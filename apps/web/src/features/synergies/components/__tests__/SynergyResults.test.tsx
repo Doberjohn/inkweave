@@ -112,6 +112,19 @@ describe('SynergyResults', () => {
     expect(screen.queryByRole('button', {name: 'Shift Targets'})).not.toBeInTheDocument();
   });
 
+  // While the card's synergies load the list is empty, which must not read as "no synergies".
+  it('shows the loading skeleton, not the empty notice, while synergies load', () => {
+    renderResults({synergies: [], totalSynergyCount: 0, isLoading: true});
+    expect(screen.getByRole('status', {name: 'Loading synergies'})).toBeInTheDocument();
+    expect(screen.queryByText('No synergies found for this card.')).not.toBeInTheDocument();
+  });
+
+  it('shows the empty notice once loading settles with no synergies', () => {
+    renderResults({synergies: [], totalSynergyCount: 0, isLoading: false});
+    expect(screen.getByText('No synergies found for this card.')).toBeInTheDocument();
+    expect(screen.queryByRole('status', {name: 'Loading synergies'})).not.toBeInTheDocument();
+  });
+
   it('should still show sort select when only 1 synergy group', () => {
     renderResults({synergies: [mockSynergies[0]], totalSynergyCount: 1});
     expect(screen.getByRole('combobox', {name: 'Sort synergies'})).toBeInTheDocument();

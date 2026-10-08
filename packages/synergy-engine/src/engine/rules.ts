@@ -86,6 +86,7 @@ import {
   pairFindSynergies,
   makePayoffAnchoredRule,
   makeTribalRule,
+  tribeDescription,
 } from './ruleScoring';
 import {scoreBouncePair} from './bounceScoring';
 import {scoreInkDropPair} from './inkDropScoring';
@@ -1233,8 +1234,7 @@ export const synergyRules: SynergyRule[] = [
     name: 'Toy',
     category: 'playstyle',
     playstyleId: 'toy',
-    description:
-      'Toy characters and Toy-payoff cards reinforce a tight tribal strategy with search effects, cost reduction, and banish recursion',
+    description: tribeDescription('toy'),
 
     matches: isToyCard,
 
@@ -1250,8 +1250,7 @@ export const synergyRules: SynergyRule[] = [
     name: 'Seven Dwarfs',
     category: 'playstyle',
     playstyleId: 'dwarfs',
-    description:
-      'Seven Dwarfs characters and the payoffs that reward running them — density draws, free recruits, and bounce-for-value effects compound as you fill the board with Dwarfs',
+    description: tribeDescription('dwarfs'),
 
     matches: isDwarfsCard,
 
@@ -1270,8 +1269,7 @@ export const synergyRules: SynergyRule[] = [
       name: 'Floodborns',
       category: 'playstyle',
       playstyleId: 'floodborn',
-      description:
-        'Floodborn characters and the Set 13 Vine payoffs that buff or trigger off them. Payoff-anchored: a Floodborn body synergizes with payoffs, but two plain Floodborn do not synergize with each other.',
+      description: tribeDescription('floodborn'),
       matches: isFloodbornCard,
     },
     getFloodbornRoles,
@@ -1328,8 +1326,7 @@ export const synergyRules: SynergyRule[] = [
     name: 'Hunny',
     category: 'playstyle',
     playstyleId: 'hunny',
-    description:
-      'Hunny characters and the payoffs that reward running them: searches that dig the tribe out of the deck, density payoffs that scale with Hunny in play, and single-target buffs.',
+    description: tribeDescription('hunny'),
 
     matches: isHunnyCard,
 
@@ -1345,8 +1342,7 @@ export const synergyRules: SynergyRule[] = [
     name: 'Red Panda',
     category: 'playstyle',
     playstyleId: 'red-panda',
-    description:
-      'Red Panda characters and the deck-search payoff that digs the tribe out of your deck.',
+    description: tribeDescription('red-panda'),
 
     matches: isRedPandaCard,
 
@@ -1356,56 +1352,17 @@ export const synergyRules: SynergyRule[] = [
 
   // --------------------------------------------
   // CLASSIFICATION TRIBES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle, Madrigal)
-  // Generated from one shared factory — all payoff-anchored, all 5-baseline.
+  // Generated from one shared factory — all payoff-anchored, all 5-baseline. Royalty is
+  // Queen / King / Prince, kept distinct from Princess.
   // --------------------------------------------
-  makeTribalRule(
-    TRIBAL_SPECS.monster,
-    'Monsters',
-    'Monster',
-    'Monster characters and the payoffs that reward fielding the tribe. Payoff-anchored: plain Monster bodies do not synergize with each other.',
-  ),
-  makeTribalRule(
-    TRIBAL_SPECS.princess,
-    'Princesses',
-    'Princess',
-    'The Princess archetype: Princess characters and the payoffs that buff them, dig them out of the deck, or reward having a Princess in play.',
-  ),
-  makeTribalRule(
-    TRIBAL_SPECS.hero,
-    'Heroes',
-    'Hero',
-    'Hero characters and the Set 12 payoffs that buff or trigger off the tribe. Payoff-anchored, so a Hero body only surfaces against the payoffs that reward it.',
-  ),
-  makeTribalRule(
-    TRIBAL_SPECS.super,
-    'Supers',
-    'Super',
-    'The Incredibles "Super" package: Super characters and the payoffs that pump, ready, or reward them.',
-  ),
-  makeTribalRule(
-    TRIBAL_SPECS.royalty,
-    'Royalty',
-    'Royalty',
-    'Queen / King / Prince characters (Royalty, kept distinct from Princess) and the payoffs that buff or reward the crown.',
-  ),
-  makeTribalRule(
-    TRIBAL_SPECS.detective,
-    'Detectives',
-    'Detective',
-    'The Set 10 Detective tribe (Zootopia / Great Mouse Detective): Detective characters and the payoffs that buff them, search them out, or reward having one in play.',
-  ),
-  makeTribalRule(
-    TRIBAL_SPECS.gargoyle,
-    'Gargoyles',
-    'Gargoyle',
-    'The Gargoyles clan: Gargoyle characters and the payoffs that buff them, fire when they challenge, lift their Stone by Day drawback, or count them in your discard.',
-  ),
-  makeTribalRule(
-    TRIBAL_SPECS.madrigal,
-    'Madrigals',
-    'Madrigal',
-    'The Encanto family: Madrigal characters and the payoffs that reward having another Madrigal in play.',
-  ),
+  makeTribalRule(TRIBAL_SPECS.monster, 'Monsters', 'Monster'),
+  makeTribalRule(TRIBAL_SPECS.princess, 'Princesses', 'Princess'),
+  makeTribalRule(TRIBAL_SPECS.hero, 'Heroes', 'Hero'),
+  makeTribalRule(TRIBAL_SPECS.super, 'Supers', 'Super'),
+  makeTribalRule(TRIBAL_SPECS.royalty, 'Royalty', 'Royalty'),
+  makeTribalRule(TRIBAL_SPECS.detective, 'Detectives', 'Detective'),
+  makeTribalRule(TRIBAL_SPECS.gargoyle, 'Gargoyles', 'Gargoyle'),
+  makeTribalRule(TRIBAL_SPECS.madrigal, 'Madrigals', 'Madrigal'),
 
   // --------------------------------------------
   // EXERT (Exert Matters, opponent-facing, payoff-anchored)

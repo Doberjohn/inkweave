@@ -298,3 +298,22 @@ test.describe('Card page footer (#532)', () => {
     await expect(footer).toBeAttached();
   });
 });
+
+test.describe('Card page synergy loading', () => {
+  // A card's synergy list is empty until its file arrives, which must not read as "no synergies":
+  // the page used to flash its "No synergies found" notice before every card's groups. Any viewport.
+  test('shows the synergy skeleton, not the empty notice, until the synergies load', async ({page}) => {
+    const releaseSynergies = await holdUntilReleased(page, `**/data/synergies/${EXPAND_CARD_ID}.json`);
+    const skeleton = page.getByTestId('synergy-results-loading');
+    const emptyNotice = page.getByText(/no synergies found for this card/i);
+
+    await page.goto(`/card/${EXPAND_CARD_ID}`);
+    await expect(skeleton).toBeVisible({timeout: 10000});
+    await expect(emptyNotice).toHaveCount(0);
+
+    releaseSynergies();
+    await expect(page.locator(`[data-group-key="${EXPAND_GROUP}"]`)).toBeVisible({timeout: 10000});
+    await expect(skeleton).toHaveCount(0);
+    await expect(emptyNotice).toHaveCount(0);
+  });
+});

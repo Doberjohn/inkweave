@@ -3,6 +3,7 @@ import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {CardDetail, SynergyGroup} from '.';
 import {ExpandedGroupView} from './ExpandedGroupView';
+import {SynergyResultsSkeleton} from './SynergyResultsSkeleton';
 import {Chip, RenderProfiler} from '../../../shared/components';
 import {SortSelect} from '../../../shared/components/SortSelect';
 import type {SynergySortOrder} from '../../../shared/constants';
@@ -18,6 +19,8 @@ import {
 interface SynergyResultsProps {
   selectedCard: LorcanaCard;
   synergies: SynergyGroupData[];
+  /** True while the card's synergies are still loading: shows a skeleton, not the empty notice. */
+  isLoading?: boolean;
   totalSynergyCount: number;
   onClearSelection: () => void;
   isMobile: boolean;
@@ -181,6 +184,7 @@ function NoSynergiesNotice() {
 interface ResultsBodyProps {
   selectedCard: LorcanaCard;
   synergies: SynergyGroupData[];
+  isLoading: boolean;
   totalSynergyCount: number;
   onClearSelection: () => void;
   isMobile: boolean;
@@ -193,11 +197,12 @@ interface ResultsBodyProps {
   onSynergyCardClick: (card: LorcanaCard, groupKey?: string) => void;
 }
 
-/** The default (non-expanded) view: optional card detail, then either the empty notice or the
- *  sorted, filterable group list with its header and toolbar. */
+/** The default (non-expanded) view: optional card detail, then the loading skeleton, the empty
+ *  notice, or the sorted, filterable group list with its header and toolbar. */
 function SynergyResultsBody({
   selectedCard,
   synergies,
+  isLoading,
   totalSynergyCount,
   onClearSelection,
   isMobile,
@@ -219,7 +224,9 @@ function SynergyResultsBody({
         // The card page owns the document's single h1 (#524).
         <CardDetail card={selectedCard} onClear={onClearSelection} headingLevel="h1" />
       )}
-      {synergies.length === 0 ? (
+      {isLoading ? (
+        <SynergyResultsSkeleton isMobile={isMobile} />
+      ) : synergies.length === 0 ? (
         <NoSynergiesNotice />
       ) : (
         <>
@@ -280,6 +287,7 @@ function SynergyResultsContent(
     <SynergyResultsBody
       selectedCard={selectedCard}
       synergies={synergies}
+      isLoading={props.isLoading ?? false}
       totalSynergyCount={props.totalSynergyCount}
       onClearSelection={props.onClearSelection}
       isMobile={isMobile}
