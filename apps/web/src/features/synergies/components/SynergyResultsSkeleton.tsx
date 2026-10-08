@@ -97,7 +97,9 @@ function GroupSkeleton() {
  */
 export function SynergyResultsSkeleton({isMobile}: SynergyResultsSkeletonProps) {
   return (
-    <div data-testid="synergy-results-loading" aria-busy="true" aria-label="Loading synergies">
+    // role="status": a plain div's implicit generic role prohibits aria-label, so the label
+    // would never reach assistive technology (same pattern as CardOverviewModalFallback).
+    <div role="status" data-testid="synergy-results-loading" aria-busy="true" aria-label="Loading synergies">
       <HeaderSkeleton />
       <ToolbarSkeleton isMobile={isMobile} />
       {Array.from({length: GROUP_COUNT}).map((_, i) => (
