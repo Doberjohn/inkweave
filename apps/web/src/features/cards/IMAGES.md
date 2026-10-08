@@ -10,7 +10,9 @@ Production is **content-addressed and self-hosted**; dev falls back to proxies. 
 
 Gated on `VITE_LOCAL_IMAGES=true`, set in `vercel.json`'s build command.
 
-`scripts/download-card-images.mjs` runs first. It downloads card images from Ravensburger for every card in `allCards.json`, copies any committed preview AVIFs (`apps/web/public/card-images-preview/{id}{-sm}.avif`) for cards in `previewCards.json`, converts and resizes to two sizes, then **hashes each AVIF** (sha256 prefix, 16 hex chars) and writes:
+`scripts/convert-preview-images.mjs --force` runs first. It turns any raw scan in the git-ignored `apps/web/public/card-images-raw/` into the preview AVIFs. A deploy checkout holds a raw only when admin has just committed one, so `--force` lets a replaced image win over the AVIF already committed for that card. Without it the build shipped the old art, because the conversion workflow's own commit is `[skip ci]` and deploys nothing (#750).
+
+`scripts/download-card-images.mjs` runs next. It downloads card images from Ravensburger for every card in `allCards.json`, copies any committed preview AVIFs (`apps/web/public/card-images-preview/{id}{-sm}.avif`) for cards in `previewCards.json`, converts and resizes to two sizes, then **hashes each AVIF** (sha256 prefix, 16 hex chars) and writes:
 
 - `apps/web/public/card-images/{id}.{hash}.avif`
 - `apps/web/public/card-images/{id}.{hash}-sm.avif`

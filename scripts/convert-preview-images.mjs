@@ -13,6 +13,11 @@
  * With --prune-raw, each source raw is deleted once its AVIFs are on disk, so the
  * CI conversion workflow leaves no tracked raw behind (see issue #420).
  *
+ * build:vercel passes --force (#750). card-images-raw/ is git-ignored, so a deploy
+ * checkout holds a raw only when admin has just committed it, and that raw is newer
+ * than any AVIF already there. Skipping it shipped the old art: the conversion
+ * workflow's own commit is [skip ci] and starts no deploy.
+ *
  * Usage:
  *   pnpm convert-preview-images              # Convert all missing
  *   pnpm convert-preview-images --force      # Re-convert everything
