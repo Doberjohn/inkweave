@@ -142,6 +142,7 @@ export function CardPage() {
         <SynergyResults
           selectedCard={card}
           synergies={synergies}
+          isLoading={synergiesLoading}
           totalSynergyCount={totalCount}
           onClearSelection={closeCard}
           isMobile={isMobile}
