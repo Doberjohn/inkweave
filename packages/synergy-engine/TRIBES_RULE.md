@@ -42,16 +42,16 @@ Buff scores 6 (a static stat grant) while trigger scores 7 (a repeating engine) 
 
 ## Coverage (live pair counts)
 
-Regenerated when the Gargoyle tribe was added, from the live engine over the Core pool (sets 9-13 plus the Set 14 preview). The design notes below keep the counts from when the tribes were built.
+Regenerated when the Gargoyle tribe was added, from the live engine over the Core pool (sets 9-13 plus the Set 14 preview). Counts go through `SynergyEngine.findSynergies`, so pairs `canShareDeck` rules out (incompatible dual-ink cards) are excluded, matching the precomputed JSON. The design notes below keep the counts from when the tribes were built.
 
 | Tribe | Members | Payoff cards | Unique pairs | Score dist (6 / 7 / 8) |
 |-------|---------|--------------|--------------|------------------------|
 | Monsters | 15 | 1 | 15 | 15 / 0 / 0 |
-| Princesses | 74 | 10 | 755 | 568 / 28 / 159 |
-| Heroes | 338 | 13 | 4,407 | 3,663 / 744 / 0 |
-| Supers | 57 | 7 | 385 | 208 / 119 / 58 |
-| Royalty | 84 | 3 | 246 | 243 / 3 / 0 |
-| Detectives | 39 | 11 | 396 | 279 / 76 / 41 |
+| Princesses | 74 | 10 | 735 | 552 / 28 / 155 |
+| Heroes | 338 | 13 | 4,284 | 3,561 / 723 / 0 |
+| Supers | 57 | 7 | 374 | 202 / 116 / 56 |
+| Royalty | 84 | 3 | 242 | 239 / 3 / 0 |
+| Detectives | 39 | 11 | 392 | 275 / 76 / 41 |
 | Gargoyles | 16 | 4 | 54 | 36 / 18 / 0 |
 
 ## Design notes

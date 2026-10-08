@@ -1873,6 +1873,7 @@ export const TRIBAL_SPECS = {
 
 const tribalPatternCache = new Map<string, {buff: RegExp; trigger: RegExp; search: RegExp; check: RegExp}>();
 
+/** Build (once per spec, then cached) the four payoff-role regexes from the spec's ref words. */
 function tribalPatterns(spec: TribalSpec) {
   const cached = tribalPatternCache.get(spec.playstyleId);
   if (cached) return cached;
