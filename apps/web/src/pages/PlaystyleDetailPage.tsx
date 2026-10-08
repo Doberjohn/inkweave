@@ -24,8 +24,10 @@ import {
   STRUCTURAL_ROLE_TO_MECHANIC,
   mechanicLabel,
   mechanicDescription,
+  tribalMechanicDescription,
   type PlaystyleId,
   type LorcanaCard,
+  type TribalSpec,
 } from 'inkweave-synergy-engine';
 import {usePrecomputedPlaystyleCards} from '../features/synergies/hooks';
 import {RoleTileRow, type RoleTile} from '../features/synergies/components/RoleTileRow';
@@ -211,13 +213,27 @@ const LOCATION_CARD_ROLE = 'location' as const;
 interface RoleConfig {
   getRoles: (card: LorcanaCard) => readonly string[];
   extraChips?: (cards: LorcanaCard[]) => RoleChip[];
+  /** A tile's description; `mechanicDescription` unless the playstyle words a role its own way. */
+  describe?: (mechanicId: string) => string;
+}
+
+/**
+ * A classification tribe's tiles: its tribal roles, with While in Play and Trigger naming the
+ * tribe (the catalog words those two for Location Control and Floodborns).
+ */
+function tribalConfig(spec: TribalSpec): RoleConfig {
+  return {
+    getRoles: (card) => getTribalRoles(card, spec).filter((r) => r !== 'member'),
+    describe: (id) => tribalMechanicDescription(id, spec),
+  };
 }
 
 /**
  * Per-playstyle structural-role DETECTORS only. Labels/descriptions are NOT here —
  * every tile's text comes from the one mechanics catalog (mechanicLabel/Description),
- * so the same mechanic reads identically in every playstyle. `member` is structural
- * membership, not a displayed mechanic, so it's filtered out. See MECHANICS_TAXONOMY.md.
+ * so the same mechanic reads identically in every playstyle; a tribe's two shared roles
+ * name the tribe (`tribalConfig`). `member` is structural membership, not a displayed
+ * mechanic, so it's filtered out. See MECHANICS_TAXONOMY.md.
  */
 const ROLE_CONFIGS: Record<PlaystyleId, RoleConfig> = {
   'location-control': {
@@ -244,14 +260,14 @@ const ROLE_CONFIGS: Record<PlaystyleId, RoleConfig> = {
   exert: {getRoles: (card) => getExertRoles(card)},
   bounce: {getRoles: (card) => getBounceRoles(card)},
   'ink-drops': {getRoles: (card) => getInkDropRoles(card)},
-  monster: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.monster).filter((r) => r !== 'member')},
-  princess: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.princess).filter((r) => r !== 'member')},
-  hero: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.hero).filter((r) => r !== 'member')},
-  super: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.super).filter((r) => r !== 'member')},
-  royalty: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.royalty).filter((r) => r !== 'member')},
-  detective: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.detective).filter((r) => r !== 'member')},
-  gargoyle: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.gargoyle).filter((r) => r !== 'member')},
-  madrigal: {getRoles: (card) => getTribalRoles(card, TRIBAL_SPECS.madrigal).filter((r) => r !== 'member')},
+  monster: tribalConfig(TRIBAL_SPECS.monster),
+  princess: tribalConfig(TRIBAL_SPECS.princess),
+  hero: tribalConfig(TRIBAL_SPECS.hero),
+  super: tribalConfig(TRIBAL_SPECS.super),
+  royalty: tribalConfig(TRIBAL_SPECS.royalty),
+  detective: tribalConfig(TRIBAL_SPECS.detective),
+  gargoyle: tribalConfig(TRIBAL_SPECS.gargoyle),
+  madrigal: tribalConfig(TRIBAL_SPECS.madrigal),
 };
 
 /**
@@ -281,10 +297,11 @@ function getRoleChips(playstyleId: PlaystyleId | undefined, cards: LorcanaCard[]
     for (const id of cardMechanicIds(config, card)) counts.set(id, (counts.get(id) ?? 0) + 1);
   }
   const extras = config.extraChips?.(cards) ?? [];
+  const describe = config.describe ?? mechanicDescription;
   const chips = [...counts].map(([role, count]) => ({
     role,
     label: mechanicLabel(role),
-    tooltip: mechanicDescription(role),
+    tooltip: describe(role),
     count,
   }));
   return [...extras, ...chips];

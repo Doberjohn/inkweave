@@ -16,6 +16,7 @@ import type {
   ExertRole,
   BounceRole,
   TribalRole,
+  TribalSpec,
 } from './cardHelpers.js';
 import type {InkDropRole} from './inkDrops.js';
 import {
@@ -233,6 +234,31 @@ export function mechanicLabel(id: string): string {
 export function mechanicDescription(id: string): string {
   const canonical = STRUCTURAL_ROLE_TO_MECHANIC[id] ?? id;
   return MECHANIC_BY_ID[canonical]?.description ?? '';
+}
+
+/**
+ * Two tribal roles share an id with another playstyle's role, and the catalog describes them
+ * in that playstyle's terms: `in-play-check` names locations (Location Control) and `trigger`
+ * names Floodborn characters. On a classification tribe's page they name the tribe instead.
+ */
+const TRIBAL_ROLE_DESCRIPTIONS: Partial<Record<TribalRole, (aTribe: string) => string>> = {
+  // Mostly "while you have a X in play", but also "if you played / returned a X" and "if a X is
+  // chosen", so the wording leads with the common case without promising it.
+  'in-play-check': (aTribe) => `Get benefits tied to ${aTribe} character, such as having one in play`,
+  trigger: (aTribe) => `Get a repeating benefit when you play ${aTribe} character or one quests or challenges`,
+};
+
+/** The tribe's classifications with an article: "a Madrigal", "a Queen, King or Prince". */
+function tribeWithArticle(spec: TribalSpec): string {
+  const classes = spec.memberClasses;
+  const list = classes.length > 1 ? `${classes.slice(0, -1).join(', ')} or ${classes.at(-1)}` : classes[0];
+  return `${/^[AEIOU]/i.test(list) ? 'an' : 'a'} ${list}`;
+}
+
+/** A mechanic's description on a classification tribe's page (`mechanicDescription` elsewhere). */
+export function tribalMechanicDescription(id: string, spec: TribalSpec): string {
+  const describe = TRIBAL_ROLE_DESCRIPTIONS[id as TribalRole];
+  return describe ? describe(tribeWithArticle(spec)) : mechanicDescription(id);
 }
 
 /**

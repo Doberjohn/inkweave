@@ -7,6 +7,8 @@ import {
   getCardMechanics,
   mechanicLabel,
   mechanicDescription,
+  tribalMechanicDescription,
+  TRIBAL_SPECS,
 } from '../utils';
 import {STRUCTURAL_ROLE_DISPLAY} from '../utils/mechanics.js';
 import {createCard} from './fixtures.js';
@@ -105,6 +107,31 @@ describe('mechanics catalog', () => {
     it('labels the Floodborns trigger role', () => {
       expect(mechanicLabel('trigger')).toBe('Trigger');
       expect(mechanicLabel('trigger')).not.toBe('trigger');
+    });
+  });
+
+  // The catalog describes in-play-check in Location Control's terms and trigger in Floodborn's;
+  // a classification tribe's page names the tribe instead.
+  describe('tribe-page descriptions', () => {
+    it('names the tribe in While in Play and Trigger', () => {
+      expect(tribalMechanicDescription('in-play-check', TRIBAL_SPECS.madrigal)).toBe(
+        'Get benefits tied to a Madrigal character, such as having one in play',
+      );
+      expect(tribalMechanicDescription('trigger', TRIBAL_SPECS.hero)).toBe(
+        'Get a repeating benefit when you play a Hero character or one quests or challenges',
+      );
+    });
+
+    it('lists every classification of a multi-class tribe', () => {
+      expect(tribalMechanicDescription('in-play-check', TRIBAL_SPECS.royalty)).toBe(
+        'Get benefits tied to a Queen, King or Prince character, such as having one in play',
+      );
+    });
+
+    it('keeps the catalog text for other mechanics, and for Location Control and Floodborn', () => {
+      expect(tribalMechanicDescription('buff', TRIBAL_SPECS.madrigal)).toBe(mechanicDescription('buff'));
+      expect(mechanicDescription('in-play-check')).toBe('Get benefits when you have locations in play');
+      expect(mechanicDescription('trigger')).toContain('Floodborn characters');
     });
   });
 });
