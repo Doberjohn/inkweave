@@ -50,7 +50,7 @@ layout on every project and also run in the chromium-only Windows pre-push.
 | a wrong slug still renders the card by id and canonicalizes to the correct slug (#498) | `/card/1947/wrong-slug-here` resolves card 1947 by id (slug decorative); canonical rewritten to the derived slug, not the URL's |
 | shows a not-found page for an invalid card ID | `/card/99999999` → noindex "Card not found" page; URL stays, no modal |
 | should close the modal when Escape is pressed | Escape dismisses the modal, hero reappears |
-| shows the empty state on the page for a card with no synergies | `/card/1936` (no synergy file) → page "No synergies found for this card" notice |
+| shows the empty state on the page for a card with no synergies | `/card/2228` (no synergy file; guarded by a fixture check) → page "No synergies found for this card" notice |
 | should lock background scroll while the modal is open | `document.body` overflow is `hidden` while open, restored on close |
 | Show More reveals the full expanded group, and Back returns to default | Modal opened on card 2095 via Browse (`openCardOverview`); ramp group: one "+N more" click → `data-state="expanded"` with a "Back to all synergies" link; Back → `data-state="default"` |
 | arrows navigate to a sibling card from the Browse grid | Opening a card from `/browse` shows prev/next arrows; clicking "Next card" changes the modal's h1 to the adjacent grid card |

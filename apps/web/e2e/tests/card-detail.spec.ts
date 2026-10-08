@@ -39,6 +39,17 @@ if (overflowGroupCount < 5) {
   );
 }
 
+// Card 2228 (Cauldron Born - Mindless Horde) is a vanilla Storyborn character no rule touches, so it
+// has no precomputed synergy file and the card page renders its "no synergies" notice (#486).
+// (Bruno Madrigal - Undetected Uncle was the fixture until the Madrigals tribe gave him synergies.)
+const EMPTY_CARD_ID = '2228';
+if (fs.existsSync(path.resolve(process.cwd(), 'public/data/synergies', `${EMPTY_CARD_ID}.json`))) {
+  throw new Error(
+    `Fixture broken: card ${EMPTY_CARD_ID} must have no precomputed synergy file (a rule now matches it). ` +
+      `Pick another card with no file in public/data/synergies/.`,
+  );
+}
+
 test.describe('Card Detail (modal)', () => {
   // Desktop only — mobile has different layout
   test.beforeEach(async ({appPage}, testInfo) => {
@@ -127,9 +138,7 @@ test.describe('Card Detail (modal)', () => {
   });
 
   test('shows the empty state on the page for a card with no synergies', async ({page}) => {
-    // Card 1936 (Bruno Madrigal - Undetected Uncle) has no precomputed synergy file — the card
-    // page's SynergyResults renders its "no synergies" notice (#486).
-    await page.goto('/card/1936');
+    await page.goto(`/card/${EMPTY_CARD_ID}`);
 
     await expect(page.getByText(/no synergies found for this card/i)).toBeVisible({timeout: 10000});
   });
