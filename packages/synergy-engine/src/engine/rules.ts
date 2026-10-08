@@ -18,7 +18,8 @@ import {
   isItem,
   isLocation,
   isLocationSupportCard,
-  locationBuffReaches,
+  locationRoleReaches,
+  stripDamageMoves,
   isRampCard,
   isSong,
   isToyCard,
@@ -385,8 +386,9 @@ function buildLocationDirectMatch(
   role: LocationRole,
 ): SynergyMatch | null {
   if (role === 'boost' && !isBoostBeneficiaryLocation(location)) return null;
-  // A classified buff ("Your Hyperia City locations get ...") reaches only its own locations.
-  if (role === 'buff' && !locationBuffReaches(card, location)) return null;
+  // A classified buff or move ("Your Hyperia City locations get ...", "move him to a Hyperia City
+  // location") reaches only its own locations.
+  if (!locationRoleReaches(card, location, role)) return null;
   return {
     card: location,
     score: LOCATION_ROLE_SCORE[role],
@@ -450,7 +452,7 @@ function findLocationCardSynergiesForRole(
 
     const roles = getLocationRoles(other);
     if (!roles.includes(role)) continue;
-    if (role === 'buff' && !locationBuffReaches(other, card)) continue;
+    if (!locationRoleReaches(other, card, role)) continue;
 
     matches.push({
       card: other,
@@ -468,7 +470,8 @@ interface LocationRuleSpec {
   name: string;
   role: LocationRole;
   pattern: RegExp;
-  excludePattern?: RegExp;
+  /** Rewrites the text before the pattern test (move: strip damage-moving clauses). */
+  prepareText?: (text: string) => string;
 }
 
 function locationRuleMatches(spec: LocationRuleSpec, card: LorcanaCard): boolean {
@@ -482,8 +485,7 @@ function locationRuleMatches(spec: LocationRuleSpec, card: LorcanaCard): boolean
   const normalizedText = normalizeCardText(card);
   // Exclude anti-location cards (banish/remove locations)
   if (LOCATION_PATTERNS['anti-location'].test(normalizedText)) return false;
-  if (spec.excludePattern && spec.excludePattern.test(normalizedText)) return false;
-  return spec.pattern.test(normalizedText);
+  return spec.pattern.test(spec.prepareText ? spec.prepareText(normalizedText) : normalizedText);
 }
 
 /** Create a single location rule for a specific pattern */
@@ -534,7 +536,7 @@ const LOCATION_RULE_SPECS: readonly LocationRuleSpec[] = [
     name: 'Move to Location',
     role: 'move',
     pattern: LOCATION_PATTERNS.move,
-    excludePattern: LOCATION_PATTERNS['move-exclude'],
+    prepareText: stripDamageMoves,
   },
   {
     id: 'in-play-check',
@@ -1353,7 +1355,7 @@ export const synergyRules: SynergyRule[] = [
   },
 
   // --------------------------------------------
-  // CLASSIFICATION TRIBES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle)
+  // CLASSIFICATION TRIBES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle, Madrigal)
   // Generated from one shared factory — all payoff-anchored, all 5-baseline.
   // --------------------------------------------
   makeTribalRule(
@@ -1397,6 +1399,12 @@ export const synergyRules: SynergyRule[] = [
     'Gargoyles',
     'Gargoyle',
     'The Gargoyles clan: Gargoyle characters and the payoffs that buff them, fire when they challenge, lift their Stone by Day drawback, or count them in your discard.',
+  ),
+  makeTribalRule(
+    TRIBAL_SPECS.madrigal,
+    'Madrigals',
+    'Madrigal',
+    'The Encanto family: Madrigal characters and the payoffs that reward having another Madrigal in play.',
   ),
 
   // --------------------------------------------

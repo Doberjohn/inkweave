@@ -1,11 +1,13 @@
 import {describe, it, expect} from 'vitest';
 import {SynergyEngine} from '../engine';
+import {getLocationRoles} from '../utils';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
 
-// Location Control fix from #628: a buff limited to one location classification ("Your Hyperia
-// City locations get +2 ⛉.") reaches only locations of that classification. Kept out of
-// rules.test.ts (CodeScene: function count). Named cards use their real text.
+// Location Control fixes: a buff (#628) or a move limited to one location classification
+// ("Your Hyperia City locations get +2 ⛉.", "move him to a Hyperia City location") reaches only
+// locations of that classification. Kept out of rules.test.ts (CodeScene: function count).
+// Named cards use their real text.
 
 const engine = new SynergyEngine();
 /** The pair's Location Control score with `card` as the searcher, or undefined when they do not pair. */
@@ -82,5 +84,111 @@ describe('Location Control: a buff limited to one location classification', () =
     expect(locationScore(village, plainLocation)).toBe(7);
     expect(locationScore(russell, plainLocation)).toBe(7);
     expect(locationScore(mixed, plainLocation)).toBe(7);
+  });
+});
+
+// A move named by pronoun ("move him to ...") is a move, and a move limited to one location
+// classification ("a Hyperia City location") reaches only locations of that classification.
+describe('Location Control: pronoun moves and a move limited to one location classification', () => {
+  const bogo = createCard({
+    id: 'chief-bogo-police-commissioner',
+    name: 'Chief Bogo',
+    fullName: 'Chief Bogo - Police Commissioner',
+    ink: 'Steel',
+    text: 'I KNOW THESE STREETS Whenever this character quests, you may move him to a Hyperia City location for free.\nSTOP RIGHT THERE 6 ⬡ — Chosen opposing character can’t challenge until the start of your next turn.',
+  });
+  const hathi = createCard({
+    id: 'colonel-hathi-on-the-march',
+    name: 'Colonel Hathi',
+    fullName: 'Colonel Hathi - On the March',
+    ink: 'Ruby',
+    text: 'HUP, TWO, THREE, FOUR Whenever this character\nquests, you may move him to one of your locations\nfor free.',
+  });
+
+  it('pairs a classified move (5) with a location of that classification, from both sides', () => {
+    expect(locationScore(bogo, hyperiaLocation)).toBe(5);
+    expect(locationScore(hyperiaLocation, bogo)).toBe(5);
+  });
+
+  it('gives a classified move no match with a location outside its classification', () => {
+    expect(getLocationRoles(bogo)).toEqual(['move']);
+    expect(locationScore(bogo, plainLocation)).toBeUndefined();
+    expect(locationScore(plainLocation, bogo)).toBeUndefined();
+  });
+
+  it('keeps the classification when the same sentence names "that location" again', () => {
+    const trailing = createCard({
+      id: 'trailing-that-location',
+      text: "Whenever this character quests, you may move him to a Hyperia City location for free and gain lore equal to that location's ◊.",
+    });
+    expect(locationScore(trailing, hyperiaLocation)).toBe(5);
+    expect(locationScore(trailing, plainLocation)).toBeUndefined();
+  });
+
+  it('reads "move them to that location" as a move', () => {
+    const peopleGonnaComeHere = createCard({
+      id: 'people-gonna-come-here',
+      type: 'Action',
+      ink: 'Steel',
+      classifications: ['Song'],
+      text: '(A character with cost 7 or more can ⟳ to sing this song for free.)\nPlay a location from your hand or discard for free. If a character sang this song, you may move them to that location for free.',
+    });
+    expect(getLocationRoles(peopleGonnaComeHere)).toContain('move');
+  });
+
+  it('reads "move him to one of your locations" as a global move, not a buff', () => {
+    expect(getLocationRoles(hathi)).toEqual(['move']);
+    expect(locationScore(hathi, plainLocation)).toBe(5);
+  });
+
+  it('keeps a move whose card mentions damage outside the move clause', () => {
+    const gamesAfoot = createCard({
+      id: 'the-games-afoot',
+      type: 'Action',
+      ink: 'Steel',
+      text: 'Move up to 2 of your characters to the same location for free.\nThat location gains Resist +2 until the start of your next turn.\n(Damage dealt to it is reduced by 2.)',
+    });
+    expect(getLocationRoles(gamesAfoot)).toContain('move');
+  });
+
+  it('keeps a buff that gives an effect "to your locations", even after a move in its sentence', () => {
+    const giveBuff = createCard({id: 'give-to-locations', type: 'Item', text: 'Give Resist +1 to your locations.'});
+    const moveThenBuff = createCard({
+      id: 'move-then-give',
+      text: 'Move him to one of your locations, then give Resist +1 to your locations.',
+    });
+    expect(getLocationRoles(giveBuff)).toEqual(['buff']);
+    expect(locationScore(giveBuff, plainLocation)).toBe(7);
+    expect(getLocationRoles(moveThenBuff)).toEqual(['move', 'buff']);
+  });
+
+  it('keeps a location move written after a damage-moving clause, in the next sentence or the same one', () => {
+    const nextSentence = createCard({
+      id: 'damage-then-move',
+      text: 'Move 1 damage counter from chosen character to chosen opposing character. Move him to one of your locations for free.',
+    });
+    const sameSentence = createCard({
+      id: 'damage-then-move-same-sentence',
+      text: 'Move 1 damage counter from a character to another character, then move him to a location.',
+    });
+    expect(getLocationRoles(nextSentence)).toContain('move');
+    expect(getLocationRoles(sameSentence)).toContain('move');
+  });
+
+  it('never reads a damage-moving clause as a location move', () => {
+    const damageOnly = createCard({
+      id: 'damage-move-only',
+      text: 'Move 1 damage counter from a character at a location to chosen opposing character.',
+    });
+    expect(getLocationRoles(damageOnly)).not.toContain('move');
+  });
+
+  it('reads a move that carries a second character as a move', () => {
+    const carl = createCard({
+      id: 'carl-fredricksen-on-the-move',
+      ink: 'Ruby',
+      text: 'MOVING PARTNER Whenever you play a location,\nyou may move this character and up to 1 of your\nother characters to that location for free.',
+    });
+    expect(getLocationRoles(carl)).toContain('move');
   });
 });

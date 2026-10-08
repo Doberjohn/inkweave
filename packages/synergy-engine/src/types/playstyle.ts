@@ -24,6 +24,7 @@ export type PlaystyleId =
   | 'royalty'
   | 'detective'
   | 'gargoyle'
+  | 'madrigal'
   | 'bounce'
   | 'ink-drops';
 

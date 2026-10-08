@@ -103,7 +103,7 @@ Triggers effects when a character **moves onto** a location (Taffyta, Goofy). Sp
 
 Strengthens locations (resist, willpower, protection).
 
-A buff limited to one location classification reaches only locations of that classification (`getLocationBuffClassifications`, `locationBuffReaches`). Hyperia City Express's "Your Hyperia City locations get +2 ⛉." scores its buff 7 with the Hyperia City locations only; with any other location it still pairs at 5, through its move ability. The classification is read as the Title Case words between "your" and "locations", case-sensitively, so lowercase shapes stay global: "Your characters and locations gain Resist +1" (We'll Save Our Village) and "Your characters at locations get +1 ¤" (Russell - Senior Wilderness Explorer). A card that also buffs every location ("Your Hyperia City locations get +2 ⛉. Your locations gain Resist +1.") stays global too.
+A buff limited to one location classification reaches only locations of that classification (`getLocationBuffClassifications`, `locationRoleReaches`). Hyperia City Express's "Your Hyperia City locations get +2 ⛉." scores its buff 7 with the Hyperia City locations only; with any other location it still pairs at 5, through its move ability. The classification is read as the Title Case words between "your" and "locations", case-sensitively, so lowercase shapes stay global: "Your characters and locations gain Resist +1" (We'll Save Our Village) and "Your characters at locations get +1 ¤" (Russell - Senior Wilderness Explorer). A card that also buffs every location ("Your Hyperia City locations get +2 ⛉. Your locations gain Resist +1.") stays global too.
 
 #### Location Ramp (Score 7)
 
@@ -122,6 +122,10 @@ Reduces cost of playing or moving to locations.
 | **Goofy - Set for Adventure** | **Elsa's Ice Palace** |
 
 Moves characters to locations for positioning.
+
+The mover may be named by pronoun ("move **him** to one of your locations", Colonel Hathi - On the March; "move **them** to that location", People Gonna Come Here), and it may carry a second character ("move this character and up to 1 of your other characters to that location", Carl Fredricksen - On the Move). "**move** … **to** (one of) your locations" is a move destination, not a buff, so the `buff` pattern's bare `your locations` alternative skips the move's own destination and only that: the "to" before it must be the move's first ("up to N" aside). "Give Resist +1 to your locations", even later in a move's sentence, and "remove damage from one of your locations" are still buffs. Damage-moving clauses ("move 1 damage counter from …") are stripped before the move test instead of dropping the card, so a damage move never reads as a location move, and a real mover keeps the role when "damage" appears elsewhere on the card (The Game's Afoot!, whose reminder text reads "Damage dealt to it is reduced by 2") or when another clause, in the same sentence or another, moves damage.
+
+A move limited to one location classification reaches only locations of that classification (`getLocationMoveClassifications`, `locationRoleReaches`), the same gate as a classified buff. Chief Bogo - Police Commissioner ("move him to a Hyperia City location for free") pairs at 5 with the five Hyperia City locations and with no other location. The classification is read as the Title Case words in "to a/an/one of your … location(s)", case-sensitively, so "to a location" and "to one of your locations" stay global. The classified clause is cut as a sentence break before the "is the rest of the text still a move?" check, so a trailing "… and gain lore equal to that location's ◊" in the same sentence does not turn a classified move global.
 
 #### In-Play Check (Score 5)
 
@@ -184,9 +188,9 @@ Returns all roles a card fulfills (cards can have multiple roles). Location card
 |------|-------|-------------------|
 | `at-payoff` | `while.{0,60}at a location\|if.{0,60}at a location\|is at a location` | "While this character is at a location, she gets +3 lore" |
 | `play-trigger` | `when(ever)? you play a location\|whenever.*play a location` | "Whenever you play a location, you may exert chosen character" |
-| `buff` | `your locations\|locations gain\|locations get\|location.*can't be challenged\|location gains? resist` | "Your locations get +2 willpower" |
+| `buff` | `(?<!\bmove\b(?:(?!\bto\b)[^.]\|\bup to\b){0,60}\bto (?:one of )?)your locations\|locations gain\|locations get\|location.*can't be challenged\|location gains? resist` | "Your locations get +2 willpower" |
 | `location-ramp` | `\bless\b.*(?:to )?(?:play\|move).*location\|\bless\b for.*location\|play a location.*(?:from\|for free)` | "you pay 2 less for the next location you play this turn" |
-| `move` | `move.*to.*location\|moves to a location\|move.*character.*location\|to the same location` | "you may move a character of yours to a location for free" |
+| `move` | `\bmove\b[^.]{0,40}?\b(?:characters?\|him\|her\|them)\b[^.]{0,50}?\blocation\|to the same location` | "you may move a character of yours to a location for free", "you may move him to one of your locations" |
 | `in-play-check` | `if you have a location\|while you have a.*(location)\|for each location` | "For each location you have in play, this character gains Resist +1" |
 | `search` | `search.*location card\|reveal.*location card\|return a location\|location card from` | "Search your deck for a location card" |
 | `boost` | `under.*(?:characters\|character) or locations\|under.*locations\|locations with boost\|play a character or location with boost` | "Whenever you put a card under one of your characters or locations" |
@@ -197,12 +201,12 @@ Two exclusion mechanisms prevent false positives:
 
 1. **Anti-location exclusion** (`LOCATION_PATTERNS['anti-location']`): Cards that banish or remove locations are excluded from ALL roles. Pattern: `banish (?:chosen |all )(?:item or )?location|shuffle.*location into`
 
-2. **Move-specific exclusion** (`LOCATION_PATTERNS['move-exclude']`): Cards mentioning "move" in a damage context (e.g., "move damage") are excluded from the move role. Pattern: `move.*damage`
+2. **Damage-move stripping** (`LOCATION_PATTERNS['move-exclude']`, `stripDamageMoves`): a damage-moving clause ("move 1 damage counter from chosen character …"), up to the end of its clause (the next period, comma or semicolon, or the next "move"), is stripped from the text before the move test, both in `getLocationRoles` and in the move rule's `matches`. It therefore never reads as a location move, while a real move elsewhere on the card still counts, and "damage" in reminder text (The Game's Afoot!) or in "remove … damage" never drops a mover. Pattern: `\bmove\b[^.]{0,20}?\bdamage\b`
 
 Two location-side gates then decide which locations a matched support card pairs with. Each is applied from both directions, so a pair scores the same whichever card is selected:
 
 1. **Boost gate** (`isBoostBeneficiaryLocation`): a `boost` card pairs only with locations that actually use cards put under them. Applied in `buildLocationDirectMatch` when the support card searches, and in the boost rule's `matches` when a location searches.
-2. **Classified-buff gate** (`locationBuffReaches`): a `buff` limited to one location classification ("Your Hyperia City locations get +2 ⛉.") pairs only with locations of that classification. Applied in `buildLocationDirectMatch` and in `findLocationCardSynergiesForRole`. See Buff above.
+2. **Classified buff/move gate** (`locationRoleReaches`): a `buff` or `move` limited to one location classification ("Your Hyperia City locations get +2 ⛉.", "move him to a Hyperia City location") pairs only with locations of that classification. Applied in `buildLocationDirectMatch` and in `findLocationCardSynergiesForRole`. See Buff and Move above.
 
 ### Multi-Role Cards
 
@@ -311,7 +315,7 @@ These are used in the synergy detail modal and vote screen to explain *why* a ca
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Location Synergy Rules')`. The classified-buff gate is tested in `packages/synergy-engine/src/__tests__/locationControl.test.ts` (4 tests): Hyperia City Express scores 7 with a Hyperia City location and 5 with any other, from both sides; a buff-only card has no match outside its classification; and We'll Save Our Village, Russell - Senior Wilderness Explorer and a mixed buff still reach every location.
+Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Location Synergy Rules')`. The classified buff/move gate and move detection are tested in `packages/synergy-engine/src/__tests__/locationControl.test.ts` (14 tests). Buff: Hyperia City Express scores 7 with a Hyperia City location and 5 with any other, from both sides; a buff-only card has no match outside its classification; and We'll Save Our Village, Russell - Senior Wilderness Explorer and a mixed buff still reach every location. Move: Chief Bogo scores 5 with a Hyperia City location and has no match with any other, from both sides; a classified move keeps its classification when the same sentence names "that location" again; People Gonna Come Here's "move them to that location" is a move; Colonel Hathi's "move him to one of your locations" is a global move, not a buff; The Game's Afoot! keeps its move despite "Damage" in its reminder text; a move written after a damage-moving clause, in the next sentence or the same one, is a move, while a damage-moving clause alone never is; Carl Fredricksen's two-character move is a move; and "Give Resist +1 to your locations" stays a buff (7 with any location), even after a move in the same sentence.
 
 ### Role Detection Tests (5 tests)
 

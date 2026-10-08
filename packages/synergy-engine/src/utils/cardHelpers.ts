@@ -374,8 +374,14 @@ export function makeBanishTriggerPattern(target: string): RegExp {
 
 export const LOCATION_PATTERNS = {
   'at-payoff': /while\b.{0,60}at a location|if\b.{0,60}at a location|is at a location/i,
-  move: /\bmove\b[^.]{0,40}?\bcharacter[^.]{0,40}?\blocation|to the same location/i,
-  'move-exclude': /move.*damage/i,
+  // The mover may be named by pronoun ("move him to one of your locations", Colonel Hathi) and may
+  // move a second character first ("move this character and up to 1 of your other characters to
+  // that location", Carl Fredricksen), hence the pronouns and the wider second gap.
+  move: /\bmove\b[^.]{0,40}?\b(?:characters?|him|her|them)\b[^.]{0,50}?\blocation|to the same location/i,
+  // A damage-moving clause ("move 1 damage counter from ..."). The move role strips these clauses
+  // (stripDamageMoves) rather than dropping the card, so "damage" in reminder text (The Game's
+  // Afoot!) or a separate damage move never hides a real location move.
+  'move-exclude': /\bmove\b[^.]{0,20}?\bdamage\b/i,
   // Fires when you PLAY a location (e.g. Elsa - Ice Artisan).
   'play-trigger': /when(?:ever)? you play a location|whenever.*play a location/i,
   // Fires when a character MOVES onto a location (e.g. Taffyta, Goofy) — a payoff
@@ -383,7 +389,10 @@ export const LOCATION_PATTERNS = {
   'move-trigger': /when(?:ever)?[^.]{0,40}moves? to a location/i,
   'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
   search: makeSearchPattern('location(?:\\s+cards?)?'),
-  buff: /your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
+  // "move ... to (one of) your locations" is a move destination (Colonel Hathi), not a buff; "give
+  // ... to your locations" still is, even later in the move's sentence. The skip needs that "to" to
+  // be the move's first ("up to N" aside), so it reaches only the move's own destination.
+  buff: /(?<!\bmove\b(?:(?!\bto\b)[^.]|\bup to\b){0,60}\bto (?:one of )?)your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
   boost:
     /under.*(?:characters|character) or locations|under.*locations|locations with boost|play a character or location with boost/i,
   'location-ramp':
@@ -394,6 +403,24 @@ export const LOCATION_PATTERNS = {
   'boost-beneficiary':
     /for each card (?:under|beneath)|cards? (?:from )?(?:under|beneath) (?:this|the) (?:location|card)/i,
 } as const;
+
+/**
+ * A damage-moving clause (see LOCATION_PATTERNS['move-exclude']) up to the end of its clause: the
+ * next period, comma or semicolon, or the next "move", so a later move in its sentence survives.
+ * Global flag: use only with replace, never .test().
+ */
+const DAMAGE_MOVE_CLAUSE = new RegExp(
+  `${LOCATION_PATTERNS['move-exclude'].source}(?:(?!\\bmove\\b)[^.,;])*`,
+  'gi',
+);
+
+/** Card text without its damage-moving clauses, so they neither read as a move nor hide one. */
+export function stripDamageMoves(text: string): string {
+  return text.replace(DAMAGE_MOVE_CLAUSE, '');
+}
+
+/** Whether `text` reads as a location move once its damage-moving clauses are stripped. */
+const readsAsLocationMove = (text: string): boolean => LOCATION_PATTERNS.move.test(stripDamageMoves(text));
 
 export type LocationRole =
   | 'at-payoff'
@@ -413,15 +440,15 @@ export type LocationRole =
 /**
  * Ordered role detectors (order = role-array order). A data table instead of an
  * if-ladder keeps `getLocationRoles` flat — adding a role is one row, not one
- * more branch. `exclude` (move only) suppresses a false-positive pattern.
+ * more branch. `prepare` (move only) strips damage-moving clauses before the test.
  */
 const LOCATION_ROLE_DETECTORS: ReadonlyArray<{
   role: LocationRole;
   pattern: RegExp;
-  exclude?: RegExp;
+  prepare?: (text: string) => string;
 }> = [
   {role: 'at-payoff', pattern: LOCATION_PATTERNS['at-payoff']},
-  {role: 'move', pattern: LOCATION_PATTERNS.move, exclude: LOCATION_PATTERNS['move-exclude']},
+  {role: 'move', pattern: LOCATION_PATTERNS.move, prepare: stripDamageMoves},
   {role: 'play-trigger', pattern: LOCATION_PATTERNS['play-trigger']},
   {role: 'move-trigger', pattern: LOCATION_PATTERNS['move-trigger']},
   {role: 'in-play-check', pattern: LOCATION_PATTERNS['in-play-check']},
@@ -439,9 +466,9 @@ export function getLocationRoles(card: LorcanaCard): LocationRole[] {
   // Anti-location cards (banish/remove locations) are excluded entirely
   if (LOCATION_PATTERNS['anti-location'].test(text)) return [];
 
-  return LOCATION_ROLE_DETECTORS.filter(
-    (d) => d.pattern.test(text) && !d.exclude?.test(text),
-  ).map((d) => d.role);
+  return LOCATION_ROLE_DETECTORS.filter((d) => d.pattern.test(d.prepare ? d.prepare(text) : text)).map(
+    (d) => d.role,
+  );
 }
 
 /**
@@ -462,21 +489,51 @@ export function isLocationSupportCard(card: LorcanaCard): boolean {
 const CLASSIFIED_LOCATION_BUFF = /\b[Yy]our ((?:[A-Z][a-z'-]+ )+)locations\b/g;
 
 /**
- * Location classifications a card's buff is limited to (['Hyperia City'] for Hyperia City
- * Express). Bound to the buff clause, not the whole card: returns [] when the text still reads
- * as a buff after the classified clauses are removed, meaning the card also buffs every location.
+ * A move limited to one location classification: "move him to a Hyperia City location"
+ * (Chief Bogo - Police Commissioner). Title Case and case-sensitive like the buff shape, so
+ * "to a location" / "to one of your locations" stay global. Global flag: matchAll/replace only.
  */
-export function getLocationBuffClassifications(card: LorcanaCard): string[] {
+const CLASSIFIED_LOCATION_MOVE = /\bto (?:a|an|one of your) ((?:[A-Z][a-z'-]+ )+)locations?\b/g;
+
+/**
+ * The classifications a role clause is limited to, or [] when it is global. Bound to the clause,
+ * not the whole card: returns [] when the text still reads as the role after the classified
+ * clauses are removed, meaning the card also covers every location. Each classified clause is
+ * cut as a sentence break, so a stranded "move him" cannot reach a later "that location" in the
+ * same sentence and read as a second, global move.
+ */
+function classifiedLocationScope(
+  card: LorcanaCard,
+  scopedClause: RegExp,
+  readsAsRole: (text: string) => boolean,
+): string[] {
   const text = normalizeCardText(card);
-  const scoped = [...text.matchAll(CLASSIFIED_LOCATION_BUFF)].map((m) => m[1].trim());
+  const scoped = [...text.matchAll(scopedClause)].map((m) => m[1].trim());
   if (scoped.length === 0) return [];
-  const unscoped = text.replace(CLASSIFIED_LOCATION_BUFF, '');
-  return LOCATION_PATTERNS.buff.test(unscoped) ? [] : scoped;
+  return readsAsRole(text.replace(scopedClause, '.')) ? [] : scoped;
 }
 
-/** Whether a card's location buff reaches `location`. A classified buff reaches only its own locations. */
-export function locationBuffReaches(card: LorcanaCard, location: LorcanaCard): boolean {
-  const scoped = getLocationBuffClassifications(card);
+/** Location classifications a card's buff is limited to (['Hyperia City'] for Hyperia City Express). */
+export function getLocationBuffClassifications(card: LorcanaCard): string[] {
+  return classifiedLocationScope(card, CLASSIFIED_LOCATION_BUFF, (text) => LOCATION_PATTERNS.buff.test(text));
+}
+
+/** Location classifications a card's move is limited to (['Hyperia City'] for Chief Bogo). */
+export function getLocationMoveClassifications(card: LorcanaCard): string[] {
+  return classifiedLocationScope(card, CLASSIFIED_LOCATION_MOVE, readsAsLocationMove);
+}
+
+/**
+ * Whether a card's `role` reaches `location`. A classified buff or move reaches only locations of
+ * its own classification; every other role reaches every location.
+ */
+export function locationRoleReaches(card: LorcanaCard, location: LorcanaCard, role: LocationRole): boolean {
+  const scoped =
+    role === 'buff'
+      ? getLocationBuffClassifications(card)
+      : role === 'move'
+        ? getLocationMoveClassifications(card)
+        : [];
   return scoped.length === 0 || scoped.some((c) => hasClassification(location, c));
 }
 
@@ -1835,7 +1892,7 @@ export function getHealRoles(card: LorcanaCard): HealRole[] {
 export const isHealCard = (card: LorcanaCard): boolean => getHealRoles(card).length > 0;
 
 // ============================================
-// TRIBAL PLAYSTYLES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle) — shared detector
+// TRIBAL PLAYSTYLES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle, Madrigal) — shared detector
 // ============================================
 
 /**
@@ -1854,7 +1911,7 @@ export interface TribalSpec {
   refWords: readonly string[];
 }
 
-/** The seven tribal specs. Royalty deliberately excludes Princess so it complements the Princess rule. */
+/** The eight tribal specs. Royalty deliberately excludes Princess so it complements the Princess rule. */
 export const TRIBAL_SPECS = {
   monster: {playstyleId: 'monster', memberClasses: ['Monster'], refWords: ['Monster']},
   princess: {playstyleId: 'princess', memberClasses: ['Princess'], refWords: ['Princess']},
@@ -1869,6 +1926,10 @@ export const TRIBAL_SPECS = {
   // members themselves). Drop-in over the shared factory; Angela - Night Warrior's "lose
   // Stone by Day" is caught by the team-buff "lose" verb.
   gargoyle: {playstyleId: 'gargoyle', memberClasses: ['Gargoyle'], refWords: ['Gargoyle']},
+  // Madrigals — the Encanto family (mostly Set 12). 26 members, 3 payoffs, all "if you have
+  // another Madrigal in play" checks the in-play-check role already catches. Drop-in, no new
+  // patterns. The Madrigal Family's "Madrigal Shift" stays with Shift Targets.
+  madrigal: {playstyleId: 'madrigal', memberClasses: ['Madrigal'], refWords: ['Madrigal']},
 } as const satisfies Record<string, TribalSpec>;
 
 const tribalPatternCache = new Map<string, {buff: RegExp; trigger: RegExp; search: RegExp; check: RegExp}>();
@@ -1897,7 +1958,7 @@ function tribalPatterns(spec: TribalSpec) {
     search: new RegExp(`(?:search your deck for|reveal) (?:a|an) ${T} character`, 'i'),
     // Conditional gated on tribe presence or a tribe event this turn.
     check: new RegExp(
-      `(?:while|if) you have (?:a|an|another|\\d+ or more)[^.]{0,30}(?<!named )${T}\\b` + // "while you have a [Dwarfs or a] X character in play", never "an item named X"
+      `(?:while|if) you have (?:a|an|another|\\d+ or more)[^.]{0,30}(?<!named (?:[\\w'-]+ ){0,2})${T}\\b` + // "while you have a [Dwarfs or a] X character in play", never a name ("an item named X", "a character named Mirabel X")
         `|if (?:a|an) (?:\\w+ or (?:a )?)?${T}(?: or \\w+)? character (?:is|card)` + // "if a [Y or] X [or Y] character is in play/chosen"
         `|if you (?:played|returned)[^.]{0,20}${T} character` + // "if you played a X character this turn"
         `|if (?:that card|the \\w+) is (?:a|an) ${T} character card`, // "if that card is a X character card"
