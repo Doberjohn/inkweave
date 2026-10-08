@@ -1,6 +1,6 @@
-# Classification Tribes (Monsters / Princesses / Heroes / Supers / Royalty / Detectives / Gargoyles / Madrigals)
+# Classification Tribes (Monsters / Princesses / Heroes / Supers / Royalty / Detectives / Gargoyles / Madrigals / Villains)
 
-Eight payoff-anchored tribal playstyles generated from **one shared factory** (`makeTribalRule` over `TRIBAL_SPECS` in `utils/cardHelpers.ts`). Each keys on a character classification and pairs the tribe's members with the cards that reward running them.
+Nine payoff-anchored tribal playstyles generated from **one shared factory** (`makeTribalRule` over `TRIBAL_SPECS` in `utils/cardHelpers.ts`). Each keys on a character classification and pairs the tribe's members with the cards that reward running them.
 
 | Playstyle id | Member classification(s) | Payoff ref word(s) |
 |--------------|--------------------------|--------------------|
@@ -12,6 +12,7 @@ Eight payoff-anchored tribal playstyles generated from **one shared factory** (`
 | `detective`  | `Detective` | Detective |
 | `gargoyle`  | `Gargoyle` | Gargoyle |
 | `madrigal`  | `Madrigal` | Madrigal |
+| `villain`  | `Villain` | Villain |
 
 **Royalty deliberately excludes `Princess`** so it complements the Princess rule instead of swallowing it. Cards that read "Princess **or** Queen" bridge the two tribes as expected cross-playstyle composition (they surface in both groups).
 
@@ -43,7 +44,7 @@ Buff scores 6 (a static stat grant) while trigger scores 7 (a repeating engine) 
 
 ## Coverage (live pair counts)
 
-Regenerated when the Madrigal tribe was added, from the live engine over the Core pool (sets 9-13 plus the Set 14 preview). Counts go through `SynergyEngine.findSynergies`, so pairs `canShareDeck` rules out (incompatible dual-ink cards) are excluded, matching the precomputed JSON. The design notes below keep the counts from when the tribes were built.
+Regenerated when the Villain tribe was added, from the live engine over the Core pool (sets 9-13 plus the Set 14 preview). Counts go through `SynergyEngine.findSynergies`, so pairs `canShareDeck` rules out (incompatible dual-ink cards) are excluded, matching the precomputed JSON. The design notes below keep the counts from when the tribes were built.
 
 | Tribe | Members | Payoff cards | Unique pairs | Score dist (6 / 7 / 8) |
 |-------|---------|--------------|--------------|------------------------|
@@ -55,6 +56,7 @@ Regenerated when the Madrigal tribe was added, from the live engine over the Cor
 | Detectives | 39 | 11 | 392 | 275 / 76 / 41 |
 | Gargoyles | 16 | 4 | 54 | 36 / 18 / 0 |
 | Madrigals | 26 | 3 | 74 | 71 / 3 / 0 |
+| Villains | 124 | 2 | 246 | 245 / 1 / 0 |
 
 ## Design notes
 
@@ -73,5 +75,10 @@ Regenerated when the Madrigal tribe was added, from the live engine over the Cor
   - `Pedro Madrigal - Family Patriarch` (2720) and `Alma Madrigal - Leading the Way` (2751): one-shot on-play checks on 2-cost members.
   - `Julieta's Arepas` (2881): the only repeating payoff (heals each turn while you have a Madrigal in play), already a Healing and Items card.
   - Scores are flat (71 at 6, 3 payoff-payoff pairs at 7, nothing at 8) and the payoffs sit one per ink, so a two-ink deck holds at most two. The tribe adds family-gate pairs on top of Healing rather than a new deck: 52 of its 74 pairs were new to the index. `The Madrigal Family - Every Generation`'s "Madrigal Shift" stays with Shift Targets, and "named X Madrigal" Shift references are name reads, not payoffs.
+- **Villains** is the widest tribe after Heroes (124 members across every ink and every Core set: Ruby 30, Amethyst 27, Emerald 23, Sapphire 19, Steel 18, Amber 7) with the thinnest payoff side after Monsters, two cards. Both are caught by the shared patterns, so no pattern changed:
+  - `Queen of Hearts - Wonderland Empress` (1959, Amber): team `buff` (your other Villain characters get +1 lore whenever she quests). The only payoff that is a Villain herself.
+  - `Diablo - Stone Servant` (2911, Steel): `in-play-check` (+2 strength and +1 lore while you have a Villain in play) and team `buff` (your Villain characters can't be challenged while he is exerted). Not a Villain himself.
+  - Scores are flat (245 at 6, the one Queen of Hearts ↔ Diablo pair at 7, nothing at 8), and 243 of the 246 pairs were new to the index. Like Monsters, the page is a member fan around two payoffs more than a full archetype, and it fills in as payoffs are printed.
+  - Out of scope: the other cards that name Villains are Hero-side hate aimed at opposing Villains (`Little John - Sir Reginald`, `Mr. Incredible - Taking Out the Trash`, `Darkwing Duck - Cool Under Pressure`, `Darkwing Tower - Icy Headquarters`), and `The Thunderquack` gives every opposing character the Villain classification to switch that hate on. None of them rewards running Villains, so none is a payoff.
 - **Shared role ids, no new tiles.** All five roles (`member` / `buff` / `trigger` / `search` / `in-play-check`) already existed in the mechanics catalog (Location / Floodborn / Hunny), so no new `STRUCTURAL_MECHANICS` labels were needed. `TribalRole` is added to `StructuralRoleId` purely as a compile-time guardrail for any future role.
 - **Cross-rule overlap is expected composition.** A Floodborn Prince, a Hero Prince, and a Princess buff can each surface the same card in multiple tribal groups.

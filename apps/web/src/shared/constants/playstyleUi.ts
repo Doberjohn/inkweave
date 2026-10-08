@@ -58,20 +58,5 @@ export const PLAYSTYLE_UI: Record<PlaystyleId, PlaystyleUiMeta> = {
   detective: makeUiMeta('#3b82f6', 'tribe', '2345'), // Judy Hopps - Uncovering Clues (Sapphire)
   gargoyle: makeUiMeta('#ef4444', 'tribe', '2308'), // Goliath - Guardian of Castle Wyvern (Ruby)
   madrigal: makeUiMeta('#f59e0b', 'tribe', '3001'), // The Madrigal Family - Every Generation (Amber-Sapphire)
+  villain: makeUiMeta('#3b82f6', 'tribe', '2876'), // Ursula - Deal Maker (Sapphire)
 };
-
-export interface ComingSoonPlaystyle {
-  name: string;
-  accentColor: string;
-  accentRgb: string;
-}
-
-function makeComingSoon(name: string, accentColor: string): ComingSoonPlaystyle {
-  return {name, accentColor, accentRgb: hexToRgb(accentColor)};
-}
-
-/** Playstyles that are planned but not yet implemented in the engine. */
-export const COMING_SOON_PLAYSTYLES: ComingSoonPlaystyle[] = [
-  makeComingSoon('Zombies', '#f59e0b'),
-  makeComingSoon('Villains', '#3b82f6'),
-];

@@ -11,13 +11,10 @@ import {CompactHeader, CtaButton, ErrorBoundary, EtherealBackground, Seo} from '
 import {PlaystyleFanTile, PlaystyleSection} from '../features/playstyles';
 import {
   COLORS,
-  EMPTY_BOX,
   FONTS,
   FONT_SIZES,
-  RADIUS,
   SPACING,
   PLAYSTYLE_UI,
-  COMING_SOON_PLAYSTYLES,
   type PlaystyleUiMeta,
 } from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
@@ -147,43 +144,6 @@ function PlaystyleGalleryLoadingGrid({isMobile}: {isMobile: boolean}) {
   );
 }
 
-function ComingSoonBand() {
-  if (COMING_SOON_PLAYSTYLES.length === 0) return null;
-  return (
-    <section style={{marginTop: 28}}>
-      <h2
-        style={{
-          fontFamily: FONTS.body,
-          fontSize: `${FONT_SIZES.xl}px`,
-          fontWeight: 700,
-          color: COLORS.textMuted,
-          margin: '0 0 14px',
-        }}>
-        Coming soon
-      </h2>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: 12,
-        }}>
-        {COMING_SOON_PLAYSTYLES.map((ps) => (
-          <div
-            key={ps.name}
-            style={{
-              ...EMPTY_BOX,
-              borderRadius: RADIUS.card,
-              minHeight: 84,
-              fontSize: `${FONT_SIZES.base}px`,
-            }}>
-            {ps.name}
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function PlaystyleGalleryGrid({
   isLoading,
   isMobile,
@@ -225,7 +185,6 @@ function PlaystyleGalleryGrid({
       <PlaystyleSection title="Tribes" subtitle="A party of characters who quest better together.">
         {tribes.map(renderTile)}
       </PlaystyleSection>
-      <ComingSoonBand />
     </>
   );
 }

@@ -95,6 +95,10 @@
     "madrigal": {
       "name": "Madrigals",
       "tagline": "Madrigal characters and cards that reward including them in your deck."
+    },
+    "villain": {
+      "name": "Villains",
+      "tagline": "Villain characters and cards that reward including them in your deck."
     }
   },
   "directRules": {
