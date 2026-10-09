@@ -1115,8 +1115,7 @@ export const synergyRules: SynergyRule[] = [
     id: 'spike-suit',
     name: 'Spike Suit',
     category: 'direct',
-    description:
-      'Spike Suit makes your characters deal combat damage with their willpower instead of their strength, so bodies with more willpower than strength hit far above their weight',
+    description: 'Your characters deal challenge damage with willpower instead of strength.',
 
     // Anchor finds high-willpower payoffs (forward); payoffs find the anchor (reverse).
     matches: (card) => isSpikeSuitAnchor(card) || isSpikeSuitPayoff(card),
@@ -1134,8 +1133,7 @@ export const synergyRules: SynergyRule[] = [
     id: 'merida-archer',
     name: 'Merida Archer',
     category: 'direct',
-    description:
-      "Merida's STEADY AIM adds 2 damage whenever one of your actions deals damage to an opposing character, so damage-dealing action cards hit far harder",
+    description: 'Your actions that damage an opposing character deal 2 extra damage.',
 
     // Anchor (Merida) finds damage-dealing Action payoffs (forward); the actions find the anchor (reverse).
     matches: (card) => isSteadyAimAnchor(card) || isMeridaDamageAction(card),
@@ -1153,8 +1151,7 @@ export const synergyRules: SynergyRule[] = [
     id: 'merida-wisp',
     name: 'Merida - Wisp Conjurer',
     category: 'direct',
-    description:
-      "Merida's BECKON draws a card whenever another of your characters enters play exerted, so she synergizes with cards that push your characters into play exerted — board-wide engines, self-reanimators, and Bodyguard bodies.",
+    description: 'Each character you put into play exerted draws you a card through BECKON.',
 
     // Anchor finds exerted-entry enablers (forward); enablers find the anchor (reverse).
     matches: (card) => isBeckonAnchor(card) || getBeckonEnablerTier(card) !== null,
@@ -1172,8 +1169,7 @@ export const synergyRules: SynergyRule[] = [
     id: 'free-play',
     name: 'Free Play',
     category: 'direct',
-    description:
-      "Pocahontas - Guiding the Tribe's STAY CLOSE plays a cost-1 character for free, so she pairs with every cheap body, and best with the ones whose on-play effect the free play also triggers.",
+    description: 'Play cost-1 characters for free, best when they have an on-play effect.',
 
     // Anchor finds cost-1 payoffs (forward); cost-1 characters find the anchor (reverse).
     matches: (card) => isFreePlayAnchor(card) || isFreePlayPayoff(card),
