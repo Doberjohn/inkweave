@@ -1151,7 +1151,7 @@ export const synergyRules: SynergyRule[] = [
     id: 'merida-wisp',
     name: 'Merida - Wisp Conjurer',
     category: 'direct',
-    description: 'Each character you put into play exerted draws you a card through BECKON.',
+    description: 'BECKON lets you draw a card when another of your characters enters play exerted.',
 
     // Anchor finds exerted-entry enablers (forward); enablers find the anchor (reverse).
     matches: (card) => isBeckonAnchor(card) || getBeckonEnablerTier(card) !== null,
