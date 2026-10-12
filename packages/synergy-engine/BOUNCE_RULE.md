@@ -77,7 +77,7 @@ Gated enablers in the current pool (9 of 17): Pocahontas & Meeko - Adventurous F
 | enabler ↔ rebuy-payoff the gate rejects | (dropped) | a cap-2 bouncer cannot re-buy a cost-8 body |
 | everything else | (not generated) | payoff-anchored |
 
-8 mirrors Sacrifice `self-banish ↔ banish-trigger` and Self-Discard `enabler ↔ reanimator` (a win-condition combo — the bounce guarantees the ETB re-fire on your terms). 6 mirrors Lore Denial `burn ↔ steal` (a complementary tempo effect plus a lore trickle, not a snowball); with Maleficent's Staff out of Core the 6-tier currently emits nothing.
+8 mirrors Sacrifice `self-banish ↔ banish-trigger` and Self-Discard `enabler ↔ a payoff its discard switches on` (a win-condition combo — the bounce guarantees the ETB re-fire on your terms). 6 mirrors Lore Denial `burn ↔ steal` (a complementary tempo effect plus a lore trickle, not a snowball); with Maleficent's Staff out of Core the 6-tier currently emits nothing.
 
 ---
 

@@ -735,12 +735,25 @@ const SELF_CONTAINED_RECURSION_PATTERN =
 /** Self-recursion that fires when YOU discard the card is fed by hand discard, so it stays. */
 const DISCARD_FED_RECURSION_PATTERN = /\bwhen(?:ever)?\s+you\s+discard\b/i;
 
+/** A sentence break: the whitespace after ".", "!" or "?". */
+const SENTENCE_BREAK = /(?<=[.!?])\s+/;
+
 /** The text without its self-contained recursion sentences (see SELF_CONTAINED_RECURSION_PATTERN). */
 function stripSelfContainedRecursion(text: string): string {
   return text
-    .split(/(?<=[.!?])\s+/)
+    .split(SENTENCE_BREAK)
     .filter((s) => !(SELF_CONTAINED_RECURSION_PATTERN.test(s) && !DISCARD_FED_RECURSION_PATTERN.test(s)))
     .join(' ');
+}
+
+/**
+ * Recursion that fires on your discard ("when you discard this card, you may play it from your
+ * discard"), so a hand discard switches it on.
+ */
+function hasDiscardFedRecursion(text: string): boolean {
+  return text
+    .split(SENTENCE_BREAK)
+    .some((s) => SELF_DISCARD_REANIMATOR_PATTERN.test(s) && DISCARD_FED_RECURSION_PATTERN.test(s));
 }
 /** State payoff, event half: rewards the discard EVENT ("if you discarded a card this turn"). */
 const SELF_DISCARD_EVENT_PATTERN = /discarded\s+a\s+card\s+this\s+turn/i;
@@ -899,6 +912,8 @@ interface SelfDiscardFeedProfile {
   refills: boolean;
   /** Kinds the card's recursion pulls, self-contained recursion stripped; null when it takes any card. */
   recursionKinds: Set<SelfDiscardKind> | null;
+  /** The recursion fires on your discard (see hasDiscardFedRecursion). */
+  recursionOnDiscard: boolean;
   /** The state payoff rewards the discard event ("discarded a card this turn"), not an empty hand. */
   rewardsEvent: boolean;
 }
@@ -914,6 +929,7 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
     outletKinds: selfDiscardOutletKinds(text),
     refills: SELF_DISCARD_REFILL_PATTERN.test(text),
     recursionKinds: selfDiscardRecursionKinds(card, stripSelfContainedRecursion(text)),
+    recursionOnDiscard: hasDiscardFedRecursion(text),
     rewardsEvent: SELF_DISCARD_EVENT_PATTERN.test(text),
   };
   selfDiscardFeedProfiles.set(card, profile);
@@ -921,24 +937,35 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
 }
 
 /**
- * Whether `enabler`'s hand discard can switch on `payoff`'s reanimator or state payoff:
- *  - recursion: the outlet's discard kinds meet the recursion kinds, so a typed outlet ("discard
- *    a song card") feeds song, action and any-card recursion, never character or item recursion;
- *  - state: any discard is a "discarded a card this turn" event, but a refill outlet never
- *    leaves the empty hand a "no cards in hand" payoff needs.
+ * How an outlet's discard reaches a payoff: 'trigger' when the discard itself switches the payoff
+ * on, 'stock' when it only stocks the bin a recursion payoff replays from (banished characters
+ * and played actions stock it too).
+ */
+export type SelfDiscardFeed = 'trigger' | 'stock';
+
+/**
+ * How `enabler`'s hand discard reaches `payoff`'s reanimator or state payoff (null if it can't):
+ *  - recursion: the outlet's discard kinds must meet the recursion kinds, so a typed outlet
+ *    ("discard a song card") feeds song, action and any-card recursion, never character or item
+ *    recursion. It is a trigger only when the recursion fires on the discard ("when you discard
+ *    this card, you may play it from your discard"); otherwise the outlet just stocks the bin;
+ *  - state: a trigger. Any discard is a "discarded a card this turn" event, but a refill outlet
+ *    never leaves the empty hand a "no cards in hand" payoff needs.
  * Reads the payoff's text with self-contained recursion stripped, like getSelfDiscardRoles.
  */
-export function selfDiscardOutletFeeds(
+export function selfDiscardOutletFeed(
   enabler: LorcanaCard,
   payoff: LorcanaCard,
   payoffRoles: SelfDiscardRole[],
-): boolean {
+): SelfDiscardFeed | null {
   const outlet = selfDiscardFeedProfile(enabler);
   const target = selfDiscardFeedProfile(payoff);
+  const feedsState = payoffRoles.includes('state-payoff') && (target.rewardsEvent || !outlet.refills);
+  if (feedsState) return 'trigger';
   const feedsRecursion =
     payoffRoles.includes('reanimator') && selfDiscardKindsMeet(outlet.outletKinds, target.recursionKinds);
-  const feedsState = payoffRoles.includes('state-payoff') && (target.rewardsEvent || !outlet.refills);
-  return feedsRecursion || feedsState;
+  if (!feedsRecursion) return null;
+  return target.recursionOnDiscard ? 'trigger' : 'stock';
 }
 
 // ============================================

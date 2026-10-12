@@ -50,8 +50,9 @@ const rebuyResult = (enabler: string, payoff: string): {score: number; explanati
  * resolve to null and are dropped by `pairFindSynergies`). 5-baseline:
  *   - enabler (self-bounce|flexible) ↔ rebuy-payoff      = 8  win-condition: the bounce re-fires the
  *                                                             ETB (mirrors Sacrifice self-banish↔trigger,
- *                                                             Self-Discard enabler↔reanimator); only when
- *                                                             the enabler's target gate admits the body
+ *                                                             Self-Discard enabler↔discard-fed payoff);
+ *                                                             only when the enabler's target gate admits
+ *                                                             the body
  *   - opponent-side ↔ return-payoff (Maleficent's Staff) = 6  tempo bounce + a lore trickle
  *
  * `card` is the searcher (token {A}); `other` the partner ({B}). The re-buy combo is checked per
