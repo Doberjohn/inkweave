@@ -2881,7 +2881,7 @@ describe('Self-Discard rule (Discard Matters)', () => {
   describe('synergy scoring', () => {
     const allCards = [loot, dumpHand, reanimator, discardedThisTurn, hellbent, unrelated];
 
-    it('enabler ↔ reanimator scores 8 (win-condition combo)', () => {
+    it('enabler ↔ recursion that fires on the discard scores 8 (win-condition combo)', () => {
       const match = selfDiscardRule
         .findSynergies(loot, allCards)
         .find((s) => s.card.id === 'gothel-reanimate');
@@ -2906,12 +2906,12 @@ describe('Self-Discard rule (Discard Matters)', () => {
       expect(match!.score).toBe(5);
     });
 
-    it('fill combos score 7 with the bin-filler as the actor', () => {
+    it('fill combos score 7 from a mill and 6 from a hand discard, with the bin-filler as the actor', () => {
       const pool = [loot, mill, reanimator, discardCount];
       const find = (from: typeof loot, to: string) =>
         selfDiscardRule.findSynergies(from, pool).find((s) => s.card.id === to);
       expect(find(loot, 'pepita-zone')).toMatchObject({
-        score: 7,
+        score: 6,
         explanation: "{A} fills your discard from hand, switching on {B}'s discard-count payoff.",
       });
       expect(find(mill, 'pepita-zone')).toMatchObject({

@@ -24,7 +24,7 @@ Payoffs:
 - **state-payoff** — rewards the discard *event* ("if you discarded a card this turn") or an empty hand (Hellbent).
 - **zone-payoff** — rewards the discard as a countable *zone* ("while you have 10 or more cards in your discard", "a song card in your discard", "if 2 or more cards were put into your discard this turn").
 
-The two filler roles are not interchangeable: a hand discard *is* a discard event, so it switches on every payoff; milling never triggers a "when you discard" payoff, so it feeds only the payoffs that read the pile itself. That distinction is what the score matrix encodes.
+The two filler roles are not interchangeable: a hand discard *is* a discard event, so it switches on every payoff; milling never triggers a "when you discard" payoff, so it feeds only the payoffs that read the pile itself. That distinction is what the score matrix encodes, together with a second one: whether the discard *switches a payoff on* (the discard event, an empty hand, recursion that fires when you discard) or only *stocks the pile* a payoff reads, which banished characters and played actions stock too.
 
 Like Sacrifice, it is an asymmetric-role playstyle: the fillers *create* the fuel that the payoffs *exploit*. A deck of all reanimators has an empty bin; a deck of all loot has nothing to bring back. The combo is the rule. This rule fills the "recursion role" that `makeSearchPattern` in `cardHelpers.ts` deliberately deferred ("from your discard ... Recursion deserves its own role; see Phase 3").
 
@@ -33,7 +33,7 @@ Like Sacrifice, it is an asymmetric-role playstyle: the fillers *create* the fue
 **Enabler (loot)**: Scrooge McDuck - S.H.U.S.H. Agent (Emerald): "When you play this character, draw a card, then choose and discard a card."
 **Reanimator**: Mother Gothel - Evil as Ever (Emerald): "When you discard this card, you may play this character from your discard."
 
-Loot Mother Gothel into the discard → she replays herself for free. The loot digs for what you need *and* stocks the bin; the reanimator cashes it. Same-ink Emerald.
+Loot Mother Gothel into the discard → she replays herself from it (you still pay her cost). The loot digs for what you need *and* stocks the bin; the reanimator cashes it. Same-ink Emerald.
 
 ---
 
@@ -42,7 +42,7 @@ Loot Mother Gothel into the discard → she replays herself for free. The loot d
 ### Architecture
 
 ```typescript
-getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[]  // any subset of ['enabler','reanimator','state-payoff']
+getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[]  // any subset of the five roles
 ```
 
 A card can be multi-role: `Rapunzel & Flynn Rider - Unlikely Pair` loots (enabler) *and* replays discarded characters (reanimator). Detection uses a fast pre-filter (`HAS_SELF_DISCARD_KEYWORD = /discard|no cards in/i`) before the patterns.
@@ -161,24 +161,25 @@ Real cards the `getSelfDiscardRoles` detector tags for each role (names from the
 
 ## Scoring (8/7/6/5 matrix)
 
-Applies the project-wide **5-baseline convention** and mirrors the Sacrifice shape (asymmetric combo at peak, same-axis density at floor), with a `7` for a bin-filler feeding the payoff it fuels and a `6` for the recursion-density case.
+Applies the project-wide **5-baseline convention** and mirrors the Sacrifice shape (asymmetric combo at peak, same-axis density at floor), with a `7` for a filler that stocks the pile a payoff reads and a `6` for complementary pairs (a hand discard nudging a pile count, two recursion engines).
 
 ### Score Table
 
 | Pair Type | Score | Display Tier | Explanation |
 |-----------|-------|-------------|-------------|
-| enabler ↔ payoff (reanimator or state) | **8** | Strong | Win-condition combo: discard a card, then replay it from the bin (reanimator) or flip the "discarded this turn" / empty-hand payoff (state) on demand. Only when the outlet's discard can switch that payoff on (see Feed check) |
-| enabler ↔ zone-payoff | **7** | Strong | Mechanical compounding: every hand discard raises the count the payoff reads |
-| mill ↔ zone-payoff | **7** | Strong | The deck-side filler stocks the pile the payoff counts, several cards at a time |
+| enabler ↔ a payoff its discard switches on | **8** | Strong | Win-condition combo: the discard flips a "discarded this turn" / empty-hand payoff (state) on demand, or fires recursion that replays the discarded card ("when you discard this card, you may play this character from your discard"). Only when the outlet's discard can reach that payoff (see Feed check) |
+| enabler ↔ any other reanimator | **7** | Strong | Mechanical compounding: the outlet stocks the bin the recursion replays from, and picks what lands there |
+| mill ↔ zone-payoff | **7** | Strong | The deck-side filler stocks the pile the payoff counts, several cards at a time and without spending the hand |
 | mill ↔ reanimator | **7** | Strong | Mill buries targets the recursion engine then replays |
+| enabler ↔ zone-payoff | **6** | Moderate | Complementary: each hand discard adds one card to the count the payoff reads, a nudge rather than a compounding |
 | reanimator ↔ reanimator | **6** | Moderate | Two recursion engines mining the same discard pile, complementary but not a single combo |
-| enabler ↔ enabler / mill ↔ state-payoff / reanimator ↔ state / state ↔ state / an outlet that cannot feed the payoff | **5** | Weak/Moderate | Same-axis density: parallel fillers, two payoffs that don't amplify each other, or an outlet whose discard can't switch the payoff on |
+| enabler ↔ enabler / mill ↔ state-payoff / reanimator ↔ state / state ↔ state / an outlet that cannot feed the payoff | **5** | Weak/Moderate | Same-axis density: parallel fillers, two payoffs that don't amplify each other, or an outlet whose discard can't reach the payoff |
 
-A fill combo sits at 7 rather than 8 because it is compounding, not a closed loop: the filler makes the payoff bigger, but the payoff does not cash the specific card that was filled. That is the difference between "discard Mother Gothel, replay Mother Gothel" (8) and "mill 4, your count-payoff gets bigger" (7).
+Only an 8 is a closed loop: the discard itself is what the payoff waits for. That is the difference between "discard Mother Gothel, replay Mother Gothel" (8) and "discard a card, and a recursion engine has one more target" (7). Most recursion pulls whatever sits in the pile, and play stocks the pile on its own: every banished character and every action or song you play ends up there. An outlet adds choice and speed to that engine, not the engine itself.
 
-### Feed check (`selfDiscardOutletFeeds`)
+### Feed check (`selfDiscardOutletFeed`)
 
-The 8 needs more than an outlet and a payoff in the same deck: the outlet's discard has to be able to switch that payoff on. It is checked per direction, so a card that is both an outlet and a payoff can pair either way. A pair that fails falls through to the lower tiers, usually 5.
+The enabler ↔ payoff combo needs more than an outlet and a payoff in the same deck: the outlet's discard has to reach that payoff. `selfDiscardOutletFeed` answers per direction with `trigger` (the discard switches the payoff on: 8), `stock` (it only stocks the bin a recursion payoff replays from: 7) or nothing. When both directions feed, the stronger one sets the score and the explanation's actor, so a card that is both an outlet and a payoff can pair either way. A pair that fails falls through to the lower tiers, usually 5.
 
 **Recursion:** the kinds of card the outlet can discard must meet the kinds the recursion can pull.
 
@@ -191,43 +192,46 @@ The 8 needs more than an outlet and a payoff in the same deck: the outlet's disc
 | Self-reference | the card's own kind | "this card", "it", or a card named like itself ("another character card named Alien", Alien - True Believer) |
 | Named other card | nothing | "an action card named Three Arrows" (Merida - Formidable Archer): no typed outlet is known to discard it |
 
-A generic side always meets. "Action" admits songs too, since a song is an action (Comprehensive Rules §5.4.4.1), while "song" admits only songs. So Max Goof - Karaoke Star feeds song, action and any-card recursion, and scores 5 with character, item and location recursion.
+A generic side always meets. "Action" admits songs too, since a song is an action (Comprehensive Rules §5.4.4.1), while "song" admits only songs. So Max Goof - Karaoke Star feeds song, action and any-card recursion (7 each, since none of it fires on the discard), and scores 5 with character, item and location recursion.
 
-**State:** any discard is a "discarded a card this turn" event, so every outlet feeds an event payoff. An empty-hand payoff ("while you have no cards in your hand") is not fed by an outlet that discards one card and then draws 2 or more ("discard a song card. If you do, draw 2 cards"): its hand is never empty when it resolves. That refill rule is deliberately narrow (Max Goof - Karaoke Star only); general empty-hand scoring is a separate decision.
+**Trigger or stock:** recursion that fires on your discard is a trigger and scores 8: Mother Gothel - Evil as Ever and Look What You've Done ("during your turn, when you discard this card, you may play it from your discard") and Rapunzel & Flynn Rider - Unlikely Pair ("whenever you discard a character card, you may play that character from your discard"). The check reads the recursion sentence itself (`hasDiscardFedRecursion`), so an unrelated "when you discard" elsewhere on a card doesn't count. Every other recursion only has its bin stocked by the outlet and scores 7.
+
+**State:** always a trigger. Any discard is a "discarded a card this turn" event, so every outlet feeds an event payoff. An empty-hand payoff ("while you have no cards in your hand") is not fed by an outlet that discards one card and then draws 2 or more ("discard a song card. If you do, draw 2 cards"): its hand is never empty when it resolves. That refill rule is deliberately narrow (Max Goof - Karaoke Star only); general empty-hand scoring is a separate decision.
 
 ### Live distribution
 
-Generated from the live engine over the current Core pool (sets 9-13 plus the Set 14 preview, measured with the #628 fixes): **123 tagged cards** (42 enabler, 48 reanimator, 6 state-payoff, 29 zone-payoff, 8 mill; roles overlap on multi-role cards such as Lyle Tiberius Rourke, who mills *and* reanimates). After the engine's ink-compatibility filter (`canShareDeck`), **7,357 unique pairs**:
+Generated from the live engine over the current Core pool (sets 9-13 plus the Set 14 preview, measured with the trigger-or-stock split): **127 tagged cards** (44 enabler, 50 reanimator, 6 state-payoff, 29 zone-payoff, 8 mill; roles overlap on multi-role cards such as Lyle Tiberius Rourke, who mills *and* reanimates). After the engine's ink-compatibility filter (`canShareDeck`), **7,851 unique pairs**:
 
 | Pair shape | Count | Score | Share |
 |------------|-------|-------|-------|
-| enabler ↔ payoff (reanimator or state) | 2,144 | 8 | 29.1% |
-| enabler ↔ zone-payoff | 1,109 | 7 | 15.1% |
-| mill ↔ reanimator | 346 | 7 | 4.7% |
-| mill ↔ zone-payoff | 223 | 7 | 3.0% |
-| reanimator ↔ reanimator | 951 | 6 | 12.9% |
-| other same-axis | 2,584 | 5 | 35.1% |
+| enabler ↔ a payoff its discard switches on | 377 | 8 | 4.8% |
+| enabler ↔ any other reanimator | 1,958 | 7 | 24.9% |
+| mill ↔ reanimator | 364 | 7 | 4.6% |
+| mill ↔ zone-payoff | 227 | 7 | 2.9% |
+| enabler ↔ zone-payoff | 1,157 | 6 | 14.7% |
+| reanimator ↔ reanimator | 1,041 | 6 | 13.3% |
+| other same-axis | 2,727 | 5 | 34.7% |
 
-The score-8 share runs high, like Sacrifice's, and for the same structural reason: recursion is one of the deepest payoff pools in the game (48 reanimators), so a handful of enablers pair against a large payoff side. The combo *is* the archetype.
+The score-8 share is small on purpose. Recursion is one of the deepest payoff pools in the game (50 reanimators), but only three of them fire on the discard, and only six state payoffs need one; every other reanimator pairs with the outlets at 7.
 
-Note on ordering: the 7 guard runs before the 6, so a card that both mills and reanimates (Lyle Tiberius Rourke) scores 7 against another reanimator rather than 6. That is deliberate: he does not merely share the bin with it, he fills the bin for it.
+Note on ordering: the 7 guard runs before the 6, so a card that both mills and reanimates (Lyle Tiberius Rourke) scores 7 against another reanimator rather than 6. That is deliberate: he does not merely share the bin with it, he fills the bin for it. For the same reason the fill rows run best score first: an outlet that also counts the pile (Max Goof - Karaoke Star) against a mill that counts it too (Though I Have to Say Goodbye) reads as the mill at 7, not as the outlet at 6.
 
 ### Token-swapped explanation
 
-The combo string uses the project `{A}`/`{B}` convention so the **enabler** always reads as the actor, regardless of which card the user selected:
+The combo string uses the project `{A}`/`{B}` convention so the **enabler** always reads as the actor, regardless of which card the user selected. When both cards have an outlet, the actor is the one whose discard reaches the other's payoff (a plain loot card feeding Rapunzel & Flynn Rider - Unlikely Pair reads as the actor from either side):
 
 ```typescript
-const enablerToken = cardEnabler ? '{A}' : '{B}';
-const payoffToken = cardEnabler ? '{B}' : '{A}';
+const enablerToken = combo.enablerIsCard ? '{A}' : '{B}';
+const payoffToken = combo.enablerIsCard ? '{B}' : '{A}';
 // reanimator payoff: `${enablerToken} discards your own cards so ${payoffToken} can replay them from the discard.`
 // state payoff:      `${enablerToken}'s self-discard switches on ${payoffToken}'s discard payoff.`
 ```
 
-The fill combos follow the same convention, with the **filler** as the actor:
+The 7 and 8 combos share these two strings; the score tells them apart. The fill combos follow the same convention, with the **filler** as the actor:
 
-- enabler ↔ zone-payoff: `"{A} fills your discard from hand, switching on {B}'s discard-count payoff."`
-- mill ↔ zone-payoff: `"{A} mills your deck into the discard, feeding {B}'s discard-count payoff."`
-- mill ↔ reanimator: `"{A} mills cards into your discard for {B} to replay."`
+- mill ↔ zone-payoff (7): `"{A} mills your deck into the discard, feeding {B}'s discard-count payoff."`
+- mill ↔ reanimator (7): `"{A} mills cards into your discard for {B} to replay."`
+- enabler ↔ zone-payoff (6): `"{A} fills your discard from hand, switching on {B}'s discard-count payoff."`
 
 Same-axis pairs use distinct sentences:
 
@@ -239,8 +243,8 @@ Same-axis pairs use distinct sentences:
 
 ## Coverage
 
-- **42 enablers** (loot / discard-hand / discard-cost), every ink.
-- **48 reanimators** ("from your discard", self-contained recursion excluded), the deepest side.
+- **44 enablers** (loot / discard-hand / discard-cost), every ink.
+- **50 reanimators** ("from your discard", self-contained recursion excluded), the deepest side.
 - **29 zone-payoffs** (count / card-type / put-this-turn), added in the Set 14 pass.
 - **8 mill cards**, the deck-side filler.
 - **6 state-payoffs** (discarded-this-turn + Hellbent), the thinnest side.
@@ -248,10 +252,10 @@ Same-axis pairs use distinct sentences:
 ```chart
 {
   "type": "doughnut",
-  "title": "Role Composition (123 cards; multi-role overlap)",
+  "title": "Role Composition (127 cards; multi-role overlap)",
   "data": {
-    "labels": ["Reanimator (48)", "Enabler (42)", "Zone-payoff (29)", "Mill (8)", "State-payoff (6)"],
-    "values": [48, 42, 29, 8, 6]
+    "labels": ["Reanimator (50)", "Enabler (44)", "Zone-payoff (29)", "Mill (8)", "State-payoff (6)"],
+    "values": [50, 44, 29, 8, 6]
   }
 }
 ```
@@ -281,13 +285,13 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 
 | Test | What it verifies |
 |------|------------------|
-| enabler ↔ reanimator → 8 | win-condition combo, enabler-as-actor explanation |
+| enabler ↔ discard-fed recursion → 8 | win-condition combo (loot into Mother Gothel), enabler-as-actor explanation |
 | enabler ↔ state-payoff → 8 | loot flips the discard-state payoff |
 | enabler ↔ enabler → 5 | parallel outlets |
-| fill combos → 7 | all three shapes, with the filler as the actor and the token-swap when the payoff is the searcher |
+| fill combos → 7 / 6 | mill ↔ zone-payoff and mill ↔ reanimator 7, loot ↔ zone-payoff 6, with the filler as the actor and the token-swap when the payoff is the searcher |
 | mill ↔ state-payoff → 5 | milling is not a discard event, so it stays at the baseline |
 
-### Self-contained recursion and feed check (9 tests, `selfDiscard.test.ts`)
+### Self-contained recursion and feed check (11 tests, `selfDiscard.test.ts`)
 
 | Test | What it verifies |
 |------|------------------|
@@ -295,10 +299,12 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | other roles kept | Tiana - Party Hostess stays `['enabler']`; Torn Scrap stays `['zone-payoff']` |
 | discard-fed recursion kept | Mother Gothel - Evil as Ever and Look What You've Done keep `reanimator` |
 | enter-play recursion kept | "When you play this character, return a card from your discard" stays a reanimator |
-| song-only outlet → 8 | Max Goof - Karaoke Star with song (Max Goof - Rebellious Teen), action (Buzz Lightyear - Jungle Ranger) and any-card (Jiminy Cricket - Ghost of Christmas Past) recursion |
+| trigger or stock | Kronk with Mother Gothel - Evil as Ever (from both searchers), Look What You've Done and Rapunzel & Flynn Rider - Unlikely Pair → 8; with Salvage Operation (from both searchers) → 7 |
+| the outlet that feeds is the actor | Rapunzel & Flynn Rider as the searcher with Kronk reads Kronk (`{B}`) as the actor |
+| song-only outlet → 7 | Max Goof - Karaoke Star with song (Max Goof - Rebellious Teen), action (Buzz Lightyear - Jungle Ranger) and any-card (Jiminy Cricket - Ghost of Christmas Past) recursion |
 | song-only outlet → 5 | with Circle of Life (from both searchers), Salvage Operation, Look What You've Done and Merida - Formidable Archer |
-| state payoffs | Max Goof feeds Maximus (8) but not Megavolt (5); You Broke My Smolder and Kronk still feed Megavolt (8) |
-| character-or-location outlet → 8 | Sprout - Experiment 509 with Get to Safety!, Circle of Life, Alien - True Believer and Megavolt |
+| state payoffs | Max Goof feeds Maximus (8) but not Megavolt (5); You Broke My Smolder, Kronk and Sprout - Experiment 509 still feed Megavolt (8) |
+| character-or-location outlet → 7 | Sprout - Experiment 509 with Get to Safety!, Circle of Life and Alien - True Believer |
 | character-or-location outlet → 5 | Sprout with Salvage Operation and Max Goof - Rebellious Teen |
 
 ---
@@ -311,9 +317,13 @@ The Discard rule is opponent-facing (make *them* discard, reward *your* hand-siz
 
 ### Why mill is a bin-filler, not an enabler
 
-Mill fills the bin from the deck, not the hand. It feeds anything that *reads* or *pulls from* the pile (zone payoffs, reanimators), but it does **not** trigger "when you discard" payoffs (Mother Gothel, Maximus), which need an actual hand discard. So it carries its own role rather than joining `enabler`: it scores 7 against zone payoffs and reanimators, and stays at the 5 baseline against state payoffs.
+Mill fills the bin from the deck, not the hand. It feeds anything that *reads* or *pulls from* the pile (zone payoffs, reanimators), but it does **not** trigger "when you discard" payoffs (Mother Gothel, Maximus), which need an actual hand discard. So it carries its own role rather than joining `enabler`: it scores 7 against zone payoffs and reanimators, and stays at the 5 baseline against state payoffs. Against a zone payoff it outscores a hand discard (7 to 6), because it adds several cards at a time without spending the hand.
 
 It was excluded outright until the Set 14 pass, on the grounds that the pool was thin and mill had no payoff to point at. The zone-payoff role is that payoff: once the engine could see "10 or more cards in your discard", a mechanic whose entire job is raising that number could no longer be a non-participant.
+
+### Why an outlet scores 8 only with a payoff its discard switches on
+
+Every enabler ↔ reanimator pair used to score 8 and every enabler ↔ zone-payoff pair 7. Community votes rated both groups well below those scores, further below than voters sit from the engine overall, while the few votes on the pairs that keep 8 sat in line with the rest of the engine. The mechanics agree. An 8 is a closed loop: Maximus - Relentless Stallion needs a discard this turn, and Mother Gothel - Evil as Ever replays herself because she was discarded, so the outlet is what switches them on. Generic recursion ("return a character card from your discard to your hand") runs on a pile that banished characters and played actions fill anyway; the outlet adds choice and speed, which is compounding (7). A count payoff ("10 or more cards in your discard") gains one card per hand discard, a nudge rather than a compounding (6), while a mill adds several cards at a time and keeps its 7.
 
 ### Why reanimator ↔ reanimator sits at 6, not 5
 

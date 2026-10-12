@@ -36,6 +36,7 @@ const sulleyAndBoo = createCard({
 
 // Recursion that fires when you discard the card: hand discard really feeds it.
 const gothel = createCard({
+  id: 'mother-gothel-evil-as-ever',
   fullName: 'Mother Gothel - Evil as Ever',
   text: "MUMMY'S BACK During your turn, when you\ndiscard this card, you may play this character\nfrom your discard. (You pay all costs.)",
 });
@@ -177,17 +178,42 @@ const megavolt = createCard({
   ink: 'Steel',
   text: 'FORCE FIELD While you have no cards in your\nhand, this character gains Resist +2. (Damage\ndealt to them is reduced by 2.)',
 });
+const rapunzelAndFlynn = createCard({
+  id: 'rapunzel-flynn-unlikely-pair',
+  name: 'Rapunzel & Flynn Rider',
+  fullName: 'Rapunzel & Flynn Rider - Unlikely Pair',
+  ink: 'Emerald',
+  text: 'Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one\nof your characters named Rapunzel or Flynn Rider.)\nCLEVER SWAP Whenever this character quests, you may\ndraw a card, then choose and discard a card.\nFRESH START During your turn, whenever you discard\na character card, you may play that character from your\ndiscard. (You pay all costs.)',
+});
 
 describe('Self-Discard scoring: an outlet feeds only the payoffs its discard can switch on', () => {
   const rule = getRuleById('self-discard')!;
+  /** The pair's match with `card` as the searcher. */
+  const match = (card: LorcanaCard, partner: LorcanaCard) =>
+    rule.findSynergies(card, [card, partner]).find((s) => s.card.id === partner.id);
   /** The pair's score with `card` as the searcher. */
-  const score = (card: LorcanaCard, partner: LorcanaCard) =>
-    rule.findSynergies(card, [card, partner]).find((s) => s.card.id === partner.id)?.score;
+  const score = (card: LorcanaCard, partner: LorcanaCard) => match(card, partner)?.score;
 
-  it('scores a song-only outlet 8 with song, action and any-card recursion', () => {
-    expect(score(maxKaraoke, maxTeen)).toBe(8);
-    expect(score(maxKaraoke, buzz)).toBe(8);
-    expect(score(maxKaraoke, jiminy)).toBe(8);
+  it('scores 8 when the recursion fires on the discard, 7 when the outlet only stocks the bin', () => {
+    expect(score(kronk, gothel)).toBe(8);
+    expect(score(gothel, kronk)).toBe(8);
+    expect(score(kronk, lookWhatYouveDone)).toBe(8);
+    expect(score(kronk, rapunzelAndFlynn)).toBe(8);
+    expect(score(kronk, salvageOperation)).toBe(7);
+    expect(score(salvageOperation, kronk)).toBe(7);
+  });
+
+  it('reads the outlet that feeds as the actor when both cards have one', () => {
+    expect(match(rapunzelAndFlynn, kronk)).toMatchObject({
+      score: 8,
+      explanation: '{B} discards your own cards so {A} can replay them from the discard.',
+    });
+  });
+
+  it('scores a song-only outlet 7 with song, action and any-card recursion', () => {
+    expect(score(maxKaraoke, maxTeen)).toBe(7);
+    expect(score(maxKaraoke, buzz)).toBe(7);
+    expect(score(maxKaraoke, jiminy)).toBe(7);
   });
 
   it('scores a song-only outlet 5 with recursion its discard cannot supply', () => {
@@ -203,13 +229,13 @@ describe('Self-Discard scoring: an outlet feeds only the payoffs its discard can
     expect(score(maxKaraoke, megavolt)).toBe(5);
     expect(score(youBrokeMySmolder, megavolt)).toBe(8);
     expect(score(kronk, megavolt)).toBe(8);
+    expect(score(sprout, megavolt)).toBe(8);
   });
 
-  it('scores a character-or-location outlet 8 with character, location and self-named recursion', () => {
-    expect(score(sprout, getToSafety)).toBe(8);
-    expect(score(sprout, circleOfLife)).toBe(8);
-    expect(score(sprout, alien)).toBe(8);
-    expect(score(sprout, megavolt)).toBe(8);
+  it('scores a character-or-location outlet 7 with character, location and self-named recursion', () => {
+    expect(score(sprout, getToSafety)).toBe(7);
+    expect(score(sprout, circleOfLife)).toBe(7);
+    expect(score(sprout, alien)).toBe(7);
   });
 
   it('scores a character-or-location outlet 5 with item and song recursion', () => {

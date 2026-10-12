@@ -12,12 +12,13 @@ import {
   isRepeatingTrigger,
   costReductionTargetsOverlap,
   isExertConsumePayoff,
-  selfDiscardOutletFeeds,
+  selfDiscardOutletFeed,
   type DiscardRole,
   type LoreDenialRole,
   type RampRole,
   type SacrificeRole,
   type SelfDiscardRole,
+  type SelfDiscardFeed,
   type ToyRole,
   type DwarfsRole,
   type FloodbornRole,
@@ -260,31 +261,53 @@ export function scoreSacrificePair(
 const isSelfDiscardPayoff = (roles: SelfDiscardRole[]): boolean =>
   roles.includes('reanimator') || roles.includes('state-payoff');
 
+/** A pair's enabler↔payoff combo: the outlet's side, and how its discard reaches the payoff. */
+interface SelfDiscardCombo {
+  /** The searcher (`card`, token {A}) holds the outlet. */
+  enablerIsCard: boolean;
+  feed: SelfDiscardFeed;
+}
+
 /** Derived flags for a self-discard pair — keeps the scorer a flat guard sequence. */
 interface SelfDiscardPairCtx {
-  cardEnabler: boolean;
-  otherEnabler: boolean;
-  /** The enabler↔payoff combo fired: one side is an enabler, the other a payoff. */
-  isCombo: boolean;
+  /** The enabler↔payoff combo, or null when neither side's outlet can feed the other's payoff. */
+  combo: SelfDiscardCombo | null;
   bothReanimator: boolean;
   bothEnabler: boolean;
 }
 
 /**
- * One direction of the 8 combo: `enabler` is a hand-discard outlet, `payoff` a reanimator or
- * state payoff, and the outlet's discard can actually switch that payoff on.
+ * One direction of the combo: how `enabler`'s hand discard reaches `payoff`'s reanimator or state
+ * payoff, or null when `enabler` has no outlet, `payoff` has no such payoff, or the discard can't
+ * switch it on.
  */
-function feedsSelfDiscardPayoff(
+function selfDiscardFeedInto(
   enabler: LorcanaCard,
   enablerRoles: SelfDiscardRole[],
   payoff: LorcanaCard,
   payoffRoles: SelfDiscardRole[],
-): boolean {
-  return (
-    enablerRoles.includes('enabler') &&
-    isSelfDiscardPayoff(payoffRoles) &&
-    selfDiscardOutletFeeds(enabler, payoff, payoffRoles)
-  );
+): SelfDiscardFeed | null {
+  if (!enablerRoles.includes('enabler') || !isSelfDiscardPayoff(payoffRoles)) return null;
+  return selfDiscardOutletFeed(enabler, payoff, payoffRoles);
+}
+
+/**
+ * The pair's combo, checked in both directions: a trigger beats a stock feed, and on a tie the
+ * searcher holds the outlet. Following the direction that feeds keeps the actor right when both
+ * cards have an outlet but only one has a payoff the other can feed.
+ */
+function findSelfDiscardCombo(
+  card: LorcanaCard,
+  cardRoles: SelfDiscardRole[],
+  other: LorcanaCard,
+  otherRoles: SelfDiscardRole[],
+): SelfDiscardCombo | null {
+  const fromCard = selfDiscardFeedInto(card, cardRoles, other, otherRoles);
+  const fromOther = selfDiscardFeedInto(other, otherRoles, card, cardRoles);
+  // The searcher's outlet leads unless only the partner's discard is a trigger.
+  const cardLeads = fromCard === 'trigger' || fromOther !== 'trigger';
+  if (fromCard && cardLeads) return {enablerIsCard: true, feed: fromCard};
+  return fromOther ? {enablerIsCard: false, feed: fromOther} : null;
 }
 
 function buildSelfDiscardPairCtx(
@@ -293,68 +316,70 @@ function buildSelfDiscardPairCtx(
   other: LorcanaCard,
   otherRoles: SelfDiscardRole[],
 ): SelfDiscardPairCtx {
-  const cardEnabler = cardRoles.includes('enabler');
-  const otherEnabler = otherRoles.includes('enabler');
   return {
-    cardEnabler,
-    otherEnabler,
-    isCombo:
-      feedsSelfDiscardPayoff(card, cardRoles, other, otherRoles) ||
-      feedsSelfDiscardPayoff(other, otherRoles, card, cardRoles),
+    combo: findSelfDiscardCombo(card, cardRoles, other, otherRoles),
     bothReanimator: cardRoles.includes('reanimator') && otherRoles.includes('reanimator'),
-    bothEnabler: cardEnabler && otherEnabler,
+    bothEnabler: cardRoles.includes('enabler') && otherRoles.includes('enabler'),
   };
 }
 
 /**
- * Build the 8-score self-discard combo result: an enabler on one side, a payoff on the
- * other. Token-swap keeps the enabler reading as {A} when the searcher is the enabler; the
- * explanation branches on whether the payoff side is a reanimator or a discard-state payoff.
+ * Build the self-discard combo result: 8 when the outlet's discard switches the payoff on, 7 when
+ * it only stocks the bin a recursion payoff replays from. Token-swap keeps the outlet reading as
+ * the actor; the explanation branches on whether the payoff side is a reanimator or a
+ * discard-state payoff.
  */
 function scoreSelfDiscardCombo(
-  ctx: SelfDiscardPairCtx,
+  combo: SelfDiscardCombo,
   cardRoles: SelfDiscardRole[],
   otherRoles: SelfDiscardRole[],
 ): {score: number; explanation: string} {
-  const enablerToken = ctx.cardEnabler ? '{A}' : '{B}';
-  const payoffToken = ctx.cardEnabler ? '{B}' : '{A}';
-  const payoffRoles = ctx.cardEnabler ? otherRoles : cardRoles;
+  const enablerToken = combo.enablerIsCard ? '{A}' : '{B}';
+  const payoffToken = combo.enablerIsCard ? '{B}' : '{A}';
+  const payoffRoles = combo.enablerIsCard ? otherRoles : cardRoles;
   return {
-    score: 8,
+    score: combo.feed === 'trigger' ? 8 : 7,
     explanation: payoffRoles.includes('reanimator')
       ? `${enablerToken} discards your own cards so ${payoffToken} can replay them from the discard.`
       : `${enablerToken}'s self-discard switches on ${payoffToken}'s discard payoff.`,
   };
 }
 
-/** The bin-filling combos: a filler role on one side, the payoff it feeds on the other. */
+/**
+ * The bin-filling combos, best score first: a filler role on one side, the payoff it feeds on
+ * the other.
+ */
 const SELF_DISCARD_FILL_COMBOS: ReadonlyArray<{
   filler: SelfDiscardRole;
   payoff: SelfDiscardRole;
+  score: number;
   explain: (filler: string, payoff: string) => string;
 }> = [
   {
-    filler: 'enabler',
-    payoff: 'zone-payoff',
-    explain: (f, p) => `${f} fills your discard from hand, switching on ${p}'s discard-count payoff.`,
-  },
-  {
     filler: 'mill',
     payoff: 'zone-payoff',
+    score: 7,
     explain: (f, p) => `${f} mills your deck into the discard, feeding ${p}'s discard-count payoff.`,
   },
   {
     filler: 'mill',
     payoff: 'reanimator',
+    score: 7,
     explain: (f, p) => `${f} mills cards into your discard for ${p} to replay.`,
+  },
+  {
+    filler: 'enabler',
+    payoff: 'zone-payoff',
+    score: 6,
+    explain: (f, p) => `${f} fills your discard from hand, switching on ${p}'s discard-count payoff.`,
   },
 ];
 
 /**
- * The 7-score fill combo, or null: a bin-filler (hand-discard enabler or mill) on one side and
+ * The fill combo (7 or 6), or null: a bin-filler (mill or hand-discard enabler) on one side and
  * the discard-count / recursion payoff it feeds on the other. Token-swap keeps the filler
  * reading as the actor regardless of which card is the searcher. The first matching row wins,
- * so a card that both loots and mills reads as the hand-discard outlet.
+ * and the rows run best score first, so a card that both loots and mills reads as the mill.
  */
 function scoreSelfDiscardFillCombo(
   cardRoles: SelfDiscardRole[],
@@ -365,20 +390,25 @@ function scoreSelfDiscardFillCombo(
     const otherFills = otherRoles.includes(combo.filler) && cardRoles.includes(combo.payoff);
     if (!cardFills && !otherFills) continue;
     const [filler, payoff] = cardFills ? ['{A}', '{B}'] : ['{B}', '{A}'];
-    return {score: 7, explanation: combo.explain(filler, payoff)};
+    return {score: combo.score, explanation: combo.explain(filler, payoff)};
   }
   return null;
 }
 
 /**
  * Score a self-discard pair (5-baseline convention, mirrors the Sacrifice shape):
- *   - enabler ↔ payoff (reanimator or state) = 8  (win-condition: discard, then cash it; only
- *                                                 when the outlet's discard can switch it on)
- *   - bin-filler ↔ zone payoff, mill ↔ reanimator = 7  (mechanical compounding: the filler feeds
- *                                                 a discard-count payoff or a recursion engine)
+ *   - enabler ↔ payoff it switches on        = 8  (win-condition: a state payoff, or recursion
+ *                                                 that fires on the discard itself)
+ *   - enabler ↔ any other reanimator         = 7  (compounding: the outlet stocks the bin the
+ *                                                 recursion replays from, which play fills too)
+ *   - mill ↔ zone payoff, mill ↔ reanimator  = 7  (compounding: mill stocks the pile several
+ *                                                 cards at a time without spending the hand)
+ *   - enabler ↔ zone payoff                  = 6  (complementary: each discard adds one card
+ *                                                 to the count)
  *   - reanimator ↔ reanimator                = 6  (two recursion engines share one bin)
  *   - all other same-axis pairs              = 5  (parallel density; includes mill ↔ state,
  *                                                 since milling is not a discard event)
+ * An outlet scores with a payoff only when its discard can reach it (selfDiscardOutletFeed).
  *
  * `card` is the searcher (token {A}); `other` is the partner (token {B}). The token-swap keeps
  * the enabler side reading as the actor regardless of which card is the searcher.
@@ -391,12 +421,12 @@ export function scoreSelfDiscardPair(
 ): {score: number; explanation: string} {
   const ctx = buildSelfDiscardPairCtx(card, cardRoles, other, otherRoles);
 
-  // 8 — win-condition combo: an enabler on one side, a payoff (reanimator or state) on the other.
-  if (ctx.isCombo) {
-    return scoreSelfDiscardCombo(ctx, cardRoles, otherRoles);
+  // 8 or 7 — an enabler on one side, a payoff (reanimator or state) it can feed on the other.
+  if (ctx.combo) {
+    return scoreSelfDiscardCombo(ctx.combo, cardRoles, otherRoles);
   }
 
-  // 7 — a bin-filler feeding a discard-count payoff, or mill feeding a recursion engine.
+  // 7 or 6 — a bin-filler feeding a discard-count payoff, or mill feeding a recursion engine.
   const fill = scoreSelfDiscardFillCombo(cardRoles, otherRoles);
   if (fill) return fill;
 
