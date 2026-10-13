@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "month": "2026-09",
+  "title": "September 2026",
+  "summary": "Set 14 reveals, Epic, Enchanted and Iconic printings, a new Ink Drops playstyle and a faster homepage.",
+  "sections": {
+    "new": [
+      {
+        "title": "Set 14 reveals are live",
+        "body": "The Reveals page is back for Set 14, Hyperia City. By September 30 it held 181 of the set's 204 main cards: every one officially revealed so far. The set's prerelease is on October 16 and its release on October 23.",
+        "highlight": true,
+        "prs": [565, 572, 577, 590, 604, 612, 665, 678]
+      },
+      {
+        "title": "Epic, Enchanted and Iconic printings",
+        "body": "Cards with an alternate printing now have a printing switcher and a swipeable art strip, on the card page and in the card window. Sets 9 to 13 gained 190 printings, and Set 14 its first two Iconics.",
+        "highlight": true,
+        "prs": [629, 655]
+      },
+      {
+        "title": "Alt arts on the Reveals page",
+        "body": "Each ink's board now has a row for its Epic, Enchanted and Iconic printings, and clicking a revealed one opens the card on that printing. The first five Set 14 Enchanted printings are in.",
+        "prs": [674]
+      },
+      {
+        "title": "See translation",
+        "body": "Set 14 cards whose only scan so far is in another language can show their English name and rules text over the art, marked as an unofficial translation. 18 cards had it at the end of September.",
+        "prs": [623]
+      }
+    ],
+    "improved": [
+      {
+        "title": "A faster homepage",
+        "body": "The homepage's main script is about half the size it was, featured cards appear without waiting for the full card database, and the logo paints straight away without shifting the layout. Repeat visits reuse cached files, and text no longer jumps when the web font arrives.",
+        "highlight": true,
+        "prs": [630, 650, 657, 666, 677, 679]
+      },
+      {
+        "title": "Reduced motion",
+        "body": "The card image fade-in now switches off when your device asks for reduced motion.",
+        "prs": [650]
+      },
+      {
+        "title": "Easier-to-read card text",
+        "body": "Ability names are now bold, with a little more space before the effect.",
+        "prs": [622, 626]
+      },
+      {
+        "title": "Search box",
+        "body": "The homepage search's focus ring now matches the header search, in the brand gold.",
+        "prs": [617]
+      }
+    ],
+    "fixed": [
+      {
+        "title": "Only official reveals",
+        "body": "An unofficial leaked card was taken down the day it appeared, and new reveals are now checked against the official reveal list before they're published. The card returned on September 30, once it was officially revealed.",
+        "prs": [573, 575, 678]
+      },
+      {
+        "title": "Sharing the Reveals page",
+        "body": "The Reveals page now has its own title in the browser tab, and links shared in Discord, Slack, iMessage or Twitter preview as the Reveals page instead of the homepage.",
+        "prs": [567, 570]
+      },
+      {
+        "title": "Card images",
+        "body": "Six cards whose art can't be downloaded now show a placeholder instead of a broken image, and Woody - Jungle Guide's missing image was added.",
+        "prs": [568]
+      },
+      {
+        "title": "Mobile card pages",
+        "body": "Card pages with many synergy groups no longer scroll sideways on phones.",
+        "prs": [636]
+      },
+      {
+        "title": "Card search",
+        "body": "Search now finds names typed with a curly apostrophe, the way iPhones type it, so bruno’s finds Bruno's Return.",
+        "prs": [616]
+      },
+      {
+        "title": "Mobile search focus",
+        "body": "Closing search on a phone now returns keyboard focus to the Search tab.",
+        "prs": [620]
+      },
+      {
+        "title": "Stuck old versions",
+        "body": "Devices still running an old copy of the site from www.inkweave.ink now clear it and move to inkweave.ink.",
+        "prs": [637]
+      },
+      {
+        "title": "Printing switcher fixes",
+        "body": "On a phone, closing a card page opened through a redirected comparison link now goes to Browse instead of leaving the site, and switching a comparison's Engine and Community tabs no longer scrolls the page.",
+        "prs": [663]
+      },
+      {
+        "title": "Reveals page on phones",
+        "body": "The ink board's header glow now spans the whole panel.",
+        "prs": [661]
+      },
+      {
+        "title": "Card text",
+        "body": "Kit Cloudkicker - Sure Shot now shows the ink symbol in its rules text.",
+        "prs": [633]
+      },
+      {
+        "title": "Fairer, more private voting",
+        "body": "Individual votes are no longer publicly readable, the one-vote-per-pair rule can't be sidestepped, and voters on IPv6 connections are no longer counted as one person.",
+        "link": {"label": "Vote on synergies", "to": "/vote"},
+        "prs": [595]
+      },
+      {
+        "title": "Privacy",
+        "body": "The site stopped serving internal vote and traffic analytics files.",
+        "prs": [592]
+      }
+    ],
+    "engine": [
+      {
+        "title": "New playstyle: Ink Drops",
+        "body": "Set 14's new mechanic gets its own playstyle, pairing cards that create ink drops with cards that spend, hold or convert them. Baloo - Delivery Pilot, which can't quest or challenge unless you gained an ink drop that turn, finds its partners too.",
+        "highlight": true,
+        "link": {"label": "See the Ink Drops playstyle", "to": "/playstyles/ink-drops"},
+        "prs": [632, 678]
+      },
+      {
+        "title": "Shift paid with ink drops",
+        "body": "Baymax - Amped Up's Shift is now recognized and scored, and Named Companions no longer reads a Shift reminder as a companion.",
+        "prs": [585]
+      },
+      {
+        "title": "Set 14 audit corrections",
+        "body": "Wrong scores were fixed across Self-Discard, Items, Super, Location Control and Bounce, and Honey Lemon - Endlessly Curious regained its Ramp synergies.",
+        "prs": [648]
+      },
+      {
+        "title": "Bounce, Singer and Self-Discard",
+        "body": "Bounce pairs now respect targeting limits such as \"cost 2 or less\". Characters that grant themselves Singer now find their songs, and Self-Discard understands \"cards in your discard\" payoffs and mill.",
+        "prs": [565]
+      },
+      {
+        "title": "Named Companions",
+        "body": "Four card names are now read correctly, so Buzz's Arm pairs with the Buzz Lightyear cards and Focused Search with Kevin.",
+        "prs": [589]
+      },
+      {
+        "title": "Card text the engine can read",
+        "body": "Curly apostrophes no longer hide synergies, and new reveals are written with the game's symbols before they're published, so they don't lose mechanics to spelled-out words.",
+        "prs": [619, 649, 669]
+      }
+    ]
+  },
+  "behindTheScenes": "Plus 33 behind-the-scenes changes: dependency updates, deploy and tooling fixes, tests and docs."
+}

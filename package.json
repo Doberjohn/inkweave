@@ -45,6 +45,7 @@
       "path": [
         "apps/web/dist/assets/*.js",
         "!apps/web/dist/assets/RevealsPage-*.js",
+        "!apps/web/dist/assets/ReleaseNotesPage-*.js",
         "!apps/web/dist/assets/supabaseClient-*.js"
       ],
       "limit": "430 kB",
@@ -68,6 +69,12 @@
         "apps/web/dist/assets/RevealsPage-*.js"
       ],
       "limit": "60 kB",
+      "gzip": true
+    },
+    {
+      "name": "Release notes page",
+      "path": "apps/web/dist/assets/ReleaseNotesPage-*.js",
+      "limit": "30 kB",
       "gzip": true
     },
     {

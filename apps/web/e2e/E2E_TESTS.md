@@ -2,11 +2,11 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-151 tests across 21 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+155 tests across 22 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts` and the `/reveals` check in `seo.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
-**Warm-up before the first test (#664):** `e2e/global-setup.ts` opens the 7 pages `accessibility.spec.ts` visits, up to 3 at a time (never more than the run's workers), on the run's fresh Vite, and waits until no module request has been in flight for 1 s. So the app shell every page shares and those pages compile before any test (every module on its first request, every TSX file through the React Compiler's Babel pass), not inside the first wave's 30 s, and the run log shows `E2E warm-up: 7 routes in N s`. A page that fails to load, or takes over 180 s, stops the run with an `E2E warm-up:` error naming it. What stays cold still compiles on first use, inside a test: the card modal (loaded on the first interaction), the mobile-only search sheet, and pages the warm-up doesn't open (`/compare`, `/vote`, `/reveals`, `/admin/analytics`). The mobile projects skip `accessibility.spec.ts`, so their first tests start on such pages, with only the shell warm. Skipped under `PWDEBUG`, whose Inspector would otherwise pause on the warm-up's own browser.
+**Warm-up before the first test (#664):** `e2e/global-setup.ts` opens the 7 pages `accessibility.spec.ts` visits, up to 3 at a time (never more than the run's workers), on the run's fresh Vite, and waits until no module request has been in flight for 1 s. So the app shell every page shares and those pages compile before any test (every module on its first request, every TSX file through the React Compiler's Babel pass), not inside the first wave's 30 s, and the run log shows `E2E warm-up: 7 routes in N s`. A page that fails to load, or takes over 180 s, stops the run with an `E2E warm-up:` error naming it. What stays cold still compiles on first use, inside a test: the card modal (loaded on the first interaction), the mobile-only search sheet, and pages the warm-up doesn't open (`/compare`, `/vote`, `/reveals`, `/about`, `/release-notes`, `/admin/analytics`). The mobile projects skip `accessibility.spec.ts`, so their first tests start on such pages, with only the shell warm. Skipped under `PWDEBUG`, whose Inspector would otherwise pause on the warm-up's own browser.
 
 **Global console-error guard:** the shared `page` fixture (`e2e/fixtures/test-fixtures.ts`) fails any test that logs a `console.error` or throws an uncaught exception, except messages matching the documented `BENIGN_CONSOLE` allowlist. This turns silent runtime faults — most importantly React's "Maximum update depth exceeded" render loop, which a loading-skeleton assertion otherwise passes through — into red builds across every spec.
 
@@ -179,7 +179,7 @@ At page load, supabase-js is downloaded only when there is a session to restore 
 | should close dropdown on Escape | Escape key dismisses autocomplete dropdown, within the default timeout (a debounce pending at the keypress used to reopen it, #746) |
 | should NOT show autocomplete on browse page search | Typing in browse page search does NOT show autocomplete (browse filters inline) |
 
-## `seo.spec.ts` — 18 tests (both viewports)
+## `seo.spec.ts` — 19 tests (both viewports)
 
 Route-level metadata coverage (#524). Before this, the file asserted only home-page
 properties, so #486's central acceptance criterion — every route self-references its own
@@ -203,6 +203,7 @@ against the dev server, where both are present.
 | should own its title and canonical: `/card/1989/elsa-snow-queen` | As above, on a slug card route (#498) |
 | should own its title and canonical: `/inks` | As above, on the ink gallery (#530) |
 | should own its title and canonical: `/ink/steel` | As above, on an ink hub (#530) |
+| should own its title and canonical: `/release-notes` | As above, on a page built on `LegalPage` (#765) |
 | card page has exactly one h1 at a mobile viewport | 412×915 — CardPage gates the desktop `CardDetailPanel` behind `!isMobile` while `CardDetail` owns the h1 below it (`headingLevel="h1"`, always set by `SynergyResults`). Googlebot renders mobile, so a regression in either branch is invisible at desktop width |
 | card page links to all six ink hubs at a mobile viewport | The footer's ink nav is what puts every hub one click from all 1,024 card pages (#530) |
 | ink hub emits one crawlable anchor per card, identically on mobile | `CardGrid`, not the Virtuoso-windowed `BrowseCardGrid` — windowing would emit a fraction of the anchors to a crawler (#530) |
@@ -311,6 +312,16 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 | ?ink= param selects the starting mosaic ink | `/reveals?ink=emerald` makes the Emerald `ink-tracker-tile` the `aria-pressed` (featured) one |
 | clicking a rarity chip dims the other revealed cards | A kit chip in the "Highlight a rarity" group toggles `aria-pressed`; other-rarity slots get `data-dimmed`; clicking again clears it (skips when <2 rarities revealed) |
 | an alt art opens the card modal on that printing | On `/reveals?ink=amber`, clicking the first `reveal-printing-slot` opens the modal with that rarity's radio `aria-checked` in the "Card printing" group (skips until the Amber board has a revealed Epic/Enchanted/Iconic) |
+
+## `release-notes.spec.ts`: 3 tests (every project; the last at a 390px viewport)
+
+The `/release-notes` page (#765), which shows one committed JSON file per month, newest first. The tests read September 2026 by name, so they stay true as later months are added.
+
+| Test | What it verifies |
+|---|---|
+| shows a month with its sections in order | The h1 "Release notes", and the September 2026 region's h3s read New, Improved, Fixed, Synergy engine |
+| the footer links to it | From `/about`, the site footer's "Release notes" link opens `/release-notes` |
+| does not scroll sideways on a phone | At 390px, `document.documentElement.scrollWidth <= clientWidth` once the month has rendered |
 
 ## Patterns
 

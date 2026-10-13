@@ -37,6 +37,9 @@
     <loc>https://inkweave.ink/about</loc>
   </url>
   <url>
+    <loc>https://inkweave.ink/release-notes</loc>
+  </url>
+  <url>
     <loc>https://inkweave.ink/privacy</loc>
   </url>
   <url>
@@ -91,6 +94,9 @@
     <loc>https://inkweave.ink/playstyles/bounce</loc>
   </url>
   <url>
+    <loc>https://inkweave.ink/playstyles/ink-drops</loc>
+  </url>
+  <url>
     <loc>https://inkweave.ink/playstyles/monster</loc>
   </url>
   <url>
@@ -107,6 +113,15 @@
   </url>
   <url>
     <loc>https://inkweave.ink/playstyles/detective</loc>
+  </url>
+  <url>
+    <loc>https://inkweave.ink/playstyles/gargoyle</loc>
+  </url>
+  <url>
+    <loc>https://inkweave.ink/playstyles/madrigal</loc>
+  </url>
+  <url>
+    <loc>https://inkweave.ink/playstyles/villain</loc>
   </url>
   <url>
     <loc>https://inkweave.ink/card/1936/bruno-madrigal-undetected-uncle</loc>

@@ -19,6 +19,7 @@ const INDEXABLE_ROUTES = [
   '/card/1989/elsa-snow-queen',
   '/inks',
   '/ink/steel',
+  '/release-notes',
 ];
 
 test.describe('SEO', () => {
