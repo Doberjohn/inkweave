@@ -353,7 +353,7 @@ The file lives at `apps/web/public/data/previewCards.json`. Post-Set-12 graduati
 
 **Source of truth:** `LorcanaJSONCard` in `packages/synergy-engine/src/utils/cardTransformer.ts`. Anything outside that interface is ignored at runtime; the table above is the practical subset that drives app behavior.
 
-**ID convention reminder:** preview ids are placeholders until LorcanaJSON publishes canonical ids, and graduation via `pnpm graduate-set` replaces them wholesale with canonical sequential ids. The format is still test-enforced (`REVEAL_ID_BASE + number`, see the `id` row above): it keeps preview ids clear of `allCards.json`, where a collision makes the loader silently drop the preview card.
+**ID convention reminder:** preview ids are placeholders until LorcanaJSON publishes canonical ids, and graduation via `pnpm graduate-set` replaces them wholesale with canonical sequential ids. The format is still test-enforced (`REVEAL_ID_BASE + number`, see the `id` row above): it keeps preview ids clear of `allCards.json`, where a collision makes the loader silently drop the preview card. What Supabase stores on a preview id (votes, cloud collection keys, deck cards) moves too, through the remap migration graduation writes ([Graduation path](#graduation-path), #748).
 
 </details>
 
@@ -1002,19 +1002,20 @@ flowchart TD
     Step1["Step 1 — Update allCards.json<br/>(replace with new export from lorcanajson.org)"]
     Step2["Step 2: Empty previewCards.json<br/>cards: [] and KEEP sets[graduated set]<br/>(pnpm graduate-set does this; never sets:{} or delete the file)"]
     Step3["Step 3 — Rebuild + deploy<br/>(precompute-synergies merges new pool)"]
+    StepR["Step 3b: Apply the remap migration<br/>(votes, collections and decks move<br/>to the canonical ids)"]
     Step4{Repurposing /reveals<br/>for next set?}
     Step5["Move REVEAL_SET_CODE<br/>(shared/constants/revealSet.ts)<br/>see reveals/START_REVEAL_SEASON.md"]
     Step6["Remove /reveals route<br/>(apps/web/src/router.tsx)"]
     Done["✓ Graduation complete"]
 
-    Step1 --> Step2 --> Step3 --> Step4
+    Step1 --> Step2 --> Step3 --> StepR --> Step4
     Step4 -->|yes| Step5 --> Done
     Step4 -->|no| Step6 --> Done
 
     classDef step fill:#1a1a2e,stroke:#5cb1ff,color:#e8e8e8
     classDef decision fill:#2a1a4a,stroke:#d4af37,color:#e8e8e8
     classDef terminal fill:#1a4a1a,stroke:#90ee90,color:#e8e8e8
-    class Step1,Step2,Step3,Step5,Step6 step
+    class Step1,Step2,Step3,StepR,Step5,Step6 step
     class Check,Step4 decision
     class Done terminal
 ```
@@ -1034,7 +1035,8 @@ flowchart TD
 # 2. Run the graduation script — encodes the 6 rules below AND retargets hardcoded
 #    card-id references (featured cards, playstyle-gallery heroes, reveals/playstyle
 #    stories) from preview to canonical ids. It prints the canonical
-#    VITE_FEATURED_CARD_IDS value to paste into Vercel (see step 6).
+#    VITE_FEATURED_CARD_IDS value to paste into Vercel (see step 6), and writes
+#    supabase/migrations/<stamp>_remap_set<N>_preview_ids.sql for step 9.
 #    Default: reads apps/web/public/data/set{N}data.json
 pnpm graduate-set <set-code>
 
@@ -1058,12 +1060,27 @@ pnpm test
 # 7. Optionally: delete the canonical input file once migration succeeded
 #    (it served its purpose; LorcanaJSON evolves so the snapshot is short-lived)
 
-# 8. Commit
+# 8. Commit (the remap migration from step 2 included)
+
+# 9. Once the graduated cards are live in production, apply the remap migration with
+#    the Supabase MCP's apply_migration, then confirm no vote is left on a preview id
+#    (step 2's map lists them). Not before: a vote cast on a preview id after the
+#    remap stays there until it runs again.
 ```
 
 The script is idempotent on dry-run safety: if you run it twice with the same source, the second run replaces what the first wrote (since canonical entries are stripped to a stable shape).
 
 The script also retargets hardcoded card-id references (`retargetHardcodedIds`, run before the `previewCards.json` reset): a set graduation renumbers ids, dangling every place that hardcodes a real card id by its preview id. The step rewrites a curated `ID_REFERENCE_FILES` list — `FeaturedCards.tsx` + its test, `playstyleUi.ts` gallery hero cards, `setSpotlights.ts`, and the reveals/playstyle Storybook demos — and deliberately skips self-contained mock-fixture tests (analytics, card-analytics) whose `13xxx` ids are arbitrary. The blast radius is wide and mostly not test-guarded (only the `FeaturedCards` fixtures fail loudly); grep `\b13[0-9]{3}\b` across `apps/web/src` after graduating to confirm nothing was missed. Add a file to `ID_REFERENCE_FILES` only if it references real graduated cards.
+
+The same preview id → canonical id map carries what Supabase stores (#748). Graduation writes `supabase/migrations/<stamp>_remap_set<N>_preview_ids.sql`, which calls `internal.remap_card_ids` (`20261013000000_card_id_remap.sql`) with the map: it moves every vote, cloud collection key and deck card on a preview id to the canonical one, so the season's votes count toward the released cards. The map joins on collector number; a card revealed without one (the `+900` band) falls back to its full name, and the script names every preview card that neither places, to add to the map by hand before applying. Without this step the votes stay on ids no card list holds: sets 12 and 13 stranded 383 votes that way, which `20261013000001` and `20261013000002` moved.
+
+What the function does, so its result can be checked:
+
+- **Votes** are re-keyed and put back in pair order (the smaller id first, compared as text), flipping `who_carries` when the pair turns round. A voter holds one vote per pair, so a moved vote that lands on that voter's vote on the released pair merges into it the way a re-vote does: the newer answers win and the older fill the gaps. `created_at` is kept (the newer one on a merge), so the move neither trips the vote rate limit nor reshuffles admin's weekly trends.
+- **Collections** rename the key. A collection holding both ids for a card keeps the larger count per finish.
+- **Decks** re-point the card where it stood. A deck listing both ids keeps one entry with the larger quantity.
+- **Every row it changes** is first copied to `internal.card_id_remap_backup` under the migration's label (`set <N> graduation`), which no API role can read. `internal.undo_card_id_remap('<label>')`, run from a migration, puts those rows back.
+- **Running it again is safe**: it moves only what is still on a preview id, such as a vote from a page left open since the graduation.
 
 ### Rules during canonical integration
 
@@ -1072,7 +1089,7 @@ Six rules apply when integrating canonical LorcanaJSON data into `allCards.json`
 | # | Rule | Why |
 |---|------|-----|
 | 1 | **Fold variant printings into their base card**: `Epic`, `Iconic`, `Enchanted` become entries in the base card's `variants` (matched on LorcanaJSON `baseId`, via `scripts/lib/fold-variants.mjs`). **Strip `Special`** promos. A printing graduation would drop stops the run before it writes anything (`--allow-missing-variants` drops it on purpose): a variant hand-scanned during the reveal season but missing from the canonical source (`previewCards.json` is its only copy), or a canonical printing whose base card isn't in the set's file. | Variants are rules-identical alternate art, not new cards: they're stored on their base card for the #625 printing switcher (card page and modal), never as separate cards. Special promos (several per base, each needing its own label) stay out of scope. Before #625 all four rarities were stripped (51 printings in Set 12). |
-| 2 | **Adopt canonical IDs unconditionally** | LorcanaJSON's sequential ids (`2716`...) are the permanent identity; preview composite ids (`121204`...) are placeholders. Pre-graduation URLs break — acceptable in beta. |
+| 2 | **Adopt canonical IDs unconditionally** | LorcanaJSON's sequential ids (`2716`...) are the permanent identity; preview composite ids (`121204`...) are placeholders. Pre-graduation URLs break — acceptable in beta. Votes, cloud collection keys and deck cards move to the canonical ids through the remap migration the script writes (#748). |
 | 3 | **Adopt canonical names** | LorcanaJSON is source of truth; preview curation can have typos / wording corrections. Rule 2 makes this automatic since canonical entries fully replace preview entries. |
 | 4 | **Strip `franchise` field** | Only needed during reveal season for franchise-logo tiering on `/reveals`. Post-graduation, deactivate the page via `VITE_IS_REVEAL_SEASON=false`. Next set's preview re-adds it. |
 | 5 | **Strip extra metadata** — `artists`, `flavorText`, `story`, `foilTypes`, `enchantedId`, `iconicId`, `epicId`, `promoIds`, `fullIdentifier`, `simpleName`, etc. | App uses none of these; bloats `size-limit` budget (360 kB gzipped). |

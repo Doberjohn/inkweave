@@ -43,8 +43,11 @@ whose migration grants nothing is unreachable through the Data API.
   `security_invoker` setting. `pair_scores` readers reach `internal.trimmed_mean` only
   through the default `PUBLIC` grant, so revoking that one from `public` needs an explicit
   grant to `anon` and `authenticated` in the same migration.
-- A `serial` column's sequence needs `grant usage` for every role that inserts. Every table
-  here uses `uuid` keys, so there is no such sequence today.
+- A `serial` column's sequence needs `grant usage` for every role that inserts. Every public
+  table here uses `uuid` keys. The one sequence, the identity of
+  `internal.card_id_remap_backup`, is written only by migrations, so it needs no grant.
+- A table in the `internal` schema is migration-only, so its migration revokes everything,
+  `service_role` included, rather than granting `service_role` all (`20261013000000`).
 - Verify privileges from `pg_class.relacl` and `pg_attribute.attacl` with `aclexplode()`
   (#706, Step 1), never from `information_schema.table_privileges`, which hides column
   grants and `MAINTAIN`.
