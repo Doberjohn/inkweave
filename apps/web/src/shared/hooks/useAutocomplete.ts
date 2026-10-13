@@ -106,6 +106,10 @@ export function useAutocomplete({
   const isOpen = isFocused && suggestions.length > 0 && query.length >= minChars;
 
   const close = () => {
+    // A debounce timer scheduled by the last keystroke would otherwise fire after
+    // this and set `debouncedQuery` straight back, reopening the listbox. Escape
+    // leaves `query` and `isFocused` intact, so nothing else would stop it.
+    clearTimeout(debounceTimeoutRef.current);
     setHighlightedIndex(-1);
     setDebouncedQuery('');
   };
@@ -126,7 +130,12 @@ export function useAutocomplete({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      // Typing faster than the debounce leaves the list unopened, so Escape has nothing to
+      // close, but close() still cancels the timer that would open the list straight after.
+      if (e.key === 'Escape') close();
+      return;
+    }
 
     switch (e.key) {
       case 'ArrowDown':

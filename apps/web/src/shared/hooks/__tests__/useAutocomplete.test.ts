@@ -184,6 +184,70 @@ describe('useAutocomplete', () => {
     expect(result.current.isOpen).toBe(false);
   });
 
+  /** The hook focused, with `query` held by the caller as the search fields hold it. */
+  const renderFocused = () => {
+    const {result, rerender} = renderHook(
+      ({query}) => useAutocomplete({...defaultOptions(), query}),
+      {initialProps: {query: ''}},
+    );
+    const type = (value: string) => {
+      act(() => {
+        result.current.inputProps.onChange({
+          target: {value},
+        } as React.ChangeEvent<HTMLInputElement>);
+      });
+      rerender({query: value});
+    };
+    const pressEscape = () => {
+      act(() => {
+        result.current.inputProps.onKeyDown({
+          key: 'Escape',
+          preventDefault: vi.fn(),
+        } as unknown as React.KeyboardEvent);
+      });
+    };
+    act(() => {
+      result.current.inputProps.onFocus();
+    });
+    return {result, type, pressEscape};
+  };
+
+  it('stays closed when a debounce timer was pending at Escape', () => {
+    // Escape within debounceMs of a keystroke closed the list, then that keystroke's timer
+    // set debouncedQuery straight back and reopened it (#746).
+    const {result, type, pressEscape} = renderFocused();
+    type('El');
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(result.current.isOpen).toBe(true);
+
+    // The list stays open on "El" while the debounce for "Els" runs.
+    type('Els');
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+    pressEscape();
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(result.current.isOpen).toBe(false);
+  });
+
+  it('stays closed when Escape lands before the list first opens', () => {
+    // Typing faster than the debounce never opens the list, so Escape found nothing to close
+    // and the last keystroke's timer opened it straight after.
+    const {result, type, pressEscape} = renderFocused();
+    type('Elsa');
+    pressEscape();
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(result.current.isOpen).toBe(false);
+  });
+
   it('debounces suggestions when typing via onChange', () => {
     const onQueryChange = vi.fn();
     const {result, rerender} = renderHook(
