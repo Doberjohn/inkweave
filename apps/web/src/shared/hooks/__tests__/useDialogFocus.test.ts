@@ -158,4 +158,50 @@ describe('useDialogFocus', () => {
 
     document.body.removeChild(container);
   });
+
+  it.each([
+    {start: 'panel', key: 'Shift+Tab', shiftKey: true, lands: 'last'},
+    {start: 'panel', key: 'Tab', shiftKey: false, lands: 'first'},
+    {start: 'message', key: 'Shift+Tab', shiftKey: true, lands: 'last'},
+    {start: 'message', key: 'Tab', shiftKey: false, lands: 'first'},
+  ] as const)(
+    '$key from focus on the $start moves to the $lands control',
+    ({start, shiftKey, lands}) => {
+      // DialogShell's panel (tabIndex={-1}) takes initial focus when no initialFocusRef is
+      // passed, and admin's "Leave this page?" dialog gives it to its message. The trap counts
+      // neither as a control, so the browser moved Shift+Tab from them to the page behind the
+      // scrim (#732).
+      const panel = document.createElement('div');
+      panel.tabIndex = -1;
+      const message = document.createElement('p');
+      message.tabIndex = -1;
+      const stay = document.createElement('button');
+      const leave = document.createElement('button');
+      panel.append(message, stay, leave);
+      document.body.appendChild(panel);
+
+      const {result} = renderHook(() =>
+        useDialogFocus({
+          isOpen: true,
+          containerRef: {current: panel},
+          initialFocusRef: createRef<HTMLElement>(),
+          onClose: vi.fn(),
+        }),
+      );
+
+      (start === 'panel' ? panel : message).focus();
+      const event = {
+        key: 'Tab',
+        shiftKey,
+        preventDefault: vi.fn(),
+      } as unknown as React.KeyboardEvent;
+      act(() => {
+        result.current.handleKeyDown(event);
+      });
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(document.activeElement).toBe(lands === 'last' ? leave : stay);
+      document.body.removeChild(panel);
+    },
+  );
 });

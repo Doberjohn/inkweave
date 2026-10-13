@@ -176,7 +176,7 @@ At page load, supabase-js is downloaded only when there is a session to restore 
 | should show autocomplete dropdown when typing 2+ characters | Typing "El" in hero search shows listbox with options |
 | should open card overview modal when clicking a suggestion | Clicking a suggestion opens the card modal; URL stays `/` |
 | should open card overview modal via keyboard (ArrowDown + Enter) | ArrowDown + Enter on a suggestion opens the card modal |
-| should close dropdown on Escape | Escape key dismisses autocomplete dropdown |
+| should close dropdown on Escape | Escape key dismisses autocomplete dropdown, within the default timeout (a debounce pending at the keypress used to reopen it, #746) |
 | should NOT show autocomplete on browse page search | Typing in browse page search does NOT show autocomplete (browse filters inline) |
 
 ## `seo.spec.ts` — 18 tests (both viewports)

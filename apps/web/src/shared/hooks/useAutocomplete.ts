@@ -48,6 +48,18 @@ export interface UseAutocompleteReturn {
   searchImmediate: (term: string) => void;
 }
 
+/** The step each arrow key takes through the list. */
+const ARROW_STEPS: Record<string, 1 | -1> = {ArrowDown: 1, ArrowUp: -1};
+
+/**
+ * The option one step from `from` in a list of `count` (at least one), wrapping at both ends.
+ * From no highlight (-1), a step down lands on the first option and a step up on the last.
+ */
+function stepIndex(from: number, step: 1 | -1, count: number): number {
+  if (step === 1) return (from + 1) % count;
+  return from <= 0 ? count - 1 : from - 1;
+}
+
 export function useAutocomplete({
   cards,
   query,
@@ -84,9 +96,10 @@ export function useAutocomplete({
     onQueryChange(newValue);
 
     clearTimeout(debounceTimeoutRef.current);
+    // The highlight was in the list for the old text, so typing drops it.
+    setHighlightedIndex(-1);
     if (newValue.length < minChars) {
       setDebouncedQuery('');
-      setHighlightedIndex(-1);
       return;
     }
     debounceTimeoutRef.current = setTimeout(() => {
@@ -95,17 +108,22 @@ export function useAutocomplete({
     }, debounceMs);
   };
 
-  // Compute suggestions from debounced query, sorted by descending set code
-  const suggestions = (() => {
-    if (!debouncedQuery || debouncedQuery.length < minChars) return [];
-    return searchCardsByName(cards, debouncedQuery)
+  // Suggestions for a search term, sorted by descending set code
+  const suggestionsFor = (term: string) => {
+    if (!term || term.length < minChars) return [];
+    return searchCardsByName(cards, term)
       .sort((a, b) => parseSetOrder(b.setCode) - parseSetOrder(a.setCode))
       .slice(0, maxResults);
-  })();
+  };
+  const suggestions = suggestionsFor(debouncedQuery);
 
   const isOpen = isFocused && suggestions.length > 0 && query.length >= minChars;
 
   const close = () => {
+    // A debounce timer scheduled by the last keystroke would otherwise fire after
+    // this and set `debouncedQuery` straight back, reopening the listbox. Escape
+    // leaves `query` and `isFocused` intact, so nothing else would stop it.
+    clearTimeout(debounceTimeoutRef.current);
     setHighlightedIndex(-1);
     setDebouncedQuery('');
   };
@@ -125,18 +143,33 @@ export function useAutocomplete({
     close();
   };
 
+  /**
+   * Arrow keys step through the list for the text in the input, opening it if it is closed.
+   * While a debounce is pending, the list on screen is still an earlier keystroke's, or there
+   * is none yet, and the timer reset the highlight when it fired, so a quick Enter picked
+   * nothing and submitted the search instead. Applying the typed text first, and cancelling
+   * that timer, lands the step in the list Enter reads. Returns false, changing nothing, when
+   * the typed text has no matches.
+   */
+  const moveHighlight = (step: 1 | -1) => {
+    const count = suggestionsFor(query).length;
+    if (count === 0) return false;
+    clearTimeout(debounceTimeoutRef.current);
+    setDebouncedQuery(query);
+    setHighlightedIndex((prev) => stepIndex(prev, step, count));
+    return true;
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // An arrow claims the key only when the typed text has matches to step through.
+    const step = ARROW_STEPS[e.key];
+    if (step && moveHighlight(step)) e.preventDefault();
+    // Escape runs close() whether or not the list is open: typing faster than the debounce
+    // leaves it unopened, and close() still cancels the timer that would open it straight after.
+    if (e.key === 'Escape') close();
     if (!isOpen) return;
 
     switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setHighlightedIndex((prev) => (prev + 1) % suggestions.length);
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setHighlightedIndex((prev) => (prev <= 0 ? suggestions.length - 1 : prev - 1));
-        break;
       case 'Enter':
         if (highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
           e.preventDefault();
@@ -145,8 +178,9 @@ export function useAutocomplete({
         // If no highlight, let event propagate (e.g., HeroSection search submit)
         break;
       case 'Escape':
+        // close() ran above. Only an open list claims the key; a closed one leaves it to
+        // whatever else listens for it.
         e.preventDefault();
-        close();
         break;
     }
   };

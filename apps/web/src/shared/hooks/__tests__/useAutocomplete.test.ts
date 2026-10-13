@@ -184,6 +184,129 @@ describe('useAutocomplete', () => {
     expect(result.current.isOpen).toBe(false);
   });
 
+  /** The hook focused, with `query` held by the caller as the search fields hold it. */
+  const renderFocused = () => {
+    const onSelect = vi.fn();
+    const {result, rerender} = renderHook(
+      ({query}) => useAutocomplete({...defaultOptions(), query, onSelect}),
+      {initialProps: {query: ''}},
+    );
+    const type = (value: string) => {
+      act(() => {
+        result.current.inputProps.onChange({
+          target: {value},
+        } as React.ChangeEvent<HTMLInputElement>);
+      });
+      rerender({query: value});
+    };
+    /** Presses a key in the input and returns the event's `preventDefault` spy. */
+    const press = (key: string) => {
+      const preventDefault = vi.fn();
+      act(() => {
+        result.current.inputProps.onKeyDown({
+          key,
+          preventDefault,
+        } as unknown as React.KeyboardEvent);
+      });
+      return preventDefault;
+    };
+    act(() => {
+      result.current.inputProps.onFocus();
+    });
+    return {result, onSelect, type, press};
+  };
+
+  it('stays closed when a debounce timer was pending at Escape', () => {
+    // Escape within debounceMs of a keystroke closed the list, then that keystroke's timer
+    // set debouncedQuery straight back and reopened it (#746).
+    const {result, type, press} = renderFocused();
+    type('El');
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(result.current.isOpen).toBe(true);
+
+    // The list stays open on "El" while the debounce for "Els" runs.
+    type('Els');
+    act(() => {
+      vi.advanceTimersByTime(50);
+    });
+    press('Escape');
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(result.current.isOpen).toBe(false);
+  });
+
+  it('stays closed when Escape lands before the list first opens', () => {
+    // Typing faster than the debounce never opens the list, so Escape found nothing to close
+    // and the last keystroke's timer opened it straight after.
+    const {result, type, press} = renderFocused();
+    type('Elsa');
+    const preventDefault = press('Escape');
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(result.current.isOpen).toBe(false);
+    // With no list to close, the key stays free for a surrounding dialog's own Escape.
+    expect(preventDefault).not.toHaveBeenCalled();
+  });
+
+  it('ArrowDown before the list first opens highlights the first match', () => {
+    // Typing faster than the debounce never opened the list, so the arrow did nothing and a
+    // quick Enter submitted the search instead of picking a card.
+    const {result, onSelect, type, press} = renderFocused();
+    type('Elsa');
+    press('ArrowDown');
+    expect(result.current.isOpen).toBe(true);
+    press('Enter');
+
+    expect(onSelect).toHaveBeenCalledWith(cards[0]);
+  });
+
+  it.each([
+    {key: 'ArrowDown', picks: 0},
+    {key: 'ArrowUp', picks: 1},
+  ])('$key during a pending debounce highlights a match for the typed text', ({key, picks}) => {
+    // The list on screen was still the one for "El", and the pending timer for "Elsa" reset
+    // the highlight when it fired, so Enter selected nothing and the search submitted instead.
+    const {result, onSelect, type, press} = renderFocused();
+    type('El');
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(result.current.isOpen).toBe(true);
+
+    type('Elsa');
+    press(key);
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    press('Enter');
+
+    expect(onSelect).toHaveBeenCalledWith(cards[picks]);
+  });
+
+  it('drops the highlight on typing, so Enter no longer picks from the old list', () => {
+    // The highlight sat in the list for "El" until the debounce fired, so Enter straight
+    // after a keystroke picked a card the text had moved on from.
+    const {result, onSelect, type, press} = renderFocused();
+    type('El');
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    press('ArrowDown');
+    expect(result.current.highlightedIndex).toBe(0);
+
+    type('Els');
+    expect(result.current.highlightedIndex).toBe(-1);
+    press('Enter');
+
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
   it('debounces suggestions when typing via onChange', () => {
     const onQueryChange = vi.fn();
     const {result, rerender} = renderHook(

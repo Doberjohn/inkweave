@@ -36,11 +36,54 @@ function takeInitialFocus(container: HTMLElement | null, target: HTMLElement | n
 }
 
 /**
+ * Whether focus sits inside the dialog on something the trap doesn't count as a control:
+ * the container itself (DialogShell's panel, its initial focus when no `initialFocusRef` is
+ * passed) or another `tabIndex={-1}` element, such as a message given initial focus.
+ */
+function isFocusOffControls(container: HTMLElement, focusableElements: Element[]): boolean {
+  const active = document.activeElement;
+  return active !== null && container.contains(active) && !focusableElements.includes(active);
+}
+
+/**
+ * The Tab trap: Tab from the last control wraps to the first, and Shift+Tab from the first
+ * wraps to the last. Focus off the controls counts as "before the first control" (#732): the
+ * browser would move Shift+Tab from there to whatever precedes the portal, outside the modal.
+ *
+ * Extracted for the same reason as `takeInitialFocus`, Tab check included: CodeScene counts
+ * a one-line handler's branches into the hook.
+ */
+function trapTab(e: React.KeyboardEvent, container: HTMLElement | null): void {
+  if (e.key !== 'Tab' || !container) return;
+
+  const focusableElements = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+
+  if (focusableElements.length === 0) {
+    e.preventDefault();
+    return;
+  }
+
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+  // Tab leaves from the last control and wraps to the first; Shift+Tab, the reverse.
+  const [edge, wrapTo] = e.shiftKey ? [firstElement, lastElement] : [lastElement, firstElement];
+
+  if (document.activeElement === edge || isFocusOffControls(container, focusableElements)) {
+    e.preventDefault();
+    wrapTo.focus();
+  }
+}
+
+/**
  * Manages focus for modal/drawer dialogs:
  * - Saves and restores the previously focused element (or `returnFocusRef`)
  * - Moves focus to `initialFocusRef` when the dialog opens
  * - Closes on Escape key
  * - Returns a `handleKeyDown` for focus trapping on Tab/Shift+Tab
+ *
+ * Both effects return early while closed. Wrapping their bodies in `if (isOpen) {…}` put a
+ * conditional inside a conditional twice, and CodeScene's Bumpy Road check fails a function
+ * at two such blocks.
  */
 export function useDialogFocus({
   isOpen,
@@ -51,59 +94,36 @@ export function useDialogFocus({
 }: UseDialogFocusParams) {
   // Save the return target, set initial focus, restore on close
   useEffect(() => {
-    if (isOpen) {
-      // A given return target never falls back to the focused element: for the
-      // search sheet that is the hidden proxy.
-      const returnTarget = returnFocusRef
-        ? returnFocusRef.current
-        : (document.activeElement as HTMLElement | null);
-      const timerId = setTimeout(
-        () => takeInitialFocus(containerRef.current, initialFocusRef.current),
-        100,
-      );
-      return () => {
-        clearTimeout(timerId);
-        if (returnTarget && returnTarget.isConnected) {
-          returnTarget.focus();
-        }
-      };
-    }
+    if (!isOpen) return;
+    // A given return target never falls back to the focused element: for the
+    // search sheet that is the hidden proxy.
+    const returnTarget = returnFocusRef
+      ? returnFocusRef.current
+      : (document.activeElement as HTMLElement | null);
+    const timerId = setTimeout(
+      () => takeInitialFocus(containerRef.current, initialFocusRef.current),
+      100,
+    );
+    return () => {
+      clearTimeout(timerId);
+      if (returnTarget && returnTarget.isConnected) {
+        returnTarget.focus();
+      }
+    };
   }, [isOpen, containerRef, initialFocusRef, returnFocusRef]);
 
   // Escape key listener (separate effect to avoid spurious focus restore)
   useEffect(() => {
-    if (isOpen) {
-      const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onClose();
-      };
-      document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
-    }
+    if (!isOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
   // Focus trap: keep Tab/Shift+Tab within the container
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key !== 'Tab' || !containerRef.current) return;
-
-    const focusableElements =
-      containerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-
-    if (focusableElements.length === 0) {
-      e.preventDefault();
-      return;
-    }
-
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-
-    if (e.shiftKey && document.activeElement === firstElement) {
-      e.preventDefault();
-      lastElement.focus();
-    } else if (!e.shiftKey && document.activeElement === lastElement) {
-      e.preventDefault();
-      firstElement.focus();
-    }
-  };
+  const handleKeyDown = (e: React.KeyboardEvent) => trapTab(e, containerRef.current);
 
   return {handleKeyDown};
 }
