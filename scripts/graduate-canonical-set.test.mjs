@@ -1,8 +1,12 @@
 import {describe, it, expect} from 'vitest';
 import {
   applyCardRules,
+  buildPreviewToCanonicalMap,
   droppedVariants,
   previewVariantsMissingFrom,
+  remapMigrationName,
+  remapMigrationSql,
+  unmappedPreviewCards,
 } from './graduate-canonical-set.mjs';
 
 const IMAGES = {full: 'full.jpg', thumbnail: 'thumb.jpg', foilMask: 'mask.jpg'};
@@ -100,5 +104,65 @@ describe('droppedVariants (graduation)', () => {
       'Epic #230 Nobody - Anywhere',
       'Iconic #242 Mickey Mouse - Best in Town',
     ]);
+  });
+});
+
+// Graduation renumbers cards, and votes, collections and decks follow them through this map (#748).
+describe('buildPreviewToCanonicalMap (graduation)', () => {
+  const canonical = [
+    {id: 3230, number: 1, fullName: 'Ariel - Spectacular Singer'},
+    {id: 3260, number: 31, fullName: 'Goofy - Super Goof'},
+  ];
+
+  it('joins preview ids to canonical ids on the collector number, whatever the name', () => {
+    const previewCards = [
+      {id: 14001, setCode: '14', number: 1, fullName: 'Ariel - Spectacular Songstress'},
+    ];
+
+    expect(buildPreviewToCanonicalMap(previewCards, canonical, '14')).toEqual(
+      new Map([['14001', '3230']]),
+    );
+  });
+
+  it('places a card revealed without a number by its full name, and reports what neither places', () => {
+    const previewCards = [
+      {id: 14900, setCode: '14', fullName: 'Goofy - Super Goof'},
+      {id: 14901, setCode: '14', fullName: 'Nobody - Anywhere'},
+    ];
+
+    const map = buildPreviewToCanonicalMap(previewCards, canonical, '14');
+
+    expect(map).toEqual(new Map([['14900', '3260']]));
+    expect(unmappedPreviewCards(previewCards, map, '14').map((c) => c.id)).toEqual([14901]);
+  });
+
+  it("skips other sets' preview cards, whose numbers would match the wrong cards", () => {
+    const previewCards = [{id: 15001, setCode: '15', number: 1, fullName: 'Someone - New'}];
+
+    expect(buildPreviewToCanonicalMap(previewCards, canonical, '14').size).toBe(0);
+  });
+});
+
+describe('remap migration (graduation)', () => {
+  it('calls remap_card_ids with the whole map and labels the run by set', () => {
+    const sql = remapMigrationSql(
+      '14',
+      new Map([
+        ['14001', '3230'],
+        ['14031', '3260'],
+      ]),
+    );
+
+    const [, json, label] = sql.match(
+      /select internal\.remap_card_ids\('([^']*)'::jsonb, '([^']*)'\);/,
+    );
+    expect(JSON.parse(json)).toEqual({14001: '3230', 14031: '3260'});
+    expect(label).toBe('set 14 graduation');
+  });
+
+  it('is named with the UTC time it was written, like every migration', () => {
+    expect(remapMigrationName('Q1', new Date('2026-10-20T08:05:09.123Z'))).toBe(
+      '20261020080509_remap_setq1_preview_ids.sql',
+    );
   });
 });

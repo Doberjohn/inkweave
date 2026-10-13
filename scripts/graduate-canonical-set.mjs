@@ -7,7 +7,8 @@
  * Epic/Enchanted/Iconic printings into their base card's `variants`),
  * replaces any existing entries for that set in `allCards.json`, retargets
  * hardcoded card-id references (featured, playstyle heroes, reveals demos) from
- * preview to canonical, and empties `previewCards.json`.
+ * preview to canonical, writes the Supabase migration that moves votes, cloud
+ * collection keys and deck cards the same way (#748), and empties `previewCards.json`.
  *
  * Encodes the 6 graduation rules documented at:
  *   docs/CARD_DATA_PIPELINE.md  (Rules during canonical integration)
@@ -15,6 +16,7 @@
  *
  * Usage:
  *   node scripts/graduate-canonical-set.mjs <set-code> [source-path] [--allow-missing-variants]
+ *                                           [--allow-unmapped-ids]
  *
  *   set-code      Set code as it appears on cards (e.g. "12", "13", "Q1").
  *                 Must match the `setCode` value the app uses for filtering.
@@ -25,6 +27,11 @@
  *                 a hand-scanned preview variant missing from the canonical source, or a
  *                 canonical printing with no base card in it. Without this flag the
  *                 script stops before writing anything.
+ *   --allow-unmapped-ids
+ *                 Graduate even if a preview card matches no canonical card by number or
+ *                 name, so its votes, collection keys and deck cards stay on its preview
+ *                 id until it is added to the remap migration by hand. Without this flag
+ *                 the script stops before writing anything.
  *
  * Examples:
  *   node scripts/graduate-canonical-set.mjs 12
@@ -37,6 +44,9 @@
  *   3. pnpm test                   # confirm no regressions
  *   4. Flip VITE_IS_REVEAL_SEASON=false in .env.local + Vercel env
  *      (deactivates /reveals route until next reveal season)
+ *   5. Once the graduated cards are live in production, apply the remap
+ *      migration this wrote to supabase/migrations/ with the Supabase MCP's
+ *      apply_migration
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -48,6 +58,7 @@ const ROOT = path.resolve(__dirname, '..');
 const ALL_CARDS = path.join(ROOT, 'apps/web/public/data/allCards.json');
 const PREVIEW = path.join(ROOT, 'apps/web/public/data/previewCards.json');
 const FEATURED_IDS_JSON = path.join(ROOT, 'apps/web/src/features/cards/featuredCardIds.json');
+const MIGRATIONS = path.join(ROOT, 'supabase/migrations');
 
 /**
  * Committed source that hardcodes REAL card ids from a set: the landing-page
@@ -189,9 +200,8 @@ export function droppedVariants(previewCards, {cards, fold}, setCode) {
  * Committed source hardcodes real card ids in a few spots: the landing-page
  * featured-card list + its test, the playstyle-gallery hero cards, and the reveals /
  * playstyle Storybook demos (ID_REFERENCE_FILES). Graduation renumbers those cards,
- * so every such reference would otherwise dangle. This maps each graduating-set
- * preview id -> canonical id (previewCards' id<->number joined to the canonical
- * number<->id) and rewrites those files in place.
+ * so every such reference would otherwise dangle. This rewrites those files in place
+ * through the preview id -> canonical id map (buildPreviewToCanonicalMap).
  *
  * The Vercel `VITE_FEATURED_CARD_IDS` env var lives outside the repo and can't be
  * written here — the translated value is printed for a manual paste + redeploy.
@@ -200,8 +210,7 @@ export function droppedVariants(previewCards, {cards, fold}, setCode) {
  * new set with no pre-picked cards), prompt for which canonical ids to feature
  * rather than only translating existing ones.
  */
-function retargetHardcodedIds(previewCards, baseCards) {
-  const previewToCanonical = buildPreviewToCanonicalMap(previewCards, baseCards);
+function retargetHardcodedIds(previewToCanonical) {
   if (previewToCanonical.size === 0) {
     console.log(`  Card-id refs:               previewCards empty — skipped\n`);
     return;
@@ -217,15 +226,68 @@ function retargetHardcodedIds(previewCards, baseCards) {
   printFeaturedVercelHint();
 }
 
-/** Map each graduating-set preview id -> canonical id, joined on the shared card number. */
-function buildPreviewToCanonicalMap(previewCards, baseCards) {
-  const numberToCanonical = new Map(baseCards.map((c) => [c.number, String(c.id)]));
+/**
+ * Map each graduating-set preview id -> canonical id, joined on the shared card number.
+ * A card the number can't place (the +900 band has none) falls back to its full name,
+ * which can miss: graduation corrected 6 of set 12's names and 14 of set 13's. Other
+ * sets' preview cards are skipped, since their numbers would match the wrong cards.
+ */
+export function buildPreviewToCanonicalMap(previewCards, baseCards, setCode) {
+  const byNumber = new Map(baseCards.map((c) => [c.number, String(c.id)]));
+  const byName = new Map(baseCards.map((c) => [c.fullName, String(c.id)]));
   const map = new Map();
   for (const pc of previewCards) {
-    const canonId = numberToCanonical.get(pc.number);
+    if (String(pc.setCode) !== String(setCode)) continue;
+    const canonId = byNumber.get(pc.number) ?? byName.get(pc.fullName);
     if (canonId) map.set(String(pc.id), canonId);
   }
   return map;
+}
+
+/** The graduating set's preview cards the map left out: what is stored on them stays put. */
+export function unmappedPreviewCards(previewCards, previewToCanonical, setCode) {
+  return previewCards.filter(
+    (c) => String(c.setCode) === String(setCode) && !previewToCanonical.has(String(c.id)),
+  );
+}
+
+/** Quote a value as a SQL string literal. */
+const sqlString = (value) => `'${String(value).replaceAll("'", "''")}'`;
+
+/** The remap migration's filename: a UTC `YYYYMMDDHHMMSS` stamp, like every migration here. */
+export function remapMigrationName(setCode, date) {
+  const stamp = date.toISOString().replace(/\D/g, '').slice(0, 14);
+  return `${stamp}_remap_set${String(setCode).toLowerCase()}_preview_ids.sql`;
+}
+
+/**
+ * The migration that moves votes, cloud collection keys and deck cards from the graduating
+ * set's preview ids to its canonical ids (#748), through `internal.remap_card_ids`.
+ */
+export function remapMigrationSql(setCode, previewToCanonical) {
+  const map = JSON.stringify(Object.fromEntries(previewToCanonical), null, 2);
+  return `-- Set ${setCode} graduation (#748): move the votes, cloud collection keys and deck cards still
+-- on set ${setCode}'s preview ids to the released cards' ids. Written by \`pnpm graduate-set ${setCode}\`,
+-- which pairs each preview card with its canonical card by collector number. The function is
+-- in 20261013000000_card_id_remap.sql.
+--
+-- Apply it once the graduated cards are live in production, so no vote lands on a preview id
+-- after it runs. Running it again is safe: it moves only what is still on a preview id.
+select internal.remap_card_ids(${sqlString(map)}::jsonb, ${sqlString(`set ${setCode} graduation`)});
+`;
+}
+
+/** Step 8 — write the remap migration for every preview id the map places. */
+function writeRemapMigration(setCode, previewToCanonical) {
+  if (previewToCanonical.size === 0) {
+    console.log(`  Stored-data remap:          no preview ids to move — skipped\n`);
+    return;
+  }
+  const file = path.join(MIGRATIONS, remapMigrationName(setCode, new Date()));
+  fs.writeFileSync(file, remapMigrationSql(setCode, previewToCanonical));
+  console.log(
+    `  Stored-data remap:          ${previewToCanonical.size} preview ids, ${path.relative(ROOT, file)}\n`,
+  );
 }
 
 /** Replace every graduating-set preview id in one file; return true if it changed. */
@@ -261,10 +323,11 @@ function printFeaturedVercelHint() {
 function parseArgs(argv) {
   const args = argv.slice(2);
   const allowMissingVariants = args.includes('--allow-missing-variants');
+  const allowUnmappedIds = args.includes('--allow-unmapped-ids');
   const [setCode, sourceArg] = args.filter((a) => !a.startsWith('--'));
   if (!setCode) {
     console.error(
-      'Usage: graduate-canonical-set.mjs <set-code> [source-path] [--allow-missing-variants]',
+      'Usage: graduate-canonical-set.mjs <set-code> [source-path] [--allow-missing-variants] [--allow-unmapped-ids]',
     );
     console.error('Example: graduate-canonical-set.mjs 13');
     process.exit(2);
@@ -277,7 +340,7 @@ function parseArgs(argv) {
     console.error(`Place the per-set LorcanaJSON file there, or pass an explicit path.`);
     process.exit(2);
   }
-  return {setCode: String(setCode), source, allowMissingVariants};
+  return {setCode: String(setCode), source, allowMissingVariants, allowUnmappedIds};
 }
 
 /** Stops the run, before anything is written, when graduating would drop a variant. */
@@ -293,8 +356,26 @@ function guardDroppedVariants(dropped, allowMissingVariants) {
   process.exit(1);
 }
 
+/**
+ * Stops the run, before anything is written, when a preview card matches no canonical card:
+ * the remap migration would leave its votes, collection keys and deck cards behind (#748).
+ */
+function guardUnmappedPreviewIds(unmapped, allowUnmappedIds) {
+  if (unmapped.length === 0) return;
+  for (const c of unmapped) console.error(`    ! ${c.id} ${c.fullName} matched no canonical card`);
+  if (allowUnmappedIds) {
+    console.warn(
+      `  --allow-unmapped-ids: ${unmapped.length} preview id(s) stay put; add them to the remap migration by hand.\n`,
+    );
+    return;
+  }
+  console.error('  Stopped before writing anything. Fix the source (or wait for LorcanaJSON),');
+  console.error('  or rerun with --allow-unmapped-ids and add them to the migration by hand.');
+  process.exit(1);
+}
+
 function main() {
-  const {setCode, source, allowMissingVariants} = parseArgs(process.argv);
+  const {setCode, source, allowMissingVariants, allowUnmappedIds} = parseArgs(process.argv);
   console.log(`\n  Graduating Set ${setCode} from preview to canonical\n`);
   console.log(`  Source: ${source}\n`);
 
@@ -317,8 +398,12 @@ function main() {
   console.log(
     `  Rule 1 - fold variants:    +${fold.folded.length + fold.replaced.length} (Epic/Enchanted/Iconic), strip Special: -${specialCount}`,
   );
-  const dropped = droppedVariants(existingPreview.cards ?? [], {cards: stripped, fold}, setCode);
+  const previewCards = existingPreview.cards ?? [];
+  const dropped = droppedVariants(previewCards, {cards: stripped, fold}, setCode);
   guardDroppedVariants(dropped, allowMissingVariants);
+  const previewToCanonical = buildPreviewToCanonicalMap(previewCards, stripped, setCode);
+  const unmapped = unmappedPreviewCards(previewCards, previewToCanonical, setCode);
+  guardUnmappedPreviewIds(unmapped, allowUnmappedIds);
   console.log(`  Base cards after rule 1:    ${stripped.length}`);
 
   // Rules 2 + 3 — replace preview entries wholesale (canonical ids + names win)
@@ -354,8 +439,9 @@ function main() {
   fs.writeFileSync(ALL_CARDS, JSON.stringify(all, null, 2) + '\n');
   console.log(`  Wrote allCards.json:        ${ALL_CARDS}\n`);
 
-  // Retarget hardcoded card-id references to the new canonical ids (before reset).
-  retargetHardcodedIds(existingPreview.cards ?? [], stripped);
+  // Carry card-id references and stored data to the new canonical ids (before reset).
+  retargetHardcodedIds(previewToCanonical);
+  writeRemapMigration(setCode, previewToCanonical);
 
   // Reset previewCards.json — empty cards, but preserve sets[setCode] metadata
   // so revealDates.ts (which reads prereleaseDate/releaseDate from this file)
@@ -378,7 +464,10 @@ function main() {
   console.log(`    1. pnpm precompute-synergies          # regenerate per-card synergy files`);
   console.log(`    2. pnpm download-images               # fetch any new card images`);
   console.log(`    3. pnpm test                          # confirm no regressions`);
-  console.log(`    4. Flip VITE_IS_REVEAL_SEASON=false   # in .env.local + Vercel env\n`);
+  console.log(`    4. Flip VITE_IS_REVEAL_SEASON=false   # in .env.local + Vercel env`);
+  console.log(
+    `    5. Apply the remap migration          # Supabase MCP, once the deploy is live\n`,
+  );
 }
 
 // Run only when invoked directly (never when imported by the test).
