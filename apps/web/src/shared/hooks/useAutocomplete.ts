@@ -48,6 +48,16 @@ export interface UseAutocompleteReturn {
   searchImmediate: (term: string) => void;
 }
 
+/**
+ * The option one step from `from` in a list of `count`, wrapping at both ends. From no
+ * highlight (-1), a step down lands on the first option and a step up on the last.
+ */
+function stepIndex(from: number, step: 1 | -1, count: number): number {
+  if (count === 0) return -1;
+  if (step === 1) return (from + 1) % count;
+  return from <= 0 ? count - 1 : from - 1;
+}
+
 export function useAutocomplete({
   cards,
   query,
@@ -84,9 +94,10 @@ export function useAutocomplete({
     onQueryChange(newValue);
 
     clearTimeout(debounceTimeoutRef.current);
+    // The highlight was in the list for the old text, so typing drops it.
+    setHighlightedIndex(-1);
     if (newValue.length < minChars) {
       setDebouncedQuery('');
-      setHighlightedIndex(-1);
       return;
     }
     debounceTimeoutRef.current = setTimeout(() => {
@@ -95,13 +106,14 @@ export function useAutocomplete({
     }, debounceMs);
   };
 
-  // Compute suggestions from debounced query, sorted by descending set code
-  const suggestions = (() => {
-    if (!debouncedQuery || debouncedQuery.length < minChars) return [];
-    return searchCardsByName(cards, debouncedQuery)
+  // Suggestions for a search term, sorted by descending set code
+  const suggestionsFor = (term: string) => {
+    if (!term || term.length < minChars) return [];
+    return searchCardsByName(cards, term)
       .sort((a, b) => parseSetOrder(b.setCode) - parseSetOrder(a.setCode))
       .slice(0, maxResults);
-  })();
+  };
+  const suggestions = suggestionsFor(debouncedQuery);
 
   const isOpen = isFocused && suggestions.length > 0 && query.length >= minChars;
 
@@ -129,6 +141,19 @@ export function useAutocomplete({
     close();
   };
 
+  /**
+   * Arrow keys step through the list for the text in the input. While a debounce is pending,
+   * the list on screen is still an earlier keystroke's, and the timer reset the highlight when
+   * it fired, so a quick Enter picked nothing and submitted the search instead. Applying the
+   * typed text first, and cancelling that timer, lands the step in the list Enter reads.
+   */
+  const moveHighlight = (step: 1 | -1) => {
+    clearTimeout(debounceTimeoutRef.current);
+    setDebouncedQuery(query);
+    const count = suggestionsFor(query).length;
+    setHighlightedIndex((prev) => stepIndex(prev, step, count));
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) {
       // Typing faster than the debounce leaves the list unopened, so Escape has nothing to
@@ -140,11 +165,11 @@ export function useAutocomplete({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setHighlightedIndex((prev) => (prev + 1) % suggestions.length);
+        moveHighlight(1);
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setHighlightedIndex((prev) => (prev <= 0 ? suggestions.length - 1 : prev - 1));
+        moveHighlight(-1);
         break;
       case 'Enter':
         if (highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
