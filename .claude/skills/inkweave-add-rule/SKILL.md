@@ -80,6 +80,7 @@ If not, ask: "What game mechanic or interaction does this rule detect?"
 
 14. **Update documentation**:
     - Write the rule's spec into `packages/synergy-engine/<NAME>_RULE.md` (the authoritative doc: detection, score matrix, coverage, rationale)
+    - Never type its coverage numbers: mark where they go with `<!-- coverage:start NAME -->` / `<!-- coverage:end -->`, add a spec for those blocks in `scripts/lib/rule-coverage/specs/` (listed in its `index.mjs`), then run `pnpm refresh-rule-coverage`. The generator refuses to run while a rule doc has no spec
     - Add ONE row to the **Synergy Rules** registry table in `CLAUDE.md` (rule name, playstyle id, doc link). Do NOT restate rule detail there — it is always-loaded context
     - Update `REMOVED_RULES.md` if replacing a removed rule
 

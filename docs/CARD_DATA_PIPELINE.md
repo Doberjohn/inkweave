@@ -454,7 +454,7 @@ Standard Vite production build. The env var flips `loader.ts:33` (`USE_LOCAL_IMA
 
 | Hook | Trigger | Action |
 |---|---|---|
-| `.claude/hooks/engine-auto-rebuild.sh:28-46` | PostToolUse Edit/Write on `packages/synergy-engine/src/` | `pnpm build:engine && pnpm precompute-synergies` |
+| `.claude/hooks/engine-auto-rebuild.sh:29-53` | PostToolUse Edit/Write on `packages/synergy-engine/src/` | `pnpm build:engine && pnpm precompute-synergies`, then `node scripts/refresh-rule-coverage.mjs` (rule-doc coverage blocks, #479) |
 | `.claude/hooks/preview-data-auto-precompute.sh:32-46` | PostToolUse Edit/Write on `apps/web/public/data/previewCards.json` | `pnpm precompute-synergies` |
 | `.claude/hooks/preview-images-auto-convert.sh` | PostToolUse Edit/Write on `apps/web/public/card-images-raw/` | `pnpm convert-preview-images` |
 
@@ -907,13 +907,14 @@ sounds: expect a handful whenever a set has just been revealed.
 Every file that reads or writes either JSON, or participates in the build/runtime pipeline. Sections are collapsible — open the one for the layer you're navigating.
 
 <details open>
-<summary><strong>Scripts (<code>scripts/</code>)</strong> — 5 files</summary>
+<summary><strong>Scripts (<code>scripts/</code>)</strong> — 6 files</summary>
 
 | File | Role |
 |---|---|
 | `download-card-images.mjs` | Reads both JSONs; merges; downloads + hashes images; mutates both JSONs with `imageHash` fields |
 | `precompute-synergies.mjs` | Reads both JSONs; merges; runs engine; writes `synergies/*.json` + `_manifest.json` + `_playstyles.json` + `_pairs_index.json` |
 | `convert-preview-images.mjs` | Reads JPGs from `card-images-raw/`; writes AVIFs to `card-images-preview/`. Does not touch the JSONs. |
+| `refresh-rule-coverage.mjs` | Reads both JSONs; merges and cuts to Core the way precompute does; runs the built engine; rewrites only the coverage blocks in `packages/synergy-engine/*_RULE.md` (#479). Does not touch the JSONs. |
 | `audit-synergy-data.mjs` | Read-only audit; reads `allCards.json` + `synergies/`; prints markdown to stdout (paste into `docs/SYNERGY_AUDIT.md` manually) |
 | `generate-docs.mjs` | Read-only HTML report generator from markdown docs. Does not touch card data. |
 
@@ -980,7 +981,7 @@ Not part of this pipeline: `codescene-gate.mjs`, `test-supabase-integration.mjs`
 | `apps/web/vite.config.ts:213-225` | Vite dev proxy for `/card-images/` → Ravensburger |
 | `package.json:24-26` | Script aliases: `download-images`, `convert-preview-images`, `precompute-synergies` |
 | `package.json:38-43` | `size-limit` budget: `allCards.json` ≤ 360 kB gzipped |
-| `.claude/hooks/engine-auto-rebuild.sh` | PostToolUse: rebuild engine + precompute on engine source edits |
+| `.claude/hooks/engine-auto-rebuild.sh` | PostToolUse: rebuild engine + precompute + refresh rule-doc coverage on engine source edits |
 | `.claude/hooks/preview-data-auto-precompute.sh` | PostToolUse: precompute on `previewCards.json` edits |
 | `.claude/hooks/preview-images-auto-convert.sh` | PostToolUse: convert AVIFs on `card-images-raw/` edits |
 | `.gitignore:52` | `apps/web/public/card-images/` (downloaded — regenerated at build) |
