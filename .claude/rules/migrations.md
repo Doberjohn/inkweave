@@ -46,8 +46,10 @@ whose migration grants nothing is unreachable through the Data API.
 - A `serial` column's sequence needs `grant usage` for every role that inserts. Every public
   table here uses `uuid` keys. The one sequence, the identity of
   `internal.card_id_remap_backup`, is written only by migrations, so it needs no grant.
-- A table in the `internal` schema is migration-only, so its migration revokes everything,
-  `service_role` included, rather than granting `service_role` all (`20261013000000`).
+- A table only migrations touch, such as `internal.card_id_remap_backup`, revokes everything,
+  `service_role` included, rather than granting `service_role` all (`20261013000000`). An
+  `internal` table that runtime functions read, such as `internal.rate_limit_config`, keeps
+  what those functions need.
 - Verify privileges from `pg_class.relacl` and `pg_attribute.attacl` with `aclexplode()`
   (#706, Step 1), never from `information_schema.table_privileges`, which hides column
   grants and `MAINTAIN`.

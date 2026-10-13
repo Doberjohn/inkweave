@@ -16,6 +16,7 @@
  *
  * Usage:
  *   node scripts/graduate-canonical-set.mjs <set-code> [source-path] [--allow-missing-variants]
+ *                                           [--allow-unmapped-ids]
  *
  *   set-code      Set code as it appears on cards (e.g. "12", "13", "Q1").
  *                 Must match the `setCode` value the app uses for filtering.
@@ -26,6 +27,11 @@
  *                 a hand-scanned preview variant missing from the canonical source, or a
  *                 canonical printing with no base card in it. Without this flag the
  *                 script stops before writing anything.
+ *   --allow-unmapped-ids
+ *                 Graduate even if a preview card matches no canonical card by number or
+ *                 name, so its votes, collection keys and deck cards stay on its preview
+ *                 id until it is added to the remap migration by hand. Without this flag
+ *                 the script stops before writing anything.
  *
  * Examples:
  *   node scripts/graduate-canonical-set.mjs 12
@@ -271,26 +277,17 @@ select internal.remap_card_ids(${sqlString(map)}::jsonb, ${sqlString(`set ${setC
 `;
 }
 
-/**
- * Step 8 — write the remap migration, and name every preview card it leaves out so that
- * card can be added to the map by hand before the migration is applied.
- */
-function writeRemapMigration(setCode, previewCards, previewToCanonical) {
+/** Step 8 — write the remap migration for every preview id the map places. */
+function writeRemapMigration(setCode, previewToCanonical) {
   if (previewToCanonical.size === 0) {
-    console.log(`  Stored-data remap:          previewCards empty — skipped\n`);
+    console.log(`  Stored-data remap:          no preview ids to move — skipped\n`);
     return;
   }
   const file = path.join(MIGRATIONS, remapMigrationName(setCode, new Date()));
   fs.writeFileSync(file, remapMigrationSql(setCode, previewToCanonical));
   console.log(
-    `  Stored-data remap:          ${previewToCanonical.size} preview ids, ${path.relative(ROOT, file)}`,
+    `  Stored-data remap:          ${previewToCanonical.size} preview ids, ${path.relative(ROOT, file)}\n`,
   );
-  for (const c of unmappedPreviewCards(previewCards, previewToCanonical, setCode)) {
-    console.warn(
-      `    ! ${c.id} ${c.fullName} matched no canonical card: add it to the map by hand`,
-    );
-  }
-  console.log('');
 }
 
 /** Replace every graduating-set preview id in one file; return true if it changed. */
@@ -326,10 +323,11 @@ function printFeaturedVercelHint() {
 function parseArgs(argv) {
   const args = argv.slice(2);
   const allowMissingVariants = args.includes('--allow-missing-variants');
+  const allowUnmappedIds = args.includes('--allow-unmapped-ids');
   const [setCode, sourceArg] = args.filter((a) => !a.startsWith('--'));
   if (!setCode) {
     console.error(
-      'Usage: graduate-canonical-set.mjs <set-code> [source-path] [--allow-missing-variants]',
+      'Usage: graduate-canonical-set.mjs <set-code> [source-path] [--allow-missing-variants] [--allow-unmapped-ids]',
     );
     console.error('Example: graduate-canonical-set.mjs 13');
     process.exit(2);
@@ -342,7 +340,7 @@ function parseArgs(argv) {
     console.error(`Place the per-set LorcanaJSON file there, or pass an explicit path.`);
     process.exit(2);
   }
-  return {setCode: String(setCode), source, allowMissingVariants};
+  return {setCode: String(setCode), source, allowMissingVariants, allowUnmappedIds};
 }
 
 /** Stops the run, before anything is written, when graduating would drop a variant. */
@@ -358,8 +356,26 @@ function guardDroppedVariants(dropped, allowMissingVariants) {
   process.exit(1);
 }
 
+/**
+ * Stops the run, before anything is written, when a preview card matches no canonical card:
+ * the remap migration would leave its votes, collection keys and deck cards behind (#748).
+ */
+function guardUnmappedPreviewIds(unmapped, allowUnmappedIds) {
+  if (unmapped.length === 0) return;
+  for (const c of unmapped) console.error(`    ! ${c.id} ${c.fullName} matched no canonical card`);
+  if (allowUnmappedIds) {
+    console.warn(
+      `  --allow-unmapped-ids: ${unmapped.length} preview id(s) stay put; add them to the remap migration by hand.\n`,
+    );
+    return;
+  }
+  console.error('  Stopped before writing anything. Fix the source (or wait for LorcanaJSON),');
+  console.error('  or rerun with --allow-unmapped-ids and add them to the migration by hand.');
+  process.exit(1);
+}
+
 function main() {
-  const {setCode, source, allowMissingVariants} = parseArgs(process.argv);
+  const {setCode, source, allowMissingVariants, allowUnmappedIds} = parseArgs(process.argv);
   console.log(`\n  Graduating Set ${setCode} from preview to canonical\n`);
   console.log(`  Source: ${source}\n`);
 
@@ -382,8 +398,12 @@ function main() {
   console.log(
     `  Rule 1 - fold variants:    +${fold.folded.length + fold.replaced.length} (Epic/Enchanted/Iconic), strip Special: -${specialCount}`,
   );
-  const dropped = droppedVariants(existingPreview.cards ?? [], {cards: stripped, fold}, setCode);
+  const previewCards = existingPreview.cards ?? [];
+  const dropped = droppedVariants(previewCards, {cards: stripped, fold}, setCode);
   guardDroppedVariants(dropped, allowMissingVariants);
+  const previewToCanonical = buildPreviewToCanonicalMap(previewCards, stripped, setCode);
+  const unmapped = unmappedPreviewCards(previewCards, previewToCanonical, setCode);
+  guardUnmappedPreviewIds(unmapped, allowUnmappedIds);
   console.log(`  Base cards after rule 1:    ${stripped.length}`);
 
   // Rules 2 + 3 — replace preview entries wholesale (canonical ids + names win)
@@ -420,10 +440,8 @@ function main() {
   console.log(`  Wrote allCards.json:        ${ALL_CARDS}\n`);
 
   // Carry card-id references and stored data to the new canonical ids (before reset).
-  const previewCards = existingPreview.cards ?? [];
-  const previewToCanonical = buildPreviewToCanonicalMap(previewCards, stripped, setCode);
   retargetHardcodedIds(previewToCanonical);
-  writeRemapMigration(setCode, previewCards, previewToCanonical);
+  writeRemapMigration(setCode, previewToCanonical);
 
   // Reset previewCards.json — empty cards, but preserve sets[setCode] metadata
   // so revealDates.ts (which reads prereleaseDate/releaseDate from this file)

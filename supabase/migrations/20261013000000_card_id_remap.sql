@@ -162,12 +162,13 @@ begin
             from (
               select coalesce(p_map ->> e.key, e.key) as card_id,
                      case when count(*) = 1 then (array_agg(e.value))[1]
+                          -- A finish neither entry counts keeps what it had, never a null.
                           else (array_agg(e.value order by p_map ? e.key, e.key))[1]
-                               || jsonb_build_object(
+                               || jsonb_strip_nulls(jsonb_build_object(
                                     'normal', max(case when jsonb_typeof(e.value -> 'normal') = 'number'
                                                        then (e.value ->> 'normal')::numeric end),
                                     'foil', max(case when jsonb_typeof(e.value -> 'foil') = 'number'
-                                                     then (e.value ->> 'foil')::numeric end))
+                                                     then (e.value ->> 'foil')::numeric end)))
                      end as entry
               from jsonb_each(t.entries) e
               group by 1
@@ -212,9 +213,9 @@ begin
                           else (array_agg(e.card order by e.mapped, e.pos))[1]
                                || jsonb_build_object('cardId', e.card_id)
                                || case when count(*) = 1 then '{}'::jsonb
-                                       else jsonb_build_object('quantity',
+                                       else jsonb_strip_nulls(jsonb_build_object('quantity',
                                               max(case when jsonb_typeof(e.card -> 'quantity') = 'number'
-                                                       then (e.card ->> 'quantity')::numeric end))
+                                                       then (e.card ->> 'quantity')::numeric end)))
                                   end
                      end as card
               from (
@@ -284,9 +285,12 @@ end;
 $function$;
 
 -- Put back every row a remap labelled p_label changed, as it was before, and drop its
--- backup. Whatever changed in those rows since the remap is lost. Returns the rows restored.
--- It stops, changing nothing, if a vote cast since the remap sits where a restored one goes
--- back to: a stale page that votes on the old ids again, by a voter whose vote moved.
+-- backup. Whatever changed in those rows since the remap is lost. A row deleted since the
+-- remap stays deleted: undo never brings back a vote, collection or deck someone removed,
+-- only the votes the remap itself merged away. Collections and decks get their entries and
+-- cards back, and their updated_at shows the undo, as it showed the remap. Returns the rows
+-- restored. It stops, changing nothing, if a vote cast since the remap sits where a restored
+-- one goes back to: a stale page that votes on the old ids again, by a voter whose vote moved.
 create function internal.undo_card_id_remap(p_label text)
 returns int
 language plpgsql
@@ -301,7 +305,8 @@ begin
   -- Each row's first copy: a re-run under the same label can save a row twice.
   if to_regclass('pg_temp.remap_undo') is not null then drop table pg_temp.remap_undo; end if;
   create temp table remap_undo on commit drop as
-  select distinct on (source_table, row_id) source_table, row_id, old_row
+  select distinct on (source_table, row_id) source_table, row_id, old_row,
+         bool_or(action = 'deleted') over (partition by source_table, row_id) as remap_deleted
   from internal.card_id_remap_backup
   where label = p_label
   order by source_table, row_id, id;
@@ -310,6 +315,16 @@ begin
   if v_count = 0 then
     raise exception 'undo_card_id_remap found no backup labelled %', p_label;
   end if;
+
+  delete from pg_temp.remap_undo u
+  where not u.remap_deleted
+    and not case u.source_table
+              when 'votes' then exists (select 1 from public.votes v where v.id = u.row_id::uuid)
+              when 'collections' then exists (select 1 from public.collections c
+                                              where c.owner_id = u.row_id::uuid)
+              else exists (select 1 from public.decks d where d.id = u.row_id::uuid)
+            end;
+  select count(*) into v_count from pg_temp.remap_undo;
 
   -- A changed vote goes back by replacing its current version; a merged-away one returns.
   delete from public.votes v

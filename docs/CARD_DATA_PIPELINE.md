@@ -1002,7 +1002,7 @@ flowchart TD
     Step1["Step 1 — Update allCards.json<br/>(replace with new export from lorcanajson.org)"]
     Step2["Step 2: Empty previewCards.json<br/>cards: [] and KEEP sets[graduated set]<br/>(pnpm graduate-set does this; never sets:{} or delete the file)"]
     Step3["Step 3 — Rebuild + deploy<br/>(precompute-synergies merges new pool)"]
-    StepR["Step 3b: Apply the remap migration<br/>(votes, collections and decks move<br/>to the canonical ids)"]
+    StepR["Step 3b: Apply the remap migration<br/>pnpm graduate-set wrote (votes, collections<br/>and decks move to the canonical ids)"]
     Step4{Repurposing /reveals<br/>for next set?}
     Step5["Move REVEAL_SET_CODE<br/>(shared/constants/revealSet.ts)<br/>see reveals/START_REVEAL_SEASON.md"]
     Step6["Remove /reveals route<br/>(apps/web/src/router.tsx)"]
@@ -1022,7 +1022,7 @@ flowchart TD
 
 **Two graduation modes:**
 
-- **Wholesale replace** — LorcanaJSON publishes a new master `allCards.json` that includes the graduated set. Download → drop in place → reset `previewCards.json`'s `cards` to `[]`, keeping the graduated set's `sets` entry. Simplest path when you can re-pull the master file.
+- **Wholesale replace** — LorcanaJSON publishes a new master `allCards.json` that includes the graduated set. Download → drop in place → reset `previewCards.json`'s `cards` to `[]`, keeping the graduated set's `sets` entry. Simplest path when you can re-pull the master file, but only for a set that had no preview cards: it skips what `pnpm graduate-set` does beyond the card data, retargeting hardcoded ids and writing the remap migration (#748). A previewed set graduates through the set-only merge, with that set's file from LorcanaJSON.
 - **Set-only canonical merge** — you have just the new set's canonical file (e.g., `set013.json` from LorcanaJSON's per-set release stream). Use the generic `pnpm graduate-set` script.
 
 **Concrete steps (set-only canonical merge):**
@@ -1065,7 +1065,9 @@ pnpm test
 # 9. Once the graduated cards are live in production, apply the remap migration with
 #    the Supabase MCP's apply_migration, then confirm no vote is left on a preview id
 #    (step 2's map lists them). Not before: a vote cast on a preview id after the
-#    remap stays there until it runs again.
+#    remap stays there until it runs again. The function it calls comes from
+#    20261013000000_card_id_remap.sql, in production since #748; a fresh database
+#    takes every migration in filename order, so it has the function first.
 ```
 
 The script is idempotent on dry-run safety: if you run it twice with the same source, the second run replaces what the first wrote (since canonical entries are stripped to a stable shape).
@@ -1079,7 +1081,7 @@ What the function does, so its result can be checked:
 - **Votes** are re-keyed and put back in pair order (the smaller id first, compared as text), flipping `who_carries` when the pair turns round. A voter holds one vote per pair, so a moved vote that lands on that voter's vote on the released pair merges into it the way a re-vote does: the newer answers win and the older fill the gaps. `created_at` is kept (the newer one on a merge), so the move neither trips the vote rate limit nor reshuffles admin's weekly trends.
 - **Collections** rename the key. A collection holding both ids for a card keeps the larger count per finish.
 - **Decks** re-point the card where it stood. A deck listing both ids keeps one entry with the larger quantity.
-- **Every row it changes** is first copied to `internal.card_id_remap_backup` under the migration's label (`set <N> graduation`), which no API role can read. `internal.undo_card_id_remap('<label>')`, run from a migration, puts those rows back.
+- **Every row it changes** is first copied to `internal.card_id_remap_backup` under the migration's label (`set <N> graduation`), which no API role can read. `internal.undo_card_id_remap('<label>')`, run from a migration, puts those rows back, except any deleted since, which stay deleted.
 - **Running it again is safe**: it moves only what is still on a preview id, such as a vote from a page left open since the graduation.
 
 ### Rules during canonical integration
