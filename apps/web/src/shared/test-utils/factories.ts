@@ -3,7 +3,6 @@ import type {
   SynergyGroup,
   SynergyMatchDisplay,
   PairSynergyConnection,
-  DetailedPairSynergy,
 } from 'inkweave-synergy-engine';
 import type {VotingPair} from '../../features/voting/types';
 
@@ -80,18 +79,5 @@ export function createVotingPair(
     connections: [createConnection()],
     aggregateScore: 7,
     ...rest,
-  };
-}
-
-/** Create a mock DetailedPairSynergy. */
-export function createPairSynergy(
-  overrides: Partial<DetailedPairSynergy> = {},
-): DetailedPairSynergy {
-  return {
-    cardA: createCard({id: 'card-a', name: 'Card A', fullName: 'Card A - Version'}),
-    cardB: createCard({id: 'card-b', name: 'Card B', fullName: 'Card B - Version'}),
-    connections: [createConnection()],
-    aggregateScore: 8,
-    ...overrides,
   };
 }
