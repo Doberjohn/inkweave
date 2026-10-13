@@ -36,6 +36,10 @@ const PrivacyPage = lazyWithRetry(() => import('./pages/PrivacyPage'), 'PrivacyP
 const TermsPage = lazyWithRetry(() => import('./pages/TermsPage'), 'TermsPage');
 const DisclaimerPage = lazyWithRetry(() => import('./pages/DisclaimerPage'), 'DisclaimerPage');
 const AboutPage = lazyWithRetry(() => import('./pages/AboutPage'), 'AboutPage');
+const ReleaseNotesPage = lazyWithRetry(
+  () => import('./pages/ReleaseNotesPage'),
+  'ReleaseNotesPage',
+);
 
 /** Generic 3-line fallback used by every route except `/`. */
 function GenericFallback() {
@@ -243,6 +247,14 @@ const routes: RouteObject[] = [
         element: (
           <SuspenseWrapper>
             <AboutPage />
+          </SuspenseWrapper>
+        ),
+      },
+      {
+        path: 'release-notes',
+        element: (
+          <SuspenseWrapper>
+            <ReleaseNotesPage />
           </SuspenseWrapper>
         ),
       },

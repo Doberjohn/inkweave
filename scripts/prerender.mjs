@@ -113,6 +113,7 @@ async function enumerateRoutes() {
       '/ink/sapphire',
       '/ink/steel',
       '/about',
+      '/release-notes',
       '/privacy',
       '/terms',
       '/disclaimer',

@@ -44,6 +44,7 @@ export const STATIC_ROUTES = [
   '/ink/sapphire',
   '/ink/steel',
   '/about',
+  '/release-notes',
   '/privacy',
   '/terms',
   '/disclaimer',

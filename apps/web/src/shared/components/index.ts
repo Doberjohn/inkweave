@@ -21,6 +21,7 @@ export {CostFilterGroup} from './CostFilterGroup';
 export {CostIcon} from './CostIcon';
 export {CountBadge} from './CountBadge';
 export {BetaTag} from './BetaTag';
+export {GoldTag} from './GoldTag';
 export {BottomSheet} from './BottomSheet';
 export {CtaButton} from './CtaButton';
 export {DialogShell} from './DialogShell';

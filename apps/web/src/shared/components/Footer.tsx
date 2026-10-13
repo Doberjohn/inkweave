@@ -4,15 +4,17 @@ import {APP_NAME, COLORS, FONTS, FONT_SIZES, INK_COLORS, SPACING} from '../const
 
 /**
  * Site footer: legal/product navigation plus the Ravensburger Community Code
- * attribution notice (issue #219). Rendered on scrollable pages (Home and the
- * four legal pages), NOT globally in AppLayout: the height:100vh tool pages
- * (Browse, Vote) would push it below the fold or behind the fixed mobile nav.
+ * attribution notice (issue #219). Rendered on scrollable pages (Home, card
+ * pages and the pages built on LegalPage), NOT globally in AppLayout: the
+ * height:100vh tool pages (Browse, Vote) would push it below the fold or
+ * behind the fixed mobile nav.
  */
 
 const CONTACT_EMAIL = 'support.inkweave@gmail.com';
 
 const NAV_LINKS: {label: string; to: string}[] = [
   {label: 'About', to: '/about'},
+  {label: 'Release notes', to: '/release-notes'},
   {label: 'Privacy', to: '/privacy'},
   {label: 'Terms', to: '/terms'},
   {label: 'Disclaimer', to: '/disclaimer'},
