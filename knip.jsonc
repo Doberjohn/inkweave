@@ -13,8 +13,6 @@
         "scripts/codescene-gate.mjs",
         ".claude/hooks/lib/run-hook.mjs",
       ],
-      // A manual audit (docs/CARD_DATA_PIPELINE.md) that nothing runs; #479 decides its future.
-      "ignoreFiles": ["scripts/audit-synergy-data.mjs"],
       // Root scripts load these from apps/web on purpose, through createRequire.
       "ignoreDependencies": ["@playwright/test", "@supabase/supabase-js"],
       // generate-docs.mjs opens the docs hub with the system's own opener.

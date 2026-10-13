@@ -907,7 +907,7 @@ sounds: expect a handful whenever a set has just been revealed.
 Every file that reads or writes either JSON, or participates in the build/runtime pipeline. Sections are collapsible — open the one for the layer you're navigating.
 
 <details open>
-<summary><strong>Scripts (<code>scripts/</code>)</strong> — 6 files</summary>
+<summary><strong>Scripts (<code>scripts/</code>)</strong> — 5 files</summary>
 
 | File | Role |
 |---|---|
@@ -915,7 +915,6 @@ Every file that reads or writes either JSON, or participates in the build/runtim
 | `precompute-synergies.mjs` | Reads both JSONs; merges; runs engine; writes `synergies/*.json` + `_manifest.json` + `_playstyles.json` + `_pairs_index.json` |
 | `convert-preview-images.mjs` | Reads JPGs from `card-images-raw/`; writes AVIFs to `card-images-preview/`. Does not touch the JSONs. |
 | `refresh-rule-coverage.mjs` | Reads both JSONs; merges and cuts to Core the way precompute does; runs the built engine; rewrites only the coverage blocks in `packages/synergy-engine/*_RULE.md` (#479). Does not touch the JSONs. |
-| `audit-synergy-data.mjs` | Read-only audit; reads `allCards.json` + `synergies/`; prints markdown to stdout (paste into `docs/SYNERGY_AUDIT.md` manually) |
 | `generate-docs.mjs` | Read-only HTML report generator from markdown docs. Does not touch card data. |
 
 Not part of this pipeline: `codescene-gate.mjs`, `test-supabase-integration.mjs`. Confirmed via grep.
