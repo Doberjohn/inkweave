@@ -50,9 +50,12 @@ function isFocusOffControls(container: HTMLElement, focusableElements: Element[]
  * wraps to the last. Focus off the controls counts as "before the first control" (#732): the
  * browser would move Shift+Tab from there to whatever precedes the portal, outside the modal.
  *
- * Extracted for the same reason as `takeInitialFocus`.
+ * Extracted for the same reason as `takeInitialFocus`, Tab check included: CodeScene counts
+ * a one-line handler's branches into the hook.
  */
-function trapTab(e: React.KeyboardEvent, container: HTMLElement): void {
+function trapTab(e: React.KeyboardEvent, container: HTMLElement | null): void {
+  if (e.key !== 'Tab' || !container) return;
+
   const focusableElements = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
 
   if (focusableElements.length === 0) {
@@ -118,9 +121,7 @@ export function useDialogFocus({
   }, [isOpen, onClose]);
 
   // Focus trap: keep Tab/Shift+Tab within the container
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Tab' && containerRef.current) trapTab(e, containerRef.current);
-  };
+  const handleKeyDown = (e: React.KeyboardEvent) => trapTab(e, containerRef.current);
 
   return {handleKeyDown};
 }
