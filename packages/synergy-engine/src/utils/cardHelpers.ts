@@ -698,7 +698,8 @@ export function isSacrificeCard(card: LorcanaCard): boolean {
  *                     hand-discard enabler: it does not trigger a "when you discard" payoff.
  *  - 'reanimator'   — plays / returns a card FROM YOUR DISCARD (recursion). `makeSearchPattern`
  *                     deliberately excludes "from your discard" and defers recursion to this role.
- *  - 'state-payoff' — rewards the discard EVENT ("discarded a card this turn") or an empty hand.
+ *  - 'state-payoff' — rewards the discard EVENT ("discarded a card this turn"), an empty hand, or
+ *                     a small one (STONE BY DAY: "3 or more cards in your hand" keeps it exerted).
  *  - 'zone-payoff'  — rewards the discard as a countable ZONE ("10 or more cards in your discard",
  *                     "a song card in your discard", "cards were put into your discard this turn").
  *
@@ -757,8 +758,15 @@ function hasDiscardFedRecursion(text: string): boolean {
 }
 /** State payoff, event half: rewards the discard EVENT ("if you discarded a card this turn"). */
 const SELF_DISCARD_EVENT_PATTERN = /discarded\s+a\s+card\s+this\s+turn/i;
-/** State payoff, empty-hand half: rewards an empty hand ("while you have no cards in your hand"). */
+/** State payoff, empty-hand shape: "while you have no cards in your hand". */
 const SELF_DISCARD_HELLBENT_PATTERN = /no cards in (?:your )?hand/i;
+/**
+ * State payoff, small-hand shape: the Gargoyles' STONE BY DAY ("If you have 3 or more cards in your
+ * hand, this character can't ready"), keyed on the condition rather than the ability name. The
+ * Ready step comes before the Draw step, so the hand that counts is the one you end your turn with.
+ */
+const SELF_DISCARD_SMALL_HAND_PATTERN =
+  /if you have 3 or more cards in your hand, this character can't ready/i;
 /**
  * Zone payoff — counts or checks cards sitting IN your discard ("10 or more cards in your
  * discard", "for each Alien character card in your discard", "a song card in your discard").
@@ -772,8 +780,8 @@ const SELF_DISCARD_ZONE_PUT_PATTERN = /cards?\s+were\s+put\s+into\s+your\s+disca
 const SELF_DISCARD_MILL_PATTERN =
   /put\s+the\s+top\s+(?:card|\d+\s+cards)\s+of\s+your\s+deck\s+into\s+your\s+discard/i;
 
-/** Fast pre-filter: every self-discard pattern contains "discard" or "no cards in". */
-const HAS_SELF_DISCARD_KEYWORD = /discard|no cards in/i;
+/** Fast pre-filter: every pattern has "discard", "no cards in" or "cards in your hand". */
+const HAS_SELF_DISCARD_KEYWORD = /discard|no cards in|cards in your hand/i;
 
 /** Zone payoff: either the "in your discard" count/check shape or the "put into your discard this turn" trigger. */
 function isSelfDiscardZonePayoff(text: string): boolean {
@@ -791,9 +799,13 @@ function isSelfDiscardReanimator(text: string): boolean {
   );
 }
 
-/** State payoff: the discard event ("discarded a card this turn") or an empty hand. */
+/** State payoff: the discard event ("discarded a card this turn"), an empty hand or a small one. */
 function isSelfDiscardStatePayoff(text: string): boolean {
-  return SELF_DISCARD_EVENT_PATTERN.test(text) || SELF_DISCARD_HELLBENT_PATTERN.test(text);
+  return (
+    SELF_DISCARD_EVENT_PATTERN.test(text) ||
+    SELF_DISCARD_HELLBENT_PATTERN.test(text) ||
+    SELF_DISCARD_SMALL_HAND_PATTERN.test(text)
+  );
 }
 
 /**
@@ -863,6 +875,21 @@ const SELF_DISCARD_ANY_OBJECT_PATTERN = /\b(?:a|an|another|any|\d+)\s+cards?\b/i
  */
 const SELF_DISCARD_REFILL_PATTERN =
   /discard\s+an?\s+(?:\w+\s+){0,2}?card\.\s*if you do,\s*draw\s+[2-9]\s+cards/i;
+/**
+ * An outlet that puts a card in your hand before it discards: a loot ("draw a card, then choose
+ * and discard a card", "Draw 2 cards. Then, discard a card at random") or a return ("return that
+ * card to your hand, then choose and discard a card"). Your hand ends as big as it was, or bigger.
+ */
+const SELF_DISCARD_DRAW_FIRST_PATTERN =
+  /(?:\bdraws?\b|\b(?:in)?to your hand\b)[^.]*(?:\.\s+(?:then|if you do),?)?[^.]*\bdiscard\b/i;
+/**
+ * Goliath - Clan Leader's DUSK TO DAWN: "At the end of each player's turn, if they have more than 2
+ * cards in their hand, they choose and discard cards until they have 2" (a shorter hand draws up
+ * to 2). It discards from every hand, so the opponent gate keeps it out of the enabler role, but it
+ * leaves you 2 cards as your turn ends: the narrow exception that feeds a small-hand payoff alone.
+ */
+const SELF_DISCARD_HAND_TRIM_PATTERN =
+  /\beach player's turn, if they have more than ([0-2]) cards in their hand, they choose and discard cards until they have \1\b/i;
 
 /** The kinds the kind words in `fragment` admit (empty when it names none). */
 function selfDiscardKindsIn(fragment: string): Set<SelfDiscardKind> {
@@ -910,12 +937,20 @@ interface SelfDiscardFeedProfile {
   outletKinds: Set<SelfDiscardKind> | null;
   /** The outlet refills the hand as it discards ("discard a card. If you do, draw 2 cards"). */
   refills: boolean;
+  /** The outlet leaves a smaller hand: no draw before its discard (a loot), no refill after. */
+  shrinksHand: boolean;
+  /** The card trims your hand to 2 at the end of your turn (Goliath - Clan Leader). */
+  trimsHand: boolean;
   /** Kinds the card's recursion pulls, self-contained recursion stripped; null when it takes any card. */
   recursionKinds: Set<SelfDiscardKind> | null;
   /** The recursion fires on your discard (see hasDiscardFedRecursion). */
   recursionOnDiscard: boolean;
-  /** The state payoff rewards the discard event ("discarded a card this turn"), not an empty hand. */
+  /** The state payoff rewards the discard event ("discarded a card this turn"). */
   rewardsEvent: boolean;
+  /** The state payoff rewards an empty hand ("while you have no cards in your hand"). */
+  rewardsEmptyHand: boolean;
+  /** The state payoff needs a small hand to ready (STONE BY DAY). */
+  needsSmallHand: boolean;
 }
 
 const selfDiscardFeedProfiles = new WeakMap<LorcanaCard, SelfDiscardFeedProfile>();
@@ -925,12 +960,17 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
   const cached = selfDiscardFeedProfiles.get(card);
   if (cached) return cached;
   const text = normalizeCardText(card);
+  const refills = SELF_DISCARD_REFILL_PATTERN.test(text);
   const profile: SelfDiscardFeedProfile = {
     outletKinds: selfDiscardOutletKinds(text),
-    refills: SELF_DISCARD_REFILL_PATTERN.test(text),
+    refills,
+    shrinksHand: !refills && !SELF_DISCARD_DRAW_FIRST_PATTERN.test(text),
+    trimsHand: SELF_DISCARD_HAND_TRIM_PATTERN.test(text),
     recursionKinds: selfDiscardRecursionKinds(card, stripSelfContainedRecursion(text)),
     recursionOnDiscard: hasDiscardFedRecursion(text),
     rewardsEvent: SELF_DISCARD_EVENT_PATTERN.test(text),
+    rewardsEmptyHand: SELF_DISCARD_HELLBENT_PATTERN.test(text),
+    needsSmallHand: SELF_DISCARD_SMALL_HAND_PATTERN.test(text),
   };
   selfDiscardFeedProfiles.set(card, profile);
   return profile;
@@ -939,9 +979,33 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
 /**
  * How an outlet's discard reaches a payoff: 'trigger' when the discard itself switches the payoff
  * on, 'stock' when it only stocks the bin a recursion payoff replays from (banished characters
- * and played actions stock it too).
+ * and played actions stock it too), 'unlock' when it keeps your hand small enough to switch a
+ * drawback off (STONE BY DAY).
  */
-export type SelfDiscardFeed = 'trigger' | 'stock';
+export type SelfDiscardFeed = 'trigger' | 'stock' | 'unlock';
+
+/**
+ * How an outlet's discard reaches a state payoff: any discard is a "discarded a card this turn"
+ * event, while an empty hand needs an outlet that doesn't refill it, and a small hand one that
+ * shrinks it (a loot or a refill leaves the hand as big or bigger).
+ */
+function selfDiscardStateFeed(
+  outlet: SelfDiscardFeedProfile,
+  target: SelfDiscardFeedProfile,
+): SelfDiscardFeed | null {
+  const feedsEmptyHand = target.rewardsEmptyHand && !outlet.refills;
+  if (target.rewardsEvent || feedsEmptyHand) return 'trigger';
+  return target.needsSmallHand && outlet.shrinksHand ? 'unlock' : null;
+}
+
+/** How an outlet's discard reaches recursion: a trigger if it fires on the discard, else stock. */
+function selfDiscardRecursionFeed(
+  outlet: SelfDiscardFeedProfile,
+  target: SelfDiscardFeedProfile,
+): SelfDiscardFeed | null {
+  if (!selfDiscardKindsMeet(outlet.outletKinds, target.recursionKinds)) return null;
+  return target.recursionOnDiscard ? 'trigger' : 'stock';
+}
 
 /**
  * How `enabler`'s hand discard reaches `payoff`'s reanimator or state payoff (null if it can't):
@@ -949,9 +1013,11 @@ export type SelfDiscardFeed = 'trigger' | 'stock';
  *    ("discard a song card") feeds song, action and any-card recursion, never character or item
  *    recursion. It is a trigger only when the recursion fires on the discard ("when you discard
  *    this card, you may play it from your discard"); otherwise the outlet just stocks the bin;
- *  - state: a trigger. Any discard is a "discarded a card this turn" event, but a refill outlet
- *    never leaves the empty hand a "no cards in hand" payoff needs.
- * Reads the payoff's text with self-contained recursion stripped, like getSelfDiscardRoles.
+ *  - state: a trigger for the discard event or an empty hand, except that a refill outlet never
+ *    leaves the empty hand a "no cards in hand" payoff needs; an unlock for a small hand, which
+ *    only an outlet that shrinks the hand feeds.
+ * A trigger wins over a stock or an unlock. Reads the payoff's text with self-contained recursion
+ * stripped, like getSelfDiscardRoles.
  */
 export function selfDiscardOutletFeed(
   enabler: LorcanaCard,
@@ -960,12 +1026,26 @@ export function selfDiscardOutletFeed(
 ): SelfDiscardFeed | null {
   const outlet = selfDiscardFeedProfile(enabler);
   const target = selfDiscardFeedProfile(payoff);
-  const feedsState = payoffRoles.includes('state-payoff') && (target.rewardsEvent || !outlet.refills);
-  if (feedsState) return 'trigger';
-  const feedsRecursion =
-    payoffRoles.includes('reanimator') && selfDiscardKindsMeet(outlet.outletKinds, target.recursionKinds);
-  if (!feedsRecursion) return null;
-  return target.recursionOnDiscard ? 'trigger' : 'stock';
+  const state = payoffRoles.includes('state-payoff') ? selfDiscardStateFeed(outlet, target) : null;
+  if (state === 'trigger') return state;
+  const recursion = payoffRoles.includes('reanimator')
+    ? selfDiscardRecursionFeed(outlet, target)
+    : null;
+  return recursion ?? state;
+}
+
+/**
+ * How a hand trim (Goliath - Clan Leader) reaches a payoff: it unlocks a small-hand payoff and
+ * nothing else. It resolves once your turn's actions are done, and it draws a short hand back up
+ * to 2, so it never switches on a "discarded a card this turn" or an empty-hand payoff.
+ */
+export function selfDiscardHandTrimFeed(
+  trimmer: LorcanaCard,
+  payoff: LorcanaCard,
+): SelfDiscardFeed | null {
+  const unlocks =
+    selfDiscardFeedProfile(trimmer).trimsHand && selfDiscardFeedProfile(payoff).needsSmallHand;
+  return unlocks ? 'unlock' : null;
 }
 
 // ============================================

@@ -171,7 +171,7 @@ export const STRUCTURAL_MECHANICS: Mechanic[] = [
   // Self-Discard
   {id: 'enabler', category: 'structural', label: 'Discard then Draw', description: 'Discard your own cards from hand (loot, discard your hand, or as a cost)'},
   {id: 'reanimator', category: 'structural', label: 'Play from Discard', description: 'Play or return a card from your discard'},
-  {id: 'state-payoff', category: 'structural', label: 'Discard Benefits', description: 'Get benefits for discarding a card or having an empty hand'},
+  {id: 'state-payoff', category: 'structural', label: 'Discard Benefits', description: 'Get benefits for discarding a card or keeping your hand empty or small'},
   {id: 'zone-payoff', category: 'structural', label: 'Discard Count', description: 'Get benefits for the cards sitting in your discard'},
   {id: 'mill', category: 'structural', label: 'Mill', description: 'Put cards from the top of your deck into your discard'},
   // Items
