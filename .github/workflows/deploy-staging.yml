@@ -1,0 +1,153 @@
+# Staging deploy: staging.inkweave.ink serves master built with the Preview environment's
+# values (#741).
+#
+# WHY: experimental features ship behind build-time VITE_* flags. Production builds with the
+# Production values (deploy.yml), and PR previews sit behind Vercel's login, so testers had
+# nowhere to try a flag that is on. This workflow builds every master push with the Preview
+# values and moves staging.inkweave.ink to the result. VITE_* values are baked in at build time:
+# to turn a flag on for staging, set its Preview value, then re-run the newest Deploy Staging run
+# on master; to ship it, set its Production value, then re-run the newest Deploy run on master.
+# Preview values also reach every PR preview.
+#
+# KEPT APART FROM PRODUCTION: deploy-drift.yml's workflow_run trigger matches the name "Deploy",
+# and this workflow's different name keeps a staging failure from raising the production drift
+# alarm (#569). Its own concurrency group means it never waits behind or delays a production
+# deploy. It shares only deploy.yml's card image cache.
+#
+# WHAT DIFFERS FROM deploy.yml: the build has no --prod, so `vercel build` reads the pulled
+# Preview values and the deployment is a preview, which no production domain can move to.
+# SKIP_PRERENDER=1 skips the crawl, because staging is never indexed, so there is no crawl check
+# and no IndexNow ping. scripts/vercel-deploy.mjs deploys (retried once, #698), then points
+# staging.inkweave.ink at the new deployment with `vercel alias set`. vercel.json sends
+# X-Robots-Tag: noindex on that host, because Vercel adds none to a preview on a custom domain.
+#
+# DOMAIN: staging.inkweave.ink is a project domain on Preview, tied to Git branch `staging`
+# because Vercel only accepts a branch that exists. vercel.json's git.deploymentEnabled keeps
+# Vercel from ever building that branch, so only this workflow moves the domain. Keep the branch,
+# and never connect the domain to Production: every production deploy would take it over.
+#
+# DATA: staging uses the production Supabase project, so its sign-ups are real accounts and its
+# votes count toward the public scores (#741's decision, kept until the deck builder writes data).
+#
+# A PR that changes this file gets a dry run: the same pull and build, with no deploy and no alias.
+#
+# KILL SWITCH: like deploy.yml, the jobs only run when repo variable DEPLOY_VIA_CI == 'true'. To
+# stop staging alone, disable this workflow in the Actions tab.
+
+# Never rename this to "Deploy": deploy-drift.yml would then treat staging as production.
+name: Deploy Staging
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+    paths:
+      - '.github/workflows/deploy-staging.yml'
+
+# Only actions/checkout uses GITHUB_TOKEN here, as in deploy.yml.
+permissions:
+  contents: read
+
+concurrency:
+  # Staging only ever needs the newest master, so a newer push replaces a running deploy. A PR's
+  # dry run gets its own group, and a newer push to the PR replaces it.
+  group: ${{ github.event_name == 'push' && 'deploy-staging' || format('deploy-staging-dry-run-{0}', github.ref) }}
+  cancel-in-progress: true
+
+# Bump together with deploy.yml's VERCEL_CLI_VERSION (see the comment there).
+env:
+  VERCEL_CLI_VERSION: '60.0.0'
+
+jobs:
+  # As in deploy.yml: the container image must match the Playwright version pnpm-lock.yaml pins,
+  # and PRs from forks and from Dependabot get no Actions secrets, so both jobs skip on them.
+  playwright-version:
+    if: >-
+      vars.DEPLOY_VIA_CI == 'true' && (github.event_name == 'push' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.pw.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: pnpm-lock.yaml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      # yq ships on ubuntu-latest.
+      - name: Read the Playwright version from the lockfile
+        id: pw
+        run: |
+          version="$(yq '.importers["apps/web"].devDependencies["@playwright/test"].version' pnpm-lock.yaml)"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Unexpected @playwright/test version in pnpm-lock.yaml: $version"
+            exit 1
+          fi
+          echo "Playwright $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  staging:
+    needs: playwright-version
+    if: >-
+      vars.DEPLOY_VIA_CI == 'true' && (github.event_name == 'push' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]'))
+    runs-on: ubuntu-latest
+    # A few minutes without the crawl. A cold card image cache adds about 15 (#579).
+    timeout-minutes: 30
+    # deploy.yml's container, so the card image cache is gzip here too and this job restores the
+    # entries production saves. The browser is never launched.
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.version }}-noble
+      # uid 1001 owns $HOME (/github/home), as in deploy.yml.
+      options: --user 1001
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # deploy.yml's cache, same path and key: without it every staging deploy would re-download
+      # and re-encode all ~1,024 card images.
+      - name: Restore card image cache
+        uses: actions/cache@v6
+        with:
+          path: node_modules/.cache/card-images
+          key: card-images-${{ runner.os }}-${{ hashFiles('apps/web/public/data/allCards.json', 'apps/web/public/data/previewCards.json') }}
+          restore-keys: |
+            card-images-${{ runner.os }}-
+
+      - name: Pull Vercel preview environment
+        run: npx "vercel@${VERCEL_CLI_VERSION:?}" pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build with the Preview values, SPA-only
+        # Without --prod, `vercel build` reads the Preview values just pulled. VERCEL_ENV is
+        # Sentry's environment (vite.config.ts, #740), so staging's events report "preview".
+        env:
+          VERCEL_ENV: preview
+          SKIP_PRERENDER: '1'
+        run: npx "vercel@${VERCEL_CLI_VERSION:?}" build --token=${{ secrets.VERCEL_TOKEN }}
+
+      # Only the alias changes what staging serves, so a failure anywhere before it leaves the
+      # previous build up. A PR's dry run stops before this step.
+      - name: Deploy and point staging.inkweave.ink at it
+        if: github.event_name == 'push'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: node scripts/vercel-deploy.mjs staging

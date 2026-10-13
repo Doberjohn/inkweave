@@ -1,10 +1,14 @@
+import fs from 'node:fs';
 import {describe, expect, it} from 'vitest';
-import {deploy, parseArgs} from './vercel-deploy.mjs';
+import {STAGING_HOST, deploy, parseArgs} from './vercel-deploy.mjs';
 
 // The URL shape a real production deploy printed (run 37001759449).
 const STAGED = 'https://inkweave-bnxieb59b-johnfanidis-projects.vercel.app';
+// A real preview deployment's URL, which `vercel deploy` prints with the scheme.
+const PREVIEW = 'https://inkweave-pwyo836zk-johnfanidis-projects.vercel.app';
 const OK = {status: 0, stdout: ''};
 const FAILED = {status: 1, stdout: ''};
+const vercelJson = JSON.parse(fs.readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
 
 /**
  * A fake Vercel CLI that answers each call from `results` in order and records its args. An
@@ -107,11 +111,79 @@ describe('vercel-deploy', () => {
     });
   });
 
+  describe('staging', () => {
+    it('deploys a preview, then points staging.inkweave.ink at exactly that one', async () => {
+      const h = harness({status: 0, stdout: `${PREVIEW}\n`}, OK);
+      expect(await deploy('staging', h.options)).toBe(0);
+      expect(h.calls).toEqual([
+        {args: ['deploy', '--prebuilt', '--token=t'], capture: true},
+        {args: ['alias', 'set', PREVIEW, 'staging.inkweave.ink', '--token=t'], capture: false},
+      ]);
+    });
+
+    it('retries a failed alias once, 15 s later', async () => {
+      const h = harness({status: 0, stdout: PREVIEW}, FAILED, OK);
+      expect(await deploy('staging', h.options)).toBe(0);
+      expect(h.calls[2]).toEqual(h.calls[1]);
+      expect(h.sleeps).toEqual([15_000]);
+      expect(h.lines.join('\n')).toMatch(/^::warning::vercel alias failed/m);
+    });
+
+    it("fails with the alias retry's exit code when both alias attempts fail", async () => {
+      const h = harness({status: 0, stdout: PREVIEW}, FAILED, {status: 2, stdout: ''});
+      expect(await deploy('staging', h.options)).toBe(2);
+      expect(h.lines.join('\n')).toMatch(/^::error::vercel alias set failed \(exit 2\)/m);
+    });
+
+    it.each([
+      ['a bare project name', 'inkweave'],
+      ['two URLs', `${PREVIEW}\n${PREVIEW}`],
+      ['a URL with a path', `${PREVIEW}/version.json`],
+    ])('moves nothing and fails when stdout is %s', async (_, stdout) => {
+      const h = harness({status: 0, stdout});
+      expect(await deploy('staging', h.options)).toBe(1);
+      expect(h.calls).toHaveLength(1);
+      expect(h.lines.join('\n')).toMatch(/^::error::Unexpected deployment URL/m);
+    });
+
+    it("moves nothing and fails with the retry's code when both deploys fail", async () => {
+      const h = harness({status: 1, stdout: PREVIEW}, {status: 2, stdout: PREVIEW});
+      expect(await deploy('staging', h.options)).toBe(2);
+      expect(h.calls.map((call) => call.args[0])).toEqual(['deploy', 'deploy']);
+    });
+
+    // Vercel adds no noindex to a preview served on a custom domain, so vercel.json does, and
+    // only for this host: the same header on inkweave.ink would take production out of search.
+    it('is the one host vercel.json asks search engines not to index', () => {
+      const noindex = vercelJson.headers.filter((rule) =>
+        rule.headers.some((header) => header.key.toLowerCase() === 'x-robots-tag'),
+      );
+      expect(noindex).toEqual([
+        {
+          source: '/(.*)',
+          has: [{type: 'host', value: STAGING_HOST}],
+          headers: [{key: 'X-Robots-Tag', value: 'noindex, nofollow'}],
+        },
+      ]);
+    });
+
+    // Vercel ties a Preview domain only to a branch that exists, so staging.inkweave.ink sits on
+    // branch `staging`. A Git build of that branch would move the domain, so Vercel never builds
+    // it and only this script's alias does.
+    it('is a branch Vercel never builds', () => {
+      expect(vercelJson.git.deploymentEnabled.staging).toBe(false);
+    });
+  });
+
   describe('parseArgs', () => {
     const env = {VERCEL_CLI_VERSION: '60.0.0', VERCEL_TOKEN: 't'};
 
     it('reads the mode, the CLI version and the token', () => {
       expect(parseArgs(['staged'], env)).toEqual({mode: 'staged', version: '60.0.0', token: 't'});
+    });
+
+    it('accepts staging', () => {
+      expect(parseArgs(['staging'], env).mode).toBe('staging');
     });
 
     it.each([[[]], [['preview']], [['toString']]])('refuses %j with the usage line', (argv) => {
