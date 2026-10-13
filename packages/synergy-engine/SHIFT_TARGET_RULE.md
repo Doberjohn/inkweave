@@ -23,16 +23,22 @@ The rule works in both directions:
 
 Both directions use the same scoring function (`calculateShiftSynergy`), so scores are always consistent regardless of which card you select first.
 
+<!-- coverage:start groups -->
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+
 ```chart
 {
   "type": "doughnut",
-  "title": "Shift Group Sizes (376 cards)",
+  "title": "Cards by number of Shift partners (405 cards)",
   "data": {
-    "labels": ["1-4 targets (90.4%)", "5-9 targets (7.7%)", "10-14 targets (1.3%)", "15+ targets (0.5%)"],
-    "values": [340, 29, 5, 2]
+    "labels": ["1-4 partners (368)", "5-9 partners (27)", "10-14 partners (8)", "15+ partners (2)"],
+    "values": [368, 27, 8, 2]
   }
 }
 ```
+<!-- coverage:end -->
+
+A card's partners are what its own page lists: the bases a Shift card can land on, or the Shift cards that can land on a base.
 
 ### Example
 
@@ -150,20 +156,24 @@ calculateShiftSynergy(shiftCard, baseCard)
 | **3** | 4+ | Any | "The cost gap makes it hard to set up {base} in time to shift {shiftCard} onto it." | Ursula - Cauldron Keeper (cost 2) + Ursula - Sea Witch Queen (Shift 8) |
 | **3** | Negative | Any | "The cost gap makes it hard to set up {base} in time to shift {shiftCard} onto it." | Base costs more than Shift cost |
 
+<!-- coverage:start scores -->
 ```chart
 {
   "type": "bar",
-  "title": "Shift Target Score Distribution (855 matches)",
+  "title": "Score distribution (494 unique pairs)",
   "data": {
     "labels": ["3", "5", "7", "8", "9", "10"],
-    "datasets": [{
-      "label": "Matches",
-      "data": [234, 212, 168, 47, 192, 2],
-      "backgroundColor": ["#f59090", "#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#fbbf24"]
-    }]
+    "datasets": [
+      {
+        "label": "Pairs",
+        "data": [135, 125, 98, 24, 111, 1],
+        "backgroundColor": ["#f59090", "#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#fbbf24"]
+      }
+    ]
   }
 }
 ```
+<!-- coverage:end -->
 
 #### Why inkwell matters for gap=1
 

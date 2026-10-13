@@ -13,9 +13,22 @@ Detailed documentation for the Ink Drops rule, a payoff-anchored playstyle for S
 
 Ink Drops is a two-sided playstyle. **Makers** get ink drops (on play, on a challenge, at the end of your turn, from a ⟳ ability, from an action). **Payoffs** use them in one of five ways: a bonus when you remove a drop to play the card, a trigger whenever you remove one, a bonus while you hold one, a cost paid with drops, or a gate that lets the card act only on a turn you gained one.
 
-Every drop is 1 banked ink, so a maker is useful with no payoff at all, like ramp. What turns the resource into a strategy is the payoff side, which is why the rule is **payoff-anchored**: two makers never pair with each other (they just add more of the same resource), and each maker lists exactly the payoffs that cash its drops in. Folding the cards into Ramp's density scoring would instead have emitted about 2,200 same-deck pairs at 5, the noise the 5-baseline convention exists to avoid.
+Every drop is 1 banked ink, so a maker is useful with no payoff at all, like ramp. What turns the resource into a strategy is the payoff side, which is why the rule is **payoff-anchored**: two makers never pair with each other (they just add more of the same resource), and each maker lists exactly the payoffs that cash its drops in. Folding the cards into Ramp's density scoring would instead have paired every drop card at 5 with every Ramp card it can share a deck with, the noise the 5-baseline convention exists to avoid.
 
-Steel carries both sides most deeply (9 makers, 3 payoffs), with Amethyst (6 makers, 2 payoffs) and Sapphire (4 makers, 3 payoffs) behind. Emerald has 10 makers and no payoffs, and Amber's two makers share their drops with every player by design.
+<!-- coverage:start inks -->
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+
+| Ink | Makers | Payoffs | Shared makers |
+|---|------|-------|-------------|
+| Amber | 2 | 0 | 2 |
+| Amethyst | 6 | 2 | 0 |
+| Emerald | 10 | 0 | 4 |
+| Ruby | 4 | 1 | 0 |
+| Sapphire | 4 | 3 | 0 |
+| Steel | 10 | 3 | 0 |
+<!-- coverage:end -->
+
+The table shows where each side runs deep, and which inks have makers with no payoff of their own to cash the drops in. A shared maker's drops also reach an opponent, by design (see *drop-shared*).
 
 ### Example
 
@@ -58,13 +71,15 @@ DROP_SINK      = /\bshift remove \d+ ink drops?\b|\bif you would get an ink drop
 GAIN_GATE      = /\bunless you (?:gained|got) (?:an|\d+(?: or more)?) ink drops? this turn\b/i
 ```
 
-| Shape | Example card text | Cards |
-|-------|-------------------|-------|
-| spend rider | "**If you removed an ink drop to play this action**, deal 5 damage instead." | Jousting Match, Intense Research, Wasabi - Future Thinker, Madam Mim - Resourceful Trickster |
+| Shape | Example card text | From |
+|-------|-------------------|------|
+| spend rider | "**If you removed an ink drop to play this action**, deal 5 damage instead." | Jousting Match |
 | remove trigger | "**whenever you remove an ink drop**, draw a card." | Madam Mim - Resourceful Trickster |
-| hold | "**While you have an ink drop**, this character gains Challenger +3." | Sir Kay - Determined to Win, Wasabi - Called into Battle, Madam Mim - Bauble Chaser |
+| hold | "**While you have an ink drop**, this character gains Challenger +3." | Sir Kay - Determined to Win |
 | sink | "**Shift Remove 2 ink drops** …", "**If you would get an ink drop**, … into your inkwell … instead." | Baymax - Amped Up |
 | gain gate | "This character can't quest or challenge **unless you got an ink drop this turn**." | Baloo - Delivery Pilot |
+
+Coverage lists every card of each shape.
 
 `GAIN_GATE` also reads "gained", the wording of the translated scan Baloo's preview carried before his English printing.
 
@@ -78,12 +93,12 @@ Flags a maker whose drops also (or only) reach an opponent: Mickey Mouse - Best 
 
 ### Scoring helpers (not roles)
 
-| Helper | Pattern | Cards |
-|--------|---------|-------|
-| `isRepeatingDropMaker` | Judged one ability at a time (`textSections`, where each "•" option of a modal ability is read with the line that offers it): some ability matches `REPEATING_GAIN` (a gain inside "whenever …", "at the end of your turn", or a ⟳ ability) and not `PAID_ACTIVATION_GAIN` (a gain behind an ink-cost activation) | Arthur - Jousting Knight, Arthur - Merlin's Assistant, Fred - Awesome Boss, Go Go Tomago - Extreme Tester, Honey Lemon - Ingenious Researcher, Honey Lemon - Testing the Limits, Inkcaster Skates, Kit Cloudkicker - Sure Shot, Marie - Caught in the Act, Meilin Lee - Ecstatic Fan, Mickey Mouse - Best in Town, Port Authority - Center Hub, Shere Khan - Khan Industries CEO, Sir Pellinore - Tougher Than He Looks |
-| `isLateDropMaker` | Judged one ability at a time: every ability that gets drops matches `LATE_GAIN` (a gain at the end of your turn, or when this character is challenged, which happens on the opponent's turn) | Go Go Tomago - Extreme Tester, Mickey Mouse - Best in Town |
-| `isOpponentGatedDrop` | `OPPONENT_GATED` ("chosen opponent chooses one", "for each opponent who doesn't", "whenever this character is challenged") | Go Go Tomago - Extreme Tester, Shere Khan - Opportunistic Tycoon, This Is Business |
-| burst | `getInkDropGain(card) >= 2` | Baymax - Lab Assistant (2), Higitus Figitus (3), Merlin - Ink Drop Tinkerer (2), Tadashi Hamada - Making Waves (2), This Is Business (2) |
+| Helper | Pattern |
+|--------|---------|
+| `isRepeatingDropMaker` | Judged one ability at a time (`textSections`, where each "•" option of a modal ability is read with the line that offers it): some ability matches `REPEATING_GAIN` (a gain inside "whenever …", "at the end of your turn", or a ⟳ ability) and not `PAID_ACTIVATION_GAIN` (a gain behind an ink-cost activation) |
+| `isLateDropMaker` | Judged one ability at a time: every ability that gets drops matches `LATE_GAIN` (a gain at the end of your turn, or when this character is challenged, which happens on the opponent's turn) |
+| `isOpponentGatedDrop` | `OPPONENT_GATED` ("chosen opponent chooses one", "for each opponent who doesn't", "whenever this character is challenged") |
+| burst | `getInkDropGain(card) >= 2` |
 
 ```regex
 REPEATING_GAIN       = /(?:\bwhenever\b|\bat the end of your turn\b|⟳)[^()]{0,120}?\bgets?\s+\d+\s+ink\s+drops?\b/i
@@ -91,6 +106,17 @@ PAID_ACTIVATION_GAIN = /\d+\s*⬡\s*[—–-][^()]{0,120}?\bgets?\s+\d+\s+ink\s+
 LATE_GAIN            = /(?:\bat the end of your turn\b|\bwhenever this character is challenged\b)[^()]{0,120}?\bgets?\s+\d+\s+ink\s+drops?\b/i
 OPPONENT_GATED       = /\bchosen opponent chooses one\b|\bfor each opponent who doesn't\b|\bwhenever this character is challenged\b/i
 ```
+
+The cards each helper picks out (a burst card shows its gain):
+
+<!-- coverage:start helpers -->
+| Helper | Cards |
+|------|-----|
+| `isRepeatingDropMaker` | Arthur - Jousting Knight, Arthur - Merlin's Assistant, Central Station - Transportation Hub, Fred - Awesome Boss, Go Go Tomago - Extreme Tester, Honey Lemon - Ingenious Researcher, Honey Lemon - Testing the Limits, Inkcaster Skates, Kit Cloudkicker - Sure Shot, Marie - Caught in the Act, Meilin Lee - Ecstatic Fan, Mickey Mouse - Best in Town, Port Authority - Center Hub, Shere Khan - Khan Industries CEO, Sir Pellinore - Tougher Than He Looks |
+| `isLateDropMaker` | Go Go Tomago - Extreme Tester, Mickey Mouse - Best in Town |
+| `isOpponentGatedDrop` | Go Go Tomago - Extreme Tester, Shere Khan - Opportunistic Tycoon, This Is Business |
+| burst | Baymax - Lab Assistant (2), Higitus Figitus (3), Merlin - Ink Drop Tinkerer (2), Tadashi Hamada - Making Waves (2), This Is Business (2) |
+<!-- coverage:end -->
 
 Merlin - Ink Drop Tinkerer counts as a burst although he gets 2 only when Shifted: `getInkDropGain` reads the largest single gain on the card.
 
@@ -115,7 +141,7 @@ Applies the project-wide **5-baseline convention**. For each maker ↔ payoff pa
 |-----------|-------|-------------|-------------|
 | maker ↔ spend rider | **7** | Strong | The maker banks the drop you remove to play the payoff, switching its bonus on |
 | repeating maker ↔ remove trigger | **8** | Strong | Steady drops feed a draw every turn |
-| one-shot maker ↔ remove trigger (card with no spend rider; none today) | **6** | Moderate | The banked drop, once spent, fires the trigger once |
+| one-shot maker ↔ remove trigger (a card with no spend rider) | **6** | Moderate | The banked drop, once spent, fires the trigger once |
 | one-shot maker ↔ hold payoff | **6** | Moderate | The banked drop switches the static bonus on |
 | repeating maker ↔ hold payoff | **7** | Strong | Fresh drops let you spend one and still hold one |
 | one-shot maker ↔ drop sink | **6** | Moderate | The maker's drop becomes a permanent inkwell card |
@@ -152,51 +178,57 @@ Applies the project-wide **5-baseline convention**. For each maker ↔ payoff pa
 
 ### Live distribution
 
-Measured on `origin/master` 7e2ceffe plus the 2026-09-30 evening reveals (44 drop cards, all Set 14). After the engine's ink-compatibility filter (`canShareDeck`, which admits every pair here), **316 unique pairs**:
+<!-- coverage:start distribution -->
+**45 drop cards**. **325 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
-| Pair shape | Pairs | Score |
-|------------|-------|-------|
-| maker ↔ spend rider | 115 | 7 |
-| maker ↔ spend rider, gated | 11 | 6 |
-| repeating maker ↔ remove trigger | 13 | 8 |
-| repeating maker ↔ remove trigger, gated | 1 | 7 |
-| one-shot maker ↔ hold | 57 | 6 |
-| one-shot maker ↔ hold, gated | 6 | 5 |
-| repeating maker ↔ hold | 39 | 7 |
-| repeating maker ↔ hold, gated | 3 | 6 |
-| one-shot maker ↔ sink | 15 | 6 |
-| one-shot maker ↔ sink, gated | 1 | 5 |
-| burst maker ↔ sink | 4 | 7 |
-| burst maker ↔ sink, gated | 1 | 6 |
-| repeating maker ↔ sink | 13 | 8 |
-| repeating maker ↔ sink, gated | 1 | 7 |
-| one-shot maker ↔ gain gate | 19 | 6 |
-| one-shot maker ↔ gain gate, gated | 2 | 5 |
-| repeating maker ↔ gain gate | 12 | 7 |
-| hold ↔ hold | 3 | 6 |
+| Pair shape | Pairs | Score | Share |
+|----------|-----|-----|-----|
+| maker ↔ spend rider | 118 | 7 | 36.3% |
+| maker ↔ spend rider, gated | 11 | 6 | 3.4% |
+| repeating maker ↔ remove trigger | 14 | 8 | 4.3% |
+| repeating maker ↔ remove trigger, gated | 1 | 7 | 0.3% |
+| one-shot maker ↔ hold | 57 | 6 | 17.5% |
+| one-shot maker ↔ hold, gated | 6 | 5 | 1.8% |
+| repeating maker ↔ hold | 42 | 7 | 12.9% |
+| repeating maker ↔ hold, gated | 3 | 6 | 0.9% |
+| one-shot maker ↔ sink | 15 | 6 | 4.6% |
+| one-shot maker ↔ sink, gated | 1 | 5 | 0.3% |
+| burst maker ↔ sink | 4 | 7 | 1.2% |
+| burst maker ↔ sink, gated | 1 | 6 | 0.3% |
+| repeating maker ↔ sink | 14 | 8 | 4.3% |
+| repeating maker ↔ sink, gated | 1 | 7 | 0.3% |
+| one-shot maker ↔ gain gate | 19 | 6 | 5.8% |
+| one-shot maker ↔ gain gate, gated | 2 | 5 | 0.6% |
+| repeating maker ↔ gain gate | 13 | 7 | 4.0% |
+| hold ↔ hold | 3 | 6 | 0.9% |
 
-Totals: **5: 9, 6: 109, 7: 172, 8: 26**. Every drop card gets at least one partner, and for 8 of them (Archimedes - Messenger Owl, Intense Research, Khan Transport Delivery, Molly Cunningham - Remembers to Share, Pushing Boundaries, Sir Kay - Determined to Win, This Is Business, Yama - Notorious Criminal) the Ink Drops group is their only synergy group.
+Totals: **5: 9, 6: 109, 7: 179, 8: 28**. Drop cards with no partner: none. Cards whose only synergy group is Ink Drops: 8 (Archimedes - Messenger Owl, Intense Research, Khan Transport Delivery, Molly Cunningham - Remembers to Share, Pushing Boundaries, Sir Kay - Determined to Win, This Is Business, Yama - Notorious Criminal).
+<!-- coverage:end -->
+
+A shape with no pairs in the pool is left out of the table. A card whose only synergy group is Ink Drops would surface nowhere else on the site without this rule.
 
 ---
 
 ## Coverage
 
-- **35 makers** (Emerald 10, Steel 9, Amethyst 6, Ruby 4, Sapphire 4, Amber 2): A Dark Age No More, Another Tale to Spin, Archimedes - Messenger Owl, Arthur - Jousting Knight, Arthur - Merlin's Assistant, Arthur - Novice Blacksmith, Baymax - Lab Assistant, Blinding Chem Ball, Bobby Zimuruski - Soundboard Whiz, Fred - Awesome Boss, Go Go Tomago - Extreme Tester, Higitus Figitus, Honey Lemon - Ingenious Researcher, Honey Lemon - Testing the Limits, Ink Explosion, Inkcaster Skates, Khan Transport Delivery, Kit Cloudkicker - Irrepressible Bear, Kit Cloudkicker - Sure Shot, Marie - Caught in the Act, Meilin Lee - Ecstatic Fan, Merlin - Bauble Expert, Merlin - Ink Drop Tinkerer, Merlin - Profoundly Curious, Mickey Mouse - Best in Town, Molly Cunningham - Remembers to Share, Port Authority - Center Hub, Prototype Chem Ball, Pushing Boundaries, Shere Khan - Khan Industries CEO, Shere Khan - Opportunistic Tycoon, Sir Pellinore - Tougher Than He Looks, Tadashi Hamada - Making Waves, This Is Business, Yama - Notorious Criminal
-- **9 payoffs** (Sapphire 3, Steel 3, Amethyst 2, Ruby 1): **spend** Intense Research, Jousting Match, Wasabi - Future Thinker, Madam Mim - Resourceful Trickster (also the only remove trigger); **hold** Sir Kay - Determined to Win, Wasabi - Called into Battle, Madam Mim - Bauble Chaser; **sink** Baymax - Amped Up; **gain gate** Baloo - Delivery Pilot
+<!-- coverage:start coverage -->
+- **36 makers** (Emerald 10, Steel 10, Amethyst 6, Ruby 4, Sapphire 4, Amber 2): A Dark Age No More, Another Tale to Spin, Archimedes - Messenger Owl, Arthur - Jousting Knight, Arthur - Merlin's Assistant, Arthur - Novice Blacksmith, Baymax - Lab Assistant, Blinding Chem Ball, Bobby Zimuruski - Soundboard Whiz, Central Station - Transportation Hub, Fred - Awesome Boss, Go Go Tomago - Extreme Tester, Higitus Figitus, Honey Lemon - Ingenious Researcher, Honey Lemon - Testing the Limits, Ink Explosion, Inkcaster Skates, Khan Transport Delivery, Kit Cloudkicker - Irrepressible Bear, Kit Cloudkicker - Sure Shot, Marie - Caught in the Act, Meilin Lee - Ecstatic Fan, Merlin - Bauble Expert, Merlin - Ink Drop Tinkerer, Merlin - Profoundly Curious, Mickey Mouse - Best in Town, Molly Cunningham - Remembers to Share, Port Authority - Center Hub, Prototype Chem Ball, Pushing Boundaries, Shere Khan - Khan Industries CEO, Shere Khan - Opportunistic Tycoon, Sir Pellinore - Tougher Than He Looks, Tadashi Hamada - Making Waves, This Is Business, Yama - Notorious Criminal
+- **9 payoffs** (Sapphire 3, Steel 3, Amethyst 2, Ruby 1): **spend** Intense Research, Jousting Match, Madam Mim - Resourceful Trickster, Wasabi - Future Thinker; **remove trigger** Madam Mim - Resourceful Trickster; **hold** Madam Mim - Bauble Chaser, Sir Kay - Determined to Win, Wasabi - Called into Battle; **sink** Baymax - Amped Up; **gain gate** Baloo - Delivery Pilot
 - **6 shared makers** (Emerald 4, Amber 2): Another Tale to Spin, Kit Cloudkicker - Irrepressible Bear, Mickey Mouse - Best in Town, Molly Cunningham - Remembers to Share, Port Authority - Center Hub, This Is Business
 
 ```chart
 {
   "type": "doughnut",
-  "title": "Role Composition (44 cards)",
+  "title": "Role composition (45 cards)",
   "data": {
-    "labels": ["Makers (35)", "Spend payoffs (4)", "Hold payoffs (3)", "Sink (1)", "Gain gate (1)"],
-    "values": [35, 4, 3, 1, 1]
+    "labels": ["Makers (36)", "Spend payoffs (4)", "Hold payoffs (3)", "Sink payoffs (1)", "Gain gate payoffs (1)"],
+    "values": [36, 4, 3, 1, 1]
   }
 }
 ```
+<!-- coverage:end -->
 
-Set 14 is still being revealed; re-derive these lists from the engine (`getInkDropRoles` over allCards + previewCards) rather than editing them by hand.
+A payoff with two shapes is listed under both, and the chart files it under the first.
 
 ---
 
@@ -250,7 +282,7 @@ Unit and rule tests live in `packages/synergy-engine/src/__tests__/inkDrops.test
 
 ### Why a standalone playstyle and not part of Ramp?
 
-Drops are temporary ink, not inkwell growth: they never fire inkwell triggers (except through Baymax - Amped Up's conversion), and a Ramp fold would have scored every drop card at 5 against every Ramp card. The designer framed Set 14 around this one mechanic, the payoff side has three distinct shapes plus a conversion card, and players browsing the set want one page that separates the cards that make drops from the cards that use them.
+Drops are temporary ink, not inkwell growth: they never fire inkwell triggers (except through Baymax - Amped Up's conversion), and a Ramp fold would have scored every drop card at 5 against every Ramp card. The designer framed Set 14 around this one mechanic, the payoff side has four distinct shapes plus a conversion card, and players browsing the set want one page that separates the cards that make drops from the cards that use them.
 
 ### Why 7 for spend riders and 8 only for steady makers?
 

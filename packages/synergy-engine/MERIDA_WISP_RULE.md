@@ -49,7 +49,7 @@ Selecting **Merida - Wisp Conjurer** surfaces (top of the list):
 /whenever another character of yours enters play exerted/i
 ```
 
-Against the current pool this matches exactly one card (Merida - Wisp Conjurer, 13050).
+Coverage lists the cards it matches.
 
 ### Enabler Detection & Tiers
 
@@ -97,27 +97,38 @@ Score is set purely by the enabler tier — how much exerted-entry pressure it g
 
 ## Coverage
 
-Based on the current Core + Set 13 preview pool:
-- **1 anchor** (Merida - Wisp Conjurer, 13050)
-- **60 raw enablers**: **3 engine** (The Horned King 13022, Simba 2209, Powhatan's Staff 13036 [item]), **2 reanimator** (Lilo 1201, Stitch 1830), **55 self-only** bodies
-- **55 deck-compatible** with Amethyst Merida (all 5 engine/reanimator + 50 of 55 self-only; 5 dual-ink bodies lack Amethyst)
+<!-- coverage:start coverage -->
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
 
-Merida's synergy page score distribution (after the ink filter): **50 × 5 / 2 × 7 / 3 × 8**. The self-only pool is Bodyguard-heavy — Amber (23) and Steel (20) dominate, matching the Bodyguard tribes.
+- **1 anchor**: Merida - Wisp Conjurer
+- **36 raw enablers**; **36 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`)
+- Self-only enablers per ink: Amber 16, Steel 12, Emerald 2, Amethyst 1, Sapphire 1
+
+| Tier | Raw enablers | Deck-compatible | Score |
+|----|------------|---------------|-----|
+| engine | 4 (Powhatan's Staff, Remember Me, Simba - King in the Making, The Horned King - Merciless Master) | 4 | 8 |
+| reanimator | 0 | 0 | none |
+| self | 32 | 32 | 5 |
 
 ```chart
 {
   "type": "bar",
-  "title": "Merida BECKON — Enabler tiers (60 raw enablers)",
+  "title": "Enabler tiers (36 raw enablers)",
   "data": {
-    "labels": ["engine (score 8)", "reanimator (score 7)", "self-only (score 5)"],
-    "datasets": [{
-      "label": "Enablers",
-      "data": [3, 2, 55],
-      "backgroundColor": ["#d4af37", "#6ee7a0", "#60b5f5"]
-    }]
+    "labels": ["engine", "reanimator", "self"],
+    "datasets": [
+      {
+        "label": "Enablers",
+        "data": [4, 0, 32],
+        "backgroundColor": ["#6ee7a0", "#60b5f5", "#60b5f5"]
+      }
+    ]
   }
 }
 ```
+<!-- coverage:end -->
+
+The self-only pool is Bodyguard-heavy, so its ink spread follows the Bodyguard inks.
 
 ---
 
@@ -142,7 +153,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 
 ### Why a Single-Anchor Direct Rule?
 
-Only one card in the pool has BECKON, and the synergy is entirely about *building around it*. Modeling it as a direct rule (not a playstyle) keeps it pair-specific — there is no "exerted-entry density", you either run Merida or you don't. The reverse direction exists so browsing a Bodyguard body or a reanimator surfaces Merida as the build-around payoff.
+The rule was built around one card with BECKON, and the synergy is entirely about *building around it*. Modeling it as a direct rule (not a playstyle) keeps it pair-specific — there is no "exerted-entry density", you either run Merida or you don't. The reverse direction exists so browsing a Bodyguard body or a reanimator surfaces Merida as the build-around payoff.
 
 ### Why Score by Tier Instead of a Flat Number?
 

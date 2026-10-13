@@ -15,7 +15,8 @@ A card is a **payoff** if `buff` or `trigger` matches (multi-role allowed; The V
 
 ## Payoff-anchored
 `findSynergies` skips member-member pairs, so two plain Floodborn never synergize. This
-avoids ~6,400 density-5 pairs that would tag every shifted card in the game.
+avoids a density-5 pair between every two Floodborn characters that could share a deck, which
+would tag every shifted card in the game; Coverage counts the pairs it skips.
 
 ## Card examples by role
 
@@ -40,5 +41,24 @@ Floodborn banish-triggers (Maid Marian, The Vine) are also detected by the Sacri
 rule's `banish-trigger`. Expected composition, not a bug.
 
 ## Coverage
-12 payoffs (7 buff + 6 trigger, The Vine in both) against 122 Floodborn in the merged
-preview pool, plus the payoff-vs-payoff pairs. All synergies score 6 or 7.
+Every pair is a payoff with a Floodborn character or with another payoff, so every score is 6
+or 7.
+
+<!-- coverage:start coverage -->
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+
+| Role | Cards | Cards per ink |
+|----|-----|-------------|
+| member | 62 | Amethyst 12, Emerald 11, Steel 11, Ruby 10, Amber 9, Sapphire 9 |
+| buff | 11 | Steel 4, Amethyst 3, Ruby 2, Amber 1, Sapphire 1 |
+| trigger | 10 | Steel 4, Amethyst 3, Amber 1, Emerald 1, Sapphire 1 |
+
+Payoffs (`buff` or `trigger`): 19. Floodborn characters with no payoff role: 48. Payoff anchoring skips the 1,128 pairs among them that could share a deck.
+
+**1,083 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+
+| Score | Pairs | Share |
+|-----|-----|-----|
+| 7 | 651 | 60.1% |
+| 6 | 432 | 39.9% |
+<!-- coverage:end -->

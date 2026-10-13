@@ -44,41 +44,47 @@ Buff scores 6 (a static stat grant) while trigger scores 7 (a repeating engine) 
 
 ## Coverage (live pair counts)
 
-Regenerated when the Villain tribe was added, from the live engine over the Core pool (sets 9-13 plus the Set 14 preview). Counts go through `SynergyEngine.findSynergies`, so pairs `canShareDeck` rules out (incompatible dual-ink cards) are excluded, matching the precomputed JSON. The design notes below keep the counts from when the tribes were built.
+<!-- coverage:start coverage -->
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
 
 | Tribe | Members | Payoff cards | Unique pairs | Score dist (6 / 7 / 8) |
-|-------|---------|--------------|--------------|------------------------|
+|-----|-------|------------|------------|----------------------|
 | Monsters | 15 | 1 | 15 | 15 / 0 / 0 |
 | Princesses | 74 | 10 | 735 | 552 / 28 / 155 |
-| Heroes | 338 | 13 | 4,284 | 3,561 / 723 / 0 |
+| Heroes | 338 | 13 | 4,285 | 3,561 / 724 / 0 |
 | Supers | 57 | 7 | 374 | 202 / 116 / 56 |
 | Royalty | 84 | 3 | 242 | 239 / 3 / 0 |
 | Detectives | 39 | 11 | 392 | 275 / 76 / 41 |
 | Gargoyles | 16 | 4 | 54 | 36 / 18 / 0 |
 | Madrigals | 26 | 3 | 74 | 71 / 3 / 0 |
 | Villains | 124 | 2 | 246 | 245 / 1 / 0 |
+<!-- coverage:end -->
+
+Members are the characters with the tribe's classification. Payoff cards are the cards holding any other role, members or not. Unique pairs count each pair once, after the engine's ink-compatibility filter (`canShareDeck`), including any pair both its cards' pages hide past the engine's 100-partner display cap (`maxResultsPerGroup`).
 
 ## Design notes
 
+The counts in these notes are from when each tribe was built, kept as the record of what each decision weighed. Coverage has today's.
+
 - **The five were built together on an explicit "all five" decision** after the payoff-pool counts were in hand. Two carry known trade-offs the user accepted:
-  - **Monsters** has a single payoff card (`Red Alert`), so its page is a thin 15-pair fan rather than a real archetype.
-  - **Heroes** has a real Set-12 payoff pool but ~495 members (being a Hero is near-universal among protagonists), so it contributes ~72% of the new pairs, mostly score-6 density. High volume, low per-pair signal.
+  - **Monsters** had a single payoff card (`Red Alert`), so its page was a thin 15-pair fan rather than a real archetype.
+  - **Heroes** had a real Set-12 payoff pool but ~495 members (being a Hero is near-universal among protagonists), so it contributed ~72% of the new pairs, mostly score-6 density. High volume, low per-pair signal.
   - Princesses, Supers, and Royalty are the coherent, well-shaped archetypes.
-  - **Detectives** (Set 10 Zootopia / Great Mouse Detective) is a clean, well-shaped archetype: 39 members, 9 pattern-caught payoffs, all concentrated in Set 10 and Sapphire/Steel-heavy. Every emitted pair scores 6-8 (zero density floor). **Two real payoffs are missed** by the shared patterns and are accepted gaps: `Nick Wilde - Persistent Investigator` (2376) triggers on a Detective *banish*, not quest/challenge/play (cross-covered by Sacrifice's `banish-trigger`); `Fangmeyer - Icy Officer` (2473) is discard-*recursion* ("return a Detective character card from your discard"), which the deck-search pattern does not cover (cross-covered by Self-Discard's `reanimator`). A third — `Flash - Records Specialist` (2203, "give chosen Detective character +2") — was recovered by extending the shared single-target `buff` clause to accept a give-form `+N` stat buff (`chosen X character … +\d`); measured against all six tribes, the broadening tagged **only** Flash (zero collateral).
-- **Gargoyles** (Sets 10-11 plus four Amethyst Set 14 preview cards) is a small, coherent clan: 16 members and 4 payoffs, every payoff itself a Gargoyle. No action or item names the tribe yet; the shared patterns never require a payoff to be a character, so one printed later is picked up with no change. 14 of the 16 members carry **Stone by Day** ("if you have 3 or more cards in your hand, this character can't ready"), which is what makes Angela the clan's key card:
+  - **Detectives** (Set 10 Zootopia / Great Mouse Detective) was built as a clean, well-shaped archetype: 39 members and 9 pattern-caught payoffs at the time, all concentrated in Set 10 and Sapphire/Steel-heavy. Every emitted pair scores 6-8 (zero density floor). **Two real payoffs are missed** by the shared patterns and are accepted gaps: `Nick Wilde - Persistent Investigator` (2376) triggers on a Detective *banish*, not quest/challenge/play (cross-covered by Sacrifice's `banish-trigger`); `Fangmeyer - Icy Officer` (2473) is discard-*recursion* ("return a Detective character card from your discard"), which the deck-search pattern does not cover (cross-covered by Self-Discard's `reanimator`). A third — `Flash - Records Specialist` (2203, "give chosen Detective character +2") — was recovered by extending the shared single-target `buff` clause to accept a give-form `+N` stat buff (`chosen X character … +\d`); measured against all six tribes, the broadening tagged **only** Flash (zero collateral).
+- **Gargoyles** (Sets 10-11 plus four Amethyst Set 14 preview cards) is a small, coherent clan: 16 members and 4 payoffs when it was built, every payoff itself a Gargoyle. No action or item names the tribe yet; the shared patterns never require a payoff to be a character, so one printed later is picked up with no change. 14 of those 16 members carried **Stone by Day** ("if you have 3 or more cards in your hand, this character can't ready"), which is what makes Angela the clan's key card:
   - `Goliath - Guardian of Castle Wyvern` (2308): `trigger` (gain 1 lore whenever one of your Gargoyles challenges).
   - `Demona - Imperious Spellcaster` (14056): single-target `buff` (chosen Gargoyle gains Rush and Evasive).
   - `Angela - Night Warrior` (2650): team `buff` via the `lose` verb, added to the shared team-buff clause for this tribe. Measured against the six existing tribes, `your X characters lose` tags **zero** other cards.
   - `Coldstone - Reincarnated Cyborg` (2240): `in-play-check`, through the shared `if you have N or more … X` clause, although his condition counts Gargoyle cards in your **discard**, not in play. The pairing holds (every Gargoyle feeds the count once it hits the discard), but the shared explanation text still reads "have a Gargoyle in play". Accepted rather than forking the shared template.
   - Out of scope: the hand-size side of Stone by Day (discard outlets and Goliath - Clan Leader's "discard down to 2") is a mechanic axis, not tribal membership. Self-Discard scores it as its small-hand payoff.
-- **Madrigals** (the Encanto family; 17 of 26 members are Set 12, split Amber 10 / Amethyst 10 / Sapphire 6) is a pure drop-in: the shared patterns already catch all three payoffs, so no pattern changed. Every payoff is an `in-play-check` on "another Madrigal" / "a Madrigal character in play":
+- **Madrigals** (the Encanto family; when it was built, 17 of its 26 members were Set 12, split Amber 10 / Amethyst 10 / Sapphire 6) is a pure drop-in: the shared patterns already catch all three payoffs, so no pattern changed. Every payoff is an `in-play-check` on "another Madrigal" / "a Madrigal character in play":
   - `Pedro Madrigal - Family Patriarch` (2720) and `Alma Madrigal - Leading the Way` (2751): one-shot on-play checks on 2-cost members.
   - `Julieta's Arepas` (2881): the only repeating payoff (heals each turn while you have a Madrigal in play), already a Healing and Items card.
-  - Scores are flat (71 at 6, 3 payoff-payoff pairs at 7, nothing at 8) and the payoffs sit one per ink, so a two-ink deck holds at most two. The tribe adds family-gate pairs on top of Healing rather than a new deck: 52 of its 74 pairs were new to the index. `The Madrigal Family - Every Generation`'s "Madrigal Shift" stays with Shift Targets, and "named X Madrigal" Shift references are name reads, not payoffs.
-- **Villains** is the widest tribe after Heroes (124 members across every ink and every Core set: Ruby 30, Amethyst 27, Emerald 23, Sapphire 19, Steel 18, Amber 7) with the thinnest payoff side after Monsters, two cards. Both are caught by the shared patterns, so no pattern changed:
+  - Scores were flat (71 at 6, 3 payoff-payoff pairs at 7, nothing at 8) and the payoffs sit one per ink, so a two-ink deck holds at most two. The tribe adds family-gate pairs on top of Healing rather than a new deck: 52 of its 74 pairs were new to the index. `The Madrigal Family - Every Generation`'s "Madrigal Shift" stays with Shift Targets, and "named X Madrigal" Shift references are name reads, not payoffs.
+- **Villains** was built as the widest tribe after Heroes (124 members across every ink and every Core set: Ruby 30, Amethyst 27, Emerald 23, Sapphire 19, Steel 18, Amber 7) with the thinnest payoff side after Monsters, two cards. Both are caught by the shared patterns, so no pattern changed:
   - `Queen of Hearts - Wonderland Empress` (1959, Amber): team `buff` (your other Villain characters get +1 lore whenever she quests). The only payoff that is a Villain herself.
   - `Diablo - Stone Servant` (2911, Steel): `in-play-check` (+2 strength and +1 lore while you have a Villain in play) and team `buff` (your Villain characters can't be challenged while he is exerted). Not a Villain himself.
-  - Scores are flat (245 at 6, the one Queen of Hearts ↔ Diablo pair at 7, nothing at 8), and 243 of the 246 pairs were new to the index. Like Monsters, the page is a member fan around two payoffs more than a full archetype, and it fills in as payoffs are printed.
+  - Scores were flat (245 at 6, the one Queen of Hearts ↔ Diablo pair at 7, nothing at 8), and 243 of the 246 pairs were new to the index. Like Monsters, the page is a member fan around two payoffs more than a full archetype, and it fills in as payoffs are printed.
   - Out of scope: the other cards that name Villains are Hero-side hate aimed at opposing Villains (`Little John - Sir Reginald`, `Mr. Incredible - Taking Out the Trash`, `Darkwing Duck - Cool Under Pressure`, `Darkwing Tower - Icy Headquarters`), and `The Thunderquack` gives every opposing character the Villain classification to switch that hate on. None of them rewards running Villains, so none is a payoff.
 - **Shared role ids, no new tiles.** All five roles (`member` / `buff` / `trigger` / `search` / `in-play-check`) already existed in the mechanics catalog (Location / Floodborn / Hunny), so no new `STRUCTURAL_MECHANICS` labels were needed. `TribalRole` is added to `StructuralRoleId` purely as a compile-time guardrail for any future role.
 - **Cross-rule overlap is expected composition.** A Floodborn Prince, a Hero Prince, and a Princess buff can each surface the same card in multiple tribal groups.

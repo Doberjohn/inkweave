@@ -16,7 +16,7 @@ Detailed documentation for the Free Play rule, a direct synergy built around anc
 
 A free cost-1 body is a real tempo swing (a card played and a body deployed for zero ink), and it is a genuine two-for-one when that body also carries a "when you play this character" effect, since playing it for free still triggers the effect. The rule therefore pairs the anchor with **every cost-1 character**, scoring the on-play bodies above the vanilla ones.
 
-Detection keys on the **ability text**, not a card id, so any card with the same wording joins the rule automatically. In the current Core pool that is **two** cards:
+Detection keys on the **ability text**, not a card id, so any card with the same wording joins the rule automatically. It was built around these two (Coverage lists every anchor in the pool):
 
 | Anchor | Ink | Ability | Trigger |
 |--------|-----|---------|---------|
@@ -44,11 +44,11 @@ Both directions produce identical scores for the same pair; the explanation toke
 /play a character with cost 1 for free/i
 ```
 
-Matching on wording rather than a card id means reprints or new "cost 1 for free" cards join the rule with no code change. Against the current Core pool it matches Pocahontas - Guiding the Tribe and Pocahontas & Meeko.
+Matching on wording rather than a card id means reprints or new "cost 1 for free" cards join the rule with no code change. Coverage lists the cards it matches.
 
 ### Payoff Detection
 
-`isFreePlayPayoff(card)` requires `isCharacter(card) && card.cost === 1`. Only characters qualify (the ability plays a character), and only cost-1 (the ability's exact threshold). There is **no quality floor**: unlike Spike Suit's 637-candidate pool, the 77 cost-1 characters are a manageable set and every one is a legitimate free-play target.
+`isFreePlayPayoff(card)` requires `isCharacter(card) && card.cost === 1`. Only characters qualify (the ability plays a character), and only cost-1 (the ability's exact threshold). There is **no quality floor**: unlike Spike Suit's literal reading, which matches hundreds of characters, the cost-1 characters are a manageable set and every one is a legitimate free-play target.
 
 ### On-Play Detection
 
@@ -56,7 +56,7 @@ Matching on wording rather than a card id means reprints or new "cost 1 for free
 
 ### Ink Compatibility
 
-Handled centrally by the engine (`canShareDeck`) before rules run, so the rule does no ink filtering. Mono-Amber Pocahontas pairs with every mono-ink cost-1 and any dual-ink cost-1 containing Amber (all 77 qualify). Dual-ink Pocahontas & Meeko (Amber-Amethyst) pairs only with cost-1s that fit an Amber-Amethyst deck (27).
+Handled centrally by the engine (`canShareDeck`) before rules run, so the rule does no ink filtering. Mono-Amber Pocahontas pairs with every mono-ink cost-1 and any dual-ink cost-1 containing Amber. Dual-ink Pocahontas & Meeko (Amber-Amethyst) pairs only with cost-1s that fit an Amber-Amethyst deck. Coverage counts each anchor's payoffs.
 
 ---
 
@@ -88,16 +88,19 @@ Grading the on-play bodies further (8 vs 9) was rejected: the effects are not un
 
 ## Coverage
 
-Based on the current Core format card pool:
+<!-- coverage:start coverage -->
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
 
-- **2 anchors** (Pocahontas - Guiding the Tribe, Pocahontas & Meeko - Adventurous Friends)
-- **77 deck-compatible payoffs** for Pocahontas: tier split **67 Moderate / 10 Strong**, across all six inks (Emerald 18, Amethyst 14, Amber 13, Sapphire 12, Ruby 11, Steel 9)
-- **27 deck-compatible payoffs** for Pocahontas & Meeko: tier split **24 Moderate / 3 Strong** (Amethyst 14, Amber 13)
-- **104 free-play pairs** total (bidirectional)
+- **2 anchors**: Pocahontas - Guiding the Tribe, Pocahontas & Meeko - Adventurous Friends
+- **135 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`)
 
-The 10 cost-1 characters that reach the Strong tier (an on-play effect the free play triggers) are: Bobby Zimuruski, Carl Fredricksen - Loving Husband, Copper - Hound Pup, Finnick - Tiny Terror, Flit - Reflective Hummingbird, Gantu, Jasmine - Heir of Agrabah, Julieta Madrigal, Mike Wazowski, and Webby Vanderquack.
+| Anchor | Ink | Deck-compatible payoffs | Pairs per score | Payoffs per ink |
+|------|---|-----------------------|---------------|---------------|
+| Pocahontas - Guiding the Tribe | Amber | 98 | 6: 85, 8: 13 | Emerald 20, Amethyst 19, Amber 18, Ruby 14, Sapphire 14, Steel 13 |
+| Pocahontas & Meeko - Adventurous Friends | Amber-Amethyst | 37 | 6: 33, 8: 4 | Amethyst 19, Amber 18 |
 
-Coverage numbers are derived from the live engine (`pnpm precompute-synergies`), not hand-typed, so they refresh with each Core rotation.
+The 13 cost-1 characters that score 8, for an on-play effect the free play also triggers: Berlioz - Tiny Rascal, Bobby Zimuruski - Spray Cheese Kid, Carl Fredricksen - Loving Husband, Copper - Hound Pup, Finnick - Tiny Terror, Flit - Reflective Hummingbird, Gantu - Hamsterviel's Accomplice, Hector Rivera - Street Musician, Jasmine - Heir of Agrabah, Judy Hopps - Helpful Officer, Julieta Madrigal - Caring Baker, Mike Wazowski - Well-Rounded Entertainer, Webby Vanderquack - Mystery Enthusiast.
+<!-- coverage:end -->
 
 ---
 
@@ -130,8 +133,8 @@ Id-locking to Pocahontas would have missed Pocahontas & Meeko, whose WELCOME RET
 
 ### Why No Quality Floor?
 
-Spike Suit floors at gap 3 because its literal reading yields 637 matches. The free-play payoff pool is 77 cost-1 characters, all genuine free-play targets, so a floor would only hide legitimate tempo plays.
+Spike Suit floors at gap 3 because its literal reading matches hundreds of characters. The free-play payoff pool is only the cost-1 characters, all genuine free-play targets, so a floor would only hide legitimate tempo plays.
 
 ### Why Reject a Generalized "Free Play" Rule?
 
-The wider "play a character for free" family is heterogeneous (Duke Weaselton cost ≤ 2, Mystical Inkcaster cost ≤ 5, Mickey Trumpeter *any* cost). A generalized rule would pair Mickey with all ~850 characters, a meaningless pool explosion. The hard `cost === 1` filter is what keeps this rule honest.
+The wider "play a character for free" family is heterogeneous (Duke Weaselton cost ≤ 2, Mystical Inkcaster cost ≤ 5, Mickey Trumpeter *any* cost). A generalized rule would pair Mickey with every character in the pool, a meaningless pool explosion. The hard `cost === 1` filter is what keeps this rule honest.

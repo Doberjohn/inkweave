@@ -52,7 +52,7 @@ Some characters have no Singer keyword but gain one on themselves from ability t
 - Scanned over each ability's `effect`/`fullText` and then the card's own `fullText`. The card text matters because reveal-form preview cards carry only keyword-type abilities, so their named-ability text lives solely in `fullText`.
 - A native Singer keyword always wins; the conditional value is added only when none exists.
 
-Current pool: **Mickey Mouse - Amber Champion** ("While you have 2 or more other Amber characters in play, this character gains Singer 8") and **Miguel Rivera - Street Musician** ("While you have a song card in your discard, this character gets +1 ◊ and gains Singer 3"). Both then flow through the standard detection, cost gate and score table below; the synthesized keyword also shows as a plain Singer chip in the web UI and under its Keyword filter, the trade-off already accepted for conditional Shift.
+For example **Mickey Mouse - Amber Champion** ("While you have 2 or more other Amber characters in play, this character gains Singer 8") and **Miguel Rivera - Street Musician** ("While you have a song card in your discard, this character gets +1 ◊ and gains Singer 3"); Coverage names every conditional Singer in the pool. They then flow through the standard detection, cost gate and score table below; the synthesized keyword also shows as a plain Singer chip in the web UI and under its Keyword filter, the trade-off already accepted for conditional Shift.
 
 ### Song Detection
 
@@ -81,20 +81,26 @@ Score is based on **threshold utilization** — how efficiently the Singer's cap
 | 2 | **6** | Moderate | Good savings, slight inefficiency |
 | 3+ | **5** | Moderate | Functional but the Singer could do better |
 
+<!-- coverage:start scores -->
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+
 ```chart
 {
   "type": "bar",
-  "title": "Threshold Utilization — Score Distribution (897 unique pairs)",
+  "title": "Score distribution (1,615 unique pairs)",
   "data": {
-    "labels": ["Score 5 — Functional (diff 3+)", "Score 6 — Good (diff 2)", "Score 7 — Near-perfect (diff 1)", "Score 8 — Perfect fit (diff 0)"],
-    "datasets": [{
-      "label": "Pairs",
-      "data": [344, 192, 205, 156],
-      "backgroundColor": ["#60b5f5", "#60b5f5", "#6ee7a0", "#6ee7a0"]
-    }]
+    "labels": ["5", "6", "7", "8"],
+    "datasets": [
+      {
+        "label": "Pairs",
+        "data": [651, 350, 345, 269],
+        "backgroundColor": ["#60b5f5", "#60b5f5", "#6ee7a0", "#6ee7a0"]
+      }
+    ]
   }
 }
 ```
+<!-- coverage:end -->
 
 ### Why Not Higher Than 8?
 
@@ -116,32 +122,24 @@ Example: "Powerline - World's Greatest Rock Star (Singer 9) can sing Be Our Gues
 
 ## Coverage
 
-Generated from the live engine over the current Core pool (sets 9-13 plus the Set 14 preview):
-- **18 Singers** (16 native keywords + 2 conditional; Amber 13, Ruby 5)
-- **66 Songs** (distributed across all inks)
-- **897 unique pairs** after cost gating: 156 at 8, 205 at 7, 192 at 6, 344 at 5
+<!-- coverage:start coverage -->
+- **27 Singers** (Amber 16, Ruby 11), 2 of them conditional: Mickey Mouse - Amber Champion, Miguel Rivera - Street Musician
+- **78 Songs** (Amber 20, Emerald 13, Ruby 13, Amethyst 12, Steel 11, Sapphire 9)
+- **1,615 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`), scored as the chart under Score Table shows
 
 ```chart
 {
   "type": "doughnut",
-  "title": "Card Pool: Singers vs Songs (84 cards)",
+  "title": "Cards by number of partners (103 cards)",
   "data": {
-    "labels": ["Songs (66)", "Singers (18)"],
-    "values": [66, 18]
+    "labels": ["1-4 partners (5)", "5-9 partners (8)", "15+ partners (90)"],
+    "values": [5, 8, 90]
   }
 }
 ```
+<!-- coverage:end -->
 
-```chart
-{
-  "type": "doughnut",
-  "title": "Group Sizes: Matches per Card (82 participating)",
-  "data": {
-    "labels": ["15+ matches (64.6%)", "10-14 matches (23.2%)", "1-4 matches (7.3%)", "5-9 matches (4.9%)"],
-    "values": [53, 19, 6, 4]
-  }
-}
-```
+A conditional Singer's keyword comes from its ability text (see Conditional Singer), not from the card data.
 
 ---
 

@@ -49,7 +49,7 @@ Selecting **Dale - Ready for His Shot** finds (top of the list):
 /deal damage with their .* instead of their/i
 ```
 
-This matches Dale's Spike Suit wording (the `.*` spans the ⛉/¤ glyphs without depending on their exact codepoints). Detecting on the **ability text rather than a card id** means any future reprint or new card with the same effect joins the rule automatically. Against the current Core pool the pattern matches exactly one card (Dale).
+This matches Dale's Spike Suit wording (the `.*` spans the ⛉/¤ glyphs without depending on their exact codepoints). Detecting on the **ability text rather than a card id** means any future reprint or new card with the same effect joins the rule automatically. Coverage lists the cards it matches.
 
 ### Payoff Detection
 
@@ -61,11 +61,17 @@ This matches Dale's Spike Suit wording (the `.*` spans the ⛉/¤ glyphs without
 
 ### The gap ≥ 3 Floor
 
-`SPIKE_SUIT_FLOOR = 3`. Below +3 the bonus is marginal (a 2/3 hitting for 3 instead of 2) and the candidate pool balloons — **637** characters have *any* willpower lead, **265** of them only +1. Flooring at +3 keeps every surfaced match a genuine upgrade and avoids polluting hundreds of character pages with a trivial Dale entry in the reverse direction. The floor leaves **204** deck-compatible payoffs.
+`SPIKE_SUIT_FLOOR = 3`. Below +3 the bonus is marginal (a 2/3 hitting for 3 instead of 2) and the candidate pool balloons. Flooring at +3 keeps every surfaced match a genuine upgrade and avoids polluting hundreds of character pages with a trivial Dale entry in the reverse direction.
+
+<!-- coverage:start floor -->
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+
+**460 characters** have any willpower lead, **204** of them only +1. The +3 floor keeps **125**, and **124** of those can share a deck with an anchor.
+<!-- coverage:end -->
 
 ### Ink Compatibility
 
-Handled centrally by the engine (`canShareDeck`) before rules run, so the rule itself does no ink filtering. Dale is single-ink Amber, so he pairs with every single-ink card and any dual-ink card containing Amber (204 of the 217 raw gap-≥3 payoffs).
+Handled centrally by the engine (`canShareDeck`) before rules run, so the rule itself does no ink filtering. Dale is single-ink Amber, so he pairs with every single-ink card and any dual-ink card containing Amber; the floor counts above show how many gap-≥3 characters that keeps.
 
 ---
 
@@ -92,22 +98,28 @@ The `+3` offset lifts the weakest qualifying pair (gap 3) to **6** — the botto
 | 3/10 | 7 | no | **10** | Perfect |
 | 0/8 | 8 | yes | **10** (capped) | Perfect |
 
+<!-- coverage:start scores -->
 ```chart
 {
   "type": "bar",
-  "title": "Spike Suit — Score Distribution (204 deck-compatible payoffs)",
+  "title": "Score distribution (124 unique pairs)",
   "data": {
-    "labels": ["Score 6 — Moderate (gap 3)", "Score 7 — Strong", "Score 8 — Strong", "Score 9 — Strong", "Score 10 — Perfect"],
-    "datasets": [{
-      "label": "Payoffs",
-      "data": [108, 41, 38, 10, 7],
-      "backgroundColor": ["#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#d4af37"]
-    }]
+    "labels": ["6", "7", "8", "9", "10"],
+    "datasets": [
+      {
+        "label": "Pairs",
+        "data": [75, 21, 20, 5, 3],
+        "backgroundColor": ["#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#fbbf24"]
+      }
+    ]
   }
 }
 ```
 
-Tier split: **0 Weak / 108 Moderate / 89 Strong / 7 Perfect**. Only the genuine monsters (0/7+, 3/10, 0/8) reach Perfect; the bulk are the solid +3/+4 bodies in Moderate–Strong.
+Tier split: **0 Weak / 75 Moderate / 46 Strong / 3 Perfect**.
+<!-- coverage:end -->
+
+Only the biggest gaps and walls reach Perfect; the bulk are solid +3 and +4 bodies in Moderate and Strong.
 
 ### Explanation Template
 
@@ -121,24 +133,24 @@ Tier split: **0 Weak / 108 Moderate / 89 Strong / 7 Perfect**. Only the genuine 
 
 ## Coverage
 
-Based on the current Core format card pool:
-- **1 anchor** (Dale - Ready for His Shot)
-- **204 deck-compatible payoffs** (characters with willpower − strength ≥ 3 that can share an Amber deck)
-- **40** of those payoffs are strength-0 walls (the highest-impact pairings)
-
-Dale's own synergy page is capped at the engine's `maxResultsPerGroup` (100), sorted by score; the reverse direction adds a single Dale entry to each of the 204 payoff pages.
+<!-- coverage:start coverage -->
+- **1 anchor**: Dale - Ready for His Shot
+- **124 deck-compatible payoffs**; **124 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`)
+- **23** of the payoffs are strength-0 walls, the highest-impact pairings
 
 ```chart
 {
   "type": "bar",
-  "title": "Payoff Gap Distribution (204 cards)",
+  "title": "Payoff gap distribution (124 cards)",
   "data": {
-    "labels": ["+3", "+4", "+5", "+6", "+7", "+8"],
-    "datasets": [{
-      "label": "Payoffs",
-      "data": [117, 52, 23, 8, 3, 1],
-      "backgroundColor": "#60b5f5"
-    }]
+    "labels": ["+3", "+4", "+5", "+6", "+7"],
+    "datasets": [
+      {
+        "label": "Payoffs",
+        "data": [84, 21, 14, 4, 1],
+        "backgroundColor": ["#60b5f5", "#60b5f5", "#60b5f5", "#60b5f5", "#60b5f5"]
+      }
+    ]
   }
 }
 ```
@@ -146,13 +158,16 @@ Dale's own synergy page is capped at the engine's `maxResultsPerGroup` (100), so
 ```chart
 {
   "type": "doughnut",
-  "title": "Payoff Primary-Ink Spread (204 cards)",
+  "title": "Payoffs by primary ink (124 cards)",
   "data": {
-    "labels": ["Amber (66)", "Sapphire (37)", "Amethyst (33)", "Steel (32)", "Emerald (21)", "Ruby (15)"],
-    "values": [66, 37, 33, 32, 21, 15]
+    "labels": ["Amber (42)", "Sapphire (26)", "Amethyst (18)", "Steel (17)", "Emerald (13)", "Ruby (8)"],
+    "values": [42, 26, 18, 17, 13, 8]
   }
 }
 ```
+<!-- coverage:end -->
+
+Dale's own synergy page is capped at the engine's `maxResultsPerGroup` (100), sorted by score; the reverse direction adds a single Dale entry to each payoff's page.
 
 Amber leads (Dale's own ink, always available), but high-willpower bodies appear across every ink, so Dale slots into many second-ink pairings.
 
@@ -179,11 +194,11 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 
 ### Why a Single-Anchor Direct Rule?
 
-Only one card in the pool has this effect, and the synergy is entirely about *building around it*. Modeling it as a direct rule (not a playstyle) keeps it pair-specific: there's no "Spike Suit density" — you either have Dale or you don't. The reverse direction exists so that browsing a high-willpower wall surfaces Dale as the build-around enabler.
+The rule was built around one card with this effect, and the synergy is entirely about *building around it*. Modeling it as a direct rule (not a playstyle) keeps it pair-specific: there's no "Spike Suit density" — you either have Dale or you don't. The reverse direction exists so that browsing a high-willpower wall surfaces Dale as the build-around enabler.
 
 ### Why Floor at gap ≥ 3 (Not ≥ 1 or ≥ 2)?
 
-The literal "willpower > strength" reading yields 637 matches, 42% of them a trivial +1. A +1 swing rarely changes a combat outcome and would attach a weak Dale entry to 265 character pages. Flooring at +3 (the point where the extra damage reliably trades up a tier of bodies) keeps the synergy honest in both directions. See the investigation in the rule's commit history.
+The literal "willpower > strength" reading matches hundreds of characters, many of them a trivial +1 (the *gap ≥ 3 Floor* section counts both). A +1 swing rarely changes a combat outcome and would attach a weak Dale entry to every one of those pages. Flooring at +3 (the point where the extra damage reliably trades up a tier of bodies) keeps the synergy honest in both directions. See the investigation in the rule's commit history.
 
 ### Why the Strength-0 Bump?
 
@@ -191,4 +206,4 @@ A 0/X wall is the archetype's dream target: normally a pure quester/blocker that
 
 ### Why Cap at 10?
 
-The display scale tops out at 10 (Perfect ≥ 9.5). The three biggest walls (0/7, 0/8) would compute to 11 without the cap; clamping keeps them at a clean 10 alongside the other top-tier pairings.
+The display scale tops out at 10 (Perfect ≥ 9.5). The biggest walls (0/7 and up) would compute to 11 or more without the cap; clamping keeps them at a clean 10 alongside the other top-tier pairings.

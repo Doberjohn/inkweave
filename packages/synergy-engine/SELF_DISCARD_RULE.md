@@ -64,7 +64,7 @@ gate: !(/opponent|each player|challenging player|that player/i)
 | Discard hand | "**Discard your hand.** Draw 2 cards." | You Broke My Smolder |
 | Discard as cost | "**discard a card** to ..." | (discount / cost outlets) |
 
-The discard-as-cost pattern is intentionally kept tight (`{0,2}` words between "discard a" and "card"), so it catches generic "discard a card" costs without over-tagging narrow conditional costs. The only rotation card it leaves half-tagged is The Queen - Conceited Ruler (a "discard a Princess or Queen character card" cost); widening it to `{0,4}` would promote exactly one card to `enabler` and bump 49 pairs (measured), so it stays tight.
+The discard-as-cost pattern is intentionally kept tight (`{0,2}` words between "discard a" and "card"), so it catches generic "discard a card" costs without over-tagging narrow conditional costs. The only rotation card it left half-tagged when this was measured is The Queen - Conceited Ruler (a "discard a Princess or Queen character card" cost); widening it to `{0,4}` would then have promoted exactly one card to `enabler` and bumped 49 pairs, so it stays tight.
 
 ### reanimator (recursion payoff)
 
@@ -145,7 +145,7 @@ Deliberately tight: it reads the top-of-deck phrasing only. "Put the rest into y
 |----------|------------------|
 | **Opponent discard** | Anything matching `opponent` / `each player` is the Discard rule's domain (attacking *their* hand). The gate keeps the two axes disjoint, exactly the boundary the Discard rule's doc calls out ("self-discard ... belongs to a separate axis"). One narrow exception: Goliath - Clan Leader's end-of-turn trim stays out of `enabler` but feeds the small-hand payoff (see Feed check). |
 | **Big-hand payoffs** | Jafar - Keeper of Secrets ("+1 ¤ for each card in your hand") and Tinker Bell - Snowflake Collector ("While you have 4 or more cards in your hand") want the opposite of a small hand, so the small-hand pattern names STONE BY DAY's own condition rather than any hand-size count. Neither is a Discard payoff either: that one compares your hand with an opponent's. |
-| **Songs as bin-fillers** | A sung song lands in the discard, so in principle every Song feeds a zone payoff. It is not modelled: that would make all 66 Songs bin-fillers and drown the axis in near-baseline pairs, and the Song half of the interaction already has a home in the Singer + Songs rule. |
+| **Songs as bin-fillers** | A sung song lands in the discard, so in principle every Song feeds a zone payoff. It is not modelled: that would make every Song a bin-filler and drown the axis in near-baseline pairs, and the Song half of the interaction already has a home in the Singer + Songs rule. |
 | **Mill as a hand-discard enabler** | Mill *is* tagged (role `mill`) but is never an `enabler`: it fills the bin from the deck, so it cannot switch on a payoff that needs an actual hand discard, nor shrink your hand for a small-hand one. `mill ↔ state-payoff` therefore stays at the 5 baseline, while an outlet scores 8 with a discard-event payoff. |
 
 ---
@@ -213,14 +213,17 @@ A generic side always meets. "Action" admits songs too, since a song is an actio
 | Loot (draw or return to hand first) | no | "draw a card, then choose and discard a card" (Kronk - Meat Hut Cook, Hudson - Determined Reader) |
 | Refill (discard 1, draw 2 or more) | no | "choose and discard a song card. If you do, draw 2 cards" (Max Goof - Karaoke Star) |
 
-17 of the 44 outlets shrink the hand. Goliath - Clan Leader has no outlet of his own (his DUSK TO DAWN makes *each player* discard, which the enabler gate keeps out), but at the end of your turn it trims your hand to 2, exactly what STONE BY DAY asks for. `selfDiscardHandTrimFeed` reads that trim as an unlock for a small-hand payoff and nothing else: it resolves after the turn's actions, and it draws a hand of 0 or 1 back up to 2, so it never feeds a "discarded this turn" or empty-hand payoff, and it is no outlet for recursion or a pile count. He scores 7 with every other STONE BY DAY card, and, being one himself, 7 with the 17 outlets that shrink the hand.
+Coverage counts the outlets that shrink the hand. Goliath - Clan Leader has no outlet of his own (his DUSK TO DAWN makes *each player* discard, which the enabler gate keeps out), but at the end of your turn it trims your hand to 2, exactly what STONE BY DAY asks for. `selfDiscardHandTrimFeed` reads that trim as an unlock for a small-hand payoff and nothing else: it resolves after the turn's actions, and it draws a hand of 0 or 1 back up to 2, so it never feeds a "discarded this turn" or empty-hand payoff, and it is no outlet for recursion or a pile count. He scores 7 with every other STONE BY DAY card, and, being one himself, 7 with every outlet that shrinks the hand.
 
 ### Live distribution
 
-Generated from the live engine over the current Core pool (sets 9-13 plus the Set 14 preview, measured with the trigger, stock and unlock split): **138 tagged cards** (44 enabler, 50 reanimator, 20 state-payoff, 29 zone-payoff, 8 mill; roles overlap on multi-role cards such as Lyle Tiberius Rourke, who mills *and* reanimates, or Hudson - Determined Reader, who loots and carries STONE BY DAY). After the engine's ink-compatibility filter (`canShareDeck`), **9,291 unique pairs**, each read from its lower-id card as the searcher:
+<!-- coverage:start distribution -->
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
 
-| Pair shape | Count | Score | Share |
-|------------|-------|-------|-------|
+**138 tagged cards** (44 enabler, 50 reanimator, 20 state-payoff, 29 zone-payoff, 8 mill; roles overlap on multi-role cards). **9,291 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+
+| Pair shape | Pairs | Score | Share |
+|----------|-----|-----|-----|
 | enabler ↔ a payoff its discard switches on | 377 | 8 | 4.1% |
 | enabler ↔ any other reanimator | 1,956 | 7 | 21.1% |
 | enabler ↔ small-hand payoff | 242 | 7 | 2.6% |
@@ -228,9 +231,13 @@ Generated from the live engine over the current Core pool (sets 9-13 plus the Se
 | mill ↔ zone-payoff | 227 | 7 | 2.4% |
 | enabler ↔ zone-payoff | 1,154 | 6 | 12.4% |
 | reanimator ↔ reanimator | 1,041 | 6 | 11.2% |
-| other same-axis | 3,930 | 5 | 42.3% |
+| enabler ↔ enabler | 702 | 5 | 7.6% |
+| other same-axis | 3,228 | 5 | 34.7% |
+<!-- coverage:end -->
 
-The score-8 share is small on purpose. Recursion is one of the deepest payoff pools in the game (50 reanimators), but only three of them fire on the discard, and only six state payoffs need one; every other reanimator pairs with the outlets at 7. The 14 STONE BY DAY cards need a small hand instead, which only 17 outlets and Goliath - Clan Leader's trim provide, so they sit at 5 with every loot, refill, mill and other payoff in their inks, which is why the 5 share rose from 34.7%. Three pairs score 7 from both sides for different reasons, so their row depends on the searcher: Hercules - Young Rescuer's discard-your-hand unlocks Hudson - Determined Reader, Goliath - Transformed Warrior and Demona - Imperious Spellcaster, whose outlets in turn stock his recursion.
+Roles overlap on multi-role cards such as Lyle Tiberius Rourke, who mills *and* reanimates, or Hudson - Determined Reader, who loots and carries STONE BY DAY. When both cards of a pair score it the same, the pair is read from its lower-id card as the searcher.
+
+The score-8 share is small on purpose. Recursion is one of the deepest payoff pools in the game, but only a few reanimators fire on the discard, and only the discard-event and empty-hand state payoffs need one (Coverage names both); every other reanimator pairs with the outlets at 7. The STONE BY DAY cards need a small hand instead, which only the outlets that shrink the hand and Goliath - Clan Leader's trim provide, so they sit at 5 with every loot, refill, mill and other payoff in their inks; the Stone by Day pass raised the 5 share for that reason. A pair can score 7 from both sides for different reasons, and then its row depends on the searcher: Hercules - Young Rescuer's discard-your-hand unlocks Hudson - Determined Reader, Goliath - Transformed Warrior and Demona - Imperious Spellcaster, whose outlets in turn stock his recursion.
 
 Note on ordering: the 7 guard runs before the 6, so a card that both mills and reanimates (Lyle Tiberius Rourke) scores 7 against another reanimator rather than 6. That is deliberate: he does not merely share the bin with it, he fills the bin for it. For the same reason the fill rows run best score first: an outlet that also counts the pile (Max Goof - Karaoke Star) against a mill that counts it too (Though I Have to Say Goodbye) reads as the mill at 7, not as the outlet at 6.
 
@@ -263,22 +270,35 @@ Same-axis pairs use distinct sentences:
 
 ## Coverage
 
-- **44 enablers** (loot / discard-hand / discard-cost), every ink; 17 of them shrink the hand.
-- **50 reanimators** ("from your discard", self-contained recursion excluded), the deepest side.
-- **29 zone-payoffs** (count / card-type / put-this-turn), added in the Set 14 pass.
-- **20 state-payoffs**: 2 discarded-this-turn, 4 Hellbent and 14 STONE BY DAY (Amethyst, Ruby and Steel Gargoyles).
-- **8 mill cards**, the deck-side filler and now the thinnest side.
+<!-- coverage:start coverage -->
+| Role | Cards | Cards per ink |
+|----|-----|-------------|
+| enabler (loot / discard-hand / discard-cost) | 44 | Steel 23, Emerald 14, Amethyst 5, Ruby 2, Amber 1 |
+| reanimator ("from your discard", self-contained recursion excluded) | 50 | Amber 19, Sapphire 9, Emerald 8, Ruby 7, Steel 7, Amethyst 2 |
+| state-payoff (discarded this turn / Hellbent / STONE BY DAY) | 20 | Steel 10, Amethyst 6, Ruby 4 |
+| zone-payoff (count / card-type / put-this-turn) | 29 | Ruby 11, Amethyst 6, Emerald 6, Sapphire 3, Amber 2, Steel 1 |
+| mill (deck-side filler) | 8 | Ruby 7, Sapphire 1 |
+
+| Read from the pairs | Cards |
+|-------------------|-----|
+| Reanimators that fire on the discard (8 with an outlet) | 3 (Look What You've Done, Mother Gothel - Evil as Ever, Rapunzel & Flynn Rider - Unlikely Pair) |
+| State payoffs an outlet's discard switches on (8) | 6 (Angel - Experiment 624, Beast's Mirror, Discarded Armor, Gizmoduck - Duckburg Defender, Maximus - Relentless Stallion, Megavolt - Electrical Menace) |
+| STONE BY DAY payoffs an outlet unlocks (7) | 14 |
+| Outlets that shrink the hand enough to unlock one (7) | 17 |
 
 ```chart
 {
   "type": "doughnut",
-  "title": "Role Composition (138 cards; multi-role overlap)",
+  "title": "Role composition (138 cards; multi-role overlap)",
   "data": {
-    "labels": ["Reanimator (50)", "Enabler (44)", "Zone-payoff (29)", "State-payoff (20)", "Mill (8)"],
-    "values": [50, 44, 29, 20, 8]
+    "labels": ["Enabler (44)", "Reanimator (50)", "State-payoff (20)", "Zone-payoff (29)", "Mill (8)"],
+    "values": [44, 50, 20, 29, 8]
   }
 }
 ```
+<!-- coverage:end -->
+
+Reanimators are the deepest side and mill, the deck-side filler, the thinnest. The zone-payoff and mill roles joined in the Set 14 pass; the STONE BY DAY payoffs are the Amethyst, Ruby and Steel Gargoyles.
 
 ---
 

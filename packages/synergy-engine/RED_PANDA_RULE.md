@@ -22,6 +22,24 @@ Real cards the `getRedPandaRoles` detector tags for each role (names from the li
 | search + member | 8 |
 | member + member | 5 |
 
+## Coverage
+
+<!-- coverage:start coverage -->
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+
+| Role | Cards | Cards per ink |
+|----|-----|-------------|
+| member | 11 | Ruby 5, Amber 3, Amethyst 3 |
+| search | 1 (Meilin Lee - Losing Control) | Amber 1 |
+
+**55 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+
+| Score | Pairs | Share |
+|-----|-----|-----|
+| 8 | 10 | 18.2% |
+| 5 | 45 | 81.8% |
+<!-- coverage:end -->
+
 ## Note
 The tribe's other connections (Meilin/Ming named-companions, Red Panda Shift) come from
 Rules 1 and 2. This rule only adds the tribal-fetch axis.
