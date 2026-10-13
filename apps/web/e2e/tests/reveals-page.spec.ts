@@ -1,30 +1,5 @@
 import {test, expect} from '../fixtures';
-
-interface RevealSet {
-  name: string;
-  number: number;
-  releaseDate: string;
-}
-
-/**
- * The set in reveal season: the previewCards.json entry with the latest
- * releaseDate. Read from the data the app itself reads, so this spec names no set
- * and needs no edit when a new season starts.
- */
-/** A set block is usable here only once it carries the three fields the assertions read. */
-function isRevealSet(set: Partial<RevealSet> | undefined): set is RevealSet {
-  return (
-    typeof set?.name === 'string' &&
-    typeof set?.number === 'number' &&
-    typeof set?.releaseDate === 'string'
-  );
-}
-
-function latestRevealSet(data: {sets?: Record<string, Partial<RevealSet> | undefined>}): RevealSet | null {
-  const dated = Object.values(data?.sets ?? {}).filter(isRevealSet);
-  if (dated.length === 0) return null;
-  return dated.reduce((a, b) => (new Date(b.releaseDate) > new Date(a.releaseDate) ? b : a));
-}
+import {startClockInRevealSeason, type RevealSet} from '../helpers/revealSeason';
 
 /** A debut franchise's spotlight tile: an action button labelled "View <franchise> cards". */
 const FRANCHISE_BUTTON = /^View .+ cards$/;
@@ -43,20 +18,11 @@ test.describe('Reveals page (flag on)', () => {
     });
     testInfo.annotations.push({type: 'requires', description: 'VITE_IS_REVEAL_SEASON=true'});
 
-    // Skip when reveal season has ended (today is past the set's releaseDate).
-    // useRevealPhase returns 'released' once now >= releaseDate, RevealsGate
-    // redirects /reveals -> /, and the Reveals nav entry / promo modal no
-    // longer render — so these reveal-season-only assertions can't pass.
-    // After each set graduates and previewCards.json is refreshed with the
-    // NEXT set's dates, these tests pick back up automatically.
-    const resp = await page.request.get('/data/previewCards.json');
-    const set = resp.ok() ? latestRevealSet(await resp.json()) : null;
+    // The page's clock starts inside the reveal season, so these reveal-season-only
+    // assertions run on any date, release day and the gap before the next season included.
+    const set = await startClockInRevealSeason(page);
     if (!set) {
       test.skip(true, 'previewCards.json has no dated reveal set.');
-      return;
-    }
-    if (Date.now() >= new Date(set.releaseDate).getTime()) {
-      test.skip(true, `Reveal season ended (latest releaseDate ${set.releaseDate})`);
       return;
     }
     revealSet = set;
@@ -121,8 +87,7 @@ test.describe('Reveals page (flag on)', () => {
     await page.goto('/reveals');
     // The mosaic renders after the card data loads (async), so wait for the first
     // revealed slot rather than snapshotting the count. Early reveal season:
-    // previewCards.json may still have cards: [] (no slots) — skip then, mirroring
-    // the season-ended skip in beforeEach so the suite stays green across the lifecycle.
+    // previewCards.json may still have cards: [] (no slots), so skip then.
     const firstSlot = page.getByTestId('reveal-card-slot').first();
     const hasSlots = await firstSlot
       .waitFor({state: 'visible', timeout: 10000})
