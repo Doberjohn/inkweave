@@ -166,6 +166,13 @@ describe('vercel-deploy', () => {
         },
       ]);
     });
+
+    // Vercel ties a Preview domain only to a branch that exists, so staging.inkweave.ink sits on
+    // branch `staging`. A Git build of that branch would move the domain, so Vercel never builds
+    // it and only this script's alias does.
+    it('is a branch Vercel never builds', () => {
+      expect(vercelJson.git.deploymentEnabled.staging).toBe(false);
+    });
   });
 
   describe('parseArgs', () => {

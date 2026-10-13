@@ -21,6 +21,11 @@
 # staging.inkweave.ink at the new deployment with `vercel alias set`. vercel.json sends
 # X-Robots-Tag: noindex on that host, because Vercel adds none to a preview on a custom domain.
 #
+# DOMAIN: staging.inkweave.ink is a project domain on Preview, tied to Git branch `staging`
+# because Vercel only accepts a branch that exists. vercel.json's git.deploymentEnabled keeps
+# Vercel from ever building that branch, so only this workflow moves the domain. Keep the branch,
+# and never connect the domain to Production: every production deploy would take it over.
+#
 # DATA: staging uses the production Supabase project, so its sign-ups are real accounts and its
 # votes count toward the public scores (#741's decision, kept until the deck builder writes data).
 #

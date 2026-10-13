@@ -3,7 +3,7 @@
   "outputDirectory": "apps/web/dist",
   "installCommand": "pnpm install",
   "framework": "vite",
-  "git": {"deploymentEnabled": {"master": false}},
+  "git": {"deploymentEnabled": {"master": false, "staging": false}},
   "redirects": [
     {
       "source": "/((?!sw[.]js$).*)",
