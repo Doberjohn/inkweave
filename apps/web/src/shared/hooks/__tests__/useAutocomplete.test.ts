@@ -199,13 +199,16 @@ describe('useAutocomplete', () => {
       });
       rerender({query: value});
     };
+    /** Presses a key in the input and returns the event's `preventDefault` spy. */
     const press = (key: string) => {
+      const preventDefault = vi.fn();
       act(() => {
         result.current.inputProps.onKeyDown({
           key,
-          preventDefault: vi.fn(),
+          preventDefault,
         } as unknown as React.KeyboardEvent);
       });
+      return preventDefault;
     };
     act(() => {
       result.current.inputProps.onFocus();
@@ -241,12 +244,26 @@ describe('useAutocomplete', () => {
     // and the last keystroke's timer opened it straight after.
     const {result, type, press} = renderFocused();
     type('Elsa');
-    press('Escape');
+    const preventDefault = press('Escape');
     act(() => {
       vi.advanceTimersByTime(100);
     });
 
     expect(result.current.isOpen).toBe(false);
+    // With no list to close, the key stays free for a surrounding dialog's own Escape.
+    expect(preventDefault).not.toHaveBeenCalled();
+  });
+
+  it('ArrowDown before the list first opens highlights the first match', () => {
+    // Typing faster than the debounce never opened the list, so the arrow did nothing and a
+    // quick Enter submitted the search instead of picking a card.
+    const {result, onSelect, type, press} = renderFocused();
+    type('Elsa');
+    press('ArrowDown');
+    expect(result.current.isOpen).toBe(true);
+    press('Enter');
+
+    expect(onSelect).toHaveBeenCalledWith(cards[0]);
   });
 
   it.each([

@@ -48,12 +48,14 @@ export interface UseAutocompleteReturn {
   searchImmediate: (term: string) => void;
 }
 
+/** The step each arrow key takes through the list. */
+const ARROW_STEPS: Record<string, 1 | -1> = {ArrowDown: 1, ArrowUp: -1};
+
 /**
- * The option one step from `from` in a list of `count`, wrapping at both ends. From no
- * highlight (-1), a step down lands on the first option and a step up on the last.
+ * The option one step from `from` in a list of `count` (at least one), wrapping at both ends.
+ * From no highlight (-1), a step down lands on the first option and a step up on the last.
  */
 function stepIndex(from: number, step: 1 | -1, count: number): number {
-  if (count === 0) return -1;
   if (step === 1) return (from + 1) % count;
   return from <= 0 ? count - 1 : from - 1;
 }
@@ -142,35 +144,32 @@ export function useAutocomplete({
   };
 
   /**
-   * Arrow keys step through the list for the text in the input. While a debounce is pending,
-   * the list on screen is still an earlier keystroke's, and the timer reset the highlight when
-   * it fired, so a quick Enter picked nothing and submitted the search instead. Applying the
-   * typed text first, and cancelling that timer, lands the step in the list Enter reads.
+   * Arrow keys step through the list for the text in the input, opening it if it is closed.
+   * While a debounce is pending, the list on screen is still an earlier keystroke's, or there
+   * is none yet, and the timer reset the highlight when it fired, so a quick Enter picked
+   * nothing and submitted the search instead. Applying the typed text first, and cancelling
+   * that timer, lands the step in the list Enter reads. Returns false, changing nothing, when
+   * the typed text has no matches.
    */
   const moveHighlight = (step: 1 | -1) => {
+    const count = suggestionsFor(query).length;
+    if (count === 0) return false;
     clearTimeout(debounceTimeoutRef.current);
     setDebouncedQuery(query);
-    const count = suggestionsFor(query).length;
     setHighlightedIndex((prev) => stepIndex(prev, step, count));
+    return true;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isOpen) {
-      // Typing faster than the debounce leaves the list unopened, so Escape has nothing to
-      // close, but close() still cancels the timer that would open the list straight after.
-      if (e.key === 'Escape') close();
-      return;
-    }
+    // An arrow claims the key only when the typed text has matches to step through.
+    const step = ARROW_STEPS[e.key];
+    if (step && moveHighlight(step)) e.preventDefault();
+    // Escape runs close() whether or not the list is open: typing faster than the debounce
+    // leaves it unopened, and close() still cancels the timer that would open it straight after.
+    if (e.key === 'Escape') close();
+    if (!isOpen) return;
 
     switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        moveHighlight(1);
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        moveHighlight(-1);
-        break;
       case 'Enter':
         if (highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
           e.preventDefault();
@@ -179,8 +178,9 @@ export function useAutocomplete({
         // If no highlight, let event propagate (e.g., HeroSection search submit)
         break;
       case 'Escape':
+        // close() ran above. Only an open list claims the key; a closed one leaves it to
+        // whatever else listens for it.
         e.preventDefault();
-        close();
         break;
     }
   };
