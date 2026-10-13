@@ -2029,7 +2029,7 @@ export const TRIBAL_SPECS = {
   // pattern-caught payoffs (all Set 10, Sapphire/Steel-heavy). Drop-in over the shared
   // factory: reuses member/buff/trigger/search/in-play-check, no new roles.
   detective: {playstyleId: 'detective', memberClasses: ['Detective'], refWords: ['Detective']},
-  // Gargoyles — the Sets 10-11 clan plus the Set 14 preview. 16 members, 4 payoffs (all
+  // Gargoyles — the Sets 10-11 clan plus four Set 14 cards. 16 members, 4 payoffs (all
   // members themselves). Drop-in over the shared factory; Angela - Night Warrior's "lose
   // Stone by Day" is caught by the team-buff "lose" verb.
   gargoyle: {playstyleId: 'gargoyle', memberClasses: ['Gargoyle'], refWords: ['Gargoyle']},

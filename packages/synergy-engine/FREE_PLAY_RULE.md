@@ -89,7 +89,7 @@ Grading the on-play bodies further (8 vs 9) was rejected: the effects are not un
 ## Coverage
 
 <!-- coverage:start coverage -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
 
 - **2 anchors**: Pocahontas - Guiding the Tribe, Pocahontas & Meeko - Adventurous Friends
 - **135 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`)
@@ -99,7 +99,7 @@ Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy
 | Pocahontas - Guiding the Tribe | Amber | 98 | 6: 85, 8: 13 | Emerald 20, Amethyst 19, Amber 18, Ruby 14, Sapphire 14, Steel 13 |
 | Pocahontas & Meeko - Adventurous Friends | Amber-Amethyst | 37 | 6: 33, 8: 4 | Amethyst 19, Amber 18 |
 
-The 13 cost-1 characters that score 8, for an on-play effect the free play also triggers: Berlioz - Tiny Rascal, Bobby Zimuruski - Spray Cheese Kid, Carl Fredricksen - Loving Husband, Copper - Hound Pup, Finnick - Tiny Terror, Flit - Reflective Hummingbird, Gantu - Hamsterviel's Accomplice, Hector Rivera - Street Musician, Jasmine - Heir of Agrabah, Judy Hopps - Helpful Officer, Julieta Madrigal - Caring Baker, Mike Wazowski - Well-Rounded Entertainer, Webby Vanderquack - Mystery Enthusiast.
+The 13 cost-1 characters that score 8, for an on-play effect the free play also triggers: Berlioz - Tiny Rascal, Bobby Zimuruski - Spray Cheese Kid, Carl Fredricksen - Loving Husband, Copper - Hound Pup, Finnick - Tiny Terror, Flit - Reflective Hummingbird, Gantu - Hamsterviel's Accomplice, Héctor Rivera - Street Musician, Jasmine - Heir of Agrabah, Judy Hopps - Helpful Officer, Julieta Madrigal - Caring Baker, Mike Wazowski - Well-Rounded Entertainer, Webby Vanderquack - Mystery Enthusiast.
 <!-- coverage:end -->
 
 ---

@@ -51,11 +51,12 @@
  *
  * After running:
  *   1. pnpm precompute-synergies   # regenerate per-card synergy files
- *   2. pnpm download-images        # fetch any new card images
- *   3. pnpm test                   # confirm no regressions
- *   4. Flip VITE_IS_REVEAL_SEASON=false in .env.local + Vercel env
- *      (deactivates /reveals route until next reveal season)
- *   5. Once the graduated cards are live in production, apply the remap
+ *   2. pnpm refresh-rule-coverage  # rule docs name the sets their counts cover
+ *   3. pnpm download-images        # fetch any new card images
+ *   4. pnpm test                   # confirm no regressions
+ *   5. Flip VITE_IS_REVEAL_SEASON=false in .env.local + Vercel env once the set
+ *      is released (/reveals hides itself on release day either way)
+ *   6. Once the graduated cards are live in production, apply the remap
  *      migration this wrote to supabase/migrations/ with the Supabase MCP's
  *      apply_migration
  */
@@ -89,7 +90,6 @@ const ID_REFERENCE_FILES = [
   'apps/web/src/features/cards/featuredCardIds.json',
   'apps/web/src/shared/constants/playstyleUi.ts',
   'apps/web/.env.example',
-  'apps/web/src/features/reveals/setSpotlights.ts',
   'apps/web/src/features/reveals/InkBoard.stories.tsx',
   'apps/web/src/features/reveals/CardMosaic.stories.tsx',
   'apps/web/src/features/reveals/FranchiseCardsModal.stories.tsx',
@@ -153,6 +153,10 @@ function stripCard(card, setCode) {
     if (k in card) out[k] = card[k];
   }
   if (out.images) out.images = stripImages(out.images);
+  // Rule 4: LorcanaJSON's `story` is the franchise the preview cards carried as `franchise`.
+  // Kept under that name, it holds /reveals' debut-franchise tiers together when a set
+  // graduates before its release day, the day the page hides itself.
+  if (card.story) out.franchise = card.story;
   // Canonical LorcanaJSON puts set info at the top level, not per-card.
   // Inject setCode so the rest of the pipeline (filtering, browse page) works.
   if (!out.setCode) out.setCode = setCode;
@@ -637,11 +641,12 @@ async function main() {
 
   console.log(`  Next steps:`);
   console.log(`    1. pnpm precompute-synergies          # regenerate per-card synergy files`);
-  console.log(`    2. pnpm download-images               # fetch any new card images`);
-  console.log(`    3. pnpm test                          # confirm no regressions`);
-  console.log(`    4. Flip VITE_IS_REVEAL_SEASON=false   # in .env.local + Vercel env`);
+  console.log(`    2. pnpm refresh-rule-coverage         # rule docs name the sets their counts cover`);
+  console.log(`    3. pnpm download-images               # fetch any new card images`);
+  console.log(`    4. pnpm test                          # confirm no regressions`);
+  console.log(`    5. Flip VITE_IS_REVEAL_SEASON=false   # in .env.local + Vercel env, once released`);
   console.log(
-    `    5. Apply the remap migration          # Supabase MCP, once the deploy is live\n`,
+    `    6. Apply the remap migration          # Supabase MCP, once the deploy is live\n`,
   );
 }
 

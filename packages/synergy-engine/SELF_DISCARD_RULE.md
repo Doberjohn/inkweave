@@ -218,7 +218,7 @@ Coverage counts the outlets that shrink the hand. Goliath - Clan Leader has no o
 ### Live distribution
 
 <!-- coverage:start distribution -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
 
 **138 tagged cards** (44 enabler, 50 reanimator, 20 state-payoff, 29 zone-payoff, 8 mill; roles overlap on multi-role cards). **9,291 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 

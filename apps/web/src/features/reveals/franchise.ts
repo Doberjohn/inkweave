@@ -6,7 +6,7 @@ export type FranchiseId = 'coco';
 export interface FranchiseConfig {
   id: FranchiseId;
   label: string;
-  /** Value to match against `card.franchise`. */
+  /** Value to match against `card.franchise`: LorcanaJSON's `story` spelling, so the tier survives graduation. */
   match: string;
   /**
    * The franchise's one accent colour on the reveals page: its What's New card
@@ -30,9 +30,9 @@ export const FRANCHISES: readonly FranchiseConfig[] = [
 ];
 
 /**
- * Filter cards by franchise using the explicit `franchise` field on preview cards.
- * Only preview cards have this field set; main-pool cards are filtered out when
- * a franchise filter is active.
+ * Filter cards by their explicit `franchise` field. Preview cards carry it, and so do
+ * cards graduated since Set 14 (graduation keeps LorcanaJSON's `story` under that name);
+ * older cards have none, so they are filtered out when a franchise filter is active.
  *
  * Pass `null` to disable filtering (returns true for all cards).
  */

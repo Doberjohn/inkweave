@@ -6,7 +6,7 @@
  * through the built engine, and admin's reveal publisher through the package
  * (Doberjohn/inkweave-admin, both from its pinned copy of this repo). This is what gets WRITTEN. The
  * engine's own text patterns stay strict, so a word form that slips past here costs a card its
- * mechanic tags (Honey Lemon 14151 lost its Ramp group to "pay 1 Ink less").
+ * mechanic tags (Honey Lemon 3416 lost its Ramp group to "pay 1 Ink less").
  */
 
 /** Near-miss glyphs from vision readers and hand entry, mapped to the ones card data uses. */
@@ -35,7 +35,7 @@ const INK_COST_KEYWORD = /^((?:[A-Z][a-z]+ )*(?:Shift|Boost)) (\d+) \(/;
  * forms in allCards.json). Case-sensitive: lowercase "N ink drops" is Set 14's mechanic word and
  * must stay. Lore is signed-only: released data keeps "gain N lore" as a lowercase word.
  *
- * An exert cost spelled "Exert" (Pirate Plane 14202, #667) becomes ⟳ only in cost position,
+ * An exert cost spelled "Exert" (Pirate Plane 3467, #667) becomes ⟳ only in cost position,
  * right before the em dash or a comma-separated cost that ends in one. Released data also uses
  * "Exert" as the verb ("Exert chosen opposing character."), never before a dash. The dash
  * normalization runs first, so "Exert, 2 Ink -" is covered.

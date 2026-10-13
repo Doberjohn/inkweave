@@ -64,7 +64,7 @@ This matches Dale's Spike Suit wording (the `.*` spans the ⛉/¤ glyphs without
 `SPIKE_SUIT_FLOOR = 3`. Below +3 the bonus is marginal (a 2/3 hitting for 3 instead of 2) and the candidate pool balloons. Flooring at +3 keeps every surfaced match a genuine upgrade and avoids polluting hundreds of character pages with a trivial Dale entry in the reverse direction.
 
 <!-- coverage:start floor -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
 
 **459 characters** have any willpower lead, **204** of them only +1. The floor keeps **124**, and **124** of those can share a deck with an anchor.
 <!-- coverage:end -->

@@ -20,7 +20,8 @@ import {FRANCHISE_SPOTLIGHTS, SET_SPOTLIGHTS} from '../../../features/reveals/se
 //
 // Invariants only. CI runs this on every reveal-publisher commit from admin, which lands
 // a card BEFORE its AVIFs (the convert workflow commits those afterwards), so
-// nothing here may depend on image files existing.
+// nothing here may depend on a card's image files existing. Spotlight art is the one
+// exception: it is copied in by hand, in the same commit as the spotlight that shows it.
 
 /** An alternate printing folded into its base card (#625). */
 interface VariantEntry {
@@ -58,20 +59,18 @@ function hasWellFormedId(card: PreviewCard): boolean {
   return card.id === REVEAL_ID_BASE + card.number;
 }
 
-/** The preview-card ids a spotlight's art points at. */
-function spotlightCardIds(): number[] {
+/** Every image a spotlight shows that isn't committed under public/. */
+function missingSpotlightImages(): string[] {
   const srcs = [...FRANCHISE_SPOTLIGHTS.map((s) => s.data), ...SET_SPOTLIGHTS.flatMap((g) => g.items)].flatMap((data) => [
     data.heroImage,
     ...data.support.map((s) => s.src),
   ]);
-  return srcs.flatMap((src) => {
-    const id = /\/card-images-preview\/(\d+)\.avif$/.exec(src)?.[1];
-    return id ? [Number(id)] : [];
-  });
+  return srcs.filter((src) => !fs.existsSync(path.join(process.cwd(), 'public', src)));
 }
 
 describe('reveal-set integrity', () => {
   const preview = readData<PreviewFile>('previewCards.json');
+  const missingSpotlightArt = missingSpotlightImages();
 
   it('previewCards.json has a dated entry for the reveal set', () => {
     const set = preview.sets[REVEAL_SET_CODE];
@@ -135,9 +134,8 @@ describe('reveal-set integrity', () => {
     expect(misplaced).toEqual([]);
   });
 
-  it('every card a spotlight shows has been revealed', () => {
-    const revealed = new Set(preview.cards.map((c) => c.id));
-    expect(spotlightCardIds().filter((id) => !revealed.has(id))).toEqual([]);
+  it('every image a spotlight shows is committed', () => {
+    expect(missingSpotlightArt).toEqual([]);
   });
 
   it('ink blocks tile the set from 1 to SET_TOTAL with no gap or overlap', () => {

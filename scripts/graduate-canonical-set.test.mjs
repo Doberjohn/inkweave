@@ -28,6 +28,7 @@ const source = [
     fullName: 'Mickey Mouse - Best in Town',
     rarity: 'Super Rare',
     color: 'Amber',
+    story: 'Mickey Mouse & Friends',
     images: IMAGES,
     artists: ['X'],
   },
@@ -64,6 +65,13 @@ describe('applyCardRules (graduation)', () => {
     expect(specialCount).toBe(1);
     expect(cards[0]).not.toHaveProperty('artists');
     expect(cards[0].setCode).toBe('14');
+  });
+
+  it("keeps the card's story as its franchise, the field /reveals tiers by (Rule 4)", () => {
+    const {cards} = applyCardRules(source, '14');
+
+    expect(cards[0].franchise).toBe('Mickey Mouse & Friends');
+    expect(cards[0]).not.toHaveProperty('story');
   });
 });
 

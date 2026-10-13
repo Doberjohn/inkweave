@@ -12,7 +12,7 @@ import {NotFoundPage} from './NotFoundPage';
  * `/ink/:inkSlug` — one hub per ink colour (#530).
  *
  * These pages exist for internal linking, not browsing: ink is the only total partition of
- * the corpus, so six hubs guarantee all 1,024 cards an inbound crawlable `<a>`. The grid
+ * the corpus, so six hubs guarantee every card an inbound crawlable `<a>`. The grid
  * therefore uses `CardGrid` with `linkToCards` — the NON-virtualized grid — because
  * `BrowseCardGrid`'s Virtuoso windowing only mounts visible rows, which would emit a
  * fraction of the anchors to a crawler and defeat the entire purpose.

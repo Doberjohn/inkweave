@@ -45,7 +45,7 @@ Buff scores 6 (a static stat grant) while trigger scores 7 (a repeating engine) 
 ## Coverage (live pair counts)
 
 <!-- coverage:start coverage -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
 
 | Tribe | Members | Payoff cards | Unique pairs | Score dist (6 / 7 / 8) |
 |-----|-------|------------|------------|----------------------|
@@ -73,7 +73,7 @@ The counts in these notes are from when each tribe was built, kept as the record
   - **Detectives** (Set 10 Zootopia / Great Mouse Detective) was built as a clean, well-shaped archetype: 39 members and 9 pattern-caught payoffs at the time, all concentrated in Set 10 and Sapphire/Steel-heavy. Every emitted pair scores 6-8 (zero density floor). **Two real payoffs are missed** by the shared patterns and are accepted gaps: `Nick Wilde - Persistent Investigator` (2376) triggers on a Detective *banish*, not quest/challenge/play (cross-covered by Sacrifice's `banish-trigger`); `Fangmeyer - Icy Officer` (2473) is discard-*recursion* ("return a Detective character card from your discard"), which the deck-search pattern does not cover (cross-covered by Self-Discard's `reanimator`). A third — `Flash - Records Specialist` (2203, "give chosen Detective character +2") — was recovered by extending the shared single-target `buff` clause to accept a give-form `+N` stat buff (`chosen X character … +\d`); measured against all six tribes, the broadening tagged **only** Flash (zero collateral).
 - **Gargoyles** (Sets 10-11 plus four Amethyst Set 14 preview cards) is a small, coherent clan: 16 members and 4 payoffs when it was built, every payoff itself a Gargoyle. No action or item names the tribe yet; the shared patterns never require a payoff to be a character, so one printed later is picked up with no change. 14 of those 16 members carried **Stone by Day** ("if you have 3 or more cards in your hand, this character can't ready"), which is what makes Angela the clan's key card:
   - `Goliath - Guardian of Castle Wyvern` (2308): `trigger` (gain 1 lore whenever one of your Gargoyles challenges).
-  - `Demona - Imperious Spellcaster` (14056): single-target `buff` (chosen Gargoyle gains Rush and Evasive).
+  - `Demona - Imperious Spellcaster` (3321): single-target `buff` (chosen Gargoyle gains Rush and Evasive).
   - `Angela - Night Warrior` (2650): team `buff` via the `lose` verb, added to the shared team-buff clause for this tribe. Measured against the six existing tribes, `your X characters lose` tags **zero** other cards.
   - `Coldstone - Reincarnated Cyborg` (2240): `in-play-check`, through the shared `if you have N or more … X` clause, although his condition counts Gargoyle cards in your **discard**, not in play. The pairing holds (every Gargoyle feeds the count once it hits the discard), but the shared explanation text still reads "have a Gargoyle in play". Accepted rather than forking the shared template.
   - Out of scope: the hand-size side of Stone by Day (discard outlets and Goliath - Clan Leader's "discard down to 2") is a mechanic axis, not tribal membership. Self-Discard scores it as its small-hand payoff.

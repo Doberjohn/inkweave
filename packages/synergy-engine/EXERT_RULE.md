@@ -123,7 +123,7 @@ The same-side payoff pair uses a distinct sentence: `"Both reward opposing chara
 ### Live distribution
 
 <!-- coverage:start distribution -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
 
 **126 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
@@ -141,7 +141,7 @@ The score-8 share runs high because the consume payoffs are the archetype's iden
 ## Coverage
 
 <!-- coverage:start coverage -->
-- **15 exert-enablers** (Amethyst 12, Ruby 3): Alma Madrigal - Keeper of the Flame, Alma Madrigal - Leading the Way, Can't Hold It Back Anymore, Demona - Scourge of the Wyvern Clan, Elsa - Snow Queen, Frozone - Super Cool, Ghostly Tale, Isis Vanderchill - Ice Queen of St. Canard, Last-Ditch Effort, Maleficent - Imperious Traveler, Peter Pan’s Shadow - Elusive Prankster, Petrify, Scream Canister, Tinker Bell - Temperamental Fairy, Ursula - Voice Stealer
+- **15 exert-enablers** (Amethyst 12, Ruby 3): Alma Madrigal - Keeper of the Flame, Alma Madrigal - Leading the Way, Can't Hold It Back Anymore, Demona - Scourge of the Wyvern Clan, Elsa - Snow Queen, Frozone - Super Cool, Ghostly Tale, Isis Vanderchill - Ice Queen of St. Canard, Last-Ditch Effort, Maleficent - Imperious Traveler, Peter Pan's Shadow - Elusive Prankster, Petrify, Scream Canister, Tinker Bell - Temperamental Fairy, Ursula - Voice Stealer
 - **7 exert-payoffs** (Amethyst 6, Amber 1): **consume (5)** Grimorum Arcanorum, I'm Stuck!, Ming Lee - Overprotective Parent, Minnie Mouse - Sweetheart Princess, Pot of Honey; **state (2)** Dolores Madrigal - Easy Listener, Pocahontas - Following the Wind
 
 Cards with a role: 22. Cards with more than one: 0.
