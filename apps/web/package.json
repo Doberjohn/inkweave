@@ -26,9 +26,9 @@
     "check:design": "node scripts/check-design-tokens.mjs"
   },
   "dependencies": {
-    "@radix-ui/react-dialog": "^1.1.23",
-    "@sentry/react": "^11.2.0",
-    "@supabase/supabase-js": "^2.117.2",
+    "@radix-ui/react-dialog": "^1.2.0",
+    "@sentry/react": "^11.6.0",
+    "@supabase/supabase-js": "^2.117.3",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "inkweave-synergy-engine": "workspace:*",
