@@ -1,0 +1,59 @@
+name: Script tests (Windows)
+
+# Some script tests only run on Windows: the worktree remover's junction and long-path safety
+# checks (scripts/remove-worktree.test.mjs, it.runIf(WINDOWS)). CI is otherwise Linux-only, so
+# they never ran on their own (tech debt sweep, 2026-10-13). The owner works on Windows, so the
+# whole script suite runs here; Linux runs it in CI's build-and-test job on every PR.
+on:
+  pull_request:
+    branches: [master, main]
+    paths:
+      - 'scripts/**'
+      - '.claude/hooks/**'
+      - 'vitest.scripts.config.mjs'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.gitattributes'
+      - '.github/workflows/script-tests-windows.yml'
+  push:
+    branches: [master, main]
+    paths:
+      - 'scripts/**'
+      - '.claude/hooks/**'
+      - 'vitest.scripts.config.mjs'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.gitattributes'
+      - '.github/workflows/script-tests-windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  script-tests:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      # The suites import the engine's dist (getAllPlaystyles), as in build-and-test.
+      - name: Build the engine
+        run: pnpm build:engine
+
+      - name: Run script tests
+        run: pnpm test:scripts

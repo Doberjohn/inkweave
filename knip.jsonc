@@ -1,0 +1,28 @@
+// Dead-code check. CI runs `pnpm knip`, which fails on unused files, dependencies and binaries
+// only (the script's --include). Unused exports and types are left out for now: the 2026-10-13
+// tech debt sweep found 106 barrel re-exports nothing imports, and clearing them waits on
+// deck-builder, which uses some. `pnpm exec knip` reports everything.
+{
+  "$schema": "https://unpkg.com/knip@6/schema-jsonc.json",
+  "workspaces": {
+    ".": {
+      // Run from places knip doesn't read: vercel.json's buildCommand, .husky/pre-push and the
+      // .claude/hooks shell scripts.
+      "entry": [
+        "scripts/check-sourcemaps.mjs",
+        "scripts/codescene-gate.mjs",
+        ".claude/hooks/lib/run-hook.mjs",
+      ],
+      // A manual audit (docs/CARD_DATA_PIPELINE.md) that nothing runs; #479 decides its future.
+      "ignoreFiles": ["scripts/audit-synergy-data.mjs"],
+      // Root scripts load these from apps/web on purpose, through createRequire.
+      "ignoreDependencies": ["@playwright/test", "@supabase/supabase-js"],
+      // generate-docs.mjs opens the docs hub with the system's own opener.
+      "ignoreBinaries": ["xdg-open"],
+    },
+    "apps/web": {
+      // index.html loads it in dev only, which knip can't see (#673).
+      "ignoreDependencies": ["react-grab"],
+    },
+  },
+}

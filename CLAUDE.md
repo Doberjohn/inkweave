@@ -260,6 +260,7 @@ Dark fantasy theme inspired by Lorcana:
 - **Local Windows Vitest runs use 4 workers** (`resolveVitestWorkers` in `apps/web/vite.config.ts`, #720): on a cold disk cache, Vitest's default first wave misses its hardcoded 60 s worker-start limit and those files never run. CI keeps Vitest's default; `VITEST_MAX_WORKERS` overrides the cap.
 - **Pre-push hook** (husky) runs E2E chromium on every `git push`. Do not skip.
 - Full 5-browser E2E suite runs in CI as safety net.
+- Script suites (`pnpm test:scripts`) also run on Windows in CI (`script-tests-windows.yml`) when scripts, hooks or dependencies change, so the worktree remover's Windows-only tests run.
 - After pushing, always confirm with clear output (e.g., git log showing commit on origin/master).
 - **When pre-push fails on tests unrelated to your change:** (1) confirm it's pre-existing by checking whether the same test was accepted on `origin/HEAD` — if yes, something drifted since then; (2) surface scope options to the user (fix in scope / fix separately / defer / `--no-verify` with explicit approval) before digging into root-cause; (3) do NOT silently investigate the unrelated breakage — that's scope drift. Pause and ask.
 
@@ -287,6 +288,7 @@ Dark fantasy theme inspired by Lorcana:
 - Use `/refactor-code` for periodic comprehensive codebase audits
 - When reviewing code or doing a re-review, always re-read the current file contents first — never assume you know what's already been changed. Diff against the actual working tree, not your memory of previous edits.
 - When editing theme or config files, re-read the full file after edits to ensure no constants or exports were accidentally removed by the edit tool
+- **Dead code**: CI's `pnpm knip` fails on unused files, dependencies and binaries. Something that only looks unused (run from a shell script or `vercel.json`, loaded at run time) goes in `knip.jsonc` with the reason.
 
 ### Design Token Changes
 - **Grep the token value, not just declaration sites.** When swapping a font, color, or spacing value, the declaration lives in `theme.ts` / `index.css` / `index.html` — but inline styles, Storybook stories, and dynamic CSS strings (`cssText`, concatenated styles) bypass the token and must be found by searching the literal value across `apps/web/src/`.
