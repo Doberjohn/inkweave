@@ -42,10 +42,10 @@ A card's partners are what its own page lists: the bases a Shift card can land o
 
 ### Example
 
-Selecting **Elsa - Ice Maker** (cost 7, Shift 5) finds:
+When this example was written, selecting **Elsa - Ice Maker** (cost 7, Shift 5) found (it has since left Core):
 - **Elsa - Snow Queen** (cost 4) — score 9, perfect curve: play on turn 4, Shift next turn
 
-Selecting **Elsa - Snow Queen** (cost 4) finds:
+And selecting **Elsa - Snow Queen** (cost 4) found:
 - **Elsa - Ice Maker** (Shift 5) — score 9, same pair, same score
 
 ### Shift Variants

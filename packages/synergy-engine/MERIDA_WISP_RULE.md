@@ -30,7 +30,7 @@ The explanation token-swaps so Merida always reads as the **payoff** regardless 
 
 ### Example
 
-Selecting **Merida - Wisp Conjurer** surfaces (top of the list):
+When this example was written, selecting **Merida - Wisp Conjurer** surfaced (top of the list; some of these cards have since left Core):
 - **The Horned King - Merciless Master** (13022) — score **8** (engine: replays your discard exerted)
 - **Simba - King in the Making** (2209) — score **8** (engine: plays revealed characters exerted)
 - **Powhatan's Staff** (13036, item) — score **8** (engine: the next character you play enters exerted)

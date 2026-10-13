@@ -7,8 +7,10 @@ export default {
   blocks: {
     coverage: (coverage) => {
       const pairs = coverage.pairs('merida-archer');
+      // Every anchor in the pool, so one with no deck-compatible payoff is still listed.
+      const anchors = coverage.pool.cards.filter(coverage.engine.isSteadyAimAnchor).sort(byName);
       // "{anchor}'s STEADY AIM adds 2 damage to {payoff}'s …": an explanation names the anchor first.
-      const [anchors, payoffs] = [namedIn(pairs, 0), namedIn(pairs, 1)];
+      const payoffs = namedIn(pairs, 1);
       const raw = coverage.pool.cards.filter(coverage.engine.isMeridaDamageAction).sort(byName);
       return section(
         poolLine(coverage),

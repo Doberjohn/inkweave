@@ -1,6 +1,6 @@
 import {pairsLead, poolLine, scoreRange, section} from '../blocks.mjs';
 import {fmt, nameList, plural, table, tallyText} from '../render.mjs';
-import {namedIn, namedOrder, scoreCounts} from '../stats.mjs';
+import {byName, namedIn, namedOrder, scoreCounts} from '../stats.mjs';
 
 // "{anchor} plays {payoff} for free": an explanation names the anchor first.
 const anchorOf = (pair) => namedOrder(pair)[0];
@@ -20,7 +20,7 @@ function anchorRow(coverage, anchor, pairs) {
     anchor.fullName,
     coverage.inks(anchor).join('-'),
     fmt(payoffs.length),
-    scores,
+    scores || 'none',
     tallyText(payoffs.flatMap(coverage.inks)),
   ];
 }
@@ -43,7 +43,8 @@ export default {
   blocks: {
     coverage: (coverage) => {
       const pairs = coverage.pairs('free-play');
-      const anchors = namedIn(pairs, 0);
+      // Every anchor in the pool, so one with no deck-compatible payoff still gets its row.
+      const anchors = coverage.pool.cards.filter(coverage.engine.isFreePlayAnchor).sort(byName);
       return section(
         poolLine(coverage),
         `- **${plural(anchors.length, 'anchor')}**: ${nameList(anchors)}\n- ${pairsLead(pairs)}`,

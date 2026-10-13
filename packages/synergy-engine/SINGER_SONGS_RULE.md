@@ -24,7 +24,7 @@ Both directions produce identical scores for the same pair.
 
 ### Example
 
-Selecting **Powerline - World's Greatest Rock Star** (Singer 9) finds:
+When this example was written, selecting **Powerline - World's Greatest Rock Star** (Singer 9) found (some of these cards have since left Core):
 - **Be Our Guest** (cost 2) — score 5 (functional, 7 ink wasted)
 - **Let It Go** (cost 5) — score 5 (functional, 4 ink wasted)
 - **Grab Your Sword** (cost 7) — score 6 (good savings, 2 ink wasted)

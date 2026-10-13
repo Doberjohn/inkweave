@@ -27,7 +27,8 @@ export default {
   blocks: {
     coverage: (coverage) => {
       const pairs = coverage.pairs('merida-wisp');
-      const anchors = namedIn(pairs, 1);
+      // Every anchor in the pool, so one with no deck-compatible enabler is still listed.
+      const anchors = coverage.pool.cards.filter(coverage.engine.isBeckonAnchor).sort(byName);
       const tiers = tierStats(coverage, pairs);
       const self = tiers.find(({tier}) => tier === 'self').raw;
       const rawCount = tiers.reduce((n, {raw}) => n + raw.length, 0);

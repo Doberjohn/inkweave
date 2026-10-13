@@ -9,14 +9,18 @@ import {blockNames, fillBlocks} from './markers.mjs';
 const listed = (names) => names.join(', ');
 
 /**
- * Throws unless every rule doc has a spec and every spec has a doc, so a new rule doc can't
- * skip its coverage and a renamed one can't leave a spec behind.
+ * Throws unless every rule doc has one spec and every spec has a doc, so a new rule doc can't
+ * skip its coverage, two specs can't both write one doc, and a renamed one can't leave a spec
+ * behind.
  *
  * @param {string[]} docs - the *_RULE.md file names on disk
  * @param {Array<{doc: string}>} specs
  */
 export function checkSpecs(docs, specs) {
   const specDocs = specs.map((spec) => spec.doc);
+  const repeated = specDocs.filter((doc, i) => specDocs.indexOf(doc) !== i);
+  if (repeated.length > 0)
+    throw new Error(`more than one coverage spec names ${listed([...new Set(repeated)])}`);
   const missing = docs.filter((doc) => !specDocs.includes(doc));
   if (missing.length > 0) {
     throw new Error(

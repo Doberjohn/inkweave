@@ -24,6 +24,47 @@ describe('coverage specs over an empty pool', () => {
   });
 });
 
+describe('coverage specs that list anchors', () => {
+  // A pool of one anchor: no payoff, so no pair names it.
+  const loneAnchor = async (text) => {
+    const engine = await import(pathToFileURL(ENGINE).href);
+    const card = {
+      id: '1',
+      name: 'Test',
+      fullName: 'Test - Anchor',
+      type: 'Character',
+      ink: 'Amber',
+      cost: 2,
+      text,
+    };
+    return createCoverage({engine, pool: {cards: [card], label: 'a test pool'}});
+  };
+  const render = (doc, coverage) =>
+    SPECS.find((spec) => spec.doc === doc).blocks.coverage(coverage);
+
+  it.each([
+    ['FREE_PLAY_RULE.md', 'You may play a character with cost 1 for free.'],
+    ['SPIKE_SUIT_RULE.md', 'Your characters deal damage with their ⛉ instead of their ¤.'],
+    [
+      'MERIDA_ARCHER_RULE.md',
+      'Whenever one of your actions deals damage to an opposing character.',
+    ],
+    [
+      'MERIDA_WISP_RULE.md',
+      'Whenever another character of yours enters play exerted, draw a card.',
+    ],
+  ])('%s lists an anchor that nothing pairs with', async (doc, text) => {
+    expect(render(doc, await loneAnchor(text))).toContain('**1 anchor**: Test - Anchor');
+  });
+
+  it('gives a Free Play anchor with no payoff its own row', async () => {
+    const coverage = await loneAnchor('You may play a character with cost 1 for free.');
+    expect(render('FREE_PLAY_RULE.md', coverage)).toContain(
+      '| Test - Anchor | Amber | 0 | none | none |',
+    );
+  });
+});
+
 describe('coverage specs that count by explanation or role', () => {
   const card = {id: '1', fullName: 'Test - Card'};
 

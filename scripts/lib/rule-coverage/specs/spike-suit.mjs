@@ -1,12 +1,18 @@
 import {pairsLead, poolLine, scoreChart, section, tierSplit} from '../blocks.mjs';
 import {bars, doughnut, fmt, nameList, plural, tally} from '../render.mjs';
-import {namedIn} from '../stats.mjs';
+import {byName, namedIn} from '../stats.mjs';
 
 /** The bonus combat damage Spike Suit unlocks: willpower minus strength. */
 const gap = (card) => (card.willpower ?? 0) - (card.strength ?? 0);
 
-// "{anchor} lets {payoff} deal damage with its N willpower …": an explanation names the anchor first.
-const anchorsAndPayoffs = (pairs) => ({anchors: namedIn(pairs, 0), payoffs: namedIn(pairs, 1)});
+/**
+ * Every anchor in the pool, so one with no deck-compatible payoff is still listed, and the
+ * payoffs it pairs with ("{anchor} lets {payoff} deal damage …" names the anchor first).
+ */
+const anchorsAndPayoffs = (coverage, pairs) => ({
+  anchors: coverage.pool.cards.filter(coverage.engine.isSpikeSuitAnchor).sort(byName),
+  payoffs: namedIn(pairs, 1),
+});
 
 /** The characters that could be a payoff: all but an anchor no other anchor pairs with. */
 function candidates(coverage, {anchors, payoffs}) {
@@ -18,7 +24,7 @@ function candidates(coverage, {anchors, payoffs}) {
 
 /** How many characters lead on willpower, how many the floor keeps, how many pair. */
 function floorLine(coverage) {
-  const roles = anchorsAndPayoffs(coverage.pairs('spike-suit'));
+  const roles = anchorsAndPayoffs(coverage, coverage.pairs('spike-suit'));
   const characters = candidates(coverage, roles);
   const rule = coverage.engine.getAllRules().find((r) => r.id === 'spike-suit');
   const leading = characters.filter((card) => gap(card) >= 1);
@@ -44,7 +50,7 @@ export default {
     },
     coverage: (coverage) => {
       const pairs = coverage.pairs('spike-suit');
-      const {anchors, payoffs} = anchorsAndPayoffs(pairs);
+      const {anchors, payoffs} = anchorsAndPayoffs(coverage, pairs);
       const gaps = tally(payoffs.map((card) => String(gap(card)))).sort(
         (a, b) => Number(a[0]) - Number(b[0]),
       );

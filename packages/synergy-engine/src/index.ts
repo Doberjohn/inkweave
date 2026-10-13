@@ -33,6 +33,8 @@ export {
   getRulesByCategory,
   getRulesByPlaystyle,
   getRuleById,
+  isSpikeSuitAnchor,
+  isFreePlayAnchor,
   getAllPlaystyles,
   getPlaystyleById,
   LOCATION_ROLE_CHIP_LABELS,

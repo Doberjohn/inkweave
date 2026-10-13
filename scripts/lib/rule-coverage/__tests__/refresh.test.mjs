@@ -67,6 +67,12 @@ describe('checkSpecs', () => {
     );
   });
 
+  it('names a doc that two specs claim', () => {
+    expect(() => checkSpecs(['A_RULE.md'], [{doc: 'A_RULE.md'}, {doc: 'A_RULE.md'}])).toThrow(
+      'more than one coverage spec names A_RULE.md',
+    );
+  });
+
   it('names a spec whose doc is gone', () => {
     expect(() => checkSpecs(['A_RULE.md'], [{doc: 'A_RULE.md'}, {doc: 'OLD_RULE.md'}])).toThrow(
       "coverage specs name docs that don't exist: OLD_RULE.md",

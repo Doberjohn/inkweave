@@ -20,7 +20,7 @@ The rule only fires **forward**: the card with "named X" in its text triggers th
 
 ### Example
 
-Selecting **Anna - Trusting Sister** ("While you have a character named Elsa in play, this character gains Evasive") finds:
+When this example was written, selecting **Anna - Trusting Sister** ("While you have a character named Elsa in play, this character gains Evasive") found (some of these cards have since left Core):
 - **Elsa - Snow Queen** (cost 3) — score 7 (strong: keyword grant)
 - **Elsa - Ice Maker** (cost 7) — score 7 (strong: keyword grant)
 - Every other card with base name "Elsa"

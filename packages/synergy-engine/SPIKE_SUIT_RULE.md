@@ -30,7 +30,7 @@ Both directions produce identical scores for the same pair. The explanation toke
 
 ### Example
 
-Selecting **Dale - Ready for His Shot** finds (top of the list):
+When this example was written, selecting **Dale - Ready for His Shot** found (top of the list; some of these cards have since left Core):
 - **Minnie Mouse - Daring Defender** (0/8) — score 10 (a wall that now hits for 8)
 - **Prince Charming - Protector of the Realm** (3/10) — score 10 (+7 combat damage)
 - **Mufasa - Ruler of Pride Rock** (4/9) — score 8 (+5 combat damage)

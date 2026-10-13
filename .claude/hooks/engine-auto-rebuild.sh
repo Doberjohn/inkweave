@@ -46,8 +46,9 @@ if echo "$FILE_PATH" | grep -q "packages/synergy-engine/src/"; then
   echo "[engine-auto-rebuild] OK — $SUMMARY"
 
   # Refresh the rule docs' coverage blocks from the engine just built, so it runs last. It
-  # writes a doc only when one of its numbers moved, so a doc open for editing stays as read
-  # unless the edit changed its coverage. A failure writes no doc at all.
+  # writes a doc only when one of its generated blocks changed (a count, a card list, a chart),
+  # so a doc open for editing stays as read unless the edit changed its coverage. A failure
+  # writes no doc at all.
   COVERAGE_OUT=$(node scripts/refresh-rule-coverage.mjs 2>&1)
   COVERAGE_OK=$?
 

@@ -27,7 +27,7 @@ Both directions produce identical scores. The explanation token-swaps so Merida 
 
 ### Example
 
-Selecting **Merida - Formidable Archer** finds (top of the list):
+When this example was written, selecting **Merida - Formidable Archer** found (top of the list; some of these cards have since left Core):
 - **Unfortunate Situation** (4 damage, multi) — score 9
 - **The Mob Song** (3 damage, up to 3 targets) — score 9
 - **Smash** (3 damage) — score 8

@@ -40,8 +40,9 @@ export default {
     },
     coverage: (coverage) => {
       const {roles, enablers, payoffs, consume, state} = exertGroups(coverage);
+      // The engine's textContains folds line breaks, which can fall inside the phrase.
       const inkwellRamp = coverage.pool.cards.filter((card) =>
-        INKWELL_EXERTED.test(card.text ?? ''),
+        coverage.engine.textContains(card, INKWELL_EXERTED),
       );
       const tagged = inkwellRamp.filter((card) => coverage.engine.getExertRoles(card).length > 0);
       return section(

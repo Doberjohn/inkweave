@@ -59,6 +59,16 @@ describe('shapeTable', () => {
     expect(rows).toContain('| density | 2 | 5 | 66.7% |');
   });
 
+  it('files a pair two shapes with its score would take under the first of them', () => {
+    const overlapping = [
+      {label: 'search', score: 8, test: /^Search/},
+      {label: 'any combo', score: 8},
+    ];
+    const rows = shapeTable([pair(8, 'Search and banish'), pair(8, 'Combo')], overlapping);
+    expect(rows).toContain('| search | 1 | 8 | 50.0% |');
+    expect(rows).toContain('| any combo | 1 | 8 | 50.0% |');
+  });
+
   it('fails on a pair no shape takes, so a new explanation cannot go uncounted', () => {
     expect(() => shapeTable([pair(8, 'Something new')], shapes)).toThrow(
       'no pair shape for a test pair at 8: Something new',
