@@ -143,8 +143,9 @@ export const cardSetTable = (coverage, cards) =>
     cards.map((card) => [card.fullName, coverage.pool.setName(card.setCode)]),
   );
 
-/** "5-7": the lowest and highest score among the pairs. */
+/** "5-7": the lowest and highest score among the pairs, or "none". */
 export function scoreRange(pairs) {
+  if (pairs.length === 0) return 'none';
   const scores = pairs.map((pair) => pair.score);
   const [low, high] = [Math.min(...scores), Math.max(...scores)];
   return low === high ? String(low) : `${low}-${high}`;

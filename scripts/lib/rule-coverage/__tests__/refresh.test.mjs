@@ -21,6 +21,17 @@ describe('blockNames', () => {
     expect(() => blockNames(text, 'X_RULE.md')).toThrow('X_RULE.md: unbalanced coverage markers');
   });
 
+  it.each([
+    ['a space after a start marker', `<!-- coverage:start a --> \n<!-- coverage:end -->\n`],
+    ['an indented end marker', `<!-- coverage:start a -->\n  <!-- coverage:end -->\n`],
+    ['a CRLF line ending', `<!-- coverage:start a -->\r\n<!-- coverage:end -->\r\n`],
+    ['a name with a capital', `<!-- coverage:start Roles -->\n<!-- coverage:end -->\n`],
+  ])('names the marker line for %s, not the balance', (_, text) => {
+    expect(() => blockNames(text, 'X_RULE.md')).toThrow(
+      /^X_RULE\.md: coverage marker line ".*" must hold the marker alone/,
+    );
+  });
+
   it('rejects two blocks with one name', () => {
     expect(() => blockNames(`${block('a')}\n${block('a')}\n`, 'X_RULE.md')).toThrow(
       'two coverage blocks are named a',
@@ -64,6 +75,16 @@ describe('refreshDoc', () => {
   it('rejects a marked block the spec does not render', () => {
     const spec = {doc: 'X_RULE.md', blocks: {roles: render('roles')}};
     expect(() => refreshDoc(DOC, spec, {})).toThrow('X_RULE.md: no spec for block pairs');
+  });
+
+  it('names the doc and block when a block fails to render', () => {
+    const fail = () => {
+      throw new Error('roleFn is not a function');
+    };
+    const spec = {doc: 'X_RULE.md', blocks: {roles: render('roles'), pairs: fail}};
+    expect(() => refreshDoc(DOC, spec, {})).toThrow(
+      'X_RULE.md block pairs: roleFn is not a function',
+    );
   });
 
   it('rejects a spec block the doc has no markers for', () => {

@@ -13,6 +13,33 @@ const gateText = ({costCap, classification}) =>
 
 const gated = (gate) => gate.costCap !== null || gate.classification !== null;
 
+/** Every enabler → re-buy body reading that could share a deck, with the enabler's gate. */
+function* readings(engine, roles) {
+  for (const enabler of holders(roles, ENABLERS)) {
+    const gate = engine.getBounceTargetGate(enabler);
+    for (const body of roles.get('rebuy-payoff')) {
+      if (body !== enabler && engine.canShareDeck(enabler, body)) yield {enabler, gate, body};
+    }
+  }
+}
+
+/** Whether the gate names a classification the body lacks. */
+const failsClassGate = (engine, gate, body) =>
+  gate.classification !== null && !engine.hasClassification(body, gate.classification);
+
+/** A pair's verdict before any reading: not admitted, no class gate, no losing bodies. */
+const freshVerdict = () => ({admitted: false, classGate: false, bodies: new Set()});
+
+/** Records one reading on its pair's verdict: admitted, or rejected and by which gate. */
+function judge(verdict, engine, {gate, body}) {
+  if (engine.bounceGateAdmits(gate, body)) {
+    verdict.admitted = true;
+    return;
+  }
+  verdict.bodies.add(body);
+  if (failsClassGate(engine, gate, body)) verdict.classGate = true;
+}
+
 /**
  * Every enabler → re-buy body reading that could share a deck, judged by the enabler's target
  * gate: what the rule would pair without the gates, and why the gates drop the rest.
@@ -20,20 +47,10 @@ const gated = (gate) => gate.costCap !== null || gate.classification !== null;
 function gateStudy(coverage, roles) {
   const {engine} = coverage;
   const verdicts = new Map();
-  for (const enabler of holders(roles, ENABLERS)) {
-    const gate = engine.getBounceTargetGate(enabler);
-    for (const body of roles.get('rebuy-payoff')) {
-      if (body === enabler || !engine.canShareDeck(enabler, body)) continue;
-      const {key} = pairOf(enabler, body);
-      const verdict = verdicts.get(key) ?? {admitted: false, classGate: false, bodies: new Set()};
-      if (engine.bounceGateAdmits(gate, body)) verdict.admitted = true;
-      else {
-        verdict.bodies.add(body);
-        verdict.classGate ||=
-          gate.classification !== null && !engine.hasClassification(body, gate.classification);
-      }
-      verdicts.set(key, verdict);
-    }
+  for (const reading of readings(engine, roles)) {
+    const {key} = pairOf(reading.enabler, reading.body);
+    if (!verdicts.has(key)) verdicts.set(key, freshVerdict());
+    judge(verdicts.get(key), engine, reading);
   }
   const rejected = [...verdicts.values()].filter((verdict) => !verdict.admitted);
   return {

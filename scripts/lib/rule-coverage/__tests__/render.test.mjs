@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest';
-import {partnerBuckets, shapeTable, tierSplit} from '../blocks.mjs';
-import {doughnut, table, tallyText} from '../render.mjs';
+import {partnerBuckets, scoreRange, shapeTable, tierSplit} from '../blocks.mjs';
+import {doughnut, nameList, table, tallyText} from '../render.mjs';
 
 const chartSpec = (block) => JSON.parse(block.replace(/^```chart\n|\n```$/g, ''));
 const pair = (score, explanation) => ({score, explanation, ruleId: 'test'});
@@ -15,6 +15,13 @@ describe('render', () => {
   it('counts most common first, ties by name, and says none for nothing', () => {
     expect(tallyText(['Ruby', 'Amber', 'Ruby', 'Steel'])).toBe('Ruby 2, Amber 1, Steel 1');
     expect(tallyText([])).toBe('none');
+  });
+
+  it('lists cards by full name in the order given, and says none for no cards', () => {
+    expect(nameList([{fullName: 'Dale - Ready for His Shot'}, {fullName: 'Chip - Ranger'}])).toBe(
+      'Dale - Ready for His Shot, Chip - Ranger',
+    );
+    expect(nameList([])).toBe('none');
   });
 
   it('writes a chart the docs hub can parse, leaving out empty slices', () => {
@@ -55,6 +62,12 @@ describe('summaries', () => {
     expect(tierSplit([pair(3), pair(6), pair(7), pair(10)])).toBe(
       '1 Weak / 1 Moderate / 1 Strong / 1 Perfect',
     );
+  });
+
+  it('gives the score range, one score when they agree, and none for no pairs', () => {
+    expect(scoreRange([pair(7), pair(5), pair(6)])).toBe('5-7');
+    expect(scoreRange([pair(5), pair(5)])).toBe('5');
+    expect(scoreRange([])).toBe('none');
   });
 
   it('buckets cards by how many partners their pages list', () => {

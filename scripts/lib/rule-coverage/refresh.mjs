@@ -28,9 +28,19 @@ export function checkSpecs(docs, specs) {
     throw new Error(`coverage specs name docs that don't exist: ${listed(orphans)}`);
 }
 
+/** A block's markdown, or an error that names the doc and block it came from. */
+function renderBlock(spec, name, coverage) {
+  try {
+    return spec.blocks[name](coverage);
+  } catch (error) {
+    throw new Error(`${spec.doc} block ${name}: ${error.message}`, {cause: error});
+  }
+}
+
 /**
  * A doc with its blocks filled from its spec. Throws when the doc's blocks and the spec's
- * differ, so a marker pair can't go unfilled and a spec block can't go unshown.
+ * differ, so a marker pair can't go unfilled and a spec block can't go unshown, and when a
+ * block fails to render, naming the doc and block.
  *
  * @param {string} text - the doc
  * @param {{doc: string, blocks: Record<string, (coverage: object) => string>}} spec
@@ -44,5 +54,5 @@ export function refreshDoc(text, spec, coverage) {
   if (unfilled.length > 0) throw new Error(`${spec.doc}: no spec for block ${listed(unfilled)}`);
   const unshown = expected.filter((name) => !names.includes(name));
   if (unshown.length > 0) throw new Error(`${spec.doc}: no markers for block ${listed(unshown)}`);
-  return fillBlocks(text, (name) => spec.blocks[name](coverage));
+  return fillBlocks(text, (name) => renderBlock(spec, name, coverage));
 }

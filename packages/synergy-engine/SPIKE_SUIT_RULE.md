@@ -66,7 +66,7 @@ This matches Dale's Spike Suit wording (the `.*` spans the ⛉/¤ glyphs without
 <!-- coverage:start floor -->
 Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
 
-**460 characters** have any willpower lead, **204** of them only +1. The +3 floor keeps **125**, and **124** of those can share a deck with an anchor.
+**459 characters** have any willpower lead, **204** of them only +1. The floor keeps **124**, and **124** of those can share a deck with an anchor.
 <!-- coverage:end -->
 
 ### Ink Compatibility

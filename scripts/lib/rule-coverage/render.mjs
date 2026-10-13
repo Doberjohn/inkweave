@@ -9,8 +9,9 @@ export const fmt = (n) => n.toLocaleString('en-US');
 /** A share to one decimal place: pct(1, 3) → "33.3%". */
 export const pct = (part, whole) => `${whole === 0 ? '0.0' : ((100 * part) / whole).toFixed(1)}%`;
 
-/** Cards' full names, comma-separated, in the order given. */
-export const nameList = (cards) => cards.map((card) => card.fullName).join(', ');
+/** Cards' full names, comma-separated, in the order given, or "none". */
+export const nameList = (cards) =>
+  cards.length === 0 ? 'none' : cards.map((card) => card.fullName).join(', ');
 
 /** "1 card" / "3 cards". */
 export const plural = (n, word) => `${fmt(n)} ${word}${n === 1 ? '' : 's'}`;

@@ -77,6 +77,23 @@ function onlyGroup(coverage, ruleId, cards) {
 
 const perInk = (cards, inks) => (ink) => cards.filter((card) => inks(card).includes(ink)).length;
 
+/**
+ * The role composition doughnut's slices, each drop card in one: makers first, then payoffs
+ * under their first shape. A card no slice takes fails the run, so the slices always add up.
+ */
+function compositionSlices({all, makers, shapes}) {
+  const filed = new Set(makers);
+  const slices = [['Makers', makers.length]];
+  for (const [shape, cards] of shapes) {
+    const fresh = cards.filter((card) => !filed.has(card));
+    for (const card of fresh) filed.add(card);
+    slices.push([`${shape[0].toUpperCase()}${shape.slice(1)} payoffs`, fresh.length]);
+  }
+  const unfiled = all.filter((card) => !filed.has(card));
+  if (unfiled.length > 0) throw new Error(`no role composition slice for ${nameList(unfiled)}`);
+  return slices;
+}
+
 export default {
   doc: 'INK_DROPS_RULE.md',
   blocks: {
@@ -102,7 +119,7 @@ export default {
           all
             .filter((card) => engine.getInkDropGain(card) >= 2)
             .map(gain)
-            .join(', '),
+            .join(', ') || 'none',
         ],
       ];
       return table(['Helper', 'Cards'], rows);
@@ -120,19 +137,14 @@ export default {
       return section(
         `**${fmt(all.length)} drop cards**. ${pairsLead(pairs)}:`,
         shapeTable(pairs, SHAPES, {hideEmpty: true}),
-        `Totals: **${totals}**. Drop cards with no partner: ${loners.length === 0 ? 'none' : nameList(loners)}. ` +
+        `Totals: **${totals}**. Drop cards with no partner: ${nameList(loners)}. ` +
           `Cards whose only synergy group is Ink Drops: ${fmt(only.length)}` +
           `${only.length > 0 ? ` (${nameList(only)})` : ''}.`,
       );
     },
     coverage: (coverage) => {
-      const {all, makers, payoffs, shared, shapes} = dropGroups(coverage);
-      const filed = new Set();
-      const slices = shapes.map(([shape, cards]) => {
-        const fresh = cards.filter((card) => !filed.has(card));
-        for (const card of fresh) filed.add(card);
-        return [`${shape[0].toUpperCase()}${shape.slice(1)} payoffs`, fresh.length];
-      });
+      const groups = dropGroups(coverage);
+      const {all, makers, payoffs, shared, shapes} = groups;
       const shapeText = shapes
         .filter(([, cards]) => cards.length > 0)
         .map(([shape, cards]) => `**${shape}** ${nameList([...cards].sort(byName))}`)
@@ -140,13 +152,10 @@ export default {
       return section(
         [
           roleBullet('maker', makers, {inks: coverage.inks, names: 100}),
-          `- **${fmt(payoffs.length)} payoffs** (${tallyText(payoffs.flatMap(coverage.inks))}): ${shapeText}`,
+          `- **${fmt(payoffs.length)} payoffs** (${tallyText(payoffs.flatMap(coverage.inks))}): ${shapeText || 'none'}`,
           roleBullet('shared maker', shared, {inks: coverage.inks, names: 100}),
         ].join('\n'),
-        doughnut(`Role composition (${fmt(all.length)} cards)`, [
-          ['Makers', makers.length],
-          ...slices,
-        ]),
+        doughnut(`Role composition (${fmt(all.length)} cards)`, compositionSlices(groups)),
       );
     },
   },

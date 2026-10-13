@@ -454,7 +454,7 @@ Standard Vite production build. The env var flips `loader.ts:33` (`USE_LOCAL_IMA
 
 | Hook | Trigger | Action |
 |---|---|---|
-| `.claude/hooks/engine-auto-rebuild.sh:29-53` | PostToolUse Edit/Write on `packages/synergy-engine/src/` | `pnpm build:engine && pnpm precompute-synergies`, then `node scripts/refresh-rule-coverage.mjs` (rule-doc coverage blocks, #479) |
+| `.claude/hooks/engine-auto-rebuild.sh:29-61` | PostToolUse Edit/Write on `packages/synergy-engine/src/` | `pnpm build:engine && pnpm precompute-synergies`, then `node scripts/refresh-rule-coverage.mjs` (rule-doc coverage blocks, #479) |
 | `.claude/hooks/preview-data-auto-precompute.sh:32-46` | PostToolUse Edit/Write on `apps/web/public/data/previewCards.json` | `pnpm precompute-synergies` |
 | `.claude/hooks/preview-images-auto-convert.sh` | PostToolUse Edit/Write on `apps/web/public/card-images-raw/` | `pnpm convert-preview-images` |
 

@@ -14,17 +14,30 @@ const END = /<!-- coverage:end -->/g;
 const BLOCK =
   /<!-- coverage:start ([a-z0-9-]+) -->\n(?:(?:(?!<!-- coverage:)[\s\S])*\n)?<!-- coverage:end -->/g;
 
+// A whole marker line. Anything else on it (indent, trailing space, a CR) would hide the block.
+const MARKER_LINE = /^<!-- coverage:(?:start [a-z0-9-]+|end) -->$/;
+
 const count = (text, pattern) => [...text.matchAll(pattern)].length;
 
 /**
- * The names of a doc's blocks, in order. Throws when the markers don't pair up: a start with no
- * end, a stray end, a block inside a block, or two blocks with one name.
+ * The names of a doc's blocks, in order. Throws when a marker shares its line or misspells its
+ * name, and when the markers don't pair up: a start with no end, a stray end, a block inside a
+ * block, or two blocks with one name.
  *
- * @param {string} text - the doc
+ * @param {string} text - the doc, with LF line endings
  * @param {string} doc - its file name, for the error
  * @returns {string[]}
  */
 export function blockNames(text, doc) {
+  const loose = text
+    .split('\n')
+    .find((line) => line.includes('<!-- coverage:') && !MARKER_LINE.test(line));
+  if (loose !== undefined) {
+    throw new Error(
+      `${doc}: coverage marker line ${JSON.stringify(loose)} must hold the marker alone, ` +
+        'named with a-z, 0-9 and -',
+    );
+  }
   const names = [...text.matchAll(BLOCK)].map((m) => m[1]);
   const balanced = names.length === count(text, START) && names.length === count(text, END);
   if (!balanced) throw new Error(`${doc}: unbalanced coverage markers`);

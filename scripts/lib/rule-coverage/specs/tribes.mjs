@@ -29,7 +29,7 @@ export default {
       ].sort((a, b) => a - b);
       const dist = (pairs) => {
         const counts = new Map(scoreCounts(pairs));
-        return scores.map((score) => fmt(counts.get(score) ?? 0)).join(' / ');
+        return scores.map((score) => fmt(counts.get(score) ?? 0)).join(' / ') || 'none';
       };
       const rows = tribes.map(({name, members, payoffs, pairs}) => [
         name,
@@ -43,7 +43,7 @@ export default {
         'Members',
         'Payoff cards',
         'Unique pairs',
-        `Score dist (${scores.join(' / ')})`,
+        scores.length > 0 ? `Score dist (${scores.join(' / ')})` : 'Score dist',
       ];
       return section(poolLine(coverage), table(headers, rows));
     },

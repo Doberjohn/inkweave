@@ -11,7 +11,9 @@ const DOCS_DIR = path.resolve(
   '../../../../packages/synergy-engine',
 );
 const DOCS = fs.readdirSync(DOCS_DIR).filter((file) => file.endsWith('_RULE.md'));
-const TEXTS = new Map(DOCS.map((doc) => [doc, fs.readFileSync(path.join(DOCS_DIR, doc), 'utf8')]));
+// Read as LF, the way refresh-rule-coverage.mjs reads them, whatever endings a checkout gives.
+const read = (doc) => fs.readFileSync(path.join(DOCS_DIR, doc), 'utf8').replace(/\r\n/g, '\n');
+const TEXTS = new Map(DOCS.map((doc) => [doc, read(doc)]));
 
 describe('coverage specs', () => {
   it('cover every rule doc, and only rule docs that exist', () => {

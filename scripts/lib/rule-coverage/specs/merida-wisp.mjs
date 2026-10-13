@@ -1,5 +1,5 @@
 import {countWithNames, pairsLead, poolLine, section} from '../blocks.mjs';
-import {bars, fmt, nameList, table, tallyText, tierColor} from '../render.mjs';
+import {bars, fmt, nameList, plural, table, tallyText, tierColor} from '../render.mjs';
 import {byName, namedIn, namedOrder} from '../stats.mjs';
 
 // getBeckonEnablerTier's tiers, strongest first.
@@ -34,7 +34,7 @@ export default {
       return section(
         poolLine(coverage),
         [
-          `- **${fmt(anchors.length)} ${anchors.length === 1 ? 'anchor' : 'anchors'}**: ${nameList(anchors)}`,
+          `- **${plural(anchors.length, 'anchor')}**: ${nameList(anchors)}`,
           `- **${fmt(rawCount)} raw enablers**; ${pairsLead(pairs)}`,
           `- Self-only enablers per ink: ${tallyText(self.flatMap(coverage.inks))}`,
         ].join('\n'),

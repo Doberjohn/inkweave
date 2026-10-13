@@ -31,6 +31,17 @@ const PREVIEW_DATA_FILE = path.join(ROOT, 'apps/web/public/data/previewCards.jso
 
 const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf-8'));
 
+/** A doc's path, its text on disk, and its text with fresh blocks. */
+function refreshFile(spec, coverage) {
+  const file = path.join(DOCS_DIR, spec.doc);
+  const text = fs.readFileSync(file, 'utf-8');
+  // .gitattributes checks docs out with LF, but an editor may save one with CRLF: read it as LF
+  // and write it back with the endings it had, so a run never rewrites a doc for its endings alone.
+  const eol = text.includes('\r\n') ? '\r\n' : '\n';
+  const next = refreshDoc(text.replace(/\r\n/g, '\n'), spec, coverage).replace(/\n/g, eol);
+  return {doc: spec.doc, file, text, next};
+}
+
 async function main() {
   if (!fs.existsSync(ENGINE)) throw new Error('Engine not built. Run `pnpm build:engine` first.');
   const engine = await import(pathToFileURL(ENGINE).href);
@@ -40,19 +51,15 @@ async function main() {
 
   const docs = fs.readdirSync(DOCS_DIR).filter((file) => file.endsWith('_RULE.md'));
   checkSpecs(docs, SPECS);
-  const changed = [];
-  for (const spec of SPECS) {
-    const file = path.join(DOCS_DIR, spec.doc);
-    const text = fs.readFileSync(file, 'utf-8');
-    // .gitattributes checks docs out with LF, but an editor may save one with CRLF: read it as LF
-    // and write it back with the endings it had, so a run never rewrites a doc for its endings alone.
-    const eol = text.includes('\r\n') ? '\r\n' : '\n';
-    const next = refreshDoc(text.replace(/\r\n/g, '\n'), spec, coverage).replace(/\n/g, eol);
-    if (next === text) continue;
-    fs.writeFileSync(file, next);
-    changed.push(spec.doc);
-  }
-  const summary = changed.length > 0 ? `updated ${changed.join(', ')}` : 'all docs up to date';
+  // Render every doc before writing any, so a block that fails leaves all the docs as they were.
+  const changed = SPECS.map((spec) => refreshFile(spec, coverage)).filter(
+    ({text, next}) => next !== text,
+  );
+  for (const {file, next} of changed) fs.writeFileSync(file, next);
+  const summary =
+    changed.length > 0
+      ? `updated ${changed.map(({doc}) => doc).join(', ')}`
+      : 'all docs up to date';
   console.log(`Rule coverage over ${pool.cards.length} Core cards (${pool.label}): ${summary}`);
 }
 

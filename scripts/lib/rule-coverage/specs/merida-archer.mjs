@@ -1,5 +1,5 @@
 import {pairsLead, poolLine, scoreChart, section, tierSplit} from '../blocks.mjs';
-import {fmt, nameList, tallyText} from '../render.mjs';
+import {fmt, nameList, plural, tallyText} from '../render.mjs';
 import {byName, namedIn} from '../stats.mjs';
 
 export default {
@@ -13,7 +13,7 @@ export default {
       return section(
         poolLine(coverage),
         [
-          `- **${fmt(anchors.length)} ${anchors.length === 1 ? 'anchor' : 'anchors'}**: ${nameList(anchors)}`,
+          `- **${plural(anchors.length, 'anchor')}**: ${nameList(anchors)}`,
           `- **${fmt(raw.length)} damage-dealing actions** (${tallyText(raw.flatMap(coverage.inks))}), ` +
             `**${fmt(payoffs.length)}** of them deck-compatible payoffs: ${nameList(payoffs)}`,
           `- ${pairsLead(pairs)}`,
