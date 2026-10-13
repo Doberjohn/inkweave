@@ -26,6 +26,8 @@ updates:
         update-types:
           - 'version-update:semver-major'
 
+  # First-party actions/* stay on version tags. Third-party actions are pinned to a
+  # commit SHA with their version in a trailing comment, and these updates move the pins.
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
