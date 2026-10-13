@@ -14,7 +14,8 @@
  * Run AFTER `pnpm build:web`. In CI/Vercel the browser must be installed first
  * (`playwright install chromium`). Set PRERENDER_SAMPLE=1 to crawl a small subset for a fast
  * smoke check. Set PRERENDER_CPU_THROTTLE=<n> to slow each page's CPU n-fold (reproduces
- * render races such as #584's).
+ * render races such as #584's). Set SKIP_PRERENDER=1 to skip the crawl and ship SPA-only:
+ * .github/workflows/deploy-staging.yml does, because staging is never indexed (#741).
  */
 import {createRequire} from 'node:module';
 import {createServer} from 'node:http';
@@ -393,6 +394,10 @@ function selectRoutes({staticRoutes, playstyleRoutes, cardRoutes}, only, sample)
 }
 
 async function main() {
+  if (process.env.SKIP_PRERENDER === '1') {
+    console.log('[prerender] skipped (SKIP_PRERENDER=1): shipping SPA-only');
+    return;
+  }
   const shellHtml = await loadBuildShell();
   const only = process.env.PRERENDER_URL;
   const sample = Number(process.env.PRERENDER_SAMPLE || 0);
