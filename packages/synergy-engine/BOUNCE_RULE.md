@@ -80,7 +80,7 @@ Gated enablers in the pool: **9 of 17**.
 
 A capped enabler pairs only with the bodies it can reach. One that keeps no Bounce partner still surfaces through the other rules it fits.
 
-**Known limitation:** the gate is read from the card's first matching return clause, not from the specific clause that granted the enabler role, so a card carrying a *capped opponent-side* bounce and a separate *uncapped self-bounce* would have the cap applied to its re-buy pairs. No card had that shape when this was written (every enabler carried exactly one gate-bearing return clause), and role detection is whole-text for the same reason, so scoping both to a clause is deferred until a card needs it.
+**Known limitation:** the gate is read from the card's first matching return clause, not from the specific clause that granted the enabler role, so a card carrying a *capped opponent-side* bounce and a separate *uncapped self-bounce* would have the cap applied to its re-buy pairs. No card had that shape when this was written (every enabler carried exactly one `return … chosen` clause, the one the gate is read from), and role detection is whole-text for the same reason, so scoping both to a clause is deferred until a card needs it.
 
 ---
 

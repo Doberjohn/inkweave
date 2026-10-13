@@ -1,5 +1,12 @@
-import {holdersLine, pairsLead, poolLine, roleTable, section, shapeTable} from '../blocks.mjs';
-import {doughnut} from '../render.mjs';
+import {
+  compositionChart,
+  holdersLine,
+  pairsLead,
+  poolLine,
+  roleTable,
+  section,
+  shapeTable,
+} from '../blocks.mjs';
 import {holders} from '../stats.mjs';
 
 const ENABLERS = ['standard', 'targeted', 'random'];
@@ -37,9 +44,9 @@ export default {
       return section(
         roleTable(roles, {names: 6, inks: coverage.inks, labels: LABELS}),
         holdersLine(roles),
-        doughnut(`Role composition (${holders(roles).length} cards)`, [
-          ['Enablers', enablers.length],
-          ['Payoffs', roles.get('payoff').length],
+        compositionChart([
+          ['Enablers', enablers],
+          ['Payoffs', roles.get('payoff')],
         ]),
       );
     },

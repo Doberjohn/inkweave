@@ -198,7 +198,7 @@ The rule was built around one card with this effect, and the synergy is entirely
 
 ### Why Floor at gap ≥ 3 (Not ≥ 1 or ≥ 2)?
 
-The literal "willpower > strength" reading matches hundreds of characters, many of them a trivial +1 (the *gap ≥ 3 Floor* section counts both). A +1 swing rarely changes a combat outcome and would attach a weak Dale entry to every one of those pages. Flooring at +3 (the point where the extra damage reliably trades up a tier of bodies) keeps the synergy honest in both directions. See the investigation in the rule's commit history.
+The literal "willpower > strength" reading matches hundreds of characters, many of them a trivial +1 (the *gap ≥ 3 Floor* section counts both). A +1 swing rarely changes a combat outcome, and dropping the floor would attach a marginal Dale entry to every one of those +1 characters' pages. Flooring at +3 (the point where the extra damage reliably trades up a tier of bodies) keeps the synergy honest in both directions. See the investigation in the rule's commit history.
 
 ### Why the Strength-0 Bump?
 

@@ -1,6 +1,13 @@
-import {holdersLine, pairsLead, poolLine, roleBullet, section, shapeTable} from '../blocks.mjs';
-import {doughnut, fmt, nameList, tallyText} from '../render.mjs';
-import {holders} from '../stats.mjs';
+import {
+  compositionChart,
+  holdersLine,
+  pairsLead,
+  poolLine,
+  roleBullet,
+  section,
+  shapeTable,
+} from '../blocks.mjs';
+import {fmt, nameList, tallyText} from '../render.mjs';
 
 const SHAPES = [
   {label: 'enabler ↔ consume payoff', score: 8, test: /punishes the exerted body/},
@@ -8,7 +15,7 @@ const SHAPES = [
   {label: 'payoff ↔ payoff', score: 5, test: /^Both reward opposing characters being exerted/},
 ];
 
-/** The "into your inkwell facedown and exerted" ramp the rule must never tag. */
+/** Cards that put a card into an inkwell "facedown and exerted": ramp the rule must never tag. */
 const INKWELL_EXERTED = /facedown and exerted/i;
 
 function exertGroups(coverage) {
@@ -45,12 +52,12 @@ export default {
             `**state (${fmt(state.length)})** ${nameList(state)}`,
         ].join('\n'),
         holdersLine(roles),
-        `Inkwell-ramp cards ("into your inkwell facedown and exerted"): ${fmt(inkwellRamp.length)}, ` +
+        `Cards that put a card into an inkwell "facedown and exerted": ${fmt(inkwellRamp.length)}, ` +
           `of which ${fmt(tagged.length)} gain an exert role.`,
-        doughnut(`Role composition (${fmt(holders(roles).length)} cards)`, [
-          ['Enablers', enablers.length],
-          ['Consume payoffs', consume.length],
-          ['State payoffs', state.length],
+        compositionChart([
+          ['Enablers', enablers],
+          ['Consume payoffs', consume],
+          ['State payoffs', state],
         ]),
       );
     },

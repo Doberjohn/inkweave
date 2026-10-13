@@ -80,17 +80,13 @@ export default {
       return section(
         roleTable(roles, {labels: LABELS, inks: coverage.inks}),
         table(['Read from the pairs', 'Cards'], facts),
-        roleChart(
-          `Role composition (${fmt(holders(roles).length)} cards; multi-role overlap)`,
-          roles,
-          {
-            enabler: 'Enabler',
-            reanimator: 'Reanimator',
-            'state-payoff': 'State-payoff',
-            'zone-payoff': 'Zone-payoff',
-            mill: 'Mill',
-          },
-        ),
+        roleChart(roles, {
+          enabler: 'Enabler',
+          reanimator: 'Reanimator',
+          'state-payoff': 'State-payoff',
+          'zone-payoff': 'Zone-payoff',
+          mill: 'Mill',
+        }),
       );
     },
   },

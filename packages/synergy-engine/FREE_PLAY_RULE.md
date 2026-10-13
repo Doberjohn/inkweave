@@ -137,4 +137,4 @@ Spike Suit floors at gap 3 because its literal reading matches hundreds of chara
 
 ### Why Reject a Generalized "Free Play" Rule?
 
-The wider "play a character for free" family is heterogeneous (Duke Weaselton cost ≤ 2, Mystical Inkcaster cost ≤ 5, Mickey Trumpeter *any* cost). A generalized rule would pair Mickey with every character in the pool, a meaningless pool explosion. The hard `cost === 1` filter is what keeps this rule honest.
+The wider "play a character for free" family is heterogeneous (Duke Weaselton cost ≤ 2, Mystical Inkcaster cost ≤ 5, Mickey Trumpeter *any* cost). A generalized rule would pair Mickey with every deck-compatible character, a meaningless pool explosion. The hard `cost === 1` filter is what keeps this rule honest.

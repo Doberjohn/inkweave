@@ -9,7 +9,6 @@ import {
   shapeTable,
 } from '../blocks.mjs';
 import {pct} from '../render.mjs';
-import {holders} from '../stats.mjs';
 import {TOY_ROLES} from './roles.mjs';
 
 const ROLES = ['self-banish', 'banish-trigger'];
@@ -61,7 +60,7 @@ export default {
         ].join('\n'),
         holdersLine(roles),
         `Banish-triggers the Toy rule tags too: ${countWithNames(shared, 12)}.`,
-        roleChart(`Role composition (${holders(roles).length} cards)`, roles, {
+        roleChart(roles, {
           'self-banish': 'Self-banish cards',
           'banish-trigger': 'Banish-triggers',
         }),

@@ -28,7 +28,7 @@ Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy
 | Steel | 10 | 3 | 0 |
 <!-- coverage:end -->
 
-The table shows where each side runs deep, and which inks have makers with no payoff of their own to cash the drops in. A shared maker's drops also reach an opponent, by design (see *drop-shared*).
+The table shows where each side runs deep, and which inks have makers with no payoff of their own to cash the drops in. A shared maker's drops also, or only, reach an opponent, by design (see *drop-shared*).
 
 ### Example
 

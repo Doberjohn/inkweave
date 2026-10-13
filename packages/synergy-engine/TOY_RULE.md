@@ -59,7 +59,7 @@ The **tribal vs generic** distinction is the core design axis. Tribal payoffs sc
 | `banish-trigger` | `makeBanishTriggerPattern('Toy characters?')` OR `makeBanishTriggerPattern('this character')` — "when(ever) X is/are/gets banished" with strict tense |
 | `self-discount` | `you pay \d+ ⬡? less to play this` OR `play this character for free` — conditional self-cost reduction (incl. limit case "play for free") |
 
-Live distribution names the cards in each role.
+Live distribution names a role's cards when it has six or fewer.
 
 The membership gate runs first, so self-banish (`when this character is banished`) only counts as a Toy banish when the carrying card is itself a Toy member — non-Toy "deathrattle" cards never enter the Toy playstyle.
 

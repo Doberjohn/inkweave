@@ -15,8 +15,9 @@ A card is a **payoff** if `buff` or `trigger` matches (multi-role allowed; The V
 
 ## Payoff-anchored
 `findSynergies` skips member-member pairs, so two plain Floodborn never synergize. This
-avoids a density-5 pair between every two Floodborn characters that could share a deck, which
-would tag every shifted card in the game; Coverage counts the pairs it skips.
+avoids a density-5 pair between every two Floodborn characters that have no payoff role and
+could share a deck, which would tag every shifted card in the game; Coverage counts the pairs it
+skips.
 
 ## Card examples by role
 

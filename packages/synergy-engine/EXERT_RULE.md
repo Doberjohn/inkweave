@@ -146,7 +146,7 @@ The score-8 share runs high because the consume payoffs are the archetype's iden
 
 Cards with a role: 22. Cards with more than one: 0.
 
-Inkwell-ramp cards ("into your inkwell facedown and exerted"): 38, of which 0 gain an exert role.
+Cards that put a card into an inkwell "facedown and exerted": 38, of which 0 gain an exert role.
 
 ```chart
 {

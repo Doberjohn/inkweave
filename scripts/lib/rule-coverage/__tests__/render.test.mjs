@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {partnerBuckets, scoreRange, shapeTable, tierSplit} from '../blocks.mjs';
+import {compositionChart, partnerBuckets, scoreRange, shapeTable, tierSplit} from '../blocks.mjs';
 import {doughnut, nameList, table, tallyText} from '../render.mjs';
 
 const chartSpec = (block) => JSON.parse(block.replace(/^```chart\n|\n```$/g, ''));
@@ -31,6 +31,19 @@ describe('render', () => {
     ]);
     expect(block).toContain('"values": [5]');
     expect(chartSpec(block).data.labels).toEqual(['Enablers (5)']);
+  });
+
+  it('titles a role composition by distinct cards, noting a card in two slices', () => {
+    const [a, b, c] = [{id: 'a'}, {id: 'b'}, {id: 'c'}];
+    const title = (payoffs) => {
+      const slices = [
+        ['Enablers', [a, b]],
+        ['Payoffs', payoffs],
+      ];
+      return chartSpec(compositionChart(slices)).title;
+    };
+    expect(title([c])).toBe('Role composition (3 cards)');
+    expect(title([b, c])).toBe('Role composition (3 cards; multi-role overlap)');
   });
 });
 

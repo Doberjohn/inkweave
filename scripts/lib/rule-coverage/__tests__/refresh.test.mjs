@@ -4,10 +4,15 @@ import {checkSpecs, refreshDoc} from '../refresh.mjs';
 
 const block = (name, body = '') => `<!-- coverage:start ${name} -->\n${body}<!-- coverage:end -->`;
 const DOC = `# Rule\n\nProse before.\n\n${block('roles', 'old roles\n')}\n\nProse between.\n${block('pairs')}\n`;
+const ADJACENT = `${block('a', 'old a\n')}\n${block('b', 'old b\n')}\n`;
 
 describe('blockNames', () => {
-  it('lists the blocks in order, keeping adjacent blocks apart', () => {
+  it('lists the blocks in order', () => {
     expect(blockNames(DOC, 'X_RULE.md')).toEqual(['roles', 'pairs']);
+  });
+
+  it('keeps adjacent blocks apart', () => {
+    expect(blockNames(ADJACENT, 'X_RULE.md')).toEqual(['a', 'b']);
   });
 
   it.each([
@@ -46,6 +51,12 @@ describe('fillBlocks', () => {
       `# Rule\n\nProse before.\n\n${block('roles', 'new roles\n')}\n\nProse between.\n${block('pairs', 'new pairs\n')}\n`,
     );
     expect(fillBlocks(once, (name) => `new ${name}`)).toBe(once);
+  });
+
+  it('fills adjacent blocks one by one', () => {
+    expect(fillBlocks(ADJACENT, (name) => `new ${name}`)).toBe(
+      `${block('a', 'new a\n')}\n${block('b', 'new b\n')}\n`,
+    );
   });
 });
 

@@ -151,12 +151,24 @@ export function scoreRange(pairs) {
   return low === high ? String(low) : `${low}-${high}`;
 }
 
-/** A doughnut of role sizes. */
-export const roleChart = (title, groups, labels = {}) =>
-  doughnut(
-    title,
-    [...groups].map(([role, cards]) => [labels[role] ?? role, cards.length]),
+/**
+ * A role composition doughnut: each slice a label and its cards. The title counts distinct cards
+ * and says so when a card sits in more than one slice, since the slices then add up to more.
+ *
+ * @param {Array<[string, object[]]>} slices
+ */
+export function compositionChart(slices) {
+  const distinct = new Set(slices.flatMap(([, cards]) => cards)).size;
+  const overlap = slices.reduce((n, [, cards]) => n + cards.length, 0) > distinct;
+  return doughnut(
+    `Role composition (${fmt(distinct)} cards${overlap ? '; multi-role overlap' : ''})`,
+    slices.map(([label, cards]) => [label, cards.length]),
   );
+}
+
+/** A role composition doughnut with a slice per role. */
+export const roleChart = (groups, labels = {}) =>
+  compositionChart([...groups].map(([role, cards]) => [labels[role] ?? role, cards]));
 
 /** Pairs per score as bars coloured by display tier, lowest score first. */
 export function scoreChart(title, pairs) {
