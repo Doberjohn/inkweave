@@ -10,7 +10,8 @@ export const RELOAD_GRACE_MS = 10_000;
 /**
  * A page whose code could not be downloaded, even on a page that already reloaded onto the
  * current deploy. ErrorBoundary offers a reload for it: rendering again can't help, because
- * React keeps a lazy component's failed import.
+ * React keeps a lazy component's failed import. ErrorBoundary knows it by `name`, without
+ * importing it, so keep the two in step.
  */
 export class PageLoadError extends Error {
   constructor(cause: unknown) {

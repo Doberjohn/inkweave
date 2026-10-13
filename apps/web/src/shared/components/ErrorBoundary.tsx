@@ -1,6 +1,5 @@
 import {Component, type ReactNode} from 'react';
 import {COLORS, FONT_SIZES, SPACING, RADIUS} from '../constants';
-import {PageLoadError} from '../lib/lazyWithRetry';
 import {loadSentry} from '../lib/sentry';
 
 interface Props {
@@ -13,11 +12,20 @@ interface State {
   error: Error | null;
 }
 
+/**
+ * lazyWithRetry's PageLoadError, known by its name. Importing the class here made the production
+ * build split shared code out of the entry chunk: about 3 kB more JS and four more requests on
+ * every page load.
+ */
+function isPageLoadError(error: Error | null) {
+  return error?.name === 'PageLoadError';
+}
+
 /** The error screen's heading, the line under it and its button. */
 function errorCopy(error: Error | null) {
   // Rendering again can't fetch a page's missing code (React keeps the failed import), so this
   // screen's button reloads the page instead of retrying the render.
-  if (error instanceof PageLoadError) {
+  if (isPageLoadError(error)) {
     return {
       title: "This page couldn't load",
       message: 'Check your connection, then reload the page.',
@@ -53,7 +61,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   handleAction = () => {
-    if (this.state.error instanceof PageLoadError) window.location.reload();
+    if (isPageLoadError(this.state.error)) window.location.reload();
     else this.setState({hasError: false, error: null});
   };
 
