@@ -20,8 +20,8 @@ describe('release notes files', () => {
     expect(path).toBe(`../notes/${(notes as {month?: unknown}).month}.json`);
   });
 
-  it('lists each month once, newest first', () => {
-    const months = RELEASE_NOTES.map((notes) => notes.month);
-    expect(months).toEqual([...new Set(months)].sort().reverse());
+  it('lists every file once, newest month first', () => {
+    const fileMonths = FILES.map(([path]) => path.replace(/^.*\/(.+)\.json$/, '$1'));
+    expect(RELEASE_NOTES.map((notes) => notes.month)).toEqual(fileMonths.sort().reverse());
   });
 });

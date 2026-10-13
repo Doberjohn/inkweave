@@ -69,7 +69,14 @@ describe('releaseNotesProblems', () => {
     {
       broken: 'a link off the site',
       change: (notes: Notes) => (notes.sections.new[0].link = {label: 'News', to: 'https://x.y'}),
-      problem: 'sections.new[0].link.to: must be an in-app path starting with a single /',
+      problem:
+        'sections.new[0].link.to: must be an in-app path (one leading /, no spaces or backslashes)',
+    },
+    {
+      broken: 'a backslash in a link',
+      change: (notes: Notes) => (notes.sections.new[0].link = {label: 'News', to: '/\\x.y'}),
+      problem:
+        'sections.new[0].link.to: must be an in-app path (one leading /, no spaces or backslashes)',
     },
     {
       broken: 'a PR listed twice',
@@ -85,6 +92,28 @@ describe('releaseNotesProblems', () => {
     const notes = validMonth();
     change(notes);
     expect(releaseNotesProblems(notes)).toEqual([problem]);
+  });
+
+  it('reads a single * or _ around text as emphasis, but not one between words', () => {
+    const problemsIn = (body: string) => {
+      const notes = validMonth();
+      notes.sections.fixed[0].body = body;
+      return releaseNotesProblems(notes);
+    };
+    const emphasis = ['sections.fixed[0].body: contains Markdown emphasis or code'];
+    expect(problemsIn('Now *really* fast.')).toEqual(emphasis);
+    expect(problemsIn('Now _really_ fast.')).toEqual(emphasis);
+    expect(problemsIn('Costs 2 * 3 ink, and snake_case_names stay.')).toEqual([]);
+  });
+
+  it('counts an emoji as one character, like the routine does', () => {
+    const notes = validMonth();
+    notes.sections.fixed[0].title = `${'a'.repeat(79)}🎉`;
+    expect(releaseNotesProblems(notes)).toEqual([]);
+    notes.sections.fixed[0].title += '!';
+    expect(releaseNotesProblems(notes)).toEqual([
+      'sections.fixed[0].title: 81 characters, the limit is 80',
+    ]);
   });
 });
 

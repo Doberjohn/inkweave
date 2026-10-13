@@ -44,8 +44,11 @@ const ITEM_KEYS: ReadonlySet<string> = new Set(['title', 'body', 'highlight', 'l
 const HIGHLIGHTS = {min: 1, max: 5};
 
 const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
-/** An in-app path: one leading slash (two would make it protocol-relative) and no spaces. */
-const IN_APP_PATH = /^\/(?!\/)\S*$/;
+/**
+ * An in-app path: one leading slash, and no spaces or backslashes. Browsers read `//` and `/\`
+ * alike as the start of another site's address, so `/\evil.com` would leave the site.
+ */
+const IN_APP_PATH = /^\/(?!\/)[^\s\\]*$/;
 const MONTH_NAMES = [
   'January',
   'February',
@@ -63,7 +66,12 @@ const MONTH_NAMES = [
 
 /** What makes a text more than plain text, and how a problem names it. */
 const NOT_PLAIN_TEXT: [RegExp, string][] = [
-  [/\*\*|__|`/, 'Markdown emphasis or code'],
+  // Doubled markers, a backtick, or a single * or _ around text (*so*, _so_). Like Markdown, it
+  // reads neither 2 * 3 nor the _ inside snake_case as emphasis.
+  [
+    /\*\*|__|`|\*[^\s*](?:[^*]*[^\s*])?\*|(?<![A-Za-z0-9])_[^\s_](?:[^_]*[^\s_])?_(?![A-Za-z0-9])/,
+    'Markdown emphasis or code',
+  ],
   [/\]\(/, 'a Markdown link'],
   [/<\s*\/?\s*[A-Za-z]/, 'an HTML tag'],
   [/(?<![\w&])#\d+\b/, 'a PR or issue reference (PR numbers go in prs)'],
@@ -100,8 +108,10 @@ function textProblems(parent: Field, rule: TextRule): string[] {
   const problems = NOT_PLAIN_TEXT.filter(([pattern]) => pattern.test(value)).map(
     ([, found]) => `${path}: contains ${found}`,
   );
-  if (value.length > rule.maxLength) {
-    problems.push(`${path}: ${value.length} characters, the limit is ${rule.maxLength}`);
+  // Code points, as JSON Schema and the routine's Python count them: an emoji is one character.
+  const length = [...value].length;
+  if (length > rule.maxLength) {
+    problems.push(`${path}: ${length} characters, the limit is ${rule.maxLength}`);
   }
   if (value !== value.trim()) problems.push(`${path}: has leading or trailing spaces`);
   return problems;
@@ -118,7 +128,7 @@ function linkProblems(field: Field): string[] {
   }
   const to = isInAppPath(link.to)
     ? []
-    : [`${field.path}.to: must be an in-app path starting with a single /`];
+    : [`${field.path}.to: must be an in-app path (one leading /, no spaces or backslashes)`];
   return [...textProblems(field, LINK_LABEL), ...to];
 }
 
