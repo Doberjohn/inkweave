@@ -1,10 +1,18 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {reloadForStaleChunk} from '../staleChunkReload';
+
+let reloadForStaleChunk: typeof import('../staleChunkReload').reloadForStaleChunk;
+
+/** A fresh page, as a real reload gives one: new module state, the same sessionStorage. */
+async function loadPage() {
+  vi.resetModules();
+  ({reloadForStaleChunk} = await import('../staleChunkReload'));
+}
 
 describe('reloadForStaleChunk', () => {
   const reload = vi.fn();
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await loadPage();
     sessionStorage.clear();
     reload.mockClear();
     // Fake timers also mock Date.now(), which the time-window guard reads.
@@ -39,6 +47,23 @@ describe('reloadForStaleChunk', () => {
       vi.advanceTimersByTime(1_000);
       reloadForStaleChunk();
     }
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  // lazyWithRetry keeps a page's loading state up while this says a reload is on its way.
+  it('says the page is reloading, including on later calls the guard refuses', () => {
+    expect(reloadForStaleChunk()).toBe(true);
+    vi.advanceTimersByTime(5_000);
+    expect(reloadForStaleChunk()).toBe(true);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('says it is not reloading when the reloaded page fails again inside the window', async () => {
+    reloadForStaleChunk(); // the page left open across a deploy
+    await loadPage();
+    vi.advanceTimersByTime(5_000);
+
+    expect(reloadForStaleChunk()).toBe(false);
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
