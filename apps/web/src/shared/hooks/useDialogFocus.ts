@@ -80,6 +80,10 @@ function trapTab(e: React.KeyboardEvent, container: HTMLElement | null): void {
  * - Moves focus to `initialFocusRef` when the dialog opens
  * - Closes on Escape key
  * - Returns a `handleKeyDown` for focus trapping on Tab/Shift+Tab
+ *
+ * Both effects return early while closed. Wrapping their bodies in `if (isOpen) {…}` put a
+ * conditional inside a conditional twice, and CodeScene's Bumpy Road check fails a function
+ * at two such blocks.
  */
 export function useDialogFocus({
   isOpen,
@@ -90,34 +94,32 @@ export function useDialogFocus({
 }: UseDialogFocusParams) {
   // Save the return target, set initial focus, restore on close
   useEffect(() => {
-    if (isOpen) {
-      // A given return target never falls back to the focused element: for the
-      // search sheet that is the hidden proxy.
-      const returnTarget = returnFocusRef
-        ? returnFocusRef.current
-        : (document.activeElement as HTMLElement | null);
-      const timerId = setTimeout(
-        () => takeInitialFocus(containerRef.current, initialFocusRef.current),
-        100,
-      );
-      return () => {
-        clearTimeout(timerId);
-        if (returnTarget && returnTarget.isConnected) {
-          returnTarget.focus();
-        }
-      };
-    }
+    if (!isOpen) return;
+    // A given return target never falls back to the focused element: for the
+    // search sheet that is the hidden proxy.
+    const returnTarget = returnFocusRef
+      ? returnFocusRef.current
+      : (document.activeElement as HTMLElement | null);
+    const timerId = setTimeout(
+      () => takeInitialFocus(containerRef.current, initialFocusRef.current),
+      100,
+    );
+    return () => {
+      clearTimeout(timerId);
+      if (returnTarget && returnTarget.isConnected) {
+        returnTarget.focus();
+      }
+    };
   }, [isOpen, containerRef, initialFocusRef, returnFocusRef]);
 
   // Escape key listener (separate effect to avoid spurious focus restore)
   useEffect(() => {
-    if (isOpen) {
-      const handleEscape = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onClose();
-      };
-      document.addEventListener('keydown', handleEscape);
-      return () => document.removeEventListener('keydown', handleEscape);
-    }
+    if (!isOpen) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
   // Focus trap: keep Tab/Shift+Tab within the container
