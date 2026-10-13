@@ -13,7 +13,8 @@ import {loadSentryWhenIdle} from './shared/lib/sentry';
 // running the old bundle references hashed CSS/JS chunks the deploy has purged;
 // Vite fires a cancelable `vite:preloadError` and re-throws unless we cancel it
 // (that re-throw is what spammed Sentry). preventDefault() silences it at the
-// source, then we reload onto the fresh deploy (loop-guarded).
+// source, then we reload onto the fresh deploy (loop-guarded). Cancelled, the
+// failed import resolves empty instead of rejecting; lazyWithRetry handles that.
 if (import.meta.env.PROD) {
   window.addEventListener('vite:preloadError', (event) => {
     event.preventDefault();
