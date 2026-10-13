@@ -2,6 +2,7 @@ import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import {FeaturedCards} from '../FeaturedCards';
 import {useFeaturedCardsFile} from '../../featured';
+import featuredCardIds from '../../featuredCardIds.json';
 import type {LorcanaCard} from '../../types';
 
 // The small featured-cards file (#641): stubbed so each test picks what it holds.
@@ -34,16 +35,13 @@ function makeCard(ink: string, id: string, name: string): LorcanaCard {
   } as LorcanaCard;
 }
 
-// IDs must match DEFAULT_FEATURED_IDS in FeaturedCards.tsx (also overridable via
-// VITE_FEATURED_CARD_IDS — tests rely on the unset/default path).
-const mockCards: LorcanaCard[] = [
-  makeCard('Amber', '2999', 'Woody & Buzz Lightyear'),
-  makeCard('Amethyst', '3022', 'Mrs. Incredible'),
-  makeCard('Emerald', '3053', 'Russell'),
-  makeCard('Ruby', '3096', 'Meilin Lee'),
-  makeCard('Sapphire', '3129', 'Maid Marian'),
-  makeCard('Steel', '3168', 'The Vine'),
-];
+// One card per entry of featuredCardIds.json, in its order, so the tests follow the curated list
+// when a set graduation changes it. vite.config.ts empties VITE_FEATURED_CARD_IDS for tests, so
+// the file decides which cards are featured.
+const mockCards: LorcanaCard[] = featuredCardIds.map(({id, card}) => {
+  const [colors, name] = card.split(': ');
+  return makeCard(colors.split('-')[0], id, name);
+});
 
 describe('FeaturedCards', () => {
   it('should render featured cards section', () => {
@@ -81,8 +79,8 @@ describe('FeaturedCards', () => {
     render(<FeaturedCards cards={shuffled} onCardSelect={vi.fn()} />);
 
     const listItems = screen.getAllByRole('listitem');
-    expect(listItems[0]).toHaveTextContent('Woody & Buzz Lightyear');
-    expect(listItems[5]).toHaveTextContent('The Vine');
+    expect(listItems[0]).toHaveTextContent(mockCards[0].name);
+    expect(listItems[5]).toHaveTextContent(mockCards[5].name);
   });
 
   it('should gracefully handle missing featured cards', () => {

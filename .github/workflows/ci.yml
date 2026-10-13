@@ -90,6 +90,10 @@ jobs:
       - name: Run linting
         run: pnpm lint
 
+      # Unused files, dependencies and binaries (knip.jsonc says what it ignores and why).
+      - name: Dead code check
+        run: pnpm knip
+
       # Backstops for the local pre-push gates (#508): story coverage was
       # previously local-only; the design-token value gate ships with it.
       - name: Story coverage gate

@@ -1034,7 +1034,10 @@ flowchart TD
 
 # 2. Run the graduation script — encodes the 6 rules below AND retargets hardcoded
 #    card-id references (featured cards, playstyle-gallery heroes, reveals/playstyle
-#    stories) from preview to canonical ids. It prints the canonical
+#    stories) from preview to canonical ids. When the homepage features none of the
+#    set's cards, it asks for six of them by collector number, one per ink from Amber
+#    to Steel (Enter keeps today's; without a terminal, answer with
+#    --featured=<numbers> or --keep-featured). It prints the canonical
 #    VITE_FEATURED_CARD_IDS value to paste into Vercel (see step 6), and writes
 #    supabase/migrations/<stamp>_remap_set<N>_preview_ids.sql for step 9.
 #    Default: reads apps/web/public/data/set{N}data.json
@@ -1072,7 +1075,7 @@ pnpm test
 
 The script is idempotent on dry-run safety: if you run it twice with the same source, the second run replaces what the first wrote (since canonical entries are stripped to a stable shape).
 
-The script also retargets hardcoded card-id references (`retargetHardcodedIds`, run before the `previewCards.json` reset): a set graduation renumbers ids, dangling every place that hardcodes a real card id by its preview id. The step rewrites a curated `ID_REFERENCE_FILES` list — `FeaturedCards.tsx` + its test, `playstyleUi.ts` gallery hero cards, `setSpotlights.ts`, and the reveals/playstyle Storybook demos — and deliberately skips self-contained mock-fixture tests (analytics, card-analytics) whose `13xxx` ids are arbitrary. The blast radius is wide and mostly not test-guarded (only the `FeaturedCards` fixtures fail loudly); grep `\b13[0-9]{3}\b` across `apps/web/src` after graduating to confirm nothing was missed. Add a file to `ID_REFERENCE_FILES` only if it references real graduated cards.
+The script also retargets hardcoded card-id references (`retargetHardcodedIds`, run before the `previewCards.json` reset): a set graduation renumbers ids, dangling every place that hardcodes a real card id by its preview id. The step rewrites a curated `ID_REFERENCE_FILES` list — `featuredCardIds.json` (which the `FeaturedCards` test reads), `playstyleUi.ts` gallery hero cards, `setSpotlights.ts`, and the reveals/playstyle Storybook demos — and deliberately skips self-contained mock-fixture tests (analytics, card-analytics) whose `13xxx` ids are arbitrary. A featured list that holds none of the graduating set's cards gets six new ones from the script's question instead. The blast radius is wide and mostly not test-guarded; grep `\b13[0-9]{3}\b` across `apps/web/src` after graduating to confirm nothing was missed. Add a file to `ID_REFERENCE_FILES` only if it references real graduated cards.
 
 The same preview id → canonical id map carries what Supabase stores (#748). Graduation writes `supabase/migrations/<stamp>_remap_set<N>_preview_ids.sql`, which calls `internal.remap_card_ids` (`20261013000000_card_id_remap.sql`) with the map: it moves every vote, cloud collection key and deck card on a preview id to the canonical one, so the season's votes count toward the released cards. The map joins on collector number; a card revealed without one (the `+900` band) falls back to its full name, and the script names every preview card that neither places, to add to the map by hand before applying. Without this step the votes stay on ids no card list holds: sets 12 and 13 stranded 383 votes that way, which `20261013000001` and `20261013000002` moved.
 

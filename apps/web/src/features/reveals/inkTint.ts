@@ -19,8 +19,3 @@ export function inkRgb(ink: Ink): string {
 export function inkRgba(ink: Ink, alpha: number): string {
   return `rgba(${inkRgb(ink)}, ${alpha})`;
 }
-
-/** `rgb(r, g, b)` solid for the ink. */
-export function inkRgbSolid(ink: Ink): string {
-  return `rgb(${inkRgb(ink)})`;
-}

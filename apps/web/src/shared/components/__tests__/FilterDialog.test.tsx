@@ -23,6 +23,9 @@ const defaultProps = {
 
 describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant) => {
   const testId = variant === 'modal' ? 'filter-modal' : 'filter-drawer';
+  // The modal is the desktop variant, which has no ink buttons: desktop shows the ink filters in
+  // the toolbar instead (FilterContent renders its ink section on mobile only). So the three ink
+  // tests below run on the drawer only.
 
   beforeEach(() => {
     vi.clearAllMocks();

@@ -15,10 +15,6 @@ const bounceIsEnabler = (roles: BounceRole[]): boolean =>
 const bounceIsOpponentSide = (roles: BounceRole[]): boolean =>
   roles.includes('opponent-bounce') || roles.includes('flexible');
 
-/** A payoff side: the re-buyable ETB body, or the "when returned" lore payoff. */
-export const isBouncePayoff = (roles: BounceRole[]): boolean =>
-  roles.includes('rebuy-payoff') || roles.includes('return-payoff');
-
 /**
  * The re-buy combo in ONE direction: `enabler` bounces `payoff`. Besides the roles, the enabler's
  * target gate must admit the payoff: a "cost 2 or less" bouncer cannot re-buy a cost-8 body, so

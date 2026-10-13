@@ -332,8 +332,6 @@ export default defineConfig({
         '**/*.test.{ts,tsx}',
         '**/test-utils/**',
         '**/index.ts', // Barrel files (re-exports only)
-        'src/features/cards/utils/cardHelpers.ts', // Re-exports from synergy-engine
-        'src/features/cards/utils/typeGuards.ts', // Re-exports from synergy-engine
       ],
     },
   },

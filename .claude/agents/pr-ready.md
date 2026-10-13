@@ -58,7 +58,6 @@ git log --oneline master..HEAD
 ```
 
 Check:
-- TODO(human): Review commit messages for convention compliance
 - Commits reference issue number (`#<num>`)
 - Semantic prefix used (feat, fix, refactor, etc.)
 

@@ -2,10 +2,10 @@ import type {Locator, Page} from '@playwright/test';
 
 /**
  * Serve a deterministic vote queue via route interception so voting tests don't depend on the
- * Vite dev server's static-JSON responses under parallel-worker contention. That contention is a
- * LOCAL-ONLY flake (net::ERR_ABORTED navigations + slow pair loads): CI runs `workers: 1` (serial,
- * no contention) and is green, while the local pre-push hook runs many parallel workers hammering
- * one dev server. Call from a spec's beforeEach AFTER the initial home navigation.
+ * Vite dev server's static-JSON responses under parallel-worker contention (net::ERR_ABORTED
+ * navigations + slow pair loads). That contention is local: the pre-push hook runs several workers
+ * against one dev server, while CI runs `workers: 1`. Call from a spec's beforeEach AFTER the
+ * initial home navigation.
  *
  * The pair entries are copied verbatim from the live `_pairs_index.json` so their card ids resolve
  * through the real CardDataContext (`getCardById`); several entries keep the queue non-empty across
@@ -31,11 +31,19 @@ export async function mockVoteQueue(page: Page): Promise<void> {
 /**
  * Navigate to a path, retrying if the navigation is interrupted. Under parallel-worker dev-server
  * contention a page.goto intermittently fails — net::ERR_ABORTED / "Frame load interrupted" on
- * chromium, "interrupted by another navigation to /" on webkit. This is a LOCAL-ONLY flake (CI runs
- * workers:1 serially and is green) and the interruption is a transient dev-server artifact, not a
- * real redirect. waitUntil:'domcontentloaded' resolves once the document is parsed rather than
- * waiting for every subresource (the 'load' event is the one aborted under contention). Callers
- * should assert their own readiness signal after this returns.
+ * chromium, "interrupted by another navigation to /" on webkit. That contention is local (CI runs
+ * workers:1), and the interruption is a transient dev-server artifact, not a real redirect.
+ * waitUntil:'domcontentloaded' resolves once the document is parsed rather than waiting for every
+ * subresource (the 'load' event is the one aborted under contention). Callers should assert their
+ * own readiness signal after this returns.
+ *
+ * Retrying can't save a WebKit page whose network process crashed, which CI's WebKit runs hit even
+ * with one worker: a lazy route chunk fails with "Importing a module script failed", the Vite HMR
+ * socket reports "Network process crashed", and the goto times out. Playwright 1.63's WebKit
+ * bundles libsoup 3.6.5, whose use-after-free kills the network process when a navigation cancels
+ * in-flight loads while a page holds a WebSocket (microsoft/playwright#42803). Playwright 1.64's
+ * WebKit carries the fix; on 1.63 only Playwright's own retries, in a fresh browser, keep those
+ * jobs green.
  */
 export async function gotoWithRetry(page: Page, url: string): Promise<void> {
   let lastError: unknown;

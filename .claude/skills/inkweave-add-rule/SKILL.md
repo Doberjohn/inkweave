@@ -38,7 +38,7 @@ If not, ask: "What game mechanic or interaction does this rule detect?"
    - Scoring: factors influencing 1-10 score
    - Explanation template for UI display
 
-5. **TODO(human): Review and iterate on the scoring design**
+5. **Owner review: iterate on the scoring design**
    The scoring breakdown determines how useful synergy results are. Consider:
    - What makes one pair stronger than another?
    - Are there natural tiers (game-winning, strong, moderate, minor)?
