@@ -25,6 +25,7 @@ export function FilterDialog({
   uniqueKeywords,
   uniqueClassifications,
   sets,
+  buttonOptions,
 }: FilterDialogProps) {
   const draft = useDraftFilters({isOpen, inkFilters, typeFilters, costFilters, filters});
   const showInlineCost = useInlineCostFilters();
@@ -172,6 +173,7 @@ export function FilterDialog({
               uniqueKeywords={uniqueKeywords}
               uniqueClassifications={uniqueClassifications}
               sets={sets}
+              buttonOptions={buttonOptions}
               onToggleInk={draft.toggleInk}
               onToggleType={draft.toggleType}
               onToggleCost={draft.toggleCost}

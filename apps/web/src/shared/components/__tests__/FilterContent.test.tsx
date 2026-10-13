@@ -1,5 +1,5 @@
 import {describe, it, expect, vi} from 'vitest';
-import {render, screen} from '@testing-library/react';
+import {render, screen, within} from '@testing-library/react';
 import {FilterContent} from '../FilterContent';
 import type {Ink} from '../../../features/cards';
 import type {CardFilterOptions} from '../../../features/cards';
@@ -38,5 +38,34 @@ describe('FilterContent cost section', () => {
   it('always shows the Ink Cost section on mobile', () => {
     render(<FilterContent {...defaultProps({variant: 'mobile', showInlineCost: true})} />);
     expect(screen.getByText('Ink Cost')).toBeInTheDocument();
+  });
+});
+
+describe('FilterContent button options', () => {
+  it('offers only the values in buttonOptions', () => {
+    const buttonOptions = {
+      inks: ['Ruby'] as Ink[],
+      costs: [2, 9],
+      types: ['Song'] as CardTypeFilter[],
+      inkwell: ['inkable'] as const,
+    };
+    render(<FilterContent {...defaultProps({variant: 'mobile', buttonOptions})} />);
+
+    // Icon buttons are named by aria-label, text buttons by their text.
+    const buttonNames = (group: string) =>
+      within(screen.getByRole('group', {name: group}))
+        .getAllByRole('button')
+        .map((button) => button.getAttribute('aria-label') ?? button.textContent);
+    expect(buttonNames('Ink color filters')).toEqual(['Filter by Ruby']);
+    expect(buttonNames('Ink cost filters')).toEqual(['Cost 2', 'Cost 9+']);
+    expect(buttonNames('Card type filters')).toEqual(['Song']);
+    expect(buttonNames('Inkwell filters')).toEqual(['Inkable']);
+  });
+
+  it('leaves out a dropdown with no options', () => {
+    render(<FilterContent {...defaultProps({uniqueClassifications: ['Hero']})} />);
+
+    expect(screen.queryByRole('combobox', {name: 'Filter by keyword'})).not.toBeInTheDocument();
+    expect(screen.getByRole('combobox', {name: 'Filter by classification'})).toBeInTheDocument();
   });
 });

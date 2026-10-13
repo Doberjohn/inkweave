@@ -42,6 +42,7 @@ import {
   applySortOrder,
   type CardFilterOptions,
 } from '../features/cards/loader';
+import {getPoolFilterOptions} from '../features/cards/filterOptions';
 import {CompactHeader, CtaButton, ErrorBoundary, EtherealBackground, FilterDialog, Seo} from '../shared/components';
 import {
   COLORS,
@@ -407,8 +408,10 @@ function toggleSetMember<T>(prev: Set<T>, item: T): Set<T> {
 /**
  * Bundle the BrowseToolbar + FilterDialog props for PlaystyleDetailPage.
  * Extracted so the page component stays under the Large Method threshold.
+ * The filter options are narrowed to the playstyle's cards (#248).
  */
 function buildPlaystyleViewProps(args: {
+  cards: LorcanaCard[];
   showFilters: boolean;
   setShowFilters: (open: boolean) => void;
   activeFilterCount: number;
@@ -430,6 +433,18 @@ function buildPlaystyleViewProps(args: {
   uniqueClassifications: string[];
   sets: FilterDialogSharedProps['sets'];
 }): {toolbarProps: ToolbarProps; filterDialogProps: FilterDialogSharedProps} {
+  const applied = {
+    inks: args.inkFilters,
+    types: args.typeFilters,
+    costs: args.costFilters,
+    filters: args.filters,
+  };
+  const all = {
+    keywords: args.uniqueKeywords,
+    classifications: args.uniqueClassifications,
+    sets: args.sets,
+  };
+  const options = getPoolFilterOptions(args.cards, applied, all);
   const toolbarProps: ToolbarProps = {
     onFiltersClick: () => args.setShowFilters(true),
     activeFilterCount: args.activeFilterCount,
@@ -446,6 +461,7 @@ function buildPlaystyleViewProps(args: {
     onFiltersChange: args.setFilters,
     sortOrder: args.sortOrder,
     onSortChange: args.setSortOrder,
+    buttonOptions: options.buttons,
   };
   const filterDialogProps: FilterDialogSharedProps = {
     isOpen: args.showFilters,
@@ -455,9 +471,10 @@ function buildPlaystyleViewProps(args: {
     typeFilters: args.typeFilters,
     costFilters: args.costFilters,
     filters: args.filters,
-    uniqueKeywords: args.uniqueKeywords,
-    uniqueClassifications: args.uniqueClassifications,
-    sets: args.sets,
+    uniqueKeywords: options.keywords,
+    uniqueClassifications: options.classifications,
+    sets: options.sets,
+    buttonOptions: options.buttons,
   };
   return {toolbarProps, filterDialogProps};
 }
@@ -560,6 +577,7 @@ export function PlaystyleDetailPage() {
 
   const heroLayout = getHeroLayout(isMobile);
   const {toolbarProps, filterDialogProps} = buildPlaystyleViewProps({
+    cards: playstyleCards,
     showFilters,
     setShowFilters,
     activeFilterCount,
@@ -643,6 +661,7 @@ interface ToolbarProps {
   onFiltersChange: Parameters<typeof BrowseToolbar>[0]['onFiltersChange'];
   sortOrder: Parameters<typeof BrowseToolbar>[0]['sortOrder'];
   onSortChange: Parameters<typeof BrowseToolbar>[0]['onSortChange'];
+  buttonOptions: Parameters<typeof BrowseToolbar>[0]['buttonOptions'];
 }
 
 interface FilterDialogSharedProps {
@@ -656,6 +675,7 @@ interface FilterDialogSharedProps {
   uniqueKeywords: string[];
   uniqueClassifications: string[];
   sets: Parameters<typeof FilterDialog>[0]['sets'];
+  buttonOptions: Parameters<typeof FilterDialog>[0]['buttonOptions'];
 }
 
 /** Per-route metadata for a playstyle page (React 19 native, self-referential canonical). */

@@ -1,5 +1,6 @@
 import type {Ink, SetInfo} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards';
+import type {FilterButtonOptions} from '../../features/cards/filterOptions';
 import type {CardTypeFilter} from '../constants';
 import type {InkwellValue} from './InkwellIcon';
 import {CARD_TYPE_FILTERS, COST_BUTTONS, COLORS, SELECT_STYLE_MD} from '../constants';
@@ -26,6 +27,11 @@ export interface FilterPanelProps {
   uniqueKeywords: string[];
   uniqueClassifications: string[];
   sets: SetInfo[];
+  /**
+   * Limits the ink, cost, type and inkwell buttons to these values (a playstyle's card
+   * pool). Left out, every value shows.
+   */
+  buttonOptions?: FilterButtonOptions;
 }
 
 interface FilterContentProps {
@@ -36,6 +42,8 @@ interface FilterContentProps {
   uniqueKeywords: string[];
   uniqueClassifications: string[];
   sets: SetInfo[];
+  /** Limits the button groups to these values; left out, every value shows. */
+  buttonOptions?: FilterButtonOptions;
   onToggleInk: (ink: Ink) => void;
   onToggleType: (type: CardTypeFilter) => void;
   onToggleCost: (cost: number) => void;
@@ -108,17 +116,20 @@ function shouldShowCostSection(isDesktop: boolean, showInlineCost: boolean): boo
 function CostFilterSection({
   costFilters,
   onToggleCost,
+  options,
 }: {
   costFilters: number[];
   onToggleCost: (cost: number) => void;
+  options: FilterButtonOptions | undefined;
 }) {
+  const costs = options?.costs ?? COST_BUTTONS;
   return (
     <FilterSection label="Ink Cost">
       <div
         role="group"
         aria-label="Ink cost filters"
         style={{display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center'}}>
-        {COST_BUTTONS.map((cost) => (
+        {costs.map((cost) => (
           <FilterButton
             key={cost}
             size="sm"
@@ -141,15 +152,18 @@ function CostFilterSection({
 function InkFilterSection({
   inkFilters,
   onToggleInk,
+  options,
 }: {
   inkFilters: Ink[];
   onToggleInk: (ink: Ink) => void;
+  options: FilterButtonOptions | undefined;
 }) {
   return (
     <FilterSection label="Ink">
       <InkFilterGroup
         inkFilters={inkFilters}
         onToggleInk={onToggleInk}
+        inks={options?.inks}
         size="sm"
         iconSize={30}
         style={{
@@ -165,10 +179,13 @@ function InkFilterSection({
 function InkwellFilterSection({
   filters,
   onFiltersChange,
+  options,
 }: {
   filters: CardFilterOptions;
   onFiltersChange: (filters: CardFilterOptions) => void;
+  options: FilterButtonOptions | undefined;
 }) {
+  const values: readonly InkwellValue[] = options?.inkwell ?? ['inkable', 'uninkable'];
   return (
     <FilterSection label="Inkwell">
       <div
@@ -179,7 +196,7 @@ function InkwellFilterSection({
           flexWrap: 'wrap',
           justifyContent: 'space-evenly',
         }}>
-        {(['inkable', 'uninkable'] as InkwellValue[]).map((value) => (
+        {values.map((value) => (
           <FilterButton
             key={value}
             size="md"
@@ -208,11 +225,14 @@ function CardTypeFilterSection({
   typeFilters,
   onToggleType,
   isDesktop,
+  options,
 }: {
   typeFilters: CardTypeFilter[];
   onToggleType: (type: CardTypeFilter) => void;
   isDesktop: boolean;
+  options: FilterButtonOptions | undefined;
 }) {
+  const types = options?.types ?? CARD_TYPE_FILTERS;
   return (
     <FilterSection label={isDesktop ? 'Card Type' : 'Type'}>
       <div
@@ -224,7 +244,7 @@ function CardTypeFilterSection({
           flexWrap: 'wrap',
           justifyContent: isDesktop ? undefined : 'space-evenly',
         }}>
-        {CARD_TYPE_FILTERS.map((type) => (
+        {types.map((type) => (
           <FilterButton
             key={type}
             size="md"
@@ -242,7 +262,9 @@ function CardTypeFilterSection({
 
 // Single-select dropdown shared by the Keywords, Classification, and Set sections.
 // They differ only in label/aria/placeholder/options/onChange, all passed as props.
+// With no options (a playstyle none of whose cards has a keyword), the section is left out.
 function FilterSelect({label, ariaLabel, value, placeholder, options, onChange}: FilterSelectProps) {
+  if (options.length === 0) return null;
   return (
     <FilterSection label={label}>
       <select
@@ -273,6 +295,7 @@ export function FilterContent({
   uniqueKeywords,
   uniqueClassifications,
   sets,
+  buttonOptions,
   onToggleInk,
   onToggleType,
   onToggleCost,
@@ -296,16 +319,30 @@ export function FilterContent({
   return (
     <>
       {/* Ink Color (desktop has these inline in the toolbar) */}
-      {!isDesktop && <InkFilterSection inkFilters={inkFilters} onToggleInk={onToggleInk} />}
+      {!isDesktop && (
+        <InkFilterSection
+          inkFilters={inkFilters}
+          onToggleInk={onToggleInk}
+          options={buttonOptions}
+        />
+      )}
 
       {/* Ink Cost (inline in the toolbar on wide desktop; shown here otherwise) */}
       {showCostSection && (
-        <CostFilterSection costFilters={costFilters} onToggleCost={onToggleCost} />
+        <CostFilterSection
+          costFilters={costFilters}
+          onToggleCost={onToggleCost}
+          options={buttonOptions}
+        />
       )}
 
       {/* Inkwell (desktop has these inline in the toolbar) */}
       {!isDesktop && (
-        <InkwellFilterSection filters={filters} onFiltersChange={onFiltersChange} />
+        <InkwellFilterSection
+          filters={filters}
+          onFiltersChange={onFiltersChange}
+          options={buttonOptions}
+        />
       )}
 
       {/* Card Type Filter */}
@@ -313,6 +350,7 @@ export function FilterContent({
         typeFilters={typeFilters}
         onToggleType={onToggleType}
         isDesktop={isDesktop}
+        options={buttonOptions}
       />
 
       {/* Keywords */}

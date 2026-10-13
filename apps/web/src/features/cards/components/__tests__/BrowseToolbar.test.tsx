@@ -181,4 +181,26 @@ describe('BrowseToolbar', () => {
     render(<BrowseToolbar {...defaultProps()} />);
     expect(screen.queryByTestId('role-chip')).not.toBeInTheDocument();
   });
+
+  it('limits the inline ink, cost and inkwell icons to buttonOptions', () => {
+    setViewport(1600);
+    const buttonOptions = {
+      inks: ['Ruby'] as Ink[],
+      costs: [4],
+      types: ['Character'] as CardTypeFilter[],
+      inkwell: ['uninkable'] as const,
+    };
+    render(<BrowseToolbar {...defaultProps({buttonOptions})} />);
+
+    expect(
+      within(screen.getByRole('group', {name: 'Ink color filters'})).getAllByRole('button'),
+    ).toHaveLength(1);
+    expect(screen.getByRole('button', {name: 'Filter by Ruby'})).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('group', {name: 'Ink cost filters'})).getAllByRole('button'),
+    ).toHaveLength(1);
+    expect(screen.getByRole('button', {name: 'Cost 4'})).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Filter by Inkable'})).not.toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Filter by Uninkable'})).toBeInTheDocument();
+  });
 });

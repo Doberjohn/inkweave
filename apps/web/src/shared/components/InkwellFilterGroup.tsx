@@ -8,9 +8,13 @@ const INKWELL_OPTIONS: {value: InkwellValue; label: string}[] = [
   {value: 'uninkable', label: 'Uninkable'},
 ];
 
+const ALL_INKWELL_VALUES = INKWELL_OPTIONS.map((option) => option.value);
+
 interface InkwellFilterGroupProps {
   activeValue: InkwellValue | undefined;
   onToggle: (value: InkwellValue | undefined) => void;
+  /** The values to offer (e.g. only those a playstyle's cards have). Defaults to both. */
+  values?: readonly InkwellValue[];
   size?: 'sm' | 'md';
   iconSize?: number;
   style?: React.CSSProperties;
@@ -20,6 +24,7 @@ interface InkwellFilterGroupProps {
 export function InkwellFilterGroup({
   activeValue,
   onToggle,
+  values = ALL_INKWELL_VALUES,
   size = 'sm',
   iconSize = 28,
   style,
@@ -30,7 +35,7 @@ export function InkwellFilterGroup({
 
   return (
     <div role="group" aria-label="Inkwell filters" style={{display: 'flex', gap: 4, ...style}}>
-      {INKWELL_OPTIONS.map(({value, label}) => (
+      {INKWELL_OPTIONS.filter((option) => values.includes(option.value)).map(({value, label}) => (
         <FilterButton
           key={value}
           size={size}
