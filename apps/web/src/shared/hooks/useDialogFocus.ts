@@ -36,6 +36,42 @@ function takeInitialFocus(container: HTMLElement | null, target: HTMLElement | n
 }
 
 /**
+ * Whether focus sits inside the dialog on something the trap doesn't count as a control:
+ * the container itself (DialogShell's panel, its initial focus when no `initialFocusRef` is
+ * passed) or another `tabIndex={-1}` element, such as a message given initial focus.
+ */
+function isFocusOffControls(container: HTMLElement, focusableElements: Element[]): boolean {
+  const active = document.activeElement;
+  return active !== null && container.contains(active) && !focusableElements.includes(active);
+}
+
+/**
+ * The Tab trap: Tab from the last control wraps to the first, and Shift+Tab from the first
+ * wraps to the last. Focus off the controls counts as "before the first control" (#732): the
+ * browser would move Shift+Tab from there to whatever precedes the portal, outside the modal.
+ *
+ * Extracted for the same reason as `takeInitialFocus`.
+ */
+function trapTab(e: React.KeyboardEvent, container: HTMLElement): void {
+  const focusableElements = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+
+  if (focusableElements.length === 0) {
+    e.preventDefault();
+    return;
+  }
+
+  const firstElement = focusableElements[0];
+  const lastElement = focusableElements[focusableElements.length - 1];
+  // Tab leaves from the last control and wraps to the first; Shift+Tab, the reverse.
+  const [edge, wrapTo] = e.shiftKey ? [firstElement, lastElement] : [lastElement, firstElement];
+
+  if (document.activeElement === edge || isFocusOffControls(container, focusableElements)) {
+    e.preventDefault();
+    wrapTo.focus();
+  }
+}
+
+/**
  * Manages focus for modal/drawer dialogs:
  * - Saves and restores the previously focused element (or `returnFocusRef`)
  * - Moves focus to `initialFocusRef` when the dialog opens
@@ -83,26 +119,7 @@ export function useDialogFocus({
 
   // Focus trap: keep Tab/Shift+Tab within the container
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key !== 'Tab' || !containerRef.current) return;
-
-    const focusableElements =
-      containerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
-
-    if (focusableElements.length === 0) {
-      e.preventDefault();
-      return;
-    }
-
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-
-    if (e.shiftKey && document.activeElement === firstElement) {
-      e.preventDefault();
-      lastElement.focus();
-    } else if (!e.shiftKey && document.activeElement === lastElement) {
-      e.preventDefault();
-      firstElement.focus();
-    }
+    if (e.key === 'Tab' && containerRef.current) trapTab(e, containerRef.current);
   };
 
   return {handleKeyDown};
