@@ -57,6 +57,11 @@ describe('releaseNotesProblems', () => {
       problem: 'sections.fixed[0].body: contains a PR or issue reference (PR numbers go in prs)',
     },
     {
+      broken: 'a PR reference right after a word',
+      change: (notes: Notes) => (notes.sections.fixed[0].body = 'Fixed in PR#616.'),
+      problem: 'sections.fixed[0].body: contains a PR or issue reference (PR numbers go in prs)',
+    },
+    {
       broken: 'an empty section',
       change: (notes: Notes) => (notes.sections.improved = []),
       problem: 'sections.improved: must be a non-empty list (leave the section out instead)',
@@ -104,6 +109,20 @@ describe('releaseNotesProblems', () => {
     expect(problemsIn('Now *really* fast.')).toEqual(emphasis);
     expect(problemsIn('Now _really_ fast.')).toEqual(emphasis);
     expect(problemsIn('Costs 2 * 3 ink, and snake_case_names stay.')).toEqual([]);
+  });
+
+  it('rejects a link to the Reveals page or under it, but not a path that only starts alike', () => {
+    const problemsFor = (to: string) => {
+      const notes = validMonth();
+      notes.sections.new[0].link = {label: 'See the reveals', to};
+      return releaseNotesProblems(notes);
+    };
+    const revealSeason = [
+      'sections.new[0].link.to: links to a reveal-season page, which redirects home outside the season',
+    ];
+    expect(problemsFor('/reveals')).toEqual(revealSeason);
+    expect(problemsFor('/Reveals/set-14?ink=amber')).toEqual(revealSeason);
+    expect(problemsFor('/revealsx')).toEqual([]);
   });
 
   it('counts an emoji as one character, like the routine does', () => {

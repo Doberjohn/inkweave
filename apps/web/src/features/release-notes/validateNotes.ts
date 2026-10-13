@@ -49,6 +49,11 @@ const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
  * alike as the start of another site's address, so `/\evil.com` would leave the site.
  */
 const IN_APP_PATH = /^\/(?!\/)[^\s\\]*$/;
+/**
+ * The Reveals page, with or without a subpath, query or hash. Outside reveal season it redirects
+ * home, so a link to it breaks. Routes match case-insensitively, so this does too.
+ */
+const REVEAL_SEASON_PATH = /^\/reveals(?:[/?#]|$)/i;
 const MONTH_NAMES = [
   'January',
   'February',
@@ -74,7 +79,7 @@ const NOT_PLAIN_TEXT: [RegExp, string][] = [
   ],
   [/\]\(/, 'a Markdown link'],
   [/<\s*\/?\s*[A-Za-z]/, 'an HTML tag'],
-  [/(?<![\w&])#\d+\b/, 'a PR or issue reference (PR numbers go in prs)'],
+  [/#\d+\b/, 'a PR or issue reference (PR numbers go in prs)'],
   [/[\r\n]/, 'a line break'],
 ];
 
@@ -117,8 +122,15 @@ function textProblems(parent: Field, rule: TextRule): string[] {
   return problems;
 }
 
-function isInAppPath(value: unknown): boolean {
-  return typeof value === 'string' && IN_APP_PATH.test(value);
+/** Where a link goes: a path inside the site that stays valid, so never a reveal-season page. */
+function linkTargetProblems({path, value}: Field): string[] {
+  if (typeof value !== 'string' || !IN_APP_PATH.test(value)) {
+    return [`${path}: must be an in-app path (one leading /, no spaces or backslashes)`];
+  }
+  if (REVEAL_SEASON_PATH.test(value)) {
+    return [`${path}: links to a reveal-season page, which redirects home outside the season`];
+  }
+  return [];
 }
 
 function linkProblems(field: Field): string[] {
@@ -126,10 +138,7 @@ function linkProblems(field: Field): string[] {
   if (!isRecord(link) || Object.keys(link).sort().join() !== 'label,to') {
     return [`${field.path}: must be an object with exactly label and to`];
   }
-  const to = isInAppPath(link.to)
-    ? []
-    : [`${field.path}.to: must be an in-app path (one leading /, no spaces or backslashes)`];
-  return [...textProblems(field, LINK_LABEL), ...to];
+  return [...textProblems(field, LINK_LABEL), ...linkTargetProblems(child(field, 'to'))];
 }
 
 function isPrNumber(value: unknown): boolean {
