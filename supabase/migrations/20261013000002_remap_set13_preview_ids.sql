@@ -1,3 +1,6 @@
+-- Applied 2026-10-13 as 20261013000002 (#748), in the Supabase SQL editor like
+-- 20261013000000, with its history row added by hand under the filename stamp.
+--
 -- Set 13 graduation (#748): move the votes, cloud collection keys and deck cards still
 -- on set 13's preview ids to the released cards' ids. 200 votes, cast June 26 to July 7, sit
 -- on them today; no collection or deck holds one.

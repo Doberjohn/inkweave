@@ -1066,8 +1066,8 @@ pnpm test
 #    the Supabase MCP's apply_migration, then confirm no vote is left on a preview id
 #    (step 2's map lists them). Not before: a vote cast on a preview id after the
 #    remap stays there until it runs again. The function it calls comes from
-#    20261013000000_card_id_remap.sql, in production since #748; a fresh database
-#    takes every migration in filename order, so it has the function first.
+#    20261013000000_card_id_remap.sql, applied to production on 2026-10-13 (#748); a
+#    fresh database takes every migration in filename order, so it has the function first.
 ```
 
 The script is idempotent on dry-run safety: if you run it twice with the same source, the second run replaces what the first wrote (since canonical entries are stripped to a stable shape).

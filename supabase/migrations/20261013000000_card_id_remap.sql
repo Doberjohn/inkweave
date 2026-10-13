@@ -1,3 +1,8 @@
+-- Applied 2026-10-13 as 20261013000000 (#748), in the Supabase SQL editor: the MCP's
+-- apply_migration asks the owner to confirm SQL with delete or update statements, and from
+-- a cloud session that confirmation never reached them. The editor records no migration
+-- history, so the row was added by hand, under the filename stamp.
+--
 -- Move what is stored on a retired preview card id to the card's released id (#748).
 --
 -- During a reveal season a card carries a placeholder id (set 12 used 12<number>204, set 13
