@@ -13,6 +13,7 @@ import {
   costReductionTargetsOverlap,
   isExertConsumePayoff,
   selfDiscardOutletFeed,
+  selfDiscardHandTrimFeed,
   type DiscardRole,
   type LoreDenialRole,
   type RampRole,
@@ -278,8 +279,9 @@ interface SelfDiscardPairCtx {
 
 /**
  * One direction of the combo: how `enabler`'s hand discard reaches `payoff`'s reanimator or state
- * payoff, or null when `enabler` has no outlet, `payoff` has no such payoff, or the discard can't
- * switch it on.
+ * payoff, or null when `payoff` has no such payoff or the discard can't switch it on. A card with
+ * no outlet can still trim your hand (Goliath - Clan Leader), which reaches a small-hand payoff
+ * alone.
  */
 function selfDiscardFeedInto(
   enabler: LorcanaCard,
@@ -287,14 +289,16 @@ function selfDiscardFeedInto(
   payoff: LorcanaCard,
   payoffRoles: SelfDiscardRole[],
 ): SelfDiscardFeed | null {
-  if (!enablerRoles.includes('enabler') || !isSelfDiscardPayoff(payoffRoles)) return null;
-  return selfDiscardOutletFeed(enabler, payoff, payoffRoles);
+  if (!isSelfDiscardPayoff(payoffRoles)) return null;
+  return enablerRoles.includes('enabler')
+    ? selfDiscardOutletFeed(enabler, payoff, payoffRoles)
+    : selfDiscardHandTrimFeed(enabler, payoff);
 }
 
 /**
- * The pair's combo, checked in both directions: a trigger beats a stock feed, and on a tie the
- * searcher holds the outlet. Following the direction that feeds keeps the actor right when both
- * cards have an outlet but only one has a payoff the other can feed.
+ * The pair's combo, checked in both directions: a trigger beats a stock or unlock feed, and on a
+ * tie the searcher holds the outlet. Following the direction that feeds keeps the actor right when
+ * both cards have an outlet but only one has a payoff the other can feed.
  */
 function findSelfDiscardCombo(
   card: LorcanaCard,
@@ -324,24 +328,40 @@ function buildSelfDiscardPairCtx(
 }
 
 /**
+ * The combo sentence, with the outlet as the actor: a hand kept small enough for the payoff to
+ * ready, a bin the recursion replays from, or another discard payoff switched on.
+ */
+function explainSelfDiscardCombo(
+  feed: SelfDiscardFeed,
+  payoffRoles: SelfDiscardRole[],
+  tokens: {enabler: string; payoff: string},
+): string {
+  const {enabler, payoff} = tokens;
+  if (feed === 'unlock') {
+    return `${enabler}'s self-discard keeps your hand at 2 or fewer, so ${payoff} can ready.`;
+  }
+  return payoffRoles.includes('reanimator')
+    ? `${enabler} discards your own cards so ${payoff} can replay them from the discard.`
+    : `${enabler}'s self-discard switches on ${payoff}'s discard payoff.`;
+}
+
+/**
  * Build the self-discard combo result: 8 when the outlet's discard switches the payoff on, 7 when
- * it only stocks the bin a recursion payoff replays from. Token-swap keeps the outlet reading as
- * the actor; the explanation branches on whether the payoff side is a reanimator or a
- * discard-state payoff.
+ * it only stocks the bin a recursion payoff replays from, or keeps your hand small enough to
+ * switch a STONE BY DAY drawback off. Token-swap keeps the outlet reading as the actor.
  */
 function scoreSelfDiscardCombo(
   combo: SelfDiscardCombo,
   cardRoles: SelfDiscardRole[],
   otherRoles: SelfDiscardRole[],
 ): {score: number; explanation: string} {
-  const enablerToken = combo.enablerIsCard ? '{A}' : '{B}';
-  const payoffToken = combo.enablerIsCard ? '{B}' : '{A}';
+  const tokens = combo.enablerIsCard
+    ? {enabler: '{A}', payoff: '{B}'}
+    : {enabler: '{B}', payoff: '{A}'};
   const payoffRoles = combo.enablerIsCard ? otherRoles : cardRoles;
   return {
     score: combo.feed === 'trigger' ? 8 : 7,
-    explanation: payoffRoles.includes('reanimator')
-      ? `${enablerToken} discards your own cards so ${payoffToken} can replay them from the discard.`
-      : `${enablerToken}'s self-discard switches on ${payoffToken}'s discard payoff.`,
+    explanation: explainSelfDiscardCombo(combo.feed, payoffRoles, tokens),
   };
 }
 
@@ -397,10 +417,13 @@ function scoreSelfDiscardFillCombo(
 
 /**
  * Score a self-discard pair (5-baseline convention, mirrors the Sacrifice shape):
- *   - enabler ↔ payoff it switches on        = 8  (win-condition: a state payoff, or recursion
- *                                                 that fires on the discard itself)
+ *   - enabler ↔ payoff it switches on        = 8  (win-condition: a discard-event or empty-hand
+ *                                                 payoff, or recursion that fires on the discard)
  *   - enabler ↔ any other reanimator         = 7  (compounding: the outlet stocks the bin the
  *                                                 recursion replays from, which play fills too)
+ *   - enabler ↔ small-hand payoff            = 7  (compounding: an outlet that shrinks your hand,
+ *                                                 or Goliath - Clan Leader's trim, switches the
+ *                                                 STONE BY DAY drawback off)
  *   - mill ↔ zone payoff, mill ↔ reanimator  = 7  (compounding: mill stocks the pile several
  *                                                 cards at a time without spending the hand)
  *   - enabler ↔ zone payoff                  = 6  (complementary: each discard adds one card
@@ -408,7 +431,8 @@ function scoreSelfDiscardFillCombo(
  *   - reanimator ↔ reanimator                = 6  (two recursion engines share one bin)
  *   - all other same-axis pairs              = 5  (parallel density; includes mill ↔ state,
  *                                                 since milling is not a discard event)
- * An outlet scores with a payoff only when its discard can reach it (selfDiscardOutletFeed).
+ * An outlet scores with a payoff only when its discard can reach it (selfDiscardOutletFeed, or
+ * selfDiscardHandTrimFeed for a hand trim).
  *
  * `card` is the searcher (token {A}); `other` is the partner (token {B}). The token-swap keeps
  * the enabler side reading as the actor regardless of which card is the searcher.

@@ -21,10 +21,10 @@ Bin-fillers:
 Payoffs:
 
 - **reanimator** — plays or returns a card *from your discard* (the deep recursion payoff).
-- **state-payoff** — rewards the discard *event* ("if you discarded a card this turn") or an empty hand (Hellbent).
+- **state-payoff** — rewards the discard *event* ("if you discarded a card this turn"), an empty hand (Hellbent), or a small one (the Gargoyles' STONE BY DAY, whose characters can't ready while you hold 3 or more cards).
 - **zone-payoff** — rewards the discard as a countable *zone* ("while you have 10 or more cards in your discard", "a song card in your discard", "if 2 or more cards were put into your discard this turn").
 
-The two filler roles are not interchangeable: a hand discard *is* a discard event, so it switches on every payoff; milling never triggers a "when you discard" payoff, so it feeds only the payoffs that read the pile itself. That distinction is what the score matrix encodes, together with a second one: whether the discard *switches a payoff on* (the discard event, an empty hand, recursion that fires when you discard) or only *stocks the pile* a payoff reads, which banished characters and played actions stock too.
+The two filler roles are not interchangeable: a hand discard *is* a discard event, so it can switch on the payoffs that wait for one; milling never triggers a "when you discard" payoff, so it feeds only the payoffs that read the pile itself. That distinction is what the score matrix encodes, together with a second one: whether the discard *switches a payoff on* (the discard event, an empty hand, recursion that fires when you discard), *switches a drawback off* (a hand of 2 or fewer lets a STONE BY DAY character ready), or only *stocks the pile* a payoff reads, which banished characters and played actions stock too.
 
 Like Sacrifice, it is an asymmetric-role playstyle: the fillers *create* the fuel that the payoffs *exploit*. A deck of all reanimators has an empty bin; a deck of all loot has nothing to bring back. The combo is the rule. This rule fills the "recursion role" that `makeSearchPattern` in `cardHelpers.ts` deliberately deferred ("from your discard ... Recursion deserves its own role; see Phase 3").
 
@@ -45,7 +45,7 @@ Loot Mother Gothel into the discard → she replays herself from it (you still p
 getSelfDiscardRoles(card: LorcanaCard): SelfDiscardRole[]  // any subset of the five roles
 ```
 
-A card can be multi-role: `Rapunzel & Flynn Rider - Unlikely Pair` loots (enabler) *and* replays discarded characters (reanimator). Detection uses a fast pre-filter (`HAS_SELF_DISCARD_KEYWORD = /discard|no cards in/i`) before the patterns.
+A card can be multi-role: `Rapunzel & Flynn Rider - Unlikely Pair` loots (enabler) *and* replays discarded characters (reanimator). Detection uses a fast pre-filter (`HAS_SELF_DISCARD_KEYWORD = /discard|no cards in|cards in your hand/i`) before the patterns. The last branch is for STONE BY DAY, whose text never says "discard".
 
 ### enabler (self-discard outlet from hand)
 
@@ -92,19 +92,23 @@ The `[^.]{0,60}` window keeps the verb and "from your discard" inside one clause
 
 Recursion that fires when **you** discard the card stays ("when you discard this card, you may play it from your discard": Mother Gothel - Evil as Ever, Look What You've Done, Rapunzel & Flynn Rider), because a hand discard is exactly what feeds it. Tiana keeps `enabler` (her draw-then-discard is a real outlet) and Torn Scrap keeps `zone-payoff`.
 
-### state-payoff (discard event / empty hand)
+### state-payoff (discard event / empty hand / small hand)
 
 ```regex
 event:      /discarded\s+a\s+card\s+this\s+turn/i
 empty hand: /no cards in (?:your )?hand/i
+small hand: /if you have 3 or more cards in your hand, this character can't ready/i
 ```
 
-The two halves are separate patterns so the feed check (below) can tell an event payoff from an empty-hand one.
+The three shapes are separate patterns so the feed check (below) can tell them apart. The small-hand pattern reads the condition, not the ability's name, and the text is normalized first, so a typographic apostrophe ("can’t") matches too.
 
 | Shape | Example card text | Card |
 |-------|-------------------|------|
 | Discarded this turn | "**If you discarded a card this turn**, ..." | Maximus - Relentless Stallion, Discarded Armor |
 | Hellbent | "**While you have no cards in your hand**, ..." | Megavolt - Electrical Menace, Gizmoduck |
+| Small hand (STONE BY DAY) | "**If you have 3 or more cards in your hand, this character can't ready.**" | Bronx - Ferocious Beast, Goliath - Clan Leader |
+
+STONE BY DAY is a drawback a small hand switches off: a Gargoyle that quested or challenged stays exerted unless you hold 2 or fewer cards. The Ready step comes before the Draw step (Comprehensive Rules 3.2.1 to 3.2.3), so the hand that counts is the one you end your previous turn with. Every one of the 14 cards that carry it is a Gargoyle; three of them also carry an outlet (Hudson - Determined Reader, Goliath - Transformed Warrior, Demona - Imperious Spellcaster).
 
 ### zone-payoff (the discard as a countable zone)
 
@@ -139,9 +143,10 @@ Deliberately tight: it reads the top-of-deck phrasing only. "Put the rest into y
 
 | Excluded | Pattern / reason |
 |----------|------------------|
-| **Opponent discard** | Anything matching `opponent` / `each player` is the Discard rule's domain (attacking *their* hand). The gate keeps the two axes disjoint, exactly the boundary the Discard rule's doc calls out ("self-discard ... belongs to a separate axis"). |
+| **Opponent discard** | Anything matching `opponent` / `each player` is the Discard rule's domain (attacking *their* hand). The gate keeps the two axes disjoint, exactly the boundary the Discard rule's doc calls out ("self-discard ... belongs to a separate axis"). One narrow exception: Goliath - Clan Leader's end-of-turn trim stays out of `enabler` but feeds the small-hand payoff (see Feed check). |
+| **Big-hand payoffs** | Jafar - Keeper of Secrets ("+1 ¤ for each card in your hand") and Tinker Bell - Snowflake Collector ("While you have 4 or more cards in your hand") want the opposite of a small hand, so the small-hand pattern names STONE BY DAY's own condition rather than any hand-size count. Neither is a Discard payoff either: that one compares your hand with an opponent's. |
 | **Songs as bin-fillers** | A sung song lands in the discard, so in principle every Song feeds a zone payoff. It is not modelled: that would make all 66 Songs bin-fillers and drown the axis in near-baseline pairs, and the Song half of the interaction already has a home in the Singer + Songs rule. |
-| **Mill as a hand-discard enabler** | Mill *is* tagged (role `mill`) but is never an `enabler`: it fills the bin from the deck, so it cannot switch on a payoff that needs an actual hand discard. `mill ↔ state-payoff` therefore stays at the 5 baseline, while `enabler ↔ state-payoff` scores 8. |
+| **Mill as a hand-discard enabler** | Mill *is* tagged (role `mill`) but is never an `enabler`: it fills the bin from the deck, so it cannot switch on a payoff that needs an actual hand discard, nor shrink your hand for a small-hand one. `mill ↔ state-payoff` therefore stays at the 5 baseline, while an outlet scores 8 with a discard-event payoff. |
 
 ---
 
@@ -153,7 +158,7 @@ Real cards the `getSelfDiscardRoles` detector tags for each role (names from the
 |------|-----------|--------------|
 | **enabler** | Kronk - Meat Hut Cook (Steel), Search for Clues (Amber), The Horned King - Wicked Ruler (Amethyst) | Discard your own cards from hand: loot, discard-your-hand, or discard-as-cost |
 | **reanimator** | The Queen - Conceited Ruler (Amber), Lady Tremaine - Sinister Socialite (Ruby), Pluto - Clever Cluefinder (Sapphire) | Play or return a card *from your discard*: the deep recursion payoff |
-| **state-payoff** | Maximus - Relentless Stallion (Steel), Megavolt - Electrical Menace (Steel), Beast's Mirror (Steel) | Rewards the discard event ("discarded a card this turn") or an empty hand (Hellbent) |
+| **state-payoff** | Maximus - Relentless Stallion (Steel), Megavolt - Electrical Menace (Steel), Bronx - Ferocious Beast (Ruby) | Rewards the discard event ("discarded a card this turn") or an empty hand (Hellbent), or needs a small one to ready (STONE BY DAY) |
 | **zone-payoff** | Priya Mangal - Serious Music Lover (Amber), Pain - Running with Scissors (Amethyst), Helga Sinclair - No Backup Needed (Emerald) | Reads the pile itself: a count, a card type sitting there, or what was put there this turn |
 | **mill** | Quackerjack - Loony Toymaker (Sapphire), Preston Whitmore - Expedition Financier (Ruby), Remote Inklands - Desert Ruins (Ruby) | Puts cards from the top of your deck into your discard |
 
@@ -169,17 +174,18 @@ Applies the project-wide **5-baseline convention** and mirrors the Sacrifice sha
 |-----------|-------|-------------|-------------|
 | enabler ↔ a payoff its discard switches on | **8** | Strong | Win-condition combo: the discard flips a "discarded this turn" / empty-hand payoff (state) on demand, or fires recursion that replays the discarded card ("when you discard this card, you may play this character from your discard"). Only when the outlet's discard can reach that payoff (see Feed check) |
 | enabler ↔ any other reanimator | **7** | Strong | Mechanical compounding: the outlet stocks the bin the recursion replays from, and picks what lands there |
+| enabler ↔ small-hand payoff | **7** | Strong | Mechanical compounding: an outlet that shrinks your hand switches the STONE BY DAY drawback off, so the character readies. Only an outlet that shrinks the hand, or Goliath - Clan Leader's end-of-turn trim (see Feed check) |
 | mill ↔ zone-payoff | **7** | Strong | The deck-side filler stocks the pile the payoff counts, several cards at a time and without spending the hand |
 | mill ↔ reanimator | **7** | Strong | Mill buries targets the recursion engine then replays |
 | enabler ↔ zone-payoff | **6** | Moderate | Complementary: each hand discard adds one card to the count the payoff reads, a nudge rather than a compounding |
 | reanimator ↔ reanimator | **6** | Moderate | Two recursion engines mining the same discard pile, complementary but not a single combo |
-| enabler ↔ enabler / mill ↔ state-payoff / reanimator ↔ state / state ↔ state / an outlet that cannot feed the payoff | **5** | Weak/Moderate | Same-axis density: parallel fillers, two payoffs that don't amplify each other, or an outlet whose discard can't reach the payoff |
+| enabler ↔ enabler / mill ↔ state-payoff / reanimator ↔ state / state ↔ state / an outlet that cannot feed the payoff | **5** | Weak/Moderate | Same-axis density: parallel fillers, two payoffs that don't amplify each other, or an outlet whose discard can't reach the payoff (a loot or a refill next to a small-hand payoff) |
 
 Only an 8 is a closed loop: the discard itself is what the payoff waits for. That is the difference between "discard Mother Gothel, replay Mother Gothel" (8) and "discard a card, and a recursion engine has one more target" (7). Most recursion pulls whatever sits in the pile, and play stocks the pile on its own: every banished character and every action or song you play ends up there. An outlet adds choice and speed to that engine, not the engine itself.
 
 ### Feed check (`selfDiscardOutletFeed`)
 
-The enabler ↔ payoff combo needs more than an outlet and a payoff in the same deck: the outlet's discard has to reach that payoff. `selfDiscardOutletFeed` answers per direction with `trigger` (the discard switches the payoff on: 8), `stock` (it only stocks the bin a recursion payoff replays from: 7) or nothing. When both directions feed, the stronger one sets the score and the explanation's actor, so a card that is both an outlet and a payoff can pair either way. A pair that fails falls through to the lower tiers, usually 5.
+The enabler ↔ payoff combo needs more than an outlet and a payoff in the same deck: the outlet's discard has to reach that payoff. `selfDiscardOutletFeed` answers per direction with `trigger` (the discard switches the payoff on: 8), `stock` (it only stocks the bin a recursion payoff replays from: 7), `unlock` (it keeps your hand small enough for a STONE BY DAY character to ready: 7) or nothing. When both directions feed, the stronger one sets the score and the explanation's actor, so a card that is both an outlet and a payoff can pair either way; on a tie the searcher holds the outlet. A pair that fails falls through to the lower tiers, usually 5.
 
 **Recursion:** the kinds of card the outlet can discard must meet the kinds the recursion can pull.
 
@@ -196,23 +202,35 @@ A generic side always meets. "Action" admits songs too, since a song is an actio
 
 **Trigger or stock:** recursion that fires on your discard is a trigger and scores 8: Mother Gothel - Evil as Ever and Look What You've Done ("during your turn, when you discard this card, you may play it from your discard") and Rapunzel & Flynn Rider - Unlikely Pair ("whenever you discard a character card, you may play that character from your discard"). The check reads the recursion sentence itself (`hasDiscardFedRecursion`), so an unrelated "when you discard" elsewhere on a card doesn't count. Every other recursion only has its bin stocked by the outlet and scores 7.
 
-**State:** always a trigger. Any discard is a "discarded a card this turn" event, so every outlet feeds an event payoff. An empty-hand payoff ("while you have no cards in your hand") is not fed by an outlet that discards one card and then draws 2 or more ("discard a song card. If you do, draw 2 cards"): its hand is never empty when it resolves. That refill rule is deliberately narrow (Max Goof - Karaoke Star only); general empty-hand scoring is a separate decision.
+**State:** a trigger for the discard event and the empty hand. Any discard is a "discarded a card this turn" event, so every outlet feeds an event payoff. An empty-hand payoff ("while you have no cards in your hand") is not fed by an outlet that discards one card and then draws 2 or more ("discard a song card. If you do, draw 2 cards"): its hand is never empty when it resolves. That refill rule is deliberately narrow (Max Goof - Karaoke Star only); general empty-hand scoring is a separate decision.
+
+**Small hand:** an unlock, and only from an outlet that leaves the hand smaller. STONE BY DAY reads how many cards you hold, not whether you discarded, so an outlet that draws first or refills afterwards hands back what it took:
+
+| Outlet | Shrinks the hand? | Example |
+|--------|-------------------|---------|
+| Discard, nothing drawn | yes | "choose and discard a card" (Gantu - Hamsterviel's Accomplice), "choose and discard a card or banish him" (Meeko - Skittish Scrounger) |
+| Discard your hand, then draw 2 | yes: 2 cards is a small hand | "Discard your hand. Draw 2 cards." (You Broke My Smolder) |
+| Loot (draw or return to hand first) | no | "draw a card, then choose and discard a card" (Kronk - Meat Hut Cook, Hudson - Determined Reader) |
+| Refill (discard 1, draw 2 or more) | no | "choose and discard a song card. If you do, draw 2 cards" (Max Goof - Karaoke Star) |
+
+17 of the 44 outlets shrink the hand. Goliath - Clan Leader has no outlet of his own (his DUSK TO DAWN makes *each player* discard, which the enabler gate keeps out), but at the end of your turn it trims your hand to 2, exactly what STONE BY DAY asks for. `selfDiscardHandTrimFeed` reads that trim as an unlock for a small-hand payoff and nothing else: it resolves after the turn's actions, and it draws a hand of 0 or 1 back up to 2, so it never feeds a "discarded this turn" or empty-hand payoff, and it is no outlet for recursion or a pile count. He scores 7 with every other STONE BY DAY card, and, being one himself, 7 with the 17 outlets that shrink the hand.
 
 ### Live distribution
 
-Generated from the live engine over the current Core pool (sets 9-13 plus the Set 14 preview, measured with the trigger-or-stock split): **127 tagged cards** (44 enabler, 50 reanimator, 6 state-payoff, 29 zone-payoff, 8 mill; roles overlap on multi-role cards such as Lyle Tiberius Rourke, who mills *and* reanimates). After the engine's ink-compatibility filter (`canShareDeck`), **7,851 unique pairs**:
+Generated from the live engine over the current Core pool (sets 9-13 plus the Set 14 preview, measured with the trigger, stock and unlock split): **138 tagged cards** (44 enabler, 50 reanimator, 20 state-payoff, 29 zone-payoff, 8 mill; roles overlap on multi-role cards such as Lyle Tiberius Rourke, who mills *and* reanimates, or Hudson - Determined Reader, who loots and carries STONE BY DAY). After the engine's ink-compatibility filter (`canShareDeck`), **9,291 unique pairs**, each read from its lower-id card as the searcher:
 
 | Pair shape | Count | Score | Share |
 |------------|-------|-------|-------|
-| enabler ↔ a payoff its discard switches on | 377 | 8 | 4.8% |
-| enabler ↔ any other reanimator | 1,958 | 7 | 24.9% |
-| mill ↔ reanimator | 364 | 7 | 4.6% |
-| mill ↔ zone-payoff | 227 | 7 | 2.9% |
-| enabler ↔ zone-payoff | 1,157 | 6 | 14.7% |
-| reanimator ↔ reanimator | 1,041 | 6 | 13.3% |
-| other same-axis | 2,727 | 5 | 34.7% |
+| enabler ↔ a payoff its discard switches on | 377 | 8 | 4.1% |
+| enabler ↔ any other reanimator | 1,956 | 7 | 21.1% |
+| enabler ↔ small-hand payoff | 242 | 7 | 2.6% |
+| mill ↔ reanimator | 364 | 7 | 3.9% |
+| mill ↔ zone-payoff | 227 | 7 | 2.4% |
+| enabler ↔ zone-payoff | 1,154 | 6 | 12.4% |
+| reanimator ↔ reanimator | 1,041 | 6 | 11.2% |
+| other same-axis | 3,930 | 5 | 42.3% |
 
-The score-8 share is small on purpose. Recursion is one of the deepest payoff pools in the game (50 reanimators), but only three of them fire on the discard, and only six state payoffs need one; every other reanimator pairs with the outlets at 7.
+The score-8 share is small on purpose. Recursion is one of the deepest payoff pools in the game (50 reanimators), but only three of them fire on the discard, and only six state payoffs need one; every other reanimator pairs with the outlets at 7. The 14 STONE BY DAY cards need a small hand instead, which only 17 outlets and Goliath - Clan Leader's trim provide, so they sit at 5 with every loot, refill, mill and other payoff in their inks, which is why the 5 share rose from 34.7%. Three pairs score 7 from both sides for different reasons, so their row depends on the searcher: Hercules - Young Rescuer's discard-your-hand unlocks Hudson - Determined Reader, Goliath - Transformed Warrior and Demona - Imperious Spellcaster, whose outlets in turn stock his recursion.
 
 Note on ordering: the 7 guard runs before the 6, so a card that both mills and reanimates (Lyle Tiberius Rourke) scores 7 against another reanimator rather than 6. That is deliberate: he does not merely share the bin with it, he fills the bin for it. For the same reason the fill rows run best score first: an outlet that also counts the pile (Max Goof - Karaoke Star) against a mill that counts it too (Though I Have to Say Goodbye) reads as the mill at 7, not as the outlet at 6.
 
@@ -221,13 +239,15 @@ Note on ordering: the 7 guard runs before the 6, so a card that both mills and r
 The combo string uses the project `{A}`/`{B}` convention so the **enabler** always reads as the actor, regardless of which card the user selected. When both cards have an outlet, the actor is the one whose discard reaches the other's payoff (a plain loot card feeding Rapunzel & Flynn Rider - Unlikely Pair reads as the actor from either side):
 
 ```typescript
-const enablerToken = combo.enablerIsCard ? '{A}' : '{B}';
-const payoffToken = combo.enablerIsCard ? '{B}' : '{A}';
-// reanimator payoff: `${enablerToken} discards your own cards so ${payoffToken} can replay them from the discard.`
-// state payoff:      `${enablerToken}'s self-discard switches on ${payoffToken}'s discard payoff.`
+const tokens = combo.enablerIsCard
+  ? {enabler: '{A}', payoff: '{B}'}
+  : {enabler: '{B}', payoff: '{A}'};
+// small-hand payoff: `${enabler}'s self-discard keeps your hand at 2 or fewer, so ${payoff} can ready.`
+// reanimator payoff: `${enabler} discards your own cards so ${payoff} can replay them from the discard.`
+// state payoff:      `${enabler}'s self-discard switches on ${payoff}'s discard payoff.`
 ```
 
-The 7 and 8 combos share these two strings; the score tells them apart. The fill combos follow the same convention, with the **filler** as the actor:
+The 7 and 8 recursion combos share one string; the score tells them apart. Goliath - Clan Leader's trim reads as the actor too, with the small-hand string. The fill combos follow the same convention, with the **filler** as the actor:
 
 - mill ↔ zone-payoff (7): `"{A} mills your deck into the discard, feeding {B}'s discard-count payoff."`
 - mill ↔ reanimator (7): `"{A} mills cards into your discard for {B} to replay."`
@@ -243,19 +263,19 @@ Same-axis pairs use distinct sentences:
 
 ## Coverage
 
-- **44 enablers** (loot / discard-hand / discard-cost), every ink.
+- **44 enablers** (loot / discard-hand / discard-cost), every ink; 17 of them shrink the hand.
 - **50 reanimators** ("from your discard", self-contained recursion excluded), the deepest side.
 - **29 zone-payoffs** (count / card-type / put-this-turn), added in the Set 14 pass.
-- **8 mill cards**, the deck-side filler.
-- **6 state-payoffs** (discarded-this-turn + Hellbent), the thinnest side.
+- **20 state-payoffs**: 2 discarded-this-turn, 4 Hellbent and 14 STONE BY DAY (Amethyst, Ruby and Steel Gargoyles).
+- **8 mill cards**, the deck-side filler and now the thinnest side.
 
 ```chart
 {
   "type": "doughnut",
-  "title": "Role Composition (127 cards; multi-role overlap)",
+  "title": "Role Composition (138 cards; multi-role overlap)",
   "data": {
-    "labels": ["Reanimator (50)", "Enabler (44)", "Zone-payoff (29)", "Mill (8)", "State-payoff (6)"],
-    "values": [50, 44, 29, 8, 6]
+    "labels": ["Reanimator (50)", "Enabler (44)", "Zone-payoff (29)", "State-payoff (20)", "Mill (8)"],
+    "values": [50, 44, 29, 20, 8]
   }
 }
 ```
@@ -264,7 +284,7 @@ Same-axis pairs use distinct sentences:
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Self-Discard rule (Discard Matters)')`. The self-contained recursion carve-out and the feed check are tested in `packages/synergy-engine/src/__tests__/selfDiscard.test.ts`, with real card text.
+Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Self-Discard rule (Discard Matters)')`. The self-contained recursion carve-out and the feed check are tested in `packages/synergy-engine/src/__tests__/selfDiscard.test.ts`, and STONE BY DAY in `packages/synergy-engine/src/__tests__/stoneByDay.test.ts`, both with real card text.
 
 ### Role Detection (10 tests)
 
@@ -307,6 +327,20 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | character-or-location outlet → 7 | Sprout - Experiment 509 with Get to Safety!, Circle of Life and Alien - True Believer |
 | character-or-location outlet → 5 | Sprout with Salvage Operation and Max Goof - Rebellious Teen |
 
+### STONE BY DAY (9 tests, `stoneByDay.test.ts`)
+
+| Test | What it verifies |
+|------|------------------|
+| small-hand payoff role | Bronx - Ferocious Beast reads `['state-payoff']`; Hudson - Determined Reader keeps his outlet, `['enabler', 'state-payoff']` |
+| the trim is no outlet | Goliath - Clan Leader reads `['state-payoff']` only |
+| big-hand payoffs stay out | Tinker Bell - Snowflake Collector and Jafar - Keeper of Secrets have no roles |
+| no leak into Discard | Bronx has no Discard role; Goliath - Clan Leader keeps only the `standard` role his trim gives him there |
+| an outlet that shrinks the hand → 7 | Gantu - Hamsterviel's Accomplice with Bronx from both searchers (the outlet as the actor), Meeko - Skittish Scrounger and You Broke My Smolder with Bronx, Gantu with Hudson |
+| a loot or a refill → 5 | Kronk - Meat Hut Cook, Max Goof - Karaoke Star and Hudson with Bronx |
+| the trim → 7 | Goliath - Clan Leader with Bronx, and with Hudson as the searcher, Goliath reading as the actor both times |
+| the trim feeds nothing else → 5 | Goliath - Clan Leader with Megavolt - Electrical Menace and Maximus - Relentless Stallion |
+| small-hand payoff with another payoff → 5 | Bronx with Demona - Betrayer of the Clan, Megavolt and Maximus |
+
 ---
 
 ## Design Decisions and Rationale
@@ -328,3 +362,19 @@ Every enabler ↔ reanimator pair used to score 8 and every enabler ↔ zone-pay
 ### Why reanimator ↔ reanimator sits at 6, not 5
 
 Two recursion engines genuinely complement each other, they mine the same bin and give it two ways to convert to board, which is more than parallel density but less than a single enabler→payoff combo. It is the one same-axis case that earns a bump above the 5 baseline.
+
+### Why STONE BY DAY is a Self-Discard payoff
+
+STONE BY DAY wants a small hand, a milder form of what Hellbent wants, and your own outlets are what give you one. Discard is the wrong home: its hand-size payoff compares your hand with an opponent's, and a Gargoyle doesn't care what the opponent holds. So it is a third state-payoff shape rather than a new playstyle, and the Gargoyle tribe keeps what the clan does for itself (TRIBES_RULE.md leaves the hand-size side here).
+
+### Why a small hand scores 7, not 8
+
+An 8 is a closed loop: the discard is what the payoff waits for. STONE BY DAY is a drawback the card puts on itself, and the outlet lifts it rather than adding anything, only on turns after the character exerted and only while you keep holding 2 or fewer. That is compounding, the same tier as an outlet stocking a recursion bin.
+
+### Why a loot or a refill doesn't feed STONE BY DAY
+
+STONE BY DAY counts the cards you hold, not the cards you discarded. A loot draws before it discards and a refill draws 2 after discarding 1, so the hand ends as big or bigger, and scoring one 7 with a Gargoyle would claim help it never gives. "Discard your hand. Draw 2 cards." still feeds: 2 cards is a small hand.
+
+### Why Goliath - Clan Leader feeds the small-hand payoff alone
+
+DUSK TO DAWN trims *each player's* hand to 2 as their own turn ends, so the enabler gate keeps it out: it caps the opponent's hand too, which is Discard's ground (Discard tags him `standard`). For STONE BY DAY, though, it is the condition itself, since every one of your turns ends with a hand of 2. So `selfDiscardHandTrimFeed` reads the trim against a small-hand payoff and nothing else. It can't feed a discard-event or empty-hand payoff (it resolves as the turn ends and draws a short hand back up to 2), and scoring it with recursion or a pile count would make a symmetric hand-control card a Self-Discard outlet, which is a separate decision.
