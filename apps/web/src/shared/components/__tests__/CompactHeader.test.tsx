@@ -37,7 +37,7 @@ describe('CompactHeader', () => {
           </SessionProvider>
         </MemoryRouter>,
       );
-      const input = screen.getByTestId('browse-search');
+      const input = screen.getByTestId('header-search');
       fireEvent.focus(input);
       fireEvent.blur(input);
       expect(vi.getTimerCount()).toBe(1); // only the hook's 150ms blur timer is pending

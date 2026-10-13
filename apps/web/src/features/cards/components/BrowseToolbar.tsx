@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
 import type {CardFilterOptions} from '../loader';
+import type {FilterButtonOptions} from '../filterOptions';
 import type {CardTypeFilter, BrowseSortOrder} from '../../../shared/constants';
 import {BROWSE_SORT_OPTIONS, COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
@@ -37,6 +38,8 @@ interface BrowseToolbarProps {
    */
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
+  /** Limits the inline ink, cost and inkwell icons to these values; left out, all show. */
+  buttonOptions?: FilterButtonOptions;
 }
 
 // =====================================================================
@@ -254,6 +257,7 @@ interface DesktopFilterIconsProps {
   onInkwellChange: (v: CardFilterOptions['inkwell']) => void;
   /** When false, the cost group is tucked into the Filters dialog (narrow desktop). */
   showCost: boolean;
+  options: FilterButtonOptions | undefined;
 }
 
 function DesktopFilterIcons({
@@ -264,18 +268,27 @@ function DesktopFilterIcons({
   onToggleCost,
   onInkwellChange,
   showCost,
+  options,
 }: DesktopFilterIconsProps) {
   return (
     <>
-      <InkFilterGroup inkFilters={inkFilters} onToggleInk={onToggleInk} />
+      <InkFilterGroup inkFilters={inkFilters} onToggleInk={onToggleInk} inks={options?.inks} />
       <div aria-hidden="true" style={DIVIDER_STYLE} />
       {showCost && (
         <>
-          <CostFilterGroup costFilters={costFilters} onToggleCost={onToggleCost} />
+          <CostFilterGroup
+            costFilters={costFilters}
+            onToggleCost={onToggleCost}
+            costs={options?.costs}
+          />
           <div aria-hidden="true" style={DIVIDER_STYLE} />
         </>
       )}
-      <InkwellFilterGroup activeValue={inkwell} onToggle={onInkwellChange} />
+      <InkwellFilterGroup
+        activeValue={inkwell}
+        onToggle={onInkwellChange}
+        values={options?.inkwell}
+      />
     </>
   );
 }
@@ -302,6 +315,7 @@ export function BrowseToolbar({
   extraChips,
   searchQuery,
   onSearchChange,
+  buttonOptions,
 }: BrowseToolbarProps) {
   // Cost icons stay inline only on wide desktops; below that they tuck into the
   // Filters dialog and surface as a chip instead (see buildHiddenIconChips).
@@ -342,6 +356,7 @@ export function BrowseToolbar({
             onToggleCost={onToggleCost}
             onInkwellChange={(v) => onFiltersChange({...filters, inkwell: v})}
             showCost={showCost}
+            options={buttonOptions}
           />
         )}
         <SortSelect

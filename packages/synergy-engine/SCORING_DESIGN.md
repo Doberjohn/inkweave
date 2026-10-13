@@ -66,7 +66,7 @@ Playstyle pairs are no longer flat-7. Each rule now applies a role-driven matrix
 - **Ink Drops**: 5 / 6 / 7 / 8, payoff-anchored (maker ↔ maker never emitted). A one-shot drop switching a payoff on is 6-7; 8 is kept for a steady maker feeding a per-turn payoff; an opponent-gated maker takes -1, floored at 5 (see `INK_DROPS_RULE.md`)
 
 Differentiation *within* a playstyle comes from the role matrix the rule defines, not from card potency.
-Card potency (#136) is still planned as a separate axis measuring individual card importance, but the rule scoring itself encodes mechanical role differences.
+A separate potency axis for how important one card is to its strategy was proposed in #136 and closed as not planned, so the rule scoring alone encodes mechanical role differences.
 
 Differentiation *across* playstyles (e.g., "Is lore denial stronger than location control?") is
 deliberately excluded from engine scoring. Strategy power depends on the meta and shifts with new
@@ -107,7 +107,7 @@ handles both engine-assigned integers and future community-voted decimals.
 Location **move cost**, card **play cost**, and support card cost were considered for scoring and
 excluded. Move cost is a one-time payment to move a character to a location (not ongoing), so the
 difference between moveCost=1 and moveCost=2 is negligible to the synergy relationship. Play cost
-and card cost affect card evaluation (future potency in #136), not the synergy between two cards.
+and card cost affect how strong a card is on its own, not the synergy between two cards.
 
 `moveCost` is being added to `LorcanaCard` in #132 as a data model improvement (it exists in raw
 JSON but wasn't extracted), but it does not influence synergy scores.

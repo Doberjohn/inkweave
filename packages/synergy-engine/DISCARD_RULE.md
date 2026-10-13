@@ -209,4 +209,4 @@ Cards like "Each player draws 3, then discards 3 at random" affect both players 
 
 ### Why No Score Differentiation Within Enablers?
 
-All enablers score identically when paired with each other (7) or with payoffs (8). Differentiating "quality" of discard (targeted vs. random, 1 card vs. 2) is a card potency question (#136), not a synergy question. Two mediocre enablers reinforce the strategy just as much as two powerful ones — the synergy relationship is the same.
+All enablers score identically when paired with each other (5) or with payoffs (8). Differentiating "quality" of discard (targeted vs. random, 1 card vs. 2) is about how strong each card is on its own, not a synergy question. Two mediocre enablers reinforce the strategy just as much as two powerful ones — the synergy relationship is the same.

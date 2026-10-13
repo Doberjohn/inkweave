@@ -358,6 +358,11 @@ export function filterCards(cards: LorcanaCard[], options: CardFilterOptions): L
   return cards.filter((card) => CARD_FILTER_PREDICATES.every((p) => p(card, options)));
 }
 
+/** Whether any card passes the filters: filterCards' rules, stopping at the first match. */
+export function anyCardMatches(cards: LorcanaCard[], options: CardFilterOptions): boolean {
+  return cards.some((card) => CARD_FILTER_PREDICATES.every((p) => p(card, options)));
+}
+
 /**
  * Canonical single-word Lorcana keyword labels. Matching against this set,
  * rather than trusting the first word, drops non-keyword noise that leaks in

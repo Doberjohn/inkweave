@@ -142,6 +142,9 @@ function panelChrome(size: keyof typeof SIZE_MAX_WIDTH, goldRing: boolean): Reac
     maxWidth: SIZE_MAX_WIDTH[size],
     maxHeight: '85vh',
     overflow: 'auto',
+    // #511: no replacement ring needed. The panel is `tabIndex={-1}`, out of the Tab order;
+    // it only takes focus programmatically (initial focus without `initialFocusRef`), and a
+    // ring round the whole panel would mark nothing. The controls inside draw their own.
     outline: 'none',
     background: COLORS.surface,
     border: `1px solid ${COLORS.surfaceBorder}`,

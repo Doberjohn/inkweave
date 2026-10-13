@@ -77,6 +77,9 @@ export function BottomSheet({
           flexDirection: 'column',
           overflow: 'hidden',
           paddingBottom: 'env(safe-area-inset-bottom)',
+          // #511: no replacement ring needed. The sheet is `tabIndex={-1}`, out of the Tab
+          // order; it only takes focus programmatically so the trap has somewhere to land,
+          // and a ring round the whole sheet would mark nothing. Its controls draw their own.
           outline: 'none',
           ...sheetStyle,
         }}>

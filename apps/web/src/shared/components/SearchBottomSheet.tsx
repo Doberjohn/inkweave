@@ -1,7 +1,7 @@
 import {forwardRef, useEffect, useImperativeHandle, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SHADOWS, SPACING, TRUNCATE} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SPACING, TRUNCATE} from '../constants';
 import {BottomSheet} from './BottomSheet';
 import {LinkButton} from './LinkButton';
 import {useCardDataContext} from '../contexts/CardDataContext';
@@ -179,6 +179,26 @@ function useDelayedModalOpen(openCardModal: (cardId: string) => void): (cardId: 
 // Subcomponents — internal, not exported.
 // =====================================================================
 
+// The header and toolbar searches' recipe: gold border and ring while focused, plain at rest.
+function getSheetInputStyle(focused: boolean): React.CSSProperties {
+  return {
+    width: '100%',
+    height: 40,
+    padding: '0 36px 0 12px',
+    borderRadius: RADIUS.lg,
+    border: `1px solid ${focused ? GOLD_GLOW.activeBorder : COLORS.searchBorder}`,
+    background: COLORS.searchBg,
+    color: COLORS.text,
+    fontSize: `${FONT_SIZES.lg}px`,
+    fontFamily: FONTS.body,
+    boxSizing: 'border-box',
+    // #511: the UA outline is dropped only because the GOLD_GLOW ring below replaces it.
+    outline: 'none',
+    boxShadow: focused ? GOLD_GLOW.focusRing : 'none',
+    transition: `border-color 0.25s ${EASING.snappy}, box-shadow 0.25s ${EASING.snappy}`,
+  };
+}
+
 interface SearchSheetInputProps {
   query: string;
   autocomplete: ReturnType<typeof useAutocomplete>;
@@ -224,20 +244,7 @@ function SearchSheetInput({query, autocomplete, inputRef, onSubmit, onClear}: Se
           {...autocomplete.inputProps}
           onKeyDown={handleKeyDown}
           data-testid="search-sheet-input"
-          style={{
-            width: '100%',
-            height: 40,
-            padding: '0 36px 0 12px',
-            borderRadius: RADIUS.lg,
-            border: `1px solid ${COLORS.primary}`,
-            background: COLORS.searchBg,
-            color: COLORS.text,
-            fontSize: `${FONT_SIZES.lg}px`,
-            fontFamily: FONTS.body,
-            boxSizing: 'border-box',
-            outline: 'none',
-            boxShadow: SHADOWS.glowSm,
-          }}
+          style={getSheetInputStyle(autocomplete.isFocused)}
         />
         {query && <ClearButton onClear={onClear} />}
       </div>
