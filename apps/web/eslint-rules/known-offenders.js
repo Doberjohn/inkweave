@@ -66,7 +66,6 @@ export const KNOWN_OFFENDERS = {
   ],
   // 63 files, 259 violations at seeding
   'no-raw-rgba': [
-    'src/features/cards/components/BrowseToolbar.tsx', // x2
     'src/features/cards/components/CardTile.tsx', // x2
     'src/features/playstyles/PlaystyleFanTile.tsx', // x6
     'src/features/reveals/ProgressRing.tsx', // x1
@@ -174,7 +173,6 @@ export const KNOWN_OFFENDERS = {
   ],
   // 23 files, 54 violations at seeding
   'no-raw-easing': [
-    'src/features/cards/components/BrowseToolbar.tsx', // x1
     'src/features/reveals/WhatsNewSection.tsx', // x1
     'src/features/synergies/components/CommunityEmptyState.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.tsx', // x4

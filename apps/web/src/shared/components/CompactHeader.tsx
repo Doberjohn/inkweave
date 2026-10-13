@@ -288,7 +288,7 @@ function HeaderSearch({cards, query, onChange, onSubmit, onCardSelect, viewport}
         placeholder="Search cards..."
         {...autocomplete.inputProps}
         onKeyDown={handleKeyDown}
-        data-testid="browse-search"
+        data-testid="header-search"
         style={getSearchInputStyle({focused, height: sizing.inputHeight, padding: sizing.inputPadding})}
       />
       <SearchAutocomplete

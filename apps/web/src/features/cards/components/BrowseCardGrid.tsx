@@ -67,6 +67,8 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
   if (displayedCards.length === 0) {
     return (
       <div
+        role="status"
+        aria-live="polite"
         style={{
           textAlign: 'center',
           padding: 64,

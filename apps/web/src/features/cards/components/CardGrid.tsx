@@ -51,6 +51,8 @@ export function CardGrid({
   if (cards.length === 0 && emptyMessage) {
     return (
       <div
+        role="status"
+        aria-live="polite"
         style={{
           textAlign: 'center',
           padding: 64,
