@@ -1,13 +1,22 @@
+import fs from 'node:fs';
 import {describe, it, expect} from 'vitest';
 import {
   applyCardRules,
   buildPreviewToCanonicalMap,
   droppedVariants,
+  featuredEntriesFor,
+  featuredIdsJson,
+  featuresGraduatingSet,
   previewVariantsMissingFrom,
   remapMigrationName,
   remapMigrationSql,
   unmappedPreviewCards,
 } from './graduate-canonical-set.mjs';
+
+const FEATURED_FILE = fs.readFileSync(
+  new URL('../apps/web/src/features/cards/featuredCardIds.json', import.meta.url),
+  'utf8',
+);
 
 const IMAGES = {full: 'full.jpg', thumbnail: 'thumb.jpg', foilMask: 'mask.jpg'};
 
@@ -164,5 +173,43 @@ describe('remap migration (graduation)', () => {
     expect(remapMigrationName('Q1', new Date('2026-10-20T08:05:09.123Z'))).toBe(
       '20261020080509_remap_setq1_preview_ids.sql',
     );
+  });
+});
+
+describe('featured cards (graduation)', () => {
+  const setCards = [
+    {id: 3201, number: 7, color: 'Amber-Emerald', fullName: 'Ariel - Spectacular Singer'},
+    {id: 3224, number: 30, color: 'Amethyst', fullName: 'Merlin - Shapeshifter'},
+    {id: 3255, number: 61, color: 'Emerald', fullName: 'Robin Hood - Archery Contestant'},
+    {id: 3289, number: 95, color: 'Ruby', fullName: 'Mulan - Elite Archer'},
+    {id: 3324, number: 130, color: 'Sapphire', fullName: 'Belle - Inventive Engineer'},
+    {id: 3364, number: 170, color: 'Steel', fullName: 'Hercules - Hero in Training'},
+  ];
+
+  it("asks only when the featured list holds none of the graduating set's preview ids", () => {
+    const previewToCanonical = new Map([['14007', '3201']]);
+
+    expect(featuresGraduatingSet([{id: '14007'}, {id: '2999'}], previewToCanonical)).toBe(true);
+    expect(featuresGraduatingSet([{id: '2999'}, {id: '3022'}], previewToCanonical)).toBe(false);
+  });
+
+  it('turns six collector numbers into entries, in the order given', () => {
+    const {entries} = featuredEntriesFor('30, 7 61,95 130 0170', setCards);
+    const ids = entries.map((entry) => entry.id);
+
+    expect(ids).toEqual(['3224', '3201', '3255', '3289', '3324', '3364']);
+    expect(entries[1]).toEqual({id: '3201', card: 'Amber-Emerald: Ariel - Spectacular Singer'});
+  });
+
+  it("turns down an answer that isn't six different numbers from the set", () => {
+    expect(featuredEntriesFor('7 30 61 95 130', setCards).error).toMatch(/6 different/);
+    expect(featuredEntriesFor('7 7 61 95 130 170', setCards).error).toMatch(/6 different/);
+    expect(featuredEntriesFor('7 30 61 95 130 999', setCards).error).toBe(
+      'this set has no card numbered 999',
+    );
+  });
+
+  it('writes featuredCardIds.json in the format the file is kept in', () => {
+    expect(featuredIdsJson(JSON.parse(FEATURED_FILE))).toBe(FEATURED_FILE);
   });
 });
