@@ -260,7 +260,7 @@ Dark fantasy theme inspired by Lorcana:
 - **Local Windows Vitest runs use 4 workers** (`resolveVitestWorkers` in `apps/web/vite.config.ts`, #720): on a cold disk cache, Vitest's default first wave misses its hardcoded 60 s worker-start limit and those files never run. CI keeps Vitest's default; `VITEST_MAX_WORKERS` overrides the cap.
 - **Pre-push hook** (husky) runs E2E chromium on every `git push`. Do not skip.
 - Full 5-browser E2E suite runs in CI as safety net.
-- Script suites (`pnpm test:scripts`) also run on Windows in CI (`script-tests-windows.yml`) when scripts, hooks or dependencies change, so the worktree remover's Windows-only tests run.
+- Script suites (`pnpm test:scripts`) also run on Windows in CI (`script-tests-windows.yml`) when `scripts/`, `.claude/hooks/`, the root `package.json` or the lockfile change, so the worktree remover's Windows-only tests run.
 - After pushing, always confirm with clear output (e.g., git log showing commit on origin/master).
 - **When pre-push fails on tests unrelated to your change:** (1) confirm it's pre-existing by checking whether the same test was accepted on `origin/HEAD` — if yes, something drifted since then; (2) surface scope options to the user (fix in scope / fix separately / defer / `--no-verify` with explicit approval) before digging into root-cause; (3) do NOT silently investigate the unrelated breakage — that's scope drift. Pause and ask.
 

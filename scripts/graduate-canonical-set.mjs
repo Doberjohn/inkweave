@@ -36,10 +36,11 @@
  *                 the script stops before writing anything.
  *   --featured=<numbers>
  *                 The homepage's six featured cards from this set, by collector number, one
- *                 per ink from Amber to Steel (e.g. --featured=28,51,72,109,140,197). Only
- *                 asked for when the featured list holds none of the set's cards; in a
- *                 terminal the script asks instead, and without one it stops before writing
- *                 anything unless this flag or --keep-featured answers.
+ *                 per ink from Amber to Steel (e.g. --featured=28,51,72,109,140,197); six
+ *                 that leave an ink out are turned down. Only asked for when the featured
+ *                 list holds none of the set's cards; in a terminal the script asks instead,
+ *                 and without one it stops before writing anything unless this flag or
+ *                 --keep-featured answers.
  *   --keep-featured
  *                 Keep today's featured cards.
  *
@@ -71,8 +72,9 @@ const PREVIEW = path.join(ROOT, 'apps/web/public/data/previewCards.json');
 const FEATURED_IDS_JSON = path.join(ROOT, 'apps/web/src/features/cards/featuredCardIds.json');
 const ENV_EXAMPLE = path.join(ROOT, 'apps/web/.env.example');
 const MIGRATIONS = path.join(ROOT, 'supabase/migrations');
-// The homepage's grids hold exactly six featured cards (featured.ts).
+// The homepage's grids hold exactly six featured cards, one per ink (featured.ts).
 const FEATURED_COUNT = 6;
+const INKS = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
 
 /**
  * Committed source that hardcodes REAL card ids from a set: the landing-page
@@ -337,16 +339,28 @@ function readFeaturedEntries() {
   return JSON.parse(fs.readFileSync(FEATURED_IDS_JSON, 'utf8'));
 }
 
-/** True when the featured list holds a graduating-set preview id, which step 7 carries over. */
-export function featuresGraduatingSet(entries, previewToCanonical) {
-  return entries.some((entry) => previewToCanonical.has(String(entry.id)));
+/**
+ * True when the featured list already holds a graduating-set card: a preview id, which step 7
+ * carries over, or one of `baseCards`' canonical ids, which a rerun finds after the first run
+ * emptied previewCards.json.
+ */
+export function featuresGraduatingSet(entries, baseCards, previewToCanonical) {
+  const canonicalIds = new Set(baseCards.map((card) => String(card.id)));
+  return entries.some(({id}) => previewToCanonical.has(String(id)) || canonicalIds.has(String(id)));
 }
 
 const featuredEntry = (card) => ({id: String(card.id), card: `${card.color}: ${card.fullName}`});
 
+/** The inks none of `cards` carries; a dual-ink card ("Amber-Emerald") carries both. */
+function missingInks(cards) {
+  const inks = new Set(cards.flatMap((card) => card.color.split('-')));
+  return INKS.filter((ink) => !inks.has(ink));
+}
+
 /**
  * The featured-list entries for an answer of collector numbers, in the order given, or why
- * the answer can't be used. `baseCards` are the graduating set's cards after rule 1.
+ * the answer can't be used: it names six different cards of the set that carry every ink
+ * between them. `baseCards` are the graduating set's cards after rule 1.
  */
 export function featuredEntriesFor(answer, baseCards) {
   const numbers = answer
@@ -359,7 +373,12 @@ export function featuredEntriesFor(answer, baseCards) {
   const byNumber = new Map(baseCards.map((card) => [String(card.number), card]));
   const unknown = numbers.filter((number) => !byNumber.has(number));
   if (unknown.length > 0) return {error: `this set has no card numbered ${unknown.join(', ')}`};
-  return {entries: numbers.map((number) => featuredEntry(byNumber.get(number)))};
+  const cards = numbers.map((number) => byNumber.get(number));
+  const missing = missingInks(cards);
+  if (missing.length > 0) {
+    return {error: `pick one card of each ink (none is ${missing.join(' or ')})`};
+  }
+  return {entries: cards.map(featuredEntry)};
 }
 
 /** featuredCardIds.json's text: one entry per line, as the file is kept. */
@@ -384,7 +403,7 @@ async function chooseFeaturedEntries(
   previewToCanonical,
 ) {
   const current = readFeaturedEntries();
-  if (keepFeatured || featuresGraduatingSet(current, previewToCanonical)) return null;
+  if (keepFeatured || featuresGraduatingSet(current, baseCards, previewToCanonical)) return null;
   console.log(`  Featured cards:             none from Set ${setCode}. Today's six:`);
   for (const entry of current) console.log(`    ${entry.id}  ${entry.card}`);
   if (featured !== undefined) return entriesFromFlag(featured, baseCards);

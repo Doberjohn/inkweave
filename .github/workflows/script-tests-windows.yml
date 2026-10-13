@@ -38,6 +38,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
+        with:
+          # No step needs git credentials, so the install and tests (the PR's code) run with no
+          # token in git's config.
+          persist-credentials: false
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6

@@ -186,13 +186,18 @@ describe('featured cards (graduation)', () => {
     {id: 3364, number: 170, color: 'Steel', fullName: 'Hercules - Hero in Training'},
   ];
 
-  it("asks only when the featured list holds none of the graduating set's preview ids", () => {
-    const previewToCanonical = new Map([['14007', '3201']]);
+  it("asks only when the featured list holds none of the graduating set's cards", () => {
+    const featured = (...ids) => ids.map((id) => ({id}));
+    const previews = new Map([['14007', '3201']]);
+    // A rerun: the first run emptied previewCards.json and left canonical ids in the list.
+    const rerun = new Map();
 
-    expect(featuresGraduatingSet([{id: '14007'}, {id: '2999'}], previewToCanonical)).toBe(true);
-    expect(featuresGraduatingSet([{id: '2999'}, {id: '3022'}], previewToCanonical)).toBe(false);
+    expect(featuresGraduatingSet(featured('14007', '2999'), setCards, previews)).toBe(true);
+    expect(featuresGraduatingSet(featured('3224', '2999'), setCards, rerun)).toBe(true);
+    expect(featuresGraduatingSet(featured('2999', '3022'), setCards, previews)).toBe(false);
   });
 
+  // Amber comes only from card 7, Amber-Emerald: a dual-ink card counts for both its inks.
   it('turns six collector numbers into entries, in the order given', () => {
     const {entries} = featuredEntriesFor('30, 7 61,95 130 0170', setCards);
     const ids = entries.map((entry) => entry.id);
@@ -206,6 +211,14 @@ describe('featured cards (graduation)', () => {
     expect(featuredEntriesFor('7 7 61 95 130 170', setCards).error).toMatch(/6 different/);
     expect(featuredEntriesFor('7 30 61 95 130 999', setCards).error).toBe(
       'this set has no card numbered 999',
+    );
+  });
+
+  it('turns down six cards that leave an ink out', () => {
+    const secondRuby = {id: 3290, number: 96, color: 'Ruby', fullName: 'Mulan - Reflecting'};
+
+    expect(featuredEntriesFor('7 30 61 95 96 170', [...setCards, secondRuby]).error).toBe(
+      'pick one card of each ink (none is Sapphire)',
     );
   });
 
