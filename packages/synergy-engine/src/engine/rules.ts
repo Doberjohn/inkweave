@@ -685,7 +685,7 @@ function isSpikeSuitWall(card: LorcanaCard): boolean {
  * willpower (Dale - Ready for His Shot's SPIKE SUIT). Matched on the ability text,
  * not a card id, so any future reprint with the same wording joins the rule for free.
  */
-function isSpikeSuitAnchor(card: LorcanaCard): boolean {
+export function isSpikeSuitAnchor(card: LorcanaCard): boolean {
   return /deal damage with their .* instead of their/i.test(normalizeCardText(card));
 }
 
@@ -757,7 +757,7 @@ function findSpikeSuitAnchors(payoff: LorcanaCard, allCards: LorcanaCard[]): Syn
  * reprint with the same wording joins the rule for free. Matches Pocahontas - Guiding the
  * Tribe and the dual-legend Pocahontas & Meeko in the current Core pool.
  */
-function isFreePlayAnchor(card: LorcanaCard): boolean {
+export function isFreePlayAnchor(card: LorcanaCard): boolean {
   return /play a character with cost 1 for free/i.test(normalizeCardText(card));
 }
 

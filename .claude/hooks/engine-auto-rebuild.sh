@@ -4,7 +4,8 @@
 #
 # Reads the tool input JSON from stdin, checks if the edited file
 # is inside packages/synergy-engine/src/, and triggers pnpm build:engine
-# followed by pnpm precompute-synergies so the web app sees fresh data.
+# followed by pnpm precompute-synergies so the web app sees fresh data,
+# then refreshes the coverage numbers in the *_RULE.md docs (#479).
 # Always exits 0 (PostToolUse hooks are informational).
 
 INPUT=$(cat)
@@ -43,4 +44,19 @@ if echo "$FILE_PATH" | grep -q "packages/synergy-engine/src/"; then
   SUMMARY=$(echo "$PRECOMPUTE_OUT" | grep -E "playstyles|groups|matches|cards with")
 
   echo "[engine-auto-rebuild] OK — $SUMMARY"
+
+  # Refresh the rule docs' coverage blocks from the engine just built, so it runs last. It
+  # writes a doc only when one of its generated blocks changed (a count, a card list, a chart),
+  # so a doc open for editing stays as read unless the edit changed its coverage. A failure
+  # writes no doc at all.
+  COVERAGE_OUT=$(node scripts/refresh-rule-coverage.mjs 2>&1)
+  COVERAGE_OK=$?
+
+  if [ $COVERAGE_OK -ne 0 ]; then
+    echo "[engine-auto-rebuild] COVERAGE REFRESH FAILED"
+    echo "$COVERAGE_OUT" | tail -5
+    exit 0
+  fi
+
+  echo "[engine-auto-rebuild] $COVERAGE_OUT"
 fi

@@ -20,7 +20,7 @@ The rule only fires **forward**: the card with "named X" in its text triggers th
 
 ### Example
 
-Selecting **Anna - Trusting Sister** ("While you have a character named Elsa in play, this character gains Evasive") finds:
+When this example was written, selecting **Anna - Trusting Sister** ("While you have a character named Elsa in play, this character gains Evasive") found (some of these cards have since left Core):
 - **Elsa - Snow Queen** (cost 3) — score 7 (strong: keyword grant)
 - **Elsa - Ice Maker** (cost 7) — score 7 (strong: keyword grant)
 - Every other card with base name "Elsa"
@@ -104,7 +104,7 @@ Scans the card's **entire text** (not just the "named" clause) to determine what
 | **Strong** | 7 | Cost reduction (`cost X less`), keyword grants (Rush, Evasive, Bodyguard, Singer) | Anna - Trusting Sister (gains Evasive) |
 | **Moderate** | 6 | Stat boosts (+strength/willpower/lore), Resist, Support, can't be challenged | Elsa - Ice Artisan (+2 strength to named Elsa) |
 | **Minor** | 5 | Everything else | Cards with minor conditional effects |
-| **Hostile** | 4 | A `banish` (not `banished`) within 40 characters of "named", read as the card banishing the named target. A passive "named X was banished" condition is not hostile | None in Core today. Buzz's Arm's "named Buzz Lightyear was banished" reads as its free play (8) |
+| **Hostile** | 4 | A `banish` (not `banished`) within 40 characters of "named", read as the card banishing the named target. A passive "named X was banished" condition is not hostile | Buzz's Arm's "named Buzz Lightyear was banished" reads as its free play (8), not as hostile |
 
 ### Classification Order
 
@@ -128,20 +128,26 @@ The classifier doesn't try to isolate which effect applies to the named companio
 
 Scores are mapped via `NAMED_EFFECT_SCORES` in `cardHelpers.ts`.
 
+<!-- coverage:start tiers -->
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+
 ```chart
 {
   "type": "bar",
-  "title": "Named Companions: Effect Tier Distribution (154 matches)",
+  "title": "Effect tier distribution (158 unique pairs)",
   "data": {
     "labels": ["Hostile (4)", "Minor (5)", "Moderate (6)", "Strong (7)", "Game-winning (8)"],
-    "datasets": [{
-      "label": "Matches",
-      "data": [0, 60, 31, 42, 21],
-      "backgroundColor": ["#f59090", "#60b5f5", "#60b5f5", "#6ee7a0", "#6ee7a0"]
-    }]
+    "datasets": [
+      {
+        "label": "Pairs",
+        "data": [0, 62, 31, 44, 21],
+        "backgroundColor": ["#60b5f5", "#60b5f5", "#60b5f5", "#6ee7a0", "#6ee7a0"]
+      }
+    ]
   }
 }
 ```
+<!-- coverage:end -->
 
 ### Why Not Higher Scores?
 
@@ -151,21 +157,24 @@ Named companion synergies cap at 8 (not 9-10) because they're **one-sided depend
 
 ## Coverage
 
-- 44 cards with named references in the Core pool (1,124 cards: sets 9 to 13 plus the Set 14 previews)
-- 36 unique referenced names
-- 35 of 36 names match a card. The one miss is not a misread: "Belle's City Guide" (from Belle - Reflective Writer) is an item not yet in the data. It will match once revealed, provided its name is stored with the straight apostrophe every card name uses today
-- 42 cards have a Companions group. The other 2 find no target: Belle - Reflective Writer, whose item is unrevealed, and Alien - True Believer, which names the only Alien in the pool, itself
+<!-- coverage:start coverage -->
+- **46 cards** carry a "named" reference, through 37 distinct names.
+- Names no pool card carries: none.
+- Cards with a Companions group: 44. With no target: Alien - True Believer, Leaning Tower of Cheese-a.
 
 ```chart
 {
   "type": "doughnut",
-  "title": "Group Sizes — Cards by Number of Targets",
+  "title": "Cards by number of targets (44 cards)",
   "data": {
-    "labels": ["1-4 targets (57.1%)", "5-9 targets (40.5%)", "10-14 targets (2.4%)", "15+ targets (0.0%)"],
-    "values": [24, 17, 1, 0]
+    "labels": ["1-4 targets (25)", "5-9 targets (18)", "10-14 targets (1)"],
+    "values": [25, 18, 1]
   }
 }
 ```
+<!-- coverage:end -->
+
+A name no pool card carries is usually a card not in the data yet rather than a misread; it matches once the card arrives, provided its name uses the straight apostrophe every card name uses. A card finds no target when the only cards with the name are itself or cards it can't share a deck with.
 
 ---
 
@@ -218,7 +227,7 @@ Note: `bidirectional: true` is still set on matches (for deduplication in the en
 
 ### Why Terminator-Based Regex Instead of a Name Dictionary?
 
-A dictionary approach would require updating a lookup table every time a new set releases new card names. The terminator approach works with any name, including names from future sets, because it stops at game-mechanic words, not at known names. The tradeoff is occasional misreads on unusual card text. #586 fixed the four known ones (see Name Extraction); today 35 of the 36 names extracted match a card, and the one that doesn't is an unrevealed item, not a misread (see Coverage).
+A dictionary approach would require updating a lookup table every time a new set releases new card names. The terminator approach works with any name, including names from future sets, because it stops at game-mechanic words, not at known names. The tradeoff is occasional misreads on unusual card text. #586 fixed the four known ones (see Name Extraction), and Coverage lists any extracted name that matches no card in the pool.
 
 ### Why 40-Character Window for Hostile Detection?
 

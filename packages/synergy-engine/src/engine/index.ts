@@ -7,6 +7,8 @@ export {
   getRulesByPlaystyle,
   getRuleById,
   getCrossSynergyScore,
+  isSpikeSuitAnchor,
+  isFreePlayAnchor,
   LOCATION_ROLE_CHIP_LABELS,
   LOCATION_ROLE_DESCRIPTIONS,
   LOCATION_ROLE_TOOLTIP,

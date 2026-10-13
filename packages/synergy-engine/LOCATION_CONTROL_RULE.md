@@ -37,31 +37,36 @@ Each role has a distinct detection pattern and a distinct score when paired with
 | `search` | **5** | Utility | Searches deck/discard for location cards |
 | `boost` | **5** | Utility | Works with the Boost keyword to power up locations |
 
-```chart
-{
-  "type": "bar",
-  "title": "Matches per Sub-Rule (4,220 total)",
-  "data": {
-    "labels": ["Boost", "At Payoff", "Move", "In-Play Check", "Buff", "Ramp", "Search"],
-    "datasets": [{
-      "label": "Matches",
-      "data": [1112, 688, 586, 546, 458, 418, 412],
-      "backgroundColor": ["#60b5f5", "#6ee7a0", "#60b5f5", "#60b5f5", "#6ee7a0", "#6ee7a0", "#60b5f5"]
-    }]
-  }
-}
-```
+<!-- coverage:start pairs -->
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+
+Merged across the 9 sub-rules, **2,361 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+
+| Score | Pairs | Share |
+|-----|-----|-----|
+| 7 | 968 | 41.0% |
+| 5 | 909 | 38.5% |
+| 3 | 484 | 20.5% |
 
 ```chart
 {
-  "type": "doughnut",
-  "title": "Combined Score Distribution",
+  "type": "bar",
+  "title": "Pairs per sub-rule, before merging",
   "data": {
-    "labels": ["Score 5 — Utility (59.5%)", "Score 7 — High-value (30.5%)", "Score 3 — Cross-synergy (10.0%)"],
-    "values": [2512, 1288, 420]
+    "labels": ["Move to Location", "Location Ramp", "Location Buff", "At Location Payoff", "Location Search", "Location In-Play Check", "Location Play Trigger", "Location Boost", "Location Move Trigger"],
+    "datasets": [
+      {
+        "label": "Pairs",
+        "data": [982, 640, 558, 503, 452, 411, 315, 182, 150],
+        "backgroundColor": ["#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#60b5f5", "#60b5f5", "#6ee7a0", "#60b5f5", "#6ee7a0"]
+      }
+    ]
   }
 }
 ```
+<!-- coverage:end -->
+
+A pair two sub-rules both find counts once in the merged table, so the bars add up to more than its total. Green bars are the high-value sub-rules (7 with a Location), blue the utility ones (5).
 
 ### Role Examples
 
@@ -83,7 +88,7 @@ Gets bonuses when characters are at a location.
 | ![Elsa - Ice Artisan](https://api.lorcana.ravensburger.com/images/en/set11/123_c4e62c081171f16d197d27b8167524141478bdda.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
 | **Elsa - Ice Artisan** | **Elsa's Ice Palace** |
 
-Triggers effects when you **play** a location. Elsa is the only card with this role (she also has at-payoff). Cards that trigger when a character *moves onto* a location are a separate role — see Move Trigger below.
+Triggers effects when you **play** a location. Elsa also has at-payoff. Coverage counts the cards with this role, and names them while there are only a few. Cards that trigger when a character *moves onto* a location are a separate role (see Move Trigger below).
 
 #### Move Trigger (Score 7)
 
@@ -92,7 +97,7 @@ Triggers effects when you **play** a location. Elsa is the only card with this r
 | ![Taffyta Muttonfudge - Sour Speedster](https://api.lorcana.ravensburger.com/images/en/set5/117_b857847abeeb29cef2adae2b4b46033ab5e3886d.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
 | **Taffyta Muttonfudge - Sour Speedster** | **Elsa's Ice Palace** |
 
-Triggers effects when a character **moves onto** a location (Taffyta, Goofy). Split from `play-trigger` so the move event scores as its own combo: the `move` enabler that relocates a character is what fires this payoff, so `move ↔ move-trigger` is a complementary pair.
+Triggers effects when a character **moves onto** a location; Coverage counts the cards. Split from `play-trigger` so the move event scores as its own combo: the `move` enabler that relocates a character is what fires this payoff, so `move ↔ move-trigger` is a complementary pair.
 
 #### Buff (Score 7)
 
@@ -125,7 +130,7 @@ Moves characters to locations for positioning.
 
 The mover may be named by pronoun ("move **him** to one of your locations", Colonel Hathi - On the March; "move **them** to that location", People Gonna Come Here), and it may carry a second character ("move this character and up to 1 of your other characters to that location", Carl Fredricksen - On the Move). "**move** … **to** (one of) your locations" is a move destination, not a buff, so the `buff` pattern's bare `your locations` alternative skips the move's own destination and only that: the "to" before it must be the move's first ("up to N" aside). "Give Resist +1 to your locations", even later in a move's sentence, and "remove damage from one of your locations" are still buffs. Damage-moving clauses ("move 1 damage counter from …") are stripped before the move test instead of dropping the card, so a damage move never reads as a location move, and a real mover keeps the role when "damage" appears elsewhere on the card (The Game's Afoot!, whose reminder text reads "Damage dealt to it is reduced by 2") or when another clause, in the same sentence or another, moves damage.
 
-A move limited to one location classification reaches only locations of that classification (`getLocationMoveClassifications`, `locationRoleReaches`), the same gate as a classified buff. Chief Bogo - Police Commissioner ("move him to a Hyperia City location for free") pairs at 5 with the five Hyperia City locations and with no other location. The classification is read as the Title Case words in "to a/an/one of your … location(s)", case-sensitively, so "to a location" and "to one of your locations" stay global. The classified clause is cut as a sentence break before the "is the rest of the text still a move?" check, so a trailing "… and gain lore equal to that location's ◊" in the same sentence does not turn a classified move global.
+A move limited to one location classification reaches only locations of that classification (`getLocationMoveClassifications`, `locationRoleReaches`), the same gate as a classified buff. Chief Bogo - Police Commissioner ("move him to a Hyperia City location for free") pairs at 5 with the Hyperia City locations (Coverage counts them) and with no other location. The classification is read as the Title Case words in "to a/an/one of your … location(s)", case-sensitively, so "to a location" and "to one of your locations" stay global. The classified clause is cut as a sentence break before the "is the rest of the text still a move?" check, so a trailing "… and gain lore equal to that location's ◊" in the same sentence does not turn a classified move global.
 
 #### In-Play Check (Score 5)
 
@@ -215,7 +220,7 @@ A card can fulfill multiple roles simultaneously:
 **Elsa - Ice Artisan**: "When you play this character and whenever you play a location, you may exert chosen character. While this character is at a location, she gets +3 lore."
 → Roles: `['at-payoff', 'play-trigger']`
 
-The engine generates synergies for each role independently. Deduplication in the playstyle merging layer keeps only the highest-scoring match per card pair.
+The engine generates synergies for each role independently. When two sub-rules match the same card pair, the playstyle group keeps the earlier rule's match (see Creation Order).
 
 ---
 
@@ -283,11 +288,11 @@ Each call produces a complete `SynergyRule` with:
 
 ```typescript
 createLocationRules(): SynergyRule[]
-// Returns 8 rules in order:
-// at-payoff, play-trigger, buff, location-ramp, move, in-play-check, search, boost
+// Returns 9 rules in order:
+// at-payoff, play-trigger, move-trigger, buff, location-ramp, move, in-play-check, search, boost
 ```
 
-Order matters for deduplication — when the engine merges results from all 8 rules into the `location-control` playstyle group, earlier rules' matches take priority for the same card pair.
+Order matters for deduplication — when the engine merges results from all 9 rules into the `location-control` playstyle group, earlier rules' matches take priority for the same card pair.
 
 ---
 
@@ -310,6 +315,30 @@ LOCATION_ROLE_DESCRIPTIONS: Record<LocationRole, (cardName: string, locationName
 ```
 
 These are used in the synergy detail modal and vote screen to explain *why* a card is in the Location Control group. The `locationName` parameter is the name of the Location card in the pair (or "locations" if neither card is a Location).
+
+---
+
+## Coverage
+
+<!-- coverage:start coverage -->
+**45 Location cards** (Ruby 12, Steel 10, Amber 6, Amethyst 6, Emerald 6, Sapphire 5). By classification: Hyperia City 5, Hunny 1.
+
+| Role | Cards | Cards per ink |
+|----|-----|-------------|
+| at-payoff | 7 | Ruby 5, Emerald 2, Steel 1 |
+| play-trigger | 4 (Carl Fredricksen - On the Move, Ellie Fredricksen - Loving Wife, Elsa - Ice Artisan, Fergus - Outpost Builder) | Ruby 2, Emerald 1, Steel 1 |
+| move-trigger | 2 (Arthur - Merlin's Assistant, Goofy - Set for Adventure) | Emerald 1, Steel 1 |
+| buff | 8 | Steel 7, Emerald 1 |
+| location-ramp | 7 | Ruby 5, Steel 2 |
+| move | 14 | Ruby 6, Steel 6, Emerald 2 |
+| in-play-check | 6 | Steel 3, Amber 1, Emerald 1, Ruby 1 |
+| search | 5 (Amazu's Inkcaster, Closet Door Portal, Pocahontas - Steadfast Traveler, The Cold Never Bothered Me, Woody - Leader of the Toys) | Ruby 2, Amber 1, Sapphire 1, Steel 1 |
+| boost | 14 | Amber 3, Emerald 3, Ruby 3, Sapphire 3, Amethyst 2 |
+
+Cards with a role: 52. Cards with more than one: 12.
+<!-- coverage:end -->
+
+Location cards hold no role: they are what every role pairs with.
 
 ---
 
@@ -382,9 +411,9 @@ Move cost is stored on `LorcanaCard` for data completeness but doesn't influence
 
 Cards that banish or remove locations ("banish chosen location") could theoretically synergize with location strategies as removal tools. But in practice, these cards *counter* location strategies — you wouldn't include "banish chosen location" in your own location deck. Excluding them prevents confusing results.
 
-### Why 8 Rules Instead of Pattern-Based Grouping?
+### Why 9 Rules Instead of Pattern-Based Grouping?
 
-An alternative design would use one rule that detects all location patterns and scores based on which pattern matched. The 8-rule approach was chosen because:
+An alternative design would use one rule that detects all location patterns and scores based on which pattern matched. The 9-rule approach was chosen because:
 
 1. Each rule has its own `matches()` function that can be independently tested
 2. Adding a new role means adding one `createLocationRule()` call, not modifying a complex switch statement

@@ -27,7 +27,7 @@ Both directions produce identical scores. The explanation token-swaps so Merida 
 
 ### Example
 
-Selecting **Merida - Formidable Archer** finds (top of the list):
+When this example was written, selecting **Merida - Formidable Archer** found (top of the list; some of these cards have since left Core):
 - **Unfortunate Situation** (4 damage, multi) — score 9
 - **The Mob Song** (3 damage, up to 3 targets) — score 9
 - **Smash** (3 damage) — score 8
@@ -46,7 +46,7 @@ Selecting **Merida - Formidable Archer** finds (top of the list):
 /whenever one of your actions deals? damage to an opposing character/i
 ```
 
-`deals?` covers the singular "deals" printed on Merida and a possible "deal" reprint. Against the current pool the pattern matches exactly one card (Merida, id 2906).
+`deals?` covers the singular "deals" printed on Merida and a possible "deal" reprint. Coverage lists the cards it matches.
 
 ### Payoff Detection
 
@@ -67,7 +67,7 @@ The granted-ability char classes include both curly (“”) and straight (") qu
 
 ### Ink Compatibility
 
-Handled centrally by the engine (`canShareDeck`) before rules run. Merida is single-ink Steel, so she pairs with every single-ink card and any dual-ink card containing Steel. All 19 raw payoffs are Steel-deck-compatible (15 Steel, 3 Emerald reachable via a Steel-Emerald build, 1 Ruby-Steel).
+Handled centrally by the engine (`canShareDeck`) before rules run. Merida is single-ink Steel, so she pairs with every single-ink card and any dual-ink card containing Steel. Coverage counts the raw payoffs by ink and how many of them can share a Steel deck.
 
 ---
 
@@ -108,28 +108,34 @@ score = min(5 + min(actionDamage, 3) + (multiTarget ? 1 : 0), 10)
 
 ## Coverage
 
-Based on the current Core + preview card pool:
-- **1 anchor** (Merida - Formidable Archer)
-- **19 deck-compatible payoffs** (damage-dealing Actions that share a Steel deck)
+<!-- coverage:start coverage -->
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
 
-Payoff ids: 1152, 13101, 13102, 13200, 13203, 1394, 1396, 1398, 1635, 1813, 1867, 2034, 2134, 2136, 2138, 2285, 2386, 2660, 2912.
+- **1 anchor**: Merida - Formidable Archer
+- **15 damage-dealing actions** (Steel 10, Emerald 5), **15** of them deck-compatible payoffs: Air Drop, Chomp!, Fire the Cannons!, He Hurled His Thunderbolt, Ink Explosion, Jousting Match, Look What You've Done, Make the Potion, Piercing Attack, Smash, The Mob Song, The Terror That Flaps in the Night, Three Arrows, To Wither a Flower, Windstorm
+- **15 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`)
 
 ```chart
 {
   "type": "bar",
-  "title": "Merida Archer — Score Distribution (19 payoffs)",
+  "title": "Score distribution (15 unique pairs)",
   "data": {
-    "labels": ["Score 6 — Moderate", "Score 7 — Strong", "Score 8 — Strong", "Score 9 — Strong"],
-    "datasets": [{
-      "label": "Payoffs",
-      "data": [1, 11, 5, 2],
-      "backgroundColor": ["#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0"]
-    }]
+    "labels": ["7", "8", "9"],
+    "datasets": [
+      {
+        "label": "Pairs",
+        "data": [8, 6, 1],
+        "backgroundColor": ["#6ee7a0", "#6ee7a0", "#6ee7a0"]
+      }
+    ]
   }
 }
 ```
 
-Tier split: **0 Weak / 1 Moderate / 18 Strong / 0 Perfect**. The floor of 6 means every match is at least a genuine +2 upgrade; nothing reaches Perfect (a flat +2 is strong, not game-ending on its own).
+Tier split: **0 Weak / 0 Moderate / 15 Strong / 0 Perfect**.
+<!-- coverage:end -->
+
+The floor of 6 means every match is at least a genuine +2 upgrade, and the formula tops out at 9: a flat +2 is strong, not game-ending on its own.
 
 ---
 
