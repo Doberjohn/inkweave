@@ -17,6 +17,7 @@ import {
   selfDiscardMillFeedsRecursion,
   selfDiscardHandTrimFeed,
   triggersOnAnyBanish,
+  banishTriggerFiresOnYourTurn,
   toyAbilityCounts,
   TOY_TRIBAL_ROLES,
   isHunnyTeamBuff,
@@ -276,14 +277,6 @@ function isSacrificeBanishCombo(
 }
 
 /**
- * Score a sacrifice pair (5-baseline convention, mirrors the Discard rule shape):
- *   - self-banish ↔ banish-trigger = 8  (win-condition combo)
- *   - banish-trigger ↔ banish-trigger = 5  (parallel payoff density)
- *   - self-banish ↔ self-banish     = 5  (parallel enablers, still need a payoff)
- *
- * `_card` is the searcher (token {A}); `other` is the partner (token {B}).
- */
-/**
  * Build the 8-score sacrifice banish-combo result. Token-swap so the SELF-BANISH side always
  * reads as the actor: it is {A} when the searcher (card) holds the self-banish role, else {B}.
  */
@@ -309,6 +302,34 @@ function sacrificePayoffsLine(card: LorcanaCard, other: LorcanaCard): string {
   return `${any} benefits when your characters are banished, and ${self} when it is.`;
 }
 
+/**
+ * The 5 line: two payoffs (sacrificePayoffsLine), two self-banish cards, or a self-banish card
+ * next to a payoff it can't set off.
+ */
+function sacrificeBaselineLine(
+  card: LorcanaCard,
+  cardRoles: SacrificeRole[],
+  other: LorcanaCard,
+  otherRoles: SacrificeRole[],
+): string {
+  if (cardRoles.includes('banish-trigger') && otherRoles.includes('banish-trigger')) {
+    return sacrificePayoffsLine(card, other);
+  }
+  if (cardRoles.includes('self-banish') && otherRoles.includes('self-banish')) {
+    return `{A} and {B} both banish your own characters.`;
+  }
+  return sameDeckLine('a Sacrifice');
+}
+
+/**
+ * Score a sacrifice pair (5-baseline convention, mirrors the Discard rule shape):
+ *   - self-banish ↔ banish-trigger = 8  (win-condition combo), unless the trigger fires only on
+ *                                       an opponent's turn, which no self-banish reaches (5)
+ *   - banish-trigger ↔ banish-trigger = 5  (parallel payoff density)
+ *   - self-banish ↔ self-banish     = 5  (parallel enablers, still need a payoff)
+ *
+ * `card` is the searcher (token {A}); `other` is the partner (token {B}).
+ */
 export function scoreSacrificePair(
   card: LorcanaCard,
   cardRoles: SacrificeRole[],
@@ -317,8 +338,9 @@ export function scoreSacrificePair(
 ): {score: number; explanation: string} {
   const cardSelfBanish = cardRoles.includes('self-banish');
   const otherSelfBanish = otherRoles.includes('self-banish');
-  const cardPayoff = cardRoles.includes('banish-trigger');
-  const otherPayoff = otherRoles.includes('banish-trigger');
+  // A payoff counts toward the combo only when it can fire on your own turn.
+  const cardPayoff = cardRoles.includes('banish-trigger') && banishTriggerFiresOnYourTurn(card);
+  const otherPayoff = otherRoles.includes('banish-trigger') && banishTriggerFiresOnYourTurn(other);
 
   const isBanishCombo = isSacrificeBanishCombo(
     cardSelfBanish,
@@ -331,15 +353,10 @@ export function scoreSacrificePair(
     return scoreSacrificeBanishCombo(cardSelfBanish);
   }
 
-  // Same-side pair: density baseline. Two payoffs share the banish axis without
-  // amplifying it; two self-banish cards are parallel enablers that still need a payoff body.
-  const bothPayoff = cardPayoff && otherPayoff;
-  return {
-    score: 5,
-    explanation: bothPayoff
-      ? sacrificePayoffsLine(card, other)
-      : `{A} and {B} both banish your own characters.`,
-  };
+  // No combo: density baseline. Two payoffs share the banish axis without amplifying it; two
+  // self-banish cards are parallel enablers that still need a payoff body; a payoff that fires
+  // only on an opponent's turn just shares the deck with a self-banish card.
+  return {score: 5, explanation: sacrificeBaselineLine(card, cardRoles, other, otherRoles)};
 }
 
 // ============================================

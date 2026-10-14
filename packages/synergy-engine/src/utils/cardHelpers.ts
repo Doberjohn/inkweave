@@ -794,6 +794,20 @@ export type SacrificeRole = 'self-banish' | 'banish-trigger';
 const SACRIFICE_BANISH_TRIGGER_PATTERN =
   /when(?:ever)?\s+(?:this character|(?:one of\s+)?your(?:\s+other)?(?:\s+\w+)?\s+characters?|a\s+character\s+of\s+yours)\s+(?:is|are|gets?)\s+banished/i;
 
+/** Every banish trigger on a card, counted against the opponent's-turn ones below. */
+const SACRIFICE_BANISH_TRIGGERS = new RegExp(SACRIFICE_BANISH_TRIGGER_PATTERN.source, 'gi');
+
+/**
+ * A banish trigger that fires only on an opponent's turn ("During an opponent's turn, when this
+ * character is banished", "During opponents' turns, whenever one of your other characters is
+ * banished"). Every self-banish card banishes on your own turn (an action, a ⟳ ability or an
+ * on-play effect), so it never sets such a trigger off.
+ */
+const SACRIFICE_OPPONENT_TURN_TRIGGERS = new RegExp(
+  `\\bduring (?:an opponent's turn|opponents' turns),\\s*${SACRIFICE_BANISH_TRIGGER_PATTERN.source}`,
+  'gi',
+);
+
 /**
  * The any-character half of SACRIFICE_BANISH_TRIGGER_PATTERN: the payoff fires when any of your
  * characters is banished, not only when the card itself is.
@@ -844,6 +858,16 @@ export function getSacrificeRoles(card: LorcanaCard): SacrificeRole[] {
  */
 export function isSacrificeCard(card: LorcanaCard): boolean {
   return getSacrificeRoles(card).length > 0;
+}
+
+/**
+ * True iff a banish payoff can fire on your own turn, when a self-banish card acts: some banish
+ * trigger on it isn't limited to an opponent's turn (see SACRIFICE_OPPONENT_TURN_TRIGGERS).
+ */
+export function banishTriggerFiresOnYourTurn(card: LorcanaCard): boolean {
+  const text = normalizeCardText(card);
+  const triggers = text.match(SACRIFICE_BANISH_TRIGGERS)?.length ?? 0;
+  return triggers > (text.match(SACRIFICE_OPPONENT_TURN_TRIGGERS)?.length ?? 0);
 }
 
 /**

@@ -37,6 +37,7 @@ export {
   getSacrificeRoles,
   isSacrificeCard,
   triggersOnAnyBanish,
+  banishTriggerFiresOnYourTurn,
   getSelfDiscardRoles,
   isSelfDiscardCard,
   selfDiscardOutletFeed,
