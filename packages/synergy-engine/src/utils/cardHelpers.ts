@@ -2526,8 +2526,9 @@ function tribalPatterns(spec: TribalSpec) {
   const T = `(?:${w})`;
   const p = {
     // Benefit the tribe: team buff, single-target buff, or tribal ready (all strengthen/free your bodies).
+    // The `\b` after the team buff's tribe word keeps "Your Princess characters" from reading as Prince.
     buff: new RegExp(
-      `your (?:other )?${T}[^.]{0,18}characters? (?:get|gain|can|lose)` + // team: "your [other] X characters get/gain/can't-be..." or shed a drawback ("lose the Stone by Day ability", Angela - Night Warrior)
+      `your (?:other )?${T}\\b[^.]{0,18}characters? (?:get|gain|can|lose)` + // team: "your [other] X characters get/gain/can't-be..." or shed a drawback ("lose the Stone by Day ability", Angela - Night Warrior)
         `|chosen ${T} character[^.]{0,12}(?:gets|gains|can|\\+\\d)` + // single-target: "chosen X character gains ..." or a give-form "+N" stat buff (Flash - Records Specialist)
         `|ready (?:your|chosen)[^.]{0,30}${T} characters?`, // tribal ready: "ready your other exerted X characters"
       'i',

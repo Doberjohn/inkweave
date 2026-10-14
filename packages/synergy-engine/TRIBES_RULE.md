@@ -21,7 +21,7 @@ Nine payoff-anchored tribal playstyles generated from **one shared factory** (`m
 A card can hold several roles at once (Philoctetes is `member` + `buff` + `trigger`).
 
 - **member** — `type === 'Character'` AND the card carries one of the spec's `memberClasses`.
-- **buff** — benefits the tribe: a team buff (`your [other] X characters get/gain/can…`, or `… lose` when the tribe sheds a drawback, e.g. Angela - Night Warrior's "lose the Stone by Day ability"), a single-target buff (`chosen X character … gets/gains/can`, or a give-form `+N` stat buff `chosen X character … +\d`), or a tribal ready (`ready your/chosen … X characters`).
+- **buff** — benefits the tribe: a team buff (`your [other] X characters get/gain/can…`, or `… lose` when the tribe sheds a drawback, e.g. Angela - Night Warrior's "lose the Stone by Day ability"; the tribe word must end there, so Beast - Gracious Prince's "Your Princess characters get +1" is a Princess buff and no Prince one), a single-target buff (`chosen X character … gets/gains/can`, or a give-form `+N` stat buff `chosen X character … +\d`), or a tribal ready (`ready your/chosen … X characters`).
 - **trigger** — a repeating trigger tied to the tribe: `whenever you play a X`, or `whenever … your X character(s) … quest/challenge`.
 - **search** — deck dig: `search your deck for a X character` / `reveal a X character`.
 - **in-play-check** — a conditional gated on the tribe: `while/if you have a X in play`, `if a [Y or] X character is in play/chosen`, `if you played/returned a X this turn`, or `if that card is a X character card`. A tribe word inside a name does not count: a `(?<!named (?:[\w'-]+ ){0,2})` guard skips the tribe word when "named" sits up to two words before it. It keeps "while you have an item named Super Suit in play" (Edna Mode - Super Suit Designer) from reading as a Super check, and a future "if you have a character named Mirabel Madrigal in play" from reading as a Madrigal check (Madrigal names end in the tribe word). Widening the guard from one word to two changed no role on any card across all eight tribes.
@@ -55,7 +55,7 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 | Princesses | 74 | 10 | 735 | 552 / 28 / 155 |
 | Heroes | 338 | 13 | 4,285 | 3,561 / 724 / 0 |
 | Supers | 57 | 7 | 374 | 202 / 116 / 56 |
-| Royalty | 84 | 3 | 242 | 239 / 3 / 0 |
+| Royalty | 84 | 2 | 163 | 162 / 1 / 0 |
 | Detectives | 39 | 11 | 392 | 275 / 76 / 41 |
 | Gargoyles | 16 | 4 | 54 | 36 / 18 / 0 |
 | Madrigals | 26 | 3 | 74 | 71 / 3 / 0 |
