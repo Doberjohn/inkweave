@@ -856,11 +856,19 @@ function isFreePlayPayoff(card: LorcanaCard): boolean {
 }
 
 /**
+ * An on-play clause that only costs you (Gantu - Hamsterviel's Accomplice's EASY TARGET: "When you
+ * play this character, choose and discard a card."). The free play fires it too, which adds no
+ * second card's worth of value.
+ */
+const ON_PLAY_DRAWBACK_PATTERN = /\bwhen you play this character, choose and discard a card\./gi;
+
+/**
  * True when a cost-1 character carries a "when you play this character" effect. The free
- * play triggers it too, turning a free body into a free two-for-one.
+ * play triggers it too, turning a free body into a free two-for-one. A drawback doesn't count.
  */
 function hasOnPlayEffect(card: LorcanaCard): boolean {
-  return /when you play this character/i.test(normalizeCardText(card));
+  const text = normalizeCardText(card).replace(ON_PLAY_DRAWBACK_PATTERN, '');
+  return /when you play this character/i.test(text);
 }
 
 /**
