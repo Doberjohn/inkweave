@@ -8,7 +8,10 @@ so membership keys on the `Floodborn` classification tag, never on the Shift key
 
 ## Roles
 - `member` is a Floodborn character (`isCharacter` + `hasClassification('Floodborn')`).
-- `buff` is a static team pump: `/your\b[^.]*\bfloodborn characters?\b[^.]*\b(?:get|gain)\b/i`.
+- `buff` is a static team pump: `/your\b[^.]*\bfloodborn characters?\b[^.,]*\b(?:get|gain)\b/i`.
+  The gap after "characters" stops at a comma, so a trigger's own clause can't reach the
+  player's "gain": Scar - Created by the Vine's "whenever one of your Floodborn characters
+  banishes another character in a challenge, gain 1 lore" is a `trigger` only.
 - `trigger` is a repeating engine: `/\bwhen(?:ever)?\b[^.]*\bfloodborn\b/i` (quest / play / banish).
 
 A card is a **payoff** if `buff` or `trigger` matches (multi-role allowed; The Vine is all three).
@@ -60,7 +63,7 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 | Role | Cards | Cards per ink |
 |----|-----|-------------|
 | member | 62 | Amethyst 12, Emerald 11, Steel 11, Ruby 10, Amber 9, Sapphire 9 |
-| buff | 11 | Steel 4, Amethyst 3, Ruby 2, Amber 1, Sapphire 1 |
+| buff | 10 | Amethyst 3, Steel 3, Ruby 2, Amber 1, Sapphire 1 |
 | trigger | 10 | Steel 4, Amethyst 3, Amber 1, Emerald 1, Sapphire 1 |
 
 Payoffs (`buff` or `trigger`): 19. Floodborn characters with no payoff role: 48. Payoff anchoring skips the 1,128 pairs among them that could share a deck.

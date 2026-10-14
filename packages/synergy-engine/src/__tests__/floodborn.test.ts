@@ -1,4 +1,5 @@
 import {describe, it, expect} from 'vitest';
+import {getFloodbornRoles} from '../utils';
 import {getRuleById} from '../engine';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
@@ -70,5 +71,22 @@ describe('Floodborns: a team buff the member already prints', () => {
       score: 6,
       explanation: "{A}'s Floodborn buff powers up {B}.",
     });
+  });
+});
+
+// A trigger whose payoff is the player's lore gain.
+const scar = createCard({
+  id: 'scar-created-by-the-vine',
+  name: 'Scar',
+  fullName: 'Scar - Created by the Vine',
+  ink: 'Steel',
+  cost: 5,
+  classifications: ['Floodborn', 'Vineling'],
+  text: "VICTOR'S REWARD During your turn, whenever\none of your Floodborn characters banishes\nanother character in a challenge, gain 1 lore.\nFILL THE RANKS During an opponent's turn,\nwhenever one of your Floodborn characters is\nbanished, draw a card.",
+});
+
+describe('Floodborns: a trigger that ends in the player gaining lore', () => {
+  it('reads it as a trigger, not a team buff', () => {
+    expect(getFloodbornRoles(scar)).toEqual(['member', 'trigger']);
   });
 });

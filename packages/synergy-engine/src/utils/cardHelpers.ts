@@ -2201,8 +2201,13 @@ export const isLoreDenialCard = (card: LorcanaCard): boolean => getLoreDenialRol
  */
 export type FloodbornRole = 'member' | 'buff' | 'trigger';
 
-/** Static team buff: "Your [...] Floodborn characters get/gain ...". */
-const FLOODBORN_BUFF_PATTERN = /your\b[^.]*\bfloodborn characters?\b[^.]*\b(?:get|gain)\b/i;
+/**
+ * Static team buff: "Your [...] Floodborn characters get/gain ...". The gap after "characters"
+ * stops at a comma, so a trigger's own clause can't reach the player's "gain": "whenever one of
+ * your Floodborn characters banishes another character in a challenge, gain 1 lore" (Scar -
+ * Created by the Vine) is a trigger, not a buff.
+ */
+const FLOODBORN_BUFF_PATTERN = /your\b[^.]*\bfloodborn characters?\b[^.,]*\b(?:get|gain)\b/i;
 /** Repeating trigger: "whenever [...] Floodborn ..." (quests / is banished / you play another). */
 const FLOODBORN_TRIGGER_PATTERN = /\bwhen(?:ever)?\b[^.]*\bfloodborn\b/i;
 
