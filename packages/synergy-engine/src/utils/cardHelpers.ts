@@ -2605,6 +2605,53 @@ export function getExertRoles(card: LorcanaCard): ExertRole[] {
 }
 
 export const isExertCard = (card: LorcanaCard): boolean => getExertRoles(card).length > 0;
+
+/** A strength cap on an exert effect: "exert chosen opposing character with 2 ¤ or less". */
+const EXERT_STRENGTH_CAP = /\bwith (\d+) ¤ or less\b/i;
+/** A strength floor on a payoff: "banish chosen exerted character with 5 ¤ or more". */
+const EXERT_STRENGTH_FLOOR = /\bwith (\d+) ¤ or more\b/i;
+/** Every payoff shape, to find the sentences that carry a payoff's floor. */
+const EXERT_PAYOFF_PATTERNS = [
+  EXERT_PAYOFF_TRIGGER,
+  EXERT_PAYOFF_BANISH,
+  EXERT_PAYOFF_CANT_READY,
+  EXERT_PAYOFF_OPP_STATE,
+  EXERT_PAYOFF_LORE,
+];
+
+/**
+ * The most ¤ a character the enabler exerts can have: the highest "with N ¤ or less" cap among
+ * its exert effects, or Infinity when one of them has none.
+ */
+function exertStrengthReach(text: string): number {
+  const caps = text
+    .split(SENTENCE_BREAK)
+    .filter((sentence) => isExertEnabler(sentence))
+    .map((sentence) => Number(EXERT_STRENGTH_CAP.exec(sentence)?.[1] ?? Infinity));
+  return caps.length > 0 ? Math.max(...caps) : Infinity;
+}
+
+/**
+ * The least ¤ an exerted character needs for the payoff to act on it: the lowest "with N ¤ or
+ * more" floor among its payoff effects, or 0 when one of them has none.
+ */
+function exertStrengthFloor(text: string): number {
+  const floors = text
+    .split(SENTENCE_BREAK)
+    .filter((sentence) => EXERT_PAYOFF_PATTERNS.some((pattern) => pattern.test(sentence)))
+    .map((sentence) => Number(EXERT_STRENGTH_FLOOR.exec(sentence)?.[1] ?? 0));
+  return floors.length > 0 ? Math.min(...floors) : 0;
+}
+
+/**
+ * True iff the enabler can exert a character the payoff acts on. Minnie Mouse - Sweetheart
+ * Princess banishes an exerted character "with 5 ¤ or more", which an effect that exerts one
+ * "with 2 ¤ or less" (Ghostly Tale) never sets up.
+ */
+export function exertEnablerReachesPayoff(enabler: LorcanaCard, payoff: LorcanaCard): boolean {
+  const reach = exertStrengthReach(normalizeCardText(enabler));
+  return reach >= exertStrengthFloor(normalizeCardText(payoff));
+}
 // ============================================
 // MERIDA ARCHER DETECTION (Merida - Formidable Archer, STEADY AIM)
 // ============================================

@@ -70,6 +70,7 @@ export {
   getExertRoles,
   isExertCard,
   isExertConsumePayoff,
+  exertEnablerReachesPayoff,
   getBounceRoles,
   getBounceTargetGate,
   bounceGateAdmits,

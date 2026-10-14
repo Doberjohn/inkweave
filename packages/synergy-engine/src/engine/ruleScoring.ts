@@ -12,6 +12,7 @@ import {
   isRepeatingTrigger,
   costReductionTargetsOverlap,
   isExertConsumePayoff,
+  exertEnablerReachesPayoff,
   selfDiscardOutletFeed,
   selfDiscardOutletFeedsPile,
   selfDiscardMillFeedsRecursion,
@@ -1319,6 +1320,7 @@ interface ExertPairCtx {
   /** The enabler reads as {A} when the searcher (card) is the enabler side. */
   enablerToken: '{A}' | '{B}';
   payoffToken: '{A}' | '{B}';
+  enablerCard: LorcanaCard;
   /** The payoff card whose text decides the consume/state tier. */
   payoffCard: LorcanaCard;
 }
@@ -1348,7 +1350,28 @@ function buildExertPairCtx(
     bothPayoff: cardPayoff && otherPayoff,
     enablerToken: cardEnabler ? '{A}' : '{B}',
     payoffToken: cardEnabler ? '{B}' : '{A}',
+    enablerCard: cardEnabler ? card : other,
     payoffCard: cardEnabler ? other : card,
+  };
+}
+
+/**
+ * The enabler ↔ payoff pair, scored by the payoff's tier. A payoff that acts only on a character
+ * stronger than any the enabler exerts (exertEnablerReachesPayoff) just shares the deck.
+ */
+function scoreExertCombo(ctx: ExertPairCtx): {score: number; explanation: string} {
+  if (!exertEnablerReachesPayoff(ctx.enablerCard, ctx.payoffCard)) {
+    return {score: 5, explanation: sameDeckLine('an Exert')};
+  }
+  if (isExertConsumePayoff(ctx.payoffCard)) {
+    return {
+      score: 8,
+      explanation: `${ctx.enablerToken} exerts an opposing character, and ${ctx.payoffToken} punishes the exerted body.`,
+    };
+  }
+  return {
+    score: 6,
+    explanation: `${ctx.enablerToken} keeps an opposing character exerted, switching on ${ctx.payoffToken}.`,
   };
 }
 
@@ -1358,6 +1381,7 @@ function buildExertPairCtx(
  *
  *   enabler ↔ consume payoff (exert-trigger / banish-exerted / can't-ready lock) = 8
  *   enabler ↔ state payoff   (opp-exert-state / lore-off-exerted)               = 6
+ *   enabler ↔ a payoff whose ¤ floor sits above the enabler's ¤ cap              = 5
  *   payoff  ↔ payoff                                                             = 5
  *   enabler ↔ enabler                                                            = null
  *
@@ -1374,18 +1398,7 @@ export function scoreExertPair(
   const ctx = buildExertPairCtx(card, cardRoles, other, otherRoles);
 
   // enabler ↔ payoff (cross-role): score by the PAYOFF side's tier.
-  if (ctx.isCombo) {
-    if (isExertConsumePayoff(ctx.payoffCard)) {
-      return {
-        score: 8,
-        explanation: `${ctx.enablerToken} exerts an opposing character, and ${ctx.payoffToken} punishes the exerted body.`,
-      };
-    }
-    return {
-      score: 6,
-      explanation: `${ctx.enablerToken} keeps an opposing character exerted, switching on ${ctx.payoffToken}.`,
-    };
-  }
+  if (ctx.isCombo) return scoreExertCombo(ctx);
 
   // payoff ↔ payoff = 5 (parallel payoff density).
   if (ctx.bothPayoff) {
