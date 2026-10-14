@@ -11,18 +11,18 @@ Detailed documentation for the Seven Dwarfs rule — a tribal playstyle synergy 
 
 ## Overview
 
-The Dwarfs archetype is a tight tribal playstyle: **14 Seven-Dwarfs-classified characters** plus a small set of cards that explicitly reward running them. Like the Toy rule, the tribe is small enough that every match carries signal — unlike the removed Princess/Villain/Hero tribals (`REMOVED_RULES.md`), where uniform strength on hundreds of pairs created noise.
+The Dwarfs archetype is a tight tribal playstyle: **a handful of Seven-Dwarfs-classified characters** plus a small set of cards that explicitly reward running them (Live distribution counts both). Like the Toy rule, the tribe is small enough that every match carries signal — unlike the removed Princess/Villain/Hero tribals (`REMOVED_RULES.md`), where uniform strength on hundreds of pairs created noise.
 
 The rule is modeled directly on the **Toy** rule: a role-driven scoring matrix where each card's roles (not regex at score time) drive the score. Membership is a **subtype lookup** — only the payoff side needs regex.
 
 ### Sub-themes
 
-The pool spans two card generations that share the same rule:
+The rule was written for two card generations:
 
 - **Set 5 / Steel ("Knight" Dwarfs)**: Doc, Grumpy, Happy, Sleepy, Bashful, Sneezy, Dopey — their own abilities pay off *Knight* tribal, but they carry the `Seven Dwarfs` subtype, so they still count toward every density check and are valid recruit/return targets.
 - **Set 12 / Amethyst (Snow White package)**: the real tribal payoffs live here — density draws (Doc - Taking Notes, Sleepy - Deep Sleeper, Don't Be Nervous), a free recruit (Right Behind You), and a bounce-for-value engine (Snow White - Merry as the Morning).
 
-A Steel splash unlocks the set-5 members in an Amethyst payoff shell; mono-Amethyst is the most consistent build.
+Set 5 has sat below the Core rotation floor since the Set 13 graduation, so the Knight Dwarfs only count while a reprint brings them back; Live distribution shows which members and inks the pool holds. While they were in, a Steel splash unlocked them in an Amethyst payoff shell, and mono-Amethyst is the most consistent build.
 
 ---
 
@@ -39,20 +39,22 @@ A card enters the Dwarfs playstyle if **either**:
 1. It has the `Seven Dwarfs` classification (`hasClassification(card, 'Seven Dwarfs')`), OR
 2. Its text matches `DWARFS_PAYOFF_PATTERN = /\bSeven Dwarfs\b/i`
 
-Unlike Toy (which needs the tightened `\bToy characters?\b` to dodge the "WORLD'S GREATEST TOY" ability-name false positive), bare `\bSeven Dwarfs\b` is safe: **no card in the database names an ability "Seven Dwarfs"**, so the broad gate matches exactly the 5 genuine payoff cards with zero false positives.
+Unlike Toy (which needs the tightened `\bToy characters?\b` to dodge the "WORLD'S GREATEST TOY" ability-name false positive), bare `\bSeven Dwarfs\b` is safe: **no card in the database names an ability "Seven Dwarfs"**, so the broad gate matches only genuine payoff cards, with zero false positives.
 
 ### Role types
 
-| Role | Detection | Cards |
-|------|-----------|-------|
-| `member` | `Seven Dwarfs` classification | 14 (7 Steel set 5, 7 Amethyst set 12) |
-| `density` | `/if you have (?:another \| a \| an \| \d+ or more )?Seven Dwarfs/i` — a benefit gated on Dwarfs in play | 4 (Doc - Taking Notes, Sleepy - Deep Sleeper, Right Behind You, Don't Be Nervous) |
-| `recruit` | `/play a Seven Dwarfs character[^.]*for free/i` — cheat a Dwarf into play | 1 (Right Behind You) |
-| `return` | `/return (?:chosen )?(?:a \| an )?Seven Dwarfs character/i` — bounce a Dwarf to hand for value | 1 (Snow White - Merry as the Morning) |
+| Role | Detection |
+|------|-----------|
+| `member` | `Seven Dwarfs` classification |
+| `density` | `/if you have (?:another \| a \| an \| \d+ or more )?Seven Dwarfs/i` — a benefit gated on Dwarfs in play |
+| `recruit` | `/play a Seven Dwarfs character[^.]*for free/i` — cheat a Dwarf into play |
+| `return` | `/return (?:chosen )?(?:a \| an )?Seven Dwarfs character/i` — bounce a Dwarf to hand for value |
+
+Live distribution counts the cards in each role.
 
 ### Excluded by design: the "OR Princess" satisfier
 
-Every Set-12 payoff is worded "Seven Dwarfs **OR Princess** character." That Princess clause is **not** modeled here — it would pull all 91 Princess cards into the rule and conflate it with the separate **Princesses** playstyle. Membership is scoped to the Seven Dwarfs subtype and Seven-Dwarfs text references only. Snow White - Merry is still included — caught by her own "Seven Dwarfs" text reference, not by being a Princess.
+Every Set-12 payoff is worded "Seven Dwarfs **OR Princess** character." That Princess clause is **not** modeled here — it would pull every Princess card into the rule and conflate it with the separate **Princesses** playstyle. Membership is scoped to the Seven Dwarfs subtype and Seven-Dwarfs text references only. Snow White - Merry is still included — caught by her own "Seven Dwarfs" text reference, not by being a Princess.
 
 ---
 
@@ -91,26 +93,32 @@ Right Behind You carries **both** `recruit` and `density`. Against a member it s
 
 ---
 
-## Live distribution (Set 12)
+## Live distribution
 
-17 Seven-Dwarfs-affiliated cards (14 members + 3 non-member payoffs), 136 unique pairs:
+<!-- coverage:start distribution -->
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-| Score | Count | Share | Captures |
-|-------|-------|-------|----------|
-| **5** | 68 | 50% | member ↔ member — same-deck baseline |
-| **7** | 53 | 39% | density ↔ member, density ↔ density, return ↔ member — payoff feeds / compounds |
-| **8** | 15 | 11% | recruit ↔ member, recruit ↔ density — free recruit onto the board |
+**10 Seven-Dwarfs-affiliated cards** (7 members + 3 non-member payoffs). **45 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+
+| Pair shape | Pairs | Score | Share |
+|----------|-----|-----|-----|
+| recruit ↔ member, recruit ↔ density | 8 | 8 | 17.8% |
+| density ↔ density | 3 | 7 | 6.7% |
+| density ↔ member | 15 | 7 | 33.3% |
+| return ↔ member | 7 | 7 | 15.6% |
+| member ↔ member and other same-deck pairs | 12 | 5 | 26.7% |
 
 Role population:
 
-| Role | Cards |
-|------|-------|
-| member | 14 (Doc/Grumpy/Happy/Sleepy/Bashful/Sneezy/Dopey × Steel set 5 + Amethyst set 12) |
-| density | 4 (Doc - Taking Notes, Sleepy - Deep Sleeper, Right Behind You, Don't Be Nervous) |
-| recruit | 1 (Right Behind You) |
-| return | 1 (Snow White - Merry as the Morning) |
+| Role | Cards | Cards per ink |
+|----|-----|-------------|
+| member | 7 (Bashful - Riding the Rails, Doc - Taking Notes, Dopey - Drawn to Music, Grumpy - Soreheaded Miner, Happy - Joyful Adventurer, Sleepy - Deep Sleeper, Sneezy - Startlingly Loud) | Amethyst 7 |
+| density | 4 (Doc - Taking Notes, Don't Be Nervous, Right Behind You, Sleepy - Deep Sleeper) | Amethyst 4 |
+| recruit | 1 (Right Behind You) | Amethyst 1 |
+| return | 1 (Snow White - Merry as the Morning) | Amethyst 1 |
+<!-- coverage:end -->
 
-Predominant ink: Amethyst (all payoffs). The set-5 members are Steel — a Steel splash deepens the member pool, but `canShareDeck` already treats single-ink Steel members and Amethyst payoffs as compatible (a hypothetical Amethyst-Steel deck), so cross-ink member↔payoff pairs are not filtered out.
+`canShareDeck` treats a single-ink member and a single-ink payoff of another ink as compatible (a hypothetical two-ink deck), so cross-ink member↔payoff pairs, like the Steel Knight Dwarfs with the Amethyst payoffs while Set 5 was in the pool, are not filtered out.
 
 ---
 
@@ -150,7 +158,7 @@ The cleanest lever in this rule wasn't regex — it was the Princess boundary. T
 
 ### Set-5 Steel "Knight" Dwarfs are members
 
-They pay off Knight tribal, not Seven Dwarfs, but they carry the subtype and satisfy every density check — so the subtype-as-membership convention (shared with Toy's `hasClassification`) includes them. They are legitimate recruit and return targets.
+They pay off Knight tribal, not Seven Dwarfs, but they carry the subtype and satisfy every density check — so the subtype-as-membership convention (shared with Toy's `hasClassification`) includes them. They are legitimate recruit and return targets whenever a Core set carries them.
 
 ### recruit ↔ density = 8, like recruit ↔ member
 

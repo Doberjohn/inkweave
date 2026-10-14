@@ -33,7 +33,7 @@ Hades banishes Diablo on demand → Diablo's trigger fires → draw a card, plus
 getSacrificeRoles(card: LorcanaCard): SacrificeRole[]  // ['self-banish'] | ['banish-trigger'] | [...both] | []
 ```
 
-A card could in principle be both roles; none currently are (the two roles live on different cards). Detection uses a fast pre-filter (`HAS_BANISH_KEYWORD = /banish/i`) before running the patterns.
+A card could in principle hold both roles; Coverage counts any that do. Detection uses a fast pre-filter (`HAS_BANISH_KEYWORD = /banish/i`) before running the patterns.
 
 ### banish-trigger (payoff)
 
@@ -75,7 +75,7 @@ Matches banishing one of **your own** characters on demand:
 | **Item / location banish triggers** | "when this item is banished" / "whenever an item is banished" are not character sacrifice. Excluded naturally: the banish-trigger pattern requires `this character` / `your ... characters` / `a character of yours`. |
 | **Opponent-side banish triggers** | "whenever an opposing character is banished" rewards the opponent's characters dying (a removal payoff, not your sacrifice). Excluded naturally for the same reason. |
 
-This `banish-trigger` role is a strict **superset** of the Toy rule's tribal-gated `banish-trigger`. A few Sid's Toys (Babyhead, Jingle Joe, Pterodactyl Janie Doll) appear in both, which is the normal cross-playstyle composition the engine already does (Toy composes burn/steal/ramp from other playstyles).
+This `banish-trigger` role is a strict **superset** of the Toy rule's tribal-gated `banish-trigger`. Cards in both (Coverage names them) are the normal cross-playstyle composition the engine already does (Toy composes burn/steal/ramp from other playstyles).
 
 ---
 
@@ -102,16 +102,23 @@ Applies the project-wide **5-baseline convention** and mirrors the Discard rule'
 | banish-trigger ↔ banish-trigger | **5** | Weak | Parallel payoff density: a board of value-on-banish bodies that each trade independently, no compounding |
 | self-banish ↔ self-banish | **5** | Weak | Parallel enablers: two self-banish cards don't compound, you still need a payoff body to banish |
 
-### Live distribution (Set 12)
+### Live distribution
 
-7 self-banish cards + 40 banish-triggers = 47 cards. After the engine's ink-compatibility filter (`canShareDeck`), **846 unique pairs**:
+<!-- coverage:start distribution -->
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-| Pair shape | Count | Score | Share |
-|------------|-------|-------|-------|
-| self-banish ↔ banish-trigger | 243 | 8 | 28.7% |
-| same-side (banish ↔ banish, self-banish ↔ self-banish) | 603 | 5 | 71.3% |
+**389 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
-The score-8 share (~29%) runs higher than Discard's ~10% or Toy's ~16%. That is structural, not a defect: with only 7 enablers each pairing against 40 payoffs, the combo *is* the archetype's identity. (Raw, pre-ink-filter the split is 280 / 801.)
+| Pair shape | Pairs | Score | Share |
+|----------|-----|-----|-----|
+| self-banish ↔ banish-trigger | 151 | 8 | 38.8% |
+| banish-trigger ↔ banish-trigger | 217 | 5 | 55.8% |
+| self-banish ↔ self-banish | 21 | 5 | 5.4% |
+
+Score-8 share next to Discard and Toy: Sacrifice 38.8%, Discard 0.0%, Toy 13.3%.
+<!-- coverage:end -->
+
+The score-8 share runs high next to Discard's and Toy's. That is structural, not a defect: with a handful of enablers each pairing against many payoffs, the combo *is* the archetype's identity.
 
 ### Token-swapped explanation
 
@@ -132,19 +139,25 @@ Same-side pairs use distinct sentences:
 
 ## Coverage
 
-- **7 self-banish cards** (Ruby 5, Emerald 2): Hades - Strong Arm, Glimmer vs Glimmer, Time to Go!, Retro Evolution Device, Lonely Grave, The Claw, Sid Phillips - Toy Surgeon
-- **40 banish-triggers** spanning all 6 inks: Amethyst 10, Amber 10, Ruby 10, Steel 7, Emerald 6, Sapphire 5
+<!-- coverage:start coverage -->
+- **7 self-banish cards** (Ruby 4, Emerald 3): If She Doesn't Scare You, Lonely Grave, Retro Evolution Device, Sid Phillips - Toy Surgeon, The Claw, Time to Go!, Vine Pod
+- **22 banish-triggers** (Ruby 7, Sapphire 5, Amethyst 3, Emerald 3, Steel 3, Amber 2)
+
+Cards with a role: 29. Cards with more than one: 0.
+
+Banish-triggers the Toy rule tags too: 4 (Alien - True Believer, Jingle Joe - Sid's Toy, Pterodactyl Janie Doll - Sid's Toy, Rex - Protective Dinosaur).
 
 ```chart
 {
   "type": "doughnut",
-  "title": "Role Composition (47 cards)",
+  "title": "Role composition (29 cards)",
   "data": {
-    "labels": ["Banish-triggers (40)", "Self-banish cards (7)"],
-    "values": [40, 7]
+    "labels": ["Self-banish cards (7)", "Banish-triggers (22)"],
+    "values": [7, 22]
   }
 }
 ```
+<!-- coverage:end -->
 
 ---
 

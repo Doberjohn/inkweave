@@ -11,9 +11,9 @@ Detailed documentation for the Items rule, the Set 9-13 Inventor / artifacts axi
 
 ## Overview
 
-Item Matters is **payoff-anchored** like Floodborn: the item pool is large (82 items in rotation, all six inks), so items never synergize with each other. A pair scores only when at least one side is an item **payoff**. This is deliberate: scoring every item against every other item would emit thousands of density-floor pairs.
+Item Matters is **payoff-anchored** like Floodborn: the item pool is large and spans every ink (Coverage counts it), so items never synergize with each other. A pair scores only when at least one side is an item **payoff**. This is deliberate: scoring every item against every other item would emit thousands of density-floor pairs.
 
-The archetype is real but **Sapphire-concentrated** and payoff-thin (six of the seven rotation payoffs are Sapphire), which is why the pre-build investigation recommended deferring it. The rule is built anyway; the payoff-anchoring keeps it honest.
+The archetype is real but **Sapphire-concentrated** and payoff-thin (Coverage counts the payoffs per ink), which is why the pre-build investigation recommended deferring it. The rule is built anyway; the payoff-anchoring keeps it honest.
 
 ---
 
@@ -48,7 +48,19 @@ Cards are multi-role: an item that recurs items (Shepherd's Journal) is `member`
 
 ### Live distribution
 
-**1,085 unique pairs** after the ink filter (Core pool, sets 9-13 plus the Set 14 preview): 8 = 159 (15%), 7 = 303 (28%), 6 = 623 (57%). The 6-heavy shape is structural: every item satisfies a static "have an item" check, so `member ↔ payoff-static` dominates, the same pattern as Floodborn's `member ↔ buff`.
+<!-- coverage:start distribution -->
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
+
+**1,287 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+
+| Score | Pairs | Share |
+|-----|-----|-----|
+| 8 | 197 | 15.3% |
+| 7 | 425 | 33.0% |
+| 6 | 665 | 51.7% |
+<!-- coverage:end -->
+
+The 6-heavy shape is structural: every item satisfies a static "have an item" check, so `member ↔ payoff-static` dominates, the same pattern as Floodborn's `member ↔ buff`.
 
 ---
 
@@ -74,6 +86,21 @@ The item engine overlaps existing rules by design, which is why item-engine pair
 - **Ingenious Device** (banish this item, draw) is also Sacrifice's `self-banish`.
 
 Users still see those connections, just under the rule that owns them.
+
+---
+
+## Coverage
+
+<!-- coverage:start coverage -->
+| Role | Cards | Cards per ink |
+|----|-----|-------------|
+| member | 98 | Sapphire 25, Emerald 19, Amethyst 16, Steel 15, Amber 12, Ruby 11 |
+| item-engine | 18 | Sapphire 15, Emerald 3 |
+| payoff-trigger | 4 (Alpha - Pack Leader, Ariel - Collector of Oddities, Charles Muntz - Obsessive Explorer, Norton Nimnul - Misanthropic Genius) | Sapphire 4 |
+| payoff-static | 8 | Sapphire 6, Emerald 2 |
+
+Payoffs (`payoff-trigger` or `payoff-static`): 11 (Sapphire 9, Emerald 2). Payoff anchoring skips the 6,216 pairs among the other tagged cards (members and item engines) that could share a deck.
+<!-- coverage:end -->
 
 ---
 

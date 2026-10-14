@@ -15,7 +15,7 @@ The Exert archetype is a two-role strategy: **exert-enablers** are effects that 
 
 Like Sacrifice and Discard, this is an asymmetric-role playstyle: the enabler *creates* the exerted body that the payoff *exploits*. It is **payoff-anchored** — two exert-enablers do not synergize with each other (parallel soft-removal that never compounds), so the rule emits a pair only when at least one side is a payoff. A deck of all enablers just taps bodies; the payoffs turn that tap into a kill or a hard lock.
 
-The archetype is mono-**Amethyst** in practice (16 of 21 enablers, 10 of 12 payoffs), so a real deck lives in an Amethyst pairing.
+The archetype is mono-**Amethyst** in practice (Coverage counts each role's inks), so a real deck lives in an Amethyst pairing.
 
 ### Example
 
@@ -34,7 +34,7 @@ Petrify exerts an opposing body → Te Kā's trigger fires → the body is banis
 getExertRoles(card: LorcanaCard): ExertRole[]  // ['exert-enabler'] | ['exert-payoff'] | [...both] | []
 ```
 
-Detection uses a fast pre-filter (`HAS_EXERT = /exert/i`) before running the patterns. A card can in principle hold both roles; none in the live database do (the two roles live on different cards).
+Detection uses a fast pre-filter (`HAS_EXERT = /exert/i`) before running the patterns. A card can in principle hold both roles; Coverage counts any that do.
 
 ### exert-enabler (an effect that exerts an OPPOSING character)
 
@@ -88,7 +88,7 @@ Card text reaches these patterns through `normalizeCardText`, which straightens 
 | Excluded | Pattern / reason |
 |----------|------------------|
 | **Exert-as-COST** | The `⟳`/`↻` glyph and dash-clause activation costs (`⟳, 2 ⬡ — ...`) are how a card pays to use an ability, not an effect that exerts the opponent. These are excluded *by construction*: enabler detection requires an `exert <opposing>` **effect**, so an ability whose only exert is a `⟳` cost never qualifies. (A card like Elsa - Snow Queen, whose `⟳` activation *produces* an opposing-exert effect, is correctly a genuine enabler.) |
-| **Inkwell ramp** | The ~61 "into your inkwell facedown **and exerted**" ramp cards put YOUR (or the opponent's) card into an inkwell exerted — a ramp/tempo mechanic, not opposing-body removal. Excluded because they never match the `exert <opposing> character` effect shape, and none carry a payoff pattern. Verified: 0 of the 61 gain any exert role. |
+| **Inkwell ramp** | The "into your inkwell facedown **and exerted**" ramp cards put YOUR (or the opponent's) card into an inkwell exerted — a ramp/tempo mechanic, not opposing-body removal. Excluded because they never match the `exert <opposing> character` effect shape, and none carry a payoff pattern. Coverage counts them and checks that none gains an exert role. |
 | **Self-exert-state** | `while this character is exerted` / `if this character is exerted` (Genie - Main Attraction, Hamish/Hubert/Harris) powers a payoff off THIS body being exerted, an engine on your own side, not a consumer of an opponent's exerted body. The `SELF_EXERT_STATE` gate drops the payoff role for these. |
 | **Exert-an-item effects** | "exert chosen opposing **item**" (HeiHei - Not-So-Tricky Chicken, Ice Spikes' second ability) taps an item, not a character. The `EXERT_ITEM_ONLY` gate excludes them from both roles. |
 
@@ -122,33 +122,43 @@ The same-side payoff pair uses a distinct sentence: `"Both reward opposing chara
 
 ### Live distribution
 
-**21 exert-enablers + 12 exert-payoffs = 33 cards.** After the engine's ink-compatibility filter (`canShareDeck`), **313 unique pairs**:
+<!-- coverage:start distribution -->
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-| Pair shape | Count | Score | Share |
-|------------|-------|-------|-------|
-| enabler ↔ consume payoff | 164 | 8 | 52% |
-| enabler ↔ state payoff | 84 | 6 | 27% |
-| payoff ↔ payoff | 65 | 5 | 21% |
+**126 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
-The score-8 share (~52%) runs high because the consume payoffs (8 of 12) are the archetype's identity and every enabler pairs against them. `enabler ↔ enabler` pairs are dropped entirely (payoff-anchored).
+| Pair shape | Pairs | Score | Share |
+|----------|-----|-----|-----|
+| enabler ↔ consume payoff | 75 | 8 | 59.5% |
+| enabler ↔ state payoff | 30 | 6 | 23.8% |
+| payoff ↔ payoff | 21 | 5 | 16.7% |
+<!-- coverage:end -->
+
+The score-8 share runs high because the consume payoffs are the archetype's identity and every enabler pairs against them. `enabler ↔ enabler` pairs are dropped entirely (payoff-anchored).
 
 ---
 
 ## Coverage
 
-- **21 exert-enablers** (Amethyst 16, Amethyst-Steel 2, Ruby 3): Petrify, Elsa - The Fifth Spirit, Elsa - Snow Queen, Elsa - Fierce Protector, Peter Pan - Shadow Catcher, Madam Mim - Cheating Spellcaster, Isis Vanderchill, Ursula - Voice Stealer, Last-Ditch Effort, Restoring the Crown, Demona, Can't Hold It Back Anymore, Anna - Mystical Majesty, The Sultan - Royal Apparition, Alma Madrigal (x2), Maleficent - Imperious Traveler, Frozone - Super Cool, Tinker Bell - Temperamental Fairy, Ghostly Tale, Scream Canister
-- **12 exert-payoffs** (Amethyst 10, Amethyst-Ruby 1, Amber 1): **consume (8)** Te Kā, Grimorum Arcanorum, Minnie Mouse - Sweetheart Princess, I'm Stuck!, King of Hearts, Pot of Honey, Lose the Way, Ming Lee - Overprotective Parent; **state (4)** Honeymaren, Dolores Madrigal, Olaf - Happy Passenger, Pocahontas - Following the Wind
+<!-- coverage:start coverage -->
+- **15 exert-enablers** (Amethyst 12, Ruby 3): Alma Madrigal - Keeper of the Flame, Alma Madrigal - Leading the Way, Can't Hold It Back Anymore, Demona - Scourge of the Wyvern Clan, Elsa - Snow Queen, Frozone - Super Cool, Ghostly Tale, Isis Vanderchill - Ice Queen of St. Canard, Last-Ditch Effort, Maleficent - Imperious Traveler, Peter Pan's Shadow - Elusive Prankster, Petrify, Scream Canister, Tinker Bell - Temperamental Fairy, Ursula - Voice Stealer
+- **7 exert-payoffs** (Amethyst 6, Amber 1): **consume (5)** Grimorum Arcanorum, I'm Stuck!, Ming Lee - Overprotective Parent, Minnie Mouse - Sweetheart Princess, Pot of Honey; **state (2)** Dolores Madrigal - Easy Listener, Pocahontas - Following the Wind
+
+Cards with a role: 22. Cards with more than one: 0.
+
+Cards that put a card into an inkwell "facedown and exerted": 48, of which 0 gain an exert role.
 
 ```chart
 {
   "type": "doughnut",
-  "title": "Role Composition (33 cards)",
+  "title": "Role composition (22 cards)",
   "data": {
-    "labels": ["Enablers (21)", "Consume payoffs (8)", "State payoffs (4)"],
-    "values": [21, 8, 4]
+    "labels": ["Enablers (15)", "Consume payoffs (5)", "State payoffs (2)"],
+    "values": [15, 5, 2]
   }
 }
 ```
+<!-- coverage:end -->
 
 ---
 

@@ -63,60 +63,66 @@ The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral
 | burn ↔ steal | `{burnCard} pushes the opponent down while {stealCard} pulls you up — pressing both ends of the lore race` |
 | steal ↔ steal | `Both {a} and {b} steal lore — every trigger swings the race in your favor twice` |
 
-## Coverage (Set 12)
+## Coverage
+
+<!-- coverage:start coverage -->
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
 | Metric | Value |
-|--------|-------|
-| Burn cards | 14 |
-| Steal cards | 10 |
-| Total cards | 24 |
-| Total unique pairs | 276 |
-| Score range | 5–7 |
+|------|-----|
+| Burn cards | 12 |
+| Steal cards | 6 |
+| Total cards | 18 |
+| Total unique pairs | 153 |
+| Score range | 5-7 |
 | Playstyle ID | `lore-denial` |
+<!-- coverage:end -->
 
 ### Pair distribution
 
-| Pair shape | Count | Score | Share |
-|------------|-------|-------|-------|
-| burn ↔ burn | 91 | 5 | 33% |
-| burn ↔ steal | 140 | 6 | 51% |
-| steal ↔ steal | 45 | 7 | 16% |
+<!-- coverage:start distribution -->
+**153 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
-The 51% mid-tier is structurally meaningful: most decks running lore denial mix burn and steal naturally. Pure-steal builds (16% of pairs) are rare but mechanically the strongest density target. Pure-burn (33%) reads as the deck's broad floor.
+| Pair shape | Pairs | Score | Share |
+|----------|-----|-----|-----|
+| burn ↔ burn | 66 | 5 | 43.1% |
+| burn ↔ steal | 72 | 6 | 47.1% |
+| steal ↔ steal | 15 | 7 | 9.8% |
+<!-- coverage:end -->
 
-### Burn cards (14)
+The burn ↔ steal mid-tier is structurally meaningful: most decks running lore denial mix burn and steal naturally. Pure-steal pairs are mechanically the strongest density target. Pure-burn pairs read as the deck's broad floor.
 
+### Burn cards
+
+<!-- coverage:start burn-cards -->
 | Card | Set |
-|------|-----|
-| Brom Bones - Burly Bully | Shimmering Skies |
-| Donald Duck - Daisy's Date | Into the Inklands |
-| Donald Duck - Pie Slinger | Into the Inklands |
-| Jasmine - Rebellious Princess | Ursula's Return |
-| Lyle Tiberius Rourke - Adventurer for Hire | Archazia's Island |
-| Nani's Payback | Azurite Sea |
-| Olaf - Snowman of Action | Azurite Sea |
-| Pizza Planet - Spaceport | Azurite Sea |
-| Rapunzel - Letting Down Her Hair | Shimmering Skies |
-| Scrooge McDuck - Ebenezer Scrooge | Azurite Sea |
-| Stabbington Brother - With a Patch | Ursula's Return |
-| Taffyta Muttonfudge - Crowd Favorite | Into the Inklands |
-| The Matchmaker - Unforgiving Expert | Ursula's Return |
-| The Witch - Wily Woodcarver | Shimmering Skies |
+|----|---|
+| Brom Bones - Burly Bully | Whispers in the Well |
+| Grandma Wu - Fierce Red Panda | Attack of the Vine! |
+| Lester the Possum - Park Mascot | Hyperia City |
+| Lyle Tiberius Rourke - Adventurer for Hire | The Wilds Unknown |
+| Nani's Payback | Winterspell |
+| Olaf - Snowman of Action | Winterspell |
+| Pizza Planet - Spaceport | The Wilds Unknown |
+| Rapunzel - Letting Down Her Hair | Fabled |
+| Red Alert | Attack of the Vine! |
+| Scrooge McDuck - Ebenezer Scrooge | Winterspell |
+| The Witch - Wily Woodcarver | The Wilds Unknown |
+| Yzma - Choosy Customer | Attack of the Vine! |
+<!-- coverage:end -->
 
-### Steal cards (10)
+### Steal cards
 
+<!-- coverage:start steal-cards -->
 | Card | Set |
-|------|-----|
-| A Pirate's Life | Shimmering Skies |
-| Beast - Aggressive Lord | Shimmering Skies |
-| Flotilla - Coconut Armada | Ursula's Return |
-| Gloyd Orangeboar - Fierce Competitor | Archazia's Island |
-| Hero Work | Azurite Sea |
-| LeFou - Cake Thief | Archazia's Island |
-| Negaduck - Public Enemy Number One | Azurite Sea |
-| Pterodactyl Janie Doll - Sid's Toy | Azurite Sea |
-| The Sword Released | Into the Inklands |
-| Thievery | Ursula's Return |
+|----|---|
+| A Pirate's Life | Fabled |
+| Beast - Aggressive Lord | Whispers in the Well |
+| Hero Work | The Wilds Unknown |
+| Negaduck - Public Enemy Number One | Winterspell |
+| Prophetic Vision | Attack of the Vine! |
+| Pterodactyl Janie Doll - Sid's Toy | The Wilds Unknown |
+<!-- coverage:end -->
 
 ## Test coverage
 

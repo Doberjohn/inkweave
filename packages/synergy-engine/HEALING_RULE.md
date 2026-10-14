@@ -15,7 +15,7 @@ The Heal Matters archetype is a two-role, enabler-to-payoff strategy: **healers*
 
 Like Sacrifice and Discard, this is an asymmetric-role playstyle: the healers *create* the removal event that the payoffs *exploit*. A deck of all payoffs has nothing to trigger them; a deck of all healers has nothing to pay off. The combo is the rule, so it is **payoff-anchored** — two plain healers never synergize with each other.
 
-**Why key healing on the mechanic, not Madrigals?** Encanto is the flavor home of healing, but only ~12% of healers (7 of 58) carry the Madrigal classification, and every payoff is worded generically ("remove damage from one of your characters"). So this rule keys on the mechanic, not a subtype, the same reason Sacrifice keys on "of yours" text rather than a classification. The family itself is now its own playstyle, the `madrigal` tribe ([TRIBES_RULE.md](TRIBES_RULE.md)), keyed on its "another Madrigal in play" payoffs. The two complement each other: Julieta's Arepas sits in both.
+**Why key healing on the mechanic, not Madrigals?** Encanto is the flavor home of healing, but only a minority of healers carry the Madrigal classification (Coverage counts them), and every payoff is worded generically ("remove damage from one of your characters"). So this rule keys on the mechanic, not a subtype, the same reason Sacrifice keys on "of yours" text rather than a classification. The family itself is now its own playstyle, the `madrigal` tribe ([TRIBES_RULE.md](TRIBES_RULE.md)), keyed on its "another Madrigal in play" payoffs. The two complement each other: Julieta's Arepas sits in both.
 
 ### Example
 
@@ -69,7 +69,7 @@ Matches a benefit gated on the removal event:
 | Excluded | Pattern / reason |
 |----------|------------------|
 | **Move-damage** | "move ... damage from X to Y" relocates damage, the opposite mechanic. The pure-mover guard (`/\bmove\b[^.]*\bdamage\b/i`) drops a card ONLY when it has neither a remove clause nor a payoff, so a dual card that both moves and separately removes damage stays a healer. |
-| **Steel "no damage / undamaged" statics** | "deals no damage" / "while undamaged" is a different axis; none match the remove/payoff patterns, so they are excluded naturally (0 wrongly tagged). |
+| **Steel "no damage / undamaged" statics** | "deals no damage" / "while undamaged" is a different axis; none match the remove/payoff patterns, so they are excluded naturally. |
 
 ---
 
@@ -99,25 +99,31 @@ Applies the project-wide **5-baseline convention**. Because the rule is payoff-a
 
 ### Live distribution
 
-58 healers + 14 heal-payoffs (7 pure payoff + 7 dual-role healer+payoff) = 65 distinct participating cards. After the engine's ink-compatibility filter (`canShareDeck`), **755 unique pairs**:
+<!-- coverage:start distribution -->
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-| Pair shape | Count | Score | Share |
-|------------|-------|-------|-------|
-| healer <-> heal-payoff | 666 | 8 | 88% |
-| heal-payoff <-> heal-payoff | 89 | 7 | 12% |
+33 healers + 13 heal-payoffs (7 pure payoff + 6 dual-role healer+payoff) = 40 distinct participating cards. **423 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
-1,142 healer <-> healer pairs are dropped (payoff-anchored). The high 8-share is structural: healers vastly outnumber payoffs (58 vs 14), so most emitted pairs are a healer feeding a payoff, which *is* the archetype's identity.
+| Pair shape | Pairs | Score | Share |
+|----------|-----|-----|-----|
+| healer <-> heal-payoff | 347 | 8 | 82.0% |
+| heal-payoff <-> heal-payoff | 76 | 7 | 18.0% |
+
+351 healer <-> healer pairs are dropped (payoff-anchored).
 
 ```chart
 {
   "type": "doughnut",
-  "title": "Role Composition (65 cards)",
+  "title": "Role composition (40 cards)",
   "data": {
-    "labels": ["Healers only (51)", "Payoffs only (7)", "Both roles (7)"],
-    "values": [51, 7, 7]
+    "labels": ["Healers only (27)", "Payoffs only (7)", "Both roles (6)"],
+    "values": [27, 7, 6]
   }
 }
 ```
+<!-- coverage:end -->
+
+The high 8-share is structural: healers far outnumber payoffs, so most emitted pairs are a healer feeding a payoff, which *is* the archetype's identity.
 
 ### Token-swapped explanation
 
@@ -135,9 +141,13 @@ The payoff-payoff pair uses a distinct sentence: `"Both reward removing damage: 
 
 ## Coverage
 
-- **58 healers**, Amber/Sapphire-heavy: Amber 27, Sapphire 21, Ruby 4, plus dual-inks (Amber-Steel 2, Amber-Ruby 1, Amber-Sapphire 1, Emerald-Sapphire 1, Sapphire-Steel 1).
-- **14 heal-payoffs** (7 pure payoff, 7 dual-role): Amber, Sapphire, Amethyst, and the Amber-Sapphire Set-13 Madrigal Family card.
-- 7 of 58 healers are Madrigal (12%) — confirms this is a mechanic axis, not a tribe.
+<!-- coverage:start coverage -->
+- **33 healers** (Amber 15, Sapphire 14, Ruby 4)
+- **13 heal-payoffs** (Amber 7, Sapphire 5, Amethyst 2); 7 pure payoff, 6 dual-role
+- Healers with the Madrigal classification: 7 of 33 (21.2%)
+<!-- coverage:end -->
+
+Healing is Amber/Sapphire-heavy, and the Madrigal minority among healers confirms this is a mechanic axis, not a tribe.
 
 ---
 
@@ -175,11 +185,11 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 
 ### Why payoff-anchored?
 
-Healers vastly outnumber payoffs (58 vs 14). If two healers paired at a density baseline of 5, the rule would emit ~1,600 low-signal healer-healer pairs that tag half the Amber/Sapphire pool. Anchoring on the payoff (like Floodborn and Items) keeps the rule to the mechanical win: a healer feeding a payoff.
+Healers far outnumber payoffs (Coverage has the counts). If two healers paired at a density baseline of 5, the rule would emit a flood of low-signal healer-healer pairs (Live distribution counts the pairs it drops) that tag much of the Amber/Sapphire pool. Anchoring on the payoff (like Floodborn and Items) keeps the rule to the mechanical win: a healer feeding a payoff.
 
 ### Why a mechanic, not a Madrigal tribe?
 
-Only 12% of healers are Madrigal, and every payoff reads "remove damage from one of your characters" with no classification gate. Keying on the mechanic captures the whole archetype (Baymax, Aurora, Grand Pabbie, the Chromicons) that a Madrigal tribe would miss.
+Only a minority of healers are Madrigal, and every payoff reads "remove damage from one of your characters" with no classification gate. Keying on the mechanic captures the whole archetype (Baymax, Aurora, Grand Pabbie, the Chromicons) that a Madrigal tribe would miss.
 
 ### Why the scoped move-damage guard?
 

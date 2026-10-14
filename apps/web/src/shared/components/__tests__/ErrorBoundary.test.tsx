@@ -1,6 +1,7 @@
-import {describe, it, expect, vi, beforeEach} from 'vitest';
+import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {render, screen, fireEvent, waitFor} from '@testing-library/react';
 import {ErrorBoundary} from '../ErrorBoundary';
+import {PageLoadError} from '../../lib/lazyWithRetry';
 import {loadSentry} from '../../lib/sentry';
 
 const captureException = vi.hoisted(() => vi.fn());
@@ -16,10 +17,21 @@ function ThrowError({shouldThrow}: {shouldThrow: boolean}) {
   return <div>Content rendered successfully</div>;
 }
 
+// A lazy page whose code couldn't download, even after a reload.
+function FailToLoad(): never {
+  throw new PageLoadError(new Error('chunk 404'));
+}
+
+const realLocation = window.location;
+
 describe('ErrorBoundary', () => {
   // Suppress console.error for cleaner test output
   beforeEach(() => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, 'location', {configurable: true, value: realLocation});
   });
 
   it('should render children when there is no error', () => {
@@ -90,5 +102,23 @@ describe('ErrorBoundary', () => {
 
     // Error should be caught again
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+  });
+
+  it('offers a reload instead of Try Again when a page could not load', () => {
+    const reload = vi.fn();
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {...realLocation, reload},
+    });
+    render(
+      <ErrorBoundary>
+        <FailToLoad />
+      </ErrorBoundary>,
+    );
+
+    expect(screen.getByText("This page couldn't load")).toBeInTheDocument();
+    expect(screen.queryByText('Something went wrong')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: 'Reload'}));
+    expect(reload).toHaveBeenCalledTimes(1);
   });
 });

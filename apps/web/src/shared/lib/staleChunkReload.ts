@@ -45,15 +45,24 @@ function canReload(now: number): boolean {
   return now - last >= RELOAD_WINDOW_MS;
 }
 
+/** Set once this page has asked to reload; it is on its way out from then on. */
+let reloadRequested = false;
+
 /**
  * Reload onto the fresh deploy to recover from a stale chunk reference, guarded
  * against infinite reload loops by a time window (see `canReload`).
+ *
+ * Returns whether this page is reloading, through this call or an earlier one.
+ * False means the guard refused on a page that never asked: it is the reloaded
+ * page, and it still can't load the chunk.
  */
-export function reloadForStaleChunk(): void {
+export function reloadForStaleChunk(): boolean {
   const now = Date.now();
-  if (!canReload(now)) return;
+  if (!canReload(now)) return reloadRequested;
   // Persist *before* reloading — the reload tears down the page, so this write
   // must win the race against window.location.reload().
   sessionStorage.setItem(GUARD_KEY, String(now));
+  reloadRequested = true;
   window.location.reload();
+  return true;
 }

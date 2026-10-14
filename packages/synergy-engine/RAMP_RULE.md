@@ -33,16 +33,16 @@ Detection uses the same pattern as the Discard rule: a `getRampRoles(card)` func
 
 All regex matching operates on **normalized text** (`card.text.replace(/\n/g, ' ')`) to handle multi-line card text.
 
-### Role 1: Inkwell Ramp (34 cards, ~80% Sapphire)
+### Role 1: Inkwell Ramp
 
-Cards that put extra cards into YOUR inkwell. Two sub-types:
+Cards that put extra cards into YOUR inkwell, Sapphire's identity mechanic. Two sub-types (Coverage counts each):
 
-**Deck Ramp (20 cards)** — Top of deck → inkwell. Free mana with no card cost.
+**Deck Ramp** — Top of deck → inkwell. Free mana with no card cost.
 - Pattern: `put the top card of your deck into your inkwell`
 - Pattern: `look at the top X cards...put...into your inkwell`
 - Pattern: `put up to X cards from your discard into your inkwell`
 
-**Self-Sacrifice (14 cards)** — Hand/board card → inkwell. Trades a card for speed.
+**Self-Sacrifice** — Hand/board card → inkwell. Trades a card for speed.
 - Pattern: `put a card from your hand into your inkwell`
 - Pattern: `put chosen character of yours into your inkwell`
 - Pattern: `put this card into your inkwell`
@@ -56,24 +56,24 @@ Cards that put stuff into the **opponent's** inkwell are **removal**, not ramp. 
 
 Examples: Hide Away, Wipe Out!, Let It Go, Hades - Infernal Schemer.
 
-### Role 2: Inkwell Triggers (28 cards, even color spread)
+### Role 2: Inkwell Triggers
 
 Cards with "whenever a card is put into your inkwell" effects. Two timing variants:
 
-**Repeating (20 cards)** — Fire every time a card enters your inkwell.
+**Repeating** — Fire every time a card enters your inkwell.
 - Pattern: `whenever a card is put into your inkwell` (without "once" qualifier)
-- Includes the **Coil cycle** (6 items, one per ink color) — a designed-in archetype signal.
+- Included the **Coil cycle** (one item per ink color, a designed-in archetype signal) until its set rotated out of Core.
 
-**Once-per-turn (8 cards)** — Fire only on the first ink event per turn.
+**Once-per-turn** — Fire only on the first ink event per turn.
 - Pattern: `once during your turn, whenever a card is put into your inkwell`
 
 **Variant wordings** (also detected):
 - `whenever you put a card into your inkwell` (Fairy Godmother's Wand)
 - `when you put a card into your inkwell` (Chicha)
 
-### Role 3: Cost Reduction Grants (18 cards, ~50% Amber)
+### Role 3: Cost Reduction Grants
 
-Cards that reduce the cost of OTHER cards you play.
+Cards that reduce the cost of OTHER cards you play, leaning Amber (its support identity).
 
 **Detection**: `you pay X ⬡ less` — but NOT `you pay X ⬡ less to play this` (which is self-discount, excluded).
 
@@ -135,19 +135,27 @@ if ramp ↔ cost-reduction: 5
 if trigger ↔ cost-reduction: 5
 ```
 
-### Live distribution (Set 12)
+### Live distribution
 
-90 total ramp cards across 3,507 unique pairs:
+<!-- coverage:start distribution -->
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-| Score | Pairs | Share | Captures |
-|-------|-------|-------|----------|
-| **5** | 2,598 | 74.1% | Same-axis density (Ramp↔Ramp, Trigger↔Trigger, Ramp↔CR, Trigger↔CR) |
-| **6** | 99 | 2.8% | Cost-reduction with overlapping target types |
-| **7** | 115 | 3.3% | Self-sac ramp + once-per-turn trigger |
-| **8** | 476 | 13.6% | Deck ramp + once-turn, or self-sac + repeating |
-| **9** | 469 | 13.4% | Peak chain (deck ramp + repeating trigger — every free ink fires the trigger) |
+**1,767 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
-The 27% of pairs at 8–9 isn't inflation — it's an honest reflection of Sapphire-heavy ramp design in Lorcana. Most inkwell-ramp cards are deck-ramp (the strongest variant), and most inkwell-triggers are repeating. So most pairs that *can* chain *do*. The 74% baseline + 27% genuine chains is the right curve: rare, mechanically real spikes against a broad density floor.
+| Pair shape | Pairs | Score | Share |
+|----------|-----|-----|-----|
+| Deck ramp ↔ repeating trigger | 52 | 9 | 2.9% |
+| Deck ramp ↔ once-per-turn trigger | 26 | 8 | 1.5% |
+| Self-sacrifice ↔ repeating trigger | 24 | 8 | 1.4% |
+| Self-sacrifice ↔ once-per-turn trigger | 12 | 7 | 0.7% |
+| Cost reduction ↔ cost reduction (overlapping targets) | 96 | 6 | 5.4% |
+| Ramp ↔ ramp | 701 | 5 | 39.7% |
+| Trigger ↔ trigger | 3 | 5 | 0.2% |
+| Ramp ↔ cost reduction | 790 | 5 | 44.7% |
+| Trigger ↔ cost reduction | 63 | 5 | 3.6% |
+<!-- coverage:end -->
+
+The 8-9 pairs aren't inflation: they're the ramp ↔ trigger chains, the only real mechanical chain in the playstyle. Most inkwell-ramp cards are deck ramp (the strongest variant) and most inkwell triggers repeat, so most pairs that *can* chain *do*; how many chains there are follows how many trigger cards the pool holds. A broad density floor with rare, mechanically real spikes is the right curve. The scores and explanation templates live in `tuning.json`, and the table reads both from the engine.
 
 ### Explanation Templates
 
@@ -164,29 +172,28 @@ The 27% of pairs at 8–9 isn't inflation — it's an honest reflection of Sapph
 
 ## Coverage
 
-**80 total ramp cards** (5.6% of 1429-card pool):
+<!-- coverage:start coverage -->
+**62 total ramp cards**:
 
-| Role | Count | Sub-patterns |
-|------|-------|-------------|
-| Inkwell Ramp | 34 | 20 deck ramp + 14 self-sacrifice |
-| Inkwell Triggers | 28 | 20 repeating + 8 once-per-turn |
-| Cost Reduction | 18 | Exert/Quest/Passive activation |
+| Role | Cards | Sub-patterns | Cards per ink |
+|----|-----|------------|-------------|
+| Inkwell Ramp | 38 | 26 deck ramp + 12 self-sacrifice | Sapphire 36, Emerald 2, Amber 1 |
+| Inkwell Triggers | 3 | 2 repeating + 1 once-per-turn | Sapphire 3 |
+| Cost Reduction | 21 | Exert/Quest/Passive activation | Amber 10, Emerald 3, Sapphire 3, Amethyst 2, Ruby 2, Steel 1 |
+<!-- coverage:end -->
 
-**Color distribution**:
-- Inkwell Ramp: ~80% Sapphire (Sapphire's identity mechanic)
-- Inkwell Triggers: Even spread across all 6 colors (Coil cycle)
-- Cost Reduction: ~50% Amber (Amber's support identity)
+Inkwell ramp is Sapphire's identity mechanic and cost reduction is Amber's support identity; the ink columns show how the live pool splits.
 
 ---
 
 ## Excluded Card Categories
 
-| Category | Count | Reason |
-|----------|-------|--------|
-| Opponent Ink | ~12 | Removal, not ramp — doesn't fire your triggers or give you ink |
-| Self-Discount Payoffs | ~34 | "Pay X less to play **this**" — built-in discount, too self-contained |
-| Free Play Grants | ~36 | Bypass mana entirely — separate mechanic, doesn't benefit from more ink |
-| High-cost generic | hundreds | Original issue suggested cost 6+ as payoffs — too broad, no synergy signal |
+| Category | Reason |
+|----------|--------|
+| Opponent Ink | Removal, not ramp — doesn't fire your triggers or give you ink |
+| Self-Discount Payoffs | "Pay X less to play **this**" — built-in discount, too self-contained |
+| Free Play Grants | Bypass mana entirely — separate mechanic, doesn't benefit from more ink |
+| High-cost generic | Original issue suggested cost 6+ as payoffs — too broad, no synergy signal |
 
 ---
 

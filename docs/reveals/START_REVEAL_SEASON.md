@@ -66,10 +66,11 @@ Dates are local midnight. Drop the old set's entry: nothing reads it once the co
 | `features/reveals/franchise.ts` | `FranchiseId` union + `FRANCHISES` (label, `match`, tint `ink`, blurb) for the debut franchises |
 | `src/tools/reveal/constants.ts` in admin | `FEATURED_FRANCHISE_HINT`, the reveal publisher's hint text (an admin commit) |
 | `features/reveals/CardMosaic.tsx` | `ROWS` / `ROWS_MOBILE`: each ink's rows must sum to `PER_INK[ink]` (a test enforces it) |
-| `features/reveals/setSpotlights.ts` | `SET_SPOTLIGHTS` (new mechanics, tribes) and `FRANCHISE_ART` (hero + support card ids) |
+| `features/reveals/setSpotlights.ts` | `SET_SPOTLIGHTS` (new mechanics, tribes) and `FRANCHISE_ART` (hero + support art names) |
+| `public/art/spotlights/` | The spotlights' card art, one AVIF per card, named after it (last season's files go) |
 | `public/art/sets/`, `public/art/franchises/<id>.webp` | The set logo, its 320px `-sm` copy for the promo card, and one logo per debut franchise |
 
-`SET_SPOTLIGHTS` can start empty. The What's New band drops empty groups and, with a single group, drops its tab bar. `FRANCHISE_ART` is optional per franchise: without an entry the franchise card shows its logo (`/art/franchises/<id>.webp`) instead of card art. Fill both in as cards are revealed, using preview ids (`REVEAL_ID_BASE + number`) of cards that already have committed AVIFs. `reveal-set-integrity.test.ts` fails if a spotlight points at an unrevealed id.
+`SET_SPOTLIGHTS` can start empty. The What's New band drops empty groups and, with a single group, drops its tab bar. `FRANCHISE_ART` is optional per franchise: without an entry the franchise card shows its logo (`/art/franchises/<id>.webp`) instead of card art. Fill both in as cards are revealed: copy a revealed card's full-size AVIF from `card-images-preview/` to `public/art/spotlights/<card slug>.avif` and pass `art()` that name. Spotlight art is named after the card, not its preview id, so graduation's new ids leave it working. `reveal-set-integrity.test.ts` fails if a spotlight shows an image that isn't committed.
 
 A franchise's `ink` is its one accent colour: its What's New card (NEW pill, CTA, wash, glow) and its cards modal (border, glow, eyebrow).
 
@@ -99,7 +100,7 @@ A set is numbered ink by ink in `ALL_INKS` order, so the collector number implie
 
 ### Record conventions
 
-`fullText` carries everything the engine reads. `abilities` needs only keyword entries for keywords the card HAS (Singer N, Shift N, Resist +N, Bodyguard, Evasive, ...); named abilities and keywords the card grants to others live in `fullText` only. No flavor text. Data fields are English even when the scan is not. `franchise` is the card's real franchise name; only a value matching a `FRANCHISES.match` groups it, everything else lands in "Returning". Keep the `&` in team names.
+`fullText` carries everything the engine reads. `abilities` needs only keyword entries for keywords the card HAS (Singer N, Shift N, Resist +N, Bodyguard, Evasive, ...); named abilities and keywords the card grants to others live in `fullText` only. No flavor text. Data fields are English even when the scan is not. `franchise` is the card's real franchise name, spelled as LorcanaJSON's `story` field spells it (graduation replaces it with that field); only a value matching a `FRANCHISES.match` groups it, everything else lands in "Returning". Keep the `&` in team names.
 
 ### First batch, by PR
 
@@ -127,6 +128,8 @@ Cards reach `previewCards.json` from [Doberjohn/inkweave-admin](https://github.c
 
 - **In bulk,** admin's `/fetch-reveals` opens a PR here from a `reveals/…` branch, with the verified cards and their AVIFs.
 - **One card at a time,** admin's reveal publisher (https://inkweave-admin.vercel.app/reveal) commits the record plus its raw scan straight to `master`, and `.github/workflows/convert-reveal-images.yml` converts the raw, commits the AVIFs with `[skip ci]` and prunes it. Each card commit triggers `deploy.yml`: **allow 15 to 20 minutes** (the prerender crawl).
+
+Either way, once the cards are on `master`, `.github/workflows/refresh-rule-coverage.yml` follows with a commit of any rule-doc coverage they moved, also with `[skip ci]` (#781).
 
 How to run both, and what each refuses to write: [`docs/REVEAL_RUNBOOK.md`](https://github.com/Doberjohn/inkweave-admin/blob/main/docs/REVEAL_RUNBOOK.md) in admin.
 
@@ -184,7 +187,7 @@ When a later `pnpm sync-variants` prints `! 14221 now has official art, but card
 - [ ] `previewCards.json`: new `sets[code]` with future dates, old entry dropped
 - [ ] `franchise.ts`, plus admin's `FEATURED_FRANCHISE_HINT`
 - [ ] `CardMosaic.tsx` rows sum to `PER_INK`
-- [ ] `setSpotlights.ts` cleared of last season's content
+- [ ] `setSpotlights.ts` and `public/art/spotlights/` cleared of last season's content
 - [ ] Set logo + franchise logos added
 - [ ] `pnpm lint`, `pnpm test`, `tsc -b`, `check:stories`, `check:design`, full chromium E2E
 - [ ] Visual check-in with the owner: hero, boards (desktop + mobile), What's New band, home promo
@@ -193,4 +196,4 @@ When a later `pnpm sync-variants` prints `! 14221 now has official art, but card
 - [ ] Admin's season checklist (its `REVEAL_RUNBOOK.md`: pin bump, `scan-reveal-card`, the illumineertales section), plus `SET_NAME_TO_CODE` in admin's `PREVIEW_CARD_PARSER.md`
 - [ ] Only now: the first reveal publish or `/fetch-reveals` run from admin
 
-When the set releases, graduate it with the runbook in [`CARD_DATA_PIPELINE.md`](../CARD_DATA_PIPELINE.md) and set the flag back to `false`.
+When LorcanaJSON publishes the set, graduate it with the runbook in [`CARD_DATA_PIPELINE.md`](../CARD_DATA_PIPELINE.md). The page keeps working on the graduated cards and hides itself on release day; set the flag back to `false` once the set is out.

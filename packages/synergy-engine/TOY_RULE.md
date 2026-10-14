@@ -11,7 +11,7 @@ Detailed documentation for the Toy rule — a tribal playstyle synergy that dete
 
 ## Overview
 
-The Toy archetype is a tight tribal playstyle: 21 Toy-classified characters and a small set of cards that explicitly reward running them. The tribe is small enough that every match carries signal — unlike the removed Princess/Villain/Hero tribals (`REMOVED_RULES.md`), where uniform `moderate` strength on hundreds of pairs created noise.
+The Toy archetype is a tight tribal playstyle: a small pool of Toy-classified characters and a few cards that explicitly reward running them (Live distribution counts both). The tribe is small enough that every match carries signal — unlike the removed Princess/Villain/Hero tribals (`REMOVED_RULES.md`), where uniform `moderate` strength on hundreds of pairs created noise.
 
 The rule has been rebuilt around a **role-driven scoring matrix**. The original 4-tier regex classifier (`classifyToyPayoff`) was replaced by per-role detection composed across other playstyles, with scoring driven by which roles each card carries (not by regex pattern matching at score time).
 
@@ -22,7 +22,7 @@ The tribe contains two natural deck archetypes that share the same rule:
 - **Andy's Toys**: Woody/Buzz/Jessie/Bullseye/Rex — value-engine package built around Woody Leader's search and stat scaling
 - **Sid's Toys**: Wind-Up Frog/Hand-in-the-Box/Bouncing Ducky/Jingle Joe + Sid Phillips — banish-recursion package that loops Toys through the discard pile for triggers
 
-These sub-themes share enough cards (most of the Sid's Toys family also fits the Andy's Toys engine) that splitting them would inflate UI complexity for a 5-card pattern. They roll into a single `toy` playstyle group.
+These sub-themes share enough cards (most of the Sid's Toys family also fits the Andy's Toys engine) that splitting them would inflate UI complexity for a pattern of a handful of cards. They roll into a single `toy` playstyle group.
 
 ---
 
@@ -53,11 +53,13 @@ The **tribal vs generic** distinction is the core design axis. Tribal payoffs sc
 
 ### Tribal role detection
 
-| Role | Pattern | Cards |
-|------|---------|-------|
-| `search` | `makeSearchPattern('Toy characters?(?:\\s+cards?)?')` — top-of-deck reveal / search-from-deck/discard / "return a Toy" shapes | Woody — Leader of the Toys, You've Got a Friend in Me |
-| `banish-trigger` | `makeBanishTriggerPattern('Toy characters?')` OR `makeBanishTriggerPattern('this character')` — "when(ever) X is/are/gets banished" with strict tense | Sid Phillips, Jingle Joe, Alien — True Believer, Pterodactyl Janie Doll, Rex |
-| `self-discount` | `you pay \d+ ⬡? less to play this` OR `play this character for free` — conditional self-cost reduction (incl. limit case "play for free") | Bullseye, Wind-Up Frog, Bouncing Ducky, Hand-in-the-Box |
+| Role | Pattern |
+|------|---------|
+| `search` | `makeSearchPattern('Toy characters?(?:\\s+cards?)?')` — top-of-deck reveal / search-from-deck/discard / "return a Toy" shapes |
+| `banish-trigger` | `makeBanishTriggerPattern('Toy characters?')` OR `makeBanishTriggerPattern('this character')` — "when(ever) X is/are/gets banished" with strict tense |
+| `self-discount` | `you pay \d+ ⬡? less to play this` OR `play this character for free` — conditional self-cost reduction (incl. limit case "play for free") |
+
+Live distribution names a role's cards when it has six or fewer.
 
 The membership gate runs first, so self-banish (`when this character is banished`) only counts as a Toy banish when the carrying card is itself a Toy member — non-Toy "deathrattle" cards never enter the Toy playstyle.
 
@@ -77,7 +79,7 @@ Then Toy-scoped patterns add the tribal roles (`search`, `banish-trigger`, `self
 
 ### Retired role
 
-The original `payoff` fallback bucket was retired once every Toy in the live database mapped onto a specific mechanic. A card can still enter the playstyle without a specific role (via `TOY_PAYOFF_PATTERN` text reference), but it will only surface in synergy results if some specific role is detected. As of Set 12, the bucket is empty.
+The original `payoff` fallback bucket was retired once every Toy in the live database mapped onto a specific mechanic. A card can still enter the playstyle without a specific role (via `TOY_PAYOFF_PATTERN` text reference), but it will only surface in synergy results if some specific role is detected. The bucket was empty when it was retired.
 
 ---
 
@@ -126,35 +128,41 @@ The "otherwise" bucket covers Member↔Member, Member↔generic, and Generic↔g
 
 ### Why search is special
 
-Search is the only mechanic that converts a deck slot into immediate tribal density. Two of two cards in the live pool — Woody — Leader of the Toys and You've Got a Friend in Me — are rare and game-winning when present. Member ↔ search and search ↔ banish-trigger are the only pairs that earn 8.
+Search is the only mechanic that converts a deck slot into immediate tribal density. The search cards (Live distribution names them) are rare and game-winning when present. Member ↔ search and search ↔ banish-trigger are the only pairs that earn 8.
 
 ---
 
-## Live distribution (Set 12)
+## Live distribution
 
-24 Toy-affiliated cards, 276 unique pairs:
+<!-- coverage:start distribution -->
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-| Score | Count | Share | Captures |
-|-------|-------|-------|----------|
-| **5** | 89 | 32% | Member↔Member + Member↔generic + Generic↔generic — same-deck baseline |
-| **7** | 144 | 52% | Member↔Tribal + Tribal↔Tribal — tribal compounding |
-| **8** | 43 | 16% | Member↔search + search↔banish-trigger — peak chains |
+**29 Toy-affiliated cards**. **398 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
-Role population:
+| Pair shape | Pairs | Score | Share |
+|----------|-----|-----|-----|
+| member ↔ search | 43 | 8 | 10.8% |
+| search ↔ banish-trigger | 10 | 8 | 2.5% |
+| tribal ↔ tribal | 36 | 7 | 9.0% |
+| member ↔ tribal | 147 | 7 | 36.9% |
+| member ↔ member, member ↔ generic, generic ↔ generic | 162 | 5 | 40.7% |
 
-| Role | Cards |
-|------|-------|
-| member | 21 |
-| banish-trigger | 5 (Sid Phillips, Jingle Joe, Alien, Pterodactyl Janie Doll, Rex) |
-| draw | 4 (Babyhead, Buzz Lightyear — On the Way, Jessie, Woody — Jungle Guide) |
-| self-discount | 4 (Bullseye, Wind-Up Frog, Bouncing Ducky, Hand-in-the-Box) |
-| search | 2 (Woody — Leader of the Toys, You've Got a Friend in Me) |
-| cost-reduction | 1 (Hamm) |
-| targeted (Discard) | 1 (Lenny) |
-| burn (Lore Denial) | 1 (Pizza Planet) |
-| steal (Lore Denial) | 1 (Pterodactyl Janie Doll) |
+Role population (roles no card holds are left out):
 
-Predominant inks: Amber (Andy's Toys), Ruby (Sid's Toys). Mono-Amber gets the deepest member pool; mono-Ruby leans on the banish-recursion package.
+| Role | Cards | Cards per ink |
+|----|-----|-------------|
+| member | 26 | Amber 11, Emerald 9, Ruby 7 |
+| search | 2 (Woody - Leader of the Toys, You've Got a Friend in Me) | Amber 2 |
+| draw | 4 (Babyhead - Leader of Sid's Toys, Buzz Lightyear - On the Way, Jessie - Lively Cowgirl, Woody - Jungle Guide) | Amber 2, Emerald 1, Ruby 1 |
+| banish-trigger | 5 (Alien - True Believer, Jingle Joe - Sid's Toy, Pterodactyl Janie Doll - Sid's Toy, Rex - Protective Dinosaur, Sid Phillips - Toy Surgeon) | Ruby 3, Amber 1, Emerald 1 |
+| self-discount | 4 (Bouncing Ducky - Sid's Toy, Bullseye - Loyal Horse, Hand-in-the-Box - Sid's Toy, Wind-Up Frog - Sid's Toy) | Ruby 3, Amber 1 |
+| burn (Lore Denial) | 1 (Pizza Planet - Spaceport) | Emerald 1 |
+| steal (Lore Denial) | 1 (Pterodactyl Janie Doll - Sid's Toy) | Ruby 1 |
+| targeted (Discard) | 1 (Lenny - Toy Binoculars) | Emerald 1 |
+| cost-reduction (Ramp) | 1 (Hamm - Piggy Bank) | Amber 1 |
+<!-- coverage:end -->
+
+Andy's Toys lean Amber and Sid's Toys Ruby (the Cards per ink column shows the split). Mono-Amber gets the deepest member pool; mono-Ruby leans on the banish-recursion package.
 
 ---
 

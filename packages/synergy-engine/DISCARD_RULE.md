@@ -78,7 +78,7 @@ Before running the 7 enabler regexes, `getDiscardRoles` checks `HAS_DISCARD_KEYW
 /discard|more cards in your hand/i
 ```
 
-This skips the full pattern battery for the ~95% of cards that don't mention discard at all.
+This skips the full pattern battery for the great majority of cards, which never mention discard.
 
 ---
 
@@ -107,17 +107,23 @@ The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral
 | Enabler ↔ Enabler | **5** | Weak | Parallel pressure on the opponent's hand; doesn't compound mechanically — they just stack |
 | Payoff ↔ Payoff | **5** | Weak | Same axis (both reward hand-size advantage); having two doesn't multiply the win condition |
 
-### Live distribution (Set 12)
+### Live distribution
 
-37 enablers + 2 payoffs = 39 cards across 741 unique pairs:
+<!-- coverage:start distribution -->
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-| Pair shape | Count | Score | Share |
-|------------|-------|-------|-------|
-| Enabler ↔ Enabler | 666 | 5 | 89.9% |
-| Enabler ↔ Payoff | 74 | 8 | 10.0% |
-| Payoff ↔ Payoff | 1 | 5 | 0.1% |
+**325 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
-The 89.9% baseline isn't noise — it's the deck's identity. Discard is a deck of pressure cards built around finding one of the two genuine win conditions (Yzma — Transformed Kitten, Pacha — Trekmate). The score 8 marks exactly that asymmetric kill combo.
+| Pair shape | Pairs | Score | Share |
+|----------|-----|-----|-----|
+| Enabler ↔ Enabler | 325 | 5 | 100.0% |
+| Enabler ↔ Payoff | 0 | 8 | 0.0% |
+| Payoff ↔ Payoff | 0 | 5 | 0.0% |
+
+No hand-size payoff is in the pool, so every pair sits at the 5 baseline.
+<!-- coverage:end -->
+
+A baseline-heavy split isn't noise: it's the deck's identity. Discard is a deck of pressure cards built around finding one of its rare genuine win conditions, the hand-size payoffs (Yzma - Transformed Kitten and Pacha - Trekmate when this rule was designed). The score 8 marks exactly that asymmetric kill combo, so the 8 share moves with how many payoffs the pool holds.
 
 ### Why Enabler ↔ Payoff is 8 (and not 9)
 
@@ -139,22 +145,29 @@ The rule generates role-aware explanations:
 
 ## Coverage
 
-- ~34 enabler cards in the Core format database
-- 2 payoff cards (Pacha - Trekmate, Yzma - Transformed Kitten)
-- 36 total discard cards
+<!-- coverage:start coverage -->
+| Role | Cards | Cards per ink |
+|----|-----|-------------|
+| standard (enabler) | 20 | Emerald 14, Amber 5, Steel 1 |
+| targeted (enabler) | 5 (Elisa Maza - Hardworking Detective, Goldie O'Gilt - Cunning Prospector, Lenny - Toy Binoculars, Timon - Snowball Swiper, Ursula - Deceiver) | Emerald 3, Amber 2 |
+| random (enabler) | 1 (The Headless Horseman - Cursed Rider) | Steel 1 |
+| payoff | 0 | none |
 
-The low payoff count is accurate to the current card pool — hand-size-advantage is a rare condition in Lorcana. Future sets may add more payoffs, which would automatically be detected by the existing pattern.
+Cards with a role: 26. Cards with more than one: 0.
 
 ```chart
 {
   "type": "doughnut",
-  "title": "Role Composition (36 cards)",
+  "title": "Role composition (26 cards)",
   "data": {
-    "labels": ["Enablers (34)", "Payoffs (2)"],
-    "values": [34, 2]
+    "labels": ["Enablers (26)"],
+    "values": [26]
   }
 }
 ```
+<!-- coverage:end -->
+
+Payoffs are scarce because hand-size advantage is a rare condition in Lorcana. Future sets may add more, and the existing pattern detects them automatically.
 
 ---
 
