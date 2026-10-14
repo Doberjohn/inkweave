@@ -1007,17 +1007,22 @@ function isSelfDiscardStatePayoff(text: string): boolean {
   );
 }
 
-/**
- * Enabler: a hand-discard OUTLET (loot / discard-your-hand / discard-as-cost) that is NOT
- * opponent-facing (opponent discard belongs to the Discard rule). Split out of
- * getSelfDiscardRoles so the role builder stays a flat sequence of named pushes.
- */
-function isSelfDiscardEnabler(text: string): boolean {
-  const isOutlet =
+/** A hand-discard OUTLET: loot, discard-your-hand or discard-as-cost. */
+function hasSelfDiscardOutlet(text: string): boolean {
+  return (
     SELF_DISCARD_LOOT_PATTERN.test(text) ||
     SELF_DISCARD_HAND_PATTERN.test(text) ||
-    SELF_DISCARD_COST_PATTERN.test(text);
-  return isOutlet && !SELF_DISCARD_OPPONENT_PATTERN.test(text);
+    SELF_DISCARD_COST_PATTERN.test(text)
+  );
+}
+
+/**
+ * Enabler: a hand-discard outlet that is NOT opponent-facing (opponent discard belongs to the
+ * Discard rule). Split out of getSelfDiscardRoles so the role builder stays a flat sequence of
+ * named pushes.
+ */
+function isSelfDiscardEnabler(text: string): boolean {
+  return hasSelfDiscardOutlet(text) && !SELF_DISCARD_OPPONENT_PATTERN.test(text);
 }
 
 /** Determine the self-discard role(s) a card fulfills. A card can be multi-role (loot + reanimate). */
@@ -1088,6 +1093,38 @@ const SELF_DISCARD_DRAW_FIRST_PATTERN =
 const SELF_DISCARD_HAND_TRIM_PATTERN =
   /\beach player's turn, if they have more than ([0-2]) cards in their hand, they choose and discard cards until they have \1\b/i;
 
+/** An ability that resolves as your turn ends, after your quests, challenges and plays. */
+const END_OF_YOUR_TURN_PATTERN = /\bat the end of your turn\b/i;
+
+/** The card's ability blocks, each normalized; the whole text when it carries no sections. */
+function selfDiscardAbilityTexts(card: LorcanaCard): string[] {
+  const sections = card.textSections?.length ? card.textSections : [card.text ?? ''];
+  return sections.map((text) => normalizeCardText({...card, text}));
+}
+
+/**
+ * Every outlet on the card sits in an "At the end of your turn" ability (Meeko - Skittish
+ * Scrounger: "At the end of your turn, if this character is exerted, choose and discard a card
+ * or banish him"), so its discard lands after every check made during the turn.
+ */
+function discardsOnlyAtEndOfTurn(blocks: string[]): boolean {
+  const outlets = blocks.filter(hasSelfDiscardOutlet);
+  return outlets.length > 0 && outlets.every((block) => END_OF_YOUR_TURN_PATTERN.test(block));
+}
+
+/**
+ * The card checks this turn's discards as your turn ends ("At the end of your turn, if 2 or more
+ * cards were put into your discard this turn, draw a card"), late enough for an end-of-turn
+ * outlet to count.
+ */
+function checksDiscardsAtEndOfTurn(blocks: string[]): boolean {
+  return blocks.some(
+    (block) =>
+      END_OF_YOUR_TURN_PATTERN.test(block) &&
+      (SELF_DISCARD_EVENT_PATTERN.test(block) || SELF_DISCARD_ZONE_PUT_PATTERN.test(block)),
+  );
+}
+
 /** The kinds the kind words in `fragment` admit (empty when it names none). */
 function selfDiscardKindsIn(fragment: string): Set<SelfDiscardKind> {
   const kinds = new Set<SelfDiscardKind>();
@@ -1136,6 +1173,8 @@ interface SelfDiscardFeedProfile {
   shrinksHand: boolean;
   /** The card trims your hand to 2 at the end of your turn (Goliath - Clan Leader). */
   trimsHand: boolean;
+  /** Every outlet on the card discards at the end of your turn (see discardsOnlyAtEndOfTurn). */
+  discardsAtEndOfTurn: boolean;
   /** Kinds the card's recursion pulls, unfed recursion stripped; null when it takes any card. */
   recursionKinds: Set<SelfDiscardKind> | null;
   /** The recursion fires on your discard (see hasDiscardFedRecursion). */
@@ -1146,6 +1185,10 @@ interface SelfDiscardFeedProfile {
   rewardsEmptyHand: boolean;
   /** The state payoff needs a small hand to ready (STONE BY DAY). */
   needsSmallHand: boolean;
+  /** The zone payoff reads the pile itself (a count or a card type), whenever it looks. */
+  readsPile: boolean;
+  /** The card checks this turn's discards at the end of your turn (see checksDiscardsAtEndOfTurn). */
+  checksAtEndOfTurn: boolean;
 }
 
 const selfDiscardFeedProfiles = new WeakMap<LorcanaCard, SelfDiscardFeedProfile>();
@@ -1155,17 +1198,21 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
   const cached = selfDiscardFeedProfiles.get(card);
   if (cached) return cached;
   const text = normalizeCardText(card);
+  const blocks = selfDiscardAbilityTexts(card);
   const refills = SELF_DISCARD_REFILL_PATTERN.test(text);
   const profile: SelfDiscardFeedProfile = {
     outletKinds: selfDiscardOutletKinds(text),
     refills,
     shrinksHand: !refills && !SELF_DISCARD_DRAW_FIRST_PATTERN.test(text),
     trimsHand: SELF_DISCARD_HAND_TRIM_PATTERN.test(text),
+    discardsAtEndOfTurn: discardsOnlyAtEndOfTurn(blocks),
     recursionKinds: selfDiscardRecursionKinds(card, stripUnfedRecursion(text)),
     recursionOnDiscard: hasDiscardFedRecursion(text),
     rewardsEvent: SELF_DISCARD_EVENT_PATTERN.test(text),
     rewardsEmptyHand: SELF_DISCARD_HELLBENT_PATTERN.test(text),
     needsSmallHand: SELF_DISCARD_SMALL_HAND_PATTERN.test(text),
+    readsPile: SELF_DISCARD_ZONE_IN_PATTERN.test(text),
+    checksAtEndOfTurn: checksDiscardsAtEndOfTurn(blocks),
   };
   selfDiscardFeedProfiles.set(card, profile);
   return profile;
@@ -1180,16 +1227,27 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
 export type SelfDiscardFeed = 'trigger' | 'stock' | 'unlock';
 
 /**
- * How an outlet's discard reaches a state payoff: any discard is a "discarded a card this turn"
- * event, while an empty hand needs an outlet that doesn't refill it, and a small hand one that
- * shrinks it (a loot or a refill leaves the hand as big or bigger).
+ * The outlet's discard lands before the payoff checks this turn's discards: it discards during
+ * the turn, or the payoff checks as the turn ends. An end-of-turn outlet is too late for a check
+ * made while you quest, challenge or play ("If you discarded a card this turn, this character …
+ * can challenge ready characters this turn").
+ */
+function discardLandsInTime(outlet: SelfDiscardFeedProfile, target: SelfDiscardFeedProfile): boolean {
+  return !outlet.discardsAtEndOfTurn || target.checksAtEndOfTurn;
+}
+
+/**
+ * How an outlet's discard reaches a state payoff: any discard in time is a "discarded a card
+ * this turn" event, while an empty hand needs an outlet that doesn't refill it, and a small hand
+ * one that shrinks it (a loot or a refill leaves the hand as big or bigger).
  */
 function selfDiscardStateFeed(
   outlet: SelfDiscardFeedProfile,
   target: SelfDiscardFeedProfile,
 ): SelfDiscardFeed | null {
+  const feedsEvent = target.rewardsEvent && discardLandsInTime(outlet, target);
   const feedsEmptyHand = target.rewardsEmptyHand && !outlet.refills;
-  if (target.rewardsEvent || feedsEmptyHand) return 'trigger';
+  if (feedsEvent || feedsEmptyHand) return 'trigger';
   return target.needsSmallHand && outlet.shrinksHand ? 'unlock' : null;
 }
 
@@ -1227,6 +1285,16 @@ export function selfDiscardOutletFeed(
     ? selfDiscardRecursionFeed(outlet, target)
     : null;
   return recursion ?? state;
+}
+
+/**
+ * Whether `enabler`'s hand discard reaches `payoff`'s zone payoff (the enabler ↔ zone-payoff
+ * row): a count or a card type in the pile always, a "cards were put into your discard this
+ * turn" check only when the discard lands in time (see discardLandsInTime).
+ */
+export function selfDiscardOutletFeedsPile(enabler: LorcanaCard, payoff: LorcanaCard): boolean {
+  const target = selfDiscardFeedProfile(payoff);
+  return target.readsPile || discardLandsInTime(selfDiscardFeedProfile(enabler), target);
 }
 
 /**

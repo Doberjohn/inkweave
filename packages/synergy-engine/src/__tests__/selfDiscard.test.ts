@@ -186,6 +186,34 @@ const rapunzelAndFlynn = createCard({
   text: 'Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one\nof your characters named Rapunzel or Flynn Rider.)\nCLEVER SWAP Whenever this character quests, you may\ndraw a card, then choose and discard a card.\nFRESH START During your turn, whenever you discard\na character card, you may play that character from your\ndiscard. (You pay all costs.)',
 });
 
+// An outlet that discards only as your turn ends, and payoffs that look before or at that point.
+const meeko = createCard({
+  id: 'meeko-skittish-scrounger',
+  name: 'Meeko',
+  fullName: 'Meeko - Skittish Scrounger',
+  ink: 'Amethyst',
+  text: 'Evasive (Only characters with Evasive can\nchallenge this character.)\nBOTTOMLESS PIT At the end of your turn, if this\ncharacter is exerted, choose and discard a card or\nbanish him.',
+});
+const helgaNoBackup = createCard({
+  id: 'helga-no-backup-needed',
+  name: 'Helga Sinclair',
+  fullName: 'Helga Sinclair - No Backup Needed',
+  ink: 'Emerald',
+  text: 'CRISIS MANAGEMENT If 2 or more cards were put into your discard this turn, you pay 2 ⬡ less to play this character.',
+});
+const miloHandsDirty = createCard({
+  id: 'milo-getting-his-hands-dirty',
+  name: 'Milo Thatch',
+  fullName: 'Milo Thatch - Getting His Hands Dirty',
+  ink: 'Emerald',
+  text: "Ward\nSCHOLAR'S GAMBIT When you play this character,\nyou may choose and discard a card to return chosen\ncharacter to their player's hand.\nPRACTICAL KNOWLEDGE At the end of your turn, if\n2 or more cards were put into your discard this turn,\ndraw a card.",
+  textSections: [
+    'Ward',
+    "SCHOLAR'S GAMBIT When you play this character,\nyou may choose and discard a card to return chosen\ncharacter to their player's hand.",
+    'PRACTICAL KNOWLEDGE At the end of your turn, if\n2 or more cards were put into your discard this turn,\ndraw a card.',
+  ],
+});
+
 describe('Self-Discard scoring: an outlet feeds only the payoffs its discard can switch on', () => {
   const rule = getRuleById('self-discard')!;
   /** The pair's match with `card` as the searcher. */
@@ -229,6 +257,14 @@ describe('Self-Discard scoring: an outlet feeds only the payoffs its discard can
     expect(score(youBrokeMySmolder, megavolt)).toBe(8);
     expect(score(kronk, megavolt)).toBe(8);
     expect(score(sprout, megavolt)).toBe(8);
+  });
+
+  it('lets an end-of-turn outlet feed only the checks made as the turn ends', () => {
+    expect(score(meeko, maximus)).toBe(5);
+    expect(score(meeko, helgaNoBackup)).toBe(5);
+    expect(score(meeko, miloHandsDirty)).toBe(6);
+    expect(score(kronk, maximus)).toBe(8);
+    expect(score(kronk, helgaNoBackup)).toBe(6);
   });
 
   it('scores a character-or-location outlet 7 with character and location recursion', () => {

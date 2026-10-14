@@ -13,6 +13,7 @@ import {
   costReductionTargetsOverlap,
   isExertConsumePayoff,
   selfDiscardOutletFeed,
+  selfDiscardOutletFeedsPile,
   selfDiscardHandTrimFeed,
   triggersOnAnyBanish,
   toyAbilityCounts,
@@ -451,14 +452,21 @@ function scoreSelfDiscardCombo(
   };
 }
 
+/** A side of a self-discard pair: the card and its roles. */
+interface SelfDiscardSide {
+  card: LorcanaCard;
+  roles: SelfDiscardRole[];
+}
+
 /**
  * The bin-filling combos, best score first: a filler role on one side, the payoff it feeds on
- * the other.
+ * the other, and, where the cards decide it, whether this filler reaches this payoff.
  */
 const SELF_DISCARD_FILL_COMBOS: ReadonlyArray<{
   filler: SelfDiscardRole;
   payoff: SelfDiscardRole;
   score: number;
+  feeds?: (filler: LorcanaCard, payoff: LorcanaCard) => boolean;
   explain: (filler: string, payoff: string) => string;
 }> = [
   {
@@ -477,9 +485,20 @@ const SELF_DISCARD_FILL_COMBOS: ReadonlyArray<{
     filler: 'enabler',
     payoff: 'zone-payoff',
     score: 6,
+    feeds: selfDiscardOutletFeedsPile,
     explain: (f, p) => `${f} fills your discard from hand, switching on ${p}'s discard-count payoff.`,
   },
 ];
+
+/** `filler` holds the combo's filler role, `payoff` its payoff role, and the filler reaches it. */
+function fillsFor(
+  combo: (typeof SELF_DISCARD_FILL_COMBOS)[number],
+  filler: SelfDiscardSide,
+  payoff: SelfDiscardSide,
+): boolean {
+  const rolesMatch = filler.roles.includes(combo.filler) && payoff.roles.includes(combo.payoff);
+  return rolesMatch && (combo.feeds?.(filler.card, payoff.card) ?? true);
+}
 
 /**
  * The fill combo (7 or 6), or null: a bin-filler (mill or hand-discard enabler) on one side and
@@ -488,13 +507,12 @@ const SELF_DISCARD_FILL_COMBOS: ReadonlyArray<{
  * and the rows run best score first, so a card that both loots and mills reads as the mill.
  */
 function scoreSelfDiscardFillCombo(
-  cardRoles: SelfDiscardRole[],
-  otherRoles: SelfDiscardRole[],
+  searcher: SelfDiscardSide,
+  partner: SelfDiscardSide,
 ): {score: number; explanation: string} | null {
   for (const combo of SELF_DISCARD_FILL_COMBOS) {
-    const cardFills = cardRoles.includes(combo.filler) && otherRoles.includes(combo.payoff);
-    const otherFills = otherRoles.includes(combo.filler) && cardRoles.includes(combo.payoff);
-    if (!cardFills && !otherFills) continue;
+    const cardFills = fillsFor(combo, searcher, partner);
+    if (!cardFills && !fillsFor(combo, partner, searcher)) continue;
     const [filler, payoff] = cardFills ? ['{A}', '{B}'] : ['{B}', '{A}'];
     return {score: combo.score, explanation: combo.explain(filler, payoff)};
   }
@@ -518,7 +536,8 @@ function scoreSelfDiscardFillCombo(
  *   - all other same-axis pairs              = 5  (parallel density; includes mill ↔ state,
  *                                                 since milling is not a discard event)
  * An outlet scores with a payoff only when its discard can reach it (selfDiscardOutletFeed, or
- * selfDiscardHandTrimFeed for a hand trim).
+ * selfDiscardHandTrimFeed for a hand trim), and with a zone payoff only when its discard lands
+ * before the payoff looks (selfDiscardOutletFeedsPile).
  *
  * `card` is the searcher (token {A}); `other` is the partner (token {B}). The token-swap keeps
  * the enabler side reading as the actor regardless of which card is the searcher.
@@ -537,7 +556,7 @@ export function scoreSelfDiscardPair(
   }
 
   // 7 or 6 — a bin-filler feeding a discard-count payoff, or mill feeding a recursion engine.
-  const fill = scoreSelfDiscardFillCombo(cardRoles, otherRoles);
+  const fill = scoreSelfDiscardFillCombo({card, roles: cardRoles}, {card: other, roles: otherRoles});
   if (fill) return fill;
 
   // 6 — two recursion engines mining the same discard pile.

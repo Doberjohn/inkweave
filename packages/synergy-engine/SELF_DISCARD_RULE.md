@@ -181,9 +181,9 @@ Applies the project-wide **5-baseline convention** and mirrors the Sacrifice sha
 | enabler ↔ small-hand payoff | **7** | Strong | Mechanical compounding: an outlet that shrinks your hand switches the STONE BY DAY drawback off, so the character readies. Only an outlet that shrinks the hand, or Goliath - Clan Leader's end-of-turn trim (see Feed check) |
 | mill ↔ zone-payoff | **7** | Strong | The deck-side filler stocks the pile the payoff counts, several cards at a time and without spending the hand |
 | mill ↔ reanimator | **7** | Strong | Mill buries targets the recursion engine then replays |
-| enabler ↔ zone-payoff | **6** | Moderate | Complementary: each hand discard adds one card to the count the payoff reads, a nudge rather than a compounding |
+| enabler ↔ zone-payoff | **6** | Moderate | Complementary: each hand discard adds one card to the count the payoff reads, a nudge rather than a compounding. Only when the discard lands before the payoff looks (see Timing) |
 | reanimator ↔ reanimator | **6** | Moderate | Two recursion engines mining the same discard pile, complementary but not a single combo |
-| enabler ↔ enabler / mill ↔ state-payoff / reanimator ↔ state / state ↔ state / an outlet that cannot feed the payoff | **5** | Weak/Moderate | Same-axis density: parallel fillers, two payoffs that don't amplify each other, or an outlet whose discard can't reach the payoff (a loot or a refill next to a small-hand payoff) |
+| enabler ↔ enabler / mill ↔ state-payoff / reanimator ↔ state / state ↔ state / an outlet that cannot feed the payoff | **5** | Weak/Moderate | Same-axis density: parallel fillers, two payoffs that don't amplify each other, or an outlet whose discard can't reach the payoff (a loot or a refill next to a small-hand payoff, an end-of-turn outlet next to a check made earlier in the turn) |
 
 Only an 8 is a closed loop: the discard itself is what the payoff waits for. That is the difference between "discard Mother Gothel, replay Mother Gothel" (8) and "discard a card, and a recursion engine has one more target" (7). Most recursion pulls whatever sits in the pile, and play stocks the pile on its own: every banished character and every action or song you play ends up there. An outlet adds choice and speed to that engine, not the engine itself.
 
@@ -205,7 +205,9 @@ A generic side always meets. "Action" admits songs too, since a song is an actio
 
 **Trigger or stock:** recursion that fires on your discard is a trigger and scores 8: Mother Gothel - Evil as Ever and Look What You've Done ("during your turn, when you discard this card, you may play it from your discard") and Rapunzel & Flynn Rider - Unlikely Pair ("whenever you discard a character card, you may play that character from your discard"). The check reads the recursion sentence itself (`hasDiscardFedRecursion`), so an unrelated "when you discard" elsewhere on a card doesn't count. Every other recursion only has its bin stocked by the outlet and scores 7.
 
-**State:** a trigger for the discard event and the empty hand. Any discard is a "discarded a card this turn" event, so every outlet feeds an event payoff. An empty-hand payoff ("while you have no cards in your hand") is not fed by an outlet that discards one card and then draws 2 or more ("discard a song card. If you do, draw 2 cards"): its hand is never empty when it resolves. That refill rule is deliberately narrow (Max Goof - Karaoke Star only); general empty-hand scoring is a separate decision.
+**State:** a trigger for the discard event and the empty hand. Any discard is a "discarded a card this turn" event, so every outlet feeds an event payoff, unless it discards too late (see Timing). An empty-hand payoff ("while you have no cards in your hand") is not fed by an outlet that discards one card and then draws 2 or more ("discard a song card. If you do, draw 2 cards"): its hand is never empty when it resolves. That refill rule is deliberately narrow (Max Goof - Karaoke Star only); general empty-hand scoring is a separate decision.
+
+**Timing:** an outlet that discards only as your turn ends (Meeko - Skittish Scrounger: "At the end of your turn, if this character is exerted, choose and discard a card or banish him"; Scar - Finally King) lands after every check made while you quest, challenge or play. It feeds neither "If you discarded a card this turn" (Maximus - Relentless Stallion, Discarded Armor) nor a "cards were put into your discard this turn" check made earlier (Helga Sinclair - No Backup Needed's discount, Kida - Discovering the Unknown's quest trigger, Escape Plan), and scores 5 with them (`discardLandsInTime`, read one ability at a time). It still feeds the checks made as the turn ends (Milo Thatch - Getting His Hands Dirty, Lyle Tiberius Rourke - Adventurer for Hire, Kashekim - Wise King), pile counts, recursion and STONE BY DAY, so `selfDiscardOutletFeedsPile` gates the enabler ↔ zone-payoff row the same way.
 
 **Small hand:** an unlock, and only from an outlet that leaves the hand smaller. STONE BY DAY reads how many cards you hold, not whether you discarded, so an outlet that draws first or refills afterwards hands back what it took:
 
@@ -227,15 +229,15 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| enabler ↔ a payoff its discard switches on | 377 | 8 | 4.4% |
+| enabler ↔ a payoff its discard switches on | 373 | 8 | 4.4% |
 | enabler ↔ any other reanimator | 1,703 | 7 | 20.1% |
 | enabler ↔ small-hand payoff | 242 | 7 | 2.9% |
 | mill ↔ reanimator | 324 | 7 | 3.8% |
 | mill ↔ zone-payoff | 219 | 7 | 2.6% |
-| enabler ↔ zone-payoff | 1,153 | 6 | 13.6% |
+| enabler ↔ zone-payoff | 1,139 | 6 | 13.4% |
 | reanimator ↔ reanimator | 783 | 6 | 9.2% |
 | enabler ↔ enabler | 702 | 5 | 8.3% |
-| other same-axis | 2,986 | 5 | 35.2% |
+| other same-axis | 3,004 | 5 | 35.4% |
 <!-- coverage:end -->
 
 Roles overlap on multi-role cards such as Lyle Tiberius Rourke, who mills *and* reanimates, or Hudson - Determined Reader, who loots and carries STONE BY DAY. When both cards of a pair score it the same, the pair is read from its lower-id card as the searcher.
@@ -334,7 +336,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | fill combos → 7 / 6 | mill ↔ zone-payoff and mill ↔ reanimator 7, loot ↔ zone-payoff 6, with the filler as the actor and the token-swap when the payoff is the searcher |
 | mill ↔ state-payoff → 5 | milling is not a discard event, so it stays at the baseline |
 
-### Self-contained recursion, named cards, deck-bottom sweeps and feed check (16 tests, `selfDiscard.test.ts`)
+### Self-contained recursion, named cards, deck-bottom sweeps and feed check (17 tests, `selfDiscard.test.ts`)
 
 | Test | What it verifies |
 |------|------------------|
@@ -347,6 +349,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | song-only outlet → 7 | Max Goof - Karaoke Star with song (Max Goof - Rebellious Teen), action (Buzz Lightyear - Jungle Ranger) and any-card (Jiminy Cricket - Ghost of Christmas Past) recursion |
 | song-only outlet → 5 | with Circle of Life (from both searchers), Salvage Operation and Look What You've Done |
 | state payoffs | Max Goof feeds Maximus (8) but not Megavolt (5); You Broke My Smolder, Kronk and Sprout - Experiment 509 still feed Megavolt (8) |
+| end-of-turn outlet | Meeko - Skittish Scrounger with Maximus - Relentless Stallion and Helga Sinclair - No Backup Needed → 5, with Milo Thatch - Getting His Hands Dirty → 6; Kronk with Maximus → 8 and with Helga → 6 |
 | character-or-location outlet → 7 | Sprout - Experiment 509 with Get to Safety! and Circle of Life |
 | character-or-location outlet → 5 | Sprout with Salvage Operation and Max Goof - Rebellious Teen |
 | named-card recursion | Captain Hook - Captain of the Jolly Roger, Merida - Formidable Archer and Alien - True Believer have no roles |
