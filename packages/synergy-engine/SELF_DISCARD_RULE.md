@@ -94,6 +94,8 @@ Recursion that fires when **you** discard the card stays ("when you discard this
 
 **Recursion of one named card is stripped too** (`stripUnfedRecursion`): "return an action card **named Three Arrows** from your discard" (Merida - Formidable Archer), "an action card named Fire the Cannons!" (Captain Hook - Captain of the Jolly Roger), "a character card named Hen Wen" (Taran - Pig Keeper) and "another character card named Alien" (Alien - True Believer, the only card named Alien). Only that one card switches the recursion on, so an outlet or a mill doesn't feed it, and Named Companions already pairs the card with the one it names. Neither side of "named" may cross another play/return/put, so a named card elsewhere in the sentence ("if you have an item named Rivera Family Photo in play, you may play this item from your discard") doesn't strip the recursion next to it.
 
+**So is a sweep the card must make**: "put 3 cards from your discard on the bottom of your deck in any order or banish her" (Mamá Imelda - No-Nonsense Ancestor) and "put all Toy character cards from your discard on the bottom of your deck" (Bouncing Ducky - Sid's Toy, who keeps `zone-payoff` for his discount). No card comes back to hand or play. An optional sweep ("You may put a Toy character card from your discard on the bottom of your deck to play this character for free", Hand-in-the-Box - Sid's Toy) is a cost the card pays for something else, and stays a reanimator.
+
 ### state-payoff (discard event / empty hand / small hand)
 
 ```regex
@@ -221,19 +223,19 @@ Coverage counts the outlets that shrink the hand. Goliath - Clan Leader has no o
 <!-- coverage:start distribution -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-**133 tagged cards** (44 enabler, 46 reanimator, 20 state-payoff, 28 zone-payoff, 8 mill; roles overlap on multi-role cards). **8,620 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+**132 tagged cards** (44 enabler, 44 reanimator, 20 state-payoff, 28 zone-payoff, 8 mill; roles overlap on multi-role cards). **8,489 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
 | enabler ↔ a payoff its discard switches on | 377 | 8 | 4.4% |
-| enabler ↔ any other reanimator | 1,788 | 7 | 20.7% |
-| enabler ↔ small-hand payoff | 242 | 7 | 2.8% |
-| mill ↔ reanimator | 332 | 7 | 3.9% |
-| mill ↔ zone-payoff | 219 | 7 | 2.5% |
-| enabler ↔ zone-payoff | 1,111 | 6 | 12.9% |
-| reanimator ↔ reanimator | 865 | 6 | 10.0% |
-| enabler ↔ enabler | 702 | 5 | 8.1% |
-| other same-axis | 2,984 | 5 | 34.6% |
+| enabler ↔ any other reanimator | 1,703 | 7 | 20.1% |
+| enabler ↔ small-hand payoff | 242 | 7 | 2.9% |
+| mill ↔ reanimator | 324 | 7 | 3.8% |
+| mill ↔ zone-payoff | 219 | 7 | 2.6% |
+| enabler ↔ zone-payoff | 1,153 | 6 | 13.6% |
+| reanimator ↔ reanimator | 783 | 6 | 9.2% |
+| enabler ↔ enabler | 702 | 5 | 8.3% |
+| other same-axis | 2,986 | 5 | 35.2% |
 <!-- coverage:end -->
 
 Roles overlap on multi-role cards such as Lyle Tiberius Rourke, who mills *and* reanimates, or Hudson - Determined Reader, who loots and carries STONE BY DAY. When both cards of a pair score it the same, the pair is read from its lower-id card as the searcher.
@@ -275,7 +277,7 @@ Same-axis pairs name both cards:
 | Role | Cards | Cards per ink |
 |----|-----|-------------|
 | enabler (loot / discard-hand / discard-cost) | 44 | Steel 23, Emerald 14, Amethyst 5, Ruby 2, Amber 1 |
-| reanimator ("from your discard", self-contained and named-card recursion excluded) | 46 | Amber 18, Sapphire 9, Emerald 7, Ruby 7, Steel 5, Amethyst 2 |
+| reanimator ("from your discard", minus self-contained, named-card and forced deck-bottom clauses) | 44 | Amber 18, Sapphire 9, Emerald 7, Ruby 6, Steel 5, Amethyst 1 |
 | state-payoff (discarded this turn / Hellbent / STONE BY DAY) | 20 | Steel 10, Amethyst 6, Ruby 4 |
 | zone-payoff (count / card-type / put-this-turn) | 28 | Ruby 11, Emerald 6, Amethyst 5, Sapphire 3, Amber 2, Steel 1 |
 | mill (deck-side filler) | 8 | Ruby 7, Sapphire 1 |
@@ -290,10 +292,10 @@ Same-axis pairs name both cards:
 ```chart
 {
   "type": "doughnut",
-  "title": "Role composition (133 cards; multi-role overlap)",
+  "title": "Role composition (132 cards; multi-role overlap)",
   "data": {
-    "labels": ["Enabler (44)", "Reanimator (46)", "State-payoff (20)", "Zone-payoff (28)", "Mill (8)"],
-    "values": [44, 46, 20, 28, 8]
+    "labels": ["Enabler (44)", "Reanimator (44)", "State-payoff (20)", "Zone-payoff (28)", "Mill (8)"],
+    "values": [44, 44, 20, 28, 8]
   }
 }
 ```
@@ -305,7 +307,7 @@ Reanimators are the deepest side and mill, the deck-side filler, the thinnest. T
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Self-Discard rule (Discard Matters)')`. The self-contained and named-card recursion carve-outs and the feed check are tested in `packages/synergy-engine/src/__tests__/selfDiscard.test.ts`, and STONE BY DAY in `packages/synergy-engine/src/__tests__/stoneByDay.test.ts`, both with real card text.
+Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Self-Discard rule (Discard Matters)')`. The self-contained recursion, named-card and deck-bottom sweep carve-outs and the feed check are tested in `packages/synergy-engine/src/__tests__/selfDiscard.test.ts`, and STONE BY DAY in `packages/synergy-engine/src/__tests__/stoneByDay.test.ts`, both with real card text.
 
 ### Role Detection (10 tests)
 
@@ -332,7 +334,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | fill combos → 7 / 6 | mill ↔ zone-payoff and mill ↔ reanimator 7, loot ↔ zone-payoff 6, with the filler as the actor and the token-swap when the payoff is the searcher |
 | mill ↔ state-payoff → 5 | milling is not a discard event, so it stays at the baseline |
 
-### Self-contained recursion, named cards and feed check (14 tests, `selfDiscard.test.ts`)
+### Self-contained recursion, named cards, deck-bottom sweeps and feed check (16 tests, `selfDiscard.test.ts`)
 
 | Test | What it verifies |
 |------|------------------|
@@ -350,6 +352,8 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | named-card recursion | Captain Hook - Captain of the Jolly Roger, Merida - Formidable Archer and Alien - True Believer have no roles |
 | named-card pile check | Pain - Running with Scissors has no roles |
 | a named card in another sentence | Get to Safety! stays `['reanimator']` |
+| a sweep the card must make | Mamá Imelda - No-Nonsense Ancestor has no roles; Bouncing Ducky - Sid's Toy keeps only `['zone-payoff']` |
+| an optional sweep | Hand-in-the-Box - Sid's Toy stays `['reanimator']` |
 
 ### STONE BY DAY (9 tests, `stoneByDay.test.ts`)
 

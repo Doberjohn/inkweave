@@ -268,3 +268,28 @@ describe('Self-Discard roles: a clause that names one card', () => {
     expect(getSelfDiscardRoles(getToSafety)).toEqual(['reanimator']);
   });
 });
+
+// A sweep that moves cards from your discard to the bottom of your deck: no card comes back.
+const mamaImelda = createCard({
+  fullName: 'Mamá Imelda - No-Nonsense Ancestor',
+  text: 'LET ME THROUGH When you play this character, put 3 cards from your discard on the bottom of your deck in any order or banish her.',
+});
+const bouncingDucky = createCard({
+  fullName: "Bouncing Ducky - Sid's Toy",
+  text: 'REJECTED TOYS For each Toy character card in your discard, you pay 1 ⬡ less to play this character.\nREPURPOSED When you play this character, put all Toy character cards from your discard on the bottom of your deck in any order.',
+});
+const handInTheBox = createCard({
+  fullName: "Hand-in-the-Box - Sid's Toy",
+  text: 'SPRING-LOADED You may put a Toy character card from your discard on the bottom of your deck to play this character for free.',
+});
+
+describe('Self-Discard roles: a sweep from the discard to the bottom of the deck', () => {
+  it('reads no recursion from a sweep the card must make', () => {
+    expect(getSelfDiscardRoles(mamaImelda)).toEqual([]);
+    expect(getSelfDiscardRoles(bouncingDucky)).toEqual(['zone-payoff']);
+  });
+
+  it('keeps an optional sweep the card pays as a cost', () => {
+    expect(getSelfDiscardRoles(handInTheBox)).toEqual(['reanimator']);
+  });
+});

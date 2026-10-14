@@ -913,6 +913,15 @@ const DISCARD_FED_RECURSION_PATTERN = /\bwhen(?:ever)?\s+you\s+discard\b/i;
  */
 const NAMED_CARD_RECURSION_PATTERN =
   /\b(?:play|return|put)\b(?:(?!\b(?:play|return|put)\b)[^.]){0,60}?\bnamed\b(?:(?!\b(?:play|return|put)\b)[^.]){0,40}?\bfrom your discard\b/gi;
+/**
+ * A sweep that must move cards from your discard to the bottom of your deck ("put 3 cards from
+ * your discard on the bottom of your deck in any order or banish her", Mamá Imelda -
+ * No-Nonsense Ancestor). No card comes back to hand or play, so it is no recursion. An optional
+ * one ("you may put a Toy character card from your discard on the bottom of your deck to play
+ * this character for free") is a cost the card pays for something else, and stays.
+ */
+const MANDATORY_DECK_BOTTOM_SWEEP_PATTERN =
+  /(?<!\byou may )\bput\b[^.]{0,40}?\bfrom your discard on the bottom of your deck\b/gi;
 
 /** A sentence break: the whitespace after ".", "!" or "?". */
 const SENTENCE_BREAK = /(?<=[.!?])\s+/;
@@ -927,10 +936,12 @@ function stripSelfContainedRecursion(text: string): string {
 
 /**
  * The text with only the recursion an outlet or a mill can feed: self-contained recursion
- * sentences and named-card recursion clauses removed.
+ * sentences, named-card recursion clauses and mandatory deck-bottom sweeps removed.
  */
 function stripUnfedRecursion(text: string): string {
-  return stripSelfContainedRecursion(text).replace(NAMED_CARD_RECURSION_PATTERN, '');
+  return stripSelfContainedRecursion(text)
+    .replace(NAMED_CARD_RECURSION_PATTERN, '')
+    .replace(MANDATORY_DECK_BOTTOM_SWEEP_PATTERN, '');
 }
 
 /**
