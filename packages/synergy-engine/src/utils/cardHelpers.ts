@@ -2345,18 +2345,20 @@ export const isItemCard = (card: LorcanaCard): boolean => getItemRoles(card).len
  */
 export type HealRole = 'healer' | 'heal-payoff';
 
-/** Healer (enabler): an outlet that removes damage from a character. Begins with "remove", so a
- *  "move ... damage" clause on the same card can never fabricate a false healer here. */
-const HEALER_PATTERN = /remove (?:up to \d+|all|\d+) damage from/i;
+/** Healer (enabler): an outlet that removes damage from a character, or spreads a "damage total"
+ *  over several. Begins with "remove", so a "move ... damage" clause on the same card can never
+ *  fabricate a false healer here. */
+const HEALER_PATTERN = /remove (?:up to \d+|all|\d+) damage (?:total )?from/i;
 
 /**
  * Heal-payoff: a benefit triggered or gated on removing damage. Covers the repeating
  * "whenever/when you remove damage" triggers, the "if you removed damage" turn-state
- * condition, and the "for each N damage removed" / "damage removed this way" / "remove 1
- * or more damage" count payoffs.
+ * condition, and the "for each N damage removed" / "remove 1 or more damage" count payoffs.
+ * A bonus for the card's own heal ("If you removed damage this way", "for each 1 damage
+ * removed this way") is no payoff: no other healer can feed it, so the card is only a healer.
  */
 const HEAL_PAYOFF_PATTERN =
-  /whenever you remove damage|when you remove damage|if you removed damage|for each \d+ damage removed|damage removed this way|remove 1 or more damage/i;
+  /whenever you remove damage|when you remove damage|if you removed damage(?! this way)|for each \d+ damage removed(?! this way)|remove 1 or more damage/i;
 
 /**
  * Move-damage is the OPPOSITE mechanic (relocating damage between characters, not clearing
