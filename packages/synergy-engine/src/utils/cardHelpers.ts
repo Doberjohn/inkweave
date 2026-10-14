@@ -904,6 +904,15 @@ const SELF_CONTAINED_RECURSION_PATTERN =
   /\b(?:play|return|put)\s+(?:this|that)\s+(?:card|item|character|location)\s+from your discard\b|\bthose\s+characters\s+from your discard\b|\byou played this turn\b[^.]{0,60}\bfrom your discard\b|\bthis way, you may (?:play|return) it from your discard\b/i;
 /** Self-recursion that fires when YOU discard the card is fed by hand discard, so it stays. */
 const DISCARD_FED_RECURSION_PATTERN = /\bwhen(?:ever)?\s+you\s+discard\b/i;
+/**
+ * Recursion of one named card ("return an action card named Three Arrows from your discard",
+ * "another character card named Alien"). Only that card switches it on, and Named Companions
+ * already pairs the two, so no outlet or mill feeds it. Neither side of "named" may cross
+ * another play/return/put, so a named card elsewhere in the sentence ("if you have an item
+ * named Rivera Family Photo in play, you may play this item from your discard") stays out.
+ */
+const NAMED_CARD_RECURSION_PATTERN =
+  /\b(?:play|return|put)\b(?:(?!\b(?:play|return|put)\b)[^.]){0,60}?\bnamed\b(?:(?!\b(?:play|return|put)\b)[^.]){0,40}?\bfrom your discard\b/gi;
 
 /** A sentence break: the whitespace after ".", "!" or "?". */
 const SENTENCE_BREAK = /(?<=[.!?])\s+/;
@@ -914,6 +923,14 @@ function stripSelfContainedRecursion(text: string): string {
     .split(SENTENCE_BREAK)
     .filter((s) => !(SELF_CONTAINED_RECURSION_PATTERN.test(s) && !DISCARD_FED_RECURSION_PATTERN.test(s)))
     .join(' ');
+}
+
+/**
+ * The text with only the recursion an outlet or a mill can feed: self-contained recursion
+ * sentences and named-card recursion clauses removed.
+ */
+function stripUnfedRecursion(text: string): string {
+  return stripSelfContainedRecursion(text).replace(NAMED_CARD_RECURSION_PATTERN, '');
 }
 
 /**
@@ -939,10 +956,12 @@ const SELF_DISCARD_SMALL_HAND_PATTERN =
 /**
  * Zone payoff — counts or checks cards sitting IN your discard ("10 or more cards in your
  * discard", "for each Alien character card in your discard", "a song card in your discard").
- * "in your discard" keeps it disjoint from the reanimator's "from your discard".
+ * "in your discard" keeps it disjoint from the reanimator's "from your discard". A check for one
+ * named card ("a character card named Panic in your discard") is no pile check: only that card
+ * switches it on, and Named Companions already pairs the two.
  */
 const SELF_DISCARD_ZONE_IN_PATTERN =
-  /\b(?:a|an|\d+\s+or\s+more|for\s+each)\s+(?:\w+\s+){0,3}?cards?\s+(?:named\s+\w+\s+)?in\s+your\s+discard\b/i;
+  /\b(?:a|an|\d+\s+or\s+more|for\s+each)\s+(?:\w+\s+){0,3}?cards?\s+in\s+your\s+discard\b/i;
 /** Zone payoff — the "N or more cards were put into your discard this turn" trigger family. */
 const SELF_DISCARD_ZONE_PUT_PATTERN = /cards?\s+were\s+put\s+into\s+your\s+discard\s+this\s+turn/i;
 /** Mill — fills the bin from the top of the deck. Kept tight: "put the rest / put it into your discard" is not mill. */
@@ -958,13 +977,13 @@ function isSelfDiscardZonePayoff(text: string): boolean {
 }
 
 /**
- * Reanimator: recursion that is not self-contained. The raw test runs first, so the sentence
- * split only happens for the few cards that recur anything at all.
+ * Reanimator: recursion an outlet or a mill can feed (see stripUnfedRecursion). The raw test
+ * runs first, so the sentence split only happens for the few cards that recur anything at all.
  */
 function isSelfDiscardReanimator(text: string): boolean {
   return (
     SELF_DISCARD_REANIMATOR_PATTERN.test(text) &&
-    SELF_DISCARD_REANIMATOR_PATTERN.test(stripSelfContainedRecursion(text))
+    SELF_DISCARD_REANIMATOR_PATTERN.test(stripUnfedRecursion(text))
   );
 }
 
@@ -1033,8 +1052,6 @@ const SELF_DISCARD_TYPED_OUTLET_PATTERN =
 /** A recursion clause's object: the words between its nearest play/return/put and "from your discard". */
 const SELF_DISCARD_RECURSION_OBJECT_PATTERN =
   /\b(?:play|return|put)\b((?:(?!\b(?:play|return|put)\b)[^.]){0,60}?)\bfrom your discard\b/i;
-/** A recursion object restricted to one named card: "an action card named Three Arrows". */
-const SELF_DISCARD_NAMED_OBJECT_PATTERN = /\bnamed\s+(.+?)\s*$/i;
 /** A recursion object that takes any card: "a card", "another card", "2 cards". */
 const SELF_DISCARD_ANY_OBJECT_PATTERN = /\b(?:a|an|another|any|\d+)\s+cards?\b/i;
 /**
@@ -1076,20 +1093,18 @@ function selfDiscardOutletKinds(text: string): Set<SelfDiscardKind> | null {
   return kinds.size > 0 ? kinds : null;
 }
 
-/** A self-reference ("this card", "it", a card named like itself) recurs the card's own kind. */
+/** A self-reference ("this card", "it") recurs the card's own kind. */
 function ownSelfDiscardKinds(card: LorcanaCard): Set<SelfDiscardKind> {
   return new Set([isSong(card) ? 'song' : (card.type.toLowerCase() as SelfDiscardKind)]);
 }
 
 /**
- * What a reanimator pulls from the bin; null when it takes any card. A named other card
- * ("an action card named Three Arrows") admits no kind, since no typed outlet is known to
- * discard it; an object with no kind word and no generic card ("this card", "it") is a self-reference.
+ * What a reanimator pulls from the bin; null when it takes any card. An object with no kind
+ * word and no generic card ("this card", "it") is a self-reference. Named-card recursion never
+ * gets here: stripUnfedRecursion has removed it.
  */
 function selfDiscardRecursionKinds(card: LorcanaCard, text: string): Set<SelfDiscardKind> | null {
   const object = SELF_DISCARD_RECURSION_OBJECT_PATTERN.exec(text)?.[1] ?? 'a card';
-  const named = SELF_DISCARD_NAMED_OBJECT_PATTERN.exec(object)?.[1];
-  if (named !== undefined) return named === card.name ? ownSelfDiscardKinds(card) : new Set();
   const kinds = selfDiscardKindsIn(object);
   if (kinds.size > 0) return kinds;
   return SELF_DISCARD_ANY_OBJECT_PATTERN.test(object) ? null : ownSelfDiscardKinds(card);
@@ -1110,7 +1125,7 @@ interface SelfDiscardFeedProfile {
   shrinksHand: boolean;
   /** The card trims your hand to 2 at the end of your turn (Goliath - Clan Leader). */
   trimsHand: boolean;
-  /** Kinds the card's recursion pulls, self-contained recursion stripped; null when it takes any card. */
+  /** Kinds the card's recursion pulls, unfed recursion stripped; null when it takes any card. */
   recursionKinds: Set<SelfDiscardKind> | null;
   /** The recursion fires on your discard (see hasDiscardFedRecursion). */
   recursionOnDiscard: boolean;
@@ -1135,7 +1150,7 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
     refills,
     shrinksHand: !refills && !SELF_DISCARD_DRAW_FIRST_PATTERN.test(text),
     trimsHand: SELF_DISCARD_HAND_TRIM_PATTERN.test(text),
-    recursionKinds: selfDiscardRecursionKinds(card, stripSelfContainedRecursion(text)),
+    recursionKinds: selfDiscardRecursionKinds(card, stripUnfedRecursion(text)),
     recursionOnDiscard: hasDiscardFedRecursion(text),
     rewardsEvent: SELF_DISCARD_EVENT_PATTERN.test(text),
     rewardsEmptyHand: SELF_DISCARD_HELLBENT_PATTERN.test(text),
@@ -1185,7 +1200,7 @@ function selfDiscardRecursionFeed(
  *  - state: a trigger for the discard event or an empty hand, except that a refill outlet never
  *    leaves the empty hand a "no cards in hand" payoff needs; an unlock for a small hand, which
  *    only an outlet that shrinks the hand feeds.
- * A trigger wins over a stock or an unlock. Reads the payoff's text with self-contained recursion
+ * A trigger wins over a stock or an unlock. Reads the payoff's text with unfed recursion
  * stripped, like getSelfDiscardRoles.
  */
 export function selfDiscardOutletFeed(

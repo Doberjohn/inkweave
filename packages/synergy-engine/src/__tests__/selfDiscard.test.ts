@@ -221,7 +221,6 @@ describe('Self-Discard scoring: an outlet feeds only the payoffs its discard can
     expect(score(circleOfLife, maxKaraoke)).toBe(5);
     expect(score(maxKaraoke, salvageOperation)).toBe(5);
     expect(score(maxKaraoke, lookWhatYouveDone)).toBe(5);
-    expect(score(maxKaraoke, merida)).toBe(5);
   });
 
   it('lets any discard feed a discard-event payoff, but not a refill outlet feed an empty-hand one', () => {
@@ -232,14 +231,40 @@ describe('Self-Discard scoring: an outlet feeds only the payoffs its discard can
     expect(score(sprout, megavolt)).toBe(8);
   });
 
-  it('scores a character-or-location outlet 7 with character, location and self-named recursion', () => {
+  it('scores a character-or-location outlet 7 with character and location recursion', () => {
     expect(score(sprout, getToSafety)).toBe(7);
     expect(score(sprout, circleOfLife)).toBe(7);
-    expect(score(sprout, alien)).toBe(7);
   });
 
   it('scores a character-or-location outlet 5 with item and song recursion', () => {
     expect(score(sprout, salvageOperation)).toBe(5);
     expect(score(sprout, maxTeen)).toBe(5);
+  });
+});
+
+// Recursion or a pile check that names one card: only that card switches it on, and Named
+// Companions already pairs the two.
+const hook = createCard({
+  fullName: 'Captain Hook - Captain of the Jolly Roger',
+  text: 'DOUBLE THE POWDER! When you play this character, you may return an action card named Fire the Cannons! from your discard to your hand.',
+});
+const pain = createCard({
+  fullName: 'Pain - Running with Scissors',
+  text: 'MULTIPURPOSE TOOL When you play this character, if you have a character card named Panic in your discard, gain 2 lore.',
+});
+
+describe('Self-Discard roles: a clause that names one card', () => {
+  it('reads no recursion from a clause that returns one named card', () => {
+    expect(getSelfDiscardRoles(hook)).toEqual([]);
+    expect(getSelfDiscardRoles(merida)).toEqual([]);
+    expect(getSelfDiscardRoles(alien)).toEqual([]);
+  });
+
+  it('reads no pile check from a clause that looks for one named card', () => {
+    expect(getSelfDiscardRoles(pain)).toEqual([]);
+  });
+
+  it('keeps recursion when a named card sits in another sentence', () => {
+    expect(getSelfDiscardRoles(getToSafety)).toEqual(['reanimator']);
   });
 });
