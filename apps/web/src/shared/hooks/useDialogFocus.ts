@@ -20,13 +20,16 @@ const FOCUSABLE_SELECTOR =
 
 /**
  * The stops Tab reaches inside the dialog, in DOM order: the selector's matches minus any with a
- * negative tabIndex. A roving grid keeps its inactive items in the DOM at -1, as SynergyGroup's
- * tiles do in the card overview modal. Counted as controls, they made the trap's edges tiles Tab
- * never reaches, so Tab from the grid's active tile left the dialog.
+ * negative tabIndex or under `inert`. A roving grid keeps its inactive items in the DOM at -1, as
+ * SynergyGroup's tiles do in the card overview modal. Counted as controls, they made the trap's
+ * edges tiles Tab never reaches, so Tab from the grid's active tile left the dialog. Inert
+ * controls are skipped for the same reason: the modal's comparison mode makes its chip row and
+ * synergy section inert, and an inert stop at an edge would hand Tab to the browser, or take a
+ * focus() call that does nothing.
  */
 function tabStops(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
-    (el) => el.tabIndex >= 0,
+    (el) => el.tabIndex >= 0 && !el.closest('[inert]'),
   );
 }
 

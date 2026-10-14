@@ -163,21 +163,28 @@ describe('useDialogFocus', () => {
     {key: 'Tab', shiftKey: false, from: 'last', lands: 'first'},
     {key: 'Shift+Tab', shiftKey: true, from: 'first', lands: 'last'},
   ] as const)(
-    '$key from the $from stop wraps to the $lands, past roving items Tab skips',
+    '$key from the $from stop wraps to the $lands, past items Tab never reaches',
     ({shiftKey, from, lands}) => {
       // A roving grid keeps its inactive items in the DOM at tabIndex -1, as SynergyGroup's tiles
       // do in the card overview modal. The trap counted them as controls, so its edges were tiles
-      // Tab never reaches, and Tab from the grid's active tile left the dialog.
+      // Tab never reaches, and Tab from the grid's active tile left the dialog. Controls under
+      // `inert`, like the modal's chips and tiles in comparison mode, are out of Tab's reach too.
       const link = (tabIndex: number) => {
         const a = document.createElement('a');
         a.href = '#';
         a.tabIndex = tabIndex;
         return a;
       };
+      const inertButton = () => {
+        const wrapper = document.createElement('div');
+        wrapper.setAttribute('inert', '');
+        wrapper.append(document.createElement('button'));
+        return wrapper;
+      };
       const first = link(0);
       const last = link(0);
       const container = document.createElement('div');
-      container.append(link(-1), first, last, link(-1));
+      container.append(inertButton(), link(-1), first, last, link(-1), inertButton());
       document.body.appendChild(container);
 
       const {result} = renderHook(() =>
