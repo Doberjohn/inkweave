@@ -82,6 +82,8 @@ Three activation patterns (same synergy behavior, affects scoring nuance):
 - **Quest-activated**: `Whenever this character quests, you pay X less` (Huey, Aurora)
 - **Passive**: `While/For each...you pay X less` (Yokai, Gadget)
 
+A discount for the cards of **one name** is not a grant: "You pay 1 ⬡ less to play characters named Gurgi." (Munchings and Crunchings), "you pay 2 ⬡ less for the next character named Ellie Fredricksen" (Carl Fredricksen - Loving Husband). It helps that one partner, which Named Companions pairs, and never stacks with another discount on any other play. `NAMED_DISCOUNT_PATTERN` strips it before the grant test.
+
 ---
 
 ## Card examples by role
@@ -140,19 +142,19 @@ if trigger ↔ cost-reduction: 5
 <!-- coverage:start distribution -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-**1,767 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+**1,661 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| Deck ramp ↔ repeating trigger | 52 | 9 | 2.9% |
-| Deck ramp ↔ once-per-turn trigger | 26 | 8 | 1.5% |
+| Deck ramp ↔ repeating trigger | 52 | 9 | 3.1% |
+| Deck ramp ↔ once-per-turn trigger | 26 | 8 | 1.6% |
 | Self-sacrifice ↔ repeating trigger | 24 | 8 | 1.4% |
 | Self-sacrifice ↔ once-per-turn trigger | 12 | 7 | 0.7% |
-| Cost reduction ↔ cost reduction (overlapping targets) | 96 | 6 | 5.4% |
-| Ramp ↔ ramp | 701 | 5 | 39.7% |
+| Cost reduction ↔ cost reduction (overlapping targets) | 71 | 6 | 4.3% |
+| Ramp ↔ ramp | 701 | 5 | 42.2% |
 | Trigger ↔ trigger | 3 | 5 | 0.2% |
-| Ramp ↔ cost reduction | 790 | 5 | 44.7% |
-| Trigger ↔ cost reduction | 63 | 5 | 3.6% |
+| Ramp ↔ cost reduction | 715 | 5 | 43.0% |
+| Trigger ↔ cost reduction | 57 | 5 | 3.4% |
 <!-- coverage:end -->
 
 The 8-9 pairs aren't inflation: they're the ramp ↔ trigger chains, the only real mechanical chain in the playstyle. Most inkwell-ramp cards are deck ramp (the strongest variant) and most inkwell triggers repeat, so most pairs that *can* chain *do*; how many chains there are follows how many trigger cards the pool holds. A broad density floor with rare, mechanically real spikes is the right curve. The scores and explanation templates live in `tuning.json`, and the table reads both from the engine.
@@ -175,13 +177,13 @@ The templates live in `tuning.json` (`ruleTexts.ramp.templates`). A two-role tem
 ## Coverage
 
 <!-- coverage:start coverage -->
-**62 total ramp cards**:
+**60 total ramp cards**:
 
 | Role | Cards | Sub-patterns | Cards per ink |
 |----|-----|------------|-------------|
 | Inkwell Ramp | 38 | 26 deck ramp + 12 self-sacrifice | Sapphire 36, Emerald 2, Amber 1 |
 | Inkwell Triggers | 3 | 2 repeating + 1 once-per-turn | Sapphire 3 |
-| Cost Reduction | 21 | Exert/Quest/Passive activation | Amber 10, Emerald 3, Sapphire 3, Amethyst 2, Ruby 2, Steel 1 |
+| Cost Reduction | 19 | Exert/Quest/Passive activation | Amber 9, Sapphire 3, Amethyst 2, Emerald 2, Ruby 2, Steel 1 |
 <!-- coverage:end -->
 
 Inkwell ramp is Sapphire's identity mechanic and cost reduction is Amber's support identity; the ink columns show how the live pool splits.
@@ -194,6 +196,7 @@ Inkwell ramp is Sapphire's identity mechanic and cost reduction is Amber's suppo
 |----------|--------|
 | Opponent Ink | Removal, not ramp — doesn't fire your triggers or give you ink |
 | Self-Discount Payoffs | "Pay X less to play **this**" — built-in discount, too self-contained |
+| Named Discounts | "Pay X less to play characters **named Gurgi**" — helps one partner, which Named Companions pairs |
 | Free Play Grants | Bypass mana entirely — separate mechanic, doesn't benefit from more ink |
 | High-cost generic | Original issue suggested cost 6+ as payoffs — too broad, no synergy signal |
 
@@ -222,6 +225,9 @@ Inkwell ramp is Sapphire's identity mechanic and cost reduction is Amber's suppo
 - No synergies for excluded opponent-ink cards
 - Explanations include both card names
 - All matches marked bidirectional
+
+### Misread fixes (`ramp.test.ts`, real card text)
+- A discount for the cards of one name (Munchings and Crunchings, Carl Fredricksen - Loving Husband) gains no cost-reduction role, and pairs with no general discount (Pluto - Friendly Pooch)
 
 ---
 

@@ -1484,6 +1484,15 @@ const COST_REDUCTION_GRANT_PATTERN = /you\s+pay\s+\d+\s+⬡?\s*less/i;
 const COST_REDUCTION_SELF_PATTERN = /you\s+pay\s+\d+\s+⬡?\s*less\s+⬡?\s*to\s+play\s+this/i;
 
 /**
+ * A discount for the cards of one name: "You pay 1 ⬡ less to play characters named Gurgi."
+ * (Munchings and Crunchings), "you pay 2 ⬡ less for the next character named Ellie Fredricksen"
+ * (Carl Fredricksen - Loving Husband). It helps that one partner, which Named Companions pairs,
+ * so getRampRoles reads no cost reduction from it.
+ */
+const NAMED_DISCOUNT_PATTERN =
+  /you\s+pay\s+\d+\s+⬡?\s*less\s+(?:for\s+the\s+(?:next|first)\s+|to\s+play\s+)[^.]{0,30}?\bnamed\b/gi;
+
+/**
  * Self-discount via free-play: "play this character for free" — the limit case
  * of self cost reduction (cost = 0). Distinct shape from "you pay N less", but
  * the same mechanic: this character's mana cost is reduced when a condition is met.
@@ -1519,8 +1528,9 @@ export function getRampRoles(card: LorcanaCard): RampRole[] {
     roles.push('inkwell-trigger');
   }
 
-  // Check cost reduction grant (reduces cost of OTHER cards, not self)
-  if (COST_REDUCTION_GRANT_PATTERN.test(t) && !COST_REDUCTION_SELF_PATTERN.test(t)) {
+  // Check cost reduction grant (reduces cost of OTHER cards, not self, nor of one name only)
+  const grants = t.replace(NAMED_DISCOUNT_PATTERN, '');
+  if (COST_REDUCTION_GRANT_PATTERN.test(grants) && !COST_REDUCTION_SELF_PATTERN.test(grants)) {
     roles.push('cost-reduction');
   }
 
