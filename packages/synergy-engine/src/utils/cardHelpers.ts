@@ -2993,3 +2993,35 @@ export function getBounceRoles(card: LorcanaCard): BounceRole[] {
 
 /** Check if a card participates in the bounce axis (any role). */
 export const isBounceCard = (card: LorcanaCard): boolean => getBounceRoles(card).length > 0;
+
+// ============================================
+// SPIKE SUIT DETECTION (Dale - Ready for His Shot)
+// ============================================
+
+/** Reminder text, like Challenger's "(While challenging, this character gets +N ¤.)". */
+const REMINDER_TEXT_PATTERN = /\([^)]*\)/g;
+/** A character's boost to its own strength: "this character gets +N ¤", "he gets +N ¤". */
+const SELF_STRENGTH_BOOST_PATTERN = /\b(?:this character|he|she) gets \+(\d+) ¤/i;
+/**
+ * A self boost that is off when the character challenges: one that lasts a turn after a trigger
+ * or a payment, or one that needs a location or damage.
+ */
+const OFF_IN_CHALLENGE_PATTERN = /\bthis turn\b|\bat a location\b|\bhas damage\b/i;
+
+/**
+ * The strength a character challenges with: its printed strength plus each boost its own text
+ * gives it that is on whenever it challenges (always, "during your turn", "while this character
+ * has no damage", "while there's a card under this character"). A "for each" boost counts once.
+ * Reminder text is skipped, so Challenger's bonus isn't one.
+ */
+export function strengthInChallenge(card: LorcanaCard): number {
+  return normalizeCardText(card)
+    .replace(REMINDER_TEXT_PATTERN, '')
+    .split(SENTENCE_BREAK)
+    .filter((sentence) => !OFF_IN_CHALLENGE_PATTERN.test(sentence))
+    .reduce(
+      (strength, sentence) =>
+        strength + Number(sentence.match(SELF_STRENGTH_BOOST_PATTERN)?.[1] ?? 0),
+      card.strength ?? 0,
+    );
+}

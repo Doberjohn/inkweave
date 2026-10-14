@@ -61,6 +61,7 @@ import {
   mechanicLabel,
   NAMED_EFFECT_SCORES,
   normalizeCardText,
+  strengthInChallenge,
   type LocationRole,
   type ShiftPayment,
   type ShiftType,
@@ -755,14 +756,17 @@ function findShiftSourcesForBase(baseCard: LorcanaCard, allCards: LorcanaCard[])
  */
 const SPIKE_SUIT_FLOOR = 3;
 
-/** The bonus combat damage Spike Suit hands this character (willpower − strength). */
+/**
+ * The bonus combat damage Spike Suit hands this character: willpower − the strength it challenges
+ * with, its own strength boosts included (`strengthInChallenge`).
+ */
 function spikeSuitGap(card: LorcanaCard): number {
-  return (card.willpower ?? 0) - (card.strength ?? 0);
+  return (card.willpower ?? 0) - strengthInChallenge(card);
 }
 
-/** True when a character has no strength — Spike Suit transforms it from wall to threat. */
+/** True when a character challenges with no strength — Spike Suit turns it from wall to threat. */
 function isSpikeSuitWall(card: LorcanaCard): boolean {
-  return (card.strength ?? 0) === 0;
+  return strengthInChallenge(card) === 0;
 }
 
 /**

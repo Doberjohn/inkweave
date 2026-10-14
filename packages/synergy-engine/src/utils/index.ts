@@ -80,6 +80,7 @@ export {
   getBounceTargetGate,
   bounceGateAdmits,
   isBounceCard,
+  strengthInChallenge,
   getTribalRoles,
   tribalPayoffClasses,
   isTribalCard,

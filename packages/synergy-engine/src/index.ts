@@ -56,6 +56,7 @@ export {
   getKeywordValue,
   isSong,
   isCharacter,
+  strengthInChallenge,
   isAction,
   isItem,
   isLocation,
