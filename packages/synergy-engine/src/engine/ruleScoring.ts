@@ -10,6 +10,7 @@ import {
   isTribalCard,
   isDeckRamp,
   isRepeatingTrigger,
+  inkLandsOffTriggerTurn,
   costReductionTargetsOverlap,
   isExertConsumePayoff,
   exertEnablerReachesPayoff,
@@ -658,9 +659,12 @@ const RAMP = TUNING.ruleTexts.ramp;
 /**
  * Tags every ramp pair by role mix. The tag drives both scoring and explanation
  * generation, replacing the repeated boolean-flag arithmetic that lived in both.
+ * 'ramp-trigger-off-turn' is a ramp ↔ trigger pair whose ink lands on the turn the
+ * trigger can't fire (inkLandsOffTriggerTurn), so it scores as density.
  */
 type RampPairShape =
   | 'ramp-trigger'
+  | 'ramp-trigger-off-turn'
   | 'cost-cost'
   | 'ramp-ramp'
   | 'trigger-trigger'
@@ -719,12 +723,16 @@ function classifyRampPair(
 ): RampPairFlags {
   const a = rampRoleFlags(rolesA);
   const b = rampRoleFlags(rolesB);
-  return {
+  const flags: RampPairFlags = {
     shape: determineRampShape(a, b),
     rampCard: a.ramp ? cardA : cardB,
     triggerCard: a.trigger ? cardA : cardB,
     costCard: a.cost ? cardA : cardB,
   };
+  if (flags.shape === 'ramp-trigger' && inkLandsOffTriggerTurn(flags.rampCard, flags.triggerCard)) {
+    flags.shape = 'ramp-trigger-off-turn';
+  }
+  return flags;
 }
 
 /** Score the ramp ↔ trigger chain (the only pair shape with a tiered ladder). */
@@ -756,6 +764,7 @@ function scoreRampCostPair(cardA: LorcanaCard, cardB: LorcanaCard): number {
  * - Deck ramp ↔ Once/turn trigger: 8 (free ink but trigger capped)
  * - Self-sacrifice ↔ Repeating trigger: 8 (fires every event but costs a card)
  * - Self-sacrifice ↔ Once/turn trigger: 7 (card cost + capped)
+ * - Ramp ↔ trigger whose ink lands on the other turn: 5 (the trigger never sees it)
  * - Cost reduction ↔ Cost reduction (overlap): 6 (stacking discounts on same card type)
  * - Cost reduction ↔ Cost reduction (no overlap): 0 (silently dropped)
  * - All other same-axis density pairs: 5 (parallel acceleration)
@@ -787,6 +796,7 @@ const RAMP_EXPLANATIONS: Record<
       .replace('{RAMP}', rampToken)
       .replace('{TRIGGER}', triggerToken);
   },
+  'ramp-trigger-off-turn': () => sameDeckLine('a Ramp'),
   'ramp-ramp': (_a, _b) => RAMP.templates['ramp-ramp'],
   'ramp-cost': (a, _b, f) => {
     const rampIsA = f.rampCard.id === a.id;

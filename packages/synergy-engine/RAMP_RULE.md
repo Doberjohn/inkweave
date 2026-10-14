@@ -71,6 +71,8 @@ Cards with "whenever a card is put into your inkwell" effects. Two timing varian
 - `whenever you put a card into your inkwell` (Fairy Godmother's Wand)
 - `when you put a card into your inkwell` (Chicha)
 
+**Turn limits**: triggers such as Scrooge McDuck - Miserly Ebenezer fire only "during your turn", and Ink Amplifier ramps only "during their turn", so they never see its ink. `inkLandsOffTriggerTurn` reads the turn that every ramp sentence and every trigger sentence is limited to, and a ramp ↔ trigger pair limited to different turns scores as density.
+
 ### Role 3: Cost Reduction Grants
 
 Cards that reduce the cost of OTHER cards you play, leaning Amber (its support identity).
@@ -110,6 +112,7 @@ The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral
 | 2 | Deck Ramp ↔ Once/turn Trigger | **8** | One Jump Ahead + Raya Kumandran — free ink, capped trigger |
 | 3 | Self-Sacrifice ↔ Repeating Trigger | **8** | Winnie the Pooh + Rafiki — hand→ink fires every event |
 | 4 | Self-Sacrifice ↔ Once/turn Trigger | **7** | Cinderella + Dawson — card cost + capped trigger |
+| — | Ramp ↔ Trigger, ink on the turn it can't fire | **5** | Ink Amplifier + Scrooge McDuck - Miserly Ebenezer: the ink lands on the opponent's turn, the trigger fires only on yours |
 | 5 | Cost Reduction ↔ Cost Reduction (overlap) | **6** | Pluto + Huey — same target type, real stacking discount |
 | 6 | Ramp ↔ Ramp | **5** | Parallel ramp; doesn't compound |
 | 7 | Trigger ↔ Trigger | **5** | Parallel triggers; both need a ramp card to fire |
@@ -121,6 +124,7 @@ The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral
 
 ```
 if ramp ↔ trigger:
+  5 if the ramp's ink lands only on the turn the trigger can't fire (Ink Amplifier)
   base = 7
   +1 if ramp card is deck ramp (free mana)
   +1 if trigger is repeating (scales with ramp)
@@ -146,10 +150,11 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| Deck ramp ↔ repeating trigger | 52 | 9 | 3.1% |
-| Deck ramp ↔ once-per-turn trigger | 26 | 8 | 1.6% |
+| Deck ramp ↔ repeating trigger | 50 | 9 | 3.0% |
+| Deck ramp ↔ once-per-turn trigger | 25 | 8 | 1.5% |
 | Self-sacrifice ↔ repeating trigger | 24 | 8 | 1.4% |
 | Self-sacrifice ↔ once-per-turn trigger | 12 | 7 | 0.7% |
+| Ramp ↔ trigger, ink on the turn it can't fire | 3 | 5 | 0.2% |
 | Cost reduction ↔ cost reduction (overlapping targets) | 71 | 6 | 4.3% |
 | Ramp ↔ ramp | 701 | 5 | 42.2% |
 | Trigger ↔ trigger | 3 | 5 | 0.2% |
@@ -171,6 +176,8 @@ The templates live in `tuning.json` (`ruleTexts.ramp.templates`). A two-role tem
 | Trigger ↔ Trigger | "{A} and {B} both trigger when cards go into your inkwell." |
 | Cost ↔ Cost | "{A} and {B} both give ink discounts which stack." |
 | Trigger ↔ Cost | "{TRIGGER} rewards cards going into your inkwell, and {COST} gives ink discounts." |
+
+A ramp ↔ trigger pair on different turns uses the engine's same-deck line, "{A} and {B} both go in a Ramp deck.", which lives in code, not `tuning.json`.
 
 ---
 

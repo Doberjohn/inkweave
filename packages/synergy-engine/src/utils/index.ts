@@ -48,6 +48,7 @@ export {
   isRampCard,
   isDeckRamp,
   isRepeatingTrigger,
+  inkLandsOffTriggerTurn,
   getCostReductionTarget,
   costReductionTargetsOverlap,
   getToyRoles,

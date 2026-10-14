@@ -1569,6 +1569,32 @@ export function isRepeatingTrigger(card: LorcanaCard): boolean {
   return !/once\s+during\s+your\s+turn/i.test(t);
 }
 
+const YOUR_TURN_ONLY = /\bduring your turn\b/i;
+const THEIR_TURN_ONLY = /\bduring (?:their|an opponent's|opponents') turns?\b/i;
+
+/** The turn that every sentence matching one of `patterns` is limited to, if they share one. */
+function clauseTurn(card: LorcanaCard, patterns: RegExp[]): 'yours' | 'theirs' | undefined {
+  const clauses = normalizeCardText(card)
+    .split(SENTENCE_BREAK)
+    .filter((s) => patterns.some((p) => p.test(s)));
+  if (clauses.length === 0) return undefined;
+  if (clauses.every((s) => THEIR_TURN_ONLY.test(s))) return 'theirs';
+  if (clauses.every((s) => YOUR_TURN_ONLY.test(s))) return 'yours';
+  return undefined;
+}
+
+/**
+ * True when a ramp card puts ink into your inkwell only on the turn an inkwell trigger can't
+ * fire: Ink Amplifier ramps "during their turn", and every inkwell trigger fires only "during
+ * your turn" (Fairy Godmother's Wand, Scrooge McDuck - Miserly Ebenezer, Chief Tui - Weaving a
+ * Tale), so the trigger never sees that ink.
+ */
+export function inkLandsOffTriggerTurn(rampCard: LorcanaCard, triggerCard: LorcanaCard): boolean {
+  const rampTurn = clauseTurn(rampCard, INKWELL_RAMP_PATTERNS);
+  const triggerTurn = clauseTurn(triggerCard, INKWELL_TRIGGER_PATTERNS);
+  return rampTurn !== undefined && triggerTurn !== undefined && rampTurn !== triggerTurn;
+}
+
 /**
  * Broad card type that a cost reduction card targets.
  * Used to determine if two cost-reduction cards can stack on the same play.
