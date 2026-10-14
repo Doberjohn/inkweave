@@ -41,6 +41,7 @@ export {
   isSelfDiscardCard,
   selfDiscardOutletFeed,
   selfDiscardOutletFeedsPile,
+  selfDiscardMillFeedsRecursion,
   selfDiscardHandTrimFeed,
   getRampRoles,
   isRampCard,

@@ -215,6 +215,15 @@ const priya = createCard({
   text: "THIS IS MY JAM When you play this character, if\nthere's a song card in your discard, gain 1 lore.",
 });
 
+// A mill: it puts cards into your discard without discarding them.
+const hectorStreetMusician = createCard({
+  id: 'hector-rivera-street-musician',
+  name: 'Héctor Rivera',
+  fullName: 'Héctor Rivera - Street Musician',
+  ink: 'Ruby',
+  text: 'Singer 2 (This character counts as cost 2 to sing songs.)\nSTRIKE A CHORD When you play this character, you\nmay put the top card of your deck into your discard.',
+});
+
 // An outlet that discards only as your turn ends, and payoffs that look before or at that point.
 const meeko = createCard({
   id: 'meeko-skittish-scrounger',
@@ -286,6 +295,12 @@ describe('Self-Discard scoring: an outlet feeds only the payoffs its discard can
     expect(score(youBrokeMySmolder, megavolt)).toBe(8);
     expect(score(kronk, megavolt)).toBe(8);
     expect(score(sprout, megavolt)).toBe(8);
+  });
+
+  it('lets a mill stock recursion, but not recursion that fires only on your discard', () => {
+    expect(score(hectorStreetMusician, salvageOperation)).toBe(7);
+    expect(score(hectorStreetMusician, gothel)).toBe(5);
+    expect(score(lookWhatYouveDone, hectorStreetMusician)).toBe(5);
   });
 
   it('lets an end-of-turn outlet feed only the checks made as the turn ends', () => {

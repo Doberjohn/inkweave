@@ -2909,7 +2909,7 @@ describe('Self-Discard rule (Discard Matters)', () => {
     });
 
     it('fill combos score 7 from a mill and 6 from a hand discard, with the bin-filler as the actor', () => {
-      const pool = [loot, mill, reanimator, discardCount];
+      const pool = [loot, mill, millReanimate, discardCount];
       const find = (from: typeof loot, to: string) =>
         selfDiscardRule.findSynergies(from, pool).find((s) => s.card.id === to);
       expect(find(loot, 'pepita-zone')).toMatchObject({
@@ -2921,7 +2921,7 @@ describe('Self-Discard rule (Discard Matters)', () => {
         explanation: "{A} mills your deck into the discard, feeding {B}'s discard-count payoff.",
       });
       // The payoff is the searcher here, so the filler reads as {B}.
-      expect(find(reanimator, 'quackerjack-mill')).toMatchObject({
+      expect(find(millReanimate, 'quackerjack-mill')).toMatchObject({
         score: 7,
         explanation: '{B} mills cards into your discard for {A} to replay.',
       });

@@ -14,6 +14,7 @@ import {
   isExertConsumePayoff,
   selfDiscardOutletFeed,
   selfDiscardOutletFeedsPile,
+  selfDiscardMillFeedsRecursion,
   selfDiscardHandTrimFeed,
   triggersOnAnyBanish,
   toyAbilityCounts,
@@ -479,6 +480,7 @@ const SELF_DISCARD_FILL_COMBOS: ReadonlyArray<{
     filler: 'mill',
     payoff: 'reanimator',
     score: 7,
+    feeds: (_mill, payoff) => selfDiscardMillFeedsRecursion(payoff),
     explain: (f, p) => `${f} mills cards into your discard for ${p} to replay.`,
   },
   {
@@ -537,7 +539,8 @@ function scoreSelfDiscardFillCombo(
  *                                                 since milling is not a discard event)
  * An outlet scores with a payoff only when its discard can reach it (selfDiscardOutletFeed, or
  * selfDiscardHandTrimFeed for a hand trim), and with a zone payoff only when its discard lands
- * before the payoff looks (selfDiscardOutletFeedsPile).
+ * before the payoff looks (selfDiscardOutletFeedsPile). A mill never feeds recursion that fires
+ * only on your discard (selfDiscardMillFeedsRecursion).
  *
  * `card` is the searcher (token {A}); `other` is the partner (token {B}). The token-swap keeps
  * the enabler side reading as the actor regardless of which card is the searcher.

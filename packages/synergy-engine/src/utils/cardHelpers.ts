@@ -953,6 +953,18 @@ function hasDiscardFedRecursion(text: string): boolean {
     .split(SENTENCE_BREAK)
     .some((s) => SELF_DISCARD_REANIMATOR_PATTERN.test(s) && DISCARD_FED_RECURSION_PATTERN.test(s));
 }
+
+/**
+ * Every recursion an outlet can feed fires on your discard (Mother Gothel - Evil as Ever: "when
+ * you discard this card, you may play this character from your discard"). A mill puts cards into
+ * your discard without discarding them, so it never switches such recursion on.
+ */
+function recursesOnlyOnDiscard(text: string): boolean {
+  const recursion = stripUnfedRecursion(text)
+    .split(SENTENCE_BREAK)
+    .filter((s) => SELF_DISCARD_REANIMATOR_PATTERN.test(s));
+  return recursion.length > 0 && recursion.every((s) => DISCARD_FED_RECURSION_PATTERN.test(s));
+}
 /** State payoff, event half: rewards the discard EVENT ("if you discarded a card this turn"). */
 const SELF_DISCARD_EVENT_PATTERN = /discarded\s+a\s+card\s+this\s+turn/i;
 /** State payoff, empty-hand shape: "while you have no cards in your hand". */
@@ -1233,6 +1245,8 @@ interface SelfDiscardFeedProfile {
   recursionKinds: Set<SelfDiscardKindEntry> | null;
   /** The recursion fires on your discard (see hasDiscardFedRecursion). */
   recursionOnDiscard: boolean;
+  /** All of the recursion fires on your discard, so a mill never feeds it (see recursesOnlyOnDiscard). */
+  recursionOnlyOnDiscard: boolean;
   /** The state payoff rewards the discard event ("discarded a card this turn"). */
   rewardsEvent: boolean;
   /** The state payoff rewards an empty hand ("while you have no cards in your hand"). */
@@ -1264,6 +1278,7 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
     discardsAtEndOfTurn: discardsOnlyAtEndOfTurn(blocks),
     recursionKinds: selfDiscardRecursionKinds(card, stripUnfedRecursion(text)),
     recursionOnDiscard: hasDiscardFedRecursion(text),
+    recursionOnlyOnDiscard: recursesOnlyOnDiscard(text),
     rewardsEvent: SELF_DISCARD_EVENT_PATTERN.test(text),
     rewardsEmptyHand: SELF_DISCARD_HELLBENT_PATTERN.test(text),
     needsSmallHand: SELF_DISCARD_SMALL_HAND_PATTERN.test(text),
@@ -1356,6 +1371,14 @@ export function selfDiscardOutletFeedsPile(enabler: LorcanaCard, payoff: Lorcana
   const target = selfDiscardFeedProfile(payoff);
   if (!selfDiscardKindsMeet(outlet.outletKinds, target.pileKinds)) return false;
   return target.readsPile || discardLandsInTime(outlet, target);
+}
+
+/**
+ * Whether a mill stocks `payoff`'s recursion (the mill ↔ reanimator row): not when all of it fires
+ * on your discard, since a milled card is put into your discard, not discarded.
+ */
+export function selfDiscardMillFeedsRecursion(payoff: LorcanaCard): boolean {
+  return !selfDiscardFeedProfile(payoff).recursionOnlyOnDiscard;
 }
 
 /**
