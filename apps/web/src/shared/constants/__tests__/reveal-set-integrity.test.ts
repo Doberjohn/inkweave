@@ -72,18 +72,28 @@ function missingSpotlightImages(): string[] {
   return spotlightImages().filter((src) => !fs.existsSync(path.join(process.cwd(), 'public', src)));
 }
 
+/** Card art a spotlight shows: a copy kept under public/art/spotlights/, named by card slug. */
+const SPOTLIGHT_ART = /^\/art\/spotlights\/(.+)\.avif$/;
+
+/** A debut franchise's logo, which its spotlight shows until the franchise has card art. */
+const FRANCHISE_LOGO = /^\/art\/franchises\/[^/]+\.webp$/;
+
 /**
- * Spotlight art not named after a revealed card of the reveal set. The art is named by card
- * slug, so a typo or a card that isn't revealed yet lands here. The set's cards are preview
- * cards during the season and canonical cards once it graduates, so both files count.
+ * Spotlight images that don't show a revealed card of the reveal set. Card art is named by card
+ * slug, so a typo or a card that isn't revealed yet lands here, and so does an image kept
+ * anywhere else, such as a preview scan named by card id, which graduation renumbers. A
+ * franchise's logo is the one image that isn't card art. The set's cards are preview cards
+ * during the season and canonical cards once it graduates, so both files count.
  */
 function spotlightArtWithoutCard(cards: PreviewCard[]): string[] {
   const slugs = new Set(
     cards.flatMap((c) => (c.setCode === REVEAL_SET_CODE && c.fullName ? [cardSlug({fullName: c.fullName})] : [])),
   );
-  return spotlightImages()
-    .map((src) => /^\/art\/spotlights\/(.+)\.avif$/.exec(src)?.[1])
-    .filter((name): name is string => name !== undefined && !slugs.has(name));
+  return spotlightImages().filter((src) => {
+    if (FRANCHISE_LOGO.test(src)) return false;
+    const name = SPOTLIGHT_ART.exec(src)?.[1];
+    return name === undefined || !slugs.has(name);
+  });
 }
 
 describe('reveal-set integrity', () => {
