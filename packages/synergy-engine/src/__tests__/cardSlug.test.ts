@@ -12,6 +12,11 @@ describe('cardSlug', () => {
     expect(cardSlug({fullName: "Bruno's Return"})).toBe('brunos-return');
   });
 
+  it('folds accented letters to their base letter instead of dropping them', () => {
+    expect(cardSlug({fullName: 'Héctor Rivera - Gone to Pieces'})).toBe('hector-rivera-gone-to-pieces');
+    expect(cardSlug({fullName: "Mamá Imelda's Blessing"})).toBe('mama-imeldas-blessing');
+  });
+
   it('collapses commas, ampersands and other punctuation runs to single hyphens', () => {
     expect(cardSlug({fullName: 'Hamish, Hubert & Harris - Making Mischief'})).toBe(
       'hamish-hubert-harris-making-mischief',

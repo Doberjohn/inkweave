@@ -109,7 +109,7 @@ score = min(5 + min(actionDamage, 3) + (multiTarget ? 1 : 0), 10)
 ## Coverage
 
 <!-- coverage:start coverage -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
 
 - **1 anchor**: Merida - Formidable Archer
 - **15 damage-dealing actions** (Steel 10, Emerald 5), **15** of them deck-compatible payoffs: Air Drop, Chomp!, Fire the Cannons!, He Hurled His Thunderbolt, Ink Explosion, Jousting Match, Look What You've Done, Make the Potion, Piercing Attack, Smash, The Mob Song, The Terror That Flaps in the Night, Three Arrows, To Wither a Flower, Windstorm

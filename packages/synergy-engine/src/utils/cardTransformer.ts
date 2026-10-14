@@ -64,7 +64,7 @@ export interface LorcanaJSONCard {
   setCode?: string;
   number?: number;
   rarity?: string;
-  franchise?: string; // Set only on preview cards (e.g., "Toy Story", "The Incredibles", "Brave")
+  franchise?: string; // Preview cards, and cards graduated since Set 14 (LorcanaJSON's `story`), e.g. "Coco"
   scanLanguage?: string; // Set only on preview cards whose only scan is not in English (e.g. "ja")
   variants?: RawCardVariant[]; // Epic/Enchanted/Iconic printings; transformCard ignores them
 }

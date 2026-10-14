@@ -51,7 +51,7 @@ export interface LorcanaCard {
   imageHashSm?: string;
   setCode?: string;
   setNumber?: number;
-  franchise?: string; // Set only on preview cards (e.g., "Toy Story", "The Incredibles", "Brave")
+  franchise?: string; // Preview cards, and cards graduated since Set 14 (LorcanaJSON's `story`), e.g. "Coco"
   rarity?: string; // "Common" | "Uncommon" | "Rare" | "Super Rare" | "Legendary" | "Enchanted"
   // Language code ("ja", "de") of the card's only scan when that scan is not in English:
   // a preview card revealed abroad first, whose name and text are an unofficial translation.

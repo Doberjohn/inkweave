@@ -9,7 +9,9 @@
  * prerendered files on disk, producing 404s and canonical conflicts. All three
  * consume the built engine, so this is the one place the rule lives.
  *
- * Rules (validated against all 1024 card `fullName`s, which are ASCII):
+ * Rules (validated against every Core card `fullName`):
+ *   - accents fold to their base letter, so a name keeps every letter:
+ *     "Héctor Rivera" -> "hector-rivera" (not "h-ctor-rivera")
  *   - apostrophes are dropped, not hyphenated: "Bruno's Return" -> "brunos-return"
  *   - every other run of non-alphanumerics collapses to a single hyphen (so the
  *     " - " name/version separator does not become "---")
@@ -17,6 +19,8 @@
  */
 export function cardSlug(card: {fullName: string}): string {
   return card.fullName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/['‘’]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
