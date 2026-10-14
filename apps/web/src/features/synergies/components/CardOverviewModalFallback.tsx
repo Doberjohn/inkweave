@@ -1,7 +1,7 @@
 import {useEffect, type CSSProperties, type RefObject} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
+import {COLORS, ICON_SIZE, RADIUS} from '../../../shared/constants';
 import {IconButton} from '../../../shared/components/IconButton';
 import {
   hasForeignScan,
@@ -71,9 +71,23 @@ export function SynergiesLoadingSkeleton() {
 const CLOSE_BUTTON_STYLE: CSSProperties = {
   borderRadius: '50%',
   border: `1px solid ${COLORS.surfaceBorder}`,
-  fontSize: FONT_SIZES.xl,
+  // The brand gold, like the BACK link that shares the header in the pair view.
+  color: COLORS.primary,
   flexShrink: 0,
 };
+
+/**
+ * The ×, drawn rather than typed: a typed × sits on its font's math axis, below the middle of
+ * the line box, so it rode low in the circle. Drawn around the viewBox's center, it sits dead
+ * center in the button.
+ */
+function CloseGlyph() {
+  return (
+    <svg width={ICON_SIZE.sm} height={ICON_SIZE.sm} viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
+      <path d="M5 5l6 6M11 5l-6 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 /**
  * The modal's close (×) button. The loading shell renders it too, so it can be dismissed the
@@ -88,7 +102,7 @@ export function ModalCloseButton({onClose, focusRef}: {onClose: () => void; focu
       ref={focusRef}
       size={CLOSE_BUTTON_SIZE}
       style={CLOSE_BUTTON_STYLE}>
-      ×
+      <CloseGlyph />
     </IconButton>
   );
 }

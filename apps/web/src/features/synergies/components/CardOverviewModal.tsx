@@ -11,10 +11,10 @@ import {CardPrintingContext, CardTranslationContext, useCardTranslation, useModa
 import {CardTranslationPanel, CtaButton, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
-import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
+import {prefersReducedMotion, usePrefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {trackEvent} from '../../../shared/lib/analytics';
-import {COLORS, EASING, FONT_SIZES, LETTER_SPACING, RADIUS, hexRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONT_SIZES, LETTER_SPACING, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
 import {LinkButton} from '../../../shared/components/LinkButton';
 import {ModalCloseButton, SynergiesLoadingSkeleton} from './CardOverviewModalFallback';
@@ -333,7 +333,8 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
  * - Cards row: big card image (left) + group stack (right)
  *
  * Comparison mode — entered when a synergy mini-tile is clicked:
- * - chip-row, hero-divider, info-col fade out (250ms)
+ * - chip-row, hero-divider, info-col fade out (250ms); the chip-row + hero-divider block also
+ *   collapses (480ms, with the FLIP) so the pair sits right under the header (ChipFilterBlock)
  * - compare-card grows from clicked tile rect to 380×530 next to A (FLIP, 480ms cubic-bezier)
  * - pair-connector dashed lines + score badge fade in (250ms, delayed 200ms)
  * - comparison-detail panel (engine + community columns) expands max-height (480ms) + opacity (300ms, delayed 250ms)
@@ -593,36 +594,35 @@ function ModalContentRegion({
     );
   }
   return (
-    <>
-      <ChipFilterRow
+    <ModalBody>
+      <ChipFilterBlock
         synergies={synergies}
-        inComparison={inComparison}
+        isMobile={isMobile}
+        comparisonPair={comparisonPair}
+        exitingPair={exitingPair}
         activeGroupFilter={activeGroupFilter}
         toggleChip={toggleChip}
       />
-      <HeroDivider hasSynergies={synergies.length > 0} inComparison={inComparison} />
-      <ModalBody>
-        <MobileOrDesktopBody
-          isMobile={isMobile}
-          card={card}
-          cardWidth={cardWidth}
-          cardHeight={cardHeight}
-          synergies={synergies}
-          synergiesLoading={synergiesLoading}
-          visibleGroups={visibleGroups}
-          activeGroupFilter={activeGroupFilter}
-          comparisonPair={comparisonPair}
-          exitingPair={exitingPair}
-          comparisonOrigin={comparisonOrigin}
-          highlightedCard={highlightedCard}
-          inComparison={inComparison}
-          compareCardRef={compareCardRef}
-          onShowAll={handleShowAll}
-          onCardClick={handleSynergyCardClick}
-          setHighlightedCard={setHighlightedCard}
-        />
-      </ModalBody>
-    </>
+      <MobileOrDesktopBody
+        isMobile={isMobile}
+        card={card}
+        cardWidth={cardWidth}
+        cardHeight={cardHeight}
+        synergies={synergies}
+        synergiesLoading={synergiesLoading}
+        visibleGroups={visibleGroups}
+        activeGroupFilter={activeGroupFilter}
+        comparisonPair={comparisonPair}
+        exitingPair={exitingPair}
+        comparisonOrigin={comparisonOrigin}
+        highlightedCard={highlightedCard}
+        inComparison={inComparison}
+        compareCardRef={compareCardRef}
+        onShowAll={handleShowAll}
+        onCardClick={handleSynergyCardClick}
+        setHighlightedCard={setHighlightedCard}
+      />
+    </ModalBody>
   );
 }
 
@@ -1008,6 +1008,72 @@ function ModalTitle({card, isMobile}: {card: LorcanaCard; isMobile: boolean}) {
   );
 }
 
+interface ChipFilterBlockProps {
+  synergies: SynergyGroupData[];
+  isMobile: boolean;
+  comparisonPair: DetailedPairSynergy | null;
+  /** Set through BACK's exit window (see MobileOrDesktopBody); drives the mobile return fade. */
+  exitingPair: DetailedPairSynergy | null;
+  activeGroupFilter: string | null;
+  toggleChip: (key: string) => void;
+}
+
+/**
+ * The chip filter row and the gold hero divider: default-view chrome the pair view has no use
+ * for. Fading them out alone left their space behind, an empty band under BACK, so comparison
+ * takes the space back too:
+ * - Desktop: the block collapses with the cards' FLIP (same duration and easing), so card A rises
+ *   and slides right along one straight line while card B lands in the same rising row.
+ * - Mobile: the layout never changes (#332 #5). The block stays put, hidden with the default
+ *   view, and MobileComparisonView's overlay covers it from just under the header.
+ */
+function ChipFilterBlock({synergies, isMobile, comparisonPair, exitingPair, activeGroupFilter, toggleChip}: ChipFilterBlockProps) {
+  const reducedMotion = usePrefersReducedMotion();
+  if (synergies.length === 0) return null;
+  const inComparison = !!comparisonPair;
+  return (
+    <div style={pickChipBlockStyle({isMobile, reducedMotion, comparisonPair, exitingPair})}>
+      <div style={CHIP_BLOCK_CLIP_STYLE}>
+        <ChipFilterRow
+          synergies={synergies}
+          inComparison={inComparison}
+          activeGroupFilter={activeGroupFilter}
+          toggleChip={toggleChip}
+        />
+        <HeroDivider inComparison={inComparison} />
+      </div>
+    </div>
+  );
+}
+
+/** grid-template-rows 1fr ↔ 0fr animates the block's real height, as ComparisonDetailPanel's does. */
+const CHIP_BLOCK_STYLE: React.CSSProperties = {display: 'grid', gridTemplateRows: '1fr', flexShrink: 0};
+
+/** `minHeight: 0` lets the row shrink below its content, and `overflow: hidden` clips the chips as it does. */
+const CHIP_BLOCK_CLIP_STYLE: React.CSSProperties = {minHeight: 0, overflow: 'hidden'};
+
+interface ChipBlockStyleInput {
+  isMobile: boolean;
+  reducedMotion: boolean;
+  comparisonPair: DetailedPairSynergy | null;
+  exitingPair: DetailedPairSynergy | null;
+}
+
+function pickChipBlockStyle({isMobile, reducedMotion, comparisonPair, exitingPair}: ChipBlockStyleInput): React.CSSProperties {
+  if (isMobile) {
+    // Hidden and revealed exactly like the default view's ScrollArea under it.
+    const comparisonActive = !!comparisonPair;
+    const isExiting = !comparisonActive && !!exitingPair;
+    return {...CHIP_BLOCK_STYLE, ...pickScrollAreaRevealStyle({isMobile, comparisonActive, isExiting})};
+  }
+  return {
+    ...CHIP_BLOCK_STYLE,
+    gridTemplateRows: comparisonPair ? '0fr' : '1fr',
+    // Under reduced motion card B skips its FLIP and appears in place, so the row doesn't glide either.
+    transition: reducedMotion ? undefined : `grid-template-rows ${FLIP_DURATION}ms ${FLIP_EASING}`,
+  };
+}
+
 interface ChipFilterRowProps {
   synergies: SynergyGroupData[];
   inComparison: boolean;
@@ -1019,8 +1085,7 @@ function ChipFilterRow({synergies, inComparison, activeGroupFilter, toggleChip}:
   // Render even when inComparison so the row can fade smoothly (250ms ease-out) alongside the
   // info-column's existing fade. Returning null on comparison-entry produces a jarring instant pop
   // while the info-column animates next to it — that asymmetry is what this opacity-driven exit
-  // closes. The `synergies.length === 0` short-circuit still returns null (no chrome to fade).
-  if (synergies.length === 0) return null;
+  // closes. ChipFilterBlock gives up the space the faded row leaves.
   return (
     <div
       // `inert` removes the row + descendants from focus order + a11y tree while invisible
@@ -1083,16 +1148,13 @@ function FilterChip({group, activeGroupFilter, toggleChip}: FilterChipProps) {
 }
 
 interface HeroDividerProps {
-  hasSynergies: boolean;
   inComparison: boolean;
 }
 
-function HeroDivider({hasSynergies, inComparison}: HeroDividerProps) {
-  // Render whenever there are synergies; let `inComparison` drive an opacity transition that
-  // matches the chip-row + info-column fade (250ms ease-out). Splitting the old `visible` boolean
-  // (`synergies.length > 0 && !inComparison`) into two props lets us animate the comparison-mode
-  // exit instead of unmounting instantly.
-  if (!hasSynergies) return null;
+function HeroDivider({inComparison}: HeroDividerProps) {
+  // Stays mounted in comparison and lets `inComparison` drive an opacity transition that matches
+  // the chip-row + info-column fade (250ms ease-out), instead of unmounting instantly.
+  // ChipFilterBlock renders it only when there are synergies.
   return (
     <hr
       aria-hidden="true"
@@ -1113,10 +1175,11 @@ interface ModalBodyProps {
 }
 
 /**
- * Non-scrolling positioned frame for the modal's body region. Scrolling + padding live in the
- * default-view ScrollArea inside (see MobileOrDesktopBody). Keeping ModalBody itself
- * non-scrolling is what lets the mobile MobileComparisonView — a `position: absolute` overlay
- * anchored here — stay put: an absolute child of a scroll container would scroll out of view.
+ * Non-scrolling positioned frame for the modal's body region: the chip block (ChipFilterBlock),
+ * then the default-view ScrollArea, which holds the scrolling + padding (see MobileOrDesktopBody).
+ * Keeping ModalBody itself non-scrolling is what lets the mobile MobileComparisonView — a
+ * `position: absolute` overlay anchored here — stay put: an absolute child of a scroll container
+ * would scroll out of view.
  */
 function ModalBody({children}: ModalBodyProps) {
   return (
@@ -1220,18 +1283,32 @@ function MobileOrDesktopBody(props: MobileOrDesktopBodyProps) {
     return (
       <>
         {defaultBody}
-        <MobileComparisonView
-          key="mobile-comparison-view"
-          pair={mobilePair}
-          engineScore={mobilePair.aggregateScore}
-          originRects={comparisonOrigin}
-          isExiting={isExiting}
-        />
+        <div key="mobile-comparison-view" style={MOBILE_COMPARISON_SLOT_STYLE}>
+          <MobileComparisonView
+            pair={mobilePair}
+            engineScore={mobilePair.aggregateScore}
+            originRects={comparisonOrigin}
+            isExiting={isExiting}
+          />
+        </div>
       </>
     );
   }
   return defaultBody;
 }
+
+/**
+ * The box MobileComparisonView's overlay fills: all of ModalBody, the hidden chip block included,
+ * so the pair starts under BACK rather than under an empty band, less the 20px the default body
+ * keeps under the header (its top padding), so the cards don't touch the header row.
+ */
+const MOBILE_COMPARISON_SLOT_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  top: SPACING.xl,
+  right: 0,
+  bottom: 0,
+  left: 0,
+};
 
 interface CardsRowProps {
   card: LorcanaCard;

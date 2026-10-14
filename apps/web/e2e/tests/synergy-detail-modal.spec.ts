@@ -1,3 +1,4 @@
+import type {Locator} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {cardFullNameById} from '../helpers/cardData';
 import fs from 'node:fs';
@@ -24,10 +25,35 @@ const COMPARE_URL = `/compare/1947/${COMPARE_PARTNER_ID}/${COMPARE_GROUP_KEY}`;
 
 /**
  * Comparison mode (formerly the separate synergy detail modal). Clicking a synergy card tile
- * inside CardOverviewModal transitions the modal in-place to comparison view: dimmed chip row,
- * cardA + cardB side-by-side via FLIP animation, BACK button replacing the title, and the
- * engine + community columns expanding underneath.
+ * inside CardOverviewModal transitions the modal in-place to comparison view: the chip row and
+ * gold divider fade out and give up their space, cardA + cardB side-by-side via FLIP animation,
+ * BACK button replacing the title, and the engine + community columns expanding underneath.
  */
+
+/** Pixels between the bottom of the modal's × and the top of `pairTop`, or NaN until both show. */
+async function gapUnderClose(modal: Locator, pairTop: Locator) {
+  const close = await modal.getByRole('button', {name: 'Close', exact: true}).boundingBox();
+  const pair = await pairTop.boundingBox();
+  return close && pair ? pair.y - (close.y + close.height) : Number.NaN;
+}
+
+/**
+ * Comparison takes back the chip row's space, so the pair settles about 20px under the BACK + ×
+ * row: not under an empty band, and never over the row. A reading only counts once a second one,
+ * two frames later, agrees, so neither bound can pass while the pair is still moving.
+ */
+async function expectPairRightUnderClose(modal: Locator, pairTop: Locator) {
+  const settledGap = async () => {
+    const before = await gapUnderClose(modal, pairTop);
+    await modal.evaluate(
+      () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+    );
+    const after = await gapUnderClose(modal, pairTop);
+    return before === after ? after : Number.NaN;
+  };
+  await expect.poll(settledGap).toBeLessThan(40);
+  await expect.poll(settledGap).toBeGreaterThanOrEqual(0);
+}
 
 test.describe('Synergy comparison — Desktop', () => {
   test.beforeEach(async ({appPage}, testInfo) => {
@@ -52,6 +78,9 @@ test.describe('Synergy comparison — Desktop', () => {
     await expect(
       appPage.cardOverviewModal.getByRole('button', {name: /back to synergies/i}),
     ).toBeVisible({timeout: 3000});
+    // The pair rises to sit right under the BACK + × row as the chip row folds away.
+    const cardA = appPage.cardOverviewModal.locator('[data-comparison-card-a]');
+    await expectPairRightUnderClose(appPage.cardOverviewModal, cardA);
     // URL stays on the originating Browse page — the in-app comparison flow doesn't push
     // /compare/*, so Browse stays mounted in <Outlet /> behind the modal backdrop.
     // (Deep-link flow still URL-syncs when switching pairs — see CardModalContext.)
@@ -124,6 +153,9 @@ test.describe('Synergy comparison — Mobile', () => {
     await expect(
       appPage.cardOverviewModal.getByRole('button', {name: /back to synergies/i}),
     ).toBeVisible({timeout: 3000});
+    // The pair lands right under the BACK + × row, over the hidden chip row.
+    const cardA = appPage.cardOverviewModal.getByRole('button', {name: /^Enlarge /}).first();
+    await expectPairRightUnderClose(appPage.cardOverviewModal, cardA);
   });
 
   test('should render the tabbed comparison layout on mobile', async ({appPage}) => {
