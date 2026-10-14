@@ -671,23 +671,33 @@ function makeSingerSongMatch(
   };
 }
 
+/** "This character can't sing songs without Sing Together." (Meilin Lee - Lead Vocalist) */
+const SING_TOGETHER_ONLY_PATTERN = /\bcan't sing songs without Sing Together\b/i;
+
+/**
+ * True iff the singer can sing the song for free: the song costs no more than its Singer value,
+ * and a singer barred from songs without Sing Together gets only the songs that have it.
+ */
+function canSingForFree(singer: LorcanaCard, song: LorcanaCard): boolean {
+  const singerValue = getKeywordValue(singer, 'Singer') ?? singer.cost;
+  if (song.cost > singerValue) return false;
+  if (!SING_TOGETHER_ONLY_PATTERN.test(normalizeCardText(singer))) return true;
+  return hasKeyword(song, 'Sing Together');
+}
+
 /** Forward: a Singer card finds Songs it can sing for free. */
 function findSongsForSinger(singer: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
-  const singerValue = getKeywordValue(singer, 'Singer') ?? singer.cost;
   return allCards
-    .filter((other) => other.id !== singer.id && isSong(other) && other.cost <= singerValue)
+    .filter((other) => other.id !== singer.id && isSong(other) && canSingForFree(singer, other))
     .map((song) => makeSingerSongMatch(singer, song, song));
 }
 
 /** Reverse: a Song card finds Singers that can sing it. */
 function findSingersForSong(song: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
   return allCards
-    .filter((other) => {
-      if (other.id === song.id) return false;
-      if (!hasKeyword(other, 'Singer')) return false;
-      const singerValue = getKeywordValue(other, 'Singer') ?? other.cost;
-      return song.cost <= singerValue;
-    })
+    .filter(
+      (other) => other.id !== song.id && hasKeyword(other, 'Singer') && canSingForFree(other, song),
+    )
     .map((singer) => makeSingerSongMatch(singer, song, singer));
 }
 

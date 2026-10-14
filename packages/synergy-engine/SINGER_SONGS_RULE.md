@@ -66,6 +66,10 @@ This catches Songs via their official classification and via text-based fallback
 
 The core constraint: `song.cost <= singerValue`. A Singer 5 can sing Songs costing 1-5 but not 6+. This is enforced in both the forward and reverse paths.
 
+### Sing Together only
+
+A singer whose text says it "can't sing songs without Sing Together" (`/\bcan't sing songs without Sing Together\b/i`, Meilin Lee - Lead Vocalist) pairs only with songs that have the Sing Together keyword, under the same cost gate. `canSingForFree` in `rules.ts` holds both checks for the forward and reverse paths.
+
 ---
 
 ## Scoring
@@ -87,13 +91,13 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 ```chart
 {
   "type": "bar",
-  "title": "Score distribution (1,615 unique pairs)",
+  "title": "Score distribution (1,578 unique pairs)",
   "data": {
     "labels": ["5", "6", "7", "8"],
     "datasets": [
       {
         "label": "Pairs",
-        "data": [651, 350, 345, 269],
+        "data": [651, 349, 328, 250],
         "backgroundColor": ["#60b5f5", "#60b5f5", "#6ee7a0", "#6ee7a0"]
       }
     ]
@@ -125,15 +129,15 @@ Even a Singer 9 singing a cost-1 Song saves 1 ink and gets a free card played. T
 <!-- coverage:start coverage -->
 - **27 Singers** (Amber 16, Ruby 11), 2 of them conditional: Mickey Mouse - Amber Champion, Miguel Rivera - Street Musician
 - **78 Songs** (Amber 20, Emerald 13, Ruby 13, Amethyst 12, Steel 11, Sapphire 9)
-- **1,615 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`), scored as the chart under Score Table shows
+- **1,578 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`), scored as the chart under Score Table shows
 
 ```chart
 {
   "type": "doughnut",
   "title": "Cards by number of partners (103 cards)",
   "data": {
-    "labels": ["1-4 partners (5)", "5-9 partners (8)", "15+ partners (90)"],
-    "values": [5, 8, 90]
+    "labels": ["1-4 partners (6)", "5-9 partners (8)", "15+ partners (89)"],
+    "values": [6, 8, 89]
   }
 }
 ```
