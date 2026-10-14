@@ -1,7 +1,7 @@
 import {describe, it, expect} from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import type {Ink} from 'inkweave-synergy-engine';
+import {cardSlug, type Ink} from 'inkweave-synergy-engine';
 import {
   ALL_INKS,
   REVEAL_ID_BASE,
@@ -59,18 +59,40 @@ function hasWellFormedId(card: PreviewCard): boolean {
   return card.id === REVEAL_ID_BASE + card.number;
 }
 
-/** Every image a spotlight shows that isn't committed under public/. */
-function missingSpotlightImages(): string[] {
-  const srcs = [...FRANCHISE_SPOTLIGHTS.map((s) => s.data), ...SET_SPOTLIGHTS.flatMap((g) => g.items)].flatMap((data) => [
+/** Every image a spotlight shows, hero and fan, mechanics and franchises alike. */
+function spotlightImages(): string[] {
+  return [...FRANCHISE_SPOTLIGHTS.map((s) => s.data), ...SET_SPOTLIGHTS.flatMap((g) => g.items)].flatMap((data) => [
     data.heroImage,
     ...data.support.map((s) => s.src),
   ]);
-  return srcs.filter((src) => !fs.existsSync(path.join(process.cwd(), 'public', src)));
+}
+
+/** Every image a spotlight shows that isn't committed under public/. */
+function missingSpotlightImages(): string[] {
+  return spotlightImages().filter((src) => !fs.existsSync(path.join(process.cwd(), 'public', src)));
+}
+
+/**
+ * Spotlight art not named after a revealed card of the reveal set. The art is named by card
+ * slug, so a typo or a card that isn't revealed yet lands here. The set's cards are preview
+ * cards during the season and canonical cards once it graduates, so both files count.
+ */
+function spotlightArtWithoutCard(cards: PreviewCard[]): string[] {
+  const slugs = new Set(
+    cards.flatMap((c) => (c.setCode === REVEAL_SET_CODE && c.fullName ? [cardSlug({fullName: c.fullName})] : [])),
+  );
+  return spotlightImages()
+    .map((src) => /^\/art\/spotlights\/(.+)\.avif$/.exec(src)?.[1])
+    .filter((name): name is string => name !== undefined && !slugs.has(name));
 }
 
 describe('reveal-set integrity', () => {
   const preview = readData<PreviewFile>('previewCards.json');
   const missingSpotlightArt = missingSpotlightImages();
+  const spotlightArtOffSet = spotlightArtWithoutCard([
+    ...preview.cards,
+    ...readData<{cards: PreviewCard[]}>('allCards.json').cards,
+  ]);
 
   it('previewCards.json has a dated entry for the reveal set', () => {
     const set = preview.sets[REVEAL_SET_CODE];
@@ -136,6 +158,10 @@ describe('reveal-set integrity', () => {
 
   it('every image a spotlight shows is committed', () => {
     expect(missingSpotlightArt).toEqual([]);
+  });
+
+  it('every spotlight image is named after a revealed card of the set', () => {
+    expect(spotlightArtOffSet).toEqual([]);
   });
 
   it('ink blocks tile the set from 1 to SET_TOTAL with no gap or overlap', () => {
