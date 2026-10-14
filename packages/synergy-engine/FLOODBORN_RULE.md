@@ -46,7 +46,7 @@ Every pair is a payoff with a Floodborn character or with another payoff, so eve
 or 7.
 
 <!-- coverage:start coverage -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
 | Role | Cards | Cards per ink |
 |----|-----|-------------|

@@ -34,7 +34,7 @@ Real cards the `getHunnyRoles` detector tags for each role (names from the live 
 ## Coverage
 
 <!-- coverage:start coverage -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
 | Role | Cards | Cards per ink |
 |----|-----|-------------|

@@ -45,7 +45,7 @@ Buff scores 6 (a static stat grant) while trigger scores 7 (a repeating engine) 
 ## Coverage (live pair counts)
 
 <!-- coverage:start coverage -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
 | Tribe | Members | Payoff cards | Unique pairs | Score dist (6 / 7 / 8) |
 |-----|-------|------------|------------|----------------------|

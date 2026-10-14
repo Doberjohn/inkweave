@@ -208,7 +208,7 @@ Negative-claim evidence:
 - Glob `scripts/fetch-cards*` — no files found
 - Full `ls scripts/` returns exactly 7 files: `audit-synergy-data.mjs`, `codescene-gate.mjs`, `convert-preview-images.mjs`, `download-card-images.mjs`, `generate-docs.mjs`, `precompute-synergies.mjs`, `test-supabase-integration.mjs`. None of these create cards from scratch.
 - Grep `lorcanajson\.org|api.lorcanajson` across the repo — only the README mention, no fetch code
-- Grep `previewCards\|allCards` in `.github/workflows/` — no matches; CI doesn't touch the JSONs
+- Grep `previewCards\|allCards` in `.github/workflows/`: `deploy.yml` and `deploy-staging.yml` hash both for the card-image cache key, and `refresh-rule-coverage.yml` lists both as push triggers. No workflow commits them.
 
 ### Updating `allCards.json`
 
@@ -470,6 +470,8 @@ Standard Vite production build. The env var flips `loader.ts:33` (`USE_LOCAL_IMA
 | `.claude/hooks/preview-images-auto-convert.sh` | PostToolUse Edit/Write on `apps/web/public/card-images-raw/` | `pnpm convert-preview-images` |
 
 No hook fires on `allCards.json` edits. Rationale: it's treated as canonical/externally-sourced; the Vite plugin's mtime check catches staleness on next `pnpm dev`.
+
+On `master`, `.github/workflows/refresh-rule-coverage.yml` runs the same coverage refresh after every push that changes `allCards.json`, `previewCards.json`, engine source (`tuning.json` included) or the generator, and commits the docs whose numbers moved as `github-actions[bot]`, with `[skip ci]` (#781). It catches what no hook sees: admin's API commits, merges, and edits made outside Claude Code. A branch that also changed a generated block can conflict with those commits; take either side of the block, run `pnpm refresh-rule-coverage`, and commit what it writes.
 
 ---
 
@@ -928,7 +930,7 @@ Every file that reads or writes either JSON, or participates in the build/runtim
 | `download-card-images.mjs` | Reads both JSONs; merges; downloads + hashes images; mutates both JSONs with `imageHash` fields |
 | `precompute-synergies.mjs` | Reads both JSONs; merges; runs engine; writes `synergies/*.json` + `_manifest.json` + `_playstyles.json` + `_pairs_index.json` |
 | `convert-preview-images.mjs` | Reads JPGs from `card-images-raw/`; writes AVIFs to `card-images-preview/`. Does not touch the JSONs. |
-| `refresh-rule-coverage.mjs` | Reads both JSONs; merges and cuts to Core the way precompute does; runs the built engine; rewrites only the coverage blocks in `packages/synergy-engine/*_RULE.md` (#479). Does not touch the JSONs. |
+| `refresh-rule-coverage.mjs` | Reads both JSONs; merges and cuts to Core the way precompute does; runs the built engine; rewrites only the coverage blocks in `packages/synergy-engine/*_RULE.md` (#479). Does not touch the JSONs. Also run by `.github/workflows/refresh-rule-coverage.yml` after every push to `master` that changes its inputs (#781). |
 | `generate-docs.mjs` | Read-only HTML report generator from markdown docs. Does not touch card data. |
 
 Not part of this pipeline: `codescene-gate.mjs`, `test-supabase-integration.mjs`. Confirmed via grep.

@@ -20,10 +20,13 @@ import {holders, scoreCounts} from './stats.mjs';
 /** Markdown parts as paragraphs, empty ones left out. */
 export const section = (...parts) => parts.filter(Boolean).join('\n\n');
 
-/** The line that opens a doc's coverage: where the numbers come from and which cards they count. */
+/**
+ * The line that opens a doc's coverage: where the numbers come from and which cards they count.
+ * It names the pool but not its size, so a revealed card rewrites only the docs whose numbers move.
+ */
 export const poolLine = (coverage) =>
-  `Counted by \`pnpm refresh-rule-coverage\` over the ${fmt(coverage.pool.cards.length)} Core cards ` +
-  `in the synergy pool (${coverage.pool.label}).`;
+  `Counted by \`pnpm refresh-rule-coverage\` over the Core cards in the synergy pool ` +
+  `(${coverage.pool.label}).`;
 
 /** "**1,234 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`)". */
 export const pairsLead = (pairs) =>

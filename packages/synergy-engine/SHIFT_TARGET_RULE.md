@@ -24,7 +24,7 @@ The rule works in both directions:
 Both directions use the same scoring function (`calculateShiftSynergy`), so scores are always consistent regardless of which card you select first.
 
 <!-- coverage:start groups -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
 ```chart
 {

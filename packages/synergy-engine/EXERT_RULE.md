@@ -123,7 +123,7 @@ The same-side payoff pair uses a distinct sentence: `"Both reward opposing chara
 ### Live distribution
 
 <!-- coverage:start distribution -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
 **126 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 

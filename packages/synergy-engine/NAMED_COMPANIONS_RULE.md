@@ -129,7 +129,7 @@ The classifier doesn't try to isolate which effect applies to the named companio
 Scores are mapped via `NAMED_EFFECT_SCORES` in `cardHelpers.ts`.
 
 <!-- coverage:start tiers -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
 ```chart
 {

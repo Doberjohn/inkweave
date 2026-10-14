@@ -82,7 +82,7 @@ Score is based on **threshold utilization** — how efficiently the Singer's cap
 | 3+ | **5** | Moderate | Functional but the Singer could do better |
 
 <!-- coverage:start scores -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
 ```chart
 {

@@ -1,5 +1,5 @@
 import {pairsLead, poolLine, section, shapeTable} from '../blocks.mjs';
-import {fmt, pct, table, tallyText} from '../render.mjs';
+import {fmt, table, tallyText} from '../render.mjs';
 import {holders, templatePattern, tokenCard} from '../stats.mjs';
 
 const ROLES = ['inkwell-ramp', 'inkwell-trigger', 'cost-reduction'];
@@ -101,9 +101,8 @@ export default {
           inks('cost-reduction'),
         ],
       ];
-      const total = coverage.pool.cards.length;
       return section(
-        `**${fmt(all.length)} total ramp cards** (${pct(all.length, total)} of the ${fmt(total)}-card pool):`,
+        `**${fmt(all.length)} total ramp cards**:`,
         table(['Role', 'Cards', 'Sub-patterns', 'Cards per ink'], rows),
       );
     },

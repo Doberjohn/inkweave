@@ -89,7 +89,7 @@ Grading the on-play bodies further (8 vs 9) was rejected: the effects are not un
 ## Coverage
 
 <!-- coverage:start coverage -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
 - **2 anchors**: Pocahontas - Guiding the Tribe, Pocahontas & Meeko - Adventurous Friends
 - **135 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`)

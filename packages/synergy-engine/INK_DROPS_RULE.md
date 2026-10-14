@@ -16,7 +16,7 @@ Ink Drops is a two-sided playstyle. **Makers** get ink drops (on play, on a chal
 Every drop is 1 banked ink, so a maker is useful with no payoff at all, like ramp. What turns the resource into a strategy is the payoff side, which is why the rule is **payoff-anchored**: two makers never pair with each other (they just add more of the same resource), and each maker lists exactly the payoffs that cash its drops in. Folding the cards into Ramp's density scoring would instead have paired every drop card at 5 with every Ramp card it can share a deck with, the noise the 5-baseline convention exists to avoid.
 
 <!-- coverage:start inks -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-14).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
 | Ink | Makers | Payoffs | Shared makers |
 |---|------|-------|-------------|
