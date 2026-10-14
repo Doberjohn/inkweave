@@ -373,7 +373,10 @@ export function makeBanishTriggerPattern(target: string): RegExp {
 }
 
 export const LOCATION_PATTERNS = {
-  'at-payoff': /while\b.{0,60}at a location|if\b.{0,60}at a location|is at a location/i,
+  // "Your characters at locations get +1 ¤" (Russell - Senior Wilderness Explorer) rewards
+  // characters for being at a location; it strengthens no location, so it is no buff.
+  'at-payoff':
+    /while\b.{0,60}at a location|if\b.{0,60}at a location|is at a location|\bcharacters at locations\b/i,
   // The mover may be named by pronoun ("move him to one of your locations", Colonel Hathi) and may
   // move a second character first ("move this character and up to 1 of your other characters to
   // that location", Carl Fredricksen), hence the pronouns and the wider second gap.
@@ -382,21 +385,33 @@ export const LOCATION_PATTERNS = {
   // (stripDamageMoves) rather than dropping the card, so "damage" in reminder text (The Game's
   // Afoot!) or a separate damage move never hides a real location move.
   'move-exclude': /\bmove\b[^.]{0,20}?\bdamage\b/i,
-  // Fires when you PLAY a location (e.g. Elsa - Ice Artisan).
-  'play-trigger': /when(?:ever)? you play a location|whenever.*play a location/i,
+  // Fires when you PLAY a location (e.g. Elsa - Ice Artisan). Only "you play a location" is the
+  // trigger: in "whenever this character becomes exerted, you may play a location" (Fergus -
+  // Outpost Builder) the location play is the effect.
+  'play-trigger': /when(?:ever)? you play a location/i,
   // Fires when a character MOVES onto a location (e.g. Taffyta, Goofy) — a payoff
   // for the `move` enabler. Split from play-trigger so the two events score apart.
   'move-trigger': /when(?:ever)?[^.]{0,40}moves? to a location/i,
-  'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
-  search: makeSearchPattern('location(?:\\s+cards?)?'),
+  // A check on one named location ("if you have a location named Sleepy Hollow in play", Get to
+  // Safety!) or on a card under one ("a character or location in play with a card under them",
+  // Flintheart Glomgold) is no reward for any location in play. One sentence at most.
+  'in-play-check':
+    /if you have a location(?! named\b)|while you have an? [^.]*?\blocation\b(?! named\b)(?![^.]*\bwith a card under\b)|for each location/i,
+  // "a location card named Andy's Room" (Woody - Leader of the Toys) finds that one location only.
+  search: makeSearchPattern('location(?!(?:\\s+cards?)?\\s+named\\b)(?:\\s+cards?)?'),
   // "move ... to (one of) your locations" is a move destination (Colonel Hathi), not a buff; "give
   // ... to your locations" still is, even later in the move's sentence. The skip needs that "to" to
   // be the move's first ("up to N" aside), so it reaches only the move's own destination.
-  buff: /(?<!\bmove\b(?:(?!\bto\b)[^.]|\bup to\b){0,60}\bto (?:one of )?)your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
+  // "Your characters at locations get" strengthens characters, so "locations get" needs
+  // locations as its subject.
+  buff: /(?<!\bmove\b(?:(?!\bto\b)[^.]|\bup to\b){0,60}\bto (?:one of )?)your locations|(?<!\bat )locations (?:gain|get)\b|location.*can't be challenged|location gains? resist/i,
   boost:
     /under.*(?:characters|character) or locations|under.*locations|locations with boost|play a character or location with boost/i,
+  // Each shape stays in one sentence, and a free location play stays in one clause: in "whenever
+  // you play a location, you may move this character ... for free" (Carl Fredricksen - On the
+  // Move) the free part is the move.
   'location-ramp':
-    /\bless\b.*(?:to )?(?:play|move).*location|\bless\b for.*location|play a location.*(?:from|for free)/i,
+    /\bless\b[^.]*?\b(?:play|move)\b[^.]*?\blocation|\bless\b for[^.]*?\blocation|play a location[^,.]*?(?:from|for free)/i,
   /** Anti-location cards: banish/remove/shuffle locations. Excluded from location-control. */
   'anti-location': /banish (?:chosen |all )(?:item or )?location|shuffle.*location into/i,
   /** Locations that actually benefit from having cards beneath them — used to scope the boost rule. */
@@ -524,17 +539,156 @@ export function getLocationMoveClassifications(card: LorcanaCard): string[] {
 }
 
 /**
+ * A location play capped by cost: "Play a location with cost 3 or less from your discard for
+ * free" (Get to Safety!). Global flag: use only with matchAll/replace, never .test().
+ */
+const CAPPED_LOCATION_PLAY = /\bplay a location\b[^.]*?\bwith cost (\d+) or less\b/gi;
+
+/**
+ * The highest location cost a card's location ramp reaches: the cap of its capped location plays,
+ * or Infinity when it has none, or when the text still reads as location ramp once they are cut
+ * (the card also ramps every location).
+ */
+function getLocationRampCostCap(card: LorcanaCard): number {
+  const text = normalizeCardText(card);
+  const caps = [...text.matchAll(CAPPED_LOCATION_PLAY)].map((m) => Number(m[1]));
+  if (caps.length === 0 || LOCATION_PATTERNS['location-ramp'].test(text.replace(CAPPED_LOCATION_PLAY, '.'))) {
+    return Infinity;
+  }
+  return Math.max(...caps);
+}
+
+/**
+ * A discount on a move to a location: "pay 1 ⬡ less to move this character to a location"
+ * (Raksha - Fearless Mother). Global flag: use only with replace, never .test().
+ */
+const MOVE_COST_DISCOUNT = /\bless\b[^.]*?\bto move\b[^.]*?\blocation/gi;
+
+/**
+ * Whether a card's location ramp only makes moves cheaper. It puts no location into play, so it
+ * helps what a move helps, and nothing at a location that costs no ink to move to.
+ */
+export function isMoveOnlyLocationRamp(card: LorcanaCard): boolean {
+  const text = normalizeCardText(card);
+  const rest = text.replace(MOVE_COST_DISCOUNT, '.');
+  return rest !== text && !LOCATION_PATTERNS['location-ramp'].test(rest);
+}
+
+/**
+ * A sentence that puts cards only under characters or locations with Boost ("under one of your
+ * characters or locations with Boost", Recovered Page). Global flag: use only with replace.
+ */
+const WITH_BOOST_SENTENCE = /[^.]*\blocations? with Boost\b[^.]*/gi;
+
+/** Cards under a location, either way round: "under one of your locations", "locations with a card under them". */
+const CARDS_UNDER_LOCATION = /\bunder\b[^.]*\blocations?\b|\blocations?\b[^.]*\bunder\b/i;
+
+/**
+ * Whether a boost card works only with locations that have Boost: each of its sentences about
+ * cards under a location says "with Boost". Blessed Bagpipes also rewards "locations with a card
+ * under them", so it works with any location that holds cards.
+ */
+function boostNeedsBoostKeyword(card: LorcanaCard): boolean {
+  const text = normalizeCardText(card);
+  const rest = text.replace(WITH_BOOST_SENTENCE, '.');
+  return rest !== text && !CARDS_UNDER_LOCATION.test(rest);
+}
+
+/**
+ * A sentence whose reward is sized by the location's lore: "draw cards equal to that location's
+ * ◊" (Carl Fredricksen - On the Move). Global flag: use only with replace.
+ */
+const LORE_SIZED_SENTENCE = /[^.]*\bequal to that location's ◊[^.]*/gi;
+
+/**
+ * Whether a card's at-location reward is sized by the location's lore in every sentence that
+ * reads as one, so it gives nothing at a location without lore.
+ */
+function atPayoffNeedsLore(card: LorcanaCard): boolean {
+  const text = normalizeCardText(card);
+  const rest = text.replace(LORE_SIZED_SENTENCE, '.');
+  return rest !== text && !LOCATION_PATTERNS['at-payoff'].test(rest);
+}
+
+/** Whether `location` has one of `classifications`; [] means every location. */
+const hasAnyClassification = (classifications: string[], location: LorcanaCard): boolean =>
+  classifications.length === 0 || classifications.some((c) => hasClassification(location, c));
+
+/** A location ramp reaches locations under its cost cap; a move discount, only locations that cost ink to move to. */
+function locationRampReaches(card: LorcanaCard, location: LorcanaCard): boolean {
+  if ((location.cost ?? 0) > getLocationRampCostCap(card)) return false;
+  return !isMoveOnlyLocationRamp(card) || (location.moveCost ?? 0) > 0;
+}
+
+/** The locations a role reaches, for the roles that do not reach every location. */
+const LOCATION_ROLE_REACH: Partial<
+  Record<LocationRole, (card: LorcanaCard, location: LorcanaCard) => boolean>
+> = {
+  buff: (card, location) => hasAnyClassification(getLocationBuffClassifications(card), location),
+  move: (card, location) => hasAnyClassification(getLocationMoveClassifications(card), location),
+  'location-ramp': locationRampReaches,
+  'at-payoff': (card, location) => !atPayoffNeedsLore(card) || (location.lore ?? 0) > 0,
+  boost: (card, location) => !boostNeedsBoostKeyword(card) || hasKeyword(location, 'Boost'),
+};
+
+/**
  * Whether a card's `role` reaches `location`. A classified buff or move reaches only locations of
- * its own classification; every other role reaches every location.
+ * its own classification; a capped location play, only locations under its cap; a move discount,
+ * only locations that cost ink to move to; a reward sized by lore, only locations with lore; and
+ * cards put under locations "with Boost", only locations with Boost. Every other role reaches
+ * every location.
  */
 export function locationRoleReaches(card: LorcanaCard, location: LorcanaCard, role: LocationRole): boolean {
-  const scoped =
-    role === 'buff'
-      ? getLocationBuffClassifications(card)
-      : role === 'move'
-        ? getLocationMoveClassifications(card)
-        : [];
-  return scoped.length === 0 || scoped.some((c) => hasClassification(location, c));
+  return LOCATION_ROLE_REACH[role]?.(card, location) ?? true;
+}
+
+/** Other characters rewarded at the location too: "all characters at that location get +1 ◊". */
+const OTHERS_AT_LOCATION = /\bcharacters at (?:that|this|the|a) location\b/i;
+
+/**
+ * Clauses that concern only the card itself, by the role they carry, each with the test of
+ * whether the rest of the text still reads as that role. Global flags: use only with replace.
+ * - move: it moves only itself ("move him to a location", Arthur - Merlin's Assistant); "move
+ *   him and one of your other characters" moves another character too.
+ * - at-payoff: it is rewarded for being at a location itself ("while this character is at a
+ *   location", Shenzi; "if he's at a location", Beast), unless the reward goes to every
+ *   character there ("all characters at that location get +1 ◊", Carl Fredricksen & Russell).
+ * - move-trigger: it triggers on its own move ("whenever this character moves to a location").
+ */
+const SELF_ONLY_LOCATION_CLAUSES: ReadonlyArray<{
+  role: LocationRole;
+  clause: RegExp;
+  readsAsRole: (text: string) => boolean;
+}> = [
+  {
+    role: 'move',
+    clause: /\bmove (?:this character|him|her)\b(?! and\b)[^.]*?\blocations?\b/gi,
+    readsAsRole: readsAsLocationMove,
+  },
+  {
+    role: 'at-payoff',
+    clause: /\b(?:this character|he|she)\b(?:'s| is)?[^.,]*?\bat a location\b/gi,
+    readsAsRole: (text) => LOCATION_PATTERNS['at-payoff'].test(text) || OTHERS_AT_LOCATION.test(text),
+  },
+  {
+    role: 'move-trigger',
+    clause: /\b(?:this character|he|she) moves? to a location\b/gi,
+    readsAsRole: (text) => LOCATION_PATTERNS['move-trigger'].test(text),
+  },
+];
+
+/**
+ * A character's location roles whose every clause concerns only itself. Two such clauses do
+ * nothing for each other: a character that moves only itself never puts another character at a
+ * location, and one rewarded only for its own position needs its own move.
+ */
+export function getSelfOnlyLocationRoles(card: LorcanaCard): LocationRole[] {
+  if (!isCharacter(card)) return [];
+  const text = normalizeCardText(card);
+  return SELF_ONLY_LOCATION_CLAUSES.filter(({clause, readsAsRole}) => {
+    const rest = text.replace(clause, '.');
+    return rest !== text && !readsAsRole(rest);
+  }).map(({role}) => role);
 }
 
 // ============================================

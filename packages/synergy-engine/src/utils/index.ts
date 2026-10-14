@@ -22,6 +22,8 @@ export {
   getLocationBuffClassifications,
   getLocationMoveClassifications,
   locationRoleReaches,
+  isMoveOnlyLocationRamp,
+  getSelfOnlyLocationRoles,
   stripDamageMoves,
   LOCATION_PATTERNS,
   getShiftType,

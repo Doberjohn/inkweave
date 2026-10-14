@@ -14,6 +14,8 @@ import {
   hasKeyword,
   isBoostBeneficiaryLocation,
   isCharacter,
+  isMoveOnlyLocationRamp,
+  getSelfOnlyLocationRoles,
   isDiscardCard,
   isItem,
   isLocation,
@@ -382,12 +384,58 @@ const HIGH_VALUE_ROLES: Set<LocationRole> = new Set([
   'location-ramp',
 ]);
 
+/** A support card's location roles as a cross pair reads them. */
+interface LocationCrossProfile {
+  /** Roles the complements are matched on: a move-only ramp (Raksha's discount on her own move) reads as a move. */
+  roles: LocationRole[];
+  /** Of `roles`, those whose clauses concern only the card itself (`getSelfOnlyLocationRoles`). */
+  selfOnly: LocationRole[];
+  /** Whether the card's own roles include a high-value one. */
+  highValue: boolean;
+}
+
+const hasHighValueRole = (roles: LocationRole[]): boolean => roles.some((r) => HIGH_VALUE_ROLES.has(r));
+
+/** The cross profile of bare roles: no move-only ramp, no self-only clause. */
+const rolesProfile = (roles: LocationRole[]): LocationCrossProfile => ({
+  roles,
+  selfOnly: [],
+  highValue: hasHighValueRole(roles),
+});
+
+/** The cross profile of a support card. */
+function cardCrossProfile(card: LorcanaCard): LocationCrossProfile {
+  const own = getLocationRoles(card);
+  const roles =
+    own.includes('location-ramp') && isMoveOnlyLocationRamp(card)
+      ? [...new Set(own.map((r): LocationRole => (r === 'location-ramp' ? 'move' : r)))]
+      : own;
+  return {roles, selfOnly: getSelfOnlyLocationRoles(card), highValue: hasHighValueRole(own)};
+}
+
+/** Whether `from`'s `role` links to `to`'s `target`: void when both clauses concern only their own card. */
+const rolesLink = (
+  from: LocationCrossProfile,
+  role: LocationRole,
+  to: LocationCrossProfile,
+  target: LocationRole,
+): boolean => to.roles.includes(target) && !(from.selfOnly.includes(role) && to.selfOnly.includes(target));
+
 /** Check if any role in `from` has a complementary relationship with any role in `to`. */
-function hasComplementaryRole(from: LocationRole[], to: LocationRole[]): boolean {
-  return from.some((role) => {
-    const complements = COMPLEMENTARY_ROLES[role];
-    return complements != null && to.some((r) => complements.includes(r));
-  });
+function hasComplementaryRole(from: LocationCrossProfile, to: LocationCrossProfile): boolean {
+  return from.roles.some((role) =>
+    (COMPLEMENTARY_ROLES[role] ?? []).some((target) => rolesLink(from, role, to, target)),
+  );
+}
+
+/** Cross-synergy score of two support cards' profiles (see `getCrossSynergyScore`). */
+function scoreCrossProfiles(a: LocationCrossProfile, b: LocationCrossProfile): number | null {
+  if (a.roles.length === 0 || b.roles.length === 0) return null;
+
+  // Check both directions: A complements B, or B complements A
+  if (!hasComplementaryRole(a, b) && !hasComplementaryRole(b, a)) return null;
+
+  return a.highValue && b.highValue ? 5 : 3;
 }
 
 /**
@@ -400,16 +448,7 @@ export function getCrossSynergyScore(
   rolesA: LocationRole[],
   rolesB: LocationRole[],
 ): number | null {
-  if (rolesA.length === 0 || rolesB.length === 0) return null;
-
-  // Check both directions: A complements B, or B complements A
-  if (!hasComplementaryRole(rolesA, rolesB) && !hasComplementaryRole(rolesB, rolesA)) return null;
-
-  const aHighValue = rolesA.some((r) => HIGH_VALUE_ROLES.has(r));
-  const bHighValue = rolesB.some((r) => HIGH_VALUE_ROLES.has(r));
-
-  if (aHighValue && bHighValue) return 5;
-  return 3;
+  return scoreCrossProfiles(rolesProfile(rolesA), rolesProfile(rolesB));
 }
 
 /** Build a Location ↔ location-support match (or null when role-specific gating excludes the location). */
@@ -419,8 +458,8 @@ function buildLocationDirectMatch(
   role: LocationRole,
 ): SynergyMatch | null {
   if (role === 'boost' && !isBoostBeneficiaryLocation(location)) return null;
-  // A classified buff or move ("Your Hyperia City locations get ...", "move him to a Hyperia City
-  // location") reaches only its own locations.
+  // A classified buff or move ("Your Hyperia City locations get ..."), a capped location play
+  // and the other limits in `locationRoleReaches` keep the role to the locations it can reach.
   if (!locationRoleReaches(card, location, role)) return null;
   return {
     card: location,
@@ -436,19 +475,17 @@ function buildLocationDirectMatch(
  * the partner has the role too.
  */
 function buildLocationCrossMatch(
-  _card: LorcanaCard,
   other: LorcanaCard,
-  cardRoles: LocationRole[],
+  cardProfile: LocationCrossProfile,
   role: LocationRole,
 ): SynergyMatch | null {
-  const otherRoles = getLocationRoles(other);
-  const score = getCrossSynergyScore(cardRoles, otherRoles);
+  const score = scoreCrossProfiles(cardProfile, cardCrossProfile(other));
   if (score === null) return null;
   const lines = LOCATION_ROLE_LINES[role];
   return {
     card: other,
     score,
-    explanation: otherRoles.includes(role) ? lines.both : lines.general('{A}'),
+    explanation: getLocationRoles(other).includes(role) ? lines.both : lines.general('{A}'),
     bidirectional: true,
   };
 }
@@ -460,14 +497,14 @@ function findLocationSupportSynergies(
   role: LocationRole,
 ): SynergyMatch[] {
   const matches: SynergyMatch[] = [];
-  const cardRoles = getLocationRoles(card);
+  const cardProfile = cardCrossProfile(card);
 
   for (const other of allCards) {
     if (other.id === card.id) continue;
     const match = isLocation(other)
       ? buildLocationDirectMatch(card, other, role)
       : isLocationSupportCard(other)
-        ? buildLocationCrossMatch(card, other, cardRoles, role)
+        ? buildLocationCrossMatch(other, cardProfile, role)
         : null;
     if (match) matches.push(match);
   }
