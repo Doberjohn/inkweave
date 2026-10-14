@@ -2222,6 +2222,27 @@ export function getFloodbornRoles(card: LorcanaCard): FloodbornRole[] {
 
 export const isFloodbornCard = (card: LorcanaCard): boolean => getFloodbornRoles(card).length > 0;
 
+/**
+ * A Floodborn team buff that grants one keyword a second copy adds nothing to: "Your Floodborn
+ * characters gain Evasive until the start of your next turn." (Protective Aura).
+ */
+const FLOODBORN_FLAT_KEYWORD_PATTERN =
+  /\bfloodborn characters? gain (Evasive|Alert|Rush|Ward|Bodyguard)(?=\.| until\b)/i;
+/** The printed keywords that already give a body the granted one: Evasive covers Alert. */
+const FLOODBORN_KEYWORD_COVERED_BY: Record<string, string[]> = {alert: ['Alert', 'Evasive']};
+
+/**
+ * True iff the payoff's Floodborn team buff only grants a keyword the member already prints, so
+ * it adds nothing to that member (Protective Aura's Evasive on Prince Phillip - Vanquisher of
+ * Foes, or Robin Hood - Created by the Vine's Alert on him).
+ */
+export function floodbornBuffAlreadyPrinted(payoff: LorcanaCard, member: LorcanaCard): boolean {
+  const keyword = normalizeCardText(payoff).match(FLOODBORN_FLAT_KEYWORD_PATTERN)?.[1];
+  if (keyword === undefined) return false;
+  const covering = FLOODBORN_KEYWORD_COVERED_BY[keyword.toLowerCase()] ?? [keyword];
+  return covering.some((printed) => hasKeywordExact(member, printed));
+}
+
 // ============================================
 // HUNNY TRIBAL DETECTION
 // ============================================

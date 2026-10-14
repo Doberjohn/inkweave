@@ -59,6 +59,7 @@ export {
   isDwarfsCard,
   getFloodbornRoles,
   isFloodbornCard,
+  floodbornBuffAlreadyPrinted,
   getHunnyRoles,
   isHunnyCard,
   isHunnyTeamBuff,

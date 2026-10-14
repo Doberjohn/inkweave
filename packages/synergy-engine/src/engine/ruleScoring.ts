@@ -24,6 +24,7 @@ import {
   banishTriggerFiresOnYourTurn,
   toyAbilityCounts,
   TOY_TRIBAL_ROLES,
+  floodbornBuffAlreadyPrinted,
   isHunnyTeamBuff,
   countsAsHunnyCharacter,
   readiesItemsOnly,
@@ -1108,18 +1109,22 @@ function floodbornBuffLine(payoffIsCard: boolean): string {
  *   - payoff <-> payoff           = 7 (two payoffs stack on the same Floodborn board)
  *   - member <-> trigger payoff   = 7 (the body fires the repeating trigger)
  *   - member <-> buff payoff      = 6 (the body is pumped by the team buff)
+ *   - member <-> buff it prints   = 5 (the buff's keyword is already on the body)
  */
 /**
  * Score a member ↔ single-payoff Floodborn pair (exactly one side is a payoff): 7 when the
- * payoff is a repeating trigger the body fires, 6 when it is a team buff pumping the body.
+ * payoff is a repeating trigger the body fires, 6 when it is a team buff pumping the body, and
+ * the same-deck 5 when that buff only grants a keyword the body already prints.
  */
 function scoreFloodbornMemberPayoff(
   payoffIsCard: boolean,
   payoffRoles: FloodbornRole[],
+  buffAlreadyPrinted: boolean,
 ): {score: number; explanation: string} {
   if (payoffRoles.includes('trigger')) {
     return {score: 7, explanation: floodbornTriggerLine(payoffIsCard)};
   }
+  if (buffAlreadyPrinted) return {score: 5, explanation: sameDeckLine('a Floodborns')};
   return {score: 6, explanation: floodbornBuffLine(payoffIsCard)};
 }
 
@@ -1140,6 +1145,8 @@ function floodbornStackedLine(cardRoles: FloodbornRole[], otherRoles: FloodbornR
 export function scoreFloodbornPair(
   cardRoles: FloodbornRole[],
   otherRoles: FloodbornRole[],
+  card: LorcanaCard,
+  other: LorcanaCard,
 ): {score: number; explanation: string} {
   const cardPayoff = isFloodbornPayoff(cardRoles);
   const otherPayoff = isFloodbornPayoff(otherRoles);
@@ -1148,7 +1155,12 @@ export function scoreFloodbornPair(
     return {score: 7, explanation: floodbornStackedLine(cardRoles, otherRoles)};
   }
   // Exactly one side is a payoff; the other is a member only.
-  return scoreFloodbornMemberPayoff(cardPayoff, cardPayoff ? cardRoles : otherRoles);
+  const [payoff, member] = cardPayoff ? [card, other] : [other, card];
+  return scoreFloodbornMemberPayoff(
+    cardPayoff,
+    cardPayoff ? cardRoles : otherRoles,
+    floodbornBuffAlreadyPrinted(payoff, member),
+  );
 }
 
 // ============================================

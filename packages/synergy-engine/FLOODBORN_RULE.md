@@ -13,6 +13,12 @@ so membership keys on the `Floodborn` classification tag, never on the Shift key
 
 A card is a **payoff** if `buff` or `trigger` matches (multi-role allowed; The Vine is all three).
 
+A buff that grants only a keyword a second copy adds nothing to
+(`/\bfloodborn characters? gain (Evasive|Alert|Rush|Ward|Bodyguard)(?=\.| until\b)/i`) does
+nothing for a member that already prints that keyword, and Evasive covers Alert
+(`floodbornBuffAlreadyPrinted`): Protective Aura's Evasive and Robin Hood - Created by the Vine's
+Alert on Prince Phillip - Vanquisher of Foes.
+
 ## Payoff-anchored
 `findSynergies` skips member-member pairs, so two plain Floodborn never synergize. This
 avoids a density-5 pair between every two Floodborn characters that have no payoff role and
@@ -25,9 +31,9 @@ Real cards the `getFloodbornRoles` detector tags for each role (names from the l
 
 | Role | Real cards | What they do |
 |------|-----------|--------------|
-| **member** | Fix-It Felix, Jr. - Niceland Steward (Amber), Maleficent - Formidable Queen (Amethyst), Clarabelle - Light on Her Hooves (Emerald) | A Floodborn character: the tribe's bodies (payoff-anchored, so members don't pair with each other) |
-| **trigger** | Hiro Hamada - Future Champion (Emerald), Honey Lemon - Chemistry Whiz (Sapphire), Honey Lemon - Costumed Catalyst (Emerald-Sapphire) | Repeating engine that fires whenever you play a Floodborn |
-| **buff** | Rapunzel's Tower - In the Vines' Grip (Amber), Pete - Created by the Vine (Amethyst), Hiro Hamada - Armor Designer (Emerald-Sapphire) | Static team pump for your Floodborn characters |
+| **member** | Pluto - Determined Defender (Amber), Prince Phillip - Vanquisher of Foes (Emerald), Mickey Mouse - Brave Little Prince (Ruby) | A Floodborn character: the tribe's bodies (payoff-anchored, so members don't pair with each other) |
+| **trigger** | Ursula - Created by the Vine (Amber), Hera - Created by the Vine (Amethyst), Maid Marian - Created by the Vine (Sapphire) | Repeating engine that fires whenever one of your Floodborn characters quests, is played or is banished |
+| **buff** | Rapunzel's Tower - Taken by the Vine (Amber), Pete - Created by the Vine (Amethyst), Protective Aura (Amethyst) | Static team pump for your Floodborn characters |
 
 ## Scoring (5-baseline)
 | Pair | Score | Explanation (from the payoff's page) |
@@ -35,6 +41,7 @@ Real cards the `getFloodbornRoles` detector tags for each role (names from the l
 | member + trigger | 7 | `{B} triggers {A}'s Floodborn ability.` |
 | payoff + payoff | 7 | Split below |
 | member + buff | 6 | `{A}'s Floodborn buff powers up {B}.` |
+| member + buff whose keyword the member already prints | 5 | `{A} and {B} both go in a Floodborns deck.` |
 | member + member | (not generated) | Payoff-anchored. |
 
 `{A}` is the card whose page shows the tile and `{B}` its partner; on the member's page the tokens swap. Two payoffs split by which of them is a Floodborn character the other's ability helps, at the same 7: neither reads `{A} and {B} are both Floodborn payoffs, so they stack on your board.`; one reads as that member with the other card's buff or trigger line; each reads `{A} and {B} are both Floodborn characters, and each one's ability helps the other.`
@@ -63,5 +70,6 @@ Payoffs (`buff` or `trigger`): 19. Floodborn characters with no payoff role: 48.
 | Score | Pairs | Share |
 |-----|-----|-----|
 | 7 | 651 | 60.1% |
-| 6 | 432 | 39.9% |
+| 6 | 426 | 39.3% |
+| 5 | 6 | 0.6% |
 <!-- coverage:end -->
