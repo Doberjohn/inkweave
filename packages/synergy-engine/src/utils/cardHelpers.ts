@@ -1795,8 +1795,9 @@ export function classifyNamedEffect(card: LorcanaCard): NamedEffectTier {
   if (/draw \d+ card|draw cards/.test(text)) return 'game-winning';
   if (/search your deck/.test(text)) return 'game-winning';
 
-  // Strong: cost reduction, keyword grants (Bodyguard, Challenger, Rush, Evasive, Singer)
-  if (/costs? \d+ less|cost.*less|cost reduction|pay \d+ .*less/.test(text)) return 'strong';
+  // Strong: cost reduction, keyword grants (Bodyguard, Challenger, Rush, Evasive, Singer). A
+  // reduction reads "pay 1 ⬡ less"; "cost 3 or less" is a threshold (John Smith's Compass).
+  if (/costs? \d+ less|cost reduction|pay \d+ .*less/.test(text)) return 'strong';
   if (/gains? (?:bodyguard|challenger|rush|evasive|singer)/.test(text)) return 'strong';
   if (/challenger \+\d/.test(text)) return 'strong';
 

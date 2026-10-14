@@ -105,7 +105,7 @@ Scans the card's **entire text** (not just the "named" clause) to determine what
 | Tier | Score | Triggers | Real Card Examples |
 |------|-------|----------|--------------------|
 | **Game-winning** | 8 | Free play (`play.*for free`), draw 2+ cards, deck search | Yzma - On Edge (search deck for named card) |
-| **Strong** | 7 | Cost reduction (`cost X less`), keyword grants (Rush, Evasive, Bodyguard, Singer) | Anna - Trusting Sister (gains Evasive) |
+| **Strong** | 7 | Cost reduction (`pay N ⬡ less`, `costs N less`), keyword grants (Rush, Evasive, Bodyguard, Singer). A cost threshold such as "cost 3 or less" is no reduction: John Smith's Compass, which puts a revealed "character card with cost 3 or less or named Pocahontas" into your hand, is minor | Anna - Trusting Sister (gains Evasive) |
 | **Moderate** | 6 | Stat boosts (+strength/willpower/lore), Resist, Support, can't be challenged | Elsa - Ice Artisan (+2 strength to named Elsa) |
 | **Minor** | 5 | Everything else | Cards with minor conditional effects |
 | **Hostile** | 4 | A `banish` (not `banished`) within 40 characters of "named", read as the card banishing the named target. A passive "named X was banished" condition is not hostile | Buzz's Arm's "named Buzz Lightyear was banished" reads as its free play (8), not as hostile |
@@ -144,7 +144,7 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
     "datasets": [
       {
         "label": "Pairs",
-        "data": [0, 62, 29, 44, 21],
+        "data": [0, 67, 29, 39, 21],
         "backgroundColor": ["#60b5f5", "#60b5f5", "#60b5f5", "#6ee7a0", "#6ee7a0"]
       }
     ]
