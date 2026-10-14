@@ -174,7 +174,11 @@ function CardImageOrFallback({card, colors}: {card: LorcanaCard; colors: typeof 
 }
 
 /** The badge's text, which the tile's name repeats. Phones show the short tier label. */
-function badgeText(tier: ReturnType<typeof getStrengthTier>, score: number, isMobile: boolean): string {
+function badgeText(
+  tier: ReturnType<typeof getStrengthTier>,
+  score: number,
+  isMobile: boolean,
+): string {
   return `${isMobile ? tier.shortLabel : tier.label} ${score}`;
 }
 

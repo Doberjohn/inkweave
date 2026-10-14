@@ -57,10 +57,15 @@ describe('SynergyCard', () => {
   it.each([
     {isMobile: false, name: 'Elsa - Snow Queen, Moderate 5'},
     {isMobile: true, name: 'Elsa - Snow Queen, Mod 5'},
-  ])('names the tile by its card and the badge it shows (isMobile: $isMobile)', ({isMobile, name}) => {
-    render(<SynergyCard card={mockCard} score={5} explanation="Test synergy" isMobile={isMobile} />);
-    expect(screen.getByRole('link', {name})).toBeInTheDocument();
-  });
+  ])(
+    'names the tile by its card and the badge it shows (isMobile: $isMobile)',
+    ({isMobile, name}) => {
+      render(
+        <SynergyCard card={mockCard} score={5} explanation="Test synergy" isMobile={isMobile} />,
+      );
+      expect(screen.getByRole('link', {name})).toBeInTheDocument();
+    },
+  );
 
   it('should show View details cue on hover (desktop)', () => {
     render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);

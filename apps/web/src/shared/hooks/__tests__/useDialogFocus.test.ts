@@ -215,10 +215,10 @@ describe('useDialogFocus', () => {
   it.each([
     {key: 'Tab', shiftKey: false, lands: 'next'},
     {key: 'Shift+Tab', shiftKey: true, lands: 'previous'},
-  ] as const)('$key from a scroller between stops moves to the $lands stop', ({shiftKey, lands}) => {
-    // Chrome and Firefox let Tab reach a scroll container with nothing focusable inside, such as the
-    // card overview modal's printing strip. The trap took it for "before the first control" and
-    // wrapped to the top, so Tab never reached the synergy tiles after it.
+  ] as const)('$key from a scroller between stops reaches the $lands stop', ({shiftKey, lands}) => {
+    // Chrome and Firefox let Tab reach a scroll container with nothing focusable inside, such as
+    // the card overview modal's printing strip. The trap took it for "before the first control"
+    // and wrapped to the top, so Tab never reached the synergy tiles after it.
     const [close, chip, tile] = Array.from({length: 3}, () => document.createElement('button'));
     const strip = document.createElement('div');
     strip.tabIndex = -1; // jsdom focuses it only with a tabindex; browsers reach it as a scroller

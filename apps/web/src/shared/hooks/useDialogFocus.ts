@@ -76,7 +76,11 @@ function nearestStop(stops: HTMLElement[], from: Element, back: boolean): HTMLEl
  * Firefox let Tab reach a scroll container with nothing focusable inside, such as the card
  * overview modal's printing strip, and wrapping from there kept Tab off the synergy tiles below.
  */
-function trapTarget(container: HTMLElement, stops: HTMLElement[], back: boolean): HTMLElement | undefined {
+function trapTarget(
+  container: HTMLElement,
+  stops: HTMLElement[],
+  back: boolean,
+): HTMLElement | undefined {
   const next = nearestStop(stops, document.activeElement ?? container, back);
   if (!next) return back ? stops[stops.length - 1] : stops[0];
   return isFocusOffControls(container, stops) ? next : undefined;
