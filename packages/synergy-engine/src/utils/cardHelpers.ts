@@ -2283,13 +2283,22 @@ export const isRedPandaCard = (card: LorcanaCard): boolean => getRedPandaRoles(c
 export type ItemRole = 'member' | 'item-engine' | 'payoff-trigger' | 'payoff-static';
 
 const ITEM_PLAY_TRIGGER = /whenever you play an item/i;
+/**
+ * A count or check of your items in play. A count of item cards in your discard ("For each item
+ * card in your discard", Stegmutt - Clumsy Dinosaur; "for each item card put into your discard
+ * this way", Quackerjack - Loony Toymaker) is skipped: no item you play reaches it.
+ */
 const ITEM_STATIC_PAYOFF =
-  /for each (?:of your )?items?\b|(?:while|if) you have (?:an?|\d+ or more) items?\b(?!\s+named)(?: in play)?|each item you have in play|\bready chosen item\b/i;
+  /for each (?:of your )?items?\b(?! cards? (?:put )?in(?:to)? your discard)|(?:while|if) you have (?:an?|\d+ or more) items?\b(?!\s+named)(?: in play)?|each item you have in play|\bready chosen item\b/i;
 /** Search/tutor/free-play an item from deck, hand, or discard. */
 const ITEM_SEARCH =
   /reveal[^.]{0,40}\bitem card|\bplay (?:a|an|that|chosen)[^.]{0,30}\bitem\b[^.]{0,30}(?:for free|from your (?:hand|discard))/i;
-/** Return an item card from your discard. */
-const ITEM_RECURSION = /\bitem card[^.]{0,30}from your discard|from your discard[^.]{0,15}\bitem card/i;
+/**
+ * Return an item card from your discard to your hand. Moving item cards from your discard to the
+ * bottom of your deck (Stegmutt - Clumsy Dinosaur's cost) brings none back.
+ */
+const ITEM_RECURSION =
+  /\bitem card[^.]{0,30}from your discard to your hand|from your discard[^.]{0,15}\bitem card/i;
 /** Discount an item you play (gated below so self-discount "this item" doesn't count). */
 const ITEM_COST_REDUCTION = /pay \d+[^.]{0,5}(?:less|fewer)[^.]{0,28}\bitems?\b/i;
 const SELF_ITEM_DISCOUNT = /(?:less|fewer)[^.]{0,12}to play this item/i;
