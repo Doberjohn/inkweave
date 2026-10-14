@@ -152,7 +152,7 @@ The miner itself (`scripts/mine-rule-candidates.mjs`, run via `pnpm mine-rules`)
 
 ## Synergy Rules
 
-Rules live in `packages/synergy-engine/src/engine/rules/` and run at build time only; the web app consumes pre-computed JSON.
+Rules live in `packages/synergy-engine/src/engine/rules.ts` and run at build time only; the web app consumes pre-computed JSON.
 
 **Each rule's authoritative spec is its own `*_RULE.md`** in `packages/synergy-engine/` (detection patterns, score matrices, coverage, rationale). `scripts/generate-docs.mjs` auto-discovers them. **Do not restate rule detail here** — this file is always-loaded context. The registry below is the index; add a row when you add a rule.
 
