@@ -100,3 +100,21 @@ describe("Ramp: ink that lands on the turn a trigger can't fire", () => {
     expect(rampPair(mamaOdie, chiefTui)?.score).toBe(8);
   });
 });
+
+// Ramps from the discard; the Boost reminder before it puts a card under him, not into your inkwell.
+const jiminyAbility =
+  'LOOK INTO YOUR PAST Whenever you put a card\nunder this character, you may put a card from your\ndiscard into your inkwell facedown and exerted.';
+const jiminy = createCard({
+  id: 'jiminy-cricket-ghost-of-christmas-past',
+  name: 'Jiminy Cricket',
+  fullName: 'Jiminy Cricket - Ghost of Christmas Past',
+  ink: 'Sapphire',
+  text: `Boost 2 ⬡ (Once during your turn, you may pay 2 ⬡\nto put the top card of your deck facedown under this\ncharacter.)\n${jiminyAbility}`,
+});
+
+describe('Ramp: a card put into your inkwell from your discard', () => {
+  it('reads ramp from that clause, not from the Boost reminder', () => {
+    expect(getRampRoles({...jiminy, text: jiminyAbility})).toEqual(['inkwell-ramp']);
+    expect(getRampRoles(jiminy)).toEqual(['inkwell-ramp']);
+  });
+});

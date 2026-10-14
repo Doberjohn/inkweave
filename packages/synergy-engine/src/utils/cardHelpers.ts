@@ -1454,8 +1454,8 @@ const INKWELL_RAMP_PATTERNS: RegExp[] = [
   /put\s+that\s+card\s+(?:from\s+your\s+discard\s+)?into\s+your\s+inkwell/i,
   // "put any number of cards from under your characters...into your inkwell"
   /put\s+any\s+number\s+of\s+cards.*?into\s+your\s+inkwell/i,
-  // "put cards from under...into your inkwell" (boosted cards)
-  /put\s+the\s+top\s+card\s+of\s+your\s+deck\s+facedown\s+under/i,
+  // "put a card from your discard into your inkwell" (Jiminy Cricket - Ghost of Christmas Past)
+  /put\s+a\s+card\s+from\s+your\s+discard\s+into\s+your\s+inkwell/i,
 ];
 
 /**

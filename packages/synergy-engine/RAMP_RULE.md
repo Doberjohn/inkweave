@@ -48,6 +48,8 @@ Cards that put extra cards into YOUR inkwell, Sapphire's identity mechanic. Two 
 - Pattern: `put this card into your inkwell`
 - Pattern: `additional card...into your inkwell`
 
+**One card from your discard**: `put a card from your discard into your inkwell` (Jiminy Cricket - Ghost of Christmas Past) is inkwell ramp too. `isDeckRamp` counts only `put up to X cards from your discard`, so Jiminy scores in the self-sacrifice tier. Boost's reminder text ("put the top card of your deck facedown under this character") puts a card under a character, not into your inkwell, so it is no ramp pattern.
+
 ### Critical Exclusion: Opponent Ink
 
 Cards that put stuff into the **opponent's** inkwell are **removal**, not ramp. They do NOT fire your inkwell triggers and do NOT give you more ink.
