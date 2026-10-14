@@ -62,6 +62,7 @@ export {
   getHunnyRoles,
   isHunnyCard,
   isHunnyTeamBuff,
+  countsAsHunnyCharacter,
   getRedPandaRoles,
   isRedPandaCard,
   getItemRoles,

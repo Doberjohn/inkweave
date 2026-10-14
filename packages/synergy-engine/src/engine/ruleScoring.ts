@@ -25,6 +25,7 @@ import {
   toyAbilityCounts,
   TOY_TRIBAL_ROLES,
   isHunnyTeamBuff,
+  countsAsHunnyCharacter,
   readiesItemsOnly,
   hasExertAbility,
   type DiscardRole,
@@ -1338,6 +1339,16 @@ function scoreHunnyLowerTiers(ctx: HunnyPairCtx): {score: number; explanation: s
   return {score: 5, explanation: sameDeckLine('a Hunny')};
 }
 
+/**
+ * The roles a Hunny card brings to the 7/6/5 tiers. A member that isn't a Hunny character
+ * (Hundred Acre Wood - Hunny Campsite) drops its member role there: the density and buff payoffs
+ * count or choose Hunny characters, so only a search for a "Hunny card" finds it.
+ */
+function hunnyTierRoles(card: LorcanaCard, roles: HunnyRole[]): HunnyRole[] {
+  if (countsAsHunnyCharacter(card)) return roles;
+  return roles.filter((role) => role !== 'member');
+}
+
 /** `card` is the searcher (token {A}); `other` is the partner (token {B}). */
 export function scoreHunnyPair(
   card: LorcanaCard,
@@ -1349,7 +1360,15 @@ export function scoreHunnyPair(
   if (cross('search', 'member') || cross('search', 'density')) {
     return {score: 8, explanation: revealLine(cardRoles, otherRoles, 'Hunny')};
   }
-  return scoreHunnyLowerTiers({card, other, cardRoles, otherRoles, cross});
+  const tierCardRoles = hunnyTierRoles(card, cardRoles);
+  const tierOtherRoles = hunnyTierRoles(other, otherRoles);
+  return scoreHunnyLowerTiers({
+    card,
+    other,
+    cardRoles: tierCardRoles,
+    otherRoles: tierOtherRoles,
+    cross: crossMatcher(tierCardRoles, tierOtherRoles),
+  });
 }
 
 // ============================================
