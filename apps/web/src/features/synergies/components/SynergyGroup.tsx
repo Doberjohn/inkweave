@@ -170,6 +170,8 @@ function MoreTile({
       <span style={{fontSize: `${config.countFontSize}px`, fontWeight: 700, color: COLORS.primary500}}>
         +{count}
       </span>
+      {/* The flex column never renders this space, but without it the tile's text reads "+12more
+          cards", which label-in-name checks (WCAG 2.5.3) can't find in the aria-label. */}{' '}
       <span
         style={{
           fontSize: `${config.labelFontSize}px`,
