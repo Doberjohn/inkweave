@@ -160,6 +160,90 @@ describe('useDialogFocus', () => {
   });
 
   it.each([
+    {key: 'Tab', shiftKey: false, from: 'last', lands: 'first'},
+    {key: 'Shift+Tab', shiftKey: true, from: 'first', lands: 'last'},
+  ] as const)(
+    '$key from the $from stop wraps to the $lands, past roving items Tab skips',
+    ({shiftKey, from, lands}) => {
+      // A roving grid keeps its inactive items in the DOM at tabIndex -1, as SynergyGroup's tiles
+      // do in the card overview modal. The trap counted them as controls, so its edges were tiles
+      // Tab never reaches, and Tab from the grid's active tile left the dialog.
+      const link = (tabIndex: number) => {
+        const a = document.createElement('a');
+        a.href = '#';
+        a.tabIndex = tabIndex;
+        return a;
+      };
+      const first = link(0);
+      const last = link(0);
+      const container = document.createElement('div');
+      container.append(link(-1), first, last, link(-1));
+      document.body.appendChild(container);
+
+      const {result} = renderHook(() =>
+        useDialogFocus({
+          isOpen: true,
+          containerRef: {current: container},
+          initialFocusRef: createRef<HTMLElement>(),
+          onClose: vi.fn(),
+        }),
+      );
+
+      (from === 'last' ? last : first).focus();
+      const event = {
+        key: 'Tab',
+        shiftKey,
+        preventDefault: vi.fn(),
+      } as unknown as React.KeyboardEvent;
+      act(() => {
+        result.current.handleKeyDown(event);
+      });
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(document.activeElement).toBe(lands === 'first' ? first : last);
+      document.body.removeChild(container);
+    },
+  );
+
+  it.each([
+    {key: 'Tab', shiftKey: false, lands: 'next'},
+    {key: 'Shift+Tab', shiftKey: true, lands: 'previous'},
+  ] as const)('$key from a scroller between stops moves to the $lands stop', ({shiftKey, lands}) => {
+    // Chrome and Firefox let Tab reach a scroll container with nothing focusable inside, such as the
+    // card overview modal's printing strip. The trap took it for "before the first control" and
+    // wrapped to the top, so Tab never reached the synergy tiles after it.
+    const [close, chip, tile] = Array.from({length: 3}, () => document.createElement('button'));
+    const strip = document.createElement('div');
+    strip.tabIndex = -1; // jsdom focuses it only with a tabindex; browsers reach it as a scroller
+    const container = document.createElement('div');
+    container.append(close, chip, strip, tile);
+    document.body.appendChild(container);
+
+    const {result} = renderHook(() =>
+      useDialogFocus({
+        isOpen: true,
+        containerRef: {current: container},
+        initialFocusRef: createRef<HTMLElement>(),
+        onClose: vi.fn(),
+      }),
+    );
+
+    strip.focus();
+    const event = {
+      key: 'Tab',
+      shiftKey,
+      preventDefault: vi.fn(),
+    } as unknown as React.KeyboardEvent;
+    act(() => {
+      result.current.handleKeyDown(event);
+    });
+
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(document.activeElement).toBe(lands === 'next' ? tile : chip);
+    document.body.removeChild(container);
+  });
+
+  it.each([
     {start: 'panel', key: 'Shift+Tab', shiftKey: true, lands: 'last'},
     {start: 'panel', key: 'Tab', shiftKey: false, lands: 'first'},
     {start: 'message', key: 'Shift+Tab', shiftKey: true, lands: 'last'},
