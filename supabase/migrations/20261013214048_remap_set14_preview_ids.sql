@@ -1,3 +1,7 @@
+-- Applied 2026-10-14 as 20261013214048 (#780), in the Supabase SQL editor like
+-- 20261013000000, once the graduated cards were live, with its history row added by hand
+-- under the filename stamp.
+--
 -- Set 14 graduation (#748): move the votes, cloud collection keys and deck cards still
 -- on set 14's preview ids to the released cards' ids. Written by `pnpm graduate-set 14`,
 -- which pairs each preview card with its canonical card by collector number. The function is
