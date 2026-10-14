@@ -902,6 +902,9 @@ function tryToyMemberSearch(ctx: ToyPairCtx): ToyPairResult | null {
 /** The plain Toys line: no ability of either card counts the other. */
 const TOY_DECK_LINE = sameDeckLine('a Toys');
 
+/** The 5 baseline: two Toy cards with no ability of either counting the other. */
+const TOY_DECK_PAIR: ToyPairResult = {score: 5, explanation: TOY_DECK_LINE};
+
 /** The member line, with the payoff's ability counting the member as a Toy. */
 function toyActivateLine(payoffIsCard: boolean): string {
   const [payoff, member] = tokenPair(payoffIsCard);
@@ -909,28 +912,33 @@ function toyActivateLine(payoffIsCard: boolean): string {
 }
 
 /**
- * 7 — Tribal ↔ Tribal (multiple density rewards compound). The words follow what each card's
- * text counts, not the payoff tag: Rex - Protective Dinosaur's banish trigger counts no other Toy.
+ * 7 — Tribal ↔ Tribal (multiple density rewards compound), when either card's ability counts
+ * the other. The score follows what each card's text counts, not the payoff tag: Rex - Protective
+ * Dinosaur's banish trigger counts no other Toy, so two such payoffs sit at the 5 baseline.
  */
 function tryToyTribalCompound(ctx: ToyPairCtx): ToyPairResult | null {
   if (!(ctx.aTribal && ctx.bTribal)) return null;
-  const explanation = splitStackedPayoffs(
-    ctx.bMember && toyAbilityCounts(ctx.card, ctx.other),
-    ctx.aMember && toyAbilityCounts(ctx.other, ctx.card),
-    {stack: TOY_DECK_LINE, mutual: mutualLine('Toy'), oneWay: toyActivateLine},
-  );
+  const cardCountsOther = ctx.bMember && toyAbilityCounts(ctx.card, ctx.other);
+  const otherCountsCard = ctx.aMember && toyAbilityCounts(ctx.other, ctx.card);
+  if (!cardCountsOther && !otherCountsCard) return TOY_DECK_PAIR;
+  const explanation = splitStackedPayoffs(cardCountsOther, otherCountsCard, {
+    stack: TOY_DECK_LINE,
+    mutual: mutualLine('Toy'),
+    oneWay: toyActivateLine,
+  });
   return {score: 7, explanation};
 }
 
-/** 7 — Member ↔ Tribal (member feeds the tribal payoff). Exactly one side is tribal here. */
+/**
+ * 7 — Member ↔ Tribal (member feeds the tribal payoff). Exactly one side is tribal here. A
+ * payoff whose ability counts no other Toy (Rex - Protective Dinosaur) sits at the 5 baseline.
+ */
 function tryToyMemberTribal(ctx: ToyPairCtx): ToyPairResult | null {
   const matched = (ctx.aMember && ctx.bTribal) || (ctx.aTribal && ctx.bMember);
   if (!matched) return null;
   const [payoff, member] = ctx.aTribal ? [ctx.card, ctx.other] : [ctx.other, ctx.card];
-  return {
-    score: 7,
-    explanation: toyAbilityCounts(payoff, member) ? toyActivateLine(ctx.aTribal) : TOY_DECK_LINE,
-  };
+  if (!toyAbilityCounts(payoff, member)) return TOY_DECK_PAIR;
+  return {score: 7, explanation: toyActivateLine(ctx.aTribal)};
 }
 
 /**
@@ -941,8 +949,8 @@ function tryToyMemberTribal(ctx: ToyPairCtx): ToyPairResult | null {
  * Matrix (highest precedence first):
  *   - search ↔ banish-trigger  = 8 (peak chain — load board, pay off on banish)
  *   - Member ↔ search          = 8 (search converts deck slot to tribal member)
- *   - Tribal ↔ Tribal (other)  = 7 (multiple density rewards compound)
- *   - Member ↔ Tribal          = 7 (member feeds the tribal payoff)
+ *   - Tribal ↔ Tribal (other)  = 7 (multiple density rewards compound), when either counts the other
+ *   - Member ↔ Tribal          = 7 (member feeds the tribal payoff), when the payoff counts it
  *   - Otherwise                = 5 (Member↔Member, Member↔generic, Generic↔generic;
  *                                   generic mechanic synergies are owned by their own rules)
  */
@@ -957,7 +965,8 @@ export function scoreToyPair(
     tryToyPeakChain(ctx) ??
     tryToyMemberSearch(ctx) ??
     tryToyTribalCompound(ctx) ??
-    tryToyMemberTribal(ctx) ?? {score: 5, explanation: TOY_DECK_LINE}
+    tryToyMemberTribal(ctx) ??
+    TOY_DECK_PAIR
   );
 }
 
