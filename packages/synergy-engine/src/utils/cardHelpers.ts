@@ -2824,10 +2824,15 @@ const BOUNCE_OPPONENT_SIDE = /opposing|opponent'?s?\b/i;
 /** return-payoff — gain value whenever a card is returned to hand from play (Maleficent's Staff). */
 const BOUNCE_RETURN_PAYOFF_PATTERN =
   /when(?:ever)?\s+[^.]{0,90}?\bis\s+returned\s+to\s+(?:their|your|its player'?s?)\s+hand/i;
-/** rebuy-payoff — a "when you play this character" ETB whose effect is unambiguous re-fire value. */
+/**
+ * rebuy-payoff — a "when you play this character" ETB whose effect is unambiguous re-fire value.
+ * A deck look counts only when a card from it goes to your hand, in the look's sentence or the
+ * next: Jafar - Lamp Thief's "look at the top 2 cards of your deck. Put one on the top of your
+ * deck and the other on the bottom." only orders the deck.
+ */
 const BOUNCE_ETB_PATTERN = /when\s+you\s+play\s+this\s+character/i;
 const BOUNCE_REBUY_EFFECT_PATTERN =
-  /draw\s+(?:\d+|two|three)\s+cards?|search\s+your\s+(?:deck|library)|look at the top \d+ cards of your deck|banish\s+(?:a|an|another\s+)?chosen\s+character|(?:play|put)\s+(?!this\s+character)[^.]{0,50}?for free|without paying/i;
+  /draw\s+(?:\d+|two|three)\s+cards?|search\s+your\s+(?:deck|library)|look at the top \d+ cards of your deck[^.]*(?:\.\s*[^.]*)?\binto your hand|banish\s+(?:a|an|another\s+)?chosen\s+character|(?:play|put)\s+(?!this\s+character)[^.]{0,50}?for free|without paying/i;
 /**
  * Fast pre-filter. Admits BOTH the "return … to hand" bounce shapes AND the enter-play bodies
  * the re-buy payoff keys on — a rebuy body (e.g. Merlin - Turtle's deck-dig ETB) need not contain
