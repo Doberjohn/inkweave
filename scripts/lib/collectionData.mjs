@@ -3,7 +3,7 @@
  *
  * `apps/web/public/data/allCards.json` is the Core pool and the only input to the
  * synergy engine, the deck builder and the playstyle pages. This module builds the
- * OTHER 2,152 cards: sets 1-8 and the Enchanted/Epic/Iconic/Special
+ * OTHER 2,205 cards: sets 1-8 and the Enchanted/Epic/Iconic/Special
  * printings inside Core sets — for collection viewing only.
  *
  * **Nothing appears in both datasets.** That is the invariant the whole Core
@@ -18,7 +18,7 @@
  * nameless and statless. Complete, it measures 445 KB gzip, not the 118 KB the
  * design estimated. Hence:
  *
- *   - INDEX (~69 KB gzip, all 2,152 cards): what the grid and every filter need.
+ *   - INDEX (~71 KB gzip, all 2,205 cards): what the grid and every filter need.
  *     Loaded once when collection mode turns on.
  *   - DETAIL (5-42 KB gzip per set): card text, stats, abilities and image URLs.
  *     Loaded for the set being viewed, which is also the binder's page unit.
@@ -42,7 +42,7 @@ export const INDEX_FIELDS = [
   'setCode',
   'number',
   'rarity',
-  // Alternate printings point at the Core card they reprint. 260 of 260 resolve,
+  // Alternate printings point at the Core card they reprint. 313 of 313 resolve,
   // which is what lets an Enchanted card show its base card's real synergies.
   'baseId',
 ];

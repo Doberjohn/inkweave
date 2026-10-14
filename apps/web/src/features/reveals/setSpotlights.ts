@@ -14,10 +14,11 @@ export interface SpotlightGroup {
 }
 
 /**
- * Preview-card art by id. In season these are `REVEAL_ID_BASE + number` ids,
- * whose AVIFs are committed under public/card-images-preview/.
+ * Spotlight art by file name: a copy of a revealed card's full-size AVIF, kept under
+ * public/art/spotlights/ and named after the card. Not a card id, because graduation
+ * renumbers the set's cards and its preview AVIFs go with them.
  */
-const art = (id: number): string => `/card-images-preview/${id}.avif`;
+const art = (name: string): string => `/art/spotlights/${name}.avif`;
 
 /**
  * Curated spotlights for the reveal set: its new mechanics and tribes, each a
@@ -26,7 +27,8 @@ const art = (id: number): string => `/card-images-preview/${id}.avif`;
  * with no items, so the band shows the debut franchises alone in the meantime.
  *
  * To add one, give it an `id`, an `accent` token (a playstyle's PLAYSTYLE_UI
- * accent, or an INK_COLORS border), and `art()` ids of cards already revealed.
+ * accent, or an INK_COLORS border), and `art()` names of revealed cards' art,
+ * copied into public/art/spotlights/.
  */
 export const SET_SPOTLIGHTS: SpotlightGroup[] = [
   {
@@ -40,12 +42,12 @@ export const SET_SPOTLIGHTS: SpotlightGroup[] = [
         title: 'Ink Drops',
         summary: 'Bank ink drops now and spend them later. Each one pays 1 ink.',
         href: '/playstyles/ink-drops',
-        heroImage: art(14193),
+        heroImage: art('arthur-jousting-knight'),
         heroAlt: 'Arthur - Jousting Knight',
         support: [
-          {src: art(14052), alt: 'Merlin - Ink Drop Tinkerer'},
-          {src: art(14059), alt: 'Madam Mim - Resourceful Trickster'},
-          {src: art(14158), alt: 'Baymax - Amped Up'},
+          {src: art('merlin-ink-drop-tinkerer'), alt: 'Merlin - Ink Drop Tinkerer'},
+          {src: art('madam-mim-resourceful-trickster'), alt: 'Madam Mim - Resourceful Trickster'},
+          {src: art('baymax-amped-up'), alt: 'Baymax - Amped Up'},
         ],
       },
     ],
@@ -53,13 +55,15 @@ export const SET_SPOTLIGHTS: SpotlightGroup[] = [
 ];
 
 /**
- * Representative hero + fan card art for a debut franchise, by preview-card id.
+ * Representative hero + fan card art for a debut franchise, by `art()` name.
  * Optional: a franchise with no revealed cards yet falls back to its logo.
  */
-const FRANCHISE_ART: Partial<Record<FranchiseId, {hero: number; support: number[]}>> = {
-  // Hero: Miguel Rivera - Street Musician. Fan (nearest first): Hector Rivera,
-  // Pepita - Imelda's Right Hand, Un Poco Loco. Portrait art only: the fan crops to cover.
-  coco: {hero: 14021, support: [14117, 14119, 14063]},
+const FRANCHISE_ART: Partial<Record<FranchiseId, {hero: string; support: string[]}>> = {
+  // Fan nearest first. Portrait art only: the fan crops to cover.
+  coco: {
+    hero: 'miguel-rivera-street-musician',
+    support: ['hector-rivera-street-musician', 'pepita-imeldas-right-hand', 'un-poco-loco'],
+  },
 };
 
 /**
@@ -80,7 +84,7 @@ export function franchiseSpotlight(f: FranchiseConfig): SpotlightHeroData {
     // A logo is a wide wordmark, not a card: fit it inside the card frame instead of cropping.
     heroFit: cardArt ? 'cover' : 'contain',
     heroAlt: f.label,
-    support: (cardArt?.support ?? []).map((id) => ({src: art(id), alt: f.label})),
+    support: (cardArt?.support ?? []).map((name) => ({src: art(name), alt: f.label})),
   };
 }
 

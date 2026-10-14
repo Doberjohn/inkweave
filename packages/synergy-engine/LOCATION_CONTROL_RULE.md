@@ -38,7 +38,7 @@ Each role has a distinct detection pattern and a distinct score when paired with
 | `boost` | **5** | Utility | Works with the Boost keyword to power up locations |
 
 <!-- coverage:start pairs -->
-Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
 Merged across the 9 sub-rules, **2,361 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 

@@ -135,7 +135,7 @@ flowchart TB
 | Origin | External — [LorcanaJSON.org](https://lorcanajson.org/) | `README.md:124` |
 | Generated in this repo? | **No** | Glob `scripts/generate-cards*`, `scripts/sync-cards*`, `scripts/fetch-cards*` all return zero |
 | Tracked in git? | Yes | Not present in `.gitignore` |
-| Current contents | 1,633 cards, sets 5–12 (post-Set-12 graduation 2026-05-13) | Direct inspection (Node `cards.length` + `Object.keys(sets)`) |
+| Current contents | 1,228 cards, sets 9-14 (post-Set-14 graduation 2026-10-13) | Direct inspection (Node `cards.length` + `Object.keys(sets)`) |
 | Updated when | Manually, when LorcanaJSON.org publishes a new release | No automation found |
 
 The expected card shape is the LorcanaJSON format defined by `LorcanaJSONCard` in `packages/synergy-engine/src/utils/cardTransformer.ts`. Notably:
@@ -144,7 +144,7 @@ The expected card shape is the LorcanaJSON format defined by `LorcanaJSONCard` i
 - `color: string` (parsed into `ink` + optional `ink2` for dual-ink cards, lines 53-65)
 - `subtypes: string[]` — `Song` is split out into `isSong` (line 107) and removed from `classifications`; everything else goes into `classifications`
 - `abilities: Array<{type, keyword, keywordValue, ...}>` — `transformCard` extracts native `keywords` and, via `collectKeywords`, synthesizes the conditional Shift and Singer a card grants to itself in ability text or in the card's own `fullText` (see [SHIFT_TARGET_RULE.md](../packages/synergy-engine/SHIFT_TARGET_RULE.md) and [SINGER_SONGS_RULE.md](../packages/synergy-engine/SINGER_SONGS_RULE.md))
-- `franchise?: string` — **set only on preview cards** (e.g., `"Toy Story"`, `"The Incredibles"`, `"Brave"`). Used by `useRevealCards` to tier the reveal grid.
+- `franchise?: string`: set on preview cards, and on cards graduated since Set 14, which keep LorcanaJSON's `story` under this name ([Rule 4](#rules-during-canonical-integration), e.g. `"Coco"`). Used by `useRevealCards` to tier the reveal grid.
 - `imageHash?: string` / `imageHashSm?: string` — content-addressed hash suffixes injected at build time by `download-card-images.mjs`. Used by `loader.ts:42-43` to build immutable image URLs in production.
 
 ### `previewCards.json` — reveal-season overlay
@@ -183,6 +183,17 @@ Per the original design (`docs/superpowers/specs/2026-04-17-set12-preview-cards-
 3. Deactivate the `/reveals` route ✅ (handled via `VITE_IS_REVEAL_SEASON=false` flag flip in production)
 
 All three steps executed cleanly. After a graduation `previewCards.json` carries `cards: []` and keeps the graduated set's `sets` entry (not `sets: {}`), ready for the next reveal season. **To start that season, follow [`reveals/START_REVEAL_SEASON.md`](reveals/START_REVEAL_SEASON.md)**; the schema reference under [Updating `previewCards.json`](#updating-previewcardsjson) gives the shape new entries should follow.
+
+### Set 14 graduation (2026-10-13)
+
+Set 14 (Hyperia City) graduated three days before its prerelease, through `pnpm graduate-set 14` on LorcanaJSON's set file of 2026-10-10.
+
+- **Ids:** preview ids 14001-14204 became 3266-3469 (3265 + the collector number), every card matched by number. The 38 Epic, Enchanted and Iconic printings folded into their base cards matched the season's exactly, and the 15 Special promos were stripped.
+- **Corrections from canonical:** 12 names, mostly accents (Héctor, Mamá, Tía), plus Woolter & Jesse's inkwell, Roxanne - Concert Lover's classification and Judy Hopps - Helpful Officer's rarity and ability name. The engine's output did not move: the same synergies, pairs and scores before and after.
+- **Accented names** were the Core pool's first, so `cardSlug` now folds accents (`hector-rivera-gone-to-pieces`) instead of dropping the letters.
+- **`/reveals` stayed up until release day.** [Rule 4](#rules-during-canonical-integration) now keeps LorcanaJSON's `story` as `franchise`, so the Coco tier held its 27 cards, and the spotlight art moved to `public/art/spotlights/`, named after cards rather than preview ids. The preview AVIFs stay until the stories that show them move on.
+- **Stored data:** `20261013214048_remap_set14_preview_ids.sql` moves votes and collection entries to the canonical ids, applied once the deploy is live ([Graduation path](#graduation-path), step 9).
+- **[Collection dataset](#the-collection-dataset-553):** the set's 53 Epic, Enchanted, Iconic and Special printings went in as `collection/14.json` plus their index entries, projected from the same set file through `scripts/lib/collectionData.mjs`, because the cloud session that graduated the set couldn't download the full export. The next full-export run of `pnpm generate-collection-data` rebuilds them with the rest.
 
 ---
 
@@ -347,7 +358,7 @@ The file lives at `apps/web/public/data/previewCards.json`. Post-Set-12 graduati
 | `number` | Yes | Card number within set (1 to total cards in set) |
 | `rarity` | Yes | `"Common"`, `"Uncommon"`, `"Rare"`, `"Super Rare"`, `"Legendary"`. Never add an Epic, Iconic, Enchanted or Special printing as its own entry: the first three go in the base card's `variants` (next row), and Special is out of scope. |
 | `variants` | Optional | The card's Epic/Enchanted/Iconic printings (#625), sorted by collector number: `[{"id": 14241, "rarity": "Iconic", "number": 241, "images": {"full": "...", "thumbnail": "..."}}]`. In reveal season the id is `REVEAL_ID_BASE + number` and the number is above the set's base total (both test-enforced). `images` is absent for a hand-supplied scan, whose art is `card-images-preview/{id}.avif`. A hand-supplied scan that is not in English also carries its `scanLanguage` (#681), so the app offers the card's English text over that printing; `pnpm sync-variants` drops it when official art replaces the entry. Written by `pnpm sync-variants` or by hand ([START_REVEAL_SEASON.md](reveals/START_REVEAL_SEASON.md)); canonical cards get theirs from [Rule 1](#rules-during-canonical-integration). The engine never reads it. |
-| `franchise` | **Preview-only** | Drives the `/reveals` page franchise tiering. Set to a value matching one of `FRANCHISES.match` in `apps/web/src/features/reveals/franchise.ts` (currently `"Toy Story"`, `"The Incredibles"`, `"Brave"`). Cards without a matching franchise fall into the "Returning franchises" tier. Stripped at graduation per [Rule 4](#rules-during-canonical-integration). For Set 13+, update `FRANCHISES` if new IPs join. |
+| `franchise` | Optional | Drives the `/reveals` page franchise tiering. Set to a value matching one of `FRANCHISES.match` in `apps/web/src/features/reveals/franchise.ts` (currently `"Coco"`). Cards without a matching franchise fall into the "Returning franchises" tier. Spell it as LorcanaJSON's `story` field does: graduation replaces it with that field ([Rule 4](#rules-during-canonical-integration)), so a mismatch empties the franchise's tier once the set graduates. Update `FRANCHISES` each season for the debut franchises. |
 | `scanLanguage` | **Preview-only** | Two-letter code (e.g. `"ja"`) of the card's scan when it is not in English: a card revealed abroad first, whose name and text are then an unofficial translation. The app offers that English text over the scan behind "See translation" (#623). A variant entry carries its own for a printing revealed abroad first (#681, see `variants`). Never `"en"`: `reveal-set-integrity.test.ts` checks both. Delete it when the card is refreshed from its English scan. |
 | `images.thumbnail` / `images.full` | Optional but recommended | Preview URLs from lorcanaplayer.com. The loader at `loader.ts:52` rewrites `lorcanaplayer.com/*` → `/card-images-preview/{id}.avif` automatically; AVIFs come from `convert-preview-images.mjs` reading raw JPGs in `card-images-raw/`. |
 
@@ -768,7 +779,7 @@ No SW cache rule for `previewCards.json` itself — its graceful 404 path is bro
 
 ### The collection dataset (#553)
 
-A **third** card dataset lives at `apps/web/public/data/collection/`: the 2,152
+A **third** card dataset lives at `apps/web/public/data/collection/`: the 2,205
 cards Inkweave can SHOW but never analyses, namely sets 1-8 and the
 Enchanted/Epic/Iconic/Special printings inside Core sets.
 
@@ -788,28 +799,31 @@ The boundary is about SYNERGY, not about the files being untouched. `download-ca
 does read and rewrite these chunks, to image the cards and inject their hashes, which is
 described below. Nothing it does feeds a synergy calculation.
 
-All figures below are **gzip level 6**, which is what `gzip -c` and `size-limit`
-report, and they distinguish COMMITTED from SERVED. The build injects two 16-hex
-hashes per subject into every chunk, so a chunk is larger in production than in git.
-The index is never imaged, so it is served exactly as committed. Mixing the two bases
-is easy and gives numbers that look right and are not.
+All figures below are what `size-limit` measures, **gzip level 9** in kB of 1,000
+bytes (`gzip -c` defaults to level 6 and reads a little larger), and they distinguish
+COMMITTED from SERVED. The build injects two 16-hex hashes per subject into every
+chunk, so a chunk is larger in production than in git. The index is never imaged, so
+it is served exactly as committed. Mixing the two bases is easy and gives numbers that
+look right and are not.
 
 | File | Contents | committed | served |
 |---|---|---|---|
-| `collection/index.json` | all 2,152, light projection: grid, filters, name search | 69 KB | 69 KB |
-| `collection/{set}.json` | one per set: card text, stats, abilities, image URLs | 10-43 KB | 11-49 KB |
-| whole dataset | 14 files, 2.9 MB on disk | 445 KB | 500 KB |
+| `collection/index.json` | all 2,205, light projection: grid, filters, name search | 71 kB | 71 kB |
+| `collection/{set}.json` | one per set: card text, stats, abilities, image URLs | 10-43 kB | 11-49 kB |
+| whole dataset | 15 files, 3.0 MB on disk | 460 kB | 515 kB |
 
 Both tiers are budgeted in `package.json`, and **deliberately as two entries rather
-than one**: no visitor loads all 500 KB. Collection mode loads the index once plus the
-one chunk for the set being viewed, so the **per-visit worst case is 118 KB** (69 KB
-index plus set 8 at 49 KB served), under a quarter of the total. `Collection index
-JSON` guards that per-visit cost; `Collection set chunks` is a growth guard on data
-nobody loads in full.
+than one**: collection mode is designed to load the index once plus the one chunk for
+the set being viewed, a **per-visit worst case of 120 kB** (71 kB index plus set 8 at
+49 kB served), under a quarter of the 515 kB total. `Collection index JSON` guards
+that per-visit cost; `Collection set chunks` is a growth guard on the data as a whole.
+Until that tiering lands, `CollectionCardsProvider` loads every detail chunk and no
+index (444 kB served), a design-phase simplification explained at the top of
+`CollectionCardsContext.tsx`.
 
 **The chunk budget is set against the SERVED size, not the committed size.**
-Committed chunks gzip to 376 KB; because content-addressed hashes are high-entropy
-they barely compress, injection adds **55 KB** to reach 431 KB, against a 470 kB
+Committed chunks gzip to 389 kB; because content-addressed hashes are high-entropy
+they barely compress, injection adds **55 kB** to reach 444 kB, against a 470 kB
 limit. Measuring the committed files would set a limit against an artifact nobody is
 served, which is the defect [#729](https://github.com/Doberjohn/inkweave/issues/729) describes.
 The index is not imaged, so its budget needs no such allowance.
@@ -847,7 +861,7 @@ binder renders one set at a time from that set's chunk. Measured on `deck-builde
 when Phase C shipped there with Quest sets still included, adding 2,218 cards took the
 image output from 27.5 MB / 2,048 files to **88 MB / 6,484 files**. Carried over rather
 than re-measured, because re-running the pipeline would inject hashes into the chunks
-above; this dataset is 66 cards smaller, so the real figure is slightly below it.
+above; this dataset is 13 cards smaller, so the real figure is slightly below it.
 
 ### CDN restore on a cache miss (#554)
 
@@ -1048,8 +1062,14 @@ pnpm graduate-set <set-code>
 #    Custom source path:
 pnpm graduate-set <set-code> /path/to/canonical-file.json
 
-# 3. Regenerate per-card synergy files with the new canonical ids
+# 3. Regenerate per-card synergy files with the new canonical ids, then the rule
+#    docs' coverage blocks, which name the sets their counts cover (#479), then the
+#    collection dataset, which holds the set's Epic, Enchanted, Iconic and Special
+#    printings for collection mode. That one reads LorcanaJSON's full export with
+#    the set in it, not the set file
 pnpm precompute-synergies
+pnpm refresh-rule-coverage
+pnpm generate-collection-data /path/to/allCards.json
 
 # 4. Fetch any new card images
 pnpm download-images
@@ -1057,10 +1077,13 @@ pnpm download-images
 # 5. Confirm no regressions
 pnpm test
 
-# 6. In Vercel env (+ redeploy): flip VITE_IS_REVEAL_SEASON=false (deactivates
-#    /reveals until the next reveal season), and set VITE_FEATURED_CARD_IDS to the
-#    canonical value the script printed in step 2 (or delete it to use the in-code
-#    default, which the script already retargeted). Both are external to the repo.
+# 6. In Vercel env (+ redeploy): set VITE_FEATURED_CARD_IDS (Production and Preview)
+#    to the canonical value the script printed in step 2 (or delete it to use the
+#    in-code default, which the script already retargeted). Once the set is released,
+#    flip VITE_IS_REVEAL_SEASON=false. /reveals hides itself on release day anyway,
+#    and a set graduated before then keeps its page working (Rule 4 keeps the
+#    franchise tags, and spotlight art lives in public/art/spotlights/). Both are
+#    external to the repo.
 
 # 7. Optionally: delete the canonical input file once migration succeeded
 #    (it served its purpose; LorcanaJSON evolves so the snapshot is short-lived)
@@ -1077,7 +1100,7 @@ pnpm test
 
 The script is idempotent on dry-run safety: if you run it twice with the same source, the second run replaces what the first wrote (since canonical entries are stripped to a stable shape).
 
-The script also retargets hardcoded card-id references (`retargetHardcodedIds`, run before the `previewCards.json` reset): a set graduation renumbers ids, dangling every place that hardcodes a real card id by its preview id. The step rewrites a curated `ID_REFERENCE_FILES` list — `featuredCardIds.json` (which the `FeaturedCards` test reads), `playstyleUi.ts` gallery hero cards, `setSpotlights.ts`, and the reveals/playstyle Storybook demos — and deliberately skips self-contained mock-fixture tests (analytics, card-analytics) whose `13xxx` ids are arbitrary. A featured list that holds none of the graduating set's cards gets six new ones from the script's question instead. The blast radius is wide and mostly not test-guarded; grep `\b13[0-9]{3}\b` across `apps/web/src` after graduating to confirm nothing was missed. Add a file to `ID_REFERENCE_FILES` only if it references real graduated cards.
+The script also retargets hardcoded card-id references (`retargetHardcodedIds`, run before the `previewCards.json` reset): a set graduation renumbers ids, dangling every place that hardcodes a real card id by its preview id. The step rewrites a curated `ID_REFERENCE_FILES` list — `featuredCardIds.json` (which the `FeaturedCards` test reads), `playstyleUi.ts` gallery hero cards, and the reveals/playstyle Storybook demos — and deliberately skips self-contained mock-fixture tests (analytics, card-analytics) whose `13xxx` ids are arbitrary. `setSpotlights.ts` needs no retarget: its art is named after cards, under `public/art/spotlights/`. A featured list that holds none of the graduating set's cards gets six new ones from the script's question instead. The blast radius is wide and mostly not test-guarded; grep the set's preview ids (`\b14[0-9]{3}\b` for Set 14) across `apps/web/src` after graduating to confirm nothing was missed. Add a file to `ID_REFERENCE_FILES` only if it references real graduated cards.
 
 The same preview id → canonical id map carries what Supabase stores (#748). Graduation writes `supabase/migrations/<stamp>_remap_set<N>_preview_ids.sql`, which calls `internal.remap_card_ids` (`20261013000000_card_id_remap.sql`) with the map: it moves every vote, cloud collection key and deck card on a preview id to the canonical one, so the season's votes count toward the released cards. The map joins on collector number; a card revealed without one (the `+900` band) falls back to its full name, and the script names every preview card that neither places, to add to the map by hand before applying. Without this step the votes stay on ids no card list holds: sets 12 and 13 stranded 383 votes that way, which `20261013000001` and `20261013000002` moved.
 
@@ -1098,8 +1121,8 @@ Six rules apply when integrating canonical LorcanaJSON data into `allCards.json`
 | 1 | **Fold variant printings into their base card**: `Epic`, `Iconic`, `Enchanted` become entries in the base card's `variants` (matched on LorcanaJSON `baseId`, via `scripts/lib/fold-variants.mjs`). **Strip `Special`** promos. A printing graduation would drop stops the run before it writes anything (`--allow-missing-variants` drops it on purpose): a variant hand-scanned during the reveal season but missing from the canonical source (`previewCards.json` is its only copy), or a canonical printing whose base card isn't in the set's file. | Variants are rules-identical alternate art, not new cards: they're stored on their base card for the #625 printing switcher (card page and modal), never as separate cards. Special promos (several per base, each needing its own label) stay out of scope. Before #625 all four rarities were stripped (51 printings in Set 12). |
 | 2 | **Adopt canonical IDs unconditionally** | LorcanaJSON's sequential ids (`2716`...) are the permanent identity; preview composite ids (`121204`...) are placeholders. Pre-graduation URLs break — acceptable in beta. Votes, cloud collection keys and deck cards move to the canonical ids through the remap migration the script writes (#748). |
 | 3 | **Adopt canonical names** | LorcanaJSON is source of truth; preview curation can have typos / wording corrections. Rule 2 makes this automatic since canonical entries fully replace preview entries. |
-| 4 | **Strip `franchise` field** | Only needed during reveal season for franchise-logo tiering on `/reveals`. Post-graduation, deactivate the page via `VITE_IS_REVEAL_SEASON=false`. Next set's preview re-adds it. |
-| 5 | **Strip extra metadata** — `artists`, `flavorText`, `story`, `foilTypes`, `enchantedId`, `iconicId`, `epicId`, `promoIds`, `fullIdentifier`, `simpleName`, etc. | App uses none of these; bloats `size-limit` budget (360 kB gzipped). |
+| 4 | **Keep LorcanaJSON's `story` as `franchise`** (since Set 14) | `/reveals` tiers its debut franchises by `franchise`, and a set usually graduates before its release day, when the page hides itself. `story` holds the same value the preview cards carried (all 27 of Set 14's Coco cards), so the page keeps working. Costs under 1 kB gzipped per set. Sets graduated earlier had it stripped. |
+| 5 | **Strip extra metadata**: `artists`, `flavorText`, `foilTypes`, `enchantedId`, `iconicId`, `epicId`, `promoIds`, `fullIdentifier`, `simpleName`, etc. (`story` survives only as Rule 4's `franchise`) | App uses none of these; bloats `size-limit` budget (360 kB gzipped). |
 | 6 | **Strip `images.foilMask`** — keep only `full` + `thumbnail` | App doesn't render foil overlays. |
 
 The "keep" allow-list = `LorcanaJSONCard` in `packages/synergy-engine/src/utils/cardTransformer.ts`. Everything outside that interface gets stripped at integration time, not at runtime.

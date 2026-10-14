@@ -100,7 +100,7 @@ Applies the project-wide **5-baseline convention**. Because the rule is payoff-a
 ### Live distribution
 
 <!-- coverage:start distribution -->
-Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
 33 healers + 13 heal-payoffs (7 pure payoff + 6 dual-role healer+payoff) = 40 distinct participating cards. **423 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 

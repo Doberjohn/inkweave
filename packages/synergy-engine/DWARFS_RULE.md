@@ -96,7 +96,7 @@ Right Behind You carries **both** `recruit` and `density`. Against a member it s
 ## Live distribution
 
 <!-- coverage:start distribution -->
-Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
 **10 Seven-Dwarfs-affiliated cards** (7 members + 3 non-member payoffs). **45 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 

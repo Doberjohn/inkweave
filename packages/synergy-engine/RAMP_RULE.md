@@ -138,7 +138,7 @@ if trigger ↔ cost-reduction: 5
 ### Live distribution
 
 <!-- coverage:start distribution -->
-Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
 **1,767 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 

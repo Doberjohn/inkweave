@@ -4,14 +4,12 @@ import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
  * The six ink hub pages (#530).
  *
  * Ink is the only TOTAL partition of the card corpus: every card carries at least one, so
- * six pages guarantee every one of the 1,024 cards an inbound internal link. Playstyles
- * reach only 682 cards and synergy adjacency truncates at `maxVisibleCards`, so neither
- * can close the orphan gap on its own.
+ * six pages guarantee every card an inbound internal link. Playstyles reach only part of
+ * the corpus and synergy adjacency truncates at `maxVisibleCards`, so neither can close
+ * the orphan gap on its own.
  *
- * Set pages would partition the corpus too, but sets 9 and 13 hold 205 and 207 cards
- * against `LAYOUT.maxDisplayedCards = 204` — they would silently truncate, producing hubs
- * that look complete while hiding cards. Every ink hub is 173-174, so there is roughly a
- * set's worth of headroom before that becomes a concern here.
+ * A hub lists every card of its ink: InkHubPage renders the uncapped `CardGrid`, never a
+ * grid cut at `LAYOUT.maxDisplayedCards` (204), which hubs outgrew when Set 14 graduated.
  */
 export interface InkHub {
   /** URL segment: /ink/{slug}. Lowercased ink name; never derive it from user input. */

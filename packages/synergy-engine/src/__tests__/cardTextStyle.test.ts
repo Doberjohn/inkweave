@@ -7,7 +7,7 @@ import {
 } from '../utils';
 
 describe('canonicalizeCardLine', () => {
-  it('writes the ink glyph in a Shift header and its reminder (Kit Cloudkicker 14192)', () => {
+  it('writes the ink glyph in a Shift header and its reminder (Kit Cloudkicker 3457)', () => {
     expect(
       canonicalizeCardLine(
         'Shift 3 (You may pay 3 Ink to play this on top of one of your characters named Kit Cloudkicker.)',
@@ -31,7 +31,7 @@ describe('canonicalizeCardLine', () => {
     expect(canonicalizeCardLine('get 2 ink drops.')).toBe('get 2 ink drops.');
   });
 
-  it('writes an exert cost as the ⟳ glyph (Pirate Plane 14202)', () => {
+  it('writes an exert cost as the ⟳ glyph (Pirate Plane 3467)', () => {
     expect(canonicalizeCardLine('BARREL ROLL Exert, 1 ⬡ — Chosen character gains Alert this turn.')).toBe(
       'BARREL ROLL ⟳, 1 ⬡ — Chosen character gains Alert this turn.',
     );
