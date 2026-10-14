@@ -7,6 +7,7 @@ import type {
   DetailedPairSynergy,
 } from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
+import {fillChipNames} from '../utils';
 
 // ── Pre-computed JSON shapes (must match scripts/precompute-synergies.mjs output) ──
 
@@ -94,9 +95,15 @@ export function filterPairByGroup(
 
 // ── Resolve pre-computed data into full types ──
 
+/**
+ * The groups with their partner cards. A tile shows its explanation only as plain text (the
+ * strength badge's tooltip), so its {A}/{B} chip tokens become the two cards' names; the pair
+ * view reads the tokens from `pairs`, which stay as they are.
+ */
 function resolveGroups(
   precomputed: PrecomputedSynergyGroup[],
   getCardById: (id: string) => LorcanaCard | undefined,
+  source: LorcanaCard | undefined,
 ): SynergyGroup[] {
   return precomputed
     .map((group) => ({
@@ -112,7 +119,9 @@ function resolveGroups(
           return {
             card,
             score: match.score,
-            explanation: match.explanation,
+            explanation: source
+              ? fillChipNames(match.explanation, source, card)
+              : match.explanation,
             ruleId: match.ruleId,
             ruleName: match.ruleName,
           };
@@ -226,7 +235,7 @@ export function usePrecomputedSynergies(
         dispatch({
           type: 'FETCH_SUCCESS',
           cardId,
-          synergies: resolveGroups(data.groups, getCardById),
+          synergies: resolveGroups(data.groups, getCardById, getCardById(cardId)),
           pairs: data.pairs,
         });
       })

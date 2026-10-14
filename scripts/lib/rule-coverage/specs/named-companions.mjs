@@ -2,7 +2,7 @@ import {partnerBuckets, poolLine, section} from '../blocks.mjs';
 import {bars, doughnut, fmt, nameList, tierColor} from '../render.mjs';
 import {byName} from '../stats.mjs';
 
-const TIER = /^Has an? (\S+) effect when/;
+const TIER = /^\{A\} has an? (\S+) effect that names \{B\}/;
 
 /** "Game-winning (8)": a tier and the score it maps to. */
 const tierLabel = ([tier, score]) => `${tier[0].toUpperCase()}${tier.slice(1)} (${score})`;

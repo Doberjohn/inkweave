@@ -17,10 +17,12 @@ Real cards the `getRedPandaRoles` detector tags for each role (names from the li
 | **search** | Meilin Lee - Losing Control (Amber) | Reveal a Red Panda character off the top of your deck |
 
 ## Scoring (5-baseline)
-| Pair | Score |
-|------|-------|
-| search + member | 8 |
-| member + member | 5 |
+| Pair | Score | Explanation (from the first card's page) |
+|------|-------|-------------|
+| search + member | 8 | `{A} can reveal {B} from your deck.` |
+| member + member | 5 | `{A} and {B} both go in a Red Panda deck.` |
+
+`{A}` is the card whose page shows the tile and `{B}` its partner; on the member's page the search line reads `{B} can reveal {A} from your deck.`
 
 ## Coverage
 

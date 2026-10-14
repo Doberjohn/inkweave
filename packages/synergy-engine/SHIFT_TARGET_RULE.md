@@ -136,7 +136,7 @@ calculateShiftSynergy(shiftCard, baseCard)
   +-- baseActivatesShiftCondition(shiftCard, baseCard)         --> boolean
   |
   +-- if condition activates: score = min(baseScore + 1, 10)
-      append condition explanation to reason
+      reason = the activationBonus text
 ```
 
 ---
@@ -145,16 +145,18 @@ calculateShiftSynergy(shiftCard, baseCard)
 
 ### Standard Shift (gap-based scoring)
 
+Every text names both cards: the engine swaps `<BASE>` and `<SHIFT>` for the `{A}`/`{B}` chips, `{A}` being the card whose page shows the tile. The texts live in `data/tuning.json`, and `tuning.test.ts` fails on a text that drops either placeholder.
+
 | Score | Curve Gap | Inkwell | Explanation Template | Example |
 |-------|-----------|---------|---------------------|---------|
-| **9** | 1 | Both inkable | "Perfect curve: play {base} on turn {N}, Shift next turn. Both cards are inkable as fallback." | Elsa - Snow Queen (cost 4, inkable) + Elsa - Ice Maker (Shift 5, inkable) |
-| **8** | 1 | One inkable | "Perfect curve: play {base} on turn {N}, Shift next turn. One card is inkable as fallback." | Elsa - Snow Queen (cost 4, not inkable) + Elsa - Ice Maker (Shift 5, inkable) |
-| **7** | 1 | Neither inkable | "On curve: Play {base} on turn {N}, Shift next turn. Neither card is inkable — Less flexible if drawn off-curve." | Elsa - Snow Queen (cost 4, not inkable) + Elsa - Ice Maker (Shift 5, not inkable) |
-| **7** | 2 | Any | "Smooth curve: {base} flows naturally into Shift within a couple of turns." | Elsa - Snow Queen (cost 4) + Ursula - Sea Witch (Shift 6) |
-| **5** | 0 | Any | "Same cost — No ink savings from Shifting, but skips the drying phase." | Elsa - Snow Queen (cost 5) + Elsa - Ice Maker (Shift 5) |
-| **5** | 3 | Any | "Wide 3-turn gap — Playable but slow to set up." | Simba - Young Prince (cost 2) + Simba - King (Shift 5) |
-| **3** | 4+ | Any | "The cost gap makes it hard to set up {base} in time to shift {shiftCard} onto it." | Ursula - Cauldron Keeper (cost 2) + Ursula - Sea Witch Queen (Shift 8) |
-| **3** | Negative | Any | "The cost gap makes it hard to set up {base} in time to shift {shiftCard} onto it." | Base costs more than Shift cost |
+| **9** | 1 | Both inkable | "Perfect curve: <SHIFT> shifts onto <BASE> the turn after. Both are inkable as a fallback." | Elsa - Snow Queen (cost 4, inkable) + Elsa - Ice Maker (Shift 5, inkable) |
+| **8** | 1 | One inkable | "Perfect curve: <SHIFT> shifts onto <BASE> the turn after. Only one of them is inkable as a fallback." | Elsa - Snow Queen (cost 4, not inkable) + Elsa - Ice Maker (Shift 5, inkable) |
+| **7** | 1 | Neither inkable | "On curve: <SHIFT> shifts onto <BASE> the turn after, but neither is inkable, so it's less flexible off-curve." | Elsa - Snow Queen (cost 4, not inkable) + Elsa - Ice Maker (Shift 5, not inkable) |
+| **7** | 2 | Any | "Smooth curve: <BASE> flows into <SHIFT> in a couple of turns." | Elsa - Snow Queen (cost 4) + Ursula - Sea Witch (Shift 6) |
+| **5** | 0 | Any | "Same cost: shifting <SHIFT> onto <BASE> saves no ink, but skips the drying phase." | Elsa - Snow Queen (cost 5) + Elsa - Ice Maker (Shift 5) |
+| **5** | 3 | Any | "Wide gap: <SHIFT> shifts onto <BASE> 3 turns after it lands. Playable, but slow to set up." | Simba - Young Prince (cost 2) + Simba - King (Shift 5) |
+| **3** | 4+ | Any | "The cost gap makes it hard to set up <BASE> in time to shift <SHIFT> onto it." | Ursula - Cauldron Keeper (cost 2) + Ursula - Sea Witch Queen (Shift 8) |
+| **3** | Negative | Any | "The cost gap makes it hard to set up <BASE> in time to shift <SHIFT> onto it." | Base costs more than Shift cost |
 
 <!-- coverage:start scores -->
 ```chart
@@ -193,12 +195,14 @@ Instead, scoring is based on **how easy it is to get the base card into play fir
 
 | Score | Base Cost | Condition Activates? | Explanation Template |
 |-------|-----------|---------------------|---------------------|
-| **10** | <= 3 | Yes | "Free Shift: Play {base} early, then shift into {shift} for 0 ink. {base} is both a Shift target and enables the free Shift condition." |
-| **9** | <= 3 | No | "Free Shift: Play {base} early, then shift into {shift} for 0 ink." |
-| **8** | 4-5 | Yes | "Free Shift: Shift {base} into {shift} for 0 ink, but the base takes longer to set up. {base} is both a Shift target and enables the free Shift condition." |
-| **7** | 4-5 | No | "Free Shift: Shift {base} into {shift} for 0 ink, but the base takes longer to set up." |
-| **6** | 6+ | Yes | "Free Shift but expensive base — Hard to get {base} into play first. {base} is both a Shift target and enables the free Shift condition." |
-| **5** | 6+ | No | "Free Shift but expensive base — Hard to get {base} into play first." |
+| **10** | <= 3 | Yes | "<BASE> is a Shift target that also switches on <SHIFT>'s free Shift condition." |
+| **9** | <= 3 | No | "Free Shift. Play <BASE> early, then shift <SHIFT> in for 0 ink." |
+| **8** | 4-5 | Yes | "<BASE> is a Shift target that also switches on <SHIFT>'s free Shift condition." |
+| **7** | 4-5 | No | "Free Shift: <SHIFT> costs no ink, but <BASE> takes longer to set up." |
+| **6** | 6+ | Yes | "<BASE> is a Shift target that also switches on <SHIFT>'s free Shift condition." |
+| **5** | 6+ | No | "Free Shift for <SHIFT>, but <BASE> is expensive and hard to set up first." |
+
+When the base switches on the condition, the activation text (`activationBonus`) replaces the tier's text, and the score takes the +1.
 
 ```chart
 {
@@ -230,8 +234,8 @@ Neither ink path fits. Read as 2 ink on the curve, a cost-4 base gives a negativ
 
 | Score | Base gets the drops? | Explanation Template | Example |
 |-------|----------------------|---------------------|---------|
-| **8** | Yes: at least as many as the Shift removes | "Ink-drop Shift. {base} gets the drops that pay for the Shift." | Baymax - Lab Assistant (cost 4, "get 2 ink drops") + Baymax - Amped Up |
-| **5** | No | "Ink-drop Shift. Other cards must supply the drops." | A Baymax base with no drop source, or one that gets fewer drops than the Shift removes |
+| **8** | Yes: at least as many as the Shift removes | "Ink-drop Shift: <BASE> gives the ink drops that pay for <SHIFT>." | Baymax - Lab Assistant (cost 4, "get 2 ink drops") + Baymax - Amped Up |
+| **5** | No | "Ink-drop Shift: <BASE> doesn't give the ink drops <SHIFT> needs, so other cards must." | A Baymax base with no drop source, or one that gets fewer drops than the Shift removes |
 
 - **Why 8.** The base pays the other card's alternate cost: play Lab Assistant, get 2 ink drops, and shift a 7-cost Baymax onto it the same turn for no ink. Per rule 8.10.4 the shifted character enters play drying, since its base was played that turn. The rule's own analog, a free Shift onto a mid-cost base that also enables the condition, is 8 too.
 - **Why 5.** The base is a valid landing spot, but the pair cannot pay for the Shift on its own. That is same-deck density, the 5 baseline.

@@ -87,6 +87,8 @@ import {
   makePayoffAnchoredRule,
   makeTribalRule,
   tribeDescription,
+  tokenPair,
+  type ChipToken,
 } from './ruleScoring';
 import {scoreBouncePair} from './bounceScoring';
 import {scoreInkDropPair} from './inkDropScoring';
@@ -275,19 +277,6 @@ const LOCATION_ROLE_SCORE: Record<LocationRole, number> = {
   boost: 5,
 };
 
-/** Human-readable labels for each location role */
-const ROLE_LABELS: Record<LocationRole, string> = {
-  'at-payoff': 'at location payoff',
-  'play-trigger': 'play trigger',
-  'move-trigger': 'move trigger',
-  buff: 'location buff',
-  'location-ramp': 'location ramp',
-  move: 'move to location',
-  'in-play-check': 'location check',
-  search: 'location search',
-  boost: 'location boost',
-};
-
 /** Short chip labels for each location role (used in UI) */
 // Labels are single-sourced from the mechanics catalog (STRUCTURAL_MECHANICS) so
 // a location role reads identically on the carousel tiles and in the card-detail
@@ -304,20 +293,63 @@ export const LOCATION_ROLE_CHIP_LABELS: Record<LocationRole, string> = {
   boost: mechanicLabel('boost'),
 };
 
-/** Educational descriptions explaining what each location role means, templated with card name and location name */
-export const LOCATION_ROLE_DESCRIPTIONS: Record<
-  LocationRole,
-  (cardName: string, locationName: string) => string
-> = {
-  'at-payoff': (_name, loc) => `Gets bonuses when characters are at ${loc}.`,
-  'play-trigger': (_name, loc) => `Activates effects when you play ${loc}.`,
-  'move-trigger': (_name, loc) => `Triggers effects when a character moves to ${loc}.`,
-  buff: (_name, loc) => `Strengthens ${loc} with Resist or stat boosts.`,
-  'location-ramp': (_name, loc) => `Reduces the cost of moving characters to ${loc}.`,
-  move: (_name, loc) => `Moves characters to ${loc} for an advantage.`,
-  'in-play-check': (_name, loc) => `Gains benefits when ${loc} is in play.`,
-  search: (_name, loc) => `Searches your deck or discard for ${loc}.`,
-  boost: (_name, loc) => `Powers up ${loc} via the Boost keyword.`,
+/**
+ * Each location role's lines, naming the card with the role (`support`): next to a location
+ * (`withLocation`), next to another support card (`general`), and when both support cards have
+ * the role (`both`).
+ */
+interface LocationRoleLines {
+  withLocation: (support: ChipToken, location: ChipToken) => string;
+  general: (support: ChipToken) => string;
+  both: string;
+}
+
+const LOCATION_ROLE_LINES: Record<LocationRole, LocationRoleLines> = {
+  move: {
+    withLocation: (s, l) => `${s} moves characters to ${l}.`,
+    general: (s) => `${s} moves characters to locations.`,
+    both: '{A} and {B} both move characters to locations.',
+  },
+  'location-ramp': {
+    withLocation: (s, l) => `${s} makes ${l} cheaper to play or move to.`,
+    general: (s) => `${s} makes locations cheaper to play or move to.`,
+    both: '{A} and {B} both make locations cheaper to play or move to.',
+  },
+  buff: {
+    withLocation: (s, l) => `${s} strengthens ${l} with Resist or stat boosts.`,
+    general: (s) => `${s} strengthens your locations with Resist or stat boosts.`,
+    both: '{A} and {B} both strengthen your locations with Resist or stat boosts.',
+  },
+  'at-payoff': {
+    withLocation: (s, l) => `${s} rewards having characters at ${l}.`,
+    general: (s) => `${s} rewards having characters at locations.`,
+    both: '{A} and {B} both reward having characters at locations.',
+  },
+  search: {
+    withLocation: (s, l) => `${s} can find ${l} in your deck or discard.`,
+    general: (s) => `${s} can find a location in your deck or discard.`,
+    both: '{A} and {B} can both find a location in your deck or discard.',
+  },
+  'in-play-check': {
+    withLocation: (s, l) => `${s} gets a bonus while ${l} is in play.`,
+    general: (s) => `${s} gets a bonus while you have a location in play.`,
+    both: '{A} and {B} both get a bonus while you have a location in play.',
+  },
+  'play-trigger': {
+    withLocation: (s, l) => `${s} triggers when you play ${l}.`,
+    general: (s) => `${s} triggers when you play a location.`,
+    both: '{A} and {B} both trigger when you play a location.',
+  },
+  boost: {
+    withLocation: (s, l) => `${s} puts cards under ${l}, which powers it up.`,
+    general: (s) => `${s} puts cards under your locations, which powers them up.`,
+    both: '{A} and {B} both put cards under your locations, which powers them up.',
+  },
+  'move-trigger': {
+    withLocation: (s, l) => `${s} triggers when a character moves to ${l}.`,
+    general: (s) => `${s} triggers when a character moves to a location.`,
+    both: '{A} and {B} both trigger when a character moves to a location.',
+  },
 };
 
 /**
@@ -393,12 +425,16 @@ function buildLocationDirectMatch(
   return {
     card: location,
     score: LOCATION_ROLE_SCORE[role],
-    explanation: `${card.name} has ${ROLE_LABELS[role]} — Works with locations`,
+    explanation: LOCATION_ROLE_LINES[role].withLocation('{A}', '{B}'),
     bidirectional: true,
   };
 }
 
-/** Build a cross-synergy match between two location-support cards (or null when roles don't complement). */
+/**
+ * Build a cross-synergy match between two location-support cards (or null when roles don't
+ * complement). The row names the card with this rule's role, the searcher, or both cards when
+ * the partner has the role too.
+ */
 function buildLocationCrossMatch(
   _card: LorcanaCard,
   other: LorcanaCard,
@@ -408,11 +444,11 @@ function buildLocationCrossMatch(
   const otherRoles = getLocationRoles(other);
   const score = getCrossSynergyScore(cardRoles, otherRoles);
   if (score === null) return null;
-  const otherLabel = otherRoles.map((r) => ROLE_LABELS[r]).join(' + ');
+  const lines = LOCATION_ROLE_LINES[role];
   return {
     card: other,
     score,
-    explanation: `${ROLE_LABELS[role]} and ${otherLabel} are complementary location roles.`,
+    explanation: otherRoles.includes(role) ? lines.both : lines.general('{A}'),
     bidirectional: true,
   };
 }
@@ -458,7 +494,7 @@ function findLocationCardSynergiesForRole(
     matches.push({
       card: other,
       score: LOCATION_ROLE_SCORE[role],
-      explanation: `${other.name} has ${ROLE_LABELS[role]}`,
+      explanation: LOCATION_ROLE_LINES[role].withLocation('{B}', '{A}'),
       bidirectional: true,
     });
   }
@@ -588,10 +624,12 @@ function makeSingerSongMatch(
   target: LorcanaCard,
 ): SynergyMatch {
   const singerValue = getKeywordValue(singer, 'Singer') ?? singer.cost;
+  // The searcher (token A) is whichever card is NOT the target: the singer when it finds songs.
+  const [singerToken, songToken] = tokenPair(song.id === target.id);
   return {
     card: target,
     score: singerSongScore(singerValue - song.cost),
-    explanation: `Singer ${singerValue} sings any cost ${song.cost} or lower song for free.`,
+    explanation: `${singerToken} can sing ${songToken} (cost ${song.cost}) for free with Singer ${singerValue}.`,
     bidirectional: true,
   };
 }
@@ -994,7 +1032,7 @@ export const synergyRules: SynergyRule[] = [
           matches.push({
             card: target,
             score,
-            explanation: `Has a ${effectTier} effect when ${refName} is in play.`,
+            explanation: `{A} has a ${effectTier} effect that names {B}.`,
             bidirectional: true,
           });
         }
@@ -1327,7 +1365,7 @@ export const synergyRules: SynergyRule[] = [
     matches: isHunnyCard,
 
     findSynergies: (card, allCards) =>
-      tribalFindSynergies(card, allCards, getHunnyRoles, scoreHunnyPair),
+      pairFindSynergies(card, allCards, getHunnyRoles, scoreHunnyPair),
   },
 
   // --------------------------------------------

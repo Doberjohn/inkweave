@@ -130,10 +130,12 @@ const payoffToken = cardSelfBanish ? '{B}' : '{A}';
 // `${selfBanishToken} banishes your own character on demand, guaranteeing ${payoffToken}'s banish payoff.`
 ```
 
-Same-side pairs use distinct sentences:
+Same-side pairs score 5 and name both cards. Two banish-triggers read by what each one's trigger watches (`triggersOnAnyBanish`): any of your characters being banished, or only the card itself:
 
-- banish ↔ banish: `"Both pay off when your characters are banished: a board that trades into value."`
-- self-banish ↔ self-banish: `"Both banish your own characters: parallel self-banish cards."`
+- banish ↔ banish, both watching any of your characters: `"{A} and {B} both benefit when your characters are banished."`
+- banish ↔ banish, one of each (David Xanatos - Charismatic Leader with Kuzco - Wanted Llama): `"{A} benefits when your characters are banished, and {B} when it is."`
+- banish ↔ banish, both watching only themselves: `"{A} and {B} both benefit from being banished."`
+- self-banish ↔ self-banish: `"{A} and {B} both banish your own characters."`
 
 ---
 

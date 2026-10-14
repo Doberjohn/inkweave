@@ -51,7 +51,8 @@ const samplePair: DetailedPairSynergy = {
       ruleName: 'Shift Targets',
       category: 'direct',
       score: 9,
-      explanation: 'Free Shift. Play A early, then shift B in for 0 ink.',
+      explanation:
+        'Perfect curve: {B} shifts onto {A} the turn after. Only one of them is inkable as a fallback.',
     },
   ],
 };

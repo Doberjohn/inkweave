@@ -1,7 +1,7 @@
 import {useState, useEffect} from 'react';
 import type {LorcanaCard} from '../../features/cards';
 import type {Ink, LocationRole, PairSynergyConnection} from 'inkweave-synergy-engine';
-import {LOCATION_ROLE_CHIP_LABELS, LOCATION_ROLE_DESCRIPTIONS} from 'inkweave-synergy-engine';
+import {LOCATION_ROLE_CHIP_LABELS} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../constants';
 import {useResponsive} from '../hooks';
 import type {ConnectionGroupData} from './groupConnections';
@@ -60,26 +60,6 @@ function extractLocationRole(ruleId: string): LocationRole | null {
   const candidate = ruleId.slice(prefix.length);
   if (candidate in LOCATION_ROLE_CHIP_LABELS) return candidate as LocationRole;
   return null;
-}
-
-function getRoleSourceName(
-  conn: PairSynergyConnection,
-  cardA: LorcanaCard,
-  cardB: LorcanaCard,
-): string {
-  const nameOf = (card: LorcanaCard) => (cardA.name === cardB.name ? card.fullName : card.name);
-  if (cardA.type === 'Location' && cardB.type !== 'Location') return nameOf(cardB);
-  if (cardB.type === 'Location' && cardA.type !== 'Location') return nameOf(cardA);
-  if (conn.explanation.startsWith(cardA.name)) return nameOf(cardA);
-  if (conn.explanation.startsWith(cardB.name)) return nameOf(cardB);
-  return nameOf(cardA);
-}
-
-function getLocationName(cardA: LorcanaCard, cardB: LorcanaCard): string {
-  const nameOf = (card: LorcanaCard) => (cardA.name === cardB.name ? card.fullName : card.name);
-  if (cardA.type === 'Location') return nameOf(cardA);
-  if (cardB.type === 'Location') return nameOf(cardB);
-  return 'locations';
 }
 
 function findCardInText(text: string, fullName: string): {index: number; match: string} {
@@ -436,21 +416,15 @@ function pickStackPosition(index: number, total: number): AbilityRowPosition {
   return 'middle';
 }
 
-/** Resolve a connection's display label + description, using engine role tables. */
-function resolveRoleDisplay(
-  conn: PairSynergyConnection,
-  cardA: LorcanaCard,
-  cardB: LorcanaCard,
-): {key: string; label: string; description: string} {
+/** Resolve a connection's display label + description: a location role reads under its chip label. */
+function resolveRoleDisplay(conn: PairSynergyConnection): {
+  key: string;
+  label: string;
+  description: string;
+} {
   const role = extractLocationRole(conn.ruleId);
   const label = role ? LOCATION_ROLE_CHIP_LABELS[role] : conn.ruleName;
-  const description = role
-    ? LOCATION_ROLE_DESCRIPTIONS[role](
-        getRoleSourceName(conn, cardA, cardB),
-        getLocationName(cardA, cardB),
-      )
-    : conn.explanation;
-  return {key: conn.ruleId, label, description};
+  return {key: conn.ruleId, label, description: conn.explanation};
 }
 
 /**
@@ -491,9 +465,7 @@ function MultiRoleAbilityList({
 
   // Sort by score desc so the highest-scoring role becomes the visible top row on desktop
   // and the first row on mobile. groupConnections() doesn't sort within a group.
-  const roles = [...connections]
-    .sort((a, b) => b.score - a.score)
-    .map((conn) => resolveRoleDisplay(conn, cardA, cardB));
+  const roles = [...connections].sort((a, b) => b.score - a.score).map(resolveRoleDisplay);
 
   // Esc closes the expansion (desktop only — mobile has no toggle).
   useEscapeToClose(!isMobile && isOpen, setIsOpen);

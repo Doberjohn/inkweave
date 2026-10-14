@@ -57,11 +57,13 @@ The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral
 
 ### Explanation templates
 
+`{A}` is the card whose page shows the tile and `{B}` its partner; the UI draws each as its card's chip.
+
 | Pair | Template |
 |------|----------|
-| burn ↔ burn | `Both {a} and {b} make the opponent lose lore — stacking denial pressure` |
-| burn ↔ steal | `{burnCard} pushes the opponent down while {stealCard} pulls you up — pressing both ends of the lore race` |
-| steal ↔ steal | `Both {a} and {b} steal lore — every trigger swings the race in your favor twice` |
+| burn ↔ burn | `{A} and {B} both make opponents lose lore.` |
+| burn ↔ steal | `{A} pushes opponents down. {B} pulls you up. Both ends pressed.` The burn card reads first from either page, so the tokens swap on the steal card's page. |
+| steal ↔ steal | `{A} and {B} both steal lore from the opponent.` |
 
 ## Coverage
 
@@ -151,7 +153,7 @@ The project-wide convention anchors **5 = same-axis density**. Anything above 5 
 
 ### Per-pair explanations
 
-The synergy results page now teaches the gameplan instead of repeating "both make the opponent lose lore" generically. A burn↔steal pair reads "X pushes the opponent down while Y pulls you up — pressing both ends of the lore race" — players reading that understand the deck's win condition more clearly than a generic membership confirmation.
+The synergy results page now teaches the gameplan instead of repeating "both make the opponent lose lore" generically. A burn↔steal pair reads "{A} pushes opponents down. {B} pulls you up. Both ends pressed.", which tells players the deck's win condition more clearly than a generic membership confirmation.
 
 ### Future tuning levers
 

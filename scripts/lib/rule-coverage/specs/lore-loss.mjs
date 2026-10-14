@@ -3,9 +3,9 @@ import {fmt, table} from '../render.mjs';
 import {holders} from '../stats.mjs';
 
 const SHAPES = [
-  {label: 'burn ↔ burn', score: 5, test: /^Both make opponents lose lore/},
+  {label: 'burn ↔ burn', score: 5, test: /both make opponents lose lore/},
   {label: 'burn ↔ steal', score: 6, test: /pushes opponents down/},
-  {label: 'steal ↔ steal', score: 7, test: /^Both steal lore/},
+  {label: 'steal ↔ steal', score: 7, test: /both steal lore/},
 ];
 
 const loreRoles = (coverage) =>

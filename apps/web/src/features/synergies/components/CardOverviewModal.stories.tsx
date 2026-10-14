@@ -87,8 +87,8 @@ const synergies: SynergyGroupData[] = [
     tagline: 'Characters with Shift and their valid targets',
     description: 'Cards that share a name and can Shift onto each other.',
     synergies: [
-      {card: annaSister, score: 9, explanation: 'Free Shift. Play A early, then Shift B in for 0 ink.'},
-      {card: annaMystical, score: 7, explanation: 'On curve, but neither card is inkable. Less flexible off-curve.'},
+      {card: annaSister, score: 9, explanation: 'Free Shift. Play Anna - Diplomatic Queen early, then shift Anna - Soothing Sister in for 0 ink.'},
+      {card: annaMystical, score: 7, explanation: 'Perfect curve: Anna - Mystical Majesty shifts onto Anna - Diplomatic Queen the turn after. Only one of them is inkable as a fallback.'},
     ],
   },
   {
@@ -98,7 +98,7 @@ const synergies: SynergyGroupData[] = [
     tagline: 'Force opponents to discard cards while you keep yours.',
     description: 'Hand-disruption playstyle pairing enablers with hand-size payoffs.',
     synergies: [
-      {card: mowgli, score: 5, explanation: "Both disrupt the opponent's hand."},
+      {card: mowgli, score: 5, explanation: "Anna and Mowgli both disrupt the opponent's hand."},
     ],
   },
 ];
@@ -115,7 +115,7 @@ const samplePair: DetailedPairSynergy = {
       ruleName: 'Shift Targets',
       category: 'direct',
       score: 9,
-      explanation: 'Free Shift. Play A early, then Shift B in for 0 ink.',
+      explanation: 'Free Shift. Play {A} early, then shift {B} in for 0 ink.',
     },
   ],
 };

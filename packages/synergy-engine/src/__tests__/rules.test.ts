@@ -1636,7 +1636,9 @@ describe('Discard Control', () => {
       const yzmaMatch = synergies.find((s) => s.card.id === 'yzma-kitten');
       expect(yzmaMatch).toBeDefined();
       expect(yzmaMatch!.score).toBe(5);
-      expect(yzmaMatch!.explanation).toContain('hand-size advantage');
+      expect(yzmaMatch!.explanation).toBe(
+        '{A} and {B} both reward having more cards in hand than the opponent.',
+      );
     });
 
     it('should not include unrelated cards', () => {
@@ -1861,15 +1863,15 @@ describe('Card Helper Functions', () => {
       expect(synergies[0].score).toBe(8); // falls back to card.cost=4, diff=0
     });
 
-    it('should include Singer value, song cost, and "sings" verb in explanation', () => {
+    it("names the singer and the song, with the song's cost and the Singer value", () => {
       const {singer, song} = makeSingerSongPair({songCost: 4});
-      const synergies = singerRule.findSynergies(singer, [singer, song]);
-      // Explanation no longer interpolates card names (modal context provides
-      // identity via the visible cards). Mechanic-level assertions only.
-      expect(synergies[0].explanation).toContain('Singer 5');
-      expect(synergies[0].explanation).toContain('sings');
-      expect(synergies[0].explanation).toContain('cost 4');
-      expect(synergies[0].explanation).toContain('for free');
+      // The searcher is {A}: the singer on its own page, the song on the song's page.
+      expect(singerRule.findSynergies(singer, [singer, song])[0].explanation).toBe(
+        '{A} can sing {B} (cost 4) for free with Singer 5.',
+      );
+      expect(singerRule.findSynergies(song, [singer, song])[0].explanation).toBe(
+        '{B} can sing {A} (cost 4) for free with Singer 5.',
+      );
     });
   });
 
@@ -3167,18 +3169,21 @@ describe('Sacrifice rule (Banish Matters)', () => {
       );
     });
 
-    it('banish-trigger \u2194 banish-trigger scores 5 (parallel payoff density)', () => {
+    it('banish-trigger \u2194 banish-trigger scores 5 and says which trigger watches any banish', () => {
       const synergies = sacrificeRule.findSynergies(diablo, allCards);
       const match = synergies.find((s) => s.card.id === 'david-xanatos');
       expect(match!.score).toBe(5);
-      expect(match!.explanation).toContain('pay off when your characters are banished');
+      // David Xanatos triggers on any of your characters; Diablo, the searcher, only on itself.
+      expect(match!.explanation).toBe(
+        '{B} benefits when your characters are banished, and {A} when it is.',
+      );
     });
 
     it('self-banish \u2194 self-banish scores 5 (parallel enablers)', () => {
       const synergies = sacrificeRule.findSynergies(hadesStrongArm, allCards);
       const match = synergies.find((s) => s.card.id === 'the-claw');
       expect(match!.score).toBe(5);
-      expect(match!.explanation).toContain('parallel self-banish cards');
+      expect(match!.explanation).toBe('{A} and {B} both banish your own characters.');
     });
   });
 });

@@ -159,14 +159,16 @@ The 8-9 pairs aren't inflation: they're the ramp ↔ trigger chains, the only re
 
 ### Explanation Templates
 
+The templates live in `tuning.json` (`ruleTexts.ramp.templates`). A two-role template names each card by its role (`{RAMP}`, `{TRIGGER}`, `{COST}`), which the engine swaps for the `{A}`/`{B}` chips; a same-role template names them `{A}` and `{B}` directly. `tuning.test.ts` fails on a template that drops a card.
+
 | Pair | Template |
 |------|----------|
-| Ramp ↔ Trigger | "{ramp} adds ink to your inkwell, triggering {trigger}'s inkwell effect" |
-| Ramp ↔ Ramp | "Both {A} and {B} accelerate your ink, getting you ahead on mana faster" |
-| Ramp ↔ Cost Reduction | "{ramp} adds extra ink while {cost} discounts your plays — double acceleration" |
-| Trigger ↔ Trigger | "Both {A} and {B} fire on inkwell events — each ink triggers both effects" |
-| Cost ↔ Cost | "Both {A} and {B} reduce costs — stacking discounts lets you deploy faster" |
-| Trigger ↔ Cost | "{A} and {B} both support an accelerated game plan" |
+| Ramp ↔ Trigger | "{RAMP} adds ink to your inkwell, triggering {TRIGGER}'s inkwell effect." |
+| Ramp ↔ Ramp | "{A} and {B} both put extra cards into your inkwell, getting you ahead faster." |
+| Ramp ↔ Cost Reduction | "{RAMP} adds extra ink, {COST} discounts your plays." |
+| Trigger ↔ Trigger | "{A} and {B} both trigger when cards go into your inkwell." |
+| Cost ↔ Cost | "{A} and {B} both give ink discounts which stack." |
+| Trigger ↔ Cost | "{TRIGGER} rewards cards going into your inkwell, and {COST} gives ink discounts." |
 
 ---
 

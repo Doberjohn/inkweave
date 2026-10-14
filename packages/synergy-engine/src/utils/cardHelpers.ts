@@ -641,6 +641,13 @@ const SACRIFICE_BANISH_TRIGGER_PATTERN =
   /when(?:ever)?\s+(?:this character|(?:one of\s+)?your(?:\s+other)?(?:\s+\w+)?\s+characters?|a\s+character\s+of\s+yours)\s+(?:is|are|gets?)\s+banished/i;
 
 /**
+ * The any-character half of SACRIFICE_BANISH_TRIGGER_PATTERN: the payoff fires when any of your
+ * characters is banished, not only when the card itself is.
+ */
+const SACRIFICE_ANY_BANISH_TRIGGER_PATTERN =
+  /when(?:ever)?\s+(?:(?:one of\s+)?your(?:\s+other)?(?:\s+\w+)?\s+characters?|a\s+character\s+of\s+yours)\s+(?:is|are|gets?)\s+banished/i;
+
+/**
  * Combat-only recursion ("banished in a challenge, return this card") belongs to
  * the Challenge Matters axis (#371), NOT sacrifice: a self-banish card banishes
  * outside of combat, so it can never trigger an "in a challenge" payoff. Excluding
@@ -683,6 +690,14 @@ export function getSacrificeRoles(card: LorcanaCard): SacrificeRole[] {
  */
 export function isSacrificeCard(card: LorcanaCard): boolean {
   return getSacrificeRoles(card).length > 0;
+}
+
+/**
+ * True iff a banish payoff fires when any of your characters is banished (David Xanatos), not only
+ * when it is banished itself (Kuzco). The two read differently in a payoff-payoff pair.
+ */
+export function triggersOnAnyBanish(card: LorcanaCard): boolean {
+  return SACRIFICE_ANY_BANISH_TRIGGER_PATTERN.test(normalizeCardText(card));
 }
 
 // ============================================
@@ -1503,6 +1518,12 @@ export type ToyRole =
   | Exclude<DiscardRole, 'payoff'>
   | RampRole;
 
+/**
+ * The Toy roles that reward Toy density, scored as tribal payoffs. The generic mechanics a Toy
+ * card picks up from other playstyles (draw, burn, ramp) don't compound with tribal mass.
+ */
+export const TOY_TRIBAL_ROLES: readonly ToyRole[] = ['search', 'banish-trigger', 'self-discount'];
+
 /** Compose roles from other playstyles' detectors (Lore Denial, Discard, Ramp). */
 function composeCrossPlaystyleToyRoles(card: LorcanaCard, roles: ToyRole[]): void {
   for (const r of getLoreDenialRoles(card)) roles.push(r);
@@ -1541,6 +1562,19 @@ export function getToyRoles(card: LorcanaCard): ToyRole[] {
 }
 
 export const isToyCard = (card: LorcanaCard): boolean => getToyRoles(card).length > 0;
+
+/**
+ * True iff `payoff`'s ability counts `member`: its text names Toy characters, or names the member
+ * itself (Bullseye - Loyal Horse's discount needs Woody or Jessie, which Woody & Buzz Lightyear
+ * meets through its first half). Rex - Protective Dinosaur and Pterodactyl Janie Doll hold Toy
+ * payoff roles for their own banish, which counts no other Toy.
+ */
+export function toyAbilityCounts(payoff: LorcanaCard, member: LorcanaCard): boolean {
+  if (TOY_PAYOFF_PATTERN.test(normalizeCardText(payoff))) return true;
+  // A team card carries each half's name, the same names it can be shifted onto.
+  const memberNames = getShiftBaseNames(member);
+  return getNamedReferences(payoff).some((name) => memberNames.includes(name));
+}
 
 // ============================================
 // SEVEN DWARFS TRIBAL DETECTION
@@ -1829,6 +1863,17 @@ export function getHunnyRoles(card: LorcanaCard): HunnyRole[] {
 }
 
 export const isHunnyCard = (card: LorcanaCard): boolean => getHunnyRoles(card).length > 0;
+
+/** A density payoff that buffs your other Hunny characters (Gopher - Hunny Cook's Resist). */
+const HUNNY_TEAM_BUFF_PATTERN = /your other Hunny characters (?:get|gain)\b/i;
+
+/**
+ * True iff the card's Hunny ability buffs your other Hunny characters. The density role takes it
+ * (it names "your other Hunny characters"), but it reads as a buff, not as a count.
+ */
+export function isHunnyTeamBuff(card: LorcanaCard): boolean {
+  return HUNNY_TEAM_BUFF_PATTERN.test(normalizeCardText(card));
+}
 
 // ============================================
 // RED PANDA TRIBAL DETECTION

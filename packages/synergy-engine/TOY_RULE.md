@@ -107,22 +107,24 @@ return (
   tryToyPeakChain(ctx) ??
   tryToyMemberSearch(ctx) ??
   tryToyTribalCompound(ctx) ??
-  tryToyMemberTribal(ctx) ?? {
-    score: 5,
-    explanation: `${card.fullName} and ${other.fullName} share the Toys deck — density baseline`,
-  }
+  tryToyMemberTribal(ctx) ?? {score: 5, explanation: TOY_DECK_LINE}
 );
+// TOY_DECK_LINE: "{A} and {B} both go in a Toys deck."
 ```
 
 ### Matrix (highest precedence first)
 
-| Pair shape | Score | Explanation template |
+| Pair shape | Score | Explanation |
 |------------|-------|----------------------|
-| **search ↔ banish-trigger** | **8** | `{searcher} loads a Toy onto the board, then {trigger} pays off when it's banished — peak tribal chain` |
-| **Member ↔ search** | **8** | `{searcher} can fetch {member} from the deck — direct tribal access` |
-| **Tribal ↔ Tribal** (other) | **7** | `{a} and {b} both reward Toy density — tribal payoffs compound` |
-| **Member ↔ Tribal** | **7** | `{member} contributes to the Toy density that {tribal} rewards` |
-| **Otherwise** | **5** | `{a} and {b} share the Toys deck — density baseline` |
+| **search ↔ banish-trigger** | **8** | `{A} loads a Toy, then {B} pays off when it gets banished. Peak chain.` |
+| **Member ↔ search** | **8** | `{A} fetches {B} from the deck. Direct tribal access.` |
+| **Tribal ↔ Tribal** (other) | **7** | Split by what each card's text counts: neither, `{A} and {B} both go in a Toys deck.`; one, the Member ↔ Tribal line; each, `{A} and {B} are both Toy characters, and each one's ability helps the other.` |
+| **Member ↔ Tribal** | **7** | `{A} can activate {B}'s Toy ability.` when the payoff's text counts the member; otherwise `{A} and {B} both go in a Toys deck.` |
+| **Otherwise** | **5** | `{A} and {B} both go in a Toys deck.` |
+
+On every page `{A}` is the card whose page shows the tile and `{B}` its partner. Each line above is written as the page of the card it names first (the search, the member) shows it. A sentence keeps its order of roles from either page, so on the other card's page its tokens swap: on Woody - Leader of the Toys' page, the You've Got a Friend in Me line reads `{B} fetches {A} from the deck.` The search reads first even when the member has a search of its own: next to You've Got a Friend in Me, Woody is the Toy the song fetches.
+
+The 7 lines follow what the payoff's text counts (`toyAbilityCounts`), not its tag: a text that names Toy characters counts any Toy, and one that names a character counts that card, team halves included (Bullseye - Loyal Horse's discount needs Woody or Jessie, which Woody & Buzz Lightyear meets through its first half). Rex - Protective Dinosaur and Pterodactyl Janie Doll hold Toy payoff roles for their own banish, which counts no other Toy. Their pairs read as the same-deck line unless the partner's text counts them: next to Jingle Joe - Sid's Toy, whose ability counts Toy characters, they read `{A} can activate {B}'s Toy ability.`
 
 The "otherwise" bucket covers Member↔Member, Member↔generic, and Generic↔generic pairs. Generic mechanics' actual cross-card synergies (draw↔draw, burn↔steal) are owned by their own playstyles (Lore Denial, Discard, Ramp) — Toys gives them only the deck-share floor to avoid double-counting.
 

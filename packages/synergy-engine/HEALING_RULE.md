@@ -135,7 +135,7 @@ const payoffToken = cardPayoff ? '{A}' : '{B}';
 // `${healerToken} clears damage off your characters, firing ${payoffToken}'s heal payoff.`
 ```
 
-The payoff-payoff pair uses a distinct sentence: `"Both reward removing damage: two heal engines that compound on the same board."`
+The payoff-payoff pair names both cards: `"{A} and {B} both pay off when you remove damage."`
 
 ---
 

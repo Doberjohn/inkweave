@@ -25,6 +25,8 @@ When this example was written, selecting **Anna - Trusting Sister** ("While you 
 - **Elsa - Ice Maker** (cost 7) — score 7 (strong: keyword grant)
 - Every other card with base name "Elsa"
 
+Each tile reads `{A} has a {tier} effect that names {B}.` ("{A} has a strong effect that names {B}." on Anna's page), where `{A}` is the card whose page shows the tile and `{B}` its partner. The pair view runs the rules from both cards and reads every line from the first card's side, so when the line comes only from the second card (Elsa's view of the pair with Anna) its tokens are swapped: "{B} has a strong effect that names {A}."
+
 ---
 
 ## Name Extraction

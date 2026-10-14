@@ -30,12 +30,14 @@ Real cards the `getFloodbornRoles` detector tags for each role (names from the l
 | **buff** | Rapunzel's Tower - In the Vines' Grip (Amber), Pete - Created by the Vine (Amethyst), Hiro Hamada - Armor Designer (Emerald-Sapphire) | Static team pump for your Floodborn characters |
 
 ## Scoring (5-baseline)
-| Pair | Score | Why |
+| Pair | Score | Explanation (from the payoff's page) |
 |------|-------|-----|
-| member + trigger | 7 | The body fires the repeating payoff trigger. |
-| payoff + payoff | 7 | Two payoffs stack on the same Floodborn board. |
-| member + buff | 6 | The body is pumped by the team buff. |
+| member + trigger | 7 | `{B} triggers {A}'s Floodborn ability.` |
+| payoff + payoff | 7 | Split below |
+| member + buff | 6 | `{A}'s Floodborn buff powers up {B}.` |
 | member + member | (not generated) | Payoff-anchored. |
+
+`{A}` is the card whose page shows the tile and `{B}` its partner; on the member's page the tokens swap. Two payoffs split by which of them is a Floodborn character the other's ability helps, at the same 7: neither reads `{A} and {B} are both Floodborn payoffs, so they stack on your board.`; one reads as that member with the other card's buff or trigger line; each reads `{A} and {B} are both Floodborn characters, and each one's ability helps the other.`
 
 ## Cross-rule composition
 Floodborn banish-triggers (Maid Marian, The Vine) are also detected by the Sacrifice

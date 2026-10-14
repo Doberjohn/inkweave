@@ -32,13 +32,15 @@ Payoff detection runs on the card's whitespace-normalized text (card text carrie
 
 The rule is **payoff-anchored** like Floodborn and Items: `scoreTribalPair` returns `null` for member-member pairs, so `tribalFindSynergies` never emits them. A tribe is only interesting through its payoffs. Cards are multi-role, so the **highest applicable bucket wins**:
 
-| Pair | Score | Explanation |
+| Pair | Score | Explanation (from the first card's page) |
 |------|-------|-------------|
-| search ↔ member \| payoff | **8** | The search digs the tribe out of your deck, fueling the payoffs |
-| trigger ↔ member | **7** | The body fires the repeating payoff trigger each time |
-| payoff ↔ payoff | **7** | Two payoffs stack on one tribal board |
-| buff ↔ member | **6** | The body is pumped by the (team or single-target) buff |
-| in-play-check ↔ member | **6** | The body turns on the "have a X in play" payoff |
+| search ↔ member \| payoff | **8** | `{A} can reveal {B} from your deck.` When each can find the other: `{A} and {B} can each reveal the other from your deck.` Beside a payoff that is not a member: `{A} can reveal X characters for {B}.` |
+| trigger ↔ member | **7** | `{B} triggers {A}'s X ability.` When each fires the other's: `{A} and {B} trigger each other's X abilities.` |
+| payoff ↔ payoff | **7** | Split by which of the two members the other's ability helps: neither, `{A} and {B} are both X payoffs, so they stack on your board.`; one, that card's buff or in-play-check line; each, `{A} and {B} are both X characters, and each one's ability helps the other.` |
+| buff ↔ member | **6** | `{A}'s X buff powers up {B}.` |
+| in-play-check ↔ member | **6** | `{B} can make {A}'s X ability trigger.` |
+
+`X` is the tribe's singular noun ("Princess", "Royalty"). `{A}` is the card whose page shows the tile and `{B}` its partner; a line names each card in its role, so on the other card's page the tokens swap.
 
 Buff scores 6 (a static stat grant) while trigger scores 7 (a repeating engine) — the same principled split Floodborn uses.
 

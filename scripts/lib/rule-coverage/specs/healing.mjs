@@ -4,7 +4,7 @@ import {holders} from '../stats.mjs';
 
 const SHAPES = [
   {label: 'healer <-> heal-payoff', score: 8, test: /clears damage off your characters/},
-  {label: 'heal-payoff <-> heal-payoff', score: 7, test: /^Both reward removing damage/},
+  {label: 'heal-payoff <-> heal-payoff', score: 7, test: /both pay off when you remove damage/},
 ];
 
 /** Healers, payoffs, and the cards that are only one or both. */

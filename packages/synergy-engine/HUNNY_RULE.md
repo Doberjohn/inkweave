@@ -24,12 +24,15 @@ Real cards the `getHunnyRoles` detector tags for each role (names from the live 
 | **buff** | Rabbit - Hunny Paladin (Amber), Tigger - Hunny Barbarian (Ruby), Magical Hunny Staff (Amethyst) | Single-target pump of a chosen Hunny |
 
 ## Scoring (5-baseline)
-| Pair | Score |
-|------|-------|
-| search + member, search + density | 8 |
-| density + density, density + member | 7 |
-| buff + member | 6 |
-| everything else | 5 |
+| Pair | Score | Explanation (from the first card's page) |
+|------|-------|-------------|
+| search + member, search + density | 8 | `{A} can reveal {B} from your deck.` When each can find the other: `{A} and {B} can each reveal the other from your deck.` |
+| density + member | 7 | `{B} activates {A}'s Hunny ability.` A payoff that buffs your other Hunny characters (Gopher - Hunny Cook) reads `{A}'s Hunny buff powers up {B}.` |
+| density + density | 7 | Split by which of the two the other's ability counts: neither, `{A} and {B} are both Hunny payoffs, so they stack on your board.`; one, the density + member line; each, `{A} and {B} are both Hunny characters, and each one's ability helps the other.` |
+| buff + member | 6 | `{A}'s Hunny buff powers up {B}.` When each buffs the other: `{A} and {B} can each buff the other.` |
+| everything else | 5 | `{A} and {B} both go in a Hunny deck.` |
+
+`{A}` is the card whose page shows the tile and `{B}` its partner; a line names each card in its role, so on the other card's page the tokens swap.
 
 ## Coverage
 

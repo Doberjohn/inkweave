@@ -38,7 +38,6 @@ export {
   getAllPlaystyles,
   getPlaystyleById,
   LOCATION_ROLE_CHIP_LABELS,
-  LOCATION_ROLE_DESCRIPTIONS,
   LOCATION_ROLE_TOOLTIP,
 } from './engine';
 export type {SynergyEngineOptions, CachedSynergyResult} from './engine';
@@ -94,6 +93,7 @@ export {
   NAMED_REFERENCE,
   getToyRoles,
   isToyCard,
+  TOY_TRIBAL_ROLES,
   getDwarfsRoles,
   isDwarfsCard,
   getLoreDenialRoles,

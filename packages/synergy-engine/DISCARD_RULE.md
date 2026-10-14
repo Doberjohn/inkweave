@@ -135,11 +135,11 @@ Two enablers don't *compound* — they just stack pressure. Two payoffs share an
 
 ### Explanation Templates
 
-The rule generates role-aware explanations:
+The rule generates role-aware explanations. On every page `{A}` is the card whose page shows the tile and `{B}` its partner; the UI draws each as its card's chip:
 
-- **Enabler ↔ Payoff**: `"{enabler.fullName} depletes the opponent's hand, powering up {payoff.fullName}'s hand-size advantage"`
-- **Enabler ↔ Enabler**: `"Both {card.fullName} and {other.fullName} make the opponent discard"`
-- **Payoff ↔ Payoff**: `"Both {card.fullName} and {other.fullName} reward hand-size advantage over opponents"`
+- **Enabler ↔ Payoff**: `"{A} empties the opponent's hand, powering up {B}'s hand-size edge."`, as the enabler's page shows it. The enabler reads first from either page, so the payoff's page shows `"{B} empties the opponent's hand, powering up {A}'s hand-size edge."`
+- **Enabler ↔ Enabler**: `"{A} and {B} both disrupt the opponent's hand."`
+- **Payoff ↔ Payoff**: `"{A} and {B} both reward having more cards in hand than the opponent."`
 
 ---
 

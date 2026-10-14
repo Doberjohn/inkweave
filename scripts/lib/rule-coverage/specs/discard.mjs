@@ -18,9 +18,9 @@ const LABELS = {
 };
 
 const SHAPES = [
-  {label: 'Enabler ↔ Enabler', score: 5, test: /^Both disrupt the opponent's hand/},
+  {label: 'Enabler ↔ Enabler', score: 5, test: /both disrupt the opponent's hand/},
   {label: 'Enabler ↔ Payoff', score: 8, test: /empties the opponent's hand/},
-  {label: 'Payoff ↔ Payoff', score: 5, test: /^Both reward hand-size advantage/},
+  {label: 'Payoff ↔ Payoff', score: 5, test: /both reward having more cards in hand/},
 ];
 
 const discardRoles = (coverage) => coverage.roles(coverage.engine.getDiscardRoles, ROLES);

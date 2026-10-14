@@ -12,7 +12,7 @@ import {fmt, nameList, tallyText} from '../render.mjs';
 const SHAPES = [
   {label: 'enabler ↔ consume payoff', score: 8, test: /punishes the exerted body/},
   {label: 'enabler ↔ state payoff', score: 6, test: /keeps an opposing character exerted/},
-  {label: 'payoff ↔ payoff', score: 5, test: /^Both reward opposing characters being exerted/},
+  {label: 'payoff ↔ payoff', score: 5, test: /both benefit when opposing characters are exerted/},
 ];
 
 /** Cards that put a card into an inkwell "facedown and exerted": ramp the rule must never tag. */
