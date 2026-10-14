@@ -188,7 +188,16 @@ describe('Location Control: pronoun moves and a move limited to one location cla
 // Clear misreads (2026-10-14 false-pairs review): each case uses the card's real text.
 describe('Location Control: clauses that reach fewer locations than they seem to', () => {
   const location = (id: string, fields: Partial<LorcanaCard>) =>
-    createCard({id, name: id, fullName: id, type: 'Location', ink: 'Ruby', lore: 1, moveCost: 1, ...fields});
+    createCard({
+      id,
+      name: id,
+      fullName: id,
+      type: 'Location',
+      ink: 'Ruby',
+      lore: 1,
+      moveCost: 1,
+      ...fields,
+    });
   const cheapLocation = location('cheap-location', {cost: 3});
   const dearLocation = location('dear-location', {cost: 4});
   const loreless = location('loreless-location', {lore: 0});
@@ -332,7 +341,9 @@ describe('Location Control: clauses that reach fewer locations than they seem to
 
   it("keeps a reward sized by the location's lore off a location without lore", () => {
     const atPayoff = getRuleById('location-at-payoff')!;
-    const partners = atPayoff.findSynergies(carl, [carl, cheapLocation, loreless]).map((m) => m.card.id);
+    const partners = atPayoff
+      .findSynergies(carl, [carl, cheapLocation, loreless])
+      .map((m) => m.card.id);
     expect(partners).toEqual([cheapLocation.id]);
     expect(atPayoff.findSynergies(loreless, [loreless, carl])).toEqual([]);
   });

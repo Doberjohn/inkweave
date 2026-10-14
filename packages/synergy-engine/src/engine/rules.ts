@@ -406,7 +406,8 @@ interface LocationCrossProfile {
   highValue: boolean;
 }
 
-const hasHighValueRole = (roles: LocationRole[]): boolean => roles.some((r) => HIGH_VALUE_ROLES.has(r));
+const hasHighValueRole = (roles: LocationRole[]): boolean =>
+  roles.some((r) => HIGH_VALUE_ROLES.has(r));
 
 /** The cross profile of bare roles: no move-only ramp, no self-only clause. */
 const rolesProfile = (roles: LocationRole[]): LocationCrossProfile => ({
@@ -431,7 +432,8 @@ const rolesLink = (
   role: LocationRole,
   to: LocationCrossProfile,
   target: LocationRole,
-): boolean => to.roles.includes(target) && !(from.selfOnly.includes(role) && to.selfOnly.includes(target));
+): boolean =>
+  to.roles.includes(target) && !(from.selfOnly.includes(role) && to.selfOnly.includes(target));
 
 /** Check if any role in `from` has a complementary relationship with any role in `to`. */
 function hasComplementaryRole(from: LocationCrossProfile, to: LocationCrossProfile): boolean {

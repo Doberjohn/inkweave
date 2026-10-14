@@ -42,7 +42,7 @@ function rampShapes(engine) {
       test: chain(false, false),
     },
     {
-      label: 'Ramp ↔ trigger, ink on the turn it can\'t fire',
+      label: "Ramp ↔ trigger, ink on the turn it can't fire",
       score: scores.density,
       test: (pair) => /both go in a Ramp deck/.test(pair.explanation),
     },

@@ -591,7 +591,10 @@ export function scoreSelfDiscardPair(
   }
 
   // 7 or 6 — a bin-filler feeding a discard-count payoff, or mill feeding a recursion engine.
-  const fill = scoreSelfDiscardFillCombo({card, roles: cardRoles}, {card: other, roles: otherRoles});
+  const fill = scoreSelfDiscardFillCombo(
+    {card, roles: cardRoles},
+    {card: other, roles: otherRoles},
+  );
   if (fill) return fill;
 
   // 6 — two recursion engines mining the same discard pile.

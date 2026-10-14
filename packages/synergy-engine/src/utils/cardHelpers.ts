@@ -566,7 +566,10 @@ const CAPPED_LOCATION_PLAY = /\bplay a location\b[^.]*?\bwith cost (\d+) or less
 function getLocationRampCostCap(card: LorcanaCard): number {
   const text = normalizeCardText(card);
   const caps = [...text.matchAll(CAPPED_LOCATION_PLAY)].map((m) => Number(m[1]));
-  if (caps.length === 0 || LOCATION_PATTERNS['location-ramp'].test(text.replace(CAPPED_LOCATION_PLAY, '.'))) {
+  if (
+    caps.length === 0 ||
+    LOCATION_PATTERNS['location-ramp'].test(text.replace(CAPPED_LOCATION_PLAY, '.'))
+  ) {
     return Infinity;
   }
   return Math.max(...caps);
@@ -682,7 +685,8 @@ const SELF_ONLY_LOCATION_CLAUSES: ReadonlyArray<{
   {
     role: 'at-payoff',
     clause: /\b(?:this character|he|she)\b(?:'s| is)?[^.,]*?\bat a location\b/gi,
-    readsAsRole: (text) => LOCATION_PATTERNS['at-payoff'].test(text) || OTHERS_AT_LOCATION.test(text),
+    readsAsRole: (text) =>
+      LOCATION_PATTERNS['at-payoff'].test(text) || OTHERS_AT_LOCATION.test(text),
   },
   {
     role: 'move-trigger',
@@ -1126,7 +1130,8 @@ const SELF_DISCARD_RECURSION_OBJECT_PATTERN =
 /** A recursion object that takes any card: "a card", "another card", "2 cards". */
 const SELF_DISCARD_ANY_OBJECT_PATTERN = /\b(?:a|an|another|any|\d+)\s+cards?\b/i;
 /** A recursion object that is the card itself: "this character", "this card", "it". */
-const SELF_DISCARD_SELF_OBJECT_PATTERN = /\bthis\s+(?:card|character|item|location|action|song)\b|\bit\b/i;
+const SELF_DISCARD_SELF_OBJECT_PATTERN =
+  /\bthis\s+(?:card|character|item|location|action|song)\b|\bit\b/i;
 /**
  * An outlet that discards one card and then draws 2+ ("discard a song card. If you do, draw
  * 2 cards"), so its hand is never empty when it resolves. Deliberately narrow (Max Goof -
@@ -1242,7 +1247,10 @@ function selfDiscardPileKinds(text: string): Set<SelfDiscardKindEntry> | null {
  * card" or "it" is a self-reference, and so is an object with no kind word and no generic card.
  * Named-card recursion never gets here: stripUnfedRecursion has removed it.
  */
-function selfDiscardRecursionKinds(card: LorcanaCard, text: string): Set<SelfDiscardKindEntry> | null {
+function selfDiscardRecursionKinds(
+  card: LorcanaCard,
+  text: string,
+): Set<SelfDiscardKindEntry> | null {
   const object = SELF_DISCARD_RECURSION_OBJECT_PATTERN.exec(text)?.[1] ?? 'a card';
   if (SELF_DISCARD_SELF_OBJECT_PATTERN.test(object)) return ownSelfDiscardKinds(card);
   const kinds = selfDiscardKindsIn(object);
@@ -1342,7 +1350,10 @@ export type SelfDiscardFeed = 'trigger' | 'stock' | 'unlock';
  * made while you quest, challenge or play ("If you discarded a card this turn, this character …
  * can challenge ready characters this turn").
  */
-function discardLandsInTime(outlet: SelfDiscardFeedProfile, target: SelfDiscardFeedProfile): boolean {
+function discardLandsInTime(
+  outlet: SelfDiscardFeedProfile,
+  target: SelfDiscardFeedProfile,
+): boolean {
   return !outlet.discardsAtEndOfTurn || target.checksAtEndOfTurn;
 }
 
