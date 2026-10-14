@@ -1432,6 +1432,13 @@ export function selfDiscardHandTrimFeed(
 export type RampRole = 'inkwell-ramp' | 'inkwell-trigger' | 'cost-reduction';
 
 /**
+ * "Look at the top 2 cards of your deck. Put one into your hand and the other into your
+ * inkwell." The ink comes from the look in its sentence or the next: Closet Door Portal's look
+ * plays a card for free, and its closing "Put this card into your inkwell" is self-sacrifice.
+ */
+const DECK_LOOK_TO_INKWELL = /look\s+at\s+the\s+top[^.]*(?:\.\s*[^.]*)?into\s+your\s+inkwell/i;
+
+/**
  * Inkwell ramp patterns — cards that put cards into YOUR inkwell.
  * Covers: deck-top ramp, hand-to-inkwell, board-to-inkwell, discard-to-inkwell.
  */
@@ -1439,7 +1446,7 @@ const INKWELL_RAMP_PATTERNS: RegExp[] = [
   // "put the top card of your deck into your inkwell"
   /put\s+the\s+top\s+card\s+of\s+your\s+deck\s+into\s+your\s+inkwell/i,
   // "look at the top X cards...put...into your inkwell"
-  /look\s+at\s+the\s+top.*?put.*?into\s+your\s+inkwell/i,
+  DECK_LOOK_TO_INKWELL,
   // "put up to X cards from your discard into your inkwell"
   /put\s+up\s+to\s+\d+\s+cards?\s+from\s+your\s+discard\s+into\s+your\s+inkwell/i,
   // "put a card from your hand into your inkwell"
@@ -1553,7 +1560,7 @@ export function isDeckRamp(card: LorcanaCard): boolean {
   const t = normalizeCardText(card);
   return (
     /put\s+the\s+top\s+card\s+of\s+your\s+deck\s+into\s+your\s+inkwell/i.test(t) ||
-    /look\s+at\s+the\s+top.*?put.*?into\s+your\s+inkwell/i.test(t) ||
+    DECK_LOOK_TO_INKWELL.test(t) ||
     /put\s+up\s+to\s+\d+\s+cards?\s+from\s+your\s+discard\s+into\s+your\s+inkwell/i.test(t)
   );
 }

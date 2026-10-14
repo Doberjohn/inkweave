@@ -39,7 +39,7 @@ Cards that put extra cards into YOUR inkwell, Sapphire's identity mechanic. Two 
 
 **Deck Ramp** — Top of deck → inkwell. Free mana with no card cost.
 - Pattern: `put the top card of your deck into your inkwell`
-- Pattern: `look at the top X cards...put...into your inkwell`
+- Pattern: `look at the top X cards...put...into your inkwell`, with "into your inkwell" in the look's sentence or the next. Closet Door Portal's look plays a card for free, and its closing "Put this card into your inkwell" is self-sacrifice.
 - Pattern: `put up to X cards from your discard into your inkwell`
 
 **Self-Sacrifice** — Hand/board card → inkwell. Trades a card for speed.
@@ -152,10 +152,10 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| Deck ramp ↔ repeating trigger | 50 | 9 | 3.0% |
-| Deck ramp ↔ once-per-turn trigger | 25 | 8 | 1.5% |
-| Self-sacrifice ↔ repeating trigger | 24 | 8 | 1.4% |
-| Self-sacrifice ↔ once-per-turn trigger | 12 | 7 | 0.7% |
+| Deck ramp ↔ repeating trigger | 48 | 9 | 2.9% |
+| Deck ramp ↔ once-per-turn trigger | 24 | 8 | 1.4% |
+| Self-sacrifice ↔ repeating trigger | 26 | 8 | 1.6% |
+| Self-sacrifice ↔ once-per-turn trigger | 13 | 7 | 0.8% |
 | Ramp ↔ trigger, ink on the turn it can't fire | 3 | 5 | 0.2% |
 | Cost reduction ↔ cost reduction (overlapping targets) | 71 | 6 | 4.3% |
 | Ramp ↔ ramp | 701 | 5 | 42.2% |
@@ -190,7 +190,7 @@ A ramp ↔ trigger pair on different turns uses the engine's same-deck line, "{A
 
 | Role | Cards | Sub-patterns | Cards per ink |
 |----|-----|------------|-------------|
-| Inkwell Ramp | 38 | 26 deck ramp + 12 self-sacrifice | Sapphire 36, Emerald 2, Amber 1 |
+| Inkwell Ramp | 38 | 25 deck ramp + 13 self-sacrifice | Sapphire 36, Emerald 2, Amber 1 |
 | Inkwell Triggers | 3 | 2 repeating + 1 once-per-turn | Sapphire 3 |
 | Cost Reduction | 19 | Exert/Quest/Passive activation | Amber 9, Sapphire 3, Amethyst 2, Emerald 2, Ruby 2, Steel 1 |
 <!-- coverage:end -->

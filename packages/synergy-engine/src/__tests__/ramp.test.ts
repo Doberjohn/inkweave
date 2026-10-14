@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {getRampRoles, inkLandsOffTriggerTurn} from '../utils';
+import {getRampRoles, inkLandsOffTriggerTurn, isDeckRamp} from '../utils';
 import {getRuleById} from '../engine';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
@@ -116,5 +116,38 @@ describe('Ramp: a card put into your inkwell from your discard', () => {
   it('reads ramp from that clause, not from the Boost reminder', () => {
     expect(getRampRoles({...jiminy, text: jiminyAbility})).toEqual(['inkwell-ramp']);
     expect(getRampRoles(jiminy)).toEqual(['inkwell-ramp']);
+  });
+});
+
+// A deck look whose own cards go into your inkwell, and one whose look plays a card for free
+// before the item puts itself into your inkwell.
+const whatElse = createCard({
+  id: 'what-else-can-i-do',
+  name: 'What Else Can I Do?',
+  fullName: 'What Else Can I Do?',
+  type: 'Action',
+  ink: 'Sapphire',
+  text: "(A character with cost 5 or more can ⟳ to sing this song\nfor free.)\nLook at the top 2 cards of your deck. Put one into your hand\nand the other into your inkwell facedown and exerted. If a\ncharacter sang this song, your characters gain Ward until the\nstart of your next turn. (Opponents can't choose them except\nto challenge.)",
+});
+const closetDoorPortal = createCard({
+  id: 'closet-door-portal',
+  name: 'Closet Door Portal',
+  fullName: 'Closet Door Portal',
+  type: 'Item',
+  ink: 'Sapphire',
+  text: "KNOCK, KNOCK This item enters play exerted.\nWHO'S THERE? ⟳, 2 ⬡ — Look at the top 3 cards of\nyour deck. You may reveal a character, item, or location\ncard with cost 6 or less and play it for free. Put the rest\non the bottom of your deck in any order. Put this card\ninto your inkwell facedown and exerted.",
+});
+
+describe('Ramp: a deck look that puts a card into your inkwell', () => {
+  it('reads deck ramp only from ink that comes from the look', () => {
+    expect(isDeckRamp(whatElse)).toBe(true);
+    expect(isDeckRamp(closetDoorPortal)).toBe(false);
+    expect(getRampRoles(closetDoorPortal)).toEqual(['inkwell-ramp']);
+  });
+
+  it('scores a card that puts itself into your inkwell in the self-sacrifice tier', () => {
+    expect(rampPair(closetDoorPortal, scrooge)?.score).toBe(8);
+    expect(rampPair(closetDoorPortal, chiefTui)?.score).toBe(7);
+    expect(rampPair(whatElse, scrooge)?.score).toBe(9);
   });
 });
