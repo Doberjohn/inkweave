@@ -235,11 +235,11 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 
 | Test | What it verifies |
 |---|---|
-| should enter comparison mode when clicking a synergy card | (desktop) Clicking a shift-targets tile shows the BACK button; URL stays `/` |
+| should enter comparison mode when clicking a synergy card | (desktop) Clicking a shift-targets tile shows the BACK button, and card A settles under 40px below the × (the chip row and gold divider give up their space, so no empty band under BACK); URL stays `/` |
 | should show engine column with rule explanations in comparison mode | (desktop) `section[aria-label="Engine score"]` renders with Shift rule explanations |
 | should exit comparison mode via the BACK button | (desktop) BACK returns the modal to `data-mode="default"`, URL stays `/` |
 | should switch comparison pairs across exit and re-entry | (desktop) Enter → BACK → enter a different pair; consecutive comparisons work cleanly |
-| should enter comparison mode on mobile | (mobile) Tapping a synergy tile shows the BACK button |
+| should enter comparison mode on mobile | (mobile) Tapping a synergy tile shows the BACK button, and card A settles under 40px below the × (MobileComparisonView covers the hidden chip row) |
 | should render the tabbed comparison layout on mobile | (mobile) MobileComparisonView's Engine/Community section-switch pill buttons render |
 | should switch to the Community tab on mobile | (mobile) Tapping the Community pill moves `aria-current="true"` onto it, and scrolls only the tab strip: once the strip has landed on Community, the page and every scroll container around it are where they were before the tap (#653, the strip now uses `useScrollSnapIndex` instead of `scrollIntoView`, which also scrolls ancestors; the old code did not move them in this layout either, so this guards the outcome) |
 | should open and dismiss the card lightbox on mobile | (mobile) Tapping a comparison card opens the portal-to-body `Enlarged:` dialog; its close button dismisses it |
