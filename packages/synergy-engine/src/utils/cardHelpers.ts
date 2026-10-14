@@ -1518,6 +1518,12 @@ export type ToyRole =
   | Exclude<DiscardRole, 'payoff'>
   | RampRole;
 
+/**
+ * The Toy roles that reward Toy density, scored as tribal payoffs. The generic mechanics a Toy
+ * card picks up from other playstyles (draw, burn, ramp) don't compound with tribal mass.
+ */
+export const TOY_TRIBAL_ROLES: readonly ToyRole[] = ['search', 'banish-trigger', 'self-discount'];
+
 /** Compose roles from other playstyles' detectors (Lore Denial, Discard, Ramp). */
 function composeCrossPlaystyleToyRoles(card: LorcanaCard, roles: ToyRole[]): void {
   for (const r of getLoreDenialRoles(card)) roles.push(r);

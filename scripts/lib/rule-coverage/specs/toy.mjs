@@ -3,15 +3,13 @@ import {fmt} from '../render.mjs';
 import {holders} from '../stats.mjs';
 import {TOY_ROLES} from './roles.mjs';
 
-/** The Toy roles the engine scores as tribal payoffs (TOY_TRIBAL_ROLES in ruleScoring.ts). */
-const TRIBAL_ROLES = ['search', 'banish-trigger', 'self-discount'];
-
 /**
  * The pair shapes. A 7 reads by what each card's text counts, the same for two tribal payoffs as
  * for a member and one, so the tribal ↔ tribal row checks the roles instead of the words.
  */
 function toyShapes(engine) {
-  const tribal = (card) => engine.getToyRoles(card).some((role) => TRIBAL_ROLES.includes(role));
+  const tribal = (card) =>
+    engine.getToyRoles(card).some((role) => engine.TOY_TRIBAL_ROLES.includes(role));
   return [
     {label: 'member ↔ search', score: 8, test: /fetches .* from the deck/},
     {label: 'search ↔ banish-trigger', score: 8, test: /loads a Toy/},

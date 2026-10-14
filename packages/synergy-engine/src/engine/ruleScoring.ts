@@ -16,6 +16,7 @@ import {
   selfDiscardHandTrimFeed,
   triggersOnAnyBanish,
   toyAbilityCounts,
+  TOY_TRIBAL_ROLES,
   isHunnyTeamBuff,
   type DiscardRole,
   type LoreDenialRole,
@@ -768,13 +769,6 @@ export function getRampExplanation(
 // ============================================
 // TOY TRIBAL SCORING
 // ============================================
-
-/**
- * Tribal payoff roles — these specifically reward Toy density (vs. generic
- * mechanics inherited via composition like draw, burn, ramp, etc., which
- * happen to appear on Toy cards but don't compound with tribal mass).
- */
-const TOY_TRIBAL_ROLES: readonly ToyRole[] = ['search', 'banish-trigger', 'self-discount'];
 
 const hasTribalRole = (roles: ToyRole[]): boolean =>
   roles.some((r) => TOY_TRIBAL_ROLES.includes(r));

@@ -44,8 +44,7 @@ const mockConnection: PairSynergyConnection = {
   ruleName: 'Shift Targets',
   category: 'direct' as const,
   score: 8,
-  explanation:
-    'Perfect curve: {A} shifts onto {B} the turn after. Only one of them is inkable as a fallback.',
+  explanation: 'Perfect curve: {A} shifts onto {B} the turn after. Both are inkable as a fallback.',
 };
 
 const mockPair: VotingPair = {

@@ -93,6 +93,7 @@ export {
   NAMED_REFERENCE,
   getToyRoles,
   isToyCard,
+  TOY_TRIBAL_ROLES,
   getDwarfsRoles,
   isDwarfsCard,
   getLoreDenialRoles,

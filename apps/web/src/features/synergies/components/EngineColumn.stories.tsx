@@ -49,7 +49,7 @@ const singleRulePair: DetailedPairSynergy = {
       category: 'direct',
       score: 9,
       explanation:
-        'Perfect curve: {B} shifts onto {A} the turn after. Both are inkable as a fallback.',
+        'Perfect curve: {B} shifts onto {A} the turn after. Only one of them is inkable as a fallback.',
     },
   ],
 };

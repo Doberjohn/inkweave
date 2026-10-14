@@ -8,12 +8,12 @@ import {
   type LorcanaJSONCard,
 } from 'inkweave-synergy-engine';
 
-// Data guard for the synergy lines: every line names its cards with the {A}/{B} chip tokens, which
-// the pair view draws as card chips and a tile's tooltip fills with card names. A line without
-// them reads as a generic sentence beside two specific cards. Runs every rule over the real card
-// pool, uncapped and in both directions, so it reaches every line a tile or the pair view can
-// show: a new rule or a reworded line that drops the tokens turns CI red. Reads the pool the way
-// the precompute builds it (main wins over preview on an id, Core sets only).
+// Data guard for the synergy lines: every line names both its cards with the {A}/{B} chip tokens,
+// which the pair view draws as card chips and a tile's tooltip fills with card names. A line
+// without them reads as a generic sentence beside two specific cards. Runs every rule over the real
+// card pool, uncapped and in both directions, so it reaches every line a tile or the pair view can
+// show: a new rule or a reworded line that drops a token turns CI red. Reads the pool the way the
+// precompute builds it (main wins over preview on an id, Core sets only).
 
 function readCards(file: string): LorcanaJSONCard[] {
   return (
@@ -43,12 +43,22 @@ const linesByRule = new Map(
   }),
 );
 
+/**
+ * Whether a line names the cards it must. A Location row between two support cards names only the
+ * card with that role, since the pair view's next row names the other card (the owner's call in the
+ * wording review), so a Location line needs one token; every other line needs both.
+ */
+function namesItsCards(ruleId: string, text: string): boolean {
+  if (ruleId.startsWith('location-')) return /\{[AB]\}/.test(text);
+  return text.includes('{A}') && text.includes('{B}');
+}
+
 describe('Synergy description chips', () => {
-  it('names a card with {A} or {B} in every line a rule writes', () => {
-    const chipFree = [...linesByRule].flatMap(([ruleId, lines]) =>
-      [...lines].filter((text) => !/\{[AB]\}/.test(text)).map((text) => `${ruleId}: ${text}`),
+  it('names both cards with {A} and {B} in every line a rule writes', () => {
+    const missing = [...linesByRule].flatMap(([ruleId, lines]) =>
+      [...lines].filter((text) => !namesItsCards(ruleId, text)).map((text) => `${ruleId}: ${text}`),
     );
     expect(pool.length).toBeGreaterThan(0);
-    expect(chipFree).toEqual([]);
+    expect(missing).toEqual([]);
   });
 });

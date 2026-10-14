@@ -88,7 +88,7 @@ const synergies: SynergyGroupData[] = [
     description: 'Cards that share a name and can Shift onto each other.',
     synergies: [
       {card: annaSister, score: 9, explanation: 'Free Shift. Play Anna - Diplomatic Queen early, then shift Anna - Soothing Sister in for 0 ink.'},
-      {card: annaMystical, score: 7, explanation: "On curve: Anna - Mystical Majesty shifts onto Anna - Diplomatic Queen the turn after, but neither is inkable, so it's less flexible off-curve."},
+      {card: annaMystical, score: 7, explanation: 'Perfect curve: Anna - Mystical Majesty shifts onto Anna - Diplomatic Queen the turn after. Only one of them is inkable as a fallback.'},
     ],
   },
   {

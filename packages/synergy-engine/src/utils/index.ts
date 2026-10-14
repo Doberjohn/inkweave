@@ -48,6 +48,7 @@ export {
   getToyRoles,
   isToyCard,
   toyAbilityCounts,
+  TOY_TRIBAL_ROLES,
   getDwarfsRoles,
   isDwarfsCard,
   getFloodbornRoles,

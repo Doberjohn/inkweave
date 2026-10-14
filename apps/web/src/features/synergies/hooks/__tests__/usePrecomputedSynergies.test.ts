@@ -16,12 +16,12 @@ vi.mock('../../../../shared/contexts/CardDataContext', () => ({
 /** Registers a card the mocked card database can resolve. Ids are unique per test, because
  * the hook's fetch cache is module-level and outlives each test. */
 function card(id: string): LorcanaCard {
-  mockCardsById[id] = {id, fullName: `Card ${id}`} as LorcanaCard;
+  mockCardsById[id] = {id, name: 'Card', fullName: `Card ${id}`} as LorcanaCard;
   return mockCardsById[id];
 }
 
 /** Holds every synergy fetch until the test releases it with one partner for that card. */
-function holdSynergyFetches(): (cardId: string, partnerId: string) => void {
+function holdSynergyFetches(): (cardId: string, partnerId: string, explanation?: string) => void {
   const pending = new Map<string, (data: unknown) => void>();
   vi.stubGlobal(
     'fetch',
@@ -35,7 +35,7 @@ function holdSynergyFetches(): (cardId: string, partnerId: string) => void {
         }),
     ),
   );
-  return (cardId, partnerId) =>
+  return (cardId, partnerId, explanation = 'Shifts onto it') =>
     pending.get(cardId)?.({
       groups: [
         {
@@ -44,7 +44,7 @@ function holdSynergyFetches(): (cardId: string, partnerId: string) => void {
           label: 'Shift',
           tagline: '',
           description: '',
-          synergies: [{cardId: partnerId, score: 7, explanation: 'Shifts onto it'}],
+          synergies: [{cardId: partnerId, score: 7, explanation}],
         },
       ],
       pairs: {},
@@ -82,6 +82,22 @@ describe('usePrecomputedSynergies', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.synergies[0].synergies[0].card.id).toBe('9202');
+  });
+
+  it("names both cards in a tile's explanation", async () => {
+    // A tile shows its explanation as plain text, so its chip tokens become the cards' names: full
+    // names here, since both cards are named Card.
+    const release = holdSynergyFetches();
+    const selected = card('9251');
+    card('9252');
+
+    const {result} = renderHook(() => usePrecomputedSynergies(selected));
+    release('9251', '9252', '{B} shifts onto {A} the turn after.');
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.synergies[0].synergies[0].explanation).toBe(
+      'Card 9252 shifts onto Card 9251 the turn after.',
+    );
   });
 
   it("reports loading without the previous card's groups when the card changes", async () => {
