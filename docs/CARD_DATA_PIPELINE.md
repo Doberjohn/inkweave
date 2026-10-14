@@ -193,7 +193,7 @@ Set 14 (Hyperia City) graduated three days before its prerelease, through `pnpm 
 - **Accented names** were the Core pool's first, so `cardSlug` now folds accents (`hector-rivera-gone-to-pieces`) instead of dropping the letters.
 - **`/reveals` stayed up until release day.** [Rule 4](#rules-during-canonical-integration) now keeps LorcanaJSON's `story` as `franchise`, so the Coco tier held its 27 cards, and the spotlight art moved to `public/art/spotlights/`, named after cards rather than preview ids. The preview AVIFs stay until the stories that show them move on.
 - **Stored data:** `20261013214048_remap_set14_preview_ids.sql` moves votes and collection entries to the canonical ids, applied once the deploy is live ([Graduation path](#graduation-path), step 9).
-- **Not yet in the [collection dataset](#the-collection-dataset-553):** the set's 53 Epic, Enchanted, Iconic and Special printings, until `pnpm generate-collection-data` runs on a LorcanaJSON full export that includes Set 14.
+- **[Collection dataset](#the-collection-dataset-553):** the set's 53 Epic, Enchanted, Iconic and Special printings went in as `collection/14.json` plus their index entries, projected from the same set file through `scripts/lib/collectionData.mjs`, because the cloud session that graduated the set couldn't download the full export. The next full-export run of `pnpm generate-collection-data` rebuilds them with the rest.
 
 ---
 
@@ -777,7 +777,7 @@ No SW cache rule for `previewCards.json` itself — its graceful 404 path is bro
 
 ### The collection dataset (#553)
 
-A **third** card dataset lives at `apps/web/public/data/collection/`: the 2,152
+A **third** card dataset lives at `apps/web/public/data/collection/`: the 2,205
 cards Inkweave can SHOW but never analyses, namely sets 1-8 and the
 Enchanted/Epic/Iconic/Special printings inside Core sets.
 
@@ -805,20 +805,20 @@ is easy and gives numbers that look right and are not.
 
 | File | Contents | committed | served |
 |---|---|---|---|
-| `collection/index.json` | all 2,152, light projection: grid, filters, name search | 69 KB | 69 KB |
+| `collection/index.json` | all 2,205, light projection: grid, filters, name search | 71 KB | 71 KB |
 | `collection/{set}.json` | one per set: card text, stats, abilities, image URLs | 10-43 KB | 11-49 KB |
-| whole dataset | 14 files, 2.9 MB on disk | 445 KB | 500 KB |
+| whole dataset | 15 files, 3.0 MB on disk | 458 KB | 515 KB |
 
 Both tiers are budgeted in `package.json`, and **deliberately as two entries rather
-than one**: no visitor loads all 500 KB. Collection mode loads the index once plus the
-one chunk for the set being viewed, so the **per-visit worst case is 118 KB** (69 KB
+than one**: no visitor loads all 515 KB. Collection mode loads the index once plus the
+one chunk for the set being viewed, so the **per-visit worst case is 120 KB** (71 KB
 index plus set 8 at 49 KB served), under a quarter of the total. `Collection index
 JSON` guards that per-visit cost; `Collection set chunks` is a growth guard on data
 nobody loads in full.
 
 **The chunk budget is set against the SERVED size, not the committed size.**
-Committed chunks gzip to 376 KB; because content-addressed hashes are high-entropy
-they barely compress, injection adds **55 KB** to reach 431 KB, against a 470 kB
+Committed chunks gzip to 387 KB; because content-addressed hashes are high-entropy
+they barely compress, injection adds **57 KB** to reach 444 KB, against a 470 kB
 limit. Measuring the committed files would set a limit against an artifact nobody is
 served, which is the defect [#729](https://github.com/Doberjohn/inkweave/issues/729) describes.
 The index is not imaged, so its budget needs no such allowance.
@@ -856,7 +856,7 @@ binder renders one set at a time from that set's chunk. Measured on `deck-builde
 when Phase C shipped there with Quest sets still included, adding 2,218 cards took the
 image output from 27.5 MB / 2,048 files to **88 MB / 6,484 files**. Carried over rather
 than re-measured, because re-running the pipeline would inject hashes into the chunks
-above; this dataset is 66 cards smaller, so the real figure is slightly below it.
+above; this dataset is 13 cards smaller, so the real figure is slightly below it.
 
 ### CDN restore on a cache miss (#554)
 
@@ -1058,9 +1058,13 @@ pnpm graduate-set <set-code>
 pnpm graduate-set <set-code> /path/to/canonical-file.json
 
 # 3. Regenerate per-card synergy files with the new canonical ids, then the rule
-#    docs' coverage blocks, which name the sets their counts cover (#479)
+#    docs' coverage blocks, which name the sets their counts cover (#479), then the
+#    collection dataset, which holds the set's Epic, Enchanted, Iconic and Special
+#    printings for collection mode. That one reads LorcanaJSON's full export with
+#    the set in it, not the set file
 pnpm precompute-synergies
 pnpm refresh-rule-coverage
+pnpm generate-collection-data /path/to/allCards.json
 
 # 4. Fetch any new card images
 pnpm download-images

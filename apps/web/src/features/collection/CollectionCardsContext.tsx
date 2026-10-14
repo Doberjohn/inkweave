@@ -1,8 +1,8 @@
 // The non-Core card pool, for viewing only (#553 Phase C).
 //
 // THE CORE BOUNDARY LIVES HERE, and it is structural rather than a rule. These
-// 2,218 cards never enter `CardDataContext`, so the deck builder, the playstyle
-// pages and every build script keep seeing exactly the 1,024 Core cards — not
+// 2,205 cards never enter `CardDataContext`, so the deck builder, the playstyle
+// pages and every build script keep seeing exactly the 1,228 Core cards — not
 // because anyone remembered to filter, but because they never ask this provider.
 // Browse merges the two arrays locally, in the one place that should see both.
 //
@@ -10,7 +10,7 @@
 // visitor who never opens it pays nothing.
 //
 // DESIGN-PHASE SIMPLIFICATION, deliberate and temporary: this loads every set's
-// DETAIL chunk (~382 KB gzip) rather than the 71 KB index. The index carries no
+// DETAIL chunk (~444 KB gzip served) rather than the 71 KB index. The index carries no
 // keywords and no card text, and both are real filters — measured on Set 1,
 // "Evasive" hits 11 cards across 6 spreads and the text "banish" hits 27 across
 // all 9. Deciding the production tiering before the UI exists would be sizing a
@@ -31,7 +31,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
  * stale entries were not harmless, because a missing chunk 404s, `Promise.all`
  * rejects, and collection mode gets an empty pool rather than a partial one.
  */
-export const COLLECTION_SETS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13'];
+export const COLLECTION_SETS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14'];
 
 interface CollectionCardsContextValue {
   /** Non-Core cards, transformed. Empty until collection mode asks for them. */
@@ -63,7 +63,7 @@ async function fetchChunk(setCode: string): Promise<LorcanaCard[]> {
   // `imageUrl` unset ("a web-app concern"), and the loader wraps it to attach the
   // resolved URL plus the content-addressed hashes. Calling the engine directly
   // costs every collection card its artwork: `CardTile` falls back to the plain
-  // cost badge when `imgSrc` is falsy, which looks like 2,218 cards with no image
+  // cost badge when `imgSrc` is falsy, which looks like 2,205 cards with no image
   // rather than a missing transform step.
   return transformRawCards(cards);
 }

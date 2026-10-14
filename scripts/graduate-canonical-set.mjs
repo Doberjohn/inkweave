@@ -52,11 +52,14 @@
  * After running:
  *   1. pnpm precompute-synergies   # regenerate per-card synergy files
  *   2. pnpm refresh-rule-coverage  # rule docs name the sets their counts cover
- *   3. pnpm download-images        # fetch any new card images
- *   4. pnpm test                   # confirm no regressions
- *   5. Flip VITE_IS_REVEAL_SEASON=false in .env.local + Vercel env once the set
+ *   3. pnpm generate-collection-data <full export>, for the set's Epic, Enchanted,
+ *      Iconic and Special printings in collection mode. It reads LorcanaJSON's
+ *      full export with the set in it, not the set file
+ *   4. pnpm download-images        # fetch any new card images
+ *   5. pnpm test                   # confirm no regressions
+ *   6. Flip VITE_IS_REVEAL_SEASON=false in .env.local + Vercel env once the set
  *      is released (/reveals hides itself on release day either way)
- *   6. Once the graduated cards are live in production, apply the remap
+ *   7. Once the graduated cards are live in production, apply the remap
  *      migration this wrote to supabase/migrations/ with the Supabase MCP's
  *      apply_migration
  */
@@ -642,11 +645,12 @@ async function main() {
   console.log(`  Next steps:`);
   console.log(`    1. pnpm precompute-synergies          # regenerate per-card synergy files`);
   console.log(`    2. pnpm refresh-rule-coverage         # rule docs name the sets their counts cover`);
-  console.log(`    3. pnpm download-images               # fetch any new card images`);
-  console.log(`    4. pnpm test                          # confirm no regressions`);
-  console.log(`    5. Flip VITE_IS_REVEAL_SEASON=false   # in .env.local + Vercel env, once released`);
+  console.log(`    3. pnpm generate-collection-data <full export>  # printings for collection mode`);
+  console.log(`    4. pnpm download-images               # fetch any new card images`);
+  console.log(`    5. pnpm test                          # confirm no regressions`);
+  console.log(`    6. Flip VITE_IS_REVEAL_SEASON=false   # in .env.local + Vercel env, once released`);
   console.log(
-    `    6. Apply the remap migration          # Supabase MCP, once the deploy is live\n`,
+    `    7. Apply the remap migration          # Supabase MCP, once the deploy is live\n`,
   );
 }
 
