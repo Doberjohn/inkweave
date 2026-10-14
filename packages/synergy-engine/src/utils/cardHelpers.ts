@@ -2335,6 +2335,23 @@ export function getItemRoles(card: LorcanaCard): ItemRole[] {
 
 export const isItemCard = (card: LorcanaCard): boolean => getItemRoles(card).length > 0;
 
+/** "Ready chosen item.", the payoff Edna Mode - Super Suit Designer and Castle of the Horned King share. */
+const ITEM_READY_PAYOFF = /\bready chosen item\b/i;
+
+/**
+ * True iff readying an item is the card's only item payoff (Edna Mode - Super Suit Designer,
+ * Castle of the Horned King - Bastion of Evil). Such a payoff helps only an item it can ready and
+ * use again (hasExertAbility).
+ */
+export function readiesItemsOnly(card: LorcanaCard): boolean {
+  const text = normalizeCardText(card);
+  if (!ITEM_READY_PAYOFF.test(text) || ITEM_PLAY_TRIGGER.test(text)) return false;
+  return !ITEM_STATIC_PAYOFF.test(text.replace(ITEM_READY_PAYOFF, ''));
+}
+
+/** True iff the card has an exert ability: a ⟳ in its text, the cost of an activated ability. */
+export const hasExertAbility = (card: LorcanaCard): boolean => (card.text ?? '').includes('⟳');
+
 // ============================================
 // HEAL MATTERS DETECTION ("Heal Matters", payoff-anchored)
 // ============================================

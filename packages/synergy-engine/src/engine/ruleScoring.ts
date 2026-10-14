@@ -22,6 +22,8 @@ import {
   toyAbilityCounts,
   TOY_TRIBAL_ROLES,
   isHunnyTeamBuff,
+  readiesItemsOnly,
+  hasExertAbility,
   type DiscardRole,
   type LoreDenialRole,
   type RampRole,
@@ -183,20 +185,27 @@ export function pairFindSynergies<R>(
 /**
  * Build a payoff-anchored tribal rule (Floodborns / Items / Healing share one body):
  * a pair scores only when at least one side is a payoff, so the `isPayoff` gate drops
- * pure member↔member / engine↔engine density before delegating to `scorePair`.
+ * pure member↔member / engine↔engine density before delegating to `scorePair`. `scorePair` also
+ * gets both cards, for a pair that turns on more than roles, and may return null to drop it.
  */
 export function makePayoffAnchoredRule<R>(
   rule: Omit<PlaystyleSynergyRule, 'findSynergies'>,
   getRoles: (c: LorcanaCard) => R[],
   isPayoff: (roles: R[]) => boolean,
-  scorePair: (cardRoles: R[], otherRoles: R[]) => {score: number; explanation: string},
+  scorePair: (
+    cardRoles: R[],
+    otherRoles: R[],
+    card: LorcanaCard,
+    other: LorcanaCard,
+  ) => {score: number; explanation: string} | null,
 ): SynergyRule {
+  const scoreAnchored = (card: LorcanaCard, cardRoles: R[], other: LorcanaCard, otherRoles: R[]) =>
+    isPayoff(cardRoles) || isPayoff(otherRoles)
+      ? scorePair(cardRoles, otherRoles, card, other)
+      : null;
   return {
     ...rule,
-    findSynergies: (card, allCards) =>
-      tribalFindSynergies(card, allCards, getRoles, (cardRoles, otherRoles) =>
-        isPayoff(cardRoles) || isPayoff(otherRoles) ? scorePair(cardRoles, otherRoles) : null,
-      ),
+    findSynergies: (card, allCards) => pairFindSynergies(card, allCards, getRoles, scoreAnchored),
   };
 }
 
@@ -1173,6 +1182,35 @@ export function scoreItemPair(
     return {score: 6, explanation: `${member} can activate ${payoff}'s item ability.`};
   }
   return {score: 5, explanation: sameDeckLine('an item')};
+}
+
+/**
+ * A plain item next to a payoff that only readies an item (Edna Mode - Super Suit Designer's
+ * "Ready chosen item."): readying does nothing for an item without an exert ability.
+ */
+function readyPayoffMissesItem(
+  payoff: LorcanaCard,
+  item: LorcanaCard,
+  itemRoles: ItemRole[],
+): boolean {
+  const plainItem = itemRoles.every((role) => role === 'member');
+  return plainItem && readiesItemsOnly(payoff) && !hasExertAbility(item);
+}
+
+/**
+ * The Items rule's scorer: drops a plain item the payoff can't use (readyPayoffMissesItem), then
+ * scores the pair by its roles (scoreItemPair).
+ */
+export function scoreItemCards(
+  cardRoles: ItemRole[],
+  otherRoles: ItemRole[],
+  card: LorcanaCard,
+  other: LorcanaCard,
+): {score: number; explanation: string} | null {
+  const payoffIsCard = isItemPayoff(cardRoles);
+  const [payoff, item] = payoffIsCard ? [card, other] : [other, card];
+  if (readyPayoffMissesItem(payoff, item, payoffIsCard ? otherRoles : cardRoles)) return null;
+  return scoreItemPair(cardRoles, otherRoles);
 }
 
 // ============================================

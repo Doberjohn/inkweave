@@ -78,7 +78,7 @@ import {
   scoreExertPair,
   scoreFloodbornPair,
   isFloodbornPayoff,
-  scoreItemPair,
+  scoreItemCards,
   isItemPayoff,
   scoreHealPair,
   isHealPayoff,
@@ -1366,7 +1366,7 @@ export const synergyRules: SynergyRule[] = [
     },
     getItemRoles,
     isItemPayoff,
-    scoreItemPair,
+    scoreItemCards,
   ),
 
   // --------------------------------------------

@@ -1,6 +1,8 @@
 import {describe, it, expect} from 'vitest';
-import {getItemRoles} from '../utils';
+import {getItemRoles, readiesItemsOnly} from '../utils';
+import {getRuleById} from '../engine';
 import {createCard} from './fixtures';
+import type {LorcanaCard} from '../types';
 
 // Items fixes from the 2026-10-14 misread review, kept out of rules.test.ts (CodeScene: function
 // count). Real card text.
@@ -54,5 +56,60 @@ describe('Items: item cards in your discard', () => {
     expect(getItemRoles(pooh)).toEqual(['item-engine']);
     // Darkwing Duck still plays an item from your discard.
     expect(getItemRoles(darkwing)).toEqual(['item-engine']);
+  });
+});
+
+const itemsRule = getRuleById('items')!;
+/** The Items pair `card` finds with `partner`, or undefined when they do not pair. */
+const itemsPair = (card: LorcanaCard, partner: LorcanaCard) =>
+  itemsRule.findSynergies(card, [card, partner]).find((s) => s.card.id === partner.id);
+
+// Payoffs that only ready an item.
+const edna = createCard({
+  id: 'edna-mode-super-suit-designer',
+  name: 'Edna Mode',
+  fullName: 'Edna Mode - Super Suit Designer',
+  ink: 'Sapphire',
+  text: "KEY ACCESSORY ⟳ — Ready chosen item.\nALL THE BASICS While you have an item\nnamed Super Suit in play, this character gains\nWard. (Opponents can't choose them except to\nchallenge.)",
+});
+const castle = createCard({
+  id: 'castle-of-the-horned-king-bastion-of-evil',
+  name: 'Castle of the Horned King',
+  fullName: 'Castle of the Horned King - Bastion of Evil',
+  type: 'Location',
+  ink: 'Sapphire',
+  text: 'INTO THE GLOOM Once during your turn, whenever a character quests\nwhile here, you may ready chosen item.',
+});
+// An item with no exert ability, and one with a ⟳ ability.
+const potato = createCard({
+  id: 'potato',
+  name: 'Potato',
+  fullName: 'Potato',
+  type: 'Item',
+  ink: 'Emerald',
+  text: 'FULL OF POTENTIAL This item enters play exerted.',
+});
+const screamCanister = createCard({
+  id: 'scream-canister',
+  name: 'Scream Canister',
+  fullName: 'Scream Canister',
+  type: 'Item',
+  ink: 'Ruby',
+  text: 'ERRATIC SCREAMS ⟳, 2 ⬡ — Exert all cards in your\ninkwell. Exert chosen opposing character with 2 ¤\nor less.',
+});
+
+describe('Items: a payoff that only readies an item', () => {
+  it('reads which payoffs only ready an item', () => {
+    expect(readiesItemsOnly(edna)).toBe(true);
+    expect(readiesItemsOnly(castle)).toBe(true);
+    expect(readiesItemsOnly(ariel)).toBe(false);
+  });
+
+  it('pairs only with items that have an exert ability, from either side', () => {
+    for (const payoff of [edna, castle]) {
+      expect(itemsPair(payoff, potato)).toBeUndefined();
+      expect(itemsPair(potato, payoff)).toBeUndefined();
+      expect(itemsPair(payoff, screamCanister)?.score).toBe(6);
+    }
   });
 });
