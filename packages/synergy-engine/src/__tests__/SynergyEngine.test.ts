@@ -243,6 +243,23 @@ describe('SynergyEngine', () => {
       const shiftConnections = result.connections.filter((c) => c.ruleId === 'shift-targets');
       expect(shiftConnections).toHaveLength(1);
     });
+
+    it("reads every line from cardA's side, swapping the chips on a line only the reverse pass finds", () => {
+      // Named Companions runs one way: only Anna's text names the other card.
+      const anna = createCard({
+        id: 'anna',
+        name: 'Anna',
+        text: 'While you have a character named Elsa in play, this character gains Evasive.',
+      });
+      const elsa = createCard({id: 'elsa', name: 'Elsa'});
+      const companions = (cardA: LorcanaCard, cardB: LorcanaCard) =>
+        new SynergyEngine()
+          .getPairSynergies(cardA, cardB)
+          .connections.find((c) => c.ruleId === 'named-companions')?.explanation;
+
+      expect(companions(anna, elsa)).toMatch(/^\{A\} has an? .+ effect that names \{B\}\.$/);
+      expect(companions(elsa, anna)).toMatch(/^\{B\} has an? .+ effect that names \{A\}\.$/);
+    });
   });
 
   describe('ink compatibility filtering', () => {

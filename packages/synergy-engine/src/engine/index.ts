@@ -10,7 +10,6 @@ export {
   isSpikeSuitAnchor,
   isFreePlayAnchor,
   LOCATION_ROLE_CHIP_LABELS,
-  LOCATION_ROLE_DESCRIPTIONS,
   LOCATION_ROLE_TOOLTIP,
 } from './rules.js';
 export {getAllPlaystyles, getPlaystyleById} from './playstyles.js';

@@ -44,7 +44,8 @@ const mockConnection: PairSynergyConnection = {
   ruleName: 'Shift Targets',
   category: 'direct' as const,
   score: 8,
-  explanation: 'Elsa - Snow Queen can shift onto Elsa - Ice Sorceress for reduced cost',
+  explanation:
+    'Perfect curve: {A} shifts onto {B} the turn after. Only one of them is inkable as a fallback.',
 };
 
 const mockPair: VotingPair = {

@@ -79,13 +79,15 @@ The rule uses the project-wide **5-baseline scoring convention**: 5 = neutral de
 
 ### Matrix (highest precedence first)
 
-| Pair shape | Score | Explanation |
+| Pair shape | Score | Explanation (from the first card's page) |
 |------------|-------|-------------|
-| **recruit ↔ member** *or* **recruit ↔ density** | **8** | A free recruit cheats a Seven Dwarfs character onto the board. |
-| **density ↔ density** | **7** | Both reward Seven Dwarfs density — the payoffs compound. |
-| **density ↔ member** | **7** | The member feeds the Seven Dwarfs density payoff. |
-| **return ↔ member** | **7** | Bouncing the member re-buys its enter-play ability and draws a card. |
-| **Otherwise** (member ↔ member, etc.) | **5** | Same-deck density baseline. |
+| **recruit ↔ member** *or* **recruit ↔ density** | **8** | `{A} can play {B} for free.` Beside a density payoff that is not a Dwarf: `{A} can play a Seven Dwarfs character for free, which helps activate {B}.` |
+| **density ↔ density** | **7** | Split by which of the two Dwarfs the other's ability counts: neither, `{A} and {B} are both Seven Dwarfs payoffs, so they stack on your board.`; one, the density ↔ member line; each, `{A} and {B} are both Seven Dwarfs characters, and each one's ability helps the other.` |
+| **density ↔ member** | **7** | `{B} activates {A}'s Seven Dwarfs ability.` |
+| **return ↔ member** | **7** | `{A} returns {B} to your hand and draws a card, so you can replay it.` |
+| **Otherwise** (member ↔ member, etc.) | **5** | `{A} and {B} both go in a Seven Dwarfs deck.` |
+
+`{A}` is the card whose page shows the tile and `{B}` its partner; a line names each card in its role, so on the other card's page the tokens swap.
 
 ### Why precedence order matters
 

@@ -47,7 +47,7 @@ const directGroup: ConnectionGroupData = {
     ruleName: 'Shift Targets',
     category: 'direct',
     score: 8,
-    explanation: 'Perfect curve: Play Elsa - The Fifth Spirit on turn 5, Shift next turn. One card is inkable as fallback.',
+    explanation: 'Perfect curve: {B} shifts onto {A} the turn after. Only one of them is inkable as a fallback.',
   }],
   category: 'direct',
 };
@@ -63,7 +63,7 @@ const multiRoleGroup: ConnectionGroupData = {
       category: 'playstyle',
       playstyleId: 'location-control',
       score: 7,
-      explanation: 'Elsa gets bonuses when characters are at a location',
+      explanation: '{A} rewards having characters at locations.',
     },
     {
       ruleId: 'location-move',
@@ -71,7 +71,7 @@ const multiRoleGroup: ConnectionGroupData = {
       category: 'playstyle',
       playstyleId: 'location-control',
       score: 5,
-      explanation: 'Elsa moves characters to locations for positioning advantage',
+      explanation: '{B} moves characters to locations.',
     },
   ],
   category: 'playstyle',

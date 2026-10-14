@@ -17,6 +17,13 @@ const CATEGORY_ORDER: Record<SynergyCategory, number> = {
   playstyle: 1,
 };
 
+/** Swap the {A} and {B} chip tokens, so a line written from one card's side reads from the other's. */
+function swapChipTokens(explanation: string): string {
+  return explanation.replace(/\{([AB])\}/g, (_token, side: string) =>
+    side === 'A' ? '{B}' : '{A}',
+  );
+}
+
 /** Aggregate pair score: max of all connection scores (avoids inflation). */
 function computeAggregateScore(connections: PairSynergyConnection[]): number {
   if (connections.length === 0) return 0;
@@ -222,11 +229,13 @@ export class SynergyEngine {
   /**
    * Get a detailed breakdown of all synergy connections between two specific cards.
    * Runs rules bidirectionally and deduplicates by ruleId (keeps highest score).
+   * Every explanation reads from cardA's side: {A} is cardA and {B} is cardB, so a line from
+   * the reverse pass, which names its own searcher (cardB) {A}, has its tokens swapped.
    */
   getPairSynergies(cardA: LorcanaCard, cardB: LorcanaCard): DetailedPairSynergy {
     const connectionMap = new Map<string, PairSynergyConnection>();
 
-    const collectConnections = (source: LorcanaCard, target: LorcanaCard) => {
+    const collectConnections = (source: LorcanaCard, target: LorcanaCard, reverse: boolean) => {
       for (const rule of this.rules) {
         if (!rule.matches(source)) continue;
         const matches = rule.findSynergies(source, [target]);
@@ -237,7 +246,7 @@ export class SynergyEngine {
               ruleId: rule.id,
               ruleName: rule.name,
               score: match.score,
-              explanation: match.explanation,
+              explanation: reverse ? swapChipTokens(match.explanation) : match.explanation,
             };
             connectionMap.set(
               rule.id,
@@ -250,8 +259,8 @@ export class SynergyEngine {
       }
     };
 
-    collectConnections(cardA, cardB);
-    collectConnections(cardB, cardA);
+    collectConnections(cardA, cardB, false);
+    collectConnections(cardB, cardA, true);
 
     const connections = Array.from(connectionMap.values()).sort((a, b) => b.score - a.score);
     const aggregateScore = computeAggregateScore(connections);

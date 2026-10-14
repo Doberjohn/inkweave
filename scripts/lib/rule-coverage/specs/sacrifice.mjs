@@ -15,8 +15,9 @@ const ROLES = ['self-banish', 'banish-trigger'];
 
 const SHAPES = [
   {label: 'self-banish ↔ banish-trigger', score: 8, test: /banishes your own character on demand/},
-  {label: 'banish-trigger ↔ banish-trigger', score: 5, test: /^Both pay off when your characters/},
-  {label: 'self-banish ↔ self-banish', score: 5, test: /^Both banish your own characters/},
+  // Read by what each trigger counts: any of your characters banished, or only the card itself.
+  {label: 'banish-trigger ↔ banish-trigger', score: 5, test: /\bbanished\b/},
+  {label: 'self-banish ↔ self-banish', score: 5, test: /both banish your own characters/},
 ];
 
 /** The share of a rule's pairs that score 8. */

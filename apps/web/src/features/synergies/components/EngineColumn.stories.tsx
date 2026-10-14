@@ -48,7 +48,8 @@ const singleRulePair: DetailedPairSynergy = {
       ruleName: 'Shift Targets',
       category: 'direct',
       score: 9,
-      explanation: 'Free Shift. Play A early, then shift B in for 0 ink.',
+      explanation:
+        'Perfect curve: {B} shifts onto {A} the turn after. Both are inkable as a fallback.',
     },
   ],
 };
@@ -64,7 +65,7 @@ const multiRulePair: DetailedPairSynergy = {
       category: 'playstyle',
       playstyleId: 'location-control',
       score: 8,
-      explanation: 'Both cards reward filling locations.',
+      explanation: '{A} and {B} both reward having characters at locations.',
     },
     {
       ruleId: 'location-move',
@@ -72,7 +73,7 @@ const multiRulePair: DetailedPairSynergy = {
       category: 'playstyle',
       playstyleId: 'location-control',
       score: 6,
-      explanation: 'Move characters to locations for positioning.',
+      explanation: '{A} moves characters to locations.',
     },
   ],
 };

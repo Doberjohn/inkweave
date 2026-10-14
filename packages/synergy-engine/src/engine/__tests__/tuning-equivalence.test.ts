@@ -20,7 +20,7 @@ describe('Tuning equivalence (pre-refactor snapshot)', () => {
     });
   });
 
-  it('a gap-3 Shift pair scores 5 with the "Wide 3-turn gap" explanation', () => {
+  it('a gap-3 Shift pair scores 5 with the "Wide gap" explanation', () => {
     const shiftRule = getRuleById('shift-targets')!;
     // Base cost 2 + Shift 5 → curveGap = shiftCost(5) - baseCost(2) = 3.
     const base = createCard({id: 'elsa-base', name: 'Elsa', fullName: 'Elsa - Snow Queen', cost: 2});
@@ -36,7 +36,10 @@ describe('Tuning equivalence (pre-refactor snapshot)', () => {
     const match = synergies.find((s) => s.card.id === 'elsa-base');
 
     expect(match?.score).toBe(5);
-    expect(match?.explanation).toContain('Wide 3-turn gap. Playable but slow to set up.');
+    // The Shift card is the searcher, so <SHIFT> reads as {A} and <BASE> as {B}.
+    expect(match?.explanation).toBe(
+      'Wide gap: {A} shifts onto {B} 3 turns after it lands. Playable, but slow to set up.',
+    );
   });
 
   it('a Ramp deck-ramp + repeating-trigger pair scores 9', () => {

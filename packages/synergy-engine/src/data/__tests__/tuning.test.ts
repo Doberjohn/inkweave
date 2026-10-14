@@ -36,4 +36,24 @@ describe('tuning.json', () => {
       expect(t.trim()).not.toBe('');
     }
   });
+
+  // The engine swaps these placeholders for the {A}/{B} chips, so a text that drops one shows a
+  // synergy line that names only one of its cards.
+  it('every shift text names both cards', () => {
+    for (const entry of Object.values(TUNING.ruleTexts['shift-targets'])) {
+      expect(entry.text).toContain('<BASE>');
+      expect(entry.text).toContain('<SHIFT>');
+    }
+  });
+
+  it('every ramp template names both cards: by role ({RAMP}, {TRIGGER}, {COST}), or {A} and {B} when they share one', () => {
+    for (const [shape, template] of Object.entries(TUNING.ruleTexts.ramp.templates)) {
+      const [first, second] = shape.split('-');
+      const tokens =
+        first === second
+          ? ['{A}', '{B}']
+          : [first, second].map((role) => `{${role.toUpperCase()}}`);
+      for (const token of tokens) expect(template).toContain(token);
+    }
+  });
 });

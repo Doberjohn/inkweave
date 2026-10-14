@@ -27,9 +27,9 @@ const SHAPES = [
   {label: 'mill ↔ reanimator', score: 7, test: /mills cards into your discard/},
   {label: 'mill ↔ zone-payoff', score: 7, test: /mills your deck into the discard/},
   {label: 'enabler ↔ zone-payoff', score: 6, test: /fills your discard from hand/},
-  {label: 'reanimator ↔ reanimator', score: 6, test: /^Both replay cards from your discard/},
-  {label: 'enabler ↔ enabler', score: 5, test: /^Both fill your own discard/},
-  {label: 'other same-axis', score: 5, test: /^Same discard-matters axis/},
+  {label: 'reanimator ↔ reanimator', score: 6, test: /both take cards from your discard/},
+  {label: 'enabler ↔ enabler', score: 5, test: /both fill your discard from your hand/},
+  {label: 'other same-axis', score: 5, test: /both go in a Self-Discard deck/},
 ];
 
 const LABELS = {

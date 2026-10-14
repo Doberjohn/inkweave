@@ -260,11 +260,11 @@ The 7 and 8 recursion combos share one string; the score tells them apart. Golia
 - mill ↔ reanimator (7): `"{A} mills cards into your discard for {B} to replay."`
 - enabler ↔ zone-payoff (6): `"{A} fills your discard from hand, switching on {B}'s discard-count payoff."`
 
-Same-axis pairs use distinct sentences:
+Same-axis pairs name both cards:
 
-- enabler ↔ enabler: `"Both fill your own discard: parallel self-discard outlets."`
-- reanimator ↔ reanimator: `"Both replay cards from your discard: two recursion engines sharing one bin."`
-- other: `"Same discard-matters axis without compounding."`
+- enabler ↔ enabler (5): `"{A} and {B} both fill your discard from your hand."`
+- reanimator ↔ reanimator (6): `"{A} and {B} both take cards from your discard."` It says "take", not "replay": some reanimators put a discard card on the bottom of your deck or into your inkwell instead.
+- other (5): `"{A} and {B} both go in a Self-Discard deck."`
 
 ---
 

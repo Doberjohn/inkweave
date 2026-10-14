@@ -118,7 +118,7 @@ const payoffToken = cardEnabler ? '{B}' : '{A}';
 // state:   `${enablerToken} keeps an opposing character exerted, switching on ${payoffToken}.`
 ```
 
-The same-side payoff pair uses a distinct sentence: `"Both reward opposing characters being exerted. Density baseline."`
+The same-side payoff pair names both cards: `"{A} and {B} both benefit when opposing characters are exerted."` None of these payoffs exerts anything itself; each cashes in on an opposing character that is already exerted.
 
 ### Live distribution
 

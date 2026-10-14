@@ -195,10 +195,7 @@ import {
   transformCards,    // Transform array of JSON cards
   // UI label/description constants:
   LOCATION_ROLE_CHIP_LABELS,
-  LOCATION_ROLE_DESCRIPTIONS,
   LOCATION_ROLE_TOOLTIP,
-  DISCARD_ROLE_CHIP_LABELS,
-  DISCARD_ROLE_DESCRIPTIONS,
 } from "inkweave-synergy-engine";
 ```
 

@@ -38,13 +38,15 @@ Cards are multi-role: an item that recurs items (Shepherd's Journal) is `member`
 
 `findSynergies` calls `scoreItemPair` only when at least one side is a payoff, so every emitted pair is 8/7/6. Cards are multi-role, so the **highest applicable bucket wins**:
 
-| Pair | Score | Explanation |
+| Pair | Score | Explanation (from the first card's page) |
 |------|-------|-------------|
-| item-engine ↔ payoff (trigger or static) | **8** | The item engine floods the board, and every item it plays fires the payoff |
-| payoff ↔ payoff | **7** | Two item payoffs stack on the same item flood |
-| member ↔ payoff-trigger | **7** | Playing the item fires the repeating "whenever you play an item" payoff |
-| member ↔ payoff-static | **6** | The item in play turns on the "have an item in play" payoff |
+| item-engine ↔ payoff (trigger or static) | **8** | `{A} helps you play more items, and they activate {B}.` |
+| payoff ↔ payoff | **7** | `{A} and {B} are both item payoffs, so they stack on your board.` |
+| member ↔ payoff-trigger | **7** | `Playing {A} triggers {B}'s "whenever you play an item" ability.` |
+| member ↔ payoff-static | **6** | `{A} can activate {B}'s item ability.` |
 | item-engine ↔ item-engine / member ↔ item-engine / member ↔ member | (not generated) | Pure density; the engine connections already surface via Ramp / Self-Discard |
+
+`{A}` is the card whose page shows the tile and `{B}` its partner; the UI draws each as its card's chip. A line names each card in its role, so on the other card's page the tokens swap: on Norton Nimnul's page, Gadget Hackwrench's tile reads `{B} helps you play more items, and they activate {A}.`
 
 ### Live distribution
 

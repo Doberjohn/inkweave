@@ -36,7 +36,7 @@ If not, ask: "What game mechanic or interaction does this rule detect?"
    - If playstyle: new playstyle or fits existing one?
    - Detection: text patterns, keywords, or card properties
    - Scoring: factors influencing 1-10 score
-   - Explanation template for UI display
+   - Explanation template for UI display: name both cards with the `{A}`/`{B}` chip tokens, each by its role, so the line reads true from either card's page (the chip convention in `.claude/rules/engine.md`)
 
 5. **Owner review: iterate on the scoring design**
    The scoring breakdown determines how useful synergy results are. Consider:

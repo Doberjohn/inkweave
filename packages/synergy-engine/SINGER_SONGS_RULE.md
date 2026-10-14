@@ -113,10 +113,10 @@ Even a Singer 9 singing a cost-1 Song saves 1 ink and gets a free card played. T
 ### Explanation Template
 
 ```
-{singer.fullName} (Singer {value}) can sing {song.fullName} (cost {songCost}) for free
+{singer} can sing {song} (cost {songCost}) for free with Singer {value}.
 ```
 
-Example: "Powerline - World's Greatest Rock Star (Singer 9) can sing Be Our Guest (cost 2) for free"
+`{singer}` and `{song}` are the `{A}`/`{B}` chips: `{A}` is the card whose page shows the tile, so on the Singer's page the line reads "{A} can sing {B} (cost 2) for free with Singer 9." and on the Song's page "{B} can sing {A} (cost 2) for free with Singer 9." The pair view draws each token as its card's chip, and a tile's tooltip writes in the names: "Powerline can sing Be Our Guest (cost 2) for free with Singer 9."
 
 ---
 

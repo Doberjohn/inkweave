@@ -115,50 +115,50 @@
       },
       "free.midBase": {
         "score": 7,
-        "text": "Free Shift saves ink, but <BASE> takes longer to set up."
+        "text": "Free Shift: <SHIFT> costs no ink, but <BASE> takes longer to set up."
       },
       "free.expensiveBase": {
         "score": 5,
-        "text": "Free Shift, but <BASE> is expensive and hard to set up first."
+        "text": "Free Shift for <SHIFT>, but <BASE> is expensive and hard to set up first."
       },
       "curve.bothInkable": {
         "score": 9,
-        "text": "Perfect curve. Both cards inkable as fallback."
+        "text": "Perfect curve: <SHIFT> shifts onto <BASE> the turn after. Both are inkable as a fallback."
       },
       "curve.oneInkable": {
         "score": 8,
-        "text": "Perfect curve. One card inkable as fallback."
+        "text": "Perfect curve: <SHIFT> shifts onto <BASE> the turn after. Only one of them is inkable as a fallback."
       },
       "curve.neitherInkable": {
         "score": 7,
-        "text": "On curve, but neither card is inkable. Less flexible off-curve."
+        "text": "On curve: <SHIFT> shifts onto <BASE> the turn after, but neither is inkable, so it's less flexible off-curve."
       },
       "curve.gap2": {
         "score": 7,
-        "text": "Smooth curve. <BASE> flows into Shift in a couple of turns."
+        "text": "Smooth curve: <BASE> flows into <SHIFT> in a couple of turns."
       },
       "curve.gap0": {
         "score": 5,
-        "text": "Same cost. No ink savings from Shifting, but skips the drying phase."
+        "text": "Same cost: shifting <SHIFT> onto <BASE> saves no ink, but skips the drying phase."
       },
       "curve.gap3": {
         "score": 5,
-        "text": "Wide 3-turn gap. Playable but slow to set up."
+        "text": "Wide gap: <SHIFT> shifts onto <BASE> 3 turns after it lands. Playable, but slow to set up."
       },
       "curve.poor": {
         "score": 3,
-        "text": "The cost gap makes it hard to set up <BASE> in time to Shift."
+        "text": "The cost gap makes it hard to set up <BASE> in time to shift <SHIFT> onto it."
       },
       "drops.basePays": {
         "score": 8,
-        "text": "Ink-drop Shift. <BASE> gets the drops that pay for the Shift."
+        "text": "Ink-drop Shift: <BASE> gives the ink drops that pay for <SHIFT>."
       },
       "drops.outside": {
         "score": 5,
-        "text": "Ink-drop Shift. Other cards must supply the drops."
+        "text": "Ink-drop Shift: <BASE> doesn't give the ink drops <SHIFT> needs, so other cards must."
       },
       "activationBonus": {
-        "text": "Same target. Also unlocks the free Shift condition."
+        "text": "<BASE> is a Shift target that also switches on <SHIFT>'s free Shift condition."
       }
     },
     "ramp": {
@@ -171,11 +171,11 @@
       },
       "templates": {
         "ramp-trigger": "{RAMP} adds ink to your inkwell, triggering {TRIGGER}'s inkwell effect.",
-        "ramp-ramp": "Both accelerate your ink. Gets you ahead faster.",
+        "ramp-ramp": "{A} and {B} both put extra cards into your inkwell, getting you ahead faster.",
         "ramp-cost": "{RAMP} adds extra ink, {COST} discounts your plays.",
-        "trigger-trigger": "Both effects activate on inkwell events.",
-        "cost-cost": "Both reduce costs. Stacking discounts plays cards faster.",
-        "trigger-cost": "Both support an accelerated game plan."
+        "trigger-trigger": "{A} and {B} both trigger when cards go into your inkwell.",
+        "cost-cost": "{A} and {B} both give ink discounts which stack.",
+        "trigger-cost": "{TRIGGER} rewards cards going into your inkwell, and {COST} gives ink discounts."
       }
     }
   }

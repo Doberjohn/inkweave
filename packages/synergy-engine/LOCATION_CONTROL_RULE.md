@@ -300,7 +300,7 @@ Order matters for deduplication — when the engine merges results from all 9 ru
 
 ### Role Chips
 
-The engine exports labels and descriptions for UI display:
+The engine exports labels for UI display:
 
 ```typescript
 LOCATION_ROLE_CHIP_LABELS: Record<LocationRole, string>
@@ -309,12 +309,19 @@ LOCATION_ROLE_CHIP_LABELS: Record<LocationRole, string>
 // Labels are single-sourced from the mechanics catalog (STRUCTURAL_MECHANICS in
 // utils/mechanics.ts) via mechanicLabel(), so the carousel tiles and these chips
 // always agree. Rename a label there, not in rules.ts.
-
-LOCATION_ROLE_DESCRIPTIONS: Record<LocationRole, (cardName: string, locationName: string) => string>
-// { 'at-payoff': (name, loc) => `${name} gets bonuses when characters are at ${loc}`, ... }
 ```
 
-These are used in the synergy detail modal and vote screen to explain *why* a card is in the Location Control group. The `locationName` parameter is the name of the Location card in the pair (or "locations" if neither card is a Location).
+### Pair lines
+
+Each match carries its own line, which names both cards with the `{A}`/`{B}` chips (`{A}` is the card whose page shows the tile). `LOCATION_ROLE_LINES` in `rules.ts` holds three per role:
+
+| Pair | Line (move) |
+|------|-------------|
+| support card beside a Location (`withLocation`) | `{A} moves characters to {B}.` |
+| two support cards, only the searcher in this role (`general`) | `{A} moves characters to locations.` |
+| two support cards, both in this role (`both`) | `{A} and {B} both move characters to locations.` |
+
+The support card reads first from either page: on the Location's page the line is `{B} moves characters to {A}.` The synergy modal draws the tokens as card chips, and a tile's tooltip writes in the card names.
 
 ---
 
