@@ -38,6 +38,7 @@ const sulleyAndBoo = createCard({
 const gothel = createCard({
   id: 'mother-gothel-evil-as-ever',
   fullName: 'Mother Gothel - Evil as Ever',
+  classifications: ['Storyborn', 'Villain'],
   text: "MUMMY'S BACK During your turn, when you\ndiscard this card, you may play this character\nfrom your discard. (You pay all costs.)",
 });
 const lookWhatYouveDone = createCard({
@@ -186,6 +187,34 @@ const rapunzelAndFlynn = createCard({
   text: 'Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one\nof your characters named Rapunzel or Flynn Rider.)\nCLEVER SWAP Whenever this character quests, you may\ndraw a card, then choose and discard a card.\nFRESH START During your turn, whenever you discard\na character card, you may play that character from your\ndiscard. (You pay all costs.)',
 });
 
+// Payoffs that take only one classification or kind of card.
+const fangmeyer = createCard({
+  id: 'fangmeyer-icy-officer',
+  name: 'Fangmeyer',
+  fullName: 'Fangmeyer - Icy Officer',
+  text: 'REQUEST REINFORCEMENTS When you play this\ncharacter, you may return a Detective character\ncard from your discard to your hand.',
+});
+const drHamsterviel = createCard({
+  id: 'dr-hamsterviel-infamous-scientist',
+  name: 'Dr. Hamsterviel',
+  fullName: 'Dr. Hamsterviel - Infamous Scientist',
+  ink: 'Steel',
+  text: "CONTROLLED VARIABLES For each Alien character\ncard in your discard, you pay 1 ⬡ less to play this\ncharacter.\nAWESTRUCK When you play this character,\nchosen opposing character can't challenge during\ntheir next turn.",
+});
+const coldstone = createCard({
+  id: 'coldstone-reincarnated-cyborg',
+  name: 'Coldstone',
+  fullName: 'Coldstone - Reincarnated Cyborg',
+  ink: 'Amethyst',
+  text: 'THE CANTRIPS HAVE BEEN SPOKEN When you play\nthis character, if you have 2 or more Gargoyle\ncharacter cards in your discard, gain 2 lore.',
+});
+const priya = createCard({
+  id: 'priya-serious-music-lover',
+  name: 'Priya Mangal',
+  fullName: 'Priya Mangal - Serious Music Lover',
+  text: "THIS IS MY JAM When you play this character, if\nthere's a song card in your discard, gain 1 lore.",
+});
+
 // An outlet that discards only as your turn ends, and payoffs that look before or at that point.
 const meeko = createCard({
   id: 'meeko-skittish-scrounger',
@@ -270,6 +299,20 @@ describe('Self-Discard scoring: an outlet feeds only the payoffs its discard can
   it('scores a character-or-location outlet 7 with character and location recursion', () => {
     expect(score(sprout, getToSafety)).toBe(7);
     expect(score(sprout, circleOfLife)).toBe(7);
+  });
+
+  it('keeps an outlet for one classification to recursion that takes it', () => {
+    expect(score(sprout, rapunzelAndFlynn)).toBe(8);
+    expect(score(sprout, gothel)).toBe(5);
+    expect(score(sprout, fangmeyer)).toBe(5);
+  });
+
+  it('scores a typed outlet 6 only with a pile count its discard adds to', () => {
+    expect(score(sprout, drHamsterviel)).toBe(6);
+    expect(score(sprout, coldstone)).toBe(5);
+    expect(score(maxKaraoke, priya)).toBe(6);
+    expect(score(maxKaraoke, drHamsterviel)).toBe(5);
+    expect(score(kronk, coldstone)).toBe(6);
   });
 
   it('scores a character-or-location outlet 5 with item and song recursion', () => {

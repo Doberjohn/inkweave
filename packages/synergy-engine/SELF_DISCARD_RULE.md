@@ -181,7 +181,7 @@ Applies the project-wide **5-baseline convention** and mirrors the Sacrifice sha
 | enabler ↔ small-hand payoff | **7** | Strong | Mechanical compounding: an outlet that shrinks your hand switches the STONE BY DAY drawback off, so the character readies. Only an outlet that shrinks the hand, or Goliath - Clan Leader's end-of-turn trim (see Feed check) |
 | mill ↔ zone-payoff | **7** | Strong | The deck-side filler stocks the pile the payoff counts, several cards at a time and without spending the hand |
 | mill ↔ reanimator | **7** | Strong | Mill buries targets the recursion engine then replays |
-| enabler ↔ zone-payoff | **6** | Moderate | Complementary: each hand discard adds one card to the count the payoff reads, a nudge rather than a compounding. Only when the discard lands before the payoff looks (see Timing) |
+| enabler ↔ zone-payoff | **6** | Moderate | Complementary: each hand discard adds one card to the count the payoff reads, a nudge rather than a compounding. Only when the outlet can discard a card the payoff counts, and in time (see Feed check) |
 | reanimator ↔ reanimator | **6** | Moderate | Two recursion engines mining the same discard pile, complementary but not a single combo |
 | enabler ↔ enabler / mill ↔ state-payoff / reanimator ↔ state / state ↔ state / an outlet that cannot feed the payoff | **5** | Weak/Moderate | Same-axis density: parallel fillers, two payoffs that don't amplify each other, or an outlet whose discard can't reach the payoff (a loot or a refill next to a small-hand payoff, an end-of-turn outlet next to a check made earlier in the turn) |
 
@@ -196,12 +196,14 @@ The enabler ↔ payoff combo needs more than an outlet and a payoff in the same 
 | Side | Reads as | Example |
 |------|----------|---------|
 | Generic outlet | any card | "choose and discard a card" (Kronk - Meat Hut Cook), "Discard your hand" |
-| Typed outlet | the kinds it names | "discard a song card" (Max Goof - Karaoke Star), "discard an Alien character card or a location card" (Sprout - Experiment 509) |
+| Typed outlet | the kinds it names, a classification included | "discard a song card" (Max Goof - Karaoke Star), "discard an Alien character card or a location card" (Sprout - Experiment 509: Alien characters and locations) |
 | Generic recursion | any card | "a card from your discard" (Jiminy Cricket - Ghost of Christmas Past) |
-| Typed recursion | the kinds in its own clause | "return an action card … from your discard" (Buzz Lightyear - Jungle Ranger); "a character card with Singer" is character |
-| Self-reference | the card's own kind | "this card", "it" |
+| Typed recursion | the kinds in its own clause | "return an action card … from your discard" (Buzz Lightyear - Jungle Ranger); "a character card with Singer" is character; "a Detective character card" (Fangmeyer - Icy Officer) is Detective characters |
+| Self-reference | the card itself | "this character", "this card", "it": a song, the card's type, or for a character each of its classifications |
 
-A generic side always meets. "Action" admits songs too, since a song is an action (Comprehensive Rules §5.4.4.1), while "song" admits only songs. So Max Goof - Karaoke Star feeds song, action and any-card recursion (7 each, since none of it fires on the discard), and scores 5 with character, item and location recursion.
+A generic side always meets. "Action" admits songs too, since a song is an action (Comprehensive Rules §5.4.4.1), while "song" admits only songs. So Max Goof - Karaoke Star feeds song, action and any-card recursion (7 each, since none of it fires on the discard), and scores 5 with character, item and location recursion. A classification narrows the character kind, and two named classifications meet only when they are the same: Sprout - Experiment 509 feeds Rapunzel & Flynn Rider - Unlikely Pair, who replays whatever character you discard (8), but neither Mother Gothel - Evil as Ever, who isn't an Alien, nor Detective recursion (Fangmeyer - Icy Officer).
+
+**Pile counts:** the enabler ↔ zone-payoff 6 needs the same meeting (`selfDiscardOutletFeedsPile`): the outlet has to be able to discard a card the payoff counts. A generic outlet adds to every count, and "10 or more cards in your discard" or "cards were put into your discard this turn" counts any card, while Sprout adds to "for each Alien character card in your discard" (Dr. Hamsterviel - Infamous Scientist) but not to a Gargoyle, item, action or song count, and Max Goof - Karaoke Star's songs add to song and action counts only.
 
 **Trigger or stock:** recursion that fires on your discard is a trigger and scores 8: Mother Gothel - Evil as Ever and Look What You've Done ("during your turn, when you discard this card, you may play it from your discard") and Rapunzel & Flynn Rider - Unlikely Pair ("whenever you discard a character card, you may play that character from your discard"). The check reads the recursion sentence itself (`hasDiscardFedRecursion`), so an unrelated "when you discard" elsewhere on a card doesn't count. Every other recursion only has its bin stocked by the outlet and scores 7.
 
@@ -229,15 +231,15 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| enabler ↔ a payoff its discard switches on | 373 | 8 | 4.4% |
-| enabler ↔ any other reanimator | 1,703 | 7 | 20.1% |
+| enabler ↔ a payoff its discard switches on | 372 | 8 | 4.4% |
+| enabler ↔ any other reanimator | 1,700 | 7 | 20.0% |
 | enabler ↔ small-hand payoff | 242 | 7 | 2.9% |
 | mill ↔ reanimator | 324 | 7 | 3.8% |
 | mill ↔ zone-payoff | 219 | 7 | 2.6% |
-| enabler ↔ zone-payoff | 1,139 | 6 | 13.4% |
+| enabler ↔ zone-payoff | 1,125 | 6 | 13.3% |
 | reanimator ↔ reanimator | 783 | 6 | 9.2% |
-| enabler ↔ enabler | 702 | 5 | 8.3% |
-| other same-axis | 3,004 | 5 | 35.4% |
+| enabler ↔ enabler | 703 | 5 | 8.3% |
+| other same-axis | 3,021 | 5 | 35.6% |
 <!-- coverage:end -->
 
 Roles overlap on multi-role cards such as Lyle Tiberius Rourke, who mills *and* reanimates, or Hudson - Determined Reader, who loots and carries STONE BY DAY. When both cards of a pair score it the same, the pair is read from its lower-id card as the searcher.
@@ -336,7 +338,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | fill combos → 7 / 6 | mill ↔ zone-payoff and mill ↔ reanimator 7, loot ↔ zone-payoff 6, with the filler as the actor and the token-swap when the payoff is the searcher |
 | mill ↔ state-payoff → 5 | milling is not a discard event, so it stays at the baseline |
 
-### Self-contained recursion, named cards, deck-bottom sweeps and feed check (17 tests, `selfDiscard.test.ts`)
+### Self-contained recursion, named cards, deck-bottom sweeps and feed check (19 tests, `selfDiscard.test.ts`)
 
 | Test | What it verifies |
 |------|------------------|
@@ -350,6 +352,8 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | song-only outlet → 5 | with Circle of Life (from both searchers), Salvage Operation and Look What You've Done |
 | state payoffs | Max Goof feeds Maximus (8) but not Megavolt (5); You Broke My Smolder, Kronk and Sprout - Experiment 509 still feed Megavolt (8) |
 | end-of-turn outlet | Meeko - Skittish Scrounger with Maximus - Relentless Stallion and Helga Sinclair - No Backup Needed → 5, with Milo Thatch - Getting His Hands Dirty → 6; Kronk with Maximus → 8 and with Helga → 6 |
+| an outlet for one classification | Sprout - Experiment 509 with Rapunzel & Flynn Rider - Unlikely Pair → 8; with Mother Gothel - Evil as Ever (no Alien) and Fangmeyer - Icy Officer (Detective recursion) → 5 |
+| a typed outlet and a pile count | Sprout with Dr. Hamsterviel - Infamous Scientist (Alien count) → 6, with Coldstone - Reincarnated Cyborg (Gargoyle count) → 5; Max Goof - Karaoke Star with Priya Mangal - Serious Music Lover (song) → 6, with Dr. Hamsterviel → 5; Kronk with Coldstone → 6 |
 | character-or-location outlet → 7 | Sprout - Experiment 509 with Get to Safety! and Circle of Life |
 | character-or-location outlet → 5 | Sprout with Salvage Operation and Max Goof - Rebellious Teen |
 | named-card recursion | Captain Hook - Captain of the Jolly Roger, Merida - Formidable Archer and Alien - True Believer have no roles |

@@ -1049,8 +1049,13 @@ export function isSelfDiscardCard(card: LorcanaCard): boolean {
 // Self-discard feed check: can this outlet's discard switch on that payoff?
 // --------------------------------------------
 
-/** A card kind a typed discard or recursion clause names. A song is an action (CR 5.4.4.1). */
+/** A card kind a typed discard, recursion or pile check names. A song is an action (CR 5.4.4.1). */
 type SelfDiscardKind = 'character' | 'action' | 'song' | 'item' | 'location';
+/**
+ * A kind as a clause admits it: a card kind, or characters of one classification when the clause
+ * names one ("an Alien character card" admits 'character:Alien').
+ */
+type SelfDiscardKindEntry = SelfDiscardKind | `character:${string}`;
 
 /** Kind word → the kinds it admits. "action" admits songs too; "song" admits only songs. */
 const SELF_DISCARD_KIND_WORDS: ReadonlyArray<readonly [RegExp, readonly SelfDiscardKind[]]> = [
@@ -1070,6 +1075,8 @@ const SELF_DISCARD_RECURSION_OBJECT_PATTERN =
   /\b(?:play|return|put)\b((?:(?!\b(?:play|return|put)\b)[^.]){0,60}?)\bfrom your discard\b/i;
 /** A recursion object that takes any card: "a card", "another card", "2 cards". */
 const SELF_DISCARD_ANY_OBJECT_PATTERN = /\b(?:a|an|another|any|\d+)\s+cards?\b/i;
+/** A recursion object that is the card itself: "this character", "this card", "it". */
+const SELF_DISCARD_SELF_OBJECT_PATTERN = /\bthis\s+(?:card|character|item|location|action|song)\b|\bit\b/i;
 /**
  * An outlet that discards one card and then draws 2+ ("discard a song card. If you do, draw
  * 2 cards"), so its hand is never empty when it resolves. Deliberately narrow (Max Goof -
@@ -1125,48 +1132,95 @@ function checksDiscardsAtEndOfTurn(blocks: string[]): boolean {
   );
 }
 
-/** The kinds the kind words in `fragment` admit (empty when it names none). */
-function selfDiscardKindsIn(fragment: string): Set<SelfDiscardKind> {
-  const kinds = new Set<SelfDiscardKind>();
+/** A classification narrowing the character kind word right after it: "an Alien character card". */
+const SELF_DISCARD_CLASSIFIED_CHARACTER_PATTERN = /\b([A-Z][a-z]+)\s+characters?\b/;
+
+/**
+ * The kinds the kind words in `fragment` admit (empty when it names none), with the character
+ * kind narrowed to the classification that precedes it.
+ */
+function selfDiscardKindsIn(fragment: string): Set<SelfDiscardKindEntry> {
+  const kinds = new Set<SelfDiscardKindEntry>();
   for (const [word, admits] of SELF_DISCARD_KIND_WORDS) {
     if (word.test(fragment)) admits.forEach((kind) => kinds.add(kind));
   }
+  const classification = SELF_DISCARD_CLASSIFIED_CHARACTER_PATTERN.exec(fragment)?.[1];
+  if (classification && kinds.delete('character')) kinds.add(`character:${classification}`);
   return kinds;
 }
 
 /** What an outlet can put in the bin; null when it can discard any card (or names no known kind). */
-function selfDiscardOutletKinds(text: string): Set<SelfDiscardKind> | null {
+function selfDiscardOutletKinds(text: string): Set<SelfDiscardKindEntry> | null {
   if (SELF_DISCARD_ANY_OUTLET_PATTERN.test(text)) return null;
   const kinds = selfDiscardKindsIn(SELF_DISCARD_TYPED_OUTLET_PATTERN.exec(text)?.[0] ?? '');
   return kinds.size > 0 ? kinds : null;
 }
 
-/** A self-reference ("this card", "it") recurs the card's own kind. */
-function ownSelfDiscardKinds(card: LorcanaCard): Set<SelfDiscardKind> {
-  return new Set([isSong(card) ? 'song' : (card.type.toLowerCase() as SelfDiscardKind)]);
+/**
+ * A self-reference ("this card", "it") recurs the card itself: a song, its own type, or for a
+ * character each of its classifications, so a classified outlet meets it only when the card
+ * carries that classification.
+ */
+function ownSelfDiscardKinds(card: LorcanaCard): Set<SelfDiscardKindEntry> {
+  if (isSong(card)) return new Set(['song']);
+  const kind = card.type.toLowerCase() as SelfDiscardKind;
+  const classes = kind === 'character' ? (card.classifications ?? []) : [];
+  if (classes.length === 0) return new Set([kind]);
+  return new Set(classes.map((classification) => `character:${classification}` as const));
+}
+
+/** Every "N cards in your discard" check on a card, read for the kinds it counts. */
+const SELF_DISCARD_ZONE_IN_CHECKS = new RegExp(SELF_DISCARD_ZONE_IN_PATTERN.source, 'gi');
+
+/**
+ * What a zone payoff counts in the pile; null when any card counts ("10 or more cards in your
+ * discard", "cards were put into your discard this turn") or it reads no pile at all.
+ */
+function selfDiscardPileKinds(text: string): Set<SelfDiscardKindEntry> | null {
+  if (SELF_DISCARD_ZONE_PUT_PATTERN.test(text)) return null;
+  const kinds = new Set<SelfDiscardKindEntry>();
+  for (const [check] of text.matchAll(SELF_DISCARD_ZONE_IN_CHECKS)) {
+    const counted = selfDiscardKindsIn(check);
+    if (counted.size === 0) return null;
+    counted.forEach((kind) => kinds.add(kind));
+  }
+  return kinds.size > 0 ? kinds : null;
 }
 
 /**
- * What a reanimator pulls from the bin; null when it takes any card. An object with no kind
- * word and no generic card ("this card", "it") is a self-reference. Named-card recursion never
- * gets here: stripUnfedRecursion has removed it.
+ * What a reanimator pulls from the bin; null when it takes any card. "This character", "this
+ * card" or "it" is a self-reference, and so is an object with no kind word and no generic card.
+ * Named-card recursion never gets here: stripUnfedRecursion has removed it.
  */
-function selfDiscardRecursionKinds(card: LorcanaCard, text: string): Set<SelfDiscardKind> | null {
+function selfDiscardRecursionKinds(card: LorcanaCard, text: string): Set<SelfDiscardKindEntry> | null {
   const object = SELF_DISCARD_RECURSION_OBJECT_PATTERN.exec(text)?.[1] ?? 'a card';
+  if (SELF_DISCARD_SELF_OBJECT_PATTERN.test(object)) return ownSelfDiscardKinds(card);
   const kinds = selfDiscardKindsIn(object);
   if (kinds.size > 0) return kinds;
   return SELF_DISCARD_ANY_OBJECT_PATTERN.test(object) ? null : ownSelfDiscardKinds(card);
 }
 
-/** Two kind sets can meet in one card: either side takes any card, or they share a kind. */
-function selfDiscardKindsMeet(a: Set<SelfDiscardKind> | null, b: Set<SelfDiscardKind> | null): boolean {
-  return a === null || b === null || [...a].some((kind) => b.has(kind));
+/** Two entries admit one card: the same kind, and the same classification where both name one. */
+function selfDiscardEntriesMeet(a: SelfDiscardKindEntry, b: SelfDiscardKindEntry): boolean {
+  const [kindA, classA] = a.split(':');
+  const [kindB, classB] = b.split(':');
+  const classesMeet = !classA || !classB || classA === classB;
+  return kindA === kindB && classesMeet;
+}
+
+/** Two kind sets can meet in one card: either side takes any card, or two entries meet. */
+function selfDiscardKindsMeet(
+  a: Set<SelfDiscardKindEntry> | null,
+  b: Set<SelfDiscardKindEntry> | null,
+): boolean {
+  if (a === null || b === null) return true;
+  return [...a].some((entry) => [...b].some((other) => selfDiscardEntriesMeet(entry, other)));
 }
 
 /** What a card's discard or recursion can reach. Fixed per card, while the feed check runs per pair. */
 interface SelfDiscardFeedProfile {
   /** Kinds the card discards as an outlet; null when it can discard any card. */
-  outletKinds: Set<SelfDiscardKind> | null;
+  outletKinds: Set<SelfDiscardKindEntry> | null;
   /** The outlet refills the hand as it discards ("discard a card. If you do, draw 2 cards"). */
   refills: boolean;
   /** The outlet leaves a smaller hand: no draw before its discard (a loot), no refill after. */
@@ -1176,7 +1230,7 @@ interface SelfDiscardFeedProfile {
   /** Every outlet on the card discards at the end of your turn (see discardsOnlyAtEndOfTurn). */
   discardsAtEndOfTurn: boolean;
   /** Kinds the card's recursion pulls, unfed recursion stripped; null when it takes any card. */
-  recursionKinds: Set<SelfDiscardKind> | null;
+  recursionKinds: Set<SelfDiscardKindEntry> | null;
   /** The recursion fires on your discard (see hasDiscardFedRecursion). */
   recursionOnDiscard: boolean;
   /** The state payoff rewards the discard event ("discarded a card this turn"). */
@@ -1187,6 +1241,8 @@ interface SelfDiscardFeedProfile {
   needsSmallHand: boolean;
   /** The zone payoff reads the pile itself (a count or a card type), whenever it looks. */
   readsPile: boolean;
+  /** Kinds the zone payoff counts in the pile; null when any card counts. */
+  pileKinds: Set<SelfDiscardKindEntry> | null;
   /** The card checks this turn's discards at the end of your turn (see checksDiscardsAtEndOfTurn). */
   checksAtEndOfTurn: boolean;
 }
@@ -1212,6 +1268,7 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
     rewardsEmptyHand: SELF_DISCARD_HELLBENT_PATTERN.test(text),
     needsSmallHand: SELF_DISCARD_SMALL_HAND_PATTERN.test(text),
     readsPile: SELF_DISCARD_ZONE_IN_PATTERN.test(text),
+    pileKinds: selfDiscardPileKinds(text),
     checksAtEndOfTurn: checksDiscardsAtEndOfTurn(blocks),
   };
   selfDiscardFeedProfiles.set(card, profile);
@@ -1289,12 +1346,16 @@ export function selfDiscardOutletFeed(
 
 /**
  * Whether `enabler`'s hand discard reaches `payoff`'s zone payoff (the enabler ↔ zone-payoff
- * row): a count or a card type in the pile always, a "cards were put into your discard this
- * turn" check only when the discard lands in time (see discardLandsInTime).
+ * row): the outlet's kinds must meet the kinds the payoff counts ("discard a song card" never
+ * adds to "for each item card in your discard"), and then a count or a card type in the pile
+ * always takes it, a "cards were put into your discard this turn" check only when the discard
+ * lands in time (see discardLandsInTime).
  */
 export function selfDiscardOutletFeedsPile(enabler: LorcanaCard, payoff: LorcanaCard): boolean {
+  const outlet = selfDiscardFeedProfile(enabler);
   const target = selfDiscardFeedProfile(payoff);
-  return target.readsPile || discardLandsInTime(selfDiscardFeedProfile(enabler), target);
+  if (!selfDiscardKindsMeet(outlet.outletKinds, target.pileKinds)) return false;
+  return target.readsPile || discardLandsInTime(outlet, target);
 }
 
 /**
