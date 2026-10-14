@@ -53,9 +53,23 @@ describe('SynergyCard', () => {
     expect(screen.getByTestId('reason-tag')).toHaveTextContent('Mod 5');
   });
 
+  // The aria-label replaces the tile's content, so it has to carry the badge too (WCAG 2.5.3).
+  it.each([
+    {isMobile: false, name: 'Elsa - Snow Queen, Moderate 5'},
+    {isMobile: true, name: 'Elsa - Snow Queen, Mod 5'},
+  ])(
+    'names the tile by its card and the badge it shows (isMobile: $isMobile)',
+    ({isMobile, name}) => {
+      render(
+        <SynergyCard card={mockCard} score={5} explanation="Test synergy" isMobile={isMobile} />,
+      );
+      expect(screen.getByRole('link', {name})).toBeInTheDocument();
+    },
+  );
+
   it('should show View details cue on hover (desktop)', () => {
     render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
-    const tile = screen.getByRole('link', {name: 'Elsa - Snow Queen'});
+    const tile = screen.getByRole('link', {name: 'Elsa - Snow Queen, Strong 7'});
     fireEvent.mouseEnter(tile);
     expect(screen.getByText('View details')).toBeTruthy();
   });

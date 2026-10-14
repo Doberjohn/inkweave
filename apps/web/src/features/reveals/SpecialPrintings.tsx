@@ -119,7 +119,8 @@ export function SpecialPrintings({ink, slots, onOpenPrinting, compact = false, s
         <span style={CAP_LABEL_XS}>Alt arts</span>
         <span style={{...TABULAR, fontSize: FONT_SIZES.base, fontWeight: 700, color: COLORS.text}}>
           {revealed}
-          <span style={{color: COLORS.textDim}}> / {slots.length}</span>
+          {/* textMuted, not textDim: at 13px textDim gives 3.5:1 on the page, under the 4.5:1 WCAG asks. */}
+          <span style={{color: COLORS.textMuted}}> / {slots.length}</span>
         </span>
       </div>
       <div ref={railRef} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.md}}>

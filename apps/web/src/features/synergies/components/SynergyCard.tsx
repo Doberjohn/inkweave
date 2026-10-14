@@ -31,6 +31,9 @@ export function SynergyCard({
   tabIndex,
 }: SynergyCardProps) {
   const tier = getStrengthTier(score);
+  // The tile's aria-label replaces its content, so it repeats the badge's text: named by the card
+  // alone, the tile hid its strength from screen readers and failed label-in-name (WCAG 2.5.3).
+  const badge = badgeText(tier, score, isMobile);
   const colors = INK_COLORS[card.ink];
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -69,7 +72,7 @@ export function SynergyCard({
         onClick={handleClick}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        aria-label={card.fullName || ''}
+        aria-label={`${card.fullName}, ${badge}`}
         style={{
           position: 'relative',
           // Mockup `.mini-tile`: 5px radius + neutral var(--border). Wider contexts get the inkier 8px tinted border.
@@ -87,7 +90,7 @@ export function SynergyCard({
         }}>
         <ViewDetailsHoverCue isMobile={isMobile} compact={compact} hovered={hovered} />
         <CardImageOrFallback card={card} colors={colors} />
-        <StrengthBadgeOverlay tier={tier} score={score} explanation={explanation} isMobile={isMobile} />
+        <StrengthBadgeOverlay tier={tier} text={badge} explanation={explanation} isMobile={isMobile} />
       </a>
       <MaybeLightbox card={card} lightboxOpen={lightboxOpen} setLightboxOpen={setLightboxOpen} />
     </div>
@@ -170,14 +173,23 @@ function CardImageOrFallback({card, colors}: {card: LorcanaCard; colors: typeof 
   );
 }
 
+/** The badge's text, which the tile's name repeats. Phones show the short tier label. */
+function badgeText(
+  tier: ReturnType<typeof getStrengthTier>,
+  score: number,
+  isMobile: boolean,
+): string {
+  return `${isMobile ? tier.shortLabel : tier.label} ${score}`;
+}
+
 interface StrengthBadgeOverlayProps {
   tier: ReturnType<typeof getStrengthTier>;
-  score: number;
+  text: string;
   explanation: string;
   isMobile: boolean;
 }
 
-function StrengthBadgeOverlay({tier, score, explanation, isMobile}: StrengthBadgeOverlayProps) {
+function StrengthBadgeOverlay({tier, text, explanation, isMobile}: StrengthBadgeOverlayProps) {
   return (
     <div
       style={{
@@ -191,7 +203,7 @@ function StrengthBadgeOverlay({tier, score, explanation, isMobile}: StrengthBadg
         alignItems: 'center',
       }}>
       <StrengthBadge tier={tier} size="sm" testId="reason-tag" title={explanation}>
-        {isMobile ? tier.shortLabel : tier.label} {score}
+        {text}
       </StrengthBadge>
     </div>
   );

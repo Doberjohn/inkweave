@@ -16,7 +16,22 @@ interface UseDialogFocusParams {
 }
 
 const FOCUSABLE_SELECTOR =
-  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]';
+
+/**
+ * The stops Tab reaches inside the dialog, in DOM order: the selector's matches minus any with a
+ * negative tabIndex or under `inert`. A roving grid keeps its inactive items in the DOM at -1, as
+ * SynergyGroup's tiles do in the card overview modal. Counted as controls, they made the trap's
+ * edges tiles Tab never reaches, so Tab from the grid's active tile left the dialog. Inert
+ * controls are skipped for the same reason: the modal's comparison mode makes its chip row and
+ * synergy section inert, and an inert stop at an edge would hand Tab to the browser, or take a
+ * focus() call that does nothing.
+ */
+function tabStops(container: HTMLElement): HTMLElement[] {
+  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+    (el) => el.tabIndex >= 0 && !el.closest('[inert]'),
+  );
+}
 
 /**
  * The dialog's initial focus, applied on a delay so the open transition has started.
@@ -36,19 +51,44 @@ function takeInitialFocus(container: HTMLElement | null, target: HTMLElement | n
 }
 
 /**
- * Whether focus sits inside the dialog on something the trap doesn't count as a control:
- * the container itself (DialogShell's panel, its initial focus when no `initialFocusRef` is
- * passed) or another `tabIndex={-1}` element, such as a message given initial focus.
+ * Whether focus sits inside the dialog on something that isn't one of the trap's stops: the
+ * container itself (DialogShell's panel, its initial focus when no `initialFocusRef` is passed),
+ * another `tabIndex={-1}` element, such as a message given initial focus, or a scroll container
+ * the browser lets Tab reach, such as CardOverviewModal's printing strip.
  */
 function isFocusOffControls(container: HTMLElement, focusableElements: Element[]): boolean {
   const active = document.activeElement;
   return active !== null && container.contains(active) && !focusableElements.includes(active);
 }
 
+/** The nearest stop past `from` in DOM order: the next one, or with `back` the previous one. */
+function nearestStop(stops: HTMLElement[], from: Element, back: boolean): HTMLElement | undefined {
+  const side = back ? Node.DOCUMENT_POSITION_PRECEDING : Node.DOCUMENT_POSITION_FOLLOWING;
+  const ahead = stops.filter((stop) => from.compareDocumentPosition(stop) & side);
+  return back ? ahead[ahead.length - 1] : ahead[0];
+}
+
 /**
- * The Tab trap: Tab from the last control wraps to the first, and Shift+Tab from the first
- * wraps to the last. Focus off the controls counts as "before the first control" (#732): the
- * browser would move Shift+Tab from there to whatever precedes the portal, outside the modal.
+ * Where the trap sends Tab, or Shift+Tab with `back`; undefined leaves the key to the browser.
+ * With no stop left that way, focus wraps to the far end. Focus off the stops moves to the
+ * nearest stop that way. The browser can't be left to it: from the panel or a message,
+ * Shift+Tab lands outside the modal (#732). Nor can focus off the stops always wrap: Chrome and
+ * Firefox let Tab reach a scroll container with nothing focusable inside, such as the card
+ * overview modal's printing strip, and wrapping from there kept Tab off the synergy tiles below.
+ */
+function trapTarget(
+  container: HTMLElement,
+  stops: HTMLElement[],
+  back: boolean,
+): HTMLElement | undefined {
+  const next = nearestStop(stops, document.activeElement ?? container, back);
+  if (!next) return back ? stops[stops.length - 1] : stops[0];
+  return isFocusOffControls(container, stops) ? next : undefined;
+}
+
+/**
+ * The Tab trap: Tab from the last stop wraps to the first, and Shift+Tab from the first wraps
+ * to the last (see `trapTarget`).
  *
  * Extracted for the same reason as `takeInitialFocus`, Tab check included: CodeScene counts
  * a one-line handler's branches into the hook.
@@ -56,21 +96,17 @@ function isFocusOffControls(container: HTMLElement, focusableElements: Element[]
 function trapTab(e: React.KeyboardEvent, container: HTMLElement | null): void {
   if (e.key !== 'Tab' || !container) return;
 
-  const focusableElements = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR));
+  const stops = tabStops(container);
 
-  if (focusableElements.length === 0) {
+  if (stops.length === 0) {
     e.preventDefault();
     return;
   }
 
-  const firstElement = focusableElements[0];
-  const lastElement = focusableElements[focusableElements.length - 1];
-  // Tab leaves from the last control and wraps to the first; Shift+Tab, the reverse.
-  const [edge, wrapTo] = e.shiftKey ? [firstElement, lastElement] : [lastElement, firstElement];
-
-  if (document.activeElement === edge || isFocusOffControls(container, focusableElements)) {
+  const target = trapTarget(container, stops, e.shiftKey);
+  if (target) {
     e.preventDefault();
-    wrapTo.focus();
+    target.focus();
   }
 }
 
