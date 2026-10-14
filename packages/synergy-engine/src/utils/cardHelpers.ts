@@ -2573,6 +2573,22 @@ export function getTribalRoles(card: LorcanaCard, spec: TribalSpec): TribalRole[
 export const isTribalCard = (card: LorcanaCard, spec: TribalSpec): boolean =>
   getTribalRoles(card, spec).length > 0;
 
+const CAPITALIZED_WORD = /\b[A-Z][a-z]+\b/g;
+
+/**
+ * The classifications a tribe payoff's clauses name, read as the capitalized words of every
+ * clause a payoff role matched: Agnarr - King of Arendelle's "While you have a Queen" names Queen,
+ * and Hans - Noble Scoundrel's "if a Princess or Queen character is" names Princess and Queen.
+ * The clause's other capitalized words ("While", "Your") are no classification any card holds.
+ */
+export function tribalPayoffClasses(card: LorcanaCard, spec: TribalSpec): string[] {
+  const text = normalizeCardText(card);
+  const clauses = Object.values(tribalPatterns(spec)).flatMap(
+    (pattern) => text.match(new RegExp(pattern.source, 'gi')) ?? [],
+  );
+  return clauses.flatMap((clause) => clause.match(CAPITALIZED_WORD) ?? []);
+}
+
 // ============================================
 // EXERT DETECTION ("Exert Matters" — opponent-facing, payoff-anchored)
 // ============================================

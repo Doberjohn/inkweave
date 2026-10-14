@@ -7,7 +7,9 @@ import type {
 } from '../types';
 import {
   getTribalRoles,
+  tribalPayoffClasses,
   isTribalCard,
+  hasClassification,
   isDeckRamp,
   isRepeatingTrigger,
   inkLandsOffTriggerTurn,
@@ -1572,7 +1574,7 @@ function scoreTribalLowerTiers(ctx: TribalPairCtx): {score: number; explanation:
 
 /**
  * Score a classification-tribe pair (payoff-anchored). Returns null for member-member
- * pairs so `tribalFindSynergies` drops them (a tribe is only interesting through its payoffs).
+ * pairs so the rule drops them (a tribe is only interesting through its payoffs).
  * `tribe` is the SINGULAR grammar noun ("Princess", "Royalty") woven into each explanation —
  * kept distinct from the plural display name ("Princesses", "Royalties") so the templates stay grammatical.
  * Highest applicable bucket wins, since cards are multi-role (Philoctetes is member+buff+trigger):
@@ -1599,6 +1601,33 @@ export function scoreTribalPair(
   return scoreTribalLowerTiers({tribe, cardRoles, otherRoles, cross, cardPayoff, bothPayoff});
 }
 
+/** One side of a tribe pair. */
+interface TribalSide {
+  card: LorcanaCard;
+  roles: TribalRole[];
+}
+
+/**
+ * A side's roles as the other side's payoff sees them: a member counts only when it holds a
+ * classification that payoff's clauses name (tribalPayoffClasses). Agnarr - King of Arendelle's
+ * "While you have a Queen character in play" is no reason to play a King or a Prince beside him.
+ * In a one-class tribe every clause names the class every member holds, so nothing changes.
+ */
+function tribalRolesFor(spec: TribalSpec, side: TribalSide, other: TribalSide): TribalRole[] {
+  if (!side.roles.includes('member') || !isTribalPayoff(other.roles)) return side.roles;
+  const named = tribalPayoffClasses(other.card, spec);
+  if (named.some((cls) => hasClassification(side.card, cls))) return side.roles;
+  return side.roles.filter((role) => role !== 'member');
+}
+
+/** scoreTribalPair over the roles each side holds for the other; null when a side holds none. */
+function scoreTribalSides(spec: TribalSpec, noun: string, a: TribalSide, b: TribalSide) {
+  const aRoles = tribalRolesFor(spec, a, b);
+  const bRoles = tribalRolesFor(spec, b, a);
+  if (aRoles.length === 0 || bRoles.length === 0) return null;
+  return scoreTribalPair(noun, aRoles, bRoles);
+}
+
 /**
  * A tribe rule's description: its playstyle tagline from tuning.json, the line players see, so
  * every tribe reads the same way and an edit to the tagline reaches the rule too.
@@ -1623,8 +1652,17 @@ export function makeTribalRule(spec: TribalSpec, name: string, noun: string): Sy
     description: tribeDescription(playstyleId),
     matches: (card) => isTribalCard(card, spec),
     findSynergies: (card, allCards) =>
-      tribalFindSynergies(card, allCards, (c) => getTribalRoles(c, spec), (cardRoles, otherRoles) =>
-        scoreTribalPair(noun, cardRoles, otherRoles),
+      pairFindSynergies(
+        card,
+        allCards,
+        (c) => getTribalRoles(c, spec),
+        (c, cardRoles, other, otherRoles) =>
+          scoreTribalSides(
+            spec,
+            noun,
+            {card: c, roles: cardRoles},
+            {card: other, roles: otherRoles},
+          ),
       ),
   };
 }

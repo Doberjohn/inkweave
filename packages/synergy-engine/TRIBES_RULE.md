@@ -30,7 +30,7 @@ Payoff detection runs on the card's whitespace-normalized text (card text carrie
 
 ## Scoring (payoff-anchored, 5-baseline)
 
-The rule is **payoff-anchored** like Floodborn and Items: `scoreTribalPair` returns `null` for member-member pairs, so `tribalFindSynergies` never emits them. A tribe is only interesting through its payoffs. Cards are multi-role, so the **highest applicable bucket wins**:
+The rule is **payoff-anchored** like Floodborn and Items: `scoreTribalPair` returns `null` for member-member pairs, so the rule never emits them. A tribe is only interesting through its payoffs. Cards are multi-role, so the **highest applicable bucket wins**:
 
 | Pair | Score | Explanation (from the first card's page) |
 |------|-------|-------------|
@@ -44,6 +44,8 @@ The rule is **payoff-anchored** like Floodborn and Items: `scoreTribalPair` retu
 
 Buff scores 6 (a static stat grant) while trigger scores 7 (a repeating engine) — the same principled split Floodborn uses.
 
+**A member counts only for a payoff that names its class.** `tribalPayoffClasses` reads the classifications a payoff's matched clauses name, and `scoreTribalSides` drops a card's `member` role against a payoff that names none of its classes. Agnarr - King of Arendelle's "While you have a Queen character in play" pairs with Queens, not with Kings or Princes. Hans - Noble Scoundrel's "if a Princess or Queen character is in play" pairs with Queens and with the Prince-and-Princess team cards such as Belle & Beast - Certain as the Sun. In a one-class tribe every clause names the class every member holds, so only Royalty, whose payoffs name single ranks, changes. Two payoffs that switch neither one on still stack at 7: Agnarr and Hans both want a Queen.
+
 ## Coverage (live pair counts)
 
 <!-- coverage:start coverage -->
@@ -55,7 +57,7 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 | Princesses | 74 | 10 | 735 | 552 / 28 / 155 |
 | Heroes | 338 | 13 | 4,285 | 3,561 / 724 / 0 |
 | Supers | 57 | 7 | 374 | 202 / 116 / 56 |
-| Royalty | 84 | 2 | 163 | 162 / 1 / 0 |
+| Royalty | 84 | 2 | 56 | 55 / 1 / 0 |
 | Detectives | 39 | 11 | 392 | 275 / 76 / 41 |
 | Gargoyles | 16 | 4 | 54 | 36 / 18 / 0 |
 | Madrigals | 26 | 3 | 74 | 71 / 3 / 0 |

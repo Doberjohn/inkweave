@@ -79,6 +79,7 @@ export {
   bounceGateAdmits,
   isBounceCard,
   getTribalRoles,
+  tribalPayoffClasses,
   isTribalCard,
   TRIBAL_SPECS,
   isSteadyAimAnchor,
