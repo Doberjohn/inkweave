@@ -127,7 +127,9 @@ Production serves a preview image only when BOTH variants are committed, and it 
 Cards reach `previewCards.json` from [Doberjohn/inkweave-admin](https://github.com/Doberjohn/inkweave-admin), not from this repo's tooling:
 
 - **In bulk,** admin's `/fetch-reveals` opens a PR here from a `reveals/…` branch, with the verified cards and their AVIFs.
-- **One card at a time,** admin's reveal publisher (https://inkweave-admin.vercel.app/reveal) commits the record plus its raw scan straight to `master`, and `.github/workflows/convert-reveal-images.yml` converts the raw, commits the AVIFs with `[skip ci]` and prunes it. Alongside it, `.github/workflows/refresh-rule-coverage.yml` commits any rule-doc coverage the card moved, also with `[skip ci]` (#781). Each card commit triggers `deploy.yml`: **allow 15 to 20 minutes** (the prerender crawl).
+- **One card at a time,** admin's reveal publisher (https://inkweave-admin.vercel.app/reveal) commits the record plus its raw scan straight to `master`, and `.github/workflows/convert-reveal-images.yml` converts the raw, commits the AVIFs with `[skip ci]` and prunes it. Each card commit triggers `deploy.yml`: **allow 15 to 20 minutes** (the prerender crawl).
+
+Either way, once the cards are on `master`, `.github/workflows/refresh-rule-coverage.yml` follows with a commit of any rule-doc coverage they moved, also with `[skip ci]` (#781).
 
 How to run both, and what each refuses to write: [`docs/REVEAL_RUNBOOK.md`](https://github.com/Doberjohn/inkweave-admin/blob/main/docs/REVEAL_RUNBOOK.md) in admin.
 
