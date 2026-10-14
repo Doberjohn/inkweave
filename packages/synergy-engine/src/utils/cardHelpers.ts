@@ -137,6 +137,20 @@ export function getShiftBaseNames(card: LorcanaCard): string[] {
 }
 
 /**
+ * A character that also takes another name, for Shift only: "This character also counts as
+ * being named Syndrome for Shift." (Incrediboy - Buddy Pine). A Shift onto Syndrome can land on
+ * it, so it is a Shift base for that name, not a card that names a companion.
+ */
+const SHIFT_ALIAS_PATTERN = /\bcounts as being named\s+(.+?)\s+for\s+Shift\b/gi;
+
+/** The other names a character counts as for Shift; most cards have none. */
+export function getShiftAliasNames(card: LorcanaCard): string[] {
+  // Cheap gate on the raw text: the Shift matcher asks this of every character.
+  if (!card.text || !/\bfor\s+Shift\b/i.test(card.text)) return [];
+  return [...normalizeCardText(card).matchAll(SHIFT_ALIAS_PATTERN)].map((match) => match[1].trim());
+}
+
+/**
  * How a Shift cost is paid: ink from the inkwell ("Shift 5"), or ink drops you remove
  * ("Shift Remove 2 ink drops", Set 14). A ShiftType's `cost` counts in that unit.
  */
@@ -1709,8 +1723,11 @@ const NAMED_PATTERN = new RegExp(
 export function getNamedReferences(card: LorcanaCard): string[] {
   if (!card.text || !HAS_NAMED.test(card.text)) return [];
 
-  // Strip Shift reminders (normalizeCardText already spells apostrophes as card names do)
-  const cleanText = normalizeCardText(card).replace(SHIFT_REMINDER, '');
+  // Strip Shift reminders and Shift aliases (normalizeCardText already spells apostrophes as
+  // card names do)
+  const cleanText = normalizeCardText(card)
+    .replace(SHIFT_REMINDER, '')
+    .replace(SHIFT_ALIAS_PATTERN, '');
 
   const names = new Set<string>();
 

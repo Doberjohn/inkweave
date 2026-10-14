@@ -2,6 +2,7 @@ import type {LorcanaCard, PlaystyleId, SynergyMatch, SynergyRule} from '../types
 import {
   classifyNamedEffect,
   getBaseName,
+  getShiftAliasNames,
   getShiftBaseNames,
   getDiscardRoles,
   getInkDropGain,
@@ -232,6 +233,18 @@ function calculateShiftBaseScore(
 }
 
 /**
+ * True when a same-name Shift lands on `target`. Team cards ("Belle & Beast") shift onto either
+ * named half, so the target is checked against every name the shifter can land on. A target that
+ * also counts as another name for Shift matches on that name too (Incrediboy - Buddy Pine counts
+ * as Syndrome).
+ */
+function shiftLandsOnName(shiftCard: LorcanaCard, target: LorcanaCard): boolean {
+  const landingNames = getShiftBaseNames(shiftCard);
+  if (landingNames.includes(getBaseName(target))) return true;
+  return getShiftAliasNames(target).some((alias) => landingNames.includes(alias));
+}
+
+/**
  * Check if a target card is a valid Shift target for the given Shift variant.
  * - standard: same base name (character)
  * - classification: character with the required classification
@@ -248,9 +261,7 @@ function isValidShiftTarget(
 ): boolean {
   switch (shiftType.kind) {
     case 'standard':
-      // Team cards ("Belle & Beast") shift onto either named half, so match the
-      // target's base name against every name the shifter can land on.
-      return isCharacter(target) && getShiftBaseNames(shiftCard).includes(getBaseName(target));
+      return isCharacter(target) && shiftLandsOnName(shiftCard, target);
     case 'classification':
       return isCharacter(target) && hasClassification(target, shiftType.classification);
     case 'universal':
