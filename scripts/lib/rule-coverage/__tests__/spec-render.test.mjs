@@ -99,3 +99,24 @@ describe('coverage specs that count by explanation or role', () => {
     );
   });
 });
+
+describe('coverage specs and a card no rule counts', () => {
+  // A revealed card that no rule counts must leave every doc as it was, so the refresh
+  // workflow commits only the docs whose numbers move (#781).
+  const uncounted = {
+    id: '2',
+    name: 'Plain',
+    fullName: 'Plain - Vanilla',
+    type: 'Character',
+    ink: 'Steel',
+    cost: 3,
+    text: '',
+    classifications: ['Storyborn', 'Ally'],
+  };
+
+  it.each(blocks)('%s reads the same with or without it', async (_, render) => {
+    const engine = await import(pathToFileURL(ENGINE).href);
+    const coverage = (cards) => createCoverage({engine, pool: {cards, label: 'a test pool'}});
+    expect(render(coverage([uncounted]))).toBe(render(coverage([])));
+  });
+});

@@ -138,7 +138,7 @@ if trigger ↔ cost-reduction: 5
 ### Live distribution
 
 <!-- coverage:start distribution -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
 
 **1,767 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
@@ -173,7 +173,7 @@ The 8-9 pairs aren't inflation: they're the ramp ↔ trigger chains, the only re
 ## Coverage
 
 <!-- coverage:start coverage -->
-**62 total ramp cards** (5.0% of the 1,228-card pool):
+**62 total ramp cards**:
 
 | Role | Cards | Sub-patterns | Cards per ink |
 |----|-----|------------|-------------|

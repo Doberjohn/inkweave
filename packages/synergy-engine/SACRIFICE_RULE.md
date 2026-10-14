@@ -105,7 +105,7 @@ Applies the project-wide **5-baseline convention** and mirrors the Discard rule'
 ### Live distribution
 
 <!-- coverage:start distribution -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
 
 **389 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 

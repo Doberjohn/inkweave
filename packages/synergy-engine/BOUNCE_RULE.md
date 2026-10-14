@@ -102,7 +102,7 @@ A capped enabler pairs only with the bodies it can reach. One that keeps no Boun
 ## Coverage
 
 <!-- coverage:start coverage -->
-Counted by `pnpm refresh-rule-coverage` over the 1,228 Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
+Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-13 plus the Set 14 preview).
 
 - **Roles**: self-bounce 6, flexible 11, opponent-bounce 2, return-payoff 0, rebuy-payoff 24; **43 participating cards**.
 - 39 cards carry a Bounce group.
