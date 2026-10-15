@@ -11,6 +11,19 @@ const sacrificeRule = getRuleById('sacrifice')!;
 /** The Sacrifice pair `card` finds with `partner`, or undefined when they do not pair. */
 const sacrificePair = (card: LorcanaCard, partner: LorcanaCard) =>
   sacrificeRule.findSynergies(card, [card, partner]).find((s) => s.card.id === partner.id);
+/** Expects `card` to pair with each of `payoffs` at the same-deck 5, from either side. */
+function expectSameDeckFive(card: LorcanaCard, payoffs: LorcanaCard[]) {
+  const pairs = payoffs.flatMap((payoff) => [
+    sacrificePair(card, payoff),
+    sacrificePair(payoff, card),
+  ]);
+  for (const pair of pairs) {
+    expect(pair).toMatchObject({
+      score: 5,
+      explanation: '{A} and {B} both go in a Sacrifice deck.',
+    });
+  }
+}
 
 const timeToGo = createCard({
   id: 'time-to-go',
@@ -60,16 +73,7 @@ describe("Sacrifice: banish triggers limited to an opponent's turn", () => {
   });
 
   it('scores a self-banish card with them at 5, from either side', () => {
-    const pairs = [rex, donaldHoneywell].flatMap((payoff) => [
-      sacrificePair(timeToGo, payoff),
-      sacrificePair(payoff, timeToGo),
-    ]);
-    for (const pair of pairs) {
-      expect(pair).toMatchObject({
-        score: 5,
-        explanation: '{A} and {B} both go in a Sacrifice deck.',
-      });
-    }
+    expectSameDeckFive(timeToGo, [rex, donaldHoneywell]);
   });
 });
 
@@ -99,15 +103,6 @@ describe('Sacrifice: banish payoffs that give back little', () => {
   });
 
   it('scores a self-banish card with them at 5, from either side', () => {
-    const pairs = [alien, merlin].flatMap((payoff) => [
-      sacrificePair(timeToGo, payoff),
-      sacrificePair(payoff, timeToGo),
-    ]);
-    for (const pair of pairs) {
-      expect(pair).toMatchObject({
-        score: 5,
-        explanation: '{A} and {B} both go in a Sacrifice deck.',
-      });
-    }
+    expectSameDeckFive(timeToGo, [alien, merlin]);
   });
 });
