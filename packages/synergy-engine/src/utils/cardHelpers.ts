@@ -2628,6 +2628,36 @@ export function getHealRoles(card: LorcanaCard): HealRole[] {
 /** Check if a card participates in the heal axis (healer or heal-payoff). */
 export const isHealCard = (card: LorcanaCard): boolean => getHealRoles(card).length > 0;
 
+/**
+ * Temporary Shift's reminder text: "At the end of your turn, remove all damage from this
+ * character and return only this card to your hand." It heals only a character that took
+ * damage that turn, and only once the turn's actions are done.
+ */
+const TEMPORARY_SHIFT_HEAL_PATTERN =
+  /\bat the end of your turn, remove all damage from this character and return only this card to your hand\b/i;
+
+/**
+ * The card's only heal is Temporary Shift's end-of-turn cleanup (Grandma Wu - Fierce Red Panda,
+ * Sun Yee - Red Panda Spirit): no remove clause is left once the reminder text is taken out.
+ */
+export function healsOnlyAsTemporaryShiftEnds(card: LorcanaCard): boolean {
+  const text = normalizeCardText(card);
+  if (!TEMPORARY_SHIFT_HEAL_PATTERN.test(text)) return false;
+  return !HEALER_PATTERN.test(text.replace(TEMPORARY_SHIFT_HEAL_PATTERN, ''));
+}
+
+/** A heal payoff that triggers on the removal: "Whenever you remove 1 or more damage …". */
+const HEAL_TRIGGER_PATTERN = /\b(?:whenever|when) you remove\b/i;
+
+/**
+ * The payoff fires on the removal itself. A turn check ("⟳ — If you removed damage from a
+ * character this turn, gain 1 lore", Julieta's Arepas) is used while you act, so a heal that
+ * lands as the turn ends never meets it.
+ */
+export function healPayoffTriggers(card: LorcanaCard): boolean {
+  return HEAL_TRIGGER_PATTERN.test(normalizeCardText(card));
+}
+
 // ============================================
 // TRIBAL PLAYSTYLES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle, Madrigal, Villain) — shared detector
 // ============================================

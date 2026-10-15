@@ -77,3 +77,31 @@ describe("Healing: a bonus for the card's own heal", () => {
     }
   });
 });
+
+// Temporary Shift heals the character only as your turn ends, and only if it took damage.
+const grandmaWu = createCard({
+  id: 'grandma-wu-fierce-red-panda',
+  name: 'Grandma Wu',
+  fullName: 'Grandma Wu - Fierce Red Panda',
+  ink: 'Ruby',
+  classifications: ['Storyborn', 'Mentor', 'Red Panda'],
+  text: 'Temporary Shift 4 ⬡ (You may pay 4 ⬡ to play this on\ntop of one of your characters named Grandma Wu. At the\nend of your turn, remove all damage from this character\nand return only this card to your hand.)\nINTIMIDATING CHARGE Whenever this character\nchallenges another character, you gain 2 lore and each\nopponent loses 2 lore.',
+});
+
+describe("Healing: Temporary Shift's end-of-turn heal", () => {
+  it('scores 6 with a heal trigger, the Temporary Shift card as the actor', () => {
+    expect(healingPair(grandmaWu, grandPabbie)).toMatchObject({
+      score: 6,
+      explanation:
+        "{A}'s Temporary Shift removes its damage at the end of your turn, firing {B}'s heal payoff when it was damaged.",
+    });
+    expect(healingPair(grandPabbie, grandmaWu)?.explanation).toBe(
+      "{B}'s Temporary Shift removes its damage at the end of your turn, firing {A}'s heal payoff when it was damaged.",
+    );
+  });
+
+  it('does not pair with a check made while you act', () => {
+    expect(healingPair(grandmaWu, arepas)).toBeUndefined();
+    expect(healingPair(arepas, grandmaWu)).toBeUndefined();
+  });
+});

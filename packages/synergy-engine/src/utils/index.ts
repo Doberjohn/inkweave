@@ -74,6 +74,8 @@ export {
   hasExertAbility,
   getHealRoles,
   isHealCard,
+  healsOnlyAsTemporaryShiftEnds,
+  healPayoffTriggers,
   getExertRoles,
   isExertCard,
   isExertConsumePayoff,

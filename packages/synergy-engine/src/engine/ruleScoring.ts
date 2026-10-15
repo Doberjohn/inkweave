@@ -30,6 +30,8 @@ import {
   countsAsHunnyCharacter,
   readiesItemsOnly,
   hasExertAbility,
+  healsOnlyAsTemporaryShiftEnds,
+  healPayoffTriggers,
   type DiscardRole,
   type LoreDenialRole,
   type RampRole,
@@ -1268,20 +1270,39 @@ export function scoreItemCards(
 export const isHealPayoff = (roles: HealRole[]): boolean => roles.includes('heal-payoff');
 
 /**
+ * A healer whose only heal is Temporary Shift's end-of-turn cleanup: it fires a heal trigger
+ * only when the character took damage that turn (6), and lands too late for a check made while
+ * you act (Julieta's Arepas: no pair).
+ */
+function scoreTemporaryShiftHeal(
+  payoff: LorcanaCard,
+  tokens: {healer: string; payoff: string},
+): {score: number; explanation: string} | null {
+  if (!healPayoffTriggers(payoff)) return null;
+  return {
+    score: 6,
+    explanation: `${tokens.healer}'s Temporary Shift removes its damage at the end of your turn, firing ${tokens.payoff}'s heal payoff when it was damaged.`,
+  };
+}
+
+/**
  * Score a Heal-Matters pair. findSynergies only calls this when at least one side is a payoff
  * (payoff-anchored), so healer-healer pairs never reach here. Cards can be multi-role (Ohana
  * Means Family is healer+heal-payoff), so a side counts as the payoff whenever it carries the
  * 'heal-payoff' role:
  *   healer      <-> heal-payoff  = 8  win-condition: the healer clears damage, firing the payoff engine
  *   heal-payoff <-> heal-payoff  = 7  two heal engines compound on the same board
+ *   Temporary Shift healer <-> heal trigger = 6  (see scoreTemporaryShiftHeal)
  *
- * `cardRoles` is the searcher (token {A}); `otherRoles` is the partner (token {B}). The token-swap
- * keeps the HEALER side reading as the actor regardless of which card the user selected.
+ * `card` is the searcher (token {A}); `other` is the partner (token {B}). The token-swap keeps
+ * the HEALER side reading as the actor regardless of which card the user selected.
  */
 export function scoreHealPair(
   cardRoles: HealRole[],
   otherRoles: HealRole[],
-): {score: number; explanation: string} {
+  card: LorcanaCard,
+  other: LorcanaCard,
+): {score: number; explanation: string} | null {
   const cardPayoff = isHealPayoff(cardRoles);
   const otherPayoff = isHealPayoff(otherRoles);
 
@@ -1289,11 +1310,15 @@ export function scoreHealPair(
     return {score: 7, explanation: '{A} and {B} both pay off when you remove damage.'};
   }
   // Exactly one side is a payoff; the other is a healer only. The healer is the enabler/actor.
-  const healerToken = cardPayoff ? '{B}' : '{A}';
-  const payoffToken = cardPayoff ? '{A}' : '{B}';
+  const sides = cardPayoff
+    ? {healer: other, payoff: card, tokens: {healer: '{B}', payoff: '{A}'}}
+    : {healer: card, payoff: other, tokens: {healer: '{A}', payoff: '{B}'}};
+  if (healsOnlyAsTemporaryShiftEnds(sides.healer)) {
+    return scoreTemporaryShiftHeal(sides.payoff, sides.tokens);
+  }
   return {
     score: 8,
-    explanation: `${healerToken} clears damage off your characters, firing ${payoffToken}'s heal payoff.`,
+    explanation: `${sides.tokens.healer} clears damage off your characters, firing ${sides.tokens.payoff}'s heal payoff.`,
   };
 }
 

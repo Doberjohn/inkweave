@@ -51,6 +51,8 @@ Matches an outlet that removes damage from a character. Because it begins with `
 | "...you may **remove all damage from** this character." | Isabela Madrigal - Perfectly in Control |
 | "**Remove up to 4 damage total from** any number of your characters." | I'm Never Not by Your Side |
 
+Temporary Shift's reminder text reads as a healer too: "At the end of your turn, **remove all damage from** this character and return only this card to your hand" (Grandma Wu - Fierce Red Panda, Sun Yee - Red Panda Spirit). It is a real removal, but it heals only a character that took damage that turn, and only as the turn ends, so it scores lower (see Scoring).
+
 ### heal-payoff (payoff)
 
 ```regex
@@ -87,9 +89,9 @@ Real cards the `getHealRoles` detector tags (names from the live database; effec
 
 ---
 
-## Scoring (7/8 matrix)
+## Scoring (6/7/8 matrix)
 
-Applies the project-wide **5-baseline convention**. Because the rule is payoff-anchored, every emitted pair has at least one payoff, so scores resolve to 8 or 7 (the healer-healer density baseline is never emitted).
+Applies the project-wide **5-baseline convention**. Because the rule is payoff-anchored, every emitted pair has at least one payoff, so scores resolve to 8 or 7, or 6 for a Temporary Shift healer (the healer-healer density baseline is never emitted).
 
 ### Score Table
 
@@ -97,6 +99,7 @@ Applies the project-wide **5-baseline convention**. Because the rule is payoff-a
 |-----------|-------|-------------|-------------|
 | healer <-> heal-payoff | **8** | Strong | Win-condition combo: the healer clears damage on demand, firing the payoff engine each time |
 | heal-payoff <-> heal-payoff | **7** | Strong | Two heal engines compound on the same board |
+| Temporary Shift healer <-> heal trigger | **6** | Moderate | Complementary: the end-of-turn cleanup fires a "whenever you remove damage" trigger, but only on turns the character took damage. A turn check made while you act ("⟳ — If you removed damage from a character this turn", Julieta's Arepas) never sees it, so that pair is dropped |
 | healer <-> healer | (not generated) | - | Payoff-anchored: two enablers with no payoff to fire are dropped |
 
 ### Live distribution
@@ -104,12 +107,13 @@ Applies the project-wide **5-baseline convention**. Because the rule is payoff-a
 <!-- coverage:start distribution -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-34 healers + 8 heal-payoffs (6 pure payoff + 2 dual-role healer+payoff) = 40 distinct participating cards. **278 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+34 healers + 8 heal-payoffs (6 pure payoff + 2 dual-role healer+payoff) = 40 distinct participating cards. **274 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| healer <-> heal-payoff | 252 | 8 | 90.6% |
-| heal-payoff <-> heal-payoff | 26 | 7 | 9.4% |
+| healer <-> heal-payoff | 224 | 8 | 81.8% |
+| heal-payoff <-> heal-payoff | 26 | 7 | 9.5% |
+| Temporary Shift healer <-> heal trigger | 24 | 6 | 8.8% |
 
 496 healer <-> healer pairs are dropped (payoff-anchored).
 
@@ -137,7 +141,7 @@ const payoffToken = cardPayoff ? '{A}' : '{B}';
 // `${healerToken} clears damage off your characters, firing ${payoffToken}'s heal payoff.`
 ```
 
-The payoff-payoff pair names both cards: `"{A} and {B} both pay off when you remove damage."`
+The payoff-payoff pair names both cards: `"{A} and {B} both pay off when you remove damage."` A Temporary Shift healer reads as the actor too: `"{A}'s Temporary Shift removes its damage at the end of your turn, firing {B}'s heal payoff when it was damaged."`
 
 ---
 
@@ -155,7 +159,7 @@ Healing is Amber/Sapphire-heavy, and the Madrigal minority among healers confirm
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Healing rule (Heal Matters)')`, plus `src/__tests__/healing.test.ts` for a bonus that counts only the card's own heal.
+Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Healing rule (Heal Matters)')`, plus `src/__tests__/healing.test.ts` for a bonus that counts only the card's own heal and for Temporary Shift's end-of-turn heal.
 
 ### Role Detection (4 tests)
 
@@ -192,6 +196,15 @@ Real text of Julieta Madrigal - Excellent Cook, Ohana Means Family, I'm Never No
 | keeps a check on damage removed this turn | Julieta's Arepas stays healer + heal-payoff |
 | pairs them with a payoff, not a healer | each → Grand Pabbie 8; each ↔ Rapunzel no pair |
 
+### Temporary Shift's end-of-turn heal (2 tests, `healing.test.ts`)
+
+Real text of Grandma Wu - Fierce Red Panda, Grand Pabbie - Oldest and Wisest and Julieta's Arepas.
+
+| Test | What it verifies |
+|------|------------------|
+| a heal trigger → 6 | Grandma Wu with Grand Pabbie, the Temporary Shift card as the actor from both searchers |
+| a check made while you act | Grandma Wu ↔ Julieta's Arepas no pair, from both searchers |
+
 ---
 
 ## Design Decisions and Rationale
@@ -207,6 +220,10 @@ Only a minority of healers are Madrigal, and every payoff reads "remove damage f
 ### Why a "this way" bonus isn't a payoff
 
 Julieta Madrigal - Excellent Cook draws "if you removed damage this way", and Ohana Means Family draws "for each 1 damage removed this way". "This way" means the card's own removal, so a second healer never feeds the bonus. Reading these clauses as payoffs paired the five cards with every plain healer at 8 and with each other at 7, all combos the cards can't perform. They are healers: next to a payoff that fires on any removal (Grand Pabbie, Isabela Madrigal - Caring Cultivator), each one sets it off, which scores 8.
+
+### Why Temporary Shift's heal scores 6
+
+Temporary Shift returns the card to your hand at the end of your turn and removes its damage first, so Grand Pabbie - Oldest and Wisest does gain 2 lore, but only on turns the character took damage, and never when you choose. A healer you fire on demand is the 8 combo; this one is a side effect of the card's real job, so it sits one step above the baseline. Julieta's Arepas checks "If you removed damage from a character this turn" with an ability you use while you act, and the cleanup lands after that, so the two don't pair.
 
 ### Why the scoped move-damage guard?
 
