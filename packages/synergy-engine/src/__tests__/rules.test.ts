@@ -1757,7 +1757,9 @@ describe('Card Helper Functions', () => {
         name: singerName,
         fullName: `${singerName} - Pop Star`,
         keywords: [opts.singerKeyword ?? 'Singer 5'],
-        ...(opts.singerCost !== undefined && {cost: opts.singerCost}),
+        // Cost 1 by default: a character already sings a song its own cost reaches, so Singer
+        // pairs only with songs above it.
+        cost: opts.singerCost ?? 1,
       });
       const song = createCard({
         id: 'song-1',
@@ -1840,7 +1842,7 @@ describe('Card Helper Functions', () => {
       ['perfect fit (diff 0) → 8', 'Singer 5', 5, 8],
       ['near-perfect (diff 1) → 7', 'Singer 5', 4, 7],
       ['good savings (diff 2) → 6', 'Singer 5', 3, 6],
-      ['inefficient (diff >= 3) → 5', 'Singer 9', 1, 5],
+      ['inefficient (diff >= 3) → 5', 'Singer 9', 2, 5],
     ] as const)('should score %s', (_label, singerKeyword, songCost, expected) => {
       const {singer, song} = makeSingerSongPair({singerKeyword, songCost});
       const synergies = singerRule.findSynergies(singer, [singer, song]);
@@ -1906,15 +1908,14 @@ describe('Card Helper Functions', () => {
       expect(synergies[0].score).toBe(8);
     });
 
-    it('should fall back to card cost when Singer keyword has no numeric value', () => {
+    it('should pair no song when the Singer keyword has no numeric value', () => {
       const {singer, song} = makeSingerSongPair({
         singerKeyword: 'Singer',
         singerCost: 4,
         songCost: 4,
       });
-      const synergies = singerRule.findSynergies(singer, [singer, song]);
-      expect(synergies).toHaveLength(1);
-      expect(synergies[0].score).toBe(8); // falls back to card.cost=4, diff=0
+      // The Singer value falls back to the card's cost, which reaches no song Singer unlocks.
+      expect(singerRule.findSynergies(singer, [singer, song])).toHaveLength(0);
     });
 
     it("names the singer and the song, with the song's cost and the Singer value", () => {

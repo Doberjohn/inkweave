@@ -46,3 +46,46 @@ describe('Singer + Songs: a singer barred from songs without Sing Together', () 
     expect(singerPair(healWhatHasBeenHurt, meilinLee)).toBeUndefined();
   });
 });
+
+// A cost-4 Singer 5, a song its own cost already sings and one only Singer reaches.
+const fourTown = createCard({
+  id: '4town-hottest-band-of-the-year',
+  name: '4*Town',
+  fullName: '4*Town - Hottest Band of the Year',
+  cost: 4,
+  strength: 5,
+  willpower: 5,
+  classifications: ['Storyborn'],
+  keywords: ['Singer 5'],
+  text: 'Singer 5 (This character counts as cost 5 to sing\nsongs.)\nSTAR PERFORMANCE Whenever this character\nsings a song with Sing Together, draw a card.',
+});
+const educationOrElimination = createCard({
+  id: 'education-or-elimination',
+  name: 'Education or Elimination',
+  fullName: 'Education or Elimination',
+  type: 'Action',
+  ink: 'Emerald',
+  cost: 4,
+  text: '(A character with cost 4 or more can ⟳ to sing this song\nfor free.)\nChoose one:\n• Draw a card. Chosen character of yours gets +1 ◊ and gains\nEvasive until the start of your next turn. (Only characters\nwith Evasive can challenge them.)\n• Banish chosen damaged character.',
+});
+const letItGo = createCard({
+  id: 'let-it-go',
+  name: 'Let It Go',
+  fullName: 'Let It Go',
+  type: 'Action',
+  ink: 'Sapphire',
+  cost: 5,
+  text: "(A character with cost 5 or more can ⟳ to sing this\nsong for free.)\nPut chosen character into their player's inkwell\nfacedown and exerted.",
+});
+
+describe("Singer + Songs: only songs above the singer's own cost", () => {
+  it('drops a song its printed cost already sings, from either side', () => {
+    expect(singerPair(fourTown, educationOrElimination)).toBeUndefined();
+    expect(singerPair(educationOrElimination, fourTown)).toBeUndefined();
+  });
+
+  it('pairs a song only Singer reaches', () => {
+    expect(singerPair(fourTown, letItGo)?.score).toBe(8);
+    expect(singerPair(letItGo, fourTown)?.score).toBe(8);
+  });
+});
