@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {getSelfDiscardRoles} from '../utils';
+import {getDiscardRoles, getSelfDiscardRoles} from '../utils';
 import {getRuleById} from '../engine';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
@@ -385,5 +385,22 @@ describe('Self-Discard roles: a sweep from the discard to the bottom of the deck
 
   it('keeps an optional sweep the card pays as a cost', () => {
     expect(getSelfDiscardRoles(handInTheBox)).toEqual(['reanimator']);
+  });
+});
+
+// Discard aimed at the biggest hand: it lands on you only while your hand is the biggest.
+const searchForClues = createCard({
+  fullName: 'Search for Clues',
+  type: 'Action',
+  text: 'The player or players with the most cards in their\nhands choose and discard 2 cards. If you have a\nDetective character in play, gain 1 lore.',
+});
+
+describe('Self-Discard roles: a discard aimed at the biggest hand', () => {
+  it('reads no outlet from it', () => {
+    expect(getSelfDiscardRoles(searchForClues)).toEqual([]);
+  });
+
+  it('leaves it to the Discard rule', () => {
+    expect(getDiscardRoles(searchForClues)).toEqual(['standard']);
   });
 });

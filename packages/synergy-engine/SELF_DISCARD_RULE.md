@@ -55,7 +55,7 @@ Three sub-patterns, all gated against opponent-facing discard:
 loot: /draw\s+(?:a|an|\d+)\s+cards?,?\s+then\s+(?:choose and\s+)?discard/i
 hand: /discard\s+your\s+hand/i
 cost: /(?:you may\s+)?discard\s+(?:a|an|another|\d+)\s+(?:\w+\s+){0,2}?cards?\b/i
-gate: !(/opponent|each player|challenging player|that player/i)
+gate: !(/opponent|each player|challenging player|that player|most cards in their hands?/i)
 ```
 
 | Shape | Example card text | Card |
@@ -147,7 +147,7 @@ Deliberately tight: it reads the top-of-deck phrasing only. "Put the rest into y
 
 | Excluded | Pattern / reason |
 |----------|------------------|
-| **Opponent discard** | Anything matching `opponent` / `each player` is the Discard rule's domain (attacking *their* hand). The gate keeps the two axes disjoint, exactly the boundary the Discard rule's doc calls out ("self-discard ... belongs to a separate axis"). One narrow exception: Goliath - Clan Leader's end-of-turn trim stays out of `enabler` but feeds the small-hand payoff (see Feed check). |
+| **Opponent discard** | Anything matching `opponent` / `each player` is the Discard rule's domain (attacking *their* hand). The gate keeps the two axes disjoint, exactly the boundary the Discard rule's doc calls out ("self-discard ... belongs to a separate axis"). Search for Clues ("the player or players with the most cards in their hands choose and discard 2 cards") is gated out too: it lands on you only while your hand is the biggest, and the Discard rule reads it as comparative targeting. One narrow exception: Goliath - Clan Leader's end-of-turn trim stays out of `enabler` but feeds the small-hand payoff (see Feed check). |
 | **Big-hand payoffs** | Jafar - Keeper of Secrets ("+1 ¤ for each card in your hand") and Tinker Bell - Snowflake Collector ("While you have 4 or more cards in your hand") want the opposite of a small hand, so the small-hand pattern names STONE BY DAY's own condition rather than any hand-size count. Neither is a Discard payoff either: that one compares your hand with an opponent's. |
 | **Songs as bin-fillers** | A sung song lands in the discard, so in principle every Song feeds a zone payoff. It is not modelled: that would make every Song a bin-filler and drown the axis in near-baseline pairs, and the Song half of the interaction already has a home in the Singer + Songs rule. |
 | **Mill as a hand-discard enabler** | Mill *is* tagged (role `mill`) but is never an `enabler`: it fills the bin from the deck, so it cannot switch on a payoff that needs an actual hand discard, nor shrink your hand for a small-hand one. `mill ↔ state-payoff` therefore stays at the 5 baseline, while an outlet scores 8 with a discard-event payoff. |
@@ -160,7 +160,7 @@ Real cards the `getSelfDiscardRoles` detector tags for each role (names from the
 
 | Role | Real cards | What they do |
 |------|-----------|--------------|
-| **enabler** | Kronk - Meat Hut Cook (Steel), Search for Clues (Amber), The Horned King - Wicked Ruler (Amethyst) | Discard your own cards from hand: loot, discard-your-hand, or discard-as-cost |
+| **enabler** | Kronk - Meat Hut Cook (Steel), Tod - Clever Fox (Emerald), The Horned King - Wicked Ruler (Amethyst) | Discard your own cards from hand: loot, discard-your-hand, or discard-as-cost |
 | **reanimator** | The Queen - Conceited Ruler (Amber), Lady Tremaine - Sinister Socialite (Ruby), Pluto - Clever Cluefinder (Sapphire) | Play or return a card *from your discard*: the deep recursion payoff |
 | **state-payoff** | Maximus - Relentless Stallion (Steel), Megavolt - Electrical Menace (Steel), Bronx - Ferocious Beast (Ruby) | Rewards the discard event ("discarded a card this turn") or an empty hand (Hellbent), or needs a small one to ready (STONE BY DAY) |
 | **zone-payoff** | Priya Mangal - Serious Music Lover (Amber), Dante - Strange and Endearing (Amethyst), Helga Sinclair - No Backup Needed (Emerald) | Reads the pile itself: a count, a card type sitting there, or what was put there this turn |
@@ -229,19 +229,19 @@ Coverage counts the outlets that shrink the hand. Goliath - Clan Leader has no o
 <!-- coverage:start distribution -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-**132 tagged cards** (44 enabler, 44 reanimator, 20 state-payoff, 28 zone-payoff, 8 mill; roles overlap on multi-role cards). **8,489 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+**131 tagged cards** (43 enabler, 44 reanimator, 20 state-payoff, 28 zone-payoff, 8 mill; roles overlap on multi-role cards). **8,360 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| enabler ↔ a payoff its discard switches on | 372 | 8 | 4.4% |
-| enabler ↔ any other reanimator | 1,700 | 7 | 20.0% |
-| enabler ↔ small-hand payoff | 242 | 7 | 2.9% |
-| mill ↔ reanimator | 308 | 7 | 3.6% |
+| enabler ↔ a payoff its discard switches on | 364 | 8 | 4.4% |
+| enabler ↔ any other reanimator | 1,660 | 7 | 19.9% |
+| enabler ↔ small-hand payoff | 228 | 7 | 2.7% |
+| mill ↔ reanimator | 308 | 7 | 3.7% |
 | mill ↔ zone-payoff | 219 | 7 | 2.6% |
-| enabler ↔ zone-payoff | 1,125 | 6 | 13.3% |
-| reanimator ↔ reanimator | 785 | 6 | 9.2% |
-| enabler ↔ enabler | 703 | 5 | 8.3% |
-| other same-axis | 3,035 | 5 | 35.8% |
+| enabler ↔ zone-payoff | 1,098 | 6 | 13.1% |
+| reanimator ↔ reanimator | 785 | 6 | 9.4% |
+| enabler ↔ enabler | 668 | 5 | 8.0% |
+| other same-axis | 3,030 | 5 | 36.2% |
 <!-- coverage:end -->
 
 Roles overlap on multi-role cards such as Lyle Tiberius Rourke, who mills *and* reanimates, or Hudson - Determined Reader, who loots and carries STONE BY DAY. When both cards of a pair score it the same, the pair is read from its lower-id card as the searcher.
@@ -282,7 +282,7 @@ Same-axis pairs name both cards:
 <!-- coverage:start coverage -->
 | Role | Cards | Cards per ink |
 |----|-----|-------------|
-| enabler (loot / discard-hand / discard-cost) | 44 | Steel 23, Emerald 14, Amethyst 5, Ruby 2, Amber 1 |
+| enabler (loot / discard-hand / discard-cost) | 43 | Steel 23, Emerald 14, Amethyst 5, Ruby 2 |
 | reanimator ("from your discard", minus self-contained, named-card and forced deck-bottom clauses) | 44 | Amber 18, Sapphire 9, Emerald 7, Ruby 6, Steel 5, Amethyst 1 |
 | state-payoff (discarded this turn / Hellbent / STONE BY DAY) | 20 | Steel 10, Amethyst 6, Ruby 4 |
 | zone-payoff (count / card-type / put-this-turn) | 28 | Ruby 11, Emerald 6, Amethyst 5, Sapphire 3, Amber 2, Steel 1 |
@@ -293,15 +293,15 @@ Same-axis pairs name both cards:
 | Reanimators that fire on the discard (8 with an outlet) | 3 (Look What You've Done, Mother Gothel - Evil as Ever, Rapunzel & Flynn Rider - Unlikely Pair) |
 | State payoffs an outlet's discard switches on (8) | 6 (Angel - Experiment 624, Beast's Mirror, Discarded Armor, Gizmoduck - Duckburg Defender, Maximus - Relentless Stallion, Megavolt - Electrical Menace) |
 | STONE BY DAY payoffs an outlet unlocks (7) | 14 |
-| Outlets that shrink the hand enough to unlock one (7) | 17 |
+| Outlets that shrink the hand enough to unlock one (7) | 16 |
 
 ```chart
 {
   "type": "doughnut",
-  "title": "Role composition (132 cards; multi-role overlap)",
+  "title": "Role composition (131 cards; multi-role overlap)",
   "data": {
-    "labels": ["Enabler (44)", "Reanimator (44)", "State-payoff (20)", "Zone-payoff (28)", "Mill (8)"],
-    "values": [44, 44, 20, 28, 8]
+    "labels": ["Enabler (43)", "Reanimator (44)", "State-payoff (20)", "Zone-payoff (28)", "Mill (8)"],
+    "values": [43, 44, 20, 28, 8]
   }
 }
 ```
@@ -313,7 +313,7 @@ Reanimators are the deepest side and mill, the deck-side filler, the thinnest. T
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Self-Discard rule (Discard Matters)')`. The self-contained recursion, named-card and deck-bottom sweep carve-outs and the feed check are tested in `packages/synergy-engine/src/__tests__/selfDiscard.test.ts`, and STONE BY DAY in `packages/synergy-engine/src/__tests__/stoneByDay.test.ts`, both with real card text.
+Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Self-Discard rule (Discard Matters)')`. The self-contained recursion, named-card, deck-bottom sweep and biggest-hand carve-outs and the feed check are tested in `packages/synergy-engine/src/__tests__/selfDiscard.test.ts`, and STONE BY DAY in `packages/synergy-engine/src/__tests__/stoneByDay.test.ts`, both with real card text.
 
 ### Role Detection (10 tests)
 
@@ -340,7 +340,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | fill combos → 7 / 6 | mill ↔ zone-payoff and mill ↔ reanimator 7, loot ↔ zone-payoff 6, with the filler as the actor and the token-swap when the payoff is the searcher |
 | mill ↔ state-payoff → 5 | milling is not a discard event, so it stays at the baseline |
 
-### Self-contained recursion, named cards, deck-bottom sweeps and feed check (20 tests, `selfDiscard.test.ts`)
+### Self-contained recursion, named cards, deck-bottom sweeps, the biggest hand and feed check (22 tests, `selfDiscard.test.ts`)
 
 | Test | What it verifies |
 |------|------------------|
@@ -364,6 +364,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | a named card in another sentence | Get to Safety! stays `['reanimator']` |
 | a sweep the card must make | Mamá Imelda - No-Nonsense Ancestor has no roles; Bouncing Ducky - Sid's Toy keeps only `['zone-payoff']` |
 | an optional sweep | Hand-in-the-Box - Sid's Toy stays `['reanimator']` |
+| a discard aimed at the biggest hand | Search for Clues has no roles, and the Discard rule keeps it `['standard']` |
 
 ### STONE BY DAY (9 tests, `stoneByDay.test.ts`)
 

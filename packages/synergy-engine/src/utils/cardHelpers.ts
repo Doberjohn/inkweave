@@ -947,8 +947,14 @@ const SELF_DISCARD_HAND_PATTERN = /discard\s+your\s+hand/i;
  * "discard a card" costs without over-tagging narrow conditional costs like a Princess/Queen discard.
  */
 const SELF_DISCARD_COST_PATTERN = /(?:you may\s+)?discard\s+(?:a|an|another|\d+)\s+(?:\w+\s+){0,2}?cards?\b/i;
-/** Opponent-facing discard belongs to the Discard rule; exclude it here to keep the two axes disjoint. */
-const SELF_DISCARD_OPPONENT_PATTERN = /opponent|each player|challenging player|that player/i;
+/**
+ * Opponent-facing discard belongs to the Discard rule; exclude it here to keep the two axes
+ * disjoint. Search for Clues' "the player or players with the most cards in their hands choose
+ * and discard" hits you only while your hand is the biggest, and the Discard rule reads it as
+ * comparative targeting, so it is opponent-facing too.
+ */
+const SELF_DISCARD_OPPONENT_PATTERN =
+  /opponent|each player|challenging player|that player|most cards in their hands?/i;
 
 /** Reanimator — play / return / put a card FROM YOUR DISCARD (recursion payoff). */
 const SELF_DISCARD_REANIMATOR_PATTERN = /(?:play|return|put)\b[^.]{0,60}\bfrom your discard\b/i;
