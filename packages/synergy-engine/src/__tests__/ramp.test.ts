@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {getRampRoles, inkLandsOffTriggerTurn, isDeckRamp} from '../utils';
+import {getRampRoles, inkLandsOffTriggerTurn, isDeckRamp, isRepeatingTrigger} from '../utils';
 import {getRuleById} from '../engine';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
@@ -98,6 +98,38 @@ describe("Ramp: ink that lands on the turn a trigger can't fire", () => {
   it('keeps the chain for ramp on your own turn', () => {
     expect(rampPair(mamaOdie, scrooge)?.score).toBe(9);
     expect(rampPair(mamaOdie, chiefTui)?.score).toBe(8);
+  });
+});
+
+// A trigger whose keyword lasts until your next turn: a second ink that turn gives Ward to a
+// Princess that already has it.
+const fairyGodmothersWand = createCard({
+  id: 'fairy-godmothers-wand',
+  name: "Fairy Godmother's Wand",
+  fullName: "Fairy Godmother's Wand",
+  type: 'Item',
+  ink: 'Sapphire',
+  text: 'ONLY TILL MIDNIGHT During your turn, whenever you\nput a card into your inkwell, chosen Princess character\nof yours gains Ward until the start of your next turn.',
+});
+const winnieThePooh = createCard({
+  id: 'winnie-the-pooh-having-a-think',
+  name: 'Winnie the Pooh',
+  fullName: 'Winnie the Pooh - Having a Think',
+  ink: 'Sapphire',
+  text: 'HUNNY POT Whenever this character quests, you may\nput a card from your hand into your inkwell facedown.',
+});
+
+describe('Ramp: a trigger that grants a lasting keyword', () => {
+  it('reads as once per turn', () => {
+    expect(getRampRoles(fairyGodmothersWand)).toEqual(['inkwell-trigger']);
+    expect(isRepeatingTrigger(fairyGodmothersWand)).toBe(false);
+    expect(isRepeatingTrigger(scrooge)).toBe(true);
+  });
+
+  it('scores one tier below a repeating trigger', () => {
+    expect(rampPair(mamaOdie, fairyGodmothersWand)?.score).toBe(8);
+    expect(rampPair(winnieThePooh, fairyGodmothersWand)?.score).toBe(7);
+    expect(rampPair(winnieThePooh, scrooge)?.score).toBe(8);
   });
 });
 

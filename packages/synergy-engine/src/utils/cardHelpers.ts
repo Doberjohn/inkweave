@@ -1591,14 +1591,25 @@ export function isDeckRamp(card: LorcanaCard): boolean {
 }
 
 /**
- * Sub-pattern detection: returns whether a trigger fires every ink event (true)
- * or is capped at once per turn (false).
+ * A trigger that gives one chosen character a keyword until the start of your next turn pays off
+ * once a turn: a second ink that turn gives the keyword to a character that already has it,
+ * unless you have a second target. Fairy Godmother's Wand: "chosen Princess character of yours
+ * gains Ward until the start of your next turn." Only keywords without a number qualify, since a
+ * second Resist +1 or Challenger +1 stacks.
+ */
+const LASTING_KEYWORD_GRANT =
+  /\bchosen\b[^.]*\bgains?\s+(?:Ward|Evasive|Rush|Alert|Bodyguard|Reckless|Support|Vanish)\b[^.]*\buntil the start of your next turn\b/i;
+
+/**
+ * Sub-pattern detection: returns whether a trigger pays off on every ink event (true), or is
+ * capped at once per turn (false): "once during your turn", or a lasting keyword grant
+ * (LASTING_KEYWORD_GRANT).
  */
 export function isRepeatingTrigger(card: LorcanaCard): boolean {
   if (!card.text) return false;
   const t = normalizeCardText(card);
   if (!INKWELL_TRIGGER_PATTERNS.some((p) => p.test(t))) return false;
-  return !/once\s+during\s+your\s+turn/i.test(t);
+  return !/once\s+during\s+your\s+turn/i.test(t) && !LASTING_KEYWORD_GRANT.test(t);
 }
 
 const YOUR_TURN_ONLY = /\bduring your turn\b/i;
