@@ -54,8 +54,9 @@ Floodborn banish-triggers (Maid Marian, The Vine) are also detected by the Sacri
 rule's `banish-trigger`. Expected composition, not a bug.
 
 ## Coverage
-Every pair is a payoff with a Floodborn character or with another payoff, so every score is 6
-or 7.
+Every pair is a payoff with a Floodborn character or with another payoff, so nearly every score
+is 6 or 7. The exception, at 5, is a buff paired with a member that already prints the keyword it
+grants.
 
 <!-- coverage:start coverage -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
