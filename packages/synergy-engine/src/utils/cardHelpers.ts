@@ -137,6 +137,20 @@ export function getShiftBaseNames(card: LorcanaCard): string[] {
 }
 
 /**
+ * A character that also takes another name, for Shift only: "This character also counts as
+ * being named Syndrome for Shift." (Incrediboy - Buddy Pine). A Shift onto Syndrome can land on
+ * it, so it is a Shift base for that name, not a card that names a companion.
+ */
+const SHIFT_ALIAS_PATTERN = /\bcounts as being named\s+(.+?)\s+for\s+Shift\b/gi;
+
+/** The other names a character counts as for Shift; most cards have none. */
+export function getShiftAliasNames(card: LorcanaCard): string[] {
+  // Cheap gate on the raw text: the Shift matcher asks this of every character.
+  if (!card.text || !/\bfor\s+Shift\b/i.test(card.text)) return [];
+  return [...normalizeCardText(card).matchAll(SHIFT_ALIAS_PATTERN)].map((match) => match[1].trim());
+}
+
+/**
  * How a Shift cost is paid: ink from the inkwell ("Shift 5"), or ink drops you remove
  * ("Shift Remove 2 ink drops", Set 14). A ShiftType's `cost` counts in that unit.
  */
@@ -373,7 +387,10 @@ export function makeBanishTriggerPattern(target: string): RegExp {
 }
 
 export const LOCATION_PATTERNS = {
-  'at-payoff': /while\b.{0,60}at a location|if\b.{0,60}at a location|is at a location/i,
+  // "Your characters at locations get +1 ¤" (Russell - Senior Wilderness Explorer) rewards
+  // characters for being at a location; it strengthens no location, so it is no buff.
+  'at-payoff':
+    /while\b.{0,60}at a location|if\b.{0,60}at a location|is at a location|\bcharacters at locations\b/i,
   // The mover may be named by pronoun ("move him to one of your locations", Colonel Hathi) and may
   // move a second character first ("move this character and up to 1 of your other characters to
   // that location", Carl Fredricksen), hence the pronouns and the wider second gap.
@@ -382,21 +399,33 @@ export const LOCATION_PATTERNS = {
   // (stripDamageMoves) rather than dropping the card, so "damage" in reminder text (The Game's
   // Afoot!) or a separate damage move never hides a real location move.
   'move-exclude': /\bmove\b[^.]{0,20}?\bdamage\b/i,
-  // Fires when you PLAY a location (e.g. Elsa - Ice Artisan).
-  'play-trigger': /when(?:ever)? you play a location|whenever.*play a location/i,
+  // Fires when you PLAY a location (e.g. Elsa - Ice Artisan). Only "you play a location" is the
+  // trigger: in "whenever this character becomes exerted, you may play a location" (Fergus -
+  // Outpost Builder) the location play is the effect.
+  'play-trigger': /when(?:ever)? you play a location/i,
   // Fires when a character MOVES onto a location (e.g. Taffyta, Goofy) — a payoff
   // for the `move` enabler. Split from play-trigger so the two events score apart.
   'move-trigger': /when(?:ever)?[^.]{0,40}moves? to a location/i,
-  'in-play-check': /if you have a location|while you have a.*(location)|for each location/i,
-  search: makeSearchPattern('location(?:\\s+cards?)?'),
+  // A check on one named location ("if you have a location named Sleepy Hollow in play", Get to
+  // Safety!) or on a card under one ("a character or location in play with a card under them",
+  // Flintheart Glomgold) is no reward for any location in play. One sentence at most.
+  'in-play-check':
+    /if you have a location(?! named\b)|while you have an? [^.]*?\blocation\b(?! named\b)(?![^.]*\bwith a card under\b)|for each location/i,
+  // "a location card named Andy's Room" (Woody - Leader of the Toys) finds that one location only.
+  search: makeSearchPattern('location(?!(?:\\s+cards?)?\\s+named\\b)(?:\\s+cards?)?'),
   // "move ... to (one of) your locations" is a move destination (Colonel Hathi), not a buff; "give
   // ... to your locations" still is, even later in the move's sentence. The skip needs that "to" to
   // be the move's first ("up to N" aside), so it reaches only the move's own destination.
-  buff: /(?<!\bmove\b(?:(?!\bto\b)[^.]|\bup to\b){0,60}\bto (?:one of )?)your locations|locations gain|locations get|location.*can't be challenged|location gains? resist/i,
+  // "Your characters at locations get" strengthens characters, so "locations get" needs
+  // locations as its subject.
+  buff: /(?<!\bmove\b(?:(?!\bto\b)[^.]|\bup to\b){0,60}\bto (?:one of )?)your locations|(?<!\bat )locations (?:gain|get)\b|location.*can't be challenged|location gains? resist/i,
   boost:
     /under.*(?:characters|character) or locations|under.*locations|locations with boost|play a character or location with boost/i,
+  // Each shape stays in one sentence, and a free location play stays in one clause: in "whenever
+  // you play a location, you may move this character ... for free" (Carl Fredricksen - On the
+  // Move) the free part is the move.
   'location-ramp':
-    /\bless\b.*(?:to )?(?:play|move).*location|\bless\b for.*location|play a location.*(?:from|for free)/i,
+    /\bless\b[^.]*?\b(?:play|move)\b[^.]*?\blocation|\bless\b for[^.]*?\blocation|play a location[^,.]*?(?:from|for free)/i,
   /** Anti-location cards: banish/remove/shuffle locations. Excluded from location-control. */
   'anti-location': /banish (?:chosen |all )(?:item or )?location|shuffle.*location into/i,
   /** Locations that actually benefit from having cards beneath them — used to scope the boost rule. */
@@ -524,17 +553,160 @@ export function getLocationMoveClassifications(card: LorcanaCard): string[] {
 }
 
 /**
+ * A location play capped by cost: "Play a location with cost 3 or less from your discard for
+ * free" (Get to Safety!). Global flag: use only with matchAll/replace, never .test().
+ */
+const CAPPED_LOCATION_PLAY = /\bplay a location\b[^.]*?\bwith cost (\d+) or less\b/gi;
+
+/**
+ * The highest location cost a card's location ramp reaches: the cap of its capped location plays,
+ * or Infinity when it has none, or when the text still reads as location ramp once they are cut
+ * (the card also ramps every location).
+ */
+function getLocationRampCostCap(card: LorcanaCard): number {
+  const text = normalizeCardText(card);
+  const caps = [...text.matchAll(CAPPED_LOCATION_PLAY)].map((m) => Number(m[1]));
+  if (
+    caps.length === 0 ||
+    LOCATION_PATTERNS['location-ramp'].test(text.replace(CAPPED_LOCATION_PLAY, '.'))
+  ) {
+    return Infinity;
+  }
+  return Math.max(...caps);
+}
+
+/**
+ * A discount on a move to a location: "pay 1 ⬡ less to move this character to a location"
+ * (Raksha - Fearless Mother). Global flag: use only with replace, never .test().
+ */
+const MOVE_COST_DISCOUNT = /\bless\b[^.]*?\bto move\b[^.]*?\blocation/gi;
+
+/**
+ * Whether a card's location ramp only makes moves cheaper. It puts no location into play, so it
+ * helps what a move helps, and nothing at a location that costs no ink to move to.
+ */
+export function isMoveOnlyLocationRamp(card: LorcanaCard): boolean {
+  const text = normalizeCardText(card);
+  const rest = text.replace(MOVE_COST_DISCOUNT, '.');
+  return rest !== text && !LOCATION_PATTERNS['location-ramp'].test(rest);
+}
+
+/**
+ * A sentence that puts cards only under characters or locations with Boost ("under one of your
+ * characters or locations with Boost", Recovered Page). Global flag: use only with replace.
+ */
+const WITH_BOOST_SENTENCE = /[^.]*\blocations? with Boost\b[^.]*/gi;
+
+/** Cards under a location, either way round: "under one of your locations", "locations with a card under them". */
+const CARDS_UNDER_LOCATION = /\bunder\b[^.]*\blocations?\b|\blocations?\b[^.]*\bunder\b/i;
+
+/**
+ * Whether a boost card works only with locations that have Boost: each of its sentences about
+ * cards under a location says "with Boost". Blessed Bagpipes also rewards "locations with a card
+ * under them", so it works with any location that holds cards.
+ */
+function boostNeedsBoostKeyword(card: LorcanaCard): boolean {
+  const text = normalizeCardText(card);
+  const rest = text.replace(WITH_BOOST_SENTENCE, '.');
+  return rest !== text && !CARDS_UNDER_LOCATION.test(rest);
+}
+
+/**
+ * A sentence whose reward is sized by the location's lore: "draw cards equal to that location's
+ * ◊" (Carl Fredricksen - On the Move). Global flag: use only with replace.
+ */
+const LORE_SIZED_SENTENCE = /[^.]*\bequal to that location's ◊[^.]*/gi;
+
+/**
+ * Whether a card's at-location reward is sized by the location's lore in every sentence that
+ * reads as one, so it gives nothing at a location without lore.
+ */
+function atPayoffNeedsLore(card: LorcanaCard): boolean {
+  const text = normalizeCardText(card);
+  const rest = text.replace(LORE_SIZED_SENTENCE, '.');
+  return rest !== text && !LOCATION_PATTERNS['at-payoff'].test(rest);
+}
+
+/** Whether `location` has one of `classifications`; [] means every location. */
+const hasAnyClassification = (classifications: string[], location: LorcanaCard): boolean =>
+  classifications.length === 0 || classifications.some((c) => hasClassification(location, c));
+
+/** A location ramp reaches locations under its cost cap; a move discount, only locations that cost ink to move to. */
+function locationRampReaches(card: LorcanaCard, location: LorcanaCard): boolean {
+  if ((location.cost ?? 0) > getLocationRampCostCap(card)) return false;
+  return !isMoveOnlyLocationRamp(card) || (location.moveCost ?? 0) > 0;
+}
+
+/** The locations a role reaches, for the roles that do not reach every location. */
+const LOCATION_ROLE_REACH: Partial<
+  Record<LocationRole, (card: LorcanaCard, location: LorcanaCard) => boolean>
+> = {
+  buff: (card, location) => hasAnyClassification(getLocationBuffClassifications(card), location),
+  move: (card, location) => hasAnyClassification(getLocationMoveClassifications(card), location),
+  'location-ramp': locationRampReaches,
+  'at-payoff': (card, location) => !atPayoffNeedsLore(card) || (location.lore ?? 0) > 0,
+  boost: (card, location) => !boostNeedsBoostKeyword(card) || hasKeyword(location, 'Boost'),
+};
+
+/**
  * Whether a card's `role` reaches `location`. A classified buff or move reaches only locations of
- * its own classification; every other role reaches every location.
+ * its own classification; a capped location play, only locations under its cap; a move discount,
+ * only locations that cost ink to move to; a reward sized by lore, only locations with lore; and
+ * cards put under locations "with Boost", only locations with Boost. Every other role reaches
+ * every location.
  */
 export function locationRoleReaches(card: LorcanaCard, location: LorcanaCard, role: LocationRole): boolean {
-  const scoped =
-    role === 'buff'
-      ? getLocationBuffClassifications(card)
-      : role === 'move'
-        ? getLocationMoveClassifications(card)
-        : [];
-  return scoped.length === 0 || scoped.some((c) => hasClassification(location, c));
+  return LOCATION_ROLE_REACH[role]?.(card, location) ?? true;
+}
+
+/** Other characters rewarded at the location too: "all characters at that location get +1 ◊". */
+const OTHERS_AT_LOCATION = /\bcharacters at (?:that|this|the|a) location\b/i;
+
+/**
+ * Clauses that concern only the card itself, by the role they carry, each with the test of
+ * whether the rest of the text still reads as that role. Global flags: use only with replace.
+ * - move: it moves only itself ("move him to a location", Arthur - Merlin's Assistant); "move
+ *   him and one of your other characters" moves another character too.
+ * - at-payoff: it is rewarded for being at a location itself ("while this character is at a
+ *   location", Shenzi; "if he's at a location", Beast), unless the reward goes to every
+ *   character there ("all characters at that location get +1 ◊", Carl Fredricksen & Russell).
+ * - move-trigger: it triggers on its own move ("whenever this character moves to a location").
+ */
+const SELF_ONLY_LOCATION_CLAUSES: ReadonlyArray<{
+  role: LocationRole;
+  clause: RegExp;
+  readsAsRole: (text: string) => boolean;
+}> = [
+  {
+    role: 'move',
+    clause: /\bmove (?:this character|him|her)\b(?! and\b)[^.]*?\blocations?\b/gi,
+    readsAsRole: readsAsLocationMove,
+  },
+  {
+    role: 'at-payoff',
+    clause: /\b(?:this character|he|she)\b(?:'s| is)?[^.,]*?\bat a location\b/gi,
+    readsAsRole: (text) =>
+      LOCATION_PATTERNS['at-payoff'].test(text) || OTHERS_AT_LOCATION.test(text),
+  },
+  {
+    role: 'move-trigger',
+    clause: /\b(?:this character|he|she) moves? to a location\b/gi,
+    readsAsRole: (text) => LOCATION_PATTERNS['move-trigger'].test(text),
+  },
+];
+
+/**
+ * A character's location roles whose every clause concerns only itself. Two such clauses do
+ * nothing for each other: a character that moves only itself never puts another character at a
+ * location, and one rewarded only for its own position needs its own move.
+ */
+export function getSelfOnlyLocationRoles(card: LorcanaCard): LocationRole[] {
+  if (!isCharacter(card)) return [];
+  const text = normalizeCardText(card);
+  return SELF_ONLY_LOCATION_CLAUSES.filter(({clause, readsAsRole}) => {
+    const rest = text.replace(clause, '.');
+    return rest !== text && !readsAsRole(rest);
+  }).map(({role}) => role);
 }
 
 // ============================================
@@ -640,6 +812,20 @@ export type SacrificeRole = 'self-banish' | 'banish-trigger';
 const SACRIFICE_BANISH_TRIGGER_PATTERN =
   /when(?:ever)?\s+(?:this character|(?:one of\s+)?your(?:\s+other)?(?:\s+\w+)?\s+characters?|a\s+character\s+of\s+yours)\s+(?:is|are|gets?)\s+banished/i;
 
+/** Every banish trigger on a card, counted against the opponent's-turn ones below. */
+const SACRIFICE_BANISH_TRIGGERS = new RegExp(SACRIFICE_BANISH_TRIGGER_PATTERN.source, 'gi');
+
+/**
+ * A banish trigger that fires only on an opponent's turn ("During an opponent's turn, when this
+ * character is banished", "During opponents' turns, whenever one of your other characters is
+ * banished"). Every self-banish card banishes on your own turn (an action, a ⟳ ability or an
+ * on-play effect), so it never sets such a trigger off.
+ */
+const SACRIFICE_OPPONENT_TURN_TRIGGERS = new RegExp(
+  `\\bduring (?:an opponent's turn|opponents' turns),\\s*${SACRIFICE_BANISH_TRIGGER_PATTERN.source}`,
+  'gi',
+);
+
 /**
  * The any-character half of SACRIFICE_BANISH_TRIGGER_PATTERN: the payoff fires when any of your
  * characters is banished, not only when the card itself is.
@@ -690,6 +876,16 @@ export function getSacrificeRoles(card: LorcanaCard): SacrificeRole[] {
  */
 export function isSacrificeCard(card: LorcanaCard): boolean {
   return getSacrificeRoles(card).length > 0;
+}
+
+/**
+ * True iff a banish payoff can fire on your own turn, when a self-banish card acts: some banish
+ * trigger on it isn't limited to an opponent's turn (see SACRIFICE_OPPONENT_TURN_TRIGGERS).
+ */
+export function banishTriggerFiresOnYourTurn(card: LorcanaCard): boolean {
+  const text = normalizeCardText(card);
+  const triggers = text.match(SACRIFICE_BANISH_TRIGGERS)?.length ?? 0;
+  return triggers > (text.match(SACRIFICE_OPPONENT_TURN_TRIGGERS)?.length ?? 0);
 }
 
 /**
@@ -750,6 +946,24 @@ const SELF_CONTAINED_RECURSION_PATTERN =
   /\b(?:play|return|put)\s+(?:this|that)\s+(?:card|item|character|location)\s+from your discard\b|\bthose\s+characters\s+from your discard\b|\byou played this turn\b[^.]{0,60}\bfrom your discard\b|\bthis way, you may (?:play|return) it from your discard\b/i;
 /** Self-recursion that fires when YOU discard the card is fed by hand discard, so it stays. */
 const DISCARD_FED_RECURSION_PATTERN = /\bwhen(?:ever)?\s+you\s+discard\b/i;
+/**
+ * Recursion of one named card ("return an action card named Three Arrows from your discard",
+ * "another character card named Alien"). Only that card switches it on, and Named Companions
+ * already pairs the two, so no outlet or mill feeds it. Neither side of "named" may cross
+ * another play/return/put, so a named card elsewhere in the sentence ("if you have an item
+ * named Rivera Family Photo in play, you may play this item from your discard") stays out.
+ */
+const NAMED_CARD_RECURSION_PATTERN =
+  /\b(?:play|return|put)\b(?:(?!\b(?:play|return|put)\b)[^.]){0,60}?\bnamed\b(?:(?!\b(?:play|return|put)\b)[^.]){0,40}?\bfrom your discard\b/gi;
+/**
+ * A sweep that must move cards from your discard to the bottom of your deck ("put 3 cards from
+ * your discard on the bottom of your deck in any order or banish her", Mamá Imelda -
+ * No-Nonsense Ancestor). No card comes back to hand or play, so it is no recursion. An optional
+ * one ("you may put a Toy character card from your discard on the bottom of your deck to play
+ * this character for free") is a cost the card pays for something else, and stays.
+ */
+const MANDATORY_DECK_BOTTOM_SWEEP_PATTERN =
+  /(?<!\byou may )\bput\b[^.]{0,40}?\bfrom your discard on the bottom of your deck\b/gi;
 
 /** A sentence break: the whitespace after ".", "!" or "?". */
 const SENTENCE_BREAK = /(?<=[.!?])\s+/;
@@ -763,6 +977,16 @@ function stripSelfContainedRecursion(text: string): string {
 }
 
 /**
+ * The text with only the recursion an outlet or a mill can feed: self-contained recursion
+ * sentences, named-card recursion clauses and mandatory deck-bottom sweeps removed.
+ */
+function stripUnfedRecursion(text: string): string {
+  return stripSelfContainedRecursion(text)
+    .replace(NAMED_CARD_RECURSION_PATTERN, '')
+    .replace(MANDATORY_DECK_BOTTOM_SWEEP_PATTERN, '');
+}
+
+/**
  * Recursion that fires on your discard ("when you discard this card, you may play it from your
  * discard"), so a hand discard switches it on.
  */
@@ -770,6 +994,18 @@ function hasDiscardFedRecursion(text: string): boolean {
   return text
     .split(SENTENCE_BREAK)
     .some((s) => SELF_DISCARD_REANIMATOR_PATTERN.test(s) && DISCARD_FED_RECURSION_PATTERN.test(s));
+}
+
+/**
+ * Every recursion an outlet can feed fires on your discard (Mother Gothel - Evil as Ever: "when
+ * you discard this card, you may play this character from your discard"). A mill puts cards into
+ * your discard without discarding them, so it never switches such recursion on.
+ */
+function recursesOnlyOnDiscard(text: string): boolean {
+  const recursion = stripUnfedRecursion(text)
+    .split(SENTENCE_BREAK)
+    .filter((s) => SELF_DISCARD_REANIMATOR_PATTERN.test(s));
+  return recursion.length > 0 && recursion.every((s) => DISCARD_FED_RECURSION_PATTERN.test(s));
 }
 /** State payoff, event half: rewards the discard EVENT ("if you discarded a card this turn"). */
 const SELF_DISCARD_EVENT_PATTERN = /discarded\s+a\s+card\s+this\s+turn/i;
@@ -785,10 +1021,12 @@ const SELF_DISCARD_SMALL_HAND_PATTERN =
 /**
  * Zone payoff — counts or checks cards sitting IN your discard ("10 or more cards in your
  * discard", "for each Alien character card in your discard", "a song card in your discard").
- * "in your discard" keeps it disjoint from the reanimator's "from your discard".
+ * "in your discard" keeps it disjoint from the reanimator's "from your discard". A check for one
+ * named card ("a character card named Panic in your discard") is no pile check: only that card
+ * switches it on, and Named Companions already pairs the two.
  */
 const SELF_DISCARD_ZONE_IN_PATTERN =
-  /\b(?:a|an|\d+\s+or\s+more|for\s+each)\s+(?:\w+\s+){0,3}?cards?\s+(?:named\s+\w+\s+)?in\s+your\s+discard\b/i;
+  /\b(?:a|an|\d+\s+or\s+more|for\s+each)\s+(?:\w+\s+){0,3}?cards?\s+in\s+your\s+discard\b/i;
 /** Zone payoff — the "N or more cards were put into your discard this turn" trigger family. */
 const SELF_DISCARD_ZONE_PUT_PATTERN = /cards?\s+were\s+put\s+into\s+your\s+discard\s+this\s+turn/i;
 /** Mill — fills the bin from the top of the deck. Kept tight: "put the rest / put it into your discard" is not mill. */
@@ -804,13 +1042,13 @@ function isSelfDiscardZonePayoff(text: string): boolean {
 }
 
 /**
- * Reanimator: recursion that is not self-contained. The raw test runs first, so the sentence
- * split only happens for the few cards that recur anything at all.
+ * Reanimator: recursion an outlet or a mill can feed (see stripUnfedRecursion). The raw test
+ * runs first, so the sentence split only happens for the few cards that recur anything at all.
  */
 function isSelfDiscardReanimator(text: string): boolean {
   return (
     SELF_DISCARD_REANIMATOR_PATTERN.test(text) &&
-    SELF_DISCARD_REANIMATOR_PATTERN.test(stripSelfContainedRecursion(text))
+    SELF_DISCARD_REANIMATOR_PATTERN.test(stripUnfedRecursion(text))
   );
 }
 
@@ -823,17 +1061,22 @@ function isSelfDiscardStatePayoff(text: string): boolean {
   );
 }
 
-/**
- * Enabler: a hand-discard OUTLET (loot / discard-your-hand / discard-as-cost) that is NOT
- * opponent-facing (opponent discard belongs to the Discard rule). Split out of
- * getSelfDiscardRoles so the role builder stays a flat sequence of named pushes.
- */
-function isSelfDiscardEnabler(text: string): boolean {
-  const isOutlet =
+/** A hand-discard OUTLET: loot, discard-your-hand or discard-as-cost. */
+function hasSelfDiscardOutlet(text: string): boolean {
+  return (
     SELF_DISCARD_LOOT_PATTERN.test(text) ||
     SELF_DISCARD_HAND_PATTERN.test(text) ||
-    SELF_DISCARD_COST_PATTERN.test(text);
-  return isOutlet && !SELF_DISCARD_OPPONENT_PATTERN.test(text);
+    SELF_DISCARD_COST_PATTERN.test(text)
+  );
+}
+
+/**
+ * Enabler: a hand-discard outlet that is NOT opponent-facing (opponent discard belongs to the
+ * Discard rule). Split out of getSelfDiscardRoles so the role builder stays a flat sequence of
+ * named pushes.
+ */
+function isSelfDiscardEnabler(text: string): boolean {
+  return hasSelfDiscardOutlet(text) && !SELF_DISCARD_OPPONENT_PATTERN.test(text);
 }
 
 /** Determine the self-discard role(s) a card fulfills. A card can be multi-role (loot + reanimate). */
@@ -860,8 +1103,13 @@ export function isSelfDiscardCard(card: LorcanaCard): boolean {
 // Self-discard feed check: can this outlet's discard switch on that payoff?
 // --------------------------------------------
 
-/** A card kind a typed discard or recursion clause names. A song is an action (CR 5.4.4.1). */
+/** A card kind a typed discard, recursion or pile check names. A song is an action (CR 5.4.4.1). */
 type SelfDiscardKind = 'character' | 'action' | 'song' | 'item' | 'location';
+/**
+ * A kind as a clause admits it: a card kind, or characters of one classification when the clause
+ * names one ("an Alien character card" admits 'character:Alien').
+ */
+type SelfDiscardKindEntry = SelfDiscardKind | `character:${string}`;
 
 /** Kind word → the kinds it admits. "action" admits songs too; "song" admits only songs. */
 const SELF_DISCARD_KIND_WORDS: ReadonlyArray<readonly [RegExp, readonly SelfDiscardKind[]]> = [
@@ -879,10 +1127,11 @@ const SELF_DISCARD_TYPED_OUTLET_PATTERN =
 /** A recursion clause's object: the words between its nearest play/return/put and "from your discard". */
 const SELF_DISCARD_RECURSION_OBJECT_PATTERN =
   /\b(?:play|return|put)\b((?:(?!\b(?:play|return|put)\b)[^.]){0,60}?)\bfrom your discard\b/i;
-/** A recursion object restricted to one named card: "an action card named Three Arrows". */
-const SELF_DISCARD_NAMED_OBJECT_PATTERN = /\bnamed\s+(.+?)\s*$/i;
 /** A recursion object that takes any card: "a card", "another card", "2 cards". */
 const SELF_DISCARD_ANY_OBJECT_PATTERN = /\b(?:a|an|another|any|\d+)\s+cards?\b/i;
+/** A recursion object that is the card itself: "this character", "this card", "it". */
+const SELF_DISCARD_SELF_OBJECT_PATTERN =
+  /\bthis\s+(?:card|character|item|location|action|song)\b|\bit\b/i;
 /**
  * An outlet that discards one card and then draws 2+ ("discard a song card. If you do, draw
  * 2 cards"), so its hand is never empty when it resolves. Deliberately narrow (Max Goof -
@@ -906,66 +1155,156 @@ const SELF_DISCARD_DRAW_FIRST_PATTERN =
 const SELF_DISCARD_HAND_TRIM_PATTERN =
   /\beach player's turn, if they have more than ([0-2]) cards in their hand, they choose and discard cards until they have \1\b/i;
 
-/** The kinds the kind words in `fragment` admit (empty when it names none). */
-function selfDiscardKindsIn(fragment: string): Set<SelfDiscardKind> {
-  const kinds = new Set<SelfDiscardKind>();
+/** An ability that resolves as your turn ends, after your quests, challenges and plays. */
+const END_OF_YOUR_TURN_PATTERN = /\bat the end of your turn\b/i;
+
+/** The card's ability blocks, each normalized; the whole text when it carries no sections. */
+function selfDiscardAbilityTexts(card: LorcanaCard): string[] {
+  const sections = card.textSections?.length ? card.textSections : [card.text ?? ''];
+  return sections.map((text) => normalizeCardText({...card, text}));
+}
+
+/**
+ * Every outlet on the card sits in an "At the end of your turn" ability (Meeko - Skittish
+ * Scrounger: "At the end of your turn, if this character is exerted, choose and discard a card
+ * or banish him"), so its discard lands after every check made during the turn.
+ */
+function discardsOnlyAtEndOfTurn(blocks: string[]): boolean {
+  const outlets = blocks.filter(hasSelfDiscardOutlet);
+  return outlets.length > 0 && outlets.every((block) => END_OF_YOUR_TURN_PATTERN.test(block));
+}
+
+/**
+ * The card checks this turn's discards as your turn ends ("At the end of your turn, if 2 or more
+ * cards were put into your discard this turn, draw a card"), late enough for an end-of-turn
+ * outlet to count.
+ */
+function checksDiscardsAtEndOfTurn(blocks: string[]): boolean {
+  return blocks.some(
+    (block) =>
+      END_OF_YOUR_TURN_PATTERN.test(block) &&
+      (SELF_DISCARD_EVENT_PATTERN.test(block) || SELF_DISCARD_ZONE_PUT_PATTERN.test(block)),
+  );
+}
+
+/** A classification narrowing the character kind word right after it: "an Alien character card". */
+const SELF_DISCARD_CLASSIFIED_CHARACTER_PATTERN = /\b([A-Z][a-z]+)\s+characters?\b/;
+
+/**
+ * The kinds the kind words in `fragment` admit (empty when it names none), with the character
+ * kind narrowed to the classification that precedes it.
+ */
+function selfDiscardKindsIn(fragment: string): Set<SelfDiscardKindEntry> {
+  const kinds = new Set<SelfDiscardKindEntry>();
   for (const [word, admits] of SELF_DISCARD_KIND_WORDS) {
     if (word.test(fragment)) admits.forEach((kind) => kinds.add(kind));
   }
+  const classification = SELF_DISCARD_CLASSIFIED_CHARACTER_PATTERN.exec(fragment)?.[1];
+  if (classification && kinds.delete('character')) kinds.add(`character:${classification}`);
   return kinds;
 }
 
 /** What an outlet can put in the bin; null when it can discard any card (or names no known kind). */
-function selfDiscardOutletKinds(text: string): Set<SelfDiscardKind> | null {
+function selfDiscardOutletKinds(text: string): Set<SelfDiscardKindEntry> | null {
   if (SELF_DISCARD_ANY_OUTLET_PATTERN.test(text)) return null;
   const kinds = selfDiscardKindsIn(SELF_DISCARD_TYPED_OUTLET_PATTERN.exec(text)?.[0] ?? '');
   return kinds.size > 0 ? kinds : null;
 }
 
-/** A self-reference ("this card", "it", a card named like itself) recurs the card's own kind. */
-function ownSelfDiscardKinds(card: LorcanaCard): Set<SelfDiscardKind> {
-  return new Set([isSong(card) ? 'song' : (card.type.toLowerCase() as SelfDiscardKind)]);
+/**
+ * A self-reference ("this card", "it") recurs the card itself: a song, its own type, or for a
+ * character each of its classifications, so a classified outlet meets it only when the card
+ * carries that classification.
+ */
+function ownSelfDiscardKinds(card: LorcanaCard): Set<SelfDiscardKindEntry> {
+  if (isSong(card)) return new Set(['song']);
+  const kind = card.type.toLowerCase() as SelfDiscardKind;
+  const classes = kind === 'character' ? (card.classifications ?? []) : [];
+  if (classes.length === 0) return new Set([kind]);
+  return new Set(classes.map((classification) => `character:${classification}` as const));
+}
+
+/** Every "N cards in your discard" check on a card, read for the kinds it counts. */
+const SELF_DISCARD_ZONE_IN_CHECKS = new RegExp(SELF_DISCARD_ZONE_IN_PATTERN.source, 'gi');
+
+/**
+ * What a zone payoff counts in the pile; null when any card counts ("10 or more cards in your
+ * discard", "cards were put into your discard this turn") or it reads no pile at all.
+ */
+function selfDiscardPileKinds(text: string): Set<SelfDiscardKindEntry> | null {
+  if (SELF_DISCARD_ZONE_PUT_PATTERN.test(text)) return null;
+  const kinds = new Set<SelfDiscardKindEntry>();
+  for (const [check] of text.matchAll(SELF_DISCARD_ZONE_IN_CHECKS)) {
+    const counted = selfDiscardKindsIn(check);
+    if (counted.size === 0) return null;
+    counted.forEach((kind) => kinds.add(kind));
+  }
+  return kinds.size > 0 ? kinds : null;
 }
 
 /**
- * What a reanimator pulls from the bin; null when it takes any card. A named other card
- * ("an action card named Three Arrows") admits no kind, since no typed outlet is known to
- * discard it; an object with no kind word and no generic card ("this card", "it") is a self-reference.
+ * What a reanimator pulls from the bin; null when it takes any card. "This character", "this
+ * card" or "it" is a self-reference, and so is an object with no kind word and no generic card.
+ * Named-card recursion never gets here: stripUnfedRecursion has removed it.
  */
-function selfDiscardRecursionKinds(card: LorcanaCard, text: string): Set<SelfDiscardKind> | null {
+function selfDiscardRecursionKinds(
+  card: LorcanaCard,
+  text: string,
+): Set<SelfDiscardKindEntry> | null {
   const object = SELF_DISCARD_RECURSION_OBJECT_PATTERN.exec(text)?.[1] ?? 'a card';
-  const named = SELF_DISCARD_NAMED_OBJECT_PATTERN.exec(object)?.[1];
-  if (named !== undefined) return named === card.name ? ownSelfDiscardKinds(card) : new Set();
+  if (SELF_DISCARD_SELF_OBJECT_PATTERN.test(object)) return ownSelfDiscardKinds(card);
   const kinds = selfDiscardKindsIn(object);
   if (kinds.size > 0) return kinds;
   return SELF_DISCARD_ANY_OBJECT_PATTERN.test(object) ? null : ownSelfDiscardKinds(card);
 }
 
-/** Two kind sets can meet in one card: either side takes any card, or they share a kind. */
-function selfDiscardKindsMeet(a: Set<SelfDiscardKind> | null, b: Set<SelfDiscardKind> | null): boolean {
-  return a === null || b === null || [...a].some((kind) => b.has(kind));
+/** Two entries admit one card: the same kind, and the same classification where both name one. */
+function selfDiscardEntriesMeet(a: SelfDiscardKindEntry, b: SelfDiscardKindEntry): boolean {
+  const [kindA, classA] = a.split(':');
+  const [kindB, classB] = b.split(':');
+  const classesMeet = !classA || !classB || classA === classB;
+  return kindA === kindB && classesMeet;
+}
+
+/** Two kind sets can meet in one card: either side takes any card, or two entries meet. */
+function selfDiscardKindsMeet(
+  a: Set<SelfDiscardKindEntry> | null,
+  b: Set<SelfDiscardKindEntry> | null,
+): boolean {
+  if (a === null || b === null) return true;
+  return [...a].some((entry) => [...b].some((other) => selfDiscardEntriesMeet(entry, other)));
 }
 
 /** What a card's discard or recursion can reach. Fixed per card, while the feed check runs per pair. */
 interface SelfDiscardFeedProfile {
   /** Kinds the card discards as an outlet; null when it can discard any card. */
-  outletKinds: Set<SelfDiscardKind> | null;
+  outletKinds: Set<SelfDiscardKindEntry> | null;
   /** The outlet refills the hand as it discards ("discard a card. If you do, draw 2 cards"). */
   refills: boolean;
   /** The outlet leaves a smaller hand: no draw before its discard (a loot), no refill after. */
   shrinksHand: boolean;
   /** The card trims your hand to 2 at the end of your turn (Goliath - Clan Leader). */
   trimsHand: boolean;
-  /** Kinds the card's recursion pulls, self-contained recursion stripped; null when it takes any card. */
-  recursionKinds: Set<SelfDiscardKind> | null;
+  /** Every outlet on the card discards at the end of your turn (see discardsOnlyAtEndOfTurn). */
+  discardsAtEndOfTurn: boolean;
+  /** Kinds the card's recursion pulls, unfed recursion stripped; null when it takes any card. */
+  recursionKinds: Set<SelfDiscardKindEntry> | null;
   /** The recursion fires on your discard (see hasDiscardFedRecursion). */
   recursionOnDiscard: boolean;
+  /** All of the recursion fires on your discard, so a mill never feeds it (see recursesOnlyOnDiscard). */
+  recursionOnlyOnDiscard: boolean;
   /** The state payoff rewards the discard event ("discarded a card this turn"). */
   rewardsEvent: boolean;
   /** The state payoff rewards an empty hand ("while you have no cards in your hand"). */
   rewardsEmptyHand: boolean;
   /** The state payoff needs a small hand to ready (STONE BY DAY). */
   needsSmallHand: boolean;
+  /** The zone payoff reads the pile itself (a count or a card type), whenever it looks. */
+  readsPile: boolean;
+  /** Kinds the zone payoff counts in the pile; null when any card counts. */
+  pileKinds: Set<SelfDiscardKindEntry> | null;
+  /** The card checks this turn's discards at the end of your turn (see checksDiscardsAtEndOfTurn). */
+  checksAtEndOfTurn: boolean;
 }
 
 const selfDiscardFeedProfiles = new WeakMap<LorcanaCard, SelfDiscardFeedProfile>();
@@ -975,17 +1314,23 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
   const cached = selfDiscardFeedProfiles.get(card);
   if (cached) return cached;
   const text = normalizeCardText(card);
+  const blocks = selfDiscardAbilityTexts(card);
   const refills = SELF_DISCARD_REFILL_PATTERN.test(text);
   const profile: SelfDiscardFeedProfile = {
     outletKinds: selfDiscardOutletKinds(text),
     refills,
     shrinksHand: !refills && !SELF_DISCARD_DRAW_FIRST_PATTERN.test(text),
     trimsHand: SELF_DISCARD_HAND_TRIM_PATTERN.test(text),
-    recursionKinds: selfDiscardRecursionKinds(card, stripSelfContainedRecursion(text)),
+    discardsAtEndOfTurn: discardsOnlyAtEndOfTurn(blocks),
+    recursionKinds: selfDiscardRecursionKinds(card, stripUnfedRecursion(text)),
     recursionOnDiscard: hasDiscardFedRecursion(text),
+    recursionOnlyOnDiscard: recursesOnlyOnDiscard(text),
     rewardsEvent: SELF_DISCARD_EVENT_PATTERN.test(text),
     rewardsEmptyHand: SELF_DISCARD_HELLBENT_PATTERN.test(text),
     needsSmallHand: SELF_DISCARD_SMALL_HAND_PATTERN.test(text),
+    readsPile: SELF_DISCARD_ZONE_IN_PATTERN.test(text),
+    pileKinds: selfDiscardPileKinds(text),
+    checksAtEndOfTurn: checksDiscardsAtEndOfTurn(blocks),
   };
   selfDiscardFeedProfiles.set(card, profile);
   return profile;
@@ -1000,16 +1345,30 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
 export type SelfDiscardFeed = 'trigger' | 'stock' | 'unlock';
 
 /**
- * How an outlet's discard reaches a state payoff: any discard is a "discarded a card this turn"
- * event, while an empty hand needs an outlet that doesn't refill it, and a small hand one that
- * shrinks it (a loot or a refill leaves the hand as big or bigger).
+ * The outlet's discard lands before the payoff checks this turn's discards: it discards during
+ * the turn, or the payoff checks as the turn ends. An end-of-turn outlet is too late for a check
+ * made while you quest, challenge or play ("If you discarded a card this turn, this character …
+ * can challenge ready characters this turn").
+ */
+function discardLandsInTime(
+  outlet: SelfDiscardFeedProfile,
+  target: SelfDiscardFeedProfile,
+): boolean {
+  return !outlet.discardsAtEndOfTurn || target.checksAtEndOfTurn;
+}
+
+/**
+ * How an outlet's discard reaches a state payoff: any discard in time is a "discarded a card
+ * this turn" event, while an empty hand needs an outlet that doesn't refill it, and a small hand
+ * one that shrinks it (a loot or a refill leaves the hand as big or bigger).
  */
 function selfDiscardStateFeed(
   outlet: SelfDiscardFeedProfile,
   target: SelfDiscardFeedProfile,
 ): SelfDiscardFeed | null {
+  const feedsEvent = target.rewardsEvent && discardLandsInTime(outlet, target);
   const feedsEmptyHand = target.rewardsEmptyHand && !outlet.refills;
-  if (target.rewardsEvent || feedsEmptyHand) return 'trigger';
+  if (feedsEvent || feedsEmptyHand) return 'trigger';
   return target.needsSmallHand && outlet.shrinksHand ? 'unlock' : null;
 }
 
@@ -1031,7 +1390,7 @@ function selfDiscardRecursionFeed(
  *  - state: a trigger for the discard event or an empty hand, except that a refill outlet never
  *    leaves the empty hand a "no cards in hand" payoff needs; an unlock for a small hand, which
  *    only an outlet that shrinks the hand feeds.
- * A trigger wins over a stock or an unlock. Reads the payoff's text with self-contained recursion
+ * A trigger wins over a stock or an unlock. Reads the payoff's text with unfed recursion
  * stripped, like getSelfDiscardRoles.
  */
 export function selfDiscardOutletFeed(
@@ -1047,6 +1406,28 @@ export function selfDiscardOutletFeed(
     ? selfDiscardRecursionFeed(outlet, target)
     : null;
   return recursion ?? state;
+}
+
+/**
+ * Whether `enabler`'s hand discard reaches `payoff`'s zone payoff (the enabler ↔ zone-payoff
+ * row): the outlet's kinds must meet the kinds the payoff counts ("discard a song card" never
+ * adds to "for each item card in your discard"), and then a count or a card type in the pile
+ * always takes it, a "cards were put into your discard this turn" check only when the discard
+ * lands in time (see discardLandsInTime).
+ */
+export function selfDiscardOutletFeedsPile(enabler: LorcanaCard, payoff: LorcanaCard): boolean {
+  const outlet = selfDiscardFeedProfile(enabler);
+  const target = selfDiscardFeedProfile(payoff);
+  if (!selfDiscardKindsMeet(outlet.outletKinds, target.pileKinds)) return false;
+  return target.readsPile || discardLandsInTime(outlet, target);
+}
+
+/**
+ * Whether a mill stocks `payoff`'s recursion (the mill ↔ reanimator row): not when all of it fires
+ * on your discard, since a milled card is put into your discard, not discarded.
+ */
+export function selfDiscardMillFeedsRecursion(payoff: LorcanaCard): boolean {
+  return !selfDiscardFeedProfile(payoff).recursionOnlyOnDiscard;
 }
 
 /**
@@ -1076,6 +1457,13 @@ export function selfDiscardHandTrimFeed(
 export type RampRole = 'inkwell-ramp' | 'inkwell-trigger' | 'cost-reduction';
 
 /**
+ * "Look at the top 2 cards of your deck. Put one into your hand and the other into your
+ * inkwell." The ink comes from the look in its sentence or the next: Closet Door Portal's look
+ * plays a card for free, and its closing "Put this card into your inkwell" is self-sacrifice.
+ */
+const DECK_LOOK_TO_INKWELL = /look\s+at\s+the\s+top[^.]*(?:\.\s*[^.]*)?into\s+your\s+inkwell/i;
+
+/**
  * Inkwell ramp patterns — cards that put cards into YOUR inkwell.
  * Covers: deck-top ramp, hand-to-inkwell, board-to-inkwell, discard-to-inkwell.
  */
@@ -1083,7 +1471,7 @@ const INKWELL_RAMP_PATTERNS: RegExp[] = [
   // "put the top card of your deck into your inkwell"
   /put\s+the\s+top\s+card\s+of\s+your\s+deck\s+into\s+your\s+inkwell/i,
   // "look at the top X cards...put...into your inkwell"
-  /look\s+at\s+the\s+top.*?put.*?into\s+your\s+inkwell/i,
+  DECK_LOOK_TO_INKWELL,
   // "put up to X cards from your discard into your inkwell"
   /put\s+up\s+to\s+\d+\s+cards?\s+from\s+your\s+discard\s+into\s+your\s+inkwell/i,
   // "put a card from your hand into your inkwell"
@@ -1098,8 +1486,8 @@ const INKWELL_RAMP_PATTERNS: RegExp[] = [
   /put\s+that\s+card\s+(?:from\s+your\s+discard\s+)?into\s+your\s+inkwell/i,
   // "put any number of cards from under your characters...into your inkwell"
   /put\s+any\s+number\s+of\s+cards.*?into\s+your\s+inkwell/i,
-  // "put cards from under...into your inkwell" (boosted cards)
-  /put\s+the\s+top\s+card\s+of\s+your\s+deck\s+facedown\s+under/i,
+  // "put a card from your discard into your inkwell" (Jiminy Cricket - Ghost of Christmas Past)
+  /put\s+a\s+card\s+from\s+your\s+discard\s+into\s+your\s+inkwell/i,
 ];
 
 /**
@@ -1126,6 +1514,15 @@ const INKWELL_TRIGGER_PATTERNS: RegExp[] = [
  */
 const COST_REDUCTION_GRANT_PATTERN = /you\s+pay\s+\d+\s+⬡?\s*less/i;
 const COST_REDUCTION_SELF_PATTERN = /you\s+pay\s+\d+\s+⬡?\s*less\s+⬡?\s*to\s+play\s+this/i;
+
+/**
+ * A discount for the cards of one name: "You pay 1 ⬡ less to play characters named Gurgi."
+ * (Munchings and Crunchings), "you pay 2 ⬡ less for the next character named Ellie Fredricksen"
+ * (Carl Fredricksen - Loving Husband). It helps that one partner, which Named Companions pairs,
+ * so getRampRoles reads no cost reduction from it.
+ */
+const NAMED_DISCOUNT_PATTERN =
+  /you\s+pay\s+\d+\s+⬡?\s*less\s+(?:for\s+the\s+(?:next|first)\s+|to\s+play\s+)[^.]{0,30}?\bnamed\b/gi;
 
 /**
  * Self-discount via free-play: "play this character for free" — the limit case
@@ -1163,8 +1560,9 @@ export function getRampRoles(card: LorcanaCard): RampRole[] {
     roles.push('inkwell-trigger');
   }
 
-  // Check cost reduction grant (reduces cost of OTHER cards, not self)
-  if (COST_REDUCTION_GRANT_PATTERN.test(t) && !COST_REDUCTION_SELF_PATTERN.test(t)) {
+  // Check cost reduction grant (reduces cost of OTHER cards, not self, nor of one name only)
+  const grants = t.replace(NAMED_DISCOUNT_PATTERN, '');
+  if (COST_REDUCTION_GRANT_PATTERN.test(grants) && !COST_REDUCTION_SELF_PATTERN.test(grants)) {
     roles.push('cost-reduction');
   }
 
@@ -1187,7 +1585,7 @@ export function isDeckRamp(card: LorcanaCard): boolean {
   const t = normalizeCardText(card);
   return (
     /put\s+the\s+top\s+card\s+of\s+your\s+deck\s+into\s+your\s+inkwell/i.test(t) ||
-    /look\s+at\s+the\s+top.*?put.*?into\s+your\s+inkwell/i.test(t) ||
+    DECK_LOOK_TO_INKWELL.test(t) ||
     /put\s+up\s+to\s+\d+\s+cards?\s+from\s+your\s+discard\s+into\s+your\s+inkwell/i.test(t)
   );
 }
@@ -1201,6 +1599,32 @@ export function isRepeatingTrigger(card: LorcanaCard): boolean {
   const t = normalizeCardText(card);
   if (!INKWELL_TRIGGER_PATTERNS.some((p) => p.test(t))) return false;
   return !/once\s+during\s+your\s+turn/i.test(t);
+}
+
+const YOUR_TURN_ONLY = /\bduring your turn\b/i;
+const THEIR_TURN_ONLY = /\bduring (?:their|an opponent's|opponents') turns?\b/i;
+
+/** The turn that every sentence matching one of `patterns` is limited to, if they share one. */
+function clauseTurn(card: LorcanaCard, patterns: RegExp[]): 'yours' | 'theirs' | undefined {
+  const clauses = normalizeCardText(card)
+    .split(SENTENCE_BREAK)
+    .filter((s) => patterns.some((p) => p.test(s)));
+  if (clauses.length === 0) return undefined;
+  if (clauses.every((s) => THEIR_TURN_ONLY.test(s))) return 'theirs';
+  if (clauses.every((s) => YOUR_TURN_ONLY.test(s))) return 'yours';
+  return undefined;
+}
+
+/**
+ * True when a ramp card puts ink into your inkwell only on the turn an inkwell trigger can't
+ * fire: Ink Amplifier ramps "during their turn", and every inkwell trigger fires only "during
+ * your turn" (Fairy Godmother's Wand, Scrooge McDuck - Miserly Ebenezer, Chief Tui - Weaving a
+ * Tale), so the trigger never sees that ink.
+ */
+export function inkLandsOffTriggerTurn(rampCard: LorcanaCard, triggerCard: LorcanaCard): boolean {
+  const rampTurn = clauseTurn(rampCard, INKWELL_RAMP_PATTERNS);
+  const triggerTurn = clauseTurn(triggerCard, INKWELL_TRIGGER_PATTERNS);
+  return rampTurn !== undefined && triggerTurn !== undefined && rampTurn !== triggerTurn;
 }
 
 /**
@@ -1310,8 +1734,11 @@ const NAMED_PATTERN = new RegExp(
 export function getNamedReferences(card: LorcanaCard): string[] {
   if (!card.text || !HAS_NAMED.test(card.text)) return [];
 
-  // Strip Shift reminders (normalizeCardText already spells apostrophes as card names do)
-  const cleanText = normalizeCardText(card).replace(SHIFT_REMINDER, '');
+  // Strip Shift reminders and Shift aliases (normalizeCardText already spells apostrophes as
+  // card names do)
+  const cleanText = normalizeCardText(card)
+    .replace(SHIFT_REMINDER, '')
+    .replace(SHIFT_ALIAS_PATTERN, '');
 
   const names = new Set<string>();
 
@@ -1379,8 +1806,9 @@ export function classifyNamedEffect(card: LorcanaCard): NamedEffectTier {
   if (/draw \d+ card|draw cards/.test(text)) return 'game-winning';
   if (/search your deck/.test(text)) return 'game-winning';
 
-  // Strong: cost reduction, keyword grants (Bodyguard, Challenger, Rush, Evasive, Singer)
-  if (/costs? \d+ less|cost.*less|cost reduction|pay \d+ .*less/.test(text)) return 'strong';
+  // Strong: cost reduction, keyword grants (Bodyguard, Challenger, Rush, Evasive, Singer). A
+  // reduction reads "pay 1 ⬡ less"; "cost 3 or less" is a threshold (John Smith's Compass).
+  if (/costs? \d+ less|cost reduction|pay \d+ .*less/.test(text)) return 'strong';
   if (/gains? (?:bodyguard|challenger|rush|evasive|singer)/.test(text)) return 'strong';
   if (/challenger \+\d/.test(text)) return 'strong';
 
@@ -1802,8 +2230,13 @@ export const isLoreDenialCard = (card: LorcanaCard): boolean => getLoreDenialRol
  */
 export type FloodbornRole = 'member' | 'buff' | 'trigger';
 
-/** Static team buff: "Your [...] Floodborn characters get/gain ...". */
-const FLOODBORN_BUFF_PATTERN = /your\b[^.]*\bfloodborn characters?\b[^.]*\b(?:get|gain)\b/i;
+/**
+ * Static team buff: "Your [...] Floodborn characters get/gain ...". The gap after "characters"
+ * stops at a comma, so a trigger's own clause can't reach the player's "gain": "whenever one of
+ * your Floodborn characters banishes another character in a challenge, gain 1 lore" (Scar -
+ * Created by the Vine) is a trigger, not a buff.
+ */
+const FLOODBORN_BUFF_PATTERN = /your\b[^.]*\bfloodborn characters?\b[^.,]*\b(?:get|gain)\b/i;
 /** Repeating trigger: "whenever [...] Floodborn ..." (quests / is banished / you play another). */
 const FLOODBORN_TRIGGER_PATTERN = /\bwhen(?:ever)?\b[^.]*\bfloodborn\b/i;
 
@@ -1823,6 +2256,27 @@ export function getFloodbornRoles(card: LorcanaCard): FloodbornRole[] {
 
 export const isFloodbornCard = (card: LorcanaCard): boolean => getFloodbornRoles(card).length > 0;
 
+/**
+ * A Floodborn team buff that grants one keyword a second copy adds nothing to: "Your Floodborn
+ * characters gain Evasive until the start of your next turn." (Protective Aura).
+ */
+const FLOODBORN_FLAT_KEYWORD_PATTERN =
+  /\bfloodborn characters? gain (Evasive|Alert|Rush|Ward|Bodyguard)(?=\.| until\b)/i;
+/** The printed keywords that already give a body the granted one: Evasive covers Alert. */
+const FLOODBORN_KEYWORD_COVERED_BY: Record<string, string[]> = {alert: ['Alert', 'Evasive']};
+
+/**
+ * True iff the payoff's Floodborn team buff only grants a keyword the member already prints, so
+ * it adds nothing to that member (Protective Aura's Evasive on Prince Phillip - Vanquisher of
+ * Foes, or Robin Hood - Created by the Vine's Alert on him).
+ */
+export function floodbornBuffAlreadyPrinted(payoff: LorcanaCard, member: LorcanaCard): boolean {
+  const keyword = normalizeCardText(payoff).match(FLOODBORN_FLAT_KEYWORD_PATTERN)?.[1];
+  if (keyword === undefined) return false;
+  const covering = FLOODBORN_KEYWORD_COVERED_BY[keyword.toLowerCase()] ?? [keyword];
+  return covering.some((printed) => hasKeywordExact(member, printed));
+}
+
 // ============================================
 // HUNNY TRIBAL DETECTION
 // ============================================
@@ -1834,7 +2288,8 @@ export const isFloodbornCard = (card: LorcanaCard): boolean => getFloodbornRoles
  * (the same caps-ability-name trap as Toy's "WORLD'S GREATEST TOY").
  *
  * Roles: 'member', 'density' (gated on Hunny in play), 'search' (dig a Hunny from deck),
- * 'buff' (single-target pump of a chosen Hunny).
+ * 'buff' (single-target pump of a chosen Hunny, or a location's pump of the Hunny characters
+ * there).
  */
 export type HunnyRole = 'member' | 'density' | 'search' | 'buff';
 
@@ -1842,12 +2297,14 @@ const HUNNY_PAYOFF_PATTERN = /\bHunny (?:character|card|classification)/i;
 const HUNNY_DENSITY_PATTERN = /(?:\d+ or more other|another|your other)\s+Hunny characters?/i;
 const HUNNY_SEARCH_PATTERN = /search your deck for a Hunny card|Hunny card[^.]*put it into your hand/i;
 const HUNNY_BUFF_PATTERN = /chosen Hunny character/i;
+/** A location's pump of the Hunny characters there (Hundred Acre Wood - Hunny Campsite). */
+const HUNNY_LOCATION_BUFF_PATTERN = /\bHunny characters (?:get|gain)\b[^.]*\bwhile here\b/i;
 
 /** Detect Hunny-scoped payoff roles from card text (density, search, buff). */
 function detectHunnyPayoffRoles(text: string, roles: HunnyRole[]): void {
   if (HUNNY_DENSITY_PATTERN.test(text)) roles.push('density');
   if (HUNNY_SEARCH_PATTERN.test(text)) roles.push('search');
-  if (HUNNY_BUFF_PATTERN.test(text)) roles.push('buff');
+  if (HUNNY_BUFF_PATTERN.test(text) || HUNNY_LOCATION_BUFF_PATTERN.test(text)) roles.push('buff');
 }
 
 export function getHunnyRoles(card: LorcanaCard): HunnyRole[] {
@@ -1873,6 +2330,19 @@ const HUNNY_TEAM_BUFF_PATTERN = /your other Hunny characters (?:get|gain)\b/i;
  */
 export function isHunnyTeamBuff(card: LorcanaCard): boolean {
   return HUNNY_TEAM_BUFF_PATTERN.test(normalizeCardText(card));
+}
+
+/** Magical Hunny Staff's GIFT OF THE HIVE gives a character of yours the Hunny classification. */
+const HUNNY_GRANT_PATTERN = /\bthe Hunny classification\b/i;
+
+/**
+ * True iff a Hunny member counts as a Hunny character for the payoffs that count or choose one: a
+ * Hunny character, or a card that gives one of your characters the classification (Magical Hunny
+ * Staff). Big Book of Hunny and Hundred Acre Wood - Hunny Campsite carry the classification
+ * without being characters, so only a search for a "Hunny card" finds them.
+ */
+export function countsAsHunnyCharacter(card: LorcanaCard): boolean {
+  return isCharacter(card) || HUNNY_GRANT_PATTERN.test(normalizeCardText(card));
 }
 
 // ============================================
@@ -1927,13 +2397,22 @@ export const isRedPandaCard = (card: LorcanaCard): boolean => getRedPandaRoles(c
 export type ItemRole = 'member' | 'item-engine' | 'payoff-trigger' | 'payoff-static';
 
 const ITEM_PLAY_TRIGGER = /whenever you play an item/i;
+/**
+ * A count or check of your items in play. A count of item cards in your discard ("For each item
+ * card in your discard", Stegmutt - Clumsy Dinosaur; "for each item card put into your discard
+ * this way", Quackerjack - Loony Toymaker) is skipped: no item you play reaches it.
+ */
 const ITEM_STATIC_PAYOFF =
-  /for each (?:of your )?items?\b|(?:while|if) you have (?:an?|\d+ or more) items?\b(?!\s+named)(?: in play)?|each item you have in play|\bready chosen item\b/i;
+  /for each (?:of your )?items?\b(?! cards? (?:put )?in(?:to)? your discard)|(?:while|if) you have (?:an?|\d+ or more) items?\b(?!\s+named)(?: in play)?|each item you have in play|\bready chosen item\b/i;
 /** Search/tutor/free-play an item from deck, hand, or discard. */
 const ITEM_SEARCH =
   /reveal[^.]{0,40}\bitem card|\bplay (?:a|an|that|chosen)[^.]{0,30}\bitem\b[^.]{0,30}(?:for free|from your (?:hand|discard))/i;
-/** Return an item card from your discard. */
-const ITEM_RECURSION = /\bitem card[^.]{0,30}from your discard|from your discard[^.]{0,15}\bitem card/i;
+/**
+ * Return an item card from your discard to your hand. Moving item cards from your discard to the
+ * bottom of your deck (Stegmutt - Clumsy Dinosaur's cost) brings none back.
+ */
+const ITEM_RECURSION =
+  /\bitem card[^.]{0,30}from your discard to your hand|from your discard[^.]{0,15}\bitem card/i;
 /** Discount an item you play (gated below so self-discount "this item" doesn't count). */
 const ITEM_COST_REDUCTION = /pay \d+[^.]{0,5}(?:less|fewer)[^.]{0,28}\bitems?\b/i;
 const SELF_ITEM_DISCOUNT = /(?:less|fewer)[^.]{0,12}to play this item/i;
@@ -1970,6 +2449,23 @@ export function getItemRoles(card: LorcanaCard): ItemRole[] {
 
 export const isItemCard = (card: LorcanaCard): boolean => getItemRoles(card).length > 0;
 
+/** "Ready chosen item.", the payoff Edna Mode - Super Suit Designer and Castle of the Horned King share. */
+const ITEM_READY_PAYOFF = /\bready chosen item\b/i;
+
+/**
+ * True iff readying an item is the card's only item payoff (Edna Mode - Super Suit Designer,
+ * Castle of the Horned King - Bastion of Evil). Such a payoff helps only an item it can ready and
+ * use again (hasExertAbility).
+ */
+export function readiesItemsOnly(card: LorcanaCard): boolean {
+  const text = normalizeCardText(card);
+  if (!ITEM_READY_PAYOFF.test(text) || ITEM_PLAY_TRIGGER.test(text)) return false;
+  return !ITEM_STATIC_PAYOFF.test(text.replace(ITEM_READY_PAYOFF, ''));
+}
+
+/** True iff the card has an exert ability: a ⟳ in its text, the cost of an activated ability. */
+export const hasExertAbility = (card: LorcanaCard): boolean => (card.text ?? '').includes('⟳');
+
 // ============================================
 // HEAL MATTERS DETECTION ("Heal Matters", payoff-anchored)
 // ============================================
@@ -1989,18 +2485,20 @@ export const isItemCard = (card: LorcanaCard): boolean => getItemRoles(card).len
  */
 export type HealRole = 'healer' | 'heal-payoff';
 
-/** Healer (enabler): an outlet that removes damage from a character. Begins with "remove", so a
- *  "move ... damage" clause on the same card can never fabricate a false healer here. */
-const HEALER_PATTERN = /remove (?:up to \d+|all|\d+) damage from/i;
+/** Healer (enabler): an outlet that removes damage from a character, or spreads a "damage total"
+ *  over several. Begins with "remove", so a "move ... damage" clause on the same card can never
+ *  fabricate a false healer here. */
+const HEALER_PATTERN = /remove (?:up to \d+|all|\d+) damage (?:total )?from/i;
 
 /**
  * Heal-payoff: a benefit triggered or gated on removing damage. Covers the repeating
  * "whenever/when you remove damage" triggers, the "if you removed damage" turn-state
- * condition, and the "for each N damage removed" / "damage removed this way" / "remove 1
- * or more damage" count payoffs.
+ * condition, and the "for each N damage removed" / "remove 1 or more damage" count payoffs.
+ * A bonus for the card's own heal ("If you removed damage this way", "for each 1 damage
+ * removed this way") is no payoff: no other healer can feed it, so the card is only a healer.
  */
 const HEAL_PAYOFF_PATTERN =
-  /whenever you remove damage|when you remove damage|if you removed damage|for each \d+ damage removed|damage removed this way|remove 1 or more damage/i;
+  /whenever you remove damage|when you remove damage|if you removed damage(?! this way)|for each \d+ damage removed(?! this way)|remove 1 or more damage/i;
 
 /**
  * Move-damage is the OPPOSITE mechanic (relocating damage between characters, not clearing
@@ -2099,8 +2597,9 @@ function tribalPatterns(spec: TribalSpec) {
   const T = `(?:${w})`;
   const p = {
     // Benefit the tribe: team buff, single-target buff, or tribal ready (all strengthen/free your bodies).
+    // The `\b` after the team buff's tribe word keeps "Your Princess characters" from reading as Prince.
     buff: new RegExp(
-      `your (?:other )?${T}[^.]{0,18}characters? (?:get|gain|can|lose)` + // team: "your [other] X characters get/gain/can't-be..." or shed a drawback ("lose the Stone by Day ability", Angela - Night Warrior)
+      `your (?:other )?${T}\\b[^.]{0,18}characters? (?:get|gain|can|lose)` + // team: "your [other] X characters get/gain/can't-be..." or shed a drawback ("lose the Stone by Day ability", Angela - Night Warrior)
         `|chosen ${T} character[^.]{0,12}(?:gets|gains|can|\\+\\d)` + // single-target: "chosen X character gains ..." or a give-form "+N" stat buff (Flash - Records Specialist)
         `|ready (?:your|chosen)[^.]{0,30}${T} characters?`, // tribal ready: "ready your other exerted X characters"
       'i',
@@ -2144,6 +2643,22 @@ export function getTribalRoles(card: LorcanaCard, spec: TribalSpec): TribalRole[
 
 export const isTribalCard = (card: LorcanaCard, spec: TribalSpec): boolean =>
   getTribalRoles(card, spec).length > 0;
+
+const CAPITALIZED_WORD = /\b[A-Z][a-z]+\b/g;
+
+/**
+ * The classifications a tribe payoff's clauses name, read as the capitalized words of every
+ * clause a payoff role matched: Agnarr - King of Arendelle's "While you have a Queen" names Queen,
+ * and Hans - Noble Scoundrel's "if a Princess or Queen character is" names Princess and Queen.
+ * The clause's other capitalized words ("While", "Your") are no classification any card holds.
+ */
+export function tribalPayoffClasses(card: LorcanaCard, spec: TribalSpec): string[] {
+  const text = normalizeCardText(card);
+  const clauses = Object.values(tribalPatterns(spec)).flatMap(
+    (pattern) => text.match(new RegExp(pattern.source, 'gi')) ?? [],
+  );
+  return clauses.flatMap((clause) => clause.match(CAPITALIZED_WORD) ?? []);
+}
 
 // ============================================
 // EXERT DETECTION ("Exert Matters" — opponent-facing, payoff-anchored)
@@ -2249,6 +2764,53 @@ export function getExertRoles(card: LorcanaCard): ExertRole[] {
 }
 
 export const isExertCard = (card: LorcanaCard): boolean => getExertRoles(card).length > 0;
+
+/** A strength cap on an exert effect: "exert chosen opposing character with 2 ¤ or less". */
+const EXERT_STRENGTH_CAP = /\bwith (\d+) ¤ or less\b/i;
+/** A strength floor on a payoff: "banish chosen exerted character with 5 ¤ or more". */
+const EXERT_STRENGTH_FLOOR = /\bwith (\d+) ¤ or more\b/i;
+/** Every payoff shape, to find the sentences that carry a payoff's floor. */
+const EXERT_PAYOFF_PATTERNS = [
+  EXERT_PAYOFF_TRIGGER,
+  EXERT_PAYOFF_BANISH,
+  EXERT_PAYOFF_CANT_READY,
+  EXERT_PAYOFF_OPP_STATE,
+  EXERT_PAYOFF_LORE,
+];
+
+/**
+ * The most ¤ a character the enabler exerts can have: the highest "with N ¤ or less" cap among
+ * its exert effects, or Infinity when one of them has none.
+ */
+function exertStrengthReach(text: string): number {
+  const caps = text
+    .split(SENTENCE_BREAK)
+    .filter((sentence) => isExertEnabler(sentence))
+    .map((sentence) => Number(EXERT_STRENGTH_CAP.exec(sentence)?.[1] ?? Infinity));
+  return caps.length > 0 ? Math.max(...caps) : Infinity;
+}
+
+/**
+ * The least ¤ an exerted character needs for the payoff to act on it: the lowest "with N ¤ or
+ * more" floor among its payoff effects, or 0 when one of them has none.
+ */
+function exertStrengthFloor(text: string): number {
+  const floors = text
+    .split(SENTENCE_BREAK)
+    .filter((sentence) => EXERT_PAYOFF_PATTERNS.some((pattern) => pattern.test(sentence)))
+    .map((sentence) => Number(EXERT_STRENGTH_FLOOR.exec(sentence)?.[1] ?? 0));
+  return floors.length > 0 ? Math.min(...floors) : 0;
+}
+
+/**
+ * True iff the enabler can exert a character the payoff acts on. Minnie Mouse - Sweetheart
+ * Princess banishes an exerted character "with 5 ¤ or more", which an effect that exerts one
+ * "with 2 ¤ or less" (Ghostly Tale) never sets up.
+ */
+export function exertEnablerReachesPayoff(enabler: LorcanaCard, payoff: LorcanaCard): boolean {
+  const reach = exertStrengthReach(normalizeCardText(enabler));
+  return reach >= exertStrengthFloor(normalizeCardText(payoff));
+}
 // ============================================
 // MERIDA ARCHER DETECTION (Merida - Formidable Archer, STEADY AIM)
 // ============================================
@@ -2357,10 +2919,15 @@ const BOUNCE_OPPONENT_SIDE = /opposing|opponent'?s?\b/i;
 /** return-payoff — gain value whenever a card is returned to hand from play (Maleficent's Staff). */
 const BOUNCE_RETURN_PAYOFF_PATTERN =
   /when(?:ever)?\s+[^.]{0,90}?\bis\s+returned\s+to\s+(?:their|your|its player'?s?)\s+hand/i;
-/** rebuy-payoff — a "when you play this character" ETB whose effect is unambiguous re-fire value. */
+/**
+ * rebuy-payoff — a "when you play this character" ETB whose effect is unambiguous re-fire value.
+ * A deck look counts only when a card from it goes to your hand, in the look's sentence or the
+ * next: Jafar - Lamp Thief's "look at the top 2 cards of your deck. Put one on the top of your
+ * deck and the other on the bottom." only orders the deck.
+ */
 const BOUNCE_ETB_PATTERN = /when\s+you\s+play\s+this\s+character/i;
 const BOUNCE_REBUY_EFFECT_PATTERN =
-  /draw\s+(?:\d+|two|three)\s+cards?|search\s+your\s+(?:deck|library)|look at the top \d+ cards of your deck|banish\s+(?:a|an|another\s+)?chosen\s+character|(?:play|put)\s+(?!this\s+character)[^.]{0,50}?for free|without paying/i;
+  /draw\s+(?:\d+|two|three)\s+cards?|search\s+your\s+(?:deck|library)|look at the top \d+ cards of your deck[^.]*(?:\.\s*[^.]*)?\binto your hand|banish\s+(?:a|an|another\s+)?chosen\s+character|(?:play|put)\s+(?!this\s+character)[^.]{0,50}?for free|without paying/i;
 /**
  * Fast pre-filter. Admits BOTH the "return … to hand" bounce shapes AND the enter-play bodies
  * the re-buy payoff keys on — a rebuy body (e.g. Merlin - Turtle's deck-dig ETB) need not contain
@@ -2455,3 +3022,35 @@ export function getBounceRoles(card: LorcanaCard): BounceRole[] {
 
 /** Check if a card participates in the bounce axis (any role). */
 export const isBounceCard = (card: LorcanaCard): boolean => getBounceRoles(card).length > 0;
+
+// ============================================
+// SPIKE SUIT DETECTION (Dale - Ready for His Shot)
+// ============================================
+
+/** Reminder text, like Challenger's "(While challenging, this character gets +N ¤.)". */
+const REMINDER_TEXT_PATTERN = /\([^)]*\)/g;
+/** A character's boost to its own strength: "this character gets +N ¤", "he gets +N ¤". */
+const SELF_STRENGTH_BOOST_PATTERN = /\b(?:this character|he|she) gets \+(\d+) ¤/i;
+/**
+ * A self boost that is off when the character challenges: one that lasts a turn after a trigger
+ * or a payment, or one that needs a location or damage.
+ */
+const OFF_IN_CHALLENGE_PATTERN = /\bthis turn\b|\bat a location\b|\bhas damage\b/i;
+
+/**
+ * The strength a character challenges with: its printed strength plus each boost its own text
+ * gives it that is on whenever it challenges (always, "during your turn", "while this character
+ * has no damage", "while there's a card under this character"). A "for each" boost counts once.
+ * Reminder text is skipped, so Challenger's bonus isn't one.
+ */
+export function strengthInChallenge(card: LorcanaCard): number {
+  return normalizeCardText(card)
+    .replace(REMINDER_TEXT_PATTERN, '')
+    .split(SENTENCE_BREAK)
+    .filter((sentence) => !OFF_IN_CHALLENGE_PATTERN.test(sentence))
+    .reduce(
+      (strength, sentence) =>
+        strength + Number(sentence.match(SELF_STRENGTH_BOOST_PATTERN)?.[1] ?? 0),
+      card.strength ?? 0,
+    );
+}

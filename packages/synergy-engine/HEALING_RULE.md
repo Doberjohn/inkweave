@@ -34,12 +34,12 @@ Healing Touch clears damage -> Grand Pabbie's trigger fires -> gain 2 lore. The 
 getHealRoles(card: LorcanaCard): HealRole[]  // ['healer'] | ['heal-payoff'] | [...both] | []
 ```
 
-A card can be both roles (Ohana Means Family removes damage AND draws for each point removed). Detection uses a fast pre-filter (`HAS_HEAL_KEYWORD = /remove|damage removed/i`) before running the patterns.
+A card can be both roles (Bruno Madrigal - Oasis Oracle removes damage when he quests AND pays off every removal). Detection uses a fast pre-filter (`HAS_HEAL_KEYWORD = /remove|damage removed/i`) before running the patterns.
 
 ### healer (enabler)
 
 ```regex
-/remove (?:up to \d+|all|\d+) damage from/i
+/remove (?:up to \d+|all|\d+) damage (?:total )?from/i
 ```
 
 Matches an outlet that removes damage from a character. Because it begins with `remove`, it can never match `move`, so a "move ... damage" clause on the same card cannot fabricate a false healer.
@@ -49,11 +49,12 @@ Matches an outlet that removes damage from a character. Because it begins with `
 | "**Remove up to 3 damage from** chosen character." | Healing Touch |
 | "**Remove all damage from** chosen character of yours." | Ohana Means Family |
 | "...you may **remove all damage from** this character." | Isabela Madrigal - Perfectly in Control |
+| "**Remove up to 4 damage total from** any number of your characters." | I'm Never Not by Your Side |
 
 ### heal-payoff (payoff)
 
 ```regex
-/whenever you remove damage|when you remove damage|if you removed damage|for each \d+ damage removed|damage removed this way|remove 1 or more damage/i
+/whenever you remove damage|when you remove damage|if you removed damage(?! this way)|for each \d+ damage removed(?! this way)|remove 1 or more damage/i
 ```
 
 Matches a benefit gated on the removal event:
@@ -62,13 +63,14 @@ Matches a benefit gated on the removal event:
 |-------|-------------------|
 | Repeating trigger | "**Whenever you remove 1 or more damage** from one of your characters, gain 2 lore." (Grand Pabbie) |
 | Count payoff | "...gain 1 lore **for each 1 damage removed**." (Isabela Madrigal - Caring Cultivator) |
-| This-way count | "Draw a card **for each 1 damage removed this way**." (Ohana Means Family) |
+| Turn check | "⟳ — **If you removed damage** from a character this turn, gain 1 lore." (Julieta's Arepas) |
 
 ### What's Excluded
 
 | Excluded | Pattern / reason |
 |----------|------------------|
 | **Move-damage** | "move ... damage from X to Y" relocates damage, the opposite mechanic. The pure-mover guard (`/\bmove\b[^.]*\bdamage\b/i`) drops a card ONLY when it has neither a remove clause nor a payoff, so a dual card that both moves and separately removes damage stays a healer. |
+| **A bonus for its own heal** | "If you removed damage **this way**" (Julieta Madrigal - Excellent Cook, Antonio Madrigal - Animal Doctor) and "for each 1 damage removed **this way**" (Reuben - Sandwich Expert, Ohana Means Family, I'm Never Not by Your Side) count only the card's own removal, so no other healer can feed them. The `(?! this way)` lookaheads keep these clauses out of the payoff role: the cards are healers, and fire the real payoffs like any other healer. |
 | **Steel "no damage / undamaged" statics** | "deals no damage" / "while undamaged" is a different axis; none match the remove/payoff patterns, so they are excluded naturally. |
 
 ---
@@ -81,7 +83,7 @@ Real cards the `getHealRoles` detector tags (names from the live database; effec
 |------|-----------|--------------|
 | **healer** (enabler) | Healing Touch (Amber), Baymax - Personal Healthcare Companion (Sapphire), Grand Pabbie's healers pool (Amber/Sapphire) | Remove damage from one of your characters |
 | **heal-payoff** (payoff) | Grand Pabbie - Oldest and Wisest (Sapphire), Aurora - Waking Beauty (Amber), Pepa Madrigal - Calm Before the Storm (Amethyst) | Fire a bonus whenever you remove damage |
-| **both** | Ohana Means Family (Amber), Julieta's Arepas (Sapphire), Antonio Madrigal - Animal Doctor (Sapphire) | Remove damage AND reward the same removal |
+| **both** | Julieta's Arepas (Sapphire), Bruno Madrigal - Oasis Oracle (Sapphire) | Remove damage AND reward any removal, their own included |
 
 ---
 
@@ -102,22 +104,22 @@ Applies the project-wide **5-baseline convention**. Because the rule is payoff-a
 <!-- coverage:start distribution -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-33 healers + 13 heal-payoffs (7 pure payoff + 6 dual-role healer+payoff) = 40 distinct participating cards. **423 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+34 healers + 8 heal-payoffs (6 pure payoff + 2 dual-role healer+payoff) = 40 distinct participating cards. **278 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| healer <-> heal-payoff | 347 | 8 | 82.0% |
-| heal-payoff <-> heal-payoff | 76 | 7 | 18.0% |
+| healer <-> heal-payoff | 252 | 8 | 90.6% |
+| heal-payoff <-> heal-payoff | 26 | 7 | 9.4% |
 
-351 healer <-> healer pairs are dropped (payoff-anchored).
+496 healer <-> healer pairs are dropped (payoff-anchored).
 
 ```chart
 {
   "type": "doughnut",
   "title": "Role composition (40 cards)",
   "data": {
-    "labels": ["Healers only (27)", "Payoffs only (7)", "Both roles (6)"],
-    "values": [27, 7, 6]
+    "labels": ["Healers only (32)", "Payoffs only (6)", "Both roles (2)"],
+    "values": [32, 6, 2]
   }
 }
 ```
@@ -142,9 +144,9 @@ The payoff-payoff pair names both cards: `"{A} and {B} both pay off when you rem
 ## Coverage
 
 <!-- coverage:start coverage -->
-- **33 healers** (Amber 15, Sapphire 14, Ruby 4)
-- **13 heal-payoffs** (Amber 7, Sapphire 5, Amethyst 2); 7 pure payoff, 6 dual-role
-- Healers with the Madrigal classification: 7 of 33 (21.2%)
+- **34 healers** (Amber 16, Sapphire 14, Ruby 4)
+- **8 heal-payoffs** (Sapphire 4, Amber 3, Amethyst 2); 6 pure payoff, 2 dual-role
+- Healers with the Madrigal classification: 7 of 34 (20.6%)
 <!-- coverage:end -->
 
 Healing is Amber/Sapphire-heavy, and the Madrigal minority among healers confirms this is a mechanic axis, not a tribe.
@@ -153,7 +155,7 @@ Healing is Amber/Sapphire-heavy, and the Madrigal minority among healers confirm
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Healing rule (Heal Matters)')`.
+Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Healing rule (Heal Matters)')`, plus `src/__tests__/healing.test.ts` for a bonus that counts only the card's own heal.
 
 ### Role Detection (4 tests)
 
@@ -161,7 +163,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 |------|------------------|
 | healer from "remove up to N damage from" | Healing Touch |
 | heal-payoff from "whenever you remove ... damage" | Grand Pabbie |
-| dual-role healer + heal-payoff | Ohana Means Family |
+| dual-role healer + heal-payoff | Bruno Madrigal - Oasis Oracle |
 | excludes pure move-damage / text-less / unrelated | empty arrays |
 
 ### Rule Matching (1 test)
@@ -179,6 +181,17 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | heal-payoff <-> heal-payoff -> 7 | two engines compound |
 | does not pair two plain healers | payoff-anchored drop |
 
+### A bonus for its own heal (4 tests, `healing.test.ts`)
+
+Real text of Julieta Madrigal - Excellent Cook, Ohana Means Family, I'm Never Not by Your Side, Julieta's Arepas, Grand Pabbie - Oldest and Wisest and Rapunzel - Sunshine.
+
+| Test | What it verifies |
+|------|------------------|
+| reads the card as a healer only | "this way" bonuses (Julieta, Ohana) give no payoff role |
+| reads a damage total as a healer | "Remove up to 4 damage total from" (I'm Never Not by Your Side) |
+| keeps a check on damage removed this turn | Julieta's Arepas stays healer + heal-payoff |
+| pairs them with a payoff, not a healer | each → Grand Pabbie 8; each ↔ Rapunzel no pair |
+
 ---
 
 ## Design Decisions and Rationale
@@ -190,6 +203,10 @@ Healers far outnumber payoffs (Coverage has the counts). If two healers paired a
 ### Why a mechanic, not a Madrigal tribe?
 
 Only a minority of healers are Madrigal, and every payoff reads "remove damage from one of your characters" with no classification gate. Keying on the mechanic captures the whole archetype (Baymax, Aurora, Grand Pabbie, the Chromicons) that a Madrigal tribe would miss.
+
+### Why a "this way" bonus isn't a payoff
+
+Julieta Madrigal - Excellent Cook draws "if you removed damage this way", and Ohana Means Family draws "for each 1 damage removed this way". "This way" means the card's own removal, so a second healer never feeds the bonus. Reading these clauses as payoffs paired the five cards with every plain healer at 8 and with each other at 7, all combos the cards can't perform. They are healers: next to a payoff that fires on any removal (Grand Pabbie, Isabela Madrigal - Caring Cultivator), each one sets it off, which scores 8.
 
 ### Why the scoped move-damage guard?
 

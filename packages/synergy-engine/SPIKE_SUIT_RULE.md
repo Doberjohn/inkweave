@@ -57,7 +57,15 @@ This matches Dale's Spike Suit wording (the `.*` spans the ⛉/¤ glyphs without
 1. `isCharacter(card)` — only characters deal combat damage
 2. `spikeSuitGap(card) >= 3` — willpower exceeds strength by at least the floor
 
-`spikeSuitGap(card)` is `(willpower ?? 0) - (strength ?? 0)` — exactly the bonus combat damage Spike Suit unlocks.
+`spikeSuitGap(card)` is `(willpower ?? 0) - strengthInChallenge(card)` — exactly the bonus combat damage Spike Suit unlocks.
+
+### Strength in a challenge
+
+`strengthInChallenge(card)` (`cardHelpers.ts`) is the strength a character challenges with: its printed strength plus each boost its own text gives it (`/\b(?:this character|he|she) gets \+(\d+) ¤/i`) that is on whenever it challenges. That covers a boost with no condition and one that holds "during your turn", "while this character has no damage" or "while there's a card under this character". A "for each" boost counts once (Jafar - Keeper of Secrets' "+1 ¤ for each card in your hand" reads as 1).
+
+Left out, sentence by sentence (`/\bthis turn\b|\bat a location\b|\bhas damage\b/i`): a boost that lasts one turn after a trigger or a payment (Donald Duck - Sleepwalker, Akela - Forest Runner), or one that needs a location or damage (Shenzi - Hyena Pack Leader, The Bear - Territorial Animal). Reminder text in parentheses is skipped, so Challenger's "(While challenging, this character gets +N ¤.)" isn't a boost here.
+
+So Pacha - Panicked Customer (2/6, "During your turn, this character gets +4 ¤") challenges as a 6/6 and Lawrence - Jealous Manservant (0/4, "+4 ¤" while undamaged) as a 4/4: Dale adds nothing to either, and neither is a payoff.
 
 ### The gap ≥ 3 Floor
 
@@ -66,7 +74,7 @@ This matches Dale's Spike Suit wording (the `.*` spans the ⛉/¤ glyphs without
 <!-- coverage:start floor -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-**459 characters** have any willpower lead, **204** of them only +1. The floor keeps **124**, and **124** of those can share a deck with an anchor.
+**444 characters** have any willpower lead, **197** of them only +1. The floor keeps **119**, and **119** of those can share a deck with an anchor.
 <!-- coverage:end -->
 
 ### Ink Compatibility
@@ -80,8 +88,10 @@ Handled centrally by the engine (`canShareDeck`) before rules run, so the rule i
 Score scales **linearly with the gap**, because the gap *is* the bonus damage — keeping the score directly interpretable. Strength-0 walls get **+1** on top: they jump from dealing *zero* in combat to swinging for their full willpower, a qualitative transformation the raw gap alone understates.
 
 ```text
-score = min(gap + 3 + (strength === 0 ? 1 : 0), 10)
+score = min(gap + 3 + (strengthInChallenge === 0 ? 1 : 0), 10)
 ```
+
+Both the gap and the wall check use the strength in a challenge, so a 0-strength card whose own text gives it strength gets no wall bonus.
 
 The `+3` offset lifts the weakest qualifying pair (gap 3) to **6** — the bottom of the Moderate tier — so the floor and the curve tell the same story: every match is at least a meaningful upgrade.
 
@@ -102,13 +112,13 @@ The `+3` offset lifts the weakest qualifying pair (gap 3) to **6** — the botto
 ```chart
 {
   "type": "bar",
-  "title": "Score distribution (124 unique pairs)",
+  "title": "Score distribution (119 unique pairs)",
   "data": {
     "labels": ["6", "7", "8", "9", "10"],
     "datasets": [
       {
         "label": "Pairs",
-        "data": [75, 21, 20, 5, 3],
+        "data": [73, 20, 19, 4, 3],
         "backgroundColor": ["#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#fbbf24"]
       }
     ]
@@ -116,7 +126,7 @@ The `+3` offset lifts the weakest qualifying pair (gap 3) to **6** — the botto
 }
 ```
 
-Tier split: **0 Weak / 75 Moderate / 46 Strong / 3 Perfect**.
+Tier split: **0 Weak / 73 Moderate / 43 Strong / 3 Perfect**.
 <!-- coverage:end -->
 
 Only the biggest gaps and walls reach Perfect; the bulk are solid +3 and +4 bodies in Moderate and Strong.
@@ -127,7 +137,7 @@ Only the biggest gaps and walls reach Perfect; the bulk are solid +3 and +4 bodi
 {anchor} lets {payoff} deal damage with its {willpower} willpower instead of its {strength} strength.
 ```
 
-`{anchor}` / `{payoff}` are `{A}`/`{B}` chip tokens, swapped by direction so Dale always reads as the enabler. The unified template covers walls too — "instead of its 0 strength" reads cleanly for a 0-strength body without special-casing (and dodges the "a 8" / "an 8" article hazard).
+`{anchor}` / `{payoff}` are `{A}`/`{B}` chip tokens, swapped by direction so Dale always reads as the enabler. `{strength}` is the printed strength. The unified template covers walls too — "instead of its 0 strength" reads cleanly for a 0-strength body without special-casing (and dodges the "a 8" / "an 8" article hazard).
 
 ---
 
@@ -135,19 +145,19 @@ Only the biggest gaps and walls reach Perfect; the bulk are solid +3 and +4 bodi
 
 <!-- coverage:start coverage -->
 - **1 anchor**: Dale - Ready for His Shot
-- **124 deck-compatible payoffs**; **124 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`)
-- **23** of the payoffs are strength-0 walls, the highest-impact pairings
+- **119 deck-compatible payoffs**; **119 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`)
+- **20** of the payoffs are strength-0 walls, the highest-impact pairings
 
 ```chart
 {
   "type": "bar",
-  "title": "Payoff gap distribution (124 cards)",
+  "title": "Payoff gap distribution (119 cards)",
   "data": {
     "labels": ["+3", "+4", "+5", "+6", "+7"],
     "datasets": [
       {
         "label": "Payoffs",
-        "data": [84, 21, 14, 4, 1],
+        "data": [81, 20, 13, 4, 1],
         "backgroundColor": ["#60b5f5", "#60b5f5", "#60b5f5", "#60b5f5", "#60b5f5"]
       }
     ]
@@ -158,10 +168,10 @@ Only the biggest gaps and walls reach Perfect; the bulk are solid +3 and +4 bodi
 ```chart
 {
   "type": "doughnut",
-  "title": "Payoffs by primary ink (124 cards)",
+  "title": "Payoffs by primary ink (119 cards)",
   "data": {
-    "labels": ["Amber (42)", "Sapphire (26)", "Amethyst (18)", "Steel (17)", "Emerald (13)", "Ruby (8)"],
-    "values": [42, 26, 18, 17, 13, 8]
+    "labels": ["Amber (42)", "Sapphire (26)", "Amethyst (18)", "Steel (15)", "Emerald (13)", "Ruby (5)"],
+    "values": [42, 26, 18, 15, 13, 5]
   }
 }
 ```

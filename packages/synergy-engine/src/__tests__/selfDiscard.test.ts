@@ -38,6 +38,7 @@ const sulleyAndBoo = createCard({
 const gothel = createCard({
   id: 'mother-gothel-evil-as-ever',
   fullName: 'Mother Gothel - Evil as Ever',
+  classifications: ['Storyborn', 'Villain'],
   text: "MUMMY'S BACK During your turn, when you\ndiscard this card, you may play this character\nfrom your discard. (You pay all costs.)",
 });
 const lookWhatYouveDone = createCard({
@@ -186,6 +187,71 @@ const rapunzelAndFlynn = createCard({
   text: 'Shift 3 ⬡ (You may pay 3 ⬡ to play this on top of one\nof your characters named Rapunzel or Flynn Rider.)\nCLEVER SWAP Whenever this character quests, you may\ndraw a card, then choose and discard a card.\nFRESH START During your turn, whenever you discard\na character card, you may play that character from your\ndiscard. (You pay all costs.)',
 });
 
+// Payoffs that take only one classification or kind of card.
+const fangmeyer = createCard({
+  id: 'fangmeyer-icy-officer',
+  name: 'Fangmeyer',
+  fullName: 'Fangmeyer - Icy Officer',
+  text: 'REQUEST REINFORCEMENTS When you play this\ncharacter, you may return a Detective character\ncard from your discard to your hand.',
+});
+const drHamsterviel = createCard({
+  id: 'dr-hamsterviel-infamous-scientist',
+  name: 'Dr. Hamsterviel',
+  fullName: 'Dr. Hamsterviel - Infamous Scientist',
+  ink: 'Steel',
+  text: "CONTROLLED VARIABLES For each Alien character\ncard in your discard, you pay 1 ⬡ less to play this\ncharacter.\nAWESTRUCK When you play this character,\nchosen opposing character can't challenge during\ntheir next turn.",
+});
+const coldstone = createCard({
+  id: 'coldstone-reincarnated-cyborg',
+  name: 'Coldstone',
+  fullName: 'Coldstone - Reincarnated Cyborg',
+  ink: 'Amethyst',
+  text: 'THE CANTRIPS HAVE BEEN SPOKEN When you play\nthis character, if you have 2 or more Gargoyle\ncharacter cards in your discard, gain 2 lore.',
+});
+const priya = createCard({
+  id: 'priya-serious-music-lover',
+  name: 'Priya Mangal',
+  fullName: 'Priya Mangal - Serious Music Lover',
+  text: "THIS IS MY JAM When you play this character, if\nthere's a song card in your discard, gain 1 lore.",
+});
+
+// A mill: it puts cards into your discard without discarding them.
+const hectorStreetMusician = createCard({
+  id: 'hector-rivera-street-musician',
+  name: 'Héctor Rivera',
+  fullName: 'Héctor Rivera - Street Musician',
+  ink: 'Ruby',
+  text: 'Singer 2 (This character counts as cost 2 to sing songs.)\nSTRIKE A CHORD When you play this character, you\nmay put the top card of your deck into your discard.',
+});
+
+// An outlet that discards only as your turn ends, and payoffs that look before or at that point.
+const meeko = createCard({
+  id: 'meeko-skittish-scrounger',
+  name: 'Meeko',
+  fullName: 'Meeko - Skittish Scrounger',
+  ink: 'Amethyst',
+  text: 'Evasive (Only characters with Evasive can\nchallenge this character.)\nBOTTOMLESS PIT At the end of your turn, if this\ncharacter is exerted, choose and discard a card or\nbanish him.',
+});
+const helgaNoBackup = createCard({
+  id: 'helga-no-backup-needed',
+  name: 'Helga Sinclair',
+  fullName: 'Helga Sinclair - No Backup Needed',
+  ink: 'Emerald',
+  text: 'CRISIS MANAGEMENT If 2 or more cards were put into your discard this turn, you pay 2 ⬡ less to play this character.',
+});
+const miloHandsDirty = createCard({
+  id: 'milo-getting-his-hands-dirty',
+  name: 'Milo Thatch',
+  fullName: 'Milo Thatch - Getting His Hands Dirty',
+  ink: 'Emerald',
+  text: "Ward\nSCHOLAR'S GAMBIT When you play this character,\nyou may choose and discard a card to return chosen\ncharacter to their player's hand.\nPRACTICAL KNOWLEDGE At the end of your turn, if\n2 or more cards were put into your discard this turn,\ndraw a card.",
+  textSections: [
+    'Ward',
+    "SCHOLAR'S GAMBIT When you play this character,\nyou may choose and discard a card to return chosen\ncharacter to their player's hand.",
+    'PRACTICAL KNOWLEDGE At the end of your turn, if\n2 or more cards were put into your discard this turn,\ndraw a card.',
+  ],
+});
+
 describe('Self-Discard scoring: an outlet feeds only the payoffs its discard can switch on', () => {
   const rule = getRuleById('self-discard')!;
   /** The pair's match with `card` as the searcher. */
@@ -221,7 +287,6 @@ describe('Self-Discard scoring: an outlet feeds only the payoffs its discard can
     expect(score(circleOfLife, maxKaraoke)).toBe(5);
     expect(score(maxKaraoke, salvageOperation)).toBe(5);
     expect(score(maxKaraoke, lookWhatYouveDone)).toBe(5);
-    expect(score(maxKaraoke, merida)).toBe(5);
   });
 
   it('lets any discard feed a discard-event payoff, but not a refill outlet feed an empty-hand one', () => {
@@ -232,14 +297,93 @@ describe('Self-Discard scoring: an outlet feeds only the payoffs its discard can
     expect(score(sprout, megavolt)).toBe(8);
   });
 
-  it('scores a character-or-location outlet 7 with character, location and self-named recursion', () => {
+  it('lets a mill stock recursion, but not recursion that fires only on your discard', () => {
+    expect(score(hectorStreetMusician, salvageOperation)).toBe(7);
+    expect(score(hectorStreetMusician, gothel)).toBe(5);
+    expect(score(lookWhatYouveDone, hectorStreetMusician)).toBe(5);
+  });
+
+  it('lets an end-of-turn outlet feed only the checks made as the turn ends', () => {
+    expect(score(meeko, maximus)).toBe(5);
+    expect(score(meeko, helgaNoBackup)).toBe(5);
+    expect(score(meeko, miloHandsDirty)).toBe(6);
+    expect(score(kronk, maximus)).toBe(8);
+    expect(score(kronk, helgaNoBackup)).toBe(6);
+  });
+
+  it('scores a character-or-location outlet 7 with character and location recursion', () => {
     expect(score(sprout, getToSafety)).toBe(7);
     expect(score(sprout, circleOfLife)).toBe(7);
-    expect(score(sprout, alien)).toBe(7);
+  });
+
+  it('keeps an outlet for one classification to recursion that takes it', () => {
+    expect(score(sprout, rapunzelAndFlynn)).toBe(8);
+    expect(score(sprout, gothel)).toBe(5);
+    expect(score(sprout, fangmeyer)).toBe(5);
+  });
+
+  it('scores a typed outlet 6 only with a pile count its discard adds to', () => {
+    expect(score(sprout, drHamsterviel)).toBe(6);
+    expect(score(sprout, coldstone)).toBe(5);
+    expect(score(maxKaraoke, priya)).toBe(6);
+    expect(score(maxKaraoke, drHamsterviel)).toBe(5);
+    expect(score(kronk, coldstone)).toBe(6);
   });
 
   it('scores a character-or-location outlet 5 with item and song recursion', () => {
     expect(score(sprout, salvageOperation)).toBe(5);
     expect(score(sprout, maxTeen)).toBe(5);
+  });
+});
+
+// Recursion or a pile check that names one card: only that card switches it on, and Named
+// Companions already pairs the two.
+const hook = createCard({
+  fullName: 'Captain Hook - Captain of the Jolly Roger',
+  text: 'DOUBLE THE POWDER! When you play this character, you may return an action card named Fire the Cannons! from your discard to your hand.',
+});
+const pain = createCard({
+  fullName: 'Pain - Running with Scissors',
+  text: 'MULTIPURPOSE TOOL When you play this character, if you have a character card named Panic in your discard, gain 2 lore.',
+});
+
+describe('Self-Discard roles: a clause that names one card', () => {
+  it('reads no recursion from a clause that returns one named card', () => {
+    expect(getSelfDiscardRoles(hook)).toEqual([]);
+    expect(getSelfDiscardRoles(merida)).toEqual([]);
+    expect(getSelfDiscardRoles(alien)).toEqual([]);
+  });
+
+  it('reads no pile check from a clause that looks for one named card', () => {
+    expect(getSelfDiscardRoles(pain)).toEqual([]);
+  });
+
+  it('keeps recursion when a named card sits in another sentence', () => {
+    expect(getSelfDiscardRoles(getToSafety)).toEqual(['reanimator']);
+  });
+});
+
+// A sweep that moves cards from your discard to the bottom of your deck: no card comes back.
+const mamaImelda = createCard({
+  fullName: 'Mamá Imelda - No-Nonsense Ancestor',
+  text: 'LET ME THROUGH When you play this character, put 3 cards from your discard on the bottom of your deck in any order or banish her.',
+});
+const bouncingDucky = createCard({
+  fullName: "Bouncing Ducky - Sid's Toy",
+  text: 'REJECTED TOYS For each Toy character card in your discard, you pay 1 ⬡ less to play this character.\nREPURPOSED When you play this character, put all Toy character cards from your discard on the bottom of your deck in any order.',
+});
+const handInTheBox = createCard({
+  fullName: "Hand-in-the-Box - Sid's Toy",
+  text: 'SPRING-LOADED You may put a Toy character card from your discard on the bottom of your deck to play this character for free.',
+});
+
+describe('Self-Discard roles: a sweep from the discard to the bottom of the deck', () => {
+  it('reads no recursion from a sweep the card must make', () => {
+    expect(getSelfDiscardRoles(mamaImelda)).toEqual([]);
+    expect(getSelfDiscardRoles(bouncingDucky)).toEqual(['zone-payoff']);
+  });
+
+  it('keeps an optional sweep the card pays as a cost', () => {
+    expect(getSelfDiscardRoles(handInTheBox)).toEqual(['reanimator']);
   });
 });

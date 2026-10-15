@@ -18,6 +18,12 @@ const SHAPES = [
   // Read by what each trigger counts: any of your characters banished, or only the card itself.
   {label: 'banish-trigger ↔ banish-trigger', score: 5, test: /\bbanished\b/},
   {label: 'self-banish ↔ self-banish', score: 5, test: /both banish your own characters/},
+  // A self-banish card next to a payoff that fires only on an opponent's turn.
+  {
+    label: "self-banish ↔ an opponent's-turn banish-trigger",
+    score: 5,
+    test: /both go in a Sacrifice deck/,
+  },
 ];
 
 /** The share of a rule's pairs that score 8. */

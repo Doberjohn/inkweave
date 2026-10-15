@@ -2,6 +2,7 @@ import type {LorcanaCard, PlaystyleId, SynergyMatch, SynergyRule} from '../types
 import {
   classifyNamedEffect,
   getBaseName,
+  getShiftAliasNames,
   getShiftBaseNames,
   getDiscardRoles,
   getInkDropGain,
@@ -14,6 +15,8 @@ import {
   hasKeyword,
   isBoostBeneficiaryLocation,
   isCharacter,
+  isMoveOnlyLocationRamp,
+  getSelfOnlyLocationRoles,
   isDiscardCard,
   isItem,
   isLocation,
@@ -59,6 +62,7 @@ import {
   mechanicLabel,
   NAMED_EFFECT_SCORES,
   normalizeCardText,
+  strengthInChallenge,
   type LocationRole,
   type ShiftPayment,
   type ShiftType,
@@ -76,7 +80,7 @@ import {
   scoreExertPair,
   scoreFloodbornPair,
   isFloodbornPayoff,
-  scoreItemPair,
+  scoreItemCards,
   isItemPayoff,
   scoreHealPair,
   isHealPayoff,
@@ -229,6 +233,18 @@ function calculateShiftBaseScore(
 }
 
 /**
+ * True when a same-name Shift lands on `target`. Team cards ("Belle & Beast") shift onto either
+ * named half, so the target is checked against every name the shifter can land on. A target that
+ * also counts as another name for Shift matches on that name too (Incrediboy - Buddy Pine counts
+ * as Syndrome).
+ */
+function shiftLandsOnName(shiftCard: LorcanaCard, target: LorcanaCard): boolean {
+  const landingNames = getShiftBaseNames(shiftCard);
+  if (landingNames.includes(getBaseName(target))) return true;
+  return getShiftAliasNames(target).some((alias) => landingNames.includes(alias));
+}
+
+/**
  * Check if a target card is a valid Shift target for the given Shift variant.
  * - standard: same base name (character)
  * - classification: character with the required classification
@@ -245,9 +261,7 @@ function isValidShiftTarget(
 ): boolean {
   switch (shiftType.kind) {
     case 'standard':
-      // Team cards ("Belle & Beast") shift onto either named half, so match the
-      // target's base name against every name the shifter can land on.
-      return isCharacter(target) && getShiftBaseNames(shiftCard).includes(getBaseName(target));
+      return isCharacter(target) && shiftLandsOnName(shiftCard, target);
     case 'classification':
       return isCharacter(target) && hasClassification(target, shiftType.classification);
     case 'universal':
@@ -382,12 +396,60 @@ const HIGH_VALUE_ROLES: Set<LocationRole> = new Set([
   'location-ramp',
 ]);
 
+/** A support card's location roles as a cross pair reads them. */
+interface LocationCrossProfile {
+  /** Roles the complements are matched on: a move-only ramp (Raksha's discount on her own move) reads as a move. */
+  roles: LocationRole[];
+  /** Of `roles`, those whose clauses concern only the card itself (`getSelfOnlyLocationRoles`). */
+  selfOnly: LocationRole[];
+  /** Whether the card's own roles include a high-value one. */
+  highValue: boolean;
+}
+
+const hasHighValueRole = (roles: LocationRole[]): boolean =>
+  roles.some((r) => HIGH_VALUE_ROLES.has(r));
+
+/** The cross profile of bare roles: no move-only ramp, no self-only clause. */
+const rolesProfile = (roles: LocationRole[]): LocationCrossProfile => ({
+  roles,
+  selfOnly: [],
+  highValue: hasHighValueRole(roles),
+});
+
+/** The cross profile of a support card. */
+function cardCrossProfile(card: LorcanaCard): LocationCrossProfile {
+  const own = getLocationRoles(card);
+  const roles =
+    own.includes('location-ramp') && isMoveOnlyLocationRamp(card)
+      ? [...new Set(own.map((r): LocationRole => (r === 'location-ramp' ? 'move' : r)))]
+      : own;
+  return {roles, selfOnly: getSelfOnlyLocationRoles(card), highValue: hasHighValueRole(own)};
+}
+
+/** Whether `from`'s `role` links to `to`'s `target`: void when both clauses concern only their own card. */
+const rolesLink = (
+  from: LocationCrossProfile,
+  role: LocationRole,
+  to: LocationCrossProfile,
+  target: LocationRole,
+): boolean =>
+  to.roles.includes(target) && !(from.selfOnly.includes(role) && to.selfOnly.includes(target));
+
 /** Check if any role in `from` has a complementary relationship with any role in `to`. */
-function hasComplementaryRole(from: LocationRole[], to: LocationRole[]): boolean {
-  return from.some((role) => {
-    const complements = COMPLEMENTARY_ROLES[role];
-    return complements != null && to.some((r) => complements.includes(r));
-  });
+function hasComplementaryRole(from: LocationCrossProfile, to: LocationCrossProfile): boolean {
+  return from.roles.some((role) =>
+    (COMPLEMENTARY_ROLES[role] ?? []).some((target) => rolesLink(from, role, to, target)),
+  );
+}
+
+/** Cross-synergy score of two support cards' profiles (see `getCrossSynergyScore`). */
+function scoreCrossProfiles(a: LocationCrossProfile, b: LocationCrossProfile): number | null {
+  if (a.roles.length === 0 || b.roles.length === 0) return null;
+
+  // Check both directions: A complements B, or B complements A
+  if (!hasComplementaryRole(a, b) && !hasComplementaryRole(b, a)) return null;
+
+  return a.highValue && b.highValue ? 5 : 3;
 }
 
 /**
@@ -400,16 +462,7 @@ export function getCrossSynergyScore(
   rolesA: LocationRole[],
   rolesB: LocationRole[],
 ): number | null {
-  if (rolesA.length === 0 || rolesB.length === 0) return null;
-
-  // Check both directions: A complements B, or B complements A
-  if (!hasComplementaryRole(rolesA, rolesB) && !hasComplementaryRole(rolesB, rolesA)) return null;
-
-  const aHighValue = rolesA.some((r) => HIGH_VALUE_ROLES.has(r));
-  const bHighValue = rolesB.some((r) => HIGH_VALUE_ROLES.has(r));
-
-  if (aHighValue && bHighValue) return 5;
-  return 3;
+  return scoreCrossProfiles(rolesProfile(rolesA), rolesProfile(rolesB));
 }
 
 /** Build a Location ↔ location-support match (or null when role-specific gating excludes the location). */
@@ -419,8 +472,8 @@ function buildLocationDirectMatch(
   role: LocationRole,
 ): SynergyMatch | null {
   if (role === 'boost' && !isBoostBeneficiaryLocation(location)) return null;
-  // A classified buff or move ("Your Hyperia City locations get ...", "move him to a Hyperia City
-  // location") reaches only its own locations.
+  // A classified buff or move ("Your Hyperia City locations get ..."), a capped location play
+  // and the other limits in `locationRoleReaches` keep the role to the locations it can reach.
   if (!locationRoleReaches(card, location, role)) return null;
   return {
     card: location,
@@ -436,19 +489,17 @@ function buildLocationDirectMatch(
  * the partner has the role too.
  */
 function buildLocationCrossMatch(
-  _card: LorcanaCard,
   other: LorcanaCard,
-  cardRoles: LocationRole[],
+  cardProfile: LocationCrossProfile,
   role: LocationRole,
 ): SynergyMatch | null {
-  const otherRoles = getLocationRoles(other);
-  const score = getCrossSynergyScore(cardRoles, otherRoles);
+  const score = scoreCrossProfiles(cardProfile, cardCrossProfile(other));
   if (score === null) return null;
   const lines = LOCATION_ROLE_LINES[role];
   return {
     card: other,
     score,
-    explanation: otherRoles.includes(role) ? lines.both : lines.general('{A}'),
+    explanation: getLocationRoles(other).includes(role) ? lines.both : lines.general('{A}'),
     bidirectional: true,
   };
 }
@@ -460,14 +511,14 @@ function findLocationSupportSynergies(
   role: LocationRole,
 ): SynergyMatch[] {
   const matches: SynergyMatch[] = [];
-  const cardRoles = getLocationRoles(card);
+  const cardProfile = cardCrossProfile(card);
 
   for (const other of allCards) {
     if (other.id === card.id) continue;
     const match = isLocation(other)
       ? buildLocationDirectMatch(card, other, role)
       : isLocationSupportCard(other)
-        ? buildLocationCrossMatch(card, other, cardRoles, role)
+        ? buildLocationCrossMatch(other, cardProfile, role)
         : null;
     if (match) matches.push(match);
   }
@@ -634,23 +685,33 @@ function makeSingerSongMatch(
   };
 }
 
+/** "This character can't sing songs without Sing Together." (Meilin Lee - Lead Vocalist) */
+const SING_TOGETHER_ONLY_PATTERN = /\bcan't sing songs without Sing Together\b/i;
+
+/**
+ * True iff the singer can sing the song for free: the song costs no more than its Singer value,
+ * and a singer barred from songs without Sing Together gets only the songs that have it.
+ */
+function canSingForFree(singer: LorcanaCard, song: LorcanaCard): boolean {
+  const singerValue = getKeywordValue(singer, 'Singer') ?? singer.cost;
+  if (song.cost > singerValue) return false;
+  if (!SING_TOGETHER_ONLY_PATTERN.test(normalizeCardText(singer))) return true;
+  return hasKeyword(song, 'Sing Together');
+}
+
 /** Forward: a Singer card finds Songs it can sing for free. */
 function findSongsForSinger(singer: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
-  const singerValue = getKeywordValue(singer, 'Singer') ?? singer.cost;
   return allCards
-    .filter((other) => other.id !== singer.id && isSong(other) && other.cost <= singerValue)
+    .filter((other) => other.id !== singer.id && isSong(other) && canSingForFree(singer, other))
     .map((song) => makeSingerSongMatch(singer, song, song));
 }
 
 /** Reverse: a Song card finds Singers that can sing it. */
 function findSingersForSong(song: LorcanaCard, allCards: LorcanaCard[]): SynergyMatch[] {
   return allCards
-    .filter((other) => {
-      if (other.id === song.id) return false;
-      if (!hasKeyword(other, 'Singer')) return false;
-      const singerValue = getKeywordValue(other, 'Singer') ?? other.cost;
-      return song.cost <= singerValue;
-    })
+    .filter(
+      (other) => other.id !== song.id && hasKeyword(other, 'Singer') && canSingForFree(other, song),
+    )
     .map((singer) => makeSingerSongMatch(singer, song, singer));
 }
 
@@ -708,14 +769,17 @@ function findShiftSourcesForBase(baseCard: LorcanaCard, allCards: LorcanaCard[])
  */
 const SPIKE_SUIT_FLOOR = 3;
 
-/** The bonus combat damage Spike Suit hands this character (willpower − strength). */
+/**
+ * The bonus combat damage Spike Suit hands this character: willpower − the strength it challenges
+ * with, its own strength boosts included (`strengthInChallenge`).
+ */
 function spikeSuitGap(card: LorcanaCard): number {
-  return (card.willpower ?? 0) - (card.strength ?? 0);
+  return (card.willpower ?? 0) - strengthInChallenge(card);
 }
 
-/** True when a character has no strength — Spike Suit transforms it from wall to threat. */
+/** True when a character challenges with no strength — Spike Suit turns it from wall to threat. */
 function isSpikeSuitWall(card: LorcanaCard): boolean {
-  return (card.strength ?? 0) === 0;
+  return strengthInChallenge(card) === 0;
 }
 
 /**
@@ -805,11 +869,19 @@ function isFreePlayPayoff(card: LorcanaCard): boolean {
 }
 
 /**
+ * An on-play clause that only costs you (Gantu - Hamsterviel's Accomplice's EASY TARGET: "When you
+ * play this character, choose and discard a card."). The free play fires it too, which adds no
+ * second card's worth of value.
+ */
+const ON_PLAY_DRAWBACK_PATTERN = /\bwhen you play this character, choose and discard a card\./gi;
+
+/**
  * True when a cost-1 character carries a "when you play this character" effect. The free
- * play triggers it too, turning a free body into a free two-for-one.
+ * play triggers it too, turning a free body into a free two-for-one. A drawback doesn't count.
  */
 function hasOnPlayEffect(card: LorcanaCard): boolean {
-  return /when you play this character/i.test(normalizeCardText(card));
+  const text = normalizeCardText(card).replace(ON_PLAY_DRAWBACK_PATTERN, '');
+  return /when you play this character/i.test(text);
 }
 
 /**
@@ -1329,7 +1401,7 @@ export const synergyRules: SynergyRule[] = [
     },
     getItemRoles,
     isItemPayoff,
-    scoreItemPair,
+    scoreItemCards,
   ),
 
   // --------------------------------------------

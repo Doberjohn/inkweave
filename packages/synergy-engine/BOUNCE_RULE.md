@@ -37,11 +37,13 @@ Multi-role allowed (a self-bounce enabler that is itself a re-buyable ETB body c
 | `flexible` | Un-restricted "return chosen … to their player's hand" — both sides | flex pattern gated `!of yours` `!opposing/opponent's` |
 | `opponent-bounce` | Return a body to their player's hand (tempo/removal) | `return … to their player's hand` AND not flexible |
 | `return-payoff` | Lore whenever a card is returned to hand from play (Maleficent's Staff, rotated out of Core) | `when(ever) … is returned to … hand` |
-| `rebuy-payoff` | A "when you play this character" ETB worth re-firing (draw 2+, search, free-play, banish-chosen); Shift bodies excluded | ETB pattern AND re-fire-value pattern AND `isCharacter` AND `!hasAnyShift` |
+| `rebuy-payoff` | A "when you play this character" ETB worth re-firing (draw 2+, search, a deck look that puts a card into your hand, free-play, banish-chosen); Shift bodies excluded | ETB pattern AND re-fire-value pattern AND `isCharacter` AND `!hasAnyShift` |
 
 Coverage counts the cards in each role.
 
 **A free play, not a free move.** The re-fire value pattern counts a free play ("you may play a character with cost 2 or less for free") but skips the card's own "play this character". Before #628, Arthur - Merlin's Assistant's "When you play this character, you may move him to a location for free" read as free-play value and made him a replay target.
+
+**A deck look counts only when it fills your hand.** "Look at the top 4 cards of your deck. You may reveal a character card and put it into your hand." (Tinker Bell - Generous Fairy) is re-buy value. Jafar - Lamp Thief's "look at the top 2 cards of your deck. Put one on the top of your deck and the other on the bottom." only orders the deck, so it is not, and Jafar holds no Bounce role. The pattern looks for "into your hand" in the look's sentence or the next.
 
 **Gated enter-play abilities stay replay targets** (owner ruling, #628). Stitch - Carefree Surfer draws only with 2 other characters in play, and Madam Mim - Resourceful Trickster only when an ink drop paid for her. A bounce lets you replay them once the condition holds, so both keep `rebuy-payoff`.
 
@@ -74,7 +76,7 @@ Gated enablers in the pool: **9 of 17**.
 | Poor Unfortunate Souls | cap 2 | 1 (Pocahontas - Guiding the Tribe) |
 | Tigger - Bouncing All the Way | cap 2 | 1 (Pocahontas - Guiding the Tribe) |
 | Vixey - Expert Fisher | cap 2 | 1 (Pocahontas - Guiding the Tribe) |
-| Begone! | cap 3 | 8 |
+| Begone! | cap 3 | 7 |
 | Snow White - Merry as the Morning | Seven Dwarfs | 0 |
 <!-- coverage:end -->
 
@@ -104,19 +106,19 @@ A capped enabler pairs only with the bodies it can reach. One that keeps no Boun
 <!-- coverage:start coverage -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-- **Roles**: self-bounce 6, flexible 11, opponent-bounce 2, return-payoff 0, rebuy-payoff 24; **43 participating cards**.
-- 39 cards carry a Bounce group.
-- Without the target gates, 391 enabler and re-buy pairs would qualify, and 190 of them (48.6%) are legally impossible: 166 fall to cost caps, 24 to a classification gate. 24 of the 24 re-buy bodies lose at least one pair.
+- **Roles**: self-bounce 6, flexible 11, opponent-bounce 2, return-payoff 0, rebuy-payoff 23; **42 participating cards**.
+- 38 cards carry a Bounce group.
+- Without the target gates, 374 enabler and re-buy pairs would qualify, and 182 of them (48.7%) are legally impossible: 159 fall to cost caps, 23 to a classification gate. 23 of the 23 re-buy bodies lose at least one pair.
 
-**201 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+**192 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
 | Score | Pairs | Share |
 |-----|-----|-----|
-| 8 | 201 | 100.0% |
+| 8 | 192 | 100.0% |
 <!-- coverage:end -->
 
 ---
 
 ## Test coverage
 
-`packages/synergy-engine/src/__tests__/rules.test.ts` → `describe('Bounce rule (return from play to hand)')`: target-gate parsing (cost cap, uncapped, the "cost N or more" reminder guard, classification), role detection (all 5 roles + the multi-role self+rebuy body), exclusions (from-discard recursion, Shift ETB bodies), and scoring (enabler↔rebuy=8 with the token-swap, flexible-as-enabler against an in-cap body, cap and classification rejections in both directions, a two-enabler pair kept when only one direction passes, opponent↔Staff=6, and the payoff-anchored drop). `cardHelpers.test.ts` → `describe('getBounceRoles: re-buy value on entering play')` (2 tests): Arthur - Merlin's Assistant's free move is not re-buy value, while a free play and the gated draws of Madam Mim - Resourceful Trickster and Stitch - Carefree Surfer are.
+`packages/synergy-engine/src/__tests__/rules.test.ts` → `describe('Bounce rule (return from play to hand)')`: target-gate parsing (cost cap, uncapped, the "cost N or more" reminder guard, classification), role detection (all 5 roles + the multi-role self+rebuy body), exclusions (from-discard recursion, Shift ETB bodies), and scoring (enabler↔rebuy=8 with the token-swap, flexible-as-enabler against an in-cap body, cap and classification rejections in both directions, a two-enabler pair kept when only one direction passes, opponent↔Staff=6, and the payoff-anchored drop). `cardHelpers.test.ts` → `describe('getBounceRoles: re-buy value on entering play')` (2 tests): Arthur - Merlin's Assistant's free move is not re-buy value, while a free play and the gated draws of Madam Mim - Resourceful Trickster and Stitch - Carefree Surfer are. `bounce.test.ts` (2 tests): Jafar - Lamp Thief's deck look that only orders the deck is no re-buy value and pairs with no bounce card, while Tinker Bell - Generous Fairy's look into your hand is.

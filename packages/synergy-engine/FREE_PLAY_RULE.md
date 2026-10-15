@@ -54,6 +54,8 @@ Matching on wording rather than a card id means reprints or new "cost 1 for free
 
 `hasOnPlayEffect(card)` tests the normalized text against `/when you play this character/i`. This is the only signal that varies across the otherwise-uniform payoff pool, so it is what the score tracks. Normalizing newlines to spaces before the test is what catches bodies whose "when you play this / character" wording wraps a line.
 
+An on-play clause that only costs you is stripped first (`/\bwhen you play this character, choose and discard a card\./gi`): Gantu - Hamsterviel's Accomplice's EASY TARGET makes you discard a card, so playing him for free is a plain free body at 6, not a two-for-one. A loot ("you may draw a card, then choose and discard a card", Bobby Zimuruski - Spray Cheese Kid) still counts.
+
 ### Ink Compatibility
 
 Handled centrally by the engine (`canShareDeck`) before rules run, so the rule does no ink filtering. Mono-Amber Pocahontas pairs with every mono-ink cost-1 and any dual-ink cost-1 containing Amber. Dual-ink Pocahontas & Meeko (Amber-Amethyst) pairs only with cost-1s that fit an Amber-Amethyst deck. Coverage counts each anchor's payoffs.
@@ -96,10 +98,10 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 
 | Anchor | Ink | Deck-compatible payoffs | Pairs per score | Payoffs per ink |
 |------|---|-----------------------|---------------|---------------|
-| Pocahontas - Guiding the Tribe | Amber | 98 | 6: 85, 8: 13 | Emerald 20, Amethyst 19, Amber 18, Ruby 14, Sapphire 14, Steel 13 |
+| Pocahontas - Guiding the Tribe | Amber | 98 | 6: 86, 8: 12 | Emerald 20, Amethyst 19, Amber 18, Ruby 14, Sapphire 14, Steel 13 |
 | Pocahontas & Meeko - Adventurous Friends | Amber-Amethyst | 37 | 6: 33, 8: 4 | Amethyst 19, Amber 18 |
 
-The 13 cost-1 characters that score 8, for an on-play effect the free play also triggers: Berlioz - Tiny Rascal, Bobby Zimuruski - Spray Cheese Kid, Carl Fredricksen - Loving Husband, Copper - Hound Pup, Finnick - Tiny Terror, Flit - Reflective Hummingbird, Gantu - Hamsterviel's Accomplice, Héctor Rivera - Street Musician, Jasmine - Heir of Agrabah, Judy Hopps - Helpful Officer, Julieta Madrigal - Caring Baker, Mike Wazowski - Well-Rounded Entertainer, Webby Vanderquack - Mystery Enthusiast.
+The 12 cost-1 characters that score 8, for an on-play effect the free play also triggers: Berlioz - Tiny Rascal, Bobby Zimuruski - Spray Cheese Kid, Carl Fredricksen - Loving Husband, Copper - Hound Pup, Finnick - Tiny Terror, Flit - Reflective Hummingbird, Héctor Rivera - Street Musician, Jasmine - Heir of Agrabah, Judy Hopps - Helpful Officer, Julieta Madrigal - Caring Baker, Mike Wazowski - Well-Rounded Entertainer, Webby Vanderquack - Mystery Enthusiast.
 <!-- coverage:end -->
 
 ---

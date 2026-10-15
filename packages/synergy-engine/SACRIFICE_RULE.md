@@ -52,6 +52,8 @@ Matches a **general (any-cause)** banish trigger on your own side or on this cha
 
 The optional `\w+` slot is load-bearing: it lets tribal triggers (Racer / Illusion / Puppy) count, because a self-banish can banish a Racer just as well as a generic character, so the trigger genuinely fires.
 
+A trigger limited to an opponent's turn ("**During an opponent's turn, when this character is banished**, gain 1 lore.", Rex - Protective Dinosaur) keeps the role but never makes the combo: see [Why an opponent's-turn trigger isn't a combo](#why-an-opponents-turn-trigger-isnt-a-combo).
+
 ### self-banish (enabler)
 
 ```regex
@@ -99,6 +101,7 @@ Applies the project-wide **5-baseline convention** and mirrors the Discard rule'
 | Pair Type | Score | Display Tier | Explanation |
 |-----------|-------|-------------|-------------|
 | self-banish ↔ banish-trigger | **8** | Strong | Win-condition combo: the self-banish card banishes your own payoff body on demand, converting a banish-trigger into a guaranteed, on-your-terms value engine |
+| self-banish ↔ a banish-trigger that fires only on an opponent's turn | **5** | Weak | No combo: a self-banish card acts on your own turn, so it never sets the trigger off. The two just share the deck |
 | banish-trigger ↔ banish-trigger | **5** | Weak | Parallel payoff density: a board of value-on-banish bodies that each trade independently, no compounding |
 | self-banish ↔ self-banish | **5** | Weak | Parallel enablers: two self-banish cards don't compound, you still need a payoff body to banish |
 
@@ -111,11 +114,12 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| self-banish ↔ banish-trigger | 151 | 8 | 38.8% |
+| self-banish ↔ banish-trigger | 123 | 8 | 31.6% |
 | banish-trigger ↔ banish-trigger | 217 | 5 | 55.8% |
 | self-banish ↔ self-banish | 21 | 5 | 5.4% |
+| self-banish ↔ an opponent's-turn banish-trigger | 28 | 5 | 7.2% |
 
-Score-8 share next to Discard and Toy: Sacrifice 38.8%, Discard 0.0%, Toy 13.3%.
+Score-8 share next to Discard and Toy: Sacrifice 31.6%, Discard 0.0%, Toy 13.3%.
 <!-- coverage:end -->
 
 The score-8 share runs high next to Discard's and Toy's. That is structural, not a defect: with a handful of enablers each pairing against many payoffs, the combo *is* the archetype's identity.
@@ -130,12 +134,13 @@ const payoffToken = cardSelfBanish ? '{B}' : '{A}';
 // `${selfBanishToken} banishes your own character on demand, guaranteeing ${payoffToken}'s banish payoff.`
 ```
 
-Same-side pairs score 5 and name both cards. Two banish-triggers read by what each one's trigger watches (`triggersOnAnyBanish`): any of your characters being banished, or only the card itself:
+Pairs that aren't a combo score 5 and name both cards. Two banish-triggers read by what each one's trigger watches (`triggersOnAnyBanish`): any of your characters being banished, or only the card itself:
 
 - banish ↔ banish, both watching any of your characters: `"{A} and {B} both benefit when your characters are banished."`
 - banish ↔ banish, one of each (David Xanatos - Charismatic Leader with Kuzco - Wanted Llama): `"{A} benefits when your characters are banished, and {B} when it is."`
 - banish ↔ banish, both watching only themselves: `"{A} and {B} both benefit from being banished."`
 - self-banish ↔ self-banish: `"{A} and {B} both banish your own characters."`
+- self-banish ↔ a banish-trigger that fires only on an opponent's turn: `"{A} and {B} both go in a Sacrifice deck."`
 
 ---
 
@@ -165,7 +170,7 @@ Banish-triggers the Toy rule tags too: 4 (Alien - True Believer, Jingle Joe - Si
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Sacrifice rule (Banish Matters)')`.
+Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Sacrifice rule (Banish Matters)')`, plus `src/__tests__/sacrifice.test.ts` for triggers limited to an opponent's turn.
 
 ### Role Detection (8 tests)
 
@@ -189,6 +194,17 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | banish-trigger ↔ banish-trigger → 5 | parallel payoff density |
 | self-banish ↔ self-banish → 5 | parallel enablers |
 
+### Opponent's-turn triggers (4 tests, `sacrifice.test.ts`)
+
+Real text of Time to Go!, David Xanatos - Charismatic Leader, Rex - Protective Dinosaur and Donald Duck - Fred Honeywell.
+
+| Test | What it verifies |
+|------|------------------|
+| reads the turn each trigger can fire on | `banishTriggerFiresOnYourTurn`: David Xanatos yes, Rex and Donald Duck no |
+| keeps them as banish-triggers | Rex and Donald Duck stay in the rule |
+| keeps the combo for a your-turn trigger | Time to Go! ↔ David Xanatos → 8 |
+| a self-banish card with them → 5 | Time to Go! ↔ Rex or Donald Duck → 5 from either side, the same-deck line |
+
 ---
 
 ## Design Decisions and Rationale
@@ -200,6 +216,12 @@ The whole value of the rule is the 8-score combo. A "banished *in a challenge*" 
 ### Why the "of yours" gate matters
 
 `banish chosen character` (opponent removal) and `banish chosen character of yours` (a self-banish card) differ by two words but are opposite mechanics. The gate keeps removal out of this axis and is the same boundary the Damage Matters candidate ([#368](https://github.com/Doberjohn/inkweave/issues/368)) leans on to separate "damage the opponent" from "sacrifice your own."
+
+### Why an opponent's-turn trigger isn't a combo
+
+You play actions and use ⟳ abilities only on your own turn, and every self-banish card banishes through one of those or an on-play effect: Time to Go! and If She Doesn't Scare You are actions, The Claw, Lonely Grave, Retro Evolution Device and Vine Pod are ⟳ abilities, and Sid Phillips - Toy Surgeon banishes when you play him. A trigger that reads "During an opponent's turn" (Rex - Protective Dinosaur, Scar - Created by the Vine, The Vine - Towering Stalk) or "During opponents' turns" (Donald Duck - Fred Honeywell) can't fire then, so the 8 would promise a combo the cards can't perform.
+
+`banishTriggerFiresOnYourTurn` counts a card's banish triggers against the ones limited to an opponent's turn, so a card with any trigger that can fire on your turn still makes the combo. The others keep the banish-trigger role: they still pay off when the opponent banishes your characters, the same density the other payoffs share.
 
 ### Why same-side pairs sit at 5
 

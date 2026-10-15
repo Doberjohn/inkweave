@@ -2909,7 +2909,7 @@ describe('Self-Discard rule (Discard Matters)', () => {
     });
 
     it('fill combos score 7 from a mill and 6 from a hand discard, with the bin-filler as the actor', () => {
-      const pool = [loot, mill, reanimator, discardCount];
+      const pool = [loot, mill, millReanimate, discardCount];
       const find = (from: typeof loot, to: string) =>
         selfDiscardRule.findSynergies(from, pool).find((s) => s.card.id === to);
       expect(find(loot, 'pepita-zone')).toMatchObject({
@@ -2921,7 +2921,7 @@ describe('Self-Discard rule (Discard Matters)', () => {
         explanation: "{A} mills your deck into the discard, feeding {B}'s discard-count payoff.",
       });
       // The payoff is the searcher here, so the filler reads as {B}.
-      expect(find(reanimator, 'quackerjack-mill')).toMatchObject({
+      expect(find(millReanimate, 'quackerjack-mill')).toMatchObject({
         score: 7,
         explanation: '{B} mills cards into your discard for {A} to replay.',
       });
@@ -2961,13 +2961,12 @@ describe('Healing rule (Heal Matters)', () => {
     ink: 'Amber',
     text: 'DO NO WRONG Whenever you remove damage from one of your characters, gain 1 lore for each 1 damage removed.',
   });
-  // Dual-role: healer AND payoff on one card.
-  const ohana = createCard({
-    id: '2495',
-    fullName: 'Ohana Means Family',
-    ink: 'Amber',
-    type: 'Action',
-    text: 'Remove all damage from chosen character of yours. Draw a card for each 1 damage removed this way.',
+  // Dual-role: heals, and pays off any removal, its own included.
+  const bruno = createCard({
+    id: '2869',
+    fullName: 'Bruno Madrigal - Oasis Oracle',
+    ink: 'Sapphire',
+    text: "FIND THAT VISION Once during your turn, whenever you\nremove damage from one of your characters, you may\nlook at the top 2 cards of your deck. Put one into your\nhand and the other on the bottom of your deck.\nYOU'LL BE OKAY Whenever this character quests, you\nmay remove all damage from chosen character.",
   });
 
   // Excluded / unrelated.
@@ -2988,8 +2987,8 @@ describe('Healing rule (Heal Matters)', () => {
       expect(getHealRoles(grandPabbie)).toEqual(['heal-payoff']);
     });
 
-    it('detects a dual-role card as healer + heal-payoff (Ohana Means Family)', () => {
-      expect(getHealRoles(ohana)).toEqual(['healer', 'heal-payoff']);
+    it('detects a dual-role card as healer + heal-payoff (Bruno Madrigal - Oasis Oracle)', () => {
+      expect(getHealRoles(bruno)).toEqual(['healer', 'heal-payoff']);
     });
 
     it('excludes a pure move-damage card and text-less / unrelated cards', () => {

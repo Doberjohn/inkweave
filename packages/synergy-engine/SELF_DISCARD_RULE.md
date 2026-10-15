@@ -77,7 +77,7 @@ Matches playing, returning, or putting a card **from your discard**:
 | Example card text | Card |
 |-------------------|------|
 | "you may **play this character from your discard**." | Mother Gothel - Evil as Ever |
-| "**return a character card from your discard** to your hand." | The Queen - Conceited Ruler, Taran - Pig Keeper |
+| "**return a character card from your discard** to your hand." | The Queen - Conceited Ruler, Bruno's Return |
 | "you may **play that character from your discard**." | Rapunzel & Flynn Rider |
 
 The `[^.]{0,60}` window keeps the verb and "from your discard" inside one clause, so a card can't match by having "play" in one sentence and "from your discard" in an unrelated one.
@@ -91,6 +91,10 @@ The `[^.]{0,60}` window keeps the verb and "from your discard" inside one clause
 | A card it just discarded | "If you discarded a location card **this way, you may play it from your discard**" | Tiana - Party Hostess |
 
 Recursion that fires when **you** discard the card stays ("when you discard this card, you may play it from your discard": Mother Gothel - Evil as Ever, Look What You've Done, Rapunzel & Flynn Rider), because a hand discard is exactly what feeds it. Tiana keeps `enabler` (her draw-then-discard is a real outlet) and Torn Scrap keeps `zone-payoff`.
+
+**Recursion of one named card is stripped too** (`stripUnfedRecursion`): "return an action card **named Three Arrows** from your discard" (Merida - Formidable Archer), "an action card named Fire the Cannons!" (Captain Hook - Captain of the Jolly Roger), "a character card named Hen Wen" (Taran - Pig Keeper) and "another character card named Alien" (Alien - True Believer, the only card named Alien). Only that one card switches the recursion on. An outlet or a mill feeds it only when it happens to put that card into your discard, a narrow case the Self-Discard roles don't model, so pairing it with every outlet would overstate it. Named Companions pairs Merida, Captain Hook and Taran with the card each names; Alien names only another copy of itself, so no rule pairs it for this ability. Neither side of "named" may cross another play/return/put, so a named card elsewhere in the sentence ("if you have an item named Rivera Family Photo in play, you may play this item from your discard") doesn't strip the recursion next to it.
+
+**So is a sweep the card must make**: "put 3 cards from your discard on the bottom of your deck in any order or banish her" (Mamá Imelda - No-Nonsense Ancestor) and "put all Toy character cards from your discard on the bottom of your deck" (Bouncing Ducky - Sid's Toy, who keeps `zone-payoff` for his discount). No card comes back to hand or play. An optional sweep ("You may put a Toy character card from your discard on the bottom of your deck to play this character for free", Hand-in-the-Box - Sid's Toy) is a cost the card pays for something else, and stays a reanimator.
 
 ### state-payoff (discard event / empty hand / small hand)
 
@@ -113,11 +117,11 @@ STONE BY DAY is a drawback a small hand switches off: a Gargoyle that quested or
 ### zone-payoff (the discard as a countable zone)
 
 ```regex
-in:  /\b(?:a|an|\d+\s+or\s+more|for\s+each)\s+(?:\w+\s+){0,3}?cards?\s+(?:named\s+\w+\s+)?in\s+your\s+discard\b/i
+in:  /\b(?:a|an|\d+\s+or\s+more|for\s+each)\s+(?:\w+\s+){0,3}?cards?\s+in\s+your\s+discard\b/i
 put: /cards?\s+were\s+put\s+into\s+your\s+discard\s+this\s+turn/i
 ```
 
-The `in your discard` wording keeps this disjoint from the reanimator's `from your discard`: a zone payoff *reads* the pile, a reanimator *empties* it. The `put` pattern covers the trigger family that counts what arrived this turn regardless of how it got there.
+The `in your discard` wording keeps this disjoint from the reanimator's `from your discard`: a zone payoff *reads* the pile, a reanimator *empties* it. The `put` pattern covers the trigger family that counts what arrived this turn regardless of how it got there. A check for one named card is no pile check ("if you have a character card named Panic in your discard", Pain - Running with Scissors): only that card switches it on, and Named Companions pairs the two.
 
 | Shape | Example card text | Card |
 |-------|-------------------|------|
@@ -159,7 +163,7 @@ Real cards the `getSelfDiscardRoles` detector tags for each role (names from the
 | **enabler** | Kronk - Meat Hut Cook (Steel), Search for Clues (Amber), The Horned King - Wicked Ruler (Amethyst) | Discard your own cards from hand: loot, discard-your-hand, or discard-as-cost |
 | **reanimator** | The Queen - Conceited Ruler (Amber), Lady Tremaine - Sinister Socialite (Ruby), Pluto - Clever Cluefinder (Sapphire) | Play or return a card *from your discard*: the deep recursion payoff |
 | **state-payoff** | Maximus - Relentless Stallion (Steel), Megavolt - Electrical Menace (Steel), Bronx - Ferocious Beast (Ruby) | Rewards the discard event ("discarded a card this turn") or an empty hand (Hellbent), or needs a small one to ready (STONE BY DAY) |
-| **zone-payoff** | Priya Mangal - Serious Music Lover (Amber), Pain - Running with Scissors (Amethyst), Helga Sinclair - No Backup Needed (Emerald) | Reads the pile itself: a count, a card type sitting there, or what was put there this turn |
+| **zone-payoff** | Priya Mangal - Serious Music Lover (Amber), Dante - Strange and Endearing (Amethyst), Helga Sinclair - No Backup Needed (Emerald) | Reads the pile itself: a count, a card type sitting there, or what was put there this turn |
 | **mill** | Quackerjack - Loony Toymaker (Sapphire), Preston Whitmore - Expedition Financier (Ruby), Remote Inklands - Desert Ruins (Ruby) | Puts cards from the top of your deck into your discard |
 
 ---
@@ -176,10 +180,10 @@ Applies the project-wide **5-baseline convention** and mirrors the Sacrifice sha
 | enabler ↔ any other reanimator | **7** | Strong | Mechanical compounding: the outlet stocks the bin the recursion replays from, and picks what lands there |
 | enabler ↔ small-hand payoff | **7** | Strong | Mechanical compounding: an outlet that shrinks your hand switches the STONE BY DAY drawback off, so the character readies. Only an outlet that shrinks the hand, or Goliath - Clan Leader's end-of-turn trim (see Feed check) |
 | mill ↔ zone-payoff | **7** | Strong | The deck-side filler stocks the pile the payoff counts, several cards at a time and without spending the hand |
-| mill ↔ reanimator | **7** | Strong | Mill buries targets the recursion engine then replays |
-| enabler ↔ zone-payoff | **6** | Moderate | Complementary: each hand discard adds one card to the count the payoff reads, a nudge rather than a compounding |
+| mill ↔ reanimator | **7** | Strong | Mill buries targets the recursion engine then replays. Not recursion that fires only on your discard (see Feed check) |
+| enabler ↔ zone-payoff | **6** | Moderate | Complementary: each hand discard adds one card to the count the payoff reads, a nudge rather than a compounding. Only when the outlet can discard a card the payoff counts, and in time (see Feed check) |
 | reanimator ↔ reanimator | **6** | Moderate | Two recursion engines mining the same discard pile, complementary but not a single combo |
-| enabler ↔ enabler / mill ↔ state-payoff / reanimator ↔ state / state ↔ state / an outlet that cannot feed the payoff | **5** | Weak/Moderate | Same-axis density: parallel fillers, two payoffs that don't amplify each other, or an outlet whose discard can't reach the payoff (a loot or a refill next to a small-hand payoff) |
+| enabler ↔ enabler / mill ↔ state-payoff / reanimator ↔ state / state ↔ state / an outlet that cannot feed the payoff | **5** | Weak/Moderate | Same-axis density: parallel fillers, two payoffs that don't amplify each other, or an outlet whose discard can't reach the payoff (a loot or a refill next to a small-hand payoff, an end-of-turn outlet next to a check made earlier in the turn) |
 
 Only an 8 is a closed loop: the discard itself is what the payoff waits for. That is the difference between "discard Mother Gothel, replay Mother Gothel" (8) and "discard a card, and a recursion engine has one more target" (7). Most recursion pulls whatever sits in the pile, and play stocks the pile on its own: every banished character and every action or song you play ends up there. An outlet adds choice and speed to that engine, not the engine itself.
 
@@ -192,17 +196,22 @@ The enabler ↔ payoff combo needs more than an outlet and a payoff in the same 
 | Side | Reads as | Example |
 |------|----------|---------|
 | Generic outlet | any card | "choose and discard a card" (Kronk - Meat Hut Cook), "Discard your hand" |
-| Typed outlet | the kinds it names | "discard a song card" (Max Goof - Karaoke Star), "discard an Alien character card or a location card" (Sprout - Experiment 509) |
+| Typed outlet | the kinds it names, a classification included | "discard a song card" (Max Goof - Karaoke Star), "discard an Alien character card or a location card" (Sprout - Experiment 509: Alien characters and locations) |
 | Generic recursion | any card | "a card from your discard" (Jiminy Cricket - Ghost of Christmas Past) |
-| Typed recursion | the kinds in its own clause | "return an action card … from your discard" (Buzz Lightyear - Jungle Ranger); "a character card with Singer" is character |
-| Self-reference | the card's own kind | "this card", "it", or a card named like itself ("another character card named Alien", Alien - True Believer) |
-| Named other card | nothing | "an action card named Three Arrows" (Merida - Formidable Archer): no typed outlet is known to discard it |
+| Typed recursion | the kinds in its own clause | "return an action card … from your discard" (Buzz Lightyear - Jungle Ranger); "a character card with Singer" is character; "a Detective character card" (Fangmeyer - Icy Officer) is Detective characters |
+| Self-reference | the card itself | "this character", "this card", "it": a song, the card's type, or for a character each of its classifications |
 
-A generic side always meets. "Action" admits songs too, since a song is an action (Comprehensive Rules §5.4.4.1), while "song" admits only songs. So Max Goof - Karaoke Star feeds song, action and any-card recursion (7 each, since none of it fires on the discard), and scores 5 with character, item and location recursion.
+A generic side always meets. "Action" admits songs too, since a song is an action (Comprehensive Rules §5.4.4.1), while "song" admits only songs. So Max Goof - Karaoke Star feeds song, action and any-card recursion (7 each, since none of it fires on the discard), and scores 5 with character, item and location recursion. A classification narrows the character kind, and two named classifications meet only when they are the same: Sprout - Experiment 509 feeds Rapunzel & Flynn Rider - Unlikely Pair, who replays whatever character you discard (8), but neither Mother Gothel - Evil as Ever, who isn't an Alien, nor Detective recursion (Fangmeyer - Icy Officer).
+
+**Pile counts:** the enabler ↔ zone-payoff 6 needs the same meeting (`selfDiscardOutletFeedsPile`): the outlet has to be able to discard a card the payoff counts. A generic outlet adds to every count, and "10 or more cards in your discard" or "cards were put into your discard this turn" counts any card, while Sprout adds to "for each Alien character card in your discard" (Dr. Hamsterviel - Infamous Scientist) but not to a Gargoyle, item, action or song count, and Max Goof - Karaoke Star's songs add to song and action counts only.
 
 **Trigger or stock:** recursion that fires on your discard is a trigger and scores 8: Mother Gothel - Evil as Ever and Look What You've Done ("during your turn, when you discard this card, you may play it from your discard") and Rapunzel & Flynn Rider - Unlikely Pair ("whenever you discard a character card, you may play that character from your discard"). The check reads the recursion sentence itself (`hasDiscardFedRecursion`), so an unrelated "when you discard" elsewhere on a card doesn't count. Every other recursion only has its bin stocked by the outlet and scores 7.
 
-**State:** a trigger for the discard event and the empty hand. Any discard is a "discarded a card this turn" event, so every outlet feeds an event payoff. An empty-hand payoff ("while you have no cards in your hand") is not fed by an outlet that discards one card and then draws 2 or more ("discard a song card. If you do, draw 2 cards"): its hand is never empty when it resolves. That refill rule is deliberately narrow (Max Goof - Karaoke Star only); general empty-hand scoring is a separate decision.
+**State:** a trigger for the discard event and the empty hand. Any discard is a "discarded a card this turn" event, so every outlet feeds an event payoff, unless it discards too late (see Timing). An empty-hand payoff ("while you have no cards in your hand") is not fed by an outlet that discards one card and then draws 2 or more ("discard a song card. If you do, draw 2 cards"): its hand is never empty when it resolves. That refill rule is deliberately narrow (Max Goof - Karaoke Star only); general empty-hand scoring is a separate decision.
+
+**Timing:** an outlet that discards only as your turn ends (Meeko - Skittish Scrounger: "At the end of your turn, if this character is exerted, choose and discard a card or banish him"; Scar - Finally King) lands after every check made while you quest, challenge or play. It feeds neither "If you discarded a card this turn" (Maximus - Relentless Stallion, Discarded Armor) nor a "cards were put into your discard this turn" check made earlier (Helga Sinclair - No Backup Needed's discount, Kida - Discovering the Unknown's quest trigger, Escape Plan), and scores 5 with them (`discardLandsInTime`, read one ability at a time). It still feeds the checks made as the turn ends (Milo Thatch - Getting His Hands Dirty, Lyle Tiberius Rourke - Adventurer for Hire, Kashekim - Wise King), pile counts, recursion and STONE BY DAY, so `selfDiscardOutletFeedsPile` gates the enabler ↔ zone-payoff row the same way.
+
+**Mill:** a milled card is put into your discard, not discarded, so a mill never switches on recursion that fires only on your discard. `selfDiscardMillFeedsRecursion` keeps Mother Gothel - Evil as Ever and Look What You've Done out of the mill ↔ reanimator 7: they score 5 with a plain mill, and 6 with Lyle Tiberius Rourke - Crystallized Commander, who reanimates too. Rapunzel & Flynn Rider - Unlikely Pair reads the same way, though no mill shares a deck with both of her inks today.
 
 **Small hand:** an unlock, and only from an outlet that leaves the hand smaller. STONE BY DAY reads how many cards you hold, not whether you discarded, so an outlet that draws first or refills afterwards hands back what it took:
 
@@ -220,19 +229,19 @@ Coverage counts the outlets that shrink the hand. Goliath - Clan Leader has no o
 <!-- coverage:start distribution -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-**138 tagged cards** (44 enabler, 50 reanimator, 20 state-payoff, 29 zone-payoff, 8 mill; roles overlap on multi-role cards). **9,291 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+**132 tagged cards** (44 enabler, 44 reanimator, 20 state-payoff, 28 zone-payoff, 8 mill; roles overlap on multi-role cards). **8,489 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| enabler ↔ a payoff its discard switches on | 377 | 8 | 4.1% |
-| enabler ↔ any other reanimator | 1,956 | 7 | 21.1% |
-| enabler ↔ small-hand payoff | 242 | 7 | 2.6% |
-| mill ↔ reanimator | 364 | 7 | 3.9% |
-| mill ↔ zone-payoff | 227 | 7 | 2.4% |
-| enabler ↔ zone-payoff | 1,154 | 6 | 12.4% |
-| reanimator ↔ reanimator | 1,041 | 6 | 11.2% |
-| enabler ↔ enabler | 702 | 5 | 7.6% |
-| other same-axis | 3,228 | 5 | 34.7% |
+| enabler ↔ a payoff its discard switches on | 372 | 8 | 4.4% |
+| enabler ↔ any other reanimator | 1,700 | 7 | 20.0% |
+| enabler ↔ small-hand payoff | 242 | 7 | 2.9% |
+| mill ↔ reanimator | 308 | 7 | 3.6% |
+| mill ↔ zone-payoff | 219 | 7 | 2.6% |
+| enabler ↔ zone-payoff | 1,125 | 6 | 13.3% |
+| reanimator ↔ reanimator | 785 | 6 | 9.2% |
+| enabler ↔ enabler | 703 | 5 | 8.3% |
+| other same-axis | 3,035 | 5 | 35.8% |
 <!-- coverage:end -->
 
 Roles overlap on multi-role cards such as Lyle Tiberius Rourke, who mills *and* reanimates, or Hudson - Determined Reader, who loots and carries STONE BY DAY. When both cards of a pair score it the same, the pair is read from its lower-id card as the searcher.
@@ -274,9 +283,9 @@ Same-axis pairs name both cards:
 | Role | Cards | Cards per ink |
 |----|-----|-------------|
 | enabler (loot / discard-hand / discard-cost) | 44 | Steel 23, Emerald 14, Amethyst 5, Ruby 2, Amber 1 |
-| reanimator ("from your discard", self-contained recursion excluded) | 50 | Amber 19, Sapphire 9, Emerald 8, Ruby 7, Steel 7, Amethyst 2 |
+| reanimator ("from your discard", minus self-contained, named-card and forced deck-bottom clauses) | 44 | Amber 18, Sapphire 9, Emerald 7, Ruby 6, Steel 5, Amethyst 1 |
 | state-payoff (discarded this turn / Hellbent / STONE BY DAY) | 20 | Steel 10, Amethyst 6, Ruby 4 |
-| zone-payoff (count / card-type / put-this-turn) | 29 | Ruby 11, Amethyst 6, Emerald 6, Sapphire 3, Amber 2, Steel 1 |
+| zone-payoff (count / card-type / put-this-turn) | 28 | Ruby 11, Emerald 6, Amethyst 5, Sapphire 3, Amber 2, Steel 1 |
 | mill (deck-side filler) | 8 | Ruby 7, Sapphire 1 |
 
 | Read from the pairs | Cards |
@@ -289,10 +298,10 @@ Same-axis pairs name both cards:
 ```chart
 {
   "type": "doughnut",
-  "title": "Role composition (138 cards; multi-role overlap)",
+  "title": "Role composition (132 cards; multi-role overlap)",
   "data": {
-    "labels": ["Enabler (44)", "Reanimator (50)", "State-payoff (20)", "Zone-payoff (29)", "Mill (8)"],
-    "values": [44, 50, 20, 29, 8]
+    "labels": ["Enabler (44)", "Reanimator (44)", "State-payoff (20)", "Zone-payoff (28)", "Mill (8)"],
+    "values": [44, 44, 20, 28, 8]
   }
 }
 ```
@@ -304,7 +313,7 @@ Reanimators are the deepest side and mill, the deck-side filler, the thinnest. T
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Self-Discard rule (Discard Matters)')`. The self-contained recursion carve-out and the feed check are tested in `packages/synergy-engine/src/__tests__/selfDiscard.test.ts`, and STONE BY DAY in `packages/synergy-engine/src/__tests__/stoneByDay.test.ts`, both with real card text.
+Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Self-Discard rule (Discard Matters)')`. The self-contained recursion, named-card and deck-bottom sweep carve-outs and the feed check are tested in `packages/synergy-engine/src/__tests__/selfDiscard.test.ts`, and STONE BY DAY in `packages/synergy-engine/src/__tests__/stoneByDay.test.ts`, both with real card text.
 
 ### Role Detection (10 tests)
 
@@ -331,7 +340,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | fill combos → 7 / 6 | mill ↔ zone-payoff and mill ↔ reanimator 7, loot ↔ zone-payoff 6, with the filler as the actor and the token-swap when the payoff is the searcher |
 | mill ↔ state-payoff → 5 | milling is not a discard event, so it stays at the baseline |
 
-### Self-contained recursion and feed check (11 tests, `selfDiscard.test.ts`)
+### Self-contained recursion, named cards, deck-bottom sweeps and feed check (20 tests, `selfDiscard.test.ts`)
 
 | Test | What it verifies |
 |------|------------------|
@@ -342,10 +351,19 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | trigger or stock | Kronk with Mother Gothel - Evil as Ever (from both searchers), Look What You've Done and Rapunzel & Flynn Rider - Unlikely Pair → 8; with Salvage Operation (from both searchers) → 7 |
 | the outlet that feeds is the actor | Rapunzel & Flynn Rider as the searcher with Kronk reads Kronk (`{B}`) as the actor |
 | song-only outlet → 7 | Max Goof - Karaoke Star with song (Max Goof - Rebellious Teen), action (Buzz Lightyear - Jungle Ranger) and any-card (Jiminy Cricket - Ghost of Christmas Past) recursion |
-| song-only outlet → 5 | with Circle of Life (from both searchers), Salvage Operation, Look What You've Done and Merida - Formidable Archer |
+| song-only outlet → 5 | with Circle of Life (from both searchers), Salvage Operation and Look What You've Done |
 | state payoffs | Max Goof feeds Maximus (8) but not Megavolt (5); You Broke My Smolder, Kronk and Sprout - Experiment 509 still feed Megavolt (8) |
-| character-or-location outlet → 7 | Sprout - Experiment 509 with Get to Safety!, Circle of Life and Alien - True Believer |
+| a mill and discard-fed recursion | Héctor Rivera - Street Musician with Salvage Operation → 7, with Mother Gothel - Evil as Ever and Look What You've Done → 5 |
+| end-of-turn outlet | Meeko - Skittish Scrounger with Maximus - Relentless Stallion and Helga Sinclair - No Backup Needed → 5, with Milo Thatch - Getting His Hands Dirty → 6; Kronk with Maximus → 8 and with Helga → 6 |
+| an outlet for one classification | Sprout - Experiment 509 with Rapunzel & Flynn Rider - Unlikely Pair → 8; with Mother Gothel - Evil as Ever (no Alien) and Fangmeyer - Icy Officer (Detective recursion) → 5 |
+| a typed outlet and a pile count | Sprout with Dr. Hamsterviel - Infamous Scientist (Alien count) → 6, with Coldstone - Reincarnated Cyborg (Gargoyle count) → 5; Max Goof - Karaoke Star with Priya Mangal - Serious Music Lover (song) → 6, with Dr. Hamsterviel → 5; Kronk with Coldstone → 6 |
+| character-or-location outlet → 7 | Sprout - Experiment 509 with Get to Safety! and Circle of Life |
 | character-or-location outlet → 5 | Sprout with Salvage Operation and Max Goof - Rebellious Teen |
+| named-card recursion | Captain Hook - Captain of the Jolly Roger, Merida - Formidable Archer and Alien - True Believer have no roles |
+| named-card pile check | Pain - Running with Scissors has no roles |
+| a named card in another sentence | Get to Safety! stays `['reanimator']` |
+| a sweep the card must make | Mamá Imelda - No-Nonsense Ancestor has no roles; Bouncing Ducky - Sid's Toy keeps only `['zone-payoff']` |
+| an optional sweep | Hand-in-the-Box - Sid's Toy stays `['reanimator']` |
 
 ### STONE BY DAY (9 tests, `stoneByDay.test.ts`)
 
@@ -371,7 +389,7 @@ The Discard rule is opponent-facing (make *them* discard, reward *your* hand-siz
 
 ### Why mill is a bin-filler, not an enabler
 
-Mill fills the bin from the deck, not the hand. It feeds anything that *reads* or *pulls from* the pile (zone payoffs, reanimators), but it does **not** trigger "when you discard" payoffs (Mother Gothel, Maximus), which need an actual hand discard. So it carries its own role rather than joining `enabler`: it scores 7 against zone payoffs and reanimators, and stays at the 5 baseline against state payoffs. Against a zone payoff it outscores a hand discard (7 to 6), because it adds several cards at a time without spending the hand.
+Mill fills the bin from the deck, not the hand. It feeds anything that *reads* or *pulls from* the pile (zone payoffs, reanimators), but it does **not** trigger "when you discard" payoffs (Mother Gothel, Maximus), which need an actual hand discard. So it carries its own role rather than joining `enabler`: it scores 7 against zone payoffs and reanimators, and stays at the 5 baseline against state payoffs and against recursion that only fires on your discard (Mother Gothel's own). Against a zone payoff it outscores a hand discard (7 to 6), because it adds several cards at a time without spending the hand.
 
 It was excluded outright until the Set 14 pass, on the grounds that the pool was thin and mill had no payoff to point at. The zone-payoff role is that payoff: once the engine could see "10 or more cards in your discard", a mechanic whose entire job is raising that number could no longer be a non-participant.
 

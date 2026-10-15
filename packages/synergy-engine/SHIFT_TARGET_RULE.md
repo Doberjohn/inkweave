@@ -29,10 +29,10 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 ```chart
 {
   "type": "doughnut",
-  "title": "Cards by number of Shift partners (405 cards)",
+  "title": "Cards by number of Shift partners (406 cards)",
   "data": {
-    "labels": ["1-4 partners (368)", "5-9 partners (27)", "10-14 partners (8)", "15+ partners (2)"],
-    "values": [368, 27, 8, 2]
+    "labels": ["1-4 partners (369)", "5-9 partners (27)", "10-14 partners (8)", "15+ partners (2)"],
+    "values": [369, 27, 8, 2]
   }
 }
 ```
@@ -79,6 +79,10 @@ getShiftBaseNames("Ming Lee")                  -> ["Ming Lee"]
 ```
 
 The split is on `&` only (not spaces or " and "), so multi-word halves stay intact and ordinary names with no ampersand pass through as a single-element list — behaviourally identical to the old exact-match path. Both directions benefit: the Team card finds either base, and either base finds the Team card.
+
+#### Shift alias (counts as another name)
+
+Incrediboy - Buddy Pine's SPOILER ALERT reads "This character also counts as being named Syndrome for Shift." So a Shift onto Syndrome can land on it: Syndrome - Out for Revenge (Shift 4) shifts onto Incrediboy as it would onto any Syndrome. `getShiftAliasNames` (`utils/cardHelpers.ts`) reads the alias (`/\bcounts as being named\s+(.+?)\s+for\s+Shift\b/gi`), and the `standard` matcher (`shiftLandsOnName` in `rules.ts`) checks a target's aliases after its base name, so both directions find the pair. The alias holds for Shift only: no other rule reads Incrediboy as a Syndrome, and Named Companions strips the sentence (it is no "named Syndrome" reference).
 
 ---
 
@@ -162,13 +166,13 @@ Every text names both cards: the engine swaps `<BASE>` and `<SHIFT>` for the `{A
 ```chart
 {
   "type": "bar",
-  "title": "Score distribution (494 unique pairs)",
+  "title": "Score distribution (495 unique pairs)",
   "data": {
     "labels": ["3", "5", "7", "8", "9", "10"],
     "datasets": [
       {
         "label": "Pairs",
-        "data": [135, 125, 98, 24, 111, 1],
+        "data": [135, 125, 99, 24, 111, 1],
         "backgroundColor": ["#f59090", "#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#fbbf24"]
       }
     ]

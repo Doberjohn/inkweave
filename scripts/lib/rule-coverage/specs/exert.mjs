@@ -13,6 +13,8 @@ const SHAPES = [
   {label: 'enabler ↔ consume payoff', score: 8, test: /punishes the exerted body/},
   {label: 'enabler ↔ state payoff', score: 6, test: /keeps an opposing character exerted/},
   {label: 'payoff ↔ payoff', score: 5, test: /both benefit when opposing characters are exerted/},
+  // An enabler next to a payoff whose ¤ floor sits above the enabler's ¤ cap.
+  {label: "enabler ↔ a payoff it can't reach", score: 5, test: /both go in an Exert deck/},
 ];
 
 /** Cards that put a card into an inkwell "facedown and exerted": ramp the rule must never tag. */

@@ -39,7 +39,7 @@ Cards that put extra cards into YOUR inkwell, Sapphire's identity mechanic. Two 
 
 **Deck Ramp** — Top of deck → inkwell. Free mana with no card cost.
 - Pattern: `put the top card of your deck into your inkwell`
-- Pattern: `look at the top X cards...put...into your inkwell`
+- Pattern: `look at the top X cards...put...into your inkwell`, with "into your inkwell" in the look's sentence or the next. Closet Door Portal's look plays a card for free, and its closing "Put this card into your inkwell" is self-sacrifice.
 - Pattern: `put up to X cards from your discard into your inkwell`
 
 **Self-Sacrifice** — Hand/board card → inkwell. Trades a card for speed.
@@ -47,6 +47,8 @@ Cards that put extra cards into YOUR inkwell, Sapphire's identity mechanic. Two 
 - Pattern: `put chosen character of yours into your inkwell`
 - Pattern: `put this card into your inkwell`
 - Pattern: `additional card...into your inkwell`
+
+**One card from your discard**: `put a card from your discard into your inkwell` (Jiminy Cricket - Ghost of Christmas Past) is inkwell ramp too. `isDeckRamp` counts only `put up to X cards from your discard`, so Jiminy scores in the self-sacrifice tier. Boost's reminder text ("put the top card of your deck facedown under this character") puts a card under a character, not into your inkwell, so it is no ramp pattern.
 
 ### Critical Exclusion: Opponent Ink
 
@@ -71,6 +73,8 @@ Cards with "whenever a card is put into your inkwell" effects. Two timing varian
 - `whenever you put a card into your inkwell` (Fairy Godmother's Wand)
 - `when you put a card into your inkwell` (Chicha)
 
+**Turn limits**: triggers such as Scrooge McDuck - Miserly Ebenezer fire only "during your turn", and Ink Amplifier ramps only "during their turn", so they never see its ink. `inkLandsOffTriggerTurn` reads the turn that every ramp sentence and every trigger sentence is limited to, and a ramp ↔ trigger pair limited to different turns scores as density.
+
 ### Role 3: Cost Reduction Grants
 
 Cards that reduce the cost of OTHER cards you play, leaning Amber (its support identity).
@@ -81,6 +85,8 @@ Three activation patterns (same synergy behavior, affects scoring nuance):
 - **Exert-activated**: `⟳ — You pay X less` (Pluto, Lantern)
 - **Quest-activated**: `Whenever this character quests, you pay X less` (Huey, Aurora)
 - **Passive**: `While/For each...you pay X less` (Yokai, Gadget)
+
+A discount for the cards of **one name** is not a grant: "You pay 1 ⬡ less to play characters named Gurgi." (Munchings and Crunchings), "you pay 2 ⬡ less for the next character named Ellie Fredricksen" (Carl Fredricksen - Loving Husband). It helps that one partner, which Named Companions pairs, and never stacks with another discount on any other play. `NAMED_DISCOUNT_PATTERN` strips it before the grant test.
 
 ---
 
@@ -108,6 +114,7 @@ The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral
 | 2 | Deck Ramp ↔ Once/turn Trigger | **8** | One Jump Ahead + Raya Kumandran — free ink, capped trigger |
 | 3 | Self-Sacrifice ↔ Repeating Trigger | **8** | Winnie the Pooh + Rafiki — hand→ink fires every event |
 | 4 | Self-Sacrifice ↔ Once/turn Trigger | **7** | Cinderella + Dawson — card cost + capped trigger |
+| — | Ramp ↔ Trigger, ink on the turn it can't fire | **5** | Ink Amplifier + Scrooge McDuck - Miserly Ebenezer: the ink lands on the opponent's turn, the trigger fires only on yours |
 | 5 | Cost Reduction ↔ Cost Reduction (overlap) | **6** | Pluto + Huey — same target type, real stacking discount |
 | 6 | Ramp ↔ Ramp | **5** | Parallel ramp; doesn't compound |
 | 7 | Trigger ↔ Trigger | **5** | Parallel triggers; both need a ramp card to fire |
@@ -119,6 +126,7 @@ The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral
 
 ```
 if ramp ↔ trigger:
+  5 if the ramp's ink lands only on the turn the trigger can't fire (Ink Amplifier)
   base = 7
   +1 if ramp card is deck ramp (free mana)
   +1 if trigger is repeating (scales with ramp)
@@ -140,19 +148,20 @@ if trigger ↔ cost-reduction: 5
 <!-- coverage:start distribution -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-**1,767 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+**1,661 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| Deck ramp ↔ repeating trigger | 52 | 9 | 2.9% |
-| Deck ramp ↔ once-per-turn trigger | 26 | 8 | 1.5% |
-| Self-sacrifice ↔ repeating trigger | 24 | 8 | 1.4% |
-| Self-sacrifice ↔ once-per-turn trigger | 12 | 7 | 0.7% |
-| Cost reduction ↔ cost reduction (overlapping targets) | 96 | 6 | 5.4% |
-| Ramp ↔ ramp | 701 | 5 | 39.7% |
+| Deck ramp ↔ repeating trigger | 48 | 9 | 2.9% |
+| Deck ramp ↔ once-per-turn trigger | 24 | 8 | 1.4% |
+| Self-sacrifice ↔ repeating trigger | 26 | 8 | 1.6% |
+| Self-sacrifice ↔ once-per-turn trigger | 13 | 7 | 0.8% |
+| Ramp ↔ trigger, ink on the turn it can't fire | 3 | 5 | 0.2% |
+| Cost reduction ↔ cost reduction (overlapping targets) | 71 | 6 | 4.3% |
+| Ramp ↔ ramp | 701 | 5 | 42.2% |
 | Trigger ↔ trigger | 3 | 5 | 0.2% |
-| Ramp ↔ cost reduction | 790 | 5 | 44.7% |
-| Trigger ↔ cost reduction | 63 | 5 | 3.6% |
+| Ramp ↔ cost reduction | 715 | 5 | 43.0% |
+| Trigger ↔ cost reduction | 57 | 5 | 3.4% |
 <!-- coverage:end -->
 
 The 8-9 pairs aren't inflation: they're the ramp ↔ trigger chains, the only real mechanical chain in the playstyle. Most inkwell-ramp cards are deck ramp (the strongest variant) and most inkwell triggers repeat, so most pairs that *can* chain *do*; how many chains there are follows how many trigger cards the pool holds. A broad density floor with rare, mechanically real spikes is the right curve. The scores and explanation templates live in `tuning.json`, and the table reads both from the engine.
@@ -170,18 +179,20 @@ The templates live in `tuning.json` (`ruleTexts.ramp.templates`). A two-role tem
 | Cost ↔ Cost | "{A} and {B} both give ink discounts which stack." |
 | Trigger ↔ Cost | "{TRIGGER} rewards cards going into your inkwell, and {COST} gives ink discounts." |
 
+A ramp ↔ trigger pair on different turns uses the engine's same-deck line, "{A} and {B} both go in a Ramp deck.", which lives in code, not `tuning.json`.
+
 ---
 
 ## Coverage
 
 <!-- coverage:start coverage -->
-**62 total ramp cards**:
+**60 total ramp cards**:
 
 | Role | Cards | Sub-patterns | Cards per ink |
 |----|-----|------------|-------------|
-| Inkwell Ramp | 38 | 26 deck ramp + 12 self-sacrifice | Sapphire 36, Emerald 2, Amber 1 |
+| Inkwell Ramp | 38 | 25 deck ramp + 13 self-sacrifice | Sapphire 36, Emerald 2, Amber 1 |
 | Inkwell Triggers | 3 | 2 repeating + 1 once-per-turn | Sapphire 3 |
-| Cost Reduction | 21 | Exert/Quest/Passive activation | Amber 10, Emerald 3, Sapphire 3, Amethyst 2, Ruby 2, Steel 1 |
+| Cost Reduction | 19 | Exert/Quest/Passive activation | Amber 9, Sapphire 3, Amethyst 2, Emerald 2, Ruby 2, Steel 1 |
 <!-- coverage:end -->
 
 Inkwell ramp is Sapphire's identity mechanic and cost reduction is Amber's support identity; the ink columns show how the live pool splits.
@@ -194,6 +205,7 @@ Inkwell ramp is Sapphire's identity mechanic and cost reduction is Amber's suppo
 |----------|--------|
 | Opponent Ink | Removal, not ramp — doesn't fire your triggers or give you ink |
 | Self-Discount Payoffs | "Pay X less to play **this**" — built-in discount, too self-contained |
+| Named Discounts | "Pay X less to play characters **named Gurgi**" — helps one partner, which Named Companions pairs |
 | Free Play Grants | Bypass mana entirely — separate mechanic, doesn't benefit from more ink |
 | High-cost generic | Original issue suggested cost 6+ as payoffs — too broad, no synergy signal |
 
@@ -222,6 +234,9 @@ Inkwell ramp is Sapphire's identity mechanic and cost reduction is Amber's suppo
 - No synergies for excluded opponent-ink cards
 - Explanations include both card names
 - All matches marked bidirectional
+
+### Misread fixes (`ramp.test.ts`, real card text)
+- A discount for the cards of one name (Munchings and Crunchings, Carl Fredricksen - Loving Husband) gains no cost-reduction role, and pairs with no general discount (Pluto - Friendly Pooch)
 
 ---
 
