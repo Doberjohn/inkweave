@@ -12,7 +12,7 @@ Detailed documentation for the Singer + Songs rule — a direct synergy that pai
 
 Singer is a keyword on characters that lets them exert to sing a Song action card for free, as long as the Song's ink cost is within the Singer's numeric threshold. For example, a Singer 5 character can sing any Song costing 5 or less.
 
-Any character can already sing a Song its own printed cost reaches: every Song reads "A character with cost N or more can ⟳ to sing this song for free." So Singer only adds the Songs above that cost, and those are the only Songs the rule pairs: a cost-3 Singer 5 pairs with Songs costing 4 or 5.
+Any character can already sing a Song its own printed cost reaches: a Song reads "A character with cost N or more can ⟳ to sing this song for free", and a Sing Together N Song lets characters whose costs total N or more sing it, which one character of cost N or more meets alone. So Singer only adds the Songs above that cost, and those are the only Songs the rule pairs: a cost-3 Singer 5 pairs with Songs costing 4 or 5.
 
 This creates a natural pair synergy: Singers want Songs to sing, and Songs benefit from Singers who can sing them without spending ink. Unlike playstyle rules (where density matters), Singer + Songs scores on **value efficiency** — how much ink the Singer saves by singing the Song for free.
 

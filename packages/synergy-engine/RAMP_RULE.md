@@ -165,7 +165,7 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 | Trigger ↔ cost reduction | 57 | 5 | 3.4% |
 <!-- coverage:end -->
 
-The 8-9 pairs aren't inflation: they're the ramp ↔ trigger chains, the only real mechanical chain in the playstyle. Most inkwell-ramp cards are deck ramp (the strongest variant) and most inkwell triggers repeat, so most pairs that *can* chain *do*; how many chains there are follows how many trigger cards the pool holds. A broad density floor with rare, mechanically real spikes is the right curve. The scores and explanation templates live in `tuning.json`, and the table reads both from the engine.
+The 8-9 pairs aren't inflation: they're the ramp ↔ trigger chains, the only real mechanical chain in the playstyle. Most inkwell-ramp cards are deck ramp (the strongest variant), so most pairs that *can* chain score 8 or 9, whether the trigger repeats or pays off once a turn; how many chains there are follows how many trigger cards the pool holds. A broad density floor with rare, mechanically real spikes is the right curve. The scores and explanation templates live in `tuning.json`, and the table reads both from the engine.
 
 ### Explanation Templates
 

@@ -1326,8 +1326,8 @@ export const isHealPayoff = (roles: HealRole[]): boolean => roles.includes('heal
 
 /**
  * A healer whose only heal is Temporary Shift's end-of-turn cleanup: it fires a heal trigger
- * only when the character took damage that turn (6), and lands too late for a check made while
- * you act (Julieta's Arepas: no pair).
+ * only when the character has damage as the turn ends (6), and lands too late for a check made
+ * while you act (Julieta's Arepas: no pair).
  */
 function scoreTemporaryShiftHeal(
   payoff: LorcanaCard,

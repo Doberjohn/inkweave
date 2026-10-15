@@ -57,7 +57,7 @@ And selecting **Elsa - Snow Queen** (cost 4) found:
 | `Shift N` | `standard` | same base name (Team compound names like "Belle & Beast" match either half — see below) |
 | `Temporary Shift N` | `standard` | same base name; the card returns to hand at end of turn ("Temporary" is a modifier, stripped before classifying) |
 | `Combo Shift N` | `standard` | either named half of a Team card, or one of each (see below) |
-| `Duo Shift N` | `standard` | both named halves of a Team card at once; each half scores from the [Duo Shift tiers](#duo-shift-both-halves-one-tier-lower) |
+| `Duo Shift N` | `standard` | both named halves of a Team card at once; a free one (`Duo Shift 0`, the only kind printed) scores each half from the [Duo Shift tiers](#duo-shift-both-halves-one-tier-lower), and a paid one would score on the ink curve |
 | `X Shift N` (e.g. `Puppy Shift`, `Madrigal Shift`, `Temporary Red Panda Shift`) | `classification` | characters with classification `X` (the prefix may be multiple words) |
 | `Universal Shift N` | `universal` | any character |
 | `X Shift N` with an "items named X" reminder (e.g. `Potato Shift N`) | `named-item` | the **item** named `X` — identified by the reminder text, not the keyword prefix (see below) |

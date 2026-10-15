@@ -45,7 +45,7 @@ Same-axis density pairs that were re-baselined to 5 in the convention rollout:
 | Rule | Pair | Was | Now |
 |------|------|-----|-----|
 | Floodborns | payoff ↔ payoff, neither helps the other | 7 | 5 |
-| Floodborns | payoff ↔ payoff, one buffs the other | 7 | 6 |
+| Floodborns | payoff ↔ payoff, one buffs the other | 7 | 6 (5 when the buffed card already prints the keyword) |
 | Classification tribes | payoff ↔ payoff, neither helps the other | 7 | 5 |
 | Classification tribes | payoff ↔ payoff, one buffs the other or switches it on | 7 | 6 |
 | Items | payoff ↔ payoff, neither of them an item | 7 | 5 |

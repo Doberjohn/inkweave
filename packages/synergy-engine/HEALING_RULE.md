@@ -51,7 +51,7 @@ Matches an outlet that removes damage from a character. Because it begins with `
 | "...you may **remove all damage from** this character." | Isabela Madrigal - Perfectly in Control |
 | "**Remove up to 4 damage total from** any number of your characters." | I'm Never Not by Your Side |
 
-Temporary Shift's reminder text reads as a healer too: "At the end of your turn, **remove all damage from** this character and return only this card to your hand" (Grandma Wu - Fierce Red Panda, Sun Yee - Red Panda Spirit). It is a real removal, but it heals only a character that took damage that turn, and only as the turn ends, so it scores lower (see Scoring).
+Temporary Shift's reminder text reads as a healer too: "At the end of your turn, **remove all damage from** this character and return only this card to your hand" (Grandma Wu - Fierce Red Panda, Sun Yee - Red Panda Spirit). It is a real removal, of damage taken that turn or already on the character it shifted onto, but it lands only as the turn ends, so it scores lower (see Scoring).
 
 ### heal-payoff (payoff)
 
@@ -99,7 +99,7 @@ Applies the project-wide **5-baseline convention**. Because the rule is payoff-a
 |-----------|-------|-------------|-------------|
 | healer <-> heal-payoff | **8** | Strong | Win-condition combo: the healer clears damage on demand, firing the payoff engine each time |
 | heal-payoff <-> heal-payoff | **7** | Strong | Two heal engines compound on the same board |
-| Temporary Shift healer <-> heal trigger | **6** | Moderate | Complementary: the end-of-turn cleanup fires a "whenever you remove damage" trigger, but only on turns the character took damage. A turn check made while you act ("⟳ — If you removed damage from a character this turn", Julieta's Arepas) never sees it, so that pair is dropped |
+| Temporary Shift healer <-> heal trigger | **6** | Moderate | Complementary: the end-of-turn cleanup fires a "whenever you remove damage" trigger, but only when the character has damage as the turn ends. A turn check made while you act ("⟳ — If you removed damage from a character this turn", Julieta's Arepas) never sees it, so that pair is dropped |
 | healer <-> healer | (not generated) | - | Payoff-anchored: two enablers with no payoff to fire are dropped |
 
 ### Live distribution
@@ -223,7 +223,7 @@ Julieta Madrigal - Excellent Cook draws "if you removed damage this way", and Oh
 
 ### Why Temporary Shift's heal scores 6
 
-Temporary Shift returns the card to your hand at the end of your turn and removes its damage first, so Grand Pabbie - Oldest and Wisest does gain 2 lore, but only on turns the character took damage, and never when you choose. A healer you fire on demand is the 8 combo; this one is a side effect of the card's real job, so it sits one step above the baseline. Julieta's Arepas checks "If you removed damage from a character this turn" with an ability you use while you act, and the cleanup lands after that, so the two don't pair.
+Temporary Shift returns the card to your hand at the end of your turn and removes its damage first, so Grand Pabbie - Oldest and Wisest does gain 2 lore, but only when the character has damage as the turn ends, and never when you choose. A healer you fire on demand is the 8 combo; this one is a side effect of the card's real job, so it sits one step above the baseline. Julieta's Arepas checks "If you removed damage from a character this turn" with an ability you use while you act, and the cleanup lands after that, so the two don't pair.
 
 ### Why the scoped move-damage guard?
 

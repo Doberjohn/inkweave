@@ -78,7 +78,7 @@ describe("Healing: a bonus for the card's own heal", () => {
   });
 });
 
-// Temporary Shift heals the character only as your turn ends, and only if it took damage.
+// Temporary Shift heals the character only as your turn ends, and only if it has damage then.
 const grandmaWu = createCard({
   id: 'grandma-wu-fierce-red-panda',
   name: 'Grandma Wu',

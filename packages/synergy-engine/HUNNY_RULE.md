@@ -35,7 +35,7 @@ Real cards the `getHunnyRoles` detector tags for each role (names from the live 
 |------|-------|-------------|
 | search + member, search + density | 8 | `{A} can reveal {B} from your deck.` When each can find the other: `{A} and {B} can each reveal the other from your deck.` |
 | density + member | 7 | `{B} activates {A}'s Hunny ability.` A payoff that buffs your other Hunny characters (Gopher - Hunny Cook) reads `{A}'s Hunny buff powers up {B}.` |
-| density + density | 7 | What each card's ability counts of the other (`scorePayoffPair`, shared with Floodborns, Items and the classification tribes): each, `{A} and {B} are both Hunny characters, and each one's ability helps the other.`; one, the density + member line. Two that count neither would sit at the same-deck 5, since two payoffs on one board don't multiply each other; no such pair exists today. |
+| density + density | 5 or 7 | What each card's ability counts of the other (`scorePayoffPair`, shared with Floodborns, Items and the classification tribes): each, `{A} and {B} are both Hunny characters, and each one's ability helps the other.`; one, the density + member line. Two that count neither would sit at the same-deck 5, since two payoffs on one board don't multiply each other; no such pair exists today. |
 | buff + member | 6 | `{A}'s Hunny buff powers up {B}.` When each buffs the other: `{A} and {B} can each buff the other.` |
 | everything else | 5 | `{A} and {B} both go in a Hunny deck.` |
 
