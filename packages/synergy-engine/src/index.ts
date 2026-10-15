@@ -76,6 +76,7 @@ export {
   isDiscardCard,
   getSacrificeRoles,
   isSacrificeCard,
+  banishPayoffPaysLittle,
   getSelfDiscardRoles,
   isSelfDiscardCard,
   getRampRoles,

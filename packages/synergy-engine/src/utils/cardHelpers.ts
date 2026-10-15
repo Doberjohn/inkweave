@@ -889,6 +889,25 @@ export function banishTriggerFiresOnYourTurn(card: LorcanaCard): boolean {
 }
 
 /**
+ * A banish payoff that gives back almost nothing: it returns only another card of its own name
+ * ("return another character card named Alien from your discard to your hand", Alien - True
+ * Believer), or only puts itself on the bottom of your deck ("put this card from your discard on
+ * the bottom of your deck", Merlin - Envisioning the Future).
+ */
+const SACRIFICE_THIN_PAYOFFS =
+  /\bwhen this character is banished, (?:return another character card named [^.]+ from your discard to your hand|put this card from your discard on the bottom of your deck)\./gi;
+
+/**
+ * True iff every banish trigger on a payoff gives back almost nothing (SACRIFICE_THIN_PAYOFFS), so
+ * a self-banish card that cashes it in gains too little for the combo.
+ */
+export function banishPayoffPaysLittle(card: LorcanaCard): boolean {
+  const text = normalizeCardText(card);
+  const triggers = text.match(SACRIFICE_BANISH_TRIGGERS)?.length ?? 0;
+  return triggers > 0 && (text.match(SACRIFICE_THIN_PAYOFFS)?.length ?? 0) >= triggers;
+}
+
+/**
  * True iff a banish payoff fires when any of your characters is banished (David Xanatos), not only
  * when it is banished itself (Kuzco). The two read differently in a payoff-payoff pair.
  */

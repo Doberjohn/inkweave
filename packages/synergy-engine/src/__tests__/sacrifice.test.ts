@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {banishTriggerFiresOnYourTurn, getSacrificeRoles} from '../utils';
+import {banishPayoffPaysLittle, banishTriggerFiresOnYourTurn, getSacrificeRoles} from '../utils';
 import {getRuleById} from '../engine';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
@@ -61,6 +61,45 @@ describe("Sacrifice: banish triggers limited to an opponent's turn", () => {
 
   it('scores a self-banish card with them at 5, from either side', () => {
     const pairs = [rex, donaldHoneywell].flatMap((payoff) => [
+      sacrificePair(timeToGo, payoff),
+      sacrificePair(payoff, timeToGo),
+    ]);
+    for (const pair of pairs) {
+      expect(pair).toMatchObject({
+        score: 5,
+        explanation: '{A} and {B} both go in a Sacrifice deck.',
+      });
+    }
+  });
+});
+
+// Banish payoffs that give back almost nothing: another card of the same name, or a trip to the
+// bottom of the deck.
+const alien = createCard({
+  id: 'alien-true-believer',
+  name: 'Alien',
+  fullName: 'Alien - True Believer',
+  ink: 'Emerald',
+  text: 'WE ARE ONE This character gets +1 ¤ for each\nother Toy character you have in play.\nHE HAS BEEN CHOSEN During your turn, when\nthis character is banished, return another\ncharacter card named Alien from your discard to\nyour hand.',
+});
+const merlin = createCard({
+  id: 'merlin-envisioning-the-future',
+  name: 'Merlin',
+  fullName: 'Merlin - Envisioning the Future',
+  ink: 'Sapphire',
+  text: 'MINOR TRICKERY When you play this character,\nyou may draw a card from the bottom of\nyour deck.\nAGE OF INCONVENIENCE When this character is\nbanished, put this card from your discard on the\nbottom of your deck.',
+});
+
+describe('Sacrifice: banish payoffs that give back little', () => {
+  it('reads them as thin payoffs', () => {
+    expect(getSacrificeRoles(alien)).toEqual(['banish-trigger']);
+    expect(banishPayoffPaysLittle(alien)).toBe(true);
+    expect(banishPayoffPaysLittle(merlin)).toBe(true);
+    expect(banishPayoffPaysLittle(davidXanatos)).toBe(false);
+  });
+
+  it('scores a self-banish card with them at 5, from either side', () => {
+    const pairs = [alien, merlin].flatMap((payoff) => [
       sacrificePair(timeToGo, payoff),
       sacrificePair(payoff, timeToGo),
     ]);

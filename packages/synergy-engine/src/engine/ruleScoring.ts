@@ -22,6 +22,7 @@ import {
   selfDiscardHandTrimFeed,
   triggersOnAnyBanish,
   banishTriggerFiresOnYourTurn,
+  banishPayoffPaysLittle,
   toyAbilityCounts,
   TOY_TRIBAL_ROLES,
   floodbornBuffAlreadyPrinted,
@@ -337,9 +338,19 @@ function sacrificeBaselineLine(
 }
 
 /**
+ * A banish payoff a self-banish card can cash in: it fires on your own turn, and gives back more
+ * than another card of its own name or its own trip to the bottom of your deck.
+ */
+const cashesInBanish = (card: LorcanaCard, roles: SacrificeRole[]): boolean =>
+  roles.includes('banish-trigger') &&
+  banishTriggerFiresOnYourTurn(card) &&
+  !banishPayoffPaysLittle(card);
+
+/**
  * Score a sacrifice pair (5-baseline convention, mirrors the Discard rule shape):
  *   - self-banish ↔ banish-trigger = 8  (win-condition combo), unless the trigger fires only on
- *                                       an opponent's turn, which no self-banish reaches (5)
+ *                                       an opponent's turn, which no self-banish reaches, or
+ *                                       gives back almost nothing (5)
  *   - banish-trigger ↔ banish-trigger = 5  (parallel payoff density)
  *   - self-banish ↔ self-banish     = 5  (parallel enablers, still need a payoff)
  *
@@ -353,9 +364,8 @@ export function scoreSacrificePair(
 ): {score: number; explanation: string} {
   const cardSelfBanish = cardRoles.includes('self-banish');
   const otherSelfBanish = otherRoles.includes('self-banish');
-  // A payoff counts toward the combo only when it can fire on your own turn.
-  const cardPayoff = cardRoles.includes('banish-trigger') && banishTriggerFiresOnYourTurn(card);
-  const otherPayoff = otherRoles.includes('banish-trigger') && banishTriggerFiresOnYourTurn(other);
+  const cardPayoff = cashesInBanish(card, cardRoles);
+  const otherPayoff = cashesInBanish(other, otherRoles);
 
   const isBanishCombo = isSacrificeBanishCombo(
     cardSelfBanish,
