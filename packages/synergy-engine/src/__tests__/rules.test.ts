@@ -1384,6 +1384,8 @@ describe('Location Synergy Rules', () => {
       ['move + move-trigger → 3', ['move'], ['move-trigger'], 3],
       // two high-value complementary roles → 5
       ['move-trigger + location-ramp → 5', ['move-trigger'], ['location-ramp'], 5],
+      // two high-value roles keep the same-deck 5 over a link with no text tie
+      ['buff + move and buff → 5', ['buff'], ['move', 'buff'], 5],
     ])('%s', (_label, rolesA, rolesB, expected) => {
       expect(getCrossSynergyScore(rolesA, rolesB)).toBe(expected);
     });
@@ -1393,6 +1395,8 @@ describe('Location Synergy Rules', () => {
       ['same roles (boost)', ['boost'], ['boost']],
       ['non-complementary', ['at-payoff'], ['in-play-check']],
       ['non-complementary', ['boost'], ['move']],
+      ['a link with no text tie', ['boost'], ['search']],
+      ['a link with no text tie', ['buff'], ['move']],
     ])('should return null for %s', (_label, rolesA, rolesB) => {
       expect(getCrossSynergyScore(rolesA, rolesB)).toBeNull();
     });

@@ -40,13 +40,13 @@ Each role has a distinct detection pattern and a distinct score when paired with
 <!-- coverage:start pairs -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-Merged across the 9 sub-rules, **2,048 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+Merged across the 9 sub-rules, **1,873 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
 | Score | Pairs | Share |
 |-----|-----|-----|
-| 7 | 954 | 46.6% |
-| 5 | 751 | 36.7% |
-| 3 | 343 | 16.7% |
+| 7 | 954 | 50.9% |
+| 5 | 751 | 40.1% |
+| 3 | 168 | 9.0% |
 
 ```chart
 {
@@ -57,7 +57,7 @@ Merged across the 9 sub-rules, **2,048 unique pairs** after the engine's ink-com
     "datasets": [
       {
         "label": "Pairs",
-        "data": [888, 504, 483, 468, 350, 190, 180, 138, 133],
+        "data": [826, 490, 413, 405, 294, 190, 159, 138, 21],
         "backgroundColor": ["#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#60b5f5", "#6ee7a0", "#60b5f5", "#6ee7a0", "#60b5f5"]
       }
     ]
@@ -256,13 +256,15 @@ Two support cards can synergize if their roles are **complementary** — meaning
                at-payoff  play-trigger  buff  ramp  move  in-play  search  boost
 at-payoff         -            -         ✓     -     ✓       -       ✓      -
 play-trigger      -            -         -     -     -       -       ✓      -
-buff              ✓            -         -     -     ✓       ✓       ✓      -
-ramp              ✓            ✓         ✓     -     ✓       ✓       -      ✓
-move              ✓            -         ✓     -     -       -       -      -
+buff              ✓            -         -     -     ○       ○       ✓      -
+ramp              ✓            ✓         ✓     -     ✓       ✓       -      ○
+move              ✓            -         ○     -     -       -       -      -
 in-play-check     -            -         -     -     -       -       ✓      -
-search             ✓            ✓         ✓     -     ✓       ✓       -      ✓
-boost             -            -         -     -     -       -       ✓      -
+search             ✓            ✓         ✓     -     ✓       ✓       -      ○
+boost             -            -         -     ○     -       -       ○      -
 ```
+
+○ marks a link with no text tie (`UNTIED_LINKS` in `rules.ts`), which scores only between two high-value cards (see Cross-Synergy Scoring).
 
 Relationships are checked **bidirectionally** — if A complements B or B complements A, the pair has cross-synergy.
 
@@ -276,12 +278,14 @@ Two refinements read the card text behind the roles (`cardCrossProfile` in `rule
 | Condition | Score | Display Tier |
 |-----------|-------|-------------|
 | Both cards have high-value roles AND are complementary | **5** | Moderate |
-| Complementary but not both high-value | **3** | Weak |
-| Same roles, or non-complementary | **null** (no synergy) | — |
+| Complementary through a link with a text tie, but not both high-value | **3** | Weak |
+| Same roles, non-complementary, or linked only with no text tie and not both high-value | **null** (no synergy) | — |
+
+**Links with no text tie** (○ above) join two cards that share a location deck and nothing more. A boost card puts cards under a location with Boost, which a location search or play ramp rarely brings out (Scrooge McDuck - Cavern Prospector and Amazu's Inkcaster). A buff that protects your locations does nothing for the characters a mover sends there (Launchpad - Hideout Defender and Tuk Tuk - Lively Partner) or for a card's bonus for having a location in play (Launchpad and The Twins - Lost Boys). Two high-value cards linked only this way keep the same-deck 5 (Launchpad and Hyperia City Express). Any other pair linked only this way has no synergy, rather than a Weak tile with nothing behind it.
 
 ### Why Low Cross-Synergy Scores?
 
-Two support cards without a Location in play have minimal interaction. The search can find a Location, the buff can protect it, but without the Location itself, neither card is doing its job. Score 5 for high-value pairs acknowledges the strategic alignment; score 3 for utility pairs reflects the loose thematic overlap.
+Two support cards without a Location in play have minimal interaction. The search can find a Location, the buff can protect it, but without the Location itself, neither card is doing its job. Score 5 for high-value pairs acknowledges the strategic alignment; score 3 for utility pairs reflects the loose thematic overlap. A 3 still needs one card to feed the other, as a search finds the location a mover sends characters to (Tuk Tuk - Lively Partner and Amazu's Inkcaster).
 
 ---
 
@@ -370,7 +374,7 @@ Location cards hold no role: they are what every role pairs with.
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Location Synergy Rules')`. The classified buff/move gate, move detection and the fixed misreads are tested in `packages/synergy-engine/src/__tests__/locationControl.test.ts` (22 tests). Buff: Hyperia City Express scores 7 with a Hyperia City location and 5 with any other, from both sides; a buff-only card has no match outside its classification; and We'll Save Our Village and a mixed buff still reach every location. Move: Chief Bogo scores 5 with a Hyperia City location and has no match with any other, from both sides; a classified move keeps its classification when the same sentence names "that location" again; People Gonna Come Here's "move them to that location" is a move; Colonel Hathi's "move him to one of your locations" is a global move, not a buff; The Game's Afoot! keeps its move despite "Damage" in its reminder text; a move written after a damage-moving clause, in the next sentence or the same one, is a move, while a damage-moving clause alone never is; Carl Fredricksen's two-character move is a move; and "Give Resist +1 to your locations" stays a buff (7 with any location), even after a move in the same sentence. Misreads, each on the card's real text: Woody's named location, Flintheart's card under a location and Get to Safety!'s named location give no role; Get to Safety!'s capped play pairs with a cost-3 location and not a cost-4 one, from both sides; Carl Fredricksen - On the Move is no ramp card and Fergus no play trigger; Raksha's move discount scores 7 with a location that costs ink to move to and 5 (her move) with one that doesn't, and pairs with a location buff but not with an in-play check; two self-only clauses never link (Arthur and Shenzi, Raksha and Goofy) while a mover of another character does (Goofy and Shenzi, Arthur and Goofy) and so does a reward for every character at the location (Raksha and Carl Fredricksen & Russell); Recovered Page pairs with a Boost location but not with Graveyard of Christmas Future, which Blessed Bagpipes still pairs with; Russell - Senior Wilderness Explorer is an at-payoff that skips John Silver; and Carl's lore-sized reward skips a location without lore.
+Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Location Synergy Rules')`. The classified buff/move gate, move detection and the fixed misreads are tested in `packages/synergy-engine/src/__tests__/locationControl.test.ts` (24 tests). Buff: Hyperia City Express scores 7 with a Hyperia City location and 5 with any other, from both sides; a buff-only card has no match outside its classification; and We'll Save Our Village and a mixed buff still reach every location. Move: Chief Bogo scores 5 with a Hyperia City location and has no match with any other, from both sides; a classified move keeps its classification when the same sentence names "that location" again; People Gonna Come Here's "move them to that location" is a move; Colonel Hathi's "move him to one of your locations" is a global move, not a buff; The Game's Afoot! keeps its move despite "Damage" in its reminder text; a move written after a damage-moving clause, in the next sentence or the same one, is a move, while a damage-moving clause alone never is; Carl Fredricksen's two-character move is a move; and "Give Resist +1 to your locations" stays a buff (7 with any location), even after a move in the same sentence. Misreads, each on the card's real text: Woody's named location, Flintheart's card under a location and Get to Safety!'s named location give no role; Get to Safety!'s capped play pairs with a cost-3 location and not a cost-4 one, from both sides; Carl Fredricksen - On the Move is no ramp card and Fergus no play trigger; Raksha's move discount scores 7 with a location that costs ink to move to and 5 (her move) with one that doesn't, and pairs with a location buff but not with an in-play check; two self-only clauses never link (Arthur and Shenzi, Raksha and Goofy) while a mover of another character does (Goofy and Shenzi, Arthur and Goofy) and so does a reward for every character at the location (Raksha and Carl Fredricksen & Russell); Recovered Page pairs with a Boost location but not with Graveyard of Christmas Future, which Blessed Bagpipes still pairs with; Russell - Senior Wilderness Explorer is an at-payoff that skips John Silver; and Carl's lore-sized reward skips a location without lore. Two support cards linked only with no text tie don't pair: Scrooge McDuck - Cavern Prospector and Amazu's Inkcaster, from both sides, and Launchpad - Hideout Defender with Tuk Tuk - Lively Partner, from both sides, or with The Twins - Lost Boys. Tuk Tuk and Amazu's Inkcaster keep their 3, and Launchpad and Hyperia City Express their 5.
 
 ### Role Detection Tests (5 tests)
 
@@ -392,7 +396,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | Correct scores by role | at-payoff=7, move=5, search=5 |
 | Unrelated card → no location synergies | Anna (no location text) produces no location-control group |
 
-### Cross-Synergy Tests (6 tests)
+### Cross-Synergy Tests (14 tests)
 
 | Test | Score | Roles |
 |------|-------|-------|
@@ -402,6 +406,8 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | move + search → 3 | Both utility, complementary |
 | Same roles → null | No cross-synergy for identical roles |
 | Non-complementary → null | e.g., at-payoff + in-play-check |
+| buff + move and buff → 5 | Both high-value, linked only with no text tie |
+| No text tie → null | e.g., boost + search, buff + move |
 
 ### Boost & Ramp Tests (4 tests)
 

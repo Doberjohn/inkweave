@@ -348,3 +348,64 @@ describe('Location Control: clauses that reach fewer locations than they seem to
     expect(atPayoff.findSynergies(loreless, [loreless, carl])).toEqual([]);
   });
 });
+
+// Design call 6 of the 2026-10-14 review: two support cards whose only link has no text tie
+// score no 3. Real card text.
+describe('Location Control: support cards whose texts share only a location deck', () => {
+  const scrooge = createCard({
+    id: 'scrooge-mcduck-cavern-prospector',
+    name: 'Scrooge McDuck',
+    fullName: 'Scrooge McDuck - Cavern Prospector',
+    ink: 'Amber',
+    cost: 6,
+    classifications: ['Floodborn', 'Hero'],
+    text: 'Shift 4 ⬡ (You may pay 4 ⬡ to play this on top of\none of your characters named Scrooge McDuck.)\nSPECULATION Whenever you play a character or\nlocation with Boost, you may put the top card of\nyour deck facedown under them.',
+  });
+  const inkcaster = createCard({
+    id: 'amazus-inkcaster',
+    name: "Amazu's Inkcaster",
+    fullName: "Amazu's Inkcaster",
+    type: 'Item',
+    ink: 'Ruby',
+    cost: 2,
+    text: 'ON THE HORIZON ⟳, 1 ⬡ — Look at the top 4 cards of\nyour deck. You may reveal a location card and put it into\nyour hand. Put the rest on the bottom of your deck in\nany order.',
+  });
+  const launchpad = createCard({
+    id: 'launchpad-hideout-defender',
+    name: 'Launchpad',
+    fullName: 'Launchpad - Hideout Defender',
+    ink: 'Steel',
+    cost: 3,
+    text: 'STAND GUARD Your locations gain Resist +1.\n(Damage dealt to them is reduced by 1.)',
+  });
+  const tukTuk = createCard({
+    id: 'tuk-tuk-lively-partner',
+    name: 'Tuk Tuk',
+    fullName: 'Tuk Tuk - Lively Partner',
+    ink: 'Ruby',
+    cost: 3,
+    keywords: ['Evasive'],
+    text: 'Evasive (Only characters with Evasive can challenge this\ncharacter.)\nON A ROLL When you play this character, you may\nmove him and one of your other characters to the\nsame location for free. If you do, the other character\ngets +2 ¤ this turn.',
+  });
+  const twins = createCard({
+    id: 'the-twins-lost-boys',
+    name: 'The Twins',
+    fullName: 'The Twins - Lost Boys',
+    ink: 'Steel',
+    cost: 6,
+    text: 'TWO FOR ONE When you play this character,\nif you have a location in play, you may deal 2\ndamage to chosen character.',
+  });
+
+  it('drops a boost card with a location search, and a location buff with a mover or an in-play bonus', () => {
+    expect(locationScore(scrooge, inkcaster)).toBeUndefined();
+    expect(locationScore(inkcaster, scrooge)).toBeUndefined();
+    expect(locationScore(launchpad, tukTuk)).toBeUndefined();
+    expect(locationScore(tukTuk, launchpad)).toBeUndefined();
+    expect(locationScore(launchpad, twins)).toBeUndefined();
+  });
+
+  it('keeps the 3 where one text feeds the other, and the 5 between two high-value pieces', () => {
+    expect(locationScore(tukTuk, inkcaster)).toBe(3);
+    expect(locationScore(launchpad, express)).toBe(5);
+  });
+});

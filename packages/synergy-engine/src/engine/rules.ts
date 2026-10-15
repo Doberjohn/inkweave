@@ -407,6 +407,26 @@ const COMPLEMENTARY_ROLES: Partial<Record<LocationRole, LocationRole[]>> = {
   boost: ['search', 'location-ramp'],
 };
 
+/**
+ * Complementary links with no text tie: the two cards share a location deck and nothing more. A
+ * boost card powers up a location with Boost, which a location search or play ramp rarely brings
+ * out, and a buff that protects your locations does nothing for the characters a mover sends there
+ * or for a card's bonus for having a location in play. Such a link still gives two high-value
+ * pieces the same-deck 5, but it scores no 3 (2026-10-14 synergy review).
+ */
+const UNTIED_LINKS: Partial<Record<LocationRole, LocationRole[]>> = {
+  search: ['boost'],
+  'location-ramp': ['boost'],
+  boost: ['search', 'location-ramp'],
+  move: ['buff'],
+  buff: ['move', 'in-play-check'],
+};
+
+/** Which complementary links a check counts. */
+type LinkFilter = (role: LocationRole, target: LocationRole) => boolean;
+const everyLink: LinkFilter = () => true;
+const tiedLink: LinkFilter = (role, target) => !UNTIED_LINKS[role]?.includes(target);
+
 /** Roles that represent high-value location strategy pieces */
 const HIGH_VALUE_ROLES: Set<LocationRole> = new Set([
   'at-payoff',
@@ -455,28 +475,40 @@ const rolesLink = (
 ): boolean =>
   to.roles.includes(target) && !(from.selfOnly.includes(role) && to.selfOnly.includes(target));
 
-/** Check if any role in `from` has a complementary relationship with any role in `to`. */
-function hasComplementaryRole(from: LocationCrossProfile, to: LocationCrossProfile): boolean {
+/** Whether a role of `from` complements a role of `to`, counting the links `counts` passes. */
+function hasComplementaryRole(
+  from: LocationCrossProfile,
+  to: LocationCrossProfile,
+  counts: LinkFilter,
+): boolean {
   return from.roles.some((role) =>
-    (COMPLEMENTARY_ROLES[role] ?? []).some((target) => rolesLink(from, role, to, target)),
+    (COMPLEMENTARY_ROLES[role] ?? []).some(
+      (target) => counts(role, target) && rolesLink(from, role, to, target),
+    ),
   );
 }
+
+/** Whether `a` complements `b` or `b` complements `a`, counting the links `counts` passes. */
+const profilesLink = (
+  a: LocationCrossProfile,
+  b: LocationCrossProfile,
+  counts: LinkFilter,
+): boolean => hasComplementaryRole(a, b, counts) || hasComplementaryRole(b, a, counts);
 
 /** Cross-synergy score of two support cards' profiles (see `getCrossSynergyScore`). */
 function scoreCrossProfiles(a: LocationCrossProfile, b: LocationCrossProfile): number | null {
   if (a.roles.length === 0 || b.roles.length === 0) return null;
-
-  // Check both directions: A complements B, or B complements A
-  if (!hasComplementaryRole(a, b) && !hasComplementaryRole(b, a)) return null;
-
-  return a.highValue && b.highValue ? 5 : 3;
+  if (!profilesLink(a, b, everyLink)) return null;
+  if (a.highValue && b.highValue) return 5;
+  return profilesLink(a, b, tiedLink) ? 3 : null;
 }
 
 /**
  * Determine cross-synergy score between two location-support cards.
  * Only cards with complementary roles get cross-synergy — same-role or
  * unrelated-role pairs return null (no synergy).
- * Complementary high-value pairs score 5, others score 3.
+ * Complementary high-value pairs score 5. Others score 3 when a link between them has a text
+ * tie, and nothing when every link is in `UNTIED_LINKS`.
  */
 export function getCrossSynergyScore(
   rolesA: LocationRole[],

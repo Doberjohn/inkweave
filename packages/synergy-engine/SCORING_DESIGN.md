@@ -194,10 +194,13 @@ Uniform scoring — value comes from density of denial cards, not specific pairs
 
 **3b. Cross-Synergy (Support Card paired with another Support Card)**
 
-| Condition                             | Score | Tier     | Example                                  | Why                                                                |
-|---------------------------------------|-------|----------|------------------------------------------|--------------------------------------------------------------------|
-| Both high-value roles + complementary | **5** | Moderate | Vanellope (at-payoff) + Launchpad (buff) | Different strategy angles, both want locations in play             |
-| Otherwise                             | **3** | Weak     | Transport Pod (move) + Minnie (search)    | Loose thematic overlap, minimal benefit without a location present |
+| Condition                                | Score | Tier     | Example                                             | Why                                                                |
+|------------------------------------------|-------|----------|-----------------------------------------------------|--------------------------------------------------------------------|
+| Both high-value roles + complementary    | **5** | Moderate | Vanellope (at-payoff) + Launchpad (buff)            | Different strategy angles, both want locations in play             |
+| Complementary through a text tie         | **3** | Weak     | Transport Pod (move) + Minnie (search)              | Loose thematic overlap, minimal benefit without a location present |
+| Only an untied link, not both high-value | none  | —        | Scrooge McDuck (boost) + Amazu's Inkcaster (search) | The cards share a location deck and nothing more                   |
+
+An untied link (`UNTIED_LINKS` in `rules.ts`) is a boost card with a location search or play ramp, or a location buff with a mover or an in-play bonus. A boost card powers up a location with Boost, which a search or ramp card rarely brings out, and a buff that protects your locations does nothing for the characters moved there or for a card's bonus for having one in play. Two high-value cards linked only this way still score the same-deck 5.
 
 ### Rule 4: Discard (Playstyle: Discard)
 
