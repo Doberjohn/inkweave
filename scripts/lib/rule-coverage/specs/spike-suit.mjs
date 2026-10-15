@@ -1,4 +1,4 @@
-import {pairsLead, poolLine, scoreChart, section, tierSplit} from '../blocks.mjs';
+import {countWithNames, pairsLead, poolLine, scoreChart, section, tierSplit} from '../blocks.mjs';
 import {bars, doughnut, fmt, nameList, plural, tally} from '../render.mjs';
 import {byName, namedIn} from '../stats.mjs';
 
@@ -22,18 +22,23 @@ function candidates(coverage, {anchors, payoffs}) {
   );
 }
 
-/** How many characters lead on willpower, how many the floor keeps, how many pair. */
+/**
+ * How many characters lead on willpower, how many the floor keeps, how many of those can't
+ * challenge (the rule's only other payoff check), and how many of the rest pair.
+ */
 function floorLine(coverage) {
+  const {engine} = coverage;
   const roles = anchorsAndPayoffs(coverage, coverage.pairs('spike-suit'));
   const characters = candidates(coverage, roles);
-  const rule = coverage.engine.getAllRules().find((r) => r.id === 'spike-suit');
-  const leading = characters.filter((card) => gap(coverage.engine, card) >= 1);
-  const kept = characters.filter((card) => rule.matches(card));
+  const rule = engine.getAllRules().find((r) => r.id === 'spike-suit');
+  const leading = characters.filter((card) => gap(engine, card) >= 1);
+  const cleared = leading.filter((card) => gap(engine, card) >= 3);
+  const benched = cleared.filter((card) => !rule.matches(card));
   return (
     `**${fmt(leading.length)} characters** have any willpower lead, ` +
-    `**${fmt(leading.filter((card) => gap(coverage.engine, card) === 1).length)}** of them only +1. ` +
-    `The floor keeps **${fmt(kept.length)}**, and **${fmt(roles.payoffs.length)}** of those ` +
-    'can share a deck with an anchor.'
+    `**${fmt(leading.filter((card) => gap(engine, card) === 1).length)}** of them only +1. ` +
+    `The floor keeps **${fmt(cleared.length)}**; ${countWithNames(benched, 6)} of those can't ` +
+    `challenge, and **${fmt(roles.payoffs.length)}** of the rest can share a deck with an anchor.`
   );
 }
 

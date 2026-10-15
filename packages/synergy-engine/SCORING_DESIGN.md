@@ -40,6 +40,16 @@ Same-axis density pairs that were re-baselined to 5 in the convention rollout:
 | Toy | member ↔ member | 5 | 5 (already neutral) |
 | Toy | member ↔ generic mechanic | new | 5 |
 
+**Two payoffs score what one gives the other.** The tribe-like rules (Floodborns, Items, the classification tribes, Toys, Seven Dwarfs and Hunny) score a pair of their payoffs with one helper, `scorePayoffPair` in `ruleScoring.ts`. Each card's gift is the member pair it would make with the other card: two payoffs that each help the other compound at 7, one that helps the other scores its own gift (a buff 6, a trigger 7), and two that help neither sit at 5, for the reason Discard's payoff pairs did. Before, every such pair scored 7:
+
+| Rule | Pair | Was | Now |
+|------|------|-----|-----|
+| Floodborns | payoff ↔ payoff, neither helps the other | 7 | 5 |
+| Floodborns | payoff ↔ payoff, one buffs the other | 7 | 6 (5 when the buffed card already prints the keyword) |
+| Classification tribes | payoff ↔ payoff, neither helps the other | 7 | 5 |
+| Classification tribes | payoff ↔ payoff, one buffs the other or switches it on | 7 | 6 |
+| Items | payoff ↔ payoff, neither of them an item | 7 | 5 |
+
 ## Score Type: `number`
 
 The `score` field is typed as `number`, not a branded integer. The engine assigns integers (1, 3, 5, 7, 9)
@@ -116,7 +126,7 @@ JSON but wasn't extracted), but it does not influence synergy scores.
 
 ### Rule 1: Shift Targets (Direct)
 
-Scores based on **curve gap** (shift cost - base cost), **inkwell** (fallback utility), and **condition activation** (+1 bonus). A Shift paid in **ink drops** skips the curve and scores on who supplies the drops.
+Scores based on **curve gap** (shift cost - base cost), **inkwell** (fallback utility), and **condition activation** (+1 bonus). A Shift paid in **ink drops** skips the curve and scores on who supplies the drops. A **Duo Shift**, which lands on both halves of a Team card at once, scores each half one free Shift tier lower.
 
 For the full rule documentation with examples, condition matchers, and design rationale, see [`SHIFT_TARGET_RULE.md`](SHIFT_TARGET_RULE.md).
 
@@ -143,6 +153,14 @@ For the full rule documentation with examples, condition matchers, and design ra
 | 4-5       | No        | **7**  | Strong   | Free Shift but base takes until mid-game to deploy  |
 | 6+        | Yes       | **6**  | Moderate | Free Shift + expensive base, condition helps        |
 | 6+        | No        | **5**  | Moderate | Free Shift but expensive base limits the advantage  |
+
+**Duo Shift (Duo Shift 0, needs both halves in play):**
+
+| Half's Cost | Score | Tier     | Why                                                   |
+|-------------|-------|----------|-------------------------------------------------------|
+| <= 3        | **7** | Strong   | Free, but it also waits on the other half             |
+| 4-5         | **5** | Moderate | Waits on the other half, and this one comes down late |
+| 6+          | **3** | Weak     | Waits on the other half behind an expensive one       |
 
 **Ink-drop Shift ("Shift Remove N ink drops", drop-based):**
 
@@ -176,20 +194,23 @@ Uniform scoring — value comes from density of denial cards, not specific pairs
 
 **3b. Cross-Synergy (Support Card paired with another Support Card)**
 
-| Condition                             | Score | Tier     | Example                                  | Why                                                                |
-|---------------------------------------|-------|----------|------------------------------------------|--------------------------------------------------------------------|
-| Both high-value roles + complementary | **5** | Moderate | Vanellope (at-payoff) + Launchpad (buff) | Different strategy angles, both want locations in play             |
-| Otherwise                             | **3** | Weak     | Transport Pod (move) + Minnie (search)    | Loose thematic overlap, minimal benefit without a location present |
+| Condition                                | Score | Tier     | Example                                             | Why                                                                |
+|------------------------------------------|-------|----------|-----------------------------------------------------|--------------------------------------------------------------------|
+| Both high-value roles + complementary    | **5** | Moderate | Vanellope (at-payoff) + Launchpad (buff)            | Different strategy angles, both want locations in play             |
+| Complementary through a text tie         | **3** | Weak     | Transport Pod (move) + Minnie (search)              | Loose thematic overlap, minimal benefit without a location present |
+| Only an untied link, not both high-value | none  | —        | Scrooge McDuck (boost) + Amazu's Inkcaster (search) | The cards share a location deck and nothing more                   |
+
+An untied link (`UNTIED_LINKS` in `rules.ts`) is a boost card with a location search or play ramp, or a location buff with a mover or an in-play bonus. A boost card powers up a location with Boost, which a search or ramp card rarely brings out, and a buff that protects your locations does nothing for the characters moved there or for a card's bonus for having one in play. Two high-value cards linked only this way still score the same-deck 5.
 
 ### Rule 4: Discard (Playstyle: Discard)
 
 Role-based scoring — enablers that empty the opponent's hand pair with payoffs that capitalize on hand-size advantage.
 
-| Pairing            | Score | Tier   | Why                                                                                    |
-|--------------------|-------|--------|----------------------------------------------------------------------------------------|
-| Enabler ↔ Payoff   | **8** | Strong | Direct synergy: enabler depletes hand, payoff converts that into advantage              |
-| Enabler ↔ Enabler  | **7** | Strong | Both disrupt the opponent's hand, increasing consistency of the denial strategy         |
-| Payoff ↔ Payoff    | **7** | Strong | Both reward hand-size advantage, but need enablers to unlock their potential            |
+| Pairing           | Score | Tier     | Why                                                                            |
+|-------------------|-------|----------|--------------------------------------------------------------------------------|
+| Enabler ↔ Payoff  | **8** | Strong   | Direct synergy: enabler depletes hand, payoff converts that into advantage     |
+| Enabler ↔ Enabler | **5** | Moderate | Parallel pressure on the opponent's hand; the two stack but don't compound     |
+| Payoff ↔ Payoff   | **5** | Moderate | Both reward hand-size advantage; having two doesn't multiply the win condition |
 
 ---
 

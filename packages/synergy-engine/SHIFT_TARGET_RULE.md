@@ -56,7 +56,8 @@ And selecting **Elsa - Snow Queen** (cost 4) found:
 |---|---|---|
 | `Shift N` | `standard` | same base name (Team compound names like "Belle & Beast" match either half — see below) |
 | `Temporary Shift N` | `standard` | same base name; the card returns to hand at end of turn ("Temporary" is a modifier, stripped before classifying) |
-| `Combo Shift N` / `Duo Shift N` | `standard` | the named halves of a Team card — flavor labels for a compound-name shift (see below) |
+| `Combo Shift N` | `standard` | either named half of a Team card, or one of each (see below) |
+| `Duo Shift N` | `standard` | both named halves of a Team card at once; a free one (`Duo Shift 0`, the only kind printed) scores each half from the [Duo Shift tiers](#duo-shift-both-halves-one-tier-lower), and a paid one would score on the ink curve |
 | `X Shift N` (e.g. `Puppy Shift`, `Madrigal Shift`, `Temporary Red Panda Shift`) | `classification` | characters with classification `X` (the prefix may be multiple words) |
 | `Universal Shift N` | `universal` | any character |
 | `X Shift N` with an "items named X" reminder (e.g. `Potato Shift N`) | `named-item` | the **item** named `X` — identified by the reminder text, not the keyword prefix (see below) |
@@ -80,6 +81,8 @@ getShiftBaseNames("Ming Lee")                  -> ["Ming Lee"]
 
 The split is on `&` only (not spaces or " and "), so multi-word halves stay intact and ordinary names with no ampersand pass through as a single-element list — behaviourally identical to the old exact-match path. Both directions benefit: the Team card finds either base, and either base finds the Team card.
 
+Duo Shift is the one label that changes the score. Its reminder reads "on top of two of your characters, one named Mickey Mouse and one named Minnie Mouse", so it lands on both halves at once and neither half takes it alone. `isDuoShift` (`utils/cardHelpers.ts`) reads that reminder, and each half scores from the [Duo Shift tiers](#duo-shift-both-halves-one-tier-lower). Combo Shift's reminder ("one named Sulley, one named Boo, or one of each") takes either half, so a Combo Shift scores like any other Shift.
+
 #### Shift alias (counts as another name)
 
 Incrediboy - Buddy Pine's SPOILER ALERT reads "This character also counts as being named Syndrome for Shift." So a Shift onto Syndrome can land on it: Syndrome - Out for Revenge (Shift 4) shifts onto Incrediboy as it would onto any Syndrome. `getShiftAliasNames` (`utils/cardHelpers.ts`) reads the alias (`/\bcounts as being named\s+(.+?)\s+for\s+Shift\b/gi`), and the `standard` matcher (`shiftLandsOnName` in `rules.ts`) checks a target's aliases after its base name, so both directions find the pair. The alias holds for Shift only: no other rule reads Incrediboy as a Syndrome, and Named Companions strips the sentence (it is no "named Syndrome" reference).
@@ -92,7 +95,7 @@ Scoring is split into two phases:
 
 ### Phase 1: Base Score (`calculateShiftBaseScore`)
 
-Computes a score from **curve alignment** — how naturally the base card's cost flows into the Shift cost. A Shift paid in ink drops skips the curve entirely and scores on who supplies the drops (see [Ink-drop Shift](#ink-drop-shift-drop-based-scoring)); a Shift 0 scores on base cost (see [Free Shift](#free-shift-shift-0-cost-based-scoring)).
+Computes a score from **curve alignment** — how naturally the base card's cost flows into the Shift cost. A Shift paid in ink drops skips the curve entirely and scores on who supplies the drops (see [Ink-drop Shift](#ink-drop-shift-drop-based-scoring)); a Shift 0 scores on base cost (see [Free Shift](#free-shift-shift-0-cost-based-scoring)), and a Duo Shift 0 on its half's cost, one tier lower (see [Duo Shift](#duo-shift-both-halves-one-tier-lower)).
 
 The key metric is **curve gap**: `shiftCost - baseCost`
 
@@ -134,7 +137,7 @@ calculateShiftSynergy(shiftCard, baseCard)
   |
   +-- calculateShiftBaseScore(shiftCard, baseCard, shiftCost, payment)  --> {score, reason}
   |     payment 'ink-drops' -> inkDropShiftScore (who supplies the drops)
-  |     shiftCost 0         -> freeShiftScore (base cost tiers)
+  |     shiftCost 0         -> freeShiftScore (base cost tiers, or the Duo Shift tiers)
   |     otherwise           -> curveAlignmentScore (curve gap)
   |
   +-- baseActivatesShiftCondition(shiftCard, baseCard)         --> boolean
@@ -172,7 +175,7 @@ Every text names both cards: the engine swaps `<BASE>` and `<SHIFT>` for the `{A
     "datasets": [
       {
         "label": "Pairs",
-        "data": [135, 125, 99, 24, 111, 1],
+        "data": [138, 124, 105, 24, 103, 1],
         "backgroundColor": ["#f59090", "#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#fbbf24"]
       }
     ]
@@ -229,6 +232,21 @@ A free Shift is only as good as how quickly you can set it up:
 - **Cheap base (cost 1-3)**: Play the base on turns 1-3, free Shift on the very next turn. Extremely powerful — you get a 5+ cost character for free.
 - **Mid base (cost 4-5)**: Takes until mid-game to deploy the base. Still strong, but the opponent has time to respond.
 - **Expensive base (cost 6+)**: By the time you can play the base, the free Shift advantage matters less — you're deep into the game where ink is plentiful.
+
+### Duo Shift (both halves, one tier lower)
+
+Mickey Mouse & Minnie Mouse - Adventuring Duo prints "Duo Shift 0 ⬡ (You may pay 0 ⬡ to play this on top of two of your characters, one named Mickey Mouse and one named Minnie Mouse.)". The Shift is free, but it needs both halves in play, so a single Mickey or Minnie is only half of what it lands on. Each half scores one step below the free Shift tier its cost would get:
+
+| Score | Half's cost | Explanation Template |
+|-------|-------------|---------------------|
+| **7** | <= 3 | "Duo Shift: play <BASE> early, then shift <SHIFT> in for 0 ink once its other half is in play too." |
+| **5** | 4-5 | "Duo Shift: <SHIFT> costs no ink, but needs its other half in play too, and <BASE> takes longer to set up." |
+| **3** | 6+ | "Duo Shift: <SHIFT> needs its other half in play too, and <BASE> is expensive and hard to set up first." |
+
+- **Why one tier lower.** The free Shift tiers measure how soon the base can be in play. A Duo Shift also waits on a second character, so a cheap half is about as slow to set up as a mid-cost base for a free Shift (7), and an expensive half sits with the poor-curve pairs (3).
+- **Detection.** `isDuoShift` reads the "on top of two of your characters" reminder, not the keyword label. Combo Shift and plain team Shift take either half and keep the free Shift tiers.
+- **Scope.** The tiers cover a free Duo Shift, the only kind printed. A paid Duo Shift would score on the ink curve like any Shift.
+- **Tuning.** The tiers live in `data/tuning.json` (`duo.cheapHalf`, `duo.midHalf`, `duo.expensiveHalf`), so admin's tuning editor edits them like the other Shift tiers.
 
 ### Ink-drop Shift (drop-based scoring)
 
@@ -416,6 +434,9 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | Free Shift onto cheap base | 9 | Shift 0, base cost 2 |
 | Free Shift onto mid-cost base | 7 | Shift 0, base cost 4 |
 | Free Shift onto expensive base | 5 | Shift 0, base cost 7 |
+| Duo Shift onto one half, by its cost | 7 / 5 / 3 | Mickey Mouse & Minnie Mouse - Adventuring Duo onto a cost-3, cost-4 and cost-6 Mickey; forward and reverse |
+| Duo Shift line | 7 | the half's page says its other half must be in play too |
+| Combo Shift is no Duo Shift | n/a | `isDuoShift` reads Duo's "two of your characters" reminder, not Combo's "or one of each" |
 | Ink-drop Shift, base gets the drops | 8 | "Shift Remove 2 ink drops" onto a cost-4 base that gets 2 ink drops; forward and reverse |
 | Ink-drop Shift, base gets too few drops | 5 | Cost-1 base that gets 1 ink drop (the ink curve and the free path would both give 9) |
 

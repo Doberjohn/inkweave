@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {strengthInChallenge} from '../utils';
+import {cantChallenge, strengthInChallenge} from '../utils';
 import {getRuleById} from '../engine';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
@@ -83,5 +83,57 @@ describe('Spike Suit: a partner that boosts its own strength', () => {
     }
     expect(spikeSuitPair(dale, jafar)?.score).toBe(7);
     expect(spikeSuitPair(dale, theBear)?.score).toBe(6);
+  });
+});
+
+// A partner whose Challenger bonus already lifts its strength when it challenges.
+const rabbit = createCard({
+  id: 'rabbit-fed-up',
+  name: 'Rabbit',
+  fullName: 'Rabbit - Fed Up',
+  ink: 'Amethyst',
+  cost: 3,
+  strength: 1,
+  willpower: 4,
+  keywords: ['Challenger +3'],
+  classifications: ['Storyborn', 'Ally'],
+  text: 'Challenger +3 (While challenging, this character\ngets +3 ¤.)',
+});
+// Partners that can't challenge, one in its own text and one in Adventurous's reminder.
+const percy = createCard({
+  id: 'percy-pupsicle',
+  name: 'Percy',
+  fullName: 'Percy - Pupsicle',
+  cost: 3,
+  strength: 1,
+  willpower: 4,
+  classifications: ['Storyborn', 'Ally'],
+  text: "ICE BATH This character can't challenge.",
+});
+const mickey = createCard({
+  id: 'mickey-mouse-best-in-town',
+  name: 'Mickey Mouse',
+  fullName: 'Mickey Mouse - Best in Town',
+  cost: 1,
+  strength: 0,
+  willpower: 4,
+  keywords: ['Adventurous'],
+  classifications: ['Dreamborn', 'Hero'],
+  text: "Adventurous (This character can't challenge and\nmust quest each turn if able.)\nHOT DOG! At the end of your turn, if this character\nis exerted, each player gets 1 ink drop. (Each ink\ndrop may be removed to pay 1 ⬡.)",
+});
+
+describe('Spike Suit: a partner that gains little when it challenges', () => {
+  it('counts Challenger in the strength it challenges with', () => {
+    expect(strengthInChallenge(rabbit)).toBe(4);
+    expect(spikeSuitPair(dale, rabbit)).toBeUndefined();
+    expect(spikeSuitRule.matches(rabbit)).toBe(false);
+  });
+
+  it("drops a partner that can't challenge, Adventurous's reminder included", () => {
+    for (const partner of [percy, mickey]) {
+      expect(cantChallenge(partner)).toBe(true);
+      expect(spikeSuitPair(dale, partner)).toBeUndefined();
+      expect(spikeSuitRule.matches(partner)).toBe(false);
+    }
   });
 });

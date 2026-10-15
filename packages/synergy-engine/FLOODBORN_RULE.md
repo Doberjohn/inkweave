@@ -42,12 +42,20 @@ Real cards the `getFloodbornRoles` detector tags for each role (names from the l
 | Pair | Score | Explanation (from the payoff's page) |
 |------|-------|-----|
 | member + trigger | 7 | `{B} triggers {A}'s Floodborn ability.` |
-| payoff + payoff | 7 | Split below |
+| payoff + payoff | 5-7 | What each card's ability gives the other, below |
 | member + buff | 6 | `{A}'s Floodborn buff powers up {B}.` |
 | member + buff whose keyword the member already prints | 5 | `{A} and {B} both go in a Floodborns deck.` |
 | member + member | (not generated) | Payoff-anchored. |
 
-`{A}` is the card whose page shows the tile and `{B}` its partner; on the member's page the tokens swap. Two payoffs split by which of them is a Floodborn character the other's ability helps, at the same 7: neither reads `{A} and {B} are both Floodborn payoffs, so they stack on your board.`; one reads as that member with the other card's buff or trigger line; each reads `{A} and {B} are both Floodborn characters, and each one's ability helps the other.`
+`{A}` is the card whose page shows the tile and `{B}` its partner; on the member's page the tokens swap.
+
+**Two payoffs score what each card's ability gives the other** (`scorePayoffPair` in `ruleScoring.ts`, shared with Toys, Seven Dwarfs, Hunny, Items and the classification tribes). Two payoffs on one board don't multiply each other, the reason Discard's payoff pairs moved from 7 to 5 (`SCORING_DESIGN.md`), so the pair earns only what one card's ability does for the other:
+
+| Two payoffs | Score | Explanation |
+|------|-------|-----|
+| each is a Floodborn character the other's ability helps (Gaston - Created by the Vine and Hera - Created by the Vine) | 7 | `{A} and {B} are both Floodborn characters, and each one's ability helps the other.` |
+| only one is (Ring of Stones - Taken by the Vine and Robin Hood - Created by the Vine) | 5-7 | The member pair the helped card makes with the other: 7 for a trigger, 6 for a buff, 5 for a buff whose keyword it already prints |
+| neither is (Protective Aura and Ring of Stones - Taken by the Vine, neither of them a character) | 5 | `{A} and {B} both go in a Floodborns deck.` |
 
 ## Cross-rule composition
 Floodborn banish-triggers (Maid Marian, The Vine) are also detected by the Sacrifice
@@ -55,8 +63,10 @@ rule's `banish-trigger`. Expected composition, not a bug.
 
 ## Coverage
 Every pair is a payoff with a Floodborn character or with another payoff, so nearly every score
-is 6 or 7. The exception, at 5, is a buff paired with a member that already prints the keyword it
-grants.
+is 6 or 7. The 5s are a buff paired with a member that already prints the keyword it grants, and
+two payoffs that aren't characters, whose abilities help neither of them.
+
+`floodborn.test.ts` checks these on real card text: the buffs whose keyword the member prints, Scar - Created by the Vine's lore-gain trigger, and two payoffs at 5, 6 and 7 by what each gives the other.
 
 <!-- coverage:start coverage -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
@@ -73,7 +83,7 @@ Payoffs (`buff` or `trigger`): 19. Floodborn characters with no payoff role: 48.
 
 | Score | Pairs | Share |
 |-----|-----|-----|
-| 7 | 651 | 60.1% |
-| 6 | 426 | 39.3% |
-| 5 | 6 | 0.6% |
+| 7 | 571 | 52.7% |
+| 6 | 496 | 45.8% |
+| 5 | 16 | 1.5% |
 <!-- coverage:end -->

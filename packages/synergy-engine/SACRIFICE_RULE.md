@@ -102,6 +102,7 @@ Applies the project-wide **5-baseline convention** and mirrors the Discard rule'
 |-----------|-------|-------------|-------------|
 | self-banish ↔ banish-trigger | **8** | Strong | Win-condition combo: the self-banish card banishes your own payoff body on demand, converting a banish-trigger into a guaranteed, on-your-terms value engine |
 | self-banish ↔ a banish-trigger that fires only on an opponent's turn | **5** | Weak | No combo: a self-banish card acts on your own turn, so it never sets the trigger off. The two just share the deck |
+| self-banish ↔ a banish-trigger that gives back little | **5** | Weak | No combo: the trigger only returns another card of its own name (Alien - True Believer) or puts the card on the bottom of your deck (Merlin - Envisioning the Future), so banishing it on demand gains almost nothing |
 | banish-trigger ↔ banish-trigger | **5** | Weak | Parallel payoff density: a board of value-on-banish bodies that each trade independently, no compounding |
 | self-banish ↔ self-banish | **5** | Weak | Parallel enablers: two self-banish cards don't compound, you still need a payoff body to banish |
 
@@ -114,12 +115,13 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| self-banish ↔ banish-trigger | 123 | 8 | 31.6% |
+| self-banish ↔ banish-trigger | 109 | 8 | 28.0% |
 | banish-trigger ↔ banish-trigger | 217 | 5 | 55.8% |
 | self-banish ↔ self-banish | 21 | 5 | 5.4% |
 | self-banish ↔ an opponent's-turn banish-trigger | 28 | 5 | 7.2% |
+| self-banish ↔ a banish-trigger that gives back little | 14 | 5 | 3.6% |
 
-Score-8 share next to Discard and Toy: Sacrifice 31.6%, Discard 0.0%, Toy 13.3%.
+Score-8 share next to Discard and Toy: Sacrifice 28.0%, Discard 0.0%, Toy 13.3%.
 <!-- coverage:end -->
 
 The score-8 share runs high next to Discard's and Toy's. That is structural, not a defect: with a handful of enablers each pairing against many payoffs, the combo *is* the archetype's identity.
@@ -140,7 +142,7 @@ Pairs that aren't a combo score 5 and name both cards. Two banish-triggers read 
 - banish ↔ banish, one of each (David Xanatos - Charismatic Leader with Kuzco - Wanted Llama): `"{A} benefits when your characters are banished, and {B} when it is."`
 - banish ↔ banish, both watching only themselves: `"{A} and {B} both benefit from being banished."`
 - self-banish ↔ self-banish: `"{A} and {B} both banish your own characters."`
-- self-banish ↔ a banish-trigger that fires only on an opponent's turn: `"{A} and {B} both go in a Sacrifice deck."`
+- self-banish ↔ a banish-trigger that fires only on an opponent's turn, or gives back little: `"{A} and {B} both go in a Sacrifice deck."`
 
 ---
 
@@ -170,7 +172,7 @@ Banish-triggers the Toy rule tags too: 4 (Alien - True Believer, Jingle Joe - Si
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Sacrifice rule (Banish Matters)')`, plus `src/__tests__/sacrifice.test.ts` for triggers limited to an opponent's turn.
+Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Sacrifice rule (Banish Matters)')`, plus `src/__tests__/sacrifice.test.ts` for triggers limited to an opponent's turn and for payoffs that give back little.
 
 ### Role Detection (8 tests)
 
@@ -204,6 +206,15 @@ Real text of Time to Go!, David Xanatos - Charismatic Leader, Rex - Protective D
 | keeps them as banish-triggers | Rex and Donald Duck stay in the rule |
 | keeps the combo for a your-turn trigger | Time to Go! ↔ David Xanatos → 8 |
 | a self-banish card with them → 5 | Time to Go! ↔ Rex or Donald Duck → 5 from either side, the same-deck line |
+
+### Payoffs that give back little (2 tests, `sacrifice.test.ts`)
+
+Real text of Alien - True Believer and Merlin - Envisioning the Future.
+
+| Test | What it verifies |
+|------|------------------|
+| reads them as thin payoffs | `banishPayoffPaysLittle`: Alien and Merlin yes, David Xanatos no; Alien stays a banish-trigger |
+| a self-banish card with them → 5 | Time to Go! ↔ Alien or Merlin → 5 from either side, the same-deck line |
 
 ---
 

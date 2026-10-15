@@ -121,6 +121,18 @@
         "score": 5,
         "text": "Free Shift for <SHIFT>, but <BASE> is expensive and hard to set up first."
       },
+      "duo.cheapHalf": {
+        "score": 7,
+        "text": "Duo Shift: play <BASE> early, then shift <SHIFT> in for 0 ink once its other half is in play too."
+      },
+      "duo.midHalf": {
+        "score": 5,
+        "text": "Duo Shift: <SHIFT> costs no ink, but needs its other half in play too, and <BASE> takes longer to set up."
+      },
+      "duo.expensiveHalf": {
+        "score": 3,
+        "text": "Duo Shift: <SHIFT> needs its other half in play too, and <BASE> is expensive and hard to set up first."
+      },
       "curve.bothInkable": {
         "score": 9,
         "text": "Perfect curve: <SHIFT> shifts onto <BASE> the turn after. Both are inkable as a fallback."

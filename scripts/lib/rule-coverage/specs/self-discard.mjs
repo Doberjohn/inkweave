@@ -35,9 +35,9 @@ const SHAPES = [
 const LABELS = {
   enabler: 'enabler (loot / discard-hand / discard-cost)',
   reanimator:
-    'reanimator ("from your discard", minus self-contained, named-card and forced deck-bottom clauses)',
+    'reanimator ("from your discard", minus self-contained, named-card and deck-bottom clauses)',
   'state-payoff': 'state-payoff (discarded this turn / Hellbent / STONE BY DAY)',
-  'zone-payoff': 'zone-payoff (count / card-type / put-this-turn)',
+  'zone-payoff': 'zone-payoff (count / card-type / put-this-turn / pile cost)',
   mill: 'mill (deck-side filler)',
 };
 

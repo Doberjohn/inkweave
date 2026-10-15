@@ -13,18 +13,36 @@ import {TOY_ROLES} from './roles.mjs';
 
 const ROLES = ['self-banish', 'banish-trigger'];
 
-const SHAPES = [
-  {label: 'self-banish ↔ banish-trigger', score: 8, test: /banishes your own character on demand/},
-  // Read by what each trigger counts: any of your characters banished, or only the card itself.
-  {label: 'banish-trigger ↔ banish-trigger', score: 5, test: /\bbanished\b/},
-  {label: 'self-banish ↔ self-banish', score: 5, test: /both banish your own characters/},
-  // A self-banish card next to a payoff that fires only on an opponent's turn.
-  {
-    label: "self-banish ↔ an opponent's-turn banish-trigger",
-    score: 5,
-    test: /both go in a Sacrifice deck/,
-  },
-];
+/**
+ * A self-banish card next to a payoff it can't cash in: one that fires only on an opponent's
+ * turn, or (`thin`) one that gives back almost nothing.
+ */
+const noCombo = (engine, thin) => (pair) =>
+  /both go in a Sacrifice deck/.test(pair.explanation) &&
+  pair.cards.some((card) => engine.banishPayoffPaysLittle(card)) === thin;
+
+function sacrificeShapes(engine) {
+  return [
+    {
+      label: 'self-banish ↔ banish-trigger',
+      score: 8,
+      test: /banishes your own character on demand/,
+    },
+    // Read by what each trigger counts: any of your characters banished, or only the card itself.
+    {label: 'banish-trigger ↔ banish-trigger', score: 5, test: /\bbanished\b/},
+    {label: 'self-banish ↔ self-banish', score: 5, test: /both banish your own characters/},
+    {
+      label: "self-banish ↔ an opponent's-turn banish-trigger",
+      score: 5,
+      test: noCombo(engine, false),
+    },
+    {
+      label: 'self-banish ↔ a banish-trigger that gives back little',
+      score: 5,
+      test: noCombo(engine, true),
+    },
+  ];
+}
 
 /** The share of a rule's pairs that score 8. */
 function eightShare(coverage, ruleId) {
@@ -43,7 +61,7 @@ export default {
       return section(
         poolLine(coverage),
         `${pairsLead(pairs)}:`,
-        shapeTable(pairs, SHAPES),
+        shapeTable(pairs, sacrificeShapes(coverage.engine)),
         `Score-8 share next to Discard and Toy: Sacrifice ${shares[0]}, Discard ${shares[1]}, ` +
           `Toy ${shares[2]}.`,
       );

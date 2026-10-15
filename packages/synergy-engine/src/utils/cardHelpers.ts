@@ -271,6 +271,19 @@ export function hasAnyShift(card: LorcanaCard): boolean {
   return getShiftType(card) !== null;
 }
 
+/**
+ * Duo Shift's reminder: "play this on top of two of your characters, one named Mickey Mouse and
+ * one named Minnie Mouse." It lands on both halves at once, so neither half takes it alone.
+ * Combo Shift's reminder ("one named Sulley, one named Boo, or one of each") takes either half,
+ * as a plain team Shift does.
+ */
+const DUO_SHIFT_PATTERN = /\bon top of two of your characters\b/i;
+
+/** The Shift needs both named halves in play (Mickey Mouse & Minnie Mouse - Adventuring Duo). */
+export function isDuoShift(card: LorcanaCard): boolean {
+  return DUO_SHIFT_PATTERN.test(normalizeCardText(card));
+}
+
 /** An effect that gets ink drops: "get 2 ink drops", "each player gets 1 ink drop". */
 const INK_DROP_GAIN = /\bgets?\s+(\d+)\s+ink\s+drops?\b/gi;
 
@@ -889,6 +902,25 @@ export function banishTriggerFiresOnYourTurn(card: LorcanaCard): boolean {
 }
 
 /**
+ * A banish payoff that gives back almost nothing: it returns only another card of its own name
+ * ("return another character card named Alien from your discard to your hand", Alien - True
+ * Believer), or only puts itself on the bottom of your deck ("put this card from your discard on
+ * the bottom of your deck", Merlin - Envisioning the Future).
+ */
+const SACRIFICE_THIN_PAYOFFS =
+  /\bwhen this character is banished, (?:return another character card named [^.]+ from your discard to your hand|put this card from your discard on the bottom of your deck)\./gi;
+
+/**
+ * True iff every banish trigger on a payoff gives back almost nothing (SACRIFICE_THIN_PAYOFFS), so
+ * a self-banish card that cashes it in gains too little for the combo.
+ */
+export function banishPayoffPaysLittle(card: LorcanaCard): boolean {
+  const text = normalizeCardText(card);
+  const triggers = text.match(SACRIFICE_BANISH_TRIGGERS)?.length ?? 0;
+  return triggers > 0 && (text.match(SACRIFICE_THIN_PAYOFFS)?.length ?? 0) >= triggers;
+}
+
+/**
  * True iff a banish payoff fires when any of your characters is banished (David Xanatos), not only
  * when it is banished itself (Kuzco). The two read differently in a payoff-payoff pair.
  */
@@ -912,7 +944,9 @@ export function triggersOnAnyBanish(card: LorcanaCard): boolean {
  *  - 'state-payoff' — rewards the discard EVENT ("discarded a card this turn"), an empty hand, or
  *                     a small one (STONE BY DAY: "3 or more cards in your hand" keeps it exerted).
  *  - 'zone-payoff'  — rewards the discard as a countable ZONE ("10 or more cards in your discard",
- *                     "a song card in your discard", "cards were put into your discard this turn").
+ *                     "a song card in your discard", "cards were put into your discard this turn"),
+ *                     or spends it as a cost ("you may put 2 character cards from your discard on
+ *                     the bottom of your deck to give this character Rush").
  *
  * The opponent-exclusion keeps the enabler disjoint from the Discard rule. Songs are not
  * bin-fillers here: a sung song lands in the discard, but that is the Singer rule's axis.
@@ -928,8 +962,14 @@ const SELF_DISCARD_HAND_PATTERN = /discard\s+your\s+hand/i;
  * "discard a card" costs without over-tagging narrow conditional costs like a Princess/Queen discard.
  */
 const SELF_DISCARD_COST_PATTERN = /(?:you may\s+)?discard\s+(?:a|an|another|\d+)\s+(?:\w+\s+){0,2}?cards?\b/i;
-/** Opponent-facing discard belongs to the Discard rule; exclude it here to keep the two axes disjoint. */
-const SELF_DISCARD_OPPONENT_PATTERN = /opponent|each player|challenging player|that player/i;
+/**
+ * Opponent-facing discard belongs to the Discard rule; exclude it here to keep the two axes
+ * disjoint. Search for Clues' "the player or players with the most cards in their hands choose
+ * and discard" hits you only while your hand is the biggest, and the Discard rule reads it as
+ * comparative targeting, so it is opponent-facing too.
+ */
+const SELF_DISCARD_OPPONENT_PATTERN =
+  /opponent|each player|challenging player|that player|most cards in their hands?/i;
 
 /** Reanimator — play / return / put a card FROM YOUR DISCARD (recursion payoff). */
 const SELF_DISCARD_REANIMATOR_PATTERN = /(?:play|return|put)\b[^.]{0,60}\bfrom your discard\b/i;
@@ -956,14 +996,22 @@ const DISCARD_FED_RECURSION_PATTERN = /\bwhen(?:ever)?\s+you\s+discard\b/i;
 const NAMED_CARD_RECURSION_PATTERN =
   /\b(?:play|return|put)\b(?:(?!\b(?:play|return|put)\b)[^.]){0,60}?\bnamed\b(?:(?!\b(?:play|return|put)\b)[^.]){0,40}?\bfrom your discard\b/gi;
 /**
- * A sweep that must move cards from your discard to the bottom of your deck ("put 3 cards from
- * your discard on the bottom of your deck in any order or banish her", Mamá Imelda -
- * No-Nonsense Ancestor). No card comes back to hand or play, so it is no recursion. An optional
- * one ("you may put a Toy character card from your discard on the bottom of your deck to play
- * this character for free") is a cost the card pays for something else, and stays.
+ * A sweep that moves cards from your discard to the bottom of your deck. No card comes back to
+ * hand or play, so it is no recursion, whether the card must make it ("put 3 cards from your
+ * discard on the bottom of your deck in any order or banish her", Mamá Imelda - No-Nonsense
+ * Ancestor) or may pay it as a cost (see DECK_BOTTOM_COST_PATTERN).
  */
-const MANDATORY_DECK_BOTTOM_SWEEP_PATTERN =
-  /(?<!\byou may )\bput\b[^.]{0,40}?\bfrom your discard on the bottom of your deck\b/gi;
+const DECK_BOTTOM_SWEEP_PATTERN =
+  /\bput\b[^.]{0,40}?\bfrom your discard on the bottom of your deck\b/gi;
+/**
+ * A cost paid from the pile: "You may put a Toy character card from your discard on the bottom
+ * of your deck to play this character for free" (Hand-in-the-Box - Sid's Toy), "you may put 2
+ * character cards from your discard on the bottom of your deck to give this character Rush"
+ * (Roller Bob - Sid's Toy). It needs those cards in your discard, so it reads the pile the way a
+ * count does, and the kinds it names are the kinds it takes.
+ */
+const DECK_BOTTOM_COST_PATTERN =
+  /\byou may put\b[^.]{0,40}?\bfrom your discard on the bottom of your deck\b/i;
 
 /** A sentence break: the whitespace after ".", "!" or "?". */
 const SENTENCE_BREAK = /(?<=[.!?])\s+/;
@@ -978,12 +1026,12 @@ function stripSelfContainedRecursion(text: string): string {
 
 /**
  * The text with only the recursion an outlet or a mill can feed: self-contained recursion
- * sentences, named-card recursion clauses and mandatory deck-bottom sweeps removed.
+ * sentences, named-card recursion clauses and deck-bottom sweeps removed.
  */
 function stripUnfedRecursion(text: string): string {
   return stripSelfContainedRecursion(text)
     .replace(NAMED_CARD_RECURSION_PATTERN, '')
-    .replace(MANDATORY_DECK_BOTTOM_SWEEP_PATTERN, '');
+    .replace(DECK_BOTTOM_SWEEP_PATTERN, '');
 }
 
 /**
@@ -1036,9 +1084,25 @@ const SELF_DISCARD_MILL_PATTERN =
 /** Fast pre-filter: every pattern has "discard", "no cards in" or "cards in your hand". */
 const HAS_SELF_DISCARD_KEYWORD = /discard|no cards in|cards in your hand/i;
 
-/** Zone payoff: either the "in your discard" count/check shape or the "put into your discard this turn" trigger. */
+/**
+ * Zone payoff: the "in your discard" count/check shape, the "put into your discard this turn"
+ * trigger, or a cost paid from the pile (see paysCostFromPile).
+ */
 function isSelfDiscardZonePayoff(text: string): boolean {
-  return SELF_DISCARD_ZONE_IN_PATTERN.test(text) || SELF_DISCARD_ZONE_PUT_PATTERN.test(text);
+  return (
+    SELF_DISCARD_ZONE_IN_PATTERN.test(text) ||
+    SELF_DISCARD_ZONE_PUT_PATTERN.test(text) ||
+    paysCostFromPile(text)
+  );
+}
+
+/**
+ * A cost paid from the pile (see DECK_BOTTOM_COST_PATTERN) that is no price on recursion the
+ * card also makes: Darkwing Duck - Dashing Gadgeteer puts an item card on the bottom of your deck
+ * to play another item from your discard, and stays a reanimator.
+ */
+function paysCostFromPile(text: string): boolean {
+  return DECK_BOTTOM_COST_PATTERN.test(text) && !isSelfDiscardReanimator(text);
 }
 
 /**
@@ -1134,8 +1198,7 @@ const SELF_DISCARD_SELF_OBJECT_PATTERN =
   /\bthis\s+(?:card|character|item|location|action|song)\b|\bit\b/i;
 /**
  * An outlet that discards one card and then draws 2+ ("discard a song card. If you do, draw
- * 2 cards"), so its hand is never empty when it resolves. Deliberately narrow (Max Goof -
- * Karaoke Star only today); general empty-hand scoring is a separate decision.
+ * 2 cards"), so it leaves the hand bigger than it found it (Max Goof - Karaoke Star).
  */
 const SELF_DISCARD_REFILL_PATTERN =
   /discard\s+an?\s+(?:\w+\s+){0,2}?card\.\s*if you do,\s*draw\s+[2-9]\s+cards/i;
@@ -1146,6 +1209,15 @@ const SELF_DISCARD_REFILL_PATTERN =
  */
 const SELF_DISCARD_DRAW_FIRST_PATTERN =
   /(?:\bdraws?\b|\b(?:in)?to your hand\b)[^.]*(?:\.\s+(?:then|if you do),?)?[^.]*\bdiscard\b/i;
+/**
+ * An outlet that puts cards back in your hand after its discard, in the same sentence or the
+ * next one when that draws or opens "If you do": "Discard your hand. Draw 2 cards." (You Broke
+ * My Smolder), "discard your hand and draw 2 cards" (Syndrome's Remote), "discard your hand. If
+ * you do, return a card from your discard to your hand" (Hercules - Young Rescuer). The hand
+ * ends small, never empty. Read one ability at a time, so another ability's draw never counts.
+ */
+const SELF_DISCARD_DRAW_AFTER_PATTERN =
+  /\bdiscard\s+(?:your\s+hand|(?:a|an|another|\d+)\s+(?:\w+\s+){0,3}?cards?)\b(?:[^.]*?\b(?:draws?|to your hand)\b|[^.]*\.\s+(?:draw|if you do,[^.]*?\b(?:draws?|to your hand)\b))/i;
 /**
  * Goliath - Clan Leader's DUSK TO DAWN: "At the end of each player's turn, if they have more than 2
  * cards in their hand, they choose and discard cards until they have 2" (a shorter hand draws up
@@ -1162,6 +1234,11 @@ const END_OF_YOUR_TURN_PATTERN = /\bat the end of your turn\b/i;
 function selfDiscardAbilityTexts(card: LorcanaCard): string[] {
   const sections = card.textSections?.length ? card.textSections : [card.text ?? ''];
   return sections.map((text) => normalizeCardText({...card, text}));
+}
+
+/** An ability puts cards back in your hand after its discard (see SELF_DISCARD_DRAW_AFTER_PATTERN). */
+function drawsAfterDiscard(blocks: string[]): boolean {
+  return blocks.some((block) => SELF_DISCARD_DRAW_AFTER_PATTERN.test(block));
 }
 
 /**
@@ -1224,17 +1301,28 @@ function ownSelfDiscardKinds(card: LorcanaCard): Set<SelfDiscardKindEntry> {
   return new Set(classes.map((classification) => `character:${classification}` as const));
 }
 
-/** Every "N cards in your discard" check on a card, read for the kinds it counts. */
-const SELF_DISCARD_ZONE_IN_CHECKS = new RegExp(SELF_DISCARD_ZONE_IN_PATTERN.source, 'gi');
+/**
+ * Every "N cards in your discard" check and every cost paid from the pile on a card, read for
+ * the kinds it takes.
+ */
+const SELF_DISCARD_PILE_CHECKS = new RegExp(
+  `${SELF_DISCARD_ZONE_IN_PATTERN.source}|${DECK_BOTTOM_COST_PATTERN.source}`,
+  'gi',
+);
+
+/** The card reads the pile itself: a count or a card type in it, or a cost paid from it. */
+function readsSelfDiscardPile(text: string): boolean {
+  return SELF_DISCARD_ZONE_IN_PATTERN.test(text) || DECK_BOTTOM_COST_PATTERN.test(text);
+}
 
 /**
- * What a zone payoff counts in the pile; null when any card counts ("10 or more cards in your
- * discard", "cards were put into your discard this turn") or it reads no pile at all.
+ * What a zone payoff counts in the pile or pays from it; null when any card counts ("10 or more
+ * cards in your discard", "cards were put into your discard this turn") or it reads no pile.
  */
 function selfDiscardPileKinds(text: string): Set<SelfDiscardKindEntry> | null {
   if (SELF_DISCARD_ZONE_PUT_PATTERN.test(text)) return null;
   const kinds = new Set<SelfDiscardKindEntry>();
-  for (const [check] of text.matchAll(SELF_DISCARD_ZONE_IN_CHECKS)) {
+  for (const [check] of text.matchAll(SELF_DISCARD_PILE_CHECKS)) {
     const counted = selfDiscardKindsIn(check);
     if (counted.size === 0) return null;
     counted.forEach((kind) => kinds.add(kind));
@@ -1279,10 +1367,10 @@ function selfDiscardKindsMeet(
 interface SelfDiscardFeedProfile {
   /** Kinds the card discards as an outlet; null when it can discard any card. */
   outletKinds: Set<SelfDiscardKindEntry> | null;
-  /** The outlet refills the hand as it discards ("discard a card. If you do, draw 2 cards"). */
-  refills: boolean;
   /** The outlet leaves a smaller hand: no draw before its discard (a loot), no refill after. */
   shrinksHand: boolean;
+  /** The outlet shrinks the hand and puts no card back in it (see drawsAfterDiscard). */
+  drainsHand: boolean;
   /** The card trims your hand to 2 at the end of your turn (Goliath - Clan Leader). */
   trimsHand: boolean;
   /** Every outlet on the card discards at the end of your turn (see discardsOnlyAtEndOfTurn). */
@@ -1299,7 +1387,7 @@ interface SelfDiscardFeedProfile {
   rewardsEmptyHand: boolean;
   /** The state payoff needs a small hand to ready (STONE BY DAY). */
   needsSmallHand: boolean;
-  /** The zone payoff reads the pile itself (a count or a card type), whenever it looks. */
+  /** The zone payoff reads the pile itself (a count, a card type or a cost), whenever it looks. */
   readsPile: boolean;
   /** Kinds the zone payoff counts in the pile; null when any card counts. */
   pileKinds: Set<SelfDiscardKindEntry> | null;
@@ -1315,11 +1403,12 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
   if (cached) return cached;
   const text = normalizeCardText(card);
   const blocks = selfDiscardAbilityTexts(card);
-  const refills = SELF_DISCARD_REFILL_PATTERN.test(text);
+  const shrinksHand =
+    !SELF_DISCARD_REFILL_PATTERN.test(text) && !SELF_DISCARD_DRAW_FIRST_PATTERN.test(text);
   const profile: SelfDiscardFeedProfile = {
     outletKinds: selfDiscardOutletKinds(text),
-    refills,
-    shrinksHand: !refills && !SELF_DISCARD_DRAW_FIRST_PATTERN.test(text),
+    shrinksHand,
+    drainsHand: shrinksHand && !drawsAfterDiscard(blocks),
     trimsHand: SELF_DISCARD_HAND_TRIM_PATTERN.test(text),
     discardsAtEndOfTurn: discardsOnlyAtEndOfTurn(blocks),
     recursionKinds: selfDiscardRecursionKinds(card, stripUnfedRecursion(text)),
@@ -1328,7 +1417,7 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
     rewardsEvent: SELF_DISCARD_EVENT_PATTERN.test(text),
     rewardsEmptyHand: SELF_DISCARD_HELLBENT_PATTERN.test(text),
     needsSmallHand: SELF_DISCARD_SMALL_HAND_PATTERN.test(text),
-    readsPile: SELF_DISCARD_ZONE_IN_PATTERN.test(text),
+    readsPile: readsSelfDiscardPile(text),
     pileKinds: selfDiscardPileKinds(text),
     checksAtEndOfTurn: checksDiscardsAtEndOfTurn(blocks),
   };
@@ -1359,15 +1448,15 @@ function discardLandsInTime(
 
 /**
  * How an outlet's discard reaches a state payoff: any discard in time is a "discarded a card
- * this turn" event, while an empty hand needs an outlet that doesn't refill it, and a small hand
- * one that shrinks it (a loot or a refill leaves the hand as big or bigger).
+ * this turn" event, while a small hand needs an outlet that shrinks it (a loot or a refill
+ * leaves the hand as big or bigger), and an empty hand one that also puts no card back.
  */
 function selfDiscardStateFeed(
   outlet: SelfDiscardFeedProfile,
   target: SelfDiscardFeedProfile,
 ): SelfDiscardFeed | null {
   const feedsEvent = target.rewardsEvent && discardLandsInTime(outlet, target);
-  const feedsEmptyHand = target.rewardsEmptyHand && !outlet.refills;
+  const feedsEmptyHand = target.rewardsEmptyHand && outlet.drainsHand;
   if (feedsEvent || feedsEmptyHand) return 'trigger';
   return target.needsSmallHand && outlet.shrinksHand ? 'unlock' : null;
 }
@@ -1387,9 +1476,9 @@ function selfDiscardRecursionFeed(
  *    ("discard a song card") feeds song, action and any-card recursion, never character or item
  *    recursion. It is a trigger only when the recursion fires on the discard ("when you discard
  *    this card, you may play it from your discard"); otherwise the outlet just stocks the bin;
- *  - state: a trigger for the discard event or an empty hand, except that a refill outlet never
- *    leaves the empty hand a "no cards in hand" payoff needs; an unlock for a small hand, which
- *    only an outlet that shrinks the hand feeds.
+ *  - state: a trigger for the discard event, or for an empty hand when the outlet takes cards
+ *    from your hand and puts none back (no loot, no refill, no draw after the discard); an
+ *    unlock for a small hand, which only an outlet that shrinks the hand feeds.
  * A trigger wins over a stock or an unlock. Reads the payoff's text with unfed recursion
  * stripped, like getSelfDiscardRoles.
  */
@@ -1591,14 +1680,25 @@ export function isDeckRamp(card: LorcanaCard): boolean {
 }
 
 /**
- * Sub-pattern detection: returns whether a trigger fires every ink event (true)
- * or is capped at once per turn (false).
+ * A trigger that gives one chosen character a keyword until the start of your next turn pays off
+ * once a turn: a second ink that turn gives the keyword to a character that already has it,
+ * unless you have a second target. Fairy Godmother's Wand: "chosen Princess character of yours
+ * gains Ward until the start of your next turn." Only keywords without a number qualify, since a
+ * second Resist +1 or Challenger +1 stacks.
+ */
+const LASTING_KEYWORD_GRANT =
+  /\bchosen\b[^.]*\bgains?\s+(?:Ward|Evasive|Rush|Alert|Bodyguard|Reckless|Support|Vanish)\b[^.]*\buntil the start of your next turn\b/i;
+
+/**
+ * Sub-pattern detection: returns whether a trigger pays off on every ink event (true), or is
+ * capped at once per turn (false): "once during your turn", or a lasting keyword grant
+ * (LASTING_KEYWORD_GRANT).
  */
 export function isRepeatingTrigger(card: LorcanaCard): boolean {
   if (!card.text) return false;
   const t = normalizeCardText(card);
   if (!INKWELL_TRIGGER_PATTERNS.some((p) => p.test(t))) return false;
-  return !/once\s+during\s+your\s+turn/i.test(t);
+  return !/once\s+during\s+your\s+turn/i.test(t) && !LASTING_KEYWORD_GRANT.test(t);
 }
 
 const YOUR_TURN_ONLY = /\bduring your turn\b/i;
@@ -2541,6 +2641,36 @@ export function getHealRoles(card: LorcanaCard): HealRole[] {
 /** Check if a card participates in the heal axis (healer or heal-payoff). */
 export const isHealCard = (card: LorcanaCard): boolean => getHealRoles(card).length > 0;
 
+/**
+ * Temporary Shift's reminder text: "At the end of your turn, remove all damage from this
+ * character and return only this card to your hand." It heals only a character that took
+ * damage that turn, and only once the turn's actions are done.
+ */
+const TEMPORARY_SHIFT_HEAL_PATTERN =
+  /\bat the end of your turn, remove all damage from this character and return only this card to your hand\b/i;
+
+/**
+ * The card's only heal is Temporary Shift's end-of-turn cleanup (Grandma Wu - Fierce Red Panda,
+ * Sun Yee - Red Panda Spirit): no remove clause is left once the reminder text is taken out.
+ */
+export function healsOnlyAsTemporaryShiftEnds(card: LorcanaCard): boolean {
+  const text = normalizeCardText(card);
+  if (!TEMPORARY_SHIFT_HEAL_PATTERN.test(text)) return false;
+  return !HEALER_PATTERN.test(text.replace(TEMPORARY_SHIFT_HEAL_PATTERN, ''));
+}
+
+/** A heal payoff that triggers on the removal: "Whenever you remove 1 or more damage …". */
+const HEAL_TRIGGER_PATTERN = /\b(?:whenever|when) you remove\b/i;
+
+/**
+ * The payoff fires on the removal itself. A turn check ("⟳ — If you removed damage from a
+ * character this turn, gain 1 lore", Julieta's Arepas) is used while you act, so a heal that
+ * lands as the turn ends never meets it.
+ */
+export function healPayoffTriggers(card: LorcanaCard): boolean {
+  return HEAL_TRIGGER_PATTERN.test(normalizeCardText(card));
+}
+
 // ============================================
 // TRIBAL PLAYSTYLES (Monster, Princess, Hero, Super, Royalty, Detective, Gargoyle, Madrigal, Villain) — shared detector
 // ============================================
@@ -3038,10 +3168,11 @@ const SELF_STRENGTH_BOOST_PATTERN = /\b(?:this character|he|she) gets \+(\d+) ¤
 const OFF_IN_CHALLENGE_PATTERN = /\bthis turn\b|\bat a location\b|\bhas damage\b/i;
 
 /**
- * The strength a character challenges with: its printed strength plus each boost its own text
+ * The strength a character challenges with: its printed strength, its Challenger bonus ("While
+ * challenging, this character gets +N ¤", read from the keyword), and each boost its own text
  * gives it that is on whenever it challenges (always, "during your turn", "while this character
  * has no damage", "while there's a card under this character"). A "for each" boost counts once.
- * Reminder text is skipped, so Challenger's bonus isn't one.
+ * Reminder text is skipped, so Challenger's reminder isn't counted twice.
  */
 export function strengthInChallenge(card: LorcanaCard): number {
   return normalizeCardText(card)
@@ -3051,6 +3182,18 @@ export function strengthInChallenge(card: LorcanaCard): number {
     .reduce(
       (strength, sentence) =>
         strength + Number(sentence.match(SELF_STRENGTH_BOOST_PATTERN)?.[1] ?? 0),
-      card.strength ?? 0,
+      (card.strength ?? 0) + (getKeywordValue(card, 'Challenger') ?? 0),
     );
+}
+
+/**
+ * "This character can't challenge": Percy - Pupsicle's ICE BATH, and Adventurous's reminder
+ * ("This character can't challenge and must quest each turn if able"), so reminder text is read
+ * too. A conditional "can't quest or challenge unless …" doesn't match.
+ */
+const CANT_CHALLENGE_PATTERN = /\bthis character can't challenge\b/i;
+
+/** The character never challenges, so it fights only when an opponent challenges it. */
+export function cantChallenge(card: LorcanaCard): boolean {
+  return CANT_CHALLENGE_PATTERN.test(normalizeCardText(card));
 }

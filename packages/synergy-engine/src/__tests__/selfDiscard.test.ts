@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {getSelfDiscardRoles} from '../utils';
+import {getDiscardRoles, getSelfDiscardRoles} from '../utils';
 import {getRuleById} from '../engine';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
@@ -96,6 +96,22 @@ const youBrokeMySmolder = createCard({
   type: 'Action',
   ink: 'Steel',
   text: 'Discard your hand. Draw 2 cards.',
+});
+// Outlets that discard your hand, then put cards back in it.
+const herculesYoungRescuer = createCard({
+  id: 'hercules-young-rescuer',
+  name: 'Hercules',
+  fullName: 'Hercules - Young Rescuer',
+  ink: 'Ruby',
+  text: 'HEROIC SACRIFICE When you play this character,\nyou may discard your hand. If you do, return a\ncard from your discard to your hand.',
+});
+const syndromesRemote = createCard({
+  id: 'syndromes-remote',
+  name: "Syndrome's Remote",
+  fullName: "Syndrome's Remote",
+  type: 'Item',
+  ink: 'Steel',
+  text: "ZERO-POINT ENERGY ⟳, 2 ⬡ — Chosen character\ncan't challenge during their next turn.\nLEARN FROM THEIR LOSSES Whenever a Robot\ncharacter is banished, you may banish this item to\ndiscard your hand and draw 2 cards.",
 });
 const kronk = createCard({
   id: 'kronk-meat-hut-cook',
@@ -289,12 +305,19 @@ describe('Self-Discard scoring: an outlet feeds only the payoffs its discard can
     expect(score(maxKaraoke, lookWhatYouveDone)).toBe(5);
   });
 
-  it('lets any discard feed a discard-event payoff, but not a refill outlet feed an empty-hand one', () => {
+  it('lets any discard feed a discard-event payoff', () => {
     expect(score(maxKaraoke, maximus)).toBe(8);
-    expect(score(maxKaraoke, megavolt)).toBe(5);
-    expect(score(youBrokeMySmolder, megavolt)).toBe(8);
-    expect(score(kronk, megavolt)).toBe(8);
+    expect(score(youBrokeMySmolder, maximus)).toBe(8);
+  });
+
+  it('feeds an empty-hand payoff only from an outlet that puts no card back in your hand', () => {
     expect(score(sprout, megavolt)).toBe(8);
+    expect(score(megavolt, sprout)).toBe(8);
+    expect(score(kronk, megavolt)).toBe(5);
+    expect(score(maxKaraoke, megavolt)).toBe(5);
+    expect(score(youBrokeMySmolder, megavolt)).toBe(5);
+    expect(score(herculesYoungRescuer, megavolt)).toBe(5);
+    expect(score(syndromesRemote, megavolt)).toBe(5);
   });
 
   it('lets a mill stock recursion, but not recursion that fires only on your discard', () => {
@@ -372,9 +395,20 @@ const bouncingDucky = createCard({
   fullName: "Bouncing Ducky - Sid's Toy",
   text: 'REJECTED TOYS For each Toy character card in your discard, you pay 1 ⬡ less to play this character.\nREPURPOSED When you play this character, put all Toy character cards from your discard on the bottom of your deck in any order.',
 });
+// A sweep the card may pay as a cost: it needs those cards in your discard, the way a count does.
 const handInTheBox = createCard({
+  id: 'hand-in-the-box-sids-toy',
+  name: 'Hand-in-the-Box',
   fullName: "Hand-in-the-Box - Sid's Toy",
-  text: 'SPRING-LOADED You may put a Toy character card from your discard on the bottom of your deck to play this character for free.',
+  ink: 'Ruby',
+  text: 'SPRING-LOADED You may put a Toy character\ncard from your discard on the bottom of your\ndeck to play this character for free.',
+});
+const darkwingGadgeteer = createCard({
+  id: 'darkwing-duck-dashing-gadgeteer',
+  name: 'Darkwing Duck',
+  fullName: 'Darkwing Duck - Dashing Gadgeteer',
+  ink: 'Sapphire',
+  text: 'MODERN MARVEL Whenever this character quests,\nyou may put an item card from your discard on the\nbottom of your deck. If you do, you may play an item\nwith cost 5 or less from your discard for free.',
 });
 
 describe('Self-Discard roles: a sweep from the discard to the bottom of the deck', () => {
@@ -383,7 +417,46 @@ describe('Self-Discard roles: a sweep from the discard to the bottom of the deck
     expect(getSelfDiscardRoles(bouncingDucky)).toEqual(['zone-payoff']);
   });
 
-  it('keeps an optional sweep the card pays as a cost', () => {
-    expect(getSelfDiscardRoles(handInTheBox)).toEqual(['reanimator']);
+  it('reads a sweep the card may pay as a cost as a pile check', () => {
+    expect(getSelfDiscardRoles(handInTheBox)).toEqual(['zone-payoff']);
+  });
+
+  it('keeps the recursion a sweep pays for', () => {
+    expect(getSelfDiscardRoles(darkwingGadgeteer)).toEqual(['reanimator']);
+  });
+});
+
+describe('Self-Discard scoring: a cost paid from the pile', () => {
+  const rule = getRuleById('self-discard')!;
+  /** The pair's score with `card` as the searcher. */
+  const score = (card: LorcanaCard, partner: LorcanaCard) =>
+    rule.findSynergies(card, [card, partner]).find((s) => s.card.id === partner.id)?.score;
+
+  it('scores 6 with an outlet that can discard what the cost takes, 5 with one that cannot', () => {
+    expect(score(kronk, handInTheBox)).toBe(6);
+    expect(score(handInTheBox, kronk)).toBe(6);
+    expect(score(sprout, handInTheBox)).toBe(5);
+  });
+
+  it('scores 7 with a mill and 5 with recursion, as a pile count does', () => {
+    expect(score(hectorStreetMusician, handInTheBox)).toBe(7);
+    expect(score(salvageOperation, handInTheBox)).toBe(5);
+  });
+});
+
+// Discard aimed at the biggest hand: it lands on you only while your hand is the biggest.
+const searchForClues = createCard({
+  fullName: 'Search for Clues',
+  type: 'Action',
+  text: 'The player or players with the most cards in their\nhands choose and discard 2 cards. If you have a\nDetective character in play, gain 1 lore.',
+});
+
+describe('Self-Discard roles: a discard aimed at the biggest hand', () => {
+  it('reads no outlet from it', () => {
+    expect(getSelfDiscardRoles(searchForClues)).toEqual([]);
+  });
+
+  it('leaves it to the Discard rule', () => {
+    expect(getDiscardRoles(searchForClues)).toEqual(['standard']);
   });
 });

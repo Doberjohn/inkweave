@@ -68,6 +68,7 @@ Cards with "whenever a card is put into your inkwell" effects. Two timing varian
 
 **Once-per-turn** — Fire only on the first ink event per turn.
 - Pattern: `once during your turn, whenever a card is put into your inkwell`
+- A trigger that gives one chosen character a keyword until the start of your next turn scores here too (`LASTING_KEYWORD_GRANT`). Fairy Godmother's Wand's "chosen Princess character of yours gains Ward until the start of your next turn" pays off on the first ink of a turn; a second ink only helps if you have a second Princess. Keywords with a number (Resist +1, Challenger +1) stack, so a grant of one still repeats.
 
 **Variant wordings** (also detected):
 - `whenever you put a card into your inkwell` (Fairy Godmother's Wand)
@@ -152,10 +153,10 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| Deck ramp ↔ repeating trigger | 48 | 9 | 2.9% |
-| Deck ramp ↔ once-per-turn trigger | 24 | 8 | 1.4% |
-| Self-sacrifice ↔ repeating trigger | 26 | 8 | 1.6% |
-| Self-sacrifice ↔ once-per-turn trigger | 13 | 7 | 0.8% |
+| Deck ramp ↔ repeating trigger | 24 | 9 | 1.4% |
+| Deck ramp ↔ once-per-turn trigger | 48 | 8 | 2.9% |
+| Self-sacrifice ↔ repeating trigger | 13 | 8 | 0.8% |
+| Self-sacrifice ↔ once-per-turn trigger | 26 | 7 | 1.6% |
 | Ramp ↔ trigger, ink on the turn it can't fire | 3 | 5 | 0.2% |
 | Cost reduction ↔ cost reduction (overlapping targets) | 71 | 6 | 4.3% |
 | Ramp ↔ ramp | 701 | 5 | 42.2% |
@@ -164,7 +165,7 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 | Trigger ↔ cost reduction | 57 | 5 | 3.4% |
 <!-- coverage:end -->
 
-The 8-9 pairs aren't inflation: they're the ramp ↔ trigger chains, the only real mechanical chain in the playstyle. Most inkwell-ramp cards are deck ramp (the strongest variant) and most inkwell triggers repeat, so most pairs that *can* chain *do*; how many chains there are follows how many trigger cards the pool holds. A broad density floor with rare, mechanically real spikes is the right curve. The scores and explanation templates live in `tuning.json`, and the table reads both from the engine.
+The 8-9 pairs aren't inflation: they're the ramp ↔ trigger chains, the only real mechanical chain in the playstyle. Most inkwell-ramp cards are deck ramp (the strongest variant), so most pairs that *can* chain score 8 or 9, whether the trigger repeats or pays off once a turn; how many chains there are follows how many trigger cards the pool holds. A broad density floor with rare, mechanically real spikes is the right curve. The scores and explanation templates live in `tuning.json`, and the table reads both from the engine.
 
 ### Explanation Templates
 
@@ -191,7 +192,7 @@ A ramp ↔ trigger pair on different turns uses the engine's same-deck line, "{A
 | Role | Cards | Sub-patterns | Cards per ink |
 |----|-----|------------|-------------|
 | Inkwell Ramp | 38 | 25 deck ramp + 13 self-sacrifice | Sapphire 36, Emerald 2, Amber 1 |
-| Inkwell Triggers | 3 | 2 repeating + 1 once-per-turn | Sapphire 3 |
+| Inkwell Triggers | 3 | 1 repeating + 2 once-per-turn | Sapphire 3 |
 | Cost Reduction | 19 | Exert/Quest/Passive activation | Amber 9, Sapphire 3, Amethyst 2, Emerald 2, Ruby 2, Steel 1 |
 <!-- coverage:end -->
 

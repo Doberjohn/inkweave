@@ -90,3 +90,62 @@ describe('Floodborns: a trigger that ends in the player gaining lore', () => {
     expect(getFloodbornRoles(scar)).toEqual(['member', 'trigger']);
   });
 });
+
+// A buff that isn't a character, and two Floodborn characters whose payoffs each count the other.
+const ringOfStones = createCard({
+  id: 'ring-of-stones-taken-by-the-vine',
+  name: 'Ring of Stones',
+  fullName: 'Ring of Stones - Taken by the Vine',
+  type: 'Location',
+  ink: 'Amethyst',
+  cost: 4,
+  text: 'DEEP WISDOM Your Floodborn characters get +1 ◊.',
+});
+const gaston = createCard({
+  id: 'gaston-created-by-the-vine',
+  name: 'Gaston',
+  fullName: 'Gaston - Created by the Vine',
+  ink: 'Ruby',
+  cost: 2,
+  classifications: ['Floodborn', 'Vineling'],
+  text: 'DRAWING STRENGTH Your Floodborn characters\nget +1 ¤.',
+});
+const hera = createCard({
+  id: 'hera-created-by-the-vine',
+  name: 'Hera',
+  fullName: 'Hera - Created by the Vine',
+  ink: 'Amethyst',
+  cost: 5,
+  classifications: ['Floodborn', 'Queen', 'Deity', 'Vineling'],
+  text: 'MYSTICAL BOON Whenever you play this or\nanother Floodborn character, gain 1 lore.',
+});
+
+describe('Floodborns: two payoffs score what each gives the other', () => {
+  it('scores two that help neither at the same-deck 5, from either side', () => {
+    for (const [card, partner] of [
+      [protectiveAura, ringOfStones],
+      [ringOfStones, protectiveAura],
+    ]) {
+      expect(floodbornPair(card, partner)).toMatchObject({
+        score: 5,
+        explanation: '{A} and {B} both go in a Floodborns deck.',
+      });
+    }
+  });
+
+  it("scores one that helps the other at its own member pair's 6", () => {
+    expect(floodbornPair(ringOfStones, robinHood)).toMatchObject({
+      score: 6,
+      explanation: "{A}'s Floodborn buff powers up {B}.",
+    });
+    expect(floodbornPair(robinHood, ringOfStones)?.score).toBe(6);
+  });
+
+  it('keeps 7 for two that each help the other', () => {
+    expect(floodbornPair(gaston, hera)).toMatchObject({
+      score: 7,
+      explanation:
+        "{A} and {B} are both Floodborn characters, and each one's ability helps the other.",
+    });
+  });
+});

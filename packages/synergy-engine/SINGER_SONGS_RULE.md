@@ -12,23 +12,25 @@ Detailed documentation for the Singer + Songs rule — a direct synergy that pai
 
 Singer is a keyword on characters that lets them exert to sing a Song action card for free, as long as the Song's ink cost is within the Singer's numeric threshold. For example, a Singer 5 character can sing any Song costing 5 or less.
 
+Any character can already sing a Song its own printed cost reaches: a Song reads "A character with cost N or more can ⟳ to sing this song for free", and a Sing Together N Song lets characters whose costs total N or more sing it, which one character of cost N or more meets alone. So Singer only adds the Songs above that cost, and those are the only Songs the rule pairs: a cost-3 Singer 5 pairs with Songs costing 4 or 5.
+
 This creates a natural pair synergy: Singers want Songs to sing, and Songs benefit from Singers who can sing them without spending ink. Unlike playstyle rules (where density matters), Singer + Songs scores on **value efficiency** — how much ink the Singer saves by singing the Song for free.
 
 ### Bidirectional Matching
 
 Both directions are matched:
-- **Forward**: Selecting a Singer finds all Songs it can sing (cost ≤ Singer value)
-- **Reverse**: Selecting a Song finds all Singers that can sing it (Singer value ≥ Song cost)
+- **Forward**: Selecting a Singer finds the Songs its Singer lets it sing (printed cost < Song cost ≤ Singer value)
+- **Reverse**: Selecting a Song finds the Singers whose Singer lets them sing it (the same gate)
 
 Both directions produce identical scores for the same pair.
 
 ### Example
 
-When this example was written, selecting **Powerline - World's Greatest Rock Star** (Singer 9) found (some of these cards have since left Core):
-- **Be Our Guest** (cost 2) — score 5 (functional, 7 ink wasted)
-- **Let It Go** (cost 5) — score 5 (functional, 4 ink wasted)
+When this example was written, selecting **Powerline - World's Greatest Rock Star** (cost 6, Singer 9) found (some of these cards have since left Core):
 - **Grab Your Sword** (cost 7) — score 6 (good savings, 2 ink wasted)
 - **A Whole New World** (cost 9) — score 8 (perfect fit, 0 ink wasted)
+
+**Be Our Guest** (cost 2) and **Let It Go** (cost 5) once paired at 5 too, but Powerline's own cost of 6 already sings them, so they no longer pair.
 
 ---
 
@@ -38,7 +40,7 @@ When this example was written, selecting **Powerline - World's Greatest Rock Sta
 
 Uses `hasKeyword(card, 'Singer')` — checks if the card's `keywords` array contains an entry starting with "Singer". The numeric threshold is extracted via `getKeywordValue(card, 'Singer')`, which parses the number after the keyword (e.g., "Singer 5" → 5).
 
-**Fallback**: If `getKeywordValue` returns `null` (a Singer keyword without a number, which doesn't exist in the current card pool), the rule falls back to `card.cost` as the Singer value. This is a defensive default.
+**Fallback**: If `getKeywordValue` returns `null` (a Singer keyword without a number, which doesn't exist in the current card pool), the rule falls back to `card.cost` as the Singer value. This is a defensive default, and it pairs the card with no Song: a Singer value equal to the printed cost reaches nothing the cost doesn't.
 
 ### Conditional Singer (transformer-synthesized)
 
@@ -64,11 +66,11 @@ This catches Songs via their official classification and via text-based fallback
 
 ### Cost Gate
 
-The core constraint: `song.cost <= singerValue`. A Singer 5 can sing Songs costing 1-5 but not 6+. This is enforced in both the forward and reverse paths.
+The core constraint: `singer.cost < song.cost <= singerValue`. A Singer 5 can sing Songs costing 1-5 but not 6+, and a cost-3 Singer 5 sings the Songs costing 1-3 without its Singer, so it pairs only with Songs costing 4 or 5. `singerUnlocksSong` in `rules.ts` enforces this in both the forward and reverse paths. A conditional Singer is gated on its printed cost the same way.
 
 ### Sing Together only
 
-A singer whose text says it "can't sing songs without Sing Together" (`/\bcan't sing songs without Sing Together\b/i`, Meilin Lee - Lead Vocalist) pairs only with songs that have the Sing Together keyword, under the same cost gate. `canSingForFree` in `rules.ts` holds both checks for the forward and reverse paths.
+A singer whose text says it "can't sing songs without Sing Together" (`/\bcan't sing songs without Sing Together\b/i`, Meilin Lee - Lead Vocalist) pairs only with songs that have the Sing Together keyword, under the same cost gate. `singerUnlocksSong` in `rules.ts` holds both checks for the forward and reverse paths.
 
 ---
 
@@ -91,13 +93,13 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 ```chart
 {
   "type": "bar",
-  "title": "Score distribution (1,578 unique pairs)",
+  "title": "Score distribution (548 unique pairs)",
   "data": {
     "labels": ["5", "6", "7", "8"],
     "datasets": [
       {
         "label": "Pairs",
-        "data": [651, 349, 328, 250],
+        "data": [9, 20, 269, 250],
         "backgroundColor": ["#60b5f5", "#60b5f5", "#6ee7a0", "#6ee7a0"]
       }
     ]
@@ -112,7 +114,7 @@ Scores 9-10 are reserved for irreplaceable, game-defining synergies (like perfec
 
 ### Why Not Lower Than 5?
 
-Even a Singer 9 singing a cost-1 Song saves 1 ink and gets a free card played. That's still a real synergy — just an inefficient one. Below 5 would imply the pairing is barely worth noting, which undersells the "free card" aspect.
+Every pair is a Song the Singer could not sing for free without its Singer, so even the loosest fit (a cost-4 Singer 8 with a cost-5 Song) plays a card for free that would otherwise cost its full ink. That's still a real synergy, just an inefficient one. Below 5 would imply the pairing is barely worth noting, which undersells the "free card" aspect.
 
 ### Explanation Template
 
@@ -129,15 +131,15 @@ Even a Singer 9 singing a cost-1 Song saves 1 ink and gets a free card played. T
 <!-- coverage:start coverage -->
 - **27 Singers** (Amber 16, Ruby 11), 2 of them conditional: Mickey Mouse - Amber Champion, Miguel Rivera - Street Musician
 - **78 Songs** (Amber 20, Emerald 13, Ruby 13, Amethyst 12, Steel 11, Sapphire 9)
-- **1,578 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`), scored as the chart under Score Table shows
+- **548 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`), scored as the chart under Score Table shows
 
 ```chart
 {
   "type": "doughnut",
-  "title": "Cards by number of partners (103 cards)",
+  "title": "Cards by number of partners (102 cards)",
   "data": {
-    "labels": ["1-4 partners (6)", "5-9 partners (8)", "15+ partners (89)"],
-    "values": [6, 8, 89]
+    "labels": ["1-4 partners (23)", "5-9 partners (35)", "10-14 partners (27)", "15+ partners (17)"],
+    "values": [23, 35, 27, 17]
   }
 }
 ```
@@ -163,7 +165,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 
 | Test | What It Verifies |
 |------|-----------------|
-| Cost gate filtering | Cheap song found, expensive song excluded |
+| Cost gate filtering | A song above the printed cost found, one above the Singer value excluded |
 | Score 8 (diff=0) | Song cost equals Singer value |
 | Score 7 (diff=1) | Song cost is Singer value - 1 |
 | Score 6 (diff=2) | Song cost is Singer value - 2 |
@@ -194,6 +196,14 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 
 `packages/synergy-engine/src/__tests__/cardTransformer.test.ts` pins the synthesis (from an ability effect, from `fullText` with no abilities array, native keyword wins, grants to other characters ignored); one integration test in the Singer block of `rules.test.ts` runs Miguel's raw record through `transformCard` and finds a cost-3 song at 8.
 
+### Real-card tests (`singer-songs.test.ts`)
+
+| Test | What It Verifies |
+|------|-----------------|
+| Sing Together only | Meilin Lee - Lead Vocalist pairs with Un Poco Loco (Sing Together) and not with Heal What Has Been Hurt, from either side |
+| Song its cost already sings | 4*Town - Hottest Band of the Year (cost 4) doesn't pair with Education or Elimination (cost 4), from either side |
+| Song only Singer reaches | 4*Town pairs with Let It Go (cost 5) at 8, from either side |
+
 ## Design Decisions and Rationale
 
 ### Why Bidirectional?
@@ -206,4 +216,10 @@ The rule scores on cost-gap efficiency rather than evaluating what the Song actu
 
 ### Why Is the Minimum Score 5?
 
-Singer + Songs is a direct rule, not a playstyle rule. Every valid pair represents a concrete mechanical interaction (free play), not just thematic alignment. Even the worst-case pairing (Singer 9 + cost-1 Song) still means a free card — that's worth at least a Moderate score.
+Singer + Songs is a direct rule, not a playstyle rule. Every valid pair represents a concrete mechanical interaction (free play), not just thematic alignment. Even the worst-case pairing (a Song just above the printed cost, well under the Singer value) still means a free card only Singer unlocks, which is worth at least a Moderate score.
+
+### Why Only Songs Above the Printed Cost?
+
+A Song's own text lets any character with cost N or more sing it for free, so a Singer whose printed cost already reaches a Song gets nothing from its keyword there. Pairing those Songs credited Singer with what every character of that cost does: 4*Town - Hottest Band of the Year (cost 4, Singer 5) with Education or Elimination (cost 4) scored 7, and two voters rated it 1. The gate drops those pairs and keeps the Songs only Singer reaches.
+
+A singer whose own text rewards singing (Powerline - World's Greatest Rock Star's MASH-UP, 4*Town's STAR PERFORMANCE) gets that reward from cheaper Songs too, but the reward comes from its sing trigger, not its Singer. The rule pairs no sing trigger with Songs, on a Singer or not: Miguel Rivera - Promising Musician ("Whenever this character sings a song, gain 1 lore") has no Singer, so it has no Singer + Songs pairs.

@@ -130,7 +130,7 @@ describe('Classification tribes', () => {
       name: 'neither',
       card: beast,
       partner: hans,
-      expected: '{A} and {B} are both Princess payoffs, so they stack on your board.',
+      expected: '{A} and {B} both go in a Princess deck.',
     },
     {name: 'one', card: beast, partner: jasmine, expected: "{A}'s Princess buff powers up {B}."},
     {
