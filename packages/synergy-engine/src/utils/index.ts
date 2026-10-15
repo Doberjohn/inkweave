@@ -86,6 +86,7 @@ export {
   bounceGateAdmits,
   isBounceCard,
   strengthInChallenge,
+  cantChallenge,
   getTribalRoles,
   tribalPayoffClasses,
   isTribalCard,

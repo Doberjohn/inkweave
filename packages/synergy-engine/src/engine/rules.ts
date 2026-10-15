@@ -64,6 +64,7 @@ import {
   NAMED_EFFECT_SCORES,
   normalizeCardText,
   strengthInChallenge,
+  cantChallenge,
   type LocationRole,
   type ShiftPayment,
   type ShiftType,
@@ -790,7 +791,7 @@ const SPIKE_SUIT_FLOOR = 3;
 
 /**
  * The bonus combat damage Spike Suit hands this character: willpower − the strength it challenges
- * with, its own strength boosts included (`strengthInChallenge`).
+ * with, its Challenger bonus and own strength boosts included (`strengthInChallenge`).
  */
 function spikeSuitGap(card: LorcanaCard): number {
   return (card.willpower ?? 0) - strengthInChallenge(card);
@@ -810,9 +811,13 @@ export function isSpikeSuitAnchor(card: LorcanaCard): boolean {
   return /deal damage with their .* instead of their/i.test(normalizeCardText(card));
 }
 
-/** Payoff: a character whose willpower beats its strength by at least the floor. */
+/**
+ * Payoff: a character whose willpower beats the strength it challenges with by at least the
+ * floor. Spike Suit also works when an opponent challenges your character, but the opponent
+ * picks those fights, so a character that can't challenge is no payoff.
+ */
 function isSpikeSuitPayoff(card: LorcanaCard): boolean {
-  return isCharacter(card) && spikeSuitGap(card) >= SPIKE_SUIT_FLOOR;
+  return isCharacter(card) && !cantChallenge(card) && spikeSuitGap(card) >= SPIKE_SUIT_FLOOR;
 }
 
 /**

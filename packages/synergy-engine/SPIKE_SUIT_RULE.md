@@ -55,17 +55,24 @@ This matches Dale's Spike Suit wording (the `.*` spans the ⛉/¤ glyphs without
 
 `isSpikeSuitPayoff(card)` requires:
 1. `isCharacter(card)` — only characters deal combat damage
-2. `spikeSuitGap(card) >= 3` — willpower exceeds strength by at least the floor
+2. `!cantChallenge(card)`: the character can challenge (see [Characters that can't challenge](#characters-that-cant-challenge))
+3. `spikeSuitGap(card) >= 3` — willpower exceeds strength by at least the floor
 
 `spikeSuitGap(card)` is `(willpower ?? 0) - strengthInChallenge(card)` — exactly the bonus combat damage Spike Suit unlocks.
 
 ### Strength in a challenge
 
-`strengthInChallenge(card)` (`cardHelpers.ts`) is the strength a character challenges with: its printed strength plus each boost its own text gives it (`/\b(?:this character|he|she) gets \+(\d+) ¤/i`) that is on whenever it challenges. That covers a boost with no condition and one that holds "during your turn", "while this character has no damage" or "while there's a card under this character". A "for each" boost counts once (Jafar - Keeper of Secrets' "+1 ¤ for each card in your hand" reads as 1).
+`strengthInChallenge(card)` (`cardHelpers.ts`) is the strength a character challenges with: its printed strength, its Challenger bonus, and each boost its own text gives it (`/\b(?:this character|he|she) gets \+(\d+) ¤/i`) that is on whenever it challenges. That covers a boost with no condition and one that holds "during your turn", "while this character has no damage" or "while there's a card under this character". A "for each" boost counts once (Jafar - Keeper of Secrets' "+1 ¤ for each card in your hand" reads as 1).
 
-Left out, sentence by sentence (`/\bthis turn\b|\bat a location\b|\bhas damage\b/i`): a boost that lasts one turn after a trigger or a payment (Donald Duck - Sleepwalker, Akela - Forest Runner), or one that needs a location or damage (Shenzi - Hyena Pack Leader, The Bear - Territorial Animal). Reminder text in parentheses is skipped, so Challenger's "(While challenging, this character gets +N ¤.)" isn't a boost here.
+Challenger +N comes from the keyword: "(While challenging, this character gets +N ¤.)" is on in every challenge the character starts. Reminder text in parentheses is skipped otherwise, so that reminder isn't counted twice. A Challenger gained "this turn" (Camilo Madrigal - Prankster, Jasmine - Fearless Princess) isn't counted.
 
-So Pacha - Panicked Customer (2/6, "During your turn, this character gets +4 ¤") challenges as a 6/6 and Lawrence - Jealous Manservant (0/4, "+4 ¤" while undamaged) as a 4/4: Dale adds nothing to either, and neither is a payoff.
+Left out, sentence by sentence (`/\bthis turn\b|\bat a location\b|\bhas damage\b/i`): a boost that lasts one turn after a trigger or a payment (Donald Duck - Sleepwalker, Akela - Forest Runner), or one that needs a location or damage (Shenzi - Hyena Pack Leader, The Bear - Territorial Animal).
+
+So Pacha - Panicked Customer (2/6, "During your turn, this character gets +4 ¤") challenges as a 6/6, Lawrence - Jealous Manservant (0/4, "+4 ¤" while undamaged) as a 4/4 and Rabbit - Fed Up (1/4, Challenger +3) as a 4/4: Dale adds nothing to any of them, and none is a payoff. Challenger +2 leaves Sir Pellinore - Tougher Than He Looks (1/5) a gain of +2, below the floor.
+
+### Characters that can't challenge
+
+Spike Suit works in every challenge, including one an opponent starts against your character, but the opponent picks those fights. The rule scores the challenges your character starts, so a character that can't challenge is no payoff. `cantChallenge(card)` (`cardHelpers.ts`) reads "This character can't challenge" in the card's text, reminder text included: Percy - Pupsicle's ICE BATH, and Adventurous's reminder on Mickey Mouse - Best in Town ("This character can't challenge and must quest each turn if able"). A conditional "can't quest or challenge unless …" doesn't match.
 
 ### The gap ≥ 3 Floor
 
@@ -74,7 +81,7 @@ So Pacha - Panicked Customer (2/6, "During your turn, this character gets +4 ¤"
 <!-- coverage:start floor -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-**444 characters** have any willpower lead, **197** of them only +1. The floor keeps **119**, and **119** of those can share a deck with an anchor.
+**432 characters** have any willpower lead, **194** of them only +1. The floor keeps **113**; 2 (Percy - Pupsicle, Mickey Mouse - Best in Town) of those can't challenge, and **111** of the rest can share a deck with an anchor.
 <!-- coverage:end -->
 
 ### Ink Compatibility
@@ -112,13 +119,13 @@ The `+3` offset lifts the weakest qualifying pair (gap 3) to **6** — the botto
 ```chart
 {
   "type": "bar",
-  "title": "Score distribution (119 unique pairs)",
+  "title": "Score distribution (111 unique pairs)",
   "data": {
     "labels": ["6", "7", "8", "9", "10"],
     "datasets": [
       {
         "label": "Pairs",
-        "data": [73, 20, 19, 4, 3],
+        "data": [68, 18, 18, 4, 3],
         "backgroundColor": ["#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#fbbf24"]
       }
     ]
@@ -126,7 +133,7 @@ The `+3` offset lifts the weakest qualifying pair (gap 3) to **6** — the botto
 }
 ```
 
-Tier split: **0 Weak / 73 Moderate / 43 Strong / 3 Perfect**.
+Tier split: **0 Weak / 68 Moderate / 40 Strong / 3 Perfect**.
 <!-- coverage:end -->
 
 Only the biggest gaps and walls reach Perfect; the bulk are solid +3 and +4 bodies in Moderate and Strong.
@@ -145,19 +152,19 @@ Only the biggest gaps and walls reach Perfect; the bulk are solid +3 and +4 bodi
 
 <!-- coverage:start coverage -->
 - **1 anchor**: Dale - Ready for His Shot
-- **119 deck-compatible payoffs**; **119 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`)
-- **20** of the payoffs are strength-0 walls, the highest-impact pairings
+- **111 deck-compatible payoffs**; **111 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`)
+- **18** of the payoffs are strength-0 walls, the highest-impact pairings
 
 ```chart
 {
   "type": "bar",
-  "title": "Payoff gap distribution (119 cards)",
+  "title": "Payoff gap distribution (111 cards)",
   "data": {
     "labels": ["+3", "+4", "+5", "+6", "+7"],
     "datasets": [
       {
         "label": "Payoffs",
-        "data": [81, 20, 13, 4, 1],
+        "data": [75, 18, 13, 4, 1],
         "backgroundColor": ["#60b5f5", "#60b5f5", "#60b5f5", "#60b5f5", "#60b5f5"]
       }
     ]
@@ -168,10 +175,10 @@ Only the biggest gaps and walls reach Perfect; the bulk are solid +3 and +4 bodi
 ```chart
 {
   "type": "doughnut",
-  "title": "Payoffs by primary ink (119 cards)",
+  "title": "Payoffs by primary ink (111 cards)",
   "data": {
-    "labels": ["Amber (42)", "Sapphire (26)", "Amethyst (18)", "Steel (15)", "Emerald (13)", "Ruby (5)"],
-    "values": [42, 26, 18, 15, 13, 5]
+    "labels": ["Amber (40)", "Sapphire (26)", "Amethyst (15)", "Emerald (13)", "Steel (12)", "Ruby (5)"],
+    "values": [40, 26, 15, 13, 12, 5]
   }
 }
 ```
@@ -197,6 +204,8 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | Score curve (`it.each`) | gap 3 → 6, gap 4 → 7, gap 5 → 8, wall 0/3 → 7, wall 0/8 → 10 (capped) |
 | Token-swap | Forward `{A} lets {B}`, reverse `{B} lets {A}` — anchor stays the enabler |
 | Bidirectional flag | All matches have `bidirectional: true` |
+
+`spike-suit.test.ts` covers the strength a partner challenges with, on real card text: its own boosts (Pacha - Panicked Customer, Lawrence - Jealous Manservant, Jafar - Keeper of Secrets, The Bear - Territorial Animal), its Challenger bonus (Rabbit - Fed Up), and partners that can't challenge (Percy - Pupsicle, Mickey Mouse - Best in Town).
 
 ---
 
