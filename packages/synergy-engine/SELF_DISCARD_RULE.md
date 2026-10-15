@@ -183,7 +183,7 @@ Applies the project-wide **5-baseline convention** and mirrors the Sacrifice sha
 | mill ↔ reanimator | **7** | Strong | Mill buries targets the recursion engine then replays. Not recursion that fires only on your discard (see Feed check) |
 | enabler ↔ zone-payoff | **6** | Moderate | Complementary: each hand discard adds one card to the count the payoff reads, a nudge rather than a compounding. Only when the outlet can discard a card the payoff counts, and in time (see Feed check) |
 | reanimator ↔ reanimator | **6** | Moderate | Two recursion engines mining the same discard pile, complementary but not a single combo |
-| enabler ↔ enabler / mill ↔ state-payoff / reanimator ↔ state / state ↔ state / an outlet that cannot feed the payoff | **5** | Weak/Moderate | Same-axis density: parallel fillers, two payoffs that don't amplify each other, or an outlet whose discard can't reach the payoff (a loot or a refill next to a small-hand payoff, an end-of-turn outlet next to a check made earlier in the turn) |
+| enabler ↔ enabler / mill ↔ state-payoff / reanimator ↔ state / state ↔ state / an outlet that cannot feed the payoff | **5** | Weak/Moderate | Same-axis density: parallel fillers, two payoffs that don't amplify each other, or an outlet whose discard can't reach the payoff (a loot or a refill next to a small-hand or empty-hand payoff, an outlet that draws after its discard next to an empty-hand payoff, an end-of-turn outlet next to a check made earlier in the turn) |
 
 Only an 8 is a closed loop: the discard itself is what the payoff waits for. That is the difference between "discard Mother Gothel, replay Mother Gothel" (8) and "discard a card, and a recursion engine has one more target" (7). Most recursion pulls whatever sits in the pile, and play stocks the pile on its own: every banished character and every action or song you play ends up there. An outlet adds choice and speed to that engine, not the engine itself.
 
@@ -207,20 +207,20 @@ A generic side always meets. "Action" admits songs too, since a song is an actio
 
 **Trigger or stock:** recursion that fires on your discard is a trigger and scores 8: Mother Gothel - Evil as Ever and Look What You've Done ("during your turn, when you discard this card, you may play it from your discard") and Rapunzel & Flynn Rider - Unlikely Pair ("whenever you discard a character card, you may play that character from your discard"). The check reads the recursion sentence itself (`hasDiscardFedRecursion`), so an unrelated "when you discard" elsewhere on a card doesn't count. Every other recursion only has its bin stocked by the outlet and scores 7.
 
-**State:** a trigger for the discard event and the empty hand. Any discard is a "discarded a card this turn" event, so every outlet feeds an event payoff, unless it discards too late (see Timing). An empty-hand payoff ("while you have no cards in your hand") is not fed by an outlet that discards one card and then draws 2 or more ("discard a song card. If you do, draw 2 cards"): its hand is never empty when it resolves. That refill rule is deliberately narrow (Max Goof - Karaoke Star only); general empty-hand scoring is a separate decision.
+**State:** a trigger for the discard event and the empty hand. Any discard is a "discarded a card this turn" event, so every outlet feeds an event payoff, unless it discards too late (see Timing). An empty-hand payoff (Megavolt - Electrical Menace: "While you have no cards in your hand, this character gains Resist +2") is fed only by an outlet that takes cards from your hand and puts none back (see Small hand and empty hand). A loot hands back what it takes, and discarding your hand before drawing 2 or returning a card leaves you 1 or 2, so those score 5 with it.
 
 **Timing:** an outlet that discards only as your turn ends (Meeko - Skittish Scrounger: "At the end of your turn, if this character is exerted, choose and discard a card or banish him"; Scar - Finally King) lands after every check made while you quest, challenge or play. It feeds neither "If you discarded a card this turn" (Maximus - Relentless Stallion, Discarded Armor) nor a "cards were put into your discard this turn" check made earlier (Helga Sinclair - No Backup Needed's discount, Kida - Discovering the Unknown's quest trigger, Escape Plan), and scores 5 with them (`discardLandsInTime`, read one ability at a time). It still feeds the checks made as the turn ends (Milo Thatch - Getting His Hands Dirty, Lyle Tiberius Rourke - Adventurer for Hire, Kashekim - Wise King), pile counts, recursion and STONE BY DAY, so `selfDiscardOutletFeedsPile` gates the enabler ↔ zone-payoff row the same way.
 
 **Mill:** a milled card is put into your discard, not discarded, so a mill never switches on recursion that fires only on your discard. `selfDiscardMillFeedsRecursion` keeps Mother Gothel - Evil as Ever and Look What You've Done out of the mill ↔ reanimator 7: they score 5 with a plain mill, and 6 with Lyle Tiberius Rourke - Crystallized Commander, who reanimates too. Rapunzel & Flynn Rider - Unlikely Pair reads the same way, though no mill shares a deck with both of her inks today.
 
-**Small hand:** an unlock, and only from an outlet that leaves the hand smaller. STONE BY DAY reads how many cards you hold, not whether you discarded, so an outlet that draws first or refills afterwards hands back what it took:
+**Small hand and empty hand:** STONE BY DAY reads how many cards you hold and an empty-hand payoff whether you hold any, not whether you discarded, so an outlet that draws first or refills afterwards hands back what it took. A small hand takes an unlock (7) from an outlet that leaves the hand smaller. An empty hand takes a trigger (8) only from one that also puts no card back after its discard, in the same sentence or the next (`drawsAfterDiscard`, read one ability at a time): each discard it makes is a card closer to an empty hand.
 
-| Outlet | Shrinks the hand? | Example |
-|--------|-------------------|---------|
-| Discard, nothing drawn | yes | "choose and discard a card" (Gantu - Hamsterviel's Accomplice), "choose and discard a card or banish him" (Meeko - Skittish Scrounger) |
-| Discard your hand, then draw 2 | yes: 2 cards is a small hand | "Discard your hand. Draw 2 cards." (You Broke My Smolder) |
-| Loot (draw or return to hand first) | no | "draw a card, then choose and discard a card" (Kronk - Meat Hut Cook, Hudson - Determined Reader) |
-| Refill (discard 1, draw 2 or more) | no | "choose and discard a song card. If you do, draw 2 cards" (Max Goof - Karaoke Star) |
+| Outlet | Small hand? | Empty hand? | Example |
+|--------|-------------|-------------|---------|
+| Discard, nothing drawn | yes | yes | "choose and discard a card" (Gantu - Hamsterviel's Accomplice), "choose and discard a card or banish him" (Meeko - Skittish Scrounger) |
+| Discard your hand, then draw 2 or return a card | yes: 1 or 2 cards is a small hand | no: the hand is never empty | "Discard your hand. Draw 2 cards." (You Broke My Smolder), "discard your hand and draw 2 cards" (Syndrome's Remote), "discard your hand. If you do, return a card from your discard to your hand" (Hercules - Young Rescuer) |
+| Loot (draw or return to hand first) | no | no | "draw a card, then choose and discard a card" (Kronk - Meat Hut Cook, Hudson - Determined Reader) |
+| Refill (discard 1, draw 2 or more) | no | no | "choose and discard a song card. If you do, draw 2 cards" (Max Goof - Karaoke Star) |
 
 Coverage counts the outlets that shrink the hand. Goliath - Clan Leader has no outlet of his own (his DUSK TO DAWN makes *each player* discard, which the enabler gate keeps out), but at the end of your turn it trims your hand to 2, exactly what STONE BY DAY asks for. `selfDiscardHandTrimFeed` reads that trim as an unlock for a small-hand payoff and nothing else: it resolves after the turn's actions, and it draws a hand of 0 or 1 back up to 2, so it never feeds a "discarded this turn" or empty-hand payoff, and it is no outlet for recursion or a pile count. He scores 7 with every other STONE BY DAY card, and, being one himself, 7 with every outlet that shrinks the hand.
 
@@ -233,20 +233,20 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| enabler ↔ a payoff its discard switches on | 364 | 8 | 4.4% |
-| enabler ↔ any other reanimator | 1,660 | 7 | 19.9% |
-| enabler ↔ small-hand payoff | 228 | 7 | 2.7% |
+| enabler ↔ a payoff its discard switches on | 249 | 8 | 3.0% |
+| enabler ↔ any other reanimator | 1,661 | 7 | 19.9% |
+| enabler ↔ small-hand payoff | 229 | 7 | 2.7% |
 | mill ↔ reanimator | 308 | 7 | 3.7% |
 | mill ↔ zone-payoff | 219 | 7 | 2.6% |
 | enabler ↔ zone-payoff | 1,098 | 6 | 13.1% |
 | reanimator ↔ reanimator | 785 | 6 | 9.4% |
-| enabler ↔ enabler | 668 | 5 | 8.0% |
-| other same-axis | 3,030 | 5 | 36.2% |
+| enabler ↔ enabler | 694 | 5 | 8.3% |
+| other same-axis | 3,117 | 5 | 37.3% |
 <!-- coverage:end -->
 
 Roles overlap on multi-role cards such as Lyle Tiberius Rourke, who mills *and* reanimates, or Hudson - Determined Reader, who loots and carries STONE BY DAY. When both cards of a pair score it the same, the pair is read from its lower-id card as the searcher.
 
-The score-8 share is small on purpose. Recursion is one of the deepest payoff pools in the game, but only a few reanimators fire on the discard, and only the discard-event and empty-hand state payoffs need one (Coverage names both); every other reanimator pairs with the outlets at 7. The STONE BY DAY cards need a small hand instead, which only the outlets that shrink the hand and Goliath - Clan Leader's trim provide, so they sit at 5 with every loot, refill, mill and other payoff in their inks; the Stone by Day pass raised the 5 share for that reason. A pair can score 7 from both sides for different reasons, and then its row depends on the searcher: Hercules - Young Rescuer's discard-your-hand unlocks Hudson - Determined Reader, Goliath - Transformed Warrior and Demona - Imperious Spellcaster, whose outlets in turn stock his recursion.
+The score-8 share is small on purpose. Recursion is one of the deepest payoff pools in the game, but only a few reanimators fire on the discard, and only the discard-event and empty-hand state payoffs need one (Coverage names both), the empty-hand ones an outlet that puts no card back; every other reanimator pairs with the outlets at 7. The STONE BY DAY cards need a small hand instead, which only the outlets that shrink the hand and Goliath - Clan Leader's trim provide, so they sit at 5 with every loot, refill, mill and other payoff in their inks; the Stone by Day pass raised the 5 share for that reason. A pair can score 7 from both sides for different reasons, and then its row depends on the searcher: Hercules - Young Rescuer's discard-your-hand unlocks Hudson - Determined Reader, Goliath - Transformed Warrior and Demona - Imperious Spellcaster, whose outlets in turn stock his recursion.
 
 Note on ordering: the 7 guard runs before the 6, so a card that both mills and reanimates (Lyle Tiberius Rourke) scores 7 against another reanimator rather than 6. That is deliberate: he does not merely share the bin with it, he fills the bin for it. For the same reason the fill rows run best score first: an outlet that also counts the pile (Max Goof - Karaoke Star) against a mill that counts it too (Though I Have to Say Goodbye) reads as the mill at 7, not as the outlet at 6.
 
@@ -340,7 +340,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | fill combos → 7 / 6 | mill ↔ zone-payoff and mill ↔ reanimator 7, loot ↔ zone-payoff 6, with the filler as the actor and the token-swap when the payoff is the searcher |
 | mill ↔ state-payoff → 5 | milling is not a discard event, so it stays at the baseline |
 
-### Self-contained recursion, named cards, deck-bottom sweeps, the biggest hand and feed check (22 tests, `selfDiscard.test.ts`)
+### Self-contained recursion, named cards, deck-bottom sweeps, the biggest hand and feed check (23 tests, `selfDiscard.test.ts`)
 
 | Test | What it verifies |
 |------|------------------|
@@ -352,7 +352,8 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | the outlet that feeds is the actor | Rapunzel & Flynn Rider as the searcher with Kronk reads Kronk (`{B}`) as the actor |
 | song-only outlet → 7 | Max Goof - Karaoke Star with song (Max Goof - Rebellious Teen), action (Buzz Lightyear - Jungle Ranger) and any-card (Jiminy Cricket - Ghost of Christmas Past) recursion |
 | song-only outlet → 5 | with Circle of Life (from both searchers), Salvage Operation and Look What You've Done |
-| state payoffs | Max Goof feeds Maximus (8) but not Megavolt (5); You Broke My Smolder, Kronk and Sprout - Experiment 509 still feed Megavolt (8) |
+| discard-event payoff | Max Goof and You Broke My Smolder feed Maximus (8) |
+| empty-hand payoff | Sprout - Experiment 509 feeds Megavolt (8, from both searchers); Kronk, Max Goof, You Broke My Smolder, Hercules - Young Rescuer and Syndrome's Remote put cards back in your hand and score 5 with him |
 | a mill and discard-fed recursion | Héctor Rivera - Street Musician with Salvage Operation → 7, with Mother Gothel - Evil as Ever and Look What You've Done → 5 |
 | end-of-turn outlet | Meeko - Skittish Scrounger with Maximus - Relentless Stallion and Helga Sinclair - No Backup Needed → 5, with Milo Thatch - Getting His Hands Dirty → 6; Kronk with Maximus → 8 and with Helga → 6 |
 | an outlet for one classification | Sprout - Experiment 509 with Rapunzel & Flynn Rider - Unlikely Pair → 8; with Mother Gothel - Evil as Ever (no Alien) and Fangmeyer - Icy Officer (Detective recursion) → 5 |
@@ -413,6 +414,10 @@ An 8 is a closed loop: the discard is what the payoff waits for. STONE BY DAY is
 ### Why a loot or a refill doesn't feed STONE BY DAY
 
 STONE BY DAY counts the cards you hold, not the cards you discarded. A loot draws before it discards and a refill draws 2 after discarding 1, so the hand ends as big or bigger, and scoring one 7 with a Gargoyle would claim help it never gives. "Discard your hand. Draw 2 cards." still feeds: 2 cards is a small hand.
+
+### Why an outlet that puts cards back doesn't feed an empty hand
+
+An empty-hand payoff asks for the strictest hand of all: none. A loot never shrinks the hand, and an outlet that discards your hand and then draws 2 or returns a card leaves 1 or 2, a small hand but never an empty one. Scoring those 8 with Megavolt - Electrical Menace would claim a combo the outlet can't finish. An outlet that only discards keeps every card it takes out of your hand, so it is the one that empties it, and it keeps the 8.
 
 ### Why Goliath - Clan Leader feeds the small-hand payoff alone
 

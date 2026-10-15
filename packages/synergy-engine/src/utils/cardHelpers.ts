@@ -1159,8 +1159,7 @@ const SELF_DISCARD_SELF_OBJECT_PATTERN =
   /\bthis\s+(?:card|character|item|location|action|song)\b|\bit\b/i;
 /**
  * An outlet that discards one card and then draws 2+ ("discard a song card. If you do, draw
- * 2 cards"), so its hand is never empty when it resolves. Deliberately narrow (Max Goof -
- * Karaoke Star only today); general empty-hand scoring is a separate decision.
+ * 2 cards"), so it leaves the hand bigger than it found it (Max Goof - Karaoke Star).
  */
 const SELF_DISCARD_REFILL_PATTERN =
   /discard\s+an?\s+(?:\w+\s+){0,2}?card\.\s*if you do,\s*draw\s+[2-9]\s+cards/i;
@@ -1171,6 +1170,15 @@ const SELF_DISCARD_REFILL_PATTERN =
  */
 const SELF_DISCARD_DRAW_FIRST_PATTERN =
   /(?:\bdraws?\b|\b(?:in)?to your hand\b)[^.]*(?:\.\s+(?:then|if you do),?)?[^.]*\bdiscard\b/i;
+/**
+ * An outlet that puts cards back in your hand after its discard, in the same sentence or the
+ * next one when that draws or opens "If you do": "Discard your hand. Draw 2 cards." (You Broke
+ * My Smolder), "discard your hand and draw 2 cards" (Syndrome's Remote), "discard your hand. If
+ * you do, return a card from your discard to your hand" (Hercules - Young Rescuer). The hand
+ * ends small, never empty. Read one ability at a time, so another ability's draw never counts.
+ */
+const SELF_DISCARD_DRAW_AFTER_PATTERN =
+  /\bdiscard\s+(?:your\s+hand|(?:a|an|another|\d+)\s+(?:\w+\s+){0,3}?cards?)\b(?:[^.]*?\b(?:draws?|to your hand)\b|[^.]*\.\s+(?:draw|if you do,[^.]*?\b(?:draws?|to your hand)\b))/i;
 /**
  * Goliath - Clan Leader's DUSK TO DAWN: "At the end of each player's turn, if they have more than 2
  * cards in their hand, they choose and discard cards until they have 2" (a shorter hand draws up
@@ -1187,6 +1195,11 @@ const END_OF_YOUR_TURN_PATTERN = /\bat the end of your turn\b/i;
 function selfDiscardAbilityTexts(card: LorcanaCard): string[] {
   const sections = card.textSections?.length ? card.textSections : [card.text ?? ''];
   return sections.map((text) => normalizeCardText({...card, text}));
+}
+
+/** An ability puts cards back in your hand after its discard (see SELF_DISCARD_DRAW_AFTER_PATTERN). */
+function drawsAfterDiscard(blocks: string[]): boolean {
+  return blocks.some((block) => SELF_DISCARD_DRAW_AFTER_PATTERN.test(block));
 }
 
 /**
@@ -1304,10 +1317,10 @@ function selfDiscardKindsMeet(
 interface SelfDiscardFeedProfile {
   /** Kinds the card discards as an outlet; null when it can discard any card. */
   outletKinds: Set<SelfDiscardKindEntry> | null;
-  /** The outlet refills the hand as it discards ("discard a card. If you do, draw 2 cards"). */
-  refills: boolean;
   /** The outlet leaves a smaller hand: no draw before its discard (a loot), no refill after. */
   shrinksHand: boolean;
+  /** The outlet shrinks the hand and puts no card back in it (see drawsAfterDiscard). */
+  drainsHand: boolean;
   /** The card trims your hand to 2 at the end of your turn (Goliath - Clan Leader). */
   trimsHand: boolean;
   /** Every outlet on the card discards at the end of your turn (see discardsOnlyAtEndOfTurn). */
@@ -1340,11 +1353,12 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
   if (cached) return cached;
   const text = normalizeCardText(card);
   const blocks = selfDiscardAbilityTexts(card);
-  const refills = SELF_DISCARD_REFILL_PATTERN.test(text);
+  const shrinksHand =
+    !SELF_DISCARD_REFILL_PATTERN.test(text) && !SELF_DISCARD_DRAW_FIRST_PATTERN.test(text);
   const profile: SelfDiscardFeedProfile = {
     outletKinds: selfDiscardOutletKinds(text),
-    refills,
-    shrinksHand: !refills && !SELF_DISCARD_DRAW_FIRST_PATTERN.test(text),
+    shrinksHand,
+    drainsHand: shrinksHand && !drawsAfterDiscard(blocks),
     trimsHand: SELF_DISCARD_HAND_TRIM_PATTERN.test(text),
     discardsAtEndOfTurn: discardsOnlyAtEndOfTurn(blocks),
     recursionKinds: selfDiscardRecursionKinds(card, stripUnfedRecursion(text)),
@@ -1384,15 +1398,15 @@ function discardLandsInTime(
 
 /**
  * How an outlet's discard reaches a state payoff: any discard in time is a "discarded a card
- * this turn" event, while an empty hand needs an outlet that doesn't refill it, and a small hand
- * one that shrinks it (a loot or a refill leaves the hand as big or bigger).
+ * this turn" event, while a small hand needs an outlet that shrinks it (a loot or a refill
+ * leaves the hand as big or bigger), and an empty hand one that also puts no card back.
  */
 function selfDiscardStateFeed(
   outlet: SelfDiscardFeedProfile,
   target: SelfDiscardFeedProfile,
 ): SelfDiscardFeed | null {
   const feedsEvent = target.rewardsEvent && discardLandsInTime(outlet, target);
-  const feedsEmptyHand = target.rewardsEmptyHand && !outlet.refills;
+  const feedsEmptyHand = target.rewardsEmptyHand && outlet.drainsHand;
   if (feedsEvent || feedsEmptyHand) return 'trigger';
   return target.needsSmallHand && outlet.shrinksHand ? 'unlock' : null;
 }
@@ -1412,9 +1426,9 @@ function selfDiscardRecursionFeed(
  *    ("discard a song card") feeds song, action and any-card recursion, never character or item
  *    recursion. It is a trigger only when the recursion fires on the discard ("when you discard
  *    this card, you may play it from your discard"); otherwise the outlet just stocks the bin;
- *  - state: a trigger for the discard event or an empty hand, except that a refill outlet never
- *    leaves the empty hand a "no cards in hand" payoff needs; an unlock for a small hand, which
- *    only an outlet that shrinks the hand feeds.
+ *  - state: a trigger for the discard event, or for an empty hand when the outlet takes cards
+ *    from your hand and puts none back (no loot, no refill, no draw after the discard); an
+ *    unlock for a small hand, which only an outlet that shrinks the hand feeds.
  * A trigger wins over a stock or an unlock. Reads the payoff's text with unfed recursion
  * stripped, like getSelfDiscardRoles.
  */

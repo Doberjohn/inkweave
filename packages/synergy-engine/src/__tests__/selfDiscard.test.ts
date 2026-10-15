@@ -97,6 +97,22 @@ const youBrokeMySmolder = createCard({
   ink: 'Steel',
   text: 'Discard your hand. Draw 2 cards.',
 });
+// Outlets that discard your hand, then put cards back in it.
+const herculesYoungRescuer = createCard({
+  id: 'hercules-young-rescuer',
+  name: 'Hercules',
+  fullName: 'Hercules - Young Rescuer',
+  ink: 'Ruby',
+  text: 'HEROIC SACRIFICE When you play this character,\nyou may discard your hand. If you do, return a\ncard from your discard to your hand.',
+});
+const syndromesRemote = createCard({
+  id: 'syndromes-remote',
+  name: "Syndrome's Remote",
+  fullName: "Syndrome's Remote",
+  type: 'Item',
+  ink: 'Steel',
+  text: "ZERO-POINT ENERGY ⟳, 2 ⬡ — Chosen character\ncan't challenge during their next turn.\nLEARN FROM THEIR LOSSES Whenever a Robot\ncharacter is banished, you may banish this item to\ndiscard your hand and draw 2 cards.",
+});
 const kronk = createCard({
   id: 'kronk-meat-hut-cook',
   name: 'Kronk',
@@ -289,12 +305,19 @@ describe('Self-Discard scoring: an outlet feeds only the payoffs its discard can
     expect(score(maxKaraoke, lookWhatYouveDone)).toBe(5);
   });
 
-  it('lets any discard feed a discard-event payoff, but not a refill outlet feed an empty-hand one', () => {
+  it('lets any discard feed a discard-event payoff', () => {
     expect(score(maxKaraoke, maximus)).toBe(8);
-    expect(score(maxKaraoke, megavolt)).toBe(5);
-    expect(score(youBrokeMySmolder, megavolt)).toBe(8);
-    expect(score(kronk, megavolt)).toBe(8);
+    expect(score(youBrokeMySmolder, maximus)).toBe(8);
+  });
+
+  it('feeds an empty-hand payoff only from an outlet that puts no card back in your hand', () => {
     expect(score(sprout, megavolt)).toBe(8);
+    expect(score(megavolt, sprout)).toBe(8);
+    expect(score(kronk, megavolt)).toBe(5);
+    expect(score(maxKaraoke, megavolt)).toBe(5);
+    expect(score(youBrokeMySmolder, megavolt)).toBe(5);
+    expect(score(herculesYoungRescuer, megavolt)).toBe(5);
+    expect(score(syndromesRemote, megavolt)).toBe(5);
   });
 
   it('lets a mill stock recursion, but not recursion that fires only on your discard', () => {
