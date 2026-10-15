@@ -271,6 +271,19 @@ export function hasAnyShift(card: LorcanaCard): boolean {
   return getShiftType(card) !== null;
 }
 
+/**
+ * Duo Shift's reminder: "play this on top of two of your characters, one named Mickey Mouse and
+ * one named Minnie Mouse." It lands on both halves at once, so neither half takes it alone.
+ * Combo Shift's reminder ("one named Sulley, one named Boo, or one of each") takes either half,
+ * as a plain team Shift does.
+ */
+const DUO_SHIFT_PATTERN = /\bon top of two of your characters\b/i;
+
+/** The Shift needs both named halves in play (Mickey Mouse & Minnie Mouse - Adventuring Duo). */
+export function isDuoShift(card: LorcanaCard): boolean {
+  return DUO_SHIFT_PATTERN.test(normalizeCardText(card));
+}
+
 /** An effect that gets ink drops: "get 2 ink drops", "each player gets 1 ink drop". */
 const INK_DROP_GAIN = /\bgets?\s+(\d+)\s+ink\s+drops?\b/gi;
 

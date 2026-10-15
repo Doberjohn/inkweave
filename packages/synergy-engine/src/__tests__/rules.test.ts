@@ -38,6 +38,7 @@ import {
   isTribalCard,
   TRIBAL_SPECS,
   getNamedReferences,
+  isDuoShift,
   transformCard,
 } from '../utils';
 import {createCard} from './fixtures.js';
@@ -681,6 +682,59 @@ describe('Synergy Rules', () => {
         const {shiftCard, base} = freeShiftSetup(baseCost, {shiftText, baseText});
         const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
         expect(synergies[0].score).toBe(expected);
+      });
+    });
+
+    describe('Duo Shift scoring', () => {
+      // Duo Shift lands on two characters at once, one with each name, so a single half scores
+      // one tier below a free Shift's base.
+      const duo = createCard({
+        id: 'mickey-minnie-duo',
+        name: 'Mickey Mouse & Minnie Mouse',
+        fullName: 'Mickey Mouse & Minnie Mouse - Adventuring Duo',
+        cost: 7,
+        keywords: ['Duo Shift 0'],
+        text: 'Duo Shift 0 ⬡ (You may pay 0 ⬡ to play this on\ntop of two of your characters, one named Mickey\nMouse and one named Minnie Mouse.)\nTHINKING OF YOU If this character would be\nbanished, put them into your inkwell facedown\nand exerted instead.',
+      });
+      const mickey = (version: string, cost: number) =>
+        createCard({
+          id: 'mickey',
+          name: 'Mickey Mouse',
+          fullName: `Mickey Mouse - ${version}`,
+          cost,
+        });
+
+      it.each([
+        {label: 'cheap half (cost <= 3) → 7', version: 'Steamboat Pilot', cost: 3, expected: 7},
+        {
+          label: 'mid-cost half (cost 4-5) → 5',
+          version: 'Inquisitive Explorer',
+          cost: 4,
+          expected: 5,
+        },
+        {label: 'expensive half (cost 6+) → 3', version: 'Snowboard Ace', cost: 6, expected: 3},
+      ])('$label, from either card', ({version, cost, expected}) => {
+        const half = mickey(version, cost);
+        const pool = [duo, half];
+        expect(shiftRule.findSynergies(duo, pool)[0].score).toBe(expected);
+        expect(shiftRule.findSynergies(half, pool)[0].score).toBe(expected);
+      });
+
+      it("says the half's other half must be in play too", () => {
+        const half = mickey('Steamboat Pilot', 3);
+        expect(shiftRule.findSynergies(half, [duo, half])[0].explanation).toBe(
+          'Duo Shift: play {A} early, then shift {B} in for 0 ink once its other half is in play too.',
+        );
+      });
+
+      it('leaves a Combo Shift, which takes either half, as a plain team Shift', () => {
+        const combo = createCard({
+          name: 'Sulley & Boo',
+          keywords: ['Combo Shift 4'],
+          text: 'Combo Shift 4 ⬡ (You may pay 4 ⬡ to play this on top\nof one of your characters named Sulley, one named Boo,\nor one of each.)',
+        });
+        expect(isDuoShift(duo)).toBe(true);
+        expect(isDuoShift(combo)).toBe(false);
       });
     });
 

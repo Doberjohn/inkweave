@@ -13,6 +13,7 @@ import {
   getShiftType,
   hasClassification,
   hasKeyword,
+  isDuoShift,
   isBoostBeneficiaryLocation,
   isCharacter,
   isMoveOnlyLocationRamp,
@@ -173,14 +174,32 @@ function calculateShiftSynergy(
   return base;
 }
 
-/** Score a free Shift (cost 0) — only the base card's cost matters since the shift itself is free. */
+/** A free Shift's tiers by the base's cost: 3 or less, 4-5, and 6 or more. */
+const FREE_SHIFT_TIERS = ['free.cheapBase', 'free.midBase', 'free.expensiveBase'] as const;
+
+/**
+ * A Duo Shift's tiers, one step below the free Shift's: the base is only one of the two
+ * characters it lands on, so its other half must be in play too.
+ */
+const DUO_SHIFT_TIERS = ['duo.cheapHalf', 'duo.midHalf', 'duo.expensiveHalf'] as const;
+
+/** The base's cost band for a free Shift: 0 for cost 3 or less, 1 for 4-5, 2 for 6 or more. */
+function freeShiftBand(baseCard: LorcanaCard): 0 | 1 | 2 {
+  if (baseCard.cost <= 3) return 0;
+  if (baseCard.cost <= 5) return 1;
+  return 2;
+}
+
+/**
+ * Score a free Shift (cost 0): only the base card's cost matters since the shift itself is free.
+ * A Duo Shift (Mickey Mouse & Minnie Mouse - Adventuring Duo) scores from its own tiers.
+ */
 function freeShiftScore(
-  _shiftCard: LorcanaCard,
+  shiftCard: LorcanaCard,
   baseCard: LorcanaCard,
 ): {score: number; reason: string} {
-  if (baseCard.cost <= 3) return shiftTier('free.cheapBase');
-  if (baseCard.cost <= 5) return shiftTier('free.midBase');
-  return shiftTier('free.expensiveBase');
+  const tiers = isDuoShift(shiftCard) ? DUO_SHIFT_TIERS : FREE_SHIFT_TIERS;
+  return shiftTier(tiers[freeShiftBand(baseCard)]);
 }
 
 /**

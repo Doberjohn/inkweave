@@ -116,7 +116,7 @@ JSON but wasn't extracted), but it does not influence synergy scores.
 
 ### Rule 1: Shift Targets (Direct)
 
-Scores based on **curve gap** (shift cost - base cost), **inkwell** (fallback utility), and **condition activation** (+1 bonus). A Shift paid in **ink drops** skips the curve and scores on who supplies the drops.
+Scores based on **curve gap** (shift cost - base cost), **inkwell** (fallback utility), and **condition activation** (+1 bonus). A Shift paid in **ink drops** skips the curve and scores on who supplies the drops. A **Duo Shift**, which lands on both halves of a Team card at once, scores each half one free Shift tier lower.
 
 For the full rule documentation with examples, condition matchers, and design rationale, see [`SHIFT_TARGET_RULE.md`](SHIFT_TARGET_RULE.md).
 
@@ -143,6 +143,14 @@ For the full rule documentation with examples, condition matchers, and design ra
 | 4-5       | No        | **7**  | Strong   | Free Shift but base takes until mid-game to deploy  |
 | 6+        | Yes       | **6**  | Moderate | Free Shift + expensive base, condition helps        |
 | 6+        | No        | **5**  | Moderate | Free Shift but expensive base limits the advantage  |
+
+**Duo Shift (Duo Shift 0, needs both halves in play):**
+
+| Half's Cost | Score | Tier     | Why                                                   |
+|-------------|-------|----------|-------------------------------------------------------|
+| <= 3        | **7** | Strong   | Free, but it also waits on the other half             |
+| 4-5         | **5** | Moderate | Waits on the other half, and this one comes down late |
+| 6+          | **3** | Weak     | Waits on the other half behind an expensive one       |
 
 **Ink-drop Shift ("Shift Remove N ink drops", drop-based):**
 

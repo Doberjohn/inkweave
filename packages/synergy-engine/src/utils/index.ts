@@ -29,6 +29,7 @@ export {
   LOCATION_PATTERNS,
   getShiftType,
   hasAnyShift,
+  isDuoShift,
   getInkDropGain,
   getNamedReferences,
   classifyNamedEffect,
