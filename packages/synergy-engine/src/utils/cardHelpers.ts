@@ -931,7 +931,9 @@ export function triggersOnAnyBanish(card: LorcanaCard): boolean {
  *  - 'state-payoff' — rewards the discard EVENT ("discarded a card this turn"), an empty hand, or
  *                     a small one (STONE BY DAY: "3 or more cards in your hand" keeps it exerted).
  *  - 'zone-payoff'  — rewards the discard as a countable ZONE ("10 or more cards in your discard",
- *                     "a song card in your discard", "cards were put into your discard this turn").
+ *                     "a song card in your discard", "cards were put into your discard this turn"),
+ *                     or spends it as a cost ("you may put 2 character cards from your discard on
+ *                     the bottom of your deck to give this character Rush").
  *
  * The opponent-exclusion keeps the enabler disjoint from the Discard rule. Songs are not
  * bin-fillers here: a sung song lands in the discard, but that is the Singer rule's axis.
@@ -981,14 +983,22 @@ const DISCARD_FED_RECURSION_PATTERN = /\bwhen(?:ever)?\s+you\s+discard\b/i;
 const NAMED_CARD_RECURSION_PATTERN =
   /\b(?:play|return|put)\b(?:(?!\b(?:play|return|put)\b)[^.]){0,60}?\bnamed\b(?:(?!\b(?:play|return|put)\b)[^.]){0,40}?\bfrom your discard\b/gi;
 /**
- * A sweep that must move cards from your discard to the bottom of your deck ("put 3 cards from
- * your discard on the bottom of your deck in any order or banish her", Mamá Imelda -
- * No-Nonsense Ancestor). No card comes back to hand or play, so it is no recursion. An optional
- * one ("you may put a Toy character card from your discard on the bottom of your deck to play
- * this character for free") is a cost the card pays for something else, and stays.
+ * A sweep that moves cards from your discard to the bottom of your deck. No card comes back to
+ * hand or play, so it is no recursion, whether the card must make it ("put 3 cards from your
+ * discard on the bottom of your deck in any order or banish her", Mamá Imelda - No-Nonsense
+ * Ancestor) or may pay it as a cost (see DECK_BOTTOM_COST_PATTERN).
  */
-const MANDATORY_DECK_BOTTOM_SWEEP_PATTERN =
-  /(?<!\byou may )\bput\b[^.]{0,40}?\bfrom your discard on the bottom of your deck\b/gi;
+const DECK_BOTTOM_SWEEP_PATTERN =
+  /\bput\b[^.]{0,40}?\bfrom your discard on the bottom of your deck\b/gi;
+/**
+ * A cost paid from the pile: "You may put a Toy character card from your discard on the bottom
+ * of your deck to play this character for free" (Hand-in-the-Box - Sid's Toy), "you may put 2
+ * character cards from your discard on the bottom of your deck to give this character Rush"
+ * (Roller Bob - Sid's Toy). It needs those cards in your discard, so it reads the pile the way a
+ * count does, and the kinds it names are the kinds it takes.
+ */
+const DECK_BOTTOM_COST_PATTERN =
+  /\byou may put\b[^.]{0,40}?\bfrom your discard on the bottom of your deck\b/i;
 
 /** A sentence break: the whitespace after ".", "!" or "?". */
 const SENTENCE_BREAK = /(?<=[.!?])\s+/;
@@ -1003,12 +1013,12 @@ function stripSelfContainedRecursion(text: string): string {
 
 /**
  * The text with only the recursion an outlet or a mill can feed: self-contained recursion
- * sentences, named-card recursion clauses and mandatory deck-bottom sweeps removed.
+ * sentences, named-card recursion clauses and deck-bottom sweeps removed.
  */
 function stripUnfedRecursion(text: string): string {
   return stripSelfContainedRecursion(text)
     .replace(NAMED_CARD_RECURSION_PATTERN, '')
-    .replace(MANDATORY_DECK_BOTTOM_SWEEP_PATTERN, '');
+    .replace(DECK_BOTTOM_SWEEP_PATTERN, '');
 }
 
 /**
@@ -1061,9 +1071,25 @@ const SELF_DISCARD_MILL_PATTERN =
 /** Fast pre-filter: every pattern has "discard", "no cards in" or "cards in your hand". */
 const HAS_SELF_DISCARD_KEYWORD = /discard|no cards in|cards in your hand/i;
 
-/** Zone payoff: either the "in your discard" count/check shape or the "put into your discard this turn" trigger. */
+/**
+ * Zone payoff: the "in your discard" count/check shape, the "put into your discard this turn"
+ * trigger, or a cost paid from the pile (see paysCostFromPile).
+ */
 function isSelfDiscardZonePayoff(text: string): boolean {
-  return SELF_DISCARD_ZONE_IN_PATTERN.test(text) || SELF_DISCARD_ZONE_PUT_PATTERN.test(text);
+  return (
+    SELF_DISCARD_ZONE_IN_PATTERN.test(text) ||
+    SELF_DISCARD_ZONE_PUT_PATTERN.test(text) ||
+    paysCostFromPile(text)
+  );
+}
+
+/**
+ * A cost paid from the pile (see DECK_BOTTOM_COST_PATTERN) that is no price on recursion the
+ * card also makes: Darkwing Duck - Dashing Gadgeteer puts an item card on the bottom of your deck
+ * to play another item from your discard, and stays a reanimator.
+ */
+function paysCostFromPile(text: string): boolean {
+  return DECK_BOTTOM_COST_PATTERN.test(text) && !isSelfDiscardReanimator(text);
 }
 
 /**
@@ -1262,17 +1288,28 @@ function ownSelfDiscardKinds(card: LorcanaCard): Set<SelfDiscardKindEntry> {
   return new Set(classes.map((classification) => `character:${classification}` as const));
 }
 
-/** Every "N cards in your discard" check on a card, read for the kinds it counts. */
-const SELF_DISCARD_ZONE_IN_CHECKS = new RegExp(SELF_DISCARD_ZONE_IN_PATTERN.source, 'gi');
+/**
+ * Every "N cards in your discard" check and every cost paid from the pile on a card, read for
+ * the kinds it takes.
+ */
+const SELF_DISCARD_PILE_CHECKS = new RegExp(
+  `${SELF_DISCARD_ZONE_IN_PATTERN.source}|${DECK_BOTTOM_COST_PATTERN.source}`,
+  'gi',
+);
+
+/** The card reads the pile itself: a count or a card type in it, or a cost paid from it. */
+function readsSelfDiscardPile(text: string): boolean {
+  return SELF_DISCARD_ZONE_IN_PATTERN.test(text) || DECK_BOTTOM_COST_PATTERN.test(text);
+}
 
 /**
- * What a zone payoff counts in the pile; null when any card counts ("10 or more cards in your
- * discard", "cards were put into your discard this turn") or it reads no pile at all.
+ * What a zone payoff counts in the pile or pays from it; null when any card counts ("10 or more
+ * cards in your discard", "cards were put into your discard this turn") or it reads no pile.
  */
 function selfDiscardPileKinds(text: string): Set<SelfDiscardKindEntry> | null {
   if (SELF_DISCARD_ZONE_PUT_PATTERN.test(text)) return null;
   const kinds = new Set<SelfDiscardKindEntry>();
-  for (const [check] of text.matchAll(SELF_DISCARD_ZONE_IN_CHECKS)) {
+  for (const [check] of text.matchAll(SELF_DISCARD_PILE_CHECKS)) {
     const counted = selfDiscardKindsIn(check);
     if (counted.size === 0) return null;
     counted.forEach((kind) => kinds.add(kind));
@@ -1337,7 +1374,7 @@ interface SelfDiscardFeedProfile {
   rewardsEmptyHand: boolean;
   /** The state payoff needs a small hand to ready (STONE BY DAY). */
   needsSmallHand: boolean;
-  /** The zone payoff reads the pile itself (a count or a card type), whenever it looks. */
+  /** The zone payoff reads the pile itself (a count, a card type or a cost), whenever it looks. */
   readsPile: boolean;
   /** Kinds the zone payoff counts in the pile; null when any card counts. */
   pileKinds: Set<SelfDiscardKindEntry> | null;
@@ -1367,7 +1404,7 @@ function selfDiscardFeedProfile(card: LorcanaCard): SelfDiscardFeedProfile {
     rewardsEvent: SELF_DISCARD_EVENT_PATTERN.test(text),
     rewardsEmptyHand: SELF_DISCARD_HELLBENT_PATTERN.test(text),
     needsSmallHand: SELF_DISCARD_SMALL_HAND_PATTERN.test(text),
-    readsPile: SELF_DISCARD_ZONE_IN_PATTERN.test(text),
+    readsPile: readsSelfDiscardPile(text),
     pileKinds: selfDiscardPileKinds(text),
     checksAtEndOfTurn: checksDiscardsAtEndOfTurn(blocks),
   };

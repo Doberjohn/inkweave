@@ -94,7 +94,7 @@ Recursion that fires when **you** discard the card stays ("when you discard this
 
 **Recursion of one named card is stripped too** (`stripUnfedRecursion`): "return an action card **named Three Arrows** from your discard" (Merida - Formidable Archer), "an action card named Fire the Cannons!" (Captain Hook - Captain of the Jolly Roger), "a character card named Hen Wen" (Taran - Pig Keeper) and "another character card named Alien" (Alien - True Believer, the only card named Alien). Only that one card switches the recursion on. An outlet or a mill feeds it only when it happens to put that card into your discard, a narrow case the Self-Discard roles don't model, so pairing it with every outlet would overstate it. Named Companions pairs Merida, Captain Hook and Taran with the card each names; Alien names only another copy of itself, so no rule pairs it for this ability. Neither side of "named" may cross another play/return/put, so a named card elsewhere in the sentence ("if you have an item named Rivera Family Photo in play, you may play this item from your discard") doesn't strip the recursion next to it.
 
-**So is a sweep the card must make**: "put 3 cards from your discard on the bottom of your deck in any order or banish her" (Mamá Imelda - No-Nonsense Ancestor) and "put all Toy character cards from your discard on the bottom of your deck" (Bouncing Ducky - Sid's Toy, who keeps `zone-payoff` for his discount). No card comes back to hand or play. An optional sweep ("You may put a Toy character card from your discard on the bottom of your deck to play this character for free", Hand-in-the-Box - Sid's Toy) is a cost the card pays for something else, and stays a reanimator.
+**So is a sweep from your discard to the bottom of your deck**, whether the card must make it ("put 3 cards from your discard on the bottom of your deck in any order or banish her", Mamá Imelda - No-Nonsense Ancestor; "put all Toy character cards from your discard on the bottom of your deck", Bouncing Ducky - Sid's Toy, who keeps `zone-payoff` for his discount) or may pay it as a cost ("You may put a Toy character card from your discard on the bottom of your deck to play this character for free", Hand-in-the-Box - Sid's Toy). No card comes back to hand or play. A cost still needs those cards in your discard, so it reads the pile instead (see zone-payoff). Darkwing Duck - Dashing Gadgeteer's cost pays for real recursion ("If you do, you may play an item with cost 5 or less from your discard for free"), so he stays a reanimator.
 
 ### state-payoff (discard event / empty hand / small hand)
 
@@ -117,8 +117,9 @@ STONE BY DAY is a drawback a small hand switches off: a Gargoyle that quested or
 ### zone-payoff (the discard as a countable zone)
 
 ```regex
-in:  /\b(?:a|an|\d+\s+or\s+more|for\s+each)\s+(?:\w+\s+){0,3}?cards?\s+in\s+your\s+discard\b/i
-put: /cards?\s+were\s+put\s+into\s+your\s+discard\s+this\s+turn/i
+in:   /\b(?:a|an|\d+\s+or\s+more|for\s+each)\s+(?:\w+\s+){0,3}?cards?\s+in\s+your\s+discard\b/i
+put:  /cards?\s+were\s+put\s+into\s+your\s+discard\s+this\s+turn/i
+cost: /\byou may put\b[^.]{0,40}?\bfrom your discard on the bottom of your deck\b/i
 ```
 
 The `in your discard` wording keeps this disjoint from the reanimator's `from your discard`: a zone payoff *reads* the pile, a reanimator *empties* it. The `put` pattern covers the trigger family that counts what arrived this turn regardless of how it got there. A check for one named card is no pile check ("if you have a character card named Panic in your discard", Pain - Running with Scissors): only that card switches it on, and Named Companions pairs the two.
@@ -129,6 +130,9 @@ The `in your discard` wording keeps this disjoint from the reanimator's `from yo
 | Card-type check | "if there's **a song card in your discard**, ..." | Priya Mangal - Serious Music Lover, Miguel Rivera - Street Musician |
 | For-each scaling | "**For each** Alien character **card in your discard**, ..." | Dr. Hamsterviel - Infamous Scientist, Coldstone - Reincarnated Cyborg |
 | Put this turn | "If **2 or more cards were put into your discard this turn**, ..." | Helga Sinclair - No Backup Needed, Kida - Discovering the Unknown |
+| Pile cost | "**You may put a Toy character card from your discard on the bottom of your deck** to play this character for free." | Hand-in-the-Box - Sid's Toy, Roller Bob - Sid's Toy, Maleficent & Diablo - Evil Incarnate |
+
+A pile cost spends the pile rather than counting it, but it needs the same thing a count does: cards of the kinds it names sitting in your discard. No card comes back, so it is no recursion. A cost that pays for recursion the card also makes (Darkwing Duck - Dashing Gadgeteer) is part of that recursion's price, and the card stays a reanimator only.
 
 ### mill (deck → discard)
 
@@ -163,7 +167,7 @@ Real cards the `getSelfDiscardRoles` detector tags for each role (names from the
 | **enabler** | Kronk - Meat Hut Cook (Steel), Tod - Clever Fox (Emerald), The Horned King - Wicked Ruler (Amethyst) | Discard your own cards from hand: loot, discard-your-hand, or discard-as-cost |
 | **reanimator** | The Queen - Conceited Ruler (Amber), Lady Tremaine - Sinister Socialite (Ruby), Pluto - Clever Cluefinder (Sapphire) | Play or return a card *from your discard*: the deep recursion payoff |
 | **state-payoff** | Maximus - Relentless Stallion (Steel), Megavolt - Electrical Menace (Steel), Bronx - Ferocious Beast (Ruby) | Rewards the discard event ("discarded a card this turn") or an empty hand (Hellbent), or needs a small one to ready (STONE BY DAY) |
-| **zone-payoff** | Priya Mangal - Serious Music Lover (Amber), Dante - Strange and Endearing (Amethyst), Helga Sinclair - No Backup Needed (Emerald) | Reads the pile itself: a count, a card type sitting there, or what was put there this turn |
+| **zone-payoff** | Priya Mangal - Serious Music Lover (Amber), Dante - Strange and Endearing (Amethyst), Helga Sinclair - No Backup Needed (Emerald) | Reads the pile itself: a count, a card type sitting there, what was put there this turn, or a cost paid from it |
 | **mill** | Quackerjack - Loony Toymaker (Sapphire), Preston Whitmore - Expedition Financier (Ruby), Remote Inklands - Desert Ruins (Ruby) | Puts cards from the top of your deck into your discard |
 
 ---
@@ -203,7 +207,7 @@ The enabler ↔ payoff combo needs more than an outlet and a payoff in the same 
 
 A generic side always meets. "Action" admits songs too, since a song is an action (Comprehensive Rules §5.4.4.1), while "song" admits only songs. So Max Goof - Karaoke Star feeds song, action and any-card recursion (7 each, since none of it fires on the discard), and scores 5 with character, item and location recursion. A classification narrows the character kind, and two named classifications meet only when they are the same: Sprout - Experiment 509 feeds Rapunzel & Flynn Rider - Unlikely Pair, who replays whatever character you discard (8), but neither Mother Gothel - Evil as Ever, who isn't an Alien, nor Detective recursion (Fangmeyer - Icy Officer).
 
-**Pile counts:** the enabler ↔ zone-payoff 6 needs the same meeting (`selfDiscardOutletFeedsPile`): the outlet has to be able to discard a card the payoff counts. A generic outlet adds to every count, and "10 or more cards in your discard" or "cards were put into your discard this turn" counts any card, while Sprout adds to "for each Alien character card in your discard" (Dr. Hamsterviel - Infamous Scientist) but not to a Gargoyle, item, action or song count, and Max Goof - Karaoke Star's songs add to song and action counts only.
+**Pile counts:** the enabler ↔ zone-payoff 6 needs the same meeting (`selfDiscardOutletFeedsPile`): the outlet has to be able to discard a card the payoff counts. A generic outlet adds to every count, and "10 or more cards in your discard" or "cards were put into your discard this turn" counts any card, while Sprout adds to "for each Alien character card in your discard" (Dr. Hamsterviel - Infamous Scientist) but not to a Gargoyle, item, action or song count, and Max Goof - Karaoke Star's songs add to song and action counts only. A pile cost takes the kinds it names the same way: Kronk - Meat Hut Cook stocks Hand-in-the-Box - Sid's Toy's Toy character cost (6), and Sprout's Alien characters never do (5).
 
 **Trigger or stock:** recursion that fires on your discard is a trigger and scores 8: Mother Gothel - Evil as Ever and Look What You've Done ("during your turn, when you discard this card, you may play it from your discard") and Rapunzel & Flynn Rider - Unlikely Pair ("whenever you discard a character card, you may play that character from your discard"). The check reads the recursion sentence itself (`hasDiscardFedRecursion`), so an unrelated "when you discard" elsewhere on a card doesn't count. Every other recursion only has its bin stocked by the outlet and scores 7.
 
@@ -229,19 +233,19 @@ Coverage counts the outlets that shrink the hand. Goliath - Clan Leader has no o
 <!-- coverage:start distribution -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-**131 tagged cards** (43 enabler, 44 reanimator, 20 state-payoff, 28 zone-payoff, 8 mill; roles overlap on multi-role cards). **8,360 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+**131 tagged cards** (43 enabler, 40 reanimator, 20 state-payoff, 31 zone-payoff, 8 mill; roles overlap on multi-role cards). **8,360 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
 | enabler ↔ a payoff its discard switches on | 249 | 8 | 3.0% |
-| enabler ↔ any other reanimator | 1,661 | 7 | 19.9% |
+| enabler ↔ any other reanimator | 1,512 | 7 | 18.1% |
 | enabler ↔ small-hand payoff | 229 | 7 | 2.7% |
-| mill ↔ reanimator | 308 | 7 | 3.7% |
-| mill ↔ zone-payoff | 219 | 7 | 2.6% |
-| enabler ↔ zone-payoff | 1,098 | 6 | 13.1% |
-| reanimator ↔ reanimator | 785 | 6 | 9.4% |
+| mill ↔ reanimator | 292 | 7 | 3.5% |
+| mill ↔ zone-payoff | 235 | 7 | 2.8% |
+| enabler ↔ zone-payoff | 1,247 | 6 | 14.9% |
+| reanimator ↔ reanimator | 668 | 6 | 8.0% |
 | enabler ↔ enabler | 694 | 5 | 8.3% |
-| other same-axis | 3,117 | 5 | 37.3% |
+| other same-axis | 3,234 | 5 | 38.7% |
 <!-- coverage:end -->
 
 Roles overlap on multi-role cards such as Lyle Tiberius Rourke, who mills *and* reanimates, or Hudson - Determined Reader, who loots and carries STONE BY DAY. When both cards of a pair score it the same, the pair is read from its lower-id card as the searcher.
@@ -283,9 +287,9 @@ Same-axis pairs name both cards:
 | Role | Cards | Cards per ink |
 |----|-----|-------------|
 | enabler (loot / discard-hand / discard-cost) | 43 | Steel 23, Emerald 14, Amethyst 5, Ruby 2 |
-| reanimator ("from your discard", minus self-contained, named-card and forced deck-bottom clauses) | 44 | Amber 18, Sapphire 9, Emerald 7, Ruby 6, Steel 5, Amethyst 1 |
+| reanimator ("from your discard", minus self-contained, named-card and deck-bottom clauses) | 40 | Amber 18, Sapphire 9, Emerald 6, Ruby 4, Steel 4 |
 | state-payoff (discarded this turn / Hellbent / STONE BY DAY) | 20 | Steel 10, Amethyst 6, Ruby 4 |
-| zone-payoff (count / card-type / put-this-turn) | 28 | Ruby 11, Emerald 6, Amethyst 5, Sapphire 3, Amber 2, Steel 1 |
+| zone-payoff (count / card-type / put-this-turn / pile cost) | 31 | Ruby 13, Amethyst 6, Emerald 6, Sapphire 3, Amber 2, Steel 2 |
 | mill (deck-side filler) | 8 | Ruby 7, Sapphire 1 |
 
 | Read from the pairs | Cards |
@@ -300,8 +304,8 @@ Same-axis pairs name both cards:
   "type": "doughnut",
   "title": "Role composition (131 cards; multi-role overlap)",
   "data": {
-    "labels": ["Enabler (43)", "Reanimator (44)", "State-payoff (20)", "Zone-payoff (28)", "Mill (8)"],
-    "values": [43, 44, 20, 28, 8]
+    "labels": ["Enabler (43)", "Reanimator (40)", "State-payoff (20)", "Zone-payoff (31)", "Mill (8)"],
+    "values": [43, 40, 20, 31, 8]
   }
 }
 ```
@@ -340,7 +344,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | fill combos → 7 / 6 | mill ↔ zone-payoff and mill ↔ reanimator 7, loot ↔ zone-payoff 6, with the filler as the actor and the token-swap when the payoff is the searcher |
 | mill ↔ state-payoff → 5 | milling is not a discard event, so it stays at the baseline |
 
-### Self-contained recursion, named cards, deck-bottom sweeps, the biggest hand and feed check (23 tests, `selfDiscard.test.ts`)
+### Self-contained recursion, named cards, deck-bottom sweeps, the biggest hand and feed check (26 tests, `selfDiscard.test.ts`)
 
 | Test | What it verifies |
 |------|------------------|
@@ -364,7 +368,10 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | named-card pile check | Pain - Running with Scissors has no roles |
 | a named card in another sentence | Get to Safety! stays `['reanimator']` |
 | a sweep the card must make | Mamá Imelda - No-Nonsense Ancestor has no roles; Bouncing Ducky - Sid's Toy keeps only `['zone-payoff']` |
-| an optional sweep | Hand-in-the-Box - Sid's Toy stays `['reanimator']` |
+| a sweep the card may pay | Hand-in-the-Box - Sid's Toy reads `['zone-payoff']` |
+| recursion a sweep pays for | Darkwing Duck - Dashing Gadgeteer stays `['reanimator']` |
+| a cost paid from the pile | Kronk with Hand-in-the-Box → 6 from both searchers, Sprout - Experiment 509 (no Toy) → 5 |
+| the cost's other sides | Héctor Rivera - Street Musician (a mill) with Hand-in-the-Box → 7, Salvage Operation (recursion) → 5 |
 | a discard aimed at the biggest hand | Search for Clues has no roles, and the Discard rule keeps it `['standard']` |
 
 ### STONE BY DAY (9 tests, `stoneByDay.test.ts`)
@@ -418,6 +425,10 @@ STONE BY DAY counts the cards you hold, not the cards you discarded. A loot draw
 ### Why an outlet that puts cards back doesn't feed an empty hand
 
 An empty-hand payoff asks for the strictest hand of all: none. A loot never shrinks the hand, and an outlet that discards your hand and then draws 2 or returns a card leaves 1 or 2, a small hand but never an empty one. Scoring those 8 with Megavolt - Electrical Menace would claim a combo the outlet can't finish. An outlet that only discards keeps every card it takes out of your hand, so it is the one that empties it, and it keeps the 8.
+
+### Why a cost paid from the pile is a zone payoff
+
+Hand-in-the-Box - Sid's Toy, Roller Bob - Sid's Toy, Maleficent & Diablo - Evil Incarnate and Stegmutt - Clumsy Dinosaur pay for a free play, Rush, a free shift or 3 damage by putting cards from your discard on the bottom of your deck. Reading that as recursion paired them with every outlet at 7 under "can replay them from the discard", though nothing comes back. What the cost does want is a stocked pile, which is what a pile count wants too, so it scores like one: 6 with an outlet that can discard the kinds it takes, 7 with a mill.
 
 ### Why Goliath - Clan Leader feeds the small-hand payoff alone
 

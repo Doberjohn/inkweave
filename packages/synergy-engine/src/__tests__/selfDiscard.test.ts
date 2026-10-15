@@ -395,9 +395,20 @@ const bouncingDucky = createCard({
   fullName: "Bouncing Ducky - Sid's Toy",
   text: 'REJECTED TOYS For each Toy character card in your discard, you pay 1 ⬡ less to play this character.\nREPURPOSED When you play this character, put all Toy character cards from your discard on the bottom of your deck in any order.',
 });
+// A sweep the card may pay as a cost: it needs those cards in your discard, the way a count does.
 const handInTheBox = createCard({
+  id: 'hand-in-the-box-sids-toy',
+  name: 'Hand-in-the-Box',
   fullName: "Hand-in-the-Box - Sid's Toy",
-  text: 'SPRING-LOADED You may put a Toy character card from your discard on the bottom of your deck to play this character for free.',
+  ink: 'Ruby',
+  text: 'SPRING-LOADED You may put a Toy character\ncard from your discard on the bottom of your\ndeck to play this character for free.',
+});
+const darkwingGadgeteer = createCard({
+  id: 'darkwing-duck-dashing-gadgeteer',
+  name: 'Darkwing Duck',
+  fullName: 'Darkwing Duck - Dashing Gadgeteer',
+  ink: 'Sapphire',
+  text: 'MODERN MARVEL Whenever this character quests,\nyou may put an item card from your discard on the\nbottom of your deck. If you do, you may play an item\nwith cost 5 or less from your discard for free.',
 });
 
 describe('Self-Discard roles: a sweep from the discard to the bottom of the deck', () => {
@@ -406,8 +417,30 @@ describe('Self-Discard roles: a sweep from the discard to the bottom of the deck
     expect(getSelfDiscardRoles(bouncingDucky)).toEqual(['zone-payoff']);
   });
 
-  it('keeps an optional sweep the card pays as a cost', () => {
-    expect(getSelfDiscardRoles(handInTheBox)).toEqual(['reanimator']);
+  it('reads a sweep the card may pay as a cost as a pile check', () => {
+    expect(getSelfDiscardRoles(handInTheBox)).toEqual(['zone-payoff']);
+  });
+
+  it('keeps the recursion a sweep pays for', () => {
+    expect(getSelfDiscardRoles(darkwingGadgeteer)).toEqual(['reanimator']);
+  });
+});
+
+describe('Self-Discard scoring: a cost paid from the pile', () => {
+  const rule = getRuleById('self-discard')!;
+  /** The pair's score with `card` as the searcher. */
+  const score = (card: LorcanaCard, partner: LorcanaCard) =>
+    rule.findSynergies(card, [card, partner]).find((s) => s.card.id === partner.id)?.score;
+
+  it('scores 6 with an outlet that can discard what the cost takes, 5 with one that cannot', () => {
+    expect(score(kronk, handInTheBox)).toBe(6);
+    expect(score(handInTheBox, kronk)).toBe(6);
+    expect(score(sprout, handInTheBox)).toBe(5);
+  });
+
+  it('scores 7 with a mill and 5 with recursion, as a pile count does', () => {
+    expect(score(hectorStreetMusician, handInTheBox)).toBe(7);
+    expect(score(salvageOperation, handInTheBox)).toBe(5);
   });
 });
 
