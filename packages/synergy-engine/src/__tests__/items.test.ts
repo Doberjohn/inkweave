@@ -113,3 +113,37 @@ describe('Items: a payoff that only readies an item', () => {
     }
   });
 });
+
+// Two payoffs that reward playing items, neither of them an item.
+const norton = createCard({
+  id: 'norton-nimnul-misanthropic-genius',
+  name: 'Norton Nimnul',
+  fullName: 'Norton Nimnul - Misanthropic Genius',
+  ink: 'Sapphire',
+  cost: 3,
+  classifications: ['Storyborn', 'Villain', 'Inventor'],
+  text: 'DEVITALIZER RAY Once during your turn,\nwhenever you play an item, chosen opposing\ncharacter gets -2 ¤ this turn.',
+});
+const alpha = createCard({
+  id: 'alpha-pack-leader',
+  name: 'Alpha',
+  fullName: 'Alpha - Pack Leader',
+  ink: 'Sapphire',
+  cost: 2,
+  classifications: ['Storyborn', 'Ally'],
+  text: 'WHO WANTS A TREAT? Whenever you play an item,\nchosen character gets +1 ¤ and gains Resist +1 this\nturn. (Damage dealt to them is reduced by 1.)',
+});
+
+describe('Items: two payoffs, neither of them an item', () => {
+  it('scores them at the same-deck 5, from either side', () => {
+    for (const [card, partner] of [
+      [norton, alpha],
+      [alpha, norton],
+    ]) {
+      expect(itemsPair(card, partner)).toMatchObject({
+        score: 5,
+        explanation: '{A} and {B} both go in an item deck.',
+      });
+    }
+  });
+});

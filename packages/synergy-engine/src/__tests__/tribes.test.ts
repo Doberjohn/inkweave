@@ -73,10 +73,66 @@ describe('Tribes: a payoff that names one rank', () => {
     expect(royaltyPair(beast, hans)).toBeUndefined();
   });
 
-  it('reads two payoffs that neither switches on as stacking', () => {
+  it('scores two payoffs that neither switches on at the same-deck 5', () => {
     expect(royaltyPair(agnarr, hans)).toMatchObject({
-      score: 7,
-      explanation: '{A} and {B} are both Royalty payoffs, so they stack on your board.',
+      score: 5,
+      explanation: '{A} and {B} both go in a Royalty deck.',
     });
+  });
+});
+
+const heroRule = getRuleById('hero')!;
+/** The Heroes pair `card` finds with `partner`, or undefined when they do not pair. */
+const heroPair = (card: LorcanaCard, partner: LorcanaCard) =>
+  heroRule.findSynergies(card, [card, partner]).find((s) => s.card.id === partner.id);
+
+// Two Hero payoffs that aren't Heroes, and a Hero whose buff counts only other Heroes.
+const littleJohn = createCard({
+  id: 'little-john-sir-reginald',
+  name: 'Little John',
+  fullName: 'Little John - Sir Reginald',
+  ink: 'Steel',
+  cost: 2,
+  classifications: ['Storyborn', 'Ally'],
+  text: 'WHAT A BEAUTIFUL BRAWL! When you play this\ncharacter, choose one:\n• Chosen Hero character gains Resist +2 this turn.\n(Damage dealt to them is reduced by 2.)\n• Deal 2 damage to chosen Villain character.',
+});
+const oneLastHope = createCard({
+  id: 'one-last-hope',
+  name: 'One Last Hope',
+  fullName: 'One Last Hope',
+  type: 'Action',
+  ink: 'Steel',
+  cost: 3,
+  text: '(A character with cost 3 or more can ⟳ to sing this\nsong for free.)\nChosen character gains Resist +2 until the start of your\nnext turn. If a Hero character is chosen, they can also\nchallenge ready characters this turn. (Damage dealt to\nthem is reduced by 2.)',
+});
+const princePhillip = createCard({
+  id: 'prince-phillip-warden-of-the-woods',
+  name: 'Prince Phillip',
+  fullName: 'Prince Phillip - Warden of the Woods',
+  ink: 'Emerald',
+  cost: 4,
+  classifications: ['Dreamborn', 'Hero', 'Prince'],
+  text: "SHINING BEACON Your other Hero characters\ngain Ward. (Opponents can't choose them except\nto challenge.)",
+});
+
+describe('Tribes: two payoffs score what each gives the other', () => {
+  it('scores two that help neither at the same-deck 5, from either side', () => {
+    for (const [card, partner] of [
+      [littleJohn, oneLastHope],
+      [oneLastHope, littleJohn],
+    ]) {
+      expect(heroPair(card, partner)).toMatchObject({
+        score: 5,
+        explanation: '{A} and {B} both go in a Hero deck.',
+      });
+    }
+  });
+
+  it("scores one that helps the other at its own member pair's 6", () => {
+    expect(heroPair(littleJohn, princePhillip)).toMatchObject({
+      score: 6,
+      explanation: "{A}'s Hero buff powers up {B}.",
+    });
+    expect(heroPair(princePhillip, littleJohn)?.score).toBe(6);
   });
 });

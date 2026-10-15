@@ -82,7 +82,7 @@ The rule uses the project-wide **5-baseline scoring convention**: 5 = neutral de
 | Pair shape | Score | Explanation (from the first card's page) |
 |------------|-------|-------------|
 | **recruit ↔ member** *or* **recruit ↔ density** | **8** | `{A} can play {B} for free.` Beside a density payoff that is not a Dwarf: `{A} can play a Seven Dwarfs character for free, which helps activate {B}.` |
-| **density ↔ density** | **7** | Split by which of the two Dwarfs the other's ability counts: neither, `{A} and {B} are both Seven Dwarfs payoffs, so they stack on your board.`; one, the density ↔ member line; each, `{A} and {B} are both Seven Dwarfs characters, and each one's ability helps the other.` |
+| **density ↔ density** | **7** | What each card's ability counts of the other (`scorePayoffPair`, shared with Floodborns, Items and the classification tribes): each, `{A} and {B} are both Seven Dwarfs characters, and each one's ability helps the other.`; one, the density ↔ member line. Two that count neither would sit at the same-deck 5, since two payoffs on one board don't multiply each other; no such pair exists today. |
 | **density ↔ member** | **7** | `{B} activates {A}'s Seven Dwarfs ability.` |
 | **return ↔ member** | **7** | `{A} returns {B} to your hand and draws a card, so you can replay it.` |
 | **Otherwise** (member ↔ member, etc.) | **5** | `{A} and {B} both go in a Seven Dwarfs deck.` |

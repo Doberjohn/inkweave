@@ -78,10 +78,6 @@ export const tokenPair = (firstIsCard: boolean): [ChipToken, ChipToken] =>
 /** The same-deck line: no ability of either card counts the other. */
 const sameDeckLine = (deck: string): string => `{A} and {B} both go in ${deck} deck.`;
 
-/** Two payoffs whose abilities both reward the board but count neither card. */
-const stackLine = (kind: string): string =>
-  `{A} and {B} are both ${kind} payoffs, so they stack on your board.`;
-
 /** Two members of the playstyle whose abilities each count the other. */
 const mutualLine = (kind: string): string =>
   `{A} and {B} are both ${kind} characters, and each one's ability helps the other.`;
@@ -105,30 +101,39 @@ function revealLine(
   return `${search} can reveal ${kind} characters for ${payoff}.`;
 }
 
-/** How a payoff-payoff pair reads, by whose ability helps whom (see splitStackedPayoffs). */
-interface StackedPayoffLines {
-  /** Neither card's ability counts the other. */
-  stack: string;
-  /** Each card's ability counts the other. */
-  mutual: string;
-  /** Only one does: the playstyle's member line, with that card as the payoff. */
-  oneWay: (helperIsCard: boolean) => string;
+/** A pair's score and the line that explains it. */
+interface PairScore {
+  score: number;
+  explanation: string;
 }
 
+/** The lines a payoff pair reads when no single card's gift explains it (scorePayoffPair). */
+interface PayoffPairLines {
+  /** Each card's ability helps the other. */
+  mutual: string;
+  /** Neither card's ability helps the other: the rule's same-deck line. */
+  deck: string;
+}
+
+/** A gift helps only above 5: a Floodborn buff of a keyword the member prints gives 5. */
+const helps = (gift: PairScore | null): gift is PairScore => gift !== null && gift.score > 5;
+
 /**
- * Two payoffs of one playstyle split by how many of the two cards the other card's ability helps:
- * none keeps the stack line, one takes the member line, both read as each helping the other. The
- * split changes only the words; the pair keeps its score.
+ * Score two payoffs of one playstyle by what each card's ability gives the other. A card's gift is
+ * the pair it would score with the other card as its member, or null when its ability counts
+ * nothing the other card is. Each helping the other compounds (7), one helping scores its own
+ * gift, and neither is the 5 baseline: two payoffs on one axis don't multiply each other, the call
+ * SCORING_DESIGN.md made for Discard's payoff pairs.
  */
-function splitStackedPayoffs(
-  cardHelpsOther: boolean,
-  otherHelpsCard: boolean,
-  lines: StackedPayoffLines,
-): string {
-  if (cardHelpsOther && otherHelpsCard) return lines.mutual;
-  if (cardHelpsOther) return lines.oneWay(true);
-  if (otherHelpsCard) return lines.oneWay(false);
-  return lines.stack;
+function scorePayoffPair(
+  cardGift: PairScore | null,
+  otherGift: PairScore | null,
+  lines: PayoffPairLines,
+): PairScore {
+  if (helps(cardGift) && helps(otherGift)) return {score: 7, explanation: lines.mutual};
+  if (helps(cardGift)) return cardGift;
+  if (helps(otherGift)) return otherGift;
+  return {score: 5, explanation: lines.deck};
 }
 
 /**
@@ -928,22 +933,25 @@ function toyActivateLine(payoffIsCard: boolean): string {
   return `${member} can activate ${payoff}'s Toy ability.`;
 }
 
+/** The Member ↔ Tribal pair a Toy payoff gives a partner its ability counts, or null. */
+const toyGift = (counts: boolean, payoffIsCard: boolean): ToyPairResult | null =>
+  counts ? {score: 7, explanation: toyActivateLine(payoffIsCard)} : null;
+
+const TOY_PAYOFF_LINES: PayoffPairLines = {mutual: mutualLine('Toy'), deck: TOY_DECK_LINE};
+
 /**
  * 7 — Tribal ↔ Tribal (multiple density rewards compound), when either card's ability counts
- * the other. The score follows what each card's text counts, not the payoff tag: Rex - Protective
- * Dinosaur's banish trigger counts no other Toy, so two such payoffs sit at the 5 baseline.
+ * the other (scorePayoffPair). The score follows what each card's text counts, not the payoff
+ * tag: Rex - Protective Dinosaur's banish trigger counts no other Toy, so two such payoffs sit at
+ * the 5 baseline.
  */
 function tryToyTribalCompound(ctx: ToyPairCtx): ToyPairResult | null {
   if (!(ctx.aTribal && ctx.bTribal)) return null;
-  const cardCountsOther = ctx.bMember && toyAbilityCounts(ctx.card, ctx.other);
-  const otherCountsCard = ctx.aMember && toyAbilityCounts(ctx.other, ctx.card);
-  if (!cardCountsOther && !otherCountsCard) return TOY_DECK_PAIR;
-  const explanation = splitStackedPayoffs(cardCountsOther, otherCountsCard, {
-    stack: TOY_DECK_LINE,
-    mutual: mutualLine('Toy'),
-    oneWay: toyActivateLine,
-  });
-  return {score: 7, explanation};
+  return scorePayoffPair(
+    toyGift(ctx.bMember && toyAbilityCounts(ctx.card, ctx.other), true),
+    toyGift(ctx.aMember && toyAbilityCounts(ctx.other, ctx.card), false),
+    TOY_PAYOFF_LINES,
+  );
 }
 
 /**
@@ -1034,14 +1042,16 @@ function dwarfsRecruitLine(cardRoles: DwarfsRole[], otherRoles: DwarfsRole[]): s
   return `${recruit} can play a Seven Dwarfs character for free, which helps activate ${payoff}.`;
 }
 
-/** Two density payoffs, split by which of the two Dwarfs the other's ability counts. */
-function dwarfsStackedLine(cardRoles: DwarfsRole[], otherRoles: DwarfsRole[]): string {
-  return splitStackedPayoffs(otherRoles.includes('member'), cardRoles.includes('member'), {
-    stack: stackLine('Seven Dwarfs'),
-    mutual: mutualLine('Seven Dwarfs'),
-    oneWay: dwarfsActivateLine,
-  });
-}
+/** The density ↔ member pair a density payoff gives a partner that is a Dwarf, or null. */
+const dwarfsGift = (partnerRoles: DwarfsRole[], payoffIsCard: boolean): DwarfsPairResult | null =>
+  partnerRoles.includes('member')
+    ? {score: 7, explanation: dwarfsActivateLine(payoffIsCard)}
+    : null;
+
+const DWARFS_PAYOFF_LINES: PayoffPairLines = {
+  mutual: mutualLine('Seven Dwarfs'),
+  deck: sameDeckLine('a Seven Dwarfs'),
+};
 
 /** The return line: the bounce re-buys the member's enter-play ability and draws a card. */
 function dwarfsReturnLine(cardRoles: DwarfsRole[], otherRoles: DwarfsRole[]): string {
@@ -1056,7 +1066,8 @@ function dwarfsReturnLine(cardRoles: DwarfsRole[], otherRoles: DwarfsRole[]): st
  *
  * Agreed matrix (highest precedence first):
  *   - recruit ↔ member | recruit ↔ density = 8 (free recruit cheats a Dwarf onto the board)
- *   - density ↔ density | density ↔ member | return ↔ member = 7 (compounding / member feeds payoff)
+ *   - density ↔ density                    = 7 when either counts the other, else 5
+ *   - density ↔ member | return ↔ member   = 7 (member feeds payoff / bounce re-buys its ETB)
  *   - everything else (member ↔ member, etc.)               = 5 (same-deck density baseline)
  *
  * Multi-role cards matter here: Right Behind You is BOTH recruit and density, so the
@@ -1068,9 +1079,13 @@ function dwarfsReturnLine(cardRoles: DwarfsRole[], otherRoles: DwarfsRole[]): st
  */
 function scoreDwarfsLowerTiers(ctx: DwarfsPairCtx): DwarfsPairResult {
   const {cardRoles, otherRoles} = ctx;
-  // 7 — compounding density payoffs, or a member feeding a payoff.
+  // Two density payoffs score what each counts of the other; a member feeding a payoff is 7.
   if (ctx.cross('density', 'density')) {
-    return {score: 7, explanation: dwarfsStackedLine(cardRoles, otherRoles)};
+    return scorePayoffPair(
+      dwarfsGift(otherRoles, true),
+      dwarfsGift(cardRoles, false),
+      DWARFS_PAYOFF_LINES,
+    );
   }
   if (ctx.cross('density', 'member')) {
     return {score: 7, explanation: dwarfsActivateLine(cardRoles.includes('density'))};
@@ -1119,14 +1134,6 @@ function floodbornBuffLine(payoffIsCard: boolean): string {
 }
 
 /**
- * Score a Floodborns pair. Called only when at least one side is a payoff
- * (the rule's findSynergies skips member-member pairs).
- *   - payoff <-> payoff           = 7 (two payoffs stack on the same Floodborn board)
- *   - member <-> trigger payoff   = 7 (the body fires the repeating trigger)
- *   - member <-> buff payoff      = 6 (the body is pumped by the team buff)
- *   - member <-> buff it prints   = 5 (the buff's keyword is already on the body)
- */
-/**
  * Score a member ↔ single-payoff Floodborn pair (exactly one side is a payoff): 7 when the
  * payoff is a repeating trigger the body fires, 6 when it is a team buff pumping the body, and
  * the same-deck 5 when that buff only grants a keyword the body already prints.
@@ -1143,20 +1150,37 @@ function scoreFloodbornMemberPayoff(
   return {score: 6, explanation: floodbornBuffLine(payoffIsCard)};
 }
 
-/** Two payoffs, split by which of the two Floodborns the other's ability helps. */
-function floodbornStackedLine(cardRoles: FloodbornRole[], otherRoles: FloodbornRole[]): string {
-  return splitStackedPayoffs(otherRoles.includes('member'), cardRoles.includes('member'), {
-    stack: stackLine('Floodborn'),
-    mutual: mutualLine('Floodborn'),
-    oneWay: (helperIsCard) => {
-      const helperRoles = helperIsCard ? cardRoles : otherRoles;
-      return helperRoles.includes('buff')
-        ? floodbornBuffLine(helperIsCard)
-        : floodbornTriggerLine(helperIsCard);
-    },
-  });
+/** One side of a Floodborns pair. */
+interface FloodbornSide {
+  card: LorcanaCard;
+  roles: FloodbornRole[];
 }
 
+/** The member pair `payoff`'s ability gives `member`, or null when `member` is no Floodborn. */
+function floodbornGift(
+  payoff: FloodbornSide,
+  member: FloodbornSide,
+  payoffIsCard: boolean,
+): PairScore | null {
+  if (!member.roles.includes('member')) return null;
+  const buffAlreadyPrinted = floodbornBuffAlreadyPrinted(payoff.card, member.card);
+  return scoreFloodbornMemberPayoff(payoffIsCard, payoff.roles, buffAlreadyPrinted);
+}
+
+const FLOODBORN_PAYOFF_LINES: PayoffPairLines = {
+  mutual: mutualLine('Floodborn'),
+  deck: sameDeckLine('a Floodborns'),
+};
+
+/**
+ * Score a Floodborns pair. Called only when at least one side is a payoff
+ * (the rule's findSynergies skips member-member pairs).
+ *   - payoff <-> payoff           = what each gives the other (scorePayoffPair): 7 when each
+ *                                   helps the other, one's own member pair when one does, else 5
+ *   - member <-> trigger payoff   = 7 (the body fires the repeating trigger)
+ *   - member <-> buff payoff      = 6 (the body is pumped by the team buff)
+ *   - member <-> buff it prints   = 5 (the buff's keyword is already on the body)
+ */
 export function scoreFloodbornPair(
   cardRoles: FloodbornRole[],
   otherRoles: FloodbornRole[],
@@ -1167,7 +1191,13 @@ export function scoreFloodbornPair(
   const otherPayoff = isFloodbornPayoff(otherRoles);
 
   if (cardPayoff && otherPayoff) {
-    return {score: 7, explanation: floodbornStackedLine(cardRoles, otherRoles)};
+    const cardSide = {card, roles: cardRoles};
+    const otherSide = {card: other, roles: otherRoles};
+    return scorePayoffPair(
+      floodbornGift(cardSide, otherSide, true),
+      floodbornGift(otherSide, cardSide, false),
+      FLOODBORN_PAYOFF_LINES,
+    );
   }
   // Exactly one side is a payoff; the other is a member only.
   const [payoff, member] = cardPayoff ? [card, other] : [other, card];
@@ -1192,14 +1222,43 @@ function hasItemEnginePayoffCombo(has: (x: ItemRole, y: ItemRole) => boolean): b
 }
 
 /**
+ * The pair an item payoff gives a partner that is an item, or null when the partner is none: 7
+ * when playing it fires the payoff's "whenever you play an item", 6 when it switches the payoff's
+ * "have an item in play" check on.
+ */
+function itemGift(
+  payoffRoles: ItemRole[],
+  partnerRoles: ItemRole[],
+  payoffIsCard: boolean,
+): PairScore | null {
+  if (!partnerRoles.includes('member')) return null;
+  const [payoff, member] = tokenPair(payoffIsCard);
+  if (payoffRoles.includes('payoff-trigger')) {
+    return {
+      score: 7,
+      explanation: `Playing ${member} triggers ${payoff}'s "whenever you play an item" ability.`,
+    };
+  }
+  return {score: 6, explanation: `${member} can activate ${payoff}'s item ability.`};
+}
+
+const ITEM_DECK_LINE = sameDeckLine('an item');
+
+const ITEM_PAYOFF_LINES: PayoffPairLines = {
+  mutual: "{A} and {B} are both items, and each one's ability helps the other.",
+  deck: ITEM_DECK_LINE,
+};
+
+/**
  * Score an Item-Matters pair. findSynergies only calls this when at least one side is a
- * payoff (payoff-anchored), so every pair resolves to 8/7/6. Cards are multi-role (an item
- * that recurs items is member+item-engine), so the HIGHEST applicable bucket wins:
+ * payoff (payoff-anchored). Cards are multi-role (an item that recurs items is
+ * member+item-engine), so the HIGHEST applicable bucket wins:
  *   item-engine x payoff (trigger|static)  = 8  the engine floods items, each firing the payoff
- *   payoff      x payoff                    = 7  two payoffs stack on one item flood
+ *   payoff      x payoff                    = what each gives the other (scorePayoffPair): 5
+ *                                             when neither is an item, as no payoff is today
  *   member      x payoff-trigger            = 7  the item body fires the repeating "whenever you play an item"
  *   member      x payoff-static             = 6  the item satisfies the "have an item in play" check
- * The trailing `return 5` is an unreachable guard — the payoff gate guarantees a match above.
+ * The trailing 5 is an unreachable guard — the payoff gate guarantees a match above.
  */
 export function scoreItemPair(
   cardRoles: ItemRole[],
@@ -1216,21 +1275,17 @@ export function scoreItemPair(
       explanation: `${engine} helps you play more items, and they activate ${payoff}.`,
     };
   }
-  if (isItemPayoff(cardRoles) && isItemPayoff(otherRoles)) {
-    return {score: 7, explanation: stackLine('item')};
+  const cardPayoff = isItemPayoff(cardRoles);
+  if (cardPayoff && isItemPayoff(otherRoles)) {
+    return scorePayoffPair(
+      itemGift(cardRoles, otherRoles, true),
+      itemGift(otherRoles, cardRoles, false),
+      ITEM_PAYOFF_LINES,
+    );
   }
   // From here exactly one side is a payoff; the other is the item it counts.
-  const [payoff, member] = tokenPair(isItemPayoff(cardRoles));
-  if (has('member', 'payoff-trigger')) {
-    return {
-      score: 7,
-      explanation: `Playing ${member} triggers ${payoff}'s "whenever you play an item" ability.`,
-    };
-  }
-  if (has('member', 'payoff-static')) {
-    return {score: 6, explanation: `${member} can activate ${payoff}'s item ability.`};
-  }
-  return {score: 5, explanation: sameDeckLine('an item')};
+  const [payoffRoles, memberRoles] = cardPayoff ? [cardRoles, otherRoles] : [otherRoles, cardRoles];
+  return itemGift(payoffRoles, memberRoles, cardPayoff) ?? {score: 5, explanation: ITEM_DECK_LINE};
 }
 
 /**
@@ -1356,9 +1411,25 @@ function hunnyBuffLine(cardRoles: HunnyRole[], otherRoles: HunnyRole[]): string 
   return `${payoff}'s Hunny buff powers up ${member}.`;
 }
 
+/** The density ↔ member pair a density payoff gives a Hunny character partner, or null. */
+function hunnyGift(
+  ctx: HunnyPairCtx,
+  partnerRoles: HunnyRole[],
+  payoffIsCard: boolean,
+): PairScore | null {
+  if (!partnerRoles.includes('member')) return null;
+  return {score: 7, explanation: hunnyActivateLine(ctx, payoffIsCard)};
+}
+
+const HUNNY_PAYOFF_LINES: PayoffPairLines = {
+  mutual: mutualLine('Hunny'),
+  deck: sameDeckLine('a Hunny'),
+};
+
 /**
  *   - search <-> member | search <-> density = 8 (fetch converts a slot / fuels the payoff)
- *   - density <-> density | density <-> member = 7 (compounding / member feeds payoff)
+ *   - density <-> density                      = 7 when either counts the other, else 5
+ *   - density <-> member                       = 7 (member feeds payoff)
  *   - buff <-> member                          = 6 (single-target pump on a Hunny body)
  *   - everything else                          = 5 (same-deck density baseline)
  */
@@ -1369,16 +1440,11 @@ function hunnyBuffLine(cardRoles: HunnyRole[], otherRoles: HunnyRole[]): string 
 function scoreHunnyLowerTiers(ctx: HunnyPairCtx): {score: number; explanation: string} {
   const {cardRoles, otherRoles, cross} = ctx;
   if (cross('density', 'density')) {
-    const explanation = splitStackedPayoffs(
-      otherRoles.includes('member'),
-      cardRoles.includes('member'),
-      {
-        stack: stackLine('Hunny'),
-        mutual: mutualLine('Hunny'),
-        oneWay: (helperIsCard) => hunnyActivateLine(ctx, helperIsCard),
-      },
+    return scorePayoffPair(
+      hunnyGift(ctx, otherRoles, true),
+      hunnyGift(ctx, cardRoles, false),
+      HUNNY_PAYOFF_LINES,
     );
-    return {score: 7, explanation};
   }
   if (cross('density', 'member')) {
     return {score: 7, explanation: hunnyActivateLine(ctx, cardRoles.includes('density'))};
@@ -1604,30 +1670,31 @@ function tribalTriggerLine(ctx: TribalPairCtx): string {
 }
 
 /**
- * Two payoffs, split by which of the two tribe members the other's ability helps. A one-way
- * helper never holds a trigger here (the trigger tier above takes those pairs), so it reads as
- * its buff, or else its in-play check.
+ * The member pair a tribe payoff's buff or in-play check gives a partner that is a member, or
+ * null when it gives none. A gift never holds a trigger here: the trigger tier above takes those
+ * pairs.
  */
-function tribalStackedLine(ctx: TribalPairCtx): string {
-  const {tribe, cardRoles, otherRoles} = ctx;
-  return splitStackedPayoffs(
-    tribalHelps(cardRoles, otherRoles),
-    tribalHelps(otherRoles, cardRoles),
-    {
-      stack: stackLine(tribe),
-      mutual: mutualLine(tribe),
-      oneWay: (helperIsCard) => {
-        const helperRoles = helperIsCard ? cardRoles : otherRoles;
-        return helperRoles.includes('buff')
-          ? tribalBuffLine(tribe, helperIsCard)
-          : tribalCheckLine(tribe, helperIsCard);
-      },
-    },
-  );
+function tribalGift(ctx: TribalPairCtx, helperIsCard: boolean): PairScore | null {
+  const [helperRoles, partnerRoles] = helperIsCard
+    ? [ctx.cardRoles, ctx.otherRoles]
+    : [ctx.otherRoles, ctx.cardRoles];
+  if (!tribalHelps(helperRoles, partnerRoles)) return null;
+  const explanation = helperRoles.includes('buff')
+    ? tribalBuffLine(ctx.tribe, helperIsCard)
+    : tribalCheckLine(ctx.tribe, helperIsCard);
+  return {score: 6, explanation};
+}
+
+/** Two payoffs score what each one's buff or in-play check gives the other (scorePayoffPair). */
+function scoreTribalPayoffPair(ctx: TribalPairCtx): PairScore {
+  return scorePayoffPair(tribalGift(ctx, true), tribalGift(ctx, false), {
+    mutual: mutualLine(ctx.tribe),
+    deck: sameDeckLine(`a ${ctx.tribe}`),
+  });
 }
 
 /**
- * Score the sub-search tribal tiers (7/6), reached only after the search combo misses.
+ * Score the sub-search tribal tiers (7/6/5), reached only after the search combo misses.
  * Split out of scoreTribalPair so the top-level scorer stays a flat gate → search → lower
  * sequence. `bothPayoff` is precomputed by the caller (it also drove the null gate).
  * The trailing 5 is an unreachable guard — the payoff gate admits only member-payoff or
@@ -1639,7 +1706,7 @@ function scoreTribalLowerTiers(ctx: TribalPairCtx): {score: number; explanation:
     return {score: 7, explanation: tribalTriggerLine(ctx)};
   }
   if (ctx.bothPayoff) {
-    return {score: 7, explanation: tribalStackedLine(ctx)};
+    return scoreTribalPayoffPair(ctx);
   }
   if (cross('buff', 'member')) {
     return {score: 6, explanation: tribalBuffLine(tribe, cardPayoff)};
@@ -1658,7 +1725,8 @@ function scoreTribalLowerTiers(ctx: TribalPairCtx): {score: number; explanation:
  * Highest applicable bucket wins, since cards are multi-role (Philoctetes is member+buff+trigger):
  *   search  <-> member|payoff       = 8  the search digs the tribe out to fuel the payoffs
  *   trigger <-> member              = 7  the body fires the repeating payoff each time
- *   payoff  <-> payoff              = 7  two payoffs stack on one tribal board
+ *   payoff  <-> payoff              = 7  each one's buff or check helps the other; 6 when one
+ *                                        does, 5 when neither does (scoreTribalPayoffPair)
  *   buff    <-> member              = 6  the body is pumped by the (team or single-target) buff
  *   check   <-> member              = 6  the body turns on the "have a X in play" payoff
  */

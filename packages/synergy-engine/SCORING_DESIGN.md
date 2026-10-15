@@ -40,6 +40,16 @@ Same-axis density pairs that were re-baselined to 5 in the convention rollout:
 | Toy | member ↔ member | 5 | 5 (already neutral) |
 | Toy | member ↔ generic mechanic | new | 5 |
 
+**Two payoffs score what one gives the other.** The tribe-like rules (Floodborns, Items, the classification tribes, Toys, Seven Dwarfs and Hunny) score a pair of their payoffs with one helper, `scorePayoffPair` in `ruleScoring.ts`. Each card's gift is the member pair it would make with the other card: two payoffs that each help the other compound at 7, one that helps the other scores its own gift (a buff 6, a trigger 7), and two that help neither sit at 5, for the reason Discard's payoff pairs did. Before, every such pair scored 7:
+
+| Rule | Pair | Was | Now |
+|------|------|-----|-----|
+| Floodborns | payoff ↔ payoff, neither helps the other | 7 | 5 |
+| Floodborns | payoff ↔ payoff, one buffs the other | 7 | 6 |
+| Classification tribes | payoff ↔ payoff, neither helps the other | 7 | 5 |
+| Classification tribes | payoff ↔ payoff, one buffs the other or switches it on | 7 | 6 |
+| Items | payoff ↔ payoff, neither of them an item | 7 | 5 |
+
 ## Score Type: `number`
 
 The `score` field is typed as `number`, not a branded integer. The engine assigns integers (1, 3, 5, 7, 9)
@@ -193,11 +203,11 @@ Uniform scoring — value comes from density of denial cards, not specific pairs
 
 Role-based scoring — enablers that empty the opponent's hand pair with payoffs that capitalize on hand-size advantage.
 
-| Pairing            | Score | Tier   | Why                                                                                    |
-|--------------------|-------|--------|----------------------------------------------------------------------------------------|
-| Enabler ↔ Payoff   | **8** | Strong | Direct synergy: enabler depletes hand, payoff converts that into advantage              |
-| Enabler ↔ Enabler  | **7** | Strong | Both disrupt the opponent's hand, increasing consistency of the denial strategy         |
-| Payoff ↔ Payoff    | **7** | Strong | Both reward hand-size advantage, but need enablers to unlock their potential            |
+| Pairing           | Score | Tier     | Why                                                                            |
+|-------------------|-------|----------|--------------------------------------------------------------------------------|
+| Enabler ↔ Payoff  | **8** | Strong   | Direct synergy: enabler depletes hand, payoff converts that into advantage     |
+| Enabler ↔ Enabler | **5** | Moderate | Parallel pressure on the opponent's hand; the two stack but don't compound     |
+| Payoff ↔ Payoff   | **5** | Moderate | Both reward hand-size advantage; having two doesn't multiply the win condition |
 
 ---
 

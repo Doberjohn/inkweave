@@ -146,7 +146,7 @@ describe('Synergy Rules', () => {
 
     it('scores item-engine + payoff at 8', () => { expect(scoreWith(engine, trigger)?.score).toBe(8); });
     it('scores member + trigger payoff at 7', () => { expect(scoreWith(item, trigger)?.score).toBe(7); });
-    it('scores payoff + payoff at 7', () => { expect(scoreWith(trigger, trigger2)?.score).toBe(7); });
+    it('scores payoff + payoff at 5 when neither is an item', () => { expect(scoreWith(trigger, trigger2)?.score).toBe(5); });
     it('scores member + static payoff at 6', () => { expect(scoreWith(item, staticPayoff)?.score).toBe(6); });
     it('drops bare item + bare item (payoff-anchored)', () => { expect(scoreWith(item, item2)).toBeUndefined(); });
     it('drops item-engine + item-engine (neither is a payoff)', () => { expect(scoreWith(engine, engine2)).toBeUndefined(); });
@@ -198,7 +198,7 @@ describe('Synergy Rules', () => {
 
     it('scores search + member at 8', () => { expect(scoreWith(search, member)?.score).toBe(8); });
     it('scores trigger + member at 7', () => { expect(scoreWith(trigger, member)?.score).toBe(7); });
-    it('scores payoff + payoff at 7', () => { expect(scoreWith(teamBuff, trigger)?.score).toBe(7); });
+    it('scores payoff + payoff at 6 when only one helps the other', () => { expect(scoreWith(teamBuff, trigger)?.score).toBe(6); });
     it('scores buff + member at 6', () => { expect(scoreWith(teamBuff, member)?.score).toBe(6); });
     it('scores in-play-check + member at 6', () => { expect(scoreWith(check, member)?.score).toBe(6); });
     it('drops member + member (payoff-anchored)', () => { expect(scoreWith(member, member2)).toBeUndefined(); });
@@ -326,7 +326,7 @@ describe('Synergy Rules', () => {
     const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
 
     it('scores in-play-check + member at 6', () => { expect(scoreWith(itemCheck, member)?.score).toBe(6); });
-    it('scores payoff + payoff at 7', () => { expect(scoreWith(check, itemCheck)?.score).toBe(7); });
+    it('scores payoff + payoff at 6 when only one helps the other', () => { expect(scoreWith(check, itemCheck)?.score).toBe(6); });
     it('drops member + member (payoff-anchored)', () => { expect(scoreWith(member, member2)).toBeUndefined(); });
   });
 
@@ -357,7 +357,7 @@ describe('Synergy Rules', () => {
     const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
 
     it('scores buff + member at 6', () => { expect(scoreWith(buff, member)?.score).toBe(6); });
-    it('scores payoff + payoff at 7', () => { expect(scoreWith(buff, check)?.score).toBe(7); });
+    it('scores payoff + payoff at 6 when only one helps the other', () => { expect(scoreWith(buff, check)?.score).toBe(6); });
     it('drops member + member (payoff-anchored)', () => { expect(scoreWith(member, member2)).toBeUndefined(); });
   });
 
@@ -3689,7 +3689,7 @@ describe('Dwarfs Tribal', () => {
     it('scores member + buff payoff at 6', () => {
       expect(scoreWith(member, buff)?.score).toBe(6);
     });
-    it('scores payoff + payoff at 7', () => {
+    it('scores payoff + payoff at 7 when each helps the other', () => {
       expect(scoreWith(buff, trigger)?.score).toBe(7);
     });
   });
