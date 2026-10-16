@@ -1,5 +1,5 @@
-import type {LorcanaCard} from '../types';
-import {getInkDropGain, normalizeCardText} from './cardHelpers.js';
+import type {LorcanaCard} from '../../types';
+import {getInkDropGain, normalizeCardText} from '../cardHelpers.js';
 
 // ============================================
 // INK DROPS DETECTION (Set 14: bank a drop now, remove it later to pay 1 ⬡)
@@ -13,9 +13,6 @@ import {getInkDropGain, normalizeCardText} from './cardHelpers.js';
  *    gate that opens only on a turn you gained one.
  *  - 'drop-shared': the gain also (or only) feeds an opponent. Display-only: it tells players
  *    the downside but never changes a pair score.
- *
- * Lives outside cardHelpers.ts (the first role detector to do so) to keep that file out of
- * the CodeScene gate; bounceScoring.ts is the scoring-side precedent for the split.
  */
 export type InkDropRole = 'drop-maker' | 'drop-payoff' | 'drop-shared';
 
