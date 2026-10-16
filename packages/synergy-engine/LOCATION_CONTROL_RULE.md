@@ -40,25 +40,25 @@ Each role has a distinct detection pattern and a distinct score when paired with
 <!-- coverage:start pairs -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-Merged across the 9 sub-rules, **2,361 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
+Merged across the 9 sub-rules, **1,873 unique pairs** after the engine's ink-compatibility filter (`canShareDeck`):
 
 | Score | Pairs | Share |
 |-----|-----|-----|
-| 7 | 968 | 41.0% |
-| 5 | 909 | 38.5% |
-| 3 | 484 | 20.5% |
+| 7 | 954 | 50.9% |
+| 5 | 751 | 40.1% |
+| 3 | 168 | 9.0% |
 
 ```chart
 {
   "type": "bar",
   "title": "Pairs per sub-rule, before merging",
   "data": {
-    "labels": ["Move to Location", "Location Ramp", "Location Buff", "At Location Payoff", "Location Search", "Location In-Play Check", "Location Play Trigger", "Location Boost", "Location Move Trigger"],
+    "labels": ["Move to Location", "At Location Payoff", "Location Ramp", "Location Buff", "Location Search", "Location Play Trigger", "Location In-Play Check", "Location Move Trigger", "Location Boost"],
     "datasets": [
       {
         "label": "Pairs",
-        "data": [982, 640, 558, 503, 452, 411, 315, 182, 150],
-        "backgroundColor": ["#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#60b5f5", "#60b5f5", "#6ee7a0", "#60b5f5", "#6ee7a0"]
+        "data": [826, 490, 413, 405, 294, 190, 159, 138, 21],
+        "backgroundColor": ["#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#60b5f5", "#6ee7a0", "#60b5f5", "#6ee7a0", "#60b5f5"]
       }
     ]
   }
@@ -79,7 +79,9 @@ Each role paired with a Location card, using real synergy data:
 | ![Beast - Snowfield Troublemaker](https://api.lorcana.ravensburger.com/images/en/set11/118_69e8ce2687419dd03bbb0378c04f9509175b0de8.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
 | **Beast - Snowfield Troublemaker** | **Elsa's Ice Palace** |
 
-Gets bonuses when characters are at a location.
+Gets bonuses when characters are at a location. "Your characters at locations get +1 ¤" (Russell - Senior Wilderness Explorer) is one too: it strengthens the characters at a location, not the location, so it reads as at-payoff and never as a buff.
+
+A reward sized by the location's lore gives nothing at a location without lore, so it pairs only with locations that have some (`locationRoleReaches`): Carl Fredricksen - On the Move's "draw cards equal to that location's ◊" skips the locations with 0 ◊, where the pair still stands on his play trigger. The gate holds only while every at-payoff sentence on the card is sized that way.
 
 #### Play Trigger (Score 7)
 
@@ -88,7 +90,7 @@ Gets bonuses when characters are at a location.
 | ![Elsa - Ice Artisan](https://api.lorcana.ravensburger.com/images/en/set11/123_c4e62c081171f16d197d27b8167524141478bdda.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
 | **Elsa - Ice Artisan** | **Elsa's Ice Palace** |
 
-Triggers effects when you **play** a location. Elsa also has at-payoff. Coverage counts the cards with this role, and names them while there are only a few. Cards that trigger when a character *moves onto* a location are a separate role (see Move Trigger below).
+Triggers effects when you **play** a location. Elsa also has at-payoff. Only "when(ever) you play a location" is the trigger: in Fergus - Outpost Builder's "whenever this character becomes exerted, you may play a location" the location play is the effect, which reads as location ramp. Coverage counts the cards with this role, and names them while there are only a few. Cards that trigger when a character *moves onto* a location are a separate role (see Move Trigger below).
 
 #### Move Trigger (Score 7)
 
@@ -108,7 +110,7 @@ Triggers effects when a character **moves onto** a location; Coverage counts the
 
 Strengthens locations (resist, willpower, protection).
 
-A buff limited to one location classification reaches only locations of that classification (`getLocationBuffClassifications`, `locationRoleReaches`). Hyperia City Express's "Your Hyperia City locations get +2 ⛉." scores its buff 7 with the Hyperia City locations only; with any other location it still pairs at 5, through its move ability. The classification is read as the Title Case words between "your" and "locations", case-sensitively, so lowercase shapes stay global: "Your characters and locations gain Resist +1" (We'll Save Our Village) and "Your characters at locations get +1 ¤" (Russell - Senior Wilderness Explorer). A card that also buffs every location ("Your Hyperia City locations get +2 ⛉. Your locations gain Resist +1.") stays global too.
+A buff limited to one location classification reaches only locations of that classification (`getLocationBuffClassifications`, `locationRoleReaches`). Hyperia City Express's "Your Hyperia City locations get +2 ⛉." scores its buff 7 with the Hyperia City locations only; with any other location it still pairs at 5, through its move ability. The classification is read as the Title Case words between "your" and "locations", case-sensitively, so lowercase shapes stay global: "Your characters and locations gain Resist +1" (We'll Save Our Village). "Your characters at locations get +1 ¤" (Russell - Senior Wilderness Explorer) is no buff at all: `locations get|gain` needs locations as its subject, and that clause reads as at-payoff. A card that also buffs every location ("Your Hyperia City locations get +2 ⛉. Your locations gain Resist +1.") stays global too.
 
 #### Location Ramp (Score 7)
 
@@ -118,6 +120,12 @@ A buff limited to one location classification reaches only locations of that cla
 | **Elsa - Concerned Sister** | **Elsa's Ice Palace** |
 
 Reduces cost of playing or moving to locations.
+
+Three limits keep a ramp card to the locations it can reach (`locationRoleReaches`), from both sides:
+
+- **A cost cap.** "Play a location with cost 3 or less from your discard for free" (Get to Safety!) and "play a location from your hand or discard with cost 4 or less for free" (Fergus - Outpost Builder) reach only locations up to that cost. A card that also ramps every location stays uncapped.
+- **A move discount.** "pay 1 ⬡ less to move this character to a location" (Raksha - Fearless Mother) puts no location into play: it does nothing at a location that costs 0 ⬡ to move to (Carl's House - Flying High), and beside another support card it reads as a move (see Cross-Synergy).
+- **One clause, one sentence.** A free location play must stay inside its clause: in "Whenever you play a location, you may move this character and up to 1 of your other characters to that location for free" (Carl Fredricksen - On the Move) the free part is the move, so Carl is no ramp card. Each shape also stays inside one sentence.
 
 #### Move (Score 5)
 
@@ -136,19 +144,19 @@ A move limited to one location classification reaches only locations of that cla
 
 | Support | Location |
 |:-------:|:--------:|
-| ![Flintheart Glomgold - Scheming Billionaire](https://api.lorcana.ravensburger.com/images/en/set10/76_2aed0e5a593164b41c3f301621b079977eab7427.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
-| **Flintheart Glomgold** | **Elsa's Ice Palace** |
+| ![John Silver - Greedy Treasure Seeker](https://api.lorcana.ravensburger.com/images/en/set9/192_526cb592f8f52756f537457c1d84678f017c31a8.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
+| **John Silver - Greedy Treasure Seeker** | **Elsa's Ice Palace** |
 
-Gains benefits when you have locations in play.
+Gains benefits when you have locations in play. A check on one named location ("if you have a location named Sleepy Hollow in play", Get to Safety!) or on a card under one ("While you have a character or location in play with a card under them", Flintheart Glomgold - Scheming Billionaire and Webby Vanderquack - Knowledge Seeker) rewards no location in play, so neither reads as this role. Their tie to the cards that put cards under locations is not modeled yet.
 
 #### Search (Score 5)
 
 | Support | Location |
 |:-------:|:--------:|
-| ![Goldie O'Gilt - Cunning Prospector](https://api.lorcana.ravensburger.com/images/en/set10/87_90807268acf6a0f1017fcbee24b8c19361430e5c.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
-| **Goldie O'Gilt** | **Elsa's Ice Palace** |
+| ![Amazu's Inkcaster](https://api.lorcana.ravensburger.com/images/en/set12/134_ee36596832274c493abe3d1fed41e3c25674a648.jpg) | ![Elsa's Ice Palace](https://api.lorcana.ravensburger.com/images/en/set5/67_ad791d04c8bc09f7282d7d3479d401197c4cab1d.jpg) |
+| **Amazu's Inkcaster** | **Elsa's Ice Palace** |
 
-Searches deck or discard for location cards.
+Searches deck or discard for location cards. A search for one named location ("reveal a Toy character card or a location card named Andy's Room", Woody - Leader of the Toys) finds only that location, so it is no location search; Named Companions pairs Woody with Andy's Room.
 
 #### Boost (Score 5)
 
@@ -158,6 +166,8 @@ Searches deck or discard for location cards.
 | **Blessed Bagpipes** | **Elsa's Ice Palace** |
 
 Works with the Boost keyword to power up locations.
+
+A boost card whose every sentence about cards under a location says "with Boost" ("Put the top card of your deck facedown under one of your characters or locations with Boost", Recovered Page) pairs only with locations that have Boost (Scrooge's Counting House - Ebenezer's Office), not with a location that holds cards some other way (Graveyard of Christmas Future - Lonely Resting Place). Blessed Bagpipes also rewards "locations with a card under them", so it pairs with both.
 
 ---
 
@@ -191,13 +201,13 @@ Returns all roles a card fulfills (cards can have multiple roles). Location card
 
 | Role | Regex | Example Card Text |
 |------|-------|-------------------|
-| `at-payoff` | `while.{0,60}at a location\|if.{0,60}at a location\|is at a location` | "While this character is at a location, she gets +3 lore" |
-| `play-trigger` | `when(ever)? you play a location\|whenever.*play a location` | "Whenever you play a location, you may exert chosen character" |
-| `buff` | `(?<!\bmove\b(?:(?!\bto\b)[^.]\|\bup to\b){0,60}\bto (?:one of )?)your locations\|locations gain\|locations get\|location.*can't be challenged\|location gains? resist` | "Your locations get +2 willpower" |
-| `location-ramp` | `\bless\b.*(?:to )?(?:play\|move).*location\|\bless\b for.*location\|play a location.*(?:from\|for free)` | "you pay 2 less for the next location you play this turn" |
+| `at-payoff` | `while.{0,60}at a location\|if.{0,60}at a location\|is at a location\|\bcharacters at locations\b` | "While this character is at a location, she gets +3 lore" |
+| `play-trigger` | `when(ever)? you play a location` | "Whenever you play a location, you may exert chosen character" |
+| `buff` | `(?<!\bmove\b(?:(?!\bto\b)[^.]\|\bup to\b){0,60}\bto (?:one of )?)your locations\|(?<!\bat )locations (?:gain\|get)\b\|location.*can't be challenged\|location gains? resist` | "Your locations get +2 willpower" |
+| `location-ramp` | `\bless\b[^.]*?\b(?:play\|move)\b[^.]*?\blocation\|\bless\b for[^.]*?\blocation\|play a location[^,.]*?(?:from\|for free)` | "you pay 2 less for the next location you play this turn" |
 | `move` | `\bmove\b[^.]{0,40}?\b(?:characters?\|him\|her\|them)\b[^.]{0,50}?\blocation\|to the same location` | "you may move a character of yours to a location for free", "you may move him to one of your locations" |
-| `in-play-check` | `if you have a location\|while you have a.*(location)\|for each location` | "For each location you have in play, this character gains Resist +1" |
-| `search` | `search.*location card\|reveal.*location card\|return a location\|location card from` | "Search your deck for a location card" |
+| `in-play-check` | `if you have a location(?! named\b)\|while you have an? [^.]*?\blocation\b(?! named\b)(?![^.]*\bwith a card under\b)\|for each location` | "For each location you have in play, this character gains Resist +1" |
+| `search` | `makeSearchPattern('location(?!(?:\s+cards?)?\s+named\b)(?:\s+cards?)?')`: a deck look that reveals, a search, or a return of a location card, not of one named location | "Look at the top 4 cards of your deck. You may reveal a location card" |
 | `boost` | `under.*(?:characters\|character) or locations\|under.*locations\|locations with boost\|play a character or location with boost` | "Whenever you put a card under one of your characters or locations" |
 
 ### Exclude Patterns
@@ -208,10 +218,14 @@ Two exclusion mechanisms prevent false positives:
 
 2. **Damage-move stripping** (`LOCATION_PATTERNS['move-exclude']`, `stripDamageMoves`): a damage-moving clause ("move 1 damage counter from chosen character …"), up to the end of its clause (the next period, comma or semicolon, or the next "move"), is stripped from the text before the move test, both in `getLocationRoles` and in the move rule's `matches`. It therefore never reads as a location move, while a real move elsewhere on the card still counts, and "damage" in reminder text (The Game's Afoot!) or in "remove … damage" never drops a mover. Pattern: `\bmove\b[^.]{0,20}?\bdamage\b`
 
-Two location-side gates then decide which locations a matched support card pairs with. Each is applied from both directions, so a pair scores the same whichever card is selected:
+Location-side gates then decide which locations a matched support card pairs with. Each is applied from both directions, so a pair scores the same whichever card is selected:
 
 1. **Boost gate** (`isBoostBeneficiaryLocation`): a `boost` card pairs only with locations that actually use cards put under them. Applied in `buildLocationDirectMatch` when the support card searches, and in the boost rule's `matches` when a location searches.
-2. **Classified buff/move gate** (`locationRoleReaches`): a `buff` or `move` limited to one location classification ("Your Hyperia City locations get +2 ⛉.", "move him to a Hyperia City location") pairs only with locations of that classification. Applied in `buildLocationDirectMatch` and in `findLocationCardSynergiesForRole`. See Buff and Move above.
+2. **Reach gates** (`locationRoleReaches`), applied in `buildLocationDirectMatch` and in `findLocationCardSynergiesForRole`:
+   - a `buff` or `move` limited to one location classification ("Your Hyperia City locations get +2 ⛉.", "move him to a Hyperia City location") reaches only locations of that classification (see Buff and Move above);
+   - a `location-ramp` with a cost cap reaches only locations up to the cap, and a move discount only locations that cost ink to move to (see Location Ramp);
+   - an `at-payoff` sized by the location's lore reaches only locations with lore (see At Location Payoff);
+   - a `boost` card that puts cards only under locations "with Boost" reaches only locations with Boost (see Boost).
 
 ### Multi-Role Cards
 
@@ -242,27 +256,36 @@ Two support cards can synergize if their roles are **complementary** — meaning
                at-payoff  play-trigger  buff  ramp  move  in-play  search  boost
 at-payoff         -            -         ✓     -     ✓       -       ✓      -
 play-trigger      -            -         -     -     -       -       ✓      -
-buff              ✓            -         -     -     ✓       ✓       ✓      -
-ramp              ✓            ✓         ✓     -     ✓       ✓       -      ✓
-move              ✓            -         ✓     -     -       -       -      -
+buff              ✓            -         -     -     ○       ○       ✓      -
+ramp              ✓            ✓         ✓     -     ✓       ✓       -      ○
+move              ✓            -         ○     -     -       -       -      -
 in-play-check     -            -         -     -     -       -       ✓      -
-search             ✓            ✓         ✓     -     ✓       ✓       -      ✓
-boost             -            -         -     -     -       -       ✓      -
+search             ✓            ✓         ✓     -     ✓       ✓       -      ○
+boost             -            -         -     ○     -       -       ○      -
 ```
 
+○ marks a link with no text tie (`UNTIED_LINKS` in `rules.ts`), which scores only between two high-value cards (see Cross-Synergy Scoring).
+
 Relationships are checked **bidirectionally** — if A complements B or B complements A, the pair has cross-synergy.
+
+Two refinements read the card text behind the roles (`cardCrossProfile` in `rules.ts`):
+
+- **Self-only clauses** (`getSelfOnlyLocationRoles`). A character's `move`, `at-payoff` or `move-trigger` is self-only when every clause of it concerns that character alone: "move him to a location" (Arthur - Merlin's Assistant), "while this character is at a location" (Shenzi - Hyena Pack Leader), "whenever this character moves to a location" (Goofy - Set for Adventure). A link between two self-only clauses is void, since a character that moves only itself never puts another character at a location. "move him and one of your other characters" moves someone else too, and "all characters at that location get +1 ◊" (Carl Fredricksen & Russell - Intrepid Explorers) rewards everyone there, so neither is self-only.
+- **A move discount reads as a move.** Raksha - Fearless Mother's discount on her own move complements what a move complements (at-payoff, buff, move-trigger), not what playing a location does. It still counts as a high-value role for the score.
 
 ### Cross-Synergy Scoring
 
 | Condition | Score | Display Tier |
 |-----------|-------|-------------|
 | Both cards have high-value roles AND are complementary | **5** | Moderate |
-| Complementary but not both high-value | **3** | Weak |
-| Same roles, or non-complementary | **null** (no synergy) | — |
+| Complementary through a link with a text tie, but not both high-value | **3** | Weak |
+| Same roles, non-complementary, or linked only with no text tie and not both high-value | **null** (no synergy) | — |
+
+**Links with no text tie** (○ above) join two cards that share a location deck and nothing more. A boost card puts cards under a location with Boost, which a location search or play ramp rarely brings out (Scrooge McDuck - Cavern Prospector and Amazu's Inkcaster). A buff that protects your locations does nothing for the characters a mover sends there (Launchpad - Hideout Defender and Tuk Tuk - Lively Partner) or for a card's bonus for having a location in play (Launchpad and The Twins - Lost Boys). Two high-value cards linked only this way keep the same-deck 5 (Launchpad and Hyperia City Express). Any other pair linked only this way has no synergy, rather than a Weak tile with nothing behind it.
 
 ### Why Low Cross-Synergy Scores?
 
-Two support cards without a Location in play have minimal interaction. The search can find a Location, the buff can protect it, but without the Location itself, neither card is doing its job. Score 5 for high-value pairs acknowledges the strategic alignment; score 3 for utility pairs reflects the loose thematic overlap.
+Two support cards without a Location in play have minimal interaction. The search can find a Location, the buff can protect it, but without the Location itself, neither card is doing its job. Score 5 for high-value pairs acknowledges the strategic alignment; score 3 for utility pairs reflects the loose thematic overlap. A 3 still needs one card to feed the other, as a search finds the location a mover sends characters to (Tuk Tuk - Lively Partner and Amazu's Inkcaster).
 
 ---
 
@@ -332,17 +355,17 @@ The support card reads first from either page: on the Location's page the line i
 
 | Role | Cards | Cards per ink |
 |----|-----|-------------|
-| at-payoff | 7 | Ruby 5, Emerald 2, Steel 1 |
-| play-trigger | 4 (Carl Fredricksen - On the Move, Ellie Fredricksen - Loving Wife, Elsa - Ice Artisan, Fergus - Outpost Builder) | Ruby 2, Emerald 1, Steel 1 |
+| at-payoff | 8 | Ruby 5, Emerald 3, Steel 1 |
+| play-trigger | 3 (Carl Fredricksen - On the Move, Ellie Fredricksen - Loving Wife, Elsa - Ice Artisan) | Ruby 2, Emerald 1 |
 | move-trigger | 2 (Arthur - Merlin's Assistant, Goofy - Set for Adventure) | Emerald 1, Steel 1 |
-| buff | 8 | Steel 7, Emerald 1 |
-| location-ramp | 7 | Ruby 5, Steel 2 |
+| buff | 7 | Steel 7 |
+| location-ramp | 6 | Ruby 4, Steel 2 |
 | move | 14 | Ruby 6, Steel 6, Emerald 2 |
-| in-play-check | 6 | Steel 3, Amber 1, Emerald 1, Ruby 1 |
-| search | 5 (Amazu's Inkcaster, Closet Door Portal, Pocahontas - Steadfast Traveler, The Cold Never Bothered Me, Woody - Leader of the Toys) | Ruby 2, Amber 1, Sapphire 1, Steel 1 |
+| in-play-check | 3 (John Silver - Greedy Treasure Seeker, Raya - Determined Explorer, The Twins - Lost Boys) | Steel 3 |
+| search | 4 (Amazu's Inkcaster, Closet Door Portal, Pocahontas - Steadfast Traveler, The Cold Never Bothered Me) | Ruby 2, Sapphire 1, Steel 1 |
 | boost | 14 | Amber 3, Emerald 3, Ruby 3, Sapphire 3, Amethyst 2 |
 
-Cards with a role: 52. Cards with more than one: 12.
+Cards with a role: 49. Cards with more than one: 11.
 <!-- coverage:end -->
 
 Location cards hold no role: they are what every role pairs with.
@@ -351,7 +374,7 @@ Location cards hold no role: they are what every role pairs with.
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Location Synergy Rules')`. The classified buff/move gate and move detection are tested in `packages/synergy-engine/src/__tests__/locationControl.test.ts` (14 tests). Buff: Hyperia City Express scores 7 with a Hyperia City location and 5 with any other, from both sides; a buff-only card has no match outside its classification; and We'll Save Our Village, Russell - Senior Wilderness Explorer and a mixed buff still reach every location. Move: Chief Bogo scores 5 with a Hyperia City location and has no match with any other, from both sides; a classified move keeps its classification when the same sentence names "that location" again; People Gonna Come Here's "move them to that location" is a move; Colonel Hathi's "move him to one of your locations" is a global move, not a buff; The Game's Afoot! keeps its move despite "Damage" in its reminder text; a move written after a damage-moving clause, in the next sentence or the same one, is a move, while a damage-moving clause alone never is; Carl Fredricksen's two-character move is a move; and "Give Resist +1 to your locations" stays a buff (7 with any location), even after a move in the same sentence.
+Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Location Synergy Rules')`. The classified buff/move gate, move detection and the fixed misreads are tested in `packages/synergy-engine/src/__tests__/locationControl.test.ts` (24 tests). Buff: Hyperia City Express scores 7 with a Hyperia City location and 5 with any other, from both sides; a buff-only card has no match outside its classification; and We'll Save Our Village and a mixed buff still reach every location. Move: Chief Bogo scores 5 with a Hyperia City location and has no match with any other, from both sides; a classified move keeps its classification when the same sentence names "that location" again; People Gonna Come Here's "move them to that location" is a move; Colonel Hathi's "move him to one of your locations" is a global move, not a buff; The Game's Afoot! keeps its move despite "Damage" in its reminder text; a move written after a damage-moving clause, in the next sentence or the same one, is a move, while a damage-moving clause alone never is; Carl Fredricksen's two-character move is a move; and "Give Resist +1 to your locations" stays a buff (7 with any location), even after a move in the same sentence. Misreads, each on the card's real text: Woody's named location, Flintheart's card under a location and Get to Safety!'s named location give no role; Get to Safety!'s capped play pairs with a cost-3 location and not a cost-4 one, from both sides; Carl Fredricksen - On the Move is no ramp card and Fergus no play trigger; Raksha's move discount scores 7 with a location that costs ink to move to and 5 (her move) with one that doesn't, and pairs with a location buff but not with an in-play check; two self-only clauses never link (Arthur and Shenzi, Raksha and Goofy) while a mover of another character does (Goofy and Shenzi, Arthur and Goofy) and so does a reward for every character at the location (Raksha and Carl Fredricksen & Russell); Recovered Page pairs with a Boost location but not with Graveyard of Christmas Future, which Blessed Bagpipes still pairs with; Russell - Senior Wilderness Explorer is an at-payoff that skips John Silver; and Carl's lore-sized reward skips a location without lore. Two support cards linked only with no text tie don't pair: Scrooge McDuck - Cavern Prospector and Amazu's Inkcaster, from both sides, and Launchpad - Hideout Defender with Tuk Tuk - Lively Partner, from both sides, or with The Twins - Lost Boys. Tuk Tuk and Amazu's Inkcaster keep their 3, and Launchpad and Hyperia City Express their 5.
 
 ### Role Detection Tests (5 tests)
 
@@ -373,7 +396,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | Correct scores by role | at-payoff=7, move=5, search=5 |
 | Unrelated card → no location synergies | Anna (no location text) produces no location-control group |
 
-### Cross-Synergy Tests (6 tests)
+### Cross-Synergy Tests (14 tests)
 
 | Test | Score | Roles |
 |------|-------|-------|
@@ -383,6 +406,8 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | move + search → 3 | Both utility, complementary |
 | Same roles → null | No cross-synergy for identical roles |
 | Non-complementary → null | e.g., at-payoff + in-play-check |
+| buff + move and buff → 5 | Both high-value, linked only with no text tie |
+| No text tie → null | e.g., boost + search, buff + move |
 
 ### Boost & Ramp Tests (4 tests)
 
@@ -412,7 +437,7 @@ Location move cost (how much ink to move a character there) was considered as a 
 2. The difference between moveCost=1 and moveCost=2 is marginal
 3. It would complicate scoring for minimal user value
 
-Move cost is stored on `LorcanaCard` for data completeness but doesn't influence synergy scores. See `SCORING_DESIGN.md` for the full rationale.
+Move cost doesn't influence synergy scores. It only gates a move discount (Raksha - Fearless Mother), which does nothing at a location that costs 0 ⬡ to move to. See `SCORING_DESIGN.md` for the full rationale.
 
 ### Why Exclude Anti-Location Cards Entirely?
 

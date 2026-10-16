@@ -202,7 +202,7 @@ Applies the project-wide **5-baseline convention**. For each maker ↔ payoff pa
 | repeating maker ↔ gain gate | 13 | 7 | 4.0% |
 | hold ↔ hold | 3 | 6 | 0.9% |
 
-Totals: **5: 9, 6: 109, 7: 179, 8: 28**. Drop cards with no partner: none. Cards whose only synergy group is Ink Drops: 8 (Archimedes - Messenger Owl, Intense Research, Khan Transport Delivery, Molly Cunningham - Remembers to Share, Pushing Boundaries, Sir Kay - Determined to Win, This Is Business, Yama - Notorious Criminal).
+Totals: **5: 9, 6: 109, 7: 179, 8: 28**. Drop cards with no partner: none. Cards whose only synergy group is Ink Drops: 9 (Archimedes - Messenger Owl, Intense Research, Khan Transport Delivery, Molly Cunningham - Remembers to Share, Pushing Boundaries, Sir Kay - Determined to Win, Sir Pellinore - Tougher Than He Looks, This Is Business, Yama - Notorious Criminal).
 <!-- coverage:end -->
 
 A shape with no pairs in the pool is left out of the table. A card whose only synergy group is Ink Drops would surface nowhere else on the site without this rule.

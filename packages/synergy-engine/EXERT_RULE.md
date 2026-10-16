@@ -104,6 +104,7 @@ Applies the project-wide **5-baseline convention**. The rule mirrors the Floodbo
 |-----------|-------|-------------|-------------|
 | exert-enabler ↔ consume payoff (exert-trigger / banish-exerted / cant-ready lock) | **8** | Strong | Win-condition combo: the enabler exerts an opposing body on demand, and the payoff banishes or hard-locks it |
 | exert-enabler ↔ state payoff (opp-exert-state / lore-off-exerted) | **6** | Moderate | The enabler keeps an opposing body exerted, switching on the payoff's exerted-state reward, but doesn't hard-punish it |
+| exert-enabler ↔ a payoff it can't reach | **5** | Weak | The payoff acts only on a character stronger than any the enabler exerts (see [Strength caps and floors](#strength-caps-and-floors)), so the two just share the deck |
 | exert-payoff ↔ exert-payoff | **5** | Weak | Parallel payoff density: two exerted-matters payoffs on the same board, no compounding |
 | exert-enabler ↔ exert-enabler | **null** | — | Not emitted (payoff-anchored): two soft-taps stack pressure but don't combo |
 
@@ -118,7 +119,19 @@ const payoffToken = cardEnabler ? '{B}' : '{A}';
 // state:   `${enablerToken} keeps an opposing character exerted, switching on ${payoffToken}.`
 ```
 
-The same-side payoff pair names both cards: `"{A} and {B} both benefit when opposing characters are exerted."` None of these payoffs exerts anything itself; each cashes in on an opposing character that is already exerted.
+The same-side payoff pair names both cards: `"{A} and {B} both benefit when opposing characters are exerted."` None of these payoffs exerts anything itself; each cashes in on an opposing character that is already exerted. An enabler next to a payoff it can't reach names both cards too: `"{A} and {B} both go in an Exert deck."`
+
+### Strength caps and floors
+
+Some enablers exert only a weak character, and some payoffs act only on a strong one:
+
+| Side | Shape | Card |
+|------|-------|------|
+| enabler cap | "Exert all opposing characters **with 2 ¤ or less**." | Ghostly Tale |
+| enabler cap | "exert chosen opposing character **with 2 ¤ or less**." | Tinker Bell - Temperamental Fairy, Scream Canister |
+| payoff floor | "banish chosen exerted character **with 5 ¤ or more**." | Minnie Mouse - Sweetheart Princess |
+
+`exertEnablerReachesPayoff` reads them sentence by sentence. The enabler's reach is the highest cap among its exert effects (none when one of them has no cap), and the payoff's floor is the lowest among its payoff effects (none when one of them has no floor). When the floor sits above the reach, the enabler never exerts a character the payoff can act on, so the pair scores 5 instead of the combo.
 
 ### Live distribution
 
@@ -129,9 +142,10 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| enabler ↔ consume payoff | 75 | 8 | 59.5% |
+| enabler ↔ consume payoff | 72 | 8 | 57.1% |
 | enabler ↔ state payoff | 30 | 6 | 23.8% |
 | payoff ↔ payoff | 21 | 5 | 16.7% |
+| enabler ↔ a payoff it can't reach | 3 | 5 | 2.4% |
 <!-- coverage:end -->
 
 The score-8 share runs high because the consume payoffs are the archetype's identity and every enabler pairs against them. `enabler ↔ enabler` pairs are dropped entirely (payoff-anchored).
@@ -164,7 +178,7 @@ Cards that put a card into an inkwell "facedown and exerted": 48, of which 0 gai
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Exert rule (Exert Matters)')`.
+Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Exert rule (Exert Matters)')`, plus `src/__tests__/exert.test.ts` for strength caps and floors.
 
 ### Role Detection
 
@@ -188,6 +202,16 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | enabler ↔ state payoff → 6 | Petrify ↔ Honeymaren |
 | enabler ↔ enabler → not emitted | payoff-anchored: Petrify ↔ Elsa - The Fifth Spirit produces no pair |
 
+### Strength caps and floors (3 tests, `exert.test.ts`)
+
+Real text of Minnie Mouse - Sweetheart Princess, Ghostly Tale, Scream Canister, Petrify and I'm Stuck!.
+
+| Test | What it verifies |
+|------|------------------|
+| reads whether an enabler reaches the payoff | `exertEnablerReachesPayoff`: a 2 ¤ cap misses Minnie's 5 ¤ floor; an uncapped enabler or an unfloored payoff always meets |
+| a capped enabler with a payoff it can't reach → 5 | Ghostly Tale or Scream Canister ↔ Minnie → 5 from either side, the same-deck line |
+| keeps the combo when the enabler reaches | Petrify ↔ Minnie and Ghostly Tale ↔ I'm Stuck! → 8 |
+
 ---
 
 ## Design Decisions and Rationale
@@ -199,6 +223,10 @@ The original (see REMOVED_RULES.md) fired one-directionally, used no scoring nua
 ### Why payoff-anchored?
 
 Two exert-enablers are parallel soft-removal: tapping two opposing bodies doesn't make either tap better. The combo is the enabler feeding a payoff that converts the tap into a kill or a lock. Emitting `enabler ↔ enabler` at 5 would flood every Amethyst removal card's page with low-signal density; dropping it keeps the rule about the actual interaction.
+
+### Why a strength floor above the cap isn't a combo
+
+Ghostly Tale, Tinker Bell - Temperamental Fairy and Scream Canister exert only a character with 2 ¤ or less, and Minnie Mouse - Sweetheart Princess banishes only an exerted character with 5 ¤ or more. The enabler never sets up a body the payoff can banish, so the 8 would promise a combo the cards can't perform. The pairs stay at the 5 same-deck line, where a payoff ↔ payoff pair sits, rather than drop out: both cards still belong in an Exert deck.
 
 ### Why the consume/state tier split (8 vs 6)?
 

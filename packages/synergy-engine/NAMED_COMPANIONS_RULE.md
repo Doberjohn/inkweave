@@ -68,6 +68,8 @@ The next ability's title is caught before matching instead. Ability titles are A
 
 Before scanning, every Shift reminder is stripped, whatever its cost: `(You may pay 5 ⬡ to play this on top of one of your characters named Elsa.)` or `(You may remove 2 ink drops to play this on top of one of your characters named Baymax.)`. A Shift target belongs to Shift Targets, not here. The strip (`SHIFT_REMINDER` in `cardHelpers.ts`) is keyed on the reminder's own wording, "to play this on top of", rather than on the keyword, so a Shift cost of any shape is covered. The earlier strip required a digit after "Shift", so it missed the ink-drop Shift of Baymax - Amped Up and scored that card's own Shift target as a companion.
 
+A Shift alias is stripped the same way: Incrediboy - Buddy Pine's "This character also counts as being named Syndrome for Shift." makes it a Shift base for Syndrome (see [Shift Targets](SHIFT_TARGET_RULE.md)), not a card that names Syndrome. Read as a reference, it paired Incrediboy with every Syndrome at 6.
+
 `normalizeCardText` runs before all of this, for every rule: it joins the card's printed line breaks and turns typographic apostrophes (`’`, `‘`) into the straight `'` that every card name in the data uses, so the Set 14 reveal text "an item card named Belle’s City Guide" reads "Belle's City Guide". Finally the text is split at each ability title (`ABILITY_TITLE_START`, see Sentence Ends and Ability Titles). The printed line breaks can't mark abilities: they fall mid-sentence, even inside a name.
 
 ### Conjunction Handling
@@ -103,7 +105,7 @@ Scans the card's **entire text** (not just the "named" clause) to determine what
 | Tier | Score | Triggers | Real Card Examples |
 |------|-------|----------|--------------------|
 | **Game-winning** | 8 | Free play (`play.*for free`), draw 2+ cards, deck search | Yzma - On Edge (search deck for named card) |
-| **Strong** | 7 | Cost reduction (`cost X less`), keyword grants (Rush, Evasive, Bodyguard, Singer) | Anna - Trusting Sister (gains Evasive) |
+| **Strong** | 7 | Cost reduction (`pay N ⬡ less`, `costs N less`), keyword grants (Rush, Evasive, Bodyguard, Singer). A cost threshold such as "cost 3 or less" is no reduction: John Smith's Compass, which puts a revealed "character card with cost 3 or less or named Pocahontas" into your hand, is minor | Anna - Trusting Sister (gains Evasive) |
 | **Moderate** | 6 | Stat boosts (+strength/willpower/lore), Resist, Support, can't be challenged | Elsa - Ice Artisan (+2 strength to named Elsa) |
 | **Minor** | 5 | Everything else | Cards with minor conditional effects |
 | **Hostile** | 4 | A `banish` (not `banished`) within 40 characters of "named", read as the card banishing the named target. A passive "named X was banished" condition is not hostile | Buzz's Arm's "named Buzz Lightyear was banished" reads as its free play (8), not as hostile |
@@ -136,13 +138,13 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 ```chart
 {
   "type": "bar",
-  "title": "Effect tier distribution (158 unique pairs)",
+  "title": "Effect tier distribution (156 unique pairs)",
   "data": {
     "labels": ["Hostile (4)", "Minor (5)", "Moderate (6)", "Strong (7)", "Game-winning (8)"],
     "datasets": [
       {
         "label": "Pairs",
-        "data": [0, 62, 31, 44, 21],
+        "data": [0, 67, 29, 39, 21],
         "backgroundColor": ["#60b5f5", "#60b5f5", "#60b5f5", "#6ee7a0", "#6ee7a0"]
       }
     ]
@@ -160,17 +162,17 @@ Named companion synergies cap at 8 (not 9-10) because they're **one-sided depend
 ## Coverage
 
 <!-- coverage:start coverage -->
-- **46 cards** carry a "named" reference, through 37 distinct names.
+- **45 cards** carry a "named" reference, through 36 distinct names.
 - Names no pool card carries: none.
-- Cards with a Companions group: 44. With no target: Alien - True Believer, Leaning Tower of Cheese-a.
+- Cards with a Companions group: 43. With no target: Alien - True Believer, Leaning Tower of Cheese-a.
 
 ```chart
 {
   "type": "doughnut",
-  "title": "Cards by number of targets (44 cards)",
+  "title": "Cards by number of targets (43 cards)",
   "data": {
-    "labels": ["1-4 targets (25)", "5-9 targets (18)", "10-14 targets (1)"],
-    "values": [25, 18, 1]
+    "labels": ["1-4 targets (24)", "5-9 targets (18)", "10-14 targets (1)"],
+    "values": [24, 18, 1]
   }
 }
 ```

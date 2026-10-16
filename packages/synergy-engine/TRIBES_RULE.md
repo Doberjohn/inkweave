@@ -21,7 +21,7 @@ Nine payoff-anchored tribal playstyles generated from **one shared factory** (`m
 A card can hold several roles at once (Philoctetes is `member` + `buff` + `trigger`).
 
 - **member** — `type === 'Character'` AND the card carries one of the spec's `memberClasses`.
-- **buff** — benefits the tribe: a team buff (`your [other] X characters get/gain/can…`, or `… lose` when the tribe sheds a drawback, e.g. Angela - Night Warrior's "lose the Stone by Day ability"), a single-target buff (`chosen X character … gets/gains/can`, or a give-form `+N` stat buff `chosen X character … +\d`), or a tribal ready (`ready your/chosen … X characters`).
+- **buff** — benefits the tribe: a team buff (`your [other] X characters get/gain/can…`, or `… lose` when the tribe sheds a drawback, e.g. Angela - Night Warrior's "lose the Stone by Day ability"; the tribe word must end there, so Beast - Gracious Prince's "Your Princess characters get +1" is a Princess buff and no Prince one), a single-target buff (`chosen X character … gets/gains/can`, or a give-form `+N` stat buff `chosen X character … +\d`), or a tribal ready (`ready your/chosen … X characters`).
 - **trigger** — a repeating trigger tied to the tribe: `whenever you play a X`, or `whenever … your X character(s) … quest/challenge`.
 - **search** — deck dig: `search your deck for a X character` / `reveal a X character`.
 - **in-play-check** — a conditional gated on the tribe: `while/if you have a X in play`, `if a [Y or] X character is in play/chosen`, `if you played/returned a X this turn`, or `if that card is a X character card`. A tribe word inside a name does not count: a `(?<!named (?:[\w'-]+ ){0,2})` guard skips the tribe word when "named" sits up to two words before it. It keeps "while you have an item named Super Suit in play" (Edna Mode - Super Suit Designer) from reading as a Super check, and a future "if you have a character named Mirabel Madrigal in play" from reading as a Madrigal check (Madrigal names end in the tribe word). Widening the guard from one word to two changed no role on any card across all eight tribes.
@@ -30,13 +30,13 @@ Payoff detection runs on the card's whitespace-normalized text (card text carrie
 
 ## Scoring (payoff-anchored, 5-baseline)
 
-The rule is **payoff-anchored** like Floodborn and Items: `scoreTribalPair` returns `null` for member-member pairs, so `tribalFindSynergies` never emits them. A tribe is only interesting through its payoffs. Cards are multi-role, so the **highest applicable bucket wins**:
+The rule is **payoff-anchored** like Floodborn and Items: `scoreTribalPair` returns `null` for member-member pairs, so the rule never emits them. A tribe is only interesting through its payoffs. Cards are multi-role, so the **highest applicable bucket wins**:
 
 | Pair | Score | Explanation (from the first card's page) |
 |------|-------|-------------|
 | search ↔ member \| payoff | **8** | `{A} can reveal {B} from your deck.` When each can find the other: `{A} and {B} can each reveal the other from your deck.` Beside a payoff that is not a member: `{A} can reveal X characters for {B}.` |
 | trigger ↔ member | **7** | `{B} triggers {A}'s X ability.` When each fires the other's: `{A} and {B} trigger each other's X abilities.` |
-| payoff ↔ payoff | **7** | Split by which of the two members the other's ability helps: neither, `{A} and {B} are both X payoffs, so they stack on your board.`; one, that card's buff or in-play-check line; each, `{A} and {B} are both X characters, and each one's ability helps the other.` |
+| payoff ↔ payoff | **5-7** | What each card's ability gives the other (`scorePayoffPair`, shared with Floodborns and Items): each a member the other helps, **7**, `{A} and {B} are both X characters, and each one's ability helps the other.`; only one, **6**, that card's buff or in-play-check line; neither, **5**, `{A} and {B} both go in a X deck.` |
 | buff ↔ member | **6** | `{A}'s X buff powers up {B}.` |
 | in-play-check ↔ member | **6** | `{B} can make {A}'s X ability trigger.` |
 
@@ -44,22 +44,26 @@ The rule is **payoff-anchored** like Floodborn and Items: `scoreTribalPair` retu
 
 Buff scores 6 (a static stat grant) while trigger scores 7 (a repeating engine) — the same principled split Floodborn uses.
 
+**A member counts only for a payoff that names its class.** `tribalPayoffClasses` reads the classifications a payoff's matched clauses name, and `scoreTribalSides` drops a card's `member` role against a payoff that names none of its classes. Agnarr - King of Arendelle's "While you have a Queen character in play" pairs with Queens, not with Kings or Princes. Hans - Noble Scoundrel's "if a Princess or Queen character is in play" pairs with Queens and with the Prince-and-Princess team cards such as Belle & Beast - Certain as the Sun. In a one-class tribe every clause names the class every member holds, so only Royalty, whose payoffs name single ranks, changes. Two payoffs that switch neither one on sit at the same-deck 5: Agnarr and Hans both want a Queen, and neither is one.
+
+**Two payoffs score what each one's ability gives the other.** Two payoffs on one board don't multiply each other, the reason Discard's payoff pairs moved from 7 to 5 (`SCORING_DESIGN.md`). Little John - Sir Reginald ("Chosen Hero character gains Resist +2") and One Last Hope both reward a Hero, and neither is one, so they sit at 5. Little John beside Prince Phillip - Warden of the Woods is the buff ↔ member 6, since Prince Phillip's own buff counts only his other Heroes. Two payoff members that each help the other compound at 7. A trigger never reaches this row: a trigger beside a member it counts is the trigger tier above.
+
 ## Coverage (live pair counts)
 
 <!-- coverage:start coverage -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
 
-| Tribe | Members | Payoff cards | Unique pairs | Score dist (6 / 7 / 8) |
-|-----|-------|------------|------------|----------------------|
-| Monsters | 15 | 1 | 15 | 15 / 0 / 0 |
-| Princesses | 74 | 10 | 735 | 552 / 28 / 155 |
-| Heroes | 338 | 13 | 4,285 | 3,561 / 724 / 0 |
-| Supers | 57 | 7 | 374 | 202 / 116 / 56 |
-| Royalty | 84 | 3 | 242 | 239 / 3 / 0 |
-| Detectives | 39 | 11 | 392 | 275 / 76 / 41 |
-| Gargoyles | 16 | 4 | 54 | 36 / 18 / 0 |
-| Madrigals | 26 | 3 | 74 | 71 / 3 / 0 |
-| Villains | 124 | 2 | 246 | 245 / 1 / 0 |
+| Tribe | Members | Payoff cards | Unique pairs | Score dist (5 / 6 / 7 / 8) |
+|-----|-------|------------|------------|--------------------------|
+| Monsters | 15 | 1 | 15 | 0 / 15 / 0 / 0 |
+| Princesses | 74 | 10 | 735 | 15 / 564 / 1 / 155 |
+| Heroes | 338 | 13 | 4,285 | 28 / 3,596 / 661 / 0 |
+| Supers | 57 | 7 | 374 | 1 / 210 / 107 / 56 |
+| Royalty | 84 | 2 | 56 | 1 / 55 / 0 / 0 |
+| Detectives | 39 | 11 | 392 | 3 / 296 / 52 / 41 |
+| Gargoyles | 16 | 4 | 54 | 0 / 36 / 18 / 0 |
+| Madrigals | 26 | 3 | 74 | 0 / 73 / 1 / 0 |
+| Villains | 124 | 2 | 246 | 0 / 246 / 0 / 0 |
 <!-- coverage:end -->
 
 Members are the characters with the tribe's classification. Payoff cards are the cards holding any other role, members or not. Unique pairs count each pair once, after the engine's ink-compatibility filter (`canShareDeck`), including any pair both its cards' pages hide past the engine's 100-partner display cap (`maxResultsPerGroup`).

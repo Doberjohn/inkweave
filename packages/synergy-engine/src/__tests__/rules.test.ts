@@ -38,6 +38,7 @@ import {
   isTribalCard,
   TRIBAL_SPECS,
   getNamedReferences,
+  isDuoShift,
   transformCard,
 } from '../utils';
 import {createCard} from './fixtures.js';
@@ -145,7 +146,7 @@ describe('Synergy Rules', () => {
 
     it('scores item-engine + payoff at 8', () => { expect(scoreWith(engine, trigger)?.score).toBe(8); });
     it('scores member + trigger payoff at 7', () => { expect(scoreWith(item, trigger)?.score).toBe(7); });
-    it('scores payoff + payoff at 7', () => { expect(scoreWith(trigger, trigger2)?.score).toBe(7); });
+    it('scores payoff + payoff at 5 when neither is an item', () => { expect(scoreWith(trigger, trigger2)?.score).toBe(5); });
     it('scores member + static payoff at 6', () => { expect(scoreWith(item, staticPayoff)?.score).toBe(6); });
     it('drops bare item + bare item (payoff-anchored)', () => { expect(scoreWith(item, item2)).toBeUndefined(); });
     it('drops item-engine + item-engine (neither is a payoff)', () => { expect(scoreWith(engine, engine2)).toBeUndefined(); });
@@ -197,7 +198,7 @@ describe('Synergy Rules', () => {
 
     it('scores search + member at 8', () => { expect(scoreWith(search, member)?.score).toBe(8); });
     it('scores trigger + member at 7', () => { expect(scoreWith(trigger, member)?.score).toBe(7); });
-    it('scores payoff + payoff at 7', () => { expect(scoreWith(teamBuff, trigger)?.score).toBe(7); });
+    it('scores payoff + payoff at 6 when only one helps the other', () => { expect(scoreWith(teamBuff, trigger)?.score).toBe(6); });
     it('scores buff + member at 6', () => { expect(scoreWith(teamBuff, member)?.score).toBe(6); });
     it('scores in-play-check + member at 6', () => { expect(scoreWith(check, member)?.score).toBe(6); });
     it('drops member + member (payoff-anchored)', () => { expect(scoreWith(member, member2)).toBeUndefined(); });
@@ -325,7 +326,7 @@ describe('Synergy Rules', () => {
     const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
 
     it('scores in-play-check + member at 6', () => { expect(scoreWith(itemCheck, member)?.score).toBe(6); });
-    it('scores payoff + payoff at 7', () => { expect(scoreWith(check, itemCheck)?.score).toBe(7); });
+    it('scores payoff + payoff at 6 when only one helps the other', () => { expect(scoreWith(check, itemCheck)?.score).toBe(6); });
     it('drops member + member (payoff-anchored)', () => { expect(scoreWith(member, member2)).toBeUndefined(); });
   });
 
@@ -356,7 +357,7 @@ describe('Synergy Rules', () => {
     const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
 
     it('scores buff + member at 6', () => { expect(scoreWith(buff, member)?.score).toBe(6); });
-    it('scores payoff + payoff at 7', () => { expect(scoreWith(buff, check)?.score).toBe(7); });
+    it('scores payoff + payoff at 6 when only one helps the other', () => { expect(scoreWith(buff, check)?.score).toBe(6); });
     it('drops member + member (payoff-anchored)', () => { expect(scoreWith(member, member2)).toBeUndefined(); });
   });
 
@@ -681,6 +682,59 @@ describe('Synergy Rules', () => {
         const {shiftCard, base} = freeShiftSetup(baseCost, {shiftText, baseText});
         const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
         expect(synergies[0].score).toBe(expected);
+      });
+    });
+
+    describe('Duo Shift scoring', () => {
+      // Duo Shift lands on two characters at once, one with each name, so a single half scores
+      // one tier below a free Shift's base.
+      const duo = createCard({
+        id: 'mickey-minnie-duo',
+        name: 'Mickey Mouse & Minnie Mouse',
+        fullName: 'Mickey Mouse & Minnie Mouse - Adventuring Duo',
+        cost: 7,
+        keywords: ['Duo Shift 0'],
+        text: 'Duo Shift 0 ⬡ (You may pay 0 ⬡ to play this on\ntop of two of your characters, one named Mickey\nMouse and one named Minnie Mouse.)\nTHINKING OF YOU If this character would be\nbanished, put them into your inkwell facedown\nand exerted instead.',
+      });
+      const mickey = (version: string, cost: number) =>
+        createCard({
+          id: 'mickey',
+          name: 'Mickey Mouse',
+          fullName: `Mickey Mouse - ${version}`,
+          cost,
+        });
+
+      it.each([
+        {label: 'cheap half (cost <= 3) → 7', version: 'Steamboat Pilot', cost: 3, expected: 7},
+        {
+          label: 'mid-cost half (cost 4-5) → 5',
+          version: 'Inquisitive Explorer',
+          cost: 4,
+          expected: 5,
+        },
+        {label: 'expensive half (cost 6+) → 3', version: 'Snowboard Ace', cost: 6, expected: 3},
+      ])('$label, from either card', ({version, cost, expected}) => {
+        const half = mickey(version, cost);
+        const pool = [duo, half];
+        expect(shiftRule.findSynergies(duo, pool)[0].score).toBe(expected);
+        expect(shiftRule.findSynergies(half, pool)[0].score).toBe(expected);
+      });
+
+      it("says the half's other half must be in play too", () => {
+        const half = mickey('Steamboat Pilot', 3);
+        expect(shiftRule.findSynergies(half, [duo, half])[0].explanation).toBe(
+          'Duo Shift: play {A} early, then shift {B} in for 0 ink once its other half is in play too.',
+        );
+      });
+
+      it('leaves a Combo Shift, which takes either half, as a plain team Shift', () => {
+        const combo = createCard({
+          name: 'Sulley & Boo',
+          keywords: ['Combo Shift 4'],
+          text: 'Combo Shift 4 ⬡ (You may pay 4 ⬡ to play this on top\nof one of your characters named Sulley, one named Boo,\nor one of each.)',
+        });
+        expect(isDuoShift(duo)).toBe(true);
+        expect(isDuoShift(combo)).toBe(false);
       });
     });
 
@@ -1330,6 +1384,8 @@ describe('Location Synergy Rules', () => {
       ['move + move-trigger → 3', ['move'], ['move-trigger'], 3],
       // two high-value complementary roles → 5
       ['move-trigger + location-ramp → 5', ['move-trigger'], ['location-ramp'], 5],
+      // two high-value roles keep the same-deck 5 over a link with no text tie
+      ['buff + move and buff → 5', ['buff'], ['move', 'buff'], 5],
     ])('%s', (_label, rolesA, rolesB, expected) => {
       expect(getCrossSynergyScore(rolesA, rolesB)).toBe(expected);
     });
@@ -1339,6 +1395,8 @@ describe('Location Synergy Rules', () => {
       ['same roles (boost)', ['boost'], ['boost']],
       ['non-complementary', ['at-payoff'], ['in-play-check']],
       ['non-complementary', ['boost'], ['move']],
+      ['a link with no text tie', ['boost'], ['search']],
+      ['a link with no text tie', ['buff'], ['move']],
     ])('should return null for %s', (_label, rolesA, rolesB) => {
       expect(getCrossSynergyScore(rolesA, rolesB)).toBeNull();
     });
@@ -1703,7 +1761,9 @@ describe('Card Helper Functions', () => {
         name: singerName,
         fullName: `${singerName} - Pop Star`,
         keywords: [opts.singerKeyword ?? 'Singer 5'],
-        ...(opts.singerCost !== undefined && {cost: opts.singerCost}),
+        // Cost 1 by default: a character already sings a song its own cost reaches, so Singer
+        // pairs only with songs above it.
+        cost: opts.singerCost ?? 1,
       });
       const song = createCard({
         id: 'song-1',
@@ -1786,7 +1846,7 @@ describe('Card Helper Functions', () => {
       ['perfect fit (diff 0) → 8', 'Singer 5', 5, 8],
       ['near-perfect (diff 1) → 7', 'Singer 5', 4, 7],
       ['good savings (diff 2) → 6', 'Singer 5', 3, 6],
-      ['inefficient (diff >= 3) → 5', 'Singer 9', 1, 5],
+      ['inefficient (diff >= 3) → 5', 'Singer 9', 2, 5],
     ] as const)('should score %s', (_label, singerKeyword, songCost, expected) => {
       const {singer, song} = makeSingerSongPair({singerKeyword, songCost});
       const synergies = singerRule.findSynergies(singer, [singer, song]);
@@ -1852,15 +1912,14 @@ describe('Card Helper Functions', () => {
       expect(synergies[0].score).toBe(8);
     });
 
-    it('should fall back to card cost when Singer keyword has no numeric value', () => {
+    it('should pair no song when the Singer keyword has no numeric value', () => {
       const {singer, song} = makeSingerSongPair({
         singerKeyword: 'Singer',
         singerCost: 4,
         songCost: 4,
       });
-      const synergies = singerRule.findSynergies(singer, [singer, song]);
-      expect(synergies).toHaveLength(1);
-      expect(synergies[0].score).toBe(8); // falls back to card.cost=4, diff=0
+      // The Singer value falls back to the card's cost, which reaches no song Singer unlocks.
+      expect(singerRule.findSynergies(singer, [singer, song])).toHaveLength(0);
     });
 
     it("names the singer and the song, with the song's cost and the Singer value", () => {
@@ -2909,7 +2968,7 @@ describe('Self-Discard rule (Discard Matters)', () => {
     });
 
     it('fill combos score 7 from a mill and 6 from a hand discard, with the bin-filler as the actor', () => {
-      const pool = [loot, mill, reanimator, discardCount];
+      const pool = [loot, mill, millReanimate, discardCount];
       const find = (from: typeof loot, to: string) =>
         selfDiscardRule.findSynergies(from, pool).find((s) => s.card.id === to);
       expect(find(loot, 'pepita-zone')).toMatchObject({
@@ -2921,7 +2980,7 @@ describe('Self-Discard rule (Discard Matters)', () => {
         explanation: "{A} mills your deck into the discard, feeding {B}'s discard-count payoff.",
       });
       // The payoff is the searcher here, so the filler reads as {B}.
-      expect(find(reanimator, 'quackerjack-mill')).toMatchObject({
+      expect(find(millReanimate, 'quackerjack-mill')).toMatchObject({
         score: 7,
         explanation: '{B} mills cards into your discard for {A} to replay.',
       });
@@ -2961,13 +3020,12 @@ describe('Healing rule (Heal Matters)', () => {
     ink: 'Amber',
     text: 'DO NO WRONG Whenever you remove damage from one of your characters, gain 1 lore for each 1 damage removed.',
   });
-  // Dual-role: healer AND payoff on one card.
-  const ohana = createCard({
-    id: '2495',
-    fullName: 'Ohana Means Family',
-    ink: 'Amber',
-    type: 'Action',
-    text: 'Remove all damage from chosen character of yours. Draw a card for each 1 damage removed this way.',
+  // Dual-role: heals, and pays off any removal, its own included.
+  const bruno = createCard({
+    id: '2869',
+    fullName: 'Bruno Madrigal - Oasis Oracle',
+    ink: 'Sapphire',
+    text: "FIND THAT VISION Once during your turn, whenever you\nremove damage from one of your characters, you may\nlook at the top 2 cards of your deck. Put one into your\nhand and the other on the bottom of your deck.\nYOU'LL BE OKAY Whenever this character quests, you\nmay remove all damage from chosen character.",
   });
 
   // Excluded / unrelated.
@@ -2988,8 +3046,8 @@ describe('Healing rule (Heal Matters)', () => {
       expect(getHealRoles(grandPabbie)).toEqual(['heal-payoff']);
     });
 
-    it('detects a dual-role card as healer + heal-payoff (Ohana Means Family)', () => {
-      expect(getHealRoles(ohana)).toEqual(['healer', 'heal-payoff']);
+    it('detects a dual-role card as healer + heal-payoff (Bruno Madrigal - Oasis Oracle)', () => {
+      expect(getHealRoles(bruno)).toEqual(['healer', 'heal-payoff']);
     });
 
     it('excludes a pure move-damage card and text-less / unrelated cards', () => {
@@ -3635,7 +3693,7 @@ describe('Dwarfs Tribal', () => {
     it('scores member + buff payoff at 6', () => {
       expect(scoreWith(member, buff)?.score).toBe(6);
     });
-    it('scores payoff + payoff at 7', () => {
+    it('scores payoff + payoff at 7 when each helps the other', () => {
       expect(scoreWith(buff, trigger)?.score).toBe(7);
     });
   });

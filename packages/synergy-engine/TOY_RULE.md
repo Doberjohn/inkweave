@@ -107,9 +107,10 @@ return (
   tryToyPeakChain(ctx) ??
   tryToyMemberSearch(ctx) ??
   tryToyTribalCompound(ctx) ??
-  tryToyMemberTribal(ctx) ?? {score: 5, explanation: TOY_DECK_LINE}
+  tryToyMemberTribal(ctx) ??
+  TOY_DECK_PAIR
 );
-// TOY_DECK_LINE: "{A} and {B} both go in a Toys deck."
+// TOY_DECK_PAIR: 5, "{A} and {B} both go in a Toys deck."
 ```
 
 ### Matrix (highest precedence first)
@@ -118,13 +119,13 @@ return (
 |------------|-------|----------------------|
 | **search ↔ banish-trigger** | **8** | `{A} loads a Toy, then {B} pays off when it gets banished. Peak chain.` |
 | **Member ↔ search** | **8** | `{A} fetches {B} from the deck. Direct tribal access.` |
-| **Tribal ↔ Tribal** (other) | **7** | Split by what each card's text counts: neither, `{A} and {B} both go in a Toys deck.`; one, the Member ↔ Tribal line; each, `{A} and {B} are both Toy characters, and each one's ability helps the other.` |
-| **Member ↔ Tribal** | **7** | `{A} can activate {B}'s Toy ability.` when the payoff's text counts the member; otherwise `{A} and {B} both go in a Toys deck.` |
-| **Otherwise** | **5** | `{A} and {B} both go in a Toys deck.` |
+| **Tribal ↔ Tribal** (other) | **7** | When either card's text counts the other: one way, the Member ↔ Tribal line; each way, `{A} and {B} are both Toy characters, and each one's ability helps the other.` |
+| **Member ↔ Tribal** | **7** | `{A} can activate {B}'s Toy ability.`, when the payoff's text counts the member |
+| **Otherwise** | **5** | `{A} and {B} both go in a Toys deck.`, including a tribal pair whose texts count neither card |
 
 On every page `{A}` is the card whose page shows the tile and `{B}` its partner. Each line above is written as the page of the card it names first (the search, the member) shows it. A sentence keeps its order of roles from either page, so on the other card's page its tokens swap: on Woody - Leader of the Toys' page, the You've Got a Friend in Me line reads `{B} fetches {A} from the deck.` The search reads first even when the member has a search of its own: next to You've Got a Friend in Me, Woody is the Toy the song fetches.
 
-The 7 lines follow what the payoff's text counts (`toyAbilityCounts`), not its tag: a text that names Toy characters counts any Toy, and one that names a character counts that card, team halves included (Bullseye - Loyal Horse's discount needs Woody or Jessie, which Woody & Buzz Lightyear meets through its first half). Rex - Protective Dinosaur and Pterodactyl Janie Doll hold Toy payoff roles for their own banish, which counts no other Toy. Their pairs read as the same-deck line unless the partner's text counts them: next to Jingle Joe - Sid's Toy, whose ability counts Toy characters, they read `{A} can activate {B}'s Toy ability.`
+The 7 lines follow what the payoff's text counts (`toyAbilityCounts`), not its tag: a text that names Toy characters counts any Toy, and one that names a character counts that card, team halves included (Bullseye - Loyal Horse's discount needs Woody or Jessie, which Woody & Buzz Lightyear meets through its first half). Rex - Protective Dinosaur and Pterodactyl Janie Doll hold Toy payoff roles for their own banish, which counts no other Toy. Their pairs sit at the same-deck 5 unless the partner's text counts them: next to Jingle Joe - Sid's Toy, whose ability counts Toy characters, they score 7 and read `{A} can activate {B}'s Toy ability.` A 7 needs that count, since the same-deck line names no link between the cards. Bullseye - Loyal Horse scores 7 only with a Woody or a Jessie.
 
 The "otherwise" bucket covers Member↔Member, Member↔generic, and Generic↔generic pairs. Generic mechanics' actual cross-card synergies (draw↔draw, burn↔steal) are owned by their own playstyles (Lore Denial, Discard, Ramp) — Toys gives them only the deck-share floor to avoid double-counting.
 
@@ -145,8 +146,9 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 |----------|-----|-----|-----|
 | member ↔ search | 43 | 8 | 10.8% |
 | search ↔ banish-trigger | 10 | 8 | 2.5% |
-| tribal ↔ tribal | 36 | 7 | 9.0% |
-| member ↔ tribal | 147 | 7 | 36.9% |
+| tribal ↔ tribal | 33 | 7 | 8.3% |
+| member ↔ tribal | 103 | 7 | 25.9% |
+| tribal ↔ member or tribal, no text counting the other card | 47 | 5 | 11.8% |
 | member ↔ member, member ↔ generic, generic ↔ generic | 162 | 5 | 40.7% |
 
 Role population (roles no card holds are left out):
@@ -196,6 +198,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 | member ↔ banish-trigger (member feeds the trigger) | 7 |
 | member ↔ self-discount (member activates discount density) | 7 |
 | tribal ↔ tribal (multiple density rewards compound) | 7 |
+| a payoff that counts no other Toy (Rex - Protective Dinosaur) ↔ member or payoff (`toy.test.ts`) | 5 |
 | member ↔ generic mechanic (deck-share, no tribal compounding) | 5 |
 | Rule does not match non-Toy cards | (boolean) |
 
