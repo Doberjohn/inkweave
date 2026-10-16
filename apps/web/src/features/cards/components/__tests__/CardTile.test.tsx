@@ -109,10 +109,10 @@ describe('CardTile', () => {
     expect(screen.getByRole('button', {name: 'Elsa - Snow Queen, Enchanted printing'})).toBeInTheDocument();
   });
 
-  it("names a pocket for a printing that keeps its base card's rarity by its collector number (#796)", () => {
+  it("names a pocket for a printing that keeps its base card's rarity as an alt foil (#802)", () => {
     const pocket = createCard({...mockCard, rarity: 'Super Rare', setNumber: 247, baseId: '3147'});
     render(<CardTile card={pocket} onSelect={vi.fn()} />);
-    expect(screen.getByRole('button', {name: 'Elsa - Snow Queen, #247 printing'})).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Elsa - Snow Queen, Alt foil printing'})).toBeInTheDocument();
   });
 
 });
