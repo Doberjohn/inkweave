@@ -1,7 +1,7 @@
 import {useTransition} from 'react';
 import {useSearchParams} from 'react-router-dom';
 import type {Ink} from '../../features/cards';
-import type {CardFilterOptions} from '../../features/cards/loader';
+import {countFilterOptions, offersDualOnly, type CardFilterOptions} from '../../features/cards/loader';
 import type {CardTypeFilter, BrowseSortOrder} from '../constants';
 import {BROWSE_SORT_OPTIONS} from '../constants';
 import type {InkwellValue} from '../components/InkwellIcon';
@@ -43,16 +43,63 @@ function setOrDelete(params: URLSearchParams, key: string, value: string): void 
   else params.delete(key);
 }
 
-/** Serialize CardFilterOptions into URL params (keyword, classification, set, inkwell). */
+/**
+ * A comma-separated list param, as `ink` and `type` already are: keyword,
+ * classification and set hold several values since the chips and set logos
+ * (owner, 2026-10-08). An old single-value link still reads, as a list of one.
+ * Undefined when empty.
+ */
+function parseList(raw: string | null): string[] | undefined {
+  const values = raw ? raw.split(',').filter(Boolean) : [];
+  return values.length > 0 ? values : undefined;
+}
+
+/**
+ * The set filter's param. Exported for collection mode, which keeps no set filter: it
+ * opens the set one names and drops it, since its set is chosen in the collection panel.
+ */
+export const SET_PARAM = 'set';
+
+/**
+ * Every CardFilterOptions field the URL carries: its param, how to read it, and how
+ * to write it (an empty value deletes the param). One table for both directions, so a
+ * new option cannot be read without being written, or the other way round.
+ */
+const OPTION_PARAMS: readonly {
+  param: string;
+  read: (raw: string | null) => Partial<CardFilterOptions>;
+  write: (options: CardFilterOptions) => string | undefined;
+}[] = [
+  {param: 'keyword', read: (raw) => ({keywords: parseList(raw)}), write: (o) => o.keywords?.join(',')},
+  {param: 'classification', read: (raw) => ({classifications: parseList(raw)}), write: (o) => o.classifications?.join(',')},
+  {param: SET_PARAM, read: (raw) => ({setCodes: parseList(raw)}), write: (o) => o.setCodes?.join(',')},
+  {param: 'rarity', read: (raw) => ({rarities: parseList(raw)}), write: (o) => o.rarities?.join(',')},
+  {param: 'inkwell', read: (raw) => ({inkwell: raw && isValidInkwell(raw) ? raw : undefined}), write: (o) => o.inkwell},
+  {param: 'inkmatch', read: (raw) => ({inkMatch: raw === 'dual' ? 'dual' : undefined}), write: (o) => o.inkMatch},
+];
+
+/** Serialize CardFilterOptions into their URL params. */
 function serializeFilterOptions(params: URLSearchParams, opts: CardFilterOptions): void {
-  params.delete('keyword');
-  params.delete('classification');
-  params.delete('set');
-  params.delete('inkwell');
-  if (opts.keywords?.length) params.set('keyword', opts.keywords[0]);
-  if (opts.classifications?.length) params.set('classification', opts.classifications[0]);
-  if (opts.setCode) params.set('set', opts.setCode);
-  if (opts.inkwell) params.set('inkwell', opts.inkwell);
+  for (const {param, write} of OPTION_PARAMS) setOrDelete(params, param, write(opts) ?? '');
+}
+
+/** CardFilterOptions from the URL, holding only the options it carries: an empty URL reads as `{}`. */
+function parseFilterOptions(params: URLSearchParams): CardFilterOptions {
+  const options = Object.assign({}, ...OPTION_PARAMS.map((field) => field.read(params.get(field.param))));
+  return Object.fromEntries(Object.entries(options).filter(([, value]) => value !== undefined));
+}
+
+/**
+ * Switch the Dual-ink cards mode off once the ink selection no longer offers it
+ * (none, or three or more inks), the moment its switch disappears. Run after
+ * EVERY write, so no path (a third ink, clearing them, the dialog's Apply) can
+ * strand it out of sight: left in the URL it would come back on, unasked, for the
+ * next selection. The filter itself ignores it there too; this keeps the URL
+ * honest.
+ */
+function dropDualOnlyWhenNotOffered(params: URLSearchParams): void {
+  const inkCount = new Set(parseCommaSeparated(params.get('ink'), isValidInk)).size;
+  if (!offersDualOnly(inkCount)) params.delete('inkmatch');
 }
 
 /** Parse comma-separated values from a URL param, filtering by validator */
@@ -100,30 +147,15 @@ export function useFilterParams(): UseFilterParamsReturn {
 
   const costFilters: number[] = parseCostParam(searchParams.get('cost'));
 
-  const filters: CardFilterOptions = (() => {
-    const f: CardFilterOptions = {};
-    const keyword = searchParams.get('keyword');
-    if (keyword) f.keywords = [keyword];
-    const classification = searchParams.get('classification');
-    if (classification) f.classifications = [classification];
-    const set = searchParams.get('set');
-    if (set) f.setCode = set;
-    const inkwell = searchParams.get('inkwell');
-    if (inkwell && isValidInkwell(inkwell)) f.inkwell = inkwell;
-    return f;
-  })();
+  const filters = parseFilterOptions(searchParams);
 
   const sortOrder: BrowseSortOrder = (() => {
     const raw = searchParams.get('sort');
     return raw && VALID_SORTS.has(raw) ? (raw as BrowseSortOrder) : 'newest';
   })();
 
-  const activeFilterCount =
-    inkFilters.length +
-    typeFilters.length +
-    costFilters.length +
-    [filters.keywords?.length, filters.classifications?.length, filters.setCode, filters.inkwell].filter(Boolean)
-      .length;
+  // Every picked value counts, as each ink and type already does (see countFilterOptions).
+  const activeFilterCount = inkFilters.length + typeFilters.length + costFilters.length + countFilterOptions(filters);
 
   // Mark all filter/sort updates as non-urgent so filter buttons stay responsive
   // while the card grid re-renders with the new filters in the background.
@@ -136,6 +168,7 @@ export function useFilterParams(): UseFilterParamsReturn {
         (prev) => {
           const next = new URLSearchParams(prev);
           updater(next);
+          dropDualOnlyWhenNotOffered(next);
           return next;
         },
         {replace: true},

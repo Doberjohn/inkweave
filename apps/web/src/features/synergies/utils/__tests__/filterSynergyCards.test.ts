@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {filterSynergyCards, EMPTY_SYNERGY_FILTERS} from '../filterSynergyCards';
+import {filterSynergyCards, EMPTY_SYNERGY_FILTERS, withoutStaleDualOnly} from '../filterSynergyCards';
 import type {SynergyFilterState} from '../filterSynergyCards';
 import type {SynergyMatchDisplay} from '../../types';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
@@ -53,7 +53,7 @@ describe('filterSynergyCards', () => {
     expect(result.map((s) => s.card.fullName)).toEqual(['Amber Char', 'Amber Location']);
   });
 
-  it('should OR multiple ink values', () => {
+  it('should show the mono-ink cards of every selected ink', () => {
     const result = filterSynergyCards(synergies, withFilters({inkFilters: ['Amber', 'Ruby']}));
     expect(result).toHaveLength(3);
   });
@@ -66,6 +66,20 @@ describe('filterSynergyCards', () => {
   it('should handle Song pseudo-type separately from Action', () => {
     const result = filterSynergyCards(synergies, withFilters({typeFilters: ['Song']}));
     expect(result.map((s) => s.card.fullName)).toEqual(['Ruby Action']);
+  });
+
+  describe('Action and Song, as Browse reads them', () => {
+    const withPlainAction = [...synergies, mockSynergy({fullName: 'Steel Action', ink: 'Steel', type: 'Action'})];
+
+    it('keeps Songs out of Action', () => {
+      const result = filterSynergyCards(withPlainAction, withFilters({typeFilters: ['Action']}));
+      expect(result.map((s) => s.card.fullName)).toEqual(['Steel Action']);
+    });
+
+    it('keeps every action when Action and Song are both picked', () => {
+      const result = filterSynergyCards(withPlainAction, withFilters({typeFilters: ['Action', 'Song']}));
+      expect(result.map((s) => s.card.fullName)).toEqual(['Ruby Action', 'Steel Action']);
+    });
   });
 
   it('should filter by cost with exact match', () => {
@@ -116,7 +130,7 @@ describe('filterSynergyCards', () => {
   });
 
   it('should filter by set code', () => {
-    const result = filterSynergyCards(synergies, withFilters({filters: {setCode: 'TFC'}}));
+    const result = filterSynergyCards(synergies, withFilters({filters: {setCodes: ['TFC']}}));
     expect(result).toHaveLength(4); // all have setCode 'TFC'
   });
 
@@ -134,9 +148,70 @@ describe('filterSynergyCards', () => {
     expect(result).toEqual([]);
   });
 
+  it('should keep cards of any picked rarity', () => {
+    const pool = [
+      mockSynergy({fullName: 'Common', rarity: 'Common'}),
+      mockSynergy({fullName: 'Rare', rarity: 'Rare'}),
+      mockSynergy({fullName: 'Legendary', rarity: 'Legendary'}),
+    ];
+    const result = filterSynergyCards(pool, withFilters({filters: {rarities: ['Rare', 'Legendary']}}));
+    expect(result.map((s) => s.card.fullName)).toEqual(['Rare', 'Legendary']);
+  });
+
+  it('should keep only cards carrying every picked keyword', () => {
+    const pool = [
+      mockSynergy({fullName: 'Evasive', keywords: ['Evasive']}),
+      mockSynergy({fullName: 'Evasive Ward', keywords: ['Evasive', 'Ward']}),
+    ];
+    const result = filterSynergyCards(pool, withFilters({filters: {keywords: ['Evasive', 'Ward']}}));
+    expect(result.map((s) => s.card.fullName)).toEqual(['Evasive Ward']);
+  });
+
   it('should handle cards with undefined keywords defensively', () => {
     const withUndef = [mockSynergy({keywords: undefined})];
     const result = filterSynergyCards(withUndef, withFilters({filters: {keywords: ['test']}}));
     expect(result).toEqual([]);
+  });
+
+  // The SAME ink rule as Browse: a card page's synergies and the grid must answer
+  // an ink selection identically.
+  describe('ink rule shared with Browse', () => {
+    const pool = [
+      mockSynergy({fullName: 'Amber', ink: 'Amber'}),
+      mockSynergy({fullName: 'Amber-Ruby', ink: 'Amber', ink2: 'Ruby'}),
+      mockSynergy({fullName: 'Steel', ink: 'Steel'}),
+    ];
+    const names = (state: Partial<SynergyFilterState>) =>
+      filterSynergyCards(pool, withFilters(state)).map((s) => s.card.fullName);
+
+    it('shows a dual-ink card under either of its inks alone', () => {
+      expect(names({inkFilters: ['Amber']})).toEqual(['Amber', 'Amber-Ruby']);
+      // The old primary-ink check missed this one.
+      expect(names({inkFilters: ['Ruby']})).toEqual(['Amber-Ruby']);
+    });
+
+    it('hides a dual-ink card from a pair that is not its own', () => {
+      expect(names({inkFilters: ['Amber', 'Steel']})).toEqual(['Amber', 'Steel']);
+    });
+
+    it('narrows to dual-ink cards when the Dual-ink cards switch is on', () => {
+      expect(names({inkFilters: ['Amber'], filters: {inkMatch: 'dual'}})).toEqual(['Amber-Ruby']);
+    });
+  });
+
+  it('should switch the Dual-ink cards mode off once three inks no longer offer it', () => {
+    const pair = withFilters({inkFilters: ['Amber', 'Steel'], filters: {inkMatch: 'dual'}});
+    expect(withoutStaleDualOnly(pair)).toBe(pair);
+    const three = withoutStaleDualOnly({...pair, inkFilters: ['Amber', 'Steel', 'Ruby']});
+    expect(three.filters.inkMatch).toBeUndefined();
+  });
+
+  it('should filter by inkwell', () => {
+    const pool = [
+      mockSynergy({fullName: 'Inkable', inkwell: true}),
+      mockSynergy({fullName: 'Uninkable', inkwell: false}),
+    ];
+    const result = filterSynergyCards(pool, withFilters({filters: {inkwell: 'uninkable'}}));
+    expect(result.map((s) => s.card.fullName)).toEqual(['Uninkable']);
   });
 });

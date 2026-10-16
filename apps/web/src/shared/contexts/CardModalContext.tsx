@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import {useNavigate, useLocation} from 'react-router-dom';
-import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
+import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import {usePrecomputedSynergies} from '../../features/synergies/hooks';
 import {CardOverviewModalFallback} from '../../features/synergies/components/CardOverviewModalFallback';
 import {useCardDataContext} from './CardDataContext';
@@ -29,6 +29,28 @@ const LazyCardOverviewModal = lazyWithRetry(loadCardOverviewModal, 'CardOverview
 interface OpenCardModalOptions {
   /** Open on this Epic/Enchanted/Iconic printing (a variant id) instead of the Standard art. */
   printingId?: string;
+  /**
+   * The printing each card starts on, for the opened card and every sibling the
+   * arrows step to, by its id and its place in `siblingIds`. Browse opens a card on the
+   * printing its tile shows (owner, 2026-10-08), so paging through an Enchanted result
+   * stays on Enchanted art. A binder answers by place: it holds a card and its printings
+   * as pockets of their own, listed under the card's one id.
+   * `printingId`, when also given, wins for the opened card.
+   */
+  printingFor?: (cardId: string, index: number) => string | undefined;
+  /**
+   * Where the opened card sits in `siblingIds`, for a list that holds an id more than
+   * once (a binder's card and its printings). Defaults to the id's first place.
+   */
+  siblingIndex?: number;
+  /**
+   * Resolve an id `CardDataContext` does not hold: the collection's cards from sets
+   * 1-8 (#553 Phase C), which are viewable but never enter the Core data on purpose.
+   * Consulted only when the Core lookup misses, for the opened card and for every
+   * sibling the arrows step to, so a binder's prev/next crosses both kinds. A card
+   * resolved here opens with an "outside Core" note in place of synergies.
+   */
+  resolveCard?: (cardId: string) => LorcanaCard | undefined;
 }
 
 interface CardModalContextValue {
@@ -42,6 +64,8 @@ interface CardModalContextValue {
   siblingCardIds: string[];
   /** The printing this open started on (see OpenCardModalOptions), or null for the Standard art. */
   initialPrintingId: string | null;
+  /** The open's fallback resolver (see OpenCardModalOptions), or null. */
+  resolveCard: ((cardId: string) => LorcanaCard | undefined) | null;
   openCardModal: (cardId: string, siblingIds?: string[], options?: OpenCardModalOptions) => void;
   /**
    * Open the modal directly in comparison state. Optional `groupKey` filters connections to
@@ -93,7 +117,14 @@ export function CardModalProvider({children}: {children: ReactNode}) {
   // Drives `hideBackButton` — there's no default state to step back to if the user never saw one.
   const [hasUserSeenDefaultState, setHasUserSeenDefaultState] = useState(false);
   const [siblingCardIds, setSiblingCardIds] = useState<string[]>([]);
+  // The open card's place in `siblingCardIds`, kept rather than looked up: a list can hold
+  // an id twice, and finding the first copy sent a binder's arrows back to it in a loop.
+  const [siblingIndex, setSiblingIndex] = useState(-1);
   const [initialPrintingId, setInitialPrintingId] = useState<string | null>(null);
+  const [resolveCard, setResolveCard] = useState<((cardId: string) => LorcanaCard | undefined) | null>(null);
+  const [printingFor, setPrintingFor] = useState<((cardId: string, index: number) => string | undefined) | null>(
+    null,
+  );
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -111,8 +142,13 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setSelectedCardId(cardId);
     setComparisonPartnerId(null);
     setComparisonGroupKey(null);
+    const index = options.siblingIndex ?? siblingIds.indexOf(cardId);
     setSiblingCardIds(siblingIds);
-    setInitialPrintingId(options.printingId ?? null);
+    setSiblingIndex(index);
+    setInitialPrintingId(options.printingId ?? options.printingFor?.(cardId, index) ?? null);
+    // Wrapped: a bare function passed to a state setter is called as an updater.
+    setResolveCard(() => options.resolveCard ?? null);
+    setPrintingFor(() => options.printingFor ?? null);
     // hasUserSeenDefaultState will flip true on the next render via the guard above.
   };
 
@@ -121,7 +157,10 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setComparisonPartnerId(partnerId);
     setComparisonGroupKey(groupKey ?? null);
     setSiblingCardIds([]);
+    setSiblingIndex(-1);
     setInitialPrintingId(null);
+    setResolveCard(null);
+    setPrintingFor(null);
     // Don't touch hasUserSeenDefaultState here — its value is determined by whether the user
     // had previously been in default state for this session. Click flow: openCardModal was
     // called first, flag is already true. Deep link: openComparison is the first call, flag
@@ -134,22 +173,26 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setComparisonGroupKey(null);
     setHasUserSeenDefaultState(false);
     setSiblingCardIds([]);
+    setSiblingIndex(-1);
     setInitialPrintingId(null);
+    setPrintingFor(null);
+    // The provider outlives collection mode; a kept resolver would hold its pool.
+    setResolveCard(null);
     if (location.pathname.startsWith('/compare/')) {
       navigate('/');
     }
   };
 
   const goToSibling = (direction: 1 | -1) => {
-    if (!selectedCardId || siblingCardIds.length < 2) return;
-    const index = siblingCardIds.indexOf(selectedCardId);
-    if (index === -1) return;
+    if (!selectedCardId || siblingCardIds.length < 2 || siblingIndex === -1) return;
     const n = siblingCardIds.length;
-    const nextId = siblingCardIds[(index + direction + n) % n];
+    const next = (siblingIndex + direction + n) % n;
+    const nextId = siblingCardIds[next];
     setSelectedCardId(nextId);
+    setSiblingIndex(next);
     setComparisonPartnerId(null);
     setComparisonGroupKey(null);
-    setInitialPrintingId(null);
+    setInitialPrintingId(printingFor?.(nextId, next) ?? null);
   };
 
   const {enterComparisonRoute, exitComparisonRoute} = useComparisonRouteSync({
@@ -165,6 +208,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     hasUserSeenDefaultState,
     siblingCardIds,
     initialPrintingId,
+    resolveCard,
     openCardModal,
     openComparison,
     closeCardModal,
@@ -233,6 +277,23 @@ interface CardModalRootProps {
   onExitComparison: () => void;
 }
 
+/**
+ * The card to show, and whether it came from outside Core. The open's resolver is
+ * asked only when the Core lookup misses: a card from sets 1-8, opened from a
+ * collection (#553 Phase C), which never enters CardDataContext on purpose.
+ */
+function resolveModalCard(
+  id: string | null,
+  getCardById: (id: string) => LorcanaCard | undefined,
+  resolveCard: ((id: string) => LorcanaCard | undefined) | null,
+): {card: LorcanaCard | null; outsideCore: boolean} {
+  if (id === null) return {card: null, outsideCore: false};
+  const core = getCardById(id);
+  if (core) return {card: core, outsideCore: false};
+  const outside = resolveCard?.(id) ?? null;
+  return {card: outside, outsideCore: outside !== null};
+}
+
 function CardModalRoot({onEnterComparison, onExitComparison}: CardModalRootProps) {
   const {
     selectedCardId,
@@ -241,14 +302,15 @@ function CardModalRoot({onEnterComparison, onExitComparison}: CardModalRootProps
     hasUserSeenDefaultState,
     siblingCardIds,
     initialPrintingId,
+    resolveCard,
     closeCardModal,
     goToSibling,
   } = useCardModal();
   const {getCardById} = useCardDataContext();
   const {isMobile} = useResponsive();
-  const card = selectedCardId ? (getCardById(selectedCardId) ?? null) : null;
+  const {card, outsideCore} = resolveModalCard(selectedCardId, getCardById, resolveCard);
   const partnerCard = comparisonPartnerId ? (getCardById(comparisonPartnerId) ?? null) : null;
-  const {synergies, getPairSynergies, isLoading: synergiesLoading} = usePrecomputedSynergies(card);
+  const {synergies, getPairSynergies, isLoading: synergiesLoading} = usePrecomputedSynergies(outsideCore ? null : card);
   const {Modal, openedBeforeModalReady} = useModalForOpen(card !== null);
 
   if (!card) return null;
@@ -280,6 +342,7 @@ function CardModalRoot({onEnterComparison, onExitComparison}: CardModalRootProps
         card={card}
         synergies={synergies}
         synergiesLoading={synergiesLoading}
+        outsideCore={outsideCore}
         onClose={closeCardModal}
         getPairSynergies={getPairSynergies}
         isMobile={isMobile}

@@ -13,6 +13,7 @@ import {
   specialSlotsFor,
 } from '..';
 import {FRANCHISE_SPOTLIGHTS, SET_SPOTLIGHTS} from '../../../features/reveals/setSpotlights';
+import {rarityConfigOf} from '../../../features/reveals/rarity';
 
 // Guards the reveal season's one-constant switch (revealSet.ts) against the data
 // it must agree with. A half-done switch is otherwise silent: the page renders,
@@ -41,7 +42,14 @@ interface PreviewCard {
   color?: string;
   scanLanguage?: string;
   variants?: VariantEntry[];
+  /** The type line's subtypes: "Song", a classification, a set subtype like "Hyperia City". */
+  subtypes?: string[];
+  /** One of the five base rarities; Epic/Enchanted/Iconic live on `variants`. */
+  rarity?: string;
 }
+
+/** Card types, which belong in `type`, never in `subtypes`. */
+const CARD_TYPES = new Set(['Character', 'Action', 'Item', 'Location']);
 
 interface PreviewFile {
   sets: Record<string, {name?: string; number?: number; prereleaseDate?: string; releaseDate?: string} | undefined>;
@@ -116,6 +124,25 @@ describe('reveal-set integrity', () => {
   it('every preview card belongs to the reveal set and has a well-formed id', () => {
     const malformed = preview.cards.filter((c) => !hasWellFormedId(c)).map((c) => `${c.id} ${c.fullName}`);
     expect(malformed).toEqual([]);
+  });
+
+  // The publisher's subtypes are typed by hand, and a card type typed there became a
+  // bogus Classification chip in Browse's filters ("Action", "Item"; fixed 2026-10-08).
+  // "Song" and set subtypes such as "Hyperia City" are printed on the card and valid.
+  it('no preview card lists its card type among its subtypes', () => {
+    const misfiled = preview.cards
+      .filter((c) => (c.subtypes ?? []).some((subtype) => CARD_TYPES.has(subtype)))
+      .map((c) => `${c.id} ${c.fullName}: ${JSON.stringify(c.subtypes)}`);
+    expect(misfiled).toEqual([]);
+  });
+
+  // A card without one matches no Rarity filter and drops out of every rarity count
+  // (Judy Hopps - Helpful Officer shipped without one; fixed 2026-10-08).
+  it('every preview card has one of the five base rarities', () => {
+    const missing = preview.cards
+      .filter((c) => rarityConfigOf(c.rarity) === undefined)
+      .map((c) => `${c.id} ${c.fullName}: ${JSON.stringify(c.rarity)}`);
+    expect(missing).toEqual([]);
   });
 
   it('no preview card id collides with a canonical card (the loader would silently drop it)', () => {

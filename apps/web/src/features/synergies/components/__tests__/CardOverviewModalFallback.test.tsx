@@ -46,22 +46,24 @@ describe('CardOverviewModalFallback', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it.each([false, true])(
-    'holds the space for the printing pills out of sight, so the modal adds them without a shift (mobile: %s)',
-    (isMobile) => {
-      const {container} = render(
-        <CardOverviewModalFallback card={cardWithPrintings} isMobile={isMobile} onClose={vi.fn()} />,
-      );
+  it('holds the space for the printing pills out of sight on mobile, so the modal adds them without a shift', () => {
+    const {container} = render(<CardOverviewModalFallback card={cardWithPrintings} isMobile onClose={vi.fn()} />);
 
-      expect(container.querySelector('[role="radiogroup"]')).not.toBeNull();
-      expect(screen.queryByRole('radiogroup')).toBeNull();
-    },
-  );
+    expect(container.querySelector('[role="radiogroup"]')).not.toBeNull();
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+  });
 
-  it('reserves no printing space for a card with a single printing', () => {
-    const {container} = render(<CardOverviewModalFallback card={card} isMobile={false} onClose={vi.fn()} />);
+  // Desktop's controls sit in a row pinned under the shrunk art, so the placeholder shrinks alike.
+  it('shrinks the card placeholder on desktop for a card with art controls, and only then', () => {
+    const placeholder = (c: LorcanaCard) => {
+      const {container, unmount} = render(<CardOverviewModalFallback card={c} isMobile={false} onClose={vi.fn()} />);
+      const transform = container.querySelector<HTMLElement>('.react-loading-skeleton')!.style.transform;
+      unmount();
+      return transform;
+    };
 
-    expect(container.querySelector('[role="radiogroup"]')).toBeNull();
+    expect(placeholder(cardWithPrintings)).toMatch(/^scale\(0\.\d+\)$/);
+    expect(placeholder(card)).toBe('');
   });
 
   it.each([

@@ -1,13 +1,23 @@
 import 'react-loading-skeleton/dist/skeleton.css';
+// The app's own stylesheet, as main.tsx loads it. Without it no story had the
+// classes defined there: the card tiles' hover ring and press, the binder's
+// unowned grey, the foil shimmer and every keyframe, so stories quietly differed
+// from the app.
+import '../src/index.css';
 import type {Preview} from '@storybook/react-vite';
+import {SkeletonTheme} from 'react-loading-skeleton';
 import {themes} from 'storybook/theming';
+import {COLORS} from '../src/shared/constants';
 
 const preview: Preview = {
   decorators: [
     (Story) => (
-      <div style={{background: '#0d0d14', minHeight: '100vh', padding: 0}}>
-        <Story />
-      </div>
+      // AppLayout's one SkeletonTheme (#511): without it, skeletons render light grey here.
+      <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+        <div style={{background: '#0d0d14', minHeight: '100vh', padding: 0}}>
+          <Story />
+        </div>
+      </SkeletonTheme>
     ),
   ],
   parameters: {

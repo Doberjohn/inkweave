@@ -55,11 +55,11 @@ export interface CardPrintingState {
 export const CardPrintingContext = createContext<CardPrintingState | null>(null);
 
 /**
- * Which printing the modal shows. A card opens on its Standard printing, or on the printing it
- * was opened with (`initialPrintingId`, from a reveals board special slot), and a comparison
- * always shows the base art, so closing, paging and entering a comparison all reset it (and a
- * comparison locks the strip). The translation reads it (useCardTranslation), so it is called
- * first.
+ * Which printing the modal shows. A card opens on its Standard printing, or on the printing the
+ * open names for it (`initialPrintingId`: a reveals board special slot, or for every card the
+ * arrows reach, the art its Browse tile showed). A comparison always shows the base art, so
+ * closing and entering a comparison reset it (and a comparison locks the strip). The
+ * translation reads it (useCardTranslation), so it is called first.
  */
 export function useModalPrinting(
   card: LorcanaCard,

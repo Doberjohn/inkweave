@@ -14,6 +14,7 @@ const defaultProps = {
   filters: {},
   uniqueKeywords: ['Singer', 'Evasive', 'Ward'],
   uniqueClassifications: ['Princess', 'Hero', 'Villain'],
+  uniqueRarities: ['Common', 'Rare'],
   sets: [
     {code: '1', name: 'The First Chapter', number: 1},
     {code: '5', name: 'Shimmering Skies', number: 5},
@@ -181,15 +182,15 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
     expect(defaultProps.onApply).not.toHaveBeenCalled();
   });
 
-  it('should update draft keyword via dropdown', () => {
+  it('should collect several draft keywords from their chips', () => {
     const onApply = vi.fn();
     render(<FilterDialog {...defaultProps} variant={variant} onApply={onApply} />);
 
-    const selects = screen.getAllByRole('combobox');
-    fireEvent.change(selects[0], {target: {value: 'Singer'}});
+    fireEvent.click(screen.getByRole('button', {name: 'Singer'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Ward'}));
     fireEvent.click(screen.getByRole('button', {name: /apply/i}));
 
-    expect(onApply).toHaveBeenCalledWith([], [], [], {keywords: ['Singer']});
+    expect(onApply).toHaveBeenCalledWith([], [], [], {keywords: ['Singer', 'Ward']});
   });
 
   it('should have correct ARIA attributes', () => {
@@ -213,14 +214,16 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
         typeFilters={['Character']}
         costFilters={[2, 5]}
         filters={{
-          keywords: ['Singer'],
+          keywords: ['Singer', 'Ward'],
           classifications: ['Princess'],
-          setCode: '5',
+          setCodes: ['5', '6'],
         }}
       />,
     );
 
-    expect(screen.getByText(/filters \(7\)/i)).toBeInTheDocument();
+    // Every picked value counts: 1 ink + 1 type + 2 costs + 2 keywords + 1
+    // classification + 2 sets. Counting each list as one gave 7.
+    expect(screen.getByText(/filters \(9\)/i)).toBeInTheDocument();
   });
 });
 

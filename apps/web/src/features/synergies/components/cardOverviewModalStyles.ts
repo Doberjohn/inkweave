@@ -1,5 +1,7 @@
 import type {CSSProperties} from 'react';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
+import {hasForeignScan, printingsOf} from '../../../shared/hooks/usePrintingSelection';
 
 /*
  * The card modal's chrome, shared by CardOverviewModal and CardOverviewModalFallback (#640). The
@@ -105,6 +107,42 @@ export function modalCardSize(isMobile: boolean): {cardWidth: number; cardHeight
   return {cardWidth, cardHeight: Math.round((cardWidth * 368) / 264)};
 }
 
+/**
+ * The row of art controls under a desktop card (#625's printing pills, #681's translation
+ * toggle; owner, 2026-10-08, they sat in the header before): as tall as the pills, 34px
+ * from their padding and text.
+ */
+export const ART_CONTROLS_HEIGHT = 34;
+
+/** Whether a card has art controls: printings to switch between, or a foreign scan to translate. */
+export function hasArtControls(card: LorcanaCard): boolean {
+  return printingsOf(card).length > 1 || hasForeignScan(card);
+}
+
+/**
+ * A desktop card's art, shrunk so it, the column's gap and the controls under it fill the
+ * card's height: the row and the synergy column beside it keep their size, and nothing under
+ * the card can be clipped (the desktop body never scrolls). A scale, not a smaller size: the
+ * art's box stays where a comparison expects it (card B is drawn at full size), so growing
+ * back for one can animate with the comparison's own motion.
+ */
+export function artScaleTransform(cardHeight: number): string {
+  return `scale(${(cardHeight - SPACING.md - ART_CONTROLS_HEIGHT) / cardHeight})`;
+}
+
+/** The art controls' row, pinned to the bottom of the card's column and centred under the art. */
+export const DESKTOP_ART_CONTROLS_STYLE: CSSProperties = {
+  position: 'absolute',
+  left: 0,
+  right: 0,
+  bottom: 0,
+  height: ART_CONTROLS_HEIGHT,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: SPACING.sm,
+};
+
 interface PickCardsRowStyleInput {
   isMobile: boolean;
   cardWidth: number;
@@ -136,6 +174,8 @@ export function pickCardColumnLayout(isMobile: boolean): CSSProperties {
     alignItems: isMobile ? 'center' : 'flex-start',
     gap: SPACING.md,
     flexShrink: 0,
+    // Anchors desktop's art controls row (DESKTOP_ART_CONTROLS_STYLE) to the column's bottom.
+    position: 'relative',
   };
 }
 

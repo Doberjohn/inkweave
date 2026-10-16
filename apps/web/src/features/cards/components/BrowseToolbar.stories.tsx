@@ -1,6 +1,8 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import {BrowseToolbar} from './BrowseToolbar';
+import {CollectionModeSwitch} from '../../collection/CollectionModeSwitch';
+import {BINDER_SORT_OPTIONS} from '../../collection/binderCards';
 
 const noopFilters = {
   onFiltersClick: fn(),
@@ -58,5 +60,38 @@ export const MobileWithChips: Story = {
     inkFilters: ['Ruby', 'Emerald'],
     typeFilters: ['Action'],
     activeFilterCount: 3,
+  },
+};
+
+/**
+ * Browse on desktop, docked over the side panel (owner, 2026-10-08): Filters and the sort
+ * span the panel's width, the search starts where the cards do, Collection takes the far
+ * end. The panel shows the filters, so Filters is filled; collection mode is off.
+ */
+export const Docked: Story = {
+  args: {
+    docked: {panelOpen: true},
+    modeSwitch: <CollectionModeSwitch active={false} onToggle={fn()} />,
+    typeFilters: ['Character'],
+    activeFilterCount: 1,
+  },
+};
+
+/** The panel closed: Filters turns to its outline, and the active filters show as chips underneath. */
+export const DockedPanelClosed: Story = {
+  args: {...Docked.args, docked: {panelOpen: false}},
+};
+
+/**
+ * Collection mode with the filters open: both toggles filled, and the sort in its Browse
+ * place. The binder's pockets follow it, so its default reads as what it is there: collector order.
+ */
+export const DockedCollectionMode: Story = {
+  args: {
+    ...Docked.args,
+    docked: {panelOpen: true},
+    modeSwitch: <CollectionModeSwitch active onToggle={fn()} />,
+    sortOrder: 'newest',
+    sortOptions: BINDER_SORT_OPTIONS,
   },
 };

@@ -1,7 +1,7 @@
 // The non-Core card pool, for viewing only (#553 Phase C).
 //
 // THE CORE BOUNDARY LIVES HERE, and it is structural rather than a rule. These
-// 2,205 cards never enter `CardDataContext`, so the deck builder, the playstyle
+// 2,217 cards never enter `CardDataContext`, so the deck builder, the playstyle
 // pages and every build script keep seeing exactly the 1,228 Core cards — not
 // because anyone remembered to filter, but because they never ask this provider.
 // Browse merges the two arrays locally, in the one place that should see both.
@@ -20,6 +20,7 @@
 import {createContext, useContext, useEffect, useRef, useState, type ReactNode} from 'react';
 import type {LorcanaJSONCard} from 'inkweave-synergy-engine';
 import {transformRawCards} from '../cards/loader';
+import {withPrintingCards} from './binderCards';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 
 /**
@@ -38,6 +39,12 @@ interface CollectionCardsContextValue {
   cards: LorcanaCard[];
   /** True while chunks are in flight. */
   isLoading: boolean;
+  /**
+   * True once every chunk has landed. NOT the same as "not loading": before the
+   * first request starts, `isLoading` is also false, so a guard written as
+   * `!isLoading` would pass over an empty pool for that first render.
+   */
+  loaded: boolean;
   /**
    * Set when loading failed. The caller must NOT fall back to a partial pool:
    * a half-loaded collection silently omits cards from search, which reads as
@@ -63,7 +70,7 @@ async function fetchChunk(setCode: string): Promise<LorcanaCard[]> {
   // `imageUrl` unset ("a web-app concern"), and the loader wraps it to attach the
   // resolved URL plus the content-addressed hashes. Calling the engine directly
   // costs every collection card its artwork: `CardTile` falls back to the plain
-  // cost badge when `imgSrc` is falsy, which looks like 2,205 cards with no image
+  // cost badge when `imgSrc` is falsy, which looks like 2,217 cards with no image
   // rather than a missing transform step.
   return transformRawCards(cards);
 }
@@ -71,12 +78,13 @@ async function fetchChunk(setCode: string): Promise<LorcanaCard[]> {
 export function CollectionCardsProvider({children}: {children: ReactNode}) {
   const [cards, setCards] = useState<LorcanaCard[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /**
    * Guards the one-shot fetch. A REF and not state, because it must flip
    * synchronously within a single call — two `ensureLoaded()` calls in the same
    * tick (both modes asking at once) would both see a stale `false` from state
-   * and fire the fifteen requests twice.
+   * and fire every chunk request twice.
    */
   const started = useRef(false);
 
@@ -92,7 +100,10 @@ export function CollectionCardsProvider({children}: {children: ReactNode}) {
     setIsLoading(true);
     setError(null);
     Promise.all(COLLECTION_SETS.map(fetchChunk))
-      .then((chunks) => setCards(chunks.flat()))
+      .then((chunks) => {
+        setCards(chunks.flat());
+        setLoaded(true);
+      })
       .catch((err: Error) => {
         // All or nothing, on purpose — see `error` above.
         setCards([]);
@@ -101,7 +112,7 @@ export function CollectionCardsProvider({children}: {children: ReactNode}) {
         // into an infinite one: the catch sets state, the provider re-renders,
         // `ensureLoaded` gets a fresh identity, the effect below sees its dep
         // change and calls it again, and the guard it would have hit is gone.
-        // Fifteen requests per iteration, forever, against a 404. Retrying is
+        // A request per chunk on every iteration, forever, against a 404. Retrying is
         // now explicit; see `retry`.
       })
       .finally(() => setIsLoading(false));
@@ -113,7 +124,7 @@ export function CollectionCardsProvider({children}: {children: ReactNode}) {
     ensureLoaded();
   }
 
-  const value: CollectionCardsContextValue = {cards, isLoading, error, ensureLoaded, retry};
+  const value: CollectionCardsContextValue = {cards, isLoading, loaded, error, ensureLoaded, retry};
   return <CollectionCardsContext.Provider value={value}>{children}</CollectionCardsContext.Provider>;
 }
 
@@ -143,15 +154,24 @@ export function useCollectionCards(): CollectionCardsContextValue {
  * fired again without limit. Recovery is `retry`, which a user triggers.
  */
 export function useCollectionPool(coreCards: LorcanaCard[], active: boolean) {
-  const {cards, isLoading, error, ensureLoaded} = useCollectionCards();
+  const {cards, isLoading, loaded, error, ensureLoaded} = useCollectionCards();
 
   useEffect(() => {
     if (active) ensureLoaded();
   }, [active, ensureLoaded]);
 
   return {
-    pool: active ? [...coreCards, ...cards] : coreCards,
+    // With a card for each printing the chunks do not carry, so every printing has a pocket.
+    pool: active ? withPrintingCards([...coreCards, ...cards]) : coreCards,
     isLoading: active && isLoading,
     error: active ? error : null,
+    /**
+     * The pool is COMPLETE: every non-Core chunk landed AND the Core cards are in.
+     * The import must wait for this, not merely for "not loading", or it parses
+     * against a partial pool and silently drops the cards it cannot see. Core
+     * matters too: on a direct load of /account the Core data can still be empty
+     * when the chunks arrive.
+     */
+    isReady: active && loaded && error === null && coreCards.length > 0,
   };
 }

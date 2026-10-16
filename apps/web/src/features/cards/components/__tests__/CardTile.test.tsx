@@ -86,4 +86,27 @@ describe('CardTile', () => {
     expect(screen.getByRole('button')).toHaveAttribute('aria-pressed', 'true');
   });
 
+  it("should show a given printing's art and name it, while selecting the card", () => {
+    const onSelect = vi.fn();
+    const cardWithImage = createCard({...mockCard, imageUrl: '/card-images/card-1.avif'});
+    const enchanted = {id: 'card-1-ench', rarity: 'Enchanted' as const, number: 205, imageUrl: '/card-images/ench.avif'};
+    render(<CardTile card={cardWithImage} printing={enchanted} onSelect={onSelect} isSelected={false} useSmallImage />);
+
+    const tile = screen.getByRole('button', {name: 'Elsa - Snow Queen, Enchanted printing'});
+    expect(tile.querySelector('img')).toHaveAttribute('src', '/card-images/ench-sm.avif');
+    fireEvent.click(tile);
+    expect(onSelect).toHaveBeenCalledWith(cardWithImage);
+  });
+
+  it('is a plain button, not a toggle, where no selection is passed', () => {
+    // The binder: a click opens the card, so "toggle button, not pressed" would mislead.
+    render(<CardTile card={mockCard} onSelect={vi.fn()} />);
+    expect(screen.getByRole('button')).not.toHaveAttribute('aria-pressed');
+  });
+
+  it('names a card of an alt-art rarity as that printing, as a binder pocket holds it', () => {
+    render(<CardTile card={createCard({...mockCard, rarity: 'Enchanted'})} onSelect={vi.fn()} />);
+    expect(screen.getByRole('button', {name: 'Elsa - Snow Queen, Enchanted printing'})).toBeInTheDocument();
+  });
+
 });

@@ -296,6 +296,56 @@ option {
   animation: tile-click-ack 90ms ease-out;
 }
 
+/* Foil sweep for the collection binder's foil stepper (#553 Phase C). Moves ONLY
+   the first background layer — the light band — and pins the gold and the ground
+   beneath it, which is why the layer order in `FOIL_SHEEN` is load-bearing.
+   Declared as a class so the prefers-reduced-motion block below can stop it. */
+@keyframes inkweave-foil-sweep {
+  0%   { background-position: -60% 0, 0 0, 0 0; }
+  100% { background-position: 160% 0, 0 0, 0 0; }
+}
+.inkweave-foil-shimmer {
+  animation: inkweave-foil-sweep 3.5s linear infinite;
+}
+
+/* The collection panel's bars (#553, owner 2026-10-15). A bar fills from empty when it
+   first appears, then glides between lengths through an inline `width` transition; a full
+   bar gets one pass of light after its glide. The panel sets the duration, easing and delay
+   inline (EASING and the bar's place in the panel), so these carry only the keyframes and
+   their fill. Both are declared as classes so the prefers-reduced-motion block below can
+   stop them; the panel also leaves them off there. */
+@keyframes collection-bar-fill {
+  from {
+    width: 0;
+  }
+}
+.collection-bar-fill {
+  animation-name: collection-bar-fill;
+  animation-fill-mode: backwards;
+}
+@keyframes collection-bar-sheen {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+.collection-bar-sheen {
+  animation-name: collection-bar-sheen;
+  animation-fill-mode: both;
+}
+
+/* QuantityStepper: quantity-change pop on the count (replays on count remount). */
+@keyframes inkweave-qty-pop {
+  from {
+    transform: scale(1.5);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
 /* Card-slot placeholder tile: FeaturedCardsSkeleton, rendered by both HomePageSkeleton
    and FeaturedCards while the cards JSON is loading. The tile's inline gradient is its
    whole look. It used to carry a background-position sweep, but the inline `background`
@@ -374,6 +424,19 @@ option {
   .inkweave-shimmer-tile {
     animation: none !important;
   }
+  /* Park the foil sweep. The band's resting position is OFF the left edge (so
+     the sweep enters from outside rather than fading in over the count), which
+     means parking it leaves plain gold — exactly the resting foil surface, and
+     still visibly the foil one. Purely decorative; nothing is encoded in it. */
+  .inkweave-foil-shimmer {
+    animation: none !important;
+  }
+  /* The collection panel's bars stand at their lengths: no fill on arrival, and the pass
+     of light stays parked off the track's left edge. */
+  .collection-bar-fill,
+  .collection-bar-sheen {
+    animation: none !important;
+  }
   /* Skip the engine-score pulse — score appears with the panel; no transient
      brightening when the connector lands. */
   .engine-score-pulse-on-entry {
@@ -396,14 +459,51 @@ option {
   }
 }
 
-/* Card tile hover/tap animations: spring bounce easing */
+/* Card tile hover RING (owner, 2026-10-08), replacing the old scale-and-lift: an
+   INNER border, a gold line flush with the card art's edge, drawn over the outer
+   part of the black frame printed on the card. An earlier version sat 1.5% in,
+   which left a strip of black frame outside the ring.
+   PROPORTIONAL WIDTH: the frame is 4.1% of the card's width, so the ring takes
+   about half of it, 2cqw, at every tile size: 4px on a 207px Browse card, 3px in
+   the binder, 2px on a synergy card (browsers floor border widths to whole
+   pixels; 2px is also the floor here). A fixed width cannot fit both: 4px leaves
+   black inside it on Browse but swallows a small card's whole frame. Hence the
+   tile is a size container (`container-type`), for the `cqw` unit.
+   `border-radius: inherit` follows each tile's own corners (Browse 14px, synergy
+   5-8px, binder 0). Hover-capable pointers only, so a tap on a phone cannot leave
+   it stuck on. The gold comes from theme.ts via `--inkweave-gold`, which each tile
+   sets on itself (`CARD_TILE_RING`), so the ring shows wherever a tile renders. */
+.card-tile {
+  container-type: inline-size;
+}
+.card-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: max(2px, 2cqw) solid var(--inkweave-gold);
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-out;
+}
+@media (hover: hover) {
+  .card-tile:hover::after {
+    opacity: 1;
+  }
+}
+
+/* An unowned binder card (CollectionBinder.tsx): its art greyed and darkened. On
+   the tile's CHILDREN, never the tile or a wrapper, so the hover ring above stays
+   gold: a pseudo-element is not a child, and `> *` never matches it. */
+.binder-unowned .card-tile > * {
+  filter: grayscale(1) brightness(0.45);
+}
+
+/* Card tile tap animation: spring bounce easing. */
 .card-tile {
   transition:
     transform 0.3s linear(0, 0.004, 0.016, 0.035, 0.063, 0.098, 0.141, 0.191, 0.25, 0.316, 0.391, 0.472, 0.562, 0.66, 0.765, 0.878, 1, 1.029, 1.049, 1.061, 1.066, 1.064, 1.055, 1.042, 1.026, 1.008, 0.99, 0.974, 0.96, 0.95, 0.943, 0.94, 0.941, 0.946, 0.953, 0.963, 0.975, 0.987, 1),
     box-shadow 0.3s linear(0, 0.004, 0.016, 0.035, 0.063, 0.098, 0.141, 0.191, 0.25, 0.316, 0.391, 0.472, 0.562, 0.66, 0.765, 0.878, 1, 1.029, 1.049, 1.061, 1.066, 1.064, 1.055, 1.042, 1.026, 1.008, 0.99, 0.974, 0.96, 0.95, 0.943, 0.94, 0.941, 0.946, 0.953, 0.963, 0.975, 0.987, 1);
-}
-.card-tile:hover {
-  transform: scale(1.04) translateY(-3px);
 }
 .card-tile:active {
   transform: scale(0.97);
@@ -462,12 +562,10 @@ option {
   /* .card-tile-img: the card image's inline opacity fade (CardTile.tsx); !important beats
      the inline style, so the image appears at full opacity the moment it loads. */
   .card-tile,
+  .card-tile::after,
   .card-tile-img,
   .overlay-transition {
     transition: none !important;
-  }
-  .card-tile:hover {
-    transform: none;
   }
 }
 

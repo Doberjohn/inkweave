@@ -66,6 +66,13 @@ interface CollectionContextValue {
    * simply never imported. Check this before offering that filter or a badge.
    */
   hasCollection: boolean;
+  /**
+   * True while signed in and the account's copy has not answered yet. Until it has,
+   * a collection that lives only on the server (a new browser) reads as none, so a
+   * `false` {@link hasCollection} is not yet an answer: nothing should offer an import
+   * over it in the meantime. False when signed out.
+   */
+  syncing: boolean;
   /** Copies owned of one card, both finishes. 0 when unowned or none imported. */
   ownedCount: (cardId: string) => number;
   /** Owned means at least one copy, not a full playset (owner ruling 2026-08-10). */
@@ -279,7 +286,7 @@ function snapshotFor(uid: Uid, local: CollectionState): SyncSnapshot {
 
 /**
  * Act on a resolved sync plan. Hoisted out of the effect so the hook holds the
- * subscription concerns (claim, cancel, staleness) and this holds the outcome:
+ * subscription concerns (cancel, staleness) and this holds the outcome:
  * they change for unrelated reasons.
  */
 function applySyncPlan(
@@ -317,10 +324,25 @@ async function serverStateFor(uid: Uid): Promise<StoredCollection | null | undef
 }
 
 /**
+ * Whether the account's copy is still to answer for `uid`, and the setter a read calls
+ * once it has. Signing out forgets the answer, so signing back in waits again.
+ */
+function useAccountAnswer(uid: Uid | null): {syncing: boolean; answered: (uid: string) => void} {
+  const [answeredFor, setAnsweredFor] = useState<string | null>(null);
+  if (uid === null && answeredFor !== null) setAnsweredFor(null);
+  return {syncing: uid !== null && answeredFor !== uid, answered: setAnsweredFor};
+}
+
+/**
  * Reconcile this browser's collection with the account's, once per uid.
  *
- * `claimedUid` is a REF, not state, and claimed before the first await: two
- * renders in the same tick would both see a stale `null` and fire the fetch twice.
+ * The effect re-runs only when the account changes: its other deps are a state setter
+ * and a ref, both stable, and one that changed identity would refetch on every change.
+ * Each run reads for itself and its cleanup cancels that read, so StrictMode's dev
+ * double run (mount, clean up, mount) ends with exactly one answer applied. A claim
+ * kept across the cleanup once skipped the second read and dropped the cancelled
+ * first's answer, so in dev a collection that lived only on the server was never
+ * adopted.
  *
  * Deliberately NOT gated on `state`: the effect must run on the sign-in moment,
  * not on every import. `latest` carries the current value in without making it
@@ -328,14 +350,20 @@ async function serverStateFor(uid: Uid): Promise<StoredCollection | null | undef
  *
  * Silent on failure: the local copy still stands, and the pending marker or
  * tombstone left by whichever write failed is what the next sync retries.
+ *
+ * Returns whether the account's copy is still to answer for this uid. Every way this
+ * uid's read ends marks it answered (adopted, stale, failed, or rejected outright), or
+ * a page waiting on it would wait for ever; only a read cancelled by a uid change or an
+ * unmount does not, since its answer no longer applies. A stale result counts: a local
+ * change made mid-flight is the newer truth.
  */
 function useCollectionSync(
   uid: Uid | null,
   state: CollectionState,
   setState: (next: CollectionState) => void,
   localEpoch: {current: number},
-) {
-  const claimedUid = useRef<string | null>(null);
+): boolean {
+  const {syncing, answered} = useAccountAnswer(uid);
   // Synced in an unkeyed effect, never mutated in render — the React Compiler
   // forbids the latter, and `DeckContext`'s `latestDeck` does exactly this.
   const latest = useRef(state);
@@ -344,14 +372,9 @@ function useCollectionSync(
   });
 
   useEffect(() => {
-    if (uid === null) {
-      // A real sign-out. Release the claim so signing back in re-syncs, and
-      // deliberately DO NOT clear the local collection — see the header.
-      claimedUid.current = null;
-      return;
-    }
-    if (claimedUid.current === uid) return;
-    claimedUid.current = uid;
+    // Signed out: nothing to reconcile, and deliberately NOT a reason to clear the
+    // local collection (see the header).
+    if (uid === null) return;
 
     let cancelled = false;
     // A result goes stale for THREE reasons, and `cancelled` only covers two of them
@@ -362,15 +385,24 @@ function useCollectionSync(
     const epochAtRead = localEpoch.current;
     const isStale = () => cancelled || localEpoch.current !== epochAtRead;
     const snapshot = snapshotFor(uid, latest.current);
-    void serverStateFor(uid).then((server) => {
-      if (isStale() || server === undefined) return;
-      applySyncPlan(uid, server, snapshot, setState);
-    });
+    const markAnswered = () => {
+      if (!cancelled) answered(uid);
+    };
+    void serverStateFor(uid)
+      .then((server) => {
+        // Batched with the plan's own state below, so the collection and the answer land together.
+        markAnswered();
+        if (isStale() || server === undefined) return;
+        applySyncPlan(uid, server, snapshot, setState);
+      })
+      .catch(markAnswered);
 
     return () => {
       cancelled = true;
     };
-  }, [uid, setState, localEpoch]);
+  }, [uid, setState, localEpoch, answered]);
+
+  return syncing;
 }
 
 export function CollectionProvider({children}: {children: ReactNode}) {
@@ -381,7 +413,7 @@ export function CollectionProvider({children}: {children: ReactNode}) {
   const localEpoch = useRef(0);
   // The sync reasons about the FULL local copy, another account's included; only
   // what is exposed below is filtered (owner ruling 2026-10-06).
-  useCollectionSync(uid, state, setState, localEpoch);
+  const syncing = useCollectionSync(uid, state, setState, localEpoch);
   const visible = state !== null && visibleTo(state, {uid, loading}) ? state : null;
 
   // No useMemo/useCallback anywhere below: the React Compiler memoizes this file
@@ -422,6 +454,7 @@ export function CollectionProvider({children}: {children: ReactNode}) {
     entries: visible?.entries ?? NO_ENTRIES,
     importedAt: visible?.importedAt ?? null,
     hasCollection: visible !== null,
+    syncing,
     ownedCount,
     owns: (cardId: string) => ownedCount(cardId) > 0,
     importCollection,

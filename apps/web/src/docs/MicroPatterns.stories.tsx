@@ -8,10 +8,12 @@ import {
   FONTS,
   FONT_SIZES,
   GOLD_GLOW,
+  RADIUS,
   SPACING,
   SURFACE_CARD,
   TABULAR,
   TRUNCATE,
+  searchFieldStyle,
 } from '../shared/constants';
 
 const meta: Meta = {
@@ -57,6 +59,22 @@ export const Consts: Story = {
       <button type="button" disabled style={{...SURFACE_CARD, ...DISABLED_STYLE, fontFamily: FONTS.body, color: COLORS.text}}>
         DISABLED_STYLE: one dimmed recipe for every control
       </button>
+
+      <input
+        readOnly
+        aria-label="searchFieldStyle example"
+        placeholder="searchFieldStyle: raised at rest, lighter edge on hover, gold with the ring on focus"
+        style={{
+          ...searchFieldStyle({focused: false, hovered: false}),
+          height: 36,
+          padding: `0 ${SPACING.md}px`,
+          borderRadius: RADIUS.lg,
+          color: COLORS.text,
+          fontFamily: FONTS.body,
+          fontSize: FONT_SIZES.base,
+          outline: 'none',
+        }}
+      />
     </div>
   ),
 };

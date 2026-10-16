@@ -16,6 +16,7 @@ vi.mock('../../../shared/contexts/CardDataContext', () => ({
     totalCards: mockCards.length,
     uniqueKeywords: [],
     uniqueClassifications: [],
+    uniqueRarities: [],
     uniqueSets: [],
     sets: [],
     retryLoad: () => {},

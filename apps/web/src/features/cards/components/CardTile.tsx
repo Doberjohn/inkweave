@@ -1,8 +1,19 @@
 import {useState, type CSSProperties, type MouseEvent, type ReactNode} from 'react';
 import Skeleton from 'react-loading-skeleton';
+import type {CardPrinting} from 'inkweave-synergy-engine';
 import type {LorcanaCard} from '../types';
-import {INK_COLORS, COLORS, EASING, FONT_SIZES, RADIUS} from '../../../shared/constants';
-import {smallImageUrl} from '../loader';
+import {
+  INK_COLORS,
+  COLORS,
+  CARD_TILE_RING,
+  EASING,
+  FONT_SIZES,
+  RADIUS,
+  blackRgba,
+  whiteRgba,
+} from '../../../shared/constants';
+import {printingAlt} from '../../../shared/hooks/usePrintingSelection';
+import {isAltArtRarity, smallImageUrl} from '../loader';
 import {isModifiedClick} from '../../../shared/utils/touchGuard';
 import {preloadCardOverviewModal} from '../../../shared/contexts/cardOverviewModalLoader';
 
@@ -14,7 +25,12 @@ interface CardTileProps {
   onClick?: () => void;
   /** Stable callback. Receives the card, so parent doesn't need per-item closures. */
   onSelect?: (card: LorcanaCard) => void;
-  isSelected: boolean;
+  /**
+   * Selection contexts (deck builder, voting) pass it, and the tile is a toggle,
+   * announced with aria-pressed. Omit it where a click opens the card (the binder),
+   * or every tile reads as "toggle button, not pressed".
+   */
+  isSelected?: boolean;
   variant?: 'full' | 'minimal';
   borderRadius?: number;
   /** Set to true for above-fold LCP-candidate images to disable lazy loading and boost priority. */
@@ -30,6 +46,11 @@ interface CardTileProps {
    * Omit for selection contexts (deck builder, voting) that need `<button>` + aria-pressed.
    */
   href?: string;
+  /**
+   * A printing whose art the tile shows instead of the card's own: Browse, while
+   * that printing's rarity is picked (owner, 2026-10-08). The tile is still the card.
+   */
+  printing?: CardPrinting;
 }
 
 /** Border + shadow depend on variant/selection; hoisted out of the component to keep its CC low. */
@@ -41,14 +62,15 @@ function buildTileStyle(
 ): CSSProperties {
   const minimal = variant === 'minimal';
   return {
+    ...CARD_TILE_RING,
     position: 'relative',
     borderRadius: `${borderRadius ?? RADIUS.xl}px`,
     border: minimal ? 'none' : `2px solid ${isSelected ? colors.border : 'transparent'}`,
     boxShadow: minimal
-      ? '0 0 0 1px rgba(255,255,255,0.1), 0 25px 50px -12px rgba(0,0,0,0.5)'
+      ? `0 0 0 1px ${whiteRgba(0.1)}, 0 25px 50px -12px ${blackRgba(0.5)}`
       : isSelected
         ? `0 0 8px ${colors.border}60`
-        : '0 2px 6px rgba(0,0,0,0.3)',
+        : `0 2px 6px ${blackRgba(0.3)}`,
     cursor: 'pointer',
     padding: 0,
     overflow: 'hidden',
@@ -57,21 +79,38 @@ function buildTileStyle(
   };
 }
 
-/** Card artwork with a load skeleton, falling back to the ink-tinted cost badge on error/no src. */
+/**
+ * What the tile is called: the card, or the printing it shows ("Elsa - Snow Queen, Enchanted
+ * printing"). A card of an alt-art rarity is named as that printing too: the binder holds each
+ * printing as a pocket of its own, under its base card's name.
+ */
+function tileName(card: LorcanaCard, printing: CardPrinting | undefined): string {
+  if (printing) return printingAlt(card, printing);
+  if (isAltArtRarity(card.rarity)) return printingAlt(card, {rarity: card.rarity});
+  return card.fullName || card.name;
+}
+
+/** Artwork (the card's, or a printing's) with a load skeleton, falling back to the ink-tinted cost badge on error/no src. */
 function CardTileImage({
-  card,
+  art,
+  name,
+  cost,
   colors,
   useSmall,
   priority,
 }: {
-  card: LorcanaCard;
+  art: Pick<LorcanaCard, 'id' | 'imageUrl' | 'imageHashSm'>;
+  /** The image's alt text (`tileName`). */
+  name: string;
+  /** Shown on the fallback badge. */
+  cost: number;
   colors: InkColors;
   useSmall?: boolean;
   priority?: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
-  const imgSrc = useSmall ? smallImageUrl(card) : card.imageUrl;
+  const imgSrc = useSmall ? smallImageUrl(art) : art.imageUrl;
   // Above-fold LCP candidates load eagerly + decode synchronously; the rest defer (one flag, one branch).
   const {loading, decoding} = priority
     ? ({loading: 'eager', decoding: 'sync'} as const)
@@ -89,7 +128,7 @@ function CardTileImage({
           justifyContent: 'center',
         }}>
         <span style={{fontSize: `${FONT_SIZES.xxxl}px`, fontWeight: 600, color: colors.text}}>
-          {card.cost}
+          {cost}
         </span>
       </div>
     );
@@ -109,7 +148,7 @@ function CardTileImage({
       <img
         className="card-tile-img"
         src={imgSrc}
-        alt={card.fullName || card.name || ''}
+        alt={name}
         loading={loading}
         decoding={decoding}
         onLoad={() => setImgLoaded(true)}
@@ -170,7 +209,10 @@ function CardTileLink({
   );
 }
 
-/** Selection `<button>` variant (deck builder, voting): toggles via onClick/onSelect + aria-pressed. */
+/**
+ * The `<button>` variant: a toggle (aria-pressed) where a selection context passes
+ * `isSelected` (deck builder, voting), a plain button where a click opens the card.
+ */
 function CardTileButton({
   tabIndex,
   label,
@@ -183,7 +225,7 @@ function CardTileButton({
 }: {
   tabIndex?: number;
   label: string;
-  isSelected: boolean;
+  isSelected: boolean | undefined;
   style: CSSProperties;
   card: LorcanaCard;
   onClick?: () => void;
@@ -220,11 +262,25 @@ export function CardTile({
   useSmallImage: useSmall,
   tabIndex,
   href,
+  printing,
 }: CardTileProps) {
   const colors = INK_COLORS[card.ink];
-  const label = card.fullName || card.name || 'View card details';
-  const tileStyle = buildTileStyle(colors, variant, isSelected, borderRadius);
-  const image = <CardTileImage card={card} colors={colors} useSmall={useSmall} priority={priority} />;
+  const name = tileName(card, printing);
+  const label = name || 'View card details';
+  const tileStyle = buildTileStyle(colors, variant, isSelected === true, borderRadius);
+  const image = (
+    <CardTileImage
+      // Keyed by the art shown, so a printing whose image failed once does not keep the
+      // card's own art on its fallback after the pick changes.
+      key={(printing ?? card).id}
+      art={printing ?? card}
+      name={name}
+      cost={card.cost}
+      colors={colors}
+      useSmall={useSmall}
+      priority={priority}
+    />
+  );
 
   if (href) {
     return (

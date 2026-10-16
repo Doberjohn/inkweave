@@ -2,6 +2,8 @@ import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import {Chip, type ChipProps} from './Chip';
+import {FONT_SIZES} from '../constants';
+import {RaritySymbol} from '../../features/reveals/RaritySymbol';
 
 // Chip's props are a discriminated union (toggle | dismiss). Storybook's CSF
 // generics can't reconcile both variants in one StoryObj, so the meta is pinned
@@ -37,7 +39,7 @@ export const DismissMobile: Story = {
 export const ToggleWithCount: Story = {
   render: () => (
     <Chip label="Payoff" active={true} onClick={fn()}>
-      <span style={{fontSize: 10, opacity: 0.7}}>12</span>
+      <span style={{fontSize: FONT_SIZES.xs, opacity: 0.7}}>12</span>
     </Chip>
   ),
 };
@@ -49,6 +51,16 @@ export const ToggleWithTooltip: Story = {
     onClick: fn(),
     title: 'Searches your deck or discard for location cards',
   },
+};
+
+/** A glyph instead of the label, as in the Rarity filter: the label names the chip and is its tooltip. */
+export const ToggleIconOnly: Story = {
+  render: () => (
+    <div style={{display: 'flex', gap: 6}}>
+      <Chip label="Rare" icon={<RaritySymbol rarity="rare" size={24} />} active={false} onClick={fn()} />
+      <Chip label="Legendary" icon={<RaritySymbol rarity="legendary" size={24} />} active onClick={fn()} />
+    </div>
+  ),
 };
 
 export const ToggleGroup: Story = {

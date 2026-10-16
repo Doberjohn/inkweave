@@ -11,6 +11,13 @@ import type {FilterPanelProps} from './FilterContent';
 interface FilterDialogProps extends FilterPanelProps {
   /** Responsive variant. Controls layout and animation. */
   variant: 'modal' | 'drawer';
+  /**
+   * Whether the page's toolbar carries the cost and inkwell buttons inline, so the
+   * desktop modal can leave them out. Defaults to Browse's toolbar: inkwell always,
+   * cost on wide screens. A toolbar without them (the synergy toolbar) passes
+   * `false` for each, or those filters are unreachable on desktop.
+   */
+  toolbarCarries?: {cost: boolean; inkwell: boolean};
 }
 
 export function FilterDialog({
@@ -24,11 +31,16 @@ export function FilterDialog({
   filters,
   uniqueKeywords,
   uniqueClassifications,
+  uniqueRarities,
   sets,
   buttonOptions,
+  showSetFilter,
+  showArtPresets,
+  toolbarCarries = {cost: true, inkwell: true},
 }: FilterDialogProps) {
   const draft = useDraftFilters({isOpen, inkFilters, typeFilters, costFilters, filters});
-  const showInlineCost = useInlineCostFilters();
+  // Cost rides inline only on wide screens, and only in a toolbar that has it.
+  const showInlineCost = useInlineCostFilters() && toolbarCarries.cost;
 
   const handleApply = () => {
     onApply(draft.draftInks, draft.draftTypes, draft.draftCosts, draft.draftFilters);
@@ -172,6 +184,7 @@ export function FilterDialog({
               filters={draft.draftFilters}
               uniqueKeywords={uniqueKeywords}
               uniqueClassifications={uniqueClassifications}
+              uniqueRarities={uniqueRarities}
               sets={sets}
               buttonOptions={buttonOptions}
               onToggleInk={draft.toggleInk}
@@ -180,6 +193,9 @@ export function FilterDialog({
               onFiltersChange={draft.updateFilters}
               variant={variant === 'modal' ? 'desktop' : 'mobile'}
               showInlineCost={showInlineCost}
+              showInlineInkwell={toolbarCarries.inkwell}
+              showSetFilter={showSetFilter}
+              showArtPresets={showArtPresets}
             />
           </div>
 

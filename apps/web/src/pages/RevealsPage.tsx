@@ -13,6 +13,8 @@ import {
   WhatsNewSection,
   RevealHero,
   fetchRevealDates,
+  mosaicOrder,
+  specialsOrder,
   useCountdown,
   useInkParam,
   useRevealCards,
@@ -34,6 +36,17 @@ function cardsForFranchise(tiers: RevealTier[], franchise: FranchiseConfig | nul
   if (!franchise) return [];
   return tiers.find((t) => t.id === franchise.id)?.cards ?? [];
 }
+
+/**
+ * What the card modal's arrows step through (owner, 2026-10-08): the cards of the group the
+ * card was clicked in, in the order it shows them, and the printing each opens on.
+ */
+interface ModalSiblings {
+  ids: string[];
+  printingFor?: (cardId: string) => string | undefined;
+}
+
+const siblingsOf = (cards: LorcanaCard[]): ModalSiblings => ({ids: cards.map((card) => card.id)});
 
 const srOnly: React.CSSProperties = {
   position: 'absolute',
@@ -128,6 +141,7 @@ export function RevealsPage() {
   const openAndTrack = (
     card: LorcanaCard,
     source: 'mosaic' | 'franchise_modal' | 'special_printings',
+    siblings: ModalSiblings,
     printing?: CardPrinting,
   ) => {
     trackEvent('reveal_card_click', {
@@ -139,8 +153,10 @@ export function RevealsPage() {
       rarity: printing?.rarity ?? card.rarity ?? null,
       franchise: card.franchise ?? null,
     });
-    openCardModal(card.id, [], {printingId: printing?.id});
+    openCardModal(card.id, siblings.ids, {printingId: printing?.id, printingFor: siblings.printingFor});
   };
+  // The board on show: its mosaic and its special printings are the arrows' two groups.
+  const board = progress.byInk[selectedInk];
   const sidePad = isMobile ? SPACING.lg : 36;
 
   return (
@@ -175,8 +191,10 @@ export function RevealsPage() {
             progress={progress}
             selectedInk={selectedInk}
             onSelectInk={selectInk}
-            onOpen={(card) => openAndTrack(card, 'mosaic')}
-            onOpenPrinting={(card, printing) => openAndTrack(card, 'special_printings', printing)}
+            onOpen={(card) => openAndTrack(card, 'mosaic', siblingsOf(mosaicOrder(selectedInk, board.cards)))}
+            onOpenPrinting={(card, printing) =>
+              openAndTrack(card, 'special_printings', specialsOrder(board.specials), printing)
+            }
             onSelectFranchise={(f) => setShowcase({label: f.label, ink: f.ink, cards: cardsForFranchise(tiers, f)})}
             compact={isMobile}
           />
@@ -188,7 +206,7 @@ export function RevealsPage() {
           source={{label: showcase.label, ink: showcase.ink}}
           cards={showcase.cards}
           onClose={() => setShowcase(null)}
-          onCardClick={(card) => openAndTrack(card, 'franchise_modal')}
+          onCardClick={(card) => openAndTrack(card, 'franchise_modal', siblingsOf(showcase.cards))}
         />
       )}
     </ErrorBoundary>

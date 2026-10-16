@@ -76,7 +76,6 @@ export function CardGrid({
           key={card.id}
           card={card}
           href={linkToCards ? cardPath(card) : undefined}
-          isSelected={false}
           onSelect={onSelect}
           variant={variant}
           useSmallImage={useSmallImage}

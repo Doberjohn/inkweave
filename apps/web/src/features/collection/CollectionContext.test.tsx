@@ -1,6 +1,6 @@
 import {describe, it, expect, beforeEach, afterEach, vi} from 'vitest';
-import {renderHook, act} from '@testing-library/react';
-import type {ReactNode} from 'react';
+import {renderHook, act, render as renderUi, screen} from '@testing-library/react';
+import {StrictMode, type ReactNode} from 'react';
 import {CollectionProvider, useCollection} from './CollectionContext';
 import {COLLECTION_KEY, writeCollection} from './collectionStorage';
 import {deleteCollection, getCollection, upsertCollection} from './collectionRepository';
@@ -46,6 +46,10 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe('CollectionContext', () => {
+  it('is not syncing when signed out: there is no account copy to wait for', () => {
+    expect(render().result.current.syncing).toBe(false);
+  });
+
   it('starts with no collection when nothing is stored', () => {
     const {result} = render();
     expect(result.current.hasCollection).toBe(false);
@@ -142,6 +146,44 @@ describe('CollectionContext — signed in', () => {
   });
   afterEach(() => {
     mockSession.user = null;
+  });
+
+  it('reports syncing until the account copy answers, so "no collection" is not taken for an answer', async () => {
+    let answer: (value: Awaited<ReturnType<typeof getCollection>>) => void = () => {};
+    vi.mocked(getCollection).mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
+    const {result} = render();
+    expect(result.current.syncing).toBe(true);
+
+    await act(async () => answer({data: null, error: null}));
+    expect(result.current.syncing).toBe(false);
+  });
+
+  it('adopts a collection that lives only on the account under StrictMode, which runs the sync twice', async () => {
+    // Dev mounts, cleans up and mounts again; the first read is cancelled, so the
+    // second must still be made, or a new browser never sees the account's copy.
+    const row = {data: {schemaVersion: 1, importedAt: 9000, entries: ENTRIES}, error: null};
+    vi.mocked(getCollection).mockResolvedValueOnce(row).mockResolvedValueOnce(row);
+    function Status() {
+      const {hasCollection, syncing} = useCollection();
+      return <p>{`${hasCollection ? 'adopted' : 'none'}, ${syncing ? 'syncing' : 'answered'}`}</p>;
+    }
+    // StrictMode AT THE ROOT. React decides the double run where the new subtree
+    // starts, so inside a wrapper (renderHook's included) the effect runs once and
+    // this test would pass with the bug in.
+    renderUi(
+      <StrictMode>
+        <CollectionProvider>
+          <Status />
+        </CollectionProvider>
+      </StrictMode>,
+    );
+    expect(await screen.findByText('adopted, answered')).toBeInTheDocument();
+  });
+
+  it('stops syncing when the read fails outright, rather than waiting for ever', async () => {
+    vi.mocked(getCollection).mockRejectedValueOnce(new Error('offline'));
+    const {result} = render();
+    await vi.waitFor(() => expect(result.current.syncing).toBe(false));
   });
 
   it('uploads an import to the account', async () => {

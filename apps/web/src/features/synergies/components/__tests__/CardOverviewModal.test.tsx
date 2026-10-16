@@ -154,7 +154,7 @@ test('a swipe that hides the focused translation toggle moves focus to the ×', 
   expect(screen.getByRole('button', {name: 'Close'})).toHaveFocus();
 });
 
-test('the expanded group view hides the translation toggle, which has no card image to cover', async () => {
+test('the expanded group view drops the translation toggle with the card image it covers', async () => {
   const user = userEvent.setup();
   render(
     <MemoryRouter>
@@ -171,8 +171,8 @@ test('the expanded group view hides the translation toggle, which has no card im
   );
   expect(screen.getByRole('button', {name: 'See translation'})).toBeVisible();
   await user.click(screen.getByRole('button', {name: /more/i}));
-  // Hidden, not removed, so the header keeps its height (a hidden button has no accessible name).
-  expect(screen.getByText('See translation')).not.toBeVisible();
+  // The toggle sits under the card, which the expanded view does not show.
+  expect(screen.queryByText('See translation')).toBeNull();
 });
 
 function renderWithSiblings(opts: {onGoToSibling?: (d: 1 | -1) => void; siblingCardIds?: string[]} = {}) {
@@ -242,6 +242,21 @@ function renderPrintingModal(
   const utils = render(tree(card));
   return {...utils, rerenderCard: (c: LorcanaCard) => utils.rerender(tree(c))};
 }
+
+test('desktop puts the printing pills under the card, shrinking its art to make room', () => {
+  Element.prototype.scrollTo = vi.fn();
+  const {container} = renderPrintingModal(withEnchanted(makeCard('b')));
+
+  expect(container.querySelector('header')).not.toContainElement(screen.getByRole('radiogroup'));
+  const art = container.querySelector<HTMLElement>('[data-comparison-card-a]')!;
+  expect(art.style.transform).toMatch(/^scale\(0\.\d+\)$/);
+});
+
+test('desktop leaves the art of a card without printings at full size', () => {
+  const {container} = renderPrintingModal(makeCard('b'));
+
+  expect(container.querySelector<HTMLElement>('[data-comparison-card-a]')!.style.transform).toBe('');
+});
 
 test('a card with an alternate printing shows the one picked, and records it', async () => {
   Element.prototype.scrollTo = vi.fn();
@@ -338,7 +353,8 @@ test('an English card with an English variant offers no translation', () => {
   expect(screen.queryByText('See translation')).toBeNull();
 });
 
-// Desktop's toggle sits in the header, mobile's under the card (MobileArtControls).
+// Both sit under the card: desktop's in a row pinned below the shrunk art (DesktopArtControls),
+// mobile's in the column's flow (MobileArtControls).
 test.each([false, true])(
   'a foreign-scan variant offers its translation on that printing only (mobile: %s)',
   async (isMobile) => {

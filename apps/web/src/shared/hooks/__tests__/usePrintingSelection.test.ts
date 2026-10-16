@@ -72,6 +72,45 @@ describe('usePrintingSelection', () => {
     expect(unknown.result.current.index).toBe(0);
   });
 
+  it('starts each card it arrives on at the printing initialKey names for it', () => {
+    // Browse's modal arrows: every card opens on the art its grid tile showed.
+    const perdita = createCard({id: '1939', variants: [{id: '2142', rarity: 'Epic', number: 210}]});
+    const {result, rerender} = renderHook(
+      ({card, initialKey}) => usePrintingSelection(card, {surface: 'modal', initialKey}),
+      {initialProps: {card: pongo, initialKey: '2141'}},
+    );
+    expect(result.current.current.label).toBe('Enchanted');
+
+    rerender({card: perdita, initialKey: '2142'});
+    expect(result.current.current.label).toBe('Epic');
+
+    rerender({card: pongo, initialKey: '2141'});
+    expect(result.current.current.label).toBe('Enchanted');
+  });
+
+  it('starts the same card again when it is reached with another printing to start on', () => {
+    // A binder under Name A-Z: pongo's own pocket, then its Enchanted's, side by side.
+    const {result, rerender} = renderHook(
+      ({initialKey}: {initialKey: string | null}) => usePrintingSelection(pongo, {surface: 'modal', initialKey}),
+      {initialProps: {initialKey: null as string | null}},
+    );
+    expect(result.current.index).toBe(0);
+
+    rerender({initialKey: '2141'});
+    expect(result.current.current.label).toBe('Enchanted');
+
+    rerender({initialKey: null});
+    expect(result.current.index).toBe(0);
+  });
+
+  it('lets a card that started on a printing switch back to Standard', () => {
+    const {result} = renderHook(() => usePrintingSelection(pongo, {surface: 'modal', initialKey: '2141'}));
+
+    act(() => result.current.select(0));
+
+    expect(result.current.index).toBe(0);
+  });
+
   it('reads initialKey once: resetWhen drops that printing for good', () => {
     const {result, rerender} = renderHook(
       ({resetWhen}) => usePrintingSelection(pongo, {resetWhen, surface: 'modal', initialKey: '2141'}),

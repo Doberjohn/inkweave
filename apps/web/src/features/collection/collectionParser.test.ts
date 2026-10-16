@@ -145,9 +145,9 @@ describe('parseCollectionCsv', () => {
   });
 
   it('resolves a lettered variant to the printed card it is a variant of', () => {
-    // Dreamborn numbers Set 3's Dalmatian Puppy 4a-4e; our data carries it once,
-    // as plain 4. Without a fallback all five read as unidentified, which is how
-    // a real import reported five owned cards as "sets Core does not use".
+    // Dreamborn letters a card's printing variants (Set 3's Dalmatian Puppy is 4a-4e)
+    // where our data numbers them plainly. On a card we carry once the variants fold
+    // into it; without the fallback every one of them reads as unidentified.
     const withPuppy = [
       ...pool,
       createCard({id: '3004', fullName: 'Dalmatian Puppy - Tail Wagger', setCode: '3', setNumber: 4}),
@@ -162,6 +162,39 @@ describe('parseCollectionCsv', () => {
     // One printed card, so the variants fold into its copy count.
     expect(entries['3004']).toEqual({normal: 3, foil: 0});
     expect(summary.unidentified).toEqual([]);
+  });
+
+  describe('a number two printings share, which no row can tell apart', () => {
+    // Set 3's Dalmatian Puppy - Tail Wagger is five printings in our data, all numbered 4
+    // (Dreamborn's 4a-4e): a row names one of the arts, and nothing says which of ours it is.
+    const puppies = [
+      ...pool,
+      ...['436', '437'].map((id) =>
+        createCard({id, fullName: 'Dalmatian Puppy - Tail Wagger', setCode: '3', setNumber: 4}),
+      ),
+    ];
+
+    it('leaves a lettered row out, reported as ambiguous, rather than guessing a printing', () => {
+      const {entries, summary} = parseCollectionCsv(
+        csv(
+          '003,4b,normal,2,"Dalmatian Puppy - Tail Wagger",Amber,Common',
+          '003,4b,foil,1,"Dalmatian Puppy - Tail Wagger",Amber,Common',
+        ),
+        puppies,
+      );
+      expect(Object.keys(entries)).toEqual([]);
+      expect(summary.ambiguous).toEqual(['3-4b']);
+      expect(summary.unidentified).toEqual([]);
+    });
+
+    it('leaves out a row naming the shared number itself, too', () => {
+      const {entries, summary} = parseCollectionCsv(
+        csv('003,4,normal,1,"Dalmatian Puppy - Tail Wagger",Amber,Common'),
+        puppies,
+      );
+      expect(Object.keys(entries)).toEqual([]);
+      expect(summary.ambiguous).toEqual(['3-4']);
+    });
   });
 
   it('reports each unidentified card once, not once per finish', () => {

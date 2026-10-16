@@ -58,6 +58,14 @@ describe('Chip', () => {
       expect(screen.getByRole('button')).toHaveAttribute('title', 'Searches for locations');
     });
 
+    it('should show an icon instead of the label, still named and titled by the label', () => {
+      render(<Chip label="Rare" icon={<svg data-testid="glyph" />} active={false} onClick={vi.fn()} />);
+      const btn = screen.getByRole('button', {name: 'Rare'});
+      expect(btn).toContainElement(screen.getByTestId('glyph'));
+      expect(btn.textContent).toBe('');
+      expect(btn).toHaveAttribute('title', 'Rare');
+    });
+
     it('should set aria-pressed=true when active', () => {
       render(<Chip label="All" active={true} onClick={vi.fn()} />);
       expect(screen.getByRole('button')).toHaveAttribute('aria-pressed', 'true');

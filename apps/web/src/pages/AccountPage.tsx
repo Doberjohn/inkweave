@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {Suspense, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {
   BackLink,
@@ -10,6 +10,8 @@ import {
 } from '../shared/components';
 import {SignInDialog} from '../shared/components/SignInDialog';
 import {DisplayNameDialog, useProfile, type PublicIdentity} from '../features/profile';
+import {SHOW_COLLECTION} from '../features/collection/flag';
+import {lazyWithRetry} from '../shared/lib/lazyWithRetry';
 import {useSession} from '../shared/contexts/SessionContext';
 import {useResponsive} from '../shared/hooks';
 import {CAP_LABEL, COLORS, FONT_SIZES, FONTS, SPACING, SURFACE_CARD} from '../shared/constants';
@@ -20,10 +22,12 @@ import {CAP_LABEL, COLORS, FONT_SIZES, FONTS, SPACING, SURFACE_CARD} from '../sh
  * WHY IT EXISTS, beyond holding these particular controls: the app had no account
  * surface, so anything account-shaped got parented to whatever page was nearby —
  * and when that page changed, the feature was orphaned. `DisplayNameDialog` lost
+ * its only render site to `8d9a3ae3`; `ImportCollectionDialog` shipped with no
  * caller at all. Both are complete, tested components that nothing could open.
  * This page is mostly mount sites, which is the point.
  *
- * Design: `docs/deck-builder/2026-08-11-account-page-design.md`.
+ * Design: `docs/deck-builder/2026-08-11-account-page-design.md` on the `deck-builder`
+ * branch; that folder has not been brought to master.
  */
 
 function Section({title, children}: {title: string; children: React.ReactNode}) {
@@ -33,6 +37,16 @@ function Section({title, children}: {title: string; children: React.ReactNode}) 
       {children}
     </section>
   );
+}
+
+/** Locale date, or a dash. Hoisted so the section carries one fewer branch. */
+function formatImported(importedAt: number | null): string {
+  if (importedAt === null) return '—';
+  return new Date(importedAt).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 function Row({label, value, action}: {label: string; value: string; action?: React.ReactNode}) {
@@ -168,6 +182,121 @@ function SignedOut({onSignIn}: {onSignIn: () => void}) {
   );
 }
 
+/** The destructive half, split out so its three states do not land on the section. */
+function ClearControls({
+  confirming,
+  onAsk,
+  onConfirm,
+  onCancel,
+}: {
+  confirming: boolean;
+  onAsk: () => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!confirming) {
+    return (
+      <CtaButton variant="neutral" onClick={onAsk}>
+        Clear
+      </CtaButton>
+    );
+  }
+  // Confirm in place rather than a dialog: one destructive action with no undo,
+  // and a second overlay for a single yes/no is heavier than the decision.
+  return (
+    <>
+      <CtaButton variant="neutral" onClick={onConfirm}>
+        Delete my collection
+      </CtaButton>
+      <CtaButton variant="ghost" onClick={onCancel}>
+        Cancel
+      </CtaButton>
+    </>
+  );
+}
+
+interface CollectionSectionProps {
+  hasCollection: boolean;
+  /**
+   * No collection here yet and the account's copy has not answered: on a new browser
+   * that copy may BE the collection, so the section waits instead of offering an
+   * import over it (`useCollection().syncing`).
+   */
+  checking: boolean;
+  owned: number;
+  importedAt: number | null;
+  confirming: boolean;
+  onImport: () => void;
+  onAskClear: () => void;
+  onConfirmClear: () => void;
+  onCancelClear: () => void;
+}
+
+export function CollectionSection({
+  hasCollection,
+  checking,
+  owned,
+  importedAt,
+  confirming,
+  onImport,
+  onAskClear,
+  onConfirmClear,
+  onCancelClear,
+}: CollectionSectionProps) {
+  return (
+    <Section title="Collection">
+      {hasCollection ? (
+        <>
+          <Row label="Cards owned" value={owned.toLocaleString()} />
+          <Row label="Imported" value={formatImported(importedAt)} />
+        </>
+      ) : (
+        <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.md}px`, margin: 0}}>
+          {checking
+            ? 'Checking your account for a collection…'
+            : 'Import a Dreamborn CSV export to see what you own while you browse.'}
+        </p>
+      )}
+      <div style={{display: 'flex', gap: SPACING.md, marginTop: SPACING.lg, flexWrap: 'wrap'}}>
+        <CtaButton variant="ghost" onClick={onImport} disabled={checking}>
+          {hasCollection ? 'Re-import' : 'Import collection'}
+        </CtaButton>
+        {hasCollection && (
+          <ClearControls
+            confirming={confirming}
+            onAsk={onAskClear}
+            onConfirm={onConfirmClear}
+            onCancel={onCancelClear}
+          />
+        )}
+      </div>
+      {confirming && (
+        <p
+          role="alert"
+          style={{
+            color: COLORS.textMuted,
+            fontSize: `${FONT_SIZES.xs}px`,
+            margin: `${SPACING.md}px 0 0`,
+          }}>
+          {/* The account copy goes too: this page is signed-in only, and a clear
+              while signed in deletes the server row as well (#555). */}
+          This deletes your imported collection from this browser and from your account. It cannot be
+          undone.
+        </p>
+      )}
+    </Section>
+  );
+}
+
+/**
+ * The collection section and its import (#553 Phase C), only under `SHOW_COLLECTION`.
+ * A component of its own because its hooks need the collection providers, which mount
+ * only under that flag, and a hook cannot be skipped; a component can. And a MODULE of
+ * its own, loaded lazily, so a flag-off build never requests the collection's data layer
+ * for /account (`flag.ts`: off means NOT LOADED).
+ */
+const AccountCollection = SHOW_COLLECTION ? lazyWithRetry(() => import('./AccountCollection'), 'AccountCollection') : null;
+
 export function AccountPage() {
   const navigate = useNavigate();
   const {isMobile} = useResponsive();
@@ -213,10 +342,15 @@ export function AccountPage() {
         ) : user === null ? (
           <SignedOut onSignIn={() => setShowSignIn(true)} />
         ) : (
-          <>
+          // One boundary around every section: while the collection's module loads, the
+          // page keeps its "Checking your session…" card, and the sections arrive together.
+          // A boundary around the collection alone let Session paint first, then pushed it
+          // down when the collection landed between it and Identity.
+          <Suspense fallback={<Checking />}>
             <IdentitySection identity={identity} onChange={() => setShowName(true)} />
+            {AccountCollection && <AccountCollection />}
             <SessionSection onSignOut={signOut} />
-          </>
+          </Suspense>
         )}
       </div>
 

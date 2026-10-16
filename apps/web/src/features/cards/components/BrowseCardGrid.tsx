@@ -1,17 +1,20 @@
 import {forwardRef, type CSSProperties, type ReactNode} from 'react';
 import {VirtuosoGrid} from 'react-virtuoso';
-import type {LorcanaCard} from 'inkweave-synergy-engine';
+import type {CardPrinting, LorcanaCard} from 'inkweave-synergy-engine';
 import {cardPath} from 'inkweave-synergy-engine/card';
 import {CardTile} from './CardTile';
 import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
 import {RenderProfiler} from '../../../shared/components';
 import {useResponsive} from '../../../shared/hooks';
 import {CardGridSkeleton} from './CardGridSkeleton';
+import {BROWSE_GUTTER} from './BrowseSidePanel';
 
 interface BrowseCardGridProps {
   cards: LorcanaCard[];
   isLoading: boolean;
   onCardSelect: (card: LorcanaCard) => void;
+  /** The printing a card's tile shows instead of its own art (see `CardTile`'s `printing`). */
+  printingFor?: (card: LorcanaCard) => CardPrinting | undefined;
 }
 
 interface ListContainerProps {
@@ -52,9 +55,9 @@ const createListContainer = ({paddingX, minColWidth}: ListContainerConfig) =>
     );
   });
 
-export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridProps) {
+export function BrowseCardGrid({cards, isLoading, onCardSelect, printingFor}: BrowseCardGridProps) {
   const {isMobile} = useResponsive();
-  const paddingX = isMobile ? SPACING.lg : 32;
+  const paddingX = isMobile ? SPACING.lg : BROWSE_GUTTER;
   const minColWidth = isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth;
   const ListContainer = createListContainer({paddingX, minColWidth});
 
@@ -94,6 +97,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect}: BrowseCardGridP
             variant="minimal"
             priority={index < 6}
             useSmallImage
+            printing={printingFor?.(displayedCards[index])}
           />
         )}
         style={{height: '100%'}}

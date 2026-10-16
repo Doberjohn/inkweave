@@ -431,6 +431,7 @@ function buildPlaystyleViewProps(args: {
   setSortOrder: ToolbarProps['onSortChange'];
   uniqueKeywords: string[];
   uniqueClassifications: string[];
+  uniqueRarities: string[];
   sets: FilterDialogSharedProps['sets'];
 }): {toolbarProps: ToolbarProps; filterDialogProps: FilterDialogSharedProps} {
   const applied = {
@@ -442,6 +443,7 @@ function buildPlaystyleViewProps(args: {
   const all = {
     keywords: args.uniqueKeywords,
     classifications: args.uniqueClassifications,
+    rarities: args.uniqueRarities,
     sets: args.sets,
   };
   const options = getPoolFilterOptions(args.cards, applied, all);
@@ -473,6 +475,7 @@ function buildPlaystyleViewProps(args: {
     filters: args.filters,
     uniqueKeywords: options.keywords,
     uniqueClassifications: options.classifications,
+    uniqueRarities: options.rarities,
     sets: options.sets,
     buttonOptions: options.buttons,
   };
@@ -524,7 +527,7 @@ export function PlaystyleDetailPage() {
   const navigate = useNavigate();
   const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();
-  const {isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets, getCardById} =
+  const {isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, uniqueRarities, sets, getCardById} =
     useCardDataContext();
   const {
     searchQuery,
@@ -597,6 +600,7 @@ export function PlaystyleDetailPage() {
     setSortOrder,
     uniqueKeywords,
     uniqueClassifications,
+    uniqueRarities,
     sets,
   });
 
@@ -674,6 +678,7 @@ interface FilterDialogSharedProps {
   filters: Parameters<typeof FilterDialog>[0]['filters'];
   uniqueKeywords: string[];
   uniqueClassifications: string[];
+  uniqueRarities: string[];
   sets: Parameters<typeof FilterDialog>[0]['sets'];
   buttonOptions: Parameters<typeof FilterDialog>[0]['buttonOptions'];
 }

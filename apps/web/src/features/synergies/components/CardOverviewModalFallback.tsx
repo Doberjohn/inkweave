@@ -11,10 +11,13 @@ import {
 } from '../../../shared/hooks';
 import {CardTranslationToggle} from '../../../shared/components/CardTranslationToggle';
 import {PrintingPills} from '../../../shared/components/PrintingPills';
+import {ModalCardTitle} from './ModalCardTitle';
 import {
+  artScaleTransform,
   CENTERING_WRAPPER_STYLE,
   CLOSE_BUTTON_SIZE,
   DEFAULT_BODY_STYLE,
+  hasArtControls,
   MODAL_BACKDROP_STYLE,
   MODAL_FRAME_STYLE,
   MODAL_HEADER_STYLE,
@@ -22,7 +25,6 @@ import {
   pickCardColumnLayout,
   pickCardsRowStyle,
   pickModalShellStyle,
-  pickModalTitleStyle,
   pickSynergyColumnLayout,
 } from './cardOverviewModalStyles';
 
@@ -113,34 +115,33 @@ const HIDDEN: CSSProperties = {visibility: 'hidden'};
 const noop = () => {};
 
 /**
- * The modal's printing pills and translation toggle (ModalCardArt.tsx), invisible: rendered
- * only where the modal renders them and in the same wrappers (the header on desktop, under the
- * card on mobile), they hold exactly the space the real controls take, so nothing moves at the
- * handoff. visibility:hidden also keeps them out of the focus order and the accessibility tree.
+ * The card placeholder: block (no trailing line box), and on desktop shrunk like the modal's
+ * art when controls will sit under it, so the handoff moves nothing.
  */
-function ReservedArtControls({card, isMobile}: {card: LorcanaCard; isMobile: boolean}) {
-  const printings = printingsOf(card);
-  const toggle = hasForeignScan(card) ? (
-    <span style={HIDDEN}>
-      <CardTranslationToggle shown={false} onToggle={noop} />
-    </span>
-  ) : null;
-  if (isMobile) {
-    return (
-      <>
-        <PrintingPills printings={printings} index={0} onSelect={noop} isMobile style={HIDDEN} />
-        {toggle}
-      </>
-    );
-  }
+function pickSkeletonArtStyle(shrunk: boolean, cardHeight: number): CSSProperties {
+  return {
+    display: 'block',
+    transform: shrunk ? artScaleTransform(cardHeight) : undefined,
+    transformOrigin: 'top center',
+  };
+}
+
+/**
+ * Mobile's printing pills and translation toggle (ModalCardArt.tsx), invisible: rendered under
+ * the card as the modal renders them, they hold exactly the space the real controls take, so
+ * nothing moves at the handoff. visibility:hidden also keeps them out of the focus order and
+ * the accessibility tree. Desktop's sit in a row pinned under the shrunk art, which takes no
+ * space of its own, so only the art's scale needs matching there.
+ */
+function ReservedMobileArtControls({card}: {card: LorcanaCard}) {
   return (
     <>
-      {printings.length > 1 && (
+      <PrintingPills printings={printingsOf(card)} index={0} onSelect={noop} isMobile style={HIDDEN} />
+      {hasForeignScan(card) && (
         <span style={HIDDEN}>
-          <PrintingPills printings={printings} index={0} onSelect={noop} />
+          <CardTranslationToggle shown={false} onToggle={noop} />
         </span>
       )}
-      {toggle}
     </>
   );
 }
@@ -193,8 +194,7 @@ export function CardOverviewModalFallback({card, isMobile, onClose}: CardOvervie
             data-testid="card-overview-fallback"
             style={pickModalShellStyle(isMobile)}>
             <div style={MODAL_HEADER_STYLE}>
-              <div style={pickModalTitleStyle(isMobile)}>{card.fullName}</div>
-              {!isMobile && <ReservedArtControls card={card} isMobile={false} />}
+              <ModalCardTitle card={card} isMobile={isMobile} as="div" />
               {/* The modal's own ×: it sets the header's height, so everything below sits
                   exactly where the modal's will. It never takes focus (see above). */}
               <ModalCloseButton onClose={onClose} />
@@ -209,9 +209,9 @@ export function CardOverviewModalFallback({card, isMobile, onClose}: CardOvervie
                     height={cardHeight}
                     borderRadius={RADIUS.xl}
                     inline
-                    style={{display: 'block'}}
+                    style={pickSkeletonArtStyle(!isMobile && hasArtControls(card), cardHeight)}
                   />
-                  {isMobile && <ReservedArtControls card={card} isMobile />}
+                  {isMobile && <ReservedMobileArtControls card={card} />}
                 </div>
                 <div style={pickSynergyColumnLayout(isMobile, cardHeight)}>
                   <SynergiesLoadingSkeleton />
