@@ -476,10 +476,6 @@ export type LocationRole =
   | 'location-ramp';
 
 /**
- * Get all location roles a card fulfills.
- * Returns empty array for cards with no location interaction.
- */
-/**
  * Ordered role detectors (order = role-array order). A data table instead of an
  * if-ladder keeps `getLocationRoles` flat — adding a role is one row, not one
  * more branch. `prepare` (move only) strips damage-moving clauses before the test.
@@ -500,6 +496,10 @@ const LOCATION_ROLE_DETECTORS: ReadonlyArray<{
   {role: 'location-ramp', pattern: LOCATION_PATTERNS['location-ramp']},
 ];
 
+/**
+ * Get all location roles a card fulfills.
+ * Returns empty array for cards with no location interaction.
+ */
 export function getLocationRoles(card: LorcanaCard): LocationRole[] {
   if (isLocation(card) || !card.text) return [];
 
@@ -1625,6 +1625,25 @@ const SELF_DISCOUNT_FREE_PATTERN = /play\s+this\s+character\s+for\s+free/i;
 /** Fast pre-filter: skip cards without any ramp-related keywords */
 const HAS_RAMP_KEYWORD = /inkwell|you pay \d+.*less/i;
 
+/** Puts cards into YOUR inkwell: an opponent-inkwell effect counts only when it also ramps you. */
+function rampsYourInkwell(t: string): boolean {
+  if (!INKWELL_RAMP_PATTERNS.some((p) => p.test(t))) return false;
+  return !OPPONENT_INK_PATTERN.test(t) || /into\s+your\s+inkwell/i.test(t);
+}
+
+/** Reduces the cost of OTHER cards: not a self-discount, nor a discount for one name only. */
+function grantsCostReduction(t: string): boolean {
+  const grants = t.replace(NAMED_DISCOUNT_PATTERN, '');
+  return COST_REDUCTION_GRANT_PATTERN.test(grants) && !COST_REDUCTION_SELF_PATTERN.test(grants);
+}
+
+/** Each ramp role with the check that grants it, in the order getRampRoles reports them. */
+const RAMP_ROLE_CHECKS: ReadonlyArray<readonly [RampRole, (t: string) => boolean]> = [
+  ['inkwell-ramp', rampsYourInkwell],
+  ['inkwell-trigger', (t) => INKWELL_TRIGGER_PATTERNS.some((p) => p.test(t))],
+  ['cost-reduction', grantsCostReduction],
+];
+
 /**
  * Determine the ramp role(s) a card fulfills.
  * A card can have multiple roles (e.g., a card that both ramps and triggers).
@@ -1633,29 +1652,7 @@ export function getRampRoles(card: LorcanaCard): RampRole[] {
   if (!card.text) return [];
   const t = normalizeCardText(card);
   if (!HAS_RAMP_KEYWORD.test(t)) return [];
-
-  const roles: RampRole[] = [];
-
-  // Check inkwell ramp (must put cards into YOUR inkwell, not opponent's)
-  const isRamp = INKWELL_RAMP_PATTERNS.some((p) => p.test(t));
-  const isOpponentInk = OPPONENT_INK_PATTERN.test(t);
-  const alsoSelfRamps = /into\s+your\s+inkwell/i.test(t);
-  if (isRamp && (!isOpponentInk || alsoSelfRamps)) {
-    roles.push('inkwell-ramp');
-  }
-
-  // Check inkwell trigger
-  if (INKWELL_TRIGGER_PATTERNS.some((p) => p.test(t))) {
-    roles.push('inkwell-trigger');
-  }
-
-  // Check cost reduction grant (reduces cost of OTHER cards, not self, nor of one name only)
-  const grants = t.replace(NAMED_DISCOUNT_PATTERN, '');
-  if (COST_REDUCTION_GRANT_PATTERN.test(grants) && !COST_REDUCTION_SELF_PATTERN.test(grants)) {
-    roles.push('cost-reduction');
-  }
-
-  return roles;
+  return RAMP_ROLE_CHECKS.filter(([, applies]) => applies(t)).map(([role]) => role);
 }
 
 /**
@@ -1840,53 +1837,77 @@ export function getNamedReferences(card: LorcanaCard): string[] {
     .replace(SHIFT_REMINDER, '')
     .replace(SHIFT_ALIAS_PATTERN, '');
 
-  const names = new Set<string>();
-
   // Reset lastIndex for global regex reuse
   NAMED_PATTERN.lastIndex = 0;
 
   // Scan the text between ability titles piece by piece, so a name never runs into a title
-  const matches = cleanText
+  const names = cleanText
     .split(ABILITY_TITLE_START)
-    .flatMap((piece) => [...piece.matchAll(NAMED_PATTERN)]);
+    .flatMap((piece) => [...piece.matchAll(NAMED_PATTERN)])
+    .flatMap((match) => namesInCapture(match[1]));
 
-  for (const match of matches) {
-    let name = match[1].trim();
+  return [...new Set(names)];
+}
 
-    // Strip trailing punctuation (sentence-end periods, commas) but keep internal ones like "Mr."
-    name = name.replace(/[.,]+$/, '');
+/** "named both Chip and Dale" names two cards. */
+function splitBothPair(name: string): string[] | null {
+  if (!name.toLowerCase().startsWith('both ')) return null;
+  const bothMatch = name.match(/^both\s+(.+?)\s+and\s+(.+)$/i);
+  return bothMatch ? [bothMatch[1].trim(), bothMatch[2].trim()] : null;
+}
 
-    if (!name) continue;
+/** "X and Y" or "X or Y" names two cards when both parts start with uppercase. */
+function splitCapitalizedPair(name: string): string[] | null {
+  const conjMatch = name.match(/^(.+?)\s+(?:and|or)\s+([A-Z].+)$/);
+  if (!conjMatch || !/^[A-Z]/.test(conjMatch[1])) return null;
+  return [conjMatch[1].trim(), conjMatch[2].trim()];
+}
 
-    // Skip generic game terms (e.g., "the named card, put it into your hand")
-    if (GENERIC_WORDS.has(name.toLowerCase())) continue;
-
-    // Handle "both X and Y" pattern (e.g., "named both Chip and Dale")
-    if (name.toLowerCase().startsWith('both ')) {
-      const bothMatch = name.match(/^both\s+(.+?)\s+and\s+(.+)$/i);
-      if (bothMatch) {
-        names.add(bothMatch[1].trim());
-        names.add(bothMatch[2].trim());
-        continue;
-      }
-    }
-
-    // Handle "X and Y" or "X or Y" where both parts start with uppercase
-    const conjMatch = name.match(/^(.+?)\s+(?:and|or)\s+([A-Z].+)$/);
-    if (conjMatch && /^[A-Z]/.test(conjMatch[1])) {
-      names.add(conjMatch[1].trim());
-      names.add(conjMatch[2].trim());
-      continue;
-    }
-
-    names.add(name);
-  }
-
-  return [...names];
+/** The card name(s) in one "named X" capture, or none for a generic game term. */
+function namesInCapture(capture: string): string[] {
+  // Strip trailing punctuation (sentence-end periods, commas) but keep internal ones like "Mr."
+  const name = capture.trim().replace(/[.,]+$/, '');
+  // Skip generic game terms (e.g., "the named card, put it into your hand")
+  if (!name || GENERIC_WORDS.has(name.toLowerCase())) return [];
+  return splitBothPair(name) ?? splitCapitalizedPair(name) ?? [name];
 }
 
 /** Effect tier of a named reference; NAMED_EFFECT_SCORES maps each tier to its score. */
 export type NamedEffectTier = 'game-winning' | 'strong' | 'moderate' | 'minor' | 'hostile';
+
+/** Effect tiers in priority order: the first tier with a matching pattern wins; else 'minor'. */
+const NAMED_EFFECT_TIERS: ReadonlyArray<readonly [NamedEffectTier, readonly RegExp[]]> = [
+  // Hostile: a "banish" within 40 characters of "named" (the same clause), read as the card
+  // banishing the named character. A passive "banished" does not count: "named Buzz Lightyear
+  // was banished" is a condition the card waits for, not an attack.
+  ['hostile', [/banish(?!ed).{0,40}named|named.{0,40}banish(?!ed)/]],
+  // Game-winning: free play, draw multiple, deck search
+  [
+    'game-winning',
+    [/play.*for free|for free|play.*without paying/, /draw \d+ card|draw cards/, /search your deck/],
+  ],
+  // Strong: cost reduction, keyword grants (Bodyguard, Challenger, Rush, Evasive, Singer). A
+  // reduction reads "pay 1 ⬡ less"; "cost 3 or less" is a threshold (John Smith's Compass).
+  [
+    'strong',
+    [
+      /costs? \d+ less|cost reduction|pay \d+ .*less/,
+      /gains? (?:bodyguard|challenger|rush|evasive|singer)/,
+      /challenger \+\d/,
+    ],
+  ],
+  // Moderate: stat boosts, lore, Resist, Support
+  [
+    'moderate',
+    [
+      /\+\d+\s*(?:strength|willpower|lore)/,
+      /gains?\s+\d+ lore/,
+      /resist \+\d/,
+      /gains? support/,
+      /can't be challenged/,
+    ],
+  ],
+];
 
 /**
  * Classify the effect of a named reference for scoring purposes.
@@ -1895,32 +1916,8 @@ export type NamedEffectTier = 'game-winning' | 'strong' | 'moderate' | 'minor' |
 export function classifyNamedEffect(card: LorcanaCard): NamedEffectTier {
   if (!card.text) return 'minor';
   const text = normalizeCardText(card).toLowerCase();
-
-  // Hostile: a "banish" within 40 characters of "named" (the same clause), read as the card
-  // banishing the named character. A passive "banished" does not count: "named Buzz Lightyear
-  // was banished" is a condition the card waits for, not an attack.
-  if (/banish(?!ed).{0,40}named|named.{0,40}banish(?!ed)/.test(text)) return 'hostile';
-
-  // Game-winning: free play, draw multiple, deck search
-  if (/play.*for free|for free|play.*without paying/.test(text)) return 'game-winning';
-  if (/draw \d+ card|draw cards/.test(text)) return 'game-winning';
-  if (/search your deck/.test(text)) return 'game-winning';
-
-  // Strong: cost reduction, keyword grants (Bodyguard, Challenger, Rush, Evasive, Singer). A
-  // reduction reads "pay 1 ⬡ less"; "cost 3 or less" is a threshold (John Smith's Compass).
-  if (/costs? \d+ less|cost reduction|pay \d+ .*less/.test(text)) return 'strong';
-  if (/gains? (?:bodyguard|challenger|rush|evasive|singer)/.test(text)) return 'strong';
-  if (/challenger \+\d/.test(text)) return 'strong';
-
-  // Moderate: stat boosts, lore, Resist, Support
-  if (/\+\d+\s*(?:strength|willpower|lore)/.test(text)) return 'moderate';
-  if (/gains?\s+\d+ lore/.test(text)) return 'moderate';
-  if (/resist \+\d/.test(text)) return 'moderate';
-  if (/gains? support/.test(text)) return 'moderate';
-  if (/can't be challenged/.test(text)) return 'moderate';
-
-  // Minor: everything else
-  return 'minor';
+  const tier = NAMED_EFFECT_TIERS.find(([, patterns]) => patterns.some((p) => p.test(text)));
+  return tier ? tier[0] : 'minor';
 }
 
 /** Map effect tier to numeric score */
