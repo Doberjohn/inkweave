@@ -48,6 +48,15 @@ function plural(n: number, one: string, many: string): string {
 /** Enough to act on; beyond this the list stops being readable. */
 const MAX_LISTED = 8;
 
+/** Card refs to list, the rest counted: `14-7, 3-999` or `... and 4 more`. */
+function listed(refs: readonly string[]): string {
+  const more = refs.length - MAX_LISTED;
+  return `${refs.slice(0, MAX_LISTED).join(', ')}${more > 0 ? ` and ${count(more)} more` : ''}`;
+}
+
+/** A receipt line below the headline: what was left out, and why. */
+const NOTE_STYLE: React.CSSProperties = {...DIALOG_BODY, fontWeight: 400, marginTop: SPACING.sm};
+
 /**
  * The receipt, ALWAYS shown on success. The imported cards land in a mode the
  * user has not opened yet, so an import that said nothing would look like it had
@@ -56,10 +65,12 @@ const MAX_LISTED = 8;
  * It names what could NOT be identified rather than counting it: five card
  * numbers are something a person can look up. Every set is stored, so there is
  * no "outside Core" remainder to explain away; a real import once lost Set 3's
- * lettered Dalmatian Puppies (4a-4e) behind a sentence like that.
+ * lettered Dalmatian Puppies (4a-4e) behind a sentence like that. Rows that match
+ * more than one printing get a line of their own: they are left out on purpose
+ * (#553), and "could not be matched" would misstate why.
  */
 function SummaryStep({summary}: {summary: CollectionSummary}) {
-  const {unidentified, unparsed} = summary;
+  const {unidentified, ambiguous, unparsed} = summary;
   return (
     <>
       <p style={{...DIALOG_BODY, marginTop: SPACING.xs}}>
@@ -67,17 +78,23 @@ function SummaryStep({summary}: {summary: CollectionSummary}) {
         in all.
       </p>
       {unidentified.length > 0 && (
-        <p style={{...DIALOG_BODY, fontWeight: 400, marginTop: SPACING.sm}}>
+        <p style={NOTE_STYLE}>
           {unidentified.length === 1
             ? 'One card could not be matched to our data'
             : `${count(unidentified.length)} cards could not be matched to our data`}{' '}
-          and {unidentified.length === 1 ? 'was' : 'were'} not imported:{' '}
-          {unidentified.slice(0, MAX_LISTED).join(', ')}
-          {unidentified.length > MAX_LISTED && ` and ${count(unidentified.length - MAX_LISTED)} more`}.
+          and {unidentified.length === 1 ? 'was' : 'were'} not imported: {listed(unidentified)}.
+        </p>
+      )}
+      {ambiguous.length > 0 && (
+        <p style={NOTE_STYLE}>
+          {ambiguous.length === 1
+            ? 'One card matches more than one printing in our data. We could not tell which you own, so it was'
+            : `${count(ambiguous.length)} cards each match more than one printing in our data. We could not tell which you own, so they were`}{' '}
+          not imported: {listed(ambiguous)}.
         </p>
       )}
       {unparsed.length > 0 && (
-        <p style={{...DIALOG_BODY, fontWeight: 400, marginTop: SPACING.sm}}>
+        <p style={NOTE_STYLE}>
           {plural(unparsed.length, 'row', 'rows')} could not be read, and{' '}
           {unparsed.length === 1 ? 'was' : 'were'} skipped.
         </p>
@@ -234,17 +251,23 @@ export function ImportCollectionDialog({
     }
   }
   /**
-   * Bumped by every close and every new read. An import still reading the file
-   * when the user cancels must not land afterwards: it would replace their
-   * collection behind a dialog they already dismissed. Nor may an earlier read land
-   * after a later one. A ref, read after the await, because state captured by that
-   * closure would still hold the value from before the cancel.
+   * Bumped by every close, every new read and the unmount. An import still reading
+   * the file when the user cancels, or leaves the page, must not land afterwards:
+   * it would replace their collection behind a dialog they already dismissed. Nor
+   * may an earlier read land after a later one. A ref, read after the await, because
+   * state captured by that closure would still hold the value from before the cancel.
    */
-  const attempt = useRef(0);
+  const attemptRef = useRef(0);
+  useEffect(() => {
+    const attempts = attemptRef;
+    return () => {
+      attempts.current += 1;
+    };
+  }, []);
   const footerRef = useFocusDoneOnReceipt(summary);
 
   const close = () => {
-    attempt.current += 1;
+    attemptRef.current += 1;
     onClose();
   };
 
@@ -256,21 +279,21 @@ export function ImportCollectionDialog({
       setError('Still loading the full card list. Try again in a moment.');
       return;
     }
-    attempt.current += 1;
-    const mine = attempt.current;
+    attemptRef.current += 1;
+    const mine = attemptRef.current;
     setBusy(true);
     setError(null);
     let text: string;
     try {
       text = await file.text();
     } catch {
-      if (attempt.current !== mine) return;
+      if (attemptRef.current !== mine) return;
       setBusy(false);
       setError('That file could not be read. Try exporting it from Dreamborn again.');
       return;
     }
 
-    if (attempt.current !== mine) return;
+    if (attemptRef.current !== mine) return;
     const {entries, summary: parsed} = parseCollectionCsv(text, pool);
     setBusy(false);
 

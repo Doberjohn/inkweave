@@ -74,6 +74,37 @@ export const PoolFailedToLoad: Story = {
 export const Imported: Story = {
   play: async () => {
     await userEvent.upload(screen.getByLabelText('Collection CSV file'), csvFile());
+    // The read is async: the story ends on the receipt, not the chooser.
+    await screen.findByRole('heading', {name: 'Collection imported'});
+  },
+};
+
+/**
+ * Every line the receipt can show. Set 3's Dalmatian Puppy is five printings all
+ * numbered 4 in our data, where Dreamborn letters them 4a-4e, so no row can say
+ * which printing it owns: those rows are left out with a reason of their own (#553),
+ * apart from the set-4 row that matches nothing.
+ */
+export const SharedNumber: Story = {
+  args: {
+    pool: [
+      ...pool,
+      ...['436', '437'].map((id) =>
+        createCard({id, fullName: 'Dalmatian Puppy - Tail Wagger', setCode: '3', setNumber: 4}),
+      ),
+    ],
+  },
+  play: async () => {
+    const rows = [
+      CSV,
+      '003,4a,normal,2,"Dalmatian Puppy - Tail Wagger",Amber,Common',
+      '003,4b,foil,1,"Dalmatian Puppy - Tail Wagger",Amber,Common',
+    ].join('\n');
+    await userEvent.upload(
+      screen.getByLabelText('Collection CSV file'),
+      new File([rows], 'collection.csv', {type: 'text/csv'}),
+    );
+    await screen.findByRole('heading', {name: 'Collection imported'});
   },
 };
 
@@ -82,6 +113,7 @@ export const StorageRefused: Story = {
   args: {onImport: fn(() => 'Your browser would not let us save this collection.')},
   play: async () => {
     await userEvent.upload(screen.getByLabelText('Collection CSV file'), csvFile());
+    await screen.findByRole('alert');
   },
 };
 
@@ -94,5 +126,6 @@ export const NothingOwned: Story = {
       {type: 'text/csv'},
     );
     await userEvent.upload(screen.getByLabelText('Collection CSV file'), empty);
+    await screen.findByRole('alert');
   },
 };

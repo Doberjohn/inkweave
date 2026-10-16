@@ -5,14 +5,16 @@ import {CardModalProvider, useCardModal} from '../CardModalContext';
 import {CardDataProvider} from '../CardDataContext';
 
 function Probe() {
-  const {selectedCardId, siblingCardIds, initialPrintingId, openCardModal, closeCardModal, goToSibling} =
+  const {selectedCardId, siblingCardIds, initialPrintingId, resolveCard, openCardModal, closeCardModal, goToSibling} =
     useCardModal();
   return (
     <div>
       <span data-testid="selected">{selectedCardId ?? 'none'}</span>
       <span data-testid="siblings">{siblingCardIds.join(',')}</span>
       <span data-testid="printing">{initialPrintingId ?? 'none'}</span>
+      <span data-testid="resolver">{resolveCard ? 'set' : 'none'}</span>
       <button onClick={() => openCardModal('b', ['a', 'b', 'c'])}>open-b</button>
+      <button onClick={() => openCardModal('b', ['a', 'b', 'c'], {resolveCard: () => undefined})}>open-collection</button>
       <button onClick={() => openCardModal('b', ['a', 'b', 'c'], {printingId: 'b-enchanted'})}>open-b-printing</button>
       <button
         onClick={() =>
@@ -78,6 +80,16 @@ test('a printing the modal opened on is dropped by paging and by closing', async
   await user.click(screen.getByText('open-b-printing'));
   await user.click(screen.getByText('close'));
   expect(screen.getByTestId('printing')).toHaveTextContent('none');
+});
+
+test("closing lets go of a collection open's resolver, and the pool it holds", async () => {
+  const user = userEvent.setup();
+  renderProbe();
+  await user.click(screen.getByText('open-collection'));
+  expect(screen.getByTestId('resolver')).toHaveTextContent('set');
+
+  await user.click(screen.getByText('close'));
+  expect(screen.getByTestId('resolver')).toHaveTextContent('none');
 });
 
 test("an open's printingFor names the printing of the opened card and of each card the arrows reach", async () => {

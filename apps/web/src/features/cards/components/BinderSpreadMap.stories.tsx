@@ -20,7 +20,7 @@ import {ALL_INKS, COLORS, SET_NAMES, SPACING, type SetCode} from '../../../share
 function setPockets(size: number, owned: (i: number) => boolean, dualEvery = 11): Pocket[] {
   const main = size - 38;
   return Array.from({length: size}, (_, i) => {
-    const block = i < main ? Math.floor((i / main) * ALL_INKS.length) : i % ALL_INKS.length;
+    const block = i < main ? Math.floor((i / main) * ALL_INKS.length) : (i - main) % ALL_INKS.length;
     const inks: Ink[] = [ALL_INKS[block]];
     if (i % dualEvery === dualEvery - 1) inks.push(ALL_INKS[(block + 1) % ALL_INKS.length]);
     return {owned: owned(i), inks};

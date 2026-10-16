@@ -1,4 +1,4 @@
-import {describe, it, expect, vi} from 'vitest';
+import {afterAll, describe, it, expect, vi} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import {AccountPage} from '../AccountPage';
@@ -16,6 +16,8 @@ import {AccountPage} from '../AccountPage';
 vi.hoisted(() => {
   vi.stubEnv('VITE_SHOW_COLLECTION', 'false');
 });
+// Restored after the file, so the stub cannot reach a later test file in the same worker.
+afterAll(() => vi.unstubAllEnvs());
 vi.mock('../../shared/contexts/SessionContext', () => ({
   useSession: () => ({user: {id: 'user-1'}, loading: false, signOut: vi.fn()}),
 }));

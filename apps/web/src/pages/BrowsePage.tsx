@@ -68,7 +68,7 @@ interface BrowseContentSectionProps {
   toolbarProps: React.ComponentProps<typeof BrowseToolbar>;
   cards: LorcanaCard[];
   isLoading: boolean;
-  onCardSelect: (card: {id: string}) => void;
+  onCardSelect: (card: LorcanaCard) => void;
   /** The printing a grid tile shows instead of its card's own art (a picked Enchanted, say). */
   printingFor?: (card: LorcanaCard) => CardPrinting | undefined;
   /** Collection mode's content. When set, it replaces the grid entirely. */
@@ -294,8 +294,9 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
   const {filters} = params;
   const {rarities, binderOptions, sortedCards, matchedCards, filtered} = browseView(collection, cards, params);
   const listing = {cards: sortedCards, sortOrder: params.sortOrder, matched: matchedCards, filtered};
-  const selectCard = (card: {id: string}) => {
-    trackCardSelected(getCardById(card.id), 'browse');
+  const selectCard = (card: LorcanaCard) => {
+    // A binder card from outside Core is not in CardDataContext: count the card handed over.
+    trackCardSelected(getCardById(card.id) ?? card, 'browse');
     const printingFor = printingIdsFor(getCardById, filters.rarities);
     openFromBrowse(openCardModal, card.id, {...listing, printingFor}, collection);
   };

@@ -176,6 +176,8 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setSiblingIndex(-1);
     setInitialPrintingId(null);
     setPrintingFor(null);
+    // The provider outlives collection mode; a kept resolver would hold its pool.
+    setResolveCard(null);
     if (location.pathname.startsWith('/compare/')) {
       navigate('/');
     }

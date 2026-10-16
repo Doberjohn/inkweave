@@ -31,10 +31,14 @@ interface SectionOptions {
   sortOrder?: BrowseSortOrder;
   setCode?: string;
   entries?: CollectionEntries;
+  isLoading?: boolean;
 }
 
 /** The section with `matched` the cards the page's filters let through, as the page counts them. */
-function renderSection(matched: string[], {sortOrder = 'newest', setCode = '9', entries = {}}: SectionOptions = {}) {
+function renderSection(
+  matched: string[],
+  {sortOrder = 'newest', setCode = '9', entries = {}, isLoading = false}: SectionOptions = {},
+) {
   const counted = POOL.filter((card) => matched.includes(card.id));
   render(
     <MemoryRouter>
@@ -45,7 +49,7 @@ function renderSection(matched: string[], {sortOrder = 'newest', setCode = '9', 
         filtered={counted.length < POOL.length}
         sortOrder={sortOrder}
         entries={entries}
-        isLoading={false}
+        isLoading={isLoading}
         error={null}
         onRetry={vi.fn()}
         onCardSelect={vi.fn()}
@@ -64,6 +68,12 @@ function renderSection(matched: string[], {sortOrder = 'newest', setCode = '9', 
 const pockets = () => screen.getAllByRole('button', {name: /^Card /}).map((tile) => tile.getAttribute('aria-label'));
 
 describe('CollectionBinderSection', () => {
+  it('keeps the loading map, which holds no cards yet, from announcing "nothing missing"', () => {
+    // jsdom's 1024px window is desktop, where the map docks under the binder.
+    renderSection([], {isLoading: true});
+    expect(screen.queryByRole('button', {name: /nothing missing/})).not.toBeInTheDocument();
+  });
+
   it("holds only this set's cards that pass the filters, packed in the page's sort", () => {
     renderSection(['a', 'c', 'next'], {sortOrder: 'cost-asc'});
     expect(pockets()).toEqual(['Card c', 'Card a']);

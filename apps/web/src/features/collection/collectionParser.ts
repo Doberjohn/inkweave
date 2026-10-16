@@ -8,7 +8,7 @@
 //     013,1,normal,0,"Woody - Helping a Friend",Amber,Rare
 //     013,1,foil,0,"Woody - Helping a Friend",Amber,Rare
 //
-// Measured against the real export and `allCards.json` on 2026-08-10. Five facts
+// Measured against the real export and `allCards.json` on 2026-08-10. Seven facts
 // this parser is built on, each of which contradicts a plausible assumption:
 //
 //   1. THE JOIN IS EXACT. `(parseInt(Set Number), Card Number)` against
@@ -32,6 +32,11 @@
 //      undercounted distinct non-Core cards by exactly 4. So card numbers are
 //      NORMALIZED STRINGS here, never integers. Set numbers are always numeric
 //      (verified across all 5329 rows) and stay parsed, because they are padded.
+//   7. THE `(set, number)` KEY IS NOT UNIQUE IN THE POOL, though no export slot has
+//      two rows. Measured 2026-10-16 on the 3,445-card pool: 181 keys have more than
+//      one card. 180 are one base card plus Special promos, which the base card
+//      settles; one, Set 3 #4, is five base printings of the puppy, which nothing
+//      in a row settles. See `buildPoolIndex`.
 //
 // The pool this parses against SPANS EVERY SET (since #553 Phase C), so a card
 // from set 3 is stored like any other and there is no "below the floor" branch.
@@ -86,6 +91,12 @@ export interface CollectionSummary {
    * someone can act on, where "another 5 cards" is only a thing to worry about.
    */
   unidentified: string[];
+  /**
+   * `set-number` refs whose number two printings of a card share in our data, so the
+   * row cannot say which one it owns (#553: reported, never guessed). Today that is Set
+   * 3's Dalmatian Puppy - Tail Wagger, five printings numbered 4 (Dreamborn's 4a-4e).
+   */
+  ambiguous: string[];
   /** Rows that could not be read at all, verbatim. */
   unparsed: string[];
 }
@@ -105,7 +116,7 @@ interface CollectionRow {
 }
 
 /** What a row turned out to be. Drives both `entries` and the summary. */
-export type RowOutcome = {kind: 'owned'; cardId: string} | {kind: 'unidentified'};
+export type RowOutcome = {kind: 'owned'; cardId: string} | {kind: 'ambiguous'} | {kind: 'unidentified'};
 
 /**
  * Split one CSV line. Fields may be quoted and a quoted field may contain commas
@@ -190,100 +201,108 @@ function readRow(line: string): CollectionRow | null {
  * falsily, because 0 is a real collector number (fact 4). It is numeric, so
  * stringifying it is already normalized.
  */
-function poolKey(card: LorcanaCard): string | null {
+function poolKey(card: LorcanaCard): PoolKey | null {
   const set = Number(card.setCode);
   if (!(set > 0) || card.setNumber === undefined) return null;
   return `${set}:${card.setNumber}`;
 }
 
-/**
- * Award one `set:number` key to a card, resolving a contested one.
- *
- * FIRST WINS, EXCEPT that a base card evicts a Special. See `buildPoolIndex` for
- * why: order must not decide it, and one of the 98 contested numbers lists its
- * Special first. Two base cards sharing a number stay a data fault rather than a
- * silent load-order swap.
- */
-function claimKey(
-  index: Map<string, string>,
-  heldBySpecial: Set<string>,
-  key: string,
-  card: LorcanaCard,
-): void {
-  const isSpecial = card.rarity === 'Special';
-  if (!index.has(key)) {
-    index.set(key, card.id);
-    if (isSpecial) heldBySpecial.add(key);
-    return;
+/** A `set:number` join key, as `poolKey` builds it from a card and `classifyRow` from a row. */
+type PoolKey = `${number}:${string}`;
+
+/** The pool, keyed for joining rows. */
+interface PoolIndex {
+  /** Each key to the one card it settles on. */
+  cards: Map<PoolKey, string>;
+  /** Keys with more than one card and nothing to choose between them: a row on one is never guessed. */
+  shared: Set<PoolKey>;
+}
+
+/** The cards claiming one key, base printings apart from Special promos. */
+interface Claim {
+  base: string[];
+  special: string[];
+}
+
+/** Every key's claimants, in pool order. */
+function claimsByKey(pool: readonly LorcanaCard[]): Map<PoolKey, Claim> {
+  const claims = new Map<PoolKey, Claim>();
+  for (const card of pool) {
+    const key = poolKey(card);
+    if (key === null) continue;
+    const claim = claims.get(key) ?? {base: [], special: []};
+    (card.rarity === 'Special' ? claim.special : claim.base).push(card.id);
+    claims.set(key, claim);
   }
-  if (!isSpecial && heldBySpecial.has(key)) {
-    index.set(key, card.id);
-    heldBySpecial.delete(key);
-  }
+  return claims;
 }
 
 /**
- * `set:number` to card id, for every pool card that carries both.
+ * The pool keyed by `set:number`, for every card that carries both.
  *
- * THE KEY IS NOT UNIQUE OUTSIDE CORE (fact 7). Special-rarity promos reuse base
- * collector numbers: 98 contested numbers across the non-Core sets, with five
- * cards claiming Set 1's slot #1. So this cannot be a plain `set()` — whichever
- * card happened to be last would win, and a Special won 97 of the 98.
+ * THE KEY IS NOT UNIQUE (fact 7). Special-rarity promos reuse base collector
+ * numbers, with five cards claiming Set 1's slot #1. So this cannot be a plain
+ * `set()`: whichever card happened to be last would win, and a Special won 97 of
+ * the 98 contested numbers outside Core.
  *
  * THE BASE CARD WINS, because that is what the CSV row means: `001,1` is the card
  * printed in Set 1's first slot, not a promo reprinted with the same number. When
  * a Special took the key, ownership was recorded against a card the binder does
- * not even render — it excludes Specials, or five would fight for one pocket — so
+ * not even render (it excludes Specials, or five would fight for one pocket), so
  * a card the user owned showed as unowned. Measured on a real import: 18 of Set
  * 1's 30 apparent gaps.
  *
- * Order must not decide it, so this is first-wins EXCEPT that a base card evicts
- * a Special. One of the 98 lists the Special first.
+ * So a key's base cards claim it when it has any, its Specials only when it has
+ * none, and order never decides: one claimant settles the key, and more than one
+ * makes it SHARED. Set 3's Dalmatian Puppy is the one shared key today, five
+ * Common printings all numbered 4, and its rows are reported rather than given to
+ * whichever printing came first (#553).
  */
-function buildPoolIndex(pool: readonly LorcanaCard[]): Map<string, string> {
-  const index = new Map<string, string>();
-  /** Keys currently held by a Special, i.e. still open to eviction. */
-  const heldBySpecial = new Set<string>();
-
-  for (const card of pool) {
-    const key = poolKey(card);
-    if (key !== null) claimKey(index, heldBySpecial, key, card);
+function buildPoolIndex(pool: readonly LorcanaCard[]): PoolIndex {
+  const index: PoolIndex = {cards: new Map(), shared: new Set()};
+  for (const [key, {base, special}] of claimsByKey(pool)) {
+    const claimants = base.length > 0 ? base : special;
+    if (claimants.length === 1) index.cards.set(key, claimants[0]);
+    else index.shared.add(key);
   }
   return index;
 }
 
 /**
- * Decide what an owned row is: a card we can store, a card from outside Core, or
- * a Core card the pool does not have.
- *
- * The pool is Core-only (the card loader filters on the rotation floor), so a
- * miss against the index is ambiguous on its own and the two readings are treated
- * oppositely by the summary: one is the expected bulk of a real collection, the
- * other is a genuine failure worth showing someone.
- */
-/**
  * Strip a trailing variant letter: `4a` -> `4`. Empty when there is none.
  *
- * Dreamborn numbers a card's printing variants with a letter suffix — Set 3's
- * Dalmatian Puppy is 4a through 4e — while our data carries the printed card
- * once, as plain `4`. They are the same card, and `totalOwned` already folds
- * copies, so five variant rows correctly become five copies of one card.
+ * Dreamborn numbers a card's printing variants with a letter suffix (Set 3's
+ * Dalmatian Puppy is 4a through 4e), where our data numbers them plainly. A
+ * lettered row on a card we carry once folds into it, since `totalOwned` already
+ * folds copies. The puppy itself we carry five times, all as `4`, so its rows
+ * land on a shared key and are reported instead.
  */
 function printedNumber(number: string): string {
   const match = /^(\d+)[a-z]$/.exec(number);
   return match ? match[1] : '';
 }
 
-function classifyRow(row: CollectionRow, index: Map<string, string>): RowOutcome {
-  const cardId = index.get(`${row.set}:${row.number}`);
-  if (cardId !== undefined) return {kind: 'owned', cardId};
+/** What a key says about a row, or undefined when no card claims it. */
+function lookUp(index: PoolIndex, key: PoolKey): RowOutcome | undefined {
+  if (index.shared.has(key)) return {kind: 'ambiguous'};
+  const cardId = index.cards.get(key);
+  return cardId === undefined ? undefined : {kind: 'owned', cardId};
+}
+
+/**
+ * Decide what an owned row is: a card we can store, a number two printings share
+ * so the row cannot say which it owns, or a card the pool does not have.
+ */
+function classifyRow(row: CollectionRow, index: PoolIndex): RowOutcome {
+  const exact = lookUp(index, `${row.set}:${row.number}`);
+  if (exact !== undefined) return exact;
 
   // Exact first, always: the fallback must never shadow a real key. Only after a
   // genuine miss do we ask whether this was a lettered variant of a card we have.
   const printed = printedNumber(row.number);
   if (printed !== '') {
-    const variantOf = index.get(`${row.set}:${printed}`);
-    if (variantOf !== undefined) return {kind: 'owned', cardId: variantOf};
+    const variantOf = lookUp(index, `${row.set}:${printed}`);
+    if (variantOf !== undefined) return variantOf;
   }
 
   // Everything else is simply unidentified. There is no longer a quiet branch for
@@ -292,6 +311,13 @@ function classifyRow(row: CollectionRow, index: Map<string, string>): RowOutcome
   // pool was Core-only and two thirds of a collection was discarded by design; it
   // now hides real losses behind a routine-sounding explanation.
   return {kind: 'unidentified'};
+}
+
+/** Add a row's copies to its card's entry, which the card's first row creates. */
+function addCopies(entries: CollectionEntries, cardId: string, row: CollectionRow): void {
+  const entry = entries[cardId] ?? {normal: 0, foil: 0};
+  entry[row.variant] += row.count;
+  entries[cardId] = entry;
 }
 
 /**
@@ -303,7 +329,8 @@ function classifyRow(row: CollectionRow, index: Map<string, string>): RowOutcome
 export function parseCollectionCsv(csv: string, pool: readonly LorcanaCard[]): ParsedCollection {
   const index = buildPoolIndex(pool);
   const entries: CollectionEntries = {};
-  const unidentified = new Set<string>();
+  /** Refs left out, by why. Sets, because the census lists each card twice (normal + foil). */
+  const missed = {unidentified: new Set<string>(), ambiguous: new Set<string>()};
   const unparsed: string[] = [];
 
   // Skip the header only when there IS one. An unconditional `.slice(1)` would
@@ -320,14 +347,11 @@ export function parseCollectionCsv(csv: string, pool: readonly LorcanaCard[]): P
     if (row.count <= 0) continue;
 
     const outcome = classifyRow(row, index);
-    if (outcome.kind === 'unidentified') {
-      // A Set, because the census lists each card twice (normal + foil) and one
-      // unidentified card must not be reported as two.
-      unidentified.add(`${row.set}-${row.number}`);
+    if (outcome.kind === 'owned') {
+      addCopies(entries, outcome.cardId, row);
     } else {
-      const entry = entries[outcome.cardId] ?? {normal: 0, foil: 0};
-      entry[row.variant] += row.count;
-      entries[outcome.cardId] = entry;
+      // One card we cannot place must not be reported twice, once per finish.
+      missed[outcome.kind].add(`${row.set}-${row.number}`);
     }
   }
 
@@ -337,7 +361,8 @@ export function parseCollectionCsv(csv: string, pool: readonly LorcanaCard[]): P
     summary: {
       cardsOwned: owned.length,
       copiesOwned: owned.reduce((total, entry) => total + totalOwned(entry), 0),
-      unidentified: [...unidentified],
+      unidentified: [...missed.unidentified],
+      ambiguous: [...missed.ambiguous],
       unparsed,
     },
   };

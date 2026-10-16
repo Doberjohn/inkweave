@@ -383,8 +383,12 @@ export function matchesInk(card: LorcanaCard, options: CardFilterOptions): boole
   return shows && (!dualOnly || inks.length === 2);
 }
 
-// Song is a pseudo-type: card.type is 'Action' but card.isSong is true.
-function cardMatchesType(card: LorcanaCard, type: CardType | 'Song'): boolean {
+/**
+ * Song is a pseudo-type: card.type is 'Action' but card.isSong is true, so Action
+ * means the other actions. Exported so a card page's synergy filter reads a type
+ * pick exactly as Browse does.
+ */
+export function cardMatchesType(card: LorcanaCard, type: CardType | 'Song'): boolean {
   if (type === 'Song') return !!card.isSong;
   if (type === 'Action') return card.type === 'Action' && !card.isSong;
   return card.type === type;

@@ -24,7 +24,7 @@ const ImportCollectionDialog = lazyWithRetry(
  */
 export function AccountCollection() {
   const {cards} = useCardDataContext();
-  const {hasCollection, importCollection, clearImported, ownedCount, entries, importedAt} = useCollection();
+  const {hasCollection, syncing, importCollection, clearImported, ownedCount, entries, importedAt} = useCollection();
   const [showImport, setShowImport] = useState(false);
   // Mounted from first open on, so closing plays the dialog's exit animation.
   const [importMounted, setImportMounted] = useState(false);
@@ -38,6 +38,7 @@ export function AccountCollection() {
     <>
       <CollectionSection
         hasCollection={hasCollection}
+        checking={syncing && !hasCollection}
         owned={owned}
         importedAt={importedAt}
         confirming={confirmClear}

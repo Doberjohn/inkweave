@@ -68,6 +68,20 @@ describe('filterSynergyCards', () => {
     expect(result.map((s) => s.card.fullName)).toEqual(['Ruby Action']);
   });
 
+  describe('Action and Song, as Browse reads them', () => {
+    const withPlainAction = [...synergies, mockSynergy({fullName: 'Steel Action', ink: 'Steel', type: 'Action'})];
+
+    it('keeps Songs out of Action', () => {
+      const result = filterSynergyCards(withPlainAction, withFilters({typeFilters: ['Action']}));
+      expect(result.map((s) => s.card.fullName)).toEqual(['Steel Action']);
+    });
+
+    it('keeps every action when Action and Song are both picked', () => {
+      const result = filterSynergyCards(withPlainAction, withFilters({typeFilters: ['Action', 'Song']}));
+      expect(result.map((s) => s.card.fullName)).toEqual(['Ruby Action', 'Steel Action']);
+    });
+  });
+
   it('should filter by cost with exact match', () => {
     const result = filterSynergyCards(synergies, withFilters({costFilters: [5]}));
     expect(result.map((s) => s.card.fullName)).toEqual(['Ruby Action']);

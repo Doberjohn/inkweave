@@ -8,7 +8,7 @@ import {SET_NAMES, type BrowseSortOrder} from '../../shared/constants';
 import {useSession} from '../../shared/contexts/SessionContext';
 import {useCollection} from './CollectionContext';
 import {useCollectionCards, useCollectionPool} from './CollectionCardsContext';
-import {collectionAction} from './collectionAction';
+import {useCollectionClick} from './useCollectionClick';
 import {binderModalTarget, type ModalTarget} from './collectionModalTarget';
 import {
   BINDER_PARAM,
@@ -197,6 +197,36 @@ export interface BrowseCollectionSlots {
   renderSetPanel: (listing: BrowseListing) => ReactNode | undefined;
 }
 
+/** Who is asking for collection mode, and what is known about them yet. */
+interface BinderReader {
+  sessionLoading: boolean;
+  /** The account's copy has not answered yet (`useCollection().syncing`). */
+  syncing: boolean;
+  signedIn: boolean;
+  hasCollection: boolean;
+}
+
+/**
+ * Whether `?binder=` gets collection mode, and whether the param is dead.
+ *
+ * The param asks for the mode; it is HONOURED only for someone the Collection button
+ * would toggle for (signed in, holding a collection), so a shared link never shows a
+ * stranger an empty binder in place of the grid. While the answer is not known yet (the
+ * session still restoring, or the account's copy not yet heard from, which on a new
+ * browser IS the collection), the binder is kept, loading, rather than flashing the
+ * grid for a returning owner.
+ *
+ * Once a signed-in account has answered with no collection, the mode cannot be had, so
+ * the param is DEAD and the page drops it. Left in, it kept the grid's Set filter
+ * stripped as a stray (`strayParams` reads the param, not the mode) and reloaded into a
+ * loading binder; a click that waited on the account leaves one behind (#553).
+ */
+function binderMode(requested: string | null, reader: BinderReader): {active: boolean; dead: boolean} {
+  if (requested === null) return {active: false, dead: false};
+  const active = reader.sessionLoading || reader.syncing || (reader.signedIn && reader.hasCollection);
+  return {active, dead: reader.signedIn && !active};
+}
+
 /**
  * Collection mode's state and controls for Browse, in one place so the page only
  * slots them in. Requires the collection providers, which the `CollectionScope`
@@ -211,15 +241,18 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   const [importMounted, setImportMounted] = useState(false);
   const {requested, show, enterBinder, writeBinder, leaveBinder, writeShow} = useBinderParams();
   const {user, loading: sessionLoading} = useSession();
-  const {entries, hasCollection, importCollection} = useCollection();
+  const {entries, hasCollection, syncing, importCollection} = useCollection();
   const {retry} = useCollectionCards();
 
-  // The param asks for the mode; it is HONOURED only for someone the Collection
-  // button would toggle for (signed in, holding a collection), so a shared link
-  // never shows a stranger an empty binder in place of the grid. While the session
-  // is still restoring the answer is not known yet, so the binder is kept rather
-  // than flashing the grid for a returning owner.
-  const collectionMode = requested !== null && (sessionLoading || (user !== null && hasCollection));
+  const {active: collectionMode, dead} = binderMode(requested, {
+    sessionLoading,
+    syncing,
+    signedIn: user !== null,
+    hasCollection,
+  });
+  useEffect(() => {
+    if (dead) leaveBinder();
+  }, [dead, leaveBinder]);
 
   // Only collection mode (or the import, which parses against the full pool)
   // widens the pool, so a visitor who never switches fetches no chunks at all.
@@ -229,16 +262,15 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
 
   // Sign-in first, then import, then toggle; the order is the rule and lives in
   // `collectionAction`, pure and tested, since two branches need a real session.
-  function onCollectionClick() {
-    const action = collectionAction({signedIn: user !== null, hasCollection});
-    if (action === 'sign-in') return setShowSignIn(true);
-    if (action === 'import') {
-      setImportMounted(true);
-      return setShowImport(true);
-    }
-    if (collectionMode) leaveBinder();
-    else enterBinder(setCode, sets);
-  }
+  // `useCollectionClick` adds the wait for an account that has not answered yet.
+  const openImport = () => {
+    setImportMounted(true);
+    setShowImport(true);
+  };
+  const onCollectionClick = useCollectionClick(
+    {signedIn: user !== null, hasCollection, syncing, active: collectionMode},
+    {openSignIn: () => setShowSignIn(true), openImport, enter: () => enterBinder(setCode, sets), leave: leaveBinder},
+  );
 
   const modeSwitch = <CollectionModeSwitch active={collectionMode} onToggle={onCollectionClick} />;
 
@@ -264,7 +296,8 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           filtered={listing.filtered}
           sortOrder={listing.sortOrder}
           entries={entries}
-          isLoading={!isReady && error === null}
+          // Loading while the account's copy is still to answer, too.
+          isLoading={syncing || (!isReady && error === null)}
           error={error}
           onRetry={retry}
           {...panelControls}
@@ -326,7 +359,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
             cards={listing.matched}
             filtered={listing.filtered}
             entries={entries}
-            isLoading={!isReady}
+            isLoading={syncing || !isReady}
             {...panelControls}
           />
         </Suspense>

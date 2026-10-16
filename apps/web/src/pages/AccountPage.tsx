@@ -217,6 +217,12 @@ function ClearControls({
 
 interface CollectionSectionProps {
   hasCollection: boolean;
+  /**
+   * No collection here yet and the account's copy has not answered: on a new browser
+   * that copy may BE the collection, so the section waits instead of offering an
+   * import over it (`useCollection().syncing`).
+   */
+  checking: boolean;
   owned: number;
   importedAt: number | null;
   confirming: boolean;
@@ -228,6 +234,7 @@ interface CollectionSectionProps {
 
 export function CollectionSection({
   hasCollection,
+  checking,
   owned,
   importedAt,
   confirming,
@@ -245,11 +252,13 @@ export function CollectionSection({
         </>
       ) : (
         <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.md}px`, margin: 0}}>
-          Import a Dreamborn CSV export to see what you own while you browse.
+          {checking
+            ? 'Checking your account for a collection…'
+            : 'Import a Dreamborn CSV export to see what you own while you browse.'}
         </p>
       )}
       <div style={{display: 'flex', gap: SPACING.md, marginTop: SPACING.lg, flexWrap: 'wrap'}}>
-        <CtaButton variant="ghost" onClick={onImport}>
+        <CtaButton variant="ghost" onClick={onImport} disabled={checking}>
           {hasCollection ? 'Re-import' : 'Import collection'}
         </CtaButton>
         {hasCollection && (

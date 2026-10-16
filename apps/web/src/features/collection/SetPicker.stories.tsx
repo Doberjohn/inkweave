@@ -16,6 +16,12 @@ const PROGRESS = new Map<string, {complete: number; cards: number}>([
  */
 function LivePicker(args: SetPickerProps) {
   const [setCode, setSetCode] = useState(args.setCode);
+  // A new `setCode` from the Controls panel replaces the one picked here.
+  const [argSetCode, setArgSetCode] = useState(args.setCode);
+  if (args.setCode !== argSetCode) {
+    setArgSetCode(args.setCode);
+    setSetCode(args.setCode);
+  }
   const onSetChange = (set: string) => {
     setSetCode(set);
     args.onSetChange(set);

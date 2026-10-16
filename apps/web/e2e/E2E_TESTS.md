@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-167 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+170 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts` and the `/reveals` check in `seo.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -99,7 +99,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | Test | What it verifies |
 |---|---|
 | should navigate to browse when searching from hero | Typing in hero search navigates to `/browse?q=Elsa`, hides hero, shows CardList |
-| should toggle the docked filters panel on browse page | "Browse all cards" CTA navigates to `/browse`, where the docked `Filters` panel is open by default (its Ink Cost "Cost 1" button shows); Filters closes it, and a second click reopens it. The Filters dialog is the narrower screens' |
+| should toggle the docked filters panel on browse page | "Browse all cards" CTA navigates to `/browse`, where the docked `Filters` panel is open by default (its Ink Cost "Cost 1" button shows); Filters closes it, and a second click reopens it. Narrower screens open the Filters dialog instead |
 | should deep link to browse with ink filter in URL | Direct navigation to `/browse?ink=Sapphire` shows filtered browse page |
 | should navigate to browse via Browse all cards CTA | "Browse all cards" CTA navigates to `/browse`, hero gone, CardList visible |
 | should preserve search query in URL on browse page | Hero search for "Ariel" puts `q=Ariel` in URL, browse search input shows "Ariel" |
@@ -160,7 +160,7 @@ At page load, supabase-js is downloaded only when there is a session to restore 
 | a stored session downloads the Supabase SDK to restore it | An `inkweave:auth` entry seeded before load makes `/browse` request the SDK (all projects) |
 | the sign-in control opens the provider dialog | Clicking it opens the `SignInDialog`. Stops at the provider choice: signing in needs a real round-trip no placeholder project can serve |
 
-## `collection-mode.spec.ts`: 11 tests (1 every project, 1 chromium only, 8 desktop only, 1 on every project at a 390px viewport)
+## `collection-mode.spec.ts`: 14 tests (1 every project, 1 chromium only, 11 desktop only, 1 on every project at a 390px viewport)
 
 Covers Browse's collection mode (#553 Phase C), which ships behind `VITE_SHOW_COLLECTION` (default OFF). The flag REQUIRES `VITE_SHOW_ACCOUNTS`, and `playwright.config.ts` pins both ON. The Collection button is gated on sign-in (owner ruling 2026-10-07).
 
@@ -173,6 +173,9 @@ The desktop signed-in tests skip the mobile projects: they find the numbers in t
 | the Collection button asks a signed-out visitor to sign in | `/browse` shows "Show my collection"; clicking it opens the sign-in dialog and renders no binder |
 | a visit that never opens collection mode loads none of it | Loading `/browse` to network idle requests no `/data/collection/` chunk and no `CollectionBinderSection` module. Chromium only: it asserts the network, which the other browsers would only repeat |
 | the Collection button opens a collector's binder, with the set panel's numbers | Signed in with a collection, "Show my collection" puts `binder=<set>` in the URL and shows the `Binder` region, with "Complete set" in the `Collection numbers` region. It names no set: the binder opens on the newest set, which a reveal season can move ahead of the card data, so the tests below open the collection's set by URL |
+| on a new browser, the Collection button waits for the account instead of offering an import | The collection is the server row alone (no local copy), and the server holds its answer. The page goes out through Home and back (client-side), so the providers mount with the account already known, the case StrictMode's dev double effect makes hard. A click before the answer opens the binder to wait (`binder=` in the URL) rather than the Import dialog; once the server answers, "Complete set" shows and no Import dialog opens |
+| when the account answers with no collection, the wait offers the import and drops the binder param | No collection anywhere (no local copy, no server row), and the server holds its answer. A click before the answer opens the binder to wait (`binder=` in the URL); once the server answers with nothing, the Import dialog opens and `binder=` leaves the URL. Left behind, the dead param kept the grid's Set filter stripped as a stray |
+| on a new browser, the account page checks the account before offering an import | The collection is the server row alone, and the server holds its answer. On /account the Collection section reads "Checking your account for a collection…" with Import collection disabled; once the server answers, "Cards owned" shows and Re-import is enabled |
 | the panel counts every pocket of the set, the alt-art printings among them | `/browse?binder=<set>`: the numbers read "H of N cards", H the held pockets and N the set's cards plus its Epic, Enchanted and Iconic printings |
 | Owned keeps the held cards alone, and leaving the mode drops that view | The `Binder shows` group's "Owned" adds `owned=owned` and leaves exactly the held tiles; turning collection mode off removes the binder and both the `binder` and `owned` params |
 | the set picker opens the whole collection in the binder | Picking "Whole collection" in the `Binder set` picker gives `binder=all` and relabels the picker "Binder set: Whole collection", and the rest follows: "Complete collection" in the numbers and a tile in the binder |

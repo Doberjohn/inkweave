@@ -84,13 +84,24 @@ function storedSession() {
 
 const COLLECTIONS_PATH = '/rest/v1/collections';
 
+interface CollectorOptions {
+  /** Also store the local copy. False is a new browser: the collection is the server row alone. */
+  local?: boolean;
+  /** The server holds its answer until this settles, so a test can act before the sync hears. */
+  answered?: Promise<void>;
+}
+
 /**
  * Signs the page in as a collector holding `entries`, or holding nothing for `null`: the
  * stored session, the local copy (stamped as the server's, so it is never uploaded back),
  * and the server row. Call before the first navigation.
  */
-async function signInAsCollector(page: Page, entries: Entries | null): Promise<void> {
-  const local = entries && {
+async function signInAsCollector(
+  page: Page,
+  entries: Entries | null,
+  {local: storeLocal = true, answered}: CollectorOptions = {},
+): Promise<void> {
+  const local = storeLocal && entries && {
     schemaVersion: 1,
     importedAt: IMPORTED_AT,
     entries,
@@ -110,8 +121,10 @@ async function signInAsCollector(page: Page, entries: Entries | null): Promise<v
     : [];
   await page.route(
     (url) => url.origin === E2E_SUPABASE_ORIGIN && url.pathname === COLLECTIONS_PATH,
-    (route) =>
-      route.fulfill({status: 200, contentType: 'application/json', body: JSON.stringify(rows)}),
+    async (route) => {
+      await answered;
+      await route.fulfill({status: 200, contentType: 'application/json', body: JSON.stringify(rows)});
+    },
   );
 }
 
@@ -177,6 +190,68 @@ test.describe('Collection mode, signed in', () => {
     await expect(page).toHaveURL(/[?&]binder=\d+(&|$)/);
     await expect(binder(page)).toBeVisible();
     await expect(numbers(page).getByText('Complete set', {exact: true})).toBeVisible();
+  });
+
+  test('on a new browser, the Collection button waits for the account instead of offering an import', async ({
+    page,
+  }) => {
+    let answer = () => {};
+    const answered = new Promise<void>((resolve) => (answer = resolve));
+    await signInAsCollector(page, ENTRIES, {local: false, answered});
+    await page.goto('/browse');
+    await signedIn(page);
+    // Out through Home and back, so the collection's providers mount again with the account
+    // already known: the mount that StrictMode's dev double effect makes the hard case.
+    // Back is client-side too (history pop); a reload would restore the session again first.
+    await page.getByRole('link', {name: 'Go to home page'}).click();
+    await expect(page).toHaveURL(/\/$/);
+    await page.goBack();
+
+    await page.getByRole('button', {name: 'Show my collection'}).click();
+    // The account's copy, which here IS the collection, has not answered yet: the click
+    // opens the binder to wait (its param in the URL), where an import would leave the URL be.
+    await expect(page).toHaveURL(/[?&]binder=/);
+
+    answer();
+    // Once the sync has answered, the binder stays only for a collection that arrived, and
+    // its numbers show only once loaded (the click opens the newest set, as the test above notes).
+    await expect(numbers(page).getByText('Complete set', {exact: true})).toBeVisible();
+    await expect(binder(page)).toBeVisible();
+    await expect(page.getByRole('dialog', {name: 'Import your collection'})).toHaveCount(0);
+  });
+
+  test('when the account answers with no collection, the wait offers the import and drops the binder param', async ({
+    page,
+  }) => {
+    let answer = () => {};
+    const answered = new Promise<void>((resolve) => (answer = resolve));
+    await signInAsCollector(page, null, {local: false, answered});
+    await page.goto('/browse');
+    await signedIn(page);
+
+    await page.getByRole('button', {name: 'Show my collection'}).click();
+    await expect(page).toHaveURL(/[?&]binder=/);
+
+    answer();
+    // Nothing came, so the click's import opens, and the binder's param goes with the
+    // binder: left behind, it kept the grid's Set filter stripped as a stray.
+    await expect(page.getByRole('dialog', {name: 'Import your collection'})).toBeVisible();
+    await expect(page).not.toHaveURL(/[?&]binder=/);
+  });
+
+  test('on a new browser, the account page checks the account before offering an import', async ({page}) => {
+    let answer = () => {};
+    const answered = new Promise<void>((resolve) => (answer = resolve));
+    await signInAsCollector(page, ENTRIES, {local: false, answered});
+    await page.goto('/account');
+    // The account's copy IS the collection here, and it has not answered: an import now
+    // could replace it, so the section says it is checking and offers none.
+    await expect(page.getByRole('button', {name: 'Import collection'})).toBeDisabled();
+    await expect(page.getByText('Checking your account for a collection…')).toBeVisible();
+
+    answer();
+    await expect(page.getByText('Cards owned')).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Re-import'})).toBeEnabled();
   });
 
   test('the panel counts every pocket of the set, the alt-art printings among them', async ({

@@ -48,6 +48,7 @@ describe('CollectionSetBody', () => {
     expect(name).toHaveStyle({opacity: '0'});
     fireEvent.mouseLeave(headline);
     expect(count).toHaveStyle({opacity: '0'});
+    expect(name).toHaveStyle({opacity: '1'});
   });
 
   it("shows the whole collection's numbers in the same blocks", () => {
@@ -107,7 +108,8 @@ describe('CollectionSetBody', () => {
   it('lists the chase printings after the five rarities an import can fill', () => {
     renderBody();
     const rows = screen.getByRole('region', {name: 'By rarity, complete'}).textContent ?? '';
-    const order = ['Legendary', 'Epic', 'Enchanted', 'Iconic'].map((rarity) => rows.indexOf(rarity));
+    const rulebookOrder = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', 'Epic', 'Enchanted', 'Iconic'];
+    const order = rulebookOrder.map((rarity) => rows.indexOf(rarity));
     expect(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1]))).toBe(true);
   });
 

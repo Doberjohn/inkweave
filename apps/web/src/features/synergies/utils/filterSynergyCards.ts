@@ -1,5 +1,6 @@
-import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
+import type {Ink} from 'inkweave-synergy-engine';
 import {
+  cardMatchesType,
   matchesClassifications,
   matchesInk,
   matchesInkwell,
@@ -66,12 +67,9 @@ function matchesSynergyInks({card}: SynergyMatchDisplay, {inkFilters, filters}: 
   return matchesInk(card, {ink: inkFilters, inkMatch: filters.inkMatch}) && matchesInkwell(card, filters);
 }
 
-// Song is a pseudo-type (an Action with isSong); every other type compares directly.
-const matchesSynergyTypeValue = (card: LorcanaCard, type: CardTypeFilter) =>
-  type === 'Song' ? card.isSong === true : card.type === type;
-
+/** Type: Browse's own rule (`cardMatchesType`), so Action means the actions that are not Songs. */
 function matchesSynergyType({card}: SynergyMatchDisplay, {typeFilters}: SynergyFilterState): boolean {
-  return typeFilters.length === 0 || typeFilters.some((type) => matchesSynergyTypeValue(card, type));
+  return typeFilters.length === 0 || typeFilters.some((type) => cardMatchesType(card, type));
 }
 
 // Discrete selection; cost 9 means "9 or higher" (matches browse behavior).

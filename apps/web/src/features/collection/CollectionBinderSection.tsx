@@ -184,8 +184,16 @@ export function CollectionBinderSection({
           start={0}
           single={isMobile}
           arrows={!docked}
-          // Docked, a map of one empty spread holds the band the real map will fill.
-          footer={docked ? <BinderSpreadMap pockets={[]} current={0} onGo={NOOP} /> : undefined}
+          // Docked, a map of one empty spread holds the band the real map will fill. It holds
+          // no cards yet, so it is out of the Tab order and the accessibility tree: it would
+          // otherwise announce "nothing missing" about a collection that has not loaded.
+          footer={
+            docked ? (
+              <div inert aria-hidden="true">
+                <BinderSpreadMap pockets={[]} current={0} onGo={NOOP} />
+              </div>
+            ) : undefined
+          }
           renderSlot={() => <BinderSlotSkeleton />}
           onPrev={NOOP}
           onNext={NOOP}

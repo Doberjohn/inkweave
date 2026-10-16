@@ -19,6 +19,10 @@ describe('SHOW_COLLECTION', () => {
     expect(await showCollection({collection: 'true', accounts: 'false'})).toBe(false);
   });
 
+  it('stays off with the collection flag off, even with accounts on', async () => {
+    expect(await showCollection({collection: 'false', accounts: 'true'})).toBe(false);
+  });
+
   it('is off by default', async () => {
     expect(await showCollection({})).toBe(false);
   });

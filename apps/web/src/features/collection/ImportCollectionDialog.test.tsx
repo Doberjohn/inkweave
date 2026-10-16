@@ -32,6 +32,18 @@ describe('ImportCollectionDialog', () => {
     expect(await screen.findByText('Collection imported')).toBeInTheDocument();
   });
 
+  it('gives a row two printings share its own reason, apart from rows that match nothing', async () => {
+    // #553: such a row is left out on purpose, and "could not be matched" would misstate why.
+    const pool = [
+      ...POOL,
+      ...['p1', 'p2'].map((id) => ({id, name: 'Puppy', setCode: '3', setNumber: 4}) as unknown as LorcanaCard),
+    ];
+    render(<ImportCollectionDialog isOpen onClose={vi.fn()} pool={pool} isPoolReady poolError={null} onRetryPool={vi.fn()} onImport={vi.fn(() => null)} />);
+    await act(async () => pick(`${CSV}003,4b,normal,1,"Puppy",Amber,Common\n014,7,normal,1,"Next Set",Steel,Rare\n`));
+    expect(screen.getByText(/more than one printing/)).toHaveTextContent('3-4b');
+    expect(screen.getByText(/could not be matched/)).not.toHaveTextContent('3-4b');
+  });
+
   it('a cancel while the file is still being read imports nothing', async () => {
     const onImport = vi.fn(() => null);
     render(<ImportCollectionDialog isOpen onClose={vi.fn()} pool={POOL} isPoolReady poolError={null} onRetryPool={vi.fn()} onImport={onImport} />);
@@ -42,6 +54,21 @@ describe('ImportCollectionDialog', () => {
     fireEvent.change(input, {target: {files: [slow]}});
 
     fireEvent.click(screen.getByRole('button', {name: 'Cancel'}));
+    await act(async () => release(CSV));
+    expect(onImport).not.toHaveBeenCalled();
+  });
+
+  it('leaving the page while the file is still being read imports nothing', async () => {
+    const onImport = vi.fn(() => null);
+    const {unmount} = render(
+      <ImportCollectionDialog isOpen onClose={vi.fn()} pool={POOL} isPoolReady poolError={null} onRetryPool={vi.fn()} onImport={onImport} />,
+    );
+    let release: (text: string) => void = () => {};
+    const slow = new File([CSV], 'export.csv', {type: 'text/csv'});
+    slow.text = () => new Promise((resolve) => (release = resolve));
+    fireEvent.change(screen.getByLabelText('Collection CSV file'), {target: {files: [slow]}});
+
+    unmount();
     await act(async () => release(CSV));
     expect(onImport).not.toHaveBeenCalled();
   });

@@ -1,3 +1,4 @@
+import {useState} from 'react';
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import type {Ink} from 'inkweave-synergy-engine';
@@ -20,18 +21,19 @@ const filterProps = {
   onFiltersChange: vi.fn(),
 };
 
+/** The panel as the page drives it: clearing drops the count to 0, which takes Clear all away. */
+function LivePanel() {
+  const [count, setCount] = useState(1);
+  return <BrowseSidePanel filterProps={filterProps} activeFilterCount={count} onClearFilters={() => setCount(0)} />;
+}
+
 describe('BrowseSidePanel', () => {
   it('keeps focus in the panel when Clear all clears, and so removes, itself', () => {
-    const onClearFilters = vi.fn();
-    render(
-      <BrowseSidePanel
-        filterProps={filterProps}
-        activeFilterCount={1}
-        onClearFilters={onClearFilters}
-      />,
-    );
-    fireEvent.click(screen.getByRole('button', {name: 'Clear all'}));
-    expect(onClearFilters).toHaveBeenCalledTimes(1);
+    render(<LivePanel />);
+    const clearAll = screen.getByRole('button', {name: 'Clear all'});
+    clearAll.focus();
+    fireEvent.click(clearAll);
+    expect(screen.queryByRole('button', {name: 'Clear all'})).not.toBeInTheDocument();
     expect(screen.getByRole('complementary', {name: 'Filters'})).toHaveFocus();
   });
 });
