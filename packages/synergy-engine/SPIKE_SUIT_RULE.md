@@ -2,7 +2,7 @@
 
 Detailed documentation for the Spike Suit rule — a direct synergy built around **Dale - Ready for His Shot**, whose ability lets your characters deal combat damage with their willpower instead of their strength.
 
-**Source**: `packages/synergy-engine/src/engine/rules.ts`
+**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/detection/spikeSuit.ts`
 **Rule ID**: `spike-suit`
 **Category**: `direct` (single-anchor, bidirectional)
 

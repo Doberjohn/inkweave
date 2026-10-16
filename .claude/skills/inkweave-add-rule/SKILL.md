@@ -57,7 +57,7 @@ If not, ask: "What game mechanic or interaction does this rule detect?"
    - Add rule function in `packages/synergy-engine/src/engine/rules.ts`
    - Register in `DEFAULT_RULES` array
    - If playstyle: update types, registry, and UI config
-   - Put the rule's card-text detection in its own module, `packages/synergy-engine/src/utils/detection/<rule>.ts` (export it through `src/utils/index.ts`); only helpers several rules share belong in `src/utils/cardHelpers.ts`
+   - Put the rule's card-text detection in `packages/synergy-engine/src/utils/detection/`: a new module for a new rule doc, or the module of the playstyle the rule joins (export it through `src/utils/index.ts`). A direct rule's own few patterns may stay beside it in `rules.ts`; only helpers several rules share belong in `src/utils/cardHelpers.ts`
 
 9. **Engine rebuilds automatically** via PostToolUse hook after editing engine files.
 
