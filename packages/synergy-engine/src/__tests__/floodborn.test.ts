@@ -1,11 +1,71 @@
 import {describe, it, expect} from 'vitest';
-import {getFloodbornRoles} from '../utils';
+import {getFloodbornRoles, isFloodbornCard} from '../utils';
 import {getRuleById} from '../engine';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
 
-// Floodborn fixes from the 2026-10-14 misread review, kept out of rules.test.ts (CodeScene:
-// function count). Real card text.
+describe('Floodborns detection', () => {
+  const floodbornMember = createCard({
+    id: 'elsa-fb', name: 'Elsa', fullName: 'Elsa - Spirit of Winter',
+    cost: 7, classifications: ['Floodborn'], text: 'Whenever this character quests, draw a card.',
+  });
+  const buffPayoff = createCard({
+    id: 'gaston-vine', name: 'Gaston', fullName: 'Gaston - Created by the Vine',
+    cost: 2, classifications: ['Floodborn', 'Vineling'],
+    text: 'DRAWING STRENGTH Your Floodborn characters get +1 ¤.',
+  });
+  const triggerPayoff = createCard({
+    id: 'hera-vine', name: 'Hera', fullName: 'Hera - Created by the Vine',
+    cost: 5, classifications: ['Floodborn', 'Vineling'],
+    text: 'MYSTICAL BOON Whenever you play this or another Floodborn character, gain 1 lore.',
+  });
+  const theVine = createCard({
+    id: 'the-vine', name: 'The Vine', fullName: 'The Vine - Towering Stalk',
+    cost: 10, classifications: ['Floodborn'],
+    text: 'SATURATE Your other exerted Floodborn characters gain Bodyguard. HOSTILE SWARM During an opponent\'s turn, whenever one of your Floodborn characters is banished, deal 1 damage to each opposing character.',
+  });
+
+  it('tags a plain Floodborn character as member only', () => {
+    expect(getFloodbornRoles(floodbornMember)).toEqual(['member']);
+  });
+  it('detects a static team buff', () => {
+    expect(getFloodbornRoles(buffPayoff)).toEqual(['member', 'buff']);
+  });
+  it('detects a repeating trigger', () => {
+    expect(getFloodbornRoles(triggerPayoff)).toEqual(['member', 'trigger']);
+  });
+  it('detects The Vine as member + buff + trigger', () => {
+    expect(getFloodbornRoles(theVine)).toEqual(['member', 'buff', 'trigger']);
+  });
+  it('ignores non-Floodborn cards with no Floodborn payoff text', () => {
+    expect(isFloodbornCard(createCard({id: 'x', name: 'X', cost: 3, text: 'Draw a card.'}))).toBe(false);
+  });
+});
+
+describe('Floodborns rule', () => {
+  const rule = getRuleById('floodborn')!;
+  const member = createCard({id: 'm1', name: 'Elsa', cost: 7, classifications: ['Floodborn'], text: 'Quests for 2 lore.'});
+  const member2 = createCard({id: 'm2', name: 'Ariel', cost: 5, classifications: ['Floodborn'], text: 'Has Evasive.'});
+  const buff = createCard({id: 'b1', name: 'Gaston', cost: 2, classifications: ['Floodborn'], text: 'Your Floodborn characters get +1 ¤.'});
+  const trigger = createCard({id: 't1', name: 'Hera', cost: 5, classifications: ['Floodborn'], text: 'Whenever you play this or another Floodborn character, gain 1 lore.'});
+
+  const scoreWith = (a, b) => rule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+  it('does not pair two plain Floodborn members (payoff-anchored)', () => {
+    expect(rule.findSynergies(member, [member, member2])).toHaveLength(0);
+  });
+  it('scores member + trigger payoff at 7', () => {
+    expect(scoreWith(member, trigger)?.score).toBe(7);
+  });
+  it('scores member + buff payoff at 6', () => {
+    expect(scoreWith(member, buff)?.score).toBe(6);
+  });
+  it('scores payoff + payoff at 7 when each helps the other', () => {
+    expect(scoreWith(buff, trigger)?.score).toBe(7);
+  });
+});
+
+// Fixes from the 2026-10-14 misread review. Real card text.
 
 const floodbornRule = getRuleById('floodborn')!;
 /** The Floodborns pair `card` finds with `partner`, or undefined when they do not pair. */

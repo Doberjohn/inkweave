@@ -2,7 +2,7 @@
 
 Detailed documentation for the Discard rule — a playstyle synergy that detects hand-disruption strategies.
 
-**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/cardHelpers.ts`
+**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/detection/discard.ts`
 **Rule ID**: `discard`
 **Category**: `playstyle`
 **Playstyle ID**: `discard`
@@ -173,7 +173,7 @@ Payoffs are scarce because hand-size advantage is a rare condition in Lorcana. F
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Discard Control')`.
+Tests live in `packages/synergy-engine/src/__tests__/discard.test.ts` under `describe('Discard Control')`.
 
 ### Role Detection Tests (12 tests)
 

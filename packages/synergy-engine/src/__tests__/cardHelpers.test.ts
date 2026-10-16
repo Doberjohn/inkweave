@@ -15,8 +15,37 @@ import {
   getTribalRoles,
   TRIBAL_SPECS,
   getBounceRoles,
+  hasNegativeTargeting,
+  hasPositiveClassificationEffect,
 } from '../utils';
 import {createCard} from './fixtures.js';
+
+describe('hasNegativeTargeting', () => {
+  it('should detect exert targeting', () => {
+    const card = createCard({
+      text: 'When you play this character, you may exert chosen Princess character.',
+    });
+    expect(hasNegativeTargeting(card, 'Princess')).toBe(true);
+    expect(hasNegativeTargeting(card, 'Villain')).toBe(false);
+  });
+
+  it('should detect banish targeting', () => {
+    const card = createCard({text: 'Banish target Villain character.'});
+    expect(hasNegativeTargeting(card, 'Villain')).toBe(true);
+  });
+});
+
+describe('hasPositiveClassificationEffect', () => {
+  it('should detect positive buff effects', () => {
+    const card = createCard({text: 'Your Princess characters get +2 strength.'});
+    expect(hasPositiveClassificationEffect(card, 'Princess')).toBe(true);
+  });
+
+  it('should detect conditional benefits', () => {
+    const card = createCard({text: 'If you have a Villain character, draw a card.'});
+    expect(hasPositiveClassificationEffect(card, 'Villain')).toBe(true);
+  });
+});
 
 describe('shift type utilities', () => {
   describe('getShiftType', () => {

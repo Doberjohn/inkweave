@@ -2,7 +2,7 @@
 
 Detailed documentation for the Exert rule, a payoff-anchored playstyle that detects the opponent-facing exert-as-removal archetype. This is a clean, tightly-scoped revival of the archived `exert-synergies` rule (see [`REMOVED_RULES.md`](REMOVED_RULES.md)).
 
-**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/cardHelpers.ts`
+**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/detection/exert.ts`
 **Rule ID**: `exert`
 **Category**: `playstyle`
 **Playstyle ID**: `exert`
@@ -178,7 +178,7 @@ Cards that put a card into an inkwell "facedown and exerted": 48, of which 0 gai
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Exert rule (Exert Matters)')`, plus `src/__tests__/exert.test.ts` for strength caps and floors.
+Tests live in `packages/synergy-engine/src/__tests__/exert.test.ts`: `describe('Exert rule (Exert Matters)')`, then strength caps and floors.
 
 ### Role Detection
 

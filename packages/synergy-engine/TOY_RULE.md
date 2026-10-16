@@ -2,7 +2,7 @@
 
 Detailed documentation for the Toy rule — a tribal playstyle synergy that detects Toy-Story decks (Andy's Toys + Sid's Toys sub-themes).
 
-**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/cardHelpers.ts`
+**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/detection/toy.ts`
 **Rule ID**: `toy`
 **Category**: `playstyle`
 **Playstyle ID**: `toy`
@@ -172,7 +172,7 @@ Andy's Toys lean Amber and Sid's Toys Ruby (the Cards per ink column shows the s
 
 ## Test coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Toy Tribal')`.
+Tests live in `packages/synergy-engine/src/__tests__/toy.test.ts` under `describe('Toy Tribal')`.
 
 ### Role detection
 

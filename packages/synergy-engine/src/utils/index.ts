@@ -18,6 +18,14 @@ export {
   isLocation,
   hasNegativeTargeting,
   hasPositiveClassificationEffect,
+  getShiftType,
+  hasAnyShift,
+  isDuoShift,
+  getInkDropGain,
+} from './cardHelpers.js';
+export type {ShiftType, ShiftPayment} from './cardHelpers.js';
+
+export {
   isLocationSupportCard,
   getLocationRoles,
   getLocationBuffClassifications,
@@ -27,26 +35,36 @@ export {
   getSelfOnlyLocationRoles,
   stripDamageMoves,
   LOCATION_PATTERNS,
-  getShiftType,
-  hasAnyShift,
-  isDuoShift,
-  getInkDropGain,
-  getNamedReferences,
-  classifyNamedEffect,
-  NAMED_EFFECT_SCORES,
-  getDiscardRoles,
-  isDiscardCard,
+  isBoostBeneficiaryLocation,
+} from './detection/locationControl.js';
+export type {LocationRole} from './detection/locationControl.js';
+
+export {getNamedReferences, classifyNamedEffect, NAMED_EFFECT_SCORES} from './detection/namedCompanions.js';
+export type {NamedEffectTier} from './detection/namedCompanions.js';
+
+export {getDiscardRoles, isDiscardCard} from './detection/discard.js';
+export type {DiscardRole} from './detection/discard.js';
+
+export {
   getSacrificeRoles,
   isSacrificeCard,
   triggersOnAnyBanish,
   banishTriggerFiresOnYourTurn,
   banishPayoffPaysLittle,
+} from './detection/sacrifice.js';
+export type {SacrificeRole} from './detection/sacrifice.js';
+
+export {
   getSelfDiscardRoles,
   isSelfDiscardCard,
   selfDiscardOutletFeed,
   selfDiscardOutletFeedsPile,
   selfDiscardMillFeedsRecursion,
   selfDiscardHandTrimFeed,
+} from './detection/selfDiscard.js';
+export type {SelfDiscardRole, SelfDiscardFeed} from './detection/selfDiscard.js';
+
+export {
   getRampRoles,
   isRampCard,
   isDeckRamp,
@@ -54,81 +72,68 @@ export {
   inkLandsOffTriggerTurn,
   getCostReductionTarget,
   costReductionTargetsOverlap,
-  getToyRoles,
-  isToyCard,
-  toyAbilityCounts,
-  TOY_TRIBAL_ROLES,
-  getDwarfsRoles,
-  isDwarfsCard,
-  getFloodbornRoles,
-  isFloodbornCard,
-  floodbornBuffAlreadyPrinted,
-  getHunnyRoles,
-  isHunnyCard,
-  isHunnyTeamBuff,
-  countsAsHunnyCharacter,
-  getRedPandaRoles,
-  isRedPandaCard,
-  getItemRoles,
-  isItemCard,
-  readiesItemsOnly,
-  hasExertAbility,
+} from './detection/ramp.js';
+export type {RampRole, CostReductionTarget} from './detection/ramp.js';
+
+export {getToyRoles, isToyCard, toyAbilityCounts, TOY_TRIBAL_ROLES} from './detection/toy.js';
+export type {ToyRole} from './detection/toy.js';
+
+export {getDwarfsRoles, isDwarfsCard} from './detection/dwarfs.js';
+export type {DwarfsRole} from './detection/dwarfs.js';
+
+export {getFloodbornRoles, isFloodbornCard, floodbornBuffAlreadyPrinted} from './detection/floodborn.js';
+export type {FloodbornRole} from './detection/floodborn.js';
+
+export {getHunnyRoles, isHunnyCard, isHunnyTeamBuff, countsAsHunnyCharacter} from './detection/hunny.js';
+export type {HunnyRole} from './detection/hunny.js';
+
+export {getRedPandaRoles, isRedPandaCard} from './detection/redPanda.js';
+export type {RedPandaRole} from './detection/redPanda.js';
+
+export {getItemRoles, isItemCard, readiesItemsOnly, hasExertAbility} from './detection/items.js';
+export type {ItemRole} from './detection/items.js';
+
+export {
   getHealRoles,
   isHealCard,
   healsOnlyAsTemporaryShiftEnds,
   healPayoffTriggers,
+} from './detection/healing.js';
+export type {HealRole} from './detection/healing.js';
+
+export {
   getExertRoles,
   isExertCard,
   isExertConsumePayoff,
   exertEnablerReachesPayoff,
+} from './detection/exert.js';
+export type {ExertRole} from './detection/exert.js';
+
+export {
   getBounceRoles,
   getBounceTargetGate,
   bounceGateAdmits,
   isBounceCard,
-  strengthInChallenge,
-  cantChallenge,
-  getTribalRoles,
-  tribalPayoffClasses,
-  isTribalCard,
-  TRIBAL_SPECS,
+} from './detection/bounce.js';
+export type {BounceRole, BounceTargetGate} from './detection/bounce.js';
+
+export {strengthInChallenge, cantChallenge} from './detection/spikeSuit.js';
+
+export {getTribalRoles, tribalPayoffClasses, isTribalCard, TRIBAL_SPECS} from './detection/tribes.js';
+export type {TribalRole, TribalSpec} from './detection/tribes.js';
+
+export {
   isSteadyAimAnchor,
   getActionDamage,
   isMeridaDamageAction,
   isMultiTargetDamageAction,
-  isBeckonAnchor,
-  getBeckonEnablerTier,
-  isBeckonEnabler,
-  isBoostBeneficiaryLocation,
-  getLoreDenialRoles,
-  isLoreDenialCard,
-  LORE_LOSS_PATTERN,
-} from './cardHelpers.js';
-export type {
-  LocationRole,
-  ShiftType,
-  ShiftPayment,
-  NamedEffectTier,
-  DiscardRole,
-  SacrificeRole,
-  SelfDiscardRole,
-  SelfDiscardFeed,
-  RampRole,
-  CostReductionTarget,
-  ToyRole,
-  DwarfsRole,
-  FloodbornRole,
-  HunnyRole,
-  RedPandaRole,
-  ItemRole,
-  HealRole,
-  ExertRole,
-  BounceRole,
-  BounceTargetGate,
-  BeckonEnablerTier,
-  TribalRole,
-  TribalSpec,
-  LoreDenialRole,
-} from './cardHelpers.js';
+} from './detection/meridaArcher.js';
+
+export {isBeckonAnchor, getBeckonEnablerTier, isBeckonEnabler} from './detection/meridaWisp.js';
+export type {BeckonEnablerTier} from './detection/meridaWisp.js';
+
+export {getLoreDenialRoles, isLoreDenialCard, LORE_LOSS_PATTERN} from './detection/loreLoss.js';
+export type {LoreDenialRole} from './detection/loreLoss.js';
 
 export {
   getInkDropRoles,
@@ -141,8 +146,8 @@ export {
   isRepeatingDropMaker,
   isLateDropMaker,
   isOpponentGatedDrop,
-} from './inkDrops.js';
-export type {InkDropRole} from './inkDrops.js';
+} from './detection/inkDrops.js';
+export type {InkDropRole} from './detection/inkDrops.js';
 
 export {isCardType} from './typeGuards.js';
 

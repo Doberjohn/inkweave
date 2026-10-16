@@ -2,7 +2,7 @@
 
 Detailed documentation for the Healing rule, a playstyle synergy that detects the "Heal Matters" archetype: remove damage from your own characters, then cash in the payoffs that reward healing.
 
-**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/cardHelpers.ts`
+**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/detection/healing.ts`
 **Rule ID**: `healing`
 **Category**: `playstyle`
 **Playstyle ID**: `healing`
@@ -159,7 +159,7 @@ Healing is Amber/Sapphire-heavy, and the Madrigal minority among healers confirm
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Healing rule (Heal Matters)')`, plus `src/__tests__/healing.test.ts` for a bonus that counts only the card's own heal and for Temporary Shift's end-of-turn heal.
+Tests live in `packages/synergy-engine/src/__tests__/healing.test.ts`: `describe('Healing rule (Heal Matters)')`, then a bonus that counts only the card's own heal and Temporary Shift's end-of-turn heal.
 
 ### Role Detection (4 tests)
 

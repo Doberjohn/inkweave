@@ -128,7 +128,7 @@ The burn ↔ steal mid-tier is structurally meaningful: most decks running lore 
 
 ## Test coverage
 
-Tests in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Lore Loss')`.
+Tests in `packages/synergy-engine/src/__tests__/loreLoss.test.ts` under `describe('Lore Loss')`.
 
 | Test | Score |
 |------|-------|

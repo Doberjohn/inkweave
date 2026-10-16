@@ -2,7 +2,7 @@
 
 Detailed documentation for the Merida rule — a direct synergy built around **Merida - Wisp Conjurer**, whose BECKON ability draws a card whenever another of your characters enters play exerted.
 
-**Source**: `packages/synergy-engine/src/engine/rules.ts`
+**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/detection/meridaWisp.ts`
 **Rule ID**: `merida-wisp`
 **Category**: `direct` (single-anchor, bidirectional)
 
@@ -134,7 +134,7 @@ The self-only pool is Bodyguard-heavy, so its ink spread follows the Bodyguard i
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Merida - Wisp Conjurer (BECKON)')`.
+Tests live in `packages/synergy-engine/src/__tests__/merida-wisp.test.ts` under `describe('Merida - Wisp Conjurer (BECKON)')`.
 
 | Test | What It Verifies |
 |------|-----------------|

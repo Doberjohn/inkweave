@@ -2,7 +2,7 @@
 
 Detailed documentation for the Named Companions rule — the second direct synergy rule in Inkweave's engine.
 
-**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/cardHelpers.ts`
+**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/detection/namedCompanions.ts`
 **Rule ID**: `named-companions`
 **Category**: `direct` (pair-specific, not density-based)
 
@@ -66,7 +66,7 @@ The next ability's title is caught before matching instead. Ability titles are A
 
 ### Pre-Processing
 
-Before scanning, every Shift reminder is stripped, whatever its cost: `(You may pay 5 ⬡ to play this on top of one of your characters named Elsa.)` or `(You may remove 2 ink drops to play this on top of one of your characters named Baymax.)`. A Shift target belongs to Shift Targets, not here. The strip (`SHIFT_REMINDER` in `cardHelpers.ts`) is keyed on the reminder's own wording, "to play this on top of", rather than on the keyword, so a Shift cost of any shape is covered. The earlier strip required a digit after "Shift", so it missed the ink-drop Shift of Baymax - Amped Up and scored that card's own Shift target as a companion.
+Before scanning, every Shift reminder is stripped, whatever its cost: `(You may pay 5 ⬡ to play this on top of one of your characters named Elsa.)` or `(You may remove 2 ink drops to play this on top of one of your characters named Baymax.)`. A Shift target belongs to Shift Targets, not here. The strip (`SHIFT_REMINDER` in `utils/detection/namedCompanions.ts`) is keyed on the reminder's own wording, "to play this on top of", rather than on the keyword, so a Shift cost of any shape is covered. The earlier strip required a digit after "Shift", so it missed the ink-drop Shift of Baymax - Amped Up and scored that card's own Shift target as a companion.
 
 A Shift alias is stripped the same way: Incrediboy - Buddy Pine's "This character also counts as being named Syndrome for Shift." makes it a Shift base for Syndrome (see [Shift Targets](SHIFT_TARGET_RULE.md)), not a card that names Syndrome. Read as a reference, it paired Incrediboy with every Syndrome at 6.
 
@@ -130,7 +130,7 @@ The classifier doesn't try to isolate which effect applies to the named companio
 | Minor | 5 | Moderate |
 | Hostile | 4 | Moderate |
 
-Scores are mapped via `NAMED_EFFECT_SCORES` in `cardHelpers.ts`.
+Scores are mapped via `NAMED_EFFECT_SCORES` in `utils/detection/namedCompanions.ts`.
 
 <!-- coverage:start tiers -->
 Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool (sets 9-14).
@@ -184,7 +184,7 @@ A name no pool card carries is usually a card not in the data yet rather than a 
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Named Companions')`.
+Tests live in `packages/synergy-engine/src/__tests__/named-companions.test.ts` under `describe('Named Companions')`.
 
 ### Matching Tests
 

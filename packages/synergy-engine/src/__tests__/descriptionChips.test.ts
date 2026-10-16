@@ -5,8 +5,7 @@ import {createCard} from './fixtures.js';
 
 // Every synergy line names its cards with chip tokens: {A} is the card whose page shows the tile,
 // {B} its partner. These cases pin the lines whose words follow which card holds which role, read
-// from both pages where the direction matters. Named cards use their real text. Kept out of
-// rules.test.ts (CodeScene: function count).
+// from both pages where the direction matters. Named cards use their real text.
 
 /** The line `card`'s page shows on `partner`'s tile for one rule, or undefined when they don't pair. */
 function line(ruleId: string, card: LorcanaCard, partner: LorcanaCard): string | undefined {

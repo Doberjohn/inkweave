@@ -2,7 +2,7 @@
 
 Detailed documentation for the Sacrifice rule, a playstyle synergy that detects the aristocrats / "Banish Matters" archetype.
 
-**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/cardHelpers.ts`
+**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/detection/sacrifice.ts`
 **Rule ID**: `sacrifice`
 **Category**: `playstyle`
 **Playstyle ID**: `sacrifice`
@@ -172,7 +172,7 @@ Banish-triggers the Toy rule tags too: 4 (Alien - True Believer, Jingle Joe - Si
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Sacrifice rule (Banish Matters)')`, plus `src/__tests__/sacrifice.test.ts` for triggers limited to an opponent's turn and for payoffs that give back little.
+Tests live in `packages/synergy-engine/src/__tests__/sacrifice.test.ts`: `describe('Sacrifice rule (Banish Matters)')`, then triggers limited to an opponent's turn and payoffs that give back little.
 
 ### Role Detection (8 tests)
 
