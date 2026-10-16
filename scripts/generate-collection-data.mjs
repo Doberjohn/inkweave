@@ -158,7 +158,8 @@ function main() {
   const previewCards = readCards(PREVIEW_FILE, {required: false});
 
   const excluded = idSet([...coreCards, ...previewCards]);
-  const collectionCards = selectCollectionCards(fullCards, [excluded]);
+  const previewSets = new Set(previewCards.map((card) => String(card.setCode)));
+  const collectionCards = selectCollectionCards(fullCards, [excluded], previewSets);
   assertDisjoint(collectionCards, excluded);
 
   const index = buildIndex(collectionCards);

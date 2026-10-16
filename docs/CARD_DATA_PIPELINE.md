@@ -779,7 +779,7 @@ No SW cache rule for `previewCards.json` itself — its graceful 404 path is bro
 
 ### The collection dataset (#553)
 
-A **third** card dataset lives at `apps/web/public/data/collection/`: the 2,205
+A **third** card dataset lives at `apps/web/public/data/collection/`: the 2,217
 cards Inkweave can SHOW but never analyses, namely sets 1-8 and the
 Enchanted/Epic/Iconic/Special printings inside Core sets.
 
@@ -808,22 +808,22 @@ look right and are not.
 
 | File | Contents | committed | served |
 |---|---|---|---|
-| `collection/index.json` | all 2,205, light projection: grid, filters, name search | 71 kB | 71 kB |
+| `collection/index.json` | all 2,217, light projection: grid, filters, name search | 72 kB | 72 kB |
 | `collection/{set}.json` | one per set: card text, stats, abilities, image URLs | 10-43 kB | 11-49 kB |
-| whole dataset | 15 files, 3.0 MB on disk | 460 kB | 515 kB |
+| whole dataset | 15 files, 3.1 MB on disk | 462 kB | 517 kB |
 
 Both tiers are budgeted in `package.json`, and **deliberately as two entries rather
 than one**: collection mode is designed to load the index once plus the one chunk for
-the set being viewed, a **per-visit worst case of 120 kB** (71 kB index plus set 8 at
-49 kB served), under a quarter of the 515 kB total. `Collection index JSON` guards
+the set being viewed, a **per-visit worst case of 121 kB** (72 kB index plus set 8 at
+49 kB served), under a quarter of the 517 kB total. `Collection index JSON` guards
 that per-visit cost; `Collection set chunks` is a growth guard on the data as a whole.
 Until that tiering lands, `CollectionCardsProvider` loads every detail chunk and no
-index (444 kB served), a design-phase simplification explained at the top of
+index (446 kB served), a design-phase simplification explained at the top of
 `CollectionCardsContext.tsx`.
 
 **The chunk budget is set against the SERVED size, not the committed size.**
-Committed chunks gzip to 389 kB; because content-addressed hashes are high-entropy
-they barely compress, injection adds **55 kB** to reach 444 kB, against a 470 kB
+Committed chunks gzip to 391 kB; because content-addressed hashes are high-entropy
+they barely compress, injection adds **55 kB** to reach 446 kB, against a 470 kB
 limit. Measuring the committed files would set a limit against an artifact nobody is
 served, which is the defect [#729](https://github.com/Doberjohn/inkweave/issues/729) describes.
 The index is not imaged, so its budget needs no such allowance.
@@ -832,7 +832,11 @@ The index is not imaged, so its budget needs no such allowance.
 LorcanaJSON.org and pass its path to `pnpm generate-collection-data`.
 `previewCards.json` ids are excluded alongside `allCards.json`, because the runtime
 loader admits a preview card whose id is absent from the primary file, and a card in
-both would otherwise appear twice.
+both would otherwise appear twice. **The preview's whole SET is excluded too**, because
+its ids are Inkweave's own (`14021`) and never match the export's: the 2026-09-30 export
+was the first to carry Set 14, and the id check alone let all 112 of its cards through
+as non-Core duplicates. Regenerate after a set graduates, so its Enchanted, Epic and
+Iconic printings join the collection.
 
 **The committed chunks carry no image hashes.** `injectManifestIntoChunk` writes
 `imageHash`/`imageHashSm` into them during the build, the same way it does for

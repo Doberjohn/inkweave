@@ -53,6 +53,16 @@ describe('selectCollectionCards', () => {
   it('compares ids as strings, so numeric and string ids cannot slip past', () => {
     expect(selectCollectionCards([card({id: 7})], [new Set([7])])).toEqual([]);
   });
+
+  it('drops every card of a served set, whose ids never match the export', () => {
+    // The reveal set: preview ids are Inkweave's own (14021), the export's numeric.
+    const kept = selectCollectionCards(
+      [card({id: 2700, setCode: '14'}), card({id: 1, setCode: '1'})],
+      [new Set(['14021'])],
+      new Set(['14']),
+    );
+    expect(kept.map((c) => c.id)).toEqual([1]);
+  });
 });
 
 // Many of these fields are legitimately absent on many cards — `baseId` only on

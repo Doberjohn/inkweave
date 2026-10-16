@@ -3,7 +3,7 @@
  *
  * `apps/web/public/data/allCards.json` is the Core pool and the only input to the
  * synergy engine, the deck builder and the playstyle pages. This module builds the
- * OTHER 2,205 cards: sets 1-8 and the Enchanted/Epic/Iconic/Special
+ * OTHER 2,217 cards: sets 1-8 and the Enchanted/Epic/Iconic/Special
  * printings inside Core sets — for collection viewing only.
  *
  * **Nothing appears in both datasets.** That is the invariant the whole Core
@@ -18,7 +18,7 @@
  * nameless and statless. Complete, it measures 445 KB gzip, not the 118 KB the
  * design estimated. Hence:
  *
- *   - INDEX (~71 KB gzip, all 2,205 cards): what the grid and every filter need.
+ *   - INDEX (~72 KB gzip, all 2,217 cards): what the grid and every filter need.
  *     Loaded once when collection mode turns on.
  *   - DETAIL (5-42 KB gzip per set): card text, stats, abilities and image URLs.
  *     Loaded for the set being viewed, which is also the binder's page unit.
@@ -42,7 +42,7 @@ export const INDEX_FIELDS = [
   'setCode',
   'number',
   'rarity',
-  // Alternate printings point at the Core card they reprint. 313 of 313 resolve,
+  // Alternate printings point at the Core card they reprint. 323 of 323 resolve,
   // which is what lets an Enchanted card show its base card's real synergies.
   'baseId',
 ];
@@ -109,16 +109,26 @@ function pickFields(card, fields) {
  * `previewCards.json` also merges into the Core pool at runtime
  * (`features/cards/loader.ts` admits a preview card whose id is absent from the
  * primary file). A card in the full export and in previewCards but not yet in
- * allCards would otherwise appear twice in collection mode. Currently moot —
- * previewCards holds 0 cards off-season — which is exactly why it is easy to miss.
+ * allCards would otherwise appear twice in collection mode.
+ *
+ * `servedSetCodes` drops whole sets, because the id check alone CANNOT catch the
+ * reveal set. Preview cards carry Inkweave's own ids (`14021`), the export its
+ * numeric ones, so the same card never matches by id. The 2026-09-30 export was
+ * the first to carry Set 14, and without this it shipped all 112 of its cards a
+ * second time, labelled "Outside Core". The preview serves its set in full until
+ * graduation, which is when this dataset should be regenerated to pick up that
+ * set's Enchanted/Iconic printings.
  */
-export function selectCollectionCards(fullCards, excludedIdSets) {
+export function selectCollectionCards(fullCards, excludedIdSets, servedSetCodes = new Set()) {
   const excluded = new Set();
   for (const set of excludedIdSets) {
     for (const id of set) excluded.add(String(id));
   }
   return fullCards.filter(
-    (card) => !excluded.has(String(card.id)) && !QUEST_SET_CODE.test(String(card.setCode)),
+    (card) =>
+      !excluded.has(String(card.id)) &&
+      !servedSetCodes.has(String(card.setCode)) &&
+      !QUEST_SET_CODE.test(String(card.setCode)),
   );
 }
 
