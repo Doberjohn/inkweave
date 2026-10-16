@@ -37,8 +37,9 @@ One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spr
 ## Related
 
 - **`no-raw-spacing` is `'off'`.** While it is off, spacing has **zero** enforcement,
-  including on new code: see [[reference_disabled_lint_rule_is_invisible]]. **#548**
-  converts the quoted shorthands the rule structurally cannot read, then **#549**
+  including on new code: an `'off'` rule reports nothing, and the value gate greps
+  token values, so a bare number never matches it. **#548** converts the quoted
+  shorthands the rule structurally cannot read, then **#549**
   seeds a ledger and flips it to `'error'`. That order is load-bearing, because
   seeding first would force new ledger entries, which shrink-only forbids.
   Measured 2026-07-31: 314 violations across 134 files the rule can see, plus 86
