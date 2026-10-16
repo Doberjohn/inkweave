@@ -1,7 +1,7 @@
 // The non-Core card pool, for viewing only (#553 Phase C).
 //
 // THE CORE BOUNDARY LIVES HERE, and it is structural rather than a rule. These
-// 2,217 cards never enter `CardDataContext`, so the deck builder, the playstyle
+// 2,224 cards never enter `CardDataContext`, so the deck builder, the playstyle
 // pages and every build script keep seeing exactly the 1,228 Core cards — not
 // because anyone remembered to filter, but because they never ask this provider.
 // Browse merges the two arrays locally, in the one place that should see both.
@@ -70,7 +70,7 @@ async function fetchChunk(setCode: string): Promise<LorcanaCard[]> {
   // `imageUrl` unset ("a web-app concern"), and the loader wraps it to attach the
   // resolved URL plus the content-addressed hashes. Calling the engine directly
   // costs every collection card its artwork: `CardTile` falls back to the plain
-  // cost badge when `imgSrc` is falsy, which looks like 2,217 cards with no image
+  // cost badge when `imgSrc` is falsy, which looks like 2,224 cards with no image
   // rather than a missing transform step.
   return transformRawCards(cards);
 }

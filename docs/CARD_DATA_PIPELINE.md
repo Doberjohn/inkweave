@@ -356,8 +356,8 @@ The file lives at `apps/web/public/data/previewCards.json`. Post-Set-12 graduati
 | `keywordAbilities` | Optional | Array of keyword name strings — alternative to embedding in `abilities` |
 | `setCode` | Yes | Set code as string (e.g., `"13"`). Critical — used everywhere for filtering. Must match the key in `sets[code]`. |
 | `number` | Yes | Card number within set (1 to total cards in set) |
-| `rarity` | Yes | `"Common"`, `"Uncommon"`, `"Rare"`, `"Super Rare"`, `"Legendary"`. Never add an Epic, Iconic, Enchanted or Special printing as its own entry: the first three go in the base card's `variants` (next row), and Special is out of scope. |
-| `variants` | Optional | The card's Epic/Enchanted/Iconic printings (#625), sorted by collector number: `[{"id": 14241, "rarity": "Iconic", "number": 241, "images": {"full": "...", "thumbnail": "..."}}]`. In reveal season the id is `REVEAL_ID_BASE + number` and the number is above the set's base total (both test-enforced). `images` is absent for a hand-supplied scan, whose art is `card-images-preview/{id}.avif`. A hand-supplied scan that is not in English also carries its `scanLanguage` (#681), so the app offers the card's English text over that printing; `pnpm sync-variants` drops it when official art replaces the entry. Written by `pnpm sync-variants` or by hand ([START_REVEAL_SEASON.md](reveals/START_REVEAL_SEASON.md)); canonical cards get theirs from [Rule 1](#rules-during-canonical-integration). The engine never reads it. |
+| `rarity` | Yes | `"Common"`, `"Uncommon"`, `"Rare"`, `"Super Rare"`, `"Legendary"`. Never add a printing (a card with a LorcanaJSON `baseId`) as its own entry: every one but Special goes in the base card's `variants` (next row), and Special is out of scope. |
+| `variants` | Optional | The card's alternate printings (#625), sorted by collector number: Epic, Enchanted and Iconic, and any printing that keeps its base card's rarity (#796: its `rarity` is then the base card's, and the app labels it by its collector number, "#247"). For example: `[{"id": 14241, "rarity": "Iconic", "number": 241, "images": {"full": "...", "thumbnail": "..."}}]`. In reveal season the id is `REVEAL_ID_BASE + number` and the number is above the set's base total (both test-enforced). `images` is absent for a hand-supplied scan, whose art is `card-images-preview/{id}.avif`. A hand-supplied scan that is not in English also carries its `scanLanguage` (#681), so the app offers the card's English text over that printing; `pnpm sync-variants` drops it when official art replaces the entry. Written by `pnpm sync-variants` or by hand ([START_REVEAL_SEASON.md](reveals/START_REVEAL_SEASON.md)); canonical cards get theirs from [Rule 1](#rules-during-canonical-integration). The engine never reads it. |
 | `franchise` | Optional | Drives the `/reveals` page franchise tiering. Set to a value matching one of `FRANCHISES.match` in `apps/web/src/features/reveals/franchise.ts` (currently `"Coco"`). Cards without a matching franchise fall into the "Returning franchises" tier. Spell it as LorcanaJSON's `story` field does: graduation replaces it with that field ([Rule 4](#rules-during-canonical-integration)), so a mismatch empties the franchise's tier once the set graduates. Update `FRANCHISES` each season for the debut franchises. |
 | `scanLanguage` | **Preview-only** | Two-letter code (e.g. `"ja"`) of the card's scan when it is not in English: a card revealed abroad first, whose name and text are then an unofficial translation. The app offers that English text over the scan behind "See translation" (#623). A variant entry carries its own for a printing revealed abroad first (#681, see `variants`). Never `"en"`: `reveal-set-integrity.test.ts` checks both. Delete it when the card is refreshed from its English scan. |
 | `images.thumbnail` / `images.full` | Optional but recommended | Preview URLs from lorcanaplayer.com. The loader at `loader.ts:52` rewrites `lorcanaplayer.com/*` → `/card-images-preview/{id}.avif` automatically; AVIFs come from `convert-preview-images.mjs` reading raw JPGs in `card-images-raw/`. |
@@ -779,9 +779,11 @@ No SW cache rule for `previewCards.json` itself — its graceful 404 path is bro
 
 ### The collection dataset (#553)
 
-A **third** card dataset lives at `apps/web/public/data/collection/`: the 2,217
-cards Inkweave can SHOW but never analyses, namely sets 1-8 and the
-Enchanted/Epic/Iconic/Special printings inside Core sets.
+A **third** card dataset lives at `apps/web/public/data/collection/`: the 2,224
+cards Inkweave can SHOW but never analyses, namely sets 1-8 and the printings
+inside Core sets: Enchanted, Epic, Iconic, Special, and the four that keep their base
+card's rarity (Sven #243, Mr. Incredible #243, Christopher Robin #246, Violet Parr #247;
+#796).
 
 **Illumineer's Quest sets are excluded entirely** (owner ruling, 2026-10-06). Those
 are a separate co-op product rather than trading-card boosters, so they are not part
@@ -808,7 +810,7 @@ look right and are not.
 
 | File | Contents | committed | served |
 |---|---|---|---|
-| `collection/index.json` | all 2,217, light projection: grid, filters, name search | 72 kB | 72 kB |
+| `collection/index.json` | all 2,224, light projection: grid, filters, name search | 72 kB | 72 kB |
 | `collection/{set}.json` | one per set: card text, stats, abilities, image URLs | 10-43 kB | 11-49 kB |
 | whole dataset | 15 files, 3.1 MB on disk | 462 kB | 517 kB |
 
@@ -1122,7 +1124,7 @@ Six rules apply when integrating canonical LorcanaJSON data into `allCards.json`
 
 | # | Rule | Why |
 |---|------|-----|
-| 1 | **Fold variant printings into their base card**: `Epic`, `Iconic`, `Enchanted` become entries in the base card's `variants` (matched on LorcanaJSON `baseId`, via `scripts/lib/fold-variants.mjs`). **Strip `Special`** promos. A printing graduation would drop stops the run before it writes anything (`--allow-missing-variants` drops it on purpose): a variant hand-scanned during the reveal season but missing from the canonical source (`previewCards.json` is its only copy), or a canonical printing whose base card isn't in the set's file. | Variants are rules-identical alternate art, not new cards: they're stored on their base card for the #625 printing switcher (card page and modal), never as separate cards. Special promos (several per base, each needing its own label) stay out of scope. Before #625 all four rarities were stripped (51 printings in Set 12). |
+| 1 | **Fold variant printings into their base card**: every printing, meaning every card with a LorcanaJSON `baseId` (`Epic`, `Iconic`, `Enchanted`, and the ones that keep their base card's rarity, #796), becomes an entry in the base card's `variants` (matched on that `baseId`, via `scripts/lib/fold-variants.mjs`). **Strip `Special`** promos. A printing graduation would drop stops the run before it writes anything (`--allow-missing-variants` drops it on purpose): a variant hand-scanned during the reveal season but missing from the canonical source (`previewCards.json` is its only copy), or a canonical printing whose base card isn't in the set's file. | Variants are rules-identical alternate art, not new cards: they're stored on their base card for the #625 printing switcher (card page and modal), never as separate cards. Special promos (several per base, each needing its own label) stay out of scope. Before #625 all four rarities were stripped (51 printings in Set 12). |
 | 2 | **Adopt canonical IDs unconditionally** | LorcanaJSON's sequential ids (`2716`...) are the permanent identity; preview composite ids (`121204`...) are placeholders. Pre-graduation URLs break — acceptable in beta. Votes, cloud collection keys and deck cards move to the canonical ids through the remap migration the script writes (#748). |
 | 3 | **Adopt canonical names** | LorcanaJSON is source of truth; preview curation can have typos / wording corrections. Rule 2 makes this automatic since canonical entries fully replace preview entries. |
 | 4 | **Keep LorcanaJSON's `story` as `franchise`** (since Set 14) | `/reveals` tiers its debut franchises by `franchise`, and a set usually graduates before its release day, when the page hides itself. `story` holds the same value the preview cards carried (all 27 of Set 14's Coco cards), so the page keeps working. Costs under 1 kB gzipped per set. Sets graduated earlier had it stripped. |
