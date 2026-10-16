@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Fold Epic/Enchanted/Iconic printings from a LorcanaJSON export into our card data (#625).
+ * Fold the printings in a LorcanaJSON export (#625: every card with a `baseId` but the Special
+ * promos, #796) into our card data.
  *
  * - allCards.json: canonical cards match on LorcanaJSON's `baseId` (our ids are LorcanaJSON's)
  *   and keep the LorcanaJSON variant id.

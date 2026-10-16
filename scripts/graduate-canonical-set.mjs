@@ -4,7 +4,7 @@
  *
  * Reads a per-set LorcanaJSON file (the format LorcanaJSON.org publishes for
  * each set, e.g. `set012.json`), applies the 6 graduation rules (Rule 1 folds
- * Epic/Enchanted/Iconic printings into their base card's `variants`),
+ * every printing, any card with a `baseId`, into its base card's `variants`),
  * replaces any existing entries for that set in `allCards.json`, retargets
  * hardcoded card-id references (featured, playstyle heroes, reveals demos) from
  * preview to canonical, asks for the set's featured cards when the homepage features
@@ -25,7 +25,7 @@
  *   source-path   Path to the canonical per-set LorcanaJSON file.
  *                 Defaults to: apps/web/public/data/set{set-code}data.json
  *   --allow-missing-variants
- *                 Graduate even if an Epic/Enchanted/Iconic printing would be dropped:
+ *                 Graduate even if a printing (Epic, Enchanted, Iconic or any other) would be dropped:
  *                 a hand-scanned preview variant missing from the canonical source, or a
  *                 canonical printing with no base card in it. Without this flag the
  *                 script stops before writing anything.
@@ -67,7 +67,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline/promises';
 import {fileURLToPath} from 'node:url';
-import {foldVariants} from './lib/fold-variants.mjs';
+import {foldVariants, isPrinting} from './lib/fold-variants.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -136,10 +136,11 @@ const KEEP_FIELDS = [
 
 /**
  * Rule 1 — variant printings are alternate-art versions of base cards, not new cards.
- * Epic/Enchanted/Iconic fold into their base card's `variants` (the printing switcher,
- * #625); Special promos are still stripped.
+ * Every printing (a card with a `baseId`, #796) folds into its base card's `variants` (the
+ * printing switcher, #625), including the ones that keep their base card's rarity; Special
+ * promos are still stripped. Only a card that is neither stays a card of its own.
  */
-const VARIANT_RARITIES = new Set(['Epic', 'Iconic', 'Enchanted', 'Special']);
+const isBaseCard = (card) => !isPrinting(card) && card.rarity !== 'Special';
 
 /** Rule 6 — strip foilMask from images, keep only full + thumbnail. */
 function stripImages(images) {
@@ -168,10 +169,10 @@ function stripCard(card, setCode) {
 
 /**
  * Rules 1, 4, 5, 6 applied to one set's canonical cards: base printings stripped to the kept
- * fields, with their Epic/Enchanted/Iconic printings folded in by `baseId`; Special dropped.
+ * fields, with their printings folded in by `baseId`; Special dropped.
  */
 export function applyCardRules(sourceCards, setCode) {
-  const baseCards = sourceCards.filter((c) => !VARIANT_RARITIES.has(c.rarity));
+  const baseCards = sourceCards.filter(isBaseCard);
   const cards = baseCards.map((c) => stripCard(c, setCode));
   const fold = foldVariants(cards, sourceCards, {matchBy: 'baseId', idFor: (v) => v.id});
   const specialCount = sourceCards.filter((c) => c.rarity === 'Special').length;
@@ -586,11 +587,11 @@ async function main() {
     process.exit(2);
   }
 
-  // Rule 1 — fold Epic/Enchanted/Iconic into their base, strip Special; Rules 4, 5, 6 — strip per-card
+  // Rule 1 — fold every printing into its base, strip Special; Rules 4, 5, 6 — strip per-card
   const {cards: stripped, fold, specialCount} = applyCardRules(sourceCards, setCode);
   console.log(`  Canonical input:           ${sourceCards.length} cards`);
   console.log(
-    `  Rule 1 - fold variants:    +${fold.folded.length + fold.replaced.length} (Epic/Enchanted/Iconic), strip Special: -${specialCount}`,
+    `  Rule 1 - fold variants:    +${fold.folded.length + fold.replaced.length} printings, strip Special: -${specialCount}`,
   );
   const previewCards = existingPreview.cards ?? [];
   const dropped = droppedVariants(previewCards, {cards: stripped, fold}, setCode);
