@@ -119,7 +119,11 @@ function BreakpointSection() {
             <span style={tokenValue}>{value}px</span>
             <div style={{position: 'relative', height: 8}}>
               <div
-                style={{width: `${(value / BREAKPOINTS.desktop) * 100}%`, height: '100%', ...goldBar}}
+                style={{
+                  width: `${(value / BREAKPOINTS.desktop) * 100}%`,
+                  height: '100%',
+                  ...goldBar,
+                }}
               />
             </div>
           </div>

@@ -39,7 +39,7 @@ function compareMatches(a: SynergyMatchDisplay, b: SynergyMatchDisplay): number 
   return a.card.name.localeCompare(b.card.name);
 }
 
-/** Groups in display order: direct first, then playstyle, then alphabetical within each category. */
+/** Groups in display order: direct first, then playstyle, each alphabetical by label. */
 function compareGroups(a: SynergyGroup, b: SynergyGroup): number {
   const catDiff = CATEGORY_ORDER[a.category] - CATEGORY_ORDER[b.category];
   if (catDiff !== 0) return catDiff;
@@ -61,7 +61,11 @@ function addMatches(group: SynergyGroup, rule: SynergyRule, matches: SynergyMatc
 }
 
 /** A rule's match as a pair connection, its explanation read from the pair's first card. */
-function toConnection(rule: SynergyRule, match: SynergyMatch, reverse: boolean): PairSynergyConnection {
+function toConnection(
+  rule: SynergyRule,
+  match: SynergyMatch,
+  reverse: boolean,
+): PairSynergyConnection {
   const base = {
     ruleId: rule.id,
     ruleName: rule.name,
@@ -73,7 +77,7 @@ function toConnection(rule: SynergyRule, match: SynergyMatch, reverse: boolean):
     : {...base, category: 'direct' as const};
 }
 
-/** Keep each rule's strongest connection: a later match replaces an earlier one only if it scores higher. */
+/** Keep each rule's strongest connection: a later match wins only if it scores higher. */
 function keepStrongest(
   connections: Map<string, PairSynergyConnection>,
   rule: SynergyRule,
@@ -281,7 +285,9 @@ export class SynergyEngine {
     reverse: boolean,
   ): void {
     for (const rule of this.rules) {
-      if (rule.matches(source)) keepStrongest(connections, rule, rule.findSynergies(source, [target]), reverse);
+      if (rule.matches(source)) {
+        keepStrongest(connections, rule, rule.findSynergies(source, [target]), reverse);
+      }
     }
   }
 
