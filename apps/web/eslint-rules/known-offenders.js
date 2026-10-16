@@ -99,7 +99,6 @@ export const KNOWN_OFFENDERS = {
   // 44 files, 116 violations at seeding
   'no-raw-font-size': [
     'src/docs/Colors.stories.tsx', // x10
-    'src/docs/Typography.stories.tsx', // x5
     'src/features/reveals/NewFranchises.tsx', // x1
     'src/features/reveals/RaritySymbol.stories.tsx', // x1
     'src/features/reveals/RevealHero.tsx', // x1

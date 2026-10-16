@@ -1,8 +1,9 @@
+import {Fragment} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {FONTS, FONT_SIZES, COLORS} from '../shared/constants';
 
 const sectionHeading: React.CSSProperties = {
-  fontSize: 16,
+  fontSize: FONT_SIZES.xl,
   fontWeight: 600,
   color: COLORS.text,
   fontFamily: FONTS.body,
@@ -11,16 +12,173 @@ const sectionHeading: React.CSSProperties = {
   paddingBottom: 8,
 };
 
+/** A token's name, in gold. */
+const tokenName: React.CSSProperties = {
+  color: COLORS.primary500,
+  fontSize: FONT_SIZES.base,
+  fontFamily: FONTS.body,
+};
+
+/** Muted copy: notes, values and descriptions. */
+const mutedText: React.CSSProperties = {
+  color: COLORS.textMuted,
+  fontSize: FONT_SIZES.base,
+  fontFamily: FONTS.body,
+};
+
+/** A source reference inside muted copy. */
+const codeNote: React.CSSProperties = {color: COLORS.descriptionText};
+
+const FONT_FAMILIES = [
+  {token: 'FONTS.body', name: 'Plus Jakarta Sans', family: FONTS.body},
+  {token: 'FONTS.hero', name: 'Tinos (serif)', family: FONTS.hero},
+];
+
+/** Each type-scale step and what it is for. */
+const USAGE_GUIDE: ReadonlyArray<readonly [step: string, use: string]> = [
+  ['xxxl (22)', 'Reserved, rarely used'],
+  ['xxl (20)', 'Page titles, card names, hero names'],
+  ['xl (16)', 'Section headings, group titles'],
+  ['lg (14)', 'Search inputs only (form exception)'],
+  ['base (13)', 'Most UI text: chips, labels, descriptions'],
+  ['md (12)', 'Compact labels, secondary info'],
+  ['sm (11)', 'Small labels, metadata'],
+  ['xs (10)', 'Badges, count circles, hover cues'],
+];
+
+const TEXT_COLORS = [
+  {color: COLORS.text, label: '#e8e8e8: Primary', desc: 'Card names, headings, active UI'},
+  {color: COLORS.textMuted, label: '#90a1b9: Muted', desc: 'Labels, counts, secondary info'},
+  {color: COLORS.primary500, label: '#d4af37: Gold', desc: 'Brand, accents, active states, CTAs'},
+  {
+    color: COLORS.descriptionText,
+    label: '#c8c8d8: Description',
+    desc: 'Supplementary/educational content',
+  },
+];
+
+function Section({title, children}: {title: string; children: React.ReactNode}) {
+  return (
+    <section style={{marginBottom: 32}}>
+      <h2 style={sectionHeading}>{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+// ── Sections ─────────────────────────────────────────────────────────
+
+/** One font family: its token and name, then a sample line set in it. */
+function FontSample({token, name, family}: {token: string; name: string; family: string}) {
+  return (
+    <div>
+      <div style={{...mutedText, marginBottom: 8}}>
+        <code style={codeNote}>{token}</code>: {name}
+      </div>
+      <div style={{fontSize: FONT_SIZES.xxl, fontFamily: family, color: COLORS.text}}>
+        The quick brown fox jumps over the lazy dog
+      </div>
+    </div>
+  );
+}
+
+function FontFamiliesSection() {
+  return (
+    <Section title="Font Families">
+      <div style={{display: 'flex', flexDirection: 'column', gap: 24}}>
+        {FONT_FAMILIES.map((font) => (
+          <FontSample key={font.token} {...font} />
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function ScaleSection() {
+  return (
+    <Section title="Type Scale">
+      <div style={{display: 'flex', flexDirection: 'column', gap: 0}}>
+        {Object.entries(FONT_SIZES).map(([name, size]) => (
+          <div
+            key={name}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '80px 50px 1fr',
+              alignItems: 'baseline',
+              padding: '12px 0',
+              borderBottom: `1px solid ${COLORS.gray100}`,
+            }}>
+            <code style={tokenName}>{name}</code>
+            <span style={mutedText}>{size}px</span>
+            <span style={{fontSize: size, fontFamily: FONTS.body, color: COLORS.text}}>
+              Inkweave: Master Lorcana Synergies
+            </span>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function UsageGuideSection() {
+  return (
+    <Section title="Usage Guide">
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '100px 1fr',
+          gap: '8px 16px',
+          color: COLORS.text,
+          fontSize: FONT_SIZES.base,
+          fontFamily: FONTS.body,
+        }}>
+        {USAGE_GUIDE.map(([step, use]) => (
+          <Fragment key={step}>
+            <code style={{color: COLORS.primary500}}>{step}</code>
+            <span style={{color: COLORS.textMuted}}>{use}</span>
+          </Fragment>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
+function TextColorsSection() {
+  return (
+    <Section title="Text Color Palette">
+      <p style={{...mutedText, margin: '0 0 16px'}}>
+        4-color system, all WCAG AA on dark backgrounds. Hierarchy via weight/case/color, not pixel
+        nudges.
+      </p>
+      <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
+        {TEXT_COLORS.map((t) => (
+          <div key={t.label} style={{display: 'flex', alignItems: 'center', gap: 16}}>
+            <span
+              style={{
+                color: t.color,
+                fontSize: FONT_SIZES.xl,
+                fontWeight: 600,
+                fontFamily: FONTS.body,
+                minWidth: 260,
+              }}>
+              {t.label}
+            </span>
+            <span style={mutedText}>{t.desc}</span>
+          </div>
+        ))}
+      </div>
+    </Section>
+  );
+}
+
 // ── Type Scale ───────────────────────────────────────────────────────
 
 function TypeScale() {
-  const sizes = Object.entries(FONT_SIZES) as [string, number][];
-
   return (
     <div style={{padding: 24, maxWidth: 960}}>
       <h1
         style={{
-          fontSize: 20,
+          fontSize: FONT_SIZES.xxl,
           fontWeight: 700,
           color: COLORS.primary500,
           fontFamily: FONTS.body,
@@ -28,181 +186,14 @@ function TypeScale() {
         }}>
         Typography
       </h1>
-      <p
-        style={{
-          color: COLORS.textMuted,
-          fontSize: FONT_SIZES.base,
-          fontFamily: FONTS.body,
-          margin: '0 0 32px',
-        }}>
-        Type scale and font families from{' '}
-        <code style={{color: COLORS.descriptionText}}>shared/constants/theme.ts</code>. Based on a
-        ~1.25 major third ratio with 13px base.
+      <p style={{...mutedText, margin: '0 0 32px'}}>
+        Type scale and font families from <code style={codeNote}>shared/constants/theme.ts</code>.
+        Based on a ~1.25 major third ratio with 13px base.
       </p>
-
-      {/* Font Families */}
-      <section style={{marginBottom: 32}}>
-        <h2 style={sectionHeading}>Font Families</h2>
-        <div style={{display: 'flex', flexDirection: 'column', gap: 24}}>
-          <div>
-            <div
-              style={{
-                color: COLORS.textMuted,
-                fontSize: FONT_SIZES.base,
-                fontFamily: FONTS.body,
-                marginBottom: 8,
-              }}>
-              <code style={{color: COLORS.descriptionText}}>FONTS.body</code>: Plus Jakarta Sans
-            </div>
-            <div style={{fontSize: 20, fontFamily: FONTS.body, color: COLORS.text}}>
-              The quick brown fox jumps over the lazy dog
-            </div>
-          </div>
-          <div>
-            <div
-              style={{
-                color: COLORS.textMuted,
-                fontSize: FONT_SIZES.base,
-                fontFamily: FONTS.body,
-                marginBottom: 8,
-              }}>
-              <code style={{color: COLORS.descriptionText}}>FONTS.hero</code>: Tinos (serif)
-            </div>
-            <div style={{fontSize: 20, fontFamily: FONTS.hero, color: COLORS.text}}>
-              The quick brown fox jumps over the lazy dog
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Type Scale */}
-      <section style={{marginBottom: 32}}>
-        <h2 style={sectionHeading}>Type Scale</h2>
-        <div style={{display: 'flex', flexDirection: 'column', gap: 0}}>
-          {sizes.map(([name, size]) => (
-            <div
-              key={name}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '80px 50px 1fr',
-                alignItems: 'baseline',
-                padding: '12px 0',
-                borderBottom: `1px solid ${COLORS.gray100}`,
-              }}>
-              <code
-                style={{
-                  color: COLORS.primary500,
-                  fontSize: FONT_SIZES.base,
-                  fontFamily: FONTS.body,
-                }}>
-                {name}
-              </code>
-              <span
-                style={{
-                  color: COLORS.textMuted,
-                  fontSize: FONT_SIZES.base,
-                  fontFamily: FONTS.body,
-                }}>
-                {size}px
-              </span>
-              <span style={{fontSize: size, fontFamily: FONTS.body, color: COLORS.text}}>
-                Inkweave: Master Lorcana Synergies
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Usage Guide */}
-      <section style={{marginBottom: 32}}>
-        <h2 style={sectionHeading}>Usage Guide</h2>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '100px 1fr',
-            gap: '8px 16px',
-            color: COLORS.text,
-            fontSize: FONT_SIZES.base,
-            fontFamily: FONTS.body,
-          }}>
-          <code style={{color: COLORS.primary500}}>xxxl (22)</code>
-          <span style={{color: COLORS.textMuted}}>Reserved, rarely used</span>
-          <code style={{color: COLORS.primary500}}>xxl (20)</code>
-          <span style={{color: COLORS.textMuted}}>Page titles, card names, hero names</span>
-          <code style={{color: COLORS.primary500}}>xl (16)</code>
-          <span style={{color: COLORS.textMuted}}>Section headings, group titles</span>
-          <code style={{color: COLORS.primary500}}>lg (14)</code>
-          <span style={{color: COLORS.textMuted}}>Search inputs only (form exception)</span>
-          <code style={{color: COLORS.primary500}}>base (13)</code>
-          <span style={{color: COLORS.textMuted}}>Most UI text: chips, labels, descriptions</span>
-          <code style={{color: COLORS.primary500}}>md (12)</code>
-          <span style={{color: COLORS.textMuted}}>Compact labels, secondary info</span>
-          <code style={{color: COLORS.primary500}}>sm (11)</code>
-          <span style={{color: COLORS.textMuted}}>Small labels, metadata</span>
-          <code style={{color: COLORS.primary500}}>xs (10)</code>
-          <span style={{color: COLORS.textMuted}}>Badges, count circles, hover cues</span>
-        </div>
-      </section>
-
-      {/* Text Colors */}
-      <section style={{marginBottom: 32}}>
-        <h2 style={sectionHeading}>Text Color Palette</h2>
-        <p
-          style={{
-            color: COLORS.textMuted,
-            fontSize: FONT_SIZES.base,
-            fontFamily: FONTS.body,
-            margin: '0 0 16px',
-          }}>
-          4-color system, all WCAG AA on dark backgrounds. Hierarchy via weight/case/color, not
-          pixel nudges.
-        </p>
-        <div style={{display: 'flex', flexDirection: 'column', gap: 16}}>
-          {[
-            {
-              color: COLORS.text,
-              label: '#e8e8e8: Primary',
-              desc: 'Card names, headings, active UI',
-            },
-            {
-              color: COLORS.textMuted,
-              label: '#90a1b9: Muted',
-              desc: 'Labels, counts, secondary info',
-            },
-            {
-              color: COLORS.primary500,
-              label: '#d4af37: Gold',
-              desc: 'Brand, accents, active states, CTAs',
-            },
-            {
-              color: COLORS.descriptionText,
-              label: '#c8c8d8: Description',
-              desc: 'Supplementary/educational content',
-            },
-          ].map((t) => (
-            <div key={t.label} style={{display: 'flex', alignItems: 'center', gap: 16}}>
-              <span
-                style={{
-                  color: t.color,
-                  fontSize: 16,
-                  fontWeight: 600,
-                  fontFamily: FONTS.body,
-                  minWidth: 260,
-                }}>
-                {t.label}
-              </span>
-              <span
-                style={{
-                  color: COLORS.textMuted,
-                  fontSize: FONT_SIZES.base,
-                  fontFamily: FONTS.body,
-                }}>
-                {t.desc}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
+      <FontFamiliesSection />
+      <ScaleSection />
+      <UsageGuideSection />
+      <TextColorsSection />
     </div>
   );
 }
