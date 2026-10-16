@@ -59,6 +59,29 @@ describe('applyCardRules (graduation)', () => {
     ]);
   });
 
+  it("folds a printing that keeps its base card's rarity instead of keeping it as a card (#796)", () => {
+    const sameRarity = {
+      id: 3600,
+      baseId: 3288,
+      number: 243,
+      fullName: 'Mickey Mouse - Best in Town',
+      rarity: 'Super Rare',
+      images: IMAGES,
+    };
+    const {cards} = applyCardRules([...source, sameRarity], '14');
+
+    expect(cards.map((c) => c.id)).toEqual([3288]);
+    expect(cards[0].variants.map((v) => v.id)).toEqual([3506, 3600]);
+  });
+
+  it('never keeps an Epic, Enchanted or Iconic as a card, even one that has lost its baseId', () => {
+    const unlinked = {id: 3601, number: 223, fullName: 'Mickey Mouse - Best in Town', rarity: 'Enchanted', images: IMAGES};
+    const {cards, fold} = applyCardRules([...source, unlinked], '14');
+
+    expect(cards.map((c) => c.id)).toEqual([3288]);
+    expect(fold.unmatched).toEqual([unlinked]);
+  });
+
   it('still strips Special promos and per-card metadata', () => {
     const {cards, specialCount} = applyCardRules(source, '14');
 

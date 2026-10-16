@@ -41,6 +41,23 @@ describe('parseCollectionCsv', () => {
     expect(summary.cardsOwned).toBe(0);
   });
 
+  it("imports a printing that keeps its base card's rarity onto its own card, not the base (#796)", () => {
+    // Violet Parr #247 shares her name and rarity with the #176 she reprints; only the number tells.
+    const violet = [
+      createCard({id: '3147', fullName: 'Violet Parr - Super Resilient', setCode: '13', setNumber: 176, rarity: 'Super Rare'}),
+      createCard({
+        id: '3573',
+        fullName: 'Violet Parr - Super Resilient',
+        setCode: '13',
+        setNumber: 247,
+        rarity: 'Super Rare',
+        baseId: '3147',
+      }),
+    ];
+    const {entries} = parseCollectionCsv(csv('013,247,foil,1,"Violet Parr - Super Resilient",Steel,Super Rare'), violet);
+    expect(entries).toEqual({3573: {normal: 0, foil: 1}});
+  });
+
   it('keeps a quantity above a playset intact — a collection count is not a deck count', () => {
     const {entries} = parseCollectionCsv(csv('011,191,normal,10,"Angel - Experiment 624",Amber,Rare'), pool);
     expect(totalOwned(entries['2001'])).toBe(10);

@@ -75,7 +75,8 @@ export function isBinderCard(card: LorcanaCard): boolean {
  * them found nothing.
  *
  * Built from the base card, under the printing's own id, rarity, number and art. The
- * full-size image hash is the base card's art, so it is dropped rather than carried.
+ * full-size image hash is the base card's art, so it is dropped rather than carried. It
+ * names the base card as its `baseId`, as a chunk's printing does (#796).
  */
 export function withPrintingCards(pool: LorcanaCard[]): LorcanaCard[] {
   const held = new Set(pool.map((card) => card.id));
@@ -87,6 +88,7 @@ export function withPrintingCards(pool: LorcanaCard[]): LorcanaCard[] {
       printings.push({
         ...card,
         id: printing.id,
+        baseId: card.id,
         rarity: printing.rarity,
         setNumber: printing.number,
         imageUrl: printing.imageUrl,

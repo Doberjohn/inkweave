@@ -1,23 +1,36 @@
 import {useState} from 'react';
-import type {LorcanaCard, VariantRarity} from 'inkweave-synergy-engine';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
+import {isAltArtRarity} from '../../features/cards/loader';
 import {trackEvent} from '../lib/analytics';
 
-/** One printing of a card: its Standard art, or an Epic/Enchanted/Iconic variant (#625). */
+/** One printing of a card: its Standard art, or one of its alternate printings (#625). */
 export interface Printing {
   /** 'standard', or the variant's id. */
   key: string;
-  /** What the printing switcher shows: "Standard", or the variant's rarity. */
+  /** What the printing switcher shows: "Standard", or the variant's `printingName`. */
   label: string;
-  /** Absent for the Standard printing. */
-  rarity?: VariantRarity;
+  /** The variant's printed rarity; absent for the Standard printing. */
+  rarity?: string;
+  /** The variant's collector number; absent for the Standard printing. */
+  number?: number;
   imageUrl?: string;
   /** Language code ("it") of this printing's scan if not English; absent means English. */
   scanLanguage?: string;
 }
 
-/** Accessible name for a printing's image: the card name, plus the rarity for a variant. */
-export function printingAlt(card: LorcanaCard, printing: Pick<Printing, 'rarity'>): string {
-  return printing.rarity ? `${card.fullName}, ${printing.rarity} printing` : card.fullName;
+/**
+ * What an alternate printing is called: its chase rarity, whose symbol it carries, or else
+ * its collector number (#796). A printing that keeps its base card's rarity (Violet Parr #247
+ * is a Super Rare, like her Standard art) has nothing else that tells it apart.
+ */
+export function printingName({rarity, number}: {rarity: string; number?: number}): string {
+  return isAltArtRarity(rarity) || number === undefined ? rarity : `#${number}`;
+}
+
+/** Accessible name for a printing's image: the card name, plus the printing's name for a variant. */
+export function printingAlt(card: LorcanaCard, printing: {rarity?: string; number?: number}): string {
+  const {rarity, number} = printing;
+  return rarity ? `${card.fullName}, ${printingName({rarity, number})} printing` : card.fullName;
 }
 
 /** Records a view of a variant printing; the Standard printing is the card itself, not a view. */
@@ -28,8 +41,8 @@ function recordView(card: LorcanaCard, printing: Printing, surface: 'card_page' 
 }
 
 /**
- * A card's printings: its Standard art first, then each Epic/Enchanted/Iconic variant. Each
- * carries its own scan's language, since a variant can be revealed abroad first (#681).
+ * A card's printings: its Standard art first, then each alternate printing. Each carries its
+ * own scan's language, since a variant can be revealed abroad first (#681).
  */
 export function printingsOf(card: LorcanaCard): Printing[] {
   const standard: Printing = {
@@ -40,8 +53,9 @@ export function printingsOf(card: LorcanaCard): Printing[] {
   };
   const variants = (card.variants ?? []).map((v): Printing => ({
     key: v.id,
-    label: v.rarity,
+    label: printingName(v),
     rarity: v.rarity,
+    number: v.number,
     imageUrl: v.imageUrl,
     scanLanguage: v.scanLanguage,
   }));

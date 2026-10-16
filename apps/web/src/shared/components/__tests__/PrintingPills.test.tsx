@@ -84,4 +84,12 @@ describe('PrintingPills', () => {
     expect(epic).toHaveAttribute('title', 'Epic');
     expect(screen.getByRole('radio', {name: 'Standard'})).toHaveTextContent('Standard');
   });
+
+  it('keeps the label on a printing that has no symbol, so no pill is ever blank (#796)', () => {
+    renderPills(0, [...PRINTINGS, {key: '3571', label: '#243', rarity: 'Legendary'}]);
+
+    const sameRarity = screen.getByRole('radio', {name: '#243'});
+    expect(sameRarity).toHaveTextContent('#243');
+    expect(sameRarity.querySelector('img')).toBeNull();
+  });
 });

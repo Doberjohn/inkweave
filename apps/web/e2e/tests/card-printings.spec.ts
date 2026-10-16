@@ -21,7 +21,8 @@ const slideShown = (page: Page) =>
 
 /**
  * Gives the fixture card an Epic and an Iconic printing too, borrowing two real variants' art:
- * no card has had more than one alternate printing yet, but the switcher must hold four.
+ * Mr. Incredible - Super Strong is the first card with two alternate printings (#796), and the
+ * switcher must hold four.
  */
 async function withFourPrintings(page: Page) {
   await page.route('**/data/allCards.json', async (route) => {

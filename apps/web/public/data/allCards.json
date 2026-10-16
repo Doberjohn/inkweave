@@ -19041,7 +19041,18 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/60_f21a436d5622a2f70b2e9a04e089f7370088f03a.jpg"
       },
       "imageHash": "efa58e6a77e47402",
-      "imageHashSm": "3ab213087cb4352f"
+      "imageHashSm": "3ab213087cb4352f",
+      "variants": [
+        {
+          "id": 3570,
+          "rarity": "Super Rare",
+          "number": 243,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set11/243_a1beb195336d4027cab8b2ef959d2ae4fc345aae.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/243_fde65899acdbccb7e47afea26f13a3e5f9580acf.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2524,
@@ -29976,6 +29987,15 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set12/234_3f946381982ae80e97cf6442390e6137ae7b2343.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/234_a363783be904f3f5e460dac0ae177a6469ff23c0.jpg"
           }
+        },
+        {
+          "id": 3571,
+          "rarity": "Legendary",
+          "number": 243,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set12/243_e6f76836d6c4b2cd19706a1b3ba595d4bbe560a8.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/243_ff21b96c7dbbb56ac523c281fc462997cdbe4bd6.jpg"
+          }
         }
       ]
     },
@@ -35444,7 +35464,18 @@
       },
       "number": 61,
       "rarity": "Legendary",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3572,
+          "rarity": "Legendary",
+          "number": 246,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/246_a4f47432a5b57858ecb06bbca321ae8f539628cd.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/246_c5f59c2f2adfae9e522ff66ed6d4216170cac447.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3033,
@@ -39942,7 +39973,18 @@
       },
       "number": 176,
       "rarity": "Super Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3573,
+          "rarity": "Super Rare",
+          "number": 247,
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/set13/247_980439450d4c0ece6873e82219dd62661f676643.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/247_786e36620d9ca89db62544bec4be7756a5367058.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3148,

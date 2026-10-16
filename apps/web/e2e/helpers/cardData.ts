@@ -57,12 +57,16 @@ export function setCards(setCode: string): RawCard[] {
     .sort((a, b) => (a.number ?? 0) - (b.number ?? 0));
 }
 
+/** The rarities the "Alt art cards" preset picks. */
+const ALT_ART = new Set(['Epic', 'Enchanted', 'Iconic']);
+
 /**
  * A set's Epic, Enchanted and Iconic printings (#625), each a pocket of its own in the
- * binder, in the order their base cards come.
+ * binder, in the order their base cards come. Only those three: a printing that keeps its
+ * base card's rarity (#796) is a pocket too, but no alt-art filter or preset picks it.
  */
 export function setPrintings(setCode: string): {id: string; rarity: string}[] {
   return setCards(setCode).flatMap((c) =>
-    (c.variants ?? []).map((v) => ({id: String(v.id), rarity: v.rarity})),
+    (c.variants ?? []).filter((v) => ALT_ART.has(v.rarity)).map((v) => ({id: String(v.id), rarity: v.rarity})),
   );
 }

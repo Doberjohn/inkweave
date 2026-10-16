@@ -101,6 +101,10 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
   // Only preview cards shown with a foreign-language scan carry this (the "See translation" toggle).
   card.scanLanguage = raw.scanLanguage;
   card.variants = raw.variants?.map(toPrinting);
+  // A collection card that is a printing names the card it reprints (#796). Special promos
+  // carry one too, as printings that never fold; the binder drops them, so only the printings
+  // it holds reach the collection panel's one-finish rule (collectionStats.ts).
+  card.baseId = raw.baseId === undefined ? undefined : String(raw.baseId);
   return card;
 }
 
@@ -429,10 +433,14 @@ export function matchesRarity(card: LorcanaCard, options: CardFilterOptions): bo
  * The card's printing of a picked rarity, if it has one: the art Browse shows on
  * the card's tile, and the printing the card modal opens on. The first such
  * printing, should a card ever carry two.
+ *
+ * Never a printing of the card's own rarity (#796): Mr. Incredible #243 is a
+ * Legendary like his Standard art, and picking Legendary is asking for the card,
+ * not for that printing's art.
  */
 export function pickedPrinting(card: LorcanaCard, rarities: readonly string[] | undefined): CardPrinting | undefined {
   if (!rarities?.length) return undefined;
-  return card.variants?.find((printing) => rarities.includes(printing.rarity));
+  return card.variants?.find((printing) => printing.rarity !== card.rarity && rarities.includes(printing.rarity));
 }
 
 /**

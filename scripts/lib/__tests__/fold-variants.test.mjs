@@ -59,17 +59,39 @@ describe('foldVariants', () => {
     expect(cards[0].variants).toEqual([{id: 14241, rarity: 'Iconic', number: 241, images: IMAGES}]);
   });
 
-  it('ignores Special promos and base rarities', () => {
+  it('ignores Special promos and cards with no baseId', () => {
     const cards = [base()];
     const result = foldVariants(
       cards,
-      [variant({rarity: 'Special'}), variant({rarity: 'Common'})],
+      [variant({rarity: 'Special'}), base({id: 1939, number: 3})],
       byBaseId,
     );
 
     expect(cards[0].variants).toBeUndefined();
     expect(result).toEqual({folded: [], replaced: [], unchanged: [], unmatched: []});
   });
+
+  it("folds a printing that keeps its base card's rarity, since it has a baseId (#796)", () => {
+    const cards = [base()];
+    const sameRarity = variant({id: 3573, number: 247, rarity: 'Super Rare'});
+    const result = foldVariants(cards, [sameRarity], byBaseId);
+
+    expect(result.folded).toEqual([sameRarity]);
+    expect(cards[0].variants).toEqual([
+      {id: 3573, rarity: 'Super Rare', number: 247, images: IMAGES},
+    ]);
+  });
+
+  it.each(['Epic', 'Enchanted', 'Iconic'])(
+    'reports an %s that has lost its baseId as unmatched, never skipping it',
+    (rarity) => {
+      const cards = [base()];
+      const unlinked = variant({baseId: undefined, rarity});
+      const result = foldVariants(cards, [unlinked], byBaseId);
+
+      expect(result.unmatched).toEqual([unlinked]);
+    },
+  );
 
   it('reports a variant whose base is not in the target as unmatched', () => {
     const cards = [base()];
@@ -91,7 +113,7 @@ describe('foldVariants', () => {
     expect(cards[0].variants[0]).toMatchObject({imageHash: 'h', imageHashSm: 'hs'});
   });
 
-  it('replaces an entry of the same rarity instead of duplicating it', () => {
+  it('replaces the entry for the same printing instead of duplicating it', () => {
     const cards = [base({variants: [{id: 2141, rarity: 'Enchanted', number: 223}]})];
     const result = foldVariants(cards, [variant()], byBaseId);
 
@@ -99,6 +121,26 @@ describe('foldVariants', () => {
     expect(cards[0].variants).toEqual([
       {id: 2141, rarity: 'Enchanted', number: 223, images: IMAGES},
     ]);
+  });
+
+  it('replaces an entry whose rarity changed under the same number, never keeping the stale one', () => {
+    const cards = [base({variants: [{id: 2141, rarity: 'Epic', number: 223, images: IMAGES}]})];
+    const result = foldVariants(cards, [variant()], byBaseId);
+
+    expect(result.replaced).toHaveLength(1);
+    expect(cards[0].variants).toEqual([
+      {id: 2141, rarity: 'Enchanted', number: 223, images: IMAGES},
+    ]);
+  });
+
+  it('keeps two printings of the same rarity apart, each under its own number (#796)', () => {
+    const cards = [base()];
+    const first = variant({id: 3573, number: 247, rarity: 'Super Rare'});
+    const second = variant({id: 3580, number: 250, rarity: 'Super Rare'});
+    const result = foldVariants(cards, [first, second], byBaseId);
+
+    expect(result.folded).toEqual([first, second]);
+    expect(cards[0].variants.map((v) => v.id)).toEqual([3573, 3580]);
   });
 
   it('keeps a base with several printings in collector-number order', () => {

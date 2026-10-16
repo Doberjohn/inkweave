@@ -13,6 +13,7 @@ import {
   fetchCardsFromLocal,
   smallImageUrl,
   applySortOrder,
+  transformRawCards,
 } from '../loader';
 import {_resetPreviewCardsCache} from '../previewCards';
 import type {Ink, LorcanaCard} from '../types';
@@ -244,6 +245,21 @@ describe('Card Filtering', () => {
     it("picks the printing of a picked rarity for the tile, and none for the card's own rarity", () => {
       expect(pickedPrinting(elsa, ['Legendary', 'Enchanted'])?.id).toBe('x-ench');
       expect(pickedPrinting(elsa, ['Legendary'])).toBeUndefined();
+    });
+
+    it("never picks a printing of the card's own rarity, so the tile keeps its standard art (#796)", () => {
+      // Mr. Incredible: an Enchanted printing, and #243, a printing that keeps his Legendary rarity.
+      const mrIncredible = createCard({
+        id: '2842',
+        rarity: 'Legendary',
+        variants: [
+          {id: '2949', rarity: 'Enchanted', number: 234},
+          {id: '3571', rarity: 'Legendary', number: 243},
+        ],
+      });
+
+      expect(pickedPrinting(mrIncredible, ['Legendary'])).toBeUndefined();
+      expect(pickedPrinting(mrIncredible, ['Enchanted'])?.id).toBe('2949');
     });
   });
 
@@ -792,5 +808,20 @@ describe('applySortOrder - ink-cost', () => {
     const original = [...cards];
     applySortOrder(cards, 'ink-cost');
     expect(cards).toEqual(original);
+  });
+});
+
+describe('transformRawCards', () => {
+  // The collection chunks' cards (#553): a printing names the card it reprints (#796).
+  const raw = {name: 'Violet Parr', fullName: 'Violet Parr - Super Resilient', cost: 5, color: 'Steel', inkwell: true, type: 'Character', setCode: '13'};
+
+  it("carries a printing's baseId as a string id, and leaves it off a card that is no printing", () => {
+    const [printing, base] = transformRawCards([
+      {...raw, id: 3573, number: 247, rarity: 'Super Rare', baseId: 3147},
+      {...raw, id: 3147, number: 176, rarity: 'Super Rare'},
+    ]);
+
+    expect(printing.baseId).toBe('3147');
+    expect(base.baseId).toBeUndefined();
   });
 });

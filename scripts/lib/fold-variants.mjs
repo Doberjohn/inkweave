@@ -1,16 +1,33 @@
 /**
  * Fold alternate printings into their base card.
  *
- * Epic, Enchanted and Iconic printings are rules-identical reprints of a base card with
- * different art, so they are not cards of their own: each is stored as a small entry in
- * its base card's `variants` array, which the web app shows as a printing switcher (#625).
- * Special promos stay out (graduation Rule 1 still strips them).
+ * Alternate printings are rules-identical reprints of a base card with different art, so
+ * they are not cards of their own: each is stored as a small entry in its base card's
+ * `variants` array, which the web app shows as a printing switcher (#625). Special promos
+ * stay out (graduation Rule 1 still strips them).
+ *
+ * A PRINTING IS WHAT HAS A `baseId`, not only what has a chase rarity (#796). LorcanaJSON
+ * links every Epic, Enchanted and Iconic printing to its base card, and also four printings
+ * that keep their base card's rarity (Sets 11 to 13, numbered after the Iconics: Sven #243,
+ * Mr. Incredible #243, Christopher Robin #246, Violet Parr #247). A rarity list missed those;
+ * the link does not, and it will not miss the next kind either. The chase rarities still
+ * count on their own as a second guard: an Epic, Enchanted or Iconic that lost its `baseId`
+ * is reported unmatched, which stops a graduation, instead of passing as a card of its own.
  *
  * Shared by `scripts/sync-variants.mjs` (backfill + reveal-season sync) and
  * `scripts/graduate-canonical-set.mjs` (Rule 1), so both write the same entry shape.
  */
 
-export const FOLDED_RARITIES = new Set(['Enchanted', 'Epic', 'Iconic']);
+const CHASE_RARITIES = new Set(['Enchanted', 'Epic', 'Iconic']);
+
+/**
+ * A printing of another card: one with a `baseId` (LorcanaJSON gives every printing one,
+ * promos included), or one of a chase rarity whatever its data says.
+ */
+export const isPrinting = (card) => card.baseId !== undefined || CHASE_RARITIES.has(card.rarity);
+
+/** The printings that fold: every one but the Special promos. */
+const folds = (card) => isPrinting(card) && card.rarity !== 'Special';
 
 /** Only the two art URLs the image build and the dev loader read (graduation Rule 6). */
 function pickImages(images) {
@@ -28,11 +45,16 @@ function toEntry(variant, id) {
   return entry;
 }
 
-/** Same printing, same art: an existing entry that needs no rewrite (build hashes survive). */
+/**
+ * Same printing, same rarity, same art: an existing entry that needs no rewrite (build hashes
+ * survive). The rarity counts because entries are found by number: a corrected rarity must
+ * reach the entry, not leave the stale one in place.
+ */
 function sameEntry(existing, entry) {
   return (
     existing.id === entry.id &&
     existing.number === entry.number &&
+    existing.rarity === entry.rarity &&
     existing.images?.full === entry.images?.full &&
     existing.images?.thumbnail === entry.images?.thumbnail
   );
@@ -50,10 +72,15 @@ function baseFinder(baseCards, matchBy) {
   throw new Error(`foldVariants: unknown matchBy "${matchBy}"`);
 }
 
-/** Put `entry` on `base`, replacing a same-rarity entry; returns which report bucket it lands in. */
+/**
+ * Put `entry` on `base`, replacing the entry for the same printing; returns which report bucket
+ * it lands in. A printing is known by its collector number, which stays put when a hand scan's
+ * entry is replaced by official art. Not by rarity: a card can hold two printings of one rarity
+ * now that printings which keep their base card's rarity fold too (#796).
+ */
 function upsert(base, entry) {
   const variants = base.variants ?? [];
-  const at = variants.findIndex((v) => v.rarity === entry.rarity);
+  const at = variants.findIndex((v) => v.number === entry.number);
   if (at >= 0 && sameEntry(variants[at], entry)) return 'unchanged';
   if (at >= 0) variants[at] = entry;
   else variants.push(entry);
@@ -63,8 +90,8 @@ function upsert(base, entry) {
 }
 
 /**
- * Fold the Epic/Enchanted/Iconic printings in `sourceCards` into the `variants` of their base
- * in `baseCards` (mutated in place).
+ * Fold the printings in `sourceCards` (every card with a `baseId` but the Special promos) into
+ * the `variants` of their base in `baseCards` (mutated in place).
  *
  * - `matchBy: 'baseId'` matches LorcanaJSON's `variant.baseId` to `base.id` (canonical data,
  *   whose ids are LorcanaJSON's).
@@ -72,14 +99,14 @@ function upsert(base, entry) {
  *   are `REVEAL_ID_BASE + number` rather than LorcanaJSON's).
  * - `idFor(variant)` picks the id stored on the entry.
  *
- * Idempotent: a same-rarity entry is replaced, or left alone when nothing changed (so hashes a
+ * Idempotent: the entry with the same collector number is replaced, or left alone when nothing changed (so hashes a
  * local image build injected are not churned). Returns the source variants per outcome.
  */
 export function foldVariants(baseCards, sourceCards, {matchBy, idFor}) {
   const findBase = baseFinder(baseCards, matchBy);
   const result = {folded: [], replaced: [], unchanged: [], unmatched: []};
   for (const variant of sourceCards) {
-    if (!FOLDED_RARITIES.has(variant.rarity)) continue;
+    if (!folds(variant)) continue;
     const base = findBase(variant);
     if (!base) {
       result.unmatched.push(variant);
