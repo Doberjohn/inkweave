@@ -25,12 +25,13 @@ import {binderCardsForSet, isBinderCard} from './binderCards';
  * five (owner, 2026-10-12); a printing that keeps its base card's rarity (Violet Parr #247,
  * Super Rare) counts under that rarity (owner, 2026-10-16).
  *
- * EVERY PRINTING COMES IN ONE FINISH. Every Enchanted and Epic row of the owner's own
- * exports (2026-10-12) is a foil row, with no zero-count normal row beside it as the promo
- * export has, and LorcanaJSON lists one foil finish for every printing with a `baseId`:
- * all 360 chase printings and the 13 that keep their rarity (the 10-10 export). So a held
- * one is held in every finish it comes in, and counts toward master too, or a finished
- * set's master breakdown would read 0 forever.
+ * EVERY PRINTING THE BINDER HOLDS COMES IN ONE FINISH. Every Enchanted and Epic row of the
+ * owner's own exports (2026-10-12) is a foil row, with no zero-count normal row beside it as
+ * the promo export has, and LorcanaJSON lists one foil finish for every printing with a
+ * `baseId` that isn't Special: all 360 chase printings and the 13 that keep their rarity (the
+ * 10-10 export). So a held one is held in every finish it comes in, and counts toward master
+ * too, or a finished set's master breakdown would read 0 forever. The Special promos carry a
+ * `baseId` too, but `isBinderCard` drops them before any tally, so this needs no rarity check.
  */
 const isPrinting = (card: LorcanaCard) => card.baseId !== undefined;
 

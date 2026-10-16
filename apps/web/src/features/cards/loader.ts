@@ -101,8 +101,9 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
   // Only preview cards shown with a foreign-language scan carry this (the "See translation" toggle).
   card.scanLanguage = raw.scanLanguage;
   card.variants = raw.variants?.map(toPrinting);
-  // A collection card that is a printing names the card it reprints (#796): every printing
-  // comes in one finish, and this is how the collection panel tells them.
+  // A collection card that is a printing names the card it reprints (#796). Special promos
+  // carry one too, as printings that never fold; the binder drops them, so only the printings
+  // it holds reach the collection panel's one-finish rule (collectionStats.ts).
   card.baseId = raw.baseId === undefined ? undefined : String(raw.baseId);
   return card;
 }

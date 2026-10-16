@@ -138,7 +138,10 @@ const KEEP_FIELDS = [
  * Rule 1 — variant printings are alternate-art versions of base cards, not new cards.
  * Every printing (a card with a `baseId`, #796) folds into its base card's `variants` (the
  * printing switcher, #625), including the ones that keep their base card's rarity; Special
- * promos are still stripped. Only a card that is neither stays a card of its own.
+ * promos are still stripped. An Epic, Enchanted or Iconic counts as a printing even when it
+ * has lost its `baseId`: the fold reports it unmatched, which stops the run (or, with
+ * --allow-missing-variants, drops it), so it never graduates as a card. Only a card that is
+ * none of these stays a card of its own.
  */
 const isBaseCard = (card) => !isPrinting(card) && card.rarity !== 'Special';
 

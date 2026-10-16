@@ -61,7 +61,11 @@ describe('foldVariants', () => {
 
   it('ignores Special promos and cards with no baseId', () => {
     const cards = [base()];
-    const result = foldVariants(cards, [variant({rarity: 'Special'}), base({id: 1939, number: 3})], byBaseId);
+    const result = foldVariants(
+      cards,
+      [variant({rarity: 'Special'}), base({id: 1939, number: 3})],
+      byBaseId,
+    );
 
     expect(cards[0].variants).toBeUndefined();
     expect(result).toEqual({folded: [], replaced: [], unchanged: [], unmatched: []});
@@ -73,16 +77,21 @@ describe('foldVariants', () => {
     const result = foldVariants(cards, [sameRarity], byBaseId);
 
     expect(result.folded).toEqual([sameRarity]);
-    expect(cards[0].variants).toEqual([{id: 3573, rarity: 'Super Rare', number: 247, images: IMAGES}]);
+    expect(cards[0].variants).toEqual([
+      {id: 3573, rarity: 'Super Rare', number: 247, images: IMAGES},
+    ]);
   });
 
-  it('reports an Epic, Enchanted or Iconic that has lost its baseId as unmatched, never skipping it', () => {
-    const cards = [base()];
-    const unlinked = variant({baseId: undefined});
-    const result = foldVariants(cards, [unlinked], byBaseId);
+  it.each(['Epic', 'Enchanted', 'Iconic'])(
+    'reports an %s that has lost its baseId as unmatched, never skipping it',
+    (rarity) => {
+      const cards = [base()];
+      const unlinked = variant({baseId: undefined, rarity});
+      const result = foldVariants(cards, [unlinked], byBaseId);
 
-    expect(result.unmatched).toEqual([unlinked]);
-  });
+      expect(result.unmatched).toEqual([unlinked]);
+    },
+  );
 
   it('reports a variant whose base is not in the target as unmatched', () => {
     const cards = [base()];
@@ -106,6 +115,16 @@ describe('foldVariants', () => {
 
   it('replaces the entry for the same printing instead of duplicating it', () => {
     const cards = [base({variants: [{id: 2141, rarity: 'Enchanted', number: 223}]})];
+    const result = foldVariants(cards, [variant()], byBaseId);
+
+    expect(result.replaced).toHaveLength(1);
+    expect(cards[0].variants).toEqual([
+      {id: 2141, rarity: 'Enchanted', number: 223, images: IMAGES},
+    ]);
+  });
+
+  it('replaces an entry whose rarity changed under the same number, never keeping the stale one', () => {
+    const cards = [base({variants: [{id: 2141, rarity: 'Epic', number: 223, images: IMAGES}]})];
     const result = foldVariants(cards, [variant()], byBaseId);
 
     expect(result.replaced).toHaveLength(1);

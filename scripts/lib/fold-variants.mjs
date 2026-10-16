@@ -45,11 +45,16 @@ function toEntry(variant, id) {
   return entry;
 }
 
-/** Same printing, same art: an existing entry that needs no rewrite (build hashes survive). */
+/**
+ * Same printing, same rarity, same art: an existing entry that needs no rewrite (build hashes
+ * survive). The rarity counts because entries are found by number: a corrected rarity must
+ * reach the entry, not leave the stale one in place.
+ */
 function sameEntry(existing, entry) {
   return (
     existing.id === entry.id &&
     existing.number === entry.number &&
+    existing.rarity === entry.rarity &&
     existing.images?.full === entry.images?.full &&
     existing.images?.thumbnail === entry.images?.thumbnail
   );
