@@ -1,11 +1,164 @@
 import {describe, it, expect} from 'vitest';
-import {exertEnablerReachesPayoff} from '../utils';
+import {exertEnablerReachesPayoff, getExertRoles, isExertCard} from '../utils';
 import {getRuleById} from '../engine';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
 
-// Exert fixes from the 2026-10-14 misread review, kept out of rules.test.ts (CodeScene: function
-// count). Real card text.
+describe('Exert rule (Exert Matters)', () => {
+  const exertRule = getRuleById('exert')!;
+
+  // Enabler — an effect that exerts an OPPOSING character.
+  const petrify = createCard({
+    id: 'petrify',
+    fullName: 'Petrify',
+    ink: 'Amethyst',
+    type: 'Action',
+    text: 'Exert chosen opposing character.',
+  });
+  // Consume payoffs (score 8 vs enabler).
+  const teKa = createCard({
+    id: 'te-ka',
+    fullName: 'Te Kā - Elemental Terror',
+    ink: 'Amethyst',
+    text: 'ANCIENT RAGE During your turn, whenever an opposing character is exerted, banish them.',
+  });
+  const imStuck = createCard({
+    id: 'im-stuck',
+    fullName: "I'm Stuck!",
+    ink: 'Amethyst',
+    type: 'Action',
+    text: "Chosen exerted character can't ready at the start of their next turn.",
+  });
+  // State payoff (score 6 vs enabler).
+  const honeymaren = createCard({
+    id: 'honeymaren',
+    fullName: 'Honeymaren - Northuldra Guide',
+    ink: 'Amethyst',
+    text: 'TALE OF THE FIFTH SPIRIT When you play this character, if an opponent has an exerted character in play, gain 1 lore.',
+  });
+  // A second pure enabler, to prove enabler↔enabler is not emitted.
+  const elsaFifth = createCard({
+    id: 'elsa-fifth',
+    fullName: 'Elsa - The Fifth Spirit',
+    ink: 'Amethyst',
+    text: 'CRYSTALLIZE When you play this character, exert chosen opposing character.',
+  });
+
+  // Excluded cases.
+  const costGlyph = createCard({
+    id: 'freeze-cost',
+    fullName: 'Cost Glyph Card',
+    ink: 'Amethyst',
+    text: 'FREEZE ⟳ — Draw a card.', // ⟳ is an activation cost; exerts nothing opposing
+  });
+  const inkwellRamp = createCard({
+    id: 'ink-ramp-exerted',
+    fullName: 'Inkwell Ramp Card',
+    ink: 'Sapphire',
+    text: 'When you play this character, each opponent puts the top card of their deck into their inkwell facedown and exerted.',
+  });
+  const selfExert = createCard({
+    id: 'genie-main',
+    fullName: 'Genie - Main Attraction',
+    ink: 'Amethyst',
+    text: "PHENOMENAL SHOWMAN While this character is exerted, opposing characters can't ready at the start of their turn.",
+  });
+  const itemExert = createCard({
+    id: 'heihei',
+    fullName: 'HeiHei - Not-So-Tricky Chicken',
+    ink: 'Sapphire',
+    text: "EAT ANYTHING When you play this character, exert chosen opposing item. It can't ready at the start of its next turn.",
+  });
+
+  describe('role detection', () => {
+    it('detects exert-enabler from "exert chosen opposing character"', () => {
+      expect(getExertRoles(petrify)).toEqual(['exert-enabler']);
+    });
+
+    it('detects a consume payoff from an exert-trigger', () => {
+      expect(getExertRoles(teKa)).toEqual(['exert-payoff']);
+    });
+
+    it('detects a consume payoff from a can’t-ready lock', () => {
+      expect(getExertRoles(imStuck)).toEqual(['exert-payoff']);
+    });
+
+    it('detects a state payoff from an opponent-exerted-state check', () => {
+      expect(getExertRoles(honeymaren)).toEqual(['exert-payoff']);
+    });
+
+    it('excludes exert-as-cost (⟳ glyph, no opposing exert)', () => {
+      expect(getExertRoles(costGlyph)).toEqual([]);
+    });
+
+    it('excludes inkwell ramp ("into inkwell facedown and exerted")', () => {
+      expect(getExertRoles(inkwellRamp)).toEqual([]);
+    });
+
+    it('excludes self-exert-state payoffs', () => {
+      expect(getExertRoles(selfExert)).toEqual([]);
+    });
+
+    it('excludes exert-an-item effects', () => {
+      expect(getExertRoles(itemExert)).toEqual([]);
+      expect(isExertCard(itemExert)).toBe(false);
+    });
+  });
+
+  describe('rule matching', () => {
+    it('matches enablers and payoffs, not excluded cards', () => {
+      expect(exertRule.matches(petrify)).toBe(true);
+      expect(exertRule.matches(teKa)).toBe(true);
+      expect(exertRule.matches(selfExert)).toBe(false);
+    });
+  });
+
+  describe('synergy scoring', () => {
+    const allCards = [petrify, teKa, imStuck, honeymaren, elsaFifth];
+
+    it('enabler ↔ consume payoff (exert-trigger) scores 8, enabler reads as actor', () => {
+      const synergies = exertRule.findSynergies(petrify, allCards);
+      const match = synergies.find((s) => s.card.id === 'te-ka');
+      expect(match!.score).toBe(8);
+      // Petrify is the searcher ({A}) and the enabler, so it reads as the actor.
+      expect(match!.explanation).toBe(
+        '{A} exerts an opposing character, and {B} punishes the exerted body.',
+      );
+    });
+
+    it('keeps the enabler as the actor when the payoff is the searcher', () => {
+      const synergies = exertRule.findSynergies(teKa, allCards);
+      const match = synergies.find((s) => s.card.id === 'petrify');
+      expect(match!.score).toBe(8);
+      // Now the enabler (Petrify) is the partner ({B}), so the tokens swap.
+      expect(match!.explanation).toBe(
+        '{B} exerts an opposing character, and {A} punishes the exerted body.',
+      );
+    });
+
+    it('enabler ↔ consume payoff (can’t-ready lock) scores 8', () => {
+      const synergies = exertRule.findSynergies(petrify, allCards);
+      const match = synergies.find((s) => s.card.id === 'im-stuck');
+      expect(match!.score).toBe(8);
+    });
+
+    it('enabler ↔ state payoff scores 6', () => {
+      const synergies = exertRule.findSynergies(petrify, allCards);
+      const match = synergies.find((s) => s.card.id === 'honeymaren');
+      expect(match!.score).toBe(6);
+      expect(match!.explanation).toBe(
+        '{A} keeps an opposing character exerted, switching on {B}.',
+      );
+    });
+
+    it('enabler ↔ enabler is not emitted (payoff-anchored)', () => {
+      const synergies = exertRule.findSynergies(petrify, allCards);
+      expect(synergies.find((s) => s.card.id === 'elsa-fifth')).toBeUndefined();
+    });
+  });
+});
+
+// Fixes from the 2026-10-14 misread review. Real card text.
 
 const exertRule = getRuleById('exert')!;
 /** The Exert pair `card` finds with `partner`, or undefined when they do not pair. */

@@ -1,11 +1,203 @@
 import {describe, it, expect} from 'vitest';
-import {getDiscardRoles, getSelfDiscardRoles} from '../utils';
+import {getDiscardRoles, getSelfDiscardRoles, isSelfDiscardCard} from '../utils';
 import {getRuleById} from '../engine';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
 
-// Self-Discard fixes from #628, kept out of rules.test.ts (CodeScene: function count). Real card
-// text, named by fullName (Set 14 preview ids renumber when the set graduates).
+describe('Self-Discard rule (Discard Matters)', () => {
+  const selfDiscardRule = getRuleById('self-discard')!;
+
+  // Enablers — self-discard OUTLETS from hand.
+  const loot = createCard({
+    id: 'kronk-loot',
+    fullName: 'Kronk - Meat Hut Cook',
+    ink: 'Steel',
+    text: 'PICKUP! Once during your turn, you may pay 1 ⬡ to draw a card, then choose and discard a card.',
+  });
+  const dumpHand = createCard({
+    id: 'dump-hand',
+    fullName: 'You Broke My Smolder',
+    ink: 'Steel',
+    type: 'Action',
+    text: 'Discard your hand. Draw 2 cards.',
+  });
+
+  // Payoffs.
+  const reanimator = createCard({
+    id: 'gothel-reanimate',
+    fullName: 'Mother Gothel - Evil as Ever',
+    ink: 'Emerald',
+    text: 'MUMMY When you discard this card, you may play this character from your discard.',
+  });
+  const discardedThisTurn = createCard({
+    id: 'maximus-state',
+    fullName: 'Maximus - Relentless Stallion',
+    ink: 'Steel',
+    text: 'NO ESCAPE If you discarded a card this turn, this character gains Challenger +2.',
+  });
+  const hellbent = createCard({
+    id: 'megavolt-hellbent',
+    fullName: 'Megavolt - Electrical Menace',
+    ink: 'Steel',
+    text: 'FORCE FIELD While you have no cards in your hand, this character gains Resist +2.',
+  });
+  const lootReanimate = createCard({
+    id: 'rapunzel-flynn',
+    fullName: 'Rapunzel & Flynn Rider - Unlikely Pair',
+    ink: 'Emerald',
+    ink2: 'Steel',
+    text: 'CLEVER SWAP Whenever this character quests, you may draw a card, then choose and discard a card. FRESH START Whenever you discard a character card, you may play that character from your discard.',
+  });
+
+  // Zone payoffs — the discard as a countable zone, not an event.
+  const discardCount = createCard({
+    id: 'pepita-zone',
+    fullName: "Pepita - Imelda's Right Hand",
+    ink: 'Ruby',
+    text: 'ANCESTRAL WISDOM While you have 10 or more cards in your discard, this character gets +2 ¤ and +2 ◊.',
+  });
+  const songInDiscard = createCard({
+    id: 'miguel-zone',
+    fullName: 'Miguel Rivera - Street Musician',
+    ink: 'Amber',
+    text: 'SHARE THE MUSIC While you have a song card in your discard, this character gets +1 ◊ and gains Singer 3.',
+  });
+  const putThisTurn = createCard({
+    id: 'helga-zone',
+    fullName: 'Helga Sinclair - No Backup Needed',
+    ink: 'Ruby',
+    text: 'If 2 or more cards were put into your discard this turn, this character gets +2 ¤.',
+  });
+
+  // Mill — fills the bin from the deck: a bin-filler, never a hand-discard enabler.
+  const mill = createCard({
+    id: 'quackerjack-mill',
+    fullName: 'Quackerjack - Loony Toymaker',
+    ink: 'Sapphire',
+    text: 'EVIL DESIGN When you play this character, put the top 4 cards of your deck into your discard.',
+  });
+  const millReanimate = createCard({
+    id: 'lyle-mill',
+    fullName: 'Lyle Tiberius Rourke - Crystallized Commander',
+    ink: 'Sapphire',
+    text: 'When you play this character, put the top 3 cards of your deck into your discard. Then you may return an action card from your discard to your hand.',
+  });
+
+  // Excluded cases.
+  const opponentDiscard = createCard({
+    id: 'opp-discard',
+    fullName: 'Hand Disruption',
+    ink: 'Amethyst',
+    type: 'Action',
+    text: 'Each opponent chooses and discards a card.',
+  });
+  const unrelated = createCard({id: 'unrelated-sd', fullName: 'Anna', text: 'Gain 1 lore.'});
+
+  describe('role detection', () => {
+    it('detects enabler from loot (draw, then discard)', () => {
+      expect(getSelfDiscardRoles(loot)).toEqual(['enabler']);
+    });
+
+    it('detects enabler from "discard your hand"', () => {
+      expect(getSelfDiscardRoles(dumpHand)).toEqual(['enabler']);
+    });
+
+    it('detects reanimator from "play ... from your discard"', () => {
+      expect(getSelfDiscardRoles(reanimator)).toEqual(['reanimator']);
+    });
+
+    it('detects state-payoff from "discarded a card this turn"', () => {
+      expect(getSelfDiscardRoles(discardedThisTurn)).toEqual(['state-payoff']);
+    });
+
+    it('detects state-payoff from Hellbent ("no cards in your hand")', () => {
+      expect(getSelfDiscardRoles(hellbent)).toEqual(['state-payoff']);
+    });
+
+    it('detects both enabler and reanimator on an all-in-one card', () => {
+      expect(getSelfDiscardRoles(lootReanimate)).toEqual(['enabler', 'reanimator']);
+    });
+
+    it('does not tag opponent-facing discard (that is the Discard rule)', () => {
+      expect(getSelfDiscardRoles(opponentDiscard)).toEqual([]);
+    });
+
+    it('detects zone-payoff from a discard count, a card type in the discard, or cards put there this turn', () => {
+      expect(getSelfDiscardRoles(discardCount)).toEqual(['zone-payoff']);
+      expect(getSelfDiscardRoles(songInDiscard)).toEqual(['zone-payoff']);
+      expect(getSelfDiscardRoles(putThisTurn)).toEqual(['zone-payoff']);
+    });
+
+    it('tags mill as a deck-side bin-filler, never as a hand-discard enabler', () => {
+      expect(getSelfDiscardRoles(mill)).toEqual(['mill']);
+      expect(getSelfDiscardRoles(millReanimate)).toEqual(['reanimator', 'mill']);
+    });
+
+    it('returns no roles for unrelated or text-less cards', () => {
+      expect(getSelfDiscardRoles(unrelated)).toEqual([]);
+      expect(getSelfDiscardRoles(createCard({text: undefined}))).toEqual([]);
+      expect(isSelfDiscardCard(unrelated)).toBe(false);
+    });
+  });
+
+  describe('synergy scoring', () => {
+    const allCards = [loot, dumpHand, reanimator, discardedThisTurn, hellbent, unrelated];
+
+    it('enabler ↔ recursion that fires on the discard scores 8 (win-condition combo)', () => {
+      const match = selfDiscardRule
+        .findSynergies(loot, allCards)
+        .find((s) => s.card.id === 'gothel-reanimate');
+      expect(match!.score).toBe(8);
+      // Token swap: the enabler ({A}, the searcher here) reads as the actor.
+      expect(match!.explanation).toBe(
+        '{A} discards your own cards so {B} can replay them from the discard.',
+      );
+    });
+
+    it('enabler ↔ state-payoff scores 8', () => {
+      const match = selfDiscardRule
+        .findSynergies(loot, allCards)
+        .find((s) => s.card.id === 'maximus-state');
+      expect(match!.score).toBe(8);
+    });
+
+    it('enabler ↔ enabler scores 5 (parallel outlets)', () => {
+      const match = selfDiscardRule
+        .findSynergies(loot, allCards)
+        .find((s) => s.card.id === 'dump-hand');
+      expect(match!.score).toBe(5);
+    });
+
+    it('fill combos score 7 from a mill and 6 from a hand discard, with the bin-filler as the actor', () => {
+      const pool = [loot, mill, millReanimate, discardCount];
+      const find = (from: typeof loot, to: string) =>
+        selfDiscardRule.findSynergies(from, pool).find((s) => s.card.id === to);
+      expect(find(loot, 'pepita-zone')).toMatchObject({
+        score: 6,
+        explanation: "{A} fills your discard from hand, switching on {B}'s discard-count payoff.",
+      });
+      expect(find(mill, 'pepita-zone')).toMatchObject({
+        score: 7,
+        explanation: "{A} mills your deck into the discard, feeding {B}'s discard-count payoff.",
+      });
+      // The payoff is the searcher here, so the filler reads as {B}.
+      expect(find(millReanimate, 'quackerjack-mill')).toMatchObject({
+        score: 7,
+        explanation: '{B} mills cards into your discard for {A} to replay.',
+      });
+    });
+
+    it('mill ↔ state-payoff stays at 5 (mill is not a discard event)', () => {
+      const match = selfDiscardRule
+        .findSynergies(mill, [mill, discardedThisTurn])
+        .find((s) => s.card.id === 'maximus-state');
+      expect(match!.score).toBe(5);
+    });
+  });
+});
+
+// Fixes from #628. Real card text, named by fullName (Set 14 preview ids renumber when the set
+// graduates).
 
 // Recursion that can only return the card itself or a card it just handled.
 const aurora = createCard({

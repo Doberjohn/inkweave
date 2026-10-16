@@ -1,11 +1,113 @@
 import {describe, it, expect} from 'vitest';
-import {getHealRoles} from '../utils';
+import {getHealRoles, isHealCard} from '../utils';
 import {getRuleById} from '../engine';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
 
-// Healing fixes from the 2026-10-14 misread review, kept out of rules.test.ts (CodeScene: function
-// count). Real card text.
+describe('Healing rule (Heal Matters)', () => {
+  const healingRule = getRuleById('healing')!;
+
+  // Healer (enabler) — removes damage from a character.
+  const healingTouch = createCard({
+    id: 'healing-touch',
+    fullName: 'Healing Touch',
+    ink: 'Amber',
+    type: 'Action',
+    text: 'Remove up to 3 damage from chosen character.',
+  });
+
+  // Heal-payoffs — reward the removal event.
+  const grandPabbie = createCard({
+    id: '2086',
+    fullName: 'Grand Pabbie - Oldest and Wisest',
+    ink: 'Sapphire',
+    text: 'ANCIENT INSIGHT Whenever you remove 1 or more damage from one of your characters, gain 2 lore.',
+  });
+  const isabela = createCard({
+    id: '2734',
+    fullName: 'Isabela Madrigal - Caring Cultivator',
+    ink: 'Amber',
+    text: 'DO NO WRONG Whenever you remove damage from one of your characters, gain 1 lore for each 1 damage removed.',
+  });
+  // Dual-role: heals, and pays off any removal, its own included.
+  const bruno = createCard({
+    id: '2869',
+    fullName: 'Bruno Madrigal - Oasis Oracle',
+    ink: 'Sapphire',
+    text: "FIND THAT VISION Once during your turn, whenever you\nremove damage from one of your characters, you may\nlook at the top 2 cards of your deck. Put one into your\nhand and the other on the bottom of your deck.\nYOU'LL BE OKAY Whenever this character quests, you\nmay remove all damage from chosen character.",
+  });
+
+  // Excluded / unrelated.
+  const moveDamage = createCard({
+    id: 'mover',
+    fullName: 'Damage Mover',
+    ink: 'Sapphire',
+    text: 'You may move all damage from chosen character of yours to this character.',
+  });
+  const unrelated = createCard({id: 'unrelated', fullName: 'Anna', text: 'Draw a card.'});
+
+  describe('role detection', () => {
+    it('detects a healer from "remove up to N damage from"', () => {
+      expect(getHealRoles(healingTouch)).toEqual(['healer']);
+    });
+
+    it('detects a heal-payoff from "whenever you remove ... damage"', () => {
+      expect(getHealRoles(grandPabbie)).toEqual(['heal-payoff']);
+    });
+
+    it('detects a dual-role card as healer + heal-payoff (Bruno Madrigal - Oasis Oracle)', () => {
+      expect(getHealRoles(bruno)).toEqual(['healer', 'heal-payoff']);
+    });
+
+    it('excludes a pure move-damage card and text-less / unrelated cards', () => {
+      expect(getHealRoles(moveDamage)).toEqual([]);
+      expect(getHealRoles(unrelated)).toEqual([]);
+      expect(isHealCard(unrelated)).toBe(false);
+    });
+  });
+
+  describe('rule matching', () => {
+    it('matches healers and payoffs, not unrelated cards', () => {
+      expect(healingRule.matches(healingTouch)).toBe(true);
+      expect(healingRule.matches(grandPabbie)).toBe(true);
+      expect(healingRule.matches(unrelated)).toBe(false);
+    });
+  });
+
+  describe('synergy scoring', () => {
+    const scoreWith = (a: typeof healingTouch, b: typeof grandPabbie) =>
+      healingRule.findSynergies(a, [a, b]).find((m) => m.card.id === b.id);
+
+    it('healer ↔ heal-payoff scores 8, healer reads as the actor', () => {
+      const match = scoreWith(healingTouch, grandPabbie);
+      expect(match!.score).toBe(8);
+      // healingTouch is the searcher ({A}); it is the healer, so it stays the actor.
+      expect(match!.explanation).toBe(
+        "{A} clears damage off your characters, firing {B}'s heal payoff.",
+      );
+    });
+
+    it('keeps the healer as the actor when the payoff is the searcher', () => {
+      const match = scoreWith(grandPabbie, healingTouch);
+      expect(match!.score).toBe(8);
+      // grandPabbie is the searcher ({A}) but is the payoff, so the healer reads as {B}.
+      expect(match!.explanation).toBe(
+        "{B} clears damage off your characters, firing {A}'s heal payoff.",
+      );
+    });
+
+    it('heal-payoff ↔ heal-payoff scores 7 (two engines compound)', () => {
+      expect(scoreWith(grandPabbie, isabela)?.score).toBe(7);
+    });
+
+    it('does not pair two plain healers (payoff-anchored)', () => {
+      const healer2 = createCard({id: 'h2', fullName: 'Second Healer', text: 'Remove 2 damage from chosen character.'});
+      expect(healingRule.findSynergies(healingTouch, [healingTouch, healer2])).toHaveLength(0);
+    });
+  });
+});
+
+// Fixes from the 2026-10-14 misread review. Real card text.
 
 const healingRule = getRuleById('healing')!;
 /** The Healing pair `card` finds with `partner`, or undefined when they do not pair. */
