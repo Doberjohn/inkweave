@@ -76,20 +76,32 @@ describe('PrintingPills', () => {
     expect(enchanted.style.color).toBe(unlit);
   });
 
-  it('with three or more printings, shows each variant by its symbol alone, still named for screen readers and on hover', () => {
-    renderPills(0, [...PRINTINGS, {key: '2200', label: 'Epic', rarity: 'Epic' as const}]);
+  it('names every printing beside its symbol, however many printings a card has (#802)', () => {
+    renderPills(0, [...PRINTINGS, {key: '2200', label: 'Epic', rarity: 'Epic'}, {key: '2201', label: 'Iconic', rarity: 'Iconic'}]);
 
     const epic = screen.getByRole('radio', {name: 'Epic'});
-    expect(epic).not.toHaveTextContent('Epic');
-    expect(epic).toHaveAttribute('title', 'Epic');
-    expect(screen.getByRole('radio', {name: 'Standard'})).toHaveTextContent('Standard');
+    expect(epic).toHaveTextContent('Epic');
+    expect(epic.querySelector('img')).toHaveAttribute('src', expect.stringContaining('epic'));
   });
 
-  it('keeps the label on a printing that has no symbol, so no pill is ever blank (#796)', () => {
-    renderPills(0, [...PRINTINGS, {key: '3571', label: '#243', rarity: 'Legendary'}]);
+  it('marks an alt foil with the foil marker and tells screen readers its number (#802)', () => {
+    renderPills(0, [...PRINTINGS, {key: '3571', label: 'Alt foil', rarity: 'Legendary', number: 243}]);
 
-    const sameRarity = screen.getByRole('radio', {name: '#243'});
-    expect(sameRarity).toHaveTextContent('#243');
-    expect(sameRarity.querySelector('img')).toBeNull();
+    const altFoil = screen.getByRole('radio', {name: 'Alt foil, #243'});
+    expect(altFoil).toHaveTextContent('Alt foil');
+    expect(altFoil.querySelector('[aria-hidden="true"]')).not.toBeNull();
+    expect(altFoil.querySelector('img')).toBeNull();
+  });
+
+  it("shows a promo's symbol and printed code, and tells screen readers it is a promo (#802)", () => {
+    renderPills(0, [
+      ...PRINTINGS,
+      {key: '663', label: '5/P1', rarity: 'Special', number: 5, promoGrouping: 'P1'},
+      {key: '2183', label: '5/P3', rarity: 'Special', number: 5, promoGrouping: 'P3'},
+    ]);
+
+    const promo = screen.getByRole('radio', {name: 'Promo 5/P3'});
+    expect(promo).toHaveTextContent('5/P3');
+    expect(promo.querySelector('img')).toHaveAttribute('src', expect.stringContaining('promo'));
   });
 });
