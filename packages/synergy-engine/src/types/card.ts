@@ -24,6 +24,8 @@ export interface CardPrinting {
   imageUrl?: string;
   imageHashSm?: string;
   scanLanguage?: string; // language code ("it") when this printing's scan is not in English (#681)
+  promoGrouping?: string; // a promo's set as printed on the card: "P1" in 25/P1 (#802)
+  finish?: 'foil' | 'normal'; // only on promo twins that share a code (#802)
 }
 
 // Core card interface (based on LorcanaJSON structure)

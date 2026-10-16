@@ -496,6 +496,23 @@ describe('loadCardsFromJSON', () => {
     expect(card.variants?.map((v) => v.scanLanguage)).toEqual(['it', undefined]);
   });
 
+  // A promo names its set as printed ("C1" in 8/C1), and twins that share a code their finish (#802).
+  it("should carry a promo variant's set and finish through", () => {
+    const [kuzco] = loadCardsFromJSON(
+      makeJsonData({
+        id: 2005,
+        variants: [
+          {id: 80010, rarity: 'Special', number: 8, promoGrouping: 'C1', finish: 'foil'},
+          {id: 80011, rarity: 'Special', number: 8, promoGrouping: 'C1', finish: 'normal'},
+        ],
+      }),
+    );
+    expect(kuzco.variants?.map((v) => [v.promoGrouping, v.finish])).toEqual([
+      ['C1', 'foil'],
+      ['C1', 'normal'],
+    ]);
+  });
+
   it('should leave variants undefined on a card with no alternate printing', () => {
     const [card] = loadCardsFromJSON(makeJsonData({id: 2716}));
     expect(card.variants).toBeUndefined();
