@@ -99,7 +99,6 @@ export const KNOWN_OFFENDERS = {
   // 44 files, 116 violations at seeding
   'no-raw-font-size': [
     'src/docs/Colors.stories.tsx', // x10
-    'src/docs/SpacingLayout.stories.tsx', // x2
     'src/docs/Typography.stories.tsx', // x5
     'src/features/reveals/NewFranchises.tsx', // x1
     'src/features/reveals/RaritySymbol.stories.tsx', // x1
@@ -125,7 +124,6 @@ export const KNOWN_OFFENDERS = {
   // 62 files, 102 violations at seeding
   'no-raw-radius': [
     'src/docs/Colors.stories.tsx', // x2
-    'src/docs/SpacingLayout.stories.tsx', // x4
     'src/features/playstyles/PlaystyleFanTile.tsx', // x2
     'src/features/reveals/NewFranchises.tsx', // x2
     'src/features/reveals/RevealHero.tsx', // x2
