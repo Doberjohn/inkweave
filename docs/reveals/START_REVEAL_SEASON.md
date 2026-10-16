@@ -4,7 +4,7 @@ The counterpart to the graduation runbook in [`CARD_DATA_PIPELINE.md`](../CARD_D
 
 **When:** the next set's cards are being revealed publicly, and the previous set has graduated into `allCards.json`.
 
-**Outcome:** `/reveals` is live in production for the new set, admin's reveal publisher can publish cards, and the nav pill, mobile tab and home promo are visible.
+**Outcome:** `/reveals` is live in production for the new set, admin's Card studio can publish cards, and the nav pill, mobile tab and home promo are visible.
 
 ## Why the flag alone does nothing
 
@@ -64,7 +64,7 @@ Dates are local midnight. Drop the old set's entry: nothing reads it once the co
 | File | What changes |
 |---|---|
 | `features/reveals/franchise.ts` | `FranchiseId` union + `FRANCHISES` (label, `match`, tint `ink`, blurb) for the debut franchises |
-| `src/tools/reveal/constants.ts` in admin | `FEATURED_FRANCHISE_HINT`, the reveal publisher's hint text (an admin commit) |
+| `src/tools/reveal/constants.ts` in admin | `FEATURED_FRANCHISE_HINT`, the franchise hint in Card studio's form (an admin commit) |
 | `features/reveals/CardMosaic.tsx` | `ROWS` / `ROWS_MOBILE`: each ink's rows must sum to `PER_INK[ink]` (a test enforces it) |
 | `features/reveals/setSpotlights.ts` | `SET_SPOTLIGHTS` (new mechanics, tribes) and `FRANCHISE_ART` (hero + support art names) |
 | `public/art/spotlights/` | The spotlights' card art, one AVIF per card, named after it (last season's files go) |
@@ -91,12 +91,12 @@ If one of these needs a per-season edit, something regressed:
 ### Ids and filenames
 
 - Numbered card: `id = REVEAL_ID_BASE + collector number` (Set 14 #50 is `14050`).
-- Card revealed WITHOUT a collector number (common early on; 10 of 89 at Set 13's start): an id in the reserved `+900..+999` band and no `number` field, per [`PREVIEW_CARD_PARSER.md`](https://github.com/Doberjohn/inkweave-admin/blob/main/docs/PREVIEW_CARD_PARSER.md) in admin. Renumber it once the collector number is known. These can only be added by PR: admin's reveal publisher requires a number.
+- Card revealed WITHOUT a collector number (common early on; 10 of 89 at Set 13's start): an id in the reserved `+900..+999` band and no `number` field, per [`PREVIEW_CARD_PARSER.md`](https://github.com/Doberjohn/inkweave-admin/blob/main/docs/PREVIEW_CARD_PARSER.md) in admin. Renumber it once the collector number is known. These can only be added, and renumbered, by PR: Card studio's New reveal requires a number, and its Edit card keeps a card's id and number as they are (admin's runbook, "Ids and filenames").
 - Raw scans go in `apps/web/public/card-images-raw/` and the filename stem MUST be the numeric card id (`14050.jpg`). One bad filename fails the whole convert run.
 
 ### Ink blocks
 
-A set is numbered ink by ink in `ALL_INKS` order, so the collector number implies the ink. `inkBlock(ink)` gives each range. **A dual-ink card sits in the block of its FIRST ink.** Admin's reveal publisher rejects an ink that does not own the number, because both wrong-ink publishes in Set 13 were the form's default ink (`Amber`) left unchanged. Numbers above `SET_TOTAL` (promos, enchanteds) are not checked. If the set turns out to split unevenly (Set 13 ran 37 down to 32), fix `PER_INK` and the matching `ROWS`.
+A set is numbered ink by ink in `ALL_INKS` order, so the collector number implies the ink. `inkBlock(ink)` gives each range. **A dual-ink card sits in the block of its FIRST ink.** Admin's Card studio rejects an ink that does not own the number, because both wrong-ink publishes in Set 13 were the form's default ink (`Amber`) left unchanged. Its New reveal also refuses every number above `SET_TOTAL`, since each is an Epic, Enchanted or Iconic printing of a card in the set (admin's runbook, "Ink blocks"), and a number that a released card of the reveal set already holds, which matters once a set graduates. `/fetch-reveals` refuses that number too (Doberjohn/inkweave-admin#51). If the set turns out to split unevenly (Set 13 ran 37 down to 32), fix `PER_INK` and the matching `ROWS`.
 
 ### Record conventions
 
@@ -127,17 +127,17 @@ Production serves a preview image only when BOTH variants are committed, and it 
 Cards reach `previewCards.json` from [Doberjohn/inkweave-admin](https://github.com/Doberjohn/inkweave-admin), not from this repo's tooling:
 
 - **In bulk,** admin's `/fetch-reveals` opens a PR here from a `reveals/…` branch, with the verified cards and their AVIFs.
-- **One card at a time,** admin's reveal publisher (https://inkweave-admin.vercel.app/reveal) commits the record plus its raw scan straight to `master`, and `.github/workflows/convert-reveal-images.yml` converts the raw, commits the AVIFs with `[skip ci]` and prunes it. Each card commit triggers `deploy.yml`: **allow 15 to 20 minutes** (the prerender crawl).
+- **One card at a time,** admin's Card studio (https://inkweave-admin.vercel.app/studio) commits the record plus its raw scan straight to `master`, and `.github/workflows/convert-reveal-images.yml` converts the raw, commits the AVIFs with `[skip ci]` and prunes it. Each card commit triggers `deploy.yml`: **allow 15 to 20 minutes** (the prerender crawl).
 
 Either way, once the cards are on `master`, `.github/workflows/refresh-rule-coverage.yml` follows with a commit of any rule-doc coverage they moved, also with `[skip ci]` (#781).
 
 How to run both, and what each refuses to write: [`docs/REVEAL_RUNBOOK.md`](https://github.com/Doberjohn/inkweave-admin/blob/main/docs/REVEAL_RUNBOOK.md) in admin.
 
-**Merge the season switch, then bump admin's pin past it, before anything is published.** Admin reads the season from its pinned copy of this repo, and the publisher commits to `master`, the only branch the convert workflow runs on.
+**Merge the season switch, then bump admin's pin past it, before anything is published.** Admin reads the season from its pinned copy of this repo, and Card studio commits to `master`, the only branch the convert workflow runs on.
 
 ### Variant printings (Epic, Enchanted, Iconic)
 
-A variant printing is alternate art for a card that is already in, not a card of its own: it goes in the base card's `variants` array, and the app shows it as a `Standard | <Rarity>` switcher (#625). Never add one as its own entry. Admin's `/fetch-reveals` and reveal publisher do not handle variants (the fetch pipeline's rarity gate rejects them), so use one of these two paths. Both give the variant the id `REVEAL_ID_BASE + collector number` (Iconic #241 is `14241`), so they converge on one id, and `reveal-set-integrity.test.ts` enforces it.
+A variant printing is alternate art for a card that is already in, not a card of its own: it goes in the base card's `variants` array, and the app shows it as a `Standard | <Rarity>` switcher (#625). Never add one as its own entry. Admin's `/fetch-reveals` and Card studio never add one as a card: the fetch pipeline's rarity gate rejects variants, and Card studio's New reveal refuses a collector number past the set and points to admin's variants script. Use one of these three paths. All three give the variant the id `REVEAL_ID_BASE + collector number` (Iconic #241 is `14241`), so they converge on one id, and `reveal-set-integrity.test.ts` enforces it.
 
 **Official art, once LorcanaJSON lists the variant** (preferred):
 
@@ -150,6 +150,8 @@ pnpm precompute-synergies
 ```
 
 It matches the preview card on set + full name, so the base card must already be in. Run it again any time: it only adds or updates.
+
+**Official scan, from admin, before LorcanaJSON lists it**: admin's `node scripts/reveal-sync/variants.mjs stage <numbers>`, then `publish <run>` once the owner approves (Doberjohn/inkweave-admin#22). It checks each printing against illumineertales.com's list and this repo's `master`, converts the official scan with this repo's `convert-preview-images`, and opens a `reveals/set<N>-variants-<numbers>` PR here with the `variants` entries and both AVIFs. It takes English scans only: a printing revealed abroad first still goes in by hand, as below. How to run it: admin's runbook, "Variant printings from admin".
 
 **Manual scan, before LorcanaJSON lists it**:
 
@@ -174,7 +176,7 @@ When a later `pnpm sync-variants` prints `! 14221 now has official art, but card
 
 ## Gotchas
 
-- **Two writers to `master`.** During a reveal window admin's reveal publisher commits every few minutes. A code push that runs the multi-minute pre-push hook will lose the race and be rejected as non-fast-forward after the hook already passed. `git fetch`, `git merge origin/master`, retry. Reveal commits touch only data and images, so the merge is conflict-free.
+- **Two writers to `master`.** During a reveal window admin's Card studio commits every few minutes. A code push that runs the multi-minute pre-push hook will lose the race and be rejected as non-fast-forward after the hook already passed. `git fetch`, `git merge origin/master`, retry. Reveal commits touch only data and images, so the merge is conflict-free.
 - **The phase flip shows the home promo to every E2E spec.** `playwright.config.ts` forces the flag on, so once the dates are in the future `RevealsPromoCard` renders on `/` in all projects (a fixed bottom bar on mobile). Run the whole chromium suite, not just the reveals spec.
 - **Working in a git worktree.** The three pnpm Claude hooks `cd "$CLAUDE_PROJECT_DIR"`, and the Browser-pane launcher reads `.claude/launch.json` from the same place: the directory the session was LAUNCHED in, not the worktree it later entered. From such a session, run `pnpm build:engine`, `precompute-synergies` and `convert-preview-images` by hand in the worktree, and serve it on its own port (5174) rather than through the launcher.
 - **Stale `.env.local`.** `VITE_IS_REVEAL_SEASON=true` there adds about 19 kB to local bundle-size checks. A fresh worktree has no `.env.local` at all: copy it from the main checkout.
@@ -194,6 +196,6 @@ When a later `pnpm sync-variants` prints `! 14221 now has official art, but card
 - [ ] Vercel flag on Production AND Preview; `DEPLOY_VIA_CI` is `true`
 - [ ] PR preview shows a hashed card image; PR merged; production verified
 - [ ] Admin's season checklist (its `REVEAL_RUNBOOK.md`: pin bump, `scan-reveal-card`, the illumineertales section), plus `SET_NAME_TO_CODE` in admin's `PREVIEW_CARD_PARSER.md`
-- [ ] Only now: the first reveal publish or `/fetch-reveals` run from admin
+- [ ] Only now: the first Card studio publish or `/fetch-reveals` run from admin
 
 When LorcanaJSON publishes the set, graduate it with the runbook in [`CARD_DATA_PIPELINE.md`](../CARD_DATA_PIPELINE.md). The page keeps working on the graduated cards and hides itself on release day; set the flag back to `false` once the set is out.
