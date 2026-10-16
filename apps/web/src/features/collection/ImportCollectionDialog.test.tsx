@@ -1,5 +1,5 @@
 import {describe, it, expect, vi} from 'vitest';
-import {render, screen, fireEvent, act} from '@testing-library/react';
+import {render, screen, fireEvent, act, type RenderResult} from '@testing-library/react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {ImportCollectionDialog} from './ImportCollectionDialog';
 
@@ -11,6 +11,23 @@ function pick(contents: string) {
   const input = screen.getByLabelText('Collection CSV file') as HTMLInputElement;
   const file = new File([contents], 'export.csv', {type: 'text/csv'});
   fireEvent.change(input, {target: {files: [file]}});
+}
+
+/**
+ * Pick a file whose read waits for the returned call, so a test can act mid-read.
+ * It throws if the dialog never started the read: then "nothing imported" would hold
+ * for the wrong reason.
+ */
+function pickSlowly(): () => Promise<void> {
+  let release: ((text: string) => void) | null = null;
+  const file = new File([CSV], 'export.csv', {type: 'text/csv'});
+  file.text = () => new Promise((resolve) => (release = resolve));
+  fireEvent.change(screen.getByLabelText('Collection CSV file'), {target: {files: [file]}});
+  return () => {
+    const finish = release;
+    if (finish === null) throw new Error('The dialog never read the file.');
+    return act(async () => finish(CSV));
+  };
 }
 
 describe('ImportCollectionDialog', () => {
@@ -44,32 +61,18 @@ describe('ImportCollectionDialog', () => {
     expect(screen.getByText(/could not be matched/)).not.toHaveTextContent('3-4b');
   });
 
-  it('a cancel while the file is still being read imports nothing', async () => {
+  const interruptions: [string, (view: RenderResult) => void][] = [
+    ['a cancel', () => fireEvent.click(screen.getByRole('button', {name: 'Cancel'}))],
+    ['leaving the page', (view) => view.unmount()],
+  ];
+  it.each(interruptions)('%s while the file is still being read imports nothing', async (_, interrupt) => {
     const onImport = vi.fn(() => null);
-    render(<ImportCollectionDialog isOpen onClose={vi.fn()} pool={POOL} isPoolReady poolError={null} onRetryPool={vi.fn()} onImport={onImport} />);
-    let release: (text: string) => void = () => {};
-    const slow = new File([CSV], 'export.csv', {type: 'text/csv'});
-    slow.text = () => new Promise((resolve) => (release = resolve));
-    const input = screen.getByLabelText('Collection CSV file') as HTMLInputElement;
-    fireEvent.change(input, {target: {files: [slow]}});
-
-    fireEvent.click(screen.getByRole('button', {name: 'Cancel'}));
-    await act(async () => release(CSV));
-    expect(onImport).not.toHaveBeenCalled();
-  });
-
-  it('leaving the page while the file is still being read imports nothing', async () => {
-    const onImport = vi.fn(() => null);
-    const {unmount} = render(
+    const view = render(
       <ImportCollectionDialog isOpen onClose={vi.fn()} pool={POOL} isPoolReady poolError={null} onRetryPool={vi.fn()} onImport={onImport} />,
     );
-    let release: (text: string) => void = () => {};
-    const slow = new File([CSV], 'export.csv', {type: 'text/csv'});
-    slow.text = () => new Promise((resolve) => (release = resolve));
-    fireEvent.change(screen.getByLabelText('Collection CSV file'), {target: {files: [slow]}});
-
-    unmount();
-    await act(async () => release(CSV));
+    const finishReading = pickSlowly();
+    interrupt(view);
+    await finishReading();
     expect(onImport).not.toHaveBeenCalled();
   });
 
