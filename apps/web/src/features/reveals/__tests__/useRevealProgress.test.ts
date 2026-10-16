@@ -46,13 +46,15 @@ const mockCards: LorcanaCard[] = [
   make('d1', {ink: 'Amber', ink2: 'Emerald', rarity: 'Legendary'}), // dual-ink
   make('s1', {ink: 'Steel', rarity: undefined}), // revealed but no rarity yet
   make('x1', {ink: 'Ruby', setCode: '11'}), // not the reveal set → excluded
+  // A printing that keeps its base card's rarity, like Mr. Incredible #243 (#796).
+  make('p1', {ink: 'Sapphire', rarity: 'Legendary', variants: [{id: '14243', rarity: 'Legendary', number: 243}]}),
 ];
 
 describe('useRevealProgress', () => {
   it('sums per-ink counts to the unique total revealed (reveal set only)', () => {
     const {result} = renderHook(() => useRevealProgress());
     const {inks, totalRevealed} = result.current;
-    expect(totalRevealed).toBe(5); // a1, a2, e1, d1, s1 — x1 excluded
+    expect(totalRevealed).toBe(6); // a1, a2, e1, d1, s1, p1 — x1 excluded
     expect(inks.reduce((s, p) => s + p.count, 0)).toBe(totalRevealed);
     expect(result.current.byInk.Ruby.count).toBe(0); // x1 is set 11
   });
@@ -89,8 +91,15 @@ describe('useRevealProgress', () => {
     expect(specials.at(-1)?.number).toBe(299);
   });
 
+  it("leaves off a printing that keeps its base card's rarity: no special slot is its (#796)", () => {
+    const {result} = renderHook(() => useRevealProgress());
+    const {specials, rarityCounts} = result.current.byInk.Sapphire;
+    expect(specials.some((slot) => slot.number === 243)).toBe(false);
+    expect(rarityCounts).toEqual({legendary: 1});
+  });
+
   it('derives overallPct from the unique total against the whole set', () => {
     const {result} = renderHook(() => useRevealProgress());
-    expect(result.current.overallPct).toBe(Math.round((5 / SET_TOTAL) * 100));
+    expect(result.current.overallPct).toBe(Math.round((6 / SET_TOTAL) * 100));
   });
 });

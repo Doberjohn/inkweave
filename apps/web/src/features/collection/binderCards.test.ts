@@ -88,6 +88,11 @@ describe('withPrintingCards', () => {
     expect(printing.variants).toBeUndefined();
   });
 
+  it('names the card a printing it gives a card to reprints, as a chunk card does (#796)', () => {
+    const [, printing] = withPrintingCards([base]);
+    expect(printing.baseId).toBe('14012');
+  });
+
   it('leaves alone a printing the pool already holds as a card, as a chunk supplies it', () => {
     const fromChunk = {...base, id: '14224', rarity: 'Enchanted', setNumber: 224, variants: undefined} as LorcanaCard;
     expect(withPrintingCards([base, fromChunk])).toHaveLength(2);

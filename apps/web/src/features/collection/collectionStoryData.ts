@@ -1,5 +1,6 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {BINDER_CARDS} from '../cards/components/binderStoryCards';
+import {isAltArtRarity} from '../cards/loader';
 import type {CollectionEntries, CollectionEntry} from './collectionParser';
 import {tallyCollection} from './collectionStats';
 
@@ -37,13 +38,18 @@ const RARITY_MIX: string[] = [
   'Iconic',
 ];
 
+/** A chase printing names a card it reprints, as every one in the data does (#796): one finish counts as both. */
 export const STORY_POOL: LorcanaCard[] = STORY_SETS.flatMap((code) =>
-  BINDER_CARDS.map((card, i) => ({
-    ...card,
-    id: `${code}-${card.id}`,
-    setCode: code,
-    rarity: RARITY_MIX[i % RARITY_MIX.length],
-  })),
+  BINDER_CARDS.map((card, i) => {
+    const rarity = RARITY_MIX[i % RARITY_MIX.length];
+    return {
+      ...card,
+      id: `${code}-${card.id}`,
+      setCode: code,
+      rarity,
+      ...(isAltArtRarity(rarity) ? {baseId: `${code}-${BINDER_CARDS[0].id}`} : {}),
+    };
+  }),
 );
 
 export const STORY_ENTRIES: CollectionEntries = Object.fromEntries(

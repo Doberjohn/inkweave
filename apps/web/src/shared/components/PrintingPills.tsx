@@ -1,5 +1,6 @@
 import {useRef, type CSSProperties, type KeyboardEvent, type Ref} from 'react';
 import type {VariantRarity} from 'inkweave-synergy-engine';
+import {isAltArtRarity} from '../../features/cards/loader';
 import {useHover} from '../hooks';
 import {
   COLORS,
@@ -17,7 +18,7 @@ import iconicSymbol from '../../assets/iconic.webp?no-inline';
 
 interface PrintingPillsProps {
   /** The card's printings in display order: Standard first, then its variants. */
-  printings: ReadonlyArray<{key: string; label: string; rarity?: VariantRarity}>;
+  printings: ReadonlyArray<{key: string; label: string; rarity?: string}>;
   /** The printing shown now. */
   index: number;
   onSelect: (index: number) => void;
@@ -47,8 +48,9 @@ interface SegmentSize {
 /**
  * Pill size by layout. Three or more printings tighten the padding and text, and show each
  * variant by its symbol alone (see PillContent), so that four pills still fit a 360px phone
- * (~296px of content) and the desktop card column (298px): no card has ever had more than
- * one alternate printing, but a row this wide must not widen the page if one does.
+ * (~296px of content) and the desktop card column (298px). Mr. Incredible - Super Strong was
+ * the first card with two alternate printings (#796), and a row this wide must not widen the
+ * page.
  */
 function segmentSize(isMobile: boolean, compact: boolean): SegmentSize {
   if (compact) return {padding: isMobile ? '6px 10px' : '4px 9px', fontSize: FONT_SIZES.md};
@@ -75,19 +77,22 @@ function segmentStyle(checked: boolean, hovered: boolean, size: SegmentSize): CS
   };
 }
 
-/** A variant's rarity symbol (decorative: the pill's name says it) and, unless compact, its name. */
+/**
+ * A variant's rarity symbol (decorative: the pill's name says it) and, unless compact, its name.
+ * Only the chase rarities have a symbol: a printing that keeps its base card's rarity has none.
+ */
 function PillContent({
   label,
   rarity,
   symbolOnly,
 }: {
   label: string;
-  rarity?: VariantRarity;
+  rarity?: string;
   symbolOnly: boolean;
 }) {
   return (
     <>
-      {rarity && (
+      {isAltArtRarity(rarity) && (
         <img
           src={RARITY_SYMBOLS[rarity]}
           alt=""
@@ -151,8 +156,8 @@ export function PrintingPills({
           printing={printing}
           checked={i === index}
           // Compact rows name a variant by its symbol alone; the name stays for assistive
-          // tech and as a hover tooltip.
-          symbolOnly={compact && !!printing.rarity}
+          // tech and as a hover tooltip. A printing with no symbol keeps its label (#796).
+          symbolOnly={compact && isAltArtRarity(printing.rarity)}
           size={size}
           onSelect={() => onSelect(i)}
           onKeyDown={onKeyDown}
@@ -177,7 +182,7 @@ function PrintingPill({
   onKeyDown,
 }: {
   ref: Ref<HTMLButtonElement>;
-  printing: {label: string; rarity?: VariantRarity};
+  printing: {label: string; rarity?: string};
   checked: boolean;
   symbolOnly: boolean;
   size: SegmentSize;

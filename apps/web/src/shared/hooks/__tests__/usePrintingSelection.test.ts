@@ -21,6 +21,13 @@ const gosalyn: LorcanaCard = createCard({
   id: '2716',
   fullName: 'Gosalyn Mallard - The Quiverwing Quack',
 });
+/** A printing that keeps its base card's rarity, so it has no rarity symbol of its own (#796). */
+const violet: LorcanaCard = createCard({
+  id: '3147',
+  fullName: 'Violet Parr - Super Resilient',
+  rarity: 'Super Rare',
+  variants: [{id: '3573', rarity: 'Super Rare', number: 247}],
+});
 
 function renderSelection(card: LorcanaCard, resetWhen = false) {
   return renderHook(
@@ -195,6 +202,12 @@ describe('printingAlt', () => {
     expect(printingAlt(pongo, standard)).toBe('Pongo - Determined Father');
     expect(printingAlt(pongo, enchanted)).toBe('Pongo - Determined Father, Enchanted printing');
   });
+
+  it('names a printing with no rarity symbol by its collector number (#796)', () => {
+    const [, sameRarity] = printingsOf(violet);
+
+    expect(printingAlt(violet, sameRarity)).toBe('Violet Parr - Super Resilient, #247 printing');
+  });
 });
 
 describe('printingsOf', () => {
@@ -211,5 +224,9 @@ describe('printingsOf', () => {
 
     expect(printingsOf(italianEpic).map((p) => p.scanLanguage)).toEqual([undefined, 'it']);
     expect(printingsOf(japaneseBase).map((p) => p.scanLanguage)).toEqual(['ja', undefined]);
+  });
+
+  it("labels a printing that keeps its base card's rarity by its collector number (#796)", () => {
+    expect(printingsOf(violet).map((p) => p.label)).toEqual(['Standard', '#247']);
   });
 });

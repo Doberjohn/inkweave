@@ -4,8 +4,17 @@ import {createCard} from '../../shared/test-utils';
 import {percentOf, tallyCollection, tallySet} from './collectionStats';
 import type {CollectionEntries} from './collectionParser';
 
+/** Every chase printing in the data names the card it reprints (#796), so these do too. */
+const CHASE = new Set(['Epic', 'Enchanted', 'Iconic']);
 const card = (id: string, rarity: string, ink: Ink = 'Amber', ink2?: Ink) =>
-  createCard({id, setCode: '1', rarity, ink, ...(ink2 === undefined ? {} : {ink2})});
+  createCard({
+    id,
+    setCode: '1',
+    rarity,
+    ink,
+    ...(ink2 === undefined ? {} : {ink2}),
+    ...(CHASE.has(rarity) ? {baseId: 'base'} : {}),
+  });
 
 describe('tallySet', () => {
   it('counts a card held in either finish as complete, both finishes as master', () => {
@@ -35,6 +44,13 @@ describe('tallySet', () => {
     });
     expect(t.complete).toBe(2);
     expect(t.master).toBe(1);
+  });
+
+  it("counts a held printing that keeps its base card's rarity as mastered, under that rarity (#796)", () => {
+    // Violet Parr #247: a Super Rare printing of a Super Rare card, in foil only.
+    const sameRarity = createCard({id: 'p', setCode: '1', rarity: 'Super Rare', baseId: 'base'});
+    const t = tallySet([sameRarity], {p: {normal: 0, foil: 1}});
+    expect(t.byRarity).toEqual([{rarity: 'Super Rare', complete: 1, master: 1, total: 1}]);
   });
 
   it('attributes a dual-ink card to BOTH inks, matching inkDistribution', () => {
@@ -80,7 +96,7 @@ describe('tallyCollection', () => {
     createCard({id: 's2b', setCode: '2', setNumber: 2, rarity: 'Rare'}),
     createCard({id: 's1a', setCode: '1', setNumber: 1, rarity: 'Common'}),
     createCard({id: 's1b', setCode: '1', setNumber: 2, rarity: 'Legendary'}),
-    createCard({id: 's1e', setCode: '1', setNumber: 205, rarity: 'Enchanted'}),
+    createCard({id: 's1e', setCode: '1', setNumber: 205, rarity: 'Enchanted', baseId: 's1b'}),
   ];
   const entries: CollectionEntries = {
     s2a: {normal: 1, foil: 1},

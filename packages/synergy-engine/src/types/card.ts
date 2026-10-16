@@ -7,7 +7,8 @@ export type GameMode = 'infinity' | 'core';
 // Card types
 export type CardType = 'Character' | 'Action' | 'Item' | 'Location';
 
-// Alternate-art printings a base card can have (#625). Special promos are not folded in.
+// The chase rarities an alternate printing can have, each with a symbol of its own (#625).
+// Not every printing has one (see CardPrinting.rarity). Special promos are not folded in.
 export type VariantRarity = 'Enchanted' | 'Epic' | 'Iconic';
 
 /**
@@ -16,7 +17,9 @@ export type VariantRarity = 'Enchanted' | 'Epic' | 'Iconic';
  */
 export interface CardPrinting {
   id: string;
-  rarity: VariantRarity;
+  // Its printed rarity: a VariantRarity, or the base card's own for a printing that keeps it,
+  // like Violet Parr #247 (Super Rare, #796).
+  rarity: string;
   number: number; // collector number, e.g. 241
   imageUrl?: string;
   imageHashSm?: string;
@@ -57,7 +60,11 @@ export interface LorcanaCard {
   // a preview card revealed abroad first, whose name and text are an unofficial translation.
   // Absent means the scan is English. Set by the web loader; engine never reads it.
   scanLanguage?: string;
-  // Epic/Enchanted/Iconic printings of this card, in collector-number order; absent when it
-  // has none. Set by the web loader; engine never reads it.
+  // The alternate printings of this card, in collector-number order; absent when it has none.
+  // Set by the web loader; engine never reads it.
   variants?: CardPrinting[];
+  // The id of the card this one is a printing of (LorcanaJSON's `baseId`); absent on a card
+  // that is no printing. Only collection cards carry one, since a Core card holds its
+  // printings in `variants` instead (#796). Set by the web loader; engine never reads it.
+  baseId?: string;
 }

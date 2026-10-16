@@ -1,4 +1,4 @@
-import type {Ink, CardType, LorcanaCard, VariantRarity} from '../types/card.js';
+import type {Ink, CardType, LorcanaCard} from '../types/card.js';
 
 /**
  * An alternate printing folded into its base card's raw entry (#625), in the shape
@@ -7,7 +7,8 @@ import type {Ink, CardType, LorcanaCard, VariantRarity} from '../types/card.js';
 export interface RawCardVariant {
   /** LorcanaJSON id; in reveal season, REVEAL_ID_BASE + number (e.g. 14241). */
   id: number;
-  rarity: VariantRarity;
+  /** Epic, Enchanted or Iconic, or the base card's own rarity for a printing that keeps it (#796). */
+  rarity: string;
   /** Collector number, e.g. 241. */
   number: number;
   /** Absent for a hand-supplied scan, whose art is then card-images-preview/{id}.avif. */
@@ -66,7 +67,8 @@ export interface LorcanaJSONCard {
   rarity?: string;
   franchise?: string; // Preview cards, and cards graduated since Set 14 (LorcanaJSON's `story`), e.g. "Coco"
   scanLanguage?: string; // Set only on preview cards whose only scan is not in English (e.g. "ja")
-  variants?: RawCardVariant[]; // Epic/Enchanted/Iconic printings; transformCard ignores them
+  variants?: RawCardVariant[]; // The card's alternate printings; transformCard ignores them
+  baseId?: number; // On a printing: the card it reprints. Collection chunks only (#796); transformCard ignores it
 }
 
 const VALID_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];

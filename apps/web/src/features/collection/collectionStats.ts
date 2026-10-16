@@ -2,7 +2,6 @@ import type {Ink} from 'inkweave-synergy-engine';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from './collectionParser';
 import {binderCardsForSet, isBinderCard} from './binderCards';
-import {ALT_ART_RARITIES} from '../cards/loader';
 
 /**
  * Set-completion tallies for the stats panel (#553 stats spike).
@@ -21,16 +20,19 @@ import {ALT_ART_RARITIES} from '../cards/loader';
  */
 
 /**
- * The binder's chase printings, each a rarity row of its own under the five (owner,
- * 2026-10-12).
+ * Whether a binder card is a printing of another card: one with a `baseId` (#796). The
+ * chase printings (Epic, Enchanted, Iconic) each get a rarity row of their own under the
+ * five (owner, 2026-10-12); a printing that keeps its base card's rarity (Violet Parr #247,
+ * Super Rare) counts under that rarity (owner, 2026-10-16).
  *
- * THEY COME IN ONE FINISH. Every Enchanted and Epic row of the owner's own exports
- * (2026-10-12) is a foil row, with no zero-count normal row beside it as the promo
- * export has, so a held one is held in every finish it comes in: it counts toward
- * master too, or a finished set's master breakdown would read 0 forever. Iconic is
- * assumed the same; none was in the exports. The same three the Alt art cards preset picks.
+ * EVERY PRINTING COMES IN ONE FINISH. Every Enchanted and Epic row of the owner's own
+ * exports (2026-10-12) is a foil row, with no zero-count normal row beside it as the promo
+ * export has, and LorcanaJSON lists one foil finish for every printing with a `baseId`:
+ * all 360 chase printings and the 13 that keep their rarity (the 10-10 export). So a held
+ * one is held in every finish it comes in, and counts toward master too, or a finished
+ * set's master breakdown would read 0 forever.
  */
-const CHASE_RARITIES = ALT_ART_RARITIES;
+const isPrinting = (card: LorcanaCard) => card.baseId !== undefined;
 
 /** One breakdown bucket: an ink, or a rarity. Both are counted identically. */
 interface Slot {
@@ -98,15 +100,15 @@ const RARITY_ORDER = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', '
 /**
  * Fold one card into the running tallies.
  *
- * Separate from `tallySet` so the per-card RULES (what a chase printing's one finish
- * counts as, how a dual-ink card is attributed) sit apart from the setup and the final
- * sort. A card of a rarity outside `RARITY_ORDER` counts everywhere but gets no row.
+ * Separate from `tallySet` so the per-card RULES (what a printing's one finish counts
+ * as, how a dual-ink card is attributed) sit apart from the setup and the final sort. A
+ * card of a rarity outside `RARITY_ORDER` counts everywhere but gets no row.
  */
 function addCard(acc: Accumulator, card: LorcanaCard, entries: CollectionEntries): void {
   if (!isBinderCard(card)) return;
   const holding = holdingOf(entries[card.id]);
   const rarity = card.rarity ?? 'Unknown';
-  const held = CHASE_RARITIES.has(rarity) ? {any: holding.any, both: holding.any} : holding;
+  const held = isPrinting(card) ? {any: holding.any, both: holding.any} : holding;
 
   acc.totals.cards++;
   if (held.any) acc.totals.complete++;

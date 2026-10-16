@@ -81,12 +81,16 @@ function buildTileStyle(
 
 /**
  * What the tile is called: the card, or the printing it shows ("Elsa - Snow Queen, Enchanted
- * printing"). A card of an alt-art rarity is named as that printing too: the binder holds each
- * printing as a pocket of its own, under its base card's name.
+ * printing"). A card that is itself a printing is named as that printing too: the binder holds
+ * each printing as a pocket of its own, under its base card's name. That is a card of an
+ * alt-art rarity, or a collection card with a `baseId`, which covers a printing that keeps its
+ * base card's rarity ("Violet Parr - Super Resilient, #247 printing", #796).
  */
 function tileName(card: LorcanaCard, printing: CardPrinting | undefined): string {
   if (printing) return printingAlt(card, printing);
-  if (isAltArtRarity(card.rarity)) return printingAlt(card, {rarity: card.rarity});
+  if (isAltArtRarity(card.rarity) || card.baseId !== undefined) {
+    return printingAlt(card, {rarity: card.rarity, number: card.setNumber});
+  }
   return card.fullName || card.name;
 }
 
