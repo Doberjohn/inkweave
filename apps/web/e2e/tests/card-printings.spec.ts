@@ -105,7 +105,7 @@ test.describe('Card printings (desktop)', () => {
 test.describe('Card printings (phone width)', () => {
   // Runs on every project, not just mobile-*: isMobile is width-based (useResponsive), so a forced
   // phone viewport renders the mobile layout anywhere, including the chromium-only Windows pre-push.
-  test('four printings fit a 360px phone as symbols, and jumping to the last checks only it', async ({
+  test('four printings fit a 360px phone without widening it, and jumping to the last checks only it', async ({
     page,
   }) => {
     await page.setViewportSize({width: 360, height: 740});
@@ -114,11 +114,13 @@ test.describe('Card printings (phone width)', () => {
 
     const pills = page.getByRole('radiogroup', {name: 'Card printing'});
     await expect(pills.getByRole('radio')).toHaveCount(4, {timeout: 10000});
-    // A row of three or more names each variant by its symbol alone, keeping the name for
-    // assistive tech (and hover).
+    // Every chip names its printing beside its symbol, however many there are (#802): the row
+    // wraps instead of shrinking to symbols.
     const epic = pills.getByRole('radio', {name: 'Epic'});
-    await expect(epic).toHaveAttribute('title', 'Epic');
-    expect(await epic.textContent()).toBe('');
+    await expect(epic).toHaveText('Epic');
+    await expect
+      .poll(() => epic.locator('img').evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(0);
 
     // documentElement.clientWidth, not innerWidth: mobile emulation zooms out to fit an
     // overflowing page, which inflates innerWidth to the overflowed width.
@@ -135,8 +137,8 @@ test.describe('Card printings (phone width)', () => {
     await pills.evaluate((row) => {
       const seen: string[] = [];
       new MutationObserver(() => {
-        const checked =
-          row.querySelector('[aria-checked="true"]')?.getAttribute('aria-label') ?? '';
+        // The visible name: a chase rarity's chip carries no aria-label of its own (#802).
+        const checked = row.querySelector('[aria-checked="true"]')?.textContent ?? '';
         if (seen[seen.length - 1] !== checked) seen.push(checked);
       }).observe(row, {subtree: true, attributeFilter: ['aria-checked']});
       (window as unknown as {checkedPills: string[]}).checkedPills = seen;
