@@ -32,6 +32,7 @@ const meta: Meta<typeof SynergyToolbar> = {
     isMobile: false,
     uniqueKeywords: ['Evasive', 'Rush', 'Singer', 'Shift', 'Ward'],
     uniqueClassifications: ['Floodborn', 'Dreamborn', 'Storyborn'],
+    uniqueRarities: ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary'],
     sets: mockSets,
   },
 };

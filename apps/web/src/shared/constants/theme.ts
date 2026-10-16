@@ -82,6 +82,31 @@ export const EASING = {
   smooth: 'linear(0, 0.064, 0.178, 0.324, 0.478, 0.621, 0.74, 0.833, 0.902, 0.95, 0.979, 0.995, 1)',
 } as const;
 
+/**
+ * Transition durations, in milliseconds (2026-07-29 ruling). EASING tokenized
+ * the CURVE; this is the other half of every transition, which was 18 distinct
+ * values across 48 files — and three of the top four were spelled BOTH ways
+ * (`0.25s` x20 alongside `250ms` x11). Milliseconds is the one spelling, to
+ * match the `FLIP_DURATION` / `*_MS` consts already in the code.
+ *
+ * Three steps, deliberately. The 31 uses of 250ms converge to `base` or `slow`
+ * when their file is next touched, on the same principle as the 4-multiple
+ * spacing ruling: a step nobody can feel is a choice nobody should have to make.
+ *
+ * SCOPE: UI transitions and hovers only. Decorative infinite animations
+ * (`reveal-floatY 4s`, `idv-shimmer 2.5s`) and FLIP/handoff choreography
+ * (480ms, 1000ms) are cross-component or narrative timings, not system values —
+ * they stay literal and named at their call site.
+ */
+export const DURATION = {
+  /** Hover, press, small state flips. */
+  fast: 150,
+  /** The default: most transitions and fades. */
+  base: 200,
+  /** Larger moves — panels, expands, progress. */
+  slow: 300,
+} as const;
+
 // Typography. The display tier (2026-07-22 ruling) covers hero numerals and
 // display headings above the 22px body ceiling; raw 30/32/44 converge to the
 // nearest step when touched. The dev-only banner tool's 68 stays exempt.
@@ -172,9 +197,12 @@ export const COLORS = {
   heroSubtitleSecondary: '#90a1b9',
   heroGradient: 'linear-gradient(90deg, #bedBff 0%, #e9d4ff 50%, #fcCEe8 100%)',
 
-  // Search / Filter bar
-  searchBg: 'rgba(15, 23, 43, 0.5)',
-  searchBorder: 'rgba(49, 65, 88, 0.5)',
+  // Search / Filter bar. A search field is RAISED (owner, 2026-10-15): the toolbar sort
+  // control's surface and edge, so it holds its own on the page. It was a half-transparent
+  // navy and slate before, which the near-black page swallowed. See `searchFieldStyle`.
+  searchBg: '#1e1e35', // = surfaceRaised
+  searchBorder: '#333355', // = surfaceBorder
+  searchBorderHover: '#444466', // = gray300
   searchPlaceholder: '#90a1b9',
   filterGradient: 'linear-gradient(90deg, #fe9a00, #e17100)',
   filterText: '#0f172b',
@@ -215,8 +243,8 @@ export const SET_ABBREVIATIONS: Record<SetCode, string> = {
   '3': '3INK',
   '4': '4URS',
   '5': '5SSK',
-  '6': '6ARI',
-  '7': '7AZS',
+  '6': '6AZS',
+  '7': '7ARI',
   '8': '8JAF',
   '9': '9FAB',
   '10': '10WHI',
@@ -233,8 +261,8 @@ export const SET_NAMES: Record<SetCode, string> = {
   '3': 'Into the Inklands',
   '4': "Ursula's Return",
   '5': 'Shimmering Skies',
-  '6': "Archazia's Island",
-  '7': 'Azurite Sea',
+  '6': 'Azurite Sea',
+  '7': "Archazia's Island",
   '8': 'The Reign of Jafar',
   '9': 'Fabled',
   '10': 'Whispers in the Well',
@@ -376,6 +404,27 @@ export const TIER_COLORS = {
 /** Letter-spacing scale: `cap` for uppercase section labels, `eyebrow` for hero kickers. */
 export const LETTER_SPACING = {cap: '0.05em', eyebrow: '0.08em'} as const;
 
+/**
+ * Dialog copy, so weight is decided ONCE rather than per overlay (owner ruling
+ * 2026-08-02). Every dialog previously set its own inline font, which meant
+ * "make dialog text 600" was an eleven-file edit with a twelfth waiting to
+ * diverge. Spread these; override only where a dialog genuinely differs.
+ */
+export const DIALOG_TITLE: React.CSSProperties = {
+  fontFamily: FONTS.hero,
+  fontSize: FONT_SIZES.xxl,
+  color: COLORS.text,
+  margin: 0,
+};
+
+export const DIALOG_BODY: React.CSSProperties = {
+  fontFamily: FONTS.body,
+  fontSize: FONT_SIZES.base,
+  fontWeight: 600,
+  color: COLORS.textMuted,
+  margin: 0,
+};
+
 /** Uppercase section label (the 51-site idiom): md size, bold, tracked, muted. */
 export const CAP_LABEL: React.CSSProperties = {
   fontSize: FONT_SIZES.md,
@@ -432,6 +481,93 @@ export const GOLD_GLOW = {
   hoverBg: hexRgba(COLORS.primary, 0.06),
   shadow: `0 0 12px ${hexRgba(COLORS.primary, 0.15)}, inset 0 0 8px ${hexRgba(COLORS.primary, 0.05)}`,
   focusRing: `0 0 0 2px ${hexRgba(COLORS.primary, 0.15)}, 0 0 12px ${hexRgba(COLORS.primary, 0.08)}`,
+} as const;
+
+/** A search field's edge: gold while focused, lighter while hovered, the raised edge at rest. */
+function searchEdge(focused: boolean, hovered: boolean): string {
+  if (focused) return GOLD_GLOW.activeBorder;
+  return hovered ? COLORS.searchBorderHover : COLORS.searchBorder;
+}
+
+/**
+ * A search field's surface and edge (owner, 2026-10-15), one recipe for Browse's toolbar,
+ * the header and the homepage hero: raised at rest, the edge lighter on hover, and gold with
+ * the focus ring while focused. Spread it, then size the field.
+ */
+export function searchFieldStyle({focused, hovered}: {focused: boolean; hovered: boolean}): React.CSSProperties {
+  return {
+    background: COLORS.searchBg,
+    border: `1px solid ${searchEdge(focused, hovered)}`,
+    boxShadow: focused ? GOLD_GLOW.focusRing : 'none',
+    transition: `border-color ${DURATION.base}ms ${EASING.snappy}, box-shadow ${DURATION.base}ms ${EASING.snappy}`,
+  };
+}
+
+/**
+ * The card tiles' hover-ring gold, as the custom property `.card-tile::after` (index.css)
+ * reads. Spread into each tile's own style rather than set once on the page root, so the
+ * ring shows wherever a tile renders: in the card modal's portal, in Storybook, and in
+ * admin, which imports the tile and index.css but not this app's bootstrap.
+ */
+export const CARD_TILE_RING = {'--inkweave-gold': COLORS.primary} as React.CSSProperties;
+
+/**
+ * The FOIL marker: brushed gold, for anything reporting foil copies.
+ *
+ * A SIX-INK RAINBOW WAS TRIED FIRST AND REJECTED (owner, 2026-08-14). It was the
+ * literal convention other Lorcana tools use and it was defensible on paper, but
+ * on a 20px pill six hues compress into a smear that reads as noise rather than
+ * as foil, and it fought every card behind it. Gold says "premium" with one hue
+ * and it is already the app's own accent.
+ *
+ * ONE SURFACE, NOT A REST/HOVER PAIR (owner, 2026-08-14). A quieter flat variant
+ * for the resting state was tried and dropped: rest and hover are the same object
+ * at two widths, and giving them two different fills made hovering look like a
+ * substitution rather than an expansion.
+ *
+ * THREE LAYERS, in paint order: the light band, the gold, the ground. The gold is
+ * SEMI-TRANSPARENT over that ground rather than replacing it, which is what holds
+ * the count legible — flat `COLORS.primary` behind white bold text is 3.0:1 and
+ * fails; over this ground it is 6.4:1. Recompute before raising it.
+ *
+ * The band is a separate layer sized to a fraction of the pill precisely so it can
+ * travel: `.inkweave-foil-shimmer` in index.css animates the FIRST layer's
+ * `background-position` and leaves the other two pinned, so the layer order is
+ * load-bearing. Only the hovered control sweeps.
+ */
+const GOLD_EDGE = hexRgba(COLORS.primary, 0.2);
+const GOLD_PEAK = hexRgba(COLORS.primary, 0.45);
+const SHINE = whiteRgba(0.3);
+
+export const FOIL_SHEEN = {
+  /**
+   * The foil surface over `ground`. The CALLER supplies the ground because how
+   * opaque it must be is a property of where the control sits, not of the foil:
+   * the deck pool lets a sliver of card art through, the binder does not.
+   *
+   * `band` is the light stripe, and it belongs to MOTION only (owner,
+   * 2026-08-14). Narrowing it and parking it on the left shoulder was tried
+   * first; a stripe that never moves still reads as a defect on a resting chip,
+   * so the resting surface is plain gold and the band exists only while the
+   * pill is open and sweeping. Pass `false` and the layer is not painted at all
+   * — the size/position lists shrink with it.
+   */
+  surface: (ground: string, band = true): React.CSSProperties => ({
+    backgroundImage: [
+      ...(band ? [`linear-gradient(100deg, transparent 0%, ${SHINE} 50%, transparent 100%)`] : []),
+      `linear-gradient(100deg, ${GOLD_EDGE} 0%, ${GOLD_PEAK} 50%, ${GOLD_EDGE} 100%)`,
+      `linear-gradient(${ground}, ${ground})`,
+    ].join(', '),
+    // The band starts OFF the left edge so the sweep enters from outside the
+    // pill rather than fading in over the count. `.inkweave-foil-shimmer`
+    // animates this first position; the other two stay pinned.
+    backgroundSize: band ? '36% 100%, 100% 100%, 100% 100%' : '100% 100%, 100% 100%',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: band ? '-20% 0, 0 0, 0 0' : '0 0, 0 0',
+  }),
+
+  /** index.css owns the keyframes so `prefers-reduced-motion` can kill them. */
+  shimmerClass: 'inkweave-foil-shimmer',
 } as const;
 
 /** Minimum touch-target square (px) — the a11y floor for tap surfaces. */

@@ -7,11 +7,17 @@ import {HomePageSkeleton} from './pages/HomePageSkeleton';
 import {COLORS, RADIUS, SPACING} from './shared/constants';
 import {lazyWithRetry} from './shared/lib/lazyWithRetry';
 import {withSpeedInsightsRoutes} from './shared/lib/speedInsightsRoute';
+import {SHOW_COLLECTION} from './features/collection/flag';
 
 // Lazy-load page components for code splitting (with retry on chunk load failure)
 const HomePage = lazyWithRetry(() => import('./pages/HomePage'), 'HomePage');
-const BrowsePage = lazyWithRetry(() => import('./pages/BrowsePage'), 'BrowsePage');
+// The flag picks Browse's page module (#553 Phase C), so a flag-off build never loads the
+// collection feature on /browse. See BrowsePage for why one module cannot choose.
+const BrowsePage = SHOW_COLLECTION
+  ? lazyWithRetry(() => import('./pages/BrowseCollectionPage'), 'BrowseCollectionPage')
+  : lazyWithRetry(() => import('./pages/BrowsePage'), 'BrowsePage');
 const AccountPage = lazyWithRetry(() => import('./pages/AccountPage'), 'AccountPage');
+const CollectionScope = lazyWithRetry(() => import('./features/collection/CollectionScope'), 'CollectionScope');
 const AuthCallbackPage = lazyWithRetry(() => import('./pages/AuthCallbackPage'), 'AuthCallbackPage');
 const CardPage = lazyWithRetry(() => import('./pages/CardPage'), 'CardPage');
 const ComparePage = lazyWithRetry(() => import('./pages/ComparePage'), 'ComparePage');
@@ -78,6 +84,25 @@ function SuspenseWrapper({children, fallback}: {children: React.ReactNode; fallb
   return <Suspense fallback={fallback ?? <GenericFallback />}>{children}</Suspense>;
 }
 
+/**
+ * `/browse` and `/account` under the collection layout route while `SHOW_COLLECTION`
+ * is on, and as plain siblings otherwise, so a dark feature adds nothing to either.
+ * See `CollectionScope` for why the providers mount here and not in `AppLayout`.
+ */
+function withCollectionScope(children: RouteObject[]): RouteObject[] {
+  if (!SHOW_COLLECTION) return children;
+  return [
+    {
+      element: (
+        <SuspenseWrapper>
+          <CollectionScope />
+        </SuspenseWrapper>
+      ),
+      children,
+    },
+  ];
+}
+
 const routes: RouteObject[] = [
   {
     path: '/',
@@ -91,25 +116,27 @@ const routes: RouteObject[] = [
           </SuspenseWrapper>
         ),
       },
-      {
-        path: 'browse',
-        element: (
-          <SuspenseWrapper>
-            <BrowsePage />
-          </SuspenseWrapper>
-        ),
-      },
-      {
-        // Private account settings. NOT gated by a route guard: the page renders
-        // its own sign-in prompt, because a redirect would discard the URL and
-        // make a shared or bookmarked /account link look broken rather than gated.
-        path: 'account',
-        element: (
-          <SuspenseWrapper>
-            <AccountPage />
-          </SuspenseWrapper>
-        ),
-      },
+      ...withCollectionScope([
+        {
+          path: 'browse',
+          element: (
+            <SuspenseWrapper>
+              <BrowsePage />
+            </SuspenseWrapper>
+          ),
+        },
+        {
+          // Private account settings. NOT gated by a route guard: the page renders
+          // its own sign-in prompt, because a redirect would discard the URL and
+          // make a shared or bookmarked /account link look broken rather than gated.
+          path: 'account',
+          element: (
+            <SuspenseWrapper>
+              <AccountPage />
+            </SuspenseWrapper>
+          ),
+        },
+      ]),
       {
         path: 'card/:cardId',
         element: (

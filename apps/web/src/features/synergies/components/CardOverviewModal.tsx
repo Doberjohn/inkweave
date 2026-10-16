@@ -6,7 +6,7 @@ import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
 import {MobileComparisonView, type ComparisonOriginRects} from './MobileComparisonView';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {HeaderPrintingPills, HeaderTranslationToggle, MobileArtControls, ModalCardArt} from './ModalCardArt';
+import {DesktopArtControls, MobileArtControls, ModalCardArt} from './ModalCardArt';
 import {CardPrintingContext, CardTranslationContext, useCardTranslation, useModalPrinting} from './modalArtState';
 import {CardTranslationPanel, CtaButton, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
@@ -18,17 +18,19 @@ import {COLORS, EASING, FONT_SIZES, LETTER_SPACING, RADIUS, SPACING, hexRgba} fr
 import {Chip} from '../../../shared/components/Chip';
 import {LinkButton} from '../../../shared/components/LinkButton';
 import {ModalCloseButton, SynergiesLoadingSkeleton} from './CardOverviewModalFallback';
+import {LOGO_HEIGHT, ModalCardTitle} from './ModalCardTitle';
 import {
   CENTERING_WRAPPER_STYLE,
   DEFAULT_BODY_STYLE,
   MODAL_BACKDROP_STYLE,
   MODAL_FRAME_STYLE,
   MODAL_HEADER_STYLE,
+  artScaleTransform,
+  hasArtControls,
   modalCardSize,
   pickCardColumnLayout,
   pickCardsRowStyle,
   pickModalShellStyle,
-  pickModalTitleStyle,
   pickSynergyColumnLayout,
 } from './cardOverviewModalStyles';
 
@@ -88,6 +90,12 @@ interface CardOverviewModalProps {
    *  card genuinely has zero synergies. See usePrecomputedSynergies for the
    *  fetch lifecycle. */
   synergiesLoading?: boolean;
+  /**
+   * The card is outside Core (sets 1-8, from a collection, #553 Phase C). The engine
+   * never analyses those sets, so the synergy column says so instead of reading as
+   * "no synergies yet", which would imply a rule might still match.
+   */
+  outsideCore?: boolean;
   onClose: () => void;
   /** Resolves a clicked card into its full pair-synergy data (engine + connection details). */
   getPairSynergies: (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null;
@@ -346,7 +354,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
  * - comparison — synergy card clicked → in-place pair detail, both A and B side-by-side
  */
 export function CardOverviewModal(props: CardOverviewModalProps) {
-  const {isOpen, card, synergies, synergiesLoading = false, onClose, isMobile = false, hideBackButton = false} = props;
+  const {isOpen, card, synergies, synergiesLoading = false, outsideCore = false, onClose, isMobile = false, hideBackButton = false} = props;
   const {siblingCardIds = [], onGoToSibling} = props;
   const {
     modalRef,
@@ -429,7 +437,6 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               onClose={onClose}
               exitComparison={exitComparison}
               initialFocusRef={initialFocusRef}
-              showExpanded={showExpanded}
             />
             <ModalContentRegion
               showExpanded={showExpanded}
@@ -445,6 +452,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               cardWidth={cardWidth}
               cardHeight={cardHeight}
               synergiesLoading={synergiesLoading}
+              outsideCore={outsideCore}
               visibleGroups={visibleGroups}
               comparisonPair={comparisonPair}
               exitingPair={exitingPair}
@@ -543,6 +551,7 @@ interface ModalContentRegionProps {
   cardWidth: number;
   cardHeight: number;
   synergiesLoading: boolean;
+  outsideCore: boolean;
   visibleGroups: SynergyGroupData[];
   comparisonPair: DetailedPairSynergy | null;
   exitingPair: DetailedPairSynergy | null;
@@ -572,6 +581,7 @@ function ModalContentRegion({
   cardWidth,
   cardHeight,
   synergiesLoading,
+  outsideCore,
   visibleGroups,
   comparisonPair,
   exitingPair,
@@ -610,6 +620,7 @@ function ModalContentRegion({
         cardHeight={cardHeight}
         synergies={synergies}
         synergiesLoading={synergiesLoading}
+        outsideCore={outsideCore}
         visibleGroups={visibleGroups}
         activeGroupFilter={activeGroupFilter}
         comparisonPair={comparisonPair}
@@ -984,27 +995,23 @@ interface ModalHeaderProps {
   exitComparison: () => void;
   /** useDialogFocus's initial-focus target — attached to the close × (#510: it was created but never attached). */
   initialFocusRef: React.RefObject<HTMLButtonElement | null>;
-  /** The expanded group view shows no card image, so it has nothing to translate. */
-  showExpanded: boolean;
 }
 
-function ModalHeader({card, isMobile, inComparison, hideBackButton, onClose, exitComparison, initialFocusRef, showExpanded}: ModalHeaderProps) {
+/** The title (or BACK, in a comparison) and the close ×. The art controls sit under the card. */
+function ModalHeader({card, isMobile, inComparison, hideBackButton, onClose, exitComparison, initialFocusRef}: ModalHeaderProps) {
   const showBack = inComparison && !hideBackButton;
   return (
     <header style={MODAL_HEADER_STYLE}>
-      {showBack ? <BackButton onClick={exitComparison} /> : <ModalTitle card={card} isMobile={isMobile} />}
+      {showBack ? (
+        // As tall as the title's set logo on desktop, so opening a comparison keeps the header's height.
+        <BackButton onClick={exitComparison} minHeight={isMobile ? undefined : LOGO_HEIGHT} />
+      ) : (
+        <ModalCardTitle card={card} isMobile={isMobile} />
+      )}
       {/* Spacer pushes close button to the right when BACK is in the slot (BACK doesn't have flex:1) */}
       {inComparison && <div style={{flex: 1}} />}
-      {!isMobile && <HeaderPrintingPills hidden={inComparison || showExpanded} />}
-      {!isMobile && <HeaderTranslationToggle hidden={inComparison || showExpanded} />}
       <ModalCloseButton onClose={onClose} focusRef={initialFocusRef} />
     </header>
-  );
-}
-
-function ModalTitle({card, isMobile}: {card: LorcanaCard; isMobile: boolean}) {
-  return (
-    <h1 style={pickModalTitleStyle(isMobile)}>{card.fullName}</h1>
   );
 }
 
@@ -1314,6 +1321,7 @@ interface CardsRowProps {
   card: LorcanaCard;
   cardWidth: number;
   synergiesLoading: boolean;
+  outsideCore: boolean;
   cardHeight: number;
   isMobile: boolean;
   synergies: SynergyGroupData[];
@@ -1344,10 +1352,12 @@ function CardsRow(props: CardsRowProps) {
         isMobile={isMobile}
         highlightedCard={highlightedCard}
         inComparison={props.inComparison}
+        comparing={effectivePair !== null}
       />
       <DefaultInfoColumn
         synergies={props.synergies}
         synergiesLoading={props.synergiesLoading}
+        outsideCore={props.outsideCore}
         visibleGroups={props.visibleGroups}
         activeGroupFilter={props.activeGroupFilter}
         cardHeight={cardHeight}
@@ -1403,15 +1413,19 @@ interface CardImageDisplayProps {
   isMobile: boolean;
   highlightedCard: 'a' | 'b' | null;
   inComparison: boolean;
+  /** A comparison is open or closing (its exit window): the art's scale animates only then. */
+  comparing: boolean;
 }
 
-function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCard, inComparison}: CardImageDisplayProps) {
+function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCard, inComparison, comparing}: CardImageDisplayProps) {
   // In comparison mode the wrapper takes the ambient `focused-card-glow` className
   // (#332 #6 idea D). The animation cycles `box-shadow` between a low and high gold-tinted
   // aura around the card. Setting borderRadius=14 on the wrapper makes the shadow follow
   // the card's rounded corners instead of drawing against a rectangular bounding box.
   const useGlow = !isMobile && inComparison;
   const translation = useContext(CardTranslationContext);
+  // Desktop's art controls sit under the card, the art shrunk to make room (owner, 2026-10-08).
+  const controlsBelow = !isMobile && hasArtControls(card);
   return (
     <div
       className={useGlow ? 'focused-card-glow' : undefined}
@@ -1419,7 +1433,7 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
       {/* Shrink-wrap span carrying the `data-comparison-card-a` marker — its rect is exactly
           the card image (not the full-width flex wrapper), so the click handler captures the
           correct FLIP origin for Card A's mobile comparison transition (#332 #5). */}
-      <span data-comparison-card-a style={{display: 'inline-block', lineHeight: 0, position: 'relative'}}>
+      <span data-comparison-card-a style={pickArtBoxStyle(controlsBelow && !inComparison, comparing, cardHeight)}>
         <ModalCardArt card={card} cardWidth={cardWidth} cardHeight={cardHeight} />
         {translation?.shown && !inComparison && (
           <CardTranslationPanel
@@ -1431,9 +1445,31 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
         )}
       </span>
       {/* Outside the span, whose rect is the FLIP origin above. */}
-      {isMobile && <MobileArtControls />}
+      <ArtControls isMobile={isMobile} controlsBelow={controlsBelow} inComparison={inComparison} />
     </div>
   );
+}
+
+/** The art's controls: in the column's flow on mobile, pinned under the shrunk art on desktop. */
+function ArtControls({isMobile, controlsBelow, inComparison}: {isMobile: boolean; controlsBelow: boolean; inComparison: boolean}) {
+  if (isMobile) return <MobileArtControls />;
+  return controlsBelow ? <DesktopArtControls hidden={inComparison} /> : null;
+}
+
+/**
+ * The art's own box. On desktop it shrinks while controls sit under it, and grows back for a
+ * comparison (card B is drawn at full size). The scale animates only with a comparison's own
+ * motion: paging between a card with controls and one without resizes it at once.
+ */
+function pickArtBoxStyle(shrunk: boolean, animate: boolean, cardHeight: number): React.CSSProperties {
+  return {
+    display: 'inline-block',
+    lineHeight: 0,
+    position: 'relative',
+    transform: shrunk ? artScaleTransform(cardHeight) : undefined,
+    transformOrigin: 'top center',
+    transition: animate ? `transform ${FLIP_DURATION}ms ${FLIP_EASING}` : undefined,
+  };
 }
 
 /** The translation covers the scan exactly, rounded like CardImage. */
@@ -1464,6 +1500,7 @@ function pickCardWrapperStyle({isMobile, highlightedCard, inComparison}: {isMobi
 interface DefaultInfoColumnProps {
   synergies: SynergyGroupData[];
   synergiesLoading: boolean;
+  outsideCore: boolean;
   visibleGroups: SynergyGroupData[];
   activeGroupFilter: string | null;
   cardHeight: number;
@@ -1473,7 +1510,7 @@ interface DefaultInfoColumnProps {
   onCardClick: (card: LorcanaCard, groupKey?: string) => void;
 }
 
-function DefaultInfoColumn({synergies, synergiesLoading, visibleGroups, activeGroupFilter, cardHeight, isMobile, inComparison, onShowAll, onCardClick}: DefaultInfoColumnProps) {
+function DefaultInfoColumn({synergies, synergiesLoading, outsideCore, visibleGroups, activeGroupFilter, cardHeight, isMobile, inComparison, onShowAll, onCardClick}: DefaultInfoColumnProps) {
   return (
     <section
       aria-label="Synergies"
@@ -1490,7 +1527,9 @@ function DefaultInfoColumn({synergies, synergiesLoading, visibleGroups, activeGr
           h3 from each SynergyGroup. Without this, axe flags `heading-order` because the page
           jumps h1 → h3 directly. */}
       <h2 style={SR_ONLY_STYLE}>Synergies</h2>
-      {synergiesLoading ? (
+      {outsideCore ? (
+        <OutsideCoreNotice />
+      ) : synergiesLoading ? (
         <SynergiesLoadingSkeleton />
       ) : synergies.length === 0 ? (
         <SynergiesEmptyState />
@@ -1512,6 +1551,33 @@ function DefaultInfoColumn({synergies, synergiesLoading, visibleGroups, activeGr
         ))
       )}
     </section>
+  );
+}
+
+/**
+ * In place of synergies for a card from sets 1-8 (#553 Phase C). Collection mode
+ * shows every card a collection can hold, but Inkweave analyses Core only, so the
+ * honest answer is "not analysed", not "none found".
+ */
+function OutsideCoreNotice() {
+  return (
+    <div
+      data-testid="card-overview-outside-core"
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        textAlign: 'center',
+        padding: 24,
+        gap: 8,
+      }}>
+      <p style={{margin: 0, color: COLORS.text, fontSize: FONT_SIZES.lg, fontWeight: 600}}>Outside Core</p>
+      <p style={{margin: 0, color: COLORS.textMuted, fontSize: FONT_SIZES.md, lineHeight: 1.5, maxWidth: 300}}>
+        Inkweave analyses the Core format, sets 9 and later, so this card has no synergies here.
+      </p>
+    </div>
   );
 }
 
@@ -1698,7 +1764,7 @@ function PairConnector({cardHeight, exiting}: PairConnectorProps) {
 }
 
 /** BACK button (focused-state nav) — the shared LinkButton in its gold tone (#509). */
-function BackButton({onClick}: {onClick: () => void}) {
+function BackButton({onClick, minHeight}: {onClick: () => void; minHeight?: number}) {
   return (
     <LinkButton
       type="button"
@@ -1706,6 +1772,7 @@ function BackButton({onClick}: {onClick: () => void}) {
       onClick={onClick}
       size="sm"
       style={{
+        minHeight,
         fontWeight: 700,
         textTransform: 'uppercase',
         letterSpacing: LETTER_SPACING.eyebrow,

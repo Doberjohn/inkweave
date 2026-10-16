@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-155 tests across 22 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+167 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts` and the `/reveals` check in `seo.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -99,7 +99,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | Test | What it verifies |
 |---|---|
 | should navigate to browse when searching from hero | Typing in hero search navigates to `/browse?q=Elsa`, hides hero, shows CardList |
-| should open filter modal on browse page | "Browse all cards" CTA navigates to `/browse`, clicking Filters opens modal with Character/Action type buttons |
+| should toggle the docked filters panel on browse page | "Browse all cards" CTA navigates to `/browse`, where the docked `Filters` panel is open by default (its Ink Cost "Cost 1" button shows); Filters closes it, and a second click reopens it. The Filters dialog is the narrower screens' |
 | should deep link to browse with ink filter in URL | Direct navigation to `/browse?ink=Sapphire` shows filtered browse page |
 | should navigate to browse via Browse all cards CTA | "Browse all cards" CTA navigates to `/browse`, hero gone, CardList visible |
 | should preserve search query in URL on browse page | Hero search for "Ariel" puts `q=Ariel` in URL, browse search input shows "Ariel" |
@@ -159,6 +159,28 @@ At page load, supabase-js is downloaded only when there is a session to restore 
 | an anonymous visit never downloads the Supabase SDK | With nothing stored, `/browse` renders the "Sign in" control and reaches network idle without one SDK request |
 | a stored session downloads the Supabase SDK to restore it | An `inkweave:auth` entry seeded before load makes `/browse` request the SDK (all projects) |
 | the sign-in control opens the provider dialog | Clicking it opens the `SignInDialog`. Stops at the provider choice: signing in needs a real round-trip no placeholder project can serve |
+
+## `collection-mode.spec.ts`: 11 tests (1 every project, 1 chromium only, 8 desktop only, 1 on every project at a 390px viewport)
+
+Covers Browse's collection mode (#553 Phase C), which ships behind `VITE_SHOW_COLLECTION` (default OFF). The flag REQUIRES `VITE_SHOW_ACCOUNTS`, and `playwright.config.ts` pins both ON. The Collection button is gated on sign-in (owner ruling 2026-10-07).
+
+**Signed in without signing in.** An OAuth round-trip is out of E2E's reach, but a session supabase-js restores needs none. `signInAsCollector` stores an unexpired session under `inkweave:auth`, which `getSession()` hands back without a network check, and the collector's collection twice: as the local copy (`inkweave:collection`, stamped `source: 'server'` so it is never uploaded back) and as the `collections` row its own `page.route` serves, which the sync adopts on every load (`resolveCollectionSync`). That route is registered after the fixture's catch-all stub, so it wins for that table. Tests that open the mode from the button first wait for the header's "Account" control, so the click never lands while the session is still restoring. The collection is drawn from the card data, not hardcoded: the newest Core set's first three cards and its first alt-art printing (`newestCoreSet`, `setCards`, `setPrintings` in `e2e/helpers/cardData.ts`), so the counts follow the data when a set graduates.
+
+The desktop signed-in tests skip the mobile projects: they find the numbers in the docked collection panel and the art presets in the docked Filters panel, and phones get the set strip (numbers behind a toggle) and the filter drawer instead. The strip has its own test, run on every project at a forced 390px viewport: the layout is chosen by width (`useResponsive`), so a desktop browser renders it too, and the chromium-only Windows pre-push covers it. The tablet rail's figures have a unit test (`CollectionBinderSection.test.tsx`). Reading an import file and the sync's conflict paths stay with the unit tests (`ImportCollectionDialog.test.tsx`, `collectionParser.test.ts`, `__tests__/collectionSync.test.ts`, `CollectionContext.test.tsx`).
+
+| Test | What it verifies |
+|---|---|
+| the Collection button asks a signed-out visitor to sign in | `/browse` shows "Show my collection"; clicking it opens the sign-in dialog and renders no binder |
+| a visit that never opens collection mode loads none of it | Loading `/browse` to network idle requests no `/data/collection/` chunk and no `CollectionBinderSection` module. Chromium only: it asserts the network, which the other browsers would only repeat |
+| the Collection button opens a collector's binder, with the set panel's numbers | Signed in with a collection, "Show my collection" puts `binder=<set>` in the URL and shows the `Binder` region, with "Complete set" in the `Collection numbers` region. It names no set: the binder opens on the newest set, which a reveal season can move ahead of the card data, so the tests below open the collection's set by URL |
+| the panel counts every pocket of the set, the alt-art printings among them | `/browse?binder=<set>`: the numbers read "H of N cards", H the held pockets and N the set's cards plus its Epic, Enchanted and Iconic printings |
+| Owned keeps the held cards alone, and leaving the mode drops that view | The `Binder shows` group's "Owned" adds `owned=owned` and leaves exactly the held tiles; turning collection mode off removes the binder and both the `binder` and `owned` params |
+| the set picker opens the whole collection in the binder | Picking "Whole collection" in the `Binder set` picker gives `binder=all` and relabels the picker "Binder set: Whole collection", and the rest follows: "Complete collection" in the numbers and a tile in the binder |
+| the set picker's arrow keys never park a set under its pinned row | The `Binder set` list holds every set in the pool, so it scrolls (asserted, so the test cannot pass with nothing to scroll). From End, each Arrow Up row's top stays at or below the bottom of the pinned Whole collection strip, which the list's `scroll-padding-top` keeps clear (WCAG 2.4.11) |
+| a search narrows the binder, and the panel's numbers count only what it finds | A held card's full name (one with no alt-art printing) in `browse-search` leaves one tile, and the numbers read "1 of 1 cards" under the headline "Complete": filtered, it names no set. Skips when none of the set's first three cards lacks a printing |
+| Alt art cards picks the alt-art rarities, and the binder counts only those printings | The Filters panel's "Alt art cards" preset turns `aria-pressed`, sets `rarity` to Enchanted, Epic and Iconic, and the numbers read "1 of P cards", P the set's printings. Skips a set with none |
+| a signed-in visitor without a collection is asked to import one | Signed in with no local copy and no server row, "Show my collection" opens the `Import your collection` dialog and renders no binder |
+| the set strip reads the set's two percentages and opens its numbers inline | Every project at 390x844, `/browse?binder=<set>`: the `Set` strip's "Show the numbers" toggle reads the Complete and Master percentages, rounded down as the panel rounds them (`percentOf`), and no `Collection numbers` region shows; clicking it opens the region ("Complete set" visible, the toggle now "Hide the numbers", `aria-expanded`), and a second click folds it away |
 
 ## `responsive-images.spec.ts` — 4 tests (desktop only)
 
@@ -297,9 +319,9 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 |---|---|
 | loads the pair and renders the interactive vote form | Navigates to `/vote/2730/2718`; the `[aria-label="Loading vote pair and form"]` skeleton becomes hidden, then "Is this synergy real?" + the "Yes" radio are visible (a loop/hang fails by timeout) |
 
-## `reveals-page.spec.ts` — 9 tests (8 desktop, 1 mobile)
+## `reveals-page.spec.ts`: 10 tests (9 desktop, 1 mobile)
 
-**Season-independent by design.** The `beforeEach` reads the reveal set (the `previewCards.json` entry with the latest `releaseDate`) and the tests build their matchers from its `name` and `number`; the franchise label is read off the tile's own `aria-label`. Starting a new season needs no edit here. The `beforeEach` also starts the page's clock two days before that `releaseDate` (`e2e/helpers/revealSeason.ts`), so the suite runs on any date, release day and the weeks before the next set's dates land included: graduation keeps the set's dates in `previewCards.json` and its cards in `allCards.json`. Three tests additionally skip while `cards` is empty.
+**Season-independent by design.** The `beforeEach` reads the reveal set (the `previewCards.json` entry with the latest `releaseDate`) and the tests build their matchers from its `name` and `number`; the franchise label is read off the tile's own `aria-label`. Starting a new season needs no edit here. The `beforeEach` also starts the page's clock two days before that `releaseDate` (`e2e/helpers/revealSeason.ts`), so the suite runs on any date, release day and the weeks before the next set's dates land included: graduation keeps the set's dates in `previewCards.json` and its cards in `allCards.json`. Four tests additionally skip while `cards` is empty.
 
 | Test | What it verifies |
 |---|---|
@@ -308,6 +330,7 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 | mobile nav shows Reveals tab | On mobile, `/browse`'s bottom nav has a "Set N reveals" link |
 | promo modal appears on landing page and not on /reveals | `role="complementary" name="Set N reveals"` visible on `/`, absent on `/reveals` |
 | mosaic card click opens the card overview modal | Clicking a `reveal-card-slot` on `/reveals` opens the modal; URL stays `/reveals` (skips with no cards) |
+| the card modal's arrows step through the board's cards in mosaic order | Opening the first `reveal-card-slot`, then "Next card", shows the second slot's card in the modal's `h1` (slot labels read "View <card>"; skips with fewer than two revealed cards) |
 | franchise card click opens the franchise cards modal | Clicking the first "View … cards" tile opens the `dialog` named "<franchise> cards"; a card-tile inside opens the overview modal on top (card click skips with no cards) |
 | ?ink= param selects the starting mosaic ink | `/reveals?ink=emerald` makes the Emerald `ink-tracker-tile` the `aria-pressed` (featured) one |
 | clicking a rarity chip dims the other revealed cards | A kit chip in the "Highlight a rarity" group toggles `aria-pressed`; other-rarity slots get `data-dimmed`; clicking again clears it (skips when <2 rarities revealed) |

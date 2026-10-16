@@ -37,6 +37,20 @@ const EXCLUDED = new Set([
   // frame and assert nothing. The binder and dialog they feed DO have stories.
   'CollectionContext.tsx',
   'CollectionCardsContext.tsx',
+  // A hook (#553 Phase C), not a component: it holds collection mode's state and
+  // returns slots for BrowseCollectionPage. Its JSX only composes components that have
+  // their own stories (CollectionModeSwitch, CollectionBinderSection,
+  // ImportCollectionDialog, SignInDialog), and it needs a session plus both
+  // collection providers to run, so a story of it would be a page in disguise.
+  'useBrowseCollection.tsx',
+  // The layout route that mounts the two collection providers around an
+  // <Outlet />: like the providers themselves it renders only its children.
+  'CollectionScope.tsx',
+  // The account page's collection wiring, split out so a flag-off build never loads
+  // the collection's data layer. Like useBrowseCollection, it only feeds hooks into
+  // components with their own coverage: the page's CollectionSection (pages are
+  // excluded) and ImportCollectionDialog (storied), and needs both providers to run.
+  'AccountCollection.tsx',
 ]);
 
 // Pages are route compositions of already-storied components; stories exist

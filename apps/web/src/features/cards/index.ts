@@ -12,6 +12,7 @@ export {
   applySortOrder,
   getUniqueKeywords,
   getUniqueClassifications,
+  getUniqueRarities,
   getUniqueSets,
   smallImageUrl,
 } from './loader';

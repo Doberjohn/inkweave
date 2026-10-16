@@ -1,13 +1,15 @@
 import {useEffect, useState} from 'react';
 import {useSearchParams} from 'react-router-dom';
-import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {BrowseCardGrid, BrowseToolbar, type Ink} from '../features/cards';
+import type {CardPrinting, LorcanaCard} from 'inkweave-synergy-engine';
+import {BrowseCardGrid, BrowseToolbar} from '../features/cards';
 import {
-  searchCardsByName,
-  filterCards,
-  applySortOrder,
-  type CardFilterOptions,
-} from '../features/cards/loader';
+  BROWSE_GUTTER,
+  BrowseSidePanel,
+  DockedPanelsRow,
+  DockedSetPanel,
+  useSidePanelDocked,
+} from '../features/cards/components/BrowseSidePanel';
+import {pickedPrinting} from '../features/cards/loader';
 import {
   CompactHeader,
   CtaButton,
@@ -17,47 +19,13 @@ import {
   MOBILE_NAV_HEIGHT,
   Seo,
 } from '../shared/components';
-import {
-  COLORS,
-  FONTS,
-  FONT_SIZES,
-  SPACING,
-  type BrowseSortOrder,
-  type CardTypeFilter,
-} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
-
-// =====================================================================
-// Module-level helpers — keep BrowsePage's CC low by hoisting branches.
-// =====================================================================
-
-function buildCombinedFilters(
-  base: CardFilterOptions,
-  inkFilters: Ink[],
-  typeFilters: CardTypeFilter[],
-  costFilters: number[],
-): CardFilterOptions {
-  const combined: CardFilterOptions = {...base};
-  if (inkFilters.length > 0) combined.ink = inkFilters;
-  if (typeFilters.length > 0) combined.type = typeFilters;
-  if (costFilters.length > 0) combined.costs = costFilters;
-  return combined;
-}
-
-function applyFiltersAndSort(
-  cards: LorcanaCard[],
-  searchQuery: string,
-  combinedFilters: CardFilterOptions,
-  sortOrder: BrowseSortOrder,
-): LorcanaCard[] {
-  let result = cards;
-  if (searchQuery.trim()) result = searchCardsByName(result, searchQuery);
-  if (Object.keys(combinedFilters).length > 0) result = filterCards(result, combinedFilters);
-  return applySortOrder(result, sortOrder);
-}
+import type {BrowseCollectionSlots, BrowseListing} from '../features/collection/useBrowseCollection';
+import {browseView, printingIdsFor} from './browseView';
 
 // =====================================================================
 // Subcomponents — local to this file. Keep BrowsePage's render small
@@ -101,6 +69,14 @@ interface BrowseContentSectionProps {
   cards: LorcanaCard[];
   isLoading: boolean;
   onCardSelect: (card: {id: string}) => void;
+  /** The printing a grid tile shows instead of its card's own art (a picked Enchanted, say). */
+  printingFor?: (card: LorcanaCard) => CardPrinting | undefined;
+  /** Collection mode's content. When set, it replaces the grid entirely. */
+  binder?: React.ReactNode;
+  /** The docked filters panel (desktop, while open), left of the grid or binder. */
+  sidePanel?: React.ReactNode;
+  /** Collection mode's docked set panel (desktop), right of the binder, under Collection. */
+  setPanel?: React.ReactNode;
 }
 
 function BrowseContentSection({
@@ -109,10 +85,14 @@ function BrowseContentSection({
   cards,
   isLoading,
   onCardSelect,
+  printingFor,
+  binder,
+  sidePanel,
+  setPanel,
 }: BrowseContentSectionProps) {
   const titlePadding = isMobile
     ? `${SPACING.lg}px ${SPACING.lg}px 0`
-    : `${SPACING.xxl}px 32px 0`;
+    : `${SPACING.xxl}px ${BROWSE_GUTTER}px 0`;
   return (
     <div
       style={{
@@ -135,14 +115,85 @@ function BrowseContentSection({
         }}>
         Browse Cards
       </h1>
+      {/* The toolbar serves BOTH modes: in collection mode its filters decide which
+          binder slots stay lit rather than which cards are listed. */}
       <BrowseToolbar {...toolbarProps} />
-      {/* Card grid — flex-fills remaining space; VirtuosoGrid scrolls inside */}
-      <div style={{flex: 1, minHeight: 0, position: 'relative'}}>
+      {/* Card grid or binder between the docked panels; VirtuosoGrid scrolls inside. */}
+      <DockedPanelsRow left={sidePanel} right={setPanel}>
         <ErrorBoundary>
-          <BrowseCardGrid cards={cards} isLoading={isLoading} onCardSelect={onCardSelect} />
+          {binder ?? (
+            <BrowseCardGrid cards={cards} isLoading={isLoading} onCardSelect={onCardSelect} printingFor={printingFor} />
+          )}
         </ErrorBoundary>
-      </div>
+      </DockedPanelsRow>
     </div>
+  );
+}
+
+/**
+ * Open a card from Browse. The binder holds cards CardDataContext cannot resolve,
+ * in pockets of its own, so while it shows it says how to open a card and which
+ * cards the modal's arrows step through; otherwise the arrows follow the grid, and
+ * each card opens on the printing its tile shows.
+ */
+function openFromBrowse(
+  openCardModal: ReturnType<typeof useCardModal>['openCardModal'],
+  cardId: string,
+  listing: BrowseListing & {printingFor: (cardId: string) => string | undefined},
+  collection: BrowseCollectionSlots | null,
+) {
+  const target = collection?.modalTarget?.(cardId, listing);
+  if (target) openCardModal(target.cardId, target.siblingIds, target.options);
+  else openCardModal(cardId, listing.cards.map((c) => c.id), {printingFor: listing.printingFor});
+}
+
+/**
+ * The docked filters panel's state (desktop): OPEN BY DEFAULT (owner, 2026-10-07), and
+ * the Filters button closes and reopens it. Collection mode's set panel has a place of
+ * its own on the right (owner, 2026-10-08), so the filters panel holds nothing else.
+ */
+function useSidePanelState() {
+  const [open, setOpen] = useState(true);
+  return {open, onFiltersClick: () => setOpen((wasOpen) => !wasOpen)};
+}
+
+/**
+ * The viewport-bounded shell, one definition for both widths. The two differed
+ * only in height (mobile subtracts the bottom nav, so AppLayout's padding does not
+ * push past the viewport and bring back page scroll) and in the filter dialog's
+ * variant; as two literal returns every shell change had to be made twice.
+ */
+function BrowseShell({
+  isMobile,
+  goHome,
+  contentProps,
+  filterDialogProps,
+  prompts,
+}: {
+  isMobile: boolean;
+  goHome: () => void;
+  contentProps: React.ComponentProps<typeof BrowseContentSection>;
+  filterDialogProps: Omit<React.ComponentProps<typeof FilterDialog>, 'variant'>;
+  prompts: React.ReactNode;
+}) {
+  return (
+    <main
+      style={{
+        height: isMobile ? `calc(100dvh - ${MOBILE_NAV_HEIGHT}px)` : '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: COLORS.background,
+        fontFamily: FONTS.body,
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+      <BrowseSeo />
+      <EtherealBackground />
+      <CompactHeader onLogoClick={goHome} isMobile={isMobile} />
+      <BrowseContentSection {...contentProps} />
+      <FilterDialog {...filterDialogProps} variant={isMobile ? 'drawer' : 'modal'} />
+      {prompts}
+    </main>
   );
 }
 
@@ -152,33 +203,22 @@ function BrowseContentSection({
 // doesn't push us past the viewport (would re-introduce page scroll).
 // =====================================================================
 
+/**
+ * Browse without collection mode: the route's page while `SHOW_COLLECTION` is off.
+ * With the flag on, the router loads `BrowseCollectionPage` instead, which wires the
+ * collection into the same `BrowseBody`. Two page modules rather than one choosing a
+ * branch (#553 Phase C): any static path from this module into the collection feature
+ * put its data layer on Browse for every visitor, flag off. A chunk of React components
+ * runs its runtimes' CommonJS initialisers, so the bundler can never prove it free of
+ * side effects, and keeps even an import whose every binding it dropped.
+ */
 export function BrowsePage() {
-  const {openCardModal} = useCardModal();
-  const {isMobile} = useResponsive();
-  const {cards, isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets, getCardById} =
-    useCardDataContext();
-  const {
-    searchQuery,
-    setSearchQuery,
-    inkFilters,
-    toggleInk,
-    typeFilters,
-    toggleType,
-    costFilters,
-    toggleCost,
-    clearCosts,
-    filters,
-    setFilters,
-    replaceFilters,
-    clearAllFilters,
-    activeFilterCount,
-    sortOrder,
-    setSortOrder,
-  } = useFilterParams();
-  const [showFilters, setShowFilters] = useState(false);
-  const [searchParams, setSearchParams] = useSearchParams();
+  return <BrowseBody collection={null} />;
+}
 
-  // Auto-focus search when navigating with ?focus=search (desktop only; mobile uses bottom sheet)
+/** Focus the search box when Browse opens with `?focus=search` (desktop only; mobile uses the bottom sheet). */
+function useFocusSearchParam(isMobile: boolean) {
+  const [searchParams, setSearchParams] = useSearchParams();
   useEffect(() => {
     if (!isMobile && searchParams.get('focus') === 'search') {
       requestAnimationFrame(() => {
@@ -189,94 +229,138 @@ export function BrowsePage() {
       setSearchParams(searchParams, {replace: true});
     }
   }, [isMobile, searchParams, setSearchParams]);
+}
+
+type FilterParams = ReturnType<typeof useFilterParams>;
+type SidePanelState = ReturnType<typeof useSidePanelState>;
+type ToolbarProps = React.ComponentProps<typeof BrowseToolbar>;
+
+/** The Filters button: on desktop it shows or hides the docked panel, elsewhere it opens the dialog. */
+function filtersButton(docked: boolean, panel: SidePanelState, openDialog: () => void) {
+  return docked
+    ? {onFiltersClick: panel.onFiltersClick, docked: {panelOpen: panel.open}}
+    : {onFiltersClick: openDialog, docked: undefined};
+}
+
+/** The toolbar's props: the URL's filter state and setters, plus the page's own controls. */
+function toolbarPropsFrom(
+  params: FilterParams,
+  controls: Pick<ToolbarProps, 'onFiltersClick' | 'docked' | 'isMobile' | 'modeSwitch' | 'sortOptions'>,
+): ToolbarProps {
+  return {
+    ...controls,
+    activeFilterCount: params.activeFilterCount,
+    inkFilters: params.inkFilters,
+    typeFilters: params.typeFilters,
+    costFilters: params.costFilters,
+    filters: params.filters,
+    onToggleInk: params.toggleInk,
+    onToggleType: params.toggleType,
+    onToggleCost: params.toggleCost,
+    onClearCosts: params.clearCosts,
+    onFiltersChange: params.setFilters,
+    sortOrder: params.sortOrder,
+    onSortChange: params.setSortOrder,
+    searchQuery: params.searchQuery,
+    onSearchChange: params.setSearchQuery,
+  };
+}
+
+/** The docked filters panel, on desktop while open. Live, unlike the dialog's draft: the grid beside it is the preview. */
+function dockedPanel(docked: boolean, panel: SidePanelState, props: React.ComponentProps<typeof BrowseSidePanel>) {
+  if (!docked || !panel.open) return undefined;
+  return <BrowseSidePanel {...props} />;
+}
+
+/** Collection mode's set panel, docked on the binder's right where the page docks panels. */
+function dockedSetPanel(docked: boolean, setPanel: React.ReactNode | undefined) {
+  return docked && setPanel ? <DockedSetPanel>{setPanel}</DockedSetPanel> : undefined;
+}
+
+/** Browse's content, with collection mode's slots when the page wires them in (`BrowseCollectionPage`). */
+export function BrowseBody({collection}: {collection: BrowseCollectionSlots | null}) {
+  const {openCardModal} = useCardModal();
+  const {isMobile} = useResponsive();
+  const {cards, isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets, getCardById} =
+    useCardDataContext();
+  const params = useFilterParams();
+  const [showFilters, setShowFilters] = useState(false);
+  const docked = useSidePanelDocked();
+  const panel = useSidePanelState();
+  useFocusSearchParam(isMobile);
 
   if (error) return <BrowsePageError onRetry={retryLoad} />;
 
-  const combinedFilters = buildCombinedFilters(filters, inkFilters, typeFilters, costFilters);
-  const sortedCards = applyFiltersAndSort(cards, searchQuery, combinedFilters, sortOrder);
-  const goHome = clearAllFilters;
+  const {filters} = params;
+  const {rarities, binderOptions, sortedCards, matchedCards, filtered} = browseView(collection, cards, params);
+  const listing = {cards: sortedCards, sortOrder: params.sortOrder, matched: matchedCards, filtered};
   const selectCard = (card: {id: string}) => {
     trackCardSelected(getCardById(card.id), 'browse');
-    openCardModal(card.id, sortedCards.map((c) => c.id));
+    const printingFor = printingIdsFor(getCardById, filters.rarities);
+    openFromBrowse(openCardModal, card.id, {...listing, printingFor}, collection);
   };
 
-  const toolbarProps = {
-    onFiltersClick: () => setShowFilters(true),
-    activeFilterCount,
-    inkFilters,
-    typeFilters,
-    costFilters,
+  const binder = collection?.renderBinder(listing, selectCard) ?? undefined;
+  // The binder's wide pool brings Keyword and Classification options Core never prints.
+  const {keywords, classifications} = binderOptions ?? {
+    keywords: uniqueKeywords,
+    classifications: uniqueClassifications,
+  };
+  // One set of options for the dialog and the docked panel.
+  const filterOptions = {
+    inkFilters: params.inkFilters,
+    typeFilters: params.typeFilters,
+    costFilters: params.costFilters,
     filters,
-    onToggleInk: toggleInk,
-    onToggleType: toggleType,
-    onToggleCost: toggleCost,
-    onClearCosts: clearCosts,
-    onFiltersChange: setFilters,
-    sortOrder,
-    onSortChange: setSortOrder,
-    isMobile,
-    searchQuery,
-    onSearchChange: setSearchQuery,
-  } as const;
-
-  const filterDialogProps = {
-    isOpen: showFilters,
-    onClose: () => setShowFilters(false),
-    onApply: replaceFilters,
-    inkFilters,
-    typeFilters,
-    costFilters,
-    filters,
-    uniqueKeywords,
-    uniqueClassifications,
+    uniqueKeywords: keywords,
+    uniqueClassifications: classifications,
+    uniqueRarities: rarities,
     sets,
+    // Collection mode's set is chosen in its collection panel, so it keeps no set filter.
+    showSetFilter: !collection?.active,
+    // The art presets pick rarities, so they work in both modes (owner, 2026-10-15).
+    showArtPresets: true,
   };
 
   const contentProps = {
     isMobile,
-    toolbarProps,
+    toolbarProps: toolbarPropsFrom(params, {
+      ...filtersButton(docked, panel, () => setShowFilters(true)),
+      isMobile,
+      modeSwitch: collection?.modeSwitch,
+      sortOptions: collection?.sortOptions,
+    }),
+    sidePanel: dockedPanel(docked, panel, {
+      filterProps: {
+        ...filterOptions,
+        onToggleInk: params.toggleInk,
+        onToggleType: params.toggleType,
+        onToggleCost: params.toggleCost,
+        onFiltersChange: params.setFilters,
+      },
+      activeFilterCount: params.activeFilterCount,
+      onClearFilters: () => params.replaceFilters([], [], [], {}),
+    }),
+    setPanel: dockedSetPanel(docked, collection?.renderSetPanel(listing)),
     cards: sortedCards,
     isLoading,
     onCardSelect: selectCard,
+    printingFor: (card: LorcanaCard) => pickedPrinting(card, filters.rarities),
+    binder,
   };
 
-  if (isMobile) {
-    return (
-      <main
-        style={{
-          height: `calc(100dvh - ${MOBILE_NAV_HEIGHT}px)`,
-          display: 'flex',
-          flexDirection: 'column',
-          background: COLORS.background,
-          fontFamily: FONTS.body,
-          position: 'relative',
-          overflow: 'hidden',
-        }}>
-        <BrowseSeo />
-        <EtherealBackground />
-        <CompactHeader onLogoClick={goHome} isMobile />
-        <BrowseContentSection {...contentProps} />
-        <FilterDialog {...filterDialogProps} variant="drawer" />
-      </main>
-    );
-  }
-
   return (
-    <main
-      style={{
-        height: '100vh',
-        background: COLORS.background,
-        fontFamily: FONTS.body,
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-      <BrowseSeo />
-      <EtherealBackground />
-      <CompactHeader onLogoClick={goHome} />
-      <BrowseContentSection {...contentProps} />
-      <FilterDialog {...filterDialogProps} variant="modal" />
-    </main>
+    <BrowseShell
+      isMobile={isMobile}
+      goHome={params.clearAllFilters}
+      contentProps={contentProps}
+      filterDialogProps={{
+        ...filterOptions,
+        isOpen: showFilters,
+        onClose: () => setShowFilters(false),
+        onApply: params.replaceFilters,
+      }}
+      prompts={collection?.prompts}
+    />
   );
 }

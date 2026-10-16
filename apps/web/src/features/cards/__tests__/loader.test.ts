@@ -2,6 +2,10 @@ import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {
   searchCardsByName,
   filterCards,
+  countFilterOptions,
+  getUniqueRarities,
+  getRaritiesWithPrintings,
+  pickedPrinting,
   getUniqueKeywords,
   getUniqueClassifications,
   getUniqueSets,
@@ -11,7 +15,7 @@ import {
   applySortOrder,
 } from '../loader';
 import {_resetPreviewCardsCache} from '../previewCards';
-import type {LorcanaCard} from '../types';
+import type {Ink, LorcanaCard} from '../types';
 import {createCard} from '../../../shared/test-utils';
 
 /** Wrap card overrides in the JSON structure loadCardsFromJSON expects. */
@@ -42,6 +46,9 @@ describe('Card Search', () => {
     createCard({id: '4', name: 'Mickey Mouse', fullName: 'Mickey Mouse - Brave Little Tailor'}),
     createCard({id: '5', name: "Bruno's Return", fullName: "Bruno's Return"}),
     createCard({id: '6', name: 'Curly’s Card', fullName: 'Curly’s Card'}),
+    createCard({id: '7', name: 'Fru Fru', fullName: 'Fru Fru - VIP Guest', version: 'VIP Guest'}),
+    createCard({id: '8', name: 'Mr. Smee', fullName: 'Mr. Smee - Loyal First Mate'}),
+    createCard({id: '9', name: 'Judy Hopps', fullName: 'Judy Hopps - Helpful Officer'}),
   ];
 
   it.each([
@@ -51,6 +58,21 @@ describe('Card Search', () => {
     ['no match', 'Donald', 0],
     ['a typographic apostrophe against a straight name', 'bruno’s', 1],
     ['a straight apostrophe against a typographic name', "curly's", 1],
+    // Punctuation and spacing are not part of a name: the separator dash, a
+    // period, an apostrophe left out, a doubled space.
+    ['a full name typed without its dash', 'fru fru vip guest', 1],
+    ['a full name with doubled spaces', 'Fru Fru  VIP Guest', 1],
+    ['a dash typed without spaces', 'fru fru-vip', 1],
+    ['a name without its period', 'mr smee', 1],
+    ['a name without its apostrophe', 'brunos return', 1],
+    // Each word must appear, in any order: name and version words mix freely.
+    ['words from the name and the version', 'judy officer', 1],
+    ['words out of order', 'vip guest fru', 1],
+    ['a partly typed last word', 'judy offi', 1],
+    ['a word the card does not have', 'judy queen', 0],
+    // Each word matches the START of a name word, so "the" is not "Father".
+    ['the middle of a word', 'opps', 0],
+    ['the start of a word', 'hop', 1],
   ])('should search by %s', (_label, query, expectedCount) => {
     expect(searchCardsByName(cards, query)).toHaveLength(expectedCount);
   });
@@ -83,14 +105,36 @@ describe('Card Filtering', () => {
     expect(filterCards(cards, {ink: ['Amber', 'Ruby']})).toHaveLength(3);
   });
 
-  it('should match dual-ink cards on either ink', () => {
-    const dualInkCards = [
-      ...cards,
-      createCard({id: 'dual-1', ink: 'Amethyst', ink2: 'Sapphire', cost: 5}),
+  describe('ink selection as a deck', () => {
+    const pool = [
+      createCard({id: 'amber', ink: 'Amber'}),
+      createCard({id: 'steel', ink: 'Steel'}),
+      createCard({id: 'amber-steel', ink: 'Amber', ink2: 'Steel'}),
+      createCard({id: 'amber-ruby', ink: 'Amber', ink2: 'Ruby'}),
+      createCard({id: 'ruby', ink: 'Ruby'}),
     ];
-    expect(filterCards(dualInkCards, {ink: 'Sapphire'}).some((c) => c.id === 'dual-1')).toBe(true);
-    expect(filterCards(dualInkCards, {ink: 'Amethyst'}).some((c) => c.id === 'dual-1')).toBe(true);
-    expect(filterCards(dualInkCards, {ink: 'Ruby'}).some((c) => c.id === 'dual-1')).toBe(false);
+    const ids = (ink: Ink[], inkMatch?: 'dual') => filterCards(pool, {ink, inkMatch}).map((c) => c.id);
+
+    it('shows every card carrying a single selected ink, dual-ink ones included', () => {
+      expect(ids(['Amber'])).toEqual(['amber', 'amber-steel', 'amber-ruby']);
+    });
+
+    it('keeps only cards whose every ink is selected for a pair, as that deck could play', () => {
+      expect(ids(['Amber', 'Steel'])).toEqual(['amber', 'steel', 'amber-steel']);
+    });
+
+    it("narrows a single ink to its dual-ink cards when the Dual-ink cards switch is on", () => {
+      expect(ids(['Amber'], 'dual')).toEqual(['amber-steel', 'amber-ruby']);
+    });
+
+    it('narrows a pair to its own dual-ink cards when the Dual-ink cards switch is on', () => {
+      expect(ids(['Amber', 'Steel'], 'dual')).toEqual(['amber-steel']);
+    });
+
+    it('ignores the Dual-ink cards switch beyond two inks', () => {
+      // A link can carry the mode with three inks; it must not change the grid.
+      expect(ids(['Amber', 'Steel', 'Ruby'], 'dual')).toEqual(ids(['Amber', 'Steel', 'Ruby']));
+    });
   });
 
   it('should filter by card type', () => {
@@ -128,10 +172,84 @@ describe('Card Filtering', () => {
     expect(filterCards(cards, {classifications: ['Princess']})).toHaveLength(1);
   });
 
+  // Several keywords or classifications narrow (owner, 2026-10-08): a card must
+  // carry EVERY one selected, unlike types, where any selected type matches.
+  describe('several keywords or classifications', () => {
+    const pool = [
+      createCard({id: 'evasive', keywords: ['Evasive']}),
+      createCard({id: 'evasive-ward', keywords: ['Evasive', 'Ward']}),
+      createCard({id: 'hero', classifications: ['Storyborn', 'Hero']}),
+      createCard({id: 'hero-princess', classifications: ['Storyborn', 'Hero', 'Princess']}),
+    ];
+    const ids = (options: Parameters<typeof filterCards>[1]) => filterCards(pool, options).map((c) => c.id);
+
+    it('keeps only cards carrying every selected keyword', () => {
+      expect(ids({keywords: ['Evasive', 'Ward']})).toEqual(['evasive-ward']);
+    });
+
+    it('keeps only cards carrying every selected classification', () => {
+      expect(ids({classifications: ['Hero', 'Princess']})).toEqual(['hero-princess']);
+    });
+  });
+
   it('should filter by set code', () => {
-    const results = filterCards(cards, {setCode: '5'});
+    const results = filterCards(cards, {setCodes: ['5']});
     expect(results).toHaveLength(1);
     expect(results[0].id).toBe('7');
+  });
+
+  it('should count every picked keyword, classification and set, plus inkwell, as filters', () => {
+    // The one count behind the Filters badge, the dialog title and the synergy toolbar.
+    expect(
+      countFilterOptions({keywords: ['Evasive', 'Ward'], classifications: ['Hero'], setCodes: ['10', '11'], inkwell: 'inkable'}),
+    ).toBe(6);
+    // A mode is not a filter of its own.
+    expect(countFilterOptions({inkMatch: 'dual'})).toBe(0);
+  });
+
+  describe('rarity', () => {
+    const pool = [
+      createCard({id: 'c', rarity: 'Common'}),
+      createCard({id: 'r', rarity: 'Rare'}),
+      createCard({id: 'l', rarity: 'Legendary'}),
+      createCard({id: 'e', rarity: 'Enchanted'}),
+    ];
+
+    it('shows cards of any picked rarity', () => {
+      // A card has one rarity, so several widen the result, as types and sets do.
+      expect(filterCards(pool, {rarities: ['Rare', 'Legendary']}).map((c) => c.id)).toEqual(['r', 'l']);
+    });
+
+    it('lists the pool rarities in rarity order, not alphabetically', () => {
+      expect(getUniqueRarities([...pool].reverse())).toEqual(['Common', 'Rare', 'Legendary', 'Enchanted']);
+    });
+
+    it('counts each picked rarity as a filter', () => {
+      expect(countFilterOptions({rarities: ['Rare', 'Legendary']})).toBe(2);
+    });
+
+    // Browse folds each Epic, Enchanted and Iconic printing into its base card.
+    const elsa = createCard({id: 'x', rarity: 'Legendary', variants: [{id: 'x-ench', rarity: 'Enchanted', number: 205}]});
+
+    it('matches a card through its printing of a picked rarity only in printings mode', () => {
+      // Without the mode (the binder's printings are cards of their own) only the card's own rarity counts.
+      expect(filterCards([elsa], {rarities: ['Enchanted']})).toEqual([]);
+      expect(filterCards([elsa], {rarities: ['Enchanted'], rarityMatch: 'printings'})).toEqual([elsa]);
+    });
+
+    it('offers Browse the rarities of its cards and of their printings, in rarity order', () => {
+      expect(getRaritiesWithPrintings([elsa, pool[0]])).toEqual(['Common', 'Legendary', 'Enchanted']);
+    });
+
+    it("picks the printing of a picked rarity for the tile, and none for the card's own rarity", () => {
+      expect(pickedPrinting(elsa, ['Legendary', 'Enchanted'])?.id).toBe('x-ench');
+      expect(pickedPrinting(elsa, ['Legendary'])).toBeUndefined();
+    });
+  });
+
+  it('should show cards from any of several picked sets', () => {
+    // A card belongs to one set, so several sets widen the result, as types do.
+    expect(filterCards(cards, {setCodes: ['1', '5']}).map((c) => c.id)).toEqual(['6', '7']);
   });
 
   it('should combine multiple filters', () => {

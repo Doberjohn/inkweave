@@ -26,7 +26,7 @@ export function ExpandedGroupView({
 }: ExpandedGroupViewProps) {
   const [filterState, setFilterState] = useState<SynergyFilterState>(EMPTY_SYNERGY_FILTERS);
   const [sortOrder, setSortOrder] = useState<SynergySortOrder>('ink-cost');
-  const {uniqueKeywords, uniqueClassifications, sets} = useCardDataContext();
+  const {uniqueKeywords, uniqueClassifications, uniqueRarities, sets} = useCardDataContext();
 
   // Filter then sort synergies
   const filteredSynergies = (() => {
@@ -74,6 +74,7 @@ export function ExpandedGroupView({
         isMobile={isMobile}
         uniqueKeywords={uniqueKeywords}
         uniqueClassifications={uniqueClassifications}
+        uniqueRarities={uniqueRarities}
         sets={sets}
       />
 

@@ -4,10 +4,30 @@ import {
   COST_BUTTONS,
   type CardTypeFilter,
 } from '../../shared/constants';
-import {anyCardMatches, type CardFilterOptions, type SetInfo} from './loader';
+import {RARITIES_BY_ART, anyCardMatches, type ArtKind, type CardFilterOptions, type SetInfo} from './loader';
 import type {Ink, LorcanaCard} from './types';
 
 export type InkwellFilter = NonNullable<CardFilterOptions['inkwell']>;
+
+/**
+ * The art presets, in the panel's order (owner, 2026-10-15): shortcuts that pick one
+ * kind's rarities (`RARITIES_BY_ART`), as picking them one by one would. Each preset's
+ * label, which the toolbar's chip for it repeats, and its tooltip.
+ */
+export const ART_OPTIONS: readonly {value: ArtKind; label: string; title: string}[] = [
+  {value: 'standard', label: 'Standard cards', title: 'Pick the five standard rarities'},
+  {value: 'alt', label: 'Alt art cards', title: 'Pick Epic, Enchanted and Iconic'},
+];
+
+/** Whether the picks are exactly these rarities, in any order. */
+export function picksExactly(picked: readonly string[], rarities: readonly string[]): boolean {
+  return picked.length === rarities.length && rarities.every((rarity) => picked.includes(rarity));
+}
+
+/** The art preset the picked rarities amount to, if they are exactly one kind's. */
+export function artPresetOf(picked: readonly string[]) {
+  return ART_OPTIONS.find(({value}) => picksExactly(picked, RARITIES_BY_ART[value]));
+}
 
 /** The values each filter button group shows: ink, cost, card type and inkwell. */
 export interface FilterButtonOptions {
@@ -17,10 +37,11 @@ export interface FilterButtonOptions {
   inkwell: readonly InkwellFilter[];
 }
 
-/** The lists behind the filter dialog's Keyword, Classification and Set dropdowns. */
+/** The lists behind the filter dialog's Keyword, Classification, Rarity and Set sections. */
 export interface FilterSelectOptions {
   keywords: string[];
   classifications: string[];
+  rarities: string[];
   sets: SetInfo[];
 }
 
@@ -86,6 +107,7 @@ export function getPoolFilterOptions(
     classifications: keepOffered(all.classifications, filters.classifications ?? [], (c) =>
       matches({classifications: [c]}),
     ),
-    sets: all.sets.filter((set) => set.code === filters.setCode || matches({setCode: set.code})),
+    rarities: keepOffered(all.rarities, filters.rarities ?? [], (rarity) => matches({rarities: [rarity]})),
+    sets: all.sets.filter((set) => filters.setCodes?.includes(set.code) || matches({setCodes: [set.code]})),
   };
 }

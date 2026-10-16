@@ -48,9 +48,12 @@
         "apps/web/dist/assets/*.js",
         "!apps/web/dist/assets/RevealsPage-*.js",
         "!apps/web/dist/assets/ReleaseNotesPage-*.js",
+        "!apps/web/dist/assets/CollectionBinderSection-*.js",
+        "!apps/web/dist/assets/CollectionScope-*.js",
+        "!apps/web/dist/assets/ImportCollectionDialog-*.js",
         "!apps/web/dist/assets/supabaseClient-*.js"
       ],
-      "limit": "430 kB",
+      "limit": "455 kB",
       "gzip": true
     },
     {
@@ -68,7 +71,10 @@
     {
       "name": "Flag-gated JS",
       "path": [
-        "apps/web/dist/assets/RevealsPage-*.js"
+        "apps/web/dist/assets/RevealsPage-*.js",
+        "apps/web/dist/assets/CollectionBinderSection-*.js",
+        "apps/web/dist/assets/CollectionScope-*.js",
+        "apps/web/dist/assets/ImportCollectionDialog-*.js"
       ],
       "limit": "60 kB",
       "gzip": true

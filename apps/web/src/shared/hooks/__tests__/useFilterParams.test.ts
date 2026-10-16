@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {renderHook, act} from '@testing-library/react';
-import {MemoryRouter} from 'react-router-dom';
+import {MemoryRouter, useSearchParams} from 'react-router-dom';
 import {useFilterParams} from '../useFilterParams';
 import {trackEvent} from '../../lib/analytics';
 import type {ReactNode} from 'react';
@@ -108,8 +108,55 @@ describe('useFilterParams', () => {
       expect(result.current.filters).toEqual({
         keywords: ['Singer'],
         classifications: ['Princess'],
-        setCode: '5',
+        setCodes: ['5'],
       });
+    });
+
+    it('should parse several keywords, classifications, sets and rarities, each counted as a filter', () => {
+      const {result} = renderHook(() => useFilterParams(), {
+        wrapper: createWrapper([
+          '/?keyword=Evasive,Ward&classification=Hero,Seven Dwarfs&set=10,11&rarity=Super Rare,Legendary',
+        ]),
+      });
+      expect(result.current.filters.keywords).toEqual(['Evasive', 'Ward']);
+      expect(result.current.filters.classifications).toEqual(['Hero', 'Seven Dwarfs']);
+      expect(result.current.filters.setCodes).toEqual(['10', '11']);
+      expect(result.current.filters.rarities).toEqual(['Super Rare', 'Legendary']);
+      expect(result.current.activeFilterCount).toBe(8);
+    });
+
+    it('should write several keywords back as one list', () => {
+      const {result} = renderHook(() => useFilterParams(), {wrapper: createWrapper(['/'])});
+      act(() => result.current.setFilters({keywords: ['Evasive', 'Ward']}));
+      expect(result.current.filters.keywords).toEqual(['Evasive', 'Ward']);
+    });
+
+    it('should read the Dual-ink cards mode without counting it as a filter', () => {
+      // A modifier of the ink selection, not a filter of its own.
+      const {result} = renderHook(() => useFilterParams(), {
+        wrapper: createWrapper(['/?ink=Amber,Steel&inkmatch=dual']),
+      });
+      expect(result.current.filters.inkMatch).toBe('dual');
+      expect(result.current.activeFilterCount).toBe(2);
+    });
+
+    it('should switch the Dual-ink cards mode off once a third ink hides its switch', () => {
+      // Left on out of sight, it would come back on, unasked, for the next selection.
+      const {result} = renderHook(() => useFilterParams(), {
+        wrapper: createWrapper(['/?ink=Amber,Steel&inkmatch=dual']),
+      });
+      act(() => result.current.toggleInk('Ruby'));
+      expect(result.current.inkFilters).toEqual(['Amber', 'Steel', 'Ruby']);
+      expect(result.current.filters.inkMatch).toBeUndefined();
+    });
+
+    it('should keep the Dual-ink cards mode from a pair down to one ink, where its switch still shows', () => {
+      const {result} = renderHook(() => useFilterParams(), {
+        wrapper: createWrapper(['/?ink=Amber,Steel&inkmatch=dual']),
+      });
+      act(() => result.current.toggleInk('Steel'));
+      expect(result.current.inkFilters).toEqual(['Amber']);
+      expect(result.current.filters.inkMatch).toBe('dual');
     });
   });
 
@@ -261,13 +308,13 @@ describe('useFilterParams', () => {
         result.current.setFilters({
           keywords: ['Evasive'],
           classifications: ['Hero'],
-          setCode: '6',
+          setCodes: ['6'],
         }),
       );
       expect(result.current.filters).toEqual({
         keywords: ['Evasive'],
         classifications: ['Hero'],
-        setCode: '6',
+        setCodes: ['6'],
       });
     });
 
@@ -279,6 +326,21 @@ describe('useFilterParams', () => {
       expect(result.current.inkFilters).toEqual(['Ruby']);
       expect(result.current.costFilters).toEqual([2]);
       expect(result.current.filters.keywords).toEqual(['Ward']);
+    });
+  });
+
+  describe('params outside the filters', () => {
+    it("leaves collection mode's own params alone when the filters are written or cleared", () => {
+      // `owned` is the binder view and `binder` the mode: neither is a filter, so
+      // neither may be counted, nor dropped by a filter write or Clear all.
+      const {result} = renderHook(() => ({filters: useFilterParams(), url: useSearchParams()[0]}), {
+        wrapper: createWrapper(['/?binder=9&owned=missing&keyword=Ward']),
+      });
+      expect(result.current.filters.activeFilterCount).toBe(1);
+      act(() => result.current.filters.replaceFilters([], [], [], {}));
+      expect(result.current.filters.activeFilterCount).toBe(0);
+      expect(result.current.url.get('owned')).toBe('missing');
+      expect(result.current.url.get('binder')).toBe('9');
     });
   });
 });

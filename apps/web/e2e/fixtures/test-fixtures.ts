@@ -1,7 +1,6 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import {test as base, expect} from '@playwright/test';
 import {AppPage} from '../pages/app.page';
-import {CardListPage} from '../pages/card-list.page';
 import {SynergyResultsPage} from '../pages/synergy-results.page';
 import {VotePage} from '../pages/vote.page';
 import {stubSupabase} from './supabaseStub';
@@ -9,7 +8,6 @@ import {stubSupabase} from './supabaseStub';
 // Define fixture types
 type TestFixtures = {
   appPage: AppPage;
-  cardListPage: CardListPage;
   synergyResultsPage: SynergyResultsPage;
   votePage: VotePage;
 };
@@ -58,6 +56,14 @@ const BENIGN_CONSOLE: readonly RegExp[] = [
   // checks" phrase) so it can't mask a real data fault — a genuine problem surfaces as an HTTP
   // status or JSON parse error, which contain neither anchor and still fail the guard.
   /\/data\/(allCards|previewCards)\.json.*access control checks/i,
+  // Firefox-only: in dev and CI, card art is proxied to Ravensburger's CDN (the '/card-images/'
+  // proxy in vite.config.ts; production self-hosts it, see IMAGES.md), and now and then an image
+  // arrives incomplete. Gecko then logs an error naming it:
+  //   "Image corrupt or truncated." {file: ".../card-images/en/set12/91_<hash>.jpg" line: 0}
+  // A different card failed each time, and reruns load the same images whole, so it is the
+  // transfer, not the file. BOTH anchors are required (the message AND the proxied path) so a
+  // truncated image the app serves itself ('/card-images-preview/', '/art/') still fails the guard.
+  /Image corrupt or truncated.*\/card-images\//,
 ];
 
 // Extend base test with custom fixtures + a global console-error guard.
@@ -86,10 +92,6 @@ export const test = base.extend<TestFixtures>({
   appPage: async ({page}, use) => {
     const appPage = new AppPage(page);
     await use(appPage);
-  },
-  cardListPage: async ({page}, use) => {
-    const cardListPage = new CardListPage(page);
-    await use(cardListPage);
   },
   synergyResultsPage: async ({page}, use) => {
     const synergyResultsPage = new SynergyResultsPage(page);

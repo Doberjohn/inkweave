@@ -55,8 +55,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/CountBadge.tsx', // x1
     'src/shared/components/EtherealBackground.tsx', // x1
     'src/shared/components/FilterButton.stories.tsx', // x1
-    'src/shared/components/FilterContent.stories.tsx', // x3
-    'src/shared/components/FilterSection.stories.tsx', // x2
     'src/shared/components/Footer.stories.tsx', // x1
     'src/shared/components/Sparkles.stories.tsx', // x9
     'src/shared/components/Sparkles.tsx', // x1
@@ -66,7 +64,6 @@ export const KNOWN_OFFENDERS = {
   ],
   // 63 files, 259 violations at seeding
   'no-raw-rgba': [
-    'src/features/cards/components/CardTile.tsx', // x2
     'src/features/playstyles/PlaystyleFanTile.tsx', // x6
     'src/features/reveals/ProgressRing.tsx', // x1
     'src/features/reveals/RevealHero.tsx', // x5
@@ -79,7 +76,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/MechanicsButton.tsx', // x5
     'src/features/synergies/components/MobileComparisonView.tsx', // x16
     'src/features/synergies/components/RoleTileRow.tsx', // x3
-    'src/features/synergies/components/SynergyCard.tsx', // x2
     'src/features/synergies/components/SynergyGroup.tsx', // x2
     'src/features/voting/components/DistributionBar.tsx', // x3
     'src/features/voting/components/InDepthVoteForm.tsx', // x9
@@ -119,7 +115,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/VoteStatusBanner.tsx', // x2
     'src/pages/HomePageSkeleton.tsx', // x2
     'src/shared/components/CardImage.stories.tsx', // x1
-    'src/shared/components/Chip.stories.tsx', // x1
     'src/shared/components/CollapsibleSection.stories.tsx', // x2
     'src/shared/components/ConnectionGroup.tsx', // x1
     'src/shared/components/EmptyState.stories.tsx', // x3
@@ -155,14 +150,11 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/ScorePicker.tsx', // x1
     'src/features/voting/components/VoteAffirmation.stories.tsx', // x1
     'src/features/voting/components/VoteStatusBanner.tsx', // x2
-    'src/pages/BrowsePage.tsx', // x1
     'src/shared/components/CardLightbox.stories.tsx', // x1
     'src/shared/components/CardTextBlock.stories.tsx', // x1
     'src/shared/components/CollapsibleSection.stories.tsx', // x1
     'src/shared/components/ConnectionGroup.stories.tsx', // x1
     'src/shared/components/ConnectionGroup.tsx', // x1
-    'src/shared/components/FilterContent.stories.tsx', // x3
-    'src/shared/components/FilterSection.stories.tsx', // x2
     'src/shared/components/Sparkles.stories.tsx', // x3
   ],
   // 5 files, 5 violations at seeding
@@ -177,7 +169,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/CommunityEmptyState.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.tsx', // x4
     'src/features/synergies/components/RoleTileRow.tsx', // x3
-    'src/features/synergies/components/SynergyCard.tsx', // x1
     'src/features/voting/components/PairStack.tsx', // x1
     'src/features/voting/components/QuickVoteControl.tsx', // x6
     'src/shared/components/CardImage.tsx', // x1

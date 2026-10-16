@@ -9,6 +9,7 @@ export {
   FONTS,
   COLORS,
   EASING,
+  DURATION,
   ALL_INKS,
   SET_ABBREVIATIONS,
   SET_NAMES,
@@ -29,6 +30,8 @@ export {
   SHADOWS,
   TIER_COLORS,
   LETTER_SPACING,
+  DIALOG_TITLE,
+  DIALOG_BODY,
   CAP_LABEL,
   CAP_LABEL_XS,
   SURFACE_CARD,
@@ -36,6 +39,9 @@ export {
   TRUNCATE,
   TABULAR,
   GOLD_GLOW,
+  searchFieldStyle,
+  CARD_TILE_RING,
+  FOIL_SHEEN,
   TOUCH_TARGET,
   ICON_SIZE,
   PRESS_SCALE,
@@ -57,5 +63,6 @@ export {
   specialSlotsFor,
 } from './revealSet';
 export type {SpecialBlock, SpecialSlotSpec} from './revealSet';
+export {SET_LOGOS} from './setLogos';
 export type {PlaystyleUiMeta} from './playstyleUi';
 export {PLAYSTYLE_UI, accentRgba} from './playstyleUi';

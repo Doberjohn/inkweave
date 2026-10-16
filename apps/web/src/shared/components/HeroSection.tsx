@@ -1,16 +1,15 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {
   COLORS,
-  EASING,
   FONTS,
   FONT_SIZES,
-  GOLD_GLOW,
   HERO_LOGO_IMG,
   RADIUS,
   SPACING,
   Z_INDEX,
+  searchFieldStyle,
 } from '../constants';
-import {useAutocomplete, useHeroLogoSrc} from '../hooks';
+import {useAutocomplete, useHeroLogoSrc, useHover} from '../hooks';
 import {SearchAutocomplete} from './SearchAutocomplete';
 import {SearchIcon} from './SearchIcon';
 import {CtaButton} from './CtaButton';
@@ -177,6 +176,7 @@ export function HeroSection({
   });
   // The hook's focus state carries the blur delay and cancels it on refocus and unmount.
   const isSearchFocused = autocomplete.isFocused;
+  const {hovered: isSearchHovered, hoverProps: searchHoverProps} = useHover();
   const logoSrc = useHeroLogoSrc();
 
   const mobile = !!isMobile;
@@ -210,6 +210,7 @@ export function HeroSection({
             aria-label="Search for a card"
             placeholder="Search for a card..."
             {...autocomplete.inputProps}
+            {...searchHoverProps}
             onKeyDown={(e) => {
               autocomplete.inputProps.onKeyDown(e);
               if (!e.defaultPrevented && e.key === 'Enter') {
@@ -218,18 +219,16 @@ export function HeroSection({
             }}
             data-testid="hero-search"
             style={{
+              // The shared field recipe, sized for the hero.
+              ...searchFieldStyle({focused: isSearchFocused, hovered: isSearchHovered}),
               width: '100%',
               height: mobile ? 48 : 56,
               padding: mobile ? '0 12px 0 44px' : '0 12px 0 48px',
               borderRadius: `${RADIUS.lg}px`,
-              border: `1px solid ${isSearchFocused ? GOLD_GLOW.activeBorder : COLORS.searchBorder}`,
-              background: COLORS.searchBg,
               color: COLORS.text,
               fontFamily: FONTS.body,
               fontSize: `${FONT_SIZES.xl}px`,
               boxSizing: 'border-box',
-              boxShadow: isSearchFocused ? GOLD_GLOW.focusRing : 'none',
-              transition: `border-color 0.25s ${EASING.snappy}, box-shadow 0.25s ${EASING.snappy}`,
               outline: 'none',
             }}
           />

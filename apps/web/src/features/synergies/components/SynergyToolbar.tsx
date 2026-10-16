@@ -2,10 +2,10 @@ import {useState} from 'react';
 import type {SetStateAction} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
 import type {SetInfo} from '../../cards';
-import type {CardFilterOptions} from '../../cards/loader';
+import {countFilterOptions, offersDualOnly, type CardFilterOptions} from '../../cards/loader';
 import type {CardTypeFilter, SynergySortOrder} from '../../../shared/constants';
 import type {SynergyFilterState, StrengthTierFilter} from '../utils/filterSynergyCards';
-import {EMPTY_SYNERGY_FILTERS} from '../utils/filterSynergyCards';
+import {EMPTY_SYNERGY_FILTERS, withoutStaleDualOnly} from '../utils/filterSynergyCards';
 import {SYNERGY_SORT_OPTIONS, SPACING} from '../../../shared/constants';
 import {FilterDialog} from '../../../shared/components/FilterDialog';
 import {LinkButton} from '../../../shared/components/LinkButton';
@@ -28,10 +28,109 @@ interface SynergyToolbarProps {
   /** Card data for filter modal options */
   uniqueKeywords: string[];
   uniqueClassifications: string[];
+  uniqueRarities: string[];
   sets: SetInfo[];
 }
 
 const STRENGTH_TIERS: StrengthTierFilter[] = ['Strong', 'Moderate', 'Weak'];
+
+/**
+ * This toolbar carries only the ink buttons inline, so the desktop modal must
+ * offer cost and inkwell. Left to the dialog's default (Browse's toolbar), it hid
+ * both: cost at 1580px and wider, inkwell at every desktop width.
+ */
+const TOOLBAR_CARRIES = {cost: false, inkwell: false};
+
+type FilterUpdate = (update: SetStateAction<SynergyFilterState>) => void;
+
+const toggled = <T,>(values: T[], value: T) =>
+  values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
+
+/** Modal filters only: strength is controlled by its own inline toggles. */
+function countActiveFilters({inkFilters, typeFilters, costFilters, filters}: SynergyFilterState): number {
+  return inkFilters.length + typeFilters.length + costFilters.length + countFilterOptions(filters);
+}
+
+/** A chip that clears one `filters` option. */
+function optionChip(id: string, label: string, key: keyof CardFilterOptions, update: FilterUpdate): ChipData {
+  return {id, label, onDismiss: () => update((prev) => ({...prev, filters: {...prev.filters, [key]: undefined}}))};
+}
+
+/** One chip per value of a list dimension; dismissing it removes that value. */
+function listChips<T extends string | number>(
+  values: T[],
+  key: 'inkFilters' | 'typeFilters' | 'costFilters',
+  label: (value: T) => string,
+  update: FilterUpdate,
+): ChipData[] {
+  return values.map((value) => ({
+    id: `${key}:${value}`,
+    label: label(value),
+    onDismiss: () => update((prev) => ({...prev, [key]: (prev[key] as T[]).filter((v) => v !== value)})),
+  }));
+}
+
+/**
+ * The ink modifiers. Desktop has no inline control for either, and phones only
+ * reach them in the drawer, so a chip is the one place they always show.
+ */
+function inkModeChips({inkFilters, filters}: SynergyFilterState, update: FilterUpdate): ChipData[] {
+  const chips: ChipData[] = [];
+  if (filters.inkMatch === 'dual' && offersDualOnly(inkFilters.length)) {
+    chips.push(optionChip('inkmatch:dual', 'Dual-ink cards', 'inkMatch', update));
+  }
+  if (filters.inkwell) {
+    chips.push(optionChip(`inkwell:${filters.inkwell}`, filters.inkwell === 'inkable' ? 'Inkable' : 'Uninkable', 'inkwell', update));
+  }
+  return chips;
+}
+
+/** The modal's chip and logo options: every rarity, keyword, classification and set picked. */
+function selectChips({filters}: SynergyFilterState, update: FilterUpdate): ChipData[] {
+  return [
+    ...traitChips(filters.rarities, 'rarities', update),
+    ...traitChips(filters.keywords, 'keywords', update),
+    ...traitChips(filters.classifications, 'classifications', update),
+    ...traitChips(filters.setCodes, 'setCodes', update, (code) => `Set ${code}`),
+  ];
+}
+
+/**
+ * One chip per picked keyword, classification or set (several since the chip
+ * and logo pickers). Dismissing drops just that value from the CURRENT state,
+ * and the last one clears the option.
+ */
+function traitChips(
+  values: string[] | undefined,
+  key: 'keywords' | 'classifications' | 'setCodes' | 'rarities',
+  update: FilterUpdate,
+  label: (value: string) => string = (value) => value,
+): ChipData[] {
+  return (values ?? []).map((value) => ({
+    id: `${key}:${value}`,
+    label: label(value),
+    onDismiss: () =>
+      update((prev) => {
+        const rest = (prev.filters[key] ?? []).filter((v) => v !== value);
+        return {...prev, filters: {...prev.filters, [key]: rest.length > 0 ? rest : undefined}};
+      }),
+  }));
+}
+
+/**
+ * Chips for the active filters (strength excluded; it has its own toggle row).
+ * Desktop shows the ink icons inline, so ink chips are phone-only. Dismissals use
+ * functional updates, to avoid stale closures under rapid interaction.
+ */
+function buildChips(state: SynergyFilterState, isMobile: boolean, update: FilterUpdate): ChipData[] {
+  return [
+    ...(isMobile ? listChips(state.inkFilters, 'inkFilters', String, update) : []),
+    ...inkModeChips(state, update),
+    ...listChips(state.typeFilters, 'typeFilters', String, update),
+    ...listChips(state.costFilters, 'costFilters', (cost) => `Cost ${cost}`, update),
+    ...selectChips(state, update),
+  ];
+}
 
 export function SynergyToolbar({
   filterState,
@@ -41,90 +140,20 @@ export function SynergyToolbar({
   isMobile,
   uniqueKeywords,
   uniqueClassifications,
+  uniqueRarities,
   sets,
 }: SynergyToolbarProps) {
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const {inkFilters, typeFilters, costFilters, filters, strengthFilters} = filterState;
+  const {inkFilters, strengthFilters} = filterState;
 
-  // Count active modal filters only (strength is controlled via inline toggles, not the modal)
-  const activeFilterCount =
-    inkFilters.length +
-    typeFilters.length +
-    costFilters.length +
-    [filters.keywords?.length, filters.classifications?.length, filters.setCode].filter(Boolean)
-      .length;
+  // EVERY write goes through here, so the Dual-ink cards switch can never outlive the ink
+  // selection that offered it (see `withoutStaleDualOnly`), whichever control
+  // changed the inks.
+  const update: FilterUpdate = (next) =>
+    onFilterChange((prev) => withoutStaleDualOnly(typeof next === 'function' ? next(prev) : next));
 
-  // Build chip list from active filters (strength excluded; it has its own toggle row)
-  // Desktop shows ink icons inline, so skip ink chips there
-  // Uses functional updaters in onDismiss to avoid stale closure bugs under rapid interaction.
-  const chips: ChipData[] = (() => {
-    const result: ChipData[] = [];
-    if (isMobile) {
-      for (const ink of inkFilters) {
-        result.push({
-          id: `ink:${ink}`,
-          label: ink,
-          onDismiss: () =>
-            onFilterChange((prev) => ({
-              ...prev,
-              inkFilters: prev.inkFilters.filter((i) => i !== ink),
-            })),
-        });
-      }
-    }
-    for (const type of typeFilters) {
-      result.push({
-        id: `type:${type}`,
-        label: type,
-        onDismiss: () =>
-          onFilterChange((prev) => ({
-            ...prev,
-            typeFilters: prev.typeFilters.filter((t) => t !== type),
-          })),
-      });
-    }
-    for (const cost of costFilters) {
-      result.push({
-        id: `cost:${cost}`,
-        label: `Cost ${cost}`,
-        onDismiss: () =>
-          onFilterChange((prev) => ({
-            ...prev,
-            costFilters: prev.costFilters.filter((c) => c !== cost),
-          })),
-      });
-    }
-    if (filters.keywords?.length) {
-      result.push({
-        id: `keyword:${filters.keywords[0]}`,
-        label: filters.keywords[0],
-        onDismiss: () =>
-          onFilterChange((prev) => ({...prev, filters: {...prev.filters, keywords: undefined}})),
-      });
-    }
-    if (filters.classifications?.length) {
-      result.push({
-        id: `classification:${filters.classifications[0]}`,
-        label: filters.classifications[0],
-        onDismiss: () =>
-          onFilterChange((prev) => ({
-            ...prev,
-            filters: {...prev.filters, classifications: undefined},
-          })),
-      });
-    }
-    if (filters.setCode) {
-      result.push({
-        id: `set:${filters.setCode}`,
-        label: `Set ${filters.setCode}`,
-        onDismiss: () =>
-          onFilterChange((prev) => ({...prev, filters: {...prev.filters, setCode: undefined}})),
-      });
-    }
-    return result;
-  })();
-
+  const chips = buildChips(filterState, isMobile, update);
   const hasChips = chips.length > 0;
 
   const handleApplyFilters = (
@@ -133,7 +162,7 @@ export function SynergyToolbar({
     costs: number[],
     opts: CardFilterOptions,
   ) => {
-    onFilterChange((prev) => ({
+    update((prev) => ({
       ...prev,
       inkFilters: inks,
       typeFilters: types,
@@ -143,21 +172,16 @@ export function SynergyToolbar({
   };
 
   const handleClearAll = () => {
-    onFilterChange(EMPTY_SYNERGY_FILTERS);
+    update(EMPTY_SYNERGY_FILTERS);
   };
 
   const toggleInk = (ink: Ink) => {
-    onFilterChange((prev) => ({
-      ...prev,
-      inkFilters: prev.inkFilters.includes(ink)
-        ? prev.inkFilters.filter((i) => i !== ink)
-        : [...prev.inkFilters, ink],
-    }));
+    update((prev) => ({...prev, inkFilters: toggled(prev.inkFilters, ink)}));
   };
 
   const toggleStrength = (tier: StrengthTierFilter) => {
     // Single-select: clicking the active tier deselects, clicking another switches
-    onFilterChange((prev) => ({
+    update((prev) => ({
       ...prev,
       strengthFilters: prev.strengthFilters.includes(tier) ? [] : [tier],
     }));
@@ -176,7 +200,7 @@ export function SynergyToolbar({
         }}>
         <FiltersButton
           onClick={() => setFilterOpen(true)}
-          activeCount={activeFilterCount}
+          activeCount={countActiveFilters(filterState)}
           isMobile={isMobile}
         />
 
@@ -243,12 +267,14 @@ export function SynergyToolbar({
         onClose={() => setFilterOpen(false)}
         onApply={handleApplyFilters}
         variant={isMobile ? 'drawer' : 'modal'}
+        toolbarCarries={TOOLBAR_CARRIES}
         inkFilters={inkFilters}
-        typeFilters={typeFilters}
-        costFilters={costFilters}
-        filters={filters}
+        typeFilters={filterState.typeFilters}
+        costFilters={filterState.costFilters}
+        filters={filterState.filters}
         uniqueKeywords={uniqueKeywords}
         uniqueClassifications={uniqueClassifications}
+        uniqueRarities={uniqueRarities}
         sets={sets}
       />
     </>

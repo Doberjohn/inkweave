@@ -4,6 +4,7 @@ import {
   fetchCardsFromLocal,
   getUniqueKeywords,
   getUniqueClassifications,
+  getUniqueRarities,
   getUniqueSets,
 } from '../../cards';
 import {whenLoadedAndIdle} from '../../../shared/lib/whenLoadedAndIdle';
@@ -22,6 +23,8 @@ export interface UseCardDataReturn {
   totalCards: number;
   uniqueKeywords: string[];
   uniqueClassifications: string[];
+  /** The pool's rarities in rarity order: the Rarity filter's options. */
+  uniqueRarities: string[];
   uniqueSets: string[];
   /** Set info with names and codes */
   sets: SetInfo[];
@@ -104,6 +107,7 @@ export function useCardData({deferInitialLoad = false}: UseCardDataOptions = {})
 
   const uniqueKeywords = getUniqueKeywords(cards);
   const uniqueClassifications = getUniqueClassifications(cards);
+  const uniqueRarities = getUniqueRarities(cards);
   const uniqueSets = getUniqueSets(cards);
 
   return {
@@ -113,6 +117,7 @@ export function useCardData({deferInitialLoad = false}: UseCardDataOptions = {})
     totalCards: cards.length,
     uniqueKeywords,
     uniqueClassifications,
+    uniqueRarities,
     uniqueSets,
     sets,
     retryLoad,

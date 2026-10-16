@@ -13,7 +13,10 @@ import path from 'node:path';
 interface RawCard {
   id: number | string;
   fullName: string;
-  variants?: {rarity: string}[];
+  setCode?: string;
+  /** Collector number. */
+  number?: number;
+  variants?: {id: number | string; rarity: string}[];
 }
 
 const allCards = JSON.parse(
@@ -36,4 +39,30 @@ export function cardFullNameById(id: string): string {
 /** The rarities of a card's alternate printings (#625), e.g. ['Enchanted']; [] for none. */
 export function cardVariantRarities(id: string): string[] {
   return (cardById(id).variants ?? []).map((v) => v.rarity);
+}
+
+/** The first set of the Core format (`MIN_CORE_SET` in the engine). */
+const MIN_CORE_SET = 9;
+
+/** The newest Core set: the one collection mode's binder opens on. */
+export function newestCoreSet(): string {
+  const codes = allCards.cards.map((c) => Number(c.setCode)).filter((code) => code >= MIN_CORE_SET);
+  return String(Math.max(...codes));
+}
+
+/** A set's cards in collector order, as the binder's first pockets hold them. */
+export function setCards(setCode: string): RawCard[] {
+  return allCards.cards
+    .filter((c) => c.setCode === setCode)
+    .sort((a, b) => (a.number ?? 0) - (b.number ?? 0));
+}
+
+/**
+ * A set's Epic, Enchanted and Iconic printings (#625), each a pocket of its own in the
+ * binder, in the order their base cards come.
+ */
+export function setPrintings(setCode: string): {id: string; rarity: string}[] {
+  return setCards(setCode).flatMap((c) =>
+    (c.variants ?? []).map((v) => ({id: String(v.id), rarity: v.rarity})),
+  );
 }

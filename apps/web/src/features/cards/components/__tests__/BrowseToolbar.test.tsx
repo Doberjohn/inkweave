@@ -1,6 +1,7 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
 import {render, screen, fireEvent, within} from '@testing-library/react';
 import {BrowseToolbar} from '../BrowseToolbar';
+import {BINDER_SORT_OPTIONS} from '../../../collection/binderCards';
 import type {CardFilterOptions} from '../../loader';
 import type {Ink} from 'inkweave-synergy-engine';
 import type {CardTypeFilter, BrowseSortOrder} from '../../../../shared/constants';
@@ -95,6 +96,25 @@ describe('BrowseToolbar', () => {
 
     fireEvent.click(screen.getByText('Character'));
     expect(onToggleType).toHaveBeenCalledWith('Character');
+  });
+
+  it('renders one chip per picked keyword, and dismissing one keeps the rest', () => {
+    const onFiltersChange = vi.fn();
+    render(<BrowseToolbar {...defaultProps({filters: {keywords: ['Evasive', 'Ward']}, onFiltersChange})} />);
+
+    expect(screen.getByText('Evasive')).toBeInTheDocument();
+    expect(screen.getByText('Ward')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Evasive'));
+    expect(onFiltersChange).toHaveBeenCalledWith({keywords: ['Ward']});
+  });
+
+  it('shows a whole kind of rarities as one chip named for its preset, which clears them all', () => {
+    const onFiltersChange = vi.fn();
+    render(<BrowseToolbar {...defaultProps({filters: {rarities: ['Iconic', 'Epic', 'Enchanted']}, onFiltersChange})} />);
+    expect(screen.queryByText('Epic')).toBeNull();
+    fireEvent.click(screen.getByText('Alt art cards'));
+    expect(onFiltersChange).toHaveBeenCalledWith({rarities: undefined});
   });
 
   it('renders selected costs as one combined chip on mobile, sorted, clearing all on dismiss', () => {
@@ -202,5 +222,53 @@ describe('BrowseToolbar', () => {
     expect(screen.getByRole('button', {name: 'Cost 4'})).toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Filter by Inkable'})).not.toBeInTheDocument();
     expect(screen.getByRole('button', {name: 'Filter by Uninkable'})).toBeInTheDocument();
+  });
+});
+
+// Browse's own toolbar (owner, 2026-10-08): Collection at the far end, the sort beside
+// Filters, and on desktop a toolbar docked over the side panel.
+describe('BrowseToolbar on Browse', () => {
+  const docked = (panelOpen: boolean) => ({docked: {panelOpen}});
+  const search = {searchQuery: '', onSearchChange: vi.fn()};
+  const modeSwitch = <button type="button">Collection</button>;
+  /** The toolbar's controls in document order, by name. */
+  const order = () =>
+    [...screen.getByTestId('browse-toolbar').querySelectorAll('button, select, input')].map(
+      (el) => el.getAttribute('aria-label') ?? el.textContent?.trim(),
+    );
+
+  it('puts the sort beside Filters and the mode switch at the far end', () => {
+    render(<BrowseToolbar {...defaultProps({...search, modeSwitch, ...docked(true)})} />);
+    expect(order()).toEqual(['Filters', 'Sort cards', 'Search cards', 'Collection']);
+  });
+
+  it('keeps the sort at the far end of a toolbar without a mode switch (the playstyle page)', () => {
+    render(<BrowseToolbar {...defaultProps(search)} />);
+    expect(order().at(-1)).toBe('Sort cards');
+  });
+
+  it('fills Filters while the docked panel is open, and outlines it while closed', () => {
+    const {rerender} = render(<BrowseToolbar {...defaultProps(docked(true))} />);
+    const filters = () => screen.getByRole('button', {name: 'Filters'});
+    expect(filters()).toHaveAttribute('aria-expanded', 'true');
+    expect(filters().style.background).toContain('gradient');
+
+    rerender(<BrowseToolbar {...defaultProps(docked(false))} />);
+    expect(filters()).toHaveAttribute('aria-expanded', 'false');
+    expect(filters().style.background).toBe('transparent');
+  });
+
+  it('offers the sort options the page passes, so collection mode names its default Collector number', () => {
+    render(<BrowseToolbar {...defaultProps({sortOptions: BINDER_SORT_OPTIONS, ...docked(true)})} />);
+    expect(screen.getByRole('combobox', {name: 'Sort cards'})).toHaveDisplayValue('Collector number');
+  });
+
+  it('shows the active filters as chips only while the docked panel is closed', () => {
+    const props = defaultProps({typeFilters: ['Character'] as CardTypeFilter[]});
+    const {rerender} = render(<BrowseToolbar {...props} {...docked(false)} />);
+    expect(screen.getByRole('button', {name: /Character/})).toBeInTheDocument();
+
+    rerender(<BrowseToolbar {...props} {...docked(true)} />);
+    expect(screen.queryByRole('button', {name: /Character/})).toBeNull();
   });
 });

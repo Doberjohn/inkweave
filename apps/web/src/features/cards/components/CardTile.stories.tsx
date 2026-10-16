@@ -89,6 +89,33 @@ export const Priority: Story = {
   },
 };
 
+// Browse with a printing's rarity picked (owner, 2026-10-08): the tile shows that
+// printing's art and is named for it, while selecting it still selects the card.
+// Baymax and his Epic (#213) because both preview AVIFs are committed.
+export const WithPrinting: Story = {
+  args: {
+    card: createMockCard({
+      id: '14085',
+      name: 'Baymax',
+      version: 'Lab Assistant',
+      fullName: 'Baymax - Lab Assistant',
+      cost: 4,
+      ink: 'Emerald',
+      classifications: ['Storyborn', 'Super', 'Hero', 'Robot'],
+      keywords: [],
+      text: '',
+      strength: 3,
+      willpower: 4,
+      lore: 1,
+      imageUrl: '/card-images-preview/14085.avif',
+      setCode: '14',
+      setNumber: 85,
+    }),
+    printing: {id: '14213', rarity: 'Epic', number: 213, imageUrl: '/card-images-preview/14213.avif'},
+    isSelected: false,
+  },
+};
+
 // Grid-optimized 191x266 image. The mock's base URL uses the small variant's
 // content hash so smallImageUrl's `-sm` derivation resolves to a real file.
 export const SmallImage: Story = {

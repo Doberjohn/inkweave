@@ -1,23 +1,36 @@
 import type {Ink} from 'inkweave-synergy-engine';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from './collectionParser';
+import {binderCardsForSet, isBinderCard} from './binderCards';
+import {ALT_ART_RARITIES} from '../cards/loader';
 
 /**
  * Set-completion tallies for the stats panel (#553 stats spike).
  *
  * Separate from the panel because it is the part with rules in it, and rules
- * deserve tests: what counts as importable, what "complete" and "master" mean,
- * and how a dual-ink card is attributed.
+ * deserve tests: what counts, what "complete" and "master" mean, and how a dual-ink
+ * card is attributed.
  *
- * THE DENOMINATOR IS THE WHOLE DESIGN (owner, 2026-08-14). A Dreamborn export
- * contains exactly five rarities — verified across all 5,329 rows of a real one.
- * Enchanted, Special, Epic and Iconic are never in it, so those slots can never
- * be filled by an import and counting them would put 100% permanently out of
- * reach. Set 1 is 216 binder slots but only 204 importable.
+ * EVERY CARD THE BINDER HOLDS COUNTS (owner, 2026-10-15), the chase printings
+ * included, so the numbers always describe the cards on show: a search the binder
+ * answers with 25 cards, 21 of them held, reads 21 of 25. Until then the headline and
+ * the inks counted only the five rarities of Dreamborn's standard export (owner,
+ * 2026-08-14), which never carries Enchanted, Epic or Iconic; those come in exports of
+ * their own, by rarity, and an import of only the standard one shows them missing, as
+ * the binder does. Special stays out of every count: the binder holds no Special pocket.
  */
 
-/** The rarities a Dreamborn export can actually contain. */
-const IMPORTABLE_RARITIES = new Set(['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary']);
+/**
+ * The binder's chase printings, each a rarity row of its own under the five (owner,
+ * 2026-10-12).
+ *
+ * THEY COME IN ONE FINISH. Every Enchanted and Epic row of the owner's own exports
+ * (2026-10-12) is a foil row, with no zero-count normal row beside it as the promo
+ * export has, so a held one is held in every finish it comes in: it counts toward
+ * master too, or a finished set's master breakdown would read 0 forever. Iconic is
+ * assumed the same; none was in the exports. The same three the Alt art cards preset picks.
+ */
+const CHASE_RARITIES = ALT_ART_RARITIES;
 
 /** One breakdown bucket: an ink, or a rarity. Both are counted identically. */
 interface Slot {
@@ -35,24 +48,14 @@ interface Holding {
 }
 
 interface Tally {
-  /** Cards an import can reach. */
-  importable: number;
+  /** The cards counted: every card the binder holds. */
+  cards: number;
   /** Held in at least one finish. */
   complete: number;
-  /** Held in BOTH finishes. */
+  /** Held in BOTH finishes (a chase printing's one finish counts as both). */
   master: number;
-  /**
-   * Everything outside `IMPORTABLE_RARITIES`: in the binder, never in an export.
-   *
-   * Anchored to the constant rather than re-listing, because the obvious list is
-   * wrong. Enchanted/Epic/Iconic is a real typed concept elsewhere (`VariantRarity`,
-   * `SPECIAL_RARITIES`), so naming only those three actively misleads a reader who
-   * knows the type: this bucket is roughly a third `Special`, plus the `Unknown`
-   * fallback.
-   */
-  chase: number;
-  chaseHeld: number;
   byInk: ({ink: Ink} & Slot)[];
+  /** The rarities the cards have, Common first and the chase printings last (`RARITY_ORDER`). */
   byRarity: ({rarity: string} & Slot)[];
 }
 
@@ -87,41 +90,38 @@ function bump<K>(into: Map<K, Slot>, key: K, held: Holding): void {
 }
 
 /**
+ * Common first, scarcest last, so the rarity rows read as a difficulty ramp: the
+ * rulebook's order, and the filters' (`RARITY_ORDER` in the cards loader).
+ */
+const RARITY_ORDER = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', 'Epic', 'Enchanted', 'Iconic'];
+
+/**
  * Fold one card into the running tallies.
  *
- * Separate from `tallySet` so the per-card RULES (what is importable, what a
- * chase card contributes, how a dual-ink card is attributed) sit apart from the
- * setup and the final sort.
+ * Separate from `tallySet` so the per-card RULES (what a chase printing's one finish
+ * counts as, how a dual-ink card is attributed) sit apart from the setup and the final
+ * sort. A card of a rarity outside `RARITY_ORDER` counts everywhere but gets no row.
  */
 function addCard(acc: Accumulator, card: LorcanaCard, entries: CollectionEntries): void {
-  const held = holdingOf(entries[card.id]);
+  if (!isBinderCard(card)) return;
+  const holding = holdingOf(entries[card.id]);
   const rarity = card.rarity ?? 'Unknown';
+  const held = CHASE_RARITIES.has(rarity) ? {any: holding.any, both: holding.any} : holding;
 
-  if (!IMPORTABLE_RARITIES.has(rarity)) {
-    acc.totals.chase++;
-    if (held.any) acc.totals.chaseHeld++;
-    return;
-  }
-
-  acc.totals.importable++;
+  acc.totals.cards++;
   if (held.any) acc.totals.complete++;
   if (held.both) acc.totals.master++;
 
   for (const i of inksOf(card)) bump(acc.ink, i, held);
-  bump(acc.rarity, rarity, held);
+  if (RARITY_ORDER.includes(rarity)) bump(acc.rarity, rarity, held);
 }
-
-/** Common first, scarcest last, so the rarity rows read as a difficulty ramp. */
-const RARITY_ORDER = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary'];
 
 export function tallySet(cards: LorcanaCard[], entries: CollectionEntries): Tally {
   const acc: Accumulator = {
     totals: {
-      importable: 0,
+      cards: 0,
       complete: 0,
       master: 0,
-      chase: 0,
-      chaseHeld: 0,
       byInk: [],
       byRarity: [],
     },
@@ -138,5 +138,63 @@ export function tallySet(cards: LorcanaCard[], entries: CollectionEntries): Tall
     .map(([rarity, slot]) => ({rarity, ...slot}))
     .sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
   return acc.totals;
+}
+
+/** Done: every one of a nonzero total. A set with nothing to count is never finished. */
+export const isFinished = (value: number, total: number) => total > 0 && value === total;
+
+/**
+ * Whole percent, rounded DOWN, so 100% only ever means finished (owner, 2026-10-12):
+ * rounding showed Winterspell's 203 of 204 as 100%. Nothing to count reads 0%.
+ */
+// Times 100 before dividing: (29 / 100) * 100 is 28.999999999999996 in floating point, which
+// floors to 28. Whole counts times 100 divide exactly whenever the share is a whole percent.
+export const percentOf = (value: number, total: number) => (total === 0 ? 0 : Math.floor((value * 100) / total));
+
+/**
+ * The whole collection's numbers (owner, 2026-10-12): the sets' tallies summed. Its copies,
+ * foils and playsets went with their row, and its sets done each way with the headlines'
+ * longer counts (owner, 2026-10-15).
+ */
+interface CollectionTotals {
+  cards: number;
+  complete: number;
+  master: number;
+  /** Every set's breakdowns summed (owner, 2026-10-12): the Whole collection panel's. */
+  byInk: Tally['byInk'];
+  byRarity: Tally['byRarity'];
+}
+
+/** Add one set's breakdown into the collection's, bucket by bucket. */
+function addSlots<K>(into: Map<K, Slot>, slots: readonly ({key: K} & Slot)[]): void {
+  for (const {key, complete, master, total} of slots) {
+    const sum = into.get(key) ?? {complete: 0, master: 0, total: 0};
+    into.set(key, {complete: sum.complete + complete, master: sum.master + master, total: sum.total + total});
+  }
+}
+
+/**
+ * Every set's tally, in the order given (the panel's: newest first), and the whole
+ * collection's totals, counted as `tallySet` counts a set. Given only the cards a
+ * page's filters let through, every number describes those (owner, 2026-10-15).
+ */
+export function tallyCollection(cards: LorcanaCard[], entries: CollectionEntries, setCodes: readonly string[]) {
+  const totals: CollectionTotals = {cards: 0, complete: 0, master: 0, byInk: [], byRarity: []};
+  const ink = new Map<Ink, Slot>();
+  const rarity = new Map<string, Slot>();
+  const sets = setCodes.map((code) => {
+    const tally = tallySet(binderCardsForSet(cards, code), entries);
+    totals.cards += tally.cards;
+    totals.complete += tally.complete;
+    totals.master += tally.master;
+    addSlots(ink, tally.byInk.map(({ink: key, ...slot}) => ({key, ...slot})));
+    addSlots(rarity, tally.byRarity.map(({rarity: key, ...slot}) => ({key, ...slot})));
+    return {code, tally};
+  });
+  totals.byInk = [...ink].map(([key, slot]) => ({ink: key, ...slot}));
+  totals.byRarity = [...rarity]
+    .map(([key, slot]) => ({rarity: key, ...slot}))
+    .sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
+  return {totals, sets};
 }
 

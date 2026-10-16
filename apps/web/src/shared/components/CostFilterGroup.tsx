@@ -9,6 +9,8 @@ interface CostFilterGroupProps {
   costs?: readonly number[];
   iconSize?: number;
   style?: React.CSSProperties;
+  /** Draw the icons in the uninkable cost hexagon, while the Uninkable filter is on. */
+  uninkable?: boolean;
 }
 
 /** Inline ink cost filter icons with gold glow, matching InkFilterGroup pattern. */
@@ -18,6 +20,7 @@ export function CostFilterGroup({
   costs = COST_BUTTONS,
   iconSize = 28,
   style,
+  uninkable = false,
 }: CostFilterGroupProps) {
   return (
     <div role="group" aria-label="Ink cost filters" style={{display: 'flex', gap: 4, ...style}}>
@@ -32,7 +35,7 @@ export function CostFilterGroup({
           inactiveColor="transparent"
           inactiveTextColor="transparent"
           aria-label={`Cost ${cost}${cost >= 9 ? '+' : ''}`}>
-          <CostIcon cost={cost} size={iconSize} />
+          <CostIcon cost={cost} size={iconSize} inkwell={uninkable ? 'uninkable' : 'inkable'} />
         </FilterButton>
       ))}
     </div>

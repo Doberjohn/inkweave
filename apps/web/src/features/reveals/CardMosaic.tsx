@@ -4,7 +4,7 @@ import {CardSlot} from './CardSlot';
 import {isSlotDimmed} from './rarity';
 import {slotSize} from './mosaicSizing';
 import {PER_INK} from './setComposition';
-import {INK_BASE} from '../../shared/constants';
+import {placeCards} from './boardOrder';
 import {useContainerWidth} from '../../shared/hooks';
 
 /**
@@ -37,11 +37,6 @@ export const ROWS_MOBILE: Record<Ink, readonly number[]> = {
 /** How many random revealed slots burst in on each ink switch. */
 const POP_COUNT = 5;
 
-// A card's slot is `number - INK_BASE[ink]` (the first collector number of the
-// ink's block, derived from PER_INK in shared/constants/revealSet.ts), so cards
-// read across in true set order and unrevealed numbers show as gaps in the right
-// place rather than trailing off the end.
-
 function pickRandom(pool: number[], n: number): Set<number> {
   const a = [...pool];
   for (let i = a.length - 1; i > 0; i--) {
@@ -49,51 +44,6 @@ function pickRandom(pool: number[], n: number): Set<number> {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return new Set(a.slice(0, n));
-}
-
-/** The card's absolute slot from its collector number, or -1 if it can't claim one. */
-function slotFor(card: LorcanaCard, base: number, slotCount: number): number {
-  if (card.setNumber == null) return -1;
-  const slot = card.setNumber - base;
-  return slot >= 0 && slot < slotCount ? slot : -1;
-}
-
-/** Empty slot indices, highest first — where leftover cards spill in. */
-function emptySlotsFromEnd(placed: (LorcanaCard | undefined)[]): number[] {
-  const empty: number[] = [];
-  for (let i = placed.length - 1; i >= 0; i--) {
-    if (placed[i] == null) empty.push(i);
-  }
-  return empty;
-}
-
-/**
- * Lay the revealed cards into the ink's `slotCount` slots by collector number.
- * In-range numbered cards (number-base ∈ [0,slotCount)) claim their exact slot.
- * Anything that can't be placed absolutely — cards numbered outside the block or
- * with no number — fills the remaining gaps from the end so every revealed card
- * still shows.
- */
-function placeCards(ink: Ink, cards: LorcanaCard[], slotCount: number): (LorcanaCard | undefined)[] {
-  const placed: (LorcanaCard | undefined)[] = new Array(slotCount).fill(undefined);
-  const base = INK_BASE[ink];
-  const leftovers: LorcanaCard[] = [];
-
-  for (const card of cards) {
-    const slot = slotFor(card, base, slotCount);
-    if (slot >= 0 && placed[slot] == null) {
-      placed[slot] = card;
-    } else {
-      leftovers.push(card);
-    }
-  }
-
-  // Spill outliers / numberless cards into the remaining gaps from the end.
-  const empty = emptySlotsFromEnd(placed);
-  leftovers.forEach((card, i) => {
-    if (i < empty.length) placed[empty[i]] = card;
-  });
-  return placed;
 }
 
 interface CardMosaicProps {

@@ -16,7 +16,7 @@ export interface Printing {
 }
 
 /** Accessible name for a printing's image: the card name, plus the rarity for a variant. */
-export function printingAlt(card: LorcanaCard, printing: Printing): string {
+export function printingAlt(card: LorcanaCard, printing: Pick<Printing, 'rarity'>): string {
   return printing.rarity ? `${card.fullName}, ${printing.rarity} printing` : card.fullName;
 }
 
@@ -57,20 +57,23 @@ export function hasForeignScan(card: LorcanaCard): boolean {
 }
 
 /**
- * The printing index selected for `cardId`, 0 (Standard) until one is selected. A card starts
- * on its Standard printing, or on `initialIndex` (read once on mount). Paging to another card
- * drops the selection, and so does `resetWhen` (the modal closing, or entering a comparison,
- * which always shows base art), so the Standard printing is back once it clears. The
- * render-time reset is the same pattern as the modal's `useCardTranslation`.
+ * The printing index shown for `cardId`. Each card starts on `initialIndex` as it arrives,
+ * opened or paged to: the printing the open names for it, else its Standard printing (0).
+ * The same card arrives again when it is reached with another printing to start on: a
+ * binder holds a card and its printings as pockets side by side under Name A-Z, and paging
+ * between them keeps the id. `resetWhen` (the modal closing, or entering a comparison,
+ * which always shows base art) puts the card back on Standard for good: its start applies
+ * again only once another card has arrived. The render-time updates are the same pattern
+ * as the modal's `useCardTranslation`.
  */
 function useCardSelection(cardId: string, resetWhen: boolean, initialIndex: number) {
-  const [selected, setSelected] = useState<{cardId: string; index: number} | null>(() =>
-    initialIndex > 0 ? {cardId, index: initialIndex} : null,
-  );
-  const keep = !resetWhen && selected?.cardId === cardId;
-  if (selected && !keep) setSelected(null);
-  const select = (next: number) => setSelected(next === 0 ? null : {cardId, index: next});
-  return {selectedIndex: keep ? selected.index : 0, select};
+  const start = resetWhen ? 0 : Math.max(initialIndex, 0);
+  const [selected, setSelected] = useState({cardId, initialIndex, index: start});
+  const arrived = selected.cardId !== cardId || selected.initialIndex !== initialIndex;
+  if (arrived) setSelected({cardId, initialIndex, index: start});
+  else if (resetWhen && selected.index !== 0) setSelected({cardId, initialIndex, index: 0});
+  const select = (next: number) => setSelected({cardId, initialIndex, index: next});
+  return {selectedIndex: arrived || resetWhen ? start : selected.index, select};
 }
 
 /**
@@ -79,7 +82,8 @@ function useCardSelection(cardId: string, resetWhen: boolean, initialIndex: numb
  * pill, already settled) records, and so does `settle` (the strip at rest after a swipe, from
  * PrintingCarousel's `onSettle`). `select` only follows the strip's live index as a swipe
  * crosses printings, so it records nothing. `initialKey` (a variant's id) starts the card on
- * that printing instead of Standard: the reveals board opens its special slots that way.
+ * that printing instead of Standard: the reveals board opens its special slots that way, and
+ * Browse names one for each card the modal's arrows reach (CardModalContext's `printingFor`).
  */
 export function usePrintingSelection(
   card: LorcanaCard,

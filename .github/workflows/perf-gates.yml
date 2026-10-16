@@ -57,6 +57,7 @@ jobs:
       VITE_SENTRY_DSN: https://public@ci.placeholder.ingest.sentry.io/1
       VITE_LOCAL_IMAGES: 'true'
       VITE_SHOW_ACCOUNTS: 'true'
+      VITE_SHOW_COLLECTION: 'true'
       VITE_IS_REVEAL_SEASON: 'true'
       VITE_SHOW_BETA_NOTICE: 'true'
 

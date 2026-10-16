@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import type {Ink} from '../../features/cards';
-import type {CardFilterOptions} from '../../features/cards/loader';
+import {countFilterOptions, offersDualOnly, type CardFilterOptions} from '../../features/cards/loader';
 import type {CardTypeFilter} from '../constants';
 
 interface UseDraftFiltersParams {
@@ -48,7 +48,17 @@ export function useDraftFilters({
   }
 
   const toggleInk = (ink: Ink) => {
-    setDraftInks((prev) => toggleItem(prev, ink));
+    const next = toggleItem(draftInks, ink);
+    setDraftInks(next);
+    // As the URL does (`dropDualOnlyWhenNotOffered`): inks that no longer offer Dual-ink
+    // cards drop the switch, or it came back lit for the next ink, unasked.
+    if (!offersDualOnly(next.length) && draftFilters.inkMatch) {
+      setDraftFilters((prev) => {
+        const rest = {...prev};
+        delete rest.inkMatch;
+        return rest;
+      });
+    }
   };
 
   const toggleType = (type: CardTypeFilter) => {
@@ -66,16 +76,8 @@ export function useDraftFilters({
     setDraftFilters({});
   };
 
-  const activeFilterCount =
-    draftInks.length +
-    draftTypes.length +
-    draftCosts.length +
-    [
-      draftFilters.keywords?.length,
-      draftFilters.classifications?.length,
-      draftFilters.setCode,
-      draftFilters.inkwell,
-    ].filter(Boolean).length;
+  // The same count as the toolbar's badge (countFilterOptions): every picked value.
+  const activeFilterCount = draftInks.length + draftTypes.length + draftCosts.length + countFilterOptions(draftFilters);
 
   return {
     draftInks,

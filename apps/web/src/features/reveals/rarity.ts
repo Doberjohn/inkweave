@@ -40,6 +40,17 @@ export function rarityConfigOf(rarity: string | undefined): RarityConfig | undef
   return RARITIES.find((r) => r.key === key);
 }
 
+/** The keys RaritySymbol draws: the five main-set rarities and the special printings. */
+const SYMBOL_KEYS = new Set([...RARITIES, ...Object.values(SPECIAL_RARITIES)].map((r) => r.key));
+
+/**
+ * Whether a raw `card.rarity` has a symbol (case-insensitive). LorcanaJSON's
+ * "Special", its promo printings, has none.
+ */
+export function hasRaritySymbol(rarity: string): boolean {
+  return SYMBOL_KEYS.has(rarity.trim().toLowerCase());
+}
+
 /**
  * Whether a mosaic slot should fade when a rarity is highlighted: true for any slot
  * that isn't a card of the selected rarity. Non-matching revealed cards AND empty

@@ -25,23 +25,23 @@ test.describe('Card Search and Filtering', () => {
     await expect(page.getByPlaceholder('Search cards...')).toBeVisible();
   });
 
-  test('should open filter modal on browse page', async ({page}) => {
+  test('should toggle the docked filters panel on browse page', async ({page}) => {
     // Navigate to browse page via "Browse all cards" CTA
     await page.getByTestId('cta-browse').click();
-    await page.waitForTimeout(200);
-
-    // Should be on /browse
     await expect(page).toHaveURL(/\/browse/);
 
-    // Click the Filters button to open the filter modal
-    await page.getByRole('button', {name: /Filters/}).click();
-    await page.waitForTimeout(200);
+    // On desktop the filters are a panel docked beside the cards, open by default (owner,
+    // 2026-10-07), and the Filters button closes and reopens it; the dialog is for narrower
+    // screens. Ink Cost is one of the sections the panel opens unfolded.
+    const panel = page.getByRole('complementary', {name: 'Filters'});
+    await expect(panel.getByRole('button', {name: 'Cost 1'})).toBeVisible();
 
-    // Filter modal should be visible with card type options (ink/cost/inkwell are inline on desktop)
-    const modal = page.getByTestId('filter-modal');
-    await expect(modal).toBeVisible();
-    await expect(modal.getByRole('button', {name: 'Character'})).toBeVisible();
-    await expect(modal.getByRole('button', {name: 'Action'})).toBeVisible();
+    const filtersButton = page.getByRole('button', {name: /Filters/});
+    await filtersButton.click();
+    await expect(panel).toHaveCount(0);
+
+    await filtersButton.click();
+    await expect(panel.getByRole('button', {name: 'Cost 1'})).toBeVisible();
   });
 
   test('should deep link to browse with ink filter in URL', async ({page}) => {

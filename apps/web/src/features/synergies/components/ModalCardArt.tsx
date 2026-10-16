@@ -6,8 +6,9 @@ import {
   PrintingCarousel,
   PrintingPills,
 } from '../../../shared/components';
-import {RADIUS} from '../../../shared/constants';
+import {EASING, RADIUS} from '../../../shared/constants';
 import {CardPrintingContext, CardTranslationContext} from './modalArtState';
+import {DESKTOP_ART_CONTROLS_STYLE} from './cardOverviewModalStyles';
 
 /**
  * The card overview modal's card art: its scan, or for a card with an alternate printing
@@ -63,44 +64,38 @@ export function ModalCardArt({
 }
 
 /**
- * Desktop's printing switcher (#625; mobile's is in MobileArtControls, under the card). Like
- * the translation toggle, it hides but keeps its place where the card image is gone.
+ * Desktop's printing pills and translation toggle, in a row under the card (owner,
+ * 2026-10-08; they sat in the header before). The art shrinks to make room
+ * (`artScaleTransform`), so the column keeps its height and nothing under the card can be
+ * clipped. In a comparison, which shows the base art, they fade out while the art grows back.
+ * The toggle hides but keeps its place while the scan on show is English, so the pills never
+ * move under the pointer.
  */
-export function HeaderPrintingPills({hidden}: {hidden: boolean}) {
-  const printing = useContext(CardPrintingContext);
-  if (!printing) return null;
-  return (
-    <span style={{visibility: hidden ? 'hidden' : undefined}}>
-      <PrintingPills
-        printings={printing.printings}
-        index={printing.index}
-        onSelect={printing.pick}
-      />
-    </span>
-  );
-}
-
-/**
- * Desktop's translation toggle (mobile's is in MobileArtControls, under the card). Where the
- * card image is gone (comparison, an expanded group), or shows a printing whose scan is
- * already English, it hides but keeps its place, so the header keeps its height and the modal
- * does not jump.
- */
-export function HeaderTranslationToggle({hidden}: {hidden: boolean}) {
+export function DesktopArtControls({hidden}: {hidden: boolean}) {
   const translation = useContext(CardTranslationContext);
-  if (!translation) return null;
+  const printing = useContext(CardPrintingContext);
   return (
-    <span style={{visibility: hidden || !translation.language ? 'hidden' : undefined}}>
-      <CardTranslationToggle shown={translation.shown} onToggle={translation.toggle} />
-    </span>
+    <div
+      style={{
+        ...DESKTOP_ART_CONTROLS_STYLE,
+        opacity: hidden ? 0 : 1,
+        visibility: hidden ? 'hidden' : undefined,
+        transition: `opacity 0.2s ${EASING.smooth}, visibility 0.2s`,
+      }}>
+      {printing && <PrintingPills printings={printing.printings} index={printing.index} onSelect={printing.pick} />}
+      {translation && (
+        <span style={{visibility: translation.language ? undefined : 'hidden'}}>
+          <CardTranslationToggle shown={translation.shown} onToggle={translation.toggle} />
+        </span>
+      )}
+    </div>
   );
 }
 
 /**
- * Mobile's printing pills and translation toggle, under the card. Desktop keeps both in the
- * header, since its body never scrolls and a short viewport would clip anything under the
- * card. Mobile keeps them through comparison too, because its hidden default body must not
- * reflow under the comparison overlay.
+ * Mobile's printing pills and translation toggle, under the card, in the column's flow (the
+ * mobile body scrolls). Mobile keeps them through comparison too, because its hidden default
+ * body must not reflow under the comparison overlay.
  */
 export function MobileArtControls() {
   const translation = useContext(CardTranslationContext);

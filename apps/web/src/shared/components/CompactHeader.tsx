@@ -1,8 +1,8 @@
 import {type ReactNode, useState} from 'react';
 import {Link, NavLink} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../constants';
-import {useAutocomplete} from '../hooks';
+import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX, searchFieldStyle} from '../constants';
+import {useAutocomplete, useHover} from '../hooks';
 import {useRevealPhase} from '../../features/reveals';
 import {AuthButton} from './AuthButton';
 import {CTA_FILLED_STYLE} from './ctaStyles';
@@ -69,6 +69,7 @@ interface InteractionState {
 /** All knobs needed to compute the search-input wrapper style. */
 interface SearchInputStyleConfig {
   focused: boolean;
+  hovered: boolean;
   height: number;
   padding: string;
 }
@@ -139,25 +140,19 @@ function getSearchSizing(viewport: ViewportConfig): SearchSizing {
   return {iconSize: 16, iconLeft: 12, inputHeight: 36, inputPadding: '0 12px 0 36px', maxWidth: 320};
 }
 
+/** The header's search: the shared field recipe (`searchFieldStyle`), sized for the header. */
 function getSearchInputStyle(config: SearchInputStyleConfig): React.CSSProperties {
-  const borderColor = config.focused ? GOLD_GLOW.activeBorder : COLORS.searchBorder;
-  const boxShadow = config.focused
-    ? GOLD_GLOW.focusRing
-    : 'none';
   return {
+    ...searchFieldStyle(config),
     width: '100%',
     height: config.height,
     padding: config.padding,
     borderRadius: `${RADIUS.lg}px`,
-    border: `1px solid ${borderColor}`,
-    background: COLORS.searchBg,
     color: COLORS.text,
     fontSize: `${FONT_SIZES.lg}px`,
     fontFamily: FONTS.body,
     boxSizing: 'border-box',
     outline: 'none',
-    boxShadow,
-    transition: `border-color 0.25s ${EASING.snappy}, box-shadow 0.25s ${EASING.snappy}`,
   };
 }
 
@@ -241,6 +236,7 @@ function HeaderSearch({cards, query, onChange, onSubmit, onCardSelect, viewport}
   });
   // The hook's focus state carries the blur delay and cancels it on refocus and unmount.
   const focused = autocomplete.isFocused;
+  const {hovered, hoverProps} = useHover();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     autocomplete.inputProps.onKeyDown(e);
@@ -287,9 +283,10 @@ function HeaderSearch({cards, query, onChange, onSubmit, onCardSelect, viewport}
         aria-label="Search cards"
         placeholder="Search cards..."
         {...autocomplete.inputProps}
+        {...hoverProps}
         onKeyDown={handleKeyDown}
         data-testid="header-search"
-        style={getSearchInputStyle({focused, height: sizing.inputHeight, padding: sizing.inputPadding})}
+        style={getSearchInputStyle({focused, hovered, height: sizing.inputHeight, padding: sizing.inputPadding})}
       />
       <SearchAutocomplete
         suggestions={autocomplete.suggestions}

@@ -10,6 +10,7 @@ export {RevealsGate} from './RevealsGate';
 export {useRevealCards} from './useRevealCards';
 export type {RevealTier, UseRevealCardsReturn} from './useRevealCards';
 export {useRevealProgress} from './useRevealProgress';
+export {mosaicOrder, specialsOrder} from './boardOrder';
 export type {RevealProgress, InkProgress} from './useRevealProgress';
 export {PER_INK, SET_TOTAL} from './setComposition';
 export {RARITIES, rarityConfigOf} from './rarity';

@@ -3,7 +3,7 @@ import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../../cards';
 import {cardPath} from 'inkweave-synergy-engine/card';
 import {smallImageUrl} from '../../cards';
-import {INK_COLORS, COLORS, EASING, FONT_SIZES, RADIUS} from '../../../shared/constants';
+import {INK_COLORS, COLORS, CARD_TILE_RING, EASING, FONT_SIZES, RADIUS, hexRgba} from '../../../shared/constants';
 import {CardLightbox, StrengthBadge} from '../../../shared/components';
 import {isSyntheticMouseEvent, isModifiedClick} from '../../../shared/utils/touchGuard';
 import {getStrengthTier} from '../utils';
@@ -74,6 +74,7 @@ export function SynergyCard({
         onMouseLeave={() => setHovered(false)}
         aria-label={`${card.fullName}, ${badge}`}
         style={{
+          ...CARD_TILE_RING,
           position: 'relative',
           // Mockup `.mini-tile`: 5px radius + neutral var(--border). Wider contexts get the inkier 8px tinted border.
           borderRadius: `${compact ? RADIUS.sm + 1 : RADIUS.lg}px`,
@@ -105,7 +106,7 @@ function ViewDetailsHoverCue({isMobile, compact, hovered}: {isMobile: boolean; c
         position: 'absolute',
         top: 8,
         right: 8,
-        background: 'rgba(13, 13, 20, 0.8)',
+        background: hexRgba(COLORS.background, 0.8),
         color: COLORS.primary,
         fontSize: `${FONT_SIZES.xs}px`,
         fontWeight: 600,
@@ -166,7 +167,7 @@ function CardImageOrFallback({card, colors}: {card: LorcanaCard; colors: typeof 
           objectFit: 'cover',
           display: 'block',
           opacity: imgLoaded ? 1 : 0,
-          transition: 'opacity 0.2s ease',
+          transition: `opacity 0.2s ${EASING.smooth}`,
         }}
       />
     </>
@@ -198,7 +199,7 @@ function StrengthBadgeOverlay({tier, text, explanation, isMobile}: StrengthBadge
         left: 0,
         right: 0,
         padding: isMobile ? '10px 4px 4px' : '12px 6px 5px',
-        background: 'linear-gradient(transparent, rgba(13, 13, 20, 0.85) 30%, rgba(13, 13, 20, 0.95))',
+        background: `linear-gradient(transparent, ${hexRgba(COLORS.background, 0.85)} 30%, ${hexRgba(COLORS.background, 0.95)})`,
         display: 'flex',
         alignItems: 'center',
       }}>

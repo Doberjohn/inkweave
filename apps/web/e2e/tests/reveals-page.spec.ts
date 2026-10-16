@@ -101,6 +101,28 @@ test.describe('Reveals page (flag on)', () => {
     await expect(page.getByTestId('card-overview-modal')).toBeVisible({timeout: 15000});
   });
 
+  test("the card modal's arrows step through the board's cards in mosaic order", async ({page}, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+
+    await page.goto('/reveals');
+    const slots = page.getByTestId('reveal-card-slot');
+    const hasTwo = await slots
+      .nth(1)
+      .waitFor({state: 'visible', timeout: 10000})
+      .then(() => true)
+      .catch(() => false);
+    test.skip(!hasTwo, 'Need two revealed cards on the board to page between them.');
+    // The slots name their cards ("View <card>") in the order the board shows them.
+    const second = ((await slots.nth(1).getAttribute('aria-label')) ?? '').replace(/^View /, '');
+    await slots.first().click();
+
+    const modal = page.getByTestId('card-overview-modal');
+    await expect(modal).toBeVisible({timeout: 15000});
+    // The arrows sit outside the dialog shell (in the frame), so query them at the page level.
+    await page.getByRole('button', {name: 'Next card'}).click();
+    await expect(modal.locator('h1')).toHaveText(second);
+  });
+
   test('franchise card click opens the franchise cards modal', async ({page}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 

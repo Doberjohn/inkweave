@@ -1,4 +1,4 @@
-import type {CardPrinting, LorcanaJSONCard, RawCardVariant} from 'inkweave-synergy-engine';
+import type {CardPrinting, LorcanaJSONCard, RawCardVariant, VariantRarity} from 'inkweave-synergy-engine';
 import {transformCard as baseTransformCard, isCoreSet} from 'inkweave-synergy-engine/card';
 import type {LorcanaCard, Ink, CardType} from './types';
 import {fetchPreviewCards} from './previewCards';
@@ -240,28 +240,46 @@ export async function fetchCardsFromLocal(
 }
 
 /**
- * Typographic single quotes (U+2018, U+2019). iOS Smart Punctuation types ’ for ', and
- * Set 14 preview text prints it. Global flag: use with .replace only.
+ * Apostrophes, straight and typographic (U+2018, U+2019: iOS Smart Punctuation types ’
+ * for ', and Set 14 preview text prints it). DROPPED, not spaced, so "brunos" finds
+ * "Bruno's" as well as either spelling finding the other. Global: .replace only.
  */
-const TYPOGRAPHIC_APOSTROPHE = /[‘’]/g;
+const APOSTROPHES = /['‘’]/g;
 
-/** A string as search compares it: lowercase, with typographic apostrophes spelled '. */
+/**
+ * Every other run of non-letters, non-digits: the " - " between name and version,
+ * periods, commas, "!", "&", repeated spaces. Global: .replace only.
+ */
+const SEPARATORS = /[^\p{L}\p{N}]+/gu;
+
+/**
+ * A string as search compares it: lowercase words separated by single spaces.
+ * Punctuation is never part of what someone means by a name, so "fru fru vip guest"
+ * must find "Fru Fru - VIP Guest" (it used to need the dash typed exactly).
+ */
 function searchKey(value: string): string {
-  return value.toLowerCase().replace(TYPOGRAPHIC_APOSTROPHE, "'");
+  return value.toLowerCase().replace(APOSTROPHES, '').replace(SEPARATORS, ' ').trim();
 }
 
 /**
- * Search cards by name (case-insensitive substring match). Apostrophe styles match each
- * other, so a query typed with ’ finds a name spelled with ', and the reverse.
+ * Search cards by name: EVERY query word must begin a word of the card's name, in
+ * any order (owner, 2026-10-08). So "judy officer" finds "Judy Hopps - Helpful
+ * Officer", a half-typed word still matches ("judy offi"), and "the" finds "The
+ * Queen" but not "Father". Compared over `searchKey`, so punctuation, apostrophe
+ * style and spacing never decide a match.
+ *
+ * Name and version are matched as ONE string: a query mixes their words freely,
+ * which separate checks against each field could never satisfy.
  */
 export function searchCardsByName(cards: LorcanaCard[], query: string): LorcanaCard[] {
-  const q = searchKey(query);
-  return cards.filter(
-    (card) =>
-      searchKey(card.name).includes(q) ||
-      searchKey(card.fullName).includes(q) ||
-      searchKey(card.version ?? '').includes(q),
-  );
+  // A leading space on both sides turns "begins a word" into one substring test:
+  // `searchKey` leaves single spaces between words, so " offi" can only match at
+  // the start of one.
+  const words = searchKey(query).split(' ').filter(Boolean).map((word) => ` ${word}`);
+  return cards.filter((card) => {
+    const key = ` ${searchKey(`${card.fullName} ${card.name} ${card.version ?? ''}`)}`;
+    return words.every((word) => key.includes(word));
+  });
 }
 
 /**
@@ -274,16 +292,95 @@ export interface CardFilterOptions {
   keywords?: string[];
   classifications?: string[];
   textSearch?: string;
-  setCode?: string;
+  /**
+   * Picked sets, ANY of them (owner, 2026-10-08: the set logos replaced a
+   * single-pick dropdown). A card belongs to one set, so several widen the result,
+   * as types do.
+   */
+  setCodes?: string[];
+  /**
+   * Picked rarities, ANY of them (owner, 2026-10-08), matched against the card's
+   * own rarity, and with `rarityMatch` against its printings too. A card has one
+   * rarity, so several widen the result, as types do.
+   */
+  rarities?: string[];
   inkwell?: 'inkable' | 'uninkable';
+  /**
+   * `dual`: the DUAL-INK CARDS switch (owner, 2026-10-08), narrowing the result to dual-ink
+   * cards: one ink's, or exactly one pair's. Applies only to selections that
+   * offer it; see `offersDualOnly` and `matchesInk`.
+   */
+  inkMatch?: 'dual';
+  /**
+   * `printings`: a picked rarity also matches a card's Epic, Enchanted or Iconic
+   * printing (owner, 2026-10-08). Browse sets it, since it folds those printings
+   * into their base card (#625); collection mode does not, since its binder holds
+   * them as cards of their own. Set by the page, never read from the URL.
+   */
+  rarityMatch?: 'printings';
+}
+
+/** The two kinds of printing the art presets pick: standard cards, and the alternate-art printings. */
+export type ArtKind = 'standard' | 'alt';
+
+/**
+ * The rarities of each kind (owner, 2026-10-15): the five a standard card comes in, and
+ * the alternate-art printings, Epic, Enchanted and Iconic, of which a base card carries
+ * at most one. Special (promos) is neither.
+ */
+export const RARITIES_BY_ART: Readonly<Record<ArtKind, readonly string[]>> = {
+  standard: ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary'],
+  alt: ['Epic', 'Enchanted', 'Iconic'],
+};
+
+/** The alternate-art printings' rarities, for asking of one rarity. */
+export const ALT_ART_RARITIES: ReadonlySet<string> = new Set(RARITIES_BY_ART.alt);
+
+/** Whether a rarity is an alternate-art printing's, narrowed to the engine's printing rarities. */
+export function isAltArtRarity(rarity: string | undefined): rarity is VariantRarity {
+  return rarity !== undefined && ALT_ART_RARITIES.has(rarity);
 }
 
 type CardFilterPredicate = (card: LorcanaCard, options: CardFilterOptions) => boolean;
 
-function matchesInk(card: LorcanaCard, options: CardFilterOptions): boolean {
+/**
+ * Whether a selection of this many inks offers the Dual-ink cards switch: one ink (its dual
+ * cards) or a pair (that pair's). The ONE definition, read by the filter, the URL
+ * cleanup, the panel's switch and the toolbar's chip, so they cannot disagree.
+ */
+export function offersDualOnly(inkCount: number): boolean {
+  return inkCount === 1 || inkCount === 2;
+}
+
+/** Every ink the card has. */
+const cardInks = (card: LorcanaCard): Ink[] => (card.ink2 ? [card.ink, card.ink2] : [card.ink]);
+
+/**
+ * The ink rule (owner, 2026-10-08).
+ *
+ *   - ONE INK selected: every card carrying it, dual-ink ones included. Amber
+ *     shows Sulley & Boo (Amber-Ruby).
+ *   - TWO OR MORE: the selection is a DECK'S colors, so a card shows only if every
+ *     ink it has is selected, because that is what such a deck can play. Amber +
+ *     Steel keeps mono Amber, mono Steel and Amber-Steel, and drops Amber-Ruby.
+ *
+ * The Dual-ink cards switch then keeps just the dual-ink cards of that result. Off a count
+ * that offers it, it is ignored rather than trusted: a link carrying it beside
+ * three inks must not change the grid.
+ *
+ * Exported for the synergy results (`filterSynergyCards`), which must answer an
+ * ink selection exactly as Browse does. An EMPTY selection filters nothing: the
+ * synergy state keeps `[]` where Browse leaves the key out, and under the
+ * every-ink rule an empty set would otherwise reject every card.
+ */
+export function matchesInk(card: LorcanaCard, options: CardFilterOptions): boolean {
   if (!options.ink) return true;
-  const selected = Array.isArray(options.ink) ? options.ink : [options.ink];
-  return selected.includes(card.ink) || (!!card.ink2 && selected.includes(card.ink2));
+  const selected = new Set(Array.isArray(options.ink) ? options.ink : [options.ink]);
+  if (selected.size === 0) return true;
+  const inks = cardInks(card);
+  const shows = selected.size === 1 ? inks.some((ink) => selected.has(ink)) : inks.every((ink) => selected.has(ink));
+  const dualOnly = options.inkMatch === 'dual' && offersDualOnly(selected.size);
+  return shows && (!dualOnly || inks.length === 2);
 }
 
 // Song is a pseudo-type: card.type is 'Action' but card.isSong is true.
@@ -307,29 +404,81 @@ function matchesCost(card: LorcanaCard, options: CardFilterOptions): boolean {
   return card.cost >= 9 ? options.costs.includes(9) : options.costs.includes(card.cost);
 }
 
-function matchesSet(card: LorcanaCard, options: CardFilterOptions): boolean {
-  return !options.setCode || card.setCode === options.setCode;
+/** Any picked set. Exported for the synergy results, which share Browse's rules. */
+export function matchesSet(card: LorcanaCard, options: CardFilterOptions): boolean {
+  return !options.setCodes?.length || (card.setCode !== undefined && options.setCodes.includes(card.setCode));
 }
 
-function matchesKeywords(card: LorcanaCard, options: CardFilterOptions): boolean {
-  if (!options.keywords || options.keywords.length === 0) return true;
-  if (!card.keywords) return false;
-  return options.keywords.some((k) => {
-    const lk = k.toLowerCase();
-    return card.keywords!.some((ck) => ck.toLowerCase().includes(lk));
+/**
+ * Any picked rarity: the card's own, or, with `rarityMatch: 'printings'`, one of
+ * its printings' (`pickedPrinting`). Exported for the synergy results, which never
+ * set the mode: a synergy list is about how cards play, not how they are printed.
+ */
+export function matchesRarity(card: LorcanaCard, options: CardFilterOptions): boolean {
+  const picked = options.rarities;
+  if (!picked?.length) return true;
+  if (card.rarity !== undefined && picked.includes(card.rarity)) return true;
+  return options.rarityMatch === 'printings' && pickedPrinting(card, picked) !== undefined;
+}
+
+/**
+ * The card's printing of a picked rarity, if it has one: the art Browse shows on
+ * the card's tile, and the printing the card modal opens on. The first such
+ * printing, should a card ever carry two.
+ */
+export function pickedPrinting(card: LorcanaCard, rarities: readonly string[] | undefined): CardPrinting | undefined {
+  if (!rarities?.length) return undefined;
+  return card.variants?.find((printing) => rarities.includes(printing.rarity));
+}
+
+/**
+ * How many filters the options hold: every picked keyword, classification, set
+ * and rarity, plus inkwell. The ONE count behind the Filters badge, the dialog's
+ * "Filters (N)" title and the synergy toolbar; callers add their inks, types and
+ * costs. It used to be written out three times, and when keywords became
+ * multi-pick one copy kept counting them as one. `inkMatch` is a mode of the ink
+ * selection, never a filter of its own.
+ */
+export function countFilterOptions(options: CardFilterOptions): number {
+  const lists = [options.keywords, options.classifications, options.setCodes, options.rarities];
+  return lists.reduce((sum, list) => sum + (list?.length ?? 0), 0) + (options.inkwell ? 1 : 0);
+}
+
+/**
+ * Whether the card carries EVERY selected value (owner, 2026-10-08): several
+ * keywords or classifications NARROW the result, "Evasive and Ward", "Hero and
+ * Princess". Types work the other way round, any of them, since a card has one.
+ * `matches` compares one lowercased card value with one lowercased wanted value.
+ */
+function carriesEvery(
+  selected: string[] | undefined,
+  cardValues: string[] | undefined,
+  matches: (cardValue: string, wanted: string) => boolean,
+): boolean {
+  if (!selected || selected.length === 0) return true;
+  if (!cardValues) return false;
+  return selected.every((wanted) => {
+    const w = wanted.toLowerCase();
+    return cardValues.some((value) => matches(value.toLowerCase(), w));
   });
 }
 
-function matchesClassifications(card: LorcanaCard, options: CardFilterOptions): boolean {
-  if (!options.classifications || options.classifications.length === 0) return true;
-  if (!card.classifications) return false;
-  return options.classifications.some((c) => {
-    const lc = c.toLowerCase();
-    return card.classifications!.some((cc) => cc.toLowerCase() === lc);
-  });
+/**
+ * Every selected keyword, matched by CONTAINMENT, because stored keywords carry
+ * values: "Singer" finds "Singer 5", "Shift" finds "Floodborn Shift 7". Exported
+ * for the synergy results, which share Browse's rule.
+ */
+export function matchesKeywords(card: LorcanaCard, options: CardFilterOptions): boolean {
+  return carriesEvery(options.keywords, card.keywords, (value, wanted) => value.includes(wanted));
 }
 
-function matchesInkwell(card: LorcanaCard, options: CardFilterOptions): boolean {
+/** Every selected classification, matched exactly. Exported for the synergy results. */
+export function matchesClassifications(card: LorcanaCard, options: CardFilterOptions): boolean {
+  return carriesEvery(options.classifications, card.classifications, (value, wanted) => value === wanted);
+}
+
+/** Exported for the synergy results, which share Browse's inkwell rule. */
+export function matchesInkwell(card: LorcanaCard, options: CardFilterOptions): boolean {
   if (!options.inkwell) return true;
   return options.inkwell === 'inkable' ? card.inkwell : !card.inkwell;
 }
@@ -348,6 +497,7 @@ const CARD_FILTER_PREDICATES: CardFilterPredicate[] = [
   matchesKeywords,
   matchesClassifications,
   matchesInkwell,
+  matchesRarity,
   matchesTextSearch,
 ];
 
@@ -437,6 +587,33 @@ export function getUniqueClassifications(cards: LorcanaCard[]): string[] {
     card.classifications?.forEach((c) => classifications.add(c));
   }
   return Array.from(classifications).sort();
+}
+
+/**
+ * Rarity rank, low to high: the five main-set rarities, then the special
+ * printings. Sorts the Rarity filter's options; a rarity missing here (should a
+ * new one appear) sorts after these, alphabetically.
+ */
+const RARITY_ORDER = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', 'Epic', 'Enchanted', 'Iconic', 'Special'];
+
+/** Unique rarities among cards or printings, in rarity order (see RARITY_ORDER). */
+export function getUniqueRarities(items: readonly {rarity?: string}[]): string[] {
+  const found = new Set<string>();
+  for (const item of items) if (item.rarity) found.add(item.rarity);
+  const rank = (rarity: string) => {
+    const i = RARITY_ORDER.indexOf(rarity);
+    return i === -1 ? RARITY_ORDER.length : i;
+  };
+  return [...found].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+}
+
+/**
+ * Browse's Rarity options: its cards' own rarities plus their printings', since
+ * Browse folds each Epic, Enchanted and Iconic printing into its base card. A chip
+ * for one matches the cards that have it (`rarityMatch: 'printings'`).
+ */
+export function getRaritiesWithPrintings(cards: readonly LorcanaCard[]): string[] {
+  return getUniqueRarities([...cards, ...cards.flatMap((card) => card.variants ?? [])]);
 }
 
 /**
