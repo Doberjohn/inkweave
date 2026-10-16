@@ -151,7 +151,7 @@ A conditional Singer's keyword comes from its ability text (see Conditional Sing
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Singer + Songs')`.
+Tests live in `packages/synergy-engine/src/__tests__/singer-songs.test.ts` under `describe('Singer + Songs')`.
 
 ### Gate Tests (3 tests)
 
@@ -194,7 +194,7 @@ Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `descr
 
 ### Conditional Singer tests
 
-`packages/synergy-engine/src/__tests__/cardTransformer.test.ts` pins the synthesis (from an ability effect, from `fullText` with no abilities array, native keyword wins, grants to other characters ignored); one integration test in the Singer block of `rules.test.ts` runs Miguel's raw record through `transformCard` and finds a cost-3 song at 8.
+`packages/synergy-engine/src/__tests__/cardTransformer.test.ts` pins the synthesis (from an ability effect, from `fullText` with no abilities array, native keyword wins, grants to other characters ignored); one integration test in the Singer block of `singer-songs.test.ts` runs Miguel's raw record through `transformCard` and finds a cost-3 song at 8.
 
 ### Real-card tests (`singer-songs.test.ts`)
 

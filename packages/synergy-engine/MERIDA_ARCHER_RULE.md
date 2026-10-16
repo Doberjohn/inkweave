@@ -155,7 +155,7 @@ We **include** it: the opposing character still takes damage as the direct resul
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Merida Archer')`.
+Tests live in `packages/synergy-engine/src/__tests__/merida-archer.test.ts` under `describe('Merida Archer')`.
 
 | Test | What It Verifies |
 |------|-----------------|

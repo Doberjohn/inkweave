@@ -134,7 +134,7 @@ The self-only pool is Bodyguard-heavy, so its ink spread follows the Bodyguard i
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Merida - Wisp Conjurer (BECKON)')`.
+Tests live in `packages/synergy-engine/src/__tests__/merida-wisp.test.ts` under `describe('Merida - Wisp Conjurer (BECKON)')`.
 
 | Test | What It Verifies |
 |------|-----------------|

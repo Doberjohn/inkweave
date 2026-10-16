@@ -50,7 +50,7 @@ A mechanic can be a **structural role in its home playstyle** *and* a **generic 
 | Sacrifice | `self-banish`, `banish-trigger` | `SACRIFICE_*_PATTERN` |
 | Toy | `member`, `search`, `banish-trigger`, `self-discount` | classification + Toy-scoped regex |
 | Seven Dwarfs | `member`, `density`, `recruit`, `return` | classification + `DWARFS_*_PATTERN` |
-| Ink Drops | `drop-maker` (alias of the generic `ink-drop-gain`), `drop-payoff`, `drop-shared` (display-only) | `getInkDropRoles` in `utils/inkDrops.ts` |
+| Ink Drops | `drop-maker` (alias of the generic `ink-drop-gain`), `drop-payoff`, `drop-shared` (display-only) | `getInkDropRoles` in `utils/detection/inkDrops.ts` |
 
 > Note the overlaps: Lore Denial's `burn`/`steal`, Ramp's three roles, and Discard's three disruption roles are **also generic mechanics** (§5). They stay structural for *scoring* in their home; the catalog supplies the *tile* everywhere.
 

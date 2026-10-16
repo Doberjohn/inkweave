@@ -2,7 +2,7 @@
 
 Detailed documentation for the Self-Discard rule, a playstyle synergy that detects the player-side discard-recursion archetype: discard your own cards, then cash them in.
 
-**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/cardHelpers.ts`
+**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/detection/selfDiscard.ts`
 **Rule ID**: `self-discard`
 **Category**: `playstyle`
 **Playstyle ID**: `self-discard`
@@ -317,7 +317,7 @@ Reanimators are the deepest side and mill, the deck-side filler, the thinnest. T
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Self-Discard rule (Discard Matters)')`. The self-contained recursion, named-card, deck-bottom sweep and biggest-hand carve-outs and the feed check are tested in `packages/synergy-engine/src/__tests__/selfDiscard.test.ts`, and STONE BY DAY in `packages/synergy-engine/src/__tests__/stoneByDay.test.ts`, both with real card text.
+Tests live in `packages/synergy-engine/src/__tests__/selfDiscard.test.ts`: `describe('Self-Discard rule (Discard Matters)')`, then the self-contained recursion, named-card, deck-bottom sweep and biggest-hand carve-outs and the feed check, with real card text. STONE BY DAY is tested in `packages/synergy-engine/src/__tests__/stoneByDay.test.ts`, also with real card text.
 
 ### Role Detection (10 tests)
 

@@ -2,7 +2,7 @@
 
 Detailed documentation for the Ink Drops rule, a payoff-anchored playstyle for Set 14's (Hyperia City) new mechanic: an ink drop is a counter you bank now and remove later to pay 1 ⬡.
 
-**Source**: `packages/synergy-engine/src/utils/inkDrops.ts` (roles), `packages/synergy-engine/src/engine/inkDropScoring.ts` (scoring), registered in `packages/synergy-engine/src/engine/rules.ts`
+**Source**: `packages/synergy-engine/src/utils/detection/inkDrops.ts` (roles), `packages/synergy-engine/src/engine/inkDropScoring.ts` (scoring), registered in `packages/synergy-engine/src/engine/rules.ts`
 **Rule ID**: `ink-drops`
 **Category**: `playstyle`
 **Playstyle ID**: `ink-drops`
@@ -246,7 +246,7 @@ None of these changes a score today.
 
 ## Test Coverage
 
-Unit and rule tests live in `packages/synergy-engine/src/__tests__/inkDrops.test.ts` (kept out of `rules.test.ts`, which already trips CodeScene's module-size finding), and a data guard in `apps/web/src/shared/constants/__tests__/ink-drop-coverage.test.ts`.
+Unit and rule tests live in `packages/synergy-engine/src/__tests__/inkDrops.test.ts`, and a data guard in `apps/web/src/shared/constants/__tests__/ink-drop-coverage.test.ts`.
 
 | Test | What it verifies |
 |------|------------------|

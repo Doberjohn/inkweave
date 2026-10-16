@@ -9,6 +9,7 @@ paths:
 When editing engine source under `packages/synergy-engine/src/`:
 
 - **Rule pattern:** add rules via the `SynergyRule` interface (pluggable rules pattern). Rules run at build time only; the web app consumes pre-computed JSON.
+- **Where a rule's code lives:** its card-text detection (roles, patterns, pair checks) in `src/utils/detection/<rule>.ts`, its tests in `src/__tests__/<rule>.test.ts`. `src/utils/cardHelpers.ts` holds only what several rules share (text normalization, keywords, Shift parsing, card types). CodeScene marks any module over 240 functions, test files included, so never pool one rule's tests into another rule's file.
 - **Keep docs in sync:** when you change rule logic, scoring, or explanations, update the matching `packages/synergy-engine/*_RULE.md`. That doc is the rule's authoritative spec. CLAUDE.md carries only a registry row (rule name, playstyle id, doc link); update it only when you add, remove, or rename a rule. **Do not restate rule detail in CLAUDE.md** — it is always-loaded context.
 - **New `PlaystyleId`:** the web UI has exhaustive `Record`s keyed on it. A new id needs `PLAYSTYLE_UI`, `ROLE_CONFIGS`, and `STRUCTURAL_ROLE_DISPLAY` entries or the build fails.
 - **Auto-rebuild:** editing any file here triggers the `engine-auto-rebuild` hook (`pnpm build:engine` + `pnpm precompute-synergies`). No manual rebuild needed.

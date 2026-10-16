@@ -320,7 +320,7 @@ To add a new condition matcher:
 },
 ```
 
-4. Add a test case in `packages/synergy-engine/src/__tests__/rules.test.ts`
+4. Add a test case in `packages/synergy-engine/src/__tests__/shift-targets.test.ts`
 5. Update the "Current Matchers" section in this document
 
 ---
@@ -407,7 +407,7 @@ With disambiguation:
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Shift Targets')`.
+Tests live in `packages/synergy-engine/src/__tests__/shift-targets.test.ts` under `describe('Shift Targets')`.
 
 ### Matching tests
 | Test | What it verifies |

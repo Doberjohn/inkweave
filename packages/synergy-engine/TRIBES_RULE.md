@@ -1,6 +1,6 @@
 # Classification Tribes (Monsters / Princesses / Heroes / Supers / Royalty / Detectives / Gargoyles / Madrigals / Villains)
 
-Nine payoff-anchored tribal playstyles generated from **one shared factory** (`makeTribalRule` over `TRIBAL_SPECS` in `utils/cardHelpers.ts`). Each keys on a character classification and pairs the tribe's members with the cards that reward running them.
+Nine payoff-anchored tribal playstyles generated from **one shared factory** (`makeTribalRule` over `TRIBAL_SPECS` in `utils/detection/tribes.ts`). Each keys on a character classification and pairs the tribe's members with the cards that reward running them.
 
 | Playstyle id | Member classification(s) | Payoff ref word(s) |
 |--------------|--------------------------|--------------------|

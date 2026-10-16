@@ -62,7 +62,7 @@ This matches Dale's Spike Suit wording (the `.*` spans the ⛉/¤ glyphs without
 
 ### Strength in a challenge
 
-`strengthInChallenge(card)` (`cardHelpers.ts`) is the strength a character challenges with: its printed strength, its Challenger bonus, and each boost its own text gives it (`/\b(?:this character|he|she) gets \+(\d+) ¤/i`) that is on whenever it challenges. That covers a boost with no condition and one that holds "during your turn", "while this character has no damage" or "while there's a card under this character". A "for each" boost counts once (Jafar - Keeper of Secrets' "+1 ¤ for each card in your hand" reads as 1).
+`strengthInChallenge(card)` (`utils/detection/spikeSuit.ts`) is the strength a character challenges with: its printed strength, its Challenger bonus, and each boost its own text gives it (`/\b(?:this character|he|she) gets \+(\d+) ¤/i`) that is on whenever it challenges. That covers a boost with no condition and one that holds "during your turn", "while this character has no damage" or "while there's a card under this character". A "for each" boost counts once (Jafar - Keeper of Secrets' "+1 ¤ for each card in your hand" reads as 1).
 
 Challenger +N comes from the keyword: "(While challenging, this character gets +N ¤.)" is on in every challenge the character starts. Reminder text in parentheses is skipped otherwise, so that reminder isn't counted twice. A Challenger gained "this turn" (Camilo Madrigal - Prankster, Jasmine - Fearless Princess) isn't counted.
 
@@ -72,7 +72,7 @@ So Pacha - Panicked Customer (2/6, "During your turn, this character gets +4 ¤"
 
 ### Characters that can't challenge
 
-Spike Suit works in every challenge, including one an opponent starts against your character, but the opponent picks those fights. The rule scores the challenges your character starts, so a character that can't challenge is no payoff. `cantChallenge(card)` (`cardHelpers.ts`) reads "This character can't challenge" in the card's text, reminder text included: Percy - Pupsicle's ICE BATH, and Adventurous's reminder on Mickey Mouse - Best in Town ("This character can't challenge and must quest each turn if able"). A conditional "can't quest or challenge unless …" doesn't match.
+Spike Suit works in every challenge, including one an opponent starts against your character, but the opponent picks those fights. The rule scores the challenges your character starts, so a character that can't challenge is no payoff. `cantChallenge(card)` (`utils/detection/spikeSuit.ts`) reads "This character can't challenge" in the card's text, reminder text included: Percy - Pupsicle's ICE BATH, and Adventurous's reminder on Mickey Mouse - Best in Town ("This character can't challenge and must quest each turn if able"). A conditional "can't quest or challenge unless …" doesn't match.
 
 ### The gap ≥ 3 Floor
 
@@ -192,7 +192,7 @@ Amber leads (Dale's own ink, always available), but high-willpower bodies appear
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Spike Suit')`.
+Tests live in `packages/synergy-engine/src/__tests__/spike-suit.test.ts` under `describe('Spike Suit')`.
 
 | Test | What It Verifies |
 |------|-----------------|
