@@ -2,7 +2,7 @@
 
 Playstyle rule for the **Bounce** axis: return a card from play back to a hand, either to re-fire your own enter-play ability (self-bounce) or to buy tempo against the opponent (opponent-bounce).
 
-**Source**: `packages/synergy-engine/src/engine/rules.ts`, `engine/bounceScoring.ts`, `utils/cardHelpers.ts`
+**Source**: `packages/synergy-engine/src/engine/rules.ts`, `engine/bounceScoring.ts`, `utils/detection/bounce.ts`
 **Rule ID**: `bounce`
 **Category**: `playstyle`
 **Playstyle ID**: `bounce`
@@ -121,4 +121,4 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 
 ## Test coverage
 
-`packages/synergy-engine/src/__tests__/rules.test.ts` → `describe('Bounce rule (return from play to hand)')`: target-gate parsing (cost cap, uncapped, the "cost N or more" reminder guard, classification), role detection (all 5 roles + the multi-role self+rebuy body), exclusions (from-discard recursion, Shift ETB bodies), and scoring (enabler↔rebuy=8 with the token-swap, flexible-as-enabler against an in-cap body, cap and classification rejections in both directions, a two-enabler pair kept when only one direction passes, opponent↔Staff=6, and the payoff-anchored drop). `cardHelpers.test.ts` → `describe('getBounceRoles: re-buy value on entering play')` (2 tests): Arthur - Merlin's Assistant's free move is not re-buy value, while a free play and the gated draws of Madam Mim - Resourceful Trickster and Stitch - Carefree Surfer are. `bounce.test.ts` (2 tests): Jafar - Lamp Thief's deck look that only orders the deck is no re-buy value and pairs with no bounce card, while Tinker Bell - Generous Fairy's look into your hand is.
+`packages/synergy-engine/src/__tests__/bounce.test.ts` → `describe('Bounce rule (return from play to hand)')`: target-gate parsing (cost cap, uncapped, the "cost N or more" reminder guard, classification), role detection (all 5 roles + the multi-role self+rebuy body), exclusions (from-discard recursion, Shift ETB bodies), and scoring (enabler↔rebuy=8 with the token-swap, flexible-as-enabler against an in-cap body, cap and classification rejections in both directions, a two-enabler pair kept when only one direction passes, opponent↔Staff=6, and the payoff-anchored drop). `cardHelpers.test.ts` → `describe('getBounceRoles: re-buy value on entering play')` (2 tests): Arthur - Merlin's Assistant's free move is not re-buy value, while a free play and the gated draws of Madam Mim - Resourceful Trickster and Stitch - Carefree Surfer are. Two more tests in `bounce.test.ts`: Jafar - Lamp Thief's deck look that only orders the deck is no re-buy value and pairs with no bounce card, while Tinker Bell - Generous Fairy's look into your hand is.

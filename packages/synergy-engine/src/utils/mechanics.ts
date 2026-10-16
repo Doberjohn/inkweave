@@ -1,32 +1,26 @@
 import type {LorcanaCard} from '../types/card.js';
-import type {
-  LoreDenialRole,
-  LocationRole,
-  DiscardRole,
-  SelfDiscardRole,
-  RampRole,
-  SacrificeRole,
-  ToyRole,
-  DwarfsRole,
-  FloodbornRole,
-  HunnyRole,
-  RedPandaRole,
-  ItemRole,
-  HealRole,
-  ExertRole,
-  BounceRole,
-  TribalRole,
-  TribalSpec,
-} from './cardHelpers.js';
-import type {InkDropRole} from './inkDrops.js';
-import {
-  normalizeCardText,
-  getLoreDenialRoles,
-  getDiscardRoles,
-  getRampRoles,
-  getInkDropGain,
-  DRAW_PATTERN,
-} from './cardHelpers.js';
+import type {BounceRole} from './detection/bounce.js';
+import type {DiscardRole} from './detection/discard.js';
+import type {DwarfsRole} from './detection/dwarfs.js';
+import type {ExertRole} from './detection/exert.js';
+import type {FloodbornRole} from './detection/floodborn.js';
+import type {HealRole} from './detection/healing.js';
+import type {HunnyRole} from './detection/hunny.js';
+import type {InkDropRole} from './detection/inkDrops.js';
+import type {ItemRole} from './detection/items.js';
+import type {LocationRole} from './detection/locationControl.js';
+import type {LoreDenialRole} from './detection/loreLoss.js';
+import type {RampRole} from './detection/ramp.js';
+import type {RedPandaRole} from './detection/redPanda.js';
+import type {SacrificeRole} from './detection/sacrifice.js';
+import type {SelfDiscardRole} from './detection/selfDiscard.js';
+import type {ToyRole} from './detection/toy.js';
+import type {TribalRole, TribalSpec} from './detection/tribes.js';
+import {getInkDropGain, normalizeCardText} from './cardHelpers.js';
+import {getDiscardRoles} from './detection/discard.js';
+import {getLoreDenialRoles} from './detection/loreLoss.js';
+import {getRampRoles} from './detection/ramp.js';
+import {DRAW_PATTERN} from './detection/toy.js';
 
 /**
  * A generic, cross-playstyle game mechanic. These recur on cards across many

@@ -2,7 +2,7 @@
 
 Detailed documentation for the Seven Dwarfs rule — a tribal playstyle synergy that detects Seven Dwarfs decks (the Snow White / Seven Dwarfs package introduced in Set 12).
 
-**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/cardHelpers.ts`
+**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/detection/dwarfs.ts`
 **Rule ID**: `dwarfs`
 **Category**: `playstyle`
 **Playstyle ID**: `dwarfs`
@@ -126,7 +126,7 @@ Role population:
 
 ## Test coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Dwarfs Tribal')`.
+Tests live in `packages/synergy-engine/src/__tests__/dwarfs.test.ts` under `describe('Dwarfs Tribal')`.
 
 ### Role detection
 

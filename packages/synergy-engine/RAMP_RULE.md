@@ -2,7 +2,7 @@
 
 Detailed documentation for the Ramp rule — a playstyle synergy that detects mana acceleration strategies.
 
-**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/cardHelpers.ts`
+**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/detection/ramp.ts`
 **Rule ID**: `ramp`
 **Category**: `playstyle`
 **Playstyle ID**: `ramp`
@@ -214,21 +214,23 @@ Inkwell ramp is Sapphire's identity mechanic and cost reduction is Amber's suppo
 
 ## Test Coverage
 
-**37 tests** in `rules.test.ts`:
+In `ramp.test.ts`, under `describe('Ramp')`:
 
-### Role Detection (9 tests)
+### Role Detection (10 tests)
 - Deck ramp detection (Mama Odie, One Jump Ahead)
 - Self-sacrifice detection (Winnie the Pooh)
 - Repeating trigger detection (Jafar, Amber Coil)
 - Once-per-turn trigger detection (Raya)
 - Variant wording trigger (Fairy Godmother's Wand)
 - Cost reduction grant detection (Pluto, Lantern)
+- Cost reduction target types (character for Pluto and Lantern, location for Elsa - Concerned Sister)
 - Opponent-ink exclusion (Hide Away, Wipe Out!)
 - Self-discount exclusion (Kristoff)
 - Unrelated card exclusion
 
-### Scoring (9 tests)
+### Scoring (10 tests)
 - All 9 entries in the scoring matrix verified with specific card pairs
+- Two cost reductions for different card types don't pair (Pluto, Elsa - Concerned Sister)
 
 ### Integration (4 tests)
 - No synergies with unrelated cards

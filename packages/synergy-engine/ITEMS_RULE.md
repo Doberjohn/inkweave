@@ -2,7 +2,7 @@
 
 Detailed documentation for the Items rule, the Set 9-13 Inventor / artifacts axis: play a lot of items, and cash in the payoffs that reward it.
 
-**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/cardHelpers.ts`
+**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/detection/items.ts`
 **Rule ID**: `items`
 **Category**: `playstyle`
 **Playstyle ID**: `items`
@@ -115,4 +115,4 @@ Payoffs (`payoff-trigger` or `payoff-static`): 9 (Sapphire 8, Emerald 1). Payoff
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Items detection')` (6 role tests) and `describe('Items rule (payoff-anchored)')` (6 scoring tests, including the two drop cases that prove the payoff gate). `cardHelpers.test.ts` → `describe('getItemRoles: named-item conditions')` (2 tests) covers the named-item exclusion (Torn Scrap and a fixture) and the item-count and ready-an-item payoffs (a fixture, Edna Mode - Super Suit Designer, Castle of the Horned King). `items.test.ts` (5 tests, real card text) covers the discard counts and the deck-bottom cost (Stegmutt and Quackerjack gain no payoff, Stegmutt gains no engine role, and Ariel - Collector of Oddities, Winnie the Pooh - Hungry Bear and Darkwing Duck - Dashing Gadgeteer keep theirs), and the payoffs that only ready an item: Edna Mode and Castle of the Horned King pair with Scream Canister at 6 and not with Potato, from either side. A fifth test scores Norton Nimnul and Alpha - Pack Leader at the same-deck 5 from either side.
+Tests live in `packages/synergy-engine/src/__tests__/items.test.ts` under `describe('Items detection')` (6 role tests) and `describe('Items rule (payoff-anchored)')` (6 scoring tests, including the two drop cases that prove the payoff gate). `cardHelpers.test.ts` → `describe('getItemRoles: named-item conditions')` (2 tests) covers the named-item exclusion (Torn Scrap and a fixture) and the item-count and ready-an-item payoffs (a fixture, Edna Mode - Super Suit Designer, Castle of the Horned King). Five more tests in `items.test.ts`, on real card text, cover the discard counts and the deck-bottom cost (Stegmutt and Quackerjack gain no payoff, Stegmutt gains no engine role, and Ariel - Collector of Oddities, Winnie the Pooh - Hungry Bear and Darkwing Duck - Dashing Gadgeteer keep theirs), and the payoffs that only ready an item: Edna Mode and Castle of the Horned King pair with Scream Canister at 6 and not with Potato, from either side. A fifth test scores Norton Nimnul and Alpha - Pack Leader at the same-deck 5 from either side.

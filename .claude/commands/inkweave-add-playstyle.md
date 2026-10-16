@@ -63,7 +63,7 @@ and group multiple synergy rules under one identity.
 11. **Add the synergy rules**:
     - File: `packages/synergy-engine/src/engine/rules.ts`
     - Add rule functions with `category: 'playstyle'` and `playstyleId: '<new-id>'`
-    - Add helper functions to `packages/synergy-engine/src/utils/cardHelpers.ts` if needed
+    - Put the playstyle's card-text detection in its own module, `packages/synergy-engine/src/utils/detection/<playstyle>.ts`, which all of the playstyle's rules share (export it through `src/utils/index.ts`); only helpers several rules share belong in `src/utils/cardHelpers.ts`
     - Register rules in `DEFAULT_RULES`
 
 12. **Immediately rebuild the engine**:

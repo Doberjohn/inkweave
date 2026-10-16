@@ -108,7 +108,7 @@ The 12 cost-1 characters that score 8, for an on-play effect the free play also 
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Free Play')`.
+Tests live in `packages/synergy-engine/src/__tests__/free-play.test.ts` under `describe('Free Play')`.
 
 | Test | What It Verifies |
 |------|-----------------|

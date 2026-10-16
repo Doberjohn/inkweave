@@ -1,13 +1,325 @@
 import {describe, it, expect} from 'vitest';
-import {getRuleById, SynergyEngine} from '../engine';
-import {getLocationRoles} from '../utils';
+import {getCrossSynergyScore, getRuleById, SynergyEngine} from '../engine';
+import {getLocationRoles, isLocationSupportCard} from '../utils';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
+
+describe('Location Synergy Rules', () => {
+  const elsaIceArtisan = createCard({
+    id: 'elsa-ice-artisan',
+    name: 'Elsa',
+    cost: 6,
+    ink: 'Ruby',
+    keywords: ['Shift 4'],
+    text: 'Shift 4 ENDLESS WINTER When you play this character and whenever you play a location, you may exert chosen character. DISTANT CALL While this character is at a location, she gets +3 lore.',
+  });
+
+  const transportPod = createCard({
+    id: 'transport-pod',
+    name: 'Transport Pod',
+    type: 'Item',
+    cost: 1,
+    ink: 'Emerald',
+    text: "GIVE 'EM A SHOW At the start of your turn, you may move a character of yours to a location for free.",
+  });
+
+  const johnSilver = createCard({
+    id: 'john-silver-treasure',
+    name: 'John Silver',
+    cost: 3,
+    ink: 'Ruby',
+    text: 'For each location you have in play, this character gains Resist +1 and gets +1 lore.',
+  });
+
+  const islandsPulled = createCard({
+    id: 'islands-pulled',
+    name: 'The Islands I Pulled from the Sea',
+    type: 'Action',
+    cost: 3,
+    ink: 'Ruby',
+    text: 'Search your deck for a location card, reveal that card to all players, and put it into your hand.',
+  });
+
+  const felixSteward = createCard({
+    id: 'felix-steward',
+    name: 'Fix-It Felix, Jr.',
+    cost: 5,
+    ink: 'Amber',
+    keywords: ['Shift 3'],
+    text: 'Shift 3 BUILDING TOGETHER Your locations get +2 willpower.',
+  });
+
+  const agrabah = createCard({
+    id: 'agrabah',
+    name: 'Agrabah',
+    type: 'Location',
+    cost: 3,
+    ink: 'Ruby',
+  });
+
+  const unrelatedCard = createCard({
+    id: 'anna-plain',
+    name: 'Anna',
+    cost: 3,
+    text: 'When you play this character, draw a card.',
+  });
+
+  const anotherLocation = createCard({
+    id: 'motunui',
+    name: 'Motunui',
+    type: 'Location',
+    cost: 2,
+    ink: 'Emerald',
+  });
+
+  describe('Location role detection', () => {
+    it.each([
+      ['at-payoff and play-trigger on Elsa', elsaIceArtisan, ['at-payoff', 'play-trigger']],
+      ['move on Transport Pod', transportPod, ['move']],
+      ['search on Islands Pulled', islandsPulled, ['search']],
+    ])('should detect %s', (_label, card, expectedRoles) => {
+      const roles = getLocationRoles(card);
+      for (const role of expectedRoles) {
+        expect(roles).toContain(role);
+      }
+    });
+
+    it('should detect in-play-check on John Silver', () => {
+      expect(getLocationRoles(johnSilver)).toContain('in-play-check');
+    });
+
+    it('should detect buff on Felix Steward', () => {
+      expect(getLocationRoles(felixSteward)).toContain('buff');
+    });
+
+    it('reads a location buff printed with a typographic apostrophe', () => {
+      const card = createCard({text: 'Chosen location can’t be challenged until the start of your next turn.'});
+      expect(getLocationRoles(card)).toContain('buff');
+    });
+
+    it('splits move-trigger (moves to a location) apart from play-trigger', () => {
+      const taffyta = createCard({
+        id: 'taffyta-move-trigger',
+        name: 'Taffyta Muttonfudge',
+        cost: 3,
+        ink: 'Ruby',
+        text: 'Once per turn, when this character moves to a location, gain 2 lore.',
+      });
+      const taffytaRoles = getLocationRoles(taffyta);
+      expect(taffytaRoles).toContain('move-trigger');
+      expect(taffytaRoles).not.toContain('play-trigger');
+      // Elsa fires on *playing* a location, so she stays play-trigger only.
+      expect(getLocationRoles(elsaIceArtisan)).not.toContain('move-trigger');
+    });
+
+    it('should return empty for Location cards and unrelated cards', () => {
+      expect(getLocationRoles(agrabah)).toEqual([]);
+      expect(isLocationSupportCard(agrabah)).toBe(false);
+      expect(getLocationRoles(unrelatedCard)).toEqual([]);
+      expect(isLocationSupportCard(unrelatedCard)).toBe(false);
+    });
+
+    it('normalizes newlines so multi-line phrases still match (regression: Cold Never Bothered Me)', () => {
+      const songWithSplitPhrase = createCard({
+        id: 'cold-never-bothered',
+        name: 'The Cold Never Bothered Me',
+        type: 'Action',
+        cost: 3,
+        ink: 'Ruby',
+        text: 'Look at the top 4 cards of your deck. You may reveal\na location card and put it into your hand. Put the\nrest into your discard. You pay 3 ⬡ less for the next\nlocation you play this turn.',
+      });
+      const roles = getLocationRoles(songWithSplitPhrase);
+      expect(roles).toContain('search');
+      expect(roles).toContain('location-ramp');
+    });
+  });
+
+  describe('Location ↔ support card synergies', () => {
+    const engine = new SynergyEngine();
+    const allCards = [
+      elsaIceArtisan,
+      transportPod,
+      johnSilver,
+      islandsPulled,
+      felixSteward,
+      agrabah,
+      anotherLocation,
+      unrelatedCard,
+    ];
+
+    it('should find location-support cards when a Location is selected', () => {
+      const groups = engine.findSynergies(agrabah, allCards);
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control');
+      expect(locationGroup).toBeDefined();
+
+      const cardIds = locationGroup!.synergies.map((s) => s.card.id);
+      expect(cardIds).toContain('elsa-ice-artisan');
+      expect(cardIds).toContain('transport-pod');
+      expect(cardIds).toContain('john-silver-treasure');
+      expect(cardIds).toContain('islands-pulled');
+      expect(cardIds).toContain('felix-steward');
+      expect(cardIds).not.toContain('motunui');
+      expect(cardIds).not.toContain('anna-plain');
+    });
+
+    it('should find Locations when a support card is selected', () => {
+      const groups = engine.findSynergies(elsaIceArtisan, allCards);
+      const cardIds = groups
+        .find((g) => g.groupKey === 'location-control')!
+        .synergies.map((s) => s.card.id);
+      expect(cardIds).toContain('agrabah');
+      expect(cardIds).toContain('motunui');
+    });
+
+    it('should assign correct scores by role', () => {
+      const groups = engine.findSynergies(agrabah, allCards);
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control')!;
+
+      // at-payoff → 7
+      expect(locationGroup.synergies.find((s) => s.card.id === 'elsa-ice-artisan')!.score).toBe(7);
+      // move/search → 5
+      expect(locationGroup.synergies.find((s) => s.card.id === 'transport-pod')!.score).toBe(5);
+      expect(locationGroup.synergies.find((s) => s.card.id === 'islands-pulled')!.score).toBe(5);
+    });
+
+    it('should not produce location synergies for unrelated cards', () => {
+      const groups = engine.findSynergies(unrelatedCard, allCards);
+      expect(groups.find((g) => g.groupKey === 'location-control')).toBeUndefined();
+    });
+  });
+
+  describe('Cross-synergy between support cards', () => {
+    it.each([
+      ['at-payoff + buff → 5', ['at-payoff', 'play-trigger'], ['buff'], 5],
+      ['at-payoff + move → 3', ['at-payoff'], ['move'], 3],
+      ['search + buff → 3', ['search'], ['buff'], 3],
+      ['move + search → 3', ['move'], ['search'], 3],
+      // move enabler ↔ move-trigger payoff: complementary, but move isn't high-value → 3
+      ['move + move-trigger → 3', ['move'], ['move-trigger'], 3],
+      // two high-value complementary roles → 5
+      ['move-trigger + location-ramp → 5', ['move-trigger'], ['location-ramp'], 5],
+      // two high-value roles keep the same-deck 5 over a link with no text tie
+      ['buff + move and buff → 5', ['buff'], ['move', 'buff'], 5],
+    ])('%s', (_label, rolesA, rolesB, expected) => {
+      expect(getCrossSynergyScore(rolesA, rolesB)).toBe(expected);
+    });
+
+    it.each([
+      ['same roles (at-payoff)', ['at-payoff'], ['at-payoff']],
+      ['same roles (boost)', ['boost'], ['boost']],
+      ['non-complementary', ['at-payoff'], ['in-play-check']],
+      ['non-complementary', ['boost'], ['move']],
+      ['a link with no text tie', ['boost'], ['search']],
+      ['a link with no text tie', ['buff'], ['move']],
+    ])('should return null for %s', (_label, rolesA, rolesB) => {
+      expect(getCrossSynergyScore(rolesA, rolesB)).toBeNull();
+    });
+
+    it('should show cross-synergy between Elsa and Felix in engine results', () => {
+      const engine = new SynergyEngine();
+      const groups = engine.findSynergies(elsaIceArtisan, [elsaIceArtisan, felixSteward, agrabah]);
+      const felixMatch = groups
+        .find((g) => g.groupKey === 'location-control')!
+        .synergies.find((s) => s.card.id === 'felix-steward');
+      expect(felixMatch!.score).toBe(5);
+    });
+  });
+
+  describe('Boost role', () => {
+    const webbysDiary = createCard({
+      id: 'webbys-diary',
+      name: "Webby's Diary",
+      type: 'Item',
+      cost: 2,
+      ink: 'Amber',
+      text: 'Whenever you put a card under one of your characters or locations, you may pay 1 to draw a card.',
+    });
+
+    const scroogesCountingHouse = createCard({
+      id: 'scrooges-counting-house',
+      name: "Scrooge's Counting House",
+      type: 'Location',
+      cost: 3,
+      ink: 'Amber',
+      text: 'Whenever a character of yours moves here, put the top card of your deck facedown under this location. GOOD BUSINESS This location gets +1 ⛉ and +1 ◊ for each card under it.',
+    });
+
+    it('should detect boost role and find boost-beneficiary Locations as synergies', () => {
+      expect(getLocationRoles(webbysDiary)).toContain('boost');
+
+      const engine = new SynergyEngine();
+      const groups = engine.findSynergies(webbysDiary, [
+        webbysDiary,
+        scroogesCountingHouse,
+        agrabah,
+        unrelatedCard,
+      ]);
+      const locationGroup = groups.find((g) => g.groupKey === 'location-control');
+      expect(locationGroup).toBeDefined();
+      const ids = locationGroup!.synergies.map((s) => s.card.id);
+      expect(ids).toContain('scrooges-counting-house');
+      // Generic locations without "cards beneath" mechanic should NOT pair with boost cards
+      expect(ids).not.toContain('agrabah');
+    });
+
+    it('should assign score 5 for boost cards with boost-beneficiary Locations', () => {
+      const engine = new SynergyEngine();
+      const groups = engine.findSynergies(scroogesCountingHouse, [
+        scroogesCountingHouse,
+        webbysDiary,
+      ]);
+      const diaryMatch = groups
+        .find((g) => g.groupKey === 'location-control')!
+        .synergies.find((s) => s.card.id === 'webbys-diary');
+      expect(diaryMatch!.score).toBe(5);
+    });
+  });
+
+  describe('Location-ramp role', () => {
+    const elsaConcerned = createCard({
+      id: 'elsa-concerned',
+      name: 'Elsa',
+      cost: 4,
+      ink: 'Ruby',
+      text: 'When you play this character, you pay 2 less for the next location you play this turn.',
+    });
+
+    it('should detect location-ramp and assign score 7', () => {
+      expect(getLocationRoles(elsaConcerned)).toContain('location-ramp');
+
+      const engine = new SynergyEngine();
+      const groups = engine.findSynergies(agrabah, [agrabah, elsaConcerned]);
+      const elsaMatch = groups
+        .find((g) => g.groupKey === 'location-control')!
+        .synergies.find((s) => s.card.id === 'elsa-concerned');
+      expect(elsaMatch!.score).toBe(7);
+    });
+  });
+
+  describe('Anti-location exclusion', () => {
+    const launchpadPilot = createCard({
+      id: 'launchpad-pilot',
+      name: 'Launchpad',
+      cost: 4,
+      ink: 'Emerald',
+      text: 'When you play this character, you may banish chosen location.',
+    });
+
+    it('should exclude anti-location cards from all roles and synergies', () => {
+      expect(getLocationRoles(launchpadPilot)).toEqual([]);
+      expect(isLocationSupportCard(launchpadPilot)).toBe(false);
+
+      const engine = new SynergyEngine();
+      const groups = engine.findSynergies(agrabah, [agrabah, launchpadPilot, unrelatedCard]);
+      expect(groups.find((g) => g.groupKey === 'location-control')).toBeUndefined();
+    });
+  });
+});
 
 // Location Control fixes: a buff (#628) or a move limited to one location classification
 // ("Your Hyperia City locations get +2 ⛉.", "move him to a Hyperia City location") reaches only
 // locations of that classification, and the clear misreads from the 2026-10-14 review stay
-// fixed. Kept out of rules.test.ts (CodeScene: function count). Named cards use their real text.
+// fixed. Named cards use their real text.
 
 const engine = new SynergyEngine();
 /** The pair's Location Control score with `card` as the searcher, or undefined when they do not pair. */

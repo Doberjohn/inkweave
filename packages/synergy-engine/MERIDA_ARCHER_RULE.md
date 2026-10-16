@@ -2,7 +2,7 @@
 
 Detailed documentation for the Merida Archer rule — a direct synergy built around **Merida - Formidable Archer**, whose STEADY AIM ability adds damage whenever one of your actions deals damage to an opposing character.
 
-**Source**: `packages/synergy-engine/src/engine/rules.ts`
+**Source**: `packages/synergy-engine/src/engine/rules.ts`, `packages/synergy-engine/src/utils/detection/meridaArcher.ts`
 **Rule ID**: `merida-archer`
 **Category**: `direct` (single-anchor, bidirectional)
 
@@ -155,7 +155,7 @@ We **include** it: the opposing character still takes damage as the direct resul
 
 ## Test Coverage
 
-Tests live in `packages/synergy-engine/src/__tests__/rules.test.ts` under `describe('Merida Archer')`.
+Tests live in `packages/synergy-engine/src/__tests__/merida-archer.test.ts` under `describe('Merida Archer')`.
 
 | Test | What It Verifies |
 |------|-----------------|
