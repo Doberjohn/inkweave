@@ -24,7 +24,10 @@ import iconicSymbol from '../../assets/iconic.webp?no-inline';
 import promoSymbol from '../../assets/promo.webp?no-inline';
 
 /** What a chip reads from usePrintingSelection's Printing. */
-type PrintingChip = Pick<Printing, 'key' | 'label' | 'rarity' | 'number' | 'promoGrouping' | 'finish'>;
+type PrintingChip = Pick<
+  Printing,
+  'key' | 'label' | 'rarity' | 'number' | 'promoGrouping' | 'finish'
+>;
 
 interface PrintingPillsProps {
   /** The card's printings in display order: Standard first, then its variants. */
@@ -101,12 +104,16 @@ function chipStyle(checked: boolean, hovered: boolean, isMobile: boolean): CSSPr
   };
 }
 
-/** A promo's name: the code printed on it, and the finish that only twins carry. */
+/**
+ * A promo's name: the code printed on it, and the finish that only twins carry. The chip's gap
+ * spaces the two on screen, and the space a flex item starts with renders nothing, but copying
+ * or finding the text needs it ("8/C1 foil", not "8/C1foil").
+ */
 function PromoName({printing}: {printing: PrintingChip}) {
   return (
     <>
       {promoCode(printing)}
-      {printing.finish && <span style={FINISH_STYLE}>{FINISH_WORD[printing.finish]}</span>}
+      {printing.finish && <span style={FINISH_STYLE}>{` ${FINISH_WORD[printing.finish]}`}</span>}
     </>
   );
 }
@@ -120,7 +127,9 @@ function ChipContent({printing}: {printing: PrintingChip}) {
   const symbol = printing.rarity ? RARITY_SYMBOLS[printing.rarity] : undefined;
   return (
     <>
-      {symbol && <img src={symbol} alt="" width={ICON_SIZE.sm} height={ICON_SIZE.sm} style={SYMBOL_STYLE} />}
+      {symbol && (
+        <img src={symbol} alt="" width={ICON_SIZE.sm} height={ICON_SIZE.sm} style={SYMBOL_STYLE} />
+      )}
       {kind === 'altFoil' && <span aria-hidden="true" style={FOIL_MARKER} />}
       {kind === 'promo' ? <PromoName printing={printing} /> : printing.label}
     </>

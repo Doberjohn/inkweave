@@ -115,4 +115,12 @@ describe('CardTile', () => {
     expect(screen.getByRole('button', {name: 'Elsa - Snow Queen, Alt foil printing'})).toBeInTheDocument();
   });
 
+  // The collection chunks' Special cards carry no promo set; collection mode's Browse shows them.
+  it('names a collection Special card by its number, as it carries no promo set (#802)', () => {
+    const promo = createCard({...mockCard, rarity: 'Special', setNumber: 3, baseId: '41'});
+    render(<CardTile card={promo} onSelect={vi.fn()} />);
+    const name = 'Elsa - Snow Queen, #3 printing';
+    expect(screen.getByRole('button', {name})).toBeInTheDocument();
+  });
+
 });

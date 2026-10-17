@@ -226,6 +226,11 @@ describe('printingName', () => {
     // Minnie Mouse - Amethyst Champion's non-foil C2 has no known number yet.
     expect(printingName({rarity: 'Special', promoGrouping: 'C2', finish: 'normal'})).toBe('C2 non-foil');
   });
+
+  it("names a promo by what is known of its code when no set came with it (#802)", () => {
+    expect(printingName({rarity: 'Special', number: 1})).toBe('#1');
+    expect(printingName({rarity: 'Special'})).toBe('Promo');
+  });
 });
 
 describe('printingSpokenName', () => {

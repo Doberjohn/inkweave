@@ -77,15 +77,27 @@ describe('PrintingPills', () => {
   });
 
   it('names every printing beside its symbol, however many printings a card has (#802)', () => {
-    renderPills(0, [...PRINTINGS, {key: '2200', label: 'Epic', rarity: 'Epic'}, {key: '2201', label: 'Iconic', rarity: 'Iconic'}]);
+    renderPills(0, [
+      ...PRINTINGS,
+      {key: '2200', label: 'Epic', rarity: 'Epic'},
+      {key: '2201', label: 'Iconic', rarity: 'Iconic'},
+    ]);
 
-    const epic = screen.getByRole('radio', {name: 'Epic'});
-    expect(epic).toHaveTextContent('Epic');
-    expect(epic.querySelector('img')).toHaveAttribute('src', expect.stringContaining('epic'));
+    for (const rarity of ['Enchanted', 'Epic', 'Iconic']) {
+      const chip = screen.getByRole('radio', {name: rarity});
+      expect(chip).toHaveTextContent(rarity);
+      expect(chip.querySelector('img')).toHaveAttribute(
+        'src',
+        expect.stringContaining(rarity.toLowerCase()),
+      );
+    }
   });
 
   it('marks an alt foil with the foil marker and tells screen readers its number (#802)', () => {
-    renderPills(0, [...PRINTINGS, {key: '3571', label: 'Alt foil', rarity: 'Legendary', number: 243}]);
+    renderPills(0, [
+      ...PRINTINGS,
+      {key: '3571', label: 'Alt foil', rarity: 'Legendary', number: 243},
+    ]);
 
     const altFoil = screen.getByRole('radio', {name: 'Alt foil, #243'});
     expect(altFoil).toHaveTextContent('Alt foil');
@@ -103,5 +115,19 @@ describe('PrintingPills', () => {
     const promo = screen.getByRole('radio', {name: 'Promo 5/P3'});
     expect(promo).toHaveTextContent('5/P3');
     expect(promo.querySelector('img')).toHaveAttribute('src', expect.stringContaining('promo'));
+  });
+
+  // The chip's gap only spaces the words on screen: copying or finding the text needs a real space.
+  it("spaces a promo twin's finish from its code in the chip's text (#802)", () => {
+    const twin = {
+      key: '80010',
+      label: '8/C1 foil',
+      rarity: 'Special',
+      number: 8,
+      promoGrouping: 'C1',
+    };
+    renderPills(0, [...PRINTINGS, {...twin, finish: 'foil'}]);
+
+    expect(screen.getByRole('radio', {name: 'Promo 8/C1, foil'}).textContent).toBe('8/C1 foil');
   });
 });

@@ -44,9 +44,14 @@ export const FINISH_WORD = {foil: 'foil', normal: 'non-foil'} as const;
 
 type PrintingFacts = Pick<Printing, 'number' | 'promoGrouping' | 'finish'>;
 
-/** A promo's code as printed on the card ("25/P1"), or its set alone while its number is unknown. */
+/**
+ * A promo's code as printed on the card ("25/P1"), or what is known of it: its set alone while its
+ * number is unknown, and its number alone ("#1", as before #802) without a set, which the
+ * collection chunks' Special cards never carry.
+ */
 export function promoCode({number, promoGrouping}: PrintingFacts): string {
-  return number === undefined ? `${promoGrouping}` : `${number}/${promoGrouping}`;
+  if (promoGrouping === undefined) return number === undefined ? 'Promo' : `#${number}`;
+  return number === undefined ? promoGrouping : `${number}/${promoGrouping}`;
 }
 
 /**
