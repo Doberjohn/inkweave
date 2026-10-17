@@ -84,7 +84,7 @@ function buildTileStyle(
  * printing"). A card that is itself a printing is named as that printing too: the binder holds
  * each printing as a pocket of its own, under its base card's name. That is a card of an
  * alt-art rarity, or a collection card with a `baseId`, which covers a printing that keeps its
- * base card's rarity ("Violet Parr - Super Resilient, #247 printing", #796).
+ * base card's rarity ("Violet Parr - Super Resilient, Alt foil printing", #796, #802).
  */
 function tileName(card: LorcanaCard, printing: CardPrinting | undefined): string {
   if (printing) return printingAlt(card, printing);

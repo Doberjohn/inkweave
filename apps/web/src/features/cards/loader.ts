@@ -117,6 +117,8 @@ function toPrinting(variant: RawCardVariant): CardPrinting {
     imageUrl: resolveImageUrl(variant),
     imageHashSm: variant.imageHashSm,
     scanLanguage: variant.scanLanguage,
+    promoGrouping: variant.promoGrouping,
+    finish: variant.finish,
   };
 }
 

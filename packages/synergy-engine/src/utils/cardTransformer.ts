@@ -23,6 +23,10 @@ export interface RawCardVariant {
    * English. fold-variants.mjs never writes it, so official art replacing the entry drops it.
    */
   scanLanguage?: string;
+  /** A promo's set as printed on the card: "P1" in 25/P1 (#802). Absent on every other printing. */
+  promoGrouping?: string;
+  /** Only on promo twins that share a code, such as Kuzco's foil and non-foil 8/C1 (#802). */
+  finish?: 'foil' | 'normal';
 }
 
 /**

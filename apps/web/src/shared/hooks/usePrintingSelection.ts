@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import type {LorcanaCard} from 'inkweave-synergy-engine';
+import type {CardPrinting, LorcanaCard} from 'inkweave-synergy-engine';
 import {isAltArtRarity} from '../../features/cards/loader';
 import {trackEvent} from '../lib/analytics';
 
@@ -13,24 +13,87 @@ export interface Printing {
   rarity?: string;
   /** The variant's collector number; absent for the Standard printing. */
   number?: number;
+  /** A promo's set as printed on the card ("P1" in 25/P1); absent on every other printing. */
+  promoGrouping?: string;
+  /** Only on promo twins that share a code, such as Kuzco's foil and non-foil 8/C1. */
+  finish?: 'foil' | 'normal';
   imageUrl?: string;
   /** Language code ("it") of this printing's scan if not English; absent means English. */
   scanLanguage?: string;
 }
 
+/** What a printing is, which decides how the printing switcher names it (#802). */
+export type PrintingKind = 'standard' | 'chase' | 'altFoil' | 'promo';
+
+/** The rarity LorcanaJSON gives promos. */
+const PROMO_RARITY = 'Special';
+
 /**
- * What an alternate printing is called: its chase rarity, whose symbol it carries, or else
- * its collector number (#796). A printing that keeps its base card's rarity (Violet Parr #247
- * is a Super Rare, like her Standard art) has nothing else that tells it apart.
+ * A printing's kind, from its printed rarity: none for the Standard art, a chase rarity (Epic,
+ * Enchanted, Iconic) with a symbol of its own, Special for a promo, and anything else for a
+ * printing that keeps its base card's rarity (Violet Parr's Super Rare #247), an alt foil.
  */
-export function printingName({rarity, number}: {rarity: string; number?: number}): string {
-  return isAltArtRarity(rarity) || number === undefined ? rarity : `#${number}`;
+export function printingKind(rarity: string | undefined): PrintingKind {
+  if (rarity === undefined) return 'standard';
+  if (isAltArtRarity(rarity)) return 'chase';
+  return rarity === PROMO_RARITY ? 'promo' : 'altFoil';
+}
+
+/** What a promo twin's finish adds to its name: the collection parser's "normal" reads "non-foil". */
+export const FINISH_WORD = {foil: 'foil', normal: 'non-foil'} as const;
+
+type PrintingFacts = Pick<Printing, 'number' | 'promoGrouping' | 'finish'>;
+
+/**
+ * A promo's code as printed on the card ("25/P1"), or what is known of it: its set alone while its
+ * number is unknown, and its number alone ("#1", as before #802) without a set, which the
+ * collection chunks' Special cards never carry.
+ */
+export function promoCode({number, promoGrouping}: PrintingFacts): string {
+  if (promoGrouping === undefined) return number === undefined ? 'Promo' : `#${number}`;
+  return number === undefined ? promoGrouping : `${number}/${promoGrouping}`;
+}
+
+/**
+ * What the printing switcher calls an alternate printing (#802): a chase rarity by its name, a
+ * promo by the code printed on it plus the finish that only twins carry, and a printing that
+ * keeps its base card's rarity "Alt foil" (its number alone told nothing, #796).
+ */
+export function printingName(printing: PrintingFacts & {rarity: string}): string {
+  const kind = printingKind(printing.rarity);
+  if (kind === 'chase') return printing.rarity;
+  if (kind === 'altFoil') return 'Alt foil';
+  const code = promoCode(printing);
+  return printing.finish ? `${code} ${FINISH_WORD[printing.finish]}` : code;
+}
+
+/**
+ * What assistive tech hears for a printing (#802): its label, with an alt foil's collector
+ * number added (a card could hold two) and a promo called one (its code alone means little
+ * read aloud).
+ */
+export function printingSpokenName(printing: PrintingFacts & Pick<Printing, 'label' | 'rarity'>): string {
+  const kind = printingKind(printing.rarity);
+  if (kind === 'altFoil') return `Alt foil, #${printing.number}`;
+  if (kind !== 'promo') return printing.label;
+  const finish = printing.finish ? `, ${FINISH_WORD[printing.finish]}` : '';
+  return `Promo ${promoCode(printing)}${finish}`;
 }
 
 /** Accessible name for a printing's image: the card name, plus the printing's name for a variant. */
-export function printingAlt(card: LorcanaCard, printing: {rarity?: string; number?: number}): string {
-  const {rarity, number} = printing;
-  return rarity ? `${card.fullName}, ${printingName({rarity, number})} printing` : card.fullName;
+export function printingAlt(card: LorcanaCard, printing: PrintingFacts & {rarity?: string}): string {
+  const {rarity} = printing;
+  return rarity ? `${card.fullName}, ${printingName({...printing, rarity})} printing` : card.fullName;
+}
+
+/**
+ * The switcher's order (#802): the chase and alt foil printings by collector number, then the
+ * promos by set and number. Promo numbers restart in every set, so they sort apart.
+ */
+function byDisplayOrder(a: CardPrinting, b: CardPrinting): number {
+  const promosLast = Number(a.rarity === PROMO_RARITY) - Number(b.rarity === PROMO_RARITY);
+  const bySet = (a.promoGrouping ?? '').localeCompare(b.promoGrouping ?? '', undefined, {numeric: true});
+  return promosLast || bySet || a.number - b.number;
 }
 
 /** Records a view of a variant printing; the Standard printing is the card itself, not a view. */
@@ -41,8 +104,9 @@ function recordView(card: LorcanaCard, printing: Printing, surface: 'card_page' 
 }
 
 /**
- * A card's printings: its Standard art first, then each alternate printing. Each carries its
- * own scan's language, since a variant can be revealed abroad first (#681).
+ * A card's printings: its Standard art first, then each alternate printing in display order
+ * (`byDisplayOrder`). Each carries its own scan's language, since a variant can be revealed
+ * abroad first (#681).
  */
 export function printingsOf(card: LorcanaCard): Printing[] {
   const standard: Printing = {
@@ -51,11 +115,14 @@ export function printingsOf(card: LorcanaCard): Printing[] {
     imageUrl: card.imageUrl,
     scanLanguage: card.scanLanguage,
   };
-  const variants = (card.variants ?? []).map((v): Printing => ({
+  // Sorted on a copy: the card's own variants are shared card data.
+  const variants = [...(card.variants ?? [])].sort(byDisplayOrder).map((v): Printing => ({
     key: v.id,
     label: printingName(v),
     rarity: v.rarity,
     number: v.number,
+    promoGrouping: v.promoGrouping,
+    finish: v.finish,
     imageUrl: v.imageUrl,
     scanLanguage: v.scanLanguage,
   }));

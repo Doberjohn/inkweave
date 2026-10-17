@@ -3,7 +3,13 @@ import {renderHook, act} from '@testing-library/react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {createCard} from '../../test-utils';
 import {trackEvent} from '../../lib/analytics';
-import {printingAlt, printingsOf, usePrintingSelection} from '../usePrintingSelection';
+import {
+  printingAlt,
+  printingName,
+  printingSpokenName,
+  printingsOf,
+  usePrintingSelection,
+} from '../usePrintingSelection';
 
 vi.mock('../../lib/analytics', () => ({trackEvent: vi.fn()}));
 
@@ -203,10 +209,40 @@ describe('printingAlt', () => {
     expect(printingAlt(pongo, enchanted)).toBe('Pongo - Determined Father, Enchanted printing');
   });
 
-  it('names a printing with no rarity symbol by its collector number (#796)', () => {
+  it("names a printing that keeps its base card's rarity an alt foil (#802)", () => {
     const [, sameRarity] = printingsOf(violet);
 
-    expect(printingAlt(violet, sameRarity)).toBe('Violet Parr - Super Resilient, #247 printing');
+    expect(printingAlt(violet, sameRarity)).toBe('Violet Parr - Super Resilient, Alt foil printing');
+  });
+});
+
+describe('printingName', () => {
+  it('names a promo by the code printed on it, adding the finish only to twins (#802)', () => {
+    expect(printingName({rarity: 'Special', number: 25, promoGrouping: 'P1'})).toBe('25/P1');
+    expect(printingName({rarity: 'Special', number: 8, promoGrouping: 'C1', finish: 'foil'})).toBe('8/C1 foil');
+    expect(printingName({rarity: 'Special', number: 8, promoGrouping: 'C1', finish: 'normal'})).toBe(
+      '8/C1 non-foil',
+    );
+    // Minnie Mouse - Amethyst Champion's non-foil C2 has no known number yet.
+    expect(printingName({rarity: 'Special', promoGrouping: 'C2', finish: 'normal'})).toBe('C2 non-foil');
+  });
+
+  it("names a promo by what is known of its code when no set came with it (#802)", () => {
+    expect(printingName({rarity: 'Special', number: 1})).toBe('#1');
+    expect(printingName({rarity: 'Special'})).toBe('Promo');
+  });
+});
+
+describe('printingSpokenName', () => {
+  it("tells assistive tech an alt foil's number and that a promo is one (#802)", () => {
+    expect(printingSpokenName({label: 'Alt foil', rarity: 'Legendary', number: 243})).toBe('Alt foil, #243');
+    expect(printingSpokenName({label: '25/P1', rarity: 'Special', number: 25, promoGrouping: 'P1'})).toBe(
+      'Promo 25/P1',
+    );
+    expect(
+      printingSpokenName({label: '8/C1 non-foil', rarity: 'Special', number: 8, promoGrouping: 'C1', finish: 'normal'}),
+    ).toBe('Promo 8/C1, non-foil');
+    expect(printingSpokenName({label: 'Enchanted', rarity: 'Enchanted', number: 234})).toBe('Enchanted');
   });
 });
 
@@ -226,7 +262,21 @@ describe('printingsOf', () => {
     expect(printingsOf(japaneseBase).map((p) => p.scanLanguage)).toEqual(['ja', undefined]);
   });
 
-  it("labels a printing that keeps its base card's rarity by its collector number (#796)", () => {
-    expect(printingsOf(violet).map((p) => p.label)).toEqual(['Standard', '#247']);
+  it("labels a printing that keeps its base card's rarity \"Alt foil\" (#802)", () => {
+    expect(printingsOf(violet).map((p) => p.label)).toEqual(['Standard', 'Alt foil']);
+  });
+
+  it('orders Standard, then the chase and alt foil printings by number, then promos by set and number (#802)', () => {
+    const card = createCard({
+      id: '2887',
+      variants: [
+        {id: 'p3', rarity: 'Special', number: 10, promoGrouping: 'P3'},
+        {id: 'enchanted', rarity: 'Enchanted', number: 234},
+        {id: 'p1', rarity: 'Special', number: 25, promoGrouping: 'P1'},
+        {id: 'alt', rarity: 'Super Rare', number: 243},
+      ],
+    });
+
+    expect(printingsOf(card).map((p) => p.label)).toEqual(['Standard', 'Enchanted', 'Alt foil', '25/P1', '10/P3']);
   });
 });
