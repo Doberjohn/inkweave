@@ -86,7 +86,8 @@ test.describe('Accessibility — axe audits', () => {
  * 400% zoom) must not scroll sideways. The ink pages rendered the desktop header on phones, and
  * its nav ran off the edge, Reveals pill first: the clock starts in the reveal season so the pill
  * shows whatever the date. The viewport is set in each test, so it runs on every project, the
- * chromium-only pre-push included.
+ * chromium-only pre-push included. The WebKit projects draw a classic scrollbar, so there the page
+ * must fit in the 312px beside it: body's `min-width: 320px` made it 8px too wide.
  */
 test.describe('Accessibility: reflow at 320px', () => {
   // Each page with the items of its grid: the ink cards, and the ink's card tiles.
