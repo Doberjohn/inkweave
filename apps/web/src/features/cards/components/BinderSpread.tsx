@@ -1,4 +1,13 @@
-import {useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type ReactNode} from 'react';
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FocusEvent,
+  type KeyboardEvent,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import {NavArrowButton} from '../../../shared/components';
 import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
 import {blackRgba, COLORS, RADIUS, SPACING} from '../../../shared/constants';
@@ -360,17 +369,42 @@ function Pages({start, renderSlot, cardCount}: Pick<ViewProps, 'start' | 'render
 /*
  * The height cap lives on the box around the pages, NOT on the row. The row keeps
  * `flex: 1` and therefore a constant height, so whatever sits below it never moves,
- * which matters because the cap arrives one frame late (ResizeObserver runs after
+ * which matters because the cap arrived one frame late (ResizeObserver runs after
  * first paint). On the row itself that late arrival shrank it from 700px to 669px
  * and scored a 0.036 layout shift; on the inner box the same measurement only moves
- * content inside a box that never changed.
+ * content inside a box that never changed. Since #790 the first cap comes before the
+ * first paint (see `useRowWidth`), but one after a resize still lands a frame late.
  */
 const PAGES_BOX: CSSProperties = {minWidth: 0, display: 'flex', alignItems: 'stretch', justifyContent: 'center'};
+
+/** An element's content-box width: what a ResizeObserver reports for it. */
+function contentWidth(el: HTMLElement): number {
+  const {paddingLeft, paddingRight} = getComputedStyle(el);
+  return Math.max(0, el.getBoundingClientRect().width - parseFloat(paddingLeft) - parseFloat(paddingRight));
+}
+
+/**
+ * The row's width, from before the first paint and on every resize after it.
+ *
+ * MEASURED IN A LAYOUT EFFECT TOO (#790). `useContainerWidth` reads its first width
+ * after the first paint, and the collection binder remounts on every new set, sort or
+ * filter (keyed by its cards, see `CollectionBinderSection`), so each switch painted a
+ * frame with no height cap: at 1920x1080, one frame of 257px cards before the capped
+ * 200px, on every switch. The layout effect reads it before that paint.
+ */
+function useRowWidth(ref: RefObject<HTMLDivElement | null>): number {
+  const observed = useContainerWidth(ref);
+  const [first, setFirst] = useState(0);
+  useLayoutEffect(() => {
+    if (ref.current) setFirst(contentWidth(ref.current));
+  }, [ref]);
+  return observed > 0 ? observed : first;
+}
 
 /** Two facing pages, sized from the height they are given, arrows either side. */
 function FlankedSpread({start, renderSlot, arrows, cardCount}: ViewProps & {arrows: NonNullable<ViewProps['arrows']>}) {
   const rowRef = useRef<HTMLDivElement>(null);
-  const maxHeight = spreadMaxHeight(useContainerWidth(rowRef), true);
+  const maxHeight = spreadMaxHeight(useRowWidth(rowRef), true);
   return (
     // The arrows are FLEX SIBLINGS of the pages, not an overlay. Overlaying them
     // was tried and reverted the same hour: the spread's width is derived from its
@@ -412,7 +446,7 @@ function FlankedSpread({start, renderSlot, arrows, cardCount}: ViewProps & {arro
  */
 function StackedSpread({start, renderSlot, footer, cardCount}: ViewProps) {
   const rowRef = useRef<HTMLDivElement>(null);
-  const maxHeight = spreadMaxHeight(useContainerWidth(rowRef), false);
+  const maxHeight = spreadMaxHeight(useRowWidth(rowRef), false);
   return (
     <div
       ref={rowRef}

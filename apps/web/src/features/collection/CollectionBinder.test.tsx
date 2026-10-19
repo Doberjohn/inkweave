@@ -1,4 +1,4 @@
-import {describe, it, expect, vi} from 'vitest';
+import {describe, it, expect, vi, afterEach} from 'vitest';
 import {act, render, screen, fireEvent} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
@@ -40,7 +40,20 @@ const firstShown = () => screen.getAllByRole('button', {name: /^Card \d+$/})[0].
 /** The pocket holding card `n`. */
 const pocket = (n: number) => screen.getByRole('button', {name: `Card ${n}`});
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe('CollectionBinder', () => {
+  it.each(['arrows', 'map'] as const)('caps the spread from its first render, with %s', (pager) => {
+    // jsdom has no ResizeObserver, so only the measure before the first paint can set the
+    // cap. A binder remounts on every new set, and painted a frame uncapped before it (#790).
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({width: 1200, height: 800} as DOMRect);
+    render(binder({pager}));
+    const pages = screen.getByRole('group', {name: 'Left page'}).parentElement;
+    expect(pages?.style.maxHeight).toMatch(/^\d+(\.\d+)?px$/);
+  });
+
   it('pages a spread, 24 cards at a time', () => {
     render(binder());
     fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
