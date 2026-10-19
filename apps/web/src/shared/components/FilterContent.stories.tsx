@@ -95,7 +95,8 @@ export const ArtPresets: Story = {
 
 /**
  * Browse's panel with the promo printings (#805): LorcanaJSON's Special rarity shows the
- * promo symbol, named "Promo" for its tooltip and screen readers. Neither art preset picks it.
+ * promo symbol, named "Promo" for its tooltip and screen readers. The Alt art preset picks it
+ * with the chase rarities (owner, 2026-10-17).
  */
 export const WithPromos: Story = {
   ...ArtPresets,

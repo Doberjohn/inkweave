@@ -3,7 +3,6 @@ import {describe, it, expect} from 'vitest';
 import {
   applyCardRules,
   buildPreviewToCanonicalMap,
-  carryPromoPrintings,
   droppedVariants,
   featuredEntriesFor,
   featuredIdsJson,
@@ -11,6 +10,7 @@ import {
   previewVariantsMissingFrom,
   remapMigrationName,
   remapMigrationSql,
+  replaceSetCards,
   unmappedPreviewCards,
 } from './graduate-canonical-set.mjs';
 
@@ -100,28 +100,28 @@ describe('applyCardRules (graduation)', () => {
 });
 
 // Re-graduating a set replaces its cards wholesale; only the promo catalog writes promos (#805).
-describe('carryPromoPrintings (graduation)', () => {
+describe('replaceSetCards (graduation)', () => {
   const promo = {id: 3700, rarity: 'Special', number: 4, promoGrouping: 'D23'};
-  const oldCard = (id, variants) => ({
-    id,
-    setCode: '14',
-    fullName: 'Mickey Mouse - Best in Town',
-    variants,
+  const catalog = (baseId) => ({fold: [{baseId, fullName: 'Mickey Mouse - Best in Town', variants: [promo]}]});
+  const oldCard = {id: 3288, setCode: '14', fullName: 'Mickey Mouse - Best in Town', variants: [promo]};
+  const otherSet = {id: 1949, setCode: '9', fullName: 'Mickey Mouse - True Friend'};
+
+  it("puts the catalog's promo printings on the new cards, after their own printings", () => {
+    const {cards} = applyCardRules(source, '14');
+    const all = {cards: [otherSet, oldCard]};
+
+    const {dropped} = replaceSetCards(all, '14', cards, catalog(3288));
+    expect(dropped).toEqual([oldCard]);
+    expect(all.cards.map((card) => card.id)).toEqual([1949, 3288]);
+    expect(all.cards[1].variants.map((v) => v.id)).toEqual([3506, 3700]);
   });
 
-  it("carries each old card's promo printings onto the new card with its id, after its printings", () => {
+  it('throws, changing nothing, when the catalog names a card the new set lacks', () => {
     const {cards} = applyCardRules(source, '14');
-    const old = [oldCard(3288, [{id: 3506, rarity: 'Iconic', number: 241}, promo])];
+    const all = {cards: [otherSet, oldCard]};
 
-    expect(carryPromoPrintings(old, cards)).toEqual({carried: 1, stranded: []});
-    expect(cards[0].variants.map((v) => v.id)).toEqual([3506, 3700]);
-  });
-
-  it('reports an old card whose promos find no new card to go to', () => {
-    const {cards} = applyCardRules(source, '14');
-    const old = [oldCard(3299, [promo])];
-
-    expect(carryPromoPrintings(old, cards)).toEqual({carried: 0, stranded: old});
+    expect(() => replaceSetCards(all, '14', cards, catalog(3299))).toThrow(/no card 3299/);
+    expect(all.cards).toEqual([otherSet, oldCard]);
   });
 });
 

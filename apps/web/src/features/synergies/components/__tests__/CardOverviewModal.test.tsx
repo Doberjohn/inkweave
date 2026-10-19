@@ -175,6 +175,7 @@ test("a printing's own card in a foreign scan shows its base card's text as the 
   await user.click(screen.getByRole('button', {name: 'See translation'}));
   const panel = screen.getByRole('region', {name: 'English text of Card p - Test'});
   expect(panel).toHaveTextContent("This printing is in Japanese. The text is the English card's.");
+  expect(panel).toHaveTextContent('Draw a card.');
 });
 
 test('the expanded group view hides the translation toggle, which has no card image to cover', async () => {

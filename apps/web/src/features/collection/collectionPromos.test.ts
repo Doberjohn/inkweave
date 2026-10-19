@@ -7,21 +7,33 @@ import {
   type RawCollectionPromo,
 } from './collectionPromos';
 
-const ART = 'https://api.lorcana.ravensburger.com/images/en/promo1/25_x.jpg';
-
-/** Mickey Mouse - True Friend's 25/P1 as `collection/promos.json` lists it, and Hades, whose card is not out. */
+/**
+ * Mickey Mouse - True Friend's 25/P1 as `collection/promos.json` lists it, the owner's Japanese
+ * scan with no LorcanaJSON art, and Hades, whose card is not out.
+ */
 const RAW: RawCollectionPromo[] = [
   {
     id: 80042,
     rarity: 'Special',
     number: 25,
     promoGrouping: 'P1',
-    images: {thumbnail: ART},
+    scanLanguage: 'ja',
     fullName: 'Mickey Mouse - True Friend',
     baseId: 1949,
   },
   {id: 80033, rarity: 'Special', number: 29, promoGrouping: 'C3', fullName: 'Hades - Dark Usurper'},
 ];
+
+/** 1/C1's Dragon Fire, a promo LorcanaJSON lists, with its art. */
+const DRAGON_FIRE: RawCollectionPromo = {
+  id: 1187,
+  rarity: 'Special',
+  number: 1,
+  promoGrouping: 'C1',
+  images: {thumbnail: 'https://api.lorcana.ravensburger.com/images/en/challenge1/1_x.jpg'},
+  fullName: 'Dragon Fire',
+  baseId: 2322,
+};
 
 const MICKEY = createCard({
   id: '1949',
@@ -33,10 +45,12 @@ const MICKEY = createCard({
 
 describe('transformPromos', () => {
   it("resolves a promo's art as a printing's, and keeps the card it reprints", () => {
-    const [mickey, hades] = transformPromos(RAW);
+    const [mickey, hades, dragonFire] = transformPromos([...RAW, DRAGON_FIRE]);
 
     expect(mickey).toMatchObject({id: '80042', number: 25, promoGrouping: 'P1', baseId: '1949'});
-    expect(mickey.imageUrl).toBe('/card-images/en/promo1/25_x.jpg');
+    // An owner's scan has no LorcanaJSON art: its preview AVIF stands in, as a reveal card's does.
+    expect(mickey.imageUrl).toBe('/card-images-preview/80042.avif');
+    expect(dragonFire.imageUrl).toBe('/card-images/en/challenge1/1_x.jpg');
     expect(hades.baseId).toBeUndefined();
   });
 });

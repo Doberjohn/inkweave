@@ -540,11 +540,15 @@ function ScopeNumbers({figures, wide, promo, axis: chosen, onAxisChange}: ScopeN
   );
 }
 
-/** While the pool loads: the two headlines' shape, so the numbers land without the panel jumping. */
-function NumbersLoading() {
+/**
+ * While the pool loads: the headlines' shape, so the numbers land without the panel jumping.
+ * A promo set's numbers have the first headline alone.
+ */
+function NumbersLoading({promo}: {promo: boolean}) {
+  const sizes = promo ? [FONT_SIZES.displaySm] : [FONT_SIZES.displaySm, FONT_SIZES.xl];
   return (
     <>
-      {[FONT_SIZES.displaySm, FONT_SIZES.xl].map((size) => (
+      {sizes.map((size) => (
         <div key={size} style={COLUMN}>
           <Skeleton height={size} width="70%" />
           <Skeleton height={size === FONT_SIZES.displaySm ? BAR.headline : BAR.second} borderRadius={RADIUS.pill} />
@@ -562,13 +566,13 @@ interface NumbersProps extends AxisChoice {
 
 /** The numbers for what the picker shows: the whole collection, or the open set. */
 function Numbers({stats, setCode, filtered, axis, onAxisChange}: NumbersProps) {
-  if (stats === null) return <NumbersLoading />;
+  const promo = isPromoSet(setCode);
+  if (stats === null) return <NumbersLoading promo={promo} />;
   const whole = setCode === WHOLE_COLLECTION;
   const tally = whole ? stats.totals : stats.sets.find((set) => set.code === setCode)?.tally;
-  if (!tally) return <NumbersLoading />;
+  if (!tally) return <NumbersLoading promo={promo} />;
   const figures = {...tally, noun: headlineNoun({whole, filtered})};
   if (figures.cards > 0) {
-    const promo = isPromoSet(setCode);
     return <ScopeNumbers figures={figures} wide={whole} promo={promo} axis={axis} onAxisChange={onAxisChange} />;
   }
   // Filters that leave no card: said in words, since 0% of nothing would read as owning none.

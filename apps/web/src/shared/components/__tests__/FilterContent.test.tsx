@@ -220,16 +220,19 @@ describe('FilterContent art presets', () => {
   const STANDARD = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary'];
   const standard = () => screen.getByRole('button', {name: 'Standard cards'});
 
-  it('pick promos with the alt art printings (owner, 2026-10-17), or only the offered ones', () => {
+  it('pick promos with the alt art printings (owner, 2026-10-17), or only the offered ones, as they say', () => {
     const onFiltersChange = vi.fn();
     const props = {variant: 'panel', showArtPresets: true, onFiltersChange};
+    const alt = () => screen.getByRole('button', {name: 'Alt art cards'});
     const {rerender} = render(<FilterContent {...defaultProps({...props, uniqueRarities: RARITIES})} />);
-    fireEvent.click(screen.getByRole('button', {name: 'Alt art cards'}));
+    fireEvent.click(alt());
     expect(onFiltersChange).toHaveBeenLastCalledWith({rarities: ['Epic', 'Enchanted', 'Iconic', 'Special']});
-    // Collection mode's binder offers no promo yet.
+    expect(alt()).toHaveAttribute('title', 'Pick Epic, Enchanted, Iconic and Promo');
+    // Offered no promo, it picks the chase rarities, and says so.
     rerender(<FilterContent {...defaultProps({...props, uniqueRarities: RARITIES.slice(0, -1)})} />);
-    fireEvent.click(screen.getByRole('button', {name: 'Alt art cards'}));
+    fireEvent.click(alt());
     expect(onFiltersChange).toHaveBeenLastCalledWith({rarities: ['Epic', 'Enchanted', 'Iconic']});
+    expect(alt()).toHaveAttribute('title', 'Pick Epic, Enchanted and Iconic');
   });
 
   it('are offered only where asked, and only with rarities of both kinds to pick', () => {

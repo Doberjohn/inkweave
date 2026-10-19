@@ -313,7 +313,7 @@ function ArtPresets({rarities, filters, onFiltersChange, isMobile}: {
             key={value}
             label={label}
             active={lit}
-            title={title}
+            title={title(kind)}
             onClick={() => onFiltersChange(withOption(filters, 'rarities', lit ? [] : kind))}
             isMobile={isMobile}
             style={compactChip(isMobile)}

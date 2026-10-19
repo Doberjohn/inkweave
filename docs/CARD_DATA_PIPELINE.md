@@ -793,13 +793,14 @@ of the collection anyone tracks. Sets 1-8 stay: equally outside Core format, but
 same product, and the reason this dataset exists. `QUEST_SET_CODE` in
 `scripts/lib/collectionData.mjs` drops them, and matches a future Q3 box automatically.
 
-**No card id appears in both it and `allCards.json`.** That is what makes the Core
+**No card in it has the id of a card in `allCards.json`.** That is what makes the Core
 boundary structural: `precompute-synergies.mjs` reads `allCards.json` and never opens
 these files, so a set-1 card cannot reach a synergy calculation even by mistake.
-`scripts/generate-collection-data.mjs:66` asserts the two sets are disjoint and aborts
-otherwise. A Core card's promo is in both, as a variant of its card in `allCards.json` and
-as an entry in `promos.json`, which is safe for the same reason: the engine never reads
-variants.
+`assertDisjoint` in `scripts/generate-collection-data.mjs` checks the chunks' cards and
+`promos.json`'s promos against the cards of `allCards.json` and `previewCards.json`, and
+aborts on any match. The one overlap is deliberate: a Core card's promo is an entry in
+`promos.json` and a printing in its card's `variants` in `allCards.json`, never a card
+there, which is safe for the same reason: the engine never reads variants.
 
 The boundary is about SYNERGY, not about the files being untouched. `download-card-images.mjs`
 does read and rewrite these chunks, to image the cards and inject their hashes, which is
@@ -918,9 +919,10 @@ Cardmarket.
   on a scan that isn't English. A scan can stand in for its twin's ("Its art is 14/C3's scan"
   in the catalog's notes) until its own comes.
 - **Kept by the other scripts**: `pnpm sync-variants` never folds or matches a Special and
-  keeps promos after the other printings (`scripts/lib/fold-variants.mjs`), and re-graduating
-  a set carries its cards' promo printings over (`carryPromoPrintings` in
-  `scripts/graduate-canonical-set.mjs`).
+  keeps promos after the other printings (`scripts/lib/fold-variants.mjs`), and graduating a
+  set puts the catalog's promo printings on its new cards as `pnpm merge-promos` does
+  (`replaceSetCards` in `scripts/graduate-canonical-set.mjs`). A catalog that names a card the
+  new set lacks stops it before it writes anything.
 - **Promo sets**, the binder's groups, live in `PROMO_SETS`
   (`apps/web/src/shared/constants/promoSets.ts`): release order, names, the numbers never
   released (`unreleased`) or still to come (`upcoming`), and Curator's Collection's editions,
@@ -1182,7 +1184,7 @@ Six rules apply when integrating canonical LorcanaJSON data into `allCards.json`
 
 | # | Rule | Why |
 |---|------|-----|
-| 1 | **Fold variant printings into their base card**: every printing, meaning every card with a LorcanaJSON `baseId` (`Epic`, `Iconic`, `Enchanted`, and the ones that keep their base card's rarity, #796), becomes an entry in the base card's `variants` (matched on that `baseId`, via `scripts/lib/fold-variants.mjs`). **Strip `Special`** promos, and carry over the promo printings the set's old cards hold (#805, `carryPromoPrintings`). A printing graduation would drop stops the run before it writes anything (`--allow-missing-variants` drops it on purpose): a variant hand-scanned during the reveal season but missing from the canonical source (`previewCards.json` is its only copy), or a canonical printing whose base card isn't in the set's file. | Variants are rules-identical alternate art, not new cards: they're stored on their base card for the #625 printing switcher (card page and modal), never as separate cards. LorcanaJSON's promo cards are not the source of promos: the owner's catalog is ([Promo printings](#promo-printings-805)). Before #625 all four rarities were stripped (51 printings in Set 12). |
+| 1 | **Fold variant printings into their base card**: every printing, meaning every card with a LorcanaJSON `baseId` (`Epic`, `Iconic`, `Enchanted`, and the ones that keep their base card's rarity, #796), becomes an entry in the base card's `variants` (matched on that `baseId`, via `scripts/lib/fold-variants.mjs`). **Strip `Special`** promos: the set's promo printings come from the promo catalog instead (#805, `replaceSetCards`), and a catalog that names a card the set lacks stops the run before it writes anything. A printing graduation would drop stops the run before it writes anything (`--allow-missing-variants` drops it on purpose): a variant hand-scanned during the reveal season but missing from the canonical source (`previewCards.json` is its only copy), or a canonical printing whose base card isn't in the set's file. | Variants are rules-identical alternate art, not new cards: they're stored on their base card for the #625 printing switcher (card page and modal), never as separate cards. LorcanaJSON's promo cards are not the source of promos: the owner's catalog is ([Promo printings](#promo-printings-805)). Before #625 all four rarities were stripped (51 printings in Set 12). |
 | 2 | **Adopt canonical IDs unconditionally** | LorcanaJSON's sequential ids (`2716`...) are the permanent identity; preview composite ids (`121204`...) are placeholders. Pre-graduation URLs break — acceptable in beta. Votes, cloud collection keys and deck cards move to the canonical ids through the remap migration the script writes (#748). |
 | 3 | **Adopt canonical names** | LorcanaJSON is source of truth; preview curation can have typos / wording corrections. Rule 2 makes this automatic since canonical entries fully replace preview entries. |
 | 4 | **Keep LorcanaJSON's `story` as `franchise`** (since Set 14) | `/reveals` tiers its debut franchises by `franchise`, and a set usually graduates before its release day, when the page hides itself. `story` holds the same value the preview cards carried (all 27 of Set 14's Coco cards), so the page keeps working. Costs under 1 kB gzipped per set. Sets graduated earlier had it stripped. |

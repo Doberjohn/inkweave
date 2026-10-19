@@ -5,7 +5,8 @@
  * Reads a per-set LorcanaJSON file (the format LorcanaJSON.org publishes for
  * each set, e.g. `set012.json`), applies the 6 graduation rules (Rule 1 folds
  * every printing, any card with a `baseId`, into its base card's `variants`),
- * replaces any existing entries for that set in `allCards.json`, retargets
+ * replaces any existing entries for that set in `allCards.json`, puts the promo
+ * catalog's printings on the new cards as `pnpm merge-promos` does (#805), retargets
  * hardcoded card-id references (featured, playstyle heroes, reveals demos) from
  * preview to canonical, asks for the set's featured cards when the homepage features
  * none of them, writes the Supabase migration that moves votes, cloud collection keys
@@ -67,12 +68,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline/promises';
 import {fileURLToPath} from 'node:url';
-import {byPrintingOrder, foldVariants, isPrinting, isPromo} from './lib/fold-variants.mjs';
+import {foldVariants, isPrinting} from './lib/fold-variants.mjs';
+import {mergePromoPrintings} from './lib/promo-printings.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const ALL_CARDS = path.join(ROOT, 'apps/web/public/data/allCards.json');
 const PREVIEW = path.join(ROOT, 'apps/web/public/data/previewCards.json');
+const PROMO_CATALOG = path.join(ROOT, 'scripts/data/promo-printings.json');
 const FEATURED_IDS_JSON = path.join(ROOT, 'apps/web/src/features/cards/featuredCardIds.json');
 const ENV_EXAMPLE = path.join(ROOT, 'apps/web/.env.example');
 const MIGRATIONS = path.join(ROOT, 'supabase/migrations');
@@ -183,27 +186,18 @@ export function applyCardRules(sourceCards, setCode) {
 }
 
 /**
- * Rules 2 + 3 replace a set's cards wholesale, and Rule 1 strips LorcanaJSON's promo cards, so
- * a re-graduation would lose the promo printings the promo catalog put on them (#805). Each old
- * card's promo entries move to the new card with its id (`newCards` is mutated in place), after
- * that card's other printings. Returns how many moved, and the old cards whose promos found no
- * new card to go to.
+ * Rules 2 + 3: the set's cards in `all.cards` replaced wholesale by `newCards` (canonical ids
+ * and names win). Rule 1 strips LorcanaJSON's promo cards, so the cards' promo printings come
+ * from the promo `catalog`, exactly as `pnpm merge-promos` puts them (#805). Throws, changing
+ * nothing, when the catalog can't merge, as when it names a card the new set lacks. Returns the
+ * set's old cards and the merge's report.
  */
-export function carryPromoPrintings(oldCards, newCards) {
-  const newById = new Map(newCards.map((card) => [card.id, card]));
-  const result = {carried: 0, stranded: []};
-  for (const old of oldCards) {
-    const promos = (old.variants ?? []).filter(isPromo);
-    if (promos.length === 0) continue;
-    const card = newById.get(old.id);
-    if (!card) {
-      result.stranded.push(old);
-      continue;
-    }
-    card.variants = [...(card.variants ?? []), ...promos].sort(byPrintingOrder);
-    result.carried += promos.length;
-  }
-  return result;
+export function replaceSetCards(all, setCode, newCards, catalog) {
+  const dropped = all.cards.filter((card) => card.setCode === setCode);
+  const cards = [...all.cards.filter((card) => card.setCode !== setCode), ...newCards];
+  const promos = mergePromoPrintings(cards, catalog);
+  all.cards = cards;
+  return {dropped, promos};
 }
 
 /**
@@ -575,6 +569,29 @@ function guardUnmappedPreviewIds(unmapped, allowUnmappedIds) {
 }
 
 /**
+ * `replaceSetCards` with the promo catalog, or a stop before anything is written when the
+ * catalog can't merge onto the new cards: point its groups at them, then rerun.
+ */
+function replaceSetCardsOrStop(all, setCode, newCards) {
+  try {
+    return replaceSetCards(all, setCode, newCards, JSON.parse(fs.readFileSync(PROMO_CATALOG, 'utf8')));
+  } catch (error) {
+    console.error(`\n  ${error.message}`);
+    console.error('  Stopped before writing anything. Point those groups in scripts/data/promo-printings.json');
+    console.error('  at the new cards, then rerun.');
+    process.exit(1);
+  }
+}
+
+const PROMO_OUTCOMES = ['added', 'updated', 'removed', 'unchanged'];
+
+/** The catalog merge's totals in a line, as `pnpm merge-promos` reports them. */
+function promoTotals({changes}) {
+  const total = (outcome) => changes.reduce((n, change) => n + change[outcome].length, 0);
+  return PROMO_OUTCOMES.map((outcome) => `${total(outcome)} ${outcome}`).join(', ');
+}
+
+/**
  * Update sets[code] metadata — flip hasAllCards true.
  * If the set didn't exist in allCards.json (first graduation), seed from
  * the canonical file's top-level set metadata.
@@ -628,22 +645,14 @@ async function main() {
   guardUnmappedPreviewIds(unmapped, allowUnmappedIds);
   console.log(`  Base cards after rule 1:    ${stripped.length}`);
 
-  // Rules 2 + 3 — replace preview entries wholesale (canonical ids + names win), keeping the
-  // promo printings the old cards carry (#805)
+  // Rules 2 + 3 — replace preview entries wholesale (canonical ids + names win), with the
+  // promo catalog's printings on the new cards (#805)
   const beforeReplace = all.cards.length;
-  const oldSetCards = all.cards.filter((c) => c.setCode === setCode);
-  const promos = carryPromoPrintings(oldSetCards, stripped);
-  all.cards = all.cards.filter((c) => c.setCode !== setCode);
-  all.cards.push(...stripped);
+  const {dropped: oldSetCards, promos} = replaceSetCardsOrStop(all, setCode, stripped);
   console.log(`  allCards before:            ${beforeReplace} cards`);
   console.log(`  Dropped Set ${setCode} preview:        -${oldSetCards.length}`);
   console.log(`  Appended canonical:        +${stripped.length}`);
-  console.log(`  Carried promo printings:   ${promos.carried}`);
-  for (const card of promos.stranded) {
-    console.warn(
-      `  ! Dropped the promo printings of ${card.id} ${card.fullName}, which the new set lacks: move them in scripts/data/promo-printings.json`,
-    );
-  }
+  console.log(`  Promo printings (catalog): ${promoTotals(promos)}`);
   console.log(`  allCards after:             ${all.cards.length}\n`);
 
   markSetGraduated(all.sets, setCode, canonical);

@@ -1,5 +1,5 @@
 import {describe, it, expect, vi} from 'vitest';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {render, screen, fireEvent, within} from '@testing-library/react';
 import {CollectionSetBody} from './CollectionSetPanel';
 import {tallyCollection} from './collectionStats';
 import {
@@ -142,8 +142,15 @@ describe('CollectionSetBody', () => {
     it("counts the promos in the whole collection's numbers, under Promo by rarity", () => {
       renderBody({...promoSet, setCode: 'all'});
       const rows = screen.getByRole('region', {name: 'By rarity, complete'});
-      expect(rows).toHaveTextContent('Promo');
+      // Three of the story's seven promos are held.
+      expect(within(rows).getByText('Promo').parentElement).toHaveTextContent('Promo3/7');
       expect(rows).not.toHaveTextContent('Special');
+    });
+
+    it("holds one headline's place while the pool loads, since its numbers have one", () => {
+      renderBody({...promoSet, stats: null});
+      // A headline's place is its line and its bar.
+      expect(numbers().querySelectorAll('.react-loading-skeleton')).toHaveLength(2);
     });
   });
 });

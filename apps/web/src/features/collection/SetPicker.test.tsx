@@ -1,5 +1,5 @@
 import {describe, it, expect, vi} from 'vitest';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {render, screen, fireEvent, within} from '@testing-library/react';
 import {SetPicker} from './SetPicker';
 
 const PROGRESS = new Map([
@@ -98,8 +98,12 @@ describe('SetPicker', () => {
       fireEvent.click(button());
       const group = screen.getByRole('group', {name: 'Promo sets'});
       expect(group).toHaveTextContent('Promo sets');
-      const names = screen.getAllByRole('option').map((row) => row.getAttribute('aria-label'));
-      expect(names.slice(-2)).toEqual(["Promo set CC, Curator's Collection", 'Promo set P1, Promo Set 1']);
+      const promoSets = within(group).getAllByRole('option');
+      expect(promoSets.map((row) => row.getAttribute('aria-label'))).toEqual([
+        "Promo set CC, Curator's Collection",
+        'Promo set P1, Promo Set 1',
+      ]);
+      expect(screen.getAllByRole('option').slice(-2)).toEqual(promoSets);
     });
 
     it('names a promo set on its button by its code and its name', () => {

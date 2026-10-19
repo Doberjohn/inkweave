@@ -55,6 +55,12 @@ const createListContainer = ({paddingX, minColWidth}: ListContainerConfig) =>
     );
   });
 
+/**
+ * A tile's card page. A promo's tile is its card on that promo (#805), and only the card has a
+ * page, so the tile links there: a click opens the promo in the modal, a new tab opens the card.
+ */
+const tilePath = (card: LorcanaCard) => cardPath({id: card.baseId ?? card.id, fullName: card.fullName});
+
 export function BrowseCardGrid({cards, isLoading, onCardSelect, printingFor}: BrowseCardGridProps) {
   const {isMobile} = useResponsive();
   const paddingX = isMobile ? SPACING.lg : BROWSE_GUTTER;
@@ -91,7 +97,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect, printingFor}: Br
         itemContent={(index) => (
           <CardTile
             card={displayedCards[index]}
-            href={cardPath(displayedCards[index])}
+            href={tilePath(displayedCards[index])}
             isSelected={false}
             onSelect={onCardSelect}
             variant="minimal"

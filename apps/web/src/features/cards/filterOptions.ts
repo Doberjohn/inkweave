@@ -19,12 +19,19 @@ export type InkwellFilter = NonNullable<CardFilterOptions['inkwell']>;
 /**
  * The art presets, in the panel's order (owner, 2026-10-15): shortcuts that pick one
  * kind's rarities (`RARITIES_BY_ART`), as picking them one by one would. Each preset's
- * label, which the toolbar's chip for it repeats, and its tooltip.
+ * label, which the toolbar's chip for it repeats, and its tooltip, which names what it picks
+ * of the rarities the page offers.
  */
-export const ART_OPTIONS: readonly {value: ArtKind; label: string; title: string}[] = [
-  {value: 'standard', label: 'Standard cards', title: 'Pick the five standard rarities'},
-  {value: 'alt', label: 'Alt art cards', title: 'Pick Epic, Enchanted, Iconic and Promo'},
+export const ART_OPTIONS: readonly {value: ArtKind; label: string; title: (picks: readonly string[]) => string}[] = [
+  {value: 'standard', label: 'Standard cards', title: () => 'Pick the five standard rarities'},
+  {value: 'alt', label: 'Alt art cards', title: (picks) => `Pick ${inWords(picks.map(rarityLabel))}`},
 ];
+
+/** Names as a sentence runs them: "Epic, Enchanted and Iconic". */
+function inWords(names: readonly string[]): string {
+  if (names.length < 2) return names.join('');
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
 
 /**
  * What the filters call a rarity: its own name, but Promo for Special, the rarity
@@ -41,8 +48,8 @@ export function picksExactly(picked: readonly string[], rarities: readonly strin
 }
 
 /**
- * The offered rarities of one kind, in the offered order: what its preset picks. Collection
- * mode offers no Special, so its Alt art kind is the three chase rarities.
+ * The offered rarities of one kind, in the offered order: what its preset picks. Where no
+ * Special is offered, the Alt art kind is the three chase rarities.
  */
 export const raritiesOfKind = (offered: readonly string[], kind: ArtKind) =>
   offered.filter((rarity) => RARITIES_BY_ART[kind].includes(rarity));
