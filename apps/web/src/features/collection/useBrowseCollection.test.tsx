@@ -11,6 +11,8 @@ const SIGNED_OUT: Reader = {sessionLoading: false, syncing: false, signedIn: fal
 const RESTORING: Reader = {sessionLoading: true, syncing: false, signedIn: false, hasCollection: false};
 /** Signed in with nothing in this browser, the account not answered yet: a click enters at once. */
 const AWAITING: Reader = {sessionLoading: false, syncing: true, signedIn: true, hasCollection: false};
+/** The account has answered with no collection, so `?binder=` is dead: `useBrowseCollection` drops it. */
+const NO_COLLECTION: Reader = {sessionLoading: false, syncing: false, signedIn: true, hasCollection: false};
 
 /** The hook on a page at `url`, with the params as they stand after its effects. */
 function renderBinderParams(url: string, reader: Reader) {
@@ -55,6 +57,7 @@ describe('useBinderParams', () => {
   it.each([
     {who: 'signed out', reader: SIGNED_OUT},
     {who: 'while the session restores', reader: RESTORING},
+    {who: 'signed in with no collection', reader: NO_COLLECTION},
   ])('keeps a Set filter under a binder link, $who', ({reader}) => {
     const {result} = renderBinderParams('/browse?binder=14&set=5', reader);
     expect(result.current.search).toBe('binder=14&set=5');

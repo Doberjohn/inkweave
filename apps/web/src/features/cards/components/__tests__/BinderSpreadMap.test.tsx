@@ -150,12 +150,22 @@ function firstCell() {
   return {page, cell: page.firstElementChild as HTMLElement};
 }
 
+/**
+ * A fresh copy of the map, where CSS can round or cannot. Whether it can is read once, at
+ * module load, so each case stubs `CSS.supports` and imports its own, whatever jsdom reports.
+ */
+async function loadMap(canRound: boolean) {
+  vi.stubGlobal('CSS', {supports: () => canRound});
+  vi.resetModules();
+  return (await import('../BinderSpreadMap')).BinderSpreadMap;
+}
+
 describe('BinderSpreadMap, cells', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  // jsdom parses CSS, so it supports round() against a container as current browsers do.
-  it('sizes each cell in whole pixels against its page, where CSS can round', () => {
-    render(<BinderSpreadMap pockets={POCKETS.slice(0, 24)} current={0} onGo={() => {}} />);
+  it('sizes each cell in whole pixels against its page, where CSS can round', async () => {
+    const Rounded = await loadMap(true);
+    render(<Rounded pockets={POCKETS.slice(0, 24)} current={0} onGo={() => {}} />);
     const {page, cell} = firstCell();
     expect(page.style.containerType).toBe('inline-size');
     expect(cell.style.width).toMatch(/^round\(down, /);
@@ -163,10 +173,7 @@ describe('BinderSpreadMap, cells', () => {
   });
 
   it("keeps each cell a card's shape where CSS cannot round", async () => {
-    // Whether it can is read once, at module load, so this case imports a fresh copy.
-    vi.stubGlobal('CSS', {supports: () => false});
-    vi.resetModules();
-    const {BinderSpreadMap: Unrounded} = await import('../BinderSpreadMap');
+    const Unrounded = await loadMap(false);
     render(<Unrounded pockets={POCKETS.slice(0, 24)} current={0} onGo={() => {}} />);
     const {page, cell} = firstCell();
     expect(page.style.containerType).toBe('');
