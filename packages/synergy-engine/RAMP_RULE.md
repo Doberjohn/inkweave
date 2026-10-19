@@ -105,7 +105,7 @@ Real cards the `getRampRoles` detector tags for each role (names from the live d
 
 ## Scoring (5–8 chain ladder + density baseline)
 
-The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral default (parallel acceleration / same-axis density, no compounding), 6+ = specific mechanical interaction. The chain ladder (Ramp↔Trigger, scored 7–8) is the only real mechanical chain in the playstyle and is preserved at full strength.
+The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral default (parallel acceleration / same-axis density, no compounding), 6+ = specific mechanical interaction. The chain ladder (Ramp↔Trigger, scored 7–8) is the only real mechanical chain in the playstyle and sits above the density baseline.
 
 ### Score Table
 
@@ -131,6 +131,7 @@ if ramp ↔ trigger:
   8 if ramp card is deck ramp (free mana) and trigger is repeating (scales with ramp): chain.deckRepeating
   7 if only one of the two holds: chain.mixed
   7 if neither holds: chain.neither
+  # chain.mixed shares chain.neither's 7 since community-vote tuning: 7 is as low as it can go while the ladder stays in order
 
 if cost-reduction ↔ cost-reduction:
   6 if discount target types overlap (real stacking on same play)
