@@ -1,9 +1,9 @@
-// The monthly release notes format (#765). One JSON file per month lives in ./notes, named
-// <YYYY-MM>.json. The project's Monthly changelog draft routine writes each month's file and the
-// owner publishes it with a PR that adds the file; validateNotes.ts holds the rules every file
-// must pass.
+// The weekly release notes format. One JSON file per week lives in ./notes, named for the Monday
+// the week starts (<YYYY-MM-DD>.json, in UTC). The project's Weekly changelog draft routine writes
+// each week's file and publishes it with a PR that adds the file; validateNotes.ts holds the rules
+// every file must pass. The page started out monthly (#765), as schemaVersion 1.
 
-/** The sections a month can have, in the order the page shows them. */
+/** The sections a week can have, in the order the page shows them. */
 export const RELEASE_NOTES_SECTIONS = ['new', 'improved', 'fixed', 'engine'] as const;
 
 export type ReleaseNotesSectionKey = (typeof RELEASE_NOTES_SECTIONS)[number];
@@ -27,18 +27,18 @@ export interface ReleaseNoteItem {
   title: string;
   /** One to three plain-text sentences, up to 600 characters. */
   body: string;
-  /** One of the month's headline items. Each month marks one to five. */
+  /** One of the week's headline items. A week marks up to five, and a quiet one none. */
   highlight?: boolean;
   link?: ReleaseNoteLink;
   /** The Doberjohn/inkweave PRs behind the item. Kept for the record; the page doesn't show them. */
   prs?: number[];
 }
 
-export interface ReleaseNotesMonth {
-  schemaVersion: 1;
-  /** The month covered, "YYYY-MM". Also the file name and the month's anchor on the page. */
-  month: string;
-  /** The month's heading, such as "September 2026". */
+export interface ReleaseNotesWeek {
+  schemaVersion: 2;
+  /** The week's Monday, "YYYY-MM-DD": also the file name and the week's anchor on the page. */
+  week: string;
+  /** The week's heading, Monday to Sunday, such as "September 28 to October 4, 2026". */
   title: string;
   /** One line under the heading, up to 280 characters. */
   summary: string;

@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 1,
-  "month": "2026-10",
-  "title": "October 2026",
-  "summary": "Set 14 fully revealed and now official, three new tribes, thousands fewer false synergies and synergy lines that name both cards.",
+  "schemaVersion": 2,
+  "week": "2026-10-12",
+  "title": "October 12 to 18, 2026",
+  "summary": "Set 14 is official, every synergy line names both cards, over 3,000 false synergies are gone, and four cards gain an Alt foil printing.",
   "sections": {
     "new": [
       {
@@ -13,13 +13,8 @@
         "prs": [780]
       },
       {
-        "title": "Set 14 fully revealed",
-        "body": "By October 1 the Reveals page held all 204 Set 14 cards, and by October 5 all 18 Epic and 18 Enchanted printings had joined them. Cards first published from a foreign-language scan switched to their English printing, and an Epic known only from an Italian scan offered a translation.",
-        "prs": [680, 682, 683, 687, 689, 693, 700, 704, 714, 728]
-      },
-      {
         "title": "Release notes",
-        "body": "This page shows what changed on Inkweave each month, newest first, starting with September 2026. The site's footer links to it.",
+        "body": "This page shows what changed on Inkweave each week, newest first, back to the start of Set 14's reveal season. The site's footer links to it.",
         "prs": [770]
       },
       {
@@ -31,24 +26,14 @@
     "improved": [
       {
         "title": "Every synergy names both cards",
-        "body": "Each synergy line now names both cards and the part each one plays, so it reads true from either card's page, where most lines used to name neither. Tile tooltips show the card names, every tribe playstyle shares one clear tagline, and the four longest group descriptions are down to a sentence each.",
+        "body": "Each synergy line now names both cards and the part each one plays, so it reads true from either card's page, where most lines used to name neither. Tile tooltips show the card names too.",
         "highlight": true,
-        "prs": [753, 757, 786]
-      },
-      {
-        "title": "A faster first load",
-        "body": "The site's main script is about a third smaller, because the code behind voting and community scores now loads only when you use them.",
-        "prs": [737]
+        "prs": [786]
       },
       {
         "title": "Playstyle filters fit the playstyle",
         "body": "A playstyle page now offers only the filter values its own cards have, so no single option empties the grid. Browse and card pages keep every option.",
         "prs": [773]
-      },
-      {
-        "title": "Steadier card pages",
-        "body": "Card pages no longer jump while they load, and they show a loading placeholder instead of briefly saying no synergies were found.",
-        "prs": [684, 754]
       },
       {
         "title": "Pair view",
@@ -72,21 +57,9 @@
         "body": "383 votes cast on Set 12 and 13 cards while they were previews now count toward the released cards, and Set 14's preview votes moved the same way when the set went official.",
         "link": {"label": "Vote on synergies", "to": "/vote"},
         "prs": [767, 780]
-      },
-      {
-        "title": "Tribe pages",
-        "body": "The While in Play and Trigger tiles on tribe playstyle pages now describe that tribe, not Location Control or Floodborns.",
-        "prs": [755]
       }
     ],
     "engine": [
-      {
-        "title": "Three new tribes",
-        "body": "Gargoyles, Madrigals and Villains join the classification tribes, pairing each tribe's members with the cards that reward them. Villains alone brings 124 members across every ink.",
-        "highlight": true,
-        "link": {"label": "See the playstyles", "to": "/playstyles"},
-        "prs": [752, 753, 756]
-      },
       {
         "title": "Fewer false synergies",
         "body": "A review of the synergy data removed links the cards' text doesn't support, such as Woody - Leader of the Toys pairing with every location, and singers now pair only with songs that cost more than they do, the ones Singer is for. Across sets 9 to 14, over 3,100 pairs are gone and nearly 1,000 score lower.",
@@ -97,18 +70,8 @@
         "title": "Self-Discard",
         "body": "A discard outlet now scores highest only with a payoff its discard switches on, such as an empty hand. The Gargoyles with STONE BY DAY joined the playstyle, paired with the cards that keep your hand small enough for them to ready.",
         "prs": [760, 768]
-      },
-      {
-        "title": "Location movers",
-        "body": "Chief Bogo - Police Commissioner and five other cards that move characters to locations are now recognized, and a move limited to Hyperia City locations pairs only with those.",
-        "prs": [753]
-      },
-      {
-        "title": "Ink Drops after the English printing",
-        "body": "Baloo - Delivery Pilot kept his Ink Drops partners when his English printing replaced the translated one.",
-        "prs": [685]
       }
     ]
   },
-  "behindTheScenes": "Plus 52 behind-the-scenes changes: dependency updates, deploy and tooling fixes, tests, docs, code cleanups and work on features that aren't switched on yet."
+  "behindTheScenes": "Plus 20 behind-the-scenes changes: dependency updates, CI and tooling fixes, code cleanups and work on features that aren't switched on yet."
 }

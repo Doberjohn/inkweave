@@ -5,20 +5,20 @@ import {
   RELEASE_NOTES_SECTIONS,
   SECTION_HEADINGS,
   type ReleaseNoteItem,
-  type ReleaseNotesMonth,
+  type ReleaseNotesWeek,
 } from './types';
 
-export interface ReleaseNotesMonthSectionProps {
-  notes: ReleaseNotesMonth;
+export interface ReleaseNotesWeekSectionProps {
+  notes: ReleaseNotesWeek;
 }
 
-const monthStyle: React.CSSProperties = {
+const weekStyle: React.CSSProperties = {
   borderTop: `1px solid ${COLORS.surfaceBorder}`,
   marginTop: SPACING.xxl,
   paddingTop: SPACING.xxl,
 };
 
-const monthHeadingStyle: React.CSSProperties = {
+const weekHeadingStyle: React.CSSProperties = {
   margin: 0,
   fontSize: FONT_SIZES.xxl,
   fontWeight: 700,
@@ -91,7 +91,7 @@ function NoteGroup({heading, items}: {heading: string; items: ReleaseNoteItem[] 
     <>
       <h3 style={sectionHeadingStyle}>{heading}</h3>
       <ul style={listStyle}>
-        {/* A month's items never move, and two may share a title, so the index is the key. */}
+        {/* A week's items never move, and two may share a title, so the index is the key. */}
         {items.map((item, index) => (
           <NoteItem key={index} item={item} />
         ))}
@@ -101,15 +101,15 @@ function NoteGroup({heading, items}: {heading: string; items: ReleaseNoteItem[] 
 }
 
 /**
- * One month of release notes: its heading and summary, then New, Improved, Fixed and Synergy
- * engine in that order, leaving out any the month doesn't have. The section's id is the month,
- * so /release-notes#2026-09 lands on it.
+ * One week of release notes: its heading and summary, then New, Improved, Fixed and Synergy
+ * engine in that order, leaving out any the week doesn't have. The section's id is the week's
+ * Monday, so /release-notes#2026-09-28 lands on it.
  */
-export function ReleaseNotesMonthSection({notes}: ReleaseNotesMonthSectionProps) {
-  const headingId = `${notes.month}-heading`;
+export function ReleaseNotesWeekSection({notes}: ReleaseNotesWeekSectionProps) {
+  const headingId = `${notes.week}-heading`;
   return (
-    <section id={notes.month} aria-labelledby={headingId} style={monthStyle}>
-      <h2 id={headingId} style={monthHeadingStyle}>
+    <section id={notes.week} aria-labelledby={headingId} style={weekStyle}>
+      <h2 id={headingId} style={weekHeadingStyle}>
         {notes.title}
       </h2>
       <p style={summaryStyle}>{notes.summary}</p>
