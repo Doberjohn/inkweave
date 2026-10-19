@@ -153,14 +153,6 @@ function sideButtonStyle(
   };
 }
 
-/**
- * The count's pop on a step. Set inline, so index.css's reduced-motion block can't reach it,
- * and reduced motion is read here instead (#790).
- */
-function popAnimation(pop: boolean, reducedMotion: boolean): string | undefined {
-  return pop && !reducedMotion ? `inkweave-qty-pop ${DURATION.base}ms ${EASING.smooth}` : undefined;
-}
-
 function incrementAriaLabel(disabled: boolean, disabledReason: string | undefined, name: string): string {
   if (disabled) return disabledReason ?? `Cannot add more ${name}`;
   return `Add one copy of ${name}`;
@@ -168,19 +160,24 @@ function incrementAriaLabel(disabled: boolean, disabledReason: string | undefine
 
 // Owns the pop animation state so the component stays a thin view. Controlled
 // (parent passes `popping`/`onPopEnd`) or uncontrolled (internal state); the pop
-// is triggered from the click handlers only, never a render-time effect.
+// is triggered from the click handlers only, never a render-time effect. The
+// animation is inline, where index.css's reduced-motion block can't reach it, so
+// under reduced motion this hook drops it, and sets no pop of its own: the
+// animation's end is what clears one, and with no animation that never fires. A
+// parent that owns the pop gets no `onPopEnd` then either, so it skips its own (#790).
 function usePopAnimation(popping: boolean | undefined, onPopEnd: (() => void) | undefined) {
+  const reducedMotion = usePrefersReducedMotion();
   const isControlled = popping !== undefined;
   const [internalPop, setInternalPop] = useState(false);
   const shouldPop = isControlled ? popping : internalPop;
   const triggerPop = () => {
-    if (!isControlled) setInternalPop(true);
+    if (!isControlled && !reducedMotion) setInternalPop(true);
   };
   const handlePopEnd = () => {
     if (isControlled) onPopEnd?.();
     else setInternalPop(false);
   };
-  return {shouldPop, triggerPop, handlePopEnd};
+  return {shouldPop: shouldPop && !reducedMotion, triggerPop, handlePopEnd};
 }
 
 /**
@@ -214,7 +211,6 @@ export function QuantityStepper({
   const name = label ?? 'card';
 
   const {shouldPop, triggerPop, handlePopEnd} = usePopAnimation(popping, onPopEnd);
-  const reducedMotion = usePrefersReducedMotion();
 
   const handleInc = () => {
     if (incrementDisabled) return;
@@ -250,7 +246,7 @@ export function QuantityStepper({
       </button>
       <span
         onAnimationEnd={handlePopEnd}
-        style={{...cell, color: COLORS.text, fontSize: dims.countFontSize, animation: popAnimation(shouldPop, reducedMotion)}}>
+        style={{...cell, color: COLORS.text, fontSize: dims.countFontSize, animation: shouldPop ? `inkweave-qty-pop ${DURATION.base}ms ${EASING.smooth}` : undefined}}>
         {value}
       </span>
       <button
