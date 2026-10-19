@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
-import {render, screen} from '@testing-library/react';
+import {fireEvent, render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
@@ -29,6 +29,8 @@ const card = (id: string, setNumber: number, cost: number, setCode = '9') =>
 const POOL = [card('a', 1, 5), card('b', 2, 1), card('c', 3, 3), card('next', 1, 1, '10')];
 
 interface SectionOptions {
+  /** Every card the page holds; the four above unless a case needs more. */
+  pool?: LorcanaCard[];
   sortOrder?: BrowseSortOrder;
   setCode?: string;
   entries?: CollectionEntries;
@@ -39,16 +41,16 @@ interface SectionOptions {
 /** The section with `matched` the cards the page's filters let through, as the page counts them. */
 function section(
   matched: string[],
-  {sortOrder = 'newest', setCode = '9', entries = {}, isLoading = false, error = null}: SectionOptions = {},
+  {pool = POOL, sortOrder = 'newest', setCode = '9', entries = {}, isLoading = false, error = null}: SectionOptions = {},
 ) {
-  const counted = POOL.filter((card) => matched.includes(card.id));
+  const counted = pool.filter((card) => matched.includes(card.id));
   return (
     <MemoryRouter>
       <CollectionBinderSection
-        cards={POOL}
+        cards={pool}
         matchedIds={new Set(matched)}
         counted={counted}
-        filtered={counted.length < POOL.length}
+        filtered={counted.length < pool.length}
         sortOrder={sortOrder}
         entries={entries}
         isLoading={isLoading}
@@ -98,6 +100,18 @@ describe('CollectionBinderSection', () => {
     vi.stubGlobal('innerWidth', 800);
     renderSection(['a'], {entries: {a: {normal: 1, foil: 0}}});
     expect(screen.getByRole('complementary', {name: 'Set'})).toHaveTextContent('filtered · 100% complete · 0% master');
+  });
+
+  it('opens at the first spread when a filter changes what it holds', () => {
+    // Thirty of Set 9's cards fill two spreads. Narrowing them must not leave the reader
+    // on the second, which would now hold other cards.
+    const thirty = Array.from({length: 30}, (_, i) => card(`s${i + 1}`, i + 1, 1));
+    const ids = thirty.map((held) => held.id);
+    const view = renderSection(ids, {pool: thirty});
+    fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+    expect(screen.getByRole('button', {name: /^Spread 2 of 2/})).toHaveAttribute('aria-current', 'true');
+    view.rerender(section(ids.slice(1), {pool: thirty}));
+    expect(screen.getByRole('button', {name: /^Spread 1 of 2/})).toHaveAttribute('aria-current', 'true');
   });
 
   it('says so when nothing in this set matches, rather than drawing an empty binder', () => {

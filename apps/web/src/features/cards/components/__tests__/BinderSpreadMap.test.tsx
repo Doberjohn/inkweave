@@ -30,12 +30,15 @@ describe('BinderSpreadMap, for a long binder', () => {
   });
 
   it('moves it back when a step goes back past its first spread, that spread now its last', () => {
+    // From the third window, spreads 21 to 31: one back from the second, the binder's
+    // start would clamp the move and hide where it lands (#790).
     render(<Live />);
     fireEvent.click(screen.getByRole('button', {name: /^Spread 11 of 40/}));
+    fireEvent.click(screen.getByRole('button', {name: /^Spread 21 of 40/}));
     fireEvent.click(screen.getByRole('button', {name: 'Previous spread'}));
-    expect(spreads()[0]).toMatch(/^Spread 1 of 40/);
-    expect(spreads()[9]).toMatch(/^Spread 10 of 40/);
-    expect(screen.getByRole('button', {name: /^Spread 10 of 40/})).toHaveAttribute('aria-current', 'true');
+    expect(spreads()[0]).toMatch(/^Spread 10 of 40/);
+    expect(spreads()[10]).toMatch(/^Spread 20 of 40/);
+    expect(screen.getByRole('button', {name: /^Spread 20 of 40/})).toHaveAttribute('aria-current', 'true');
   });
 
   it('keeps a short binder whole, with no window to move', () => {
@@ -138,5 +141,36 @@ describe('BinderSpreadMap, set by set', () => {
     expect(spreads()[0]).toBe('Set A, spread 1 of 10: nothing missing');
     expect(spreads()[9]).toBe('Set A, spread 10 of 10, then Set B, spread 1 of 31: nothing missing');
     expect(spreads()[10]).toBe('Set B, spread 2 of 31: nothing missing');
+  });
+});
+
+/** The first mini spread's left page, and that page's first cell. */
+function firstCell() {
+  const page = screen.getByRole('button', {name: /^Spread 1 of 1/}).firstElementChild as HTMLElement;
+  return {page, cell: page.firstElementChild as HTMLElement};
+}
+
+describe('BinderSpreadMap, cells', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  // jsdom parses CSS, so it supports round() against a container as current browsers do.
+  it('sizes each cell in whole pixels against its page, where CSS can round', () => {
+    render(<BinderSpreadMap pockets={POCKETS.slice(0, 24)} current={0} onGo={() => {}} />);
+    const {page, cell} = firstCell();
+    expect(page.style.containerType).toBe('inline-size');
+    expect(cell.style.width).toMatch(/^round\(down, /);
+    expect(cell.style.height).toMatch(/^round\(/);
+  });
+
+  it("keeps each cell a card's shape where CSS cannot round", async () => {
+    // Whether it can is read once, at module load, so this case imports a fresh copy.
+    vi.stubGlobal('CSS', {supports: () => false});
+    vi.resetModules();
+    const {BinderSpreadMap: Unrounded} = await import('../BinderSpreadMap');
+    render(<Unrounded pockets={POCKETS.slice(0, 24)} current={0} onGo={() => {}} />);
+    const {page, cell} = firstCell();
+    expect(page.style.containerType).toBe('');
+    expect(cell.style.width).toBe('');
+    expect(cell.style.aspectRatio).toMatch(/^0\.75\b/);
   });
 });
