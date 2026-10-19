@@ -17,7 +17,7 @@ describe('CtaButton', () => {
   it('should render ghost variant with gold border', () => {
     render(<CtaButton variant="ghost">Ghost</CtaButton>);
     const btn = screen.getByRole('button');
-    expect(btn).toHaveStyle({background: 'transparent'});
+    expect(btn.style.background).toBe('transparent');
   });
 
   it('should forward onClick and other button props', () => {
