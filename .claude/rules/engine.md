@@ -26,7 +26,7 @@ All playstyle rules share the same anchor: **5 = neutral default**. Same-axis de
 | 6 | Complementary roles on the same axis (e.g., burn ↔ steal) |
 | 7 | Mechanical compounding (e.g., steal ↔ steal, member ↔ tribal) |
 | 8 | Win-condition combo / peak chain (Discard enabler ↔ payoff, Toy search ↔ banish-trigger) |
-| 9 | Snowball chain (Ramp deck-ramp ↔ repeating-trigger) |
+| 9 | Snowball chain (none at present: community-vote tuning moved Ramp's deck-ramp ↔ repeating-trigger to 8) |
 | 10 | Engine-bonus / community-tuned |
 
 Display tiers: Perfect (>=9.5), Strong (7-9.4), Moderate (4-6.9), Weak (<4). All integers 1-10 are valid.
