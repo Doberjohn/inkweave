@@ -5,6 +5,8 @@ import {gotoWithRetry} from '../pages/vote.page';
 /** Must match apps/web/index.html's static <title> byte-for-byte (note the em dash). */
 const SHELL_TITLE = 'Inkweave — Master Lorcana Synergies';
 const SITE_ORIGIN = 'https://inkweave.ink';
+/** VotePage's visually hidden h1 (VoteHeading). */
+const VOTE_H1 = 'Vote on Lorcana card synergies';
 
 /**
  * One route per indexable page type. #486's central acceptance criterion was that
@@ -171,14 +173,38 @@ test.describe('SEO', () => {
     await expect(page.locator('h1')).toContainText('Elsa');
   });
 
-  // The vote screen shows no heading of its own, so its h1 is visually hidden, and every
-  // state renders it (loading, error, a pair). Nothing on screen goes missing without it,
-  // which is how /vote sat in the sitemap with no h1 at all.
-  test('vote page has exactly one h1', async ({page}) => {
+  // The vote screen shows no heading of its own, so its h1 is visually hidden: VotePageShell
+  // renders it while the pair loads and once it shows, and VoteErrorView when the pairs fail
+  // to load. Each state is held open below, because nothing on screen goes missing without
+  // the h1, which is how /vote sat in the sitemap with none at all. An array makes
+  // toHaveText match the whole list, so each check also means exactly one h1.
+  test('vote page has exactly one h1 while its pair loads and once it shows', async ({page}) => {
+    let releaseQueue = () => {};
+    const queueHeld = new Promise<void>((resolve) => (releaseQueue = resolve));
+    await page.route('**/data/synergies/_pairs_index.json', async (route) => {
+      await queueHeld;
+      await route.continue();
+    });
     await gotoWithRetry(page, '/vote');
 
-    await expect(page.locator('h1')).toHaveCount(1, {timeout: 15000});
-    await expect(page.locator('h1')).toHaveText('Vote on Lorcana card synergies');
+    await expect(page.getByLabel('Loading vote pair')).toBeVisible({timeout: 15000});
+    await expect(page.locator('h1')).toHaveText([VOTE_H1]);
+
+    releaseQueue();
+    await expect(page.getByRole('radiogroup', {name: 'Synergy score'})).toBeVisible({
+      timeout: 15000,
+    });
+    await expect(page.locator('h1')).toHaveText([VOTE_H1]);
+  });
+
+  test('vote page has exactly one h1 when its pairs fail to load', async ({page}) => {
+    await page.route('**/data/synergies/_pairs_index.json', (route) =>
+      route.fulfill({status: 500}),
+    );
+    await gotoWithRetry(page, '/vote');
+
+    await expect(page.getByRole('main').getByRole('alert')).toBeVisible({timeout: 15000});
+    await expect(page.locator('h1')).toHaveText([VOTE_H1]);
   });
 
   test('should have valid JSON-LD structured data on home page', async ({appPage, page}) => {
