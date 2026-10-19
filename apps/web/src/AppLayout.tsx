@@ -75,6 +75,39 @@ function shouldShowBetaNotice({isHome, isMobile}: BetaNoticeVisibility): boolean
   return true;
 }
 
+interface BottomCover {
+  showBottomNav: boolean;
+  showRevealsPromo: boolean;
+  isMobile: boolean;
+  promoHeight: number;
+}
+
+/**
+ * How much of the bottom of the screen a fixed bar covers: the bottom nav, or on Home on a phone
+ * the Reveals promo (on desktop it sits top right). The two never show together (Home has no
+ * bottom nav).
+ */
+function bottomCoverHeight({showBottomNav, showRevealsPromo, isMobile, promoHeight}: BottomCover): number {
+  if (showBottomNav) return MOBILE_NAV_HEIGHT;
+  if (!showRevealsPromo || !isMobile) return 0;
+  return promoHeight;
+}
+
+/**
+ * Keeps keyboard focus clear of a bar fixed over the bottom of the screen (WCAG 2.4.11): the
+ * browser scrolls a focused element into view above the root's `scroll-padding-bottom`.
+ */
+function useScrollPaddingBottom(height: number): void {
+  useEffect(() => {
+    if (!height) return;
+    const root = document.documentElement;
+    root.style.scrollPaddingBottom = `${height}px`;
+    return () => {
+      root.style.scrollPaddingBottom = '';
+    };
+  }, [height]);
+}
+
 function AppContent() {
   const {error, retryLoad, requestLoad} = useCardDataContext();
   const {isMobile} = useResponsive();
@@ -83,6 +116,10 @@ function AppContent() {
   const showBottomNav = isMobile && !isHome;
   const phase = useRevealPhase();
   const showRevealsPromo = shouldShowRevealsPromo({isHome, phase});
+  const [promoHeight, setPromoHeight] = useState(0);
+  // The page pads by it so its end can scroll clear, and focus scrolls clear of it.
+  const bottomCover = bottomCoverHeight({showBottomNav, showRevealsPromo, isMobile, promoHeight});
+  useScrollPaddingBottom(bottomCover);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<SearchBottomSheetHandle>(null);
   const earlyProxyRef = useRef<HTMLInputElement>(null);
@@ -118,7 +155,7 @@ function AppContent() {
 
   return (
     <>
-      <div style={showBottomNav ? {paddingBottom: MOBILE_NAV_HEIGHT} : undefined}>
+      <div style={bottomCover ? {paddingBottom: bottomCover} : undefined}>
         <Outlet />
       </div>
       {showBottomNav && (
@@ -137,9 +174,7 @@ function AppContent() {
           </Suspense>
         </>
       )}
-      {showRevealsPromo && (
-        <RevealsPromoCard />
-      )}
+      {showRevealsPromo && <RevealsPromoCard onHeightChange={setPromoHeight} />}
       {shouldShowBetaNotice({isHome, isMobile}) && <BetaNotice />}
     </>
   );

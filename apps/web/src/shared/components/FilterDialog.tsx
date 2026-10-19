@@ -1,3 +1,4 @@
+import {useRef} from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import {COLORS, FONT_SIZES, SHADOWS, SPACING, RADIUS, Z_INDEX} from '../constants';
 import {CtaButton} from './CtaButton';
@@ -20,6 +21,26 @@ interface FilterDialogProps extends FilterPanelProps {
   toolbarCarries?: {cost: boolean; inkwell: boolean};
 }
 
+/**
+ * Hands focus back to the control that opened the dialog when it closes (WCAG 2.4.3). Radix
+ * returns focus to a `Dialog.Trigger`, and this dialog is controlled with none, so its own
+ * target is null and focus would fall to the top of the page. Radix calls `onOpenAutoFocus`
+ * before it moves focus in, so the opener still holds it then.
+ */
+function useReturnFocus() {
+  const openerRef = useRef<HTMLElement | null>(null);
+  return {
+    keepOpener: () => {
+      openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    },
+    restore: (event: Event) => {
+      event.preventDefault();
+      if (openerRef.current?.isConnected) openerRef.current.focus();
+      openerRef.current = null;
+    },
+  };
+}
+
 export function FilterDialog({
   isOpen,
   onClose,
@@ -39,6 +60,7 @@ export function FilterDialog({
   toolbarCarries = {cost: true, inkwell: true},
 }: FilterDialogProps) {
   const draft = useDraftFilters({isOpen, inkFilters, typeFilters, costFilters, filters});
+  const returnFocus = useReturnFocus();
   // Cost rides inline only on wide screens, and only in a toolbar that has it.
   const showInlineCost = useInlineCostFilters() && toolbarCarries.cost;
 
@@ -115,6 +137,8 @@ export function FilterDialog({
         <Dialog.Content
           data-testid={variant === 'modal' ? 'filter-modal' : 'filter-drawer'}
           aria-describedby={undefined}
+          onOpenAutoFocus={returnFocus.keepOpener}
+          onCloseAutoFocus={returnFocus.restore}
           style={styles.content}>
           {/* Drag handle (drawer only) */}
           {variant === 'drawer' && (

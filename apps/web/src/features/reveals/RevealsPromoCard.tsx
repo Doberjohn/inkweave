@@ -1,6 +1,14 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState, type RefObject} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, REVEAL_SET_LOGO_SM, REVEAL_SET_NUMBER} from '../../shared/constants';
+import {
+  CARD_TILE_RING,
+  COLORS,
+  FONTS,
+  FONT_SIZES,
+  RADIUS,
+  REVEAL_SET_LOGO_SM,
+  REVEAL_SET_NUMBER,
+} from '../../shared/constants';
 import {useResponsive} from '../../shared/hooks';
 import {prefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
 
@@ -134,6 +142,9 @@ function getAsideStyle(viewport: ViewportConfig, mounted: boolean): React.CSSPro
 
 function getButtonStyle(viewport: ViewportConfig): React.CSSProperties {
   const base: React.CSSProperties = {
+    // The gold of its focus ring (`inset-focus-ring`), drawn inside: the aside's
+    // `overflow: hidden` clips the global outline.
+    ...CARD_TILE_RING,
     background: 'transparent',
     border: 'none',
     color: 'inherit',
@@ -236,16 +247,44 @@ function FireflyField() {
   );
 }
 
+/**
+ * Reports the element's height whenever it changes, and 0 once it unmounts. `onHeightChange`
+ * must keep its identity across renders (a state setter does), or every render reports 0 first.
+ */
+function useReportedHeight(ref: RefObject<HTMLElement | null>, onHeightChange?: (height: number) => void) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !onHeightChange) return;
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => onHeightChange(el.offsetHeight));
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      onHeightChange(0);
+    };
+  }, [ref, onHeightChange]);
+}
+
 // =====================================================================
 // Public component.
 // =====================================================================
 
-export function RevealsPromoCard() {
+interface RevealsPromoCardProps {
+  /**
+   * The card's height as it changes, and 0 once it unmounts. On a phone it covers the bottom of
+   * the screen, so AppLayout leaves that much room under the page and scrolls focus clear of it.
+   */
+  onHeightChange?: (height: number) => void;
+}
+
+export function RevealsPromoCard({onHeightChange}: RevealsPromoCardProps) {
   const navigate = useNavigate();
   const {isMobile} = useResponsive();
   const viewport: ViewportConfig = {isMobile};
   const reduced = prefersReducedMotion();
   const [mounted, setMounted] = useState(reduced);
+  const asideRef = useRef<HTMLElement>(null);
+  useReportedHeight(asideRef, onHeightChange);
 
   useEffect(() => {
     if (reduced) return;
@@ -254,8 +293,16 @@ export function RevealsPromoCard() {
   }, [reduced]);
 
   return (
-    <aside aria-label={`Set ${REVEAL_SET_NUMBER} reveals`} className="rpc-card" style={getAsideStyle(viewport, mounted)}>
-      <button type="button" onClick={() => navigate('/reveals')} style={getButtonStyle(viewport)}>
+    <aside
+      ref={asideRef}
+      aria-label={`Set ${REVEAL_SET_NUMBER} reveals`}
+      className="rpc-card"
+      style={getAsideStyle(viewport, mounted)}>
+      <button
+        type="button"
+        onClick={() => navigate('/reveals')}
+        className="inset-focus-ring"
+        style={getButtonStyle(viewport)}>
         <img
           src={REVEAL_SET_LOGO_SM.src}
           width={REVEAL_SET_LOGO_SM.width}

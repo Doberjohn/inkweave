@@ -507,7 +507,8 @@ export function searchFieldStyle({focused, hovered}: {focused: boolean; hovered:
  * The card tiles' hover-ring gold, as the custom property `.card-tile::after` (index.css)
  * reads. Spread into each tile's own style rather than set once on the page root, so the
  * ring shows wherever a tile renders: in the card modal's portal, in Storybook, and in
- * admin, which imports the tile and index.css but not this app's bootstrap.
+ * admin, which imports the tile and index.css but not this app's bootstrap. The inset focus
+ * ring (`.inset-focus-ring`, on CardImageButton and the Reveals promo) reads it the same way.
  */
 export const CARD_TILE_RING = {'--inkweave-gold': COLORS.primary} as React.CSSProperties;
 

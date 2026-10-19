@@ -69,6 +69,37 @@ test('Back to all synergies returns to the default view', async () => {
   expect(screen.getByRole('button', {name: /more/i})).toBeVisible();
 });
 
+test('a comparison opened from a tile takes focus to BACK, and closing it gives the tile focus back', async () => {
+  // Opening one makes the tile inert, which drops focus to <body> in a browser (WCAG 2.4.3).
+  const user = userEvent.setup();
+  const source = makeCard('source');
+  render(
+    <MemoryRouter>
+      <CardDataProvider>
+        <CardOverviewModal
+          isOpen
+          card={source}
+          synergies={[makeGroup('singer-songs', 'Singer + Songs', 3)]}
+          getPairSynergies={(cardB) => ({
+            cardA: source, cardB, aggregateScore: 7,
+            connections: [{ruleId: 'singer-songs', ruleName: 'Singer + Songs', category: 'direct', score: 7, explanation: 'Sings it.'}],
+          })}
+          onClose={() => {}}
+        />
+      </CardDataProvider>
+    </MemoryRouter>,
+  );
+  const tile = screen.getByRole('link', {name: /^Card syn-1 - Test/});
+  tile.focus();
+
+  await user.keyboard('{Enter}');
+  const back = await screen.findByRole('button', {name: 'Back to synergies'});
+  await waitFor(() => expect(back).toHaveFocus());
+
+  await user.keyboard('{Enter}');
+  await waitFor(() => expect(tile).toHaveFocus());
+});
+
 test('changing the card resets the expanded view', async () => {
   const user = userEvent.setup();
   const group = makeGroup('singer-songs', 'Singer + Songs', 20);
