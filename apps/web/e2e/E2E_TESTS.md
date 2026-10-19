@@ -330,7 +330,7 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 
 | Test | What it verifies |
 |---|---|
-| renders the tracker: hero, six ink trackers, and the debut franchises | sr-only `h1` containing the set name, the set logo (alt = set name), 6 `ink-tracker-tile`s, the "Ink board" section, and at least one "View … cards" franchise button all render |
+| renders the tracker: hero, six ink trackers, and the debut franchises | sr-only `h1` containing the set name, the set logo (alt = set name), the hero's countdown labelled "Until store release" (the pinned clock is past the pre-release), 6 `ink-tracker-tile`s, the "Ink board" section, and at least one "View … cards" franchise button all render |
 | desktop nav shows Reveals entry with NEW badge | `/browse` has a Reveals link with a "NEW" badge child |
 | mobile nav shows Reveals tab | On mobile, `/browse`'s bottom nav has a "Set N reveals" link |
 | promo modal appears on landing page and not on /reveals | `role="complementary" name="Set N reveals"` visible on `/`, absent on `/reveals` |

@@ -641,6 +641,8 @@ stateDiagram-v2
 
 Phase recomputes at the next local midnight via `setTimeout` (line 62). The hook re-fetches reveal dates once per mount.
 
+The page's countdown switches at the same boundary (`computeCountdown` in `useCountdown.ts`): during `'pre-release'` it counts down to `prereleaseDate`, and during `'pre-release-live'` to `releaseDate`, labelled "Until store release".
+
 ### Dates source
 
 `fetchRevealDates` in `apps/web/src/features/reveals/revealDates.ts`:
