@@ -410,8 +410,9 @@ function getShowMoreTileStyle({hovered, minHeight}: {hovered: boolean; minHeight
 
 /**
  * The dashed reveal tile shown as the last collapsed cell; clicking it expands the carousel.
- * Its accessible name ("Show 6 more mechanics") is a screen-reader-only line too, for the
- * reason RoleTileButton gives.
+ * Its accessible name ("Show more, 6 mechanics") is a screen-reader-only line too, for the
+ * reason RoleTileButton gives. It starts with the visible "Show more", so a speech-input
+ * user can say what the tile shows.
  */
 function ShowMoreTile({hiddenCount, minHeight, onClick}: {hiddenCount: number; minHeight: number; onClick: () => void}) {
   const [hovered, setHovered] = useState(false);
@@ -442,7 +443,7 @@ function ShowMoreTile({hiddenCount, minHeight, onClick}: {hiddenCount: number; m
         }}>
         Show more ▾
       </span>
-      <span style={SR_ONLY_STYLE}>{`Show ${hiddenCount} more mechanics`}</span>
+      <span style={SR_ONLY_STYLE}>{`Show more, ${hiddenCount} mechanics`}</span>
     </button>
   );
 }
