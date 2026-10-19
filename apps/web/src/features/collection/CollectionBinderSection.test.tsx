@@ -101,9 +101,15 @@ describe('CollectionBinderSection', () => {
   });
 
   it('says so when nothing in this set matches, rather than drawing an empty binder', () => {
+    // As a status, so a search that empties the binder is announced (#790).
     renderSection(['next']);
-    expect(screen.getByText('No cards in this set match your filters.')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('No cards in this set match your filters.');
     expect(screen.queryByRole('region', {name: 'Binder'})).toBeNull();
+  });
+
+  it('announces a load error as an alert', () => {
+    renderSection([], {error: 'The rest of the cards did not load.'});
+    expect(screen.getByRole('alert')).toHaveTextContent('The rest of the cards did not load.');
   });
 
   it('holds the whole collection set by set, each set continuing where the one before ends', () => {

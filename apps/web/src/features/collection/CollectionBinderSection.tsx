@@ -184,11 +184,14 @@ function SectionContent({
 
   // Both states are rendered rather than falling through to an empty binder.
   // A binder of blank slots is indistinguishable from "you own none of this
-  // set", so a failed fetch would read as a fact about the collection.
+  // set", so a failed fetch would read as a fact about the collection. The error
+  // is an alert (#790): it replaces a binder the reader was waiting for.
   if (error !== null) {
     return (
       <div style={{...sectionStyle(isMobile, docked), display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
-        <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.sm}px`, margin: 0}}>{error}</p>
+        <p role="alert" style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.sm}px`, margin: 0}}>
+          {error}
+        </p>
         <div>
           <CtaButton variant="ghost" onClick={onRetry}>
             Try again
@@ -254,11 +257,17 @@ function SectionContent({
  * Nothing to show. Said in words, not as an empty binder: blank pockets would read as a
  * fact about the collection. With the binder showing only owned or only missing cards,
  * that view is as likely the reason as the filters.
+ *
+ * A status (#790), like Browse's empty grid: a search that empties the binder changes
+ * nothing where the reader is typing, so it is announced.
  */
 function NoMatches({show, whole}: {show: BinderShow; whole: boolean}) {
   const where = whole ? 'your collection' : 'this set';
   return (
-    <p style={{textAlign: 'center', padding: 64, margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
+    <p
+      role="status"
+      aria-live="polite"
+      style={{textAlign: 'center', padding: 64, margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
       {show === 'all' ? `No cards in ${where} match your filters.` : `No ${show} cards in ${where} match your filters.`}
     </p>
   );
