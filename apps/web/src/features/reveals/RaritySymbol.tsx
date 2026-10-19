@@ -3,10 +3,11 @@ import uncommonSvg from '../../assets/uncommon.svg';
 import rareSvg from '../../assets/rare.svg';
 import superRareSvg from '../../assets/super_rare.svg';
 import legendarySvg from '../../assets/legendary.svg';
-// The special printings' symbols are the same files the printing switcher uses (PrintingPills).
+// The special printings' and promos' symbols are the files the printing switcher uses (PrintingPills).
 import enchantedSymbol from '../../assets/enchanted.webp?no-inline';
 import epicSymbol from '../../assets/epic.webp?no-inline';
 import iconicSymbol from '../../assets/iconic.webp?no-inline';
+import promoSymbol from '../../assets/promo.webp?no-inline';
 
 /** Real Lorcana rarity symbols, keyed by rarity key (lowercased, see rarity.ts). */
 const RARITY_SYMBOLS: Record<string, string> = {
@@ -18,6 +19,8 @@ const RARITY_SYMBOLS: Record<string, string> = {
   epic: epicSymbol,
   enchanted: enchantedSymbol,
   iconic: iconicSymbol,
+  // LorcanaJSON's rarity for promo printings (#805).
+  special: promoSymbol,
 };
 
 interface RaritySymbolProps {

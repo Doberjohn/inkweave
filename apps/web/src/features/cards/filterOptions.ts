@@ -4,7 +4,14 @@ import {
   COST_BUTTONS,
   type CardTypeFilter,
 } from '../../shared/constants';
-import {RARITIES_BY_ART, anyCardMatches, type ArtKind, type CardFilterOptions, type SetInfo} from './loader';
+import {
+  PROMO_RARITY,
+  RARITIES_BY_ART,
+  anyCardMatches,
+  type ArtKind,
+  type CardFilterOptions,
+  type SetInfo,
+} from './loader';
 import type {Ink, LorcanaCard} from './types';
 
 export type InkwellFilter = NonNullable<CardFilterOptions['inkwell']>;
@@ -16,17 +23,39 @@ export type InkwellFilter = NonNullable<CardFilterOptions['inkwell']>;
  */
 export const ART_OPTIONS: readonly {value: ArtKind; label: string; title: string}[] = [
   {value: 'standard', label: 'Standard cards', title: 'Pick the five standard rarities'},
-  {value: 'alt', label: 'Alt art cards', title: 'Pick Epic, Enchanted and Iconic'},
+  {value: 'alt', label: 'Alt art cards', title: 'Pick Epic, Enchanted, Iconic and Promo'},
 ];
+
+/**
+ * What the filters call a rarity: its own name, but Promo for Special, the rarity
+ * LorcanaJSON gives every promo printing (#805). The Rarity section's chip and summary
+ * and the toolbar's chip all say it.
+ */
+export function rarityLabel(rarity: string): string {
+  return rarity === PROMO_RARITY ? 'Promo' : rarity;
+}
 
 /** Whether the picks are exactly these rarities, in any order. */
 export function picksExactly(picked: readonly string[], rarities: readonly string[]): boolean {
   return picked.length === rarities.length && rarities.every((rarity) => picked.includes(rarity));
 }
 
-/** The art preset the picked rarities amount to, if they are exactly one kind's. */
-export function artPresetOf(picked: readonly string[]) {
-  return ART_OPTIONS.find(({value}) => picksExactly(picked, RARITIES_BY_ART[value]));
+/**
+ * The offered rarities of one kind, in the offered order: what its preset picks. Collection
+ * mode offers no Special, so its Alt art kind is the three chase rarities.
+ */
+export const raritiesOfKind = (offered: readonly string[], kind: ArtKind) =>
+  offered.filter((rarity) => RARITIES_BY_ART[kind].includes(rarity));
+
+/**
+ * The art preset the picked rarities amount to, if they are exactly one kind's: of the
+ * `offered` rarities when the page says which, as its preset picks them, else all of it.
+ */
+export function artPresetOf(picked: readonly string[], offered?: readonly string[]) {
+  return ART_OPTIONS.find(({value}) => {
+    const kind = offered ? raritiesOfKind(offered, value) : RARITIES_BY_ART[value];
+    return kind.length > 0 && picksExactly(picked, kind);
+  });
 }
 
 /** The values each filter button group shows: ink, cost, card type and inkwell. */

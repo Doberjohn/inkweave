@@ -117,29 +117,44 @@ describe('FilterContent chip pickers', () => {
 
   it('shows each rarity by its symbol alone, and one without a symbol by its name', () => {
     // Every rarity Browse or collection mode offers, so one claimed to have a
-    // symbol that RaritySymbol cannot draw shows up as a blank chip here.
-    // Special (promos) stands in for a rarity without one.
+    // symbol that RaritySymbol cannot draw shows up as a blank chip here. Mythic,
+    // made up, stands in for a rarity LorcanaJSON might add one day.
     const symbolled = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', 'Epic', 'Enchanted', 'Iconic'];
-    render(<FilterContent {...defaultProps({variant: 'panel', uniqueRarities: [...symbolled, 'Special']})} />);
+    render(<FilterContent {...defaultProps({variant: 'panel', uniqueRarities: [...symbolled, 'Special', 'Mythic']})} />);
     const group = screen.getByRole('group', {name: 'Rarity filters'});
     for (const rarity of symbolled) {
       const chip = within(group).getByRole('button', {name: rarity});
       expect(chip.querySelector('img')).not.toBeNull();
       expect(chip.textContent).toBe('');
     }
-    expect(within(group).getByRole('button', {name: 'Special'})).toHaveTextContent('Special');
+    expect(within(group).getByRole('button', {name: 'Mythic'})).toHaveTextContent('Mythic');
+  });
+
+  // LorcanaJSON gives promos the rarity Special (#805).
+  it('shows Special as the promo symbol, named "Promo" in its tooltip and in the folded summary', () => {
+    render(
+      <FilterContent
+        {...defaultProps({variant: 'panel', uniqueRarities: ['Legendary', 'Special'], filters: {rarities: ['Special']}})}
+      />,
+    );
+    const chip = within(screen.getByRole('group', {name: 'Rarity filters'})).getByRole('button', {name: 'Promo'});
+    expect(chip.querySelector('img')).toHaveAttribute('src', expect.stringContaining('promo'));
+    expect(chip).toHaveAttribute('title', 'Promo');
+
+    fireEvent.click(screen.getByRole('button', {name: /^Rarity/}));
+    expect(screen.getByRole('button', {name: /^Rarity/})).toHaveTextContent('· Promo');
   });
 
   describe('rarity lines', () => {
     const lineBreaks = () =>
       [...screen.getByRole('group', {name: 'Rarity filters'}).children].filter((el) => el.tagName === 'SPAN');
 
-    it('puts Legendary on the second line, with the special printings', () => {
-      const rarities = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', 'Epic', 'Enchanted', 'Iconic'];
+    it("puts the five card rarities on the top line and the printings' below (owner, 2026-10-17)", () => {
+      const rarities = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', 'Epic', 'Enchanted', 'Iconic', 'Special'];
       render(<FilterContent {...defaultProps({variant: 'panel', uniqueRarities: rarities})} />);
-      // One line break, right before Legendary: four symbols to a line.
+      // One line break, right before Epic: Legendary ends the top line.
       expect(lineBreaks()).toHaveLength(1);
-      expect(lineBreaks()[0].nextElementSibling).toBe(screen.getByRole('button', {name: 'Legendary'}));
+      expect(lineBreaks()[0].nextElementSibling).toBe(screen.getByRole('button', {name: 'Epic'}));
     });
 
     it('keeps five rarities without printings on one line', () => {
@@ -201,9 +216,21 @@ describe('FilterContent Dual-ink cards switch', () => {
 });
 
 describe('FilterContent art presets', () => {
-  const RARITIES = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', 'Epic', 'Enchanted', 'Iconic'];
+  const RARITIES = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', 'Epic', 'Enchanted', 'Iconic', 'Special'];
   const STANDARD = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary'];
   const standard = () => screen.getByRole('button', {name: 'Standard cards'});
+
+  it('pick promos with the alt art printings (owner, 2026-10-17), or only the offered ones', () => {
+    const onFiltersChange = vi.fn();
+    const props = {variant: 'panel', showArtPresets: true, onFiltersChange};
+    const {rerender} = render(<FilterContent {...defaultProps({...props, uniqueRarities: RARITIES})} />);
+    fireEvent.click(screen.getByRole('button', {name: 'Alt art cards'}));
+    expect(onFiltersChange).toHaveBeenLastCalledWith({rarities: ['Epic', 'Enchanted', 'Iconic', 'Special']});
+    // Collection mode's binder offers no promo yet.
+    rerender(<FilterContent {...defaultProps({...props, uniqueRarities: RARITIES.slice(0, -1)})} />);
+    fireEvent.click(screen.getByRole('button', {name: 'Alt art cards'}));
+    expect(onFiltersChange).toHaveBeenLastCalledWith({rarities: ['Epic', 'Enchanted', 'Iconic']});
+  });
 
   it('are offered only where asked, and only with rarities of both kinds to pick', () => {
     const {rerender} = render(<FilterContent {...defaultProps({variant: 'panel', uniqueRarities: RARITIES})} />);
@@ -222,7 +249,7 @@ describe('FilterContent art presets', () => {
     expect(onFiltersChange).toHaveBeenLastCalledWith({rarities: STANDARD});
     // Every symbol stays: the preset picks them, as picking them one by one would.
     rerender(<FilterContent {...defaultProps({...props, filters: {rarities: [...STANDARD].reverse()}})} />);
-    expect(within(screen.getByRole('group', {name: 'Rarity filters'})).getAllByRole('button')).toHaveLength(8);
+    expect(within(screen.getByRole('group', {name: 'Rarity filters'})).getAllByRole('button')).toHaveLength(9);
     expect(standard()).toHaveAttribute('aria-pressed', 'true');
     fireEvent.click(standard());
     expect(onFiltersChange).toHaveBeenLastCalledWith({});

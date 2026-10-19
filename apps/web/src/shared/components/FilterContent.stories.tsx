@@ -93,6 +93,28 @@ export const ArtPresets: Story = {
   },
 };
 
+/**
+ * Browse's panel with the promo printings (#805): LorcanaJSON's Special rarity shows the
+ * promo symbol, named "Promo" for its tooltip and screen readers. Neither art preset picks it.
+ */
+export const WithPromos: Story = {
+  ...ArtPresets,
+  args: {
+    ...ArtPresets.args,
+    uniqueRarities: [
+      'Common',
+      'Uncommon',
+      'Rare',
+      'Super Rare',
+      'Legendary',
+      'Epic',
+      'Enchanted',
+      'Iconic',
+      'Special',
+    ],
+  },
+};
+
 export const Interactive: Story = {
   render: (args) => {
     const [inks, setInks] = useState<Ink[]>([]);

@@ -1,13 +1,18 @@
 import {Fragment} from 'react';
 import type {Ink, SetInfo} from '../../features/cards';
 import type {CardFilterOptions} from '../../features/cards';
-import type {ArtKind} from '../../features/cards/loader';
-import {ART_OPTIONS, picksExactly, type FilterButtonOptions} from '../../features/cards/filterOptions';
+import {
+  ART_OPTIONS,
+  picksExactly,
+  raritiesOfKind,
+  rarityLabel,
+  type FilterButtonOptions,
+} from '../../features/cards/filterOptions';
 import type {CardTypeFilter} from '../constants';
 import type {InkwellValue} from './InkwellIcon';
 import {CARD_TYPE_FILTERS, COST_BUTTONS, COLORS, FONT_SIZES, SET_LOGOS, SPACING} from '../constants';
 import {Chip} from './Chip';
-import {RARITIES_BY_ART, offersDualOnly} from '../../features/cards/loader';
+import {offersDualOnly} from '../../features/cards/loader';
 import {CostIcon} from './CostIcon';
 import {FilterButton} from './FilterButton';
 import {FilterSection} from './FilterSection';
@@ -159,6 +164,7 @@ function ChipToggleGroup<T extends string>({
   ariaLabel,
   isMobile,
   iconFor,
+  labelFor,
   groupOf,
   justifyContent,
 }: {
@@ -169,6 +175,8 @@ function ChipToggleGroup<T extends string>({
   isMobile: boolean;
   /** A glyph shown instead of a chip's name, e.g. the rarity symbol; a value without one shows its name. */
   iconFor?: (value: T) => React.ReactNode;
+  /** A chip's name where it isn't the value itself: Special reads "Promo" (#805). */
+  labelFor?: (value: T) => string;
   /** Each value's group; a value starting another group starts a new line. */
   groupOf?: (value: T) => string;
   /** How each line spreads its chips; packed from the start unless set. */
@@ -181,7 +189,7 @@ function ChipToggleGroup<T extends string>({
         <Fragment key={value}>
           {startsGroup(values, i, groupOf) && <span aria-hidden style={LINE_BREAK} />}
           <Chip
-            label={value}
+            label={labelFor?.(value) ?? value}
             icon={iconFor?.(value)}
             active={selected.includes(value)}
             onClick={() => onToggle(value)}
@@ -214,6 +222,7 @@ function ChipFilterSection({
   fold,
   isMobile,
   iconFor,
+  labelFor,
   groupOf,
   justifyContent,
   below,
@@ -226,6 +235,7 @@ function ChipFilterSection({
   fold: Fold;
   isMobile: boolean;
   iconFor?: (value: string) => React.ReactNode;
+  labelFor?: (value: string) => string;
   groupOf?: (value: string) => string;
   justifyContent?: React.CSSProperties['justifyContent'];
   /** Under the chips: the Rarity section's art presets. */
@@ -233,7 +243,7 @@ function ChipFilterSection({
 }) {
   if (values.length === 0) return null;
   return (
-    <FilterSection label={label} {...fold} summary={listSummary(selected)}>
+    <FilterSection label={label} {...fold} summary={listSummary(labelFor ? selected.map(labelFor) : selected)}>
       <ChipToggleGroup
         values={values}
         selected={selected}
@@ -241,6 +251,7 @@ function ChipFilterSection({
         ariaLabel={ariaLabel}
         isMobile={isMobile}
         iconFor={iconFor}
+        labelFor={labelFor}
         groupOf={groupOf}
         justifyContent={justifyContent}
       />
@@ -251,30 +262,24 @@ function ChipFilterSection({
 
 /**
  * A rarity's chip shows its symbol alone (owner, 2026-10-08: the symbols are
- * recognizable); the name stays as the chip's accessible name and tooltip. A
- * rarity without a symbol, such as Special (promos, which no view offers today),
- * shows its name rather than an empty chip. Lowercased: RaritySymbol keys on
+ * recognizable); the name stays as the chip's accessible name and tooltip, Promo
+ * for Special (`rarityLabel`). A rarity without a symbol, should LorcanaJSON add
+ * one, shows its name rather than an empty chip. Lowercased: RaritySymbol keys on
  * "super rare".
  */
 const raritySymbol = (rarity: string) =>
   hasRaritySymbol(rarity) ? <RaritySymbol rarity={rarity.toLowerCase()} size={24} /> : undefined;
 
-/** The top line's rarities: the four below Legendary (`rarityConfigOf` keys). */
-const TOP_LINE_RARITIES = new Set(['common', 'uncommon', 'rare', 'super rare']);
-
 /**
- * Four symbols to a line, in every view (owner, 2026-10-08): Common to Super Rare,
- * then Legendary with the special printings. A pool without printings (the card
- * page's synergy filters) keeps its five on one line rather than leave Legendary
- * alone below.
+ * The five card rarities on the top line, Common to Legendary, and the printings' below:
+ * Epic, Enchanted, Iconic and Promo (owner, 2026-10-17). It was four to a line, Legendary
+ * leading the special printings (2026-10-08), until the promo symbol made that line five.
+ * A pool without printings (the card page's synergy filters) is one line either way.
  */
 function rarityLines(rarities: readonly string[]): ((rarity: string) => string) | undefined {
   if (rarities.every((rarity) => rarityConfigOf(rarity))) return undefined;
-  return (rarity) => (TOP_LINE_RARITIES.has(rarityConfigOf(rarity)?.key ?? '') ? 'top' : 'bottom');
+  return (rarity) => (rarityConfigOf(rarity) ? 'cards' : 'printings');
 }
-
-/** The offered rarities of each art kind, in the offered order. */
-const raritiesOfKind = (rarities: readonly string[], kind: ArtKind) => rarities.filter((rarity) => RARITIES_BY_ART[kind].includes(rarity));
 
 /**
  * The small chips under a section's options (the art presets, Dual-ink cards): compact
@@ -354,6 +359,7 @@ function RaritySection({
       fold={fold}
       isMobile={isMobile}
       iconFor={raritySymbol}
+      labelFor={rarityLabel}
       groupOf={rarityLines(rarities)}
       // The symbols spread across each line (owner, 2026-10-08).
       justifyContent="space-around"

@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
 import {offersDualOnly, type CardFilterOptions} from '../loader';
-import {artPresetOf, type FilterButtonOptions} from '../filterOptions';
+import {artPresetOf, rarityLabel, type FilterButtonOptions} from '../filterOptions';
 import type {CardTypeFilter, BrowseSortOrder} from '../../../shared/constants';
 import {BROWSE_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, searchFieldStyle} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
@@ -62,6 +62,12 @@ interface BrowseToolbarProps {
   onSearchChange?: (query: string) => void;
   /** Limits the inline ink, cost and inkwell icons to these values; left out, all show. */
   buttonOptions?: FilterButtonOptions;
+  /**
+   * The rarities the page offers, so a whole kind's chip names the art preset that picks
+   * it, as the panel does: a set's binder offers no promo, so its Alt art kind is three.
+   * Left out, a kind is all its rarities.
+   */
+  rarities?: readonly string[];
 }
 
 // =====================================================================
@@ -83,6 +89,7 @@ interface ChipBuildArgs {
   onToggleCost: (cost: number) => void;
   onClearCosts: () => void;
   onFiltersChange: (filters: CardFilterOptions) => void;
+  rarities?: readonly string[];
 }
 
 // Active filters whose inline icons are hidden need a dismissible chip so the
@@ -127,20 +134,21 @@ const present = (chip: ChipData | null): ChipData[] => (chip ? [chip] : []);
 
 /**
  * One chip per picked keyword, classification or rarity (several since the chip
- * pickers, owner 2026-10-08); dismissing one drops just that value, and the
- * last one clears the option.
+ * pickers, owner 2026-10-08), named by `labelFor` where a value isn't its own name;
+ * dismissing one drops just that value, and the last one clears the option.
  */
 function buildListValueChips(
   filters: CardFilterOptions,
   onFiltersChange: (f: CardFilterOptions) => void,
   key: 'keywords' | 'classifications' | 'rarities',
+  labelFor: (value: string) => string = (value) => value,
 ): ChipData[] {
   const values = filters[key] ?? [];
   return values.map((value) => {
     const rest = values.filter((v) => v !== value);
     return {
       id: `${key}:${value}`,
-      label: value,
+      label: labelFor(value),
       onDismiss: () => onFiltersChange({...filters, [key]: rest.length > 0 ? rest : undefined}),
     };
   });
@@ -175,12 +183,13 @@ function buildInkModeChip(args: ChipBuildArgs): ChipData | null {
 }
 
 /**
- * The picked rarities: a chip each, or ONE named for the art preset they amount to (owner,
- * 2026-10-15), "Standard cards" rather than five. Dismissing it clears them all.
+ * The picked rarities: a chip each, named as the Rarity filter names them (Special reads
+ * "Promo", #805), or ONE named for the art preset they amount to (owner, 2026-10-15),
+ * "Standard cards" rather than five. Dismissing it clears them all.
  */
-function buildRarityChips(filters: CardFilterOptions, onFiltersChange: (f: CardFilterOptions) => void): ChipData[] {
-  const preset = artPresetOf(filters.rarities ?? []);
-  if (!preset) return buildListValueChips(filters, onFiltersChange, 'rarities');
+function buildRarityChips({filters, onFiltersChange, rarities}: ChipBuildArgs): ChipData[] {
+  const preset = artPresetOf(filters.rarities ?? [], rarities);
+  if (!preset) return buildListValueChips(filters, onFiltersChange, 'rarities', rarityLabel);
   return [{id: `rarities:${preset.value}`, label: preset.label, onDismiss: () => onFiltersChange({...filters, rarities: undefined})}];
 }
 
@@ -195,7 +204,7 @@ function buildActiveChips(args: ChipBuildArgs): ChipData[] {
     ...buildHiddenIconChips(args),
     ...present(buildInkModeChip(args)),
     ...typeChips,
-    ...buildRarityChips(args.filters, args.onFiltersChange),
+    ...buildRarityChips(args),
     ...buildListValueChips(args.filters, args.onFiltersChange, 'keywords'),
     ...buildListValueChips(args.filters, args.onFiltersChange, 'classifications'),
     ...buildSetChips(args.filters, args.onFiltersChange),
@@ -480,6 +489,7 @@ export function BrowseToolbar({
   onSearchChange,
   buttonOptions,
   docked,
+  rarities,
 }: BrowseToolbarProps) {
   // Cost icons stay inline only on wide desktops; below that they tuck into the
   // Filters dialog and surface as a chip instead (see buildHiddenIconChips).
@@ -497,6 +507,7 @@ export function BrowseToolbar({
     onToggleCost,
     onClearCosts,
     onFiltersChange,
+    rarities,
   });
 
   const slots: ToolbarSlots = {
