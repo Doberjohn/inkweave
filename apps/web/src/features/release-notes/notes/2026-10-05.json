@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 2,
+  "week": "2026-10-05",
+  "title": "October 5 to 11, 2026",
+  "summary": "All of Set 14's Epics and Enchanteds are revealed, three new tribes join the synergy engine, and the site's first load gets lighter.",
+  "sections": {
+    "new": [
+      {
+        "title": "Every Epic and Enchanted revealed",
+        "body": "On October 5 the last five Epic and seven Enchanted printings joined the Reveals page, completing all 18 of each. See translation now works on alternate printings too, starting with Baymax - Lab Assistant's Epic, known only from an Italian scan.",
+        "prs": [714, 728]
+      }
+    ],
+    "improved": [
+      {
+        "title": "Clearer playstyle descriptions",
+        "body": "Every tribe playstyle now shares one clear tagline, and the four longest group descriptions are down to a sentence each.",
+        "prs": [753, 757]
+      },
+      {
+        "title": "A faster first load",
+        "body": "The site's main script is about a third smaller, because the code behind voting and community scores now loads only when you use them.",
+        "prs": [737]
+      },
+      {
+        "title": "Loading card pages",
+        "body": "While a card's synergies load, its page shows a loading placeholder instead of briefly saying no synergies were found.",
+        "prs": [754]
+      }
+    ],
+    "fixed": [
+      {
+        "title": "Tribe pages",
+        "body": "The While in Play and Trigger tiles on tribe playstyle pages now describe that tribe, not Location Control or Floodborns.",
+        "prs": [755]
+      }
+    ],
+    "engine": [
+      {
+        "title": "Three new tribes",
+        "body": "Gargoyles, Madrigals and Villains join the classification tribes, pairing each tribe's members with the cards that reward them. Villains alone brings 124 members across every ink.",
+        "highlight": true,
+        "link": {"label": "See the playstyles", "to": "/playstyles"},
+        "prs": [752, 753, 756]
+      },
+      {
+        "title": "Location movers",
+        "body": "Chief Bogo - Police Commissioner and five other cards that move characters to locations are now recognized, and a move limited to Hyperia City locations pairs only with those.",
+        "prs": [753]
+      }
+    ]
+  },
+  "behindTheScenes": "Plus 23 behind-the-scenes changes: dependency updates, database and tooling fixes, tests, docs and work on features that aren't switched on yet."
+}

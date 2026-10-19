@@ -1,14 +1,14 @@
 import {describe, expect, it} from 'vitest';
-import {monthTitle, releaseNotesProblems} from '../validateNotes';
+import {releaseNotesProblems, weekTitle} from '../validateNotes';
 
 type Notes = Record<string, unknown> & {sections: Record<string, Record<string, unknown>[]>};
 
-/** A small month that passes every rule; each case below breaks one. */
-function validMonth(): Notes {
+/** A small week that passes every rule; each case below breaks one. */
+function validWeek(): Notes {
   return {
-    schemaVersion: 1,
-    month: '2026-10',
-    title: 'October 2026',
+    schemaVersion: 2,
+    week: '2026-10-12',
+    title: 'October 12 to 18, 2026',
     summary: 'Set 14 lands, with a faster card page.',
     sections: {
       new: [
@@ -27,8 +27,14 @@ function validMonth(): Notes {
 }
 
 describe('releaseNotesProblems', () => {
-  it('passes a valid month', () => {
-    expect(releaseNotesProblems(validMonth())).toEqual([]);
+  it('passes a valid week', () => {
+    expect(releaseNotesProblems(validWeek())).toEqual([]);
+  });
+
+  it('passes a quiet week that marks no highlight', () => {
+    const notes = validWeek();
+    delete notes.sections.new[0].highlight;
+    expect(releaseNotesProblems(notes)).toEqual([]);
   });
 
   it('rejects anything but one JSON object', () => {
@@ -42,9 +48,25 @@ describe('releaseNotesProblems', () => {
       problem: 'summary: must be non-empty text',
     },
     {
-      broken: 'a title that names another month',
-      change: (notes: Notes) => (notes.title = 'September 2026'),
-      problem: 'title: should be "October 2026" for 2026-10',
+      broken: 'the monthly format',
+      change: (notes: Notes) => (notes.schemaVersion = 1),
+      problem: 'schemaVersion: must be 2',
+    },
+    {
+      broken: 'a title that names another week',
+      change: (notes: Notes) => (notes.title = 'October 5 to 11, 2026'),
+      problem: 'title: should be "October 12 to 18, 2026" for the week of 2026-10-12',
+    },
+    {
+      broken: 'a week that starts on a Tuesday',
+      change: (notes: Notes) => (notes.week = '2026-10-13'),
+      problem: 'week: 2026-10-13 is not a Monday, the day a week starts',
+    },
+    {
+      // Date reads 2026-02-30 as Monday, March 2.
+      broken: 'a date the calendar lacks',
+      change: (notes: Notes) => (notes.week = '2026-02-30'),
+      problem: 'week: must be a date, YYYY-MM-DD',
     },
     {
       broken: 'Markdown in a body',
@@ -89,19 +111,24 @@ describe('releaseNotesProblems', () => {
       problem: 'sections.new[0].prs: lists a PR twice',
     },
     {
-      broken: 'no highlight',
-      change: (notes: Notes) => delete notes.sections.new[0].highlight,
-      problem: 'highlights: 0 items are marked, mark 1 to 5',
+      broken: 'six highlights',
+      change: (notes: Notes) =>
+        (notes.sections.fixed = Array.from({length: 5}, () => ({
+          title: 'Card search',
+          body: 'Search finds franchise names again.',
+          highlight: true,
+        }))),
+      problem: 'highlights: 6 items are marked, mark at most 5',
     },
   ])('names $broken', ({change, problem}) => {
-    const notes = validMonth();
+    const notes = validWeek();
     change(notes);
     expect(releaseNotesProblems(notes)).toEqual([problem]);
   });
 
   it('reads a single * or _ around text as emphasis, but not one between words', () => {
     const problemsIn = (body: string) => {
-      const notes = validMonth();
+      const notes = validWeek();
       notes.sections.fixed[0].body = body;
       return releaseNotesProblems(notes);
     };
@@ -113,7 +140,7 @@ describe('releaseNotesProblems', () => {
 
   it('rejects a link to the Reveals page or under it, but not a path that only starts alike', () => {
     const problemsFor = (to: string) => {
-      const notes = validMonth();
+      const notes = validWeek();
       notes.sections.new[0].link = {label: 'See the reveals', to};
       return releaseNotesProblems(notes);
     };
@@ -126,7 +153,7 @@ describe('releaseNotesProblems', () => {
   });
 
   it('counts an emoji as one character, like the routine does', () => {
-    const notes = validMonth();
+    const notes = validWeek();
     notes.sections.fixed[0].title = `${'a'.repeat(79)}🎉`;
     expect(releaseNotesProblems(notes)).toEqual([]);
     notes.sections.fixed[0].title += '!';
@@ -136,8 +163,12 @@ describe('releaseNotesProblems', () => {
   });
 });
 
-describe('monthTitle', () => {
-  it('names the month and year', () => {
-    expect(monthTitle('2026-01')).toBe('January 2026');
+describe('weekTitle', () => {
+  it.each([
+    ['2026-09-21', 'September 21 to 27, 2026'],
+    ['2026-09-28', 'September 28 to October 4, 2026'],
+    ['2026-12-28', 'December 28, 2026 to January 3, 2027'],
+  ])('names the week of %s "%s"', (week, title) => {
+    expect(weekTitle(week)).toBe(title);
   });
 });

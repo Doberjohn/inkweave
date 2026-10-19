@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 2,
+  "week": "2026-09-21",
+  "title": "September 21 to 27, 2026",
+  "summary": "Set 14 reveals begin, voting turns fairer and more private, and the synergy engine reads Shift, Bounce, Singer, Self-Discard and Named Companions more accurately.",
+  "sections": {
+    "new": [
+      {
+        "title": "Set 14 reveals are live",
+        "body": "The Reveals page is back for Set 14, Hyperia City. By September 27 it held 122 of the set's 204 main cards: every one officially revealed so far. The set's prerelease is on October 16 and its release on October 23.",
+        "highlight": true,
+        "prs": [565, 572, 577, 590]
+      }
+    ],
+    "fixed": [
+      {
+        "title": "Only official reveals",
+        "body": "An unofficial leaked card was taken down the day it appeared, and new reveals are now checked against the official reveal list before they're published.",
+        "prs": [573, 575]
+      },
+      {
+        "title": "Sharing the Reveals page",
+        "body": "The Reveals page now has its own title in the browser tab, and links shared in Discord, Slack, iMessage or Twitter preview as the Reveals page instead of the homepage.",
+        "prs": [567, 570]
+      },
+      {
+        "title": "Card images",
+        "body": "Six cards whose art can't be downloaded now show a placeholder instead of a broken image, and Woody - Jungle Guide's missing image was added.",
+        "prs": [568]
+      },
+      {
+        "title": "Fairer, more private voting",
+        "body": "Individual votes are no longer publicly readable, the one-vote-per-pair rule can't be sidestepped, and voters on IPv6 connections are no longer counted as one person.",
+        "link": {"label": "Vote on synergies", "to": "/vote"},
+        "prs": [595]
+      },
+      {
+        "title": "Privacy",
+        "body": "The site stopped serving internal vote and traffic analytics files.",
+        "prs": [592]
+      }
+    ],
+    "engine": [
+      {
+        "title": "Shift paid with ink drops",
+        "body": "Baymax - Amped Up's Shift is now recognized and scored, and Named Companions no longer reads a Shift reminder as a companion.",
+        "prs": [585]
+      },
+      {
+        "title": "Bounce, Singer and Self-Discard",
+        "body": "Bounce pairs now respect targeting limits such as \"cost 2 or less\". Characters that grant themselves Singer now find their songs, and Self-Discard understands \"cards in your discard\" payoffs and mill.",
+        "prs": [565]
+      },
+      {
+        "title": "Named Companions",
+        "body": "Four card names are now read correctly, so Buzz's Arm pairs with the Buzz Lightyear cards and Focused Search with Kevin.",
+        "prs": [589]
+      }
+    ]
+  },
+  "behindTheScenes": "Plus 10 behind-the-scenes changes: dependency updates, deploy fixes and tooling fixes."
+}

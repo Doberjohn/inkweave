@@ -341,13 +341,13 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 
 ## `release-notes.spec.ts`: 3 tests (every project; the last at a 390px viewport)
 
-The `/release-notes` page (#765), which shows one committed JSON file per month, newest first. The tests read September 2026 by name, so they stay true as later months are added.
+The `/release-notes` page (#765), which shows one committed JSON file per week, newest first. The tests read the week of September 28, 2026 by name, so they stay true as later weeks are added.
 
 | Test | What it verifies |
 |---|---|
-| shows a month with its sections in order | The h1 "Release notes", and the September 2026 region's h3s read New, Improved, Fixed, Synergy engine |
+| shows a week with its sections in order | The h1 "Release notes", and the "September 28 to October 4, 2026" region's h3s read New, Improved, Fixed, Synergy engine |
 | the footer links to it | From `/about`, the site footer's "Release notes" link opens `/release-notes` |
-| does not scroll sideways on a phone | At 390px, `document.documentElement.scrollWidth <= clientWidth` once the month has rendered |
+| does not scroll sideways on a phone | At 390px, `document.documentElement.scrollWidth <= clientWidth` once the week has rendered |
 
 ## Patterns
 
