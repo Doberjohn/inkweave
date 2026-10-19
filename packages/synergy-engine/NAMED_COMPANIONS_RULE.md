@@ -155,7 +155,7 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 
 ### Why Not Higher Scores?
 
-Named companion synergies cap at 8 (not 9-10) because they're **one-sided dependencies**. Card A needs Card B, but Card B doesn't necessarily need Card A. Compare with Shift, where both cards participate in the combo equally. A Shift pair where both cards are dedicated to each other (gap=1, both inkable) earns 9; a named companion where one card passively benefits deserves less.
+Named companion synergies cap at 8 (not 9-10) because they're **one-sided dependencies**. Card A needs Card B, but Card B doesn't necessarily need Card A. Compare with Shift, where both cards participate in the combo equally. A Shift pair where both cards are dedicated to each other earns 8 on a perfect curve (gap=1, both inkable) and up to 10 with a free Shift onto a cheap base; a named companion where one card passively benefits never goes past 8.
 
 ---
 

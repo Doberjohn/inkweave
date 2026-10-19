@@ -783,15 +783,15 @@ function scoreRampCostPair(cardA: LorcanaCard, cardB: LorcanaCard): number {
  * Bumps above 5 reflect real mechanical chains where one card *enables* or
  * *amplifies* the other (not just parallel acceleration).
  *
- * Scoring priority:
- * - Deck ramp ↔ Repeating trigger: 9 (snowball chain — every free ink fires a trigger)
- * - Deck ramp ↔ Once/turn trigger: 8 (free ink but trigger capped)
- * - Self-sacrifice ↔ Repeating trigger: 8 (fires every event but costs a card)
- * - Self-sacrifice ↔ Once/turn trigger: 7 (card cost + capped)
- * - Ramp ↔ trigger whose ink lands on the other turn: 5 (the trigger never sees it)
- * - Cost reduction ↔ Cost reduction (overlap): 6 (stacking discounts on same card type)
+ * Scoring priority (each name is a key of `ramp.scores` in tuning.json, which holds the value):
+ * - Deck ramp ↔ Repeating trigger: chain.deckRepeating (snowball chain — every free ink fires a trigger)
+ * - Deck ramp ↔ Once/turn trigger: chain.mixed (free ink but trigger capped)
+ * - Self-sacrifice ↔ Repeating trigger: chain.mixed (fires every event but costs a card)
+ * - Self-sacrifice ↔ Once/turn trigger: chain.neither (card cost + capped)
+ * - Ramp ↔ trigger whose ink lands on the other turn: density (the trigger never sees it)
+ * - Cost reduction ↔ Cost reduction (overlap): costOverlap (stacking discounts on same card type)
  * - Cost reduction ↔ Cost reduction (no overlap): 0 (silently dropped)
- * - All other same-axis density pairs: 5 (parallel acceleration)
+ * - All other same-axis density pairs: density (parallel acceleration)
  */
 export function getRampPairScore(
   cardA: LorcanaCard,

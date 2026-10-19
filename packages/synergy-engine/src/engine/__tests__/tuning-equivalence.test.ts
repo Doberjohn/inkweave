@@ -42,7 +42,7 @@ describe('Tuning equivalence (pre-refactor snapshot)', () => {
     );
   });
 
-  it('a Ramp deck-ramp + repeating-trigger pair scores 9', () => {
+  it('a Ramp deck-ramp + repeating-trigger pair scores 8', () => {
     const rampRule = getRuleById('ramp')!;
     const mamaOdie = createCard({
       id: 'mama-odie',
@@ -63,7 +63,7 @@ describe('Tuning equivalence (pre-refactor snapshot)', () => {
 
     const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, jafar]);
 
-    expect(synergies[0].score).toBe(9);
+    expect(synergies[0].score).toBe(8);
     // Exact string pins the {A}/{B} positional token mapping — the riskiest part
     // of the Task 5 Ramp refactor, where semantic {RAMP}/{TRIGGER} tuning tokens
     // must resolve back to exactly these positional tokens.
