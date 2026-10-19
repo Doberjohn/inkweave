@@ -166,6 +166,23 @@ test.describe('Collection mode', () => {
     expect(requests.filter((url) => url.includes('/data/collection/'))).toEqual([]);
     expect(requests.filter((url) => url.includes('CollectionBinderSection'))).toEqual([]);
   });
+
+  test('signed out, a binder link keeps the grid and a Set filter picked on it', async ({page}, testInfo) => {
+    // #790: the page dropped a Set filter whenever `?binder=` was in the URL, honoured or not.
+    // One project is enough: this asserts what the URL keeps, and the panel is the desktop one.
+    if (testInfo.project.name !== 'chromium') test.skip();
+    await page.goto(`/browse?binder=${SET}`);
+    await expect(page.getByTestId('card-tile').first()).toBeVisible();
+    const panel = page.getByRole('complementary', {name: 'Filters'});
+    await panel.getByRole('button', {name: 'Set', exact: true}).click();
+    const logo = panel.getByRole('group', {name: 'Set filters'}).getByRole('button').first();
+
+    await logo.click();
+
+    await expect(logo).toHaveAttribute('aria-pressed', 'true');
+    expect(new URL(page.url()).searchParams.get('set')).not.toBeNull();
+    await expect(binder(page)).toHaveCount(0);
+  });
 });
 
 test.describe('Collection mode, signed in', () => {
@@ -234,7 +251,7 @@ test.describe('Collection mode, signed in', () => {
 
     answer();
     // Nothing came, so the click's import opens, and the binder's param goes with the
-    // binder: left behind, it kept the grid's Set filter stripped as a stray.
+    // binder: left behind, it reloaded into a loading binder.
     await expect(page.getByRole('dialog', {name: 'Import your collection'})).toBeVisible();
     await expect(page).not.toHaveURL(/[?&]binder=/);
   });

@@ -84,13 +84,64 @@ function panelSets(sets: string[] | null, setCode: string): string[] {
   return setCode === WHOLE_COLLECTION ? [] : [setCode];
 }
 
+/** Who is asking for collection mode, and what is known about them yet. */
+interface BinderReader {
+  sessionLoading: boolean;
+  /** The account's copy has not answered yet (`useCollection().syncing`). */
+  syncing: boolean;
+  signedIn: boolean;
+  hasCollection: boolean;
+}
+
+/** What a `?binder=` param gets (`binderMode`). */
+interface BinderMode {
+  /** Collection mode is on: the binder replaces the grid, loading while the reader is not known yet. */
+  active: boolean;
+  /** The mode cannot be had, so the page drops the param. */
+  dead: boolean;
+  /**
+   * The page drops the params the URL's mode never keeps (`strayParams`): always in the
+   * grid, and under `?binder=` only once the param is known to be honoured.
+   */
+  dropsStrays: boolean;
+}
+
+/**
+ * Whether `?binder=` gets collection mode, whether the param is dead, and whether the
+ * page drops the URL's strays.
+ *
+ * The param asks for the mode; it is HONOURED only for someone the Collection button
+ * would toggle for (signed in, holding a collection), so a shared link never shows a
+ * stranger an empty binder in place of the grid. While the answer is not known yet (the
+ * session still restoring, or the account's copy not yet heard from, which on a new
+ * browser IS the collection), the binder is kept, loading, rather than flashing the
+ * grid for a returning owner.
+ *
+ * Once a signed-in account has answered with no collection, the mode cannot be had, so
+ * the param is DEAD and the page drops it. Left in, it reloaded into a loading binder; a
+ * click that waited on the account leaves one behind (#553).
+ *
+ * `strayParams` reads the param, not the mode, so the page drops its strays only once the
+ * param is known to be honoured (#790). Signed out, `?binder=` keeps the grid, and the
+ * grid keeps a Set filter picked on it. Nor does the filter go while a stored session
+ * restores: that reader may yet turn out signed out, or holding no collection.
+ */
+function binderMode(requested: string | null, reader: BinderReader): BinderMode {
+  if (requested === null) return {active: false, dead: false, dropsStrays: true};
+  const pending = reader.sessionLoading || reader.syncing;
+  const honoured = !pending && reader.signedIn && reader.hasCollection;
+  const active = pending || honoured;
+  return {active, dead: reader.signedIn && !active, dropsStrays: honoured};
+}
+
 /**
  * Collection mode's params: `?binder=` (the mode and its set) and `?owned=` (what the
- * binder shows). Every write edits the params rather than replacing them, so the page's
- * filters ride along. It starts from the params as this hook last RENDERED them:
- * react-router 7 hands the updater a copy of its render-time snapshot, not the live URL.
- * So a write here and one through another hook (useFilterParams) in the same tick can
- * still lose one of the two; keep each user action to one writer.
+ * binder shows), and what the reader gets of the mode (`binderMode`). Every write edits
+ * the params rather than replacing them, so the page's filters ride along. It starts
+ * from the params as this hook last RENDERED them: react-router 7 hands the updater a
+ * copy of its render-time snapshot, not the live URL. So a write here and one through
+ * another hook (useFilterParams) in the same tick can still lose one of the two; keep
+ * each user action to one writer.
  *
  * THE SET IS CHOSEN IN THE COLLECTION PANEL (owner, 2026-10-12), so collection mode
  * keeps no set FILTER: entering it opens the set a Browse set filter names (the newest,
@@ -98,7 +149,7 @@ function panelSets(sets: string[] | null, setCode: string): string[] {
  * Leaving drops the binder view, which the grid has no collection for; a link that
  * carries one outside the mode loses it too. See `strayParams`.
  */
-function useBinderParams() {
+export function useBinderParams(reader: BinderReader) {
   const [searchParams, setSearchParams] = useSearchParams();
   function rewrite(change: (next: URLSearchParams) => void) {
     setSearchParams(
@@ -111,7 +162,8 @@ function useBinderParams() {
     );
   }
   const requested = searchParams.get(BINDER_PARAM);
-  const hasStrays = strayParams(searchParams).length > 0;
+  const mode = binderMode(requested, reader);
+  const hasStrays = mode.dropsStrays && strayParams(searchParams).length > 0;
   useEffect(() => {
     if (!hasStrays) return;
     setSearchParams(withoutStrays, {replace: true});
@@ -119,6 +171,7 @@ function useBinderParams() {
 
   return {
     requested,
+    mode,
     show: parseBinderShow(searchParams.get(OWNED_PARAM)),
     enterBinder: (fallback: string, sets: string[] | null) =>
       rewrite((next) => {
@@ -197,36 +250,6 @@ export interface BrowseCollectionSlots {
   renderSetPanel: (listing: BrowseListing) => ReactNode | undefined;
 }
 
-/** Who is asking for collection mode, and what is known about them yet. */
-interface BinderReader {
-  sessionLoading: boolean;
-  /** The account's copy has not answered yet (`useCollection().syncing`). */
-  syncing: boolean;
-  signedIn: boolean;
-  hasCollection: boolean;
-}
-
-/**
- * Whether `?binder=` gets collection mode, and whether the param is dead.
- *
- * The param asks for the mode; it is HONOURED only for someone the Collection button
- * would toggle for (signed in, holding a collection), so a shared link never shows a
- * stranger an empty binder in place of the grid. While the answer is not known yet (the
- * session still restoring, or the account's copy not yet heard from, which on a new
- * browser IS the collection), the binder is kept, loading, rather than flashing the
- * grid for a returning owner.
- *
- * Once a signed-in account has answered with no collection, the mode cannot be had, so
- * the param is DEAD and the page drops it. Left in, it kept the grid's Set filter
- * stripped as a stray (`strayParams` reads the param, not the mode) and reloaded into a
- * loading binder; a click that waited on the account leaves one behind (#553).
- */
-function binderMode(requested: string | null, reader: BinderReader): {active: boolean; dead: boolean} {
-  if (requested === null) return {active: false, dead: false};
-  const active = reader.sessionLoading || reader.syncing || (reader.signedIn && reader.hasCollection);
-  return {active, dead: reader.signedIn && !active};
-}
-
 /**
  * Collection mode's state and controls for Browse, in one place so the page only
  * slots them in. Requires the collection providers, which the `CollectionScope`
@@ -239,17 +262,17 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // Mounted from first open on, so closing plays DialogShell's exit instead of
   // unmounting mid-animation; never mounted at all for anyone who never opens it.
   const [importMounted, setImportMounted] = useState(false);
-  const {requested, show, enterBinder, writeBinder, leaveBinder, writeShow} = useBinderParams();
   const {user, loading: sessionLoading} = useSession();
   const {entries, hasCollection, syncing, importCollection} = useCollection();
   const {retry} = useCollectionCards();
-
-  const {active: collectionMode, dead} = binderMode(requested, {
+  const {requested, mode, show, enterBinder, writeBinder, leaveBinder, writeShow} = useBinderParams({
     sessionLoading,
     syncing,
     signedIn: user !== null,
     hasCollection,
   });
+
+  const {active: collectionMode, dead} = mode;
   useEffect(() => {
     if (dead) leaveBinder();
   }, [dead, leaveBinder]);
