@@ -1,5 +1,5 @@
 import type {ComponentProps} from 'react';
-import {describe, it, expect, vi} from 'vitest';
+import {describe, it, expect, vi, afterEach} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {QuantityStepper} from './QuantityStepper';
 
@@ -8,6 +8,10 @@ function renderStepper(props: Partial<ComponentProps<typeof QuantityStepper>> = 
   render(<QuantityStepper value={2} label="Pocahontas" {...handlers} {...props} />);
   return handlers;
 }
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('QuantityStepper', () => {
   it('calls onIncrement when the + is clicked', () => {
@@ -38,6 +42,17 @@ describe('QuantityStepper', () => {
   it('renders the current value', () => {
     renderStepper({value: 3});
     expect(screen.getByText('3')).toBeInTheDocument();
+  });
+
+  it('does not pop the count after a step under reduced motion', () => {
+    // The pop is set inline, where index.css's reduced-motion block can't reach it (#790).
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn((query: string) => ({matches: query.includes('reduce'), addEventListener: vi.fn(), removeEventListener: vi.fn()})),
+    );
+    renderStepper();
+    fireEvent.click(screen.getByRole('button', {name: /add one copy of pocahontas/i}));
+    expect(screen.getByText('2').style.animation).toBe('');
   });
 
   it('uses the label in both step aria-labels', () => {

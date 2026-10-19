@@ -1,5 +1,6 @@
 import {useState, type CSSProperties} from 'react';
 import {COLORS, DURATION, EASING, FOIL_SHEEN, FONTS, FONT_SIZES, hexRgba} from '../constants';
+import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
 
 interface QuantityStepperProps {
   value: number;
@@ -152,6 +153,14 @@ function sideButtonStyle(
   };
 }
 
+/**
+ * The count's pop on a step. Set inline, so index.css's reduced-motion block can't reach it,
+ * and reduced motion is read here instead (#790).
+ */
+function popAnimation(pop: boolean, reducedMotion: boolean): string | undefined {
+  return pop && !reducedMotion ? `inkweave-qty-pop ${DURATION.base}ms ${EASING.smooth}` : undefined;
+}
+
 function incrementAriaLabel(disabled: boolean, disabledReason: string | undefined, name: string): string {
   if (disabled) return disabledReason ?? `Cannot add more ${name}`;
   return `Add one copy of ${name}`;
@@ -205,6 +214,7 @@ export function QuantityStepper({
   const name = label ?? 'card';
 
   const {shouldPop, triggerPop, handlePopEnd} = usePopAnimation(popping, onPopEnd);
+  const reducedMotion = usePrefersReducedMotion();
 
   const handleInc = () => {
     if (incrementDisabled) return;
@@ -240,7 +250,7 @@ export function QuantityStepper({
       </button>
       <span
         onAnimationEnd={handlePopEnd}
-        style={{...cell, color: COLORS.text, fontSize: dims.countFontSize, animation: shouldPop ? `inkweave-qty-pop ${DURATION.base}ms ${EASING.smooth}` : undefined}}>
+        style={{...cell, color: COLORS.text, fontSize: dims.countFontSize, animation: popAnimation(shouldPop, reducedMotion)}}>
         {value}
       </span>
       <button

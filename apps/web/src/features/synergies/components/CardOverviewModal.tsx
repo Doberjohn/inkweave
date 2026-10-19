@@ -14,7 +14,7 @@ import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {prefersReducedMotion, usePrefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {trackEvent} from '../../../shared/lib/analytics';
-import {COLORS, EASING, FONT_SIZES, LETTER_SPACING, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
+import {COLORS, DURATION, EASING, FONT_SIZES, LETTER_SPACING, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
 import {LinkButton} from '../../../shared/components/LinkButton';
 import {ModalCloseButton, SynergiesLoadingSkeleton} from './CardOverviewModalFallback';
@@ -1424,16 +1424,19 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
   // the card's rounded corners instead of drawing against a rectangular bounding box.
   const useGlow = !isMobile && inComparison;
   const translation = useContext(CardTranslationContext);
+  const reducedMotion = usePrefersReducedMotion();
   // Desktop's art controls sit under the card, the art shrunk to make room (owner, 2026-10-08).
   const controlsBelow = !isMobile && hasArtControls(card);
   return (
     <div
       className={useGlow ? 'focused-card-glow' : undefined}
-      style={pickCardWrapperStyle({isMobile, highlightedCard, inComparison})}>
+      style={pickCardWrapperStyle({isMobile, highlightedCard, inComparison, reducedMotion})}>
       {/* Shrink-wrap span carrying the `data-comparison-card-a` marker — its rect is exactly
           the card image (not the full-width flex wrapper), so the click handler captures the
           correct FLIP origin for Card A's mobile comparison transition (#332 #5). */}
-      <span data-comparison-card-a style={pickArtBoxStyle(controlsBelow && !inComparison, comparing, cardHeight)}>
+      <span
+        data-comparison-card-a
+        style={pickArtBoxStyle({shrunk: controlsBelow && !inComparison, animate: comparing, reducedMotion, cardHeight})}>
         <ModalCardArt card={card} cardWidth={cardWidth} cardHeight={cardHeight} />
         {translation?.shown && !inComparison && (
           <CardTranslationPanel
@@ -1456,19 +1459,29 @@ function ArtControls({isMobile, controlsBelow, inComparison}: {isMobile: boolean
   return controlsBelow ? <DesktopArtControls hidden={inComparison} /> : null;
 }
 
+interface ArtBoxStyleInput {
+  /** Shrunk to make room for the controls under it. */
+  shrunk: boolean;
+  /** A comparison is open or closing: the only motion the scale animates with. */
+  animate: boolean;
+  reducedMotion: boolean;
+  cardHeight: number;
+}
+
 /**
  * The art's own box. On desktop it shrinks while controls sit under it, and grows back for a
  * comparison (card B is drawn at full size). The scale animates only with a comparison's own
- * motion: paging between a card with controls and one without resizes it at once.
+ * motion: paging between a card with controls and one without resizes it at once. Under
+ * reduced motion it never animates (#790).
  */
-function pickArtBoxStyle(shrunk: boolean, animate: boolean, cardHeight: number): React.CSSProperties {
+function pickArtBoxStyle({shrunk, animate, reducedMotion, cardHeight}: ArtBoxStyleInput): React.CSSProperties {
   return {
     display: 'inline-block',
     lineHeight: 0,
     position: 'relative',
     transform: shrunk ? artScaleTransform(cardHeight) : undefined,
     transformOrigin: 'top center',
-    transition: animate ? `transform ${FLIP_DURATION}ms ${FLIP_EASING}` : undefined,
+    transition: animate && !reducedMotion ? `transform ${FLIP_DURATION}ms ${FLIP_EASING}` : undefined,
   };
 }
 
@@ -1479,7 +1492,22 @@ const OVER_MODAL_SCAN: React.CSSProperties = {
   borderRadius: `${RADIUS.xl}px`,
 };
 
-function pickCardWrapperStyle({isMobile, highlightedCard, inComparison}: {isMobile: boolean; highlightedCard: 'a' | 'b' | null; inComparison: boolean}): React.CSSProperties {
+/** The hover dimming and glow, which fade, shared by card A and card B. */
+const HOVER_FADES = `opacity ${DURATION.base}ms ${EASING.smooth}, filter ${DURATION.base}ms ${EASING.smooth}`;
+
+/** Card A's transition: its hover fades, and its slide into a comparison unless reduced motion skips it (#790). */
+function cardWrapperTransition(reducedMotion: boolean): string {
+  return reducedMotion ? HOVER_FADES : `${HOVER_FADES}, transform ${FLIP_DURATION}ms ${FLIP_EASING}`;
+}
+
+interface CardWrapperStyleInput {
+  isMobile: boolean;
+  highlightedCard: 'a' | 'b' | null;
+  inComparison: boolean;
+  reducedMotion: boolean;
+}
+
+function pickCardWrapperStyle({isMobile, highlightedCard, inComparison, reducedMotion}: CardWrapperStyleInput): React.CSSProperties {
   // In comparison mode, pull Card A inward so its right edge touches the
   // PairConnector's left edge. Match the FLIP timing on Card B so both
   // cards slide into position together.
@@ -1487,7 +1515,7 @@ function pickCardWrapperStyle({isMobile, highlightedCard, inComparison}: {isMobi
   return {
     ...pickCardColumnLayout(isMobile),
     transform: inset ? `translateX(${inset}px)` : undefined,
-    transition: `opacity 0.2s ${EASING.smooth}, filter 0.2s ${EASING.smooth}, transform ${FLIP_DURATION}ms ${FLIP_EASING}`,
+    transition: cardWrapperTransition(reducedMotion),
     opacity: highlightedCard === 'b' ? 0.4 : 1,
     filter: highlightedCard === 'a' ? `drop-shadow(0 0 8px ${hexRgba(COLORS.primary500, 0.6)})` : undefined,
     // borderRadius matches CardImage's so the ambient glow's box-shadow follows the rounded
@@ -1641,7 +1669,7 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
         // (#332 #7) persists across re-renders during the 480ms exit window.
         opacity: highlightedCard === 'a' ? 0.4 : undefined,
         filter: highlightedCard === 'b' ? `drop-shadow(0 0 8px ${hexRgba(COLORS.primary500, 0.6)})` : undefined,
-        transition: `opacity 0.2s ${EASING.smooth}, filter 0.2s ${EASING.smooth}`,
+        transition: HOVER_FADES,
       }}>
       {pair.cardB.imageUrl && (
         <img
