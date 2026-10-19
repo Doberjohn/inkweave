@@ -65,7 +65,13 @@ type AnalyticsEvents = {
   // A visitor settled on an alternate printing (#625): a pill pick, or the art strip at rest
   // after a swipe. Printings a swipe only passes through don't count (#653). `rarity` is the
   // printing's printed one, so a printing that keeps its base card's rarity sends that (#796).
-  card_printing_view: {cardId: string; rarity: string; surface: 'card_page' | 'modal'};
+  // `printingId` tells apart printings that share a rarity, such as a card's promos (#805).
+  card_printing_view: {
+    cardId: string;
+    printingId: string;
+    rarity: string;
+    surface: 'card_page' | 'modal';
+  };
 };
 
 /**

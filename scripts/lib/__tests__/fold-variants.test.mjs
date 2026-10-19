@@ -150,6 +150,24 @@ describe('foldVariants', () => {
     expect(cards[0].variants.map((v) => v.number)).toEqual([223, 240]);
   });
 
+  it('never overwrites a promo that shares the number of a printing it folds (#805)', () => {
+    const promo = {id: 80010, rarity: 'Special', number: 223, promoGrouping: 'C1'};
+    const cards = [base({variants: [promo]})];
+    const result = foldVariants(cards, [variant()], byBaseId);
+
+    expect(result.folded).toHaveLength(1);
+    expect(cards[0].variants.map((v) => v.id)).toEqual([2141, 80010]);
+  });
+
+  it('keeps the promos after the other printings, in their own order (#805)', () => {
+    const p3 = {id: 2432, rarity: 'Special', number: 10, promoGrouping: 'P3'};
+    const p1 = {id: 80042, rarity: 'Special', number: 25, promoGrouping: 'P1'};
+    const cards = [base({variants: [p1, p3]})];
+    foldVariants(cards, [variant()], byBaseId);
+
+    expect(cards[0].variants.map((v) => v.id)).toEqual([2141, 80042, 2432]);
+  });
+
   it("drops a hand scan's scanLanguage once official art replaces the entry", () => {
     const cards = [base({variants: [italianHandScan()]})];
     const result = foldVariants(cards, [variant()], byBaseId);

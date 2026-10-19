@@ -115,8 +115,9 @@ describe('CardTile', () => {
     expect(screen.getByRole('button', {name: 'Elsa - Snow Queen, Alt foil printing'})).toBeInTheDocument();
   });
 
-  // The collection chunks' Special cards carry no promo set; collection mode's Browse shows them.
-  it('names a collection Special card by its number, as it carries no promo set (#802)', () => {
+  // A promo's card is named by its promo set, its set code (#805). One with no set code falls back
+  // to its number, though no data holds such a card since #805 took LorcanaJSON's out of the chunks.
+  it('names a Special card with no set by its number (#802)', () => {
     const promo = createCard({...mockCard, rarity: 'Special', setNumber: 3, baseId: '41'});
     render(<CardTile card={promo} onSelect={vi.fn()} />);
     const name = 'Elsa - Snow Queen, #3 printing';

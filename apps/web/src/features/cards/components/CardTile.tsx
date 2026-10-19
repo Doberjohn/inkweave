@@ -13,7 +13,7 @@ import {
   whiteRgba,
 } from '../../../shared/constants';
 import {printingAlt} from '../../../shared/hooks/usePrintingSelection';
-import {isAltArtRarity, smallImageUrl} from '../loader';
+import {PROMO_RARITY, isChaseRarity, smallImageUrl} from '../loader';
 import {isModifiedClick} from '../../../shared/utils/touchGuard';
 import {preloadCardOverviewModal} from '../../../shared/contexts/cardOverviewModalLoader';
 
@@ -82,14 +82,17 @@ function buildTileStyle(
 /**
  * What the tile is called: the card, or the printing it shows ("Elsa - Snow Queen, Enchanted
  * printing"). A card that is itself a printing is named as that printing too: the binder holds
- * each printing as a pocket of its own, under its base card's name. That is a card of an
- * alt-art rarity, or a collection card with a `baseId`, which covers a printing that keeps its
+ * each printing as a pocket of its own, under its base card's name. That is a card of a
+ * chase rarity, or a collection card with a `baseId`, which covers a printing that keeps its
  * base card's rarity ("Violet Parr - Super Resilient, Alt foil printing", #796, #802).
  */
 function tileName(card: LorcanaCard, printing: CardPrinting | undefined): string {
   if (printing) return printingAlt(card, printing);
-  if (isAltArtRarity(card.rarity) || card.baseId !== undefined) {
-    return printingAlt(card, {rarity: card.rarity, number: card.setNumber});
+  if (isChaseRarity(card.rarity) || card.baseId !== undefined) {
+    // A promo's card is in its promo set (`printingCard`, #805), whose code it is named by: 25/P1.
+    const promoGrouping = card.rarity === PROMO_RARITY ? card.setCode : undefined;
+    const {setNumber: number, finish, artVariant} = card;
+    return printingAlt(card, {rarity: card.rarity, number, promoGrouping, finish, artVariant});
   }
   return card.fullName || card.name;
 }

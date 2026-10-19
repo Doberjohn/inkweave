@@ -64,6 +64,17 @@ describe('CardOverviewModalFallback', () => {
 
     expect(placeholder(cardWithPrintings)).toMatch(/^scale\(0\.\d+\)$/);
     expect(placeholder(card)).toBe('');
+    // A foreign scan's toggle sits in the header (owner, 2026-10-17), so it shrinks no art.
+    expect(placeholder({...card, scanLanguage: 'ja'} as LorcanaCard)).toBe('');
+  });
+
+  it("holds the translation toggle's space out of sight in the header on desktop, where the modal puts it", () => {
+    const foreign = {...card, scanLanguage: 'ja'} as LorcanaCard;
+    render(<CardOverviewModalFallback card={foreign} isMobile={false} onClose={vi.fn()} />);
+    const header = screen.getByTestId('card-overview-fallback').firstElementChild;
+
+    expect(header).toContainElement(screen.getByText('See translation'));
+    expect(screen.queryByRole('button', {name: 'See translation'})).toBeNull();
   });
 
   it.each([

@@ -12,12 +12,12 @@ Gated on `VITE_LOCAL_IMAGES=true`, set in `vercel.json`'s build command.
 
 `scripts/convert-preview-images.mjs --force` runs first. It turns any raw scan in the git-ignored `apps/web/public/card-images-raw/` into the preview AVIFs. A deploy checkout holds a raw only when admin has just committed one, so `--force` lets a replaced image win over the AVIF already committed for that card. Without it the build shipped the old art, because the conversion workflow's own commit is `[skip ci]` and deploys nothing (#750).
 
-`scripts/download-card-images.mjs` runs next. It downloads card images from Ravensburger for every card in `allCards.json`, copies any committed preview AVIFs (`apps/web/public/card-images-preview/{id}{-sm}.avif`) for cards in `previewCards.json`, converts and resizes to two sizes, then **hashes each AVIF** (sha256 prefix, 16 hex chars) and writes:
+`scripts/download-card-images.mjs` runs next. It downloads card images from Ravensburger for every card in `allCards.json` and the collection files, copies the committed preview AVIF (`apps/web/public/card-images-preview/{id}{-sm}.avif`) for any id that has one, which then wins over the remote URL (a reveal card, a variant, or a promo printing whose art is the owner's scan, #805), converts and resizes to two sizes, then **hashes each AVIF** (sha256 prefix, 16 hex chars) and writes:
 
 - `apps/web/public/card-images/{id}.{hash}.avif`
 - `apps/web/public/card-images/{id}.{hash}-sm.avif`
 
-It also injects `imageHash` and `imageHashSm` into `allCards.json` and `previewCards.json`. `resolveImageUrl` then builds `/card-images/{id}.{imageHash}.avif`; `smallImageUrl` builds `/card-images/{id}.{imageHashSm}-sm.avif`.
+It also injects `imageHash` and `imageHashSm` into `allCards.json`, `previewCards.json` and the collection files (each set chunk and `collection/promos.json`). `resolveImageUrl` then builds `/card-images/{id}.{imageHash}.avif`; `smallImageUrl` builds `/card-images/{id}.{imageHashSm}-sm.avif`.
 
 Variant printings (a card's alternate art in its `variants`: Epic, Enchanted and Iconic, #625, and the printings that keep their base card's rarity, #796) go through the same path under their own id: each is its own image subject, its hashes land on the nested entry, and the loader resolves it with the same `resolveImageUrl`. A committed preview AVIF beats a remote URL for a variant exactly as for a card. A variant the build could not image is a warning in the build log, not a failure; it renders as a broken image, like any unhashed card.
 

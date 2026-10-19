@@ -63,6 +63,14 @@ describe('selectCollectionCards', () => {
     );
     expect(kept.map((c) => c.id)).toEqual([1]);
   });
+
+  it("drops the export's promo cards, which the promo catalog lists instead (#805)", () => {
+    const kept = selectCollectionCards(
+      [card({id: 1}), card({id: 659, rarity: 'Special', baseId: 1})],
+      [new Set()],
+    );
+    expect(kept.map((c) => c.id)).toEqual([1]);
+  });
 });
 
 // Many of these fields are legitimately absent on many cards — `baseId` only on
@@ -207,5 +215,9 @@ describe('chunkFilename', () => {
 
   it('still accepts set codes that merely contain the reserved word', () => {
     expect(chunkFilename('index1')).toBe('index1.json');
+  });
+
+  it("refuses the promos' file name too, which a set code would overwrite the same way", () => {
+    expect(() => chunkFilename('Promos')).toThrow(/reserved.*promos\.json/i);
   });
 });

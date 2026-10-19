@@ -1,7 +1,7 @@
 import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {E2E_SUPABASE_ORIGIN} from '../fixtures/supabaseStub';
-import {cardFullNameById, newestCoreSet, setCards, setPrintings} from '../helpers/cardData';
+import {cardFullNameById, newestCoreSet, promoSetWithOpenPocket, setCards, setPrintings} from '../helpers/cardData';
 
 /**
  * Collection mode (#553 Phase C), behind `VITE_SHOW_COLLECTION` and pinned on in
@@ -360,12 +360,37 @@ test.describe('Collection mode, signed in', () => {
     await preset.click();
 
     await expect(preset).toHaveAttribute('aria-pressed', 'true');
+    // The promos too (owner, 2026-10-17), though a set's binder holds none: they are its promo sets'.
     expect(new URL(page.url()).searchParams.get('rarity')?.split(',').sort()).toEqual([
       'Enchanted',
       'Epic',
       'Iconic',
+      'Special',
     ]);
     await expect(numbers(page)).toContainText(`1 of ${PRINTINGS.length} cards`);
+  });
+
+  test("the set picker lists the promo sets after the sets, and a promo set's binder holds a pocket per number", async ({
+    page,
+  }) => {
+    const promoSet = promoSetWithOpenPocket();
+    await signInAsCollector(page, {...ENTRIES, [promoSet.promos[0]]: {normal: 0, foil: 1}});
+    await page.goto(`/browse?binder=${SET}`);
+    await expect(binder(page)).toBeVisible();
+
+    await page.getByRole('button', {name: /^Binder set/}).click();
+    await page
+      .getByRole('group', {name: 'Promo sets'})
+      .getByRole('option', {name: new RegExp(`^Promo set ${promoSet.code},`)})
+      .click();
+
+    await expect(page).toHaveURL(new RegExp(`[?&]binder=${promoSet.code}(&|$)`));
+    // A number with no promo is an open pocket, which shows the number's code (owner, 2026-10-17,
+    // layout 1): why it is open (not listed, not released) is the promo set's to say.
+    await expect(binder(page).getByText(promoSet.openPocket, {exact: true})).toBeVisible();
+    // Complete set alone, counting promos: each pocket is one printing in one finish.
+    await expect(numbers(page)).toContainText(`1 of ${promoSet.promos.length} promos`);
+    await expect(numbers(page).getByRole('button', {name: /^Master/})).toHaveCount(0);
   });
 
   test('a signed-in visitor without a collection is asked to import one', async ({page}) => {

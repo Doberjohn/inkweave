@@ -1,6 +1,6 @@
 import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
-import {cardFullNameById, cardVariantRarities} from '../helpers/cardData';
+import {cardFullNameById, cardPromoCodes, cardVariantRarities} from '../helpers/cardData';
 
 // Card 1938 (Pongo - Determined Father) has one alternate printing, an Enchanted one (#625).
 // Read from the card data so a pool change fails here with a clear message, not a timeout.
@@ -13,10 +13,22 @@ if (cardVariantRarities(CARD_ID).join() !== 'Enchanted') {
   );
 }
 
-/** Which slide the printings strip is on. */
-const slideShown = (page: Page) =>
+// Card 1949 (Mickey Mouse - True Friend) has four promo printings (#805), the most of any card.
+// Its 25/P1 shows the owner's scan, which the app serves itself, so its art can be waited on.
+const PROMO_CARD_ID = '1949';
+const PROMO_CARD_NAME = cardFullNameById(PROMO_CARD_ID);
+const PROMO_CODES = ['25/P1', '15/P2', '36/P2', '10/P3'];
+if (cardPromoCodes(PROMO_CARD_ID).join() !== PROMO_CODES.join()) {
+  throw new Error(
+    `Fixture broken: card ${PROMO_CARD_ID} must have the promo printings ${PROMO_CODES.join(', ')} ` +
+      `(found: ${cardPromoCodes(PROMO_CARD_ID).join(', ') || 'none'}).`,
+  );
+}
+
+/** Which slide a card's printings strip is on: the fixture card's, unless another is named. */
+const slideShown = (page: Page, name = CARD_NAME) =>
   page
-    .getByRole('group', {name: `${CARD_NAME} printings`})
+    .getByRole('group', {name: `${name} printings`})
     .evaluate((strip) => Math.round(strip.scrollLeft / strip.clientWidth));
 
 /**
@@ -99,6 +111,28 @@ test.describe('Card printings (desktop)', () => {
     );
     await expect(modal.getByRole('radio', {name: 'Enchanted'})).toBeFocused();
     await expect(modal.locator('h1')).toHaveText(CARD_NAME);
+  });
+
+  test("a card's promo printings follow its Standard, each by its printed code, and one picked shows its art", async ({
+    page,
+  }, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    await page.goto(`/card/${PROMO_CARD_ID}`);
+    const pills = page.getByRole('radiogroup', {name: 'Card printing'});
+    await expect(pills.getByRole('radio')).toHaveCount(5, {timeout: 10000});
+    // A promo's chip is named "Promo" and its code (#802); Standard goes by its text.
+    const names = await pills
+      .getByRole('radio')
+      .evaluateAll((radios) => radios.map((radio) => radio.getAttribute('aria-label') ?? radio.textContent));
+    expect(names).toEqual(['Standard', ...PROMO_CODES.map((code) => `Promo ${code}`)]);
+
+    const scanned = pills.getByRole('radio', {name: 'Promo 25/P1'});
+    await scanned.click();
+    await expect(scanned).toHaveAttribute('aria-checked', 'true');
+    await expect(pills.getByRole('radio', {checked: true})).toHaveCount(1);
+    await expect.poll(() => slideShown(page, PROMO_CARD_NAME)).toBe(1);
+    const art = page.getByRole('img', {name: `${PROMO_CARD_NAME}, 25/P1 printing`}).first();
+    await expect.poll(() => art.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
   });
 });
 

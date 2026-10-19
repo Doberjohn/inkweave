@@ -18,6 +18,16 @@ interface CardTranslationPanelProps {
   style?: React.CSSProperties;
 }
 
+/**
+ * Whether the English text over a scan in `language` is the card's official text: the card's
+ * own scan is English, or the card is a printing's (it has a `baseId`), whose text is the
+ * English card's. Only a card whose own scan is foreign has no more than a translation.
+ */
+function isOfficialText(card: LorcanaCard, language: string | undefined): boolean {
+  if (!language) return false;
+  return !card.scanLanguage || card.baseId !== undefined;
+}
+
 /** The English name of a language code ("ja" → "Japanese"); the code itself if the runtime has none. */
 function languageName(code: string): string {
   try {
@@ -31,8 +41,10 @@ function languageName(code: string): string {
  * The English name and rules text of a card shown in another language's scan, its own or a
  * variant printing's (#681; variants are rules-identical, so the card's text serves). A card
  * whose own scan is foreign has only an unofficial translation, and says so. A card whose own
- * scan is English, shown in a variant revealed abroad first, has its official English text.
- * CardLightbox and the card modal lay it over the scan behind a CardTranslationToggle.
+ * scan is English, shown in a variant revealed abroad first, has its official English text. So
+ * does a printing's own card (one with a `baseId`), whose scan is its printing's and whose text
+ * is the English card's: the binder's pocket for a pre-Core card's promo, 41/P1 in Japanese
+ * (#805). CardLightbox and the card modal lay it over the scan behind a CardTranslationToggle.
  */
 export function CardTranslationPanel({
   card,
@@ -43,7 +55,7 @@ export function CardTranslationPanel({
   const sizes = SIZES[size];
   const languageLabel = language ? languageName(language) : 'original';
   const hasText = !!(card.textSections?.length || card.text);
-  const official = !card.scanLanguage && !!language;
+  const official = isOfficialText(card, language);
 
   return (
     <section

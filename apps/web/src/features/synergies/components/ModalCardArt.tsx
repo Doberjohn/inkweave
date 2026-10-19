@@ -64,15 +64,12 @@ export function ModalCardArt({
 }
 
 /**
- * Desktop's printing pills and translation toggle, in a row under the card (owner,
- * 2026-10-08; they sat in the header before). The art shrinks to make room
- * (`artScaleTransform`), so the column keeps its height and nothing under the card can be
- * clipped. In a comparison, which shows the base art, they fade out while the art grows back.
- * The toggle hides but keeps its place while the scan on show is English, so the pills never
- * move under the pointer.
+ * Desktop's printing pills, in a row under the card (owner, 2026-10-08; they sat in the
+ * header before). The art shrinks to make room (`artScaleTransform`), so the column keeps its
+ * height and nothing under the card can be clipped. In a comparison, which shows the base art,
+ * they fade out while the art grows back.
  */
 export function DesktopArtControls({hidden}: {hidden: boolean}) {
-  const translation = useContext(CardTranslationContext);
   const printing = useContext(CardPrintingContext);
   return (
     <div
@@ -83,12 +80,24 @@ export function DesktopArtControls({hidden}: {hidden: boolean}) {
         transition: `opacity 0.2s ${EASING.smooth}, visibility 0.2s`,
       }}>
       {printing && <PrintingPills printings={printing.printings} index={printing.index} onSelect={printing.pick} />}
-      {translation && (
-        <span style={{visibility: translation.language ? undefined : 'hidden'}}>
-          <CardTranslationToggle shown={translation.shown} onToggle={translation.toggle} />
-        </span>
-      )}
     </div>
+  );
+}
+
+/**
+ * Desktop's translation toggle, in the header before the close × (owner, 2026-10-17: back where
+ * it sat before 2026-10-08, when it moved under the card with the pills). Mobile's is under the
+ * card (`MobileArtControls`). Where the card image is gone (a comparison, an expanded group), or
+ * shows a printing whose scan is already English, it hides but keeps its place, so the title
+ * never moves.
+ */
+export function HeaderTranslationToggle({hidden}: {hidden: boolean}) {
+  const translation = useContext(CardTranslationContext);
+  if (!translation) return null;
+  return (
+    <span style={{visibility: hidden || !translation.language ? 'hidden' : undefined}}>
+      <CardTranslationToggle shown={translation.shown} onToggle={translation.toggle} />
+    </span>
   );
 }
 

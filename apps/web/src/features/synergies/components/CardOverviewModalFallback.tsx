@@ -127,21 +127,31 @@ function pickSkeletonArtStyle(shrunk: boolean, cardHeight: number): CSSPropertie
 }
 
 /**
+ * The translation toggle, invisible, for a card with a foreign scan among its printings: the
+ * space the modal's takes, under the card on mobile and in the header on desktop.
+ * visibility:hidden also keeps it out of the focus order and the accessibility tree.
+ */
+function ReservedTranslationToggle({card}: {card: LorcanaCard}) {
+  if (!hasForeignScan(card)) return null;
+  return (
+    <span style={HIDDEN}>
+      <CardTranslationToggle shown={false} onToggle={noop} />
+    </span>
+  );
+}
+
+/**
  * Mobile's printing pills and translation toggle (ModalCardArt.tsx), invisible: rendered under
  * the card as the modal renders them, they hold exactly the space the real controls take, so
- * nothing moves at the handoff. visibility:hidden also keeps them out of the focus order and
- * the accessibility tree. Desktop's sit in a row pinned under the shrunk art, which takes no
- * space of its own, so only the art's scale needs matching there.
+ * nothing moves at the handoff. Desktop's pills sit in a row pinned under the shrunk art, which
+ * takes no space of its own, so only the art's scale needs matching there; its toggle is held
+ * in the header.
  */
 function ReservedMobileArtControls({card}: {card: LorcanaCard}) {
   return (
     <>
       <PrintingPills printings={printingsOf(card)} index={0} onSelect={noop} isMobile style={HIDDEN} />
-      {hasForeignScan(card) && (
-        <span style={HIDDEN}>
-          <CardTranslationToggle shown={false} onToggle={noop} />
-        </span>
-      )}
+      <ReservedTranslationToggle card={card} />
     </>
   );
 }
@@ -195,6 +205,7 @@ export function CardOverviewModalFallback({card, isMobile, onClose}: CardOvervie
             style={pickModalShellStyle(isMobile)}>
             <div style={MODAL_HEADER_STYLE}>
               <ModalCardTitle card={card} isMobile={isMobile} as="div" />
+              {!isMobile && <ReservedTranslationToggle card={card} />}
               {/* The modal's own ×: it sets the header's height, so everything below sits
                   exactly where the modal's will. It never takes focus (see above). */}
               <ModalCloseButton onClose={onClose} />

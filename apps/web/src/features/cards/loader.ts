@@ -2,7 +2,7 @@ import type {CardPrinting, LorcanaJSONCard, RawCardVariant, VariantRarity} from 
 import {transformCard as baseTransformCard, isCoreSet} from 'inkweave-synergy-engine/card';
 import type {LorcanaCard, Ink, CardType} from './types';
 import {fetchPreviewCards} from './previewCards';
-import {ALL_INKS, type BrowseSortOrder} from '../../shared/constants';
+import {ALL_INKS, binderSetOf, editionRank, promoSetRank, type BrowseSortOrder} from '../../shared/constants';
 
 interface LorcanaJSONSet {
   name: string;
@@ -109,16 +109,41 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
 }
 
 /** A variant printing's art resolves exactly like a card's, under the variant's own id. */
-function toPrinting(variant: RawCardVariant): CardPrinting {
+export function toPrinting(variant: RawCardVariant): CardPrinting {
   return {
     id: String(variant.id),
     rarity: variant.rarity,
-    number: variant.number,
+    number: variant.number ?? undefined,
     imageUrl: resolveImageUrl(variant),
     imageHashSm: variant.imageHashSm,
     scanLanguage: variant.scanLanguage,
     promoGrouping: variant.promoGrouping,
     finish: variant.finish,
+  };
+}
+
+/**
+ * A card of its own for one of `card`'s printings: the card under the printing's id, rarity,
+ * number and art, naming `card` as its `baseId` (#796). The full-size image hash is the base
+ * card's art, so it is dropped rather than carried. A promo's card is in its promo set ("P1"
+ * in 25/P1), with its finish and art variant (#805): Browse's promo tiles and collection
+ * mode's pockets are such cards.
+ */
+export function printingCard(card: LorcanaCard, printing: CardPrinting & {artVariant?: string}): LorcanaCard {
+  return {
+    ...card,
+    id: printing.id,
+    baseId: card.id,
+    rarity: printing.rarity,
+    setCode: printing.promoGrouping ?? card.setCode,
+    setNumber: printing.number,
+    imageUrl: printing.imageUrl,
+    imageHash: undefined,
+    imageHashSm: printing.imageHashSm,
+    scanLanguage: printing.scanLanguage,
+    variants: undefined,
+    finish: printing.finish,
+    artVariant: printing.artVariant,
   };
 }
 
@@ -329,22 +354,25 @@ export interface CardFilterOptions {
 /** The two kinds of printing the art presets pick: standard cards, and the alternate-art printings. */
 export type ArtKind = 'standard' | 'alt';
 
+/** The rarity LorcanaJSON gives every promo printing, shown as "Promo" (`rarityLabel`). */
+export const PROMO_RARITY = 'Special';
+
 /**
  * The rarities of each kind (owner, 2026-10-15): the five a standard card comes in, and
- * the alternate-art printings, Epic, Enchanted and Iconic, of which a base card carries
- * at most one. Special (promos) is neither.
+ * the alternate-art printings: the chase rarities, of which a base card carries at most
+ * one, and Special, the promos (owner, 2026-10-17, #805), of which it can carry several.
  */
 export const RARITIES_BY_ART: Readonly<Record<ArtKind, readonly string[]>> = {
   standard: ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary'],
-  alt: ['Epic', 'Enchanted', 'Iconic'],
+  alt: ['Epic', 'Enchanted', 'Iconic', PROMO_RARITY],
 };
 
-/** The alternate-art printings' rarities, for asking of one rarity. */
-export const ALT_ART_RARITIES: ReadonlySet<string> = new Set(RARITIES_BY_ART.alt);
+/** The chase printings' rarities, each with a symbol of its own: the engine's `VariantRarity`. */
+const CHASE_RARITIES: ReadonlySet<string> = new Set<VariantRarity>(['Epic', 'Enchanted', 'Iconic']);
 
-/** Whether a rarity is an alternate-art printing's, narrowed to the engine's printing rarities. */
-export function isAltArtRarity(rarity: string | undefined): rarity is VariantRarity {
-  return rarity !== undefined && ALT_ART_RARITIES.has(rarity);
+/** Whether a rarity is a chase printing's (Epic, Enchanted, Iconic; not a promo's), narrowed to it. */
+export function isChaseRarity(rarity: string | undefined): rarity is VariantRarity {
+  return rarity !== undefined && CHASE_RARITIES.has(rarity);
 }
 
 type CardFilterPredicate = (card: LorcanaCard, options: CardFilterOptions) => boolean;
@@ -652,22 +680,56 @@ export function getUniqueSets(cards: LorcanaCard[]): string[] {
 }
 
 /**
- * Sort cards by set (latest first), then by card number within set.
- * Returns a new array. Does not mutate the input.
+ * Two sets, latest first: the numbered sets by number, then the rest. Of those, the promo
+ * sets go by release (#805, a promo tile's set is its promo set), then any other code.
+ */
+export function latestSetFirst(setA: string, setB: string): number {
+  const numA = parseInt(setA, 10);
+  const numB = parseInt(setB, 10);
+  if (!isNaN(numA) && !isNaN(numB)) return numB - numA;
+  if (!isNaN(numA)) return -1;
+  if (!isNaN(numB)) return 1;
+  return promoSetRank(setB) - promoSetRank(setA) || setB.localeCompare(setA);
+}
+
+/** Where a card whose number is unknown sorts in its set: last, as a promo's does (#805). */
+const UNNUMBERED = Number.MAX_SAFE_INTEGER;
+
+/** Of two promo twins under one code, the foil first (#805, owner); a card with no finish has no twin. */
+const FINISH_ORDER = {foil: 0, normal: 1} as const;
+
+/** What places a card among its set's: its number, and a promo's finish and art variant. */
+type CollectorPlace = Pick<LorcanaCard, 'setNumber' | 'finish' | 'artVariant'>;
+
+/**
+ * Two cards of one set in collector order: by number, an unknown one last, then, for two
+ * promos under one code, the foil twin first and the arts in order (24A/P2, then 24B/P2).
+ * Anything placed like a card sorts with them: the binder's open pockets do.
+ */
+export function collectorOrder(a: CollectorPlace, b: CollectorPlace): number {
+  const byNumber = (a.setNumber ?? UNNUMBERED) - (b.setNumber ?? UNNUMBERED);
+  const byFinish = FINISH_ORDER[a.finish ?? 'foil'] - FINISH_ORDER[b.finish ?? 'foil'];
+  return byNumber || byFinish || (a.artVariant ?? '').localeCompare(b.artVariant ?? '');
+}
+
+/**
+ * Two cards of one set in its binder's order: a promo set's editions in turn, oldest first
+ * (owner, 2026-10-18: Curator's Collection's Heroines, then Beauty and the Beast), and each
+ * in collector order.
+ */
+export const editionThenCollectorOrder = (a: LorcanaCard, b: LorcanaCard): number =>
+  editionRank(a.setCode ?? '') - editionRank(b.setCode ?? '') || collectorOrder(a, b);
+
+/**
+ * Sort cards by set (latest first), then in collector order within set, a promo set's
+ * editions together (`editionThenCollectorOrder`). Returns a new array. Does not mutate the input.
  */
 export function sortBySetThenNumber(cards: LorcanaCard[]): LorcanaCard[] {
   return [...cards].sort((a, b) => {
-    const setA = a.setCode ?? '';
-    const setB = b.setCode ?? '';
-    if (setA !== setB) {
-      const numA = parseInt(setA, 10);
-      const numB = parseInt(setB, 10);
-      if (!isNaN(numA) && !isNaN(numB)) return numB - numA;
-      if (!isNaN(numA)) return -1;
-      if (!isNaN(numB)) return 1;
-      return setB.localeCompare(setA);
-    }
-    return (a.setNumber ?? 0) - (b.setNumber ?? 0);
+    const setA = binderSetOf(a.setCode ?? '');
+    const setB = binderSetOf(b.setCode ?? '');
+    if (setA !== setB) return latestSetFirst(setA, setB);
+    return editionThenCollectorOrder(a, b);
   });
 }
 

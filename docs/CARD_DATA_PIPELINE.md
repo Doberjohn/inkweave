@@ -356,8 +356,8 @@ The file lives at `apps/web/public/data/previewCards.json`. Post-Set-12 graduati
 | `keywordAbilities` | Optional | Array of keyword name strings — alternative to embedding in `abilities` |
 | `setCode` | Yes | Set code as string (e.g., `"13"`). Critical — used everywhere for filtering. Must match the key in `sets[code]`. |
 | `number` | Yes | Card number within set (1 to total cards in set) |
-| `rarity` | Yes | `"Common"`, `"Uncommon"`, `"Rare"`, `"Super Rare"`, `"Legendary"`. Never add a printing (a card with a LorcanaJSON `baseId`) as its own entry: every one but Special goes in the base card's `variants` (next row), and Special is out of scope. |
-| `variants` | Optional | The card's alternate printings (#625), sorted by collector number: Epic, Enchanted and Iconic, and any printing that keeps its base card's rarity (#796: its `rarity` is then the base card's, and the app labels it by its collector number, "#247"). For example: `[{"id": 14241, "rarity": "Iconic", "number": 241, "images": {"full": "...", "thumbnail": "..."}}]`. In reveal season the id is `REVEAL_ID_BASE + number` and the number is above the set's base total (both test-enforced). `images` is absent for a hand-supplied scan, whose art is `card-images-preview/{id}.avif`. A hand-supplied scan that is not in English also carries its `scanLanguage` (#681), so the app offers the card's English text over that printing; `pnpm sync-variants` drops it when official art replaces the entry. Written by `pnpm sync-variants` or by hand ([START_REVEAL_SEASON.md](reveals/START_REVEAL_SEASON.md)); canonical cards get theirs from [Rule 1](#rules-during-canonical-integration). The engine never reads it. |
+| `rarity` | Yes | `"Common"`, `"Uncommon"`, `"Rare"`, `"Super Rare"`, `"Legendary"`. Never add a printing (a card with a LorcanaJSON `baseId`) as its own entry: every one but Special goes in the base card's `variants` (next row). A Special promo never comes from LorcanaJSON: the owner's promo catalog adds it to the same `variants` ([Promo printings](#promo-printings-805)). |
+| `variants` | Optional | The card's alternate printings (#625), sorted by collector number: Epic, Enchanted and Iconic, and any printing that keeps its base card's rarity (#796: its `rarity` is then the base card's, and the app labels it by its collector number, "#247"). For example: `[{"id": 14241, "rarity": "Iconic", "number": 241, "images": {"full": "...", "thumbnail": "..."}}]`. In reveal season the id is `REVEAL_ID_BASE + number` and the number is above the set's base total (both test-enforced). `images` is absent for a hand-supplied scan, whose art is `card-images-preview/{id}.avif`. A hand-supplied scan that is not in English also carries its `scanLanguage` (#681), so the app offers the card's English text over that printing; `pnpm sync-variants` drops it when official art replaces the entry. Written by `pnpm sync-variants` or by hand ([START_REVEAL_SEASON.md](reveals/START_REVEAL_SEASON.md)); canonical cards get theirs from [Rule 1](#rules-during-canonical-integration). Its Special entries are the card's promo printings (#805), written only by `pnpm merge-promos`: each carries `promoGrouping`, the set printed on the card ("P1" in 25/P1), and they come after the other printings ([Promo printings](#promo-printings-805)). The engine never reads it. |
 | `franchise` | Optional | Drives the `/reveals` page franchise tiering. Set to a value matching one of `FRANCHISES.match` in `apps/web/src/features/reveals/franchise.ts` (currently `"Coco"`). Cards without a matching franchise fall into the "Returning franchises" tier. Spell it as LorcanaJSON's `story` field does: graduation replaces it with that field ([Rule 4](#rules-during-canonical-integration)), so a mismatch empties the franchise's tier once the set graduates. Update `FRANCHISES` each season for the debut franchises. |
 | `scanLanguage` | **Preview-only** | Two-letter code (e.g. `"ja"`) of the card's scan when it is not in English: a card revealed abroad first, whose name and text are then an unofficial translation. The app offers that English text over the scan behind "See translation" (#623). A variant entry carries its own for a printing revealed abroad first (#681, see `variants`). Never `"en"`: `reveal-set-integrity.test.ts` checks both. Delete it when the card is refreshed from its English scan. |
 | `images.thumbnail` / `images.full` | Optional but recommended | Preview URLs from lorcanaplayer.com. The loader at `loader.ts:52` rewrites `lorcanaplayer.com/*` → `/card-images-preview/{id}.avif` automatically; AVIFs come from `convert-preview-images.mjs` reading raw JPGs in `card-images-raw/`. |
@@ -779,11 +779,13 @@ No SW cache rule for `previewCards.json` itself — its graceful 404 path is bro
 
 ### The collection dataset (#553)
 
-A **third** card dataset lives at `apps/web/public/data/collection/`: the 2,224
+A **third** card dataset lives at `apps/web/public/data/collection/`: the 2,009
 cards Inkweave can SHOW but never analyses, namely sets 1-8 and the printings
-inside Core sets: Enchanted, Epic, Iconic, Special, and the four that keep their base
+inside Core sets: Enchanted, Epic, Iconic, and the four that keep their base
 card's rarity (Sven #243, Mr. Incredible #243, Christopher Robin #246, Violet Parr #247;
-#796).
+#796), plus `promos.json`, the 264 promo printings of the owner's catalog
+([Promo printings](#promo-printings-805)). LorcanaJSON's own 215 Special cards are left
+out (#805): a promo's pocket is built from the catalog, in its promo set.
 
 **Illumineer's Quest sets are excluded entirely** (owner ruling, 2026-10-06). Those
 are a separate co-op product rather than trading-card boosters, so they are not part
@@ -791,11 +793,14 @@ of the collection anyone tracks. Sets 1-8 stay: equally outside Core format, but
 same product, and the reason this dataset exists. `QUEST_SET_CODE` in
 `scripts/lib/collectionData.mjs` drops them, and matches a future Q3 box automatically.
 
-**No card id appears in both it and `allCards.json`.** That is what makes the Core
+**No card in it has the id of a card in `allCards.json`.** That is what makes the Core
 boundary structural: `precompute-synergies.mjs` reads `allCards.json` and never opens
 these files, so a set-1 card cannot reach a synergy calculation even by mistake.
-`scripts/generate-collection-data.mjs:66` asserts the two sets are disjoint and aborts
-otherwise.
+`assertDisjoint` in `scripts/generate-collection-data.mjs` checks the chunks' cards and
+`promos.json`'s promos against the cards of `allCards.json` and `previewCards.json`, and
+aborts on any match. The one overlap is deliberate: a Core card's promo is an entry in
+`promos.json` and a printing in its card's `variants` in `allCards.json`, never a card
+there, which is safe for the same reason: the engine never reads variants.
 
 The boundary is about SYNERGY, not about the files being untouched. `download-card-images.mjs`
 does read and rewrite these chunks, to image the cards and inject their hashes, which is
@@ -810,25 +815,32 @@ look right and are not.
 
 | File | Contents | committed | served |
 |---|---|---|---|
-| `collection/index.json` | all 2,224, light projection: grid, filters, name search | 72 kB | 72 kB |
-| `collection/{set}.json` | one per set: card text, stats, abilities, image URLs | 10-43 kB | 11-49 kB |
-| whole dataset | 15 files, 3.1 MB on disk | 462 kB | 517 kB |
+| `collection/index.json` | all 2,009, light projection: grid, filters, name search | 65 kB | 65 kB |
+| `collection/{set}.json` | one per set: card text, stats, abilities, image URLs | 8-41 kB | 9-47 kB |
+| `collection/promos.json` | the catalog's 264 promos: printing fields, art, card name and id | 18 kB | 24 kB |
+| whole dataset | 16 files, 2.8 MB on disk | 438 kB | 495 kB |
+
+The served column was measured by #729 before #805, and re-estimated for #805 by writing
+random 16-hex hashes where the build writes real ones: the same method reproduces #729's
+446 kB within 1%.
 
 Both tiers are budgeted in `package.json`, and **deliberately as two entries rather
 than one**: collection mode is designed to load the index once plus the one chunk for
-the set being viewed, a **per-visit worst case of 121 kB** (72 kB index plus set 8 at
-49 kB served), under a quarter of the 517 kB total. `Collection index JSON` guards
-that per-visit cost; `Collection set chunks` is a growth guard on the data as a whole.
-Until that tiering lands, `CollectionCardsProvider` loads every detail chunk and no
-index (446 kB served), a design-phase simplification explained at the top of
-`CollectionCardsContext.tsx`.
+the set being viewed, a **per-visit worst case of 112 kB** (65 kB index plus set 8 at
+47 kB served), under a quarter of the 495 kB total. `Collection index JSON` guards
+that per-visit cost; `Collection set chunks` is a growth guard on the data as a whole,
+`promos.json` included. Until that tiering lands, `CollectionCardsProvider` loads every
+detail chunk and `promos.json`, all or nothing, and no index (430 kB served), a
+design-phase simplification explained at the top of `CollectionCardsContext.tsx`.
 
 **The chunk budget is set against the SERVED size, not the committed size.**
-Committed chunks gzip to 391 kB; because content-addressed hashes are high-entropy
-they barely compress, injection adds **55 kB** to reach 446 kB, against a 470 kB
-limit. Measuring the committed files would set a limit against an artifact nobody is
-served, which is the defect [#729](https://github.com/Doberjohn/inkweave/issues/729) describes.
-The index is not imaged, so its budget needs no such allowance.
+Its files, the chunks and `promos.json`, gzip to 373 kB committed; because
+content-addressed hashes are high-entropy they barely compress, so injection adds about
+**57 kB**, to roughly 430 kB, against a 470 kB limit (#729 measured 391 kB committed and
+446 kB served before #805 took the Special cards out). Measuring the committed files
+would set a limit against an artifact nobody is served, which is the defect
+[#729](https://github.com/Doberjohn/inkweave/issues/729) describes. The index is not
+imaged, so its budget needs no such allowance.
 
 **Source is manual**, like `allCards.json`: download the full export from
 LorcanaJSON.org and pass its path to `pnpm generate-collection-data`.
@@ -841,9 +853,11 @@ as non-Core duplicates. Regenerate after a set graduates, so its Enchanted, Epic
 Iconic printings join the collection.
 
 **The committed chunks carry no image hashes.** `injectManifestIntoChunk` writes
-`imageHash`/`imageHashSm` into them during the build, the same way it does for
-`allCards.json`, and the deployed copies are what the restore path reads back. Do not
-commit a chunk that a local `pnpm download-images` has hashed.
+`imageHash`/`imageHashSm` into them during the build, `promos.json` included (a bare array
+like a chunk, imaged by each promo's own id), the same way it does for `allCards.json`,
+and the deployed copies are what the restore path reads back. Do not commit a chunk that
+a local `pnpm download-images` has hashed; `pnpm merge-promos` ignores the hashes when it
+decides whether `promos.json` changed.
 
 **The Quest exclusion also removes a silent-drop trap**, which is worth knowing if anyone
 is ever tempted to reinstate those sets. Quest cards carry `"color": ""`, correctly, since
@@ -868,6 +882,51 @@ when Phase C shipped there with Quest sets still included, adding 2,218 cards to
 image output from 27.5 MB / 2,048 files to **88 MB / 6,484 files**. Carried over rather
 than re-measured, because re-running the pipeline would inject hashes into the chunks
 above; this dataset is 13 cards smaller, so the real figure is slightly below it.
+
+### Promo printings (#805)
+
+Promo printings (rarity `Special`) have one source: the owner's catalog,
+`scripts/data/promo-printings.json`, settled on 2026-10-16 and corrected set by set since
+(owner, 2026-10-17 to 19). LorcanaJSON's own Special cards are never used: graduation strips
+them ([Rule 1](#rules-during-canonical-integration)) and the collection generator leaves them
+out. The catalog's `notes` record each ruling and every number settled from a scan or from
+Cardmarket.
+
+- **`fold`**: promos of Core cards, grouped by the `allCards.json` id of the card each
+  reprints (`baseId`). `pnpm merge-promos` (`scripts/merge-promo-printings.mjs`, rules in
+  `scripts/lib/promo-printings.mjs`) makes each card's Special `variants` exactly its
+  group's: it adds, replaces by id and removes what the catalog dropped, after the card's
+  other printings, and stops on a group whose card is missing or named differently. Dry run
+  by default; `--write` writes `allCards.json`, and `collection/promos.json` when it changed.
+- **`noBaseCard`**: promos of cards `allCards.json` doesn't hold: sets 1-8, which live in the
+  collection chunks, and Hades - Dark Usurper, whose Set 15 no dataset holds yet. They reach
+  collection mode only.
+- **`collection/promos.json`**: every catalog promo, compact, with its card's `fullName` and
+  `baseId` (absent while no dataset holds the card), written by `pnpm merge-promos --write`
+  and `pnpm generate-collection-data`. Collection mode builds each promo's pocket from the
+  card it reprints (`withPromoPockets`, `collectionPromos.ts`), in its promo set's binder; a
+  promo whose card no dataset holds waits in a named open pocket, showing its scan if it has
+  one.
+- **Ids**: LorcanaJSON's where it has the printing, else a provisional id from 80001 up,
+  which `provisionalIds` names. When LorcanaJSON later adds one, the catalog keeps the
+  provisional id, as reveal ids are kept, until someone edits it.
+- **One printing per number**: a promo printed in both finishes is one entry, counted in both
+  like any card (owner, 2026-10-18). `finish` tells apart siblings under one code (none needs
+  it today); `artVariant` ("A" in 24A/P2) and `printedName` (26/P2's European "Vaiana") tell
+  apart two printings under one number.
+- **Art**: Ravensburger's where it exists, else the owner's scans, committed as preview AVIFs
+  (`card-images-preview/{id}.avif`) through `pnpm convert-preview-images`, with `scanLanguage`
+  on a scan that isn't English. A scan can stand in for its twin's ("Its art is 14/C3's scan"
+  in the catalog's notes) until its own comes.
+- **Kept by the other scripts**: `pnpm sync-variants` never folds or matches a Special and
+  keeps promos after the other printings (`scripts/lib/fold-variants.mjs`), and graduating a
+  set puts the catalog's promo printings on its new cards as `pnpm merge-promos` does
+  (`replaceSetCards` in `scripts/graduate-canonical-set.mjs`). A catalog that names a card the
+  new set lacks stops it before it writes anything.
+- **Promo sets**, the binder's groups, live in `PROMO_SETS`
+  (`apps/web/src/shared/constants/promoSets.ts`): release order, names, the numbers never
+  released (`unreleased`) or still to come (`upcoming`), and Curator's Collection's editions,
+  printed CC1 and CC2, gathered into one set (`editions`).
 
 ### CDN restore on a cache miss (#554)
 
@@ -929,11 +988,12 @@ sounds: expect a handful whenever a set has just been revealed.
 Every file that reads or writes either JSON, or participates in the build/runtime pipeline. Sections are collapsible — open the one for the layer you're navigating.
 
 <details open>
-<summary><strong>Scripts (<code>scripts/</code>)</strong> — 5 files</summary>
+<summary><strong>Scripts (<code>scripts/</code>)</strong> — 6 files</summary>
 
 | File | Role |
 |---|---|
 | `download-card-images.mjs` | Reads both JSONs; merges; downloads + hashes images; mutates both JSONs with `imageHash` fields |
+| `merge-promo-printings.mjs` | `pnpm merge-promos`: reads the promo catalog (`data/promo-printings.json`) and writes its promos into `allCards.json` variants and `collection/promos.json` (#805, [Promo printings](#promo-printings-805)). Rules in `lib/promo-printings.mjs`, file writes through `lib/json-file.mjs` |
 | `precompute-synergies.mjs` | Reads both JSONs; merges; runs engine; writes `synergies/*.json` + `_manifest.json` + `_playstyles.json` + `_pairs_index.json` |
 | `convert-preview-images.mjs` | Reads JPGs from `card-images-raw/`; writes AVIFs to `card-images-preview/`. Does not touch the JSONs. |
 | `refresh-rule-coverage.mjs` | Reads both JSONs; merges and cuts to Core the way precompute does; runs the built engine; rewrites only the coverage blocks in `packages/synergy-engine/*_RULE.md` (#479). Does not touch the JSONs. Also run by `.github/workflows/refresh-rule-coverage.yml` after every push to `master` that changes its inputs (#781). |
@@ -1124,7 +1184,7 @@ Six rules apply when integrating canonical LorcanaJSON data into `allCards.json`
 
 | # | Rule | Why |
 |---|------|-----|
-| 1 | **Fold variant printings into their base card**: every printing, meaning every card with a LorcanaJSON `baseId` (`Epic`, `Iconic`, `Enchanted`, and the ones that keep their base card's rarity, #796), becomes an entry in the base card's `variants` (matched on that `baseId`, via `scripts/lib/fold-variants.mjs`). **Strip `Special`** promos. A printing graduation would drop stops the run before it writes anything (`--allow-missing-variants` drops it on purpose): a variant hand-scanned during the reveal season but missing from the canonical source (`previewCards.json` is its only copy), or a canonical printing whose base card isn't in the set's file. | Variants are rules-identical alternate art, not new cards: they're stored on their base card for the #625 printing switcher (card page and modal), never as separate cards. Special promos (several per base, each needing its own label) stay out of scope. Before #625 all four rarities were stripped (51 printings in Set 12). |
+| 1 | **Fold variant printings into their base card**: every printing, meaning every card with a LorcanaJSON `baseId` (`Epic`, `Iconic`, `Enchanted`, and the ones that keep their base card's rarity, #796), becomes an entry in the base card's `variants` (matched on that `baseId`, via `scripts/lib/fold-variants.mjs`). **Strip `Special`** promos: the set's promo printings come from the promo catalog instead (#805, `replaceSetCards`), and a catalog that names a card the set lacks stops the run before it writes anything. A printing graduation would drop stops the run before it writes anything (`--allow-missing-variants` drops it on purpose): a variant hand-scanned during the reveal season but missing from the canonical source (`previewCards.json` is its only copy), or a canonical printing whose base card isn't in the set's file. | Variants are rules-identical alternate art, not new cards: they're stored on their base card for the #625 printing switcher (card page and modal), never as separate cards. LorcanaJSON's promo cards are not the source of promos: the owner's catalog is ([Promo printings](#promo-printings-805)). Before #625 all four rarities were stripped (51 printings in Set 12). |
 | 2 | **Adopt canonical IDs unconditionally** | LorcanaJSON's sequential ids (`2716`...) are the permanent identity; preview composite ids (`121204`...) are placeholders. Pre-graduation URLs break — acceptable in beta. Votes, cloud collection keys and deck cards move to the canonical ids through the remap migration the script writes (#748). |
 | 3 | **Adopt canonical names** | LorcanaJSON is source of truth; preview curation can have typos / wording corrections. Rule 2 makes this automatic since canonical entries fully replace preview entries. |
 | 4 | **Keep LorcanaJSON's `story` as `franchise`** (since Set 14) | `/reveals` tiers its debut franchises by `franchise`, and a set usually graduates before its release day, when the page hides itself. `story` holds the same value the preview cards carried (all 27 of Set 14's Coco cards), so the page keeps working. Costs under 1 kB gzipped per set. Sets graduated earlier had it stripped. |

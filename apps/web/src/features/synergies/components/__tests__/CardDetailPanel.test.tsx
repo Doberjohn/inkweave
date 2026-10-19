@@ -127,6 +127,7 @@ describe('CardDetailPanel printings', () => {
     expect(trackEvent).toHaveBeenCalledTimes(1);
     expect(trackEvent).toHaveBeenCalledWith('card_printing_view', {
       cardId: '1938',
+      printingId: '2141',
       rarity: 'Enchanted',
       surface: 'card_page',
     });

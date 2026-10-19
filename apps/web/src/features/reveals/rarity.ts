@@ -40,13 +40,17 @@ export function rarityConfigOf(rarity: string | undefined): RarityConfig | undef
   return RARITIES.find((r) => r.key === key);
 }
 
-/** The keys RaritySymbol draws: the five main-set rarities and the special printings. */
-const SYMBOL_KEYS = new Set([...RARITIES, ...Object.values(SPECIAL_RARITIES)].map((r) => r.key));
-
 /**
- * Whether a raw `card.rarity` has a symbol (case-insensitive). LorcanaJSON's
- * "Special", its promo printings, has none.
+ * The keys RaritySymbol draws: the five main-set rarities, the special printings, and
+ * "special", the rarity LorcanaJSON gives every promo printing (#805).
  */
+const SYMBOL_KEYS = new Set([
+  ...RARITIES.map((r) => r.key),
+  ...Object.values(SPECIAL_RARITIES).map((r) => r.key),
+  'special',
+]);
+
+/** Whether a raw `card.rarity` has a symbol (case-insensitive). */
 export function hasRaritySymbol(rarity: string): boolean {
   return SYMBOL_KEYS.has(rarity.trim().toLowerCase());
 }

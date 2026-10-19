@@ -145,7 +145,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/0_efc0c1177b6f8d76e49b512505c961fa4855628b.jpg"
       },
       "imageHash": "cdbd5dcfc4e4baf1",
-      "imageHashSm": "c2298563d34f4ac4"
+      "imageHashSm": "c2298563d34f4ac4",
+      "variants": [
+        {
+          "id": 1194,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/4_830c56df482cafcb991b97b1cca0f4d0f95d0ab7.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/4_e4c46685e462ae35e909b5dede01c3c0b422a9b7.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1937,
@@ -201,6 +213,16 @@
           "images": {
             "full": "https://api.lorcana.ravensburger.com/images/en/set9/205_62acc44798cda182710f8be20268c233d776cf58.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/205_f26be77b70ccc0716edb22b65d2b8932e4e8a495.jpg"
+          }
+        },
+        {
+          "id": 2181,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/3_9300e2c889060ccd3f06b47a8bb7b7e5ae88a30c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/3_ec2c3b8f3077aae79a0b10d22a43ef929843a3c9.jpg"
           }
         }
       ]
@@ -300,7 +322,39 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/3_1a59fb09ab0705ddd95238319db43a4dbbb3e141.jpg"
       },
       "imageHash": "d05d7b426aaa95a0",
-      "imageHashSm": "129d9c8d30d9e02e"
+      "imageHashSm": "129d9c8d30d9e02e",
+      "variants": [
+        {
+          "id": 3245,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "DIS",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/dis/3_a552e08f5a1eec401bbc897eda59b00c89c599e7.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/dis/3_0bda346ba8738c244a46970433ff0072b5847400.jpg"
+          }
+        },
+        {
+          "id": 660,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/2_9354b650ae34807653349b4d6d868a39f01f9609.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/2_f4f4e00351b3cc0c36acc9425517df6350d22e28.jpg"
+          }
+        },
+        {
+          "id": 688,
+          "rarity": "Special",
+          "number": 30,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/30_ed547d4fb9a33a4fdc9a80769300601c4cf3bc71.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/30_13ead8baa935f1cdb348b82b2c7fddf035efdd62.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1940,
@@ -348,6 +402,16 @@
           "images": {
             "full": "https://api.lorcana.ravensburger.com/images/en/set9/224_7f17c04013ed08ca46ff1a029608cc2fb8c5a3cb.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/224_2523f25f178e7ea29a2a61d92a55e0e447cc87a3.jpg"
+          }
+        },
+        {
+          "id": 2461,
+          "rarity": "Special",
+          "number": 40,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/40_4aaa4b5c9966aebb9625e996be936aca338989df.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/40_d1ff256465092a84fb80659e5d002d3c72d2a19e.jpg"
           }
         }
       ]
@@ -714,7 +778,42 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/13_0ea9c51e817f465409a49010dd22ba90497548fc.jpg"
       },
       "imageHash": "d83c736341c6998f",
-      "imageHashSm": "f691914a9d1e79c7"
+      "imageHashSm": "f691914a9d1e79c7",
+      "variants": [
+        {
+          "id": 80042,
+          "rarity": "Special",
+          "number": 25,
+          "promoGrouping": "P1",
+          "scanLanguage": "ja"
+        },
+        {
+          "id": 80044,
+          "rarity": "Special",
+          "number": 15,
+          "promoGrouping": "P2"
+        },
+        {
+          "id": 3595,
+          "rarity": "Special",
+          "number": 36,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/36_a73aabcc6b14ed400a8ae6c38fd67c6390943167.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/36_383bde271189fb4ab00bd186c410bffa8aeaae36.jpg"
+          }
+        },
+        {
+          "id": 2432,
+          "rarity": "Special",
+          "number": 10,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/10_30d7e69546ef091cf5e4dd6197e36f298b174af0.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/10_45e843d65737c42fc9d4a8b108fca8367f8c0136.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1950,
@@ -1413,7 +1512,15 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/31_d1d99df70ee4ad5348f0ce9fc634deebced27173.jpg"
       },
       "imageHash": "b9b907a06911f70c",
-      "imageHashSm": "2af6dba68adeb53a"
+      "imageHashSm": "2af6dba68adeb53a",
+      "variants": [
+        {
+          "id": 80034,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "CC2"
+        }
+      ]
     },
     {
       "id": 1968,
@@ -1789,6 +1896,16 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set9/226_4494bc166cb5d3e42f1f28e93d08a20149aacf76.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/226_36626b6e99f7310893d970ff390968981f15088b.jpg"
           }
+        },
+        {
+          "id": 2462,
+          "rarity": "Special",
+          "number": 41,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/41_f8ff787532a72898c1b75f24acc5b431ae68da59.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/41_88525b24337df93a22d4c357a8ff27ddc2d4d288.jpg"
+          }
         }
       ]
     },
@@ -2084,7 +2201,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/46_ffe52911a4dcb10027786847a8e05457b5e9022b.jpg"
       },
       "imageHash": "9f9305573a85cc4a",
-      "imageHashSm": "83c06baac4a5548b"
+      "imageHashSm": "83c06baac4a5548b",
+      "variants": [
+        {
+          "id": 2179,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/1_07c90c996a1bc7e5f16f1d92c1cff54b3a00bc65.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/1_396ac35493791a90c46bb6bdba4e88ba24e5f4ee.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1983,
@@ -2164,7 +2293,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/48_9185774f2496277c3394e012a0e56531d270fe48.jpg"
       },
       "imageHash": "9b1e10aab8392b40",
-      "imageHashSm": "4f8e11d3a8414955"
+      "imageHashSm": "4f8e11d3a8414955",
+      "variants": [
+        {
+          "id": 677,
+          "rarity": "Special",
+          "number": 19,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/19_92c6e3115ddf99b66da6909af0daeb693413f991.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/19_fb51e512688c86904d0c249c9fe144ea7d081a29.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 1985,
@@ -2382,6 +2523,16 @@
           "images": {
             "full": "https://api.lorcana.ravensburger.com/images/en/set9/210_e0764be325c23f7e5486ce8a04a0777664d60fb2.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/210_4fb5bd2aba548cbd69295d3f8fc2b05d5660cd1f.jpg"
+          }
+        },
+        {
+          "id": 661,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/3_cef568880146687aee7fedbb77feabd987e0fdd1.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/3_f80778722d0c4adf16e23c0aa46764eb390e7310.jpg"
           }
         }
       ]
@@ -2933,7 +3084,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/69_90b2816afbcad7bb6d96bb70af98b14f92457324.jpg"
       },
       "imageHash": "ce5a12c0f433cc87",
-      "imageHashSm": "9b8d55269adb572c"
+      "imageHashSm": "9b8d55269adb572c",
+      "variants": [
+        {
+          "id": 1198,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "C1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge1/8_ed492b373e5a8049ce3dc162683fc52b879dbc66.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge1/8_0c66571d493c60c775dd59049ae656df28f69ca6.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2006,
@@ -2998,7 +3161,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/71_846587ef2159b3513773fe195b6979ffabcb455a.jpg"
       },
       "imageHash": "3f72a8089a341c63",
-      "imageHashSm": "135663ab8e1258f2"
+      "imageHashSm": "135663ab8e1258f2",
+      "variants": [
+        {
+          "id": 2185,
+          "rarity": "Special",
+          "number": 7,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/7_7766ce1df8f13189b4e02e8d248eeb01008c7982.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/7_67966f47ecdc7f2ac11f088cb0aa0ced44b57746.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2008,
@@ -3139,6 +3314,16 @@
           "images": {
             "full": "https://api.lorcana.ravensburger.com/images/en/set9/211_a6274a911f061d0370e0df7a80ea16d04d36d72d.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/211_e175f93c40fc575c5f17dbfcd83746cd4be70075.jpg"
+          }
+        },
+        {
+          "id": 2450,
+          "rarity": "Special",
+          "number": 39,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/39_153622ed69420106f8eaace410f9e2cfa306908a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/39_33c0e06d8e3b897da76ed3d5887b2c98536124cb.jpg"
           }
         }
       ]
@@ -3561,6 +3746,26 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set9/212_6e398db56b8125ad68125dda1162063f76c2dbc8.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/212_c432540b81fbff6691a9d3c4e325df2611217834.jpg"
           }
+        },
+        {
+          "id": 2451,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "C2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge2/1_14759a518d51a11653eb125ed741e52ac648cac0.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge2/1_f92390b9a110e020d83c794ea3f223315ccaff81.jpg"
+          }
+        },
+        {
+          "id": 2455,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "C2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge2/5_3da76301dd582812f5e397f290df169ab59c5683.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge2/5_0fbc7791e740677b182c3b7d14d4ce01a6e65348.jpg"
+          }
         }
       ]
     },
@@ -3819,7 +4024,31 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/90_6fd8a37a81faf2655bdd2a591ec68d86f45f2542.jpg"
       },
       "imageHash": "c429eff247843ca3",
-      "imageHashSm": "135ffa8b2a683e5a"
+      "imageHashSm": "135ffa8b2a683e5a",
+      "variants": [
+        {
+          "id": 80018,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 80025,
+          "rarity": "Special",
+          "number": 14,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 1193,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/3_569cc7920299a66496b9db5894b5e1f8ab3ffa5f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/3_14c4e6b00e14d8466024462605e10717384cd416.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2027,
@@ -3988,6 +4217,18 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set9/213_dc0545757a750aa3c20aadd84553e31206b2d8b5.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/213_a9556fd1d00197ee49d8cacb0b77f996e0d03125.jpg"
           }
+        },
+        {
+          "id": 80007,
+          "rarity": "Special",
+          "number": 11,
+          "promoGrouping": "C2"
+        },
+        {
+          "id": 80011,
+          "rarity": "Special",
+          "number": 15,
+          "promoGrouping": "C2"
         }
       ]
     },
@@ -4135,7 +4376,21 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/99_86cab1371cb474ec9d43ce5a82405faef6f9b018.jpg"
       },
       "imageHash": "f4ca68b44df2d38d",
-      "imageHashSm": "6319d4f3ed21bcc9"
+      "imageHashSm": "6319d4f3ed21bcc9",
+      "variants": [
+        {
+          "id": 80017,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 80024,
+          "rarity": "Special",
+          "number": 13,
+          "promoGrouping": "C3"
+        }
+      ]
     },
     {
       "id": 2036,
@@ -4493,7 +4748,53 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/108_ec771c5ac3260cde84bb220fd3351e08ed6b7cb1.jpg"
       },
       "imageHash": "2cb561a4979b0896",
-      "imageHashSm": "eef2799d4623ef6e"
+      "imageHashSm": "eef2799d4623ef6e",
+      "variants": [
+        {
+          "id": 663,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/5_d23f73982e6590760190b241776999921ae48919.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/5_7fd93eecb7212684fc85488855776735c19554e6.jpg"
+          }
+        },
+        {
+          "id": 2182,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/4_542111924cad6679fd1527d01b7c321e33d09ba4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/4_ac0e255adcc05b92cdfd13d3009b2d02e83b8df0.jpg"
+          }
+        },
+        {
+          "id": 2183,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/5_96d45ae02b12c203a1d1c9ed87aedc74128b690f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/5_bee14205026531c6eae2bf2e099529858ed5869d.jpg"
+          }
+        },
+        {
+          "id": 80051,
+          "rarity": "Special",
+          "number": 61,
+          "promoGrouping": "P3",
+          "scanLanguage": "ja"
+        },
+        {
+          "id": 80052,
+          "rarity": "Special",
+          "number": 62,
+          "promoGrouping": "P3",
+          "scanLanguage": "ja"
+        }
+      ]
     },
     {
       "id": 2045,
@@ -4835,7 +5136,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/115_c926d71cf3d72b9846e7266f135db78ac0ba9f9c.jpg"
       },
       "imageHash": "c10e115b6c32409c",
-      "imageHashSm": "ea7072e642516931"
+      "imageHashSm": "ea7072e642516931",
+      "variants": [
+        {
+          "id": 682,
+          "rarity": "Special",
+          "number": 24,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/24_07184a7d67ecac9b3bef748f5537fc73ed1a6ec5.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/24_63794411920a78462eecc045ee23fcfd5dfcca0d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2052,
@@ -5009,7 +5322,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/119_71bc91b40501f7a6352aad42c413dc10d51c4096.jpg"
       },
       "imageHash": "2ec540ba3182347d",
-      "imageHashSm": "3daeefa164ad67c6"
+      "imageHashSm": "3daeefa164ad67c6",
+      "variants": [
+        {
+          "id": 2187,
+          "rarity": "Special",
+          "number": 9,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/9_67051e2c8e31467f0f24a5940dde1f66066d7403.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/9_1eb1ce86eafb1d07f5b917f5b2ea6bca0a8bdf84.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2056,
@@ -5095,7 +5420,15 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/121_2b6772d14507dee21b5b557aab9f9e2a7ade98a5.jpg"
       },
       "imageHash": "7ba765232daed760",
-      "imageHashSm": "943bd30894bf2fd5"
+      "imageHashSm": "943bd30894bf2fd5",
+      "variants": [
+        {
+          "id": 80037,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "CC2"
+        }
+      ]
     },
     {
       "id": 2058,
@@ -5295,7 +5628,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/126_cec881d47a9fd8b76061d5a163692906340e8387.jpg"
       },
       "imageHash": "aa3958503f07734a",
-      "imageHashSm": "d9b84cfac8aafc3e"
+      "imageHashSm": "d9b84cfac8aafc3e",
+      "variants": [
+        {
+          "id": 3240,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "CC1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/cc1/4_f276adc145c6817f6704a17c8b517d012cffe90c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/cc1/4_f7038053e9f197902a979a2b44471621b90806cc.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2063,
@@ -5877,6 +6222,16 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set9/217_6901b9d89b3dc94f8bce64ce77331832e8ceeb9a.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/217_d220ea2db9f5270e9a69fedd46aa65e9533008f3.jpg"
           }
+        },
+        {
+          "id": 2180,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/2_8426eb8a38d43058e2169ec64b6bd9c896ec9046.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/2_381f05acb6f4d4d83c9df5ee297e3a4662fcbd6e.jpg"
+          }
         }
       ]
     },
@@ -6100,6 +6455,12 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set9/218_fb765eaca4bc4b620c3da3639928544d82fa4a4e.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/218_271d41d5e650fe685daa9b9545897e3bc3a2e031.jpg"
           }
+        },
+        {
+          "id": 80046,
+          "rarity": "Special",
+          "number": 17,
+          "promoGrouping": "P2"
         }
       ]
     },
@@ -6217,6 +6578,16 @@
           "images": {
             "full": "https://api.lorcana.ravensburger.com/images/en/set9/219_93ec9b6b2b11b2e6adf396a8fae89ae660498a68.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/219_66d70c36328b4db3644279b953fbd70335d617ee.jpg"
+          }
+        },
+        {
+          "id": 2433,
+          "rarity": "Special",
+          "number": 12,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/12_7b0bd446a1d33dcd75a499885ebef09510d5cd5b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/12_ac1fbe10a68128ca08f116b8a661acc8cd22d4af.jpg"
           }
         }
       ]
@@ -6744,7 +7115,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/162_55f9191b6b297740939d3cbc49879cc29aa84ab6.jpg"
       },
       "imageHash": "a53e2c332e2e1442",
-      "imageHashSm": "b3c40ee173e79780"
+      "imageHashSm": "b3c40ee173e79780",
+      "variants": [
+        {
+          "id": 664,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/6_d61c675b068f0702dea3a84d1b3762c5f3224013.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/6_6ff1b1a9b70af2908643f24002b67e622601028a.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2099,
@@ -6799,7 +7182,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/164_9d1702f693121421dc334aeb66a4e8b7e00ee317.jpg"
       },
       "imageHash": "985f9fff4c463686",
-      "imageHashSm": "0a32f931bce61fb7"
+      "imageHashSm": "0a32f931bce61fb7",
+      "variants": [
+        {
+          "id": 691,
+          "rarity": "Special",
+          "number": 33,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/33_f46401ea4dec973de455e80e60fce7fd81839121.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/33_ba440608fabcc591827e7395acbd4262282601d5.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2101,
@@ -7616,6 +8011,16 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set9/220_0848254c21face478619c6d5560554b4e0a8b438.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/220_41be0a97e03d8558c8471a00b3456f9e52d6bc5c.jpg"
           }
+        },
+        {
+          "id": 675,
+          "rarity": "Special",
+          "number": 17,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/17_3124c499f9568a4f2b09f32c7bd60acbc70d7a12.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/17_989816d108b59b5f9b51d9d096418f4af1f831ed.jpg"
+          }
         }
       ]
     },
@@ -7807,7 +8212,29 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/188_6fc3e42d3ab29087b2fdbac29c411423fd1d0d7a.jpg"
       },
       "imageHash": "870347ddc13d942a",
-      "imageHashSm": "32233e022c6e5464"
+      "imageHashSm": "32233e022c6e5464",
+      "variants": [
+        {
+          "id": 3242,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "CC1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/cc1/6_c49fb8650edf9487daac01ec6f115a9cd7bc324c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/cc1/6_51774b2326707d7c10e42c1f72a1792a203b853a.jpg"
+          }
+        },
+        {
+          "id": 2188,
+          "rarity": "Special",
+          "number": 11,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/11_134f9ade8e5f9fc518a08ac788493da83f34c4da.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/11_9c5a8ad3b0627400e7042a0a93dd2738dde66f2e.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2125,
@@ -7970,7 +8397,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/192_7561751d70a52878eb79c52b02f474ea39e5f611.jpg"
       },
       "imageHash": "c32ee256a7f52d3d",
-      "imageHashSm": "33b05d40739d0a91"
+      "imageHashSm": "33b05d40739d0a91",
+      "variants": [
+        {
+          "id": 687,
+          "rarity": "Special",
+          "number": 29,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/29_b82e9d755443de8b2e343c3cf84605e9f421c637.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/29_5cdd316ec562c7ec8abbdbeda751fd9b83ba180d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2129,
@@ -8281,7 +8720,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/201_c352610cd00cc2487351a53ab81fe4492c65ed3f.jpg"
       },
       "imageHash": "946970b5c3cd1f89",
-      "imageHashSm": "81e2a23874f39d04"
+      "imageHashSm": "81e2a23874f39d04",
+      "variants": [
+        {
+          "id": 2186,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/8_09f60d7a5b67bafe819b285c6399baf482d23284.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/8_67c068cf2f59a67efa863af5bba9f3f0dbda15e9.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2138,
@@ -9346,7 +9797,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/23_a41c6f05dcf3ec6424b3b0fd1eba13b9aba199d1.jpg"
       },
       "imageHash": "5b4279cd971a8950",
-      "imageHashSm": "720b4ab30d56feb7"
+      "imageHashSm": "720b4ab30d56feb7",
+      "variants": [
+        {
+          "id": 3246,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "DIS",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/dis/6_4a406c72dc268029bb0d8a0b8e9dc111f305cee7.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/dis/6_14820444c0e99bc8d6ec79e149d9813a2ee7f43f.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2213,
@@ -9571,6 +10034,16 @@
           "images": {
             "full": "https://api.lorcana.ravensburger.com/images/en/set10/207_bcec9c3b633be01dc3a9eef0eb432134ad8b79e6.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/207_12a6fc8205c864ced28579638acb4b419869f0a5.jpg"
+          }
+        },
+        {
+          "id": 2441,
+          "rarity": "Special",
+          "number": 20,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/20_8b1b0c3ba38b771b51417e75fa9315c90927d96a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/20_6b25f55f131c496713bfe82b8a047958b00607f8.jpg"
           }
         }
       ]
@@ -9816,7 +10289,15 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/35_2f1e63cfe69cd5e04d1b51dab4c4342810425865.jpg"
       },
       "imageHash": "5be15e31385191c2",
-      "imageHashSm": "0b08d8d78c647bcf"
+      "imageHashSm": "0b08d8d78c647bcf",
+      "variants": [
+        {
+          "id": 80015,
+          "rarity": "Special",
+          "number": 20,
+          "promoGrouping": "C2"
+        }
+      ]
     },
     {
       "id": 2225,
@@ -10234,6 +10715,23 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set10/208_853f1eb6483b35818bb3f2abcd2d73ed3e6d555a.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set10/208_a097b76c5c05b5ae641c93fabe65de6a85c5ccc7.jpg"
           }
+        },
+        {
+          "id": 2443,
+          "rarity": "Special",
+          "number": 22,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/22_e45aeb9c781361f67e3abab8ee59e8cd6b7b0c0b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/22_4208243ea2094085bae82e0b00b077803bd40ed4.jpg"
+          }
+        },
+        {
+          "id": 80050,
+          "rarity": "Special",
+          "number": 59,
+          "promoGrouping": "P3",
+          "scanLanguage": "ja"
         }
       ]
     },
@@ -11143,7 +11641,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/68_a50f12321fcf05a2d15ea5f8e37e8715083a3d65.jpg"
       },
       "imageHash": "9ba33a89958434ba",
-      "imageHashSm": "e64088247d3de0ef"
+      "imageHashSm": "e64088247d3de0ef",
+      "variants": [
+        {
+          "id": 2440,
+          "rarity": "Special",
+          "number": 19,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/19_4820f65a3bbd1d3c03018775c2064aca051f288c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/19_ec5a1ffbb0ccfd1cfb60e6d0624e54b6d5a748ff.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2258,
@@ -11995,7 +12505,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/89_ec5228e5c63464064b1d99fca8ac3cbc1d90e2f7.jpg"
       },
       "imageHash": "6027aa9524d840d7",
-      "imageHashSm": "20446728ac263390"
+      "imageHashSm": "20446728ac263390",
+      "variants": [
+        {
+          "id": 2714,
+          "rarity": "Special",
+          "number": 36,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/36_51c338a1fd293aa6a51d0db281d362b837f46ff2.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/36_6477aa7bbf8a05aeaf7d1970b3c197b9a6fc153b.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2279,
@@ -12082,7 +12604,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/91_a45c71be705e9e73c49c19025ad077b67e552337.jpg"
       },
       "imageHash": "b7af537697d8ce4e",
-      "imageHashSm": "c2d2768a7663308d"
+      "imageHashSm": "c2d2768a7663308d",
+      "variants": [
+        {
+          "id": 2446,
+          "rarity": "Special",
+          "number": 25,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/25_9aebfd6e6296ef4b8e397042c49905ec1f5bd147.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/25_343e713ec5cc2ab53bc89538e4d1a955ce395eeb.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2281,
@@ -13767,7 +14301,29 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/133_bf2cba23db42246962fb0f4313dd941750d99eab.jpg"
       },
       "imageHash": "d0af36759452eed4",
-      "imageHashSm": "7c7442849205a647"
+      "imageHashSm": "7c7442849205a647",
+      "variants": [
+        {
+          "id": 1187,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "C1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge1/1_d936dc1f2c9f0cae641dbb5584bfb0288a103641.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge1/1_4270b22557c8e6c97b0a7129723051f895eb5390.jpg"
+          }
+        },
+        {
+          "id": 2459,
+          "rarity": "Special",
+          "number": 9,
+          "promoGrouping": "C2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge2/9_2cbea7707b0ecf639c53a3ac5038c107d961dacc.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge2/9_2ccf0dcdbff9ad0a31f65c238dd0462fc26beb24.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2323,
@@ -14368,7 +14924,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/149_b4359bc624c45989864cb9bc5fa98f1560fb01aa.jpg"
       },
       "imageHash": "f2e19000ea098698",
-      "imageHashSm": "bcdf1fb8fe024175"
+      "imageHashSm": "bcdf1fb8fe024175",
+      "variants": [
+        {
+          "id": 2447,
+          "rarity": "Special",
+          "number": 26,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/26_0ae8f65fef2169993613b732bcb7ef8ccc3c808a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/26_b213dcccbbed3fd3f89d6d207e9760b5e5325fcd.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2339,
@@ -14542,7 +15110,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/153_700b47e2cd2d62d1e02d55cf75511b5e8ddb7ae0.jpg"
       },
       "imageHash": "abb89c6005ec7e50",
-      "imageHashSm": "5f005ae438c7ecc3"
+      "imageHashSm": "5f005ae438c7ecc3",
+      "variants": [
+        {
+          "id": 2442,
+          "rarity": "Special",
+          "number": 21,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/21_96042505247cc9caea6ca6ea0b92a79427ae0d75.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/21_7054f2a6645e88b7d6268a9e67a7b1055bdbf62d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2343,
@@ -14597,7 +15177,43 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/154_e1c0ac9fb3b7916778f8ed93ba3b4cfacd650893.jpg"
       },
       "imageHash": "e4b01455822ce2d6",
-      "imageHashSm": "a0be25a1ba4b7d8e"
+      "imageHashSm": "a0be25a1ba4b7d8e",
+      "variants": [
+        {
+          "id": 2444,
+          "rarity": "Special",
+          "number": 23,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/23_40885d217657ebbe74c23bda7bd66478fefa0155.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/23_187c11789a46116862e307f6604e99a28b75957b.jpg"
+          }
+        },
+        {
+          "id": 2445,
+          "rarity": "Special",
+          "number": 24,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/24_a83fa383af201bad1d84858cdfdcceaa2b19187d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/24_ee045c76699c854ca085ff3d015747f53f92692b.jpg"
+          }
+        },
+        {
+          "id": 80054,
+          "rarity": "Special",
+          "number": 7,
+          "promoGrouping": "P4",
+          "scanLanguage": "ja"
+        },
+        {
+          "id": 80055,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "P4",
+          "scanLanguage": "ja"
+        }
+      ]
     },
     {
       "id": 2344,
@@ -14686,7 +15302,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/156_9c5785bd203360e9683b10ea352a7e51f4e2959a.jpg"
       },
       "imageHash": "1319c82bcedb6bec",
-      "imageHashSm": "40a13f8f42fd36dc"
+      "imageHashSm": "40a13f8f42fd36dc",
+      "variants": [
+        {
+          "id": 3590,
+          "rarity": "Special",
+          "number": 14,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/14_35b96ecf9c5ea22835a0c2224abd031a8fdfa365.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/14_34ee1fe8398d3f4a8887915d7d698d8206baccf1.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2346,
@@ -14871,7 +15499,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/160_3dc8e0eab0162385b3746d48a0a951dacc91c32d.jpg"
       },
       "imageHash": "5accf86df399666e",
-      "imageHashSm": "4b8648b398805053"
+      "imageHashSm": "4b8648b398805053",
+      "variants": [
+        {
+          "id": 666,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/8_3a76af024141d7bf19b13aee1fb17571c6f80444.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/8_ea463574255f466503b38f9417737b95f88e269d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2350,
@@ -15387,7 +16027,21 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/174_8a43b0cb58caa809de17843994aff71485d07e87.jpg"
       },
       "imageHash": "242dae54f6fe7e7a",
-      "imageHashSm": "9c660f0bd4694ad8"
+      "imageHashSm": "9c660f0bd4694ad8",
+      "variants": [
+        {
+          "id": 80009,
+          "rarity": "Special",
+          "number": 13,
+          "promoGrouping": "C2"
+        },
+        {
+          "id": 80013,
+          "rarity": "Special",
+          "number": 17,
+          "promoGrouping": "C2"
+        }
+      ]
     },
     {
       "id": 2364,
@@ -16188,7 +16842,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/193_8fd4c3ec069cab71186e951bba5cece522c2b433.jpg"
       },
       "imageHash": "8f63e866df8638e9",
-      "imageHashSm": "d36b63b5852d2599"
+      "imageHashSm": "d36b63b5852d2599",
+      "variants": [
+        {
+          "id": 2439,
+          "rarity": "Special",
+          "number": 18,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/18_05f2682a73bf2595c3b848c824592521c0099512.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/18_ac9fb2ded8ceaa878ed671f97158cfd5885480c7.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2383,
@@ -16281,7 +16947,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set10/196_dbf5fda9386b35ca3f926ca02efba6d92d41c7e2.jpg"
       },
       "imageHash": "9ad9c61200fa17cc",
-      "imageHashSm": "0569fe3e43a0d49b"
+      "imageHashSm": "0569fe3e43a0d49b",
+      "variants": [
+        {
+          "id": 2463,
+          "rarity": "Special",
+          "number": 27,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/27_17b07c694096e1453d3e107330c24ac85ae7856d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/27_cb1a5f9618b1550878090b4d0d6524ecc19bc8e3.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2386,
@@ -16846,6 +17524,16 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set11/207_3dea5f7f0298319aceb25d9c8d0b4cfc66c16839.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/207_ffabfbff5f3505bc907950f9d9e7750b40d3634b.jpg"
           }
+        },
+        {
+          "id": 2971,
+          "rarity": "Special",
+          "number": 42,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/42_130d7eb9627df4ffb45adc7f8b755b99441e4430.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/42_0601899e5073f93690955f19c30c4401ebf9ad8c.jpg"
+          }
         }
       ]
     },
@@ -17215,7 +17903,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/16_4fcf7fea9406015479868cd3cc8b44ca13c79d64.jpg"
       },
       "imageHash": "76849f83992f8bf3",
-      "imageHashSm": "a91a84a00377e696"
+      "imageHashSm": "a91a84a00377e696",
+      "variants": [
+        {
+          "id": 2710,
+          "rarity": "Special",
+          "number": 32,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/32_2ad30ba45e36419e4437bc490823bff2c5ee0d4f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/32_3325cbd8271d26dc5fbc7f68a87668a4256a7c29.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2480,
@@ -17635,7 +18335,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/25_d1eaf89d900c5a7b62464741c2375a5a91e59afe.jpg"
       },
       "imageHash": "b3961497159f3df3",
-      "imageHashSm": "9a4f6bb6ff55dfd5"
+      "imageHashSm": "9a4f6bb6ff55dfd5",
+      "variants": [
+        {
+          "id": 3586,
+          "rarity": "Special",
+          "number": 10,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/10_ec0b957c0de5d32b24322972340da18a5c78244b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/10_47f0facaa82802898dd300e889efaed8ec7b7c34.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2489,
@@ -18247,7 +18959,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/42_db0bbacc853cc3ff8514078c2470398183020411.jpg"
       },
       "imageHash": "27a956e567680347",
-      "imageHashSm": "606cda72475ec23c"
+      "imageHashSm": "606cda72475ec23c",
+      "variants": [
+        {
+          "id": 3587,
+          "rarity": "Special",
+          "number": 11,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/11_101d9fbdf51ac39892b3086607fe035b7f1542da.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/11_5b3fd7eac350184964c43cef793a94773fcca7ea.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2506,
@@ -18528,7 +19252,29 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/48_7773df51ec36124ffe4d06b431fa68e74a934f36.jpg"
       },
       "imageHash": "17eabd2dbca4b3c3",
-      "imageHashSm": "e6adeeadb86472c4"
+      "imageHashSm": "e6adeeadb86472c4",
+      "variants": [
+        {
+          "id": 2711,
+          "rarity": "Special",
+          "number": 33,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/33_b4d467889866b542ab5b9e296fd12425790dcf2d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/33_6890db80ae3016b997aa716dc6907455435919c8.jpg"
+          }
+        },
+        {
+          "id": 2712,
+          "rarity": "Special",
+          "number": 34,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/34_f8a4d6956f737fee8f55bf273a90fd9101e79c9d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/34_fa1fc811747d1a4ec128b89d4715f9257ceb3f8b.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2512,
@@ -20177,7 +20923,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/89_7711c75e2e200b32e7346a6c6af5dad5e74a8c17.jpg"
       },
       "imageHash": "b288e5055dfcc551",
-      "imageHashSm": "3c2bac3cfdbe4497"
+      "imageHashSm": "3c2bac3cfdbe4497",
+      "variants": [
+        {
+          "id": 2707,
+          "rarity": "Special",
+          "number": 29,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/29_9c43f52e18d06b986d0edb9b600dd9a836d45a8a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/29_28edb6ced59496a32c067273a69c0732ae098223.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2553,
@@ -21105,7 +21863,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/112_133534f09dec51fcd84618e0a8ac579fd922474c.jpg"
       },
       "imageHash": "68215b2e6ddcf4d4",
-      "imageHashSm": "997dabd42dbed278"
+      "imageHashSm": "997dabd42dbed278",
+      "variants": [
+        {
+          "id": 2708,
+          "rarity": "Special",
+          "number": 30,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/30_b0fb840d90ea1bcaca3149bc8761ee87d7a65db6.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/30_05663258fdbaf37ef897e0632f6c5c01e5fbd83b.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2576,
@@ -21378,7 +22148,29 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/118_fb6899d235588632a0ea968fcc32e08b28230695.jpg"
       },
       "imageHash": "e8297958a1f16d34",
-      "imageHashSm": "d6d4156a8f0dcf60"
+      "imageHashSm": "d6d4156a8f0dcf60",
+      "variants": [
+        {
+          "id": 2709,
+          "rarity": "Special",
+          "number": 31,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/31_a76fb0f5f761d22cd64cc72b5757fc6f16d58c53.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/31_25224febbcff7b31e08866b3a862df273ec959b5.jpg"
+          }
+        },
+        {
+          "id": 3225,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/1_f09b6541482df7dbac54a50739eec629416e445b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/1_787ca6fdbe521c2ab368c7fd2503c644e081ab9a.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2582,
@@ -22593,7 +23385,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/148_3f961579a225cf5118fdf1363765faf33011dbdc.jpg"
       },
       "imageHash": "8b2e7631989a53b0",
-      "imageHashSm": "9c056acab56f4941"
+      "imageHashSm": "9c056acab56f4941",
+      "variants": [
+        {
+          "id": 2706,
+          "rarity": "Special",
+          "number": 28,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/28_578f7de00facc558f1fff8fe1c4273851ee50517.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/28_1437a66211696f86e2d15469669430ce78886e48.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2612,
@@ -23271,7 +24075,29 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/163_faae6fbb6d7fdcb07b30e830636efcbc148e9b18.jpg"
       },
       "imageHash": "8b7d23fb228caea5",
-      "imageHashSm": "7abbdaf981bce769"
+      "imageHashSm": "7abbdaf981bce769",
+      "variants": [
+        {
+          "id": 1188,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "C1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge1/2_e2146eb707e1996e2ae87ecd5ce44a7edcc61a0b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge1/2_1850bf05181960cfe7baeb54a0464b0dfe8fb4df.jpg"
+          }
+        },
+        {
+          "id": 2460,
+          "rarity": "Special",
+          "number": 10,
+          "promoGrouping": "C2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge2/10_484c17f6af6ac4471206386041b22757038c6059.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge2/10_b52a2c49e0607273196cdfd8b40b186c021c72a3.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2627,
@@ -23567,6 +24393,16 @@
           "images": {
             "full": "https://api.lorcana.ravensburger.com/images/en/set11/222_7603f731b68c56ddb0b1d641e2cb250496d0a489.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set11/222_d591dee1ccba4ae382857984eb1f0870a873ab78.jpg"
+          }
+        },
+        {
+          "id": 3226,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/2_744ae0340b22124aae6d0fb522a0d7c0e8323cd0.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/2_5da7c00cbd6aeb4d0da7afc27faa0c966f2a63e7.jpg"
           }
         }
       ]
@@ -24110,7 +24946,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set11/185_b3c393b6bfca44d3859b915b5bd3b2647b791030.jpg"
       },
       "imageHash": "71a3d65ca6d4156b",
-      "imageHashSm": "9582d1eaf2cd9a2a"
+      "imageHashSm": "9582d1eaf2cd9a2a",
+      "variants": [
+        {
+          "id": 2713,
+          "rarity": "Special",
+          "number": 35,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/35_d0151d04ae5343fed9473367820fe1250fa8239b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/35_75de6b170200cedd65f2244cb3f9980f79b62a68.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2649,
@@ -25494,7 +26342,29 @@
       },
       "number": 15,
       "rarity": "Legendary",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2968,
+          "rarity": "Special",
+          "number": 53,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/53_391bde8bf1df86e42614492544034fea79590f3f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/53_857a202815937914ea95e08cfb1b3850602fc28a.jpg"
+          }
+        },
+        {
+          "id": 2969,
+          "rarity": "Special",
+          "number": 54,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/54_e65d5c7371aa43961c0fa7094393dbc2da4d2648.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/54_54bb9cd2c17e6f18be15f7a9fe4b285c08677782.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2731,
@@ -25628,7 +26498,19 @@
       },
       "number": 18,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2958,
+          "rarity": "Special",
+          "number": 43,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/43_44e511f17748cfcb786b407d368c6f10d65b42bd.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/43_ef4aa4ce6cf35673d66e9d5763a949c5bf8a67a5.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2734,
@@ -25780,7 +26662,19 @@
       },
       "number": 21,
       "rarity": "Uncommon",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 3585,
+          "rarity": "Special",
+          "number": 9,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/9_768c3d2e24e045ab0a45f3f1b9d520cab22c3333.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/9_49aeaa8b0daac21ce427303b8f62f99a37886762.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2737,
@@ -26699,7 +27593,19 @@
       },
       "number": 47,
       "rarity": "Common",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2966,
+          "rarity": "Special",
+          "number": 51,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/51_d31c2290b59c4176c32bebe112818c333c0b0cc8.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/51_bb629aeb7d452946b656ac3aafdcf325825b23dd.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2763,
@@ -26746,7 +27652,19 @@
       },
       "number": 48,
       "rarity": "Uncommon",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2970,
+          "rarity": "Special",
+          "number": 55,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/55_b919507ec7ad9be0c57e25013ad020151de4d33d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/55_b711a0b12a1d3f434264a70e40dcb11a2d34c8df.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2764,
@@ -27044,7 +27962,19 @@
       },
       "number": 55,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2959,
+          "rarity": "Special",
+          "number": 44,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/44_55ab589e7d8b7c621226e5a52af1efc2dbc52365.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/44_221977f3fd84c7a543aacfc9462e23be6f4a7391.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2771,
@@ -27350,7 +28280,19 @@
       },
       "number": 61,
       "rarity": "Super Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2967,
+          "rarity": "Special",
+          "number": 52,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/52_8c643121edecbf4e72a5377825a43f5a5c075d03.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/52_406e8a32ed07f6f5f4d8cd75fc9a01316597d345.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2777,
@@ -27875,6 +28817,23 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set12/211_2dee75b4b1d8c64ea188d291781cd75ae0b6432c.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/211_bb1b0b8c83da6f3d7d3b2e83ca932cacc28452e1.jpg"
           }
+        },
+        {
+          "id": 3250,
+          "rarity": "Special",
+          "number": 57,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/57_b55c07cfe81c27edc73a7cf3de0ecef90183c4f1.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/57_ea790ef379aa668da70691d1caff7233d1f73eca.jpg"
+          }
+        },
+        {
+          "id": 80053,
+          "rarity": "Special",
+          "number": 63,
+          "promoGrouping": "P3",
+          "scanLanguage": "ja"
         }
       ]
     },
@@ -27994,7 +28953,19 @@
       },
       "number": 79,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2964,
+          "rarity": "Special",
+          "number": 49,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/49_eed6ab1c30e0ce2f1d222edeb5449b6990d30a33.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/49_4ec5beb3055b18f0e0a8804f4fb7d3776773d27c.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2795,
@@ -28277,7 +29248,19 @@
       },
       "number": 85,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 3249,
+          "rarity": "Special",
+          "number": 56,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/56_8506064299f97aff4cae1cb819b7900f96758007.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/56_f38bb0531c708c62ffbce4c20eac1f6b0a4db772.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2801,
@@ -28602,7 +29585,19 @@
       },
       "number": 92,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2960,
+          "rarity": "Special",
+          "number": 45,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/45_2174bdc712f0cbe06df0b79e030bd9f259e600a6.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/45_2044385594e92c2b078f2f9e5e78fe31c93027ff.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2808,
@@ -29118,7 +30113,19 @@
       },
       "number": 106,
       "rarity": "Common",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 3594,
+          "rarity": "Special",
+          "number": 15,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/15_e9b2506b57f9fb7211864ff8e4c884bd1725a039.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/15_cfeea14dae1eb2193fdd377c739c66dc2bc5093d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2822,
@@ -29747,7 +30754,19 @@
       },
       "number": 122,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2961,
+          "rarity": "Special",
+          "number": 46,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/46_5493d45687bcb41090f6e197eb33b12715ddc385.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/46_5ee0c5653e4305cef4b9f3bfcfd08ebe16becc8f.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2838,
@@ -30689,7 +31708,19 @@
       },
       "number": 148,
       "rarity": "Uncommon",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2965,
+          "rarity": "Special",
+          "number": 50,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/50_25918e8d5753b0d94c9e6ea4e274e63dc2a608ff.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/50_53fc4ba145dce3678dc09ce132d80965e2aec79d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2864,
@@ -31006,7 +32037,19 @@
       },
       "number": 155,
       "rarity": "Rare",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 2962,
+          "rarity": "Special",
+          "number": 47,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/47_fd3bf23a2a8fca3e5008525c411fb1dc41e9d73a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/47_1f0192a158c60c531c28428393b49901ce61fd80.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2871,
@@ -31628,6 +32671,16 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set12/220_8c954d2a24a70e4af750eca1865b1228f03579af.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/220_8a8009fb8fa87614d6b83a26f49fdc5a6ce1c5b6.jpg"
           }
+        },
+        {
+          "id": 2963,
+          "rarity": "Special",
+          "number": 48,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/48_cd125dbc008862036917507f79ffa84fcee53e0b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/48_30c1e78cdba5e7950ac03150a4ece286fcfb8f0a.jpg"
+          }
         }
       ]
     },
@@ -31689,6 +32742,18 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set12/238_1099704b0caa4f1b01d45cd17621cc160fb51ca8.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set12/238_1d724e9530d2a28feec9865e411f53971a3aac29.jpg"
           }
+        },
+        {
+          "id": 80022,
+          "rarity": "Special",
+          "number": 11,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 80029,
+          "rarity": "Special",
+          "number": 23,
+          "promoGrouping": "C3"
         }
       ]
     },
@@ -32188,7 +33253,19 @@
       },
       "number": 185,
       "rarity": "Uncommon",
-      "setCode": "12"
+      "setCode": "12",
+      "variants": [
+        {
+          "id": 3591,
+          "rarity": "Special",
+          "number": 15,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/15_725b41f98a78b18ef2912ae509e4df9ed119da09.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/15_97ad6c8f2be24d0492eef769c35677d891f769f7.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2901,
@@ -32967,7 +34044,19 @@
       },
       "number": 1,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3236,
+          "rarity": "Special",
+          "number": 60,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/60_ed2d46869c77f291d299279a5998e4ff9ed3e71e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/60_402fc0cd56eebc5dd490eed2e2dca190127ac6fc.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2973,
@@ -33198,7 +34287,19 @@
       },
       "number": 7,
       "rarity": "Uncommon",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3218,
+          "rarity": "Special",
+          "number": 10,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/10_61acd93b69e6eefc6fde8a3dd9f5773e52cf2477.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/10_281a694764d17fcb44988f5b3a31c4b9be596ce6.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2979,
@@ -33385,7 +34486,19 @@
       },
       "number": 12,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3227,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/3_163ea38182cbc50e2590e349176c2b48ce1cc5e9.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/3_bdb6423bfcfd992241e92b928915b87d7fd3b8ef.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2984,
@@ -33494,7 +34607,21 @@
       },
       "number": 15,
       "rarity": "Uncommon",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 80020,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 80027,
+          "rarity": "Special",
+          "number": 16,
+          "promoGrouping": "C3"
+        }
+      ]
     },
     {
       "id": 2987,
@@ -33897,7 +35024,19 @@
       },
       "number": 24,
       "rarity": "Super Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3235,
+          "rarity": "Special",
+          "number": 58,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/58_f60ef7c18cfad9ebd578cca52d2b6643fc9b2555.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/58_93027eea26871cd161789657334c613e99064e9f.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 2996,
@@ -34331,7 +35470,19 @@
       },
       "number": 32,
       "rarity": "Common",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3222,
+          "rarity": "Special",
+          "number": 14,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/14_6891a2880ea856b94622b710ba1a9c75965aed59.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/14_0b2aa70ca84a271b4d1c2a04105ba72688d0a214.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3004,
@@ -34553,7 +35704,19 @@
       },
       "number": 39,
       "rarity": "Common",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3251,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "DIS",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/dis/4_376fbd81e0deba00f8d954023da2037f1b0279ff.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/dis/4_f4decf72cf5ed9475b707d490edec21b9d20df78.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3011,
@@ -34826,7 +35989,19 @@
       },
       "number": 46,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3228,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/4_e594abebd61d46162629cec36700f0cde68c3771.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/4_98db7fa00a27713a080dd7e99f51af53621484a5.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3018,
@@ -35263,7 +36438,19 @@
       },
       "number": 57,
       "rarity": "Uncommon",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3217,
+          "rarity": "Special",
+          "number": 9,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/9_87e3bb724c9196dcb9aa62166aed5caeee365532.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/9_aacb11b32975850998943d47f9ba95082b53f5e5.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3029,
@@ -35673,7 +36860,19 @@
       },
       "number": 65,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3574,
+          "rarity": "Special",
+          "number": 16,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/16_9bf5237500d2ded804e9106385ef7829ad87250a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/16_2221c8e7a40ac28977b9024c85b6de5712db8044.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3037,
@@ -36049,7 +37248,29 @@
       },
       "number": 77,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3248,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "DIS",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/dis/8_ddbff5a2ec435a2ec98ed61d6f2975b72b820afb.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/dis/8_fa07b69b64d98380f6d7eab5fd237604c432c257.jpg"
+          }
+        },
+        {
+          "id": 3229,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/5_f8c0f84264b21ad2e9b51839779a715662f3a358.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/5_7eecb0b4f13b2692464fc2ea46f3b8a29bada85e.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3049,
@@ -36807,7 +38028,29 @@
       },
       "number": 95,
       "rarity": "Super Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3223,
+          "rarity": "Special",
+          "number": 15,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/15_0ee58d29417b2d6391d9c8801f1077efc18a7cbc.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/15_d1a56a158fe193662ab41994e9c6a89e2f10f200.jpg"
+          }
+        },
+        {
+          "id": 3224,
+          "rarity": "Special",
+          "number": 16,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/16_e486cda0673f321ae77752244b3f8d1d51ff45fc.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/16_da91918ce1fb4a1c32c29bc07b5044fd3330d062.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3067,
@@ -36880,7 +38123,19 @@
       },
       "number": 97,
       "rarity": "Legendary",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3588,
+          "rarity": "Special",
+          "number": 12,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/12_872cb60f542c80664ea60375d8a0b115cc7c9056.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/12_d782bab87bc6bc776d94b4543ca497eb1f4a48f4.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3069,
@@ -38082,7 +39337,19 @@
       },
       "number": 126,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3220,
+          "rarity": "Special",
+          "number": 12,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/12_57b02ba2f9714c298bf99f895d44a61530638071.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/12_c905dc1b63b25e945f36b6f49fc94dc62133eb6b.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3098,
@@ -38128,7 +39395,19 @@
       },
       "number": 127,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3230,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/6_a74ce18f6488d1692cd4fa71a391bd5f3946f7d4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/6_39797aa1f3a8026fdb9a2bcd71ed38bbd8871eb0.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3099,
@@ -38172,7 +39451,19 @@
       },
       "number": 128,
       "rarity": "Uncommon",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3233,
+          "rarity": "Special",
+          "number": 18,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/18_68ae3bf21c03514f31ce640ef3c76962a9d70669.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/18_4ec64d879ff22e24dc404755ecf44d04cdf1cdd6.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3100,
@@ -38866,7 +40157,19 @@
       },
       "number": 146,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3231,
+          "rarity": "Special",
+          "number": 7,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/7_de1ae120281ea2d4fa062aa419ce4af4cad3f9d0.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/7_e8816d27c3135e2d34007b12add852cb65793937.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3118,
@@ -38941,7 +40244,19 @@
       },
       "number": 148,
       "rarity": "Common",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3221,
+          "rarity": "Special",
+          "number": 13,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/13_f3a0fbc7abbc6bcb4155e243b425a35f281a8e89.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/13_0e2f1f11162f637a141d434aab3a53a3ae0a210e.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3120,
@@ -39120,7 +40435,19 @@
       },
       "number": 153,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3219,
+          "rarity": "Special",
+          "number": 11,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/11_2eea0b44c691911285949a81cab924b2ee38da6e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/11_1a83563a61431da680589c0a384583ed682c29d7.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3125,
@@ -39983,6 +41310,16 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set13/247_980439450d4c0ece6873e82219dd62661f676643.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set13/247_786e36620d9ca89db62544bec4be7756a5367058.jpg"
           }
+        },
+        {
+          "id": 3234,
+          "rarity": "Special",
+          "number": 19,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/19_886d1c67852e33a81480ad57deaf6670b9c4d445.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/19_df099ed431724908198203a07d5d6ae92b281229.jpg"
+          }
         }
       ]
     },
@@ -40735,7 +42072,19 @@
       },
       "number": 195,
       "rarity": "Rare",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 3232,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/8_3f3d1c8047e9386a30b9d84efb4d9448c5af9171.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/8_4f6873c8fc4751746c05a4d861179afb2c4bab5b.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3167,
@@ -41533,7 +42882,19 @@
       "number": 11,
       "rarity": "Rare",
       "franchise": "Zootopia",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 3508,
+          "rarity": "Special",
+          "number": 9,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/9_586293ae63b20e862d9fe1a819b572fff52a0387.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/9_f0009c240204ccb1efc1b424ede78e04972ae855.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3277,
@@ -42189,6 +43550,16 @@
           "images": {
             "full": "https://api.lorcana.ravensburger.com/images/en/set14/205_9de45571c816b6cec79bf75b986c29291075a6de.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set14/205_85aadca45121e9818188cafd3906f7538e8ac68d.jpg"
+          }
+        },
+        {
+          "id": 3558,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "RPH",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/rph/5_d333db7e2184310e09f1c816529d57d4138579ca.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/rph/5_d1b738d750efa5afbe365627da2081fa3f8c0de9.jpg"
           }
         }
       ]
@@ -43276,7 +44647,19 @@
       "number": 52,
       "rarity": "Rare",
       "franchise": "The Sword in the Stone",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 3509,
+          "rarity": "Special",
+          "number": 10,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/10_db2113a67dedd5a09c0128f34631e6897eb0ef91.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/10_c95d3c9c17cc7a6a3371b206883a7890943b033d.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3318,
@@ -43636,7 +45019,21 @@
       "number": 59,
       "rarity": "Legendary",
       "franchise": "The Sword in the Stone",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 80021,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 80028,
+          "rarity": "Special",
+          "number": 17,
+          "promoGrouping": "C3"
+        }
+      ]
     },
     {
       "id": 3325,
@@ -43668,7 +45065,19 @@
       "number": 60,
       "rarity": "Common",
       "franchise": "Coco",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 3554,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "RPH",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/rph/1_3c0b988a4d05881f48a47d56a0ea009a2be3c0e7.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/rph/1_403a55e2f54777ad43c5f87b2980d9f2c15584db.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3326,
@@ -43823,7 +45232,15 @@
       "number": 65,
       "rarity": "Rare",
       "franchise": "Lorcana",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 80041,
+          "rarity": "Special",
+          "number": 19,
+          "promoGrouping": "DIS"
+        }
+      ]
     },
     {
       "id": 3331,
@@ -44606,6 +46023,12 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set14/213_e468d80d602b07fd313bc8dba4b58bfb41079293.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set14/213_872f9b9082c0b71da232e6dbd7642027c1832e87.jpg"
           }
+        },
+        {
+          "id": 80040,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "DIS"
         }
       ]
     },
@@ -44999,7 +46422,29 @@
       "number": 93,
       "rarity": "Rare",
       "franchise": "Big Hero 6",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 3559,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "RPH",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/rph/6_e2de467218afa915c2d875271ed188dd97ed21c4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/rph/6_3277e79fa1d84813cb9bf19e3968d73569b2c777.jpg"
+          }
+        },
+        {
+          "id": 3560,
+          "rarity": "Special",
+          "number": 7,
+          "promoGrouping": "RPH",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/rph/7_7610857492a22ad58861550fc4698c60fabbbe06.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/rph/7_b2d9c41b17472b91fdfa9972b082933a73edf946.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3359,
@@ -45052,7 +46497,19 @@
       "number": 95,
       "rarity": "Rare",
       "franchise": "A Goofy Movie",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 3510,
+          "rarity": "Special",
+          "number": 11,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/11_70d48b690135847b1c9507f77b0fa3e551df43c2.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/11_38da4b55041a6aedfda385982538bbedb7311f9c.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3361,
@@ -45249,7 +46706,19 @@
       "number": 102,
       "rarity": "Rare",
       "franchise": "Mickey and the Beanstalk",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 3575,
+          "rarity": "Special",
+          "number": 17,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/17_45200ead2a68a1d724fad7f92452c5c1294bde49.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/17_82c823c92f49bc667bb289f5fe62fedb200b6dd2.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3368,
@@ -45382,7 +46851,19 @@
       "number": 105,
       "rarity": "Rare",
       "franchise": "A Goofy Movie",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 3511,
+          "rarity": "Special",
+          "number": 12,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/12_ffd6224b7a2bbd9eb19439cc33bc819508d1880d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/12_90b870d78065d027578d192163bb76f3276c2017.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3371,
@@ -45573,7 +47054,15 @@
       "number": 110,
       "rarity": "Common",
       "franchise": "Mickey Mouse & Friends",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 80047,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "P4"
+        }
+      ]
     },
     {
       "id": 3376,
@@ -46064,7 +47553,19 @@
       "number": 121,
       "rarity": "Rare",
       "franchise": "Coco",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 3589,
+          "rarity": "Special",
+          "number": 13,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/13_47370b4d6e9c19d750116ef2047e4eae85116d3b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/13_8bb98a9de3ec97b462e087fea611c989d17bd883.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3387,
@@ -46101,7 +47602,19 @@
       "number": 122,
       "rarity": "Rare",
       "franchise": "Lady and the Tramp",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 3555,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "RPH",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/rph/2_bf9ddb29c64c22d030483e71c07c2c3c253f2d37.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/rph/2_25cbdf58ec52b74a76f680db33e2573a447a10c9.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3388,
@@ -47384,7 +48897,19 @@
       "number": 154,
       "rarity": "Rare",
       "franchise": "Zootopia",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 3512,
+          "rarity": "Special",
+          "number": 13,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/13_7186d949a327db003395c954d96fbca8ae95a120.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/13_9184f9b5070d5c8d81716a45d05037f8f9409c94.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3420,
@@ -47431,7 +48956,19 @@
       "number": 155,
       "rarity": "Super Rare",
       "franchise": "Mickey Mouse & Friends",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 3557,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "RPH",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/rph/4_cfe95567e774fb421434e9b8ba28100afa447566.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/rph/4_d6878264a23b53960afccb659420d22ecd1e8fe5.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3421,
@@ -48633,7 +50170,19 @@
       "number": 185,
       "rarity": "Common",
       "franchise": "The Sword in the Stone",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 3556,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "RPH",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/rph/3_a7d6fbff0c7b3776a06de96c1fec0121489fea98.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/rph/3_2d5ee179f1c0f73cb76525589e954ccd3c2aa00a.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3451,
@@ -48670,7 +50219,19 @@
       "number": 186,
       "rarity": "Rare",
       "franchise": "The Aristocats",
-      "setCode": "14"
+      "setCode": "14",
+      "variants": [
+        {
+          "id": 3513,
+          "rarity": "Special",
+          "number": 14,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/14_2bfc82512f01fc462470d0bbf2c7ab690a77c10c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/14_fc1210b348580ea732bb2b739949e63e7691440b.jpg"
+          }
+        }
+      ]
     },
     {
       "id": 3452,

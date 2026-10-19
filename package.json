@@ -35,6 +35,7 @@
     "refresh-rule-coverage": "pnpm build:engine && node scripts/refresh-rule-coverage.mjs",
     "graduate-set": "node scripts/graduate-canonical-set.mjs",
     "sync-variants": "node scripts/sync-variants.mjs",
+    "merge-promos": "node scripts/merge-promo-printings.mjs",
     "worktree:remove": "node scripts/remove-worktree.mjs",
     "clean:transient": "node scripts/clean-transient.mjs",
     "docs": "node scripts/generate-docs.mjs",

@@ -3,6 +3,13 @@ import {MemoryRouter} from 'react-router-dom';
 import {fn} from 'storybook/test';
 import {CollectionBinder} from './CollectionBinder';
 import type {CollectionEntry} from './collectionParser';
+import {promoSetPockets} from './binderCards';
+import {
+  STORY_PROMO_CARDS,
+  STORY_PROMO_ENTRIES,
+  STORY_PROMO_SET,
+  STORY_WAITING,
+} from './collectionStoryData';
 import {BINDER_CARDS} from '../cards/components/binderStoryCards';
 import {COLORS} from '../../shared/constants';
 
@@ -38,7 +45,7 @@ const meta: Meta<typeof CollectionBinder> = {
   parameters: {layout: 'fullscreen'},
   tags: ['autodocs'],
   args: {
-    cards: BINDER_CARDS,
+    slots: BINDER_CARDS,
     countsFor: counts,
     onSelect: fn(),
   },
@@ -72,4 +79,16 @@ export const WithMap: Story = {
 export const SinglePage: Story = {
   args: {single: true},
   globals: {viewport: {value: 'mobile1'}},
+};
+
+/**
+ * A promo set (owner, 2026-10-17, #805): a pocket per number, twins one each, foil first; a
+ * number nobody has listed open, with its code, a promo whose card is not out named in its
+ * open pocket, and the promo with no number last.
+ */
+export const PromoSet: Story = {
+  args: {
+    slots: promoSetPockets(STORY_PROMO_CARDS, STORY_WAITING, STORY_PROMO_SET),
+    countsFor: (cardId) => STORY_PROMO_ENTRIES[cardId] ?? {normal: 0, foil: 0},
+  },
 };

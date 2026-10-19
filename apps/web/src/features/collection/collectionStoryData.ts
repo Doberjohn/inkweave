@@ -1,7 +1,8 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {BINDER_CARDS} from '../cards/components/binderStoryCards';
-import {isAltArtRarity} from '../cards/loader';
+import {isChaseRarity} from '../cards/loader';
 import type {CollectionEntries, CollectionEntry} from './collectionParser';
+import type {CollectionPromo} from './collectionPromos';
 import {tallyCollection} from './collectionStats';
 
 /**
@@ -47,7 +48,7 @@ export const STORY_POOL: LorcanaCard[] = STORY_SETS.flatMap((code) =>
       id: `${code}-${card.id}`,
       setCode: code,
       rarity,
-      ...(isAltArtRarity(rarity) ? {baseId: `${code}-${BINDER_CARDS[0].id}`} : {}),
+      ...(isChaseRarity(rarity) ? {baseId: `${code}-${BINDER_CARDS[0].id}`} : {}),
     };
   }),
 );
@@ -63,4 +64,52 @@ export const STORY_STITCH_STATS = tallyCollection(
   STORY_POOL.filter((card) => card.name === 'Stitch'),
   STORY_ENTRIES,
   STORY_SETS,
+);
+
+/** The promo set the promo stories show (#805), after the sets as the picker lists it. */
+export const STORY_PROMO_SET = 'C1';
+
+/** A promo's card in the story's promo set, as `printingCard` builds one from its card. */
+const storyPromo = (card: LorcanaCard, setNumber: number | undefined, finish?: LorcanaCard['finish']): LorcanaCard => ({
+  ...card,
+  id: `${STORY_PROMO_SET}-${setNumber ?? 'x'}${finish ?? ''}`,
+  baseId: card.id,
+  rarity: 'Special',
+  setCode: STORY_PROMO_SET,
+  setNumber,
+  finish,
+});
+
+/**
+ * A promo set in small: a promo each at 1, 2, 5 and 7, twins at 3, foil and non-foil, none
+ * listed at 4, a promo whose card is not out at 6 (`STORY_WAITING`), and one with no number.
+ */
+export const STORY_PROMO_CARDS: LorcanaCard[] = [
+  storyPromo(BINDER_CARDS[3], 1),
+  storyPromo(BINDER_CARDS[13], 2),
+  storyPromo(BINDER_CARDS[9], 3, 'foil'),
+  storyPromo(BINDER_CARDS[9], 3, 'normal'),
+  storyPromo(BINDER_CARDS[5], 5),
+  storyPromo(BINDER_CARDS[20], 7),
+  storyPromo(BINDER_CARDS[1], undefined),
+];
+
+/** The story set's promo whose card no dataset holds yet. */
+export const STORY_WAITING: CollectionPromo[] = [
+  {id: '80033', rarity: 'Special', number: 6, promoGrouping: STORY_PROMO_SET, fullName: 'Hades - Dark Usurper'},
+];
+
+/** Half the promos held, the non-foil twin among them. */
+export const STORY_PROMO_ENTRIES: CollectionEntries = Object.fromEntries(
+  STORY_PROMO_CARDS.map((card, i) => [card.id, {normal: i % 2 === 1 ? 1 : 0, foil: 0}]),
+);
+
+/** The sets with the promo set after them, as the picker lists them. */
+export const STORY_SETS_WITH_PROMOS = [...STORY_SETS, STORY_PROMO_SET];
+
+/** The panel's numbers over the sets and the promo set. */
+export const STORY_PROMO_STATS = tallyCollection(
+  [...STORY_POOL, ...STORY_PROMO_CARDS],
+  {...STORY_ENTRIES, ...STORY_PROMO_ENTRIES},
+  STORY_SETS_WITH_PROMOS,
 );
