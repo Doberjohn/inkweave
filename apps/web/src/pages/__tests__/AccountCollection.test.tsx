@@ -31,6 +31,12 @@ vi.mock('../../shared/contexts/CardDataContext', () => ({
 afterEach(() => vi.clearAllMocks());
 
 describe('AccountCollection', () => {
+  it('dates the collection by its last change, which an import and each edit in the app stamp (#826)', () => {
+    render(<AccountCollection />);
+    expect(screen.getByText('Last changed')).toBeInTheDocument();
+    expect(screen.queryByText('Imported')).not.toBeInTheDocument();
+  });
+
   it('asks before clearing, and clears only once the reader confirms', async () => {
     const user = userEvent.setup();
     render(<AccountCollection />);

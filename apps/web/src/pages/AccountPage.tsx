@@ -39,8 +39,12 @@ function Section({title, children}: {title: string; children: React.ReactNode}) 
   );
 }
 
-/** Locale date, or a dash. Hoisted so the section carries one fewer branch. */
-function formatImported(importedAt: number | null): string {
+/**
+ * When the collection last changed, as a locale date, or a dash. Hoisted so the section carries
+ * one fewer branch. An import stamps the copy and so does each count changed in the app (#826),
+ * so the copy's stamp is its last change.
+ */
+function formatLastChanged(importedAt: number | null): string {
   if (importedAt === null) return '—';
   return new Date(importedAt).toLocaleDateString(undefined, {
     day: 'numeric',
@@ -248,7 +252,7 @@ export function CollectionSection({
       {hasCollection ? (
         <>
           <Row label="Cards owned" value={owned.toLocaleString()} />
-          <Row label="Imported" value={formatImported(importedAt)} />
+          <Row label="Last changed" value={formatLastChanged(importedAt)} />
         </>
       ) : (
         <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.md}px`, margin: 0}}>

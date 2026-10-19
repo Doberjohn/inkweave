@@ -1,4 +1,4 @@
-import {useContext, useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {useContext, useEffect, useLayoutEffect, useRef, useState, type Ref} from 'react';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
@@ -7,7 +7,17 @@ import {CommunityColumn} from './CommunityColumn';
 import {MobileComparisonView, type ComparisonOriginRects} from './MobileComparisonView';
 import {ExpandedGroupView} from './ExpandedGroupView';
 import {DesktopArtControls, HeaderTranslationToggle, MobileArtControls, ModalCardArt} from './ModalCardArt';
-import {CardPrintingContext, CardTranslationContext, useCardTranslation, useModalPrinting} from './modalArtState';
+import {
+  CardPrintingContext,
+  CardTranslationContext,
+  CopiesSlotContext,
+  useCardTranslation,
+  useModalPrinting,
+  useUnderArtHeight,
+  type CardPrintingState,
+  type CardTranslationState,
+  type CopiesSlotState,
+} from './modalArtState';
 import {CardTranslationPanel, CtaButton, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
@@ -26,7 +36,6 @@ import {
   MODAL_FRAME_STYLE,
   MODAL_HEADER_STYLE,
   artScaleTransform,
-  hasArtControls,
   modalCardSize,
   pickCardColumnLayout,
   pickCardsRowStyle,
@@ -68,6 +77,22 @@ function useFocusSurvivesPaging(
     const lost = cardChanged ? focusLost(active) : printingChanged && hiddenInPlace(active);
     if (lost) fallbackRef.current?.focus();
   }, [cardId, printingIndex, fallbackRef]);
+}
+
+/**
+ * Tells the host which printing is on show (#826): a variant's id, or null for the card's own,
+ * so a page filling the window's slot follows the pills and the swipes. In a layout effect, so
+ * what the page draws from it is corrected before the browser paints.
+ */
+function useReportShownPrinting(
+  printing: CardPrintingState | null,
+  report: ((printingId: string | null) => void) | undefined,
+) {
+  const key = printing ? printing.printings[printing.index].key : null;
+  const shownId = key === 'standard' ? null : key;
+  useLayoutEffect(() => {
+    report?.(shownId);
+  }, [shownId, report]);
 }
 
 /** Focus sits on an element hidden in place (visibility is inherited from its wrapper). */
@@ -160,6 +185,13 @@ interface CardOverviewModalProps {
   skipEnterTransition?: boolean;
   /** Open on this Epic/Enchanted/Iconic printing (a variant id) instead of the Standard art. */
   initialPrintingId?: string | null;
+  /**
+   * Takes the element under the card that a page may fill through a portal (#826): Browse's
+   * "Your copies". Without it the window has no slot.
+   */
+  copiesSlotRef?: (el: HTMLElement | null) => void;
+  /** Told the printing on show whenever it changes: a variant's id, or null for the card's own (#826). */
+  onShownPrintingChange?: (printingId: string | null) => void;
 }
 
 interface ModalState {
@@ -184,7 +216,7 @@ interface ModalState {
   setHighlightedCard: (card: 'a' | 'b' | null) => void;
   visibleGroups: SynergyGroupData[];
   inComparison: boolean;
-  handleModalKeyDown: (e: React.KeyboardEvent) => void;
+  handleModalKeyDown: (e: ShellKeyEvent) => void;
   exitComparison: () => void;
   toggleChip: (key: string) => void;
   handleShowAll: (groupKey: string) => void;
@@ -421,6 +453,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
   });
   const translation = useCardTranslation(card, isOpen, printing);
   useFocusSurvivesPaging(card.id, printing?.index ?? 0, initialFocusRef);
+  useReportShownPrinting(printing, props.onShownPrintingChange);
 
   if (!mounted) return null;
 
@@ -434,7 +467,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
     activeGroupFilter,
   });
 
-  const handleShellKeyDown = (e: React.KeyboardEvent) => {
+  const handleShellKeyDown = (e: ShellKeyEvent) => {
     if (!handleSiblingArrowKey(e, showSiblingNav, onGoToSibling)) handleModalKeyDown(e);
   };
 
@@ -460,8 +493,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
             data-highlighted={highlightedCard ?? undefined}
             onTransitionEnd={onTransitionEnd}
             style={pickModalShellStyle(isMobile)}>
-            <CardTranslationContext.Provider value={translation}>
-            <CardPrintingContext.Provider value={printing}>
+            <ModalArtState translation={translation} printing={printing} copiesSlot={pickCopiesSlot(props.copiesSlotRef, handleShellKeyDown)}>
             <ModalHeader
               card={card}
               isMobile={isMobile}
@@ -496,8 +528,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               handleShowAll={handleShowAll}
               setHighlightedCard={setHighlightedCard}
             />
-            </CardPrintingContext.Provider>
-            </CardTranslationContext.Provider>
+            </ModalArtState>
           </div>
           {showSiblingNav && (
             <SiblingNavButtons onPrev={() => onGoToSibling?.(-1)} onNext={() => onGoToSibling?.(1)} />
@@ -507,6 +538,38 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
       </>
     </RenderProfiler>
   );
+}
+
+/**
+ * The art's state for the header and the card image, which both read it (modalArtState.ts): the
+ * translation (#623), the printing on show (#625), and the slot a page may fill (#826).
+ */
+function ModalArtState({
+  translation,
+  printing,
+  copiesSlot,
+  children,
+}: {
+  translation: CardTranslationState | null;
+  printing: CardPrintingState | null;
+  copiesSlot: CopiesSlotState | null;
+  children: React.ReactNode;
+}) {
+  return (
+    <CardTranslationContext.Provider value={translation}>
+      <CardPrintingContext.Provider value={printing}>
+        <CopiesSlotContext.Provider value={copiesSlot}>{children}</CopiesSlotContext.Provider>
+      </CardPrintingContext.Provider>
+    </CardTranslationContext.Provider>
+  );
+}
+
+/** The slot under the card, wired to the window's own keys, or null where no page hosts one. */
+function pickCopiesSlot(
+  attach: ((el: HTMLElement | null) => void) | undefined,
+  onKeyDown: (e: KeyboardEvent) => void,
+): CopiesSlotState | null {
+  return attach ? {attach, onKeyDown} : null;
 }
 
 /** Guards arrow-key sibling navigation from firing while the user is typing in an input. */
@@ -552,10 +615,16 @@ function deriveModalFlags(input: DeriveModalFlagsInput): ModalFlags {
   return {expandedGroup, showExpanded, showSiblingNav, dataState};
 }
 
+/**
+ * The parts of a key press the shell's handling reads: React's event, or a native one for a
+ * key pressed in what a page portals into the window's slot (#826, `CopiesSlot`).
+ */
+type ShellKeyEvent = Pick<KeyboardEvent, 'key' | 'shiftKey' | 'target' | 'preventDefault'>;
+
 /** Arrow-key sibling navigation. Returns true if it handled the key (caller should not also
  *  run the dialog's own keydown handler). */
 function handleSiblingArrowKey(
-  e: React.KeyboardEvent,
+  e: Pick<ShellKeyEvent, 'key' | 'target'>,
   showSiblingNav: boolean,
   onGoToSibling?: (d: 1 | -1) => void,
 ): boolean {
@@ -1466,8 +1535,9 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
   const useGlow = !isMobile && inComparison;
   const translation = useContext(CardTranslationContext);
   const reducedMotion = usePrefersReducedMotion();
-  // Desktop's art controls sit under the card, the art shrunk to make room (owner, 2026-10-08).
-  const controlsBelow = !isMobile && hasArtControls(card);
+  // Desktop's art controls sit under the card, the art shrunk to make room (owner, 2026-10-08),
+  // and so does what a page puts in the window's slot (#826): measured, as only the page knows it.
+  const {underArtRef, below} = useUnderArtHeight(card, isMobile);
   return (
     <div
       className={useGlow ? 'focused-card-glow' : undefined}
@@ -1477,7 +1547,7 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
           correct FLIP origin for Card A's mobile comparison transition (#332 #5). */}
       <span
         data-comparison-card-a
-        style={pickArtBoxStyle({shrunk: controlsBelow && !inComparison, animate: comparing, reducedMotion, cardHeight})}>
+        style={pickArtBoxStyle({below, inComparison, animate: comparing, reducedMotion, cardHeight})}>
         <ModalCardArt card={card} cardWidth={cardWidth} cardHeight={cardHeight} />
         {translation?.shown && !inComparison && (
           <CardTranslationPanel
@@ -1489,20 +1559,30 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
         )}
       </span>
       {/* Outside the span, whose rect is the FLIP origin above. */}
-      <ArtControls isMobile={isMobile} controlsBelow={controlsBelow} inComparison={inComparison} />
+      <ArtControls isMobile={isMobile} inComparison={inComparison} underArtRef={underArtRef} />
     </div>
   );
 }
 
 /** The art's controls: in the column's flow on mobile, pinned under the shrunk art on desktop. */
-function ArtControls({isMobile, controlsBelow, inComparison}: {isMobile: boolean; controlsBelow: boolean; inComparison: boolean}) {
+function ArtControls({
+  isMobile,
+  inComparison,
+  underArtRef,
+}: {
+  isMobile: boolean;
+  inComparison: boolean;
+  underArtRef: Ref<HTMLDivElement>;
+}) {
   if (isMobile) return <MobileArtControls />;
-  return controlsBelow ? <DesktopArtControls hidden={inComparison} /> : null;
+  return <DesktopArtControls hidden={inComparison} measureRef={underArtRef} />;
 }
 
 interface ArtBoxStyleInput {
-  /** Shrunk to make room for the controls under it. */
-  shrunk: boolean;
+  /** The height kept free under the art for what sits there, or 0 for none. */
+  below: number;
+  /** A comparison shows the art at full size, whatever sits under it. */
+  inComparison: boolean;
   /** A comparison is open or closing: the only motion the scale animates with. */
   animate: boolean;
   reducedMotion: boolean;
@@ -1515,12 +1595,13 @@ interface ArtBoxStyleInput {
  * motion: paging between a card with controls and one without resizes it at once. Under
  * reduced motion it never animates (#790).
  */
-function pickArtBoxStyle({shrunk, animate, reducedMotion, cardHeight}: ArtBoxStyleInput): React.CSSProperties {
+function pickArtBoxStyle({below, inComparison, animate, reducedMotion, cardHeight}: ArtBoxStyleInput): React.CSSProperties {
+  const shrinkFor = inComparison ? 0 : below;
   return {
     display: 'inline-block',
     lineHeight: 0,
     position: 'relative',
-    transform: shrunk ? artScaleTransform(cardHeight) : undefined,
+    transform: shrinkFor > 0 ? artScaleTransform(cardHeight, shrinkFor) : undefined,
     transformOrigin: 'top center',
     transition: animate && !reducedMotion ? `transform ${FLIP_DURATION}ms ${FLIP_EASING}` : undefined,
   };

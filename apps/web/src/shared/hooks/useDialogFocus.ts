@@ -87,13 +87,19 @@ function trapTarget(
 }
 
 /**
+ * The parts of a key press the trap reads: React's event, or a native one, which the card
+ * overview modal hands on for keys pressed in what a page portals into it (#826).
+ */
+type TrapKeyEvent = Pick<KeyboardEvent, 'key' | 'shiftKey' | 'preventDefault'>;
+
+/**
  * The Tab trap: Tab from the last stop wraps to the first, and Shift+Tab from the first wraps
  * to the last (see `trapTarget`).
  *
  * Extracted for the same reason as `takeInitialFocus`, Tab check included: CodeScene counts
  * a one-line handler's branches into the hook.
  */
-function trapTab(e: React.KeyboardEvent, container: HTMLElement | null): void {
+function trapTab(e: TrapKeyEvent, container: HTMLElement | null): void {
   if (e.key !== 'Tab' || !container) return;
 
   const stops = tabStops(container);
@@ -159,7 +165,7 @@ export function useDialogFocus({
   }, [isOpen, onClose]);
 
   // Focus trap: keep Tab/Shift+Tab within the container
-  const handleKeyDown = (e: React.KeyboardEvent) => trapTab(e, containerRef.current);
+  const handleKeyDown = (e: TrapKeyEvent) => trapTab(e, containerRef.current);
 
   return {handleKeyDown};
 }

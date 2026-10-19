@@ -120,22 +120,35 @@ export function hasArtControls(card: LorcanaCard): boolean {
 }
 
 /**
- * A desktop card's art, shrunk so it, the column's gap and the controls under it fill the
- * card's height: the row and the synergy column beside it keep their size, and nothing under
- * the card can be clipped (the desktop body never scrolls). A scale, not a smaller size: the
- * art's box stays where a comparison expects it (card B is drawn at full size), so growing
+ * A desktop card's art, shrunk so it, the column's gap and what sits under it (`below`) fill
+ * the card's height: the row and the synergy column beside it keep their size, and nothing
+ * under the card can be clipped (the desktop body never scrolls). A scale, not a smaller size:
+ * the art's box stays where a comparison expects it (card B is drawn at full size), so growing
  * back for one can animate with the comparison's own motion.
+ *
+ * `below` defaults to the printing pills' row, which the loading shell reserves. The window
+ * measures it instead, since a page can fill its slot under the pills (#826).
  */
-export function artScaleTransform(cardHeight: number): string {
-  return `scale(${(cardHeight - SPACING.md - ART_CONTROLS_HEIGHT) / cardHeight})`;
+export function artScaleTransform(cardHeight: number, below = ART_CONTROLS_HEIGHT): string {
+  return `scale(${(cardHeight - SPACING.md - below) / cardHeight})`;
 }
 
-/** The art controls' row, pinned to the bottom of the card's column and centred under the art. */
-export const DESKTOP_ART_CONTROLS_STYLE: CSSProperties = {
+/**
+ * What sits under a desktop card, pinned to the bottom of the card's column: the printing
+ * pills' row, then whatever a page puts in the window's slot (#826, "Your copies").
+ */
+export const DESKTOP_UNDER_ART_STYLE: CSSProperties = {
   position: 'absolute',
   left: 0,
   right: 0,
   bottom: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: SPACING.md,
+};
+
+/** The art controls' row, centred under the art. */
+export const DESKTOP_ART_CONTROLS_STYLE: CSSProperties = {
   height: ART_CONTROLS_HEIGHT,
   display: 'flex',
   alignItems: 'center',
@@ -174,7 +187,7 @@ export function pickCardColumnLayout(isMobile: boolean): CSSProperties {
     alignItems: isMobile ? 'center' : 'flex-start',
     gap: SPACING.md,
     flexShrink: 0,
-    // Anchors desktop's art controls row (DESKTOP_ART_CONTROLS_STYLE) to the column's bottom.
+    // Anchors what sits under a desktop card (DESKTOP_UNDER_ART_STYLE) to the column's bottom.
     position: 'relative',
   };
 }

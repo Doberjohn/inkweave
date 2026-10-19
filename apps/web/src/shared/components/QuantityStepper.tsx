@@ -10,6 +10,12 @@ interface QuantityStepperProps {
   incrementDisabled?: boolean;
   /** title + aria-label on a disabled +. */
   disabledReason?: string;
+  /**
+   * Greys the − and suppresses onDecrement: a count at 0 (#826). It stays focusable,
+   * marked `aria-disabled` rather than `disabled`: a − pressed down to 0 under keyboard
+   * focus would otherwise drop that focus to the page, out of any dialog it sits in.
+   */
+  decrementDisabled?: boolean;
   /** When true the − and + collapse to width 0 (count-only), transitioning open when false. */
   collapsed?: boolean;
   /** 'md' = pool tile dims (default), 'sm' = deck row, 'xs' = binder slot. */
@@ -158,6 +164,13 @@ function incrementAriaLabel(disabled: boolean, disabledReason: string | undefine
   return `Add one copy of ${name}`;
 }
 
+/** A side button's click: `press`, unless the side is disabled, when a click does nothing. */
+function pressUnlessDisabled(disabled: boolean, press: () => void): () => void {
+  return () => {
+    if (!disabled) press();
+  };
+}
+
 // Owns the pop animation state so the component stays a thin view. Controlled
 // (parent passes `popping`/`onPopEnd`) or uncontrolled (internal state); the pop
 // is triggered from the click handlers only, never a render-time effect. The
@@ -181,10 +194,10 @@ function usePopAnimation(popping: boolean | undefined, onPopEnd: (() => void) | 
 }
 
 /**
- * The gold-pill `− count +` quantity stepper. On master its one user is the
- * collection binder's read-only counts (`xs`, always `collapsed`); the `md` and
- * `sm` sizes serve the deck builder's pool tile and deck row, still on the
- * `deck-builder` branch.
+ * The gold-pill `− count +` quantity stepper. On master it shows the collection
+ * binder's counts (`xs`, `collapsed`) and changes them in the card window's "Your
+ * copies" (`md`, #826); the `md` and `sm` sizes also serve the deck builder's pool
+ * tile and deck row, still on the `deck-builder` branch.
  *
  * The pop animation is driven from the click handlers only — never a useEffect
  * or a set-state-during-render — so it fires on a real change and stays silent
@@ -198,6 +211,7 @@ export function QuantityStepper({
   onDecrement,
   incrementDisabled = false,
   disabledReason,
+  decrementDisabled = false,
   collapsed = false,
   size = 'md',
   tone = 'default',
@@ -208,19 +222,20 @@ export function QuantityStepper({
 }: QuantityStepperProps) {
   const dims = DIMS[size];
   const shown = !collapsed;
+  // Collapsed, the − and + have no width, so Tab must not stop on them.
+  const sideTabIndex = shown ? 0 : -1;
   const name = label ?? 'card';
 
   const {shouldPop, triggerPop, handlePopEnd} = usePopAnimation(popping, onPopEnd);
 
-  const handleInc = () => {
-    if (incrementDisabled) return;
+  const handleInc = pressUnlessDisabled(incrementDisabled, () => {
     triggerPop();
     onIncrement();
-  };
-  const handleDec = () => {
+  });
+  const handleDec = pressUnlessDisabled(decrementDisabled, () => {
     triggerPop();
     onDecrement();
-  };
+  });
 
   const cell = cellStyle(dims);
 
@@ -241,7 +256,7 @@ export function QuantityStepper({
         ...(isFoil ? FOIL_SHEEN.surface(dims.ground, shown) : {background: dims.ground}),
         overflow: 'hidden',
       }}>
-      <button type="button" style={sideButtonStyle(dims, shown, false, COLORS.error, 'start')} onClick={handleDec} tabIndex={shown ? 0 : -1} aria-hidden={!shown} aria-label={`Remove one copy of ${name}`}>
+      <button type="button" style={sideButtonStyle(dims, shown, decrementDisabled, COLORS.error, 'start')} onClick={handleDec} tabIndex={sideTabIndex} aria-hidden={!shown} aria-disabled={decrementDisabled || undefined} aria-label={`Remove one copy of ${name}`}>
         <MinusIcon size={dims.iconSize} />
       </button>
       <span
@@ -254,7 +269,7 @@ export function QuantityStepper({
         style={sideButtonStyle(dims, shown, incrementDisabled, COLORS.success, 'end')}
         onClick={handleInc}
         disabled={incrementDisabled}
-        tabIndex={shown ? 0 : -1}
+        tabIndex={sideTabIndex}
         aria-hidden={!shown}
         title={incrementDisabled ? disabledReason : undefined}
         aria-label={incrementAriaLabel(incrementDisabled, disabledReason, name)}>

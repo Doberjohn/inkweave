@@ -1,8 +1,8 @@
 import {describe, it, expect, beforeEach, afterEach, vi} from 'vitest';
 import {renderHook, act, render as renderUi, screen} from '@testing-library/react';
 import {StrictMode, type ReactNode} from 'react';
-import {CollectionProvider, useCollection} from './CollectionContext';
-import {COLLECTION_KEY, writeCollection} from './collectionStorage';
+import {CollectionProvider, UPLOAD_DELAY_MS, useCollection} from './CollectionContext';
+import {COLLECTION_KEY, markUploadPending, pendingUploadImportedAt, writeCollection} from './collectionStorage';
 import {deleteCollection, getCollection, upsertCollection} from './collectionRepository';
 import type {CollectionEntries} from './collectionParser';
 
@@ -551,5 +551,259 @@ describe('CollectionContext — #739 cloud-sync defects', () => {
     render();
     await flush();
     expect(upsertCollection).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Counts changed in the app (#826): the local write, the batched upload with its
+ * flushes, and the re-read when the tab is shown again. On fake timers, Date included,
+ * so the batch's delay and each edit's stamp are the test's to set.
+ */
+describe('CollectionContext, counts changed in the app (#826)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(9000);
+    signIn('user-a');
+    // The account's copy, and its mirror here, so the mount's sync uploads nothing.
+    writeCollection(ENTRIES, 5000, 'user-a', 'server');
+    vi.mocked(getCollection).mockResolvedValue({data: {schemaVersion: 1, importedAt: 5000, entries: ENTRIES}, error: null});
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    signIn(null);
+    Reflect.deleteProperty(document, 'visibilityState');
+    // Back to the file's default, an account with no row, for whatever runs next.
+    vi.mocked(getCollection).mockImplementation(async () => ({data: null, error: null}));
+  });
+
+  /** Run the timers `ms` on, and everything the write chain and the sync have queued. */
+  const advance = (ms: number) =>
+    act(async () => {
+      await vi.advanceTimersByTimeAsync(ms);
+    });
+
+  /** The tab hidden or shown, as a tab switch makes it. */
+  async function showPage(visibility: 'hidden' | 'visible') {
+    Object.defineProperty(document, 'visibilityState', {value: visibility, configurable: true});
+    await act(async () => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+  }
+
+  async function renderSynced() {
+    const view = render();
+    await advance(0);
+    return view;
+  }
+
+  it('sets one finish of one card, and the edit survives a remount', async () => {
+    const {result, unmount} = await renderSynced();
+    act(() => result.current.setCount('owned', 'foil', 2));
+    expect(result.current.ownedCount('owned')).toBe(5);
+    unmount();
+
+    expect(render().result.current.entries.owned).toEqual({normal: 3, foil: 2});
+  });
+
+  it('stores a count below 0 as 0, and a card left at 0 normal and 0 foil leaves the collection', async () => {
+    const {result} = await renderSynced();
+    act(() => result.current.setCount('owned', 'foil', -2));
+    act(() => result.current.setCount('single', 'normal', 0));
+
+    expect(result.current.entries).toEqual({owned: {normal: 3, foil: 0}});
+    expect(result.current.hasCollection).toBe(true);
+  });
+
+  it('refuses a count that is not a whole number, which would fail the stored copy on its next read', async () => {
+    const {result} = await renderSynced();
+    act(() => result.current.setCount('owned', 'foil', 1.5));
+
+    expect(result.current.entries).toEqual(ENTRIES);
+  });
+
+  it("refuses an edit before the account's copy has answered, which its upload would overwrite", async () => {
+    vi.mocked(getCollection).mockImplementationOnce(() => new Promise(() => {}));
+    const {result} = render();
+    await advance(0);
+    expect(result.current.syncing).toBe(true);
+
+    act(() => result.current.setCount('owned', 'foil', 2));
+    expect(result.current.entries).toEqual(ENTRIES);
+  });
+
+  it('writes the edit as a new copy under a fresh stamp, marked pending at once', async () => {
+    const {result} = await renderSynced();
+    act(() => result.current.setCount('owned', 'foil', 2));
+
+    expect(result.current.importedAt).toBe(9000);
+    expect(pendingUploadImportedAt('user-a')).toBe(9000);
+  });
+
+  it('uploads a burst of edits once, with the last copy, a moment after the last', async () => {
+    const {result} = await renderSynced();
+    act(() => result.current.setCount('owned', 'foil', 2));
+    await advance(400);
+    act(() => result.current.setCount('owned', 'foil', 3));
+    await advance(400);
+    act(() => result.current.setCount('single', 'foil', 1));
+    await advance(UPLOAD_DELAY_MS - 1);
+    expect(upsertCollection).not.toHaveBeenCalled();
+
+    await advance(1);
+    expect(upsertCollection).toHaveBeenCalledTimes(1);
+    expect(upsertCollection).toHaveBeenCalledWith(
+      'user-a',
+      {owned: {normal: 3, foil: 3}, single: {normal: 1, foil: 1}},
+      result.current.importedAt,
+    );
+  });
+
+  it('uploads at once when the page is hidden', async () => {
+    const {result} = await renderSynced();
+    act(() => result.current.setCount('owned', 'foil', 2));
+    await showPage('hidden');
+
+    expect(upsertCollection).toHaveBeenCalledTimes(1);
+  });
+
+  it('uploads at once when the provider unmounts, leaving the pages that hold it', async () => {
+    const {result, unmount} = await renderSynced();
+    act(() => result.current.setCount('owned', 'foil', 2));
+    unmount();
+    await advance(0);
+
+    expect(upsertCollection).toHaveBeenCalledTimes(1);
+  });
+
+  it("on sign-out leaves the edit owed to the account, whose next sign-in uploads it", async () => {
+    const {result, rerender} = await renderSynced();
+    act(() => result.current.setCount('owned', 'foil', 2));
+    const stamp = result.current.importedAt;
+    signIn(null);
+    rerender();
+    await advance(UPLOAD_DELAY_MS);
+    // The session is gone by now, so an upload would only be refused.
+    expect(upsertCollection).not.toHaveBeenCalled();
+
+    signIn('user-a');
+    rerender();
+    await advance(0);
+    expect(upsertCollection).toHaveBeenCalledWith('user-a', {...ENTRIES, owned: {normal: 3, foil: 2}}, stamp);
+  });
+
+  it('an import replaces an edit still waiting to upload, upload included', async () => {
+    const {result} = await renderSynced();
+    act(() => result.current.setCount('owned', 'foil', 2));
+    act(() => {
+      result.current.importCollection({other: {normal: 1, foil: 0}}, 7000);
+    });
+    await advance(UPLOAD_DELAY_MS);
+
+    // Uploaded after the import's, the edit would have put the old cards back.
+    expect(upsertCollection).toHaveBeenCalledTimes(1);
+    expect(upsertCollection).toHaveBeenCalledWith('user-a', {other: {normal: 1, foil: 0}}, 7000);
+  });
+
+  it('a clear is never undone by an edit still waiting to upload', async () => {
+    const {result} = await renderSynced();
+    act(() => result.current.setCount('owned', 'foil', 2));
+    act(() => result.current.clearImported());
+    await advance(UPLOAD_DELAY_MS);
+
+    expect(deleteCollection).toHaveBeenCalledWith('user-a');
+    expect(upsertCollection).not.toHaveBeenCalled();
+  });
+
+  it('drops the copy here once the account has none, its collection cleared on another device', async () => {
+    // Kept, it read as the collection in force, and an edit to it uploaded it again (#826).
+    const {result} = await renderSynced();
+    vi.mocked(getCollection).mockResolvedValueOnce({data: null, error: null});
+    await showPage('hidden');
+    await showPage('visible');
+
+    expect(result.current.hasCollection).toBe(false);
+    expect(localStorage.getItem(COLLECTION_KEY)).toBeNull();
+    act(() => result.current.setCount('owned', 'foil', 2));
+    await advance(UPLOAD_DELAY_MS);
+    expect(upsertCollection).not.toHaveBeenCalled();
+  });
+
+  it('adopts the account copy changed on another device when the tab is shown again', async () => {
+    const {result} = await renderSynced();
+    const elsewhere = {other: {normal: 2, foil: 0}};
+    vi.mocked(getCollection).mockResolvedValueOnce({
+      data: {schemaVersion: 1, importedAt: 8000, entries: elsewhere},
+      error: null,
+    });
+    await showPage('hidden');
+    await showPage('visible');
+
+    expect(result.current.entries).toEqual(elsewhere);
+  });
+
+  it('drops an older read of the account copy that lands after a newer one', async () => {
+    let answerFirst: (value: Awaited<ReturnType<typeof getCollection>>) => void = () => {};
+    vi.mocked(getCollection).mockImplementationOnce(() => new Promise((resolve) => (answerFirst = resolve)));
+    const {result} = render();
+    await advance(0);
+    const newer = {newer: {normal: 1, foil: 0}};
+    vi.mocked(getCollection).mockResolvedValueOnce({data: {schemaVersion: 1, importedAt: 8000, entries: newer}, error: null});
+    await showPage('hidden');
+    await showPage('visible');
+    expect(result.current.entries).toEqual(newer);
+
+    await act(async () => answerFirst({data: {schemaVersion: 1, importedAt: 7000, entries: {older: {normal: 1, foil: 0}}}, error: null}));
+    expect(result.current.entries).toEqual(newer);
+  });
+
+  it("takes in another tab's write, which replaces this tab's waiting upload", async () => {
+    const {result} = await renderSynced();
+    act(() => result.current.setCount('owned', 'foil', 2));
+    const fromOtherTab = {other: {normal: 1, foil: 0}};
+    writeCollection(fromOtherTab, 9500, 'user-a', 'import');
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', {key: COLLECTION_KEY}));
+    });
+    await advance(UPLOAD_DELAY_MS);
+
+    expect(result.current.entries).toEqual(fromOtherTab);
+    // The tab that wrote it owns its upload.
+    expect(upsertCollection).not.toHaveBeenCalled();
+  });
+
+  it("a tab shown again after another tab's edit uploads that edit, never the account's older copy over it", async () => {
+    const {result} = await renderSynced();
+    const editedInOtherTab = {...ENTRIES, owned: {normal: 3, foil: 2}};
+    writeCollection(editedInOtherTab, 9500, 'user-a', 'import');
+    markUploadPending('user-a', 9500);
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', {key: COLLECTION_KEY}));
+    });
+    // The other tab's upload has not reached the account when this one is shown again.
+    vi.mocked(getCollection).mockResolvedValueOnce({data: {schemaVersion: 1, importedAt: 5000, entries: ENTRIES}, error: null});
+    await showPage('hidden');
+    await showPage('visible');
+
+    expect(result.current.entries).toEqual(editedInOtherTab);
+    expect(upsertCollection).toHaveBeenLastCalledWith('user-a', editedInOtherTab, 9500);
+  });
+
+  it('uploads an edit still pending when the tab is shown again, instead of adopting over it', async () => {
+    const {result} = await renderSynced();
+    // The hidden page's flush fails, so the edit is still owed when the tab comes back.
+    vi.mocked(upsertCollection).mockResolvedValueOnce({data: null, error: 'Network error'});
+    act(() => result.current.setCount('owned', 'foil', 2));
+    await showPage('hidden');
+    vi.mocked(getCollection).mockResolvedValueOnce(SERVER_ROW);
+    await showPage('visible');
+
+    expect(result.current.entries.owned).toEqual({normal: 3, foil: 2});
+    expect(upsertCollection).toHaveBeenCalledTimes(2);
+    expect(upsertCollection).toHaveBeenLastCalledWith(
+      'user-a',
+      {...ENTRIES, owned: {normal: 3, foil: 2}},
+      result.current.importedAt,
+    );
   });
 });

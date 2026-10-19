@@ -20,6 +20,7 @@ import {
   subscribeToCardOverviewModal,
   warmCardOverviewModalOnFirstInteraction,
 } from './cardOverviewModalLoader';
+import {CardWindowSlotContext, createCardWindowStores} from './cardWindowSlot';
 
 // Loaded on demand (#640): warmed by the first interaction and by card tile hover or focus. An
 // open that beats the chunk renders this lazy wrapper and shows CardOverviewModalFallback until
@@ -121,12 +122,21 @@ export function CardModalProvider({children}: {children: ReactNode}) {
   // an id twice, and finding the first copy sent a binder's arrows back to it in a loop.
   const [siblingIndex, setSiblingIndex] = useState(-1);
   const [initialPrintingId, setInitialPrintingId] = useState<string | null>(null);
+  const [windowStores] = useState(createCardWindowStores);
   const [resolveCard, setResolveCard] = useState<((cardId: string) => LorcanaCard | undefined) | null>(null);
   const [printingFor, setPrintingFor] = useState<((cardId: string, index: number) => string | undefined) | null>(
     null,
   );
   const navigate = useNavigate();
   const location = useLocation();
+
+  // The printing each card arrives on, opened or paged to. The window reports any change
+  // after that (`useCardWindowSlot`), but a card's first render already names its printing,
+  // so whatever fills the window's slot is never drawn for the card it left.
+  const startOnPrinting = (printingId: string | null) => {
+    setInitialPrintingId(printingId);
+    windowStores.shownPrintingId.set(printingId);
+  };
 
   useEffect(() => warmCardOverviewModalOnFirstInteraction(), []);
 
@@ -145,7 +155,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     const index = options.siblingIndex ?? siblingIds.indexOf(cardId);
     setSiblingCardIds(siblingIds);
     setSiblingIndex(index);
-    setInitialPrintingId(options.printingId ?? options.printingFor?.(cardId, index) ?? null);
+    startOnPrinting(options.printingId ?? options.printingFor?.(cardId, index) ?? null);
     // Wrapped: a bare function passed to a state setter is called as an updater.
     setResolveCard(() => options.resolveCard ?? null);
     setPrintingFor(() => options.printingFor ?? null);
@@ -158,7 +168,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setComparisonGroupKey(groupKey ?? null);
     setSiblingCardIds([]);
     setSiblingIndex(-1);
-    setInitialPrintingId(null);
+    startOnPrinting(null);
     setResolveCard(null);
     setPrintingFor(null);
     // Don't touch hasUserSeenDefaultState here — its value is determined by whether the user
@@ -174,7 +184,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setHasUserSeenDefaultState(false);
     setSiblingCardIds([]);
     setSiblingIndex(-1);
-    setInitialPrintingId(null);
+    startOnPrinting(null);
     setPrintingFor(null);
     // The provider outlives collection mode; a kept resolver would hold its pool.
     setResolveCard(null);
@@ -192,7 +202,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setSiblingIndex(next);
     setComparisonPartnerId(null);
     setComparisonGroupKey(null);
-    setInitialPrintingId(printingFor?.(nextId, next) ?? null);
+    startOnPrinting(printingFor?.(nextId, next) ?? null);
   };
 
   const {enterComparisonRoute, exitComparisonRoute} = useComparisonRouteSync({
@@ -217,11 +227,15 @@ export function CardModalProvider({children}: {children: ReactNode}) {
 
   return (
     <CardModalContext.Provider value={value}>
-      {children}
-      <CardModalRoot
-        onEnterComparison={enterComparisonRoute}
-        onExitComparison={exitComparisonRoute}
-      />
+      <CardWindowSlotContext.Provider value={windowStores}>
+        {children}
+        <CardModalRoot
+          onEnterComparison={enterComparisonRoute}
+          onExitComparison={exitComparisonRoute}
+          copiesSlotRef={windowStores.slot.set}
+          onShownPrintingChange={windowStores.shownPrintingId.set}
+        />
+      </CardWindowSlotContext.Provider>
     </CardModalContext.Provider>
   );
 }
@@ -275,6 +289,10 @@ function useComparisonRouteSync({
 interface CardModalRootProps {
   onEnterComparison: (partnerId: string, groupKey?: string) => void;
   onExitComparison: () => void;
+  /** Takes the window's slot under its card, for `useCardWindowSlot` (#826). */
+  copiesSlotRef: (el: HTMLElement | null) => void;
+  /** Takes the printing the window shows, for `useCardWindowSlot` (#826). */
+  onShownPrintingChange: (printingId: string | null) => void;
 }
 
 /**
@@ -294,7 +312,7 @@ function resolveModalCard(
   return {card: outside, outsideCore: outside !== null};
 }
 
-function CardModalRoot({onEnterComparison, onExitComparison}: CardModalRootProps) {
+function CardModalRoot({onEnterComparison, onExitComparison, copiesSlotRef, onShownPrintingChange}: CardModalRootProps) {
   const {
     selectedCardId,
     comparisonPartnerId,
@@ -353,6 +371,8 @@ function CardModalRoot({onEnterComparison, onExitComparison}: CardModalRootProps
         siblingCardIds={siblingCardIds}
         onGoToSibling={goToSibling}
         initialPrintingId={initialPrintingId}
+        copiesSlotRef={copiesSlotRef}
+        onShownPrintingChange={onShownPrintingChange}
       />
     </Suspense>
   );
