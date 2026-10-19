@@ -175,7 +175,9 @@ function CardTitleBlock({card}: {card: LorcanaCard}) {
         only `card.name`, so 13 different Elsa cards all claimed the h1 "Elsa" while their
         titles differed, and the page's strongest heading was entirely anchor text for a
         link to /browse. The version stays a block-level span, so the rendered result is
-        the same two lines as before; only the semantics changed.
+        the same two lines as before; only the semantics changed. The space before the span
+        never shows, since it falls at a line break, but it keeps the heading's text
+        "Name Version" rather than "NameVersion" for crawlers reading the HTML.
       */}
       <h1
         style={{
@@ -187,16 +189,19 @@ function CardTitleBlock({card}: {card: LorcanaCard}) {
         }}>
         {card.name}
         {card.version && (
-          <span
-            style={{
-              display: 'block',
-              fontSize: `${FONT_SIZES.base}px`,
-              fontWeight: 400,
-              color: COLORS.textMuted,
-              marginTop: 3,
-            }}>
-            {card.version}
-          </span>
+          <>
+            {' '}
+            <span
+              style={{
+                display: 'block',
+                fontSize: `${FONT_SIZES.base}px`,
+                fontWeight: 400,
+                color: COLORS.textMuted,
+                marginTop: 3,
+              }}>
+              {card.version}
+            </span>
+          </>
         )}
       </h1>
       {/* The all-versions affordance, demoted out of the heading but kept in place. */}

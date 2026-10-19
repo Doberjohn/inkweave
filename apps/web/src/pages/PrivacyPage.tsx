@@ -3,9 +3,12 @@ import {COLORS} from '../shared/constants';
 
 const EMAIL = 'support.inkweave@gmail.com';
 
+const DESCRIPTION =
+  'What Inkweave collects (anonymous synergy votes, cookieless analytics and error reports), where it is stored, how long it is kept, and your rights.';
+
 export function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy">
+    <LegalPage title="Privacy Policy" description={DESCRIPTION}>
       <p style={{marginTop: 0, color: COLORS.textMuted}}>Last updated: 9 July 2026</p>
 
       <p>

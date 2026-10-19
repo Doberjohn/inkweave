@@ -171,6 +171,16 @@ test.describe('SEO', () => {
     await expect(page.locator('h1')).toContainText('Elsa');
   });
 
+  // The vote screen shows no heading of its own, so its h1 is visually hidden, and every
+  // state renders it (loading, error, a pair). Nothing on screen goes missing without it,
+  // which is how /vote sat in the sitemap with no h1 at all.
+  test('vote page has exactly one h1', async ({page}) => {
+    await gotoWithRetry(page, '/vote');
+
+    await expect(page.locator('h1')).toHaveCount(1, {timeout: 15000});
+    await expect(page.locator('h1')).toHaveText('Vote on Lorcana card synergies');
+  });
+
   test('should have valid JSON-LD structured data on home page', async ({appPage, page}) => {
     await appPage.goto();
 

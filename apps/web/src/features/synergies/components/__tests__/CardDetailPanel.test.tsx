@@ -48,6 +48,14 @@ beforeEach(() => {
   vi.mocked(trackEvent).mockClear();
 });
 
+describe('CardDetailPanel title', () => {
+  it('keeps a space between the name and version in the heading text', () => {
+    renderPanel({...pongo, version: 'Determined Father'});
+
+    expect(screen.getByRole('heading', {level: 1}).textContent).toBe('Pongo Determined Father');
+  });
+});
+
 describe('CardDetailPanel printings', () => {
   it('keeps a card without an alternate printing exactly as before: one image, no switcher', () => {
     renderPanel(gosalyn);

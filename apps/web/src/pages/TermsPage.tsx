@@ -4,9 +4,12 @@ import {COLORS} from '../shared/constants';
 
 const EMAIL = 'support.inkweave@gmail.com';
 
+const DESCRIPTION =
+  'The terms for using Inkweave, a free and unofficial Disney Lorcana fan tool: acceptable use, community voting, intellectual property and liability.';
+
 export function TermsPage() {
   return (
-    <LegalPage title="Terms of Use">
+    <LegalPage title="Terms of Use" description={DESCRIPTION}>
       <p style={{marginTop: 0, color: COLORS.textMuted}}>Last updated: 9 July 2026</p>
 
       <p>

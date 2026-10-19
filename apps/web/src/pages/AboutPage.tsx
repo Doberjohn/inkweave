@@ -1,6 +1,9 @@
 import {Link} from 'react-router-dom';
 import {LegalPage, legalH2Style, legalLinkStyle} from '../shared/components';
 
+const DESCRIPTION =
+  'Meet the developer behind Inkweave, the free Disney Lorcana synergy finder and deck builder, and see how community votes shape its synergy scores.';
+
 /** External link that opens in a new tab, styled like the other legal-page links. */
 function ExtLink({href, children}: {href: string; children: React.ReactNode}) {
   return (
@@ -12,7 +15,7 @@ function ExtLink({href, children}: {href: string; children: React.ReactNode}) {
 
 export function AboutPage() {
   return (
-    <LegalPage title="About Inkweave">
+    <LegalPage title="About Inkweave" description={DESCRIPTION}>
       <p style={{marginTop: 0}}>
         Hi, I&rsquo;m John, the developer behind Inkweave. I built it because I kept hitting the same wall
         while deck-building: I could see what each card did, but not how it played with the other fifty-nine.

@@ -21,6 +21,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: {
     title: 'Example Legal Page',
+    description: 'What this example page covers, in a sentence of its own for search results.',
     children: (
       <>
         <p style={{marginTop: 0}}>
