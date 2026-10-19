@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import type {CardPrinting, LorcanaCard} from 'inkweave-synergy-engine';
-import {isAltArtRarity} from '../../features/cards/loader';
+import {PROMO_RARITY, isChaseRarity} from '../../features/cards/loader';
 import {trackEvent} from '../lib/analytics';
 
 /** One printing of a card: its Standard art, or one of its alternate printings (#625). */
@@ -15,7 +15,11 @@ export interface Printing {
   number?: number;
   /** A promo's set as printed on the card ("P1" in 25/P1); absent on every other printing. */
   promoGrouping?: string;
-  /** Only on promo twins that share a code, such as Kuzco's foil and non-foil 8/C1. */
+  /**
+   * Only where a promo's finish tells it from a sibling printing under its code; none does
+   * today. A promo printed in both finishes is one printing, counted in both like any card
+   * (owner, 2026-10-18).
+   */
   finish?: 'foil' | 'normal';
   imageUrl?: string;
   /** Language code ("it") of this printing's scan if not English; absent means English. */
@@ -25,9 +29,6 @@ export interface Printing {
 /** What a printing is, which decides how the printing switcher names it (#802). */
 export type PrintingKind = 'standard' | 'chase' | 'altFoil' | 'promo';
 
-/** The rarity LorcanaJSON gives promos. */
-const PROMO_RARITY = 'Special';
-
 /**
  * A printing's kind, from its printed rarity: none for the Standard art, a chase rarity (Epic,
  * Enchanted, Iconic) with a symbol of its own, Special for a promo, and anything else for a
@@ -35,23 +36,27 @@ const PROMO_RARITY = 'Special';
  */
 export function printingKind(rarity: string | undefined): PrintingKind {
   if (rarity === undefined) return 'standard';
-  if (isAltArtRarity(rarity)) return 'chase';
+  if (isChaseRarity(rarity)) return 'chase';
   return rarity === PROMO_RARITY ? 'promo' : 'altFoil';
 }
 
 /** What a promo twin's finish adds to its name: the collection parser's "normal" reads "non-foil". */
 export const FINISH_WORD = {foil: 'foil', normal: 'non-foil'} as const;
 
-type PrintingFacts = Pick<Printing, 'number' | 'promoGrouping' | 'finish'>;
+/**
+ * What names a printing. `artVariant` only on a collection promo printed in two arts under one
+ * number (#805), whose code then carries Dreamborn's letter: 24A/P2.
+ */
+type PrintingFacts = Pick<Printing, 'number' | 'promoGrouping' | 'finish'> & {artVariant?: string};
 
 /**
  * A promo's code as printed on the card ("25/P1"), or what is known of it: its set alone while its
- * number is unknown, and its number alone ("#1", as before #802) without a set, which the
- * collection chunks' Special cards never carry.
+ * number is unknown, and its number alone ("#1", as before #802) without a set, which every promo
+ * now carries.
  */
-export function promoCode({number, promoGrouping}: PrintingFacts): string {
+export function promoCode({number, promoGrouping, artVariant = ''}: PrintingFacts): string {
   if (promoGrouping === undefined) return number === undefined ? 'Promo' : `#${number}`;
-  return number === undefined ? promoGrouping : `${number}/${promoGrouping}`;
+  return number === undefined ? promoGrouping : `${number}${artVariant}/${promoGrouping}`;
 }
 
 /**
@@ -86,20 +91,29 @@ export function printingAlt(card: LorcanaCard, printing: PrintingFacts & {rarity
   return rarity ? `${card.fullName}, ${printingName({...printing, rarity})} printing` : card.fullName;
 }
 
+/** Where a promo whose number is unknown sorts by number: after every numbered one. */
+const UNNUMBERED = Number.MAX_SAFE_INTEGER;
+
 /**
  * The switcher's order (#802): the chase and alt foil printings by collector number, then the
- * promos by set and number. Promo numbers restart in every set, so they sort apart.
+ * promos by set and number. Promo numbers restart in every set, so they sort apart, and a promo
+ * whose number is unknown comes last in its set (#805).
  */
 function byDisplayOrder(a: CardPrinting, b: CardPrinting): number {
   const promosLast = Number(a.rarity === PROMO_RARITY) - Number(b.rarity === PROMO_RARITY);
   const bySet = (a.promoGrouping ?? '').localeCompare(b.promoGrouping ?? '', undefined, {numeric: true});
-  return promosLast || bySet || a.number - b.number;
+  return promosLast || bySet || (a.number ?? UNNUMBERED) - (b.number ?? UNNUMBERED);
 }
 
 /** Records a view of a variant printing; the Standard printing is the card itself, not a view. */
 function recordView(card: LorcanaCard, printing: Printing, surface: 'card_page' | 'modal') {
   if (printing.rarity) {
-    trackEvent('card_printing_view', {cardId: card.id, rarity: printing.rarity, surface});
+    trackEvent('card_printing_view', {
+      cardId: card.id,
+      printingId: printing.key,
+      rarity: printing.rarity,
+      surface,
+    });
   }
 }
 

@@ -8,7 +8,7 @@ export type GameMode = 'infinity' | 'core';
 export type CardType = 'Character' | 'Action' | 'Item' | 'Location';
 
 // The chase rarities an alternate printing can have, each with a symbol of its own (#625).
-// Not every printing has one (see CardPrinting.rarity). Special promos are not folded in.
+// Not every printing has one (see CardPrinting.rarity).
 export type VariantRarity = 'Enchanted' | 'Epic' | 'Iconic';
 
 /**
@@ -17,10 +17,11 @@ export type VariantRarity = 'Enchanted' | 'Epic' | 'Iconic';
  */
 export interface CardPrinting {
   id: string;
-  // Its printed rarity: a VariantRarity, or the base card's own for a printing that keeps it,
-  // like Violet Parr #247 (Super Rare, #796).
+  // Its printed rarity: a VariantRarity, Special for a promo (#805), or the base card's own
+  // for a printing that keeps it, like Violet Parr #247 (Super Rare, #796).
   rarity: string;
-  number: number; // collector number, e.g. 241
+  // Collector number, e.g. 241. Absent on a promo whose number is unknown (#805).
+  number?: number;
   imageUrl?: string;
   imageHashSm?: string;
   scanLanguage?: string; // language code ("it") when this printing's scan is not in English (#681)
@@ -69,4 +70,9 @@ export interface LorcanaCard {
   // that is no printing. Only collection cards carry one, since a Core card holds its
   // printings in `variants` instead (#796). Set by the web loader; engine never reads it.
   baseId?: string;
+  // A promo's card, built by the web from the printing (#805), keeps the printing's finish,
+  // on promo twins that share a code (CardPrinting.finish), and its art variant: "A" in
+  // Dreamborn's 24A/P2, for a promo printed in two arts under one number. Engine never reads them.
+  finish?: 'foil' | 'normal';
+  artVariant?: string;
 }

@@ -1,7 +1,7 @@
 import {describe, it, expect} from 'vitest';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {createCard} from '../../shared/test-utils';
-import {browseView, printingIdsFor} from '../browseView';
+import {browseView, gridModalTarget, printingIdsFor, tilePrintingFor} from '../browseView';
 import {binderRarities} from '../../features/collection/binderCards';
 
 // Core folds Elsa's Enchanted printing into her card; the collection's wide pool
@@ -91,5 +91,76 @@ describe('printingIdsFor', () => {
     const printingFor = printingIdsFor((id) => byId.get(id), ['Enchanted']);
     expect(printingFor('elsa')).toBe('elsa-ench');
     expect(printingFor('anna')).toBeUndefined();
+  });
+});
+
+// Each promo is a tile of its own once promos are picked (owner, 2026-10-17, #805).
+describe('promo tiles', () => {
+  const promo = (id: string, number: number, promoGrouping: string) => ({
+    id,
+    rarity: 'Special',
+    number,
+    promoGrouping,
+    imageUrl: `/card-images/${id}.avif`,
+  });
+  // Mickey Mouse - True Friend's promos in two promo sets, and a Legendary with one.
+  const mickey = createCard({
+    id: '1949',
+    rarity: 'Rare',
+    variants: [promo('2432', 10, 'P3'), promo('80042', 25, 'P1')],
+  });
+  const elsaWithPromo = {...elsa, setCode: '9', variants: [...elsa.variants!, promo('elsa-p3', 4, 'P3')]};
+  const pool = [elsaWithPromo, anna, mickey];
+  const byId = new Map(pool.map((card) => [card.id, card]));
+  const cardById = (id: string) => byId.get(id);
+  const tile = (cards: LorcanaCard[], id: string) => cards.find((card) => card.id === id)!;
+
+  it('lists each promo as a tile of its own, and no tile for a card only a promo matched', () => {
+    const {sortedCards} = browseView(null, pool, params(['Special']));
+
+    expect(ids(sortedCards)).toEqual(['2432', '80042', 'elsa-p3']);
+    expect(tile(sortedCards, '80042')).toMatchObject({
+      baseId: '1949',
+      rarity: 'Special',
+      setCode: 'P1',
+      setNumber: 25,
+      imageUrl: '/card-images/80042.avif',
+    });
+  });
+
+  it("keeps a card's own tile when another picked rarity matches it, its promos beside it", () => {
+    const {sortedCards} = browseView(null, pool, params(['Rare', 'Special']));
+
+    expect(ids(sortedCards)).toEqual(['1949', '2432', '80042', 'anna', 'elsa-p3']);
+  });
+
+  it("puts the promo tiles after the main sets' cards in Newest first, newest promo set first", () => {
+    const {sortedCards} = browseView(null, pool, {...params(['Enchanted', 'Special']), sortOrder: 'newest'});
+
+    expect(sortedCards.map((card) => card.id)).toEqual(['elsa', 'elsa-p3', '2432', '80042']);
+  });
+
+  it("shows each tile's printing: a promo tile its promo, a card's tile its picked printing but never a promo", () => {
+    const printingFor = tilePrintingFor(cardById, ['Enchanted', 'Special']);
+    const {sortedCards} = browseView(null, pool, params(['Enchanted', 'Special']));
+
+    expect(printingFor(tile(sortedCards, '80042'))?.promoGrouping).toBe('P1');
+    expect(printingFor(elsaWithPromo)?.id).toBe('elsa-ench');
+    expect(printingIdsFor(cardById, ['Legendary', 'Special'])('elsa')).toBeUndefined();
+  });
+
+  it('opens a promo tile as its card on that promo, each place keeping its own printing', () => {
+    const {sortedCards} = browseView(null, pool, {...params(['Enchanted', 'Special']), sortOrder: 'newest'});
+    const target = gridModalTarget('80042', sortedCards, printingIdsFor(cardById, ['Enchanted', 'Special']));
+
+    expect(target.cardId).toBe('1949');
+    expect(target.siblingIds).toEqual(['elsa', 'elsa', '1949', '1949']);
+    expect(target.options.siblingIndex).toBe(3);
+    expect([0, 1, 2, 3].map((at) => target.options.printingFor(target.siblingIds[at], at))).toEqual([
+      'elsa-ench',
+      'elsa-p3',
+      '2432',
+      '80042',
+    ]);
   });
 });

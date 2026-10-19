@@ -1,7 +1,7 @@
 import type {CardPrinting, Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../../shared/contexts/CardDataContext';
 import {ALL_INKS, REVEAL_SET_CODE, specialSlotsFor, type SpecialSlotSpec} from '../../shared/constants';
-import {isAltArtRarity} from '../cards/loader';
+import {isChaseRarity} from '../cards/loader';
 import {PER_INK, SET_TOTAL} from './setComposition';
 import {rarityConfigOf, SPECIAL_RARITIES} from './rarity';
 
@@ -67,7 +67,8 @@ function placeSpecials(ink: Ink, cards: LorcanaCard[]): SpecialSlot[] {
   const slots: SpecialSlot[] = specialSlotsFor(ink).map((spec) => ({...spec}));
   const revealed = cards.flatMap((card) => (card.variants ?? []).map((printing) => ({card, printing})));
   for (const {card, printing} of revealed) {
-    if (!isAltArtRarity(printing.rarity)) continue;
+    // A chase printing always carries its number: only a promo's can be unknown (#805).
+    if (!isChaseRarity(printing.rarity) || printing.number === undefined) continue;
     const slot = slots.find((s) => s.number === printing.number && !s.printing);
     if (slot) Object.assign(slot, {card, printing});
     else slots.push({number: printing.number, rarity: printing.rarity, card, printing});

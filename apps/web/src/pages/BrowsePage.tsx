@@ -9,7 +9,6 @@ import {
   DockedSetPanel,
   useSidePanelDocked,
 } from '../features/cards/components/BrowseSidePanel';
-import {pickedPrinting} from '../features/cards/loader';
 import {
   CompactHeader,
   CtaButton,
@@ -25,7 +24,7 @@ import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
 import type {BrowseCollectionSlots, BrowseListing} from '../features/collection/useBrowseCollection';
-import {browseView, printingIdsFor} from './browseView';
+import {browseView, gridModalTarget, printingIdsFor, tilePrintingFor} from './browseView';
 
 // =====================================================================
 // Subcomponents — local to this file. Keep BrowsePage's render small
@@ -134,7 +133,7 @@ function BrowseContentSection({
  * Open a card from Browse. The binder holds cards CardDataContext cannot resolve,
  * in pockets of its own, so while it shows it says how to open a card and which
  * cards the modal's arrows step through; otherwise the arrows follow the grid, and
- * each card opens on the printing its tile shows.
+ * each tile opens on the printing it shows, a promo tile its card on that promo.
  */
 function openFromBrowse(
   openCardModal: ReturnType<typeof useCardModal>['openCardModal'],
@@ -142,9 +141,8 @@ function openFromBrowse(
   listing: BrowseListing & {printingFor: (cardId: string) => string | undefined},
   collection: BrowseCollectionSlots | null,
 ) {
-  const target = collection?.modalTarget?.(cardId, listing);
-  if (target) openCardModal(target.cardId, target.siblingIds, target.options);
-  else openCardModal(cardId, listing.cards.map((c) => c.id), {printingFor: listing.printingFor});
+  const target = collection?.modalTarget?.(cardId, listing) ?? gridModalTarget(cardId, listing.cards, listing.printingFor);
+  openCardModal(target.cardId, target.siblingIds, target.options);
 }
 
 /**
@@ -245,7 +243,7 @@ function filtersButton(docked: boolean, panel: SidePanelState, openDialog: () =>
 /** The toolbar's props: the URL's filter state and setters, plus the page's own controls. */
 function toolbarPropsFrom(
   params: FilterParams,
-  controls: Pick<ToolbarProps, 'onFiltersClick' | 'docked' | 'isMobile' | 'modeSwitch' | 'sortOptions'>,
+  controls: Pick<ToolbarProps, 'onFiltersClick' | 'docked' | 'isMobile' | 'modeSwitch' | 'sortOptions' | 'rarities'>,
 ): ToolbarProps {
   return {
     ...controls,
@@ -330,6 +328,7 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
       isMobile,
       modeSwitch: collection?.modeSwitch,
       sortOptions: collection?.sortOptions,
+      rarities,
     }),
     sidePanel: dockedPanel(docked, panel, {
       filterProps: {
@@ -346,7 +345,7 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
     cards: sortedCards,
     isLoading,
     onCardSelect: selectCard,
-    printingFor: (card: LorcanaCard) => pickedPrinting(card, filters.rarities),
+    printingFor: tilePrintingFor(getCardById, filters.rarities),
     binder,
   };
 

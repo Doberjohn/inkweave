@@ -64,5 +64,15 @@ export {
 } from './revealSet';
 export type {SpecialBlock, SpecialSlotSpec} from './revealSet';
 export {SET_LOGOS} from './setLogos';
+export {
+  PROMO_SETS,
+  binderSetOf,
+  editionRank,
+  printedCodesOf,
+  promoEditionOf,
+  promoSetOf,
+  promoSetRank,
+  type PromoSet,
+} from './promoSets';
 export type {PlaystyleUiMeta} from './playstyleUi';
 export {PLAYSTYLE_UI, accentRgba} from './playstyleUi';
