@@ -513,6 +513,19 @@ describe('loadCardsFromJSON', () => {
     ]);
   });
 
+  // The promo catalog writes a number nobody knows yet as null (#805). The app never sees the null.
+  it('should load a variant whose number is null with no number', () => {
+    const [minnie] = loadCardsFromJSON(
+      makeJsonData({
+        id: 2224,
+        variants: [
+          {id: 80016, rarity: 'Special', number: null, promoGrouping: 'C2', finish: 'normal'},
+        ],
+      }),
+    );
+    expect(minnie.variants?.[0].number).toBeUndefined();
+  });
+
   it('should leave variants undefined on a card with no alternate printing', () => {
     const [card] = loadCardsFromJSON(makeJsonData({id: 2716}));
     expect(card.variants).toBeUndefined();
@@ -825,6 +838,44 @@ describe('applySortOrder - ink-cost', () => {
     const original = [...cards];
     applySortOrder(cards, 'ink-cost');
     expect(cards).toEqual(original);
+  });
+});
+
+describe('applySortOrder - newest', () => {
+  // A promo tile's set is its promo set (#805): after the main sets, newest first like them
+  // (owner, 2026-10-17), and a promo whose number is unknown ends its set.
+  it('puts the promo sets after the main sets, newest released first, an unknown number last', () => {
+    const cards = [
+      createCard({id: 'p1-25', setCode: 'P1', setNumber: 25}),
+      createCard({id: 'rph-1', setCode: 'RPH', setNumber: 1}),
+      createCard({id: 'c2-unknown', setCode: 'C2', setNumber: undefined}),
+      createCard({id: 'c2-20', setCode: 'C2', setNumber: 20}),
+      createCard({id: 'set9-1', setCode: '9', setNumber: 1}),
+      createCard({id: 'set14-2', setCode: '14', setNumber: 2}),
+      createCard({id: 'd23-4', setCode: 'D23', setNumber: 4}),
+    ];
+
+    expect(applySortOrder(cards, 'newest').map((c) => c.id)).toEqual([
+      'set14-2',
+      'set9-1',
+      'rph-1',
+      'c2-20',
+      'c2-unknown',
+      'd23-4',
+      'p1-25',
+    ]);
+  });
+
+  it("keeps a promo set's editions together, oldest first: Curator's Collection (owner, 2026-10-18)", () => {
+    const cards = [
+      createCard({id: 'cc2-1', setCode: 'CC2', setNumber: 1}),
+      createCard({id: 'rph-1', setCode: 'RPH', setNumber: 1}),
+      createCard({id: 'cc1-2', setCode: 'CC1', setNumber: 2}),
+      createCard({id: 'c3-1', setCode: 'C3', setNumber: 1}),
+      createCard({id: 'cc1-1', setCode: 'CC1', setNumber: 1}),
+    ];
+
+    expect(applySortOrder(cards, 'newest').map((c) => c.id)).toEqual(['rph-1', 'cc1-1', 'cc1-2', 'cc2-1', 'c3-1']);
   });
 });
 

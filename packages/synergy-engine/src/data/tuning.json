@@ -134,7 +134,7 @@
         "text": "Duo Shift: <SHIFT> needs its other half in play too, and <BASE> is expensive and hard to set up first."
       },
       "curve.bothInkable": {
-        "score": 9,
+        "score": 8,
         "text": "Perfect curve: <SHIFT> shifts onto <BASE> the turn after. Both are inkable as a fallback."
       },
       "curve.oneInkable": {
@@ -175,8 +175,8 @@
     },
     "ramp": {
       "scores": {
-        "chain.deckRepeating": 9,
-        "chain.mixed": 8,
+        "chain.deckRepeating": 8,
+        "chain.mixed": 7,
         "chain.neither": 7,
         "costOverlap": 6,
         "density": 5

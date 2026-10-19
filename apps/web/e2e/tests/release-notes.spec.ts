@@ -1,16 +1,16 @@
 import {test, expect} from '../fixtures';
 
-// A published month never changes, so the spec reads September 2026 by name: it stays true as
-// later months are added above it.
-const SEPTEMBER = 'September 2026';
+// A published week never changes, so the spec reads the week of September 28, 2026 by name: it
+// stays true as later weeks are added above it.
+const WEEK = 'September 28 to October 4, 2026';
 
 test.describe('Release notes page', () => {
-  test('shows a month with its sections in order', async ({page}) => {
+  test('shows a week with its sections in order', async ({page}) => {
     await page.goto('/release-notes');
 
     await expect(page.getByRole('heading', {level: 1, name: 'Release notes'})).toBeVisible();
-    const month = page.getByRole('region', {name: SEPTEMBER});
-    await expect(month.getByRole('heading', {level: 3})).toHaveText([
+    const week = page.getByRole('region', {name: WEEK});
+    await expect(week.getByRole('heading', {level: 3})).toHaveText([
       'New',
       'Improved',
       'Fixed',
@@ -34,7 +34,7 @@ test.describe('Release notes page', () => {
   test('does not scroll sideways on a phone', async ({page}) => {
     await page.setViewportSize({width: 390, height: 844});
     await page.goto('/release-notes');
-    await expect(page.getByRole('region', {name: SEPTEMBER})).toBeVisible();
+    await expect(page.getByRole('region', {name: WEEK})).toBeVisible();
 
     // documentElement.clientWidth, not window.innerWidth: mobile emulation zooms out to fit an
     // overflowing page, which inflates innerWidth to the overflowed width.

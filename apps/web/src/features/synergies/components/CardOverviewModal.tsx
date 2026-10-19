@@ -6,7 +6,7 @@ import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
 import {MobileComparisonView, type ComparisonOriginRects} from './MobileComparisonView';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {DesktopArtControls, MobileArtControls, ModalCardArt} from './ModalCardArt';
+import {DesktopArtControls, HeaderTranslationToggle, MobileArtControls, ModalCardArt} from './ModalCardArt';
 import {CardPrintingContext, CardTranslationContext, useCardTranslation, useModalPrinting} from './modalArtState';
 import {CardTranslationPanel, CtaButton, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
@@ -437,6 +437,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               onClose={onClose}
               exitComparison={exitComparison}
               initialFocusRef={initialFocusRef}
+              showExpanded={showExpanded}
             />
             <ModalContentRegion
               showExpanded={showExpanded}
@@ -995,10 +996,16 @@ interface ModalHeaderProps {
   exitComparison: () => void;
   /** useDialogFocus's initial-focus target — attached to the close × (#510: it was created but never attached). */
   initialFocusRef: React.RefObject<HTMLButtonElement | null>;
+  /** The expanded group view shows no card image, so it has nothing to translate. */
+  showExpanded: boolean;
 }
 
-/** The title (or BACK, in a comparison) and the close ×. The art controls sit under the card. */
-function ModalHeader({card, isMobile, inComparison, hideBackButton, onClose, exitComparison, initialFocusRef}: ModalHeaderProps) {
+/**
+ * The title (or BACK, in a comparison), desktop's translation toggle, and the close ×. The
+ * printing pills sit under the card, as does mobile's toggle.
+ */
+function ModalHeader(props: ModalHeaderProps) {
+  const {card, isMobile, inComparison, hideBackButton, onClose, exitComparison, initialFocusRef, showExpanded} = props;
   const showBack = inComparison && !hideBackButton;
   return (
     <header style={MODAL_HEADER_STYLE}>
@@ -1010,6 +1017,7 @@ function ModalHeader({card, isMobile, inComparison, hideBackButton, onClose, exi
       )}
       {/* Spacer pushes close button to the right when BACK is in the slot (BACK doesn't have flex:1) */}
       {inComparison && <div style={{flex: 1}} />}
+      {!isMobile && <HeaderTranslationToggle hidden={inComparison || showExpanded} />}
       <ModalCloseButton onClose={onClose} focusRef={initialFocusRef} />
     </header>
   );

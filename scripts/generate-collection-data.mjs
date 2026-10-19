@@ -4,9 +4,10 @@
  *
  * Inkweave's `apps/web/public/data/allCards.json` is the Core pool (sets 9+) and
  * the only input to the synergy engine, the deck builder and the playstyle pages.
- * This script builds the OTHER cards — sets 1-8, Q1/Q2, and the
- * Enchanted/Epic/Iconic/Special printings inside Core sets — so a user can VIEW
- * their whole collection without any of it reaching a synergy calculation.
+ * This script builds the OTHER cards — sets 1-8 and the Enchanted/Epic/Iconic
+ * printings inside Core sets — so a user can VIEW their whole collection without
+ * any of it reaching a synergy calculation. The promos come from the owner's
+ * catalog, `scripts/data/promo-printings.json`, not the export (#805).
  *
  * **The invariant: no card id appears in both datasets.** That is what makes the
  * Core boundary structural. Every build script reads `allCards.json` and never
@@ -25,22 +26,27 @@
  * Output (committed, like allCards.json):
  *   apps/web/public/data/collection/index.json    all cards, light projection
  *   apps/web/public/data/collection/{set}.json    per-set detail, one per set
+ *   apps/web/public/data/collection/promos.json   every promo in the catalog
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {
+  PROMOS_FILENAME,
   buildDetailChunks,
   buildIndex,
   chunkFilename,
   selectCollectionCards,
 } from './lib/collectionData.mjs';
+import {readJson} from './lib/json-file.mjs';
+import {collectionPromos, promoBaseProblems} from './lib/promo-printings.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const DEFAULT_SOURCE = path.join(ROOT, '.knowledge/folder/allCards.json');
 const CORE_FILE = path.join(ROOT, 'apps/web/public/data/allCards.json');
 const PREVIEW_FILE = path.join(ROOT, 'apps/web/public/data/previewCards.json');
+const PROMO_CATALOG = path.join(ROOT, 'scripts/data/promo-printings.json');
 const OUTPUT_DIR = path.join(ROOT, 'apps/web/public/data/collection');
 const STAGING_DIR = `${OUTPUT_DIR}.staging`;
 /** Holds the previous dataset across the swap, so a failed rename is recoverable. */
@@ -90,6 +96,19 @@ function assertDisjoint(collectionCards, excludedIds) {
   if (overlap.length === 0) return;
   console.error(`\n  x ${overlap.length} card(s) appear in BOTH datasets, e.g. ${overlap[0].id} ${overlap[0].fullName}`);
   console.error('    The Core boundary depends on these files being disjoint. Aborting.\n');
+  process.exit(1);
+}
+
+/**
+ * Every promo's card is in one of the datasets (#805), or the promo has no card yet. A promo
+ * naming a card that isn't would get a pocket that waits for a card that never comes.
+ */
+function assertPromoBases(promos, cards) {
+  const problems = promoBaseProblems(promos, cards);
+  if (problems.length === 0) return;
+  console.error(`\n  x The promo catalog names cards the datasets don't hold:`);
+  for (const problem of problems) console.error(`      ${problem}`);
+  console.error('    Fix scripts/data/promo-printings.json. Aborting.\n');
   process.exit(1);
 }
 
@@ -160,7 +179,9 @@ function main() {
   const excluded = idSet([...coreCards, ...previewCards]);
   const previewSets = new Set(previewCards.map((card) => String(card.setCode)));
   const collectionCards = selectCollectionCards(fullCards, [excluded], previewSets);
-  assertDisjoint(collectionCards, excluded);
+  const promos = collectionPromos(readJson(PROMO_CATALOG));
+  assertDisjoint([...collectionCards, ...promos], excluded);
+  assertPromoBases(promos, [...coreCards, ...collectionCards]);
 
   const index = buildIndex(collectionCards);
   const chunks = buildDetailChunks(collectionCards);
@@ -180,6 +201,7 @@ function main() {
     for (const [i, [, cards]] of bySet.entries()) {
       fs.writeFileSync(path.join(STAGING_DIR, filenames[i]), `${JSON.stringify(cards)}\n`);
     }
+    fs.writeFileSync(path.join(STAGING_DIR, PROMOS_FILENAME), `${JSON.stringify(promos)}\n`);
   } catch (err) {
     fs.rmSync(STAGING_DIR, {recursive: true, force: true});
     console.error(`\n  x Generation failed: ${err.message}`);
@@ -197,7 +219,9 @@ function main() {
     const file = path.join(OUTPUT_DIR, filenames[i]);
     console.log(`  ${filenames[i].padEnd(21)} ${String(cards.length).padStart(4)} cards  ${kb(fs.statSync(file).size).padStart(8)}`);
   }
-  console.log(`\n  Wrote ${bySet.length + 1} files to ${path.relative(ROOT, OUTPUT_DIR)}\n`);
+  const promosFile = path.join(OUTPUT_DIR, PROMOS_FILENAME);
+  console.log(`  ${PROMOS_FILENAME.padEnd(21)} ${String(promos.length).padStart(4)} promos ${kb(fs.statSync(promosFile).size).padStart(8)}`);
+  console.log(`\n  Wrote ${bySet.length + 2} files to ${path.relative(ROOT, OUTPUT_DIR)}\n`);
 }
 
 main();

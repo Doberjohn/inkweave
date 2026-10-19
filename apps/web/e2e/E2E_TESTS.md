@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-172 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+174 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts` and the `/reveals` check in `seo.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -60,14 +60,15 @@ layout on every project and also run in the chromium-only Windows pre-push.
 | keeps the footer out until the card and its synergies have loaded | `/card/2095` with `allCards.json` and its synergy file held: under the loading skeleton there is no `footer[aria-label="Site footer"]`; with the cards released, the card renders (its `<Seo>` title is set) and there is still no footer; with the synergies released, the footer is attached. Rendered under the loading page, the footer was pushed past the fold as the content arrived, which was the card page's whole layout shift (#532) |
 | shows the synergy skeleton, not the empty notice, until the synergies load | `/card/2095` with its synergy file held: the synergy column shows its skeleton (`synergy-results-loading`) and no "No synergies found for this card" notice; with the file released, the ramp group renders and neither the skeleton nor the notice remains. The empty list during the load used to render the notice on every card page, so a card with synergies flashed "No synergies found" first |
 
-## `card-printings.spec.ts`: 3 tests (2 desktop only, 1 on every project at a 360px viewport)
+## `card-printings.spec.ts`: 4 tests (3 desktop only, 1 on every project at a 360px viewport)
 
-The alternate-printing switcher (#625) on card 1938 (Pongo - Determined Father), whose one alternate printing is Enchanted; a module-level guard reads that from `allCards.json` and throws "Fixture broken" if the pool changes. The 360px test forces its viewport like card-detail's mobile-layout tests, so it also runs in the chromium-only Windows pre-push.
+The alternate-printing switcher (#625) on card 1938 (Pongo - Determined Father), whose one alternate printing is Enchanted, and on card 1949 (Mickey Mouse - True Friend), whose four promo printings are 25/P1, 15/P2, 36/P2 and 10/P3 (#805); module-level guards read both from `allCards.json` and throw "Fixture broken" if the pool changes. The 360px test forces its viewport like card-detail's mobile-layout tests, so it also runs in the chromium-only Windows pre-push.
 
 | Test | What it verifies |
 |---|---|
 | the card page switches to the Enchanted printing, and enlarges that one | `/card/1938`: Standard is checked first; the Enchanted pill's rarity symbol loads (`naturalWidth > 0`, it is a separate `?no-inline` file); clicking the pill checks it and lands the art strip on slide 1; "Enlarge Enchanted printing" opens the lightbox named for the Enchanted printing, not the card's own scan |
 | the modal's arrow keys move between printings, not to the next card | Modal opened on Pongo from `/browse?q=father` (four matches, so "Next card" exists). First lets the dialog's initial-focus timer run (`useDialogFocus` moves focus to the × 100ms after opening, and would otherwise take it back from the pills mid-test) by awaiting a 100ms timer of its own in the page, which runs after the dialog's. It does not wait for the × to be focused: headless WebKit has not started the enter transition by then, so the dialog is still hidden and the focus call does nothing. ArrowRight on the focused Standard pill checks and focuses Enchanted, and the modal's h1 is still Pongo (the radio group owns the arrow keys) |
+| a card's promo printings follow its Standard, each by its printed code, and one picked shows its art | `/card/1949`: five chips, named in order "Standard", "Promo 25/P1", "Promo 15/P2", "Promo 36/P2", "Promo 10/P3" (a promo's chip is named "Promo" and its code, #802). Clicking "Promo 25/P1" checks it alone and lands the strip on slide 1, and its art loads (`naturalWidth > 0`): the owner's scan, a preview AVIF the app serves itself, so the check never waits on Ravensburger's servers |
 | four printings fit a 360px phone without widening it, and jumping to the last checks only it | `page.route` adds Epic and Iconic printings to card 1938: four chips; the Epic chip reads "Epic" beside its symbol, which loads (#802: no chip is a symbol alone, the row wraps instead); the row and the page fit `documentElement.clientWidth`. Clicking Iconic lands the strip on slide 3 while a MutationObserver records the checked chip's visible name: exactly `['Iconic']`, since the strip's own scroll past Enchanted and Epic must not read as swipes (each would check its chip in passing and count as a view) |
 
 ## `card-modal-on-demand.spec.ts`: 2 tests (every project)
@@ -160,7 +161,7 @@ At page load, supabase-js is downloaded only when there is a session to restore 
 | a stored session downloads the Supabase SDK to restore it | An `inkweave:auth` entry seeded before load makes `/browse` request the SDK (all projects) |
 | the sign-in control opens the provider dialog | Clicking it opens the `SignInDialog`. Stops at the provider choice: signing in needs a real round-trip no placeholder project can serve |
 
-## `collection-mode.spec.ts`: 16 tests (1 every project, 2 chromium only, 12 desktop only, 1 on every project at a 390px viewport)
+## `collection-mode.spec.ts`: 17 tests (1 every project, 2 chromium only, 13 desktop only, 1 on every project at a 390px viewport)
 
 Covers Browse's collection mode (#553 Phase C), which ships behind `VITE_SHOW_COLLECTION` (default OFF). The flag REQUIRES `VITE_SHOW_ACCOUNTS`, and `playwright.config.ts` pins both ON. The Collection button is gated on sign-in (owner ruling 2026-10-07).
 
@@ -183,7 +184,8 @@ The desktop signed-in tests skip the mobile projects: they find the numbers in t
 | the set picker's arrow keys never park a set under its pinned row | The `Binder set` list holds every set in the pool, so it scrolls (asserted, so the test cannot pass with nothing to scroll). From End, each Arrow Up row's top stays at or below the bottom of the pinned Whole collection strip, which the list's `scroll-padding-top` keeps clear (WCAG 2.4.11) |
 | the keyboard pages the binder end to end without losing the focus | #790. `/browse?binder=<set>`: from the first pocket, one Tab reaches the spread map's Previous, focused and `aria-disabled` at the first spread (the pockets are one Tab stop). Enter on Next through to the last spread (counted from the current spread's "Spread 1 of N" name, asserted above 1) leaves the focus on Next, `aria-disabled`: a disabled Next dropped it to the page |
 | a search narrows the binder, and the panel's numbers count only what it finds | A held card's full name (one with no alt-art printing) in `browse-search` leaves one tile, and the numbers read "1 of 1 cards" under the headline "Complete": filtered, it names no set. Skips when none of the set's first three cards lacks a printing |
-| Alt art cards picks the alt-art rarities, and the binder counts only those printings | The Filters panel's "Alt art cards" preset turns `aria-pressed`, sets `rarity` to Enchanted, Epic and Iconic, and the numbers read "1 of P cards", P the set's printings. Skips a set with none |
+| Alt art cards picks the alt-art rarities, and the binder counts only those printings | The Filters panel's "Alt art cards" preset turns `aria-pressed`, sets `rarity` to Enchanted, Epic, Iconic and Special (the promos, #805, which a set's binder holds none of: they are its promo sets'), and the numbers read "1 of P cards", P the set's printings. Skips a set with none |
+| the set picker lists the promo sets after the sets, and a promo set's binder holds a pocket per number | The collector also holds one promo of the first promo set whose numbers skip one (`promoSetWithOpenPocket` reads `public/data/collection/promos.json`). The `Binder set` list's `Promo sets` group names it "Promo set <code>, ..."; picking it gives `binder=<code>`, the binder shows the open pocket's code (its first skipped number, "19/C2", whatever the pocket says about why it is open), and the numbers read "1 of N promos", N its promos with a card, with no Master headline (#805) |
 | a signed-in visitor without a collection is asked to import one | Signed in with no local copy and no server row, "Show my collection" opens the `Import your collection` dialog and renders no binder |
 | the set strip reads the set's two percentages and opens its numbers inline | Every project at 390x844, `/browse?binder=<set>`: the `Set` strip's "Show the numbers" toggle reads the Complete and Master percentages, rounded down as the panel rounds them (`percentOf`), and no `Collection numbers` region shows; clicking it opens the region ("Complete set" visible, the toggle now "Hide the numbers", `aria-expanded`), and a second click folds it away |
 
@@ -343,13 +345,13 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 
 ## `release-notes.spec.ts`: 3 tests (every project; the last at a 390px viewport)
 
-The `/release-notes` page (#765), which shows one committed JSON file per month, newest first. The tests read September 2026 by name, so they stay true as later months are added.
+The `/release-notes` page (#765), which shows one committed JSON file per week, newest first. The tests read the week of September 28, 2026 by name, so they stay true as later weeks are added.
 
 | Test | What it verifies |
 |---|---|
-| shows a month with its sections in order | The h1 "Release notes", and the September 2026 region's h3s read New, Improved, Fixed, Synergy engine |
+| shows a week with its sections in order | The h1 "Release notes", and the "September 28 to October 4, 2026" region's h3s read New, Improved, Fixed, Synergy engine |
 | the footer links to it | From `/about`, the site footer's "Release notes" link opens `/release-notes` |
-| does not scroll sideways on a phone | At 390px, `document.documentElement.scrollWidth <= clientWidth` once the month has rendered |
+| does not scroll sideways on a phone | At 390px, `document.documentElement.scrollWidth <= clientWidth` once the week has rendered |
 
 ## Patterns
 

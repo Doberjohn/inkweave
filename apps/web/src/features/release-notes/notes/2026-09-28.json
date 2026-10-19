@@ -1,15 +1,15 @@
 {
-  "schemaVersion": 1,
-  "month": "2026-09",
-  "title": "September 2026",
-  "summary": "Set 14 reveals, Epic, Enchanted and Iconic printings, a new Ink Drops playstyle and a faster homepage.",
+  "schemaVersion": 2,
+  "week": "2026-09-28",
+  "title": "September 28 to October 4, 2026",
+  "summary": "Set 14 is fully revealed, cards gain their Epic, Enchanted and Iconic printings, Ink Drops becomes a playstyle and the homepage gets faster.",
   "sections": {
     "new": [
       {
-        "title": "Set 14 reveals are live",
-        "body": "The Reveals page is back for Set 14, Hyperia City. By September 30 it held 181 of the set's 204 main cards: every one officially revealed so far. The set's prerelease is on October 16 and its release on October 23.",
+        "title": "Set 14 fully revealed",
+        "body": "The Reveals page held 181 of the set's 204 main cards on September 30 and all 204 on October 1, every one officially revealed. The leaked card taken down the week before returned on September 30, after its official reveal, and cards first published from a foreign-language scan switched to their English printing.",
         "highlight": true,
-        "prs": [565, 572, 577, 590, 604, 612, 665, 678]
+        "prs": [604, 612, 665, 678, 682, 683]
       },
       {
         "title": "Epic, Enchanted and Iconic printings",
@@ -19,8 +19,8 @@
       },
       {
         "title": "Alt arts on the Reveals page",
-        "body": "Each ink's board now has a row for its Epic, Enchanted and Iconic printings, and clicking a revealed one opens the card on that printing. The first five Set 14 Enchanted printings are in.",
-        "prs": [674]
+        "body": "Each ink's board now has a row for its Epic, Enchanted and Iconic printings, and clicking a revealed one opens the card on that printing. By October 4 the rows held 13 of the 18 Epics, 11 of the 18 Enchanteds and two Iconics.",
+        "prs": [674, 680, 687, 689, 693, 700, 704]
       },
       {
         "title": "See translation",
@@ -49,24 +49,14 @@
         "title": "Search box",
         "body": "The homepage search's focus ring now matches the header search, in the brand gold.",
         "prs": [617]
+      },
+      {
+        "title": "Steadier card pages",
+        "body": "Card pages no longer jump while they load: the footer now waits until the card and its synergies are in, instead of being pushed down as they arrive.",
+        "prs": [684]
       }
     ],
     "fixed": [
-      {
-        "title": "Only official reveals",
-        "body": "An unofficial leaked card was taken down the day it appeared, and new reveals are now checked against the official reveal list before they're published. The card returned on September 30, once it was officially revealed.",
-        "prs": [573, 575, 678]
-      },
-      {
-        "title": "Sharing the Reveals page",
-        "body": "The Reveals page now has its own title in the browser tab, and links shared in Discord, Slack, iMessage or Twitter preview as the Reveals page instead of the homepage.",
-        "prs": [567, 570]
-      },
-      {
-        "title": "Card images",
-        "body": "Six cards whose art can't be downloaded now show a placeholder instead of a broken image, and Woody - Jungle Guide's missing image was added.",
-        "prs": [568]
-      },
       {
         "title": "Mobile card pages",
         "body": "Card pages with many synergy groups no longer scroll sideways on phones.",
@@ -101,46 +91,20 @@
         "title": "Card text",
         "body": "Kit Cloudkicker - Sure Shot now shows the ink symbol in its rules text.",
         "prs": [633]
-      },
-      {
-        "title": "Fairer, more private voting",
-        "body": "Individual votes are no longer publicly readable, the one-vote-per-pair rule can't be sidestepped, and voters on IPv6 connections are no longer counted as one person.",
-        "link": {"label": "Vote on synergies", "to": "/vote"},
-        "prs": [595]
-      },
-      {
-        "title": "Privacy",
-        "body": "The site stopped serving internal vote and traffic analytics files.",
-        "prs": [592]
       }
     ],
     "engine": [
       {
         "title": "New playstyle: Ink Drops",
-        "body": "Set 14's new mechanic gets its own playstyle, pairing cards that create ink drops with cards that spend, hold or convert them. Baloo - Delivery Pilot, which can't quest or challenge unless you gained an ink drop that turn, finds its partners too.",
+        "body": "Set 14's new mechanic gets its own playstyle, pairing cards that create ink drops with cards that spend, hold or convert them. Baloo - Delivery Pilot, who can't quest or challenge unless you gained an ink drop that turn, finds his partners too, and keeps them on his English printing.",
         "highlight": true,
         "link": {"label": "See the Ink Drops playstyle", "to": "/playstyles/ink-drops"},
-        "prs": [632, 678]
-      },
-      {
-        "title": "Shift paid with ink drops",
-        "body": "Baymax - Amped Up's Shift is now recognized and scored, and Named Companions no longer reads a Shift reminder as a companion.",
-        "prs": [585]
+        "prs": [632, 678, 685]
       },
       {
         "title": "Set 14 audit corrections",
         "body": "Wrong scores were fixed across Self-Discard, Items, Super, Location Control and Bounce, and Honey Lemon - Endlessly Curious regained its Ramp synergies.",
         "prs": [648]
-      },
-      {
-        "title": "Bounce, Singer and Self-Discard",
-        "body": "Bounce pairs now respect targeting limits such as \"cost 2 or less\". Characters that grant themselves Singer now find their songs, and Self-Discard understands \"cards in your discard\" payoffs and mill.",
-        "prs": [565]
-      },
-      {
-        "title": "Named Companions",
-        "body": "Four card names are now read correctly, so Buzz's Arm pairs with the Buzz Lightyear cards and Focused Search with Kevin.",
-        "prs": [589]
       },
       {
         "title": "Card text the engine can read",
@@ -149,5 +113,5 @@
       }
     ]
   },
-  "behindTheScenes": "Plus 33 behind-the-scenes changes: dependency updates, deploy and tooling fixes, tests and docs."
+  "behindTheScenes": "Plus 32 behind-the-scenes changes: dependency updates, deploy and tooling fixes, tests, docs and work on features that aren't switched on yet."
 }

@@ -55,6 +55,16 @@ import {PER_PAGE, PER_SPREAD} from './BinderSpread';
 export interface Pocket {
   owned: boolean;
   inks: readonly Ink[];
+  /**
+   * An open pocket, with no card in it (#805): a promo-set number nobody has listed yet, or a
+   * promo whose card is not out. Drawn empty, as on the spread, and never counted as missing.
+   */
+  open?: boolean;
+  /**
+   * An open pocket that shows a waiting promo's scan (owner, 2026-10-19): drawn as the spread
+   * shows it, a greyed card, though still never counted as missing, since no one can hold it yet.
+   */
+  scan?: boolean;
 }
 
 /** Where a set starts, in a binder that goes set by set. */
@@ -162,11 +172,18 @@ const RING_STYLE: CSSProperties = {
   mask: `${MASK_FILL} content-box exclude, ${MASK_FILL}`,
 };
 
-/** A card-shaped cell in its card's ink: filled for a card you hold, a ring for one you are missing. */
+/** A waiting promo's scan in miniature: grey, as the spread greys it, with no ink to show. */
+const SCAN_FILL = hexRgba(COLORS.text, 0.3);
+
+/**
+ * A card-shaped cell in its card's ink: filled for a card you hold, a ring for one you are
+ * missing; grey for a waiting promo's scan.
+ */
 function cellStyle(pocket: Pocket | undefined): CSSProperties {
   const cell: CSSProperties = {...CELL_BOX, borderRadius: RADIUS.xs};
-  // Past the binder's last card: an empty pocket, as on the spread itself.
+  // Past the binder's last card, or an open pocket: empty, as on the spread itself.
   if (!pocket) return cell;
+  if (pocket.open) return pocket.scan ? {...cell, background: SCAN_FILL} : cell;
   if (pocket.owned) return {...cell, background: inkPaint(pocket.inks, 1)};
   return {...cell, ...RING_STYLE, background: inkPaint(pocket.inks, 0.85)};
 }
@@ -212,7 +229,7 @@ function setSpans(sets: readonly MapSet[], count: number): SetSpan[] {
  * and the next begins names both.
  */
 function spreadLabel({spread, total}: SpreadPlace, pockets: readonly Pocket[], spans: readonly SetSpan[]): string {
-  const missing = pockets.filter((p) => !p.owned).length;
+  const missing = pockets.filter((p) => !p.owned && !p.open).length;
   const state = missing === 0 ? 'nothing missing' : `${missing} missing`;
   const named = spans.filter((span) => span.first <= spread && spread <= span.last);
   if (named.length === 0) return `Spread ${spread + 1} of ${total}: ${state}`;

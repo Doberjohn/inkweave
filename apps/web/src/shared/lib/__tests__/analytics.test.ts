@@ -100,7 +100,12 @@ describe('trackEvent', () => {
   });
 
   it('forwards a card_printing_view event', () => {
-    const props = {cardId: '1938', rarity: 'Enchanted', surface: 'card_page'} as const;
+    const props = {
+      cardId: '1938',
+      printingId: '2141',
+      rarity: 'Enchanted',
+      surface: 'card_page',
+    } as const;
     trackEvent('card_printing_view', props);
     expect(track).toHaveBeenCalledWith('card_printing_view', props);
   });

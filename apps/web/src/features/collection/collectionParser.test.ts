@@ -1,4 +1,5 @@
 import {describe, expect, it} from 'vitest';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {createCard} from '../../shared/test-utils';
 import {parseCollectionCsv, totalOwned} from './collectionParser';
 
@@ -132,33 +133,76 @@ describe('parseCollectionCsv', () => {
     expect(entries['2001']).toBeUndefined();
   });
 
-  it('gives a contested collector number to the base card, not a Special reprint', () => {
-    // Special-rarity promos REUSE base collector numbers — 98 contested numbers
-    // across the non-Core sets, and a Special is listed last in 97 of them. Set 1
-    // #1 is both "Ariel - On Human Legs" (Uncommon) and, later in the file,
-    // "Ariel - Spectacular Singer" (Special).
-    //
-    // The CSV row `001,1` means the card printed in that slot. Letting the
-    // Special win recorded ownership against a card the binder does not even
-    // render (it excludes Specials, or five would fight for one pocket), so a
-    // card the user owns showed as unowned. Measured: 18 of Set 1's 30 gaps.
-    const contested = [
+  describe('a promo row, named by the code printed on the promo (#805)', () => {
+    // A promo's card is in its promo set (`printingCard`), numbered as it is there. Its row's
+    // Set Number is its card's set, so the set must not decide it: Set 1 #1 is "Ariel - On
+    // Human Legs", and 1/CC1 is "Ariel - Spectacular Singer", also a Set 1 card.
+    const promo = (id: string, setCode: string, setNumber: number, extra: Partial<LorcanaCard> = {}) =>
+      createCard({id, fullName: 'A promo', rarity: 'Special', baseId: '2', setCode, setNumber, ...extra});
+    const promos = [
       createCard({id: '1', fullName: 'Ariel - On Human Legs', setCode: '1', setNumber: 1, rarity: 'Uncommon'}),
-      createCard({id: '3237', fullName: 'Ariel - Spectacular Singer', setCode: '1', setNumber: 1, rarity: 'Special'}),
+      promo('3237', 'CC1', 1),
+      promo('1189', 'C1', 3),
+      promo('1661', 'P2', 24, {artVariant: 'A'}),
+      promo('1662', 'P2', 24, {artVariant: 'B'}),
+      promo('80015', 'C2', 20, {finish: 'foil'}),
     ];
-    const {entries} = parseCollectionCsv(csv('001,1,normal,2,"Ariel - On Human Legs",Amber,Uncommon'), contested);
-    expect(entries['1']).toEqual({normal: 2, foil: 0});
-    expect(entries['3237']).toBeUndefined();
-  });
 
-  it('lets the base card win even when the Special is listed first', () => {
-    // Order must not decide it: 1 of the 98 has the Special first.
-    const contested = [
-      createCard({id: '3237', fullName: 'Ariel - Spectacular Singer', setCode: '1', setNumber: 1, rarity: 'Special'}),
-      createCard({id: '1', fullName: 'Ariel - On Human Legs', setCode: '1', setNumber: 1, rarity: 'Uncommon'}),
-    ];
-    const {entries} = parseCollectionCsv(csv('001,1,normal,1,"Ariel - On Human Legs",Amber,Uncommon'), contested);
-    expect(entries['1']).toEqual({normal: 1, foil: 0});
+    it('matches a promo by its code, not its set and number, which name a base card', () => {
+      const {entries} = parseCollectionCsv(csv('001,1/CC1,foil,2,"Ariel - Spectacular Singer",Amber,Promo'), promos);
+      expect(entries).toEqual({3237: {normal: 0, foil: 2}});
+    });
+
+    it("counts a promo's foil and non-foil rows on its one printing, as a card's (owner, 2026-10-18)", () => {
+      const {entries} = parseCollectionCsv(
+        csv(
+          '002,3/C1,normal,1,"Cinderella - Stouthearted",Steel,Promo',
+          '002,3/C1,foil,2,"Cinderella - Stouthearted",Steel,Promo',
+        ),
+        promos,
+      );
+      expect(entries).toEqual({1189: {normal: 1, foil: 2}});
+    });
+
+    it("matches an art by Dreamborn's letter, and reports a row that names neither art", () => {
+      const {entries, summary} = parseCollectionCsv(
+        csv(
+          '007,24A/P2,normal,1,"Hiro Hamada - Armor Designer",Emerald,Promo',
+          '007,24/P2,foil,1,"Hiro Hamada - Armor Designer",Emerald,Promo',
+        ),
+        promos,
+      );
+      expect(entries).toEqual({1661: {normal: 1, foil: 0}});
+      expect(summary.ambiguous).toEqual(['24/P2']);
+    });
+
+    it("tells two printings under one code apart by the row's card name, where only their names differ", () => {
+      // 26/P2 was printed as Moana and, in Europe, as Vaiana (owner, 2026-10-18).
+      const named = [
+        promo('1433', 'P2', 26, {fullName: 'Moana - Adventurer of Land and Sea'}),
+        promo('1663', 'P2', 26, {fullName: 'Vaiana - Adventurer of Land and Sea'}),
+      ];
+      const {entries} = parseCollectionCsv(
+        csv(
+          '007,26/P2,foil,1,"Moana - Adventurer of Land and Sea",Sapphire,Promo',
+          '007,26/P2,foil,2,"Vaiana - Adventurer of Land and Sea",Sapphire,Promo',
+        ),
+        named,
+      );
+      expect(entries).toEqual({1433: {normal: 0, foil: 1}, 1663: {normal: 0, foil: 2}});
+    });
+
+    it('reports a promo the data lacks by its code, and a finish its only printing lacks', () => {
+      const {entries, summary} = parseCollectionCsv(
+        csv(
+          '011,29/C3,foil,1,"Hades - Dark Usurper",Amethyst,Promo',
+          '010,20/C2,normal,1,"Minnie Mouse - Amethyst Champion",Amethyst,Promo',
+        ),
+        promos,
+      );
+      expect(entries).toEqual({});
+      expect(summary.unidentified).toEqual(['29/C3', '20/C2']);
+    });
   });
 
   it('resolves a lettered variant to the printed card it is a variant of', () => {

@@ -6,13 +6,16 @@ import {
   type CSSProperties,
   type FocusEvent,
   type KeyboardEvent,
+  type ReactNode,
   type RefObject,
 } from 'react';
 import {CtaButton} from '../../shared/components';
 import {useHover} from '../../shared/hooks/useHover';
+import {RaritySymbol} from '../reveals/RaritySymbol';
 import {isFinished, percentOf} from './collectionStats';
-import {WHOLE_COLLECTION, setName} from './binderCards';
+import {WHOLE_COLLECTION, isPromoSet, setLabel, setName} from './binderCards';
 import {
+  CAP_LABEL,
   COLORS,
   EASING,
   FONT_SIZES,
@@ -46,8 +49,8 @@ export interface SetPickerProps {
   progress: ReadonlyMap<string, Progress> | null;
 }
 
-/** What the picker calls a choice: "Whole collection", or "Set 11, Winterspell". */
-const choiceLabel = (choice: string) => (choice === WHOLE_COLLECTION ? 'Whole collection' : `Set ${choice}, ${setName(choice)}`);
+/** What the picker calls a choice: "Whole collection", "Set 11, Winterspell", or "Promo set P1, Promo Set 1". */
+const choiceLabel = (choice: string) => (choice === WHOLE_COLLECTION ? 'Whole collection' : setLabel(choice));
 
 /**
  * Room for a two-line name ("Attack of the Vine!") under the set's number, so switching
@@ -72,6 +75,12 @@ const LIST_MAX_HEIGHT = 'min(440px, 50vh)';
  * "WHOLE COLLECTION" IS PINNED FIRST (owner, 2026-10-12), held at the top while the sets
  * scroll under it: it puts every set in the binder and the panel's numbers, where tabs
  * used to switch the numbers alone.
+ *
+ * THE PROMO SETS FOLLOW THE SETS, UNDER A "PROMO SETS" HEADING (owner, 2026-10-17, option A
+ * of `public/mockups/collection-promos.html`, #805), newest first as the sets go, each by
+ * the code printed on its cards where a set has its number, Curator's Collection by CC, the
+ * letters its editions' codes share (owner, 2026-10-19). The button shows the promo symbol
+ * for a logo.
  *
  * A listbox in the select's manner: opening focuses the open set, the arrows, Home and End
  * move through the list, Escape closes it and gives focus back to the button, and Tab or a
@@ -120,6 +129,11 @@ export function SetPicker({setCode, sets, setsLoading, onSetChange, progress}: S
     else if (moveFocus(e.currentTarget, e.key)) e.preventDefault();
   }
 
+  const option = (set: string) => (
+    <SetOption key={set} setCode={set} progress={progress?.get(set)} selected={set === setCode} onPick={pick} />
+  );
+  const promoSets = sets.filter(isPromoSet);
+
   return (
     <div ref={wrapperRef} style={{position: 'relative'}}>
       <Trigger
@@ -149,11 +163,32 @@ export function SetPicker({setCode, sets, setsLoading, onSetChange, progress}: S
               onPick={pick}
             />
           </div>
-          {sets.map((set) => (
-            <SetOption key={set} setCode={set} progress={progress?.get(set)} selected={set === setCode} onPick={pick} />
-          ))}
+          {sets.filter((set) => !isPromoSet(set)).map(option)}
+          {promoSets.length > 0 && <PromoSets>{promoSets.map(option)}</PromoSets>}
         </div>
       )}
+    </div>
+  );
+}
+
+/** The heading over the promo sets: the list's capitals, at the panel's 13px floor, ruled off from the sets. */
+const GROUP_LABEL_STYLE: CSSProperties = {
+  ...CAP_LABEL,
+  fontSize: `${FONT_SIZES.base}px`,
+  padding: `${SPACING.md}px ${SPACING.xs}px ${SPACING.xs}px`,
+  marginTop: SPACING.xs,
+  borderTop: `1px solid ${COLORS.surfaceBorder}`,
+};
+
+/** The promo sets' rows, a group under their heading. */
+function PromoSets({children}: {children: ReactNode}) {
+  return (
+    <div role="group" aria-label="Promo sets" style={{display: 'flex', flexDirection: 'column', gap: SPACING.xxs}}>
+      {/* The group's own name says it to assistive tech. */}
+      <div aria-hidden="true" style={GROUP_LABEL_STYLE}>
+        Promo sets
+      </div>
+      {children}
     </div>
   );
 }
@@ -285,11 +320,24 @@ function CollectionMark() {
   );
 }
 
-/** The button's picture: the set's logo, or the whole collection's mark. Undefined when a set has no logo. */
+/**
+ * The button's picture: the set's logo, the promo symbol for a promo set, or the whole
+ * collection's mark. Undefined when a set has no logo.
+ */
 function choiceArt(choice: string) {
   if (choice === WHOLE_COLLECTION) return <CollectionMark />;
+  if (isPromoSet(choice)) return <RaritySymbol rarity="special" size={32} />;
   const logo = SET_LOGOS[choice];
   return logo === undefined ? undefined : <img src={logo} alt="" style={{maxWidth: '100%', maxHeight: '100%', objectFit: 'contain'}} />;
+}
+
+/**
+ * The button's first line: how many sets the whole collection holds, or what the set is
+ * ("Set 11", "Promo set · P1").
+ */
+function triggerKicker(setCode: string, setCount: number): string {
+  if (setCode === WHOLE_COLLECTION) return `${setCount} sets`;
+  return isPromoSet(setCode) ? `Promo set · ${setCode}` : `Set ${setCode}`;
 }
 
 /** The button: the choice's picture, its two lines, and a chevron that turns over while open. */
@@ -313,7 +361,7 @@ function Trigger({setCode, setCount, open, listId, disabled, onToggle, onKeyDown
       {art !== undefined && <span style={LOGO_BOX}>{art}</span>}
       <span style={{minWidth: 0, display: 'flex', flexDirection: 'column', gap: SPACING.xxs}}>
         <span style={{fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.25, color: COLORS.textMuted}}>
-          {whole ? `${setCount} sets` : `Set ${setCode}`}
+          {triggerKicker(setCode, setCount)}
         </span>
         <span style={NAME_STYLE}>{whole ? 'Whole collection' : setName(setCode)}</span>
       </span>
@@ -350,11 +398,14 @@ const LIST_STYLE: CSSProperties = {
   boxShadow: SHADOWS.panel,
 };
 
-/** The kit's neutral button as a list row: gold-ringed for the open set, washed on hover. */
+/**
+ * The kit's neutral button as a list row: gold-ringed for the open set, washed on hover. Its
+ * first column fits a promo set's code ("RPH"), where a set has its number (#805).
+ */
 function optionStyle({on: selected, hovered}: Look): CSSProperties {
   return {
     display: 'grid',
-    gridTemplateColumns: '18px minmax(0, 1fr) auto',
+    gridTemplateColumns: '34px minmax(0, 1fr) auto',
     alignItems: 'center',
     justifyContent: 'stretch',
     columnGap: SPACING.sm,
@@ -409,6 +460,8 @@ function SetOption({setCode, progress, selected, onPick}: SetOptionProps) {
       aria-selected={selected}
       tabIndex={-1}
       aria-label={`${choiceLabel(setCode)}${text === null ? '' : `: ${text.spoken}`}`}
+      // A promo set's name can run past the row: whole on hover.
+      title={isPromoSet(setCode) ? setName(setCode) : undefined}
       onClick={() => onPick(setCode)}
       style={{...optionStyle({on: selected, hovered}), fontWeight: whole ? 700 : 500}}>
       <span style={{...TABULAR, fontSize: `${FONT_SIZES.base}px`, color: COLORS.textMuted, textAlign: 'right'}}>

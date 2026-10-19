@@ -1,5 +1,5 @@
 import {describe, it, expect, vi} from 'vitest';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {render, screen, fireEvent, within} from '@testing-library/react';
 import {SetPicker} from './SetPicker';
 
 const PROGRESS = new Map([
@@ -88,5 +88,43 @@ describe('SetPicker', () => {
     renderPicker({progress: null});
     fireEvent.click(button());
     expect(screen.getByRole('option', {name: 'Set 13, Attack of the Vine!'})).toBeInTheDocument();
+  });
+
+  describe('with promo sets (#805)', () => {
+    const sets = ['14', '13', 'CC', 'P1'];
+
+    it('lists the promo sets after the sets, in a group under their heading, each by its code', () => {
+      renderPicker({sets, progress: null});
+      fireEvent.click(button());
+      const group = screen.getByRole('group', {name: 'Promo sets'});
+      expect(group).toHaveTextContent('Promo sets');
+      const promoSets = within(group).getAllByRole('option');
+      expect(promoSets.map((row) => row.getAttribute('aria-label'))).toEqual([
+        "Promo set CC, Curator's Collection",
+        'Promo set P1, Promo Set 1',
+      ]);
+      expect(screen.getAllByRole('option').slice(-2)).toEqual(promoSets);
+    });
+
+    it('names a promo set on its button by its code and its name', () => {
+      renderPicker({sets, setCode: 'P1', progress: null});
+      expect(button()).toHaveTextContent('Promo set · P1');
+      expect(button()).toHaveTextContent('Promo Set 1');
+      expect(button()).toHaveAccessibleName('Binder set: Promo set P1, Promo Set 1');
+    });
+
+    it("names Curator's Collection by CC, though its cards print their editions' codes (owner, 2026-10-19)", () => {
+      renderPicker({sets, setCode: 'CC', progress: null});
+      expect(button()).toHaveTextContent('Promo set · CC');
+      fireEvent.click(button());
+      expect(screen.getByRole('option', {name: /^Promo set CC,/})).toHaveTextContent(/^CCCurator's Collection$/);
+    });
+
+    it('moves from the sets into the promo sets with the arrow keys', () => {
+      renderPicker({sets, setCode: '13', progress: null});
+      fireEvent.click(button());
+      fireEvent.keyDown(option('13'), {key: 'ArrowDown'});
+      expect(screen.getByRole('option', {name: /^Promo set CC,/})).toHaveFocus();
+    });
   });
 });

@@ -8,7 +8,7 @@ const FILES = Object.entries(
 );
 
 describe('release notes files', () => {
-  it('finds at least one month', () => {
+  it('finds at least one week', () => {
     expect(FILES.length).toBeGreaterThan(0);
   });
 
@@ -16,12 +16,12 @@ describe('release notes files', () => {
     expect(releaseNotesProblems(notes)).toEqual([]);
   });
 
-  it.each(FILES)('%s is named for the month it covers', (path, notes) => {
-    expect(path).toBe(`../notes/${(notes as {month?: unknown}).month}.json`);
+  it.each(FILES)('%s is named for the week it covers', (path, notes) => {
+    expect(path).toBe(`../notes/${(notes as {week?: unknown}).week}.json`);
   });
 
-  it('lists every file once, newest month first', () => {
-    const fileMonths = FILES.map(([path]) => path.replace(/^.*\/(.+)\.json$/, '$1'));
-    expect(RELEASE_NOTES.map((notes) => notes.month)).toEqual(fileMonths.sort().reverse());
+  it('lists every file once, newest week first', () => {
+    const fileWeeks = FILES.map(([path]) => path.replace(/^.*\/(.+)\.json$/, '$1'));
+    expect(RELEASE_NOTES.map((notes) => notes.week)).toEqual(fileWeeks.sort().reverse());
   });
 });

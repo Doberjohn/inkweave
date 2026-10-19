@@ -108,6 +108,13 @@ describe('variant printings', () => {
 
     expect(missingVariantHashes(cards, {2141: {full: 'f', sm: 's'}})).toEqual([2200]);
   });
+
+  it("lists the collection's promos with no image too, once though a Core card holds them as well", () => {
+    const promo = {id: 80042, rarity: 'Special', number: 25, promoGrouping: 'P1'};
+    const cards = [{id: 1949, variants: [promo]}, {...promo, fullName: 'Mickey Mouse - True Friend', baseId: 1949}];
+
+    expect(missingVariantHashes(cards, {})).toEqual([80042]);
+  });
 });
 
 describe('collection chunk restore', () => {

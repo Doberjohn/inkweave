@@ -29,7 +29,7 @@ const countsFor = (cardId: string) => ({normal: ['c22', 'c23', 'c24'].includes(c
 function binder(props: Partial<Parameters<typeof CollectionBinder>[0]> = {}) {
   return (
     <MemoryRouter>
-      <CollectionBinder cards={CARDS} countsFor={countsFor} onSelect={vi.fn()} {...props} />
+      <CollectionBinder slots={CARDS} countsFor={countsFor} onSelect={vi.fn()} {...props} />
     </MemoryRouter>
   );
 }
@@ -39,6 +39,10 @@ const firstShown = () => screen.getAllByRole('button', {name: /^Card \d+$/})[0].
 
 /** The pocket holding card `n`. */
 const pocket = (n: number) => screen.getByRole('button', {name: `Card ${n}`});
+
+/** A promo's card in its promo set, as `printingCard` builds one (#805). */
+const promo = (id: string, setNumber: number | undefined, over: Partial<LorcanaCard> = {}) =>
+  ({...CARDS[0], id, baseId: 'c1', rarity: 'Special', setCode: 'C1', setNumber, ...over}) as LorcanaCard;
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -109,7 +113,7 @@ describe('CollectionBinder', () => {
     it('goes to the first and last card with Home and End, and no further than the cards', async () => {
       // Eighteen cards: a full left page, and the right page's first six.
       const user = userEvent.setup();
-      render(binder({pager: 'map', cards: CARDS.slice(0, 18)}));
+      render(binder({pager: 'map', slots: CARDS.slice(0, 18)}));
       act(() => pocket(1).focus());
       await user.keyboard('{End}');
       expect(pocket(18)).toHaveFocus();
@@ -163,7 +167,7 @@ describe('CollectionBinder', () => {
 
     it("draws the last spread's empty right page as the back cover, and only that one", () => {
       // Thirty cards: the second spread holds six, all on its left page.
-      render(binder({pager: 'map', cards: CARDS.slice(0, 30)}));
+      render(binder({pager: 'map', slots: CARDS.slice(0, 30)}));
       expect(screen.queryByRole('group', {name: 'Back cover'})).toBeNull();
       fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
       expect(screen.getByRole('group', {name: 'Back cover'})).toBeInTheDocument();
@@ -180,6 +184,71 @@ describe('CollectionBinder', () => {
       render(binder({pager: 'map', single: true}));
       expect(screen.queryByRole('navigation', {name: 'Binder pages'})).toBeNull();
       expect(screen.getByRole('button', {name: 'Next page'})).toBeInTheDocument();
+    });
+
+    it("never counts an open pocket as a missing card: there's no card in it", () => {
+      render(binder({pager: 'map', slots: [promo('p1', 1), {open: true, setCode: 'C1', setNumber: 2}]}));
+      expect(screen.getByRole('button', {name: 'Spread 1 of 1: nothing missing'})).toBeInTheDocument();
+    });
+
+    it("draws a waiting promo's scan in the map as the spread shows it, a card, and an empty pocket empty", () => {
+      const hades = {open: true, setCode: 'C3', setNumber: 29, id: '80033', fullName: 'Hades - Dark Usurper'} as const;
+      const empty = {open: true, setCode: 'C3', setNumber: 30} as const;
+      render(binder({pager: 'map', slots: [{...hades, imageUrl: '/a.avif'}, empty]}));
+      const map = screen.getByRole('button', {name: 'Spread 1 of 1: nothing missing'});
+      const cells = [...map.querySelectorAll<HTMLElement>('span[aria-hidden] > span')];
+      const [scan, open] = cells.map((cell) => cell.style.background);
+      expect(scan).not.toBe('');
+      expect(open).toBe('');
+    });
+  });
+
+  describe('a promo set (#805)', () => {
+    it("writes no code over a promo's art (owner, 2026-10-17), but names its tile by it, a twin's finish too", () => {
+      render(binder({slots: [promo('p3f', 3, {finish: 'foil'}), promo('p3n', 3, {finish: 'normal'})]}));
+      expect(screen.queryByText(/3\/C1/)).toBeNull();
+      expect(screen.getByRole('button', {name: 'Card 1, 3/C1 non-foil printing'})).toBeInTheDocument();
+    });
+
+    it("holds a number nobody has listed in an open pocket, and names the card a waiting promo is for", () => {
+      render(
+        binder({
+          slots: [
+            {open: true, setCode: 'C1', setNumber: 2},
+            {open: true, setCode: 'C3', setNumber: 29, id: '80033', fullName: 'Hades - Dark Usurper'},
+          ],
+        }),
+      );
+      expect(screen.getByText('2/C1').nextSibling).toHaveTextContent('Not listed yet');
+      expect(screen.getByText('Hades - Dark Usurper')).toBeInTheDocument();
+      expect(screen.getByText('Not in our data yet')).toBeInTheDocument();
+    });
+
+    it("shows a waiting promo's scan, greyed, with what it is and why it waits in its name (owner, 2026-10-19)", () => {
+      const hades = {open: true, setCode: 'C3', setNumber: 29, id: '80033', fullName: 'Hades - Dark Usurper'} as const;
+      render(binder({slots: [{...hades, imageUrl: '/card-images-preview/80033.avif'}]}));
+      const art = screen.getByRole('img', {name: 'Hades - Dark Usurper, 29/C3 printing: not in our data yet'});
+      expect(art).toHaveAttribute('src', '/card-images-preview/80033-sm.avif');
+      expect(screen.queryByText('Not in our data yet')).toBeNull();
+      expect(screen.queryByRole('button', {name: /Hades/})).toBeNull();
+    });
+
+    it("falls back to the waiting promo's name and reason when its scan fails to load", () => {
+      const hades = {open: true, setCode: 'C3', setNumber: 29, id: '80033', fullName: 'Hades - Dark Usurper'} as const;
+      render(binder({slots: [{...hades, imageUrl: '/card-images-preview/80033.avif'}]}));
+      fireEvent.error(screen.getByRole('img'));
+      expect(screen.getByText('29/C3').nextSibling).toHaveTextContent('Hades - Dark Usurper');
+      expect(screen.getByText('Not in our data yet')).toBeInTheDocument();
+    });
+
+    it('says a number its promo set never released was not released, rather than not listed yet', () => {
+      render(binder({slots: [{open: true, setCode: 'P2', setNumber: 37, unreleased: true}]}));
+      expect(screen.getByText('37/P2').nextSibling).toHaveTextContent(/^Not released$/);
+    });
+
+    it('says a number its promo set has still to release is not released yet', () => {
+      render(binder({slots: [{open: true, setCode: 'P4', setNumber: 2, upcoming: true}]}));
+      expect(screen.getByText('2/P4').nextSibling).toHaveTextContent(/^Not released yet$/);
     });
   });
 });

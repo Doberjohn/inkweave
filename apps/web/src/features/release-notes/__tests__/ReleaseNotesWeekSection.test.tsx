@@ -1,13 +1,13 @@
 import {describe, expect, it} from 'vitest';
 import {render, screen, within} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
-import {ReleaseNotesMonthSection} from '../ReleaseNotesMonthSection';
-import type {ReleaseNotesMonth} from '../types';
+import {ReleaseNotesWeekSection} from '../ReleaseNotesWeekSection';
+import type {ReleaseNotesWeek} from '../types';
 
-const OCTOBER: ReleaseNotesMonth = {
-  schemaVersion: 1,
-  month: '2026-10',
-  title: 'October 2026',
+const WEEK: ReleaseNotesWeek = {
+  schemaVersion: 2,
+  week: '2026-10-12',
+  title: 'October 12 to 18, 2026',
   summary: 'Set 14 lands, with a faster card page.',
   sections: {
     engine: [{title: 'Ramp scores', body: 'Ramp pairs score closer to how they play.'}],
@@ -25,50 +25,50 @@ const OCTOBER: ReleaseNotesMonth = {
   behindTheScenes: 'Plus 12 behind-the-scenes changes.',
 };
 
-function renderMonth(notes: ReleaseNotesMonth = OCTOBER) {
+function renderWeek(notes: ReleaseNotesWeek = WEEK) {
   return render(
     <MemoryRouter>
-      <ReleaseNotesMonthSection notes={notes} />
+      <ReleaseNotesWeekSection notes={notes} />
     </MemoryRouter>,
   );
 }
 
-describe('ReleaseNotesMonthSection', () => {
-  it('names its region after the month and anchors it on the month id', () => {
-    renderMonth();
-    const region = screen.getByRole('region', {name: 'October 2026'});
-    expect(region.id).toBe('2026-10');
+describe('ReleaseNotesWeekSection', () => {
+  it("names its region after the week and anchors it on the week's Monday", () => {
+    renderWeek();
+    const region = screen.getByRole('region', {name: 'October 12 to 18, 2026'});
+    expect(region.id).toBe('2026-10-12');
     expect(within(region).getByText('Set 14 lands, with a faster card page.')).toBeTruthy();
   });
 
   it('shows its sections in the fixed order and leaves out the empty ones', () => {
-    renderMonth();
+    renderWeek();
     const headings = screen.getAllByRole('heading', {level: 3}).map((h) => h.textContent);
     expect(headings).toEqual(['New', 'Fixed', 'Synergy engine']);
   });
 
   it('tags only the highlighted items', () => {
-    renderMonth();
+    renderWeek();
     const tags = screen.getAllByText('Highlight');
     expect(tags).toHaveLength(1);
     expect(tags[0].closest('li')).toHaveTextContent('Set 14 is out');
   });
 
   it('links an item to its in-app page', () => {
-    renderMonth();
+    renderWeek();
     expect(screen.getByRole('link', {name: /Browse the cards/})).toHaveAttribute('href', '/browse');
   });
 
-  it('closes with the behind-the-scenes line only when the month has one', () => {
-    const {unmount} = renderMonth();
+  it('closes with the behind-the-scenes line only when the week has one', () => {
+    const {unmount} = renderWeek();
     expect(screen.getByText('Plus 12 behind-the-scenes changes.')).toBeTruthy();
     unmount();
-    renderMonth({...OCTOBER, behindTheScenes: undefined});
+    renderWeek({...WEEK, behindTheScenes: undefined});
     expect(screen.queryByText(/behind-the-scenes/)).toBeNull();
   });
 
   it('never shows PR numbers', () => {
-    renderMonth();
+    renderWeek();
     expect(screen.getByRole('region').textContent).not.toMatch(/80[123]/);
   });
 });

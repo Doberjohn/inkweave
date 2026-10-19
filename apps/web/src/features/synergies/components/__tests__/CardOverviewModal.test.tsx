@@ -160,7 +160,31 @@ test('a swipe that hides the focused translation toggle moves focus to the ×', 
   expect(screen.getByRole('button', {name: 'Close'})).toHaveFocus();
 });
 
-test('the expanded group view drops the translation toggle with the card image it covers', async () => {
+test("a printing's own card in a foreign scan shows its base card's text as the official English (#805)", async () => {
+  const user = userEvent.setup();
+  // The binder's pocket for a pre-Core card's promo (41/P1, a Japanese scan): the card's text, the promo's art.
+  const promo = {
+    ...makeCard('p'),
+    baseId: 'base',
+    rarity: 'Special',
+    setCode: 'P1',
+    setNumber: 41,
+    scanLanguage: 'ja',
+    textSections: ['Draw a card.'],
+  };
+  render(
+    <MemoryRouter>
+      <CardOverviewModal isOpen card={promo} synergies={[]} getPairSynergies={() => null} onClose={() => {}} />
+    </MemoryRouter>,
+  );
+
+  await user.click(screen.getByRole('button', {name: 'See translation'}));
+  const panel = screen.getByRole('region', {name: 'English text of Card p - Test'});
+  expect(panel).toHaveTextContent("This printing is in Japanese. The text is the English card's.");
+  expect(panel).toHaveTextContent('Draw a card.');
+});
+
+test('the expanded group view hides the translation toggle, which has no card image to cover', async () => {
   const user = userEvent.setup();
   render(
     <MemoryRouter>
@@ -177,8 +201,8 @@ test('the expanded group view drops the translation toggle with the card image i
   );
   expect(screen.getByRole('button', {name: 'See translation'})).toBeVisible();
   await user.click(screen.getByRole('button', {name: /more/i}));
-  // The toggle sits under the card, which the expanded view does not show.
-  expect(screen.queryByText('See translation')).toBeNull();
+  // Hidden, not removed, so the title keeps its place (a hidden button has no accessible name).
+  expect(screen.getByText('See translation')).not.toBeVisible();
 });
 
 function renderWithSiblings(opts: {onGoToSibling?: (d: 1 | -1) => void; siblingCardIds?: string[]} = {}) {
@@ -291,6 +315,17 @@ test('desktop leaves the art of a card without printings at full size', () => {
   expect(container.querySelector<HTMLElement>('[data-comparison-card-a]')!.style.transform).toBe('');
 });
 
+test('desktop puts the translation toggle in the header before the ×, leaving the art at full size', () => {
+  const {container} = renderPrintingModal({...makeCard('jp'), scanLanguage: 'ja'});
+  const toggle = screen.getByRole('button', {name: 'See translation'});
+
+  // Back where it sat before 2026-10-08 (owner, 2026-10-17); the pills stay under the card.
+  expect(container.querySelector('header')).toContainElement(toggle);
+  const close = screen.getByRole('button', {name: 'Close'});
+  expect(toggle.compareDocumentPosition(close) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(container.querySelector<HTMLElement>('[data-comparison-card-a]')!.style.transform).toBe('');
+});
+
 test('a card with an alternate printing shows the one picked, and records it', async () => {
   Element.prototype.scrollTo = vi.fn();
   vi.mocked(trackEvent).mockClear();
@@ -303,6 +338,7 @@ test('a card with an alternate printing shows the one picked, and records it', a
   expect(trackEvent).toHaveBeenCalledTimes(1);
   expect(trackEvent).toHaveBeenCalledWith('card_printing_view', {
     cardId: 'b',
+    printingId: 'b-e',
     rarity: 'Enchanted',
     surface: 'modal',
   });
@@ -386,8 +422,8 @@ test('an English card with an English variant offers no translation', () => {
   expect(screen.queryByText('See translation')).toBeNull();
 });
 
-// Both sit under the card: desktop's in a row pinned below the shrunk art (DesktopArtControls),
-// mobile's in the column's flow (MobileArtControls).
+// Desktop's toggle sits in the header (HeaderTranslationToggle), mobile's under the card
+// (MobileArtControls).
 test.each([false, true])(
   'a foreign-scan variant offers its translation on that printing only (mobile: %s)',
   async (isMobile) => {

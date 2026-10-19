@@ -1,4 +1,4 @@
-import type {LorcanaCard} from 'inkweave-synergy-engine';
+import type {CardPrinting, LorcanaCard} from 'inkweave-synergy-engine';
 import type {Ink} from '../features/cards';
 import {
   searchCardsByName,
@@ -8,12 +8,14 @@ import {
   getUniqueClassifications,
   getUniqueKeywords,
   pickedPrinting,
+  printingCard,
   countFilterOptions,
+  PROMO_RARITY,
   type CardFilterOptions,
 } from '../features/cards/loader';
 import type {BinderShow} from '../features/collection/binderCards';
 import type {BrowseCollectionSlots} from '../features/collection/useBrowseCollection';
-import type {BrowseSortOrder, CardTypeFilter} from '../shared/constants';
+import type {CardTypeFilter} from '../shared/constants';
 import type {useFilterParams} from '../shared/hooks';
 
 /** The URL's filter state that decides what Browse lists. */
@@ -69,16 +71,31 @@ function withPrintingRarities(filters: CardFilterOptions, binderShows: boolean):
   return filters.rarities?.length && !binderShows ? {...filters, rarityMatch: 'printings'} : filters;
 }
 
-function applyFiltersAndSort(
-  cards: LorcanaCard[],
-  searchQuery: string,
-  combinedFilters: CardFilterOptions,
-  sortOrder: BrowseSortOrder,
-): LorcanaCard[] {
+function applyFilters(cards: LorcanaCard[], searchQuery: string, combinedFilters: CardFilterOptions): LorcanaCard[] {
   let result = cards;
   if (searchQuery.trim()) result = searchCardsByName(result, searchQuery);
   if (Object.keys(combinedFilters).length > 0) result = filterCards(result, combinedFilters);
-  return applySortOrder(result, sortOrder);
+  return result;
+}
+
+/** The picked rarities a card's own tile shows a printing of: all but Special, whose promos get tiles. */
+const tileRarities = (rarities: string[] | undefined) => rarities?.filter((rarity) => rarity !== PROMO_RARITY);
+
+/**
+ * The grid's tiles while promos are picked (owner, 2026-10-17): every promo of a matching
+ * card a tile of its own, since a card's tile shows one printing and a card can carry four
+ * (Mickey Mouse - True Friend). The card keeps its own tile only when another picked rarity
+ * matches it, its own or a chase printing's. Otherwise each card is its tile. A promo's tile
+ * (`printingCard`) has its promo set as its set, so the sort places it.
+ */
+function withPromoTiles(cards: LorcanaCard[], rarities: string[] | undefined): LorcanaCard[] {
+  if (!rarities?.includes(PROMO_RARITY)) return cards;
+  const rest = tileRarities(rarities) ?? [];
+  return cards.flatMap((card) => {
+    const promos = (card.variants ?? []).filter((printing) => printing.rarity === PROMO_RARITY);
+    const ownTile = rest.includes(card.rarity ?? '') || pickedPrinting(card, rest) !== undefined;
+    return [...(ownTile ? [card] : []), ...promos.map((promo) => printingCard(card, promo))];
+  });
 }
 
 /**
@@ -133,7 +150,9 @@ export function browseView(
   const pool = collection?.active ? collection.pool : coreCards;
   const filters = withPrintingRarities(binderShows ? binderFilters(params.filters) : params.filters, binderShows);
   const combined = buildCombinedFilters(filters, params.inkFilters, params.typeFilters, params.costFilters);
-  const sorted = applyFiltersAndSort(pool, params.searchQuery, combined, params.sortOrder);
+  const matched = applyFilters(pool, params.searchQuery, combined);
+  // The binder holds each printing as a card of its own already.
+  const sorted = applySortOrder(binderShows ? matched : withPromoTiles(matched, filters.rarities), params.sortOrder);
   return {
     rarities: rarityOptions(collection, pool),
     binderOptions: binderOptions(binderShows, pool),
@@ -147,6 +166,35 @@ export function browseView(
 export function printingIdsFor(getCardById: (id: string) => LorcanaCard | undefined, rarities: string[] | undefined) {
   return (cardId: string) => {
     const card = getCardById(cardId);
-    return card && pickedPrinting(card, rarities)?.id;
+    return card && pickedPrinting(card, tileRarities(rarities))?.id;
   };
+}
+
+/**
+ * The printing each grid tile shows (`BrowseCardGrid`'s `printingFor`): a promo tile its
+ * promo, and a card's tile its printing of a picked rarity, never a promo, whose tile is its own.
+ */
+export function tilePrintingFor(getCardById: (id: string) => LorcanaCard | undefined, rarities: string[] | undefined) {
+  return (card: LorcanaCard): CardPrinting | undefined => {
+    if (card.baseId === undefined) return pickedPrinting(card, tileRarities(rarities));
+    return getCardById(card.baseId)?.variants?.find((printing) => printing.id === card.id);
+  };
+}
+
+/**
+ * How the card modal opens a grid tile, and the order its arrows step through (#805). A
+ * promo tile opens its base card on that promo, as a binder's printing pocket does
+ * (`collectionModalTarget`), so one card can hold several places: Mickey Mouse - True
+ * Friend's four promos name him four times, and each place keeps its own printing. A card's
+ * own tile opens on the printing it shows (`printingIdFor`).
+ */
+export function gridModalTarget(
+  cardId: string,
+  tiles: readonly LorcanaCard[],
+  printingIdFor: (cardId: string) => string | undefined,
+) {
+  const siblingIndex = tiles.findIndex((tile) => tile.id === cardId);
+  const siblingIds = tiles.map((tile) => tile.baseId ?? tile.id);
+  const printingFor = (id: string, at: number) => (tiles[at]?.baseId === undefined ? printingIdFor(id) : tiles[at].id);
+  return {cardId: siblingIds[siblingIndex] ?? cardId, siblingIds, options: {siblingIndex, printingFor}};
 }

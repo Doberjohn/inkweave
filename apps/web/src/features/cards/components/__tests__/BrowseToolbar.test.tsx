@@ -111,10 +111,26 @@ describe('BrowseToolbar', () => {
 
   it('shows a whole kind of rarities as one chip named for its preset, which clears them all', () => {
     const onFiltersChange = vi.fn();
-    render(<BrowseToolbar {...defaultProps({filters: {rarities: ['Iconic', 'Epic', 'Enchanted']}, onFiltersChange})} />);
+    const filters = {rarities: ['Iconic', 'Special', 'Epic', 'Enchanted']};
+    render(<BrowseToolbar {...defaultProps({filters, onFiltersChange})} />);
     expect(screen.queryByText('Epic')).toBeNull();
     fireEvent.click(screen.getByText('Alt art cards'));
     expect(onFiltersChange).toHaveBeenCalledWith({rarities: undefined});
+  });
+
+  it('names the kind by the rarities the page offers, as the panel picks it: no promo in collection mode', () => {
+    const rarities = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', 'Epic', 'Enchanted', 'Iconic'];
+    render(<BrowseToolbar {...defaultProps({filters: {rarities: ['Iconic', 'Epic', 'Enchanted']}, rarities})} />);
+    expect(screen.getByText('Alt art cards')).toBeInTheDocument();
+    expect(screen.queryByText('Epic')).toBeNull();
+  });
+
+  it("names a picked Special rarity's chip Promo, as the Rarity filter does (#805)", () => {
+    const onFiltersChange = vi.fn();
+    render(<BrowseToolbar {...defaultProps({filters: {rarities: ['Legendary', 'Special']}, onFiltersChange})} />);
+    expect(screen.queryByText('Special')).toBeNull();
+    fireEvent.click(screen.getByText('Promo'));
+    expect(onFiltersChange).toHaveBeenCalledWith({rarities: ['Legendary']});
   });
 
   it('renders selected costs as one combined chip on mobile, sorted, clearing all on dismiss', () => {

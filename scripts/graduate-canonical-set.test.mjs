@@ -10,6 +10,7 @@ import {
   previewVariantsMissingFrom,
   remapMigrationName,
   remapMigrationSql,
+  replaceSetCards,
   unmappedPreviewCards,
 } from './graduate-canonical-set.mjs';
 
@@ -95,6 +96,32 @@ describe('applyCardRules (graduation)', () => {
 
     expect(cards[0].franchise).toBe('Mickey Mouse & Friends');
     expect(cards[0]).not.toHaveProperty('story');
+  });
+});
+
+// Re-graduating a set replaces its cards wholesale; only the promo catalog writes promos (#805).
+describe('replaceSetCards (graduation)', () => {
+  const promo = {id: 3700, rarity: 'Special', number: 4, promoGrouping: 'D23'};
+  const catalog = (baseId) => ({fold: [{baseId, fullName: 'Mickey Mouse - Best in Town', variants: [promo]}]});
+  const oldCard = {id: 3288, setCode: '14', fullName: 'Mickey Mouse - Best in Town', variants: [promo]};
+  const otherSet = {id: 1949, setCode: '9', fullName: 'Mickey Mouse - True Friend'};
+
+  it("puts the catalog's promo printings on the new cards, after their own printings", () => {
+    const {cards} = applyCardRules(source, '14');
+    const all = {cards: [otherSet, oldCard]};
+
+    const {dropped} = replaceSetCards(all, '14', cards, catalog(3288));
+    expect(dropped).toEqual([oldCard]);
+    expect(all.cards.map((card) => card.id)).toEqual([1949, 3288]);
+    expect(all.cards[1].variants.map((v) => v.id)).toEqual([3506, 3700]);
+  });
+
+  it('throws, changing nothing, when the catalog names a card the new set lacks', () => {
+    const {cards} = applyCardRules(source, '14');
+    const all = {cards: [otherSet, oldCard]};
+
+    expect(() => replaceSetCards(all, '14', cards, catalog(3299))).toThrow(/no card 3299/);
+    expect(all.cards).toEqual([otherSet, oldCard]);
   });
 });
 

@@ -1,0 +1,4419 @@
+{
+  "about": "All 264 Disney Lorcana promo printings: the 261 the owner settled on 16 Oct 2026 (Claude Doc 'Promo cards to settle'), less six the owner dropped on 18 Oct (C1's four non-foil twins and its unnumbered 2025 World Champion Mickey, and C2's unnumbered store-event Minnie), and nine the owner added that day, 26/P2's European printing, Vaiana, two Chinese printings, 42/P2 Snow White - Unexpected Houseguest and 43/P2 Stitch - Little Rocket, and six the owner scanned in Japanese, 59/P3 Elsa - Exploring the Unknown, 61/P3 and 62/P3 Maleficent - Monstrous Dragon, 63/P3 Buzz Lightyear - Space Ranger, and 7/P4 and 8/P4 Daisy Duck - Paranormal Investigator. As entries for a card's `variants` array in apps/web/public/data/allCards.json, the shape Epic/Enchanted/Iconic use. Read promo-printings-merge-notes.md first.",
+  "stats": {
+    "promoPrintings": 264,
+    "withLorcanaJsonId": 215,
+    "withProvisionalId": 49,
+    "withOfficialArtUrl": 215,
+    "foldIntoAllCards": {
+      "printings": 148,
+      "baseCards": 116
+    },
+    "noBaseCardInAllCards": {
+      "printings": 116,
+      "cards": 96
+    },
+    "byPromoGrouping": {
+      "C1": 10,
+      "C2": 19,
+      "C3": 17,
+      "CC1": 6,
+      "CC2": 6,
+      "D23": 16,
+      "DIS": 9,
+      "P1": 41,
+      "P2": 40,
+      "P3": 63,
+      "P4": 11,
+      "PD1": 19,
+      "RPH": 7
+    }
+  },
+  "fold": [
+    {
+      "baseId": 1936,
+      "fullName": "Bruno Madrigal - Undetected Uncle",
+      "setCode": "9",
+      "number": 0,
+      "variants": [
+        {
+          "id": 1194,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/4_830c56df482cafcb991b97b1cca0f4d0f95d0ab7.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/4_e4c46685e462ae35e909b5dede01c3c0b422a9b7.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 1937,
+      "fullName": "The Queen - Conceited Ruler",
+      "setCode": "9",
+      "number": 1,
+      "variants": [
+        {
+          "id": 2181,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/3_9300e2c889060ccd3f06b47a8bb7b7e5ae88a30c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/3_ec2c3b8f3077aae79a0b10d22a43ef929843a3c9.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 1939,
+      "fullName": "Stitch - Rock Star",
+      "setCode": "9",
+      "number": 3,
+      "variants": [
+        {
+          "id": 3245,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "DIS",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/dis/3_a552e08f5a1eec401bbc897eda59b00c89c599e7.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/dis/3_0bda346ba8738c244a46970433ff0072b5847400.jpg"
+          }
+        },
+        {
+          "id": 660,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/2_9354b650ae34807653349b4d6d868a39f01f9609.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/2_f4f4e00351b3cc0c36acc9425517df6350d22e28.jpg"
+          }
+        },
+        {
+          "id": 688,
+          "rarity": "Special",
+          "number": 30,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/30_ed547d4fb9a33a4fdc9a80769300601c4cf3bc71.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/30_13ead8baa935f1cdb348b82b2c7fddf035efdd62.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 1940,
+      "fullName": "Beast - Gracious Prince",
+      "setCode": "9",
+      "number": 4,
+      "variants": [
+        {
+          "id": 2461,
+          "rarity": "Special",
+          "number": 40,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/40_4aaa4b5c9966aebb9625e996be936aca338989df.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/40_d1ff256465092a84fb80659e5d002d3c72d2a19e.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 1949,
+      "fullName": "Mickey Mouse - True Friend",
+      "setCode": "9",
+      "number": 13,
+      "variants": [
+        {
+          "id": 80042,
+          "rarity": "Special",
+          "number": 25,
+          "promoGrouping": "P1",
+          "scanLanguage": "ja"
+        },
+        {
+          "id": 80044,
+          "rarity": "Special",
+          "number": 15,
+          "promoGrouping": "P2"
+        },
+        {
+          "id": 3595,
+          "rarity": "Special",
+          "number": 36,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/36_a73aabcc6b14ed400a8ae6c38fd67c6390943167.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/36_383bde271189fb4ab00bd186c410bffa8aeaae36.jpg"
+          }
+        },
+        {
+          "id": 2432,
+          "rarity": "Special",
+          "number": 10,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/10_30d7e69546ef091cf5e4dd6197e36f298b174af0.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/10_45e843d65737c42fc9d4a8b108fca8367f8c0136.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 1967,
+      "fullName": "Be Our Guest",
+      "setCode": "9",
+      "number": 31,
+      "variants": [
+        {
+          "id": 80034,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "CC2"
+        }
+      ]
+    },
+    {
+      "baseId": 1976,
+      "fullName": "Belle - Accomplished Mystic",
+      "setCode": "9",
+      "number": 40,
+      "variants": [
+        {
+          "id": 2462,
+          "rarity": "Special",
+          "number": 41,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/41_f8ff787532a72898c1b75f24acc5b431ae68da59.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/41_88525b24337df93a22d4c357a8ff27ddc2d4d288.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 1982,
+      "fullName": "Dumbo - The Flying Elephant",
+      "setCode": "9",
+      "number": 46,
+      "variants": [
+        {
+          "id": 2179,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/1_07c90c996a1bc7e5f16f1d92c1cff54b3a00bc65.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/1_396ac35493791a90c46bb6bdba4e88ba24e5f4ee.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 1984,
+      "fullName": "Elsa - Gloves Off",
+      "setCode": "9",
+      "number": 48,
+      "variants": [
+        {
+          "id": 677,
+          "rarity": "Special",
+          "number": 19,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/19_92c6e3115ddf99b66da6909af0daeb693413f991.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/19_fb51e512688c86904d0c249c9fe144ea7d081a29.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 1989,
+      "fullName": "Elsa - Snow Queen",
+      "setCode": "9",
+      "number": 53,
+      "variants": [
+        {
+          "id": 661,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/3_cef568880146687aee7fedbb77feabd987e0fdd1.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/3_f80778722d0c4adf16e23c0aa46764eb390e7310.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2005,
+      "fullName": "Kuzco - Temperamental Emperor",
+      "setCode": "9",
+      "number": 69,
+      "variants": [
+        {
+          "id": 1198,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "C1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge1/8_ed492b373e5a8049ce3dc162683fc52b879dbc66.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge1/8_0c66571d493c60c775dd59049ae656df28f69ca6.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2007,
+      "fullName": "Cursed Merfolk - Ursula's Handiwork",
+      "setCode": "9",
+      "number": 71,
+      "variants": [
+        {
+          "id": 2185,
+          "rarity": "Special",
+          "number": 7,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/7_7766ce1df8f13189b4e02e8d248eeb01008c7982.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/7_67966f47ecdc7f2ac11f088cb0aa0ced44b57746.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2010,
+      "fullName": "Goofy - Set for Adventure",
+      "setCode": "9",
+      "number": 74,
+      "variants": [
+        {
+          "id": 2450,
+          "rarity": "Special",
+          "number": 39,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/39_153622ed69420106f8eaace410f9e2cfa306908a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/39_33c0e06d8e3b897da76ed3d5887b2c98536124cb.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2020,
+      "fullName": "Pegasus - Gift for Hercules",
+      "setCode": "9",
+      "number": 84,
+      "variants": [
+        {
+          "id": 2451,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "C2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge2/1_14759a518d51a11653eb125ed741e52ac648cac0.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge2/1_f92390b9a110e020d83c794ea3f223315ccaff81.jpg"
+          }
+        },
+        {
+          "id": 2455,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "C2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge2/5_3da76301dd582812f5e397f290df169ab59c5683.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge2/5_0fbc7791e740677b182c3b7d14d4ce01a6e65348.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2026,
+      "fullName": "Ursula - Deceiver",
+      "setCode": "9",
+      "number": 90,
+      "variants": [
+        {
+          "id": 80018,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 80025,
+          "rarity": "Special",
+          "number": 14,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 1193,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/3_569cc7920299a66496b9db5894b5e1f8ab3ffa5f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/3_14c4e6b00e14d8466024462605e10717384cd416.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2030,
+      "fullName": "Stand Out",
+      "setCode": "9",
+      "number": 94,
+      "variants": [
+        {
+          "id": 80007,
+          "rarity": "Special",
+          "number": 11,
+          "promoGrouping": "C2"
+        },
+        {
+          "id": 80011,
+          "rarity": "Special",
+          "number": 15,
+          "promoGrouping": "C2"
+        }
+      ]
+    },
+    {
+      "baseId": 2035,
+      "fullName": "Mother Knows Best",
+      "setCode": "9",
+      "number": 99,
+      "variants": [
+        {
+          "id": 80017,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 80024,
+          "rarity": "Special",
+          "number": 13,
+          "promoGrouping": "C3"
+        }
+      ]
+    },
+    {
+      "baseId": 2044,
+      "fullName": "Maleficent - Monstrous Dragon",
+      "setCode": "9",
+      "number": 108,
+      "variants": [
+        {
+          "id": 663,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/5_d23f73982e6590760190b241776999921ae48919.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/5_7fd93eecb7212684fc85488855776735c19554e6.jpg"
+          }
+        },
+        {
+          "id": 2182,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/4_542111924cad6679fd1527d01b7c321e33d09ba4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/4_ac0e255adcc05b92cdfd13d3009b2d02e83b8df0.jpg"
+          }
+        },
+        {
+          "id": 2183,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/5_96d45ae02b12c203a1d1c9ed87aedc74128b690f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/5_bee14205026531c6eae2bf2e099529858ed5869d.jpg"
+          }
+        },
+        {
+          "id": 80051,
+          "rarity": "Special",
+          "number": 61,
+          "promoGrouping": "P3",
+          "scanLanguage": "ja"
+        },
+        {
+          "id": 80052,
+          "rarity": "Special",
+          "number": 62,
+          "promoGrouping": "P3",
+          "scanLanguage": "ja"
+        }
+      ]
+    },
+    {
+      "baseId": 2051,
+      "fullName": "Gaston - Arrogant Hunter",
+      "setCode": "9",
+      "number": 115,
+      "variants": [
+        {
+          "id": 682,
+          "rarity": "Special",
+          "number": 24,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/24_07184a7d67ecac9b3bef748f5537fc73ed1a6ec5.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/24_63794411920a78462eecc045ee23fcfd5dfcca0d.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2055,
+      "fullName": "Sisu - Daring Visitor",
+      "setCode": "9",
+      "number": 119,
+      "variants": [
+        {
+          "id": 2187,
+          "rarity": "Special",
+          "number": 9,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/9_67051e2c8e31467f0f24a5940dde1f66066d7403.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/9_1eb1ce86eafb1d07f5b917f5b2ea6bca0a8bdf84.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2057,
+      "fullName": "Lumiere - Fiery Friend",
+      "setCode": "9",
+      "number": 121,
+      "variants": [
+        {
+          "id": 80037,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "CC2"
+        }
+      ]
+    },
+    {
+      "baseId": 2062,
+      "fullName": "Mulan - Elite Archer",
+      "setCode": "9",
+      "number": 126,
+      "variants": [
+        {
+          "id": 3240,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "CC1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/cc1/4_f276adc145c6817f6704a17c8b517d012cffe90c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/cc1/4_f7038053e9f197902a979a2b44471621b90806cc.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2077,
+      "fullName": "Alice - Accidentally Adrift",
+      "setCode": "9",
+      "number": 141,
+      "variants": [
+        {
+          "id": 2180,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/2_8426eb8a38d43058e2169ec64b6bd9c896ec9046.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/2_381f05acb6f4d4d83c9df5ee297e3a4662fcbd6e.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2082,
+      "fullName": "Anna - Braving the Storm",
+      "setCode": "9",
+      "number": 146,
+      "variants": [
+        {
+          "id": 80046,
+          "rarity": "Special",
+          "number": 17,
+          "promoGrouping": "P2"
+        }
+      ]
+    },
+    {
+      "baseId": 2085,
+      "fullName": "The Queen - Mirror Seeker",
+      "setCode": "9",
+      "number": 149,
+      "variants": [
+        {
+          "id": 2433,
+          "rarity": "Special",
+          "number": 12,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/12_7b0bd446a1d33dcd75a499885ebef09510d5cd5b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/12_ac1fbe10a68128ca08f116b8a661acc8cd22d4af.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2098,
+      "fullName": "Robin Hood - Unrivaled Archer",
+      "setCode": "9",
+      "number": 162,
+      "variants": [
+        {
+          "id": 664,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/6_d61c675b068f0702dea3a84d1b3762c5f3224013.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/6_6ff1b1a9b70af2908643f24002b67e622601028a.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2100,
+      "fullName": "Four Dozen Eggs",
+      "setCode": "9",
+      "number": 164,
+      "variants": [
+        {
+          "id": 691,
+          "rarity": "Special",
+          "number": 33,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/33_f46401ea4dec973de455e80e60fce7fd81839121.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/33_ba440608fabcc591827e7395acbd4262282601d5.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2120,
+      "fullName": "Robin Hood - Capable Fighter",
+      "setCode": "9",
+      "number": 184,
+      "variants": [
+        {
+          "id": 675,
+          "rarity": "Special",
+          "number": 17,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/17_3124c499f9568a4f2b09f32c7bd60acbc70d7a12.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/17_989816d108b59b5f9b51d9d096418f4af1f831ed.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2124,
+      "fullName": "Tinker Bell - Giant Fairy",
+      "setCode": "9",
+      "number": 188,
+      "variants": [
+        {
+          "id": 3242,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "CC1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/cc1/6_c49fb8650edf9487daac01ec6f115a9cd7bc324c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/cc1/6_51774b2326707d7c10e42c1f72a1792a203b853a.jpg"
+          }
+        },
+        {
+          "id": 2188,
+          "rarity": "Special",
+          "number": 11,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/11_134f9ade8e5f9fc518a08ac788493da83f34c4da.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/11_9c5a8ad3b0627400e7042a0a93dd2738dde66f2e.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2128,
+      "fullName": "John Silver - Greedy Treasure Seeker",
+      "setCode": "9",
+      "number": 192,
+      "variants": [
+        {
+          "id": 687,
+          "rarity": "Special",
+          "number": 29,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/29_b82e9d755443de8b2e343c3cf84605e9f421c637.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/29_5cdd316ec562c7ec8abbdbeda751fd9b83ba180d.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2137,
+      "fullName": "Strength of a Raging Fire",
+      "setCode": "9",
+      "number": 201,
+      "variants": [
+        {
+          "id": 2186,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/8_09f60d7a5b67bafe819b285c6399baf482d23284.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/8_67c068cf2f59a67efa863af5bba9f3f0dbda15e9.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2212,
+      "fullName": "Mickey Mouse - Amber Champion",
+      "setCode": "10",
+      "number": 23,
+      "variants": [
+        {
+          "id": 3246,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "DIS",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/dis/6_4a406c72dc268029bb0d8a0b8e9dc111f305cee7.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/dis/6_14820444c0e99bc8d6ec79e149d9813a2ee7f43f.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2218,
+      "fullName": "The Horseman Strikes!",
+      "setCode": "10",
+      "number": 29,
+      "variants": [
+        {
+          "id": 2441,
+          "rarity": "Special",
+          "number": 20,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/20_8b1b0c3ba38b771b51417e75fa9315c90927d96a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/20_6b25f55f131c496713bfe82b8a047958b00607f8.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2224,
+      "fullName": "Minnie Mouse - Amethyst Champion",
+      "setCode": "10",
+      "number": 35,
+      "variants": [
+        {
+          "id": 80015,
+          "rarity": "Special",
+          "number": 20,
+          "promoGrouping": "C2"
+        }
+      ]
+    },
+    {
+      "baseId": 2234,
+      "fullName": "Elsa - Exploring the Unknown",
+      "setCode": "10",
+      "number": 45,
+      "variants": [
+        {
+          "id": 2443,
+          "rarity": "Special",
+          "number": 22,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/22_e45aeb9c781361f67e3abab8ee59e8cd6b7b0c0b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/22_4208243ea2094085bae82e0b00b077803bd40ed4.jpg"
+          }
+        },
+        {
+          "id": 80050,
+          "rarity": "Special",
+          "number": 59,
+          "promoGrouping": "P3",
+          "scanLanguage": "ja"
+        }
+      ]
+    },
+    {
+      "baseId": 2257,
+      "fullName": "The Great Illuminary - Abandoned Laboratory",
+      "setCode": "10",
+      "number": 68,
+      "variants": [
+        {
+          "id": 2440,
+          "rarity": "Special",
+          "number": 19,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/19_4820f65a3bbd1d3c03018775c2064aca051f288c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/19_ec5a1ffbb0ccfd1cfb60e6d0624e54b6d5a748ff.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2278,
+      "fullName": "Scrooge McDuck - S.H.U.S.H. Agent",
+      "setCode": "10",
+      "number": 89,
+      "variants": [
+        {
+          "id": 2714,
+          "rarity": "Special",
+          "number": 36,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/36_51c338a1fd293aa6a51d0db281d362b837f46ff2.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/36_6477aa7bbf8a05aeaf7d1970b3c197b9a6fc153b.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2280,
+      "fullName": "Goofy - Emerald Champion",
+      "setCode": "10",
+      "number": 91,
+      "variants": [
+        {
+          "id": 2446,
+          "rarity": "Special",
+          "number": 25,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/25_9aebfd6e6296ef4b8e397042c49905ec1f5bd147.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/25_343e713ec5cc2ab53bc89538e4d1a955ce395eeb.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2322,
+      "fullName": "Dragon Fire",
+      "setCode": "10",
+      "number": 133,
+      "variants": [
+        {
+          "id": 1187,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "C1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge1/1_d936dc1f2c9f0cae641dbb5584bfb0288a103641.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge1/1_4270b22557c8e6c97b0a7129723051f895eb5390.jpg"
+          }
+        },
+        {
+          "id": 2459,
+          "rarity": "Special",
+          "number": 9,
+          "promoGrouping": "C2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge2/9_2cbea7707b0ecf639c53a3ac5038c107d961dacc.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge2/9_2ccf0dcdbff9ad0a31f65c238dd0462fc26beb24.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2338,
+      "fullName": "Jasmine - Soothing Princess",
+      "setCode": "10",
+      "number": 149,
+      "variants": [
+        {
+          "id": 2447,
+          "rarity": "Special",
+          "number": 26,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/26_0ae8f65fef2169993613b732bcb7ef8ccc3c808a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/26_b213dcccbbed3fd3f89d6d207e9760b5e5325fcd.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2342,
+      "fullName": "Scar - Eerily Prepared",
+      "setCode": "10",
+      "number": 153,
+      "variants": [
+        {
+          "id": 2442,
+          "rarity": "Special",
+          "number": 21,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/21_96042505247cc9caea6ca6ea0b92a79427ae0d75.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/21_7054f2a6645e88b7d6268a9e67a7b1055bdbf62d.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2343,
+      "fullName": "Daisy Duck - Paranormal Investigator",
+      "setCode": "10",
+      "number": 154,
+      "variants": [
+        {
+          "id": 2444,
+          "rarity": "Special",
+          "number": 23,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/23_40885d217657ebbe74c23bda7bd66478fefa0155.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/23_187c11789a46116862e307f6604e99a28b75957b.jpg"
+          }
+        },
+        {
+          "id": 2445,
+          "rarity": "Special",
+          "number": 24,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/24_a83fa383af201bad1d84858cdfdcceaa2b19187d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/24_ee045c76699c854ca085ff3d015747f53f92692b.jpg"
+          }
+        },
+        {
+          "id": 80054,
+          "rarity": "Special",
+          "number": 7,
+          "promoGrouping": "P4",
+          "scanLanguage": "ja"
+        },
+        {
+          "id": 80055,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "P4",
+          "scanLanguage": "ja"
+        }
+      ]
+    },
+    {
+      "baseId": 2345,
+      "fullName": "Judy Hopps - Uncovering Clues",
+      "setCode": "10",
+      "number": 156,
+      "variants": [
+        {
+          "id": 3590,
+          "rarity": "Special",
+          "number": 14,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/14_35b96ecf9c5ea22835a0c2224abd031a8fdfa365.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/14_34ee1fe8398d3f4a8887915d7d698d8206baccf1.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2349,
+      "fullName": "Mickey Mouse - Detective",
+      "setCode": "10",
+      "number": 160,
+      "variants": [
+        {
+          "id": 666,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/8_3a76af024141d7bf19b13aee1fb17571c6f80444.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/8_ea463574255f466503b38f9417737b95f88e269d.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2363,
+      "fullName": "The Headless Horseman - Cursed Rider",
+      "setCode": "10",
+      "number": 174,
+      "variants": [
+        {
+          "id": 80009,
+          "rarity": "Special",
+          "number": 13,
+          "promoGrouping": "C2"
+        },
+        {
+          "id": 80013,
+          "rarity": "Special",
+          "number": 17,
+          "promoGrouping": "C2"
+        }
+      ]
+    },
+    {
+      "baseId": 2382,
+      "fullName": "Zeus - Missing His Spark",
+      "setCode": "10",
+      "number": 193,
+      "variants": [
+        {
+          "id": 2439,
+          "rarity": "Special",
+          "number": 18,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/18_05f2682a73bf2595c3b848c824592521c0099512.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/18_ac9fb2ded8ceaa878ed671f97158cfd5885480c7.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2385,
+      "fullName": "Putting It All Together",
+      "setCode": "10",
+      "number": 196,
+      "variants": [
+        {
+          "id": 2463,
+          "rarity": "Special",
+          "number": 27,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/27_17b07c694096e1453d3e107330c24ac85ae7856d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/27_cb1a5f9618b1550878090b4d0d6524ecc19bc8e3.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2470,
+      "fullName": "Stitch - Carefree Snowboarder",
+      "setCode": "11",
+      "number": 7,
+      "variants": [
+        {
+          "id": 2971,
+          "rarity": "Special",
+          "number": 42,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/42_130d7eb9627df4ffb45adc7f8b755b99441e4430.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/42_0601899e5073f93690955f19c30c4401ebf9ad8c.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2479,
+      "fullName": "Timon - Snowball Swiper",
+      "setCode": "11",
+      "number": 16,
+      "variants": [
+        {
+          "id": 2710,
+          "rarity": "Special",
+          "number": 32,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/32_2ad30ba45e36419e4437bc490823bff2c5ee0d4f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/32_3325cbd8271d26dc5fbc7f68a87668a4256a7c29.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2488,
+      "fullName": "Angel - Siren Singer",
+      "setCode": "11",
+      "number": 25,
+      "variants": [
+        {
+          "id": 3586,
+          "rarity": "Special",
+          "number": 10,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/10_ec0b957c0de5d32b24322972340da18a5c78244b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/10_47f0facaa82802898dd300e889efaed8ec7b7c34.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2505,
+      "fullName": "Pocahontas - Following the Wind",
+      "setCode": "11",
+      "number": 42,
+      "variants": [
+        {
+          "id": 3587,
+          "rarity": "Special",
+          "number": 11,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/11_101d9fbdf51ac39892b3086607fe035b7f1542da.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/11_5b3fd7eac350184964c43cef793a94773fcca7ea.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2511,
+      "fullName": "Tinker Bell - Snowflake Collector",
+      "setCode": "11",
+      "number": 48,
+      "variants": [
+        {
+          "id": 2711,
+          "rarity": "Special",
+          "number": 33,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/33_b4d467889866b542ab5b9e296fd12425790dcf2d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/33_6890db80ae3016b997aa716dc6907455435919c8.jpg"
+          }
+        },
+        {
+          "id": 2712,
+          "rarity": "Special",
+          "number": 34,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/34_f8a4d6956f737fee8f55bf273a90fd9101e79c9d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/34_fa1fc811747d1a4ec128b89d4715f9257ceb3f8b.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2552,
+      "fullName": "White Rabbit - Late Again",
+      "setCode": "11",
+      "number": 89,
+      "variants": [
+        {
+          "id": 2707,
+          "rarity": "Special",
+          "number": 29,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/29_9c43f52e18d06b986d0edb9b600dd9a836d45a8a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/29_28edb6ced59496a32c067273a69c0732ae098223.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2575,
+      "fullName": "Elisa Maza - Transformed Gargoyle",
+      "setCode": "11",
+      "number": 112,
+      "variants": [
+        {
+          "id": 2708,
+          "rarity": "Special",
+          "number": 30,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/30_b0fb840d90ea1bcaca3149bc8761ee87d7a65db6.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/30_05663258fdbaf37ef897e0632f6c5c01e5fbd83b.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2581,
+      "fullName": "Beast - Snowfield Troublemaker",
+      "setCode": "11",
+      "number": 118,
+      "variants": [
+        {
+          "id": 2709,
+          "rarity": "Special",
+          "number": 31,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/31_a76fb0f5f761d22cd64cc72b5757fc6f16d58c53.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/31_25224febbcff7b31e08866b3a862df273ec959b5.jpg"
+          }
+        },
+        {
+          "id": 3225,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/1_f09b6541482df7dbac54a50739eec629416e445b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/1_787ca6fdbe521c2ab368c7fd2503c644e081ab9a.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2611,
+      "fullName": "Gramma Tala - Connected to Nature",
+      "setCode": "11",
+      "number": 148,
+      "variants": [
+        {
+          "id": 2706,
+          "rarity": "Special",
+          "number": 28,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/28_578f7de00facc558f1fff8fe1c4273851ee50517.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/28_1437a66211696f86e2d15469669430ce78886e48.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2626,
+      "fullName": "Let It Go",
+      "setCode": "11",
+      "number": 163,
+      "variants": [
+        {
+          "id": 1188,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "C1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge1/2_e2146eb707e1996e2ae87ecd5ce44a7edcc61a0b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge1/2_1850bf05181960cfe7baeb54a0464b0dfe8fb4df.jpg"
+          }
+        },
+        {
+          "id": 2460,
+          "rarity": "Special",
+          "number": 10,
+          "promoGrouping": "C2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge2/10_484c17f6af6ac4471206386041b22757038c6059.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge2/10_b52a2c49e0607273196cdfd8b40b186c021c72a3.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2634,
+      "fullName": "Rapunzel - Ethereal Protector",
+      "setCode": "11",
+      "number": 171,
+      "variants": [
+        {
+          "id": 3226,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/2_744ae0340b22124aae6d0fb522a0d7c0e8323cd0.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/2_5da7c00cbd6aeb4d0da7afc27faa0c966f2a63e7.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2648,
+      "fullName": "Stitch - High Badness Level",
+      "setCode": "11",
+      "number": 185,
+      "variants": [
+        {
+          "id": 2713,
+          "rarity": "Special",
+          "number": 35,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/35_d0151d04ae5343fed9473367820fe1250fa8239b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/35_75de6b170200cedd65f2244cb3f9980f79b62a68.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2730,
+      "fullName": "Woody - Jungle Guide",
+      "setCode": "12",
+      "number": 15,
+      "variants": [
+        {
+          "id": 2968,
+          "rarity": "Special",
+          "number": 53,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/53_391bde8bf1df86e42614492544034fea79590f3f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/53_857a202815937914ea95e08cfb1b3850602fc28a.jpg"
+          }
+        },
+        {
+          "id": 2969,
+          "rarity": "Special",
+          "number": 54,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/54_e65d5c7371aa43961c0fa7094393dbc2da4d2648.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/54_54bb9cd2c17e6f18be15f7a9fe4b285c08677782.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2733,
+      "fullName": "Ariel - Curious Traveler",
+      "setCode": "12",
+      "number": 18,
+      "variants": [
+        {
+          "id": 2958,
+          "rarity": "Special",
+          "number": 43,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/43_44e511f17748cfcb786b407d368c6f10d65b42bd.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/43_ef4aa4ce6cf35673d66e9d5763a949c5bf8a67a5.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2736,
+      "fullName": "Woody - Leader of the Toys",
+      "setCode": "12",
+      "number": 21,
+      "variants": [
+        {
+          "id": 3585,
+          "rarity": "Special",
+          "number": 9,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/9_768c3d2e24e045ab0a45f3f1b9d520cab22c3333.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/9_49aeaa8b0daac21ce427303b8f62f99a37886762.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2762,
+      "fullName": "Will o' the Wisp - Forest Spirit",
+      "setCode": "12",
+      "number": 47,
+      "variants": [
+        {
+          "id": 2966,
+          "rarity": "Special",
+          "number": 51,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/51_d31c2290b59c4176c32bebe112818c333c0b0cc8.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/51_bb629aeb7d452946b656ac3aafdcf325825b23dd.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2763,
+      "fullName": "Violet Parr - Learning New Powers",
+      "setCode": "12",
+      "number": 48,
+      "variants": [
+        {
+          "id": 2970,
+          "rarity": "Special",
+          "number": 55,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/55_b919507ec7ad9be0c57e25013ad020151de4d33d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/55_b711a0b12a1d3f434264a70e40dcb11a2d34c8df.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2770,
+      "fullName": "Maleficent - Imperious Traveler",
+      "setCode": "12",
+      "number": 55,
+      "variants": [
+        {
+          "id": 2959,
+          "rarity": "Special",
+          "number": 44,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/44_55ab589e7d8b7c621226e5a52af1efc2dbc52365.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/44_221977f3fd84c7a543aacfc9462e23be6f4a7391.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2776,
+      "fullName": "Dash Parr - Lava Runner",
+      "setCode": "12",
+      "number": 61,
+      "variants": [
+        {
+          "id": 2967,
+          "rarity": "Special",
+          "number": 52,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/52_8c643121edecbf4e72a5377825a43f5a5c075d03.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/52_406e8a32ed07f6f5f4d8cd75fc9a01316597d345.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2791,
+      "fullName": "Buzz Lightyear - Space Ranger",
+      "setCode": "12",
+      "number": 76,
+      "variants": [
+        {
+          "id": 3250,
+          "rarity": "Special",
+          "number": 57,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/57_b55c07cfe81c27edc73a7cf3de0ecef90183c4f1.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/57_ea790ef379aa668da70691d1caff7233d1f73eca.jpg"
+          }
+        },
+        {
+          "id": 80053,
+          "rarity": "Special",
+          "number": 63,
+          "promoGrouping": "P3",
+          "scanLanguage": "ja"
+        }
+      ]
+    },
+    {
+      "baseId": 2794,
+      "fullName": "Lenny - Toy Binoculars",
+      "setCode": "12",
+      "number": 79,
+      "variants": [
+        {
+          "id": 2964,
+          "rarity": "Special",
+          "number": 49,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/49_eed6ab1c30e0ce2f1d222edeb5449b6990d30a33.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/49_4ec5beb3055b18f0e0a8804f4fb7d3776773d27c.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2800,
+      "fullName": "Buzz Lightyear - On the Way",
+      "setCode": "12",
+      "number": 85,
+      "variants": [
+        {
+          "id": 3249,
+          "rarity": "Special",
+          "number": 56,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/56_8506064299f97aff4cae1cb819b7900f96758007.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/56_f38bb0531c708c62ffbce4c20eac1f6b0a4db772.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2807,
+      "fullName": "Cruella De Vil - Judgmental Traveler",
+      "setCode": "12",
+      "number": 92,
+      "variants": [
+        {
+          "id": 2960,
+          "rarity": "Special",
+          "number": 45,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/45_2174bdc712f0cbe06df0b79e030bd9f259e600a6.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/45_2044385594e92c2b078f2f9e5e78fe31c93027ff.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2821,
+      "fullName": "Pegasus - Searching High and Low",
+      "setCode": "12",
+      "number": 106,
+      "variants": [
+        {
+          "id": 3594,
+          "rarity": "Special",
+          "number": 15,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/15_e9b2506b57f9fb7211864ff8e4c884bd1725a039.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/15_cfeea14dae1eb2193fdd377c739c66dc2bc5093d.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2837,
+      "fullName": "Queen of Hearts - Impatient Traveler",
+      "setCode": "12",
+      "number": 122,
+      "variants": [
+        {
+          "id": 2961,
+          "rarity": "Special",
+          "number": 46,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/46_5493d45687bcb41090f6e197eb33b12715ddc385.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/46_5ee0c5653e4305cef4b9f3bfcfd08ebe16becc8f.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2863,
+      "fullName": "Zipper - Tiny Helper",
+      "setCode": "12",
+      "number": 148,
+      "variants": [
+        {
+          "id": 2965,
+          "rarity": "Special",
+          "number": 50,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/50_25918e8d5753b0d94c9e6ea4e274e63dc2a608ff.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/50_53fc4ba145dce3678dc09ce132d80965e2aec79d.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2870,
+      "fullName": "Cinderella - Resourceful Traveler",
+      "setCode": "12",
+      "number": 155,
+      "variants": [
+        {
+          "id": 2962,
+          "rarity": "Special",
+          "number": 47,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/47_fd3bf23a2a8fca3e5008525c411fb1dc41e9d73a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/47_1f0192a158c60c531c28428393b49901ce61fd80.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2886,
+      "fullName": "Pocahontas - Steadfast Traveler",
+      "setCode": "12",
+      "number": 171,
+      "variants": [
+        {
+          "id": 2963,
+          "rarity": "Special",
+          "number": 48,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/48_cd125dbc008862036917507f79ffa84fcee53e0b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/48_30c1e78cdba5e7950ac03150a4ece286fcfb8f0a.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2887,
+      "fullName": "Syndrome - Out for Revenge",
+      "setCode": "12",
+      "number": 172,
+      "variants": [
+        {
+          "id": 80022,
+          "rarity": "Special",
+          "number": 11,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 80029,
+          "rarity": "Special",
+          "number": 23,
+          "promoGrouping": "C3"
+        }
+      ]
+    },
+    {
+      "baseId": 2900,
+      "fullName": "Mr. Incredible - Taking Out the Trash",
+      "setCode": "12",
+      "number": 185,
+      "variants": [
+        {
+          "id": 3591,
+          "rarity": "Special",
+          "number": 15,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/15_725b41f98a78b18ef2912ae509e4df9ed119da09.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/15_97ad6c8f2be24d0492eef769c35677d891f769f7.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2972,
+      "fullName": "Woody - Helping a Friend",
+      "setCode": "13",
+      "number": 1,
+      "variants": [
+        {
+          "id": 3236,
+          "rarity": "Special",
+          "number": 60,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/60_ed2d46869c77f291d299279a5998e4ff9ed3e71e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/60_402fc0cd56eebc5dd490eed2e2dca190127ac6fc.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2978,
+      "fullName": "Meilin Lee - Lead Vocalist",
+      "setCode": "13",
+      "number": 7,
+      "variants": [
+        {
+          "id": 3218,
+          "rarity": "Special",
+          "number": 10,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/10_61acd93b69e6eefc6fde8a3dd9f5773e52cf2477.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/10_281a694764d17fcb44988f5b3a31c4b9be596ce6.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2983,
+      "fullName": "Pocahontas - Guiding the Tribe",
+      "setCode": "13",
+      "number": 12,
+      "variants": [
+        {
+          "id": 3227,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/3_163ea38182cbc50e2590e349176c2b48ce1cc5e9.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/3_bdb6423bfcfd992241e92b928915b87d7fd3b8ef.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 2986,
+      "fullName": "Gaston - Superior Archer",
+      "setCode": "13",
+      "number": 15,
+      "variants": [
+        {
+          "id": 80020,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 80027,
+          "rarity": "Special",
+          "number": 16,
+          "promoGrouping": "C3"
+        }
+      ]
+    },
+    {
+      "baseId": 2995,
+      "fullName": "Sulley - The New Boss",
+      "setCode": "13",
+      "number": 24,
+      "variants": [
+        {
+          "id": 3235,
+          "rarity": "Special",
+          "number": 58,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/58_f60ef7c18cfad9ebd578cca52d2b6643fc9b2555.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/58_93027eea26871cd161789657334c613e99064e9f.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3003,
+      "fullName": "If I Didn't Have You",
+      "setCode": "13",
+      "number": 32,
+      "variants": [
+        {
+          "id": 3222,
+          "rarity": "Special",
+          "number": 14,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/14_6891a2880ea856b94622b710ba1a9c75965aed59.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/14_0b2aa70ca84a271b4d1c2a04105ba72688d0a214.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3010,
+      "fullName": "Maleficent - Exultant Spellcaster",
+      "setCode": "13",
+      "number": 39,
+      "variants": [
+        {
+          "id": 3251,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "DIS",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/dis/4_376fbd81e0deba00f8d954023da2037f1b0279ff.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/dis/4_f4decf72cf5ed9475b707d490edec21b9d20df78.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3017,
+      "fullName": "Vixey - Expert Fisher",
+      "setCode": "13",
+      "number": 46,
+      "variants": [
+        {
+          "id": 3228,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/4_e594abebd61d46162629cec36700f0cde68c3771.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/4_98db7fa00a27713a080dd7e99f51af53621484a5.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3028,
+      "fullName": "Morph - Little Imitator",
+      "setCode": "13",
+      "number": 57,
+      "variants": [
+        {
+          "id": 3217,
+          "rarity": "Special",
+          "number": 9,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/9_87e3bb724c9196dcb9aa62166aed5caeee365532.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/9_aacb11b32975850998943d47f9ba95082b53f5e5.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3036,
+      "fullName": "With a Few Good Friends",
+      "setCode": "13",
+      "number": 65,
+      "variants": [
+        {
+          "id": 3574,
+          "rarity": "Special",
+          "number": 16,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/16_9bf5237500d2ded804e9106385ef7829ad87250a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/16_2221c8e7a40ac28977b9024c85b6de5712db8044.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3048,
+      "fullName": "Buzz Lightyear - Providing Cover",
+      "setCode": "13",
+      "number": 77,
+      "variants": [
+        {
+          "id": 3248,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "DIS",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/dis/8_ddbff5a2ec435a2ec98ed61d6f2975b72b820afb.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/dis/8_fa07b69b64d98380f6d7eab5fd237604c432c257.jpg"
+          }
+        },
+        {
+          "id": 3229,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/5_f8c0f84264b21ad2e9b51839779a715662f3a358.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/5_7eecb0b4f13b2692464fc2ea46f3b8a29bada85e.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3066,
+      "fullName": "Rapunzel - Escaping the Tower",
+      "setCode": "13",
+      "number": 95,
+      "variants": [
+        {
+          "id": 3223,
+          "rarity": "Special",
+          "number": 15,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/15_0ee58d29417b2d6391d9c8801f1077efc18a7cbc.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/15_d1a56a158fe193662ab41994e9c6a89e2f10f200.jpg"
+          }
+        },
+        {
+          "id": 3224,
+          "rarity": "Special",
+          "number": 16,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/16_e486cda0673f321ae77752244b3f8d1d51ff45fc.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/16_da91918ce1fb4a1c32c29bc07b5044fd3330d062.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3068,
+      "fullName": "Mushu - Stealthy Dragon",
+      "setCode": "13",
+      "number": 97,
+      "variants": [
+        {
+          "id": 3588,
+          "rarity": "Special",
+          "number": 12,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/12_872cb60f542c80664ea60375d8a0b115cc7c9056.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/12_d782bab87bc6bc776d94b4543ca497eb1f4a48f4.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3097,
+      "fullName": "Tigger - Hunny Barbarian",
+      "setCode": "13",
+      "number": 126,
+      "variants": [
+        {
+          "id": 3220,
+          "rarity": "Special",
+          "number": 12,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/12_57b02ba2f9714c298bf99f895d44a61530638071.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/12_c905dc1b63b25e945f36b6f49fc94dc62133eb6b.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3098,
+      "fullName": "Boo - Energetic Child",
+      "setCode": "13",
+      "number": 127,
+      "variants": [
+        {
+          "id": 3230,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/6_a74ce18f6488d1692cd4fa71a391bd5f3946f7d4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/6_39797aa1f3a8026fdb9a2bcd71ed38bbd8871eb0.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3099,
+      "fullName": "Sulley - Protective Monster",
+      "setCode": "13",
+      "number": 128,
+      "variants": [
+        {
+          "id": 3233,
+          "rarity": "Special",
+          "number": 18,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/18_68ae3bf21c03514f31ce640ef3c76962a9d70669.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/18_4ec64d879ff22e24dc404755ecf44d04cdf1cdd6.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3117,
+      "fullName": "Merlin - Envisioning the Future",
+      "setCode": "13",
+      "number": 146,
+      "variants": [
+        {
+          "id": 3231,
+          "rarity": "Special",
+          "number": 7,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/7_de1ae120281ea2d4fa062aa419ce4af4cad3f9d0.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/7_e8816d27c3135e2d34007b12add852cb65793937.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3119,
+      "fullName": "Belle - Always Reading",
+      "setCode": "13",
+      "number": 148,
+      "variants": [
+        {
+          "id": 3221,
+          "rarity": "Special",
+          "number": 13,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/13_f3a0fbc7abbc6bcb4155e243b425a35f281a8e89.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/13_0e2f1f11162f637a141d434aab3a53a3ae0a210e.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3124,
+      "fullName": "Randall Boggs - Scary Smart",
+      "setCode": "13",
+      "number": 153,
+      "variants": [
+        {
+          "id": 3219,
+          "rarity": "Special",
+          "number": 11,
+          "promoGrouping": "P4",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo4/11_2eea0b44c691911285949a81cab924b2ee38da6e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo4/11_1a83563a61431da680589c0a384583ed682c29d7.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3147,
+      "fullName": "Violet Parr - Super Resilient",
+      "setCode": "13",
+      "number": 176,
+      "variants": [
+        {
+          "id": 3234,
+          "rarity": "Special",
+          "number": 19,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/19_886d1c67852e33a81480ad57deaf6670b9c4d445.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/19_df099ed431724908198203a07d5d6ae92b281229.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3166,
+      "fullName": "Maximus - Relentless Stallion",
+      "setCode": "13",
+      "number": 195,
+      "variants": [
+        {
+          "id": 3232,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/8_3f3d1c8047e9386a30b9d84efb4d9448c5af9171.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/8_4f6873c8fc4751746c05a4d861179afb2c4bab5b.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3276,
+      "fullName": "Nick Wilde - Inquisitive Harbormaster",
+      "setCode": "14",
+      "number": 11,
+      "variants": [
+        {
+          "id": 3508,
+          "rarity": "Special",
+          "number": 9,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/9_586293ae63b20e862d9fe1a819b572fff52a0387.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/9_f0009c240204ccb1efc1b424ede78e04972ae855.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3290,
+      "fullName": "Nick Wilde - Providing Backup",
+      "setCode": "14",
+      "number": 25,
+      "variants": [
+        {
+          "id": 3558,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "RPH",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/rph/5_d333db7e2184310e09f1c816529d57d4138579ca.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/rph/5_d1b738d750efa5afbe365627da2081fa3f8c0de9.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3317,
+      "fullName": "Merlin - Ink Drop Tinkerer",
+      "setCode": "14",
+      "number": 52,
+      "variants": [
+        {
+          "id": 3509,
+          "rarity": "Special",
+          "number": 10,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/10_db2113a67dedd5a09c0128f34631e6897eb0ef91.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/10_c95d3c9c17cc7a6a3371b206883a7890943b033d.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3324,
+      "fullName": "Madam Mim - Resourceful Trickster",
+      "setCode": "14",
+      "number": 59,
+      "variants": [
+        {
+          "id": 80021,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 80028,
+          "rarity": "Special",
+          "number": 17,
+          "promoGrouping": "C3"
+        }
+      ]
+    },
+    {
+      "baseId": 3325,
+      "fullName": "Everyone Knows Juanita",
+      "setCode": "14",
+      "number": 60,
+      "variants": [
+        {
+          "id": 3554,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "RPH",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/rph/1_3c0b988a4d05881f48a47d56a0ea009a2be3c0e7.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/rph/1_403a55e2f54777ad43c5f87b2980d9f2c15584db.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3330,
+      "fullName": "Creative Inspiration",
+      "setCode": "14",
+      "number": 65,
+      "variants": [
+        {
+          "id": 80041,
+          "rarity": "Special",
+          "number": 19,
+          "promoGrouping": "DIS"
+        }
+      ]
+    },
+    {
+      "baseId": 3350,
+      "fullName": "Baymax - Lab Assistant",
+      "setCode": "14",
+      "number": 85,
+      "variants": [
+        {
+          "id": 80040,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "DIS"
+        }
+      ]
+    },
+    {
+      "baseId": 3358,
+      "fullName": "Honey Lemon - Testing the Limits",
+      "setCode": "14",
+      "number": 93,
+      "variants": [
+        {
+          "id": 3559,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "RPH",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/rph/6_e2de467218afa915c2d875271ed188dd97ed21c4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/rph/6_3277e79fa1d84813cb9bf19e3968d73569b2c777.jpg"
+          }
+        },
+        {
+          "id": 3560,
+          "rarity": "Special",
+          "number": 7,
+          "promoGrouping": "RPH",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/rph/7_7610857492a22ad58861550fc4698c60fabbbe06.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/rph/7_b2d9c41b17472b91fdfa9972b082933a73edf946.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3360,
+      "fullName": "Above the Crowd",
+      "setCode": "14",
+      "number": 95,
+      "variants": [
+        {
+          "id": 3510,
+          "rarity": "Special",
+          "number": 11,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/11_70d48b690135847b1c9507f77b0fa3e551df43c2.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/11_38da4b55041a6aedfda385982538bbedb7311f9c.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3367,
+      "fullName": "The Beanstalk - Onward and Upward",
+      "setCode": "14",
+      "number": 102,
+      "variants": [
+        {
+          "id": 3575,
+          "rarity": "Special",
+          "number": 17,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/17_45200ead2a68a1d724fad7f92452c5c1294bde49.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/17_82c823c92f49bc667bb289f5fe62fedb200b6dd2.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3370,
+      "fullName": "Goofy - Dancing Superstar",
+      "setCode": "14",
+      "number": 105,
+      "variants": [
+        {
+          "id": 3511,
+          "rarity": "Special",
+          "number": 12,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/12_ffd6224b7a2bbd9eb19439cc33bc819508d1880d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/12_90b870d78065d027578d192163bb76f3276c2017.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3375,
+      "fullName": "Donald Duck - Taxi Driver",
+      "setCode": "14",
+      "number": 110,
+      "variants": [
+        {
+          "id": 80047,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "P4"
+        }
+      ]
+    },
+    {
+      "baseId": 3386,
+      "fullName": "Héctor Rivera - Gone to Pieces",
+      "setCode": "14",
+      "number": 121,
+      "variants": [
+        {
+          "id": 3589,
+          "rarity": "Special",
+          "number": 13,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/13_47370b4d6e9c19d750116ef2047e4eae85116d3b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/13_8bb98a9de3ec97b462e087fea611c989d17bd883.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3387,
+      "fullName": "Tramp - Quick on His Feet",
+      "setCode": "14",
+      "number": 122,
+      "variants": [
+        {
+          "id": 3555,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "RPH",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/rph/2_bf9ddb29c64c22d030483e71c07c2c3c253f2d37.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/rph/2_25cbdf58ec52b74a76f680db33e2573a447a10c9.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3419,
+      "fullName": "Judy Hopps - Day Camp Instructor",
+      "setCode": "14",
+      "number": 154,
+      "variants": [
+        {
+          "id": 3512,
+          "rarity": "Special",
+          "number": 13,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/13_7186d949a327db003395c954d96fbca8ae95a120.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/13_9184f9b5070d5c8d81716a45d05037f8f9409c94.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3420,
+      "fullName": "Minnie Mouse - Urban Visionary",
+      "setCode": "14",
+      "number": 155,
+      "variants": [
+        {
+          "id": 3557,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "RPH",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/rph/4_cfe95567e774fb421434e9b8ba28100afa447566.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/rph/4_d6878264a23b53960afccb659420d22ecd1e8fe5.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3450,
+      "fullName": "Arthur - Novice Blacksmith",
+      "setCode": "14",
+      "number": 185,
+      "variants": [
+        {
+          "id": 3556,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "RPH",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/rph/3_a7d6fbff0c7b3776a06de96c1fec0121489fea98.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/rph/3_2d5ee179f1c0f73cb76525589e954ccd3c2aa00a.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "baseId": 3451,
+      "fullName": "Berlioz - Tiny Rascal",
+      "setCode": "14",
+      "number": 186,
+      "variants": [
+        {
+          "id": 3513,
+          "rarity": "Special",
+          "number": 14,
+          "promoGrouping": "PD1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/pd1/14_2bfc82512f01fc462470d0bbf2c7ab690a77c10c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/pd1/14_fc1210b348580ea732bb2b739949e63e7691440b.jpg"
+          }
+        }
+      ]
+    }
+  ],
+  "noBaseCard": [
+    {
+      "fullName": "Ariel - Spectacular Singer",
+      "lorcanaJsonBaseId": 2,
+      "baseSetCode": "1",
+      "baseNumber": 2,
+      "variants": [
+        {
+          "id": 3237,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "CC1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/cc1/1_7f86ac88c0fb9e4bbeef5d5a585e263a27c37dac.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/cc1/1_6cfc456a19f4e7cae1280f7104b12f56f6c14b22.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Goofy - Musketeer",
+      "lorcanaJsonBaseId": 4,
+      "baseSetCode": "1",
+      "baseNumber": 4,
+      "variants": [
+        {
+          "id": 670,
+          "rarity": "Special",
+          "number": 12,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/12_21ab1dbba3df2774f697fcd0c76fa9ae6abb55cf.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/12_ac415b5b1510706b41f9d535d7593f50fc5812e4.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "HeiHei - Boat Snack",
+      "lorcanaJsonBaseId": 7,
+      "baseSetCode": "1",
+      "baseNumber": 7,
+      "variants": [
+        {
+          "id": 667,
+          "rarity": "Special",
+          "number": 9,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/9_0d8b22713893ad5d9491588fe8618b1e170393c0.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/9_0e9d37d649f7db4f298bd9e872db7870500aaab0.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Rapunzel - Gifted with Healing",
+      "lorcanaJsonBaseId": 18,
+      "baseSetCode": "1",
+      "baseNumber": 18,
+      "variants": [
+        {
+          "id": 1190,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "C1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge1/4_13f6e83bc0dc15ba0eb9788650ddce23f3df3fd6.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge1/4_4e9d4fceb1ed4e0de4871a942ce34b9d91466641.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Elsa - Queen Regent",
+      "lorcanaJsonBaseId": 40,
+      "baseSetCode": "1",
+      "baseNumber": 40,
+      "variants": [
+        {
+          "id": 80045,
+          "rarity": "Special",
+          "number": 16,
+          "promoGrouping": "P2"
+        }
+      ]
+    },
+    {
+      "fullName": "Yzma - Alchemist",
+      "lorcanaJsonBaseId": 60,
+      "baseSetCode": "1",
+      "baseNumber": 60,
+      "variants": [
+        {
+          "id": 668,
+          "rarity": "Special",
+          "number": 10,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/10_81055ce64f4d352feb1bed47f15e5b834cb87430.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/10_3f261cdd61ba7d35f675efa73cdc5834aa1a97ca.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Cruella De Vil - Miserable as Usual",
+      "lorcanaJsonBaseId": 72,
+      "baseSetCode": "1",
+      "baseNumber": 72,
+      "variants": [
+        {
+          "id": 662,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/4_507f9a3d2d8297ecb456094efdac405bae811f26.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/4_51216df90ddc9cb3ab05efb4c32c534a8105ecd2.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Genie - Powers Unleashed",
+      "lorcanaJsonBaseId": 76,
+      "baseSetCode": "1",
+      "baseNumber": 76,
+      "variants": [
+        {
+          "id": 678,
+          "rarity": "Special",
+          "number": 20,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/20_42490b79888660ddaa402a593f2ec927a88a122f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/20_d399eef3b5d465b7981b02fd3c8f41f07f627fcb.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Mickey Mouse - Brave Little Tailor",
+      "lorcanaJsonBaseId": 115,
+      "baseSetCode": "1",
+      "baseNumber": 115,
+      "variants": [
+        {
+          "id": 80003,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "C1"
+        },
+        {
+          "id": 80023,
+          "rarity": "Special",
+          "number": 12,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 80030,
+          "rarity": "Special",
+          "number": 24,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 1191,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/1_1217b22b5c937088bfd49a72c7c226af713e557f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/1_e703beca799cc92c4427ccd50e6edd7b132b1131.jpg"
+          }
+        },
+        {
+          "id": 659,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/1_62ec0c3084773497fc59cccc9274ad5a4d8af386.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/1_71345637b9eddc5d2937523edb2dc2242f992459.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Stitch - Abomination",
+      "lorcanaJsonBaseId": 125,
+      "baseSetCode": "1",
+      "baseNumber": 125,
+      "variants": [
+        {
+          "id": 679,
+          "rarity": "Special",
+          "number": 21,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/21_f217671965746af13ac6a063b76ece7d3bd3a101.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/21_cfabbb99e5782aa656539af452737d4e8e6c5f01.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Be Prepared",
+      "lorcanaJsonBaseId": 128,
+      "baseSetCode": "1",
+      "baseNumber": 128,
+      "variants": [
+        {
+          "id": 80019,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "C3"
+        },
+        {
+          "id": 80026,
+          "rarity": "Special",
+          "number": 15,
+          "promoGrouping": "C3"
+        }
+      ]
+    },
+    {
+      "fullName": "Maleficent - Uninvited",
+      "lorcanaJsonBaseId": 151,
+      "baseSetCode": "1",
+      "baseNumber": 151,
+      "variants": [
+        {
+          "id": 680,
+          "rarity": "Special",
+          "number": 22,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/22_97ff0b8fcf7660222a56df648ae3323b5abcc8f4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/22_6d341cbff0672127e90911904f6446f0aef2c54a.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Captain Hook - Forceful Duelist",
+      "lorcanaJsonBaseId": 174,
+      "baseSetCode": "1",
+      "baseNumber": 174,
+      "variants": [
+        {
+          "id": 665,
+          "rarity": "Special",
+          "number": 7,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/7_719ee5d862ae1ed969144ac66b9e0527e70b5f34.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/7_7ec5ab0bc902e35388c93886d1ae9eba33536f9e.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Donald Duck - Musketeer",
+      "lorcanaJsonBaseId": 177,
+      "baseSetCode": "1",
+      "baseNumber": 177,
+      "variants": [
+        {
+          "id": 671,
+          "rarity": "Special",
+          "number": 13,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/13_abc137ca7e46b145a8a1a1b6705c5ebffba2ff67.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/13_38d6e2a40e22ec82c4ade6c679bcdb42a465b026.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Maui - Demigod",
+      "lorcanaJsonBaseId": 185,
+      "baseSetCode": "1",
+      "baseNumber": 185,
+      "variants": [
+        {
+          "id": 681,
+          "rarity": "Special",
+          "number": 23,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/23_972659d64f29f656a75e57fe9ea225d4664bef0f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/23_21cc754eec95afcf44e2976d82a35e7a31f4bf42.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Mickey Mouse - Musketeer",
+      "lorcanaJsonBaseId": 186,
+      "baseSetCode": "1",
+      "baseNumber": 186,
+      "variants": [
+        {
+          "id": 669,
+          "rarity": "Special",
+          "number": 11,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/11_7b94346ae8d8e842f5d576ec6dfd3a73e504b09c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/11_080ce7e3e02ce46664f2e9ff1397ba1b0f53a341.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "A Whole New World",
+      "lorcanaJsonBaseId": 195,
+      "baseSetCode": "1",
+      "baseNumber": 195,
+      "variants": [
+        {
+          "id": 1199,
+          "rarity": "Special",
+          "number": 10,
+          "promoGrouping": "C1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge1/10_d170b8d9f5f552ad50fbe13a57d5e0f99e7506a6.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge1/10_c22e0a7ddc09a3e1ab7d9a8569bd4a4a4492a306.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Hades - Dark Usurper",
+      "lorcanaJsonBaseId": null,
+      "baseSetCode": "15",
+      "baseNumber": null,
+      "variants": [
+        {
+          "id": 80031,
+          "rarity": "Special",
+          "number": 28,
+          "promoGrouping": "C3",
+          "promoSource": "Challenge Top 8 (250 copies)"
+        },
+        {
+          "id": 80032,
+          "rarity": "Special",
+          "number": 28,
+          "promoGrouping": "C3",
+          "promoSource": "Championship (36 copies)"
+        },
+        {
+          "id": 80033,
+          "rarity": "Special",
+          "number": 29,
+          "promoGrouping": "C3"
+        }
+      ]
+    },
+    {
+      "fullName": "Mickey Mouse - Friendly Face",
+      "lorcanaJsonBaseId": 229,
+      "baseSetCode": "2",
+      "baseNumber": 13,
+      "variants": [
+        {
+          "id": 676,
+          "rarity": "Special",
+          "number": 18,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/18_bc51aa12988c8daef89c41a7c3f56c4f991fddd8.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/18_4a6103900e229585e1bef12aec276394351713ef.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Rapunzel - Gifted Artist",
+      "lorcanaJsonBaseId": 235,
+      "baseSetCode": "2",
+      "baseNumber": 19,
+      "variants": [
+        {
+          "id": 689,
+          "rarity": "Special",
+          "number": 31,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/31_31c1941fc556f4677491fe9d0deadf356ec3ece9.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/31_4753a82cc262b2015d66210acb81efd4fe9f299c.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Snow White - Unexpected Houseguest",
+      "lorcanaJsonBaseId": 240,
+      "baseSetCode": "2",
+      "baseNumber": 24,
+      "variants": [
+        {
+          "id": 80043,
+          "rarity": "Special",
+          "number": 41,
+          "promoGrouping": "P1",
+          "scanLanguage": "ja"
+        },
+        {
+          "id": 80049,
+          "rarity": "Special",
+          "number": 42,
+          "promoGrouping": "P2",
+          "scanLanguage": "zh"
+        }
+      ]
+    },
+    {
+      "fullName": "Pinocchio - Talkative Puppet",
+      "lorcanaJsonBaseId": 274,
+      "baseSetCode": "2",
+      "baseNumber": 58,
+      "variants": [
+        {
+          "id": 690,
+          "rarity": "Special",
+          "number": 32,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/32_7a7c94c82373cd69136c9127fbba1d148f4cc74c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/32_9f1da6913557aebad2db4666ef7ee3bc84a29fb3.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Belle - Hidden Archer",
+      "lorcanaJsonBaseId": 288,
+      "baseSetCode": "2",
+      "baseNumber": 72,
+      "variants": [
+        {
+          "id": 80036,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "CC2"
+        }
+      ]
+    },
+    {
+      "fullName": "Bucky - Squirrel Squeak Tutor",
+      "lorcanaJsonBaseId": 289,
+      "baseSetCode": "2",
+      "baseNumber": 73,
+      "variants": [
+        {
+          "id": 673,
+          "rarity": "Special",
+          "number": 15,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/15_e2ea8cfa4607bf59aed9f6ed7c40e640f659deaa.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/15_ad1a54c809ee8865e860512e049854f27af48457.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Minnie Mouse - Wide-Eyed Diver",
+      "lorcanaJsonBaseId": 330,
+      "baseSetCode": "2",
+      "baseNumber": 114,
+      "variants": [
+        {
+          "id": 674,
+          "rarity": "Special",
+          "number": 16,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/16_cc712e95716400617a57e2740b9bcd0a760403c5.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/16_522978e71bb55256015b045384ec01b7f1f0ccca.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Gaston - Intellectual Powerhouse",
+      "lorcanaJsonBaseId": 363,
+      "baseSetCode": "2",
+      "baseNumber": 147,
+      "variants": [
+        {
+          "id": 80038,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "CC2"
+        }
+      ]
+    },
+    {
+      "fullName": "Beast - Tragic Hero",
+      "lorcanaJsonBaseId": 389,
+      "baseSetCode": "2",
+      "baseNumber": 173,
+      "variants": [
+        {
+          "id": 80039,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "CC2"
+        }
+      ]
+    },
+    {
+      "fullName": "Cinderella - Knight in Training",
+      "lorcanaJsonBaseId": 392,
+      "baseSetCode": "2",
+      "baseNumber": 176,
+      "variants": [
+        {
+          "id": 672,
+          "rarity": "Special",
+          "number": 14,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/14_75cabfaf0ea5d238315cbe47f22a90ae8ca7becc.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/14_b6cdcf6ca1d28c96eb3f13a15870851a2cd275ae.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Cinderella - Stouthearted",
+      "lorcanaJsonBaseId": 393,
+      "baseSetCode": "2",
+      "baseNumber": 177,
+      "variants": [
+        {
+          "id": 1189,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "C1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge1/3_7cfc69a3eefd2016514e90f05c0f64fd17b549fb.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge1/3_6100d3eee2d07d7ff86b7b3f1de10424acf73e36.jpg"
+          }
+        },
+        {
+          "id": 1192,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/2_49322180ef220a80b7cc871933665f8869559f93.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/2_ab8e5f5c5f2dafe94e8aaf1433b24867498bdddb.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Kit Cloudkicker - Tough Guy",
+      "lorcanaJsonBaseId": 513,
+      "baseSetCode": "3",
+      "baseNumber": 77,
+      "variants": [
+        {
+          "id": 684,
+          "rarity": "Special",
+          "number": 26,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/26_0714a9cfc3a2bdc343359e83ee79530f963342a5.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/26_78690817a4d7d1af40831f8b64e150550d039f5f.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Stitch - Little Rocket",
+      "lorcanaJsonBaseId": 561,
+      "baseSetCode": "3",
+      "baseNumber": 125,
+      "variants": [
+        {
+          "id": 80048,
+          "rarity": "Special",
+          "number": 43,
+          "promoGrouping": "P2",
+          "scanLanguage": "zh"
+        }
+      ]
+    },
+    {
+      "fullName": "Jolly Roger - Hook's Ship",
+      "lorcanaJsonBaseId": 571,
+      "baseSetCode": "3",
+      "baseNumber": 135,
+      "variants": [
+        {
+          "id": 685,
+          "rarity": "Special",
+          "number": 27,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/27_acd1cd2f118e7f81ea9599348e2163cb658c8d92.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/27_ca723a24f4f6c9bc161f93d4202bfc5a607c3ce4.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Scrooge McDuck - Uncle Moneybags",
+      "lorcanaJsonBaseId": 591,
+      "baseSetCode": "3",
+      "baseNumber": 155,
+      "variants": [
+        {
+          "id": 955,
+          "rarity": "Special",
+          "number": 39,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/39_68132e528c7f6067d808ff5cf96ee943514e2251.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/39_a52c17585baab2651512ff1cad1d3fdbe340b4f2.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "How Far I'll Go",
+      "lorcanaJsonBaseId": 597,
+      "baseSetCode": "3",
+      "baseNumber": 161,
+      "variants": [
+        {
+          "id": 686,
+          "rarity": "Special",
+          "number": 28,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/28_18df28e268a872e9eed7508efb18d99274c75f74.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/28_43fb4ad90bb10685ea841577982c115740f29d88.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Mickey Mouse - Leader of the Band",
+      "lorcanaJsonBaseId": 706,
+      "baseSetCode": "4",
+      "baseNumber": 15,
+      "variants": [
+        {
+          "id": 950,
+          "rarity": "Special",
+          "number": 34,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/34_9dae1c8c35943abcabf009d32482601d3ef9a869.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/34_f9b89a30c549b1e4532e38061e6e2084cd70af76.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Flotsam & Jetsam - Entangling Eels",
+      "lorcanaJsonBaseId": 735,
+      "baseSetCode": "4",
+      "baseNumber": 44,
+      "variants": [
+        {
+          "id": 956,
+          "rarity": "Special",
+          "number": 40,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/40_453a4b21074eb029138e74e81d7a5ebc036707c7.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/40_619fee458aad7b2a6ee3f162111b4d022b714f7a.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Mrs. Potts - Enchanted Teapot",
+      "lorcanaJsonBaseId": 743,
+      "baseSetCode": "4",
+      "baseNumber": 52,
+      "variants": [
+        {
+          "id": 80035,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "CC2"
+        }
+      ]
+    },
+    {
+      "fullName": "Ursula - Sea Witch Queen",
+      "lorcanaJsonBaseId": 749,
+      "baseSetCode": "4",
+      "baseNumber": 58,
+      "variants": [
+        {
+          "id": 954,
+          "rarity": "Special",
+          "number": 38,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/38_d4c1872d4be701b074bf36b812b6a7d913cd0744.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/38_5ef6f6e8a0f9d04d10b3d6a536519d99761b9545.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Ursula's Lair - Eye of the Storm",
+      "lorcanaJsonBaseId": 759,
+      "baseSetCode": "4",
+      "baseNumber": 68,
+      "variants": [
+        {
+          "id": 951,
+          "rarity": "Special",
+          "number": 35,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/35_adc777e002d92bf953458dd05e4a47a5eec688b1.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/35_946aa404aaea67ffafbd225b48992433a3b6ea1b.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Hidden Inkcaster",
+      "lorcanaJsonBaseId": 789,
+      "baseSetCode": "4",
+      "baseNumber": 98,
+      "variants": [
+        {
+          "id": 952,
+          "rarity": "Special",
+          "number": 36,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/36_ae193728bbcdcf6b8bb36a07fc312ec1aa947083.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/36_6a2e5185c6cdedd3e8379055aa9aef215b6cb581.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Mulan - Enemy of Entanglement",
+      "lorcanaJsonBaseId": 806,
+      "baseSetCode": "4",
+      "baseNumber": 115,
+      "variants": [
+        {
+          "id": 953,
+          "rarity": "Special",
+          "number": 37,
+          "promoGrouping": "P1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo1/37_953b47eac8d2924c9f8a7aef9e268ddf7a23715b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo1/37_33ea87d1dccccbd19b534c60c2a2900563729bbc.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Rapunzel - Appreciative Artist",
+      "lorcanaJsonBaseId": 844,
+      "baseSetCode": "4",
+      "baseNumber": 153,
+      "variants": [
+        {
+          "id": 3243,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "DIS",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/dis/1_3c05105d76d9775274bc878161a602c4c12365de.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/dis/1_34ce7a9e5ab4384ee30682a04f49dd4bf6c55ecd.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Donald Duck - Buccaneer",
+      "lorcanaJsonBaseId": 870,
+      "baseSetCode": "4",
+      "baseNumber": 179,
+      "variants": [
+        {
+          "id": 2436,
+          "rarity": "Special",
+          "number": 15,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/15_8d7f8b4314c572ae2d910f68082ad96059f4a297.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/15_356e8dae819863903f3ff074d29155e14d6409d8.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Mickey Mouse - Playful Sorcerer",
+      "lorcanaJsonBaseId": 878,
+      "baseSetCode": "4",
+      "baseNumber": 187,
+      "variants": [
+        {
+          "id": 1432,
+          "rarity": "Special",
+          "number": 7,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/7_d0fae8f0caf6fd33b168a61b95d51e2fb15d584d.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/7_b6e27ef7c2bef37aaed1a450374f4fb28828633c.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Nala - Mischievous Cub",
+      "lorcanaJsonBaseId": 958,
+      "baseSetCode": "5",
+      "baseNumber": 2,
+      "variants": [
+        {
+          "id": 1182,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/3_9705f53212ce1d4e4289326182a7f0d0c6611aa6.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/3_171e58bddb4bf3426d0f3a9e73582826728b215d.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Kristoff - Reindeer Keeper",
+      "lorcanaJsonBaseId": 969,
+      "baseSetCode": "5",
+      "baseNumber": 13,
+      "variants": [
+        {
+          "id": 1181,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/2_9b77759e7da85dbf7b0051cc7fbeadb36195356e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/2_e40db3ce31690cba23c85c8bd47ffa11f1c183f8.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Mirabel Madrigal - Family Gatherer",
+      "lorcanaJsonBaseId": 970,
+      "baseSetCode": "5",
+      "baseNumber": 14,
+      "variants": [
+        {
+          "id": 1186,
+          "rarity": "Special",
+          "number": 7,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/7_d6ea7a19e87c073a3aaaabc38701dc5a7caf7b32.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/7_db849754ff915aabc35c6f792f46ccbbcad1c326.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Vanellope von Schweetz - Sugar Rush Princess",
+      "lorcanaJsonBaseId": 975,
+      "baseSetCode": "5",
+      "baseNumber": 19,
+      "variants": [
+        {
+          "id": 1195,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/5_42d60880b0036846dc41452794caeee2849c1915.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/5_9702b03393c561fe4a2a57e8ab9b866e6c46aedc.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Invited to the Ball",
+      "lorcanaJsonBaseId": 985,
+      "baseSetCode": "5",
+      "baseNumber": 29,
+      "variants": [
+        {
+          "id": 1196,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "C1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge1/6_1b3b18a1144fa7c89505abdc0538fecdf227e291.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge1/6_7675d804f1dc0d8e01a0622bd990579c5003e6b8.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Elsa - The Fifth Spirit",
+      "lorcanaJsonBaseId": 1004,
+      "baseSetCode": "5",
+      "baseNumber": 48,
+      "variants": [
+        {
+          "id": 3247,
+          "rarity": "Special",
+          "number": 7,
+          "promoGrouping": "DIS",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/dis/7_42c0277f483fd04b8ec821692ec4eeacc31c8294.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/dis/7_ba3658f6e2618755eb4d187fcb94b457f2b325fd.jpg"
+          }
+        },
+        {
+          "id": 2184,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/6_6bb7007de2eed976162bfc98f71d581f1fb9dbba.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/6_770cc5fc81c597ff930ae89a4e3d8349d9d464e3.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Finders Keepers",
+      "lorcanaJsonBaseId": 1016,
+      "baseSetCode": "5",
+      "baseNumber": 60,
+      "variants": [
+        {
+          "id": 1183,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/4_a28c50e5eb6549dc382766bdc6fc33f5cad72008.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/4_40c719a1925b2346ec5776d8940882604fd855db.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Elsa's Ice Palace - Place of Solitude",
+      "lorcanaJsonBaseId": 1023,
+      "baseSetCode": "5",
+      "baseNumber": 67,
+      "variants": [
+        {
+          "id": 1197,
+          "rarity": "Special",
+          "number": 7,
+          "promoGrouping": "C1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge1/7_3324f1eaf672e4cfd71506a956b5098fea2364e4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge1/7_211f13ae71c966797d140785b7fe93b9a80a12f4.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Donald Duck - Pie Slinger",
+      "lorcanaJsonBaseId": 1063,
+      "baseSetCode": "5",
+      "baseNumber": 107,
+      "variants": [
+        {
+          "id": 3244,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "DIS",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/dis/2_c736ec129c7b7d996b2adc2cb412e1e49f50e5ad.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/dis/2_c84a2dbfd172031b1c99e874e6b3a4a2e2a9abbc.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Chicha - Dedicated Mother",
+      "lorcanaJsonBaseId": 1102,
+      "baseSetCode": "5",
+      "baseNumber": 146,
+      "variants": [
+        {
+          "id": 1184,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/5_71e3440e9e4739ca6ea21b8fe8038697a0fa2351.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/5_db346582fbcf1e426cba4072d02a5baa917e9cc8.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Prince John - Gold Lover",
+      "lorcanaJsonBaseId": 1103,
+      "baseSetCode": "5",
+      "baseNumber": 147,
+      "variants": [
+        {
+          "id": 1180,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/1_49775d8d6a9d891410f3c98ce69aa2fb5833d203.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/1_d01632d2c92852adc57a38dc3b8a252632f49f55.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Stitch - Team Underdog",
+      "lorcanaJsonBaseId": 1127,
+      "baseSetCode": "5",
+      "baseNumber": 171,
+      "variants": [
+        {
+          "id": 1185,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/6_b7994d40eec136667606d17c45486d94cc827554.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/6_e52e0a25f5a3a7d94f40d436dcf07375d632448e.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Lilo - Escape Artist",
+      "lorcanaJsonBaseId": 1201,
+      "baseSetCode": "6",
+      "baseNumber": 2,
+      "variants": [
+        {
+          "id": 1431,
+          "rarity": "Special",
+          "number": 25,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/25_09caf4bd04a33f4aaacfd8d6bb10cf06de46b02e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/25_bf8405a7e92ec90339f19aa45d03f79e7200591d.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Simba - Pride Protector",
+      "lorcanaJsonBaseId": 1219,
+      "baseSetCode": "6",
+      "baseNumber": 20,
+      "variants": [
+        {
+          "id": 2454,
+          "rarity": "Special",
+          "number": 4,
+          "promoGrouping": "C2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge2/4_aab2a1eb45417844fc433e302037ab6a61179580.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge2/4_5a33563aa93c35f3a78051cb7fa4d48d3d48fb16.jpg"
+          }
+        },
+        {
+          "id": 2458,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "C2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge2/8_8bdef61ee12642a63802b449c651e9085275b0ed.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge2/8_43bdc97c830343458a04a41d299e2a1c457139b9.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Rescue Rangers Away!",
+      "lorcanaJsonBaseId": 1228,
+      "baseSetCode": "6",
+      "baseNumber": 29,
+      "variants": [
+        {
+          "id": 1425,
+          "rarity": "Special",
+          "number": 10,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/10_bd3eac0c2118b2d31a0b51b2bb52852c31488912.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/10_d14c3beb42612de13fd2bac1eec39f795a5b5a61.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Jasmine - Royal Seafarer",
+      "lorcanaJsonBaseId": 1269,
+      "baseSetCode": "6",
+      "baseNumber": 70,
+      "variants": [
+        {
+          "id": 3239,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "CC1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/cc1/3_315643244732c16910cfe5c73280591132b45868.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/cc1/3_87ccd056dca9d479e1ddee10fda5e4950cafb78e.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Stitch - Alien Buccaneer",
+      "lorcanaJsonBaseId": 1271,
+      "baseSetCode": "6",
+      "baseNumber": 72,
+      "variants": [
+        {
+          "id": 1423,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/8_f3d09fb838bdbcda6ff9ae41c79114ac3bed5b99.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/8_98d7782fa93ac829337358afb3a0ddd5c40519f0.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Honey Lemon - Chemical Genius",
+      "lorcanaJsonBaseId": 1273,
+      "baseSetCode": "6",
+      "baseNumber": 74,
+      "variants": [
+        {
+          "id": 1426,
+          "rarity": "Special",
+          "number": 11,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/11_09f8e49b51f539c7d2333fff13ae36a7ac23d01f.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/11_4779db0336a12a0693906f7a65eba30bc9b8ef9f.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Daisy Duck - Pirate Captain",
+      "lorcanaJsonBaseId": 1280,
+      "baseSetCode": "6",
+      "baseNumber": 81,
+      "variants": [
+        {
+          "id": 2437,
+          "rarity": "Special",
+          "number": 16,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/16_ea2e0e62d08369d016070891284a95b261b54c41.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/16_293f0fbbac248e2d9e6f8c4348bef69e5dcdc70c.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Goofy - Expert Shipwright",
+      "lorcanaJsonBaseId": 1288,
+      "baseSetCode": "6",
+      "baseNumber": 89,
+      "variants": [
+        {
+          "id": 2435,
+          "rarity": "Special",
+          "number": 14,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/14_9049b1fc44f15c15f716ed4ec9ac1119e84ff9e4.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/14_d6b3588a7eed61f850361776dc41ee212653c1e4.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Mickey Mouse - Pirate Captain",
+      "lorcanaJsonBaseId": 1302,
+      "baseSetCode": "6",
+      "baseNumber": 103,
+      "variants": [
+        {
+          "id": 1430,
+          "rarity": "Special",
+          "number": 18,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/18_7081e1821e863d2bca0f54b5d5e4379a63737b51.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/18_81bd6bcbba6a5f0e81e69be3c6cf6929b90491d8.jpg"
+          }
+        },
+        {
+          "id": 2434,
+          "rarity": "Special",
+          "number": 13,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/13_33dcbe23994c265b88dcecff1a98931db84aea1a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/13_68fbefb81ed895d675d25f92dfcdf7a31eb085ba.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Aladdin - Intrepid Commander",
+      "lorcanaJsonBaseId": 1318,
+      "baseSetCode": "6",
+      "baseNumber": 119,
+      "variants": [
+        {
+          "id": 1424,
+          "rarity": "Special",
+          "number": 9,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/9_3797b15094dc76ba32b09e570ba28d8f1fec8b73.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/9_d4e79ddf238700f87618bd1dbbd8bd6f7505be3b.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Minnie Mouse - Pirate Lookout",
+      "lorcanaJsonBaseId": 1319,
+      "baseSetCode": "6",
+      "baseNumber": 120,
+      "variants": [
+        {
+          "id": 1427,
+          "rarity": "Special",
+          "number": 12,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/12_df8f2c918001c3267066deb03950a01dc3047414.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/12_54e2a3c177f58f1d63c538eba968b7a209ca5f74.jpg"
+          }
+        },
+        {
+          "id": 2438,
+          "rarity": "Special",
+          "number": 17,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/17_895215e20c4921c0dc472ff6d95acfcad5a8f083.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/17_b37d5d322d876a9a90b9456ce049e1497e244736.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Scar - Heartless Hunter",
+      "lorcanaJsonBaseId": 1326,
+      "baseSetCode": "6",
+      "baseNumber": 127,
+      "variants": [
+        {
+          "id": 1429,
+          "rarity": "Special",
+          "number": 14,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/14_15f1960bd5fb485730fa81bb28d5a28a1b9b850c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/14_c16d85421a970d46e9ad885c46c87a0e9bd80505.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Oswald - The Lucky Rabbit",
+      "lorcanaJsonBaseId": 1341,
+      "baseSetCode": "6",
+      "baseNumber": 142,
+      "variants": [
+        {
+          "id": 1422,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/6_f8c77d582d04d29a2891cc2c2609f3347d197e78.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/6_9f4c4cc917e3b6a7b91c202a742f77e75536fdc3.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Wasabi - Methodical Engineer",
+      "lorcanaJsonBaseId": 1348,
+      "baseSetCode": "6",
+      "baseNumber": 149,
+      "variants": [
+        {
+          "id": 1428,
+          "rarity": "Special",
+          "number": 13,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/13_7dd022192463f867be3b868ddbb064c29d106d2c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/13_7e28b320474547a9fee97c248f89b40c31e2b03b.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Baymax - Armored Companion",
+      "lorcanaJsonBaseId": 1356,
+      "baseSetCode": "6",
+      "baseNumber": 157,
+      "variants": [
+        {
+          "id": 1664,
+          "rarity": "Special",
+          "number": 9,
+          "promoGrouping": "C1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge1/9_19cd83a819704f909a297aeb743e75423af34ce9.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge1/9_4eefed1497b888216495a5ef2837b81d34d085ae.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Perdita - Playful Mother",
+      "lorcanaJsonBaseId": 1435,
+      "baseSetCode": "7",
+      "baseNumber": 2,
+      "variants": [
+        {
+          "id": 1658,
+          "rarity": "Special",
+          "number": 21,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/21_2d720709b6de3729b0c8dd642a6f8742bcfd881a.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/21_7f7d43b70721b50bea9924e81f3afc3349347382.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Snow White - Fairest in the Land",
+      "lorcanaJsonBaseId": 1466,
+      "baseSetCode": "7",
+      "baseNumber": 33,
+      "variants": [
+        {
+          "id": 1660,
+          "rarity": "Special",
+          "number": 23,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/23_7d6e97e969db1bdfb781d1d988761bfd3c8d98d9.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/23_061bda7209d4daf228a31c24320467a01b6b488a.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Elsa - Trusted Sister",
+      "lorcanaJsonBaseId": 1488,
+      "baseSetCode": "7",
+      "baseNumber": 55,
+      "variants": [
+        {
+          "id": 3238,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "CC1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/cc1/2_1e02b6a9f738a4b4f3913001513a11ab85207c19.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/cc1/2_28799b55c713870d6f544181e575fc67f30010cb.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Kronk - Laid Back",
+      "lorcanaJsonBaseId": 1496,
+      "baseSetCode": "7",
+      "baseNumber": 63,
+      "variants": [
+        {
+          "id": 1657,
+          "rarity": "Special",
+          "number": 20,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/20_ff8ac1a7af00b552b6fde33574e6f873522a3ce6.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/20_6b82a5706c5562df36a3305f039667a320de9f9e.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Elsa - Ice Maker",
+      "lorcanaJsonBaseId": 1502,
+      "baseSetCode": "7",
+      "baseNumber": 69,
+      "variants": [
+        {
+          "id": 2452,
+          "rarity": "Special",
+          "number": 2,
+          "promoGrouping": "C2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge2/2_f5b9e8b486e1abb86b3a1ac69e114f075f299965.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge2/2_5d64efcd3da762347184c836bb752ba19c88c03a.jpg"
+          }
+        },
+        {
+          "id": 2456,
+          "rarity": "Special",
+          "number": 6,
+          "promoGrouping": "C2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge2/6_108ebdd6233ebdf6601c91552efb74fe8e3f24bc.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge2/6_cc4eb2667402ae8b807ab3819fa60af838ac0555.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Anna - Ice Breaker",
+      "lorcanaJsonBaseId": 1505,
+      "baseSetCode": "7",
+      "baseNumber": 72,
+      "variants": [
+        {
+          "id": 1656,
+          "rarity": "Special",
+          "number": 19,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/19_8d8e2bb598b1018c3dd2fc9d10a0ff5d30e1ae7e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/19_c3b7dc8b329c179c962b17c8c98b09c1ca2aa82b.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Mad Hatter - Unruly Eccentric",
+      "lorcanaJsonBaseId": 1527,
+      "baseSetCode": "7",
+      "baseNumber": 94,
+      "variants": [
+        {
+          "id": 2715,
+          "rarity": "Special",
+          "number": 16,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/16_05961dfd4070633ba8808b9827727eca4c8aca32.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/16_59b93e0dc0e69ab159fb7c151406a6ddee624e3a.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Hiro Hamada - Armor Designer",
+      "lorcanaJsonBaseId": 1529,
+      "baseSetCode": "7",
+      "baseNumber": 96,
+      "variants": [
+        {
+          "id": 1661,
+          "rarity": "Special",
+          "number": 24,
+          "promoGrouping": "P2",
+          "artVariant": "A",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/24A_e61d0cc08440d0623274b0c69fef33dc32a5f64b.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/24A_cc84f7fe9ea26d1ae15e97aa838b6f39b26c510b.jpg"
+          }
+        },
+        {
+          "id": 1662,
+          "rarity": "Special",
+          "number": 24,
+          "promoGrouping": "P2",
+          "artVariant": "B",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/24B_0665cc15db892a07de98b8cfefc0015a762e79d5.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/24B_1f7b73a61642bb4b35e2355fac3e617c6f555e91.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Li Shang - Newly Promoted",
+      "lorcanaJsonBaseId": 1566,
+      "baseSetCode": "7",
+      "baseNumber": 133,
+      "variants": [
+        {
+          "id": 1659,
+          "rarity": "Special",
+          "number": 22,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/22_0180de53a0f92bad9c7e783933ea3f1901f5efb6.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/22_b52dd344271951edf235fc7f049d4a3ff9ac7d8c.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Moana - Adventurer of Land and Sea",
+      "lorcanaJsonBaseId": 1589,
+      "baseSetCode": "7",
+      "baseNumber": 156,
+      "variants": [
+        {
+          "id": 1433,
+          "rarity": "Special",
+          "number": 26,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/26_26ba867eeb259ee4382e9242e692c98a9bf7d7ff.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/26_c1dc332226a7f1d343be88e156ef85143903f054.jpg"
+          }
+        },
+        {
+          "id": 1663,
+          "rarity": "Special",
+          "number": 26,
+          "promoGrouping": "P2",
+          "printedName": "Vaiana",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/26vaiana_3986b15cc2a2ce5e29a2fb937acbf3c8db9a0321.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/26vaiana_3b810693bd58b5f343586238d5030921207632c5.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Belle - Apprentice Inventor",
+      "lorcanaJsonBaseId": 1592,
+      "baseSetCode": "7",
+      "baseNumber": 159,
+      "variants": [
+        {
+          "id": 2448,
+          "rarity": "Special",
+          "number": 37,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/37_ed7a64c02e38c9444968d0196f64032a68bd3583.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/37_06d0a0ec3410fc987eb552865f4ec1b417667f94.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Mulan - Disguised Soldier",
+      "lorcanaJsonBaseId": 1626,
+      "baseSetCode": "7",
+      "baseNumber": 193,
+      "variants": [
+        {
+          "id": 2449,
+          "rarity": "Special",
+          "number": 38,
+          "promoGrouping": "P3",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo3/38_9c020059f47add8099e4b20022c41bf857c4a9e1.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/38_73abdb14ae9ef66c5d6ca8b63de36fb9933f52d5.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Minnie Mouse - Daring Defender",
+      "lorcanaJsonBaseId": 1670,
+      "baseSetCode": "8",
+      "baseNumber": 6,
+      "variants": [
+        {
+          "id": 1894,
+          "rarity": "Special",
+          "number": 35,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/35_7e69521401e6e7658fdabc2c9ccd92cb1d08f669.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/35_895b77b7dd8cd65c7b20fb66b4ea64ff36d0bef5.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Patch - Playful Pup",
+      "lorcanaJsonBaseId": 1689,
+      "baseSetCode": "8",
+      "baseNumber": 25,
+      "variants": [
+        {
+          "id": 1890,
+          "rarity": "Special",
+          "number": 30,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/30_83296ddc56e3c1a15012bc20c5e7686b115bc188.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/30_0ecdc5364b3bf61dc7864b30dc5f515dd43eaee6.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Pluto - Tried and True",
+      "lorcanaJsonBaseId": 1692,
+      "baseSetCode": "8",
+      "baseNumber": 28,
+      "variants": [
+        {
+          "id": 1887,
+          "rarity": "Special",
+          "number": 27,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/27_355c91c18144fea361d8885ac2ceaf0393ca9daf.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/27_0baaa59adb720dc48ebada76bb8842c3b2c1ef97.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Lady - Decisive Dog",
+      "lorcanaJsonBaseId": 1697,
+      "baseSetCode": "8",
+      "baseNumber": 33,
+      "variants": [
+        {
+          "id": 1888,
+          "rarity": "Special",
+          "number": 28,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/28_9c0c593a80eb3042b590d75d0d56f8226068168c.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/28_a4635bb53ad10b73553ef4307bf645208f2d25d7.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Jafar - High Sultan of Lorcana",
+      "lorcanaJsonBaseId": 1738,
+      "baseSetCode": "8",
+      "baseNumber": 74,
+      "variants": [
+        {
+          "id": 1892,
+          "rarity": "Special",
+          "number": 32,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/32_d374689486074f49f4c88544e37a7256dc978ddc.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/32_56e6f9abc5bfd408109a68541784e944c24da097.jpg"
+          }
+        },
+        {
+          "id": 1893,
+          "rarity": "Special",
+          "number": 33,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/33_80408dcb4df9ebd6472a4d048375ee8dd46a9344.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/33_49050d493a681e9de1442c4e2dfccadd42ab1254.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Pull the Lever!",
+      "lorcanaJsonBaseId": 1744,
+      "baseSetCode": "8",
+      "baseNumber": 80,
+      "variants": [
+        {
+          "id": 1891,
+          "rarity": "Special",
+          "number": 31,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/31_493db3c34655332ae534c0ca5c91227126d49746.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/31_3891e5b5050df8ed52132f2c11bb64ee9b9775e7.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Archimedes - Resourceful Owl",
+      "lorcanaJsonBaseId": 1777,
+      "baseSetCode": "8",
+      "baseNumber": 113,
+      "variants": [
+        {
+          "id": 1935,
+          "rarity": "Special",
+          "number": 34,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/34_61799a037409d40d95427cc2ceae042c0db62698.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/34_04f1f4af02ab44d94fba3ea6c1a01c78c9b0385c.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Tinker Bell - Insistent Fairy",
+      "lorcanaJsonBaseId": 1800,
+      "baseSetCode": "8",
+      "baseNumber": 136,
+      "variants": [
+        {
+          "id": 80010,
+          "rarity": "Special",
+          "number": 14,
+          "promoGrouping": "C2"
+        },
+        {
+          "id": 80014,
+          "rarity": "Special",
+          "number": 18,
+          "promoGrouping": "C2"
+        }
+      ]
+    },
+    {
+      "fullName": "Mulan - Charging Ahead",
+      "lorcanaJsonBaseId": 1805,
+      "baseSetCode": "8",
+      "baseNumber": 141,
+      "variants": [
+        {
+          "id": 2453,
+          "rarity": "Special",
+          "number": 3,
+          "promoGrouping": "C2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge2/3_9367757ea03480a9aeab58ad1816f55acb53459e.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge2/3_52f301b0dccb6932f49a64334b385af0b848f4fe.jpg"
+          }
+        },
+        {
+          "id": 2457,
+          "rarity": "Special",
+          "number": 7,
+          "promoGrouping": "C2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/challenge2/7_6fe67451f9a47f0db3bb1c4b615187f4ec6ca290.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/challenge2/7_970a1a36d79c3a16d69863a24770412497656e1f.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Anna - Trusting Sister",
+      "lorcanaJsonBaseId": 1821,
+      "baseSetCode": "8",
+      "baseNumber": 157,
+      "variants": [
+        {
+          "id": 3241,
+          "rarity": "Special",
+          "number": 5,
+          "promoGrouping": "CC1",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/cc1/5_295cdcce096da382957e4a7f12e26caaf562fb80.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/cc1/5_99ccf115c501a6b00b94329e9b0f0df18815dfa0.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Aladdin - Vigilant Guard",
+      "lorcanaJsonBaseId": 1834,
+      "baseSetCode": "8",
+      "baseNumber": 170,
+      "variants": [
+        {
+          "id": 1889,
+          "rarity": "Special",
+          "number": 29,
+          "promoGrouping": "P2",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/promo2/29_4a1d3215fb7f26f648e0d3261c0524471cbbb808.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo2/29_69f310f0768e834c1e75c5a1b3f4e60dc85c8d6d.jpg"
+          }
+        }
+      ]
+    },
+    {
+      "fullName": "Down in New Orleans",
+      "lorcanaJsonBaseId": 1841,
+      "baseSetCode": "8",
+      "baseNumber": 177,
+      "variants": [
+        {
+          "id": 80008,
+          "rarity": "Special",
+          "number": 12,
+          "promoGrouping": "C2"
+        },
+        {
+          "id": 80012,
+          "rarity": "Special",
+          "number": 16,
+          "promoGrouping": "C2"
+        }
+      ]
+    },
+    {
+      "fullName": "Iago - Out of Reach",
+      "lorcanaJsonBaseId": 1859,
+      "baseSetCode": "8",
+      "baseNumber": 195,
+      "variants": [
+        {
+          "id": 1895,
+          "rarity": "Special",
+          "number": 8,
+          "promoGrouping": "D23",
+          "images": {
+            "full": "https://api.lorcana.ravensburger.com/images/en/d23/8_4480c6738df12918c25fccbbedad4215fc19cbf2.jpg",
+            "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/8_a141c2253ede14c4076591499a1061727e688705.jpg"
+          }
+        }
+      ]
+    }
+  ],
+  "provisionalIds": {
+    "80003": "5/C1 Mickey Mouse - Brave Little Tailor",
+    "80007": "11/C2 Stand Out",
+    "80008": "12/C2 Down in New Orleans",
+    "80009": "13/C2 The Headless Horseman - Cursed Rider",
+    "80010": "14/C2 Tinker Bell - Insistent Fairy",
+    "80011": "15/C2 Stand Out",
+    "80012": "16/C2 Down in New Orleans",
+    "80013": "17/C2 The Headless Horseman - Cursed Rider",
+    "80014": "18/C2 Tinker Bell - Insistent Fairy",
+    "80015": "20/C2 Minnie Mouse - Amethyst Champion",
+    "80017": "1/C3 Mother Knows Best",
+    "80018": "2/C3 Ursula - Deceiver",
+    "80019": "3/C3 Be Prepared",
+    "80020": "4/C3 Gaston - Superior Archer",
+    "80021": "5/C3 Madam Mim - Resourceful Trickster",
+    "80022": "11/C3 Syndrome - Out for Revenge",
+    "80023": "12/C3 Mickey Mouse - Brave Little Tailor",
+    "80024": "13/C3 Mother Knows Best",
+    "80025": "14/C3 Ursula - Deceiver",
+    "80026": "15/C3 Be Prepared",
+    "80027": "16/C3 Gaston - Superior Archer",
+    "80028": "17/C3 Madam Mim - Resourceful Trickster",
+    "80029": "23/C3 Syndrome - Out for Revenge",
+    "80030": "24/C3 Mickey Mouse - Brave Little Tailor",
+    "80031": "28/C3 (Challenge Top 8 (250 copies)) Hades - Dark Usurper",
+    "80032": "28/C3 (Championship (36 copies)) Hades - Dark Usurper",
+    "80033": "29/C3 Hades - Dark Usurper",
+    "80034": "1/CC2 Be Our Guest",
+    "80035": "2/CC2 Mrs. Potts - Enchanted Teapot",
+    "80036": "3/CC2 Belle - Hidden Archer",
+    "80037": "4/CC2 Lumiere - Fiery Friend",
+    "80038": "5/CC2 Gaston - Intellectual Powerhouse",
+    "80039": "6/CC2 Beast - Tragic Hero",
+    "80040": "5/DIS Baymax - Lab Assistant",
+    "80041": "19/DIS Creative Inspiration",
+    "80042": "25/P1 Mickey Mouse - True Friend",
+    "80043": "41/P1 Snow White - Unexpected Houseguest",
+    "80044": "15/P2 Mickey Mouse - True Friend",
+    "80045": "16/P2 Elsa - Queen Regent",
+    "80046": "17/P2 Anna - Braving the Storm",
+    "80047": "1/P4 Donald Duck - Taxi Driver",
+    "80048": "43/P2 Stitch - Little Rocket",
+    "80049": "42/P2 Snow White - Unexpected Houseguest",
+    "80050": "59/P3 Elsa - Exploring the Unknown",
+    "80051": "61/P3 Maleficent - Monstrous Dragon",
+    "80052": "62/P3 Maleficent - Monstrous Dragon",
+    "80053": "63/P3 Buzz Lightyear - Space Ranger",
+    "80054": "7/P4 Daisy Duck - Paranormal Investigator",
+    "80055": "8/P4 Daisy Duck - Paranormal Investigator"
+  },
+  "notes": [
+    {
+      "printing": "C1 (1/C1 to 10/C1)",
+      "card": "Lorcana Challenge Year 1",
+      "note": "Ten printings, one per number, each holding the finishes it was printed in (owner, 18 Oct 2026, from Cardmarket's list): 1-4 foil and non-foil, 5-7 foil only, 8-10 non-foil only. The non-foil twins of 3, 4, 8 and 9 and the unnumbered 2025 World Champion Mickey (1 of 1) were dropped that day."
+    },
+    {
+      "printing": "10/C1",
+      "card": "A Whole New World",
+      "note": "Non-foil only (owner settled); LorcanaJSON's foilTypes says Tempest, which is wrong."
+    },
+    {
+      "printing": "11/C2",
+      "card": "Stand Out",
+      "note": "Foil; 15/C2 is the same card in non-foil (owner, 18 Oct 2026). Number 11 to 14 is Lorcana Player's guess, settled as real by the owner. Its art is 15/C2's scan, with that number printed on it, until a scan of its own comes."
+    },
+    {
+      "printing": "12/C2",
+      "card": "Down in New Orleans",
+      "note": "Foil; 16/C2 is the same card in non-foil (owner, 18 Oct 2026). Number 11 to 14 is Lorcana Player's guess, settled as real by the owner. Its art is 16/C2's scan, with that number printed on it, until a scan of its own comes."
+    },
+    {
+      "printing": "13/C2",
+      "card": "The Headless Horseman - Cursed Rider",
+      "note": "Foil; 17/C2 is the same card in non-foil (owner, 18 Oct 2026). Number 11 to 14 is Lorcana Player's guess, settled as real by the owner. Its art is 17/C2's scan, with that number printed on it, until a scan of its own comes."
+    },
+    {
+      "printing": "14/C2",
+      "card": "Tinker Bell - Insistent Fairy",
+      "note": "Foil; 18/C2 is the same card in non-foil (owner, 18 Oct 2026). Number 11 to 14 is Lorcana Player's guess, settled as real by the owner. Its art is 18/C2's scan, with that number printed on it, until a scan of its own comes."
+    },
+    {
+      "printing": "15/C2",
+      "card": "Stand Out",
+      "note": "Non-foil; 11/C2 is the same card in foil (owner, 18 Oct 2026, with a scan)."
+    },
+    {
+      "printing": "16/C2",
+      "card": "Down in New Orleans",
+      "note": "Non-foil; 12/C2 is the same card in foil (owner, 18 Oct 2026, with a scan)."
+    },
+    {
+      "printing": "17/C2",
+      "card": "The Headless Horseman - Cursed Rider",
+      "note": "Non-foil; 13/C2 is the same card in foil (owner, 18 Oct 2026, with a scan)."
+    },
+    {
+      "printing": "18/C2",
+      "card": "Tinker Bell - Insistent Fairy",
+      "note": "Non-foil; 14/C2 is the same card in foil (owner, 18 Oct 2026, with a scan)."
+    },
+    {
+      "printing": "19/C2",
+      "card": "not revealed yet",
+      "note": "Not revealed yet (owner, 18 Oct 2026): the binder holds its pocket as not released yet (PROMO_SETS' `upcoming` in apps/web/src/shared/constants/promoSets.ts)."
+    },
+    {
+      "printing": "9/DIS to 18/DIS",
+      "card": "not revealed yet",
+      "note": "Not revealed yet (owner, 18 Oct 2026): the binder holds their pockets as not released yet (PROMO_SETS' `upcoming` in apps/web/src/shared/constants/promoSets.ts)."
+    },
+    {
+      "printing": "C3 (1/C3 to 24/C3)",
+      "card": "Challenge Set 3",
+      "note": "Finishes (owner, 19 Oct 2026): 1-12 non-foil, 13-24 the same cards in foil, each foil numbered its non-foil plus 12."
+    },
+    {
+      "printing": "2/C3",
+      "card": "Ursula - Deceiver",
+      "note": "Non-foil twin of 14/C3; on Cardmarket's Challenge Set 3 list. Its art is 14/C3's scan, with that number printed on it, until a scan of its own comes (19 Oct 2026)."
+    },
+    {
+      "printing": "20/C2",
+      "card": "Minnie Mouse - Amethyst Champion",
+      "note": "Foil, from Worlds 2026; the only 20/C2 so far (owner, 18 Oct 2026), so the unnumbered store-event non-foil listed before was dropped that day."
+    },
+    {
+      "printing": "24/C3",
+      "card": "Mickey Mouse - Brave Little Tailor",
+      "note": "Cardmarket lists this foil as #12; #24 follows the set's foil = non-foil + 12 pattern."
+    },
+    {
+      "printing": "25/P1",
+      "card": "Mickey Mouse - True Friend",
+      "note": "Printed only in Chinese (China Joy) and Japanese (Tokyo Toy Show); any scan will not be English (scanLanguage)."
+    },
+    {
+      "printing": "42/P2",
+      "card": "Snow White - Unexpected Houseguest",
+      "note": "Printed in Chinese and released in very small numbers; hard to find now (owner, 18 Oct 2026, with a scan)."
+    },
+    {
+      "printing": "43/P2",
+      "card": "Stitch - Little Rocket",
+      "note": "Printed in Chinese, foil; the owner holds one (18 Oct 2026). 37/P2 to 41/P2 were probably never released outside China, so the binder shows their pockets as not released (PROMO_SETS' `unreleased` in apps/web/src/shared/constants/promoSets.ts)."
+    },
+    {
+      "printing": "26/P2 (Vaiana)",
+      "card": "Moana - Adventurer of Land and Sea",
+      "note": "Released in Europe as Vaiana - Adventurer of Land and Sea, the character's European name: a printing of its own beside Moana's (owner, 18 Oct 2026). printedName carries the name on the card."
+    },
+    {
+      "printing": "59/P3",
+      "card": "Elsa - Exploring the Unknown",
+      "note": "Foil; a Japanese promo, a second printing of 22/P3's card (owner, 18 Oct 2026, with a scan)."
+    },
+    {
+      "printing": "61/P3",
+      "card": "Maleficent - Monstrous Dragon",
+      "note": "Non-foil; 62/P3 is the same card in foil (owner, 18 Oct 2026). The owner's scan is the Japanese printing."
+    },
+    {
+      "printing": "62/P3",
+      "card": "Maleficent - Monstrous Dragon",
+      "note": "Foil; 61/P3 is the same card in non-foil (owner, 18 Oct 2026). The owner's scan is the Japanese printing."
+    },
+    {
+      "printing": "63/P3",
+      "card": "Buzz Lightyear - Space Ranger",
+      "note": "Foil; a second printing of 57/P3's card (owner, 18 Oct 2026). The owner's scan is the Japanese printing."
+    },
+    {
+      "printing": "7/P4",
+      "card": "Daisy Duck - Paranormal Investigator",
+      "note": "Non-foil; Japanese; 8/P4 is the same card in foil (owner, 18 Oct 2026, with a scan)."
+    },
+    {
+      "printing": "8/P4",
+      "card": "Daisy Duck - Paranormal Investigator",
+      "note": "Foil; Japanese; 7/P4 is the same card in non-foil (owner, 18 Oct 2026, with a scan)."
+    },
+    {
+      "printing": "28/C3 (Challenge Top 8 (250 copies))",
+      "card": "Hades - Dark Usurper",
+      "note": "Two gold Hades printings share #28 (Cardmarket agrees); promoSource tells them apart."
+    },
+    {
+      "printing": "28/C3 (Challenge Top 8 (250 copies))",
+      "card": "Hades - Dark Usurper",
+      "note": "Base card is in Set 15 (Into the Inkdark), which neither LorcanaJSON (10 Oct 2026) nor allCards.json holds yet; fold once Set 15 lands."
+    },
+    {
+      "printing": "28/C3 (Championship (36 copies))",
+      "card": "Hades - Dark Usurper",
+      "note": "Two gold Hades printings share #28 (Cardmarket agrees); promoSource tells them apart."
+    },
+    {
+      "printing": "28/C3 (Championship (36 copies))",
+      "card": "Hades - Dark Usurper",
+      "note": "Base card is in Set 15 (Into the Inkdark), which neither LorcanaJSON (10 Oct 2026) nor allCards.json holds yet; fold once Set 15 lands."
+    },
+    {
+      "printing": "29/C3",
+      "card": "Hades - Dark Usurper",
+      "note": "Base card is in Set 15 (Into the Inkdark), which neither LorcanaJSON (10 Oct 2026) nor allCards.json holds yet; fold once Set 15 lands. The owner's scan is numbered 1/8 (19 Oct 2026)."
+    },
+    {
+      "printing": "3/C3",
+      "card": "Be Prepared",
+      "note": "Non-foil twin of 15/C3; on Cardmarket's Challenge Set 3 list. Its art is 15/C3's scan, with that number printed on it, until a scan of its own comes (19 Oct 2026)."
+    },
+    {
+      "printing": "4/C3",
+      "card": "Gaston - Superior Archer",
+      "note": "Non-foil twin of 16/C3; on Cardmarket's Challenge Set 3 list. Its art is 16/C3's scan, with that number printed on it, until a scan of its own comes (19 Oct 2026)."
+    },
+    {
+      "printing": "41/P1",
+      "card": "Snow White - Unexpected Houseguest",
+      "note": "Printed only in Japanese; on Cardmarket's Promo Set 1 list. Any scan will not be English (scanLanguage)."
+    },
+    {
+      "printing": "5/C3",
+      "card": "Madam Mim - Resourceful Trickster",
+      "note": "Non-foil twin of 17/C3; on Cardmarket's Challenge Set 3 list. Its art is 17/C3's scan, with that number printed on it, until a scan of its own comes (19 Oct 2026)."
+    }
+  ]
+}

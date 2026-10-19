@@ -1,7 +1,7 @@
-// The rules every release notes file must pass (#765): the JSON Schema in that issue, plus its
-// plain-text and highlight rules. The Monthly changelog draft routine checks the files it writes
-// with the same rules (its validate_release_notes.py), so a file that passes there passes here too.
-// notes.test.ts runs them on every file in ./notes, which keeps a malformed month from shipping.
+// The rules every release notes file must pass: the JSON Schema and plain-text rules from #765,
+// adapted to weekly files. The Weekly changelog draft routine checks the files it writes with the
+// same rules (its validate_release_notes.py), so a file that passes there passes here too.
+// notes.test.ts runs them on every file in ./notes, which keeps a malformed week from shipping.
 
 import {RELEASE_NOTES_SECTIONS} from './types';
 
@@ -18,7 +18,7 @@ interface TextRule {
   optional?: boolean;
 }
 
-const MONTH_TEXT: TextRule[] = [
+const WEEK_TEXT: TextRule[] = [
   {key: 'title', maxLength: 40},
   {key: 'summary', maxLength: 280},
   {key: 'behindTheScenes', maxLength: 280, optional: true},
@@ -29,9 +29,9 @@ const ITEM_TEXT: TextRule[] = [
 ];
 const LINK_LABEL: TextRule = {key: 'label', maxLength: 60};
 
-const MONTH_KEYS: ReadonlySet<string> = new Set([
+const WEEK_KEYS: ReadonlySet<string> = new Set([
   'schemaVersion',
-  'month',
+  'week',
   'title',
   'summary',
   'sections',
@@ -40,10 +40,13 @@ const MONTH_KEYS: ReadonlySet<string> = new Set([
 const SECTION_KEYS: ReadonlySet<string> = new Set(RELEASE_NOTES_SECTIONS);
 const ITEM_KEYS: ReadonlySet<string> = new Set(['title', 'body', 'highlight', 'link', 'prs']);
 
-/** How many items a month marks as highlights. */
-const HIGHLIGHTS = {min: 1, max: 5};
+/** The most items a week marks as highlights. A quiet week marks none. */
+const MAX_HIGHLIGHTS = 5;
 
-const MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** What Date's getUTCDay() returns for a Monday, the day every week starts. */
+const MONDAY = 1;
 /**
  * An in-app path: one leading slash, and no spaces or backslashes. Browsers read `//` and `/\`
  * alike as the start of another site's address, so `/\evil.com` would leave the site.
@@ -83,10 +86,32 @@ const NOT_PLAIN_TEXT: [RegExp, string][] = [
   [/[\r\n]/, 'a line break'],
 ];
 
-/** The heading a month's notes carry: "2026-09" gives "September 2026". */
-export function monthTitle(month: string): string {
-  const [year, number] = month.split('-');
-  return `${MONTH_NAMES[Number(number) - 1]} ${year}`;
+/** Midnight UTC on a "YYYY-MM-DD" date. */
+function utcDate(date: string): Date {
+  return new Date(`${date}T00:00:00Z`);
+}
+
+/** A date's month and day, such as "October 4". */
+function monthAndDay(date: Date): string {
+  return `${MONTH_NAMES[date.getUTCMonth()]} ${date.getUTCDate()}`;
+}
+
+/**
+ * The heading a week's notes carry, Monday to Sunday: "2026-09-21" gives "September 21 to 27,
+ * 2026", "2026-09-28" gives "September 28 to October 4, 2026", and a week across New Year names
+ * both years.
+ */
+export function weekTitle(week: string): string {
+  const monday = utcDate(week);
+  const sunday = new Date(monday.getTime() + 6 * DAY_MS);
+  const year = sunday.getUTCFullYear();
+  if (monday.getUTCFullYear() !== year) {
+    return `${monthAndDay(monday)}, ${monday.getUTCFullYear()} to ${monthAndDay(sunday)}, ${year}`;
+  }
+  // Sunday's month is named only when it isn't Monday's.
+  const end =
+    monday.getUTCMonth() === sunday.getUTCMonth() ? sunday.getUTCDate() : monthAndDay(sunday);
+  return `${monthAndDay(monday)} to ${end}, ${year}`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -197,16 +222,25 @@ function highlightProblems(sections: unknown): string[] {
   if (!isRecord(sections)) return [];
   const items = Object.values(sections).filter(Array.isArray).flat();
   const count = items.filter(isHighlight).length;
-  const inRange = count >= HIGHLIGHTS.min && count <= HIGHLIGHTS.max;
-  if (items.length === 0 || inRange) return [];
-  return [`highlights: ${count} items are marked, mark ${HIGHLIGHTS.min} to ${HIGHLIGHTS.max}`];
+  if (count <= MAX_HIGHLIGHTS) return [];
+  return [`highlights: ${count} items are marked, mark at most ${MAX_HIGHLIGHTS}`];
 }
 
-function monthProblems(notes: Record<string, unknown>): string[] {
-  const {month, title} = notes;
-  if (typeof month !== 'string' || !MONTH_PATTERN.test(month)) return ['month: must be YYYY-MM'];
-  const expected = monthTitle(month);
-  return title === expected ? [] : [`title: should be "${expected}" for ${month}`];
+/** A real calendar date, such as 2026-09-28: Date would read 2026-02-30 as March 2. */
+function isCalendarDate(value: unknown): value is string {
+  if (typeof value !== 'string' || !DATE_PATTERN.test(value)) return false;
+  const date = utcDate(value);
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value);
+}
+
+function weekProblems(notes: Record<string, unknown>): string[] {
+  const {week, title} = notes;
+  if (!isCalendarDate(week)) return ['week: must be a date, YYYY-MM-DD'];
+  if (utcDate(week).getUTCDay() !== MONDAY) {
+    return [`week: ${week} is not a Monday, the day a week starts`];
+  }
+  const expected = weekTitle(week);
+  return title === expected ? [] : [`title: should be "${expected}" for the week of ${week}`];
 }
 
 /** Everything wrong with a release notes file, one line each; empty when the file is valid. */
@@ -214,10 +248,10 @@ export function releaseNotesProblems(value: unknown): string[] {
   if (!isRecord(value)) return ['the file must hold one JSON object'];
   const root: Field = {path: '', value};
   return [
-    ...unknownKeyProblems(root, MONTH_KEYS),
-    ...(value.schemaVersion === 1 ? [] : ['schemaVersion: must be 1']),
-    ...monthProblems(value),
-    ...MONTH_TEXT.flatMap((rule) => textProblems(root, rule)),
+    ...unknownKeyProblems(root, WEEK_KEYS),
+    ...(value.schemaVersion === 2 ? [] : ['schemaVersion: must be 2']),
+    ...weekProblems(value),
+    ...WEEK_TEXT.flatMap((rule) => textProblems(root, rule)),
     ...sectionsProblems(child(root, 'sections')),
     ...highlightProblems(value.sections),
   ];

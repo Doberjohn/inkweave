@@ -1,7 +1,8 @@
 import type {Ink} from 'inkweave-synergy-engine';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from './collectionParser';
-import {binderCardsForSet, isBinderCard} from './binderCards';
+import {binderCardsForSet} from './binderCards';
+import {PROMO_RARITY} from '../cards/loader';
 
 /**
  * Set-completion tallies for the stats panel (#553 stats spike).
@@ -16,22 +17,25 @@ import {binderCardsForSet, isBinderCard} from './binderCards';
  * the inks counted only the five rarities of Dreamborn's standard export (owner,
  * 2026-08-14), which never carries Enchanted, Epic or Iconic; those come in exports of
  * their own, by rarity, and an import of only the standard one shows them missing, as
- * the binder does. Special stays out of every count: the binder holds no Special pocket.
+ * the binder does. The promos count too (#805): in their promo sets, and in the whole
+ * collection's numbers, which are one figure, promos and all (owner, 2026-10-17).
  */
 
 /**
  * Whether a binder card is a printing of another card: one with a `baseId` (#796). The
  * chase printings (Epic, Enchanted, Iconic) each get a rarity row of their own under the
  * five (owner, 2026-10-12); a printing that keeps its base card's rarity (Violet Parr #247,
- * Super Rare) counts under that rarity (owner, 2026-10-16).
+ * Super Rare) counts under that rarity (owner, 2026-10-16). The promos (#805) count under
+ * Special, shown as Promo: a row of the whole collection's, which a promo set's numbers have
+ * no need of, since all its cards are promos (see the panel).
  *
  * EVERY PRINTING THE BINDER HOLDS COMES IN ONE FINISH. Every Enchanted and Epic row of the
  * owner's own exports (2026-10-12) is a foil row, with no zero-count normal row beside it as
  * the promo export has, and LorcanaJSON lists one foil finish for every printing with a
  * `baseId` that isn't Special: all 360 chase printings and the 13 that keep their rarity (the
  * 10-10 export). So a held one is held in every finish it comes in, and counts toward master
- * too, or a finished set's master breakdown would read 0 forever. The Special promos carry a
- * `baseId` too, but `isBinderCard` drops them before any tally, so this needs no rarity check.
+ * too, or a finished set's master breakdown would read 0 forever. A promo is one printing in
+ * one finish as well: a promo printed in both is two, twins with a pocket each (#805).
  */
 const isPrinting = (card: LorcanaCard) => card.baseId !== undefined;
 
@@ -94,9 +98,19 @@ function bump<K>(into: Map<K, Slot>, key: K, held: Holding): void {
 
 /**
  * Common first, scarcest last, so the rarity rows read as a difficulty ramp: the
- * rulebook's order, and the filters' (`RARITY_ORDER` in the cards loader).
+ * rulebook's order, and the filters' (`RARITY_ORDER` in the cards loader), the promos last.
  */
-const RARITY_ORDER = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', 'Epic', 'Enchanted', 'Iconic'];
+const RARITY_ORDER = [
+  'Common',
+  'Uncommon',
+  'Rare',
+  'Super Rare',
+  'Legendary',
+  'Epic',
+  'Enchanted',
+  'Iconic',
+  PROMO_RARITY,
+];
 
 /**
  * Fold one card into the running tallies.
@@ -106,7 +120,6 @@ const RARITY_ORDER = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', '
  * card of a rarity outside `RARITY_ORDER` counts everywhere but gets no row.
  */
 function addCard(acc: Accumulator, card: LorcanaCard, entries: CollectionEntries): void {
-  if (!isBinderCard(card)) return;
   const holding = holdingOf(entries[card.id]);
   const rarity = card.rarity ?? 'Unknown';
   const held = isPrinting(card) ? {any: holding.any, both: holding.any} : holding;

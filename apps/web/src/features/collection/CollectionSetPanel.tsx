@@ -5,8 +5,9 @@ import {CtaButton, IconButton, InkIcon} from '../../shared/components';
 import {useHover} from '../../shared/hooks/useHover';
 import {usePrefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
 import {RaritySymbol} from '../reveals/RaritySymbol';
+import {rarityLabel} from '../cards/filterOptions';
 import {isFinished, percentOf, type tallyCollection, type tallySet} from './collectionStats';
-import {WHOLE_COLLECTION, setName, type BinderShow} from './binderCards';
+import {WHOLE_COLLECTION, isPromoSet, setName, type BinderShow} from './binderCards';
 import {SetPicker, type SetPickerProps} from './SetPicker';
 import {SIDE_PANEL_STYLE} from '../cards/components/BrowseSidePanel';
 import {
@@ -70,6 +71,10 @@ import {
  *     Enchanted, Iconic) in the headline and the inks too, and in rows of their own in the
  *     rarity breakdown (owner, 2026-10-12). The headline counted only the five rarities a
  *     Dreamborn export can contain before (2026-08-14 and 2026-10-07). See `tallySet`.
+ *   - A PROMO SET SHOWS COMPLETE SET AND BY INK ONLY (owner, 2026-10-17, #805): its pockets
+ *     each hold one printing in one finish, so its master would repeat Complete, and its
+ *     cards are all promos, so its rarity rows would be one. The whole collection's numbers
+ *     count the promos with the rest, one figure (owner, the same day).
  */
 
 type Tally = ReturnType<typeof tallySet>;
@@ -253,6 +258,8 @@ interface HeadlineProps {
   label: string;
   value: number;
   total: number;
+  /** What its count counts: cards, or a promo set's promos. */
+  unit?: 'cards' | 'promos';
   /** The tab's lead number, at display size. */
   lead?: boolean;
   /** When the bar's glide starts (ms): the second headline's sets off a beat after the first's. */
@@ -278,7 +285,15 @@ function layerStyle({shown, motion}: {shown: boolean; motion: boolean}): CSSProp
  * attended (hovered, or focused from the keyboard) the name gives way to its count,
  * "113 of 242 cards", in the same spot. Spans, so a button can hold them.
  */
-function HeadlineBody({label, value, total, lead = false, delay = 0, attended}: HeadlineProps & {attended: boolean}) {
+function HeadlineBody({
+  label,
+  value,
+  total,
+  unit = 'cards',
+  lead = false,
+  delay = 0,
+  attended,
+}: HeadlineProps & {attended: boolean}) {
   const motion = !usePrefersReducedMotion();
   return (
     <>
@@ -286,7 +301,7 @@ function HeadlineBody({label, value, total, lead = false, delay = 0, attended}: 
         <span style={{display: 'grid', minWidth: 0}}>
           <span style={{...HEADING_STYLE, ...layerStyle({shown: !attended, motion})}}>{label}</span>
           <span style={{...DETAIL_STYLE, ...layerStyle({shown: attended, motion})}}>
-            {`${count(value)} of ${count(total)} cards`}
+            {`${count(value)} of ${count(total)} ${unit}`}
           </span>
         </span>
         <span
@@ -445,7 +460,7 @@ function RarityRows({slots, axis, wide, delay}: BreakdownSlots<Tally['byRarity']
       {slots.map((slot, i) => (
         <div key={slot.rarity} style={rarityRow(wide)}>
           <RaritySymbol rarity={rarityKey(slot.rarity)} size={20} />
-          <span style={TRUNCATE}>{slot.rarity}</span>
+          <span style={TRUNCATE}>{rarityLabel(slot.rarity)}</span>
           <Bar value={slot[axis]} total={slot.total} height={BAR.row} delay={delay + i * STAGGER_MS} />
           <span style={{...countStyle(isFinished(slot[axis], slot.total)), textAlign: 'right'}}>
             {count(slot[axis])}/{count(slot.total)}
@@ -472,13 +487,17 @@ interface ScopeNumbersProps extends AxisChoice {
   figures: ScopeFigures;
   /** The whole collection's five-figure counts, which take room from the rarity rows' bars. */
   wide: boolean;
+  /** A promo set's: Complete set and By ink alone (see the header). */
+  promo: boolean;
 }
 
 /**
  * A scope's numbers, a set's or the whole collection's in the same blocks: the two
- * headlines, which also choose what the breakdowns count, then the breakdowns.
+ * headlines, which also choose what the breakdowns count, then the breakdowns. A promo set
+ * has the first headline and the inks only, which then count it whatever was chosen.
  */
-function ScopeNumbers({figures, wide, axis, onAxisChange}: ScopeNumbersProps) {
+function ScopeNumbers({figures, wide, promo, axis: chosen, onAxisChange}: ScopeNumbersProps) {
+  const axis = promo ? 'complete' : chosen;
   return (
     <>
       {/* The group's own gap is small, since each headline brings its padding. */}
@@ -488,34 +507,48 @@ function ScopeNumbers({figures, wide, axis, onAxisChange}: ScopeNumbersProps) {
           label={figures.noun ? `Complete ${figures.noun}` : 'Complete'}
           value={figures.complete}
           total={figures.cards}
+          unit={promo ? 'promos' : 'cards'}
           chosen={axis === 'complete'}
           onChoose={() => onAxisChange('complete')}
         />
-        <ChoosableHeadline
-          label={figures.noun ? `Master ${figures.noun}` : 'Master'}
-          value={figures.master}
-          total={figures.cards}
-          chosen={axis === 'master'}
-          onChoose={() => onAxisChange('master')}
-          delay={STAGGER_MS}
-        />
+        {!promo && (
+          <ChoosableHeadline
+            label={figures.noun ? `Master ${figures.noun}` : 'Master'}
+            value={figures.master}
+            total={figures.cards}
+            chosen={axis === 'master'}
+            onChoose={() => onAxisChange('master')}
+            delay={STAGGER_MS}
+          />
+        )}
       </div>
       {/* The bars set off in reading order: the two headlines', then the inks', then the rarities'. */}
       <Breakdown title="By ink" axis={axis}>
         <InkGrid slots={figures.byInk} axis={axis} delay={2 * STAGGER_MS} />
       </Breakdown>
-      <Breakdown title="By rarity" axis={axis}>
-        <RarityRows slots={figures.byRarity} axis={axis} wide={wide} delay={(2 + figures.byInk.length) * STAGGER_MS} />
-      </Breakdown>
+      {!promo && (
+        <Breakdown title="By rarity" axis={axis}>
+          <RarityRows
+            slots={figures.byRarity}
+            axis={axis}
+            wide={wide}
+            delay={(2 + figures.byInk.length) * STAGGER_MS}
+          />
+        </Breakdown>
+      )}
     </>
   );
 }
 
-/** While the pool loads: the two headlines' shape, so the numbers land without the panel jumping. */
-function NumbersLoading() {
+/**
+ * While the pool loads: the headlines' shape, so the numbers land without the panel jumping.
+ * A promo set's numbers have the first headline alone.
+ */
+function NumbersLoading({promo}: {promo: boolean}) {
+  const sizes = promo ? [FONT_SIZES.displaySm] : [FONT_SIZES.displaySm, FONT_SIZES.xl];
   return (
     <>
-      {[FONT_SIZES.displaySm, FONT_SIZES.xl].map((size) => (
+      {sizes.map((size) => (
         <div key={size} style={COLUMN}>
           <Skeleton height={size} width="70%" />
           <Skeleton height={size === FONT_SIZES.displaySm ? BAR.headline : BAR.second} borderRadius={RADIUS.pill} />
@@ -533,12 +566,15 @@ interface NumbersProps extends AxisChoice {
 
 /** The numbers for what the picker shows: the whole collection, or the open set. */
 function Numbers({stats, setCode, filtered, axis, onAxisChange}: NumbersProps) {
-  if (stats === null) return <NumbersLoading />;
+  const promo = isPromoSet(setCode);
+  if (stats === null) return <NumbersLoading promo={promo} />;
   const whole = setCode === WHOLE_COLLECTION;
   const tally = whole ? stats.totals : stats.sets.find((set) => set.code === setCode)?.tally;
-  if (!tally) return <NumbersLoading />;
+  if (!tally) return <NumbersLoading promo={promo} />;
   const figures = {...tally, noun: headlineNoun({whole, filtered})};
-  if (figures.cards > 0) return <ScopeNumbers figures={figures} wide={whole} axis={axis} onAxisChange={onAxisChange} />;
+  if (figures.cards > 0) {
+    return <ScopeNumbers figures={figures} wide={whole} promo={promo} axis={axis} onAxisChange={onAxisChange} />;
+  }
   // Filters that leave no card: said in words, since 0% of nothing would read as owning none.
   // The count line above the numbers otherwise went (owner, 2026-10-15).
   return filtered ? <p style={{...DETAIL_STYLE, margin: 0}}>No cards match your filters</p> : null;
@@ -671,16 +707,21 @@ function shownTally(props: CollectionSetPanelProps) {
 /** What the rail and the strip read of a tally: its two headlines. */
 type Headlines = Pick<Tally, 'complete' | 'master' | 'cards'>;
 
-/** The rail's sideways figures. With no card to count, said in words: 0% of nothing reads as owning none. */
-function railFigures({complete, master, cards}: Headlines): string {
+/**
+ * The rail's sideways figures, complete alone for a promo set, which shows no master. With no
+ * card to count, said in words: 0% of nothing reads as owning none.
+ */
+function railFigures({complete, master, cards}: Headlines, promo: boolean): string {
   if (cards === 0) return 'no matching cards';
-  return `${percentOf(complete, cards)}% complete · ${percentOf(master, cards)}% master`;
+  const done = `${percentOf(complete, cards)}% complete`;
+  return promo ? done : `${done} · ${percentOf(master, cards)}% master`;
 }
 
-/** The strip's toggle: the two percentages, or the set picker's dash when there is no card to count. */
-function stripFigures({complete, master, cards}: Headlines): string {
+/** The strip's toggle: the percentages the panel shows, or the set picker's dash when there is no card to count. */
+function stripFigures({complete, master, cards}: Headlines, promo: boolean): string {
   if (cards === 0) return '–';
-  return `${percentOf(complete, cards)}% · ${percentOf(master, cards)}%`;
+  const done = `${percentOf(complete, cards)}%`;
+  return promo ? done : `${done} · ${percentOf(master, cards)}%`;
 }
 
 const panelStyle = SIDE_PANEL_STYLE;
@@ -730,7 +771,7 @@ export function CollectionSetRail(props: CollectionSetPanelProps) {
         }}>
         {props.setCode === WHOLE_COLLECTION ? 'Whole collection' : setName(props.setCode)}
         {props.filtered && ' · filtered'}
-        {t !== null && ` · ${railFigures(t)}`}
+        {t !== null && ` · ${railFigures(t, isPromoSet(props.setCode))}`}
       </span>
       {open && (
         <div style={{...panelStyle, position: 'absolute', left: RAIL_WIDTH + SPACING.xs, top: 0, height: '100%', zIndex: 5}}>
@@ -755,7 +796,13 @@ export function CollectionSetStrip(props: CollectionSetPanelProps) {
         <div style={{flex: 1, minWidth: 0}}>
           <SetPicker {...pickerProps(props)} />
         </div>
-        {t !== null && <ToggleNumbers open={open} onToggle={() => setOpen(!open)} figures={stripFigures(t)} />}
+        {t !== null && (
+          <ToggleNumbers
+            open={open}
+            onToggle={() => setOpen(!open)}
+            figures={stripFigures(t, isPromoSet(props.setCode))}
+          />
+        )}
       </div>
       <BinderShows show={props.show} onShowChange={props.onShowChange} />
       {open && props.stats && (

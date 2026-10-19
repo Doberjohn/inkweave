@@ -16,7 +16,7 @@ import {
   OWNED_PARAM,
   WHOLE_COLLECTION,
   binderRarities,
-  isBinderCard,
+  binderSets,
   parseBinderShow,
   setFromFilter,
   strayParams,
@@ -53,13 +53,6 @@ const ImportCollectionDialog = lazyWithRetry(
  * it), and a new set cannot ship without its entry there (`SetCode` enforces it).
  */
 const DEFAULT_SET = String(Math.max(...Object.keys(SET_NAMES).map(Number)));
-
-/** Set codes with at least one binder card, newest first: the picker's order. */
-function binderSets(pool: LorcanaCard[]): string[] {
-  const codes = new Set<string>();
-  for (const card of pool) if (card.setCode && isBinderCard(card)) codes.add(card.setCode);
-  return [...codes].sort((a, b) => Number(b) - Number(a));
-}
 
 /**
  * The set to show, or the whole collection. A set the binder does not have
@@ -279,7 +272,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
 
   // Only collection mode (or the import, which parses against the full pool)
   // widens the pool, so a visitor who never switches fetches no chunks at all.
-  const {pool, error, isReady} = useCollectionPool(coreCards, collectionMode || showImport);
+  const {pool, waiting, error, isReady} = useCollectionPool(coreCards, collectionMode || showImport);
   const sets = isReady ? binderSets(pool) : null;
   const setCode = resolveSetCode(requested, sets);
 
@@ -312,6 +305,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
       <Suspense fallback={null}>
         <CollectionBinderSection
           cards={pool}
+          waiting={waiting}
           // Built here, not by the page: in grid mode a Set of up to 3,242 ids
           // would be rebuilt on every render for nobody.
           matchedIds={new Set(listing.cards.map((card) => card.id))}

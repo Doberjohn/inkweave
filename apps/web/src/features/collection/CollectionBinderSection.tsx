@@ -1,8 +1,16 @@
 import {useRef, type ReactNode} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries, CollectionEntry} from './collectionParser';
+import type {CollectionPromo} from './collectionPromos';
 import {CollectionBinder} from './CollectionBinder';
-import {WHOLE_COLLECTION, binderContents, goesSetBySet, type BinderShow} from './binderCards';
+import {
+  WHOLE_COLLECTION,
+  binderContents,
+  binderSlots,
+  namesStretches,
+  slotKey,
+  type BinderShow,
+} from './binderCards';
 import {tallyCollection} from './collectionStats';
 import {
   CollectionSetBody,
@@ -115,6 +123,8 @@ function PanelLayout({panel, children}: {panel: CollectionSetPanelProps; childre
 interface CollectionBinderSectionProps extends PanelControls {
   /** The merged pool, Core plus collection. Filtered to one set here. */
   cards: LorcanaCard[];
+  /** The promos whose card no dataset holds yet (#805): a promo set's binder names their pockets. */
+  waiting?: readonly CollectionPromo[];
   /**
    * Ids passing the page's filters, from the same call Browse's grid uses: the binder
    * holds this set's cards among them. Membership rather than the filter options, so
@@ -166,6 +176,7 @@ export function CollectionBinderSection({onRetry, ...props}: CollectionBinderSec
 
 function SectionContent({
   cards,
+  waiting = [],
   matchedIds,
   counted,
   filtered,
@@ -232,6 +243,13 @@ function SectionContent({
   // Docked, the page renders the panel itself (`DockedSetBody`); no need to count here.
   const stats = docked ? null : tallyCollection(counted, entries, controls.sets);
   const shown = binderContents(cards, setCode, sortOrder, controls.sets).filter((card) => matchedIds.has(card.id));
+  const slots = binderSlots(shown, {
+    scope: setCode,
+    sets: controls.sets,
+    sortOrder,
+    narrowed: filtered || controls.show !== 'all',
+    waiting,
+  });
   return (
     <PanelLayout panel={{...controls, stats, filtered}}>
       {shown.length === 0 ? (
@@ -240,9 +258,9 @@ function SectionContent({
         <CollectionBinder
           // Keyed by what it holds, in order, so a new set, sort or filter opens the
           // binder at its first spread: the old page would land on unrelated cards.
-          key={shown.map((card) => card.id).join()}
-          cards={shown}
-          bySet={goesSetBySet(setCode, sortOrder)}
+          key={slots.map(slotKey).join()}
+          slots={slots}
+          bySet={namesStretches(setCode, sortOrder)}
           countsFor={(cardId) => entries[cardId] ?? ZERO}
           onSelect={onCardSelect}
           single={isMobile}

@@ -3,8 +3,9 @@
  *
  * Alternate printings are rules-identical reprints of a base card with different art, so
  * they are not cards of their own: each is stored as a small entry in its base card's
- * `variants` array, which the web app shows as a printing switcher (#625). Special promos
- * stay out (graduation Rule 1 still strips them).
+ * `variants` array, which the web app shows as a printing switcher (#625). LorcanaJSON's
+ * Special promos never fold (graduation Rule 1 still strips them): a card's promo entries come
+ * from the promo catalog alone (scripts/lib/promo-printings.mjs, #805), and a fold leaves them be.
  *
  * A PRINTING IS WHAT HAS A `baseId`, not only what has a chase rarity (#796). LorcanaJSON
  * links every Epic, Enchanted and Iconic printing to its base card, and also four printings
@@ -15,7 +16,8 @@
  * is reported unmatched, which stops a graduation, instead of passing as a card of its own.
  *
  * Shared by `scripts/sync-variants.mjs` (backfill + reveal-season sync) and
- * `scripts/graduate-canonical-set.mjs` (Rule 1), so both write the same entry shape.
+ * `scripts/graduate-canonical-set.mjs` (Rule 1), so both write the same entry shape, and by
+ * `scripts/lib/promo-printings.mjs` for the printings' order.
  */
 
 const CHASE_RARITIES = new Set(['Enchanted', 'Epic', 'Iconic']);
@@ -26,11 +28,30 @@ const CHASE_RARITIES = new Set(['Enchanted', 'Epic', 'Iconic']);
  */
 export const isPrinting = (card) => card.baseId !== undefined || CHASE_RARITIES.has(card.rarity);
 
+/** A promo printing: LorcanaJSON gives every promo the rarity Special. */
+export const isPromo = (card) => card.rarity === 'Special';
+
 /** The printings that fold: every one but the Special promos. */
-const folds = (card) => isPrinting(card) && card.rarity !== 'Special';
+const folds = (card) => isPrinting(card) && !isPromo(card);
+
+/** Where a promo whose number is unknown sorts by number: after every numbered one (#805). */
+const UNNUMBERED = Number.MAX_SAFE_INTEGER;
+
+/**
+ * A card's printings in the order the web app's switcher shows them (`byDisplayOrder` in
+ * usePrintingSelection.ts): the other printings by collector number, then the promos by set in
+ * natural order (C2 before CC1, P2 before P10) and number, an unknown number last (#805).
+ */
+export function byPrintingOrder(a, b) {
+  const promosLast = Number(isPromo(a)) - Number(isPromo(b));
+  const bySet = (a.promoGrouping ?? '').localeCompare(b.promoGrouping ?? '', undefined, {
+    numeric: true,
+  });
+  return promosLast || bySet || (a.number ?? UNNUMBERED) - (b.number ?? UNNUMBERED);
+}
 
 /** Only the two art URLs the image build and the dev loader read (graduation Rule 6). */
-function pickImages(images) {
+export function pickImages(images) {
   if (!images) return undefined;
   const out = {};
   if (images.full) out.full = images.full;
@@ -45,19 +66,22 @@ function toEntry(variant, id) {
   return entry;
 }
 
+/** What an entry is: its printing, its rarity and its art. */
+const ENTRY_FACTS = [
+  (entry) => entry.id,
+  (entry) => entry.number,
+  (entry) => entry.rarity,
+  (entry) => entry.images?.full,
+  (entry) => entry.images?.thumbnail,
+];
+
 /**
  * Same printing, same rarity, same art: an existing entry that needs no rewrite (build hashes
  * survive). The rarity counts because entries are found by number: a corrected rarity must
  * reach the entry, not leave the stale one in place.
  */
 function sameEntry(existing, entry) {
-  return (
-    existing.id === entry.id &&
-    existing.number === entry.number &&
-    existing.rarity === entry.rarity &&
-    existing.images?.full === entry.images?.full &&
-    existing.images?.thumbnail === entry.images?.thumbnail
-  );
+  return ENTRY_FACTS.every((fact) => fact(existing) === fact(entry));
 }
 
 function baseFinder(baseCards, matchBy) {
@@ -76,18 +100,26 @@ function baseFinder(baseCards, matchBy) {
  * Put `entry` on `base`, replacing the entry for the same printing; returns which report bucket
  * it lands in. A printing is known by its collector number, which stays put when a hand scan's
  * entry is replaced by official art. Not by rarity: a card can hold two printings of one rarity
- * now that printings which keep their base card's rarity fold too (#796).
+ * now that printings which keep their base card's rarity fold too (#796). Promos are never
+ * matched: their numbers restart in every promo set, and only the promo catalog writes them
+ * (#805), so they stay as they are, after the other printings.
  */
 function upsert(base, entry) {
   const variants = base.variants ?? [];
-  const at = variants.findIndex((v) => v.number === entry.number);
-  if (at >= 0 && sameEntry(variants[at], entry)) return 'unchanged';
-  if (at >= 0) variants[at] = entry;
-  else variants.push(entry);
-  variants.sort((a, b) => a.number - b.number);
-  base.variants = variants;
-  return at >= 0 ? 'replaced' : 'folded';
+  const at = slotOf(variants, entry);
+  if (at < 0) {
+    variants.push(entry);
+    base.variants = variants.sort(byPrintingOrder);
+    return 'folded';
+  }
+  if (sameEntry(variants[at], entry)) return 'unchanged';
+  variants[at] = entry;
+  base.variants = variants.sort(byPrintingOrder);
+  return 'replaced';
 }
+
+/** Where `entry`'s printing sits among `variants`: the entry with its collector number, never a promo. */
+const slotOf = (variants, entry) => variants.findIndex((v) => !isPromo(v) && v.number === entry.number);
 
 /**
  * Fold the printings in `sourceCards` (every card with a `baseId` but the Special promos) into

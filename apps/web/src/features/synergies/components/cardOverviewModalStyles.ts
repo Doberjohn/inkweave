@@ -1,7 +1,7 @@
 import type {CSSProperties} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONTS, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
-import {hasForeignScan, printingsOf} from '../../../shared/hooks/usePrintingSelection';
+import {printingsOf} from '../../../shared/hooks/usePrintingSelection';
 
 /*
  * The card modal's chrome, shared by CardOverviewModal and CardOverviewModalFallback (#640). The
@@ -108,15 +108,15 @@ export function modalCardSize(isMobile: boolean): {cardWidth: number; cardHeight
 }
 
 /**
- * The row of art controls under a desktop card (#625's printing pills, #681's translation
- * toggle; owner, 2026-10-08, they sat in the header before): as tall as the pills, 34px
- * from their padding and text.
+ * The row of art controls under a desktop card, #625's printing pills (owner, 2026-10-08;
+ * they sat in the header before): as tall as the pills, 34px from their padding and text.
+ * #681's translation toggle went back to the header (owner, 2026-10-17).
  */
 export const ART_CONTROLS_HEIGHT = 34;
 
-/** Whether a card has art controls: printings to switch between, or a foreign scan to translate. */
+/** Whether a desktop card has art controls under its art: printings to switch between. */
 export function hasArtControls(card: LorcanaCard): boolean {
-  return printingsOf(card).length > 1 || hasForeignScan(card);
+  return printingsOf(card).length > 1;
 }
 
 /**

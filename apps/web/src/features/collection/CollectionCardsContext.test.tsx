@@ -15,9 +15,10 @@ import {
   cold reads cost 18-50 ms, which belongs outside the timed budget (#712).
 */
 const CHUNK_DIR = join(process.cwd(), 'public/data/collection');
-const SHIPPED_SETS = readdirSync(CHUNK_DIR)
-  .filter((f) => f.endsWith('.json') && f !== 'index.json')
-  .map((f) => f.replace('.json', ''));
+/** The promos' file beside the set chunks (#805), fetched with them. */
+const PROMOS_FILE = 'promos.json';
+const SHIPPED = readdirSync(CHUNK_DIR).filter((f) => f.endsWith('.json') && f !== 'index.json');
+const SHIPPED_SETS = SHIPPED.filter((f) => f !== PROMOS_FILE).map((f) => f.replace('.json', ''));
 
 const wrapper = ({children}: {children: React.ReactNode}) => (
   <CollectionCardsProvider>{children}</CollectionCardsProvider>
@@ -35,6 +36,10 @@ describe('COLLECTION_SETS', () => {
   */
   it('lists exactly the chunks the generator ships', () => {
     expect([...COLLECTION_SETS].sort()).toEqual([...SHIPPED_SETS].sort());
+  });
+
+  it('has the promos beside them, which the provider fetches too (#805)', () => {
+    expect(SHIPPED).toContain(PROMOS_FILE);
   });
 
   it('does not list the excluded Quest sets', () => {
@@ -58,14 +63,15 @@ describe('CollectionCardsProvider', () => {
   const ok = () => Promise.resolve({ok: true, json: () => Promise.resolve([])});
   const notFound = () => Promise.resolve({ok: false, status: 404});
 
-  it('fetches one chunk per set, once', async () => {
+  it('fetches one chunk per set, and the promos, once', async () => {
     fetchMock.mockImplementation(ok);
     const {result} = renderHook(() => useCollectionCards(), {wrapper});
 
     result.current.ensureLoaded();
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(fetchMock).toHaveBeenCalledTimes(COLLECTION_SETS.length);
+    expect(fetchMock).toHaveBeenCalledTimes(COLLECTION_SETS.length + 1);
+    expect(fetchMock).toHaveBeenCalledWith(`/data/collection/${PROMOS_FILE}`);
   });
 
   it('is idempotent, so calling it on every render costs nothing', async () => {
@@ -77,7 +83,7 @@ describe('CollectionCardsProvider', () => {
     result.current.ensureLoaded();
     result.current.ensureLoaded();
 
-    expect(fetchMock).toHaveBeenCalledTimes(COLLECTION_SETS.length);
+    expect(fetchMock).toHaveBeenCalledTimes(COLLECTION_SETS.length + 1);
   });
 
   /*

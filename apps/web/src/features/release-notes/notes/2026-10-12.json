@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 2,
+  "week": "2026-10-12",
+  "title": "October 12 to 18, 2026",
+  "summary": "Set 14 is official, every synergy line names both cards, over 3,000 false synergies are gone, and four cards gain an Alt foil printing.",
+  "sections": {
+    "new": [
+      {
+        "title": "Set 14 is official",
+        "body": "On October 14, Set 14 moved to the official card data, with official names, rules text and art for all 204 cards. Every card now has its permanent address, and the homepage features six Set 14 cards, one per ink. Links to preview cards shared during the reveal season no longer work.",
+        "highlight": true,
+        "link": {"label": "Browse the cards", "to": "/browse"},
+        "prs": [780]
+      },
+      {
+        "title": "Release notes",
+        "body": "This page shows what changed on Inkweave each week, newest first, back to the start of Set 14's reveal season. The site's footer links to it.",
+        "prs": [770]
+      },
+      {
+        "title": "Alt foil printings",
+        "body": "Sven - Leaping Reindeer, Mr. Incredible - Super Strong, Christopher Robin - Hunny Sage and Violet Parr - Super Resilient gained a foil-only Alt foil printing. The printing switcher now names every printing, with each chase rarity's symbol beside its name.",
+        "prs": [799, 804]
+      }
+    ],
+    "improved": [
+      {
+        "title": "Every synergy names both cards",
+        "body": "Each synergy line now names both cards and the part each one plays, so it reads true from either card's page, where most lines used to name neither. Tile tooltips show the card names too.",
+        "highlight": true,
+        "prs": [786]
+      },
+      {
+        "title": "Playstyle filters fit the playstyle",
+        "body": "A playstyle page now offers only the filter values its own cards have, so no single option empties the grid. Browse and card pages keep every option.",
+        "prs": [773]
+      },
+      {
+        "title": "Pair view",
+        "body": "Comparing two cards in the card window no longer leaves an empty band above them, and the close button's × is centered, in gold.",
+        "prs": [784]
+      }
+    ],
+    "fixed": [
+      {
+        "title": "Pages that fail to load",
+        "body": "When a page's code fails to download, most often in a tab left open during an update, the site now reloads quietly instead of showing an error. If the reload fails too, it says the page couldn't load and offers a Reload button.",
+        "prs": [778]
+      },
+      {
+        "title": "Keyboard and screen readers",
+        "body": "Tab and Shift+Tab stay inside dialogs and the card window, and search's arrow keys, Escape and Enter work even right after typing. Screen readers now hear each synergy tile's strength and when a card grid is empty, and the Alt arts counter is easier to read.",
+        "prs": [769, 773, 785]
+      },
+      {
+        "title": "Votes follow their cards",
+        "body": "383 votes cast on Set 12 and 13 cards while they were previews now count toward the released cards, and Set 14's preview votes moved the same way when the set went official.",
+        "link": {"label": "Vote on synergies", "to": "/vote"},
+        "prs": [767, 780]
+      }
+    ],
+    "engine": [
+      {
+        "title": "Fewer false synergies",
+        "body": "A review of the synergy data removed links the cards' text doesn't support, such as Woody - Leader of the Toys pairing with every location, and singers now pair only with songs that cost more than they do, the ones Singer is for. Across sets 9 to 14, over 3,100 pairs are gone and nearly 1,000 score lower.",
+        "highlight": true,
+        "prs": [787, 788]
+      },
+      {
+        "title": "Self-Discard",
+        "body": "A discard outlet now scores highest only with a payoff its discard switches on, such as an empty hand. The Gargoyles with STONE BY DAY joined the playstyle, paired with the cards that keep your hand small enough for them to ready.",
+        "prs": [760, 768]
+      }
+    ]
+  },
+  "behindTheScenes": "Plus 20 behind-the-scenes changes: dependency updates, CI and tooling fixes, code cleanups and work on features that aren't switched on yet."
+}

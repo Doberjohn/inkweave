@@ -9,8 +9,11 @@ export interface RawCardVariant {
   id: number;
   /** Epic, Enchanted or Iconic, or the base card's own rarity for a printing that keeps it (#796). */
   rarity: string;
-  /** Collector number, e.g. 241. */
-  number: number;
+  /**
+   * Collector number, e.g. 241. Absent on a promo whose number is unknown (#805), which the
+   * promo catalog writes as null; the web loader turns a null into an absent number.
+   */
+  number?: number | null;
   /** Absent for a hand-supplied scan, whose art is then card-images-preview/{id}.avif. */
   images?: {
     full?: string;

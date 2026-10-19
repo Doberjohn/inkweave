@@ -159,6 +159,7 @@ describe('usePrintingSelection views', () => {
     expect(trackEvent).toHaveBeenCalledTimes(1);
     expect(trackEvent).toHaveBeenCalledWith('card_printing_view', {
       cardId: '1938',
+      printingId: '2141',
       rarity: 'Enchanted',
       surface: 'card_page',
     });
@@ -223,7 +224,7 @@ describe('printingName', () => {
     expect(printingName({rarity: 'Special', number: 8, promoGrouping: 'C1', finish: 'normal'})).toBe(
       '8/C1 non-foil',
     );
-    // Minnie Mouse - Amethyst Champion's non-foil C2 has no known number yet.
+    // A promo whose number nobody knows yet goes by its set alone.
     expect(printingName({rarity: 'Special', promoGrouping: 'C2', finish: 'normal'})).toBe('C2 non-foil');
   });
 
@@ -278,5 +279,21 @@ describe('printingsOf', () => {
     });
 
     expect(printingsOf(card).map((p) => p.label)).toEqual(['Standard', 'Enchanted', 'Alt foil', '25/P1', '10/P3']);
+  });
+
+  it("puts a promo whose number is unknown after its set's numbered ones (#805)", () => {
+    const minnie = createCard({
+      id: '2224',
+      variants: [
+        {id: '80016', rarity: 'Special', promoGrouping: 'C2', finish: 'normal'},
+        {id: '80015', rarity: 'Special', number: 20, promoGrouping: 'C2', finish: 'foil'},
+      ],
+    });
+
+    expect(printingsOf(minnie).map((p) => p.label)).toEqual([
+      'Standard',
+      '20/C2 foil',
+      'C2 non-foil',
+    ]);
   });
 });
