@@ -4,7 +4,14 @@ import {fn, userEvent, within} from 'storybook/test';
 import {CollectionSetBody, CollectionSetRail, CollectionSetStrip, type CollectionSetPanelProps} from './CollectionSetPanel';
 import {SIDE_PANEL_STYLE} from '../cards/components/BrowseSidePanel';
 import type {BinderShow} from './binderCards';
-import {STORY_SETS, STORY_STATS, STORY_STITCH_STATS} from './collectionStoryData';
+import {
+  STORY_PROMO_SET,
+  STORY_PROMO_STATS,
+  STORY_SETS,
+  STORY_SETS_WITH_PROMOS,
+  STORY_STATS,
+  STORY_STITCH_STATS,
+} from './collectionStoryData';
 import {tallyCollection} from './collectionStats';
 import {COLORS} from '../../shared/constants';
 
@@ -86,6 +93,19 @@ export const MasterChosen: Story = {
 
 /** The whole collection, picked first in the set picker: the same blocks, with every set's numbers summed. */
 export const WholeCollection: Story = {args: {setCode: 'all'}};
+
+/**
+ * A promo set (owner, 2026-10-17, #805): Complete set and By ink alone, its count in promos.
+ * Each pocket holds one printing in one finish, so a master would only repeat Complete.
+ */
+export const PromoSet: Story = {
+  args: {setCode: STORY_PROMO_SET, sets: STORY_SETS_WITH_PROMOS, stats: STORY_PROMO_STATS},
+};
+
+/** The whole collection with a promo set in it: one figure, promos and all, and a Promo row under By rarity. */
+export const WholeCollectionWithPromos: Story = {
+  args: {setCode: 'all', sets: STORY_SETS_WITH_PROMOS, stats: STORY_PROMO_STATS},
+};
 
 /**
  * A search for "Stitch" (owner, 2026-10-15): every number counts only the cards it finds,

@@ -1,15 +1,17 @@
-import {useState} from 'react';
+import {useState, type CSSProperties} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from '../cards/components/CardTile';
+import {PROMO_RARITY, smallImageUrl} from '../cards/loader';
 import {CollectionSlotCounts} from './CollectionSlotCounts';
 import type {CollectionEntry} from './collectionParser';
 import {BinderSpread, PER_PAGE, PER_SPREAD} from '../cards/components/BinderSpread';
 import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/BinderSpreadMap';
-import {setName} from './binderCards';
+import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
+import {printingName} from '../../shared/hooks/usePrintingSelection';
+import {FONT_SIZES, RADIUS, SPACING, blackRgba} from '../../shared/constants';
 
 /**
- * The collection binder (#553 Phase C): the cards it is given, pocket by pocket, in the
- * order it is given them.
+ * The collection binder (#553 Phase C): the pockets it is given, in the order it is given them.
  *
  * IT HOLDS WHAT THE PAGE LISTS (owner, 2026-10-12): the cards that pass the page's
  * filters, in its sort, packed the way the grid packs them (see
@@ -22,18 +24,24 @@ import {setName} from './binderCards';
  * An unowned card is shown greyed rather than as an empty pocket: you cannot tell
  * which card is missing from a blank rectangle.
  *
+ * A PROMO SET HOLDS A POCKET PER NUMBER (owner, 2026-10-17, #805): laid out in collector
+ * order with nothing narrowing it, a number nobody has listed yet is an open pocket, and so
+ * is a promo whose card is not out yet, named (`promoSetPockets`). An open pocket shows its
+ * code; a promo's own pocket shows only its card, with no code over the art (owner, the same
+ * day). Its tile's name still says the code ("25/P1 printing"), with a printing's finish
+ * where it has one.
+ *
  * The parchment, spine and arrows come from `BinderSpread`, the spread map from
  * `BinderSpreadMap`.
- *
- * Collector order means something only because Special-rarity promos are excluded:
- * they reuse base collector numbers, 160 contested slots across the pool, five cards
- * claiming Set 1's slot #1. See `binderCardsForSet` in `./binderCards`.
  */
 
 interface CollectionBinderProps {
-  /** The cards to hold, in the order to hold them. */
-  cards: readonly LorcanaCard[];
-  /** The cards go set by set (the whole collection in collector order): the map names each spread's sets. */
+  /** The pockets to hold, in the order to hold them. */
+  slots: readonly BinderSlot[];
+  /**
+   * The pockets go set by set (the whole collection in collector order) or edition by edition
+   * (Curator's Collection): the map names each spread's sets or editions.
+   */
   bySet?: boolean;
   /** Copies held of this card, per finish. */
   countsFor: (cardId: string) => CollectionEntry;
@@ -59,21 +67,37 @@ interface CollectionBinderProps {
  */
 const isOwned = (counts: CollectionEntry) => counts.normal + counts.foil > 0;
 
-/** A card as the map draws it: whether you hold it, in its ink, or both inks for a dual-ink card. */
-const pocketOf = (card: LorcanaCard, counts: CollectionEntry): Pocket => ({
-  owned: isOwned(counts),
-  inks: card.ink2 ? [card.ink, card.ink2] : [card.ink],
-});
+/**
+ * A waiting promo's scan, at the small size the pockets use, or none for an open pocket that has
+ * no promo or no art. In dev every promo without official art has a scan's URL, so one whose
+ * scan is missing shows its pocket's text on the spread (`OpenPocketArt`) but grey in the map.
+ */
+function waitingScan({id, imageUrl, imageHashSm}: OpenPocket): string | undefined {
+  return id === undefined ? undefined : smallImageUrl({id, imageUrl, imageHashSm});
+}
 
-/** Where each set starts among cards that go set by set, named for the map's hover text. */
-function mapSets(cards: readonly LorcanaCard[]): MapSet[] {
-  return cards.flatMap(({setCode = ''}, i) =>
-    i > 0 && setCode === cards[i - 1].setCode ? [] : [{start: i, label: `Set ${setCode}, ${setName(setCode)}`}],
+/**
+ * A pocket as the map draws it: an open one, with a waiting promo's scan or without, or whether
+ * you hold its card, in its ink or both of a dual-ink card's.
+ */
+function pocketOf(slot: BinderSlot, countsFor: (cardId: string) => CollectionEntry): Pocket {
+  if (isOpenPocket(slot)) return {owned: false, inks: [], open: true, scan: waitingScan(slot) !== undefined};
+  return {owned: isOwned(countsFor(slot.id)), inks: slot.ink2 ? [slot.ink, slot.ink2] : [slot.ink]};
+}
+
+/** Where each set starts among pockets that go set by set, named for the map's hover text. */
+function mapSets(slots: readonly BinderSlot[]): MapSet[] {
+  return slots.flatMap(({setCode = ''}, i) =>
+    i > 0 && setCode === slots[i - 1].setCode ? [] : [{start: i, label: setLabel(setCode)}],
   );
 }
 
+/** An open pocket's code, as its promo's card would print it ("25/P1"), with its finish if it has one. */
+const promoLabel = ({setNumber, setCode, finish, artVariant}: OpenPocket) =>
+  printingName({rarity: PROMO_RARITY, number: setNumber, promoGrouping: setCode, finish, artVariant});
+
 /** One position in the binder: the card, greyed while you hold none, and its counts. */
-function BinderSlot({
+function CardPocket({
   card,
   counts,
   onSelect,
@@ -104,8 +128,83 @@ function BinderSlot({
   );
 }
 
+/**
+ * An open pocket on the parchment: dashed, in the parchment's own brown (black, thinned), with
+ * its code over what it waits for.
+ */
+const OPEN_STYLE: CSSProperties = {
+  height: '100%',
+  boxSizing: 'border-box',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: SPACING.xs,
+  padding: SPACING.sm,
+  border: `2px dashed ${blackRgba(0.3)}`,
+  borderRadius: `${RADIUS.sm}px`,
+  color: blackRgba(0.65),
+  textAlign: 'center',
+};
+
+/**
+ * Why an open pocket is empty: its promo's card is not out yet, its set never released it or
+ * has yet to, or nobody has listed it.
+ */
+function openReason(pocket: OpenPocket) {
+  if (pocket.fullName) return 'Not in our data yet';
+  if (pocket.unreleased) return 'Not released';
+  return pocket.upcoming ? 'Not released yet' : 'Not listed yet';
+}
+
+/**
+ * A pocket with no card in it (#805): its code, the card a waiting promo is for, and why the
+ * pocket is empty.
+ */
+function OpenPocketText({pocket}: {pocket: OpenPocket}) {
+  return (
+    <div style={OPEN_STYLE}>
+      <span style={{fontSize: `${FONT_SIZES.xl}px`, fontWeight: 700}}>{promoLabel(pocket)}</span>
+      {pocket.fullName && <span style={{fontSize: `${FONT_SIZES.xs}px`, fontWeight: 700}}>{pocket.fullName}</span>}
+      <span style={{fontSize: `${FONT_SIZES.xs}px`, lineHeight: 1.3}}>{openReason(pocket)}</span>
+    </div>
+  );
+}
+
+/**
+ * A waiting promo's scan (owner, 2026-10-19: the three Hades of Set 15, whose card is not out):
+ * greyed as an unowned card is, since no one can hold it yet, with no code over the art, and
+ * nothing to open. Its name says what it is and why it waits. A scan that fails to load gives
+ * way to the pocket's text.
+ */
+function OpenPocketArt({pocket, src}: {pocket: OpenPocket; src: string}) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <OpenPocketText pocket={pocket} />;
+  const name = `${pocket.fullName}, ${promoLabel(pocket)} printing: ${openReason(pocket).toLowerCase()}`;
+  return (
+    <img
+      className="binder-waiting-art"
+      src={src}
+      alt={name}
+      title={name}
+      loading="lazy"
+      decoding="async"
+      onError={() => setFailed(true)}
+      style={{width: '100%', height: '100%', objectFit: 'cover', display: 'block'}}
+    />
+  );
+}
+
+/** An open pocket: a waiting promo's scan where it has one, else its code and why it is open. */
+function OpenPocketView({pocket}: {pocket: OpenPocket}) {
+  const src = waitingScan(pocket);
+  if (src === undefined) return <OpenPocketText pocket={pocket} />;
+  // Keyed by the scan, so a pocket reused for another promo never keeps one's failure.
+  return <OpenPocketArt key={src} pocket={pocket} src={src} />;
+}
+
 export function CollectionBinder({
-  cards,
+  slots,
   bySet = false,
   countsFor,
   onSelect,
@@ -118,17 +217,17 @@ export function CollectionBinder({
   // phone opens page 2 (slots 24-35), the first page of that spread, and back
   // again. A stored view NUMBER would have jumped to spread 2's cards instead.
   const [firstSlot, setFirstSlot] = useState(0);
-  const total = Math.max(1, Math.ceil(cards.length / perView));
+  const total = Math.max(1, Math.ceil(slots.length / perView));
   const current = Math.min(Math.floor(firstSlot / perView), total - 1);
   const goTo = (view: number) => setFirstSlot(Math.max(0, Math.min(view, total - 1)) * perView);
 
   const map =
     pager === 'map' && !single ? (
       <BinderSpreadMap
-        pockets={cards.map((card) => pocketOf(card, countsFor(card.id)))}
+        pockets={slots.map((slot) => pocketOf(slot, countsFor))}
         current={current}
         onGo={goTo}
-        sets={bySet ? mapSets(cards) : undefined}
+        sets={bySet ? mapSets(slots) : undefined}
       />
     ) : undefined;
 
@@ -138,15 +237,16 @@ export function CollectionBinder({
       single={single}
       arrows={map === undefined}
       footer={map}
-      cardCount={cards.length}
+      cardCount={slots.length}
       onPrev={() => goTo(current - 1)}
       onNext={() => goTo(current + 1)}
       canPrev={current > 0}
       canNext={current < total - 1}
       renderSlot={(index) => {
-        const card = cards[index];
-        if (!card) return null;
-        return <BinderSlot card={card} counts={countsFor(card.id)} onSelect={onSelect} />;
+        const slot = slots[index];
+        if (!slot) return null;
+        if (isOpenPocket(slot)) return <OpenPocketView pocket={slot} />;
+        return <CardPocket card={slot} counts={countsFor(slot.id)} onSelect={onSelect} />;
       }}
     />
   );

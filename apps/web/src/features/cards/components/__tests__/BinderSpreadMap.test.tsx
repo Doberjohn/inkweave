@@ -140,3 +140,24 @@ describe('BinderSpreadMap, set by set', () => {
     expect(spreads()[10]).toBe('Set B, spread 2 of 31: nothing missing');
   });
 });
+
+describe('BinderSpreadMap, for a promo set (#805)', () => {
+  /** The fill of each cell of the spread with this name, in pocket order. */
+  const fills = (name: RegExp) =>
+    [...screen.getByRole('button', {name}).querySelectorAll<HTMLElement>('span[aria-hidden] > span')].map(
+      (cell) => cell.style.background,
+    );
+
+  it("draws a waiting promo's scan as a greyed card, which no one can hold yet, so it is never missing", () => {
+    const pockets: Pocket[] = [
+      {owned: true, inks: ['Amber']},
+      {owned: false, inks: [], open: true},
+      {owned: false, inks: [], open: true, scan: true},
+    ];
+    render(<BinderSpreadMap pockets={pockets} current={0} onGo={() => {}} />);
+    const [held, open, scan] = fills(/^Spread 1 of 1: nothing missing$/);
+    expect(held).not.toBe('');
+    expect(open).toBe('');
+    expect(scan).not.toBe('');
+  });
+});

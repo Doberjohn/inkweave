@@ -4,8 +4,8 @@ import {createCard} from '../../shared/test-utils';
 import {percentOf, tallyCollection, tallySet} from './collectionStats';
 import type {CollectionEntries} from './collectionParser';
 
-/** Every chase printing in the data names the card it reprints (#796), so these do too. */
-const CHASE = new Set(['Epic', 'Enchanted', 'Iconic']);
+/** Every chase printing and promo in the data names the card it reprints (#796, #805), so these do too. */
+const PRINTINGS = new Set(['Epic', 'Enchanted', 'Iconic', 'Special']);
 const card = (id: string, rarity: string, ink: Ink = 'Amber', ink2?: Ink) =>
   createCard({
     id,
@@ -13,7 +13,7 @@ const card = (id: string, rarity: string, ink: Ink = 'Amber', ink2?: Ink) =>
     rarity,
     ink,
     ...(ink2 === undefined ? {} : {ink2}),
-    ...(CHASE.has(rarity) ? {baseId: 'base'} : {}),
+    ...(PRINTINGS.has(rarity) ? {baseId: 'base'} : {}),
   });
 
 describe('tallySet', () => {
@@ -73,9 +73,10 @@ describe('tallySet', () => {
     expect(t.byRarity.map((r) => r.rarity)).toEqual(['Common', 'Rare', 'Legendary', 'Epic', 'Enchanted', 'Iconic']);
   });
 
-  it('gives the chase printings rarity rows of their own and counts them in the inks, leaving Special out', () => {
-    // A foil-only Enchanted held is mastered: it comes in no other finish. The binder holds no Special.
-    const t = tallySet([card('a', 'Common'), card('b', 'Enchanted'), card('c', 'Special')], {
+  it('gives the chase printings and the promos rarity rows of their own, and counts them in the inks', () => {
+    // A foil-only Enchanted held is mastered: it comes in no other finish. So is a promo (#805),
+    // a printing in one finish, whose twin in the other is a pocket of its own.
+    const t = tallySet([card('a', 'Common'), card('c', 'Special'), card('b', 'Enchanted')], {
       a: {normal: 1, foil: 0},
       b: {normal: 0, foil: 1},
       c: {normal: 1, foil: 0},
@@ -83,9 +84,10 @@ describe('tallySet', () => {
     expect(t.byRarity).toEqual([
       {rarity: 'Common', complete: 1, master: 0, total: 1},
       {rarity: 'Enchanted', complete: 1, master: 1, total: 1},
+      {rarity: 'Special', complete: 1, master: 1, total: 1},
     ]);
-    expect(t.cards).toBe(2);
-    expect(t.byInk).toEqual([{ink: 'Amber', complete: 2, master: 1, total: 2}]);
+    expect(t.cards).toBe(3);
+    expect(t.byInk).toEqual([{ink: 'Amber', complete: 3, master: 2, total: 3}]);
   });
 });
 
@@ -116,6 +118,13 @@ describe('tallyCollection', () => {
   it('sums the sets, the Enchanted included', () => {
     const {totals} = tallyCollection(cards, entries, ['2', '1']);
     expect(totals).toMatchObject({cards: 5, complete: 4, master: 3});
+  });
+
+  it("counts a promo set's promos with the rest, one figure for the whole collection (owner, 2026-10-17)", () => {
+    const promo = createCard({id: 'p1', setCode: 'P1', setNumber: 1, rarity: 'Special', baseId: 's1a'});
+    const {totals, sets} = tallyCollection([...cards, promo], {...entries, p1: {normal: 0, foil: 1}}, ['2', '1', 'P1']);
+    expect(sets.find((set) => set.code === 'P1')?.tally).toMatchObject({cards: 1, complete: 1, master: 1});
+    expect(totals).toMatchObject({cards: 6, complete: 5, master: 4});
   });
 
   it('counts only the cards it is given, as the panel does for the cards a filter lets through', () => {

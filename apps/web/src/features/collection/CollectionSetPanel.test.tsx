@@ -2,7 +2,13 @@ import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {CollectionSetBody} from './CollectionSetPanel';
 import {tallyCollection} from './collectionStats';
-import {STORY_SETS, STORY_STATS} from './collectionStoryData';
+import {
+  STORY_PROMO_SET,
+  STORY_PROMO_STATS,
+  STORY_SETS,
+  STORY_SETS_WITH_PROMOS,
+  STORY_STATS,
+} from './collectionStoryData';
 
 type BodyProps = Parameters<typeof CollectionSetBody>[0];
 
@@ -117,5 +123,27 @@ describe('CollectionSetBody', () => {
     renderBody({stats: null});
     expect(numbers()).toHaveAttribute('aria-busy', 'true');
     expect(screen.queryByText('Complete set')).not.toBeInTheDocument();
+  });
+
+  describe('a promo set (#805)', () => {
+    const promoSet = {setCode: STORY_PROMO_SET, sets: STORY_SETS_WITH_PROMOS, stats: STORY_PROMO_STATS};
+
+    it('shows Complete set and By ink alone, counting promos, whatever the breakdowns counted before', () => {
+      const {view} = renderBody();
+      fireEvent.click(screen.getByRole('button', {name: /^Master set/}));
+      view.rerender(<CollectionSetBody {...bodyProps(promoSet)} />);
+      const {complete, cards} = STORY_PROMO_STATS.sets.find((set) => set.code === STORY_PROMO_SET)!.tally;
+      expect(numbers()).toHaveTextContent(`${complete} of ${cards} promos`);
+      expect(screen.queryByRole('button', {name: /^Master set/})).toBeNull();
+      expect(screen.getByRole('region', {name: 'By ink, complete'})).toBeInTheDocument();
+      expect(screen.queryByRole('region', {name: /^By rarity/})).toBeNull();
+    });
+
+    it("counts the promos in the whole collection's numbers, under Promo by rarity", () => {
+      renderBody({...promoSet, setCode: 'all'});
+      const rows = screen.getByRole('region', {name: 'By rarity, complete'});
+      expect(rows).toHaveTextContent('Promo');
+      expect(rows).not.toHaveTextContent('Special');
+    });
   });
 });

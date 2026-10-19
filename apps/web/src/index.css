@@ -494,8 +494,10 @@ option {
 
 /* An unowned binder card (CollectionBinder.tsx): its art greyed and darkened. On
    the tile's CHILDREN, never the tile or a wrapper, so the hover ring above stays
-   gold: a pseudo-element is not a child, and `> *` never matches it. */
-.binder-unowned .card-tile > * {
+   gold: a pseudo-element is not a child, and `> *` never matches it. A waiting
+   promo's scan (#805), which no one can hold yet, is greyed the same. */
+.binder-unowned .card-tile > *,
+.binder-waiting-art {
   filter: grayscale(1) brightness(0.45);
 }
 

@@ -2,39 +2,58 @@ import {describe, it, expect} from 'vitest';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {
   WHOLE_COLLECTION,
+  binderCardsForSet,
   binderContents,
   binderOrder,
   binderRarities,
+  binderSets,
+  binderSlots,
+  isOpenPocket,
+  namesStretches,
+  promoSetPockets,
   setFromFilter,
+  setLabel,
+  setName,
   withPrintingCards,
   withoutStrays,
+  type BinderSlot,
 } from './binderCards';
 
 const card = (rarity: string) => ({rarity}) as LorcanaCard;
 
 describe('binderRarities', () => {
-  it('offers the special printings the binder holds, in rarity order, but never the Special promos', () => {
-    // The binder drops Special, so a Special chip would veil every slot.
+  it('offers every rarity the binder holds, in rarity order, the promos last (#805)', () => {
     const pool = ['Special', 'Enchanted', 'Rare', 'Common', 'Special'].map(card);
-    expect(binderRarities(pool)).toEqual(['Common', 'Rare', 'Enchanted']);
+    expect(binderRarities(pool)).toEqual(['Common', 'Rare', 'Enchanted', 'Special']);
   });
 });
 
 describe('binderOrder', () => {
-  const pocket = (id: string, setNumber: number, cost: number, extra: Partial<LorcanaCard> = {}) =>
+  const pocket = (id: string, setNumber: number | undefined, cost: number, extra: Partial<LorcanaCard> = {}) =>
     ({id, fullName: id, setCode: '9', setNumber, cost, rarity: 'Common', ...extra}) as LorcanaCard;
   const ids = (cards: LorcanaCard[]) => cards.map((c) => c.id);
 
   const POOL = [
     pocket('c3', 3, 1),
     pocket('c1', 1, 5),
-    pocket('promo', 1, 2, {rarity: 'Special'}),
+    // A promo of Set 9's card #1 is in its promo set, not in Set 9 (#805).
+    pocket('promo', 1, 2, {rarity: 'Special', setCode: 'P1'}),
     pocket('c2', 2, 3),
     pocket('next-set', 1, 1, {setCode: '10'}),
   ];
 
-  it('fills the pockets in collector order under the default sort, with only this set and no promos', () => {
+  it('fills the pockets in collector order under the default sort, with only this set', () => {
     expect(ids(binderOrder(POOL, '9', 'newest'))).toEqual(['c1', 'c2', 'c3']);
+  });
+
+  it("orders a promo set's twins foil first and its promo with no number last", () => {
+    const promos = [
+      pocket('unnumbered', undefined, 1, {setCode: 'C1'}),
+      pocket('3-normal', 3, 1, {setCode: 'C1', finish: 'normal'}),
+      pocket('3-foil', 3, 1, {setCode: 'C1', finish: 'foil'}),
+      pocket('1', 1, 1, {setCode: 'C1'}),
+    ];
+    expect(ids(binderOrder(promos, 'C1', 'newest'))).toEqual(['1', '3-foil', '3-normal', 'unnumbered']);
   });
 
   it('re-pockets the set in the order of another sort', () => {
@@ -96,6 +115,135 @@ describe('withPrintingCards', () => {
   it('leaves alone a printing the pool already holds as a card, as a chunk supplies it', () => {
     const fromChunk = {...base, id: '14224', rarity: 'Enchanted', setNumber: 224, variants: undefined} as LorcanaCard;
     expect(withPrintingCards([base, fromChunk])).toHaveLength(2);
+  });
+
+  it("leaves a card's promos to the collection's promo list, which puts each in its promo set (#805)", () => {
+    const promo = {id: '80042', rarity: 'Special', number: 25, promoGrouping: 'P1'};
+    expect(withPrintingCards([{...base, variants: [promo]}])).toHaveLength(1);
+  });
+});
+
+describe('promoSetPockets (#805)', () => {
+  const promo = (id: string, setNumber: number | undefined, extra: Partial<LorcanaCard> = {}) =>
+    ({id, fullName: id, setCode: 'P4', setNumber, rarity: 'Special', ...extra}) as LorcanaCard;
+  const waiting = [{id: '80033', rarity: 'Special', number: 3, promoGrouping: 'P4', fullName: 'Hades - Dark Usurper'}];
+  /** Each pocket as its card's id, or its number for an open one, its card's name after it if it waits for one. */
+  const laidOut = (slots: BinderSlot[]) =>
+    slots.map((slot) => {
+      if (!isOpenPocket(slot)) return slot.id;
+      return slot.fullName ? `open ${slot.setNumber} ${slot.fullName}` : `open ${slot.setNumber}`;
+    });
+
+  it('gives every number up to the highest a pocket, open where no promo is known, and names a waiting one', () => {
+    const pockets = promoSetPockets([promo('5', 5), promo('1', 1)], waiting, 'P4');
+    expect(laidOut(pockets)).toEqual(['1', 'open 2', 'open 3 Hades - Dark Usurper', 'open 4', '5']);
+  });
+
+  it('gives twins a pocket each under their number, and the promos with no number the last ones', () => {
+    const pockets = promoSetPockets(
+      [promo('x', undefined), promo('2n', 2, {finish: 'normal'}), promo('2f', 2, {finish: 'foil'})],
+      [],
+      'P4',
+    );
+    expect(laidOut(pockets)).toEqual(['open 1', '2f', '2n', 'x']);
+  });
+
+  it('marks a number its promo set never released: Promo Set 2 skipped 37 to 41 outside China', () => {
+    const pockets = promoSetPockets([promo('36', 36, {setCode: 'P2'}), promo('43', 43, {setCode: 'P2'})], [], 'P2');
+    const unreleased = pockets.filter((pocket) => isOpenPocket(pocket) && pocket.unreleased);
+
+    expect(unreleased.map((pocket) => pocket.setNumber)).toEqual([37, 38, 39, 40, 41]);
+    // A number below 36 is only unlisted.
+    expect(pockets.find((pocket) => pocket.setNumber === 35)).toEqual({open: true, setCode: 'P2', setNumber: 35});
+  });
+
+  it('marks a number its promo set has still to release: Promo Set 4 skipped 2 to 6 for now', () => {
+    const pockets = promoSetPockets([promo('1', 1), promo('7', 7)], [], 'P4');
+    const open = pockets.filter(isOpenPocket);
+
+    expect(open.map((pocket) => pocket.setNumber)).toEqual([2, 3, 4, 5, 6]);
+    expect(open.every((pocket) => pocket.upcoming && !pocket.unreleased)).toBe(true);
+  });
+
+  it("gives a waiting promo's pocket its art, so a scan shows before its card is out (owner, 2026-10-19)", () => {
+    const scanned = [{...waiting[0], imageUrl: '/card-images-preview/80033.avif', imageHashSm: 'sm'}];
+    const [, , open] = promoSetPockets([promo('1', 1)], scanned, 'P4');
+    expect(open).toMatchObject({id: '80033', imageUrl: '/card-images-preview/80033.avif', imageHashSm: 'sm'});
+  });
+
+  it("leaves out another promo set's waiting promos", () => {
+    expect(laidOut(promoSetPockets([promo('1', 1, {setCode: 'C3'})], waiting, 'C3'))).toEqual(['1']);
+  });
+});
+
+describe("a promo set that gathers editions: Curator's Collection (owner, 2026-10-18)", () => {
+  const cc = (edition: string, setNumber: number) =>
+    ({id: `${edition}-${setNumber}`, fullName: 'A', setCode: edition, setNumber, rarity: 'Special'}) as LorcanaCard;
+
+  it('is one set in the binder, listed once for all its editions', () => {
+    const set14 = {id: '14-1', fullName: 'A card', setCode: '14', setNumber: 1, rarity: 'Common'} as LorcanaCard;
+    expect(binderSets([cc('CC2', 1), cc('CC1', 1), set14, cc('CC1', 2)])).toEqual(['14', 'CC']);
+  });
+
+  it('holds its editions in turn, oldest first, each in collector order', () => {
+    const cards = [cc('CC2', 1), cc('CC1', 2), cc('CC1', 1), cc('CC2', 2)];
+    expect(binderCardsForSet(cards, 'CC').map((card) => card.id)).toEqual(['CC1-1', 'CC1-2', 'CC2-1', 'CC2-2']);
+  });
+
+  it("lays out each edition's numbers in turn, open where an edition skips one", () => {
+    const slots = promoSetPockets([cc('CC1', 1), cc('CC1', 3), cc('CC2', 2)], [], 'CC');
+    expect(slots.map((slot) => (isOpenPocket(slot) ? `open ${slot.setNumber}/${slot.setCode}` : slot.id))).toEqual([
+      'CC1-1',
+      'open 2/CC1',
+      'CC1-3',
+      'open 1/CC2',
+      'CC2-2',
+    ]);
+  });
+
+  it('names its editions in the spread map, as the whole collection names its sets, in collector order only', () => {
+    expect(namesStretches('CC', 'newest')).toBe(true);
+    expect(namesStretches(WHOLE_COLLECTION, 'newest')).toBe(true);
+    expect(namesStretches('P1', 'newest')).toBe(false);
+    expect(namesStretches('CC', 'name-asc')).toBe(false);
+  });
+});
+
+describe('binderSlots (#805)', () => {
+  const at = (id: string, setCode: string, setNumber: number) =>
+    ({id, fullName: id, setCode, setNumber, rarity: 'Common'}) as LorcanaCard;
+  const SHOWN = [at('main', '14', 1), at('promo', 'P4', 2)];
+  const context = {
+    scope: WHOLE_COLLECTION,
+    sets: ['14', 'P4'],
+    sortOrder: 'newest' as const,
+    narrowed: false,
+    waiting: [],
+  };
+
+  it("opens a promo set's unlisted numbers in its stretch of the whole collection, and leaves a set's cards be", () => {
+    const slots = binderSlots(SHOWN, context);
+    expect(slots.map((slot) => (isOpenPocket(slot) ? 'open' : slot.id))).toEqual(['main', 'open', 'promo']);
+  });
+
+  it('packs the cards when a filter or a view narrows them, or another sort orders them', () => {
+    expect(binderSlots(SHOWN, {...context, narrowed: true})).toEqual(SHOWN);
+    expect(binderSlots(SHOWN, {...context, sortOrder: 'name-asc'})).toEqual(SHOWN);
+  });
+});
+
+describe('set names (#805)', () => {
+  it("names a promo set by its name, and an edition by its set's and its own", () => {
+    expect(setName('P1')).toBe('Promo Set 1');
+    expect(setName('CC')).toBe("Curator's Collection");
+    expect(setName('CC1')).toBe("Curator's Collection: Heroines Edition");
+  });
+
+  it('says what kind of set it is when naming it whole', () => {
+    expect(setLabel('11')).toBe('Set 11, Winterspell');
+    expect(setLabel('P1')).toBe('Promo set P1, Promo Set 1');
+    expect(setLabel('CC')).toBe("Promo set CC, Curator's Collection");
+    expect(setLabel('CC2')).toBe("Promo set CC2, Curator's Collection: Beauty and the Beast Edition");
   });
 });
 

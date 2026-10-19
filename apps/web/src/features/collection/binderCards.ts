@@ -1,7 +1,25 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {applySortOrder, getUniqueRarities} from '../cards/loader';
-import {BROWSE_SORT_OPTIONS, SET_NAMES, type BrowseSortOrder, type SetCode} from '../../shared/constants';
+import {
+  PROMO_RARITY,
+  applySortOrder,
+  collectorOrder,
+  editionThenCollectorOrder,
+  getUniqueRarities,
+  latestSetFirst,
+  printingCard,
+} from '../cards/loader';
+import {
+  BROWSE_SORT_OPTIONS,
+  SET_NAMES,
+  binderSetOf,
+  printedCodesOf,
+  promoEditionOf,
+  promoSetOf,
+  type BrowseSortOrder,
+  type SetCode,
+} from '../../shared/constants';
 import {SET_PARAM} from '../../shared/hooks/useFilterParams';
+import type {CollectionPromo} from './collectionPromos';
 
 /**
  * THE MODE LIVES IN THE URL (owner, 2026-10-07): `?binder=<set>` present means
@@ -36,8 +54,23 @@ export function withoutStrays(params: URLSearchParams): URLSearchParams {
   return next;
 }
 
-/** The name a set goes by in the binder's controls: its own, or its number while it has none. */
-export const setName = (setCode: string) => SET_NAMES[setCode as SetCode] ?? `Set ${setCode}`;
+/** Whether a binder set is a promo set (#805), which goes by its code ("P1") rather than a number. */
+export const isPromoSet = (setCode: string) => promoSetOf(setCode) !== undefined;
+
+/** A promo set's name, and an edition's after its set's: "Curator's Collection: Heroines Edition". */
+function promoSetName(setCode: string): string | undefined {
+  const edition = promoEditionOf(setCode);
+  const name = promoSetOf(setCode)?.name;
+  return edition === undefined ? name : `${name}: ${edition.name}`;
+}
+
+/** The name a set goes by in the binder's controls: its own, a promo set's, or its number while it has none. */
+export const setName = (setCode: string) =>
+  SET_NAMES[setCode as SetCode] ?? promoSetName(setCode) ?? `Set ${setCode}`;
+
+/** A set as it is spoken and named on hover: "Set 11, Winterspell", or "Promo set P1, Promo Set 1". */
+export const setLabel = (setCode: string) =>
+  `${isPromoSet(setCode) ? 'Promo set' : 'Set'} ${setCode}, ${setName(setCode)}`;
 
 /**
  * What the binder shows (owner, 2026-10-12): every card, the ones you hold a copy of,
@@ -61,11 +94,6 @@ export function setFromFilter(raw: string | null, sets: readonly string[] | null
   return codes.sort((a, b) => Number(b) - Number(a))[0];
 }
 
-/** Whether the binder holds a card: every card but the Special promos (see below). */
-export function isBinderCard(card: LorcanaCard): boolean {
-  return card.rarity !== 'Special';
-}
-
 /**
  * The pool with a card of its own for every printing it lacks, so each Enchanted, Epic
  * and Iconic has a pocket. The collection chunks carry the printings of the sets they
@@ -74,29 +102,18 @@ export function isBinderCard(card: LorcanaCard): boolean {
  * `variants`, and its binder had no pocket for any of them, so a rarity filter for
  * them found nothing.
  *
- * Built from the base card, under the printing's own id, rarity, number and art. The
- * full-size image hash is the base card's art, so it is dropped rather than carried. It
- * names the base card as its `baseId`, as a chunk's printing does (#796).
+ * Built from the base card (`printingCard`), naming it as its `baseId`, as a chunk's
+ * printing does (#796). Not for a promo: collection mode's promos come from its own list,
+ * every promo in the owner's catalog, in its promo set (`withPromoPockets`, #805).
  */
 export function withPrintingCards(pool: LorcanaCard[]): LorcanaCard[] {
   const held = new Set(pool.map((card) => card.id));
   const printings: LorcanaCard[] = [];
   for (const card of pool) {
     for (const printing of card.variants ?? []) {
-      if (held.has(printing.id)) continue;
+      if (held.has(printing.id) || printing.rarity === PROMO_RARITY) continue;
       held.add(printing.id);
-      printings.push({
-        ...card,
-        id: printing.id,
-        baseId: card.id,
-        rarity: printing.rarity,
-        setNumber: printing.number,
-        imageUrl: printing.imageUrl,
-        imageHash: undefined,
-        imageHashSm: printing.imageHashSm,
-        scanLanguage: printing.scanLanguage,
-        variants: undefined,
-      });
+      printings.push(printingCard(card, printing));
     }
   }
   return printings.length > 0 ? [...pool, ...printings] : pool;
@@ -104,34 +121,42 @@ export function withPrintingCards(pool: LorcanaCard[]): LorcanaCard[] {
 
 /**
  * The Rarity filter's options in collection mode: the rarities of the cards the
- * binder holds. The Enchanted, Epic and Iconic printings are slots of their own,
- * so they are offered; Special never is, since a Special chip would veil every
- * slot.
+ * binder holds. The Enchanted, Epic and Iconic printings are pockets of their own,
+ * and so are the promos (#805), so their rarities are offered.
  */
 export function binderRarities(pool: readonly LorcanaCard[]): string[] {
-  return getUniqueRarities(pool.filter(isBinderCard));
+  return getUniqueRarities(pool);
 }
 
 /**
- * One set's cards as the binder needs them: Special promos dropped, collector
- * order imposed.
+ * One set's cards as the binder needs them, in collector order (`collectorOrder`): by
+ * number, and a promo set's twins foil first. A promo set that gathers editions holds each
+ * edition's cards in turn, oldest first (`editionThenCollectorOrder`).
  *
- * BOTH STEPS ARE LOAD-BEARING and neither is free from the chunk. The chunks
- * carry Special rarity (28 of Set 1's 244) and arrive unsorted, so rendering one
- * straight would put cards in arbitrary positions and stack five of them on slot
- * #1. Dropping Special leaves Set 1 at 216 = exactly 9 spreads of 24.
- *
- * This lives apart from the loader because the exclusion is the BINDER's
- * requirement: a Special card is genuinely ownable, and the Browse grid should
- * still show it. Only fixed positions need the promos gone.
+ * THE SORT IS LOAD-BEARING: the chunks arrive unsorted, so rendering one straight
+ * would put cards in arbitrary positions. Set 1 holds 216 = exactly 9 spreads of 24.
+ * The chunks hold no promo cards (#805), which reused base collector numbers and once
+ * had to be dropped here: a promo's card is in its promo set.
  *
  * Its own module, not inside `CollectionBinder`, so Browse can order the card
  * modal's siblings by it without importing the binder's lazy chunk.
  */
 export function binderCardsForSet(cards: readonly LorcanaCard[], setCode: string): LorcanaCard[] {
+  const codes = printedCodesOf(setCode);
   return cards
-    .filter((card) => card.setCode === setCode && isBinderCard(card))
-    .sort((a, b) => (a.setNumber ?? 0) - (b.setNumber ?? 0));
+    .filter((card) => card.setCode !== undefined && codes.includes(card.setCode))
+    .sort(editionThenCollectorOrder);
+}
+
+/**
+ * The sets the binder holds, newest first: the set picker's order. The promo sets follow the
+ * numbered ones (owner, 2026-10-17), newest first by release too (`latestSetFirst`), and a
+ * promo set's editions are one set (owner, 2026-10-18: Curator's Collection).
+ */
+export function binderSets(pool: readonly LorcanaCard[]): string[] {
+  const codes = new Set<string>();
+  for (const card of pool) if (card.setCode) codes.add(binderSetOf(card.setCode));
+  return [...codes].sort(latestSetFirst);
 }
 
 /**
@@ -155,6 +180,13 @@ export const goesSetBySet = (scope: string, sortOrder: BrowseSortOrder) =>
   scope === WHOLE_COLLECTION && sortOrder === 'newest';
 
 /**
+ * Whether the spread map names the stretches the binder holds, in collector order: the whole
+ * collection's sets, or a promo set's editions (owner, 2026-10-18: Curator's Collection).
+ */
+export const namesStretches = (scope: string, sortOrder: BrowseSortOrder) =>
+  sortOrder === 'newest' && (scope === WHOLE_COLLECTION || printedCodesOf(scope).length > 1);
+
+/**
  * The binder's cards in order, before the page's filters (owner, 2026-10-12):
  *
  *   - One set: that set, in the page's sort (`binderOrder`).
@@ -175,8 +207,128 @@ export function binderContents(
   sets: readonly string[],
 ): LorcanaCard[] {
   if (goesSetBySet(scope, sortOrder)) return sets.flatMap((set) => binderCardsForSet(cards, set));
-  if (scope === WHOLE_COLLECTION) return applySortOrder(cards.filter(isBinderCard), sortOrder);
+  if (scope === WHOLE_COLLECTION) return applySortOrder([...cards], sortOrder);
   return binderOrder(cards, scope, sortOrder);
+}
+
+/**
+ * A pocket with no card in it (#805): in a promo set, a number nobody has listed yet, or a
+ * promo whose card no dataset holds yet, named (`fullName`), with the facts that place it.
+ */
+export interface OpenPocket {
+  open: true;
+  setCode: string;
+  setNumber?: number;
+  /** A waiting promo's id and card. */
+  id?: string;
+  fullName?: string;
+  finish?: LorcanaCard['finish'];
+  artVariant?: string;
+  /** A waiting promo's art, resolved as a printing's is (`toPrinting`): its scan shows before its card is out. */
+  imageUrl?: string;
+  imageHashSm?: string;
+  /** A number its promo set never released where the collection is kept (`PromoSet.unreleased`). */
+  unreleased?: true;
+  /** A number its promo set has still to release (`PromoSet.upcoming`). */
+  upcoming?: true;
+}
+
+/** A pocket of the binder: a card, or an open pocket. */
+export type BinderSlot = LorcanaCard | OpenPocket;
+
+export const isOpenPocket = (slot: BinderSlot): slot is OpenPocket => 'open' in slot;
+
+/** What tells a pocket from every other: its card's id, a waiting promo's, or its place. */
+export const slotKey = (slot: BinderSlot) =>
+  isOpenPocket(slot) ? (slot.id ?? `${slot.setCode}#${slot.setNumber}`) : slot.id;
+
+/** A waiting promo's pocket: its place, its card's name and its art, with no card in it. */
+const waitingPocket = (promo: CollectionPromo): OpenPocket => ({
+  open: true,
+  setCode: promo.promoGrouping ?? '',
+  setNumber: promo.number,
+  id: promo.id,
+  fullName: promo.fullName,
+  finish: promo.finish,
+  artVariant: promo.artVariant,
+  imageUrl: promo.imageUrl,
+  imageHashSm: promo.imageHashSm,
+});
+
+/** The open pocket at a number with no promo known: never released there, still to come, or not listed yet. */
+function gapPocket(setCode: string, setNumber: number): OpenPocket {
+  const set = promoSetOf(setCode);
+  if (set?.unreleased?.includes(setNumber)) return {open: true, setCode, setNumber, unreleased: true};
+  if (set?.upcoming?.includes(setNumber)) return {open: true, setCode, setNumber, upcoming: true};
+  return {open: true, setCode, setNumber};
+}
+
+/**
+ * A promo set's pockets laid out like a real binder (owner, 2026-10-17, layout 1 of
+ * `public/mockups/collection-promos.html`): a pocket per number up to the highest known, a
+ * promo each, so twins take one each, foil first; a number nobody has listed yet left open,
+ * as is one the set never released here, and a promo whose card is not out named in its open
+ * pocket. The promos with no number come last. So a pocket never moves when the catalog learns
+ * a number. A set that gathers editions lays out each edition's in turn, oldest first,
+ * numbered as printed (owner, 2026-10-18: Curator's Collection's Heroines, then Beauty and
+ * the Beast).
+ *
+ * `cards` are the set's cards, `waiting` the promos whose card no dataset holds yet.
+ */
+export function promoSetPockets(
+  cards: readonly LorcanaCard[],
+  waiting: readonly CollectionPromo[],
+  setCode: string,
+): BinderSlot[] {
+  return printedCodesOf(setCode).flatMap((code) =>
+    codePockets(
+      cards.filter((card) => card.setCode === code),
+      waiting.filter((promo) => promo.promoGrouping === code),
+      code,
+    ),
+  );
+}
+
+/** The pockets of the promos printed with one code, as `promoSetPockets` lays them out. */
+function codePockets(cards: readonly LorcanaCard[], waiting: readonly CollectionPromo[], code: string): BinderSlot[] {
+  const pockets: BinderSlot[] = [...cards, ...waiting.map(waitingPocket)].sort(collectorOrder);
+  const numbers = pockets.flatMap((pocket) => (pocket.setNumber === undefined ? [] : [pocket.setNumber]));
+  const slots: BinderSlot[] = [];
+  for (let n = Math.min(1, ...numbers); n <= Math.max(0, ...numbers); n++) {
+    const at = pockets.filter((pocket) => pocket.setNumber === n);
+    slots.push(...(at.length > 0 ? at : [gapPocket(code, n)]));
+  }
+  return [...slots, ...pockets.filter((pocket) => pocket.setNumber === undefined)];
+}
+
+/** What the binder holds besides its cards, and whether it holds only those. */
+interface SlotContext {
+  scope: string;
+  sets: readonly string[];
+  sortOrder: BrowseSortOrder;
+  /** The page's filters or search are on, or the binder shows only owned or only missing cards. */
+  narrowed: boolean;
+  waiting: readonly CollectionPromo[];
+}
+
+/**
+ * The binder's pockets: its cards (`binderContents`, less what the page's filters leave out),
+ * and, laid out in collector order with nothing narrowing them, each promo set's open pockets
+ * too (`promoSetPockets`), its own binder's or its stretch of the whole collection's. A narrowed
+ * binder packs its cards, as the grid does: a numbered gap means nothing among the cards a
+ * search found.
+ */
+export function binderSlots(
+  shown: readonly LorcanaCard[],
+  {scope, sets, sortOrder, narrowed, waiting}: SlotContext,
+): BinderSlot[] {
+  if (narrowed || sortOrder !== 'newest') return [...shown];
+  const stretches = scope === WHOLE_COLLECTION ? sets : [scope];
+  return stretches.flatMap((set) => {
+    const codes = printedCodesOf(set);
+    const cards = shown.filter((card) => card.setCode !== undefined && codes.includes(card.setCode));
+    return isPromoSet(set) ? promoSetPockets(cards, waiting, set) : cards;
+  });
 }
 
 /**
