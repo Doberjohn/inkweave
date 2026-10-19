@@ -7,9 +7,10 @@ import {ALL_INKS, COLORS, SET_NAMES, SPACING, type SetCode} from '../../../share
 /**
  * The binder's pager where Browse docks its panels (owner, 2026-10-12): the spreads in
  * miniature, one cell per pocket in its card's ink, filled where you hold the card and a
- * ring where you are missing it. The window holds as many spreads as fit the row, eleven
- * at most; going set by set, each spread names its sets on hover. Live here: click a
- * spread, or step with Previous and Next.
+ * ring where you are missing it. The first spread opens on the front cover (#806), and the
+ * last can end in the back cover, both in the cover board's blue. The window holds as many
+ * spreads as fit the row, eleven at most; going set by set, each spread names its sets on
+ * hover. Live here: click a spread, or step with Previous and Next.
  */
 
 /**
@@ -36,7 +37,7 @@ const SET_SIZES = [242, 245, 242, 242, 242, 243, 224, 224, 222, 223, 225, 227, 2
 /**
  * The whole collection, set by set as the binder lays it out, each set continuing where
  * the one before ends: mostly held, each set's last 38 pockets its chase printings, most
- * of them missing. 135 spreads in all.
+ * of them missing. 136 spreads in all.
  */
 const WHOLE: Pocket[] = SET_SIZES.flatMap((size, i) =>
   setPockets(size, (p) => (p >= size - 38 ? p % 5 === 0 : (p * (i + 3)) % 13 !== 0)),
@@ -78,7 +79,7 @@ const meta: Meta<typeof LiveMap> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The binder at 1920px wide: every spread at full size, the third on show. */
+/** The binder at 1920px wide: every spread at full size, the first on its front cover, the third on show. */
 export const Default: Story = {};
 
 /**
@@ -113,15 +114,15 @@ export const DualInkSet: Story = {
 };
 
 /**
- * Set 14's 242 pockets leave its last spread two cards, both on the left page: the right
- * page is the binder's inside back cover, tinted the cover's blue as the spread draws it.
+ * Set 1's 216 pockets end on its tenth spread's left page: the right page is the binder's
+ * inside back cover, tinted the cover's blue as the spread draws it.
  */
 export const BackCover: Story = {
-  args: {pockets: setPockets(242, (i) => i % 9 !== 0)},
+  args: {pockets: setPockets(216, (i) => i % 9 !== 0), start: 9},
 };
 
 /**
- * The whole collection: eleven spreads in view out of 135, each naming its sets on
+ * The whole collection: eleven spreads in view out of 136, each naming its sets on
  * hover. Reach the window's last spread and it becomes the first; step back past the
  * first and it becomes the last.
  */

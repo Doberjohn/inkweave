@@ -427,12 +427,17 @@ test.describe('Collection mode, signed in', () => {
       .click();
 
     await expect(page).toHaveURL(new RegExp(`[?&]binder=${promoSet.code}(&|$)`));
-    // A number with no promo is an open pocket, which shows the number's code (owner, 2026-10-17,
-    // layout 1): why it is open (not listed, not released) is the promo set's to say.
-    await expect(binder(page).getByText(promoSet.openPocket, {exact: true})).toBeVisible();
-    // Complete set alone, counting promos: each pocket is one printing in one finish.
+    // Complete set alone, counting promos: each pocket is one printing in one finish. The
+    // numbers show once the promo set's binder has loaded, so its arrows turn its spreads.
     await expect(numbers(page)).toContainText(`1 of ${promoSet.promos.length} promos`);
     await expect(numbers(page).getByRole('button', {name: /^Master/})).toHaveCount(0);
+    // A number with no promo is an open pocket, which shows the number's code (owner, 2026-10-17,
+    // layout 1): why it is open (not listed, not released) is the promo set's to say. The binder
+    // opens on its front cover (#806), so the pocket may be a spread or more in.
+    for (let turn = 1; turn < promoSet.openSpread; turn++) {
+      await binder(page).getByRole('button', {name: 'Next spread'}).last().click();
+    }
+    await expect(binder(page).getByText(promoSet.openPocket, {exact: true})).toBeVisible();
   });
 
   test('a signed-in visitor without a collection is asked to import one', async ({page}) => {

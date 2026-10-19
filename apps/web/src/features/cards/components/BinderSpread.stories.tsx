@@ -1,10 +1,27 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {MemoryRouter} from 'react-router-dom';
 import {fn} from 'storybook/test';
-import {BinderSlotSkeleton, BinderSpread} from './BinderSpread';
+import {BinderSlotSkeleton, BinderSpread, PER_PAGE} from './BinderSpread';
 import {CardTile} from './CardTile';
 import {BINDER_CARDS} from './binderStoryCards';
+import type {LorcanaCard} from '../types';
 import {COLORS} from '../../../shared/constants';
+
+/** A binder of these cards, each in its pocket by index, and every pocket past them empty. */
+const holding = (cards: readonly LorcanaCard[]) => (index: number, tabIndex: number) => {
+  const card = cards[index];
+  if (!card) return null;
+  return (
+    <CardTile
+      card={card}
+      onSelect={fn()}
+      variant="minimal"
+      borderRadius={0}
+      useSmallImage
+      tabIndex={tabIndex}
+    />
+  );
+};
 
 /**
  * The shared binder chrome. Both binders render through this: Browse compacts
@@ -35,20 +52,7 @@ const meta: Meta<typeof BinderSpread> = {
     onNext: fn(),
     canPrev: false,
     canNext: true,
-    renderSlot: (index: number, tabIndex: number) => {
-      const card = BINDER_CARDS[index];
-      if (!card) return null;
-      return (
-        <CardTile
-          card={card}
-          onSelect={fn()}
-          variant="minimal"
-          borderRadius={0}
-          useSmallImage
-          tabIndex={tabIndex}
-        />
-      );
-    },
+    renderSlot: holding(BINDER_CARDS),
   },
 };
 
@@ -59,59 +63,59 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 /**
- * The trailing spread. Empty pockets still occupy their cells — collapsing them
- * would reflow the last spread into a different shape from every other one.
+ * The first spread on desktop (owner, 2026-10-18, #806): the binder opens on its inside
+ * front cover, the back cover's board, with the first page facing it. A phone shows one
+ * page at a time and has no cover.
+ */
+export const FrontCover: Story = {
+  args: {start: -PER_PAGE, cardCount: BINDER_CARDS.length},
+};
+
+/**
+ * The trailing spread, the second, its right page holding the last two of the 26 cards.
+ * Empty pockets still occupy their cells — collapsing them would reflow the last spread
+ * into a different shape from every other one.
  */
 export const PartlyFilled: Story = {
-  args: {
-    start: 0,
-    canPrev: true,
-    canNext: false,
-    renderSlot: (index: number, tabIndex: number) => {
-      const card = BINDER_CARDS.slice(24)[index];
-      if (!card) return null;
-      return (
-        <CardTile
-          card={card}
-          onSelect={fn()}
-          variant="minimal"
-          borderRadius={0}
-          useSmallImage
-          tabIndex={tabIndex}
-        />
-      );
-    },
-  },
+  args: {start: PER_PAGE, canPrev: true, canNext: false, cardCount: BINDER_CARDS.length},
 };
 
 /**
  * The last spread, its right page empty: drawn as the binder's inside back cover rather
- * than as empty parchment, so the binder reads as ending there. Two cards remain.
+ * than as empty parchment, so the binder reads as ending there. A binder of fourteen
+ * cards leaves its second spread two, both on the left page.
  */
 export const BackCover: Story = {
   args: {
-    ...PartlyFilled.args,
-    cardCount: BINDER_CARDS.slice(24).length,
+    start: PER_PAGE,
+    canPrev: true,
+    canNext: false,
+    cardCount: 14,
+    renderSlot: holding(BINDER_CARDS.slice(0, 14)),
   },
 };
 
 /**
- * Loading. IDENTICAL chrome to every other story — parchment, spine, arrows and
- * footnote — with shimmer in the pockets, which is what makes the arrival of
+ * Loading. IDENTICAL chrome to the binder it stands for — the front cover, parchment,
+ * spine and arrows — with shimmer in the pockets, which is what makes the arrival of
  * real cards a change of contents rather than a change of layout. Measured after
  * the change: page geometry is byte-identical from 0 images loaded to 24.
  */
 export const Loading: Story = {
   args: {
+    start: -PER_PAGE,
     canPrev: false,
     canNext: false,
     renderSlot: () => <BinderSlotSkeleton />,
   },
 };
 
-/** Mid-book: both arrows live. */
+/**
+ * Mid-book: both arrows live, on the second spread, which starts a page in, at the
+ * thirteenth pocket. The 26 cards run twice to fill it.
+ */
 export const MidBook: Story = {
-  args: {canPrev: true, canNext: true},
+  args: {start: PER_PAGE, canPrev: true, canNext: true, renderSlot: holding([...BINDER_CARDS, ...BINDER_CARDS])},
 };
 
 /**

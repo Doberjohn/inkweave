@@ -216,14 +216,18 @@ export function CollectionBinder({
   pager = 'arrows',
 }: CollectionBinderProps) {
   const perView = single ? PER_PAGE : PER_SPREAD;
+  // A spread opens on the inside front cover (owner, 2026-10-18, #806), which takes the
+  // first spread's left page, so the slots start a page in. A phone shows a page at a time,
+  // and no cover.
+  const lead = single ? 0 : PER_PAGE;
   // Held as the first SLOT in view, not a view number, so crossing the phone
-  // breakpoint stays in the same part of the set: from spread 1 (slots 24-47) a
-  // phone opens page 2 (slots 24-35), the first page of that spread, and back
-  // again. A stored view NUMBER would have jumped to spread 2's cards instead.
+  // breakpoint stays in the same part of the set: from the third spread (slots 36-59)
+  // a phone opens page 4 (slots 36-47), the first page of that spread, and back
+  // again. A stored view NUMBER would have opened page 3 (slots 24-35) instead.
   const [firstSlot, setFirstSlot] = useState(0);
-  const total = Math.max(1, Math.ceil(slots.length / perView));
-  const current = Math.min(Math.floor(firstSlot / perView), total - 1);
-  const goTo = (view: number) => setFirstSlot(Math.max(0, Math.min(view, total - 1)) * perView);
+  const total = Math.max(1, Math.ceil((slots.length + lead) / perView));
+  const current = Math.min(Math.floor((firstSlot + lead) / perView), total - 1);
+  const goTo = (view: number) => setFirstSlot(Math.max(0, Math.min(view, total - 1) * perView - lead));
 
   const map =
     pager === 'map' && !single ? (
@@ -237,7 +241,7 @@ export function CollectionBinder({
 
   return (
     <BinderSpread
-      start={current * perView}
+      start={current * perView - lead}
       single={single}
       arrows={map === undefined}
       footer={map}

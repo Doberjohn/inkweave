@@ -16,7 +16,8 @@ import {COLORS} from '../../shared/constants';
 /**
  * The collection binder: the cards it is given, pocket by pocket, in their order. The
  * page gives it the set's cards that pass its filters, in its sort (owner, 2026-10-12),
- * so unfiltered it is the whole set in collector order.
+ * so unfiltered it is the whole set in collector order. Wider than a phone it opens on its
+ * front cover, the first twelve cards facing it (#806).
  *
  * Two states share the pockets and must stay distinguishable:
  *   owned     full colour, with read-only counts per finish
@@ -75,7 +76,7 @@ export const WithMap: Story = {
   args: {pager: 'map'},
 };
 
-/** Phone width: one page per view, paged by twelve. */
+/** Phone width: one page per view, paged by twelve, with no cover (#806). */
 export const SinglePage: Story = {
   args: {single: true},
   globals: {viewport: {value: 'mobile1'}},

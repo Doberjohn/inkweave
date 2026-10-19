@@ -37,6 +37,11 @@ import {blackRgba, COLORS, RADIUS, SPACING} from '../../../shared/constants';
  * page of empty parchment read as missing cards; the cover's blue board says the binder
  * ends there (see `cardCount`).
  *
+ * THE FIRST SPREAD'S LEFT PAGE IS THE INSIDE FRONT COVER (owner, 2026-10-18, #806), the same
+ * board, plain: a real binder opens on its cover with the first page facing it, so every
+ * binder starts a page in (see `start`). A lone page on a phone has no cover, which would
+ * spend a swipe on an empty board.
+ *
  * THE SEAM IS CHROME VS FILL, because the app has two binders that want opposite
  * fills from identical chrome. Browse COMPACTS (results flow into spreads, so 36
  * matches is 2 full spreads and gaps never appear), while the collection binder
@@ -57,8 +62,11 @@ const CARD_ASPECT = 0.72;
 
 const PARCHMENT = '/art/backgrounds/binder.webp';
 
-/** The binder's inside back cover: the board the last spread's empty right page shows. */
-const BACK_COVER = '/art/backgrounds/binder-cover.webp';
+/** The binder's inside covers: the board the first spread's left page and the last spread's empty right page show. */
+const COVER_BOARD = '/art/backgrounds/binder-cover.webp';
+
+/** Which inside cover a page is: the front one, before the first page, or the back one, past the last card. */
+type Cover = 'front' | 'back';
 
 /**
  * A page. Both axes are `minmax(0, 1fr)`, so the grid claims exactly the box it
@@ -78,7 +86,7 @@ const BACK_COVER = '/art/backgrounds/binder-cover.webp';
  * arrows moved beside the spread the casualty became the navigation itself,
  * pushed off-screen. `minmax(0, 1fr)` on the columns is what bounds it.
  */
-function pageStyle(side: 'left' | 'right', cover = false): CSSProperties {
+function pageStyle(side: 'left' | 'right', cover?: Cover): CSSProperties {
   return {
     height: '100%',
     // A page HUGS ITS CARDS, and that is safe only because the slots are sized
@@ -99,7 +107,7 @@ function pageStyle(side: 'left' | 'right', cover = false): CSSProperties {
     gap: SPACING.sm,
     padding: SPACING.md,
     justifyContent: 'center',
-    backgroundImage: `url(${cover ? BACK_COVER : PARCHMENT})`,
+    backgroundImage: `url(${cover ? COVER_BOARD : PARCHMENT})`,
     backgroundSize: 'cover',
     // Mirrored, so the two sheets are not visibly the same image. One
     // spread-wide copy would run a single contour line through the gutter.
@@ -242,7 +250,11 @@ export function BinderSlotSkeleton() {
 }
 
 interface BinderSpreadProps {
-  /** Absolute index of the first slot on the left page. */
+  /**
+   * Absolute index of the first slot on the left page. `-PER_PAGE` on a binder's first
+   * spread, whose left page is then the inside front cover (#806) and whose right page holds
+   * the first twelve slots.
+   */
   start: number;
   /**
    * Slot content for an absolute index, or null for an empty pocket. The empty
@@ -284,7 +296,7 @@ interface BinderSpreadProps {
   /**
    * How many pockets the binder fills. A spread whose right page starts past the last
    * of them is the last, and that empty page is drawn as the inside back cover. Left
-   * out (the loading binder), every page is parchment.
+   * out (the loading binder), no page is the back cover.
    */
   cardCount?: number;
   /**
@@ -311,23 +323,25 @@ interface BinderPageProps {
   side: 'left' | 'right';
   single: boolean;
   renderSlot: (index: number) => ReactNode;
-  /** The inside back cover: a page past the binder's last card. */
-  cover?: boolean;
+  /** An inside cover: the front one, before the binder's first page, or the back one, past its last card. */
+  cover?: Cover;
 }
 
-/** What a page is called: "Page" alone, or its side of the spread, or the back cover. */
+const COVER_LABELS: Record<Cover, string> = {front: 'Front cover', back: 'Back cover'};
+
+/** What a page is called: "Page" alone, or its side of the spread, or the cover it is. */
 function pageLabel({side, single, cover}: Pick<BinderPageProps, 'side' | 'single' | 'cover'>): string {
   if (single) return 'Page';
-  if (cover) return 'Back cover';
+  if (cover) return COVER_LABELS[cover];
   return side === 'left' ? 'Left page' : 'Right page';
 }
 
 /**
- * One page of twelve pockets, slots sized for a spread or for a lone page. The back
- * cover keeps its twelve slots, empty: a page takes its width from them, and without
- * them it would collapse.
+ * One page of twelve pockets, slots sized for a spread or for a lone page. A cover keeps
+ * its twelve slots, empty: a page takes its width from them, and without them it would
+ * collapse. Nothing is drawn in them, so the loading binder's front cover never shimmers.
  */
-function BinderPage({from, side, single, renderSlot, cover = false}: BinderPageProps) {
+function BinderPage({from, side, single, renderSlot, cover}: BinderPageProps) {
   return (
     <div
       className="binder-page"
@@ -338,7 +352,7 @@ function BinderPage({from, side, single, renderSlot, cover = false}: BinderPageP
       aria-label={pageLabel({side, single, cover})}>
       {Array.from({length: PER_PAGE}, (_, i) => (
         <div key={from + i} style={single ? singleSlotStyle : slotStyle}>
-          {renderSlot(from + i)}
+          {cover ? null : renderSlot(from + i)}
         </div>
       ))}
     </div>
@@ -356,19 +370,28 @@ interface ViewProps {
   cardCount?: number;
 }
 
-/** The two facing pages and the spine between them, the right one the back cover once the cards run out. */
+/**
+ * The two facing pages and the spine between them: the left one the front cover before the
+ * first page, the right one the back cover once the cards run out.
+ */
 function Pages({start, renderSlot, cardCount}: Pick<ViewProps, 'start' | 'renderSlot' | 'cardCount'>) {
   const right = start + PER_PAGE;
   return (
     <>
-      <BinderPage from={start} side="left" single={false} renderSlot={renderSlot} />
+      <BinderPage
+        from={start}
+        side="left"
+        single={false}
+        renderSlot={renderSlot}
+        cover={start < 0 ? 'front' : undefined}
+      />
       <Spine />
       <BinderPage
         from={right}
         side="right"
         single={false}
         renderSlot={renderSlot}
-        cover={cardCount !== undefined && right >= cardCount}
+        cover={cardCount !== undefined && right >= cardCount ? 'back' : undefined}
       />
     </>
   );
@@ -562,7 +585,8 @@ const NEVER_OPEN = () => false;
 
 /**
  * The pockets in view that hold a card, by their place in it: the filled ones, which run from
- * the first, less any open one. Every pocket while the binder is loading.
+ * the first, less the front cover's and any open one. Every pocket past the front cover while
+ * the binder is loading.
  */
 function focusableInView(
   start: number,
@@ -570,7 +594,9 @@ function focusableInView(
   {cardCount, isOpen = NEVER_OPEN}: Pick<BinderSpreadProps, 'cardCount' | 'isOpen'>,
 ): number[] {
   const filled = cardCount === undefined ? perView : Math.max(0, Math.min(perView, cardCount - start));
-  return Array.from({length: filled}, (_, pocket) => pocket).filter((pocket) => !isOpen(start + pocket));
+  // Below zero is the front cover, which holds no pocket the binder fills.
+  const holdsCard = (index: number) => index >= 0 && !isOpen(index);
+  return Array.from({length: filled}, (_, pocket) => pocket).filter((pocket) => holdsCard(start + pocket));
 }
 
 /**

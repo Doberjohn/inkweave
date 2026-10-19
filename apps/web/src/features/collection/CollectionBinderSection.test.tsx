@@ -80,6 +80,13 @@ describe('CollectionBinderSection', () => {
     expect(screen.queryByRole('button', {name: /nothing missing/})).not.toBeInTheDocument();
   });
 
+  it('opens the loading binder on its front cover, as the binder it stands for opens (#806)', () => {
+    // The shimmer is the facing page's alone, so nothing moves when the cards arrive.
+    const {container} = renderSection([], {isLoading: true});
+    expect(screen.getByRole('group', {name: 'Front cover'})).toBeInTheDocument();
+    expect(container.querySelectorAll('.inkweave-shimmer-tile')).toHaveLength(12);
+  });
+
   it('keeps the focus in the section when Try again swaps the error for the loading binder', async () => {
     // Retrying unmounts the button that had the focus, which then fell to the page (#790).
     const user = userEvent.setup();

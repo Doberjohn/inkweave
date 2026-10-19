@@ -5,7 +5,10 @@ import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CollectionBinder} from './CollectionBinder';
 
-/** A 48-card set: two spreads, or four single pages. */
+/**
+ * A 48-card set: three spreads, the first of them twelve cards facing the front cover and the
+ * last twelve facing the back cover, or four single pages.
+ */
 const CARDS = Array.from(
   {length: 48},
   (_, i) =>
@@ -23,7 +26,7 @@ const CARDS = Array.from(
     }) as unknown as LorcanaCard,
 );
 
-/** Every card held, except the first spread's last three. */
+/** Every card held, except cards 22 to 24, on the second spread. */
 const countsFor = (cardId: string) => ({normal: ['c22', 'c23', 'c24'].includes(cardId) ? 0 : 1, foil: 0});
 
 function binder(props: Partial<Parameters<typeof CollectionBinder>[0]> = {}) {
@@ -34,8 +37,14 @@ function binder(props: Partial<Parameters<typeof CollectionBinder>[0]> = {}) {
   );
 }
 
-/** The name on the first slot in view: the card each page or spread opens on. */
-const firstShown = () => screen.getAllByRole('button', {name: /^Card \d+$/})[0].getAttribute('aria-label');
+/** The names on the cards in view, in their pockets' order. */
+const shown = () => screen.getAllByRole('button', {name: /^Card \d+$/}).map((tile) => tile.getAttribute('aria-label'));
+
+/** The name on the first card in view: the card each page or spread opens on. */
+const firstShown = () => shown()[0];
+
+/** Turns to the next spread with the arrow beside it, or the map's under it. */
+const nextSpread = () => fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
 
 /** The pocket holding card `n`. */
 const pocket = (n: number) => screen.getByRole('button', {name: `Card ${n}`});
@@ -45,8 +54,8 @@ const promo = (id: string, setNumber: number | undefined, over: Partial<LorcanaC
   ({...CARDS[0], id, baseId: 'c1', rarity: 'Special', setCode: 'C1', setNumber, ...over}) as LorcanaCard;
 
 /**
- * A promo set's left page, its cards at numbers 2, 4 and 10 and every other pocket open, the
- * first among them (#805). Number 10 sits two rows under number 2.
+ * A promo set's first page, facing the front cover: its cards at numbers 2, 4 and 10 and every
+ * other pocket open, the first among them (#805). Number 10 sits two rows under number 2.
  */
 const PROMO_PAGE = Array.from({length: 12}, (_, i) =>
   [2, 4, 10].includes(i + 1) ? promo(`p${i + 1}`, i + 1) : ({open: true, setCode: 'C1', setNumber: i + 1} as const),
@@ -65,36 +74,44 @@ describe('CollectionBinder', () => {
     // cap. A binder remounts on every new set, and painted a frame uncapped before it (#790).
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({width: 1200, height: 800} as DOMRect);
     render(binder({pager}));
-    const pages = screen.getByRole('group', {name: 'Left page'}).parentElement;
+    const pages = screen.getByRole('group', {name: 'Right page'}).parentElement;
     expect(pages?.style.maxHeight).toMatch(/^\d+(\.\d+)?px$/);
   });
 
-  it('pages a spread, 24 cards at a time', () => {
+  it('opens a spread on the front cover, cards 1-12 facing it, then pages 24 at a time (#806)', () => {
     render(binder());
-    fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
-    expect(firstShown()).toBe('Card 25');
+    expect(screen.getByRole('group', {name: 'Front cover'})).toBeInTheDocument();
+    expect(shown()).toHaveLength(12);
+    expect(firstShown()).toBe('Card 1');
+    nextSpread();
+    expect(shown()).toHaveLength(24);
+    expect(firstShown()).toBe('Card 13');
   });
 
-  it('pages a single page, 12 at a time, on phone widths', () => {
+  it('pages a single page, 12 at a time, with no cover, on phone widths', () => {
     render(binder({single: true}));
+    expect(screen.queryByRole('group', {name: 'Front cover'})).toBeNull();
+    expect(firstShown()).toBe('Card 1');
     fireEvent.click(screen.getByRole('button', {name: 'Next page'}));
     expect(firstShown()).toBe('Card 13');
   });
 
-  it('opens the first page of the spread in view when the layout switches to a single page', () => {
-    // Spread 1 (0-based) holds slots 24-47; on one page per view the binder must
-    // open on that spread's first page (slots 24-35), not reset to the start and
-    // not jump to a stored view NUMBER's cards (page 1, slots 12-23).
+  it('keeps the cards on show when the layout switches to a single page and back', () => {
+    // The second spread holds cards 13-36. One page per view opens that spread's first page,
+    // cards 13-24, not the binder's start, and the spread is back on the way back.
     const view = render(binder());
-    fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+    nextSpread();
     view.rerender(binder({single: true}));
-    expect(firstShown()).toBe('Card 25');
+    expect(firstShown()).toBe('Card 13');
+    view.rerender(binder());
+    expect(firstShown()).toBe('Card 13');
   });
 
   it('dims its flanking arrows at either end, where they stay in the Tab order', () => {
     render(binder());
     expect(screen.getByRole('button', {name: 'Previous spread'})).toHaveAttribute('aria-disabled', 'true');
-    fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+    nextSpread();
+    nextSpread();
     expect(screen.getByRole('button', {name: 'Next spread'})).toHaveAttribute('aria-disabled', 'true');
   });
 
@@ -111,27 +128,29 @@ describe('CollectionBinder', () => {
     it('moves between the pockets with the arrow keys, across the spine', async () => {
       const user = userEvent.setup();
       render(binder({pager: 'map'}));
-      // Card 4 ends the left page's top row, and Card 13 starts the right page's.
-      act(() => pocket(4).focus());
+      nextSpread();
+      // On the second spread, Card 16 ends the left page's top row, and Card 25 starts the right page's.
+      act(() => pocket(16).focus());
       await user.keyboard('{ArrowRight}');
-      expect(pocket(13)).toHaveFocus();
+      expect(pocket(25)).toHaveFocus();
       await user.keyboard('{ArrowDown}');
-      expect(pocket(17)).toHaveFocus();
+      expect(pocket(29)).toHaveFocus();
       await user.keyboard('{ArrowLeft}');
-      expect(pocket(8)).toHaveFocus();
+      expect(pocket(20)).toHaveFocus();
     });
 
     it('goes to the first and last card with Home and End, and no further than the cards', async () => {
-      // Eighteen cards: a full left page, and the right page's first six.
+      // Eighteen cards: the second spread holds the last six, on its left page, facing the back cover.
       const user = userEvent.setup();
       render(binder({pager: 'map', slots: CARDS.slice(0, 18)}));
-      act(() => pocket(1).focus());
+      nextSpread();
+      act(() => pocket(13).focus());
       await user.keyboard('{End}');
       expect(pocket(18)).toHaveFocus();
       await user.keyboard('{ArrowRight}');
       expect(pocket(18)).toHaveFocus();
       await user.keyboard('{Home}');
-      expect(pocket(1)).toHaveFocus();
+      expect(pocket(13)).toHaveFocus();
     });
 
     it('keeps the Tab stop on the card focused last, until the spread turns', async () => {
@@ -142,7 +161,7 @@ describe('CollectionBinder', () => {
       await user.tab({shift: true});
       expect(pocket(5)).toHaveFocus();
       await user.click(screen.getByRole('button', {name: 'Next spread'}));
-      expect(pocket(25)).toHaveAttribute('tabindex', '0');
+      expect(pocket(13)).toHaveAttribute('tabindex', '0');
     });
 
     it("stops on a promo set's first card when its first pocket is open", async () => {
@@ -167,17 +186,18 @@ describe('CollectionBinder', () => {
   describe('with the spread map, where the page docks its panels', () => {
     it('turns to the spread it is clicked on, with no arrows beside the spread', () => {
       render(binder({pager: 'map'}));
-      fireEvent.click(screen.getByRole('button', {name: /^Spread 2 of 2/}));
-      expect(firstShown()).toBe('Card 25');
+      fireEvent.click(screen.getByRole('button', {name: /^Spread 3 of 3/}));
+      expect(firstShown()).toBe('Card 37');
       // Its own two arrows, at either end of the map, are the only arrows left.
       expect(screen.getAllByRole('button', {name: /(Previous|Next) spread/})).toHaveLength(2);
     });
 
     it('marks the spread on show and says what each one is missing', () => {
+      // The first spread's twelve cards are all held; cards 22 to 24 are on the second.
       render(binder({pager: 'map'}));
-      const first = screen.getByRole('button', {name: 'Spread 1 of 2: 3 missing'});
+      const first = screen.getByRole('button', {name: 'Spread 1 of 3: nothing missing'});
       expect(first).toHaveAttribute('aria-current', 'true');
-      expect(screen.getByRole('button', {name: 'Spread 2 of 2: nothing missing'})).not.toHaveAttribute('aria-current');
+      expect(screen.getByRole('button', {name: 'Spread 2 of 3: 3 missing'})).not.toHaveAttribute('aria-current');
     });
 
     it('steps with its arrows, which stop at either end and keep the focus there', async () => {
@@ -189,24 +209,27 @@ describe('CollectionBinder', () => {
       act(() => next.focus());
       await user.keyboard('{Enter}');
       await user.keyboard('{Enter}');
-      expect(firstShown()).toBe('Card 25');
+      await user.keyboard('{Enter}');
+      expect(firstShown()).toBe('Card 37');
       expect(next).toHaveFocus();
       expect(next).toHaveAttribute('aria-disabled', 'true');
     });
 
     it("draws the last spread's empty right page as the back cover, and only that one", () => {
-      // Thirty cards: the second spread holds six, all on its left page.
-      render(binder({pager: 'map', slots: CARDS.slice(0, 30)}));
+      // Twenty cards: the second spread holds the last eight, all on its left page.
+      render(binder({pager: 'map', slots: CARDS.slice(0, 20)}));
       expect(screen.queryByRole('group', {name: 'Back cover'})).toBeNull();
-      fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+      nextSpread();
       expect(screen.getByRole('group', {name: 'Back cover'})).toBeInTheDocument();
       expect(screen.queryByRole('group', {name: 'Right page'})).toBeNull();
     });
 
     it('keeps a last right page with cards on it a page', () => {
-      render(binder({pager: 'map'}));
-      fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+      // Thirty cards: the second spread's right page holds the last six.
+      render(binder({pager: 'map', slots: CARDS.slice(0, 30)}));
+      nextSpread();
       expect(screen.getByRole('group', {name: 'Right page'})).toBeInTheDocument();
+      expect(screen.queryByRole('group', {name: 'Back cover'})).toBeNull();
     });
 
     it('leaves a lone page its arrows: the map draws spreads', () => {
@@ -225,7 +248,8 @@ describe('CollectionBinder', () => {
       const empty = {open: true, setCode: 'C3', setNumber: 30} as const;
       render(binder({pager: 'map', slots: [{...hades, imageUrl: '/a.avif'}, empty]}));
       const map = screen.getByRole('button', {name: 'Spread 1 of 1: nothing missing'});
-      const cells = [...map.querySelectorAll<HTMLElement>('span[aria-hidden] > span')];
+      // Past the front cover's twelve cells, which come first.
+      const cells = [...map.querySelectorAll<HTMLElement>('span[aria-hidden] > span')].slice(12);
       const [scan, open] = cells.map((cell) => cell.style.background);
       expect(scan).not.toBe('');
       expect(open).toBe('');

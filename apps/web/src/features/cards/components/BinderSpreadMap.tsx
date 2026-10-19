@@ -22,7 +22,7 @@ import {PER_PAGE, PER_SPREAD} from './BinderSpread';
  * 135 among them, where one mini each would shrink to slivers. The window moves only at
  * its edges: reach its last spread and that spread becomes its first, so what lies ahead
  * comes into view; going back mirrors it. Where the row holds `WINDOW`, a set's binder
- * (nine to eleven spreads) fits whole and never moves.
+ * (ten or eleven spreads) fits whole and never moves.
  *
  * THE BUTTONS' WORDS AND THE BIGGER SPREADS SHARE ONE ROW (owner, 2026-10-12): at 1920
  * the binder is 1,272px wide, and thirteen spreads left the words no room, so the window
@@ -33,7 +33,9 @@ import {PER_PAGE, PER_SPREAD} from './BinderSpread';
  * dropped the same day.
  *
  * THE LAST SPREAD'S EMPTY RIGHT PAGE IS THE BACK COVER HERE TOO (owner, 2026-10-12):
- * tinted the cover's blue, not the parchment's gold, as `BinderSpread` draws it.
+ * tinted the cover's blue, not the parchment's gold, as `BinderSpread` draws it. So is
+ * the first spread's left page, the front cover (owner, 2026-10-18, #806): the first
+ * spread holds a page of pockets, and every spread after it two (`spreadOf`).
  *
  * THE WINDOW HOLDS AS MANY SPREADS AS FIT ITS ROW (owner, 2026-10-16, option B of
  * `public/mockups/binder-map-narrow.html`), each at least `MIN_MINI` wide, up to
@@ -147,8 +149,8 @@ const PAGE_STYLE: CSSProperties = {
 };
 
 /**
- * The back cover in miniature. No token is the cover board's blue; Sapphire's at this
- * strength lands on the texture's average over the page (sampled 2026-10-12: rgb 42 53 110).
+ * A cover in miniature. No token is the cover board's blue; Sapphire's at this strength
+ * lands on the texture's average over the page (sampled 2026-10-12: rgb 42 53 110).
  */
 const COVER_STYLE: CSSProperties = {...PAGE_STYLE, background: hexRgba(INK_COLORS.Sapphire.border, 0.35)};
 
@@ -188,23 +190,50 @@ function cellStyle(pocket: Pocket | undefined): CSSProperties {
   return {...cell, ...RING_STYLE, background: inkPaint(pocket.inks, 0.85)};
 }
 
-/** One page of a mini spread: twelve cells, which the back cover keeps empty for its size. */
-function MiniPage({pockets, cover = false}: {pockets: readonly Pocket[]; cover?: boolean}) {
+/** A page of a mini spread: its pockets, or a cover, which holds none. */
+type MiniPageOf = readonly Pocket[] | 'cover';
+
+/** A mini spread's two pages. */
+interface MiniPages {
+  left: MiniPageOf;
+  right: MiniPageOf;
+}
+
+/** One page of a mini spread: twelve cells, which a cover keeps empty for its size. */
+function MiniPage({page}: {page: MiniPageOf}) {
+  const cover = page === 'cover';
   return (
     <span aria-hidden style={cover ? COVER_STYLE : PAGE_STYLE}>
       {Array.from({length: PER_PAGE}, (_, i) => (
-        <span key={i} style={cellStyle(pockets[i])} />
+        <span key={i} style={cellStyle(cover ? undefined : page[i])} />
       ))}
     </span>
   );
 }
 
 /**
- * Whether a spread ends the binder in its back cover: it holds cards, all of them on its
- * left page, which only the last spread can (see `BinderSpread`'s `cardCount`). The
- * loading map's one spread holds none and stays parchment, like the spread it stands for.
+ * The spread that holds the pocket at `index`: the first holds a page of pockets, facing the
+ * front cover, and every spread after it two, as `BinderSpread` draws them.
  */
-const endsInCover = (pockets: readonly Pocket[]) => pockets.length > 0 && pockets.length <= PER_PAGE;
+const spreadOf = (index: number) => Math.floor((index + PER_PAGE) / PER_SPREAD);
+
+/**
+ * A spread's two pages: the first spread's left page is the front cover, and a right page
+ * past the binder's last pocket the back cover, which only the last spread's can be. The
+ * loading map's one spread holds no pockets and keeps its right page parchment, like the
+ * spread it stands for.
+ */
+function spreadPages(pockets: readonly Pocket[], spread: number): MiniPages {
+  const right = spread * PER_SPREAD;
+  return {
+    left: spread === 0 ? 'cover' : pockets.slice(right - PER_PAGE, right),
+    right: pockets.length > 0 && right >= pockets.length ? 'cover' : pockets.slice(right, right + PER_PAGE),
+  };
+}
+
+/** The pockets on a spread's two pages. */
+const pocketsOn = ({left, right}: MiniPages): Pocket[] =>
+  [left, right].flatMap((page) => (page === 'cover' ? [] : page));
 
 /** A set's stretch of the binder: its name, and its first and last spreads. */
 interface SetSpan {
@@ -217,8 +246,8 @@ interface SetSpan {
 function setSpans(sets: readonly MapSet[], count: number): SetSpan[] {
   return sets.map((set, i) => ({
     label: set.label,
-    first: Math.floor(set.start / PER_SPREAD),
-    last: Math.floor(((sets[i + 1]?.start ?? count) - 1) / PER_SPREAD),
+    first: spreadOf(set.start),
+    last: spreadOf((sets[i + 1]?.start ?? count) - 1),
   }));
 }
 
@@ -258,12 +287,12 @@ function miniStyle({on, hovered}: Look): CSSProperties {
 interface MiniSpreadProps {
   spread: number;
   label: string;
-  pockets: readonly Pocket[];
+  pages: MiniPages;
   current: boolean;
   onGo: (spread: number) => void;
 }
 
-function MiniSpread({spread, label, pockets, current, onGo}: MiniSpreadProps) {
+function MiniSpread({spread, label, pages, current, onGo}: MiniSpreadProps) {
   const {hovered, hoverProps} = useHover();
   return (
     <CtaButton
@@ -274,8 +303,8 @@ function MiniSpread({spread, label, pockets, current, onGo}: MiniSpreadProps) {
       aria-current={current ? 'true' : undefined}
       onClick={() => onGo(spread)}
       style={miniStyle({on: current, hovered})}>
-      <MiniPage pockets={pockets.slice(0, PER_PAGE)} />
-      <MiniPage pockets={pockets.slice(PER_PAGE)} cover={endsInCover(pockets)} />
+      <MiniPage page={pages.left} />
+      <MiniPage page={pages.right} />
     </CtaButton>
   );
 }
@@ -391,7 +420,8 @@ export function BinderSpreadMap({pockets, current, onGo, sets = []}: BinderSprea
   const rowRef = useRef<HTMLElement>(null);
   const fit = useSpreadsThatFit(rowRef);
   const size = fit ?? WINDOW;
-  const total = Math.max(1, Math.ceil(pockets.length / PER_SPREAD));
+  // The last pocket's spread, and the first spread for a binder with none (the loading map).
+  const total = spreadOf(pockets.length - 1) + 1;
   const start = useWindowStart({spread: current, total}, fit);
   const shown = Array.from({length: Math.min(size, total - start)}, (_, i) => start + i);
   const spans = setSpans(sets, pockets.length);
@@ -412,13 +442,13 @@ export function BinderSpreadMap({pockets, current, onGo, sets = []}: BinderSprea
       />
       <div style={{display: 'flex', gap: SPACING.xs, minWidth: 0}}>
         {shown.map((spread) => {
-          const spreadPockets = pockets.slice(spread * PER_SPREAD, (spread + 1) * PER_SPREAD);
+          const pages = spreadPages(pockets, spread);
           return (
             <MiniSpread
               key={spread}
               spread={spread}
-              label={spreadLabel({spread, total}, spreadPockets, spans)}
-              pockets={spreadPockets}
+              label={spreadLabel({spread, total}, pocketsOn(pages), spans)}
+              pages={pages}
               current={spread === current}
               onGo={onGo}
             />
