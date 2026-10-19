@@ -21,7 +21,7 @@ import {
   type SetSwitching,
 } from './CollectionSetPanel';
 import {BROWSE_GUTTER, useSidePanelDocked} from '../cards/components/BrowseSidePanel';
-import {BinderSpread, BinderSlotSkeleton} from '../cards/components/BinderSpread';
+import {BinderSpread, BinderSlotSkeleton, PER_PAGE} from '../cards/components/BinderSpread';
 import {BinderSpreadMap} from '../cards/components/BinderSpreadMap';
 import {CtaButton} from '../../shared/components';
 import {useResponsive} from '../../shared/hooks/useResponsive';
@@ -192,7 +192,8 @@ export function CollectionBinderSection({
     return (
       <PanelLayout panel={{...controls, stats: null, filtered}}>
         <BinderSpread
-          start={0}
+          // Spreads open on the front cover, as the binder does (owner, 2026-10-18); a phone's page has none.
+          start={isMobile ? 0 : -PER_PAGE}
           single={isMobile}
           arrows={!docked}
           // Docked, a map of one empty spread holds the band the real map will fill. It holds

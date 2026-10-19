@@ -203,6 +203,14 @@ function OpenPocketView({pocket}: {pocket: OpenPocket}) {
   return <OpenPocketArt key={src} pocket={pocket} src={src} />;
 }
 
+/**
+ * How the binder pages: a phone a lone page at a time, and a spread binder two pages at a
+ * time, opening on the inside front cover (owner, 2026-10-18). The cover takes the first
+ * spread's left page, so a spread's cards start a page in: the `lead`.
+ */
+const PAGES = {perView: PER_PAGE, lead: 0};
+const SPREADS = {perView: PER_SPREAD, lead: PER_PAGE};
+
 export function CollectionBinder({
   slots,
   bySet = false,
@@ -211,15 +219,18 @@ export function CollectionBinder({
   single = false,
   pager = 'arrows',
 }: CollectionBinderProps) {
-  const perView = single ? PER_PAGE : PER_SPREAD;
+  const {perView, lead} = single ? PAGES : SPREADS;
   // Held as the first SLOT in view, not a view number, so crossing the phone
-  // breakpoint stays in the same part of the set: from spread 1 (slots 24-47) a
-  // phone opens page 2 (slots 24-35), the first page of that spread, and back
-  // again. A stored view NUMBER would have jumped to spread 2's cards instead.
+  // breakpoint stays in the same part of the set: from spread 2 (slots 12-35) a
+  // phone opens page 2 (slots 12-23), the first page of that spread's cards, and
+  // back again. A stored view NUMBER would have jumped to other cards instead.
   const [firstSlot, setFirstSlot] = useState(0);
-  const total = Math.max(1, Math.ceil(slots.length / perView));
-  const current = Math.min(Math.floor(firstSlot / perView), total - 1);
-  const goTo = (view: number) => setFirstSlot(Math.max(0, Math.min(view, total - 1)) * perView);
+  const total = Math.max(1, Math.ceil((slots.length + lead) / perView));
+  const current = Math.min(Math.floor((firstSlot + lead) / perView), total - 1);
+  const goTo = (view: number) => {
+    const to = Math.max(0, Math.min(view, total - 1));
+    setFirstSlot(Math.max(0, to * perView - lead));
+  };
 
   const map =
     pager === 'map' && !single ? (
@@ -233,7 +244,7 @@ export function CollectionBinder({
 
   return (
     <BinderSpread
-      start={current * perView}
+      start={current * perView - lead}
       single={single}
       arrows={map === undefined}
       footer={map}

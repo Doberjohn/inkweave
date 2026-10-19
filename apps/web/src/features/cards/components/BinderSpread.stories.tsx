@@ -1,10 +1,18 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {MemoryRouter} from 'react-router-dom';
 import {fn} from 'storybook/test';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {BinderSlotSkeleton, BinderSpread} from './BinderSpread';
 import {CardTile} from './CardTile';
 import {BINDER_CARDS} from './binderStoryCards';
 import {COLORS} from '../../../shared/constants';
+
+/** Each pocket's card from `cards`, by index, and an empty pocket past them. */
+const slotsFor = (cards: readonly LorcanaCard[]) => (index: number) => {
+  const card = cards[index];
+  if (!card) return null;
+  return <CardTile card={card} onSelect={fn()} variant="minimal" borderRadius={0} useSmallImage />;
+};
 
 /**
  * The shared binder chrome. Both binders render through this: Browse compacts
@@ -35,19 +43,7 @@ const meta: Meta<typeof BinderSpread> = {
     onNext: fn(),
     canPrev: false,
     canNext: true,
-    renderSlot: (index: number) => {
-      const card = BINDER_CARDS[index];
-      if (!card) return null;
-      return (
-        <CardTile
-          card={card}
-          onSelect={fn()}
-          variant="minimal"
-          borderRadius={0}
-          useSmallImage
-        />
-      );
-    },
+    renderSlot: slotsFor(BINDER_CARDS),
   },
 };
 
@@ -58,39 +54,29 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 /**
- * The trailing spread. Empty pockets still occupy their cells — collapsing them
- * would reflow the last spread into a different shape from every other one.
+ * The first spread (owner, 2026-10-18): the inside front cover on the left, the same plain
+ * board as the back cover, and the binder's first twelve cards on the right.
  */
-export const PartlyFilled: Story = {
-  args: {
-    start: 0,
-    canPrev: true,
-    canNext: false,
-    renderSlot: (index: number) => {
-      const card = BINDER_CARDS.slice(24)[index];
-      if (!card) return null;
-      return (
-        <CardTile
-          card={card}
-          onSelect={fn()}
-          variant="minimal"
-          borderRadius={0}
-          useSmallImage
-        />
-      );
-    },
-  },
+export const FrontCover: Story = {
+  args: {start: -12, cardCount: BINDER_CARDS.length},
 };
 
 /**
- * The last spread, its right page empty: drawn as the binder's inside back cover rather
- * than as empty parchment, so the binder reads as ending there. Two cards remain.
+ * The trailing spread of the 26-card binder: its right page holds the last two, and its
+ * other pockets stay empty, still taking their cells. Collapsing them would reflow the
+ * last spread into a different shape from every other one.
+ */
+export const PartlyFilled: Story = {
+  args: {start: 12, canPrev: true, canNext: false, cardCount: BINDER_CARDS.length},
+};
+
+/**
+ * The last spread of a fourteen-card binder: twelve sat beside the front cover, the last two
+ * are on this left page, and the right page, past them, is the inside back cover rather than
+ * empty parchment, so the binder reads as ending there.
  */
 export const BackCover: Story = {
-  args: {
-    ...PartlyFilled.args,
-    cardCount: BINDER_CARDS.slice(24).length,
-  },
+  args: {...PartlyFilled.args, cardCount: 14, renderSlot: slotsFor(BINDER_CARDS.slice(0, 14))},
 };
 
 /**

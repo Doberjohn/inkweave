@@ -74,6 +74,19 @@ describe('CollectionBinderSection', () => {
     expect(screen.queryByRole('button', {name: /nothing missing/})).not.toBeInTheDocument();
   });
 
+  it('opens the loading binder on the front cover, plain while the pockets shimmer, as the binder it stands for', () => {
+    renderSection([], {isLoading: true});
+    const cover = screen.getByRole('group', {name: 'Front cover'});
+    expect(cover.querySelector('.inkweave-shimmer-tile')).toBeNull();
+    expect(screen.getByRole('group', {name: 'Right page'}).querySelector('.inkweave-shimmer-tile')).not.toBeNull();
+  });
+
+  it('opens the loading binder on a page, with no cover, on a phone', () => {
+    vi.stubGlobal('innerWidth', 390);
+    renderSection([], {isLoading: true});
+    expect(screen.queryByRole('group', {name: 'Front cover'})).toBeNull();
+  });
+
   it("holds only this set's cards that pass the filters, packed in the page's sort", () => {
     renderSection(['a', 'c', 'next'], {sortOrder: 'cost-asc'});
     expect(pockets()).toEqual(['Card c', 'Card a']);
