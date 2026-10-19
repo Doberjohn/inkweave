@@ -76,6 +76,8 @@ function shouldShowBetaNotice({isHome, isMobile}: BetaNoticeVisibility): boolean
 }
 
 interface BottomCover {
+  /** The error screen shows in place of the page, with neither bar. */
+  showsError: boolean;
   showBottomNav: boolean;
   showRevealsPromo: boolean;
   isMobile: boolean;
@@ -87,7 +89,8 @@ interface BottomCover {
  * the Reveals promo (on desktop it sits top right). The two never show together (Home has no
  * bottom nav).
  */
-function bottomCoverHeight({showBottomNav, showRevealsPromo, isMobile, promoHeight}: BottomCover): number {
+function bottomCoverHeight({showsError, showBottomNav, showRevealsPromo, isMobile, promoHeight}: BottomCover): number {
+  if (showsError) return 0;
   if (showBottomNav) return MOBILE_NAV_HEIGHT;
   if (!showRevealsPromo || !isMobile) return 0;
   return promoHeight;
@@ -118,7 +121,13 @@ function AppContent() {
   const showRevealsPromo = shouldShowRevealsPromo({isHome, phase});
   const [promoHeight, setPromoHeight] = useState(0);
   // The page pads by it so its end can scroll clear, and focus scrolls clear of it.
-  const bottomCover = bottomCoverHeight({showBottomNav, showRevealsPromo, isMobile, promoHeight});
+  const bottomCover = bottomCoverHeight({
+    showsError: !!error,
+    showBottomNav,
+    showRevealsPromo,
+    isMobile,
+    promoHeight,
+  });
   useScrollPaddingBottom(bottomCover);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<SearchBottomSheetHandle>(null);

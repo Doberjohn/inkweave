@@ -98,9 +98,16 @@ test.describe('Reveals page (flag on)', () => {
       const promoHeight = await promo.evaluate((el) => (el as HTMLElement).offsetHeight);
       const scrollPadding = await page.evaluate(() => document.documentElement.style.scrollPaddingBottom);
       expect(scrollPadding).toBe(`${promoHeight}px`);
-      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      // Focused from the top of the page, the link scrolls into view above the promo. Blurred
+      // first, so a retry's focus() scrolls again.
+      await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        window.scrollTo(0, 0);
+      });
+      await lastFooterLink.focus();
       const link = (await lastFooterLink.boundingBox())!;
-      expect(link.y + link.height).toBeLessThanOrEqual((await promo.boundingBox())!.y);
+      // 1px for the rounding in offsetHeight.
+      expect(link.y + link.height).toBeLessThanOrEqual((await promo.boundingBox())!.y + 1);
     }).toPass();
   });
 
