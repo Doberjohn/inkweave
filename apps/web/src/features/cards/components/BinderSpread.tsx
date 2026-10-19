@@ -1,4 +1,14 @@
-import {useRef, type CSSProperties, type ReactNode} from 'react';
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FocusEvent,
+  type KeyboardEvent,
+  type ReactNode,
+  type RefObject,
+  type SyntheticEvent,
+} from 'react';
 import {NavArrowButton} from '../../../shared/components';
 import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
 import {blackRgba, COLORS, RADIUS, SPACING} from '../../../shared/constants';
@@ -37,7 +47,9 @@ import {blackRgba, COLORS, RADIUS, SPACING} from '../../../shared/constants';
  */
 
 /** Four columns x three rows, per page. A spread is two of these. */
-export const PER_PAGE = 12;
+const PAGE_COLUMNS = 4;
+const PAGE_ROWS = 3;
+export const PER_PAGE = PAGE_COLUMNS * PAGE_ROWS;
 export const PER_SPREAD = PER_PAGE * 2;
 
 /** Lorcana cards are 0.72 wide-to-tall. Drives the whole layout. */
@@ -82,8 +94,8 @@ function pageStyle(side: 'left' | 'right', cover = false): CSSProperties {
     // such dependency — the width is derived from a definite row height and is
     // identical at zero images loaded and at twenty-four.
     display: 'grid',
-    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-    gridTemplateRows: `repeat(3, minmax(0, 1fr))`,
+    gridTemplateColumns: `repeat(${PAGE_COLUMNS}, minmax(0, 1fr))`,
+    gridTemplateRows: `repeat(${PAGE_ROWS}, minmax(0, 1fr))`,
     gap: SPACING.sm,
     padding: SPACING.md,
     justifyContent: 'center',
@@ -236,8 +248,13 @@ interface BinderSpreadProps {
    * Slot content for an absolute index, or null for an empty pocket. The empty
    * slot still occupies its cell: collapsing it would reflow the trailing spread
    * into a different shape from every other one.
+   *
+   * `tabIndex` is the pocket's place in the Tab order: 0 for the one pocket in view
+   * that Tab stops at, -1 for the rest (see `usePocketFocus`). Content that takes
+   * focus passes it on and marks itself `data-roving-item`, as `CardTile` does. An
+   * open pocket (`isOpen`) takes no focus, so it has no use for it.
    */
-  renderSlot: (index: number) => ReactNode;
+  renderSlot: (index: number, tabIndex: number) => ReactNode;
   onPrev: () => void;
   onNext: () => void;
   canPrev: boolean;
@@ -270,6 +287,12 @@ interface BinderSpreadProps {
    * out (the loading binder), every page is parchment.
    */
   cardCount?: number;
+  /**
+   * Whether a pocket the binder fills is open: drawn with no card in it, as a promo set draws
+   * a number that has no card yet (#805), so it takes no focus. The pockets' Tab stop and
+   * arrow keys pass over it. Left out, every pocket the binder fills holds a card.
+   */
+  isOpen?: (index: number) => boolean;
 }
 
 /** The binder's ringed spine. A lone page keeps it, so it still reads as a binder. */
@@ -354,17 +377,42 @@ function Pages({start, renderSlot, cardCount}: Pick<ViewProps, 'start' | 'render
 /*
  * The height cap lives on the box around the pages, NOT on the row. The row keeps
  * `flex: 1` and therefore a constant height, so whatever sits below it never moves,
- * which matters because the cap arrives one frame late (ResizeObserver runs after
+ * which matters because the cap arrived one frame late (ResizeObserver runs after
  * first paint). On the row itself that late arrival shrank it from 700px to 669px
  * and scored a 0.036 layout shift; on the inner box the same measurement only moves
- * content inside a box that never changed.
+ * content inside a box that never changed. Since #790 the first cap comes before the
+ * first paint (see `useRowWidth`), but one after a resize still lands a frame late.
  */
 const PAGES_BOX: CSSProperties = {minWidth: 0, display: 'flex', alignItems: 'stretch', justifyContent: 'center'};
+
+/** An element's content-box width: what a ResizeObserver reports for it. */
+function contentWidth(el: HTMLElement): number {
+  const {paddingLeft, paddingRight} = getComputedStyle(el);
+  return Math.max(0, el.getBoundingClientRect().width - parseFloat(paddingLeft) - parseFloat(paddingRight));
+}
+
+/**
+ * The row's width, from before the first paint and on every resize after it.
+ *
+ * MEASURED IN A LAYOUT EFFECT TOO (#790). `useContainerWidth` reads its first width
+ * after the first paint, and the collection binder remounts on every new set, sort or
+ * filter (keyed by its cards, see `CollectionBinderSection`), so each switch painted a
+ * frame with no height cap: at 1920x1080, one frame of 257px cards before the capped
+ * 200px, on every switch. The layout effect reads it before that paint.
+ */
+function useRowWidth(ref: RefObject<HTMLDivElement | null>): number {
+  const observed = useContainerWidth(ref);
+  const [first, setFirst] = useState(0);
+  useLayoutEffect(() => {
+    if (ref.current) setFirst(contentWidth(ref.current));
+  }, [ref]);
+  return observed > 0 ? observed : first;
+}
 
 /** Two facing pages, sized from the height they are given, arrows either side. */
 function FlankedSpread({start, renderSlot, arrows, cardCount}: ViewProps & {arrows: NonNullable<ViewProps['arrows']>}) {
   const rowRef = useRef<HTMLDivElement>(null);
-  const maxHeight = spreadMaxHeight(useContainerWidth(rowRef), true);
+  const maxHeight = spreadMaxHeight(useRowWidth(rowRef), true);
   return (
     // The arrows are FLEX SIBLINGS of the pages, not an overlay. Overlaying them
     // was tried and reverted the same hour: the spread's width is derived from its
@@ -406,7 +454,7 @@ function FlankedSpread({start, renderSlot, arrows, cardCount}: ViewProps & {arro
  */
 function StackedSpread({start, renderSlot, footer, cardCount}: ViewProps) {
   const rowRef = useRef<HTMLDivElement>(null);
-  const maxHeight = spreadMaxHeight(useContainerWidth(rowRef), false);
+  const maxHeight = spreadMaxHeight(useRowWidth(rowRef), false);
   return (
     <div
       ref={rowRef}
@@ -447,6 +495,129 @@ function SingleView({start, renderSlot, arrows}: ViewProps) {
   );
 }
 
+/** A pocket's place on the grid in view: a spread's two pages side by side are eight columns. */
+interface Cell {
+  row: number;
+  col: number;
+}
+
+const cellOf = (pocket: number): Cell => {
+  const onPage = pocket % PER_PAGE;
+  return {
+    row: Math.floor(onPage / PAGE_COLUMNS),
+    col: Math.floor(pocket / PER_PAGE) * PAGE_COLUMNS + (onPage % PAGE_COLUMNS),
+  };
+};
+
+const pocketAt = ({row, col}: Cell): number =>
+  Math.floor(col / PAGE_COLUMNS) * PER_PAGE + row * PAGE_COLUMNS + (col % PAGE_COLUMNS);
+
+/** Where each arrow key steps on that grid. */
+const STEPS = new Map<string, Cell>([
+  ['ArrowRight', {row: 0, col: 1}],
+  ['ArrowLeft', {row: 0, col: -1}],
+  ['ArrowDown', {row: 1, col: 0}],
+  ['ArrowUp', {row: -1, col: 0}],
+]);
+
+/** The pockets in view: which take focus and how many pages across they sit. */
+interface PocketView {
+  /** The pockets in view that hold a card, by their place in the view, in order. */
+  focusable: readonly number[];
+  /** Pages across: two for a spread, one for a lone page. */
+  pages: number;
+}
+
+const onGrid = ({row, col}: Cell, pages: number) =>
+  row >= 0 && row < PAGE_ROWS && col >= 0 && col < pages * PAGE_COLUMNS;
+
+/**
+ * The pocket an arrow steps to from the cell `from`: the next one that way with a card in it,
+ * past any open or empty pocket, or null where the grid ends first.
+ */
+function stepFrom(from: Cell, step: Cell, view: PocketView): number | null {
+  const to = {row: from.row + step.row, col: from.col + step.col};
+  if (!onGrid(to, view.pages)) return null;
+  const pocket = pocketAt(to);
+  return view.focusable.includes(pocket) ? pocket : stepFrom(to, step, view);
+}
+
+/** A key with a modifier is the browser's or the reader's (Alt+Left goes back), not the binder's. */
+const isModified = (e: KeyboardEvent) => e.altKey || e.ctrlKey || e.metaKey;
+
+/**
+ * Where a key takes focus from pocket `from` (undefined when focus is on no card): an arrow to
+ * the next card that way, Home and End to the first and last.
+ */
+function pocketForKey(e: KeyboardEvent, from: number | undefined, view: PocketView): number | null {
+  if (from === undefined || isModified(e)) return null;
+  const {focusable} = view;
+  if (e.key === 'Home') return focusable[0];
+  if (e.key === 'End') return focusable[focusable.length - 1];
+  const step = STEPS.get(e.key);
+  return step ? stepFrom(cellOf(from), step, view) : null;
+}
+
+const NEVER_OPEN = () => false;
+
+/**
+ * The pockets in view that hold a card, by their place in it: the filled ones, which run from
+ * the first, less any open one. Every pocket while the binder is loading.
+ */
+function focusableInView(
+  start: number,
+  perView: number,
+  {cardCount, isOpen = NEVER_OPEN}: Pick<BinderSpreadProps, 'cardCount' | 'isOpen'>,
+): number[] {
+  const filled = cardCount === undefined ? perView : Math.max(0, Math.min(perView, cardCount - start));
+  return Array.from({length: filled}, (_, pocket) => pocket).filter((pocket) => !isOpen(start + pocket));
+}
+
+/**
+ * The cards in view, from an event in the binder: their tiles, the pockets they sit in, and
+ * the pocket of the card the event came from (undefined for anything else, such as an arrow).
+ * The tiles run in their pockets' order. A caller that leaves `cardCount` out may fill fewer
+ * pockets than the view holds, so the tiles have the last word on how many cards there are.
+ */
+function cardsAt(e: SyntheticEvent<HTMLElement>, view: PocketView) {
+  const tiles = [...e.currentTarget.querySelectorAll<HTMLElement>('[data-roving-item]')];
+  const focusable = view.focusable.slice(0, tiles.length);
+  const tile = tiles.indexOf(e.target as HTMLElement);
+  return {tiles, view: {...view, focusable}, from: tile < 0 ? undefined : focusable[tile]};
+}
+
+/**
+ * ONE TAB STOP FOR THE POCKETS (#790): Tab enters the view on one card and leaves it with
+ * the next press, and the arrow keys move between its cards, across the spine too, with
+ * Home and End going to the first and last. Before, every card was a Tab stop, so whatever
+ * came after the binder sat 25 presses past it on every spread. The card focused last
+ * keeps the stop, however it took focus (a key, a click, the card modal handing it back),
+ * and a new view starts on its first card. An open pocket holds no card (a promo set's,
+ * #805), so the stop and the arrow keys pass over it.
+ *
+ * Not `useRovingTabIndex`, which reads its items as one grid, row by row. A spread's
+ * pockets run page by page, so its Right from the left page's last column would drop to
+ * the next row instead of crossing the spine, and it follows only the focus its own keys move.
+ */
+function usePocketFocus(start: number, view: PocketView) {
+  const [last, setLast] = useState({start, pocket: 0});
+  const stop = last.start === start && view.focusable.includes(last.pocket) ? last.pocket : view.focusable[0];
+  return {
+    tabIndexFor: (index: number) => (index - start === stop ? 0 : -1),
+    onFocus: (e: FocusEvent<HTMLElement>) => {
+      const {from} = cardsAt(e, view);
+      if (from !== undefined) setLast({start, pocket: from});
+    },
+    onKeyDown: (e: KeyboardEvent<HTMLElement>) => {
+      const cards = cardsAt(e, view);
+      const to = pocketForKey(e, cards.from, cards.view);
+      if (to === null) return;
+      e.preventDefault();
+      cards.tiles[cards.view.focusable.indexOf(to)].focus();
+    },
+  };
+}
+
 export function BinderSpread({
   start,
   renderSlot,
@@ -458,22 +629,31 @@ export function BinderSpread({
   arrows = true,
   footer,
   cardCount,
+  isOpen,
 }: BinderSpreadProps) {
   const unit = single ? 'page' : 'spread';
+  const perView = single ? PER_PAGE : PER_SPREAD;
+  const focusable = focusableInView(start, perView, {cardCount, isOpen});
+  const pockets = usePocketFocus(start, {focusable, pages: single ? 1 : 2});
   const views: ViewProps = {
     start,
-    renderSlot,
+    renderSlot: (index) => renderSlot(index, pockets.tabIndexFor(index)),
     footer,
     cardCount,
     arrows: arrows
       ? {
-          prev: <NavArrowButton direction="prev" label={`Previous ${unit}`} onClick={onPrev} disabled={!canPrev} />,
-          next: <NavArrowButton direction="next" label={`Next ${unit}`} onClick={onNext} disabled={!canNext} />,
+          prev: <NavArrowButton direction="prev" label={`Previous ${unit}`} onClick={onPrev} atEnd={!canPrev} />,
+          next: <NavArrowButton direction="next" label={`Next ${unit}`} onClick={onNext} atEnd={!canNext} />,
         }
       : null,
   };
   return (
-    <section aria-label="Binder" style={{height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0}}>
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- roving tabindex: the arrow keys move between the pockets (#790)
+    <section
+      aria-label="Binder"
+      onKeyDown={pockets.onKeyDown}
+      onFocus={pockets.onFocus}
+      style={{height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0}}>
       {single ? <SingleView {...views} /> : <SpreadView {...views} />}
     </section>
   );

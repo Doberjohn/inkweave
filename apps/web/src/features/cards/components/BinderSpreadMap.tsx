@@ -407,7 +407,7 @@ export function BinderSpreadMap({pockets, current, onGo, sets = []}: BinderSprea
         label="Previous spread"
         text="Previous"
         onClick={() => onGo(current - 1)}
-        disabled={current <= 0}
+        atEnd={current <= 0}
         style={ARROW_STYLE}
       />
       <div style={{display: 'flex', gap: SPACING.xs, minWidth: 0}}>
@@ -430,7 +430,7 @@ export function BinderSpreadMap({pockets, current, onGo, sets = []}: BinderSprea
         label="Next spread"
         text="Next"
         onClick={() => onGo(current + 1)}
-        disabled={current >= total - 1}
+        atEnd={current >= total - 1}
         style={ARROW_STYLE}
       />
     </nav>

@@ -1,6 +1,6 @@
 import type {ComponentProps} from 'react';
-import {describe, it, expect, vi} from 'vitest';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {describe, it, expect, vi, afterEach} from 'vitest';
+import {act, render, screen, fireEvent} from '@testing-library/react';
 import {QuantityStepper} from './QuantityStepper';
 
 function renderStepper(props: Partial<ComponentProps<typeof QuantityStepper>> = {}) {
@@ -8,6 +8,28 @@ function renderStepper(props: Partial<ComponentProps<typeof QuantityStepper>> = 
   render(<QuantityStepper value={2} label="Pocahontas" {...handlers} {...props} />);
   return handlers;
 }
+
+/** Reduced motion on; the returned call turns it off, as a change to the OS setting would. */
+function stubReducedMotion() {
+  let reduce = true;
+  const listeners = new Set<() => void>();
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({
+      matches: reduce && query.includes('reduce'),
+      addEventListener: (_type: string, listener: () => void) => listeners.add(listener),
+      removeEventListener: (_type: string, listener: () => void) => listeners.delete(listener),
+    })),
+  );
+  return () => {
+    reduce = false;
+    act(() => listeners.forEach((listener) => listener()));
+  };
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('QuantityStepper', () => {
   it('calls onIncrement when the + is clicked', () => {
@@ -38,6 +60,22 @@ describe('QuantityStepper', () => {
   it('renders the current value', () => {
     renderStepper({value: 3});
     expect(screen.getByText('3')).toBeInTheDocument();
+  });
+
+  it("drops a parent's pop under reduced motion", () => {
+    // The pop is set inline, where index.css's reduced-motion block can't reach it (#790).
+    stubReducedMotion();
+    renderStepper({popping: true, onPopEnd: vi.fn()});
+    expect(screen.getByText('2').style.animation).toBe('');
+  });
+
+  it('leaves no pop of its own under reduced motion, to play once the setting changes', () => {
+    // The animation's end is what clears the pop, and under reduced motion none runs.
+    const allowMotion = stubReducedMotion();
+    renderStepper();
+    fireEvent.click(screen.getByRole('button', {name: /add one copy of pocahontas/i}));
+    allowMotion();
+    expect(screen.getByText('2').style.animation).toBe('');
   });
 
   it('uses the label in both step aria-labels', () => {

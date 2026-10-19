@@ -35,7 +35,7 @@ const meta: Meta<typeof BinderSpread> = {
     onNext: fn(),
     canPrev: false,
     canNext: true,
-    renderSlot: (index: number) => {
+    renderSlot: (index: number, tabIndex: number) => {
       const card = BINDER_CARDS[index];
       if (!card) return null;
       return (
@@ -45,6 +45,7 @@ const meta: Meta<typeof BinderSpread> = {
           variant="minimal"
           borderRadius={0}
           useSmallImage
+          tabIndex={tabIndex}
         />
       );
     },
@@ -66,7 +67,7 @@ export const PartlyFilled: Story = {
     start: 0,
     canPrev: true,
     canNext: false,
-    renderSlot: (index: number) => {
+    renderSlot: (index: number, tabIndex: number) => {
       const card = BINDER_CARDS.slice(24)[index];
       if (!card) return null;
       return (
@@ -76,6 +77,7 @@ export const PartlyFilled: Story = {
           variant="minimal"
           borderRadius={0}
           useSmallImage
+          tabIndex={tabIndex}
         />
       );
     },

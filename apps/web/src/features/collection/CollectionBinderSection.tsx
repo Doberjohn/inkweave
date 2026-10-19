@@ -1,4 +1,4 @@
-import type {ReactNode} from 'react';
+import {useRef, type ReactNode} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries, CollectionEntry} from './collectionParser';
 import type {CollectionPromo} from './collectionPromos';
@@ -152,7 +152,29 @@ interface CollectionBinderSectionProps extends PanelControls {
   onCardSelect: (card: LorcanaCard) => void;
 }
 
-export function CollectionBinderSection({
+/**
+ * The section's content, in a region that holds focus while the content changes under it.
+ *
+ * "TRY AGAIN" KEEPS FOCUS IN THE BINDER (#790): retrying swaps the error for the loading
+ * binder, which unmounts the button that had focus, and focus fell to the page, so the
+ * next Tab started from its top. The region takes focus first, and it stays mounted
+ * through the loading binder and the loaded one, as `BrowseSidePanel`'s Clear all hands
+ * focus to its panel. It is a group, not a landmark: the binder inside is the region.
+ */
+export function CollectionBinderSection({onRetry, ...props}: CollectionBinderSectionProps) {
+  const regionRef = useRef<HTMLDivElement>(null);
+  const retry = () => {
+    regionRef.current?.focus();
+    onRetry();
+  };
+  return (
+    <div ref={regionRef} tabIndex={-1} role="group" aria-label="Collection" style={{height: '100%'}}>
+      <SectionContent {...props} onRetry={retry} />
+    </div>
+  );
+}
+
+function SectionContent({
   cards,
   waiting = [],
   matchedIds,
@@ -173,11 +195,14 @@ export function CollectionBinderSection({
 
   // Both states are rendered rather than falling through to an empty binder.
   // A binder of blank slots is indistinguishable from "you own none of this
-  // set", so a failed fetch would read as a fact about the collection.
+  // set", so a failed fetch would read as a fact about the collection. The error
+  // is an alert (#790): it replaces a binder the reader was waiting for.
   if (error !== null) {
     return (
       <div style={{...sectionStyle(isMobile, docked), display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
-        <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.sm}px`, margin: 0}}>{error}</p>
+        <p role="alert" style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.sm}px`, margin: 0}}>
+          {error}
+        </p>
         <div>
           <CtaButton variant="ghost" onClick={onRetry}>
             Try again
@@ -250,11 +275,17 @@ export function CollectionBinderSection({
  * Nothing to show. Said in words, not as an empty binder: blank pockets would read as a
  * fact about the collection. With the binder showing only owned or only missing cards,
  * that view is as likely the reason as the filters.
+ *
+ * A status (#790), like Browse's empty grid: a search that empties the binder changes
+ * nothing where the reader is typing, so it is announced.
  */
 function NoMatches({show, whole}: {show: BinderShow; whole: boolean}) {
   const where = whole ? 'your collection' : 'this set';
   return (
-    <p style={{textAlign: 'center', padding: 64, margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
+    <p
+      role="status"
+      aria-live="polite"
+      style={{textAlign: 'center', padding: 64, margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
       {show === 'all' ? `No cards in ${where} match your filters.` : `No ${show} cards in ${where} match your filters.`}
     </p>
   );
