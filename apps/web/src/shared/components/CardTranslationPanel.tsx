@@ -31,8 +31,10 @@ function languageName(code: string): string {
  * The English name and rules text of a card shown in another language's scan, its own or a
  * variant printing's (#681; variants are rules-identical, so the card's text serves). A card
  * whose own scan is foreign has only an unofficial translation, and says so. A card whose own
- * scan is English, shown in a variant revealed abroad first, has its official English text.
- * CardLightbox and the card modal lay it over the scan behind a CardTranslationToggle.
+ * scan is English, shown in a variant revealed abroad first, has its official English text. So
+ * does a printing's own card (one with a `baseId`), whose scan is its printing's and whose text
+ * is the English card's: the binder's pocket for a pre-Core card's promo, 41/P1 in Japanese
+ * (#805). CardLightbox and the card modal lay it over the scan behind a CardTranslationToggle.
  */
 export function CardTranslationPanel({
   card,
@@ -43,7 +45,7 @@ export function CardTranslationPanel({
   const sizes = SIZES[size];
   const languageLabel = language ? languageName(language) : 'original';
   const hasText = !!(card.textSections?.length || card.text);
-  const official = !card.scanLanguage && !!language;
+  const official = !!language && (!card.scanLanguage || card.baseId !== undefined);
 
   return (
     <section
