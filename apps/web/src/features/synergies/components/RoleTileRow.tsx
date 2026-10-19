@@ -1,6 +1,6 @@
 import {useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
-import {COLORS, FONTS, FONT_SIZES, Z_INDEX} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, Z_INDEX, blackRgba, hexRgba} from '../../../shared/constants';
 import {useContainerWidth} from '../../../shared/hooks';
 
 export interface RoleTile {
@@ -28,8 +28,6 @@ export interface RoleTileRowProps {
   layout?: 'carousel' | 'grid';
 }
 
-const DESCRIPTION_COLOR = '#c8c8d8';
-
 const TILE_WIDTH = 190;
 const TILE_GAP = 10;
 /** Width one fixed-width cell occupies in the row (tile + the gap before it). */
@@ -46,6 +44,19 @@ const ROW_MAX_WIDTH = MAX_VISIBLE_TILES * TILE_WIDTH + (MAX_VISIBLE_TILES - 1) *
 /** Tile height with the description shown vs the compact (label + count only) form. */
 const TILE_MIN_HEIGHT_FULL = 120;
 const TILE_MIN_HEIGHT_COMPACT = 76;
+
+/** A tile's accessible name: read by screen readers, not shown (see RoleTileButton). */
+const SR_ONLY_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
 
 /**
  * How many fixed-width cells fit in the measured content width, clamped to
@@ -207,8 +218,8 @@ interface RoleTileButtonOptions {
 
 /** Compute box-shadow for the tile based on active/hover state. */
 function tileBoxShadow({active, hovered}: Pick<RoleTileButtonOptions, 'active' | 'hovered'>): string {
-  if (active) return `0 0 0 1px ${COLORS.primaryMuted}, 0 0 18px rgba(212, 175, 55, 0.18)`;
-  if (hovered) return '0 4px 12px rgba(0, 0, 0, 0.4)';
+  if (active) return `0 0 0 1px ${COLORS.primaryMuted}, 0 0 18px ${hexRgba(COLORS.primary500, 0.18)}`;
+  if (hovered) return `0 4px 12px ${blackRgba(0.4)}`;
   return 'none';
 }
 
@@ -222,7 +233,7 @@ function getRoleTileButtonStyle({active, hovered, minHeight, fill}: RoleTileButt
       : {flex: `0 0 ${TILE_WIDTH}px`, scrollSnapAlign: 'start' as const}),
     background: active || hovered ? COLORS.surface : COLORS.surfaceAlt,
     border: `1px solid ${active || hovered ? COLORS.primaryMuted : COLORS.surfaceBorder}`,
-    borderRadius: 8,
+    borderRadius: RADIUS.lg,
     padding: '14px 12px',
     cursor: 'pointer',
     textAlign: 'center',
@@ -234,8 +245,7 @@ function getRoleTileButtonStyle({active, hovered, minHeight, fill}: RoleTileButt
     justifyContent: 'center',
     gap: 6,
     minHeight,
-    transition:
-      'transform 0.15s ease, border-color 0.15s ease, background 0.15s ease, box-shadow 0.2s ease',
+    transition: `transform 0.15s ${EASING.snappy}, border-color 0.15s ${EASING.snappy}, background 0.15s ${EASING.snappy}, box-shadow 0.2s ${EASING.snappy}`,
     transform: hovered && !active ? 'translateY(-1px)' : 'translateY(0)',
     boxShadow: tileBoxShadow({active, hovered}),
   };
@@ -264,14 +274,14 @@ function RoleTileTooltip({anchor, text}: {anchor: TooltipAnchor; text: string}) 
         maxWidth: 220,
         background: COLORS.surface,
         border: `1px solid ${COLORS.surfaceBorder}`,
-        borderRadius: 8,
+        borderRadius: RADIUS.lg,
         padding: '8px 12px',
         fontSize: `${FONT_SIZES.md}px`,
         lineHeight: 1.4,
-        color: DESCRIPTION_COLOR,
+        color: COLORS.descriptionText,
         fontFamily: FONTS.body,
         textAlign: 'center',
-        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.5)',
+        boxShadow: `0 6px 20px ${blackRgba(0.5)}`,
         zIndex: Z_INDEX.popover,
         pointerEvents: 'none',
       }}>
@@ -286,6 +296,11 @@ function RoleTileTooltip({anchor, text}: {anchor: TooltipAnchor; text: string}) 
  * on click. The count is a top-right badge (not inline with the label) so a long,
  * wrapping label stays centered without dragging the number around. When
  * `showDescription` is false the description is revealed in a hover/focus tooltip.
+ *
+ * Its accessible name ("Boost, 54 cards") is one screen-reader-only line, and the visible
+ * parts are hidden from screen readers. An aria-label must contain the tile's visible text
+ * (WCAG 2.5.3, axe's label-content-name-mismatch), which the badge and description break,
+ * and a hidden ", 54 cards" after the visible label reads "Boost , 54 cards" in Chrome.
  */
 function RoleTileButton({
   tile,
@@ -329,7 +344,6 @@ function RoleTileButton({
       }}
       onFocus={openTip}
       onBlur={closeTip}
-      aria-label={`${tile.label}, ${tile.count} cards`}
       aria-pressed={active}
       style={getRoleTileButtonStyle({active, hovered, minHeight, fill})}>
       <span
@@ -347,6 +361,7 @@ function RoleTileButton({
         {tile.count}
       </span>
       <span
+        aria-hidden="true"
         style={{
           fontSize: `${FONT_SIZES.xl}px`,
           fontWeight: 600,
@@ -357,10 +372,11 @@ function RoleTileButton({
         {tile.label}
       </span>
       {showDescription && (
-        <p style={{fontSize: `${FONT_SIZES.md}px`, color: DESCRIPTION_COLOR, margin: '4px 0 0'}}>
+        <p aria-hidden="true" style={{fontSize: `${FONT_SIZES.md}px`, color: COLORS.descriptionText, margin: '4px 0 0'}}>
           {tile.description}
         </p>
       )}
+      <span style={SR_ONLY_STYLE}>{`${tile.label}, ${tile.count} cards`}</span>
       {tip && <RoleTileTooltip anchor={tip} text={tile.description} />}
     </button>
   );
@@ -374,9 +390,9 @@ function RoleTileButton({
 function getShowMoreTileStyle({hovered, minHeight}: {hovered: boolean; minHeight: number}): React.CSSProperties {
   return {
     flex: `0 0 ${TILE_WIDTH}px`,
-    background: '#151525',
-    border: `1px dashed ${hovered ? COLORS.primary : '#444466'}`,
-    borderRadius: 8,
+    background: COLORS.surfaceAlt,
+    border: `1px dashed ${hovered ? COLORS.primary : COLORS.gray300}`,
+    borderRadius: RADIUS.lg,
     padding: '14px 12px',
     cursor: 'pointer',
     textAlign: 'center',
@@ -387,12 +403,16 @@ function getShowMoreTileStyle({hovered, minHeight}: {hovered: boolean; minHeight
     justifyContent: 'center',
     gap: 6,
     minHeight,
-    transition: 'border-color 0.15s ease, background 0.15s ease, transform 0.15s ease',
+    transition: `border-color 0.15s ${EASING.snappy}, background 0.15s ${EASING.snappy}, transform 0.15s ${EASING.snappy}`,
     transform: hovered ? 'translateY(-1px)' : 'translateY(0)',
   };
 }
 
-/** The dashed reveal tile shown as the last collapsed cell; clicking it expands the carousel. */
+/**
+ * The dashed reveal tile shown as the last collapsed cell; clicking it expands the carousel.
+ * Its accessible name ("Show 6 more mechanics") is a screen-reader-only line too, for the
+ * reason RoleTileButton gives.
+ */
 function ShowMoreTile({hiddenCount, minHeight, onClick}: {hiddenCount: number; minHeight: number; onClick: () => void}) {
   const [hovered, setHovered] = useState(false);
 
@@ -402,9 +422,9 @@ function ShowMoreTile({hiddenCount, minHeight, onClick}: {hiddenCount: number; m
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      aria-label={`Show ${hiddenCount} more mechanics`}
       style={getShowMoreTileStyle({hovered, minHeight})}>
       <span
+        aria-hidden="true"
         style={{
           fontSize: `${FONT_SIZES.xl}px`,
           fontWeight: 700,
@@ -413,14 +433,16 @@ function ShowMoreTile({hiddenCount, minHeight, onClick}: {hiddenCount: number; m
         +{hiddenCount}
       </span>
       <span
+        aria-hidden="true"
         style={{
           fontSize: `${FONT_SIZES.md}px`,
           fontWeight: 500,
           color: hovered ? COLORS.primary : COLORS.textMuted,
-          transition: 'color 0.15s ease',
+          transition: `color 0.15s ${EASING.snappy}`,
         }}>
         Show more ▾
       </span>
+      <span style={SR_ONLY_STYLE}>{`Show ${hiddenCount} more mechanics`}</span>
     </button>
   );
 }

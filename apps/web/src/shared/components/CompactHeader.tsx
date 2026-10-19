@@ -351,7 +351,6 @@ function RevealsPill({isHovered, onMouseEnter, onMouseLeave}: RevealsPillProps) 
       to={REVEALS_PATH}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      aria-label="Reveals"
       style={({isActive}) => ({
         ...CTA_FILLED_STYLE,
         display: 'flex',
@@ -373,6 +372,7 @@ function RevealsPill({isHovered, onMouseEnter, onMouseLeave}: RevealsPillProps) 
       })}>
       Reveals
       <span
+        aria-hidden="true"
         style={{
           fontSize: FONT_SIZES.xs,
           fontWeight: 700,
