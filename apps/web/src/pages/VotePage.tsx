@@ -149,6 +149,26 @@ const pageShellOuter = {
   overflowY: 'auto',
 } as const;
 
+const srOnly = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+} as const;
+
+/**
+ * The page's one h1, visually hidden: the vote screen shows no heading of its own, but search
+ * engines and screen readers look for one, and every page in the sitemap needs it.
+ */
+function VoteHeading() {
+  return <h1 style={srOnly}>Vote on Lorcana card synergies</h1>;
+}
+
 type PageHeaderProps = {
   isMobile: boolean;
   cards: LorcanaCard[];
@@ -198,6 +218,7 @@ function VotePageShell({
         }}
         aria-busy={ariaBusy}
         aria-label={ariaLabel}>
+        <VoteHeading />
         {children}
       </main>
       {tail}
@@ -280,7 +301,7 @@ function VoteErrorView({isMobile, cards, onLogoClick, onCardSelect}: PageHeaderP
         cards={cards}
         onCardSelect={onCardSelect}
       />
-      <div
+      <main
         style={{
           flex: 1,
           display: 'flex',
@@ -288,8 +309,9 @@ function VoteErrorView({isMobile, cards, onLogoClick, onCardSelect}: PageHeaderP
           justifyContent: 'center',
           padding: 32,
         }}>
+        <VoteHeading />
         <VoteStatusBanner type="error" onRetry={() => window.location.reload()} />
-      </div>
+      </main>
     </div>
   );
 }

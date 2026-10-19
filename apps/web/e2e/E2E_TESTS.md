@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-174 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+176 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts` and the `/reveals` check in `seo.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -208,7 +208,7 @@ The desktop signed-in tests skip the mobile projects: they find the numbers in t
 | should close dropdown on Escape | Escape key dismisses autocomplete dropdown, within the default timeout (a debounce pending at the keypress used to reopen it, #746) |
 | should NOT show autocomplete on browse page search | Typing in browse page search does NOT show autocomplete (browse filters inline) |
 
-## `seo.spec.ts` — 19 tests (both viewports)
+## `seo.spec.ts` — 21 tests (both viewports)
 
 Route-level metadata coverage (#524). Before this, the file asserted only home-page
 properties, so #486's central acceptance criterion — every route self-references its own
@@ -234,6 +234,8 @@ against the dev server, where both are present.
 | should own its title and canonical: `/ink/steel` | As above, on an ink hub (#530) |
 | should own its title and canonical: `/release-notes` | As above, on a page built on `LegalPage` (#765) |
 | card page has exactly one h1 at a mobile viewport | 412×915 — CardPage gates the desktop `CardDetailPanel` behind `!isMobile` while `CardDetail` owns the h1 below it (`headingLevel="h1"`, always set by `SynergyResults`). Googlebot renders mobile, so a regression in either branch is invisible at desktop width |
+| vote page has exactly one h1 while its pair loads and once it shows | Holds `_pairs_index.json` to pin the loading state, then releases it. The vote screen shows no heading, so its h1 is visually hidden (`VotePageShell`), and nothing on screen goes missing without it, which is how `/vote` sat in the sitemap with no h1 |
+| vote page has exactly one h1 when its pairs fail to load | `_pairs_index.json` answers 500, so `VoteErrorView` renders, with its own copy of the hidden h1 |
 | card page links to all six ink hubs at a mobile viewport | The footer's ink nav is what puts every hub one click from all 1,024 card pages (#530) |
 | ink hub emits one crawlable anchor per card, identically on mobile | `CardGrid`, not the Virtuoso-windowed `BrowseCardGrid` — windowing would emit a fraction of the anchors to a crawler (#530) |
 | unknown ink slug renders the 404 page, not an empty hub | Junk URLs under `/ink/` declare themselves unindexable instead of returning a thin 200 (#525) |

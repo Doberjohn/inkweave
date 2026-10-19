@@ -38,8 +38,11 @@ export const legalLinkStyle: React.CSSProperties = {
 interface LegalPageProps {
   /** Page title, rendered as the single <h1>. */
   title: string;
-  /** Optional meta description; defaults to the brand blurb. */
-  description?: string;
+  /**
+   * The page's own meta description. Required: the four pages once shared a brand-blurb
+   * default, and pages sharing one description compete with each other in search results.
+   */
+  description: string;
   children: ReactNode;
 }
 
@@ -56,14 +59,7 @@ export function LegalPage({title, description, children}: LegalPageProps) {
         background: COLORS.background,
         fontFamily: FONTS.body,
       }}>
-      <Seo
-        title={`${title} | Inkweave`}
-        description={
-          description ??
-          'Inkweave is a free Disney Lorcana synergy finder and deck builder for the Core format.'
-        }
-        canonicalPath={pathname}
-      />
+      <Seo title={`${title} | Inkweave`} description={description} canonicalPath={pathname} />
       <CompactHeader isMobile={isMobile} />
 
       <article

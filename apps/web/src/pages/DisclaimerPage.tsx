@@ -1,8 +1,11 @@
 import {LegalPage, legalLinkStyle} from '../shared/components';
 
+const DESCRIPTION =
+  "Inkweave is an unofficial fan tool that uses Disney Lorcana trademarks under Ravensburger's Community Code Policy, not endorsed by Disney or Ravensburger.";
+
 export function DisclaimerPage() {
   return (
-    <LegalPage title="Intellectual Property Disclaimer">
+    <LegalPage title="Intellectual Property Disclaimer" description={DESCRIPTION}>
       <p style={{marginTop: 0}}>
         Inkweave uses trademarks and/or copyrights associated with Disney Lorcana TCG, used under
         Ravensburger&rsquo;s Community Code Policy. We are expressly prohibited from charging you to use or
