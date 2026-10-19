@@ -1,9 +1,11 @@
+import type {CSSProperties} from 'react';
 import {SET_TOTAL} from './setComposition';
+import type {CountdownMilestone, CountdownState} from './useCountdown';
 import {REVEAL_SET_CODE, REVEAL_SET_LOGO, SET_NAMES} from '../../shared/constants';
 
 interface RevealHeroProps {
-  /** Days until pre-release. */
-  countdownDays: number;
+  /** Days to the pre-release, then to the store release; null while the reveal dates load. */
+  countdown: CountdownState | null;
   /** Formatted release date, e.g. "July 24, 2026". */
   releaseDate: string;
   /** Unique cards revealed so far. */
@@ -20,13 +22,74 @@ function franchiseLabel(count: number): string {
   return count === 1 ? 'New franchise' : 'New franchises';
 }
 
+const COUNTDOWN_LABELS: Record<CountdownMilestone, string> = {
+  'pre-release': 'Until pre-release',
+  'store-release': 'Until store release',
+};
+
+/** Stands in, unseen, until the reveal dates load. */
+const LOADING_COUNTDOWN: CountdownState = {days: 0, milestone: 'pre-release'};
+
+interface CountdownPanelProps {
+  countdown: CountdownState | null;
+  releaseDate: string;
+  compact: boolean;
+  bigStat: CSSProperties;
+  unitStyle: CSSProperties;
+  labelStyle: CSSProperties;
+}
+
+/**
+ * The gold panel: the countdown beside the set's release date. While the dates load the
+ * countdown is hidden rather than removed, so the panel keeps its size.
+ */
+function CountdownPanel({
+  countdown,
+  releaseDate,
+  compact,
+  bigStat,
+  unitStyle,
+  labelStyle,
+}: CountdownPanelProps) {
+  const {days, milestone} = countdown ?? LOADING_COUNTDOWN;
+  const unit = days === 1 ? 'day' : 'days';
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-end',
+        gap: 16,
+        background: 'rgba(212, 175, 55, 0.06)',
+        border: '1px solid rgba(212, 175, 55, 0.28)',
+        borderRadius: 14,
+        // Narrower sides on phones keep the label and the date from wrapping at 360px.
+        padding: compact ? 16 : '16px 24px',
+        boxShadow: '0 0 24px rgba(212, 175, 55, 0.06)',
+      }}
+    >
+      <div style={{textAlign: 'left', visibility: countdown ? 'visible' : 'hidden'}}>
+        <div style={{...bigStat, color: '#f5d877'}}>
+          {days}
+          <span style={{...unitStyle, color: '#d4af37', letterSpacing: 0.5}}> {unit}</span>
+        </div>
+        <div style={labelStyle}>{COUNTDOWN_LABELS[milestone]}</div>
+      </div>
+      <div style={{width: 1, height: 40, background: '#3a3a52'}} />
+      <div style={{textAlign: 'left'}}>
+        <div style={{fontWeight: 700, fontSize: 18, color: '#e8e8e8', lineHeight: 1.2}}>{releaseDate}</div>
+        <div style={labelStyle}>Set release</div>
+      </div>
+    </div>
+  );
+}
+
 /**
  * The reveals page header: the set logo over two stat panels (a gold countdown
  * panel and a neutral revealed/franchises panel). Deliberately minimal — no
  * intro copy or progress bar; the six trackers below carry the progress story.
  */
 export function RevealHero({
-  countdownDays,
+  countdown,
   releaseDate,
   totalRevealed,
   franchiseCount,
@@ -69,32 +132,14 @@ export function RevealHero({
           marginTop: compact ? 18 : 30,
         }}
       >
-        {/* Countdown panel */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            gap: 16,
-            background: 'rgba(212, 175, 55, 0.06)',
-            border: '1px solid rgba(212, 175, 55, 0.28)',
-            borderRadius: 14,
-            padding: '16px 24px',
-            boxShadow: '0 0 24px rgba(212, 175, 55, 0.06)',
-          }}
-        >
-          <div style={{textAlign: 'left'}}>
-            <div style={{...bigStat, color: '#f5d877'}}>
-              {countdownDays}
-              <span style={{...unitStyle, color: '#d4af37', letterSpacing: 0.5}}> days</span>
-            </div>
-            <div style={labelStyle}>Until pre-release</div>
-          </div>
-          <div style={{width: 1, height: 40, background: '#3a3a52'}} />
-          <div style={{textAlign: 'left'}}>
-            <div style={{fontWeight: 700, fontSize: 18, color: '#e8e8e8', lineHeight: 1.2}}>{releaseDate}</div>
-            <div style={labelStyle}>Set release</div>
-          </div>
-        </div>
+        <CountdownPanel
+          countdown={countdown}
+          releaseDate={releaseDate}
+          compact={compact}
+          bigStat={bigStat}
+          unitStyle={unitStyle}
+          labelStyle={labelStyle}
+        />
 
         {/* Revealed + franchises panel */}
         <div

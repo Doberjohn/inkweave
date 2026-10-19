@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # pnpm 11 queries npm's bulk advisory endpoint. The pinned pnpm 9 still queries the
+      # pnpm 11 queries npm's bulk advisory endpoint. The pinned pnpm 10 still queries the
       # legacy one, which npm is retiring (it answered HTTP 410 on 2026-07-15, #490).
       # --pm-on-fail=ignore stops pnpm 11 from handing the command to the packageManager
       # pin, which is how it looked broken in July. Audits dev and prod dependencies and

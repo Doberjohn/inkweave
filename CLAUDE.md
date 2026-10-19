@@ -23,7 +23,7 @@ See [GitHub Issues](https://github.com/Doberjohn/inkweave/issues) for full backl
 - **OS**: Windows 11. **Shell**: Windows PowerShell 5.1 (`powershell.exe`). **pwsh 7 is not installed** - never assume it. Git Bash is available for POSIX scripts; each takes its own syntax.
 - PowerShell 5.1 has no `&&`/`||` chain operators, no ternary, no null-coalescing. Use `A; if ($?) { B }`.
 - Windows long paths are enabled, but git's own delete still fails on pnpm's deep `node_modules`: `git worktree remove` unregisters the worktree, then stops at the first long path and leaves a half-deleted folder. Remove worktrees with `pnpm worktree:remove` (see **Worktree & Agent Workflow**).
-- Node 24, pnpm workspaces. `claude` must be on PATH for the scheduled rule-candidate miner.
+- Node 24, pnpm 10 workspaces (10.34.7, pinned in `package.json`). pnpm runs no dependency install scripts: an install that meets a new one fails (`strictDepBuilds`) until `pnpm-workspace.yaml` lists it under `allowBuilds`, `true` to run it or `false` to skip it. `claude` must be on PATH for the scheduled rule-candidate miner.
 
 ## Project Structure
 

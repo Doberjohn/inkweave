@@ -61,7 +61,7 @@
 
 | Tool       | Version |
 |------------|---------|
-| pnpm       | 9.0.0   |
+| pnpm       | 10.34.7 |
 | TypeScript | 5.3+    |
 | React      | 19.2+   |
 | Vite       | 5.0+    |

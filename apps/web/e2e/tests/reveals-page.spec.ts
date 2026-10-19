@@ -37,6 +37,9 @@ test.describe('Reveals page (flag on)', () => {
     await expect(page.getByRole('heading', {level: 1, name: revealSet.name})).toHaveCount(1);
     await expect(page.getByAltText(revealSet.name, {exact: true})).toBeVisible();
 
+    // Two days before release the pre-release has passed, so the countdown runs to the store release.
+    await expect(page.getByText('Until store release')).toBeVisible();
+
     // Six ink tracker tiles (one per ink).
     await expect(page.getByTestId('ink-tracker-tile')).toHaveCount(6);
 

@@ -135,7 +135,7 @@ export function RevealsPage() {
     };
   }, []);
 
-  const {days} = useCountdown(dates?.prereleaseDate ?? null);
+  const countdown = useCountdown(dates);
   const releaseDate = dates ? formatReleaseDate(dates.releaseDate) : '';
   // A special printing opens the modal on that printing, and reports its rarity.
   const openAndTrack = (
@@ -179,7 +179,7 @@ export function RevealsPage() {
         </h1>
         <div style={{maxWidth: CONTENT_MAX_WIDTH, margin: '0 auto', padding: `0 ${sidePad}px`}}>
           <RevealHero
-            countdownDays={days}
+            countdown={countdown}
             releaseDate={releaseDate}
             totalRevealed={progress.totalRevealed}
             franchiseCount={FRANCHISES.length}
