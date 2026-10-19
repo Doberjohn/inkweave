@@ -1,7 +1,7 @@
 import type {CSSProperties} from 'react';
 import {SET_TOTAL} from './setComposition';
 import type {CountdownMilestone, CountdownState} from './useCountdown';
-import {REVEAL_SET_CODE, REVEAL_SET_LOGO, SET_NAMES} from '../../shared/constants';
+import {COLORS, REVEAL_SET_CODE, REVEAL_SET_LOGO, SET_NAMES} from '../../shared/constants';
 
 interface RevealHeroProps {
   /** Days to the pre-release, then to the store release; null while the reveal dates load. */
@@ -155,7 +155,8 @@ export function RevealHero({
           <div style={{padding: '16px 22px', textAlign: 'left'}}>
             <div style={{...bigStat, color: '#e8e8e8'}}>
               {totalRevealed}
-              <span style={{...unitStyle, color: '#666680'}}> / {totalCards}</span>
+              {/* textMuted, not textDim: textDim gives 3.3:1 on the hero, under the 4.5:1 WCAG asks. */}
+              <span style={{...unitStyle, color: COLORS.textMuted}}> / {totalCards}</span>
             </div>
             <div style={labelStyle}>Cards revealed</div>
           </div>

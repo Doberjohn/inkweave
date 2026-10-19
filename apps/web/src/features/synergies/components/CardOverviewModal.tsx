@@ -485,12 +485,15 @@ function isTextEntryTarget(target: EventTarget | null): boolean {
 }
 
 /**
- * Controls that use the arrow keys themselves: text entry, and radio groups such as the
- * printing switcher (#625), whose arrows move its selection. There they are not "next card".
+ * Controls that use the arrow keys themselves: text entry, radio groups such as the printing
+ * switcher (#625), whose arrows move its selection, and the printings strip, whose arrows scroll
+ * it. There they are not "next card".
  */
+const OWNS_ARROW_KEYS = '[role="radiogroup"], [aria-roledescription="carousel"]';
+
 function ownsArrowKeys(target: EventTarget | null): boolean {
   if (isTextEntryTarget(target)) return true;
-  return target instanceof Element && target.closest('[role="radiogroup"]') !== null;
+  return target instanceof Element && target.closest(OWNS_ARROW_KEYS) !== null;
 }
 
 interface ModalFlags {

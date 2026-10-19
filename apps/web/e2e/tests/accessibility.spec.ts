@@ -1,5 +1,6 @@
 import {test, expect} from '../fixtures';
 import AxeBuilder from '@axe-core/playwright';
+import {startClockInRevealSeason} from '../helpers/revealSeason';
 
 test.describe('Accessibility — axe audits', () => {
   // Desktop-only — mobile viewports have different layouts tested elsewhere
@@ -78,4 +79,42 @@ test.describe('Accessibility — axe audits', () => {
     const results = await new AxeBuilder({page}).analyze();
     expect(results.violations).toEqual([]);
   });
+});
+
+/**
+ * WCAG 1.4.10 Reflow (accessibility check, 2026-10-19): a 320px viewport (a 1280px screen at
+ * 400% zoom) must not scroll sideways. The ink pages rendered the desktop header on phones, and
+ * its nav ran off the edge, Reveals pill first: the clock starts in the reveal season so the pill
+ * shows whatever the date. The viewport is set in each test, so it runs on every project, the
+ * chromium-only pre-push included.
+ */
+test.describe('Accessibility: reflow at 320px', () => {
+  for (const path of ['/inks', '/ink/steel']) {
+    test(`${path} fits a 320px viewport without scrolling sideways`, async ({page}) => {
+      await page.setViewportSize({width: 320, height: 640});
+      await startClockInRevealSeason(page);
+      await page.goto(path);
+      await page.waitForSelector('h1');
+
+      // Against the visual viewport: on the phone projects the layout viewport, and innerWidth with
+      // it, widens to fit whatever sticks out, so they would never see the page scroll.
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - window.visualViewport!.width,
+      );
+      expect(overflow).toBeLessThanOrEqual(0);
+
+      // Nor may a list's items run past its edge into the page's gutter: the ink cards' 300px
+      // columns did, ending flush with the screen's edge, so the page itself never scrolled.
+      const strays = await page.locator('main ul > li').evaluateAll(
+        (items) =>
+          items.filter((item) => {
+            const list = item.parentElement!;
+            // A scroller's items may sit past its edge.
+            if (getComputedStyle(list).overflowX !== 'visible') return false;
+            return item.getBoundingClientRect().right > list.getBoundingClientRect().right + 0.5;
+          }).length,
+      );
+      expect(strays).toBe(0);
+    });
+  }
 });

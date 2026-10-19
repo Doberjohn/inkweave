@@ -113,6 +113,34 @@ test.describe('Card printings (desktop)', () => {
     await expect(modal.locator('h1')).toHaveText(CARD_NAME);
   });
 
+  // WCAG 2.1.1 (accessibility check, 2026-10-19): the strip takes a tab stop, so its arrow keys
+  // must scroll it rather than page to the next card.
+  test("the modal's arrow keys scroll a focused printings strip, not to the next card", async ({
+    appPage,
+    page,
+  }, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    await page.goto('/browse?q=father');
+    await page.getByRole('link', {name: CARD_NAME}).click();
+    const modal = appPage.cardOverviewModal;
+    await expect(modal.locator('h1')).toHaveText(CARD_NAME, {timeout: 10000});
+    await expect(page.getByRole('button', {name: 'Next card'})).toBeVisible();
+    // Let the dialog's initial-focus timer run first, as the test above does.
+    await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 100)));
+
+    const strip = modal.getByRole('group', {name: `${CARD_NAME} printings`});
+    await strip.focus();
+    await expect(strip).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+
+    await expect.poll(() => slideShown(page)).toBe(1);
+    await expect(modal.getByRole('radio', {name: 'Enchanted'})).toHaveAttribute(
+      'aria-checked',
+      'true',
+    );
+    await expect(modal.locator('h1')).toHaveText(CARD_NAME);
+  });
+
   test("a card's promo printings follow its Standard, each by its printed code, and one picked shows its art", async ({
     page,
   }, testInfo) => {

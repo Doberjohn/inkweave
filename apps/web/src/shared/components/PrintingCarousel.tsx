@@ -34,6 +34,15 @@ interface PrintingCarouselProps {
   onEnlarge?: (index: number) => void;
 }
 
+/**
+ * The strip scrolls, so the keyboard must reach it (WCAG 2.1.1): where its slides are Enlarge
+ * buttons they are the stops, else the strip takes focus itself and the arrow keys scroll it.
+ * A locked strip doesn't scroll.
+ */
+function stripTabIndex({onEnlarge, locked}: Pick<PrintingCarouselProps, 'onEnlarge' | 'locked'>): 0 | undefined {
+  return onEnlarge || locked ? undefined : 0;
+}
+
 const SLIDE_STYLE: CSSProperties = {
   flex: '0 0 100%',
   scrollSnapAlign: 'start',
@@ -125,6 +134,7 @@ export function PrintingCarousel({
       role="group"
       aria-roledescription="carousel"
       aria-label={`${card.fullName} printings`}
+      tabIndex={stripTabIndex({onEnlarge, locked})}
       onTouchStart={variantArt.reach}
       onWheel={variantArt.reach}
       onFocus={() => {

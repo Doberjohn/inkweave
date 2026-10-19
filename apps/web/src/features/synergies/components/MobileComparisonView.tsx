@@ -384,13 +384,15 @@ function ScoreChevronsTab({label, score, showScale, isActive, tintColor, tintBg,
     borderColor: isActive ? tintBorder : COLORS.surfaceBorder,
     boxShadow: isActive ? `0 0 14px ${tintGlow}` : undefined,
   };
-  const labelStyle: React.CSSProperties = {...TAB_LABEL_STYLE, color: isActive ? tintColor : COLORS.textDim};
-  const scoreStyle: React.CSSProperties = {...TAB_SCORE_STYLE, color: isActive ? tintColor : COLORS.textDim};
+  // The inactive tab's text is textMuted, as TabList's is, and "/10" keeps its tab's full colour:
+  // dimmer, they missed 4.5:1 (WCAG 1.4.3).
+  const textColor = isActive ? tintColor : COLORS.textMuted;
+  const labelStyle: React.CSSProperties = {...TAB_LABEL_STYLE, color: textColor};
+  const scoreStyle: React.CSSProperties = {...TAB_SCORE_STYLE, color: textColor};
   const scaleStyle: React.CSSProperties = {
     fontSize: 12,
     fontWeight: 700,
-    color: isActive ? tintColor : COLORS.textDim,
-    opacity: isActive ? 0.8 : 0.7,
+    color: textColor,
     marginLeft: 2,
   };
   return (
@@ -453,7 +455,10 @@ const ORB_BASE: React.CSSProperties = {
   position: 'absolute',
   borderRadius: '50%',
   filter: 'blur(80px)',
-  opacity: 0.35,
+  // The orbs shine through the see-through tabs and panels, and on short phones they sit right
+  // behind text: at 0.35 they took labels down to 3.3:1, where 0.15 keeps every one at 4.5:1 or
+  // more (WCAG 1.4.3).
+  opacity: 0.15,
 };
 
 const CARDS_ROW_STYLE: React.CSSProperties = {
