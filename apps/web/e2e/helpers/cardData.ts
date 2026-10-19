@@ -94,21 +94,30 @@ export function setPrintings(setCode: string): {id: string; rarity: string}[] {
   );
 }
 
+/** The binder's pockets per page and per spread (`PER_PAGE`, `PER_SPREAD` in BinderSpread.tsx). */
+const PAGE_POCKETS = 12;
+const SPREAD_POCKETS = 24;
+
 /**
  * A promo set whose numbers skip one, so its binder holds an open pocket (#805), with its
- * promos that have a card, each a pocket of its own, and the first open pocket's code ("19/C2"),
- * which the pocket shows whatever it says about why it is open. The first in the file's order.
+ * promos that have a card, each a pocket of its own, the first open pocket's code ("19/C2"),
+ * which the pocket shows whatever it says about why it is open, and the spread it is on, from
+ * 1, the first opening on the front cover (#806). The first in the file's order.
  */
-export function promoSetWithOpenPocket(): {code: string; promos: string[]; openPocket: string} {
+export function promoSetWithOpenPocket(): {code: string; promos: string[]; openPocket: string; openSpread: number} {
   for (const code of new Set(collectionPromos.map((promo) => promo.promoGrouping))) {
     const promos = collectionPromos.filter((promo) => promo.promoGrouping === code);
     const numbers = new Set(promos.flatMap((promo) => (promo.number === undefined ? [] : [promo.number])));
     const gap = Array.from({length: Math.max(0, ...numbers)}, (_, i) => i + 1).find((n) => !numbers.has(n));
     if (gap !== undefined) {
+      // The promos numbered below the first gap fill the pockets before it, and the front cover
+      // takes a page first (#806). E2E imports no app code, so the page sizes are repeated here.
+      const before = promos.filter((promo) => promo.number !== undefined && promo.number < gap).length;
       return {
         code,
         promos: promos.filter((promo) => promo.baseId !== undefined).map((promo) => String(promo.id)),
         openPocket: `${gap}/${code}`,
+        openSpread: Math.floor((before + PAGE_POCKETS) / SPREAD_POCKETS) + 1,
       };
     }
   }

@@ -3,8 +3,11 @@ import {afterEach, beforeEach, describe, it, expect, vi} from 'vitest';
 import {act, render, screen, fireEvent} from '@testing-library/react';
 import {BinderSpreadMap, type Pocket} from '../BinderSpreadMap';
 
+/** The pockets that fill `spreads` spreads, the first holding twelve beside the front cover. */
+const filling = (spreads: number) => spreads * 24 - 12;
+
 /** Forty spreads, every pocket held. */
-const POCKETS: Pocket[] = Array.from({length: 40 * 24}, (): Pocket => ({owned: true, inks: ['Amber']}));
+const POCKETS: Pocket[] = Array.from({length: filling(40)}, (): Pocket => ({owned: true, inks: ['Amber']}));
 
 /** The map as the binder drives it: it turns to whatever spread the map asks for. */
 function Live() {
@@ -42,7 +45,7 @@ describe('BinderSpreadMap, for a long binder', () => {
   });
 
   it('keeps a short binder whole, with no window to move', () => {
-    render(<BinderSpreadMap pockets={POCKETS.slice(0, 9 * 24)} current={8} onGo={() => {}} />);
+    render(<BinderSpreadMap pockets={POCKETS.slice(0, filling(9))} current={8} onGo={() => {}} />);
     expect(spreads()).toHaveLength(9);
   });
 });
@@ -113,7 +116,7 @@ describe('BinderSpreadMap, fitted to its row', () => {
 
   it("opens a narrow window on the spread on show, even near a short binder's end", () => {
     layOut({nav: 376});
-    render(<BinderSpreadMap pockets={POCKETS.slice(0, 9 * 24)} current={2} onGo={() => {}} />);
+    render(<BinderSpreadMap pockets={POCKETS.slice(0, filling(9))} current={2} onGo={() => {}} />);
     expect(spreads()).toEqual([expect.stringMatching(/^Spread 3 of 9/), expect.stringMatching(/^Spread 4 of 9/)]);
   });
 
@@ -132,10 +135,11 @@ describe('BinderSpreadMap, fitted to its row', () => {
 
 describe('BinderSpreadMap, set by set', () => {
   it("names each spread's set and its place in it, and both sets where one ends and the next begins", () => {
-    // Set A fills nine spreads and half the tenth, where Set B starts.
+    // Set A fills nine spreads, the first beside the cover, and the tenth's left page;
+    // Set B starts on its right page.
     const sets = [
       {start: 0, label: 'Set A'},
-      {start: 9 * 24 + 12, label: 'Set B'},
+      {start: 9 * 24, label: 'Set B'},
     ];
     render(<BinderSpreadMap pockets={POCKETS} current={0} onGo={() => {}} sets={sets} />);
     expect(spreads()[0]).toBe('Set A, spread 1 of 10: nothing missing');
@@ -158,16 +162,41 @@ describe('BinderSpreadMap, for a promo set (#805)', () => {
       {owned: false, inks: [], open: true, scan: true},
     ];
     render(<BinderSpreadMap pockets={pockets} current={0} onGo={() => {}} />);
-    const [held, open, scan] = fills(/^Spread 1 of 1: nothing missing$/);
+    // Past the front cover's twelve cells, the right page's: the pockets.
+    const [held, open, scan] = fills(/^Spread 1 of 1: nothing missing$/).slice(12);
     expect(held).not.toBe('');
     expect(open).toBe('');
     expect(scan).not.toBe('');
   });
 });
 
-/** The first mini spread's left page, and that page's first cell. */
+describe('BinderSpreadMap covers (owner, 2026-10-18)', () => {
+  /** The tint of each page of the spread with this name, left then right. */
+  const pageTints = (name: RegExp) =>
+    [...screen.getByRole('button', {name}).querySelectorAll<HTMLElement>('span[aria-hidden]')].map(
+      (page) => page.style.background,
+    );
+
+  it('draws the front cover on the first spread and the back cover past the last card, as the binder does', () => {
+    // Twenty pockets: twelve beside the cover, then the last eight on the second spread's left page.
+    render(<BinderSpreadMap pockets={POCKETS.slice(0, 20)} current={0} onGo={() => {}} />);
+    const [frontCover, firstCards] = pageTints(/^Spread 1 of 2/);
+    const [lastCards, backCover] = pageTints(/^Spread 2 of 2/);
+    expect(frontCover).toBe(backCover);
+    expect(firstCards).toBe(lastCards);
+    expect(frontCover).not.toBe(firstCards);
+  });
+
+  it('keeps the loading map, which holds no pockets yet, a front cover beside a page', () => {
+    render(<BinderSpreadMap pockets={[]} current={0} onGo={() => {}} />);
+    const [frontCover, page] = pageTints(/^Spread 1 of 1/);
+    expect(frontCover).not.toBe(page);
+  });
+});
+
+/** The first mini spread's right page, where its cards start beside the front cover, and that page's first cell. */
 function firstCell() {
-  const page = screen.getByRole('button', {name: /^Spread 1 of 1/}).firstElementChild as HTMLElement;
+  const page = screen.getByRole('button', {name: /^Spread 1 of 1/}).lastElementChild as HTMLElement;
   return {page, cell: page.firstElementChild as HTMLElement};
 }
 
@@ -186,7 +215,7 @@ describe('BinderSpreadMap, cells', () => {
 
   it('sizes each cell in whole pixels against its page, where CSS can round', async () => {
     const Rounded = await loadMap(true);
-    render(<Rounded pockets={POCKETS.slice(0, 24)} current={0} onGo={() => {}} />);
+    render(<Rounded pockets={POCKETS.slice(0, filling(1))} current={0} onGo={() => {}} />);
     const {page, cell} = firstCell();
     expect(page.style.containerType).toBe('inline-size');
     expect(cell.style.width).toMatch(/^round\(down, /);
@@ -195,7 +224,7 @@ describe('BinderSpreadMap, cells', () => {
 
   it("keeps each cell a card's shape where CSS cannot round", async () => {
     const Unrounded = await loadMap(false);
-    render(<Unrounded pockets={POCKETS.slice(0, 24)} current={0} onGo={() => {}} />);
+    render(<Unrounded pockets={POCKETS.slice(0, filling(1))} current={0} onGo={() => {}} />);
     const {page, cell} = firstCell();
     expect(page.style.containerType).toBe('');
     expect(cell.style.width).toBe('');
