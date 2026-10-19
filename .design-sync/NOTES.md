@@ -648,6 +648,10 @@ ungraded) and `CardTile` (6 of 9).
 
 ## Two false-alarm shapes that look like defects and are not
 
+Both examples are the deck advisor's stories, gone from this branch with the advisor on
+2026-10-01 (parked on `advisor/deck-quality-score`), so they turn up again only if it returns.
+The checks they teach hold for any story.
+
 - **Story-local `render:` overrides.** `PrioritiesView`'s `Vitals` / `Radar` /
   `RadarPartialAxes` set `render: (args) => <VitalsView {...args}/>` — a sibling export, not
   the component the meta names. The previews render the overridden component correctly, so a
