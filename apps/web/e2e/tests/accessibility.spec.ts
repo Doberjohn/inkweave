@@ -89,12 +89,19 @@ test.describe('Accessibility — axe audits', () => {
  * chromium-only pre-push included.
  */
 test.describe('Accessibility: reflow at 320px', () => {
-  for (const path of ['/inks', '/ink/steel']) {
+  // Each page with the items of its grid: the ink cards, and the ink's card tiles.
+  const PAGES = [
+    {path: '/inks', items: 'main ul > li'},
+    {path: '/ink/steel', items: 'main [data-testid="card-tile"]'},
+  ];
+  for (const {path, items: itemSelector} of PAGES) {
     test(`${path} fits a 320px viewport without scrolling sideways`, async ({page}) => {
       await page.setViewportSize({width: 320, height: 640});
       await startClockInRevealSeason(page);
       await page.goto(path);
-      await page.waitForSelector('h1');
+      // Waiting for the grid's items also keeps the edge check below from passing on no items.
+      const items = page.locator(itemSelector);
+      await expect(items.first()).toBeVisible();
 
       // Against the visual viewport: on the phone projects the layout viewport, and innerWidth with
       // it, widens to fit whatever sticks out, so they would never see the page scroll.
@@ -103,15 +110,15 @@ test.describe('Accessibility: reflow at 320px', () => {
       );
       expect(overflow).toBeLessThanOrEqual(0);
 
-      // Nor may a list's items run past its edge into the page's gutter: the ink cards' 300px
+      // Nor may the grid's items run past its edge into the page's gutter: the ink cards' 300px
       // columns did, ending flush with the screen's edge, so the page itself never scrolled.
-      const strays = await page.locator('main ul > li').evaluateAll(
-        (items) =>
-          items.filter((item) => {
-            const list = item.parentElement!;
+      const strays = await items.evaluateAll(
+        (els) =>
+          els.filter((item) => {
+            const grid = item.parentElement!;
             // A scroller's items may sit past its edge.
-            if (getComputedStyle(list).overflowX !== 'visible') return false;
-            return item.getBoundingClientRect().right > list.getBoundingClientRect().right + 0.5;
+            if (getComputedStyle(grid).overflowX !== 'visible') return false;
+            return item.getBoundingClientRect().right > grid.getBoundingClientRect().right + 0.5;
           }).length,
       );
       expect(strays).toBe(0);

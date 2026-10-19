@@ -21,8 +21,8 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | playstyle detail should have no axe violations | `/playstyles/discard` passes axe-core audit |
 | ink gallery should have no axe violations | `/inks` passes axe-core audit (#530: a card-count contrast violation there shipped because the ink pages had no axe coverage) |
 | ink hub should have no axe violations | `/ink/steel` passes axe-core audit (#530) |
-| /inks fits a 320px viewport without scrolling sideways | At 320×640, with the clock in the reveal season, `/inks` is no wider than the visual viewport (a phone project's layout viewport widens to fit the page, so the check can't use it), and no item of a list in `<main>` that doesn't scroll runs past the list's right edge (WCAG 1.4.10, accessibility check 2026-10-19: phones got the desktop header, whose Reveals pill stuck out 37px, and the ink cards' 300px columns ran 20px into the right gutter) |
-| /ink/steel fits a 320px viewport without scrolling sideways | The same on `/ink/steel` |
+| /inks fits a 320px viewport without scrolling sideways | At 320×640, with the clock in the reveal season, `/inks` is no wider than the visual viewport (a phone project's layout viewport widens to fit the page, so the check can't use it), and once the ink cards (`main ul > li`) have rendered, none runs past its grid's right edge (WCAG 1.4.10, accessibility check 2026-10-19: phones got the desktop header, whose Reveals pill stuck out 37px, and the ink cards' 300px columns ran 20px into the right gutter) |
+| /ink/steel fits a 320px viewport without scrolling sideways | The same on `/ink/steel`, whose grid items are its card tiles (`card-tile`) |
 
 ## `app-load.spec.ts` — 4 tests (desktop only)
 
