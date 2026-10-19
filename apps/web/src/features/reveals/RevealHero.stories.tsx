@@ -12,10 +12,20 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 // franchiseCount comes from the season's config, as the page passes it.
-const SEASON = {countdownDays: 21, releaseDate: 'October 23, 2026', totalRevealed: 86, franchiseCount: FRANCHISES.length};
+const SEASON = {
+  countdown: {days: 21, milestone: 'pre-release' as const},
+  releaseDate: 'October 23, 2026',
+  totalRevealed: 86,
+  franchiseCount: FRANCHISES.length,
+};
 
 export const Default: Story = {
   args: SEASON,
+};
+
+/** From pre-release day on, the countdown runs to the store release instead of resting at 0. */
+export const StoreRelease: Story = {
+  args: {...SEASON, countdown: {days: 4, milestone: 'store-release'}},
 };
 
 /** The stat label pluralises with the count ("New franchise" vs "New franchises"). */
