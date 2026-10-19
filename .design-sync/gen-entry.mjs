@@ -91,7 +91,8 @@ for (const story of stories) {
   entries.push({ name, impl });
 
   // SIBLING EXPORTS. A story may import more than the component it documents —
-  // Scorecard.stories.tsx does `import {Scorecard, ScorecardRow} from './Scorecard'`.
+  // BinderSpread.stories.tsx does
+  // `import {BinderSlotSkeleton, BinderSpread} from './BinderSpread'`.
   // story-imports.mjs rewrites that specifier to window.Inkweave, so any name the
   // barrel omits resolves to `undefined` and React throws "Element type is invalid".
   // Worse, the generated <Name>.prompt.md reproduces the story verbatim, so the

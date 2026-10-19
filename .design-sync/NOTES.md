@@ -229,6 +229,12 @@ own impl module. 163 → 170 exports. Three were true siblings (`ScorecardRow`,
 `RadarMedallion`, `VitalsView`); the other four were the newly-committed Phase C binder
 components.
 
+**None of those three is on this branch any more.** `Scorecard` moved to
+`Doberjohn/inkweave-admin` with the admin split (#593), and `RadarMedallion` and `VitalsView`
+left with the advisor on 2026-10-01 (parked on `advisor/deck-quality-score`). Regenerating
+after both (#594) took the entry from 170 to 141 exports. Today's sibling is
+`BinderSpread.stories.tsx`, which imports `BinderSlotSkeleton` beside `BinderSpread`.
+
 **How to recognise this class:**
 - The failing story renders **pure WHITE**, not an error string — React 19's `render` is
   async so the scaffold's `try/catch` cannot catch the throw. (Contrast the `return null`
@@ -304,7 +310,8 @@ on both sides.
 
 Three confirmed instances now: `IconButton/Disabled` (looked to have lost `opacity: 0.4`),
 `StrengthBadge/Small` (looked brighter green), `UploadColumn`'s heading numeral (looked gold
-in one panel, white in the other — a 4x crop showed white on BOTH). **A useful extra tell:
+in one panel, white in the other — a 4x crop showed white on BOTH; `UploadColumn` has since
+moved to `Doberjohn/inkweave-admin` with #593). **A useful extra tell:
 when the lie is INCONSISTENT across sibling stories of the same component, that inconsistency
 IS the giveaway** — one component cannot style the same heading two ways in three siblings.
 
@@ -413,7 +420,13 @@ These are NOT sync problems. Do not try to fix them from the design-sync side.
   stripped. 163 of 167 story files sit next to their implementation module and need
   nothing. The exceptions are in `cfg.titleMap`:
   - `HealthVariants` → `PrioritiesView` (the story file is named for the variant set, not
-    the component it renders).
+    the component it renders). Dormant since the advisor left this branch on 2026-10-01: no
+    story carries that title now. It stays, with the advisor's ten `cfg.overrides` entries
+    (`ArchetypeBadge`, `DeckAdvisorPanel`, `HealthGlance`, `HealthGrid`, `ScoreGauge`,
+    `ScoreMathModal`, `SuggestionList`, `SynergySurface`, `VerdictLine`, `VulnerabilityBox`),
+    because the advisor is parked on `advisor/deck-quality-score`, deferred rather than
+    dropped, and that branch never touched this config. The admin split (#593) has no such return, so its two
+    overrides were removed (#594).
   - `Colors`, `Spacing&Layout`, `Typography`, `MicroPatterns` → `null`
     (excluded). These four are `src/docs/*.stories.tsx` — pure documentation pages that
     render inline JSX and have no component module, so there is nothing to export and

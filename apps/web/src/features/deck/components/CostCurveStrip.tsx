@@ -48,8 +48,8 @@ function InkBandTip({ink, count}: {ink: Ink; count: number}) {
  * colors by composition and glowing its dominant ink. Hovering an ink band shows
  * that ink's glyph, name and copy count in a floating tooltip; the bar carries no
  * native title, which would double up with it. The chart still shows no numeric
- * labels or legend at rest. Hidden while the deck is empty. Bar styling mirrors
- * WeeklyActivityChart (div bars, no SVG).
+ * labels or legend at rest. Hidden while the deck is empty. The bars are plain
+ * divs, not SVG.
  */
 export function CostCurveStrip({costCurve, costCurveByInk}: CostCurveStripProps) {
   if (totalCopies(costCurve) === 0) return null;

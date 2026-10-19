@@ -241,10 +241,8 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/VoteConfirmation.tsx', // x2
     'src/features/voting/components/VoteToast.tsx', // x1
     'src/features/voting/components/VotingCardDisplay.tsx', // x2
-    'src/pages/ImageAdminPage.tsx', // x1
     'src/pages/InDepthVotePage.tsx', // x6
     'src/pages/PlaystyleDetailPage.tsx', // x1
-    'src/pages/RevealAdminPage.tsx', // x1
     'src/shared/components/CardLightbox.tsx', // x3
     'src/shared/components/ErrorBoundary.tsx', // x1
     'src/shared/components/FilterButton.tsx', // x1
@@ -264,8 +262,6 @@ export const KNOWN_OFFENDERS = {
   // 500ms progress fill). Resolve those by NAMING a local const, as the FLIP
   // timings already do -- do not force them onto fast/base/slow.
   'no-raw-duration': [
-    'src/features/admin-analytics/DayGroup.tsx', // x1
-    'src/features/admin-analytics/WebAnalyticsView.tsx', // x2
     'src/features/cards/components/BrowseToolbar.tsx', // x2
     'src/features/cards/components/CardTile.tsx', // x1
     'src/features/deck/components/DeckCardRow.tsx', // x6
