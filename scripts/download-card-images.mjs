@@ -28,6 +28,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {SITE_ORIGIN} from './lib/siteOrigin.mjs';
+import {isPromo} from './lib/fold-variants.mjs';
 import {
   deriveHash,
   hashedFilename,
@@ -327,14 +328,15 @@ export function imageSubjects(cards) {
 }
 
 /**
- * Variant ids this build emitted no image for. Reported as a warning, never fatal: a single
- * dead upstream variant URL must not block a deploy, and the switcher simply shows a broken
- * image for that printing (the same honest degradation an unhashed card gets, #323).
+ * The printing ids this build emitted no image for: variants, and the collection's promos
+ * (`collection/promos.json`, #805), each once, though a Core card's promo is both. Reported as
+ * a warning, never fatal: a single dead upstream variant URL must not block a deploy, and the
+ * switcher simply shows a broken image for that printing (the same honest degradation an
+ * unhashed card gets, #323). The promos still waiting for a scan have no URL at all.
  */
 export function missingVariantHashes(cards, manifest) {
-  return cards.flatMap((card) =>
-    (card.variants ?? []).filter((v) => !manifest[v.id]).map((v) => v.id),
-  );
+  const printings = cards.flatMap((card) => [...(isPromo(card) ? [card] : []), ...(card.variants ?? [])]);
+  return [...new Set(printings.filter((p) => !manifest[p.id]).map((p) => p.id))];
 }
 
 /**
@@ -343,10 +345,13 @@ export function missingVariantHashes(cards, manifest) {
  * silently shipping blank: without imageHash, resolveImageUrl returns undefined and
  * every card in that set renders empty in the production build. Scattered rot across
  * a set stays green (matches the non-fatal per-image warning above).
+ *
+ * The collection's promos are printings, warned about with the variants above, not counted
+ * here: most Challenge Set promos have no scan yet (#805).
  */
 function assertImageCoverage(cards, manifest) {
   const bySet = new Map();
-  for (const card of cards) {
+  for (const card of cards.filter((c) => !isPromo(c))) {
     const set = String(card.setCode ?? 'unknown');
     const stat = bySet.get(set) ?? {total: 0, hashed: 0};
     stat.total++;
@@ -590,7 +595,7 @@ async function main() {
   const unimaged = missingVariantHashes(allCards, manifest);
   if (unimaged.length > 0) {
     console.warn(
-      `  Warning: ${unimaged.length} variant printing(s) have no image: ${unimaged.join(', ')}\n`,
+      `  Warning: ${unimaged.length} printing(s) have no image: ${unimaged.join(', ')}\n`,
     );
   }
 }

@@ -3,9 +3,10 @@
  *
  * `apps/web/public/data/allCards.json` is the Core pool and the only input to the
  * synergy engine, the deck builder and the playstyle pages. This module builds the
- * OTHER 2,224 cards, for collection viewing only: sets 1-8, and every printing inside
- * the Core sets (the Enchanted, Epic, Iconic and Special ones, plus the four that keep
- * their base card's rarity, #796).
+ * OTHER 2,009 cards, for collection viewing only: sets 1-8, and every printing inside
+ * the Core sets (the Enchanted, Epic and Iconic ones, plus the four that keep their base
+ * card's rarity, #796). The promos come from the owner's catalog instead, in
+ * `PROMOS_FILENAME` (#805).
  *
  * **Nothing appears in both datasets.** That is the invariant the whole Core
  * boundary rests on: the build scripts read `allCards.json` and never open these
@@ -19,7 +20,7 @@
  * nameless and statless. Complete, it measures 445 KB gzip, not the 118 KB the
  * design estimated. Hence:
  *
- *   - INDEX (~72 KB gzip, all 2,224 cards): what the grid and every filter need.
+ *   - INDEX (~72 KB gzip, all 2,009 cards): what the grid and every filter need.
  *     Loaded once when collection mode turns on.
  *   - DETAIL (5-42 KB gzip per set): card text, stats, abilities and image URLs.
  *     Loaded for the set being viewed, which is also the binder's page unit.
@@ -94,6 +95,22 @@ const SAFE_SET_CODE = /^[A-Za-z0-9]+$/;
 /** The index tier's own filename, which no detail chunk may claim. */
 const RESERVED_SET_CODE = 'index';
 
+/**
+ * The promos' file, beside the set chunks (#805): every promo printing in the owner's catalog
+ * (`collectionPromos` in promo-printings.mjs), the one source of collection mode's promos.
+ */
+export const PROMOS_FILENAME = 'promos.json';
+
+/** Its name as a set code would claim it, which no detail chunk may either. */
+const PROMOS_SET_CODE = 'promos';
+
+/**
+ * LorcanaJSON's promo cards, which the dataset leaves out (#805): the catalog lists every promo,
+ * with its promo set and finish, which LorcanaJSON's copies lack. Kept, theirs would also give
+ * each promo a second pocket in its card's own set.
+ */
+const isPromoCard = (card) => card.rarity === 'Special';
+
 /** Copy `fields` that are actually present. Absent stays absent, never null. */
 function pickFields(card, fields) {
   const out = {};
@@ -119,6 +136,8 @@ function pickFields(card, fields) {
  * second time, labelled "Outside Core". The preview serves its set in full until
  * graduation, which is when this dataset should be regenerated to pick up that
  * set's Enchanted/Iconic printings.
+ *
+ * Promo cards are left out too (`isPromoCard`): `PROMOS_FILENAME` holds the promos.
  */
 export function selectCollectionCards(fullCards, excludedIdSets, servedSetCodes = new Set()) {
   const excluded = new Set();
@@ -129,7 +148,8 @@ export function selectCollectionCards(fullCards, excludedIdSets, servedSetCodes 
     (card) =>
       !excluded.has(String(card.id)) &&
       !servedSetCodes.has(String(card.setCode)) &&
-      !QUEST_SET_CODE.test(String(card.setCode)),
+      !QUEST_SET_CODE.test(String(card.setCode)) &&
+      !isPromoCard(card),
   );
 }
 
@@ -166,9 +186,12 @@ export function chunkFilename(setCode) {
   // `index` is safe as a path but collides with the index tier: a set carrying that
   // code would write index.json and silently replace the all-cards projection with
   // one set's detail. Reserved rather than escaped, because a set genuinely named
-  // "index" is upstream data we would want to look at, not quietly rename.
-  if (code.toLowerCase() === RESERVED_SET_CODE) {
-    throw new Error(`Set code "${code}" is reserved: it would overwrite index.json`);
+  // "index" is upstream data we would want to look at, not quietly rename. `promos`
+  // would replace the promos' file the same way.
+  for (const reserved of [RESERVED_SET_CODE, PROMOS_SET_CODE]) {
+    if (code.toLowerCase() === reserved) {
+      throw new Error(`Set code "${code}" is reserved: it would overwrite ${reserved}.json`);
+    }
   }
   return `${code}.json`;
 }

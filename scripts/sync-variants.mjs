@@ -24,6 +24,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {foldVariants} from './lib/fold-variants.mjs';
+import {readJson, writeJson} from './lib/json-file.mjs';
 import {loadSeason} from './lib/season.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -69,18 +70,6 @@ function printReport(label, result) {
       `${result.unchanged.length} unchanged, ${result.unmatched.length} unmatched`,
   );
   for (const v of result.unmatched) console.log(`    unmatched: ${describeVariant(v)}`);
-}
-
-const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
-
-/**
- * Replaces `file` whole: the JSON goes to a temporary file beside it, then a rename swaps it in,
- * so an interrupted run leaves the old file rather than half-written JSON.
- */
-function writeJson(file, data) {
-  const tmp = `${file}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2) + '\n');
-  fs.renameSync(tmp, file);
 }
 
 async function main() {

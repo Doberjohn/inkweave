@@ -3,6 +3,7 @@ import {describe, it, expect} from 'vitest';
 import {
   applyCardRules,
   buildPreviewToCanonicalMap,
+  carryPromoPrintings,
   droppedVariants,
   featuredEntriesFor,
   featuredIdsJson,
@@ -95,6 +96,32 @@ describe('applyCardRules (graduation)', () => {
 
     expect(cards[0].franchise).toBe('Mickey Mouse & Friends');
     expect(cards[0]).not.toHaveProperty('story');
+  });
+});
+
+// Re-graduating a set replaces its cards wholesale; only the promo catalog writes promos (#805).
+describe('carryPromoPrintings (graduation)', () => {
+  const promo = {id: 3700, rarity: 'Special', number: 4, promoGrouping: 'D23'};
+  const oldCard = (id, variants) => ({
+    id,
+    setCode: '14',
+    fullName: 'Mickey Mouse - Best in Town',
+    variants,
+  });
+
+  it("carries each old card's promo printings onto the new card with its id, after its printings", () => {
+    const {cards} = applyCardRules(source, '14');
+    const old = [oldCard(3288, [{id: 3506, rarity: 'Iconic', number: 241}, promo])];
+
+    expect(carryPromoPrintings(old, cards)).toEqual({carried: 1, stranded: []});
+    expect(cards[0].variants.map((v) => v.id)).toEqual([3506, 3700]);
+  });
+
+  it('reports an old card whose promos find no new card to go to', () => {
+    const {cards} = applyCardRules(source, '14');
+    const old = [oldCard(3299, [promo])];
+
+    expect(carryPromoPrintings(old, cards)).toEqual({carried: 0, stranded: old});
   });
 });
 

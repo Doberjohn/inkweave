@@ -67,7 +67,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline/promises';
 import {fileURLToPath} from 'node:url';
-import {foldVariants, isPrinting} from './lib/fold-variants.mjs';
+import {byPrintingOrder, foldVariants, isPrinting, isPromo} from './lib/fold-variants.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -180,6 +180,30 @@ export function applyCardRules(sourceCards, setCode) {
   const fold = foldVariants(cards, sourceCards, {matchBy: 'baseId', idFor: (v) => v.id});
   const specialCount = sourceCards.filter((c) => c.rarity === 'Special').length;
   return {cards, fold, specialCount};
+}
+
+/**
+ * Rules 2 + 3 replace a set's cards wholesale, and Rule 1 strips LorcanaJSON's promo cards, so
+ * a re-graduation would lose the promo printings the promo catalog put on them (#805). Each old
+ * card's promo entries move to the new card with its id (`newCards` is mutated in place), after
+ * that card's other printings. Returns how many moved, and the old cards whose promos found no
+ * new card to go to.
+ */
+export function carryPromoPrintings(oldCards, newCards) {
+  const newById = new Map(newCards.map((card) => [card.id, card]));
+  const result = {carried: 0, stranded: []};
+  for (const old of oldCards) {
+    const promos = (old.variants ?? []).filter(isPromo);
+    if (promos.length === 0) continue;
+    const card = newById.get(old.id);
+    if (!card) {
+      result.stranded.push(old);
+      continue;
+    }
+    card.variants = [...(card.variants ?? []), ...promos].sort(byPrintingOrder);
+    result.carried += promos.length;
+  }
+  return result;
 }
 
 /**
@@ -604,14 +628,22 @@ async function main() {
   guardUnmappedPreviewIds(unmapped, allowUnmappedIds);
   console.log(`  Base cards after rule 1:    ${stripped.length}`);
 
-  // Rules 2 + 3 — replace preview entries wholesale (canonical ids + names win)
+  // Rules 2 + 3 — replace preview entries wholesale (canonical ids + names win), keeping the
+  // promo printings the old cards carry (#805)
   const beforeReplace = all.cards.length;
-  const droppedPreview = all.cards.filter((c) => c.setCode === setCode).length;
+  const oldSetCards = all.cards.filter((c) => c.setCode === setCode);
+  const promos = carryPromoPrintings(oldSetCards, stripped);
   all.cards = all.cards.filter((c) => c.setCode !== setCode);
   all.cards.push(...stripped);
   console.log(`  allCards before:            ${beforeReplace} cards`);
-  console.log(`  Dropped Set ${setCode} preview:        -${droppedPreview}`);
+  console.log(`  Dropped Set ${setCode} preview:        -${oldSetCards.length}`);
   console.log(`  Appended canonical:        +${stripped.length}`);
+  console.log(`  Carried promo printings:   ${promos.carried}`);
+  for (const card of promos.stranded) {
+    console.warn(
+      `  ! Dropped the promo printings of ${card.id} ${card.fullName}, which the new set lacks: move them in scripts/data/promo-printings.json`,
+    );
+  }
   console.log(`  allCards after:             ${all.cards.length}\n`);
 
   markSetGraduated(all.sets, setCode, canonical);
