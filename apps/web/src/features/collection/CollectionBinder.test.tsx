@@ -44,6 +44,17 @@ const pocket = (n: number) => screen.getByRole('button', {name: `Card ${n}`});
 const promo = (id: string, setNumber: number | undefined, over: Partial<LorcanaCard> = {}) =>
   ({...CARDS[0], id, baseId: 'c1', rarity: 'Special', setCode: 'C1', setNumber, ...over}) as LorcanaCard;
 
+/**
+ * A promo set's left page, its cards at numbers 2, 4 and 10 and every other pocket open, the
+ * first among them (#805). Number 10 sits two rows under number 2.
+ */
+const PROMO_PAGE = Array.from({length: 12}, (_, i) =>
+  [2, 4, 10].includes(i + 1) ? promo(`p${i + 1}`, i + 1) : ({open: true, setCode: 'C1', setNumber: i + 1} as const),
+);
+
+/** The pocket holding promo number `n` of that page. */
+const promoPocket = (n: number) => screen.getByRole('button', {name: `Card 1, ${n}/C1 printing`});
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -132,6 +143,24 @@ describe('CollectionBinder', () => {
       expect(pocket(5)).toHaveFocus();
       await user.click(screen.getByRole('button', {name: 'Next spread'}));
       expect(pocket(25)).toHaveAttribute('tabindex', '0');
+    });
+
+    it("stops on a promo set's first card when its first pocket is open", async () => {
+      // An open pocket takes no focus, so a Tab stop left on one was no stop at all.
+      const user = userEvent.setup();
+      render(binder({pager: 'map', slots: PROMO_PAGE}));
+      await user.tab();
+      expect(promoPocket(2)).toHaveFocus();
+    });
+
+    it("passes over a promo set's open pockets with the arrow keys", async () => {
+      const user = userEvent.setup();
+      render(binder({pager: 'map', slots: PROMO_PAGE}));
+      act(() => promoPocket(2).focus());
+      await user.keyboard('{ArrowRight}');
+      expect(promoPocket(4)).toHaveFocus();
+      await user.keyboard('{ArrowLeft}{ArrowDown}');
+      expect(promoPocket(10)).toHaveFocus();
     });
   });
 

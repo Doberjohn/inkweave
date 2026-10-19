@@ -242,6 +242,7 @@ export function CollectionBinder({
       arrows={map === undefined}
       footer={map}
       cardCount={slots.length}
+      isOpen={(index) => isOpenPocket(slots[index])}
       onPrev={() => goTo(current - 1)}
       onNext={() => goTo(current + 1)}
       canPrev={current > 0}

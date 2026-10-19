@@ -7,6 +7,7 @@ import {
   type KeyboardEvent,
   type ReactNode,
   type RefObject,
+  type SyntheticEvent,
 } from 'react';
 import {NavArrowButton} from '../../../shared/components';
 import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
@@ -250,7 +251,8 @@ interface BinderSpreadProps {
    *
    * `tabIndex` is the pocket's place in the Tab order: 0 for the one pocket in view
    * that Tab stops at, -1 for the rest (see `usePocketFocus`). Content that takes
-   * focus passes it on and marks itself `data-roving-item`, as `CardTile` does.
+   * focus passes it on and marks itself `data-roving-item`, as `CardTile` does. An
+   * open pocket (`isOpen`) takes no focus, so it has no use for it.
    */
   renderSlot: (index: number, tabIndex: number) => ReactNode;
   onPrev: () => void;
@@ -285,6 +287,12 @@ interface BinderSpreadProps {
    * out (the loading binder), every page is parchment.
    */
   cardCount?: number;
+  /**
+   * Whether a pocket the binder fills is open: drawn with no card in it, as a promo set draws
+   * a number that has no card yet (#805), so it takes no focus. The pockets' Tab stop and
+   * arrow keys pass over it. Left out, every pocket the binder fills holds a card.
+   */
+  isOpen?: (index: number) => boolean;
 }
 
 /** The binder's ringed spine. A lone page keeps it, so it still reads as a binder. */
@@ -512,10 +520,10 @@ const STEPS = new Map<string, Cell>([
   ['ArrowUp', {row: -1, col: 0}],
 ]);
 
-/** The pockets in view: what they show and how many pages across they sit. */
+/** The pockets in view: which take focus and how many pages across they sit. */
 interface PocketView {
-  /** How many pockets in view take focus: the filled ones, which run from the first. */
-  count: number;
+  /** The pockets in view that hold a card, by their place in the view, in order. */
+  focusable: readonly number[];
   /** Pages across: two for a spread, one for a lone page. */
   pages: number;
 }
@@ -523,34 +531,59 @@ interface PocketView {
 const onGrid = ({row, col}: Cell, pages: number) =>
   row >= 0 && row < PAGE_ROWS && col >= 0 && col < pages * PAGE_COLUMNS;
 
-/** The pocket an arrow steps to from `from`, or null where the grid or the cards end that way. */
-function stepFrom(from: number, step: Cell, {count, pages}: PocketView): number | null {
-  const at = cellOf(from);
-  const to = {row: at.row + step.row, col: at.col + step.col};
-  if (!onGrid(to, pages)) return null;
+/**
+ * The pocket an arrow steps to from the cell `from`: the next one that way with a card in it,
+ * past any open or empty pocket, or null where the grid ends first.
+ */
+function stepFrom(from: Cell, step: Cell, view: PocketView): number | null {
+  const to = {row: from.row + step.row, col: from.col + step.col};
+  if (!onGrid(to, view.pages)) return null;
   const pocket = pocketAt(to);
-  return pocket < count ? pocket : null;
+  return view.focusable.includes(pocket) ? pocket : stepFrom(to, step, view);
 }
 
 /** A key with a modifier is the browser's or the reader's (Alt+Left goes back), not the binder's. */
 const isModified = (e: KeyboardEvent) => e.altKey || e.ctrlKey || e.metaKey;
 
-/** Where a key takes focus from pocket `from`: an arrow one pocket that way, Home and End the first and last. */
-function pocketForKey(e: KeyboardEvent, from: number, view: PocketView): number | null {
-  if (from < 0 || isModified(e)) return null;
-  if (e.key === 'Home') return 0;
-  if (e.key === 'End') return view.count - 1;
+/**
+ * Where a key takes focus from pocket `from` (undefined when focus is on no card): an arrow to
+ * the next card that way, Home and End to the first and last.
+ */
+function pocketForKey(e: KeyboardEvent, from: number | undefined, view: PocketView): number | null {
+  if (from === undefined || isModified(e)) return null;
+  const {focusable} = view;
+  if (e.key === 'Home') return focusable[0];
+  if (e.key === 'End') return focusable[focusable.length - 1];
   const step = STEPS.get(e.key);
-  return step ? stepFrom(from, step, view) : null;
+  return step ? stepFrom(cellOf(from), step, view) : null;
 }
 
-/** The focusable pockets under `root`, in order: in a view, those are its filled pockets from the first. */
-const pocketTiles = (root: HTMLElement) => [...root.querySelectorAll<HTMLElement>('[data-roving-item]')];
+const NEVER_OPEN = () => false;
 
-/** How many pockets the view starting at `start` fills: all of them while the binder is loading. */
-function filledInView(start: number, perView: number, cardCount: number | undefined): number {
-  if (cardCount === undefined) return perView;
-  return Math.max(0, Math.min(perView, cardCount - start));
+/**
+ * The pockets in view that hold a card, by their place in it: the filled ones, which run from
+ * the first, less any open one. Every pocket while the binder is loading.
+ */
+function focusableInView(
+  start: number,
+  perView: number,
+  {cardCount, isOpen = NEVER_OPEN}: Pick<BinderSpreadProps, 'cardCount' | 'isOpen'>,
+): number[] {
+  const filled = cardCount === undefined ? perView : Math.max(0, Math.min(perView, cardCount - start));
+  return Array.from({length: filled}, (_, pocket) => pocket).filter((pocket) => !isOpen(start + pocket));
+}
+
+/**
+ * The cards in view, from an event in the binder: their tiles, the pockets they sit in, and
+ * the pocket of the card the event came from (undefined for anything else, such as an arrow).
+ * The tiles run in their pockets' order. A caller that leaves `cardCount` out may fill fewer
+ * pockets than the view holds, so the tiles have the last word on how many cards there are.
+ */
+function cardsAt(e: SyntheticEvent<HTMLElement>, view: PocketView) {
+  const tiles = [...e.currentTarget.querySelectorAll<HTMLElement>('[data-roving-item]')];
+  const focusable = view.focusable.slice(0, tiles.length);
+  const tile = tiles.indexOf(e.target as HTMLElement);
+  return {tiles, view: {...view, focusable}, from: tile < 0 ? undefined : focusable[tile]};
 }
 
 /**
@@ -559,7 +592,8 @@ function filledInView(start: number, perView: number, cardCount: number | undefi
  * Home and End going to the first and last. Before, every card was a Tab stop, so whatever
  * came after the binder sat 25 presses past it on every spread. The card focused last
  * keeps the stop, however it took focus (a key, a click, the card modal handing it back),
- * and a new view starts on its first card.
+ * and a new view starts on its first card. An open pocket holds no card (a promo set's,
+ * #805), so the stop and the arrow keys pass over it.
  *
  * Not `useRovingTabIndex`, which reads its items as one grid, row by row. A spread's
  * pockets run page by page, so its Right from the left page's last column would drop to
@@ -567,19 +601,19 @@ function filledInView(start: number, perView: number, cardCount: number | undefi
  */
 function usePocketFocus(start: number, view: PocketView) {
   const [last, setLast] = useState({start, pocket: 0});
-  const stop = last.start === start && last.pocket < view.count ? last.pocket : 0;
+  const stop = last.start === start && view.focusable.includes(last.pocket) ? last.pocket : view.focusable[0];
   return {
     tabIndexFor: (index: number) => (index - start === stop ? 0 : -1),
     onFocus: (e: FocusEvent<HTMLElement>) => {
-      const pocket = pocketTiles(e.currentTarget).indexOf(e.target as HTMLElement);
-      if (pocket >= 0) setLast({start, pocket});
+      const {from} = cardsAt(e, view);
+      if (from !== undefined) setLast({start, pocket: from});
     },
     onKeyDown: (e: KeyboardEvent<HTMLElement>) => {
-      const tiles = pocketTiles(e.currentTarget);
-      const to = pocketForKey(e, tiles.indexOf(e.target as HTMLElement), {...view, count: tiles.length});
+      const cards = cardsAt(e, view);
+      const to = pocketForKey(e, cards.from, cards.view);
       if (to === null) return;
       e.preventDefault();
-      tiles[to].focus();
+      cards.tiles[cards.view.focusable.indexOf(to)].focus();
     },
   };
 }
@@ -595,10 +629,12 @@ export function BinderSpread({
   arrows = true,
   footer,
   cardCount,
+  isOpen,
 }: BinderSpreadProps) {
   const unit = single ? 'page' : 'spread';
   const perView = single ? PER_PAGE : PER_SPREAD;
-  const pockets = usePocketFocus(start, {count: filledInView(start, perView, cardCount), pages: single ? 1 : 2});
+  const focusable = focusableInView(start, perView, {cardCount, isOpen});
+  const pockets = usePocketFocus(start, {focusable, pages: single ? 1 : 2});
   const views: ViewProps = {
     start,
     renderSlot: (index) => renderSlot(index, pockets.tabIndexFor(index)),
