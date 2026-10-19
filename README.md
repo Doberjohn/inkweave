@@ -114,7 +114,7 @@ The synergy engine is a standalone package (`inkweave-synergy-engine`) with zero
 | **Discard** | Playstyle | Discard enablers + hand-size payoffs (5-baseline + asymmetric-kill at 8) |
 | **Location Control** | Playstyle | 8 sub-roles: at-payoff, play-trigger, buff, ramp, move, in-play-check, search, boost |
 | **Lore Denial** | Playstyle | Burn (opponent loses lore) + steal (opponent loses, you gain). Tiered 5/6/7 by role pair |
-| **Ramp** | Playstyle | Inkwell-ramp + inkwell-trigger + cost-reduction (5-baseline + chain ladder 7–9) |
+| **Ramp** | Playstyle | Inkwell-ramp + inkwell-trigger + cost-reduction (5-baseline + chain ladder 7–8) |
 | **Toys** | Playstyle | Toy classification + tribal payoffs (search, banish-trigger, self-discount) + composed generic mechanics — role-driven 5/7/8 matrix |
 
 ## Card Data

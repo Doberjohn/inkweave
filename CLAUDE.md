@@ -13,7 +13,7 @@ See [GitHub Issues](https://github.com/Doberjohn/inkweave/issues) for full backl
 ## Tech Stack
 
 - pnpm workspaces monorepo
-- React 19 + TypeScript 6 (engine tsconfig carries `ignoreDeprecations: "6.0"` for tsup's dts `baseUrl` injection — remove before TS 7.0; see issue #329)
+- React 19 + TypeScript 6
 - Vite bundler
 - Radix UI Primitives (headless behavior) + inline CSS with design tokens
 - Static JSON card database

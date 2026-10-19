@@ -43,10 +43,10 @@ A card's partners are what its own page lists: the bases a Shift card can land o
 ### Example
 
 When this example was written, selecting **Elsa - Ice Maker** (cost 7, Shift 5) found (it has since left Core):
-- **Elsa - Snow Queen** (cost 4) — score 9, perfect curve: play on turn 4, Shift next turn
+- **Elsa - Snow Queen** (cost 4) — score 8, perfect curve: play on turn 4, Shift next turn
 
 And selecting **Elsa - Snow Queen** (cost 4) found:
-- **Elsa - Ice Maker** (Shift 5) — score 9, same pair, same score
+- **Elsa - Ice Maker** (Shift 5) — score 8, same pair, same score
 
 ### Shift Variants
 
@@ -113,7 +113,7 @@ The key metric is **curve gap**: `shiftCost - baseCost`
     "labels": ["Negative", "Gap 0", "Gap 1 (no ink)", "Gap 1 (one ink)", "Gap 1 (both ink)", "Gap 2", "Gap 3", "Gap 4+"],
     "datasets": [{
       "label": "Score",
-      "data": [3, 5, 7, 8, 9, 7, 5, 3],
+      "data": [3, 5, 7, 8, 8, 7, 5, 3],
       "borderColor": "#d4af37",
       "backgroundColor": "rgba(212, 175, 55, 0.15)",
       "pointBackgroundColor": ["#f59090", "#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#60b5f5", "#f59090"],
@@ -156,7 +156,7 @@ Every text names both cards: the engine swaps `<BASE>` and `<SHIFT>` for the `{A
 
 | Score | Curve Gap | Inkwell | Explanation Template | Example |
 |-------|-----------|---------|---------------------|---------|
-| **9** | 1 | Both inkable | "Perfect curve: <SHIFT> shifts onto <BASE> the turn after. Both are inkable as a fallback." | Elsa - Snow Queen (cost 4, inkable) + Elsa - Ice Maker (Shift 5, inkable) |
+| **8** | 1 | Both inkable | "Perfect curve: <SHIFT> shifts onto <BASE> the turn after. Both are inkable as a fallback." | Elsa - Snow Queen (cost 4, inkable) + Elsa - Ice Maker (Shift 5, inkable) |
 | **8** | 1 | One inkable | "Perfect curve: <SHIFT> shifts onto <BASE> the turn after. Only one of them is inkable as a fallback." | Elsa - Snow Queen (cost 4, not inkable) + Elsa - Ice Maker (Shift 5, inkable) |
 | **7** | 1 | Neither inkable | "On curve: <SHIFT> shifts onto <BASE> the turn after, but neither is inkable, so it's less flexible off-curve." | Elsa - Snow Queen (cost 4, not inkable) + Elsa - Ice Maker (Shift 5, not inkable) |
 | **7** | 2 | Any | "Smooth curve: <BASE> flows into <SHIFT> in a couple of turns." | Elsa - Snow Queen (cost 4) + Ursula - Sea Witch (Shift 6) |
@@ -175,7 +175,7 @@ Every text names both cards: the engine swaps `<BASE>` and `<SHIFT>` for the `{A
     "datasets": [
       {
         "label": "Pairs",
-        "data": [138, 124, 105, 24, 103, 1],
+        "data": [138, 124, 105, 126, 1, 1],
         "backgroundColor": ["#f59090", "#60b5f5", "#6ee7a0", "#6ee7a0", "#6ee7a0", "#fbbf24"]
       }
     ]
@@ -188,9 +188,11 @@ Every text names both cards: the engine swaps `<BASE>` and `<SHIFT>` for the `{A
 
 A gap of 1 is the ideal curve play. But what happens when you draw these cards at the wrong time? **Inkable** cards can be placed face-down as ink — they're never dead draws. This is why:
 
-- Both inkable (score 9): Maximum flexibility. Even if you draw them late, both can become ink.
+- Both inkable (score 8): Maximum flexibility. Even if you draw them late, both can become ink.
 - One inkable (score 8): Good flexibility. One card has a fallback use.
 - Neither inkable (score 7): Perfect tempo, but if you draw them off-curve, both sit dead in hand.
+
+Both inkable and one inkable share 8 since community-vote tuning moved both inkable down from 9 in `tuning.json`.
 
 Inkwell only affects gap=1 scoring because that's the tier where the difference between "good synergy" and "great synergy" is meaningful. At wider gaps (2+), the curve alignment itself is the limiting factor, not draw flexibility.
 
@@ -420,15 +422,15 @@ Tests live in `packages/synergy-engine/src/__tests__/shift-targets.test.ts` unde
 ### Scoring tests
 | Test | Score | Scenario |
 |------|-------|----------|
-| On-curve inkable base | 9 | Gap=1, both inkable (default fixture) |
+| On-curve inkable base | 8 | Gap=1, both inkable (default fixture) |
 | On-curve one inkable | 8 | Gap=1, shift inkable, base not inkable |
 | On-curve neither inkable | 7 | Gap=1, both explicitly not inkable |
 | CurveGap 2 | 7 | Gap=2, inkable base |
 | CurveGap 3 | 5 | Gap=3 (wide, slow setup) |
 | CurveGap 4+ | 3 | Gap=4+ (poor alignment) |
 | Same cost (gap 0) | 5 | No ink savings |
-| Consistent reverse direction | 9 | Forward and reverse produce identical scores |
-| Regression: small shift onto cheap base | 9 | Shift 3 onto cost 2 (gap=1, was incorrectly scored 3) |
+| Consistent reverse direction | 8 | Forward and reverse produce identical scores |
+| Regression: small shift onto cheap base | 8 | Shift 3 onto cost 2 (gap=1, was incorrectly scored 3) |
 | Regression: huge shift onto tiny base | 3 | Shift 8 onto cost 2 (gap=6, was incorrectly scored high) |
 | Free Shift + condition activation | 10 | Shift 0, cheap base, discard condition satisfied |
 | Free Shift onto cheap base | 9 | Shift 0, base cost 2 |
@@ -438,7 +440,7 @@ Tests live in `packages/synergy-engine/src/__tests__/shift-targets.test.ts` unde
 | Duo Shift line | 7 | the half's page says its other half must be in play too |
 | Combo Shift is no Duo Shift | n/a | `isDuoShift` reads Duo's "two of your characters" reminder, not Combo's "or one of each" |
 | Ink-drop Shift, base gets the drops | 8 | "Shift Remove 2 ink drops" onto a cost-4 base that gets 2 ink drops; forward and reverse |
-| Ink-drop Shift, base gets too few drops | 5 | Cost-1 base that gets 1 ink drop (the ink curve and the free path would both give 9) |
+| Ink-drop Shift, base gets too few drops | 5 | Cost-1 base that gets 1 ink drop (the ink curve would give 8 and the free path 9) |
 
 ### Transformer tests
 Located in `packages/synergy-engine/src/__tests__/cardTransformer.test.ts` (plus a mirror in `apps/web/src/features/cards/__tests__/loader.test.ts`):
