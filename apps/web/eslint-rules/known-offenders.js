@@ -31,7 +31,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/MobileComparisonView.stories.tsx', // x2
     'src/features/synergies/components/MobileComparisonView.tsx', // x4
     'src/features/synergies/components/RoleTileRow.stories.tsx', // x1
-    'src/features/synergies/components/RoleTileRow.tsx', // x3
     'src/features/synergies/components/SynergyGroup.tsx', // x1
     'src/features/voting/components/DistributionBar.stories.tsx', // x1
     'src/features/voting/components/DistributionBar.tsx', // x3
@@ -75,7 +74,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/DeltaPanel.tsx', // x4
     'src/features/synergies/components/MechanicsButton.tsx', // x5
     'src/features/synergies/components/MobileComparisonView.tsx', // x16
-    'src/features/synergies/components/RoleTileRow.tsx', // x3
     'src/features/synergies/components/SynergyGroup.tsx', // x2
     'src/features/voting/components/DistributionBar.tsx', // x3
     'src/features/voting/components/InDepthVoteForm.tsx', // x9
@@ -136,7 +134,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/EngineColumn.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.stories.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.tsx', // x2
-    'src/features/synergies/components/RoleTileRow.tsx', // x3
     'src/features/voting/components/DistributionBar.stories.tsx', // x1
     'src/features/voting/components/DistributionBar.tsx', // x1
     'src/features/voting/components/InDepthVoteForm.stories.tsx', // x1
@@ -165,7 +162,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/reveals/WhatsNewSection.tsx', // x1
     'src/features/synergies/components/CommunityEmptyState.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.tsx', // x4
-    'src/features/synergies/components/RoleTileRow.tsx', // x3
     'src/features/voting/components/PairStack.tsx', // x1
     'src/features/voting/components/QuickVoteControl.tsx', // x6
     'src/shared/components/CardImage.tsx', // x1
