@@ -188,7 +188,7 @@ describe('Shift Targets', () => {
         shiftKeyword: 'Shift 5',
         baseCost: 4,
         baseInkwell: true,
-        expected: 9,
+        expected: 8,
       },
       {
         label: 'on-curve one inkable (curveGap 1)',
@@ -251,14 +251,14 @@ describe('Shift Targets', () => {
       expect(forward[0].score).toBe(reverse[0].score);
     });
 
-    it('regression: small shift onto cheap base scores 9, not 3 (#108)', () => {
+    it('regression: small shift onto cheap base scores 8, not 3 (#108)', () => {
       const synergies = shiftPair({
         shiftCost: 4,
         shiftKeyword: 'Shift 3',
         baseCost: 2,
         baseInkwell: true,
       });
-      expect(synergies[0].score).toBe(9);
+      expect(synergies[0].score).toBe(8);
     });
 
     it('regression: huge shift onto tiny base scores 3, not high (#108)', () => {
@@ -409,7 +409,7 @@ describe('Shift Targets', () => {
     });
 
     it('scores 5, not a free Shift, when the base gets fewer drops than the Shift removes', () => {
-      // A cost-1 base scores 9 both on the ink curve (gap 1) and on the free-Shift path.
+      // A cost-1 base scores 8 on the ink curve (gap 1) and 9 on the free-Shift path.
       const {shiftCard, base} = inkDropSetup(1, 'When you play this character, get 1 ink drop.');
       expect(shiftRule.findSynergies(shiftCard, [shiftCard, base])[0].score).toBe(5);
     });

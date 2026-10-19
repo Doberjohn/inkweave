@@ -18,7 +18,7 @@ free Shift with condition bonus).
 | 6     | Complementary | Different mechanical roles that reinforce each other on the same axis (e.g., burn ↔ steal). |
 | 7     | Strong / compounding | Mechanical interaction that compounds (e.g., steal ↔ steal, member ↔ tribal payoff). |
 | 8     | Win-condition combo | Asymmetric kill / peak chain (e.g., Discard enabler ↔ hand-size payoff, Toy search ↔ banish-trigger). |
-| 9     | Snowball chain | Self-reinforcing combo where each trigger feeds itself (e.g., Ramp deck-ramp ↔ repeating trigger). |
+| 9     | Snowball chain | Self-reinforcing combo where each trigger feeds itself (e.g., Ramp deck-ramp ↔ repeating trigger, which community-vote tuning has since moved to 8). |
 | 10    | Engine-bonus / Community-tuned | Condition activation pushes a 9 higher (e.g., free Shift + condition). Community voting can also reach here. |
 
 ### The 5-baseline convention
@@ -70,7 +70,7 @@ Playstyle pairs are no longer flat-7. Each rule now applies a role-driven matrix
 
 - **Lore Denial**: 5 / 6 / 7 by burn-vs-steal pair shape
 - **Discard**: 5 / 8 — broad density floor + asymmetric kill combo at the rare hand-size payoff
-- **Ramp**: 5 / 6 / 7 / 8 / 9 — density floor + chain ladder for deck-ramp + repeating-trigger combos
+- **Ramp**: 5 / 6 / 7 / 8 — density floor + chain ladder for deck-ramp + repeating-trigger combos
 - **Toy**: 5 / 7 / 8 — same-deck baseline + tribal compounding + peak chains
 - **Location Control**: tiered by role pair (8 sub-rules — see `LOCATION_CONTROL_RULE.md`)
 - **Ink Drops**: 5 / 6 / 7 / 8, payoff-anchored (maker ↔ maker never emitted). A one-shot drop switching a payoff on is 6-7; 8 is kept for a steady maker feeding a per-turn payoff; an opponent-gated maker takes -1, floored at 5 (see `INK_DROPS_RULE.md`)
@@ -134,7 +134,7 @@ For the full rule documentation with examples, condition matchers, and design ra
 
 | Curve Gap | Inkable       | Score  | Tier     | Why                                                                |
 |-----------|---------------|--------|----------|--------------------------------------------------------------------|
-| 1         | Both          | **9**  | Strong   | Perfect on-curve play, both can be inked as fallback               |
+| 1         | Both          | **8**  | Strong   | Perfect on-curve play, both can be inked as fallback               |
 | 1         | One           | **8**  | Strong   | Perfect curve, one card is inkable as fallback                     |
 | 1         | Neither       | **7**  | Strong   | Perfect curve, but neither is inkable — less flexible off-curve    |
 | 2         | Any           | **7**  | Strong   | Smooth curve, one-turn gap                                        |
