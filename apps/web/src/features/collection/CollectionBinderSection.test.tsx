@@ -1,5 +1,6 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
 import {render, screen} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {BrowseSortOrder} from '../../shared/constants';
@@ -32,15 +33,16 @@ interface SectionOptions {
   setCode?: string;
   entries?: CollectionEntries;
   isLoading?: boolean;
+  error?: string | null;
 }
 
 /** The section with `matched` the cards the page's filters let through, as the page counts them. */
-function renderSection(
+function section(
   matched: string[],
-  {sortOrder = 'newest', setCode = '9', entries = {}, isLoading = false}: SectionOptions = {},
+  {sortOrder = 'newest', setCode = '9', entries = {}, isLoading = false, error = null}: SectionOptions = {},
 ) {
   const counted = POOL.filter((card) => matched.includes(card.id));
-  render(
+  return (
     <MemoryRouter>
       <CollectionBinderSection
         cards={POOL}
@@ -50,7 +52,7 @@ function renderSection(
         sortOrder={sortOrder}
         entries={entries}
         isLoading={isLoading}
-        error={null}
+        error={error}
         onRetry={vi.fn()}
         onCardSelect={vi.fn()}
         setCode={setCode}
@@ -60,9 +62,11 @@ function renderSection(
         show="all"
         onShowChange={vi.fn()}
       />
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
+
+const renderSection = (...args: Parameters<typeof section>) => render(section(...args));
 
 /** The binder's pockets in order, by card. */
 const pockets = () => screen.getAllByRole('button', {name: /^Card /}).map((tile) => tile.getAttribute('aria-label'));
@@ -72,6 +76,15 @@ describe('CollectionBinderSection', () => {
     // jsdom's 1024px window is desktop, where the map docks under the binder.
     renderSection([], {isLoading: true});
     expect(screen.queryByRole('button', {name: /nothing missing/})).not.toBeInTheDocument();
+  });
+
+  it('keeps the focus in the section when Try again swaps the error for the loading binder', async () => {
+    // Retrying unmounts the button that had the focus, which then fell to the page (#790).
+    const user = userEvent.setup();
+    const view = renderSection([], {error: 'The rest of the cards did not load.'});
+    await user.click(screen.getByRole('button', {name: 'Try again'}));
+    view.rerender(section([], {isLoading: true}));
+    expect(screen.getByRole('group', {name: 'Collection'})).toHaveFocus();
   });
 
   it("holds only this set's cards that pass the filters, packed in the page's sort", () => {

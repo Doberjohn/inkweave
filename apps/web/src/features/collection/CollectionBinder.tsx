@@ -77,10 +77,13 @@ function BinderSlot({
   card,
   counts,
   onSelect,
+  tabIndex,
 }: {
   card: LorcanaCard;
   counts: CollectionEntry;
   onSelect: (card: LorcanaCard) => void;
+  /** The pocket's place in the Tab order, from `BinderSpread`: one pocket in view is a Tab stop. */
+  tabIndex: number;
 }) {
   return (
     <div style={{position: 'relative', height: '100%'}}>
@@ -97,6 +100,7 @@ function BinderSlot({
           variant="minimal"
           borderRadius={0}
           useSmallImage
+          tabIndex={tabIndex}
         />
       </div>
       <CollectionSlotCounts counts={counts} />
@@ -143,10 +147,10 @@ export function CollectionBinder({
       onNext={() => goTo(current + 1)}
       canPrev={current > 0}
       canNext={current < total - 1}
-      renderSlot={(index) => {
+      renderSlot={(index, tabIndex) => {
         const card = cards[index];
         if (!card) return null;
-        return <BinderSlot card={card} counts={countsFor(card.id)} onSelect={onSelect} />;
+        return <BinderSlot card={card} counts={countsFor(card.id)} onSelect={onSelect} tabIndex={tabIndex} />;
       }}
     />
   );

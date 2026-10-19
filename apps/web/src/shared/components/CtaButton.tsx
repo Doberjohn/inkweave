@@ -38,6 +38,16 @@ function variantStyle(variant: CtaVariant, hot: boolean): React.CSSProperties {
 }
 
 
+/**
+ * Whether the button is off: `disabled`, or `aria-disabled`, which keeps it focusable
+ * (WAI-ARIA APG) where a native `disabled` would drop the focus it holds to the page.
+ * Either way it looks off and the pointer does nothing to it; what a click does stays
+ * the caller's, so `aria-disabled` alone still delivers one (#790).
+ */
+function isOff(disabled: boolean | undefined, ariaDisabled: React.AriaAttributes['aria-disabled']): boolean {
+  return disabled === true || ariaDisabled === true || ariaDisabled === 'true';
+}
+
 type MouseHandlers = Pick<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
   'onMouseEnter' | 'onMouseLeave' | 'onMouseDown' | 'onMouseUp'
@@ -85,7 +95,8 @@ export function CtaButton({
   disabled,
   ...rest
 }: CtaButtonProps) {
-  const {boop, hovered, pressed, props} = useCtaInteractions(disabled, {
+  const off = isOff(disabled, rest['aria-disabled']);
+  const {boop, hovered, pressed, props} = useCtaInteractions(off, {
     onMouseEnter,
     onMouseLeave,
     onMouseDown,
@@ -115,10 +126,10 @@ export function CtaButton({
       disabled={disabled}
       style={{
         ...baseStyle,
-        ...variantStyle(variant, hovered && !disabled),
-        ...(!disabled ? boop.style : {}),
-        ...(pressed && !disabled ? {transform: `scale(${PRESS_SCALE})`} : {}),
-        ...(disabled ? DISABLED_STYLE : {}),
+        ...variantStyle(variant, hovered && !off),
+        ...(!off ? boop.style : {}),
+        ...(pressed && !off ? {transform: `scale(${PRESS_SCALE})`} : {}),
+        ...(off ? DISABLED_STYLE : {}),
         ...style,
       }}>
       {children}

@@ -1,4 +1,4 @@
-import type {ReactNode} from 'react';
+import {useRef, type ReactNode} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries, CollectionEntry} from './collectionParser';
 import {CollectionBinder} from './CollectionBinder';
@@ -142,7 +142,29 @@ interface CollectionBinderSectionProps extends PanelControls {
   onCardSelect: (card: LorcanaCard) => void;
 }
 
-export function CollectionBinderSection({
+/**
+ * The section's content, in a region that holds focus while the content changes under it.
+ *
+ * "TRY AGAIN" KEEPS FOCUS IN THE BINDER (#790): retrying swaps the error for the loading
+ * binder, which unmounts the button that had focus, and focus fell to the page, so the
+ * next Tab started from its top. The region takes focus first, and it stays mounted
+ * through the loading binder and the loaded one, as `BrowseSidePanel`'s Clear all hands
+ * focus to its panel. It is a group, not a landmark: the binder inside is the region.
+ */
+export function CollectionBinderSection({onRetry, ...props}: CollectionBinderSectionProps) {
+  const regionRef = useRef<HTMLDivElement>(null);
+  const retry = () => {
+    regionRef.current?.focus();
+    onRetry();
+  };
+  return (
+    <div ref={regionRef} tabIndex={-1} role="group" aria-label="Collection" style={{height: '100%'}}>
+      <SectionContent {...props} onRetry={retry} />
+    </div>
+  );
+}
+
+function SectionContent({
   cards,
   matchedIds,
   counted,

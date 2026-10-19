@@ -328,6 +328,31 @@ test.describe('Collection mode, signed in', () => {
     }
   });
 
+  test('the keyboard pages the binder end to end without losing the focus', async ({page}) => {
+    // #790: the pockets are one Tab stop, and the map's arrows stay focused, dimmed, at either end.
+    await signInAsCollector(page, ENTRIES);
+    await page.goto(`/browse?binder=${SET}`);
+    const tiles = binder(page).getByTestId('card-tile');
+    await expect(tiles.first()).toBeVisible();
+
+    await tiles.first().focus();
+    await page.keyboard.press('Tab');
+    const previous = binder(page).getByRole('button', {name: 'Previous spread'});
+    await expect(previous).toBeFocused();
+    await expect(previous).toHaveAttribute('aria-disabled', 'true');
+
+    // Enter on Next, through to the last spread.
+    const shown = binder(page).getByRole('navigation', {name: 'Binder pages'}).locator('[aria-current="true"]');
+    const spreads = Number(/ of (\d+)/.exec((await shown.getAttribute('aria-label')) ?? '')?.[1]);
+    expect(spreads, 'spreads in the set').toBeGreaterThan(1);
+    const next = binder(page).getByRole('button', {name: 'Next spread'});
+    await next.focus();
+    for (let turn = 1; turn < spreads; turn++) await page.keyboard.press('Enter');
+    await expect(shown).toHaveAccessibleName(new RegExp(`^Spread ${spreads} of ${spreads}:`));
+    await expect(next).toBeFocused();
+    await expect(next).toHaveAttribute('aria-disabled', 'true');
+  });
+
   test("a search narrows the binder, and the panel's numbers count only what it finds", async ({
     page,
   }) => {

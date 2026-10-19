@@ -1,5 +1,6 @@
 import {describe, it, expect, vi} from 'vitest';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {act, render, screen, fireEvent} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CollectionBinder} from './CollectionBinder';
@@ -36,6 +37,9 @@ function binder(props: Partial<Parameters<typeof CollectionBinder>[0]> = {}) {
 /** The name on the first slot in view: the card each page or spread opens on. */
 const firstShown = () => screen.getAllByRole('button', {name: /^Card \d+$/})[0].getAttribute('aria-label');
 
+/** The pocket holding card `n`. */
+const pocket = (n: number) => screen.getByRole('button', {name: `Card ${n}`});
+
 describe('CollectionBinder', () => {
   it('pages a spread, 24 cards at a time', () => {
     render(binder());
@@ -59,6 +63,61 @@ describe('CollectionBinder', () => {
     expect(firstShown()).toBe('Card 25');
   });
 
+  it('dims its flanking arrows at either end, where they stay in the Tab order', () => {
+    render(binder());
+    expect(screen.getByRole('button', {name: 'Previous spread'})).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+    expect(screen.getByRole('button', {name: 'Next spread'})).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  describe('from the keyboard, one Tab stop for the pockets (#790)', () => {
+    it('reaches the spread map with one Tab from the first pocket', async () => {
+      const user = userEvent.setup();
+      render(binder({pager: 'map'}));
+      await user.tab();
+      expect(pocket(1)).toHaveFocus();
+      await user.tab();
+      expect(screen.getByRole('button', {name: 'Previous spread'})).toHaveFocus();
+    });
+
+    it('moves between the pockets with the arrow keys, across the spine', async () => {
+      const user = userEvent.setup();
+      render(binder({pager: 'map'}));
+      // Card 4 ends the left page's top row, and Card 13 starts the right page's.
+      act(() => pocket(4).focus());
+      await user.keyboard('{ArrowRight}');
+      expect(pocket(13)).toHaveFocus();
+      await user.keyboard('{ArrowDown}');
+      expect(pocket(17)).toHaveFocus();
+      await user.keyboard('{ArrowLeft}');
+      expect(pocket(8)).toHaveFocus();
+    });
+
+    it('goes to the first and last card with Home and End, and no further than the cards', async () => {
+      // Eighteen cards: a full left page, and the right page's first six.
+      const user = userEvent.setup();
+      render(binder({pager: 'map', cards: CARDS.slice(0, 18)}));
+      act(() => pocket(1).focus());
+      await user.keyboard('{End}');
+      expect(pocket(18)).toHaveFocus();
+      await user.keyboard('{ArrowRight}');
+      expect(pocket(18)).toHaveFocus();
+      await user.keyboard('{Home}');
+      expect(pocket(1)).toHaveFocus();
+    });
+
+    it('keeps the Tab stop on the card focused last, until the spread turns', async () => {
+      const user = userEvent.setup();
+      render(binder({pager: 'map'}));
+      act(() => pocket(5).focus());
+      await user.tab();
+      await user.tab({shift: true});
+      expect(pocket(5)).toHaveFocus();
+      await user.click(screen.getByRole('button', {name: 'Next spread'}));
+      expect(pocket(25)).toHaveAttribute('tabindex', '0');
+    });
+  });
+
   describe('with the spread map, where the page docks its panels', () => {
     it('turns to the spread it is clicked on, with no arrows beside the spread', () => {
       render(binder({pager: 'map'}));
@@ -75,12 +134,18 @@ describe('CollectionBinder', () => {
       expect(screen.getByRole('button', {name: 'Spread 2 of 2: nothing missing'})).not.toHaveAttribute('aria-current');
     });
 
-    it('steps with its arrows, which stop at either end', () => {
+    it('steps with its arrows, which stop at either end and keep the focus there', async () => {
+      // A disabled Next dropped the focus to the page at the last spread (#790).
+      const user = userEvent.setup();
       render(binder({pager: 'map'}));
-      expect(screen.getByRole('button', {name: 'Previous spread'})).toBeDisabled();
-      fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+      expect(screen.getByRole('button', {name: 'Previous spread'})).toHaveAttribute('aria-disabled', 'true');
+      const next = screen.getByRole('button', {name: 'Next spread'});
+      act(() => next.focus());
+      await user.keyboard('{Enter}');
+      await user.keyboard('{Enter}');
       expect(firstShown()).toBe('Card 25');
-      expect(screen.getByRole('button', {name: 'Next spread'})).toBeDisabled();
+      expect(next).toHaveFocus();
+      expect(next).toHaveAttribute('aria-disabled', 'true');
     });
 
     it("draws the last spread's empty right page as the back cover, and only that one", () => {

@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-170 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+171 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts` and the `/reveals` check in `seo.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -160,7 +160,7 @@ At page load, supabase-js is downloaded only when there is a session to restore 
 | a stored session downloads the Supabase SDK to restore it | An `inkweave:auth` entry seeded before load makes `/browse` request the SDK (all projects) |
 | the sign-in control opens the provider dialog | Clicking it opens the `SignInDialog`. Stops at the provider choice: signing in needs a real round-trip no placeholder project can serve |
 
-## `collection-mode.spec.ts`: 14 tests (1 every project, 1 chromium only, 11 desktop only, 1 on every project at a 390px viewport)
+## `collection-mode.spec.ts`: 15 tests (1 every project, 1 chromium only, 12 desktop only, 1 on every project at a 390px viewport)
 
 Covers Browse's collection mode (#553 Phase C), which ships behind `VITE_SHOW_COLLECTION` (default OFF). The flag REQUIRES `VITE_SHOW_ACCOUNTS`, and `playwright.config.ts` pins both ON. The Collection button is gated on sign-in (owner ruling 2026-10-07).
 
@@ -180,6 +180,7 @@ The desktop signed-in tests skip the mobile projects: they find the numbers in t
 | Owned keeps the held cards alone, and leaving the mode drops that view | The `Binder shows` group's "Owned" adds `owned=owned` and leaves exactly the held tiles; turning collection mode off removes the binder and both the `binder` and `owned` params |
 | the set picker opens the whole collection in the binder | Picking "Whole collection" in the `Binder set` picker gives `binder=all` and relabels the picker "Binder set: Whole collection", and the rest follows: "Complete collection" in the numbers and a tile in the binder |
 | the set picker's arrow keys never park a set under its pinned row | The `Binder set` list holds every set in the pool, so it scrolls (asserted, so the test cannot pass with nothing to scroll). From End, each Arrow Up row's top stays at or below the bottom of the pinned Whole collection strip, which the list's `scroll-padding-top` keeps clear (WCAG 2.4.11) |
+| the keyboard pages the binder end to end without losing the focus | #790. `/browse?binder=<set>`: from the first pocket, one Tab reaches the spread map's Previous, focused and `aria-disabled` at the first spread (the pockets are one Tab stop). Enter on Next through to the last spread (counted from the current spread's "Spread 1 of N" name, asserted above 1) leaves the focus on Next, `aria-disabled`: a disabled Next dropped it to the page |
 | a search narrows the binder, and the panel's numbers count only what it finds | A held card's full name (one with no alt-art printing) in `browse-search` leaves one tile, and the numbers read "1 of 1 cards" under the headline "Complete": filtered, it names no set. Skips when none of the set's first three cards lacks a printing |
 | Alt art cards picks the alt-art rarities, and the binder counts only those printings | The Filters panel's "Alt art cards" preset turns `aria-pressed`, sets `rarity` to Enchanted, Epic and Iconic, and the numbers read "1 of P cards", P the set's printings. Skips a set with none |
 | a signed-in visitor without a collection is asked to import one | Signed in with no local copy and no server row, "Show my collection" opens the `Import your collection` dialog and renders no binder |
