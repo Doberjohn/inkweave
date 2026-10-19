@@ -66,19 +66,22 @@ function toEntry(variant, id) {
   return entry;
 }
 
+/** What an entry is: its printing, its rarity and its art. */
+const ENTRY_FACTS = [
+  (entry) => entry.id,
+  (entry) => entry.number,
+  (entry) => entry.rarity,
+  (entry) => entry.images?.full,
+  (entry) => entry.images?.thumbnail,
+];
+
 /**
  * Same printing, same rarity, same art: an existing entry that needs no rewrite (build hashes
  * survive). The rarity counts because entries are found by number: a corrected rarity must
  * reach the entry, not leave the stale one in place.
  */
 function sameEntry(existing, entry) {
-  return (
-    existing.id === entry.id &&
-    existing.number === entry.number &&
-    existing.rarity === entry.rarity &&
-    existing.images?.full === entry.images?.full &&
-    existing.images?.thumbnail === entry.images?.thumbnail
-  );
+  return ENTRY_FACTS.every((fact) => fact(existing) === fact(entry));
 }
 
 function baseFinder(baseCards, matchBy) {
@@ -103,14 +106,20 @@ function baseFinder(baseCards, matchBy) {
  */
 function upsert(base, entry) {
   const variants = base.variants ?? [];
-  const at = variants.findIndex((v) => !isPromo(v) && v.number === entry.number);
-  if (at >= 0 && sameEntry(variants[at], entry)) return 'unchanged';
-  if (at >= 0) variants[at] = entry;
-  else variants.push(entry);
-  variants.sort(byPrintingOrder);
-  base.variants = variants;
-  return at >= 0 ? 'replaced' : 'folded';
+  const at = slotOf(variants, entry);
+  if (at < 0) {
+    variants.push(entry);
+    base.variants = variants.sort(byPrintingOrder);
+    return 'folded';
+  }
+  if (sameEntry(variants[at], entry)) return 'unchanged';
+  variants[at] = entry;
+  base.variants = variants.sort(byPrintingOrder);
+  return 'replaced';
 }
+
+/** Where `entry`'s printing sits among `variants`: the entry with its collector number, never a promo. */
+const slotOf = (variants, entry) => variants.findIndex((v) => !isPromo(v) && v.number === entry.number);
 
 /**
  * Fold the printings in `sourceCards` (every card with a `baseId` but the Special promos) into

@@ -163,6 +163,16 @@ export function useCollectionCards(): CollectionCardsContextValue {
 }
 
 /**
+ * Core plus the collection: with a card for each printing the chunks do not carry, so every
+ * printing has a pocket, and a pocket for every promo whose card it holds (#805), the promos
+ * whose card no dataset holds yet waiting apart.
+ */
+function collectionPool(coreCards: LorcanaCard[], cards: LorcanaCard[], promos: readonly CollectionPromo[]) {
+  const printings = withPrintingCards([...coreCards, ...cards]);
+  return {pool: withPromoPockets(printings, promos), waiting: waitingPromos(printings, promos)};
+}
+
+/**
  * The pool a page should filter over: Core alone, or Core plus the collection.
  *
  * Turning `active` on both requests the data and widens the pool, so a caller
@@ -183,13 +193,11 @@ export function useCollectionPool(coreCards: LorcanaCard[], active: boolean) {
     if (active) ensureLoaded();
   }, [active, ensureLoaded]);
 
-  // With a card for each printing the chunks do not carry, so every printing has a pocket.
-  const printings = active ? withPrintingCards([...coreCards, ...cards]) : coreCards;
+  const {pool, waiting} = active ? collectionPool(coreCards, cards, promos) : {pool: coreCards, waiting: []};
   return {
-    // And a pocket for every promo whose card it holds (#805).
-    pool: active ? withPromoPockets(printings, promos) : coreCards,
+    pool,
     /** The promos whose card no dataset holds yet: the binder names their pockets. */
-    waiting: active ? waitingPromos(printings, promos) : [],
+    waiting,
     isLoading: active && isLoading,
     error: active ? error : null,
     /**

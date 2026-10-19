@@ -251,7 +251,8 @@ const promoKey = (code: string, number: number) => `${code}:${number}`;
 function promosByCode(pool: readonly LorcanaCard[]): Map<string, PromoClaim[]> {
   const promos = new Map<string, PromoClaim[]>();
   for (const card of pool) {
-    if (card.rarity !== PROMO_RARITY || card.setCode === undefined || card.setNumber === undefined) continue;
+    if (card.rarity !== PROMO_RARITY) continue;
+    if (card.setCode === undefined || card.setNumber === undefined) continue;
     const key = promoKey(card.setCode, card.setNumber);
     promos.set(key, [...(promos.get(key) ?? []), card]);
   }

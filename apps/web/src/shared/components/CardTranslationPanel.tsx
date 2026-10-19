@@ -18,6 +18,16 @@ interface CardTranslationPanelProps {
   style?: React.CSSProperties;
 }
 
+/**
+ * Whether the English text over a scan in `language` is the card's official text: the card's
+ * own scan is English, or the card is a printing's (it has a `baseId`), whose text is the
+ * English card's. Only a card whose own scan is foreign has no more than a translation.
+ */
+function isOfficialText(card: LorcanaCard, language: string | undefined): boolean {
+  if (!language) return false;
+  return !card.scanLanguage || card.baseId !== undefined;
+}
+
 /** The English name of a language code ("ja" → "Japanese"); the code itself if the runtime has none. */
 function languageName(code: string): string {
   try {
@@ -45,7 +55,7 @@ export function CardTranslationPanel({
   const sizes = SIZES[size];
   const languageLabel = language ? languageName(language) : 'original';
   const hasText = !!(card.textSections?.length || card.text);
-  const official = !!language && (!card.scanLanguage || card.baseId !== undefined);
+  const official = isOfficialText(card, language);
 
   return (
     <section
