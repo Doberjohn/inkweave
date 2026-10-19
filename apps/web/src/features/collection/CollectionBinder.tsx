@@ -101,10 +101,13 @@ function CardPocket({
   card,
   counts,
   onSelect,
+  tabIndex,
 }: {
   card: LorcanaCard;
   counts: CollectionEntry;
   onSelect: (card: LorcanaCard) => void;
+  /** The pocket's place in the Tab order, from `BinderSpread`: one pocket in view is a Tab stop. */
+  tabIndex: number;
 }) {
   return (
     <div style={{position: 'relative', height: '100%'}}>
@@ -121,6 +124,7 @@ function CardPocket({
           variant="minimal"
           borderRadius={0}
           useSmallImage
+          tabIndex={tabIndex}
         />
       </div>
       <CollectionSlotCounts counts={counts} />
@@ -249,15 +253,16 @@ export function CollectionBinder({
       arrows={map === undefined}
       footer={map}
       cardCount={slots.length}
+      isOpen={(index) => isOpenPocket(slots[index])}
       onPrev={() => goTo(current - 1)}
       onNext={() => goTo(current + 1)}
       canPrev={current > 0}
       canNext={current < total - 1}
-      renderSlot={(index) => {
+      renderSlot={(index, tabIndex) => {
         const slot = slots[index];
         if (!slot) return null;
         if (isOpenPocket(slot)) return <OpenPocketView pocket={slot} />;
-        return <CardPocket card={slot} counts={countsFor(slot.id)} onSelect={onSelect} />;
+        return <CardPocket card={slot} counts={countsFor(slot.id)} onSelect={onSelect} tabIndex={tabIndex} />;
       }}
     />
   );

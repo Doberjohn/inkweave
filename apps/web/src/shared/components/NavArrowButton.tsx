@@ -21,6 +21,11 @@ import {CtaButton} from './CtaButton';
  * there put the arrow on top of the cards at every window size where the spread is
  * wide. A consumer that overlays it offsets it without `transform`, which the boop
  * and the press own.
+ *
+ * AT THE BINDER'S END IT STAYS FOCUSABLE (#790): dimmed, announced as unavailable
+ * (`aria-disabled`), and a press does nothing. A native `disabled` dropped keyboard
+ * focus to the page the moment Enter on Next reached the last spread, so the next Tab
+ * started from the top of the page.
  */
 
 /** The round arrow: a gold disc around the chevron. */
@@ -54,7 +59,8 @@ interface NavArrowButtonProps {
   /** A word beside the chevron ("Previous", "Next"), which makes the arrow a pill. */
   text?: string;
   onClick: () => void;
-  disabled?: boolean;
+  /** At the first view (Previous) or the last (Next): dimmed and inert, but still focusable. */
+  atEnd?: boolean;
   /** Size and placement, and anything else the consumer needs to override. */
   style?: CSSProperties;
 }
@@ -64,7 +70,7 @@ export function NavArrowButton({
   label,
   text,
   onClick,
-  disabled = false,
+  atEnd = false,
   style,
 }: NavArrowButtonProps) {
   const glyph = text ? 18 : 22;
@@ -74,8 +80,8 @@ export function NavArrowButton({
       type="button"
       variant="filled"
       aria-label={label}
-      onClick={onClick}
-      disabled={disabled}
+      aria-disabled={atEnd || undefined}
+      onClick={atEnd ? undefined : onClick}
       style={{...shape, ...style}}>
       {direction === 'next' && text}
       <svg width={glyph} height={glyph} viewBox="0 0 24 24" fill="none" aria-hidden="true">

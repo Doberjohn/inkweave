@@ -52,9 +52,9 @@ export const Overlaid: Story = {
   args: {style: {position: 'absolute', top: 'calc(50% - 22px)', left: -22}},
 };
 
-/** Disabled — the binder's first and last spread. */
-export const Disabled: Story = {
-  args: {disabled: true},
+/** At the binder's first or last spread: dimmed and inert, but still focusable (#790). */
+export const AtEnd: Story = {
+  args: {atEnd: true},
 };
 
 /** With its word, a gold pill: the spread map's Previous button, at the map's 34px. */

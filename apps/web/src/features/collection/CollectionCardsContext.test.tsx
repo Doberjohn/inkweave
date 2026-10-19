@@ -2,10 +2,12 @@ import {readdirSync} from 'node:fs';
 import {join} from 'node:path';
 import {renderHook, waitFor} from '@testing-library/react';
 import {afterEach, beforeEach, describe, expect, it, vi, type Mock} from 'vitest';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {
   COLLECTION_SETS,
   CollectionCardsProvider,
   useCollectionCards,
+  useCollectionPool,
 } from './CollectionCardsContext';
 
 /*
@@ -154,5 +156,49 @@ describe('CollectionCardsProvider', () => {
     release();
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.error).toBeNull();
+  });
+
+  describe('useCollectionPool', () => {
+    const CORE = [{id: 'core'}] as unknown as LorcanaCard[];
+
+    it('is not ready until every chunk has landed, not even before the first request starts', async () => {
+      // Until the effect asks for the chunks nothing is loading either, so a guard on
+      // "not loading" would let the import parse an empty pool on the first render.
+      let release = () => {};
+      const held = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      fetchMock.mockImplementation(async () => {
+        await held;
+        return {ok: true, json: () => Promise.resolve([])};
+      });
+      const seen: boolean[] = [];
+      const {result} = renderHook(
+        () => {
+          const pool = useCollectionPool(CORE, true);
+          seen.push(pool.isReady);
+          return pool;
+        },
+        {wrapper},
+      );
+      expect(seen).not.toContain(true);
+
+      release();
+      await waitFor(() => expect(result.current.isReady).toBe(true));
+    });
+
+    it('waits for the Core cards too, which a direct load of /account can still lack', async () => {
+      fetchMock.mockImplementation(ok);
+      const {result, rerender} = renderHook(({core}) => useCollectionPool(core, true), {
+        wrapper,
+        initialProps: {core: [] as LorcanaCard[]},
+      });
+      expect(result.current.isLoading).toBe(true);
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.isReady).toBe(false);
+
+      rerender({core: CORE});
+      expect(result.current.isReady).toBe(true);
+    });
   });
 });

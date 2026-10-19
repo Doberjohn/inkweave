@@ -1,5 +1,6 @@
 import {useState, type CSSProperties} from 'react';
 import {COLORS, DURATION, EASING, FOIL_SHEEN, FONTS, FONT_SIZES, hexRgba} from '../constants';
+import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
 
 interface QuantityStepperProps {
   value: number;
@@ -159,19 +160,24 @@ function incrementAriaLabel(disabled: boolean, disabledReason: string | undefine
 
 // Owns the pop animation state so the component stays a thin view. Controlled
 // (parent passes `popping`/`onPopEnd`) or uncontrolled (internal state); the pop
-// is triggered from the click handlers only, never a render-time effect.
+// is triggered from the click handlers only, never a render-time effect. The
+// animation is inline, where index.css's reduced-motion block can't reach it, so
+// under reduced motion this hook drops it, and sets no pop of its own: the
+// animation's end is what clears one, and with no animation that never fires. A
+// parent that owns the pop gets no `onPopEnd` then either, so it skips its own (#790).
 function usePopAnimation(popping: boolean | undefined, onPopEnd: (() => void) | undefined) {
+  const reducedMotion = usePrefersReducedMotion();
   const isControlled = popping !== undefined;
   const [internalPop, setInternalPop] = useState(false);
   const shouldPop = isControlled ? popping : internalPop;
   const triggerPop = () => {
-    if (!isControlled) setInternalPop(true);
+    if (!isControlled && !reducedMotion) setInternalPop(true);
   };
   const handlePopEnd = () => {
     if (isControlled) onPopEnd?.();
     else setInternalPop(false);
   };
-  return {shouldPop, triggerPop, handlePopEnd};
+  return {shouldPop: shouldPop && !reducedMotion, triggerPop, handlePopEnd};
 }
 
 /**

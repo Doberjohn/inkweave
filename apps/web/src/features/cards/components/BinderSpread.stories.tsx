@@ -7,11 +7,13 @@ import {CardTile} from './CardTile';
 import {BINDER_CARDS} from './binderStoryCards';
 import {COLORS} from '../../../shared/constants';
 
-/** Each pocket's card from `cards`, by index, and an empty pocket past them. */
-const slotsFor = (cards: readonly LorcanaCard[]) => (index: number) => {
+/** Each pocket's card from `cards`, by index, in the binder's Tab order, and an empty pocket past them. */
+const slotsFor = (cards: readonly LorcanaCard[]) => (index: number, tabIndex: number) => {
   const card = cards[index];
   if (!card) return null;
-  return <CardTile card={card} onSelect={fn()} variant="minimal" borderRadius={0} useSmallImage />;
+  return (
+    <CardTile card={card} onSelect={fn()} variant="minimal" borderRadius={0} useSmallImage tabIndex={tabIndex} />
+  );
 };
 
 /**

@@ -1,5 +1,5 @@
 import {render, screen, waitFor} from '@testing-library/react';
-import {test, expect, vi} from 'vitest';
+import {test, expect, vi, afterEach} from 'vitest';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
@@ -10,6 +10,12 @@ import {trackEvent} from '../../../../shared/lib/analytics';
 import {restStrip, swipeStrip} from '../../../../shared/test-utils';
 
 vi.mock('../../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
+// A comparison's community votes need the card modal's provider; its card motion does not.
+vi.mock('../CommunityColumn', () => ({CommunityColumn: () => <p>Community panel</p>}));
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 function makeCard(id: string): LorcanaCard {
   return {
@@ -274,6 +280,33 @@ test('desktop puts the printing pills under the card, shrinking its art to make 
   expect(container.querySelector('header')).not.toContainElement(screen.getByRole('radiogroup'));
   const art = container.querySelector<HTMLElement>('[data-comparison-card-a]')!;
   expect(art.style.transform).toMatch(/^scale\(0\.\d+\)$/);
+});
+
+test('under reduced motion, card A goes into a comparison without scaling, sliding or fading', () => {
+  // #790: the art's scale, the column's slide and the controls' fade ignored reduced motion.
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn((query: string) => ({matches: query.includes('reduce'), addEventListener: vi.fn(), removeEventListener: vi.fn()})),
+  );
+  Element.prototype.scrollTo = vi.fn();
+  const card = withEnchanted(makeCard('b'));
+  const {container} = render(
+    <MemoryRouter>
+      <CardOverviewModal
+        isOpen
+        card={card}
+        synergies={[]}
+        getPairSynergies={() => null}
+        onClose={() => {}}
+        initialComparison={{cardA: card, cardB: makeCard('c'), connections: [], aggregateScore: 5}}
+      />
+    </MemoryRouter>,
+  );
+
+  const art = container.querySelector<HTMLElement>('[data-comparison-card-a]')!;
+  expect(art.style.transition).toBe('');
+  expect(art.parentElement!.style.transition).not.toMatch(/transform/);
+  expect(screen.getByRole('radiogroup', {hidden: true}).parentElement!.style.transition).toBe('');
 });
 
 test('desktop leaves the art of a card without printings at full size', () => {

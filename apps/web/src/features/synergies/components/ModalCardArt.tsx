@@ -6,7 +6,8 @@ import {
   PrintingCarousel,
   PrintingPills,
 } from '../../../shared/components';
-import {EASING, RADIUS} from '../../../shared/constants';
+import {DURATION, EASING, RADIUS} from '../../../shared/constants';
+import {usePrefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {CardPrintingContext, CardTranslationContext} from './modalArtState';
 import {DESKTOP_ART_CONTROLS_STYLE} from './cardOverviewModalStyles';
 
@@ -63,6 +64,11 @@ export function ModalCardArt({
   );
 }
 
+/** The controls' fade as a comparison opens or closes, which reduced motion skips (#790). */
+function controlsFade(reducedMotion: boolean): string | undefined {
+  return reducedMotion ? undefined : `opacity ${DURATION.base}ms ${EASING.smooth}, visibility ${DURATION.base}ms`;
+}
+
 /**
  * Desktop's printing pills, in a row under the card (owner, 2026-10-08; they sat in the
  * header before). The art shrinks to make room (`artScaleTransform`), so the column keeps its
@@ -71,13 +77,14 @@ export function ModalCardArt({
  */
 export function DesktopArtControls({hidden}: {hidden: boolean}) {
   const printing = useContext(CardPrintingContext);
+  const reducedMotion = usePrefersReducedMotion();
   return (
     <div
       style={{
         ...DESKTOP_ART_CONTROLS_STYLE,
         opacity: hidden ? 0 : 1,
         visibility: hidden ? 'hidden' : undefined,
-        transition: `opacity 0.2s ${EASING.smooth}, visibility 0.2s`,
+        transition: controlsFade(reducedMotion),
       }}>
       {printing && <PrintingPills printings={printing.printings} index={printing.index} onSelect={printing.pick} />}
     </div>

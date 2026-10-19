@@ -1,5 +1,5 @@
 import {useId, useState} from 'react';
-import {COLORS, EASING, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, TRUNCATE} from '../constants';
+import {COLORS, DURATION, EASING, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, TRUNCATE} from '../constants';
 import {useHover} from '../hooks/useHover';
 import {LinkButton} from './LinkButton';
 
@@ -91,7 +91,7 @@ function ToggleLabel({label, open, summary, controls, onToggle}: {
           padding: `4px ${WASH_BLEED}px`,
           borderRadius: RADIUS.sm,
           background: hovered ? GOLD_GLOW.hoverBg : 'transparent',
-          transition: `color 0.15s ${EASING.snappy}, background 0.15s ${EASING.snappy}`,
+          transition: `color ${DURATION.fast}ms ${EASING.snappy}, background ${DURATION.fast}ms ${EASING.snappy}`,
           letterSpacing: 'inherit',
         }}>
         <span aria-hidden style={{display: 'inline-block', width: 10, transform: open ? 'rotate(90deg)' : undefined}}>
