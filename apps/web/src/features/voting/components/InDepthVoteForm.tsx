@@ -109,7 +109,7 @@ function CategoryHeader({stepRange, label, accent, compact}: {stepRange: string;
       <span style={{fontSize: FONT_SIZES.xs, fontWeight: 700, color: accent, background: hexRgba(accent, 0.1), padding: '2px 8px', borderRadius: RADIUS.pill, fontFamily: FONTS.body}}>
         {stepRange}
       </span>
-      <span style={{fontSize: FONT_SIZES.sm, color: COLORS.textDim, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONTS.body}}>
+      <span style={{fontSize: FONT_SIZES.sm, color: COLORS.textMuted, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONTS.body}}>
         {label}
       </span>
     </div>

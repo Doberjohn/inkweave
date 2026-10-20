@@ -320,6 +320,87 @@ const noUnshelledDialogs = {
   },
 };
 
+/**
+ * COLORS.textDim as text fails WCAG 1.4.3 on every surface (2.6:1 to 3.5:1). Allowed: the branch
+ * of a `disabled` ternary (inactive controls are exempt) and a style on an aria-hidden element
+ * (decoration). A helper function that returns textDim is not seen; keep those to disabled states.
+ */
+const TEXT_COLOR_PROPS = new Set(['color', 'WebkitTextFillColor']);
+/** Expressions a colour value passes through on its way to its property: `a ? b : c`, `a || b`, `hexRgba(b, 0.8)`. */
+const COLOR_VALUE_WRAPPERS = new Set([
+  'ConditionalExpression',
+  'LogicalExpression',
+  'CallExpression',
+  'TemplateLiteral',
+  'TSAsExpression',
+  'TSNonNullExpression',
+]);
+const DIM_TEXT_MESSAGE =
+  'COLORS.textDim as text measures 2.6:1 to 3.5:1, under WCAG 1.4.3. Use COLORS.textMuted; textDim is for borders, strokes, disabled states and aria-hidden decoration.';
+/** `COLORS.textDim`, or `COLORS['textDim']`: a computed key names the same token. */
+const DIM_TEXT_SELECTOR = [
+  'MemberExpression[object.name="COLORS"][property.name="textDim"]',
+  'MemberExpression[object.name="COLORS"][property.value="textDim"]',
+].join(', ');
+
+/** A ternary test that names a disabled flag: `disabled`, `isDisabled`, `props.disabled`. */
+function isDisabledFlag(test) {
+  const id = test.type === 'MemberExpression' ? test.property : test;
+  return id.type === 'Identifier' && /disabled/i.test(id.name);
+}
+
+/** True when `child` is the `<here>` of `disabled ? <here> : …`. */
+function isDisabledBranch(parent, child) {
+  return parent.type === 'ConditionalExpression' && parent.consequent === child && isDisabledFlag(parent.test);
+}
+
+/**
+ * True when `node` is, or sits in the expression that is, the value of a `color` or
+ * `WebkitTextFillColor` property, outside a disabled branch. `ancestors` runs outermost first.
+ */
+function isTextColorValue(node, ancestors) {
+  let child = node;
+  for (let i = ancestors.length - 1; i >= 0; i -= 1) {
+    const parent = ancestors[i];
+    if (parent.type === 'Property') return parent.value === child && TEXT_COLOR_PROPS.has(keyName(parent));
+    if (isDisabledBranch(parent, child) || !COLOR_VALUE_WRAPPERS.has(parent.type)) return false;
+    child = parent;
+  }
+  return false;
+}
+
+/** `aria-hidden`, `aria-hidden="true"` or `aria-hidden={true}`. */
+function isAriaHiddenAttribute(attr) {
+  if (attr.type !== 'JSXAttribute' || attr.name.name !== 'aria-hidden') return false;
+  const value = attr.value?.type === 'JSXExpressionContainer' ? attr.value.expression : attr.value;
+  return value === null || value.value === true || value.value === 'true';
+}
+
+/** True when the nearest JSX attribute holding the node is the `style` of an aria-hidden element. */
+function isOnAriaHiddenElement(ancestors) {
+  const attr = ancestors.findLast((a) => a.type === 'JSXAttribute');
+  return attr?.name.name === 'style' && attr.parent.attributes.some(isAriaHiddenAttribute);
+}
+
+const noDimText = {
+  meta: {
+    type: 'problem',
+    docs: {description: 'Keep COLORS.textDim off text: it fails WCAG 1.4.3 contrast'},
+    schema: [],
+  },
+  create(context) {
+    if (isExempt(context, COLOR_EXEMPT)) return {};
+    return {
+      [DIM_TEXT_SELECTOR](node) {
+        const ancestors = context.sourceCode.getAncestors(node);
+        if (isTextColorValue(node, ancestors) && !isOnAriaHiddenElement(ancestors)) {
+          context.report({node, message: DIM_TEXT_MESSAGE});
+        }
+      },
+    };
+  },
+};
+
 export const inkweave = {
   meta: {name: 'eslint-plugin-inkweave', version: '1.0.0'},
   rules: {
@@ -334,5 +415,6 @@ export const inkweave = {
     'no-raw-spacing': noRawSpacing,
     'no-adhoc-buttons': noAdhocButtons,
     'no-unshelled-dialogs': noUnshelledDialogs,
+    'no-dim-text': noDimText,
   },
 };
