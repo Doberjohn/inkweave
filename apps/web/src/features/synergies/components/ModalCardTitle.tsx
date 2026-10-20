@@ -1,6 +1,15 @@
 import type {CSSProperties} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONT_SIZES, SET_LOGOS, SET_NAMES, SPACING, TABULAR, type SetCode} from '../../../shared/constants';
+import {
+  COLORS,
+  FONT_SIZES,
+  SET_LOGOS,
+  SET_NAMES,
+  SPACING,
+  TABULAR,
+  VISUALLY_HIDDEN,
+  type SetCode,
+} from '../../../shared/constants';
 import {printedCardNumber, type Printing} from '../../../shared/hooks';
 import {pickModalTitleStyle} from './cardOverviewModalStyles';
 
@@ -23,24 +32,11 @@ const NUMBER_STYLE: CSSProperties = {
   flexShrink: 0,
 };
 
-/** Kept for screen readers, hidden on screen. */
-const SR_ONLY_STYLE: CSSProperties = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: 'hidden',
-  clip: 'rect(0, 0, 0, 0)',
-  whiteSpace: 'nowrap',
-  border: 0,
-};
-
 /** The number printed on the card ("52/204", `printedCardNumber`), read as a card number. */
 function CardNumber({number}: {number: string}) {
   return (
     <span style={NUMBER_STYLE}>
-      <span style={SR_ONLY_STYLE}>Card number </span>
+      <span style={VISUALLY_HIDDEN}>Card number </span>
       {number}
     </span>
   );
