@@ -5,15 +5,16 @@ import {COLORS} from '../../shared/constants';
 
 /** A pocket on a phone's single page, where the counts never open. */
 const PHONE_SLOT = {width: 76, height: 105};
-/** A pocket at the size a 1920px screen gives the binder. Only a desktop spread opens its pills. */
+/** A pocket at the size a 1920px screen gives the binder. Only a desktop spread opens its stripe. */
 const DESKTOP_SLOT = {width: 144, height: 200};
-/** A pocket at the size a 1440px screen gives the binder: narrower than an opened pair. */
+/** A pocket at the size a 1440px screen gives the binder, where the stripe scales down with the card. */
 const NARROW_SLOT = {width: 84, height: 117};
 
 /**
- * A binder slot's counts: at rest, normal on the dark ground and foil on brushed gold,
- * only the finishes held; pointed at by a mouse, opened into steppers (#826). The frame
- * stands in for the pocket, a phone's unless a story names another `slot`.
+ * A binder slot's counts, a stripe across the card's foot: at rest, normal on the dark ground
+ * and foil on brushed gold, only the finishes held; pointed at by a mouse, open from the
+ * middle to the card's edges (#826). The frame stands in for the pocket, a phone's unless a
+ * story names another `slot`.
  */
 const meta: Meta<typeof CollectionSlotCounts> = {
   title: 'Collection/CollectionSlotCounts',
@@ -47,7 +48,7 @@ export const NormalOnly: Story = {args: {counts: {normal: 3, foil: 0}}};
 /** Foil only: still owned, so the card is not greyed. */
 export const FoilOnly: Story = {args: {counts: {normal: 0, foil: 1}}};
 
-/** Double-digit counts, the widest pills a real export produces (max observed 10). */
+/** Double-digit counts, the widest a real export produces (max observed 10). */
 export const DoubleDigits: Story = {args: {counts: {normal: 10, foil: 10}}};
 
 /** Unowned: nothing renders; the card's greyscale says it instead. */
@@ -59,7 +60,7 @@ export const PointedAt: Story = {
   args: {counts: {normal: 2, foil: 0}, editor: {foilOnly: false, onChange: fn()}},
 };
 
-/** Pointed at in a 1440px screen's pocket, too narrow for the pair: Foil stacks under Normal. */
+/** Pointed at in a 1440px screen's pocket: the same stripe, scaled down with the card. */
 export const PointedAtNarrow: Story = {
   parameters: {slot: NARROW_SLOT},
   args: {counts: {normal: 2, foil: 1}, editor: {foilOnly: false, onChange: fn()}},

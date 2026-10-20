@@ -3,9 +3,14 @@ import {fireEvent, render, screen} from '@testing-library/react';
 import {CollectionSlotCounts} from './CollectionSlotCounts';
 
 describe('CollectionSlotCounts', () => {
-  it('renders nothing for an unowned card', () => {
+  it('shows nothing for an unowned card: no group, its stripe closed to no width, ready to open from the middle', () => {
     const {container} = render(<CollectionSlotCounts counts={{normal: 0, foil: 0}} />);
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.queryByRole('group')).toBeNull();
+    // Closed, each − is aria-hidden itself, which leaves it no accessible name to query by.
+    const parts = [...container.querySelectorAll<HTMLElement>('[aria-label^="Remove one copy"]')].map(
+      (minus) => minus.parentElement?.style.width,
+    );
+    expect(parts).toEqual(['0px', '0px']);
   });
 
   it('labels only the finishes held', () => {

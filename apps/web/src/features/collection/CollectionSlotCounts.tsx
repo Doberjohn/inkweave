@@ -1,42 +1,31 @@
 import type {MouseEvent} from 'react';
-import {QuantityStepper} from '../../shared/components';
+import {CopiesStripe} from '../../shared/components';
 import type {CollectionEntry, Finish} from './collectionParser';
-import {SPACING} from '../../shared/constants';
 
 /**
- * What a binder slot holds, per finish: pills at rest (owner, 2026-10-07), opened into
- * steppers while a mouse points at the pocket (#826, option A of
- * `public/mockups/collection-counts.html`).
+ * What a binder slot holds, per finish: a stripe across the card's foot (owner, 2026-10-20:
+ * the pills went), black like the card's own bottom bar, normal copies on the left and foil
+ * on the right in brushed gold (`CopiesStripe`).
  *
- * THE LOOK IS THE SPIKE'S RESTING PILL, deliberately: `QuantityStepper` in its
- * `collapsed` mode, where the − and + have zero width, `tabIndex -1` and
- * `aria-hidden`, so nothing here is focusable or clickable at rest. Reusing it rather
- * than drawing a badge keeps the owner-approved surface (normal on the dark ground,
- * foil on `FOIL_SHEEN`'s brushed gold), and editing came back by un-collapsing the
- * same control instead of replacing this one.
+ * AT REST ONLY FINISHES YOU HOLD ARE SHOWN, each its count, side by side at the middle, and an
+ * unowned slot shows nothing. The card's own greyscale already says "you do not have this",
+ * so a `0` pair on every unowned card would only repeat it, 48 times on a sparse spread.
  *
- * AT REST ONLY FINISHES YOU HOLD ARE SHOWN, and an unowned slot shows nothing. The
- * card's own greyscale already says "you do not have this", so a `0` pair on every
- * unowned card would only repeat it, 48 times on a sparse spread.
+ * POINTED AT, THE STRIPE OPENS FROM THE MIDDLE TO THE CARD'S EDGES, as the pills opened: every
+ * finish the card is printed in takes its half, − count +, an unheld one at 0, so a first copy
+ * is one click, and Foil alone takes the whole stripe for Enchanted, Epic and Iconic (owner,
+ * 2026-10-19). A narrower pocket draws the stripe smaller, scaled with its card (owner,
+ * 2026-10-20). The open stripe takes every press on the card's foot, between and around its
+ * buttons too (owner, 2026-10-20), so only a press above it opens the card's window. The
+ * − and + stay out of the Tab order, which keeps a spread one Tab stop (#790): the keyboard
+ * changes a count in the card window's "Your copies".
  *
- * POINTED AT, every finish the card is printed in opens into − count +: an unheld one
- * at 0, so a first copy is one click, and the Foil one alone for Enchanted, Epic and
- * Iconic (owner, 2026-10-19). Only the − and + take the pointer, so a click anywhere
- * else on the card, its counts included, still opens its window. They stay out of the
- * Tab order, which keeps a spread one Tab stop (#790): the card window's "Your copies"
- * is the keyboard's way in.
- *
- * WHERE THE PAIR DOES NOT FIT, IT STACKS (owner, 2026-10-20): opened, the two pills take
- * 110px, and a 1440px screen's pockets are 84px wide, so Foil wraps under Normal there,
- * inside the pocket, while a 1920px screen's 144px pockets keep them side by side. On a
- * 1280px screen's 64px pockets the stack covers the card's middle, which is why a click
- * on a count still reaches the card.
- *
- * The finish is the background, not a letter (owner, 2026-08-14); the words
- * survive only in the aria-label, where they cost no pixels.
+ * The finish is the background, not a letter (owner, 2026-08-14); the words survive only in
+ * the aria-label, where they cost no pixels.
  */
 
 const FINISHES: Finish[] = ['normal', 'foil'];
+const FOIL_ONLY: Finish[] = ['foil'];
 
 /** A pocket a mouse points at, whose counts can change (#826). */
 export interface SlotCountsEditor {
@@ -49,45 +38,8 @@ export interface SlotCountsEditor {
 interface CollectionSlotCountsProps {
   /** The parser's own type, not a parallel one: a third finish must land once. */
   counts: CollectionEntry;
-  /** Set while a mouse points at the pocket and its counts can change: the pills open. */
+  /** Set while a mouse points at the pocket and its counts can change: the stripe opens. */
   editor?: SlotCountsEditor;
-}
-
-/** The finishes on show: at rest those held; pointed at, every one the card is printed in. */
-function shownFinishes(counts: CollectionEntry, editor: SlotCountsEditor | undefined): Finish[] {
-  if (editor === undefined) return FINISHES.filter((finish) => counts[finish] > 0);
-  return editor.foilOnly ? ['foil'] : FINISHES;
-}
-
-export function CollectionSlotCounts({counts, editor}: CollectionSlotCountsProps) {
-  const shown = shownFinishes(counts, editor);
-  if (shown.length === 0) return null;
-  return (
-    <div
-      role="group"
-      aria-label={shown.map((finish) => `${counts[finish]} ${finish}`).join(', ')}
-      style={{
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: SPACING.xxs,
-        display: 'flex',
-        // Only an opened pair is ever wider than its pocket. It wraps within the first
-        // frames of the steppers' snappy open, so the stack reads as part of opening.
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: SPACING.xxs,
-        zIndex: 3,
-        // A click anywhere but an open − or + reaches the card, which opens its window:
-        // the counts too, which a stacked pair lays over a narrow card's middle.
-        pointerEvents: 'none',
-      }}>
-      {shown.map((finish) => (
-        <SlotPill key={finish} finish={finish} count={counts[finish]} editor={editor} />
-      ))}
-    </div>
-  );
 }
 
 /**
@@ -97,32 +49,43 @@ export function CollectionSlotCounts({counts, editor}: CollectionSlotCountsProps
  */
 const keepFocus = (e: MouseEvent) => e.preventDefault();
 
-interface SlotPillProps {
-  finish: Finish;
-  count: number;
-  editor: SlotCountsEditor | undefined;
-}
-
-/** One finish's pill: its count at rest, − count + while the pocket is pointed at. */
-function SlotPill({finish, count, editor}: SlotPillProps) {
+export function CollectionSlotCounts({counts, editor}: CollectionSlotCountsProps) {
   const open = editor !== undefined;
+  // The stripe holds every finish the card is printed in, at rest too, so an unheld one can
+  // open out of the middle rather than appear: there it is no width at all.
+  const printed = editor?.foilOnly ? FOIL_ONLY : FINISHES;
+  const named = open ? printed : printed.filter((finish) => counts[finish] > 0);
   return (
-    // The group carries the label. Each pill's own would announce its hidden − and + a
-    // second time.
-    <span aria-hidden="true" onMouseDown={keepFocus}>
-      <QuantityStepper
-        value={count}
-        size="xs"
-        collapsed={!open}
-        tabbable={false}
-        tone={finish === 'foil' ? 'foil' : 'default'}
-        label={finish}
-        // The pointed-at foil pill sweeps its light band; the resting ones stay parked.
-        shimmer={open}
-        decrementDisabled={count === 0}
-        onIncrement={() => editor?.onChange(finish, count + 1)}
-        onDecrement={() => editor?.onChange(finish, count - 1)}
-      />
-    </span>
+    <div
+      role={named.length > 0 ? 'group' : undefined}
+      aria-label={named.length > 0 ? named.map((finish) => `${counts[finish]} ${finish}`).join(', ') : undefined}
+      style={{
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 3,
+        // Open, the card's foot is the stripe's (owner, 2026-10-20): no press there reaches the
+        // card. Closed, a tap on a count opens the card.
+        pointerEvents: open ? 'auto' : 'none',
+      }}>
+      {/*
+        The group carries the label. The stripe's own buttons would announce it a second time.
+        Edge to edge across the card's foot (owner, 2026-10-20: inset inside the tile's hover
+        ring, the card's edge showed round it as gaps), over the ring's lowest stretch.
+      */}
+      <div aria-hidden="true" onMouseDown={keepFocus}>
+        <CopiesStripe
+          open={open}
+          tabbable={false}
+          parts={printed.map((finish) => ({
+            label: finish,
+            count: counts[finish],
+            tone: finish === 'foil' ? 'foil' : 'default',
+            onChange: (count: number) => editor?.onChange(finish, count),
+          }))}
+        />
+      </div>
+    </div>
   );
 }

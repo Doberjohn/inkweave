@@ -33,6 +33,7 @@ export {PrintingPills} from './PrintingPills';
 export {PrintingCarousel} from './PrintingCarousel';
 export {IconButton} from './IconButton';
 export {QuantityStepper} from './QuantityStepper';
+export {CopiesStripe} from './CopiesStripe';
 export {NavArrowButton} from './NavArrowButton';
 export {EtherealBackground} from './EtherealBackground';
 export {FilterButton} from './FilterButton';
