@@ -9,6 +9,12 @@ on:
   push:
     branches: [master]
 
+# A newer push to a PR cancels that PR's older run (#867). Each push to master gets a group
+# of its own, so it is never cancelled.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('perf-gates-{0}', github.ref) || format('perf-gates-run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 # Read-only by default (#738). A job-level block replaces this one rather than merging with
 # it, so each job that needs more restates contents: read alongside its extra scope.
 permissions:

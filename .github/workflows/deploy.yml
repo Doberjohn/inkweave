@@ -11,10 +11,10 @@
 # SCOPE: production only. PR previews stay on Vercel's own git integration (fast SPA — previews
 # aren't indexed, so they don't need the crawl). vercel.json sets git.deploymentEnabled.master
 # = false so Vercel does NOT also deploy master (no double / flip-flopping production deploy).
-# One exception: a PR that changes this file or scripts/vercel-deploy.mjs gets a dry run
-# (#694, #698). It runs the same pull, build and prerender check, then uploads the build as a
-# staged production deployment that never receives inkweave.ink and is removed in the same run.
-# It never pings IndexNow.
+# One exception: a PR that changes this file, scripts/vercel-deploy.mjs or the crawl itself
+# (scripts/prerender.mjs) gets a dry run (#694, #698, #867). It runs the same pull, build and
+# prerender check, then uploads the build as a staged production deployment that never receives
+# inkweave.ink and is removed in the same run. It never pings IndexNow.
 #
 # KILL SWITCH: the job only runs when repo variable DEPLOY_VIA_CI == 'true'. Unsetting it stops
 # CI deploys — but note Vercel git-deploy for master is off, so to fully hand deploys back to
@@ -26,13 +26,15 @@ name: Deploy
 on:
   push:
     branches: [master]
-  # A dry run for PRs that change this file or the script that runs `vercel deploy` (#698):
-  # build, verify and stage-deploy, never promote.
+  # A dry run for PRs that change this file, the script that runs `vercel deploy` (#698) or the
+  # prerender crawl, which nothing else runs before a deploy (#867): build, verify and
+  # stage-deploy, never promote.
   pull_request:
     branches: [master]
     paths:
       - '.github/workflows/deploy.yml'
       - 'scripts/vercel-deploy.mjs'
+      - 'scripts/prerender.mjs'
 
 # Only actions/checkout uses GITHUB_TOKEN here: Vercel authenticates with VERCEL_TOKEN, and
 # actions/cache with the runner's own token. Declared, so PR dry runs (#694) stay read-only
