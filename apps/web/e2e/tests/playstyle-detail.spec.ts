@@ -53,6 +53,11 @@ test.describe('Playstyle Detail — Desktop', () => {
   });
 
   test('should render card tiles in grid', async ({page}) => {
+    // Let discard's tiles render before leaving the page. Leaving while its playstyle data is
+    // still loading aborts that fetch, and WebKit logs the abort as "TypeError: Load failed",
+    // which fails the console guard (#854).
+    await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 15000});
+
     // Navigate to a different playstyle (location-control)
     await page.goto('/playstyles/location-control');
     await page.waitForTimeout(500);
