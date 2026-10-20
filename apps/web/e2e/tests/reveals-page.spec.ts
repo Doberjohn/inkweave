@@ -84,6 +84,33 @@ test.describe('Reveals page (flag on)', () => {
     await expect(promo).toHaveCount(0);
   });
 
+  test('on a phone, the page leaves room under the promo and scrolls focus clear of it', async ({page}) => {
+    // WCAG 2.4.11 (accessibility check, 2026-10-19): the promo is fixed to the bottom of a phone
+    // screen, and the footer's last link stayed under it, focused or scrolled to the end. Forced
+    // to 390px so it runs on every project, the chromium-only pre-push included.
+    await page.setViewportSize({width: 390, height: 844});
+    await page.goto('/');
+    const promo = page.getByRole('complementary', {name: `Set ${revealSet.number} reveals`});
+    await expect(promo).toBeVisible();
+    const lastFooterLink = page.getByRole('contentinfo').getByRole('link').last();
+
+    await expect(async () => {
+      const promoHeight = await promo.evaluate((el) => (el as HTMLElement).offsetHeight);
+      const scrollPadding = await page.evaluate(() => document.documentElement.style.scrollPaddingBottom);
+      expect(scrollPadding).toBe(`${promoHeight}px`);
+      // Focused from the top of the page, the link scrolls into view above the promo. Blurred
+      // first, so a retry's focus() scrolls again.
+      await page.evaluate(() => {
+        (document.activeElement as HTMLElement | null)?.blur();
+        window.scrollTo(0, 0);
+      });
+      await lastFooterLink.focus();
+      const link = (await lastFooterLink.boundingBox())!;
+      // 1px for the rounding in offsetHeight.
+      expect(link.y + link.height).toBeLessThanOrEqual((await promo.boundingBox())!.y + 1);
+    }).toPass();
+  });
+
   test('mosaic card click opens the card overview modal', async ({page}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 

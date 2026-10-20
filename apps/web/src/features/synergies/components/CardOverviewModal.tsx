@@ -80,6 +80,37 @@ function focusLost(active: Element | null): boolean {
   return active === document.body || hiddenInPlace(active);
 }
 
+/** The element holding focus, if it sits inside `container`. */
+function focusedWithin(container: HTMLElement | null): HTMLElement | null {
+  const active = document.activeElement;
+  return active instanceof HTMLElement && container?.contains(active) ? active : null;
+}
+
+/**
+ * Focus returns to the synergy tile that opened a comparison once it closes (BACK or Escape),
+ * or to the close × if that tile is gone, as a tile of the expanded group view is (WCAG 2.4.3).
+ * The × takes it wherever it was: focus left on a control in the comparison's panel, which stays
+ * mounted through the exit animation, would fall to <body> when the panel unmounts. BACK takes
+ * focus when the comparison opens (BackButton). Returns what keeps the opener: call it with what
+ * held focus when the tile was pressed.
+ */
+function useFocusReturnsFromComparison(inComparison: boolean, fallbackRef: React.RefObject<HTMLElement | null>) {
+  const openerRef = useRef<HTMLElement | null>(null);
+  const wasInComparison = useRef(inComparison);
+  useLayoutEffect(() => {
+    const left = wasInComparison.current && !inComparison;
+    wasInComparison.current = inComparison;
+    if (!left) return;
+    const opener = openerRef.current;
+    openerRef.current = null;
+    if (opener?.isConnected) opener.focus({preventScroll: true});
+    else fallbackRef.current?.focus({preventScroll: true});
+  }, [inComparison, fallbackRef]);
+  return (opener: HTMLElement | null) => {
+    openerRef.current = opener;
+  };
+}
+
 interface CardOverviewModalProps {
   isOpen: boolean;
   card: LorcanaCard;
@@ -222,6 +253,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
     // back-stack to step out into. In normal comparison, Esc exits comparison only.
     onClose: pickEscapeHandler({comparisonPair, hideBackButton, exitComparison, onClose}),
   });
+  const keepComparisonOpener = useFocusReturnsFromComparison(!!comparisonPair, initialFocusRef);
 
   useComparisonStateResets({
     card,
@@ -290,6 +322,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
       groupKey: groupKey ?? null,
     });
     setExpandedGroupKey(null);
+    keepComparisonOpener(focusedWithin(modalRef.current));
     // If the user re-clicks a tile mid-exit, cancel the pending unmount so the new entry's
     // FLIP doesn't race against the old exit's transform style on the same compareCardRef.
     cancelPendingExit();
@@ -1802,10 +1835,24 @@ function PairConnector({cardHeight, exiting}: PairConnectorProps) {
   );
 }
 
-/** BACK button (focused-state nav) — the shared LinkButton in its gold tone (#509). */
-function BackButton({onClick, minHeight}: {onClick: () => void; minHeight?: number}) {
+/**
+ * BACK button (focused-state nav): the shared LinkButton in its gold tone (#509). It takes focus
+ * when it appears: the comparison makes the default view inert, the pressed tile with it, which
+ * would drop focus to <body> (WCAG 2.4.3).
+ */
+interface BackButtonProps {
+  onClick: () => void;
+  minHeight?: number;
+}
+
+function BackButton({onClick, minHeight}: BackButtonProps) {
+  const ref = useRef<HTMLButtonElement>(null);
+  useLayoutEffect(() => {
+    ref.current?.focus({preventScroll: true});
+  }, []);
   return (
     <LinkButton
+      ref={ref}
       type="button"
       aria-label="Back to synergies"
       onClick={onClick}

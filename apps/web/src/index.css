@@ -199,6 +199,25 @@ option {
   outline-offset: 2px;
 }
 
+/* The focus ring drawn INSIDE the element, for controls whose frame clips the outline above
+   with `overflow: hidden` (the card art buttons, the Reveals promo). On ::after so it paints
+   over the art, which an inset outline would sit under. The gold comes from theme.ts via
+   `--inkweave-gold` (CARD_TILE_RING), as the card tiles' hover ring below does. */
+.inset-focus-ring {
+  position: relative;
+}
+.inset-focus-ring:focus-visible {
+  outline: none;
+}
+.inset-focus-ring:focus-visible::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--inkweave-gold);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
 /* Animations */
 @keyframes spin {
   to {

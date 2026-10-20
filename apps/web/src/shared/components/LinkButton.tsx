@@ -7,6 +7,8 @@ interface LinkButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
   size?: 'sm' | 'base';
   /** Underline on hover for prose-adjacent placements. */
   underlineOnHover?: boolean;
+  /** React 19 ref-as-prop: the card view moves focus to its BACK link when a comparison opens. */
+  ref?: React.Ref<HTMLButtonElement>;
 }
 
 /**
