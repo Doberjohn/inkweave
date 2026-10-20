@@ -16,6 +16,7 @@ import {
   CollectionSetBody,
   CollectionSetRail,
   CollectionSetStrip,
+  type AxisChoice,
   type BinderView,
   type CollectionSetPanelProps,
   type SetSwitching,
@@ -94,8 +95,8 @@ function sectionStyle(isMobile: boolean, docked = false): React.CSSProperties {
   return {padding: `0 ${sides}px ${gutter}px`, height: '100%', ...(isMobile && {overflowY: 'auto'})};
 }
 
-/** What the page passes through to the collection panel: set switching and the binder view. */
-type PanelControls = SetSwitching & BinderView;
+/** What the page passes through to the collection panel: set switching, the binder view and the chosen headline. */
+type PanelControls = SetSwitching & BinderView & AxisChoice;
 
 /**
  * The set panel around the binder, where the page does not dock it: a strip
