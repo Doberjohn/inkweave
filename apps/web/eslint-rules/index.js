@@ -337,6 +337,11 @@ const COLOR_VALUE_WRAPPERS = new Set([
 ]);
 const DIM_TEXT_MESSAGE =
   'COLORS.textDim as text measures 2.6:1 to 3.5:1, under WCAG 1.4.3. Use COLORS.textMuted; textDim is for borders, strokes, disabled states and aria-hidden decoration.';
+/** `COLORS.textDim`, or `COLORS['textDim']`: a computed key names the same token. */
+const DIM_TEXT_SELECTOR = [
+  'MemberExpression[object.name="COLORS"][property.name="textDim"]',
+  'MemberExpression[object.name="COLORS"][property.value="textDim"]',
+].join(', ');
 
 /** A ternary test that names a disabled flag: `disabled`, `isDisabled`, `props.disabled`. */
 function isDisabledFlag(test) {
@@ -386,7 +391,7 @@ const noDimText = {
   create(context) {
     if (isExempt(context, COLOR_EXEMPT)) return {};
     return {
-      'MemberExpression[object.name="COLORS"][property.name="textDim"]'(node) {
+      [DIM_TEXT_SELECTOR](node) {
         const ancestors = context.sourceCode.getAncestors(node);
         if (isTextColorValue(node, ancestors) && !isOnAriaHiddenElement(ancestors)) {
           context.report({node, message: DIM_TEXT_MESSAGE});

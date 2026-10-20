@@ -30,6 +30,7 @@ ruleTester.run('no-dim-text', inkweave.rules['no-dim-text'], {
   invalid: [
     dim('const e = <span style={{color: COLORS.textDim}}>12</span>;'),
     dim('const LABEL = {color: COLORS.textDim};'),
+    dim("const s = {color: COLORS['textDim']};"),
     dim('const s = {color: active ? COLORS.text : COLORS.textDim};'),
     // Only the disabled branch is exempt: here textDim colours the enabled state.
     dim('const s = {color: disabled ? color : COLORS.textDim};'),
