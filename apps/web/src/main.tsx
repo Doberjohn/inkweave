@@ -8,6 +8,7 @@ import {router} from './router';
 import {showUpdateToast} from './shared/lib/swUpdateToast';
 import {reloadForStaleChunk} from './shared/lib/staleChunkReload';
 import {loadSentryWhenIdle} from './shared/lib/sentry';
+import {loadPostHogWhenIdle} from './shared/lib/posthog';
 
 // Recover from stale-deploy chunk mismatches. After a new deploy, a tab still
 // running the old bundle references hashed CSS/JS chunks the deploy has purged;
@@ -22,8 +23,10 @@ if (import.meta.env.PROD) {
   });
 }
 
-// Sentry loads after `load`, off the critical path (#640); see shared/lib/sentry.ts.
+// Sentry and PostHog load after `load`, off the critical path (#640, #827); see
+// shared/lib/sentry.ts and shared/lib/posthog.ts.
 loadSentryWhenIdle();
+loadPostHogWhenIdle();
 
 // Register service worker with auto-update flow: when a new SW reaches
 // `waiting` state, show a bottom-right toast for ~600ms so the user sees the

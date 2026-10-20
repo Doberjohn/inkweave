@@ -10,9 +10,10 @@ interface KeptCards {
 /**
  * The cards changed by hand in the binder's current view (#826, owner 2026-10-20). Its Owned
  * and Missing views keep them, with their new counts, until `view` changes (the mode, the
- * set, the view itself or the sort) or Browse closes. In the Missing view a first copy would
- * otherwise take the card out of the binder, and the spread you were on with it, since the
- * binder reopens at its first spread whenever what it holds changes.
+ * set, the view itself, the headline it asks of, or the sort) or Browse closes. In the
+ * Missing view a first copy would otherwise take the card out of the binder, and the spread
+ * you were on with it, since the binder reopens at its first spread whenever what it holds
+ * changes.
  *
  * Held while Browse is open, not past it: leaving the page reopens the binder at its first
  * spread anyway (the spread is the binder's own state), so there is no place left to keep,

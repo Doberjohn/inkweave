@@ -54,7 +54,8 @@
         "!apps/web/dist/assets/ImportCollectionDialog-*.js",
         "!apps/web/dist/assets/BrowseCollectionPage-*.js",
         "!apps/web/dist/assets/AccountCollection-*.js",
-        "!apps/web/dist/assets/supabaseClient-*.js"
+        "!apps/web/dist/assets/supabaseClient-*.js",
+        "!apps/web/dist/assets/posthogClient-*.js"
       ],
       "limit": "457 kB",
       "gzip": true
@@ -63,6 +64,12 @@
       "name": "Supabase SDK (lazy)",
       "path": "apps/web/dist/assets/supabaseClient-*.js",
       "limit": "60 kB",
+      "gzip": true
+    },
+    {
+      "name": "PostHog SDK (lazy)",
+      "path": "apps/web/dist/assets/posthogClient-*.js",
+      "limit": "112 kB",
       "gzip": true
     },
     {

@@ -53,7 +53,18 @@ function formatLastChanged(importedAt: number | null): string {
   });
 }
 
-function Row({label, value, action}: {label: string; value: string; action?: React.ReactNode}) {
+function Row({
+  label,
+  value,
+  valueClassName,
+  action,
+}: {
+  label: string;
+  value: string;
+  /** `ph-no-capture` keeps PostHog's autocapture away from the value (#827). */
+  valueClassName?: string;
+  action?: React.ReactNode;
+}) {
   return (
     <div
       style={{
@@ -66,7 +77,9 @@ function Row({label, value, action}: {label: string; value: string; action?: Rea
       <span style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.sm}px`, minWidth: '12ch'}}>
         {label}
       </span>
-      <span style={{color: COLORS.text, fontSize: `${FONT_SIZES.md}px`}}>{value}</span>
+      <span className={valueClassName} style={{color: COLORS.text, fontSize: `${FONT_SIZES.md}px`}}>
+        {value}
+      </span>
       {action && <span style={{marginLeft: 'auto'}}>{action}</span>}
     </div>
   );
@@ -86,10 +99,18 @@ function IdentitySection({
           claiming a handle is a server-side write-and-catch-23505. An edit field
           would need a whole availability flow. The display name is editable
           precisely because it carries no uniqueness constraint. */}
-      <Row label="Handle" value={identity ? `@${identity.handle}` : '—'} />
+      {/* PostHog's autocapture reads the text of the elements it records (#827). Neither value
+          sits in a link or button today; ph-no-capture keeps both out of it if that changes,
+          while the Change button's clicks still count. */}
+      <Row
+        label="Handle"
+        value={identity ? `@${identity.handle}` : '—'}
+        valueClassName="ph-no-capture"
+      />
       <Row
         label="Display name"
         value={identity?.displayName ?? '—'}
+        valueClassName="ph-no-capture"
         action={
           identity && (
             <CtaButton variant="ghost" onClick={onChange}>
