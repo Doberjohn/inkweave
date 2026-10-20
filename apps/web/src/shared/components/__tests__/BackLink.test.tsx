@@ -3,9 +3,9 @@ import {render, screen, fireEvent} from '@testing-library/react';
 import {BackLink} from '../BackLink';
 
 describe('BackLink', () => {
-  it('renders label text with arrow', () => {
+  it('is named by its label alone, the arrow hidden from screen readers', () => {
     render(<BackLink onClick={vi.fn()} label="Back to all synergies" />);
-    expect(screen.getByText(/Back to all synergies/)).toBeTruthy();
+    expect(screen.getByRole('button', {name: 'Back to all synergies'})).toBeTruthy();
   });
 
   it('calls onClick when clicked', () => {

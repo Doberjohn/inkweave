@@ -40,7 +40,9 @@ export function FranchiseCardsModal({source, cards, onClose, onCardClick}: Franc
         overflow: 'hidden',
         boxShadow: `${SHADOWS.overlay}, 0 0 40px ${inkRgba(source.ink, 0.12)}`,
       }}>
-      <header
+      {/* A div, not a header: outside a sectioning element <header> is a banner landmark,
+          and the page already has one (#835). */}
+      <div
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -67,7 +69,7 @@ export function FranchiseCardsModal({source, cards, onClose, onCardClick}: Franc
             ×
           </IconButton>
         </div>
-      </header>
+      </div>
 
       <div style={{overflowY: 'auto', padding: '16px 18px 22px'}}>
         <CardGrid cards={cards} onSelect={onCardClick} emptyMessage="No cards revealed yet." />

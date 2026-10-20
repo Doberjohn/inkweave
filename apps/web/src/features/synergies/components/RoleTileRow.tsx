@@ -1,6 +1,6 @@
 import {useId, useLayoutEffect, useRef, useState, type RefObject} from 'react';
 import {createPortal} from 'react-dom';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, Z_INDEX, blackRgba, hexRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, VISUALLY_HIDDEN, Z_INDEX, blackRgba, hexRgba} from '../../../shared/constants';
 import {useContainerWidth, useTooltip} from '../../../shared/hooks';
 
 export interface RoleTile {
@@ -44,19 +44,6 @@ const ROW_MAX_WIDTH = MAX_VISIBLE_TILES * TILE_WIDTH + (MAX_VISIBLE_TILES - 1) *
 /** Tile height with the description shown vs the compact (label + count only) form. */
 const TILE_MIN_HEIGHT_FULL = 120;
 const TILE_MIN_HEIGHT_COMPACT = 76;
-
-/** A tile's accessible name: read by screen readers, not shown (see RoleTileButton). */
-const SR_ONLY_STYLE: React.CSSProperties = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: 'hidden',
-  clip: 'rect(0, 0, 0, 0)',
-  whiteSpace: 'nowrap',
-  border: 0,
-};
 
 /**
  * How many fixed-width cells fit in the measured content width, clamped to
@@ -396,7 +383,7 @@ function RoleTileButton({
             {tile.description}
           </p>
         )}
-        <span style={SR_ONLY_STYLE}>{`${tile.label}, ${tile.count} cards`}</span>
+        <span style={VISUALLY_HIDDEN}>{`${tile.label}, ${tile.count} cards`}</span>
       </button>
       {tip.open && (
         <RoleTileTooltip tileRef={ref} text={tile.description} tooltipProps={tip.tooltipProps} />
@@ -466,7 +453,7 @@ function ShowMoreTile({hiddenCount, minHeight, onClick}: {hiddenCount: number; m
         }}>
         Show more ▾
       </span>
-      <span style={SR_ONLY_STYLE}>{`Show more, ${hiddenCount} mechanics`}</span>
+      <span style={VISUALLY_HIDDEN}>{`Show more, ${hiddenCount} mechanics`}</span>
     </button>
   );
 }

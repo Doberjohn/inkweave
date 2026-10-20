@@ -2,6 +2,7 @@ export type {SetCode, CardTypeFilter, BrowseSortOrder, SynergySortOrder} from '.
 export {
   APP_NAME,
   INK_COLORS,
+  INK_CHIP_COLORS,
   LAYOUT,
   SPACING,
   RADIUS,
@@ -38,6 +39,7 @@ export {
   EMPTY_BOX,
   TRUNCATE,
   TABULAR,
+  VISUALLY_HIDDEN,
   GOLD_GLOW,
   searchFieldStyle,
   CARD_TILE_RING,

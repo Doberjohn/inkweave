@@ -13,6 +13,20 @@ export const INK_COLORS: Record<Ink, {bg: string; text: string; border: string}>
   Steel: {bg: '#252530', text: '#a0a0b0', border: '#6b7280'},
 };
 
+/**
+ * The game's own ink-symbol colours, for the letter chips that name each card in a synergy line
+ * (ConnectionGroup, #786). They are brighter than INK_COLORS, which is tuned for badges on dark
+ * surfaces, so each ink carries the text colour that reads on its chip.
+ */
+export const INK_CHIP_COLORS: Record<Ink, {bg: string; text: string}> = {
+  Amber: {bg: '#f5b202', text: '#000000'},
+  Amethyst: {bg: '#81377b', text: '#ffffff'},
+  Emerald: {bg: '#2a8934', text: '#ffffff'},
+  Ruby: {bg: '#d3082f', text: '#ffffff'},
+  Sapphire: {bg: '#0189c4', text: '#ffffff'},
+  Steel: {bg: '#9fa8b4', text: '#000000'},
+};
+
 // Font families
 export const FONTS = {
   body: "'Plus Jakarta Sans', 'Inkweave Sans Fallback', -apple-system, BlinkMacSystemFont, sans-serif",
@@ -469,6 +483,19 @@ export const TRUNCATE: React.CSSProperties = {
 /** Lining tabular figures — any numeral column that must not jitter (scores, counts, timers). */
 export const TABULAR: React.CSSProperties = {fontVariantNumeric: 'tabular-nums'};
 
+/** Screen-reader-only: kept in the accessibility tree, drawn nowhere (a chip's card name, a heading the layout implies). */
+export const VISUALLY_HIDDEN: React.CSSProperties = {
+  position: 'absolute',
+  width: 1,
+  height: 1,
+  padding: 0,
+  margin: -1,
+  overflow: 'hidden',
+  clip: 'rect(0, 0, 0, 0)',
+  whiteSpace: 'nowrap',
+  border: 0,
+};
+
 /**
  * The gold interaction glow, unified per the one-gold ruling: every value
  * derives from COLORS.primary (#ffb900). Selection/hover chips, nav pills,
@@ -588,6 +615,8 @@ export const DISABLED_STYLE: React.CSSProperties = {
 
 // Browse sort order
 // ── Sort orders ──
+// Labels are words, never arrows: an <option> can't hide part of its text, and screen
+// readers would read "right arrow" in every name (#835).
 
 export type BrowseSortOrder =
   | 'ink-cost'
@@ -611,12 +640,12 @@ export const BROWSE_SORT_OPTIONS: {
   label: string;
   mobileLabel?: string;
 }[] = [
-  {value: 'ink-cost', label: 'Color \u2192 Cost', mobileLabel: 'Color/Cost'},
+  {value: 'ink-cost', label: 'Color, then Cost', mobileLabel: 'Color/Cost'},
   {value: 'newest', label: 'Newest first', mobileLabel: 'Newest'},
   {value: 'name-asc', label: 'Name A\u2013Z', mobileLabel: 'A\u2013Z'},
   {value: 'name-desc', label: 'Name Z\u2013A', mobileLabel: 'Z\u2013A'},
-  {value: 'cost-asc', label: 'Cost: Low \u2192 High', mobileLabel: 'Cost \u2191'},
-  {value: 'cost-desc', label: 'Cost: High \u2192 Low', mobileLabel: 'Cost \u2193'},
+  {value: 'cost-asc', label: 'Cost: Low to High', mobileLabel: 'Low cost'},
+  {value: 'cost-desc', label: 'Cost: High to Low', mobileLabel: 'High cost'},
 ];
 
 export const SYNERGY_SORT_OPTIONS: {
@@ -624,11 +653,11 @@ export const SYNERGY_SORT_OPTIONS: {
   label: string;
   mobileLabel?: string;
 }[] = [
-  {value: 'ink-cost', label: 'Color \u2192 Cost', mobileLabel: 'Color/Cost'},
-  {value: 'cost-asc', label: 'Cost: Low \u2192 High', mobileLabel: 'Cost \u2191'},
-  {value: 'cost-desc', label: 'Cost: High \u2192 Low', mobileLabel: 'Cost \u2193'},
-  {value: 'strength-desc', label: 'Score: High \u2192 Low', mobileLabel: 'Score \u2193'},
-  {value: 'strength-asc', label: 'Score: Low \u2192 High', mobileLabel: 'Score \u2191'},
+  {value: 'ink-cost', label: 'Color, then Cost', mobileLabel: 'Color/Cost'},
+  {value: 'cost-asc', label: 'Cost: Low to High', mobileLabel: 'Low cost'},
+  {value: 'cost-desc', label: 'Cost: High to Low', mobileLabel: 'High cost'},
+  {value: 'strength-desc', label: 'Score: High to Low', mobileLabel: 'High score'},
+  {value: 'strength-asc', label: 'Score: Low to High', mobileLabel: 'Low score'},
   {value: 'name-asc', label: 'Name A\u2013Z', mobileLabel: 'A\u2013Z'},
   {value: 'name-desc', label: 'Name Z\u2013A', mobileLabel: 'Z\u2013A'},
 ];

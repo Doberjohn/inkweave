@@ -1,13 +1,15 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
-import type {DetailedPairSynergy, Ink, LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS} from '../../../shared/constants';
+import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
+import {COLORS, EASING, FONTS, INK_COLORS, VISUALLY_HIDDEN} from '../../../shared/constants';
 import {usePairScore} from '../../voting/hooks/usePairScore';
 import {formatScore} from '../../../shared/utils/scoreFormatting';
 import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {useScrollSnapIndex} from '../../../shared/hooks';
 import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
+import {ComparisonCardTile} from './ComparisonCardTile';
 import {MobileLightbox} from './MobileLightbox';
+import {ScoreChevronsTab} from './ScoreChevronsTab';
 
 type TabName = 'engine' | 'community';
 /** The tabs in strip order: each is one full-width panel of the scroll-snap strip. */
@@ -168,8 +170,8 @@ function useRevealedAfterMount(): boolean {
  * only the strip, never the modal or the page around it). Tapping a card opens a lightbox
  * inside the modal (NOT a portal-to-body) so the modal frame stays visible.
  *
- * Sister components: {@link MobileLightbox}, {@link DeltaPanel}, and the `compact` mode on
- * {@link EngineColumn} + {@link CommunityColumn}.
+ * Sister components: {@link ComparisonCardTile}, {@link ScoreChevronsTab}, {@link MobileLightbox},
+ * {@link DeltaPanel}, and the `compact` mode on {@link EngineColumn} + {@link CommunityColumn}.
  */
 interface PreviewState {
   which: 'a' | 'b';
@@ -197,12 +199,12 @@ export function MobileComparisonView({pair, engineScore, originRects = null, isE
   // Chrome (glow orbs, tab bar, panels) fades out fast — nothing in the default view replaces it.
   const chromeExitStyle: React.CSSProperties = {
     opacity: isExiting ? 0 : 1,
-    transition: `opacity ${CHROME_EXIT_FADE_MS}ms ease-out`,
+    transition: `opacity ${CHROME_EXIT_FADE_MS}ms ${EASING.smooth}`,
   };
   // Cards stay fully opaque through the FLIP, then a short delayed tail-fade dissolves them
   // into the real cards showing through underneath.
   const cardsExitStyle: React.CSSProperties = isExiting
-    ? {opacity: 0, transition: `opacity ${CARDS_TAIL_FADE_MS}ms ease-out ${CARDS_TAIL_FADE_DELAY_MS}ms`}
+    ? {opacity: 0, transition: `opacity ${CARDS_TAIL_FADE_MS}ms ${EASING.smooth} ${CARDS_TAIL_FADE_DELAY_MS}ms`}
     : {opacity: 1};
 
   const onCardTap = (which: 'a' | 'b', tileEl: HTMLElement) => {
@@ -216,12 +218,14 @@ export function MobileComparisonView({pair, engineScore, originRects = null, isE
       style={{
         ...ROOT_STYLE,
         opacity: rootOpacity,
-        transition: `opacity ${CONTENT_FADE_MS}ms ease-out`,
+        transition: `opacity ${CONTENT_FADE_MS}ms ${EASING.smooth}`,
       }}>
       <GlowOrbs style={chromeExitStyle} />
 
       <div style={CONTENT_STYLE}>
         <CardsRow cardA={cardA} cardB={cardB} cardARef={cardARef} cardBRef={cardBRef} onCardTap={onCardTap} style={cardsExitStyle} />
+        {/* Between the card's h1 and the panels' headings, so they step down one level at a time. */}
+        <h2 style={VISUALLY_HIDDEN}>Synergy scores</h2>
         <TabBar activeTab={activeTab} onChange={scrollToTab} engineScore={engineScore} communityScore={communityScore} style={chromeExitStyle} />
 
         <div ref={viewportRef} role="presentation" style={{...VIEWPORT_STYLE, ...chromeExitStyle}} className="mobile-tab-viewport">
@@ -254,9 +258,9 @@ export function MobileComparisonView({pair, engineScore, originRects = null, isE
 function GlowOrbs({style}: {style?: React.CSSProperties}) {
   return (
     <div aria-hidden="true" style={{...GLOW_ORBS_STYLE, ...style}}>
-      <span style={{...ORB_BASE, width: 220, height: 220, background: '#8b5cf6', top: '8%', left: '-12%'}} />
-      <span style={{...ORB_BASE, width: 260, height: 260, background: '#3b82f6', bottom: '12%', right: '-18%'}} />
-      <span style={{...ORB_BASE, width: 180, height: 180, background: '#14b8a6', top: '48%', left: '55%'}} />
+      <span style={{...ORB_BASE, width: 220, height: 220, background: INK_COLORS.Amethyst.border, top: '8%', left: '-12%'}} />
+      <span style={{...ORB_BASE, width: 260, height: 260, background: INK_COLORS.Sapphire.border, bottom: '12%', right: '-18%'}} />
+      <span style={{...ORB_BASE, width: 180, height: 180, background: INK_COLORS.Emerald.border, top: '48%', left: '55%'}} />
     </div>
   );
 }
@@ -277,39 +281,10 @@ interface CardsRowProps {
 function CardsRow({cardA, cardB, cardARef, cardBRef, onCardTap, style}: CardsRowProps) {
   return (
     <div style={{...CARDS_ROW_STYLE, ...style}}>
-      <MobileCardTile card={cardA} which="a" onTap={onCardTap} tileRef={cardARef} />
+      <ComparisonCardTile card={cardA} which="a" onTap={onCardTap} tileRef={cardARef} />
       <PairConnectorSvg />
-      <MobileCardTile card={cardB} which="b" onTap={onCardTap} tileRef={cardBRef} />
+      <ComparisonCardTile card={cardB} which="b" onTap={onCardTap} tileRef={cardBRef} />
     </div>
-  );
-}
-
-interface MobileCardTileProps {
-  card: LorcanaCard;
-  which: 'a' | 'b';
-  onTap: (which: 'a' | 'b', tileEl: HTMLElement) => void;
-  /** Optional ref to the tile button — set for Card B so the comparison FLIP can target it. */
-  tileRef?: React.RefObject<HTMLButtonElement | null>;
-}
-
-function MobileCardTile({card, which, onTap, tileRef}: MobileCardTileProps) {
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => onTap(which, e.currentTarget);
-  const borderColor = INK_BORDER_TINT[card.ink];
-  // No cost/ink overlay badges — the card art already shows both. Only the magnify hint is kept.
-  return (
-    <button
-      type="button"
-      ref={tileRef}
-      aria-label={`Enlarge ${card.fullName}`}
-      onClick={handleClick}
-      style={{...CARD_TILE_STYLE, borderColor}}>
-      <img src={card.imageUrl} alt={card.fullName} style={CARD_IMG_STYLE} />
-      <span aria-hidden="true" style={MAGNIFY_HINT_STYLE}>
-        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-          <path d="M1 4V1H4M10 4V1H7M1 7V10H4M10 7V10H7" stroke="currentColor" strokeWidth={1.4} strokeLinecap="round" />
-        </svg>
-      </span>
-    </button>
   );
 }
 
@@ -344,10 +319,7 @@ function TabBar({activeTab, onChange, engineScore, communityScore, style}: TabBa
         score={formatScore(engineScore)}
         showScale
         isActive={activeTab === 'engine'}
-        tintColor={COLORS.primary500}
-        tintBg="rgba(212, 175, 55, 0.06)"
-        tintBorder="rgba(212, 175, 55, 0.5)"
-        tintGlow="rgba(212, 175, 55, 0.15)"
+        tint={COLORS.primary500}
         onClick={() => onChange('engine')}
       />
       <ScoreChevronsTab
@@ -355,67 +327,12 @@ function TabBar({activeTab, onChange, engineScore, communityScore, style}: TabBa
         score={communityScore != null ? formatScore(communityScore) : '—'}
         showScale={communityScore != null}
         isActive={activeTab === 'community'}
-        tintColor="#b691ff"
-        tintBg="rgba(182, 145, 255, 0.06)"
-        tintBorder="rgba(182, 145, 255, 0.5)"
-        tintGlow="rgba(182, 145, 255, 0.15)"
+        tint={INK_COLORS.Amethyst.text}
         onClick={() => onChange('community')}
       />
     </div>
   );
 }
-
-interface ScoreChevronsTabProps {
-  label: string;
-  score: string;
-  showScale: boolean;
-  isActive: boolean;
-  tintColor: string;
-  tintBg: string;
-  tintBorder: string;
-  tintGlow: string;
-  onClick: () => void;
-}
-
-function ScoreChevronsTab({label, score, showScale, isActive, tintColor, tintBg, tintBorder, tintGlow, onClick}: ScoreChevronsTabProps) {
-  const tabStyle: React.CSSProperties = {
-    ...TAB_BASE_STYLE,
-    background: isActive ? tintBg : 'rgba(255, 255, 255, 0.02)',
-    borderColor: isActive ? tintBorder : COLORS.surfaceBorder,
-    boxShadow: isActive ? `0 0 14px ${tintGlow}` : undefined,
-  };
-  // The inactive tab's text is textMuted, as TabList's is, and "/10" keeps its tab's full colour:
-  // dimmer, they missed 4.5:1 (WCAG 1.4.3).
-  const textColor = isActive ? tintColor : COLORS.textMuted;
-  const labelStyle: React.CSSProperties = {...TAB_LABEL_STYLE, color: textColor};
-  const scoreStyle: React.CSSProperties = {...TAB_SCORE_STYLE, color: textColor};
-  const scaleStyle: React.CSSProperties = {
-    fontSize: 12,
-    fontWeight: 700,
-    color: textColor,
-    marginLeft: 2,
-  };
-  return (
-    <button type="button" aria-current={isActive} onClick={onClick} style={tabStyle}>
-      <span style={labelStyle}>{label}</span>
-      <span style={scoreStyle}>
-        {score}
-        {showScale && <span style={scaleStyle}>/10</span>}
-      </span>
-    </button>
-  );
-}
-
-// ── Ink mapping helpers ──
-
-const INK_BORDER_TINT: Record<Ink, string> = {
-  Amber: 'rgba(245, 178, 2, 0.55)',
-  Amethyst: 'rgba(139, 92, 246, 0.55)',
-  Emerald: 'rgba(16, 185, 129, 0.55)',
-  Ruby: 'rgba(239, 68, 68, 0.55)',
-  Sapphire: 'rgba(59, 130, 246, 0.55)',
-  Steel: 'rgba(107, 114, 128, 0.55)',
-};
 
 // ── Styles ──
 
@@ -473,44 +390,6 @@ const CARDS_ROW_STYLE: React.CSSProperties = {
   // entry/exit FLIP (the cards scale ~1.6x beyond the row while animating).
 };
 
-const CARD_TILE_STYLE: React.CSSProperties = {
-  position: 'relative',
-  width: 'calc(50% - 8px)',
-  maxWidth: 152,
-  aspectRatio: '264 / 368',
-  borderRadius: 14,
-  overflow: 'hidden',
-  border: '1.5px solid',
-  cursor: 'zoom-in',
-  boxShadow: '0 6px 18px rgba(0, 0, 0, 0.45)',
-  padding: 0,
-  background: COLORS.surfaceAlt,
-  fontFamily: 'inherit',
-};
-
-const CARD_IMG_STYLE: React.CSSProperties = {
-  width: '100%',
-  height: '100%',
-  objectFit: 'cover',
-  display: 'block',
-};
-
-const MAGNIFY_HINT_STYLE: React.CSSProperties = {
-  position: 'absolute',
-  bottom: 6,
-  right: 6,
-  width: 22,
-  height: 22,
-  borderRadius: '50%',
-  background: 'rgba(13, 13, 20, 0.85)',
-  color: COLORS.primary500,
-  border: '1px solid rgba(212, 175, 55, 0.4)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  pointerEvents: 'none',
-};
-
 const PAIR_CONNECTOR_STYLE: React.CSSProperties = {
   flexShrink: 0,
   display: 'flex',
@@ -525,35 +404,6 @@ const TAB_BAR_STYLE: React.CSSProperties = {
   gap: 10,
   margin: '0 16px',
   flexShrink: 0,
-};
-
-const TAB_BASE_STYLE: React.CSSProperties = {
-  position: 'relative',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-start',
-  gap: 4,
-  padding: '12px 14px 10px',
-  border: '1px solid',
-  borderRadius: 12,
-  fontFamily: 'inherit',
-  cursor: 'pointer',
-  overflow: 'hidden',
-  transition: 'background 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s cubic-bezier(0.22, 1, 0.36, 1)',
-};
-
-const TAB_LABEL_STYLE: React.CSSProperties = {
-  fontSize: 10,
-  fontWeight: 700,
-  letterSpacing: '0.12em',
-  textTransform: 'uppercase',
-};
-
-const TAB_SCORE_STYLE: React.CSSProperties = {
-  fontSize: 26,
-  fontWeight: 800,
-  lineHeight: 1,
-  fontFeatureSettings: '"tnum"',
 };
 
 const VIEWPORT_STYLE: React.CSSProperties = {

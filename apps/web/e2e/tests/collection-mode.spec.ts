@@ -409,6 +409,38 @@ test.describe('Collection mode, signed in', () => {
     expect(new URL(page.url()).searchParams.has('owned')).toBe(false);
   });
 
+  test('under Master set, Owned and Missing ask for a copy in each finish', async ({page}) => {
+    await signInAsCollector(page, ENTRIES);
+    await page.goto(`/browse?binder=${SET}&owned=owned`);
+    const tiles = binder(page).getByTestId('card-tile');
+    const shows = page.getByRole('group', {name: 'Binder shows'});
+    await expect(tiles).toHaveCount(HELD);
+
+    // The three base cards are held in one finish, so toward Master only the printing is done.
+    await numbers(page)
+      .getByRole('button', {name: /^Master set/})
+      .click();
+    await expect(tiles).toHaveCount(MASTER);
+
+    // And Missing lists all three, as Master's number counts them, the set's first cards first:
+    // Set 3's Nani - Protective Sister, held as a normal copy, hid from it while Master read 99%
+    // (owner, 2026-10-20). The rest of the set fills spreads past the first, so no count here.
+    await shows.getByRole('button', {name: 'Missing'}).click();
+    for (const [i, card] of HELD_BASE.entries()) {
+      await expect(tiles.nth(i)).toHaveAccessibleName(card.fullName);
+    }
+
+    // The page holds the choice, so a switch to the whole collection keeps it, and its Owned too.
+    await page.getByRole('button', {name: /^Binder set/}).click();
+    await page.getByRole('option', {name: /^Whole collection/}).click();
+    await expect(numbers(page).getByRole('button', {name: /^Master collection/})).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await shows.getByRole('button', {name: 'Owned'}).click();
+    await expect(tiles).toHaveCount(MASTER);
+  });
+
   test('the set picker opens the whole collection in the binder', async ({page}) => {
     await signInAsCollector(page, ENTRIES);
     await page.goto(`/browse?binder=${SET}`);

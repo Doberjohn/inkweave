@@ -6,6 +6,7 @@ import {
   HERO_LOGO_IMG,
   RADIUS,
   SPACING,
+  VISUALLY_HIDDEN,
   Z_INDEX,
   searchFieldStyle,
 } from '../constants';
@@ -53,18 +54,6 @@ function getStyles(isMobile: boolean) {
       maxWidth: '100%',
       height: 'auto',
       userSelect: 'none',
-    } as React.CSSProperties,
-    // Head-term for the H1: read by Google + screen readers, invisible on screen (#496).
-    srOnly: {
-      position: 'absolute',
-      width: 1,
-      height: 1,
-      padding: 0,
-      margin: -1,
-      overflow: 'hidden',
-      clip: 'rect(0 0 0 0)',
-      whiteSpace: 'nowrap',
-      border: 0,
     } as React.CSSProperties,
     subtitleContainer: {
       textAlign: 'center',
@@ -189,7 +178,8 @@ export function HeroSection({
           for a11y; alt provides the name. */}
       <h1 style={styles.heading}>
         <img {...HERO_LOGO_IMG} src={logoSrc} alt="Inkweave" style={styles.logo} />
-        <span style={styles.srOnly}>Disney Lorcana Card Synergy Finder for Core format</span>
+        {/* Head-term for the H1: read by Google + screen readers, invisible on screen (#496). */}
+        <span style={VISUALLY_HIDDEN}>Disney Lorcana Card Synergy Finder for Core format</span>
       </h1>
 
       {/* Subtitle */}

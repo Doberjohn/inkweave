@@ -216,7 +216,7 @@ function CardTitleBlock({card}: {card: LorcanaCard}) {
         }}
         onMouseEnter={() => setNameHovered(true)}
         onMouseLeave={() => setNameHovered(false)}>
-        All {card.name} cards →
+        All {card.name} cards <span aria-hidden="true">→</span>
       </Link>
     </div>
   );
@@ -289,8 +289,9 @@ function SynergyBreakdownRow({
         {group.label}
       </div>
 
-      {/* Arrow */}
+      {/* Arrow, drawn but not read: the row's name is its count and label. */}
       <span
+        aria-hidden="true"
         style={{
           fontSize: `${FONT_SIZES.xs}px`,
           color: arrowColor,

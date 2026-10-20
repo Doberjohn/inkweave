@@ -2,6 +2,7 @@ import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import {InDepthVoteForm} from './InDepthVoteForm';
 import {createCard} from '../../../shared/test-utils/factories';
+import {COLORS, RADIUS} from '../../../shared/constants';
 
 const cardA = createCard({id: 'elsa-1', fullName: 'Elsa - Snow Queen', ink: 'Amethyst'});
 const cardB = createCard({id: 'olaf-1', fullName: 'Olaf - Friendly Snowman', ink: 'Amethyst'});
@@ -13,7 +14,7 @@ const meta = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <div style={{width: 560, background: '#1a1a2e', padding: 24, borderRadius: 12}}>
+      <div style={{width: 560, background: COLORS.surface, padding: 24, borderRadius: RADIUS.card}}>
         <Story />
       </div>
     ),
@@ -68,6 +69,21 @@ export const FullyFilled: Story = {
       wouldPlay: true,
       whoCarries: 'a',
       difficulty: 2,
+    },
+  },
+};
+
+/** The in-depth vote page's layout: one group per tab, with Previous and Next under it. */
+export const Tabbed: Story = {
+  args: {
+    layout: 'tabbed',
+    formState: {
+      isReal: true,
+      accuracy: null,
+      score: 7,
+      wouldPlay: null,
+      whoCarries: 'both',
+      difficulty: null,
     },
   },
 };

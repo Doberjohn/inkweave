@@ -1,4 +1,5 @@
 import {test, expect} from '../fixtures';
+import {cardFullNameById} from '../helpers/cardData';
 import {startClockInRevealSeason} from '../helpers/revealSeason';
 import {gotoWithRetry} from '../pages/vote.page';
 
@@ -7,6 +8,9 @@ const SHELL_TITLE = 'Inkweave — Master Lorcana Synergies';
 const SITE_ORIGIN = 'https://inkweave.ink';
 /** VotePage's visually hidden h1 (VoteHeading). */
 const VOTE_H1 = 'Vote on Lorcana card synergies';
+/** The Free Play pair the weekly accessibility check audits: Pocahontas plays Miguel for free. */
+const PAIR_A = cardFullNameById('3286');
+const PAIR_B = cardFullNameById('2983');
 
 /**
  * One route per indexable page type. #486's central acceptance criterion was that
@@ -205,6 +209,23 @@ test.describe('SEO', () => {
 
     await expect(page.getByRole('main').getByRole('alert')).toBeVisible({timeout: 15000});
     await expect(page.locator('h1')).toHaveText([VOTE_H1]);
+  });
+
+  // The comparison and the in-depth vote page rendered no <Seo>, so once main.tsx swept the
+  // prerendered tags the tab showed the bare address (accessibility check, 2026-10-19, #835).
+  // robots.txt disallows both, so they are noindex, but a tab still needs its title.
+  test('comparison owns a title naming its pair', async ({page}) => {
+    await gotoWithRetry(page, '/compare/3286/2983/free-play');
+
+    await expect(page).toHaveTitle(`${PAIR_A} + ${PAIR_B} | Compare | Inkweave`, {timeout: 15000});
+  });
+
+  // Like /vote, the in-depth vote page shows the two cards and no heading, so its h1 is hidden.
+  test('in-depth vote page owns a title naming its pair, and exactly one h1', async ({page}) => {
+    await gotoWithRetry(page, '/vote/3286/2983');
+
+    await expect(page).toHaveTitle(`${PAIR_A} + ${PAIR_B} | Vote | Inkweave`, {timeout: 15000});
+    await expect(page.locator('h1')).toHaveText([`Vote on ${PAIR_A} and ${PAIR_B}`]);
   });
 
   test('should have valid JSON-LD structured data on home page', async ({appPage, page}) => {

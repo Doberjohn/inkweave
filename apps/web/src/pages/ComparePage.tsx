@@ -1,17 +1,18 @@
 import {useEffect, useRef} from 'react';
-import {Navigate, useParams} from 'react-router-dom';
+import {Navigate, useLocation, useParams} from 'react-router-dom';
 import type {LorcanaCard} from '../features/cards';
 import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {usePrecomputedSynergies} from '../features/synergies/hooks';
+import {Seo} from '../shared/components';
 import {NotFoundPage} from './NotFoundPage';
 
 /**
  * `/compare/:idA/:idB/:groupKey` — public deep link to a focused comparison view between two cards.
  *
  * Resolves both card IDs against the loaded card data, opens the global card modal directly
- * in comparison state via `useCardModal().openComparison`, and renders nothing else. The URL
+ * in comparison state via `useCardModal().openComparison`, and renders only the tab's title. The URL
  * stays at `/compare/A/B/groupKey` so the link remains shareable while the modal is open.
  *
  * Group filtering: required for valid deep links. The URL is a strong contract — a valid one
@@ -26,6 +27,7 @@ import {NotFoundPage} from './NotFoundPage';
  */
 export function ComparePage() {
   const {idA, idB, groupKey} = useParams<{idA: string; idB: string; groupKey?: string}>();
+  const {pathname} = useLocation();
   const {getCardById, isLoading: cardsLoading} = useCardDataContext();
   const {openComparison} = useCardModal();
   const cardA = idA ? getCardById(idA) : undefined;
@@ -57,7 +59,13 @@ export function ComparePage() {
     openComparison(verdict.idA, verdict.idB, verdict.groupKey);
   }, [verdict, verdictSignature, openComparison]);
 
-  return renderComparePage(verdict);
+  // The modal shows the comparison, so the page renders only the tab's title (2.4.2): without
+  // it, once main.tsx sweeps the prerendered tags, the tab would show the bare address. It names
+  // the pair once both cards resolve, and is generic while they load.
+  const title =
+    cardA && cardB ? `${cardA.fullName} + ${cardB.fullName} | Compare | Inkweave` : 'Compare cards | Inkweave';
+  const seo = <Seo title={title} canonicalPath={pathname} noindex />;
+  return renderComparePage(verdict, seo);
 }
 
 export default ComparePage;
@@ -129,9 +137,9 @@ function hasMatchingPair({
   return pair.connections.length > 0;
 }
 
-function renderComparePage(verdict: ComparePageVerdict): React.ReactElement | null {
+function renderComparePage(verdict: ComparePageVerdict, seo: React.ReactElement): React.ReactElement {
   if (verdict.kind === 'same-id') return <Navigate to={`/card/${verdict.idA}`} replace />;
   if (verdict.kind === 'not-found') return <NotFoundPage />;
-  // 'loading' and 'valid' both render null — the modal is mounted globally by CardModalProvider.
-  return null;
+  // 'loading' and 'valid' both render only the title — the modal is mounted globally by CardModalProvider.
+  return seo;
 }
