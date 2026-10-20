@@ -1,6 +1,7 @@
 import type {Locator} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {cardFullNameById} from '../helpers/cardData';
+import {slidePointerOnto} from '../helpers/pointer';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -132,6 +133,37 @@ test.describe('Synergy comparison — Desktop', () => {
     await modal.locator('[data-group-key="discard"] a.card-tile').first().click();
     await expect(modal).toHaveAttribute('data-mode', 'comparison', {timeout: 3000});
     await expect(backButton).toBeVisible();
+  });
+
+  test('keeps the score help under the pointer, and Escape hides it before the card view hears it', async ({
+    page,
+    appPage,
+  }) => {
+    const modal = appPage.cardOverviewModal;
+    await modal.locator('[data-group-key="shift-targets"] a.card-tile').first().click();
+    const help = modal.getByRole('button', {name: 'What does this score mean?'});
+    await expect(help).toBeVisible({timeout: 3000});
+    const tooltip = page.getByRole('tooltip');
+
+    // The pointer can cross from the button onto the tooltip and stay there (WCAG 1.4.13, #836).
+    await help.hover();
+    await expect(tooltip).toBeVisible();
+    await slidePointerOnto(page, tooltip);
+    await page.waitForTimeout(300); // past the tooltip's 150 ms close delay
+    await expect(tooltip).toBeVisible();
+    await page.mouse.move(0, 0);
+    await expect(tooltip).toHaveCount(0);
+
+    // Focus describes the button with the scale. The first Escape hides only the tooltip; the
+    // second reaches the card view, which steps back out of the comparison.
+    await help.focus();
+    await expect(help).toHaveAccessibleDescription(/Perfect/);
+    await page.keyboard.press('Escape');
+    await expect(tooltip).toHaveCount(0);
+    await expect(help).toBeFocused();
+    await expect(modal).toHaveAttribute('data-mode', 'comparison');
+    await page.keyboard.press('Escape');
+    await expect(modal).toHaveAttribute('data-mode', 'default', {timeout: 5000});
   });
 });
 

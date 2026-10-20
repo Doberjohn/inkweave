@@ -23,7 +23,11 @@ mechanically: `aria-modal` in a file that imports neither `DialogShell` /
 - **Toast / status** → `role="status"` + `aria-live="polite"`, `Z_INDEX.toast`
   (or `swUpdate`); never `aria-modal`, never a trap.
 - **Tooltip / popover** → `role="tooltip"`, `pointerEvents: none`,
-  `Z_INDEX.popover`.
+  `Z_INDEX.popover`. Exception (owner ruling 2026-10-20, WCAG 1.4.13): the
+  score help tooltip (`shared/components/Tooltip.tsx`) and the mechanic tile
+  tooltip (`RoleTileRow.tsx`) take the pointer, close 150 ms after it leaves,
+  and hide on Escape without closing a dialog, all through `useTooltip`. Both
+  render only while shown (a hidden portal would ship in prerendered pages).
 
 ## Rulings (binding)
 
