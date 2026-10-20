@@ -185,6 +185,32 @@ function resolveVitestWorkers(): number | undefined {
   return process.platform === 'win32' ? 4 : undefined;
 }
 
+/**
+ * Startup chunk groups (#789). The entry shares these modules with lazy chunks, and Rolldown's
+ * automatic splitting gave most of them a small startup file each: startup loaded ten files, and
+ * with these two groups it loads four. The libraries get a group of their own, which changes only
+ * when a dependency does, so returning visitors keep it across deploys. In the app group, every
+ * deploy that touched one of its modules would re-download react-router too. List only modules
+ * the startup code already loads. `tags: ['$initial']` drops a listed module from its group once
+ * nothing at startup imports it, but a module that newly becomes shared splits out on its own
+ * until it is listed here.
+ */
+const STARTUP_VENDOR = [
+  /node_modules[\\/]react[\\/]/,
+  /node_modules[\\/]react-router[\\/]/,
+  /node_modules[\\/]@vercel[\\/]analytics[\\/]/,
+  /node_modules[\\/]react-loading-skeleton[\\/]/,
+];
+const STARTUP_SHARED = [
+  /src[\\/]shared[\\/]constants[\\/](theme|setLogos|promoSets)\.ts$/,
+  /src[\\/]shared[\\/]hooks[\\/](useHover|useBoop|usePrintingSelection|useResponsive)\.ts$/,
+  /src[\\/]shared[\\/]utils[\\/](touchGuard|prefersReducedMotion)\.ts$/,
+  /src[\\/]shared[\\/]components[\\/](CtaButton|ctaStyles|IconButton)\.tsx?$/,
+  /src[\\/]shared[\\/]lib[\\/](analytics|posthog|sentry|whenLoadedAndIdle)\.ts$/,
+  /src[\\/]features[\\/]cards[\\/](loader|previewCards)\.ts$/,
+];
+const matchesAny = (patterns: RegExp[]) => (id: string) => patterns.some((re) => re.test(id));
+
 // https://vite.dev/config/
 export default defineConfig({
   define: {
@@ -309,6 +335,28 @@ export default defineConfig({
   },
   build: {
     sourcemap: 'hidden',
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          // A group also takes the modules its own modules import. The vendor group's higher
+          // priority keeps the libraries that app modules import in the vendor group.
+          groups: [
+            {
+              name: 'startup-vendor',
+              priority: 2,
+              tags: ['$initial'],
+              test: matchesAny(STARTUP_VENDOR),
+            },
+            {
+              name: 'startup-shared',
+              priority: 1,
+              tags: ['$initial'],
+              test: matchesAny(STARTUP_SHARED),
+            },
+          ],
+        },
+      },
+    },
   },
   test: {
     environment: 'jsdom',
