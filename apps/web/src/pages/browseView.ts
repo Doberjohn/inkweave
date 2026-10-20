@@ -106,7 +106,10 @@ function withPromoTiles(cards: LorcanaCard[], rarities: string[] | undefined): L
  * copy would otherwise take a card out of Missing, and the binder back to its first spread.
  * The other filters still apply to it, having run first.
  */
-function byOwnership(cards: LorcanaCard[], {show, owns, kept}: Pick<ViewCollection, 'show' | 'owns' | 'kept'>) {
+function byOwnership(
+  cards: LorcanaCard[],
+  {show, owns, kept}: Pick<ViewCollection, 'show' | 'owns' | 'kept'>,
+) {
   if (show === 'all') return cards;
   const wantOwned = show === 'owned';
   return cards.filter((card) => kept.has(card.id) || owns(card.id) === wantOwned);

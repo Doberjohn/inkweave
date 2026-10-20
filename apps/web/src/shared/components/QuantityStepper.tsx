@@ -78,12 +78,13 @@ interface StepperDims {
 // All three flow from this one table so the variants can never drift.
 //
 // xs EXISTS FOR A MEASURED CONSTRAINT, not for taste: the collection binder puts
-// two counts SIDE BY SIDE inside one card slot, sized from the narrowest slot the
-// app produces. At rest the binder shows them collapsed (#553 Phase C, owner
-// 2026-10-07), so only the count cell is visible: measured, a normal-plus-foil pair
-// fits the 72px slot of a 390px phone's single page. A mouse on a desktop pocket
-// opens them, the − and + at 14x22 (#826, as the 2026-08-14 spike had them): 54px
-// a pill, so a pocket narrower than the pair stacks it (`CollectionSlotCounts`).
+// two counts SIDE BY SIDE inside one card slot, sized from the narrow slots the app
+// produces. At rest the binder shows them collapsed (#553 Phase C, owner 2026-10-07),
+// so only the count cell is visible: measured, a normal-plus-foil pair fits the 72px
+// slot of a 390px phone's single page and a 1280px screen's 64px pocket. A mouse on
+// a desktop pocket opens them, the − and + at 14x22 (#826, as the 2026-08-14 spike
+// had them): 54px a pill, so a pocket narrower than the pair stacks it
+// (`CollectionSlotCounts`).
 //
 // EVERY SPARE PIXEL IS IN THE COUNT (owner, 2026-08-14: bigger number, still one
 // row). The count cell went 20 -> 24 and its type 11 -> 12, because the number is

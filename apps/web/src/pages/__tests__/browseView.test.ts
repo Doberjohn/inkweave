@@ -23,7 +23,11 @@ const params = (rarities?: string[], setCodes?: string[]) => ({
 /** Holds Anna and the Set 1 card, and nothing else. */
 const owns = (cardId: string) => cardId === 'anna' || cardId === 'set-1';
 /** Collection mode's slots, its binder showing every card unless told otherwise. */
-const binder = (active: boolean, show: 'all' | 'owned' | 'missing' = 'all', kept: ReadonlySet<string> = new Set()) => ({
+const binder = (
+  active: boolean,
+  show: 'all' | 'owned' | 'missing' = 'all',
+  kept: ReadonlySet<string> = new Set(),
+) => ({
   active,
   pool: wide,
   show,
@@ -71,9 +75,8 @@ describe('browseView', () => {
       'elsa',
       'elsa-ench',
     ]);
-    expect(ids(browseView(binder(true, 'missing', kept), core, params(['Enchanted'])).sortedCards)).toEqual([
-      'elsa-ench',
-    ]);
+    const enchanted = browseView(binder(true, 'missing', kept), core, params(['Enchanted']));
+    expect(ids(enchanted.sortedCards)).toEqual(['elsa-ench']);
   });
 
   it('leaves the grid alone: it has no binder view', () => {

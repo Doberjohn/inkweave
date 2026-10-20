@@ -3,7 +3,7 @@ import {fn} from 'storybook/test';
 import {CollectionSlotCounts} from './CollectionSlotCounts';
 import {COLORS} from '../../shared/constants';
 
-/** The narrowest pocket the binder produces: a phone's single page. */
+/** A pocket on a phone's single page, where the counts never open. */
 const PHONE_SLOT = {width: 76, height: 105};
 /** A pocket at the size a 1920px screen gives the binder. Only a desktop spread opens its pills. */
 const DESKTOP_SLOT = {width: 144, height: 200};
@@ -20,7 +20,13 @@ const meta: Meta<typeof CollectionSlotCounts> = {
   component: CollectionSlotCounts,
   decorators: [
     (Story, {parameters}) => (
-      <div style={{position: 'relative', ...(parameters.slot ?? PHONE_SLOT), background: COLORS.surfaceAlt, margin: 16}}>
+      <div
+        style={{
+          position: 'relative',
+          ...(parameters.slot ?? PHONE_SLOT),
+          background: COLORS.surfaceAlt,
+          margin: 16,
+        }}>
         <Story />
       </div>
     ),
@@ -65,7 +71,7 @@ export const PointedAtUnowned: Story = {
   args: {counts: {normal: 0, foil: 0}, editor: {foilOnly: false, onChange: fn()}},
 };
 
-/** Pointed at, a card printed only in foil (Enchanted, Epic, Iconic): its Foil count alone opens. */
+/** Pointed at, a card printed only in foil (Enchanted, Epic, Iconic): only Foil opens. */
 export const PointedAtFoilOnly: Story = {
   parameters: {slot: DESKTOP_SLOT},
   args: {counts: {normal: 0, foil: 1}, editor: {foilOnly: true, onChange: fn()}},

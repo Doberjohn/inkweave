@@ -27,7 +27,9 @@ describe('CollectionSlotCounts', () => {
   describe('opened, while a mouse points at the pocket (#826)', () => {
     it('asks for the count one click away, and never for less than 0', () => {
       const onChange = vi.fn();
-      render(<CollectionSlotCounts counts={{normal: 0, foil: 2}} editor={{foilOnly: false, onChange}} />);
+      render(
+        <CollectionSlotCounts counts={{normal: 0, foil: 2}} editor={{foilOnly: false, onChange}} />,
+      );
       // The pills sit under aria-hidden, so a role query must ask for hidden elements.
       const button = (name: string) => screen.getByRole('button', {name, hidden: true});
       fireEvent.click(button('Remove one copy of normal'));
@@ -41,12 +43,27 @@ describe('CollectionSlotCounts', () => {
 
     it('keeps its − and + out of the Tab order, which leaves a spread one Tab stop (#790)', () => {
       const {container} = render(
-        <CollectionSlotCounts counts={{normal: 1, foil: 0}} editor={{foilOnly: false, onChange: vi.fn()}} />,
+        <CollectionSlotCounts
+          counts={{normal: 1, foil: 0}}
+          editor={{foilOnly: false, onChange: vi.fn()}}
+        />,
       );
       const buttons = [...container.querySelectorAll('button')];
       // Both pills' − and +: an empty list would pass `every` with nothing checked.
       expect(buttons).toHaveLength(4);
       expect(buttons.every((b) => b.tabIndex === -1)).toBe(true);
+    });
+
+    it('leaves the focus where it was when its − or + is clicked', () => {
+      render(
+        <CollectionSlotCounts
+          counts={{normal: 1, foil: 0}}
+          editor={{foilOnly: false, onChange: vi.fn()}}
+        />,
+      );
+      // A click focuses its button on mousedown: cancelled, the focus stays put.
+      const plus = screen.getByRole('button', {name: 'Add one copy of normal', hidden: true});
+      expect(fireEvent.mouseDown(plus)).toBe(false);
     });
   });
 });

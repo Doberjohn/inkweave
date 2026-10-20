@@ -314,7 +314,8 @@ describe('CollectionBinder', () => {
 
   describe('counts changed from the pocket a mouse points at (#826)', () => {
     /** A pointer coming to rest on a pocket: a mouse, unless said otherwise. */
-    const point = (target: HTMLElement, pointerType = 'mouse') => fireEvent.pointerEnter(target, {pointerType});
+    const point = (target: HTMLElement, pointerType = 'mouse') =>
+      fireEvent.pointerEnter(target, {pointerType});
 
     it('opens its pills into steppers, an unheld finish at 0, and sets the count a click asks for', () => {
       const onCountChange = vi.fn();
@@ -323,7 +324,8 @@ describe('CollectionBinder', () => {
       point(pocket(1));
       const counts = screen.getByRole('group', {name: '1 normal, 0 foil'});
       // The pills sit under aria-hidden: the group's label speaks for them.
-      fireEvent.click(within(counts).getByRole('button', {name: 'Add one copy of foil', hidden: true}));
+      const plus = within(counts).getByRole('button', {name: 'Add one copy of foil', hidden: true});
+      fireEvent.click(plus);
       expect(onCountChange).toHaveBeenCalledWith('c1', 'foil', 1);
       // A pill is not the card: the click opens no window.
       expect(onSelect).not.toHaveBeenCalled();
@@ -340,16 +342,20 @@ describe('CollectionBinder', () => {
 
     it('opens only the Foil count of a card printed only in foil', () => {
       const enchanted = {...CARDS[0], id: 'e1', rarity: 'Enchanted'} as LorcanaCard;
-      render(binder({slots: [enchanted], countsFor: () => ({normal: 0, foil: 0}), onCountChange: vi.fn()}));
+      const unheld = () => ({normal: 0, foil: 0});
+      render(binder({slots: [enchanted], countsFor: unheld, onCountChange: vi.fn()}));
       point(screen.getByRole('button', {name: /Enchanted/}));
       expect(screen.getByRole('group', {name: '0 foil'})).toBeInTheDocument();
     });
 
-    it.each(['touch', 'pen'])('never opens them for a %s, whose tap opens the card as before', (pointerType) => {
-      render(binder({onCountChange: vi.fn()}));
-      point(pocket(1), pointerType);
-      expect(screen.queryByRole('group', {name: '1 normal, 0 foil'})).toBeNull();
-    });
+    it.each(['touch', 'pen'])(
+      'never opens them for a %s, whose tap opens the card',
+      (pointerType) => {
+        render(binder({onCountChange: vi.fn()}));
+        point(pocket(1), pointerType);
+        expect(screen.queryByRole('group', {name: '1 normal, 0 foil'})).toBeNull();
+      },
+    );
 
     it("never opens them on a phone's lone page, which changes counts in the card window", () => {
       render(binder({single: true, onCountChange: vi.fn()}));

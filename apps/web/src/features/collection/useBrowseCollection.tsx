@@ -287,7 +287,8 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // The cards changed by hand in this view of the binder, which its Owned and Missing views
   // keep: a view is the mode, the set, Owned or Missing, and the sort (`useKeptCards`).
   const [searchParams] = useSearchParams();
-  const {kept, keep} = useKeptCards([collectionMode, setCode, show, searchParams.get(SORT_PARAM)].join('|'));
+  const view = [collectionMode, setCode, show, searchParams.get(SORT_PARAM)].join('|');
+  const {kept, keep} = useKeptCards(view);
   const changeCount = (cardId: string, finish: Finish, count: number) => {
     setCount(cardId, finish, count);
     keep(cardId);

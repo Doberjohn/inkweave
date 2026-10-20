@@ -1,3 +1,4 @@
+import type {MouseEvent} from 'react';
 import {QuantityStepper} from '../../shared/components';
 import type {CollectionEntry, Finish} from './collectionParser';
 import {SPACING} from '../../shared/constants';
@@ -89,13 +90,26 @@ export function CollectionSlotCounts({counts, editor}: CollectionSlotCountsProps
   );
 }
 
+/**
+ * A click on a − or + leaves the focus where it was. A mouse click focuses even a button out
+ * of the Tab order, and there the focus would sit inside `aria-hidden`, with the next Tab
+ * starting from it rather than from the spread's one stop (#790).
+ */
+const keepFocus = (e: MouseEvent) => e.preventDefault();
+
+interface SlotPillProps {
+  finish: Finish;
+  count: number;
+  editor: SlotCountsEditor | undefined;
+}
+
 /** One finish's pill: its count at rest, − count + while the pocket is pointed at. */
-function SlotPill({finish, count, editor}: {finish: Finish; count: number; editor: SlotCountsEditor | undefined}) {
+function SlotPill({finish, count, editor}: SlotPillProps) {
   const open = editor !== undefined;
   return (
     // The group carries the label. Each pill's own would announce its hidden − and + a
     // second time.
-    <span aria-hidden="true">
+    <span aria-hidden="true" onMouseDown={keepFocus}>
       <QuantityStepper
         value={count}
         size="xs"
