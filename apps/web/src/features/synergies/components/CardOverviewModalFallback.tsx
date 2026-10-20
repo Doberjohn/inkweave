@@ -13,20 +13,21 @@ import {CardTranslationToggle} from '../../../shared/components/CardTranslationT
 import {PrintingPills} from '../../../shared/components/PrintingPills';
 import {ModalCardTitle} from './ModalCardTitle';
 import {
-  artScaleTransform,
   CENTERING_WRAPPER_STYLE,
   CLOSE_BUTTON_SIZE,
   DEFAULT_BODY_STYLE,
+  desktopCardRowHeight,
   hasArtControls,
   MODAL_BACKDROP_STYLE,
-  MODAL_FRAME_STYLE,
   MODAL_HEADER_STYLE,
-  modalCardSize,
   pickCardColumnLayout,
   pickCardsRowStyle,
+  pickModalFrameStyle,
   pickModalShellStyle,
   pickSynergyColumnLayout,
+  RESERVED_ART_CONTROLS_STYLE,
 } from './cardOverviewModalStyles';
+import {useModalCardSize} from './useModalCardSize';
 
 /**
  * Right-column placeholder shown while the per-card synergy JSON is in flight
@@ -114,16 +115,17 @@ const BODY_STYLE: CSSProperties = {...DEFAULT_BODY_STYLE, overflow: 'hidden'};
 const HIDDEN: CSSProperties = {visibility: 'hidden'};
 const noop = () => {};
 
+/** The card placeholder: block, with no trailing line box. */
+const SKELETON_ART_STYLE: CSSProperties = {display: 'block'};
+
 /**
- * The card placeholder: block (no trailing line box), and on desktop shrunk like the modal's
- * art when controls will sit under it, so the handoff moves nothing.
+ * The art controls' room, held under the window of a desktop card without them (owner,
+ * 2026-10-20): every card's frame is then one height, so paging moves neither the window's top
+ * nor its arrows (`pickModalFrameStyle`). Shared with the modal, which this file's chunk precedes.
  */
-function pickSkeletonArtStyle(shrunk: boolean, cardHeight: number): CSSProperties {
-  return {
-    display: 'block',
-    transform: shrunk ? artScaleTransform(cardHeight) : undefined,
-    transformOrigin: 'top center',
-  };
+export function ReservedArtControlsRoom({card, isMobile}: {card: LorcanaCard; isMobile: boolean}) {
+  if (isMobile || hasArtControls(card)) return null;
+  return <div style={RESERVED_ART_CONTROLS_STYLE} />;
 }
 
 /**
@@ -143,9 +145,8 @@ function ReservedTranslationToggle({card}: {card: LorcanaCard}) {
 /**
  * Mobile's printing pills and translation toggle (ModalCardArt.tsx), invisible: rendered under
  * the card as the modal renders them, they hold exactly the space the real controls take, so
- * nothing moves at the handoff. Desktop's pills sit in a row pinned under the shrunk art, which
- * takes no space of its own, so only the art's scale needs matching there; its toggle is held
- * in the header.
+ * nothing moves at the handoff. Desktop's pills sit in a row pinned under the card, in room its
+ * row already holds (`desktopCardRowHeight`); its toggle is held in the header.
  */
 function ReservedMobileArtControls({card}: {card: LorcanaCard}) {
   return (
@@ -184,7 +185,8 @@ export function CardOverviewModalFallback({card, isMobile, onClose}: CardOvervie
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [onClose]);
 
-  const {cardWidth, cardHeight} = modalCardSize(isMobile);
+  const {cardWidth, cardHeight} = useModalCardSize(isMobile);
+  const rowHeight = desktopCardRowHeight({cardHeight, controlsBelow: !isMobile && hasArtControls(card)});
   const visibleClass = visible ? ' overlay-visible' : '';
   return (
     <>
@@ -196,7 +198,7 @@ export function CardOverviewModalFallback({card, isMobile, onClose}: CardOvervie
         style={MODAL_BACKDROP_STYLE}
       />
       <div style={CENTERING_WRAPPER_STYLE}>
-        <div style={MODAL_FRAME_STYLE}>
+        <div style={pickModalFrameStyle(isMobile)}>
           <div
             className={`overlay-transition overlay-scale overlay-enter${visibleClass}`}
             role="status"
@@ -211,7 +213,7 @@ export function CardOverviewModalFallback({card, isMobile, onClose}: CardOvervie
               <ModalCloseButton onClose={onClose} />
             </div>
             <div style={BODY_STYLE}>
-              <div style={pickCardsRowStyle({isMobile, cardWidth, cardHeight})}>
+              <div style={pickCardsRowStyle({isMobile, cardWidth, rowHeight})}>
                 <div style={pickCardColumnLayout(isMobile)}>
                   {/* inline + block: no trailing <br> or line box, so the placeholder is exactly
                       the card's height and the synergy column below it lines up (mobile). */}
@@ -220,11 +222,11 @@ export function CardOverviewModalFallback({card, isMobile, onClose}: CardOvervie
                     height={cardHeight}
                     borderRadius={RADIUS.xl}
                     inline
-                    style={pickSkeletonArtStyle(!isMobile && hasArtControls(card), cardHeight)}
+                    style={SKELETON_ART_STYLE}
                   />
                   {isMobile && <ReservedMobileArtControls card={card} />}
                 </div>
-                <div style={pickSynergyColumnLayout(isMobile, cardHeight)}>
+                <div style={pickSynergyColumnLayout(isMobile, rowHeight)}>
                   <SynergiesLoadingSkeleton />
                 </div>
               </div>
@@ -232,6 +234,7 @@ export function CardOverviewModalFallback({card, isMobile, onClose}: CardOvervie
               <div aria-hidden="true" />
             </div>
           </div>
+          <ReservedArtControlsRoom card={card} isMobile={isMobile} />
         </div>
       </div>
     </>

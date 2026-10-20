@@ -18,7 +18,7 @@ import type {CollectionEntry, Finish} from './collectionParser';
  * 2026-10-20). The open stripe takes every press on the card's foot, between and around its
  * buttons too (owner, 2026-10-20), so only a press above it opens the card's window. The
  * − and + stay out of the Tab order, which keeps a spread one Tab stop (#790): the keyboard
- * changes a count in the card window's "Your copies".
+ * changes a count in the card window's stripe (`WindowCopies`).
  *
  * The finish is the background, not a letter (owner, 2026-08-14); the words survive only in
  * the aria-label, where they cost no pixels.

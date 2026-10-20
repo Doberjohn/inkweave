@@ -58,8 +58,8 @@ import {COLORS, FONT_SIZES, SPACING, type BrowseSortOrder} from '../../shared/co
  * in the band under the spread; see `BinderSpreadMap`.
  *
  * COUNTS CHANGE WHERE A MOUSE POINTS (#826): a spread's pocket opens its copies stripe
- * (`CollectionSlotCounts`), and the card window holds "Your copies". A card changed by
- * hand keeps its pocket in the Owned and Missing views until the view, the
+ * (`CollectionSlotCounts`), and the card window's stripe changes them too (`WindowCopies`).
+ * A card changed by hand keeps its pocket in the Owned and Missing views until the view, the
  * set or the sort changes, or Browse closes (owner, 2026-10-20): dropped from the view
  * at once, it took the spread with it, since the binder reopens at its first spread
  * whenever what it holds changes. The page's listing keeps it (`useKeptCards`), so

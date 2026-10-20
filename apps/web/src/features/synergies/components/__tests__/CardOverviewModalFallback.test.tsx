@@ -53,19 +53,21 @@ describe('CardOverviewModalFallback', () => {
     expect(screen.queryByRole('radiogroup')).toBeNull();
   });
 
-  // Desktop's controls sit in a row pinned under the shrunk art, so the placeholder shrinks alike.
-  it('shrinks the card placeholder on desktop for a card with art controls, and only then', () => {
+  // Desktop's controls sit in a row under the full-size card, so the placeholder's row holds them.
+  it("keeps the card placeholder at full size on desktop, its row holding the controls' room only for a card with them", () => {
     const placeholder = (c: LorcanaCard) => {
       const {container, unmount} = render(<CardOverviewModalFallback card={c} isMobile={false} onClose={vi.fn()} />);
-      const transform = container.querySelector<HTMLElement>('.react-loading-skeleton')!.style.transform;
+      const art = container.querySelector<HTMLElement>('.react-loading-skeleton')!;
+      const row = art.closest<HTMLElement>('[style*="display: grid"]')!;
+      const shape = {transform: art.style.transform, row: row.style.height};
       unmount();
-      return transform;
+      return shape;
     };
 
-    expect(placeholder(cardWithPrintings)).toMatch(/^scale\(0\.\d+\)$/);
-    expect(placeholder(card)).toBe('');
-    // A foreign scan's toggle sits in the header (owner, 2026-10-17), so it shrinks no art.
-    expect(placeholder({...card, scanLanguage: 'ja'} as LorcanaCard)).toBe('');
+    expect(placeholder(cardWithPrintings)).toEqual({transform: '', row: '516px'});
+    expect(placeholder(card)).toEqual({transform: '', row: '470px'});
+    // A foreign scan's toggle sits in the header (owner, 2026-10-17), so it takes no room here.
+    expect(placeholder({...card, scanLanguage: 'ja'} as LorcanaCard)).toEqual({transform: '', row: '470px'});
   });
 
   it("holds the translation toggle's space out of sight in the header on desktop, where the modal puts it", () => {

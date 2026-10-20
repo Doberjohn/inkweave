@@ -51,6 +51,28 @@ async function withFourPrintings(page: Page) {
   });
 }
 
+/**
+ * The card window's art height, top and bottom, and its Next arrow's top, measured once the
+ * window has finished scaling in (it opens from 95%).
+ */
+async function windowGeometry(page: Page) {
+  const modal = page.getByTestId('card-overview-modal');
+  await expect
+    .poll(() => modal.evaluate((el) => getComputedStyle(el).transform))
+    .toMatch(/^(none|matrix\(1, 0, 0, 1, 0, 0\))$/);
+  const [art, shell, arrow] = await Promise.all([
+    modal.locator('[data-comparison-card-a]').boundingBox(),
+    modal.boundingBox(),
+    page.getByRole('button', {name: 'Next card'}).boundingBox(),
+  ]);
+  return {
+    art: Math.round(art!.height),
+    top: Math.round(shell!.y),
+    bottom: Math.round(shell!.y + shell!.height),
+    arrow: Math.round(arrow!.y),
+  };
+}
+
 test.describe('Card printings (desktop)', () => {
   test('the card page switches to the Enchanted printing, and enlarges that one', async ({
     page,
@@ -161,6 +183,39 @@ test.describe('Card printings (desktop)', () => {
     await expect.poll(() => slideShown(page, PROMO_CARD_NAME)).toBe(1);
     const art = page.getByRole('img', {name: `${PROMO_CARD_NAME}, 25/P1 printing`}).first();
     await expect.poll(() => art.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+  });
+
+  // One art height for every card (owner, 2026-10-20): a card's printing pills make its window
+  // taller rather than its art smaller. Playwright's 1280x720 is too short for a full-size
+  // window with pills, so every card shrinks alike here.
+  test("the card window draws every card's art one height, printings or not, and paging keeps its top and arrows still (#826)", async ({
+    appPage,
+    page,
+  }, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    // "father" matches four cards: the fixture card, with its printing pills, and three without.
+    await page.goto('/browse?q=father');
+    await page.getByRole('link', {name: CARD_NAME}).click();
+    const modal = appPage.cardOverviewModal;
+    const title = modal.locator('h1');
+    await expect(title).toHaveText(CARD_NAME, {timeout: 10000});
+    const pills = modal.getByRole('radiogroup', {name: 'Card printing'});
+    const withPills = await windowGeometry(page);
+    const pillsBox = (await pills.boundingBox())!;
+    expect(pillsBox.y + pillsBox.height, 'the pills inside the window').toBeLessThanOrEqual(withPills.bottom);
+
+    for (let step = 0; step < 3 && (await pills.count()) > 0; step++) {
+      const shown = (await title.textContent()) ?? '';
+      await page.getByRole('button', {name: 'Next card'}).click();
+      await expect(title).not.toHaveText(shown);
+    }
+    await expect(pills, 'a "father" card without printings').toHaveCount(0);
+    const withoutPills = await windowGeometry(page);
+
+    expect(withoutPills.art).toBe(withPills.art);
+    expect(withoutPills.top).toBe(withPills.top);
+    expect(withoutPills.arrow).toBe(withPills.arrow);
+    expect(withoutPills.bottom).toBeLessThan(withPills.bottom);
   });
 });
 

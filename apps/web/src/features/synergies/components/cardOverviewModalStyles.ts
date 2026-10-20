@@ -1,6 +1,6 @@
 import type {CSSProperties} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, DURATION, EASING, FONTS, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
+import {COLORS, FONTS, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
 import {printingsOf} from '../../../shared/hooks/usePrintingSelection';
 
 /*
@@ -34,16 +34,29 @@ export const CENTERING_WRAPPER_STYLE: CSSProperties = {
 };
 
 /** Shrink-wraps the modal shell so the sibling nav arrows can be positioned against its edges. */
-export const MODAL_FRAME_STYLE: CSSProperties = {
+const MODAL_FRAME_STYLE: CSSProperties = {
   position: 'relative',
   pointerEvents: 'none',
 };
+
+/**
+ * The frame. On desktop it is a column as tall as the screen allows, so a card without art
+ * controls can hold their room under its window (`RESERVED_ART_CONTROLS_STYLE`): every card's
+ * frame is then one height, and paging from card to card moves neither the window's top nor
+ * the arrows centred on the frame (owner, 2026-10-20).
+ */
+export function pickModalFrameStyle(isMobile: boolean): CSSProperties {
+  if (isMobile) return MODAL_FRAME_STYLE;
+  return {...MODAL_FRAME_STYLE, display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 48px)'};
+}
 
 export function pickModalShellStyle(isMobile: boolean): CSSProperties {
   return {
     width: isMobile ? '100%' : 1000,
     maxWidth: isMobile ? 580 : 'calc(100vw - 48px)',
     maxHeight: 'calc(100vh - 48px)',
+    // In the desktop frame's column, the room held under it gives way first.
+    flexShrink: 0,
     background: COLORS.surface,
     borderRadius: `${RADIUS.card}px`,
     border: `1px solid ${COLORS.surfaceBorder}`,
@@ -97,38 +110,14 @@ export function pickModalTitleStyle(isMobile: boolean): CSSProperties {
 }
 
 /**
- * The card's size in the modal. 337px matches the full-size AVIF's intrinsic width (see
- * scripts/download-card-images.mjs): rendering at native size avoids browser upscaling. The
- * Lorcana card aspect ratio 264:368 is the same as the AVIF's 337:470, so the height resolves
- * to 470, a clean 1:1 mapping for the LCP image.
- */
-export function modalCardSize(isMobile: boolean): {cardWidth: number; cardHeight: number} {
-  const cardWidth = isMobile ? 240 : 337;
-  return {cardWidth, cardHeight: Math.round((cardWidth * 368) / 264)};
-}
-
-/** How long a comparison's cards slide and grow into place (FLIP), and how they ease. */
-export const FLIP_DURATION = 480;
-export const FLIP_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
-
-/**
- * Inset (px) each card pulls inward when entering comparison mode so its
- * inner edge touches the PairConnector. Derived from the modal's typical
- * desktop geometry: (rowWidth ~950 - 2*cardWidth 337 - connectorWidth 192) / 2.
- * If the modal width changes, this may need to be recalculated dynamically
- * (ResizeObserver). For now it is a constant tuned to the current shell width.
- */
-export const COMPARISON_CARD_INSET = 42;
-
-/** The hover dimming and glow, which fade, shared by card A and card B. */
-export const HOVER_FADES = `opacity ${DURATION.base}ms ${EASING.smooth}, filter ${DURATION.base}ms ${EASING.smooth}`;
-
-/**
  * The row of art controls under a desktop card, #625's printing pills (owner, 2026-10-08;
  * they sat in the header before): as tall as the pills, 34px from their padding and text.
  * #681's translation toggle went back to the header (owner, 2026-10-17).
  */
 export const ART_CONTROLS_HEIGHT = 34;
+
+/** The room the art controls take under a desktop card: the column's gap, then their row. */
+const ART_CONTROLS_ROOM = SPACING.md + ART_CONTROLS_HEIGHT;
 
 /** Whether a desktop card has art controls under its art: printings to switch between. */
 export function hasArtControls(card: LorcanaCard): boolean {
@@ -136,35 +125,67 @@ export function hasArtControls(card: LorcanaCard): boolean {
 }
 
 /**
- * A desktop card's art, shrunk so it, the column's gap and what sits under it (`below`) fill
- * the card's height: the row and the synergy column beside it keep their size, and nothing
- * under the card can be clipped (the desktop body never scrolls). A scale, not a smaller size:
- * the art's box stays where a comparison expects it (card B is drawn at full size), so growing
- * back for one can animate with the comparison's own motion.
- *
- * `below` defaults to the printing pills' row, which the loading shell reserves. The window
- * measures it instead, since a page can fill its slot under the pills (#826).
+ * What a desktop window takes from the screen besides its card, for a card with art controls:
+ * 24px of screen above and below it, the header with one row of chips (117px, measured), the
+ * shell's 1px borders, the body's 20px and 24px padding, the 16px gap the comparison panel
+ * keeps, and the controls' room. A 743px screen holds such a window at full size (695px).
  */
-export function artScaleTransform(cardHeight: number, below = ART_CONTROLS_HEIGHT): string {
-  return `scale(${(cardHeight - SPACING.md - below) / cardHeight})`;
+const DESKTOP_WINDOW_CHROME = 48 + 117 + 2 + 20 + 24 + 16 + ART_CONTROLS_ROOM;
+
+/** The smallest a desktop card gets on a short screen; a shorter screen clips the window. */
+const MIN_DESKTOP_CARD_HEIGHT = 300;
+
+/**
+ * The card's size in the modal. A desktop card is 337px wide, the full-size AVIF's intrinsic
+ * width (see scripts/download-card-images.mjs), so it renders at native size: 337x470, since
+ * the AVIF shares the card's 264:368 ratio, a clean 1:1 mapping for the LCP image.
+ *
+ * EVERY DESKTOP CARD IS ONE HEIGHT (owner, 2026-10-20). A card with art controls keeps its full
+ * size, and the controls under it make its window taller than a card's without them. A screen
+ * too short for that window shrinks every card alike, controls or not, until it fits.
+ */
+export function modalCardSize(
+  isMobile: boolean,
+  viewportHeight = Number.POSITIVE_INFINITY,
+): {cardWidth: number; cardHeight: number} {
+  // The width first, then the height in the Lorcana card's 264:368 ratio.
+  const cardWidth = isMobile ? 240 : 337;
+  const full = {cardWidth, cardHeight: Math.round((cardWidth * 368) / 264)};
+  if (isMobile) return full;
+  const fits = Math.max(MIN_DESKTOP_CARD_HEIGHT, viewportHeight - DESKTOP_WINDOW_CHROME);
+  if (fits >= full.cardHeight) return full;
+  return {cardWidth: Math.round((fits * 264) / 368), cardHeight: fits};
+}
+
+/** A desktop card's row: the card, with the art controls' room under it when it has them. */
+export function desktopCardRowHeight({cardHeight, controlsBelow}: {cardHeight: number; controlsBelow: boolean}): number {
+  return controlsBelow ? cardHeight + ART_CONTROLS_ROOM : cardHeight;
 }
 
 /**
- * What sits under a desktop card, pinned to the bottom of the card's column: the printing
- * pills' row, then whatever a page puts in the window's slot (#826, "Your copies").
+ * The art controls' room, held under the window of a desktop card without them, in the frame
+ * (`pickModalFrameStyle`). It gives way when the screen is too short to hold it.
  */
-export const DESKTOP_UNDER_ART_STYLE: CSSProperties = {
+export const RESERVED_ART_CONTROLS_STYLE: CSSProperties = {height: ART_CONTROLS_ROOM, flexShrink: 1, minHeight: 0};
+
+/** The pair connector's width, between card A and card B in a comparison. */
+export const PAIR_CONNECTOR_WIDTH = 192;
+
+/**
+ * How far each card pulls inward in a comparison, so its inner edge meets the pair connector:
+ * half of what the row's ~950px leaves after both cards and the connector, 42px at full size.
+ * Tuned to the shell's 1000px width.
+ */
+export function comparisonCardInset(cardWidth: number): number {
+  return Math.round((950 - 2 * cardWidth - PAIR_CONNECTOR_WIDTH) / 2);
+}
+
+/** The art controls' row, pinned to the bottom of the card's column and centred under the art. */
+export const DESKTOP_ART_CONTROLS_STYLE: CSSProperties = {
   position: 'absolute',
   left: 0,
   right: 0,
   bottom: 0,
-  display: 'flex',
-  flexDirection: 'column',
-  gap: SPACING.md,
-};
-
-/** The art controls' row, centred under the art. */
-export const DESKTOP_ART_CONTROLS_STYLE: CSSProperties = {
   height: ART_CONTROLS_HEIGHT,
   display: 'flex',
   alignItems: 'center',
@@ -175,17 +196,18 @@ export const DESKTOP_ART_CONTROLS_STYLE: CSSProperties = {
 interface PickCardsRowStyleInput {
   isMobile: boolean;
   cardWidth: number;
-  cardHeight: number;
+  /** The row's height on desktop (`desktopCardRowHeight`). */
+  rowHeight: number;
 }
 
-export function pickCardsRowStyle({isMobile, cardWidth, cardHeight}: PickCardsRowStyleInput): CSSProperties {
+export function pickCardsRowStyle({isMobile, cardWidth, rowHeight}: PickCardsRowStyleInput): CSSProperties {
   return {
     display: isMobile ? 'flex' : 'grid',
     flexDirection: isMobile ? 'column' : undefined,
     gridTemplateColumns: isMobile ? undefined : `${cardWidth}px 1fr`,
     gap: 28,
     alignItems: 'stretch',
-    height: isMobile ? undefined : cardHeight,
+    height: isMobile ? undefined : rowHeight,
     flexShrink: 0,
     overflow: 'visible',
     position: 'relative',
@@ -203,20 +225,23 @@ export function pickCardColumnLayout(isMobile: boolean): CSSProperties {
     alignItems: isMobile ? 'center' : 'flex-start',
     gap: SPACING.md,
     flexShrink: 0,
-    // Anchors what sits under a desktop card (DESKTOP_UNDER_ART_STYLE) to the column's bottom.
+    // Anchors desktop's art controls row (DESKTOP_ART_CONTROLS_STYLE) to the column's bottom.
     position: 'relative',
   };
 }
 
-/** The synergy column beside (desktop) or under (mobile) the card. The modal adds its fade. */
-export function pickSynergyColumnLayout(isMobile: boolean, cardHeight: number): CSSProperties {
+/**
+ * The synergy column beside (desktop) or under (mobile) the card, as tall as the card's row on
+ * desktop (`desktopCardRowHeight`). The modal adds its fade.
+ */
+export function pickSynergyColumnLayout(isMobile: boolean, rowHeight: number): CSSProperties {
   return {
     minWidth: 0,
     minHeight: 0,
     display: 'flex',
     flexDirection: 'column',
     gap: 18,
-    maxHeight: isMobile ? undefined : cardHeight,
+    maxHeight: isMobile ? undefined : rowHeight,
     overflowY: isMobile ? 'visible' : 'auto',
     padding: isMobile ? 0 : '0 14px',
   };

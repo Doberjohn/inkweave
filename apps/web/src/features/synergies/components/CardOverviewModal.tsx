@@ -6,43 +6,52 @@ import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
 import {MobileComparisonView, type ComparisonOriginRects} from './MobileComparisonView';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {CardImageDisplay, HeaderTranslationToggle} from './ModalCardArt';
+import {
+  CopiesSlot,
+  DesktopArtControls,
+  HeaderTranslationToggle,
+  MobileArtControls,
+  ModalArtState,
+  ModalCardArt,
+} from './ModalCardArt';
 import {
   CardPrintingContext,
   CardTranslationContext,
-  CopiesSlotContext,
+  pickCopiesSlot,
   useCardTranslation,
   useModalPrinting,
-  type CardPrintingState,
-  type CardTranslationState,
-  type CopiesSlotState,
+  useReportShownPrinting,
 } from './modalArtState';
-import {CtaButton, RenderProfiler} from '../../../shared/components';
+import {CardTranslationPanel, CtaButton, RenderProfiler} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {prefersReducedMotion, usePrefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {trackEvent} from '../../../shared/lib/analytics';
-import {COLORS, EASING, FONT_SIZES, LETTER_SPACING, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
+import {COLORS, DURATION, EASING, FONT_SIZES, LETTER_SPACING, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
 import {LinkButton} from '../../../shared/components/LinkButton';
-import {ModalCloseButton, SynergiesLoadingSkeleton} from './CardOverviewModalFallback';
+import {ModalCloseButton, ReservedArtControlsRoom, SynergiesLoadingSkeleton} from './CardOverviewModalFallback';
 import {LOGO_HEIGHT, ModalCardTitle} from './ModalCardTitle';
 import {
   CENTERING_WRAPPER_STYLE,
-  COMPARISON_CARD_INSET,
   DEFAULT_BODY_STYLE,
-  FLIP_DURATION,
-  FLIP_EASING,
-  HOVER_FADES,
   MODAL_BACKDROP_STYLE,
-  MODAL_FRAME_STYLE,
   MODAL_HEADER_STYLE,
-  modalCardSize,
+  PAIR_CONNECTOR_WIDTH,
+  comparisonCardInset,
+  desktopCardRowHeight,
+  hasArtControls,
+  pickCardColumnLayout,
   pickCardsRowStyle,
+  pickModalFrameStyle,
   pickModalShellStyle,
   pickSynergyColumnLayout,
 } from './cardOverviewModalStyles';
+import {useModalCardSize} from './useModalCardSize';
+
+const FLIP_DURATION = 480;
+const FLIP_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
 
 /**
  * Paging to a sibling can unmount the focused control (the translation toggle, when no printing
@@ -67,22 +76,6 @@ function useFocusSurvivesPaging(
     const lost = cardChanged ? focusLost(active) : printingChanged && hiddenInPlace(active);
     if (lost) fallbackRef.current?.focus();
   }, [cardId, printingIndex, fallbackRef]);
-}
-
-/**
- * Tells the host which printing is on show (#826): a variant's id, or null for the card's own,
- * so a page filling the window's slot follows the pills and the swipes. In a layout effect, so
- * what the page draws from it is corrected before the browser paints.
- */
-function useReportShownPrinting(
-  printing: CardPrintingState | null,
-  report: ((printingId: string | null) => void) | undefined,
-) {
-  const key = printing ? printing.printings[printing.index].key : null;
-  const shownId = key === 'standard' ? null : key;
-  useLayoutEffect(() => {
-    report?.(shownId);
-  }, [shownId, report]);
 }
 
 /** Focus sits on an element hidden in place (visibility is inherited from its wrapper). */
@@ -176,8 +169,8 @@ interface CardOverviewModalProps {
   /** Open on this Epic/Enchanted/Iconic printing (a variant id) instead of the Standard art. */
   initialPrintingId?: string | null;
   /**
-   * Takes the element under the card that a page may fill through a portal (#826): Browse's
-   * "Your copies". Without it the window has no slot.
+   * Takes the element over the card's foot that a page may fill through a portal (#826):
+   * Browse's copies stripe. Without it the window has no slot.
    */
   copiesSlotRef?: (el: HTMLElement | null) => void;
   /** Told the printing on show whenever it changes: a variant's id, or null for the card's own (#826). */
@@ -444,10 +437,10 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
   const translation = useCardTranslation(card, isOpen, printing);
   useFocusSurvivesPaging(card.id, printing?.index ?? 0, initialFocusRef);
   useReportShownPrinting(printing, props.onShownPrintingChange);
+  const {cardWidth, cardHeight} = useModalCardSize(isMobile);
 
   if (!mounted) return null;
 
-  const {cardWidth, cardHeight} = modalCardSize(isMobile);
   const dataMode = inComparison ? 'comparison' : 'default';
   const {expandedGroup, showExpanded, showSiblingNav, dataState} = deriveModalFlags({
     expandedGroupKey,
@@ -470,7 +463,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               border without the shell's own overflow:hidden clipping them. The frame also owns the
               focus trap + arrow-key handling so the arrows (outside the dialog) stay reachable. */}
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- see comment above */}
-          <div ref={frameRef} style={MODAL_FRAME_STYLE} onKeyDown={handleShellKeyDown}>
+          <div ref={frameRef} style={pickModalFrameStyle(isMobile)} onKeyDown={handleShellKeyDown}>
           <div
             ref={modalRef}
             className={`overlay-transition overlay-scale overlay-enter ${visible ? 'overlay-visible' : ''}`}
@@ -520,6 +513,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
             />
             </ModalArtState>
           </div>
+          <ReservedArtControlsRoom card={card} isMobile={isMobile} />
           {showSiblingNav && (
             <SiblingNavButtons onPrev={() => onGoToSibling?.(-1)} onNext={() => onGoToSibling?.(1)} />
           )}
@@ -528,38 +522,6 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
       </>
     </RenderProfiler>
   );
-}
-
-/**
- * The art's state for the header and the card image, which both read it (modalArtState.ts): the
- * translation (#623), the printing on show (#625), and the slot a page may fill (#826).
- */
-function ModalArtState({
-  translation,
-  printing,
-  copiesSlot,
-  children,
-}: {
-  translation: CardTranslationState | null;
-  printing: CardPrintingState | null;
-  copiesSlot: CopiesSlotState | null;
-  children: React.ReactNode;
-}) {
-  return (
-    <CardTranslationContext.Provider value={translation}>
-      <CardPrintingContext.Provider value={printing}>
-        <CopiesSlotContext.Provider value={copiesSlot}>{children}</CopiesSlotContext.Provider>
-      </CardPrintingContext.Provider>
-    </CardTranslationContext.Provider>
-  );
-}
-
-/** The slot under the card, wired to the window's own keys, or null where no page hosts one. */
-function pickCopiesSlot(
-  attach: ((el: HTMLElement | null) => void) | undefined,
-  onKeyDown: (e: KeyboardEvent) => void,
-): CopiesSlotState | null {
-  return attach ? {attach, onKeyDown} : null;
 }
 
 /** Guards arrow-key sibling navigation from firing while the user is typing in an input. */
@@ -1447,8 +1409,11 @@ function CardsRow(props: CardsRowProps) {
   // During exit (comparisonPair=null, exitingPair set), keep the overlays mounted using
   // the exitingPair's data so the FLIP-back animation has something to animate.
   const effectivePair = comparisonPair ?? exitingPair;
+  // A comparison hides the controls and drops their room, so card A's column is the card itself.
+  const controlsBelow = !isMobile && !props.inComparison && hasArtControls(props.card);
+  const rowHeight = desktopCardRowHeight({cardHeight, controlsBelow});
   return (
-    <div style={pickCardsRowStyle({isMobile, cardWidth: props.cardWidth, cardHeight})}>
+    <div style={pickCardsRowStyle({isMobile, cardWidth: props.cardWidth, rowHeight})}>
       <CardImageDisplay
         card={props.card}
         cardWidth={props.cardWidth}
@@ -1456,7 +1421,6 @@ function CardsRow(props: CardsRowProps) {
         isMobile={isMobile}
         highlightedCard={highlightedCard}
         inComparison={props.inComparison}
-        comparing={effectivePair !== null}
       />
       <DefaultInfoColumn
         synergies={props.synergies}
@@ -1464,7 +1428,7 @@ function CardsRow(props: CardsRowProps) {
         outsideCore={props.outsideCore}
         visibleGroups={props.visibleGroups}
         activeGroupFilter={props.activeGroupFilter}
-        cardHeight={cardHeight}
+        rowHeight={rowHeight}
         isMobile={isMobile}
         inComparison={props.inComparison}
         onShowAll={props.onShowAll}
@@ -1510,20 +1474,116 @@ function ComparisonOverlays({pair, isMobile, isExiting, cardWidth, cardHeight, h
   );
 }
 
+interface CardImageDisplayProps {
+  card: LorcanaCard;
+  cardWidth: number;
+  cardHeight: number;
+  isMobile: boolean;
+  highlightedCard: 'a' | 'b' | null;
+  inComparison: boolean;
+}
+
+function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCard, inComparison}: CardImageDisplayProps) {
+  // In comparison mode the wrapper takes the ambient `focused-card-glow` className
+  // (#332 #6 idea D). The animation cycles `box-shadow` between a low and high gold-tinted
+  // aura around the card. Setting borderRadius=14 on the wrapper makes the shadow follow
+  // the card's rounded corners instead of drawing against a rectangular bounding box.
+  const useGlow = !isMobile && inComparison;
+  const translation = useContext(CardTranslationContext);
+  const reducedMotion = usePrefersReducedMotion();
+  // Desktop's art controls sit under the full-size card, in its row's own room (owner, 2026-10-20).
+  const controlsBelow = !isMobile && hasArtControls(card);
+  return (
+    <div
+      className={useGlow ? 'focused-card-glow' : undefined}
+      style={pickCardWrapperStyle({isMobile, cardWidth, highlightedCard, inComparison, reducedMotion})}>
+      {/* Shrink-wrap span carrying the `data-comparison-card-a` marker — its rect is exactly
+          the card image (not the full-width flex wrapper), so the click handler captures the
+          correct FLIP origin for Card A's mobile comparison transition (#332 #5). */}
+      <span data-comparison-card-a style={ART_BOX_STYLE}>
+        <ModalCardArt card={card} cardWidth={cardWidth} cardHeight={cardHeight} />
+        {translation?.shown && !inComparison && (
+          <CardTranslationPanel
+            card={card}
+            language={translation.language}
+            size={isMobile ? 'compact' : 'regular'}
+            style={OVER_MODAL_SCAN}
+          />
+        )}
+        {/* The card's copies over its foot, which a page fills (#826). A comparison shows the base art alone. */}
+        {!inComparison && <CopiesSlot />}
+      </span>
+      {/* Outside the span, whose rect is the FLIP origin above. */}
+      <ArtControls isMobile={isMobile} controlsBelow={controlsBelow} inComparison={inComparison} />
+    </div>
+  );
+}
+
+/** The art's controls: in the column's flow on mobile, pinned under the art on desktop. */
+function ArtControls({isMobile, controlsBelow, inComparison}: {isMobile: boolean; controlsBelow: boolean; inComparison: boolean}) {
+  if (isMobile) return <MobileArtControls />;
+  return controlsBelow ? <DesktopArtControls hidden={inComparison} /> : null;
+}
+
+/** The art's own box, exactly the card's size: inline-block with no line box. */
+const ART_BOX_STYLE: React.CSSProperties = {display: 'inline-block', lineHeight: 0, position: 'relative'};
+
+/** The translation covers the scan exactly, rounded like CardImage. */
+const OVER_MODAL_SCAN: React.CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  borderRadius: `${RADIUS.xl}px`,
+};
+
+/** The hover dimming and glow, which fade, shared by card A and card B. */
+const HOVER_FADES = `opacity ${DURATION.base}ms ${EASING.smooth}, filter ${DURATION.base}ms ${EASING.smooth}`;
+
+/** Card A's transition: its hover fades, and its slide into a comparison unless reduced motion skips it (#790). */
+function cardWrapperTransition(reducedMotion: boolean): string {
+  return reducedMotion ? HOVER_FADES : `${HOVER_FADES}, transform ${FLIP_DURATION}ms ${FLIP_EASING}`;
+}
+
+interface CardWrapperStyleInput {
+  isMobile: boolean;
+  cardWidth: number;
+  highlightedCard: 'a' | 'b' | null;
+  inComparison: boolean;
+  reducedMotion: boolean;
+}
+
+function pickCardWrapperStyle({isMobile, cardWidth, highlightedCard, inComparison, reducedMotion}: CardWrapperStyleInput): React.CSSProperties {
+  // In comparison mode, pull Card A inward so its right edge touches the
+  // PairConnector's left edge. Match the FLIP timing on Card B so both
+  // cards slide into position together.
+  const inset = !isMobile && inComparison ? comparisonCardInset(cardWidth) : 0;
+  return {
+    ...pickCardColumnLayout(isMobile),
+    transform: inset ? `translateX(${inset}px)` : undefined,
+    transition: cardWrapperTransition(reducedMotion),
+    opacity: highlightedCard === 'b' ? 0.4 : 1,
+    filter: highlightedCard === 'a' ? `drop-shadow(0 0 8px ${hexRgba(COLORS.primary500, 0.6)})` : undefined,
+    // borderRadius matches CardImage's so the ambient glow's box-shadow follows the rounded
+    // card silhouette instead of a rectangular bounding box. Only applied in comparison mode
+    // (when the glow class is also active); default state stays as-is.
+    borderRadius: inset ? 14 : undefined,
+  };
+}
+
 interface DefaultInfoColumnProps {
   synergies: SynergyGroupData[];
   synergiesLoading: boolean;
   outsideCore: boolean;
   visibleGroups: SynergyGroupData[];
   activeGroupFilter: string | null;
-  cardHeight: number;
+  /** The card's row on desktop, which the column fills (`desktopCardRowHeight`). */
+  rowHeight: number;
   isMobile: boolean;
   inComparison: boolean;
   onShowAll: (groupKey: string) => void;
   onCardClick: (card: LorcanaCard, groupKey?: string) => void;
 }
 
-function DefaultInfoColumn({synergies, synergiesLoading, outsideCore, visibleGroups, activeGroupFilter, cardHeight, isMobile, inComparison, onShowAll, onCardClick}: DefaultInfoColumnProps) {
+function DefaultInfoColumn({synergies, synergiesLoading, outsideCore, visibleGroups, activeGroupFilter, rowHeight, isMobile, inComparison, onShowAll, onCardClick}: DefaultInfoColumnProps) {
   return (
     <section
       aria-label="Synergies"
@@ -1531,7 +1591,7 @@ function DefaultInfoColumn({synergies, synergiesLoading, outsideCore, visibleGro
       // mode — opacity:0 + pointer-events:none would still leave them tab-reachable.
       inert={inComparison}
       style={{
-        ...pickSynergyColumnLayout(isMobile, cardHeight),
+        ...pickSynergyColumnLayout(isMobile, rowHeight),
         opacity: inComparison ? 0 : 1,
         pointerEvents: inComparison ? 'none' : 'auto',
         transition: `opacity 250ms ${EASING.smooth}`,
@@ -1640,8 +1700,8 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
         position: 'absolute',
         top: 0,
         // Pull Card B inward to touch the PairConnector's right edge.
-        // Symmetric with Card A's translateX in pickCardWrapperStyle (ModalCardArt.tsx).
-        right: COMPARISON_CARD_INSET,
+        // Symmetric with Card A's translateX in pickCardWrapperStyle.
+        right: comparisonCardInset(cardWidth),
         width: cardWidth,
         height: cardHeight,
         borderRadius: RADIUS.xl,
@@ -1753,7 +1813,7 @@ function PairConnector({cardHeight, exiting}: PairConnectorProps) {
         top: cardHeight / 2,
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: 192,
+        width: PAIR_CONNECTOR_WIDTH,
         zIndex: 6,
         animation: exiting
           ? 'card-overview-connector-out 200ms ease-out forwards'

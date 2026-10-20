@@ -7,7 +7,6 @@ import {SignInDialog} from '../../shared/components/SignInDialog';
 import {SET_NAMES, type BrowseSortOrder} from '../../shared/constants';
 import {useSession} from '../../shared/contexts/SessionContext';
 import {useCollection} from './CollectionContext';
-import {WindowCopies} from './CollectionCopies';
 import type {Finish} from './collectionParser';
 import {useKeptCards} from './useKeptCards';
 import {useCollectionCards, useCollectionPool} from './CollectionCardsContext';
@@ -27,6 +26,7 @@ import {
   type BinderShow,
 } from './binderCards';
 import {CollectionModeSwitch} from './CollectionModeSwitch';
+import {WindowCopies} from './WindowCopies';
 
 /*
  * The collection UI is SPLIT FROM BROWSE (#553 Phase C). The binder and the
@@ -240,7 +240,7 @@ export interface BrowseCollectionSlots {
    * keep (#826, `useKeptCards`): a first copy leaves a card where it was in Missing.
    */
   kept: ReadonlySet<string>;
-  /** The sign-in and import dialogs, and the card window's "Your copies" (#826), a portal. */
+  /** The sign-in and import dialogs, and the card window's copies stripe (#826), a portal. */
   prompts: ReactNode;
   /**
    * The set panel's body for the page's listing while collection mode is on, else
