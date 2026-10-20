@@ -3,7 +3,7 @@ import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../../cards';
 import {cardPath} from 'inkweave-synergy-engine/card';
 import {smallImageUrl} from '../../cards';
-import {INK_COLORS, COLORS, CARD_TILE_RING, EASING, FONT_SIZES, RADIUS, hexRgba} from '../../../shared/constants';
+import {INK_COLORS, COLORS, CARD_TILE_GLOW, EASING, FONT_SIZES, RADIUS, hexRgba} from '../../../shared/constants';
 import {CardLightbox, StrengthBadge} from '../../../shared/components';
 import {isSyntheticMouseEvent, isModifiedClick} from '../../../shared/utils/touchGuard';
 import {getStrengthTier} from '../utils';
@@ -14,7 +14,7 @@ interface SynergyCardProps {
   explanation: string;
   isMobile?: boolean;
   /** Compact tile styling for narrow grids (e.g. CardOverviewModal mockup): neutral border,
-   *  no "View details" hover cue, smaller corner radius. Default false. */
+   *  smaller corner radius. Default false. */
   compact?: boolean;
   onCardClick?: (card: LorcanaCard) => void;
   /** Override tabIndex for roving tabindex grid navigation */
@@ -36,7 +36,6 @@ export function SynergyCard({
   const badge = badgeText(tier, score, isMobile);
   const colors = INK_COLORS[card.ink];
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [hovered, setHovered] = useState(false);
 
   // Rendered as a real <a href> so the synergy graph is crawlable (issue #486). Plain
   // left-click is intercepted for the in-app behavior (onCardClick — modal comparison or
@@ -70,11 +69,10 @@ export function SynergyCard({
         data-card-id={card.id}
         tabIndex={tabIndex}
         onClick={handleClick}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
         aria-label={`${card.fullName}, ${badge}`}
         style={{
-          ...CARD_TILE_RING,
+          // The gold glow while pointed at or focused (`.card-tile`, index.css).
+          ...CARD_TILE_GLOW,
           position: 'relative',
           // Mockup `.mini-tile`: 5px radius + neutral var(--border). Wider contexts get the inkier 8px tinted border.
           borderRadius: `${compact ? RADIUS.sm + 1 : RADIUS.lg}px`,
@@ -89,36 +87,11 @@ export function SynergyCard({
           textDecoration: 'none',
           color: 'inherit',
         }}>
-        <ViewDetailsHoverCue isMobile={isMobile} compact={compact} hovered={hovered} />
         <CardImageOrFallback card={card} colors={colors} />
         <StrengthBadgeOverlay tier={tier} text={badge} explanation={explanation} isMobile={isMobile} />
       </a>
       <MaybeLightbox card={card} lightboxOpen={lightboxOpen} setLightboxOpen={setLightboxOpen} />
     </div>
-  );
-}
-
-function ViewDetailsHoverCue({isMobile, compact, hovered}: {isMobile: boolean; compact: boolean; hovered: boolean}) {
-  if (isMobile || compact) return null;
-  return (
-    <span
-      style={{
-        position: 'absolute',
-        top: 8,
-        right: 8,
-        background: hexRgba(COLORS.background, 0.8),
-        color: COLORS.primary,
-        fontSize: `${FONT_SIZES.xs}px`,
-        fontWeight: 600,
-        padding: '3px 8px',
-        borderRadius: `${RADIUS.sm}px`,
-        opacity: hovered ? 1 : 0,
-        transition: `opacity 0.2s ${EASING.snappy}`,
-        zIndex: 2,
-        pointerEvents: 'none',
-      }}>
-      View details
-    </span>
   );
 }
 

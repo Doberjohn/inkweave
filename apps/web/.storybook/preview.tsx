@@ -1,6 +1,6 @@
 import 'react-loading-skeleton/dist/skeleton.css';
 // The app's own stylesheet, as main.tsx loads it. Without it no story had the
-// classes defined there: the card tiles' hover ring and press, the binder's
+// classes defined there: the card tiles' hover glow and press, the binder's
 // unowned grey, the foil shimmer and every keyframe, so stories quietly differed
 // from the app.
 import '../src/index.css';

@@ -153,12 +153,13 @@ function CardPocket({
 }) {
   const {pointed, pointerProps} = usePointedByMouse();
   return (
-    <div style={{position: 'relative', height: '100%'}} {...pointerProps}>
+    // `binder-pocket`: a pocket's tile glows stronger, to show on the parchment (index.css).
+    <div className="binder-pocket" style={{position: 'relative', height: '100%'}} {...pointerProps}>
       {/*
         The unowned treatment greys ONLY the art: `.binder-unowned` (index.css)
         filters the tile's CHILDREN. On the slot it would grey the counts too, and
-        on this wrapper it would also grey the tile's gold hover ring
-        (`.card-tile::after`), which a filter on the children never reaches.
+        on this wrapper it would also grey the tile's gold glow, which a filter on
+        the children never reaches.
       */}
       <div className={isOwned(counts) ? undefined : 'binder-unowned'} style={{height: '100%'}}>
         <CardTile

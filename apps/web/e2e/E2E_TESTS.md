@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-182 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+183 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts` and the reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -164,7 +164,7 @@ At page load, supabase-js is downloaded only when there is a session to restore 
 | a stored session downloads the Supabase SDK to restore it | An `inkweave:auth` entry seeded before load makes `/browse` request the SDK (all projects) |
 | the sign-in control opens the provider dialog | Clicking it opens the `SignInDialog`. Stops at the provider choice: signing in needs a real round-trip no placeholder project can serve |
 
-## `collection-mode.spec.ts`: 19 tests (1 every project, 2 chromium only, 15 desktop only, 1 on every project at a 390px viewport)
+## `collection-mode.spec.ts`: 20 tests (1 every project, 2 chromium only, 16 desktop only, 1 on every project at a 390px viewport)
 
 Covers Browse's collection mode (#553 Phase C), which ships behind `VITE_SHOW_COLLECTION` (default OFF). The flag REQUIRES `VITE_SHOW_ACCOUNTS`, and `playwright.config.ts` pins both ON. The Collection button is gated on sign-in (owner ruling 2026-10-07).
 
@@ -191,6 +191,7 @@ The desktop signed-in tests skip the mobile projects: they find the numbers in t
 | a search narrows the binder, and the panel's numbers count only what it finds | A held card's full name (one with no alt-art printing) in `browse-search` leaves one tile, and the numbers read "1 of 1 cards" under the headline "Complete": filtered, it names no set. Skips when none of the set's first three cards lacks a printing |
 | Alt art cards picks the alt-art rarities, and the binder counts only those printings | The Filters panel's "Alt art cards" preset turns `aria-pressed`, sets `rarity` to Enchanted, Epic, Iconic and Special (the promos, #805, which a set's binder holds none of: they are its promo sets'), and the numbers read "1 of P cards", P the set's printings. Skips a set with none |
 | the set picker lists the promo sets after the sets, and a promo set's binder holds a pocket per number | The collector also holds one promo of the first promo set whose numbers skip one (`promoSetWithOpenPocket` reads `public/data/collection/promos.json`). The `Binder set` list's `Promo sets` group names it "Promo set <code>, ..."; picking it gives `binder=<code>`, the numbers read "1 of N promos", N its promos with a card, with no Master headline (#805), and, turned with `Next spread` to the spread holding it (the binder opens on the front cover, #806), the binder shows the open pocket's code (its first skipped number, "19/C2", whatever the pocket says about why it is open) |
+| a card glows gold when pointed at, more strongly on the binder's parchment (owner, 2026-10-21) | The one way the app highlights a card. On `/browse?set=<set>` (the grid), a mouse on the first tile gives it a box-shadow with the soft gold glow (`rgba(255, 185, 0, 0.42) 0px 0px 22px 3px`, `CARD_TILE_GLOW`) over its resting shadow, `z-index` 1 so the glow lies over its neighbours, and no `::after` (the gold ring it replaced). On `/browse?binder=<set>`, a mouse on the first held pocket gives the stronger gold (`0.85`, `22px 4px`) that shows on the parchment. A box-shadow set inline would beat the rule and fail it: the tile keeps its resting shadow in `--tile-shadow` |
 | a signed-in visitor without a collection is asked to import one | Signed in with no local copy and no server row, "Show my collection" opens the `Import your collection` dialog and renders no binder |
 | the set strip reads the set's two percentages and opens its numbers inline | Every project at 390x844, `/browse?binder=<set>`: the `Set` strip's "Show the numbers" toggle reads the Complete and Master percentages, rounded down as the panel rounds them (`percentOf`), and no `Collection numbers` region shows; clicking it opens the region ("Complete set" visible, the toggle now "Hide the numbers", `aria-expanded`), and a second click folds it away |
 

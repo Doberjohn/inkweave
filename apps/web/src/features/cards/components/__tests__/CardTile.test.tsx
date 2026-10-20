@@ -98,6 +98,16 @@ describe('CardTile', () => {
     expect(onSelect).toHaveBeenCalledWith(cardWithImage);
   });
 
+  // The hover glow is a CSS rule (`.card-tile`, index.css) that adds to the resting shadow. An
+  // inline box-shadow would beat that rule, and the glow would never show.
+  it('keeps its resting shadow out of the inline box-shadow, so the hover glow can show', () => {
+    render(<CardTile {...defaultProps} />);
+    const tile = screen.getByRole('button');
+    expect(tile.style.boxShadow).toBe('');
+    expect(tile.style.getPropertyValue('--tile-shadow')).not.toBe('');
+    expect(tile.style.getPropertyValue('--tile-glow-soft')).not.toBe('');
+  });
+
   it('is a plain button, not a toggle, where no selection is passed', () => {
     // The binder: a click opens the card, so "toggle button, not pressed" would mislead.
     render(<CardTile card={mockCard} onSelect={vi.fn()} />);

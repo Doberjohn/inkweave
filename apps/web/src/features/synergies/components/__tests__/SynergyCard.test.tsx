@@ -1,5 +1,5 @@
 import {describe, it, expect, vi} from 'vitest';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {render, screen} from '@testing-library/react';
 import {SynergyCard} from '../SynergyCard';
 import type {LorcanaCard} from '../../../cards';
 
@@ -66,16 +66,4 @@ describe('SynergyCard', () => {
       expect(screen.getByRole('link', {name})).toBeInTheDocument();
     },
   );
-
-  it('should show View details cue on hover (desktop)', () => {
-    render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
-    const tile = screen.getByRole('link', {name: 'Elsa - Snow Queen, Strong 7'});
-    fireEvent.mouseEnter(tile);
-    expect(screen.getByText('View details')).toBeTruthy();
-  });
-
-  it('should not render View details cue on mobile', () => {
-    render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" isMobile />);
-    expect(screen.queryByText('View details')).toBeNull();
-  });
 });

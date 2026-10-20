@@ -202,7 +202,7 @@ option {
 /* The focus ring drawn INSIDE the element, for controls whose frame clips the outline above
    with `overflow: hidden` (the card art buttons, the Reveals promo). On ::after so it paints
    over the art, which an inset outline would sit under. The gold comes from theme.ts via
-   `--inkweave-gold` (CARD_TILE_RING), as the card tiles' hover ring below does. */
+   `--inkweave-gold` (INSET_FOCUS_RING), which each control sets on itself. */
 .inset-focus-ring {
   position: relative;
 }
@@ -477,53 +477,64 @@ option {
   }
 }
 
-/* Card tile hover RING (owner, 2026-10-08), replacing the old scale-and-lift: an
-   INNER border, a gold line flush with the card art's edge, drawn over the outer
-   part of the black frame printed on the card. An earlier version sat 1.5% in,
-   which left a strip of black frame outside the ring.
-   PROPORTIONAL WIDTH: the frame is 4.1% of the card's width, so the ring takes
-   about half of it, 2cqw, at every tile size: 4px on a 207px Browse card, 3px in
-   the binder, 2px on a synergy card (browsers floor border widths to whole
-   pixels; 2px is also the floor here). A fixed width cannot fit both: 4px leaves
-   black inside it on Browse but swallows a small card's whole frame. Hence the
-   tile is a size container (`container-type`), for the `cqw` unit.
-   `border-radius: inherit` follows each tile's own corners (Browse 14px, synergy
-   5-8px, binder 0). Hover-capable pointers only, so a tap on a phone cannot leave
-   it stuck on. The gold comes from theme.ts via `--inkweave-gold`, which each tile
-   sets on itself (`CARD_TILE_RING`), so the ring shows wherever a tile renders. */
+/* Card tile hover GLOW (owner, 2026-10-21): pointing at a card fades in a soft gold glow
+   behind it, the ONE way the app highlights a card, in every grid and in the binder. It
+   replaced an inner gold ring (10-08), which had replaced a scale-and-lift: the lift was
+   too big, and the ring was one of several highlight styles across the app. Hover-capable
+   pointers only, so a tap on a phone cannot leave it stuck on; keyboard focus lights it
+   too, beside the focus outline above. A synergy group's "+N more" tile lights the same.
+   THE RESTING SHADOW IS `--tile-shadow` (CardTile), NEVER AN INLINE box-shadow: inline
+   beats these rules, and the glow would never show.
+   The colours come from theme.ts (`CARD_TILE_GLOW`), which each tile sets on itself, so
+   the glow shows wherever a tile renders. The lit tile rises a layer, so its glow lies
+   evenly over the cards round it: at its own layer, the cards after it would cover their
+   side of it.
+   The tile stays a size container, as it was for the ring's `cqw`: the grids and the
+   binder were measured with tiles that lend them no width of their own (BinderSpread's
+   WebKit note). */
 .card-tile {
   container-type: inline-size;
 }
-.card-tile::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border: max(2px, 2cqw) solid var(--inkweave-gold);
-  border-radius: inherit;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease-out;
+.card-tile,
+.synergy-more-tile {
+  --tile-glow: 0 0 22px 3px var(--tile-glow-soft);
+  box-shadow: var(--tile-shadow, 0 0 transparent);
+}
+/* The binder's parchment: the soft glow barely shows on it, so a pocket's is stronger,
+   measured to show there as plainly as the soft one does on the dark pages. */
+.binder-pocket .card-tile {
+  --tile-glow: 0 0 22px 4px var(--tile-glow-strong);
+}
+.card-tile:focus-visible,
+.synergy-more-tile:focus-visible {
+  z-index: 1;
+  box-shadow: var(--tile-shadow, 0 0 transparent), var(--tile-glow);
 }
 @media (hover: hover) {
-  .card-tile:hover::after {
-    opacity: 1;
+  .card-tile:hover,
+  .synergy-more-tile:hover {
+    z-index: 1;
+    box-shadow: var(--tile-shadow, 0 0 transparent), var(--tile-glow);
   }
 }
 
 /* An unowned binder card (CollectionBinder.tsx): its art greyed and darkened. On
-   the tile's CHILDREN, never the tile or a wrapper, so the hover ring above stays
-   gold: a pseudo-element is not a child, and `> *` never matches it. A waiting
-   promo's scan (#805), which no one can hold yet, is greyed the same. */
+   the tile's CHILDREN, never the tile or a wrapper, so nothing the tile draws on
+   itself, its glow and keyboard focus outline among it, is greyed with the art. A
+   waiting promo's scan (#805), which no one can hold yet, is greyed the same. */
 .binder-unowned .card-tile > *,
 .binder-waiting-art {
   filter: grayscale(1) brightness(0.45);
 }
 
-/* Card tile tap animation: spring bounce easing. */
+/* Card tile tap animation: spring bounce easing. The glow fades in as the ring did. */
 .card-tile {
   transition:
     transform 0.3s linear(0, 0.004, 0.016, 0.035, 0.063, 0.098, 0.141, 0.191, 0.25, 0.316, 0.391, 0.472, 0.562, 0.66, 0.765, 0.878, 1, 1.029, 1.049, 1.061, 1.066, 1.064, 1.055, 1.042, 1.026, 1.008, 0.99, 0.974, 0.96, 0.95, 0.943, 0.94, 0.941, 0.946, 0.953, 0.963, 0.975, 0.987, 1),
-    box-shadow 0.3s linear(0, 0.004, 0.016, 0.035, 0.063, 0.098, 0.141, 0.191, 0.25, 0.316, 0.391, 0.472, 0.562, 0.66, 0.765, 0.878, 1, 1.029, 1.049, 1.061, 1.066, 1.064, 1.055, 1.042, 1.026, 1.008, 0.99, 0.974, 0.96, 0.95, 0.943, 0.94, 0.941, 0.946, 0.953, 0.963, 0.975, 0.987, 1);
+    box-shadow 0.15s ease-out;
+}
+.synergy-more-tile {
+  transition: box-shadow 0.15s ease-out;
 }
 .card-tile:active {
   transform: scale(0.97);
@@ -582,7 +593,7 @@ option {
   /* .card-tile-img: the card image's inline opacity fade (CardTile.tsx); !important beats
      the inline style, so the image appears at full opacity the moment it loads. */
   .card-tile,
-  .card-tile::after,
+  .synergy-more-tile,
   .card-tile-img,
   .overlay-transition {
     transition: none !important;

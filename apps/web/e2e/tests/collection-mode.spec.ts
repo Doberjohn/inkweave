@@ -547,6 +547,26 @@ test.describe('Collection mode, signed in', () => {
     await expect(binder(page).getByText(promoSet.openPocket, {exact: true})).toBeVisible();
   });
 
+  test("a card glows gold when pointed at, more strongly on the binder's parchment (owner, 2026-10-21)", async ({
+    page,
+  }) => {
+    await signInAsCollector(page, ENTRIES);
+
+    // The grid: the glow over the tile's resting shadow, lifted a layer, and no gold ring.
+    await page.goto(`/browse?set=${SET}`);
+    const tile = page.getByTestId('card-tile').first();
+    await tile.hover();
+    await expect(tile).toHaveCSS('box-shadow', /rgba\(255, 185, 0, 0\.4\d*\) 0px 0px 22px 3px/);
+    await expect(tile).toHaveCSS('z-index', '1');
+    expect(await tile.evaluate((t) => getComputedStyle(t, '::after').content)).toBe('none');
+
+    // A binder pocket: the stronger gold, which shows on the parchment.
+    await page.goto(`/browse?binder=${SET}`);
+    const pocket = binder(page).getByRole('button', {name: HELD_BASE[0].fullName, exact: true});
+    await pocket.hover();
+    await expect(pocket).toHaveCSS('box-shadow', /rgba\(255, 185, 0, 0\.8\d*\) 0px 0px 22px 4px/);
+  });
+
   test('a signed-in visitor without a collection is asked to import one', async ({page}) => {
     await signInAsCollector(page, null);
     await page.goto('/browse');

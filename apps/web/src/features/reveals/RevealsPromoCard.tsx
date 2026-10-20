@@ -1,10 +1,10 @@
 import {useEffect, useRef, useState, type RefObject} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {
-  CARD_TILE_RING,
   COLORS,
   FONTS,
   FONT_SIZES,
+  INSET_FOCUS_RING,
   RADIUS,
   REVEAL_SET_LOGO_SM,
   REVEAL_SET_NUMBER,
@@ -144,7 +144,7 @@ function getButtonStyle(viewport: ViewportConfig): React.CSSProperties {
   const base: React.CSSProperties = {
     // The gold of its focus ring (`inset-focus-ring`), drawn inside: the aside's
     // `overflow: hidden` clips the global outline.
-    ...CARD_TILE_RING,
+    ...INSET_FOCUS_RING,
     background: 'transparent',
     border: 'none',
     color: 'inherit',
