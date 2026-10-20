@@ -317,3 +317,26 @@ test.describe('Card page synergy loading', () => {
     await expect(emptyNotice).toHaveCount(0);
   });
 });
+
+test.describe('Synergy tiles on a touch screen 768 px and wider', () => {
+  // No project runs a tablet: the desktop ones have no touch and the phone ones are under 768px,
+  // where taps always worked. Any project will do, since isMobile is width-based.
+  test.use({viewport: {width: 1024, height: 768}, hasTouch: true});
+
+  test('a tap on a synergy tile opens its card page', async ({page}) => {
+    await page.goto(`/card/${EXPAND_CARD_ID}`);
+    const tile = page.getByRole('list', {name: 'Synergy cards'}).first().locator('a.card-tile').first();
+    await expect(tile).toBeVisible({timeout: 10000});
+    const partnerId = await tile.getAttribute('data-card-id');
+    await tile.tap();
+    await expect(page).toHaveURL(new RegExp(`/card/${partnerId}/`));
+  });
+
+  test('a tap on a synergy tile in the card window opens the comparison', async ({appPage}) => {
+    await appPage.openCardOverview(cardFullNameById(EXPAND_CARD_ID));
+    const tile = appPage.cardOverviewModal.locator('a.card-tile').first();
+    await expect(tile).toBeVisible({timeout: 10000});
+    await tile.tap();
+    await expect(appPage.cardOverviewModal).toHaveAttribute('data-mode', 'comparison', {timeout: 3000});
+  });
+});
