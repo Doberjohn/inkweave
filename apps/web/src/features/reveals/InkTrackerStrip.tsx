@@ -21,7 +21,7 @@ export function InkTrackerStrip({inks, selected, onSelect, compact = false}: Ink
       style={{
         display: 'grid',
         gridTemplateColumns: compact ? 'repeat(3, 1fr)' : 'repeat(auto-fit, minmax(150px, 1fr))',
-        gap: compact ? 10 : SPACING.md,
+        gap: compact ? SPACING.sm : SPACING.md,
       }}
     >
       {inks.map(({ink, count}) => (

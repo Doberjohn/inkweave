@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, SPACING, hexRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, SPACING, hexRgba} from '../../../shared/constants';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
 import type {Score} from '../../../shared/lib/supabase';
 import type {VotingPair} from '../types';
@@ -75,7 +75,7 @@ function MysteryBadge({selectedScore, size}: {selectedScore: Score | null; size:
   const color = tier?.color ?? COLORS.primary500;
   const bg = tier?.bg ?? COLORS.surfaceAlt;
   const glowColor = tier ? `${color}59` : hexRgba(COLORS.primary500, 0.35);
-  const textGlow = tier ? `0 0 12px ${color}99` : `0 0 12px ${hexRgba(COLORS.primary, 0.6)}`;
+  const textGlow = tier ? `0 0 12px ${color}99` : `0 0 12px ${GOLD_GLOW.activeBorder}`;
 
   return (
     <div

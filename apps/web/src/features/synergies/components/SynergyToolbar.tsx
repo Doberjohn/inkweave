@@ -194,7 +194,7 @@ export function SynergyToolbar({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: isMobile ? SPACING.sm : 10,
+          gap: isMobile ? SPACING.sm : SPACING.md,
           flexWrap: 'wrap',
           marginBottom: `${SPACING.lg}px`,
         }}>
