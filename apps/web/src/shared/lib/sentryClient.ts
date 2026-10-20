@@ -40,9 +40,10 @@ export function startSentry(): SentryApi | null {
 }
 
 /**
- * init binds its client before it sets up the integrations, so when one of them throws, those set
- * up before it keep running: the failure goes to Sentry through them. With no client bound yet,
- * this does nothing. It never throws, since a broken SDK can throw here too.
+ * init binds its client before it sets up the integrations, so when one of them throws, Sentry is
+ * half started: the client is bound, and the integrations set up before the throw keep running.
+ * The failure goes to Sentry through that client. With no client bound yet, this does nothing. It
+ * never throws, since a broken SDK can throw here too.
  */
 function reportStartFailure(error: unknown): void {
   try {
