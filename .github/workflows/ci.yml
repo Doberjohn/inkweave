@@ -150,10 +150,21 @@ jobs:
       # Don't cancel sibling browsers when one fails — we want the full per-browser report.
       fail-fast: false
       matrix:
-        # The Playwright projects each job runs. chromium and mobile-chrome both run Chromium, so
-        # they share a job (#867): that saves a job's setup and a dev server warm-up, and on two
-        # workers the pair still finishes before WebKit.
-        projects: [[chromium, mobile-chrome], [firefox], [webkit], [mobile-safari]]
+        # The Playwright projects each job runs, and the server they test (E2E_SERVER in
+        # playwright.config.ts). chromium and mobile-chrome both run Chromium, so they share a job
+        # (#867), on the dev server: React logs its development-only errors there, which the
+        # console guard fails on, and a PR pushed without the pre-push hook gets that check here.
+        # The other three test a production build (#869), where a page loads a few chunks
+        # instead of hundreds of modules the dev server compiles on request.
+        include:
+          - projects: [chromium, mobile-chrome]
+            server: dev
+          - projects: [firefox]
+            server: preview
+          - projects: [webkit]
+            server: preview
+          - projects: [mobile-safari]
+            server: preview
     name: e2e-tests (${{ join(matrix.projects, ', ') }})
 
     steps:
@@ -172,8 +183,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # precompute-synergies and the dev server both import the engine's dist. The suite runs
-      # against the dev server, so it needs no web build.
+      # precompute-synergies, the dev server and the web build all import the engine's dist. A
+      # job on the production build makes that build itself, in Playwright's webServer command.
       - name: Build the engine
         run: pnpm build:engine
 
@@ -182,6 +193,8 @@ jobs:
 
       - name: Run E2E tests
         run: pnpm --filter inkweave-web test:e2e --project=${{ join(matrix.projects, ' --project=') }}
+        env:
+          E2E_SERVER: ${{ matrix.server }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7

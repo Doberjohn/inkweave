@@ -1,5 +1,6 @@
 import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
+import {holdLazyModule} from '../helpers/lazyModule';
 
 /** Opens the search sheet from Browse, whose bottom nav holds the Search button. */
 async function openSearchSheet(page: Page) {
@@ -115,12 +116,7 @@ test.describe('Mobile Viewport', () => {
     // Hold the lazily loaded sheet (#640), then load a page with the bottom nav from scratch. On a
     // phone the app requests the sheet in its first render, and WebKit holds the load event until
     // that request ends, so wait for DOMContentLoaded: a `load` wait could wait on the hold itself.
-    let release!: () => void;
-    const held = new Promise<void>((resolve) => (release = resolve));
-    await page.route('**/components/SearchBottomSheet.tsx*', async (route) => {
-      await held;
-      await route.continue();
-    });
+    const release = await holdLazyModule(page, 'SearchBottomSheet');
     await page.goto('/browse', {waitUntil: 'domcontentloaded'});
     await page.getByRole('button', {name: 'Search cards'}).click();
     await expect(page.getByRole('dialog', {name: 'Search cards'})).toHaveCount(0);
