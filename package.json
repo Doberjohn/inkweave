@@ -75,7 +75,7 @@
     {
       "name": "Entry chunk",
       "path": "apps/web/dist/assets/index-*.js",
-      "limit": "127 kB",
+      "limit": "35 kB",
       "gzip": true
     },
     {

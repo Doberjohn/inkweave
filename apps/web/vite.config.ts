@@ -189,16 +189,20 @@ function resolveVitestWorkers(): number | undefined {
  * Startup chunk groups (#789). The entry shares these modules with lazy chunks, and Rolldown's
  * automatic splitting gave most of them a small startup file each: startup loaded ten files, and
  * with these two groups it loads four. The libraries get a group of their own, which changes only
- * when a dependency does, so returning visitors keep it across deploys. In the app group, every
- * deploy that touched one of its modules would re-download react-router too. List only modules
- * the startup code already loads. `tags: ['$initial']` drops a listed module from its group once
- * nothing at startup imports it, but a module that newly becomes shared splits out on its own
- * until it is listed here.
+ * when a dependency does, so returning visitors keep it across deploys. It also takes react-dom's
+ * client and Speed Insights, which only the entry imports, so a deploy that changes only app code
+ * re-downloads none of the libraries. In the app group, every deploy that touched one of its
+ * modules would re-download react-router too. List only modules the startup code already loads.
+ * `tags: ['$initial']` drops a listed module from its group once nothing at startup imports it,
+ * but a module that newly becomes shared splits out on its own until it is listed here.
  */
 const STARTUP_VENDOR = [
   /node_modules[\\/]react[\\/]/,
+  /node_modules[\\/]react-dom[\\/]/,
+  /node_modules[\\/]scheduler[\\/]/,
   /node_modules[\\/]react-router[\\/]/,
   /node_modules[\\/]@vercel[\\/]analytics[\\/]/,
+  /node_modules[\\/]@vercel[\\/]speed-insights[\\/]/,
   /node_modules[\\/]react-loading-skeleton[\\/]/,
 ];
 const STARTUP_SHARED = [
