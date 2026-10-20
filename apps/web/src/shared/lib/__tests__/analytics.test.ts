@@ -1,15 +1,24 @@
 import {describe, expect, it, vi, beforeEach} from 'vitest';
 import {track} from '@vercel/analytics';
 import {trackEvent} from '../analytics';
+import {capturePostHog} from '../posthog';
 
 vi.mock('@vercel/analytics', () => ({track: vi.fn()}));
+vi.mock('../posthog', () => ({capturePostHog: vi.fn()}));
+
+/** Every event goes to Vercel and to PostHog, with the same name and props (#827). */
+function expectSentToBoth(name: string, props: object) {
+  expect(track).toHaveBeenCalledWith(name, props);
+  expect(capturePostHog).toHaveBeenCalledWith(name, props);
+}
 
 describe('trackEvent', () => {
   beforeEach(() => {
     vi.mocked(track).mockClear();
+    vi.mocked(capturePostHog).mockClear();
   });
 
-  it('forwards a reveal_card_click event with its props to Vercel track()', () => {
+  it('forwards a reveal_card_click event with its props to Vercel track() and PostHog', () => {
     const props = {
       cardName: 'Elsa - Snow Queen',
       cardId: '13001',
@@ -21,7 +30,8 @@ describe('trackEvent', () => {
     } as const;
     trackEvent('reveal_card_click', props);
     expect(track).toHaveBeenCalledTimes(1);
-    expect(track).toHaveBeenCalledWith('reveal_card_click', props);
+    expect(capturePostHog).toHaveBeenCalledTimes(1);
+    expectSentToBoth('reveal_card_click', props);
   });
 
   it('forwards a vote_submitted event with its enriched props', () => {
@@ -36,7 +46,7 @@ describe('trackEvent', () => {
       userScore: 7,
     } as const;
     trackEvent('vote_submitted', props);
-    expect(track).toHaveBeenCalledWith('vote_submitted', props);
+    expectSentToBoth('vote_submitted', props);
   });
 
   it('forwards a card_selected event', () => {
@@ -48,7 +58,7 @@ describe('trackEvent', () => {
       type: 'Character',
     } as const;
     trackEvent('card_selected', props);
-    expect(track).toHaveBeenCalledWith('card_selected', props);
+    expectSentToBoth('card_selected', props);
   });
 
   it('forwards a synergy_card_clicked event', () => {
@@ -60,43 +70,43 @@ describe('trackEvent', () => {
       groupKey: 'singer',
     } as const;
     trackEvent('synergy_card_clicked', props);
-    expect(track).toHaveBeenCalledWith('synergy_card_clicked', props);
+    expectSentToBoth('synergy_card_clicked', props);
   });
 
   it('forwards a playstyle_opened event', () => {
     const props = {playstyleId: 'singer', playstyleName: 'Singer'} as const;
     trackEvent('playstyle_opened', props);
-    expect(track).toHaveBeenCalledWith('playstyle_opened', props);
+    expectSentToBoth('playstyle_opened', props);
   });
 
   it('forwards a vote_skipped event', () => {
     const props = {cardAId: '13001', cardBId: '13002', engineScore: 7} as const;
     trackEvent('vote_skipped', props);
-    expect(track).toHaveBeenCalledWith('vote_skipped', props);
+    expectSentToBoth('vote_skipped', props);
   });
 
   it('forwards a search_submitted event', () => {
     const props = {query: 'elsa', source: 'home'} as const;
     trackEvent('search_submitted', props);
-    expect(track).toHaveBeenCalledWith('search_submitted', props);
+    expectSentToBoth('search_submitted', props);
   });
 
   it('forwards a filter_applied event', () => {
     const props = {facet: 'ink', value: 'Amber', action: 'add'} as const;
     trackEvent('filter_applied', props);
-    expect(track).toHaveBeenCalledWith('filter_applied', props);
+    expectSentToBoth('filter_applied', props);
   });
 
   it('forwards a sort_changed event', () => {
     const props = {sortOrder: 'cost', previousSort: 'newest'} as const;
     trackEvent('sort_changed', props);
-    expect(track).toHaveBeenCalledWith('sort_changed', props);
+    expectSentToBoth('sort_changed', props);
   });
 
   it('forwards a synergy_group_viewed event', () => {
     const props = {sourceCardId: '13001', groupKey: 'singer', action: 'isolate'} as const;
     trackEvent('synergy_group_viewed', props);
-    expect(track).toHaveBeenCalledWith('synergy_group_viewed', props);
+    expectSentToBoth('synergy_group_viewed', props);
   });
 
   it('forwards a card_printing_view event', () => {
@@ -107,6 +117,6 @@ describe('trackEvent', () => {
       surface: 'card_page',
     } as const;
     trackEvent('card_printing_view', props);
-    expect(track).toHaveBeenCalledWith('card_printing_view', props);
+    expectSentToBoth('card_printing_view', props);
   });
 });
