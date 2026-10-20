@@ -19,8 +19,11 @@ import {COLORS} from '../../shared/constants';
  * so unfiltered it is the whole set in collector order.
  *
  * Two states share the pockets and must stay distinguishable:
- *   owned     full colour, with read-only counts per finish
+ *   owned     full colour, with counts per finish
  *   unowned   desaturated, no counts: the card exists, you do not have it
+ *
+ * A mouse pointing at a pocket opens its counts into steppers, an unheld finish at 0
+ * (#826). Here a click reports to the Actions panel and the counts stay put.
  */
 
 /** Every third card doubled, every other one single, some of them foiled too. */
@@ -48,6 +51,7 @@ const meta: Meta<typeof CollectionBinder> = {
     slots: BINDER_CARDS,
     countsFor: counts,
     onSelect: fn(),
+    onCountChange: fn(),
   },
 };
 

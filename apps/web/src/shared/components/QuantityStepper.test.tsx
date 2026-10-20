@@ -52,6 +52,15 @@ describe('QuantityStepper', () => {
     expect(onIncrement).not.toHaveBeenCalled();
   });
 
+  it('keeps a disabled − focusable and suppresses onDecrement, so focus survives reaching 0', () => {
+    const {onDecrement} = renderStepper({value: 0, decrementDisabled: true});
+    const minus = screen.getByRole('button', {name: /remove one copy of pocahontas/i});
+    expect(minus).toHaveAttribute('aria-disabled', 'true');
+    expect(minus).toBeEnabled();
+    fireEvent.click(minus);
+    expect(onDecrement).not.toHaveBeenCalled();
+  });
+
   it('exposes the disabledReason via the disabled + aria-label', () => {
     renderStepper({incrementDisabled: true, disabledReason: 'Maximum 4 copies'});
     expect(screen.getByRole('button', {name: 'Maximum 4 copies'})).toBeInTheDocument();

@@ -23,11 +23,16 @@ const params = (rarities?: string[], setCodes?: string[]) => ({
 /** Holds Anna and the Set 1 card, and nothing else. */
 const owns = (cardId: string) => cardId === 'anna' || cardId === 'set-1';
 /** Collection mode's slots, its binder showing every card unless told otherwise. */
-const binder = (active: boolean, show: 'all' | 'owned' | 'missing' = 'all') => ({
+const binder = (
+  active: boolean,
+  show: 'all' | 'owned' | 'missing' = 'all',
+  kept: ReadonlySet<string> = new Set(),
+) => ({
   active,
   pool: wide,
   show,
   owns,
+  kept,
   rarityOptions: binderRarities,
 });
 
@@ -60,6 +65,18 @@ describe('browseView', () => {
   it('shows the binder the cards you hold, or the ones you hold none of', () => {
     expect(ids(browseView(binder(true, 'owned'), core, params()).sortedCards)).toEqual(['anna', 'set-1']);
     expect(ids(browseView(binder(true, 'missing'), core, params()).sortedCards)).toEqual(['elsa', 'elsa-ench']);
+  });
+
+  it('keeps a card changed by hand in the view it left, though not past the filters (#826)', () => {
+    // Anna's first copy took her out of Missing; she stays until the view changes.
+    const kept = new Set(['anna']);
+    expect(ids(browseView(binder(true, 'missing', kept), core, params()).sortedCards)).toEqual([
+      'anna',
+      'elsa',
+      'elsa-ench',
+    ]);
+    const enchanted = browseView(binder(true, 'missing', kept), core, params(['Enchanted']));
+    expect(ids(enchanted.sortedCards)).toEqual(['elsa-ench']);
   });
 
   it('leaves the grid alone: it has no binder view', () => {

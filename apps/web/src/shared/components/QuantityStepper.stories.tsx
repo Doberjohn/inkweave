@@ -52,3 +52,6 @@ export const FoilShimmer: Story = {
 export const Collapsed: Story = {args: {value: 2, collapsed: true, label: 'Pocahontas'}};
 
 export const AtMax: Story = {args: {value: 4, incrementDisabled: true, disabledReason: 'Maximum 4 copies', label: 'Pocahontas'}};
+
+/** A count at 0: the − greys and does nothing, but keeps its focus (`aria-disabled`, #826). */
+export const AtZero: Story = {args: {value: 0, decrementDisabled: true, label: 'Pocahontas'}};

@@ -91,16 +91,22 @@ interface CollectorOptions {
   answered?: Promise<void>;
 }
 
+/** The collections a page wrote to the account, oldest first (#826). */
+type AccountWrites = Entries[];
+
 /**
  * Signs the page in as a collector holding `entries`, or holding nothing for `null`: the
  * stored session, the local copy (stamped as the server's, so it is never uploaded back),
  * and the server row. Call before the first navigation.
+ *
+ * The row is the stub's to keep: an upload replaces it, as the table's one row per user is
+ * replaced, and every later read answers with it. Returns the uploads, as the account saw them.
  */
 async function signInAsCollector(
   page: Page,
   entries: Entries | null,
   {local: storeLocal = true, answered}: CollectorOptions = {},
-): Promise<void> {
+): Promise<AccountWrites> {
   const local = storeLocal && entries && {
     schemaVersion: 1,
     importedAt: IMPORTED_AT,
@@ -116,16 +122,26 @@ async function signInAsCollector(
     {session: storedSession(), collection: local},
   );
   // Registered after the fixture's catch-all stub, so it wins for this table.
-  const rows = entries
+  let rows: object[] = entries
     ? [{entries, imported_at: new Date(IMPORTED_AT).toISOString(), schema_version: 1}]
     : [];
+  const writes: AccountWrites = [];
   await page.route(
     (url) => url.origin === E2E_SUPABASE_ORIGIN && url.pathname === COLLECTIONS_PATH,
     async (route) => {
+      if (route.request().method() === 'POST') {
+        // `upsertCollection`: the row it sends replaces the one held.
+        const sent = route.request().postDataJSON() as {entries: Entries; imported_at: string; schema_version: number};
+        writes.push(sent.entries);
+        rows = [{entries: sent.entries, imported_at: sent.imported_at, schema_version: sent.schema_version}];
+        await route.fulfill({status: 201, body: ''});
+        return;
+      }
       await answered;
       await route.fulfill({status: 200, contentType: 'application/json', body: JSON.stringify(rows)});
     },
   );
+  return writes;
 }
 
 /** Waits for the restored session: the header's control turns from "Sign in" to "Account". */
@@ -280,6 +296,97 @@ test.describe('Collection mode, signed in', () => {
 
     // Every pocket counts, the alt-art printings too (owner, 2026-10-15).
     await expect(numbers(page)).toContainText(`${HELD} of ${SET_TOTAL} cards`);
+  });
+
+  test("a count changed in a card's window shows at once and is still there after a reload (#826)", async ({
+    page,
+  }) => {
+    // The first pocket after the three held: a card the collector has none of yet.
+    const card = BASE[HELD_BASE.length];
+    const writes = await signInAsCollector(page, ENTRIES);
+    await page.goto(`/browse?binder=${SET}`);
+    const tiles = binder(page).getByTestId('card-tile');
+    const heldPills = binder(page).getByRole('group', {name: '1 normal', exact: true});
+    await expect(heldPills).toHaveCount(HELD_BASE.length);
+
+    await tiles.nth(HELD_BASE.length).click();
+    const normal = page
+      .getByTestId('card-overview-modal')
+      .getByRole('group', {name: 'Your copies'})
+      .getByRole('group', {name: 'Normal'});
+    await normal.getByRole('button', {name: /^Add one copy/}).click();
+    await expect(normal).toContainText('1');
+    await page.keyboard.press('Escape');
+
+    // The pocket's pill and the panel's numbers follow at once.
+    await expect(heldPills).toHaveCount(HELD_BASE.length + 1);
+    await expect(numbers(page)).toContainText(`${HELD + 1} of ${SET_TOTAL} cards`);
+
+    // Saved to the account a moment after the click, which a reload then reads back.
+    await expect.poll(() => writes.at(-1)?.[String(card.id)]).toEqual({normal: 1, foil: 0});
+    await page.reload();
+    await expect(heldPills).toHaveCount(HELD_BASE.length + 1);
+    await expect(numbers(page)).toContainText(`${HELD + 1} of ${SET_TOTAL} cards`);
+  });
+
+  test('in Missing, copies added from a pocket and from the card window keep both cards and the spread (#826)', async ({
+    page,
+  }) => {
+    const writes = await signInAsCollector(page, ENTRIES);
+    await page.goto(`/browse?binder=${SET}&owned=missing`);
+    const shown = binder(page)
+      .getByRole('navigation', {name: 'Binder pages'})
+      .locator('[aria-current="true"]');
+    await expect(shown).toHaveAccessibleName(/^Spread 1 of /);
+    await binder(page).getByRole('button', {name: 'Next spread'}).click();
+    await expect(shown).toHaveAccessibleName(/^Spread 2 of /);
+
+    // The second spread's first two pockets: cards the collector has none of.
+    const tiles = binder(page).getByTestId('card-tile');
+    const names = [
+      (await tiles.nth(0).getAttribute('aria-label')) ?? '',
+      (await tiles.nth(1).getAttribute('aria-label')) ?? '',
+    ];
+    const ids = names.map((name) => BASE.find((base) => base.fullName === name)?.id);
+    expect(ids, `${names.join(' and ')} are Set ${SET}'s cards`).not.toContain(undefined);
+
+    // A first copy of the first, from its pocket a mouse points at. The pills sit under
+    // aria-hidden: their group's label speaks for them.
+    await tiles.nth(0).hover();
+    const pills = binder(page).getByRole('group', {name: '0 normal, 0 foil', exact: true});
+    await pills.getByRole('button', {name: 'Add one copy of normal', includeHidden: true}).click();
+    await expect(
+      binder(page).getByRole('group', {name: '1 normal, 0 foil', exact: true}),
+    ).toBeVisible();
+    // The click left the focus where it was, off the hidden + that no Tab reaches.
+    const focused = () => page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
+    expect(await focused()).not.toBe('Add one copy of normal');
+
+    // A first copy of the second, from its card window, whose arrows walk the binder: the
+    // first, held now but kept, is the card before it.
+    await tiles.nth(1).click();
+    const modal = page.getByTestId('card-overview-modal');
+    const normal = modal
+      .getByRole('group', {name: 'Your copies'})
+      .getByRole('group', {name: 'Normal'});
+    await normal.getByRole('button', {name: /^Add one copy/}).click();
+    await expect(normal).toContainText('1');
+    await page.getByRole('button', {name: 'Previous card'}).click();
+    await expect(modal.locator('h1')).toHaveText(names[0]);
+    await page.keyboard.press('Escape');
+
+    // Both held, so neither is missing, yet both keep their pockets and the binder its
+    // spread: dropped from the view at once, a card reopened the binder at the first.
+    for (const name of names) {
+      await expect(binder(page).getByRole('button', {name, exact: true})).toBeVisible();
+    }
+    await expect(shown).toHaveAccessibleName(/^Spread 2 of /);
+    await expect
+      .poll(() => ids.map((id) => writes.at(-1)?.[String(id)]))
+      .toEqual([
+        {normal: 1, foil: 0},
+        {normal: 1, foil: 0},
+      ]);
   });
 
   test('Owned keeps the held cards alone, and leaving the mode drops that view', async ({page}) => {

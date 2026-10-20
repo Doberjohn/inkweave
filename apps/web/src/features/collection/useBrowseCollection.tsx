@@ -1,12 +1,15 @@
 import {Suspense, useEffect, useState, type ReactNode} from 'react';
 import {useSearchParams} from 'react-router-dom';
-import {SET_PARAM} from '../../shared/hooks/useFilterParams';
+import {SET_PARAM, SORT_PARAM} from '../../shared/hooks/useFilterParams';
 import {lazyWithRetry} from '../../shared/lib/lazyWithRetry';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {SignInDialog} from '../../shared/components/SignInDialog';
 import {SET_NAMES, type BrowseSortOrder} from '../../shared/constants';
 import {useSession} from '../../shared/contexts/SessionContext';
 import {useCollection} from './CollectionContext';
+import {WindowCopies} from './CollectionCopies';
+import type {Finish} from './collectionParser';
+import {useKeptCards} from './useKeptCards';
 import {useCollectionCards, useCollectionPool} from './CollectionCardsContext';
 import {useCollectionClick} from './useCollectionClick';
 import {binderModalTarget, type ModalTarget} from './collectionModalTarget';
@@ -232,7 +235,12 @@ export interface BrowseCollectionSlots {
   rarityOptions: (pool: LorcanaCard[]) => string[];
   /** Whether you hold a copy of the card, either finish: what Owned and Missing ask. */
   owns: (cardId: string) => boolean;
-  /** The sign-in and import dialogs. */
+  /**
+   * The cards changed by hand in the binder's current view, which its Owned and Missing views
+   * keep (#826, `useKeptCards`): a first copy leaves a card where it was in Missing.
+   */
+  kept: ReadonlySet<string>;
+  /** The sign-in and import dialogs, and the card window's "Your copies" (#826), a portal. */
   prompts: ReactNode;
   /**
    * The set panel's body for the page's listing while collection mode is on, else
@@ -256,7 +264,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // unmounting mid-animation; never mounted at all for anyone who never opens it.
   const [importMounted, setImportMounted] = useState(false);
   const {user, loading: sessionLoading} = useSession();
-  const {entries, hasCollection, syncing, importCollection} = useCollection();
+  const {entries, hasCollection, syncing, importCollection, setCount} = useCollection();
   const {retry} = useCollectionCards();
   const {requested, mode, show, enterBinder, writeBinder, leaveBinder, writeShow} = useBinderParams({
     sessionLoading,
@@ -275,6 +283,16 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   const {pool, waiting, error, isReady} = useCollectionPool(coreCards, collectionMode || showImport);
   const sets = isReady ? binderSets(pool) : null;
   const setCode = resolveSetCode(requested, sets);
+
+  // The cards changed by hand in this view of the binder, which its Owned and Missing views
+  // keep: a view is the mode, the set, Owned or Missing, and the sort (`useKeptCards`).
+  const [searchParams] = useSearchParams();
+  const view = [collectionMode, setCode, show, searchParams.get(SORT_PARAM)].join('|');
+  const {kept, keep} = useKeptCards(view);
+  const changeCount = (cardId: string, finish: Finish, count: number) => {
+    setCount(cardId, finish, count);
+    keep(cardId);
+  };
 
   // Sign-in first, then import, then toggle; the order is the rule and lives in
   // `collectionAction`, pure and tested, since two branches need a real session.
@@ -319,6 +337,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           onRetry={retry}
           {...panelControls}
           onCardSelect={onCardSelect}
+          onCountChange={changeCount}
         />
       </Suspense>
     );
@@ -350,6 +369,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           />
         </Suspense>
       )}
+      <WindowCopies onEdit={keep} />
     </>
   );
 
@@ -368,6 +388,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
       const held = entries[cardId];
       return held !== undefined && held.normal + held.foil > 0;
     },
+    kept,
     prompts,
     renderSetPanel: (listing) =>
       collectionMode ? (

@@ -1,6 +1,6 @@
 import type {CSSProperties} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
+import {COLORS, DURATION, EASING, FONTS, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
 import {printingsOf} from '../../../shared/hooks/usePrintingSelection';
 
 /*
@@ -107,6 +107,22 @@ export function modalCardSize(isMobile: boolean): {cardWidth: number; cardHeight
   return {cardWidth, cardHeight: Math.round((cardWidth * 368) / 264)};
 }
 
+/** How long a comparison's cards slide and grow into place (FLIP), and how they ease. */
+export const FLIP_DURATION = 480;
+export const FLIP_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+
+/**
+ * Inset (px) each card pulls inward when entering comparison mode so its
+ * inner edge touches the PairConnector. Derived from the modal's typical
+ * desktop geometry: (rowWidth ~950 - 2*cardWidth 337 - connectorWidth 192) / 2.
+ * If the modal width changes, this may need to be recalculated dynamically
+ * (ResizeObserver). For now it is a constant tuned to the current shell width.
+ */
+export const COMPARISON_CARD_INSET = 42;
+
+/** The hover dimming and glow, which fade, shared by card A and card B. */
+export const HOVER_FADES = `opacity ${DURATION.base}ms ${EASING.smooth}, filter ${DURATION.base}ms ${EASING.smooth}`;
+
 /**
  * The row of art controls under a desktop card, #625's printing pills (owner, 2026-10-08;
  * they sat in the header before): as tall as the pills, 34px from their padding and text.
@@ -120,22 +136,35 @@ export function hasArtControls(card: LorcanaCard): boolean {
 }
 
 /**
- * A desktop card's art, shrunk so it, the column's gap and the controls under it fill the
- * card's height: the row and the synergy column beside it keep their size, and nothing under
- * the card can be clipped (the desktop body never scrolls). A scale, not a smaller size: the
- * art's box stays where a comparison expects it (card B is drawn at full size), so growing
+ * A desktop card's art, shrunk so it, the column's gap and what sits under it (`below`) fill
+ * the card's height: the row and the synergy column beside it keep their size, and nothing
+ * under the card can be clipped (the desktop body never scrolls). A scale, not a smaller size:
+ * the art's box stays where a comparison expects it (card B is drawn at full size), so growing
  * back for one can animate with the comparison's own motion.
+ *
+ * `below` defaults to the printing pills' row, which the loading shell reserves. The window
+ * measures it instead, since a page can fill its slot under the pills (#826).
  */
-export function artScaleTransform(cardHeight: number): string {
-  return `scale(${(cardHeight - SPACING.md - ART_CONTROLS_HEIGHT) / cardHeight})`;
+export function artScaleTransform(cardHeight: number, below = ART_CONTROLS_HEIGHT): string {
+  return `scale(${(cardHeight - SPACING.md - below) / cardHeight})`;
 }
 
-/** The art controls' row, pinned to the bottom of the card's column and centred under the art. */
-export const DESKTOP_ART_CONTROLS_STYLE: CSSProperties = {
+/**
+ * What sits under a desktop card, pinned to the bottom of the card's column: the printing
+ * pills' row, then whatever a page puts in the window's slot (#826, "Your copies").
+ */
+export const DESKTOP_UNDER_ART_STYLE: CSSProperties = {
   position: 'absolute',
   left: 0,
   right: 0,
   bottom: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: SPACING.md,
+};
+
+/** The art controls' row, centred under the art. */
+export const DESKTOP_ART_CONTROLS_STYLE: CSSProperties = {
   height: ART_CONTROLS_HEIGHT,
   display: 'flex',
   alignItems: 'center',
@@ -174,7 +203,7 @@ export function pickCardColumnLayout(isMobile: boolean): CSSProperties {
     alignItems: isMobile ? 'center' : 'flex-start',
     gap: SPACING.md,
     flexShrink: 0,
-    // Anchors desktop's art controls row (DESKTOP_ART_CONTROLS_STYLE) to the column's bottom.
+    // Anchors what sits under a desktop card (DESKTOP_UNDER_ART_STYLE) to the column's bottom.
     position: 'relative',
   };
 }

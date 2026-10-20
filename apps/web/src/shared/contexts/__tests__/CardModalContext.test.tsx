@@ -2,16 +2,19 @@ import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import {CardModalProvider, useCardModal} from '../CardModalContext';
+import {useCardWindowSlot} from '../cardWindowSlot';
 import {CardDataProvider} from '../CardDataContext';
 
 function Probe() {
   const {selectedCardId, siblingCardIds, initialPrintingId, resolveCard, openCardModal, closeCardModal, goToSibling} =
     useCardModal();
+  const {shownPrintingId} = useCardWindowSlot();
   return (
     <div>
       <span data-testid="selected">{selectedCardId ?? 'none'}</span>
       <span data-testid="siblings">{siblingCardIds.join(',')}</span>
       <span data-testid="printing">{initialPrintingId ?? 'none'}</span>
+      <span data-testid="shown">{shownPrintingId ?? 'none'}</span>
       <span data-testid="resolver">{resolveCard ? 'set' : 'none'}</span>
       <button onClick={() => openCardModal('b', ['a', 'b', 'c'])}>open-b</button>
       <button onClick={() => openCardModal('b', ['a', 'b', 'c'], {resolveCard: () => undefined})}>open-collection</button>
@@ -103,6 +106,23 @@ test("an open's printingFor names the printing of the opened card and of each ca
 
   await user.click(screen.getByText('next')); // wraps to a
   expect(screen.getByTestId('printing')).toHaveTextContent('a-enchanted');
+});
+
+test('the printing on show starts as each card arrives on, and none once closed (#826)', async () => {
+  // What fills the window's slot reads it, so a card's first render already names its printing.
+  const user = userEvent.setup();
+  renderProbe();
+  await user.click(screen.getByText('open-b-each'));
+  expect(screen.getByTestId('shown')).toHaveTextContent('b-enchanted');
+
+  await user.click(screen.getByText('next')); // c has none: its Standard printing
+  expect(screen.getByTestId('shown')).toHaveTextContent('none');
+
+  await user.click(screen.getByText('next')); // wraps to a
+  expect(screen.getByTestId('shown')).toHaveTextContent('a-enchanted');
+
+  await user.click(screen.getByText('close'));
+  expect(screen.getByTestId('shown')).toHaveTextContent('none');
 });
 
 test('a list holding a card twice pages by place, each place keeping its own printing', async () => {

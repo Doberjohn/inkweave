@@ -23,8 +23,13 @@ import type {CollectionSource} from './collectionStorage';
  * A pending DELETE (the tombstone) is not an input: the caller retries it before
  * resolving at all, and passes `hasServer: false` once it lands. Resolving first
  * and checking after would let one mount adopt the row the user cleared.
+ *
+ * A THIRD RULING (owner, 2026-10-19, #826): a copy the account had is DROPPED once
+ * its row is gone, the collection having been cleared from another device. Kept, it
+ * read as the collection still in force, and since counts change in the app, one
+ * edit to it uploaded it again and undid the clear.
  */
-export type CollectionSyncPlan = 'adopt-server' | 'upload' | 'none';
+export type CollectionSyncPlan = 'adopt-server' | 'upload' | 'drop-local' | 'none';
 
 /** The parts of the local copy the decision reads. */
 export interface LocalCopyFacts {
@@ -71,6 +76,24 @@ export function visibleTo(
   return local.ownerUid === viewer.uid;
 }
 
+/**
+ * Whether the account had this copy: one mirrored from it, or this uid's import whose
+ * upload the migrated marker confirmed (its re-stamp as `'server'` failed to land).
+ * Never an anonymous copy, nor another account's.
+ */
+function wasOnAccount(local: LocalCopyFacts | null, uid: string, migratedImportedAt: number | null): boolean {
+  if (local === null || local.ownerUid !== uid) return false;
+  return local.source === 'server' || local.importedAt === migratedImportedAt;
+}
+
+/**
+ * Whether `uid` may upload this copy. Never another account's (#739 defect 1), nor one
+ * this browser RECEIVED from the server (defect 6), which is already what the server had.
+ */
+function isUploadable(local: LocalCopyFacts | null, uid: string): local is LocalCopyFacts {
+  return local !== null && local.source === 'import' && belongsTo(local, uid);
+}
+
 export function resolveCollectionSync({
   uid,
   local,
@@ -78,9 +101,7 @@ export function resolveCollectionSync({
   migratedImportedAt,
   pendingImportedAt,
 }: SyncInput): CollectionSyncPlan {
-  // Never a candidate: another account's copy (#739 defect 1), or one this browser
-  // RECEIVED from the server (defect 6), which is already what the server had.
-  const uploadable = local !== null && local.source === 'import' && belongsTo(local, uid);
+  const uploadable = isUploadable(local, uid);
 
   // A copy whose upload was started and never confirmed beats the server row.
   // Ahead of server-wins on purpose (defect 2): that ruling is about two devices
@@ -98,6 +119,11 @@ export function resolveCollectionSync({
   // The copy they deleted is the one the marker names; a NEW import has a
   // different `importedAt` and still uploads (defect 3).
   if (uploadable && local.importedAt !== migratedImportedAt) return 'upload';
+
+  // And it goes here too, as the clear that removed the row would have taken it
+  // (the third ruling above): not uploading it is no longer enough, since an edit
+  // makes a new copy that does upload.
+  if (wasOnAccount(local, uid, migratedImportedAt)) return 'drop-local';
 
   return 'none';
 }
