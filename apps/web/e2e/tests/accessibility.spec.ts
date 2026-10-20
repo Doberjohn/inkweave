@@ -86,8 +86,8 @@ test.describe('Accessibility — axe audits', () => {
  * 400% zoom) must not scroll sideways. The ink pages rendered the desktop header on phones, and
  * its nav ran off the edge, Reveals pill first: the clock starts in the reveal season so the pill
  * shows whatever the date. The viewport is set in each test, so it runs on every project, the
- * chromium-only pre-push included. The WebKit projects draw a classic scrollbar, so there the page
- * must fit in the 312px beside it: body's `min-width: 320px` made it 8px too wide.
+ * chromium-only pre-push included. Desktop WebKit draws a classic scrollbar, so there the page must
+ * fit in the 312px beside it: body's `min-width: 320px` made it 8px too wide.
  */
 test.describe('Accessibility: reflow at 320px', () => {
   // Each page with the items of its grid: the ink cards, and the ink's card tiles.
@@ -104,12 +104,16 @@ test.describe('Accessibility: reflow at 320px', () => {
       const items = page.locator(itemSelector);
       await expect(items.first()).toBeVisible();
 
-      // Against the visual viewport: on the phone projects the layout viewport, and innerWidth with
-      // it, widens to fit whatever sticks out, so they would never see the page scroll.
-      const overflow = await page.evaluate(
-        () => document.documentElement.scrollWidth - window.visualViewport!.width,
-      );
-      expect(overflow).toBeLessThanOrEqual(0);
+      // Against documentElement.clientWidth, as the other sideways-scroll checks are: on the phone
+      // projects innerWidth widens to fit whatever sticks out, and on mobile-safari the visual
+      // viewport measures 8px narrower than the layout one.
+      const widths = await page.evaluate(() => ({
+        scroll: document.documentElement.scrollWidth,
+        client: document.documentElement.clientWidth,
+        inner: window.innerWidth,
+        visual: window.visualViewport!.width,
+      }));
+      expect(widths.scroll, JSON.stringify(widths)).toBeLessThanOrEqual(widths.client);
 
       // Nor may the grid's items run past its edge into the page's gutter: the ink cards' 300px
       // columns did, ending flush with the screen's edge, so the page itself never scrolled.
