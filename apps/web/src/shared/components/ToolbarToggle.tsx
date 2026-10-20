@@ -1,5 +1,5 @@
 import {CtaButton} from './CtaButton';
-import {COLORS, hexRgba} from '../constants';
+import {GOLD_GLOW} from '../constants';
 
 type CtaButtonProps = React.ComponentProps<typeof CtaButton>;
 
@@ -11,7 +11,7 @@ interface ToolbarToggleProps extends Omit<CtaButtonProps, 'variant'> {
 
 /** The filled look's warm glow, softer on phones. */
 function glow(isMobile: boolean | undefined): string {
-  const tint = hexRgba(COLORS.primary, 0.15);
+  const tint = GOLD_GLOW.activeBg;
   return isMobile ? `0px 6px 10px 0px ${tint}` : `0px 8px 12px 0px ${tint}, 0px 3px 5px 0px ${tint}`;
 }
 
