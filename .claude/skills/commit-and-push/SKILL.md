@@ -17,12 +17,14 @@ If the report shows **NOT READY**, fix the blocking issues first. Do NOT proceed
 
 ## Step 0b: Engine validation (conditional)
 
-Check if any files in `packages/synergy-engine/src/` are in the diff:
+Check if any files under `packages/synergy-engine/src/` changed, untracked ones included:
 ```bash
-git diff --name-only HEAD | grep "packages/synergy-engine/src/"
+git status --porcelain -- packages/synergy-engine/src/
 ```
 
-If engine files were changed, launch the `engine-validator` agent to run the full engine pipeline (build → test → precompute → audit scores). Wait for its report before proceeding.
+Use `git status`, not `git diff`, for the reason Step 0c gives: new files stay untracked until they are staged.
+
+If it lists any file, launch the `engine-validator` agent to run the full engine pipeline (build → test → precompute → audit scores). Wait for its report before proceeding.
 
 ## Step 0c: Supabase validation (conditional)
 
