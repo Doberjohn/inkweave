@@ -7,6 +7,7 @@ import {
   FONT_SIZES,
   RADIUS,
   SPACING,
+  TOUCH_TARGET,
   hexRgba,
   whiteRgba,
 } from '../../../shared/constants';
@@ -56,7 +57,7 @@ function getTabColor({isActive, isHovered, accent}: TabStyleInput): string {
 function getTabStyle(input: TabStyleInput): React.CSSProperties {
   return {
     flex: 1,
-    minHeight: 44,
+    minHeight: TOUCH_TARGET,
     borderRadius: RADIUS.lg,
     border: getTabBorder(input),
     background: getTabBackground(input),

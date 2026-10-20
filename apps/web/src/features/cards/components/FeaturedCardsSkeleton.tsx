@@ -39,7 +39,7 @@ export function FeaturedCardsSkeleton({isMobile = false}: FeaturedCardsSkeletonP
           display: 'flex',
           alignItems: 'center',
           gap: `${SPACING.md}px`,
-          marginBottom: isMobile ? 20 : 32,
+          marginBottom: isMobile ? SPACING.xl : SPACING.xxxl,
         }}>
         <DividerLine />
         <div

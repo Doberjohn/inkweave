@@ -4,6 +4,7 @@ import {
   EASING,
   FONT_SIZES,
   RADIUS,
+  TABULAR,
   hexRgba,
   whiteRgba,
 } from '../../../shared/constants';
@@ -85,8 +86,8 @@ const TAB_LABEL_STYLE: React.CSSProperties = {
 };
 
 const TAB_SCORE_STYLE: React.CSSProperties = {
+  ...TABULAR,
   fontSize: FONT_SIZES.displaySm,
-  fontWeight: 800,
+  fontWeight: 700,
   lineHeight: 1,
-  fontFeatureSettings: '"tnum"',
 };
