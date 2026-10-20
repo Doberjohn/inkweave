@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {COLORS, EASING, FONTS, SPACING, hexRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, SPACING, hexRgba} from '../../../shared/constants';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
 import type {Score} from '../../../shared/lib/supabase';
 import type {VotingPair} from '../types';
@@ -96,7 +96,7 @@ function MysteryBadge({selectedScore, size}: {selectedScore: Score | null; size:
       className="pair-mystery-pulse">
       <span
         style={{
-          fontSize: size > 40 ? 20 : 16,
+          fontSize: size > 40 ? FONT_SIZES.xxl : FONT_SIZES.xl,
           fontWeight: 700,
           color,
           fontFamily: FONTS.body,

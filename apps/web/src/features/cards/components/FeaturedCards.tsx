@@ -55,7 +55,7 @@ function getSectionLabelRow(isMobile: boolean): React.CSSProperties {
     display: 'flex',
     alignItems: 'center',
     gap: `${SPACING.md}px`,
-    marginBottom: isMobile ? 20 : 32,
+    marginBottom: isMobile ? SPACING.xl : SPACING.xxxl,
   };
 }
 
