@@ -14,6 +14,7 @@ export {useScrollSnapIndex} from './useScrollSnapIndex';
 export {useBackOrNavigate} from './useBackOrNavigate';
 export {
   usePrintingSelection,
+  printedCardNumber,
   printingAlt,
   printingsOf,
   hasForeignScan,

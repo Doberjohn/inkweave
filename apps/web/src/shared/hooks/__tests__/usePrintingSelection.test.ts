@@ -4,6 +4,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {createCard} from '../../test-utils';
 import {trackEvent} from '../../lib/analytics';
 import {
+  printedCardNumber,
   printingAlt,
   printingName,
   printingSpokenName,
@@ -214,6 +215,35 @@ describe('printingAlt', () => {
     const [, sameRarity] = printingsOf(violet);
 
     expect(printingAlt(violet, sameRarity)).toBe('Violet Parr - Super Resilient, Alt foil printing');
+  });
+});
+
+describe('printedCardNumber', () => {
+  it("reads the card's own number out of its set's printed size, which is 207 for Set 13", () => {
+    expect(printedCardNumber(createCard({setCode: '12', setNumber: 52}))).toBe('52/204');
+    expect(printedCardNumber(createCard({setCode: '13', setNumber: 12}))).toBe('12/207');
+  });
+
+  it("reads a chase printing's own number, and a promo's code, its own card's too", () => {
+    const card = createCard({
+      setCode: '9',
+      setNumber: 6,
+      variants: [
+        {id: 'e', rarity: 'Enchanted', number: 223},
+        {id: 'p', rarity: 'Special', number: 25, promoGrouping: 'P1'},
+      ],
+    });
+    const [standard, enchanted, promo] = printingsOf(card);
+
+    expect(printedCardNumber(card, standard)).toBe('6/204');
+    expect(printedCardNumber(card, enchanted)).toBe('223/204');
+    expect(printedCardNumber(card, promo)).toBe('25/P1');
+    expect(printedCardNumber(createCard({rarity: 'Special', setCode: 'P2', setNumber: 15}))).toBe('15/P2');
+  });
+
+  it("reads nothing when the number or its set's size is unknown", () => {
+    expect(printedCardNumber(createCard({setCode: '15', setNumber: 3}))).toBeUndefined();
+    expect(printedCardNumber(createCard({setCode: '12', setNumber: undefined}))).toBeUndefined();
   });
 });
 

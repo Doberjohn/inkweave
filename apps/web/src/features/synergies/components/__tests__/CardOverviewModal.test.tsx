@@ -469,6 +469,17 @@ test('a card with an alternate printing shows the one picked, and records it', a
   });
 });
 
+test('the header reads the number printed on the printing on show', async () => {
+  Element.prototype.scrollTo = vi.fn();
+  const user = userEvent.setup();
+  renderPrintingModal({...withEnchanted(makeCard('b')), setCode: '9', setNumber: 1});
+  const header = screen.getByRole('banner');
+
+  expect(header).toHaveTextContent('Card number 1/204');
+  await user.click(screen.getByRole('radio', {name: 'Enchanted'}));
+  expect(header).toHaveTextContent('Card number 223/204');
+});
+
 test('a swiped printing is recorded once it comes to rest, not as the swipe crosses it', () => {
   Element.prototype.scrollTo = vi.fn();
   vi.mocked(trackEvent).mockClear();

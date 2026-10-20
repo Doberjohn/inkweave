@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import type {CardPrinting, LorcanaCard} from 'inkweave-synergy-engine';
 import {PROMO_RARITY, isChaseRarity} from '../../features/cards/loader';
+import {SET_PRINTED_SIZES} from '../constants';
 import {trackEvent} from '../lib/analytics';
 
 /** One printing of a card: its Standard art, or one of its alternate printings (#625). */
@@ -57,6 +58,26 @@ type PrintingFacts = Pick<Printing, 'number' | 'promoGrouping' | 'finish'> & {ar
 export function promoCode({number, promoGrouping, artVariant = ''}: PrintingFacts): string {
   if (promoGrouping === undefined) return number === undefined ? 'Promo' : `#${number}`;
   return number === undefined ? promoGrouping : `${number}${artVariant}/${promoGrouping}`;
+}
+
+/** A number out of the card's set's printed size, "52/204"; none when either is unknown. */
+function numberOutOfSet(card: LorcanaCard, number: number | undefined): string | undefined {
+  const size = SET_PRINTED_SIZES[card.setCode ?? ''];
+  return number === undefined || size === undefined ? undefined : `${number}/${size}`;
+}
+
+/**
+ * The number printed on a card's printing (owner, 2026-10-20: the card window's header shows
+ * it): the Standard printing's collector number out of its set's size, "52/204", a chase or
+ * alt foil printing's own number, "223/204", and a promo's code, "25/P1", as is a promo card's
+ * own (#805). None when it is not known.
+ */
+export function printedCardNumber(card: LorcanaCard, printing?: Printing): string | undefined {
+  if (printing?.rarity === undefined) {
+    if (card.rarity !== PROMO_RARITY) return numberOutOfSet(card, card.setNumber);
+    return promoCode({number: card.setNumber, promoGrouping: card.setCode});
+  }
+  return printing.promoGrouping === undefined ? numberOutOfSet(card, printing.number) : promoCode(printing);
 }
 
 /**

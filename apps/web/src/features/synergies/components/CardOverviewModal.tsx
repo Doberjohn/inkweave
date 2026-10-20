@@ -1,4 +1,4 @@
-import {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {useContext, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {SynergyGroup} from './SynergyGroup';
@@ -1102,13 +1102,14 @@ interface ModalHeaderProps {
 function ModalHeader(props: ModalHeaderProps) {
   const {card, isMobile, inComparison, hideBackButton, onClose, exitComparison, initialFocusRef, showExpanded} = props;
   const showBack = inComparison && !hideBackButton;
+  const printing = useContext(CardPrintingContext);
   return (
     <header style={MODAL_HEADER_STYLE}>
       {showBack ? (
         // As tall as the title's set logo on desktop, so opening a comparison keeps the header's height.
         <BackButton onClick={exitComparison} minHeight={isMobile ? undefined : LOGO_HEIGHT} />
       ) : (
-        <ModalCardTitle card={card} isMobile={isMobile} />
+        <ModalCardTitle card={card} isMobile={isMobile} printing={printing?.printings[printing.index]} />
       )}
       {/* Spacer pushes close button to the right when BACK is in the slot (BACK doesn't have flex:1) */}
       {inComparison && <div style={{flex: 1}} />}

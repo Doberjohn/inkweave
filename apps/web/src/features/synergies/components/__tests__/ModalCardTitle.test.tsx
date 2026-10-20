@@ -17,7 +17,21 @@ describe('ModalCardTitle', () => {
   });
 
   it('shows the name alone on phones, where the logo would wrap the title', () => {
-    render(<ModalCardTitle card={createCard({setCode: '11'})} isMobile />);
+    render(<ModalCardTitle card={createCard({setCode: '11', setNumber: 52})} isMobile />);
     expect(screen.queryByRole('img')).toBeNull();
+    expect(screen.queryByText('52/204')).toBeNull();
+  });
+
+  it('reads the number printed on the printing on show after the logo, outside the heading', () => {
+    const card = createCard({fullName: 'Thomas - Wide-Eyed Recruit', setCode: '11', setNumber: 52});
+    const {rerender} = render(<ModalCardTitle card={card} isMobile={false} />);
+
+    const number = screen.getByText('52/204');
+    expect(number.textContent).toBe('Card number 52/204');
+    expect(screen.getByRole('img', {name: 'Winterspell'}).nextElementSibling).toBe(number);
+    expect(screen.getByRole('heading', {level: 1}).textContent).toBe('Thomas - Wide-Eyed Recruit');
+
+    rerender(<ModalCardTitle card={card} isMobile={false} printing={{key: 'e', label: 'Enchanted', rarity: 'Enchanted', number: 223}} />);
+    expect(screen.getByText('223/204')).toBeInTheDocument();
   });
 });
