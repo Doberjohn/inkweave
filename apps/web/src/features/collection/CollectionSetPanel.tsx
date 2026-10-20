@@ -7,8 +7,9 @@ import {usePrefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
 import {RaritySymbol} from '../reveals/RaritySymbol';
 import {rarityLabel} from '../cards/filterOptions';
 import {isFinished, percentOf, type tallyCollection, type tallySet} from './collectionStats';
-import {WHOLE_COLLECTION, isPromoSet, setName, type BinderShow} from './binderCards';
+import {ALL_PROMO_SETS, WHOLE_COLLECTION, isPromoScope, scopeName, type BinderShow} from './binderCards';
 import {SetPicker, type SetPickerProps} from './SetPicker';
+import {Segment, Segments} from './Segments';
 import {SIDE_PANEL_STYLE} from '../cards/components/BrowseSidePanel';
 import {
   ALL_INKS,
@@ -97,13 +98,15 @@ const count = (n: number) => n.toLocaleString('en-US');
 
 /** Which set the binder shows, and the sets it can show. */
 export interface SetSwitching {
-  /** The set the binder shows, or `WHOLE_COLLECTION` for every set at once. */
+  /** The set the binder shows, `WHOLE_COLLECTION` for every set at once, or `ALL_PROMO_SETS`. */
   setCode: string;
   /** The sets the binder can show; just the current one while the list loads. */
   sets: string[];
   /** True while the real list is still loading. */
   setsLoading: boolean;
   onSetChange: (set: string) => void;
+  /** The page's Rarity filter picks the promos: the set picker's whole collection opens on Promo. */
+  picksPromos?: boolean;
 }
 
 /** What the binder shows, and how to change it. */
@@ -471,16 +474,26 @@ function RarityRows({slots, axis, wide, delay}: BreakdownSlots<Tally['byRarity']
   );
 }
 
-/** What a scope's numbers need: a set's tally or the whole collection's totals, one shape, and the headlines' noun. */
+/** What a scope's numbers need: a set's tally or a scope's totals, one shape, and the headlines' noun. */
 type ScopeFigures = Tally & {
-  /** "set" or "collection"; none while filtered, since the cards counted are neither. */
+  /** "set", "collection" or "promos"; none while filtered, since the cards counted are none of those. */
   noun: string | undefined;
 };
 
+/** The headlines' nouns for the scopes spanning sets: "Complete promos" (owner, 2026-10-20). Any set's is "set". */
+const SPAN_NOUNS: Record<string, string> = {[WHOLE_COLLECTION]: 'collection', [ALL_PROMO_SETS]: 'promos'};
+
 /** The headlines' noun for what the picker shows, or none while the page filters. */
-function headlineNoun({whole, filtered}: {whole: boolean; filtered: boolean}): string | undefined {
+function headlineNoun({setCode, filtered}: {setCode: string; filtered: boolean}): string | undefined {
   if (filtered) return undefined;
-  return whole ? 'collection' : 'set';
+  return SPAN_NOUNS[setCode] ?? 'set';
+}
+
+/** What the picker shows, counted: the whole collection's totals, every promo set's, or the set's own tally. */
+function scopeTally(stats: CollectionStats, setCode: string) {
+  if (setCode === WHOLE_COLLECTION) return stats.totals;
+  if (setCode === ALL_PROMO_SETS) return stats.promoTotals;
+  return stats.sets.find((set) => set.code === setCode)?.tally;
 }
 
 interface ScopeNumbersProps extends AxisChoice {
@@ -564,16 +577,16 @@ interface NumbersProps extends AxisChoice {
   filtered: boolean;
 }
 
-/** The numbers for what the picker shows: the whole collection, or the open set. */
+/** The numbers for what the picker shows: the whole collection, every promo set, or the open set. */
 function Numbers({stats, setCode, filtered, axis, onAxisChange}: NumbersProps) {
-  const promo = isPromoSet(setCode);
+  const promo = isPromoScope(setCode);
   if (stats === null) return <NumbersLoading promo={promo} />;
-  const whole = setCode === WHOLE_COLLECTION;
-  const tally = whole ? stats.totals : stats.sets.find((set) => set.code === setCode)?.tally;
+  const tally = scopeTally(stats, setCode);
   if (!tally) return <NumbersLoading promo={promo} />;
-  const figures = {...tally, noun: headlineNoun({whole, filtered})};
+  const figures = {...tally, noun: headlineNoun({setCode, filtered})};
   if (figures.cards > 0) {
-    return <ScopeNumbers figures={figures} wide={whole} promo={promo} axis={axis} onAxisChange={onAxisChange} />;
+    const wide = setCode === WHOLE_COLLECTION;
+    return <ScopeNumbers figures={figures} wide={wide} promo={promo} axis={axis} onAxisChange={onAxisChange} />;
   }
   // Filters that leave no card: said in words, since 0% of nothing would read as owning none.
   // The count line above the numbers otherwise went (owner, 2026-10-15).
@@ -619,89 +632,59 @@ const SHOW_OPTIONS: {value: BinderShow; label: string}[] = [
   {value: 'missing', label: 'Missing'},
 ];
 
-const SEGMENTS_STYLE: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
-  gap: SPACING.xs,
-  padding: SPACING.xs,
-  borderRadius: `${RADIUS.lg}px`,
-  background: COLORS.surfaceAlt,
-  border: `1px solid ${COLORS.surfaceBorder}`,
-};
-
-/** The kit's neutral button as one segment: gold while chosen, washed on hover. */
-function segmentStyle(active: boolean, hovered: boolean): CSSProperties {
-  return {
-    height: 32,
-    minHeight: 32,
-    padding: 0,
-    borderRadius: `${RADIUS.md}px`,
-    border: `1px solid ${active ? GOLD_GLOW.activeBorder : 'transparent'}`,
-    background: active ? GOLD_GLOW.activeBg : hovered ? GOLD_GLOW.hoverBg : 'transparent',
-    boxShadow: active ? GOLD_GLOW.shadow : 'none',
-    color: active ? COLORS.primary : hovered ? COLORS.text : COLORS.textMuted,
-    fontSize: `${FONT_SIZES.lg}px`,
-    fontWeight: 600,
-    // Segments don't boop, as chips don't.
-    transform: undefined,
-    transition: `background 0.15s ${EASING.snappy}, color 0.15s ${EASING.snappy}`,
-  };
-}
-
-function Segment({label, active, onSelect}: {label: string; active: boolean; onSelect: () => void}) {
-  const {hovered, hoverProps} = useHover();
-  return (
-    <CtaButton variant="neutral" {...hoverProps} aria-pressed={active} onClick={onSelect} style={segmentStyle(active, hovered)}>
-      {label}
-    </CtaButton>
-  );
-}
-
 /** What the binder shows: every card, the ones you hold, or the ones you are missing. */
 function BinderShows({show, onShowChange}: BinderView) {
   return (
-    <div role="group" aria-label="Binder shows" style={SEGMENTS_STYLE}>
+    <Segments label="Binder shows" columns="repeat(3, 1fr)">
       {SHOW_OPTIONS.map(({value, label}) => (
         <Segment key={value} label={label} active={show === value} onSelect={() => onShowChange(value)} />
       ))}
-    </div>
+    </Segments>
   );
 }
 
 /**
- * The picker's view of the panel's props: each set's progress and the whole collection's,
- * once the pool is in. Filtered, they are the filtered cards' too (owner, 2026-10-15), so
- * the list says which sets the cards still missing are in.
+ * The picker's view of the panel's props: each set's progress, the whole collection's and
+ * every promo set's, once the pool is in. Filtered, they are the filtered cards' too (owner,
+ * 2026-10-15), so the list says which sets the cards still missing are in.
  */
-function pickerProps({setCode, sets, setsLoading, onSetChange, stats}: CollectionSetPanelProps): SetPickerProps {
+function pickerProps({setCode, sets, setsLoading, onSetChange, stats, picksPromos}: CollectionSetPanelProps): SetPickerProps {
   const progress = stats
     ? new Map<string, {complete: number; cards: number}>([
         [WHOLE_COLLECTION, stats.totals],
+        [ALL_PROMO_SETS, stats.promoTotals],
         ...stats.sets.map((set) => [set.code, set.tally] as const),
       ])
     : null;
-  return {setCode, sets, setsLoading, onSetChange, progress};
+  return {setCode, sets, setsLoading, onSetChange, progress, picksPromos};
 }
 
 /**
  * The panel body: the set picker and what the binder shows, then the numbers. The same
  * docked beside the binder (desktop) and over it from the tablet rail. Its container is a
  * column with `SIDE_PANEL_STYLE`'s padding; the numbers fill what is left of it.
+ *
+ * DOCKED, THE PICKER SITS IN THE TOOLBAR (owner, 2026-10-20), beside Collection
+ * (`ToolbarSetPicker`), and the panel starts at what the binder shows.
  */
-export function CollectionSetBody(props: CollectionSetPanelProps) {
+export function CollectionSetBody({withPicker = true, ...props}: CollectionSetPanelProps & {withPicker?: boolean}) {
   return (
     <>
-      <SetPicker {...pickerProps(props)} />
+      {withPicker && <SetPicker {...pickerProps(props)} />}
       <BinderShows show={props.show} onShowChange={props.onShowChange} />
       <NumbersRegion stats={props.stats} setCode={props.setCode} filtered={props.filtered ?? false} />
     </>
   );
 }
 
-/** The headline figures of what the picker shows, the open set's or the whole collection's, once the pool is in. */
+/** The set picker as the desktop toolbar holds it, beside Collection: a short label with no picture, as tall as Collection. */
+export function ToolbarSetPicker(props: CollectionSetPanelProps) {
+  return <SetPicker {...pickerProps(props)} compact />;
+}
+
+/** The headline figures of what the picker shows, once the pool is in. */
 function shownTally(props: CollectionSetPanelProps) {
-  if (props.setCode === WHOLE_COLLECTION) return props.stats?.totals ?? null;
-  return props.stats?.sets.find((set) => set.code === props.setCode)?.tally ?? null;
+  return props.stats ? (scopeTally(props.stats, props.setCode) ?? null) : null;
 }
 
 /** What the rail and the strip read of a tally: its two headlines. */
@@ -769,9 +752,9 @@ export function CollectionSetRail(props: CollectionSetPanelProps) {
           color: COLORS.textMuted,
           letterSpacing: '0.08em',
         }}>
-        {props.setCode === WHOLE_COLLECTION ? 'Whole collection' : setName(props.setCode)}
+        {scopeName(props.setCode)}
         {props.filtered && ' · filtered'}
-        {t !== null && ` · ${railFigures(t, isPromoSet(props.setCode))}`}
+        {t !== null && ` · ${railFigures(t, isPromoScope(props.setCode))}`}
       </span>
       {open && (
         <div style={{...panelStyle, position: 'absolute', left: RAIL_WIDTH + SPACING.xs, top: 0, height: '100%', zIndex: 5}}>
@@ -800,7 +783,7 @@ export function CollectionSetStrip(props: CollectionSetPanelProps) {
           <ToggleNumbers
             open={open}
             onToggle={() => setOpen(!open)}
-            figures={stripFigures(t, isPromoSet(props.setCode))}
+            figures={stripFigures(t, isPromoScope(props.setCode))}
           />
         )}
       </div>

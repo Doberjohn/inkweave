@@ -6,16 +6,28 @@ import {
   type CSSProperties,
   type FocusEvent,
   type KeyboardEvent,
-  type ReactNode,
+  type MouseEvent,
   type RefObject,
 } from 'react';
 import {CtaButton} from '../../shared/components';
 import {useHover} from '../../shared/hooks/useHover';
 import {RaritySymbol} from '../reveals/RaritySymbol';
+import loreSymbol from '../../assets/lore.webp?no-inline';
 import {isFinished, percentOf} from './collectionStats';
-import {WHOLE_COLLECTION, isPromoSet, setLabel, setName} from './binderCards';
 import {
-  CAP_LABEL,
+  ALL_PROMO_SETS,
+  WHOLE_COLLECTION,
+  isPromoScope,
+  isPromoSet,
+  scopeName,
+  setLabel,
+  setName,
+  spansSets,
+} from './binderCards';
+import {Segment, Segments} from './Segments';
+import {useCloseOnPressOutside} from './useCloseOnPressOutside';
+import {SIDE_PANEL_WIDTH} from '../cards/components/BrowseSidePanel';
+import {
   COLORS,
   EASING,
   FONT_SIZES,
@@ -35,7 +47,7 @@ interface Progress {
 }
 
 export interface SetPickerProps {
-  /** The set the binder shows, or `WHOLE_COLLECTION`. */
+  /** The set the binder shows, `WHOLE_COLLECTION` or `ALL_PROMO_SETS`. */
   setCode: string;
   /** The sets the binder can show, newest first. */
   sets: string[];
@@ -43,55 +55,124 @@ export interface SetPickerProps {
   setsLoading: boolean;
   onSetChange: (set: string) => void;
   /**
-   * Each set's progress by code, and the whole collection's under `WHOLE_COLLECTION`,
-   * once the pool is in, so each row can show its percentage.
+   * Each set's progress by code, the whole collection's under `WHOLE_COLLECTION` and every
+   * promo set's under `ALL_PROMO_SETS`, once the pool is in, so each row can show its percentage.
    */
   progress: ReadonlyMap<string, Progress> | null;
+  /**
+   * The toolbar's button beside Collection (desktop, owner 2026-10-20): as tall as the
+   * toolbar's controls, a short label and no picture, rather than the panel's two lines.
+   */
+  compact?: boolean;
+  /** The page's Rarity filter picks the promos: the whole collection's menu opens on Promo. */
+  picksPromos?: boolean;
 }
 
-/** What the picker calls a choice: "Whole collection", "Set 11, Winterspell", or "Promo set P1, Promo Set 1". */
-const choiceLabel = (choice: string) => (choice === WHOLE_COLLECTION ? 'Whole collection' : setLabel(choice));
+/**
+ * What the picker calls a choice: "Whole collection", "All promo sets", "Set 11, Winterspell",
+ * or "Promo set P1, Promo Set 1".
+ */
+const choiceLabel = (choice: string) => (spansSets(choice) ? scopeName(choice) : setLabel(choice));
+
+/** The menu's first row in either tab (owner, 2026-10-20): the whole collection, or every promo set. */
+const ALL_SETS = 'All sets';
 
 /**
- * Room for a two-line name ("Attack of the Vine!") under the set's number, so switching
- * sets never moves what sits below the picker.
+ * The picker's own words for a scope spanning sets: the toolbar button's, in its 71px, and
+ * the name that holds them, and the menu's first row's name, which holds its "All sets".
  */
-const TRIGGER_HEIGHT = 72;
+const SPAN_WORDS: Record<string, {compact: string; compactName: string; rowName: string}> = {
+  [WHOLE_COLLECTION]: {compact: ALL_SETS, compactName: 'All sets, the whole collection', rowName: 'All sets, the whole collection'},
+  [ALL_PROMO_SETS]: {compact: 'Promos', compactName: 'Promos, every promo set', rowName: 'All sets, every promo set'},
+};
 
 /** The logo's box. Logos run from 1.4:1 to 3.3:1, so the box is fixed and the art contained. */
 const LOGO_BOX: CSSProperties = {width: 64, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center'};
 
+/** The button's geometry where it is drawn. */
+interface TriggerGeometry {
+  height: number;
+  /** The picture's box. Without one, the button holds its words alone. */
+  logoBox?: CSSProperties;
+  /** The chevron's drawn size; its column is its width. */
+  chevron: {width: number; height: number};
+  gap: number;
+  padding: string;
+}
+
 /**
- * About eleven rows, past which the list scrolls. Half the window at most, so on a short
- * laptop (about 650px tall) the list still ends inside the panel it opens over.
+ * The panel's two-line button: room for a two-line name ("Attack of the Vine!") under the
+ * set's number, so switching sets never moves what sits below the picker.
  */
-const LIST_MAX_HEIGHT = 'min(440px, 50vh)';
+const PANEL_TRIGGER: TriggerGeometry = {
+  height: 72,
+  logoBox: LOGO_BOX,
+  chevron: {width: 14, height: 8},
+  gap: SPACING.sm,
+  padding: `${SPACING.sm}px ${SPACING.md}px ${SPACING.sm}px ${SPACING.sm}px`,
+};
+
+/**
+ * The toolbar's button: as tall as Collection beside it (`ToolbarToggle`), in the 111px the
+ * set panel's width leaves it beside Collection and the gear (owner, 2026-10-20). Its words
+ * alone, with no picture (owner, 2026-10-20), and the select's small chevron: 71px for the
+ * label.
+ */
+const TOOLBAR_TRIGGER: TriggerGeometry = {
+  height: 34,
+  chevron: {width: 10, height: 6},
+  gap: SPACING.xs,
+  padding: `0 ${SPACING.md}px`,
+};
+
+/**
+ * The tabs and about ten rows, past which the list scrolls. Half the window at most, so on
+ * a short laptop (about 650px tall) the menu still ends inside the panel it opens over.
+ */
+const MENU_MAX_HEIGHT = 'min(440px, 50vh)';
 
 /**
  * The binder's set picker (owner, 2026-10-12, layout B of `public/mockups/collection-panel-tabs.html`):
- * a button with the open set's logo and name, opening a list of every set with how far
- * through it you are. The one place the binder's set is chosen.
+ * a button with the open set's logo and name, opening a list of the sets with how far
+ * through each you are. The one place the binder's set is chosen.
  *
- * "WHOLE COLLECTION" IS PINNED FIRST (owner, 2026-10-12), held at the top while the sets
- * scroll under it: it puts every set in the binder and the panel's numbers, where tabs
- * used to switch the numbers alone.
+ * THE MENU OPENS ON TABS, STANDARD / PROMO (owner, 2026-10-20), drawn as All / Owned /
+ * Missing are, Promo with the promo symbol; their lists are named in full, Standard sets
+ * and Promo sets. Each list starts with All sets: under Standard the whole collection,
+ * every set in the binder and the panel's numbers (owner, 2026-10-12; it was a row pinned
+ * over the sets, then a tab of its own), and under Promo every promo set (owner,
+ * 2026-10-20, `ALL_PROMO_SETS`). The menu opens on the open choice's tab, Standard for
+ * the whole collection, or Promo while the page's Rarity filter picks the promos.
  *
- * THE PROMO SETS FOLLOW THE SETS, UNDER A "PROMO SETS" HEADING (owner, 2026-10-17, option A
- * of `public/mockups/collection-promos.html`, #805), newest first as the sets go, each by
- * the code printed on its cards where a set has its number, Curator's Collection by CC, the
- * letters its editions' codes share (owner, 2026-10-19). The button shows the promo symbol
- * for a logo.
+ * A PROMO SET IS LISTED BY THE CODE PRINTED ON ITS CARDS (owner, 2026-10-17, #805), where a
+ * set has its number, newest first as the sets go, and Curator's Collection by CC, the
+ * letters its editions' codes share (owner, 2026-10-19). The two-line button shows the promo
+ * symbol for a logo.
  *
- * A listbox in the select's manner: opening focuses the open set, the arrows, Home and End
- * move through the list, Escape closes it and gives focus back to the button, and Tab or a
- * press outside closes it.
+ * ON DESKTOP IT SITS IN THE TOOLBAR, BESIDE COLLECTION (owner, 2026-10-20): it, Collection and
+ * the collection's actions span the set panel as Filters and the sort span the filters panel,
+ * so it is 111px wide and as tall as Collection, a short label with no picture (`compact`):
+ * "All sets", "Set 13" or "P1". Its menu stays the panel's width. The set panel starts at
+ * what the binder shows. The tablet rail's panel and the phone strip keep the two-line button.
+ *
+ * A popup in the select's manner: opening focuses the open choice. Up, down, Home and End
+ * move down a column, the chosen tab over the sets, and left and right move along the
+ * tabs. Escape closes it and gives focus back to the button, and Tab or a press outside
+ * closes it.
  */
-export function SetPicker({setCode, sets, setsLoading, onSetChange, progress}: SetPickerProps) {
+export function SetPicker({
+  setCode,
+  sets,
+  setsLoading,
+  onSetChange,
+  progress,
+  compact = false,
+  picksPromos = false,
+}: SetPickerProps) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const listId = useId();
+  const menuId = useId();
   useCloseOnPressOutside(open, wrapperRef, setOpen);
-  useFocusOpenSetOnOpen(open, wrapperRef);
 
   const close = () => {
     setOpen(false);
@@ -101,7 +182,7 @@ export function SetPicker({setCode, sets, setsLoading, onSetChange, progress}: S
     onSetChange(set);
     close();
   };
-  /** Escape closes the list back onto the button. Ours alone: the page must not also act on it. */
+  /** Escape closes the menu back onto the button. Ours alone: the page must not also act on it. */
   const closeOnEscape = (e: KeyboardEvent) => {
     if (e.key !== 'Escape') return false;
     e.preventDefault();
@@ -109,7 +190,7 @@ export function SetPicker({setCode, sets, setsLoading, onSetChange, progress}: S
     close();
     return true;
   };
-  /** Keyboard focus leaving the picker closes the list. A press outside is the effect's: see there. */
+  /** Keyboard focus leaving the picker closes the menu. A press outside is the effect's: see there. */
   const closeOnLeave = (e: FocusEvent) => {
     if (e.relatedTarget instanceof Node && !wrapperRef.current?.contains(e.relatedTarget)) setOpen(false);
   };
@@ -123,138 +204,184 @@ export function SetPicker({setCode, sets, setsLoading, onSetChange, progress}: S
     }
   }
 
-  function onListKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+  function onMenuKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (closeOnEscape(e)) return;
     if (e.key === 'Tab') setOpen(false);
     else if (moveFocus(e.currentTarget, e.key)) e.preventDefault();
   }
 
-  const option = (set: string) => (
-    <SetOption key={set} setCode={set} progress={progress?.get(set)} selected={set === setCode} onPick={pick} />
-  );
-  const promoSets = sets.filter(isPromoSet);
-
   return (
     <div ref={wrapperRef} style={{position: 'relative'}}>
       <Trigger
         setCode={setCode}
-        setCount={sets.length}
+        sets={sets}
+        compact={compact}
         open={open}
-        listId={listId}
+        menuId={menuId}
         disabled={setsLoading}
         onToggle={() => setOpen(!open)}
         onKeyDown={onButtonKeyDown}
         onBlur={closeOnLeave}
       />
       {open && (
-        <div
-          id={listId}
-          role="listbox"
-          aria-label="Binder set"
-          tabIndex={-1}
-          style={LIST_STYLE}
-          onKeyDown={onListKeyDown}
-          onBlur={closeOnLeave}>
-          <div role="presentation" style={PINNED_STYLE}>
-            <SetOption
-              setCode={WHOLE_COLLECTION}
-              progress={progress?.get(WHOLE_COLLECTION)}
-              selected={setCode === WHOLE_COLLECTION}
-              onPick={pick}
-            />
-          </div>
-          {sets.filter((set) => !isPromoSet(set)).map(option)}
-          {promoSets.length > 0 && <PromoSets>{promoSets.map(option)}</PromoSets>}
-        </div>
+        <SetMenu
+          id={menuId}
+          setCode={setCode}
+          sets={sets}
+          progress={progress}
+          picksPromos={picksPromos}
+          onPick={pick}
+          onKeyDown={onMenuKeyDown}
+          onBlur={closeOnLeave}
+        />
       )}
     </div>
   );
 }
 
-/** The heading over the promo sets: the list's capitals, at the panel's 13px floor, ruled off from the sets. */
-const GROUP_LABEL_STYLE: CSSProperties = {
-  ...CAP_LABEL,
-  fontSize: `${FONT_SIZES.base}px`,
-  padding: `${SPACING.md}px ${SPACING.xs}px ${SPACING.xs}px`,
-  marginTop: SPACING.xs,
-  borderTop: `1px solid ${COLORS.surfaceBorder}`,
-};
+/** Which sets the menu lists. */
+type MenuTab = 'standard' | 'promo';
 
-/** The promo sets' rows, a group under their heading. */
-function PromoSets({children}: {children: ReactNode}) {
+/**
+ * The tab the menu opens on: the open choice's own, Promo for a promo set or every one and
+ * Standard for a set, and for the whole collection Standard, or Promo while the page's
+ * Rarity filter picks the promos (owner, 2026-10-20).
+ */
+function openingTab({setCode, picksPromos}: Pick<SetMenuProps, 'setCode' | 'picksPromos'>): MenuTab {
+  if (isPromoScope(setCode)) return 'promo';
+  return picksPromos && setCode === WHOLE_COLLECTION ? 'promo' : 'standard';
+}
+
+interface SetMenuProps {
+  id: string;
+  setCode: string;
+  sets: string[];
+  progress: SetPickerProps['progress'];
+  picksPromos: boolean;
+  onPick: (set: string) => void;
+  onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
+  onBlur: (e: FocusEvent) => void;
+}
+
+/**
+ * The open menu: the tabs, then the sets the chosen tab lists, All sets first in both
+ * (owner, 2026-10-20). A binder with no promo set has nothing to choose between, so no tabs.
+ */
+function SetMenu({id, setCode, sets, progress, picksPromos, onPick, onKeyDown, onBlur}: SetMenuProps) {
+  const [tab, setTab] = useState<MenuTab>(() => openingTab({setCode, picksPromos}));
+  const menuRef = useRef<HTMLDivElement>(null);
+  useFocusOpenChoiceOnMount(menuRef);
+  const promoSets = sets.filter(isPromoSet);
+  const listed = tab === 'promo' ? promoSets : sets.filter((set) => !isPromoSet(set));
+  // All sets: the whole collection under Standard sets, every promo set under Promo sets.
+  const allSets = tab === 'promo' ? ALL_PROMO_SETS : WHOLE_COLLECTION;
+  /** A list's tab shows its sets and keeps the focus, which Safari doesn't give a pressed button. */
+  const show = (next: MenuTab) => (e: MouseEvent<HTMLButtonElement>) => {
+    setTab(next);
+    e.currentTarget.focus();
+  };
   return (
-    <div role="group" aria-label="Promo sets" style={{display: 'flex', flexDirection: 'column', gap: SPACING.xxs}}>
-      {/* The group's own name says it to assistive tech. */}
-      <div aria-hidden="true" style={GROUP_LABEL_STYLE}>
-        Promo sets
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- the menu's keys: the arrows move through it, Escape and Tab close it
+    <div
+      ref={menuRef}
+      id={id}
+      role="dialog"
+      aria-label="Binder set"
+      tabIndex={-1}
+      style={MENU_STYLE}
+      onKeyDown={onKeyDown}
+      onBlur={onBlur}>
+      {promoSets.length > 0 && (
+        <Segments label="Sets" columns="repeat(2, 1fr)">
+          <Segment
+            label="Standard"
+            icon={<LoreSymbol size={16} />}
+            active={tab === 'standard'}
+            tabIndex={-1}
+            onSelect={show('standard')}
+          />
+          <Segment
+            label="Promo"
+            icon={<RaritySymbol rarity="special" size={16} />}
+            active={tab === 'promo'}
+            tabIndex={-1}
+            onSelect={show('promo')}
+          />
+        </Segments>
+      )}
+      <div role="listbox" aria-label={tab === 'promo' ? 'Promo sets' : 'Standard sets'} tabIndex={-1} style={LIST_STYLE}>
+        <div role="presentation" style={ALL_SETS_STYLE}>
+          <SetOption setCode={allSets} progress={progress?.get(allSets)} selected={setCode === allSets} onPick={onPick} />
+        </div>
+        {listed.map((set) => (
+          <SetOption key={set} setCode={set} progress={progress?.get(set)} selected={set === setCode} onPick={onPick} />
+        ))}
       </div>
-      {children}
     </div>
   );
 }
 
-/**
- * The pinned choice's strip: held at the list's top edge (through its padding) on the
- * list's own ground, ruled off from the sets that scroll under it.
- */
-const PINNED_STYLE: CSSProperties = {
-  position: 'sticky',
-  top: -SPACING.xs,
-  zIndex: 1,
-  margin: `-${SPACING.xs}px -${SPACING.xs}px ${SPACING.xxs}px`,
-  padding: SPACING.xs,
-  background: COLORS.surfaceFloating,
+/** All sets' place at the top of each list, ruled off from the sets under it. */
+const ALL_SETS_STYLE: CSSProperties = {
+  flexShrink: 0,
+  paddingBottom: SPACING.xxs,
+  marginBottom: SPACING.xxs,
   borderBottom: `1px solid ${COLORS.surfaceBorder}`,
 };
 
 /**
- * Where the list puts a row that focus scrolls into view: clear of the pinned strip, where
- * the first set sits at rest. The strip is 45px (a 36px row, its 4px padding above and
- * below, the 1px rule), and 4px more part it from the sets. Without the inset, Arrow Up
- * parks a row under the strip, because the browser counts any row inside the scrollport
- * as in view. Measured in Storybook; the rows' padding and type set it.
+ * Opening puts focus on the open choice's row, in view, as a select does, so the arrows
+ * work at once. Failing that, the chosen tab.
  */
-const PINNED_INSET = 49;
-
-/**
- * Close the list on a press anywhere outside the picker. A press, not a blur: a click
- * doesn't focus a button in Safari, so a blur there can't tell a press outside from a pick.
- */
-function useCloseOnPressOutside(open: boolean, ref: RefObject<HTMLElement | null>, setOpen: (open: boolean) => void) {
+function useFocusOpenChoiceOnMount(ref: RefObject<HTMLElement | null>) {
   useEffect(() => {
-    if (!open) return;
-    const onPress = (e: PointerEvent) => {
-      if (!(e.target instanceof Node && ref.current?.contains(e.target))) setOpen(false);
-    };
-    document.addEventListener('pointerdown', onPress);
-    return () => document.removeEventListener('pointerdown', onPress);
-  }, [open, ref, setOpen]);
+    const menu = ref.current;
+    const choice =
+      menu?.querySelector<HTMLElement>('[role="option"][aria-selected="true"]') ??
+      menu?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    choice?.focus({preventScroll: true});
+    choice?.scrollIntoView?.({block: 'nearest'});
+  }, [ref]);
 }
 
-/** Opening puts focus on the open set, in view, as a select does, so the arrows work at once. */
-function useFocusOpenSetOnOpen(open: boolean, ref: RefObject<HTMLElement | null>) {
-  useEffect(() => {
-    if (!open) return;
-    const selected = ref.current?.querySelector<HTMLElement>('[role="option"][aria-selected="true"]');
-    selected?.focus({preventScroll: true});
-    selected?.scrollIntoView?.({block: 'nearest'});
-  }, [open, ref]);
-}
+type Move = (at: number, last: number) => number;
 
-/** Where each key takes focus in the list, from the focused row and the last row's index. */
-const MOVES: Record<string, (at: number, last: number) => number> = {
+/** Where each key takes focus down the menu's column, from the focused place and the last one's index. */
+const MOVES: Record<string, Move> = {
   ArrowDown: (at, last) => Math.min(at + 1, last),
   ArrowUp: (at) => Math.max(at - 1, 0),
   Home: () => 0,
   End: (_, last) => last,
 };
 
-/** Move focus through the list's rows for a navigation key; false for any other key. */
-function moveFocus(list: HTMLElement, key: string): boolean {
+/** Where the arrows take focus along the tabs. */
+const ALONG: Record<string, Move> = {
+  ArrowRight: (at, last) => Math.min(at + 1, last),
+  ArrowLeft: (at) => Math.max(at - 1, 0),
+};
+
+/**
+ * Move focus through the menu for a navigation key; false for any other key. Left and
+ * right move along the tabs. The rest move down a column: the focused tab, or else the
+ * chosen one, over the list, so up from All sets reaches the tabs.
+ */
+function moveFocus(menu: HTMLElement, key: string): boolean {
+  const tabs = [...menu.querySelectorAll<HTMLElement>('[aria-pressed]')];
+  const onTab = tabs.findIndex((tab) => tab === document.activeElement);
+  if (onTab >= 0 && key in ALONG) {
+    tabs[ALONG[key](onTab, tabs.length - 1)].focus();
+    return true;
+  }
   if (!(key in MOVES)) return false;
-  const rows = [...list.querySelectorAll<HTMLElement>('[role="option"]')];
-  const at = rows.findIndex((row) => row === document.activeElement);
-  rows[MOVES[key](at, rows.length - 1)]?.focus();
+  // With no tabs (no promo set to list), the column is the sets alone.
+  const top = tabs[onTab] ?? tabs.find((tab) => tab.getAttribute('aria-pressed') === 'true');
+  const column = [...(top ? [top] : []), ...menu.querySelectorAll<HTMLElement>('[role="option"]')];
+  // From nowhere in the column (the list's own padding, say), the arrows start at the top.
+  const at = Math.max(
+    column.findIndex((place) => place === document.activeElement),
+    0,
+  );
+  column[MOVES[key](at, column.length - 1)]?.focus();
   return true;
 }
 
@@ -264,17 +391,24 @@ interface Look {
   hovered: boolean;
 }
 
+/** What the button holds: a picture or none, and where it is drawn. */
+interface Shape {
+  withArt: boolean;
+  geometry: TriggerGeometry;
+}
+
 /** The select's own recipe (`SortSelect`): a grey rim, lighter on hover, gold while open. */
-function triggerStyle({on: open, hovered}: Look, withArt: boolean): CSSProperties {
+function triggerStyle({on: open, hovered}: Look, {withArt, geometry}: Shape): CSSProperties {
+  const artColumn = withArt && geometry.logoBox ? `${geometry.logoBox.width}px ` : '';
   return {
     display: 'grid',
-    gridTemplateColumns: `${withArt ? `${LOGO_BOX.width}px ` : ''}minmax(0, 1fr) 14px`,
+    gridTemplateColumns: `${artColumn}minmax(0, 1fr) ${geometry.chevron.width}px`,
     alignItems: 'center',
     justifyContent: 'stretch',
-    gap: SPACING.sm,
+    gap: geometry.gap,
     width: '100%',
-    minHeight: TRIGGER_HEIGHT,
-    padding: `${SPACING.sm}px ${SPACING.md}px ${SPACING.sm}px ${SPACING.sm}px`,
+    minHeight: geometry.height,
+    padding: geometry.padding,
     borderRadius: `${RADIUS.lg}px`,
     border: `1px solid ${open ? GOLD_GLOW.activeBorder : hovered ? COLORS.gray300 : COLORS.surfaceBorder}`,
     background: COLORS.surfaceRaised,
@@ -299,75 +433,117 @@ const NAME_STYLE: CSSProperties = {
 
 interface TriggerProps {
   setCode: string;
-  /** How many sets the binder can show: the whole collection's first line. */
-  setCount: number;
+  /** The sets the binder can show, which a scope spanning them counts on its first line. */
+  sets: readonly string[];
+  compact: boolean;
   open: boolean;
-  listId: string;
+  menuId: string;
   disabled: boolean;
   onToggle: () => void;
   onKeyDown: (e: KeyboardEvent<HTMLButtonElement>) => void;
   onBlur: (e: FocusEvent) => void;
 }
 
-/** The whole collection's mark, in the logo's box: three cards fanned, in the brand gold. */
-function CollectionMark() {
+/**
+ * The lore symbol (owner, 2026-10-20): before Standard, as the promo symbol is before Promo,
+ * and the whole collection's picture on the two-line button, where three fanned cards were. Drawn the
+ * way `RaritySymbol` draws it. A gold glyph keyed off its white ground, 48px for sharp
+ * screens: the Lorcana hexagon tried first read barely at 16px.
+ */
+function LoreSymbol({size}: {size: number}) {
   return (
-    <svg width="44" height="36" viewBox="0 0 44 36" fill="none" aria-hidden="true">
-      <rect x="6" y="6" width="18" height="25" rx="2.5" transform="rotate(-14 15 18)" stroke={COLORS.primary} strokeOpacity={0.45} strokeWidth={1.5} />
-      <rect x="13" y="4" width="18" height="25" rx="2.5" stroke={COLORS.primary} strokeOpacity={0.7} strokeWidth={1.5} />
-      <rect x="20" y="6" width="18" height="25" rx="2.5" transform="rotate(14 29 18)" fill={COLORS.surfaceRaised} stroke={COLORS.primary} strokeWidth={1.5} />
-    </svg>
+    <img
+      src={loreSymbol}
+      alt=""
+      aria-hidden
+      width={size}
+      height={size}
+      style={{display: 'block', flexShrink: 0, objectFit: 'contain'}}
+    />
   );
 }
 
 /**
- * The button's picture: the set's logo, the promo symbol for a promo set, or the whole
- * collection's mark. Undefined when a set has no logo.
+ * The button's picture: the set's logo, the promo symbol for one promo set or every one, or
+ * the lore symbol for the whole collection, sized as the promo symbol is to the box it fills.
+ * Undefined when a set has no logo.
  */
-function choiceArt(choice: string) {
-  if (choice === WHOLE_COLLECTION) return <CollectionMark />;
-  if (isPromoSet(choice)) return <RaritySymbol rarity="special" size={32} />;
+function choiceArt(choice: string, box: CSSProperties) {
+  const height = Number(box.height);
+  if (choice === WHOLE_COLLECTION) return <LoreSymbol size={height - 8} />;
+  if (isPromoScope(choice)) return <RaritySymbol rarity="special" size={height - 8} />;
   const logo = SET_LOGOS[choice];
   return logo === undefined ? undefined : <img src={logo} alt="" style={{maxWidth: '100%', maxHeight: '100%', objectFit: 'contain'}} />;
 }
 
 /**
- * The button's first line: how many sets the whole collection holds, or what the set is
- * ("Set 11", "Promo set · P1").
+ * The button's first line: how many sets a scope spanning them holds ("26 sets", "12 promo
+ * sets"), or what the set is ("Set 11", "Promo set · P1").
  */
-function triggerKicker(setCode: string, setCount: number): string {
-  if (setCode === WHOLE_COLLECTION) return `${setCount} sets`;
+function triggerKicker(setCode: string, sets: readonly string[]): string {
+  if (setCode === WHOLE_COLLECTION) return `${sets.length} sets`;
+  if (setCode === ALL_PROMO_SETS) return `${sets.filter(isPromoSet).length} promo sets`;
   return isPromoSet(setCode) ? `Promo set · ${setCode}` : `Set ${setCode}`;
 }
 
-/** The button: the choice's picture, its two lines, and a chevron that turns over while open. */
-function Trigger({setCode, setCount, open, listId, disabled, onToggle, onKeyDown, onBlur}: TriggerProps) {
+/**
+ * The toolbar button's label, in the 71px its 111px leave beside the chevron (owner,
+ * 2026-10-20): "All sets" for the whole collection, "Promos" for every promo set, a set's
+ * number ("Set 13"), or a promo set's code ("P1"), each named in full on hover. A name
+ * runs past the room: "Whole collection" would need 115px, and the sets' names up to 137px.
+ */
+function compactLabel(setCode: string): string {
+  return SPAN_WORDS[setCode]?.compact ?? (isPromoSet(setCode) ? setCode : `Set ${setCode}`);
+}
+
+/** The button's name: the choice, with the toolbar's words in it for a scope spanning sets. */
+function triggerName(setCode: string, compact: boolean): string {
+  return `Binder set: ${(compact ? SPAN_WORDS[setCode]?.compactName : undefined) ?? choiceLabel(setCode)}`;
+}
+
+/** The button's words: the kicker over the name in the panel, or the toolbar's short label. */
+function TriggerLabel({setCode, sets, compact}: Pick<TriggerProps, 'setCode' | 'sets' | 'compact'>) {
+  if (compact) {
+    return <span style={{...TRUNCATE, fontSize: `${FONT_SIZES.lg}px`, fontWeight: 700}}>{compactLabel(setCode)}</span>;
+  }
+  return (
+    <span style={{minWidth: 0, display: 'flex', flexDirection: 'column', gap: SPACING.xxs}}>
+      <span style={KICKER_STYLE}>{triggerKicker(setCode, sets)}</span>
+      <span style={NAME_STYLE}>{scopeName(setCode)}</span>
+    </span>
+  );
+}
+
+const KICKER_STYLE: CSSProperties = {fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.25, color: COLORS.textMuted};
+
+/**
+ * The button: the choice's picture (the two-line button's alone), its words, and a chevron
+ * that turns over while open.
+ */
+function Trigger({setCode, sets, compact, open, menuId, disabled, onToggle, onKeyDown, onBlur}: TriggerProps) {
   const {hovered, hoverProps} = useHover();
-  const whole = setCode === WHOLE_COLLECTION;
-  const art = choiceArt(setCode);
+  const geometry = compact ? TOOLBAR_TRIGGER : PANEL_TRIGGER;
+  const art = geometry.logoBox && choiceArt(setCode, geometry.logoBox);
   return (
     <CtaButton
       variant="neutral"
       {...hoverProps}
-      aria-haspopup="listbox"
+      aria-haspopup="dialog"
       aria-expanded={open}
-      aria-controls={open ? listId : undefined}
-      aria-label={`Binder set: ${choiceLabel(setCode)}`}
+      aria-controls={open ? menuId : undefined}
+      aria-label={triggerName(setCode, compact)}
+      // The toolbar's short label names a set by its number or code alone: whole on hover.
+      title={compact ? choiceLabel(setCode) : undefined}
       disabled={disabled}
       onClick={onToggle}
       onKeyDown={onKeyDown}
       onBlur={onBlur}
-      style={triggerStyle({on: open, hovered: hovered && !disabled}, art !== undefined)}>
-      {art !== undefined && <span style={LOGO_BOX}>{art}</span>}
-      <span style={{minWidth: 0, display: 'flex', flexDirection: 'column', gap: SPACING.xxs}}>
-        <span style={{fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.25, color: COLORS.textMuted}}>
-          {triggerKicker(setCode, setCount)}
-        </span>
-        <span style={NAME_STYLE}>{whole ? 'Whole collection' : setName(setCode)}</span>
-      </span>
+      style={triggerStyle({on: open, hovered: hovered && !disabled}, {withArt: art !== undefined, geometry})}>
+      {art !== undefined && <span style={geometry.logoBox}>{art}</span>}
+      <TriggerLabel setCode={setCode} sets={sets} compact={compact} />
       <svg
-        width="14"
-        height="8"
+        width={geometry.chevron.width}
+        height={geometry.chevron.height}
         viewBox="0 0 10 6"
         fill="none"
         aria-hidden="true"
@@ -378,24 +554,36 @@ function Trigger({setCode, setCount, open, listId, disabled, onToggle, onKeyDown
   );
 }
 
-const LIST_STYLE: CSSProperties = {
+/**
+ * The menu: its tabs held at the top, and the list under them, which scrolls on its own.
+ * At least a side panel wide, the room its tabs' words take, however narrow the button.
+ */
+const MENU_STYLE: CSSProperties = {
   position: 'absolute',
-  // Over the controls below, whose kit buttons paint in their own layers.
-  zIndex: 2,
+  // Over the controls below, whose kit buttons paint in their own layers, and over the
+  // binder's count pills (`CollectionSlotCounts`, 3), which a phone's menu opens over.
+  zIndex: 4,
   top: `calc(100% + ${SPACING.xs}px)`,
   left: 0,
   right: 0,
-  maxHeight: LIST_MAX_HEIGHT,
-  overflowY: 'auto',
-  scrollPaddingTop: PINNED_INSET,
+  minWidth: SIDE_PANEL_WIDTH,
+  maxHeight: MENU_MAX_HEIGHT,
   display: 'flex',
   flexDirection: 'column',
-  gap: SPACING.xxs,
+  gap: SPACING.xs,
   padding: SPACING.xs,
   background: COLORS.surfaceFloating,
   border: `1px solid ${COLORS.surfaceBorder}`,
   borderRadius: `${RADIUS.lg}px`,
   boxShadow: SHADOWS.panel,
+};
+
+const LIST_STYLE: CSSProperties = {
+  minHeight: 0,
+  overflowY: 'auto',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: SPACING.xxs,
 };
 
 /**
@@ -447,10 +635,10 @@ function progressText(progress: Progress): {shown: string; spoken: string} {
   return {shown: `${percent}%`, spoken: `${percent}% complete`};
 }
 
-/** One choice in the list: a set's number and name, or the whole collection, and how far through it you are. */
+/** One choice in the list: a set's number and name, or All sets, and how far through it you are. */
 function SetOption({setCode, progress, selected, onPick}: SetOptionProps) {
   const {hovered, hoverProps} = useHover();
-  const whole = setCode === WHOLE_COLLECTION;
+  const spans = spansSets(setCode);
   const text = progress ? progressText(progress) : null;
   return (
     <CtaButton
@@ -459,15 +647,16 @@ function SetOption({setCode, progress, selected, onPick}: SetOptionProps) {
       role="option"
       aria-selected={selected}
       tabIndex={-1}
-      aria-label={`${choiceLabel(setCode)}${text === null ? '' : `: ${text.spoken}`}`}
+      aria-label={`${SPAN_WORDS[setCode]?.rowName ?? setLabel(setCode)}${text === null ? '' : `: ${text.spoken}`}`}
       // A promo set's name can run past the row: whole on hover.
       title={isPromoSet(setCode) ? setName(setCode) : undefined}
       onClick={() => onPick(setCode)}
-      style={{...optionStyle({on: selected, hovered}), fontWeight: whole ? 700 : 500}}>
-      <span style={{...TABULAR, fontSize: `${FONT_SIZES.base}px`, color: COLORS.textMuted, textAlign: 'right'}}>
-        {whole ? '' : setCode}
+      style={{...optionStyle({on: selected, hovered}), fontWeight: spans ? 700 : 500}}>
+      {/* Centered in its column (owner, 2026-10-20), a number and a promo code alike. */}
+      <span style={{...TABULAR, fontSize: `${FONT_SIZES.base}px`, color: COLORS.textMuted, textAlign: 'center'}}>
+        {spans ? '' : setCode}
       </span>
-      <span style={TRUNCATE}>{whole ? 'Whole collection' : setName(setCode)}</span>
+      <span style={TRUNCATE}>{spans ? ALL_SETS : setName(setCode)}</span>
       {progress && text && <span style={percentStyle(isFinished(progress.complete, progress.cards))}>{text.shown}</span>}
     </CtaButton>
   );

@@ -61,6 +61,12 @@ function parseList(raw: string | null): string[] | undefined {
 export const SET_PARAM = 'set';
 
 /**
+ * The Rarity filter's param. Exported for collection mode, which drops it from a binder of
+ * promos alone (owner, 2026-10-20): every card there is a promo, so it has nothing to pick.
+ */
+export const RARITY_PARAM = 'rarity';
+
+/**
  * The sort's param. Exported for collection mode, which keeps the cards changed by hand in
  * the binder's Owned or Missing view only until the sort changes (#826).
  */
@@ -79,7 +85,7 @@ const OPTION_PARAMS: readonly {
   {param: 'keyword', read: (raw) => ({keywords: parseList(raw)}), write: (o) => o.keywords?.join(',')},
   {param: 'classification', read: (raw) => ({classifications: parseList(raw)}), write: (o) => o.classifications?.join(',')},
   {param: SET_PARAM, read: (raw) => ({setCodes: parseList(raw)}), write: (o) => o.setCodes?.join(',')},
-  {param: 'rarity', read: (raw) => ({rarities: parseList(raw)}), write: (o) => o.rarities?.join(',')},
+  {param: RARITY_PARAM, read: (raw) => ({rarities: parseList(raw)}), write: (o) => o.rarities?.join(',')},
   {param: 'inkwell', read: (raw) => ({inkwell: raw && isValidInkwell(raw) ? raw : undefined}), write: (o) => o.inkwell},
   {param: 'inkmatch', read: (raw) => ({inkMatch: raw === 'dual' ? 'dual' : undefined}), write: (o) => o.inkMatch},
 ];

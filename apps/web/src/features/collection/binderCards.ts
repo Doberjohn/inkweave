@@ -18,7 +18,7 @@ import {
   type BrowseSortOrder,
   type SetCode,
 } from '../../shared/constants';
-import {SET_PARAM} from '../../shared/hooks/useFilterParams';
+import {RARITY_PARAM, SET_PARAM} from '../../shared/hooks/useFilterParams';
 import type {CollectionPromo} from './collectionPromos';
 
 /**
@@ -26,7 +26,8 @@ import type {CollectionPromo} from './collectionPromos';
  * collection mode, so it survives a trip to `/account` to re-import, a card page,
  * a reload and a shared link. `binder`, not `set`: the filter params already own
  * `set`, so reusing it would also apply a set FILTER and put a chip in the toolbar.
- * `?binder=all` is the whole collection in one binder (owner, 2026-10-12).
+ * `?binder=all` is the whole collection in one binder (owner, 2026-10-12), and
+ * `?binder=promos` every promo set (owner, 2026-10-20).
  */
 export const BINDER_PARAM = 'binder';
 
@@ -35,16 +36,26 @@ export const OWNED_PARAM = 'owned';
 
 /** The params collection mode never keeps: a set filter, since its panel picks the set. */
 const INSIDE_STRAYS = [SET_PARAM];
+/** And a binder of promos alone: a rarity filter too, since every card in it is a promo. */
+const PROMO_STRAYS = [SET_PARAM, RARITY_PARAM];
 /** The params the grid never keeps: the binder's view, since the grid has no collection to view. */
 const OUTSIDE_STRAYS = [OWNED_PARAM];
 
+/** The strays of a binder scope, or of the grid's (`null`, no binder). */
+function straysOf(binder: string | null): readonly string[] {
+  if (binder === null) return OUTSIDE_STRAYS;
+  return isPromoScope(binder) ? PROMO_STRAYS : INSIDE_STRAYS;
+}
+
 /**
  * The params a URL holds that its mode never keeps (owner, 2026-10-12): in collection
- * mode a set filter, outside it the binder's view.
+ * mode a set filter, outside it the binder's view. A binder of promos alone, one promo set
+ * or every one, drops a rarity filter too (owner, 2026-10-20), and the filters panel its
+ * Rarity section: the filter would pick from one rarity, and hidden it could only empty
+ * the binder out of sight.
  */
 export function strayParams(params: URLSearchParams): string[] {
-  const strays = params.has(BINDER_PARAM) ? INSIDE_STRAYS : OUTSIDE_STRAYS;
-  return strays.filter((param) => params.has(param));
+  return straysOf(params.get(BINDER_PARAM)).filter((param) => params.has(param));
 }
 
 /** The URL less the params its mode never keeps (`strayParams`). */
@@ -53,6 +64,13 @@ export function withoutStrays(params: URLSearchParams): URLSearchParams {
   for (const param of strayParams(params)) next.delete(param);
   return next;
 }
+
+/**
+ * Whether the page's Rarity filter picks the promos, alone or beside other rarities (owner,
+ * 2026-10-20): the set picker then opens the whole collection's menu on its Promo tab.
+ */
+export const rarityPicksPromos = (params: URLSearchParams) =>
+  (params.get(RARITY_PARAM) ?? '').split(',').includes(PROMO_RARITY);
 
 /** Whether a binder set is a promo set (#805), which goes by its code ("P1") rather than a number. */
 export const isPromoSet = (setCode: string) => promoSetOf(setCode) !== undefined;
@@ -170,21 +188,44 @@ export function binderOrder(cards: readonly LorcanaCard[], setCode: string, sort
 }
 
 /**
- * The binder's scope for every set at once (owner, 2026-10-12): `?binder=all`, pinned
- * first in the set picker. Every other scope is a set code.
+ * The binder's scope for every set at once (owner, 2026-10-12): `?binder=all`, All sets
+ * in the set picker's Standard sets tab. Every other scope is a set code, or `ALL_PROMO_SETS`.
  */
 export const WHOLE_COLLECTION = 'all';
 
-/** Whether the binder goes set by set, each set a stretch of its own: the whole collection in collector order. */
-export const goesSetBySet = (scope: string, sortOrder: BrowseSortOrder) =>
-  scope === WHOLE_COLLECTION && sortOrder === 'newest';
+/**
+ * The binder's scope for every promo set at once (owner, 2026-10-20): `?binder=promos`, All
+ * sets in the set picker's Promo tab. It goes set by set, as the whole collection does.
+ */
+export const ALL_PROMO_SETS = 'promos';
+
+/** Whether a scope spans sets, the whole collection or every promo set, rather than being one. */
+export const spansSets = (scope: string) => scope === WHOLE_COLLECTION || scope === ALL_PROMO_SETS;
+
+/** Whether a scope holds promos alone: one promo set, or every one. */
+export const isPromoScope = (scope: string) => scope === ALL_PROMO_SETS || isPromoSet(scope);
+
+/** The sets a scope spans, in the order given: every one, the promo sets, or the one set. */
+export function scopeSets(scope: string, sets: readonly string[]): readonly string[] {
+  if (scope === WHOLE_COLLECTION) return sets;
+  return scope === ALL_PROMO_SETS ? sets.filter(isPromoSet) : [scope];
+}
+
+/** What the binder's controls call a scope: "Whole collection", "All promo sets", or the set's name. */
+export function scopeName(scope: string): string {
+  if (scope === WHOLE_COLLECTION) return 'Whole collection';
+  return scope === ALL_PROMO_SETS ? 'All promo sets' : setName(scope);
+}
+
+/** Whether the binder goes set by set, each set a stretch of its own: a scope spanning sets, in collector order. */
+export const goesSetBySet = (scope: string, sortOrder: BrowseSortOrder) => spansSets(scope) && sortOrder === 'newest';
 
 /**
- * Whether the spread map names the stretches the binder holds, in collector order: the whole
- * collection's sets, or a promo set's editions (owner, 2026-10-18: Curator's Collection).
+ * Whether the spread map names the stretches the binder holds, in collector order: the sets of
+ * a scope spanning them, or a promo set's editions (owner, 2026-10-18: Curator's Collection).
  */
 export const namesStretches = (scope: string, sortOrder: BrowseSortOrder) =>
-  sortOrder === 'newest' && (scope === WHOLE_COLLECTION || printedCodesOf(scope).length > 1);
+  sortOrder === 'newest' && (spansSets(scope) || printedCodesOf(scope).length > 1);
 
 /**
  * The binder's cards in order, before the page's filters (owner, 2026-10-12):
@@ -196,6 +237,7 @@ export const namesStretches = (scope: string, sortOrder: BrowseSortOrder) =>
  *     at each set's end.
  *   - The whole collection in any other sort: ONE list across every set, so Name A-Z puts
  *     every Elsa together instead of starting over at A in each of fourteen sets.
+ *   - All promo sets (owner, 2026-10-20): the whole collection's way, over the promo sets.
  *
  * The binder holds the cards among these that the page lets through, packed, and the card
  * modal's arrows step through the same ones, so the two never disagree.
@@ -206,9 +248,10 @@ export function binderContents(
   sortOrder: BrowseSortOrder,
   sets: readonly string[],
 ): LorcanaCard[] {
-  if (goesSetBySet(scope, sortOrder)) return sets.flatMap((set) => binderCardsForSet(cards, set));
-  if (scope === WHOLE_COLLECTION) return applySortOrder([...cards], sortOrder);
-  return binderOrder(cards, scope, sortOrder);
+  if (scope === WHOLE_COLLECTION && !goesSetBySet(scope, sortOrder)) return applySortOrder([...cards], sortOrder);
+  if (!spansSets(scope)) return binderOrder(cards, scope, sortOrder);
+  const inTurn = scopeSets(scope, sets).flatMap((set) => binderCardsForSet(cards, set));
+  return goesSetBySet(scope, sortOrder) ? inTurn : applySortOrder(inTurn, sortOrder);
 }
 
 /**
@@ -314,7 +357,7 @@ interface SlotContext {
 /**
  * The binder's pockets: its cards (`binderContents`, less what the page's filters leave out),
  * and, laid out in collector order with nothing narrowing them, each promo set's open pockets
- * too (`promoSetPockets`), its own binder's or its stretch of the whole collection's. A narrowed
+ * too (`promoSetPockets`), its own binder's or its stretch of a scope spanning sets. A narrowed
  * binder packs its cards, as the grid does: a numbered gap means nothing among the cards a
  * search found.
  */
@@ -323,8 +366,7 @@ export function binderSlots(
   {scope, sets, sortOrder, narrowed, waiting}: SlotContext,
 ): BinderSlot[] {
   if (narrowed || sortOrder !== 'newest') return [...shown];
-  const stretches = scope === WHOLE_COLLECTION ? sets : [scope];
-  return stretches.flatMap((set) => {
+  return scopeSets(scope, sets).flatMap((set) => {
     const codes = printedCodesOf(set);
     const cards = shown.filter((card) => card.setCode !== undefined && codes.includes(card.setCode));
     return isPromoSet(set) ? promoSetPockets(cards, waiting, set) : cards;

@@ -243,7 +243,10 @@ function filtersButton(docked: boolean, panel: SidePanelState, openDialog: () =>
 /** The toolbar's props: the URL's filter state and setters, plus the page's own controls. */
 function toolbarPropsFrom(
   params: FilterParams,
-  controls: Pick<ToolbarProps, 'onFiltersClick' | 'docked' | 'isMobile' | 'modeSwitch' | 'sortOptions' | 'rarities'>,
+  controls: Pick<
+    ToolbarProps,
+    'onFiltersClick' | 'docked' | 'isMobile' | 'modeSwitch' | 'modeActions' | 'setPicker' | 'sortOptions' | 'rarities'
+  >,
 ): ToolbarProps {
   return {
     ...controls,
@@ -273,6 +276,20 @@ function dockedPanel(docked: boolean, panel: SidePanelState, props: React.Compon
 /** Collection mode's set panel, docked on the binder's right where the page docks panels. */
 function dockedSetPanel(docked: boolean, setPanel: React.ReactNode | undefined) {
   return docked && setPanel ? <DockedSetPanel>{setPanel}</DockedSetPanel> : undefined;
+}
+
+/**
+ * Collection mode's parts of the toolbar: Collection, the collection's actions after it, the
+ * binder's sort names, and, where the set panel docks, its set picker beside Collection (owner,
+ * 2026-10-20).
+ */
+function collectionToolbar(docked: boolean, collection: BrowseCollectionSlots | null, listing: BrowseListing) {
+  return {
+    modeSwitch: collection?.modeSwitch,
+    modeActions: collection?.modeActions,
+    setPicker: docked ? collection?.renderSetPicker(listing) : undefined,
+    sortOptions: collection?.sortOptions,
+  };
 }
 
 /** Browse's content, with collection mode's slots when the page wires them in (`BrowseCollectionPage`). */
@@ -325,9 +342,8 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
     isMobile,
     toolbarProps: toolbarPropsFrom(params, {
       ...filtersButton(docked, panel, () => setShowFilters(true)),
+      ...collectionToolbar(docked, collection, listing),
       isMobile,
-      modeSwitch: collection?.modeSwitch,
-      sortOptions: collection?.sortOptions,
       rarities,
     }),
     sidePanel: dockedPanel(docked, panel, {

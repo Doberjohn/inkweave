@@ -56,14 +56,17 @@ describe('BrowseBody with collection mode on', () => {
     pool: [outside],
     modeSwitch: null,
     renderBinder: (_listing, onCardSelect) => <button onClick={() => onCardSelect(outside)}>binder card</button>,
+    modeActions: null,
     modalTarget: null,
     sortOptions: undefined,
     show: 'all',
     rarityOptions: () => [],
+    promoOnly: false,
     owns: () => true,
     kept: new Set(),
     prompts: null,
     renderSetPanel: () => undefined,
+    renderSetPicker: () => undefined,
   };
 
   it('counts a binder click on a card from outside Core in the card analytics', () => {

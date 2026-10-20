@@ -26,7 +26,7 @@ type ListParams = Pick<
 /** What Browse's listing asks of collection mode. */
 type ViewCollection = Pick<
   BrowseCollectionSlots,
-  'active' | 'pool' | 'show' | 'owns' | 'kept' | 'rarityOptions'
+  'active' | 'pool' | 'show' | 'owns' | 'kept' | 'rarityOptions' | 'promoOnly'
 >;
 
 function buildCombinedFilters(
@@ -46,10 +46,12 @@ function buildCombinedFilters(
  * The Rarity filter's options: the rarities of the cards the page can show. The
  * binder holds Enchanted, Epic and Iconic printings as slots of their own (its
  * `rarityOptions`, handed over by collection mode); the grid's cards carry them as
- * printings (owner, 2026-10-08).
+ * printings (owner, 2026-10-08). A binder of promos alone offers none (owner,
+ * 2026-10-20), so the filters panel drops its Rarity section.
  */
 function rarityOptions(collection: ViewCollection | null, pool: LorcanaCard[]): string[] {
-  return collection?.active ? collection.rarityOptions(pool) : getRaritiesWithPrintings(pool);
+  if (!collection?.active) return getRaritiesWithPrintings(pool);
+  return collection.promoOnly ? [] : collection.rarityOptions(pool);
 }
 
 /**
@@ -66,8 +68,8 @@ function binderOptions(binderShows: boolean, pool: LorcanaCard[]) {
  * pick finding the cards that have an Enchanted printing; the binder's printings
  * are cards of their own, matched by their own rarity.
  */
-function withPrintingRarities(filters: CardFilterOptions, binderShows: boolean): CardFilterOptions {
-  return filters.rarities?.length && !binderShows ? {...filters, rarityMatch: 'printings'} : filters;
+function withPrintingRarities(filters: CardFilterOptions): CardFilterOptions {
+  return filters.rarities?.length ? {...filters, rarityMatch: 'printings'} : filters;
 }
 
 function applyFilters(cards: LorcanaCard[], searchQuery: string, combinedFilters: CardFilterOptions): LorcanaCard[] {
@@ -118,13 +120,20 @@ function byOwnership(
 /**
  * The filters the binder applies: Browse's, less the set filter. Collection mode's set is
  * chosen in the collection panel (owner, 2026-10-12), and a set filter could only empty
- * the binder of every other set. The mode drops the param too; this covers the render
- * before it is gone.
+ * the binder of every other set. A binder of promos alone drops the rarity filter too
+ * (owner, 2026-10-20, `promoOnly`). The mode drops both params; this covers the render
+ * before they are gone.
  */
-function binderFilters(filters: CardFilterOptions): CardFilterOptions {
+function binderFilters(filters: CardFilterOptions, promoOnly: boolean): CardFilterOptions {
   const rest = {...filters};
   delete rest.setCodes;
+  if (promoOnly) delete rest.rarities;
   return rest;
+}
+
+/** The filters the page applies: the binder's while it shows, else the grid's. */
+function appliedFilters(collection: ViewCollection | null, filters: CardFilterOptions): CardFilterOptions {
+  return collection?.active ? binderFilters(filters, collection.promoOnly) : withPrintingRarities(filters);
 }
 
 /**
@@ -154,7 +163,7 @@ export function browseView(
 ) {
   const binderShows = collection?.active ?? false;
   const pool = collection?.active ? collection.pool : coreCards;
-  const filters = withPrintingRarities(binderShows ? binderFilters(params.filters) : params.filters, binderShows);
+  const filters = appliedFilters(collection, params.filters);
   const combined = buildCombinedFilters(filters, params.inkFilters, params.typeFilters, params.costFilters);
   const matched = applyFilters(pool, params.searchQuery, combined);
   // The binder holds each printing as a card of its own already.

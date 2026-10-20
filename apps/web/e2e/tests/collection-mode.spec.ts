@@ -159,6 +159,8 @@ test.describe('Collection mode', () => {
     await page.goto('/browse');
     const toggle = page.getByRole('button', {name: 'Show my collection'});
     await expect(toggle).toBeVisible();
+    // The collection's actions need an account: no gear signed out (owner, 2026-10-20).
+    await expect(page.getByRole('button', {name: 'Collection actions'})).toHaveCount(0);
 
     await toggle.click();
 
@@ -439,47 +441,22 @@ test.describe('Collection mode, signed in', () => {
     expect(new URL(page.url()).searchParams.has('owned')).toBe(false);
   });
 
-  test('the set picker opens the whole collection in the binder', async ({page}) => {
+  test("the set picker's All sets opens the whole collection in the binder", async ({page}) => {
     await signInAsCollector(page, ENTRIES);
     await page.goto(`/browse?binder=${SET}`);
     await expect(binder(page)).toBeVisible();
 
     await page.getByRole('button', {name: /^Binder set/}).click();
-    await page.getByRole('option', {name: /^Whole collection/}).click();
+    await page
+      .getByRole('listbox', {name: 'Standard sets'})
+      .getByRole('option', {name: /^All sets, the whole collection/})
+      .click();
 
     await expect(page).toHaveURL(/[?&]binder=all(&|$)/);
-    await expect(page.getByRole('button', {name: 'Binder set: Whole collection'})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Binder set: All sets, the whole collection'})).toBeVisible();
     // The binder and its numbers follow, not only the URL and the picker's label.
     await expect(numbers(page).getByText('Complete collection', {exact: true})).toBeVisible();
     await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
-  });
-
-  test("the set picker's arrow keys never park a set under its pinned row", async ({page}) => {
-    await signInAsCollector(page, ENTRIES);
-    await page.goto(`/browse?binder=${SET}`);
-    await expect(binder(page)).toBeVisible();
-
-    await page.getByRole('button', {name: /^Binder set/}).click();
-    const list = page.getByRole('listbox', {name: 'Binder set'});
-    const options = list.getByRole('option');
-    const count = await options.count();
-    // Every set the pool holds is listed, more than the list shows at once; a list that
-    // stopped scrolling would pass this test without testing anything.
-    expect(await list.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
-
-    // Up from the last set, every row focus scrolls into view clears the pinned Whole
-    // collection strip, which covers the list's top edge (WCAG 2.4.11).
-    await page.keyboard.press('End');
-    for (let i = count - 2; i >= 1; i--) {
-      await page.keyboard.press('ArrowUp');
-      await expect(options.nth(i)).toBeFocused();
-      const {top, stripBottom} = await list.evaluate((el) => ({
-        top: document.activeElement?.getBoundingClientRect().top ?? NaN,
-        stripBottom:
-          el.querySelector('[role="presentation"]')?.getBoundingClientRect().bottom ?? NaN,
-      }));
-      expect(top, `option ${i}'s top`).toBeGreaterThanOrEqual(stripBottom - 0.5);
-    }
   });
 
   test('the keyboard pages the binder end to end without losing the focus', async ({page}) => {
@@ -549,7 +526,7 @@ test.describe('Collection mode, signed in', () => {
     await expect(numbers(page)).toContainText(`1 of ${PRINTINGS.length} cards`);
   });
 
-  test("the set picker lists the promo sets after the sets, and a promo set's binder holds a pocket per number", async ({
+  test("the set picker lists the promo sets under their own tab, and a promo set's binder holds a pocket per number", async ({
     page,
   }) => {
     const promoSet = promoSetWithOpenPocket();
@@ -558,8 +535,9 @@ test.describe('Collection mode, signed in', () => {
     await expect(binder(page)).toBeVisible();
 
     await page.getByRole('button', {name: /^Binder set/}).click();
+    await page.getByRole('dialog', {name: 'Binder set'}).getByRole('button', {name: 'Promo', exact: true}).click();
     await page
-      .getByRole('group', {name: 'Promo sets'})
+      .getByRole('listbox', {name: 'Promo sets'})
       .getByRole('option', {name: new RegExp(`^Promo set ${promoSet.code},`)})
       .click();
 
@@ -575,6 +553,66 @@ test.describe('Collection mode, signed in', () => {
     // A number with no promo is an open pocket, which shows the number's code (owner, 2026-10-17,
     // layout 1): why it is open (not listed, not released) is the promo set's to say.
     await expect(binder(page).getByText(promoSet.openPocket, {exact: true})).toBeVisible();
+  });
+
+  test("the set picker's Promo tab opens every promo set at once, counted as promos, with no Rarity filter (owner, 2026-10-20)", async ({
+    page,
+  }) => {
+    const promoSet = promoSetWithOpenPocket();
+    await signInAsCollector(page, {...ENTRIES, [promoSet.promos[0]]: {normal: 0, foil: 1}});
+    await page.goto(`/browse?binder=${SET}&rarity=Common`);
+    await expect(binder(page)).toBeVisible();
+    const rarities = page.getByRole('complementary', {name: 'Filters'}).getByRole('group', {name: 'Rarity filters'});
+    await expect(rarities).toBeVisible();
+
+    await page.getByRole('button', {name: /^Binder set/}).click();
+    await page.getByRole('dialog', {name: 'Binder set'}).getByRole('button', {name: 'Promo', exact: true}).click();
+    await page
+      .getByRole('listbox', {name: 'Promo sets'})
+      .getByRole('option', {name: /^All sets, every promo set/})
+      .click();
+
+    await expect(page).toHaveURL(/[?&]binder=promos(&|$)/);
+    // Every card is a promo: the Rarity filter goes, param and section, so it never empties the binder unseen.
+    await expect(page).not.toHaveURL(/[?&]rarity=/);
+    await expect(rarities).toHaveCount(0);
+    await expect(page.getByRole('button', {name: 'Binder set: Promos, every promo set'})).toBeVisible();
+    await expect(numbers(page).getByText('Complete promos', {exact: true})).toBeVisible();
+    // The one promo held, among every promo set's, and no Master: a promo comes in one finish.
+    // The region's text runs its blocks together ("Complete promos1 of 261 promos"): no `\b`.
+    await expect(numbers(page)).toContainText(/(?<!\d)1 of [\d,]+ promos/);
+    await expect(numbers(page).getByRole('button', {name: /^Master/})).toHaveCount(0);
+  });
+
+  test("the set picker opens the whole collection's menu on Promo while the Rarity filter picks the promos (owner, 2026-10-20)", async ({
+    page,
+  }) => {
+    await signInAsCollector(page, ENTRIES);
+    await page.goto('/browse?binder=all&rarity=Special');
+    await expect(binder(page)).toBeVisible();
+
+    await page.getByRole('button', {name: /^Binder set/}).click();
+    const menu = page.getByRole('dialog', {name: 'Binder set'});
+    await expect(menu.getByRole('button', {name: 'Promo', exact: true})).toHaveAttribute('aria-pressed', 'true');
+    await expect(menu.getByRole('listbox', {name: 'Promo sets'})).toBeVisible();
+  });
+
+  test("the gear after Collection opens the import from its menu, on the grid too (owner, 2026-10-20)", async ({
+    page,
+  }) => {
+    await signInAsCollector(page, ENTRIES);
+    await page.goto('/browse');
+    await signedIn(page);
+
+    const gear = page.getByRole('button', {name: 'Collection actions'});
+    await gear.click();
+    await page
+      .getByRole('menu', {name: 'Collection actions'})
+      .getByRole('menuitem', {name: /^Import collection/})
+      .click();
+
+    await expect(page.getByRole('dialog', {name: 'Import your collection'})).toBeVisible();
+    await expect(page.getByRole('menu', {name: 'Collection actions'})).toHaveCount(0);
   });
 
   test("a card glows gold when pointed at, more strongly on the binder's parchment (owner, 2026-10-21)", async ({
@@ -619,6 +657,8 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await signInAsCollector(page, ENTRIES);
     await page.goto(`/browse?binder=${SET}`);
     await expect(binder(page)).toBeVisible();
+    // No gear on phones (owner, 2026-10-20): it wrapped Collection onto a row of its own.
+    await expect(page.getByRole('button', {name: 'Collection actions'})).toHaveCount(0);
 
     // Above the page, in place of the docked panel: the numbers stay folded behind a toggle
     // that reads the two headline percentages, Complete then Master.

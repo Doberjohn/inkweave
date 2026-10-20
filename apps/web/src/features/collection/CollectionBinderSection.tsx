@@ -4,6 +4,7 @@ import type {CollectionEntries, CollectionEntry, Finish} from './collectionParse
 import type {CollectionPromo} from './collectionPromos';
 import {CollectionBinder} from './CollectionBinder';
 import {
+  ALL_PROMO_SETS,
   WHOLE_COLLECTION,
   binderContents,
   binderSlots,
@@ -16,6 +17,7 @@ import {
   CollectionSetBody,
   CollectionSetRail,
   CollectionSetStrip,
+  ToolbarSetPicker,
   type BinderView,
   type CollectionSetPanelProps,
   type SetSwitching,
@@ -261,7 +263,7 @@ function SectionContent({
   return (
     <PanelLayout panel={{...controls, stats, filtered}}>
       {shown.length === 0 ? (
-        <NoMatches show={controls.show} whole={setCode === WHOLE_COLLECTION} />
+        <NoMatches show={controls.show} setCode={setCode} />
       ) : (
         <CollectionBinder
           // Keyed by what it holds, in order, so a new set, sort or filter opens the
@@ -281,6 +283,12 @@ function SectionContent({
   );
 }
 
+/** Where the binder found nothing, for the scopes spanning sets; any set is "this set". */
+const NO_MATCHES_WHERE: Record<string, string> = {
+  [WHOLE_COLLECTION]: 'your collection',
+  [ALL_PROMO_SETS]: 'your promo sets',
+};
+
 /**
  * Nothing to show. Said in words, not as an empty binder: blank pockets would read as a
  * fact about the collection. With the binder showing only owned or only missing cards,
@@ -289,8 +297,8 @@ function SectionContent({
  * A status (#790), like Browse's empty grid: a search that empties the binder changes
  * nothing where the reader is typing, so it is announced.
  */
-function NoMatches({show, whole}: {show: BinderShow; whole: boolean}) {
-  const where = whole ? 'your collection' : 'this set';
+function NoMatches({show, setCode}: {show: BinderShow; setCode: string}) {
+  const where = NO_MATCHES_WHERE[setCode] ?? 'this set';
   return (
     <p
       role="status"
@@ -313,10 +321,20 @@ interface DockedSetBodyProps extends PanelControls {
 
 /**
  * The docked collection panel's body (desktop, right of the binder), with every set's
- * tally and the collection's, of the cards the page's filters let through. Lives in this
- * module, so it rides the binder's lazy chunk rather than Browse's.
+ * tally and the collection's, of the cards the page's filters let through. Its set
+ * picker sits in the toolbar (`DockedSetPicker`). Lives in this module, so it rides the
+ * binder's lazy chunk rather than Browse's.
  */
 export function DockedSetBody({cards, filtered, entries, isLoading, ...controls}: DockedSetBodyProps) {
   const stats = isLoading ? null : tallyCollection(cards, entries, controls.sets);
-  return <CollectionSetBody {...controls} stats={stats} filtered={filtered} />;
+  return <CollectionSetBody {...controls} stats={stats} filtered={filtered} withPicker={false} />;
+}
+
+/**
+ * The docked panel's set picker, in the toolbar beside Collection (desktop, owner
+ * 2026-10-20), its list counting what the panel counts.
+ */
+export function DockedSetPicker({cards, filtered, entries, isLoading, ...controls}: DockedSetBodyProps) {
+  const stats = isLoading ? null : tallyCollection(cards, entries, controls.sets);
+  return <ToolbarSetPicker {...controls} stats={stats} filtered={filtered} />;
 }

@@ -11,18 +11,18 @@ import {
   STORY_STATS,
 } from './collectionStoryData';
 
-/** Each set's progress, by code, and the whole collection's. */
+/** Each set's progress, by code, the whole collection's and every promo set's. */
 const progressOf = (stats: typeof STORY_STATS) =>
   new Map<string, {complete: number; cards: number}>([
     ['all', stats.totals],
+    ['promos', stats.promoTotals],
     ...stats.sets.map((set) => [set.code, set.tally] as const),
   ]);
 
-const PROGRESS = progressOf(STORY_STATS);
-
 /**
- * The binder's set picker, in the side panel's surface it lives on. Live: pick a set and
- * the button follows. Keyboard: the arrows open it and move through it, Escape closes it.
+ * The binder's set picker, in the side panel's surface it lives on. Live: pick a set or All
+ * sets and the button follows. Keyboard: the arrows open it and move through it, Escape
+ * closes it.
  */
 function LivePicker(args: SetPickerProps) {
   const [setCode, setSetCode] = useState(args.setCode);
@@ -50,24 +50,36 @@ const meta: Meta<typeof LivePicker> = {
     ),
   ],
   tags: ['autodocs'],
-  args: {setCode: '13', sets: STORY_SETS, setsLoading: false, onSetChange: fn(), progress: PROGRESS},
+  args: {
+    setCode: '13',
+    sets: STORY_SETS_WITH_PROMOS,
+    setsLoading: false,
+    onSetChange: fn(),
+    progress: progressOf(STORY_PROMO_STATS),
+  },
 };
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const openPicker: Story['play'] = async ({canvasElement}) => {
+  await userEvent.click(within(canvasElement).getByRole('button', {name: /^Binder set/}));
+};
+
 /** A two-line name under the set's number and logo. */
 export const Closed: Story = {};
 
-/** The whole collection picked: the fanned-cards mark, the number of sets, its name. */
+/** The whole collection picked: the lore symbol, the number of sets, its name. */
 export const WholeCollection: Story = {args: {setCode: 'all'}};
 
-/** Open: the whole collection pinned first, then every set with its progress, the open one ringed in gold and focused. */
-export const Open: Story = {
-  play: async ({canvasElement}) => {
-    await userEvent.click(within(canvasElement).getByRole('button', {name: /^Binder set/}));
-  },
-};
+/**
+ * Open (owner, 2026-10-20): Standard / Promo, then All sets and the standard sets
+ * with their progress, the open one ringed in gold and focused.
+ */
+export const Open: Story = {play: openPicker};
+
+/** Open on the whole collection: the standard sets' tab, All sets first, ringed and focused. */
+export const OpenOnWholeCollection: Story = {args: {setCode: 'all'}, play: openPicker};
 
 /** A one-line name keeps the button's height, so nothing below it moves between sets. */
 export const OneLineName: Story = {args: {setCode: '9'}};
@@ -76,15 +88,43 @@ export const OneLineName: Story = {args: {setCode: '9'}};
 export const Loading: Story = {args: {sets: ['13'], setsLoading: true, progress: null}};
 
 /**
- * A promo set picked (owner, 2026-10-17, #805): the promo symbol for its logo, "Promo set"
- * and its code over its name. Open, the promo sets follow the sets under their heading.
+ * The desktop toolbar's button, beside Collection (owner, 2026-10-20): the set's number and
+ * no picture, in the 111px left beside Collection and the gear.
  */
-export const PromoSet: Story = {
-  args: {setCode: STORY_PROMO_SET, sets: STORY_SETS_WITH_PROMOS, progress: progressOf(STORY_PROMO_STATS)},
-  play: async ({canvasElement}) => {
-    await userEvent.click(within(canvasElement).getByRole('button', {name: /^Binder set/}));
-  },
+export const Compact: Story = {
+  args: {compact: true},
+  decorators: [
+    (Story) => (
+      <div style={{width: 111}}>
+        <Story />
+      </div>
+    ),
+  ],
 };
+
+/** The toolbar's button on the whole collection: "All sets". */
+export const CompactWholeCollection: Story = {...Compact, args: {compact: true, setCode: 'all'}};
+
+/** The toolbar's button on a promo set: the set's code, whole on hover. */
+export const CompactPromoSet: Story = {...Compact, args: {compact: true, setCode: STORY_PROMO_SET}};
+
+/** The toolbar's button on every promo set (owner, 2026-10-20): "Promos". */
+export const CompactAllPromoSets: Story = {...Compact, args: {compact: true, setCode: 'promos'}};
+
+/**
+ * Every promo set picked (owner, 2026-10-20): the promo symbol, the number of promo sets, and
+ * "All promo sets". Open, the menu is on the promo sets' tab, its All sets ringed.
+ */
+export const AllPromoSets: Story = {args: {setCode: 'promos'}, play: openPicker};
+
+/**
+ * A promo set picked (owner, 2026-10-17, #805): the promo symbol for its logo, "Promo set"
+ * and its code over its name. Open, the menu is on the promo sets' tab.
+ */
+export const PromoSet: Story = {args: {setCode: STORY_PROMO_SET}, play: openPicker};
+
+/** A binder with no promo set: no tabs to choose between, All sets over the sets. */
+export const NoPromoSets: Story = {args: {sets: STORY_SETS, progress: progressOf(STORY_STATS)}, play: openPicker};
 
 /**
  * Curator's Collection picked (owner, 2026-10-18): one promo set for all its editions, by CC,

@@ -258,6 +258,24 @@ describe('BrowseToolbar on Browse', () => {
     expect(order()).toEqual(['Filters', 'Sort cards', 'Search cards', 'Collection']);
   });
 
+  it("puts collection mode's set picker just before the mode switch, which keeps its place", () => {
+    const setPicker = <button type="button">Binder set</button>;
+    render(<BrowseToolbar {...defaultProps({...search, modeSwitch, setPicker, ...docked(true)})} />);
+    expect(order()).toEqual(['Filters', 'Sort cards', 'Search cards', 'Binder set', 'Collection']);
+  });
+
+  it("puts the collection's actions after the mode switch, docked or flowing, but not on phones (owner, 2026-10-20)", () => {
+    const modeActions = <button type="button">Collection actions</button>;
+    const {unmount} = render(<BrowseToolbar {...defaultProps({...search, modeSwitch, modeActions, ...docked(true)})} />);
+    expect(order().slice(-2)).toEqual(['Collection', 'Collection actions']);
+    unmount();
+    const tablet = render(<BrowseToolbar {...defaultProps({...search, modeSwitch, modeActions})} />);
+    expect(order().slice(-2)).toEqual(['Collection', 'Collection actions']);
+    tablet.unmount();
+    render(<BrowseToolbar {...defaultProps({...search, modeSwitch, modeActions, isMobile: true})} />);
+    expect(order().at(-1)).toBe('Collection');
+  });
+
   it('keeps the sort at the far end of a toolbar without a mode switch (the playstyle page)', () => {
     render(<BrowseToolbar {...defaultProps(search)} />);
     expect(order().at(-1)).toBe('Sort cards');
