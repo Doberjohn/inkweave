@@ -38,7 +38,7 @@ Use the Supabase MCP tools to generate fresh types:
 
 Call `mcp__plugin_supabase_supabase__generate_typescript_types` or `mcp__claude_ai_Supabase__generate_typescript_types` with project_id `ttyidjyaxnycbpxwngqr`.
 
-Then diff against the committed file. Never paste the types into a Bash command: their braces and quotes trip Claude Code's obfuscation check, which blocks the command. Instead, save the `types` string (unescaped, final newline kept) with the Write tool as `generated-types.ts` in your scratchpad directory (the OS temp directory if you have none, never inside the repo), then diff the two files:
+Then diff against the committed file. Never paste the types into a Bash command: their braces and quotes trip Claude Code's obfuscation check, which blocks the command. Instead, save the `types` string (unescaped, final newline kept) with the Write tool as `generated-types.ts` in your session scratchpad directory, never in the OS temp directory or the repo, then diff the two files:
 
 ```bash
 diff --strip-trailing-cr <saved file> apps/web/src/shared/lib/database.types.ts
@@ -46,7 +46,7 @@ diff --strip-trailing-cr <saved file> apps/web/src/shared/lib/database.types.ts
 
 The committed file is the generator's output unchanged, so every line `diff` prints is a real difference.
 
-Report: FRESH (no output) or STALE (show the diff). If stale, the committed types need regeneration.
+Report: FRESH (no output) or STALE (show the diff). If stale, the committed types need regeneration. With no scratchpad to write to, write the copy nowhere else: report NOT RUN and go on to Step 4.
 
 ## Step 4: Schema Drift
 
@@ -73,7 +73,7 @@ Present a concise summary:
 
 **Integration Tests**: X/Y passed
 **Security Advisor**: X findings (list any ERROR/WARN)
-**Type Freshness**: FRESH or STALE
+**Type Freshness**: FRESH, STALE or NOT RUN
 **Schema Drift**: SYNCED or DRIFTED
 
 ### Issues
@@ -83,4 +83,4 @@ Present a concise summary:
 READY or NOT READY
 ```
 
-Do NOT commit, push, or modify any repo files: the Step 3 copy outside the repo is the only file you write. Report only.
+Do NOT commit, push, or modify any files: the Step 3 copy in your scratchpad is the only file you write. Report only.
