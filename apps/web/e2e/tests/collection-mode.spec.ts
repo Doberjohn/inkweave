@@ -209,7 +209,7 @@ test.describe('Collection mode, signed in', () => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
   });
 
-  test("the Collection button opens a collector's binder, with the set panel's numbers", async ({
+  test("the Collection button opens a collector's binder on the whole collection, with its numbers", async ({
     page,
   }) => {
     await signInAsCollector(page, ENTRIES);
@@ -218,11 +218,10 @@ test.describe('Collection mode, signed in', () => {
 
     await page.getByRole('button', {name: 'Show my collection'}).click();
 
-    // Which set it opens on is the newest one's, which a reveal season can move ahead of the
-    // card data; the tests below open the collection's set by its URL instead.
-    await expect(page).toHaveURL(/[?&]binder=\d+(&|$)/);
+    // The whole collection, not the newest set (owner, 2026-10-20).
+    await expect(page).toHaveURL(/[?&]binder=all(&|$)/);
     await expect(binder(page)).toBeVisible();
-    await expect(numbers(page).getByText('Complete set', {exact: true})).toBeVisible();
+    await expect(numbers(page).getByText('Complete collection', {exact: true})).toBeVisible();
   });
 
   test('on a new browser, the Collection button waits for the account instead of offering an import', async ({
@@ -247,8 +246,8 @@ test.describe('Collection mode, signed in', () => {
 
     answer();
     // Once the sync has answered, the binder stays only for a collection that arrived, and
-    // its numbers show only once loaded (the click opens the newest set, as the test above notes).
-    await expect(numbers(page).getByText('Complete set', {exact: true})).toBeVisible();
+    // its numbers show only once loaded (the click opens the whole collection, as above).
+    await expect(numbers(page).getByText('Complete collection', {exact: true})).toBeVisible();
     await expect(binder(page)).toBeVisible();
     await expect(page.getByRole('dialog', {name: 'Import your collection'})).toHaveCount(0);
   });

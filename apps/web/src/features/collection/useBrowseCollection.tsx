@@ -50,25 +50,25 @@ const ImportCollectionDialog = lazyWithRetry(
 );
 
 /**
- * Where the binder opens: the NEWEST set (owner, 2026-10-07), the one a collector
- * is most likely filling. Taken from `SET_NAMES` rather than the pool because the
- * first click on Collection comes BEFORE the pool loads (the toggle is what loads
- * it), and a new set cannot ship without its entry there (`SetCode` enforces it).
+ * The NEWEST set, where a set the binder does not have falls back to while the pool
+ * loads (`resolveSetCode`). Taken from `SET_NAMES` rather than the pool, which the
+ * first click on Collection comes BEFORE (the toggle is what loads it), and a new set
+ * cannot ship without its entry there (`SetCode` enforces it).
  */
 const DEFAULT_SET = String(Math.max(...Object.keys(SET_NAMES).map(Number)));
 
 /**
- * The set to show, or the whole collection. A set the binder does not have
- * (`?binder=99`) falls back to the newest it does, rather than drawing an empty
- * binder under a picker naming a different set. Until the list is known the
- * request is trusted: nothing contradicts it yet.
+ * The set to show, or the whole collection. Collection mode opens on the whole
+ * collection (owner, 2026-10-20; the newest set before), unless a Browse set filter
+ * names one (`setFromFilter`). A set the binder does not have (`?binder=99`) falls back
+ * to the newest it does, rather than drawing an empty binder under a picker naming a
+ * different set. Until the list is known the request is trusted: nothing contradicts it
+ * yet.
  */
 function resolveSetCode(requested: string | null, sets: string[] | null): string {
-  if (requested === WHOLE_COLLECTION) return requested;
-  const fallback = sets?.[0] ?? DEFAULT_SET;
-  if (requested === null) return fallback;
+  if (requested === null || requested === WHOLE_COLLECTION) return WHOLE_COLLECTION;
   if (sets === null || sets.includes(requested)) return requested;
-  return fallback;
+  return sets[0] ?? DEFAULT_SET;
 }
 
 /**
