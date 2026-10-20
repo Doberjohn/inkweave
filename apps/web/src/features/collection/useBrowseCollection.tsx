@@ -7,6 +7,7 @@ import {SignInDialog} from '../../shared/components/SignInDialog';
 import {SET_NAMES, type BrowseSortOrder} from '../../shared/constants';
 import {useSession} from '../../shared/contexts/SessionContext';
 import {useCollection} from './CollectionContext';
+import {WindowCopies} from './CollectionCopies';
 import {useCollectionCards, useCollectionPool} from './CollectionCardsContext';
 import {useCollectionClick} from './useCollectionClick';
 import {binderModalTarget, type ModalTarget} from './collectionModalTarget';
@@ -232,7 +233,7 @@ export interface BrowseCollectionSlots {
   rarityOptions: (pool: LorcanaCard[]) => string[];
   /** Whether you hold a copy of the card, either finish: what Owned and Missing ask. */
   owns: (cardId: string) => boolean;
-  /** The sign-in and import dialogs. */
+  /** The sign-in and import dialogs, and the card window's "Your copies" (#826), a portal. */
   prompts: ReactNode;
   /**
    * The set panel's body for the page's listing while collection mode is on, else
@@ -350,6 +351,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           />
         </Suspense>
       )}
+      <WindowCopies />
     </>
   );
 

@@ -1,11 +1,12 @@
 // Imported-collection state (#553, cloud-backed since #555): what the user owns.
 //
 // Reads localStorage on mount, then reconciles with the `collections` table once
-// a uid appears. Still far simpler than `DeckContext`, and deliberately so: a
-// draft is mutated continuously, which is why that provider carries a debounce
-// and a dirty fingerprint. A collection is written ONCE per import, so there is
-// no stream of edits to coalesce and no unsaved state to track — an import
-// either landed or reported why not.
+// a uid appears, and again each time the tab comes back into view. Still far
+// simpler than `DeckContext`, which carries a dirty fingerprint for a draft that is
+// mutated continuously. Here every write replaces the whole copy: an import, or
+// since #826 one count changed in the app, which is a new copy written the same
+// way. Only the edits' UPLOADS are coalesced (`UPLOAD_DELAY_MS`), so a burst of
+// clicks is one write, and the upload is flushed at every way out of the page.
 //
 // TWO PLACES IT DIVERGES FROM `DeckContext`, both owner rulings (2026-08-11):
 //   - SIGN-OUT KEEPS the local copy. `DeckContext` calls `clearDraft()`; a deck
@@ -30,9 +31,10 @@
 // id, and resolving those to cards is the consumer's job.
 
 import {createContext, useContext, useEffect, useRef, useState, type ReactNode} from 'react';
-import type {CollectionEntries} from './collectionParser';
+import type {CollectionEntries, Finish} from './collectionParser';
 import {totalOwned} from './collectionParser';
 import {
+  COLLECTION_KEY,
   clearCollection,
   clearDeleteTombstone,
   clearUploadPending,
@@ -90,6 +92,17 @@ interface CollectionContextValue {
   importCollection: (entries: CollectionEntries, importedAt: number) => string | null;
   /** Drop the collection entirely. */
   clearImported: () => void;
+  /**
+   * Set one finish's copies of one card (never below 0), saving it locally now and to
+   * the account shortly (#826).
+   *
+   * An edit is a new copy, written as an import is: under a fresh stamp, and marked
+   * pending at once, so a reload before its upload still uploads it. A card left at 0
+   * normal and 0 foil leaves the collection. Signed in with a collection only, once the
+   * account's copy has answered ({@link syncing}): an edit is owed to an account, and is
+   * built on its latest copy.
+   */
+  setCount: (cardId: string, finish: Finish, count: number) => void;
 }
 
 const CollectionContext = createContext<CollectionContextValue | null>(null);
@@ -199,6 +212,110 @@ function restampAsServerCopy(uid: Uid, copy: LocalCollection, setState: (next: C
 }
 
 /**
+ * How long after the last edit its upload starts (#826, owner 2026-10-19: saves are
+ * batched a moment after the last click), so a burst of clicks is one write, of the
+ * copy the last click made.
+ */
+export const UPLOAD_DELAY_MS = 1500;
+
+/** An edit's upload, waiting out {@link UPLOAD_DELAY_MS}. A provider holds one at most. */
+interface ScheduledUpload {
+  uid: Uid;
+  copy: LocalCollection;
+  setState: (next: CollectionState) => void;
+  timer: ReturnType<typeof setTimeout>;
+}
+
+/** Where the waiting upload is kept: a ref, touched only from handlers and effects. */
+type UploadSlot = {current: ScheduledUpload | null};
+
+/** Drop the waiting upload, if any, without sending it. */
+function cancelUpload(slot: UploadSlot): void {
+  if (slot.current !== null) clearTimeout(slot.current.timer);
+  slot.current = null;
+}
+
+/** Send the waiting upload now, if any, through the one write chain (`uploadCopy`). */
+function flushUpload(slot: UploadSlot): void {
+  const due = slot.current;
+  cancelUpload(slot);
+  if (due !== null) uploadCopy(due.uid, due.copy, due.setState);
+}
+
+/**
+ * Upload `copy` once no edit has followed it for {@link UPLOAD_DELAY_MS}. Each edit
+ * replaces the upload waiting, whose copy it supersedes. The edit marked itself pending
+ * before this, so a reload inside the delay still owes the upload (#739 defect 2).
+ */
+function scheduleUpload(
+  slot: UploadSlot,
+  uid: Uid,
+  copy: LocalCollection,
+  setState: (next: CollectionState) => void,
+): void {
+  cancelUpload(slot);
+  slot.current = {uid, copy, setState, timer: setTimeout(() => flushUpload(slot), UPLOAD_DELAY_MS)};
+}
+
+/**
+ * The provider's waiting edit upload (#826), flushed at every way out, since a timer
+ * never fires for a page that has gone: the page hidden (a tab switch, a close, a
+ * reload) and the provider unmounting (leaving `/browse` or `/account`).
+ *
+ * SIGNING OUT CANCELS IT instead. The session is gone by the time the provider hears,
+ * so the upload would only be refused, and logged as an error. The pending marker the
+ * edit set already owes it to that account's next sign-in, which uploads it ahead of
+ * the server's row (`resolveCollectionSync`).
+ */
+function useUploadBatch(uid: Uid | null): UploadSlot {
+  const slot = useRef<ScheduledUpload | null>(null);
+  useEffect(() => {
+    const flushIfHidden = () => {
+      if (document.visibilityState === 'hidden') flushUpload(slot);
+    };
+    document.addEventListener('visibilitychange', flushIfHidden);
+    return () => {
+      document.removeEventListener('visibilitychange', flushIfHidden);
+      flushUpload(slot);
+    };
+  }, []);
+  useEffect(() => {
+    if (slot.current !== null && slot.current.uid !== uid) cancelUpload(slot);
+  }, [uid]);
+  return slot;
+}
+
+/**
+ * Calls `onWrite` whenever another tab of this origin writes the stored collection (#826), or
+ * clears the whole store (`key` null). The tab that writes hears nothing: a `storage` event goes
+ * only to the others. The latest `onWrite` is called, through a ref refreshed each render.
+ */
+function useOtherTabsWrites(onWrite: () => void): void {
+  const latestOnWrite = useRef(onWrite);
+  useEffect(() => {
+    latestOnWrite.current = onWrite;
+  });
+  useEffect(() => {
+    const listener = (e: StorageEvent) => {
+      if (e.key === COLLECTION_KEY || e.key === null) latestOnWrite.current();
+    };
+    window.addEventListener('storage', listener);
+    return () => window.removeEventListener('storage', listener);
+  }, []);
+}
+
+/**
+ * `entries` with one finish of one card set to `count`. A card left at 0 normal and 0
+ * foil leaves them, as an import never stores one (`parseCollectionCsv`).
+ */
+function withCount(entries: CollectionEntries, cardId: string, finish: Finish, count: number): CollectionEntries {
+  const entry = {...(entries[cardId] ?? {normal: 0, foil: 0}), [finish]: count};
+  const next = {...entries, [cardId]: entry};
+  if (totalOwned(entry) === 0) delete next[cardId];
+  return next;
+}
+
+/**
  * Delete this uid's row, leaving a tombstone until it is confirmed gone (#739
  * defect 4). Resolves whether the delete landed, for the sync's retry.
  *
@@ -301,9 +418,25 @@ function applySyncPlan(
     adoptServerCopy(uid, server, setState);
     return;
   }
+  if (plan === 'drop-local') {
+    dropLocalCopy(uid, setState);
+    return;
+  }
   if (plan === 'upload' && snapshot.local !== null) {
     uploadLocalCopy(uid, snapshot.local, setState);
   }
+}
+
+/**
+ * Drop this browser's copy of a collection the account no longer has (owner ruling
+ * 2026-10-19, #826): it was cleared from another device, so it goes here too, as a clear
+ * made here would take it. Any pending marker named a different copy, or the plan would
+ * have been upload.
+ */
+function dropLocalCopy(uid: Uid, setState: (next: CollectionState) => void): void {
+  clearCollection();
+  clearUploadPending(uid);
+  setState(null);
 }
 
 /**
@@ -333,8 +466,57 @@ function useAccountAnswer(uid: Uid | null): {syncing: boolean; answered: (uid: s
   return {syncing: uid !== null && answeredFor !== uid, answered: setAnsweredFor};
 }
 
+/** What a read of the account's copy works with, all stable across the sync's life. */
+interface SyncDeps {
+  /** The local copy as it stands, read when the read starts (`snapshotFor`). */
+  latest: {current: CollectionState};
+  localEpoch: {current: number};
+  setState: (next: CollectionState) => void;
+  answered: (uid: string) => void;
+}
+
+/** One uid's reads: whether the sync was cancelled, and the number of the newest read. */
+interface SyncReads {
+  cancelled: boolean;
+  newest: number;
+}
+
 /**
- * Reconcile this browser's collection with the account's, once per uid.
+ * Read the account's copy and act on it (`applySyncPlan`), unless the answer has gone
+ * stale by the time it lands.
+ *
+ * A result goes stale for FOUR reasons. `cancelled` covers two (uid change, unmount).
+ * The third is a local mutation landing mid-flight: a clear during the fetch would be
+ * undone by the adopt-server branch applying a snapshot taken before it, restoring the
+ * collection the user just deleted, and an import or an edit in the same window is
+ * overwritten the same way. The fourth is a newer read (#826): a tab shown twice in
+ * quick succession reads twice, and the older answer must not land last.
+ */
+function readAccountCopy(uid: Uid, reads: SyncReads, {latest, localEpoch, setState, answered}: SyncDeps): void {
+  reads.newest += 1;
+  const readNumber = reads.newest;
+  const epochAtRead = localEpoch.current;
+  const isStale = () => reads.cancelled || reads.newest !== readNumber || localEpoch.current !== epochAtRead;
+  const snapshot = snapshotFor(uid, latest.current);
+  const markAnswered = () => {
+    if (!reads.cancelled) answered(uid);
+  };
+  void serverStateFor(uid)
+    .then((server) => {
+      // Batched with the plan's own state below, so the collection and the answer land together.
+      markAnswered();
+      if (isStale() || server === undefined) return;
+      applySyncPlan(uid, server, snapshot, setState);
+    })
+    .catch(markAnswered);
+}
+
+/**
+ * Reconcile this browser's collection with the account's: once per uid, and again
+ * each time the tab comes back into view (#826, owner 2026-10-19). A tab left open
+ * then picks up counts saved from another device before it can save over them. The
+ * decision is the same either way: a copy with an upload pending uploads, and
+ * otherwise the account's copy is adopted.
  *
  * The effect re-runs only when the account changes: its other deps are a state setter
  * and a ref, both stable, and one that changed identity would refetch on every change.
@@ -376,29 +558,16 @@ function useCollectionSync(
     // local collection (see the header).
     if (uid === null) return;
 
-    let cancelled = false;
-    // A result goes stale for THREE reasons, and `cancelled` only covers two of them
-    // (uid change, unmount). The third is a local mutation landing mid-flight: a
-    // clear during the fetch would be undone by the adopt-server branch applying a
-    // snapshot taken before it, restoring the collection the user just deleted, and
-    // an import in the same window is overwritten the same way.
-    const epochAtRead = localEpoch.current;
-    const isStale = () => cancelled || localEpoch.current !== epochAtRead;
-    const snapshot = snapshotFor(uid, latest.current);
-    const markAnswered = () => {
-      if (!cancelled) answered(uid);
+    const reads: SyncReads = {cancelled: false, newest: 0};
+    const read = () => readAccountCopy(uid, reads, {latest, localEpoch, setState, answered});
+    const readIfShown = () => {
+      if (document.visibilityState === 'visible') read();
     };
-    void serverStateFor(uid)
-      .then((server) => {
-        // Batched with the plan's own state below, so the collection and the answer land together.
-        markAnswered();
-        if (isStale() || server === undefined) return;
-        applySyncPlan(uid, server, snapshot, setState);
-      })
-      .catch(markAnswered);
-
+    read();
+    document.addEventListener('visibilitychange', readIfShown);
     return () => {
-      cancelled = true;
+      reads.cancelled = true;
+      document.removeEventListener('visibilitychange', readIfShown);
     };
   }, [uid, setState, localEpoch, answered]);
 
@@ -414,6 +583,8 @@ export function CollectionProvider({children}: {children: ReactNode}) {
   // The sync reasons about the FULL local copy, another account's included; only
   // what is exposed below is filtered (owner ruling 2026-10-06).
   const syncing = useCollectionSync(uid, state, setState, localEpoch);
+  const waitingUpload = useUploadBatch(uid);
+  useOtherTabsWrites(takeOtherTabsCopy);
   const visible = state !== null && visibleTo(state, {uid, loading}) ? state : null;
 
   // No useMemo/useCallback anywhere below: the React Compiler memoizes this file
@@ -428,6 +599,9 @@ export function CollectionProvider({children}: {children: ReactNode}) {
     if (error !== null) return error;
     setState(data);
     localEpoch.current += 1;
+    // The import replaces any edit still waiting to upload. Left waiting, that upload
+    // would land after this one's and put the edited copy back over the import.
+    cancelUpload(waitingUpload);
     if (uid) {
       // This import supersedes any clear still owed to the server: its upsert is
       // queued behind that delete and replaces the row either way, so a tombstone
@@ -442,10 +616,45 @@ export function CollectionProvider({children}: {children: ReactNode}) {
     clearCollection();
     setState(null);
     localEpoch.current += 1;
+    // Nor may a waiting edit upload outlive the clear: it would recreate the row.
+    cancelUpload(waitingUpload);
     // Clearing while signed in clears it everywhere, or the collection reappears
     // from another device. Queued behind any upload already in flight, and
     // tombstoned until it lands.
     if (uid) void deleteFromServer(uid);
+  }
+
+  /**
+   * Another tab's write, taken in here (#826). The tabs share the one stored copy and its
+   * markers, but each holds its own copy in memory. Without this a tab works on a copy another
+   * has replaced: an edit there builds on stale counts, and a re-read there pairs the stale
+   * copy with the other tab's pending marker, so it adopts the account's older row over the
+   * other tab's edit and clears the marker that owed it.
+   *
+   * The write supersedes this tab's waiting upload, as an import made here would: the tab that
+   * wrote it owns its upload. An in-flight read goes stale, as for any local change.
+   */
+  function takeOtherTabsCopy() {
+    cancelUpload(waitingUpload);
+    setState(readCollection());
+    localEpoch.current += 1;
+  }
+
+  function setCount(cardId: string, finish: Finish, count: number) {
+    // Not before the account's copy has answered: an edit made then is built on this browser's
+    // copy, and its upload would replace counts saved elsewhere that the read was bringing in.
+    const editable = uid !== null && visible !== null && !syncing;
+    // A count must stay a whole number: a stored 1.5 fails the copy's guard on the next
+    // read, and that read clears the whole collection (`readCollection`).
+    if (!editable || !Number.isSafeInteger(count)) return;
+    const entries = withCount(visible.entries, cardId, finish, Math.max(0, count));
+    const {data, error} = writeCollection(entries, uniqueImportStamp(Date.now(), uid, state), uid, 'import');
+    // As for an import: nothing moves unless the local write landed.
+    if (error !== null) return;
+    setState(data);
+    localEpoch.current += 1;
+    markUploadPending(uid, data.importedAt);
+    scheduleUpload(waitingUpload, uid, data, setState);
   }
 
   const ownedCount = (cardId: string) => totalOwned(visible?.entries[cardId]);
@@ -459,6 +668,7 @@ export function CollectionProvider({children}: {children: ReactNode}) {
     owns: (cardId: string) => ownedCount(cardId) > 0,
     importCollection,
     clearImported,
+    setCount,
   };
 
   return <CollectionContext.Provider value={value}>{children}</CollectionContext.Provider>;

@@ -140,7 +140,7 @@ function ChooseStep({
     <>
       <p style={{...DIALOG_BODY, fontWeight: 400, marginTop: SPACING.xs}}>
         Export your collection from Dreamborn as CSV, then choose the file here. Importing
-        replaces whatever collection Inkweave already has.
+        replaces whatever collection Inkweave already has, counts you changed in the app included.
       </p>
       <input
         ref={inputRef}

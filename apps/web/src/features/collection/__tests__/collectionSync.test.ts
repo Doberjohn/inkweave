@@ -35,11 +35,11 @@ describe('resolveCollectionSync', () => {
   });
 
   describe('the resurrection guard (migrated marker)', () => {
-    it('does not re-upload the copy that already migrated', () => {
+    it('drops, never re-uploads, the copy that already migrated once its row is gone', () => {
       // After migrating, the user clears their collection from another device: the
       // row is gone, but sign-out kept this browser's copy. Re-uploading it would
-      // undo their deletion.
-      expect(resolveCollectionSync(input({migratedImportedAt: 1000}))).toBe('none');
+      // undo their deletion, and so would an edit to it (#826): it goes too.
+      expect(resolveCollectionSync(input({migratedImportedAt: 1000}))).toBe('drop-local');
     });
 
     it('uploads a NEW import made after migrating (#739 defect 3)', () => {
@@ -54,20 +54,29 @@ describe('resolveCollectionSync', () => {
       );
     });
 
-    it("never uploads another account's copy", () => {
+    it("never uploads another account's copy, nor drops it", () => {
+      // This account having no row says nothing about user-b's.
       expect(
         resolveCollectionSync(input({local: {importedAt: 1000, ownerUid: 'user-b', source: 'import'}})),
+      ).toBe('none');
+      expect(
+        resolveCollectionSync(input({local: {importedAt: 1000, ownerUid: 'user-b', source: 'server'}})),
       ).toBe('none');
     });
   });
 
   describe('provenance (#739 defect 6)', () => {
-    it('never uploads a copy that came from the server, even with no marker', () => {
-      // The marker write failed after a successful mirror, then the row was
-      // deleted elsewhere. The same vector with `source: 'import'` uploads.
+    it('never uploads a copy that came from the server, and drops it once its row is gone', () => {
+      // The row was deleted elsewhere (owner ruling 2026-10-19, #826: the copy goes
+      // too). The same vector with `source: 'import'` and no marker uploads.
       expect(resolveCollectionSync(input({local: {importedAt: 1000, ownerUid: UID, source: 'server'}}))).toBe(
-        'none',
+        'drop-local',
       );
+    });
+
+    it('keeps a copy that came from the server while its row is there', () => {
+      const local = {importedAt: 1000, ownerUid: UID, source: 'server' as const};
+      expect(resolveCollectionSync(input({local, hasServer: true}))).toBe('adopt-server');
     });
   });
 

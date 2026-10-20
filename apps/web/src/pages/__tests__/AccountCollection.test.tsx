@@ -8,7 +8,7 @@ import {AccountCollection} from '../AccountCollection';
  * from the account, with no undo, so it asks first. The providers are mocked: a reader
  * holding a collection, whose clear this file watches.
  */
-const collection = vi.hoisted(() => ({clearImported: vi.fn()}));
+const collection = vi.hoisted(() => ({clearImported: vi.fn(), importedAt: Date.UTC(2026, 9, 12)}));
 vi.mock('../../features/collection/CollectionContext', () => ({
   useCollection: () => ({
     hasCollection: true,
@@ -17,7 +17,7 @@ vi.mock('../../features/collection/CollectionContext', () => ({
     clearImported: collection.clearImported,
     ownedCount: () => 1,
     entries: {a: {normal: 1, foil: 0}},
-    importedAt: Date.UTC(2026, 9, 12),
+    importedAt: collection.importedAt,
   }),
 }));
 vi.mock('../../features/collection/CollectionCardsContext', () => ({
@@ -31,6 +31,19 @@ vi.mock('../../shared/contexts/CardDataContext', () => ({
 afterEach(() => vi.clearAllMocks());
 
 describe('AccountCollection', () => {
+  it('dates the collection by its last change, which an import and each edit in the app stamp (#826)', () => {
+    render(<AccountCollection />);
+    // The copy's own stamp, formatted as the row formats it: in the machine's locale, so
+    // a fixed string would fail outside English, but a wrong stamp still fails.
+    const lastChanged = new Date(collection.importedAt).toLocaleDateString(undefined, {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    expect(screen.getByText('Last changed').nextSibling).toHaveTextContent(lastChanged);
+    expect(screen.queryByText('Imported')).not.toBeInTheDocument();
+  });
+
   it('asks before clearing, and clears only once the reader confirms', async () => {
     const user = userEvent.setup();
     render(<AccountCollection />);

@@ -31,6 +31,11 @@ function pickSlowly(): () => Promise<void> {
 }
 
 describe('ImportCollectionDialog', () => {
+  it('warns that an import replaces counts changed in the app too (#826)', () => {
+    render(<ImportCollectionDialog isOpen onClose={vi.fn()} pool={POOL} isPoolReady poolError={null} onRetryPool={vi.fn()} onImport={vi.fn(() => null)} />);
+    expect(screen.getByText(/replaces whatever collection Inkweave already has, counts you changed in the app included/)).toBeInTheDocument();
+  });
+
   it('refuses to parse while the pool is incomplete, even through the input itself', async () => {
     // The button is disabled, but the input stays drivable: the guard must sit in
     // the import funnel, or a partial pool silently drops the cards it cannot see.

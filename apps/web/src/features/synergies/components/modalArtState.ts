@@ -1,10 +1,13 @@
-import {createContext, useState} from 'react';
+import {createContext, useLayoutEffect, useState} from 'react';
+import {flushSync} from 'react-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {hasForeignScan, usePrintingSelection, type Printing} from '../../../shared/hooks';
+import {ART_CONTROLS_HEIGHT, hasArtControls} from './cardOverviewModalStyles';
 
-// The card overview modal's art state: the "See translation" overlay (#623) and the printing
-// shown (#625). Each sits in a context because the header (desktop controls) and the card
-// image (art, overlay, mobile controls) both read it; ModalCardArt.tsx holds those views.
+// The card overview modal's art state: the "See translation" overlay (#623), the printing
+// shown (#625), and the slot under the card that a page may fill (#826). Each sits in a
+// context because the header (desktop controls) and the card image (art, overlay, controls
+// under it) read them; ModalCardArt.tsx holds those views.
 
 /** "See translation" for a card with a non-English scan among its printings; else null. */
 export interface CardTranslationState {
@@ -80,4 +83,49 @@ export function useModalPrinting(
   });
   if (printings.length < 2) return null;
   return {printings, index, select, pick, settle, locked: inComparison};
+}
+
+/** The window's slot under its card (#826), as `CopiesSlot` needs it. */
+export interface CopiesSlotState {
+  /** Hands the slot's element to its host, and null once it goes: `CardModalContext`'s `copiesSlot`. */
+  attach: (el: HTMLElement | null) => void;
+  /** The window's own key handling (the Tab trap, the arrows' paging), for keys pressed in the slot. */
+  onKeyDown: (e: KeyboardEvent) => void;
+}
+
+/** Null where nothing hosts a slot: a story, a test, or a window outside `CardModalProvider`. */
+export const CopiesSlotContext = createContext<CopiesSlotState | null>(null);
+
+/**
+ * The height of what sits under a desktop card (`DesktopArtControls`), which the art shrinks
+ * to leave free (`artScaleTransform`); 0 on a phone, whose controls sit in the column's flow.
+ * Until it is measured, the pills' row for a card with printings, as the loading shell
+ * reserves, so the art keeps its size when the window takes over from the shell.
+ *
+ * Measured at once, then again whenever it changes: a page filling the window's slot (#826),
+ * the pills coming or going as the arrows page. The observer's update is flushed in its own
+ * callback, which runs before the browser paints, so the art never shows a frame overlapped by
+ * a block it has not yet shrunk for.
+ *
+ * The element is held in state, not a ref, so measuring follows it: a window that opens on a
+ * phone and is widened to desktop mounts the controls only then, after a ref's mount-time
+ * effect has come and gone.
+ */
+export function useUnderArtHeight(card: LorcanaCard, isMobile: boolean) {
+  const [el, setEl] = useState<HTMLDivElement | null>(null);
+  const [measured, setMeasured] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    // Where nothing can observe it there is no layout to read either (jsdom): `initial` stands.
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const measure = () => setMeasured(el.offsetHeight);
+    measure();
+    const observer = new ResizeObserver(() => {
+      // A detached element measures 0, which says nothing about the window.
+      if (el.isConnected) flushSync(measure);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [el]);
+  const initial = hasArtControls(card) ? ART_CONTROLS_HEIGHT : 0;
+  return {underArtRef: setEl, below: isMobile ? 0 : (measured ?? initial)};
 }

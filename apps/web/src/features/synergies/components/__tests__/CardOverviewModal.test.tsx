@@ -1,3 +1,5 @@
+import {useState} from 'react';
+import {createPortal} from 'react-dom';
 import {render, screen, waitFor} from '@testing-library/react';
 import {test, expect, vi, afterEach} from 'vitest';
 import userEvent from '@testing-library/user-event';
@@ -331,6 +333,70 @@ function renderPrintingModal(
   const utils = render(tree(card));
   return {...utils, rerenderCard: (c: LorcanaCard) => utils.rerender(tree(c))};
 }
+
+/**
+ * A page filling the window's slot through a portal, as Browse does with "Your copies" (#826):
+ * from OUTSIDE the window's tree, so React sends the button's events up this host, never up the
+ * window. A button appended to the slot by hand would be found under the window's own tree.
+ */
+function SlotHost({onShownPrintingChange, onGoToSibling = () => {}}: {
+  onShownPrintingChange?: (printingId: string | null) => void;
+  onGoToSibling?: (d: 1 | -1) => void;
+}) {
+  const [slot, setSlot] = useState<HTMLElement | null>(null);
+  return (
+    <MemoryRouter>
+      <CardOverviewModal
+        isOpen
+        card={withEnchanted(makeCard('b'))}
+        synergies={[]}
+        getPairSynergies={() => null}
+        onClose={() => {}}
+        siblingCardIds={['a', 'b', 'c']}
+        onGoToSibling={onGoToSibling}
+        copiesSlotRef={setSlot}
+        onShownPrintingChange={onShownPrintingChange}
+      />
+      {slot && createPortal(<button type="button">Add a copy</button>, slot)}
+    </MemoryRouter>
+  );
+}
+
+test('hands a page the slot under the card, which its content fills inside the window', () => {
+  Element.prototype.scrollTo = vi.fn();
+  render(<SlotHost />);
+
+  expect(screen.getByTestId('card-overview-modal')).toContainElement(screen.getByRole('button', {name: 'Add a copy'}));
+});
+
+test('tells the page the printing a pill puts on show, and the Standard art as none', async () => {
+  Element.prototype.scrollTo = vi.fn();
+  const user = userEvent.setup();
+  const report = vi.fn();
+  render(<SlotHost onShownPrintingChange={report} />);
+  expect(report).toHaveBeenLastCalledWith(null);
+
+  await user.click(screen.getByRole('radio', {name: 'Enchanted'}));
+  expect(report).toHaveBeenLastCalledWith('b-e');
+
+  await user.click(screen.getByRole('radio', {name: 'Standard'}));
+  expect(report).toHaveBeenLastCalledWith(null);
+});
+
+test('a key pressed in what fills the slot reaches the window, as one inside it would', async () => {
+  // The arrows page from the slot's controls too, once: without the slot's own listener the
+  // window never hears them, React sending a portal's events up the page that rendered it.
+  Element.prototype.scrollTo = vi.fn();
+  const user = userEvent.setup();
+  const onGoToSibling = vi.fn();
+  render(<SlotHost onGoToSibling={onGoToSibling} />);
+
+  screen.getByRole('button', {name: 'Add a copy'}).focus();
+  await user.keyboard('{ArrowRight}');
+
+  expect(onGoToSibling).toHaveBeenCalledTimes(1);
+  expect(onGoToSibling).toHaveBeenCalledWith(1);
+});
 
 test('desktop puts the printing pills under the card, shrinking its art to make room', () => {
   Element.prototype.scrollTo = vi.fn();
