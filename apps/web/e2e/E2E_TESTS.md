@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-189 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+196 tests across 24 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts` and the reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -115,6 +115,20 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should preserve search query in URL on browse page | Hero search for "Ariel" puts `q=Ariel` in URL, browse search input shows "Ariel" |
 | should deep link to browse with filters | Direct navigation to `/browse?q=Elsa&ink=Sapphire` populates the search input |
 | should filter a playstyle page in place without navigating to browse | Typing in the playstyle toolbar search filters in place: URL stays `/playstyles/ramp` and gains `q=elsa` (no jump to `/browse`) |
+
+## `browse-filters.spec.ts`: 7 tests (6 desktop only, 1 mobile only)
+
+Every other spec sets Browse's filters through the URL. These press the filter buttons and check `aria-pressed` and the URL param each one writes (`useFilterParams.ts`), which is what a shared link carries. The desktop tests use the panel docked beside the cards at 1024px and wider (`complementary` "Filters"), where Type, Keyword, Classification and Set start folded behind a header button; the phone test uses the Filters drawer, which applies only on Apply.
+
+| Test | What it verifies |
+|---|---|
+| an ink cost | "Cost 3" turns `aria-pressed` and the URL gains `cost=3` |
+| Uninkable, which redraws the cost buttons as uninkable hexagons | "Cost 1" has no `<polygon>` before; "Uninkable" turns pressed and writes `inkwell=uninkable`, and "Cost 1" then draws `CostIcon`'s uninkable hexagon |
+| a rarity | "Legendary" turns pressed and writes `rarity=Legendary` |
+| a card type, a keyword and a classification, each in its folded section | Unfolds Type, Keyword and Classification (`aria-expanded`); Character, Evasive and Hero each turn pressed and write `type=Character`, `keyword=Evasive` and `classification=Hero` |
+| an ink, then Dual-ink cards | "Filter by Amber" writes `ink=Amber`, and the "Dual-ink cards" toggle it reveals writes `inkmatch=dual` |
+| with the panel closed, the active chips list the filters and one can be dismissed | After Cost 3 and Evasive, the Filters button closes the panel; the chips "Cost: 3" and "Evasive" show (only while it is closed), and dismissing "Cost: 3" drops `cost=` and keeps `keyword=Evasive` |
+| a pick applies only on Apply | Phone drawer: "Cost 3" turns pressed with no `cost=` in the URL yet; "Apply" writes `cost=3` and closes the drawer |
 
 ## `card-selection.spec.ts` — 5 tests (desktop only)
 
