@@ -26,12 +26,14 @@ If engine files were changed, launch the `engine-validator` agent to run the ful
 
 ## Step 0c: Supabase validation (conditional)
 
-Check if any files in `supabase/migrations/` are in the diff:
+Check if any files under `supabase/migrations/` changed, untracked ones included:
 ```bash
-git diff --name-only HEAD | grep "supabase/migrations/"
+git status --porcelain -- supabase/migrations/
 ```
 
-If migration files were changed, launch the `supabase-validator` agent to run the full Supabase pipeline (integration tests → security advisor → type freshness → schema drift). Wait for its report before proceeding.
+Use `git status`, not `git diff --name-only HEAD`: `git diff` never lists untracked files, and a new migration stays untracked until it is staged, so the diff check skipped this step for #858's new migration.
+
+If it lists any file, launch the `supabase-validator` agent to run the full Supabase pipeline (integration tests → security advisor → type freshness → schema drift). Wait for its report before proceeding.
 
 ## Step 0d: Code complexity validation (always)
 
