@@ -1,6 +1,6 @@
 import type {ReactNode} from 'react';
-import {Tooltip} from '../../../shared/components';
-import {COLORS, FONTS, FONT_SIZES, LETTER_SPACING, SPACING, hexRgba} from '../../../shared/constants';
+import {HelpTooltip} from '../../../shared/components';
+import {COLORS, FONTS, FONT_SIZES, LETTER_SPACING, SPACING} from '../../../shared/constants';
 
 interface ColumnHeaderProps {
   title: string;
@@ -55,7 +55,7 @@ const HEADER_STYLE: React.CSSProperties = {
 const TITLE_STYLE: React.CSSProperties = {
   gridColumn: 2,
   margin: 0,
-  // Match the modal h1 (card name) treatment: Plus Jakarta Sans, 22px / 700. Bigger than the
+  // Match the modal h1 (card name) treatment: the body font, 22px / 700. Bigger than the
   // mockup's 17px — column titles are the second most important readout in focused state.
   fontFamily: FONTS.body,
   fontSize: FONT_SIZES.xxxl,
@@ -99,7 +99,13 @@ function ScoreStats({score, scoreColor, scoreFontSize, showScale, scoreTooltip, 
         {showScale && (
           <span style={{fontSize: FONT_SIZES.lg, fontWeight: 600, color: COLORS.textMuted, marginLeft: 2}}>/ 10</span>
         )}
-        {scoreTooltip && <ScoreTooltipButton content={scoreTooltip} />}
+        {scoreTooltip && (
+          <HelpTooltip
+            content={scoreTooltip}
+            label="What does this score mean?"
+            style={{alignSelf: 'center', marginLeft: 6}}
+          />
+        )}
       </div>
       <div style={META_STYLE}>{meta}</div>
     </div>
@@ -117,35 +123,6 @@ const META_STYLE: React.CSSProperties = {
   whiteSpace: 'nowrap',
   color: COLORS.textMuted,
 };
-
-function ScoreTooltipButton({content}: {content: string}) {
-  return (
-    <Tooltip content={content} triggerStyle={{alignSelf: 'center', marginLeft: 6}}>
-      <button
-        type="button"
-        aria-label="What does this score mean?"
-        style={{
-          width: 18,
-          height: 18,
-          borderRadius: '50%',
-          background: hexRgba(COLORS.primary500, 0.06),
-          border: `1px solid ${hexRgba(COLORS.primary500, 0.3)}`,
-          color: hexRgba(COLORS.primary500, 0.85),
-          fontSize: FONT_SIZES.sm,
-          fontWeight: 700,
-          cursor: 'help',
-          fontFamily: 'inherit',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          lineHeight: 1,
-          padding: 0,
-        }}>
-        ?
-      </button>
-    </Tooltip>
-  );
-}
 
 /** Bottom gradient divider, absolutely positioned so it doesn't take grid-row height. */
 function HeaderDivider({accentColor}: {accentColor: string}) {

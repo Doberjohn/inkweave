@@ -1,4 +1,19 @@
+import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
+
+/** Opens the search sheet from Browse, whose bottom nav holds the Search button. */
+async function openSearchSheet(page: Page) {
+  await page.getByTestId('cta-browse').click();
+  await page.getByRole('button', {name: 'Search cards'}).click();
+  const sheet = page.getByRole('dialog', {name: 'Search cards'});
+  await expect(sheet).toBeVisible();
+  return sheet;
+}
+
+/** The card name a result row shows: its highlighted match sits inside the name. */
+async function resultName(option: Locator) {
+  return (await option.locator('mark').locator('xpath=..').textContent()) ?? '';
+}
 
 test.describe('Mobile Viewport', () => {
   // This test file should only run on mobile projects
@@ -176,6 +191,57 @@ test.describe('Mobile Viewport', () => {
     // The sheet stays closed: focus returns to the Search button mid-keypress, and an
     // Enter that reached it would click it and reopen the sheet.
     await expect(page.getByRole('dialog', {name: 'Search cards'})).not.toBeVisible();
+  });
+
+  test('the search sheet shows highlighted results, and a picked one opens its card window', async ({page}) => {
+    const sheet = await openSearchSheet(page);
+    await sheet.getByPlaceholder('Search cards...').fill('Elsa');
+
+    // Results wait out the 150ms debounce, which the Enter test above never does.
+    await expect(sheet.getByText(/^\d+ results?$/)).toBeVisible();
+    const first = sheet.getByRole('option').first();
+    await expect(first.locator('mark')).toHaveText(/^elsa$/i);
+    const name = await resultName(first);
+
+    await first.click(); // a row picks on mousedown
+    await expect(page.getByRole('dialog', {name: `${name} synergies`})).toBeVisible();
+  });
+
+  test('a picked result comes back as a recent search that searches again', async ({page, appPage}) => {
+    let sheet = await openSearchSheet(page);
+    await sheet.getByPlaceholder('Search cards...').fill('Elsa');
+    const first = sheet.getByRole('option').first();
+    await expect(first).toBeVisible();
+    const name = await resultName(first);
+    await first.click();
+    await appPage.cardOverviewModal.getByRole('button', {name: 'Close'}).click();
+    await expect(appPage.cardOverviewModal).toBeHidden();
+
+    // Opened again with an empty field, the sheet lists the pick under Recent.
+    await page.getByRole('button', {name: 'Search cards'}).click();
+    sheet = page.getByRole('dialog', {name: 'Search cards'});
+    await expect(sheet.getByText('Recent', {exact: true})).toBeVisible();
+    await sheet.getByRole('button', {name, exact: true}).click();
+    await expect(sheet.getByPlaceholder('Search cards...')).toHaveValue(name);
+    await expect(sheet.getByRole('option').first()).toContainText(name);
+  });
+
+  test('Clear search empties the field, and Clear removes the recent searches', async ({page}) => {
+    await page.evaluate(() =>
+      localStorage.setItem('inkweave-recent-searches', JSON.stringify(['Elsa - Snow Queen'])),
+    );
+    const sheet = await openSearchSheet(page);
+    const input = sheet.getByPlaceholder('Search cards...');
+    await input.fill('Mickey');
+    await expect(sheet.getByText(/^\d+ results?$/)).toBeVisible();
+
+    await sheet.getByRole('button', {name: 'Clear search'}).click();
+    await expect(input).toHaveValue('');
+    await expect(sheet.getByRole('button', {name: 'Elsa - Snow Queen'})).toBeVisible();
+
+    await sheet.getByRole('button', {name: 'Clear', exact: true}).click();
+    await expect(sheet.getByText('Search for a card to see its synergies')).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem('inkweave-recent-searches'))).toBeNull();
   });
 
   test('should show sort dropdown in browse toolbar', async ({page}) => {

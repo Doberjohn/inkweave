@@ -17,21 +17,25 @@ If the report shows **NOT READY**, fix the blocking issues first. Do NOT proceed
 
 ## Step 0b: Engine validation (conditional)
 
-Check if any files in `packages/synergy-engine/src/` are in the diff:
+Check if any files under `packages/synergy-engine/src/` changed, untracked ones included:
 ```bash
-git diff --name-only HEAD | grep "packages/synergy-engine/src/"
+git status --porcelain -- packages/synergy-engine/src/
 ```
 
-If engine files were changed, launch the `engine-validator` agent to run the full engine pipeline (build → test → precompute → audit scores). Wait for its report before proceeding.
+Use `git status`, not `git diff`, for the reason Step 0c gives: new files stay untracked until they are staged.
+
+If it lists any file, launch the `engine-validator` agent to run the full engine pipeline (build → test → precompute → audit scores). Wait for its report before proceeding.
 
 ## Step 0c: Supabase validation (conditional)
 
-Check if any files in `supabase/migrations/` are in the diff:
+Check if any files under `supabase/migrations/` changed, untracked ones included:
 ```bash
-git diff --name-only HEAD | grep "supabase/migrations/"
+git status --porcelain -- supabase/migrations/
 ```
 
-If migration files were changed, launch the `supabase-validator` agent to run the full Supabase pipeline (integration tests → security advisor → type freshness → schema drift). Wait for its report before proceeding.
+Use `git status`, not `git diff --name-only HEAD`: `git diff` never lists untracked files, and a new migration stays untracked until it is staged, so the diff check skipped this step for #858's new migration.
+
+If it lists any file, launch the `supabase-validator` agent to run the full Supabase pipeline (integration tests → security advisor → type freshness → schema drift). Wait for its report before proceeding.
 
 ## Step 0d: Code complexity validation (always)
 

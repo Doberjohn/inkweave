@@ -2,6 +2,7 @@ import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {E2E_SUPABASE_ORIGIN} from '../fixtures/supabaseStub';
 import {cardFullNameById, newestCoreSet, promoSetWithOpenPocket, setCards, setPrintings} from '../helpers/cardData';
+import {storedSession} from '../helpers/session';
 
 /**
  * Collection mode (#553 Phase C), behind `VITE_SHOW_COLLECTION` and pinned on in
@@ -45,43 +46,6 @@ const MASTER = HELD_ALT ? 1 : 0;
 /** A share of the set as the panel writes it: a whole percent, rounded down (`percentOf`). */
 const percentOfSet = (count: number) => Math.floor((count / SET_TOTAL) * 100);
 
-/** base64url, for the session's token. */
-const base64url = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
-
-/**
- * A session supabase-js restores from storage as it stands: unexpired (a day out, far past
- * its refresh margin), with the user the app reads `user` from. The token is shaped like a
- * JWT; nothing in the browser verifies its signature.
- */
-function storedSession() {
-  const now = Math.floor(Date.now() / 1000);
-  const expiresAt = now + 24 * 60 * 60;
-  const user = {
-    id: COLLECTOR_ID,
-    aud: 'authenticated',
-    role: 'authenticated',
-    email: 'collector@example.test',
-    app_metadata: {provider: 'discord', providers: ['discord']},
-    user_metadata: {},
-    created_at: '2026-10-01T00:00:00Z',
-  };
-  const payload = {
-    sub: COLLECTOR_ID,
-    aud: 'authenticated',
-    role: 'authenticated',
-    iat: now,
-    exp: expiresAt,
-  };
-  return {
-    access_token: `${base64url({alg: 'HS256', typ: 'JWT'})}.${base64url(payload)}.e2e`,
-    token_type: 'bearer',
-    expires_in: expiresAt - now,
-    expires_at: expiresAt,
-    refresh_token: 'e2e-refresh-token',
-    user,
-  };
-}
-
 const COLLECTIONS_PATH = '/rest/v1/collections';
 
 interface CollectorOptions {
@@ -119,7 +83,7 @@ async function signInAsCollector(
       localStorage.setItem('inkweave:auth', JSON.stringify(session));
       if (collection) localStorage.setItem('inkweave:collection', JSON.stringify(collection));
     },
-    {session: storedSession(), collection: local},
+    {session: storedSession(COLLECTOR_ID), collection: local},
   );
   // Registered after the fixture's catch-all stub, so it wins for this table.
   let rows: object[] = entries
@@ -439,6 +403,41 @@ test.describe('Collection mode, signed in', () => {
     await expect(binder(page)).toHaveCount(0);
     expect(new URL(page.url()).searchParams.has('binder')).toBe(false);
     expect(new URL(page.url()).searchParams.has('owned')).toBe(false);
+  });
+
+  test('under Master set, Owned and Missing ask for a copy in each finish', async ({page}) => {
+    await signInAsCollector(page, ENTRIES);
+    await page.goto(`/browse?binder=${SET}&owned=owned`);
+    const tiles = binder(page).getByTestId('card-tile');
+    const shows = page.getByRole('group', {name: 'Binder shows'});
+    await expect(tiles).toHaveCount(HELD);
+
+    // The three base cards are held in one finish, so toward Master only the printing is done.
+    await numbers(page)
+      .getByRole('button', {name: /^Master set/})
+      .click();
+    await expect(tiles).toHaveCount(MASTER);
+
+    // And Missing lists all three, as Master's number counts them, the set's first cards first:
+    // Set 3's Nani - Protective Sister, held as a normal copy, hid from it while Master read 99%
+    // (owner, 2026-10-20). The rest of the set fills spreads past the first, so no count here.
+    await shows.getByRole('button', {name: 'Missing'}).click();
+    for (const [i, card] of HELD_BASE.entries()) {
+      await expect(tiles.nth(i)).toHaveAccessibleName(card.fullName);
+    }
+
+    // The page holds the choice, so a switch to the whole collection keeps it, and its Owned too.
+    await page.getByRole('button', {name: /^Binder set/}).click();
+    await page
+      .getByRole('listbox', {name: 'Standard sets'})
+      .getByRole('option', {name: /^All sets, the whole collection/})
+      .click();
+    await expect(numbers(page).getByRole('button', {name: /^Master collection/})).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await shows.getByRole('button', {name: 'Owned'}).click();
+    await expect(tiles).toHaveCount(MASTER);
   });
 
   test("the set picker's All sets opens the whole collection in the binder", async ({page}) => {

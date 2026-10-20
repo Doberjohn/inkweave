@@ -131,6 +131,19 @@ async function enumerateRoutes() {
 }
 
 /**
+ * The headers for a file the crawl serves from dist. Every file may be cached for an hour
+ * (#867), so each worker's browser context fetches the bundle, the fonts and the 2 MB
+ * allCards.json once instead of on every route: a card page fetched 78 files, 4.6 MB, and now
+ * fetches about 18, 0.2 MB. Safe because dist doesn't change under the crawl (nothing fetches
+ * the index.html files it writes; extensionless routes get the cached shell), and the cache
+ * lives only in the crawl's own contexts, which close with it. Exported for
+ * scripts/prerender.test.mjs.
+ */
+export function fileHeaders(ext) {
+  return {'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'max-age=3600'};
+}
+
+/**
  * Minimal static server over dist with an SPA fallback (extensionless paths -> index.html).
  * `shellHtml` is the CLEAN build shell, cached once by the caller: the home-route crawl
  * overwrites dist/index.html with home's rendered HTML, so re-reading it per request would
@@ -144,7 +157,7 @@ function startServer(shellHtml) {
       if (ext) {
         const filePath = join(DIST, urlPath);
         if (filePath.startsWith(DIST) && existsSync(filePath)) {
-          res.writeHead(200, {'Content-Type': MIME[ext] || 'application/octet-stream'});
+          res.writeHead(200, fileHeaders(ext));
           res.end(await readFile(filePath));
           return;
         }
@@ -305,11 +318,14 @@ export async function hasReadyContent(page, selector) {
 
 const errorMessage = (e) => (e && e.message ? e.message : String(e));
 
-/** One attempt at `route` on a fresh page: capture it, clean it, write it, report on it. */
-async function crawlRouteOnce(browser, route, selector) {
+/**
+ * One attempt at `route` on a fresh page in its worker's `context`: capture it, clean it,
+ * write it, report on it.
+ */
+async function crawlRouteOnce(context, route, selector) {
   let page;
   try {
-    page = await browser.newPage();
+    page = await context.newPage();
     // Tells the app it is being crawled, so it never loads Sentry: its modulepreload would be
     // baked into the captured HTML (#640; deploy check 7 in check-rendered-html.mjs).
     await page.addInitScript(() => {
@@ -409,12 +425,19 @@ async function main() {
   );
   const server = await startServer(shellHtml);
   const browser = await chromium.launch();
-  const crawlOnce = (route, selector) => crawlRouteOnce(browser, route, selector);
 
   let idx = 0;
   let done = 0;
   let failed = 0;
+  // Each worker crawls in one browser context of its own (#867), whose HTTP cache serves
+  // its later pages what its first one fetched (fileHeaders). Service workers are blocked:
+  // the app registers one in every production build, so a fresh context per route installed
+  // it on every page, fetching all of its precache again each time. Sharing a context leaves
+  // the captures unchanged: the app writes storage only when a visitor acts, so no route
+  // leaves state behind for the next.
   const worker = async () => {
+    const context = await browser.newContext({serviceWorkers: 'block'});
+    const crawlOnce = (route, selector) => crawlRouteOnce(context, route, selector);
     while (idx < routes.length) {
       const route = routes[idx++];
       const r = await crawlRoute(route, crawlOnce);
@@ -425,6 +448,7 @@ async function main() {
       }
       if (done % 100 === 0) console.log(`[prerender] ${done}/${routes.length} (${failed} failed)`);
     }
+    await context.close();
   };
   await Promise.all(Array.from({length: CONCURRENCY}, worker));
 

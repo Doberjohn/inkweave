@@ -1,5 +1,5 @@
 import type {Ink} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONT_SIZES, INK_COLORS, whiteRgba} from '../../shared/constants';
+import {COLORS, EASING, FONT_SIZES, INK_COLORS, RADIUS, SPACING, whiteRgba} from '../../shared/constants';
 import {PER_INK} from './setComposition';
 import {ProgressRing} from './ProgressRing';
 import {inkRgba} from './inkTint';
@@ -60,9 +60,9 @@ export function InkTrackerTile({ink, count, selected, onSelect, compact = false}
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: compact ? 7 : 9,
+        gap: SPACING.sm,
         padding: compact ? '13px 6px 11px' : '18px 10px 15px',
-        borderRadius: compact ? 12 : 14,
+        borderRadius: compact ? RADIUS.card : RADIUS.xl,
         background: selected ? inkRgba(ink, 0.1) : whiteRgba(0.02),
         border: `1.5px solid ${selected ? inkRgba(ink, 0.7) : COLORS.surfaceHover}`,
         boxShadow: selectionShadow(ink, selected, compact),

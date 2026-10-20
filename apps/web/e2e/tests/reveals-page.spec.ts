@@ -1,8 +1,8 @@
 import {test, expect} from '../fixtures';
 import {startClockInRevealSeason, type RevealSet} from '../helpers/revealSeason';
 
-/** A debut franchise's spotlight tile: an action button labelled "View <franchise> cards". */
-const FRANCHISE_BUTTON = /^View .+ cards$/;
+/** A debut franchise's spotlight tile: an action button named by its text, ending "View cards". */
+const FRANCHISE_BUTTON = /View cards$/;
 
 test.describe('Reveals page (flag on)', () => {
   let revealSet: RevealSet;
@@ -157,13 +157,14 @@ test.describe('Reveals page (flag on)', () => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 
     await page.goto('/reveals');
-    // The tile's own label names the franchise ("View Coco cards"), and its modal
-    // is "<franchise> cards", so the franchise is read off the page, not hardcoded.
+    // The tile's heading names the franchise ("Coco"), and its modal is "<franchise> cards",
+    // so the franchise is read off the page, not hardcoded. The heading sits inside the
+    // button, whose children aren't exposed as roles, so it is found by its tag.
     const tile = page.getByRole('button', {name: FRANCHISE_BUTTON}).first();
-    const label = (await tile.getAttribute('aria-label')) ?? '';
+    const franchise = ((await tile.locator('h3').textContent()) ?? '').trim();
     await tile.click();
 
-    const modal = page.getByRole('dialog', {name: label.replace(/^View /, ''), exact: true});
+    const modal = page.getByRole('dialog', {name: `${franchise} cards`, exact: true});
     await expect(modal).toBeVisible({timeout: 15000});
 
     // A card inside the franchise modal opens the shared card overview modal on top.

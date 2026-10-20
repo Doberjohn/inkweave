@@ -27,6 +27,12 @@ on:
       - '.github/workflows/script-tests-windows.yml'
   workflow_dispatch:
 
+# A newer push to a PR cancels that PR's older run (#867). Each push to master gets a group
+# of its own, so it is never cancelled.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('script-tests-windows-{0}', github.ref) || format('script-tests-windows-run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 

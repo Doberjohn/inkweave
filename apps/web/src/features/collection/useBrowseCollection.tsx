@@ -8,6 +8,7 @@ import {SET_NAMES, type BrowseSortOrder} from '../../shared/constants';
 import {useSession} from '../../shared/contexts/SessionContext';
 import {useCollection} from './CollectionContext';
 import type {Finish} from './collectionParser';
+import {isHeld, type Axis} from './collectionStats';
 import {useKeptCards} from './useKeptCards';
 import {useCollectionCards, useCollectionPool} from './CollectionCardsContext';
 import {useCollectionClick} from './useCollectionClick';
@@ -253,8 +254,12 @@ export interface BrowseCollectionSlots {
    * param too (`strayParams`); this covers the render before it is gone.
    */
   promoOnly: boolean;
-  /** Whether you hold a copy of the card, either finish: what Owned and Missing ask. */
-  owns: (cardId: string) => boolean;
+  /**
+   * Whether you hold the card toward the chosen headline (`isHeld`): a copy in either finish
+   * for Complete, one in each for Master, a printing's one finish counting as both. What
+   * Owned and Missing ask (owner, 2026-10-20).
+   */
+  owns: (card: LorcanaCard) => boolean;
   /**
    * The cards changed by hand in the binder's current view, which its Owned and Missing views
    * keep (#826, `useKeptCards`): a first copy leaves a card where it was in Missing.
@@ -308,11 +313,15 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   const {pool, waiting, error, isReady} = useCollectionPool(coreCards, collectionMode || showImport);
   const sets = isReady ? binderSets(pool) : null;
   const setCode = resolveSetCode(requested, sets);
+  // What the panel's headlines count, Complete or Master, which Owned and Missing ask too
+  // (owner, 2026-10-20): held here rather than in the panel, so the binder's view can ask it.
+  const [axis, setAxis] = useState<Axis>('complete');
 
   // The cards changed by hand in this view of the binder, which its Owned and Missing views
-  // keep: a view is the mode, the set, Owned or Missing, and the sort (`useKeptCards`).
+  // keep: a view is the mode, the set, Owned or Missing, the headline they ask of, and the
+  // sort (`useKeptCards`).
   const [searchParams] = useSearchParams();
-  const view = [collectionMode, setCode, show, searchParams.get(SORT_PARAM)].join('|');
+  const view = [collectionMode, setCode, show, axis, searchParams.get(SORT_PARAM)].join('|');
   const {kept, keep} = useKeptCards(view);
   const changeCount = (cardId: string, finish: Finish, count: number) => {
     setCount(cardId, finish, count);
@@ -344,6 +353,8 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     picksPromos: rarityPicksPromos(searchParams),
     show,
     onShowChange: writeShow,
+    axis,
+    onAxisChange: setAxis,
   };
   // What the docked panel and the toolbar's set picker count: the cards the page lets through.
   const setCounts = (listing: BrowseListing) => ({
@@ -422,10 +433,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     show,
     rarityOptions: binderRarities,
     promoOnly: collectionMode && isPromoScope(setCode),
-    owns: (cardId) => {
-      const held = entries[cardId];
-      return held !== undefined && held.normal + held.foil > 0;
-    },
+    owns: (card) => isHeld(card, entries, axis),
     kept,
     prompts,
     renderSetPanel: (listing) =>

@@ -1,18 +1,21 @@
 import {useRef, useState, useLayoutEffect, type ReactNode, type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
-import {COLORS, FONT_SIZES, RADIUS, SHADOWS, Z_INDEX} from '../constants';
+import {COLORS, FONT_SIZES, RADIUS, SHADOWS, Z_INDEX, hexRgba} from '../constants';
+import {useTooltip} from '../hooks/useTooltip';
 
 const TIP_GAP = 8;
 const TIP_MARGIN = 8;
 const TIP_MAX_WIDTH = 240;
 
 interface TooltipProps {
-  /** Trigger element (e.g. a `?` button). The tooltip is shown on hover/focus of this element. */
-  children: ReactNode;
+  /**
+   * The trigger (e.g. a `?` button), given the id its focusable control names in
+   * `aria-describedby`: the tooltip's while it shows, else undefined. The tooltip shows on hover
+   * or focus within it.
+   */
+  children: (describedBy: string | undefined) => ReactNode;
   /** Tooltip body. Newlines (`\n`) are preserved via `white-space: pre-line`. */
   content: string;
-  /** Optional aria-label for the trigger when its visible text is just an icon ("?"). */
-  triggerAriaLabel?: string;
   /** Style overrides for the trigger wrapper (the `<span>` wrapping `children`). */
   triggerStyle?: CSSProperties;
 }
@@ -25,17 +28,20 @@ interface TooltipProps {
  * - Light theme bg + muted border, multi-line content via `pre-line`
  * - Tail/arrow points back to the trigger
  * - Position recalculated on each show; clamped to viewport edges
+ *
+ * It takes the pointer and hides on Escape (`useTooltip`, WCAG 1.4.13), and renders only while it
+ * shows.
  */
-export function Tooltip({children, content, triggerAriaLabel, triggerStyle}: TooltipProps) {
+export function Tooltip({children, content, triggerStyle}: TooltipProps) {
   const triggerRef = useRef<HTMLSpanElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const {open, describedBy, triggerProps, tooltipProps} = useTooltip();
   const [placement, setPlacement] = useState<'above' | 'below'>('above');
   const [coords, setCoords] = useState<{top: number; left: number}>({top: -9999, left: -9999});
 
   // Position on every show (and on resize while visible).
   useLayoutEffect(() => {
-    if (!visible) return;
+    if (!open) return;
     const tipEl = tooltipRef.current;
     const triggerEl = triggerRef.current;
     if (!tipEl || !triggerEl) return;
@@ -62,25 +68,21 @@ export function Tooltip({children, content, triggerAriaLabel, triggerStyle}: Too
       window.removeEventListener('resize', reposition);
       window.removeEventListener('scroll', reposition, true);
     };
-  }, [visible]);
+  }, [open]);
 
   return (
     <>
       <span
         ref={triggerRef}
-        aria-label={triggerAriaLabel}
-        onMouseEnter={() => setVisible(true)}
-        onMouseLeave={() => setVisible(false)}
-        onFocus={() => setVisible(true)}
-        onBlur={() => setVisible(false)}
+        {...triggerProps}
         style={{display: 'inline-flex', alignItems: 'center', ...triggerStyle}}>
-        {children}
+        {children(describedBy)}
       </span>
-      {visible &&
+      {open &&
         createPortal(
           <div
             ref={tooltipRef}
-            role="tooltip"
+            {...tooltipProps}
             data-placement={placement}
             style={{
               position: 'fixed',
@@ -98,7 +100,6 @@ export function Tooltip({children, content, triggerAriaLabel, triggerStyle}: Too
               color: COLORS.descriptionText,
               textAlign: 'left',
               whiteSpace: 'pre-line',
-              pointerEvents: 'none',
               // Must clear Z_INDEX.modal (1000) — tooltip is portal'd to document.body but the
               // modal still stacks above unless we explicitly out-rank it (#510: the named
               // popover tier, not modal + 100 arithmetic that happened to equal it).
@@ -130,5 +131,50 @@ function TooltipArrow({placement}: {placement: 'above' | 'below'}) {
           : {bottom: '100%', borderBottomColor: COLORS.surfaceBorder}),
       }}
     />
+  );
+}
+
+/** The "?" circle: small, gold and round, as the comparison's score has always shown it. */
+const HELP_BUTTON_STYLE: CSSProperties = {
+  width: 18,
+  height: 18,
+  borderRadius: '50%',
+  background: hexRgba(COLORS.primary500, 0.06),
+  border: `1px solid ${hexRgba(COLORS.primary500, 0.3)}`,
+  color: hexRgba(COLORS.primary500, 0.85),
+  fontSize: FONT_SIZES.sm,
+  fontWeight: 700,
+  cursor: 'help',
+  fontFamily: 'inherit',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  lineHeight: 1,
+  padding: 0,
+};
+
+interface HelpTooltipProps {
+  /** The help text. Newlines are kept. */
+  content: string;
+  /** The button's name, e.g. "What does this score mean?". */
+  label: string;
+  /** Style for the wrapper around the button: where it sits in its row. */
+  style?: CSSProperties;
+}
+
+/** A "?" help circle that shows `content` on hover or focus, described by it while it shows. */
+export function HelpTooltip({content, label, style}: HelpTooltipProps) {
+  return (
+    <Tooltip content={content} triggerStyle={style}>
+      {(describedBy) => (
+        <button
+          type="button"
+          aria-label={label}
+          aria-describedby={describedBy}
+          style={HELP_BUTTON_STYLE}>
+          ?
+        </button>
+      )}
+    </Tooltip>
   );
 }

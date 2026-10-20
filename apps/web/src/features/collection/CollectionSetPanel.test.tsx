@@ -20,6 +20,8 @@ function bodyProps(overrides: Partial<BodyProps> = {}): BodyProps {
     onSetChange: vi.fn(),
     show: 'all',
     onShowChange: vi.fn(),
+    axis: 'complete',
+    onAxisChange: vi.fn(),
     stats: STORY_STATS,
     ...overrides,
   };
@@ -101,18 +103,19 @@ describe('CollectionSetBody', () => {
   it('breaks even a finished set down toward complete, until Master set is chosen', () => {
     // Set 12 is finished. It used to switch to master unasked, and a complete set's
     // Common 10/72 was taken for a bug.
-    renderBody({setCode: '12'});
+    const {props, view} = renderBody({setCode: '12'});
     expect(screen.getByRole('button', {name: /^Complete set/})).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('region', {name: 'By ink, complete'})).toBeInTheDocument();
+    // The page holds the choice, since Owned and Missing ask it too (owner, 2026-10-20).
     fireEvent.click(screen.getByRole('button', {name: /^Master set/}));
+    expect(props.onAxisChange).toHaveBeenCalledWith('master');
+    view.rerender(<CollectionSetBody {...bodyProps({setCode: '12', axis: 'master'})} />);
     expect(screen.getByRole('button', {name: /^Master set/})).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('region', {name: 'By rarity, master'})).toBeInTheDocument();
   });
 
-  it('keeps what the breakdowns count when the picker moves to the whole collection', () => {
-    const {view} = renderBody();
-    fireEvent.click(screen.getByRole('button', {name: /^Master set/}));
-    view.rerender(<CollectionSetBody {...bodyProps({setCode: 'all'})} />);
+  it('breaks the whole collection down toward the chosen headline too', () => {
+    renderBody({setCode: 'all', axis: 'master'});
     expect(screen.getByRole('button', {name: /^Master collection/})).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('region', {name: 'By ink, master'})).toBeInTheDocument();
   });
@@ -134,10 +137,8 @@ describe('CollectionSetBody', () => {
   describe('a promo set (#805)', () => {
     const promoSet = {setCode: STORY_PROMO_SET, sets: STORY_SETS_WITH_PROMOS, stats: STORY_PROMO_STATS};
 
-    it('shows Complete set and By ink alone, counting promos, whatever the breakdowns counted before', () => {
-      const {view} = renderBody();
-      fireEvent.click(screen.getByRole('button', {name: /^Master set/}));
-      view.rerender(<CollectionSetBody {...bodyProps(promoSet)} />);
+    it('shows Complete set and By ink alone, counting promos, whatever headline was chosen', () => {
+      renderBody({...promoSet, axis: 'master'});
       const {complete, cards} = STORY_PROMO_STATS.sets.find((set) => set.code === STORY_PROMO_SET)!.tally;
       expect(numbers()).toHaveTextContent(`${complete} of ${cards} promos`);
       expect(screen.queryByRole('button', {name: /^Master set/})).toBeNull();

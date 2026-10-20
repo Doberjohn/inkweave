@@ -28,7 +28,17 @@ import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {prefersReducedMotion, usePrefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {trackEvent} from '../../../shared/lib/analytics';
-import {COLORS, DURATION, EASING, FONT_SIZES, LETTER_SPACING, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
+import {
+  COLORS,
+  DURATION,
+  EASING,
+  FONT_SIZES,
+  LETTER_SPACING,
+  RADIUS,
+  SPACING,
+  VISUALLY_HIDDEN,
+  hexRgba,
+} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
 import {LinkButton} from '../../../shared/components/LinkButton';
 import {ModalCloseButton, ReservedArtControlsRoom, SynergiesLoadingSkeleton} from './CardOverviewModalFallback';
@@ -1008,19 +1018,6 @@ function invokeSynergyCardClick({clickedCard, groupKey, modalRef, captureStartRe
 
 // ── Layout config / static styles ──
 
-/** Screen-reader-only utility: keep an element in the a11y tree but visually hide it. */
-const SR_ONLY_STYLE: React.CSSProperties = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: 'hidden',
-  clip: 'rect(0, 0, 0, 0)',
-  whiteSpace: 'nowrap',
-  border: 0,
-};
-
 // ── Sub-components ──
 
 function ModalBackdrop({
@@ -1599,7 +1596,7 @@ function DefaultInfoColumn({synergies, synergiesLoading, outsideCore, visibleGro
       {/* Visually-hidden heading bridges the heading order: modal h1 (card name) → h2 here →
           h3 from each SynergyGroup. Without this, axe flags `heading-order` because the page
           jumps h1 → h3 directly. */}
-      <h2 style={SR_ONLY_STYLE}>Synergies</h2>
+      <h2 style={VISUALLY_HIDDEN}>Synergies</h2>
       {outsideCore ? (
         <OutsideCoreNotice />
       ) : synergiesLoading ? (
@@ -1764,6 +1761,8 @@ function ComparisonDetailPanel({isMobile, inComparison, comparisonPair, exitingP
           below content height during the transition; `overflow: hidden` clips so partial content
           doesn't bleed out of the collapsing/expanding bounds. */}
       <div style={{minHeight: 0, overflow: 'hidden'}}>
+        {/* Between the card's h1 and the columns' h3s, so headings step down one level at a time. */}
+        {effectivePair && <h2 style={VISUALLY_HIDDEN}>Synergy scores</h2>}
         {effectivePair && (
           <div
             style={{

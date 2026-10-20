@@ -5,7 +5,7 @@ import {cardPath} from 'inkweave-synergy-engine/card';
 import {smallImageUrl} from '../../cards';
 import {INK_COLORS, COLORS, CARD_TILE_GLOW, EASING, FONT_SIZES, RADIUS, hexRgba} from '../../../shared/constants';
 import {CardLightbox, StrengthBadge} from '../../../shared/components';
-import {isSyntheticMouseEvent, isModifiedClick} from '../../../shared/utils/touchGuard';
+import {isModifiedClick} from '../../../shared/utils/touchGuard';
 import {getStrengthTier} from '../utils';
 
 interface SynergyCardProps {
@@ -43,11 +43,8 @@ export function SynergyCard({
   // partner's card page in a new tab.
   const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
     if (isModifiedClick(e)) return; // let the browser open the partner's card page in a new tab
-    // Touch devices fire a synthetic mouse event after touch — suppress the desktop-only path.
-    if (!isMobile && isSyntheticMouseEvent()) {
-      e.preventDefault();
-      return;
-    }
+    // No touch guard here: a tap's own click lands inside isSyntheticMouseEvent's window, so a
+    // guard dropped every tap on touch screens 768px and wider (#843), as it did on CardTile (#296).
     if (onCardClick) {
       e.preventDefault();
       onCardClick(card);

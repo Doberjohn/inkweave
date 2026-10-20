@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {fillChipNames} from '../chipNames';
+import {chipCardName, fillChipNames} from '../chipNames';
 import {createCard} from '../../../../shared/test-utils';
 
 const ariel = createCard({id: 'ariel', name: 'Ariel', fullName: 'Ariel - Sonic Warrior'});
@@ -25,5 +25,19 @@ describe('fillChipNames', () => {
 
   it('leaves a line without tokens as it is', () => {
     expect(fillChipNames('Test synergy', ariel, song)).toBe('Test synergy');
+  });
+});
+
+describe('chipCardName', () => {
+  it("names a card by its name when its partner's differs", () => {
+    expect(chipCardName(ariel, song)).toBe('Ariel');
+    expect(chipCardName(song, ariel)).toBe("A Pirate's Life");
+  });
+
+  it('names a card by its full name when both cards share a name', () => {
+    const base = createCard({id: 'elsa-1', name: 'Elsa', fullName: 'Elsa - Snow Queen'});
+    const shift = createCard({id: 'elsa-2', name: 'Elsa', fullName: 'Elsa - Ice Artisan'});
+    expect(chipCardName(shift, base)).toBe('Elsa - Ice Artisan');
+    expect(chipCardName(base, shift)).toBe('Elsa - Snow Queen');
   });
 });

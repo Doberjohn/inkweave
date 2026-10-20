@@ -52,7 +52,7 @@ function PageShell({children, showFooter = true}: {children: React.ReactNode; sh
 
 function CenteredMessage({title, body}: {title: string; body: string}) {
   return (
-    <div
+    <main
       style={{
         flex: 1,
         display: 'flex',
@@ -67,7 +67,7 @@ function CenteredMessage({title, body}: {title: string; body: string}) {
         {title}
       </h1>
       <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.base}px`, margin: 0}}>{body}</p>
-    </div>
+    </main>
   );
 }
 
@@ -100,9 +100,9 @@ export function CardPage() {
       // #511 loading rule: skeleton for layout-known surfaces (no text flash).
       return (
         <PageShell showFooter={false}>
-          <div style={{display: 'flex', justifyContent: 'center'}}>
+          <main style={{display: 'flex', justifyContent: 'center'}}>
             <CardDetailSkeleton ariaLabel="Loading card" />
-          </div>
+          </main>
         </PageShell>
       );
     }

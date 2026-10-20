@@ -1,4 +1,5 @@
 import {test, expect} from '../fixtures';
+import {slidePointerOnto} from '../helpers/pointer';
 
 test.describe('Playstyle Detail — Desktop', () => {
   test.beforeEach(async ({page}, testInfo) => {
@@ -52,6 +53,11 @@ test.describe('Playstyle Detail — Desktop', () => {
   });
 
   test('should render card tiles in grid', async ({page}) => {
+    // Let discard's tiles render before leaving the page. Leaving while its playstyle data is
+    // still loading aborts that fetch, and WebKit logs the abort as "TypeError: Load failed",
+    // which fails the console guard (#854).
+    await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 15000});
+
     // Navigate to a different playstyle (location-control)
     await page.goto('/playstyles/location-control');
     await page.waitForTimeout(500);
@@ -74,5 +80,27 @@ test.describe('Playstyle Detail — Desktop', () => {
     // Modal open = React mount + per-card synergy fetch + visibility transition; slow CI
     // webkit can exceed 5s before the overlay-visible class settles. Match the 15s used above.
     await expect(page.getByTestId('card-overview-modal')).toBeVisible({timeout: 15000});
+  });
+
+  test('keeps a tile tooltip under the pointer, ignores clicks on it, and hides on Escape', async ({
+    page,
+  }) => {
+    const tile = page.getByRole('button', {name: /Forced Discard/});
+    await expect(tile).toBeVisible({timeout: 10000});
+    const tooltip = page.getByRole('tooltip');
+
+    // The pointer can cross from the tile onto its tooltip and stay there (WCAG 1.4.13, #836).
+    await tile.hover();
+    await expect(tooltip).toBeVisible();
+    await slidePointerOnto(page, tooltip);
+    await page.waitForTimeout(300); // past the tooltip's 150 ms close delay
+    await expect(tooltip).toBeVisible();
+
+    // The tooltip renders beside the tile's button, so a click on it doesn't toggle the filter.
+    await tooltip.click();
+    await expect(tile).toHaveAttribute('aria-pressed', 'false');
+
+    await page.keyboard.press('Escape');
+    await expect(tooltip).toHaveCount(0);
   });
 });

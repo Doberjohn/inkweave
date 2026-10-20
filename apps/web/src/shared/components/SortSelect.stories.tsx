@@ -5,8 +5,8 @@ import {SortSelect} from './SortSelect';
 const SORT_OPTIONS = [
   {value: 'name-asc', label: 'Name A–Z'},
   {value: 'name-desc', label: 'Name Z–A'},
-  {value: 'cost-asc', label: 'Cost ↑'},
-  {value: 'cost-desc', label: 'Cost ↓'},
+  {value: 'cost-asc', label: 'Low cost'},
+  {value: 'cost-desc', label: 'High cost'},
 ];
 
 const meta: Meta<typeof SortSelect> = {

@@ -81,7 +81,7 @@ function BoardHeader({ink, count, compact}: {ink: Ink; count: number; compact: b
       <div style={{marginLeft: 'auto', textAlign: 'right'}}>
         <div style={{fontWeight: 800, fontSize: compact ? FONT_SIZES.displaySm : FONT_SIZES.displayMd, color: COLORS.primary, lineHeight: 1}}>
           {count}
-          <span style={{fontSize: compact ? FONT_SIZES.lg : FONT_SIZES.xxl, fontWeight: 700, color: COLORS.textDim}}> / {PER_INK[ink]}</span>
+          <span style={{fontSize: compact ? FONT_SIZES.lg : FONT_SIZES.xxl, fontWeight: 700, color: COLORS.textMuted}}> / {PER_INK[ink]}</span>
         </div>
         {done ? (
           <div

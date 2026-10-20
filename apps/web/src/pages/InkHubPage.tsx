@@ -111,7 +111,7 @@ function InkHubHeader({
         <a href="/inks" style={{color: COLORS.textMuted, textDecoration: 'none'}}>
           Inks
         </a>
-        <span style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim}}>/</span>
+        <span aria-hidden="true" style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim}}>/</span>
         <span style={{color: COLORS.text, fontWeight: 500}}>{ink}</span>
       </nav>
 

@@ -2,15 +2,15 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-187 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+214 tests across 25 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
-The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts` and the reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
+The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
-**Warm-up before the first test (#664):** `e2e/global-setup.ts` opens the 7 pages `accessibility.spec.ts` visits, up to 3 at a time (never more than the run's workers), on the run's fresh Vite, and waits until no module request has been in flight for 1 s. So the app shell every page shares and those pages compile before any test (every module on its first request, every TSX file through the React Compiler's Babel pass), not inside the first wave's 30 s, and the run log shows `E2E warm-up: 7 routes in N s`. A page that fails to load, or takes over 180 s, stops the run with an `E2E warm-up:` error naming it. What stays cold still compiles on first use, inside a test: the card modal (loaded on the first interaction), the mobile-only search sheet, and pages the warm-up doesn't open (`/compare`, `/vote`, `/reveals`, `/about`, `/release-notes`, `/account`). The mobile projects skip `accessibility.spec.ts`'s axe audits, so their first tests start on such pages, with only the shell warm. Skipped under `PWDEBUG`, whose Inspector would otherwise pause on the warm-up's own browser.
+**Warm-up before the first test (#664):** `e2e/global-setup.ts` opens the 7 pages `accessibility.spec.ts` audits first, up to 3 at a time (never more than the run's workers), on the run's fresh Vite, and waits until no module request has been in flight for 1 s. So the app shell every page shares and those pages compile before any test (every module on its first request, every TSX file through the React Compiler's Babel pass), not inside the first wave's 30 s, and the run log shows `E2E warm-up: 7 routes in N s`. A page that fails to load, or takes over 180 s, stops the run with an `E2E warm-up:` error naming it. What stays cold still compiles on first use, inside a test: the card modal (loaded on the first interaction), the mobile-only search sheet, and pages the warm-up doesn't open (`/compare`, `/vote`, `/reveals`, `/about`, `/release-notes`, `/account`). The mobile projects skip `accessibility.spec.ts`'s axe audits, so their first tests start on such pages, with only the shell warm. Skipped under `PWDEBUG`, whose Inspector would otherwise pause on the warm-up's own browser.
 
 **Global console-error guard:** the shared `page` fixture (`e2e/fixtures/test-fixtures.ts`) fails any test that logs a `console.error` or throws an uncaught exception, except messages matching the documented `BENIGN_CONSOLE` allowlist. This turns silent runtime faults — most importantly React's "Maximum update depth exceeded" render loop, which a loading-skeleton assertion otherwise passes through — into red builds across every spec.
 
-## `accessibility.spec.ts`: 9 tests (7 desktop only, 2 on every project at a 320px viewport)
+## `accessibility.spec.ts`: 11 tests (9 desktop only, 2 on every project at a 320px viewport)
 
 | Test | What it verifies |
 |---|---|
@@ -21,6 +21,8 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | playstyle detail should have no axe violations | `/playstyles/discard` passes axe-core audit |
 | ink gallery should have no axe violations | `/inks` passes axe-core audit (#530: a card-count contrast violation there shipped because the ink pages had no axe coverage) |
 | ink hub should have no axe violations | `/ink/steel` passes axe-core audit (#530) |
+| in-depth vote page should have no axe violations | `/vote/3286/2983` (the Free Play pair the weekly accessibility check audits) passes axe-core audit once its form shows: it had no title and no h1 (#835) |
+| reveals page with a franchise open should have no axe violations | With the clock in the reveal season, the first franchise's cards dialog on `/reveals` passes axe-core audit once its fade ends and its first card tile shows: the spotlight tiles' labels left out their visible text, and the dialog's title bar was a second banner (#835) |
 | /inks fits a 320px viewport without scrolling sideways | At 320×640, with the clock in the reveal season, `/inks` is no wider than its layout viewport (`documentElement.clientWidth`: a phone project's `innerWidth` widens to fit the page, and mobile-safari's visual viewport is 8px narrower), and once the ink cards (`main ul > li`) have rendered, none runs past its grid's right edge (WCAG 1.4.10, accessibility check 2026-10-19: phones got the desktop header, whose Reveals pill stuck out 37px, and the ink cards' 300px columns ran 20px into the right gutter) |
 | /ink/steel fits a 320px viewport without scrolling sideways | The same on `/ink/steel`, whose grid items are its card tiles (`card-tile`) |
 
@@ -33,7 +35,7 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should show featured cards after loading | Featured cards grid has 1-12 card tiles |
 | should open the overview modal when a card is selected | Clicking a featured card opens the modal overlay-style; URL stays `/`, no compact header |
 
-## `card-detail.spec.ts` — 15 tests (10 desktop only, 3 on every project at a 390px viewport, 2 on every project at any viewport)
+## `card-detail.spec.ts` — 17 tests (10 desktop only, 3 on every project at a 390px viewport, 2 on every project at a 1024×768 touch viewport, 2 on every project at any viewport)
 
 Two surfaces: the crawlable `/card/:id` **page** (#486 — renders, not-found, empty state; slug URLs `/card/:id/:slug` with the id as the lookup key and the slug decorative, #498) and the
 CardOverviewModal opened from a tile (render, close, empty, scroll lock, show-all, sibling nav). The
@@ -43,6 +45,10 @@ is a real page now, not a modal shortcut.
 The page's mobile-layout tests (the #631 overflow guard, the × back flow) force a 390px viewport with
 `setViewportSize` instead of skipping `mobile-*`: `isMobile` is width-based, so they render the mobile
 layout on every project and also run in the chromium-only Windows pre-push.
+
+The touch-screen tests run on every project at 1024×768 with `hasTouch` (`test.use`) and press tiles with
+`tap()`: no project is a tablet otherwise (the desktop ones have no touch, the phone ones are under 768px),
+which is how synergy tiles came to ignore every tap at 768px and wider without a test noticing.
 
 | Test | What it verifies |
 |---|---|
@@ -61,6 +67,8 @@ layout on every project and also run in the chromium-only Windows pre-push.
 | × on a card page reached by the /compare/X/X redirect opens Browse | At 390px, `/compare/2095/2095` redirects (a replace, so a new location key) to `/card/2095`; × still counts it as the page the visit started on and navigates to `/browse`. Without #653's `history.state.idx` check it stepped back to `about:blank`, out of the site |
 | keeps the footer out until the card and its synergies have loaded | `/card/2095` with `allCards.json` and its synergy file held: under the loading skeleton there is no `footer[aria-label="Site footer"]`; with the cards released, the card renders (its `<Seo>` title is set) and there is still no footer; with the synergies released, the footer is attached. Rendered under the loading page, the footer was pushed past the fold as the content arrived, which was the card page's whole layout shift (#532) |
 | shows the synergy skeleton, not the empty notice, until the synergies load | `/card/2095` with its synergy file held: the synergy column shows its skeleton (`synergy-results-loading`) and no "No synergies found for this card" notice; with the file released, the ramp group renders and neither the skeleton nor the notice remains. The empty list during the load used to render the notice on every card page, so a card with synergies flashed "No synergies found" first |
+| a tap on a synergy tile opens its card page | At 1024×768 with touch, `/card/2095`: `tap()` on the first tile of a "Synergy cards" list navigates to that tile's `/card/<data-card-id>/` page. SynergyCard used to drop any click within 1 s of a touchstart when `isMobile` was false, and a tap's own click always lands inside that second (#843) |
+| a tap on a synergy tile in the card window opens the comparison | At 1024×768 with touch, the modal opened on card 2095 via `openCardOverview`: `tap()` on its first tile switches it to `data-mode="comparison"`, the same path a mouse click takes |
 
 ## `card-printings.spec.ts`: 6 tests (5 desktop only, 1 on every project at a 360px viewport)
 
@@ -111,6 +119,20 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should deep link to browse with filters | Direct navigation to `/browse?q=Elsa&ink=Sapphire` populates the search input |
 | should filter a playstyle page in place without navigating to browse | Typing in the playstyle toolbar search filters in place: URL stays `/playstyles/ramp` and gains `q=elsa` (no jump to `/browse`) |
 
+## `browse-filters.spec.ts`: 7 tests (6 desktop only, 1 mobile only)
+
+Every other spec sets Browse's filters through the URL. These press the filter buttons and check `aria-pressed` and the URL param each one writes (`useFilterParams.ts`), which is what a shared link carries. The desktop tests use the panel docked beside the cards at 1024px and wider (`complementary` "Filters"), where Type, Keyword, Classification and Set start folded behind a header button; the phone test uses the Filters drawer, which applies only on Apply.
+
+| Test | What it verifies |
+|---|---|
+| an ink cost | "Cost 3" turns `aria-pressed` and the URL gains `cost=3` |
+| Uninkable, which redraws the cost buttons as uninkable hexagons | "Cost 1" has no `<polygon>` before; "Uninkable" turns pressed and writes `inkwell=uninkable`, and "Cost 1" then draws `CostIcon`'s uninkable hexagon |
+| a rarity | "Legendary" turns pressed and writes `rarity=Legendary` |
+| a card type, a keyword and a classification, each in its folded section | Unfolds Type, Keyword and Classification (`aria-expanded`); Character, Evasive and Hero each turn pressed and write `type=Character`, `keyword=Evasive` and `classification=Hero` |
+| an ink, then Dual-ink cards | "Filter by Amber" writes `ink=Amber`, and the "Dual-ink cards" toggle it reveals writes `inkmatch=dual` |
+| with the panel closed, the active chips list the filters and one can be dismissed | After Cost 3 and Evasive, the Filters button closes the panel; the chips "Cost: 3" and "Evasive" show (only while it is closed), and dismissing "Cost: 3" drops `cost=` and keeps `keyword=Evasive` |
+| a pick applies only on Apply | Phone drawer: "Cost 3" turns pressed with no `cost=` in the URL yet; "Apply" writes `cost=3` and closes the drawer |
+
 ## `card-selection.spec.ts` — 5 tests (desktop only)
 
 | Test | What it verifies |
@@ -121,7 +143,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should clear selection by closing the modal | ✕ button closes the modal; hero reachable, URL stays `/` |
 | should close the modal when the backdrop is clicked | Backdrop click closes the modal; hero reachable, URL stays `/` |
 
-## `mobile.spec.ts` — 16 tests (mobile only)
+## `mobile.spec.ts` — 19 tests (mobile only)
 
 | Test | What it verifies |
 |---|---|
@@ -135,6 +157,9 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | a search tap that beats the sheet chunk opens it, with a proxy input holding focus | With the lazy sheet's module held (#640), a Search tap focuses AppLayout's hidden proxy input (what raises the iOS keyboard); once released, the sheet opens. The navigation waits for DOMContentLoaded, not `load` (see Patterns) |
 | should close search bottom sheet on backdrop click | Open search sheet, click backdrop, sheet dismisses, focus returns to the Search nav button (not the hidden iOS proxy input) |
 | should navigate to browse when pressing Enter in search bottom sheet | Type query in search sheet, press Enter, navigates to `/browse?q=Elsa`, sheet stays closed (the Enter must not also click the refocused Search button) |
+| the search sheet shows highlighted results, and a picked one opens its card window | Types "Elsa" in the sheet and waits out its 150ms debounce, which the Enter test above never does: "N results" shows and the first row's match is a `<mark>` reading "Elsa". Picking the row (it picks on mousedown) opens the card window named "<that card> synergies" |
+| a picked result comes back as a recent search that searches again | Picks the first "Elsa" result, closes the card window and reopens the sheet: the card's full name is a button under "Recent", and pressing it fills the field with that name and lists that card first |
+| Clear search empties the field, and Clear removes the recent searches | With one recent search seeded in `localStorage['inkweave-recent-searches']`, "Mickey" shows results; "Clear search" (the field's ×) empties the field and brings the recent search back; "Clear" shows "Search for a card to see its synergies" and removes the key |
 | should show sort dropdown in browse toolbar | Sort select and Filters button both visible in browse toolbar |
 | should lock background scroll when filter drawer is open | Opening filter drawer sets body overflow to hidden |
 | should open filter drawer in mobile browsing view | From browsing view, tap Filters button, drawer shows Amber/Sapphire/Steel ink buttons |
@@ -142,7 +167,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should close the overview modal via backdrop tap | Backdrop tap dismisses the modal on mobile |
 | should open and dismiss the Mechanics bottom sheet on a playstyle page | Mechanics button opens the `Mechanics filter` sheet; backdrop tap dismisses it |
 
-## `playstyle-pages.spec.ts` — 5 tests (desktop only)
+## `playstyle-pages.spec.ts` — 7 tests (desktop only)
 
 | Test | What it verifies |
 |---|---|
@@ -151,6 +176,8 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should navigate to playstyle detail page | Clicking a playstyle card navigates to `/playstyles/:id`, shows heading |
 | should deep link to playstyle detail page | Direct navigation to `/playstyles/lore-denial` shows heading + card tiles |
 | should navigate back from playstyle detail to gallery | Back link from detail returns to `/playstyles` (or logo to `/`) |
+| the header search opens a card window from the keyboard, staying on the gallery | On `/playstyles`, the one page whose header has a search field: typing "Elsa" lists suggestions, ArrowDown marks the first `aria-selected`, Enter opens its card window (named after it) and the URL stays `/playstyles` |
+| Enter in the header search goes to Browse with the query | On `/playstyles`, "Elsa" then Enter with nothing highlighted goes to `/browse?q=Elsa` |
 
 ## `account-header.spec.ts` — 4 tests (3 desktop only)
 
@@ -165,11 +192,11 @@ At page load, supabase-js is downloaded only when there is a session to restore 
 | a stored session downloads the Supabase SDK to restore it | An `inkweave:auth` entry seeded before load makes `/browse` request the SDK (all projects) |
 | the sign-in control opens the provider dialog | Clicking it opens the `SignInDialog`. Stops at the provider choice: signing in needs a real round-trip no placeholder project can serve |
 
-## `collection-mode.spec.ts`: 23 tests (1 every project, 2 chromium only, 19 desktop only, 1 on every project at a 390px viewport)
+## `collection-mode.spec.ts`: 24 tests (1 every project, 2 chromium only, 20 desktop only, 1 on every project at a 390px viewport)
 
 Covers Browse's collection mode (#553 Phase C), which ships behind `VITE_SHOW_COLLECTION` (default OFF). The flag REQUIRES `VITE_SHOW_ACCOUNTS`, and `playwright.config.ts` pins both ON. The Collection button is gated on sign-in (owner ruling 2026-10-07).
 
-**Signed in without signing in.** An OAuth round-trip is out of E2E's reach, but a session supabase-js restores needs none. `signInAsCollector` stores an unexpired session under `inkweave:auth`, which `getSession()` hands back without a network check, and the collector's collection twice: as the local copy (`inkweave:collection`, stamped `source: 'server'` so it is never uploaded back) and as the `collections` row its own `page.route` serves, which the sync adopts on every load (`resolveCollectionSync`). That route is registered after the fixture's catch-all stub, so it wins for that table. It keeps the row as the table does: an upload (a POST, `upsertCollection`) replaces it, every later read answers with it, and `signInAsCollector` returns the uploads for a test to read (#826). Tests that open the mode from the button first wait for the header's "Account" control, so the click never lands while the session is still restoring. The collection is drawn from the card data, not hardcoded: the newest Core set's first three cards and its first alt-art printing (`newestCoreSet`, `setCards`, `setPrintings` in `e2e/helpers/cardData.ts`), so the counts follow the data when a set graduates.
+**Signed in without signing in.** An OAuth round-trip is out of E2E's reach, but a session supabase-js restores needs none. `signInAsCollector` stores an unexpired session under `inkweave:auth` (`storedSession` in `e2e/helpers/session.ts`, which `friends.spec.ts` shares), which `getSession()` hands back without a network check, and the collector's collection twice: as the local copy (`inkweave:collection`, stamped `source: 'server'` so it is never uploaded back) and as the `collections` row its own `page.route` serves, which the sync adopts on every load (`resolveCollectionSync`). That route is registered after the fixture's catch-all stub, so it wins for that table. It keeps the row as the table does: an upload (a POST, `upsertCollection`) replaces it, every later read answers with it, and `signInAsCollector` returns the uploads for a test to read (#826). Tests that open the mode from the button first wait for the header's "Account" control, so the click never lands while the session is still restoring. The collection is drawn from the card data, not hardcoded: the newest Core set's first three cards and its first alt-art printing (`newestCoreSet`, `setCards`, `setPrintings` in `e2e/helpers/cardData.ts`), so the counts follow the data when a set graduates.
 
 The desktop signed-in tests skip the mobile projects: they find the numbers in the docked collection panel and the art presets in the docked Filters panel, and phones get the set strip (numbers behind a toggle) and the filter drawer instead. The strip has its own test, run on every project at a forced 390px viewport: the layout is chosen by width (`useResponsive`), so a desktop browser renders it too, and the chromium-only Windows pre-push covers it. The tablet rail's figures have a unit test (`CollectionBinderSection.test.tsx`). Reading an import file and the sync's conflict paths stay with the unit tests (`ImportCollectionDialog.test.tsx`, `collectionParser.test.ts`, `__tests__/collectionSync.test.ts`, `CollectionContext.test.tsx`).
 
@@ -187,6 +214,7 @@ The desktop signed-in tests skip the mobile projects: they find the numbers in t
 | in Missing, copies added from two pockets keep both cards and the spread, which the card window walks (#826) | `/browse?binder=<set>&owned=missing`, turned with `Next spread` to spread 2 (the map's current spread reads "Spread 2 of N"). A mouse on each of its first two pockets opens its copies stripe, labelled "0 normal, 0 foil"; the + of Normal (under `aria-hidden`, so found with `includeHidden`) makes them read "1 normal, 0 foil", and leaves the focus off that + (a click would otherwise focus a button no Tab reaches). A click near the second pocket's top, clear of the open stripe that takes every press on the card's foot, opens its window, and "Previous card" opens the first card, kept in the listing the arrows walk. Closed, both cards, now held, keep their pockets and the binder its spread (owner, 2026-10-20): dropped from the view at once, a card reopened the binder at spread 1. The stubbed account receives both copies |
 | the card window's stripe changes its copies by mouse and by keyboard, on the grid's windows too (#826) | `/browse?set=<set>&q=<name>`, the grid (not collection mode), signed in as the collector: the first held card's window carries the copies stripe over its card's foot in its slot (`card-overview-copies-slot`), always open, a group named "Your copies: 1 normal, 0 foil". After the dialog's 100ms initial-focus timer, a click on the + of Normal makes it "2 normal, 0 foil"; then, from that + focused, Tab twice (through the foil −, at 0 but still a stop) lands on the + of Foil, and Enter makes it "2 normal, 1 foil". The stubbed account receives {normal: 2, foil: 1} |
 | Owned keeps the held cards alone, and leaving the mode drops that view | The `Binder shows` group's "Owned" adds `owned=owned` and leaves exactly the held tiles; turning collection mode off removes the binder and both the `binder` and `owned` params |
+| under Master set, Owned and Missing ask for a copy in each finish | `/browse?binder=<set>&owned=owned` holds the H held tiles; the "Master set" headline leaves only the printing's (a held printing's one finish counts as both, `isHeld`), and "Missing" then leads with the three base cards held in one finish only. Missing asked only for a copy before, so Set 3's Nani - Protective Sister, held as a normal copy, hid from it while Master read 99% (owner, 2026-10-20). The page holds the choice: after a switch to the whole collection, "Master collection" is still chosen and Owned still holds only the printing |
 | the set picker's All sets opens the whole collection in the binder | The `Binder set` menu's first row, "All sets" in the `Standard sets` list (owner, 2026-10-20: each list starts with it), gives `binder=all` and relabels the picker "Binder set: All sets, the whole collection" (the toolbar button reads "All sets"), and the rest follows: "Complete collection" in the numbers and a tile in the binder |
 | the keyboard pages the binder end to end without losing the focus | #790. `/browse?binder=<set>`: from the first pocket, one Tab reaches the spread map's Previous, focused and `aria-disabled` at the first spread (the pockets are one Tab stop). Enter on Next through to the last spread (counted from the current spread's "Spread 1 of N" name, asserted above 1) leaves the focus on Next, `aria-disabled`: a disabled Next dropped it to the page |
 | a search narrows the binder, and the panel's numbers count only what it finds | A held card's full name (one with no alt-art printing) in `browse-search` leaves one tile, and the numbers read "1 of 1 cards" under the headline "Complete": filtered, it names no set. Skips when none of the set's first three cards lacks a printing |
@@ -198,6 +226,19 @@ The desktop signed-in tests skip the mobile projects: they find the numbers in t
 | a card glows gold when pointed at, more strongly on the binder's parchment (owner, 2026-10-21) | The one way the app highlights a card. On `/browse?set=<set>` (the grid), a mouse on the first tile gives it a box-shadow with the soft gold glow (`rgba(255, 185, 0, 0.42) 0px 0px 22px 3px`, `CARD_TILE_GLOW`) over its resting shadow, `z-index` 1 so the glow lies over its neighbours, and no `::after` (the gold ring it replaced). On `/browse?binder=<set>`, a mouse on the first held pocket gives the stronger gold (`0.85`, `22px 4px`) that shows on the parchment. A box-shadow set inline would beat the rule and fail it: the tile keeps its resting shadow in `--tile-shadow` |
 | a signed-in visitor without a collection is asked to import one | Signed in with no local copy and no server row, "Show my collection" opens the `Import your collection` dialog and renders no binder |
 | the set strip reads the set's two percentages and opens its numbers inline | Every project at 390x844, `/browse?binder=<set>`: no `Collection actions` gear shows (owner, 2026-10-20: it wrapped Collection onto a second toolbar row), and the `Set` strip's "Show the numbers" toggle reads the Complete and Master percentages, rounded down as the panel rounds them (`percentOf`), and no `Collection numbers` region shows; clicking it opens the region ("Complete set" visible, the toggle now "Hide the numbers", `aria-expanded`), and a second click folds it away |
+
+## `friends.spec.ts`: 6 tests (5 every project, 1 desktop only)
+
+Covers the Friends section on `/account` (#852), which ships behind `VITE_SHOW_FRIENDS` (default OFF). The flag REQUIRES `VITE_SHOW_ACCOUNTS`, and `playwright.config.ts` pins both ON. The player signs in from a stored session (`signInAs` in `e2e/helpers/session.ts`). Every friends call answers from a world the test keeps (`serveFriends` in `e2e/helpers/friends.ts`): `claim_handle`, `claim_friend_code`, `profiles`, `friendships` (a GET, or the delete of one row) and the `send_friend_request` and `accept_friend_request` RPCs. The world changes as the database would, in the migration's order (a send answers your own code, then a pair that already has a row by accepting theirs or echoing it, then the 20-request cap ahead of an unknown code, then adds a waiting row; an accept makes a friendship), so each test acts and then reads what the section loads back. Its routes are registered after the fixture's catch-all stub, so they win. That stub answers `claim_friend_code` with `E2E_FRIEND_CODE` on its own, so any signed-in spec opening `/account` (`collection-mode.spec.ts` does) gets a ready section, not its failed state. Everything else stays with the unit tests: decline, cancel and remove, the copy button, focus after a row leaves (`FriendsSection.test.tsx`), the tab-return reload (`useFriends.test.ts`) and each refusal's words (`friendRepository.test.ts`).
+
+| Test | What it verifies |
+|---|---|
+| /account shows the player's friend code, and no one yet | Signed in with no friendships, the Friends section shows the code as `ABCD-2345` and "No friends yet. Share your code, or enter a friend's." |
+| a friend's code sends a request, which shows under Sent with their name | `sp77-m3xt` (lower case, with the hyphen) sends Steel Pirate 777's code: the section's status line reads "Request sent to Steel Pirate 777.", `Sent (1)` lists them by name, and the field is empty again |
+| accepting a request moves it to Your friends | With Ruby Hero 042's request waiting, "Accept request from Ruby Hero 042" leaves `Your friends (1)` holding "Remove Ruby Hero 042", and no Requests heading |
+| a code no one has says so, and changes nothing | `M3PZ-8RQT` matches no one: the section's alert reads "No one has that friend code. Check it with your friend.", the code stays in the field, and the world holds no new row |
+| with 20 requests waiting, a further code is refused and nothing is added | With `Sent (20)` listed, Steel Pirate 777's real code gets the alert "You have 20 requests waiting. Cancel one to send another." (at the cap even a code someone holds answers `too_many`), and the world still holds 20 rows |
+| /account with requests, sent requests and friends has no axe violations | With a request, a sent request and a friend listed, the whole page passes axe-core. Desktop only, as `accessibility.spec.ts`'s audits are |
 
 ## `responsive-images.spec.ts` — 4 tests (desktop only)
 
@@ -218,7 +259,7 @@ The desktop signed-in tests skip the mobile projects: they find the numbers in t
 | should close dropdown on Escape | Escape key dismisses autocomplete dropdown, within the default timeout (a debounce pending at the keypress used to reopen it, #746) |
 | should NOT show autocomplete on browse page search | Typing in browse page search does NOT show autocomplete (browse filters inline) |
 
-## `seo.spec.ts` — 21 tests (both viewports)
+## `seo.spec.ts` — 23 tests (both viewports)
 
 Route-level metadata coverage (#524). Before this, the file asserted only home-page
 properties, so #486's central acceptance criterion — every route self-references its own
@@ -246,6 +287,8 @@ against the dev server, where both are present.
 | card page has exactly one h1 at a mobile viewport | 412×915 — CardPage gates the desktop `CardDetailPanel` behind `!isMobile` while `CardDetail` owns the h1 below it (`headingLevel="h1"`, always set by `SynergyResults`). Googlebot renders mobile, so a regression in either branch is invisible at desktop width |
 | vote page has exactly one h1 while its pair loads and once it shows | Holds `_pairs_index.json` to pin the loading state, then releases it. The vote screen shows no heading, so its h1 is visually hidden (`VotePageShell`), and nothing on screen goes missing without it, which is how `/vote` sat in the sitemap with no h1 |
 | vote page has exactly one h1 when its pairs fail to load | `_pairs_index.json` answers 500, so `VoteErrorView` renders, with its own copy of the hidden h1 |
+| comparison owns a title naming its pair | `/compare/3286/2983/free-play`'s tab reads "\<A\> + \<B\> \| Compare \| Inkweave", the names read from `allCards.json`: the page rendered no `<Seo>`, so once the prerendered tags were swept the tab showed the bare address (#835) |
+| in-depth vote page owns a title naming its pair, and exactly one h1 | `/vote/3286/2983`'s tab reads "\<A\> + \<B\> \| Vote \| Inkweave", and its one h1 is the visually hidden "Vote on \<A\> and \<B\>" (#835) |
 | card page links to all six ink hubs at a mobile viewport | The footer's ink nav is what puts every hub one click from all 1,024 card pages (#530) |
 | ink hub emits one crawlable anchor per card, identically on mobile | `CardGrid`, not the Virtuoso-windowed `BrowseCardGrid` — windowing would emit a fraction of the anchors to a crawler (#530) |
 | unknown ink slug renders the 404 page, not an empty hub | Junk URLs under `/ink/` declare themselves unindexable instead of returning a thin 200 (#525) |
@@ -270,7 +313,7 @@ CardOverviewModal default-mode interactions — chip filtering (→ focused sing
 | a group chip filters the modal to that group (mobile) | Clicking the Discard chip → `data-state="focused"`, one group |
 | the "+N more" tile opens the full expanded group view (mobile) | Clicking the discard `more-tile` once → `data-state="expanded"` with a "Back to all synergies" link |
 
-## `synergy-detail-modal.spec.ts` — 11 tests (4 desktop, 5 mobile, 2 deep-link)
+## `synergy-detail-modal.spec.ts` — 12 tests (5 desktop, 5 mobile, 2 deep-link)
 
 Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #486) transitions CardOverviewModal in-place to the side-by-side comparison view. Desktop uses two columns; mobile uses the tabbed `MobileComparisonView` (#332 #5). Setup opens the modal on the fixture card via `appPage.openCardOverview(name)` (Browse `?q=` + tile click). Deep links open comparison directly via `/compare/A/B/groupKey`.
 
@@ -280,6 +323,7 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 | should show engine column with rule explanations in comparison mode | (desktop) `section[aria-label="Engine score"]` renders with Shift rule explanations |
 | should exit comparison mode via the BACK button | (desktop) BACK returns the modal to `data-mode="default"`, URL stays `/` |
 | should switch comparison pairs across exit and re-entry | (desktop) Enter → BACK → enter a different pair; consecutive comparisons work cleanly |
+| keeps the score help under the pointer, and Escape hides it before the card view hears it | (desktop) In a comparison, the Engine column's "What does this score mean?" tooltip stays while the pointer slides from the button onto it and rests there past its 150 ms close delay, and closes once the pointer leaves both. With the button focused, its accessible description holds "Perfect"; the first Escape hides the tooltip with focus unmoved and the view still in comparison, and the second steps back to `data-mode="default"` (WCAG 1.4.13 and 1.3.1, #836: the tooltip ignored the pointer, wasn't announced, and Escape closed the view instead) |
 | should enter comparison mode on mobile | (mobile) Tapping a synergy tile shows the BACK button, and card A settles 0 to 40px below the × (MobileComparisonView covers the hidden chip row but not the BACK + × row) |
 | should render the tabbed comparison layout on mobile | (mobile) MobileComparisonView's Engine/Community section-switch pill buttons render |
 | should switch to the Community tab on mobile | (mobile) Tapping the Community pill moves `aria-current="true"` onto it, and scrolls only the tab strip: once the strip has landed on Community, the page and every scroll container around it are where they were before the tap (#653, the strip now uses `useScrollSnapIndex` instead of `scrollIntoView`, which also scrolls ancestors; the old code did not move them in this layout either, so this guards the outcome) |
@@ -288,14 +332,15 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 | opens directly in comparison with no BACK button (desktop) | (deep link) `/compare/A/B/groupKey` opens straight into comparison; BACK button suppressed (hideBackButton) |
 | opens the mobile tabbed comparison view (mobile) | (deep link) `/compare/A/B/groupKey` opens the mobile MobileComparisonView |
 
-## `playstyle-detail.spec.ts` — 4 tests (desktop only)
+## `playstyle-detail.spec.ts` — 5 tests (desktop only)
 
 | Test | What it verifies |
 |---|---|
 | should render hero with name and breadcrumb | `/playstyles/discard` shows h1 "Discard" and the breadcrumb nav with "Playstyles" link |
 | should show and use role filter chips | "Forced Discard" mechanic chip filters to a subset; toggling it off restores the full grid |
-| should render card tiles in grid | `/playstyles/location-control` renders 5+ card tiles |
+| should render card tiles in grid | `/playstyles/location-control` renders 5+ card tiles. It first waits for discard's tiles, since leaving while discard's playstyle data loads aborts that fetch, and WebKit's "TypeError: Load failed" for the abort fails the console guard (#854) |
 | should open the card overview modal from playstyle detail | Clicking a card tile opens the modal; URL stays on the playstyle page |
+| keeps a tile tooltip under the pointer, ignores clicks on it, and hides on Escape | The "Forced Discard" tile's description tooltip stays while the pointer slides onto it and rests there past its 150 ms close delay; a click on it leaves the tile `aria-pressed="false"` (it renders beside the tile's button, so the click no longer bubbles to it through the portal); Escape hides it (WCAG 1.4.13, #836) |
 
 ## `voting.spec.ts` — 17 tests (12 desktop, 5 mobile)
 
@@ -340,18 +385,18 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 
 ## `reveals-page.spec.ts`: 11 tests (9 desktop, 1 mobile, 1 on every project at a 390px viewport)
 
-**Season-independent by design.** The `beforeEach` reads the reveal set (the `previewCards.json` entry with the latest `releaseDate`) and the tests build their matchers from its `name` and `number`; the franchise label is read off the tile's own `aria-label`. Starting a new season needs no edit here. The `beforeEach` also starts the page's clock two days before that `releaseDate` (`e2e/helpers/revealSeason.ts`), so the suite runs on any date, release day and the weeks before the next set's dates land included: graduation keeps the set's dates in `previewCards.json` and its cards in `allCards.json`. Four tests additionally skip while `cards` is empty.
+**Season-independent by design.** The `beforeEach` reads the reveal set (the `previewCards.json` entry with the latest `releaseDate`) and the tests build their matchers from its `name` and `number`; the franchise's name is read off the tile's own heading. Starting a new season needs no edit here. The `beforeEach` also starts the page's clock two days before that `releaseDate` (`e2e/helpers/revealSeason.ts`), so the suite runs on any date, release day and the weeks before the next set's dates land included: graduation keeps the set's dates in `previewCards.json` and its cards in `allCards.json`. Four tests additionally skip while `cards` is empty.
 
 | Test | What it verifies |
 |---|---|
-| renders the tracker: hero, six ink trackers, and the debut franchises | sr-only `h1` containing the set name, the set logo (alt = set name), the hero's countdown labelled "Until store release" (the pinned clock is past the pre-release), 6 `ink-tracker-tile`s, the "Ink board" section, and at least one "View … cards" franchise button all render |
+| renders the tracker: hero, six ink trackers, and the debut franchises | sr-only `h1` containing the set name, the set logo (alt = set name), the hero's countdown labelled "Until store release" (the pinned clock is past the pre-release), 6 `ink-tracker-tile`s, the "Ink board" section, and at least one franchise button, named by its text and ending "View cards", all render |
 | desktop nav shows Reveals entry with NEW badge | `/browse` has a Reveals link with a "NEW" badge child |
 | mobile nav shows Reveals tab | On mobile, `/browse`'s bottom nav has a "Set N reveals" link |
 | promo modal appears on landing page and not on /reveals | `role="complementary" name="Set N reveals"` visible on `/`, absent on `/reveals` |
 | on a phone, the page leaves room under the promo and scrolls focus clear of it | At 390px on `/`, the root's `scroll-padding-bottom` equals the promo's height, and the footer's last link, focused from the top of the page, scrolls into view above the promo (WCAG 2.4.11, accessibility check 2026-10-19) |
 | mosaic card click opens the card overview modal | Clicking a `reveal-card-slot` on `/reveals` opens the modal; URL stays `/reveals` (skips with no cards) |
 | the card modal's arrows step through the board's cards in mosaic order | Opening the first `reveal-card-slot`, then "Next card", shows the second slot's card in the modal's `h1` (slot labels read "View <card>"; skips with fewer than two revealed cards) |
-| franchise card click opens the franchise cards modal | Clicking the first "View … cards" tile opens the `dialog` named "<franchise> cards"; a card-tile inside opens the overview modal on top (card click skips with no cards) |
+| franchise card click opens the franchise cards modal | Clicking the first franchise tile (ending "View cards") opens the `dialog` named "<franchise> cards", the franchise read from the tile's `h3`; a card-tile inside opens the overview modal on top (card click skips with no cards) |
 | ?ink= param selects the starting mosaic ink | `/reveals?ink=emerald` makes the Emerald `ink-tracker-tile` the `aria-pressed` (featured) one |
 | clicking a rarity chip dims the other revealed cards | A kit chip in the "Highlight a rarity" group toggles `aria-pressed`; other-rarity slots get `data-dimmed`; clicking again clears it (skips when <2 rarities revealed) |
 | an alt art opens the card modal on that printing | On `/reveals?ink=amber`, clicking the first `reveal-printing-slot` opens the modal with that rarity's radio `aria-checked` in the "Card printing" group (skips until the Amber board has a revealed Epic/Enchanted/Iconic) |

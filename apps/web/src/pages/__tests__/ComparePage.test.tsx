@@ -47,8 +47,8 @@ function renderAt(initialPath: string) {
   );
 }
 
-const cardA = {id: 'a1', name: 'Card A'} as unknown as LorcanaCard;
-const cardB = {id: 'b1', name: 'Card B'} as unknown as LorcanaCard;
+const cardA = {id: 'a1', name: 'Card A', fullName: 'Card A - First'} as unknown as LorcanaCard;
+const cardB = {id: 'b1', name: 'Card B', fullName: 'Card B - Second'} as unknown as LorcanaCard;
 
 function pairWithConnections(): DetailedPairSynergy {
   return {
@@ -139,5 +139,20 @@ describe('ComparePage', () => {
     renderAt('/compare/a1/b1/shift-targets');
     expect(screen.queryByTestId('not-found')).toBeNull();
     expect(mockOpenComparison).not.toHaveBeenCalled();
+  });
+
+  // The modal shows the comparison, so the page's only output is the tab's title (2.4.2).
+  it('titles the tab with the pair once both cards resolve', () => {
+    mockGetCardById.mockImplementation((id) => (id === 'a1' ? cardA : id === 'b1' ? cardB : undefined));
+    mockGetPairSynergies.mockReturnValue(pairWithConnections());
+    renderAt('/compare/a1/b1/shift-targets');
+    expect(document.title).toBe('Card A - First + Card B - Second | Compare | Inkweave');
+  });
+
+  it('titles the tab while the cards load', () => {
+    mockCardsLoading.mockReturnValue(true);
+    mockGetCardById.mockReturnValue(undefined);
+    renderAt('/compare/a1/b1/shift-targets');
+    expect(document.title).toBe('Compare cards | Inkweave');
   });
 });

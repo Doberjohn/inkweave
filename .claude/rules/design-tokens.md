@@ -8,7 +8,7 @@ paths:
 
 Two mechanisms enforce the token system; both run automatically:
 
-1. **`inkweave/*` ESLint rules** (`apps/web/eslint-rules/index.js`, per-commit + CI): no raw hex colors, `rgba()`, font-family strings, font sizes, radii, app-layer z-indexes (≥50), keyword/bezier easings, or `backdrop-filter` (WebKit E2E trap, #444/#445). Every message names the replacement token. **`no-adhoc-buttons`** (#509) additionally blocks any `<button style={…}>` in feature code: buttons come from the kit (`CtaButton` filled/ghost/neutral/pill, `LinkButton`, `TabList`, `IconButton`, `FiltersButton`, `Chip`); the exempt domain families (steppers, vote pickers, tile toggles) are listed in the rule itself.
+1. **`inkweave/*` ESLint rules** (`apps/web/eslint-rules/index.js`, per-commit + CI): no raw hex colors, `rgba()`, font-family strings, font sizes, radii, app-layer z-indexes (≥50), keyword/bezier easings, or `backdrop-filter` (WebKit E2E trap, #444/#445). Every message names the replacement token. **`no-adhoc-buttons`** (#509) additionally blocks any `<button style={…}>` in feature code: buttons come from the kit (`CtaButton` filled/ghost/neutral/pill, `LinkButton`, `TabList`, `IconButton`, `FiltersButton`, `Chip`); the exempt domain families (steppers, vote pickers, tile toggles) are listed in the rule itself. **`no-dim-text`** keeps `COLORS.textDim` off text (2.6:1 to 3.5:1 on every surface, WCAG 1.4.3): use `COLORS.textMuted`. textDim stays for borders, strokes, disabled states and `aria-hidden` decoration.
 2. **Value-grep gate** (`check:design` → `scripts/check-design-tokens.mjs`, pre-push + CI): greps the LITERAL values of the tokens (theme hexes, EASING strings, font names) across ts/tsx/css/html — it catches `cssText` strings and quoted shorthands the AST cannot see. `'Barlow'` and `backdrop-filter:` usage are zero-tolerance tripwires.
 
 ## When a rule fires on you
@@ -23,7 +23,7 @@ Two mechanisms enforce the token system; both run automatically:
 ## The micro-pattern consts (#511)
 
 One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spread, then override:
-`CAP_LABEL` / `CAP_LABEL_XS` (uppercase section labels; `LETTER_SPACING.cap`/`.eyebrow`), `SURFACE_CARD` (radius rule: `RADIUS.card` standalone panels, `RADIUS.lg` nested cards), `EMPTY_BOX` (centered dashed empty states — NOT prose notices), `TRUNCATE` (needs ancestor `minWidth: 0`), `TABULAR` (any numeral column that must not jitter), `GOLD_GLOW` (the one-gold selection/hover/focus recipe — never hand-mix gold alphas), `TOUCH_TARGET`, `ICON_SIZE`, `PRESS_SCALE`, `DISABLED_STYLE`. Dynamic playstyle accents compose via `accentRgba` (playstyleUi.ts).
+`CAP_LABEL` / `CAP_LABEL_XS` (uppercase section labels; `LETTER_SPACING.cap`/`.eyebrow`), `SURFACE_CARD` (radius rule: `RADIUS.card` standalone panels, `RADIUS.lg` nested cards), `EMPTY_BOX` (centered dashed empty states — NOT prose notices), `TRUNCATE` (needs ancestor `minWidth: 0`), `TABULAR` (any numeral column that must not jitter), `VISUALLY_HIDDEN` (screen-reader-only text, such as a chip's card name or a heading the layout implies; never a local copy), `GOLD_GLOW` (the one-gold selection/hover/focus recipe — never hand-mix gold alphas), `TOUCH_TARGET`, `ICON_SIZE`, `PRESS_SCALE`, `DISABLED_STYLE`. Dynamic playstyle accents compose via `accentRgba` (playstyleUi.ts).
 
 ## Interaction conventions (#511)
 

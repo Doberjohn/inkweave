@@ -54,9 +54,11 @@
         "!apps/web/dist/assets/ImportCollectionDialog-*.js",
         "!apps/web/dist/assets/BrowseCollectionPage-*.js",
         "!apps/web/dist/assets/AccountCollection-*.js",
-        "!apps/web/dist/assets/supabaseClient-*.js"
+        "!apps/web/dist/assets/AccountFriends-*.js",
+        "!apps/web/dist/assets/supabaseClient-*.js",
+        "!apps/web/dist/assets/posthogClient-*.js"
       ],
-      "limit": "455 kB",
+      "limit": "457 kB",
       "gzip": true
     },
     {
@@ -66,9 +68,15 @@
       "gzip": true
     },
     {
+      "name": "PostHog SDK (lazy)",
+      "path": "apps/web/dist/assets/posthogClient-*.js",
+      "limit": "112 kB",
+      "gzip": true
+    },
+    {
       "name": "Entry chunk",
       "path": "apps/web/dist/assets/index-*.js",
-      "limit": "127 kB",
+      "limit": "35 kB",
       "gzip": true
     },
     {
@@ -79,7 +87,8 @@
         "apps/web/dist/assets/CollectionScope-*.js",
         "apps/web/dist/assets/ImportCollectionDialog-*.js",
         "apps/web/dist/assets/BrowseCollectionPage-*.js",
-        "apps/web/dist/assets/AccountCollection-*.js"
+        "apps/web/dist/assets/AccountCollection-*.js",
+        "apps/web/dist/assets/AccountFriends-*.js"
       ],
       "limit": "60 kB",
       "gzip": true

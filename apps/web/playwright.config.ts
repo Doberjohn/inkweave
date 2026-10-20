@@ -48,16 +48,20 @@ function resolvePort(): number {
 }
 
 /**
- * CI runs one worker. Local Windows runs cap at 3: Playwright's default (half the logical CPUs,
- * 6 on the dev box) needs an estimated 4.4 GB of commit memory against the 2.7 GB measured for 3,
- * and with other sessions open this machine often lacks it, so headless Chrome crashed out of
- * memory mid-run. The cap lives here rather than in the pre-push hook because this file always
- * comes from the branch under test, whichever copy of the hook runs (a worktree's push enters
- * through the main checkout's copy; see .husky/handoff.sh), and it also covers runs outside the
- * hook. `--workers` (or PRE_PUSH_E2E_WORKERS in the hook) overrides it.
+ * CI runs two workers on its 4-vCPU runners (#854). On the chromium project in a 4-vCPU
+ * container, one worker took 8.9 min, two 6.0, three 5.4 and four 5.3: the browsers' renderers
+ * fill the CPUs at two, so a third or fourth worker saves under a minute and adds contention.
+ *
+ * Local Windows runs cap at 3: Playwright's default (half the logical CPUs, 6 on the dev box)
+ * needs an estimated 4.4 GB of commit memory against the 2.7 GB measured for 3, and with other
+ * sessions open this machine often lacks it, so headless Chrome crashed out of memory mid-run.
+ * The cap lives here rather than in the pre-push hook because this file always comes from the
+ * branch under test, whichever copy of the hook runs (a worktree's push enters through the main
+ * checkout's copy; see .husky/handoff.sh), and it also covers runs outside the hook. `--workers`
+ * (or PRE_PUSH_E2E_WORKERS in the hook) overrides it.
  */
 function resolveWorkers(): number | undefined {
-  if (process.env.CI) return 1;
+  if (process.env.CI) return 2;
   return process.platform === 'win32' ? 3 : undefined;
 }
 
@@ -123,6 +127,9 @@ export default defineConfig({
       // Exercise collection mode (#553 Phase C). It requires the accounts flag above
       // (the Collection button asks a signed-out visitor to sign in), so both are on.
       VITE_SHOW_COLLECTION: 'true',
+      // Exercise the Friends section on /account (#852). It requires the accounts flag too.
+      // e2e/fixtures/supabaseStub.ts answers its claim_friend_code call.
+      VITE_SHOW_FRIENDS: 'true',
       // Placeholder Supabase config, so `enabled` is true and the auth control RENDERS.
       // Two reasons this is pinned rather than inherited:
       //   1. CI supplies no Supabase env, so `isSupabaseConfigured()` is false, `enabled` is

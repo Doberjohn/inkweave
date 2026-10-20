@@ -6,7 +6,13 @@ import {useHover} from '../../shared/hooks/useHover';
 import {usePrefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
 import {RaritySymbol} from '../reveals/RaritySymbol';
 import {rarityLabel} from '../cards/filterOptions';
-import {isFinished, percentOf, type tallyCollection, type tallySet} from './collectionStats';
+import {
+  isFinished,
+  percentOf,
+  type Axis,
+  type tallyCollection,
+  type tallySet,
+} from './collectionStats';
 import {ALL_PROMO_SETS, WHOLE_COLLECTION, isPromoScope, scopeName, type BinderShow} from './binderCards';
 import {SetPicker, type SetPickerProps} from './SetPicker';
 import {Segment, Segments} from './Segments';
@@ -54,6 +60,9 @@ import {
  *     automatic switch to master on a finished set (2026-10-07), which only a small grey
  *     "master" announced: a complete Set 13 then read Common 10/72, and was taken for a bug.
  *     The ring is the one cue: the breakdowns' own grey label went (owner, 2026-10-15).
+ *   - AND WHAT OWNED AND MISSING ASK (owner, 2026-10-20): under Master set, a card held in
+ *     one finish only is missing, as Master's number counts it. So the page holds the choice
+ *     (`useBrowseCollection`), which the binder's view asks of too (`isHeld`).
  *   - THE HEADLINES' COUNTS SHOW ON HOVER (owner, 2026-10-15): while a headline is hovered
  *     or focused from the keyboard, its name gives way to its count, "113 of 242 cards", in
  *     the same spot; the percentage stays and nothing moves. A count line opening under the
@@ -80,10 +89,9 @@ import {
 
 type Tally = ReturnType<typeof tallySet>;
 type CollectionStats = ReturnType<typeof tallyCollection>;
-type Axis = 'complete' | 'master';
 
-/** What the breakdowns count, chosen with the headlines. */
-interface AxisChoice {
+/** What the breakdowns count, chosen with the headlines, and what the binder's Owned and Missing ask. */
+export interface AxisChoice {
   axis: Axis;
   onAxisChange: (axis: Axis) => void;
 }
@@ -115,7 +123,7 @@ export interface BinderView {
   onShowChange: (show: BinderShow) => void;
 }
 
-export interface CollectionSetPanelProps extends SetSwitching, BinderView {
+export interface CollectionSetPanelProps extends SetSwitching, BinderView, AxisChoice {
   /**
    * Every set's tally and the whole collection's, or null while the pool loads. While
    * the page's filters or search are on, they count only the cards those let through.
@@ -612,15 +620,20 @@ const NUMBERS_STYLE: CSSProperties = {
 };
 
 /**
- * The numbers, under the binder's controls. What the breakdowns count is kept here, so
- * it survives a switch from set to set or to the whole collection.
+ * The numbers, under the binder's controls. What the breakdowns count is the page's to keep
+ * (see the header), so it survives a switch from set to set or to the whole collection.
  */
-function NumbersRegion({stats, setCode, filtered}: Pick<NumbersProps, 'stats' | 'setCode' | 'filtered'>) {
-  const [axis, setAxis] = useState<Axis>('complete');
+function NumbersRegion({stats, setCode, filtered, axis, onAxisChange}: NumbersProps) {
   return (
     <div role="region" aria-label="Collection numbers" aria-busy={stats === null} style={NUMBERS_STYLE}>
       <BarPass.Provider value={`${setCode}:${axis}`}>
-        <Numbers stats={stats} setCode={setCode} filtered={filtered} axis={axis} onAxisChange={setAxis} />
+        <Numbers
+          stats={stats}
+          setCode={setCode}
+          filtered={filtered}
+          axis={axis}
+          onAxisChange={onAxisChange}
+        />
       </BarPass.Provider>
     </div>
   );
@@ -659,6 +672,17 @@ function pickerProps({setCode, sets, setsLoading, onSetChange, stats, picksPromo
   return {setCode, sets, setsLoading, onSetChange, progress, picksPromos};
 }
 
+/** The numbers' view of the panel's props. */
+function numbersProps({
+  stats,
+  setCode,
+  filtered = false,
+  axis,
+  onAxisChange,
+}: CollectionSetPanelProps): NumbersProps {
+  return {stats, setCode, filtered, axis, onAxisChange};
+}
+
 /**
  * The panel body: the set picker and what the binder shows, then the numbers. The same
  * docked beside the binder (desktop) and over it from the tablet rail. Its container is a
@@ -672,7 +696,7 @@ export function CollectionSetBody({withPicker = true, ...props}: CollectionSetPa
     <>
       {withPicker && <SetPicker {...pickerProps(props)} />}
       <BinderShows show={props.show} onShowChange={props.onShowChange} />
-      <NumbersRegion stats={props.stats} setCode={props.setCode} filtered={props.filtered ?? false} />
+      <NumbersRegion {...numbersProps(props)} />
     </>
   );
 }
@@ -790,7 +814,7 @@ export function CollectionSetStrip(props: CollectionSetPanelProps) {
       <BinderShows show={props.show} onShowChange={props.onShowChange} />
       {open && props.stats && (
         <div style={{...panelStyle, width: '100%'}}>
-          <NumbersRegion stats={props.stats} setCode={props.setCode} filtered={props.filtered ?? false} />
+          <NumbersRegion {...numbersProps(props)} />
         </div>
       )}
     </section>

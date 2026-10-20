@@ -3,6 +3,7 @@ import {
   CARD_READY_SELECTOR,
   cleanPrerenderedHtml,
   crawlRoute,
+  fileHeaders,
   hasReadyContent,
   isCleanShell,
   isRevealSeasonActive,
@@ -288,5 +289,19 @@ describe('crawlRoute', () => {
       `[prerender] retry /browse (1/3): ${MISS.error}`,
       `[prerender] retry /browse (2/3): ${MISS.error}`,
     ]);
+  });
+});
+
+/**
+ * The crawl's server lets the browser cache every file it serves (#867), so each worker's
+ * context loads the bundle and allCards.json once rather than on every route.
+ */
+describe('fileHeaders', () => {
+  it('makes every file cacheable for an hour, whatever its type', () => {
+    expect(fileHeaders('.json')).toEqual({
+      'Content-Type': 'application/json',
+      'Cache-Control': 'max-age=3600',
+    });
+    expect(fileHeaders('.unknown')['Cache-Control']).toBe('max-age=3600');
   });
 });

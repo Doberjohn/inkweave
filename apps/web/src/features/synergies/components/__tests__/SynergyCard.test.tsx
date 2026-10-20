@@ -1,5 +1,5 @@
 import {describe, it, expect, vi} from 'vitest';
-import {render, screen} from '@testing-library/react';
+import {render, screen, fireEvent} from '@testing-library/react';
 import {SynergyCard} from '../SynergyCard';
 import type {LorcanaCard} from '../../../cards';
 
@@ -66,4 +66,13 @@ describe('SynergyCard', () => {
       expect(screen.getByRole('link', {name})).toBeInTheDocument();
     },
   );
+
+  // A tap fires its touchstart just before its click, on tablets as on phones.
+  it('calls onCardClick for a tap: a touchstart just before the click', () => {
+    const onCardClick = vi.fn();
+    render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" onCardClick={onCardClick} />);
+    fireEvent.touchStart(document, {touches: [{clientX: 100, clientY: 200}]});
+    fireEvent.click(screen.getByRole('link', {name: 'Elsa - Snow Queen, Strong 7'}));
+    expect(onCardClick).toHaveBeenCalledWith(mockCard);
+  });
 });

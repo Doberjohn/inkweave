@@ -1,4 +1,5 @@
 import type {Ink} from 'inkweave-synergy-engine';
+import {SPACING} from '../../shared/constants';
 import {InkTrackerTile} from './InkTrackerTile';
 
 interface InkTrackerStripProps {
@@ -20,7 +21,7 @@ export function InkTrackerStrip({inks, selected, onSelect, compact = false}: Ink
       style={{
         display: 'grid',
         gridTemplateColumns: compact ? 'repeat(3, 1fr)' : 'repeat(auto-fit, minmax(150px, 1fr))',
-        gap: compact ? 10 : 12,
+        gap: compact ? SPACING.sm : SPACING.md,
       }}
     >
       {inks.map(({ink, count}) => (

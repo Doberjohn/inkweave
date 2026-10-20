@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, hexRgba, whiteRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, whiteRgba} from '../../../shared/constants';
 
 export interface OptionPickerOption<T> {
   key: string;
@@ -29,7 +29,7 @@ interface OptionPickerProps<T> {
 /** The gold default composes from GOLD_GLOW (#511) so pickers match chips/nav/search. */
 const DEFAULT_OPTION_COLOR: OptionColor = {
   border: COLORS.primary,
-  glow: hexRgba(COLORS.primary, 0.15),
+  glow: GOLD_GLOW.activeBg,
   hintBg: GOLD_GLOW.hoverBg,
   hoverBorder: GOLD_GLOW.hoverBorder,
 };
@@ -165,7 +165,7 @@ export function OptionPicker<T>({ariaLabel, options, value, onChange, isMobile, 
       style={{
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? 6 : SPACING.sm,
+        gap: isMobile ? SPACING.xs : SPACING.sm,
         width: '100%',
       }}>
       {options.map(renderButton)}

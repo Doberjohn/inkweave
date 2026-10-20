@@ -155,7 +155,7 @@ function PlaystyleHero({
             }}>
             Playstyles
           </a>
-          <span style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim}}>/</span>
+          <span aria-hidden="true" style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim}}>/</span>
           <span style={{color: COLORS.text, fontWeight: 500}}>{name}</span>
         </nav>
 
