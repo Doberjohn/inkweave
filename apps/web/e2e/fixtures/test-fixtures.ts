@@ -51,11 +51,14 @@ const BENIGN_CONSOLE: readonly RegExp[] = [
   // page renders its data-dependent UI, and loader.ts handles a missing/!ok response gracefully).
   // Playwright's page.route interception (e.g. the voting specs' mockVoteQueue) perturbs WebKit's
   // fetch layer enough to surface it more often — including on allCards.json, not just preview.
+  // The homepage's featuredCards.json (#641) meets it too, since the voting specs load / before
+  // every test (#861); fetchFeaturedCards resolves null on any failure, and the homepage then
+  // falls back to the full card list.
   // The phrasing is WebKit-specific, so this stays WebKit-scoped even though the allowlist applies
   // to every project. Both anchors are required (a /data/*.json filename AND the "access control
   // checks" phrase) so it can't mask a real data fault — a genuine problem surfaces as an HTTP
   // status or JSON parse error, which contain neither anchor and still fail the guard.
-  /\/data\/(allCards|previewCards)\.json.*access control checks/i,
+  /\/data\/(allCards|previewCards|featuredCards)\.json.*access control checks/i,
   // Firefox-only: in dev and CI, card art is proxied to Ravensburger's CDN (the '/card-images/'
   // proxy in vite.config.ts; production self-hosts it, see IMAGES.md), and now and then an image
   // arrives incomplete. Gecko then logs an error naming it:
