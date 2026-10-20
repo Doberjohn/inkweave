@@ -131,6 +131,22 @@ describe('PrintingCarousel', () => {
     expect(onSettle).toHaveBeenCalledWith(1);
   });
 
+  // WCAG 2.1.1 (accessibility check, 2026-10-19): a strip that scrolls must be reachable by
+  // keyboard. Its Enlarge buttons are the stops where it has them.
+  it('takes keyboard focus itself only when no slide is a button and it can scroll', () => {
+    const strip = () => screen.getByRole('group', {name: 'Pongo - Determined Father printings'});
+    const plain = renderCarousel({onEnlarge: undefined});
+    expect(strip()).toHaveAttribute('tabindex', '0');
+    plain.unmount();
+
+    const buttons = renderCarousel();
+    expect(strip()).not.toHaveAttribute('tabindex');
+    buttons.unmount();
+
+    renderCarousel({onEnlarge: undefined, locked: true});
+    expect(strip()).not.toHaveAttribute('tabindex');
+  });
+
   // A comparison shows the base art, so the strip must not be swiped off it.
   it('cannot be swiped while locked', () => {
     renderCarousel({locked: true});
