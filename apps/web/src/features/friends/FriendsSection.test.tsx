@@ -1,8 +1,8 @@
-import {render, screen, waitFor} from '@testing-library/react';
+import {act, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {FriendsSection, type FriendsSectionProps} from './FriendsSection';
-import type {FriendRow} from './useFriends';
+import type {FriendRow, SendOutcome} from './useFriends';
 
 const person = (id: string, name: string, since: string | null = null): FriendRow => ({
   id,
@@ -13,7 +13,8 @@ const person = (id: string, name: string, since: string | null = null): FriendRo
 });
 const RUBY = person('ruby', 'Ruby Hero 042');
 const SAPPHIRE = person('sapphire', 'Sapphire Dragon 204');
-const STEEL = person('steel', 'Steel Pirate 777');
+// A request the player sent, so the pair runs from them to Steel.
+const STEEL = {...person('steel', 'Steel Pirate 777'), pair: {requesterId: 'me', addresseeId: 'steel'}};
 const AMBER = person('amber', 'Amber Toy 115', '2026-10-19T09:00:00Z');
 const EMERALD = person('emerald', 'Emerald Princess 330', '2026-10-20T12:00:00Z');
 
@@ -84,6 +85,20 @@ describe('FriendsSection', () => {
     expect(onSend).toHaveBeenCalledWith('ABCD2345');
     expect(screen.getByRole('status')).toHaveTextContent('Request sent to Steel Pirate 777.');
     expect(field).toHaveValue('');
+  });
+
+  it('keeps a code typed while the last send was on its way', async () => {
+    const {user, onSend} = setup();
+    let finish: (outcome: SendOutcome) => void = () => {};
+    onSend.mockReturnValue(new Promise((resolve) => (finish = resolve)));
+    const field = screen.getByLabelText('Add a friend');
+    await user.type(field, 'M3PZ-8RQT');
+    await user.click(screen.getByRole('button', {name: 'Send request'}));
+    await user.clear(field);
+    await user.type(field, 'AT15-W9ZN');
+
+    await act(async () => finish({ok: true, message: 'Request sent to Steel Pirate 777.'}));
+    expect(field).toHaveValue('AT15-W9ZN');
   });
 
   it('shows a refusal as an alert and keeps the code that was typed', async () => {
@@ -163,6 +178,13 @@ describe('FriendsSection', () => {
     await user.click(screen.getByRole('button', {name: 'Decline request from Ruby Hero 042'}));
     rerender({received: [SAPPHIRE]});
     expect(screen.getByRole('button', {name: 'Accept request from Sapphire Dragon 204'})).toHaveFocus();
+  });
+
+  it('moves focus to Sent when the last request leaves and Sent still holds a row', async () => {
+    const {user, rerender} = setup({received: [RUBY], sent: [STEEL]});
+    await user.click(screen.getByRole('button', {name: 'Accept request from Ruby Hero 042'}));
+    rerender({received: [], sent: [STEEL], friends: [{...RUBY, since: '2026-10-21T08:00:00Z'}]});
+    expect(screen.getByRole('heading', {name: 'Sent (1)'})).toHaveFocus();
   });
 
   it('moves focus to Your friends when the last request leaves', async () => {

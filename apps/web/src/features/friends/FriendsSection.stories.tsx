@@ -18,7 +18,8 @@ const person = (id: string, name: string, since: string | null = null): FriendRo
   pair: {requesterId: id, addresseeId: 'me'},
 });
 const RUBY = person('ruby', 'Ruby Hero 042');
-const STEEL = person('steel', 'Steel Pirate 777');
+// A request the player sent, so the pair runs from them to Steel.
+const STEEL = {...person('steel', 'Steel Pirate 777'), pair: {requesterId: 'me', addresseeId: 'steel'}};
 const EMERALD = person('emerald', 'Emerald Princess 330', '2026-10-20T12:00:00Z');
 const AMBER = person('amber', 'Amber Toy 115', '2026-10-19T09:00:00Z');
 const AMETHYST = person('amethyst', 'Amethyst Sorcerer 518', '2026-10-02T18:30:00Z');

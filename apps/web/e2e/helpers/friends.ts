@@ -47,23 +47,41 @@ function befriend(row: FriendshipRow): void {
   row.accepted_at = new Date().toISOString();
 }
 
-/** `send_friend_request`: a refusal, a new waiting request, or theirs accepted. */
-function send(world: FriendsWorld, request: {friend_code: string}) {
+/** `send_friend_request`'s one-row answer: the friend and the pair's status, or a refusal. */
+type SendAnswer = {friend_id: string | null; status: string};
+
+/** The most requests a player can have waiting; the database refuses the next as `too_many`. */
+const MAX_WAITING = 20;
+
+const waitingFrom = (world: FriendsWorld) =>
+  world.rows.filter((row) => row.requester_id === world.me.id && row.status === 'pending').length;
+
+/** The answer when the pair already has a row: theirs accepted (entering their code is a yes), or what is there. */
+function answerExisting(world: FriendsWorld, them: Player): SendAnswer | null {
+  const pair =
+    rowOf(world, {requester_id: them.id, addressee_id: world.me.id}) ??
+    rowOf(world, {requester_id: world.me.id, addressee_id: them.id});
+  if (!pair) return null;
+  if (pair.requester_id === them.id) befriend(pair);
+  return {friend_id: them.id, status: pair.status};
+}
+
+/**
+ * `send_friend_request`, in the migration's order: your own code; a pair that already has a
+ * row; the cap, which answers before an unused code does, so a full sender can't probe which
+ * codes exist; an unknown code; then a new waiting request.
+ */
+function send(world: FriendsWorld, request: {friend_code: string}): SendAnswer {
   const {me} = world;
   if (request.friend_code === me.code) return {friend_id: null, status: 'own'};
   const them = world.others.find((player) => player.code === request.friend_code);
+  const existing = them && answerExisting(world, them);
+  if (existing) return existing;
+  if (waitingFrom(world) >= MAX_WAITING) return {friend_id: null, status: 'too_many'};
   if (!them) return {friend_id: null, status: 'unknown'};
-  const theirs = rowOf(world, {requester_id: them.id, addressee_id: me.id});
-  if (theirs) {
-    befriend(theirs);
-    return {friend_id: them.id, status: 'accepted'};
-  }
-  const mine = rowOf(world, {requester_id: me.id, addressee_id: them.id});
-  if (!mine) {
-    const now = new Date().toISOString();
-    world.rows.push({requester_id: me.id, addressee_id: them.id, status: 'pending', created_at: now, accepted_at: null});
-  }
-  return {friend_id: them.id, status: mine?.status ?? 'pending'};
+  const now = new Date().toISOString();
+  world.rows.push({requester_id: me.id, addressee_id: them.id, status: 'pending', created_at: now, accepted_at: null});
+  return {friend_id: them.id, status: 'pending'};
 }
 
 /** `accept_friend_request`: true when a request from `requester` was waiting. */

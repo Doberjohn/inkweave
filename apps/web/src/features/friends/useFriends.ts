@@ -124,7 +124,6 @@ function nameIn(snapshot: Snapshot | null, sent: SentRequest): string {
 export function useFriends(userId: string) {
   const [view, setView] = useState<View>({status: 'loading', snapshot: EMPTY});
   const [busy, setBusy] = useState(false);
-  const busyRef = useRef(false);
   const ticket = useRef(0);
 
   const reload = () =>
@@ -135,21 +134,20 @@ export function useFriends(userId: string) {
       loadLatest(() => fetchSnapshot(userId), ticket, (next) => setView((current) => settle(current, next)));
     void load();
     // A request sent while this page sat in a background tab shows when the player comes
-    // back to it, as CollectionContext's readIfShown does for the collection.
+    // back to it, as CollectionContext's readIfShown does for the collection. Even mid-action:
+    // the newest load wins (`loadLatest`), and skipping one left a failed action's lists stale.
     const loadIfShown = () => {
-      if (document.visibilityState === 'visible' && !busyRef.current) void load();
+      if (document.visibilityState === 'visible') void load();
     };
     document.addEventListener('visibilitychange', loadIfShown);
     return () => document.removeEventListener('visibilitychange', loadIfShown);
   }, [userId]);
 
   async function runAction<T>(work: () => Promise<T>): Promise<T> {
-    busyRef.current = true;
     setBusy(true);
     try {
       return await work();
     } finally {
-      busyRef.current = false;
       setBusy(false);
     }
   }

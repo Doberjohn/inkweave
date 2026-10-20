@@ -156,6 +156,19 @@ describe('useFriends', () => {
     expect(result.current.busy).toBe(false);
   });
 
+  it('reloads when the page is shown again even while an action runs', async () => {
+    const {result} = await loaded();
+    // An action that never settles holds `busy` for the rest of the test.
+    repo.removeFriendship.mockReturnValue(new Promise(() => {}));
+    act(() => {
+      void result.current.remove(result.current.friends[0]);
+    });
+    expect(result.current.busy).toBe(true);
+
+    setVisibility('visible');
+    await waitFor(() => expect(repo.listFriendships).toHaveBeenCalledTimes(2));
+  });
+
   it('reloads when the page is shown again, and not when it is hidden', async () => {
     await loaded();
 

@@ -97,7 +97,7 @@ interface Leaving {
 function FriendsReady({code, received, sent, friends, busy, onSend, onAccept, onRemove}: FriendsSectionProps) {
   const [failure, setFailure] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
-  const {watch, headingRef, listRefs} = useFocusAfterLeaving({received, sent, friends});
+  const {watch, listRefs, headingRefs} = useFocusAfterLeaving({received, sent, friends});
 
   const act = async (leaving: Leaving, action: () => Promise<string | null>) => {
     watch(leaving);
@@ -127,9 +127,9 @@ function FriendsReady({code, received, sent, friends, busy, onSend, onAccept, on
       {code && <CodeRow code={code} />}
       <AddFriend busy={busy} onSend={onSend} />
       <div style={{borderTop: RULE, marginTop: SPACING.md}} />
-      <Requests rows={received} listRef={listRefs.received} actions={rowActions} />
-      <Sent rows={sent} listRef={listRefs.sent} actions={rowActions} />
-      <Friends rows={friends} listRef={listRefs.friends} headingRef={headingRef} actions={rowActions} />
+      <Requests rows={received} listRef={listRefs.received} headingRef={headingRefs.received} actions={rowActions} />
+      <Sent rows={sent} listRef={listRefs.sent} headingRef={headingRefs.sent} actions={rowActions} />
+      <Friends rows={friends} listRef={listRefs.friends} headingRef={headingRefs.friends} actions={rowActions} />
       {failure && (
         <p role="alert" style={{...ANSWER, color: COLORS.error}}>
           {failure}
@@ -139,25 +139,49 @@ function FriendsReady({code, received, sent, friends, busy, onSend, onAccept, on
   );
 }
 
+/** The lists in reading order. */
+const LISTS: ListName[] = ['received', 'sent', 'friends'];
+
+type ListRefs<T> = Record<ListName, React.RefObject<T | null>>;
+
 /**
- * Where focus goes when an action takes away the row that held it: to the row now in its
- * place (the one above, when it was the last), or to the Your friends heading once its list
- * is empty, since Requests and Sent disappear then. It runs after every render because the
- * lists without the row come from the page's reload, which can land after the action's own
- * renders.
+ * Where focus goes once the row that held it has left: the row now in its place (the one
+ * above, when it was the last), else the heading of the next list still on screen (Sent,
+ * after Requests empties), else Your friends, which always shows. Requests and Sent
+ * disappear when empty, so their own headings are gone by then.
+ */
+function focusTarget(
+  leaving: Leaving,
+  lists: ListRefs<HTMLUListElement>,
+  headings: ListRefs<HTMLHeadingElement>,
+): HTMLElement | null {
+  const items = lists[leaving.list].current?.children;
+  const row = items?.[Math.min(leaving.index, items.length - 1)]?.querySelector('button');
+  if (row) return row;
+  const later = LISTS.slice(LISTS.indexOf(leaving.list) + 1).map((name) => headings[name].current);
+  return later.find((heading) => heading !== null) ?? headings.friends.current;
+}
+
+/**
+ * Moves focus when an action takes away the row that held it (`focusTarget`). It runs after
+ * every render because the lists without the row come from the page's reload, which can land
+ * after the action's own renders.
  */
 function useFocusAfterLeaving(rows: Record<ListName, FriendRow[]>) {
   const leavingRef = useRef<Leaving | null>(null);
-  const headingRef = useRef<HTMLHeadingElement>(null);
   // Each ref its own statement: inside an object literal, the React Compiler caches the
   // literal and skips the useRef calls on the next render.
-  const receivedRef = useRef<HTMLUListElement>(null);
-  const sentRef = useRef<HTMLUListElement>(null);
-  const friendsRef = useRef<HTMLUListElement>(null);
-  const listRefs: Record<ListName, React.RefObject<HTMLUListElement | null>> = {
-    received: receivedRef,
-    sent: sentRef,
-    friends: friendsRef,
+  const receivedListRef = useRef<HTMLUListElement>(null);
+  const sentListRef = useRef<HTMLUListElement>(null);
+  const friendsListRef = useRef<HTMLUListElement>(null);
+  const receivedHeadingRef = useRef<HTMLHeadingElement>(null);
+  const sentHeadingRef = useRef<HTMLHeadingElement>(null);
+  const friendsHeadingRef = useRef<HTMLHeadingElement>(null);
+  const listRefs: ListRefs<HTMLUListElement> = {received: receivedListRef, sent: sentListRef, friends: friendsListRef};
+  const headingRefs: ListRefs<HTMLHeadingElement> = {
+    received: receivedHeadingRef,
+    sent: sentHeadingRef,
+    friends: friendsHeadingRef,
   };
 
   useEffect(() => {
@@ -166,16 +190,14 @@ function useFocusAfterLeaving(rows: Record<ListName, FriendRow[]>) {
     leavingRef.current = null;
     // Only when the row took the focus with it: a player who moved on keeps their place.
     if (document.activeElement !== document.body) return;
-    const items = listRefs[leaving.list].current?.children;
-    const next = items?.[Math.min(leaving.index, items.length - 1)];
-    (next?.querySelector('button') ?? headingRef.current)?.focus();
+    focusTarget(leaving, listRefs, headingRefs)?.focus();
   });
 
   /** Notes the row an action may take away, so focus can follow if it goes. */
   const watch = (leaving: Leaving) => {
     leavingRef.current = leaving;
   };
-  return {watch, headingRef, listRefs};
+  return {watch, listRefs, headingRefs};
 }
 
 /**
@@ -248,10 +270,13 @@ function AddFriend({busy, onSend}: Pick<FriendsSectionProps, 'busy' | 'onSend'>)
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (code === null || busy) return;
+    const sentText = typed;
     const outcome = await onSend(code);
-    setAnswer((last) => ({...outcome, seq: (last?.seq ?? 0) + 1}));
+    setAnswer((last) => numbered(outcome, last));
     if (!outcome.ok) return;
-    setTyped('');
+    // Emptied only if it still holds what was sent: a code typed while the send was on its
+    // way stays there for the next one.
+    setTyped((now) => (now === sentText ? '' : now));
     // Send turns off once the field is empty, so the next code starts where it is typed.
     fieldRef.current?.focus();
   };
@@ -330,6 +355,8 @@ function CodeField({
 /** A send's outcome, numbered so each refusal mounts an alert of its own. */
 type Answer = SendOutcome & {seq: number};
 
+const numbered = (outcome: SendOutcome, last: Answer | null): Answer => ({...outcome, seq: (last?.seq ?? 0) + 1});
+
 /**
  * What the last send turned into. The status line stays mounted, empty, so a screen reader
  * is already listening when it changes; a refusal comes as an alert, a new one each time, so
@@ -364,14 +391,17 @@ interface RowActions {
 interface ListProps {
   rows: FriendRow[];
   listRef: React.Ref<HTMLUListElement>;
+  /** Takes the focus when a list above it empties (`focusTarget`). */
+  headingRef: React.Ref<HTMLHeadingElement>;
   actions: RowActions;
 }
 
-function Requests({rows, listRef, actions}: ListProps) {
+function Requests({rows, listRef, headingRef, actions}: ListProps) {
   if (rows.length === 0) return null;
   return (
     <PeopleList
       heading={`Requests (${rows.length})`}
+      headingRef={headingRef}
       rows={rows}
       listRef={listRef}
       joiner="request from"
@@ -400,11 +430,12 @@ function Requests({rows, listRef, actions}: ListProps) {
   );
 }
 
-function Sent({rows, listRef, actions}: ListProps) {
+function Sent({rows, listRef, headingRef, actions}: ListProps) {
   if (rows.length === 0) return null;
   return (
     <PeopleList
       heading={`Sent (${rows.length})`}
+      headingRef={headingRef}
       rows={rows}
       listRef={listRef}
       joiner="request to"
@@ -427,12 +458,7 @@ function formatDay(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {day: 'numeric', month: 'short', year: 'numeric'});
 }
 
-function Friends({
-  rows,
-  listRef,
-  headingRef,
-  actions,
-}: ListProps & {headingRef: React.Ref<HTMLHeadingElement>}) {
+function Friends({rows, listRef, headingRef, actions}: ListProps) {
   return (
     <PeopleList
       heading={rows.length > 0 ? `Your friends (${rows.length})` : 'Your friends'}

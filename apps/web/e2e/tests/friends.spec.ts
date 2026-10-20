@@ -93,6 +93,20 @@ test.describe('Friends', () => {
     expect(world.rows).toEqual([]);
   });
 
+  test('with 20 requests waiting, a further code is refused and nothing is added', async ({page}) => {
+    const queued = Array.from({length: 20}, (_, n) => player(`e2e-queued-${n}`, `Queued Player ${n}`, `Q${n}`));
+    const world = {...worldOf(queued.map((to) => row(ME, to, 'pending'))), others: [RUBY, STEEL, AMBER, ...queued]};
+    await openAccount(page, world);
+    await expect(friendsSection(page).getByRole('heading', {name: 'Sent (20)'})).toBeVisible();
+    // Steel's real code: at the cap, even a code someone holds answers too_many.
+    await sendCode(page, 'SP77-M3XT');
+
+    await expect(friendsSection(page).getByRole('alert')).toHaveText(
+      'You have 20 requests waiting. Cancel one to send another.',
+    );
+    expect(world.rows).toHaveLength(20);
+  });
+
   test('/account with requests, sent requests and friends has no axe violations', async ({page}, testInfo) => {
     // Desktop only, as accessibility.spec.ts's audits are.
     test.skip(testInfo.project.name.startsWith('mobile-'), 'axe audits run on the desktop projects');

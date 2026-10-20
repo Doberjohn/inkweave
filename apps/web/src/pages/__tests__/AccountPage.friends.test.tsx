@@ -53,7 +53,10 @@ describe('AccountPage with the friends flag on', () => {
         <AccountPage />
       </MemoryRouter>,
     );
+    // Held back with the friends module, not drawn around its fallback.
     expect(screen.getByText('Checking your session…')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', {name: 'Identity'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Sign out'})).not.toBeInTheDocument();
 
     gate.open();
 
