@@ -6,7 +6,7 @@ import {
   selectSampleCards,
   findOffenders,
   findOrphanImagePreloads,
-  findSentryPreloads,
+  findLazySdkPreloads,
   readCanonical,
   SITE_ORIGIN,
 } from './check-rendered-html.mjs';
@@ -140,24 +140,31 @@ describe('findOrphanImagePreloads', () => {
   });
 });
 
-describe('findSentryPreloads', () => {
-  const SENTRY_CHUNKS = new Set(['esm-D3E0E-l0.js']);
+describe('findLazySdkPreloads', () => {
+  const SDK_CHUNKS = new Map([
+    ['esm-D3E0E-l0.js', 'Sentry'],
+    ['posthogClient-Bq3xU9kL.js', 'PostHog'],
+  ]);
 
-  it('flags a modulepreload of a Sentry chunk, whatever order its attributes come in', () => {
+  it('flags a modulepreload of each lazy SDK chunk by name, whatever order its attributes come in', () => {
     const html =
       '<head><link as="script" rel="modulepreload" href="/assets/esm-D3E0E-l0.js">' +
-      '<link rel="modulepreload" href="/assets/HomePage-QCEVrDYP.js"></head>';
-    expect(findSentryPreloads(html, SENTRY_CHUNKS)).toEqual(['/assets/esm-D3E0E-l0.js']);
+      '<link rel="modulepreload" href="/assets/HomePage-QCEVrDYP.js">' +
+      '<link rel="modulepreload" href="/assets/posthogClient-Bq3xU9kL.js"></head>';
+    expect(findLazySdkPreloads(html, SDK_CHUNKS)).toEqual([
+      {sdk: 'Sentry', href: '/assets/esm-D3E0E-l0.js'},
+      {sdk: 'PostHog', href: '/assets/posthogClient-Bq3xU9kL.js'},
+    ]);
   });
 
   it('passes a page whose modulepreloads are all ordinary chunks', () => {
     const html = '<head><link rel="modulepreload" crossorigin="" href="/assets/loader-BeYgltdQ.js"></head>';
-    expect(findSentryPreloads(html, SENTRY_CHUNKS)).toEqual([]);
+    expect(findLazySdkPreloads(html, SDK_CHUNKS)).toEqual([]);
   });
 
   it('reads rel as a token list, so rel="modulepreload " still counts', () => {
     const html = '<head><link rel="modulepreload " href="/assets/esm-D3E0E-l0.js"></head>';
-    expect(findSentryPreloads(html, SENTRY_CHUNKS)).toEqual(['/assets/esm-D3E0E-l0.js']);
+    expect(findLazySdkPreloads(html, SDK_CHUNKS)).toEqual([{sdk: 'Sentry', href: '/assets/esm-D3E0E-l0.js'}]);
   });
 });
 
@@ -261,6 +268,24 @@ describe('findOffenders', () => {
     expect(offenders).toHaveLength(1);
     expect(offenders[0].file).toBe(path.join(dist, 'index.html'));
     expect(offenders[0].reason).toMatch(/esm-abc12345\.js/);
+  });
+
+  it('fails when a crawled card page modulepreloads the PostHog SDK, found by its name string (#827)', () => {
+    seedGoodBuild();
+    fs.mkdirSync(path.join(dist, 'assets'));
+    fs.writeFileSync(path.join(dist, 'assets', 'posthogClient-ghi34567.js'), 'console.warn("[PostHog.js]", msg);');
+    const cardFile = path.join(dist, 'card', '1989', 'elsa-snow-queen', 'index.html');
+    fs.writeFileSync(
+      cardFile,
+      goodCardHtml(CARD).replace(
+        '</head>',
+        '<link rel="modulepreload" as="script" href="/assets/posthogClient-ghi34567.js"></head>',
+      ),
+    );
+    const offenders = findOffenders(dist, [CARD], cardPath);
+    expect(offenders).toHaveLength(1);
+    expect(offenders[0].file).toBe(cardFile);
+    expect(offenders[0].reason).toMatch(/PostHog SDK \(\/assets\/posthogClient-ghi34567\.js\)/);
   });
 
   it('fails when a card page was captured before its footer rendered (#532)', () => {

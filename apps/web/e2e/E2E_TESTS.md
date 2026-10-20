@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-186 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+188 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -35,7 +35,7 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should show featured cards after loading | Featured cards grid has 1-12 card tiles |
 | should open the overview modal when a card is selected | Clicking a featured card opens the modal overlay-style; URL stays `/`, no compact header |
 
-## `card-detail.spec.ts` — 15 tests (10 desktop only, 3 on every project at a 390px viewport, 2 on every project at any viewport)
+## `card-detail.spec.ts` — 17 tests (10 desktop only, 3 on every project at a 390px viewport, 2 on every project at a 1024×768 touch viewport, 2 on every project at any viewport)
 
 Two surfaces: the crawlable `/card/:id` **page** (#486 — renders, not-found, empty state; slug URLs `/card/:id/:slug` with the id as the lookup key and the slug decorative, #498) and the
 CardOverviewModal opened from a tile (render, close, empty, scroll lock, show-all, sibling nav). The
@@ -45,6 +45,10 @@ is a real page now, not a modal shortcut.
 The page's mobile-layout tests (the #631 overflow guard, the × back flow) force a 390px viewport with
 `setViewportSize` instead of skipping `mobile-*`: `isMobile` is width-based, so they render the mobile
 layout on every project and also run in the chromium-only Windows pre-push.
+
+The touch-screen tests run on every project at 1024×768 with `hasTouch` (`test.use`) and press tiles with
+`tap()`: no project is a tablet otherwise (the desktop ones have no touch, the phone ones are under 768px),
+which is how synergy tiles came to ignore every tap at 768px and wider without a test noticing.
 
 | Test | What it verifies |
 |---|---|
@@ -63,6 +67,8 @@ layout on every project and also run in the chromium-only Windows pre-push.
 | × on a card page reached by the /compare/X/X redirect opens Browse | At 390px, `/compare/2095/2095` redirects (a replace, so a new location key) to `/card/2095`; × still counts it as the page the visit started on and navigates to `/browse`. Without #653's `history.state.idx` check it stepped back to `about:blank`, out of the site |
 | keeps the footer out until the card and its synergies have loaded | `/card/2095` with `allCards.json` and its synergy file held: under the loading skeleton there is no `footer[aria-label="Site footer"]`; with the cards released, the card renders (its `<Seo>` title is set) and there is still no footer; with the synergies released, the footer is attached. Rendered under the loading page, the footer was pushed past the fold as the content arrived, which was the card page's whole layout shift (#532) |
 | shows the synergy skeleton, not the empty notice, until the synergies load | `/card/2095` with its synergy file held: the synergy column shows its skeleton (`synergy-results-loading`) and no "No synergies found for this card" notice; with the file released, the ramp group renders and neither the skeleton nor the notice remains. The empty list during the load used to render the notice on every card page, so a card with synergies flashed "No synergies found" first |
+| a tap on a synergy tile opens its card page | At 1024×768 with touch, `/card/2095`: `tap()` on the first tile of a "Synergy cards" list navigates to that tile's `/card/<data-card-id>/` page. SynergyCard used to drop any click within 1 s of a touchstart when `isMobile` was false, and a tap's own click always lands inside that second (#843) |
+| a tap on a synergy tile in the card window opens the comparison | At 1024×768 with touch, the modal opened on card 2095 via `openCardOverview`: `tap()` on its first tile switches it to `data-mode="comparison"`, the same path a mouse click takes |
 
 ## `card-printings.spec.ts`: 5 tests (4 desktop only, 1 on every project at a 360px viewport)
 
