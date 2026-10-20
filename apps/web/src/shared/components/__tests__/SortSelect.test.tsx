@@ -1,6 +1,7 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {SortSelect} from '../SortSelect';
+import {BROWSE_SORT_OPTIONS, SYNERGY_SORT_OPTIONS} from '../../constants';
 
 const options = [
   {value: 'name', label: 'Name'},
@@ -38,5 +39,11 @@ describe('SortSelect', () => {
   it('should default ariaLabel to "Sort"', () => {
     render(<SortSelect options={options} value="name" onChange={vi.fn()} />);
     expect(screen.getByRole('combobox', {name: 'Sort'})).toBeInTheDocument();
+  });
+
+  // An <option> can't hide part of its text, so an arrow in a label is read aloud ("right arrow").
+  it('words every app sort option without arrows, on phones too', () => {
+    const labels = [...BROWSE_SORT_OPTIONS, ...SYNERGY_SORT_OPTIONS].flatMap((o) => [o.label, o.mobileLabel ?? '']);
+    for (const label of labels) expect(label).not.toMatch(/[←→↑↓]/);
   });
 });

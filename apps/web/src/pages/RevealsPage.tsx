@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import type {CardPrinting, Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {CompactHeader, ErrorBoundary, EtherealBackground, Seo} from '../shared/components';
-import {COLORS, FONTS, FONT_SIZES, REVEAL_SET_CODE, REVEAL_SET_NUMBER, SET_NAMES, SPACING} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, REVEAL_SET_CODE, REVEAL_SET_NUMBER, SET_NAMES, SPACING, VISUALLY_HIDDEN} from '../shared/constants';
 import {useResponsive} from '../shared/hooks';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {trackEvent} from '../shared/lib/analytics';
@@ -47,18 +47,6 @@ interface ModalSiblings {
 }
 
 const siblingsOf = (cards: LorcanaCard[]): ModalSiblings => ({ids: cards.map((card) => card.id)});
-
-const srOnly: React.CSSProperties = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: 'hidden',
-  clip: 'rect(0, 0, 0, 0)',
-  whiteSpace: 'nowrap',
-  border: 0,
-};
 
 const messageStyle: React.CSSProperties = {
   padding: SPACING.lg,
@@ -174,7 +162,7 @@ export function RevealsPage() {
       <EtherealBackground />
       <CompactHeader isMobile={isMobile} />
       <main style={{minHeight: '100vh', paddingTop: SPACING.lg, paddingBottom: 110, position: 'relative', zIndex: 1}}>
-        <h1 style={srOnly}>
+        <h1 style={VISUALLY_HIDDEN}>
           {SET_NAMES[REVEAL_SET_CODE]}: Set {REVEAL_SET_NUMBER} reveals
         </h1>
         <div style={{maxWidth: CONTENT_MAX_WIDTH, margin: '0 auto', padding: `0 ${sidePad}px`}}>

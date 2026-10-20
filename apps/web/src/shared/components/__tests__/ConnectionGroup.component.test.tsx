@@ -146,3 +146,27 @@ describe('ConnectionGroup — multi-role expand/collapse', () => {
     expect(screen.queryByRole('button')).toBeNull();
   });
 });
+
+describe('ConnectionGroup — card chips', () => {
+  beforeEach(() => {
+    mockUseResponsive.mockReturnValue({
+      isMobile: false,
+      isTablet: false,
+      isDesktop: true,
+      isTouchDevice: false,
+      windowWidth: 1280,
+    });
+  });
+
+  it("gives screen readers each chip's card by name and hides its letter", () => {
+    const group = singleRoleGroup();
+    group.connections = [{...group.connections[0], explanation: '{A} shifts onto {B}.'}];
+    render(<ConnectionGroup group={group} cardA={cardA} cardB={cardB} />);
+    // Both cards are Elsa, so each chip names its card in full.
+    expect(screen.getByText('Elsa - Concerned Sister')).toBeInTheDocument();
+    expect(screen.getByText('Elsa - Ice Artisan')).toBeInTheDocument();
+    const letters = screen.getAllByText('E');
+    expect(letters).toHaveLength(2);
+    for (const letter of letters) expect(letter).toHaveAttribute('aria-hidden', 'true');
+  });
+});

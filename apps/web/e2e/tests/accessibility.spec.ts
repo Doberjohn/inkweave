@@ -79,6 +79,39 @@ test.describe('Accessibility — axe audits', () => {
     const results = await new AxeBuilder({page}).analyze();
     expect(results.violations).toEqual([]);
   });
+
+  // The in-depth vote page had no title and no h1 (accessibility check, 2026-10-19, #835).
+  // 3286 and 2983 are the Free Play pair that check audits.
+  test('in-depth vote page should have no axe violations', async ({page}) => {
+    await page.goto('/vote/3286/2983');
+    await expect(page.getByRole('radio', {name: 'Yes'})).toBeVisible({timeout: 15000});
+
+    const results = await new AxeBuilder({page}).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  // A franchise's cards on Reveals: the spotlight tiles' labels left out their visible text,
+  // and the dialog's title bar added a second banner (#835). The clock starts in the reveal
+  // season, so the page shows whatever the date.
+  test('reveals page with a franchise open should have no axe violations', async ({page}) => {
+    test.skip(!(await startClockInRevealSeason(page)), 'previewCards.json has no dated reveal set.');
+    await page.goto('/reveals');
+    const tile = page.getByRole('button', {name: /View cards$/}).first();
+    const franchise = ((await tile.locator('h3').textContent()) ?? '').trim();
+    await tile.click();
+
+    const modal = page.getByRole('dialog', {name: `${franchise} cards`, exact: true});
+    // Until its fade ends, the dialog's text measures against a half-drawn panel.
+    await expect(modal).toHaveCSS('opacity', '1', {timeout: 15000});
+    await modal
+      .getByTestId('card-tile')
+      .first()
+      .waitFor({timeout: 5000})
+      .catch(() => {});
+
+    const results = await new AxeBuilder({page}).analyze();
+    expect(results.violations).toEqual([]);
+  });
 });
 
 /**

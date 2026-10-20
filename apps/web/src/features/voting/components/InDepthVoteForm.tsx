@@ -296,9 +296,12 @@ function getNavStyle({hovered, disabled, boopStyle}: NavStyleInput): React.CSSPr
   };
 }
 
-function NavButton({label, disabled, onClick}: {label: string; disabled: boolean; onClick: () => void}) {
+type NavDirection = 'previous' | 'next';
+
+/** Previous or Next: the arrow is drawn, not read, so the name is the word alone. */
+function NavButton({direction, disabled, onClick}: {direction: NavDirection; disabled: boolean; onClick: () => void}) {
   const [hovered, setHovered] = useState(false);
-  const boop = useBoop({scale: 1.05, rotation: label.includes('Next') ? 2 : -2, timing: 250});
+  const boop = useBoop({scale: 1.05, rotation: direction === 'next' ? 2 : -2, timing: 250});
   return (
     <button
       onClick={onClick}
@@ -306,7 +309,15 @@ function NavButton({label, disabled, onClick}: {label: string; disabled: boolean
       onMouseEnter={() => { setHovered(true); if (!disabled) boop.trigger(); }}
       onMouseLeave={() => setHovered(false)}
       style={getNavStyle({hovered, disabled, boopStyle: boop.style})}>
-      {label}
+      {direction === 'previous' ? (
+        <>
+          <span aria-hidden="true">←</span> Previous
+        </>
+      ) : (
+        <>
+          Next <span aria-hidden="true">→</span>
+        </>
+      )}
     </button>
   );
 }
@@ -479,12 +490,12 @@ function TabbedLayout({ctx, animate, activeTab, setActiveTab, answeredByGroup}: 
       </div>
       <div style={{display: 'flex', justifyContent: 'space-between', marginTop: SPACING.lg}}>
         <NavButton
-          label="← Previous"
+          direction="previous"
           disabled={activeTab === 'assessment'}
           onClick={() => setActiveTab(activeTab === 'rating' ? 'assessment' : 'rating')}
         />
         <NavButton
-          label="Next →"
+          direction="next"
           disabled={activeTab === 'practical'}
           onClick={() => setActiveTab(activeTab === 'assessment' ? 'rating' : 'practical')}
         />

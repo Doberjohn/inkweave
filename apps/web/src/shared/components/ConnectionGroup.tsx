@@ -2,7 +2,8 @@ import {useState, useEffect} from 'react';
 import type {LorcanaCard} from '../../features/cards';
 import type {Ink, LocationRole, PairSynergyConnection} from 'inkweave-synergy-engine';
 import {LOCATION_ROLE_CHIP_LABELS} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, VISUALLY_HIDDEN} from '../constants';
+import {chipCardName} from '../../features/synergies/utils/chipNames';
 import {useResponsive} from '../hooks';
 import type {ConnectionGroupData} from './groupConnections';
 
@@ -157,8 +158,11 @@ function ExplanationWithHighlights({
         }
         if (seg.kind === 'token') {
           const refCard = seg.card === 'a' ? cardA : cardB;
+          const partnerCard = seg.card === 'a' ? cardB : cardA;
           // Chip displays the initial letter of the card's base name (e.g. Yzma → Y,
           // Kuzco → K) so the user can match chip → card by initial without hover.
+          // Screen readers get the card's name instead: the letter and colour mean
+          // nothing without the cards in sight (#835).
           const initial = refCard.name.charAt(0).toUpperCase();
           return (
             <span
@@ -184,7 +188,8 @@ function ExplanationWithHighlights({
                 cursor: onHighlight ? 'default' : 'inherit',
                 userSelect: 'none',
               }}>
-              {initial}
+              <span aria-hidden="true">{initial}</span>
+              <span style={VISUALLY_HIDDEN}>{chipCardName(refCard, partnerCard)}</span>
             </span>
           );
         }

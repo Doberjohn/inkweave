@@ -17,7 +17,7 @@ export interface SpotlightHeroData {
   count: string;
   title: string;
   summary: string;
-  /** CTA label; defaults to "View synergies →" (link) or "View cards →" (action). */
+  /** CTA words, without an arrow (the tile draws a hidden one); defaults to "View synergies" (link) or "View cards" (action). */
   cta?: string;
   href?: string;
   heroImage: string;
@@ -46,7 +46,7 @@ function NewBadge({accent}: {accent: string}) {
         borderRadius: 20,
       }}
     >
-      ★ New
+      <span aria-hidden="true">★</span> New
     </span>
   );
 }
@@ -56,7 +56,7 @@ function NewBadge({accent}: {accent: string}) {
  * (front card largest). Base + hover transforms are passed as CSS variables so
  * the fan spreads open on hover (see reveals.css).
  */
-function SupportFan({cards, accent, compact}: {cards: SupportCard[]; accent: string; compact: boolean}) {
+function SupportFan({cards, accent, compact, decorative}: {cards: SupportCard[]; accent: string; compact: boolean; decorative: boolean}) {
   const rgb = hexToRgb(accent);
   const base = compact ? 62 : 92;
   const scales = [0.9, 1, 0.82];
@@ -90,7 +90,7 @@ function SupportFan({cards, accent, compact}: {cards: SupportCard[]; accent: str
               } as CSSProperties
             }
           >
-            <img src={c.src} alt={c.alt} loading="lazy" style={{width: '100%', height: '100%', objectFit: 'cover', display: 'block'}} />
+            <img src={c.src} alt={decorative ? '' : c.alt} loading="lazy" style={{width: '100%', height: '100%', objectFit: 'cover', display: 'block'}} />
           </div>
         );
       })}
@@ -148,13 +148,18 @@ function washFor(rgb: string, grad?: {from: string; to: string}): string {
   return `linear-gradient(110deg, rgba(${rgb}, 0.26), rgba(${rgb}, 0.06) 52%, transparent 78%), radial-gradient(560px 320px at 92% 130%, rgba(${rgb}, 0.22), transparent)`;
 }
 
-/** CTA label: caller-provided, else the sensible default for a link vs an action tile. */
+/** CTA words: caller-provided, else the sensible default for a link vs an action tile. */
 function ctaLabel(data: SpotlightHeroData): string {
-  return data.cta ?? (data.href ? 'View synergies →' : 'View cards →');
+  return data.cta ?? (data.href ? 'View synergies' : 'View cards');
 }
 
-/** The shared hero + copy + fan interior, rendered inside whichever wrapper the tile needs. */
+/**
+ * The shared hero + copy + fan interior, rendered inside whichever wrapper the tile needs. Inside
+ * a link or a button the art is decorative: the tile's name is its text alone, which then holds
+ * all of what it shows (WCAG 2.5.3), instead of the title again from every image's alt.
+ */
 function SpotlightInner({data, dims, onActivate, compact}: {data: SpotlightHeroData; dims: SpotlightDims; onActivate?: () => void; compact: boolean}) {
+  const interactive = Boolean(data.href || onActivate);
   return (
     <div
       style={{
@@ -181,7 +186,7 @@ function SpotlightInner({data, dims, onActivate, compact}: {data: SpotlightHeroD
             } as CSSProperties
           }
         >
-          <img src={data.heroImage} alt={data.heroAlt} style={{width: '100%', height: '100%', objectFit: data.heroFit ?? 'cover', display: 'block'}} />
+          <img src={data.heroImage} alt={interactive ? '' : data.heroAlt} style={{width: '100%', height: '100%', objectFit: data.heroFit ?? 'cover', display: 'block'}} />
         </div>
       </div>
 
@@ -192,14 +197,14 @@ function SpotlightInner({data, dims, onActivate, compact}: {data: SpotlightHeroD
         </div>
         <h3 style={{fontFamily: FONTS.hero, fontWeight: 700, fontSize: dims.titleSize, color: '#f4f4f8', margin: '11px 0 0'}}>{data.title}</h3>
         <p style={{fontWeight: 400, fontSize: dims.summarySize, lineHeight: 1.55, color: '#d2d2de', margin: '9px 0 0', maxWidth: 420}}>{data.summary}</p>
-        {(data.href || onActivate) && (
+        {interactive && (
           <span style={{display: 'inline-block', marginTop: 13, fontSize: 13, fontWeight: 700, color: data.accent, letterSpacing: 0.3}}>
-            {ctaLabel(data)}
+            {ctaLabel(data)} <span aria-hidden="true">→</span>
           </span>
         )}
       </div>
 
-      {data.support.length > 0 && <SupportFan cards={data.support} accent={data.accent} compact={compact} />}
+      {data.support.length > 0 && <SupportFan cards={data.support} accent={data.accent} compact={compact} decorative={interactive} />}
     </div>
   );
 }
@@ -241,7 +246,7 @@ export function SpotlightHero({
 
   if (data.href) {
     return (
-      <a href={data.href} className="reveal-spotlight-hero" aria-label={`${data.title}: view synergies`} style={shell}>
+      <a href={data.href} className="reveal-spotlight-hero" style={shell}>
         {inner}
       </a>
     );
@@ -252,7 +257,6 @@ export function SpotlightHero({
         type="button"
         onClick={onActivate}
         className="reveal-spotlight-hero"
-        aria-label={`View ${data.title} cards`}
         style={{...shell, appearance: 'none', font: 'inherit', textAlign: 'left', cursor: 'pointer', width: '100%'}}
       >
         {inner}

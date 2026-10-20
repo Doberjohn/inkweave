@@ -249,15 +249,7 @@ interface CommunityBodyProps {
 
 function CommunityBody({visual, score, cardA, cardB, engineScore, onCta, userAlreadyVoted, compact}: CommunityBodyProps) {
   if (visual.hasEmptyState) {
-    return (
-      <CommunityEmptyState
-        variant={visual.isFullEmpty ? 'full-empty' : 'half-empty'}
-        current={visual.isFullEmpty ? visual.totalVotes : visual.scoreVotes}
-        threshold={VOTES_THRESHOLD}
-        onCta={onCta}
-        userAlreadyVoted={userAlreadyVoted}
-      />
-    );
+    return <CommunityEmpty visual={visual} onCta={onCta} userAlreadyVoted={userAlreadyVoted} compact={compact} />;
   }
   if (!score) return null;
   // Mobile filled state leads with the DeltaPanel — replaces the small inline DeltaBadge the
@@ -271,6 +263,25 @@ function CommunityBody({visual, score, cardA, cardB, engineScore, onCta, userAlr
     );
   }
   return <MetricRows score={score} cardA={cardA} cardB={cardB} />;
+}
+
+function CommunityEmpty({
+  visual,
+  onCta,
+  userAlreadyVoted,
+  compact,
+}: Pick<CommunityBodyProps, 'visual' | 'onCta' | 'userAlreadyVoted' | 'compact'>) {
+  return (
+    <CommunityEmptyState
+      variant={visual.isFullEmpty ? 'full-empty' : 'half-empty'}
+      current={visual.isFullEmpty ? visual.totalVotes : visual.scoreVotes}
+      threshold={VOTES_THRESHOLD}
+      onCta={onCta}
+      userAlreadyVoted={userAlreadyVoted}
+      // Phones render no column header above it, so its title steps down from the view's h2.
+      headingLevel={compact ? 3 : 4}
+    />
+  );
 }
 
 function CommunityMeta({

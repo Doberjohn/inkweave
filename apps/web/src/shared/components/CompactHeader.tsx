@@ -193,7 +193,7 @@ function HeaderLogo({showBackArrow, viewport, onClick}: HeaderLogoProps) {
         textDecoration: 'none',
       }}>
       {showBackArrow && (
-        <span style={{fontSize: `${FONT_SIZES.base}px`, fontWeight: 500, color: COLORS.primary}}>
+        <span aria-hidden="true" style={{fontSize: `${FONT_SIZES.base}px`, fontWeight: 500, color: COLORS.primary}}>
           ←
         </span>
       )}

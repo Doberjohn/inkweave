@@ -1,7 +1,7 @@
 import type {ReactNode} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {CompactHeader, CtaButton, BackLink, EtherealBackground, Sparkles} from '../shared/components';
+import {CompactHeader, CtaButton, BackLink, EtherealBackground, Seo, Sparkles} from '../shared/components';
 import {CardDetailSkeleton} from '../features/cards';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
@@ -14,7 +14,19 @@ import {
 } from '../features/voting/hooks/useInDepthVoteSession';
 import type {InDepthFormState, VotingPair} from '../features/voting/types';
 import type {Accuracy} from '../shared/lib/supabase';
-import {COLORS, EASING, FONTS, FONT_SIZES, LAYOUT, RADIUS, SPACING, TIER_COLORS, hexRgba, whiteRgba} from '../shared/constants';
+import {
+  COLORS,
+  EASING,
+  FONTS,
+  FONT_SIZES,
+  LAYOUT,
+  RADIUS,
+  SPACING,
+  TIER_COLORS,
+  VISUALLY_HIDDEN,
+  hexRgba,
+  whiteRgba,
+} from '../shared/constants';
 
 /** Inject keyframes once at module load */
 (function injectKeyframes() {
@@ -116,6 +128,13 @@ function getResponseInsight(formState: InDepthFormState): string {
 
 function getRandomCloser(): string {
   return pickRandom(CLOSERS);
+}
+
+/** The tab's title (2.4.2): the pair once it loads, the error's own words when it can't. */
+function inDepthTitle(pair: VotingPair | null, isLoading: boolean, error: string | null): string {
+  if (isLoading) return 'Vote on a card pair | Inkweave';
+  if (!pair) return `${error ?? 'Pair not found'} | Inkweave`;
+  return `${pair.cardA.fullName} + ${pair.cardB.fullName} | Vote | Inkweave`;
 }
 
 function getFormProps(session: UseInDepthVoteSessionReturn, pair: VotingPair) {
@@ -499,6 +518,7 @@ function InDepthLoadingView({isMobile, cards, onLogoClick, onCardSelect}: PageHe
       onCardSelect={onCardSelect}
       ariaBusy
       ariaLabel="Loading vote pair and form">
+      <h1 style={VISUALLY_HIDDEN}>Vote on a card pair</h1>
       <LoadingPairs isMobile={isMobile} pairImageWidth={pairImageWidth} pairCardWidth={pairCardWidth} />
     </InDepthPageShell>
   );
@@ -519,7 +539,7 @@ function InDepthErrorView({
         cards={cards}
         onCardSelect={onCardSelect}
       />
-      <div
+      <main
         style={{
           flex: 1,
           display: 'flex',
@@ -529,16 +549,21 @@ function InDepthErrorView({
           padding: 32,
           gap: 16,
         }}>
-        <span
-          style={{fontSize: FONT_SIZES.xl, fontWeight: 700, color: COLORS.text, fontFamily: FONTS.body}}>
+        <h1
+          style={{fontSize: FONT_SIZES.xl, fontWeight: 700, color: COLORS.text, fontFamily: FONTS.body, margin: 0}}>
           {error ?? 'Pair not found'}
-        </span>
+        </h1>
         <CtaButton variant="ghost" onClick={onLogoClick}>
           Back to Home
         </CtaButton>
-      </div>
+      </main>
     </div>
   );
+}
+
+/** The page's one h1, visually hidden: the vote screen shows the two cards, not a heading (the loading view has its own). */
+function PairHeading({pair}: {pair: VotingPair}) {
+  return <h1 style={VISUALLY_HIDDEN}>{`Vote on ${pair.cardA.fullName} and ${pair.cardB.fullName}`}</h1>;
 }
 
 type ActiveViewProps = PageHeaderProps & {
@@ -564,6 +589,7 @@ function InDepthMobileView({
 
   return (
     <InDepthPageShell isMobile cards={cards} onLogoClick={onLogoClick} onCardSelect={onCardSelect}>
+      <PairHeading pair={pair} />
       <div style={{width: '100%', maxWidth: 560}}>
         <BackLink onClick={onBack} label="Back to synergy" style={{marginBottom: SPACING.lg}} />
       </div>
@@ -612,6 +638,7 @@ function InDepthDesktopView({
       cards={cards}
       onLogoClick={onLogoClick}
       onCardSelect={onCardSelect}>
+      <PairHeading pair={pair} />
       <div style={{width: '100%', maxWidth: 1320}}>
         <BackLink onClick={onBack} label="Back to synergy" style={{marginBottom: SPACING.lg}} />
       </div>
@@ -687,51 +714,38 @@ export function InDepthVotePage() {
     else navigate('/');
   };
 
+  const header = {isMobile, cards, onLogoClick: goHome, onCardSelect};
+  // One title for every branch, as VotePage does: React 19 hoists it from anywhere in the tree.
+  // Both paths are disallowed in robots.txt, so it is noindex too.
+  const seo = (
+    <Seo
+      title={inDepthTitle(pair, isLoading, error)}
+      canonicalPath={`/vote/${cardAId ?? ''}/${cardBId ?? ''}`}
+      noindex
+    />
+  );
+
   if (isLoading) {
     return (
-      <InDepthLoadingView
-        isMobile={isMobile}
-        cards={cards}
-        onLogoClick={goHome}
-        onCardSelect={onCardSelect}
-      />
+      <>
+        {seo}
+        <InDepthLoadingView {...header} />
+      </>
     );
   }
   if (error || !pair) {
     return (
-      <InDepthErrorView
-        isMobile={isMobile}
-        cards={cards}
-        error={error}
-        onLogoClick={goHome}
-        onCardSelect={onCardSelect}
-      />
+      <>
+        {seo}
+        <InDepthErrorView {...header} error={error} />
+      </>
     );
   }
-  if (isMobile) {
-    return (
-      <InDepthMobileView
-        isMobile={isMobile}
-        pair={pair}
-        session={session}
-        cards={cards}
-        onLogoClick={goHome}
-        onCardSelect={onCardSelect}
-        onBack={onBack}
-        onVoteMore={onVoteMore}
-      />
-    );
-  }
+  const active = {...header, pair, session, onBack, onVoteMore};
   return (
-    <InDepthDesktopView
-      isMobile={isMobile}
-      pair={pair}
-      session={session}
-      cards={cards}
-      onLogoClick={goHome}
-      onCardSelect={onCardSelect}
-      onBack={onBack}
-      onVoteMore={onVoteMore}
-    />
+    <>
+      {seo}
+      {isMobile ? <InDepthMobileView {...active} /> : <InDepthDesktopView {...active} />}
+    </>
   );
 }

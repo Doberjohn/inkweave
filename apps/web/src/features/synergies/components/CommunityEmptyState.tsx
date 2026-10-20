@@ -19,6 +19,11 @@ interface CommunityEmptyStateProps {
   onCta: () => void;
   /** When true, replace the CTA with an affirmation tile — user has already in-depth-voted from this browser. */
   userAlreadyVoted?: boolean;
+  /**
+   * The title's heading level: 4 under a column header (desktop), 3 where none renders (the
+   * phone comparison), so headings step down one level at a time from the view's h2.
+   */
+  headingLevel?: 3 | 4;
 }
 
 const COPY: Record<CommunityEmptyVariant, {title: string; renderDesc: (n: number) => ReactNode; ctaLabel: string}> = {
@@ -30,7 +35,7 @@ const COPY: Record<CommunityEmptyVariant, {title: string; renderDesc: (n: number
         {remaining === 1 ? '' : 's'} before community signal becomes meaningful.
       </>
     ),
-    ctaLabel: 'Rate in Detail →',
+    ctaLabel: 'Rate in Detail',
   },
   'half-empty': {
     title: 'Not enough in-depth votes yet',
@@ -40,7 +45,7 @@ const COPY: Record<CommunityEmptyVariant, {title: string; renderDesc: (n: number
         {remaining === 1 ? '' : 's'} to fill in the community details.
       </>
     ),
-    ctaLabel: 'Help fill in the details →',
+    ctaLabel: 'Help fill in the details',
   },
 };
 
@@ -51,7 +56,8 @@ const COPY: Record<CommunityEmptyVariant, {title: string; renderDesc: (n: number
  * `half-empty`: total_votes ≥ threshold but score_votes < threshold — replaces only the metric rows;
  *   parent still renders the dist bar above.
  */
-export function CommunityEmptyState({variant, current, threshold = 1, onCta, userAlreadyVoted = false}: CommunityEmptyStateProps) {
+export function CommunityEmptyState({variant, current, threshold = 1, onCta, userAlreadyVoted = false, headingLevel = 4}: CommunityEmptyStateProps) {
+  const Heading = `h${headingLevel}` as const;
   const remaining = Math.max(threshold - current, 0);
   const {title, renderDesc, ctaLabel} = COPY[variant];
   const progressPct = Math.min((current / threshold) * 100, 100);
@@ -77,7 +83,7 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
         textAlign: 'center',
         fontFamily: FONTS.body,
       }}>
-      <h4
+      <Heading
         style={{
           margin: 0,
           fontSize: `${FONT_SIZES.base}px`,
@@ -86,7 +92,7 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
           color: COLORS.text,
         }}>
         {title}
-      </h4>
+      </Heading>
       <p
         style={{
           margin: 0,
@@ -150,7 +156,7 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
             color: COLORS.background,
             boxShadow: `0 4px 12px rgba(182, 145, 255, 0.3)`,
           }}>
-          {ctaLabel}
+          {ctaLabel} <span aria-hidden="true">→</span>
         </CtaButton>
       )}
     </div>

@@ -1,6 +1,6 @@
 import {useEffect, useLayoutEffect, useRef, useState} from 'react';
 import type {DetailedPairSynergy, Ink, LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS} from '../../../shared/constants';
+import {COLORS, FONTS, VISUALLY_HIDDEN} from '../../../shared/constants';
 import {usePairScore} from '../../voting/hooks/usePairScore';
 import {formatScore} from '../../../shared/utils/scoreFormatting';
 import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
@@ -222,6 +222,8 @@ export function MobileComparisonView({pair, engineScore, originRects = null, isE
 
       <div style={CONTENT_STYLE}>
         <CardsRow cardA={cardA} cardB={cardB} cardARef={cardARef} cardBRef={cardBRef} onCardTap={onCardTap} style={cardsExitStyle} />
+        {/* Between the card's h1 and the panels' headings, so they step down one level at a time. */}
+        <h2 style={VISUALLY_HIDDEN}>Synergy scores</h2>
         <TabBar activeTab={activeTab} onChange={scrollToTab} engineScore={engineScore} communityScore={communityScore} style={chromeExitStyle} />
 
         <div ref={viewportRef} role="presentation" style={{...VIEWPORT_STYLE, ...chromeExitStyle}} className="mobile-tab-viewport">

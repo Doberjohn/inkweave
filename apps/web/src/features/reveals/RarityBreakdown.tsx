@@ -1,21 +1,7 @@
-import type {CSSProperties} from 'react';
 import {Chip} from '../../shared/components/Chip';
-import {COLORS, ICON_SIZE, SPACING, TABULAR, hexRgba} from '../../shared/constants';
+import {COLORS, ICON_SIZE, SPACING, TABULAR, VISUALLY_HIDDEN, hexRgba} from '../../shared/constants';
 import {RARITIES, type RarityConfig} from './rarity';
 import {RaritySymbol} from './RaritySymbol';
-
-/** Read by screen readers, not shown: a phone chip is its symbol and count alone. */
-const srOnly: CSSProperties = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: 'hidden',
-  clip: 'rect(0, 0, 0, 0)',
-  whiteSpace: 'nowrap',
-  border: 0,
-};
 
 interface RarityBreakdownProps {
   /** Revealed count per rarity key (from useRevealProgress). */
@@ -65,7 +51,8 @@ export function RarityBreakdown({
             title={`Highlight ${rarity.name} cards`}
           >
             <RaritySymbol rarity={rarity.key} size={ICON_SIZE.sm} />
-            <span style={compact ? srOnly : undefined}>{rarity.name}</span>{' '}
+            {/* Read by screen readers, not shown: a phone chip is its symbol and count alone. */}
+            <span style={compact ? VISUALLY_HIDDEN : undefined}>{rarity.name}</span>{' '}
             <span style={{...TABULAR, fontWeight: 700}}>{rarityCounts[rarity.key]}</span>
           </Chip>
         ))}
