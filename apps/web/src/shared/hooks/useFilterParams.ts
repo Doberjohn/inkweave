@@ -61,6 +61,12 @@ function parseList(raw: string | null): string[] | undefined {
 export const SET_PARAM = 'set';
 
 /**
+ * The sort's param. Exported for collection mode, which keeps the cards changed by hand in
+ * the binder's Owned or Missing view only until the sort changes (#826).
+ */
+export const SORT_PARAM = 'sort';
+
+/**
  * Every CardFilterOptions field the URL carries: its param, how to read it, and how
  * to write it (an empty value deletes the param). One table for both directions, so a
  * new option cannot be read without being written, or the other way round.
@@ -150,7 +156,7 @@ export function useFilterParams(): UseFilterParamsReturn {
   const filters = parseFilterOptions(searchParams);
 
   const sortOrder: BrowseSortOrder = (() => {
-    const raw = searchParams.get('sort');
+    const raw = searchParams.get(SORT_PARAM);
     return raw && VALID_SORTS.has(raw) ? (raw as BrowseSortOrder) : 'newest';
   })();
 
@@ -247,8 +253,8 @@ export function useFilterParams(): UseFilterParamsReturn {
       trackEvent('sort_changed', {sortOrder: order, previousSort: sortOrder});
     }
     updateParams((p) => {
-      if (order === 'newest') p.delete('sort');
-      else p.set('sort', order);
+      if (order === 'newest') p.delete(SORT_PARAM);
+      else p.set(SORT_PARAM, order);
     });
   };
 

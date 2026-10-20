@@ -18,6 +18,12 @@ interface QuantityStepperProps {
   decrementDisabled?: boolean;
   /** When true the − and + collapse to width 0 (count-only), transitioning open when false. */
   collapsed?: boolean;
+  /**
+   * False keeps the − and + out of the Tab order even while they show: the binder's hover
+   * steppers (#826), which leave a spread one Tab stop (#790). Keyboard users change the
+   * count in the card window instead. Default true.
+   */
+  tabbable?: boolean;
   /** 'md' = pool tile dims (default), 'sm' = deck row, 'xs' = binder slot. */
   size?: StepperSize;
   /**
@@ -72,12 +78,13 @@ interface StepperDims {
 // All three flow from this one table so the variants can never drift.
 //
 // xs EXISTS FOR A MEASURED CONSTRAINT, not for taste: the collection binder puts
-// two counts SIDE BY SIDE inside one card slot, sized from the narrowest slot the
-// app produces. On master the binder shows them READ-ONLY and always collapsed
-// (#553 Phase C, owner 2026-10-07), so only the count cell is visible: measured,
-// a normal-plus-foil pair fits the 72px slot of a 390px phone's single page. The
-// − and + keep their 14x22 size for when editing returns (the 2026-08-14 spike
-// had them open on hover; that is not shipped here).
+// two counts SIDE BY SIDE inside one card slot, sized from the narrow slots the app
+// produces. At rest the binder shows them collapsed (#553 Phase C, owner 2026-10-07),
+// so only the count cell is visible: measured, a normal-plus-foil pair fits the 72px
+// slot of a 390px phone's single page and a 1280px screen's 64px pocket. A mouse on
+// a desktop pocket opens them, the − and + at 14x22 (#826, as the 2026-08-14 spike
+// had them): 54px a pill, so a pocket narrower than the pair stacks it
+// (`CollectionSlotCounts`).
 //
 // EVERY SPARE PIXEL IS IN THE COUNT (owner, 2026-08-14: bigger number, still one
 // row). The count cell went 20 -> 24 and its type 11 -> 12, because the number is
@@ -145,6 +152,9 @@ function sideButtonStyle(
     minWidth: 0,
     width: isShown ? dims.sideWidth : 0,
     opacity: isShown ? 1 : 0,
+    // Their own pointer under a parent that lets clicks through: the binder's counts sit
+    // over the card, so only the − and + stop a click from opening it (#826).
+    pointerEvents: 'auto',
     // ONE SHORTHAND, ALWAYS FULLY SPECIFIED — never `padding: 0` plus a
     // conditional `paddingLeft`. React removes a dropped longhand by clearing
     // it, which also clears that side of the shorthand it was overriding, and
@@ -195,9 +205,10 @@ function usePopAnimation(popping: boolean | undefined, onPopEnd: (() => void) | 
 
 /**
  * The gold-pill `− count +` quantity stepper. On master it shows the collection
- * binder's counts (`xs`, `collapsed`) and changes them in the card window's "Your
- * copies" (`md`, #826); the `md` and `sm` sizes also serve the deck builder's pool
- * tile and deck row, still on the `deck-builder` branch.
+ * binder's counts (`xs`: `collapsed` at rest, open and out of the Tab order while a
+ * mouse points at the pocket) and changes them there and in the card window's "Your
+ * copies" (`md`), both #826; the `md` and `sm` sizes also serve the deck builder's
+ * pool tile and deck row, still on the `deck-builder` branch.
  *
  * The pop animation is driven from the click handlers only — never a useEffect
  * or a set-state-during-render — so it fires on a real change and stays silent
@@ -213,6 +224,7 @@ export function QuantityStepper({
   disabledReason,
   decrementDisabled = false,
   collapsed = false,
+  tabbable = true,
   size = 'md',
   tone = 'default',
   shimmer = false,
@@ -222,8 +234,9 @@ export function QuantityStepper({
 }: QuantityStepperProps) {
   const dims = DIMS[size];
   const shown = !collapsed;
-  // Collapsed, the − and + have no width, so Tab must not stop on them.
-  const sideTabIndex = shown ? 0 : -1;
+  // Collapsed, the − and + have no width, so Tab must not stop on them; nor where they are
+  // only pointed at.
+  const sideTabIndex = shown && tabbable ? 0 : -1;
   const name = label ?? 'card';
 
   const {shouldPop, triggerPop, handlePopEnd} = usePopAnimation(popping, onPopEnd);
