@@ -22,6 +22,8 @@ const gate = vi.hoisted(() => {
 vi.hoisted(() => {
   vi.stubEnv('VITE_SHOW_COLLECTION', 'true');
   vi.stubEnv('VITE_SHOW_ACCOUNTS', 'true');
+  // Off, so a `.env.local` with friends on can't load the real section, and its calls, here.
+  vi.stubEnv('VITE_SHOW_FRIENDS', 'false');
 });
 // Restored after the file, so the stubs cannot reach a later test file in the same worker.
 afterAll(() => vi.unstubAllEnvs());

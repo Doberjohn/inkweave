@@ -23,6 +23,8 @@ const EXCLUDED = new Set([
   'FilterIcon.tsx', // tiny SVG icon
   'CostIcon.tsx', // tiny SVG icon
   'InkIcon.tsx', // tiny SVG icon
+  'icons.tsx', // the Friends section's copy and check glyphs (#852), tiny SVG icons
+  'PencilIcon.tsx', // tiny SVG icon
   'EtherealBackground.tsx', // decorative static backdrop (blurred glow orbs), not animated
   'RenderProfiler.tsx', // performance utility wrapper, not visual
   'RevealsGate.tsx', // route gate: renders children or a redirect, no visual surface
@@ -51,6 +53,10 @@ const EXCLUDED = new Set([
   // components with their own coverage: the page's CollectionSection (pages are
   // excluded) and ImportCollectionDialog (storied), and needs both providers to run.
   'AccountCollection.tsx',
+  // Same case (#852): the page's Friends wiring, a module of its own so a flag-off build
+  // never loads the friends code. It only feeds useFriends into FriendsSection, which has
+  // its own stories, and needs a session and Supabase to run.
+  'AccountFriends.tsx',
 ]);
 
 // Pages are route compositions of already-storied components; stories exist

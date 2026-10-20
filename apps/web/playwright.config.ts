@@ -127,6 +127,9 @@ export default defineConfig({
       // Exercise collection mode (#553 Phase C). It requires the accounts flag above
       // (the Collection button asks a signed-out visitor to sign in), so both are on.
       VITE_SHOW_COLLECTION: 'true',
+      // Exercise the Friends section on /account (#852). It requires the accounts flag too.
+      // e2e/fixtures/supabaseStub.ts answers its claim_friend_code call.
+      VITE_SHOW_FRIENDS: 'true',
       // Placeholder Supabase config, so `enabled` is true and the auth control RENDERS.
       // Two reasons this is pinned rather than inherited:
       //   1. CI supplies no Supabase env, so `isSupabaseConfigured()` is false, `enabled` is

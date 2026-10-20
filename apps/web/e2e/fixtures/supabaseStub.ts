@@ -23,8 +23,21 @@ import type {Page} from '@playwright/test';
  */
 export const E2E_SUPABASE_ORIGIN = 'https://e2e.placeholder.supabase.co';
 export const E2E_SUPABASE_ANON_KEY = 'e2e-placeholder-anon-key';
+/** Every signed-in player's friend code, unless a spec serves its own (`helpers/friends.ts`). */
+export const E2E_FRIEND_CODE = 'ABCD2345';
 
 const E2E_SUPABASE_HOST = new URL(E2E_SUPABASE_ORIGIN).hostname;
+
+/**
+ * The empty answer for a path. `claim_friend_code` answers with a code, a JSON string:
+ * `[]` is not one, so every signed-in page opening /account would show the Friends
+ * section's failed state (#852).
+ */
+function emptyAnswer(pathname: string): string {
+  if (pathname === '/rest/v1/rpc/claim_friend_code') return JSON.stringify(E2E_FRIEND_CODE);
+  // PostgREST hands back a row set; everything else (auth, storage) expects an object.
+  return pathname.startsWith('/rest/') ? '[]' : '{}';
+}
 
 /**
  * Answer every request to the placeholder project with an empty success.
@@ -36,16 +49,13 @@ const E2E_SUPABASE_HOST = new URL(E2E_SUPABASE_ORIGIN).hostname;
 export async function stubSupabase(page: Page): Promise<void> {
   await page.route(
     (url) => url.hostname === E2E_SUPABASE_HOST,
-    (route, request) => {
-      // PostgREST hands back a row set; everything else (auth, storage) expects an object.
+    (route, request) =>
       // No auth call is expected here — with no stored session `getSession()` resolves from
       // localStorage — but answering with valid JSON beats a parse error if one ever appears.
-      const isRestQuery = new URL(request.url()).pathname.startsWith('/rest/');
-      return route.fulfill({
+      route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: isRestQuery ? '[]' : '{}',
-      });
-    },
+        body: emptyAnswer(new URL(request.url()).pathname),
+      }),
   );
 }
