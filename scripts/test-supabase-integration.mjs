@@ -65,27 +65,57 @@ function fail(name, detail) {
 }
 
 /**
- * Test 9: anon must not read raw vote identity (only the pair_scores aggregate is
- * public). Passes only on 42501 (insufficient_privilege): any other error proves
- * nothing about permissions, so it fails. Kept out of run() so run()'s complexity
- * does not grow (CodeScene gate).
+ * Passes only on 42501 (insufficient_privilege): any other error proves nothing about
+ * permissions, so it fails, and so does a success, which means anon got through.
  */
-async function checkIpHashNotReadable() {
-  const { data, error } = await supabase.from('votes').select('ip_hash').limit(1);
+async function expectDenied(name, request) {
+  const { data, error } = await request;
   if (error?.code === '42501') {
-    pass(`ip_hash not readable (${error.code})`);
+    pass(`${name} (${error.code})`);
   } else if (error) {
-    fail('ip_hash check', `unexpected error ${error.code ?? 'unknown'}: ${error.message}`);
+    fail(name, `unexpected error ${error.code ?? 'unknown'}: ${error.message}`);
   } else {
-    fail('ip_hash readable', `anon read ${data?.length ?? 0} row(s)`);
+    fail(name, Array.isArray(data) ? `anon read ${data.length} row(s)` : 'anon got through');
   }
 }
 
-async function run() {
-  console.log('Supabase Integration Tests');
-  console.log(`  URL: ${url}`);
-  console.log('');
+/**
+ * Test 9: anon must not read raw vote identity (only the pair_scores aggregate is
+ * public). Kept out of run() so run()'s complexity does not grow (CodeScene gate).
+ */
+async function checkIpHashNotReadable() {
+  await expectDenied('ip_hash not readable', supabase.from('votes').select('ip_hash').limit(1));
+}
 
+/**
+ * Test 10 (#852): anon reads neither friends table and calls none of the friend RPCs.
+ * A friend code only ever reaches a signed-in player. Kept out of run() for the same
+ * reason as Test 9.
+ */
+async function checkFriendsClosedToAnon() {
+  console.log('');
+  console.log('Friends: anon');
+  await expectDenied(
+    'friend_codes not readable',
+    supabase.from('friend_codes').select('code').limit(1),
+  );
+  await expectDenied(
+    'friendships not readable',
+    supabase.from('friendships').select('status').limit(1),
+  );
+  await expectDenied('claim_friend_code not callable', supabase.rpc('claim_friend_code'));
+  await expectDenied(
+    'send_friend_request not callable',
+    supabase.rpc('send_friend_request', { friend_code: 'ABCD2345' }),
+  );
+  await expectDenied(
+    'accept_friend_request not callable',
+    supabase.rpc('accept_friend_request', { requester: '00000000-0000-0000-0000-000000000000' }),
+  );
+}
+
+/** Tests 1-3: the submit_vote RPC inserts a vote, upserts it, and accepts a reversed pair. */
+async function checkSubmitVote() {
   // --- Test 1: Submit vote via RPC ---
   console.log('RPC: submit_vote');
   {
@@ -116,7 +146,10 @@ async function run() {
     });
     error ? fail('canonical ordering', error.message) : pass('canonical ordering (reversed pair accepted)');
   }
+}
 
+/** Tests 4-5: the pair_scores view aggregates the pair and keeps its score through a re-vote. */
+async function checkPairScores() {
   // --- Test 4: Read pair_scores view ---
   console.log('');
   console.log('View: pair_scores');
@@ -154,7 +187,10 @@ async function run() {
       pass(`coalesce preserved score after accuracy re-vote (accuracy=${data.accuracy_sentiment})`);
     }
   }
+}
 
+/** Tests 6-9: anon can't write votes directly or read raw vote identity. */
+async function checkVotesProtected() {
   // --- Test 6: Direct INSERT blocked by RLS ---
   console.log('');
   console.log('RLS: security');
@@ -200,8 +236,10 @@ async function run() {
 
   // --- Test 9: Raw vote identity is not readable (only the pair_scores aggregate is) ---
   await checkIpHashNotReadable();
+}
 
-  // --- Summary ---
+/** Prints the totals and exits non-zero when anything failed. */
+function finish() {
   console.log('');
   console.log(`${passed + failed} tests: ${passed} passed, ${failed} failed`);
 
@@ -212,6 +250,19 @@ async function run() {
   }
 
   process.exit(failed > 0 ? 1 : 0);
+}
+
+async function run() {
+  console.log('Supabase Integration Tests');
+  console.log(`  URL: ${url}`);
+  console.log('');
+
+  await checkSubmitVote();
+  await checkPairScores();
+  await checkVotesProtected();
+  // --- Test 10: The friends tables and RPCs are closed to anon (#852) ---
+  await checkFriendsClosedToAnon();
+  finish();
 }
 
 run().catch((e) => {
