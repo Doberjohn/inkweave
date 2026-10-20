@@ -1,7 +1,7 @@
-import {useRef, useState} from 'react';
+import {useId, useLayoutEffect, useRef, useState, type RefObject} from 'react';
 import {createPortal} from 'react-dom';
 import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, Z_INDEX, blackRgba, hexRgba} from '../../../shared/constants';
-import {useContainerWidth} from '../../../shared/hooks';
+import {useContainerWidth, useTooltip} from '../../../shared/hooks';
 
 export interface RoleTile {
   role: string;
@@ -257,15 +257,35 @@ interface TooltipAnchor {
   top: number;
 }
 
+/** Where the tooltip sits for the moment before it measures its tile. */
+const UNMEASURED: TooltipAnchor = {left: -9999, top: -9999};
+
+interface RoleTileTooltipProps {
+  /** The tile's button, measured as the tooltip opens. */
+  tileRef: RefObject<HTMLButtonElement | null>;
+  text: string;
+  /** The tooltip's id, role and pointer handlers, from the tile's `useTooltip`. */
+  tooltipProps: ReturnType<typeof useTooltip>['tooltipProps'];
+}
+
 /**
  * The description tooltip, portaled to <body> so it escapes the carousel's
  * overflow clip and sits above modal layers. Positioned (viewport-fixed) centered
- * under the tile that opened it.
+ * under the tile that opened it, measured each time it opens. It takes the pointer, so it
+ * renders beside the tile's button rather than inside it: a portal's events bubble through
+ * the React tree, and a click on it would otherwise toggle the tile.
  */
-function RoleTileTooltip({anchor, text}: {anchor: TooltipAnchor; text: string}) {
+function RoleTileTooltip({tileRef, text, tooltipProps}: RoleTileTooltipProps) {
+  const [anchor, setAnchor] = useState(UNMEASURED);
+
+  useLayoutEffect(() => {
+    const r = tileRef.current?.getBoundingClientRect();
+    if (r) setAnchor({left: r.left + r.width / 2, top: r.bottom + 8});
+  }, [tileRef]);
+
   return createPortal(
     <div
-      role="tooltip"
+      {...tooltipProps}
       style={{
         position: 'fixed',
         left: anchor.left,
@@ -283,7 +303,6 @@ function RoleTileTooltip({anchor, text}: {anchor: TooltipAnchor; text: string}) 
         textAlign: 'center',
         boxShadow: `0 6px 20px ${blackRgba(0.5)}`,
         zIndex: Z_INDEX.popover,
-        pointerEvents: 'none',
       }}>
       {text}
     </div>,
@@ -296,6 +315,8 @@ function RoleTileTooltip({anchor, text}: {anchor: TooltipAnchor; text: string}) 
  * on click. The count is a top-right badge (not inline with the label) so a long,
  * wrapping label stays centered without dragging the number around. When
  * `showDescription` is false the description is revealed in a hover/focus tooltip.
+ * Either way the description describes the tile (`aria-describedby`): the tooltip's while it
+ * shows, else the inline one, which a direct reference still reads though it's aria-hidden.
  *
  * Its accessible name ("Boost, 54 cards") is one screen-reader-only line, and the visible
  * parts are hidden from screen readers. An aria-label must contain the tile's visible text
@@ -318,67 +339,69 @@ function RoleTileButton({
   fill?: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
-  const [tip, setTip] = useState<TooltipAnchor | null>(null);
   const ref = useRef<HTMLButtonElement>(null);
+  const descriptionId = useId();
+  // The description is inline when shown, so only the compact tile has a tooltip.
+  const tip = useTooltip({disabled: showDescription});
   const accent = active ? COLORS.primaryMuted : undefined;
 
-  const openTip = () => {
-    if (showDescription) return; // description is inline; no tooltip needed
-    const r = ref.current?.getBoundingClientRect();
-    if (r) setTip({left: r.left + r.width / 2, top: r.bottom + 8});
-  };
-  const closeTip = () => setTip(null);
-
   return (
-    <button
-      ref={ref}
-      type="button"
-      onClick={() => onToggle(tile.role)}
-      onMouseEnter={() => {
-        setHovered(true);
-        openTip();
-      }}
-      onMouseLeave={() => {
-        setHovered(false);
-        closeTip();
-      }}
-      onFocus={openTip}
-      onBlur={closeTip}
-      aria-pressed={active}
-      style={getRoleTileButtonStyle({active, hovered, minHeight, fill})}>
-      <span
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: 8,
-          right: 10,
-          fontSize: `${FONT_SIZES.md}px`,
-          fontWeight: 700,
-          fontVariantNumeric: 'tabular-nums',
-          // Gold tint (softer than the active accent, so it reads as a count, not a selection).
-          color: COLORS.primary500,
-        }}>
-        {tile.count}
-      </span>
-      <span
-        aria-hidden="true"
-        style={{
-          fontSize: `${FONT_SIZES.xl}px`,
-          fontWeight: 600,
-          lineHeight: 1.2,
-          color: accent ?? COLORS.text,
-          textWrap: 'balance',
-        }}>
-        {tile.label}
-      </span>
-      {showDescription && (
-        <p aria-hidden="true" style={{fontSize: `${FONT_SIZES.md}px`, color: COLORS.descriptionText, margin: '4px 0 0'}}>
-          {tile.description}
-        </p>
+    <>
+      <button
+        ref={ref}
+        type="button"
+        onClick={() => onToggle(tile.role)}
+        {...tip.triggerProps}
+        onMouseEnter={() => {
+          setHovered(true);
+          tip.triggerProps.onMouseEnter();
+        }}
+        onMouseLeave={() => {
+          setHovered(false);
+          tip.triggerProps.onMouseLeave();
+        }}
+        aria-pressed={active}
+        aria-describedby={showDescription ? descriptionId : tip.describedBy}
+        style={getRoleTileButtonStyle({active, hovered, minHeight, fill})}>
+        <span
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 10,
+            fontSize: `${FONT_SIZES.md}px`,
+            fontWeight: 700,
+            fontVariantNumeric: 'tabular-nums',
+            // Gold tint (softer than the active accent, so it reads as a count, not a selection).
+            color: COLORS.primary500,
+          }}>
+          {tile.count}
+        </span>
+        <span
+          aria-hidden="true"
+          style={{
+            fontSize: `${FONT_SIZES.xl}px`,
+            fontWeight: 600,
+            lineHeight: 1.2,
+            color: accent ?? COLORS.text,
+            textWrap: 'balance',
+          }}>
+          {tile.label}
+        </span>
+        {showDescription && (
+          <p
+            id={descriptionId}
+            aria-hidden="true"
+            style={{fontSize: `${FONT_SIZES.md}px`, color: COLORS.descriptionText, margin: '4px 0 0'}}>
+            {tile.description}
+          </p>
+        )}
+        <span style={SR_ONLY_STYLE}>{`${tile.label}, ${tile.count} cards`}</span>
+      </button>
+      {tip.open && (
+        <RoleTileTooltip tileRef={ref} text={tile.description} tooltipProps={tip.tooltipProps} />
       )}
-      <span style={SR_ONLY_STYLE}>{`${tile.label}, ${tile.count} cards`}</span>
-      {tip && <RoleTileTooltip anchor={tip} text={tile.description} />}
-    </button>
+    </>
   );
 }
 

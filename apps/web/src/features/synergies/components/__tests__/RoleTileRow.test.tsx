@@ -9,6 +9,14 @@ const tiles: RoleTile[] = [
   {role: 'trigger', label: 'Trigger', description: 'Trigger description', count: 4},
 ];
 
+/** The compact row a playstyle page shows on desktop; returns its Boost tile. */
+function renderCompactRow(onToggle = vi.fn()) {
+  render(
+    <RoleTileRow tiles={tiles} activeRoles={new Set()} onToggle={onToggle} showDescriptions={false} />,
+  );
+  return screen.getByRole('button', {name: /^Boost\b/});
+}
+
 describe('RoleTileRow', () => {
   it('renders nothing when tiles is empty', () => {
     const {container} = render(
@@ -74,5 +82,34 @@ describe('RoleTileRow', () => {
     expect(onToggle).toHaveBeenCalledWith('search');
     expect(active.has('boost')).toBe(true);
     expect(active.has('search')).toBe(true);
+  });
+
+  it('shows a compact tile its description in a tooltip on focus, and is described by it', () => {
+    const tile = renderCompactRow();
+    fireEvent.focus(tile);
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Boost description');
+    expect(tile).toHaveAccessibleDescription('Boost description');
+  });
+
+  it("doesn't toggle a tile on a click on its tooltip", () => {
+    const onToggle = vi.fn();
+    fireEvent.focus(renderCompactRow(onToggle));
+    fireEvent.click(screen.getByRole('tooltip'));
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  it('hides a tile tooltip on Escape', () => {
+    const tile = renderCompactRow();
+    fireEvent.focus(tile);
+    fireEvent.keyDown(tile, {key: 'Escape'});
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  it('describes a full tile with its inline description, with no tooltip', () => {
+    render(<RoleTileRow tiles={tiles} activeRoles={new Set()} onToggle={vi.fn()} />);
+    const tile = screen.getByRole('button', {name: /^Boost\b/});
+    fireEvent.focus(tile);
+    expect(tile).toHaveAccessibleDescription('Boost description');
+    expect(screen.queryByRole('tooltip')).toBeNull();
   });
 });
