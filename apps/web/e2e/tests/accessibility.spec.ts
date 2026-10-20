@@ -1,5 +1,6 @@
 import {test, expect} from '../fixtures';
 import AxeBuilder from '@axe-core/playwright';
+import {startClockInRevealSeason} from '../helpers/revealSeason';
 
 test.describe('Accessibility — axe audits', () => {
   // Desktop-only — mobile viewports have different layouts tested elsewhere
@@ -78,4 +79,54 @@ test.describe('Accessibility — axe audits', () => {
     const results = await new AxeBuilder({page}).analyze();
     expect(results.violations).toEqual([]);
   });
+});
+
+/**
+ * WCAG 1.4.10 Reflow (accessibility check, 2026-10-19): a 320px viewport (a 1280px screen at
+ * 400% zoom) must not scroll sideways. The ink pages rendered the desktop header on phones, and
+ * its nav ran off the edge, Reveals pill first: the clock starts in the reveal season so the pill
+ * shows whatever the date. The viewport is set in each test, so it runs on every project, the
+ * chromium-only pre-push included. Desktop WebKit draws a classic scrollbar, so there the page must
+ * fit in the 312px beside it: body's `min-width: 320px` made it 8px too wide.
+ */
+test.describe('Accessibility: reflow at 320px', () => {
+  // Each page with the items of its grid: the ink cards, and the ink's card tiles.
+  const PAGES = [
+    {path: '/inks', items: 'main ul > li'},
+    {path: '/ink/steel', items: 'main [data-testid="card-tile"]'},
+  ];
+  for (const {path, items: itemSelector} of PAGES) {
+    test(`${path} fits a 320px viewport without scrolling sideways`, async ({page}) => {
+      await page.setViewportSize({width: 320, height: 640});
+      await startClockInRevealSeason(page);
+      await page.goto(path);
+      // Waiting for the grid's items also keeps the edge check below from passing on no items.
+      const items = page.locator(itemSelector);
+      await expect(items.first()).toBeVisible();
+
+      // Against documentElement.clientWidth, as the other sideways-scroll checks are: on the phone
+      // projects innerWidth widens to fit whatever sticks out, and on mobile-safari the visual
+      // viewport measures 8px narrower than the layout one.
+      const widths = await page.evaluate(() => ({
+        scroll: document.documentElement.scrollWidth,
+        client: document.documentElement.clientWidth,
+        inner: window.innerWidth,
+        visual: window.visualViewport!.width,
+      }));
+      expect(widths.scroll, JSON.stringify(widths)).toBeLessThanOrEqual(widths.client);
+
+      // Nor may the grid's items run past its edge into the page's gutter: the ink cards' 300px
+      // columns did, ending flush with the screen's edge, so the page itself never scrolled.
+      const strays = await items.evaluateAll(
+        (els) =>
+          els.filter((item) => {
+            const grid = item.parentElement!;
+            // A scroller's items may sit past its edge.
+            if (getComputedStyle(grid).overflowX !== 'visible') return false;
+            return item.getBoundingClientRect().right > grid.getBoundingClientRect().right + 0.5;
+          }).length,
+      );
+      expect(strays).toBe(0);
+    });
+  }
 });

@@ -2,6 +2,7 @@ import {Link, useNavigate} from 'react-router-dom';
 import {INK_HUBS, INK_HUB_BLURBS, cardsForInk} from '../features/cards';
 import {CompactHeader, EtherealBackground, Seo} from '../shared/components';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
+import {useResponsive} from '../shared/hooks';
 import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../shared/constants';
 
 /**
@@ -14,6 +15,7 @@ import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../shared/
 export function InkGalleryPage() {
   const navigate = useNavigate();
   const {cards, isLoading} = useCardDataContext();
+  const {isMobile} = useResponsive();
 
   return (
     <main
@@ -31,7 +33,7 @@ export function InkGalleryPage() {
         canonicalPath="/inks"
       />
       <EtherealBackground />
-      <CompactHeader onLogoClick={() => navigate('/')} />
+      <CompactHeader onLogoClick={() => navigate('/')} isMobile={isMobile} />
 
       <div
         style={{
@@ -71,7 +73,9 @@ export function InkGalleryPage() {
             padding: 0,
             margin: 0,
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            // Capped at the list's width: a bare 300px column ran past the page's 20px gutter at
+            // 320px (WCAG 1.4.10).
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
             gap: `${SPACING.md}px`,
           }}>
           {INK_HUBS.map((hub) => (
