@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [master, main]
 
+# A newer push to a PR cancels that PR's older run, whose results nobody needs once it is
+# superseded (#867). Each push to master gets a group of its own, so a merge's run is never
+# cancelled or queued behind another.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('ci-{0}', github.ref) || format('ci-run-{0}', github.run_id) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   security-audit:
     runs-on: ubuntu-latest
@@ -86,24 +93,16 @@ jobs:
       - name: Run engine tests
         run: pnpm --filter inkweave-synergy-engine test:run
 
-      - name: Run web tests with coverage
-        run: pnpm --filter inkweave-web test:coverage
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v7
-        # Diagnostic artifact only — an infra hiccup uploading it (e.g. Actions
-        # storage quota exhausted) must not fail a job whose tests already passed.
-        continue-on-error: true
-        with:
-          name: coverage-report
-          path: apps/web/coverage/
-          retention-days: 7
+      # Without coverage (#867): nothing read the report, and collecting it added about 25 s.
+      # `pnpm --filter inkweave-web test:coverage` still produces it locally.
+      - name: Run web tests
+        run: pnpm --filter inkweave-web test:run
 
   # e2e-tests runs in Playwright's image for this exact version, because an image's browsers
   # only work with the matching Playwright. Reading it from the lockfile means a Playwright bump
   # moves the image tag in the same commit (#690), and this sparse checkout takes seconds, so
   # the E2E jobs start with the run instead of after build-and-test (#854). Anything but X.Y.Z
-  # fails here, not as an unpullable image in five e2e jobs. deploy.yml and deploy-staging.yml
+  # fails here, not as an unpullable image in every e2e job. deploy.yml and deploy-staging.yml
   # run the same job.
   playwright-version:
     runs-on: ubuntu-latest
@@ -130,9 +129,10 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
   e2e-tests:
-    # Split by Playwright project so all 5 browsers run in parallel jobs instead of serially in
+    # Split by Playwright project so the browsers run in parallel jobs instead of serially in
     # a single job. Previous serial layout sat at an 18m baseline against a 30m wall — variance
-    # alone was timing out runs. Parallel matrix gives each browser its own runner + timeout.
+    # alone was timing out runs. Parallel matrix gives each browser its own runner + timeout,
+    # except chromium and mobile-chrome, which share one (see the matrix).
     runs-on: ubuntu-latest
     needs: playwright-version
     # Playwright's image ships the browsers and their system packages, so this job installs
@@ -150,8 +150,11 @@ jobs:
       # Don't cancel sibling browsers when one fails — we want the full per-browser report.
       fail-fast: false
       matrix:
-        project: [chromium, firefox, webkit, mobile-chrome, mobile-safari]
-    name: e2e-tests (${{ matrix.project }})
+        # The Playwright projects each job runs. chromium and mobile-chrome both run Chromium, so
+        # they share a job (#867): that saves a job's setup and a dev server warm-up, and on two
+        # workers the pair still finishes before WebKit.
+        projects: [[chromium, mobile-chrome], [firefox], [webkit], [mobile-safari]]
+    name: e2e-tests (${{ join(matrix.projects, ', ') }})
 
     steps:
       - name: Checkout code
@@ -178,7 +181,7 @@ jobs:
         run: pnpm precompute-synergies
 
       - name: Run E2E tests
-        run: pnpm --filter inkweave-web test:e2e --project=${{ matrix.project }}
+        run: pnpm --filter inkweave-web test:e2e --project=${{ join(matrix.projects, ' --project=') }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v7
@@ -187,8 +190,8 @@ jobs:
         # the e2e job when the tests themselves determined the outcome.
         continue-on-error: true
         with:
-          # Per-project artifact names so the 5 parallel jobs don't collide on upload.
-          name: playwright-report-${{ matrix.project }}
+          # Per-job artifact names so the parallel jobs don't collide on upload.
+          name: playwright-report-${{ join(matrix.projects, '-') }}
           path: apps/web/playwright-report/
           retention-days: 7
 
@@ -198,6 +201,6 @@ jobs:
         # Diagnostic artifact only — never fail the job on the upload itself.
         continue-on-error: true
         with:
-          name: test-results-${{ matrix.project }}
+          name: test-results-${{ join(matrix.projects, '-') }}
           path: apps/web/test-results/
           retention-days: 7
