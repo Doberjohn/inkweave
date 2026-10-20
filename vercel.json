@@ -25,6 +25,10 @@
       "source": "/card-images/:path*",
       "destination": "https://api.lorcana.ravensburger.com/images/:path*"
     },
+    {
+      "source": "/relay/:path(.*)",
+      "destination": "https://eu.i.posthog.com/:path"
+    },
     {"source": "/((?!.*\\.).*)", "destination": "/index.html"}
   ],
   "headers": [

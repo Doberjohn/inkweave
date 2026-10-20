@@ -13,3 +13,5 @@ allowBuilds:
   # 0.1.29 comes in through @react-grab/claude-code; its postinstall only prints a setup
   # hint when CI or an agent installs it.
   react-grab: false
+  # Comes in through posthog-js. Its postinstall only prints a funding banner.
+  core-js: false
