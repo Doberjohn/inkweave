@@ -2,14 +2,30 @@ import {useContext, useEffect, useRef, type CSSProperties, type Ref} from 'react
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {
   CardImage,
+  CardTranslationPanel,
   CardTranslationToggle,
   PrintingCarousel,
   PrintingPills,
 } from '../../../shared/components';
-import {DURATION, EASING, RADIUS} from '../../../shared/constants';
+import {COLORS, DURATION, EASING, RADIUS, hexRgba} from '../../../shared/constants';
 import {usePrefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
-import {CardPrintingContext, CardTranslationContext, CopiesSlotContext, type CopiesSlotState} from './modalArtState';
-import {DESKTOP_ART_CONTROLS_STYLE, DESKTOP_UNDER_ART_STYLE} from './cardOverviewModalStyles';
+import {
+  CardPrintingContext,
+  CardTranslationContext,
+  CopiesSlotContext,
+  useUnderArtHeight,
+  type CopiesSlotState,
+} from './modalArtState';
+import {
+  COMPARISON_CARD_INSET,
+  DESKTOP_ART_CONTROLS_STYLE,
+  DESKTOP_UNDER_ART_STYLE,
+  FLIP_DURATION,
+  FLIP_EASING,
+  HOVER_FADES,
+  artScaleTransform,
+  pickCardColumnLayout,
+} from './cardOverviewModalStyles';
 
 /**
  * The card overview modal's card art: its scan, or for a card with an alternate printing
@@ -178,4 +194,160 @@ export function MobileArtControls() {
       <CopiesSlot />
     </>
   );
+}
+
+interface CardImageDisplayProps {
+  card: LorcanaCard;
+  cardWidth: number;
+  cardHeight: number;
+  isMobile: boolean;
+  highlightedCard: 'a' | 'b' | null;
+  inComparison: boolean;
+  /** A comparison is open or closing (its exit window): the art's scale animates only then. */
+  comparing: boolean;
+}
+
+/**
+ * The modal's card A: its art, the translation laid over it and the controls under it, sliding
+ * and glowing into a comparison. Kept here, beside the art it shows, rather than in
+ * `CardOverviewModal`, which stays under CodeScene's 1000 lines of code (#826).
+ */
+export function CardImageDisplay({
+  card,
+  cardWidth,
+  cardHeight,
+  isMobile,
+  highlightedCard,
+  inComparison,
+  comparing,
+}: CardImageDisplayProps) {
+  // In comparison mode the wrapper takes the ambient `focused-card-glow` className
+  // (#332 #6 idea D). The animation cycles `box-shadow` between a low and high gold-tinted
+  // aura around the card. Setting borderRadius=14 on the wrapper makes the shadow follow
+  // the card's rounded corners instead of drawing against a rectangular bounding box.
+  const useGlow = !isMobile && inComparison;
+  const translation = useContext(CardTranslationContext);
+  const reducedMotion = usePrefersReducedMotion();
+  // Desktop's art controls sit under the card, the art shrunk to make room (owner, 2026-10-08),
+  // and so does what a page puts in the window's slot (#826): measured, as only the page knows it.
+  const {underArtRef, below} = useUnderArtHeight(card, isMobile);
+  return (
+    <div
+      className={useGlow ? 'focused-card-glow' : undefined}
+      style={pickCardWrapperStyle({isMobile, highlightedCard, inComparison, reducedMotion})}>
+      {/* Shrink-wrap span carrying the `data-comparison-card-a` marker: its rect is exactly
+          the card image (not the full-width flex wrapper), so the click handler captures the
+          correct FLIP origin for Card A's mobile comparison transition (#332 #5). */}
+      <span
+        data-comparison-card-a
+        style={pickArtBoxStyle({below, inComparison, animate: comparing, reducedMotion, cardHeight})}>
+        <ModalCardArt card={card} cardWidth={cardWidth} cardHeight={cardHeight} />
+        {translation?.shown && !inComparison && (
+          <CardTranslationPanel
+            card={card}
+            language={translation.language}
+            size={isMobile ? 'compact' : 'regular'}
+            style={OVER_MODAL_SCAN}
+          />
+        )}
+      </span>
+      {/* Outside the span, whose rect is the FLIP origin above. */}
+      <ArtControls isMobile={isMobile} inComparison={inComparison} underArtRef={underArtRef} />
+    </div>
+  );
+}
+
+/** The art's controls: in the column's flow on mobile, pinned under the shrunk art on desktop. */
+function ArtControls({
+  isMobile,
+  inComparison,
+  underArtRef,
+}: {
+  isMobile: boolean;
+  inComparison: boolean;
+  underArtRef: Ref<HTMLDivElement>;
+}) {
+  if (isMobile) return <MobileArtControls />;
+  return <DesktopArtControls hidden={inComparison} measureRef={underArtRef} />;
+}
+
+interface ArtBoxStyleInput {
+  /** The height kept free under the art for what sits there, or 0 for none. */
+  below: number;
+  /** A comparison shows the art at full size, whatever sits under it. */
+  inComparison: boolean;
+  /** A comparison is open or closing: the only motion the scale animates with. */
+  animate: boolean;
+  reducedMotion: boolean;
+  cardHeight: number;
+}
+
+/**
+ * The art's own box. On desktop it shrinks while controls sit under it, and grows back for a
+ * comparison (card B is drawn at full size). The scale animates only with a comparison's own
+ * motion: paging between a card with controls and one without resizes it at once. Under
+ * reduced motion it never animates (#790).
+ */
+function pickArtBoxStyle({
+  below,
+  inComparison,
+  animate,
+  reducedMotion,
+  cardHeight,
+}: ArtBoxStyleInput): CSSProperties {
+  const shrinkFor = inComparison ? 0 : below;
+  return {
+    display: 'inline-block',
+    lineHeight: 0,
+    position: 'relative',
+    transform: shrinkFor > 0 ? artScaleTransform(cardHeight, shrinkFor) : undefined,
+    transformOrigin: 'top center',
+    transition: animate && !reducedMotion ? `transform ${FLIP_DURATION}ms ${FLIP_EASING}` : undefined,
+  };
+}
+
+/** The translation covers the scan exactly, rounded like CardImage. */
+const OVER_MODAL_SCAN: CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  borderRadius: `${RADIUS.xl}px`,
+};
+
+/**
+ * Card A's transition: its hover fades, and its slide into a comparison unless reduced motion
+ * skips it (#790).
+ */
+function cardWrapperTransition(reducedMotion: boolean): string {
+  return reducedMotion ? HOVER_FADES : `${HOVER_FADES}, transform ${FLIP_DURATION}ms ${FLIP_EASING}`;
+}
+
+interface CardWrapperStyleInput {
+  isMobile: boolean;
+  highlightedCard: 'a' | 'b' | null;
+  inComparison: boolean;
+  reducedMotion: boolean;
+}
+
+function pickCardWrapperStyle({
+  isMobile,
+  highlightedCard,
+  inComparison,
+  reducedMotion,
+}: CardWrapperStyleInput): CSSProperties {
+  // In comparison mode, pull Card A inward so its right edge touches the
+  // PairConnector's left edge. Match the FLIP timing on Card B so both
+  // cards slide into position together.
+  const inset = !isMobile && inComparison ? COMPARISON_CARD_INSET : 0;
+  return {
+    ...pickCardColumnLayout(isMobile),
+    transform: inset ? `translateX(${inset}px)` : undefined,
+    transition: cardWrapperTransition(reducedMotion),
+    opacity: highlightedCard === 'b' ? 0.4 : 1,
+    filter:
+      highlightedCard === 'a' ? `drop-shadow(0 0 8px ${hexRgba(COLORS.primary500, 0.6)})` : undefined,
+    // borderRadius matches CardImage's so the ambient glow's box-shadow follows the rounded
+    // card silhouette instead of a rectangular bounding box. Only applied in comparison mode
+    // (when the glow class is also active); default state stays as-is.
+    borderRadius: inset ? 14 : undefined,
+  };
 }

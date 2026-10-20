@@ -1,6 +1,6 @@
 import type {CSSProperties} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
+import {COLORS, DURATION, EASING, FONTS, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
 import {printingsOf} from '../../../shared/hooks/usePrintingSelection';
 
 /*
@@ -106,6 +106,22 @@ export function modalCardSize(isMobile: boolean): {cardWidth: number; cardHeight
   const cardWidth = isMobile ? 240 : 337;
   return {cardWidth, cardHeight: Math.round((cardWidth * 368) / 264)};
 }
+
+/** How long a comparison's cards slide and grow into place (FLIP), and how they ease. */
+export const FLIP_DURATION = 480;
+export const FLIP_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
+
+/**
+ * Inset (px) each card pulls inward when entering comparison mode so its
+ * inner edge touches the PairConnector. Derived from the modal's typical
+ * desktop geometry: (rowWidth ~950 - 2*cardWidth 337 - connectorWidth 192) / 2.
+ * If the modal width changes, this may need to be recalculated dynamically
+ * (ResizeObserver). For now it is a constant tuned to the current shell width.
+ */
+export const COMPARISON_CARD_INSET = 42;
+
+/** The hover dimming and glow, which fade, shared by card A and card B. */
+export const HOVER_FADES = `opacity ${DURATION.base}ms ${EASING.smooth}, filter ${DURATION.base}ms ${EASING.smooth}`;
 
 /**
  * The row of art controls under a desktop card, #625's printing pills (owner, 2026-10-08;
