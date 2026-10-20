@@ -320,7 +320,7 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 |---|---|
 | should render hero with name and breadcrumb | `/playstyles/discard` shows h1 "Discard" and the breadcrumb nav with "Playstyles" link |
 | should show and use role filter chips | "Forced Discard" mechanic chip filters to a subset; toggling it off restores the full grid |
-| should render card tiles in grid | `/playstyles/location-control` renders 5+ card tiles |
+| should render card tiles in grid | `/playstyles/location-control` renders 5+ card tiles. It first waits for discard's tiles, since leaving while discard's playstyle data loads aborts that fetch, and WebKit's "TypeError: Load failed" for the abort fails the console guard (#854) |
 | should open the card overview modal from playstyle detail | Clicking a card tile opens the modal; URL stays on the playstyle page |
 | keeps a tile tooltip under the pointer, ignores clicks on it, and hides on Escape | The "Forced Discard" tile's description tooltip stays while the pointer slides onto it and rests there past its 150 ms close delay; a click on it leaves the tile `aria-pressed="false"` (it renders beside the tile's button, so the click no longer bubbles to it through the portal); Escape hides it (WCAG 1.4.13, #836) |
 
