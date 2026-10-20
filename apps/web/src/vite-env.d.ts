@@ -11,6 +11,7 @@ interface ImportMetaEnv {
   readonly VITE_SHOW_BETA_NOTICE?: string;
   readonly VITE_SHOW_ACCOUNTS?: string;
   readonly VITE_SHOW_COLLECTION?: string;
+  readonly VITE_SHOW_FRIENDS?: string;
   readonly VITE_FEATURED_CARD_IDS?: string;
   readonly VITE_DISABLE_REACT_GRAB?: string;
 }

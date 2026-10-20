@@ -54,6 +54,7 @@
         "!apps/web/dist/assets/ImportCollectionDialog-*.js",
         "!apps/web/dist/assets/BrowseCollectionPage-*.js",
         "!apps/web/dist/assets/AccountCollection-*.js",
+        "!apps/web/dist/assets/AccountFriends-*.js",
         "!apps/web/dist/assets/supabaseClient-*.js",
         "!apps/web/dist/assets/posthogClient-*.js"
       ],
@@ -86,7 +87,8 @@
         "apps/web/dist/assets/CollectionScope-*.js",
         "apps/web/dist/assets/ImportCollectionDialog-*.js",
         "apps/web/dist/assets/BrowseCollectionPage-*.js",
-        "apps/web/dist/assets/AccountCollection-*.js"
+        "apps/web/dist/assets/AccountCollection-*.js",
+        "apps/web/dist/assets/AccountFriends-*.js"
       ],
       "limit": "60 kB",
       "gzip": true

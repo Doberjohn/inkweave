@@ -49,6 +49,7 @@ export {Header} from './Header';
 export {LegalPage, legalH2Style, legalLinkStyle} from './LegalPage';
 export {HeroSection} from './HeroSection';
 export {InkIcon} from './InkIcon';
+export {PencilIcon} from './PencilIcon';
 export {Seo} from './Seo';
 export type {SeoProps} from './Seo';
 export {SearchAutocomplete} from './SearchAutocomplete';

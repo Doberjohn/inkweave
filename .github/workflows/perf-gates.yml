@@ -66,6 +66,7 @@ jobs:
       VITE_LOCAL_IMAGES: 'true'
       VITE_SHOW_ACCOUNTS: 'true'
       VITE_SHOW_COLLECTION: 'true'
+      VITE_SHOW_FRIENDS: 'true'
       VITE_IS_REVEAL_SEASON: 'true'
       VITE_SHOW_BETA_NOTICE: 'true'
 

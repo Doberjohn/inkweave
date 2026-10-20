@@ -5,12 +5,15 @@ import {
   CompactHeader,
   CtaButton,
   EtherealBackground,
+  IconButton,
   PageTitle,
+  PencilIcon,
   Seo,
 } from '../shared/components';
 import {SignInDialog} from '../shared/components/SignInDialog';
 import {DisplayNameDialog, useProfile, type PublicIdentity} from '../features/profile';
 import {SHOW_COLLECTION} from '../features/collection/flag';
+import {SHOW_FRIENDS} from '../features/friends/flag';
 import {lazyWithRetry} from '../shared/lib/lazyWithRetry';
 import {useSession} from '../shared/contexts/SessionContext';
 import {useResponsive} from '../shared/hooks';
@@ -30,7 +33,8 @@ import {CAP_LABEL, COLORS, FONT_SIZES, FONTS, SPACING, SURFACE_CARD} from '../sh
  * branch; that folder has not been brought to master.
  */
 
-function Section({title, children}: {title: string; children: React.ReactNode}) {
+/** One card on the page, under its h2. Exported for the sections that load as modules of their own. */
+export function Section({title, children}: {title: string; children: React.ReactNode}) {
   return (
     <section style={{...SURFACE_CARD, padding: SPACING.xl, marginBottom: SPACING.lg}}>
       <h2 style={{...CAP_LABEL, margin: `0 0 ${SPACING.md}px`}}>{title}</h2>
@@ -63,6 +67,7 @@ function Row({
   value: string;
   /** `ph-no-capture` keeps PostHog's autocapture away from the value (#827). */
   valueClassName?: string;
+  /** An icon button, right after the value it acts on (#852). */
   action?: React.ReactNode;
 }) {
   return (
@@ -77,10 +82,12 @@ function Row({
       <span style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.sm}px`, minWidth: '12ch'}}>
         {label}
       </span>
-      <span className={valueClassName} style={{color: COLORS.text, fontSize: `${FONT_SIZES.md}px`}}>
-        {value}
+      <span style={{display: 'inline-flex', alignItems: 'center', gap: SPACING.xxs, minWidth: 0}}>
+        <span className={valueClassName} style={{color: COLORS.text, fontSize: `${FONT_SIZES.md}px`}}>
+          {value}
+        </span>
+        {action}
       </span>
-      {action && <span style={{marginLeft: 'auto'}}>{action}</span>}
     </div>
   );
 }
@@ -101,7 +108,7 @@ function IdentitySection({
           precisely because it carries no uniqueness constraint. */}
       {/* PostHog's autocapture reads the text of the elements it records (#827). Neither value
           sits in a link or button today; ph-no-capture keeps both out of it if that changes,
-          while the Change button's clicks still count. */}
+          while the pencil's clicks still count. */}
       <Row
         label="Handle"
         value={identity ? `@${identity.handle}` : '—'}
@@ -113,9 +120,9 @@ function IdentitySection({
         valueClassName="ph-no-capture"
         action={
           identity && (
-            <CtaButton variant="ghost" onClick={onChange}>
-              Change
-            </CtaButton>
+            <IconButton aria-label="Change display name" onClick={onChange}>
+              <PencilIcon />
+            </IconButton>
           )
         }
       />
@@ -322,6 +329,14 @@ export function CollectionSection({
  */
 const AccountCollection = SHOW_COLLECTION ? lazyWithRetry(() => import('./AccountCollection'), 'AccountCollection') : null;
 
+/**
+ * The Friends section (#852), only under `SHOW_FRIENDS`, in a module of its own for the
+ * same reason: a flag-off build never requests the friends code for /account. Its UI stays
+ * out of this file too, since this route's chunk keeps every export it has and counts in
+ * User-facing JS.
+ */
+const AccountFriends = SHOW_FRIENDS ? lazyWithRetry(() => import('./AccountFriends'), 'AccountFriends') : null;
+
 export function AccountPage() {
   const navigate = useNavigate();
   const {isMobile} = useResponsive();
@@ -367,12 +382,13 @@ export function AccountPage() {
         ) : user === null ? (
           <SignedOut onSignIn={() => setShowSignIn(true)} />
         ) : (
-          // One boundary around every section: while the collection's module loads, the
-          // page keeps its "Checking your session…" card, and the sections arrive together.
-          // A boundary around the collection alone let Session paint first, then pushed it
-          // down when the collection landed between it and Identity.
+          // One boundary around every section: while the friends and collection modules
+          // load, the page keeps its "Checking your session…" card, and the sections arrive
+          // together. A boundary around the collection alone let Session paint first, then
+          // pushed it down when the collection landed between it and Identity.
           <Suspense fallback={<Checking />}>
             <IdentitySection identity={identity} onChange={() => setShowName(true)} />
+            {AccountFriends && <AccountFriends userId={user.id} />}
             {AccountCollection && <AccountCollection />}
             <SessionSection onSignOut={signOut} />
           </Suspense>

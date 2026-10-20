@@ -1,5 +1,6 @@
 import {LegalPage, legalH2Style, legalLinkStyle} from '../shared/components';
 import {COLORS} from '../shared/constants';
+import {SHOW_FRIENDS} from '../features/friends/flag';
 
 const EMAIL = 'support.inkweave@gmail.com';
 
@@ -7,9 +8,12 @@ const DESCRIPTION =
   'What Inkweave collects (anonymous synergy votes, cookieless analytics and error reports), where it is stored, how long it is kept, and your rights.';
 
 export function PrivacyPage() {
+  // The friends sentence below shows only while friends is on (#852), and the date moves
+  // with it, so the date always says when the text on screen last changed.
+  const lastUpdated = SHOW_FRIENDS ? '21 October 2026' : '20 October 2026';
   return (
     <LegalPage title="Privacy Policy" description={DESCRIPTION}>
-      <p style={{marginTop: 0, color: COLORS.textMuted}}>Last updated: 20 October 2026</p>
+      <p style={{marginTop: 0, color: COLORS.textMuted}}>Last updated: {lastUpdated}</p>
 
       <p>
         I built Inkweave as a free fan project, and I collect as little as possible. You can browse cards,
@@ -45,6 +49,17 @@ export function PrivacyPage() {
           <strong>If you sign in (optional).</strong> Signing in with Google or Discord is only needed to save
           decks to an account. If you do, I receive basic account identity from that provider (such as your
           email and a provider id). Your session is stored in your browser, not in a cookie.
+          {/* LAUNCH STEP: once friends is on in production, drop this condition (and the date's)
+              so the sentence always shows. Turning the flag off later keeps every code and
+              friendship in the database, and the policy must keep describing them. */}
+          {SHOW_FRIENDS && (
+            <>
+              {' '}
+              Opening your account page also gives you a friend code, which I store. If you add friends, I store
+              who your friends and friend requests are. Your friends see your display name and handle, which
+              anyone can see.
+            </>
+          )}
         </li>
       </ul>
 
