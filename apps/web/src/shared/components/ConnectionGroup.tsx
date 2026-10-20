@@ -1,34 +1,23 @@
 import {useState, useEffect} from 'react';
 import type {LorcanaCard} from '../../features/cards';
-import type {Ink, LocationRole, PairSynergyConnection} from 'inkweave-synergy-engine';
+import type {LocationRole, PairSynergyConnection} from 'inkweave-synergy-engine';
 import {LOCATION_ROLE_CHIP_LABELS} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, VISUALLY_HIDDEN} from '../constants';
+import {
+  COLORS,
+  DURATION,
+  EASING,
+  FONTS,
+  FONT_SIZES,
+  INK_CHIP_COLORS,
+  RADIUS,
+  VISUALLY_HIDDEN,
+  blackRgba,
+  hexRgba,
+  whiteRgba,
+} from '../constants';
 import {chipCardName} from '../../features/synergies/utils/chipNames';
 import {useResponsive} from '../hooks';
 import type {ConnectionGroupData} from './groupConnections';
-
-// ── Chip palette ──
-// Vibrant Lorcana brand ink colors used as the inline-chip background. Distinct from
-// the darker INK_COLORS (which is tuned for card-badge use against dark surfaces);
-// these are the ink-symbol colors the game uses on its physical cards. Text colors
-// chosen per-ink for WCAG-readable contrast against each bg.
-const CHIP_BG_BY_INK: Record<Ink, string> = {
-  Amber: '#F5B202',
-  Amethyst: '#81377B',
-  Emerald: '#2A8934',
-  Ruby: '#D3082F',
-  Sapphire: '#0189C4',
-  Steel: '#9FA8B4',
-};
-
-const CHIP_TEXT_BY_INK: Record<Ink, string> = {
-  Amber: '#000000',
-  Amethyst: '#FFFFFF',
-  Emerald: '#FFFFFF',
-  Ruby: '#FFFFFF',
-  Sapphire: '#FFFFFF',
-  Steel: '#000000',
-};
 
 interface ConnectionGroupProps {
   group: ConnectionGroupData;
@@ -38,7 +27,7 @@ interface ConnectionGroupProps {
 }
 
 const ABILITY_BOX_SHADOW =
-  '0 3px 10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -1px 0 rgba(0, 0, 0, 0.18)';
+  `0 3px 10px ${blackRgba(0.5)}, inset 0 1px 0 ${whiteRgba(0.22)}, inset 0 -1px 0 ${blackRgba(0.18)}`;
 
 /**
  * AbilityRow stacking position. Drives corner radii and box-shadow:
@@ -160,10 +149,12 @@ function ExplanationWithHighlights({
           const refCard = seg.card === 'a' ? cardA : cardB;
           const partnerCard = seg.card === 'a' ? cardB : cardA;
           // Chip displays the initial letter of the card's base name (e.g. Yzma → Y,
-          // Kuzco → K) so the user can match chip → card by initial without hover.
+          // Kuzco → K) so the user can match chip → card by initial without hover,
+          // on the card's own ink colour (INK_CHIP_COLORS, the game's ink symbols).
           // Screen readers get the card's name instead: the letter and colour mean
           // nothing without the cards in sight (#835).
           const initial = refCard.name.charAt(0).toUpperCase();
+          const chip = INK_CHIP_COLORS[refCard.ink];
           return (
             <span
               key={i}
@@ -171,14 +162,14 @@ function ExplanationWithHighlights({
               onMouseLeave={onHighlight ? () => onHighlight(null) : undefined}
               style={{
                 display: 'inline-block',
-                background: CHIP_BG_BY_INK[refCard.ink],
-                color: CHIP_TEXT_BY_INK[refCard.ink],
-                border: '1px solid #000000',
+                background: chip.bg,
+                color: chip.text,
+                border: `1px solid ${blackRgba(1)}`,
                 fontWeight: 700,
-                fontSize: 11,
+                fontSize: `${FONT_SIZES.sm}px`,
                 lineHeight: 1,
                 padding: '4px 6px',
-                borderRadius: 3,
+                borderRadius: `${RADIUS.sm}px`,
                 textAlign: 'center',
                 // Reset textIndent so the parent AbilityRow's text-indent:-12px
                 // (used to pull the role label flush left) doesn't cascade into
@@ -202,9 +193,9 @@ function ExplanationWithHighlights({
             style={{
               color: COLORS.lorcanaCardLink,
               fontWeight: 700,
-              borderBottom: '1px dashed rgba(122, 77, 24, 0.45)',
+              borderBottom: `1px dashed ${hexRgba(COLORS.lorcanaCardLink, 0.45)}`,
               cursor: 'default',
-              transition: 'border-color 0.15s ease, color 0.15s ease',
+              transition: `border-color ${DURATION.fast}ms ${EASING.snappy}, color ${DURATION.fast}ms ${EASING.snappy}`,
             }}>
             {seg.text}
           </span>
@@ -291,7 +282,7 @@ function pickAbilityRowStyle({
     // (see SynergyGroup.tsx:216, BetaNotice, CardLightbox, voting cards).
     boxShadow:
       interactive && hovered
-        ? '0 0 16px rgba(212, 175, 55, 0.15)'
+        ? `0 0 16px ${hexRgba(COLORS.primary500, 0.15)}`
         : withShadow
           ? ABILITY_BOX_SHADOW
           : 'none',
@@ -301,7 +292,7 @@ function pickAbilityRowStyle({
     fontWeight: 600,
     lineHeight: DESCRIPTION_LINE_HEIGHT,
     cursor: interactive ? 'pointer' : undefined,
-    transition: 'box-shadow 0.2s ease-out',
+    transition: `box-shadow ${DURATION.base}ms ${EASING.snappy}`,
   };
 }
 
@@ -403,9 +394,9 @@ function ToggleButton({
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'pointer',
-        boxShadow: '0 2px 6px rgba(0, 0, 0, 0.6)',
+        boxShadow: `0 2px 6px ${blackRgba(0.6)}`,
         transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-        transition: 'transform 0.25s ease',
+        transition: `transform ${DURATION.base}ms ${EASING.snappy}`,
         padding: 0,
       }}>
       <ChevronDownIcon />
@@ -538,7 +529,7 @@ function MultiRoleAbilityList({
             // CSS Grid 0fr → 1fr trick gives a smooth height-from-zero animation
             // without measuring content height in JS.
             gridTemplateRows: isOpen ? '1fr' : '0fr',
-            transition: 'grid-template-rows 0.25s ease-out',
+            transition: `grid-template-rows ${DURATION.slow}ms ${EASING.smooth}`,
             pointerEvents: 'auto',
           }}>
           <div
@@ -551,9 +542,9 @@ function MultiRoleAbilityList({
               // Layered shadow: deep outer dark for depth on the dark background,
               // plus a subtle gold edge highlight to align with the brand palette.
               boxShadow: isOpen
-                ? '0 18px 36px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(212, 175, 55, 0.18)'
+                ? `0 18px 36px ${blackRgba(0.75)}, 0 0 0 1px ${hexRgba(COLORS.primary500, 0.18)}`
                 : 'none',
-              transition: 'box-shadow 0.25s ease-out',
+              transition: `box-shadow ${DURATION.slow}ms ${EASING.smooth}`,
             }}>
             {hiddenRoles.map((r, i) => (
               <AbilityRow

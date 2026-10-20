@@ -6,8 +6,20 @@ import type {OptionColor} from './OptionPicker';
 import {OptionPicker} from './OptionPicker';
 import {ScorePicker} from './ScorePicker';
 import {CarriesPicker} from './CarriesPicker';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
-import {useBoop} from '../../../shared/hooks';
+import {VoteGroupTabs} from './VoteGroupTabs';
+import {CtaButton} from '../../../shared/components/CtaButton';
+import {
+  COLORS,
+  DURATION,
+  EASING,
+  FONTS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  TIER_COLORS,
+  hexRgba,
+  whiteRgba,
+} from '../../../shared/constants';
 
 export type FormLayout = 'stacked' | 'tabbed';
 
@@ -37,30 +49,28 @@ interface FormHandlers {
 }
 
 // ── Group accent colors ──
+// The strength tiers' blue, gold and green.
 
 const GROUP_ACCENTS = {
-  assessment: '#60b5f5',
-  rating: '#fbbf24',
-  practical: '#6ee7a0',
+  assessment: TIER_COLORS.moderate.color,
+  rating: TIER_COLORS.perfect.color,
+  practical: TIER_COLORS.strong.color,
 } as const;
 
 // ── Dimension color schemes ──
 
 function makeColor(hex: string): OptionColor {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
   return {
     border: hex,
-    glow: `rgba(${r},${g},${b},0.15)`,
-    hintBg: `rgba(${r},${g},${b},0.06)`,
-    hoverBorder: `rgba(${r},${g},${b},0.35)`,
+    glow: hexRgba(hex, 0.15),
+    hintBg: hexRgba(hex, 0.06),
+    hoverBorder: hexRgba(hex, 0.35),
   };
 }
 
-const GREEN = makeColor('#6ee7a0');
-const RED = makeColor('#f59090');
-const BLUE = makeColor('#60b5f5');
+const GREEN = makeColor(TIER_COLORS.strong.color);
+const RED = makeColor(TIER_COLORS.weak.color);
+const BLUE = makeColor(TIER_COLORS.moderate.color);
 
 const IS_REAL_COLORS: Record<string, OptionColor> = {yes: GREEN, no: RED};
 const ACCURACY_COLORS: Record<string, OptionColor> = {low: RED, right: GREEN, high: BLUE};
@@ -96,7 +106,7 @@ const DIFFICULTY_OPTIONS = [
 function CategoryHeader({stepRange, label, accent, compact}: {stepRange: string; label: string; accent: string; compact?: boolean}) {
   return (
     <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm, marginBottom: compact ? SPACING.xs : SPACING.md}}>
-      <span style={{fontSize: FONT_SIZES.xs, fontWeight: 700, color: accent, background: `${accent}1a`, padding: '2px 8px', borderRadius: 10, fontFamily: FONTS.body}}>
+      <span style={{fontSize: FONT_SIZES.xs, fontWeight: 700, color: accent, background: hexRgba(accent, 0.1), padding: '2px 8px', borderRadius: RADIUS.pill, fontFamily: FONTS.body}}>
         {stepRange}
       </span>
       <span style={{fontSize: FONT_SIZES.sm, color: COLORS.textDim, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONTS.body}}>
@@ -108,9 +118,15 @@ function CategoryHeader({stepRange, label, accent, compact}: {stepRange: string;
 
 function GroupSeparator() {
   return (
-    <div style={{height: 1, background: 'linear-gradient(90deg, transparent, #333355, transparent)', margin: `${SPACING.sm}px 0`}} />
+    <div style={{height: 1, background: `linear-gradient(90deg, transparent, ${COLORS.surfaceBorder}, transparent)`, margin: `${SPACING.sm}px 0`}} />
   );
 }
+
+/**
+ * Each question's entry rise, staggered 60ms apart: choreography, which the 2026-07-29 duration
+ * ruling (`DURATION` in theme.ts) leaves literal.
+ */
+const SECTION_RISE_MS = 350;
 
 interface DimensionSectionProps {
   label: string;
@@ -132,10 +148,10 @@ function DimensionSection({label, stepNumber, accentColor, isAnswered, animation
         padding: SPACING.lg,
         borderRadius: RADIUS.lg,
         borderLeft: `3px solid ${accentColor}`,
-        background: 'rgba(255,255,255,0.02)',
-        boxShadow: isAnswered ? `-4px 0 12px ${accentColor}26` : 'none',
-        transition: `border-color 0.3s ${EASING.smooth}, box-shadow 0.3s ${EASING.smooth}`,
-        animation: animate ? `idv-fade-up 0.35s ease-out ${animationDelay}ms both` : 'none',
+        background: whiteRgba(0.02),
+        boxShadow: isAnswered ? `-4px 0 12px ${hexRgba(accentColor, 0.15)}` : 'none',
+        transition: `border-color ${DURATION.slow}ms ${EASING.smooth}, box-shadow ${DURATION.slow}ms ${EASING.smooth}`,
+        animation: animate ? `idv-fade-up ${SECTION_RISE_MS}ms ${EASING.smooth} ${animationDelay}ms both` : 'none',
       }}>
       <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
         <span
@@ -149,11 +165,11 @@ function DimensionSection({label, stepNumber, accentColor, isAnswered, animation
             justifyContent: 'center',
             fontSize: FONT_SIZES.xs,
             fontWeight: 700,
-            color: isAnswered ? '#0d0d14' : accentColor,
+            color: isAnswered ? COLORS.background : accentColor,
             background: isAnswered ? accentColor : 'transparent',
             fontFamily: FONTS.body,
             flexShrink: 0,
-            transition: `all 0.3s ${EASING.bounce}`,
+            transition: `all ${DURATION.slow}ms ${EASING.bounce}`,
           }}>
           {isAnswered ? '✓' : stepNumber}
         </span>
@@ -166,7 +182,7 @@ function DimensionSection({label, stepNumber, accentColor, isAnswered, animation
   );
 }
 
-// ── Tab metadata + style helpers ──
+// ── Tab metadata ──
 
 const TAB_GROUPS = [
   {key: 'assessment', label: 'Assessment', accent: GROUP_ACCENTS.assessment, stepRange: '1-2'},
@@ -177,138 +193,14 @@ const TAB_GROUPS = [
 type TabKey = typeof TAB_GROUPS[number]['key'];
 const TAB_ORDER: TabKey[] = ['assessment', 'rating', 'practical'];
 
-interface TabStyleInput {
-  isActive: boolean;
-  isHovered: boolean;
-  accent: string;
-}
-
-function getTabBorder({isActive, isHovered, accent}: TabStyleInput): string {
-  if (isActive) return `2px solid ${accent}`;
-  if (isHovered) return `1px solid ${accent}66`;
-  return '1px solid rgba(255,255,255,0.08)';
-}
-
-function getTabBackground({isActive, isHovered, accent}: TabStyleInput): string {
-  if (isActive) return `${accent}0f`;
-  if (isHovered) return `${accent}08`;
-  return 'rgba(255,255,255,0.02)';
-}
-
-function getTabColor({isActive, isHovered, accent}: TabStyleInput): string {
-  if (isActive) return accent;
-  if (isHovered) return COLORS.text;
-  return COLORS.textMuted;
-}
-
-function getTabStyle(input: TabStyleInput): React.CSSProperties {
-  return {
-    flex: 1,
-    minHeight: 44,
-    borderRadius: RADIUS.lg,
-    border: getTabBorder(input),
-    background: getTabBackground(input),
-    color: getTabColor(input),
-    fontSize: FONT_SIZES.base,
-    fontWeight: input.isActive ? 700 : 500,
-    fontFamily: FONTS.body,
-    cursor: 'pointer',
-    padding: '8px 4px',
-    transition: `all 0.25s ${EASING.snappy}`,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 2,
-    boxShadow: input.isHovered ? `0 0 12px ${input.accent}15` : 'none',
-  };
-}
-
-function TabBar({activeTab, onTabChange, answeredByGroup}: {
-  activeTab: TabKey;
-  onTabChange: (tab: TabKey) => void;
-  answeredByGroup: Record<TabKey, number>;
-}) {
-  const [hoveredTab, setHoveredTab] = useState<TabKey | null>(null);
-  const groupTotal = 2;
-
-  return (
-    <div role="tablist" aria-label="Vote dimension groups" style={{display: 'flex', gap: SPACING.xs, width: '100%', marginBottom: SPACING.lg}}>
-      {TAB_GROUPS.map(({key, label, accent}) => {
-        const isActive = activeTab === key;
-        const isHovered = hoveredTab === key && !isActive;
-        const groupAnswered = answeredByGroup[key];
-        return (
-          <button
-            key={key}
-            role="tab"
-            aria-selected={isActive}
-            aria-controls={`panel-${key}`}
-            onClick={() => onTabChange(key)}
-            onMouseEnter={() => setHoveredTab(key)}
-            onMouseLeave={() => setHoveredTab(null)}
-            style={getTabStyle({isActive, isHovered, accent})}>
-            <span>{label}</span>
-            <span style={{fontSize: FONT_SIZES.xs, opacity: 0.7}}>
-              {groupAnswered === groupTotal ? '✓' : `${groupAnswered}/${groupTotal}`}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// ── Nav button + style helpers ──
-
-interface NavStyleInput {
-  hovered: boolean;
-  disabled: boolean;
-  boopStyle: React.CSSProperties;
-}
-
-function getNavBorder(disabled: boolean, hovered: boolean): string {
-  if (disabled) return `1px solid ${COLORS.surfaceBorder}`;
-  if (hovered) return '1px solid rgba(255,185,0,0.5)';
-  return `1px solid ${COLORS.primary}33`;
-}
-
-function getNavColor(disabled: boolean, hovered: boolean): string {
-  if (disabled) return COLORS.textDim;
-  if (hovered) return COLORS.primary;
-  return COLORS.textMuted;
-}
-
-function getNavStyle({hovered, disabled, boopStyle}: NavStyleInput): React.CSSProperties {
-  const interactive = hovered && !disabled;
-  return {
-    ...(disabled ? {} : boopStyle),
-    background: interactive ? 'rgba(255,185,0,0.05)' : 'none',
-    border: getNavBorder(disabled, hovered),
-    borderRadius: RADIUS.lg,
-    color: getNavColor(disabled, hovered),
-    fontSize: FONT_SIZES.base,
-    fontFamily: FONTS.body,
-    fontWeight: interactive ? 600 : 500,
-    padding: '8px 20px',
-    cursor: disabled ? 'default' : 'pointer',
-    opacity: disabled ? 0.4 : 1,
-    boxShadow: interactive ? '0 0 10px rgba(255,185,0,0.1)' : 'none',
-  };
-}
+// ── Nav button ──
 
 type NavDirection = 'previous' | 'next';
 
 /** Previous or Next: the arrow is drawn, not read, so the name is the word alone. */
 function NavButton({direction, disabled, onClick}: {direction: NavDirection; disabled: boolean; onClick: () => void}) {
-  const [hovered, setHovered] = useState(false);
-  const boop = useBoop({scale: 1.05, rotation: direction === 'next' ? 2 : -2, timing: 250});
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      onMouseEnter={() => { setHovered(true); if (!disabled) boop.trigger(); }}
-      onMouseLeave={() => setHovered(false)}
-      style={getNavStyle({hovered, disabled, boopStyle: boop.style})}>
+    <CtaButton variant="neutral" disabled={disabled} onClick={onClick}>
       {direction === 'previous' ? (
         <>
           <span aria-hidden="true">←</span> Previous
@@ -318,7 +210,7 @@ function NavButton({direction, disabled, onClick}: {direction: NavDirection; dis
           Next <span aria-hidden="true">→</span>
         </>
       )}
-    </button>
+    </CtaButton>
   );
 }
 
@@ -482,7 +374,7 @@ interface TabbedLayoutProps {
 function TabbedLayout({ctx, animate, activeTab, setActiveTab, answeredByGroup}: TabbedLayoutProps) {
   return (
     <div style={{width: '100%'}}>
-      <TabBar activeTab={activeTab} onTabChange={setActiveTab} answeredByGroup={answeredByGroup} />
+      <VoteGroupTabs groups={TAB_GROUPS} activeTab={activeTab} onTabChange={setActiveTab} answeredByGroup={answeredByGroup} />
       <div role="tabpanel" id={`panel-${activeTab}`} aria-label={`${activeTab} questions`}>
         <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
           <DimensionGroup groupKey={activeTab} delay={0} showHeader={false} animate={animate} ctx={ctx} />

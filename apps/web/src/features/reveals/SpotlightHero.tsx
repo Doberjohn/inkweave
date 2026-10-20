@@ -1,6 +1,6 @@
 import type {CSSProperties} from 'react';
 import './reveals.css';
-import {FONTS, hexToRgb} from '../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, blackRgba, hexRgba, hexToRgb} from '../../shared/constants';
 
 export interface SupportCard {
   src: string;
@@ -30,20 +30,19 @@ export interface SpotlightHeroData {
 
 /** ★ NEW pill, tinted in the spotlight's accent. */
 function NewBadge({accent}: {accent: string}) {
-  const rgb = hexToRgb(accent);
   return (
     <span
       style={{
         display: 'inline-block',
         fontWeight: 700,
-        fontSize: 10,
+        fontSize: FONT_SIZES.xs,
         letterSpacing: 1.4,
         textTransform: 'uppercase',
         color: accent,
-        border: `1px solid rgba(${rgb}, 0.55)`,
-        background: `rgba(${rgb}, 0.14)`,
+        border: `1px solid ${hexRgba(accent, 0.55)}`,
+        background: hexRgba(accent, 0.14),
         padding: '4px 10px',
-        borderRadius: 20,
+        borderRadius: RADIUS.pill,
       }}
     >
       <span aria-hidden="true">★</span> New
@@ -57,7 +56,6 @@ function NewBadge({accent}: {accent: string}) {
  * the fan spreads open on hover (see reveals.css).
  */
 function SupportFan({cards, accent, compact, decorative}: {cards: SupportCard[]; accent: string; compact: boolean; decorative: boolean}) {
-  const rgb = hexToRgb(accent);
   const base = compact ? 62 : 92;
   const scales = [0.9, 1, 0.82];
   const rots = [-10, -1, 9];
@@ -81,11 +79,11 @@ function SupportFan({cards, accent, compact, decorative}: {cards: SupportCard[];
                 width: w,
                 height: Math.round(w * 1.4),
                 marginLeft: i === 0 ? 0 : -Math.round(w * 0.5),
-                borderRadius: 9,
+                borderRadius: RADIUS.lg,
                 overflow: 'hidden',
-                border: `1px solid rgba(${rgb}, 0.45)`,
-                boxShadow: `0 10px 22px rgba(0, 0, 0, 0.55)`,
-                background: '#0c0c15',
+                border: `1px solid ${hexRgba(accent, 0.45)}`,
+                boxShadow: `0 10px 22px ${blackRgba(0.55)}`,
+                background: COLORS.background,
                 zIndex: i === 1 ? 3 : i,
               } as CSSProperties
             }
@@ -121,8 +119,8 @@ const FULL_DIMS: SpotlightDims = {
   flexDirection: 'row',
   textAlign: 'left',
   headerJustify: 'flex-start',
-  titleSize: 27,
-  summarySize: 14,
+  titleSize: FONT_SIZES.displaySm,
+  summarySize: FONT_SIZES.lg,
 };
 
 const COMPACT_DIMS: SpotlightDims = {
@@ -134,18 +132,17 @@ const COMPACT_DIMS: SpotlightDims = {
   flexDirection: 'column',
   textAlign: 'center',
   headerJustify: 'center',
-  titleSize: 22,
-  summarySize: 13,
+  titleSize: FONT_SIZES.xxxl,
+  summarySize: FONT_SIZES.base,
 };
 
 /** Accent wash behind the hero: a two-color gradient for dual-ink spotlights, else a single-accent sweep. */
-function washFor(rgb: string, grad?: {from: string; to: string}): string {
+function washFor(accent: string, grad?: {from: string; to: string}): string {
   if (grad) {
-    const from = hexToRgb(grad.from);
-    const to = hexToRgb(grad.to);
-    return `linear-gradient(105deg, rgba(${from}, 0.32) 0%, rgba(${from}, 0.12) 34%, rgba(${to}, 0.14) 64%, rgba(${to}, 0.32) 100%), radial-gradient(520px 320px at 100% 40%, rgba(${to}, 0.18), transparent)`;
+    const {from, to} = grad;
+    return `linear-gradient(105deg, ${hexRgba(from, 0.32)} 0%, ${hexRgba(from, 0.12)} 34%, ${hexRgba(to, 0.14)} 64%, ${hexRgba(to, 0.32)} 100%), radial-gradient(520px 320px at 100% 40%, ${hexRgba(to, 0.18)}, transparent)`;
   }
-  return `linear-gradient(110deg, rgba(${rgb}, 0.26), rgba(${rgb}, 0.06) 52%, transparent 78%), radial-gradient(560px 320px at 92% 130%, rgba(${rgb}, 0.22), transparent)`;
+  return `linear-gradient(110deg, ${hexRgba(accent, 0.26)}, ${hexRgba(accent, 0.06)} 52%, transparent 78%), radial-gradient(560px 320px at 92% 130%, ${hexRgba(accent, 0.22)}, transparent)`;
 }
 
 /** CTA words: caller-provided, else the sensible default for a link vs an action tile. */
@@ -180,9 +177,9 @@ function SpotlightInner({data, dims, onActivate, compact}: {data: SpotlightHeroD
               '--th': dims.heroTh,
               width: dims.heroW,
               height: Math.round(dims.heroW * 1.4),
-              borderRadius: 13,
+              borderRadius: RADIUS.card,
               overflow: 'hidden',
-              background: '#0c0c15',
+              background: COLORS.background,
             } as CSSProperties
           }
         >
@@ -193,12 +190,12 @@ function SpotlightInner({data, dims, onActivate, compact}: {data: SpotlightHeroD
       <div className="reveal-rise reveal-rise-1" style={{flex: '0 1 auto', minWidth: 0, maxWidth: 460}}>
         <div style={{display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', justifyContent: dims.headerJustify}}>
           {data.isNew && <NewBadge accent={data.accent} />}
-          <span style={{fontSize: 10, fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase', color: '#90a1b9'}}>{data.count}</span>
+          <span style={{fontSize: FONT_SIZES.xs, fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase', color: COLORS.textMuted}}>{data.count}</span>
         </div>
-        <h3 style={{fontFamily: FONTS.hero, fontWeight: 700, fontSize: dims.titleSize, color: '#f4f4f8', margin: '11px 0 0'}}>{data.title}</h3>
-        <p style={{fontWeight: 400, fontSize: dims.summarySize, lineHeight: 1.55, color: '#d2d2de', margin: '9px 0 0', maxWidth: 420}}>{data.summary}</p>
+        <h3 style={{fontFamily: FONTS.hero, fontWeight: 700, fontSize: dims.titleSize, color: COLORS.gray900, margin: '11px 0 0'}}>{data.title}</h3>
+        <p style={{fontWeight: 400, fontSize: dims.summarySize, lineHeight: 1.55, color: COLORS.gray700, margin: '9px 0 0', maxWidth: 420}}>{data.summary}</p>
         {interactive && (
-          <span style={{display: 'inline-block', marginTop: 13, fontSize: 13, fontWeight: 700, color: data.accent, letterSpacing: 0.3}}>
+          <span style={{display: 'inline-block', marginTop: 13, fontSize: FONT_SIZES.base, fontWeight: 700, color: data.accent, letterSpacing: 0.3}}>
             {ctaLabel(data)} <span aria-hidden="true">→</span>
           </span>
         )}
@@ -225,21 +222,21 @@ export function SpotlightHero({
   /** Click handler for action tiles (e.g. open a modal) when there is no href. */
   onActivate?: () => void;
 }) {
-  const rgb = hexToRgb(data.accent);
   const dims = compact ? COMPACT_DIMS : FULL_DIMS;
 
   const shell = {
     position: 'relative',
     overflow: 'hidden',
-    borderRadius: 18,
-    border: `1px solid rgba(${rgb}, 0.4)`,
-    background: '#0b0b12',
-    backgroundImage: washFor(rgb, data.accentGradient),
+    borderRadius: RADIUS.xl,
+    border: `1px solid ${hexRgba(data.accent, 0.4)}`,
+    background: COLORS.background,
+    backgroundImage: washFor(data.accent, data.accentGradient),
     padding: dims.padding,
     textDecoration: 'none',
     color: 'inherit',
     display: 'block',
-    '--accent-rgb': rgb,
+    // reveals.css draws the hover glows from it.
+    '--accent-rgb': hexToRgb(data.accent),
   } as CSSProperties;
 
   const inner = <SpotlightInner data={data} dims={dims} onActivate={onActivate} compact={compact} />;

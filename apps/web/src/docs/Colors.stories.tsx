@@ -1,5 +1,15 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
-import {COLORS, INK_COLORS, ALL_INKS, TIER_COLORS} from '../shared/constants';
+import {
+  COLORS,
+  FONTS,
+  FONT_SIZES,
+  INK_CHIP_COLORS,
+  INK_COLORS,
+  ALL_INKS,
+  RADIUS,
+  TIER_COLORS,
+  blackRgba,
+} from '../shared/constants';
 
 // ── Swatch component ─────────────────────────────────────────────────
 // Renders a single color token with visual preview, name, and hex value.
@@ -10,7 +20,7 @@ function ColorSwatch({name, value, large}: {name: string; value: string; large?:
   return (
     <div
       style={{
-        borderRadius: 8,
+        borderRadius: RADIUS.lg,
         overflow: 'hidden',
         border: '1px solid rgba(255, 255, 255, 0.08)',
         background: '#1a1a2e',
@@ -34,9 +44,9 @@ function ColorSwatch({name, value, large}: {name: string; value: string; large?:
         <div
           style={{
             color: '#e8e8e8',
-            fontSize: 13,
+            fontSize: FONT_SIZES.base,
             fontWeight: 500,
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontFamily: FONTS.body,
             marginBottom: 2,
           }}>
           {name}
@@ -44,8 +54,7 @@ function ColorSwatch({name, value, large}: {name: string; value: string; large?:
         <code
           style={{
             color: '#90a1b9',
-            fontSize: 11,
-            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            fontSize: FONT_SIZES.sm,
           }}>
           {value}
         </code>
@@ -69,10 +78,10 @@ function ColorGroup({
     <section style={{marginBottom: 32}}>
       <h2
         style={{
-          fontSize: 16,
+          fontSize: FONT_SIZES.xl,
           fontWeight: 600,
           color: '#e8e8e8',
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          fontFamily: FONTS.body,
           margin: '0 0 16px',
           borderBottom: '1px solid #333355',
           paddingBottom: 8,
@@ -181,6 +190,52 @@ const INK_SWATCHES = ALL_INKS.map((ink) => ({
   border: INK_COLORS[ink].border,
 }));
 
+/** The letter chips that name each card in a synergy line (ConnectionGroup), on the game's ink colours. */
+function InkChipSwatches() {
+  return (
+    <section style={{marginBottom: 32}}>
+      <h2
+        style={{
+          fontSize: FONT_SIZES.xl,
+          fontWeight: 600,
+          color: COLORS.text,
+          fontFamily: FONTS.body,
+          margin: '0 0 16px',
+          borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+          paddingBottom: 8,
+        }}>
+        Ink Chip Colors (INK_CHIP_COLORS)
+      </h2>
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12}}>
+        {ALL_INKS.map((ink) => {
+          const chip = INK_CHIP_COLORS[ink];
+          return (
+            <div key={ink} style={{display: 'flex', alignItems: 'center', gap: 10}}>
+              <span
+                style={{
+                  background: chip.bg,
+                  color: chip.text,
+                  border: `1px solid ${blackRgba(1)}`,
+                  fontFamily: FONTS.body,
+                  fontWeight: 700,
+                  fontSize: FONT_SIZES.sm,
+                  lineHeight: 1,
+                  padding: '4px 6px',
+                  borderRadius: RADIUS.sm,
+                }}>
+                {ink.charAt(0)}
+              </span>
+              <code style={{color: COLORS.textMuted, fontSize: FONT_SIZES.sm}}>
+                {ink}: {chip.bg} on {chip.text}
+              </code>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function ColorPalette() {
   const groups = PALETTE_GROUPS;
   const inkColors = INK_SWATCHES;
@@ -188,10 +243,10 @@ function ColorPalette() {
     <div style={{padding: 24, maxWidth: 960}}>
       <h1
         style={{
-          fontSize: 20,
+          fontSize: FONT_SIZES.xxl,
           fontWeight: 700,
           color: '#d4af37',
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          fontFamily: FONTS.body,
           margin: '0 0 8px',
         }}>
         Color Palette
@@ -199,8 +254,8 @@ function ColorPalette() {
       <p
         style={{
           color: '#90a1b9',
-          fontSize: 13,
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          fontSize: FONT_SIZES.base,
+          fontFamily: FONTS.body,
           margin: '0 0 32px',
         }}>
         All color tokens from <code style={{color: '#c8c8d8'}}>shared/constants/theme.ts</code>.
@@ -216,10 +271,10 @@ function ColorPalette() {
       <section style={{marginBottom: 32}}>
         <h2
           style={{
-            fontSize: 16,
+            fontSize: FONT_SIZES.xl,
             fontWeight: 600,
             color: '#e8e8e8',
-            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontFamily: FONTS.body,
             margin: '0 0 16px',
             borderBottom: '1px solid #333355',
             paddingBottom: 8,
@@ -238,15 +293,15 @@ function ColorPalette() {
               style={{
                 background: ink.bg,
                 border: `1px solid ${ink.border}`,
-                borderRadius: 8,
+                borderRadius: RADIUS.lg,
                 padding: 16,
               }}>
               <div
                 style={{
                   color: ink.text,
-                  fontSize: 14,
+                  fontSize: FONT_SIZES.lg,
                   fontWeight: 600,
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontFamily: FONTS.body,
                   marginBottom: 8,
                 }}>
                 {ink.name}
@@ -255,24 +310,24 @@ function ColorPalette() {
                 <span
                   style={{
                     color: '#90a1b9',
-                    fontSize: 11,
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    fontSize: FONT_SIZES.sm,
+                    fontFamily: FONTS.body,
                   }}>
                   bg: {ink.bg}
                 </span>
                 <span
                   style={{
                     color: '#90a1b9',
-                    fontSize: 11,
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    fontSize: FONT_SIZES.sm,
+                    fontFamily: FONTS.body,
                   }}>
                   text: {ink.text}
                 </span>
                 <span
                   style={{
                     color: '#90a1b9',
-                    fontSize: 11,
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    fontSize: FONT_SIZES.sm,
+                    fontFamily: FONTS.body,
                   }}>
                   border: {ink.border}
                 </span>
@@ -281,6 +336,8 @@ function ColorPalette() {
           ))}
         </div>
       </section>
+
+      <InkChipSwatches />
     </div>
   );
 }

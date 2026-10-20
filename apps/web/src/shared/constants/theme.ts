@@ -13,6 +13,20 @@ export const INK_COLORS: Record<Ink, {bg: string; text: string; border: string}>
   Steel: {bg: '#252530', text: '#a0a0b0', border: '#6b7280'},
 };
 
+/**
+ * The game's own ink-symbol colours, for the letter chips that name each card in a synergy line
+ * (ConnectionGroup, #786). They are brighter than INK_COLORS, which is tuned for badges on dark
+ * surfaces, so each ink carries the text colour that reads on its chip.
+ */
+export const INK_CHIP_COLORS: Record<Ink, {bg: string; text: string}> = {
+  Amber: {bg: '#f5b202', text: '#000000'},
+  Amethyst: {bg: '#81377b', text: '#ffffff'},
+  Emerald: {bg: '#2a8934', text: '#ffffff'},
+  Ruby: {bg: '#d3082f', text: '#ffffff'},
+  Sapphire: {bg: '#0189c4', text: '#ffffff'},
+  Steel: {bg: '#9fa8b4', text: '#000000'},
+};
+
 // Font families
 export const FONTS = {
   body: "'Plus Jakarta Sans', 'Inkweave Sans Fallback', -apple-system, BlinkMacSystemFont, sans-serif",

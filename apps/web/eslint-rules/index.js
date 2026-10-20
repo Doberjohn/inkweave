@@ -253,6 +253,10 @@ const ADHOC_BUTTON_EXEMPT = [
   /CardTile\.tsx$/, // card-grid tile family
   /CardSlot\.tsx$/, // reveals tile family
   /InkTrackerTile\.tsx$/, // reveals ink-selection tile family (#511)
+  /SpotlightHero\.tsx$/, // reveals spotlight tile family (#835)
+  /ComparisonCardTile\.tsx$/, // phone comparison card tile family (#835)
+  /ScoreChevronsTab\.tsx$/, // phone comparison score tab family (#835)
+  /VoteGroupTabs\.tsx$/, // in-depth vote group tab family (#835)
   /\.stories\.tsx$/,
   /\.test\.(ts|tsx)$/,
 ];
