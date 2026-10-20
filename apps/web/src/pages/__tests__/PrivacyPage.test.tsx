@@ -22,9 +22,10 @@ afterEach(() => {
   flags.friends = false;
 });
 
-// The code is stored from the account page's first load, friends or not (`claim_friend_code`).
+// The code is made and stored when the account page first loads, friends or not
+// (`claim_friend_code`), so the sentence ties it to that visit.
 const FRIENDS_SENTENCE =
-  /Your account also gets a friend code, which I store\. If you add friends, I store who your friends and friend requests are\./;
+  /Opening your account page also gives you a friend code, which I store\. If you add friends, I store who your friends and friend requests are\./;
 
 function renderPolicy({friends}: {friends: boolean}) {
   flags.friends = friends;

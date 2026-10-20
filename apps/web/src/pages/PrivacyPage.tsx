@@ -49,11 +49,15 @@ export function PrivacyPage() {
           <strong>If you sign in (optional).</strong> Signing in with Google or Discord is only needed to save
           decks to an account. If you do, I receive basic account identity from that provider (such as your
           email and a provider id). Your session is stored in your browser, not in a cookie.
+          {/* LAUNCH STEP: once friends is on in production, drop this condition (and the date's)
+              so the sentence always shows. Turning the flag off later keeps every code and
+              friendship in the database, and the policy must keep describing them. */}
           {SHOW_FRIENDS && (
             <>
               {' '}
-              Your account also gets a friend code, which I store. If you add friends, I store who your friends
-              and friend requests are. Your friends see your display name and handle, which anyone can see.
+              Opening your account page also gives you a friend code, which I store. If you add friends, I store
+              who your friends and friend requests are. Your friends see your display name and handle, which
+              anyone can see.
             </>
           )}
         </li>
