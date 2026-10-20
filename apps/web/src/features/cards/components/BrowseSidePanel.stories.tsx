@@ -9,6 +9,7 @@ import {CollectionBinderSection} from '../../collection/CollectionBinderSection'
 import {CollectionModeSwitch} from '../../collection/CollectionModeSwitch';
 import {CollectionSetBody} from '../../collection/CollectionSetPanel';
 import {STORY_ENTRIES, STORY_POOL, STORY_SETS, STORY_STATS} from '../../collection/collectionStoryData';
+import {isHeld, type Axis} from '../../collection/collectionStats';
 import {COLORS, type BrowseSortOrder} from '../../../shared/constants';
 
 /**
@@ -16,7 +17,16 @@ import {COLORS, type BrowseSortOrder} from '../../../shared/constants';
  * and in collection mode the set panel on the right, under the Collection button.
  */
 /** What the panels pass for set switching and the binder view, in the stories that are not live. */
-const panelControls = {setCode: '13', sets: STORY_SETS, setsLoading: false, onSetChange: fn(), show: 'all' as const, onShowChange: fn()};
+const panelControls = {
+  setCode: '13',
+  sets: STORY_SETS,
+  setsLoading: false,
+  onSetChange: fn(),
+  show: 'all' as const,
+  onShowChange: fn(),
+  axis: 'complete' as const,
+  onAxisChange: fn(),
+};
 
 const meta: Meta<typeof BrowseSidePanel> = {
   title: 'Cards/BrowseSidePanel',
@@ -89,22 +99,28 @@ export const SetPanel: Story = {
   ),
 };
 
-/** Whether the fixture holds a card: what the binder view asks. */
-const owns = (cardId: string) => {
-  const held = STORY_ENTRIES[cardId];
-  return held !== undefined && held.normal + held.foil > 0;
-};
-
 /**
  * The composed page, live as on the page: the sort orders the binder's pockets, a set row
- * opens that set, and All / Owned / Missing narrow the binder as `browseView` does.
+ * opens that set, and All / Owned / Missing narrow the binder as `browseView` does, toward
+ * the headline chosen in the set panel.
  */
 function CollectionModeDemo(args: React.ComponentProps<typeof BrowseSidePanel>) {
   const [sortOrder, setSortOrder] = useState<BrowseSortOrder>('newest');
   const [setCode, setSetCode] = useState('9');
   const [show, setShow] = useState<BinderShow>('all');
-  const controls = {setCode, sets: STORY_SETS, setsLoading: false, onSetChange: setSetCode, show, onShowChange: setShow};
-  const shown = STORY_POOL.filter((card) => show === 'all' || owns(card.id) === (show === 'owned'));
+  const [axis, setAxis] = useState<Axis>('complete');
+  const controls = {
+    setCode,
+    sets: STORY_SETS,
+    setsLoading: false,
+    onSetChange: setSetCode,
+    show,
+    onShowChange: setShow,
+    axis,
+    onAxisChange: setAxis,
+  };
+  // Whether the fixture holds a card toward the chosen headline: what the binder view asks.
+  const shown = STORY_POOL.filter((card) => show === 'all' || isHeld(card, STORY_ENTRIES, axis) === (show === 'owned'));
   return (
     <div style={{height: '100vh', display: 'flex', flexDirection: 'column', background: COLORS.background}}>
       <BrowseToolbar

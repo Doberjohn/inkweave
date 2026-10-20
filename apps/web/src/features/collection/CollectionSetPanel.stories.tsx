@@ -12,7 +12,7 @@ import {
   STORY_STATS,
   STORY_STITCH_STATS,
 } from './collectionStoryData';
-import {tallyCollection} from './collectionStats';
+import {tallyCollection, type Axis} from './collectionStats';
 import {COLORS} from '../../shared/constants';
 
 /**
@@ -27,7 +27,8 @@ import {COLORS} from '../../shared/constants';
 function LivePanel({layout, ...args}: CollectionSetPanelProps & {layout: 'docked' | 'rail' | 'strip'}) {
   const [setCode, setSetCode] = useState(args.setCode);
   const [show, setShow] = useState<BinderShow>(args.show);
-  const props = {...args, setCode, onSetChange: setSetCode, show, onShowChange: setShow};
+  const [axis, setAxis] = useState<Axis>(args.axis);
+  const props = {...args, setCode, onSetChange: setSetCode, show, onShowChange: setShow, axis, onAxisChange: setAxis};
   if (layout === 'rail') return <CollectionSetRail {...props} />;
   if (layout === 'strip') return <CollectionSetStrip {...props} />;
   return (
@@ -56,6 +57,8 @@ const meta: Meta<typeof LivePanel> = {
     onSetChange: fn(),
     show: 'all',
     onShowChange: fn(),
+    axis: 'complete',
+    onAxisChange: fn(),
     stats: STORY_STATS,
   },
 };

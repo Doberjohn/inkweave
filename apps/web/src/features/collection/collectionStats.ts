@@ -39,6 +39,9 @@ import {PROMO_RARITY} from '../cards/loader';
  */
 const isPrinting = (card: LorcanaCard) => card.baseId !== undefined;
 
+/** What a headline counts (owner, 2026-10-12): Complete a copy in either finish, Master one in each. */
+export type Axis = 'complete' | 'master';
+
 /** One breakdown bucket: an ink, or a rarity. Both are counted identically. */
 interface Slot {
   complete: number;
@@ -83,6 +86,23 @@ function holdingOf(entry: {normal: number; foil: number} | undefined): Holding {
   return {any: entry.normal + entry.foil > 0, both: entry.normal > 0 && entry.foil > 0};
 }
 
+/** What the owner holds of one card, as every number counts it: a held printing's one finish counts as both. */
+function heldOf(card: LorcanaCard, entries: CollectionEntries): Holding {
+  const holding = holdingOf(entries[card.id]);
+  return isPrinting(card) ? {any: holding.any, both: holding.any} : holding;
+}
+
+/**
+ * Whether a card counts as held toward a headline, as its number counts it (`heldOf`): a copy
+ * in either finish toward Complete, one in each toward Master. The binder's Owned and Missing
+ * views ask it of the chosen headline (owner, 2026-10-20), so under Master, Missing lists a
+ * card held in one finish only, as Master's number counts it, and Owned the cards it counts done.
+ */
+export function isHeld(card: LorcanaCard, entries: CollectionEntries, axis: Axis): boolean {
+  const held = heldOf(card, entries);
+  return axis === 'master' ? held.both : held.any;
+}
+
 /**
  * Fold one card into a keyed bucket. Extracted because the ink and rarity
  * breakdowns count in exactly the same way, and having that three-line increment
@@ -120,9 +140,8 @@ const RARITY_ORDER = [
  * card of a rarity outside `RARITY_ORDER` counts everywhere but gets no row.
  */
 function addCard(acc: Accumulator, card: LorcanaCard, entries: CollectionEntries): void {
-  const holding = holdingOf(entries[card.id]);
+  const held = heldOf(card, entries);
   const rarity = card.rarity ?? 'Unknown';
-  const held = isPrinting(card) ? {any: holding.any, both: holding.any} : holding;
 
   acc.totals.cards++;
   if (held.any) acc.totals.complete++;

@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import type {Ink} from 'inkweave-synergy-engine';
 import {createCard} from '../../shared/test-utils';
-import {percentOf, tallyCollection, tallySet} from './collectionStats';
+import {isHeld, percentOf, tallyCollection, tallySet} from './collectionStats';
 import type {CollectionEntries} from './collectionParser';
 
 /** Every chase printing and promo in the data names the card it reprints (#796, #805), so these do too. */
@@ -88,6 +88,30 @@ describe('tallySet', () => {
     ]);
     expect(t.cards).toBe(3);
     expect(t.byInk).toEqual([{ink: 'Amber', complete: 3, master: 2, total: 3}]);
+  });
+});
+
+// What the binder's Owned and Missing ask of the chosen headline (owner, 2026-10-20).
+describe('isHeld', () => {
+  it('asks Master for a copy in each finish, so a card held in one is still missing toward it', () => {
+    // Set 3's Nani - Protective Sister, held as a normal copy: Master read 99% while Missing hid her.
+    const nani = card('nani', 'Uncommon');
+    expect(isHeld(nani, {nani: {normal: 1, foil: 0}}, 'complete')).toBe(true);
+    expect(isHeld(nani, {nani: {normal: 1, foil: 0}}, 'master')).toBe(false);
+    expect(isHeld(nani, {nani: {normal: 1, foil: 1}}, 'master')).toBe(true);
+  });
+
+  it("agrees with each headline's number, a held printing's one finish counting toward Master", () => {
+    const cards = [card('a', 'Common'), card('b', 'Common'), card('c', 'Rare'), card('d', 'Enchanted'), card('e', 'Epic')];
+    const entries: CollectionEntries = {
+      a: {normal: 2, foil: 0},
+      b: {normal: 1, foil: 1},
+      d: {normal: 0, foil: 1},
+    };
+    const t = tallySet(cards, entries);
+    expect(cards.filter((c) => isHeld(c, entries, 'complete')).map((c) => c.id)).toEqual(['a', 'b', 'd']);
+    expect(cards.filter((c) => isHeld(c, entries, 'master')).map((c) => c.id)).toEqual(['b', 'd']);
+    expect([t.complete, t.master]).toEqual([3, 2]);
   });
 });
 

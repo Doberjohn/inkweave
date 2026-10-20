@@ -73,9 +73,10 @@ export const setLabel = (setCode: string) =>
   `${isPromoSet(setCode) ? 'Promo set' : 'Set'} ${setCode}, ${setName(setCode)}`;
 
 /**
- * What the binder shows (owner, 2026-10-12): every card, the ones you hold a copy of,
- * or the ones you hold none of. A view of the binder chosen in the collection panel,
- * not one of the page's filters: the Filters count and Clear all leave it be.
+ * What the binder shows (owner, 2026-10-12): every card, the ones you hold, or the ones
+ * you don't, toward the headline chosen beside it (owner, 2026-10-20): under Master set, a
+ * card held in one finish only is missing. A view of the binder chosen in the collection
+ * panel, not one of the page's filters: the Filters count and Clear all leave it be.
  */
 export type BinderShow = 'all' | 'owned' | 'missing';
 
