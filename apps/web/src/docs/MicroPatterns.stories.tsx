@@ -13,6 +13,7 @@ import {
   SURFACE_CARD,
   TABULAR,
   TRUNCATE,
+  VISUALLY_HIDDEN,
   searchFieldStyle,
 } from '../shared/constants';
 
@@ -43,6 +44,12 @@ export const Consts: Story = {
           TRUNCATE clips a single line — remember the ancestor minWidth: 0 in flex/grid layouts
         </span>
         <span style={{...TABULAR, fontSize: FONT_SIZES.lg}}>1,234 / 16,511</span>
+      </div>
+
+      <div style={{...SURFACE_CARD, position: 'relative'}}>
+        VISUALLY_HIDDEN keeps text for screen readers and draws none of it: a card chip's name,
+        a heading the layout implies. The next line is in this panel, read but not shown:
+        <span style={VISUALLY_HIDDEN}>Read by screen readers only (VISUALLY_HIDDEN)</span>
       </div>
 
       <div

@@ -2,15 +2,15 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-197 tests across 24 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+201 tests across 24 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
-The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts` and the reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
+The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
-**Warm-up before the first test (#664):** `e2e/global-setup.ts` opens the 7 pages `accessibility.spec.ts` visits, up to 3 at a time (never more than the run's workers), on the run's fresh Vite, and waits until no module request has been in flight for 1 s. So the app shell every page shares and those pages compile before any test (every module on its first request, every TSX file through the React Compiler's Babel pass), not inside the first wave's 30 s, and the run log shows `E2E warm-up: 7 routes in N s`. A page that fails to load, or takes over 180 s, stops the run with an `E2E warm-up:` error naming it. What stays cold still compiles on first use, inside a test: the card modal (loaded on the first interaction), the mobile-only search sheet, and pages the warm-up doesn't open (`/compare`, `/vote`, `/reveals`, `/about`, `/release-notes`, `/account`). The mobile projects skip `accessibility.spec.ts`'s axe audits, so their first tests start on such pages, with only the shell warm. Skipped under `PWDEBUG`, whose Inspector would otherwise pause on the warm-up's own browser.
+**Warm-up before the first test (#664):** `e2e/global-setup.ts` opens the 7 pages `accessibility.spec.ts` audits first, up to 3 at a time (never more than the run's workers), on the run's fresh Vite, and waits until no module request has been in flight for 1 s. So the app shell every page shares and those pages compile before any test (every module on its first request, every TSX file through the React Compiler's Babel pass), not inside the first wave's 30 s, and the run log shows `E2E warm-up: 7 routes in N s`. A page that fails to load, or takes over 180 s, stops the run with an `E2E warm-up:` error naming it. What stays cold still compiles on first use, inside a test: the card modal (loaded on the first interaction), the mobile-only search sheet, and pages the warm-up doesn't open (`/compare`, `/vote`, `/reveals`, `/about`, `/release-notes`, `/account`). The mobile projects skip `accessibility.spec.ts`'s axe audits, so their first tests start on such pages, with only the shell warm. Skipped under `PWDEBUG`, whose Inspector would otherwise pause on the warm-up's own browser.
 
 **Global console-error guard:** the shared `page` fixture (`e2e/fixtures/test-fixtures.ts`) fails any test that logs a `console.error` or throws an uncaught exception, except messages matching the documented `BENIGN_CONSOLE` allowlist. This turns silent runtime faults — most importantly React's "Maximum update depth exceeded" render loop, which a loading-skeleton assertion otherwise passes through — into red builds across every spec.
 
-## `accessibility.spec.ts`: 9 tests (7 desktop only, 2 on every project at a 320px viewport)
+## `accessibility.spec.ts`: 11 tests (9 desktop only, 2 on every project at a 320px viewport)
 
 | Test | What it verifies |
 |---|---|
@@ -21,6 +21,8 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | playstyle detail should have no axe violations | `/playstyles/discard` passes axe-core audit |
 | ink gallery should have no axe violations | `/inks` passes axe-core audit (#530: a card-count contrast violation there shipped because the ink pages had no axe coverage) |
 | ink hub should have no axe violations | `/ink/steel` passes axe-core audit (#530) |
+| in-depth vote page should have no axe violations | `/vote/3286/2983` (the Free Play pair the weekly accessibility check audits) passes axe-core audit once its form shows: it had no title and no h1 (#835) |
+| reveals page with a franchise open should have no axe violations | With the clock in the reveal season, the first franchise's cards dialog on `/reveals` passes axe-core audit once its fade ends and its first card tile shows: the spotlight tiles' labels left out their visible text, and the dialog's title bar was a second banner (#835) |
 | /inks fits a 320px viewport without scrolling sideways | At 320×640, with the clock in the reveal season, `/inks` is no wider than its layout viewport (`documentElement.clientWidth`: a phone project's `innerWidth` widens to fit the page, and mobile-safari's visual viewport is 8px narrower), and once the ink cards (`main ul > li`) have rendered, none runs past its grid's right edge (WCAG 1.4.10, accessibility check 2026-10-19: phones got the desktop header, whose Reveals pill stuck out 37px, and the ink cards' 300px columns ran 20px into the right gutter) |
 | /ink/steel fits a 320px viewport without scrolling sideways | The same on `/ink/steel`, whose grid items are its card tiles (`card-tile`) |
 
@@ -239,7 +241,7 @@ The desktop signed-in tests skip the mobile projects: they find the numbers in t
 | should close dropdown on Escape | Escape key dismisses autocomplete dropdown, within the default timeout (a debounce pending at the keypress used to reopen it, #746) |
 | should NOT show autocomplete on browse page search | Typing in browse page search does NOT show autocomplete (browse filters inline) |
 
-## `seo.spec.ts` — 21 tests (both viewports)
+## `seo.spec.ts` — 23 tests (both viewports)
 
 Route-level metadata coverage (#524). Before this, the file asserted only home-page
 properties, so #486's central acceptance criterion — every route self-references its own
@@ -267,6 +269,8 @@ against the dev server, where both are present.
 | card page has exactly one h1 at a mobile viewport | 412×915 — CardPage gates the desktop `CardDetailPanel` behind `!isMobile` while `CardDetail` owns the h1 below it (`headingLevel="h1"`, always set by `SynergyResults`). Googlebot renders mobile, so a regression in either branch is invisible at desktop width |
 | vote page has exactly one h1 while its pair loads and once it shows | Holds `_pairs_index.json` to pin the loading state, then releases it. The vote screen shows no heading, so its h1 is visually hidden (`VotePageShell`), and nothing on screen goes missing without it, which is how `/vote` sat in the sitemap with no h1 |
 | vote page has exactly one h1 when its pairs fail to load | `_pairs_index.json` answers 500, so `VoteErrorView` renders, with its own copy of the hidden h1 |
+| comparison owns a title naming its pair | `/compare/3286/2983/free-play`'s tab reads "\<A\> + \<B\> \| Compare \| Inkweave", the names read from `allCards.json`: the page rendered no `<Seo>`, so once the prerendered tags were swept the tab showed the bare address (#835) |
+| in-depth vote page owns a title naming its pair, and exactly one h1 | `/vote/3286/2983`'s tab reads "\<A\> + \<B\> \| Vote \| Inkweave", and its one h1 is the visually hidden "Vote on \<A\> and \<B\>" (#835) |
 | card page links to all six ink hubs at a mobile viewport | The footer's ink nav is what puts every hub one click from all 1,024 card pages (#530) |
 | ink hub emits one crawlable anchor per card, identically on mobile | `CardGrid`, not the Virtuoso-windowed `BrowseCardGrid` — windowing would emit a fraction of the anchors to a crawler (#530) |
 | unknown ink slug renders the 404 page, not an empty hub | Junk URLs under `/ink/` declare themselves unindexable instead of returning a thin 200 (#525) |
@@ -361,18 +365,18 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 
 ## `reveals-page.spec.ts`: 11 tests (9 desktop, 1 mobile, 1 on every project at a 390px viewport)
 
-**Season-independent by design.** The `beforeEach` reads the reveal set (the `previewCards.json` entry with the latest `releaseDate`) and the tests build their matchers from its `name` and `number`; the franchise label is read off the tile's own `aria-label`. Starting a new season needs no edit here. The `beforeEach` also starts the page's clock two days before that `releaseDate` (`e2e/helpers/revealSeason.ts`), so the suite runs on any date, release day and the weeks before the next set's dates land included: graduation keeps the set's dates in `previewCards.json` and its cards in `allCards.json`. Four tests additionally skip while `cards` is empty.
+**Season-independent by design.** The `beforeEach` reads the reveal set (the `previewCards.json` entry with the latest `releaseDate`) and the tests build their matchers from its `name` and `number`; the franchise's name is read off the tile's own heading. Starting a new season needs no edit here. The `beforeEach` also starts the page's clock two days before that `releaseDate` (`e2e/helpers/revealSeason.ts`), so the suite runs on any date, release day and the weeks before the next set's dates land included: graduation keeps the set's dates in `previewCards.json` and its cards in `allCards.json`. Four tests additionally skip while `cards` is empty.
 
 | Test | What it verifies |
 |---|---|
-| renders the tracker: hero, six ink trackers, and the debut franchises | sr-only `h1` containing the set name, the set logo (alt = set name), the hero's countdown labelled "Until store release" (the pinned clock is past the pre-release), 6 `ink-tracker-tile`s, the "Ink board" section, and at least one "View … cards" franchise button all render |
+| renders the tracker: hero, six ink trackers, and the debut franchises | sr-only `h1` containing the set name, the set logo (alt = set name), the hero's countdown labelled "Until store release" (the pinned clock is past the pre-release), 6 `ink-tracker-tile`s, the "Ink board" section, and at least one franchise button, named by its text and ending "View cards", all render |
 | desktop nav shows Reveals entry with NEW badge | `/browse` has a Reveals link with a "NEW" badge child |
 | mobile nav shows Reveals tab | On mobile, `/browse`'s bottom nav has a "Set N reveals" link |
 | promo modal appears on landing page and not on /reveals | `role="complementary" name="Set N reveals"` visible on `/`, absent on `/reveals` |
 | on a phone, the page leaves room under the promo and scrolls focus clear of it | At 390px on `/`, the root's `scroll-padding-bottom` equals the promo's height, and the footer's last link, focused from the top of the page, scrolls into view above the promo (WCAG 2.4.11, accessibility check 2026-10-19) |
 | mosaic card click opens the card overview modal | Clicking a `reveal-card-slot` on `/reveals` opens the modal; URL stays `/reveals` (skips with no cards) |
 | the card modal's arrows step through the board's cards in mosaic order | Opening the first `reveal-card-slot`, then "Next card", shows the second slot's card in the modal's `h1` (slot labels read "View <card>"; skips with fewer than two revealed cards) |
-| franchise card click opens the franchise cards modal | Clicking the first "View … cards" tile opens the `dialog` named "<franchise> cards"; a card-tile inside opens the overview modal on top (card click skips with no cards) |
+| franchise card click opens the franchise cards modal | Clicking the first franchise tile (ending "View cards") opens the `dialog` named "<franchise> cards", the franchise read from the tile's `h3`; a card-tile inside opens the overview modal on top (card click skips with no cards) |
 | ?ink= param selects the starting mosaic ink | `/reveals?ink=emerald` makes the Emerald `ink-tracker-tile` the `aria-pressed` (featured) one |
 | clicking a rarity chip dims the other revealed cards | A kit chip in the "Highlight a rarity" group toggles `aria-pressed`; other-rarity slots get `data-dimmed`; clicking again clears it (skips when <2 rarities revealed) |
 | an alt art opens the card modal on that printing | On `/reveals?ink=amber`, clicking the first `reveal-printing-slot` opens the modal with that rarity's radio `aria-checked` in the "Card printing" group (skips until the Amber board has a revealed Epic/Enchanted/Iconic) |

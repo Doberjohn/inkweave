@@ -13,7 +13,7 @@ import {usePairQueue} from '../features/voting/hooks/usePairQueue';
 import {useVoteSession} from '../features/voting/hooks/useVoteSession';
 import {trackEvent} from '../shared/lib/analytics';
 import type {Score} from '../shared/lib/supabase';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, VISUALLY_HIDDEN} from '../shared/constants';
 
 // ──────────────────────────────────────────────────────────
 // Module helpers
@@ -149,24 +149,12 @@ const pageShellOuter = {
   overflowY: 'auto',
 } as const;
 
-const srOnly = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: 'hidden',
-  clip: 'rect(0, 0, 0, 0)',
-  whiteSpace: 'nowrap',
-  border: 0,
-} as const;
-
 /**
  * The page's one h1, visually hidden: the vote screen shows no heading of its own, but search
  * engines and screen readers look for one, and every page in the sitemap needs it.
  */
 function VoteHeading() {
-  return <h1 style={srOnly}>Vote on Lorcana card synergies</h1>;
+  return <h1 style={VISUALLY_HIDDEN}>Vote on Lorcana card synergies</h1>;
 }
 
 type PageHeaderProps = {

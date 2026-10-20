@@ -79,7 +79,7 @@ export function franchiseSpotlight(f: FranchiseConfig): SpotlightHeroData {
     count: 'New franchise',
     title: f.label,
     summary: f.blurb,
-    cta: 'View cards →',
+    cta: 'View cards',
     heroImage: cardArt ? art(cardArt.hero) : `/art/franchises/${f.id}.webp`,
     // A logo is a wide wordmark, not a card: fit it inside the card frame instead of cropping.
     heroFit: cardArt ? 'cover' : 'contain',

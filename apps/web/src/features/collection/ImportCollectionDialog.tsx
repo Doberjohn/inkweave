@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
 import {CtaButton, DialogShell} from '../../shared/components';
-import {COLORS, DIALOG_BODY, DIALOG_TITLE, FONTS, FONT_SIZES, SPACING} from '../../shared/constants';
+import {COLORS, DIALOG_BODY, DIALOG_TITLE, FONTS, FONT_SIZES, SPACING, VISUALLY_HIDDEN} from '../../shared/constants';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {parseCollectionCsv, type CollectionEntries, type CollectionSummary} from './collectionParser';
 
@@ -103,25 +103,6 @@ function SummaryStep({summary}: {summary: CollectionSummary}) {
   );
 }
 
-/**
- * The file input is visually hidden rather than `display: none`, which some
- * browsers refuse to open a picker for. The visible `CtaButton` is what anyone
- * operates; it forwards the click. The input is out of the Tab order
- * (`tabIndex -1`), or keyboard users would land on an invisible stop with no
- * focus ring before reaching the button that does the same thing.
- */
-const VISUALLY_HIDDEN: React.CSSProperties = {
-  position: 'absolute',
-  width: 1,
-  height: 1,
-  padding: 0,
-  margin: -1,
-  overflow: 'hidden',
-  clip: 'rect(0 0 0 0)',
-  whiteSpace: 'nowrap',
-  border: 0,
-};
-
 /** What to upload, and where it comes from; or, when the card list failed to load, a retry. */
 function ChooseStep({
   onPick,
@@ -142,6 +123,10 @@ function ChooseStep({
         Export your collection from Dreamborn as CSV, then choose the file here. Importing
         replaces whatever collection Inkweave already has, counts you changed in the app included.
       </p>
+      {/* Visually hidden rather than `display: none`, which some browsers refuse to open a
+          picker for. The visible `CtaButton` is what anyone operates; it forwards the click.
+          Out of the Tab order (`tabIndex -1`), or keyboard users would land on an invisible
+          stop with no focus ring before reaching the button that does the same thing. */}
       <input
         ref={inputRef}
         type="file"

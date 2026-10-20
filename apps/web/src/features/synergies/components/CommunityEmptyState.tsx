@@ -1,12 +1,12 @@
 import type {ReactNode} from 'react';
-import {COLORS, FONT_SIZES, FONTS, RADIUS} from '../../../shared/constants';
+import {COLORS, DURATION, EASING, FONT_SIZES, FONTS, INK_COLORS, RADIUS, hexRgba, whiteRgba} from '../../../shared/constants';
 import {CtaButton} from '../../../shared/components/CtaButton';
 import {VoteAffirmation} from '../../voting/components';
 
-// Amethyst is the community-column accent across the modal. Both the progress fill
-// and the CTA below carry that brand identity (gold reads as engine-side).
-const COMMUNITY_TINT = '#b691ff';
-const COMMUNITY_TINT_DARK = '#9b7dd6';
+// Amethyst is the community-column accent across the modal, the token CommunityColumn uses (#511).
+// Both the progress fill and the CTA below carry that brand identity (gold reads as engine-side).
+const COMMUNITY_TINT = INK_COLORS.Amethyst.text;
+const COMMUNITY_TINT_DARK = INK_COLORS.Amethyst.border;
 
 export type CommunityEmptyVariant = 'full-empty' | 'half-empty';
 
@@ -19,6 +19,11 @@ interface CommunityEmptyStateProps {
   onCta: () => void;
   /** When true, replace the CTA with an affirmation tile — user has already in-depth-voted from this browser. */
   userAlreadyVoted?: boolean;
+  /**
+   * The title's heading level: 4 under a column header (desktop), 3 where none renders (the
+   * phone comparison), so headings step down one level at a time from the view's h2.
+   */
+  headingLevel?: 3 | 4;
 }
 
 const COPY: Record<CommunityEmptyVariant, {title: string; renderDesc: (n: number) => ReactNode; ctaLabel: string}> = {
@@ -30,7 +35,7 @@ const COPY: Record<CommunityEmptyVariant, {title: string; renderDesc: (n: number
         {remaining === 1 ? '' : 's'} before community signal becomes meaningful.
       </>
     ),
-    ctaLabel: 'Rate in Detail →',
+    ctaLabel: 'Rate in Detail',
   },
   'half-empty': {
     title: 'Not enough in-depth votes yet',
@@ -40,7 +45,7 @@ const COPY: Record<CommunityEmptyVariant, {title: string; renderDesc: (n: number
         {remaining === 1 ? '' : 's'} to fill in the community details.
       </>
     ),
-    ctaLabel: 'Help fill in the details →',
+    ctaLabel: 'Help fill in the details',
   },
 };
 
@@ -51,7 +56,8 @@ const COPY: Record<CommunityEmptyVariant, {title: string; renderDesc: (n: number
  * `half-empty`: total_votes ≥ threshold but score_votes < threshold — replaces only the metric rows;
  *   parent still renders the dist bar above.
  */
-export function CommunityEmptyState({variant, current, threshold = 1, onCta, userAlreadyVoted = false}: CommunityEmptyStateProps) {
+export function CommunityEmptyState({variant, current, threshold = 1, onCta, userAlreadyVoted = false, headingLevel = 4}: CommunityEmptyStateProps) {
+  const Heading = `h${headingLevel}` as const;
   const remaining = Math.max(threshold - current, 0);
   const {title, renderDesc, ctaLabel} = COPY[variant];
   const progressPct = Math.min((current / threshold) * 100, 100);
@@ -71,13 +77,13 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
         // gold wash pattern (rgba 0.06). Same darkness as before, but the column-accent
         // hue replaces the cool surfaceAlt blue so the two empty/active panels read as
         // a visually consistent pair.
-        background: 'rgba(182, 145, 255, 0.06)',
+        background: hexRgba(COMMUNITY_TINT, 0.06),
         border: `1px solid ${COLORS.surfaceBorder}`,
         borderRadius: `${RADIUS.lg}px`,
         textAlign: 'center',
         fontFamily: FONTS.body,
       }}>
-      <h4
+      <Heading
         style={{
           margin: 0,
           fontSize: `${FONT_SIZES.base}px`,
@@ -86,11 +92,11 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
           color: COLORS.text,
         }}>
         {title}
-      </h4>
+      </Heading>
       <p
         style={{
           margin: 0,
-          fontSize: 12,
+          fontSize: FONT_SIZES.md,
           lineHeight: 1.5,
           color: COLORS.descriptionText,
         }}>
@@ -103,8 +109,8 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
           style={{
             flex: 1,
             height: 6,
-            background: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: 3,
+            background: whiteRgba(0.05),
+            borderRadius: RADIUS.pill,
             overflow: 'hidden',
           }}>
           <div
@@ -112,13 +118,13 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
               width: `${progressPct}%`,
               height: '100%',
               background: COMMUNITY_TINT,
-              transition: 'width 0.4s ease-out',
+              transition: `width ${DURATION.slow}ms ${EASING.smooth}`,
             }}
           />
         </div>
         <span
           style={{
-            fontSize: 11,
+            fontSize: FONT_SIZES.sm,
             color: COLORS.textMuted,
             fontWeight: 600,
             letterSpacing: '0.04em',
@@ -148,9 +154,9 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
             // not engine. Dark text remains legible on the amethyst gradient.
             background: `linear-gradient(180deg, ${COMMUNITY_TINT} 0%, ${COMMUNITY_TINT_DARK} 100%)`,
             color: COLORS.background,
-            boxShadow: `0 4px 12px rgba(182, 145, 255, 0.3)`,
+            boxShadow: `0 4px 12px ${hexRgba(COMMUNITY_TINT, 0.3)}`,
           }}>
-          {ctaLabel}
+          {ctaLabel} <span aria-hidden="true">→</span>
         </CtaButton>
       )}
     </div>

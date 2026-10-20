@@ -8,7 +8,7 @@ interface BackLinkProps {
   style?: React.CSSProperties;
 }
 
-/** Styled back-navigation button with arrow and gold hover effect. */
+/** Styled back-navigation button with arrow and gold hover effect. The arrow is drawn, not read: its name is the label. */
 export function BackLink({onClick, label, style}: BackLinkProps) {
   const {hovered, hoverProps} = useHover();
 
@@ -31,7 +31,7 @@ export function BackLink({onClick, label, style}: BackLinkProps) {
         transition: `color 0.15s ${EASING.snappy}`,
         ...style,
       }}>
-      <span style={{fontSize: `${FONT_SIZES.base}px`}}>&larr;</span>
+      <span aria-hidden="true" style={{fontSize: `${FONT_SIZES.base}px`}}>&larr;</span>
       {label}
     </button>
   );
