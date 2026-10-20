@@ -75,8 +75,9 @@ export const setLabel = (setCode: string) =>
 /**
  * What the binder shows (owner, 2026-10-12): every card, the ones you hold, or the ones
  * you don't, toward the headline chosen beside it (owner, 2026-10-20): under Master set, a
- * card held in one finish only is missing. A view of the binder chosen in the collection
- * panel, not one of the page's filters: the Filters count and Clear all leave it be.
+ * card held in one finish only is missing, unless it is a printing, which comes in one
+ * (`isHeld`). A view of the binder chosen in the collection panel, not one of the page's
+ * filters: the Filters count and Clear all leave it be.
  */
 export type BinderShow = 'all' | 'owned' | 'missing';
 

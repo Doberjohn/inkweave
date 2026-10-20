@@ -236,7 +236,8 @@ export interface BrowseCollectionSlots {
   rarityOptions: (pool: LorcanaCard[]) => string[];
   /**
    * Whether you hold the card toward the chosen headline (`isHeld`): a copy in either finish
-   * for Complete, one in each for Master. What Owned and Missing ask (owner, 2026-10-20).
+   * for Complete, one in each for Master, a printing's one finish counting as both. What
+   * Owned and Missing ask (owner, 2026-10-20).
    */
   owns: (card: LorcanaCard) => boolean;
   /**

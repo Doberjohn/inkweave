@@ -28,7 +28,15 @@ function LivePanel({layout, ...args}: CollectionSetPanelProps & {layout: 'docked
   const [setCode, setSetCode] = useState(args.setCode);
   const [show, setShow] = useState<BinderShow>(args.show);
   const [axis, setAxis] = useState<Axis>(args.axis);
-  const props = {...args, setCode, onSetChange: setSetCode, show, onShowChange: setShow, axis, onAxisChange: setAxis};
+  const props = {
+    ...args,
+    setCode,
+    onSetChange: setSetCode,
+    show,
+    onShowChange: setShow,
+    axis,
+    onAxisChange: setAxis,
+  };
   if (layout === 'rail') return <CollectionSetRail {...props} />;
   if (layout === 'strip') return <CollectionSetStrip {...props} />;
   return (

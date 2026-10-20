@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import type {Ink} from 'inkweave-synergy-engine';
 import {createCard} from '../../shared/test-utils';
-import {isHeld, percentOf, tallyCollection, tallySet} from './collectionStats';
+import {isHeld, percentOf, tallyCollection, tallySet, type Axis} from './collectionStats';
 import type {CollectionEntries} from './collectionParser';
 
 /** Every chase printing and promo in the data names the card it reprints (#796, #805), so these do too. */
@@ -102,15 +102,22 @@ describe('isHeld', () => {
   });
 
   it("agrees with each headline's number, a held printing's one finish counting toward Master", () => {
-    const cards = [card('a', 'Common'), card('b', 'Common'), card('c', 'Rare'), card('d', 'Enchanted'), card('e', 'Epic')];
+    const cards = [
+      card('a', 'Common'),
+      card('b', 'Common'),
+      card('c', 'Rare'),
+      card('d', 'Enchanted'),
+      card('e', 'Epic'),
+    ];
     const entries: CollectionEntries = {
       a: {normal: 2, foil: 0},
       b: {normal: 1, foil: 1},
       d: {normal: 0, foil: 1},
     };
     const t = tallySet(cards, entries);
-    expect(cards.filter((c) => isHeld(c, entries, 'complete')).map((c) => c.id)).toEqual(['a', 'b', 'd']);
-    expect(cards.filter((c) => isHeld(c, entries, 'master')).map((c) => c.id)).toEqual(['b', 'd']);
+    const held = (axis: Axis) => cards.filter((c) => isHeld(c, entries, axis)).map((c) => c.id);
+    expect(held('complete')).toEqual(['a', 'b', 'd']);
+    expect(held('master')).toEqual(['b', 'd']);
     expect([t.complete, t.master]).toEqual([3, 2]);
   });
 });

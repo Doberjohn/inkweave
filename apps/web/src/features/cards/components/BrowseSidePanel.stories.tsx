@@ -120,7 +120,9 @@ function CollectionModeDemo(args: React.ComponentProps<typeof BrowseSidePanel>) 
     onAxisChange: setAxis,
   };
   // Whether the fixture holds a card toward the chosen headline: what the binder view asks.
-  const shown = STORY_POOL.filter((card) => show === 'all' || isHeld(card, STORY_ENTRIES, axis) === (show === 'owned'));
+  const shown = STORY_POOL.filter(
+    (card) => show === 'all' || isHeld(card, STORY_ENTRIES, axis) === (show === 'owned'),
+  );
   return (
     <div style={{height: '100vh', display: 'flex', flexDirection: 'column', background: COLORS.background}}>
       <BrowseToolbar

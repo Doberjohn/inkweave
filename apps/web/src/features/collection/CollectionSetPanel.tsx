@@ -6,7 +6,13 @@ import {useHover} from '../../shared/hooks/useHover';
 import {usePrefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
 import {RaritySymbol} from '../reveals/RaritySymbol';
 import {rarityLabel} from '../cards/filterOptions';
-import {isFinished, percentOf, type Axis, type tallyCollection, type tallySet} from './collectionStats';
+import {
+  isFinished,
+  percentOf,
+  type Axis,
+  type tallyCollection,
+  type tallySet,
+} from './collectionStats';
 import {WHOLE_COLLECTION, isPromoSet, setName, type BinderShow} from './binderCards';
 import {SetPicker, type SetPickerProps} from './SetPicker';
 import {SIDE_PANEL_STYLE} from '../cards/components/BrowseSidePanel';
@@ -608,7 +614,13 @@ function NumbersRegion({stats, setCode, filtered, axis, onAxisChange}: NumbersPr
   return (
     <div role="region" aria-label="Collection numbers" aria-busy={stats === null} style={NUMBERS_STYLE}>
       <BarPass.Provider value={`${setCode}:${axis}`}>
-        <Numbers stats={stats} setCode={setCode} filtered={filtered} axis={axis} onAxisChange={onAxisChange} />
+        <Numbers
+          stats={stats}
+          setCode={setCode}
+          filtered={filtered}
+          axis={axis}
+          onAxisChange={onAxisChange}
+        />
       </BarPass.Provider>
     </div>
   );
@@ -685,7 +697,13 @@ function pickerProps({setCode, sets, setsLoading, onSetChange, stats}: Collectio
 }
 
 /** The numbers' view of the panel's props. */
-function numbersProps({stats, setCode, filtered = false, axis, onAxisChange}: CollectionSetPanelProps): NumbersProps {
+function numbersProps({
+  stats,
+  setCode,
+  filtered = false,
+  axis,
+  onAxisChange,
+}: CollectionSetPanelProps): NumbersProps {
   return {stats, setCode, filtered, axis, onAxisChange};
 }
 
