@@ -114,6 +114,8 @@ describe('CollectionCopies', () => {
     mockSession.user = null;
     const view = await renderInWindow();
 
+    // Still here, so the block hides for the signed-out reader, not for a missing collection.
+    expect(localStorage.getItem('inkweave:collection')).not.toBeNull();
     expect(view.queryByRole('group', {name: 'Your copies'})).toBeNull();
   });
 
