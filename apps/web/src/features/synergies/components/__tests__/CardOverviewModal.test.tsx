@@ -10,8 +10,11 @@ import {trackEvent} from '../../../../shared/lib/analytics';
 import {restStrip, swipeStrip} from '../../../../shared/test-utils';
 
 vi.mock('../../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
-// A comparison's community votes need the card modal's provider; its card motion does not.
-vi.mock('../CommunityColumn', () => ({CommunityColumn: () => <p>Community panel</p>}));
+// A comparison's community votes need the card modal's provider; its card motion does not. A
+// button, so a test can leave focus in the comparison's panel.
+vi.mock('../CommunityColumn', () => ({
+  CommunityColumn: () => <button type="button">Community panel</button>,
+}));
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -67,6 +70,62 @@ test('Back to all synergies returns to the default view', async () => {
   await user.click(screen.getByText(/back to all synergies/i));
   expect(screen.queryByText(/back to all synergies/i)).toBeNull();
   expect(screen.getByRole('button', {name: /more/i})).toBeVisible();
+});
+
+/** A modal whose synergy tiles each open a comparison. */
+function renderComparable(cardCount: number) {
+  const source = makeCard('source');
+  return render(
+    <MemoryRouter>
+      <CardDataProvider>
+        <CardOverviewModal
+          isOpen
+          card={source}
+          synergies={[makeGroup('singer-songs', 'Singer + Songs', cardCount)]}
+          getPairSynergies={(cardB) => ({
+            cardA: source, cardB, aggregateScore: 7,
+            connections: [{ruleId: 'singer-songs', ruleName: 'Singer + Songs', category: 'direct', score: 7, explanation: 'Sings it.'}],
+          })}
+          onClose={() => {}}
+        />
+      </CardDataProvider>
+    </MemoryRouter>,
+  );
+}
+
+test('a comparison opened from a tile takes focus to BACK, and leaving it gives the tile focus back', async () => {
+  // Opening one makes the tile inert, which drops focus to <body> in a browser (WCAG 2.4.3).
+  const user = userEvent.setup();
+  renderComparable(3);
+  const tile = screen.getByRole('link', {name: /^Card syn-1 - Test/});
+  tile.focus();
+
+  await user.keyboard('{Enter}');
+  const back = await screen.findByRole('button', {name: 'Back to synergies'});
+  await waitFor(() => expect(back).toHaveFocus());
+  await user.keyboard('{Enter}');
+  await waitFor(() => expect(tile).toHaveFocus());
+
+  // Escape leaves it by its own route.
+  await user.keyboard('{Enter}');
+  await waitFor(() => expect(screen.getByRole('button', {name: 'Back to synergies'})).toHaveFocus());
+  await user.keyboard('{Escape}');
+  await waitFor(() => expect(tile).toHaveFocus());
+});
+
+test('leaving a comparison whose tile is gone gives focus to the close button', async () => {
+  // A tile of the expanded group view unmounts with it as the comparison opens. Focus left in the
+  // comparison's panel would fall to <body> once the panel's exit animation ends.
+  const user = userEvent.setup();
+  renderComparable(5);
+  await user.click(screen.getByRole('button', {name: /more/i}));
+  screen.getByRole('link', {name: /^Card syn-4 - Test/}).focus();
+  await user.keyboard('{Enter}');
+  await screen.findByRole('button', {name: 'Back to synergies'});
+
+  screen.getByRole('button', {name: 'Community panel'}).focus();
+  await user.keyboard('{Escape}');
+  await waitFor(() => expect(screen.getByRole('button', {name: 'Close'})).toHaveFocus());
 });
 
 test('changing the card resets the expanded view', async () => {

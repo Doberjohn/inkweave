@@ -1,3 +1,4 @@
+import {useState} from 'react';
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {render, screen, fireEvent, waitFor} from '@testing-library/react';
 import type {Ink} from '../../../features/cards';
@@ -105,6 +106,29 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
 
     expect(onClose).toHaveBeenCalled();
     expect(onApply).not.toHaveBeenCalled();
+  });
+
+  it('should hand focus back to the control that opened it on close', async () => {
+    // Controlled, with no Dialog.Trigger: Radix's own return target is null (WCAG 2.4.3).
+    function Page() {
+      const [open, setOpen] = useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>
+            Filters
+          </button>
+          <FilterDialog {...defaultProps} variant={variant} isOpen={open} onClose={() => setOpen(false)} />
+        </>
+      );
+    }
+    render(<Page />);
+    const opener = screen.getByRole('button', {name: 'Filters'});
+    opener.focus();
+    fireEvent.click(opener);
+
+    fireEvent.keyDown(await screen.findByRole('dialog'), {key: 'Escape'});
+
+    await waitFor(() => expect(opener).toHaveFocus());
   });
 
   it('should show Clear all button when draft filters are active', () => {
