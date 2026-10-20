@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useRef, useState} from 'react';
 import {
   COLORS,
   DURATION,
@@ -78,7 +78,9 @@ function getTabStyle(input: TabStyleInput): React.CSSProperties {
 /**
  * The in-depth vote page's question groups as tabs (InDepthVoteForm's tabbed layout), each in its
  * group's colour with its answers counted. A tab family of its own, so the lint rule's
- * no-adhoc-buttons exempts this file by name (#835).
+ * no-adhoc-buttons exempts this file by name (#835). It keeps TabList's keyboard contract: only
+ * the open tab is in the Tab order, and Left and Right move focus and selection, wrapping at the
+ * ends. Only the open tab names a panel, since the form renders only that one.
  */
 export function VoteGroupTabs<K extends string>({
   groups,
@@ -87,23 +89,39 @@ export function VoteGroupTabs<K extends string>({
   answeredByGroup,
 }: VoteGroupTabsProps<K>) {
   const [hoveredTab, setHoveredTab] = useState<K | null>(null);
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  function onKeyDown(e: React.KeyboardEvent, index: number) {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    e.preventDefault();
+    const dir = e.key === 'ArrowRight' ? 1 : -1;
+    const next = (index + dir + groups.length) % groups.length;
+    onTabChange(groups[next].key);
+    refs.current[next]?.focus();
+  }
 
   return (
     <div
       role="tablist"
       aria-label="Vote dimension groups"
       style={{display: 'flex', gap: SPACING.xs, width: '100%', marginBottom: SPACING.lg}}>
-      {groups.map(({key, label, accent}) => {
+      {groups.map(({key, label, accent}, i) => {
         const isActive = activeTab === key;
         const isHovered = hoveredTab === key && !isActive;
         const groupAnswered = answeredByGroup[key];
         return (
           <button
             key={key}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            type="button"
             role="tab"
             aria-selected={isActive}
-            aria-controls={`panel-${key}`}
+            aria-controls={isActive ? `panel-${key}` : undefined}
+            tabIndex={isActive ? 0 : -1}
             onClick={() => onTabChange(key)}
+            onKeyDown={(e) => onKeyDown(e, i)}
             onMouseEnter={() => setHoveredTab(key)}
             onMouseLeave={() => setHoveredTab(null)}
             style={getTabStyle({isActive, isHovered, accent})}>

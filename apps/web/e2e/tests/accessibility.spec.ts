@@ -103,11 +103,8 @@ test.describe('Accessibility — axe audits', () => {
     const modal = page.getByRole('dialog', {name: `${franchise} cards`, exact: true});
     // Until its fade ends, the dialog's text measures against a half-drawn panel.
     await expect(modal).toHaveCSS('opacity', '1', {timeout: 15000});
-    await modal
-      .getByTestId('card-tile')
-      .first()
-      .waitFor({timeout: 5000})
-      .catch(() => {});
+    // The audit is for the dialog's cards, so it waits for them rather than auditing without.
+    await expect(modal.getByTestId('card-tile').first()).toBeVisible({timeout: 10000});
 
     const results = await new AxeBuilder({page}).analyze();
     expect(results.violations).toEqual([]);

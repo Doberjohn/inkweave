@@ -162,9 +162,10 @@ describe('ConnectionGroup — card chips', () => {
     const group = singleRoleGroup();
     group.connections = [{...group.connections[0], explanation: '{A} shifts onto {B}.'}];
     render(<ConnectionGroup group={group} cardA={cardA} cardB={cardB} />);
-    // Both cards are Elsa, so each chip names its card in full.
-    expect(screen.getByText('Elsa - Concerned Sister')).toBeInTheDocument();
-    expect(screen.getByText('Elsa - Ice Artisan')).toBeInTheDocument();
+    // Both cards are Elsa, so each chip names its card in full, where screen readers reach it.
+    for (const name of ['Elsa - Concerned Sister', 'Elsa - Ice Artisan']) {
+      expect(screen.getByText(name).closest('[aria-hidden="true"]')).toBeNull();
+    }
     const letters = screen.getAllByText('E');
     expect(letters).toHaveLength(2);
     for (const letter of letters) expect(letter).toHaveAttribute('aria-hidden', 'true');
