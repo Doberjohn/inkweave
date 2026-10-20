@@ -50,6 +50,9 @@ WORKERS_ARG=${PRE_PUSH_E2E_WORKERS:+--workers=$PRE_PUSH_E2E_WORKERS}
 if [ "$IS_WINDOWS" = "1" ]; then
   powershell.exe -NoProfile -Command '$o = Get-CimInstance Win32_OperatingSystem; "pre-push: {0:N1} of {1:N1} GB commit free before E2E" -f ($o.FreeVirtualMemory / 1MB), ($o.TotalVirtualMemorySize / 1MB)' || true
 fi
+# Always the dev server (#869), where the console guard catches React's development-only errors,
+# even in a shell that set E2E_SERVER=preview to reproduce a CI failure.
+export E2E_SERVER=dev
 if [ "$IS_WINDOWS" = "1" ] && [ "${PRE_PUSH_FULL:-0}" != "1" ]; then
   pnpm --filter inkweave-web test:e2e --project chromium $WORKERS_ARG || exit $?
 else
