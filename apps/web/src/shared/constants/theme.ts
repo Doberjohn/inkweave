@@ -168,7 +168,7 @@ export const COLORS = {
   // Text
   text: '#e8e8e8',
   textMuted: '#90a1b9',
-  textDim: '#666680',
+  textDim: '#666680', // never text: 2.6-3.5:1 on our surfaces (inkweave/no-dim-text); borders, strokes, disabled, decoration
 
   // Semantic
   white: '#e8e8e8',
