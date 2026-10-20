@@ -1,9 +1,9 @@
-import {useState, type CSSProperties} from 'react';
+import {useState, type CSSProperties, type PointerEvent} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from '../cards/components/CardTile';
-import {PROMO_RARITY, smallImageUrl} from '../cards/loader';
-import {CollectionSlotCounts} from './CollectionSlotCounts';
-import type {CollectionEntry} from './collectionParser';
+import {PROMO_RARITY, isChaseRarity, smallImageUrl} from '../cards/loader';
+import {CollectionSlotCounts, type SlotCountsEditor} from './CollectionSlotCounts';
+import type {CollectionEntry, Finish} from './collectionParser';
 import {BinderSpread, PER_PAGE, PER_SPREAD} from '../cards/components/BinderSpread';
 import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/BinderSpreadMap';
 import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
@@ -58,6 +58,12 @@ interface CollectionBinderProps {
    * (owner, 2026-10-12). The map draws spreads, so a lone page keeps its arrows.
    */
   pager?: 'arrows' | 'map';
+  /**
+   * Change one finish's copies of a card (#826): a mouse pointing at a pocket opens its
+   * pills into steppers. Absent, the counts are read-only; a phone's lone page never
+   * takes it, since nothing points there (its counts change in the card window).
+   */
+  onCountChange?: (cardId: string, finish: Finish, count: number) => void;
 }
 
 /**
@@ -96,21 +102,58 @@ function mapSets(slots: readonly BinderSlot[]): MapSet[] {
 const promoLabel = ({setNumber, setCode, finish, artVariant}: OpenPocket) =>
   printingName({rarity: PROMO_RARITY, number: setNumber, promoGrouping: setCode, finish, artVariant});
 
+/**
+ * Whether a MOUSE rests on the element (#826). A touch or a pen never counts, so a tap on a
+ * phone or a tablet opens the card as it always has and never leaves its steppers open; nor
+ * do the mouse events iOS fires after a tap, which are no pointer events.
+ */
+function usePointedByMouse() {
+  const [pointed, setPointed] = useState(false);
+  return {
+    pointed,
+    pointerProps: {
+      onPointerEnter: (e: PointerEvent) => {
+        if (e.pointerType === 'mouse') setPointed(true);
+      },
+      onPointerLeave: () => setPointed(false),
+    },
+  };
+}
+
+/**
+ * The pocket's counts editor while a mouse points at it and its counts can change, else
+ * undefined: the pills open into steppers (`CollectionSlotCounts`).
+ */
+function pocketEditor(
+  card: LorcanaCard,
+  pointed: boolean,
+  onCountChange: CollectionBinderProps['onCountChange'],
+): SlotCountsEditor | undefined {
+  if (!pointed || onCountChange === undefined) return undefined;
+  return {
+    foilOnly: isChaseRarity(card.rarity),
+    onChange: (finish, count) => onCountChange(card.id, finish, count),
+  };
+}
+
 /** One position in the binder: the card, greyed while you hold none, and its counts. */
 function CardPocket({
   card,
   counts,
   onSelect,
   tabIndex,
+  onCountChange,
 }: {
   card: LorcanaCard;
   counts: CollectionEntry;
   onSelect: (card: LorcanaCard) => void;
   /** The pocket's place in the Tab order, from `BinderSpread`: one pocket in view is a Tab stop. */
   tabIndex: number;
+  onCountChange: CollectionBinderProps['onCountChange'];
 }) {
+  const {pointed, pointerProps} = usePointedByMouse();
   return (
-    <div style={{position: 'relative', height: '100%'}}>
+    <div style={{position: 'relative', height: '100%'}} {...pointerProps}>
       {/*
         The unowned treatment greys ONLY the art: `.binder-unowned` (index.css)
         filters the tile's CHILDREN. On the slot it would grey the counts too, and
@@ -127,7 +170,7 @@ function CardPocket({
           tabIndex={tabIndex}
         />
       </div>
-      <CollectionSlotCounts counts={counts} />
+      <CollectionSlotCounts counts={counts} editor={pocketEditor(card, pointed, onCountChange)} />
     </div>
   );
 }
@@ -222,6 +265,7 @@ export function CollectionBinder({
   onSelect,
   single = false,
   pager = 'arrows',
+  onCountChange,
 }: CollectionBinderProps) {
   const {perView, lead} = single ? PAGES : SPREADS;
   // Held as the first SLOT in view, not a view number, so crossing the phone
@@ -262,7 +306,15 @@ export function CollectionBinder({
         const slot = slots[index];
         if (!slot) return null;
         if (isOpenPocket(slot)) return <OpenPocketView pocket={slot} />;
-        return <CardPocket card={slot} counts={countsFor(slot.id)} onSelect={onSelect} tabIndex={tabIndex} />;
+        return (
+          <CardPocket
+            card={slot}
+            counts={countsFor(slot.id)}
+            onSelect={onSelect}
+            tabIndex={tabIndex}
+            onCountChange={single ? undefined : onCountChange}
+          />
+        );
       }}
     />
   );

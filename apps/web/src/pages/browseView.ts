@@ -13,7 +13,6 @@ import {
   PROMO_RARITY,
   type CardFilterOptions,
 } from '../features/cards/loader';
-import type {BinderShow} from '../features/collection/binderCards';
 import type {BrowseCollectionSlots} from '../features/collection/useBrowseCollection';
 import type {CardTypeFilter} from '../shared/constants';
 import type {useFilterParams} from '../shared/hooks';
@@ -27,7 +26,7 @@ type ListParams = Pick<
 /** What Browse's listing asks of collection mode. */
 type ViewCollection = Pick<
   BrowseCollectionSlots,
-  'active' | 'pool' | 'show' | 'owns' | 'rarityOptions'
+  'active' | 'pool' | 'show' | 'owns' | 'kept' | 'rarityOptions'
 >;
 
 function buildCombinedFilters(
@@ -102,11 +101,18 @@ function withPromoTiles(cards: LorcanaCard[], rarities: string[] | undefined): L
  * What the binder shows (owner, 2026-10-12): every card, or only those you hold a copy
  * of, or only those you hold none of. Applied here, after the loader's filters, because
  * it asks the collection, which the loader cannot see.
+ *
+ * A card changed by hand in this view stays in it (`kept`, #826, owner 2026-10-20): a first
+ * copy would otherwise take a card out of Missing, and the binder back to its first spread.
+ * The other filters still apply to it, having run first.
  */
-function byOwnership(cards: LorcanaCard[], show: BinderShow, owns: (cardId: string) => boolean) {
+function byOwnership(
+  cards: LorcanaCard[],
+  {show, owns, kept}: Pick<ViewCollection, 'show' | 'owns' | 'kept'>,
+) {
   if (show === 'all') return cards;
   const wantOwned = show === 'owned';
-  return cards.filter((card) => owns(card.id) === wantOwned);
+  return cards.filter((card) => kept.has(card.id) || owns(card.id) === wantOwned);
 }
 
 /**
@@ -156,7 +162,7 @@ export function browseView(
   return {
     rarities: rarityOptions(collection, pool),
     binderOptions: binderOptions(binderShows, pool),
-    sortedCards: collection?.active ? byOwnership(sorted, collection.show, collection.owns) : sorted,
+    sortedCards: collection?.active ? byOwnership(sorted, collection) : sorted,
     matchedCards: sorted,
     filtered: narrowsList(params, filters),
   };

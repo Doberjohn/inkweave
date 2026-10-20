@@ -138,8 +138,11 @@ function shownRarity(card: LorcanaCard, printingId: string | null): string | und
  * Not until the account's copy has answered (`syncing`): an edit made before then would be
  * built on this browser's copy, and its upload would replace counts saved from another device
  * that the read was about to bring in. The binder waits the same way, behind its skeleton.
+ *
+ * `onEdit` hears of each card whose count is set here: the binder behind the window keeps
+ * that card in its Owned or Missing view (#826, owner 2026-10-20; `useKeptCards`).
  */
-export function WindowCopies() {
+export function WindowCopies({onEdit}: {onEdit: (cardId: string) => void}) {
   const {slot, shownPrintingId} = useCardWindowSlot();
   const {selectedCardId, resolveCard} = useCardModal();
   const {getCardById} = useCardDataContext();
@@ -159,7 +162,10 @@ export function WindowCopies() {
       counts={entries[printingId] ?? NO_COPIES}
       cardName={card.fullName}
       foilOnly={isChaseRarity(rarity) ? rarity : undefined}
-      onChange={(finish, count) => setCount(printingId, finish, count)}
+      onChange={(finish, count) => {
+        setCount(printingId, finish, count);
+        onEdit(printingId);
+      }}
     />,
     slot,
   );

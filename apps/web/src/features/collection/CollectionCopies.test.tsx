@@ -53,10 +53,10 @@ vi.mock('../../shared/contexts/CardDataContext', () => ({
  * Browse's side, with the window open on Elsa: the block lands in the window's slot once the
  * account's copy has answered.
  */
-async function renderInWindow() {
+async function renderInWindow(onEdit: (cardId: string) => void = vi.fn()) {
   render(
     <CollectionProvider>
-      <WindowCopies />
+      <WindowCopies onEdit={onEdit} />
     </CollectionProvider>,
   );
   await act(async () => {});
@@ -81,14 +81,17 @@ describe('CollectionCopies', () => {
     expect(within(copies).getByRole('group', {name: 'Foil'})).toHaveTextContent('0');
   });
 
-  it("adds a copy with its finish's +, kept in the collection", async () => {
+  it("adds a copy with its finish's +, kept in the collection, and tells Browse which card changed", async () => {
     const user = userEvent.setup();
-    const view = await renderInWindow();
+    const onEdit = vi.fn();
+    const view = await renderInWindow(onEdit);
 
     await user.click(view.getByRole('button', {name: 'Add one copy of foil Elsa - Snow Queen'}));
 
     expect(view.getByRole('group', {name: 'Foil'})).toHaveTextContent('1');
     expect(JSON.parse(localStorage.getItem('inkweave:collection')!).entries.elsa).toEqual({normal: 2, foil: 1});
+    // So the binder behind the window keeps the card in its Owned or Missing view.
+    expect(onEdit).toHaveBeenCalledWith('elsa');
   });
 
   it('greys a − at 0, which then changes nothing', async () => {

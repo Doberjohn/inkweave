@@ -66,11 +66,30 @@ const PARCHMENT = '/art/backgrounds/binder.webp';
 const COVER_BOARD = '/art/backgrounds/binder-cover.webp';
 
 /**
- * A page. Both axes are `minmax(0, 1fr)`, so the grid claims exactly the box it
- * is given and each slot fits the card aspect INSIDE its cell — the layout sizes
- * itself from the space it has rather than from a fixed card width.
+ * A spread page's column: one card's width, spelled out from the page's own height.
+ * The page is as tall as the box around the pages (`PAGES_BOX`, a size container), so
+ * `100cqh` is the page: less its padding and row gaps, a third of it is a card's
+ * height, and the card's aspect turns that into its width.
  *
- * `minmax(0, 1fr)` is load-bearing on both axes, not stylistic. A bare `1fr` is
+ * EXPLICIT BECAUSE WEBKIT WILL NOT DERIVE IT (#826). A page hugs its cards, and each
+ * card takes its width from its row's height (`slotStyle`). Chromium carries that ratio
+ * into sizing the columns; WebKit sizes the columns before it knows the rows, gets no
+ * width from a card (a tile is an inline-size container, so it counts as 0), and drew
+ * every page 48px wide, its padding and gaps alone, with each row's cards piled on one
+ * another: measured at 1280x720, against Chromium's 304px. Spelled out, the columns are
+ * the same in both.
+ */
+const PAGE_CHROME_HEIGHT = 2 * SPACING.md + (PAGE_ROWS - 1) * SPACING.sm;
+const SPREAD_COLUMN = `calc((100cqh - ${PAGE_CHROME_HEIGHT}px) / ${PAGE_ROWS} * ${CARD_ASPECT})`;
+
+/**
+ * A page. The rows are `minmax(0, 1fr)`, so the grid claims exactly the height it is
+ * given and each slot fits the card aspect INSIDE its row: the layout sizes itself
+ * from the space it has rather than from a fixed card width. A spread page's columns
+ * are that card's width (`SPREAD_COLUMN`); a lone page's are `minmax(0, 1fr)` of the
+ * width it is given (`singlePageStyle`).
+ *
+ * `minmax(0, 1fr)` is load-bearing where it is used, not stylistic. A bare `1fr` is
  * `minmax(auto, 1fr)`, whose auto floor is the item's min-content size, so tracks
  * refuse to shrink: measured, three 249px cards overflowed a 561px page instead
  * of sizing down to fit it.
@@ -81,7 +100,8 @@ const COVER_BOARD = '/art/backgrounds/binder-cover.webp';
  * 2560x1440 and 588px at 1400x1400. Nobody noticed while the pager was a row
  * underneath, because the casualty was a clipped card edge; the moment the page
  * arrows moved beside the spread the casualty became the navigation itself,
- * pushed off-screen. `minmax(0, 1fr)` on the columns is what bounds it.
+ * pushed off-screen. The height cap (`spreadMaxHeight`) is what bounds it: the
+ * columns follow the page's height, and the cap keeps that height to what fits.
  */
 function pageStyle(side: 'left' | 'right', cover = false): CSSProperties {
   return {
@@ -99,7 +119,7 @@ function pageStyle(side: 'left' | 'right', cover = false): CSSProperties {
     // such dependency — the width is derived from a definite row height and is
     // identical at zero images loaded and at twenty-four.
     display: 'grid',
-    gridTemplateColumns: `repeat(${PAGE_COLUMNS}, minmax(0, 1fr))`,
+    gridTemplateColumns: `repeat(${PAGE_COLUMNS}, ${SPREAD_COLUMN})`,
     gridTemplateRows: `repeat(${PAGE_ROWS}, minmax(0, 1fr))`,
     gap: SPACING.sm,
     padding: SPACING.md,
@@ -192,6 +212,9 @@ const singlePageStyle: CSSProperties = {
   flex: '1 1 0',
   minWidth: 0,
   height: 'auto',
+  // The width it is given, not a spread's height-drawn columns: a lone page sits in
+  // no size container, where `100cqh` would read the viewport's height.
+  gridTemplateColumns: `repeat(${PAGE_COLUMNS}, minmax(0, 1fr))`,
   gridTemplateRows: 'repeat(3, auto)',
 };
 
@@ -405,7 +428,15 @@ function Pages({start, renderSlot, cardCount}: Pick<ViewProps, 'start' | 'render
  * content inside a box that never changed. Since #790 the first cap comes before the
  * first paint (see `useRowWidth`), but one after a resize still lands a frame late.
  */
-const PAGES_BOX: CSSProperties = {minWidth: 0, display: 'flex', alignItems: 'stretch', justifyContent: 'center'};
+const PAGES_BOX: CSSProperties = {
+  minWidth: 0,
+  display: 'flex',
+  alignItems: 'stretch',
+  justifyContent: 'center',
+  // A size container, so a spread page can read its own height (`SPREAD_COLUMN`). Safe
+  // because nothing inside sizes this box: the row's flex, its height and the cap do.
+  containerType: 'size',
+};
 
 /** An element's content-box width: what a ResizeObserver reports for it. */
 function contentWidth(el: HTMLElement): number {
