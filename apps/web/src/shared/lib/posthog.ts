@@ -48,8 +48,10 @@ export function loadPostHog(): Promise<PostHogApi | null> {
       (sdk) => sdk.startPostHog(key, reportToSentry),
       () => null,
     )
-    // The wrapper can still resolve undefined, for a failure it saw first.
-    .then((api) => (api ? onPostHogLoaded(api) : stop()), stop);
+    // The wrapper can still resolve undefined, for a failure it saw first. No rejection handler
+    // here: nothing above rejects, and one here would also catch a failed import in tests, where
+    // nothing folds, so they could not tell whether the handler above is there.
+    .then((api) => (api ? onPostHogLoaded(api) : stop()));
   return loading;
 }
 
