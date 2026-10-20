@@ -87,4 +87,28 @@ test.describe('Playstyle Pages', () => {
       await expect(page).toHaveURL('/', {timeout: 10000});
     }
   });
+
+  // The gallery is the one page whose header has a search field (desktop only).
+  test('the header search opens a card window from the keyboard, staying on the gallery', async ({page}) => {
+    await page.goto('/playstyles');
+    const search = page.getByTestId('header-search');
+    await search.pressSequentially('Elsa', {delay: 50});
+    const option = page.getByRole('listbox').getByRole('option').first();
+    await expect(option).toBeVisible();
+    const name = (await option.locator('mark').locator('xpath=..').textContent()) ?? '';
+
+    await search.press('ArrowDown');
+    await expect(option).toHaveAttribute('aria-selected', 'true');
+    await search.press('Enter');
+    await expect(page.getByRole('dialog', {name: `${name} synergies`})).toBeVisible();
+    await expect(page).toHaveURL(/\/playstyles$/);
+  });
+
+  test('Enter in the header search goes to Browse with the query', async ({page}) => {
+    await page.goto('/playstyles');
+    const search = page.getByTestId('header-search');
+    await search.fill('Elsa');
+    await search.press('Enter');
+    await expect(page).toHaveURL(/\/browse\?q=Elsa$/);
+  });
 });

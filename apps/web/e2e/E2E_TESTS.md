@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-182 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+187 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts` and the reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -120,7 +120,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should clear selection by closing the modal | ✕ button closes the modal; hero reachable, URL stays `/` |
 | should close the modal when the backdrop is clicked | Backdrop click closes the modal; hero reachable, URL stays `/` |
 
-## `mobile.spec.ts` — 16 tests (mobile only)
+## `mobile.spec.ts` — 19 tests (mobile only)
 
 | Test | What it verifies |
 |---|---|
@@ -134,6 +134,9 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | a search tap that beats the sheet chunk opens it, with a proxy input holding focus | With the lazy sheet's module held (#640), a Search tap focuses AppLayout's hidden proxy input (what raises the iOS keyboard); once released, the sheet opens. The navigation waits for DOMContentLoaded, not `load` (see Patterns) |
 | should close search bottom sheet on backdrop click | Open search sheet, click backdrop, sheet dismisses, focus returns to the Search nav button (not the hidden iOS proxy input) |
 | should navigate to browse when pressing Enter in search bottom sheet | Type query in search sheet, press Enter, navigates to `/browse?q=Elsa`, sheet stays closed (the Enter must not also click the refocused Search button) |
+| the search sheet shows highlighted results, and a picked one opens its card window | Types "Elsa" in the sheet and waits out its 150ms debounce, which the Enter test above never does: "N results" shows and the first row's match is a `<mark>` reading "Elsa". Picking the row (it picks on mousedown) opens the card window named "<that card> synergies" |
+| a picked result comes back as a recent search that searches again | Picks the first "Elsa" result, closes the card window and reopens the sheet: the card's full name is a button under "Recent", and pressing it fills the field with that name and lists that card first |
+| Clear search empties the field, and Clear removes the recent searches | With one recent search seeded in `localStorage['inkweave-recent-searches']`, "Mickey" shows results; "Clear search" (the field's ×) empties the field and brings the recent search back; "Clear" shows "Search for a card to see its synergies" and removes the key |
 | should show sort dropdown in browse toolbar | Sort select and Filters button both visible in browse toolbar |
 | should lock background scroll when filter drawer is open | Opening filter drawer sets body overflow to hidden |
 | should open filter drawer in mobile browsing view | From browsing view, tap Filters button, drawer shows Amber/Sapphire/Steel ink buttons |
@@ -141,7 +144,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should close the overview modal via backdrop tap | Backdrop tap dismisses the modal on mobile |
 | should open and dismiss the Mechanics bottom sheet on a playstyle page | Mechanics button opens the `Mechanics filter` sheet; backdrop tap dismisses it |
 
-## `playstyle-pages.spec.ts` — 5 tests (desktop only)
+## `playstyle-pages.spec.ts` — 7 tests (desktop only)
 
 | Test | What it verifies |
 |---|---|
@@ -150,6 +153,8 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | should navigate to playstyle detail page | Clicking a playstyle card navigates to `/playstyles/:id`, shows heading |
 | should deep link to playstyle detail page | Direct navigation to `/playstyles/lore-denial` shows heading + card tiles |
 | should navigate back from playstyle detail to gallery | Back link from detail returns to `/playstyles` (or logo to `/`) |
+| the header search opens a card window from the keyboard, staying on the gallery | On `/playstyles`, the one page whose header has a search field: typing "Elsa" lists suggestions, ArrowDown marks the first `aria-selected`, Enter opens its card window (named after it) and the URL stays `/playstyles` |
+| Enter in the header search goes to Browse with the query | On `/playstyles`, "Elsa" then Enter with nothing highlighted goes to `/browse?q=Elsa` |
 
 ## `account-header.spec.ts` — 4 tests (3 desktop only)
 
