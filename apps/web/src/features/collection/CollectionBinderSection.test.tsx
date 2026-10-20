@@ -63,6 +63,8 @@ function section(
         onSetChange={vi.fn()}
         show="all"
         onShowChange={vi.fn()}
+        axis="complete"
+        onAxisChange={vi.fn()}
       />
     </MemoryRouter>
   );

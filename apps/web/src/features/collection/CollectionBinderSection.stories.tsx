@@ -55,6 +55,8 @@ const meta: Meta<typeof CollectionBinderSection> = {
     onSetChange: fn(),
     show: 'all',
     onShowChange: fn(),
+    axis: 'complete',
+    onAxisChange: fn(),
     onCardSelect: fn(),
   },
 };
