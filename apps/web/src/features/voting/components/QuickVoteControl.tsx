@@ -1,6 +1,6 @@
 import {useState, useEffect, useId} from 'react';
 import Skeleton from 'react-loading-skeleton';
-import {COLORS, EASING, FONT_SIZES, FONTS, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, RADIUS, SPACING} from '../../../shared/constants';
 import {useResponsive} from '../../../shared/hooks';
 import type {AccuracyDistribution} from '../../../shared/lib/supabase';
 import type {QuickVoteError, QuickVoteState, Accuracy} from '../hooks/useQuickVote';
@@ -79,8 +79,8 @@ const CHOICE_COLORS: Record<
 const VOTES = [-1, 0, 1] as const;
 
 const CONTAINER_STYLE: React.CSSProperties = {
-  background: 'rgba(212, 175, 55, 0.06)',
-  border: '1px solid rgba(212, 175, 55, 0.18)',
+  background: GOLD_GLOW.hoverBg,
+  border: `1px solid ${GOLD_GLOW.activeBg}`,
   borderRadius: 10,
   padding: '16px 20px',
   display: 'flex',
@@ -382,7 +382,7 @@ function DashedDivider() {
       aria-hidden="true"
       style={{
         border: 'none',
-        borderTop: `1px dashed rgba(212, 175, 55, 0.18)`,
+        borderTop: `1px dashed ${GOLD_GLOW.activeBg}`,
         margin: 0,
       }}
     />
@@ -429,7 +429,7 @@ function PromptOrResult({state, onVote, userChoice, error, isMobile, isResult, i
   if (isResult) {
     return (
       <VoteAffirmation
-        accentColor={COLORS.primary500}
+        accentColor={COLORS.primary}
         title="Thanks for your quick vote"
         detail={userChoice != null ? `You picked: ${CHOICE_LABELS[userChoice]}` : undefined}
       />

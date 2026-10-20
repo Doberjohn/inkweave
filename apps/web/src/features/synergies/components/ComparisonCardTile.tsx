@@ -1,5 +1,5 @@
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, INK_COLORS, RADIUS, blackRgba, hexRgba} from '../../../shared/constants';
+import {COLORS, GOLD_GLOW, INK_COLORS, RADIUS, blackRgba, hexRgba} from '../../../shared/constants';
 
 interface ComparisonCardTileProps {
   card: LorcanaCard;
@@ -74,8 +74,8 @@ const MAGNIFY_HINT_STYLE: React.CSSProperties = {
   height: 22,
   borderRadius: '50%',
   background: hexRgba(COLORS.background, 0.85),
-  color: COLORS.primary500,
-  border: `1px solid ${hexRgba(COLORS.primary500, 0.4)}`,
+  color: COLORS.primary,
+  border: `1px solid ${GOLD_GLOW.activeBorder}`,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
