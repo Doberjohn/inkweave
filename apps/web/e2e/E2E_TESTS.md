@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-189 tests across 24 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+196 tests across 24 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts` and the reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -33,7 +33,7 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should show featured cards after loading | Featured cards grid has 1-12 card tiles |
 | should open the overview modal when a card is selected | Clicking a featured card opens the modal overlay-style; URL stays `/`, no compact header |
 
-## `card-detail.spec.ts` — 15 tests (10 desktop only, 3 on every project at a 390px viewport, 2 on every project at any viewport)
+## `card-detail.spec.ts` — 17 tests (10 desktop only, 3 on every project at a 390px viewport, 2 on every project at a 1024×768 touch viewport, 2 on every project at any viewport)
 
 Two surfaces: the crawlable `/card/:id` **page** (#486 — renders, not-found, empty state; slug URLs `/card/:id/:slug` with the id as the lookup key and the slug decorative, #498) and the
 CardOverviewModal opened from a tile (render, close, empty, scroll lock, show-all, sibling nav). The
@@ -43,6 +43,10 @@ is a real page now, not a modal shortcut.
 The page's mobile-layout tests (the #631 overflow guard, the × back flow) force a 390px viewport with
 `setViewportSize` instead of skipping `mobile-*`: `isMobile` is width-based, so they render the mobile
 layout on every project and also run in the chromium-only Windows pre-push.
+
+The touch-screen tests run on every project at 1024×768 with `hasTouch` (`test.use`) and press tiles with
+`tap()`: no project is a tablet otherwise (the desktop ones have no touch, the phone ones are under 768px),
+which is how synergy tiles came to ignore every tap at 768px and wider without a test noticing.
 
 | Test | What it verifies |
 |---|---|
@@ -61,6 +65,8 @@ layout on every project and also run in the chromium-only Windows pre-push.
 | × on a card page reached by the /compare/X/X redirect opens Browse | At 390px, `/compare/2095/2095` redirects (a replace, so a new location key) to `/card/2095`; × still counts it as the page the visit started on and navigates to `/browse`. Without #653's `history.state.idx` check it stepped back to `about:blank`, out of the site |
 | keeps the footer out until the card and its synergies have loaded | `/card/2095` with `allCards.json` and its synergy file held: under the loading skeleton there is no `footer[aria-label="Site footer"]`; with the cards released, the card renders (its `<Seo>` title is set) and there is still no footer; with the synergies released, the footer is attached. Rendered under the loading page, the footer was pushed past the fold as the content arrived, which was the card page's whole layout shift (#532) |
 | shows the synergy skeleton, not the empty notice, until the synergies load | `/card/2095` with its synergy file held: the synergy column shows its skeleton (`synergy-results-loading`) and no "No synergies found for this card" notice; with the file released, the ramp group renders and neither the skeleton nor the notice remains. The empty list during the load used to render the notice on every card page, so a card with synergies flashed "No synergies found" first |
+| a tap on a synergy tile opens its card page | At 1024×768 with touch, `/card/2095`: `tap()` on the first tile of a "Synergy cards" list navigates to that tile's `/card/<data-card-id>/` page. SynergyCard used to drop any click within 1 s of a touchstart when `isMobile` was false, and a tap's own click always lands inside that second (#843) |
+| a tap on a synergy tile in the card window opens the comparison | At 1024×768 with touch, the modal opened on card 2095 via `openCardOverview`: `tap()` on its first tile switches it to `data-mode="comparison"`, the same path a mouse click takes |
 
 ## `card-printings.spec.ts`: 5 tests (4 desktop only, 1 on every project at a 360px viewport)
 
@@ -134,7 +140,7 @@ Every other spec sets Browse's filters through the URL. These press the filter b
 | should clear selection by closing the modal | ✕ button closes the modal; hero reachable, URL stays `/` |
 | should close the modal when the backdrop is clicked | Backdrop click closes the modal; hero reachable, URL stays `/` |
 
-## `mobile.spec.ts` — 16 tests (mobile only)
+## `mobile.spec.ts` — 19 tests (mobile only)
 
 | Test | What it verifies |
 |---|---|
@@ -148,6 +154,9 @@ Every other spec sets Browse's filters through the URL. These press the filter b
 | a search tap that beats the sheet chunk opens it, with a proxy input holding focus | With the lazy sheet's module held (#640), a Search tap focuses AppLayout's hidden proxy input (what raises the iOS keyboard); once released, the sheet opens. The navigation waits for DOMContentLoaded, not `load` (see Patterns) |
 | should close search bottom sheet on backdrop click | Open search sheet, click backdrop, sheet dismisses, focus returns to the Search nav button (not the hidden iOS proxy input) |
 | should navigate to browse when pressing Enter in search bottom sheet | Type query in search sheet, press Enter, navigates to `/browse?q=Elsa`, sheet stays closed (the Enter must not also click the refocused Search button) |
+| the search sheet shows highlighted results, and a picked one opens its card window | Types "Elsa" in the sheet and waits out its 150ms debounce, which the Enter test above never does: "N results" shows and the first row's match is a `<mark>` reading "Elsa". Picking the row (it picks on mousedown) opens the card window named "<that card> synergies" |
+| a picked result comes back as a recent search that searches again | Picks the first "Elsa" result, closes the card window and reopens the sheet: the card's full name is a button under "Recent", and pressing it fills the field with that name and lists that card first |
+| Clear search empties the field, and Clear removes the recent searches | With one recent search seeded in `localStorage['inkweave-recent-searches']`, "Mickey" shows results; "Clear search" (the field's ×) empties the field and brings the recent search back; "Clear" shows "Search for a card to see its synergies" and removes the key |
 | should show sort dropdown in browse toolbar | Sort select and Filters button both visible in browse toolbar |
 | should lock background scroll when filter drawer is open | Opening filter drawer sets body overflow to hidden |
 | should open filter drawer in mobile browsing view | From browsing view, tap Filters button, drawer shows Amber/Sapphire/Steel ink buttons |
@@ -155,7 +164,7 @@ Every other spec sets Browse's filters through the URL. These press the filter b
 | should close the overview modal via backdrop tap | Backdrop tap dismisses the modal on mobile |
 | should open and dismiss the Mechanics bottom sheet on a playstyle page | Mechanics button opens the `Mechanics filter` sheet; backdrop tap dismisses it |
 
-## `playstyle-pages.spec.ts` — 5 tests (desktop only)
+## `playstyle-pages.spec.ts` — 7 tests (desktop only)
 
 | Test | What it verifies |
 |---|---|
@@ -164,6 +173,8 @@ Every other spec sets Browse's filters through the URL. These press the filter b
 | should navigate to playstyle detail page | Clicking a playstyle card navigates to `/playstyles/:id`, shows heading |
 | should deep link to playstyle detail page | Direct navigation to `/playstyles/lore-denial` shows heading + card tiles |
 | should navigate back from playstyle detail to gallery | Back link from detail returns to `/playstyles` (or logo to `/`) |
+| the header search opens a card window from the keyboard, staying on the gallery | On `/playstyles`, the one page whose header has a search field: typing "Elsa" lists suggestions, ArrowDown marks the first `aria-selected`, Enter opens its card window (named after it) and the URL stays `/playstyles` |
+| Enter in the header search goes to Browse with the query | On `/playstyles`, "Elsa" then Enter with nothing highlighted goes to `/browse?q=Elsa` |
 
 ## `account-header.spec.ts` — 4 tests (3 desktop only)
 
