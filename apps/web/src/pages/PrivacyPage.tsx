@@ -9,7 +9,7 @@ const DESCRIPTION =
 export function PrivacyPage() {
   return (
     <LegalPage title="Privacy Policy" description={DESCRIPTION}>
-      <p style={{marginTop: 0, color: COLORS.textMuted}}>Last updated: 9 July 2026</p>
+      <p style={{marginTop: 0, color: COLORS.textMuted}}>Last updated: 20 October 2026</p>
 
       <p>
         I built Inkweave as a free fan project, and I collect as little as possible. You can browse cards,
@@ -26,10 +26,12 @@ export function PrivacyPage() {
           address, and the hash can&rsquo;t be reversed back into it.
         </li>
         <li>
-          <strong>Analytics.</strong> I use Vercel Web Analytics and Speed Insights to see which pages and
-          features get used and to measure performance. They&rsquo;re cookieless and aren&rsquo;t tied to any
-          account. I record events like which cards and playstyles are opened, and the text typed into the
-          search box.
+          <strong>Analytics.</strong> I use PostHog and Vercel Web Analytics to see which pages and features
+          get used and how people move through the site, and Speed Insights to measure performance. None of
+          them uses cookies or ties anything to an account. PostHog recognises a visit by a one-way hash of
+          your IP address and browser that changes every day, and doesn&rsquo;t keep the IP address itself, so it
+          can&rsquo;t follow you from one day to the next. I record the pages you open and what you click, events
+          like which cards and playstyles are opened, and the text typed into the search box.
         </li>
         <li>
           <strong>Error reports.</strong> When something breaks, I use Sentry to collect a diagnostic report
@@ -54,8 +56,9 @@ export function PrivacyPage() {
 
       <h2 style={legalH2Style}>Where my data lives</h2>
       <p>
-        Everything I store is in the EU: votes and any account data are in Supabase (Frankfurt, Germany), and
-        error reports go to Sentry in the EU. Inkweave is hosted on Vercel and served from its Frankfurt
+        Everything I store is in the EU: votes and any account data are in Supabase (Frankfurt, Germany),
+        analytics events go to PostHog&rsquo;s EU cloud (Frankfurt, Germany), and error reports go to Sentry in
+        the EU. Inkweave is hosted on Vercel and served from its Frankfurt
         region. Card images and fonts come from Inkweave&rsquo;s own servers. If you sign in with Google or
         Discord, that sign-in also involves those providers under their own privacy policies.
       </p>
@@ -82,8 +85,8 @@ export function PrivacyPage() {
       <h2 style={legalH2Style}>Who I share data with</h2>
       <p>
         I don&rsquo;t sell your data. I rely on a few providers to run Inkweave: Vercel (hosting and
-        analytics), Supabase (database and sign-in), Sentry (error reports), and Google or Discord (only if you
-        choose to sign in). That&rsquo;s it.
+        analytics), PostHog (analytics), Supabase (database and sign-in), Sentry (error reports), and Google or
+        Discord (only if you choose to sign in). That&rsquo;s it.
       </p>
 
       <h2 style={legalH2Style}>Changes</h2>

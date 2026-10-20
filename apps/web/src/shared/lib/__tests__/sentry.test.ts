@@ -1,4 +1,5 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
+import type {SentryApi} from '../sentry';
 
 // The SDK as the app sees it. Tests of a broken SDK register their own mock instead.
 const sentryMock = () => ({
@@ -29,6 +30,8 @@ afterEach(() => {
   vi.unstubAllEnvs();
   vi.useRealTimers();
   vi.restoreAllMocks();
+  // resetModules keeps registered mocks, so a test that replaced the client must remove it.
+  vi.doUnmock('../sentryClient');
   delete window.__INKWEAVE_PRERENDER__;
 });
 
@@ -99,31 +102,39 @@ describe('sentry', () => {
   it.each([
     [
       'the import fails',
+      '@sentry/react',
       () => {
         throw new Error('blocked by an extension');
       },
     ],
     [
-      // What production sees: main.tsx cancels Vite's preload error, so the import resolves empty.
-      'init throws on an empty module',
+      'Sentry.init throws',
+      '@sentry/react',
       () => ({
-        browserTracingIntegration: vi.fn(),
+        ...sentryMock(),
         init: () => {
-          throw new TypeError("Cannot read properties of undefined (reading 'init')");
+          throw new Error('init broke');
         },
       }),
     ],
-  ])('resolves to null and drops waiting callbacks when %s', async (_label, brokenSdk) => {
+    // What the loader gets when a failure reaches Vite's preload wrapper, as every failed download
+    // did before #838: production builds move the import's first `.then` into the wrapper, which
+    // fires vite:preloadError (main.tsx cancels it to reload) and resolves undefined.
+    ['the load resolves empty', '../sentryClient', () => ({startSentry: () => undefined})],
+  ])('resolves to null and drops waiting callbacks when %s', async (_label, mocked, broken) => {
     vi.resetModules();
-    vi.doMock('@sentry/react', brokenSdk);
+    vi.doMock(mocked, broken);
     const {loadSentry, onSentryReady} = await import('../sentry');
-    const callback = vi.fn();
+    // Uses the API, as supabase.ts's callback does, so it throws when handed anything else.
+    const waiting = vi.fn((sentry: SentryApi) => sentry.addSupabaseIntegration({}));
+    const later = vi.fn();
 
-    onSentryReady(callback);
+    onSentryReady(waiting);
     await expect(loadSentry()).resolves.toBeNull();
-    onSentryReady(callback);
+    onSentryReady(later);
 
-    expect(callback).not.toHaveBeenCalled();
+    expect(waiting).not.toHaveBeenCalled();
+    expect(later).not.toHaveBeenCalled();
   });
 
   it('sends a throwing ready callback to Sentry instead of into its caller', async () => {

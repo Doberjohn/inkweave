@@ -1,5 +1,6 @@
 import {track} from '@vercel/analytics';
 import type {CardType, Ink} from 'inkweave-synergy-engine';
+import {capturePostHog} from './posthog';
 
 /**
  * The typed event catalog. Every custom analytics event the app sends is declared
@@ -7,6 +8,8 @@ import type {CardType, Ink} from 'inkweave-synergy-engine';
  * properties per custom event (plain Pro caps at 2), so each shape stays <= 8 props.
  * Vercel constraints: values must be string | number | boolean | null (no nested
  * objects/arrays), and every event name, key, and value must be <= 255 chars.
+ * Every event goes to PostHog too (#827), which allows more, but Vercel's limits
+ * bind each shape while both run.
  */
 type AnalyticsEvents = {
   reveal_card_click: {
@@ -75,13 +78,16 @@ type AnalyticsEvents = {
 };
 
 /**
- * Fire-and-forget custom event. The generic constraint makes a wrong event name or
- * prop shape a compile error, not a silently-broken event. No-ops in dev (Vercel
- * logs instead of sending); only collects in production with <Analytics/> mounted.
+ * Fire-and-forget custom event, sent to Vercel Web Analytics and PostHog. The generic
+ * constraint makes a wrong event name or prop shape a compile error, not a
+ * silently-broken event. No-ops in dev (Vercel logs instead of sending, PostHog never
+ * loads). Vercel collects only in production with <Analytics/> mounted; PostHog only in
+ * production builds with a key, once it has loaded (shared/lib/posthog.ts).
  */
 export function trackEvent<E extends keyof AnalyticsEvents>(
   name: E,
   props: AnalyticsEvents[E],
 ): void {
   track(name, props);
+  capturePostHog(name, props);
 }

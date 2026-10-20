@@ -1,14 +1,7 @@
+import type {SentryApi} from './sentryClient';
 import {whenLoadedAndIdle} from './whenLoadedAndIdle';
 
-type SentryModule = typeof import('@sentry/react');
-
-/** The part of Sentry the app calls, once it has loaded. */
-export interface SentryApi {
-  captureException: SentryModule['captureException'];
-  startSpan: SentryModule['startSpan'];
-  /** Instruments the SupabaseClient class, so it covers clients created before or after. */
-  addSupabaseIntegration(supabaseClient: unknown): void;
-}
+export type {SentryApi};
 
 /*
  * Sentry, kept off the critical path (#640). It loads after `load` and an idle callback, or at
@@ -33,27 +26,23 @@ export function loadSentry(): Promise<SentryApi | null> {
   // Literal env checks, so builds without a DSN drop the import below entirely.
   if (!import.meta.env.PROD || !import.meta.env.VITE_SENTRY_DSN) return Promise.resolve(null);
   if (isPrerenderCrawl()) return Promise.resolve(null);
-  loading ??= import('@sentry/react')
-    // Read the module only as `Sentry.<name>` inside this callback, and never pass `Sentry` on:
-    // Rolldown drops the exports a dynamic import never names, but once the namespace escapes it
-    // ships all of @sentry/react, Replay and Feedback included (55 kB gzip became 147 kB).
-    .then((Sentry): SentryApi => {
-      Sentry.init(sentryOptions(Sentry.browserTracingIntegration()));
-      return {
-        captureException: Sentry.captureException,
-        startSpan: Sentry.startSpan,
-        addSupabaseIntegration: (supabaseClient) =>
-          Sentry.addIntegration(Sentry.supabaseIntegration({supabaseClient})),
-      };
-    })
-    // A failed import rejects, except in production builds: there main.tsx cancels Vite's
-    // preload error (to reload onto a fresh deploy), so the import resolves empty and
-    // `Sentry.init` above throws. Both land here.
-    .then(onSentryLoaded, () => {
-      loadFailed = true;
-      readyCallbacks = [];
-      return null;
-    });
+  // A local module rather than @sentry/react itself, so Sentry's setup ships in the SDK's lazy
+  // chunk instead of a startup one (see sentryClient.ts).
+  loading ??= import('./sentryClient')
+    // The failure handler sits in this `.then` on purpose. Production builds move the import and
+    // this `.then` into Vite's preload wrapper, which turns any rejection inside it into a
+    // vite:preloadError, and main.tsx answers that with a page reload. Handled here, a failed
+    // download never reaches the wrapper, so Sentry can't reload the page. startSentry never
+    // throws, for the same reason.
+    .then(
+      (sdk) => sdk.startSentry(),
+      () => null,
+    )
+    // A falsy result is a failed load: null from above, or undefined should a failure ever reach
+    // the wrapper, which resolves instead of rejecting once main.tsx cancels its event. This
+    // `.then` takes no rejection handler: nothing above rejects, and one here would let the
+    // handler above go missing without a test noticing, since tests run no preload wrapper.
+    .then((api) => (api ? onSentryLoaded(api) : onSentryFailed()));
   return loading;
 }
 
@@ -80,6 +69,13 @@ function onSentryLoaded(api: SentryApi): SentryApi {
   return api;
 }
 
+/** Sentry stays off for the rest of the page: waiting and later callbacks are dropped. */
+function onSentryFailed(): null {
+  loadFailed = true;
+  readyCallbacks = [];
+  return null;
+}
+
 // Ready callbacks run inside loadSupabase() and React's Profiler, so a throw from Sentry's side
 // must not escape into them. It goes to Sentry instead.
 function runReadyCallback(callback: (sentry: SentryApi) => void, api: SentryApi): void {
@@ -88,44 +84,4 @@ function runReadyCallback(callback: (sentry: SentryApi) => void, api: SentryApi)
   } catch (error) {
     api.captureException(error);
   }
-}
-
-function sentryOptions(
-  browserTracing: ReturnType<SentryModule['browserTracingIntegration']>,
-): Parameters<SentryModule['init']>[0] {
-  // Sentry 11 collects user info, cookies, request/response bodies and query data by
-  // default (v10 did not), and bodies here could include Supabase sign-in and vote
-  // payloads. This is the migration guide's block for restoring v10's restrictive
-  // defaults; piiDeny drops IP, proxy and user identifiers from headers and query params.
-  const piiDeny = {deny: ['forwarded', '-ip', 'remote-', 'via', '-user']};
-
-  return {
-    dsn: import.meta.env.VITE_SENTRY_DSN,
-    // production, preview or unknown: baked in at build time, so previews never pose as prod.
-    environment: __DEPLOY_ENV__,
-    // The Supabase integration joins later, from shared/lib/supabase.ts, once a page creates
-    // the client: registering it here would download supabase-js on every page.
-    integrations: [browserTracing],
-    tracesSampleRate: 0.1,
-    dataCollection: {
-      userInfo: false,
-      cookies: false,
-      httpHeaders: {request: piiDeny, response: piiDeny},
-      httpBodies: [],
-      urlQueryParams: piiDeny,
-      genAI: {inputs: false, outputs: false},
-      databaseQueryData: false,
-      queues: false,
-      graphQL: {document: false, variables: false},
-    },
-    // Stale-deploy chunk mismatches are auto-recovered via reload (see the
-    // vite:preloadError handler in main.tsx), so they're noise, not bugs. Drop the
-    // whole family: the preload re-throw plus the dynamic-import variants.
-    ignoreErrors: [
-      'Unable to preload CSS',
-      'Failed to fetch dynamically imported module',
-      'Importing a module script failed',
-      'error loading dynamically imported module',
-    ],
-  };
 }

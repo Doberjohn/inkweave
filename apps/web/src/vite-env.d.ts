@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_SENTRY_DSN?: string;
+  readonly VITE_POSTHOG_KEY?: string;
   readonly VITE_LOCAL_IMAGES?: string;
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_ANON_KEY?: string;
@@ -24,7 +25,8 @@ interface ImportMeta {
 interface Window {
   /**
    * Set only by our own prerender crawl (scripts/prerender.mjs), so the captured pages never
-   * load Sentry or bake in its modulepreload (#640). Real visitors and PageSpeed never have it.
+   * load Sentry or PostHog, or bake in their modulepreloads (#640, #827). Real visitors and
+   * PageSpeed never have it.
    */
   __INKWEAVE_PRERENDER__?: boolean;
 }

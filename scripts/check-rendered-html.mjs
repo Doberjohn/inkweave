@@ -28,8 +28,8 @@
  *      cleanPrerenderedHtml() strips it; this asserts the strip actually ran.
  *   6. no sampled card page, and neither / nor /browse, preloads an image it never
  *      renders (#627): see findOrphanImagePreloads.
- *   7. no sampled card page, and neither / nor /browse, modulepreloads a Sentry chunk
- *      (#640): see findSentryPreloads.
+ *   7. no sampled card page, and neither / nor /browse, modulepreloads a lazy SDK chunk,
+ *      Sentry's (#640) or PostHog's (#827): see findLazySdkPreloads.
  *   8. every sampled card page links all six ink hubs, which only its footer does (#530).
  *      The footer waits for the page's synergies (#532): see countInkHubLinks.
  *
@@ -113,43 +113,63 @@ export function findOrphanImagePreloads(html) {
 const orphanPreloadReason = (hrefs) =>
   `preloads ${hrefs.join(', ')} but renders no <img> with that src (runtime <head> tag baked into the capture)`;
 
-/** The Sentry SDK's own name string, present in the chunk that carries the SDK. */
-const SENTRY_SIGNATURE = 'sentry.javascript';
+/**
+ * The SDKs that load only after `load`, each with a string only its own code carries: Sentry's
+ * name (#640) and PostHog's log prefix (#827).
+ */
+const LAZY_SDK_SIGNATURES = {Sentry: 'sentry.javascript', PostHog: '[PostHog.js]'};
+
+/** The file name a modulepreload href points at, which is how chunks are keyed. */
+const fileName = (href) => href.split('/').pop();
 
 /**
- * The built chunks that carry the Sentry SDK (#640), found by the SDK's name string rather than
- * a file name: chunk names follow whichever module Rolldown groups first.
+ * The built chunks that carry a lazy SDK, found by the SDK's own string rather than a file name:
+ * chunk names follow whichever module Rolldown groups first.
  *
  * @param {string} targetDir - build output root
- * @returns {Set<string>} file names under assets/
+ * @returns {Map<string, string>} file name under assets/ -> the SDK it carries
  */
-export function findSentryChunks(targetDir) {
+export function findLazySdkChunks(targetDir) {
   const assets = join(targetDir, 'assets');
-  if (!existsSync(assets)) return new Set();
-  const chunks = readdirSync(assets).filter((name) => name.endsWith('.js'));
-  return new Set(chunks.filter((name) => readFileSync(join(assets, name), 'utf8').includes(SENTRY_SIGNATURE)));
+  if (!existsSync(assets)) return new Map();
+  const sdkIn = (source) =>
+    Object.keys(LAZY_SDK_SIGNATURES).find((sdk) => source.includes(LAZY_SDK_SIGNATURES[sdk]));
+  return new Map(
+    readdirSync(assets)
+      .filter((name) => name.endsWith('.js'))
+      .map((name) => [name, sdkIn(readFileSync(join(assets, name), 'utf8'))])
+      .filter(([, sdk]) => sdk),
+  );
 }
 
 /**
- * Sentry chunks a page modulepreloads (#640). Sentry loads after `load`, and our crawl never
- * loads it (prerender.mjs sets `__INKWEAVE_PRERENDER__`), so no captured page may carry its
- * modulepreload: baked into the HTML, it fetches the SDK in the critical window on every visit.
- * The same capture-bakes-runtime-state class of bug as #525, #535 and #627.
+ * Lazy SDK chunks a page modulepreloads (#640, #827). Sentry and PostHog load after `load`, and
+ * our crawl loads neither (prerender.mjs sets `__INKWEAVE_PRERENDER__`), so no captured page may
+ * carry their modulepreloads: baked into the HTML, one fetches its SDK in the critical window on
+ * every visit. The same capture-bakes-runtime-state class of bug as #525, #535 and #627.
  *
  * @param {string} html - one captured page
- * @param {Set<string>} sentryChunks - from findSentryChunks
- * @returns {string[]} hrefs of modulepreloads that point at a Sentry chunk
+ * @param {Map<string, string>} sdkChunks - from findLazySdkChunks
+ * @returns {Array<{sdk: string, href: string}>} the modulepreloads that point at a lazy SDK chunk
  */
-export function findSentryPreloads(html, sentryChunks) {
+export function findLazySdkPreloads(html, sdkChunks) {
   return (html.match(/<link\b[^>]*>/gi) ?? [])
     .filter((tag) => hasRel(tag, 'modulepreload'))
     .map((tag) => attr(tag, 'href'))
-    .filter((href) => href && sentryChunks.has(href.split('/').pop()));
+    .filter((href) => href && sdkChunks.has(fileName(href)))
+    .map((href) => ({sdk: sdkChunks.get(fileName(href)), href}));
 }
 
-/** The offender reason shared by every page the Sentry-preload check covers. */
-const sentryPreloadReason = (hrefs) =>
-  `modulepreloads the Sentry SDK (${hrefs.join(', ')}), which must load only after \`load\` (#640)`;
+/** The offender reason shared by every page the lazy-SDK check covers. */
+const lazySdkPreloadReason = (preloads) =>
+  `modulepreloads ${preloads.map(({sdk, href}) => `the ${sdk} SDK (${href})`).join(' and ')}, ` +
+  'which must load only after `load` (#640, #827)';
+
+/** "Sentry 1, PostHog 0": how many chunks of each lazy SDK a build carries. */
+const countBySdk = (sdkChunks) =>
+  Object.keys(LAZY_SDK_SIGNATURES)
+    .map((sdk) => `${sdk} ${[...sdkChunks.values()].filter((found) => found === sdk).length}`)
+    .join(', ');
 
 /** The six ink hubs the site footer links from every page (#530): Lorcana's six inks. */
 const INK_HUB_SLUGS = ['amber', 'amethyst', 'emerald', 'ruby', 'sapphire', 'steel'];
@@ -216,10 +236,10 @@ export function selectSampleCards(cards) {
  * @param {string} targetDir - build output root to inspect
  * @param {{id: number, fullName: string}} card - the sampled card
  * @param {string} route - the card's slug path, from the engine's cardPath
- * @param {Set<string>} sentryChunks - from findSentryChunks
+ * @param {Map<string, string>} sdkChunks - from findLazySdkChunks
  * @returns {Array<{file: string, reason: string}>} empty when the page is sound
  */
-function findCardPageOffenders(targetDir, card, route, sentryChunks) {
+function findCardPageOffenders(targetDir, card, route, sdkChunks) {
   const file = join(targetDir, route, 'index.html');
   if (!existsSync(file)) {
     return [{file, reason: 'prerendered card page missing (crawl did not run?)'}];
@@ -229,7 +249,7 @@ function findCardPageOffenders(targetDir, card, route, sentryChunks) {
   const canonical = readCanonical(html);
   const expectedCanonical = `${SITE_ORIGIN}${route}`;
   const orphanPreloads = findOrphanImagePreloads(html);
-  const sentryPreloads = findSentryPreloads(html, sentryChunks);
+  const sdkPreloads = findLazySdkPreloads(html, sdkChunks);
   const inkHubs = countInkHubLinks(html);
 
   // Each entry is one assertion: [failed?, why]. A table rather than a chain of ifs
@@ -264,9 +284,9 @@ function findCardPageOffenders(targetDir, card, route, sentryChunks) {
     // A runtime image preload baked into the capture (#627): fetched first on every
     // visit, for an image this page never shows.
     [orphanPreloads.length > 0, orphanPreloadReason(orphanPreloads)],
-    // Sentry's modulepreload baked into the capture (#640): the SDK fetched in the critical
-    // window on every visit, when it should load only after `load`.
-    [sentryPreloads.length > 0, sentryPreloadReason(sentryPreloads)],
+    // A lazy SDK's modulepreload baked into the capture (#640, #827): the SDK fetched in the
+    // critical window on every visit, when it should load only after `load`.
+    [sdkPreloads.length > 0, lazySdkPreloadReason(sdkPreloads)],
     // The footer's ink-hub links put every card page one click from a hub (#530). The card
     // page renders its footer only once its synergies have loaded (#532), so a capture taken
     // before that would ship without them. prerender.mjs waits for the footer on card pages;
@@ -291,21 +311,21 @@ function findBrowseHubOffenders(targetDir) {
 }
 
 /**
- * The orphan-preload (#627) and Sentry-preload (#640) checks on the two entry pages the card
- * sample does not cover: `/`, the page PSI measures, and `/browse`. A missing file is
+ * The orphan-preload (#627) and lazy-SDK-preload (#640, #827) checks on the two entry pages the
+ * card sample does not cover: `/`, the page PSI measures, and `/browse`. A missing file is
  * skipped: findBrowseHubOffenders already reports a missing /browse, and the build always
  * writes a root index.html (the Vite shell).
  */
-function findEntryPageOffenders(targetDir, sentryChunks) {
+function findEntryPageOffenders(targetDir, sdkChunks) {
   return ['index.html', join('browse', 'index.html')].flatMap((rel) => {
     const file = join(targetDir, rel);
     if (!existsSync(file)) return [];
     const html = readFileSync(file, 'utf8');
     const orphans = findOrphanImagePreloads(html);
-    const sentry = findSentryPreloads(html, sentryChunks);
+    const sdks = findLazySdkPreloads(html, sdkChunks);
     return [
       ...(orphans.length > 0 ? [{file, reason: orphanPreloadReason(orphans)}] : []),
-      ...(sentry.length > 0 ? [{file, reason: sentryPreloadReason(sentry)}] : []),
+      ...(sdks.length > 0 ? [{file, reason: lazySdkPreloadReason(sdks)}] : []),
     ];
   });
 }
@@ -319,10 +339,10 @@ function findEntryPageOffenders(targetDir, sentryChunks) {
  * @param {string} targetDir - build output root to inspect
  * @param {Array<{id: number, fullName: string}>} samples - card pages to verify
  * @param {(card: object) => string} cardPath - the engine's slug-path builder
- * @param {Set<string>} [sentryChunks] - the build's Sentry chunks (default: read from targetDir)
+ * @param {Map<string, string>} [sdkChunks] - the build's lazy SDK chunks (default: read from targetDir)
  * @returns {Array<{file: string, reason: string}>} empty when the build is sound
  */
-export function findOffenders(targetDir, samples, cardPath, sentryChunks = findSentryChunks(targetDir)) {
+export function findOffenders(targetDir, samples, cardPath, sdkChunks = findLazySdkChunks(targetDir)) {
   // Distinguish "wrong path" from "bad crawl" before anything else. Without this,
   // a mistyped targetDir reports every sampled page as missing and blocks the
   // deploy for a reason that has nothing to do with the prerender — the most
@@ -334,9 +354,9 @@ export function findOffenders(targetDir, samples, cardPath, sentryChunks = findS
   }
 
   return [
-    ...samples.flatMap((card) => findCardPageOffenders(targetDir, card, cardPath(card), sentryChunks)),
+    ...samples.flatMap((card) => findCardPageOffenders(targetDir, card, cardPath(card), sdkChunks)),
     ...findBrowseHubOffenders(targetDir),
-    ...findEntryPageOffenders(targetDir, sentryChunks),
+    ...findEntryPageOffenders(targetDir, sdkChunks),
   ];
 }
 
@@ -359,8 +379,8 @@ async function main() {
     process.exit(1);
   }
 
-  const sentryChunks = findSentryChunks(targetDir);
-  const offenders = findOffenders(targetDir, samples, cardPath, sentryChunks);
+  const sdkChunks = findLazySdkChunks(targetDir);
+  const offenders = findOffenders(targetDir, samples, cardPath, sdkChunks);
 
   if (offenders.length > 0) {
     console.error(`✖ Render guard failed in "${targetDir}":`);
@@ -374,10 +394,11 @@ async function main() {
     process.exit(1);
   }
 
-  // The Sentry chunk count makes a vacuous check 7 visible: 0 means it had nothing to look for.
+  // The chunk counts make a vacuous check 7 visible: 0 means it had nothing to look for. PostHog
+  // counts 0 until Vercel Production has its key (#827).
   console.log(
     `✓ Prerendered HTML verified in "${targetDir}" (${samples.length} card page(s), /browse and /; ` +
-      `${sentryChunks.size} Sentry chunk(s) checked).`,
+      `lazy SDK chunks checked: ${countBySdk(sdkChunks)}).`,
   );
 }
 
