@@ -29,10 +29,14 @@ export const legalH2Style: React.CSSProperties = {
   margin: `${SPACING.xl}px 0 ${SPACING.sm}px`,
 };
 
-/** Inline-link style for legal-page copy (gold, no underline). */
+/**
+ * Inline-link style for legal-page copy: gold and underlined. The gold alone is too close to the
+ * prose around it to mark a link (WCAG 1.4.1).
+ */
 export const legalLinkStyle: React.CSSProperties = {
   color: COLORS.primary,
-  textDecoration: 'none',
+  textDecoration: 'underline',
+  textUnderlineOffset: 2,
 };
 
 interface LegalPageProps {
