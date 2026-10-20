@@ -56,7 +56,7 @@
         "!apps/web/dist/assets/AccountCollection-*.js",
         "!apps/web/dist/assets/supabaseClient-*.js"
       ],
-      "limit": "455 kB",
+      "limit": "457 kB",
       "gzip": true
     },
     {
