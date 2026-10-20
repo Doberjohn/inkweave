@@ -22,9 +22,10 @@ if (typeof document !== 'undefined') {
 }
 
 /**
- * Returns true if a mouse/click/focus event is likely synthetic (fired by iOS
- * within 1000ms of a touchstart). Use this to guard onMouseEnter, onClick,
- * onFocus, etc. on elements that could receive ghost interactions after navigation.
+ * Returns true if a mouse event is likely synthetic (fired by iOS within 1000ms
+ * of a touchstart). Guard hover handlers (onMouseEnter) with it, never click
+ * handlers: a tap's own click lands inside the window too, so a click guard
+ * drops every tap (CardTile in #296, SynergyCard on tablets in #843).
  */
 export function isSyntheticMouseEvent(): boolean {
   return Date.now() - lastTouchTime < 1000;
