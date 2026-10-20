@@ -28,10 +28,10 @@ export function PrivacyPage() {
         <li>
           <strong>Analytics.</strong> I use PostHog and Vercel Web Analytics to see which pages and features
           get used and how people move through the site, and Speed Insights to measure performance. None of
-          them uses cookies or ties anything to an account. PostHog recognises a visit by a one-way hash that
-          changes every day, so it can&rsquo;t follow you from one day to the next. I record the pages you open
-          and what you click, events like which cards and playstyles are opened, and the text typed into the
-          search box.
+          them uses cookies or ties anything to an account. PostHog recognises a visit by a one-way hash of
+          your IP address and browser that changes every day, and doesn&rsquo;t keep the IP address itself, so it
+          can&rsquo;t follow you from one day to the next. I record the pages you open and what you click, events
+          like which cards and playstyles are opened, and the text typed into the search box.
         </li>
         <li>
           <strong>Error reports.</strong> When something breaks, I use Sentry to collect a diagnostic report

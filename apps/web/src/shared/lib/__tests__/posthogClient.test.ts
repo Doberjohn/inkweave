@@ -32,9 +32,9 @@ describe('startPostHog', () => {
     expect(document.cookie).toBe('');
     expect(localStorage.length).toBe(0);
     expect(sessionStorage.length).toBe(0);
-    expect(sent.map((url) => new URL(url, location.href).pathname.split('/')[1])).toEqual(
-      sent.map(() => 'relay'),
-    );
+    // Same origin and through the relay: any other host would need a CSP change.
+    const relay = `${location.origin}/relay/`;
+    expect(sent.filter((url) => !new URL(url, location.href).href.startsWith(relay))).toEqual([]);
   });
 
   it('returns null, never a throw, when the SDK fails to start, and hands over the error', async () => {

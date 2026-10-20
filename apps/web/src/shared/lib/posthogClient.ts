@@ -27,8 +27,8 @@ export function startPostHog(key: string, onError: (error: unknown) => void): Po
       defaults: '2026-08-30',
       // No cookies, localStorage or sessionStorage. PostHog links a visit with a hash it computes
       // on its servers from a salt it deletes daily, then strips the IP. The project needs
-      // "Cookieless tracking" turned on, or PostHog drops every event, and should discard client
-      // IP data. Never call identify() in this mode.
+      // "Cookieless tracking" turned on (formerly "Cookieless server hash mode"), or PostHog drops
+      // every event, and should discard client IP data. Never call identify() in this mode.
       cookieless_mode: 'always',
       // The SDK's console logging stays off even with ?__posthog_debug=true in the URL, which
       // would otherwise switch it on and store a ph_debug flag in localStorage.
