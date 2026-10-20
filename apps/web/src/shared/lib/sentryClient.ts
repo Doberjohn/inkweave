@@ -19,15 +19,37 @@ export interface SentryApi {
   addSupabaseIntegration(supabaseClient: unknown): void;
 }
 
-/** Starts Sentry and returns the part of it the app calls. */
-export function startSentry(): SentryApi {
-  init(sentryOptions());
+/**
+ * Starts Sentry and returns the part of it the app calls, or null when the SDK fails to start.
+ * Never throws: this runs inside Vite's preload wrapper, where a throw becomes a page reload
+ * (see sentry.ts).
+ */
+export function startSentry(): SentryApi | null {
+  try {
+    init(sentryOptions());
+  } catch (error) {
+    reportStartFailure(error);
+    return null;
+  }
   return {
     captureException,
     startSpan,
     addSupabaseIntegration: (supabaseClient) =>
       addIntegration(supabaseIntegration({supabaseClient})),
   };
+}
+
+/**
+ * init binds its client before it sets up the integrations, so when one of them throws, those set
+ * up before it keep running: the failure goes to Sentry through them. With no client bound yet,
+ * this does nothing. It never throws, since a broken SDK can throw here too.
+ */
+function reportStartFailure(error: unknown): void {
+  try {
+    captureException(error);
+  } catch {
+    // Nothing left to report through.
+  }
 }
 
 function sentryOptions(): Parameters<typeof init>[0] {

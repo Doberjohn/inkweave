@@ -29,15 +29,20 @@ export function loadSentry(): Promise<SentryApi | null> {
   // A local module rather than @sentry/react itself, so Sentry's setup ships in the SDK's lazy
   // chunk instead of a startup one (see sentryClient.ts).
   loading ??= import('./sentryClient')
-    .then((sdk) => sdk.startSentry())
-    // A failed import rejects, except in production builds: there main.tsx cancels Vite's
-    // preload error (to reload onto a fresh deploy), so the import resolves empty and
-    // `sdk.startSentry()` above throws. Both land here.
-    .then(onSentryLoaded, () => {
-      loadFailed = true;
-      readyCallbacks = [];
-      return null;
-    });
+    // The failure handler sits in this `.then` on purpose. Production builds move the import and
+    // this `.then` into Vite's preload wrapper, which turns any rejection inside it into a
+    // vite:preloadError, and main.tsx answers that with a page reload. Handled here, a failed
+    // download never reaches the wrapper, so Sentry can't reload the page. startSentry never
+    // throws, for the same reason.
+    .then(
+      (sdk) => sdk.startSentry(),
+      () => null,
+    )
+    // A falsy result is a failed load: null from above, or undefined should a failure ever reach
+    // the wrapper, which resolves instead of rejecting once main.tsx cancels its event. This
+    // `.then` takes no rejection handler: nothing above rejects, and one here would let the
+    // handler above go missing without a test noticing, since tests run no preload wrapper.
+    .then((api) => (api ? onSentryLoaded(api) : onSentryFailed()));
   return loading;
 }
 
@@ -62,6 +67,13 @@ function onSentryLoaded(api: SentryApi): SentryApi {
   readyCallbacks = [];
   for (const callback of callbacks) runReadyCallback(callback, api);
   return api;
+}
+
+/** Sentry stays off for the rest of the page: waiting and later callbacks are dropped. */
+function onSentryFailed(): null {
+  loadFailed = true;
+  readyCallbacks = [];
+  return null;
 }
 
 // Ready callbacks run inside loadSupabase() and React's Profiler, so a throw from Sentry's side
