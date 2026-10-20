@@ -60,8 +60,11 @@ export function ComparePage() {
   }, [verdict, verdictSignature, openComparison]);
 
   // The modal shows the comparison, so the page renders only the tab's title (2.4.2): without
-  // it, once main.tsx sweeps the prerendered tags, the tab would show the bare address.
-  const seo = <Seo title={compareTitle(cardA, cardB)} canonicalPath={pathname} noindex />;
+  // it, once main.tsx sweeps the prerendered tags, the tab would show the bare address. It names
+  // the pair once both cards resolve, and is generic while they load.
+  const title =
+    cardA && cardB ? `${cardA.fullName} + ${cardB.fullName} | Compare | Inkweave` : 'Compare cards | Inkweave';
+  const seo = <Seo title={title} canonicalPath={pathname} noindex />;
   return renderComparePage(verdict, seo);
 }
 
@@ -132,12 +135,6 @@ function hasMatchingPair({
   const pair = getPairSynergies(cardB, groupKey);
   if (!pair) return false;
   return pair.connections.length > 0;
-}
-
-/** The tab's title: the pair once both cards resolve, a generic one while they load. */
-function compareTitle(cardA: LorcanaCard | undefined, cardB: LorcanaCard | undefined): string {
-  if (!cardA || !cardB) return 'Compare cards | Inkweave';
-  return `${cardA.fullName} + ${cardB.fullName} | Compare | Inkweave`;
 }
 
 function renderComparePage(verdict: ComparePageVerdict, seo: React.ReactElement): React.ReactElement {
