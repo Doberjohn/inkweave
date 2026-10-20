@@ -1,6 +1,6 @@
 import {useRef, type ReactNode} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import type {CollectionEntries, CollectionEntry} from './collectionParser';
+import type {CollectionEntries, CollectionEntry, Finish} from './collectionParser';
 import type {CollectionPromo} from './collectionPromos';
 import {CollectionBinder} from './CollectionBinder';
 import {
@@ -57,9 +57,12 @@ import {COLORS, FONT_SIZES, SPACING, type BrowseSortOrder} from '../../shared/co
  * WHERE THE PAGE DOCKS ITS PANELS, THE SPREAD MAP TURNS THE PAGES (owner, 2026-10-12),
  * in the band under the spread; see `BinderSpreadMap`.
  *
- * COUNTS ARE READ-ONLY (owner, 2026-10-07): the 08-14 spike's editable steppers
- * never saved, so a collection changes by re-importing until editing returns with
- * a write path of its own. See `CollectionSlotCounts`.
+ * COUNTS CHANGE WHERE A MOUSE POINTS (#826): a spread's pocket opens its pills into
+ * steppers (`CollectionSlotCounts`), and the card window holds "Your copies". A card
+ * changed by hand keeps its pocket in the Owned and Missing views until the view, the
+ * set or the sort changes (owner, 2026-10-20): dropped from the view at once, it took
+ * the spread with it, since the binder reopens at its first spread whenever what it
+ * holds changes. The page's listing keeps it (`useKeptCards`), so `matchedIds` holds it.
  *
  * PHONES GET ONE PAGE PER VIEW (owner, 2026-10-07), decided here from the same
  * `useResponsive().isMobile` for the loading and loaded branches, so the skeleton
@@ -150,6 +153,8 @@ interface CollectionBinderSectionProps extends PanelControls {
   /** Ask for the chunks again after a failure. A user action, never automatic. */
   onRetry: () => void;
   onCardSelect: (card: LorcanaCard) => void;
+  /** Change one finish's copies of a card from its pocket (#826); absent, the counts are read-only. */
+  onCountChange?: (cardId: string, finish: Finish, count: number) => void;
 }
 
 /**
@@ -186,6 +191,7 @@ function SectionContent({
   error,
   onRetry,
   onCardSelect,
+  onCountChange,
   ...controls
 }: CollectionBinderSectionProps) {
   const {isMobile} = useResponsive();
@@ -258,12 +264,14 @@ function SectionContent({
       ) : (
         <CollectionBinder
           // Keyed by what it holds, in order, so a new set, sort or filter opens the
-          // binder at its first spread: the old page would land on unrelated cards.
+          // binder at its first spread: the old page would land on unrelated cards. A
+          // count changed by hand leaves what it holds alone (`useKeptCards`).
           key={slots.map(slotKey).join()}
           slots={slots}
           bySet={namesStretches(setCode, sortOrder)}
           countsFor={(cardId) => entries[cardId] ?? ZERO}
           onSelect={onCardSelect}
+          onCountChange={onCountChange}
           single={isMobile}
           pager={docked ? 'map' : 'arrows'}
         />

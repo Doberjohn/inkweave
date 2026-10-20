@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
-import {act, render, screen, fireEvent} from '@testing-library/react';
+import {act, render, screen, fireEvent, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
@@ -309,6 +309,52 @@ describe('CollectionBinder', () => {
     it('says a number its promo set has still to release is not released yet', () => {
       render(binder({slots: [{open: true, setCode: 'P4', setNumber: 2, upcoming: true}]}));
       expect(screen.getByText('2/P4').nextSibling).toHaveTextContent(/^Not released yet$/);
+    });
+  });
+
+  describe('counts changed from the pocket a mouse points at (#826)', () => {
+    /** A pointer coming to rest on a pocket: a mouse, unless said otherwise. */
+    const point = (target: HTMLElement, pointerType = 'mouse') => fireEvent.pointerEnter(target, {pointerType});
+
+    it('opens its pills into steppers, an unheld finish at 0, and sets the count a click asks for', () => {
+      const onCountChange = vi.fn();
+      const onSelect = vi.fn();
+      render(binder({onCountChange, onSelect}));
+      point(pocket(1));
+      const counts = screen.getByRole('group', {name: '1 normal, 0 foil'});
+      // The pills sit under aria-hidden: the group's label speaks for them.
+      fireEvent.click(within(counts).getByRole('button', {name: 'Add one copy of foil', hidden: true}));
+      expect(onCountChange).toHaveBeenCalledWith('c1', 'foil', 1);
+      // A pill is not the card: the click opens no window.
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it('closes them again when the mouse leaves', () => {
+      // Only the pocket pointed at says "0 foil": every other held pocket reads "1 normal".
+      render(binder({onCountChange: vi.fn()}));
+      point(pocket(1));
+      expect(screen.getByRole('group', {name: '1 normal, 0 foil'})).toBeInTheDocument();
+      fireEvent.pointerLeave(pocket(1));
+      expect(screen.queryByRole('group', {name: '1 normal, 0 foil'})).toBeNull();
+    });
+
+    it('opens only the Foil count of a card printed only in foil', () => {
+      const enchanted = {...CARDS[0], id: 'e1', rarity: 'Enchanted'} as LorcanaCard;
+      render(binder({slots: [enchanted], countsFor: () => ({normal: 0, foil: 0}), onCountChange: vi.fn()}));
+      point(screen.getByRole('button', {name: /Enchanted/}));
+      expect(screen.getByRole('group', {name: '0 foil'})).toBeInTheDocument();
+    });
+
+    it.each(['touch', 'pen'])('never opens them for a %s, whose tap opens the card as before', (pointerType) => {
+      render(binder({onCountChange: vi.fn()}));
+      point(pocket(1), pointerType);
+      expect(screen.queryByRole('group', {name: '1 normal, 0 foil'})).toBeNull();
+    });
+
+    it("never opens them on a phone's lone page, which changes counts in the card window", () => {
+      render(binder({single: true, onCountChange: vi.fn()}));
+      point(pocket(1));
+      expect(screen.queryByRole('group', {name: '1 normal, 0 foil'})).toBeNull();
     });
   });
 });

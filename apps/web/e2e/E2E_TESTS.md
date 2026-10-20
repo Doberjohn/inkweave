@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-177 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+178 tests across 23 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts` and the `/reveals` check in `seo.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -161,7 +161,7 @@ At page load, supabase-js is downloaded only when there is a session to restore 
 | a stored session downloads the Supabase SDK to restore it | An `inkweave:auth` entry seeded before load makes `/browse` request the SDK (all projects) |
 | the sign-in control opens the provider dialog | Clicking it opens the `SignInDialog`. Stops at the provider choice: signing in needs a real round-trip no placeholder project can serve |
 
-## `collection-mode.spec.ts`: 18 tests (1 every project, 2 chromium only, 14 desktop only, 1 on every project at a 390px viewport)
+## `collection-mode.spec.ts`: 19 tests (1 every project, 2 chromium only, 15 desktop only, 1 on every project at a 390px viewport)
 
 Covers Browse's collection mode (#553 Phase C), which ships behind `VITE_SHOW_COLLECTION` (default OFF). The flag REQUIRES `VITE_SHOW_ACCOUNTS`, and `playwright.config.ts` pins both ON. The Collection button is gated on sign-in (owner ruling 2026-10-07).
 
@@ -180,6 +180,7 @@ The desktop signed-in tests skip the mobile projects: they find the numbers in t
 | on a new browser, the account page checks the account before offering an import | The collection is the server row alone, and the server holds its answer. On /account the Collection section reads "Checking your account for a collection…" with Import collection disabled; once the server answers, "Cards owned" shows and Re-import is enabled |
 | the panel counts every pocket of the set, the alt-art printings among them | `/browse?binder=<set>`: the numbers read "H of N cards", H the held pockets and N the set's cards plus its Epic, Enchanted and Iconic printings |
 | a count changed in a card's window shows at once and is still there after a reload (#826) | `/browse?binder=<set>`: the window of the first card the collector holds none of (the pocket after the three held) shows "Your copies"; its Normal row's + reads 1. Closed, the binder holds one more "1 normal" pill and the numbers read "H+1 of N cards". The stubbed account receives the upload a moment later (the batch, `UPLOAD_DELAY_MS`), and after a reload, which adopts the account's row, the pill and the numbers still read the same |
+| in Missing, copies added from a pocket and from the card window keep both cards and the spread (#826) | `/browse?binder=<set>&owned=missing`, turned with `Next spread` to spread 2 (the map's current spread reads "Spread 2 of N"). A mouse on its first pocket opens the pills into steppers, labelled "0 normal, 0 foil"; the + of Normal (under `aria-hidden`, so found with `includeHidden`) makes them read "1 normal, 0 foil". A click on the second pocket's middle opens its window (at 1280 the stacked pills cover that middle, and a click on a count reaches the card); its Normal + reads 1, and "Previous card" opens the first card, kept in the listing the arrows walk. Closed, both cards, now held, keep their pockets and the binder its spread (owner, 2026-10-20): dropped from the view at once, a card reopened the binder at spread 1. The stubbed account receives both copies |
 | Owned keeps the held cards alone, and leaving the mode drops that view | The `Binder shows` group's "Owned" adds `owned=owned` and leaves exactly the held tiles; turning collection mode off removes the binder and both the `binder` and `owned` params |
 | the set picker opens the whole collection in the binder | Picking "Whole collection" in the `Binder set` picker gives `binder=all` and relabels the picker "Binder set: Whole collection", and the rest follows: "Complete collection" in the numbers and a tile in the binder |
 | the set picker's arrow keys never park a set under its pinned row | The `Binder set` list holds every set in the pool, so it scrolls (asserted, so the test cannot pass with nothing to scroll). From End, each Arrow Up row's top stays at or below the bottom of the pinned Whole collection strip, which the list's `scroll-padding-top` keeps clear (WCAG 2.4.11) |

@@ -61,6 +61,7 @@ describe('BrowseBody with collection mode on', () => {
     show: 'all',
     rarityOptions: () => [],
     owns: () => true,
+    kept: new Set(),
     prompts: null,
     renderSetPanel: () => undefined,
   };

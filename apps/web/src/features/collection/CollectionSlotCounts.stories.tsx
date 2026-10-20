@@ -1,18 +1,26 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
+import {fn} from 'storybook/test';
 import {CollectionSlotCounts} from './CollectionSlotCounts';
 import {COLORS} from '../../shared/constants';
 
+/** The narrowest pocket the binder produces: a phone's single page. */
+const PHONE_SLOT = {width: 76, height: 105};
+/** A pocket at the size a 1920px screen gives the binder. Only a desktop spread opens its pills. */
+const DESKTOP_SLOT = {width: 144, height: 200};
+/** A pocket at the size a 1440px screen gives the binder: narrower than an opened pair. */
+const NARROW_SLOT = {width: 84, height: 117};
+
 /**
- * A binder slot's read-only counts: normal on the dark ground, foil on brushed
- * gold, only the finishes held. The frame stands in for a card slot at the
- * narrowest size the binder produces (76px wide, a phone's single page).
+ * A binder slot's counts: at rest, normal on the dark ground and foil on brushed gold,
+ * only the finishes held; pointed at by a mouse, opened into steppers (#826). The frame
+ * stands in for the pocket, a phone's unless a story names another `slot`.
  */
 const meta: Meta<typeof CollectionSlotCounts> = {
   title: 'Collection/CollectionSlotCounts',
   component: CollectionSlotCounts,
   decorators: [
-    (Story) => (
-      <div style={{position: 'relative', width: 76, height: 105, background: COLORS.surfaceAlt, margin: 16}}>
+    (Story, {parameters}) => (
+      <div style={{position: 'relative', ...(parameters.slot ?? PHONE_SLOT), background: COLORS.surfaceAlt, margin: 16}}>
         <Story />
       </div>
     ),
@@ -38,3 +46,27 @@ export const DoubleDigits: Story = {args: {counts: {normal: 10, foil: 10}}};
 
 /** Unowned: nothing renders; the card's greyscale says it instead. */
 export const Unowned: Story = {args: {counts: {normal: 0, foil: 0}}};
+
+/** Pointed at: each finish opens into − count +, the unheld foil at 0 with its − off. */
+export const PointedAt: Story = {
+  parameters: {slot: DESKTOP_SLOT},
+  args: {counts: {normal: 2, foil: 0}, editor: {foilOnly: false, onChange: fn()}},
+};
+
+/** Pointed at in a 1440px screen's pocket, too narrow for the pair: Foil stacks under Normal. */
+export const PointedAtNarrow: Story = {
+  parameters: {slot: NARROW_SLOT},
+  args: {counts: {normal: 2, foil: 1}, editor: {foilOnly: false, onChange: fn()}},
+};
+
+/** Pointed at, a card you hold none of: both finishes open at 0, a first copy one click away. */
+export const PointedAtUnowned: Story = {
+  parameters: {slot: DESKTOP_SLOT},
+  args: {counts: {normal: 0, foil: 0}, editor: {foilOnly: false, onChange: fn()}},
+};
+
+/** Pointed at, a card printed only in foil (Enchanted, Epic, Iconic): its Foil count alone opens. */
+export const PointedAtFoilOnly: Story = {
+  parameters: {slot: DESKTOP_SLOT},
+  args: {counts: {normal: 0, foil: 1}, editor: {foilOnly: true, onChange: fn()}},
+};
