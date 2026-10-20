@@ -78,22 +78,26 @@ function IdentitySection({
 }) {
   return (
     <Section title="Identity">
-      {/* Read-only BY CONSTRUCTION: uniqueness is enforced by the index, so
-          claiming a handle is a server-side write-and-catch-23505. An edit field
-          would need a whole availability flow. The display name is editable
-          precisely because it carries no uniqueness constraint. */}
-      <Row label="Handle" value={identity ? `@${identity.handle}` : '—'} />
-      <Row
-        label="Display name"
-        value={identity?.displayName ?? '—'}
-        action={
-          identity && (
-            <CtaButton variant="ghost" onClick={onChange}>
-              Change
-            </CtaButton>
-          )
-        }
-      />
+      {/* PostHog's autocapture reads the text of the elements it records (#827). Neither value
+          sits in a link or button today; ph-no-capture keeps both out of it if that changes. */}
+      <div className="ph-no-capture">
+        {/* Read-only BY CONSTRUCTION: uniqueness is enforced by the index, so
+            claiming a handle is a server-side write-and-catch-23505. An edit field
+            would need a whole availability flow. The display name is editable
+            precisely because it carries no uniqueness constraint. */}
+        <Row label="Handle" value={identity ? `@${identity.handle}` : '—'} />
+        <Row
+          label="Display name"
+          value={identity?.displayName ?? '—'}
+          action={
+            identity && (
+              <CtaButton variant="ghost" onClick={onChange}>
+                Change
+              </CtaButton>
+            )
+          }
+        />
+      </div>
       <p
         style={{
           color: COLORS.textMuted,
