@@ -11,6 +11,7 @@ export {useResponsive} from './useResponsive';
 export {useRovingTabIndex} from './useRovingTabIndex';
 export {useScrollLock} from './useScrollLock';
 export {useScrollSnapIndex} from './useScrollSnapIndex';
+export {useTooltip} from './useTooltip';
 export {useBackOrNavigate} from './useBackOrNavigate';
 export {
   usePrintingSelection,

@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-201 tests across 24 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+203 tests across 24 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). It also sets `VITE_DISABLE_REACT_GRAB=true`, so E2E pages never load the react-grab dev inspector (#673). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -295,7 +295,7 @@ CardOverviewModal default-mode interactions — chip filtering (→ focused sing
 | a group chip filters the modal to that group (mobile) | Clicking the Discard chip → `data-state="focused"`, one group |
 | the "+N more" tile opens the full expanded group view (mobile) | Clicking the discard `more-tile` once → `data-state="expanded"` with a "Back to all synergies" link |
 
-## `synergy-detail-modal.spec.ts` — 11 tests (4 desktop, 5 mobile, 2 deep-link)
+## `synergy-detail-modal.spec.ts` — 12 tests (5 desktop, 5 mobile, 2 deep-link)
 
 Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #486) transitions CardOverviewModal in-place to the side-by-side comparison view. Desktop uses two columns; mobile uses the tabbed `MobileComparisonView` (#332 #5). Setup opens the modal on the fixture card via `appPage.openCardOverview(name)` (Browse `?q=` + tile click). Deep links open comparison directly via `/compare/A/B/groupKey`.
 
@@ -305,6 +305,7 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 | should show engine column with rule explanations in comparison mode | (desktop) `section[aria-label="Engine score"]` renders with Shift rule explanations |
 | should exit comparison mode via the BACK button | (desktop) BACK returns the modal to `data-mode="default"`, URL stays `/` |
 | should switch comparison pairs across exit and re-entry | (desktop) Enter → BACK → enter a different pair; consecutive comparisons work cleanly |
+| keeps the score help under the pointer, and Escape hides it before the card view hears it | (desktop) In a comparison, the Engine column's "What does this score mean?" tooltip stays while the pointer slides from the button onto it and rests there past its 150 ms close delay, and closes once the pointer leaves both. With the button focused, its accessible description holds "Perfect"; the first Escape hides the tooltip with focus unmoved and the view still in comparison, and the second steps back to `data-mode="default"` (WCAG 1.4.13 and 1.3.1, #836: the tooltip ignored the pointer, wasn't announced, and Escape closed the view instead) |
 | should enter comparison mode on mobile | (mobile) Tapping a synergy tile shows the BACK button, and card A settles 0 to 40px below the × (MobileComparisonView covers the hidden chip row but not the BACK + × row) |
 | should render the tabbed comparison layout on mobile | (mobile) MobileComparisonView's Engine/Community section-switch pill buttons render |
 | should switch to the Community tab on mobile | (mobile) Tapping the Community pill moves `aria-current="true"` onto it, and scrolls only the tab strip: once the strip has landed on Community, the page and every scroll container around it are where they were before the tap (#653, the strip now uses `useScrollSnapIndex` instead of `scrollIntoView`, which also scrolls ancestors; the old code did not move them in this layout either, so this guards the outcome) |
@@ -313,7 +314,7 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 | opens directly in comparison with no BACK button (desktop) | (deep link) `/compare/A/B/groupKey` opens straight into comparison; BACK button suppressed (hideBackButton) |
 | opens the mobile tabbed comparison view (mobile) | (deep link) `/compare/A/B/groupKey` opens the mobile MobileComparisonView |
 
-## `playstyle-detail.spec.ts` — 4 tests (desktop only)
+## `playstyle-detail.spec.ts` — 5 tests (desktop only)
 
 | Test | What it verifies |
 |---|---|
@@ -321,6 +322,7 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 | should show and use role filter chips | "Forced Discard" mechanic chip filters to a subset; toggling it off restores the full grid |
 | should render card tiles in grid | `/playstyles/location-control` renders 5+ card tiles |
 | should open the card overview modal from playstyle detail | Clicking a card tile opens the modal; URL stays on the playstyle page |
+| keeps a tile tooltip under the pointer, ignores clicks on it, and hides on Escape | The "Forced Discard" tile's description tooltip stays while the pointer slides onto it and rests there past its 150 ms close delay; a click on it leaves the tile `aria-pressed="false"` (it renders beside the tile's button, so the click no longer bubbles to it through the portal); Escape hides it (WCAG 1.4.13, #836) |
 
 ## `voting.spec.ts` — 17 tests (12 desktop, 5 mobile)
 

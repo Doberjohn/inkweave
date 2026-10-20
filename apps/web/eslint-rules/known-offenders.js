@@ -27,7 +27,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/DeltaPanel.stories.tsx', // x1
     'src/features/synergies/components/DeltaPanel.tsx', // x5
     'src/features/synergies/components/MobileComparisonView.stories.tsx', // x2
-    'src/features/synergies/components/RoleTileRow.stories.tsx', // x1
     'src/features/synergies/components/SynergyGroup.tsx', // x1
     'src/features/voting/components/DistributionBar.stories.tsx', // x1
     'src/features/voting/components/DistributionBar.tsx', // x3
@@ -53,7 +52,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/Sparkles.tsx', // x1
     'src/shared/components/StrengthBadge.stories.tsx', // x8
     'src/shared/components/TierCircle.stories.tsx', // x2
-    'src/shared/components/Tooltip.stories.tsx', // x2
   ],
   // 63 files, 259 violations at seeding
   'no-raw-rgba': [
@@ -76,7 +74,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/EtherealBackground.tsx', // x4
     'src/shared/components/FilterButton.stories.tsx', // x1
     'src/shared/components/Sparkles.stories.tsx', // x2
-    'src/shared/components/Tooltip.stories.tsx', // x3
   ],
   // 6 files, 15 violations at seeding
   'no-literal-font-family': [
@@ -99,7 +96,6 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/EmptyState.stories.tsx', // x3
     'src/shared/components/MobileBottomNav.tsx', // x1
     'src/shared/components/Sparkles.stories.tsx', // x3
-    'src/shared/components/Tooltip.stories.tsx', // x2
   ],
   // 62 files, 102 violations at seeding
   'no-raw-radius': [
@@ -147,7 +143,6 @@ export const KNOWN_OFFENDERS = {
   // kit component (CtaButton/LinkButton/TabList/IconButton/Chip) on touch.
   // 24 files, 29 sites at seeding (2026-07-22).
   'no-adhoc-buttons': [
-    'src/features/synergies/components/ColumnHeader.tsx', // x1
     'src/features/reveals/NewFranchises.tsx', // x1
     'src/features/reveals/RevealsPromoCard.tsx', // x1
     'src/features/reveals/WhatsNewSection.tsx', // x1

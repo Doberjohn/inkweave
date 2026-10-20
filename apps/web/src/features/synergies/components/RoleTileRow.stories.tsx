@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
+import {COLORS} from '../../../shared/constants';
 import {RoleTileRow, type RoleTile} from './RoleTileRow';
 
 const locationTiles: RoleTile[] = [
@@ -21,7 +22,7 @@ const meta: Meta<typeof RoleTileRow> = {
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <div style={{padding: 24, background: '#0d0d14', minHeight: 240}}>
+      <div style={{padding: 24, background: COLORS.background, minHeight: 240}}>
         <Story />
       </div>
     ),
@@ -31,7 +32,13 @@ export default meta;
 type Story = StoryObj<typeof RoleTileRow>;
 
 /** Wraps RoleTileRow with local active-role state so stories show real toggle behavior. */
-function InteractiveTileRow({tiles}: {tiles: RoleTile[]}) {
+function InteractiveTileRow({
+  tiles,
+  showDescriptions,
+}: {
+  tiles: RoleTile[];
+  showDescriptions?: boolean;
+}) {
   const [activeRoles, setActiveRoles] = useState<Set<string>>(() => new Set());
   const toggle = (role: string) => {
     setActiveRoles((prev) => {
@@ -41,11 +48,26 @@ function InteractiveTileRow({tiles}: {tiles: RoleTile[]}) {
       return next;
     });
   };
-  return <RoleTileRow tiles={tiles} activeRoles={activeRoles} onToggle={toggle} />;
+  return (
+    <RoleTileRow
+      tiles={tiles}
+      activeRoles={activeRoles}
+      onToggle={toggle}
+      showDescriptions={showDescriptions}
+    />
+  );
 }
 
 export const Default: Story = {
   render: () => <InteractiveTileRow tiles={locationTiles} />,
+};
+
+/**
+ * The compact tiles a playstyle page shows on desktop (`showDescriptions={false}`): each
+ * description waits in a tooltip under its tile, on hover or focus.
+ */
+export const Compact: Story = {
+  render: () => <InteractiveTileRow tiles={locationTiles} showDescriptions={false} />,
 };
 
 export const WithActiveTiles: Story = {
