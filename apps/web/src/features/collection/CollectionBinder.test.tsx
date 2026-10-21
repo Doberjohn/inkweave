@@ -340,9 +340,11 @@ describe('CollectionBinder', () => {
       expect(screen.queryByRole('group', {name: '1 normal, 0 foil'})).toBeNull();
     });
 
-    it('opens it on a mouse moving inside too: the window closing over a resting mouse brings no entry', () => {
+    it('opens it on the pointer over it with no entry, as when the window closes over a resting mouse', () => {
       render(binder({onCountChange: vi.fn()}));
-      fireEvent.pointerMove(pocket(1), {pointerType: 'mouse'});
+      // From an element React tracks, React enters only on that element's pointerout, which
+      // never comes from the window's backdrop, gone from the page.
+      fireEvent.pointerOver(pocket(1), {pointerType: 'mouse', relatedTarget: pocket(2)});
       expect(screen.getByRole('group', {name: '1 normal, 0 foil'})).toBeInTheDocument();
     });
 

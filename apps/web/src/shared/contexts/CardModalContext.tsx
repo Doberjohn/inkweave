@@ -353,7 +353,14 @@ function CardModalRoot({onEnterComparison, onExitComparison, copiesSlotRef, onSh
 
   return (
     <Suspense
-      fallback={<CardOverviewModalFallback card={card} isMobile={isMobile} onClose={closeCardModal} />}>
+      fallback={
+        <CardOverviewModalFallback
+          card={card}
+          isMobile={isMobile}
+          printingId={initialPrintingId}
+          onClose={closeCardModal}
+        />
+      }>
       <Modal
         skipEnterTransition={openedBeforeModalReady}
         isOpen

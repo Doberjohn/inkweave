@@ -127,7 +127,10 @@ function SlotTarget({attach}: {attach: CopiesSlotState['attach']}) {
   return <div ref={attach} data-testid="card-overview-copies-slot" />;
 }
 
-/** Across the card's foot, its bottom corners rounded as the card's are; the art box sets no line height. */
+/**
+ * Across the card's foot, its bottom corners rounded as the card's are. The art box sets a
+ * line height of 0, so no line box sits under the art; the slot puts it back for its text.
+ */
 const SLOT_STYLE: CSSProperties = {
   position: 'absolute',
   left: 0,

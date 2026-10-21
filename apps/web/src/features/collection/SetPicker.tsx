@@ -157,8 +157,8 @@ const MENU_MAX_HEIGHT = 'min(440px, 50vh)';
  *
  * A popup in the select's manner: opening focuses the open choice. Up, down, Home and End
  * move down a column, the chosen tab over the sets, and left and right move along the
- * tabs. Escape closes it and gives focus back to the button, and Tab or a press outside
- * closes it.
+ * tabs, round from either end, each showing its sets. Escape closes it and gives focus
+ * back to the button, and Tab or a press outside closes it.
  */
 export function SetPicker({
   setCode,
@@ -354,22 +354,24 @@ const MOVES: Record<string, Move> = {
   End: (_, last) => last,
 };
 
-/** Where the arrows take focus along the tabs. */
+/** Where the arrows take focus along the tabs, round from either end. */
 const ALONG: Record<string, Move> = {
-  ArrowRight: (at, last) => Math.min(at + 1, last),
-  ArrowLeft: (at) => Math.max(at - 1, 0),
+  ArrowRight: (at, last) => (at === last ? 0 : at + 1),
+  ArrowLeft: (at, last) => (at === 0 ? last : at - 1),
 };
 
 /**
  * Move focus through the menu for a navigation key; false for any other key. Left and
- * right move along the tabs. The rest move down a column: the focused tab, or else the
- * chosen one, over the list, so up from All sets reaches the tabs.
+ * right move along the tabs, pressing the one they reach, so the sets under the focus are
+ * always its own. The rest move down a column: the focused tab, or else the chosen one,
+ * over the list, so up from All sets reaches the tabs.
  */
 function moveFocus(menu: HTMLElement, key: string): boolean {
   const tabs = [...menu.querySelectorAll<HTMLElement>('[aria-pressed]')];
   const onTab = tabs.findIndex((tab) => tab === document.activeElement);
   if (onTab >= 0 && key in ALONG) {
-    tabs[ALONG[key](onTab, tabs.length - 1)].focus();
+    // Its press shows its sets and focuses it (`SetMenu`'s `show`).
+    tabs[ALONG[key](onTab, tabs.length - 1)].click();
     return true;
   }
   if (!(key in MOVES)) return false;

@@ -160,6 +160,11 @@ function ReservedMobileArtControls({card}: {card: LorcanaCard}) {
 interface CardOverviewModalFallbackProps {
   card: LorcanaCard;
   isMobile: boolean;
+  /**
+   * The printing the open names (CardModalContext's `initialPrintingId`), whose number the
+   * title reads, as the modal's will.
+   */
+  printingId?: string | null;
   onClose: () => void;
 }
 
@@ -174,7 +179,12 @@ interface CardOverviewModalFallbackProps {
  * three times in the few hundred milliseconds the shell usually lasts (shell, tile, modal).
  * Clicking the scrim or its ×, or pressing Escape, closes it, like the modal.
  */
-export function CardOverviewModalFallback({card, isMobile, onClose}: CardOverviewModalFallbackProps) {
+export function CardOverviewModalFallback({
+  card,
+  isMobile,
+  printingId = null,
+  onClose,
+}: CardOverviewModalFallbackProps) {
   const {visible} = useTransitionPresence(true);
   useScrollLock(true);
   useEffect(() => {
@@ -206,7 +216,12 @@ export function CardOverviewModalFallback({card, isMobile, onClose}: CardOvervie
             data-testid="card-overview-fallback"
             style={pickModalShellStyle(isMobile)}>
             <div style={MODAL_HEADER_STYLE}>
-              <ModalCardTitle card={card} isMobile={isMobile} as="div" />
+              <ModalCardTitle
+                card={card}
+                isMobile={isMobile}
+                printing={printingsOf(card).find((printing) => printing.key === printingId)}
+                as="div"
+              />
               {!isMobile && <ReservedTranslationToggle card={card} />}
               {/* The modal's own ×: it sets the header's height, so everything below sits
                   exactly where the modal's will. It never takes focus (see above). */}

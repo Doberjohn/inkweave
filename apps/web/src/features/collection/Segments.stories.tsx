@@ -12,11 +12,13 @@ interface LiveSegmentsProps {
 
 /** A row of segments, live: press one and it is the chosen one. */
 function LiveSegments({label, columns, options}: LiveSegmentsProps) {
-  const [chosen, setChosen] = useState(options[0]);
+  const [picked, setPicked] = useState(options[0]);
+  // Controls can swap the list: a choice it no longer holds falls back to its first.
+  const chosen = options.includes(picked) ? picked : options[0];
   return (
     <Segments label={label} columns={columns}>
       {options.map((option) => (
-        <Segment key={option} label={option} active={chosen === option} onSelect={() => setChosen(option)} />
+        <Segment key={option} label={option} active={chosen === option} onSelect={() => setPicked(option)} />
       ))}
     </Segments>
   );

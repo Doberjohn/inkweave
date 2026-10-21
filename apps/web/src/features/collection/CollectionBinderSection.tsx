@@ -33,9 +33,11 @@ import {COLORS, FONT_SIZES, SPACING, type BrowseSortOrder} from '../../shared/co
 /**
  * Collection mode's content: the set panel, and that set's binder.
  *
- * THE SET IS CHOSEN IN THE COLLECTION PANEL'S SET LIST (owner, 2026-10-12; a picker
- * under the set's logo before), through the `?binder=` param, and only there: the
- * filters panel drops its Set section in collection mode. See `CollectionSetPanel`.
+ * THE SET IS CHOSEN IN THE SET PICKER, through the `?binder=` param, and only there: the
+ * filters panel drops its Set section in collection mode. On desktop it sits in the
+ * toolbar beside Collection (owner, 2026-10-20; `DockedSetPicker`), on tablets and phones
+ * in the collection panel's rail and strip (owner, 2026-10-12; a picker under the set's
+ * logo before). See `CollectionSetPanel`.
  *
  * THE PANEL ADAPTS (owner, 2026-10-07): on desktop it is docked on the binder's
  * right, under the Collection button (owner, 2026-10-08; it was a tab beside the
@@ -321,21 +323,28 @@ interface DockedSetBodyProps extends PanelControls {
 }
 
 /**
+ * What the docked panel and its picker in the toolbar show: the page's controls, and the
+ * numbers both read, none until the pool is complete. Each still counts for itself: they
+ * are two lazy components in two places on the page.
+ */
+function dockedPanel({cards, filtered, entries, isLoading, ...controls}: DockedSetBodyProps) {
+  return {...controls, filtered, stats: isLoading ? null : tallyCollection(cards, entries, controls.sets)};
+}
+
+/**
  * The docked collection panel's body (desktop, right of the binder), with every set's
  * tally and the collection's, of the cards the page's filters let through. Its set
  * picker sits in the toolbar (`DockedSetPicker`). Lives in this module, so it rides the
  * binder's lazy chunk rather than Browse's.
  */
-export function DockedSetBody({cards, filtered, entries, isLoading, ...controls}: DockedSetBodyProps) {
-  const stats = isLoading ? null : tallyCollection(cards, entries, controls.sets);
-  return <CollectionSetBody {...controls} stats={stats} filtered={filtered} withPicker={false} />;
+export function DockedSetBody(props: DockedSetBodyProps) {
+  return <CollectionSetBody {...dockedPanel(props)} withPicker={false} />;
 }
 
 /**
  * The docked panel's set picker, in the toolbar beside Collection (desktop, owner
  * 2026-10-20), its list counting what the panel counts.
  */
-export function DockedSetPicker({cards, filtered, entries, isLoading, ...controls}: DockedSetBodyProps) {
-  const stats = isLoading ? null : tallyCollection(cards, entries, controls.sets);
-  return <ToolbarSetPicker {...controls} stats={stats} filtered={filtered} />;
+export function DockedSetPicker(props: DockedSetBodyProps) {
+  return <ToolbarSetPicker {...dockedPanel(props)} />;
 }

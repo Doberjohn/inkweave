@@ -158,17 +158,19 @@ describe('SetPicker', () => {
       expect(all).toHaveFocus();
     });
 
-    it('moves up from All sets onto its tab, along the tabs, and back down the list', () => {
+    it('moves up from All sets onto its tab, along the tabs round from either end, showing their sets, and down the list', () => {
       renderPicker({sets, setCode: '14', progress: null});
       fireEvent.click(button());
       fireEvent.keyDown(option('14'), {key: 'ArrowUp'});
       expect(allSets()).toHaveFocus();
       fireEvent.keyDown(allSets(), {key: 'ArrowUp'});
       expect(tab('Standard')).toHaveFocus();
-      fireEvent.keyDown(tab('Standard'), {key: 'ArrowRight'});
+      // Left from the first tab comes round to the last, and shows its sets.
+      fireEvent.keyDown(tab('Standard'), {key: 'ArrowLeft'});
       expect(tab('Promo')).toHaveFocus();
+      expect(tab('Promo')).toHaveAttribute('aria-pressed', 'true');
       fireEvent.keyDown(tab('Promo'), {key: 'ArrowDown'});
-      expect(allSets()).toHaveFocus();
+      expect(screen.getByRole('option', {name: 'All sets, every promo set'})).toHaveFocus();
     });
 
     it('names a promo set on its button by its code and its name', () => {

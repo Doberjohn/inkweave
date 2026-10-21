@@ -294,7 +294,7 @@ test.describe('Collection mode, signed in', () => {
     await expect(numbers(page)).toContainText(`${HELD + 1} of ${SET_TOTAL} cards`);
   });
 
-  test('in Missing, copies added from two pockets keep both cards and the spread, which the card window walks (#826)', async ({
+  test('in Missing, copies added from a pocket and from the card window keep both cards and the spread (#826)', async ({
     page,
   }) => {
     const writes = await signInAsCollector(page, ENTRIES);
@@ -315,30 +315,39 @@ test.describe('Collection mode, signed in', () => {
     const ids = names.map((name) => BASE.find((base) => base.fullName === name)?.id);
     expect(ids, `${names.join(' and ')} are Set ${SET}'s cards`).not.toContain(undefined);
 
-    // A first copy of each, from its pocket a mouse points at. The stripe sits under
+    // A first copy of the first, from its pocket a mouse points at. The stripe sits under
     // aria-hidden: its group's label speaks for it.
-    for (const tile of [tiles.nth(0), tiles.nth(1)]) {
-      await tile.hover();
-      const stripe = binder(page).getByRole('group', {name: '0 normal, 0 foil', exact: true});
-      await stripe.getByRole('button', {name: 'Add one copy of normal', includeHidden: true}).click();
-      await expect(
-        binder(page).getByRole('group', {name: '1 normal, 0 foil', exact: true}),
-      ).toBeVisible();
-    }
-    // The clicks left the focus where it was, off the hidden + that no Tab reaches.
+    await tiles.nth(0).hover();
+    const stripe = binder(page).getByRole('group', {name: '0 normal, 0 foil', exact: true});
+    await stripe.getByRole('button', {name: 'Add one copy of normal', includeHidden: true}).click();
+    const open = binder(page).getByRole('group', {name: '1 normal, 0 foil', exact: true});
+    await expect(open).toBeVisible();
+    // The click left the focus where it was, off the hidden + that no Tab reaches.
     const focused = () => page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
     expect(await focused()).not.toBe('Add one copy of normal');
 
-    // The second's card window, whose arrows walk the binder: the first, held now but kept,
-    // is the card before it. Clicked near its top, clear of the stripe the mouse opens, which
-    // takes every press on the card's foot.
+    // A first copy of the second, from its card window, whose arrows walk the binder: the
+    // first, held now but kept, is the card before it. Clicked near its top, clear of the
+    // stripe the mouse opens, which takes every press on the card's foot; then the keyboard
+    // alone, so the mouse rests where it clicked.
     await page.mouse.move(0, 0);
     await tiles.nth(1).click({position: {x: 10, y: 10}});
     const modal = page.getByTestId('card-overview-modal');
     await expect(modal.locator('h1')).toHaveText(names[1]);
-    await page.getByRole('button', {name: 'Previous card'}).click();
+    const copies = page.getByTestId('card-overview-copies-slot').getByRole('group');
+    // The dialog moves focus to its × 100ms after opening; a 100ms timer set now runs after it.
+    await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    await copies.getByRole('button', {name: `Add one copy of ${names[1]}`, exact: true}).focus();
+    await page.keyboard.press('Enter');
+    await expect(copies).toHaveAccessibleName('Your copies: 1 normal, 0 foil');
+    await page.keyboard.press('ArrowLeft');
     await expect(modal.locator('h1')).toHaveText(names[0]);
     await page.keyboard.press('Escape');
+
+    // The window closed over the mouse resting on the second pocket, whose stripe opens
+    // again with no move of the mouse.
+    await expect(modal).toHaveCount(0);
+    await expect(open).toBeVisible();
 
     // Both held, so neither is missing, yet both keep their pockets and the binder its
     // spread: dropped from the view at once, a card reopened the binder at the first.

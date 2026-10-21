@@ -107,21 +107,19 @@ const promoLabel = ({setNumber, setCode, finish, artVariant}: OpenPocket) =>
  * phone or a tablet opens the card as it always has and never leaves its stripe open; nor
  * do the mouse events iOS fires after a tap, which are no pointer events.
  *
- * A move inside counts as well as an entry. When the card's window closes over a resting
- * mouse, the browser reports the pointer entering the pocket again, but React's emulated
- * `onPointerEnter` never fires: the pointer came from the window's backdrop, which is gone
- * from the page. The pocket stayed shut until the mouse left it and came back.
+ * The browser's own `pointerover`, not React's emulated `onPointerEnter`. When the card's
+ * window closes over a resting mouse, the browser reports the pointer over the pocket again,
+ * but the emulated entry never fires: the pointer came from the window's backdrop, which is
+ * gone from the page. The pocket stayed shut until the mouse left it and came back.
  */
 function usePointedByMouse() {
   const [pointed, setPointed] = useState(false);
-  const point = (e: PointerEvent) => {
-    if (e.pointerType === 'mouse' && !pointed) setPointed(true);
-  };
   return {
     pointed,
     pointerProps: {
-      onPointerEnter: point,
-      onPointerMove: point,
+      onPointerOver: (e: PointerEvent) => {
+        if (e.pointerType === 'mouse') setPointed(true);
+      },
       onPointerLeave: () => setPointed(false),
     },
   };

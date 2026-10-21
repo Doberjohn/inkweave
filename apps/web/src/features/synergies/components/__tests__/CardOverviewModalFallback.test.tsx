@@ -22,6 +22,13 @@ describe('CardOverviewModalFallback', () => {
     expect(screen.getByText('Woody - Jungle Guide')).toBeInTheDocument();
   });
 
+  it("reads the number of the printing the open names, as the modal's title will", () => {
+    const numbered = {...cardWithPrintings, setCode: '9', setNumber: 52} as LorcanaCard;
+    render(<CardOverviewModalFallback card={numbered} isMobile={false} printingId="14241" onClose={vi.fn()} />);
+
+    expect(screen.getByText('241/204')).toBeInTheDocument();
+  });
+
   it('closes on a scrim click, like the modal', () => {
     const onClose = vi.fn();
     render(<CardOverviewModalFallback card={card} isMobile={false} onClose={onClose} />);
