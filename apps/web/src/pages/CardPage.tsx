@@ -6,6 +6,10 @@ import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {usePrecomputedSynergies} from '../features/synergies/hooks';
 import {cardSynergySummary} from '../features/synergies/cardSynergySummary';
 import {CardDetailPanel} from '../features/synergies/components/CardDetailPanel';
+import {
+  trackSynergyCardClicked,
+  trackSynergyGroupViewed,
+} from '../features/synergies/lib/synergyAnalytics';
 import {CardDetailSkeleton} from '../features/cards';
 import {SynergyResults} from '../features/synergies/components/SynergyResults';
 import {CompactHeader, Footer, Seo} from '../shared/components';
@@ -116,9 +120,40 @@ export function CardPage() {
 
   const totalCount = synergies.reduce((n, g) => n + g.synergies.length, 0);
   const summary = cardSynergySummary(card, synergies);
+  // As in the card modal: isolating a group by its chip and expanding it by its More tile count
+  // as viewing it; clearing a chip does not.
+  const isolateGroup = (groupKey: string | null) => {
+    if (groupKey !== null && groupKey !== activeGroup) {
+      trackSynergyGroupViewed({
+        sourceCardId: card.id,
+        groupKey,
+        action: 'isolate',
+        surface: 'card_page',
+      });
+    }
+    setActiveGroup(groupKey);
+  };
   const handleGroupClick = (groupKey: string) => {
-    setActiveGroup((current) => (current === groupKey ? null : groupKey));
+    isolateGroup(activeGroup === groupKey ? null : groupKey);
     setExpandedGroup(null);
+  };
+  const showAll = (groupKey: string) => {
+    trackSynergyGroupViewed({
+      sourceCardId: card.id,
+      groupKey,
+      action: 'show_all',
+      surface: 'card_page',
+    });
+    setExpandedGroup(groupKey);
+  };
+  const followSynergy = (partner: LorcanaCard, groupKey?: string) => {
+    trackSynergyCardClicked({
+      sourceCardId: card.id,
+      clicked: partner,
+      groupKey,
+      surface: 'card_page',
+    });
+    navigate(cardPath(partner));
   };
 
   return (
@@ -148,11 +183,11 @@ export function CardPage() {
           isMobile={isMobile}
           showCardDetail={isMobile}
           activeGroupFilter={activeGroup}
-          onGroupFilterChange={setActiveGroup}
+          onGroupFilterChange={isolateGroup}
           expandedGroup={expandedGroup}
-          onShowAll={setExpandedGroup}
+          onShowAll={showAll}
           onBackToAll={() => setExpandedGroup(null)}
-          onSynergyCardClick={(partner) => navigate(cardPath(partner))}
+          onSynergyCardClick={followSynergy}
         />
       </main>
     </PageShell>
