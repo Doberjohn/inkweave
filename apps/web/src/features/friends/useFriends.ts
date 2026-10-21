@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
+import {trackEvent} from '../../shared/lib/analytics';
 import type {PublicIdentity} from '../profile';
 import {
   SEND_FAILED,
@@ -160,6 +161,8 @@ export function useFriends(userId: string) {
   const send = (code: string) =>
     runAction(async (): Promise<SendOutcome> => {
       const result = await sendFriendRequest(code);
+      // The database's answer, never the code: pending, accepted, a refusal, or failed.
+      trackEvent('friend_request_sent', {result: result.answer});
       if (!result.data) return {ok: false, message: result.error ?? SEND_FAILED};
       const name = nameIn(await reload(), result.data);
       return {

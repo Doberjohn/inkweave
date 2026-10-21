@@ -34,12 +34,23 @@ export interface SentRequest {
 /** What the section shows when a send fails for a reason other than a refusal. */
 export const SEND_FAILED = 'Could not send the request. Try again.';
 
+/** A refusal `send_friend_request` answers with instead of a friend (#852, #860). */
+type Refusal = 'invalid' | 'unknown' | 'own' | 'too_many' | 'slow_down';
+
+/** What a send came to, as the friends events name it: the pair's status, a refusal, or failed. */
+export type SendAnswer = FriendStatus | Refusal | 'failed';
+
+/** A send's result, with the database's answer beside the words the section shows. */
+export interface SentResult extends RepoResult<SentRequest> {
+  answer: SendAnswer;
+}
+
 /**
  * The words for each refusal `send_friend_request` answers with. Refusals are answers,
  * not errors (#852): raised, they would come back as HTTP errors and reach Sentry as
  * unhandled, once per mistyped code.
  */
-const REFUSALS = new Map<unknown, string>([
+const REFUSALS = new Map<Refusal, string>([
   ['invalid', 'A friend code is 8 letters and numbers, like ABCD-2345.'],
   ['unknown', 'No one has that friend code. Check it with your friend.'],
   ['own', "That's your own friend code."],
@@ -52,6 +63,10 @@ type SendAnswerRow = {friend_id?: unknown; status?: unknown};
 
 function isFriendStatus(status: unknown): status is FriendStatus {
   return status === 'pending' || status === 'accepted';
+}
+
+function isRefusal(status: unknown): status is Refusal {
+  return REFUSALS.has(status as Refusal);
 }
 
 /** Runs one call; `failure` replaces a query error's own text when the UI shows it. */
@@ -91,21 +106,21 @@ function onlyRow(rows: unknown): SendAnswerRow | null {
  * The one-row answer `send_friend_request` returns: the friend and the pair's status, or
  * a refusal with no friend, which comes back as its words with nothing logged.
  */
-function readSendAnswer(rows: unknown): RepoResult<SentRequest> {
+function readSendAnswer(rows: unknown): SentResult {
   const row = onlyRow(rows);
   if (typeof row?.friend_id === 'string' && isFriendStatus(row.status)) {
-    return {data: {friendId: row.friend_id, status: row.status}, error: null};
+    return {data: {friendId: row.friend_id, status: row.status}, error: null, answer: row.status};
   }
-  const refusal = REFUSALS.get(row?.status);
-  if (refusal) return {data: null, error: refusal};
+  const status = row?.status;
+  if (isRefusal(status)) return {data: null, error: REFUSALS.get(status) ?? SEND_FAILED, answer: status};
   console.error('[friendRepository] unexpected answer from send_friend_request:', rows);
-  return {data: null, error: SEND_FAILED};
+  return {data: null, error: SEND_FAILED, answer: 'failed'};
 }
 
 /** Sends a request to whoever holds `code`, or accepts theirs if they asked first. */
-export async function sendFriendRequest(code: string): Promise<RepoResult<SentRequest>> {
+export async function sendFriendRequest(code: string): Promise<SentResult> {
   const {data, error} = await run((c) => c.rpc('send_friend_request', {friend_code: code}), SEND_FAILED);
-  if (error) return {data: null, error};
+  if (error) return {data: null, error, answer: 'failed'};
   return readSendAnswer(data);
 }
 

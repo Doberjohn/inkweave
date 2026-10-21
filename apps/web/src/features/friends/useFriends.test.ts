@@ -1,7 +1,10 @@
 import {act, renderHook, waitFor} from '@testing-library/react';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {trackEvent} from '../../shared/lib/analytics';
 import type {Friendship} from './friendRepository';
 import {useFriends} from './useFriends';
+
+vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 
 const repo = vi.hoisted(() => ({
   claimFriendCode: vi.fn(),
@@ -85,9 +88,9 @@ describe('useFriends', () => {
   it.each([
     ['pending', 'Request sent to Steel Pirate 777.'],
     ['accepted', 'You and Steel Pirate 777 are now friends.'],
-  ])('reports a %s send after reloading the lists', async (status, message) => {
+  ])('reports a %s send after reloading the lists, and tracks the answer', async (status, message) => {
     const {result} = await loaded();
-    repo.sendFriendRequest.mockResolvedValue({data: {friendId: 'steel', status}, error: null});
+    repo.sendFriendRequest.mockResolvedValue({data: {friendId: 'steel', status}, error: null, answer: status});
 
     let outcome;
     await act(async () => {
@@ -97,11 +100,12 @@ describe('useFriends', () => {
     expect(outcome).toEqual({ok: true, message});
     expect(repo.sendFriendRequest).toHaveBeenCalledWith('M3PZ8RQT');
     expect(repo.listFriendships).toHaveBeenCalledTimes(2);
+    expect(trackEvent).toHaveBeenCalledWith('friend_request_sent', {result: status});
   });
 
-  it('returns a refusal and leaves the lists as they were', async () => {
+  it('returns a refusal, tracks it, and leaves the lists as they were', async () => {
     const {result} = await loaded();
-    repo.sendFriendRequest.mockResolvedValue({data: null, error: "That's your own friend code."});
+    repo.sendFriendRequest.mockResolvedValue({data: null, error: "That's your own friend code.", answer: 'own'});
 
     let outcome;
     await act(async () => {
@@ -110,6 +114,8 @@ describe('useFriends', () => {
 
     expect(outcome).toEqual({ok: false, message: "That's your own friend code."});
     expect(repo.listFriendships).toHaveBeenCalledTimes(1);
+    expect(trackEvent).toHaveBeenCalledTimes(1);
+    expect(trackEvent).toHaveBeenCalledWith('friend_request_sent', {result: 'own'});
   });
 
   it('says so when the request it accepted was already gone', async () => {
