@@ -44,6 +44,7 @@ const REFUSALS = new Map<unknown, string>([
   ['unknown', 'No one has that friend code. Check it with your friend.'],
   ['own', "That's your own friend code."],
   ['too_many', 'You have 20 requests waiting. Cancel one to send another.'],
+  ['slow_down', "You've entered a lot of codes. Try again in an hour."],
 ]);
 
 /** A row of `send_friend_request`'s answer, before anything about it is checked. */

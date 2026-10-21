@@ -65,12 +65,13 @@ function fail(name, detail) {
 }
 
 /**
- * Passes only on 42501 (insufficient_privilege): any other error proves nothing about
- * permissions, so it fails, and so does a success, which means anon got through.
+ * Passes only on the expected code, 42501 (insufficient_privilege) by default: any other
+ * error proves nothing about permissions, so it fails, and so does a success, which means
+ * anon got through.
  */
-async function expectDenied(name, request) {
+async function expectDenied(name, request, expectedCode = '42501') {
   const { data, error } = await request;
-  if (error?.code === '42501') {
+  if (error?.code === expectedCode) {
     pass(`${name} (${error.code})`);
   } else if (error) {
     fail(name, `unexpected error ${error.code ?? 'unknown'}: ${error.message}`);
@@ -111,6 +112,19 @@ async function checkFriendsClosedToAnon() {
   await expectDenied(
     'accept_friend_request not callable',
     supabase.rpc('accept_friend_request', { requester: '00000000-0000-0000-0000-000000000000' }),
+  );
+}
+
+/**
+ * Test 11 (#860): anon can't reach the record of friend-code tries. The internal schema
+ * isn't exposed to the Data API, so PostgREST refuses the schema itself (PGRST106) before
+ * any privilege is checked. Kept out of run() for the same reason as Test 9.
+ */
+async function checkTryRecordClosedToAnon() {
+  await expectDenied(
+    'friend_request_attempts not reachable',
+    supabase.schema('internal').from('friend_request_attempts').select('sender_id').limit(1),
+    'PGRST106',
   );
 }
 
@@ -262,6 +276,8 @@ async function run() {
   await checkVotesProtected();
   // --- Test 10: The friends tables and RPCs are closed to anon (#852) ---
   await checkFriendsClosedToAnon();
+  // --- Test 11: The record of friend-code tries is out of the Data API's reach (#860) ---
+  await checkTryRecordClosedToAnon();
   finish();
 }
 
