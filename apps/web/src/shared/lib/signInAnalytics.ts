@@ -8,6 +8,13 @@ export type SignInSurface = 'header' | 'account' | 'collection' | 'decks' | 'dec
 /** Why a sign-in did not complete. Must match the catalog's `sign_in_failed` union. */
 export type SignInFailureReason = 'error' | 'cancelled' | 'timeout';
 
+/**
+ * Accounts ship dark (#474): the header hides sign-in, but `/account` and `/auth/callback` stay
+ * reachable by URL so sign-in can be tried in production. Those tries send nothing; the events
+ * start when the flag shows sign-in to everyone. Read once at module load, like every flag.
+ */
+const SHOW_ACCOUNTS = import.meta.env.VITE_SHOW_ACCOUNTS === 'true';
+
 interface SignInStart {
   provider: AuthProvider;
   surface: SignInSurface;
@@ -15,7 +22,7 @@ interface SignInStart {
 
 /** Fire `sign_in_started` when a provider button is pressed. */
 export function trackSignInStarted(start: SignInStart): void {
-  trackEvent('sign_in_started', start);
+  if (SHOW_ACCOUNTS) trackEvent('sign_in_started', start);
 }
 
 /** The session's provider as the catalog spells it: a provider name, never an identity. */
@@ -26,7 +33,7 @@ function providerOf(session: Session): 'google' | 'discord' | 'other' {
 
 /** Fire `sign_in_completed` for the session `/auth/callback` saw arrive. */
 export function trackSignInCompleted(session: Session): void {
-  trackEvent('sign_in_completed', {provider: providerOf(session)});
+  if (SHOW_ACCOUNTS) trackEvent('sign_in_completed', {provider: providerOf(session)});
 }
 
 interface SignInFailure {
@@ -37,7 +44,7 @@ interface SignInFailure {
 
 /** Fire `sign_in_failed` for a start the dialog couldn't make, or a callback that gave up. */
 export function trackSignInFailed(failure: SignInFailure): void {
-  trackEvent('sign_in_failed', failure);
+  if (SHOW_ACCOUNTS) trackEvent('sign_in_failed', failure);
 }
 
 /**
