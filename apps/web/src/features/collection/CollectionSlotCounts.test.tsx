@@ -33,7 +33,7 @@ describe('CollectionSlotCounts', () => {
     it('asks for the count one click away, and never for less than 0', () => {
       const onChange = vi.fn();
       render(
-        <CollectionSlotCounts counts={{normal: 0, foil: 2}} editor={{foilOnly: false, onChange}} />,
+        <CollectionSlotCounts counts={{normal: 0, foil: 2}} editor={{finishes: ['normal', 'foil'], onChange}} />,
       );
       // The pills sit under aria-hidden, so a role query must ask for hidden elements.
       const button = (name: string) => screen.getByRole('button', {name, hidden: true});
@@ -50,7 +50,7 @@ describe('CollectionSlotCounts', () => {
       const {container} = render(
         <CollectionSlotCounts
           counts={{normal: 1, foil: 0}}
-          editor={{foilOnly: false, onChange: vi.fn()}}
+          editor={{finishes: ['normal', 'foil'], onChange: vi.fn()}}
         />,
       );
       const buttons = [...container.querySelectorAll('button')];
@@ -59,11 +59,20 @@ describe('CollectionSlotCounts', () => {
       expect(buttons.every((b) => b.tabIndex === -1)).toBe(true);
     });
 
+    it.each([
+      [['foil'] as const, 'foil'],
+      [['normal'] as const, 'normal'],
+    ])('opens only the finish a card printed in %j comes in (#880)', (finishes, only) => {
+      render(<CollectionSlotCounts counts={{normal: 1, foil: 1}} editor={{finishes, onChange: vi.fn()}} />);
+      const added = screen.getAllByRole('button', {name: /^Add one copy of/, hidden: true});
+      expect(added.map((button) => button.getAttribute('aria-label'))).toEqual([`Add one copy of ${only}`]);
+    });
+
     it('leaves the focus where it was when its − or + is clicked', () => {
       render(
         <CollectionSlotCounts
           counts={{normal: 1, foil: 0}}
-          editor={{foilOnly: false, onChange: vi.fn()}}
+          editor={{finishes: ['normal', 'foil'], onChange: vi.fn()}}
         />,
       );
       // A click focuses its button on mousedown: cancelled, the focus stays put.

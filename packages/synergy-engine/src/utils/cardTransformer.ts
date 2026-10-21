@@ -1,4 +1,4 @@
-import type {Ink, CardType, LorcanaCard} from '../types/card.js';
+import type {Ink, CardType, LorcanaCard, PrintingFinishes} from '../types/card.js';
 
 /**
  * An alternate printing folded into its base card's raw entry (#625), in the shape
@@ -30,6 +30,11 @@ export interface RawCardVariant {
   promoGrouping?: string;
   /** Only on promo twins that share a code, such as Kuzco's foil and non-foil 8/C1 (#802). */
   finish?: 'foil' | 'normal';
+  /**
+   * Only where the printing's rarity would get its versions wrong, or the owner corrected them
+   * (#880): from LorcanaJSON's `foilTypes`, or for a promo from the promo catalog.
+   */
+  finishes?: PrintingFinishes;
 }
 
 /**
@@ -76,6 +81,7 @@ export interface LorcanaJSONCard {
   scanLanguage?: string; // Set only on preview cards whose only scan is not in English (e.g. "ja")
   variants?: RawCardVariant[]; // The card's alternate printings; transformCard ignores them
   baseId?: number; // On a printing: the card it reprints. Collection chunks only (#796); transformCard ignores it
+  finishes?: PrintingFinishes; // Only where the card's rarity would get its versions wrong (#880); transformCard ignores it
 }
 
 const VALID_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];

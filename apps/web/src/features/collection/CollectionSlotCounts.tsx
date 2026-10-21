@@ -13,24 +13,24 @@ import type {CollectionEntry, Finish} from './collectionParser';
  *
  * POINTED AT, THE STRIPE OPENS FROM THE MIDDLE TO THE CARD'S EDGES, as the pills opened: every
  * finish the card is printed in takes its half, − count +, an unheld one at 0, so a first copy
- * is one click, and Foil alone takes the whole stripe for Enchanted, Epic and Iconic (owner,
- * 2026-10-19). A narrower pocket draws the stripe smaller, scaled with its card (owner,
- * 2026-10-20). The open stripe takes every press on the card's foot, between and around its
- * buttons too (owner, 2026-10-20), so only a press above it opens the card's window. The
- * − and + stay out of the Tab order, which keeps a spread one Tab stop (#790): the keyboard
- * changes a count in the card window's stripe (`WindowCopies`).
+ * is one click, and a card printed in one finish gives it the whole stripe: Foil for Enchanted,
+ * Epic and Iconic (owner, 2026-10-19) and the alt foils, Normal or Foil for a promo the promo
+ * catalog names one for (#880, `finishesOf`). A narrower pocket draws the stripe smaller,
+ * scaled with its card (owner, 2026-10-20). The open stripe takes every press on the card's
+ * foot, between and around its buttons too (owner, 2026-10-20), so only a press above it opens
+ * the card's window. The − and + stay out of the Tab order, which keeps a spread one Tab stop
+ * (#790): the keyboard changes a count in the card window's stripe (`WindowCopies`).
  *
  * The finish is the background, not a letter (owner, 2026-08-14); the words survive only in
  * the aria-label, where they cost no pixels.
  */
 
-const FINISHES: Finish[] = ['normal', 'foil'];
-const FOIL_ONLY: Finish[] = ['foil'];
+const FINISHES: readonly Finish[] = ['normal', 'foil'];
 
 /** A pocket a mouse points at, whose counts can change (#826). */
 export interface SlotCountsEditor {
-  /** Printed only in foil (Enchanted, Epic, Iconic): only the Foil count opens. */
-  foilOnly: boolean;
+  /** The finishes the card is printed in (`finishesOf`): only their counts open. */
+  finishes: readonly Finish[];
   /** Set one finish's count. Never asked for less than 0: the − is disabled at 0. */
   onChange: (finish: Finish, count: number) => void;
 }
@@ -53,7 +53,7 @@ export function CollectionSlotCounts({counts, editor}: CollectionSlotCountsProps
   const open = editor !== undefined;
   // The stripe holds every finish the card is printed in, at rest too, so an unheld one can
   // open out of the middle rather than appear: there it is no width at all.
-  const printed = editor?.foilOnly ? FOIL_ONLY : FINISHES;
+  const printed = editor?.finishes ?? FINISHES;
   const named = open ? printed : printed.filter((finish) => counts[finish] > 0);
   return (
     <div

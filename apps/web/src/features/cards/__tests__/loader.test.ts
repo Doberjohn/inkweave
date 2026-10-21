@@ -513,6 +513,20 @@ describe('loadCardsFromJSON', () => {
     ]);
   });
 
+  // A printing that comes in one version names it (#880): a Core card's alt foil, and a
+  // collection card, which is a printing of its own, the same way.
+  it("should carry a printing's versions through, on a variant and on a card", () => {
+    const [mrIncredible, sven] = loadCardsFromJSON(
+      makeJsonData(
+        {id: 2842, variants: [{id: 3571, rarity: 'Legendary', number: 243, finishes: ['foil']}]},
+        {id: 3570, name: 'Sven', finishes: ['foil']},
+      ),
+    );
+    expect(mrIncredible.finishes).toBeUndefined();
+    expect(mrIncredible.variants?.[0].finishes).toEqual(['foil']);
+    expect(sven.finishes).toEqual(['foil']);
+  });
+
   // The promo catalog writes a number nobody knows yet as null (#805). The app never sees the null.
   it('should load a variant whose number is null with no number', () => {
     const [minnie] = loadCardsFromJSON(

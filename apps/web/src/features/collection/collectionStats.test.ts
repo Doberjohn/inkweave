@@ -37,20 +37,31 @@ describe('tallySet', () => {
     expect(t.complete).toBe(1);
   });
 
-  it('counts a held chase printing as mastered, since it comes in one finish', () => {
+  it('counts a chase printing held in foil as mastered, since it comes in foil alone', () => {
     const t = tallySet([card('a', 'Common'), card('b', 'Enchanted')], {
       a: {normal: 1, foil: 0},
-      b: {normal: 1, foil: 0},
+      b: {normal: 0, foil: 1},
     });
     expect(t.complete).toBe(2);
     expect(t.master).toBe(1);
   });
 
-  it("counts a held printing that keeps its base card's rarity as mastered, under that rarity (#796)", () => {
-    // Violet Parr #247: a Super Rare printing of a Super Rare card, in foil only.
-    const sameRarity = createCard({id: 'p', setCode: '1', rarity: 'Super Rare', baseId: 'base'});
-    const t = tallySet([sameRarity], {p: {normal: 0, foil: 1}});
+  it("counts an alt foil held in foil as mastered, under its base card's rarity (#796, #880)", () => {
+    // Violet Parr #247: a Super Rare printing of a Super Rare card, which LorcanaJSON lists in foil alone.
+    const altFoil = createCard({id: 'p', setCode: '1', rarity: 'Super Rare', baseId: 'base', finishes: ['foil']});
+    const t = tallySet([altFoil], {p: {normal: 0, foil: 1}});
     expect(t.byRarity).toEqual([{rarity: 'Super Rare', complete: 1, master: 1, total: 1}]);
+  });
+
+  it('counts a promo as mastered once held in every finish it comes in (#880)', () => {
+    // 1/C3 comes in normal alone; a promo the catalog names no finish for comes in both.
+    const normalOnly = createCard({id: 'c3', setCode: 'C3', rarity: 'Special', baseId: 'base', finishes: ['normal']});
+    const t = tallySet([normalOnly, card('p1', 'Special'), card('p2', 'Special')], {
+      c3: {normal: 1, foil: 0},
+      p1: {normal: 0, foil: 1},
+      p2: {normal: 1, foil: 1},
+    });
+    expect([t.complete, t.master]).toEqual([3, 2]);
   });
 
   it('attributes a dual-ink card to BOTH inks, matching inkDistribution', () => {
@@ -74,8 +85,8 @@ describe('tallySet', () => {
   });
 
   it('gives the chase printings and the promos rarity rows of their own, and counts them in the inks', () => {
-    // A foil-only Enchanted held is mastered: it comes in no other finish. So is a promo (#805),
-    // a printing in one finish, whose twin in the other is a pocket of its own.
+    // A foil-only Enchanted held is mastered: it comes in no other finish. A promo held in one
+    // finish is not, as it comes in both unless the promo catalog names one (#880).
     const t = tallySet([card('a', 'Common'), card('c', 'Special'), card('b', 'Enchanted')], {
       a: {normal: 1, foil: 0},
       b: {normal: 0, foil: 1},
@@ -84,10 +95,10 @@ describe('tallySet', () => {
     expect(t.byRarity).toEqual([
       {rarity: 'Common', complete: 1, master: 0, total: 1},
       {rarity: 'Enchanted', complete: 1, master: 1, total: 1},
-      {rarity: 'Special', complete: 1, master: 1, total: 1},
+      {rarity: 'Special', complete: 1, master: 0, total: 1},
     ]);
     expect(t.cards).toBe(3);
-    expect(t.byInk).toEqual([{ink: 'Amber', complete: 3, master: 2, total: 3}]);
+    expect(t.byInk).toEqual([{ink: 'Amber', complete: 3, master: 1, total: 3}]);
   });
 });
 
@@ -101,7 +112,7 @@ describe('isHeld', () => {
     expect(isHeld(nani, {nani: {normal: 1, foil: 1}}, 'master')).toBe(true);
   });
 
-  it("agrees with each headline's number, a held printing's one finish counting toward Master", () => {
+  it("agrees with each headline's number, a printing's one finish counting toward Master", () => {
     const cards = [
       card('a', 'Common'),
       card('b', 'Common'),
@@ -135,7 +146,7 @@ describe('tallyCollection', () => {
     s2a: {normal: 1, foil: 1},
     s2b: {normal: 1, foil: 0},
     s1a: {normal: 3, foil: 2},
-    s1e: {normal: 1, foil: 0},
+    s1e: {normal: 0, foil: 1},
   };
 
   it('tallies every set in the order given, as the set list shows them', () => {
@@ -151,18 +162,19 @@ describe('tallyCollection', () => {
     expect(totals).toMatchObject({cards: 5, complete: 4, master: 3});
   });
 
+  /** A promo of the catalog's that comes in foil alone (#880), so one foil copy masters it. */
+  const foilPromo = (id: string, setCode: string, baseId: string) =>
+    createCard({id, setCode, setNumber: 1, rarity: 'Special', baseId, finishes: ['foil']});
+
   it("counts a promo set's promos with the rest, one figure for the whole collection (owner, 2026-10-17)", () => {
-    const promo = createCard({id: 'p1', setCode: 'P1', setNumber: 1, rarity: 'Special', baseId: 's1a'});
+    const promo = foilPromo('p1', 'P1', 's1a');
     const {totals, sets} = tallyCollection([...cards, promo], {...entries, p1: {normal: 0, foil: 1}}, ['2', '1', 'P1']);
     expect(sets.find((set) => set.code === 'P1')?.tally).toMatchObject({cards: 1, complete: 1, master: 1});
     expect(totals).toMatchObject({cards: 6, complete: 5, master: 4});
   });
 
   it("sums the promo sets alone into every promo set's figures (owner, 2026-10-20)", () => {
-    const promos = [
-      createCard({id: 'p1', setCode: 'P1', setNumber: 1, rarity: 'Special', baseId: 's1a'}),
-      createCard({id: 'p2', setCode: 'P2', setNumber: 1, rarity: 'Special', baseId: 's2a'}),
-    ];
+    const promos = [foilPromo('p1', 'P1', 's1a'), foilPromo('p2', 'P2', 's2a')];
     const held = {...entries, p1: {normal: 0, foil: 1}};
     const {promoTotals} = tallyCollection([...cards, ...promos], held, ['2', '1', 'P2', 'P1']);
     expect(promoTotals).toMatchObject({cards: 2, complete: 1, master: 1});

@@ -13,9 +13,18 @@
  *
  * Collection mode lists every promo of both sections, from `collectionPromos` below.
  */
+import {isFinishes, placeFinishes} from './finishes.mjs';
 import {byPrintingOrder, isPromo, pickImages} from './fold-variants.mjs';
 
-/** A promo entry's fields, in the order it writes them; its art follows as `images`. */
+/** A promo entry as the reports name it: its id and the code printed on it ("2432 10/P3"). */
+export const promoLabel = ({id, number, promoGrouping, finish}) =>
+  `${id} ${number ?? '?'}/${promoGrouping}${finish ? ` ${finish}` : ''}`;
+
+/**
+ * A promo entry's fields, in the order it writes them; its art follows as `images`, and its
+ * versions, last, as `finishes` (`withVersions`). `finish` tells two printings under one code
+ * apart; `finishes` (#880) is what a printing comes in.
+ */
 const ENTRY_FIELDS = ['id', 'rarity', 'number', 'promoGrouping', 'finish', 'scanLanguage'];
 
 /**
@@ -41,12 +50,25 @@ function toEntry(printing, fields = ENTRY_FIELDS) {
   return entry;
 }
 
-/** Same fields and art: the stored entry stays, with any hashes a local image build injected. */
+/**
+ * `entry` (mutated) with its versions as its last key (#880): the catalog printing's `finishes`,
+ * which the merge copies as it is, Both included, else the ones `stored` already holds, which
+ * it never removes. Returns `entry`.
+ */
+const withVersions = (entry, printing, stored) => placeFinishes(entry, printing.finishes ?? stored);
+
+/** What an entry holds beyond its fields: its versions and its art. */
+const ENTRY_FACTS = [
+  (entry) => entry.finishes?.join(),
+  (entry) => entry.images?.full,
+  (entry) => entry.images?.thumbnail,
+];
+
+/** Same fields, versions and art: the stored entry stays, with any hashes a local image build injected. */
 function sameEntry(stored, entry) {
   return (
     ENTRY_FIELDS.every((field) => stored[field] === entry[field]) &&
-    stored.images?.full === entry.images?.full &&
-    stored.images?.thumbnail === entry.images?.thumbnail
+    ENTRY_FACTS.every((fact) => fact(stored) === fact(entry))
   );
 }
 
@@ -80,12 +102,29 @@ function printingProblems({fullName, variants}, owners) {
   return problems;
 }
 
-function catalogProblems(cards, fold) {
+/**
+ * Why a promo's versions can't ship (#880): a `finishes` field is the app's words for one
+ * version, `["normal"]` or `["foil"]`, or for both, `["normal", "foil"]`, as admin's Edit card
+ * writes a correction to Both. Asked of both sections, since every promo reaches collection mode.
+ */
+function finishesProblems({fold, noBaseCard = []}) {
+  return [...fold, ...noBaseCard].flatMap(({fullName, variants}) =>
+    variants
+      .filter((printing) => printing.finishes !== undefined && !isFinishes(printing.finishes))
+      .map(
+        (printing) =>
+          `promo ${printing.id} on ${fullName} has finishes ${JSON.stringify(printing.finishes)}`,
+      ),
+  );
+}
+
+function catalogProblems(cards, catalog) {
   const cardsById = new Map(cards.map((card) => [card.id, card]));
   const owners = idOwners(cards);
-  return fold.flatMap((group) =>
+  const groupProblems = catalog.fold.flatMap((group) =>
     [cardProblem(group, cardsById), ...printingProblems(group, owners)].filter(Boolean),
   );
+  return [...groupProblems, ...finishesProblems(catalog)];
 }
 
 /** What a merge does with a catalog printing, given the entry stored under its id, if any. */
@@ -94,13 +133,16 @@ function outcomeFor(stored, entry) {
   return sameEntry(stored, entry) ? 'unchanged' : 'updated';
 }
 
-/** Make `card`'s promos exactly `printings`, after its other printings; returns what changed. */
+/**
+ * Make `card`'s promos exactly `printings`, after its other printings; returns what changed. The
+ * card's own versions, if it has any, stay its last key (#880).
+ */
 function syncPromos(card, printings) {
   const variants = card.variants ?? [];
   const stored = new Map(variants.filter(isPromo).map((entry) => [entry.id, entry]));
   const change = {card, added: [], updated: [], removed: [], unchanged: []};
   const promos = printings.map((printing) => {
-    const entry = toEntry(printing);
+    const entry = withVersions(toEntry(printing), printing, stored.get(printing.id)?.finishes);
     const outcome = outcomeFor(stored.get(entry.id), entry);
     const kept = outcome === 'unchanged' ? stored.get(entry.id) : entry;
     stored.delete(entry.id);
@@ -111,6 +153,7 @@ function syncPromos(card, printings) {
   const merged = [...variants.filter((entry) => !isPromo(entry)), ...promos.sort(byPrintingOrder)];
   if (merged.length > 0) card.variants = merged;
   else delete card.variants;
+  placeFinishes(card, card.finishes);
   return change;
 }
 
@@ -121,7 +164,7 @@ function syncPromos(card, printings) {
  * skipped.
  */
 export function mergePromoPrintings(cards, catalog) {
-  const problems = catalogProblems(cards, catalog.fold);
+  const problems = catalogProblems(cards, catalog);
   if (problems.length > 0) {
     throw new Error(
       `The promo catalog can't merge into allCards.json:\n${problems.map((p) => `  - ${p}`).join('\n')}`,
@@ -148,12 +191,14 @@ export function mergePromoPrintings(cards, catalog) {
  * are written to `apps/web/public/data/collection/promos.json`, which LorcanaJSON's own promo
  * cards no longer reach (collectionData.mjs leaves them out).
  *
- * Each is a collection entry (`COLLECTION_FIELDS`), the card's name, and `baseId`: the card
- * whose text the promo reprints, a Core card for `fold`, a pre-Core collection card for
- * `noBaseCard`. A promo whose card no dataset holds yet has none (Hades - Dark Usurper, whose
- * card is in Set 15), so the binder names its pocket until the card arrives.
+ * Each is a collection entry (`COLLECTION_FIELDS`), the card's name, `baseId`: the card whose
+ * text the promo reprints, a Core card for `fold`, a pre-Core collection card for `noBaseCard`,
+ * and last, its versions (#880): the catalog's, else those `kept` holds for its id, the file's
+ * own, which a run never removes. A promo whose card no dataset holds yet has no `baseId`
+ * (Hades - Dark Usurper, whose card is in Set 15), so the binder names its pocket until the card
+ * arrives.
  */
-export function collectionPromos(catalog) {
+export function collectionPromos(catalog, kept = new Map()) {
   const folded = catalog.fold.map(({baseId, fullName, variants}) => ({baseId, fullName, variants}));
   const waiting = (catalog.noBaseCard ?? []).map(({lorcanaJsonBaseId, fullName, variants}) => ({
     baseId: lorcanaJsonBaseId,
@@ -162,11 +207,13 @@ export function collectionPromos(catalog) {
   }));
   return [...folded, ...waiting]
     .flatMap(({baseId, fullName, variants}) =>
-      variants.map((printing) => ({
-        ...toEntry(printing, COLLECTION_FIELDS),
-        fullName,
-        ...(baseId != null && {baseId}),
-      })),
+      variants.map((printing) =>
+        withVersions(
+          {...toEntry(printing, COLLECTION_FIELDS), fullName, ...(baseId != null && {baseId})},
+          printing,
+          kept.get(String(printing.id)),
+        ),
+      ),
     )
     .sort(byPrintingOrder);
 }

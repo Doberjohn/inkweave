@@ -12,6 +12,12 @@
  * Only variants from sets the target file holds are considered, so the export's pre-Core sets
  * are not reported as unmatched. Idempotent: a second run changes nothing.
  *
+ * allCards.json's entries take the versions LorcanaJSON's `foilTypes` give a printing where
+ * they differ from the app's rarity rule (`finishes`, #880), unless the entry holds some
+ * already, which a sync never changes or removes; the report lists those it gives.
+ * previewCards.json's never take any: a preview printing's versions come once its set is
+ * official (owner, 2026-10-21), so until graduation it follows the app's rarity rule.
+ *
  * Usage:
  *   pnpm sync-variants <lorcanajson-allCards.json>           # dry run: report only
  *   pnpm sync-variants <lorcanajson-allCards.json> --write   # write both data files
@@ -23,6 +29,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {finishesById, finishesReport, givenFinishes} from './lib/finishes.mjs';
 import {foldVariants} from './lib/fold-variants.mjs';
 import {readJson, writeJson} from './lib/json-file.mjs';
 import {loadSeason} from './lib/season.mjs';
@@ -37,20 +44,30 @@ function fromSetsIn(cards, source) {
   return source.filter((v) => sets.has(String(v.setCode)));
 }
 
+/** A printing with no versions to give: a preview printing's wait for its set to be official. */
+const withoutVersions = (printing) => ({...printing, foilTypes: undefined});
+
 /**
  * Fold `source` variants into both data files' cards (mutated in place) and report per file.
  * `shadowed` lists preview variant ids that now have official art but still have a committed
- * manual scan AVIF, which the image build prefers until it is deleted.
+ * manual scan AVIF, which the image build prefers until it is deleted. `given` lists the
+ * versions the fold gave allCards.json's printings (#880), as `finishesReport` prints them.
  */
 export function syncVariants({allData, previewData, source, season, previewAvifExists}) {
+  const before = finishesById(allData.cards);
   const canonical = foldVariants(allData.cards, fromSetsIn(allData.cards, source), {
     matchBy: 'baseId',
     idFor: (v) => v.id,
   });
-  // Empty once the reveal set graduates, so its variants are not reported as unmatched here.
-  const revealSource = fromSetsIn(previewData.cards, source).filter(
-    (v) => String(v.setCode) === season.setCode,
+  const given = givenFinishes(
+    before,
+    allData.cards,
+    (v, card) => `${v.id} ${describeVariant({...card, ...v})}`,
   );
+  // Empty once the reveal set graduates, so its variants are not reported as unmatched here.
+  const revealSource = fromSetsIn(previewData.cards, source)
+    .filter((v) => String(v.setCode) === season.setCode)
+    .map(withoutVersions);
   const preview = foldVariants(previewData.cards, revealSource, {
     matchBy: 'name',
     idFor: (v) => season.idBase + v.number,
@@ -59,7 +76,7 @@ export function syncVariants({allData, previewData, source, season, previewAvifE
     .flatMap((c) => c.variants ?? [])
     .filter((v) => v.images && previewAvifExists(v.id))
     .map((v) => v.id);
-  return {canonical, preview, shadowed};
+  return {canonical, preview, shadowed, given};
 }
 
 const describeVariant = (v) => `${v.setCode}/${v.number} ${v.rarity} ${v.fullName}`;
@@ -99,6 +116,8 @@ async function main() {
   console.log(`\n  Variant sync from ${sourceArg}${write ? '' : ' (dry run, nothing written)'}\n`);
   printReport('allCards.json    ', report.canonical);
   printReport('previewCards.json', report.preview);
+  console.log('');
+  for (const line of finishesReport(report.given)) console.log(`  ${line}`);
   for (const id of report.shadowed) {
     console.warn(
       `  ! ${id} now has official art, but card-images-preview/${id}.avif shadows it: delete that manual scan (and its -sm) to switch.`,

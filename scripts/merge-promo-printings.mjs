@@ -6,6 +6,9 @@
  * promos (`collection/promos.json`, every promo in the catalog), which the next
  * `pnpm generate-collection-data` writes again the same way.
  *
+ * A promo's versions (`finishes`, #880) are the catalog's, copied into both files as they are.
+ * An entry the catalog names none for keeps any it holds, and the report lists those it gives.
+ *
  * Usage:
  *   pnpm merge-promos           # dry run: report only
  *   pnpm merge-promos --write   # write allCards.json and collection/promos.json
@@ -19,7 +22,13 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {PROMOS_FILENAME} from './lib/collectionData.mjs';
 import {readJson, writeJson} from './lib/json-file.mjs';
-import {collectionPromos, mergePromoPrintings, promoBaseProblems} from './lib/promo-printings.mjs';
+import {finishesById, finishesReport, givenFinishes} from './lib/finishes.mjs';
+import {
+  collectionPromos,
+  mergePromoPrintings,
+  promoBaseProblems,
+  promoLabel,
+} from './lib/promo-printings.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CATALOG = path.join(ROOT, 'scripts/data/promo-printings.json');
@@ -28,10 +37,6 @@ const COLLECTION_DIR = path.join(ROOT, 'apps/web/public/data/collection');
 const COLLECTION_PROMOS = path.join(COLLECTION_DIR, PROMOS_FILENAME);
 
 const OUTCOMES = ['added', 'updated', 'removed', 'unchanged'];
-
-/** A promo entry as the report names it: its id and the code printed on it ("2432 10/P3"). */
-const promoLabel = ({id, number, promoGrouping, finish}) =>
-  `${id} ${number ?? '?'}/${promoGrouping}${finish ? ` ${finish}` : ''}`;
 
 /** One line per card the merge changes, each removed promo by name, then the totals. */
 function printReport({changes, skipped}) {
@@ -69,9 +74,13 @@ function promosChanged(promos) {
   return withoutHashes(readJson(COLLECTION_PROMOS)) !== withoutHashes(promos);
 }
 
-/** The collection's promos, checked: each promo's card is in allCards.json or a chunk, or it has none yet. */
-function buildCollectionPromos(catalog, coreCards) {
-  const promos = collectionPromos(catalog);
+/**
+ * The collection's promos, checked: each promo's card is in allCards.json or a chunk, or it has
+ * none yet. Each keeps any versions the stored file gives it (`kept`, #880) that the catalog
+ * doesn't name.
+ */
+function buildCollectionPromos(catalog, coreCards, kept) {
+  const promos = collectionPromos(catalog, kept);
   const problems = promoBaseProblems(promos, [...coreCards, ...chunkCards()]);
   if (problems.length > 0) {
     throw new Error(
@@ -81,12 +90,18 @@ function buildCollectionPromos(catalog, coreCards) {
   return promos;
 }
 
+/** The stored collection promos, or none before the first merge. */
+const storedPromos = () => (fs.existsSync(COLLECTION_PROMOS) ? readJson(COLLECTION_PROMOS) : []);
+
 function main() {
   const write = process.argv.includes('--write');
   const allData = readJson(ALL_CARDS);
   const catalog = readJson(CATALOG);
+  // The versions both files hold before the merge (#880), which it keeps where the catalog names none.
+  const cardsBefore = finishesById(allData.cards);
+  const promosBefore = finishesById(storedPromos());
   const report = mergePromoPrintings(allData.cards, catalog);
-  const promos = buildCollectionPromos(catalog, allData.cards);
+  const promos = buildCollectionPromos(catalog, allData.cards, promosBefore);
   const changed = promosChanged(promos);
 
   const mode = write ? '' : ' (dry run, nothing written)';
@@ -96,6 +111,20 @@ function main() {
   console.log(
     `  collection/${PROMOS_FILENAME}: ${promos.length} promos, ${waiting} waiting for their card, ${changed ? 'changed' : 'unchanged'}`,
   );
+  // The versions the merge copied from the catalog (#880), so a slip in it shows.
+  const given = [
+    ...givenFinishes(
+      cardsBefore,
+      allData.cards,
+      (entry, card) => `${promoLabel(entry)} ${card.fullName}`,
+    ),
+    ...givenFinishes(
+      promosBefore,
+      promos,
+      (promo) => `${promoLabel(promo)} ${promo.fullName}, collection`,
+    ),
+  ];
+  for (const line of finishesReport(given)) console.log(`  ${line}`);
 
   if (!write) return;
   writeJson(ALL_CARDS, allData);

@@ -1,4 +1,6 @@
+import fs from 'node:fs';
 import {describe, it, expect} from 'vitest';
+import {finishesById, isFinishes} from '../finishes.mjs';
 import {collectionPromos, mergePromoPrintings, promoBaseProblems} from '../promo-printings.mjs';
 
 const art = (path) => ({
@@ -201,6 +203,61 @@ describe('mergePromoPrintings', () => {
     expect(changes[0].unchanged).toHaveLength(2);
   });
 
+  describe('versions (#880)', () => {
+    it("copies the catalog's versions as each entry's last key, Both as admin writes it included", () => {
+      const cards = [mickey()];
+      mergePromoPrintings(cards, catalog(group([{...P1, finishes: ['normal']}, {...P3, finishes: ['normal', 'foil']}])));
+
+      expect(cards[0].variants.map((v) => v.finishes)).toEqual([['normal'], ['normal', 'foil']]);
+      expect(Object.keys(cards[0].variants[1]).at(-1)).toBe('finishes');
+    });
+
+    it('updates a promo whose versions the catalog changed', () => {
+      const cards = [mickey([{...P1, finishes: ['foil']}])];
+      const {changes} = mergePromoPrintings(cards, catalog(group([{...P1, finishes: ['normal']}])));
+
+      expect(changes[0].updated).toHaveLength(1);
+      expect(cards[0].variants[0].finishes).toEqual(['normal']);
+    });
+
+    it('leaves an entry that holds versions the catalog names none for untouched', () => {
+      const stored = {...P1, finishes: ['foil']};
+      const cards = [mickey([stored])];
+      const {changes} = mergePromoPrintings(cards, catalog(group([P1])));
+
+      expect(changes[0].unchanged).toEqual([stored]);
+      expect(cards[0].variants[0]).toBe(stored);
+    });
+
+    it('leaves allCards.json byte for byte as it was when run again', () => {
+      const cards = [mickey([ENCHANTED])];
+      const promos = catalog(group([{...P1, finishes: ['normal']}, P3]));
+      mergePromoPrintings(cards, promos);
+      const once = JSON.stringify(cards, null, 2);
+      mergePromoPrintings(cards, promos);
+
+      expect(JSON.stringify(cards, null, 2)).toBe(once);
+    });
+
+    it("keeps a card's own versions its last key once promos give it variants", () => {
+      const cards = [{...mickey(), finishes: ['normal']}];
+      mergePromoPrintings(cards, catalog(group([P1])));
+
+      expect(Object.keys(cards[0]).slice(-2)).toEqual(['variants', 'finishes']);
+    });
+  });
+
+  it("refuses versions that aren't the app's words, in either section (#880)", () => {
+    const cards = [mickey()];
+    const bad = catalog(group([{...P1, finishes: ['foil', 'normal']}]));
+    bad.noBaseCard[0].variants[0].finishes = ['Foil'];
+    const message = thrown(() => mergePromoPrintings(cards, bad));
+
+    expect(message).toContain('80042');
+    expect(message).toContain('3237');
+    expect(cards[0]).not.toHaveProperty('variants');
+  });
+
   it('skips the printings of cards allCards.json does not hold, counting them', () => {
     const cards = [mickey()];
     const {changes, skipped} = mergePromoPrintings(cards, catalog());
@@ -255,6 +312,32 @@ describe('collectionPromos', () => {
     expect(promos.find((promo) => promo.id === 1663)).toMatchObject({printedName: 'Vaiana', baseId: 1589});
   });
 
+  it("gives each promo the catalog's versions as its last key, after its card (#880)", () => {
+    const promos = collectionPromos(catalog(group([{...P1, finishes: ['foil']}])));
+    const p1 = promos.find((promo) => promo.id === 80042);
+
+    expect(Object.keys(p1).slice(-3)).toEqual(['fullName', 'baseId', 'finishes']);
+    expect(p1.finishes).toEqual(['foil']);
+    expect(promos.find((promo) => promo.id === 3237)).not.toHaveProperty('finishes');
+  });
+
+  it('keeps the versions the stored file gives a promo the catalog names none for, never over its own (#880)', () => {
+    const kept = new Map([
+      ['3237', ['normal']],
+      ['80042', ['normal']],
+    ]);
+    const promos = collectionPromos(catalog(group([{...P1, finishes: ['foil']}])), kept);
+
+    expect(promos.find((promo) => promo.id === 3237).finishes).toEqual(['normal']);
+    expect(promos.find((promo) => promo.id === 80042).finishes).toEqual(['foil']);
+  });
+
+  it('writes the same promos again, byte for byte, from its own file (#880)', () => {
+    const source = catalog(group([{...P1, finishes: ['foil']}]));
+    const once = JSON.stringify(collectionPromos(source));
+    expect(JSON.stringify(collectionPromos(source, finishesById(JSON.parse(once))))).toBe(once);
+  });
+
   it('gives a promo whose card no dataset holds yet no card to reprint', () => {
     const {noBaseCard, ...rest} = catalog();
     const promos = collectionPromos({...rest, noBaseCard: [...noBaseCard, hades]});
@@ -285,5 +368,16 @@ describe('promoBaseProblems', () => {
     expect(problems).toHaveLength(2);
     expect(problems[0]).toContain('no dataset holds');
     expect(problems[1]).toContain('which is Ariel - Spectacular Singer');
+  });
+});
+
+describe('the promo catalog', () => {
+  const catalogFile = new URL('../../data/promo-printings.json', import.meta.url);
+  const {fold, noBaseCard} = JSON.parse(fs.readFileSync(catalogFile, 'utf8'));
+  const printings = [...fold, ...noBaseCard].flatMap((group) => group.variants);
+
+  it('holds only the versions the app knows, in its words and order (#880)', () => {
+    const named = printings.filter((printing) => printing.finishes !== undefined);
+    expect(named.filter((printing) => !isFinishes(printing.finishes))).toEqual([]);
   });
 });

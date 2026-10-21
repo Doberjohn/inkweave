@@ -176,6 +176,77 @@ describe('foldVariants', () => {
     expect(cards[0].variants[0]).not.toHaveProperty('scanLanguage');
   });
 
+  describe('versions (#880)', () => {
+    /** Violet Parr - Super Resilient #247, the alt foil LorcanaJSON lists in foil alone. */
+    const altFoil = (over = {}) =>
+      variant({id: 3573, number: 247, rarity: 'Super Rare', foilTypes: ['Cold'], ...over});
+
+    it("writes LorcanaJSON's versions as the entry's last key, only where the rarity rule gets them wrong", () => {
+      const cards = [base()];
+      foldVariants(cards, [variant({foilTypes: ['Cold']}), altFoil()], byBaseId);
+
+      // The Enchanted comes in foil, as its rarity says, so it needs no field.
+      expect(cards[0].variants[0]).not.toHaveProperty('finishes');
+      expect(Object.keys(cards[0].variants[1])).toEqual([
+        'id',
+        'rarity',
+        'number',
+        'images',
+        'finishes',
+      ]);
+      expect(cards[0].variants[1].finishes).toEqual(['foil']);
+    });
+
+    it('never changes or removes versions an entry holds, whatever LorcanaJSON says', () => {
+      // An owner's correction to Both, from admin's Edit card.
+      const corrected = {
+        id: 3573,
+        rarity: 'Super Rare',
+        number: 247,
+        images: IMAGES,
+        finishes: ['normal', 'foil'],
+      };
+      const cards = [base({variants: [corrected]})];
+      const result = foldVariants(cards, [altFoil()], byBaseId);
+
+      expect(result.unchanged).toHaveLength(1);
+      expect(cards[0].variants[0]).toBe(corrected);
+    });
+
+    it('keeps the versions an entry held when official art replaces it', () => {
+      const scan = {id: 3573, rarity: 'Super Rare', number: 247, finishes: ['normal']};
+      const cards = [base({variants: [scan]})];
+      foldVariants(cards, [altFoil()], byBaseId);
+
+      expect(cards[0].variants[0]).toEqual({
+        id: 3573,
+        rarity: 'Super Rare',
+        number: 247,
+        images: IMAGES,
+        finishes: ['normal'],
+      });
+    });
+
+    it('takes the versions `kept` holds for an entry the base card no longer has, as graduation passes them', () => {
+      const cards = [base()];
+      foldVariants(cards, [altFoil()], {
+        ...byBaseId,
+        kept: new Map([['3573', ['normal', 'foil']]]),
+      });
+
+      expect(cards[0].variants[0].finishes).toEqual(['normal', 'foil']);
+    });
+
+    it('leaves the data byte for byte as it was when run again', () => {
+      const cards = [base()];
+      foldVariants(cards, [variant({foilTypes: ['Cold']}), altFoil()], byBaseId);
+      const once = JSON.stringify(cards, null, 2);
+      foldVariants(cards, [variant({foilTypes: ['Cold']}), altFoil()], byBaseId);
+
+      expect(JSON.stringify(cards, null, 2)).toBe(once);
+    });
+  });
+
   it("keeps a hand scan's scanLanguage while the source has no art for the printing yet", () => {
     const cards = [base({variants: [italianHandScan()]})];
     const result = foldVariants(cards, [variant({images: undefined})], byBaseId);

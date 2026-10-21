@@ -102,9 +102,9 @@ function withPromoTiles(cards: LorcanaCard[], rarities: string[] | undefined): L
 /**
  * What the binder shows (owner, 2026-10-12): every card, or only those you hold, or only
  * those you don't, toward the panel's chosen headline (owner, 2026-10-20): a copy in either
- * finish for Complete set, one in each for Master set, a printing's one finish counting as
- * both (`owns`). Applied here, after the loader's filters, because it asks the collection,
- * which the loader cannot see.
+ * finish for Complete set, one in each it comes in for Master set, so one finish for a
+ * printing that comes in one (`owns`, #880). Applied here, after the loader's filters,
+ * because it asks the collection, which the loader cannot see.
  *
  * A card changed by hand in this view stays in it (`kept`, #826, owner 2026-10-20): a first
  * copy would otherwise take a card out of Missing, and the binder back to its first spread.

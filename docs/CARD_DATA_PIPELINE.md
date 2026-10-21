@@ -915,7 +915,40 @@ Cardmarket.
 - **One printing per number**: a promo printed in both finishes is one entry, counted in both
   like any card (owner, 2026-10-18). `finish` tells apart siblings under one code (none needs
   it today); `artVariant` ("A" in 24A/P2) and `printedName` (26/P2's European "Vaiana") tell
-  apart two printings under one number.
+  apart two printings under one number. Which versions a printing comes in is `finishes`, below.
+- **Versions (`finishes`, #880)**: the versions a printing comes in, `["normal"]`, `["foil"]` or
+  `["normal", "foil"]`, on every entry that holds the printing, with the same value in each:
+  its entry here and in `collection/promos.json` for a promo, and its variant in
+  `allCards.json` when its card is there; a Sets 1-8 card's or any set printing's entry in its
+  `collection/{set}.json`, and for Sets 9-14 its card or variant in `allCards.json` too. It is
+  always the entry's last key, so every file keeps its byte-for-byte format and an edit
+  changes only its own lines. A printing without it follows the app's rarity rule
+  (`finishesOf`, `apps/web/src/features/collection/printingFinishes.ts`): Enchanted, Epic and
+  Iconic in foil alone, everything else, promos included, in both.
+  - **Set printings** take theirs from LorcanaJSON's `foilTypes`, where "None" is the normal
+    version and any other entry a foil type: `pnpm graduate-set` and `pnpm sync-variants`
+    write them into `allCards.json`, and `pnpm generate-collection-data` into the chunks,
+    only where they differ from the rarity rule (today the 13 alt foils, all foil only). A
+    printing whose `foilTypes` is missing, as LorcanaJSON leaves it for external reveals, gets
+    none, and a preview card none until its set is official (owner, 2026-10-21).
+  - **Promos** take theirs from this catalog alone, which names one for a promo printed in one
+    version (36 today, such as 1/C3 to 5/C3 normal and their twins 13/C3 to 17/C3 foil).
+    Without it a promo comes in both (owner, 2026-10-18). `pnpm merge-promos` copies the
+    catalog's value into the promo's other entries as it is. LorcanaJSON's Special data is not
+    used: its docs warn it may be inaccurate, and the note on 10/C1 records one wrong case.
+  - **No script changes or removes a `finishes` that is there.** A run that rebuilds an entry
+    carries its value over by id (`finishesById`, `scripts/lib/finishes.mjs`), and
+    `generate-collection-data`, which replaces `collection/` whole, reads the old values
+    first. So a correction outlives every later run, even one where LorcanaJSON has changed
+    its mind. Each script lists the printings it gave one, so a wrong LorcanaJSON entry shows
+    at the next graduation.
+  - **Corrections** come from admin's Card studio (Edit card, Doberjohn/inkweave-admin#68),
+    which writes the owner's choice, Both included, into every entry that holds the printing,
+    the catalog included for a promo, straight into the card files and the catalog through
+    the GitHub API. Nothing needs a rebuild after its commit.
+  - Collection mode shows a copy counted in a version its printing doesn't come in under the
+    one it does, on the promo's twin when it has exactly one (`placeCopies.ts`), and saves the
+    move only when the player changes that count: it never rewrites saved counts on its own.
 - **Art**: Ravensburger's where it exists, else the owner's scans, committed as preview AVIFs
   (`card-images-preview/{id}.avif`) through `pnpm convert-preview-images`, with `scanLanguage`
   on a scan that isn't English. A scan can stand in for its twin's ("Its art is 14/C3's scan"
@@ -1190,7 +1223,7 @@ Six rules apply when integrating canonical LorcanaJSON data into `allCards.json`
 | 2 | **Adopt canonical IDs unconditionally** | LorcanaJSON's sequential ids (`2716`...) are the permanent identity; preview composite ids (`121204`...) are placeholders. Pre-graduation URLs break — acceptable in beta. Votes, cloud collection keys and deck cards move to the canonical ids through the remap migration the script writes (#748). |
 | 3 | **Adopt canonical names** | LorcanaJSON is source of truth; preview curation can have typos / wording corrections. Rule 2 makes this automatic since canonical entries fully replace preview entries. |
 | 4 | **Keep LorcanaJSON's `story` as `franchise`** (since Set 14) | `/reveals` tiers its debut franchises by `franchise`, and a set usually graduates before its release day, when the page hides itself. `story` holds the same value the preview cards carried (all 27 of Set 14's Coco cards), so the page keeps working. Costs under 1 kB gzipped per set. Sets graduated earlier had it stripped. |
-| 5 | **Strip extra metadata**: `artists`, `flavorText`, `foilTypes`, `enchantedId`, `iconicId`, `epicId`, `promoIds`, `fullIdentifier`, `simpleName`, etc. (`story` survives only as Rule 4's `franchise`) | App uses none of these; bloats `size-limit` budget (360 kB gzipped). |
+| 5 | **Strip extra metadata**: `artists`, `flavorText`, `foilTypes`, `enchantedId`, `iconicId`, `epicId`, `promoIds`, `fullIdentifier`, `simpleName`, etc. (`story` survives only as Rule 4's `franchise`, and `foilTypes`' versions as `finishes` on a card or printing where they differ from the app's rarity rule, #880, see [Promo printings](#promo-printings-805)) | App uses none of these; bloats `size-limit` budget (360 kB gzipped). Collection mode needs the versions, not the foil types' names. |
 | 6 | **Strip `images.foilMask`** — keep only `full` + `thumbnail` | App doesn't render foil overlays. |
 
 The "keep" allow-list = `LorcanaJSONCard` in `packages/synergy-engine/src/utils/cardTransformer.ts`. Everything outside that interface gets stripped at integration time, not at runtime.

@@ -6,6 +6,7 @@ export type {
   LorcanaCard,
   VariantRarity,
   CardPrinting,
+  PrintingFinishes,
   SynergyCategory,
   PlaystyleId,
   Playstyle,

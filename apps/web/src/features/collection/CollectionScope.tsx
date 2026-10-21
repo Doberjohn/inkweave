@@ -1,6 +1,9 @@
+import type {ReactNode} from 'react';
 import {Outlet} from 'react-router-dom';
+import {useCardDataContext} from '../../shared/contexts/CardDataContext';
 import {CollectionProvider} from './CollectionContext';
-import {CollectionCardsProvider} from './CollectionCardsContext';
+import {CollectionCardsProvider, useCollectionCards} from './CollectionCardsContext';
+import {placementsFor} from './placeCopies';
 
 /**
  * The collection providers, as a LAYOUT ROUTE around the two pages that use them
@@ -25,13 +28,34 @@ import {CollectionCardsProvider} from './CollectionCardsContext';
  * `CardDataProvider`'s data on purpose: nothing asking CardDataContext for cards
  * can receive a collection card, so the deck builder stays Core-only by
  * construction. It fetches nothing until collection mode asks.
+ *
+ * The collection sits INSIDE the viewing pool, which needs nothing from it, so it can show
+ * each copy where it belongs among the printings that have loaded (#880): the Core cards with
+ * their printings and promos at once, the rest once collection mode or an import asks for them.
+ * A copy of a printing not loaded yet shows where it was counted until then.
  */
 export function CollectionScope() {
   return (
-    <CollectionProvider>
-      <CollectionCardsProvider>
+    <CollectionCardsProvider>
+      <PlacedCollectionProvider>
         <Outlet />
-      </CollectionCardsProvider>
+      </PlacedCollectionProvider>
+    </CollectionCardsProvider>
+  );
+}
+
+/**
+ * `CollectionProvider`, told where each copy shows by the card data that has loaded (#880). The
+ * collection's cards come before Core's: a printing both hold, as a Core card's Enchanted is,
+ * has its pocket built from the chunk's card (`withPrintingCards` adds no card for a variant the
+ * pool holds), so its copies are placed by that card too.
+ */
+function PlacedCollectionProvider({children}: {children: ReactNode}) {
+  const {cards: coreCards} = useCardDataContext();
+  const {cards, promos} = useCollectionCards();
+  return (
+    <CollectionProvider placements={placementsFor([...cards, ...coreCards], promos)}>
+      {children}
     </CollectionProvider>
   );
 }

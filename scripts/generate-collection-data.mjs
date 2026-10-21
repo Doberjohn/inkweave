@@ -27,6 +27,11 @@
  *   apps/web/public/data/collection/index.json    all cards, light projection
  *   apps/web/public/data/collection/{set}.json    per-set detail, one per set
  *   apps/web/public/data/collection/promos.json   every promo in the catalog
+ *
+ * The output is replaced whole, so the versions its entries hold (`finishes`, #880) are read
+ * first and carried over: a run never changes or removes one, an owner's correction included.
+ * A card without one takes LorcanaJSON's where they differ from the app's rarity rule, and a
+ * promo the catalog's. The run lists the versions it gave.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -38,8 +43,9 @@ import {
   chunkFilename,
   selectCollectionCards,
 } from './lib/collectionData.mjs';
+import {finishesById, finishesReport, givenFinishes} from './lib/finishes.mjs';
 import {readJson} from './lib/json-file.mjs';
-import {collectionPromos, promoBaseProblems} from './lib/promo-printings.mjs';
+import {collectionPromos, promoBaseProblems, promoLabel} from './lib/promo-printings.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -179,12 +185,13 @@ function main() {
   const excluded = idSet([...coreCards, ...previewCards]);
   const previewSets = new Set(previewCards.map((card) => String(card.setCode)));
   const collectionCards = selectCollectionCards(fullCards, [excluded], previewSets);
-  const promos = collectionPromos(readJson(PROMO_CATALOG));
+  const kept = finishesById(committedEntries());
+  const promos = collectionPromos(readJson(PROMO_CATALOG), kept);
   assertDisjoint([...collectionCards, ...promos], excluded);
   assertPromoBases(promos, [...coreCards, ...collectionCards]);
 
   const index = buildIndex(collectionCards);
-  const chunks = buildDetailChunks(collectionCards);
+  const chunks = buildDetailChunks(collectionCards, kept);
   const bySet = [...chunks.entries()].sort(
     (a, b) => (parseInt(a[0], 10) || 99) - (parseInt(b[0], 10) || 99),
   );
@@ -222,6 +229,34 @@ function main() {
   const promosFile = path.join(OUTPUT_DIR, PROMOS_FILENAME);
   console.log(`  ${PROMOS_FILENAME.padEnd(21)} ${String(promos.length).padStart(4)} promos ${kb(fs.statSync(promosFile).size).padStart(8)}`);
   console.log(`\n  Wrote ${bySet.length + 2} files to ${path.relative(ROOT, OUTPUT_DIR)}\n`);
+  printFinishes(kept, bySet, promos);
+}
+
+/**
+ * Every entry of the committed dataset's set chunks and promos, read before it is replaced, for
+ * the versions they hold (#880). None on a first run.
+ */
+function committedEntries() {
+  if (!fs.existsSync(OUTPUT_DIR)) return [];
+  return fs
+    .readdirSync(OUTPUT_DIR)
+    .filter((file) => file.endsWith('.json') && file !== INDEX_NAME)
+    .flatMap((file) => readJson(path.join(OUTPUT_DIR, file)));
+}
+
+/**
+ * The versions this run gave (#880): the chunks' from LorcanaJSON, the promos' from the catalog,
+ * those the committed dataset didn't hold, so a wrong entry in either shows.
+ */
+function printFinishes(kept, bySet, promos) {
+  const given = [
+    ...givenFinishes(kept, bySet.flatMap(([, chunk]) => chunk), (card) =>
+      `${card.id} ${card.setCode}/${card.number} ${card.rarity} ${card.fullName}`,
+    ),
+    ...givenFinishes(kept, promos, (promo) => `${promoLabel(promo)} ${promo.fullName}`),
+  ];
+  for (const line of finishesReport(given)) console.log(`  ${line}`);
+  console.log('');
 }
 
 main();

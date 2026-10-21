@@ -38,8 +38,8 @@ const ENTRIES: Entries = {
 };
 const HELD = Object.keys(ENTRIES).length;
 /**
- * Held in both finishes. The base cards are held in one, so only the printing counts: a held
- * printing's one finish counts as both (`collectionStats.ts`).
+ * Held in every finish they come in. The base cards come in both and are held in one, so only
+ * the printing counts: it comes in foil alone, which it is held in (`collectionStats.ts`, #880).
  */
 const MASTER = HELD_ALT ? 1 : 0;
 
@@ -550,7 +550,7 @@ test.describe('Collection mode, signed in', () => {
       .click();
 
     await expect(page).toHaveURL(new RegExp(`[?&]binder=${promoSet.code}(&|$)`));
-    // Complete set alone, counting promos: each pocket is one printing in one finish.
+    // Complete set alone, counting promos: a promo set's numbers show no Master (#805).
     await expect(numbers(page)).toContainText(`1 of ${promoSet.promos.length} promos`);
     await expect(numbers(page).getByRole('button', {name: /^Master/})).toHaveCount(0);
     // The promo set's binder is on show, so the turns go to it. It opens on the front cover
@@ -586,7 +586,7 @@ test.describe('Collection mode, signed in', () => {
     await expect(rarities).toHaveCount(0);
     await expect(page.getByRole('button', {name: 'Binder set: Promos, every promo set'})).toBeVisible();
     await expect(numbers(page).getByText('Complete promos', {exact: true})).toBeVisible();
-    // The one promo held, among every promo set's, and no Master: a promo comes in one finish.
+    // The one promo held, among every promo set's, and no Master, as for one promo set.
     // The region's text runs its blocks together ("Complete promos1 of 261 promos"): no `\b`.
     await expect(numbers(page)).toContainText(/(?<!\d)1 of [\d,]+ promos/);
     await expect(numbers(page).getByRole('button', {name: /^Master/})).toHaveCount(0);

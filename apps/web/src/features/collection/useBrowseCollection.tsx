@@ -284,8 +284,8 @@ export interface BrowseCollectionSlots {
   promoOnly: boolean;
   /**
    * Whether you hold the card toward the chosen headline (`isHeld`): a copy in either finish
-   * for Complete, one in each for Master, a printing's one finish counting as both. What
-   * Owned and Missing ask (owner, 2026-10-20).
+   * for Complete, one in each it comes in for Master (#880). What Owned and Missing ask (owner,
+   * 2026-10-20). A promo scope asks Complete's, the one headline its panel shows.
    */
   owns: (card: LorcanaCard) => boolean;
   /**
@@ -308,6 +308,13 @@ export interface BrowseCollectionSlots {
    */
   renderSetPicker: (listing: BrowseListing) => ReactNode | undefined;
 }
+
+/**
+ * The headline Owned and Missing ask of in a scope: the one chosen, but Complete in a promo
+ * scope, whose panel shows no other (`ScopeNumbers`): there a promo in both finishes held in
+ * one (#880) would otherwise drop out of Owned under a Master set chosen on another set.
+ */
+const ownsAxis = (setCode: string, axis: Axis): Axis => (isPromoScope(setCode) ? 'complete' : axis);
 
 /**
  * Collection mode's state and controls for Browse, in one place so the page only
@@ -473,7 +480,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     show,
     rarityOptions: binderRarities,
     promoOnly: collectionMode && isPromoScope(setCode),
-    owns: (card) => isHeld(card, entries, axis),
+    owns: (card) => isHeld(card, entries, ownsAxis(setCode, axis)),
     kept,
     prompts,
     renderSetPanel: (listing) =>

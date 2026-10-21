@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import {describe, it, expect} from 'vitest';
+import {finishesById} from './lib/finishes.mjs';
 import {
   applyCardRules,
   buildPreviewToCanonicalMap,
@@ -7,6 +8,7 @@ import {
   featuredEntriesFor,
   featuredIdsJson,
   featuresGraduatingSet,
+  graduatedFinishes,
   previewVariantsMissingFrom,
   remapMigrationName,
   remapMigrationSql,
@@ -96,6 +98,55 @@ describe('applyCardRules (graduation)', () => {
 
     expect(cards[0].franchise).toBe('Mickey Mouse & Friends');
     expect(cards[0]).not.toHaveProperty('story');
+  });
+
+  describe('versions (Rule 5, #880)', () => {
+    const [base, iconic, special] = source;
+    /** The source with `foilTypes` on the card and its Iconic, as LorcanaJSON lists them. */
+    const listing = (baseTypes, iconicTypes) => [
+      {...base, foilTypes: baseTypes},
+      {...iconic, foilTypes: iconicTypes},
+      {...special, foilTypes: ['Cold']},
+    ];
+    const lastKey = (entry) => Object.keys(entry).at(-1);
+
+    it("keeps foilTypes' versions as finishes where the rarity's are wrong, each entry's last key", () => {
+      const {cards} = applyCardRules(listing(['None'], ['None', 'Cold']), '14');
+
+      expect(cards[0].finishes).toEqual(['normal']);
+      expect(lastKey(cards[0])).toBe('finishes');
+      expect(cards[0]).not.toHaveProperty('foilTypes');
+      expect(cards[0].variants[0].finishes).toEqual(['normal', 'foil']);
+      expect(lastKey(cards[0].variants[0])).toBe('finishes');
+    });
+
+    it('writes none where they match the rarity rule: a Super Rare in both, an Iconic in foil', () => {
+      const {cards} = applyCardRules(listing(['None', 'Cold'], ['Cold']), '14');
+
+      expect(cards[0]).not.toHaveProperty('finishes');
+      expect(cards[0].variants[0]).not.toHaveProperty('finishes');
+    });
+
+    it("keeps the versions the set's entries hold, whatever LorcanaJSON lists now", () => {
+      // An owner's correction: the Iconic in both, where LorcanaJSON lists the foil one alone.
+      const old = [{id: 3288, variants: [{id: 3506, finishes: ['normal', 'foil']}]}];
+      const {cards} = applyCardRules(listing(['None', 'Cold'], ['Cold']), '14', finishesById(old));
+
+      expect(cards[0].variants[0].finishes).toEqual(['normal', 'foil']);
+    });
+
+    it('lists the versions it gave, leaving the Specials out, and a rerun gives none and changes nothing', () => {
+      const first = applyCardRules(listing(['None'], ['None', 'Cold']), '14');
+
+      expect(graduatedFinishes(new Map(), first.cards)).toEqual([
+        {label: '3288 #23 Super Rare Mickey Mouse - Best in Town', finishes: ['normal']},
+        {label: '3506 #241 Iconic Mickey Mouse - Best in Town', finishes: ['normal', 'foil']},
+      ]);
+      const kept = finishesById(first.cards);
+      const rerun = applyCardRules(listing(['None'], ['None', 'Cold']), '14', kept);
+      expect(graduatedFinishes(kept, rerun.cards)).toEqual([]);
+      expect(JSON.stringify(rerun.cards, null, 2)).toBe(JSON.stringify(first.cards, null, 2));
+    });
   });
 });
 

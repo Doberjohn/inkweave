@@ -1,4 +1,5 @@
 import {describe, it, expect} from 'vitest';
+import {finishesById} from '../finishes.mjs';
 import {
   DETAIL_FIELDS,
   INDEX_FIELDS,
@@ -184,6 +185,34 @@ describe('buildDetailChunks', () => {
     const [detail] = chunks.get('1');
     expect(detail.artists).toBeUndefined();
     expect(detail.flavorText).toBeUndefined();
+  });
+
+  describe('versions (#880)', () => {
+    /** Yen Sid - Powerful Sorcerer #223, Set 4's alt foil, which LorcanaJSON lists in foil alone. */
+    const altFoil = card({id: 946, rarity: 'Legendary', number: 223, foilTypes: ['Cold']});
+
+    it("writes LorcanaJSON's versions last, in place of its foilTypes, only where the rarity rule gets them wrong", () => {
+      const [yenSid, enchanted] = buildDetailChunks([
+        altFoil,
+        card({id: 2, rarity: 'Enchanted', foilTypes: ['Cold']}),
+      ]).get('1');
+
+      expect(Object.keys(yenSid).at(-1)).toBe('finishes');
+      expect(yenSid.finishes).toEqual(['foil']);
+      expect(yenSid).not.toHaveProperty('foilTypes');
+      expect(enchanted).not.toHaveProperty('finishes');
+    });
+
+    it('keeps the versions the replaced dataset held, whatever LorcanaJSON says', () => {
+      const [yenSid] = buildDetailChunks([altFoil], new Map([['946', ['normal', 'foil']]])).get('1');
+      expect(yenSid.finishes).toEqual(['normal', 'foil']);
+    });
+
+    it('writes the same chunk again, byte for byte, from its own versions', () => {
+      const once = JSON.stringify(buildDetailChunks([altFoil]).get('1'));
+      const kept = finishesById(JSON.parse(once));
+      expect(JSON.stringify(buildDetailChunks([altFoil], kept).get('1'))).toBe(once);
+    });
   });
 });
 

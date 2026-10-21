@@ -1,9 +1,10 @@
 import {useState, type CSSProperties, type PointerEvent} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from '../cards/components/CardTile';
-import {PROMO_RARITY, isChaseRarity, smallImageUrl} from '../cards/loader';
+import {PROMO_RARITY, smallImageUrl} from '../cards/loader';
 import {CollectionSlotCounts, type SlotCountsEditor} from './CollectionSlotCounts';
 import type {CollectionEntry, Finish} from './collectionParser';
+import {finishesOf} from './printingFinishes';
 import {BinderSpread, PER_PAGE, PER_SPREAD} from '../cards/components/BinderSpread';
 import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/BinderSpreadMap';
 import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
@@ -136,7 +137,7 @@ function pocketEditor(
 ): SlotCountsEditor | undefined {
   if (!pointed || onCountChange === undefined) return undefined;
   return {
-    foilOnly: isChaseRarity(card.rarity),
+    finishes: finishesOf(card),
     onChange: (finish, count) => onCountChange(card.id, finish, count),
   };
 }
