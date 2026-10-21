@@ -1,6 +1,7 @@
 import {useNavigate, useParams} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardGrid, CardGridSkeleton, INK_HUB_BLURBS, cardsForInk, getInkHub} from '../features/cards';
+import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {CompactHeader, EtherealBackground, Seo} from '../shared/components';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
@@ -70,12 +71,13 @@ export function InkHubPage() {
         ) : (
           <CardGrid
             cards={inkCards}
-            onSelect={(card: LorcanaCard) =>
+            onSelect={(card: LorcanaCard) => {
+              trackCardSelected(card, 'ink_hub');
               openCardModal(
                 card.id,
                 inkCards.map((c) => c.id),
-              )
-            }
+              );
+            }}
             linkToCards
             priorityCount={6}
             emptyMessage={`No ${hub.ink} cards found.`}

@@ -22,7 +22,7 @@ export function withSpeedInsightsRoutes(routes: RouteObject[], parentPath = ''):
   });
 }
 
-/** The matched route's label, for AppLayout's `<SpeedInsights route={…} />`. */
+/** The matched route's label, for AppLayout's `<SpeedInsights route>` and `<Analytics route>`. */
 export function useSpeedInsightsRoute(): string {
   const {pathname} = useLocation();
   const matches = useMatches();

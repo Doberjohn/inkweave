@@ -68,6 +68,7 @@ describe('trackEvent', () => {
       clickedCardName: 'Anna - Heir to Arendelle',
       clickedCardInk: 'Amber',
       groupKey: 'singer',
+      surface: 'modal',
     } as const;
     trackEvent('synergy_card_clicked', props);
     expectSentToBoth('synergy_card_clicked', props);
@@ -104,7 +105,12 @@ describe('trackEvent', () => {
   });
 
   it('forwards a synergy_group_viewed event', () => {
-    const props = {sourceCardId: '13001', groupKey: 'singer', action: 'isolate'} as const;
+    const props = {
+      sourceCardId: '13001',
+      groupKey: 'singer',
+      action: 'isolate',
+      surface: 'card_page',
+    } as const;
     trackEvent('synergy_group_viewed', props);
     expectSentToBoth('synergy_group_viewed', props);
   });
@@ -118,6 +124,56 @@ describe('trackEvent', () => {
     } as const;
     trackEvent('card_printing_view', props);
     expectSentToBoth('card_printing_view', props);
+  });
+
+  it('forwards a sign_in_started event', () => {
+    const props = {provider: 'google', surface: 'header'} as const;
+    trackEvent('sign_in_started', props);
+    expectSentToBoth('sign_in_started', props);
+  });
+
+  it('forwards a sign_in_completed event', () => {
+    const props = {provider: 'discord'} as const;
+    trackEvent('sign_in_completed', props);
+    expectSentToBoth('sign_in_completed', props);
+  });
+
+  it('forwards a sign_in_failed event', () => {
+    const props = {provider: null, stage: 'callback', reason: 'cancelled'} as const;
+    trackEvent('sign_in_failed', props);
+    expectSentToBoth('sign_in_failed', props);
+  });
+
+  it('forwards a collection_mode_toggled event', () => {
+    const props = {state: 'on'} as const;
+    trackEvent('collection_mode_toggled', props);
+    expectSentToBoth('collection_mode_toggled', props);
+  });
+
+  it('forwards a collection_imported event', () => {
+    const props = {
+      surface: 'browse',
+      replacing: false,
+      cards: 1204,
+      copies: 3561,
+      unidentified: 2,
+      ambiguous: 1,
+      unparsed: 0,
+    } as const;
+    trackEvent('collection_imported', props);
+    expectSentToBoth('collection_imported', props);
+  });
+
+  it('forwards a collection_import_failed event', () => {
+    const props = {surface: 'account', replacing: true, reason: 'no_cards'} as const;
+    trackEvent('collection_import_failed', props);
+    expectSentToBoth('collection_import_failed', props);
+  });
+
+  it('forwards a collection_deleted event', () => {
+    const props = {cards: 1204} as const;
+    trackEvent('collection_deleted', props);
+    expectSentToBoth('collection_deleted', props);
   });
 
   it('forwards a friend_code_copied event', () => {

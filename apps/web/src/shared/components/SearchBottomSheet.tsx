@@ -7,6 +7,7 @@ import {LinkButton} from './LinkButton';
 import {useCardDataContext} from '../contexts/CardDataContext';
 import {useCardModal} from '../contexts/CardModalContext';
 import {smallImageUrl} from '../../features/cards/loader';
+import {trackCardSelected} from '../../features/cards/lib/cardAnalytics';
 import {useAutocomplete, useDialogFocus, useScrollLock, useTransitionPresence} from '../hooks';
 import {trackEvent} from '../lib/analytics';
 
@@ -616,6 +617,7 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
     const openCardModalDelayed = useDelayedModalOpen(openCardModal);
 
     const handleSelect = (card: LorcanaCard) => {
+      trackCardSelected(card, 'mobile_sheet');
       addRecentSearch(card.fullName);
       onClose();
       // Small delay so close animation starts before opening modal

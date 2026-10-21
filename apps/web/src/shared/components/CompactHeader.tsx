@@ -407,7 +407,7 @@ function HeaderAuth() {
   return (
     <div style={{marginLeft: 'auto'}}>
       <AuthButton onSignIn={() => setSignInOpen(true)} />
-      <SignInDialog isOpen={signInOpen} onClose={() => setSignInOpen(false)} />
+      <SignInDialog isOpen={signInOpen} onClose={() => setSignInOpen(false)} surface="header" />
     </div>
   );
 }

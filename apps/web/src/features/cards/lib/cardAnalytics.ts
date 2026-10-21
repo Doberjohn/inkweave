@@ -2,7 +2,8 @@ import type {LorcanaCard} from '../types';
 import {trackEvent} from '../../../shared/lib/analytics';
 
 /** The discovery surface a card was opened from. Must match the `card_selected` catalog union. */
-export type CardSelectSource = 'browse' | 'home' | 'playstyle' | 'playstyle_gallery';
+export type CardSelectSource =
+  'browse' | 'home' | 'playstyle' | 'playstyle_gallery' | 'ink_hub' | 'mobile_sheet';
 
 /**
  * Fire `card_selected` for a card opened from a discovery surface. No-ops when the

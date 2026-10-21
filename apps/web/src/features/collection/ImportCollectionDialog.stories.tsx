@@ -37,6 +37,7 @@ const meta: Meta<typeof ImportCollectionDialog> = {
     isPoolReady: true,
     poolError: null,
     onRetryPool: fn(),
+    context: {surface: 'browse', replacing: false},
   },
 };
 export default meta;
