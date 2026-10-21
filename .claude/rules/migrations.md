@@ -14,6 +14,16 @@ When editing a file under `supabase/migrations/`:
   2. verify with `list_tables` / `execute_sql`
   3. `generate_typescript_types` (regenerate types)
   4. `get_advisors` (security check)
+- **Apply and verify before the PR merges** (#860). Supabase's GitHub integration links this
+  project's production branch to `master`: with its "Deploy to production" option on, a merge
+  applies every new migration by itself, outside the review and verification steps. Applied
+  first, the migration is already recorded, so a deploy finds nothing new. `apply_migration`
+  stores the exact SQL it is given, so `md5(statements[1])` in
+  `supabase_migrations.schema_migrations` must equal the file's md5.
+- **Replay friends changes locally first** (#860). A change to `friend_codes`, `friendships`,
+  `internal.friend_request_attempts` or a friends function re-runs `supabase/replay/friends/`
+  on a local Postgres 17 (its README has the commands). Add the change's checks first and
+  watch them fail, then write the migration.
 
 ## Declare privileges in the migration that creates the object
 
@@ -44,8 +54,10 @@ whose migration grants nothing is unreachable through the Data API.
   through the default `PUBLIC` grant, so revoking that one from `public` needs an explicit
   grant to `anon` and `authenticated` in the same migration.
 - A `serial` column's sequence needs `grant usage` for every role that inserts. Every public
-  table here uses `uuid` keys. The one sequence, the identity of
-  `internal.card_id_remap_backup`, is written only by migrations, so it needs no grant.
+  table here uses `uuid` keys. The two sequences need no grant: the identities of
+  `internal.card_id_remap_backup`, written only by migrations, and
+  `internal.friend_request_attempts`, written only by `send_friend_request` as the table's
+  owner (#860).
 - A table only migrations touch, such as `internal.card_id_remap_backup`, revokes everything,
   `service_role` included, rather than granting `service_role` all (`20261013000000`). An
   `internal` table that runtime functions read, such as `internal.rate_limit_config`, keeps
