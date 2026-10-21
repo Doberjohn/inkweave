@@ -165,10 +165,16 @@ describe('SetPicker', () => {
       expect(allSets()).toHaveFocus();
       fireEvent.keyDown(allSets(), {key: 'ArrowUp'});
       expect(tab('Standard')).toHaveFocus();
-      // Left from the first tab comes round to the last, and shows its sets.
+      // Left from the first tab comes round to the last, and right from the last back to
+      // the first, each showing its sets.
       fireEvent.keyDown(tab('Standard'), {key: 'ArrowLeft'});
       expect(tab('Promo')).toHaveFocus();
       expect(tab('Promo')).toHaveAttribute('aria-pressed', 'true');
+      fireEvent.keyDown(tab('Promo'), {key: 'ArrowRight'});
+      expect(tab('Standard')).toHaveFocus();
+      expect(tab('Standard')).toHaveAttribute('aria-pressed', 'true');
+      // Down from a tab enters the list it shows.
+      fireEvent.keyDown(tab('Standard'), {key: 'ArrowRight'});
       fireEvent.keyDown(tab('Promo'), {key: 'ArrowDown'});
       expect(screen.getByRole('option', {name: 'All sets, every promo set'})).toHaveFocus();
     });
