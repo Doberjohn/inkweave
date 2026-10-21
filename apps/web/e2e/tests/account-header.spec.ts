@@ -28,7 +28,8 @@ test.describe('Account header control', () => {
   /*
     supabase-js loads only when there is a session to restore (#729). These watch the network
     for the SDK itself: under Vite dev it arrives as our supabaseClient.ts module plus the
-    prebundled @supabase/supabase-js dependency.
+    prebundled @supabase/supabase-js dependency, and in a production build as the
+    supabaseClient-<hash>.js chunk.
   */
   const isSdkRequest = (url: string) => url.includes('supabaseClient') || url.includes('supabase_supabase-js');
 

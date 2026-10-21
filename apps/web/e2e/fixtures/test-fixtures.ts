@@ -77,6 +77,13 @@ export const test = base.extend<TestFixtures>({
     // Before anything navigates: the placeholder Supabase host does not resolve, and the
     // guard below would fail on the resulting network errors. See supabaseStub.ts.
     await stubSupabase(page);
+    // A production build (E2E_SERVER=preview, #869) loads <Analytics/>'s and <SpeedInsights/>'s
+    // scripts from /_vercel/, which only Vercel serves. Answer with an empty script instead of
+    // vite preview's 404, which each browser reports in its own words. On the dev server they
+    // come from va.vercel-scripts.com instead.
+    await page.route('**/_vercel/**', (route) =>
+      route.fulfill({contentType: 'text/javascript', body: ''}),
+    );
 
     const errors: string[] = [];
     page.on('console', (msg) => {

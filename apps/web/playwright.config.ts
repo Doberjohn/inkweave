@@ -65,14 +65,55 @@ function resolveWorkers(): number | undefined {
   return process.platform === 'win32' ? 3 : undefined;
 }
 
+/**
+ * The server this run tests (#869). `dev`, the default, is Vite's dev server, where React logs
+ * its development-only errors and the console guard (e2e/fixtures/test-fixtures.ts) fails a test
+ * on them. `preview` builds the app into PREVIEW_OUT_DIR and serves that production bundle with
+ * `vite preview`: a page arrives as a few chunks instead of hundreds of modules compiled on
+ * request, so the chromium project ran in about half the time (184 s against 358 on two workers
+ * in a 4-vCPU container), and the tests run the code that ships. CI runs chromium and
+ * mobile-chrome on `dev` and the other three projects on `preview` (ci.yml). Unlike the dev
+ * server (ensureSynergiesPlugin), the build never refreshes synergy data, so after an engine
+ * change run `pnpm precompute-synergies` first.
+ */
+function resolveServer(): 'dev' | 'preview' {
+  const server = process.env.E2E_SERVER || 'dev';
+  if (server !== 'dev' && server !== 'preview') {
+    throw new Error(`E2E_SERVER must be "dev" or "preview", got "${server}"`);
+  }
+  return server;
+}
+
+/**
+ * Where `preview` builds: inside `dist`, so git and ESLint already ignore it, but beside the
+ * deploy build's `dist/assets`, so a local run never swaps the build `pnpm size` weighs for one
+ * made with E2E's flags.
+ */
+const PREVIEW_OUT_DIR = 'dist/e2e';
+
 const port = resolvePort();
 const origin = `http://localhost:${port}`;
+const server = resolveServer();
+
+/**
+ * --strictPort: if the port was taken after it was picked, fail loudly instead of drifting to the
+ * next one while Playwright waits on this URL. `vite preview` takes --port in CI too, since its
+ * own default is 4173.
+ */
+function webServerCommand(): string {
+  if (server === 'preview') {
+    const outDir = `--outDir ${PREVIEW_OUT_DIR}`;
+    return `npx vite build ${outDir} && npx vite preview ${outDir} --port ${port} --strictPort`;
+  }
+  return process.env.CI ? 'npx vite' : `npx vite --port ${port} --strictPort`;
+}
 
 export default defineConfig({
   testDir: './e2e',
-  // Opens the first spec's pages on the fresh server before any test starts, so the app shell and
-  // those pages compile outside the first wave's timeouts (#664).
-  globalSetup: './e2e/global-setup.ts',
+  // Opens the first spec's pages on the fresh dev server before any test starts, so the app shell
+  // and those pages compile outside the first wave's timeouts (#664). A production build has
+  // nothing left to compile.
+  globalSetup: server === 'dev' ? './e2e/global-setup.ts' : undefined,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -82,6 +123,10 @@ export default defineConfig({
     baseURL: origin,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    // The production build registers a service worker (main.tsx). Left to run, it would precache
+    // the app in every test's fresh context and answer requests that page.route() never sees.
+    // The dev server registers none.
+    serviceWorkers: 'block',
   },
   projects: [
     {
@@ -106,9 +151,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    // --strictPort: if the port was taken after it was picked, fail loudly instead of drifting
-    // to the next one while Playwright waits on this URL.
-    command: process.env.CI ? 'npx vite' : `npx vite --port ${port} --strictPort`,
+    command: webServerCommand(),
     url: origin,
     // Never attach to a server this run did not start (CI never did).
     reuseExistingServer: false,
@@ -119,7 +162,8 @@ export default defineConfig({
     stdout: process.env.CI ? 'ignore' : 'pipe',
     // Startup can include ensureSynergiesPlugin's engine rebuild and precompute (28 s measured),
     // and the first `GET /` on a cold server took 17 to 19 s; both run slower while other
-    // sessions load this machine (#664).
+    // sessions load this machine (#664). On `preview` it includes the build instead (26 s in a
+    // 4-vCPU container).
     timeout: 240000,
     env: {
       // Exercise the accounts surface in E2E; production default stays off via .env.example.
@@ -157,6 +201,14 @@ export default defineConfig({
       // Keep the react-grab dev inspector (index.html) out of E2E: on every page load it fetches
       // react-grab.com and @imports a Google Fonts stylesheet, which delays WebKit's `load` (#673).
       VITE_DISABLE_REACT_GRAB: 'true',
+      // A production build (`preview`) starts Sentry and PostHog when it has their keys
+      // (shared/lib/sentry.ts, posthog.ts), and with SENTRY_AUTH_TOKEN vite.config.ts uploads its
+      // source maps, then deletes dist/**/*.map, the deploy build's included. Blank all three, so
+      // neither a developer's .env.local nor their shell can send a run's errors, events or maps
+      // to the real projects. CI sets none of them.
+      VITE_SENTRY_DSN: '',
+      VITE_POSTHOG_KEY: '',
+      SENTRY_AUTH_TOKEN: '',
     },
   },
 });

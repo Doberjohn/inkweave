@@ -1,21 +1,11 @@
 import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
+import {holdLazyModule} from '../helpers/lazyModule';
 
 // The card overview modal loads on demand (#640). An open that beats its chunk shows
 // CardOverviewModalFallback, which then hands over to the modal. Holding the modal's module
-// request keeps the cold path deterministic (the dev server serves it as its source file).
-const MODAL_MODULE = '**/components/CardOverviewModal.tsx*';
-
-/** Holds the modal's module until the returned release() is called. */
-async function holdModalModule(page: Page): Promise<() => void> {
-  let release!: () => void;
-  const held = new Promise<void>((resolve) => (release = resolve));
-  await page.route(MODAL_MODULE, async (route) => {
-    await held;
-    await route.continue();
-  });
-  return release;
-}
+// request keeps the cold path deterministic.
+const holdModalModule = (page: Page) => holdLazyModule(page, 'CardOverviewModal');
 
 test.describe('Card modal on demand', () => {
   test('a cold open shows the loading shell, then the modal takes over', async ({appPage, page}) => {
