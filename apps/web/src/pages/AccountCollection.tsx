@@ -2,6 +2,7 @@ import {Suspense, useState} from 'react';
 import {useCollection} from '../features/collection/CollectionContext';
 import {useCollectionCards, useCollectionPool} from '../features/collection/CollectionCardsContext';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
+import {trackEvent} from '../shared/lib/analytics';
 import {lazyWithRetry} from '../shared/lib/lazyWithRetry';
 import {CollectionSection} from './AccountPage';
 
@@ -48,6 +49,7 @@ export function AccountCollection() {
         }}
         onAskClear={() => setConfirmClear(true)}
         onConfirmClear={() => {
+          trackEvent('collection_deleted', {cards: owned});
           clearImported();
           setConfirmClear(false);
         }}
@@ -65,6 +67,7 @@ export function AccountCollection() {
             poolError={error}
             onRetryPool={retry}
             onImport={importCollection}
+            context={{surface: 'account', replacing: hasCollection}}
           />
         </Suspense>
       )}

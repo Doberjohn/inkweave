@@ -143,4 +143,36 @@ describe('trackEvent', () => {
     trackEvent('sign_in_failed', props);
     expectSentToBoth('sign_in_failed', props);
   });
+
+  it('forwards a collection_mode_toggled event', () => {
+    const props = {state: 'on'} as const;
+    trackEvent('collection_mode_toggled', props);
+    expectSentToBoth('collection_mode_toggled', props);
+  });
+
+  it('forwards a collection_imported event', () => {
+    const props = {
+      surface: 'browse',
+      replacing: false,
+      cards: 1204,
+      copies: 3561,
+      unidentified: 2,
+      ambiguous: 1,
+      unparsed: 0,
+    } as const;
+    trackEvent('collection_imported', props);
+    expectSentToBoth('collection_imported', props);
+  });
+
+  it('forwards a collection_import_failed event', () => {
+    const props = {surface: 'account', replacing: true, reason: 'no_cards'} as const;
+    trackEvent('collection_import_failed', props);
+    expectSentToBoth('collection_import_failed', props);
+  });
+
+  it('forwards a collection_deleted event', () => {
+    const props = {cards: 1204} as const;
+    trackEvent('collection_deleted', props);
+    expectSentToBoth('collection_deleted', props);
+  });
 });
