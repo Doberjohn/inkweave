@@ -118,6 +118,14 @@ type AnalyticsEvents = {
     reason: 'not_ready' | 'unreadable' | 'no_cards' | 'storage';
   };
   collection_deleted: {cards: number};
+  // Friends (#852, #884), behind SHOW_FRIENDS. Never a friend code, name, handle or id.
+  // `result` on a send is send_friend_request's answer: pending, accepted, a refusal, or failed.
+  friend_code_copied: {result: 'copied' | 'blocked'};
+  friend_request_sent: {
+    result: 'pending' | 'accepted' | 'invalid' | 'unknown' | 'own' | 'too_many' | 'slow_down' | 'failed';
+  };
+  // A row's action finished: removing a received request is `decline`, a sent one `cancel`.
+  friend_action: {action: 'accept' | 'decline' | 'cancel' | 'remove'; ok: boolean};
 };
 
 /**

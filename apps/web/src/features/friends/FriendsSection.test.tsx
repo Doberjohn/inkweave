@@ -1,8 +1,11 @@
 import {act, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {afterEach, describe, expect, it, vi} from 'vitest';
+import {trackEvent} from '../../shared/lib/analytics';
 import {FriendsSection, type FriendsSectionProps} from './FriendsSection';
 import type {FriendRow, SendOutcome} from './useFriends';
+
+vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 
 const person = (id: string, name: string, since: string | null = null): FriendRow => ({
   id,
@@ -20,6 +23,7 @@ const EMERALD = person('emerald', 'Emerald Princess 330', '2026-10-20T12:00:00Z'
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.clearAllMocks();
 });
 
 /** The section, ready, with a code and nothing listed unless a case says otherwise. */
@@ -60,6 +64,7 @@ describe('FriendsSection', () => {
     await user.click(screen.getByRole('button', {name: 'Copy your friend code'}));
     await expect(navigator.clipboard.readText()).resolves.toBe('ABCD-2345');
     expect(screen.getByText('Copied')).toBeInTheDocument();
+    expect(trackEvent).toHaveBeenCalledWith('friend_code_copied', {result: 'copied'});
   });
 
   it('says to select the code when the clipboard refuses', async () => {
@@ -67,6 +72,7 @@ describe('FriendsSection', () => {
     vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new DOMException('Denied', 'NotAllowedError'));
     await user.click(screen.getByRole('button', {name: 'Copy your friend code'}));
     expect(await screen.findByText("Couldn't copy. Select the code instead.")).toBeInTheDocument();
+    expect(trackEvent).toHaveBeenCalledWith('friend_code_copied', {result: 'blocked'});
   });
 
   it('enables Send only for a whole code, and sends it as the database reads it', async () => {
@@ -205,5 +211,33 @@ describe('FriendsSection', () => {
     expect(screen.getByRole('alert')).toHaveTextContent("Couldn't load your friends.");
     await user.click(screen.getByRole('button', {name: 'Try again'}));
     expect(onRetry).toHaveBeenCalled();
+  });
+});
+
+describe('FriendsSection analytics', () => {
+  it('names each row action by the list it leaves, with no code or name in the payload', async () => {
+    const {user} = setup({received: [RUBY], sent: [STEEL], friends: [AMBER]});
+    await user.click(screen.getByRole('button', {name: 'Accept request from Ruby Hero 042'}));
+    await user.click(screen.getByRole('button', {name: 'Decline request from Ruby Hero 042'}));
+    await user.click(screen.getByRole('button', {name: 'Cancel request to Steel Pirate 777'}));
+    await user.click(screen.getByRole('button', {name: 'Remove Amber Toy 115'}));
+    await user.click(screen.getByRole('button', {name: 'Remove friend Amber Toy 115'}));
+
+    expect(vi.mocked(trackEvent).mock.calls).toEqual([
+      ['friend_action', {action: 'accept', ok: true}],
+      ['friend_action', {action: 'decline', ok: true}],
+      ['friend_action', {action: 'cancel', ok: true}],
+      ['friend_action', {action: 'remove', ok: true}],
+    ]);
+    const sent = JSON.stringify(vi.mocked(trackEvent).mock.calls);
+    for (const identity of ['ABCD', 'ruby', 'steel', 'amber', 'Hero', 'Pirate', 'Toy']) expect(sent).not.toContain(identity);
+  });
+
+  it('sends ok: false for an action that comes back with an error', async () => {
+    const {user, onAccept} = setup({received: [RUBY]});
+    onAccept.mockResolvedValue('That request is no longer there.');
+    await user.click(screen.getByRole('button', {name: 'Accept request from Ruby Hero 042'}));
+
+    await waitFor(() => expect(trackEvent).toHaveBeenCalledWith('friend_action', {action: 'accept', ok: false}));
   });
 });

@@ -66,11 +66,13 @@ describe('sendFriendRequest', () => {
     await expect(sendFriendRequest('ABCD2345')).resolves.toEqual({
       data: {friendId: 'friend-1', status},
       error: null,
+      answer: status,
     });
     expect(mockRpc).toHaveBeenCalledWith('send_friend_request', {friend_code: 'ABCD2345'});
   });
 
-  // Refusals are answers, not errors (#852): each gets its words, and nothing is logged.
+  // Refusals are answers, not errors (#852): each gets its words and names itself as the
+  // answer the friends events send, and nothing is logged.
   it.each([
     ['invalid', 'A friend code is 8 letters and numbers, like ABCD-2345.'],
     ['unknown', 'No one has that friend code. Check it with your friend.'],
@@ -80,21 +82,28 @@ describe('sendFriendRequest', () => {
   ])('turns %s into its message without logging', async (status, message) => {
     const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockRpc.mockResolvedValue({data: [{friend_id: null, status}], error: null});
-    await expect(sendFriendRequest('ABCD2345')).resolves.toEqual({data: null, error: message});
+    await expect(sendFriendRequest('ABCD2345')).resolves.toEqual({data: null, error: message, answer: status});
     expect(logged).not.toHaveBeenCalled();
+  });
+
+  it('answers failed, and logs, for an answer of any other shape', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockRpc.mockResolvedValue({data: [{friend_id: null, status: 'surprise'}], error: null});
+    await expect(sendFriendRequest('ABCD2345')).resolves.toEqual({data: null, error: SEND_FAILED, answer: 'failed'});
+    expect(logged).toHaveBeenCalled();
   });
 
   it('reports a raised error with the generic message, and logs it', async () => {
     const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockRpc.mockResolvedValue({data: null, error: {message: 'could not send the request'}});
-    await expect(sendFriendRequest('ABCD2345')).resolves.toEqual({data: null, error: SEND_FAILED});
+    await expect(sendFriendRequest('ABCD2345')).resolves.toEqual({data: null, error: SEND_FAILED, answer: 'failed'});
     expect(logged).toHaveBeenCalled();
   });
 
   it('degrades to a network error when the request rejects', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     mockRpc.mockRejectedValue(new TypeError('Failed to fetch'));
-    await expect(sendFriendRequest('ABCD2345')).resolves.toEqual({data: null, error: 'Network error'});
+    await expect(sendFriendRequest('ABCD2345')).resolves.toEqual({data: null, error: 'Network error', answer: 'failed'});
   });
 });
 

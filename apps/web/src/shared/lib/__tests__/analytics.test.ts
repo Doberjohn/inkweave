@@ -175,4 +175,22 @@ describe('trackEvent', () => {
     trackEvent('collection_deleted', props);
     expectSentToBoth('collection_deleted', props);
   });
+
+  it('forwards a friend_code_copied event', () => {
+    const props = {result: 'blocked'} as const;
+    trackEvent('friend_code_copied', props);
+    expectSentToBoth('friend_code_copied', props);
+  });
+
+  it('forwards a friend_request_sent event', () => {
+    const props = {result: 'slow_down'} as const;
+    trackEvent('friend_request_sent', props);
+    expectSentToBoth('friend_request_sent', props);
+  });
+
+  it('forwards a friend_action event', () => {
+    const props = {action: 'decline', ok: true} as const;
+    trackEvent('friend_action', props);
+    expectSentToBoth('friend_action', props);
+  });
 });

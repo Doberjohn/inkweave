@@ -16,6 +16,7 @@ import {
   searchFieldStyle,
 } from '../../shared/constants';
 import {useHover} from '../../shared/hooks';
+import {trackEvent} from '../../shared/lib/analytics';
 import {formatFriendCode, normalizeFriendCode} from './friendCode';
 import {CheckIcon, CopyIcon} from './icons';
 import type {FriendRow, FriendsStatus, SendOutcome} from './useFriends';
@@ -87,6 +88,12 @@ function Field({label, children}: {label: React.ReactNode; children: React.React
 
 type ListName = 'received' | 'sent' | 'friends';
 
+/** A row's action as `friend_action` names it. */
+type FriendAction = 'accept' | 'decline' | 'cancel' | 'remove';
+
+/** What removing a row means, by the list it leaves. */
+const REMOVAL: Record<ListName, FriendAction> = {received: 'decline', sent: 'cancel', friends: 'remove'};
+
 /** The row an action may take away: which list, where in it, and whose. */
 interface Leaving {
   list: ListName;
@@ -99,10 +106,11 @@ function FriendsReady({code, received, sent, friends, busy, onSend, onAccept, on
   const [confirming, setConfirming] = useState<string | null>(null);
   const {watch, listRefs, headingRefs} = useFocusAfterLeaving({received, sent, friends});
 
-  const act = async (leaving: Leaving, action: () => Promise<string | null>) => {
+  const act = async (leaving: Leaving, kind: FriendAction, action: () => Promise<string | null>) => {
     watch(leaving);
     setFailure(null);
     const error = await action();
+    trackEvent('friend_action', {action: kind, ok: error === null});
     setFailure(error);
     if (error === null) setConfirming(null);
   };
@@ -118,8 +126,8 @@ function FriendsReady({code, received, sent, friends, busy, onSend, onAccept, on
     busy,
     confirming,
     ask,
-    accept: (leaving, row) => void act(leaving, () => onAccept(row)),
-    remove: (leaving, row) => void act(leaving, () => onRemove(row)),
+    accept: (leaving, row) => void act(leaving, 'accept', () => onAccept(row)),
+    remove: (leaving, row) => void act(leaving, REMOVAL[leaving.list], () => onRemove(row)),
   };
 
   return (
@@ -218,8 +226,11 @@ function CodeRow({code}: {code: string}) {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(formatFriendCode(code));
+      trackEvent('friend_code_copied', {result: 'copied'});
       setNote({copied: true});
     } catch {
+      // In-app browsers refuse the clipboard even on HTTPS.
+      trackEvent('friend_code_copied', {result: 'blocked'});
       setNote({copied: false});
     }
   };
