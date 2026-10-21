@@ -76,6 +76,7 @@ describe('sendFriendRequest', () => {
     ['unknown', 'No one has that friend code. Check it with your friend.'],
     ['own', "That's your own friend code."],
     ['too_many', 'You have 20 requests waiting. Cancel one to send another.'],
+    ['slow_down', "You've entered a lot of codes. Try again in an hour."],
   ])('turns %s into its message without logging', async (status, message) => {
     const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockRpc.mockResolvedValue({data: [{friend_id: null, status}], error: null});
