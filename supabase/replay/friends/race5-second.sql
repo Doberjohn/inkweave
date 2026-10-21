@@ -5,6 +5,12 @@ select pg_sleep(1);
 begin;
 select t.act_as('N');
 \timing on
-select 'race5 31st try: ' || status from public.send_friend_request(t.code_of('O'));
+do $$
+declare r record;
+begin
+  select * into r from public.send_friend_request(t.code_of('O'));
+  raise notice 'race5 31st try: %', r.status;
+  assert r.status = 'slow_down' and r.friend_id is null, format('race 5, the 31st try: %s', row_to_json(r));
+end $$;
 \timing off
 commit;

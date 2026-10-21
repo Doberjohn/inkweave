@@ -5,6 +5,12 @@ select pg_sleep(1);
 begin;
 select t.act_as('S');
 \timing on
-select 'race4 S->T21: ' || status from public.send_friend_request(t.code_of('T21'));
+do $$
+declare r record;
+begin
+  select * into r from public.send_friend_request(t.code_of('T21'));
+  raise notice 'race4 S->T21: %', r.status;
+  assert r.status = 'too_many' and r.friend_id is null, format('race 4, S->T21: %s', row_to_json(r));
+end $$;
 \timing off
 commit;

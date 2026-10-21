@@ -39,13 +39,18 @@ begin
   return (select f.code from public.friend_codes f where f.owner_id = t.uid(who));
 end $$;
 
--- Run a statement as the current role and insist it fails with one SQLSTATE.
+-- Run a statement as the current role and insist it fails with one SQLSTATE. The
+-- "it succeeded" raise sits outside the handler: RAISE defaults to P0001, so inside it
+-- a success would pass as the expected failure whenever the expected state is P0001.
 create function t.expect_error(stmt text, state text) returns void language plpgsql as $$
 begin
-  execute stmt;
+  begin
+    execute stmt;
+  exception when others then
+    if sqlstate <> state then
+      raise exception 'expected SQLSTATE %, got % (%) from: %', state, sqlstate, sqlerrm, stmt;
+    end if;
+    return;
+  end;
   raise exception 'expected SQLSTATE %, but it succeeded: %', state, stmt;
-exception when others then
-  if sqlstate <> state then
-    raise exception 'expected SQLSTATE %, got % (%) from: %', state, sqlstate, sqlerrm, stmt;
-  end if;
 end $$;

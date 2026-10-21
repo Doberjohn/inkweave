@@ -5,6 +5,12 @@ select pg_sleep(1);
 begin;
 select t.act_as('P');
 \timing on
-select 'race2 second click: ' || status from public.send_friend_request(t.code_of('R'));
+do $$
+declare r record;
+begin
+  select * into r from public.send_friend_request(t.code_of('R'));
+  raise notice 'race2 second click: %', r.status;
+  assert r.status = 'pending' and r.friend_id = t.uid('R'), format('race 2, second click: %s', row_to_json(r));
+end $$;
 \timing off
 commit;

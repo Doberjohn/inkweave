@@ -48,10 +48,10 @@ $P -f $F/race5-first.sql & $P -f $F/race5-second.sql; wait
 $P -f $F/race5-verify.sql
 ```
 
-Every second file's call waits about 2 s for the first to commit (`\timing` prints it), then answers:
+Every second file's call waits about 2 s for the first to commit (`\timing` prints it), then answers. Each race file asserts its own answer and prints it as a NOTICE, so a wrong answer stops that file with an ERROR. The verify files then check what the race left behind; they run in their own sessions and can't see a race file's ERROR, so watch for one:
 
-| Race | What overlaps | The second file prints |
-|------|---------------|------------------------|
+| Race | What overlaps | The second file's answer |
+|------|---------------|--------------------------|
 | 1 | P asks Q while Q asks P | `race1 Q->P: accepted, friend is P: true` |
 | 2 | two clicks on the same code | `race2 second click: pending` |
 | 3 | two first claims of a code | the first claim's code |
@@ -62,4 +62,4 @@ The verify files end with `== all race checks passed` (races 1 to 3), `== race 4
 
 ## Proving a check bites
 
-Plant the mistake in a copy of the migration and load the copy instead. In `send_friend_request`, without the `>= 30` try-limit block check 12 fails, recording the try after the code checks fails check 15, and without the advisory lock race 5 ends with 31 tries. Check 16 proves no client role gets through to `internal.friend_request_attempts`, with or without the schema opened to it; check 16b proves none holds a privilege on the table, its columns or its sequence, so any such grant fails it.
+Plant the mistake in a copy of the migration and load the copy instead. In `send_friend_request`, without the `>= 30` try-limit block check 12 fails, recording the try after the code checks fails check 15, and without the advisory lock the second files of races 4 and 5 fail their asserts (both answer `pending`). Their failed calls roll back, so the verify files still pass: the race files' ERRORs are the signal. Check 16 proves no client role gets through to `internal.friend_request_attempts`, with or without the schema opened to it; check 16b proves none holds a privilege on the table, its columns or its sequence, so any such grant fails it.
