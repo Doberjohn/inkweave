@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import {useSession, type AuthProvider} from '../contexts/SessionContext';
+import {trackSignInFailed, trackSignInStarted, type SignInSurface} from '../lib/signInAnalytics';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../constants';
 import {CtaButton} from './CtaButton';
 import {DialogShell} from './DialogShell';
@@ -8,6 +9,8 @@ import {signInProviderButtonState} from './signInProviderState';
 interface SignInDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Where the dialog was opened, for `sign_in_started`. Required, so no caller goes untracked. */
+  surface: SignInSurface;
 }
 
 const PROVIDERS: ReadonlyArray<{id: AuthProvider; label: string}> = [
@@ -21,21 +24,24 @@ const PROVIDERS: ReadonlyArray<{id: AuthProvider; label: string}> = [
  * render here; on failure it surfaces the error inline. Rides the DialogShell overlay
  * contract (#510) — trap, scroll lock, token scrim, Escape + backdrop close.
  */
-export function SignInDialog({isOpen, onClose}: SignInDialogProps) {
+export function SignInDialog({isOpen, onClose, surface}: SignInDialogProps) {
   const {signIn, enabled} = useSession();
   const [busy, setBusy] = useState<AuthProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const start = async (provider: AuthProvider) => {
+    trackSignInStarted({provider, surface});
     setBusy(provider);
     setError(null);
     try {
       const {error: err} = await signIn(provider);
       if (err) {
+        trackSignInFailed({provider, stage: 'start', reason: 'error'});
         setError(err);
         setBusy(null);
       }
     } catch {
+      trackSignInFailed({provider, stage: 'start', reason: 'error'});
       setError('Sign-in failed. Please try again.');
       setBusy(null);
     }

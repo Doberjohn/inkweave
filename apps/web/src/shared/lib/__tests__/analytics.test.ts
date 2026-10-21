@@ -125,4 +125,22 @@ describe('trackEvent', () => {
     trackEvent('card_printing_view', props);
     expectSentToBoth('card_printing_view', props);
   });
+
+  it('forwards a sign_in_started event', () => {
+    const props = {provider: 'google', surface: 'header'} as const;
+    trackEvent('sign_in_started', props);
+    expectSentToBoth('sign_in_started', props);
+  });
+
+  it('forwards a sign_in_completed event', () => {
+    const props = {provider: 'discord'} as const;
+    trackEvent('sign_in_completed', props);
+    expectSentToBoth('sign_in_completed', props);
+  });
+
+  it('forwards a sign_in_failed event', () => {
+    const props = {provider: null, stage: 'callback', reason: 'cancelled'} as const;
+    trackEvent('sign_in_failed', props);
+    expectSentToBoth('sign_in_failed', props);
+  });
 });

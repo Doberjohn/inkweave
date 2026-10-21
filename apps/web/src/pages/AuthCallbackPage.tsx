@@ -1,6 +1,11 @@
 import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import {useSession} from '../shared/contexts/SessionContext';
+import {
+  callbackFailureReason,
+  trackSignInCompleted,
+  trackSignInFailed,
+} from '../shared/lib/signInAnalytics';
 import {CtaButton} from '../shared/components';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 
@@ -26,16 +31,23 @@ export function AuthCallbackPage() {
   const {session, loading} = useSession();
   const navigate = useNavigate();
   const [failed, setFailed] = useState(false);
+  // The OAuth error the provider sent back, if any, rides on the URL this page opened on. Read it
+  // once, on the first render, so later URL changes can't reword the failure.
+  const [failureReason] = useState(() => callbackFailureReason(window.location));
 
   useEffect(() => {
     if (loading) return;
     if (session) {
+      trackSignInCompleted(session);
       navigate(POST_SIGN_IN_ROUTE, {replace: true});
       return;
     }
-    const timer = setTimeout(() => setFailed(true), 4000);
+    const timer = setTimeout(() => {
+      trackSignInFailed({provider: null, stage: 'callback', reason: failureReason});
+      setFailed(true);
+    }, 4000);
     return () => clearTimeout(timer);
-  }, [loading, session, navigate]);
+  }, [loading, session, navigate, failureReason]);
 
   return (
     <main
