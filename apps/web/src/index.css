@@ -257,7 +257,7 @@ option {
    pair-switching remounts the span and restarts the animation. */
 @keyframes engine-score-pulse-on-entry {
   0%   { filter: brightness(1) drop-shadow(0 0 0 transparent); }
-  40%  { filter: brightness(1.45) drop-shadow(0 0 14px rgba(212, 175, 55, 0.55)); }
+  40%  { filter: brightness(1.45) drop-shadow(0 0 14px rgba(255, 185, 0, 0.4)); }
   100% { filter: brightness(1) drop-shadow(0 0 0 transparent); }
 }
 .engine-score-pulse-on-entry {

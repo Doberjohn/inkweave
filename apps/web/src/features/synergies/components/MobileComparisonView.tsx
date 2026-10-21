@@ -292,9 +292,9 @@ function PairConnectorSvg() {
   return (
     <span aria-hidden="true" style={PAIR_CONNECTOR_STYLE}>
       <svg width="34" height="14" viewBox="0 0 34 14" fill="none">
-        <line x1="2" y1="7" x2="32" y2="7" stroke={COLORS.primary500} strokeWidth={1.5} strokeDasharray="3 3" />
-        <circle cx="17" cy="7" r="3" fill={COLORS.background} stroke={COLORS.primary500} strokeWidth={1.2} />
-        <circle cx="17" cy="7" r="1.2" fill={COLORS.primary500} />
+        <line x1="2" y1="7" x2="32" y2="7" stroke={COLORS.primary} strokeWidth={1.5} strokeDasharray="3 3" />
+        <circle cx="17" cy="7" r="3" fill={COLORS.background} stroke={COLORS.primary} strokeWidth={1.2} />
+        <circle cx="17" cy="7" r="1.2" fill={COLORS.primary} />
       </svg>
     </span>
   );
@@ -319,7 +319,7 @@ function TabBar({activeTab, onChange, engineScore, communityScore, style}: TabBa
         score={formatScore(engineScore)}
         showScale
         isActive={activeTab === 'engine'}
-        tint={COLORS.primary500}
+        tint={COLORS.primary}
         onClick={() => onChange('engine')}
       />
       <ScoreChevronsTab

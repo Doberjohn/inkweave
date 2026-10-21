@@ -8,8 +8,10 @@ import {
   EASING,
   FONTS,
   FONT_SIZES,
+  GOLD_GLOW,
   INK_CHIP_COLORS,
   RADIUS,
+  SHADOWS,
   VISUALLY_HIDDEN,
   blackRgba,
   hexRgba,
@@ -278,11 +280,10 @@ function pickAbilityRowStyle({
     // the container's left edge while wrapped lines stay indented at content-left.
     textIndent: -12,
     overflow: 'hidden',
-    // Canonical gold-glow hover pattern from the rest of the app
-    // (see SynergyGroup.tsx:216, BetaNotice, CardLightbox, voting cards).
+    // Hovered, it glows with the gold interaction glow the app's chips and pills use.
     boxShadow:
       interactive && hovered
-        ? `0 0 16px ${hexRgba(COLORS.primary500, 0.15)}`
+        ? GOLD_GLOW.shadow
         : withShadow
           ? ABILITY_BOX_SHADOW
           : 'none',
@@ -542,7 +543,7 @@ function MultiRoleAbilityList({
               // Layered shadow: deep outer dark for depth on the dark background,
               // plus a subtle gold edge highlight to align with the brand palette.
               boxShadow: isOpen
-                ? `0 18px 36px ${blackRgba(0.75)}, 0 0 0 1px ${hexRgba(COLORS.primary500, 0.18)}`
+                ? `0 18px 36px ${blackRgba(0.75)}, ${SHADOWS.goldRing}`
                 : 'none',
               transition: `box-shadow ${DURATION.slow}ms ${EASING.smooth}`,
             }}>

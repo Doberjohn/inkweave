@@ -1,7 +1,8 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {ColumnHeader} from './ColumnHeader';
+import {COLORS} from '../../../shared/constants';
 
-const ENGINE_GOLD = '#d4af37';
+const ENGINE_GOLD = COLORS.primary;
 const COMMUNITY_AMETHYST = '#b691ff';
 
 const meta = {

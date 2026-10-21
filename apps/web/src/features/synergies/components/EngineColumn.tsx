@@ -3,9 +3,9 @@ import {ColumnHeader} from './ColumnHeader';
 import {ConnectionGroup, groupConnections} from '../../../shared/components';
 import {QuickVoteControl} from '../../voting/components';
 import {useQuickVote} from '../../voting/hooks';
-import {COLORS, FONTS, SPACING, hexRgba} from '../../../shared/constants';
+import {COLORS, FONTS, GOLD_GLOW, SHADOWS, SPACING} from '../../../shared/constants';
 
-const ENGINE_TINT = COLORS.primary500;
+const ENGINE_TINT = COLORS.primary;
 
 interface EngineColumnProps {
   pair: DetailedPairSynergy;
@@ -79,8 +79,8 @@ export function EngineColumn({pair, engineScore, onHighlight, compact = false}: 
         flexDirection: 'column',
         gap: SPACING.section,
         padding: '16px 18px',
-        border: `1px solid ${hexRgba(ENGINE_TINT, 0.25)}`,
-        background: hexRgba(ENGINE_TINT, 0.04),
+        border: `1px solid ${GOLD_GLOW.hoverBorder}`,
+        background: GOLD_GLOW.hoverBg,
         borderRadius: 12,
         fontFamily: FONTS.body,
       }}>
@@ -106,7 +106,7 @@ export function EngineColumn({pair, engineScore, onHighlight, compact = false}: 
                 height: 6,
                 borderRadius: '50%',
                 background: ENGINE_TINT,
-                boxShadow: `0 0 6px ${hexRgba(ENGINE_TINT, 0.6)}`,
+                boxShadow: SHADOWS.glowSm,
               }}
             />
             {ruleLabel}

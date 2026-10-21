@@ -28,7 +28,7 @@ const meta = {
     score: '6.0',
     showScale: true,
     isActive: true,
-    tint: COLORS.primary500,
+    tint: COLORS.primary,
     onClick: fn(),
   },
 } satisfies Meta<typeof ScoreChevronsTab>;

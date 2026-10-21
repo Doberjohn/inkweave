@@ -9,7 +9,7 @@ const TIER_HIGHER_GREEN = '#6ee7a0';
 const TIER_LOWER_RED = '#f59090';
 const TIER_EVEN_BLUE = '#60b5f5';
 
-const ENGINE_TINT = COLORS.primary500;
+const ENGINE_TINT = COLORS.primary;
 const COMMUNITY_TINT = '#b691ff';
 
 interface DeltaPanelProps {

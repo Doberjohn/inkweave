@@ -44,7 +44,7 @@ describe('MobileComparisonView tabs', () => {
 
     expect(screen.getByText('Community')).toHaveStyle({color: COLORS.textMuted});
     const scale = screen.getByText('/10');
-    expect(scale).toHaveStyle({color: COLORS.primary500});
+    expect(scale).toHaveStyle({color: COLORS.primary});
     expect(scale.style.opacity).toBe('');
   });
 

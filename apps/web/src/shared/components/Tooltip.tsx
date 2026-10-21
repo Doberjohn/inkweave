@@ -1,6 +1,6 @@
 import {useRef, useState, useLayoutEffect, type ReactNode, type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
-import {COLORS, FONT_SIZES, RADIUS, SHADOWS, Z_INDEX, hexRgba} from '../constants';
+import {COLORS, FONT_SIZES, GOLD_GLOW, RADIUS, SHADOWS, Z_INDEX} from '../constants';
 import {useTooltip} from '../hooks/useTooltip';
 
 const TIP_GAP = 8;
@@ -139,9 +139,9 @@ const HELP_BUTTON_STYLE: CSSProperties = {
   width: 18,
   height: 18,
   borderRadius: '50%',
-  background: hexRgba(COLORS.primary500, 0.06),
-  border: `1px solid ${hexRgba(COLORS.primary500, 0.3)}`,
-  color: hexRgba(COLORS.primary500, 0.85),
+  background: GOLD_GLOW.hoverBg,
+  border: `1px solid ${GOLD_GLOW.hoverBorder}`,
+  color: COLORS.primary,
   fontSize: FONT_SIZES.sm,
   fontWeight: 700,
   cursor: 'help',
