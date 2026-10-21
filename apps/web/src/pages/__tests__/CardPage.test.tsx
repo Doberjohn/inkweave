@@ -41,8 +41,11 @@ vi.mock('../../features/synergies/hooks', () => ({
 
 vi.mock('../../features/synergies/cardSynergySummary', () => ({cardSynergySummary: () => ''}));
 
+// Stands in for the desktop panel, whose group chips toggle a group through onGroupClick.
 vi.mock('../../features/synergies/components/CardDetailPanel', () => ({
-  CardDetailPanel: () => null,
+  CardDetailPanel: (props: {onGroupClick?: (groupKey: string) => void}) => (
+    <button onClick={() => props.onGroupClick?.('singer')}>Panel singer chip</button>
+  ),
 }));
 
 // Stands in for the results: one control per callback the page hands it.
@@ -95,9 +98,10 @@ describe('CardPage synergy analytics', () => {
     expect(mockNavigate).toHaveBeenCalledWith(cardPath(ANNA));
   });
 
-  // A group's chip isolates it, and its More tile expands it.
+  // A group's chip isolates it, in the results or the desktop panel, and its More tile expands it.
   it.each([
     {control: 'Singer chip', action: 'isolate'},
+    {control: 'Panel singer chip', action: 'isolate'},
     {control: 'More', action: 'show_all'},
   ] as const)('tracks a group view ($action) from its $control', ({control, action}) => {
     renderPage();
@@ -112,11 +116,13 @@ describe('CardPage synergy analytics', () => {
     });
   });
 
-  it('sends nothing when the chip is pressed again or cleared', () => {
+  it('sends nothing when the group is picked again, deselected in the panel or cleared', () => {
     renderPage();
 
     fireEvent.click(screen.getByRole('button', {name: 'Singer chip'}));
     fireEvent.click(screen.getByRole('button', {name: 'Singer chip'}));
+    // The panel's chip on the group already isolated toggles it off.
+    fireEvent.click(screen.getByRole('button', {name: 'Panel singer chip'}));
     fireEvent.click(screen.getByRole('button', {name: 'All chip'}));
 
     expect(trackSynergyGroupViewed).toHaveBeenCalledTimes(1);
