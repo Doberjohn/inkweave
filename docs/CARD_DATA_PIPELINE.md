@@ -932,10 +932,10 @@ Cardmarket.
     printing whose `foilTypes` is missing, as LorcanaJSON leaves it for external reveals, gets
     none, and a preview card none until its set is official (owner, 2026-10-21).
   - **Promos** take theirs from this catalog alone, which names one for a promo printed in one
-    version (36 today: 1/C3 to 12/C3 normal, 13/C3 to 24/C3 foil, and so on). Without it a
-    promo comes in both (owner, 2026-10-18). `pnpm merge-promos` copies the catalog's value
-    into the promo's other entries as it is. LorcanaJSON's Special data is not used: its docs
-    warn it may be inaccurate, and the note on 10/C1 records one wrong case.
+    version (36 today, such as 1/C3 to 5/C3 normal and their twins 13/C3 to 17/C3 foil).
+    Without it a promo comes in both (owner, 2026-10-18). `pnpm merge-promos` copies the
+    catalog's value into the promo's other entries as it is. LorcanaJSON's Special data is not
+    used: its docs warn it may be inaccurate, and the note on 10/C1 records one wrong case.
   - **No script changes or removes a `finishes` that is there.** A run that rebuilds an entry
     carries its value over by id (`finishesById`, `scripts/lib/finishes.mjs`), and
     `generate-collection-data`, which replaces `collection/` whole, reads the old values
