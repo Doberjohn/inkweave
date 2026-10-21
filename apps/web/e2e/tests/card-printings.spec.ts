@@ -52,7 +52,7 @@ async function withFourPrintings(page: Page) {
 }
 
 /**
- * The card window's art height, top and bottom, and its Next arrow's top, measured once the
+ * The card window's art height, top and bottom, and its Next arrow's middle, measured once the
  * window has finished scaling in (it opens from 95%).
  */
 async function windowGeometry(page: Page) {
