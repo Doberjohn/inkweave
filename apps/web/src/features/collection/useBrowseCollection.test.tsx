@@ -1,8 +1,30 @@
 import type {ReactNode} from 'react';
-import {describe, it, expect} from 'vitest';
-import {act, renderHook} from '@testing-library/react';
+import {beforeEach, describe, it, expect, vi} from 'vitest';
+import {act, fireEvent, render, renderHook, screen} from '@testing-library/react';
 import {MemoryRouter, useSearchParams} from 'react-router-dom';
-import {useBinderParams} from './useBrowseCollection';
+import {trackEvent} from '../../shared/lib/analytics';
+import {useBinderParams, useBrowseCollection} from './useBrowseCollection';
+
+// Who presses Collection, for useBrowseCollection's own cases; useBinderParams reads none of it.
+const {account} = vi.hoisted(() => ({account: {signedIn: true, hasCollection: true}}));
+
+vi.mock('../../shared/contexts/SessionContext', () => ({
+  useSession: () => ({user: account.signedIn ? {id: 'user-1'} : null, loading: false}),
+}));
+vi.mock('./CollectionContext', () => ({
+  useCollection: () => ({
+    entries: {},
+    hasCollection: account.hasCollection,
+    syncing: false,
+    importCollection: () => null,
+    setCount: () => {},
+  }),
+}));
+vi.mock('./CollectionCardsContext', () => ({
+  useCollectionCards: () => ({retry: () => {}}),
+  useCollectionPool: () => ({pool: [], waiting: false, error: null, isReady: true}),
+}));
+vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 
 type Reader = Parameters<typeof useBinderParams>[0];
 
@@ -61,5 +83,54 @@ describe('useBinderParams', () => {
   ])('keeps a Set filter under a binder link, $who', ({reader}) => {
     const {result} = renderBinderParams('/browse?binder=14&set=5', reader);
     expect(result.current.search).toBe('binder=14&set=5');
+  });
+});
+
+describe('useBrowseCollection analytics', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    account.signedIn = true;
+    account.hasCollection = true;
+  });
+
+  /** Browse's Collection switch, as the toolbar renders it. */
+  function CollectionSwitch() {
+    return <>{useBrowseCollection([]).modeSwitch}</>;
+  }
+
+  function pressCollection() {
+    fireEvent.click(screen.getByRole('button', {name: 'Show my collection'}));
+  }
+
+  it('sends the new state each time the switch turns collection mode on or off', () => {
+    render(
+      <MemoryRouter initialEntries={['/browse']}>
+        <CollectionSwitch />
+      </MemoryRouter>,
+    );
+    pressCollection();
+    pressCollection();
+
+    expect(vi.mocked(trackEvent).mock.calls).toEqual([
+      ['collection_mode_toggled', {state: 'on'}],
+      ['collection_mode_toggled', {state: 'off'}],
+    ]);
+  });
+
+  // The click opens sign-in or the import instead: #882 and the import events cover those.
+  it.each([
+    {who: 'signed out', signedIn: false, hasCollection: false},
+    {who: 'signed in with no collection', signedIn: true, hasCollection: false},
+  ])('sends no toggle for a click $who', ({signedIn, hasCollection}) => {
+    account.signedIn = signedIn;
+    account.hasCollection = hasCollection;
+    render(
+      <MemoryRouter initialEntries={['/browse']}>
+        <CollectionSwitch />
+      </MemoryRouter>,
+    );
+    pressCollection();
+
+    expect(trackEvent).not.toHaveBeenCalled();
   });
 });

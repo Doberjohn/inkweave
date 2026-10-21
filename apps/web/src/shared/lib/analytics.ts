@@ -75,6 +75,24 @@ type AnalyticsEvents = {
     rarity: string;
     surface: 'card_page' | 'modal';
   };
+  // Collection mode (#553, #883), behind SHOW_COLLECTION. Enums and counts only: never a
+  // card ref, a file name or a CSV row. `replacing`: the account already had a collection.
+  collection_mode_toggled: {state: 'on' | 'off'};
+  collection_imported: {
+    surface: 'browse' | 'account';
+    replacing: boolean;
+    cards: number;
+    copies: number;
+    unidentified: number;
+    ambiguous: number;
+    unparsed: number;
+  };
+  collection_import_failed: {
+    surface: 'browse' | 'account';
+    replacing: boolean;
+    reason: 'not_ready' | 'unreadable' | 'no_cards' | 'storage';
+  };
+  collection_deleted: {cards: number};
 };
 
 /**

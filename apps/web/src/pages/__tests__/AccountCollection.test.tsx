@@ -1,6 +1,7 @@
 import {afterEach, describe, it, expect, vi} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {trackEvent} from '../../shared/lib/analytics';
 import {AccountCollection} from '../AccountCollection';
 
 /*
@@ -15,8 +16,9 @@ vi.mock('../../features/collection/CollectionContext', () => ({
     syncing: false,
     importCollection: vi.fn(),
     clearImported: collection.clearImported,
-    ownedCount: () => 1,
-    entries: {a: {normal: 1, foil: 0}},
+    // One card owned; `b` is an entry at no copies, which the owned count leaves out.
+    ownedCount: (id: string) => (id === 'a' ? 1 : 0),
+    entries: {a: {normal: 1, foil: 0}, b: {normal: 0, foil: 0}},
     importedAt: collection.importedAt,
   }),
 }));
@@ -27,6 +29,7 @@ vi.mock('../../features/collection/CollectionCardsContext', () => ({
 vi.mock('../../shared/contexts/CardDataContext', () => ({
   useCardDataContext: () => ({cards: []}),
 }));
+vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 
 afterEach(() => vi.clearAllMocks());
 
@@ -56,12 +59,24 @@ describe('AccountCollection', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
+  it('sends the owned count once the reader confirms the delete', async () => {
+    const user = userEvent.setup();
+    render(<AccountCollection />);
+    await user.click(screen.getByRole('button', {name: 'Clear'}));
+    expect(trackEvent).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', {name: 'Delete my collection'}));
+    expect(trackEvent).toHaveBeenCalledTimes(1);
+    expect(trackEvent).toHaveBeenCalledWith('collection_deleted', {cards: 1});
+  });
+
   it('keeps the collection when the reader cancels', async () => {
     const user = userEvent.setup();
     render(<AccountCollection />);
     await user.click(screen.getByRole('button', {name: 'Clear'}));
     await user.click(screen.getByRole('button', {name: 'Cancel'}));
     expect(collection.clearImported).not.toHaveBeenCalled();
+    expect(trackEvent).not.toHaveBeenCalled();
     expect(screen.getByRole('button', {name: 'Clear'})).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });

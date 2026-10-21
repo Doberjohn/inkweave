@@ -1,6 +1,7 @@
 import {Suspense, useEffect, useState, type ReactNode} from 'react';
 import {useSearchParams} from 'react-router-dom';
 import {SET_PARAM, SORT_PARAM} from '../../shared/hooks/useFilterParams';
+import {trackEvent} from '../../shared/lib/analytics';
 import {lazyWithRetry} from '../../shared/lib/lazyWithRetry';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {SignInDialog} from '../../shared/components/SignInDialog';
@@ -335,9 +336,19 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     setImportMounted(true);
     setShowImport(true);
   };
+  // Only the switch's own on and off count as toggles: a click that opens sign-in or the
+  // import sends nothing here, and an import that lands in the binder is collection_imported.
+  const enterMode = () => {
+    trackEvent('collection_mode_toggled', {state: 'on'});
+    enterBinder(setCode, sets);
+  };
+  const leaveMode = () => {
+    trackEvent('collection_mode_toggled', {state: 'off'});
+    leaveBinder();
+  };
   const onCollectionClick = useCollectionClick(
     {signedIn: user !== null, hasCollection, syncing, active: collectionMode},
-    {openSignIn: () => setShowSignIn(true), openImport, enter: () => enterBinder(setCode, sets), leave: leaveBinder},
+    {openSignIn: () => setShowSignIn(true), openImport, enter: enterMode, leave: leaveMode},
   );
 
   const modeSwitch = <CollectionModeSwitch active={collectionMode} onToggle={onCollectionClick} />;
@@ -405,6 +416,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
             // Outside collection mode the binder, which shows this error too, is not drawn.
             poolError={error}
             onRetryPool={retry}
+            context={{surface: 'browse', replacing: hasCollection}}
             // Land in collection mode on success: the reader pressed "Collection"
             // and was diverted through an import to get there. Only on success, or
             // a refused write would show an empty binder as if it had worked.
