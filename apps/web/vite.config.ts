@@ -1,6 +1,6 @@
 /// <reference types="vitest" />
 import {sentryVitePlugin} from '@sentry/vite-plugin';
-import {type Plugin} from 'vite';
+import {type IndexHtmlTransformContext, type Plugin} from 'vite';
 import {defineConfig} from 'vitest/config';
 import react, {reactCompilerPreset} from '@vitejs/plugin-react';
 import babel from '@rolldown/plugin-babel';
@@ -128,11 +128,45 @@ function isNewerRecursive(dir: string, threshold: number): boolean {
   return false;
 }
 
+type OutputBundle = NonNullable<IndexHtmlTransformContext['bundle']>;
+
+/** A stylesheet's name in the chunks' preload lists, e.g. "assets/RevealsPage-<hash>.css". */
+const STYLESHEET_NAME = /["'`](assets\/[^"'`]+?\.css)["'`]/g;
+
 /**
- * Inline the render-blocking entry CSS into a <style> tag in index.html and drop
- * that file from the bundle (eliminates the CSS round-trip, ~2 KB saved). Code-split
+ * Drops a stylesheet that index.html now inlines from the bundle and from every chunk's CSS
+ * list. A lazy chunk that imports a startup chunk lists that chunk's CSS among the files Vite's
+ * preload helper loads before running it, and Vite writes those lists into the chunks after this
+ * plugin's HTML hook. Left on a list, the helper links the deleted file.
+ */
+function dropInlinedCss(bundle: OutputBundle, fileName: string): void {
+  delete bundle[fileName];
+  for (const output of Object.values(bundle)) {
+    if (output.type === 'chunk') output.viteMetadata?.importedCss.delete(fileName);
+  }
+}
+
+/** The stylesheets that chunks load at run time but the bundle doesn't have. */
+function missingStylesheets(bundle: OutputBundle): string[] {
+  const named = Object.values(bundle)
+    .filter((output) => output.type === 'chunk')
+    .flatMap((chunk) => [...chunk.code.matchAll(STYLESHEET_NAME)].map(([, name]) => name));
+  return [...new Set(named)].filter((name) => !(name in bundle));
+}
+
+/**
+ * Inline the render-blocking startup CSS into <style> tags in index.html and drop
+ * those files from the bundle (eliminates the CSS round-trip, ~2 KB saved). Code-split
  * route CSS is deliberately left in the bundle so it still loads at runtime via its
  * JS chunk — inlining only applies to stylesheets actually linked in index.html.
+ *
+ * Since the startup chunk groups (#789), react-loading-skeleton's CSS sits in the library
+ * group's stylesheet, which this plugin inlines, and every lazy route listed that file for the
+ * preload helper. The prerender then saved the helper's link to it into every page, so each page
+ * view waited on a request that 404s, and a page served without the prerender (staging) reloaded
+ * once when the preload failed. E2E on a production build caught it (#874). dropInlinedCss takes
+ * an inlined file off those lists, and the build fails if a chunk still names a stylesheet the
+ * bundle doesn't have.
  */
 function inlineCssPlugin(): Plugin {
   return {
@@ -161,11 +195,21 @@ function inlineCssPlugin(): Plugin {
             // chunk. Deleting it would 404 the stylesheet on production, so the
             // route's styles (fan-out animations) silently never apply.
             if (html !== before) {
-              delete ctx.bundle[fileName];
+              dropInlinedCss(ctx.bundle, fileName);
             }
           }
         }
         return html;
+      },
+    },
+    // `post`, so it reads the chunks after Vite has written their preload lists.
+    generateBundle: {
+      order: 'post',
+      handler(_options, bundle) {
+        const missing = missingStylesheets(bundle);
+        if (missing.length > 0) {
+          this.error(`Chunks load stylesheets the build doesn't have: ${missing.join(', ')}`);
+        }
       },
     },
   };
