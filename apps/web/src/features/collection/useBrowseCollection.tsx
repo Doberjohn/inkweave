@@ -392,7 +392,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
 
   const prompts = (
     <>
-      <SignInDialog isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
+      <SignInDialog isOpen={showSignIn} onClose={() => setShowSignIn(false)} surface="collection" />
       {importMounted && (
         <Suspense fallback={null}>
           <ImportCollectionDialog

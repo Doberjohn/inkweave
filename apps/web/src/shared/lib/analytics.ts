@@ -75,6 +75,21 @@ type AnalyticsEvents = {
     rarity: string;
     surface: 'card_page' | 'modal';
   };
+  // Sign-in (#882). `surface` is where the dialog opened; decks and deck_builder are the
+  // deck builder's DecksPage and DeckBuilderPage (#451). Never an account id, email or handle.
+  sign_in_started: {
+    provider: 'google' | 'discord';
+    surface: 'header' | 'account' | 'collection' | 'decks' | 'deck_builder';
+  };
+  // /auth/callback saw the new session. `provider` is the session's own; anything else is `other`.
+  sign_in_completed: {provider: 'google' | 'discord' | 'other'};
+  // The start failed in the dialog, or the callback gave up. `reason` comes from the OAuth error
+  // the provider sent back: access_denied is `cancelled`, none at all is `timeout`.
+  sign_in_failed: {
+    provider: 'google' | 'discord' | null;
+    stage: 'start' | 'callback';
+    reason: 'error' | 'cancelled' | 'timeout';
+  };
 };
 
 /**
