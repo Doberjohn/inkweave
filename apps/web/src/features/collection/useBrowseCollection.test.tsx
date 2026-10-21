@@ -6,7 +6,7 @@ import {trackEvent} from '../../shared/lib/analytics';
 import {useBinderParams, useBrowseCollection} from './useBrowseCollection';
 
 // Who presses Collection, for useBrowseCollection's own cases; useBinderParams reads none of it.
-const {account} = vi.hoisted(() => ({account: {signedIn: true, hasCollection: true}}));
+const {account} = vi.hoisted(() => ({account: {signedIn: true, hasCollection: true, syncing: false}}));
 
 vi.mock('../../shared/contexts/SessionContext', () => ({
   useSession: () => ({user: account.signedIn ? {id: 'user-1'} : null, loading: false}),
@@ -15,7 +15,7 @@ vi.mock('./CollectionContext', () => ({
   useCollection: () => ({
     entries: {},
     hasCollection: account.hasCollection,
-    syncing: false,
+    syncing: account.syncing,
     importCollection: () => null,
     setCount: () => {},
   }),
@@ -91,6 +91,7 @@ describe('useBrowseCollection analytics', () => {
     vi.clearAllMocks();
     account.signedIn = true;
     account.hasCollection = true;
+    account.syncing = false;
   });
 
   /** Browse's Collection switch, as the toolbar renders it. */
@@ -98,16 +99,27 @@ describe('useBrowseCollection analytics', () => {
     return <>{useBrowseCollection([]).modeSwitch}</>;
   }
 
+  /** The switch on /browse. Returns the account's answer, which ends the sync and re-renders. */
+  function renderSwitch() {
+    const page = () => (
+      <MemoryRouter initialEntries={['/browse']}>
+        <CollectionSwitch />
+      </MemoryRouter>
+    );
+    const {rerender} = render(page());
+    return (hasCollection: boolean) => {
+      account.syncing = false;
+      account.hasCollection = hasCollection;
+      rerender(page());
+    };
+  }
+
   function pressCollection() {
     fireEvent.click(screen.getByRole('button', {name: 'Show my collection'}));
   }
 
   it('sends the new state each time the switch turns collection mode on or off', () => {
-    render(
-      <MemoryRouter initialEntries={['/browse']}>
-        <CollectionSwitch />
-      </MemoryRouter>,
-    );
+    renderSwitch();
     pressCollection();
     pressCollection();
 
@@ -124,13 +136,43 @@ describe('useBrowseCollection analytics', () => {
   ])('sends no toggle for a click $who', ({signedIn, hasCollection}) => {
     account.signedIn = signedIn;
     account.hasCollection = hasCollection;
-    render(
-      <MemoryRouter initialEntries={['/browse']}>
-        <CollectionSwitch />
-      </MemoryRouter>,
-    );
+    renderSwitch();
     pressCollection();
 
     expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  // useCollectionClick's 'wait': signed in, nothing in this browser, the account not answered yet.
+  describe('a click that waits on the account', () => {
+    beforeEach(() => {
+      account.hasCollection = false;
+      account.syncing = true;
+    });
+
+    it('sends on once the account answers with a collection', () => {
+      const answer = renderSwitch();
+      pressCollection();
+      expect(trackEvent).not.toHaveBeenCalled();
+
+      answer(true);
+      expect(vi.mocked(trackEvent).mock.calls).toEqual([['collection_mode_toggled', {state: 'on'}]]);
+    });
+
+    it('sends nothing when the account answers with none, since the click offers the import', () => {
+      const answer = renderSwitch();
+      pressCollection();
+      answer(false);
+
+      expect(trackEvent).not.toHaveBeenCalled();
+    });
+
+    it('sends nothing when a second click withdraws it before the answer', () => {
+      const answer = renderSwitch();
+      pressCollection();
+      pressCollection();
+      answer(true);
+
+      expect(trackEvent).not.toHaveBeenCalled();
+    });
   });
 });

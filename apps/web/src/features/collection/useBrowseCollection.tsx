@@ -1,4 +1,4 @@
-import {Suspense, useEffect, useState, type ReactNode} from 'react';
+import {Suspense, useEffect, useRef, useState, type ReactNode} from 'react';
 import {useSearchParams} from 'react-router-dom';
 import {SET_PARAM, SORT_PARAM} from '../../shared/hooks/useFilterParams';
 import {trackEvent} from '../../shared/lib/analytics';
@@ -202,6 +202,33 @@ export function useBinderParams(reader: BinderReader) {
 }
 
 /**
+ * `collection_mode_toggled` for the Collection switch's own on and off. A click that waits
+ * on the account (`useCollectionClick`'s `'wait'`, the only entry with no collection in this
+ * browser) opens the binder at once but counts as on only when the account answers with a
+ * collection: an answer with none offers the import, which is no toggle. A second click
+ * before the answer withdraws the first, so it sends no off either.
+ */
+function useModeToggleEvents(syncing: boolean, hasCollection: boolean) {
+  // A ref, not state: whether a click waits changes nothing on screen.
+  const waiting = useRef(false);
+  useEffect(() => {
+    if (!waiting.current || syncing) return;
+    waiting.current = false;
+    if (hasCollection) trackEvent('collection_mode_toggled', {state: 'on'});
+  }, [syncing, hasCollection]);
+  return {
+    entered: () => {
+      waiting.current = !hasCollection;
+      if (hasCollection) trackEvent('collection_mode_toggled', {state: 'on'});
+    },
+    left: () => {
+      if (!waiting.current) trackEvent('collection_mode_toggled', {state: 'off'});
+      waiting.current = false;
+    },
+  };
+}
+
+/**
  * What Browse lists: the cards its filters let through, in its sort, and that sort.
  * The binder lights the cards and fills its pockets in the sort's order.
  */
@@ -338,12 +365,13 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   };
   // Only the switch's own on and off count as toggles: a click that opens sign-in or the
   // import sends nothing here, and an import that lands in the binder is collection_imported.
+  const toggles = useModeToggleEvents(syncing, hasCollection);
   const enterMode = () => {
-    trackEvent('collection_mode_toggled', {state: 'on'});
+    toggles.entered();
     enterBinder(setCode, sets);
   };
   const leaveMode = () => {
-    trackEvent('collection_mode_toggled', {state: 'off'});
+    toggles.left();
     leaveBinder();
   };
   const onCollectionClick = useCollectionClick(
