@@ -44,6 +44,19 @@ interface BrowseToolbarProps {
    */
   modeSwitch?: React.ReactNode;
   /**
+   * The collection's actions, a gear after the mode switch at the far end (owner, 2026-10-20),
+   * for the signed-in in either mode, so Collection keeps its place as the mode changes. Not
+   * on phones, where it wrapped Collection onto a row of its own and cost the binder its
+   * height: importing stays on the Account page there.
+   */
+  modeActions?: React.ReactNode;
+  /**
+   * Collection mode's set picker, just before the mode switch, where the toolbar is docked
+   * (desktop, owner 2026-10-20). Before it, not after: Collection keeps its place as the
+   * picker comes and goes with the mode.
+   */
+  setPicker?: React.ReactNode;
+  /**
    * Browse's docked side panel holds every filter (desktop, owner 2026-10-07), so
    * the inline ink, cost and inkwell icons give way, the Filters button toggles the
    * panel instead of opening the dialog, and the toolbar lines up with the page below
@@ -400,6 +413,8 @@ interface ToolbarSlots {
   search: React.ReactNode;
   chips: React.ReactNode;
   modeSwitch?: React.ReactNode;
+  modeActions?: React.ReactNode;
+  setPicker?: React.ReactNode;
 }
 
 /**
@@ -408,24 +423,59 @@ interface ToolbarSlots {
  * cards do, one gutter past the panel, and runs to Collection at the far end. The chips,
  * shown while the panel is closed, get a row of their own underneath, so the search keeps
  * its width. The geometry holds with the panel closed too: only the cards move.
+ *
+ * In collection mode the set picker and Collection mirror Filters and the sort (owner,
+ * 2026-10-20): with the collection's actions after them (`modeActions`) they span the set
+ * panel's width, the picker starting where the panel does, one gutter past the search, as
+ * the sort ends where the filters panel does. Collection keeps its place in either mode.
  */
-function DockedToolbar({filters, sort, search, chips, modeSwitch}: ToolbarSlots) {
+function DockedToolbar({filters, sort, search, chips, modeSwitch, modeActions, setPicker}: ToolbarSlots) {
   return (
     <div
       data-testid="browse-toolbar"
       style={{padding: `${SPACING.md}px ${BROWSE_GUTTER}px`, position: 'relative', zIndex: 1}}>
       <div style={{display: 'flex', alignItems: 'center'}}>
-        <div style={{width: SIDE_PANEL_WIDTH, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10}}>
+        <div style={PANEL_SPAN_STYLE}>
           {filters}
           {sort}
         </div>
         <div style={{flex: 1, minWidth: 0, marginLeft: BROWSE_GUTTER}}>{search}</div>
-        {modeSwitch && <div style={{marginLeft: 10, flexShrink: 0}}>{modeSwitch}</div>}
+        {setPicker ? (
+          <div style={{...PANEL_SPAN_STYLE, marginLeft: BROWSE_GUTTER}}>
+            <div style={{flex: 1, minWidth: 0}}>{setPicker}</div>
+            {modeSwitch}
+            {modeActions}
+          </div>
+        ) : (
+          <TrailingControls modeSwitch={modeSwitch} modeActions={modeActions} />
+        )}
       </div>
       {chips && <div style={{marginTop: SPACING.sm}}>{chips}</div>}
     </div>
   );
 }
+
+/** The far end outside collection mode: Collection, then the collection's actions. */
+function TrailingControls({modeSwitch, modeActions}: Pick<ToolbarSlots, 'modeSwitch' | 'modeActions'>) {
+  return (
+    <>
+      {modeSwitch && <div style={{marginLeft: 10, flexShrink: 0}}>{modeSwitch}</div>}
+      {modeActions && <div style={{marginLeft: 10, flexShrink: 0}}>{modeActions}</div>}
+    </>
+  );
+}
+
+/**
+ * Controls over a side panel, spanning its width: Filters and the sort, or the set picker,
+ * Collection and the collection's actions.
+ */
+const PANEL_SPAN_STYLE: React.CSSProperties = {
+  width: SIDE_PANEL_WIDTH,
+  flexShrink: 0,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+};
 
 /**
  * The flowing toolbar (tablet and phone, and the playstyle page): its controls wrap as
@@ -439,6 +489,7 @@ function FlowToolbar({
   search,
   chips,
   modeSwitch,
+  modeActions,
   icons,
   extraChips,
 }: ToolbarSlots & {isMobile: boolean; icons: React.ReactNode; extraChips: React.ReactNode}) {
@@ -452,6 +503,8 @@ function FlowToolbar({
       <div style={{marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10}}>
         {icons}
         {modeSwitch || sort}
+        {/* Not on phones (owner, 2026-10-20): it wrapped Collection onto a row of its own. */}
+        {!isMobile && modeActions}
       </div>
     </div>
   );
@@ -484,6 +537,8 @@ export function BrowseToolbar({
   sortOptions = BROWSE_SORT_OPTIONS,
   isMobile,
   modeSwitch,
+  modeActions,
+  setPicker,
   extraChips,
   searchQuery,
   onSearchChange,
@@ -536,6 +591,8 @@ export function BrowseToolbar({
     ),
     chips: parts.chipRow && chips.length > 0 ? <ActiveChipsRow chips={chips} isMobile={isMobile} /> : null,
     modeSwitch,
+    modeActions,
+    setPicker,
   };
   if (docked) return <DockedToolbar {...slots} />;
 

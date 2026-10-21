@@ -1,6 +1,7 @@
 import {describe, it, expect} from 'vitest';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {
+  ALL_PROMO_SETS,
   WHOLE_COLLECTION,
   binderCardsForSet,
   binderContents,
@@ -11,6 +12,7 @@ import {
   isOpenPocket,
   namesStretches,
   promoSetPockets,
+  rarityPicksPromos,
   setFromFilter,
   setLabel,
   setName,
@@ -99,6 +101,29 @@ describe('the whole collection in one binder', () => {
 
   it("holds a lone set's cards alone, in the page's sort", () => {
     expect(ids(binderContents(POOL, '9', 'newest', SETS))).toEqual(['a1', 'a2']);
+  });
+});
+
+describe('every promo set in one binder (owner, 2026-10-20)', () => {
+  const POOL = [
+    cardOf({id: 'set', setCode: '14', setNumber: 1, fullName: 'Ariel'}),
+    cardOf({id: 'p4-2', setCode: 'P4', setNumber: 2, fullName: 'Yzma'}),
+    cardOf({id: 'p1-1', setCode: 'P1', setNumber: 1, fullName: 'Belle'}),
+  ];
+  const SETS = ['14', 'P4', 'P1'];
+  const ids = (slots: readonly BinderSlot[]) =>
+    slots.map((slot) => (isOpenPocket(slot) ? `open ${slot.setNumber}/${slot.setCode}` : slot.id));
+
+  it("goes promo set by promo set in collector order, each with its open pockets, the sets' cards left out", () => {
+    const shown = binderContents(POOL, ALL_PROMO_SETS, 'newest', SETS);
+    expect(ids(shown)).toEqual(['p4-2', 'p1-1']);
+    const context = {scope: ALL_PROMO_SETS, sets: SETS, sortOrder: 'newest' as const, narrowed: false, waiting: []};
+    expect(ids(binderSlots(shown, context))).toEqual(['open 1/P4', 'p4-2', 'p1-1']);
+    expect(namesStretches(ALL_PROMO_SETS, 'newest')).toBe(true);
+  });
+
+  it('sorts across the promo sets under any other sort', () => {
+    expect(ids(binderContents(POOL, ALL_PROMO_SETS, 'name-asc', SETS))).toEqual(['p1-1', 'p4-2']);
   });
 });
 
@@ -291,6 +316,22 @@ describe('withoutStrays', () => {
     const left = (params: URLSearchParams) => withoutStrays(params).toString();
     expect(left(new URLSearchParams('binder=9&set=10&owned=missing'))).toBe('binder=9&owned=missing');
     expect(left(new URLSearchParams('set=10&owned=missing&keyword=Ward'))).toBe('set=10&keyword=Ward');
+  });
+
+  it('drops a rarity filter from a binder of promos alone, one promo set or every one (owner, 2026-10-20)', () => {
+    const left = (params: URLSearchParams) => withoutStrays(params).toString();
+    expect(left(new URLSearchParams('binder=promos&rarity=Common&ink=Amber'))).toBe('binder=promos&ink=Amber');
+    expect(left(new URLSearchParams('binder=P1&rarity=Special'))).toBe('binder=P1');
+    expect(left(new URLSearchParams('binder=13&rarity=Common'))).toBe('binder=13&rarity=Common');
+  });
+});
+
+describe('rarityPicksPromos (owner, 2026-10-20)', () => {
+  it('reads whether the Rarity filter picks the promos, alone or beside other rarities', () => {
+    expect(rarityPicksPromos(new URLSearchParams('rarity=Special'))).toBe(true);
+    expect(rarityPicksPromos(new URLSearchParams('rarity=Enchanted,Special'))).toBe(true);
+    expect(rarityPicksPromos(new URLSearchParams('rarity=Common'))).toBe(false);
+    expect(rarityPicksPromos(new URLSearchParams(''))).toBe(false);
   });
 });
 

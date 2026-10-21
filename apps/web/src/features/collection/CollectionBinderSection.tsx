@@ -4,6 +4,7 @@ import type {CollectionEntries, CollectionEntry, Finish} from './collectionParse
 import type {CollectionPromo} from './collectionPromos';
 import {CollectionBinder} from './CollectionBinder';
 import {
+  ALL_PROMO_SETS,
   WHOLE_COLLECTION,
   binderContents,
   binderSlots,
@@ -16,6 +17,7 @@ import {
   CollectionSetBody,
   CollectionSetRail,
   CollectionSetStrip,
+  ToolbarSetPicker,
   type AxisChoice,
   type BinderView,
   type CollectionSetPanelProps,
@@ -31,9 +33,11 @@ import {COLORS, FONT_SIZES, SPACING, type BrowseSortOrder} from '../../shared/co
 /**
  * Collection mode's content: the set panel, and that set's binder.
  *
- * THE SET IS CHOSEN IN THE COLLECTION PANEL'S SET LIST (owner, 2026-10-12; a picker
- * under the set's logo before), through the `?binder=` param, and only there: the
- * filters panel drops its Set section in collection mode. See `CollectionSetPanel`.
+ * THE SET IS CHOSEN IN THE SET PICKER, through the `?binder=` param, and only there: the
+ * filters panel drops its Set section in collection mode. On desktop it sits in the
+ * toolbar beside Collection (owner, 2026-10-20; `DockedSetPicker`), on tablets and phones
+ * in the collection panel's rail and strip (owner, 2026-10-12; a picker under the set's
+ * logo before). See `CollectionSetPanel`.
  *
  * THE PANEL ADAPTS (owner, 2026-10-07): on desktop it is docked on the binder's
  * right, under the Collection button (owner, 2026-10-08; it was a tab beside the
@@ -58,9 +62,9 @@ import {COLORS, FONT_SIZES, SPACING, type BrowseSortOrder} from '../../shared/co
  * WHERE THE PAGE DOCKS ITS PANELS, THE SPREAD MAP TURNS THE PAGES (owner, 2026-10-12),
  * in the band under the spread; see `BinderSpreadMap`.
  *
- * COUNTS CHANGE WHERE A MOUSE POINTS (#826): a spread's pocket opens its pills into
- * steppers (`CollectionSlotCounts`), and the card window holds "Your copies". A card
- * changed by hand keeps its pocket in the Owned and Missing views until the view, the
+ * COUNTS CHANGE WHERE A MOUSE POINTS (#826): a spread's pocket opens its copies stripe
+ * (`CollectionSlotCounts`), and the card window's stripe changes them too (`WindowCopies`).
+ * A card changed by hand keeps its pocket in the Owned and Missing views until the view, the
  * set or the sort changes, or Browse closes (owner, 2026-10-20): dropped from the view
  * at once, it took the spread with it, since the binder reopens at its first spread
  * whenever what it holds changes. The page's listing keeps it (`useKeptCards`), so
@@ -262,7 +266,7 @@ function SectionContent({
   return (
     <PanelLayout panel={{...controls, stats, filtered}}>
       {shown.length === 0 ? (
-        <NoMatches show={controls.show} whole={setCode === WHOLE_COLLECTION} />
+        <NoMatches show={controls.show} setCode={setCode} />
       ) : (
         <CollectionBinder
           // Keyed by what it holds, in order, so a new set, sort or filter opens the
@@ -282,6 +286,12 @@ function SectionContent({
   );
 }
 
+/** Where the binder found nothing, for the scopes spanning sets; any set is "this set". */
+const NO_MATCHES_WHERE: Record<string, string> = {
+  [WHOLE_COLLECTION]: 'your collection',
+  [ALL_PROMO_SETS]: 'your promo sets',
+};
+
 /**
  * Nothing to show. Said in words, not as an empty binder: blank pockets would read as a
  * fact about the collection. With the binder showing only owned or only missing cards,
@@ -290,8 +300,8 @@ function SectionContent({
  * A status (#790), like Browse's empty grid: a search that empties the binder changes
  * nothing where the reader is typing, so it is announced.
  */
-function NoMatches({show, whole}: {show: BinderShow; whole: boolean}) {
-  const where = whole ? 'your collection' : 'this set';
+function NoMatches({show, setCode}: {show: BinderShow; setCode: string}) {
+  const where = NO_MATCHES_WHERE[setCode] ?? 'this set';
   return (
     <p
       role="status"
@@ -313,11 +323,28 @@ interface DockedSetBodyProps extends PanelControls {
 }
 
 /**
- * The docked collection panel's body (desktop, right of the binder), with every set's
- * tally and the collection's, of the cards the page's filters let through. Lives in this
- * module, so it rides the binder's lazy chunk rather than Browse's.
+ * What the docked panel and its picker in the toolbar show: the page's controls, and the
+ * numbers both read, none until the pool is complete. Each still counts for itself: they
+ * are two lazy components in two places on the page.
  */
-export function DockedSetBody({cards, filtered, entries, isLoading, ...controls}: DockedSetBodyProps) {
-  const stats = isLoading ? null : tallyCollection(cards, entries, controls.sets);
-  return <CollectionSetBody {...controls} stats={stats} filtered={filtered} />;
+function dockedPanel({cards, filtered, entries, isLoading, ...controls}: DockedSetBodyProps) {
+  return {...controls, filtered, stats: isLoading ? null : tallyCollection(cards, entries, controls.sets)};
+}
+
+/**
+ * The docked collection panel's body (desktop, right of the binder), with every set's
+ * tally and the collection's, of the cards the page's filters let through. Its set
+ * picker sits in the toolbar (`DockedSetPicker`). Lives in this module, so it rides the
+ * binder's lazy chunk rather than Browse's.
+ */
+export function DockedSetBody(props: DockedSetBodyProps) {
+  return <CollectionSetBody {...dockedPanel(props)} withPicker={false} />;
+}
+
+/**
+ * The docked panel's set picker, in the toolbar beside Collection (desktop, owner
+ * 2026-10-20), its list counting what the panel counts.
+ */
+export function DockedSetPicker(props: DockedSetBodyProps) {
+  return <ToolbarSetPicker {...dockedPanel(props)} />;
 }

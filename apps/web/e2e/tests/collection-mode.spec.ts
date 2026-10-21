@@ -123,6 +123,8 @@ test.describe('Collection mode', () => {
     await page.goto('/browse');
     const toggle = page.getByRole('button', {name: 'Show my collection'});
     await expect(toggle).toBeVisible();
+    // The collection's actions need an account: no gear signed out (owner, 2026-10-20).
+    await expect(page.getByRole('button', {name: 'Collection actions'})).toHaveCount(0);
 
     await toggle.click();
 
@@ -173,7 +175,7 @@ test.describe('Collection mode, signed in', () => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
   });
 
-  test("the Collection button opens a collector's binder, with the set panel's numbers", async ({
+  test("the Collection button opens a collector's binder on the whole collection, with its numbers", async ({
     page,
   }) => {
     await signInAsCollector(page, ENTRIES);
@@ -182,11 +184,10 @@ test.describe('Collection mode, signed in', () => {
 
     await page.getByRole('button', {name: 'Show my collection'}).click();
 
-    // Which set it opens on is the newest one's, which a reveal season can move ahead of the
-    // card data; the tests below open the collection's set by its URL instead.
-    await expect(page).toHaveURL(/[?&]binder=\d+(&|$)/);
+    // The whole collection, not the newest set (owner, 2026-10-20).
+    await expect(page).toHaveURL(/[?&]binder=all(&|$)/);
     await expect(binder(page)).toBeVisible();
-    await expect(numbers(page).getByText('Complete set', {exact: true})).toBeVisible();
+    await expect(numbers(page).getByText('Complete collection', {exact: true})).toBeVisible();
   });
 
   test('on a new browser, the Collection button waits for the account instead of offering an import', async ({
@@ -211,8 +212,8 @@ test.describe('Collection mode, signed in', () => {
 
     answer();
     // Once the sync has answered, the binder stays only for a collection that arrived, and
-    // its numbers show only once loaded (the click opens the newest set, as the test above notes).
-    await expect(numbers(page).getByText('Complete set', {exact: true})).toBeVisible();
+    // its numbers show only once loaded (the click opens the whole collection, as above).
+    await expect(numbers(page).getByText('Complete collection', {exact: true})).toBeVisible();
     await expect(binder(page)).toBeVisible();
     await expect(page.getByRole('dialog', {name: 'Import your collection'})).toHaveCount(0);
   });
@@ -262,7 +263,7 @@ test.describe('Collection mode, signed in', () => {
     await expect(numbers(page)).toContainText(`${HELD} of ${SET_TOTAL} cards`);
   });
 
-  test("a count changed in a card's window shows at once and is still there after a reload (#826)", async ({
+  test('a count changed from a pocket shows at once and is still there after a reload (#826)', async ({
     page,
   }) => {
     // The first pocket after the three held: a card the collector has none of yet.
@@ -270,26 +271,26 @@ test.describe('Collection mode, signed in', () => {
     const writes = await signInAsCollector(page, ENTRIES);
     await page.goto(`/browse?binder=${SET}`);
     const tiles = binder(page).getByTestId('card-tile');
-    const heldPills = binder(page).getByRole('group', {name: '1 normal', exact: true});
-    await expect(heldPills).toHaveCount(HELD_BASE.length);
+    const heldCounts = binder(page).getByRole('group', {name: '1 normal', exact: true});
+    await expect(heldCounts).toHaveCount(HELD_BASE.length);
 
-    await tiles.nth(HELD_BASE.length).click();
-    const normal = page
-      .getByTestId('card-overview-modal')
-      .getByRole('group', {name: 'Your copies'})
-      .getByRole('group', {name: 'Normal'});
-    await normal.getByRole('button', {name: /^Add one copy/}).click();
-    await expect(normal).toContainText('1');
-    await page.keyboard.press('Escape');
+    // A mouse on the pocket opens its stripe. It sits under aria-hidden: its group's label
+    // speaks for it.
+    await tiles.nth(HELD_BASE.length).hover();
+    await binder(page)
+      .getByRole('group', {name: '0 normal, 0 foil', exact: true})
+      .getByRole('button', {name: 'Add one copy of normal', includeHidden: true})
+      .click();
+    await page.mouse.move(0, 0);
 
-    // The pocket's pill and the panel's numbers follow at once.
-    await expect(heldPills).toHaveCount(HELD_BASE.length + 1);
+    // The pocket's count and the panel's numbers follow at once.
+    await expect(heldCounts).toHaveCount(HELD_BASE.length + 1);
     await expect(numbers(page)).toContainText(`${HELD + 1} of ${SET_TOTAL} cards`);
 
     // Saved to the account a moment after the click, which a reload then reads back.
     await expect.poll(() => writes.at(-1)?.[String(card.id)]).toEqual({normal: 1, foil: 0});
     await page.reload();
-    await expect(heldPills).toHaveCount(HELD_BASE.length + 1);
+    await expect(heldCounts).toHaveCount(HELD_BASE.length + 1);
     await expect(numbers(page)).toContainText(`${HELD + 1} of ${SET_TOTAL} cards`);
   });
 
@@ -314,30 +315,39 @@ test.describe('Collection mode, signed in', () => {
     const ids = names.map((name) => BASE.find((base) => base.fullName === name)?.id);
     expect(ids, `${names.join(' and ')} are Set ${SET}'s cards`).not.toContain(undefined);
 
-    // A first copy of the first, from its pocket a mouse points at. The pills sit under
-    // aria-hidden: their group's label speaks for them.
+    // A first copy of the first, from its pocket a mouse points at. The stripe sits under
+    // aria-hidden: its group's label speaks for it.
     await tiles.nth(0).hover();
-    const pills = binder(page).getByRole('group', {name: '0 normal, 0 foil', exact: true});
-    await pills.getByRole('button', {name: 'Add one copy of normal', includeHidden: true}).click();
-    await expect(
-      binder(page).getByRole('group', {name: '1 normal, 0 foil', exact: true}),
-    ).toBeVisible();
+    const stripe = binder(page).getByRole('group', {name: '0 normal, 0 foil', exact: true});
+    await stripe.getByRole('button', {name: 'Add one copy of normal', includeHidden: true}).click();
+    const open = binder(page).getByRole('group', {name: '1 normal, 0 foil', exact: true});
+    await expect(open).toBeVisible();
     // The click left the focus where it was, off the hidden + that no Tab reaches.
     const focused = () => page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
     expect(await focused()).not.toBe('Add one copy of normal');
 
     // A first copy of the second, from its card window, whose arrows walk the binder: the
-    // first, held now but kept, is the card before it.
-    await tiles.nth(1).click();
+    // first, held now but kept, is the card before it. Clicked near its top, clear of the
+    // stripe the mouse opens, which takes every press on the card's foot; then the keyboard
+    // alone, so the mouse rests where it clicked.
+    await page.mouse.move(0, 0);
+    await tiles.nth(1).click({position: {x: 10, y: 10}});
     const modal = page.getByTestId('card-overview-modal');
-    const normal = modal
-      .getByRole('group', {name: 'Your copies'})
-      .getByRole('group', {name: 'Normal'});
-    await normal.getByRole('button', {name: /^Add one copy/}).click();
-    await expect(normal).toContainText('1');
-    await page.getByRole('button', {name: 'Previous card'}).click();
+    await expect(modal.locator('h1')).toHaveText(names[1]);
+    const copies = page.getByTestId('card-overview-copies-slot').getByRole('group');
+    // The dialog moves focus to its × 100ms after opening; a 100ms timer set now runs after it.
+    await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    await copies.getByRole('button', {name: `Add one copy of ${names[1]}`, exact: true}).focus();
+    await page.keyboard.press('Enter');
+    await expect(copies).toHaveAccessibleName('Your copies: 1 normal, 0 foil');
+    await page.keyboard.press('ArrowLeft');
     await expect(modal.locator('h1')).toHaveText(names[0]);
     await page.keyboard.press('Escape');
+
+    // The window closed over the mouse resting on the second pocket, whose stripe opens
+    // again with no move of the mouse.
+    await expect(modal).toHaveCount(0);
+    await expect(open).toBeVisible();
 
     // Both held, so neither is missing, yet both keep their pockets and the binder its
     // spread: dropped from the view at once, a card reopened the binder at the first.
@@ -351,6 +361,37 @@ test.describe('Collection mode, signed in', () => {
         {normal: 1, foil: 0},
         {normal: 1, foil: 0},
       ]);
+  });
+
+  test("the card window's stripe changes its copies by mouse and by keyboard, on the grid's windows too (#826)", async ({
+    page,
+  }) => {
+    const card = HELD_BASE[0];
+    const writes = await signInAsCollector(page, ENTRIES);
+    // The grid's window, not the binder's: any window Browse opens carries the stripe for a
+    // collector who is signed in (owner, 2026-10-20).
+    await page.goto(`/browse?set=${SET}&q=${encodeURIComponent(card.fullName)}`);
+    await signedIn(page);
+    await page.getByRole('link', {name: card.fullName, exact: true}).click();
+    const stripe = page.getByTestId('card-overview-copies-slot').getByRole('group');
+    await expect(stripe).toHaveAccessibleName('Your copies: 1 normal, 0 foil');
+    // The dialog moves focus to its × 100ms after opening; a 100ms timer set now runs after it.
+    await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 100)));
+
+    // Always open, the stripe needs no pointing: the mouse adds a normal copy...
+    const normalPlus = stripe.getByRole('button', {name: `Add one copy of ${card.fullName}`, exact: true});
+    await normalPlus.click();
+    await expect(stripe).toHaveAccessibleName('Your copies: 2 normal, 0 foil');
+    // ...and the keyboard a foil one, tabbing on through the foil's −, at 0, to its +.
+    await normalPlus.focus();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    await expect(stripe.getByRole('button', {name: `Add one copy of foil ${card.fullName}`, exact: true})).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(stripe).toHaveAccessibleName('Your copies: 2 normal, 1 foil');
+
+    // Saved to the account a moment after the presses.
+    await expect.poll(() => writes.at(-1)?.[String(card.id)]).toEqual({normal: 2, foil: 1});
   });
 
   test('Owned keeps the held cards alone, and leaving the mode drops that view', async ({page}) => {
@@ -396,7 +437,10 @@ test.describe('Collection mode, signed in', () => {
 
     // The page holds the choice, so a switch to the whole collection keeps it, and its Owned too.
     await page.getByRole('button', {name: /^Binder set/}).click();
-    await page.getByRole('option', {name: /^Whole collection/}).click();
+    await page
+      .getByRole('listbox', {name: 'Standard sets'})
+      .getByRole('option', {name: /^All sets, the whole collection/})
+      .click();
     await expect(numbers(page).getByRole('button', {name: /^Master collection/})).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -405,47 +449,22 @@ test.describe('Collection mode, signed in', () => {
     await expect(tiles).toHaveCount(MASTER);
   });
 
-  test('the set picker opens the whole collection in the binder', async ({page}) => {
+  test("the set picker's All sets opens the whole collection in the binder", async ({page}) => {
     await signInAsCollector(page, ENTRIES);
     await page.goto(`/browse?binder=${SET}`);
     await expect(binder(page)).toBeVisible();
 
     await page.getByRole('button', {name: /^Binder set/}).click();
-    await page.getByRole('option', {name: /^Whole collection/}).click();
+    await page
+      .getByRole('listbox', {name: 'Standard sets'})
+      .getByRole('option', {name: /^All sets, the whole collection/})
+      .click();
 
     await expect(page).toHaveURL(/[?&]binder=all(&|$)/);
-    await expect(page.getByRole('button', {name: 'Binder set: Whole collection'})).toBeVisible();
+    await expect(page.getByRole('button', {name: 'Binder set: All sets, the whole collection'})).toBeVisible();
     // The binder and its numbers follow, not only the URL and the picker's label.
     await expect(numbers(page).getByText('Complete collection', {exact: true})).toBeVisible();
     await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
-  });
-
-  test("the set picker's arrow keys never park a set under its pinned row", async ({page}) => {
-    await signInAsCollector(page, ENTRIES);
-    await page.goto(`/browse?binder=${SET}`);
-    await expect(binder(page)).toBeVisible();
-
-    await page.getByRole('button', {name: /^Binder set/}).click();
-    const list = page.getByRole('listbox', {name: 'Binder set'});
-    const options = list.getByRole('option');
-    const count = await options.count();
-    // Every set the pool holds is listed, more than the list shows at once; a list that
-    // stopped scrolling would pass this test without testing anything.
-    expect(await list.evaluate((el) => el.scrollHeight > el.clientHeight)).toBe(true);
-
-    // Up from the last set, every row focus scrolls into view clears the pinned Whole
-    // collection strip, which covers the list's top edge (WCAG 2.4.11).
-    await page.keyboard.press('End');
-    for (let i = count - 2; i >= 1; i--) {
-      await page.keyboard.press('ArrowUp');
-      await expect(options.nth(i)).toBeFocused();
-      const {top, stripBottom} = await list.evaluate((el) => ({
-        top: document.activeElement?.getBoundingClientRect().top ?? NaN,
-        stripBottom:
-          el.querySelector('[role="presentation"]')?.getBoundingClientRect().bottom ?? NaN,
-      }));
-      expect(top, `option ${i}'s top`).toBeGreaterThanOrEqual(stripBottom - 0.5);
-    }
   });
 
   test('the keyboard pages the binder end to end without losing the focus', async ({page}) => {
@@ -515,7 +534,7 @@ test.describe('Collection mode, signed in', () => {
     await expect(numbers(page)).toContainText(`1 of ${PRINTINGS.length} cards`);
   });
 
-  test("the set picker lists the promo sets after the sets, and a promo set's binder holds a pocket per number", async ({
+  test("the set picker lists the promo sets under their own tab, and a promo set's binder holds a pocket per number", async ({
     page,
   }) => {
     const promoSet = promoSetWithOpenPocket();
@@ -524,8 +543,9 @@ test.describe('Collection mode, signed in', () => {
     await expect(binder(page)).toBeVisible();
 
     await page.getByRole('button', {name: /^Binder set/}).click();
+    await page.getByRole('dialog', {name: 'Binder set'}).getByRole('button', {name: 'Promo', exact: true}).click();
     await page
-      .getByRole('group', {name: 'Promo sets'})
+      .getByRole('listbox', {name: 'Promo sets'})
       .getByRole('option', {name: new RegExp(`^Promo set ${promoSet.code},`)})
       .click();
 
@@ -541,6 +561,86 @@ test.describe('Collection mode, signed in', () => {
     // A number with no promo is an open pocket, which shows the number's code (owner, 2026-10-17,
     // layout 1): why it is open (not listed, not released) is the promo set's to say.
     await expect(binder(page).getByText(promoSet.openPocket, {exact: true})).toBeVisible();
+  });
+
+  test("the set picker's Promo tab opens every promo set at once, counted as promos, with no Rarity filter (owner, 2026-10-20)", async ({
+    page,
+  }) => {
+    const promoSet = promoSetWithOpenPocket();
+    await signInAsCollector(page, {...ENTRIES, [promoSet.promos[0]]: {normal: 0, foil: 1}});
+    await page.goto(`/browse?binder=${SET}&rarity=Common`);
+    await expect(binder(page)).toBeVisible();
+    const rarities = page.getByRole('complementary', {name: 'Filters'}).getByRole('group', {name: 'Rarity filters'});
+    await expect(rarities).toBeVisible();
+
+    await page.getByRole('button', {name: /^Binder set/}).click();
+    await page.getByRole('dialog', {name: 'Binder set'}).getByRole('button', {name: 'Promo', exact: true}).click();
+    await page
+      .getByRole('listbox', {name: 'Promo sets'})
+      .getByRole('option', {name: /^All sets, every promo set/})
+      .click();
+
+    await expect(page).toHaveURL(/[?&]binder=promos(&|$)/);
+    // Every card is a promo: the Rarity filter goes, param and section, so it never empties the binder unseen.
+    await expect(page).not.toHaveURL(/[?&]rarity=/);
+    await expect(rarities).toHaveCount(0);
+    await expect(page.getByRole('button', {name: 'Binder set: Promos, every promo set'})).toBeVisible();
+    await expect(numbers(page).getByText('Complete promos', {exact: true})).toBeVisible();
+    // The one promo held, among every promo set's, and no Master: a promo comes in one finish.
+    // The region's text runs its blocks together ("Complete promos1 of 261 promos"): no `\b`.
+    await expect(numbers(page)).toContainText(/(?<!\d)1 of [\d,]+ promos/);
+    await expect(numbers(page).getByRole('button', {name: /^Master/})).toHaveCount(0);
+  });
+
+  test("the set picker opens the whole collection's menu on Promo while the Rarity filter picks the promos (owner, 2026-10-20)", async ({
+    page,
+  }) => {
+    await signInAsCollector(page, ENTRIES);
+    await page.goto('/browse?binder=all&rarity=Special');
+    await expect(binder(page)).toBeVisible();
+
+    await page.getByRole('button', {name: /^Binder set/}).click();
+    const menu = page.getByRole('dialog', {name: 'Binder set'});
+    await expect(menu.getByRole('button', {name: 'Promo', exact: true})).toHaveAttribute('aria-pressed', 'true');
+    await expect(menu.getByRole('listbox', {name: 'Promo sets'})).toBeVisible();
+  });
+
+  test("the gear after Collection opens the import from its menu, on the grid too (owner, 2026-10-20)", async ({
+    page,
+  }) => {
+    await signInAsCollector(page, ENTRIES);
+    await page.goto('/browse');
+    await signedIn(page);
+
+    const gear = page.getByRole('button', {name: 'Collection actions'});
+    await gear.click();
+    await page
+      .getByRole('menu', {name: 'Collection actions'})
+      .getByRole('menuitem', {name: /^Import collection/})
+      .click();
+
+    await expect(page.getByRole('dialog', {name: 'Import your collection'})).toBeVisible();
+    await expect(page.getByRole('menu', {name: 'Collection actions'})).toHaveCount(0);
+  });
+
+  test("a card glows gold when pointed at, more strongly on the binder's parchment (owner, 2026-10-21)", async ({
+    page,
+  }) => {
+    await signInAsCollector(page, ENTRIES);
+
+    // The grid: the glow over the tile's resting shadow, lifted a layer, and no gold ring.
+    await page.goto(`/browse?set=${SET}`);
+    const tile = page.getByTestId('card-tile').first();
+    await tile.hover();
+    await expect(tile).toHaveCSS('box-shadow', /rgba\(255, 185, 0, 0\.4\d*\) 0px 0px 22px 3px/);
+    await expect(tile).toHaveCSS('z-index', '1');
+    expect(await tile.evaluate((t) => getComputedStyle(t, '::after').content)).toBe('none');
+
+    // A binder pocket: the stronger gold, which shows on the parchment.
+    await page.goto(`/browse?binder=${SET}`);
+    const pocket = binder(page).getByRole('button', {name: HELD_BASE[0].fullName, exact: true});
+    await pocket.hover();
+    await expect(pocket).toHaveCSS('box-shadow', /rgba\(255, 185, 0, 0\.8\d*\) 0px 0px 22px 4px/);
   });
 
   test('a signed-in visitor without a collection is asked to import one', async ({page}) => {
@@ -565,6 +665,8 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await signInAsCollector(page, ENTRIES);
     await page.goto(`/browse?binder=${SET}`);
     await expect(binder(page)).toBeVisible();
+    // No gear on phones (owner, 2026-10-20): it wrapped Collection onto a row of its own.
+    await expect(page.getByRole('button', {name: 'Collection actions'})).toHaveCount(0);
 
     // Above the page, in place of the docked panel: the numbers stay folded behind a toggle
     // that reads the two headline percentages, Complete then Master.

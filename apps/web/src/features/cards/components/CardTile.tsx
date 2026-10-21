@@ -5,7 +5,7 @@ import type {LorcanaCard} from '../types';
 import {
   INK_COLORS,
   COLORS,
-  CARD_TILE_RING,
+  CARD_TILE_GLOW,
   EASING,
   FONT_SIZES,
   RADIUS,
@@ -53,6 +53,20 @@ interface CardTileProps {
   printing?: CardPrinting;
 }
 
+/**
+ * The tile's resting shadow, as the custom property index.css's `.card-tile` rules draw it
+ * from, the hover glow added to it. Never an inline box-shadow: inline beats those rules, and
+ * the glow would never show.
+ */
+function restingShadow(colors: InkColors, minimal: boolean, isSelected: boolean): CSSProperties {
+  const shadow = minimal
+    ? `0 0 0 1px ${whiteRgba(0.1)}, 0 25px 50px -12px ${blackRgba(0.5)}`
+    : isSelected
+      ? `0 0 8px ${colors.border}60`
+      : `0 2px 6px ${blackRgba(0.3)}`;
+  return {'--tile-shadow': shadow} as CSSProperties;
+}
+
 /** Border + shadow depend on variant/selection; hoisted out of the component to keep its CC low. */
 function buildTileStyle(
   colors: InkColors,
@@ -62,15 +76,11 @@ function buildTileStyle(
 ): CSSProperties {
   const minimal = variant === 'minimal';
   return {
-    ...CARD_TILE_RING,
+    ...CARD_TILE_GLOW,
+    ...restingShadow(colors, minimal, isSelected),
     position: 'relative',
     borderRadius: `${borderRadius ?? RADIUS.xl}px`,
     border: minimal ? 'none' : `2px solid ${isSelected ? colors.border : 'transparent'}`,
-    boxShadow: minimal
-      ? `0 0 0 1px ${whiteRgba(0.1)}, 0 25px 50px -12px ${blackRgba(0.5)}`
-      : isSelected
-        ? `0 0 8px ${colors.border}60`
-        : `0 2px 6px ${blackRgba(0.3)}`,
     cursor: 'pointer',
     padding: 0,
     overflow: 'hidden',

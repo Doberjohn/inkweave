@@ -36,6 +36,12 @@ function renderBody(overrides: Partial<BodyProps> = {}) {
 const numbers = () => screen.getByRole('region', {name: 'Collection numbers'});
 
 describe('CollectionSetBody', () => {
+  it('leaves the set picker to the toolbar where it docks, and starts at what the binder shows', () => {
+    renderBody({withPicker: false});
+    expect(screen.queryByRole('button', {name: /^Binder set/})).toBeNull();
+    expect(screen.getByRole('group', {name: 'Binder shows'})).toBeInTheDocument();
+  });
+
   it("shows the open set's numbers", () => {
     renderBody();
     const {complete, cards} = STORY_STATS.sets.find((set) => set.code === '13')!.tally;
@@ -80,11 +86,11 @@ describe('CollectionSetBody', () => {
     expect(screen.queryByRole('button', {name: /^Complete/})).toBeNull();
   });
 
-  it('asks for the whole collection from the option pinned first in the picker', () => {
+  it("asks for the whole collection from the picker's first row, All sets", () => {
     const {props} = renderBody();
     fireEvent.click(screen.getByRole('button', {name: /^Binder set/}));
-    expect(screen.getAllByRole('option')[0]).toHaveAccessibleName(/^Whole collection/);
-    fireEvent.click(screen.getByRole('option', {name: /^Whole collection/}));
+    expect(screen.getAllByRole('option')[0]).toHaveAccessibleName(/^All sets, the whole collection/);
+    fireEvent.click(screen.getByRole('option', {name: /^All sets, the whole collection/}));
     expect(props.onSetChange).toHaveBeenCalledWith('all');
   });
 
@@ -138,6 +144,14 @@ describe('CollectionSetBody', () => {
       expect(screen.queryByRole('button', {name: /^Master set/})).toBeNull();
       expect(screen.getByRole('region', {name: 'By ink, complete'})).toBeInTheDocument();
       expect(screen.queryByRole('region', {name: /^By rarity/})).toBeNull();
+    });
+
+    it('shows every promo set as one, Complete promos counting promos alone (owner, 2026-10-20)', () => {
+      renderBody({...promoSet, setCode: 'promos'});
+      const {complete, cards} = STORY_PROMO_STATS.promoTotals;
+      expect(screen.getByText('Complete promos')).toBeInTheDocument();
+      expect(numbers()).toHaveTextContent(`${complete} of ${cards} promos`);
+      expect(screen.queryByRole('button', {name: /^Master/})).toBeNull();
     });
 
     it("counts the promos in the whole collection's numbers, under Promo by rarity", () => {

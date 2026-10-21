@@ -251,6 +251,7 @@ const ADHOC_BUTTON_EXEMPT = [
   /QuickVoteControl\.tsx$/, // vote control family
   /RoleTileRow\.tsx$/, // tile-toggle family
   /CardTile\.tsx$/, // card-grid tile family
+  /SynergyMoreTile\.tsx$/, // card-grid tile family: a synergy group's "+N more" tile
   /CardSlot\.tsx$/, // reveals tile family
   /InkTrackerTile\.tsx$/, // reveals ink-selection tile family (#511)
   /SpotlightHero\.tsx$/, // reveals spotlight tile family (#835)

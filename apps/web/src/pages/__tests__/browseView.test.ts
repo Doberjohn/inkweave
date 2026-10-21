@@ -34,6 +34,7 @@ const binder = (
   owns,
   kept,
   rarityOptions: binderRarities,
+  promoOnly: false,
 });
 
 const ids = (cards: LorcanaCard[]) => cards.map((card) => card.id).sort();
@@ -86,6 +87,13 @@ describe('browseView', () => {
   it('applies no set filter to the binder, whose set is chosen in the collection panel', () => {
     expect(ids(browseView(binder(true), core, params(undefined, ['99'])).sortedCards)).toHaveLength(4);
     expect(ids(browseView(binder(false), core, params(undefined, ['99'])).sortedCards)).toEqual([]);
+  });
+
+  it('offers a binder of promos alone no rarities and applies none, so no hidden filter empties it (owner, 2026-10-20)', () => {
+    const view = browseView({...binder(true), promoOnly: true}, core, params(['Common']));
+    expect(view.rarities).toEqual([]);
+    expect(ids(view.sortedCards)).toHaveLength(4);
+    expect(view.filtered).toBe(false);
   });
 
   it("hands the collection panel the cards before the binder's view, or Owned would read 100%", () => {

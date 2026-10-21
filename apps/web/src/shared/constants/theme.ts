@@ -531,13 +531,26 @@ export function searchFieldStyle({focused, hovered}: {focused: boolean; hovered:
 }
 
 /**
- * The card tiles' hover-ring gold, as the custom property `.card-tile::after` (index.css)
- * reads. Spread into each tile's own style rather than set once on the page root, so the
- * ring shows wherever a tile renders: in the card modal's portal, in Storybook, and in
- * admin, which imports the tile and index.css but not this app's bootstrap. The inset focus
- * ring (`.inset-focus-ring`, on CardImageButton and the Reveals promo) reads it the same way.
+ * The inset focus ring's gold, as the custom property `.inset-focus-ring` (index.css) reads:
+ * the card art buttons (CardImageButton), the Reveals promo and the copies stripe's − and +.
+ * Spread into each control's own style rather than set once on the page root, so the ring
+ * shows wherever the control renders: in the card modal's portal, in Storybook, and in admin,
+ * which imports the components and index.css but not this app's bootstrap.
  */
-export const CARD_TILE_RING = {'--inkweave-gold': COLORS.primary} as React.CSSProperties;
+export const INSET_FOCUS_RING = {'--inkweave-gold': COLORS.primary} as React.CSSProperties;
+
+/**
+ * The card tiles' hover glow (owner, 2026-10-21): the gold behind a card a pointer is on or
+ * keyboard focus has reached, the one way the app highlights a card (`.card-tile` and
+ * `.synergy-more-tile`, index.css). Spread into each tile's own style, as INSET_FOCUS_RING
+ * is, so the glow shows wherever a tile renders. `strong` is the binder's, where the soft one
+ * barely shows on the parchment: 85% measured as plain there as 42% does on the dark pages
+ * (a colour difference of about 24 ΔE each).
+ */
+export const CARD_TILE_GLOW = {
+  '--tile-glow-soft': hexRgba(COLORS.primary, 0.42),
+  '--tile-glow-strong': hexRgba(COLORS.primary, 0.85),
+} as React.CSSProperties;
 
 /**
  * The FOIL marker: brushed gold, for anything reporting foil copies.

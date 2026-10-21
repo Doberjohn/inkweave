@@ -42,7 +42,8 @@ export {
   VISUALLY_HIDDEN,
   GOLD_GLOW,
   searchFieldStyle,
-  CARD_TILE_RING,
+  INSET_FOCUS_RING,
+  CARD_TILE_GLOW,
   FOIL_SHEEN,
   TOUCH_TARGET,
   ICON_SIZE,
@@ -66,6 +67,7 @@ export {
 } from './revealSet';
 export type {SpecialBlock, SpecialSlotSpec} from './revealSet';
 export {SET_LOGOS} from './setLogos';
+export {SET_PRINTED_SIZES} from './setPrintedSizes';
 export {
   PROMO_SETS,
   binderSetOf,

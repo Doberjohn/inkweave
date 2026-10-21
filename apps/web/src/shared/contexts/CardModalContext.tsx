@@ -289,7 +289,7 @@ function useComparisonRouteSync({
 interface CardModalRootProps {
   onEnterComparison: (partnerId: string, groupKey?: string) => void;
   onExitComparison: () => void;
-  /** Takes the window's slot under its card, for `useCardWindowSlot` (#826). */
+  /** Takes the window's slot over its card's foot, for `useCardWindowSlot` (#826). */
   copiesSlotRef: (el: HTMLElement | null) => void;
   /** Takes the printing the window shows, for `useCardWindowSlot` (#826). */
   onShownPrintingChange: (printingId: string | null) => void;
@@ -353,7 +353,14 @@ function CardModalRoot({onEnterComparison, onExitComparison, copiesSlotRef, onSh
 
   return (
     <Suspense
-      fallback={<CardOverviewModalFallback card={card} isMobile={isMobile} onClose={closeCardModal} />}>
+      fallback={
+        <CardOverviewModalFallback
+          card={card}
+          isMobile={isMobile}
+          printingId={initialPrintingId}
+          onClose={closeCardModal}
+        />
+      }>
       <Modal
         skipEnterTransition={openedBeforeModalReady}
         isOpen

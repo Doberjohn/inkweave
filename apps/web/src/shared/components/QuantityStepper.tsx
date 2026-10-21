@@ -19,9 +19,8 @@ interface QuantityStepperProps {
   /** When true the − and + collapse to width 0 (count-only), transitioning open when false. */
   collapsed?: boolean;
   /**
-   * False keeps the − and + out of the Tab order even while they show: the binder's hover
-   * steppers (#826), which leave a spread one Tab stop (#790). Keyboard users change the
-   * count in the card window instead. Default true.
+   * False keeps the − and + out of the Tab order even while they show, as the binder's hover
+   * steppers did (#826), so a spread stayed one Tab stop (#790). Default true.
    */
   tabbable?: boolean;
   /** 'md' = pool tile dims (default), 'sm' = deck row, 'xs' = binder slot. */
@@ -204,11 +203,11 @@ function usePopAnimation(popping: boolean | undefined, onPopEnd: (() => void) | 
 }
 
 /**
- * The gold-pill `− count +` quantity stepper. On master it shows the collection
- * binder's counts (`xs`: `collapsed` at rest, open and out of the Tab order while a
- * mouse points at the pocket) and changes them there and in the card window's "Your
- * copies" (`md`), both #826; the `md` and `sm` sizes also serve the deck builder's
- * pool tile and deck row, still on the `deck-builder` branch.
+ * The gold-pill `− count +` quantity stepper. Unused on master since the copies stripe
+ * (`CopiesStripe`, owner 2026-10-20) took over the binder's counts and the card window's;
+ * kept for the deck builder's pool tile (`md`) and deck row (`sm`), still on the
+ * `deck-builder` branch. The binder used the `xs` size: `collapsed` at rest, open and
+ * out of the Tab order while a mouse pointed at the pocket (#826).
  *
  * The pop animation is driven from the click handlers only — never a useEffect
  * or a set-state-during-render — so it fires on a real change and stays silent

@@ -335,9 +335,9 @@ function renderPrintingModal(
 }
 
 /**
- * A page filling the window's slot through a portal, as Browse does with "Your copies" (#826):
- * from OUTSIDE the window's tree, so React sends the button's events up this host, never up the
- * window. A button appended to the slot by hand would be found under the window's own tree.
+ * A page filling the window's slot through a portal, as Browse does with its copies stripe
+ * (#826): from OUTSIDE the window's tree, so React sends the button's events up this host, never
+ * up the window. A button appended to the slot by hand would be found under the window's own tree.
  */
 function SlotHost({onShownPrintingChange, onGoToSibling = () => {}}: {
   onShownPrintingChange?: (printingId: string | null) => void;
@@ -362,7 +362,7 @@ function SlotHost({onShownPrintingChange, onGoToSibling = () => {}}: {
   );
 }
 
-test('hands a page the slot under the card, which its content fills inside the window', () => {
+test("hands a page the slot over the card's foot, which its content fills inside the window", () => {
   Element.prototype.scrollTo = vi.fn();
   render(<SlotHost />);
 
@@ -398,17 +398,32 @@ test('a key pressed in what fills the slot reaches the window, as one inside it 
   expect(onGoToSibling).toHaveBeenCalledWith(1);
 });
 
-test('desktop puts the printing pills under the card, shrinking its art to make room', () => {
+/** The desktop card row that holds the card's art. */
+const cardRowOf = (container: HTMLElement) =>
+  container.querySelector('[data-comparison-card-a]')!.closest<HTMLElement>('[style*="display: grid"]')!;
+
+test('desktop keeps a card with printings at full size, its row growing to hold the pills under it', () => {
   Element.prototype.scrollTo = vi.fn();
   const {container} = renderPrintingModal(withEnchanted(makeCard('b')));
 
   expect(container.querySelector('header')).not.toContainElement(screen.getByRole('radiogroup'));
-  const art = container.querySelector<HTMLElement>('[data-comparison-card-a]')!;
-  expect(art.style.transform).toMatch(/^scale\(0\.\d+\)$/);
+  expect(container.querySelector<HTMLElement>('[data-comparison-card-a]')!.style.transform).toBe('');
+  // One art height for every card (owner, 2026-10-20): 470px, then the pills' 46px of room.
+  expect(cardRowOf(container).style.height).toBe('516px');
 });
 
-test('under reduced motion, card A goes into a comparison without scaling, sliding or fading', () => {
-  // #790: the art's scale, the column's slide and the controls' fade ignored reduced motion.
+test("a card without printings holds the pills' room under its window, so paging moves neither its top nor the arrows", () => {
+  Element.prototype.scrollTo = vi.fn();
+  const {rerenderCard} = renderPrintingModal(makeCard('b'));
+  const modal = screen.getByTestId('card-overview-modal');
+
+  expect((modal.nextElementSibling as HTMLElement).style.height).toBe('46px');
+  rerenderCard(withEnchanted(makeCard('b')));
+  expect(modal.nextElementSibling).toBe(screen.getByRole('button', {name: 'Previous card'}));
+});
+
+test('under reduced motion, card A goes into a comparison without sliding or fading', () => {
+  // #790: the column's slide and the controls' fade ignored reduced motion.
   vi.stubGlobal(
     'matchMedia',
     vi.fn((query: string) => ({matches: query.includes('reduce'), addEventListener: vi.fn(), removeEventListener: vi.fn()})),
@@ -429,15 +444,36 @@ test('under reduced motion, card A goes into a comparison without scaling, slidi
   );
 
   const art = container.querySelector<HTMLElement>('[data-comparison-card-a]')!;
-  expect(art.style.transition).toBe('');
   expect(art.parentElement!.style.transition).not.toMatch(/transform/);
   expect(screen.getByRole('radiogroup', {hidden: true}).parentElement!.style.transition).toBe('');
 });
 
-test('desktop leaves the art of a card without printings at full size', () => {
+test("a comparison drops the pills' room, so card A's column, which carries its glow, is the card alone", () => {
+  Element.prototype.scrollTo = vi.fn();
+  const card = withEnchanted(makeCard('b'));
+  const {container} = render(
+    <MemoryRouter>
+      <CardOverviewModal
+        isOpen
+        card={card}
+        synergies={[]}
+        getPairSynergies={() => null}
+        onClose={() => {}}
+        initialComparison={{cardA: card, cardB: makeCard('c'), connections: [], aggregateScore: 5}}
+      />
+    </MemoryRouter>,
+  );
+
+  expect(cardRowOf(container).style.height).toBe('470px');
+  // Hidden at once: fading, the pills would sit over the card's foot as the row shrinks.
+  expect(screen.getByRole('radiogroup', {hidden: true}).parentElement!.style.transition).toBe('');
+});
+
+test('desktop leaves the art of a card without printings at full size, in a row of its own height', () => {
   const {container} = renderPrintingModal(makeCard('b'));
 
   expect(container.querySelector<HTMLElement>('[data-comparison-card-a]')!.style.transform).toBe('');
+  expect(cardRowOf(container).style.height).toBe('470px');
 });
 
 test('desktop puts the translation toggle in the header before the ×, leaving the art at full size', () => {
@@ -467,6 +503,17 @@ test('a card with an alternate printing shows the one picked, and records it', a
     rarity: 'Enchanted',
     surface: 'modal',
   });
+});
+
+test('the header reads the number printed on the printing on show', async () => {
+  Element.prototype.scrollTo = vi.fn();
+  const user = userEvent.setup();
+  renderPrintingModal({...withEnchanted(makeCard('b')), setCode: '9', setNumber: 1});
+  const header = screen.getByRole('banner');
+
+  expect(header).toHaveTextContent('Card number 1/204');
+  await user.click(screen.getByRole('radio', {name: 'Enchanted'}));
+  expect(header).toHaveTextContent('Card number 223/204');
 });
 
 test('a swiped printing is recorded once it comes to rest, not as the swipe crosses it', () => {

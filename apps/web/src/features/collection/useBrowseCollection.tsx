@@ -7,7 +7,6 @@ import {SignInDialog} from '../../shared/components/SignInDialog';
 import {SET_NAMES, type BrowseSortOrder} from '../../shared/constants';
 import {useSession} from '../../shared/contexts/SessionContext';
 import {useCollection} from './CollectionContext';
-import {WindowCopies} from './CollectionCopies';
 import type {Finish} from './collectionParser';
 import {isHeld, type Axis} from './collectionStats';
 import {useKeptCards} from './useKeptCards';
@@ -15,19 +14,26 @@ import {useCollectionCards, useCollectionPool} from './CollectionCardsContext';
 import {useCollectionClick} from './useCollectionClick';
 import {binderModalTarget, type ModalTarget} from './collectionModalTarget';
 import {
+  ALL_PROMO_SETS,
   BINDER_PARAM,
   BINDER_SORT_OPTIONS,
   OWNED_PARAM,
   WHOLE_COLLECTION,
   binderRarities,
   binderSets,
+  isPromoScope,
+  isPromoSet,
   parseBinderShow,
+  rarityPicksPromos,
   setFromFilter,
+  spansSets,
   strayParams,
   withoutStrays,
   type BinderShow,
 } from './binderCards';
 import {CollectionModeSwitch} from './CollectionModeSwitch';
+import {CollectionActions} from './CollectionActions';
+import {WindowCopies} from './WindowCopies';
 
 /*
  * The collection UI is SPLIT FROM BROWSE (#553 Phase C). The binder and the
@@ -45,40 +51,43 @@ const CollectionBinderSection = lazyWithRetry(
 );
 // Same module as the binder, so the same chunk: the docked set panel costs no request of its own.
 const DockedSetBody = lazyWithRetry(() => import('./CollectionBinderSection'), 'DockedSetBody');
+const DockedSetPicker = lazyWithRetry(() => import('./CollectionBinderSection'), 'DockedSetPicker');
 const ImportCollectionDialog = lazyWithRetry(
   () => import('./ImportCollectionDialog'),
   'ImportCollectionDialog',
 );
 
 /**
- * Where the binder opens: the NEWEST set (owner, 2026-10-07), the one a collector
- * is most likely filling. Taken from `SET_NAMES` rather than the pool because the
- * first click on Collection comes BEFORE the pool loads (the toggle is what loads
- * it), and a new set cannot ship without its entry there (`SetCode` enforces it).
+ * The NEWEST set, where a set the binder does not have falls back to while the pool
+ * loads (`resolveSetCode`). Taken from `SET_NAMES` rather than the pool, which the
+ * first click on Collection comes BEFORE (the toggle is what loads it), and a new set
+ * cannot ship without its entry there (`SetCode` enforces it).
  */
 const DEFAULT_SET = String(Math.max(...Object.keys(SET_NAMES).map(Number)));
 
 /**
- * The set to show, or the whole collection. A set the binder does not have
- * (`?binder=99`) falls back to the newest it does, rather than drawing an empty
- * binder under a picker naming a different set. Until the list is known the
- * request is trusted: nothing contradicts it yet.
+ * The set to show, the whole collection, or every promo set. Collection mode opens on
+ * the whole collection (owner, 2026-10-20; the newest set before), unless a Browse set
+ * filter names one (`setFromFilter`). A set the binder does not have (`?binder=99`)
+ * falls back to the newest it does, rather than drawing an empty binder under a picker
+ * naming a different set, and every promo set (`?binder=promos`) in a binder with none
+ * to the whole collection. Until the list is known the request is trusted: nothing
+ * contradicts it yet.
  */
 function resolveSetCode(requested: string | null, sets: string[] | null): string {
-  if (requested === WHOLE_COLLECTION) return requested;
-  const fallback = sets?.[0] ?? DEFAULT_SET;
-  if (requested === null) return fallback;
+  if (requested === null || requested === WHOLE_COLLECTION) return WHOLE_COLLECTION;
+  if (requested === ALL_PROMO_SETS) return sets === null || sets.some(isPromoSet) ? ALL_PROMO_SETS : WHOLE_COLLECTION;
   if (sets === null || sets.includes(requested)) return requested;
-  return fallback;
+  return sets[0] ?? DEFAULT_SET;
 }
 
 /**
  * The panel's list of sets: the real one once known, else just the current set, so the
- * panel's height never changes when the list arrives; none for the whole collection.
+ * panel's height never changes when the list arrives; none for a scope spanning sets.
  */
 function panelSets(sets: string[] | null, setCode: string): string[] {
   if (sets !== null) return sets;
-  return setCode === WHOLE_COLLECTION ? [] : [setCode];
+  return spansSets(setCode) ? [] : [setCode];
 }
 
 /** Who is asking for collection mode, and what is known about them yet. */
@@ -215,6 +224,11 @@ export interface BrowseCollectionSlots {
   pool: LorcanaCard[];
   /** The toolbar's mode control: the Collection toggle. */
   modeSwitch: ReactNode;
+  /**
+   * The collection's actions, a gear after Collection (owner, 2026-10-20), for the signed-in
+   * in either mode: for now, Import collection. Null signed out.
+   */
+  modeActions: ReactNode;
   /** Collection mode's content for the page's listing, or null to keep the grid. */
   renderBinder: (listing: BrowseListing, onCardSelect: (card: LorcanaCard) => void) => ReactNode | null;
   /**
@@ -235,6 +249,12 @@ export interface BrowseCollectionSlots {
    */
   rarityOptions: (pool: LorcanaCard[]) => string[];
   /**
+   * The binder holds promos alone, one promo set or every one (owner, 2026-10-20): the page
+   * offers no Rarity filter and applies none, since every card is a promo. The mode drops the
+   * param too (`strayParams`); this covers the render before it is gone.
+   */
+  promoOnly: boolean;
+  /**
    * Whether you hold the card toward the chosen headline (`isHeld`): a copy in either finish
    * for Complete, one in each for Master, a printing's one finish counting as both. What
    * Owned and Missing ask (owner, 2026-10-20).
@@ -245,7 +265,7 @@ export interface BrowseCollectionSlots {
    * keep (#826, `useKeptCards`): a first copy leaves a card where it was in Missing.
    */
   kept: ReadonlySet<string>;
-  /** The sign-in and import dialogs, and the card window's "Your copies" (#826), a portal. */
+  /** The sign-in and import dialogs, and the card window's copies stripe (#826), a portal. */
   prompts: ReactNode;
   /**
    * The set panel's body for the page's listing while collection mode is on, else
@@ -254,6 +274,11 @@ export interface BrowseCollectionSlots {
    * listing because its numbers count the cards the filters let through.
    */
   renderSetPanel: (listing: BrowseListing) => ReactNode | undefined;
+  /**
+   * The set picker for the toolbar, beside Collection, where the page docks the set panel
+   * (desktop, owner 2026-10-20), while collection mode is on, else undefined.
+   */
+  renderSetPicker: (listing: BrowseListing) => ReactNode | undefined;
 }
 
 /**
@@ -316,17 +341,28 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   );
 
   const modeSwitch = <CollectionModeSwitch active={collectionMode} onToggle={onCollectionClick} />;
+  // Every action needs an account: none signed out. The import waits as Account's does.
+  const modeActions =
+    user !== null ? <CollectionActions onImport={openImport} checking={syncing && !hasCollection} /> : null;
 
   const panelControls = {
     setCode,
     sets: panelSets(sets, setCode),
     setsLoading: sets === null,
     onSetChange: writeBinder,
+    picksPromos: rarityPicksPromos(searchParams),
     show,
     onShowChange: writeShow,
     axis,
     onAxisChange: setAxis,
   };
+  // What the docked panel and the toolbar's set picker count: the cards the page lets through.
+  const setCounts = (listing: BrowseListing) => ({
+    cards: listing.matched,
+    filtered: listing.filtered,
+    entries,
+    isLoading: syncing || !isReady,
+  });
 
   function renderBinder(listing: BrowseListing, onCardSelect: (card: LorcanaCard) => void) {
     if (!collectionMode) return null;
@@ -388,6 +424,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     active: collectionMode,
     pool,
     modeSwitch,
+    modeActions,
     renderBinder,
     modalTarget: collectionMode
       ? (cardId, listing) => binderModalTarget(cardId, listing, {coreCards, pool, setCode, sets: panelControls.sets})
@@ -395,19 +432,20 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     sortOptions: collectionMode ? BINDER_SORT_OPTIONS : undefined,
     show,
     rarityOptions: binderRarities,
+    promoOnly: collectionMode && isPromoScope(setCode),
     owns: (card) => isHeld(card, entries, axis),
     kept,
     prompts,
     renderSetPanel: (listing) =>
       collectionMode ? (
         <Suspense fallback={null}>
-          <DockedSetBody
-            cards={listing.matched}
-            filtered={listing.filtered}
-            entries={entries}
-            isLoading={syncing || !isReady}
-            {...panelControls}
-          />
+          <DockedSetBody {...setCounts(listing)} {...panelControls} />
+        </Suspense>
+      ) : undefined,
+    renderSetPicker: (listing) =>
+      collectionMode ? (
+        <Suspense fallback={null}>
+          <DockedSetPicker {...setCounts(listing)} {...panelControls} />
         </Suspense>
       ) : undefined,
   };

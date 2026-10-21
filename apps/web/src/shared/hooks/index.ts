@@ -15,6 +15,7 @@ export {useTooltip} from './useTooltip';
 export {useBackOrNavigate} from './useBackOrNavigate';
 export {
   usePrintingSelection,
+  printedCardNumber,
   printingAlt,
   printingsOf,
   hasForeignScan,

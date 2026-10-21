@@ -57,6 +57,10 @@ const EXCLUDED = new Set([
   // never loads the friends code. It only feeds useFriends into FriendsSection, which has
   // its own stories, and needs a session and Supabase to run.
   'AccountFriends.tsx',
+  // Wiring (#826): portals the copies stripe (CopiesStripe, storied) into the card window's
+  // slot, reading the session, the collection and the window's stores. A story of it would
+  // need all three to show only the stripe its own stories already show.
+  'WindowCopies.tsx',
 ]);
 
 // Pages are route compositions of already-storied components; stories exist

@@ -158,6 +158,16 @@ describe('tallyCollection', () => {
     expect(totals).toMatchObject({cards: 6, complete: 5, master: 4});
   });
 
+  it("sums the promo sets alone into every promo set's figures (owner, 2026-10-20)", () => {
+    const promos = [
+      createCard({id: 'p1', setCode: 'P1', setNumber: 1, rarity: 'Special', baseId: 's1a'}),
+      createCard({id: 'p2', setCode: 'P2', setNumber: 1, rarity: 'Special', baseId: 's2a'}),
+    ];
+    const held = {...entries, p1: {normal: 0, foil: 1}};
+    const {promoTotals} = tallyCollection([...cards, ...promos], held, ['2', '1', 'P2', 'P1']);
+    expect(promoTotals).toMatchObject({cards: 2, complete: 1, master: 1});
+  });
+
   it('counts only the cards it is given, as the panel does for the cards a filter lets through', () => {
     const {totals, sets} = tallyCollection(cards.filter((c) => c.id !== 's1b'), entries, ['2', '1']);
     expect(totals).toMatchObject({cards: 4, complete: 4});

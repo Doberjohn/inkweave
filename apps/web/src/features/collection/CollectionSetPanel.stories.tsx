@@ -113,6 +113,11 @@ export const PromoSet: Story = {
   args: {setCode: STORY_PROMO_SET, sets: STORY_SETS_WITH_PROMOS, stats: STORY_PROMO_STATS},
 };
 
+/** Every promo set at once (owner, 2026-10-20): a promo set's blocks, headed Complete promos. */
+export const AllPromoSets: Story = {
+  args: {setCode: 'promos', sets: STORY_SETS_WITH_PROMOS, stats: STORY_PROMO_STATS},
+};
+
 /** The whole collection with a promo set in it: one figure, promos and all, and a Promo row under By rarity. */
 export const WholeCollectionWithPromos: Story = {
   args: {setCode: 'all', sets: STORY_SETS_WITH_PROMOS, stats: STORY_PROMO_STATS},

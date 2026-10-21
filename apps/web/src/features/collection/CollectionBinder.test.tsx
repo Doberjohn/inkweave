@@ -317,27 +317,35 @@ describe('CollectionBinder', () => {
     const point = (target: HTMLElement, pointerType = 'mouse') =>
       fireEvent.pointerEnter(target, {pointerType});
 
-    it('opens its pills into steppers, an unheld finish at 0, and sets the count a click asks for', () => {
+    it('opens its stripe, an unheld finish at 0, and sets the count a click asks for', () => {
       const onCountChange = vi.fn();
       const onSelect = vi.fn();
       render(binder({onCountChange, onSelect}));
       point(pocket(1));
       const counts = screen.getByRole('group', {name: '1 normal, 0 foil'});
-      // The pills sit under aria-hidden: the group's label speaks for them.
+      // The stripe sits under aria-hidden: the group's label speaks for it.
       const plus = within(counts).getByRole('button', {name: 'Add one copy of foil', hidden: true});
       fireEvent.click(plus);
       expect(onCountChange).toHaveBeenCalledWith('c1', 'foil', 1);
-      // A pill is not the card: the click opens no window.
+      // The stripe is not the card: the click opens no window.
       expect(onSelect).not.toHaveBeenCalled();
     });
 
-    it('closes them again when the mouse leaves', () => {
+    it('closes it again when the mouse leaves', () => {
       // Only the pocket pointed at says "0 foil": every other held pocket reads "1 normal".
       render(binder({onCountChange: vi.fn()}));
       point(pocket(1));
       expect(screen.getByRole('group', {name: '1 normal, 0 foil'})).toBeInTheDocument();
       fireEvent.pointerLeave(pocket(1));
       expect(screen.queryByRole('group', {name: '1 normal, 0 foil'})).toBeNull();
+    });
+
+    it('opens it on the pointer over it with no entry, as when the window closes over a resting mouse', () => {
+      render(binder({onCountChange: vi.fn()}));
+      // From an element React tracks, React enters only on that element's pointerout, which
+      // never comes from the window's backdrop, gone from the page.
+      fireEvent.pointerOver(pocket(1), {pointerType: 'mouse', relatedTarget: pocket(2)});
+      expect(screen.getByRole('group', {name: '1 normal, 0 foil'})).toBeInTheDocument();
     });
 
     it('opens only the Foil count of a card printed only in foil', () => {
@@ -357,7 +365,7 @@ describe('CollectionBinder', () => {
       },
     );
 
-    it("never opens them on a phone's lone page, which changes counts in the card window", () => {
+    it("never opens them on a phone's lone page, where no mouse points", () => {
       render(binder({single: true, onCountChange: vi.fn()}));
       point(pocket(1));
       expect(screen.queryByRole('group', {name: '1 normal, 0 foil'})).toBeNull();

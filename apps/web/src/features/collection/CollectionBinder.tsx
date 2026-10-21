@@ -60,8 +60,8 @@ interface CollectionBinderProps {
   pager?: 'arrows' | 'map';
   /**
    * Change one finish's copies of a card (#826): a mouse pointing at a pocket opens its
-   * pills into steppers. Absent, the counts are read-only; a phone's lone page never
-   * takes it, since nothing points there (its counts change in the card window).
+   * copies stripe. Absent, the counts are read-only; a phone's lone page never takes it,
+   * since nothing points there (its counts change in the card window).
    */
   onCountChange?: (cardId: string, finish: Finish, count: number) => void;
 }
@@ -104,15 +104,20 @@ const promoLabel = ({setNumber, setCode, finish, artVariant}: OpenPocket) =>
 
 /**
  * Whether a MOUSE rests on the element (#826). A touch or a pen never counts, so a tap on a
- * phone or a tablet opens the card as it always has and never leaves its steppers open; nor
+ * phone or a tablet opens the card as it always has and never leaves its stripe open; nor
  * do the mouse events iOS fires after a tap, which are no pointer events.
+ *
+ * The browser's own `pointerover`, not React's emulated `onPointerEnter`. When the card's
+ * window closes over a resting mouse, the browser reports the pointer over the pocket again,
+ * but the emulated entry never fires: the pointer came from the window's backdrop, which is
+ * gone from the page. The pocket stayed shut until the mouse left it and came back.
  */
 function usePointedByMouse() {
   const [pointed, setPointed] = useState(false);
   return {
     pointed,
     pointerProps: {
-      onPointerEnter: (e: PointerEvent) => {
+      onPointerOver: (e: PointerEvent) => {
         if (e.pointerType === 'mouse') setPointed(true);
       },
       onPointerLeave: () => setPointed(false),
@@ -122,7 +127,7 @@ function usePointedByMouse() {
 
 /**
  * The pocket's counts editor while a mouse points at it and its counts can change, else
- * undefined: the pills open into steppers (`CollectionSlotCounts`).
+ * undefined: the pocket's copies stripe opens (`CollectionSlotCounts`).
  */
 function pocketEditor(
   card: LorcanaCard,
@@ -153,12 +158,13 @@ function CardPocket({
 }) {
   const {pointed, pointerProps} = usePointedByMouse();
   return (
-    <div style={{position: 'relative', height: '100%'}} {...pointerProps}>
+    // `binder-pocket`: a pocket's tile glows stronger, to show on the parchment (index.css).
+    <div className="binder-pocket" style={{position: 'relative', height: '100%'}} {...pointerProps}>
       {/*
         The unowned treatment greys ONLY the art: `.binder-unowned` (index.css)
         filters the tile's CHILDREN. On the slot it would grey the counts too, and
-        on this wrapper it would also grey the tile's gold hover ring
-        (`.card-tile::after`), which a filter on the children never reaches.
+        on this wrapper it would also grey the tile's gold glow, which a filter on
+        the children never reaches.
       */}
       <div className={isOwned(counts) ? undefined : 'binder-unowned'} style={{height: '100%'}}>
         <CardTile

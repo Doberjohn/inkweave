@@ -1,10 +1,11 @@
-import {useState, useRef} from 'react';
+import {useRef} from 'react';
 import {Link} from 'react-router-dom';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../types';
 import {SynergyCard} from './SynergyCard';
+import {SynergyMoreTile} from './SynergyMoreTile';
 import {applySynergySortOrder} from '../utils';
-import {COLORS, FONT_SIZES, LAYOUT, RADIUS, SPACING, type SynergySortOrder} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, LAYOUT, SPACING, type SynergySortOrder} from '../../../shared/constants';
 import {AbilityCallout, AbilityTag} from '../../../shared/components';
 import {useContainerWidth, useRovingTabIndex} from '../../../shared/hooks';
 
@@ -25,8 +26,8 @@ interface SynergyGroupProps {
   gridGap?: number;
   /** Override the trailing margin between stacked groups. Default: SPACING.xl. Pass 0 when the parent uses flex `gap`. */
   marginBottom?: number;
-  /** Compact tile + MoreTile sizing for narrow grids (e.g. inside CardOverviewModal):
-   *  neutral tile border, no "View details" hover cue, smaller corner radius, smaller MoreTile font. Default false. */
+  /** Compact tile + "+N more" tile sizing for narrow grids (e.g. inside CardOverviewModal):
+   *  neutral tile border, smaller corner radius, smaller "+N more" font. Default false. */
   compact?: boolean;
   /** Sort order for the cards within this group. Default 'ink-cost' (ink alphabetical, then cost).
    *  The card page threads the user's SortSelect choice through here; the modal uses the default. */
@@ -139,120 +140,6 @@ export function SynergyGroup({
   );
 }
 
-// MoreTile: dashed tile for overflowed cards
-function MoreTile({
-  count,
-  onClick,
-  isMobile,
-  tabIndex,
-  compact = false,
-}: {
-  count: number;
-  onClick?: () => void;
-  isMobile?: boolean;
-  tabIndex?: number;
-  /** Compact sizing for narrow grids (mockup `.mini-tile.more`: 13px / 9px). Default false → standard sizing. */
-  compact?: boolean;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const config = pickMoreTileConfig(compact);
-
-  return (
-    <button
-      data-testid="more-tile"
-      data-roving-item
-      tabIndex={tabIndex}
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      aria-label={`Show ${count} more cards`}
-      style={pickMoreTileButtonStyle({config, hovered, compact, isMobile})}>
-      <span style={{fontSize: `${config.countFontSize}px`, fontWeight: 700, color: COLORS.primary500}}>
-        +{count}
-      </span>
-      {/* The flex column never renders this space, but without it the tile's text reads "+12more
-          cards", which label-in-name checks (WCAG 2.5.3) can't find in the aria-label. */}{' '}
-      <span
-        style={{
-          fontSize: `${config.labelFontSize}px`,
-          fontWeight: 500,
-          color: COLORS.textMuted,
-          textTransform: config.labelTextTransform,
-          letterSpacing: config.labelLetterSpacing,
-        }}>
-        {config.labelText}
-      </span>
-    </button>
-  );
-}
-
-interface MoreTileConfig {
-  countFontSize: number;
-  labelFontSize: number;
-  labelText: string;
-  borderRadius: number;
-  labelTextTransform: 'uppercase' | undefined;
-  labelLetterSpacing: string | undefined;
-}
-
-/** Single switch on `compact` returning the full visual config — replaces ten inline ternaries. */
-function pickMoreTileConfig(compact: boolean): MoreTileConfig {
-  if (compact) {
-    return {
-      countFontSize: FONT_SIZES.sm,
-      labelFontSize: 9,
-      labelText: 'more',
-      borderRadius: RADIUS.sm + 1,
-      labelTextTransform: 'uppercase',
-      labelLetterSpacing: '0.06em',
-    };
-  }
-  return {
-    countFontSize: FONT_SIZES.xxl,
-    labelFontSize: FONT_SIZES.xs,
-    labelText: 'more cards',
-    borderRadius: RADIUS.lg,
-    labelTextTransform: undefined,
-    labelLetterSpacing: undefined,
-  };
-}
-
-interface MoreTileButtonStyleInput {
-  config: MoreTileConfig;
-  hovered: boolean;
-  compact: boolean;
-  isMobile?: boolean;
-}
-
-function pickMoreTileButtonStyle({config, hovered, compact, isMobile}: MoreTileButtonStyleInput): React.CSSProperties {
-  return {
-    position: 'relative',
-    borderRadius: `${config.borderRadius}px`,
-    overflow: 'hidden',
-    aspectRatio: '0.72',
-    cursor: 'pointer',
-    background: COLORS.surfaceAlt,
-    border: `1px dashed ${hovered ? 'rgba(212, 175, 55, 0.35)' : '#444466'}`,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: pickMoreTileGap(compact, isMobile),
-    width: '100%',
-    padding: 0,
-    transition: 'transform 0.2s, box-shadow 0.2s, border-color 0.2s',
-    transform: hovered ? 'scale(1.04) translateY(-3px)' : undefined,
-    boxShadow: hovered ? '0 0 16px rgba(212, 175, 55, 0.15)' : undefined,
-    fontFamily: 'inherit',
-  };
-}
-
-function pickMoreTileGap(compact: boolean, isMobile?: boolean): string {
-  if (compact) return '2px';
-  if (isMobile) return '4px';
-  return '6px';
-}
-
 // Card list with overflow handling
 interface SynergyCardListProps {
   synergies: SynergyMatchDisplay[];
@@ -341,7 +228,7 @@ function SynergyCardList({
       ))}
       {remaining > 0 && (
         <li>
-          <MoreTile
+          <SynergyMoreTile
             count={remaining}
             onClick={() => onShowAll?.(groupKey)}
             isMobile={isMobile}

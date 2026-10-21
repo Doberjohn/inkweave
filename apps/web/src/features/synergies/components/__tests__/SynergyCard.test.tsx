@@ -67,18 +67,6 @@ describe('SynergyCard', () => {
     },
   );
 
-  it('should show View details cue on hover (desktop)', () => {
-    render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
-    const tile = screen.getByRole('link', {name: 'Elsa - Snow Queen, Strong 7'});
-    fireEvent.mouseEnter(tile);
-    expect(screen.getByText('View details')).toBeTruthy();
-  });
-
-  it('should not render View details cue on mobile', () => {
-    render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" isMobile />);
-    expect(screen.queryByText('View details')).toBeNull();
-  });
-
   // A tap fires its touchstart just before its click, on tablets as on phones.
   it('calls onCardClick for a tap: a touchstart just before the click', () => {
     const onCardClick = vi.fn();

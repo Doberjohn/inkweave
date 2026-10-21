@@ -2,8 +2,9 @@ import {ToolbarToggle} from '../../shared/components/ToolbarToggle';
 
 /**
  * Collection mode's toolbar control, rendered into `BrowseToolbar`'s
- * `modeSwitch` slot at the toolbar's far end. Only the toggle: choosing the set
- * lives in the set panel's header beside the binder (owner ruling 2026-08-14).
+ * `modeSwitch` slot at the toolbar's far end. Only the toggle: on desktop the set
+ * picker sits just before it (owner, 2026-10-20, `setPicker`), and elsewhere in the
+ * set panel beside the binder.
  *
  * A toggle button rather than a two-tab list: the modes are not peers. "All
  * cards" is the page's resting state and "Collection" is a lens you put on. The

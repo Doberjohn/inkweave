@@ -27,7 +27,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/DeltaPanel.stories.tsx', // x1
     'src/features/synergies/components/DeltaPanel.tsx', // x5
     'src/features/synergies/components/MobileComparisonView.stories.tsx', // x2
-    'src/features/synergies/components/SynergyGroup.tsx', // x1
     'src/features/voting/components/DistributionBar.stories.tsx', // x1
     'src/features/voting/components/DistributionBar.tsx', // x3
     'src/features/voting/components/OptionPicker.stories.tsx', // x5
@@ -63,7 +62,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/reveals/inkTint.ts', // x2
     'src/features/synergies/components/DeltaPanel.tsx', // x4
     'src/features/synergies/components/MechanicsButton.tsx', // x5
-    'src/features/synergies/components/SynergyGroup.tsx', // x2
     'src/features/voting/components/DistributionBar.tsx', // x3
     'src/features/voting/components/OptionPicker.stories.tsx', // x3
     'src/features/voting/components/QuickVoteControl.tsx', // x21
@@ -147,7 +145,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/reveals/RevealsPromoCard.tsx', // x1
     'src/features/reveals/WhatsNewSection.tsx', // x1
     'src/features/synergies/components/MechanicsButton.tsx', // x1
-    'src/features/synergies/components/SynergyGroup.tsx', // x1
     'src/features/voting/components/VoteStatusBanner.tsx', // x1
   ],
 };

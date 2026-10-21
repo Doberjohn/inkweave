@@ -1,5 +1,5 @@
 import type {CSSProperties, ReactNode} from 'react';
-import {CARD_TILE_RING} from '../constants';
+import {INSET_FOCUS_RING} from '../constants';
 
 interface CardImageButtonProps {
   /** What a click enlarges, e.g. "Enlarge card image" or "Enlarge Enchanted printing". */
@@ -27,7 +27,7 @@ export function CardImageButton({
   children,
 }: CardImageButtonProps) {
   const style: CSSProperties = {
-    ...CARD_TILE_RING,
+    ...INSET_FOCUS_RING,
     display: 'block',
     border: 'none',
     background: 'none',

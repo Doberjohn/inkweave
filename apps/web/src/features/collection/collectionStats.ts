@@ -1,7 +1,7 @@
 import type {Ink} from 'inkweave-synergy-engine';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from './collectionParser';
-import {binderCardsForSet} from './binderCards';
+import {binderCardsForSet, isPromoSet} from './binderCards';
 import {PROMO_RARITY} from '../cards/loader';
 
 /**
@@ -187,9 +187,9 @@ export const isFinished = (value: number, total: number) => total > 0 && value =
 export const percentOf = (value: number, total: number) => (total === 0 ? 0 : Math.floor((value * 100) / total));
 
 /**
- * The whole collection's numbers (owner, 2026-10-12): the sets' tallies summed. Its copies,
- * foils and playsets went with their row, and its sets done each way with the headlines'
- * longer counts (owner, 2026-10-15).
+ * The whole collection's numbers (owner, 2026-10-12), or every promo set's (owner,
+ * 2026-10-20): the sets' tallies summed. Its copies, foils and playsets went with their row,
+ * and its sets done each way with the headlines' longer counts (owner, 2026-10-15).
  */
 interface CollectionTotals {
   cards: number;
@@ -208,28 +208,37 @@ function addSlots<K>(into: Map<K, Slot>, slots: readonly ({key: K} & Slot)[]): v
   }
 }
 
-/**
- * Every set's tally, in the order given (the panel's: newest first), and the whole
- * collection's totals, counted as `tallySet` counts a set. Given only the cards a
- * page's filters let through, every number describes those (owner, 2026-10-15).
- */
-export function tallyCollection(cards: LorcanaCard[], entries: CollectionEntries, setCodes: readonly string[]) {
+/** Sets' tallies summed, bucket by bucket: the whole collection's, or every promo set's. */
+function sumTallies(tallies: readonly Tally[]): CollectionTotals {
   const totals: CollectionTotals = {cards: 0, complete: 0, master: 0, byInk: [], byRarity: []};
   const ink = new Map<Ink, Slot>();
   const rarity = new Map<string, Slot>();
-  const sets = setCodes.map((code) => {
-    const tally = tallySet(binderCardsForSet(cards, code), entries);
+  for (const tally of tallies) {
     totals.cards += tally.cards;
     totals.complete += tally.complete;
     totals.master += tally.master;
     addSlots(ink, tally.byInk.map(({ink: key, ...slot}) => ({key, ...slot})));
     addSlots(rarity, tally.byRarity.map(({rarity: key, ...slot}) => ({key, ...slot})));
-    return {code, tally};
-  });
+  }
   totals.byInk = [...ink].map(([key, slot]) => ({ink: key, ...slot}));
   totals.byRarity = [...rarity]
     .map(([key, slot]) => ({rarity: key, ...slot}))
     .sort((a, b) => RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity));
-  return {totals, sets};
+  return totals;
+}
+
+/**
+ * Every set's tally, in the order given (the panel's: newest first), the whole
+ * collection's totals, and every promo set's (owner, 2026-10-20: All sets in the set
+ * picker's Promo tab), counted as `tallySet` counts a set. Given only the cards a
+ * page's filters let through, every number describes those (owner, 2026-10-15).
+ */
+export function tallyCollection(cards: LorcanaCard[], entries: CollectionEntries, setCodes: readonly string[]) {
+  const sets = setCodes.map((code) => ({code, tally: tallySet(binderCardsForSet(cards, code), entries)}));
+  return {
+    totals: sumTallies(sets.map((set) => set.tally)),
+    promoTotals: sumTallies(sets.filter((set) => isPromoSet(set.code)).map((set) => set.tally)),
+    sets,
+  };
 }
 
