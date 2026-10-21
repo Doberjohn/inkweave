@@ -44,7 +44,7 @@ describe('isFinishes', () => {
     expect(isFinishes(finishes)).toBe(true);
   });
 
-  it.each([[['foil', 'normal']], [[]], [['Normal']], ['foil'], [undefined]])(
+  it.each([[['foil', 'normal']], [[]], [['Normal']], [['normal,foil']], ['foil'], [undefined]])(
     'refuses %j',
     (finishes) => {
       expect(isFinishes(finishes)).toBe(false);

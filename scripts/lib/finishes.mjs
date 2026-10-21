@@ -35,7 +35,7 @@ const PROMO_RARITY = 'Special';
  */
 export const CHASE_RARITIES = new Set(['Enchanted', 'Epic', 'Iconic']);
 
-const sameVersions = (a, b) => a.join() === b.join();
+const sameVersions = (a, b) => a.length === b.length && a.every((version, i) => version === b[i]);
 
 /** Whether `finishes` is a value the field may hold: one version, or both, in that order. */
 export const isFinishes = (finishes) =>

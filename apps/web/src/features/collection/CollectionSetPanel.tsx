@@ -84,8 +84,9 @@ import {
  *     Dreamborn export can contain before (2026-08-14 and 2026-10-07). See `tallySet`.
  *   - A PROMO SET SHOWS COMPLETE SET AND BY INK ONLY (owner, 2026-10-17, #805): its cards
  *     are all promos, so its rarity rows would be one, and its master only repeated Complete,
- *     as every held promo counted as held in both. Since #880 only a promo the catalog names
- *     one finish for counts so; one in both needs both, as the whole collection's Master
+ *     as every held promo counted as held in both. Since #880 a promo counts as held in both
+ *     once every version it comes in is held: one copy does it for a promo the catalog names
+ *     one version for, while a promo in both needs both, as the whole collection's Master
  *     counts it. Owned and Missing still ask Complete's here (`useBrowseCollection`). The
  *     whole collection's numbers count the promos with the rest, one figure (owner, the same
  *     day).
