@@ -1,8 +1,34 @@
 import {useEffect, useRef, useState} from 'react';
 import {CtaButton, DialogShell} from '../../shared/components';
 import {COLORS, DIALOG_BODY, DIALOG_TITLE, FONTS, FONT_SIZES, SPACING, VISUALLY_HIDDEN} from '../../shared/constants';
+import {trackEvent} from '../../shared/lib/analytics';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {parseCollectionCsv, type CollectionEntries, type CollectionSummary} from './collectionParser';
+
+/** Where an import runs, and whether it replaces a collection the account already has. */
+export interface ImportContext {
+  surface: 'browse' | 'account';
+  replacing: boolean;
+}
+
+type ImportFailure = 'not_ready' | 'unreadable' | 'no_cards' | 'storage';
+
+/** `collection_imported`: the receipt's counts, never its refs or rows (file contents). */
+function trackImported(context: ImportContext, summary: CollectionSummary): void {
+  trackEvent('collection_imported', {
+    ...context,
+    cards: summary.cardsOwned,
+    copies: summary.copiesOwned,
+    unidentified: summary.unidentified.length,
+    ambiguous: summary.ambiguous.length,
+    unparsed: summary.unparsed.length,
+  });
+}
+
+/** `collection_import_failed`: which of the import's four refusals stopped it. */
+function trackImportFailed(context: ImportContext, reason: ImportFailure): void {
+  trackEvent('collection_import_failed', {...context, reason});
+}
 
 interface ImportCollectionDialogProps {
   isOpen: boolean;
@@ -32,6 +58,8 @@ interface ImportCollectionDialogProps {
    * this component needs no provider in tests or stories.
    */
   onImport: (entries: CollectionEntries, importedAt: number) => string | null;
+  /** Where this import runs and whether it replaces a collection, for the import events. */
+  context: ImportContext;
 }
 
 /** Thousands separators: these numbers run to four digits and get compared. */
@@ -219,6 +247,7 @@ export function ImportCollectionDialog({
   poolError,
   onRetryPool,
   onImport,
+  context,
 }: ImportCollectionDialogProps) {
   const [summary, setSummary] = useState<CollectionSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -261,6 +290,7 @@ export function ImportCollectionDialog({
     // lives here rather than only on the button: a disabled button still leaves
     // the input itself drivable, and getting this wrong is silent.
     if (!isPoolReady) {
+      trackImportFailed(context, 'not_ready');
       setError('Still loading the full card list. Try again in a moment.');
       return;
     }
@@ -274,6 +304,7 @@ export function ImportCollectionDialog({
     } catch {
       if (attemptRef.current !== mine) return;
       setBusy(false);
+      trackImportFailed(context, 'unreadable');
       setError('That file could not be read. Try exporting it from Dreamborn again.');
       return;
     }
@@ -285,15 +316,18 @@ export function ImportCollectionDialog({
     // Nothing owned is not a storage failure, and must not be reported as one:
     // the likeliest cause is the wrong file, so say that instead.
     if (parsed.cardsOwned === 0) {
+      trackImportFailed(context, 'no_cards');
       setError('No owned cards were found in that file. Is it a Dreamborn collection export?');
       return;
     }
 
     const storageError = onImport(entries, Date.now());
     if (storageError !== null) {
+      trackImportFailed(context, 'storage');
       setError(storageError);
       return;
     }
+    trackImported(context, parsed);
     setSummary(parsed);
   };
 
