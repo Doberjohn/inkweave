@@ -69,7 +69,10 @@ async function windowGeometry(page: Page) {
     art: Math.round(art!.height),
     top: Math.round(shell!.y),
     bottom: Math.round(shell!.y + shell!.height),
-    arrow: Math.round(arrow!.y),
+    // The arrow's middle, not its top edge. The arrow can open under the cursor that clicked the
+    // card, and the button's hover boop (scale 1.03, then back) and press scale are scales about
+    // its middle: caught mid-boop, the top edge reads up to 0.7px high, but the middle never moves.
+    arrow: Math.round(arrow!.y + arrow!.height / 2),
   };
 }
 

@@ -68,6 +68,7 @@ describe('trackEvent', () => {
       clickedCardName: 'Anna - Heir to Arendelle',
       clickedCardInk: 'Amber',
       groupKey: 'singer',
+      surface: 'modal',
     } as const;
     trackEvent('synergy_card_clicked', props);
     expectSentToBoth('synergy_card_clicked', props);
@@ -104,7 +105,12 @@ describe('trackEvent', () => {
   });
 
   it('forwards a synergy_group_viewed event', () => {
-    const props = {sourceCardId: '13001', groupKey: 'singer', action: 'isolate'} as const;
+    const props = {
+      sourceCardId: '13001',
+      groupKey: 'singer',
+      action: 'isolate',
+      surface: 'card_page',
+    } as const;
     trackEvent('synergy_group_viewed', props);
     expectSentToBoth('synergy_group_viewed', props);
   });
