@@ -77,6 +77,22 @@ describe('placeCopies', () => {
     });
   });
 
+  it("places a promo by the collection's copy, which its pocket is built from, before a card's variant", () => {
+    // Were the variant kept, which names no finish, 1/C3 would come in both by its rarity.
+    const card = createCard({
+      id: '2035',
+      variants: [{id: '80017', rarity: 'Special', number: 1, promoGrouping: 'C3'}],
+    });
+    const promo: CollectionPromo = {
+      ...c3('80017', 1, 'normal'),
+      fullName: 'Mother Knows Best',
+      baseId: '2035',
+    };
+    expect(placeCopies({'80017': {normal: 0, foil: 1}}, placementsFor([card], [promo]))).toEqual({
+      '80017': {normal: 1, foil: 0},
+    });
+  });
+
   it('follows the rarity rule where the data names no finish: an Enchanted preview card in foil alone', () => {
     const preview = placementsFor([createCard({id: 'preview-1', rarity: 'Enchanted'})], []);
     expect(placeCopies({'preview-1': {normal: 1, foil: 0}}, preview)).toEqual({

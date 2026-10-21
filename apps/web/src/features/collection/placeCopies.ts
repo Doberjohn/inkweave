@@ -72,13 +72,12 @@ function cardFacts(card: LorcanaCard): PrintingFacts[] {
   ];
 }
 
-/** Every printing of `cards` (each card and its variants) and every collection promo, as facts. */
+/** Every collection promo and every printing of `cards` (each card and its variants), as facts. */
 function printingFacts(
   cards: readonly LorcanaCard[],
   promos: readonly CollectionPromo[],
 ): PrintingFacts[] {
   return [
-    ...cards.flatMap(cardFacts),
     ...promos.map(({id, rarity, finishes, promoGrouping, baseId}) => ({
       id,
       rarity,
@@ -86,13 +85,16 @@ function printingFacts(
       promoSet: promoGrouping,
       cardId: baseId,
     })),
+    ...cards.flatMap(cardFacts),
   ];
 }
 
 /**
  * What placing copies needs to know of every printing `cards` and `promos` hold: a card, each of
- * its variants, a promo of `collection/promos.json`. A printing listed twice, as a Core card's
- * promo is (one of its variants, and a collection promo), is the same printing: the first is kept.
+ * its variants, a promo of `collection/promos.json`. A printing listed twice is the same
+ * printing, and its first listing is kept, so the caller lists first the one collection mode
+ * builds its pocket from. A promo comes before a card's variant, as its pocket is built from
+ * the promo (`withPromoPockets`).
  */
 export function placementsFor(
   cards: readonly LorcanaCard[],

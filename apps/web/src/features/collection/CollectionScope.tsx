@@ -44,12 +44,17 @@ export function CollectionScope() {
   );
 }
 
-/** `CollectionProvider`, told where each copy shows by the card data that has loaded (#880). */
+/**
+ * `CollectionProvider`, told where each copy shows by the card data that has loaded (#880). The
+ * collection's cards come before Core's: a printing both hold, as a Core card's Enchanted is,
+ * has its pocket built from the chunk's card (`withPrintingCards` adds no card for a variant the
+ * pool holds), so its copies are placed by that card too.
+ */
 function PlacedCollectionProvider({children}: {children: ReactNode}) {
   const {cards: coreCards} = useCardDataContext();
   const {cards, promos} = useCollectionCards();
   return (
-    <CollectionProvider placements={placementsFor([...coreCards, ...cards], promos)}>
+    <CollectionProvider placements={placementsFor([...cards, ...coreCards], promos)}>
       {children}
     </CollectionProvider>
   );
