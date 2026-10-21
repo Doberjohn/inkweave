@@ -107,7 +107,7 @@ export const WholeCollection: Story = {args: {setCode: 'all'}};
 
 /**
  * A promo set (owner, 2026-10-17, #805): Complete set and By ink alone, its count in promos.
- * Each pocket holds one printing in one finish, so a master would only repeat Complete.
+ * Its cards are all promos, so it has no rarity rows.
  */
 export const PromoSet: Story = {
   args: {setCode: STORY_PROMO_SET, sets: STORY_SETS_WITH_PROMOS, stats: STORY_PROMO_STATS},

@@ -68,6 +68,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline/promises';
 import {fileURLToPath} from 'node:url';
+import {finishesById, finishesReport, givenFinishes, lorcanaFinishes, placeFinishes} from './lib/finishes.mjs';
 import {foldVariants, isPrinting} from './lib/fold-variants.mjs';
 import {mergePromoPrintings} from './lib/promo-printings.mjs';
 
@@ -111,7 +112,9 @@ const ID_REFERENCE_FILES = [
  * cost of unused fields (artists, flavor text, promo metadata, alternate ids).
  *
  * Note: `imageHash`/`imageHashSm` are injected by download-card-images.mjs
- * at build time — not preserved from source.
+ * at build time — not preserved from source. `foilTypes` is stripped too, but where its
+ * versions differ from the app's rarity rule they survive as `finishes` (#880), on the card
+ * (`applyCardRules`) and on its printings (fold-variants.mjs).
  */
 const KEEP_FIELDS = [
   'id',
@@ -176,11 +179,19 @@ function stripCard(card, setCode) {
 /**
  * Rules 1, 4, 5, 6 applied to one set's canonical cards: base printings stripped to the kept
  * fields, with their printings folded in by `baseId`; Special dropped.
+ *
+ * Each card and printing ends with its versions (`finishes`, #880): those `kept` holds for its
+ * id, the set's entries in allCards.json as they stand (`finishesById`), which graduation never
+ * changes, else LorcanaJSON's where they differ from its rarity's.
  */
-export function applyCardRules(sourceCards, setCode) {
+export function applyCardRules(sourceCards, setCode, kept = new Map()) {
   const baseCards = sourceCards.filter(isBaseCard);
   const cards = baseCards.map((c) => stripCard(c, setCode));
-  const fold = foldVariants(cards, sourceCards, {matchBy: 'baseId', idFor: (v) => v.id});
+  const fold = foldVariants(cards, sourceCards, {matchBy: 'baseId', idFor: (v) => v.id, kept});
+  // Last, after the `variants` the fold gave the card.
+  for (const [i, card] of cards.entries()) {
+    placeFinishes(card, kept.get(String(card.id)) ?? lorcanaFinishes(baseCards[i]));
+  }
   const specialCount = sourceCards.filter((c) => c.rarity === 'Special').length;
   return {cards, fold, specialCount};
 }
@@ -215,6 +226,14 @@ export function previewVariantsMissingFrom(previewCards, canonicalCards, setCode
     .flatMap((c) => (c.variants ?? []).map((v) => ({...v, base: c.fullName})))
     .filter((v) => !canonical.has(`${v.rarity}#${v.number}`));
 }
+
+/**
+ * The versions graduation gave the set's cards and their printings (#880), as `finishesReport`
+ * lists them, so a wrong LorcanaJSON entry shows before the set ships: those that `kept`, the
+ * set's entries before graduation, didn't hold.
+ */
+export const graduatedFinishes = (kept, cards) =>
+  givenFinishes(kept, cards, (entry, card) => `${entry.id} #${entry.number} ${entry.rarity} ${card.fullName}`);
 
 /**
  * Every variant graduating would drop: canonical printings whose base card isn't in the source
@@ -631,12 +650,15 @@ async function main() {
     process.exit(2);
   }
 
-  // Rule 1 — fold every printing into its base, strip Special; Rules 4, 5, 6 — strip per-card
-  const {cards: stripped, fold, specialCount} = applyCardRules(sourceCards, setCode);
+  // Rule 1 — fold every printing into its base, strip Special; Rules 4, 5, 6 — strip per-card.
+  // Any versions the set's entries hold already carry over (#880).
+  const kept = finishesById(all.cards.filter((card) => card.setCode === setCode));
+  const {cards: stripped, fold, specialCount} = applyCardRules(sourceCards, setCode, kept);
   console.log(`  Canonical input:           ${sourceCards.length} cards`);
   console.log(
     `  Rule 1 - fold variants:    +${fold.folded.length + fold.replaced.length} printings, strip Special: -${specialCount}`,
   );
+  for (const line of finishesReport(graduatedFinishes(kept, stripped))) console.log(`  ${line}`);
   const previewCards = existingPreview.cards ?? [];
   const dropped = droppedVariants(previewCards, {cards: stripped, fold}, setCode);
   guardDroppedVariants(dropped, allowMissingVariants);

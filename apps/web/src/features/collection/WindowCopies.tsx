@@ -6,22 +6,21 @@ import {useCardDataContext} from '../../shared/contexts/CardDataContext';
 import {useCardModal} from '../../shared/contexts/CardModalContext';
 import {useCardWindowSlot} from '../../shared/contexts/cardWindowSlot';
 import {useSession} from '../../shared/contexts/SessionContext';
-import {isChaseRarity} from '../cards/loader';
 import {useCollection} from './CollectionContext';
 import type {CollectionEntry, Finish} from './collectionParser';
+import {finishesOf, type FinishFacts} from './printingFinishes';
 
 const NO_COPIES: CollectionEntry = {normal: 0, foil: 0};
-const FINISHES: Finish[] = ['normal', 'foil'];
-const FOIL_ONLY: Finish[] = ['foil'];
 
 /**
- * The rarity of the printing the card window shows: the variant's on show, else the card's own.
- * Enchanted, Epic and Iconic are printed only in foil (owner, 2026-10-19), which `isChaseRarity`
- * names; a promo is printed in both finishes, like any card (owner, 2026-10-18).
+ * The printing the card window shows: the variant on show, else the card itself. Its finishes
+ * (`finishesOf`) are its data's where the data names them, else its rarity's: Enchanted, Epic
+ * and Iconic in foil alone (owner, 2026-10-19), and every other card in both. A promo defaults
+ * to both (owner, 2026-10-18), and the data names the exceptions (#880).
  */
-function shownRarity(card: LorcanaCard, printingId: string | null): string | undefined {
-  if (printingId === null) return card.rarity;
-  return card.variants?.find((variant) => variant.id === printingId)?.rarity;
+function shownPrinting(card: LorcanaCard, printingId: string | null): FinishFacts {
+  if (printingId === null) return card;
+  return card.variants?.find((variant) => variant.id === printingId) ?? {};
 }
 
 /** The card the open window shows, by the window's own lookup: Core first, then the open's resolver (sets 1-8). */
@@ -34,7 +33,7 @@ function useWindowCard(): LorcanaCard | undefined {
 
 interface ShownCopies {
   counts: CollectionEntry;
-  finishes: Finish[];
+  finishes: readonly Finish[];
   cardName: string;
   change: (finish: Finish, count: number) => void;
 }
@@ -53,8 +52,8 @@ function stripeParts({counts, finishes, cardName, change}: ShownCopies): StripeP
  * The card window's copies (#826): the copies stripe over the card's foot, as tall as the card's
  * own black bar, for the printing on show (owner, 2026-10-20, where the "Your copies" block under
  * the card was). Always open: the window is where a phone or a keyboard changes a count, and
- * nothing points at it there. A part per finish the printing is made in, Foil alone for
- * Enchanted, Epic and Iconic.
+ * nothing points at it there. A part per finish the printing is made in (`finishesOf`), Foil
+ * alone for Enchanted, Epic, Iconic and the alt foils, Normal alone for 1/C3.
  *
  * On any window opened on Browse while signed in with a collection, the grid's or the binder's
  * (owner, 2026-10-20). A PORTAL into the window's slot (`useCardWindowSlot`): the window sits
@@ -80,7 +79,7 @@ export function WindowCopies({onEdit}: {onEdit: (cardId: string) => void}) {
   // A printing is a card of the collection's own: its counts are kept under its id.
   const printingId = shownPrintingId ?? card.id;
   const counts = entries[printingId] ?? NO_COPIES;
-  const finishes = isChaseRarity(shownRarity(card, shownPrintingId)) ? FOIL_ONLY : FINISHES;
+  const finishes = finishesOf(shownPrinting(card, shownPrintingId));
   const change = (finish: Finish, count: number) => {
     setCount(printingId, finish, count);
     onEdit(printingId);

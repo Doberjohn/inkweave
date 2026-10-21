@@ -29,6 +29,7 @@
  * and so always holds that set's detail chunk. If cross-set filtered results turn
  * out to need thumbnails, add `images` to INDEX_FIELDS and regenerate.
  */
+import {lorcanaFinishes, placeFinishes} from './finishes.mjs';
 
 /** Fields the grid, the filters and name search need. No text, stats or images. */
 export const INDEX_FIELDS = [
@@ -53,7 +54,8 @@ export const INDEX_FIELDS = [
  * Everything `transformCard` reads, so a detail chunk round-trips into a real
  * `LorcanaCard`. Derived from the engine's `LorcanaJSONCard` interface
  * (`packages/synergy-engine/src/utils/cardTransformer.ts`) — if that interface
- * gains a field, this list must follow or the card renders incomplete.
+ * gains a field, this list must follow or the card renders incomplete. One field it
+ * reads is not LorcanaJSON's: `finishes`, which `toDetail` adds from `foilTypes` (#880).
  */
 export const DETAIL_FIELDS = [
   ...INDEX_FIELDS,
@@ -158,17 +160,29 @@ export function buildIndex(cards) {
   return cards.map((card) => pickFields(card, INDEX_FIELDS));
 }
 
-/** The heavy tier, split per set. Returns Map<setCode, card[]>. */
-export function buildDetailChunks(cards) {
+/**
+ * One card's detail entry: its `DETAIL_FIELDS`, its art, and last, its versions (`finishes`,
+ * #880): the ones `kept` holds for its id, which a run never changes, else LorcanaJSON's where
+ * they differ from its rarity's, as for the 13 alt foils.
+ */
+function toDetail(card, kept) {
+  const detail = pickFields(card, DETAIL_FIELDS);
+  if (card.images) {
+    const images = pickFields(card.images, DETAIL_IMAGE_KEYS);
+    if (Object.keys(images).length > 0) detail.images = images;
+  }
+  return placeFinishes(detail, kept.get(String(card.id)) ?? lorcanaFinishes(card));
+}
+
+/**
+ * The heavy tier, split per set. Returns Map<setCode, card[]>. `kept` holds, by id, the versions
+ * the dataset being replaced gave its cards (`finishesById`), which carry over.
+ */
+export function buildDetailChunks(cards, kept = new Map()) {
   const chunks = new Map();
   for (const card of cards) {
-    const detail = pickFields(card, DETAIL_FIELDS);
-    if (card.images) {
-      const images = pickFields(card.images, DETAIL_IMAGE_KEYS);
-      if (Object.keys(images).length > 0) detail.images = images;
-    }
     const setCode = String(card.setCode);
-    chunks.set(setCode, [...(chunks.get(setCode) ?? []), detail]);
+    chunks.set(setCode, [...(chunks.get(setCode) ?? []), toDetail(card, kept)]);
   }
   return chunks;
 }

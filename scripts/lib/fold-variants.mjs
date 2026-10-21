@@ -19,8 +19,7 @@
  * `scripts/graduate-canonical-set.mjs` (Rule 1), so both write the same entry shape, and by
  * `scripts/lib/promo-printings.mjs` for the printings' order.
  */
-
-const CHASE_RARITIES = new Set(['Enchanted', 'Epic', 'Iconic']);
+import {CHASE_RARITIES, lorcanaFinishes, placeFinishes} from './finishes.mjs';
 
 /**
  * A printing of another card: one with a `baseId` (LorcanaJSON gives every printing one,
@@ -59,6 +58,7 @@ export function pickImages(images) {
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
+/** A printing's entry: its id, rarity and number, and its art. Its versions go last (`upsert`). */
 function toEntry(variant, id) {
   const entry = {id, rarity: variant.rarity, number: variant.number};
   const images = pickImages(variant.images);
@@ -66,19 +66,21 @@ function toEntry(variant, id) {
   return entry;
 }
 
-/** What an entry is: its printing, its rarity and its art. */
+/** What an entry is: its printing, its rarity, its versions and its art. */
 const ENTRY_FACTS = [
   (entry) => entry.id,
   (entry) => entry.number,
   (entry) => entry.rarity,
+  (entry) => entry.finishes?.join(),
   (entry) => entry.images?.full,
   (entry) => entry.images?.thumbnail,
 ];
 
 /**
- * Same printing, same rarity, same art: an existing entry that needs no rewrite (build hashes
- * survive). The rarity counts because entries are found by number: a corrected rarity must
- * reach the entry, not leave the stale one in place.
+ * Same printing, same rarity, same versions, same art: an existing entry that needs no rewrite
+ * (build hashes survive). The rarity counts because entries are found by number: a corrected
+ * rarity must reach the entry, not leave the stale one in place. The versions count for an entry
+ * LorcanaJSON gives some for the first time (#880).
  */
 function sameEntry(existing, entry) {
   return ENTRY_FACTS.every((fact) => fact(existing) === fact(entry));
@@ -103,10 +105,14 @@ function baseFinder(baseCards, matchBy) {
  * now that printings which keep their base card's rarity fold too (#796). Promos are never
  * matched: their numbers restart in every promo set, and only the promo catalog writes them
  * (#805), so they stay as they are, after the other printings.
+ *
+ * The entry's versions are the ones its printing's entry already holds, if it holds any (#880):
+ * a fold never changes or removes one, so an owner's correction outlives every sync.
  */
 function upsert(base, entry) {
   const variants = base.variants ?? [];
   const at = slotOf(variants, entry);
+  placeFinishes(entry, heldFinishes(variants, at, entry.id) ?? entry.finishes);
   if (at < 0) {
     variants.push(entry);
     base.variants = variants.sort(byPrintingOrder);
@@ -121,6 +127,9 @@ function upsert(base, entry) {
 /** Where `entry`'s printing sits among `variants`: the entry with its collector number, never a promo. */
 const slotOf = (variants, entry) => variants.findIndex((v) => !isPromo(v) && v.number === entry.number);
 
+/** The versions the printing's entry already holds: the entry with its id, else the one in its slot. */
+const heldFinishes = (variants, at, id) => (variants.find((v) => v.id === id) ?? variants[at])?.finishes;
+
 /**
  * Fold the printings in `sourceCards` (every card with a `baseId` but the Special promos) into
  * the `variants` of their base in `baseCards` (mutated in place).
@@ -130,11 +139,15 @@ const slotOf = (variants, entry) => variants.findIndex((v) => !isPromo(v) && v.n
  * - `matchBy: 'name'` matches on set code + full name (reveal-season preview cards, whose ids
  *   are `REVEAL_ID_BASE + number` rather than LorcanaJSON's).
  * - `idFor(variant)` picks the id stored on the entry.
+ * - `kept` holds, by id, the versions (`finishes`, #880) of entries the base cards no longer
+ *   hold, as graduation's freshly stripped cards don't: they are kept as if they were there.
+ *   Otherwise an entry takes LorcanaJSON's (`lorcanaFinishes`), where they differ from its
+ *   rarity's.
  *
  * Idempotent: the entry with the same collector number is replaced, or left alone when nothing changed (so hashes a
  * local image build injected are not churned). Returns the source variants per outcome.
  */
-export function foldVariants(baseCards, sourceCards, {matchBy, idFor}) {
+export function foldVariants(baseCards, sourceCards, {matchBy, idFor, kept = new Map()}) {
   const findBase = baseFinder(baseCards, matchBy);
   const result = {folded: [], replaced: [], unchanged: [], unmatched: []};
   for (const variant of sourceCards) {
@@ -144,7 +157,9 @@ export function foldVariants(baseCards, sourceCards, {matchBy, idFor}) {
       result.unmatched.push(variant);
       continue;
     }
-    result[upsert(base, toEntry(variant, idFor(variant)))].push(variant);
+    const id = idFor(variant);
+    const entry = placeFinishes(toEntry(variant, id), kept.get(String(id)) ?? lorcanaFinishes(variant));
+    result[upsert(base, entry)].push(variant);
   }
   return result;
 }

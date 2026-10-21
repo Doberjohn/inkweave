@@ -61,8 +61,9 @@ import {
  *     "master" announced: a complete Set 13 then read Common 10/72, and was taken for a bug.
  *     The ring is the one cue: the breakdowns' own grey label went (owner, 2026-10-15).
  *   - AND WHAT OWNED AND MISSING ASK (owner, 2026-10-20): under Master set, a card held in
- *     one finish only is missing, as Master's number counts it. So the page holds the choice
- *     (`useBrowseCollection`), which the binder's view asks of too (`isHeld`).
+ *     one finish only is missing, as Master's number counts it, unless that is the one finish
+ *     it comes in (#880). So the page holds the choice (`useBrowseCollection`), which the
+ *     binder's view asks of too (`isHeld`).
  *   - THE HEADLINES' COUNTS SHOW ON HOVER (owner, 2026-10-15): while a headline is hovered
  *     or focused from the keyboard, its name gives way to its count, "113 of 242 cards", in
  *     the same spot; the percentage stays and nothing moves. A count line opening under the
@@ -81,10 +82,13 @@ import {
  *     Enchanted, Iconic) in the headline and the inks too, and in rows of their own in the
  *     rarity breakdown (owner, 2026-10-12). The headline counted only the five rarities a
  *     Dreamborn export can contain before (2026-08-14 and 2026-10-07). See `tallySet`.
- *   - A PROMO SET SHOWS COMPLETE SET AND BY INK ONLY (owner, 2026-10-17, #805): its pockets
- *     each hold one printing in one finish, so its master would repeat Complete, and its
- *     cards are all promos, so its rarity rows would be one. The whole collection's numbers
- *     count the promos with the rest, one figure (owner, the same day).
+ *   - A PROMO SET SHOWS COMPLETE SET AND BY INK ONLY (owner, 2026-10-17, #805): its cards
+ *     are all promos, so its rarity rows would be one, and its master only repeated Complete,
+ *     as every held promo counted as held in both. Since #880 only a promo the catalog names
+ *     one finish for counts so; one in both needs both, as the whole collection's Master
+ *     counts it. Owned and Missing still ask Complete's here (`useBrowseCollection`). The
+ *     whole collection's numbers count the promos with the rest, one figure (owner, the same
+ *     day).
  */
 
 type Tally = ReturnType<typeof tallySet>;

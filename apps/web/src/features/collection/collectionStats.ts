@@ -2,6 +2,7 @@ import type {Ink} from 'inkweave-synergy-engine';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from './collectionParser';
 import {binderCardsForSet, isPromoSet} from './binderCards';
+import {finishesOf} from './printingFinishes';
 import {PROMO_RARITY} from '../cards/loader';
 
 /**
@@ -20,24 +21,6 @@ import {PROMO_RARITY} from '../cards/loader';
  * the binder does. The promos count too (#805): in their promo sets, and in the whole
  * collection's numbers, which are one figure, promos and all (owner, 2026-10-17).
  */
-
-/**
- * Whether a binder card is a printing of another card: one with a `baseId` (#796). The
- * chase printings (Epic, Enchanted, Iconic) each get a rarity row of their own under the
- * five (owner, 2026-10-12); a printing that keeps its base card's rarity (Violet Parr #247,
- * Super Rare) counts under that rarity (owner, 2026-10-16). The promos (#805) count under
- * Special, shown as Promo: a row of the whole collection's, which a promo set's numbers have
- * no need of, since all its cards are promos (see the panel).
- *
- * EVERY PRINTING THE BINDER HOLDS COMES IN ONE FINISH. Every Enchanted and Epic row of the
- * owner's own exports (2026-10-12) is a foil row, with no zero-count normal row beside it as
- * the promo export has, and LorcanaJSON lists one foil finish for every printing with a
- * `baseId` that isn't Special: all 360 chase printings and the 13 that keep their rarity (the
- * 10-10 export). So a held one is held in every finish it comes in, and counts toward master
- * too, or a finished set's master breakdown would read 0 forever. A promo is one printing in
- * one finish as well: a promo printed in both is two, twins with a pocket each (#805).
- */
-const isPrinting = (card: LorcanaCard) => card.baseId !== undefined;
 
 /** What a headline counts (owner, 2026-10-12): Complete a copy in either finish, Master one in each. */
 export type Axis = 'complete' | 'master';
@@ -62,7 +45,7 @@ interface Tally {
   cards: number;
   /** Held in at least one finish. */
   complete: number;
-  /** Held in BOTH finishes (a chase printing's one finish counts as both). */
+  /** Held in every finish the card comes in: both, or a one-finish printing's one (`heldOf`). */
   master: number;
   byInk: ({ink: Ink} & Slot)[];
   /** The rarities the cards have, Common first and the chase printings last (`RARITY_ORDER`). */
@@ -81,15 +64,22 @@ function inksOf(card: LorcanaCard): Ink[] {
   return [card.ink, card.ink2].filter((i): i is Ink => i !== undefined);
 }
 
-function holdingOf(entry: {normal: number; foil: number} | undefined): Holding {
-  if (entry === undefined) return {any: false, both: false};
-  return {any: entry.normal + entry.foil > 0, both: entry.normal > 0 && entry.foil > 0};
-}
-
-/** What the owner holds of one card, as every number counts it: a held printing's one finish counts as both. */
+/**
+ * What the owner holds of one card, as every number counts it: a copy in either finish, and a
+ * copy in every finish the card comes in (`finishesOf`, #880), which Master counts as held in
+ * both. So a printing that comes in one finish is held in both once it is held in that one, or
+ * a finished set's Master breakdown would read 0 forever: Enchanted, Epic and Iconic, which come
+ * in foil alone, the 13 alt foils, which LorcanaJSON lists in foil alone (the 2026-10-10
+ * export), and every promo the promo catalog names one finish for. Any other card, a promo
+ * without one included, comes in both, so Master asks for both.
+ */
 function heldOf(card: LorcanaCard, entries: CollectionEntries): Holding {
-  const holding = holdingOf(entries[card.id]);
-  return isPrinting(card) ? {any: holding.any, both: holding.any} : holding;
+  const entry = entries[card.id];
+  if (entry === undefined) return {any: false, both: false};
+  return {
+    any: entry.normal + entry.foil > 0,
+    both: finishesOf(card).every((finish) => entry[finish] > 0),
+  };
 }
 
 /**
@@ -119,6 +109,12 @@ function bump<K>(into: Map<K, Slot>, key: K, held: Holding): void {
 /**
  * Common first, scarcest last, so the rarity rows read as a difficulty ramp: the
  * rulebook's order, and the filters' (`RARITY_ORDER` in the cards loader), the promos last.
+ *
+ * A card counts under its own rarity. The chase printings (Epic, Enchanted, Iconic) each get
+ * a row of their own under the five (owner, 2026-10-12); a printing that keeps its base card's
+ * rarity (Violet Parr #247, Super Rare) counts under that rarity (owner, 2026-10-16). The
+ * promos (#805) count under Special, shown as Promo: a row of the whole collection's, which a
+ * promo set's numbers have no need of, since all its cards are promos (see the panel).
  */
 const RARITY_ORDER = [
   'Common',
@@ -136,8 +132,8 @@ const RARITY_ORDER = [
  * Fold one card into the running tallies.
  *
  * Separate from `tallySet` so the per-card RULES (what a printing's one finish counts
- * as, how a dual-ink card is attributed) sit apart from the setup and the final sort. A
- * card of a rarity outside `RARITY_ORDER` counts everywhere but gets no row.
+ * as, `heldOf`, and how a dual-ink card is attributed) sit apart from the setup and the final
+ * sort. A card of a rarity outside `RARITY_ORDER` counts everywhere but gets no row.
  */
 function addCard(acc: Accumulator, card: LorcanaCard, entries: CollectionEntries): void {
   const held = heldOf(card, entries);

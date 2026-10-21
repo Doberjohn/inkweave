@@ -102,9 +102,10 @@ function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
   card.scanLanguage = raw.scanLanguage;
   card.variants = raw.variants?.map(toPrinting);
   // A collection card that is a printing names the card it reprints (#796). Special promos
-  // carry one too, as printings that never fold; the binder drops them, so only the printings
-  // it holds reach the collection panel's one-finish rule (collectionStats.ts).
+  // carry one too, as printings that never fold; the binder drops them for the catalog's (#805).
   card.baseId = raw.baseId === undefined ? undefined : String(raw.baseId);
+  // The versions a card comes in, where its data names them (#880): see finishesOf.
+  card.finishes = raw.finishes;
   return card;
 }
 
@@ -119,15 +120,16 @@ export function toPrinting(variant: RawCardVariant): CardPrinting {
     scanLanguage: variant.scanLanguage,
     promoGrouping: variant.promoGrouping,
     finish: variant.finish,
+    finishes: variant.finishes,
   };
 }
 
 /**
  * A card of its own for one of `card`'s printings: the card under the printing's id, rarity,
- * number and art, naming `card` as its `baseId` (#796). The full-size image hash is the base
- * card's art, so it is dropped rather than carried. A promo's card is in its promo set ("P1"
- * in 25/P1), with its finish and art variant (#805): Browse's promo tiles and collection
- * mode's pockets are such cards.
+ * number, art and versions (#880), naming `card` as its `baseId` (#796). The full-size image
+ * hash is the base card's art, so it is dropped rather than carried. A promo's card is in its
+ * promo set ("P1" in 25/P1), with its finish and art variant (#805): Browse's promo tiles and
+ * collection mode's pockets are such cards.
  */
 export function printingCard(card: LorcanaCard, printing: CardPrinting & {artVariant?: string}): LorcanaCard {
   return {
@@ -143,6 +145,7 @@ export function printingCard(card: LorcanaCard, printing: CardPrinting & {artVar
     scanLanguage: printing.scanLanguage,
     variants: undefined,
     finish: printing.finish,
+    finishes: printing.finishes,
     artVariant: printing.artVariant,
   };
 }

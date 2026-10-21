@@ -28,11 +28,13 @@
 // pending marker names a copy that no longer exists, which simply never matches.
 //
 // It still takes no other context beyond the session. Entries are keyed by card
-// id, and resolving those to cards is the consumer's job.
+// id, and resolving those to cards is the consumer's job. Where each copy shows
+// (#880) comes in as `placements`, which the parent builds from the card data.
 
 import {createContext, useContext, useEffect, useRef, useState, type ReactNode} from 'react';
 import type {CollectionEntries, Finish} from './collectionParser';
 import {totalOwned} from './collectionParser';
+import {editAsShown, NO_PLACEMENTS, placeCopies, type Placements} from './placeCopies';
 import {
   COLLECTION_KEY,
   clearCollection,
@@ -55,7 +57,11 @@ import {resolveCollectionSync, visibleTo} from './collectionSync';
 import {useSession} from '../../shared/contexts/SessionContext';
 
 interface CollectionContextValue {
-  /** Owned copies per card id. Empty when nothing has been imported. */
+  /**
+   * Owned copies per card id, as shown (#880): a copy counted in a finish its printing doesn't
+   * come in shows where it belongs (`placeCopies`), while the saved counts stay as they were
+   * entered. Empty when nothing has been imported.
+   */
   entries: CollectionEntries;
   /** Epoch ms of the import in force, or null when there is none. */
   importedAt: number | null;
@@ -75,7 +81,7 @@ interface CollectionContextValue {
    * over it in the meantime. False when signed out.
    */
   syncing: boolean;
-  /** Copies owned of one card, both finishes. 0 when unowned or none imported. */
+  /** Copies owned of one card, both finishes, as shown. 0 when unowned or none imported. */
   ownedCount: (cardId: string) => number;
   /** Owned means at least one copy, not a full playset (owner ruling 2026-08-10). */
   owns: (cardId: string) => boolean;
@@ -101,6 +107,9 @@ interface CollectionContextValue {
    * normal and 0 foil leaves the collection. Signed in with a collection only, once the
    * account's copy has answered ({@link syncing}): an edit is owed to an account, and is
    * built on its latest copy.
+   *
+   * The count set is the one shown (#880), so the edit saves it as the player sees it, and
+   * clears the copies shown in it from wherever they were counted (`editAsShown`).
    */
   setCount: (cardId: string, finish: Finish, count: number) => void;
 }
@@ -302,17 +311,6 @@ function useOtherTabsWrites(onWrite: () => void): void {
     window.addEventListener('storage', listener);
     return () => window.removeEventListener('storage', listener);
   }, []);
-}
-
-/**
- * `entries` with one finish of one card set to `count`. A card left at 0 normal and 0
- * foil leaves them, as an import never stores one (`parseCollectionCsv`).
- */
-function withCount(entries: CollectionEntries, cardId: string, finish: Finish, count: number): CollectionEntries {
-  const entry = {...(entries[cardId] ?? {normal: 0, foil: 0}), [finish]: count};
-  const next = {...entries, [cardId]: entry};
-  if (totalOwned(entry) === 0) delete next[cardId];
-  return next;
 }
 
 /**
@@ -574,7 +572,16 @@ function useCollectionSync(
   return syncing;
 }
 
-export function CollectionProvider({children}: {children: ReactNode}) {
+interface CollectionProviderProps {
+  children: ReactNode;
+  /**
+   * Where each printing's copies show (#880), from the card data the parent has loaded. None
+   * known by default, so every copy shows where it was counted.
+   */
+  placements?: Placements;
+}
+
+export function CollectionProvider({children, placements = NO_PLACEMENTS}: CollectionProviderProps) {
   const [state, setState] = useState<CollectionState>(readCollection);
   const {user, loading} = useSession();
   const uid = user?.id ?? null;
@@ -647,7 +654,7 @@ export function CollectionProvider({children}: {children: ReactNode}) {
     // A count must stay a whole number: a stored 1.5 fails the copy's guard on the next
     // read, and that read clears the whole collection (`readCollection`).
     if (!editable || !Number.isSafeInteger(count)) return;
-    const entries = withCount(visible.entries, cardId, finish, Math.max(0, count));
+    const entries = editAsShown(visible.entries, placements, {id: cardId, finish}, Math.max(0, count));
     const {data, error} = writeCollection(entries, uniqueImportStamp(Date.now(), uid, state), uid, 'import');
     // As for an import: nothing moves unless the local write landed.
     if (error !== null) return;
@@ -657,10 +664,12 @@ export function CollectionProvider({children}: {children: ReactNode}) {
     scheduleUpload(waitingUpload, uid, data, setState);
   }
 
-  const ownedCount = (cardId: string) => totalOwned(visible?.entries[cardId]);
+  // Every copy where it shows (#880); the saved counts stay as they are.
+  const shown = placeCopies(visible?.entries ?? NO_ENTRIES, placements);
+  const ownedCount = (cardId: string) => totalOwned(shown[cardId]);
 
   const value: CollectionContextValue = {
-    entries: visible?.entries ?? NO_ENTRIES,
+    entries: shown,
     importedAt: visible?.importedAt ?? null,
     hasCollection: visible !== null,
     syncing,

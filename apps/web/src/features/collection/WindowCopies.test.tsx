@@ -31,7 +31,10 @@ const ELSA: LorcanaCard = createCard({
   id: 'elsa',
   fullName: 'Elsa - Snow Queen',
   rarity: 'Legendary',
-  variants: [{id: 'elsa-enchanted', rarity: 'Enchanted', number: 216}],
+  variants: [
+    {id: 'elsa-enchanted', rarity: 'Enchanted', number: 216},
+    {id: 'elsa-promo', rarity: 'Special', number: 1, promoGrouping: 'C3', finishes: ['normal']},
+  ],
 });
 
 const mockWindow = {slot: null as HTMLElement | null, shownPrintingId: null as string | null};
@@ -99,6 +102,14 @@ describe('WindowCopies', () => {
 
     expect(view.getByRole('group', {name: 'Your copies: 1 foil'})).toBeInTheDocument();
     expect(view.queryByRole('button', {name: 'Add one copy of Elsa - Snow Queen'})).toBeNull();
+  });
+
+  it('offers only the Normal count for a promo its data names in normal alone, as 1/C3 is (#880)', async () => {
+    mockWindow.shownPrintingId = 'elsa-promo';
+    const view = await renderInWindow();
+
+    expect(view.getByRole('group', {name: 'Your copies: 0 normal'})).toBeInTheDocument();
+    expect(view.queryByRole('button', {name: 'Add one copy of foil Elsa - Snow Queen'})).toBeNull();
   });
 
   it('is not shown signed out, though this browser keeps the collection', async () => {

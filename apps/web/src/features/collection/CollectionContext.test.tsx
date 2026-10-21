@@ -1,10 +1,18 @@
 import {describe, it, expect, beforeEach, afterEach, vi} from 'vitest';
 import {renderHook, act, render as renderUi, screen} from '@testing-library/react';
 import {StrictMode, type ReactNode} from 'react';
+import {createCard} from '../../shared/test-utils';
 import {CollectionProvider, UPLOAD_DELAY_MS, useCollection} from './CollectionContext';
-import {COLLECTION_KEY, markUploadPending, pendingUploadImportedAt, writeCollection} from './collectionStorage';
+import {
+  COLLECTION_KEY,
+  markUploadPending,
+  pendingUploadImportedAt,
+  readCollection,
+  writeCollection,
+} from './collectionStorage';
 import {deleteCollection, getCollection, upsertCollection} from './collectionRepository';
 import type {CollectionEntries} from './collectionParser';
+import {placementsFor} from './placeCopies';
 
 /**
  * Signed out by default. `CollectionProvider` reads `useSession` since #555, and
@@ -805,5 +813,41 @@ describe('CollectionContext, counts changed in the app (#826)', () => {
       {...ENTRIES, owned: {normal: 3, foil: 2}},
       result.current.importedAt,
     );
+  });
+
+  describe('copies shown where they belong (#880)', () => {
+    /** `owned` as an alt foil, which comes in foil alone: its 3 normal copies show in its foil. */
+    const altFoil = placementsFor([createCard({id: 'owned', rarity: 'Super Rare', finishes: ['foil']})], []);
+
+    async function renderPlaced() {
+      const view = renderHook(() => useCollection(), {
+        wrapper: ({children}: {children: ReactNode}) => (
+          <CollectionProvider placements={altFoil}>{children}</CollectionProvider>
+        ),
+      });
+      await advance(0);
+      return view;
+    }
+
+    it('shows them there, and never saves them there on its own', async () => {
+      const {result} = await renderPlaced();
+
+      expect(result.current.entries).toEqual({...ENTRIES, owned: {normal: 0, foil: 4}});
+      expect(result.current.ownedCount('owned')).toBe(4);
+      await advance(UPLOAD_DELAY_MS);
+      expect(readCollection()?.entries).toEqual(ENTRIES);
+      expect(upsertCollection).not.toHaveBeenCalled();
+    });
+
+    it('saves the count as shown once the player changes it, with nothing counted twice', async () => {
+      const {result} = await renderPlaced();
+      act(() => result.current.setCount('owned', 'foil', 5));
+
+      const saved = {...ENTRIES, owned: {normal: 0, foil: 5}};
+      expect(readCollection()?.entries).toEqual(saved);
+      expect(result.current.entries).toEqual(saved);
+      await advance(UPLOAD_DELAY_MS);
+      expect(upsertCollection).toHaveBeenCalledWith('user-a', saved, 9000);
+    });
   });
 });

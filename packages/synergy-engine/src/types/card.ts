@@ -12,6 +12,14 @@ export type CardType = 'Character' | 'Action' | 'Item' | 'Location';
 export type VariantRarity = 'Enchanted' | 'Epic' | 'Iconic';
 
 /**
+ * The versions a printing comes in (#880), in this order: normal, foil, or both. The card data
+ * names them only where the printing's rarity would get them wrong (an alt foil, a promo printed
+ * in one version), or where the owner corrected them, Both included. A printing without them
+ * comes in what its rarity says (the web's `finishesOf`).
+ */
+export type PrintingFinishes = ['normal'] | ['foil'] | ['normal', 'foil'];
+
+/**
  * An alternate printing of a card: rules-identical, only the art differs. Set by the web
  * loader from the raw card's `variants`; the engine never reads it.
  */
@@ -27,6 +35,7 @@ export interface CardPrinting {
   scanLanguage?: string; // language code ("it") when this printing's scan is not in English (#681)
   promoGrouping?: string; // a promo's set as printed on the card: "P1" in 25/P1 (#802)
   finish?: 'foil' | 'normal'; // only on promo twins that share a code (#802)
+  finishes?: PrintingFinishes; // only where its rarity would get its versions wrong, or the owner corrected them (#880)
 }
 
 // Core card interface (based on LorcanaJSON structure)
@@ -75,4 +84,7 @@ export interface LorcanaCard {
   // Dreamborn's 24A/P2, for a promo printed in two arts under one number. Engine never reads them.
   finish?: 'foil' | 'normal';
   artVariant?: string;
+  // The versions this card comes in when its data names them (#880): a printing's card keeps its
+  // printing's, and a collection card takes its own. Set by the web loader; engine never reads it.
+  finishes?: PrintingFinishes;
 }

@@ -51,8 +51,11 @@ export const OpenUnheld: Story = {args: {open: true, parts: parts(0, 0)}};
 /** Open in a 1440px screen's pocket: the same stripe, scaled down with its card. */
 export const OpenNarrow: Story = {args: {open: true}, parameters: {frame: NARROW_POCKET}};
 
-/** A printing made only in foil (Enchanted, Epic, Iconic): Foil alone across the stripe. */
+/** A printing made only in foil (Enchanted, Epic, Iconic, the alt foils): Foil alone across the stripe. */
 export const FoilOnly: Story = {args: {open: true, parts: parts(0, 1).slice(1)}};
+
+/** A printing made only in normal, as 1/C3 is (#880): Normal alone across the stripe. */
+export const NormalOnly: Story = {args: {open: true, parts: parts(1, 0).slice(0, 1)}};
 
 /** The card window's: always open, as tall as the card's own black bar. */
 export const InTheCardWindow: Story = {args: {open: true, fit: 'bar'}, parameters: {frame: WINDOW_CARD}};

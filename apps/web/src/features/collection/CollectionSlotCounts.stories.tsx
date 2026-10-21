@@ -1,6 +1,7 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import {CollectionSlotCounts} from './CollectionSlotCounts';
+import type {Finish} from './collectionParser';
 import {COLORS} from '../../shared/constants';
 
 /** A pocket on a phone's single page, where the counts never open. */
@@ -9,6 +10,8 @@ const PHONE_SLOT = {width: 76, height: 105};
 const DESKTOP_SLOT = {width: 144, height: 200};
 /** A pocket at the size a 1440px screen gives the binder, where the stripe scales down with the card. */
 const NARROW_SLOT = {width: 84, height: 117};
+/** A card printed in both finishes, as most are (`finishesOf`). */
+const BOTH: readonly Finish[] = ['normal', 'foil'];
 
 /**
  * A binder slot's counts, a stripe across the card's foot: at rest, normal on the dark ground
@@ -57,23 +60,29 @@ export const Unowned: Story = {args: {counts: {normal: 0, foil: 0}}};
 /** Pointed at: each finish opens into − count +, the unheld foil at 0 with its − off. */
 export const PointedAt: Story = {
   parameters: {slot: DESKTOP_SLOT},
-  args: {counts: {normal: 2, foil: 0}, editor: {foilOnly: false, onChange: fn()}},
+  args: {counts: {normal: 2, foil: 0}, editor: {finishes: BOTH, onChange: fn()}},
 };
 
 /** Pointed at in a 1440px screen's pocket: the same stripe, scaled down with the card. */
 export const PointedAtNarrow: Story = {
   parameters: {slot: NARROW_SLOT},
-  args: {counts: {normal: 2, foil: 1}, editor: {foilOnly: false, onChange: fn()}},
+  args: {counts: {normal: 2, foil: 1}, editor: {finishes: BOTH, onChange: fn()}},
 };
 
 /** Pointed at, a card you hold none of: both finishes open at 0, a first copy one click away. */
 export const PointedAtUnowned: Story = {
   parameters: {slot: DESKTOP_SLOT},
-  args: {counts: {normal: 0, foil: 0}, editor: {foilOnly: false, onChange: fn()}},
+  args: {counts: {normal: 0, foil: 0}, editor: {finishes: BOTH, onChange: fn()}},
 };
 
-/** Pointed at, a card printed only in foil (Enchanted, Epic, Iconic): only Foil opens. */
+/** Pointed at, a card printed only in foil (Enchanted, Epic, Iconic, the alt foils): only Foil opens. */
 export const PointedAtFoilOnly: Story = {
   parameters: {slot: DESKTOP_SLOT},
-  args: {counts: {normal: 0, foil: 1}, editor: {foilOnly: true, onChange: fn()}},
+  args: {counts: {normal: 0, foil: 1}, editor: {finishes: ['foil'], onChange: fn()}},
+};
+
+/** Pointed at, a promo printed only in normal, as 1/C3 is (#880): only Normal opens. */
+export const PointedAtNormalOnly: Story = {
+  parameters: {slot: DESKTOP_SLOT},
+  args: {counts: {normal: 1, foil: 0}, editor: {finishes: ['normal'], onChange: fn()}},
 };

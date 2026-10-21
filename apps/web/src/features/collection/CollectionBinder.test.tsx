@@ -356,6 +356,13 @@ describe('CollectionBinder', () => {
       expect(screen.getByRole('group', {name: '0 foil'})).toBeInTheDocument();
     });
 
+    it('opens only the Normal count of a promo its data names in normal alone, as 1/C3 is (#880)', () => {
+      const unheld = () => ({normal: 0, foil: 0});
+      render(binder({slots: [promo('p1', 1, {finishes: ['normal']})], countsFor: unheld, onCountChange: vi.fn()}));
+      point(screen.getByRole('button', {name: 'Card 1, 1/C1 printing'}));
+      expect(screen.getByRole('group', {name: '0 normal'})).toBeInTheDocument();
+    });
+
     it.each(['touch', 'pen'])(
       'never opens them for a %s, whose tap opens the card',
       (pointerType) => {
