@@ -395,7 +395,7 @@ export function AccountPage() {
         )}
       </div>
 
-      <SignInDialog isOpen={showSignIn} onClose={() => setShowSignIn(false)} />
+      <SignInDialog isOpen={showSignIn} onClose={() => setShowSignIn(false)} surface="account" />
       {user && identity && (
         <DisplayNameDialog
           isOpen={showName}

@@ -4,6 +4,7 @@ import {render, screen, fireEvent, act, createEvent} from '@testing-library/reac
 import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {SearchBottomSheet, type SearchBottomSheetHandle} from '../SearchBottomSheet';
+import {trackCardSelected} from '../../../features/cards/lib/cardAnalytics';
 
 const {mockOpenCardModal, mockSearchCardsByName} = vi.hoisted(() => ({
   mockOpenCardModal: vi.fn(),
@@ -39,6 +40,8 @@ vi.mock('../../../features/cards/loader', () => ({
   searchCardsByName: mockSearchCardsByName,
   parseSetOrder: () => 0,
 }));
+
+vi.mock('../../../features/cards/lib/cardAnalytics', () => ({trackCardSelected: vi.fn()}));
 
 describe('SearchBottomSheet', () => {
   beforeEach(() => {
@@ -163,6 +166,17 @@ describe('SearchBottomSheet', () => {
         vi.advanceTimersByTime(50);
       });
       expect(mockOpenCardModal).toHaveBeenCalledWith('elsa-1');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('tracks a picked suggestion as card_selected from the mobile sheet', () => {
+    vi.useFakeTimers();
+    try {
+      renderSheet();
+      selectElsa();
+      expect(trackCardSelected).toHaveBeenCalledWith(ELSA, 'mobile_sheet');
     } finally {
       vi.useRealTimers();
     }

@@ -64,6 +64,19 @@ test('Show More opens the full expanded group view', async () => {
   expect(screen.getByText(/back to all synergies/i)).toBeVisible();
 });
 
+test('Show More records the group view from the modal', async () => {
+  vi.mocked(trackEvent).mockClear();
+  const user = userEvent.setup();
+  renderModal(20);
+  await user.click(screen.getByRole('button', {name: /more/i}));
+  expect(trackEvent).toHaveBeenCalledWith('synergy_group_viewed', {
+    sourceCardId: 'source',
+    groupKey: 'singer-songs',
+    action: 'show_all',
+    surface: 'modal',
+  });
+});
+
 test('Back to all synergies returns to the default view', async () => {
   const user = userEvent.setup();
   renderModal(20);
@@ -113,6 +126,22 @@ test('a comparison opened from a tile takes focus to BACK, and leaving it gives 
   await waitFor(() => expect(screen.getByRole('button', {name: 'Back to synergies'})).toHaveFocus());
   await user.keyboard('{Escape}');
   await waitFor(() => expect(tile).toHaveFocus());
+});
+
+test('a tile followed in the modal records the partner from the modal', async () => {
+  vi.mocked(trackEvent).mockClear();
+  const user = userEvent.setup();
+  renderComparable(3);
+  screen.getByRole('link', {name: /^Card syn-1 - Test/}).focus();
+  await user.keyboard('{Enter}');
+  expect(trackEvent).toHaveBeenCalledWith('synergy_card_clicked', {
+    sourceCardId: 'source',
+    clickedCardId: 'syn-1',
+    clickedCardName: 'Card syn-1 - Test',
+    clickedCardInk: 'Amber',
+    groupKey: 'singer-songs',
+    surface: 'modal',
+  });
 });
 
 test('leaving a comparison whose tile is gone gives focus to the close button', async () => {

@@ -27,7 +27,7 @@ import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {prefersReducedMotion, usePrefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {getDominantScore, getStrengthTier} from '../utils';
-import {trackEvent} from '../../../shared/lib/analytics';
+import {trackSynergyCardClicked, trackSynergyGroupViewed} from '../lib/synergyAnalytics';
 import {
   COLORS,
   DURATION,
@@ -321,13 +321,23 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   const toggleChip = (key: string) => {
     // Only fire when isolating a group, not when clearing the current one.
     if (activeGroupFilter !== key) {
-      trackEvent('synergy_group_viewed', {sourceCardId: props.card.id, groupKey: key, action: 'isolate'});
+      trackSynergyGroupViewed({
+        sourceCardId: props.card.id,
+        groupKey: key,
+        action: 'isolate',
+        surface: 'modal',
+      });
     }
     setActiveGroupFilter((prev) => (prev === key ? null : key));
   };
 
   const handleShowAll = (groupKey: string) => {
-    trackEvent('synergy_group_viewed', {sourceCardId: props.card.id, groupKey, action: 'show_all'});
+    trackSynergyGroupViewed({
+      sourceCardId: props.card.id,
+      groupKey,
+      action: 'show_all',
+      surface: 'modal',
+    });
     // One click on a group's More tile jumps straight to the full expanded view. The intermediate
     // isolated tier still exists, reached by clicking a group chip (toggleChip), not the More tile.
     setExpandedGroupKey(groupKey);
@@ -339,12 +349,11 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   };
 
   const handleSynergyCardClick = (clickedCard: LorcanaCard, groupKey?: string) => {
-    trackEvent('synergy_card_clicked', {
+    trackSynergyCardClicked({
       sourceCardId: props.card.id,
-      clickedCardId: clickedCard.id,
-      clickedCardName: clickedCard.fullName,
-      clickedCardInk: clickedCard.ink,
-      groupKey: groupKey ?? null,
+      clicked: clickedCard,
+      groupKey,
+      surface: 'modal',
     });
     setExpandedGroupKey(null);
     keepComparisonOpener(focusedWithin(modalRef.current));

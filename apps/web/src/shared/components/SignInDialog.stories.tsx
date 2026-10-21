@@ -21,6 +21,6 @@ const meta: Meta<typeof SignInDialog> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Open: Story = {args: {isOpen: true, onClose: () => undefined}};
+export const Open: Story = {args: {isOpen: true, onClose: () => undefined, surface: 'header'}};
 
-export const Closed: Story = {args: {isOpen: false, onClose: () => undefined}};
+export const Closed: Story = {args: {isOpen: false, onClose: () => undefined, surface: 'header'}};

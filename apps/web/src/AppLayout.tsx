@@ -190,9 +190,12 @@ function AppContent() {
 }
 
 export function AppLayout() {
+  const {pathname} = useLocation();
   // Only the page the app starts on decides; the provider reads this once, at mount.
-  const startsOnHome = useLocation().pathname === '/';
-  const speedInsightsRoute = useSpeedInsightsRoute();
+  const startsOnHome = pathname === '/';
+  // The matched route's label (#688), shared by both Vercel tools. Given a route, <Analytics />
+  // turns off its script's own page tracking and sends a pageview whenever the route or path changes.
+  const route = useSpeedInsightsRoute();
   return (
     <ErrorBoundary>
       <SessionProvider>
@@ -209,8 +212,8 @@ export function AppLayout() {
           </SkeletonTheme>
         </ProfileProvider>
       </SessionProvider>
-      <Analytics />
-      <SpeedInsights route={speedInsightsRoute} />
+      <Analytics route={route} path={pathname} />
+      <SpeedInsights route={route} />
     </ErrorBoundary>
   );
 }
