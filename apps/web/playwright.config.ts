@@ -2,9 +2,9 @@ import {execFileSync} from 'node:child_process';
 import {defineConfig, devices} from '@playwright/test';
 import {E2E_SUPABASE_ANON_KEY, E2E_SUPABASE_ORIGIN} from './e2e/fixtures/supabaseStub';
 
-// Local E2E servers live here, clear of the dev-server ports (5173 and up), Storybook, the
-// react-grab relay and Chrome's blocked ports. Not the OS's own free-port pick: this machine's
-// dynamic range starts at 1024, so that could land on any of them.
+// Local E2E servers live here, clear of the dev-server ports (5173 and up), Storybook and
+// Chrome's blocked ports. Not the OS's own free-port pick: this machine's dynamic range
+// starts at 1024, so that could land on any of them.
 const FIRST_PORT = 5200;
 const PORT_COUNT = 100;
 
@@ -198,9 +198,6 @@ export default defineConfig({
       // unexpected floating card. If a future test covers the notice itself, flip
       // to 'true' and clear localStorage in beforeEach.
       VITE_SHOW_BETA_NOTICE: 'false',
-      // Keep the react-grab dev inspector (index.html) out of E2E: on every page load it fetches
-      // react-grab.com and @imports a Google Fonts stylesheet, which delays WebKit's `load` (#673).
-      VITE_DISABLE_REACT_GRAB: 'true',
       // A production build (`preview`) starts Sentry and PostHog when it has their keys
       // (shared/lib/sentry.ts, posthog.ts), and with SENTRY_AUTH_TOKEN vite.config.ts uploads its
       // source maps, then deletes dist/**/*.map, the deploy build's included. Blank all three, so

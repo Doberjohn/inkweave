@@ -1,14 +1,6 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script type="module">
-      // Dev-only inspector. E2E pins VITE_DISABLE_REACT_GRAB=true (playwright.config.ts):
-      // there it only adds internet requests, a refused ws://localhost:4722 client and injected UI.
-      if (import.meta.env.DEV && import.meta.env.VITE_DISABLE_REACT_GRAB !== 'true') {
-        import("react-grab");
-        import("@react-grab/claude-code/client");
-      }
-    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Inkweave — Master Lorcana Synergies</title>

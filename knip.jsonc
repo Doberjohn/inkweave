@@ -18,9 +18,5 @@
       // generate-docs.mjs opens the docs hub with the system's own opener.
       "ignoreBinaries": ["xdg-open"],
     },
-    "apps/web": {
-      // index.html loads it in dev only, which knip can't see (#673).
-      "ignoreDependencies": ["react-grab"],
-    },
   },
 }
