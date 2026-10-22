@@ -25,11 +25,9 @@ ruleTester.run('no-raw-spacing', inkweave.rules['no-raw-spacing'], {
     ok('const s = {padding: SPACING.md, margin: 0};'),
     ok('const s = {gap: compact ? SPACING.sm : SPACING.md};'),
     ok('const s = {marginTop: -SPACING.md, marginLeft: -0};'),
-    // Exempt: stories and the src/docs/ showcase (fixtures, not product), theme.ts
-    // (it declares the tokens), and tests.
+    // Exempt: stories and the src/docs/ showcase (fixtures, not product), and tests.
     exempt('/repo/apps/web/src/features/demo/Demo.stories.tsx'),
     exempt('/repo/apps/web/src/docs/tokens.ts'),
-    exempt('/repo/apps/web/src/shared/constants/theme.ts'),
     exempt('/repo/apps/web/src/features/demo/Demo.test.tsx'),
     exempt('C:\\repo\\apps\\web\\src\\features\\demo\\Demo.stories.tsx'),
   ],

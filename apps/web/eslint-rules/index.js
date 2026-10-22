@@ -47,11 +47,12 @@ const TEST_EXEMPT = [/\.test\.(ts|tsx)$/];
 
 /**
  * Stories and the token-showcase docs are fixtures: their padding is
- * scaffolding, not product (owner ruling, 2026-07-31). theme.ts declares the
- * tokens, VISUALLY_HIDDEN's screen-reader `margin: -1` among them. The color
- * rules exempt src/docs/ and theme.ts too.
+ * scaffolding, not product (owner ruling, 2026-07-31). Mirrors the color rules,
+ * which already exempt src/docs/. theme.ts is not exempt, unlike for the color
+ * rules: its raw spacing goes in the ledger like any other file's (owner,
+ * 2026-10-22).
  */
-const SPACING_EXEMPT = [...TEST_EXEMPT, /\.stories\.tsx$/, /src\/docs\//, /shared\/constants\/theme\.ts$/];
+const SPACING_EXEMPT = [...TEST_EXEMPT, /\.stories\.tsx$/, /src\/docs\//];
 
 function isExempt(context, exemptPatterns) {
   const name = relName(context);

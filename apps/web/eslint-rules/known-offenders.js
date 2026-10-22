@@ -135,9 +135,9 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/CardImage.tsx', // x1
   ],
   // Seeded 2026-10-22 when the rule turned on (#549), after it began reading
-  // ternary branches, negative values and the logical properties. Stories,
-  // src/docs/ and theme.ts are exempt, so none are listed.
-  // 65 files, 190 violations at seeding
+  // ternary branches, negative values and the logical properties. Stories and
+  // src/docs/ are exempt, so none are listed.
+  // 66 files, 191 violations at seeding
   'no-raw-spacing': [
     'src/features/cards/components/BinderSpreadMap.tsx', // x1
     'src/features/cards/components/BrowseCardGrid.tsx', // x1
@@ -204,6 +204,7 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/SearchBottomSheet.tsx', // x2
     'src/shared/components/TabList.tsx', // x1
     'src/shared/components/ToolbarToggle.tsx', // x1
+    'src/shared/constants/theme.ts', // x1
   ],
   // Ad-hoc styled <button> sites pre-dating the #509 kit. Converge each to a
   // kit component (CtaButton/LinkButton/TabList/IconButton/Chip) on touch.

@@ -40,10 +40,10 @@ One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spr
   `gap` and their longhand and logical forms (`paddingTop`, `paddingInline`,
   `marginBlockStart`…), negative values (`marginTop: -14`; `-SPACING.md` passes),
   and both branches of a ternary (`gap: isMobile ? 8 : 12`). Its ledger was seeded
-  the day it turned on, from a measured run: 65 files, 190 values. Stories and
+  the day it turned on, from a measured run: 66 files, 191 values. Stories and
   `src/docs/` are exempt, like tests (owner ruling, 2026-07-31: their padding is
-  scaffolding, not product), and so is `theme.ts`, which declares the tokens, as
-  for the color rules.
+  scaffolding, not product). `theme.ts` is not, unlike for the color rules: its one
+  value, `VISUALLY_HIDDEN`'s `margin: -1`, is in the ledger (owner, 2026-10-22).
 - **Spacing in a string is invisible.** `padding: '0 14px'` is text to the rule, and
   the value gate greps token values, so a quoted shorthand's numbers pass both. Put
   tokens in a shorthand (`` padding: `${SPACING.sm}px ${SPACING.md}px` ``); **#548**
