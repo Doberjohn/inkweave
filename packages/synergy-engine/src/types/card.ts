@@ -36,6 +36,8 @@ export interface CardPrinting {
   promoGrouping?: string; // a promo's set as printed on the card: "P1" in 25/P1 (#802)
   finish?: 'foil' | 'normal'; // only on promo twins that share a code (#802)
   finishes?: PrintingFinishes; // only where its rarity would get its versions wrong, or the owner corrected them (#880)
+  artVariant?: string; // a collection promo printed in two arts under one number: "A" in Dreamborn's 24A/P2 (#805)
+  printedName?: string; // a promo printed under another name than its card's: "Vaiana" on 26/P2's European printing (#891)
 }
 
 // Core card interface (based on LorcanaJSON structure)
@@ -73,7 +75,8 @@ export interface LorcanaCard {
   // Absent means the scan is English. Set by the web loader; engine never reads it.
   scanLanguage?: string;
   // The alternate printings of this card, in collector-number order; absent when it has none.
-  // Set by the web loader; engine never reads it.
+  // Set by the web loader, and for a pre-Core card by collection mode from its printings and
+  // promos (#891); engine never reads it.
   variants?: CardPrinting[];
   // The id of the card this one is a printing of (LorcanaJSON's `baseId`); absent on a card
   // that is no printing. Only collection cards carry one, since a Core card holds its

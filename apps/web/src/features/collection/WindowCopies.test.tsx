@@ -29,11 +29,21 @@ vi.mock('./collectionRepository', () => ({
 
 const ELSA: LorcanaCard = createCard({
   id: 'elsa',
+  name: 'Elsa',
+  version: 'Snow Queen',
   fullName: 'Elsa - Snow Queen',
   rarity: 'Legendary',
   variants: [
     {id: 'elsa-enchanted', rarity: 'Enchanted', number: 216},
     {id: 'elsa-promo', rarity: 'Special', number: 1, promoGrouping: 'C3', finishes: ['normal']},
+    // A promo printed under another name, as Moana's European 26/P2 reads "Vaiana" (#891).
+    {
+      id: 'elsa-renamed',
+      rarity: 'Special',
+      number: 26,
+      promoGrouping: 'P2',
+      printedName: 'Queen Elsa',
+    },
   ],
 });
 
@@ -110,6 +120,14 @@ describe('WindowCopies', () => {
 
     expect(view.getByRole('group', {name: 'Your copies: 0 normal'})).toBeInTheDocument();
     expect(view.queryByRole('button', {name: 'Add one copy of foil Elsa - Snow Queen'})).toBeNull();
+  });
+
+  it('names its buttons by the name printed on the printing on show (#891)', async () => {
+    mockWindow.shownPrintingId = 'elsa-renamed';
+    const view = await renderInWindow();
+
+    const add = view.getByRole('button', {name: 'Add one copy of Queen Elsa - Snow Queen'});
+    expect(add).toBeInTheDocument();
   });
 
   it('is not shown signed out, though this browser keeps the collection', async () => {

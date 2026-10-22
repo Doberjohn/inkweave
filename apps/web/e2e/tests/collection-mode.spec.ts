@@ -1,7 +1,14 @@
 import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {E2E_SUPABASE_ORIGIN} from '../fixtures/supabaseStub';
-import {cardFullNameById, newestCoreSet, promoSetWithOpenPocket, setCards, setPrintings} from '../helpers/cardData';
+import {
+  cardFullNameById,
+  newestCoreSet,
+  preCoreCardWithEnchanted,
+  promoSetWithOpenPocket,
+  setCards,
+  setPrintings,
+} from '../helpers/cardData';
 import {storedSession} from '../helpers/session';
 
 /**
@@ -652,6 +659,34 @@ test.describe('Collection mode, signed in', () => {
 
     await expect(page.getByRole('dialog', {name: 'Import your collection'})).toBeVisible();
     await expect(binder(page)).toHaveCount(0);
+  });
+
+  test("a pre-Core card's window offers its Enchanted, and the Enchanted's pocket opens the card on it (#891)", async ({
+    page,
+  }) => {
+    // Sets 1-8 keep a card's printings as cards of their own, each a pocket bearing its name.
+    const card = preCoreCardWithEnchanted();
+    await signInAsCollector(page, ENTRIES);
+    await page.goto(`/browse?binder=${card.setCode}&q=${encodeURIComponent(card.fullName)}`);
+    const tiles = binder(page).getByTestId('card-tile');
+    await expect(tiles).toHaveCount(2);
+    const modal = page.getByTestId('card-overview-modal');
+    const printing = (name: string) => modal.getByRole('radio', {name, exact: true});
+
+    // The card's own pocket opens it on its Standard printing, its Enchanted a pick away.
+    await tiles.nth(0).click({position: {x: 10, y: 10}});
+    await expect(modal.locator('h1')).toHaveText(card.fullName);
+    await expect(printing('Standard')).toHaveAttribute('aria-checked', 'true');
+    await expect(printing('Enchanted')).toHaveAttribute('aria-checked', 'false');
+    // The dialog moves focus to its × 100ms after opening; a 100ms timer set now runs after it.
+    await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    await page.keyboard.press('Escape');
+    await expect(modal).toHaveCount(0);
+
+    // The Enchanted's pocket opens the card itself, on the Enchanted.
+    await tiles.nth(1).click({position: {x: 10, y: 10}});
+    await expect(modal.locator('h1')).toHaveText(card.fullName);
+    await expect(printing('Enchanted')).toHaveAttribute('aria-checked', 'true');
   });
 });
 

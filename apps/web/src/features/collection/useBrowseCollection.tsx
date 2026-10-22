@@ -474,7 +474,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     modeActions,
     renderBinder,
     modalTarget: collectionMode
-      ? (cardId, listing) => binderModalTarget(cardId, listing, {coreCards, pool, setCode, sets: panelControls.sets})
+      ? (cardId, listing) => binderModalTarget(cardId, listing, {pool, setCode, sets: panelControls.sets})
       : null,
     sortOptions: collectionMode ? BINDER_SORT_OPTIONS : undefined,
     show,

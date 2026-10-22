@@ -5,7 +5,8 @@
 // pages and every build script keep seeing exactly the 1,228 Core cards — not
 // because anyone remembered to filter, but because they never ask this provider.
 // Browse merges the two arrays locally, in the one place that should see both.
-// The promos load here too (#805), each a pocket built from the card it reprints.
+// The promos load here too (#805), each a pocket built from the card it reprints, and
+// a pre-Core card gets its printings, its set's and its promos, in `variants` (#891).
 //
 // Loading is LAZY: nothing is fetched until collection mode is switched on. A
 // visitor who never opens it pays nothing.
@@ -29,6 +30,7 @@ import {
   type CollectionPromo,
   type RawCollectionPromo,
 } from './collectionPromos';
+import {withPreCoreVariants} from './preCoreVariants';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 
 /**
@@ -43,7 +45,10 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 export const COLLECTION_SETS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14'];
 
 interface CollectionCardsContextValue {
-  /** Non-Core cards, transformed. Empty until collection mode asks for them. */
+  /**
+   * Non-Core cards, transformed, each pre-Core card with its printings in `variants` (#891).
+   * Empty until collection mode asks for them.
+   */
   cards: LorcanaCard[];
   /** Every promo in the owner's catalog (#805), loaded with the cards. Empty until then. */
   promos: CollectionPromo[];
@@ -122,7 +127,7 @@ export function CollectionCardsProvider({children}: {children: ReactNode}) {
     setError(null);
     Promise.all([Promise.all(COLLECTION_SETS.map(fetchChunk)), fetchPromos()])
       .then(([chunks, loadedPromos]) => {
-        setCards(chunks.flat());
+        setCards(withPreCoreVariants(chunks.flat(), loadedPromos));
         setPromos(loadedPromos);
         setLoaded(true);
       })

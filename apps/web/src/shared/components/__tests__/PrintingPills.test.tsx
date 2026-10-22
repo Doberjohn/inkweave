@@ -130,4 +130,33 @@ describe('PrintingPills', () => {
 
     expect(screen.getByRole('radio', {name: 'Promo 8/C1, foil'}).textContent).toBe('8/C1 foil');
   });
+
+  it('names a two-art promo by its letter too, so 24A/P2 and 24B/P2 stay apart (#891)', () => {
+    // Hiro Hamada - Armor Designer's two P2 promos share #24: Dreamborn's 24A/P2 and 24B/P2.
+    const p2 = (key: string, artVariant: string) => ({
+      key,
+      label: `24${artVariant}/P2`,
+      rarity: 'Special',
+      number: 24,
+      promoGrouping: 'P2',
+      artVariant,
+    });
+    renderPills(0, [...PRINTINGS, p2('1661', 'A'), p2('1662', 'B')]);
+
+    expect(screen.getByRole('radio', {name: 'Promo 24A/P2'})).toHaveTextContent('24A/P2');
+    expect(screen.getByRole('radio', {name: 'Promo 24B/P2'})).toHaveTextContent('24B/P2');
+  });
+
+  it("names a promo printed under another name by it, so Moana's two 26/P2s stay apart (#891)", () => {
+    const p2 = {label: '26/P2', rarity: 'Special', number: 26, promoGrouping: 'P2'};
+    renderPills(0, [
+      ...PRINTINGS,
+      {...p2, key: '1433'},
+      {...p2, key: '1663', label: '26/P2 Vaiana', printedName: 'Vaiana'},
+    ]);
+
+    const vaiana = screen.getByRole('radio', {name: 'Promo 26/P2, Vaiana'});
+    expect(screen.getByRole('radio', {name: 'Promo 26/P2'}).textContent).toBe('26/P2');
+    expect(vaiana.textContent).toBe('26/P2 Vaiana');
+  });
 });

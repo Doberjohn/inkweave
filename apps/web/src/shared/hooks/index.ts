@@ -16,6 +16,7 @@ export {useBackOrNavigate} from './useBackOrNavigate';
 export {
   usePrintingSelection,
   printedCardNumber,
+  printedFullName,
   printingAlt,
   printingsOf,
   hasForeignScan,

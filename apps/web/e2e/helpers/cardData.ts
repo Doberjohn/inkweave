@@ -94,6 +94,37 @@ export function setPrintings(setCode: string): {id: string; rarity: string}[] {
   );
 }
 
+/** A card of a collection chunk (`public/data/collection/{set}.json`, #553). */
+interface RawChunkCard extends RawCard {
+  rarity?: string;
+  /** The card it is a printing of (#796): on a printing alone. */
+  baseId?: number;
+}
+
+/** The sets outside Core, which the collection's chunks alone serve. */
+const PRE_CORE_SETS = ['1', '2', '3', '4', '5', '6', '7', '8'];
+
+/**
+ * A pre-Core card whose one printing in its set is an Enchanted, and that set (#891): a search
+ * for its name narrows the set's binder to its two pockets, the card's and then the
+ * Enchanted's. The first such card in set order, read from the chunks so the test follows the
+ * data.
+ */
+export function preCoreCardWithEnchanted(): {setCode: string; fullName: string} {
+  for (const setCode of PRE_CORE_SETS) {
+    const file = path.resolve(process.cwd(), `public/data/collection/${setCode}.json`);
+    const chunk = JSON.parse(fs.readFileSync(file, 'utf8')) as RawChunkCard[];
+    const card = chunk.find((base) => {
+      if (base.baseId !== undefined) return false;
+      const named = chunk.filter((c) => c.fullName === base.fullName);
+      const enchanted = named.some((c) => c.baseId === base.id && c.rarity === 'Enchanted');
+      return named.length === 2 && enchanted;
+    });
+    if (card) return {setCode, fullName: card.fullName};
+  }
+  throw new Error('Fixture broken: no card of Sets 1-8 has an Enchanted printing in its set');
+}
+
 /** The binder's pockets per page and per spread (`PER_PAGE`, `PER_SPREAD` in BinderSpread.tsx). */
 const PAGE_POCKETS = 12;
 const SPREAD_POCKETS = 24;

@@ -200,5 +200,47 @@ describe('CollectionCardsProvider', () => {
       rerender({core: CORE});
       expect(result.current.isReady).toBe(true);
     });
+
+    it('gives a pre-Core card its printings as the collection loads, and the binder still one pocket each (#891)', async () => {
+      // Hiro Hamada - Armor Designer (7/96) and his Enchanted (7/214) as Set 7's chunk holds
+      // them, and his 24A/P2 promo as collection/promos.json lists it.
+      const hiro = {
+        id: 1529,
+        name: 'Hiro Hamada',
+        version: 'Armor Designer',
+        fullName: 'Hiro Hamada - Armor Designer',
+        cost: 7,
+        color: 'Emerald-Sapphire',
+        inkwell: true,
+        type: 'Character',
+        setCode: '7',
+        number: 96,
+        rarity: 'Super Rare',
+      };
+      const enchanted = {...hiro, id: 1647, number: 214, rarity: 'Enchanted', baseId: 1529};
+      const promo = {
+        id: 1661,
+        rarity: 'Special',
+        number: 24,
+        promoGrouping: 'P2',
+        artVariant: 'A',
+        fullName: hiro.fullName,
+        baseId: 1529,
+      };
+      const served: Record<string, unknown[]> = {
+        '/data/collection/7.json': [hiro, enchanted],
+        '/data/collection/promos.json': [promo],
+      };
+      fetchMock.mockImplementation((url: string) =>
+        Promise.resolve({ok: true, json: () => Promise.resolve(served[url] ?? [])}),
+      );
+      const {result} = renderHook(() => useCollectionPool(CORE, true), {wrapper});
+      await waitFor(() => expect(result.current.isReady).toBe(true));
+
+      const {pool} = result.current;
+      const base = pool.find((card) => card.id === '1529');
+      expect(pool.map((card) => card.id)).toEqual(['core', '1529', '1647', '1661']);
+      expect(base?.variants?.map((printing) => printing.id)).toEqual(['1647', '1661']);
+    });
   });
 });
