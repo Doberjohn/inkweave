@@ -16,19 +16,25 @@ describe('ModalCardTitle', () => {
     expect(screen.queryByRole('img')).toBeNull();
   });
 
+  it("shows a promo card's code without a logo", () => {
+    render(<ModalCardTitle card={createCard({rarity: 'Special', setCode: 'P1', setNumber: 25})} isMobile={false} />);
+    expect(screen.getByText('25/P1')).toBeInTheDocument();
+    expect(screen.queryByRole('img')).toBeNull();
+  });
+
   it('shows the name alone on phones, where the logo would wrap the title', () => {
     render(<ModalCardTitle card={createCard({setCode: '11', setNumber: 52})} isMobile />);
     expect(screen.queryByRole('img')).toBeNull();
     expect(screen.queryByText('52/204')).toBeNull();
   });
 
-  it('reads the number printed on the printing on show after the logo, outside the heading', () => {
+  it('reads the number printed on the printing on show before the logo, outside the heading', () => {
     const card = createCard({fullName: 'Thomas - Wide-Eyed Recruit', setCode: '11', setNumber: 52});
     const {rerender} = render(<ModalCardTitle card={card} isMobile={false} />);
 
     const number = screen.getByText('52/204');
     expect(number.textContent).toBe('Card number 52/204');
-    expect(screen.getByRole('img', {name: 'Winterspell'}).nextElementSibling).toBe(number);
+    expect(number.nextElementSibling).toBe(screen.getByRole('img', {name: 'Winterspell'}));
     expect(screen.getByRole('heading', {level: 1}).textContent).toBe('Thomas - Wide-Eyed Recruit');
 
     rerender(<ModalCardTitle card={card} isMobile={false} printing={{key: 'e', label: 'Enchanted', rarity: 'Enchanted', number: 223}} />);

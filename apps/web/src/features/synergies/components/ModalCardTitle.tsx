@@ -3,6 +3,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {
   COLORS,
   FONT_SIZES,
+  RADIUS,
   SET_LOGOS,
   SET_NAMES,
   SPACING,
@@ -22,12 +23,20 @@ interface ModalCardTitleProps {
   as?: 'h1' | 'div';
 }
 
-/** The card's number beside the logo: muted, and in even-width digits. */
-const NUMBER_STYLE: CSSProperties = {
+/**
+ * The card's number before the logo: a small muted tag, in even-width digits, that sets it
+ * apart from the name (owner, 2026-10-22). A label, never a control.
+ */
+const NUMBER_TAG_STYLE: CSSProperties = {
   ...TABULAR,
-  fontSize: FONT_SIZES.xl,
+  fontSize: FONT_SIZES.base,
   fontWeight: 600,
+  lineHeight: 1.4,
   color: COLORS.textMuted,
+  background: COLORS.surfaceRaised,
+  border: `1px solid ${COLORS.surfaceBorder}`,
+  borderRadius: RADIUS.sm,
+  padding: `${SPACING.xxs}px ${SPACING.sm}px`,
   whiteSpace: 'nowrap',
   flexShrink: 0,
 };
@@ -35,7 +44,7 @@ const NUMBER_STYLE: CSSProperties = {
 /** The number printed on the card ("52/204", `printedCardNumber`), read as a card number. */
 function CardNumber({number}: {number: string}) {
   return (
-    <span style={NUMBER_STYLE}>
+    <span style={NUMBER_TAG_STYLE}>
       <span style={VISUALLY_HIDDEN}>Card number </span>
       {number}
     </span>
@@ -51,12 +60,13 @@ export const LOGO_HEIGHT = 34;
 
 /**
  * The card modal's title: the name printed on the printing on show (`printedFullName`, so
- * 26/P2's European printing reads Vaiana, #891), with its set's logo beside it on desktop
- * (owner, 2026-10-08), then the number printed on that printing (owner,
- * 2026-10-20). Phones show the name alone, since there the logo would put about twice
- * as many names on two lines (27% of them to 59%, measured). The logo and the number
- * sit outside the heading, so the heading reads the name alone. Shared with the loading
- * fallback, so nothing moves when the modal arrives.
+ * 26/P2's European printing reads Vaiana, #891), then on desktop the number printed on that
+ * printing (owner, 2026-10-20) and its set's logo (owner, 2026-10-08). The number comes first,
+ * as the card prints it before its set, "52/204 · EN · 11" (owner, 2026-10-22). Phones show
+ * the name alone, since there the logo would put about twice as many names on two lines (27%
+ * of them to 59%, measured). The number and the logo sit outside the heading, so the heading
+ * reads the name alone. Shared with the loading fallback, so nothing moves when the modal
+ * arrives.
  */
 export function ModalCardTitle({card, isMobile, printing, as: Title = 'h1'}: ModalCardTitleProps) {
   const logo = !isMobile && card.setCode ? SET_LOGOS[card.setCode] : undefined;
@@ -66,6 +76,7 @@ export function ModalCardTitle({card, isMobile, printing, as: Title = 'h1'}: Mod
   return (
     <div style={{display: 'flex', alignItems: 'center', gap: SPACING.md, flex: 1, minWidth: 0}}>
       <Title style={{...pickModalTitleStyle(isMobile), flex: '0 1 auto'}}>{name}</Title>
+      {number && <CardNumber number={number} />}
       {logo && (
         <img
           src={logo}
@@ -74,7 +85,6 @@ export function ModalCardTitle({card, isMobile, printing, as: Title = 'h1'}: Mod
           style={{display: 'block', height: LOGO_HEIGHT, width: 'auto', flexShrink: 0}}
         />
       )}
-      {number && <CardNumber number={number} />}
     </div>
   );
 }
