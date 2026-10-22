@@ -56,6 +56,7 @@ export const PROMO_SETS: readonly PromoSet[] = [
     ],
   },
   {code: 'RPH', name: 'RPH Promo'},
+  {code: 'P5', name: 'Promo Set 5'},
 ];
 
 /** Whether a promo set goes by this code, or gathers an edition printed with it. */
