@@ -39,7 +39,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The card modal's header title on desktop: the name, then its set's logo. */
+/** The card modal's header title on desktop: the name, then its number in a small tag and its set's logo. */
 export const Desktop: Story = {};
 
 /** Hyperia City, the reveal season's set, with a near-square logo. */
