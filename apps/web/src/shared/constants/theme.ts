@@ -333,18 +333,7 @@ export const CARD_TYPE_FILTERS: CardTypeFilter[] = [
   'Location',
 ];
 
-// Shared select styles (dark theme)
-export const SELECT_STYLE_SM: React.CSSProperties = {
-  padding: '6px 8px',
-  borderRadius: `${RADIUS.md}px`,
-  border: `1px solid ${COLORS.surfaceBorder}`,
-  fontSize: `${FONT_SIZES.sm}px`,
-  fontFamily: FONTS.body,
-  background: COLORS.gray100,
-  color: COLORS.text,
-  cursor: 'pointer',
-};
-
+// Shared select style (dark theme)
 export const SELECT_STYLE_MD: React.CSSProperties = {
   padding: '12px 16px',
   borderRadius: `${RADIUS.lg}px`,

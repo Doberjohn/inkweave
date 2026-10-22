@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONT_SIZES, RADIUS, SPACING, hexRgba} from '../constants';
+import {COLORS, FONT_SIZES, RADIUS, SHADOWS, SPACING} from '../constants';
 import {CardTranslationPanel} from './CardTranslationPanel';
 import {CardTranslationToggle} from './CardTranslationToggle';
 import {DialogShell} from './DialogShell';
@@ -55,7 +55,7 @@ function ImageFallback() {
         padding: '40px 32px',
         background: COLORS.surface,
         borderRadius: `${RADIUS.xl}px`,
-        border: `${FRAME}px solid ${COLORS.primary500}`,
+        border: `${FRAME}px solid ${COLORS.primary}`,
         textAlign: 'center',
       }}>
       <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.base}px`, margin: 0}}>
@@ -81,8 +81,8 @@ function EnlargedScan({src, alt, isLocation, onError}: {src: string; alt: string
         maxWidth: isLocation ? '85vh' : 'calc(100vw - 80px)',
         maxHeight: isLocation ? 'calc(100vw - 80px)' : '85vh',
         borderRadius: `${RADIUS.xl}px`,
-        border: `${FRAME}px solid ${COLORS.primary500}`,
-        boxShadow: `0 0 30px ${hexRgba(COLORS.primary500, 0.3)}`,
+        border: `${FRAME}px solid ${COLORS.primary}`,
+        boxShadow: SHADOWS.glowLg,
         objectFit: 'contain',
         transform: isLocation ? 'rotate(90deg)' : undefined,
       }}

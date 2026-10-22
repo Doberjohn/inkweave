@@ -43,13 +43,13 @@
    hover state can override them. */
 .reveal-franchise-card {
   cursor: pointer;
-  border: 1px solid #24243a;
+  border: 1px solid #252540;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
   transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 .reveal-franchise-card:hover {
   transform: translateY(-3px);
-  border-color: #3a3a55;
+  border-color: #333355;
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
 }
 .reveal-franchise-card:focus-visible {
