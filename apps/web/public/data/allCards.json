@@ -155,7 +155,10 @@
           "images": {
             "full": "https://api.lorcana.ravensburger.com/images/en/d23/4_830c56df482cafcb991b97b1cca0f4d0f95d0ab7.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/d23/4_e4c46685e462ae35e909b5dede01c3c0b422a9b7.jpg"
-          }
+          },
+          "finishes": [
+            "foil"
+          ]
         }
       ]
     },
