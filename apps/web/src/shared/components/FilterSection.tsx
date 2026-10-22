@@ -28,7 +28,7 @@ interface FilterSectionProps {
 const labelStyle = (compact: boolean): React.CSSProperties => ({
   fontSize: `${FONT_SIZES.base}px`,
   color: COLORS.gray700,
-  marginBottom: compact ? '4px' : `${SPACING.sm}px`,
+  marginBottom: compact ? SPACING.xs : SPACING.sm,
   fontWeight: 500,
   letterSpacing: '0.02em',
 });
@@ -87,8 +87,8 @@ function ToggleLabel({label, open, summary, controls, onToggle}: {
           width: `calc(100% + ${2 * WASH_BLEED}px)`,
           // LinkButton's own 2px of vertical padding, plus 2px of wash that the margin
           // gives back, so the header line keeps its height.
-          margin: `-2px -${WASH_BLEED}px`,
-          padding: `4px ${WASH_BLEED}px`,
+          margin: `-${SPACING.xxs}px -${WASH_BLEED}px`,
+          padding: `${SPACING.xs}px ${WASH_BLEED}px`,
           borderRadius: RADIUS.sm,
           background: hovered ? GOLD_GLOW.hoverBg : 'transparent',
           transition: `color ${DURATION.fast}ms ${EASING.snappy}, background ${DURATION.fast}ms ${EASING.snappy}`,

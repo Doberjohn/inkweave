@@ -1,4 +1,4 @@
-import {CAP_LABEL_XS, COLORS, GOLD_GLOW, RADIUS} from '../constants';
+import {CAP_LABEL_XS, COLORS, GOLD_GLOW, RADIUS, SPACING} from '../constants';
 
 interface GoldTagProps {
   children: React.ReactNode;
@@ -20,7 +20,7 @@ export function GoldTag({children, style}: GoldTagProps) {
         background: GOLD_GLOW.activeBg,
         border: `1px solid ${GOLD_GLOW.activeBorder}`,
         borderRadius: RADIUS.sm,
-        padding: '2px 6px',
+        padding: `${SPACING.xxs}px ${SPACING.sm}px`,
         lineHeight: 1,
         ...style,
       }}>

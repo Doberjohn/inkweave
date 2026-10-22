@@ -6,6 +6,7 @@ import {slotSize} from './mosaicSizing';
 import {PER_INK} from './setComposition';
 import {placeCards} from './boardOrder';
 import {useContainerWidth} from '../../shared/hooks';
+import {SPACING} from '../../shared/constants';
 
 /**
  * Per-ink diamond row layouts. Each ink's rows sum to its PER_INK total, so every
@@ -110,8 +111,8 @@ export function CardMosaic({ink, cards, onOpen, compact = false, selectedRarity 
   });
 
   return (
-    <div ref={railRef} style={{overflowX: compact ? 'visible' : 'auto', paddingBottom: 4}}>
-      <div style={{display: 'flex', flexDirection: 'column', gap, alignItems: 'center', padding: '6px 0'}}>
+    <div ref={railRef} style={{overflowX: compact ? 'visible' : 'auto', paddingBottom: SPACING.xs}}>
+      <div style={{display: 'flex', flexDirection: 'column', gap, alignItems: 'center', padding: `${SPACING.sm}px 0`}}>
         {rows}
       </div>
     </div>

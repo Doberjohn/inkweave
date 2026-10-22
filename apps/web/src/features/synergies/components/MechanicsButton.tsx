@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
 import {CountBadge} from '../../../shared/components/CountBadge';
 
 interface MechanicsButtonProps {
@@ -55,7 +55,7 @@ export function MechanicsButton({onClick, activeCount, isMobile}: MechanicsButto
       aria-label="Mechanics"
       style={{
         height: 34,
-        padding: isMobile ? '0 12px' : '0 14px',
+        padding: isMobile ? `0 ${SPACING.md}px` : `0 ${SPACING.section}px`,
         border: `1px solid ${COLORS.primary}`,
         background,
         color: COLORS.primary,
@@ -68,7 +68,7 @@ export function MechanicsButton({onClick, activeCount, isMobile}: MechanicsButto
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
-        gap: 6,
+        gap: SPACING.sm,
         transition: `background 0.15s ${EASING.snappy}, box-shadow 0.15s ${EASING.snappy}`,
       }}>
       <MechanicsIcon />

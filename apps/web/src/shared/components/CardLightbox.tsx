@@ -48,11 +48,14 @@ const OVER_SCAN: React.CSSProperties = {
   borderRadius: `${RADIUS.card}px`,
 };
 
+// The fallback's top and bottom padding, past the spacing scale's top step (SPACING.xxxl, 32).
+const FALLBACK_PADDING_BLOCK = 40;
+
 function ImageFallback() {
   return (
     <div
       style={{
-        padding: '40px 32px',
+        padding: `${FALLBACK_PADDING_BLOCK}px ${SPACING.xxxl}px`,
         background: COLORS.surface,
         borderRadius: `${RADIUS.xl}px`,
         border: `${FRAME}px solid ${COLORS.primary}`,
@@ -61,7 +64,7 @@ function ImageFallback() {
       <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.base}px`, margin: 0}}>
         Image could not be loaded
       </p>
-      <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.sm}px`, margin: '8px 0 0'}}>
+      <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.sm}px`, margin: `${SPACING.sm}px 0 0`}}>
         Click anywhere to close
       </p>
     </div>

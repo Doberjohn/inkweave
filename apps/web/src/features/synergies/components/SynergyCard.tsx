@@ -3,7 +3,7 @@ import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../../cards';
 import {cardPath} from 'inkweave-synergy-engine/card';
 import {smallImageUrl} from '../../cards';
-import {INK_COLORS, COLORS, CARD_TILE_GLOW, EASING, FONT_SIZES, RADIUS, hexRgba} from '../../../shared/constants';
+import {INK_COLORS, COLORS, CARD_TILE_GLOW, EASING, FONT_SIZES, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
 import {CardLightbox, StrengthBadge} from '../../../shared/components';
 import {isModifiedClick} from '../../../shared/utils/touchGuard';
 import {getStrengthTier} from '../utils';
@@ -168,7 +168,9 @@ function StrengthBadgeOverlay({tier, text, explanation, isMobile}: StrengthBadge
         bottom: 0,
         left: 0,
         right: 0,
-        padding: isMobile ? '10px 4px 4px' : '12px 6px 5px',
+        padding: isMobile
+          ? `${SPACING.sm}px ${SPACING.xs}px ${SPACING.xs}px`
+          : `${SPACING.md}px ${SPACING.sm}px ${SPACING.xs}px`,
         background: `linear-gradient(transparent, ${hexRgba(COLORS.background, 0.85)} 30%, ${hexRgba(COLORS.background, 0.95)})`,
         display: 'flex',
         alignItems: 'center',

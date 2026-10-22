@@ -13,6 +13,12 @@ const TRANSITION_MS = 450;
 /** Half-width offset from center where the previous/upcoming stacks begin (px) */
 const STACK_OFFSET_PX = 440;
 
+// Spacing past the scale's top step (SPACING.xxxl, 32): the drop that brings the phone layout's
+// badge level with the cards' middle, and the gap between the real previous pairs and their
+// ghost silhouettes.
+const PHONE_BADGE_DROP = 72;
+const GHOST_ROW_GAP = 48;
+
 /** Inject carousel keyframes at module load */
 (function injectPairKeyframes() {
   const STYLE_ID = 'pair-transition-keyframes';
@@ -115,8 +121,8 @@ function PairRow({pair, selectedScore, size, highlightedCard}: {pair: VotingPair
     return (
       <div style={{display: 'flex', alignItems: 'start', justifyContent: 'center', width: '100%', gap: 0}}>
         <VotingCardDisplay card={pair.cardA} isMobile highlighted={highlightedCard === 'a'} dimmed={highlightedCard === 'b'} />
-        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 72, flexShrink: 0}}>
-          <div style={{display: 'flex', alignItems: 'center', gap: 4}}>
+        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: PHONE_BADGE_DROP, flexShrink: 0}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: SPACING.xs}}>
             <DashedLine width={16} muted />
             <MysteryBadge selectedScore={selectedScore} size={36} />
             <DashedLine width={16} muted />
@@ -158,9 +164,9 @@ function SynergyDescriptionGroups({pair, onHighlight}: {pair: VotingPair; onHigh
 }
 
 const GHOST_TIERS = [
-  {w: 132, h: 184, gap: 12, tilt: -3, opacity: 0.25, radius: 8},
-  {w: 96, h: 134, gap: 8, tilt: -7, opacity: 0.15, radius: 6},
-  {w: 67, h: 94, gap: 6, tilt: -11, opacity: 0.08, radius: 4},
+  {w: 132, h: 184, gap: SPACING.md, tilt: -3, opacity: 0.25, radius: 8},
+  {w: 96, h: 134, gap: SPACING.sm, tilt: -7, opacity: 0.15, radius: 6},
+  {w: 67, h: 94, gap: SPACING.xs, tilt: -11, opacity: 0.08, radius: 4},
 ];
 
 /** Renders previous pairs stack with ghost silhouettes for unfilled tiers */
@@ -169,7 +175,7 @@ function PreviousStack({pairs}: {pairs: PairPreview[]}) {
   const ghostTiers = GHOST_TIERS.slice(realCount);
 
   return (
-    <div style={{display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', gap: 48, pointerEvents: 'none'}}>
+    <div style={{display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', gap: GHOST_ROW_GAP, pointerEvents: 'none'}}>
       {/* Real pairs rendered by PairStack */}
       {realCount > 0 && <PairStack pairs={pairs} side="left" />}
       {/* Ghost silhouettes for remaining tiers */}
@@ -209,11 +215,11 @@ export function PairDisplay({pair, selectedScore, previousPairs, upcomingPairs, 
 
   if (isMobile) {
     return (
-      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%', overflow: 'hidden'}}>
+      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.lg, width: '100%', overflow: 'hidden'}}>
         <div
           key={pairId}
           style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, width: '100%',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.lg, width: '100%',
             animation: `pair-slide-in 400ms ${EASING.smooth}`,
           }}>
           <PairRow pair={pair} selectedScore={badgeScore} size="mobile" />
@@ -224,9 +230,9 @@ export function PairDisplay({pair, selectedScore, previousPairs, upcomingPairs, 
   }
 
   return (
-    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, width: '100%'}}>
+    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.sm, width: '100%'}}>
       {/* Cards row with carousel transition */}
-      <div style={{position: 'relative', width: '100%', overflow: 'hidden', padding: '20px 0'}}>
+      <div style={{position: 'relative', width: '100%', overflow: 'hidden', padding: `${SPACING.xl}px 0`}}>
         {/* Exiting pair: slides left and shrinks toward previous stack */}
         {exitingPair && (
           <div

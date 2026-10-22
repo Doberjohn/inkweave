@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SHADOWS, TIER_COLORS, TRUNCATE, Z_INDEX} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SHADOWS, SPACING, TIER_COLORS, TRUNCATE, Z_INDEX} from '../../../shared/constants';
 import {LinkButton} from '../../../shared/components/LinkButton';
 import type {Score} from '../../../shared/lib/supabase';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
@@ -28,7 +28,7 @@ const ENTER_MS = 300;
 function ScoreCircle({score, label}: {score: number; label: string}) {
   const tier = getStrengthTier(score);
   return (
-    <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
+    <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
       <span style={{fontSize: FONT_SIZES.sm, color: COLORS.textMuted, fontFamily: FONTS.body}}>{label}</span>
       <div
         style={{
@@ -116,15 +116,21 @@ export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
         overflow: 'hidden',
       }}
       className={exiting ? 'vote-toast-exit' : 'vote-toast-enter'}>
-      <div style={{padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8}}>
+      <div
+        style={{
+          padding: `${SPACING.md}px ${SPACING.lg}px`,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: SPACING.sm,
+        }}>
         {/* Header */}
-        <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
           <span style={{color: TIER_COLORS.strong.color, fontSize: FONT_SIZES.lg, fontWeight: 700}}>✓</span>
           <span style={{fontSize: FONT_SIZES.base, fontWeight: 600, color: COLORS.text, fontFamily: FONTS.body}}>
             Vote submitted
           </span>
           {onUndo && (
-            <LinkButton onClick={onUndo} style={{marginLeft: 'auto', padding: '2px 6px'}}>
+            <LinkButton onClick={onUndo} style={{marginLeft: 'auto', padding: `${SPACING.xxs}px ${SPACING.sm}px`}}>
               Undo
             </LinkButton>
           )}
@@ -142,7 +148,7 @@ export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
         </span>
 
         {/* Score comparison */}
-        <div style={{display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap'}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: SPACING.md, flexWrap: 'wrap'}}>
           <ScoreCircle score={data.userScore} label="You:" />
           <span style={{fontSize: FONT_SIZES.sm, color: COLORS.textMuted, fontFamily: FONTS.body, fontStyle: 'italic'}}>vs</span>
           <ScoreCircle score={data.engineScore} label="Engine:" />

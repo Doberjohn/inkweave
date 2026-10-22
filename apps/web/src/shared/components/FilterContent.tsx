@@ -183,8 +183,9 @@ function ChipToggleGroup<T extends string>({
   justifyContent?: React.CSSProperties['justifyContent'];
 }) {
   return (
-    // Gap 6: the same as the toolbar's active-chip row, so both chip rows read alike.
-    <div role="group" aria-label={ariaLabel} style={{display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent}}>
+    // The toolbar's active-chip row should match this gap, so both chip rows read alike (it's
+    // still 6 until deck-builder's spacing lands, #548).
+    <div role="group" aria-label={ariaLabel} style={{display: 'flex', flexWrap: 'wrap', gap: SPACING.sm, justifyContent}}>
       {values.map((value, i) => (
         <Fragment key={value}>
           {startsGroup(values, i, groupOf) && <span aria-hidden style={LINE_BREAK} />}
@@ -286,7 +287,8 @@ function rarityLines(rarities: readonly string[]): ((rarity: string) => string) 
  * beside full-size options on a wide screen, the kit's touch size in the phone drawer,
  * where they would otherwise be about 20px tall.
  */
-const compactChip = (isMobile: boolean) => (isMobile ? undefined : {padding: '2px 10px', fontSize: `${FONT_SIZES.sm}px`});
+const compactChip = (isMobile: boolean) =>
+  isMobile ? undefined : {padding: `${SPACING.xxs}px ${SPACING.md}px`, fontSize: `${FONT_SIZES.sm}px`};
 
 /**
  * STANDARD CARDS / ALT ART CARDS (owner, 2026-10-15): shortcuts that pick one kind's
@@ -303,8 +305,8 @@ function ArtPresets({rarities, filters, onFiltersChange, isMobile}: {
 }) {
   const picked = filters.rarities ?? [];
   return (
-    // Gap 6, as between the rarity chips above.
-    <div role="group" aria-label="Card art" style={{display: 'flex', justifyContent: 'center', gap: 6}}>
+    // The same gap as between the rarity chips above.
+    <div role="group" aria-label="Card art" style={{display: 'flex', justifyContent: 'center', gap: SPACING.sm}}>
       {ART_OPTIONS.map(({value, label, title}) => {
         const kind = raritiesOfKind(rarities, value);
         const lit = picksExactly(picked, kind);
@@ -384,7 +386,7 @@ const PANEL_GRID_STYLE: React.CSSProperties = {
   rowGap: SPACING.sm,
 };
 
-const COST_WRAP_STYLE: React.CSSProperties = {display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center'};
+const COST_WRAP_STYLE: React.CSSProperties = {display: 'flex', gap: SPACING.sm, flexWrap: 'wrap', justifyContent: 'center'};
 
 // Extracted into its own component so the cost-button .map() branch doesn't count
 // toward FilterContent's (already large) cyclomatic complexity.
@@ -536,7 +538,7 @@ function InkwellFilterSection({
             }
             activeColor={COLORS.primary500}
             activeBgColor={COLORS.primary200}>
-            <span style={{display: 'flex', alignItems: 'center', gap: 6}}>
+            <span style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
               <InkwellIcon value={value} size={18} />
               {value === 'inkable' ? 'Inkable' : 'Uninkable'}
             </span>

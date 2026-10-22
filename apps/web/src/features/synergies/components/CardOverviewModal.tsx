@@ -670,7 +670,7 @@ function ModalContentRegion({
 }: ModalContentRegionProps) {
   if (showExpanded && expandedGroup) {
     return (
-      <div style={{flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 24px 24px'}}>
+      <div style={{flex: 1, minHeight: 0, overflowY: 'auto', padding: `${SPACING.xl}px ${SPACING.xxl}px ${SPACING.xxl}px`}}>
         <ExpandedGroupView
           group={expandedGroup}
           isMobile={isMobile}
@@ -1172,10 +1172,10 @@ function ChipFilterRow({synergies, inComparison, activeGroupFilter, toggleChip}:
       // tab-reachable, defeating keyboard nav. React 19 honors `inert` as a boolean.
       inert={inComparison}
       style={{
-        padding: '14px 24px 0',
+        padding: `${SPACING.section}px ${SPACING.xxl}px 0`,
         display: 'flex',
         flexWrap: 'wrap',
-        gap: 8,
+        gap: SPACING.sm,
         opacity: inComparison ? 0 : 1,
         pointerEvents: inComparison ? 'none' : 'auto',
         transition: `opacity 250ms ${EASING.smooth}`,
@@ -1212,7 +1212,7 @@ function FilterChip({group, activeGroupFilter, toggleChip}: FilterChipProps) {
       style={isInactive ? {opacity: 0.55} : undefined}>
       <span
         style={{
-          padding: '2px 9px',
+          padding: `${SPACING.xxs}px ${SPACING.sm}px`,
           borderRadius: RADIUS.pill,
           fontSize: FONT_SIZES.sm,
           fontWeight: 700,
@@ -1241,7 +1241,7 @@ function HeroDivider({inComparison}: HeroDividerProps) {
         height: 1,
         border: 'none',
         background: `linear-gradient(90deg, transparent, ${COLORS.primary500} 50%, transparent)`,
-        margin: '16px 0 0',
+        margin: `${SPACING.lg}px 0 0`,
         opacity: inComparison ? 0 : 1,
         transition: `opacity 250ms ${EASING.smooth}`,
       }}
@@ -1620,7 +1620,7 @@ function DefaultInfoColumn({synergies, synergiesLoading, outsideCore, visibleGro
             isMobile={isMobile}
             maxVisibleCards={activeGroupFilter ? 11 : 3}
             gridColumns={4}
-            gridGap={8}
+            gridGap={SPACING.sm}
             marginBottom={0}
             showCardCount={false}
             compact
@@ -1649,8 +1649,8 @@ function OutsideCoreNotice() {
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        padding: 24,
-        gap: 8,
+        padding: SPACING.xxl,
+        gap: SPACING.sm,
       }}>
       <p style={{margin: 0, color: COLORS.text, fontSize: FONT_SIZES.lg, fontWeight: 600}}>Outside Core</p>
       <p style={{margin: 0, color: COLORS.textMuted, fontSize: FONT_SIZES.md, lineHeight: 1.5, maxWidth: 300}}>
@@ -1671,8 +1671,8 @@ function SynergiesEmptyState() {
         alignItems: 'center',
         justifyContent: 'center',
         textAlign: 'center',
-        padding: 24,
-        gap: 8,
+        padding: SPACING.xxl,
+        gap: SPACING.sm,
       }}>
       <p style={{margin: 0, color: COLORS.text, fontSize: FONT_SIZES.lg, fontWeight: 600}}>No synergies yet</p>
       <p style={{margin: 0, color: COLORS.textMuted, fontSize: FONT_SIZES.md, lineHeight: 1.5, maxWidth: 280}}>
@@ -1777,7 +1777,7 @@ function ComparisonDetailPanel({isMobile, inComparison, comparisonPair, exitingP
             style={{
               display: 'grid',
               gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-              gap: 20,
+              gap: SPACING.xl,
               // `stretch` makes both columns fill the row's height (= max of their intrinsic heights).
               // Mobile collapses to single column so the alignment is moot, but `stretch` is still the harmless default.
               alignItems: 'stretch',
@@ -1874,7 +1874,7 @@ function BackButton({onClick, minHeight}: BackButtonProps) {
         flexShrink: 0,
         display: 'inline-flex',
         alignItems: 'center',
-        gap: 6,
+        gap: SPACING.sm,
       }}>
       <span aria-hidden="true">←</span>
       <span>Back</span>

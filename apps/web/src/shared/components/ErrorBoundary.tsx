@@ -94,7 +94,7 @@ export class ErrorBoundary extends Component<Props, State> {
             onClick={this.handleAction}
             style={{
               marginTop: `${SPACING.lg}px`,
-              padding: '8px 16px',
+              padding: `${SPACING.sm}px ${SPACING.lg}px`,
               background: COLORS.primary600,
               color: COLORS.white,
               border: 'none',

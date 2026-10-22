@@ -1,5 +1,5 @@
 import {CtaButton} from './CtaButton';
-import {GOLD_GLOW} from '../constants';
+import {GOLD_GLOW, SPACING} from '../constants';
 
 type CtaButtonProps = React.ComponentProps<typeof CtaButton>;
 
@@ -28,8 +28,7 @@ export function ToolbarToggle({active, isMobile, style, ...rest}: ToolbarToggleP
       style={{
         height: 34,
         minHeight: 34,
-        padding: isMobile ? '0 12px' : '0 14px',
-        gap: 6,
+        padding: isMobile ? `0 ${SPACING.md}px` : `0 ${SPACING.section}px`,
         flexShrink: 0,
         boxShadow: active ? glow(isMobile) : undefined,
         // The ghost outline's 1px border, clear, so both states are one size and toggling

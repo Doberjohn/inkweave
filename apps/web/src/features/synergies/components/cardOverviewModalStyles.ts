@@ -30,7 +30,7 @@ export const CENTERING_WRAPPER_STYLE: CSSProperties = {
   justifyContent: 'center',
   zIndex: Z_INDEX.modal,
   pointerEvents: 'none',
-  padding: '24px',
+  padding: SPACING.xxl,
 };
 
 /** Shrink-wraps the modal shell so the sibling nav arrows can be positioned against its edges. */
@@ -82,17 +82,17 @@ export const DEFAULT_BODY_STYLE: CSSProperties = {
   flex: 1,
   minHeight: 0,
   position: 'relative',
-  padding: '20px 24px 24px',
+  padding: `${SPACING.xl}px ${SPACING.xxl}px ${SPACING.xxl}px`,
   display: 'flex',
   flexDirection: 'column',
-  gap: 16,
+  gap: SPACING.lg,
 };
 
 export const MODAL_HEADER_STYLE: CSSProperties = {
-  padding: '20px 24px 0',
+  padding: `${SPACING.xl}px ${SPACING.xxl}px 0`,
   display: 'flex',
   alignItems: 'center',
-  gap: 12,
+  gap: SPACING.md,
   flexWrap: 'wrap',
 };
 
@@ -205,7 +205,7 @@ export function pickCardsRowStyle({isMobile, cardWidth, rowHeight}: PickCardsRow
     display: isMobile ? 'flex' : 'grid',
     flexDirection: isMobile ? 'column' : undefined,
     gridTemplateColumns: isMobile ? undefined : `${cardWidth}px 1fr`,
-    gap: 28,
+    gap: SPACING.xxxl,
     alignItems: 'stretch',
     height: isMobile ? undefined : rowHeight,
     flexShrink: 0,
@@ -240,9 +240,9 @@ export function pickSynergyColumnLayout(isMobile: boolean, rowHeight: number): C
     minHeight: 0,
     display: 'flex',
     flexDirection: 'column',
-    gap: 18,
+    gap: SPACING.xl,
     maxHeight: isMobile ? undefined : rowHeight,
     overflowY: isMobile ? 'visible' : 'auto',
-    padding: isMobile ? 0 : '0 14px',
+    padding: isMobile ? 0 : `0 ${SPACING.section}px`,
   };
 }

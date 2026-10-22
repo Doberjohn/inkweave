@@ -1,5 +1,5 @@
 import type {ReactNode} from 'react';
-import {COLORS, DURATION, EASING, FONT_SIZES, FONTS, INK_COLORS, RADIUS, hexRgba, whiteRgba} from '../../../shared/constants';
+import {COLORS, DURATION, EASING, FONT_SIZES, FONTS, INK_COLORS, RADIUS, SPACING, hexRgba, whiteRgba} from '../../../shared/constants';
 import {CtaButton} from '../../../shared/components/CtaButton';
 import {VoteAffirmation} from '../../voting/components';
 
@@ -71,8 +71,8 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        gap: 12,
-        padding: '24px 20px',
+        gap: SPACING.md,
+        padding: `${SPACING.xxl}px ${SPACING.xl}px`,
         // Faint amethyst wash over the modal bg, mirroring the QuickVotePrompt's
         // gold wash pattern (rgba 0.06). Same darkness as before, but the column-accent
         // hue replaces the cool surfaceAlt blue so the two empty/active panels read as
@@ -104,7 +104,7 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
       </p>
       <div
         aria-label={`${current} of ${threshold} votes`}
-        style={{display: 'flex', alignItems: 'center', gap: 10, marginTop: 4}}>
+        style={{display: 'flex', alignItems: 'center', gap: SPACING.md, marginTop: SPACING.xs}}>
         <div
           style={{
             flex: 1,
@@ -136,7 +136,7 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
         </span>
       </div>
       {userAlreadyVoted ? (
-        <div style={{marginTop: 6}}>
+        <div style={{marginTop: SPACING.sm}}>
           <VoteAffirmation
             accentColor={COMMUNITY_TINT}
             title="Thanks for rating this in depth"
@@ -149,7 +149,7 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
           style={{
             width: '100%',
             minHeight: 40,
-            marginTop: 6,
+            marginTop: SPACING.sm,
             // Override the default gold gradient — the community CTA should read as community brand,
             // not engine. Dark text remains legible on the amethyst gradient.
             background: `linear-gradient(180deg, ${COMMUNITY_TINT} 0%, ${COMMUNITY_TINT_DARK} 100%)`,

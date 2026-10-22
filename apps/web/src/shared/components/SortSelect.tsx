@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING} from '../constants';
 
 interface SortSelectProps<T extends string> {
   options: {value: T; label: string; mobileLabel?: string}[];
@@ -48,7 +48,7 @@ export function SortSelect<T extends string>({
         // inline font-size + padding actually take effect.
         height: 34,
         boxSizing: 'border-box',
-        padding: '0 28px 0 10px',
+        padding: `0 ${SPACING.xxxl}px 0 ${SPACING.md}px`,
         appearance: 'none',
         WebkitAppearance: 'none',
         MozAppearance: 'none',
@@ -56,7 +56,8 @@ export function SortSelect<T extends string>({
         backgroundImage:
           "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'><path d='M1 1l4 4 4-4' stroke='%23e8e8e8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>\")",
         backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'right 10px center',
+        // The chevron sits as far in from the right edge as the text does from the left.
+        backgroundPosition: `right ${SPACING.md}px center`,
         borderRadius: `${RADIUS.md}px`,
         border: `1px solid ${borderColor}`,
         color: COLORS.text,

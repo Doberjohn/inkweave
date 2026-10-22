@@ -34,7 +34,7 @@ export function CardGridSkeleton({
   const containerWidth = useContainerWidth(containerRef);
 
   const gap = gapProp ?? DEFAULT_GAP;
-  const containerPadding = paddingProp ?? `${SPACING.lg}px 32px 32px`;
+  const containerPadding = paddingProp ?? `${SPACING.lg}px ${SPACING.xxxl}px ${SPACING.xxxl}px`;
 
   const columns = columnsProp ?? Math.max(1, Math.floor((containerWidth + gap) / (MIN_COL_WIDTH + gap)));
   const colWidth = containerWidth > 0 ? (containerWidth - gap * (columns - 1)) / columns : MIN_COL_WIDTH;

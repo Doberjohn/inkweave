@@ -82,7 +82,7 @@ const CONTAINER_STYLE: React.CSSProperties = {
   background: GOLD_GLOW.hoverBg,
   border: `1px solid ${GOLD_GLOW.activeBg}`,
   borderRadius: 10,
-  padding: '16px 20px',
+  padding: `${SPACING.lg}px ${SPACING.xl}px`,
   display: 'flex',
   flexDirection: 'column',
   gap: SPACING.sm,
@@ -209,7 +209,7 @@ function getVoteButtonStyle({isSelected, isDimmed, isHovered, isPressed, colors,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: SPACING.sm,
   };
 }
 
@@ -354,7 +354,7 @@ function DistributionBlock({distribution, hasDistribution, isResult, showSkeleto
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 6,
+        gap: SPACING.sm,
         overflow: 'hidden',
         animation: 'qv-dist-reveal 0.28s ease-out both',
       }}>
@@ -404,7 +404,7 @@ function DistributionSkeleton({isResult}: DistributionSkeletonProps) {
         data-testid="distribution-loading"
         aria-busy="true"
         aria-label="Loading vote distribution"
-        style={{display: 'flex', flexDirection: 'column', gap: 6}}>
+        style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
         <Skeleton width={220} height={11} borderRadius={2} />
         <Skeleton height={22} borderRadius={4} />
       </div>

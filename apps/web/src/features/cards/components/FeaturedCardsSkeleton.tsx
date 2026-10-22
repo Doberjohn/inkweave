@@ -1,6 +1,12 @@
 import {COLORS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
 
 /**
+ * The phone layout's bottom padding, past the spacing scale's top step (SPACING.xxxl, 32).
+ * FeaturedCards pads its loaded row the same, so the cards land where the skeleton stood.
+ */
+export const FEATURED_PHONE_PADDING_BOTTOM = 48;
+
+/**
  * Skeleton row for the landing page's "Popular Synergy Starters" section.
  *
  * Used both by:
@@ -29,7 +35,9 @@ export function FeaturedCardsSkeleton({isMobile = false}: FeaturedCardsSkeletonP
         width: isMobile ? '100%' : 1280,
         maxWidth: '100%',
         margin: '0 auto',
-        padding: isMobile ? `0 ${SPACING.lg}px 48px` : '0 32px',
+        padding: isMobile
+          ? `0 ${SPACING.lg}px ${FEATURED_PHONE_PADDING_BOTTOM}px`
+          : `0 ${SPACING.xxxl}px`,
         position: 'relative',
         zIndex: 1,
         boxSizing: 'border-box',

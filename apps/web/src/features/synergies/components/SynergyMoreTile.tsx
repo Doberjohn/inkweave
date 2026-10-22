@@ -1,4 +1,4 @@
-import {CARD_TILE_GLOW, COLORS, FONT_SIZES, RADIUS} from '../../../shared/constants';
+import {CARD_TILE_GLOW, COLORS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
 
 /**
  * A synergy group's "+N more" tile: a dashed, card-sized tile for the cards past the grid's
@@ -109,8 +109,8 @@ function pickMoreTileButtonStyle({config, compact, isMobile}: MoreTileButtonStyl
   };
 }
 
-function pickMoreTileGap(compact: boolean, isMobile?: boolean): string {
-  if (compact) return '2px';
-  if (isMobile) return '4px';
-  return '6px';
+function pickMoreTileGap(compact: boolean, isMobile?: boolean): number {
+  if (compact) return SPACING.xxs;
+  if (isMobile) return SPACING.xs;
+  return SPACING.sm;
 }

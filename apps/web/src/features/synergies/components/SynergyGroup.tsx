@@ -22,7 +22,7 @@ interface SynergyGroupProps {
   cardMinWidth?: number;
   /** When set, forces a fixed column count instead of the responsive auto-fill grid. */
   gridColumns?: number;
-  /** Override grid gap (px). Default: 10 */
+  /** Override grid gap (px). Default: SPACING.md */
   gridGap?: number;
   /** Override the trailing margin between stacked groups. Default: SPACING.xl. Pass 0 when the parent uses flex `gap`. */
   marginBottom?: number;
@@ -162,7 +162,7 @@ function SynergyCardList({
   onShowAll,
   cardMinWidth = LAYOUT.synergyCardMinWidth,
   gridColumns,
-  gridGap = 10,
+  gridGap = SPACING.md,
   compact = false,
   onCardClick,
 }: SynergyCardListProps) {
