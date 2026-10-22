@@ -63,8 +63,8 @@ function PromoName({printing}: {printing: NamedPrinting}) {
 /**
  * A printing's name as the card window and the card page show it (#802): its rarity's symbol
  * when it has one (decorative: the name says it), the foil marker for an alt foil, then its name.
- * Never a symbol alone. Laid out by its box, a row with a gap: the printings' peek names the
- * printing it would turn to with it, and the notice after a turn the one on show.
+ * Never a symbol alone. Laid out by its box, a row with a gap: the notice after a turn names the
+ * printing on show with it.
  */
 export function PrintingName({printing}: {printing: NamedPrinting}) {
   const kind = printingKind(printing.rarity);

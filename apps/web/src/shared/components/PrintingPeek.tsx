@@ -24,12 +24,12 @@ const NOTICE_MS = 1400;
 
 /**
  * The stack's layers above its printings, which take 1 to 3 (printingStack): the peeks'
- * buttons, under the focus ring index.css draws at 4, then the names over the art.
+ * buttons, under the focus ring index.css draws at 4, then the turn's notice over the art.
  */
 const PEEK_LAYER = 4;
 const LABEL_LAYER = 5;
 
-/** The dark pill the peek's name and the turn's notice sit in, over the art. */
+/** The dark pill the turn's notice sits in, over the art. */
 const LABEL_STYLE: CSSProperties = {
   position: 'absolute',
   zIndex: LABEL_LAYER,
@@ -51,21 +51,6 @@ const LABEL_STYLE: CSSProperties = {
 
 function fade(reducedMotion: boolean): string | undefined {
   return reducedMotion ? undefined : `opacity ${DURATION.fast}ms ${EASING.snappy}, transform ${DURATION.fast}ms ${EASING.snappy}`;
-}
-
-/** A chevron toward the side the peek turns to. */
-function Chevron({side}: {side: PeekSide}) {
-  return (
-    <svg width={12} height={12} viewBox="0 0 16 16" fill="none" aria-hidden="true">
-      <path
-        d={side === 'prev' ? 'M10 3 5 8l5 5' : 'M6 3l5 5-5 5'}
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
 }
 
 interface PeekButtonProps {
@@ -108,34 +93,6 @@ export function PeekButton({side, printing, outside, inside, dragging = false, o
         pointerEvents: dragging ? 'none' : undefined,
       }}
     />
-  );
-}
-
-interface PeekTagProps {
-  side: PeekSide;
-  printing: NamedPrinting;
-  /** Where the pointer is, down the card: the tag follows it. */
-  y: number;
-  height: number;
-}
-
-/** Names the printing a peek opens on (owner, 2026-10-22), beside the pointer on that side. */
-export function PeekTag({side, printing, y, height}: PeekTagProps) {
-  // Kept on the card at the pointer's height, its pill about 28px tall.
-  const top = Math.max(SPACING.md, Math.min(height - SPACING.xxxl - SPACING.md, y - SPACING.lg));
-  return (
-    <div
-      aria-hidden="true"
-      style={{
-        ...LABEL_STYLE,
-        top,
-        [side === 'prev' ? 'left' : 'right']: SPACING.md,
-        color: COLORS.primary,
-      }}>
-      {side === 'prev' && <Chevron side="prev" />}
-      <PrintingName printing={printing} />
-      {side === 'next' && <Chevron side="next" />}
-    </div>
   );
 }
 

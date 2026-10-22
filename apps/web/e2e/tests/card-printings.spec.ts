@@ -96,19 +96,17 @@ test.describe('Card printings (desktop)', () => {
     const stack = page.getByRole('group', {name: `${CARD_NAME} printings`});
     await expect.poll(() => printingInFront(page), {timeout: 10000}).toBe(0);
 
-    // A mouse resting near the card's side opens the Enchanted's peek, named beside its rarity
-    // symbol, a separate file that must load.
+    // A mouse resting near the card's side leans the Enchanted out from behind it, and a click
+    // there turns to it. The turn names it on the card for a moment, beside its rarity symbol, a
+    // separate file that must load: the notice's one image without a name of its own.
     const box = (await stack.boundingBox())!;
     const nearSide = {x: box.x + box.width - 30, y: box.y + box.height / 2};
     await page.mouse.move(nearSide.x, nearSide.y);
-    const tag = stack.getByText('Enchanted', {exact: true});
-    await expect(tag).toBeVisible();
-    await expect
-      .poll(() => tag.locator('img').evaluate((img: HTMLImageElement) => img.naturalWidth))
-      .toBeGreaterThan(0);
-
     await page.mouse.click(nearSide.x, nearSide.y);
     await expect.poll(() => printingInFront(page)).toBe(1);
+    await expect
+      .poll(() => stack.locator('img[alt=""]').evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(0);
 
     // Enlarging opens the printing in front, not the card's own scan.
     await page.getByRole('button', {name: 'Enlarge Enchanted printing'}).click();
@@ -118,7 +116,8 @@ test.describe('Card printings (desktop)', () => {
   });
 
   // WCAG 2.1.1 (accessibility check, 2026-10-19): the card takes a tab stop, so its arrow keys
-  // must turn it rather than page to the next card, even at its last printing.
+  // must turn it rather than page to the next card, even at its last printing, where the turns
+  // loop to the first (owner, 2026-10-22).
   test("the modal's arrow keys turn a focused card's printings, not to the next card", async ({
     appPage,
     page,
@@ -143,12 +142,12 @@ test.describe('Card printings (desktop)', () => {
     await expect.poll(() => printingInFront(page)).toBe(1);
     await page.keyboard.press('ArrowRight');
 
+    await expect.poll(() => printingInFront(page)).toBe(0);
     await expect(stack).toBeFocused();
     await expect(modal.locator('h1')).toHaveText(CARD_NAME);
-    expect(await printingInFront(page)).toBe(1);
   });
 
-  test("a card's promo printings follow its Standard, each by its printed code, and one turned to shows its art", async ({
+  test("a card's promo printings follow its Standard, each by its printed code, one turned to shows its art, and the Standard follows the last", async ({
     page,
   }, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
@@ -168,7 +167,10 @@ test.describe('Card printings (desktop)', () => {
       }
     }
     expect(names).toEqual(PROMO_CODES.map((code) => `Next printing: Promo ${code}`));
-    await expect(next, 'nothing after the last printing').toHaveCount(0);
+    // The turns loop (owner, 2026-10-22): after the last printing comes the first.
+    await expect(next).toHaveAccessibleName('Next printing: Standard');
+    await next.click();
+    await expect.poll(() => printingInFront(page, PROMO_CARD_NAME)).toBe(0);
   });
 
   // One art height for every card (owner, 2026-10-20), and now one window: no card has a row
@@ -203,7 +205,7 @@ test.describe('Card printings (desktop)', () => {
 test.describe('Card printings (phone width)', () => {
   // Runs on every project, not just mobile-*: isMobile is width-based (useResponsive), so a forced
   // phone viewport renders the mobile layout anywhere, including the chromium-only Windows pre-push.
-  test('four printings stack behind a card on a 360px phone without widening it, and each throw turns one', async ({
+  test('four printings stack behind a card on a 360px phone without widening it, and each throw turns one, round the loop', async ({
     page,
   }) => {
     await page.setViewportSize({width: 360, height: 740});
@@ -231,7 +233,11 @@ test.describe('Card printings (phone width)', () => {
       turnedTo.push(name);
     }
     expect([...turnedTo].sort()).toEqual(['Enchanted', 'Epic', 'Iconic']);
-    await expect(next, 'nothing after the last printing').toHaveCount(0);
+    // After the last printing comes the first (owner, 2026-10-22).
+    await expect(next).toHaveAccessibleName('Next printing: Standard');
+    await throwCard(page);
+    await expect.poll(() => printingInFront(page)).toBe(0);
+    await expect(status).toHaveText('Standard, 1 of 4');
     expect(await fits()).toBe(true);
   });
 });

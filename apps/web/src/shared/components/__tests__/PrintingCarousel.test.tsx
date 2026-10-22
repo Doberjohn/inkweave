@@ -63,11 +63,16 @@ function renderCarousel(props: Partial<CarouselProps> = {}) {
 }
 
 const stack = () => screen.getByRole('group', {name: 'Pongo - Determined Father printings'});
-const slide = (index: number) => stack().querySelector<HTMLElement>(`[data-slide="${index}"]`)!;
+/**
+ * A printing's slide, or with `copy` its second one: with two printings each has two, so the
+ * other one sits behind both of the card's sides.
+ */
+const slide = (index: number, copy?: 'copy') =>
+  stack().querySelector<HTMLElement>(`[data-slide="${index}"]${copy ? '[data-copy]' : ':not([data-copy])'}`)!;
 
 /** Where a slide sits in the stack, read back from its transform. */
-function poseOf(index: number) {
-  const {transform, zIndex, opacity} = slide(index).style;
+function poseOf(index: number, copy?: 'copy') {
+  const {transform, zIndex, opacity} = slide(index, copy).style;
   const number = (pattern: RegExp) => Number(pattern.exec(transform)?.[1]);
   return {
     x: number(/translate3d\((-?[\d.]+)px/),
@@ -96,8 +101,8 @@ function useFinePointerScreen() {
 }
 
 describe('PrintingCarousel', () => {
-  it('shows one slide per printing, each image named for its printing', () => {
-    renderCarousel();
+  it("shows each printing's image, named for its printing", () => {
+    renderCarousel({printings: THREE});
 
     expect(screen.getByRole('img', {name: 'Pongo - Determined Father'})).toBeInTheDocument();
     expect(
@@ -124,13 +129,17 @@ describe('PrintingCarousel', () => {
   });
 
   // Prototype B (owner, 2026-10-22): the other printings sit behind the card, a little smaller,
-  // their edges past its sides.
-  it('stacks the printing after the card behind it, its edge past the card on touch', () => {
+  // fanned out past its sides from its foot. The turns loop, so with two printings the other one
+  // is behind both sides.
+  it('stacks the other printing behind both sides of the card, fanned out past them on touch', () => {
     renderCarousel();
 
     expect(poseOf(0)).toMatchObject({x: 0, rotate: 0, scale: 1, z: 3, opacity: 1});
     // Scaled from its foot, it would sit 9px in from each side: 12 more shows past the card.
-    expect(poseOf(1)).toMatchObject({x: 20.94, rotate: 0, scale: 0.94, z: 2, opacity: 1});
+    expect(poseOf(1)).toMatchObject({x: 20.94, rotate: 1.25, scale: 0.94, z: 2, opacity: 1});
+    expect(poseOf(1, 'copy')).toMatchObject({x: -20.94, rotate: -1.25, scale: 0.94, z: 2, opacity: 1});
+    // The Standard's own second slide waits out of sight.
+    expect(poseOf(0, 'copy').opacity).toBe(0);
   });
 
   // The pills under the card went (owner, 2026-10-22): the printing behind it is a way there.
@@ -141,9 +150,32 @@ describe('PrintingCarousel', () => {
     fireEvent.click(peek);
 
     expect(peek).toHaveAttribute('tabindex', '-1');
-    expect(screen.queryByRole('button', {name: /^Previous printing/})).not.toBeInTheDocument();
     expect(onIndexChange).toHaveBeenCalledWith(1);
     expect(onSettle).toHaveBeenCalledWith(1);
+  });
+
+  // Owner, 2026-10-22: past the last printing comes the first, and before the first the last.
+  it('turns round the loop, from the last printing on to the first and from the first back to the last', () => {
+    const last = renderCarousel({index: 2, printings: THREE});
+    fireEvent.click(screen.getByRole('button', {name: 'Next printing: Standard'}));
+    expect(last.onIndexChange).toHaveBeenCalledExactlyOnceWith(0);
+    last.unmount();
+
+    const first = renderCarousel({printings: THREE});
+    fireEvent.click(screen.getByRole('button', {name: /^Previous printing:/}));
+    expect(first.onIndexChange).toHaveBeenCalledExactlyOnceWith(2);
+  });
+
+  it('brings the other of two printings in from the side it was turned to, the Standard going behind the other', () => {
+    render(<Turnable />);
+
+    fireEvent.click(screen.getByRole('button', {name: 'Previous printing: Enchanted'}));
+
+    expect(poseOf(1, 'copy')).toMatchObject({x: 0, scale: 1, z: 3});
+    expect(poseOf(0)).toMatchObject({x: 20.94, z: 2});
+    expect(poseOf(0, 'copy')).toMatchObject({x: -20.94, z: 2, opacity: 1});
+    expect(poseOf(1).opacity).toBe(0);
+    expect(screen.getByRole('status')).toHaveTextContent('Enchanted, 2 of 2');
   });
 
   it('turns with ← and →, and leaves Alt+← to the browser', () => {
@@ -157,7 +189,7 @@ describe('PrintingCarousel', () => {
   });
 
   // The card window pages to the next card on → (CardOverviewModal), which would also fire at
-  // the last printing.
+  // the last printing, where the card turns to its first.
   it('keeps its arrow keys from the page around it, even at the last printing', () => {
     const outside = vi.fn();
     render(
@@ -301,16 +333,30 @@ describe('PrintingCarousel throw', () => {
     expect(onSettle).toHaveBeenCalledWith(1);
   });
 
-  it('follows only a little toward a side with no printing, and never turns there', () => {
+  // The drag's speed is read up to its release (cubic, PR #902): its last moves alone would flick.
+  it('springs back from a drag that rests before it is let go', () => {
     const onSettle = vi.fn();
     render(<Turnable onSettle={onSettle} />);
 
     point('pointerDown', {});
+    point('pointerMove', {dx: -40, time: 20});
+    point('pointerUp', {dx: -40, time: 500});
+
+    expect(poseOf(0).x).toBe(0);
+    expect(onSettle).not.toHaveBeenCalled();
+  });
+
+  // The turns loop (owner, 2026-10-22), so a throw either way turns the card.
+  it('throws the card back from the first printing to the last', () => {
+    const onSettle = vi.fn();
+    render(<Turnable onSettle={onSettle} printings={THREE} />);
+
+    point('pointerDown', {});
     point('pointerMove', {dx: 100, time: 40});
-    expect(poseOf(0).x).toBe(28);
+    expect(poseOf(0).x).toBe(100);
     point('pointerUp', {dx: 100, time: 40});
 
-    expect(onSettle).not.toHaveBeenCalled();
+    expect(onSettle).toHaveBeenCalledExactlyOnceWith(2);
   });
 
   // touch-action: pan-y hands a swipe down to the page, which scrolls.
@@ -322,6 +368,17 @@ describe('PrintingCarousel throw', () => {
     point('pointerMove', {dx: -150, dy: 40, time: 60});
 
     expect(poseOf(0).x).toBe(0);
+  });
+
+  // A mouse never scrolls the page by dragging (cubic, PR #902).
+  it('drags the card under a mouse that moves down first', () => {
+    render(<Turnable />);
+
+    point('pointerDown', {pointerType: 'mouse'});
+    point('pointerMove', {dx: 5, dy: 20, time: 30, pointerType: 'mouse'});
+    point('pointerMove', {dx: -150, dy: 40, time: 60, pointerType: 'mouse'});
+
+    expect(poseOf(0).x).toBe(-150);
   });
 
   it('drags the card under a mouse too, and swallows the click the drag ends with, only that one', () => {
@@ -378,13 +435,16 @@ describe('PrintingCarousel peeks', () => {
 
   const hoverAt = (x: number) => fireEvent.pointerMove(stack(), {pointerType: 'mouse', clientX: x, clientY: 200});
 
-  it('shows a sliver of the printing behind the card at rest', () => {
+  // Owner, 2026-10-22: more of the printings behind the card showing at rest.
+  it('fans the printings behind the card out a little at rest', () => {
     renderCarousel();
 
-    expect(poseOf(1)).toMatchObject({x: 12.94, rotate: 0});
+    expect(poseOf(1)).toMatchObject({x: 12.94, rotate: 1.25});
+    expect(poseOf(1, 'copy')).toMatchObject({x: -12.94, rotate: -1.25});
   });
 
-  it('leans the printing out from behind the card, named, once the pointer rests near its side', () => {
+  // The tag naming the printing went (owner, 2026-10-22): the peek's button names it for screen readers.
+  it('leans the printing further out from behind the card once the pointer rests near its side, unnamed', () => {
     vi.useFakeTimers();
     try {
       renderCarousel();
@@ -395,7 +455,8 @@ describe('PrintingCarousel peeks', () => {
       });
 
       expect(poseOf(1)).toMatchObject({x: 24.94, rotate: 2.5});
-      expect(screen.getByText('Enchanted')).toBeInTheDocument();
+      expect(poseOf(1, 'copy')).toMatchObject({x: -12.94, rotate: -1.25});
+      expect(screen.queryByText('Enchanted')).not.toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }
@@ -415,7 +476,7 @@ describe('PrintingCarousel peeks', () => {
         vi.advanceTimersByTime(70);
       });
 
-      expect(poseOf(1).rotate).toBe(0);
+      expect(poseOf(1).rotate).toBe(1.25);
     } finally {
       vi.useRealTimers();
     }
@@ -444,7 +505,7 @@ describe('PrintingCarousel peeks', () => {
     fireEvent.mouseDown(stack());
     act(() => stack().focus());
 
-    expect(poseOf(1).rotate).toBe(0);
+    expect(poseOf(1).rotate).toBe(1.25);
   });
 });
 
@@ -458,26 +519,32 @@ describe('PrintingCarousel variant art', () => {
   afterEach(() => {
     complete.mockRestore();
   });
-  const variantArt = () => screen.getByRole('img', {name: 'Pongo - Determined Father, Enchanted printing', hidden: true});
+  /** The variant's art on both of its slides. */
+  const variantArt = () =>
+    screen.getAllByRole('img', {name: 'Pongo - Determined Father, Enchanted printing', hidden: true}).map((img) => img.getAttribute('src'));
+  const loaded = ['/card-images/2141.avif', '/card-images/2141.avif'];
 
-  it('holds the variant art back until the Standard art has loaded', async () => {
+  it('holds the variant art back until the Standard art has loaded, and the Standard second slide too', async () => {
     renderCarousel();
-    expect(variantArt()).not.toHaveAttribute('src');
+    const standardCopy = slide(0, 'copy').querySelector('img');
+    expect(variantArt()).toEqual([null, null]);
+    expect(standardCopy).not.toHaveAttribute('src');
 
     fireEvent.load(screen.getByRole('img', {name: 'Pongo - Determined Father'}));
 
-    await waitFor(() => expect(variantArt()).toHaveAttribute('src', '/card-images/2141.avif'));
+    await waitFor(() => expect(variantArt()).toEqual(loaded));
+    expect(standardCopy).toHaveAttribute('src', '/card-images/1938.avif');
   });
 
   it('loads the variant art at once when a touch lands on the card, or a mouse comes over it', () => {
     const {unmount} = renderCarousel();
     fireEvent.pointerDown(stack(), {pointerType: 'touch'});
-    expect(variantArt()).toHaveAttribute('src', '/card-images/2141.avif');
+    expect(variantArt()).toEqual(loaded);
     unmount();
 
     renderCarousel();
     fireEvent.pointerEnter(stack(), {pointerType: 'mouse'});
-    expect(variantArt()).toHaveAttribute('src', '/card-images/2141.avif');
+    expect(variantArt()).toEqual(loaded);
   });
 
   it('loads the variant art at once when it turns to the variant', () => {
@@ -485,6 +552,6 @@ describe('PrintingCarousel variant art', () => {
 
     rerender(<PrintingCarousel card={card} printings={PRINTINGS} index={1} onIndexChange={() => {}} width={WIDTH} height={HEIGHT} />);
 
-    expect(variantArt()).toHaveAttribute('src', '/card-images/2141.avif');
+    expect(variantArt()).toEqual(loaded);
   });
 });

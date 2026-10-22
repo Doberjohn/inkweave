@@ -70,7 +70,8 @@ function stripeParts({counts, finishes, cardName, change}: ShownCopies): StripeP
  * Not until the account's copy has answered (`syncing`): an edit made before then would be built
  * on this browser's copy, and its upload would replace counts saved from another device that the
  * read was about to bring in. The binder waits the same way, behind its skeleton. The window's
- * row is held from sign-in on (`useHoldCopiesRow`), so the stripe arriving moves nothing.
+ * row is held once signed in with a collection, this browser's copy counting before the
+ * account's has answered (`useHoldCopiesRow`), so the stripe arriving then moves nothing.
  *
  * `onEdit` hears of each card whose count is set here: the binder behind the window keeps that
  * card in its Owned or Missing view (#826, owner 2026-10-20; `useKeptCards`).

@@ -2,7 +2,7 @@ import {useRef, useState, type MouseEvent, type PointerEvent} from 'react';
 
 /** How far, in the card's own pixels, a pointer moves across before it drags the card. */
 const DRAG_START_PX = 6;
-/** How far a touch may move down first before the page's scroll takes it instead. */
+/** How far a touch or a pen may move down first before the page's scroll takes it instead. */
 const SCROLL_FIRST_PX = 10;
 /** The share of the card's width a drag must pass to throw the card. */
 const THROW_SHARE = 0.22;
@@ -10,8 +10,6 @@ const THROW_SHARE = 0.22;
 const FLICK_SPEED = 0.4;
 /** The span of the drag's latest moves that its speed is read over. */
 const FLICK_WINDOW_MS = 90;
-/** How much of a drag the card follows toward a side with no printing behind it. */
-const RUBBER_BAND = 0.28;
 
 /** -1 throws the card to the printing before it, 1 to the one after. */
 export type ThrowStep = -1 | 1;
@@ -23,15 +21,13 @@ interface Drag {
   moved: boolean;
   /** The card's offset, in its own pixels. */
   dx: number;
-  /** The latest moves' times and positions, for the release's speed. */
+  /** The latest moves' times and positions, and the release's, for its speed. */
   samples: Array<[time: number, x: number]>;
 }
 
 interface CardThrowOptions {
   /** The card's width, in its own pixels. */
   width: number;
-  /** Whether there is a printing before the card, and one after it. */
-  canTurn: {prev: boolean; next: boolean};
   enabled: boolean;
   /** A drag let go far enough, or fast enough. */
   onThrow: (step: ThrowStep) => void;
@@ -42,18 +38,17 @@ function scaleOf(el: Element, width: number): number {
   return el.getBoundingClientRect().width / width || 1;
 }
 
-/** A drag's start: across far enough drags the card, down first is the page's scroll. */
-function dragStart(dx: number, dy: number): 'drag' | 'wait' | 'scroll' {
-  if (Math.abs(dy) > SCROLL_FIRST_PX && Math.abs(dy) > Math.abs(dx)) return 'scroll';
+/**
+ * A drag's start: across far enough drags the card. A touch or a pen that moves down first is the
+ * page's scroll; a mouse never scrolls the page by dragging, so its press waits to go across.
+ */
+function dragStart(dx: number, dy: number, pointerType: string): 'drag' | 'wait' | 'scroll' {
+  if (pointerType !== 'mouse' && Math.abs(dy) > SCROLL_FIRST_PX && Math.abs(dy) > Math.abs(dx)) return 'scroll';
   return Math.abs(dx) < DRAG_START_PX ? 'wait' : 'drag';
 }
 
 function stepOf(dx: number): ThrowStep {
   return dx < 0 ? 1 : -1;
-}
-
-function sideOf(step: ThrowStep): 'prev' | 'next' {
-  return step === 1 ? 'next' : 'prev';
 }
 
 /** A drag from where `e` presses. A mouse's other buttons drag nothing. */
@@ -68,11 +63,11 @@ function dragOf(drag: Drag | null, e: PointerEvent<HTMLElement>): Drag | null {
 }
 
 /**
- * A drag's first moves: across far enough, it takes the pointer and the card follows; down
- * first, it is the page's scroll's. Capture keeps a mouse dragging past the card's edge.
+ * A drag's first moves: across far enough, it takes the pointer and the card follows; a touch's
+ * down first is the page's scroll's. Capture keeps a mouse dragging past the card's edge.
  */
 function begin(drag: Drag, e: PointerEvent<HTMLElement>, scale: number): 'drag' | 'wait' | 'scroll' {
-  const start = dragStart((e.clientX - drag.startX) / scale, (e.clientY - drag.startY) / scale);
+  const start = dragStart((e.clientX - drag.startX) / scale, (e.clientY - drag.startY) / scale, e.pointerType);
   if (start !== 'drag') return start;
   drag.moved = true;
   try {
@@ -83,7 +78,7 @@ function begin(drag: Drag, e: PointerEvent<HTMLElement>, scale: number): 'drag' 
   return start;
 }
 
-/** Notes the drag's move, keeping only the latest for the release's speed. */
+/** Notes the drag's move, or its release, keeping only the latest for the release's speed. */
 function sample(drag: Drag, e: PointerEvent<HTMLElement>) {
   drag.samples.push([e.timeStamp, e.clientX]);
   while (drag.samples.length > 2 && e.timeStamp - drag.samples[0][0] > FLICK_WINDOW_MS) drag.samples.shift();
@@ -101,15 +96,15 @@ function thrown(drag: Drag, width: number, scale: number): boolean {
 /**
  * A card thrown aside by hand, a finger or a mouse (owner, 2026-10-22: the printings stack
  * behind the card, and a swipe turns it as on a phone). The card follows the drag, and a drag
- * let go past a fifth of the card, or flicked, throws it; anything less springs back. Toward a
- * side with no printing it follows only a little. A touch that moves down first is left to the
- * page's scroll (the caller's `touch-action: pan-y`).
+ * let go past a fifth of the card, or flicked, throws it; anything less springs back, and so does
+ * a drag that rests before it is let go. A touch that moves down first is left to the page's
+ * scroll (the caller's `touch-action: pan-y`).
  *
  * `dx` is the drag's offset in the card's own pixels, null when none is under way. Spread
  * `handlers` on the card's box: they also swallow the click a drag ends with, which would
  * otherwise enlarge the card or turn a peek.
  */
-export function useCardThrow({width, canTurn, enabled, onThrow}: CardThrowOptions) {
+export function useCardThrow({width, enabled, onThrow}: CardThrowOptions) {
   const dragRef = useRef<Drag | null>(null);
   const swallowClickRef = useRef(false);
   const [dx, setDx] = useState<number | null>(null);
@@ -128,8 +123,7 @@ export function useCardThrow({width, canTurn, enabled, onThrow}: CardThrowOption
       if (start === 'scroll') dragRef.current = null;
       if (start !== 'drag') return;
     }
-    const offset = (e.clientX - drag.startX) / scale;
-    drag.dx = canTurn[sideOf(stepOf(offset))] ? offset : offset * RUBBER_BAND;
+    drag.dx = (e.clientX - drag.startX) / scale;
     sample(drag, e);
     setDx(drag.dx);
   };
@@ -141,9 +135,10 @@ export function useCardThrow({width, canTurn, enabled, onThrow}: CardThrowOption
     if (!drag.moved) return;
     swallowClickRef.current = true;
     setDx(null);
-    const step = stepOf(drag.dx);
-    if (cancelled || !canTurn[sideOf(step)]) return;
-    if (thrown(drag, width, scaleOf(e.currentTarget, width))) onThrow(step);
+    if (cancelled) return;
+    // The release's own moment: a drag that rested before it was let go has no speed left.
+    sample(drag, e);
+    if (thrown(drag, width, scaleOf(e.currentTarget, width))) onThrow(stepOf(drag.dx));
   };
 
   const onClickCapture = (e: MouseEvent<HTMLElement>) => {

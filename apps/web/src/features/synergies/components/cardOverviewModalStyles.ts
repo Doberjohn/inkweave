@@ -118,16 +118,22 @@ export function copiesRowHeight(cardWidth: number): number {
   return Math.round(cardWidth * CARD_BAR_SHARE);
 }
 
-/** The room the copies row takes under a card: the column's gap, then the row. */
+/**
+ * How far under the card its copies row sits (owner, 2026-10-22: 5px). Off the spacing scale,
+ * between `SPACING.xs` and `SPACING.sm`, on the owner's word.
+ */
+const COPIES_ROW_GAP = 5;
+
+/** The room the copies row takes under a card: its gap, then the row. */
 function copiesRoom(cardWidth: number): number {
-  return SPACING.md + copiesRowHeight(cardWidth);
+  return COPIES_ROW_GAP + copiesRowHeight(cardWidth);
 }
 
 /**
  * What a desktop window takes from the screen besides its card: 24px of screen above and below
  * it, the header with one row of chips (117px, measured), the shell's 1px borders, the body's
  * 20px and 24px padding, and the 16px gap the comparison panel keeps. A 697px screen holds the
- * window at full size (649px), and a 741px one with the copies row under its card.
+ * window at full size (649px), and a 734px one with the copies row under its card.
  */
 const DESKTOP_WINDOW_CHROME = 48 + 117 + 2 + 20 + 24 + 16;
 
@@ -222,6 +228,17 @@ export function pickCardColumnLayout(isMobile: boolean): CSSProperties {
     flexShrink: 0,
   };
 }
+
+/**
+ * The card with its copies row under it, `COPIES_ROW_GAP` apart, as one item of the card column,
+ * whose own gap keeps mobile's translation toggle further down.
+ */
+export const CARD_WITH_COPIES_STYLE: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'flex-start',
+  gap: COPIES_ROW_GAP,
+};
 
 /**
  * The synergy column beside (desktop) or under (mobile) the card, as tall as the card's row on

@@ -6,7 +6,7 @@ import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
 import {MobileComparisonView, type ComparisonOriginRects} from './MobileComparisonView';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {HeaderTranslationToggle, ModalArtState, ModalCardArt, UnderCard} from './ModalCardArt';
+import {CardWithCopies, HeaderTranslationToggle, MobileTranslationToggle, ModalArtState, ModalCardArt} from './ModalCardArt';
 import {
   CardPrintingContext,
   CardTranslationContext,
@@ -1493,22 +1493,24 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
     <div
       className={useGlow ? 'focused-card-glow' : undefined}
       style={pickCardWrapperStyle({isMobile, cardWidth, highlightedCard, inComparison, reducedMotion})}>
-      {/* Shrink-wrap span carrying the `data-comparison-card-a` marker — its rect is exactly
-          the card image (not the full-width flex wrapper), so the click handler captures the
-          correct FLIP origin for Card A's mobile comparison transition (#332 #5). */}
-      <span data-comparison-card-a style={ART_BOX_STYLE}>
-        <ModalCardArt card={card} cardWidth={cardWidth} cardHeight={cardHeight} />
-        {translation?.shown && !inComparison && (
-          <CardTranslationPanel
-            card={card}
-            language={translation.language}
-            size={isMobile ? 'compact' : 'regular'}
-            style={OVER_MODAL_SCAN}
-          />
-        )}
-      </span>
-      {/* Outside the span, whose rect is the FLIP origin above. */}
-      <UnderCard cardWidth={cardWidth} isMobile={isMobile} inComparison={inComparison} />
+      {/* The copies row stays outside the span, whose rect is the FLIP origin below. */}
+      <CardWithCopies cardWidth={cardWidth} isMobile={isMobile} inComparison={inComparison}>
+        {/* Shrink-wrap span carrying the `data-comparison-card-a` marker — its rect is exactly
+            the card image (not the full-width flex wrapper), so the click handler captures the
+            correct FLIP origin for Card A's mobile comparison transition (#332 #5). */}
+        <span data-comparison-card-a style={ART_BOX_STYLE}>
+          <ModalCardArt card={card} cardWidth={cardWidth} cardHeight={cardHeight} />
+          {translation?.shown && !inComparison && (
+            <CardTranslationPanel
+              card={card}
+              language={translation.language}
+              size={isMobile ? 'compact' : 'regular'}
+              style={OVER_MODAL_SCAN}
+            />
+          )}
+        </span>
+      </CardWithCopies>
+      {isMobile && <MobileTranslationToggle />}
     </div>
   );
 }

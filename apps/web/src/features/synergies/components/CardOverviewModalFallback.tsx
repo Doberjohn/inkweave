@@ -12,6 +12,7 @@ import {
 import {CardTranslationToggle} from '../../../shared/components/CardTranslationToggle';
 import {ModalCardTitle} from './ModalCardTitle';
 import {
+  CARD_WITH_COPIES_STYLE,
   CENTERING_WRAPPER_STYLE,
   CLOSE_BUTTON_SIZE,
   copiesRowHeight,
@@ -130,19 +131,32 @@ function ReservedTranslationToggle({card}: {card: LorcanaCard}) {
   );
 }
 
+interface CardPlaceholderProps {
+  card: LorcanaCard;
+  isMobile: boolean;
+  /** The window holds the copies row under its card. */
+  copiesRow: boolean;
+  size: {cardWidth: number; cardHeight: number};
+}
+
 /**
- * What the modal puts under a phone's card (ModalCardArt.tsx), invisible: the copies row where
- * the window holds one, and the translation toggle. Rendered under the card as the modal renders
- * them, they hold exactly the space the real ones take, so nothing moves at the handoff. Under a
- * desktop card the copies row's room is the row's own (`desktopCardRowHeight`), and the toggle
- * is held in the header.
+ * The card's placeholder, with what the modal puts under a phone's card (ModalCardArt.tsx),
+ * invisible: the copies row where the window holds one, and the translation toggle. Laid out as
+ * the modal lays them out, they hold exactly the space the real ones take, so nothing moves at
+ * the handoff. Under a desktop card the copies row's room is the row's own
+ * (`desktopCardRowHeight`), and the toggle is held in the header.
  */
-function ReservedMobileArtControls({card, cardWidth, copiesRow}: {card: LorcanaCard; cardWidth: number; copiesRow: boolean}) {
+function CardPlaceholder({card, isMobile, copiesRow, size: {cardWidth, cardHeight}}: CardPlaceholderProps) {
   return (
-    <>
-      {copiesRow && <div style={{width: cardWidth, height: copiesRowHeight(cardWidth)}} />}
-      <ReservedTranslationToggle card={card} />
-    </>
+    <div style={pickCardColumnLayout(isMobile)}>
+      <div style={CARD_WITH_COPIES_STYLE}>
+        {/* inline + block: no trailing <br> or line box, so the placeholder is exactly
+            the card's height and the synergy column below it lines up (mobile). */}
+        <Skeleton width={cardWidth} height={cardHeight} borderRadius={RADIUS.xl} inline style={SKELETON_ART_STYLE} />
+        {isMobile && copiesRow && <div style={{width: cardWidth, height: copiesRowHeight(cardWidth)}} />}
+      </div>
+      {isMobile && <ReservedTranslationToggle card={card} />}
+    </div>
   );
 }
 
@@ -221,18 +235,7 @@ export function CardOverviewModalFallback({
             </div>
             <div style={BODY_STYLE}>
               <div style={pickCardsRowStyle({isMobile, cardWidth, rowHeight})}>
-                <div style={pickCardColumnLayout(isMobile)}>
-                  {/* inline + block: no trailing <br> or line box, so the placeholder is exactly
-                      the card's height and the synergy column below it lines up (mobile). */}
-                  <Skeleton
-                    width={cardWidth}
-                    height={cardHeight}
-                    borderRadius={RADIUS.xl}
-                    inline
-                    style={SKELETON_ART_STYLE}
-                  />
-                  {isMobile && <ReservedMobileArtControls card={card} cardWidth={cardWidth} copiesRow={copiesRow} />}
-                </div>
+                <CardPlaceholder card={card} isMobile={isMobile} copiesRow={copiesRow} size={{cardWidth, cardHeight}} />
                 <div style={pickSynergyColumnLayout(isMobile, rowHeight)}>
                   <SynergiesLoadingSkeleton />
                 </div>

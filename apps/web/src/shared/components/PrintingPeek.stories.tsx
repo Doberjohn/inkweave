@@ -2,13 +2,13 @@ import {useState, type ReactNode} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {CardImage} from './CardImage';
 import {CtaButton} from './CtaButton';
-import {PeekTag, TurnNotice} from './PrintingPeek';
+import {TurnNotice} from './PrintingPeek';
 import {RADIUS, SPACING} from '../constants';
 import type {Printing} from '../hooks/usePrintingSelection';
 
-const meta: Meta<typeof PeekTag> = {
+const meta: Meta<typeof TurnNotice> = {
   title: 'Shared/PrintingPeek',
-  component: PeekTag,
+  component: TurnNotice,
   parameters: {layout: 'centered'},
 };
 export default meta;
@@ -18,16 +18,14 @@ type Story = StoryObj<typeof meta>;
 const WIDTH = 337;
 const HEIGHT = 470;
 
-const standard: Printing = {key: 'standard', label: 'Standard'};
 const enchanted: Printing = {key: '2142', label: 'Enchanted', rarity: 'Enchanted', number: 224};
-const promo: Printing = {key: '2461', label: '40/P3', rarity: 'Special', number: 40, promoGrouping: 'P3'};
 
-/** Beast - Gracious Prince's Enchanted art, which dev proxies to Ravensburger's (vite.config.ts). */
+/** Beast - Gracious Prince's Enchanted art, self-hosted as `pnpm download-images` names it. */
 function Card({children}: {children: ReactNode}) {
   return (
     <div style={{position: 'relative', width: WIDTH, height: HEIGHT}}>
       <CardImage
-        src="/card-images/en/set9/224_7f17c04013ed08ca46ff1a029608cc2fb8c5a3cb.jpg"
+        src="/card-images/2142.2091644fa9899923.avif"
         alt="Beast - Gracious Prince, Enchanted printing"
         width={WIDTH}
         height={HEIGHT}
@@ -40,25 +38,7 @@ function Card({children}: {children: ReactNode}) {
   );
 }
 
-// A pointer near the card's left side: the peek opens there, named for the printing a click turns to.
-export const PreviousPeek: Story = {
-  render: () => (
-    <Card>
-      <PeekTag side="prev" printing={standard} y={180} height={HEIGHT} />
-    </Card>
-  ),
-};
-
-// And near its right side, a promo by the code printed on it.
-export const NextPeek: Story = {
-  render: () => (
-    <Card>
-      <PeekTag side="next" printing={promo} y={300} height={HEIGHT} />
-    </Card>
-  ),
-};
-
-/** Counts the turns, as the strip does, so the notice can be played again. */
+/** Counts the turns, as the stack does, so the notice can be played again. */
 function Turns() {
   const [turns, setTurns] = useState(1);
   return (

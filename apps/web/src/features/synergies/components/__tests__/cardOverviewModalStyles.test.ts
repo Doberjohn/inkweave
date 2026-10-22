@@ -9,9 +9,9 @@ describe('modalCardSize', () => {
   });
 
   it('counts the copies row under the card where the window holds one', () => {
-    expect(modalCardSize(false, {viewportHeight: 741, copiesRow: true})).toEqual({cardWidth: 337, cardHeight: 470});
-    expect(modalCardSize(false, {viewportHeight: 740, copiesRow: true})).toEqual({cardWidth: 336, cardHeight: 469});
-    expect(modalCardSize(false, {viewportHeight: 740})).toEqual({cardWidth: 337, cardHeight: 470});
+    expect(modalCardSize(false, {viewportHeight: 734, copiesRow: true})).toEqual({cardWidth: 337, cardHeight: 470});
+    expect(modalCardSize(false, {viewportHeight: 733, copiesRow: true})).toEqual({cardWidth: 336, cardHeight: 469});
+    expect(modalCardSize(false, {viewportHeight: 733})).toEqual({cardWidth: 337, cardHeight: 470});
   });
 
   it("shrinks every desktop card alike on a shorter screen, down to a floor, and never a phone's", () => {
@@ -30,8 +30,9 @@ describe('the copies row', () => {
     expect(copiesRowHeight(240)).toBe(23);
   });
 
-  it("adds the column's gap and the row to a desktop card's row only where it shows", () => {
-    expect(desktopCardRowHeight({cardWidth: 337, cardHeight: 470, copiesRow: true})).toBe(470 + 12 + 32);
+  // 5px under the card (owner, 2026-10-22).
+  it("adds its gap and the row to a desktop card's row only where it shows", () => {
+    expect(desktopCardRowHeight({cardWidth: 337, cardHeight: 470, copiesRow: true})).toBe(470 + 5 + 32);
     expect(desktopCardRowHeight({cardWidth: 337, cardHeight: 470, copiesRow: false})).toBe(470);
   });
 });

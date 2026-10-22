@@ -448,8 +448,9 @@ test('desktop keeps the art at full size, its row growing by the copies row a pa
 
   expect(art.style.transform).toBe('');
   expect(precedes(art, screen.getByTestId('card-overview-copies-slot'))).toBe(true);
-  // One art height for every card (owner, 2026-10-20): 470px, then the row's 12px gap and 32px.
-  expect(cardRowOf(container).style.height).toBe('514px');
+  // One art height for every card (owner, 2026-10-20): 470px, then the row 5px under it (owner,
+  // 2026-10-22), 32px tall.
+  expect(cardRowOf(container).style.height).toBe('507px');
 });
 
 // The printings turn on the card itself (owner, 2026-10-22), so nothing under it comes and goes.
@@ -486,7 +487,9 @@ test('under reduced motion, card A goes into a comparison without sliding or fad
   );
 
   const art = container.querySelector<HTMLElement>('[data-comparison-card-a]')!;
-  expect(art.parentElement!.style.transition).not.toMatch(/transform/);
+  const column = art.closest<HTMLElement>('[style*="transition"]')!;
+  expect(column.style.transition).toMatch(/opacity/);
+  expect(column.style.transition).not.toMatch(/transform/);
 });
 
 test("a comparison drops the copies row, so card A's column, which carries its glow, is the card alone", () => {
@@ -554,6 +557,7 @@ test('the printing a swipe throws the card to is recorded once', () => {
   expect(trackEvent).toHaveBeenCalledTimes(1);
 });
 
+// At the last printing the card turns to its first (owner, 2026-10-22).
 test('arrow keys on the printings turn the printing, not the card, even at the last one', async () => {
   Element.prototype.scrollTo = vi.fn();
   const user = userEvent.setup();
@@ -562,9 +566,10 @@ test('arrow keys on the printings turn the printing, not the card, even at the l
   screen.getByRole('group', {name: 'Card b - Test printings'}).focus();
 
   await user.keyboard('{ArrowRight}');
+  expect(screen.getByRole('img', {name: 'Card b - Test, Enchanted printing'})).toBeInTheDocument();
   await user.keyboard('{ArrowRight}');
 
-  expect(screen.getByRole('img', {name: 'Card b - Test, Enchanted printing'})).toBeInTheDocument();
+  expect(screen.getByRole('img', {name: 'Card b - Test'})).toBeInTheDocument();
   expect(onGoToSibling).not.toHaveBeenCalled();
 });
 

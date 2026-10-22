@@ -227,11 +227,11 @@ function useCardSelection(cardId: string, resetWhen: boolean, initialIndex: numb
 /**
  * Which printing of `card` is shown (see useCardSelection for when it resets to Standard),
  * and the `card_printing_view` it records, once per variant a visitor settles on: `settle`
- * records (PrintingCarousel's `onSettle`: the strip at rest after a swipe or a drag, or a turn by
- * a peek or an arrow key). `select` only follows the strip's live index as it crosses printings,
- * so it records nothing. `initialKey` (a variant's id) starts the card on
- * that printing instead of Standard: the reveals board opens its special slots that way, and
- * Browse names one for each card the modal's arrows reach (CardModalContext's `printingFor`).
+ * records (PrintingCarousel's `onSettle`: each turn, by a throw, a swipe, a peek or an arrow
+ * key). `select` only follows the printing in front, so it records nothing. `initialKey` (a
+ * variant's id) starts the card on that printing instead of Standard: the reveals board opens
+ * its special slots that way, and Browse names one for each card the modal's arrows reach
+ * (CardModalContext's `printingFor`).
  */
 export function usePrintingSelection(
   card: LorcanaCard,

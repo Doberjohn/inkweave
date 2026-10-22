@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
 import {render, screen, fireEvent, act} from '@testing-library/react';
-import {PeekButton, PeekTag, TurnNotice} from '../PrintingPeek';
+import {PeekButton, TurnNotice} from '../PrintingPeek';
 import type {Printing} from '../../hooks';
 
 const enchanted: Printing = {key: '2141', label: 'Enchanted', rarity: 'Enchanted'};
@@ -35,24 +35,6 @@ describe('PeekButton', () => {
 
     expect(screen.getByRole('button', {name: 'Next printing: Alt foil, #243'})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: 'Next printing: Promo 26/P2, Vaiana'})).toBeInTheDocument();
-  });
-});
-
-describe('PeekTag', () => {
-  // The peek's button already names the printing for screen readers.
-  it('names the printing beside the pointer, for sighted visitors alone', () => {
-    const {container} = render(<PeekTag side="prev" printing={enchanted} y={200} height={470} />);
-    const tag = container.firstElementChild as HTMLElement;
-
-    expect(tag).toHaveTextContent('Enchanted');
-    expect(tag).toHaveAttribute('aria-hidden', 'true');
-    expect(tag).toHaveStyle({top: '184px', left: '12px'});
-  });
-
-  it('stays on the card when the pointer is at its very foot', () => {
-    const {container} = render(<PeekTag side="next" printing={enchanted} y={466} height={470} />);
-
-    expect(container.firstElementChild).toHaveStyle({top: '426px'});
   });
 });
 

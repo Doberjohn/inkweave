@@ -6,17 +6,23 @@ import type {PeekSide} from './PrintingPeek';
 const TUCKED = 0.94;
 /** How far the card leans, in degrees, across a drag of its own width. */
 const DRAG_TILT = 7;
-/** How far a printing leans out from behind the card while its peek is open. */
-const PEEK_TILT = 2.5;
-/** How much darker the printing beside the card is, until a drag brings it forward. */
-const BEHIND_DIM = 0.42;
+/**
+ * How far, in degrees, the printings beside the card lean out from behind it, fanned from its
+ * foot (owner, 2026-10-22: more of them showing at rest), and further while a peek is open.
+ */
+const FAN_TILT = {rest: 1.25, peek: 2.5} as const;
+/**
+ * How much darker the printing beside the card is, until a drag brings it forward. It lights up
+ * while its peek is open: the frame around the card leaves the lean little more room.
+ */
+const BEHIND_DIM = {rest: 0.35, peek: 0.15} as const;
 /** And the ones further back, which never show. */
 const BURIED_DIM = 0.5;
 
 /**
- * How far a printing behind the card shows past its side: a sliver under a mouse or trackpad,
- * which opens to the peek near that side, and more on touch, where the edges are the sign that
- * the card turns.
+ * How far a printing behind the card shows past its side at the card's foot, its lean showing
+ * more above: a little under a mouse or trackpad, which opens to the peek near that side, and
+ * more on touch, where the edges are the sign that the card turns.
  */
 export const STACK_EDGE = {
   fine: {rest: SPACING.xs, peek: SPACING.lg},
@@ -50,29 +56,32 @@ export interface StackState {
 }
 
 /**
- * How far an open peek slides its printing out and leans it. The lean swings the printing's top
- * corner out by about its height times the lean's sine, so where the card's frame would clip
- * that, both shrink until the corner fits.
+ * How a printing beside the card fans out past its side, at rest or with its peek open: how far
+ * it slides out, how far it leans and how dark it is. The lean swings the printing's top corner
+ * out by about its height times the lean's sine, so where the card's frame would clip that, the
+ * slide and the lean shrink until the corner fits.
  */
-function peekReach({height, edge, room}: StackState): {out: number; tilt: number} {
-  const lean = height * TUCKED * Math.sin((PEEK_TILT * Math.PI) / 180);
-  const fit = Math.min(1, room / (edge.peek + lean));
-  return {out: edge.peek * fit, tilt: PEEK_TILT * fit};
+function fanOut({height, edge, room, peeking}: StackState, side: PeekSide): {out: number; tilt: number; dim: number} {
+  const look = peeking[side] ? 'peek' : 'rest';
+  const lean = height * TUCKED * Math.sin((FAN_TILT[look] * Math.PI) / 180);
+  const fit = Math.min(1, room / (edge[look] + lean));
+  return {out: edge[look] * fit, tilt: FAN_TILT[look] * fit, dim: BEHIND_DIM[look]};
 }
 
-/** The printing before the card (`dir` -1) or after it (1), behind it and coming forward as a drag reveals it. */
+/** The printing before the card (`dir` -1) or after it (1), behind it and coming forward, upright, as a drag reveals it. */
 function besidePose(dir: -1 | 1, state: StackState): Pose {
   const {width, dx} = state;
   const inset = (width * (1 - TUCKED)) / 2;
-  const peek = state.peeking[dir < 0 ? 'prev' : 'next'] ? peekReach(state) : {out: state.edge.rest, tilt: 0};
+  const fan = fanOut(state, dir < 0 ? 'prev' : 'next');
   const toward = dir > 0 ? dx < 0 : dx > 0;
-  const progress = toward ? Math.min(1, Math.abs(dx) / width) : 0;
+  // 1 at rest beside the card, 0 once a drag has brought it all the way forward.
+  const back = 1 - (toward ? Math.min(1, Math.abs(dx) / width) : 0);
   return {
-    x: dir * (inset + peek.out) * (1 - progress),
-    rotate: dir * peek.tilt,
-    scale: TUCKED + (1 - TUCKED) * progress,
+    x: dir * (inset + fan.out) * back,
+    rotate: dir * fan.tilt * back,
+    scale: 1 - (1 - TUCKED) * back,
     z: 2,
-    dim: BEHIND_DIM * (1 - progress),
+    dim: fan.dim * back,
     opacity: 1,
   };
 }
@@ -80,7 +89,7 @@ function besidePose(dir: -1 | 1, state: StackState): Pose {
 /**
  * Where the printing `rel` places from the card sits (owner, 2026-10-22, prototype B): the card
  * in front, leaning with a drag; the printing before it and the one after behind it, a little
- * smaller and darker, their edges past its sides, each coming forward as a drag reveals it; the
+ * smaller and darker, fanned out past its sides, each coming forward as a drag reveals it; the
  * rest out of sight behind those.
  */
 export function stackPose(rel: number, state: StackState): Pose {

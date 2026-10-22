@@ -2,7 +2,7 @@ import {useContext, useEffect, useRef, type CSSProperties, type ReactNode} from 
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardImage, CardTranslationToggle, PrintingCarousel} from '../../../shared/components';
 import {RADIUS, SPACING} from '../../../shared/constants';
-import {BODY_SIDE_PADDING, copiesRowHeight} from './cardOverviewModalStyles';
+import {BODY_SIDE_PADDING, CARD_WITH_COPIES_STYLE, copiesRowHeight} from './cardOverviewModalStyles';
 import {
   CardPrintingContext,
   CardTranslationContext,
@@ -164,19 +164,24 @@ export function MobileTranslationToggle() {
   );
 }
 
+interface CardWithCopiesProps {
+  cardWidth: number;
+  isMobile: boolean;
+  inComparison: boolean;
+  /** The card. */
+  children: ReactNode;
+}
+
 /**
- * What sits under the card: its copies, which a page fills (`CopiesSlot`), and mobile's
- * translation toggle. A desktop comparison shows the base art alone, and a phone's keeps its
- * hidden default body as it was.
+ * The card with its copies under it, which a page fills (`CopiesSlot`), 5px apart (owner,
+ * 2026-10-22). A desktop comparison shows the base art alone, and a phone's keeps its hidden
+ * default body as it was.
  */
-export function UnderCard({cardWidth, isMobile, inComparison}: {cardWidth: number; isMobile: boolean; inComparison: boolean}) {
-  if (isMobile) {
-    return (
-      <>
-        <CopiesSlot cardWidth={cardWidth} />
-        <MobileTranslationToggle />
-      </>
-    );
-  }
-  return inComparison ? null : <CopiesSlot cardWidth={cardWidth} />;
+export function CardWithCopies({cardWidth, isMobile, inComparison, children}: CardWithCopiesProps) {
+  return (
+    <div style={CARD_WITH_COPIES_STYLE}>
+      {children}
+      {(isMobile || !inComparison) && <CopiesSlot cardWidth={cardWidth} />}
+    </div>
+  );
 }

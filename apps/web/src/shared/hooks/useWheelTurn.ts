@@ -16,8 +16,8 @@ interface WheelTurnOptions {
 
 /**
  * A trackpad's two-finger swipe across the card turns it one printing, as it scrolled the strip
- * the printings sat in before they stacked behind the card (#625). The swipe stays the card's
- * at its first and last printing too: the browser would take it for Back or Forward.
+ * the printings sat in before they stacked behind the card (#625). The swipe stays the card's:
+ * the browser would take it for Back or Forward.
  */
 export function useWheelTurn(ref: RefObject<HTMLElement | null>, {enabled, onTurn}: WheelTurnOptions) {
   const turn = useEffectEvent(onTurn);

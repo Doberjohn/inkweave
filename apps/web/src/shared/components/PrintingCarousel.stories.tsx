@@ -15,7 +15,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 // Beast - Gracious Prince: Standard, Enchanted and a promo, so the middle printing has a neighbour
-// on each side. Dev proxies the art to Ravensburger's (vite.config.ts).
+// on each side. Its art is self-hosted as `pnpm download-images` names it: Storybook serves
+// public/, without the dev server's proxy.
 const beast: LorcanaCard = {
   id: '1940',
   name: 'Beast',
@@ -26,23 +27,26 @@ const beast: LorcanaCard = {
   inkwell: true,
   type: 'Character',
   setCode: '9',
-  imageUrl: '/card-images/en/set9/4_ba9aa6fc55449cefeb4afcc19c1a9e0e80b6fbc1.jpg',
+  imageUrl: '/card-images/1940.369b3e8a0cc8e575.avif',
   variants: [
     {
       id: '2142',
       rarity: 'Enchanted',
       number: 224,
-      imageUrl: '/card-images/en/set9/224_7f17c04013ed08ca46ff1a029608cc2fb8c5a3cb.jpg',
+      imageUrl: '/card-images/2142.2091644fa9899923.avif',
     },
     {
       id: '2461',
       rarity: 'Special',
       number: 40,
       promoGrouping: 'P3',
-      imageUrl: '/card-images/en/promo3/40_4aaa4b5c9966aebb9625e996be936aca338989df.jpg',
+      imageUrl: '/card-images/2461.a3f9c102b6e23242.avif',
     },
   ],
 };
+
+/** Beast with its Enchanted printing alone: round the loop, it sits behind both of the card's sides. */
+const beastAndEnchanted: LorcanaCard = {...beast, variants: beast.variants?.slice(0, 1)};
 
 /** The frame around the card: its padding, the room the printings behind it show in, and clipped at its edge. */
 function frameStyle(padding: number): CSSProperties {
@@ -50,6 +54,7 @@ function frameStyle(padding: number): CSSProperties {
 }
 
 interface DemoProps {
+  card?: LorcanaCard;
   width: number;
   height: number;
   /** The padding of the frame around the card: the window's 24px, the card page panel's 16. */
@@ -60,12 +65,12 @@ interface DemoProps {
 }
 
 /** Wired as every surface wires it: the printing in front, and the views it records. */
-function Demo({width, height, frame, enlarges = false, locked}: DemoProps) {
-  const {printings, index, select, settle} = usePrintingSelection(beast, {surface: 'card_page'});
+function Demo({card = beast, width, height, frame, enlarges = false, locked}: DemoProps) {
+  const {printings, index, select, settle} = usePrintingSelection(card, {surface: 'card_page'});
   const [enlarged, setEnlarged] = useState<string | null>(null);
   const carousel = (
     <PrintingCarousel
-      card={beast}
+      card={card}
       printings={printings}
       index={index}
       onIndexChange={select}
@@ -87,11 +92,18 @@ function Demo({width, height, frame, enlarges = false, locked}: DemoProps) {
 }
 
 // The card window's card, in the window's 24px of padding. The printings before and after it
-// sit behind it, their edges showing past its sides. Under a mouse, rest near a side and that
-// printing leans out from behind the card, named: a click there turns to it. Drag the card
-// aside and let go, or swipe across it on a trackpad; with the card focused, ← and → turn it.
+// sit behind it, fanned out past its sides from its foot. Under a mouse, rest near a side and
+// that printing leans further out: a click there turns to it. Drag the card aside and let go,
+// or swipe across it on a trackpad; with the card focused, ← and → turn it. The turns loop:
+// after the promo comes the Standard, and before the Standard the promo.
 export const Window: Story = {
   render: () => <Demo width={337} height={470} frame={SPACING.xxl} />,
+};
+
+// A card with two printings: the other one sits behind both of the card's sides, and comes in
+// from whichever side the card is turned to.
+export const TwoPrintings: Story = {
+  render: () => <Demo card={beastAndEnchanted} width={337} height={470} frame={SPACING.xxl} />,
 };
 
 // The card page's hero, in the panel's 16px of padding, where the peek slides out and leans

@@ -235,9 +235,10 @@ test.describe('Reveals page (flag on)', () => {
       .catch(() => false);
     test.skip(!hasPrinting, 'No alt art revealed on the Amber board yet.');
 
-    // The slot names its rarity ("View <card>, Enchanted alt art"); the modal must open on it.
+    // The slot names its card and rarity ("View <card>, Enchanted alt art"); the modal must open
+    // on that very printing, a card holding one of each.
     const label = (await printing.getAttribute('aria-label')) ?? '';
-    const rarity = /, (Epic|Enchanted|Iconic) alt art$/.exec(label)?.[1] ?? '';
+    const [, name = '', rarity = ''] = /^View (.+), (Epic|Enchanted|Iconic) alt art$/.exec(label) ?? [];
     expect(rarity).not.toBe('');
     await printing.click();
 
@@ -245,6 +246,6 @@ test.describe('Reveals page (flag on)', () => {
     await expect(modal).toBeVisible({timeout: 15000});
     // In front of the card's stack: the others sit behind it, inert.
     const inFront = modal.locator('[data-slide]:not([inert]) img').first();
-    await expect(inFront).toHaveAttribute('alt', new RegExp(`, ${rarity} printing$`));
+    await expect(inFront).toHaveAttribute('alt', `${name}, ${rarity} printing`);
   });
 });
