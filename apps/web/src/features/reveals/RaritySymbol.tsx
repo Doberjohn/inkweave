@@ -3,7 +3,7 @@ import uncommonSvg from '../../assets/uncommon.svg';
 import rareSvg from '../../assets/rare.svg';
 import superRareSvg from '../../assets/super_rare.svg';
 import legendarySvg from '../../assets/legendary.svg';
-// The special printings' and promos' symbols are the files the printing switcher uses (PrintingPills).
+// The special printings' and promos' symbols are the files a printing's name shows (PrintingName).
 import enchantedSymbol from '../../assets/enchanted.webp?no-inline';
 import epicSymbol from '../../assets/epic.webp?no-inline';
 import iconicSymbol from '../../assets/iconic.webp?no-inline';

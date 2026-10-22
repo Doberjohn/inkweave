@@ -1,3 +1,4 @@
+import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import {BrowseToolbar} from './BrowseToolbar';
@@ -74,6 +75,22 @@ export const Docked: Story = {
     modeSwitch: <CollectionModeSwitch active={false} onToggle={fn()} />,
     typeFilters: ['Character'],
     activeFilterCount: 1,
+  },
+};
+
+/**
+ * A search typed in: the clear button sits at the field's right end until it is emptied. The
+ * story keeps the query, so the button clears it here as Browse does.
+ */
+export const DockedWithSearch: Story = {
+  args: {...Docked.args, searchQuery: 'Elsa'},
+  render: function SearchStory(args) {
+    const [query, setQuery] = useState(args.searchQuery ?? '');
+    const search = (next: string) => {
+      setQuery(next);
+      args.onSearchChange?.(next);
+    };
+    return <BrowseToolbar {...args} searchQuery={query} onSearchChange={search} />;
   },
 };
 

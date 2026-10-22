@@ -4,7 +4,7 @@ import {CopiesStripe} from '../../shared/components';
 import type {StripePart} from '../../shared/components/CopiesStripe';
 import {useCardDataContext} from '../../shared/contexts/CardDataContext';
 import {useCardModal} from '../../shared/contexts/CardModalContext';
-import {useCardWindowSlot} from '../../shared/contexts/cardWindowSlot';
+import {useCardWindowSlot, useHoldCopiesRow} from '../../shared/contexts/cardWindowSlot';
 import {useSession} from '../../shared/contexts/SessionContext';
 import {printedFullName} from '../../shared/hooks/usePrintingSelection';
 import {useCollection} from './CollectionContext';
@@ -54,9 +54,10 @@ function stripeParts({counts, finishes, cardName, change}: ShownCopies): StripeP
 }
 
 /**
- * The card window's copies (#826): the copies stripe over the card's foot, as tall as the card's
- * own black bar, for the printing on show (owner, 2026-10-20, where the "Your copies" block under
- * the card was). Always open: the window is where a phone or a keyboard changes a count, and
+ * The card window's copies (#826): the copies stripe, as tall as the card's own black bar, for
+ * the printing on show (owner, 2026-10-20, where the "Your copies" block under the card was), in
+ * a row of its own under the card, so the full card shows (owner, 2026-10-22: it sat over the
+ * card's foot). Always open: the window is where a phone or a keyboard changes a count, and
  * nothing points at it there. A part per finish the printing is made in (`finishesOf`), Foil
  * alone for Enchanted, Epic, Iconic and the alt foils, Normal alone for 1/C3.
  *
@@ -68,7 +69,9 @@ function stripeParts({counts, finishes, cardName, change}: ShownCopies): StripeP
  *
  * Not until the account's copy has answered (`syncing`): an edit made before then would be built
  * on this browser's copy, and its upload would replace counts saved from another device that the
- * read was about to bring in. The binder waits the same way, behind its skeleton.
+ * read was about to bring in. The binder waits the same way, behind its skeleton. The window's
+ * row is held once signed in with a collection, this browser's copy counting before the
+ * account's has answered (`useHoldCopiesRow`), so the stripe arriving then moves nothing.
  *
  * `onEdit` hears of each card whose count is set here: the binder behind the window keeps that
  * card in its Owned or Missing view (#826, owner 2026-10-20; `useKeptCards`).
@@ -78,9 +81,10 @@ export function WindowCopies({onEdit}: {onEdit: (cardId: string) => void}) {
   const card = useWindowCard();
   const {user} = useSession();
   const {entries, hasCollection, syncing, setCount} = useCollection();
-  const editable = user !== null && hasCollection && !syncing;
-  if (!editable || slot === null) return null;
-  if (card === undefined) return null;
+  const counting = user !== null && hasCollection;
+  useHoldCopiesRow(counting);
+  if (!counting || syncing) return null;
+  if (slot === null || card === undefined) return null;
   // A printing is a card of the collection's own: its counts are kept under its id.
   const printingId = shownPrintingId ?? card.id;
   const counts = entries[printingId] ?? NO_COPIES;

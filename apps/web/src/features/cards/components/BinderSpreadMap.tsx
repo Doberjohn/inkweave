@@ -1,16 +1,16 @@
 import {useLayoutEffect, useRef, useState, type CSSProperties, type RefObject} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
 import {CtaButton} from '../../../shared/components/CtaButton';
-import {NavArrowButton} from '../../../shared/components/NavArrowButton';
 import {COLORS, GOLD_GLOW, INK_COLORS, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
 import {useHover} from '../../../shared/hooks/useHover';
 import {PER_PAGE, PER_SPREAD} from './BinderSpread';
 
 /**
  * The binder's pager where Browse docks its panels (owner, 2026-10-12): the spreads in
- * miniature, one cell per pocket. Click a spread to turn to it; the Previous and Next
- * buttons at either end step one at a time. It answers the binder's own question, "what
- * am I missing?", so the band under the spread shows what the spread cannot.
+ * miniature, one cell per pocket. Click a spread to turn to it; the discs on the spread's
+ * outer edges step one at a time (owner, 2026-10-22: a worded Previous and Next sat at
+ * either end of this row before). It answers the binder's own question, "what am I
+ * missing?", so the band under the spread shows what the spread cannot.
  *
  * EACH CELL IS ITS CARD'S INK (owner, 2026-10-15), the vivid `INK_COLORS` shade: filled
  * for a card you hold, a ring for one you are missing, so the gaps still read as gaps and
@@ -24,9 +24,10 @@ import {PER_PAGE, PER_SPREAD} from './BinderSpread';
  * comes into view; going back mirrors it. Where the row holds `WINDOW`, a set's binder
  * (nine to eleven spreads) fits whole and never moves.
  *
- * THE BUTTONS' WORDS AND THE BIGGER SPREADS SHARE ONE ROW (owner, 2026-10-12): at 1920
- * the binder is 1,272px wide, and thirteen spreads left the words no room, so the window
- * holds eleven, and the spreads sit 4px apart rather than 8.
+ * THE WINDOW HOLDS ELEVEN AT MOST, 4px APART RATHER THAN 8 (owner, 2026-10-12): at 1920
+ * the binder is 1,272px wide, and thirteen spreads left the row's worded Previous and Next
+ * no room. Those have since moved to the spread's edges (owner, 2026-10-22), so the row is
+ * the spreads' alone.
  *
  * WHERE THE BINDER GOES SET BY SET, A SPREAD NAMES ITS SETS ON HOVER (owner, 2026-10-12):
  * "Set 11, Winterspell, spread 3 of 11". The logos that named them under the spreads were
@@ -42,10 +43,11 @@ import {PER_PAGE, PER_SPREAD} from './BinderSpread';
  * `public/mockups/binder-map-narrow.html`), each at least `MIN_MINI` wide, up to
  * `WINDOW`. Eleven squeezed into a narrow row drew cells too small to show a gap: at 1440
  * (a 792px binder) a missing card's ring filled in and read as held, and at 1280 the held
- * cells rounded to nothing. Now 1920 keeps all eleven at full size, 1440 shows eight and
- * 1280 six, their cells never under 4 by 5. The row is measured before the first paint
- * and again whenever it resizes, so docking a panel or narrowing the browser refits the
- * window around the spread on show.
+ * cells rounded to nothing. Now 1920 keeps all eleven at full size; with the buttons gone
+ * from the row (2026-10-22), 1440 keeps all eleven too, 1280 shows nine, and 1024 with
+ * both panels docked five, their cells never under 4 by 5. The row is measured before
+ * the first paint and again whenever it resizes, so docking a panel or narrowing the
+ * browser refits the window around the spread on show.
  *
  * CELLS ARE WHOLE PIXELS (owner, 2026-10-12: "some seem taller some shorter"). A cell 6.5
  * by 8.67px reaches the screen as 6 or 7 by 8 or 9, depending on where its edges fall, so
@@ -114,9 +116,6 @@ const WINDOW = 11;
  * than 6px). Exactly that, so the cells come out whole pixels: 86 once made them 6.5px.
  */
 const MINI_WIDTH = 90;
-
-/** The page buttons here: the binder's own gold arrows with their words, at the toolbar's height. */
-const ARROW_STYLE: CSSProperties = {height: 34};
 
 /**
  * Whether the browser can round a length to whole pixels against its container: CSS
@@ -318,13 +317,6 @@ function spreadsThatFit(room: number): number {
   return Math.max(1, Math.min(WINDOW, fit));
 }
 
-/** The row's width between its buttons, less the gaps either side of the spreads. */
-function roomBetweenButtons(row: HTMLElement): number {
-  const buttons = [row.firstElementChild, row.lastElementChild];
-  const taken = buttons.reduce((sum, button) => sum + (button?.getBoundingClientRect().width ?? 0), 0);
-  return row.clientWidth - taken - 2 * SPACING.md;
-}
-
 /**
  * How many spreads the window holds: as many as fit the row. Measured before the first
  * paint, so the row never shows a window it cannot fit, and again whenever the row
@@ -337,7 +329,7 @@ function useSpreadsThatFit(rowRef: RefObject<HTMLElement | null>): number | null
     const row = rowRef.current;
     if (!row) return;
     const measure = () => {
-      if (row.clientWidth > 0) setFit(spreadsThatFit(roomBetweenButtons(row)));
+      if (row.clientWidth > 0) setFit(spreadsThatFit(row.clientWidth));
     };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
@@ -427,38 +419,20 @@ export function BinderSpreadMap({pockets, current, onGo, sets = []}: BinderSprea
     <nav
       ref={rowRef}
       aria-label="Binder pages"
-      style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: SPACING.md, paddingTop: SPACING.sm}}>
-      <NavArrowButton
-        direction="prev"
-        label="Previous spread"
-        text="Previous"
-        onClick={() => onGo(current - 1)}
-        atEnd={current <= 0}
-        style={ARROW_STYLE}
-      />
-      <div style={{display: 'flex', gap: SPACING.xs, minWidth: 0}}>
-        {shown.map((spread) => {
-          const pages = spreadPages(pockets, {spread});
-          return (
-            <MiniSpread
-              key={spread}
-              spread={spread}
-              label={spreadLabel({spread, total}, [...pages.left, ...pages.right], spans)}
-              pages={pages}
-              current={spread === current}
-              onGo={onGo}
-            />
-          );
-        })}
-      </div>
-      <NavArrowButton
-        direction="next"
-        label="Next spread"
-        text="Next"
-        onClick={() => onGo(current + 1)}
-        atEnd={current >= total - 1}
-        style={ARROW_STYLE}
-      />
+      style={{display: 'flex', justifyContent: 'center', gap: SPACING.xs, paddingTop: SPACING.sm}}>
+      {shown.map((spread) => {
+        const pages = spreadPages(pockets, {spread});
+        return (
+          <MiniSpread
+            key={spread}
+            spread={spread}
+            label={spreadLabel({spread, total}, [...pages.left, ...pages.right], spans)}
+            pages={pages}
+            current={spread === current}
+            onGo={onGo}
+          />
+        );
+      })}
     </nav>
   );
 }

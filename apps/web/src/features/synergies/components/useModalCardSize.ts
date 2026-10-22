@@ -11,9 +11,10 @@ const noViewport = () => Number.POSITIVE_INFINITY;
 
 /**
  * The card's size in the modal for this screen (`modalCardSize`), kept current as the window
- * resizes: a desktop screen too short for the window shrinks every card alike.
+ * resizes: a desktop screen too short for the window shrinks every card alike. `copiesRow`: the
+ * window holds the copies row under its card.
  */
-export function useModalCardSize(isMobile: boolean): {cardWidth: number; cardHeight: number} {
+export function useModalCardSize(isMobile: boolean, copiesRow: boolean): {cardWidth: number; cardHeight: number} {
   const viewportHeight = useSyncExternalStore(subscribeToResize, readViewportHeight, noViewport);
-  return modalCardSize(isMobile, viewportHeight);
+  return modalCardSize(isMobile, {viewportHeight, copiesRow});
 }

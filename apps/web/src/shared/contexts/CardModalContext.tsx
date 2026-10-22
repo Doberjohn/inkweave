@@ -20,7 +20,7 @@ import {
   subscribeToCardOverviewModal,
   warmCardOverviewModalOnFirstInteraction,
 } from './cardOverviewModalLoader';
-import {CardWindowSlotContext, createCardWindowStores} from './cardWindowSlot';
+import {CardWindowSlotContext, createCardWindowStores, useCopiesRowHeld} from './cardWindowSlot';
 
 // Loaded on demand (#640): warmed by the first interaction and by card tile hover or focus. An
 // open that beats the chunk renders this lazy wrapper and shows CardOverviewModalFallback until
@@ -289,7 +289,7 @@ function useComparisonRouteSync({
 interface CardModalRootProps {
   onEnterComparison: (partnerId: string, groupKey?: string) => void;
   onExitComparison: () => void;
-  /** Takes the window's slot over its card's foot, for `useCardWindowSlot` (#826). */
+  /** Takes the window's slot under its card, for `useCardWindowSlot` (#826). */
   copiesSlotRef: (el: HTMLElement | null) => void;
   /** Takes the printing the window shows, for `useCardWindowSlot` (#826). */
   onShownPrintingChange: (printingId: string | null) => void;
@@ -330,6 +330,8 @@ function CardModalRoot({onEnterComparison, onExitComparison, copiesSlotRef, onSh
   const partnerCard = comparisonPartnerId ? (getCardById(comparisonPartnerId) ?? null) : null;
   const {synergies, getPairSynergies, isLoading: synergiesLoading} = usePrecomputedSynergies(outsideCore ? null : card);
   const {Modal, openedBeforeModalReady} = useModalForOpen(card !== null);
+  // The row under the card, for the page's copies, while a page holds it (`useHoldCopiesRow`).
+  const copiesRow = useCopiesRowHeld();
 
   if (!card) return null;
 
@@ -358,6 +360,7 @@ function CardModalRoot({onEnterComparison, onExitComparison, copiesSlotRef, onSh
           card={card}
           isMobile={isMobile}
           printingId={initialPrintingId}
+          copiesRow={copiesRow}
           onClose={closeCardModal}
         />
       }>
@@ -378,7 +381,7 @@ function CardModalRoot({onEnterComparison, onExitComparison, copiesSlotRef, onSh
         siblingCardIds={siblingCardIds}
         onGoToSibling={goToSibling}
         initialPrintingId={initialPrintingId}
-        copiesSlotRef={copiesSlotRef}
+        copiesSlotRef={copiesRow ? copiesSlotRef : undefined}
         onShownPrintingChange={onShownPrintingChange}
       />
     </Suspense>

@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {render, screen, fireEvent, within} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
-import {createCard, restStrip, swipeStrip} from '../../../../shared/test-utils';
+import {createCard, swipeCard} from '../../../../shared/test-utils';
 import {trackEvent} from '../../../../shared/lib/analytics';
 import {CardDetailPanel} from '../CardDetailPanel';
 
@@ -57,28 +57,24 @@ describe('CardDetailPanel title', () => {
 });
 
 describe('CardDetailPanel printings', () => {
-  it('keeps a card without an alternate printing exactly as before: one image, no switcher', () => {
+  it('keeps a card without an alternate printing exactly as before: one image, no printings', () => {
     renderPanel(gosalyn);
 
     expect(screen.getByRole('button', {name: 'Enlarge card image'})).toBeInTheDocument();
-    expect(screen.queryByRole('radiogroup', {name: 'Card printing'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', {name: /printings$/})).not.toBeInTheDocument();
   });
 
-  it('offers a Standard | Enchanted switcher for a card with an Enchanted printing', () => {
+  // The panel scrolls, so it clips at its edge: the printings behind the card show in its padding.
+  it('stacks the Enchanted printing behind the card, its edge within the panel', () => {
     renderPanel();
 
-    const pills = screen.getByRole('radiogroup', {name: 'Card printing'});
-    expect(
-      within(pills)
-        .getAllByRole('radio')
-        .map((r) => r.textContent),
-    ).toEqual(['Standard', 'Enchanted']);
+    expect(screen.getByRole('button', {name: 'Next printing: Enchanted'})).toHaveStyle({right: '-16px'});
   });
 
   it('opens the lightbox on the printing shown', () => {
     renderPanel();
 
-    fireEvent.click(screen.getByRole('radio', {name: 'Enchanted'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Next printing: Enchanted'}));
     fireEvent.click(screen.getByRole('button', {name: 'Enlarge Enchanted printing'}));
 
     const lightbox = screen.getByRole('dialog', {
@@ -90,7 +86,7 @@ describe('CardDetailPanel printings', () => {
   it('offers a translation in the lightbox of a variant revealed in another language', () => {
     renderPanel(baymax);
 
-    fireEvent.click(screen.getByRole('radio', {name: 'Epic'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Next printing: Epic'}));
     fireEvent.click(screen.getByRole('button', {name: 'Enlarge Epic printing'}));
     fireEvent.click(screen.getByRole('button', {name: 'See translation'}));
 
@@ -102,7 +98,7 @@ describe('CardDetailPanel printings', () => {
   it("offers no translation in the lightbox of a foreign card's English variant", () => {
     renderPanel({...pongo, scanLanguage: 'ja'});
 
-    fireEvent.click(screen.getByRole('radio', {name: 'Enchanted'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Next printing: Enchanted'}));
     fireEvent.click(screen.getByRole('button', {name: 'Enlarge Enchanted printing'}));
 
     expect(screen.queryByRole('button', {name: 'See translation'})).not.toBeInTheDocument();
@@ -130,7 +126,7 @@ describe('CardDetailPanel printings', () => {
   it('records which alternate printing was viewed', () => {
     renderPanel();
 
-    fireEvent.click(screen.getByRole('radio', {name: 'Enchanted'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Next printing: Enchanted'}));
 
     expect(trackEvent).toHaveBeenCalledTimes(1);
     expect(trackEvent).toHaveBeenCalledWith('card_printing_view', {
@@ -141,14 +137,11 @@ describe('CardDetailPanel printings', () => {
     });
   });
 
-  it('records a swiped printing once it comes to rest, not as the swipe crosses it', () => {
+  it('records the printing a swipe throws the card to, once', () => {
     renderPanel();
-    const strip = screen.getByRole('group', {name: 'Pongo - Determined Father printings'});
 
-    swipeStrip(strip, 1);
-    expect(trackEvent).not.toHaveBeenCalled();
+    swipeCard(screen.getByRole('group', {name: 'Pongo - Determined Father printings'}));
 
-    restStrip(strip);
-    expect(trackEvent).toHaveBeenCalledTimes(1);
+    expect(trackEvent).toHaveBeenCalledExactlyOnceWith('card_printing_view', expect.objectContaining({printingId: '2141'}));
   });
 });

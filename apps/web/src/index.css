@@ -219,6 +219,23 @@ option {
   pointer-events: none;
 }
 
+/* The printings stack (PrintingCarousel): the printings behind the card show past its sides,
+   where an outline would run over them, so its focus draws the inset ring on the card instead.
+   Above the printings (layers 1 to 3), beside the peeks' buttons, under the peek's name and the
+   turn's notice (PrintingPeek). */
+.printing-stack:focus-visible {
+  outline: none;
+}
+.printing-stack:focus-visible::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border: 2px solid var(--inkweave-gold);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
 /* Animations */
 @keyframes spin {
   to {

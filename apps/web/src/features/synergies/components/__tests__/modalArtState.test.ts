@@ -24,11 +24,11 @@ function renderArtState(card: LorcanaCard) {
 }
 
 describe('useCardTranslation', () => {
-  // A comparison resets the printing without a pick or a swipe, so only a rule that reads the
+  // A comparison resets the printing without a turn of the strip, so only a rule that reads the
   // printing on screen can catch it.
   it('clears the translation when a comparison brings the English Standard printing back', () => {
     const {result, rerender} = renderArtState(baymax);
-    act(() => result.current.printing?.pick(1));
+    act(() => result.current.printing?.select(1));
     act(() => result.current.translation?.toggle());
     expect(result.current.translation?.shown).toBe(true);
 
@@ -43,7 +43,7 @@ describe('useCardTranslation', () => {
     const {result} = renderArtState({...baymax, scanLanguage: 'ja'});
     act(() => result.current.translation?.toggle());
 
-    act(() => result.current.printing?.pick(1));
+    act(() => result.current.printing?.select(1));
 
     expect(result.current.translation).toMatchObject({shown: true, language: 'it'});
   });

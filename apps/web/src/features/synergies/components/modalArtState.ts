@@ -3,8 +3,9 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {hasForeignScan, usePrintingSelection, type Printing} from '../../../shared/hooks';
 
 // The card overview modal's art state: the "See translation" overlay (#623), the printing
-// shown (#625) and the slot over the card's foot that a page fills (#826). Each sits in a context because the header (desktop controls) and the card
-// image (art, overlay, mobile controls) both read it; ModalCardArt.tsx holds those views.
+// shown (#625) and the row under the card that a page fills (#826). Each sits in a context
+// because the header (the title, desktop's toggle) and the card image (art, overlay, mobile's
+// toggle) read it; ModalCardArt.tsx holds those views.
 
 /** "See translation" for a card with a non-English scan among its printings; else null. */
 export interface CardTranslationState {
@@ -20,7 +21,7 @@ export const CardTranslationContext = createContext<CardTranslationState | null>
 /**
  * Every card opens on its scan: paging away clears the translation (so paging back starts on
  * the scan too), and so does closing, for a host that keeps the modal mounted. So does an
- * English printing coming on screen, whatever brought it (a pill, a swipe, a comparison's
+ * English printing coming on screen, whatever brought it (a swipe, a peek, a comparison's
  * reset): a variant can be a foreign scan too (#681), so the translation follows the printing.
  */
 export function useCardTranslation(
@@ -41,17 +42,15 @@ export function useCardTranslation(
 export interface CardPrintingState {
   printings: Printing[];
   index: number;
-  /** The strip following a swipe live: shows the printing, records nothing. */
+  /** The strip turning to another printing, live: shows the printing, records nothing. */
   select: (index: number) => void;
-  /** A pill pick: shows the printing and records the view. */
-  pick: (index: number) => void;
-  /** The strip came to rest on another printing after a swipe: records the view. */
+  /** The strip came to rest on another printing, or a peek or a key turned it: records the view. */
   settle: (index: number) => void;
-  /** A comparison shows the base art, so its strip can't be swiped. */
+  /** A comparison shows the base art, so its strip can't be turned. */
   locked: boolean;
 }
 
-/** Shared by the header (desktop pills) and the card image (the strip, mobile pills). */
+/** Shared by the header (the title names the printing on show) and the card image (the strip). */
 export const CardPrintingContext = createContext<CardPrintingState | null>(null);
 
 /**
@@ -73,16 +72,16 @@ export function useModalPrinting(
     initialPrintingId?: string | null;
   },
 ): CardPrintingState | null {
-  const {printings, index, select, pick, settle} = usePrintingSelection(card, {
+  const {printings, index, select, settle} = usePrintingSelection(card, {
     resetWhen: !isOpen || inComparison,
     surface: 'modal',
     initialKey: initialPrintingId,
   });
   if (printings.length < 2) return null;
-  return {printings, index, select, pick, settle, locked: inComparison};
+  return {printings, index, select, settle, locked: inComparison};
 }
 
-/** The window's slot over its card's foot (#826), as `CopiesSlot` needs it. */
+/** The window's row under its card (#826), as `CopiesSlot` needs it. */
 export interface CopiesSlotState {
   /** Hands the slot's element to its host, and null once it goes: `CardModalContext`'s `copiesSlot`. */
   attach: (el: HTMLElement | null) => void;
@@ -93,7 +92,7 @@ export interface CopiesSlotState {
 /** Null where nothing hosts a slot: a story, a test, or a window outside `CardModalProvider`. */
 export const CopiesSlotContext = createContext<CopiesSlotState | null>(null);
 
-/** The slot over the card's foot, wired to the window's own keys, or null where no page hosts one. */
+/** The row under the card, wired to the window's own keys, or null where no page holds one. */
 export function pickCopiesSlot(
   attach: ((el: HTMLElement | null) => void) | undefined,
   onKeyDown: (e: KeyboardEvent) => void,
@@ -103,7 +102,7 @@ export function pickCopiesSlot(
 
 /**
  * Tells the host which printing is on show (#826): a variant's id, or null for the card's own,
- * so a page filling the window's slot follows the pills and the swipes. In a layout effect, so
+ * so a page filling the window's row follows each turn of the strip. In a layout effect, so
  * what the page draws from it is corrected before the browser paints.
  */
 export function useReportShownPrinting(

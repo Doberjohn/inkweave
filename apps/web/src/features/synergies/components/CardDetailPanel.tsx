@@ -10,7 +10,6 @@ import {
   CardLightbox,
   CardTextBlock,
   PrintingCarousel,
-  PrintingPills,
   TierCircle,
 } from '../../../shared/components';
 import {printingAlt, usePrintingSelection, type Printing} from '../../../shared/hooks';
@@ -71,13 +70,16 @@ function buildNameLinkStyle(hovered: boolean): CSSProperties {
 
 const HERO_WIDTH = 298;
 const HERO_HEIGHT = 417;
+/** The panel's padding, between its edge and the hero: the room the printings behind the hero show in. */
+const PANEL_PADDING = SPACING.lg;
 
 type PrintingSelection = ReturnType<typeof usePrintingSelection>;
 
 /**
- * The hero art of a card with an alternate printing (#625): the swipeable printings strip,
- * with the Standard | <rarity> pills under it. The page scrolls, so nothing here clips. The
- * pills pick a printing; the strip follows a swipe live and records it once it comes to rest.
+ * The hero art of a card with an alternate printing (#625): the card in front of its other
+ * printings, turned by a throw, a swipe, the peeks at its sides or ← → (owner, 2026-10-22: the
+ * pills under it went). The panel scrolls, so it clips at its edge: the printings behind the
+ * card show in its padding.
  */
 function PrintingsHero({
   card,
@@ -89,7 +91,7 @@ function PrintingsHero({
   onEnlarge: (index: number) => void;
 }) {
   return (
-    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.sm}}>
+    <div style={{display: 'flex', justifyContent: 'center'}}>
       <PrintingCarousel
         key={card.id}
         card={card}
@@ -102,11 +104,7 @@ function PrintingsHero({
         height={HERO_HEIGHT}
         borderRadius={RADIUS.xl}
         priority
-      />
-      <PrintingPills
-        printings={selection.printings}
-        index={selection.index}
-        onSelect={selection.pick}
+        room={PANEL_PADDING}
       />
     </div>
   );
@@ -393,7 +391,7 @@ export function CardDetailPanel({
         maxHeight: `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`,
         display: 'flex',
         flexDirection: 'column',
-        padding: `${SPACING.lg}px`,
+        padding: `${PANEL_PADDING}px`,
         gap: `${SPACING.lg}px`,
         boxSizing: 'border-box',
       }}>

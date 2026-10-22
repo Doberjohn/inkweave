@@ -10,22 +10,21 @@ import {
   useTransitionPresence,
 } from '../../../shared/hooks';
 import {CardTranslationToggle} from '../../../shared/components/CardTranslationToggle';
-import {PrintingPills} from '../../../shared/components/PrintingPills';
 import {ModalCardTitle} from './ModalCardTitle';
 import {
+  CARD_WITH_COPIES_STYLE,
   CENTERING_WRAPPER_STYLE,
   CLOSE_BUTTON_SIZE,
+  copiesRowHeight,
   DEFAULT_BODY_STYLE,
   desktopCardRowHeight,
-  hasArtControls,
   MODAL_BACKDROP_STYLE,
+  MODAL_FRAME_STYLE,
   MODAL_HEADER_STYLE,
   pickCardColumnLayout,
   pickCardsRowStyle,
-  pickModalFrameStyle,
   pickModalShellStyle,
   pickSynergyColumnLayout,
-  RESERVED_ART_CONTROLS_STYLE,
 } from './cardOverviewModalStyles';
 import {useModalCardSize} from './useModalCardSize';
 
@@ -119,16 +118,6 @@ const noop = () => {};
 const SKELETON_ART_STYLE: CSSProperties = {display: 'block'};
 
 /**
- * The art controls' room, held under the window of a desktop card without them (owner,
- * 2026-10-20): every card's frame is then one height, so paging moves neither the window's top
- * nor its arrows (`pickModalFrameStyle`). Shared with the modal, which this file's chunk precedes.
- */
-export function ReservedArtControlsRoom({card, isMobile}: {card: LorcanaCard; isMobile: boolean}) {
-  if (isMobile || hasArtControls(card)) return null;
-  return <div style={RESERVED_ART_CONTROLS_STYLE} />;
-}
-
-/**
  * The translation toggle, invisible, for a card with a foreign scan among its printings: the
  * space the modal's takes, under the card on mobile and in the header on desktop.
  * visibility:hidden also keeps it out of the focus order and the accessibility tree.
@@ -142,18 +131,32 @@ function ReservedTranslationToggle({card}: {card: LorcanaCard}) {
   );
 }
 
+interface CardPlaceholderProps {
+  card: LorcanaCard;
+  isMobile: boolean;
+  /** The window holds the copies row under its card. */
+  copiesRow: boolean;
+  size: {cardWidth: number; cardHeight: number};
+}
+
 /**
- * Mobile's printing pills and translation toggle (ModalCardArt.tsx), invisible: rendered under
- * the card as the modal renders them, they hold exactly the space the real controls take, so
- * nothing moves at the handoff. Desktop's pills sit in a row pinned under the card, in room its
- * row already holds (`desktopCardRowHeight`); its toggle is held in the header.
+ * The card's placeholder, with what the modal puts under a phone's card (ModalCardArt.tsx),
+ * invisible: the copies row where the window holds one, and the translation toggle. Laid out as
+ * the modal lays them out, they hold exactly the space the real ones take, so nothing moves at
+ * the handoff. Under a desktop card the copies row's room is the row's own
+ * (`desktopCardRowHeight`), and the toggle is held in the header.
  */
-function ReservedMobileArtControls({card}: {card: LorcanaCard}) {
+function CardPlaceholder({card, isMobile, copiesRow, size: {cardWidth, cardHeight}}: CardPlaceholderProps) {
   return (
-    <>
-      <PrintingPills printings={printingsOf(card)} index={0} onSelect={noop} isMobile style={HIDDEN} />
-      <ReservedTranslationToggle card={card} />
-    </>
+    <div style={pickCardColumnLayout(isMobile)}>
+      <div style={CARD_WITH_COPIES_STYLE}>
+        {/* inline + block: no trailing <br> or line box, so the placeholder is exactly
+            the card's height and the synergy column below it lines up (mobile). */}
+        <Skeleton width={cardWidth} height={cardHeight} borderRadius={RADIUS.xl} inline style={SKELETON_ART_STYLE} />
+        {isMobile && copiesRow && <div style={{width: cardWidth, height: copiesRowHeight(cardWidth)}} />}
+      </div>
+      {isMobile && <ReservedTranslationToggle card={card} />}
+    </div>
   );
 }
 
@@ -165,6 +168,8 @@ interface CardOverviewModalFallbackProps {
    * title reads, as the modal's will.
    */
   printingId?: string | null;
+  /** The window holds the copies row under its card (`useHoldCopiesRow`), as the modal will. */
+  copiesRow?: boolean;
   onClose: () => void;
 }
 
@@ -183,6 +188,7 @@ export function CardOverviewModalFallback({
   card,
   isMobile,
   printingId = null,
+  copiesRow = false,
   onClose,
 }: CardOverviewModalFallbackProps) {
   const {visible} = useTransitionPresence(true);
@@ -195,8 +201,8 @@ export function CardOverviewModalFallback({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [onClose]);
 
-  const {cardWidth, cardHeight} = useModalCardSize(isMobile);
-  const rowHeight = desktopCardRowHeight({cardHeight, controlsBelow: !isMobile && hasArtControls(card)});
+  const {cardWidth, cardHeight} = useModalCardSize(isMobile, copiesRow);
+  const rowHeight = desktopCardRowHeight({cardWidth, cardHeight, copiesRow});
   const visibleClass = visible ? ' overlay-visible' : '';
   return (
     <>
@@ -208,7 +214,7 @@ export function CardOverviewModalFallback({
         style={MODAL_BACKDROP_STYLE}
       />
       <div style={CENTERING_WRAPPER_STYLE}>
-        <div style={pickModalFrameStyle(isMobile)}>
+        <div style={MODAL_FRAME_STYLE}>
           <div
             className={`overlay-transition overlay-scale overlay-enter${visibleClass}`}
             role="status"
@@ -229,18 +235,7 @@ export function CardOverviewModalFallback({
             </div>
             <div style={BODY_STYLE}>
               <div style={pickCardsRowStyle({isMobile, cardWidth, rowHeight})}>
-                <div style={pickCardColumnLayout(isMobile)}>
-                  {/* inline + block: no trailing <br> or line box, so the placeholder is exactly
-                      the card's height and the synergy column below it lines up (mobile). */}
-                  <Skeleton
-                    width={cardWidth}
-                    height={cardHeight}
-                    borderRadius={RADIUS.xl}
-                    inline
-                    style={SKELETON_ART_STYLE}
-                  />
-                  {isMobile && <ReservedMobileArtControls card={card} />}
-                </div>
+                <CardPlaceholder card={card} isMobile={isMobile} copiesRow={copiesRow} size={{cardWidth, cardHeight}} />
                 <div style={pickSynergyColumnLayout(isMobile, rowHeight)}>
                   <SynergiesLoadingSkeleton />
                 </div>
@@ -249,7 +244,6 @@ export function CardOverviewModalFallback({
               <div aria-hidden="true" />
             </div>
           </div>
-          <ReservedArtControlsRoom card={card} isMobile={isMobile} />
         </div>
       </div>
     </>

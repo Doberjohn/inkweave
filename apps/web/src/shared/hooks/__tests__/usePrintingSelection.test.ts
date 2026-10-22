@@ -150,12 +150,14 @@ describe('usePrintingSelection', () => {
   });
 });
 
-// card_printing_view counts settled views: a pill pick, or the strip at rest on a printing.
+// card_printing_view counts settled views: the strip at rest on a printing, or turned to it by a
+// peek or a key.
 describe('usePrintingSelection views', () => {
-  it('records a picked printing once', () => {
+  it('records the printing the strip comes to rest on, once', () => {
     const {result} = renderSelection(pongo);
 
-    act(() => result.current.pick(1));
+    act(() => result.current.select(1));
+    act(() => result.current.settle(1));
 
     expect(result.current.index).toBe(1);
     expect(trackEvent).toHaveBeenCalledTimes(1);
@@ -175,29 +177,12 @@ describe('usePrintingSelection views', () => {
     expect(trackEvent).not.toHaveBeenCalled();
   });
 
-  it('records the printing the strip comes to rest on', () => {
-    const {result} = renderSelection(pongo);
-
-    act(() => result.current.settle(1));
-
-    expect(trackEvent).toHaveBeenCalledTimes(1);
-  });
-
   it('never records the Standard printing', () => {
     const {result} = renderSelection(pongo);
 
     act(() => result.current.settle(0));
-    act(() => result.current.pick(1));
-    act(() => result.current.pick(0));
-
-    expect(trackEvent).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not record a pick of the printing already shown', () => {
-    const {result} = renderSelection(pongo);
-
-    act(() => result.current.pick(1));
-    act(() => result.current.pick(1));
+    act(() => result.current.settle(1));
+    act(() => result.current.settle(0));
 
     expect(trackEvent).toHaveBeenCalledTimes(1);
   });

@@ -13,7 +13,6 @@ import {
   IconButton,
   InkIcon,
   PrintingCarousel,
-  PrintingPills,
 } from '../../../shared/components';
 import {usePrintingSelection} from '../../../shared/hooks';
 
@@ -116,17 +115,17 @@ function CardDetailChips({card}: {card: LorcanaCard}) {
 }
 
 /**
- * The card art, centered. A card with an alternate printing (#625) gets the swipeable
- * printings strip with the Standard | <rarity> pills under it. The pills pick a printing; the
- * strip follows a swipe live and records it once it comes to rest.
+ * The card art, centered. A card with an alternate printing (#625) stands in front of its other
+ * printings, turned by a swipe that throws it aside or a tap on the edges of the printings behind
+ * it (owner, 2026-10-22: the pills under it went).
  */
 function CardDetailArt({card}: {card: LorcanaCard}) {
-  const {printings, index, select, pick, settle} = usePrintingSelection(card, {
+  const {printings, index, select, settle} = usePrintingSelection(card, {
     surface: 'card_page',
   });
 
   return (
-    <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.sm}}>
+    <div style={{display: 'flex', justifyContent: 'center'}}>
       {printings.length < 2 ? (
         <CardImage
           src={card.imageUrl}
@@ -140,21 +139,18 @@ function CardDetailArt({card}: {card: LorcanaCard}) {
           borderRadius={RADIUS.lg}
         />
       ) : (
-        <>
-          <PrintingCarousel
-            key={card.id}
-            card={card}
-            printings={printings}
-            index={index}
-            onIndexChange={select}
-            onSettle={settle}
-            width={ART_WIDTH}
-            height={ART_HEIGHT}
-            borderRadius={RADIUS.lg}
-            priority
-          />
-          <PrintingPills printings={printings} index={index} onSelect={pick} isMobile />
-        </>
+        <PrintingCarousel
+          key={card.id}
+          card={card}
+          printings={printings}
+          index={index}
+          onIndexChange={select}
+          onSettle={settle}
+          width={ART_WIDTH}
+          height={ART_HEIGHT}
+          borderRadius={RADIUS.lg}
+          priority
+        />
       )}
     </div>
   );
@@ -162,7 +158,7 @@ function CardDetailArt({card}: {card: LorcanaCard}) {
 
 /**
  * The card on the mobile card page, read top to bottom in the card modal's order: name and
- * ×, details, the card, its printings, then its text.
+ * ×, details, the card with its printings, then its text.
  */
 export function CardDetail({card, onClear, headingLevel = 'h2'}: CardDetailProps) {
   return (

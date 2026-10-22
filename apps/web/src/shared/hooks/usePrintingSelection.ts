@@ -226,12 +226,12 @@ function useCardSelection(cardId: string, resetWhen: boolean, initialIndex: numb
 
 /**
  * Which printing of `card` is shown (see useCardSelection for when it resets to Standard),
- * and the `card_printing_view` it records, once per variant a visitor settles on: `pick` (a
- * pill, already settled) records, and so does `settle` (the strip at rest after a swipe, from
- * PrintingCarousel's `onSettle`). `select` only follows the strip's live index as a swipe
- * crosses printings, so it records nothing. `initialKey` (a variant's id) starts the card on
- * that printing instead of Standard: the reveals board opens its special slots that way, and
- * Browse names one for each card the modal's arrows reach (CardModalContext's `printingFor`).
+ * and the `card_printing_view` it records, once per variant a visitor settles on: `settle`
+ * records (PrintingCarousel's `onSettle`: each turn, by a throw, a swipe, a peek or an arrow
+ * key). `select` only follows the printing in front, so it records nothing. `initialKey` (a
+ * variant's id) starts the card on that printing instead of Standard: the reveals board opens
+ * its special slots that way, and Browse names one for each card the modal's arrows reach
+ * (CardModalContext's `printingFor`).
  */
 export function usePrintingSelection(
   card: LorcanaCard,
@@ -247,10 +247,5 @@ export function usePrintingSelection(
   // A selection past this card's printings falls back to Standard.
   const index = selectedIndex < printings.length ? selectedIndex : 0;
   const settle = (at: number) => recordView(card, printings[at], surface);
-  const pick = (next: number) => {
-    if (next === index) return;
-    select(next);
-    settle(next);
-  };
-  return {printings, index, select, pick, settle, current: printings[index]};
+  return {printings, index, select, settle, current: printings[index]};
 }

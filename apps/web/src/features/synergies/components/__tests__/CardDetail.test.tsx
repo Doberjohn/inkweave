@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {render, screen, fireEvent, within} from '@testing-library/react';
-import {createCard, restStrip, swipeStrip} from '../../../../shared/test-utils';
+import {render, screen, fireEvent} from '@testing-library/react';
+import {createCard, swipeCard} from '../../../../shared/test-utils';
 import {trackEvent} from '../../../../shared/lib/analytics';
 import {CardDetail} from '../CardDetail';
 
@@ -25,45 +25,33 @@ const precedes = (a: Element, b: Element) =>
   Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
 
 describe('CardDetail (mobile card page)', () => {
-  it('reads top to bottom like the card modal: name, details, card, printings, then text', () => {
+  it('reads top to bottom like the card modal: name, details, the card with its printings, then text', () => {
     render(<CardDetail card={pongo} onClear={() => {}} headingLevel="h1" />);
 
     const name = screen.getByRole('heading', {level: 1, name: 'Pongo - Determined Father'});
     const cost = screen.getByText('Cost 3');
-    const art = screen.getByRole('img', {name: 'Pongo - Determined Father'});
-    const pills = screen.getByRole('radiogroup', {name: 'Card printing'});
+    const printings = screen.getByRole('group', {name: 'Pongo - Determined Father printings'});
     const text = screen.getByText(/TWILIGHT BARK/);
 
     expect(precedes(name, cost)).toBe(true);
-    expect(precedes(cost, art)).toBe(true);
-    expect(precedes(art, pills)).toBe(true);
-    expect(precedes(pills, text)).toBe(true);
+    expect(precedes(cost, printings)).toBe(true);
+    expect(precedes(printings, text)).toBe(true);
   });
 
-  it('shows a card without an alternate printing with no switcher', () => {
+  it('shows a card without an alternate printing as its image alone', () => {
     render(<CardDetail card={gosalyn} onClear={() => {}} />);
 
     expect(screen.getByRole('img', {name: gosalyn.fullName})).toBeInTheDocument();
-    expect(screen.queryByRole('radiogroup', {name: 'Card printing'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', {name: /printings$/})).not.toBeInTheDocument();
   });
 
-  it('offers the Standard | Enchanted switcher under the card', () => {
+  // The pills under the card went (owner, 2026-10-22): the printing beside it is the way there.
+  it('turns to the printing beside the card and records it', () => {
     render(<CardDetail card={pongo} onClear={() => {}} />);
 
-    const pills = screen.getByRole('radiogroup', {name: 'Card printing'});
-    expect(
-      within(pills)
-        .getAllByRole('radio')
-        .map((r) => r.textContent),
-    ).toEqual(['Standard', 'Enchanted']);
-  });
+    fireEvent.click(screen.getByRole('button', {name: 'Next printing: Enchanted'}));
 
-  it('shows the printing picked and records it', () => {
-    render(<CardDetail card={pongo} onClear={() => {}} />);
-
-    fireEvent.click(screen.getByRole('radio', {name: 'Enchanted'}));
-
-    expect(screen.getByRole('radio', {name: 'Enchanted'})).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('img', {name: 'Pongo - Determined Father, Enchanted printing'})).toBeInTheDocument();
     expect(trackEvent).toHaveBeenCalledTimes(1);
     expect(trackEvent).toHaveBeenCalledWith('card_printing_view', {
       cardId: '1938',
@@ -73,15 +61,12 @@ describe('CardDetail (mobile card page)', () => {
     });
   });
 
-  it('records a swiped printing once it comes to rest, not as the swipe crosses it', () => {
+  it('records the printing a swipe throws the card to, once', () => {
     render(<CardDetail card={pongo} onClear={() => {}} />);
-    const strip = screen.getByRole('group', {name: 'Pongo - Determined Father printings'});
 
-    swipeStrip(strip, 1);
-    expect(trackEvent).not.toHaveBeenCalled();
+    swipeCard(screen.getByRole('group', {name: 'Pongo - Determined Father printings'}));
 
-    restStrip(strip);
-    expect(trackEvent).toHaveBeenCalledTimes(1);
+    expect(trackEvent).toHaveBeenCalledExactlyOnceWith('card_printing_view', expect.objectContaining({printingId: '2141'}));
   });
 
   it('closes from its × button, as the modal does', () => {

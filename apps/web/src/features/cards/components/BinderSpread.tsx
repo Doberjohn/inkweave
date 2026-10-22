@@ -9,7 +9,7 @@ import {
   type RefObject,
   type SyntheticEvent,
 } from 'react';
-import {NavArrowButton} from '../../../shared/components';
+import {EDGE_DISC_SIZE, NavArrowButton} from '../../../shared/components';
 import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
 import {blackRgba, COLORS, RADIUS, SPACING} from '../../../shared/constants';
 
@@ -29,9 +29,15 @@ import {blackRgba, COLORS, RADIUS, SPACING} from '../../../shared/constants';
  * space, and the binder is height-driven, so every pixel it took came off the
  * cards. The count it carried is coming back as part of the stats design.
  *
- * WITHOUT ARROWS WHERE BROWSE DOCKS ITS PANELS (owner, 2026-10-08): the spread takes
- * their width and fills its box from the top, so its left edge meets the search
- * bar's start and its top meets the panels' tops (see `arrows`).
+ * WITHOUT ARROWS BESIDE IT WHERE BROWSE DOCKS ITS PANELS (owner, 2026-10-08): the
+ * spread takes their width and fills its box from the top, so its left edge meets the
+ * search bar's start and its top meets the panels' tops (see `arrows`).
+ *
+ * THERE THE ARROWS SIT ON THE SPREAD'S OUTER EDGES (owner, 2026-10-22): a small disc
+ * halfway down each, growing under the pointer, where a worded Previous and Next at
+ * either end of the spread map's row turned the pages before. The spread keeps its
+ * size: at rest a disc covers its page's margin, and the rest of it lies in the gutter
+ * beside the spread.
  *
  * THE LAST SPREAD'S EMPTY RIGHT PAGE IS THE INSIDE BACK COVER (owner, 2026-10-12): a
  * page of empty parchment read as missing cards; the cover's blue board says the binder
@@ -60,6 +66,9 @@ export const PER_SPREAD = PER_PAGE * 2;
 /** Lorcana cards are 0.72 wide-to-tall. Drives the whole layout. */
 const CARD_ASPECT = 0.72;
 
+/** A page's margin around its pockets. */
+const PAGE_PADDING = SPACING.md;
+
 const PARCHMENT = '/art/backgrounds/binder.webp';
 
 /** The binder's cover board: the inside front cover, and the inside back cover past the last card. */
@@ -79,7 +88,7 @@ const COVER_BOARD = '/art/backgrounds/binder-cover.webp';
  * another: measured at 1280x720, against Chromium's 304px. Spelled out, the columns are
  * the same in both.
  */
-const PAGE_CHROME_HEIGHT = 2 * SPACING.md + (PAGE_ROWS - 1) * SPACING.sm;
+const PAGE_CHROME_HEIGHT = 2 * PAGE_PADDING + (PAGE_ROWS - 1) * SPACING.sm;
 const SPREAD_COLUMN = `calc((100cqh - ${PAGE_CHROME_HEIGHT}px) / ${PAGE_ROWS} * ${CARD_ASPECT})`;
 
 /**
@@ -122,7 +131,7 @@ function pageStyle(side: 'left' | 'right', cover = false): CSSProperties {
     gridTemplateColumns: `repeat(${PAGE_COLUMNS}, ${SPREAD_COLUMN})`,
     gridTemplateRows: `repeat(${PAGE_ROWS}, minmax(0, 1fr))`,
     gap: SPACING.sm,
-    padding: SPACING.md,
+    padding: PAGE_PADDING,
     justifyContent: 'center',
     backgroundImage: `url(${cover ? COVER_BOARD : PARCHMENT})`,
     backgroundSize: 'cover',
@@ -240,12 +249,12 @@ function spreadMaxHeight(width: number, withArrows: boolean): number | undefined
   if (width <= 0) return undefined;
   // Everything the eight cards do NOT get: the arrows and their gaps where they
   // are drawn, the spine, and each page's padding and column gaps.
-  const chrome = (withArrows ? ARROWS_CHROME : 0) + SPINE_WIDTH + 2 * (2 * SPACING.md + 3 * SPACING.sm);
+  const chrome = (withArrows ? ARROWS_CHROME : 0) + SPINE_WIDTH + 2 * (2 * PAGE_PADDING + 3 * SPACING.sm);
   const cardWidth = (width - chrome) / 8;
   if (cardWidth <= 0) return undefined;
   const cardHeight = cardWidth / CARD_ASPECT;
   // Three rows, two row gaps, and the page's own vertical padding.
-  return 3 * cardHeight + 2 * SPACING.sm + 2 * SPACING.md;
+  return 3 * cardHeight + 2 * SPACING.sm + 2 * PAGE_PADDING;
 }
 
 
@@ -302,14 +311,16 @@ interface BinderSpreadProps {
    */
   single?: boolean;
   /**
-   * Draw the page arrows (the default). Off where Browse docks its panels: the
-   * spread takes the arrows' width and fills its box from the top-left, with no
-   * padding of its own, so its edges line up with what the page puts around it.
+   * Where the page arrows go: beside the spread (the default), or, where Browse docks its
+   * panels, on its outer edges, as small discs that grow under the pointer (owner,
+   * 2026-10-22). There the spread takes the width beside it and fills its box from the
+   * top-left, with no padding of its own, so its edges line up with what the page puts
+   * around it. A lone page keeps its row of arrows under it either way.
    */
-  arrows?: boolean;
+  arrows?: 'beside' | 'edges';
   /**
-   * Drawn directly under a spread without arrows, which turns pages in their place:
-   * the collection binder's spread map. The spread gives up only the height it needs.
+   * Drawn directly under a spread with its arrows on its edges: the collection binder's
+   * spread map. The spread gives up only the height it needs.
    */
   footer?: ReactNode;
   /**
@@ -384,9 +395,9 @@ function BinderPage({from, side, single, renderSlot, cover}: BinderPageProps) {
 interface ViewProps {
   start: number;
   renderSlot: (index: number) => ReactNode;
-  /** The page arrows, or null where the binder goes without them. */
-  arrows: {prev: ReactNode; next: ReactNode} | null;
-  /** Under a spread without arrows (see `BinderSpreadProps.footer`). */
+  /** The page arrows: beside a spread or on its outer edges, or in a row under a lone page. */
+  arrows: {prev: ReactNode; next: ReactNode};
+  /** Under a spread with its arrows on its edges (see `BinderSpreadProps.footer`). */
   footer?: ReactNode;
   /** How many pockets the binder fills (see `BinderSpreadProps.cardCount`). */
   cardCount?: number;
@@ -463,7 +474,7 @@ function useRowWidth(ref: RefObject<HTMLDivElement | null>): number {
 }
 
 /** Two facing pages, sized from the height they are given, arrows either side. */
-function FlankedSpread({start, renderSlot, arrows, cardCount}: ViewProps & {arrows: NonNullable<ViewProps['arrows']>}) {
+function FlankedSpread({start, renderSlot, arrows, cardCount}: ViewProps) {
   const rowRef = useRef<HTMLDivElement>(null);
   const maxHeight = spreadMaxHeight(useRowWidth(rowRef), true);
   return (
@@ -493,9 +504,37 @@ function FlankedSpread({start, renderSlot, arrows, cardCount}: ViewProps & {arro
 }
 
 /**
- * Two facing pages without arrows, anchored to the top of their box: unpadded, so the
- * spread's top and side edges are the box's, and level with the docked panels beside it.
- * A column, so the pages give the footer the height it needs.
+ * An arrow on the spread's outer edge, where Browse docks its panels (owner, 2026-10-22):
+ * halfway down it, the disc's centre a little past the page's edge, so at rest it covers the
+ * page's margin and stops at the pockets, the rest of it in the gutter beside the spread.
+ * Grown under the pointer, it overlaps the pockets by 6px for as long as the pointer stays.
+ * Over them, so a pocket's glow under the pointer never covers it.
+ */
+function edgeArrowPlace(side: 'left' | 'right'): CSSProperties {
+  return {
+    position: 'absolute',
+    zIndex: 2,
+    top: `calc(50% - ${EDGE_DISC_SIZE / 2}px)`,
+    [side]: PAGE_PADDING - EDGE_DISC_SIZE,
+  };
+}
+
+/** An arrow's props for the spread's outer edge on `side`, where the arrows go there. */
+function onEdge(side: 'left' | 'right', edges: boolean) {
+  return edges ? {edge: true, style: edgeArrowPlace(side)} : {};
+}
+
+/**
+ * The spread itself, hugging its pages in the box the height cap sizes, so the arrows laid
+ * over its outer edges sit on the pages' edges wherever the spare width falls. Arrows laid
+ * over the row instead landed inside the cards (see `FlankedSpread`).
+ */
+const EDGE_FRAME: CSSProperties = {position: 'relative', display: 'flex', height: '100%'};
+
+/**
+ * Two facing pages with the arrows on their outer edges, anchored to the top of their box:
+ * unpadded, so the spread's top and side edges are the box's, and level with the docked
+ * panels beside it. A column, so the pages give the footer the height it needs.
  *
  * THE FOOTER SITS ON THE BOX'S BOTTOM EDGE (owner, 2026-10-12), level with the panels'
  * bottoms, and any height the pages leave over falls between the two. It also holds still
@@ -505,7 +544,7 @@ function FlankedSpread({start, renderSlot, arrows, cardCount}: ViewProps & {arro
  * search bar's start (owner, 2026-10-08). When the height runs out first and the spread
  * comes out narrower than its box, the spare width goes to the right.
  */
-function StackedSpread({start, renderSlot, footer, cardCount}: ViewProps) {
+function StackedSpread({start, renderSlot, arrows, footer, cardCount}: ViewProps) {
   const rowRef = useRef<HTMLDivElement>(null);
   const maxHeight = spreadMaxHeight(useRowWidth(rowRef), false);
   return (
@@ -513,16 +552,20 @@ function StackedSpread({start, renderSlot, footer, cardCount}: ViewProps) {
       ref={rowRef}
       style={{flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
       <div style={{...PAGES_BOX, justifyContent: 'flex-start', flex: '1 1 0', minHeight: 0, maxHeight}}>
-        <Pages start={start} renderSlot={renderSlot} cardCount={cardCount} />
+        <div style={EDGE_FRAME}>
+          {arrows.prev}
+          <Pages start={start} renderSlot={renderSlot} cardCount={cardCount} />
+          {arrows.next}
+        </div>
       </div>
       {footer}
     </div>
   );
 }
 
-/** Two facing pages, with arrows either side unless the binder goes without them. */
-function SpreadView(props: ViewProps) {
-  return props.arrows ? <FlankedSpread {...props} arrows={props.arrows} /> : <StackedSpread {...props} />;
+/** Two facing pages, the arrows beside them or on their outer edges. */
+function SpreadView({edges, ...props}: ViewProps & {edges: boolean}) {
+  return edges ? <StackedSpread {...props} /> : <FlankedSpread {...props} />;
 }
 
 /**
@@ -538,12 +581,10 @@ function SingleView({start, renderSlot, arrows}: ViewProps) {
         <Spine />
         <BinderPage from={start} side="right" single renderSlot={renderSlot} />
       </div>
-      {arrows && (
-        <div style={{display: 'flex', justifyContent: 'center', gap: SPACING.xxl, paddingTop: SPACING.sm}}>
-          {arrows.prev}
-          {arrows.next}
-        </div>
-      )}
+      <div style={{display: 'flex', justifyContent: 'center', gap: SPACING.xxl, paddingTop: SPACING.sm}}>
+        {arrows.prev}
+        {arrows.next}
+      </div>
     </>
   );
 }
@@ -682,7 +723,7 @@ export function BinderSpread({
   canPrev,
   canNext,
   single = false,
-  arrows = true,
+  arrows = 'beside',
   footer,
   cardCount,
   isOpen,
@@ -691,17 +732,32 @@ export function BinderSpread({
   const perView = single ? PER_PAGE : PER_SPREAD;
   const focusable = focusableInView(start, perView, {cardCount, isOpen});
   const pockets = usePocketFocus(start, {focusable, pages: single ? 1 : 2});
+  const edges = arrows === 'edges' && !single;
   const views: ViewProps = {
     start,
     renderSlot: (index) => renderSlot(index, pockets.tabIndexFor(index)),
     footer,
     cardCount,
-    arrows: arrows
-      ? {
-          prev: <NavArrowButton direction="prev" label={`Previous ${unit}`} onClick={onPrev} atEnd={!canPrev} />,
-          next: <NavArrowButton direction="next" label={`Next ${unit}`} onClick={onNext} atEnd={!canNext} />,
-        }
-      : null,
+    arrows: {
+      prev: (
+        <NavArrowButton
+          direction="prev"
+          label={`Previous ${unit}`}
+          onClick={onPrev}
+          atEnd={!canPrev}
+          {...onEdge('left', edges)}
+        />
+      ),
+      next: (
+        <NavArrowButton
+          direction="next"
+          label={`Next ${unit}`}
+          onClick={onNext}
+          atEnd={!canNext}
+          {...onEdge('right', edges)}
+        />
+      ),
+    },
   };
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- roving tabindex: the arrow keys move between the pockets (#790)
@@ -710,7 +766,7 @@ export function BinderSpread({
       onKeyDown={pockets.onKeyDown}
       onFocus={pockets.onFocus}
       style={{height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0}}>
-      {single ? <SingleView {...views} /> : <SpreadView {...views} />}
+      {single ? <SingleView {...views} /> : <SpreadView {...views} edges={edges} />}
     </section>
   );
 }

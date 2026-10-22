@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useRef, useState} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
 import {offersDualOnly, type CardFilterOptions} from '../loader';
 import {artPresetOf, rarityLabel, type FilterButtonOptions} from '../filterOptions';
@@ -6,6 +6,7 @@ import type {CardTypeFilter, BrowseSortOrder} from '../../../shared/constants';
 import {BROWSE_SORT_OPTIONS, COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, searchFieldStyle} from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
 import {FiltersButton} from '../../../shared/components/FiltersButton';
+import {IconButton} from '../../../shared/components/IconButton';
 import {SearchIcon} from '../../../shared/components/SearchIcon';
 import {CostFilterGroup} from '../../../shared/components/CostFilterGroup';
 import {InkFilterGroup} from '../../../shared/components/InkFilterGroup';
@@ -249,16 +250,20 @@ const DIVIDER_STYLE: React.CSSProperties = {
 // Subcomponents — each owns a small concern.
 // =====================================================================
 
+/** The clear button's box, and the room the field keeps for it at its right end while it shows. */
+const CLEAR_SIZE = 28;
+const CLEAR_ROOM = CLEAR_SIZE + 2 * SPACING.xs;
+
 /**
  * The search field (owner, 2026-10-15: option B of `public/mockups/search-bar.html`):
  * raised like the sort beside it (`searchFieldStyle`), 16px text, 36px tall as before.
  */
-function getToolbarSearchInputStyle(state: {focused: boolean; hovered: boolean}): React.CSSProperties {
+function getToolbarSearchInputStyle(state: {focused: boolean; hovered: boolean; clearable: boolean}): React.CSSProperties {
   return {
     ...searchFieldStyle(state),
     width: '100%',
     height: 36,
-    padding: `0 ${SPACING.md}px 0 40px`,
+    padding: `0 ${state.clearable ? CLEAR_ROOM : SPACING.md}px 0 40px`,
     borderRadius: `${RADIUS.lg}px`,
     color: COLORS.text,
     fontSize: `${FONT_SIZES.xl}px`,
@@ -272,13 +277,37 @@ function getToolbarSearchWrapperStyle(fill: boolean): React.CSSProperties {
   // Fixed-width, no-shrink: the search box holds a stable 300px so it reads as a
   // consistent control next to Filters, and the active-filter chip row (flex:1)
   // wraps below it under pressure instead of squeezing the input. Docked, it fills
-  // the room its slot gives it instead. position:'relative' anchors the search icon.
+  // the room its slot gives it instead. position:'relative' anchors the search icon
+  // and the clear button.
   return fill ? {position: 'relative', width: '100%'} : {position: 'relative', width: 300, flexShrink: 0};
+}
+
+const CLEAR_STYLE: React.CSSProperties = {
+  position: 'absolute',
+  right: SPACING.xs,
+  top: '50%',
+  transform: 'translateY(-50%)',
+};
+
+/**
+ * Empties the search (owner, 2026-10-22), at the field's right end while it holds text. The
+ * focus goes back to the field, ready for the next search, before the button leaves.
+ */
+function ClearSearchButton({onClear}: {onClear: () => void}) {
+  return (
+    <IconButton aria-label="Clear search" size={CLEAR_SIZE} onClick={onClear} style={CLEAR_STYLE}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M18 6 6 18M6 6l12 12" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      </svg>
+    </IconButton>
+  );
 }
 
 function ToolbarSearch({query, onChange, fill}: {query: string; onChange: (q: string) => void; fill: boolean}) {
   const [focused, setFocused] = useState(false);
   const {hovered, hoverProps} = useHover();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const clearable = query !== '';
   return (
     <div style={getToolbarSearchWrapperStyle(fill)}>
       <span
@@ -294,6 +323,7 @@ function ToolbarSearch({query, onChange, fill}: {query: string; onChange: (q: st
         <SearchIcon size={18} color={COLORS.searchPlaceholder} />
       </span>
       <input
+        ref={inputRef}
         type="text"
         aria-label="Search cards"
         placeholder="Search cards..."
@@ -303,8 +333,16 @@ function ToolbarSearch({query, onChange, fill}: {query: string; onChange: (q: st
         onBlur={() => setFocused(false)}
         {...hoverProps}
         data-testid="browse-search"
-        style={getToolbarSearchInputStyle({focused, hovered})}
+        style={getToolbarSearchInputStyle({focused, hovered, clearable})}
       />
+      {clearable && (
+        <ClearSearchButton
+          onClear={() => {
+            inputRef.current?.focus();
+            onChange('');
+          }}
+        />
+      )}
     </div>
   );
 }

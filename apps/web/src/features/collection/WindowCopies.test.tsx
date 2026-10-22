@@ -47,11 +47,16 @@ const ELSA: LorcanaCard = createCard({
   ],
 });
 
-const mockWindow = {slot: null as HTMLElement | null, shownPrintingId: null as string | null};
+const mockWindow = {slot: null as HTMLElement | null, shownPrintingId: null as string | null, rowHeld: false};
 vi.mock('../../shared/contexts/CardModalContext', () => ({
   useCardModal: () => ({selectedCardId: 'elsa', resolveCard: null}),
 }));
-vi.mock('../../shared/contexts/cardWindowSlot', () => ({useCardWindowSlot: () => mockWindow}));
+vi.mock('../../shared/contexts/cardWindowSlot', () => ({
+  useCardWindowSlot: () => mockWindow,
+  useHoldCopiesRow: (hold: boolean) => {
+    mockWindow.rowHeld = hold;
+  },
+}));
 vi.mock('../../shared/contexts/CardDataContext', () => ({
   useCardDataContext: () => ({getCardById: (id: string) => (id === 'elsa' ? ELSA : undefined)}),
 }));
@@ -72,12 +77,13 @@ beforeEach(() => {
   mockSession.user = {id: 'user-a'};
   mockWindow.slot = document.body.appendChild(document.createElement('div'));
   mockWindow.shownPrintingId = null;
+  mockWindow.rowHeld = false;
   writeCollection(HELD, 5000, 'user-a', 'server');
 });
 afterEach(() => mockWindow.slot?.remove());
 
 describe('WindowCopies', () => {
-  it("lays the printing on show's copies over the card's foot, open, every finish named", async () => {
+  it("lays the printing on show's copies in the row under the card, open, every finish named", async () => {
     const view = await renderInWindow();
     expect(view.getByRole('group', {name: 'Your copies: 2 normal, 0 foil'})).toBeInTheDocument();
     // Open: its buttons are in reach, not hidden as a resting pocket's are.
@@ -137,6 +143,8 @@ describe('WindowCopies', () => {
     // Still here, so the stripe hides for the signed-out reader, not for a missing collection.
     expect(localStorage.getItem('inkweave:collection')).not.toBeNull();
     expect(view.queryByRole('group')).toBeNull();
+    // Nor is the row under the card held for it (owner, 2026-10-22).
+    expect(mockWindow.rowHeld).toBe(false);
   });
 
   it('is not shown without a collection, here or on the account', async () => {
@@ -152,5 +160,7 @@ describe('WindowCopies', () => {
     const view = await renderInWindow();
 
     expect(view.queryByRole('group')).toBeNull();
+    // The row under the card is already held, so the stripe arriving moves nothing.
+    expect(mockWindow.rowHeld).toBe(true);
   });
 });

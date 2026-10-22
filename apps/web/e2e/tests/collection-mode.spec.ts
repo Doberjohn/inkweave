@@ -475,24 +475,27 @@ test.describe('Collection mode, signed in', () => {
   });
 
   test('the keyboard pages the binder end to end without losing the focus', async ({page}) => {
-    // #790: the pockets are one Tab stop, and the map's arrows stay focused, dimmed, at either end.
+    // #790: the pockets are one Tab stop between the arrows on the spread's edges (owner,
+    // 2026-10-22), which stay focused, dimmed, at either end.
     await signInAsCollector(page, ENTRIES);
     await page.goto(`/browse?binder=${SET}`);
     const tiles = binder(page).getByTestId('card-tile');
     await expect(tiles.first()).toBeVisible();
 
     await tiles.first().focus();
-    await page.keyboard.press('Tab');
+    await page.keyboard.press('Shift+Tab');
     const previous = binder(page).getByRole('button', {name: 'Previous spread'});
     await expect(previous).toBeFocused();
     await expect(previous).toHaveAttribute('aria-disabled', 'true');
 
-    // Enter on Next, through to the last spread.
+    // Past the pockets' one stop to Next, then Enter through to the last spread.
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab');
+    const next = binder(page).getByRole('button', {name: 'Next spread'});
+    await expect(next).toBeFocused();
     const shown = binder(page).getByRole('navigation', {name: 'Binder pages'}).locator('[aria-current="true"]');
     const spreads = Number(/ of (\d+)/.exec((await shown.getAttribute('aria-label')) ?? '')?.[1]);
     expect(spreads, 'spreads in the set').toBeGreaterThan(1);
-    const next = binder(page).getByRole('button', {name: 'Next spread'});
-    await next.focus();
     for (let turn = 1; turn < spreads; turn++) await page.keyboard.press('Enter');
     await expect(shown).toHaveAccessibleName(new RegExp(`^Spread ${spreads} of ${spreads}:`));
     await expect(next).toBeFocused();
@@ -671,13 +674,14 @@ test.describe('Collection mode, signed in', () => {
     const tiles = binder(page).getByTestId('card-tile');
     await expect(tiles).toHaveCount(2);
     const modal = page.getByTestId('card-overview-modal');
-    const printing = (name: string) => modal.getByRole('radio', {name, exact: true});
+    // The printing in front of the card's stack: the others sit behind it, inert.
+    const inFront = modal.locator('[data-slide]:not([inert]) img');
 
-    // The card's own pocket opens it on its Standard printing, its Enchanted a pick away.
+    // The card's own pocket opens it on its Standard printing, its Enchanted behind it.
     await tiles.nth(0).click({position: {x: 10, y: 10}});
     await expect(modal.locator('h1')).toHaveText(card.fullName);
-    await expect(printing('Standard')).toHaveAttribute('aria-checked', 'true');
-    await expect(printing('Enchanted')).toHaveAttribute('aria-checked', 'false');
+    await expect(inFront).toHaveAttribute('alt', card.fullName);
+    await expect(modal.getByRole('button', {name: 'Next printing: Enchanted'})).toHaveCount(1);
     // The dialog moves focus to its × 100ms after opening; a 100ms timer set now runs after it.
     await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 100)));
     await page.keyboard.press('Escape');
@@ -686,7 +690,7 @@ test.describe('Collection mode, signed in', () => {
     // The Enchanted's pocket opens the card itself, on the Enchanted.
     await tiles.nth(1).click({position: {x: 10, y: 10}});
     await expect(modal.locator('h1')).toHaveText(card.fullName);
-    await expect(printing('Enchanted')).toHaveAttribute('aria-checked', 'true');
+    await expect(inFront).toHaveAttribute('alt', /, Enchanted printing$/);
   });
 });
 

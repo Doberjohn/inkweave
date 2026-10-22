@@ -1,13 +1,8 @@
 import {useContext, useEffect, useRef, type CSSProperties, type ReactNode} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {
-  CardImage,
-  CardTranslationToggle,
-  PrintingCarousel,
-  PrintingPills,
-} from '../../../shared/components';
-import {DURATION, EASING, RADIUS} from '../../../shared/constants';
-import {usePrefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
+import {CardImage, CardTranslationToggle, PrintingCarousel} from '../../../shared/components';
+import {RADIUS, SPACING} from '../../../shared/constants';
+import {BODY_SIDE_PADDING, CARD_WITH_COPIES_STYLE, copiesRowHeight} from './cardOverviewModalStyles';
 import {
   CardPrintingContext,
   CardTranslationContext,
@@ -40,13 +35,12 @@ export function ModalArtState({
     </CardTranslationContext.Provider>
   );
 }
-import {DESKTOP_ART_CONTROLS_STYLE} from './cardOverviewModalStyles';
 
 /**
  * The card overview modal's card art: its scan, or for a card with an alternate printing
- * (#625) the swipeable printings strip. The strip stays mounted through a comparison (reset
- * to the Standard art) rather than swapping to a plain image, which would remount the <img>
- * mid-FLIP.
+ * (#625) the card in front of its other printings (PrintingCarousel). The stack stays mounted
+ * through a comparison (reset to the Standard art) rather than swapping to a plain image, which
+ * would remount the <img> mid-FLIP.
  */
 export function ModalCardArt({
   card,
@@ -72,6 +66,8 @@ export function ModalCardArt({
         height={cardHeight}
         borderRadius={RADIUS.xl}
         priority
+        // The printings behind the card show in the view's padding, clear of the window's frame.
+        room={BODY_SIDE_PADDING - SPACING.xs}
       />
     );
   }
@@ -96,15 +92,16 @@ export function ModalCardArt({
 }
 
 /**
- * The window's slot over the card's foot (#826), which a page fills through a portal: Browse's
- * copies stripe, as tall as the card's own black bar (owner, 2026-10-20). Over the art rather
- * than under it, so filling it moves nothing in the window.
+ * The window's row under its card (#826), which a page fills through a portal: Browse's copies
+ * stripe, as tall as the card's own black bar (owner, 2026-10-20). It sat over the card's foot
+ * until the owner asked for the full card to show (2026-10-22). There only while a page holds it
+ * (`useHoldCopiesRow`), and as tall as the stripe from the start, so filling it moves nothing.
  *
  * Keys pressed in it reach the window's own handling (the Tab trap, the arrows' paging) through
  * a native listener: a portal's React events bubble through the page that fills it, never
  * through the window.
  */
-export function CopiesSlot() {
+function CopiesSlot({cardWidth}: {cardWidth: number}) {
   const slot = useContext(CopiesSlotContext);
   const keysRef = useRef<HTMLDivElement>(null);
   const onKeyDown = slot?.onKeyDown;
@@ -116,7 +113,7 @@ export function CopiesSlot() {
   }, [onKeyDown]);
   if (slot === null) return null;
   return (
-    <div ref={keysRef} style={SLOT_STYLE}>
+    <div ref={keysRef} style={{...SLOT_STYLE, width: cardWidth, height: copiesRowHeight(cardWidth)}}>
       <SlotTarget attach={slot.attach} />
     </div>
   );
@@ -127,56 +124,19 @@ function SlotTarget({attach}: {attach: CopiesSlotState['attach']}) {
   return <div ref={attach} data-testid="card-overview-copies-slot" />;
 }
 
-/**
- * Across the card's foot, its bottom corners rounded as the card's are. The art box sets a
- * line height of 0, so no line box sits under the art; the slot puts it back for its text.
- */
+/** As wide as the card, its corners rounded; it clips the stripe to them. */
 const SLOT_STYLE: CSSProperties = {
-  position: 'absolute',
-  left: 0,
-  right: 0,
-  bottom: 0,
-  borderRadius: `0 0 ${RADIUS.xl}px ${RADIUS.xl}px`,
+  flexShrink: 0,
+  borderRadius: RADIUS.lg,
   overflow: 'hidden',
-  lineHeight: 'normal',
 };
-
-/** The controls' fade as a comparison opens or closes, which reduced motion skips (#790). */
-function controlsFade(reducedMotion: boolean): string | undefined {
-  return reducedMotion ? undefined : `opacity ${DURATION.base}ms ${EASING.smooth}, visibility ${DURATION.base}ms`;
-}
-
-/**
- * Desktop's printing pills, in a row under the card (owner, 2026-10-08; they sat in the
- * header before). The card keeps its full size and its row grows to hold them
- * (`desktopCardRowHeight`), so every card is one height (owner, 2026-10-20).
- *
- * A comparison, which shows the base art, hides them at once and its row drops their room, so
- * card A's column, which carries its glow, is the card alone: faded out, they would sit over
- * the card's foot as the row shrinks. Leaving it, they fade back in.
- */
-export function DesktopArtControls({hidden}: {hidden: boolean}) {
-  const printing = useContext(CardPrintingContext);
-  const reducedMotion = usePrefersReducedMotion();
-  return (
-    <div
-      style={{
-        ...DESKTOP_ART_CONTROLS_STYLE,
-        opacity: hidden ? 0 : 1,
-        visibility: hidden ? 'hidden' : undefined,
-        transition: hidden ? undefined : controlsFade(reducedMotion),
-      }}>
-      {printing && <PrintingPills printings={printing.printings} index={printing.index} onSelect={printing.pick} />}
-    </div>
-  );
-}
 
 /**
  * Desktop's translation toggle, in the header before the close × (owner, 2026-10-17: back where
  * it sat before 2026-10-08, when it moved under the card with the pills). Mobile's is under the
- * card (`MobileArtControls`). Where the card image is gone (a comparison, an expanded group), or
- * shows a printing whose scan is already English, it hides but keeps its place, so the title
- * never moves.
+ * card (`MobileTranslationToggle`). Where the card image is gone (a comparison, an expanded
+ * group), or shows a printing whose scan is already English, it hides but keeps its place, so
+ * the title never moves.
  */
 export function HeaderTranslationToggle({hidden}: {hidden: boolean}) {
   const translation = useContext(CardTranslationContext);
@@ -189,28 +149,39 @@ export function HeaderTranslationToggle({hidden}: {hidden: boolean}) {
 }
 
 /**
- * Mobile's printing pills and translation toggle, under the card, in the column's flow (the
- * mobile body scrolls). Mobile keeps them through comparison too, because its hidden default
- * body must not reflow under the comparison overlay.
+ * Mobile's translation toggle, under the card, in the column's flow (the mobile body scrolls).
+ * Mobile keeps it through comparison too, because its hidden default body must not reflow under
+ * the comparison overlay. While the printing on show has an English scan, it hides but keeps its
+ * place.
  */
-export function MobileArtControls() {
+export function MobileTranslationToggle() {
   const translation = useContext(CardTranslationContext);
-  const printing = useContext(CardPrintingContext);
+  if (!translation) return null;
   return (
-    <>
-      {printing && (
-        <PrintingPills
-          printings={printing.printings}
-          index={printing.index}
-          onSelect={printing.pick}
-          isMobile
-        />
-      )}
-      {translation && (
-        <span style={{visibility: translation.language ? undefined : 'hidden'}}>
-          <CardTranslationToggle shown={translation.shown} onToggle={translation.toggle} />
-        </span>
-      )}
-    </>
+    <span style={{visibility: translation.language ? undefined : 'hidden'}}>
+      <CardTranslationToggle shown={translation.shown} onToggle={translation.toggle} />
+    </span>
+  );
+}
+
+interface CardWithCopiesProps {
+  cardWidth: number;
+  isMobile: boolean;
+  inComparison: boolean;
+  /** The card. */
+  children: ReactNode;
+}
+
+/**
+ * The card with its copies under it, which a page fills (`CopiesSlot`), 12px apart (owner,
+ * 2026-10-22). A desktop comparison shows the base art alone, and a phone's keeps its hidden
+ * default body as it was.
+ */
+export function CardWithCopies({cardWidth, isMobile, inComparison, children}: CardWithCopiesProps) {
+  return (
+    <div style={CARD_WITH_COPIES_STYLE}>
+      {children}
+      {(isMobile || !inComparison) && <CopiesSlot cardWidth={cardWidth} />}
+    </div>
   );
 }

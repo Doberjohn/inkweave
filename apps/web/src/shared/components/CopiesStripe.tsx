@@ -1,5 +1,16 @@
 import {useRef, useState, type CSSProperties} from 'react';
-import {COLORS, DURATION, EASING, FOIL_SHEEN, FONTS, FONT_SIZES, INSET_FOCUS_RING, TABULAR, hexRgba} from '../constants';
+import {
+  CARD_BAR_SHARE,
+  COLORS,
+  DURATION,
+  EASING,
+  FOIL_SHEEN,
+  FONTS,
+  FONT_SIZES,
+  INSET_FOCUS_RING,
+  TABULAR,
+  hexRgba,
+} from '../constants';
 import {useContainerWidth} from '../hooks/useContainerWidth';
 import {useHover} from '../hooks/useHover';
 import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
@@ -45,13 +56,11 @@ const GLYPH_SIZE = 12;
  * 0.53, a 1280px screen's to 0.4.
  */
 const DRAWN_WIDTH = 160;
-/** The card's own black bar is 6.8% of its height, which is 9.5% of its width. */
-const BAR_SHARE = 0.095;
 
 /** The stripe's zoom for its measured width, by how it fits. */
 const ZOOMS: Record<NonNullable<CopiesStripeProps['fit']>, (width: number) => number> = {
   pocket: (width) => Math.min(1, width / DRAWN_WIDTH),
-  bar: (width) => (width * BAR_SHARE) / HEIGHT,
+  bar: (width) => (width * CARD_BAR_SHARE) / HEIGHT,
 };
 
 /**

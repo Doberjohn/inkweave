@@ -250,7 +250,7 @@ const STARTUP_VENDOR = [
   /node_modules[\\/]react-loading-skeleton[\\/]/,
 ];
 const STARTUP_SHARED = [
-  /src[\\/]shared[\\/]constants[\\/](theme|setLogos|promoSets)\.ts$/,
+  /src[\\/]shared[\\/]constants[\\/](theme|setLogos|promoSets|cardBar)\.ts$/,
   /src[\\/]shared[\\/]hooks[\\/](useHover|useBoop|usePrintingSelection|useResponsive)\.ts$/,
   /src[\\/]shared[\\/]utils[\\/](touchGuard|prefersReducedMotion)\.ts$/,
   /src[\\/]shared[\\/]components[\\/](CtaButton|ctaStyles|IconButton)\.tsx?$/,

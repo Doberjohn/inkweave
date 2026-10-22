@@ -68,6 +68,7 @@ export {
 export type {SpecialBlock, SpecialSlotSpec} from './revealSet';
 export {SET_LOGOS} from './setLogos';
 export {SET_PRINTED_SIZES} from './setPrintedSizes';
+export {CARD_BAR_SHARE} from './cardBar';
 export {
   PROMO_SETS,
   binderSetOf,
