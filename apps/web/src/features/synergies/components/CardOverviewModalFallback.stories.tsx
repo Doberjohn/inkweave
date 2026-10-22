@@ -49,17 +49,15 @@ export const Mobile: Story = {
   globals: {viewport: {value: 'mobile1'}},
 };
 
-/** A card with an alternate printing: the pills' space is held, invisibly, where the modal puts them. */
-const cardWithPrintings = {
-  ...card,
-  variants: [{id: '14241', rarity: 'Iconic', number: 241}],
-} as LorcanaCard;
-
-export const DesktopWithPrintings: Story = {
-  args: {isMobile: false, card: cardWithPrintings},
+/**
+ * Browse holds the row under the card for its copies stripe (`useHoldCopiesRow`): the placeholder
+ * holds it too, invisibly, so the window takes over with nothing moving.
+ */
+export const DesktopWithCopiesRow: Story = {
+  args: {isMobile: false, copiesRow: true},
 };
 
-export const MobileWithPrintings: Story = {
-  args: {isMobile: true, card: cardWithPrintings},
+export const MobileWithCopiesRow: Story = {
+  args: {isMobile: true, copiesRow: true},
   globals: {viewport: {value: 'mobile1'}},
 };

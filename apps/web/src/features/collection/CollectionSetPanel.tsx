@@ -3,6 +3,7 @@ import Skeleton from 'react-loading-skeleton';
 import type {Ink} from 'inkweave-synergy-engine';
 import {CtaButton, IconButton, InkIcon} from '../../shared/components';
 import {useHover} from '../../shared/hooks/useHover';
+import {focusedByKeyboard} from '../../shared/utils/focusedByKeyboard';
 import {usePrefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
 import {RaritySymbol} from '../reveals/RaritySymbol';
 import {rarityLabel} from '../cards/filterOptions';
@@ -363,15 +364,6 @@ function choosableStyle(chosen: boolean, hovered: boolean): CSSProperties {
     transform: undefined,
     transition: `background 0.15s ${EASING.snappy}, border-color 0.15s ${EASING.snappy}`,
   };
-}
-
-/** Whether focus came from the keyboard (`:focus-visible`); where a browser cannot say, any focus counts. */
-function focusedByKeyboard(el: Element): boolean {
-  try {
-    return el.matches(':focus-visible');
-  } catch {
-    return true;
-  }
 }
 
 /**

@@ -1,11 +1,12 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
-import {NavArrowButton} from './NavArrowButton';
+import {EDGE_DISC_SIZE, NavArrowButton} from './NavArrowButton';
 import {COLORS, RADIUS, SPACING} from '../constants';
 
 /**
- * The binder's gold arrow: round beside the spread, and the worded pill the spread
- * map uses. A filled CtaButton underneath, so it boops as the pointer arrives.
+ * The binder's gold arrow: round beside the spread, and the small disc on the spread's
+ * outer edges where Browse docks its panels, which grows under the pointer. A filled
+ * CtaButton underneath, so it boops as the pointer arrives.
  *
  * It has no `position` of its own, so the decorator supplies the relatively-
  * positioned thing the Overlaid story hangs it from; without one it would anchor
@@ -57,12 +58,20 @@ export const AtEnd: Story = {
   args: {atEnd: true},
 };
 
-/** With its word, a gold pill: the spread map's Previous button, at the map's 34px. */
-export const WordedPrevious: Story = {
-  args: {label: 'Previous spread', text: 'Previous', style: {height: 34}},
+/**
+ * The disc for the spread's outer edge (owner, 2026-10-22), hung on this panel's edge as the
+ * binder hangs it on a page's: 28px at rest, 40 under the pointer or the keyboard's focus,
+ * growing about its centre.
+ */
+export const Edge: Story = {
+  args: {
+    label: 'Previous spread',
+    edge: true,
+    style: {position: 'absolute', top: `calc(50% - ${EDGE_DISC_SIZE / 2}px)`, left: SPACING.md - EDGE_DISC_SIZE},
+  },
 };
 
-/** The spread map's Next button: the word before the chevron. */
-export const WordedNext: Story = {
-  args: {direction: 'next', label: 'Next spread', text: 'Next', style: {height: 34}},
+/** At the binder's end the disc stays small: dimmed and inert, but still focusable (#790). */
+export const EdgeAtEnd: Story = {
+  args: {...Edge.args, atEnd: true},
 };

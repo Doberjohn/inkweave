@@ -53,17 +53,26 @@ describe('CardOverviewModalFallback', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('holds the space for the printing pills out of sight on mobile, so the modal adds them without a shift', () => {
-    const {container} = render(<CardOverviewModalFallback card={cardWithPrintings} isMobile onClose={vi.fn()} />);
+  // Browse holds the row under the card for its copies (useHoldCopiesRow), so the window opens with it.
+  it("holds the copies row's room under a phone's card, where the window will hold one", () => {
+    const room = (copiesRow: boolean) => {
+      const {container, unmount} = render(
+        <CardOverviewModalFallback card={card} isMobile copiesRow={copiesRow} onClose={vi.fn()} />,
+      );
+      const held = container.querySelector<HTMLElement>('[style*="height: 23px"]');
+      unmount();
+      return held?.style.width;
+    };
 
-    expect(container.querySelector('[role="radiogroup"]')).not.toBeNull();
-    expect(screen.queryByRole('radiogroup')).toBeNull();
+    expect(room(true)).toBe('240px');
+    expect(room(false)).toBeUndefined();
   });
 
-  // Desktop's controls sit in a row under the full-size card, so the placeholder's row holds them.
-  it("keeps the card placeholder at full size on desktop, its row holding the controls' room only for a card with them", () => {
-    const placeholder = (c: LorcanaCard) => {
-      const {container, unmount} = render(<CardOverviewModalFallback card={c} isMobile={false} onClose={vi.fn()} />);
+  it("keeps the card placeholder at full size on desktop, its row holding the copies row's room only where the window holds one", () => {
+    const placeholder = (c: LorcanaCard, copiesRow: boolean) => {
+      const {container, unmount} = render(
+        <CardOverviewModalFallback card={c} isMobile={false} copiesRow={copiesRow} onClose={vi.fn()} />,
+      );
       const art = container.querySelector<HTMLElement>('.react-loading-skeleton')!;
       const row = art.closest<HTMLElement>('[style*="display: grid"]')!;
       const shape = {transform: art.style.transform, row: row.style.height};
@@ -71,10 +80,10 @@ describe('CardOverviewModalFallback', () => {
       return shape;
     };
 
-    expect(placeholder(cardWithPrintings)).toEqual({transform: '', row: '516px'});
-    expect(placeholder(card)).toEqual({transform: '', row: '470px'});
+    expect(placeholder(card, true)).toEqual({transform: '', row: '514px'});
+    expect(placeholder(cardWithPrintings, false)).toEqual({transform: '', row: '470px'});
     // A foreign scan's toggle sits in the header (owner, 2026-10-17), so it takes no room here.
-    expect(placeholder({...card, scanLanguage: 'ja'} as LorcanaCard)).toEqual({transform: '', row: '470px'});
+    expect(placeholder({...card, scanLanguage: 'ja'} as LorcanaCard, false)).toEqual({transform: '', row: '470px'});
   });
 
   it("holds the translation toggle's space out of sight in the header on desktop, where the modal puts it", () => {

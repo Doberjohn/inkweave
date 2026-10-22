@@ -2,7 +2,7 @@ import type {Meta, StoryObj} from '@storybook/react-vite';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTranslationPanel} from '../../../shared/components';
 import {RADIUS, SPACING} from '../../../shared/constants';
-import {MobileArtControls, ModalCardArt} from './ModalCardArt';
+import {MobileTranslationToggle, ModalCardArt} from './ModalCardArt';
 import {
   CardPrintingContext,
   CardTranslationContext,
@@ -72,8 +72,8 @@ type Story = StoryObj<typeof meta>;
 export const Scan: Story = {};
 
 /**
- * The printings strip with the mobile controls under it, wired through the modal's real state
- * hooks: the printing shown, and the translation that follows it (#681).
+ * The printings strip with mobile's translation toggle under it, wired through the modal's real
+ * state hooks: the printing shown, and the translation that follows it (#681).
  */
 function WithPrintings({
   card,
@@ -102,19 +102,19 @@ function WithPrintings({
               />
             )}
           </div>
-          <MobileArtControls />
+          <MobileTranslationToggle />
         </div>
       </CardPrintingContext.Provider>
     </CardTranslationContext.Provider>
   );
 }
 
-/** Swipe the art or pick a pill: both move together (#625). */
+/** Swipe or drag the art, or click the peek at its side, to turn to the other printing (#625). */
 export const Printings: Story = {
   render: (args) => <WithPrintings {...args} />,
 };
 
-/** Pick the Epic, an Italian scan, and "See translation" lays the card's English text over it. */
+/** Turn to the Epic, an Italian scan, and "See translation" lays the card's English text over it. */
 export const ForeignScanVariant: Story = {
   args: {card: baymax},
   render: (args) => <WithPrintings {...args} />,

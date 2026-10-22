@@ -56,7 +56,8 @@ interface CollectionBinderProps {
   /**
    * What turns the pages: arrows beside the spread, or under a lone page (the
    * default); or, where Browse docks its panels, the spread map under the spread
-   * (owner, 2026-10-12). The map draws spreads, so a lone page keeps its arrows.
+   * (owner, 2026-10-12) and small discs on its outer edges (owner, 2026-10-22). The
+   * map draws spreads, so a lone page keeps its arrows.
    */
   pager?: 'arrows' | 'map';
   /**
@@ -301,7 +302,7 @@ export function CollectionBinder({
     <BinderSpread
       start={current * perView - lead}
       single={single}
-      arrows={map === undefined}
+      arrows={map === undefined ? 'beside' : 'edges'}
       footer={map}
       cardCount={slots.length}
       isOpen={(index) => isOpenPocket(slots[index])}

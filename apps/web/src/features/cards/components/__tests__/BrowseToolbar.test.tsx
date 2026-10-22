@@ -306,3 +306,24 @@ describe('BrowseToolbar on Browse', () => {
     expect(screen.queryByRole('button', {name: /Character/})).toBeNull();
   });
 });
+
+// The clear button at the search field's right end (owner, 2026-10-22).
+describe('BrowseToolbar search', () => {
+  it('offers the clear button only while the search holds text', () => {
+    const {rerender} = render(<BrowseToolbar {...defaultProps({searchQuery: '', onSearchChange: vi.fn()})} />);
+    expect(screen.queryByRole('button', {name: 'Clear search'})).toBeNull();
+
+    rerender(<BrowseToolbar {...defaultProps({searchQuery: 'elsa', onSearchChange: vi.fn()})} />);
+    expect(screen.getByRole('button', {name: 'Clear search'})).toBeInTheDocument();
+  });
+
+  it('empties the search and leaves the focus in the field for the next one', () => {
+    const onSearchChange = vi.fn();
+    render(<BrowseToolbar {...defaultProps({searchQuery: 'elsa', onSearchChange})} />);
+
+    fireEvent.click(screen.getByRole('button', {name: 'Clear search'}));
+
+    expect(onSearchChange).toHaveBeenCalledWith('');
+    expect(screen.getByTestId('browse-search')).toHaveFocus();
+  });
+});

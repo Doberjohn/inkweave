@@ -243,10 +243,8 @@ test.describe('Reveals page (flag on)', () => {
 
     const modal = page.getByTestId('card-overview-modal');
     await expect(modal).toBeVisible({timeout: 15000});
-    const pill = modal
-      .getByRole('radiogroup', {name: 'Card printing'})
-      .first()
-      .getByRole('radio', {name: rarity, exact: true});
-    await expect(pill).toHaveAttribute('aria-checked', 'true');
+    // In front of the card's stack: the others sit behind it, inert.
+    const inFront = modal.locator('[data-slide]:not([inert]) img').first();
+    await expect(inFront).toHaveAttribute('alt', new RegExp(`, ${rarity} printing$`));
   });
 });

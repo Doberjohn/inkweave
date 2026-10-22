@@ -9,7 +9,7 @@ import type {SynergyGroup as SynergyGroupData} from '../../types';
 import {CardOverviewModal} from '../CardOverviewModal';
 import {CardDataProvider} from '../../../../shared/contexts/CardDataContext';
 import {trackEvent} from '../../../../shared/lib/analytics';
-import {restStrip, swipeStrip} from '../../../../shared/test-utils';
+import {swipeCard} from '../../../../shared/test-utils';
 
 vi.mock('../../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 // A comparison's community votes need the card modal's provider; its card motion does not. A
@@ -245,7 +245,7 @@ test('a swipe that hides the focused translation toggle moves focus to the ×', 
   await user.click(screen.getByRole('button', {name: 'See translation'}));
   expect(screen.getByRole('button', {name: 'See card'})).toHaveFocus();
 
-  swipeStrip(screen.getByRole('group', {name: 'Card b - Test printings'}), 0);
+  swipeCard(screen.getByRole('group', {name: 'Card b - Test printings'}), -1);
 
   expect(screen.getByRole('button', {name: 'Close'})).toHaveFocus();
 });
@@ -368,16 +368,19 @@ function renderPrintingModal(
  * (#826): from OUTSIDE the window's tree, so React sends the button's events up this host, never
  * up the window. A button appended to the slot by hand would be found under the window's own tree.
  */
-function SlotHost({onShownPrintingChange, onGoToSibling = () => {}}: {
+function SlotHost({onShownPrintingChange, onGoToSibling = () => {}, comparison = false}: {
   onShownPrintingChange?: (printingId: string | null) => void;
   onGoToSibling?: (d: 1 | -1) => void;
+  /** Opens on a comparison of the card with another. */
+  comparison?: boolean;
 }) {
   const [slot, setSlot] = useState<HTMLElement | null>(null);
+  const card = withEnchanted(makeCard('b'));
   return (
     <MemoryRouter>
       <CardOverviewModal
         isOpen
-        card={withEnchanted(makeCard('b'))}
+        card={card}
         synergies={[]}
         getPairSynergies={() => null}
         onClose={() => {}}
@@ -385,30 +388,33 @@ function SlotHost({onShownPrintingChange, onGoToSibling = () => {}}: {
         onGoToSibling={onGoToSibling}
         copiesSlotRef={setSlot}
         onShownPrintingChange={onShownPrintingChange}
+        initialComparison={
+          comparison ? {cardA: card, cardB: makeCard('c'), connections: [], aggregateScore: 5} : undefined
+        }
       />
       {slot && createPortal(<button type="button">Add a copy</button>, slot)}
     </MemoryRouter>
   );
 }
 
-test("hands a page the slot over the card's foot, which its content fills inside the window", () => {
+test('hands a page the row under the card, which its content fills inside the window', () => {
   Element.prototype.scrollTo = vi.fn();
   render(<SlotHost />);
 
   expect(screen.getByTestId('card-overview-modal')).toContainElement(screen.getByRole('button', {name: 'Add a copy'}));
 });
 
-test('tells the page the printing a pill puts on show, and the Standard art as none', async () => {
+test('tells the page the printing a turn puts on show, and the Standard art as none', async () => {
   Element.prototype.scrollTo = vi.fn();
   const user = userEvent.setup();
   const report = vi.fn();
   render(<SlotHost onShownPrintingChange={report} />);
   expect(report).toHaveBeenLastCalledWith(null);
 
-  await user.click(screen.getByRole('radio', {name: 'Enchanted'}));
+  await user.click(screen.getByRole('button', {name: 'Next printing: Enchanted'}));
   expect(report).toHaveBeenLastCalledWith('b-e');
 
-  await user.click(screen.getByRole('radio', {name: 'Standard'}));
+  await user.click(screen.getByRole('button', {name: 'Previous printing: Standard'}));
   expect(report).toHaveBeenLastCalledWith(null);
 });
 
@@ -427,27 +433,34 @@ test('a key pressed in what fills the slot reaches the window, as one inside it 
   expect(onGoToSibling).toHaveBeenCalledWith(1);
 });
 
+/** True when `a` comes before `b` in document order. */
+const precedes = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+
 /** The desktop card row that holds the card's art. */
 const cardRowOf = (container: HTMLElement) =>
   container.querySelector('[data-comparison-card-a]')!.closest<HTMLElement>('[style*="display: grid"]')!;
 
-test('desktop keeps a card with printings at full size, its row growing to hold the pills under it', () => {
+// The copies stripe sat over the card's foot until the owner asked for the full card (2026-10-22).
+test('desktop keeps the art at full size, its row growing by the copies row a page fills under it', () => {
   Element.prototype.scrollTo = vi.fn();
-  const {container} = renderPrintingModal(withEnchanted(makeCard('b')));
+  const {container} = render(<SlotHost />);
+  const art = container.querySelector<HTMLElement>('[data-comparison-card-a]')!;
 
-  expect(container.querySelector('header')).not.toContainElement(screen.getByRole('radiogroup'));
-  expect(container.querySelector<HTMLElement>('[data-comparison-card-a]')!.style.transform).toBe('');
-  // One art height for every card (owner, 2026-10-20): 470px, then the pills' 46px of room.
-  expect(cardRowOf(container).style.height).toBe('516px');
+  expect(art.style.transform).toBe('');
+  expect(precedes(art, screen.getByTestId('card-overview-copies-slot'))).toBe(true);
+  // One art height for every card (owner, 2026-10-20): 470px, then the row's 12px gap and 32px.
+  expect(cardRowOf(container).style.height).toBe('514px');
 });
 
-test("a card without printings holds the pills' room under its window, so paging moves neither its top nor the arrows", () => {
+// The printings turn on the card itself (owner, 2026-10-22), so nothing under it comes and goes.
+test('paging between a card with printings and one without moves neither the art nor the arrows', () => {
   Element.prototype.scrollTo = vi.fn();
-  const {rerenderCard} = renderPrintingModal(makeCard('b'));
+  const {container, rerenderCard} = renderPrintingModal(makeCard('b'));
   const modal = screen.getByTestId('card-overview-modal');
 
-  expect((modal.nextElementSibling as HTMLElement).style.height).toBe('46px');
-  rerenderCard(withEnchanted(makeCard('b')));
+  rerenderCard(withEnchanted(makeCard('c')));
+
+  expect(cardRowOf(container).style.height).toBe('470px');
   expect(modal.nextElementSibling).toBe(screen.getByRole('button', {name: 'Previous card'}));
 });
 
@@ -474,28 +487,14 @@ test('under reduced motion, card A goes into a comparison without sliding or fad
 
   const art = container.querySelector<HTMLElement>('[data-comparison-card-a]')!;
   expect(art.parentElement!.style.transition).not.toMatch(/transform/);
-  expect(screen.getByRole('radiogroup', {hidden: true}).parentElement!.style.transition).toBe('');
 });
 
-test("a comparison drops the pills' room, so card A's column, which carries its glow, is the card alone", () => {
+test("a comparison drops the copies row, so card A's column, which carries its glow, is the card alone", () => {
   Element.prototype.scrollTo = vi.fn();
-  const card = withEnchanted(makeCard('b'));
-  const {container} = render(
-    <MemoryRouter>
-      <CardOverviewModal
-        isOpen
-        card={card}
-        synergies={[]}
-        getPairSynergies={() => null}
-        onClose={() => {}}
-        initialComparison={{cardA: card, cardB: makeCard('c'), connections: [], aggregateScore: 5}}
-      />
-    </MemoryRouter>,
-  );
+  const {container} = render(<SlotHost comparison />);
 
   expect(cardRowOf(container).style.height).toBe('470px');
-  // Hidden at once: fading, the pills would sit over the card's foot as the row shrinks.
-  expect(screen.getByRole('radiogroup', {hidden: true}).parentElement!.style.transition).toBe('');
+  expect(screen.queryByTestId('card-overview-copies-slot')).toBeNull();
 });
 
 test('desktop leaves the art of a card without printings at full size, in a row of its own height', () => {
@@ -509,20 +508,20 @@ test('desktop puts the translation toggle in the header before the ×, leaving t
   const {container} = renderPrintingModal({...makeCard('jp'), scanLanguage: 'ja'});
   const toggle = screen.getByRole('button', {name: 'See translation'});
 
-  // Back where it sat before 2026-10-08 (owner, 2026-10-17); the pills stay under the card.
+  // Back where it sat before 2026-10-08 (owner, 2026-10-17).
   expect(container.querySelector('header')).toContainElement(toggle);
   const close = screen.getByRole('button', {name: 'Close'});
   expect(toggle.compareDocumentPosition(close) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   expect(container.querySelector<HTMLElement>('[data-comparison-card-a]')!.style.transform).toBe('');
 });
 
-test('a card with an alternate printing shows the one picked, and records it', async () => {
+test('a card with an alternate printing turns to it from the peek beside the card, and records it', async () => {
   Element.prototype.scrollTo = vi.fn();
   vi.mocked(trackEvent).mockClear();
   const user = userEvent.setup();
   renderPrintingModal(withEnchanted(makeCard('b')));
 
-  await user.click(screen.getByRole('radio', {name: 'Enchanted'}));
+  await user.click(screen.getByRole('button', {name: 'Next printing: Enchanted'}));
 
   expect(screen.getByRole('img', {name: 'Card b - Test, Enchanted printing'})).toBeInTheDocument();
   expect(trackEvent).toHaveBeenCalledTimes(1);
@@ -541,33 +540,31 @@ test('the header reads the number printed on the printing on show', async () => 
   const header = screen.getByRole('banner');
 
   expect(header).toHaveTextContent('Card number 1/204');
-  await user.click(screen.getByRole('radio', {name: 'Enchanted'}));
+  await user.click(screen.getByRole('button', {name: 'Next printing: Enchanted'}));
   expect(header).toHaveTextContent('Card number 223/204');
 });
 
-test('a swiped printing is recorded once it comes to rest, not as the swipe crosses it', () => {
+test('the printing a swipe throws the card to is recorded once', () => {
   Element.prototype.scrollTo = vi.fn();
   vi.mocked(trackEvent).mockClear();
   renderPrintingModal(withEnchanted(makeCard('b')));
-  const strip = screen.getByRole('group', {name: 'Card b - Test printings'});
 
-  swipeStrip(strip, 1);
-  expect(trackEvent).not.toHaveBeenCalled();
+  swipeCard(screen.getByRole('group', {name: 'Card b - Test printings'}));
 
-  restStrip(strip);
   expect(trackEvent).toHaveBeenCalledTimes(1);
 });
 
-test('arrow keys inside the printing switcher change the printing, not the card', async () => {
+test('arrow keys on the printings turn the printing, not the card, even at the last one', async () => {
   Element.prototype.scrollTo = vi.fn();
   const user = userEvent.setup();
   const onGoToSibling = vi.fn();
   renderPrintingModal(withEnchanted(makeCard('b')), {onGoToSibling});
-  screen.getByRole('radio', {name: 'Standard'}).focus();
+  screen.getByRole('group', {name: 'Card b - Test printings'}).focus();
 
   await user.keyboard('{ArrowRight}');
+  await user.keyboard('{ArrowRight}');
 
-  expect(screen.getByRole('radio', {name: 'Enchanted'})).toHaveAttribute('aria-checked', 'true');
+  expect(screen.getByRole('img', {name: 'Card b - Test, Enchanted printing'})).toBeInTheDocument();
   expect(onGoToSibling).not.toHaveBeenCalled();
 });
 
@@ -575,11 +572,12 @@ test('every card opens on its Standard printing', async () => {
   Element.prototype.scrollTo = vi.fn();
   const user = userEvent.setup();
   const {rerenderCard} = renderPrintingModal(withEnchanted(makeCard('b')));
-  await user.click(screen.getByRole('radio', {name: 'Enchanted'}));
+  await user.click(screen.getByRole('button', {name: 'Next printing: Enchanted'}));
 
   rerenderCard(withEnchanted(makeCard('c')));
 
-  expect(screen.getByRole('radio', {name: 'Standard'})).toHaveAttribute('aria-checked', 'true');
+  expect(screen.getByRole('img', {name: 'Card c - Test'})).toBeInTheDocument();
+  expect(screen.getByRole('button', {name: 'Next printing: Enchanted'})).toBeInTheDocument();
 });
 
 test('an English variant printing turns the translation off and hides its toggle', async () => {
@@ -592,7 +590,7 @@ test('an English variant printing turns the translation off and hides its toggle
   });
   await user.click(screen.getByRole('button', {name: 'See translation'}));
 
-  await user.click(screen.getByRole('radio', {name: 'Enchanted'}));
+  await user.click(screen.getByRole('button', {name: 'Next printing: Enchanted'}));
 
   expect(screen.queryByTestId('card-translation')).toBeNull();
   expect(screen.getByText('See translation')).not.toBeVisible();
@@ -624,7 +622,7 @@ test('an English card with an English variant offers no translation', () => {
 });
 
 // Desktop's toggle sits in the header (HeaderTranslationToggle), mobile's under the card
-// (MobileArtControls).
+// (MobileTranslationToggle).
 test.each([false, true])(
   'a foreign-scan variant offers its translation on that printing only (mobile: %s)',
   async (isMobile) => {
@@ -634,14 +632,14 @@ test.each([false, true])(
     // The Standard scan is English: the toggle holds its place, hidden.
     expect(screen.getByText('See translation')).not.toBeVisible();
 
-    await user.click(screen.getByRole('radio', {name: 'Epic'}));
+    await user.click(screen.getByRole('button', {name: 'Next printing: Epic'}));
     await user.click(screen.getByRole('button', {name: 'See translation'}));
     // The card's own scan is English, so the text is its official wording, not a translation.
     const panel = screen.getByRole('region', {name: 'English text of Card b - Test'});
     expect(panel).toHaveTextContent('Draw a card.');
     expect(panel).toHaveTextContent("This printing is in Italian. The text is the English card's.");
 
-    await user.click(screen.getByRole('radio', {name: 'Standard'}));
+    await user.click(screen.getByRole('button', {name: 'Previous printing: Standard'}));
     expect(screen.queryByTestId('card-translation')).toBeNull();
     expect(screen.getByText('See translation')).not.toBeVisible();
   },

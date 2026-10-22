@@ -4,26 +4,36 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type FocusEvent,
+  type KeyboardEvent,
   type RefObject,
 } from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {RADIUS} from '../constants';
-import {printingAlt, useScrollSnapIndex, type Printing} from '../hooks';
+import {INSET_FOCUS_RING, RADIUS, SPACING} from '../constants';
+import {printingAlt, type Printing} from '../hooks';
+import {useCardThrow} from '../hooks/useCardThrow';
+import {useFinePointer} from '../hooks/useFinePointer';
+import {useWheelTurn} from '../hooks/useWheelTurn';
 import {whenIdle} from '../lib/whenLoadedAndIdle';
+import {focusedByKeyboard} from '../utils/focusedByKeyboard';
+import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
 import {CardImage} from './CardImage';
 import {CardImageButton} from './CardImageButton';
+import {PeekButton, PeekTag, TurnNotice, type PeekSide} from './PrintingPeek';
+import {STACK_EDGE, slideStyle, stackPose} from './printingStack';
+import {PEEK_ZONE, usePeekHover, type PeekHover} from './usePeekHover';
 
 interface PrintingCarouselProps {
   card: LorcanaCard;
   /** Two or more printings, Standard first (usePrintingSelection). */
   printings: Printing[];
-  /** The printing shown; the strip scrolls to it when it changes (e.g. from the pills). */
+  /** The printing in front. */
   index: number;
-  /** A swipe crossed into another printing (the pills follow it live). */
+  /** The visitor turned the card to another printing: a throw, a swipe, a peek or an arrow key. */
   onIndexChange: (index: number) => void;
-  /** A swipe came to rest on another printing: a printing the visitor stopped to look at. */
+  /** The same turn, as a printing the visitor stopped to look at (the views it records). */
   onSettle?: (index: number) => void;
-  /** Hold the strip still: a comparison shows the base art, so it can't be swiped. */
+  /** Hold the card still: a comparison shows the base art, so it can't be turned. */
   locked?: boolean;
   width: number;
   height: number;
@@ -32,37 +42,44 @@ interface PrintingCarouselProps {
   priority?: boolean;
   /** When set, each slide is an "Enlarge" button that opens the printing's lightbox. */
   onEnlarge?: (index: number) => void;
+  /**
+   * How far past the card's sides the printings behind it may show, inside the frame around it
+   * that clips them: the card page's panel gives its 16px of padding, the window 20 of its 24.
+   * An open peek slides out and leans less to fit.
+   */
+  room?: number;
 }
 
+/** How long the printing a turn sends back stays hidden as it passes behind the one coming forward. */
+const TUCK_MS = 300;
+/** A turn's step: -1 to the printing before the card, 1 to the one after. */
+type Step = -1 | 1;
+const STEP: Record<PeekSide, Step> = {prev: -1, next: 1};
+const SIDES: readonly PeekSide[] = ['prev', 'next'];
+const NOOP = () => {};
+
 /**
- * The strip scrolls, so the keyboard must reach it (WCAG 2.1.1): where its slides are Enlarge
- * buttons they are the stops, else the strip takes focus itself and the arrow keys scroll it.
- * A locked strip doesn't scroll.
+ * The card turns, so the keyboard must reach it (WCAG 2.1.1): where its slides are Enlarge
+ * buttons they are the stops, else the card takes focus itself and ← → turn it. A locked card
+ * doesn't turn.
  */
-function stripTabIndex({onEnlarge, locked}: Pick<PrintingCarouselProps, 'onEnlarge' | 'locked'>): 0 | undefined {
+function stackTabIndex({onEnlarge, locked}: Pick<PrintingCarouselProps, 'onEnlarge' | 'locked'>): 0 | undefined {
   return onEnlarge || locked ? undefined : 0;
 }
 
-const SLIDE_STYLE: CSSProperties = {
-  flex: '0 0 100%',
-  scrollSnapAlign: 'start',
-  scrollSnapStop: 'always',
-};
-
 /**
- * Whether the variant slides may load their art yet: not until the Standard art has loaded
- * and the main thread is idle. `loading="lazy"` can't hold back a slide one width away (it
- * sits inside the browsers' lazy-load distance), and Chrome even raises that fetch to High,
- * so on a card page the variant art would compete with the LCP image. Reaching for another
- * printing loads it at once: `reach` (a touch, a wheel or keyboard focus on the strip), or
- * the pills picking one.
+ * Whether variant slides may load their art yet: not until the Standard art has loaded
+ * and the main thread is idle. `loading="lazy"` can't hold back a printing behind the card
+ * (it sits in the viewport), and Chrome even raises that fetch to High, so on a card page the
+ * variant art would compete with the LCP image. Reaching for another printing loads it at once:
+ * `reach` (a touch, a wheel, a mouse over the card or keyboard focus on it), or a turn to one.
  */
-function useVariantArt(viewportRef: RefObject<HTMLDivElement | null>, index: number) {
+function useVariantArt(rootRef: RefObject<HTMLDivElement | null>, index: number) {
   const [wanted, setWanted] = useState(index > 0);
   if (index > 0 && !wanted) setWanted(true);
 
   useEffect(() => {
-    const standard = viewportRef.current?.querySelector('img');
+    const standard = rootRef.current?.querySelector('img');
     if (wanted || !standard) return;
     let cancelIdle = () => {};
     const afterStandard = () => {
@@ -74,17 +91,223 @@ function useVariantArt(viewportRef: RefObject<HTMLDivElement | null>, index: num
       for (const type of ['load', 'error']) standard.removeEventListener(type, afterStandard);
       cancelIdle();
     };
-  }, [wanted, viewportRef]);
+  }, [wanted, rootRef]);
 
   return {wanted, reach: () => setWanted(true)};
 }
 
 /**
- * A card's printings as a swipeable strip (#625): one full-width, scroll-snapped slide per
- * printing, so a swipe on touch (or a trackpad) moves between them, and PrintingPills drives
- * it by index. Only the slide shown is reachable by keyboard and screen readers; the others
- * are inert until a swipe or the pills bring them in. The variant slides' art waits for the
- * Standard art (see useVariantArt), which alone has `priority`: the page's LCP image.
+ * The printing a turn sent back, for a moment: it fades as it passes behind the one coming
+ * forward, then its edge comes back beside the card (prototype B). With reduced motion the
+ * card turns at once, with nothing to hide.
+ */
+function useTucked(index: number, reducedMotion: boolean): number | null {
+  const [front, setFront] = useState(index);
+  const [tucked, setTucked] = useState<number | null>(null);
+  if (index !== front) {
+    setFront(index);
+    setTucked(reducedMotion ? null : front);
+  }
+  useEffect(() => {
+    if (tucked === null) return;
+    const timer = setTimeout(() => setTucked(null), TUCK_MS);
+    return () => clearTimeout(timer);
+  }, [tucked]);
+  return tucked;
+}
+
+/** The arrow key's turn: -1, 1, or 0 for any other key, and for Alt+← (the browser's Back) and its kin. */
+function arrowStep(e: KeyboardEvent): -1 | 0 | 1 {
+  if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return 0;
+  if (e.key === 'ArrowLeft') return -1;
+  return e.key === 'ArrowRight' ? 1 : 0;
+}
+
+interface BoxLook {
+  width: number;
+  height: number;
+  borderRadius: number;
+  turnable: boolean;
+  /** Under a mouse: a hand to grab the card, a pointer near a side, a fist while dragging. */
+  cursor: CSSProperties['cursor'];
+}
+
+/**
+ * The card's box, the stack's own layer: the printings behind it reach past it, and a touch
+ * that moves across it turns the card, so the page only scrolls (and zooms) by touch here.
+ */
+function boxStyle({width, height, borderRadius, turnable, cursor}: BoxLook): CSSProperties {
+  return {
+    ...INSET_FOCUS_RING,
+    position: 'relative',
+    isolation: 'isolate',
+    width,
+    height,
+    borderRadius,
+    flexShrink: 0,
+    touchAction: turnable ? 'pan-y pinch-zoom' : undefined,
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+    cursor,
+  };
+}
+
+function boxCursor({fine, turnable, dragging, nearSide}: {fine: boolean; turnable: boolean; dragging: boolean; nearSide: boolean}): CSSProperties['cursor'] {
+  if (!fine || !turnable) return undefined;
+  if (dragging) return 'grabbing';
+  return nearSide ? 'pointer' : 'grab';
+}
+
+/** Whether a printing waits before the card, and one after it. A locked card turns neither way. */
+function turnsOf({index, count, locked}: {index: number; count: number; locked: boolean}): Record<PeekSide, boolean> {
+  if (locked) return {prev: false, next: false};
+  return {prev: index > 0, next: index < count - 1};
+}
+
+/** Focus on the printing in front: its Enlarge button, or else the card. */
+function focusFront(root: HTMLElement | null, index: number) {
+  if (!root) return;
+  const slideButton = root.querySelector<HTMLElement>(`[data-slide="${index}"] button`);
+  (slideButton ?? root).focus({preventScroll: true});
+}
+
+interface TurnInput {
+  index: number;
+  canTurn: Record<PeekSide, boolean>;
+  onIndexChange: (index: number) => void;
+  onSettle?: (index: number) => void;
+  /** Hears of each turn first: the open peek closes. */
+  onTurn: () => void;
+}
+
+/**
+ * The turns the visitor asks for, a printing at a time: each is shown and recorded at once, and
+ * counted for its notice. The slide a turn leaves goes inert, which would drop focus on its
+ * Enlarge button to <body>, so focus on the card follows the turn to the printing it brought in.
+ */
+function useTurns(rootRef: RefObject<HTMLDivElement | null>, {index, canTurn, onIndexChange, onSettle = NOOP, onTurn}: TurnInput) {
+  const [turns, setTurns] = useState(0);
+  const focusFollowsRef = useRef<number | null>(null);
+
+  useLayoutEffect(() => {
+    if (focusFollowsRef.current !== index) return;
+    focusFollowsRef.current = null;
+    focusFront(rootRef.current, index);
+  }, [index, rootRef]);
+
+  const turn = (step: Step) => {
+    if (!canTurn[step < 0 ? 'prev' : 'next']) return;
+    const to = index + step;
+    focusFollowsRef.current = rootRef.current?.contains(document.activeElement) ? to : null;
+    onTurn();
+    onIndexChange(to);
+    onSettle(to);
+    setTurns((n) => n + 1);
+  };
+  return {turns, turn};
+}
+
+/**
+ * The keyboard on the card: ← → turn it, and its focus opens both peeks, as a pointer near a side
+ * opens one; a click's focus opens none. A key pressed on the card is the keyboard's, whatever
+ * focused it. Focus also loads the printings' art (`reach`).
+ */
+function useStackKeys({locked, turn, reach}: {locked: boolean; turn: (step: Step) => void; reach: () => void}) {
+  const [focused, setFocused] = useState(false);
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    setFocused(true);
+    const step = arrowStep(e);
+    if (step === 0 || locked) return;
+    // The window around the card would page to another card, even at the last printing.
+    e.preventDefault();
+    e.stopPropagation();
+    turn(step);
+  };
+  const onFocus = (e: FocusEvent<HTMLDivElement>) => {
+    setFocused(focusedByKeyboard(e.target));
+    reach();
+  };
+  const onBlur = (e: FocusEvent<HTMLDivElement>) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocused(false);
+  };
+  return {focused, handlers: {onKeyDown, onFocus, onBlur}};
+}
+
+interface PeekInput {
+  hover: PeekHover | null;
+  canTurn: Record<PeekSide, boolean>;
+  dragging: boolean;
+  /** Keyboard focus on the card, where both peeks open. */
+  focused: boolean;
+}
+
+/**
+ * The peeks open: the side a mouse rests near, if a printing waits there (`near`, whose tag names
+ * it), or both while keyboard focus is on the card. None opens mid-drag: the drag itself brings
+ * the printing forward.
+ */
+function openPeeks({hover, canTurn, dragging, focused}: PeekInput): {near: PeekHover | null; open: Record<PeekSide, boolean>} {
+  if (dragging) return {near: null, open: {prev: false, next: false}};
+  const near = hover && canTurn[hover.side] ? hover : null;
+  const open = {prev: focused, next: focused};
+  if (near) open[near.side] = true;
+  return {near, open};
+}
+
+/**
+ * How far the printings' edges show past the card, and the peeks' buttons over them: each
+ * covers its printing's edge, within the frame, and on a mouse the card's outer share too.
+ */
+function peekGeometry({fine, width, room}: {fine: boolean; width: number; room: number}) {
+  const {fine: mouse, touch} = STACK_EDGE;
+  if (!fine) return {edge: touch, outside: Math.min(room, touch.rest + SPACING.sm), inside: SPACING.sm};
+  return {edge: mouse, outside: Math.min(room, mouse.peek), inside: Math.round(width * PEEK_ZONE)};
+}
+
+interface StackPeeksProps {
+  printings: Printing[];
+  index: number;
+  canTurn: Record<PeekSide, boolean>;
+  near: PeekHover | null;
+  geometry: {outside: number; inside: number};
+  height: number;
+  dragging: boolean;
+  onTurn: (step: Step) => void;
+}
+
+/** The peeks' buttons, one at each side a printing waits, and the tag naming the one under the mouse. */
+function StackPeeks({printings, index, canTurn, near, geometry, height, dragging, onTurn}: StackPeeksProps) {
+  return (
+    <>
+      {SIDES.filter((side) => canTurn[side]).map((side) => (
+        <PeekButton
+          key={side}
+          side={side}
+          printing={printings[index + STEP[side]]}
+          outside={geometry.outside}
+          inside={geometry.inside}
+          dragging={dragging}
+          onTurn={() => onTurn(STEP[side])}
+        />
+      ))}
+      {near && <PeekTag side={near.side} printing={printings[index + STEP[near.side]]} y={near.y} height={height} />}
+    </>
+  );
+}
+
+/**
+ * A card's printings, stacked behind it (#625; owner, 2026-10-22, prototype B: the printing pills
+ * under the card went). The printing before the card and the one after it sit behind it, their
+ * edges past its sides: a sliver under a mouse, which opens to a tilted peek naming the printing
+ * as the pointer rests near that side, where a click turns to it; on touch a wider edge, which a
+ * tap turns to. The card itself is thrown aside by a finger or a mouse (`useCardThrow`), turned
+ * by a trackpad's swipe (`useWheelTurn`), or by ← → with it focused. Each turn the visitor makes
+ * is named on the card for a moment (`TurnNotice`).
+ *
+ * Only the printing in front is reachable by keyboard and screen readers; the others are inert
+ * until a turn brings them in, and the peeks are buttons named for the printing they turn to.
+ * The variant slides' art waits for the Standard art (see useVariantArt), which alone has
+ * `priority`: the page's LCP image.
  *
  * Callers render it only for a card with an alternate printing; a single-printing card keeps
  * its plain CardImage, untouched.
@@ -95,66 +318,62 @@ export function PrintingCarousel({
   index,
   onIndexChange,
   onSettle,
-  locked,
+  locked = false,
   width,
   height,
   borderRadius = RADIUS.xl,
   priority,
   onEnlarge,
+  room = Infinity,
 }: PrintingCarouselProps) {
-  // Whether keyboard focus is inside the strip (an Enlarge button), and the slide a swipe
-  // brought in while it was. The slide the swipe left goes inert, which would drop the focus
-  // to <body>, so the focus follows the swipe instead.
-  const focusWithinRef = useRef(false);
-  const focusFollowsRef = useRef<number | null>(null);
-  const {viewportRef, activeIndex, scrollToIndex} = useScrollSnapIndex({
-    onIndexChange: (next) => {
-      focusFollowsRef.current = focusWithinRef.current ? next : null;
-      onIndexChange(next);
-    },
-    onSettle,
-    initialIndex: index,
-  });
+  const rootRef = useRef<HTMLDivElement>(null);
+  const fine = useFinePointer();
+  const reducedMotion = usePrefersReducedMotion();
+  const canTurn = turnsOf({index, count: printings.length, locked});
+  const turnable = canTurn.prev || canTurn.next;
+  const variantArt = useVariantArt(rootRef, index);
+  const tucked = useTucked(index, reducedMotion);
+  const mouse = usePeekHover({size: {width, height}, canTurn, fine, reach: variantArt.reach});
+  const {turns, turn} = useTurns(rootRef, {index, canTurn, onIndexChange, onSettle, onTurn: mouse.clear});
+  const keys = useStackKeys({locked, turn, reach: variantArt.reach});
+  const drag = useCardThrow({width, canTurn, enabled: turnable, onThrow: turn});
+  useWheelTurn(rootRef, {enabled: turnable, onTurn: turn});
 
-  useEffect(() => {
-    if (index !== activeIndex) scrollToIndex(index);
-  }, [index, activeIndex, scrollToIndex]);
-
-  useLayoutEffect(() => {
-    if (focusFollowsRef.current !== index) return;
-    focusFollowsRef.current = null;
-    viewportRef.current?.children[index]?.querySelector('button')?.focus({preventScroll: true});
-  }, [index, viewportRef]);
-
-  const variantArt = useVariantArt(viewportRef, index);
+  const dragging = drag.dx !== null;
+  const {near, open} = openPeeks({hover: mouse.hover, canTurn, dragging, focused: keys.focused});
+  const geometry = peekGeometry({fine, width, room});
+  const stack = {width, height, dx: drag.dx ?? 0, peeking: open, edge: geometry.edge, room, locked};
 
   return (
+    // A carousel (WAI-ARIA APG) whose ← → turn it. The pointer handlers are the card's throw and
+    // its peeks, which the peeks' buttons reach without them.
     <div
-      ref={viewportRef}
+      ref={rootRef}
       role="group"
       aria-roledescription="carousel"
       aria-label={`${card.fullName} printings`}
-      tabIndex={stripTabIndex({onEnlarge, locked})}
-      onTouchStart={variantArt.reach}
-      onWheel={variantArt.reach}
-      onFocus={() => {
-        focusWithinRef.current = true;
-        variantArt.reach();
-      }}
-      onBlur={(e) => {
-        focusWithinRef.current = e.currentTarget.contains(e.relatedTarget as Node | null);
-      }}
-      style={{
-        display: 'flex',
+      tabIndex={stackTabIndex({onEnlarge, locked})}
+      className="printing-stack"
+      style={boxStyle({
         width,
         height,
-        overflowX: locked ? 'hidden' : 'auto',
-        overflowY: 'hidden',
-        scrollSnapType: 'x mandatory',
-        scrollbarWidth: 'none',
-        overscrollBehaviorX: 'contain',
         borderRadius,
-      }}>
+        turnable,
+        cursor: boxCursor({fine, turnable, dragging, nearSide: near !== null}),
+      })}
+      {...drag.handlers}
+      {...mouse.handlers}
+      {...keys.handlers}
+      onPointerDown={(e) => {
+        variantArt.reach();
+        drag.handlers.onPointerDown(e);
+      }}
+      onPointerMove={(e) => {
+        drag.handlers.onPointerMove(e);
+        mouse.follow(e);
+      }}
+      onWheel={variantArt.reach}
+      onDragStart={(e) => e.preventDefault()}>
       {printings.map((printing, i) => (
         <PrintingSlide
           key={printing.key}
@@ -163,15 +382,40 @@ export function PrintingCarousel({
           slideIndex={i}
           shown={i === index}
           artWanted={variantArt.wanted}
-          width={width}
-          height={height}
+          size={{width, height}}
           borderRadius={borderRadius}
+          style={slideStyle(stackPose(i - index, stack), {borderRadius, dragging, tucked: i === tucked, reducedMotion})}
           priority={priority}
           onEnlarge={onEnlarge}
         />
       ))}
+      <StackPeeks
+        printings={printings}
+        index={index}
+        canTurn={canTurn}
+        near={near}
+        geometry={geometry}
+        height={height}
+        dragging={dragging}
+        onTurn={turn}
+      />
+      <TurnNotice printing={printings[index]} position={index + 1} count={printings.length} turns={turns} />
     </div>
   );
+}
+
+interface PrintingSlideProps {
+  card: LorcanaCard;
+  printing: Printing;
+  slideIndex: number;
+  shown: boolean;
+  artWanted: boolean;
+  size: {width: number; height: number};
+  borderRadius: number;
+  /** Its place in the stack (slideStyle). */
+  style: CSSProperties;
+  priority?: boolean;
+  onEnlarge?: (index: number) => void;
 }
 
 /**
@@ -184,30 +428,19 @@ function PrintingSlide({
   slideIndex,
   shown,
   artWanted,
-  width,
-  height,
+  size,
   borderRadius,
+  style,
   priority,
   onEnlarge,
-}: {
-  card: LorcanaCard;
-  printing: Printing;
-  slideIndex: number;
-  shown: boolean;
-  artWanted: boolean;
-  width: number;
-  height: number;
-  borderRadius: number;
-  priority?: boolean;
-  onEnlarge?: (index: number) => void;
-}) {
+}: PrintingSlideProps) {
   const first = slideIndex === 0;
   const image = (
     <CardImage
       src={first || artWanted ? printing.imageUrl : undefined}
       alt={printingAlt(card, printing)}
-      width={width}
-      height={height}
+      width={size.width}
+      height={size.height}
       inkColor={card.ink}
       cost={card.cost}
       lazy={!first}
@@ -216,7 +449,7 @@ function PrintingSlide({
     />
   );
   return (
-    <div aria-hidden={!shown} inert={!shown} style={SLIDE_STYLE}>
+    <div data-slide={slideIndex} aria-hidden={!shown} inert={!shown} style={style}>
       {onEnlarge ? (
         <CardImageButton
           ariaLabel={`Enlarge ${printing.label} printing`}

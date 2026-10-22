@@ -34,11 +34,13 @@ describe('BinderSpreadMap, for a long binder', () => {
 
   it('moves it back when a step goes back past its first spread, that spread now its last', () => {
     // From the third window, spreads 21 to 31: one back from the second, the binder's
-    // start would clamp the move and hide where it lands (#790).
-    render(<Live />);
-    fireEvent.click(screen.getByRole('button', {name: /^Spread 11 of 40/}));
-    fireEvent.click(screen.getByRole('button', {name: /^Spread 21 of 40/}));
-    fireEvent.click(screen.getByRole('button', {name: 'Previous spread'}));
+    // start would clamp the move and hide where it lands (#790). The step back is the
+    // spread's own arrow's, on its edge (owner, 2026-10-22), so here the binder takes it.
+    const map = (current: number) => <BinderSpreadMap pockets={POCKETS} current={current} onGo={() => {}} />;
+    const view = render(map(0));
+    view.rerender(map(10));
+    view.rerender(map(20));
+    view.rerender(map(19));
     expect(spreads()[0]).toMatch(/^Spread 10 of 40/);
     expect(spreads()[10]).toMatch(/^Spread 20 of 40/);
     expect(screen.getByRole('button', {name: /^Spread 20 of 40/})).toHaveAttribute('aria-current', 'true');
@@ -51,17 +53,11 @@ describe('BinderSpreadMap, for a long binder', () => {
 });
 
 /**
- * jsdom lays nothing out, so the row and its buttons get widths: the row `row.nav` px, and
- * Previous and Next 95 and 71px, as they measure at 1920. Every way of reading a width
- * agrees, so these tests don't depend on which one the map reads.
+ * jsdom lays nothing out, so the row gets a width: `row.nav` px. Every way of reading a
+ * width agrees, so these tests don't depend on which one the map reads.
  */
 function layOut(row: {nav: number}) {
-  const widthOf = (el: Element) => {
-    if (el.tagName === 'NAV') return row.nav;
-    const label = el.getAttribute('aria-label');
-    if (label === 'Previous spread') return 95;
-    return label === 'Next spread' ? 71 : 0;
-  };
+  const widthOf = (el: Element) => (el.tagName === 'NAV' ? row.nav : 0);
   vi.spyOn(Element.prototype, 'clientWidth', 'get').mockImplementation(function (this: Element) {
     return widthOf(this);
   });
@@ -92,14 +88,15 @@ describe('BinderSpreadMap, fitted to its row', () => {
     resized.length = 0;
   });
 
-  // Room between the buttons is the row less 95 + 71 and two 12px gaps; each spread
-  // needs 66px and 4px after it: (room + 4) / 70, rounded down, from 1 to 11.
+  // The row is the spreads' alone (owner, 2026-10-22: its Previous and Next moved to the
+  // spread's edges). Each spread needs 66px and 4px after it: (row + 4) / 70, rounded
+  // down, from 1 to 11.
   it.each([
-    [1272, 11], // 1920 wide: room for fifteen, but the window holds eleven at most
-    [792, 8], // 1440
-    [632, 6], // 1280
-    [376, 2], // 1024, both panels docked
-    [200, 1], // no room at all: the open spread still shows
+    [1272, 11], // 1920 wide: room for eighteen, but the window holds eleven at most
+    [792, 11], // 1440
+    [632, 9], // 1280
+    [376, 5], // 1024, both panels docked
+    [60, 1], // no room at all: the open spread still shows
   ])('a %ipx row shows %i spreads', (nav, count) => {
     layOut({nav});
     render(<Live />);
@@ -107,7 +104,7 @@ describe('BinderSpreadMap, fitted to its row', () => {
   });
 
   it('moves a narrow window on at its own last spread', () => {
-    layOut({nav: 632});
+    layOut({nav: 440}); // six spreads
     render(<Live />);
     fireEvent.click(screen.getByRole('button', {name: /^Spread 6 of 40/}));
     expect(spreads()[0]).toMatch(/^Spread 6 of 40/);
@@ -115,7 +112,7 @@ describe('BinderSpreadMap, fitted to its row', () => {
   });
 
   it("opens a narrow window on the spread on show, even near a short binder's end", () => {
-    layOut({nav: 376});
+    layOut({nav: 160}); // two spreads
     render(<BinderSpreadMap pockets={POCKETS.slice(0, filling(9))} current={2} onGo={() => {}} />);
     expect(spreads()).toEqual([expect.stringMatching(/^Spread 3 of 9/), expect.stringMatching(/^Spread 4 of 9/)]);
   });
@@ -125,7 +122,7 @@ describe('BinderSpreadMap, fitted to its row', () => {
     layOut(row);
     render(<Live />);
     fireEvent.click(screen.getByRole('button', {name: /^Spread 10 of 40/}));
-    row.nav = 632;
+    row.nav = 440;
     act(() => resized.forEach((tell) => tell()));
     expect(spreads()).toHaveLength(6);
     expect(spreads()[5]).toMatch(/^Spread 10 of 40/);

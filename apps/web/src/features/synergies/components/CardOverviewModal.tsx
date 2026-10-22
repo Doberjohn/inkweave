@@ -6,17 +6,11 @@ import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
 import {MobileComparisonView, type ComparisonOriginRects} from './MobileComparisonView';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {
-  CopiesSlot,
-  DesktopArtControls,
-  HeaderTranslationToggle,
-  MobileArtControls,
-  ModalArtState,
-  ModalCardArt,
-} from './ModalCardArt';
+import {HeaderTranslationToggle, ModalArtState, ModalCardArt, UnderCard} from './ModalCardArt';
 import {
   CardPrintingContext,
   CardTranslationContext,
+  CopiesSlotContext,
   pickCopiesSlot,
   useCardTranslation,
   useModalPrinting,
@@ -41,20 +35,19 @@ import {
 } from '../../../shared/constants';
 import {Chip} from '../../../shared/components/Chip';
 import {LinkButton} from '../../../shared/components/LinkButton';
-import {ModalCloseButton, ReservedArtControlsRoom, SynergiesLoadingSkeleton} from './CardOverviewModalFallback';
+import {ModalCloseButton, SynergiesLoadingSkeleton} from './CardOverviewModalFallback';
 import {LOGO_HEIGHT, ModalCardTitle} from './ModalCardTitle';
 import {
   CENTERING_WRAPPER_STYLE,
   DEFAULT_BODY_STYLE,
   MODAL_BACKDROP_STYLE,
+  MODAL_FRAME_STYLE,
   MODAL_HEADER_STYLE,
   PAIR_CONNECTOR_WIDTH,
   comparisonCardInset,
   desktopCardRowHeight,
-  hasArtControls,
   pickCardColumnLayout,
   pickCardsRowStyle,
-  pickModalFrameStyle,
   pickModalShellStyle,
   pickSynergyColumnLayout,
 } from './cardOverviewModalStyles';
@@ -179,8 +172,9 @@ interface CardOverviewModalProps {
   /** Open on this Epic/Enchanted/Iconic printing (a variant id) instead of the Standard art. */
   initialPrintingId?: string | null;
   /**
-   * Takes the element over the card's foot that a page may fill through a portal (#826):
-   * Browse's copies stripe. Without it the window has no slot.
+   * Takes the element in the row under the card that a page may fill through a portal (#826):
+   * Browse's copies stripe. Given only while a page holds that row (`useHoldCopiesRow`); without
+   * it the window draws no row and has no slot.
    */
   copiesSlotRef?: (el: HTMLElement | null) => void;
   /** Told the printing on show whenever it changes: a variant's id, or null for the card's own (#826). */
@@ -456,7 +450,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
   const translation = useCardTranslation(card, isOpen, printing);
   useFocusSurvivesPaging(card.id, printing?.index ?? 0, initialFocusRef);
   useReportShownPrinting(printing, props.onShownPrintingChange);
-  const {cardWidth, cardHeight} = useModalCardSize(isMobile);
+  const {cardWidth, cardHeight} = useModalCardSize(isMobile, props.copiesSlotRef !== undefined);
 
   if (!mounted) return null;
 
@@ -482,7 +476,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               border without the shell's own overflow:hidden clipping them. The frame also owns the
               focus trap + arrow-key handling so the arrows (outside the dialog) stay reachable. */}
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- see comment above */}
-          <div ref={frameRef} style={pickModalFrameStyle(isMobile)} onKeyDown={handleShellKeyDown}>
+          <div ref={frameRef} style={MODAL_FRAME_STYLE} onKeyDown={handleShellKeyDown}>
           <div
             ref={modalRef}
             className={`overlay-transition overlay-scale overlay-enter ${visible ? 'overlay-visible' : ''}`}
@@ -532,7 +526,6 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
             />
             </ModalArtState>
           </div>
-          <ReservedArtControlsRoom card={card} isMobile={isMobile} />
           {showSiblingNav && (
             <SiblingNavButtons onPrev={() => onGoToSibling?.(-1)} onNext={() => onGoToSibling?.(1)} />
           )}
@@ -552,9 +545,8 @@ function isTextEntryTarget(target: EventTarget | null): boolean {
 }
 
 /**
- * Controls that use the arrow keys themselves: text entry, radio groups such as the printing
- * switcher (#625), whose arrows move its selection, and the printings strip, whose arrows scroll
- * it. There they are not "next card".
+ * Controls that use the arrow keys themselves: text entry, radio groups, whose arrows move their
+ * selection, and the printings strip (#625), whose arrows turn it. There they are not "next card".
  */
 const OWNS_ARROW_KEYS = '[role="radiogroup"], [aria-roledescription="carousel"]';
 
@@ -1064,8 +1056,8 @@ interface ModalHeaderProps {
 }
 
 /**
- * The title (or BACK, in a comparison), desktop's translation toggle, and the close ×. The
- * printing pills sit under the card, as does mobile's toggle.
+ * The title (or BACK, in a comparison), desktop's translation toggle, and the close ×. Mobile's
+ * toggle sits under the card.
  */
 function ModalHeader(props: ModalHeaderProps) {
   const {card, isMobile, inComparison, hideBackButton, onClose, exitComparison, initialFocusRef, showExpanded} = props;
@@ -1415,9 +1407,9 @@ function CardsRow(props: CardsRowProps) {
   // During exit (comparisonPair=null, exitingPair set), keep the overlays mounted using
   // the exitingPair's data so the FLIP-back animation has something to animate.
   const effectivePair = comparisonPair ?? exitingPair;
-  // A comparison hides the controls and drops their room, so card A's column is the card itself.
-  const controlsBelow = !isMobile && !props.inComparison && hasArtControls(props.card);
-  const rowHeight = desktopCardRowHeight({cardHeight, controlsBelow});
+  // A comparison drops the copies row, so card A's column is the card itself.
+  const copiesRow = useContext(CopiesSlotContext) !== null && !props.inComparison;
+  const rowHeight = desktopCardRowHeight({cardWidth: props.cardWidth, cardHeight, copiesRow});
   return (
     <div style={pickCardsRowStyle({isMobile, cardWidth: props.cardWidth, rowHeight})}>
       <CardImageDisplay
@@ -1497,8 +1489,6 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
   const useGlow = !isMobile && inComparison;
   const translation = useContext(CardTranslationContext);
   const reducedMotion = usePrefersReducedMotion();
-  // Desktop's art controls sit under the full-size card, in its row's own room (owner, 2026-10-20).
-  const controlsBelow = !isMobile && hasArtControls(card);
   return (
     <div
       className={useGlow ? 'focused-card-glow' : undefined}
@@ -1516,19 +1506,11 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
             style={OVER_MODAL_SCAN}
           />
         )}
-        {/* The card's copies over its foot, which a page fills (#826). A comparison shows the base art alone. */}
-        {!inComparison && <CopiesSlot />}
       </span>
       {/* Outside the span, whose rect is the FLIP origin above. */}
-      <ArtControls isMobile={isMobile} controlsBelow={controlsBelow} inComparison={inComparison} />
+      <UnderCard cardWidth={cardWidth} isMobile={isMobile} inComparison={inComparison} />
     </div>
   );
-}
-
-/** The art's controls: in the column's flow on mobile, pinned under the art on desktop. */
-function ArtControls({isMobile, controlsBelow, inComparison}: {isMobile: boolean; controlsBelow: boolean; inComparison: boolean}) {
-  if (isMobile) return <MobileArtControls />;
-  return controlsBelow ? <DesktopArtControls hidden={inComparison} /> : null;
 }
 
 /** The art's own box, exactly the card's size: inline-block with no line box. */

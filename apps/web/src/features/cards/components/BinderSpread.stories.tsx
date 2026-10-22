@@ -6,6 +6,7 @@ import {BinderSlotSkeleton, BinderSpread} from './BinderSpread';
 import {CardTile} from './CardTile';
 import {BINDER_CARDS} from './binderStoryCards';
 import {COLORS} from '../../../shared/constants';
+import {BROWSE_GUTTER} from './BrowseSidePanel';
 
 /** Each pocket's card from `cards`, by index, in the binder's Tab order, and an empty pocket past them. */
 const slotsFor = (cards: readonly LorcanaCard[]) => (index: number, tabIndex: number) => {
@@ -101,11 +102,20 @@ export const MidBook: Story = {
 };
 
 /**
- * Where Browse docks its panels (owner, 2026-10-08): no arrows, and no padding of its own.
- * The spread fills the width it is given and starts at the top, so the page decides its edges.
+ * Where Browse docks its panels (owner, 2026-10-08): no arrows beside it, and no padding of
+ * its own. The spread fills the width it is given and starts at the top, so the page decides
+ * its edges. Its arrows sit on its outer edges (owner, 2026-10-22): small discs, half in the
+ * gutter Browse leaves beside it, that grow under the pointer. Mid-book, so both turn.
  */
-export const WithoutArrows: Story = {
-  args: {arrows: false},
+export const ArrowsOnTheEdges: Story = {
+  args: {arrows: 'edges', canPrev: true, canNext: true},
+  decorators: [
+    (Story) => (
+      <div style={{height: '100%', padding: `0 ${BROWSE_GUTTER}px`}}>
+        <Story />
+      </div>
+    ),
+  ],
 };
 
 /**

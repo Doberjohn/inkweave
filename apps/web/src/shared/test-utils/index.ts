@@ -5,5 +5,5 @@ export {
   createConnection,
   createVotingPair,
 } from './factories';
-export {swipeStrip, restStrip} from './printingStrip';
+export {swipeCard} from './printingSwipe';
 // Note: setup.ts is imported by vitest.config.ts, not re-exported here

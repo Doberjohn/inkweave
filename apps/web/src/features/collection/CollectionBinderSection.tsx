@@ -185,6 +185,33 @@ export function CollectionBinderSection({onRetry, ...props}: CollectionBinderSec
   );
 }
 
+/** The binder while its cards load: its chrome, as the loaded binder's, with shimmer in the pockets. */
+function LoadingBinder({single, docked}: {single: boolean; docked: boolean}) {
+  return (
+    <BinderSpread
+      // Spreads open on the front cover, as the binder does (owner, 2026-10-18); a phone's page has none.
+      start={single ? 0 : -PER_PAGE}
+      single={single}
+      arrows={docked ? 'edges' : 'beside'}
+      // Docked, a map of one empty spread holds the band the real map will fill. It holds
+      // no cards yet, so it is out of the Tab order and the accessibility tree: it would
+      // otherwise announce "nothing missing" about a collection that has not loaded.
+      footer={
+        docked ? (
+          <div inert aria-hidden="true">
+            <BinderSpreadMap pockets={[]} current={0} onGo={NOOP} />
+          </div>
+        ) : undefined
+      }
+      renderSlot={() => <BinderSlotSkeleton />}
+      onPrev={NOOP}
+      onNext={NOOP}
+      canPrev={false}
+      canNext={false}
+    />
+  );
+}
+
 function SectionContent({
   cards,
   waiting = [],
@@ -201,7 +228,7 @@ function SectionContent({
   ...controls
 }: CollectionBinderSectionProps) {
   const {isMobile} = useResponsive();
-  // Docked, the spread goes without arrows; the skeleton too, so it has the binder's geometry.
+  // Docked, the spread's arrows sit on its edges; the skeleton's too, so it has the binder's geometry.
   const docked = useSidePanelDocked();
   const {setCode} = controls;
 
@@ -228,27 +255,7 @@ function SectionContent({
   if (isLoading) {
     return (
       <PanelLayout panel={{...controls, stats: null, filtered}}>
-        <BinderSpread
-          // Spreads open on the front cover, as the binder does (owner, 2026-10-18); a phone's page has none.
-          start={isMobile ? 0 : -PER_PAGE}
-          single={isMobile}
-          arrows={!docked}
-          // Docked, a map of one empty spread holds the band the real map will fill. It holds
-          // no cards yet, so it is out of the Tab order and the accessibility tree: it would
-          // otherwise announce "nothing missing" about a collection that has not loaded.
-          footer={
-            docked ? (
-              <div inert aria-hidden="true">
-                <BinderSpreadMap pockets={[]} current={0} onGo={NOOP} />
-              </div>
-            ) : undefined
-          }
-          renderSlot={() => <BinderSlotSkeleton />}
-          onPrev={NOOP}
-          onNext={NOOP}
-          canPrev={false}
-          canNext={false}
-        />
+        <LoadingBinder single={isMobile} docked={docked} />
       </PanelLayout>
     );
   }

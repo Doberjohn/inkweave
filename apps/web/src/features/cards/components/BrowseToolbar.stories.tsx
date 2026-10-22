@@ -77,6 +77,11 @@ export const Docked: Story = {
   },
 };
 
+/** A search typed in: the clear button sits at the field's right end until it is emptied. */
+export const DockedWithSearch: Story = {
+  args: {...Docked.args, searchQuery: 'Elsa'},
+};
+
 /** The panel closed: Filters turns to its outline, and the active filters show as chips underneath. */
 export const DockedPanelClosed: Story = {
   args: {...Docked.args, docked: {panelOpen: false}},
