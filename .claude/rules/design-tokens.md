@@ -8,12 +8,12 @@ paths:
 
 Two mechanisms enforce the token system; both run automatically:
 
-1. **`inkweave/*` ESLint rules** (`apps/web/eslint-rules/index.js`, per-commit + CI): no raw hex colors, `rgba()`, font-family strings, font sizes, radii, app-layer z-indexes (≥50), keyword/bezier easings, or `backdrop-filter` (WebKit E2E trap, #444/#445). Every message names the replacement token. **`no-adhoc-buttons`** (#509) additionally blocks any `<button style={…}>` in feature code: buttons come from the kit (`CtaButton` filled/ghost/neutral/pill, `LinkButton`, `TabList`, `IconButton`, `FiltersButton`, `Chip`); the exempt domain families (steppers, vote pickers, tile toggles) are listed in the rule itself. **`no-dim-text`** keeps `COLORS.textDim` off text (2.6:1 to 3.5:1 on every surface, WCAG 1.4.3): use `COLORS.textMuted`. textDim stays for borders, strokes, disabled states and `aria-hidden` decoration.
+1. **`inkweave/*` ESLint rules** (`apps/web/eslint-rules/index.js`, per-commit + CI): no raw hex colors, `rgba()`, font-family strings, font sizes, radii, spacing (padding, margin, gap), app-layer z-indexes (≥50), keyword/bezier easings, or `backdrop-filter` (WebKit E2E trap, #444/#445). Every message names the replacement token. **`no-adhoc-buttons`** (#509) additionally blocks any `<button style={…}>` in feature code: buttons come from the kit (`CtaButton` filled/ghost/neutral/pill, `LinkButton`, `TabList`, `IconButton`, `FiltersButton`, `Chip`); the exempt domain families (steppers, vote pickers, tile toggles) are listed in the rule itself. **`no-dim-text`** keeps `COLORS.textDim` off text (2.6:1 to 3.5:1 on every surface, WCAG 1.4.3): use `COLORS.textMuted`. textDim stays for borders, strokes, disabled states and `aria-hidden` decoration.
 2. **Value-grep gate** (`check:design` → `scripts/check-design-tokens.mjs`, pre-push + CI): greps the LITERAL values of the tokens (theme hexes, EASING strings, font names) across ts/tsx/css/html — it catches `cssText` strings and quoted shorthands the AST cannot see. `'Barlow'` and `backdrop-filter:` usage are zero-tolerance tripwires.
 
 ## When a rule fires on you
 
-- Use the token it names: `COLORS.*` / `INK_COLORS.*` / `TIER_COLORS.*`, `hexRgba(COLORS.x, a)` / `blackRgba` / `whiteRgba` / `COLORS.scrim`, `FONTS.*`, `FONT_SIZES.*` (display tier exists: `displaySm/Md/Lg`), `RADIUS.*` (incl. `pill`), `Z_INDEX.*` (incl. `toast`/`swUpdate`), `EASING.snappy` (hover/fast) / `bounce` (selection/press) / `smooth` (fades/progress), `SHADOWS.*`.
+- Use the token it names: `COLORS.*` / `INK_COLORS.*` / `TIER_COLORS.*`, `hexRgba(COLORS.x, a)` / `blackRgba` / `whiteRgba` / `COLORS.scrim`, `FONTS.*`, `FONT_SIZES.*` (display tier exists: `displaySm/Md/Lg`), `RADIUS.*` (incl. `pill`), `SPACING.*` (`xxs`..`xxxl`; `0` is always fine), `Z_INDEX.*` (incl. `toast`/`swUpdate`), `EASING.snappy` (hover/fast) / `bounce` (selection/press) / `smooth` (fades/progress), `SHADOWS.*`.
 - If NO token fits, that is a design-system gap: raise it with the owner, do not inline the value. Scale additions require a ruling, not a headcount (census-vs-law).
 
 ## The grandfather ledger
@@ -36,17 +36,18 @@ One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spr
 
 ## Related
 
-- **`no-raw-spacing` is `'off'`.** While it is off, spacing has **zero** enforcement,
-  including on new code: an `'off'` rule reports nothing, and the value gate greps
-  token values, so a bare number never matches it. **#548** converts the quoted
-  shorthands the rule structurally cannot read, then **#549**
-  seeds a ledger and flips it to `'error'`. That order is load-bearing, because
-  seeding first would force new ledger entries, which shrink-only forbids.
-  Measured 2026-07-31: 314 violations across 134 files the rule can see, plus 86
-  off-scale values hidden inside quoted shorthands (`padding: '0 14px'`) that it
-  cannot. This line previously said "#508 Step 6; #511 owns the sweep": both were
-  closed, and #511's scope was the micro-pattern consts, never a spacing sweep. That
-  misdirection cost real time. Do not re-add a pointer without checking the issue is
-  open and actually says so.
+- **`no-raw-spacing` is `'error'`** (#549, 2026-10-22). It reads `padding`, `margin`,
+  `gap` and their longhand and logical forms (`paddingTop`, `paddingInline`,
+  `marginBlockStart`…), negative values (`marginTop: -14`; `-SPACING.md` passes),
+  and both branches of a ternary (`gap: isMobile ? 8 : 12`). Its ledger was seeded
+  the day it turned on, from a measured run: 66 files, 191 values. Stories and
+  `src/docs/` are exempt, like tests (owner ruling, 2026-07-31: their padding is
+  scaffolding, not product). `theme.ts` is not, unlike for the color rules: its one
+  value, `VISUALLY_HIDDEN`'s `margin: -1`, is in the ledger (owner, 2026-10-22).
+- **Spacing in a string is invisible.** `padding: '0 14px'` is text to the rule, and
+  the value gate greps token values, so a quoted shorthand's numbers pass both. Put
+  tokens in a shorthand (`` padding: `${SPACING.sm}px ${SPACING.md}px` ``); **#548**
+  converts the quoted px shorthands still in production code. Keyword and
+  percentage values (`'0 auto'`, `'50%'`, `calc()`) stay strings.
 - Token declaration sites (`theme.ts`, `playstyleUi.ts`), `src/docs/` stories, tests, and the five SVG icon components are permanently exempt from the color rules.
 - Import tokens through the barrel (`shared/constants`), never the theme files directly (`no-restricted-imports` enforces).

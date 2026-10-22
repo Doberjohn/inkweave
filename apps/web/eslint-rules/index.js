@@ -45,6 +45,15 @@ const COLOR_EXEMPT = [
 
 const TEST_EXEMPT = [/\.test\.(ts|tsx)$/];
 
+/**
+ * Stories and the token-showcase docs are fixtures: their padding is
+ * scaffolding, not product (owner ruling, 2026-07-31). Mirrors the color rules,
+ * which already exempt src/docs/. theme.ts is not exempt, unlike for the color
+ * rules: its raw spacing goes in the ledger like any other file's (owner,
+ * 2026-10-22).
+ */
+const SPACING_EXEMPT = [...TEST_EXEMPT, /\.stories\.tsx$/, /src\/docs\//];
+
 function isExempt(context, exemptPatterns) {
   const name = relName(context);
   return exemptPatterns.some((re) => re.test(name));
@@ -63,6 +72,12 @@ function keyName(prop) {
   if (prop.key?.type === 'Identifier') return prop.key.name;
   if (prop.key?.type === 'Literal') return String(prop.key.value);
   return undefined;
+}
+
+/** The values a ternary can give: `a ? 8 : b ? 12 : 16` gives 8, 12 and 16; any other node is its own value. */
+function ternaryLeaves(node) {
+  if (node.type !== 'ConditionalExpression') return [node];
+  return [...ternaryLeaves(node.consequent), ...ternaryLeaves(node.alternate)];
 }
 
 // ---------------------------------------------------------------------------
@@ -86,8 +101,12 @@ function makeStringScanRule({name, description, re, message, exempt = []}) {
   };
 }
 
-/** A rule that flags style-object properties whose value fails `valueTest`. */
-function makePropertyRule({name, description, props, valueTest, message, exempt = []}) {
+/**
+ * A rule that flags style-object properties whose value fails `valueTest`.
+ * `values` picks the nodes a property's value is checked as: by default the
+ * value itself, or `ternaryLeaves` to check each branch of a ternary.
+ */
+function makePropertyRule({name, description, props, valueTest, message, exempt = [], values = (v) => [v]}) {
   const propSet = new Set(props);
   return {
     meta: {type: 'problem', docs: {description}, schema: []},
@@ -96,7 +115,9 @@ function makePropertyRule({name, description, props, valueTest, message, exempt 
       return {
         Property(node) {
           if (!propSet.has(keyName(node))) return;
-          if (valueTest(node.value)) context.report({node: node.value, message});
+          for (const value of values(node.value)) {
+            if (valueTest(value)) context.report({node: value, message});
+          }
         },
       };
     },
@@ -110,6 +131,8 @@ const isRawFontFamily = (v) => isStringLiteral(v) && v.value !== 'inherit';
 const isRawFontSize = (v) => isNumberLiteral(v) || (isStringLiteral(v) && /^\d+(px)?$/.test(v.value));
 const isAppLayerZIndex = (v) => isNumberLiteral(v) && v.value >= 50;
 const isNonZeroNumber = (v) => isNumberLiteral(v) && v.value !== 0;
+/** `-14` is a unary minus around 14, so a negative margin is read through it. */
+const isRawSpacing = (v) => isNonZeroNumber(v.type === 'UnaryExpression' && v.operator === '-' ? v.argument : v);
 
 // ---------------------------------------------------------------------------
 // The rules
@@ -168,9 +191,10 @@ const noRawZIndex = makePropertyRule({
 });
 
 /**
- * Spacing rule — implemented but registered 'off' in eslint.config.js.
- * ENABLE CONDITION (#508 Step 6): after the Wave-0 convergence sweep reduces
- * the ~429 raw non-zero spacing literals; enabling earlier drowns the signal.
+ * Spacing, on since #549 with the files that predate it in the ledger. It reads
+ * both branches of a ternary (`padding: isMobile ? 8 : 12`), where layouts fork
+ * by breakpoint, negative values (`marginTop: -14`) and the logical properties.
+ * A quoted shorthand ('8px 12px') is a string it cannot read; #548 converts those.
  */
 const noRawSpacing = makePropertyRule({
   name: 'no-raw-spacing',
@@ -179,9 +203,14 @@ const noRawSpacing = makePropertyRule({
     'padding', 'margin', 'gap', 'rowGap', 'columnGap',
     'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft',
     'marginTop', 'marginRight', 'marginBottom', 'marginLeft',
+    'paddingBlock', 'paddingBlockStart', 'paddingBlockEnd',
+    'paddingInline', 'paddingInlineStart', 'paddingInlineEnd',
+    'marginBlock', 'marginBlockStart', 'marginBlockEnd',
+    'marginInline', 'marginInlineStart', 'marginInlineEnd',
   ],
-  valueTest: isNonZeroNumber,
-  exempt: TEST_EXEMPT,
+  valueTest: isRawSpacing,
+  values: ternaryLeaves,
+  exempt: SPACING_EXEMPT,
   message: 'Raw spacing. Use SPACING.* (xxs..xxxl; 0 is always allowed) (#508).',
 });
 

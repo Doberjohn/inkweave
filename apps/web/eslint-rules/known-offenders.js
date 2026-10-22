@@ -134,8 +134,77 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/QuickVoteControl.tsx', // x6
     'src/shared/components/CardImage.tsx', // x1
   ],
-  // 0 files, 0 violations at seeding
+  // Seeded 2026-10-22 when the rule turned on (#549), after it began reading
+  // ternary branches, negative values and the logical properties. Stories and
+  // src/docs/ are exempt, so none are listed.
+  // 66 files, 191 violations at seeding
   'no-raw-spacing': [
+    'src/features/cards/components/BinderSpreadMap.tsx', // x1
+    'src/features/cards/components/BrowseCardGrid.tsx', // x1
+    'src/features/cards/components/BrowseToolbar.tsx', // x6
+    'src/features/cards/components/CardGrid.tsx', // x1
+    'src/features/collection/CollectionBinderSection.tsx', // x1
+    'src/features/playstyles/PlaystyleFanTile.tsx', // x3
+    'src/features/playstyles/PlaystyleSection.tsx', // x2
+    'src/features/reveals/CardMosaic.tsx', // x1
+    'src/features/reveals/FranchiseCardsModal.tsx', // x2
+    'src/features/reveals/InkBoard.tsx', // x6
+    'src/features/reveals/NewFranchises.tsx', // x4
+    'src/features/reveals/RevealHero.tsx', // x7
+    'src/features/reveals/RevealsPromoCard.tsx', // x1
+    'src/features/reveals/SpotlightHero.tsx', // x5
+    'src/features/reveals/mosaicSizing.ts', // x1
+    'src/features/synergies/components/CardDetailPanel.tsx', // x2
+    'src/features/synergies/components/CardOverviewModal.tsx', // x7
+    'src/features/synergies/components/CardOverviewModalFallback.tsx', // x4
+    'src/features/synergies/components/ColumnHeader.tsx', // x5
+    'src/features/synergies/components/CommunityColumn.tsx', // x6
+    'src/features/synergies/components/CommunityEmptyState.tsx', // x5
+    'src/features/synergies/components/DeltaPanel.tsx', // x4
+    'src/features/synergies/components/EngineColumn.tsx', // x1
+    'src/features/synergies/components/MechanicsButton.tsx', // x1
+    'src/features/synergies/components/MobileComparisonView.tsx', // x4
+    'src/features/synergies/components/RoleTileRow.tsx', // x2
+    'src/features/synergies/components/ScoreChevronsTab.tsx', // x2
+    'src/features/synergies/components/SynergyBreakdown.tsx', // x1
+    'src/features/synergies/components/SynergyToolbar.tsx', // x3
+    'src/features/synergies/components/cardOverviewModalStyles.ts', // x4
+    'src/features/voting/components/DistributionBar.tsx', // x4
+    'src/features/voting/components/PairDisplay.tsx', // x9
+    'src/features/voting/components/PairStack.tsx', // x1
+    'src/features/voting/components/QuickVoteControl.tsx', // x3
+    'src/features/voting/components/ScorePicker.tsx', // x5
+    'src/features/voting/components/VoteAffirmation.tsx', // x2
+    'src/features/voting/components/VoteConfirmation.tsx', // x5
+    'src/features/voting/components/VoteGroupTabs.tsx', // x1
+    'src/features/voting/components/VoteStatusBanner.tsx', // x1
+    'src/features/voting/components/VoteToast.tsx', // x4
+    'src/features/voting/components/VotingCardDisplay.tsx', // x2
+    'src/pages/BrowsePage.tsx', // x1
+    'src/pages/HomePageSkeleton.tsx', // x8
+    'src/pages/InDepthVotePage.tsx', // x9
+    'src/pages/InkHubPage.tsx', // x1
+    'src/pages/NotFoundPage.tsx', // x1
+    'src/pages/PlaystyleDetailPage.tsx', // x2
+    'src/pages/PlaystyleGalleryPage.tsx', // x1
+    'src/pages/PrivacyPage.tsx', // x1
+    'src/pages/RevealsPage.tsx', // x2
+    'src/pages/VotePage.tsx', // x7
+    'src/shared/components/BetaNotice.tsx', // x1
+    'src/shared/components/Chip.tsx', // x2
+    'src/shared/components/CompactHeader.tsx', // x2
+    'src/shared/components/ConnectionGroup.tsx', // x2
+    'src/shared/components/CostFilterGroup.tsx', // x1
+    'src/shared/components/CtaButton.tsx', // x1
+    'src/shared/components/DialogShell.tsx', // x1
+    'src/shared/components/FilterContent.tsx', // x3
+    'src/shared/components/HeroSection.tsx', // x8
+    'src/shared/components/InkFilterGroup.tsx', // x1
+    'src/shared/components/InkwellFilterGroup.tsx', // x1
+    'src/shared/components/SearchBottomSheet.tsx', // x2
+    'src/shared/components/TabList.tsx', // x1
+    'src/shared/components/ToolbarToggle.tsx', // x1
+    'src/shared/constants/theme.ts', // x1
   ],
   // Ad-hoc styled <button> sites pre-dating the #509 kit. Converge each to a
   // kit component (CtaButton/LinkButton/TabList/IconButton/Chip) on touch.
