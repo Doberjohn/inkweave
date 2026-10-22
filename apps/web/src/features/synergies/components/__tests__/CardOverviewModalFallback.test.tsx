@@ -80,7 +80,7 @@ describe('CardOverviewModalFallback', () => {
       return shape;
     };
 
-    expect(placeholder(card, true)).toEqual({transform: '', row: '507px'});
+    expect(placeholder(card, true)).toEqual({transform: '', row: '514px'});
     expect(placeholder(cardWithPrintings, false)).toEqual({transform: '', row: '470px'});
     // A foreign scan's toggle sits in the header (owner, 2026-10-17), so it takes no room here.
     expect(placeholder({...card, scanLanguage: 'ja'} as LorcanaCard, false)).toEqual({transform: '', row: '470px'});

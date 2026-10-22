@@ -46,6 +46,11 @@ export interface StackState {
   height: number;
   /** The drag's offset, 0 when none is under way. */
   dx: number;
+  /**
+   * Which way the card is dragged, 1 to the right and -1 to the left, still held a moment after
+   * the drag ends; 0 at rest.
+   */
+  heading: -1 | 0 | 1;
   /** Whether each side's peek is open: a pointer near it, or keyboard focus on the card. */
   peeking: Record<PeekSide, boolean>;
   edge: {rest: number; peek: number};
@@ -80,7 +85,10 @@ function besidePose(dir: -1 | 1, state: StackState): Pose {
     x: dir * (inset + fan.out) * back,
     rotate: dir * fan.tilt * back,
     scale: 1 - (1 - TUCKED) * back,
-    z: 2,
+    // The printing on the side the card is dragged toward goes under the one the drag brings
+    // forward from the other side: above it, it would show through where the card left, twice
+    // over where the two are one printing (owner, 2026-10-22).
+    z: dir === state.heading ? 1 : 2,
     dim: fan.dim * back,
     opacity: 1,
   };

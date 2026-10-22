@@ -448,9 +448,9 @@ test('desktop keeps the art at full size, its row growing by the copies row a pa
 
   expect(art.style.transform).toBe('');
   expect(precedes(art, screen.getByTestId('card-overview-copies-slot'))).toBe(true);
-  // One art height for every card (owner, 2026-10-20): 470px, then the row 5px under it (owner,
+  // One art height for every card (owner, 2026-10-20): 470px, then the row 12px under it (owner,
   // 2026-10-22), 32px tall.
-  expect(cardRowOf(container).style.height).toBe('507px');
+  expect(cardRowOf(container).style.height).toBe('514px');
 });
 
 // The printings turn on the card itself (owner, 2026-10-22), so nothing under it comes and goes.

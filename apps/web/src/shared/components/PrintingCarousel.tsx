@@ -9,7 +9,7 @@ import {
   type RefObject,
 } from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {INSET_FOCUS_RING, RADIUS, SPACING} from '../constants';
+import {DURATION, INSET_FOCUS_RING, RADIUS, SPACING} from '../constants';
 import {printingAlt, type Printing} from '../hooks';
 import {useCardThrow} from '../hooks/useCardThrow';
 import {useFinePointer} from '../hooks/useFinePointer';
@@ -54,8 +54,12 @@ interface PrintingCarouselProps {
   room?: number;
 }
 
-/** How long the printing a turn sends back stays hidden as it passes behind the one coming forward. */
-const TUCK_MS = 300;
+/**
+ * How long the stack takes to settle once a turn or a drag ends, its slides easing into place
+ * (`slideStyle`): the printing a turn sends back stays hidden that long as it passes behind the
+ * one coming forward, and a drag's heading holds as long.
+ */
+const SETTLE_MS = DURATION.slow;
 const STEP: Record<PeekSide, Step> = {prev: -1, next: 1};
 const SIDES: readonly PeekSide[] = ['prev', 'next'];
 const NOOP = () => {};
@@ -112,10 +116,28 @@ function useTucked(index: number, reducedMotion: boolean): number | null {
   }
   useEffect(() => {
     if (tucked === null) return;
-    const timer = setTimeout(() => setTucked(null), TUCK_MS);
+    const timer = setTimeout(() => setTucked(null), SETTLE_MS);
     return () => clearTimeout(timer);
   }, [tucked]);
   return tucked;
+}
+
+/**
+ * Which way the card is dragged, 1 to the right and -1 to the left, 0 at rest: the printing
+ * behind the side it heads for goes under the one the drag brings forward (stackPose). It holds
+ * for a moment after the drag ends, while the card springs back or lands, so that printing
+ * doesn't flash through as the card passes back over it.
+ */
+function useHeading(dx: number | null): -1 | 0 | 1 {
+  const live = Math.sign(dx ?? 0) as -1 | 0 | 1;
+  const [held, setHeld] = useState(live);
+  if (live && live !== held) setHeld(live);
+  useEffect(() => {
+    if (live || !held) return;
+    const timer = setTimeout(() => setHeld(0), SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [live, held]);
+  return live || held;
 }
 
 /** The arrow key's turn: -1, 1, or 0 for any other key, and for Alt+← (the browser's Back) and its kin. */
@@ -331,12 +353,13 @@ export function PrintingCarousel({
   const tucked = useTucked(front, reducedMotion);
   const keys = useStackKeys({locked, turn, reach: variantArt.reach});
   const drag = useCardThrow({width, enabled: turnable, onThrow: turn});
+  const heading = useHeading(drag.dx);
   useWheelTurn(rootRef, {enabled: turnable, onTurn: turn});
 
   const dragging = drag.dx !== null;
   const peeking = openPeeks({hover: mouse.hover, dragging, focused: keys.focused});
   const geometry = peekGeometry({fine, width, room});
-  const stack = {width, height, dx: drag.dx ?? 0, peeking, edge: geometry.edge, room, locked};
+  const stack = {width, height, dx: drag.dx ?? 0, heading, peeking, edge: geometry.edge, room, locked};
   const slides = slideCount(count);
 
   return (

@@ -1,5 +1,11 @@
 import {describe, expect, it} from 'vitest';
-import {copiesRowHeight, desktopCardRowHeight, modalCardSize} from '../cardOverviewModalStyles';
+import {
+  copiesRowHeight,
+  desktopCardRowHeight,
+  modalCardSize,
+  pickCardColumnLayout,
+  pickCardsRowStyle,
+} from '../cardOverviewModalStyles';
 
 describe('modalCardSize', () => {
   it('keeps a desktop card at its full 337x470 where its window fits', () => {
@@ -9,9 +15,9 @@ describe('modalCardSize', () => {
   });
 
   it('counts the copies row under the card where the window holds one', () => {
-    expect(modalCardSize(false, {viewportHeight: 734, copiesRow: true})).toEqual({cardWidth: 337, cardHeight: 470});
-    expect(modalCardSize(false, {viewportHeight: 733, copiesRow: true})).toEqual({cardWidth: 336, cardHeight: 469});
-    expect(modalCardSize(false, {viewportHeight: 733})).toEqual({cardWidth: 337, cardHeight: 470});
+    expect(modalCardSize(false, {viewportHeight: 741, copiesRow: true})).toEqual({cardWidth: 337, cardHeight: 470});
+    expect(modalCardSize(false, {viewportHeight: 740, copiesRow: true})).toEqual({cardWidth: 336, cardHeight: 469});
+    expect(modalCardSize(false, {viewportHeight: 740})).toEqual({cardWidth: 337, cardHeight: 470});
   });
 
   it("shrinks every desktop card alike on a shorter screen, down to a floor, and never a phone's", () => {
@@ -30,9 +36,17 @@ describe('the copies row', () => {
     expect(copiesRowHeight(240)).toBe(23);
   });
 
-  // 5px under the card (owner, 2026-10-22).
+  // 12px under the card (owner, 2026-10-22).
   it("adds its gap and the row to a desktop card's row only where it shows", () => {
-    expect(desktopCardRowHeight({cardWidth: 337, cardHeight: 470, copiesRow: true})).toBe(470 + 5 + 32);
+    expect(desktopCardRowHeight({cardWidth: 337, cardHeight: 470, copiesRow: true})).toBe(470 + 12 + 32);
     expect(desktopCardRowHeight({cardWidth: 337, cardHeight: 470, copiesRow: false})).toBe(470);
+  });
+});
+
+// A card dragged aside to another printing passes over the synergy column (owner, 2026-10-22).
+describe('the card row', () => {
+  it('lays the card column over the synergy column, and keeps that layer inside the row', () => {
+    expect(pickCardColumnLayout(false)).toMatchObject({position: 'relative', zIndex: 1});
+    expect(pickCardsRowStyle({isMobile: false, cardWidth: 337, rowHeight: 514}).isolation).toBe('isolate');
   });
 });

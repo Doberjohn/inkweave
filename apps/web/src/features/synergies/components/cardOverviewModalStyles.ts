@@ -118,11 +118,8 @@ export function copiesRowHeight(cardWidth: number): number {
   return Math.round(cardWidth * CARD_BAR_SHARE);
 }
 
-/**
- * How far under the card its copies row sits (owner, 2026-10-22: 5px). Off the spacing scale,
- * between `SPACING.xs` and `SPACING.sm`, on the owner's word.
- */
-const COPIES_ROW_GAP = 5;
+/** How far under the card its copies row sits: 12px (owner, 2026-10-22, back from a 5px try). */
+const COPIES_ROW_GAP = SPACING.md;
 
 /** The room the copies row takes under a card: its gap, then the row. */
 function copiesRoom(cardWidth: number): number {
@@ -133,7 +130,7 @@ function copiesRoom(cardWidth: number): number {
  * What a desktop window takes from the screen besides its card: 24px of screen above and below
  * it, the header with one row of chips (117px, measured), the shell's 1px borders, the body's
  * 20px and 24px padding, and the 16px gap the comparison panel keeps. A 697px screen holds the
- * window at full size (649px), and a 734px one with the copies row under its card.
+ * window at full size (649px), and a 741px one with the copies row under its card.
  */
 const DESKTOP_WINDOW_CHROME = 48 + 117 + 2 + 20 + 24 + 16;
 
@@ -211,13 +208,16 @@ export function pickCardsRowStyle({isMobile, cardWidth, rowHeight}: PickCardsRow
     flexShrink: 0,
     overflow: 'visible',
     position: 'relative',
+    // The card column's layer stays in the row, under a phone's comparison view laid over it.
+    isolation: 'isolate',
   };
 }
 
 /**
  * The card column: a column, so the copies row and mobile's translation toggle
- * (ModalCardArt.tsx) sit under the card, which is centered on mobile. The modal adds its
- * comparison styles.
+ * (ModalCardArt.tsx) sit under the card, which is centered on mobile. It lies over the synergy
+ * column, which a card dragged aside to another printing passes over (owner, 2026-10-22). The
+ * modal adds its comparison styles.
  */
 export function pickCardColumnLayout(isMobile: boolean): CSSProperties {
   return {
@@ -226,6 +226,8 @@ export function pickCardColumnLayout(isMobile: boolean): CSSProperties {
     alignItems: isMobile ? 'center' : 'flex-start',
     gap: SPACING.md,
     flexShrink: 0,
+    position: 'relative',
+    zIndex: 1,
   };
 }
 

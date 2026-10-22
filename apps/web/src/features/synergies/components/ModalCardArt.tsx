@@ -173,7 +173,7 @@ interface CardWithCopiesProps {
 }
 
 /**
- * The card with its copies under it, which a page fills (`CopiesSlot`), 5px apart (owner,
+ * The card with its copies under it, which a page fills (`CopiesSlot`), 12px apart (owner,
  * 2026-10-22). A desktop comparison shows the base art alone, and a phone's keeps its hidden
  * default body as it was.
  */

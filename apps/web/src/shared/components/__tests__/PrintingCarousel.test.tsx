@@ -11,7 +11,10 @@ const PRINTINGS: Printing[] = [
   {key: '2141', label: 'Enchanted', rarity: 'Enchanted', imageUrl: '/card-images/2141.avif'},
 ];
 /** Three printings: the middle one has a printing on each side. */
-const THREE: Printing[] = [...PRINTINGS, {key: '2183', label: '5/P3', rarity: 'Special', imageUrl: '/card-images/2183.avif'}];
+const THREE: Printing[] = [
+  ...PRINTINGS,
+  {key: '2183', label: '5/P3', rarity: 'Special', number: 5, promoGrouping: 'P3', imageUrl: '/card-images/2183.avif'},
+];
 const WIDTH = 298;
 const HEIGHT = 417;
 
@@ -105,12 +108,9 @@ describe('PrintingCarousel', () => {
     renderCarousel({printings: THREE});
 
     expect(screen.getByRole('img', {name: 'Pongo - Determined Father'})).toBeInTheDocument();
-    expect(
-      screen.getByRole('img', {
-        name: 'Pongo - Determined Father, Enchanted printing',
-        hidden: true,
-      }),
-    ).toBeInTheDocument();
+    for (const name of ['Enchanted', '5/P3']) {
+      expect(screen.getByRole('img', {name: `Pongo - Determined Father, ${name} printing`, hidden: true})).toBeInTheDocument();
+    }
   });
 
   it('enlarges the printing whose slide is clicked', () => {
@@ -314,6 +314,30 @@ describe('PrintingCarousel throw', () => {
     expect(poseOf(1)).toMatchObject({x: 10.47, scale: 0.97});
   });
 
+  // Owner, 2026-10-22: a drag one way, then back the other, showed the printing behind it twice.
+  it('passes the printing a drag brings forward over the one on the side the card heads for, until it springs back', () => {
+    vi.useFakeTimers();
+    try {
+      render(<Turnable />);
+
+      point('pointerDown', {});
+      point('pointerMove', {dx: -149, time: 300});
+      expect(poseOf(1).z).toBeGreaterThan(poseOf(1, 'copy').z);
+      point('pointerMove', {dx: 60, time: 900});
+      expect(poseOf(1, 'copy').z).toBeGreaterThan(poseOf(1).z);
+
+      point('pointerUp', {dx: 60, time: 1500});
+      expect(poseOf(0).x).toBe(0);
+      expect(poseOf(1, 'copy').z).toBeGreaterThan(poseOf(1).z);
+      act(() => {
+        vi.advanceTimersByTime(300);
+      });
+      expect(poseOf(1).z).toBe(poseOf(1, 'copy').z);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('springs back from a short, slow drag', () => {
     const onSettle = vi.fn();
     render(<Turnable onSettle={onSettle} />);
@@ -475,6 +499,26 @@ describe('PrintingCarousel peeks', () => {
       act(() => {
         vi.advanceTimersByTime(70);
       });
+
+      expect(poseOf(1).rotate).toBe(1.25);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('lets its peek go when the card holds still under the mouse, as a comparison holds it', () => {
+    vi.useFakeTimers();
+    try {
+      const props = {card, printings: PRINTINGS, index: 0, onIndexChange: vi.fn(), width: WIDTH, height: HEIGHT};
+      const {rerender} = render(<PrintingCarousel {...props} />);
+      hoverAt(280);
+      act(() => {
+        vi.advanceTimersByTime(70);
+      });
+
+      rerender(<PrintingCarousel {...props} locked />);
+      hoverAt(281);
+      rerender(<PrintingCarousel {...props} />);
 
       expect(poseOf(1).rotate).toBe(1.25);
     } finally {

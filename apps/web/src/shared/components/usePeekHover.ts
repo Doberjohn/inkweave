@@ -50,10 +50,11 @@ interface PeekHoverInput {
  */
 export function usePeekHover({size, turnable, fine, reach}: PeekHoverInput) {
   const {hover, point, clear} = useRestingSide();
-  // Only a mouse or a trackpad hovers, and only a card that turns has printings to peek at.
+  // Only a mouse or a trackpad hovers, and only a card that turns has printings to peek at: a
+  // card that stops turning under the mouse (a comparison holds it) lets its peek go.
   const peeks = fine && turnable;
   const follow = (e: PointerEvent<HTMLElement>) => {
-    if (peeks && e.pointerType === 'mouse') point(zoneAt(e, size));
+    if (e.pointerType === 'mouse') point(peeks ? zoneAt(e, size) : null);
   };
   const onPointerEnter = (e: PointerEvent<HTMLElement>) => {
     if (e.pointerType === 'mouse') reach();
