@@ -357,7 +357,7 @@ The file lives at `apps/web/public/data/previewCards.json`. Post-Set-12 graduati
 | `setCode` | Yes | Set code as string (e.g., `"13"`). Critical — used everywhere for filtering. Must match the key in `sets[code]`. |
 | `number` | Yes | Card number within set (1 to total cards in set) |
 | `rarity` | Yes | `"Common"`, `"Uncommon"`, `"Rare"`, `"Super Rare"`, `"Legendary"`. Never add a printing (a card with a LorcanaJSON `baseId`) as its own entry: every one but Special goes in the base card's `variants` (next row). A Special promo never comes from LorcanaJSON: the owner's promo catalog adds it to the same `variants` ([Promo printings](#promo-printings-805)). |
-| `variants` | Optional | The card's alternate printings (#625), sorted by collector number: Epic, Enchanted and Iconic, and any printing that keeps its base card's rarity (#796: its `rarity` is then the base card's, and the app labels it by its collector number, "#247"). For example: `[{"id": 14241, "rarity": "Iconic", "number": 241, "images": {"full": "...", "thumbnail": "..."}}]`. In reveal season the id is `REVEAL_ID_BASE + number` and the number is above the set's base total (both test-enforced). `images` is absent for a hand-supplied scan, whose art is `card-images-preview/{id}.avif`. A hand-supplied scan that is not in English also carries its `scanLanguage` (#681), so the app offers the card's English text over that printing; `pnpm sync-variants` drops it when official art replaces the entry. Written by `pnpm sync-variants` or by hand ([START_REVEAL_SEASON.md](reveals/START_REVEAL_SEASON.md)); canonical cards get theirs from [Rule 1](#rules-during-canonical-integration). Its Special entries are the card's promo printings (#805), written only by `pnpm merge-promos`: each carries `promoGrouping`, the set printed on the card ("P1" in 25/P1), and they come after the other printings ([Promo printings](#promo-printings-805)). The engine never reads it. |
+| `variants` | Optional | The card's alternate printings (#625), sorted by collector number: Epic, Enchanted and Iconic, and any printing that keeps its base card's rarity (#796: its `rarity` is then the base card's, and the app labels it by its collector number, "#247"). For example: `[{"id": 14241, "rarity": "Iconic", "number": 241, "images": {"full": "...", "thumbnail": "..."}}]`. In reveal season the id is `REVEAL_ID_BASE + number` and the number is above the set's base total (both test-enforced). `images` is absent for a hand-supplied scan, whose art is `card-images-preview/{id}.avif`. A hand-supplied scan that is not in English also carries its `scanLanguage` (#681), so the app offers the card's English text over that printing; `pnpm sync-variants` drops it when official art replaces the entry. Written by `pnpm sync-variants` or by hand ([START_REVEAL_SEASON.md](reveals/START_REVEAL_SEASON.md)); canonical cards get theirs from [Rule 1](#rules-during-canonical-integration). Its Special entries are the card's promo printings (#805), written only by `pnpm merge-promos`, or by admin's Card studio running the same merge (Doberjohn/inkweave-admin#77): each carries `promoGrouping`, the set printed on the card ("P1" in 25/P1), and they come after the other printings ([Promo printings](#promo-printings-805)). The engine never reads it. |
 | `franchise` | Optional | Drives the `/reveals` page franchise tiering. Set to a value matching one of `FRANCHISES.match` in `apps/web/src/features/reveals/franchise.ts` (currently `"Coco"`). Cards without a matching franchise fall into the "Returning franchises" tier. Spell it as LorcanaJSON's `story` field does: graduation replaces it with that field ([Rule 4](#rules-during-canonical-integration)), so a mismatch empties the franchise's tier once the set graduates. Update `FRANCHISES` each season for the debut franchises. |
 | `scanLanguage` | **Preview-only** | Two-letter code (e.g. `"ja"`) of the card's scan when it is not in English: a card revealed abroad first, whose name and text are then an unofficial translation. The app offers that English text over the scan behind "See translation" (#623). A variant entry carries its own for a printing revealed abroad first (#681, see `variants`). Never `"en"`: `reveal-set-integrity.test.ts` checks both. Delete it when the card is refreshed from its English scan. |
 | `images.thumbnail` / `images.full` | Optional but recommended | Preview URLs from lorcanaplayer.com. The loader at `loader.ts:52` rewrites `lorcanaplayer.com/*` → `/card-images-preview/{id}.avif` automatically; AVIFs come from `convert-preview-images.mjs` reading raw JPGs in `card-images-raw/`. |
@@ -911,7 +911,22 @@ Cardmarket.
   one.
 - **Ids**: LorcanaJSON's where it has the printing, else a provisional id from 80001 up,
   which `provisionalIds` names. When LorcanaJSON later adds one, the catalog keeps the
-  provisional id, as reveal ids are kept, until someone edits it.
+  provisional id, as reveal ids are kept, until someone edits it. A provisional id is never
+  issued twice (owner, 2026-10-22). Card studio takes the next one above the highest that
+  `provisionalIds` names, so a printing removed by hand keeps its line there, marked
+  "(removed)": `"80056": "1/P5 Mickey Mouse - Brave Little Prince (removed)"`. Otherwise a
+  later printing would take its id, along with every copy players counted on it. The six
+  printings dropped on 2026-10-18 lost their lines before anyone could count them, so 80001,
+  80002, 80004 to 80006 and 80016 stay unused.
+- **From Card studio** (Doberjohn/inkweave-admin#77): admin's Edit card adds a promo printing
+  to a released card, and edits a promo's set, number, scan and scan language, each in one
+  commit through the GitHub API. It writes the catalog, then runs this merge
+  (`mergePromoPrintings` and `collectionPromos`, through admin's bridge) over the branch's
+  `allCards.json` and `collection/promos.json`, so its commit is what
+  `pnpm merge-promos --write` would write. It refuses to publish while the branch's files
+  aren't already what the merge writes, so it never carries someone else's half-done change.
+  A scan goes to `card-images-raw/{id}.{ext}`, which `convert-reveal-images.yml` turns into
+  the printing's art. It never removes a printing: players may have counted it.
 - **One printing per number**: a promo printed in both finishes is one entry, counted in both
   like any card (owner, 2026-10-18). `finish` tells apart siblings under one code (none needs
   it today); `artVariant` ("A" in 24A/P2) and `printedName` (26/P2's European "Vaiana") tell
@@ -961,7 +976,10 @@ Cardmarket.
 - **Promo sets**, the binder's groups, live in `PROMO_SETS`
   (`apps/web/src/shared/constants/promoSets.ts`): release order, names, the numbers never
   released (`unreleased`) or still to come (`upcoming`), and Curator's Collection's editions,
-  printed CC1 and CC2, gathered into one set (`editions`).
+  printed CC1 and CC2, gathered into one set (`editions`). A new promo set goes here before
+  its first printing does. Card studio offers only the sets this list holds at admin's pin,
+  and a printing in a set the list lacks would land in the binder's Standard sets, named
+  "Set P5". Promo Set 5 (P5) came in this way for 1/P5 (owner, 2026-10-22).
 
 ### CDN restore on a cache miss (#554)
 
