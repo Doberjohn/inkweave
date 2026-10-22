@@ -135,9 +135,9 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/CardImage.tsx', // x1
   ],
   // Seeded 2026-10-22 when the rule turned on (#549), after it began reading
-  // ternary branches and the logical properties. Stories and src/docs/ are
-  // exempt, so none are listed.
-  // 64 files, 187 violations at seeding
+  // ternary branches, negative values and the logical properties. Stories,
+  // src/docs/ and theme.ts are exempt, so none are listed.
+  // 65 files, 190 violations at seeding
   'no-raw-spacing': [
     'src/features/cards/components/BinderSpreadMap.tsx', // x1
     'src/features/cards/components/BrowseCardGrid.tsx', // x1
@@ -160,7 +160,7 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/ColumnHeader.tsx', // x5
     'src/features/synergies/components/CommunityColumn.tsx', // x6
     'src/features/synergies/components/CommunityEmptyState.tsx', // x5
-    'src/features/synergies/components/DeltaPanel.tsx', // x3
+    'src/features/synergies/components/DeltaPanel.tsx', // x4
     'src/features/synergies/components/EngineColumn.tsx', // x1
     'src/features/synergies/components/MechanicsButton.tsx', // x1
     'src/features/synergies/components/MobileComparisonView.tsx', // x4
@@ -193,7 +193,7 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/BetaNotice.tsx', // x1
     'src/shared/components/Chip.tsx', // x2
     'src/shared/components/CompactHeader.tsx', // x2
-    'src/shared/components/ConnectionGroup.tsx', // x1
+    'src/shared/components/ConnectionGroup.tsx', // x2
     'src/shared/components/CostFilterGroup.tsx', // x1
     'src/shared/components/CtaButton.tsx', // x1
     'src/shared/components/DialogShell.tsx', // x1
@@ -202,6 +202,7 @@ export const KNOWN_OFFENDERS = {
     'src/shared/components/InkFilterGroup.tsx', // x1
     'src/shared/components/InkwellFilterGroup.tsx', // x1
     'src/shared/components/SearchBottomSheet.tsx', // x2
+    'src/shared/components/TabList.tsx', // x1
     'src/shared/components/ToolbarToggle.tsx', // x1
   ],
   // Ad-hoc styled <button> sites pre-dating the #509 kit. Converge each to a

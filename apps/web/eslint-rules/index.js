@@ -47,10 +47,11 @@ const TEST_EXEMPT = [/\.test\.(ts|tsx)$/];
 
 /**
  * Stories and the token-showcase docs are fixtures: their padding is
- * scaffolding, not product (owner ruling, 2026-07-31). Mirrors the color rules,
- * which already exempt src/docs/.
+ * scaffolding, not product (owner ruling, 2026-07-31). theme.ts declares the
+ * tokens, VISUALLY_HIDDEN's screen-reader `margin: -1` among them. The color
+ * rules exempt src/docs/ and theme.ts too.
  */
-const SPACING_EXEMPT = [...TEST_EXEMPT, /\.stories\.tsx$/, /src\/docs\//];
+const SPACING_EXEMPT = [...TEST_EXEMPT, /\.stories\.tsx$/, /src\/docs\//, /shared\/constants\/theme\.ts$/];
 
 function isExempt(context, exemptPatterns) {
   const name = relName(context);
@@ -129,6 +130,8 @@ const isRawFontFamily = (v) => isStringLiteral(v) && v.value !== 'inherit';
 const isRawFontSize = (v) => isNumberLiteral(v) || (isStringLiteral(v) && /^\d+(px)?$/.test(v.value));
 const isAppLayerZIndex = (v) => isNumberLiteral(v) && v.value >= 50;
 const isNonZeroNumber = (v) => isNumberLiteral(v) && v.value !== 0;
+/** `-14` is a unary minus around 14, so a negative margin is read through it. */
+const isRawSpacing = (v) => isNonZeroNumber(v.type === 'UnaryExpression' && v.operator === '-' ? v.argument : v);
 
 // ---------------------------------------------------------------------------
 // The rules
@@ -189,8 +192,8 @@ const noRawZIndex = makePropertyRule({
 /**
  * Spacing, on since #549 with the files that predate it in the ledger. It reads
  * both branches of a ternary (`padding: isMobile ? 8 : 12`), where layouts fork
- * by breakpoint, and the logical properties. A quoted shorthand ('8px 12px') is
- * a string it cannot read; #548 converts those.
+ * by breakpoint, negative values (`marginTop: -14`) and the logical properties.
+ * A quoted shorthand ('8px 12px') is a string it cannot read; #548 converts those.
  */
 const noRawSpacing = makePropertyRule({
   name: 'no-raw-spacing',
@@ -204,7 +207,7 @@ const noRawSpacing = makePropertyRule({
     'marginBlock', 'marginBlockStart', 'marginBlockEnd',
     'marginInline', 'marginInlineStart', 'marginInlineEnd',
   ],
-  valueTest: isNonZeroNumber,
+  valueTest: isRawSpacing,
   values: ternaryLeaves,
   exempt: SPACING_EXEMPT,
   message: 'Raw spacing. Use SPACING.* (xxs..xxxl; 0 is always allowed) (#508).',
