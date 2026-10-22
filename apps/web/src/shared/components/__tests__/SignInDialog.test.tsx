@@ -15,9 +15,21 @@ vi.mock('../../lib/signInAnalytics', () => ({
   trackSignInFailed: vi.fn(),
 }));
 
-function renderDialog() {
-  render(<SignInDialog isOpen onClose={() => {}} surface="collection" />);
+function renderDialog(onClose = () => {}) {
+  render(<SignInDialog isOpen onClose={onClose} surface="collection" />);
 }
+
+describe('SignInDialog', () => {
+  it('closes from its close button, its one visible way out', async () => {
+    const onClose = vi.fn();
+    renderDialog(onClose);
+
+    await userEvent.click(screen.getByRole('button', {name: 'Close'}));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', {name: 'Cancel'})).toBeNull();
+  });
+});
 
 describe('SignInDialog analytics', () => {
   beforeEach(() => {

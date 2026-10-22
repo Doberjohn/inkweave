@@ -27,6 +27,17 @@ export const INK_CHIP_COLORS: Record<Ink, {bg: string; text: string}> = {
   Steel: {bg: '#9fa8b4', text: '#000000'},
 };
 
+/**
+ * The sign-in dialog's provider buttons (owner, 2026-10-22): each provider's own colours, so
+ * each button reads as that provider's rather than ours. Google's are its light "Sign in with
+ * Google" button (white fill, grey 1px stroke, near-black label); Discord's is its Blurple,
+ * with white label and symbol. The logos themselves are files in src/assets.
+ */
+export const PROVIDER_COLORS = {
+  google: {bg: '#ffffff', text: '#1f1f1f', border: '#747775'},
+  discord: {bg: '#5865f2', text: '#ffffff'},
+} as const;
+
 // Font families
 export const FONTS = {
   body: "'Plus Jakarta Sans', 'Inkweave Sans Fallback', -apple-system, BlinkMacSystemFont, sans-serif",
