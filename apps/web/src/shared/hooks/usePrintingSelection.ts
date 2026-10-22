@@ -22,6 +22,13 @@ export interface Printing {
    * (owner, 2026-10-18).
    */
   finish?: 'foil' | 'normal';
+  /** "A" in Dreamborn's 24A/P2: a promo printed in two arts under one number (#805, #891). */
+  artVariant?: string;
+  /**
+   * The name printed on a promo where it is not its card's: "Vaiana" on 26/P2's European
+   * printing (owner, 2026-10-18; #891).
+   */
+  printedName?: string;
   imageUrl?: string;
   /** Language code ("it") of this printing's scan if not English; absent means English. */
   scanLanguage?: string;
@@ -44,11 +51,11 @@ export function printingKind(rarity: string | undefined): PrintingKind {
 /** What a promo twin's finish adds to its name: the collection parser's "normal" reads "non-foil". */
 export const FINISH_WORD = {foil: 'foil', normal: 'non-foil'} as const;
 
-/**
- * What names a printing. `artVariant` only on a collection promo printed in two arts under one
- * number (#805), whose code then carries Dreamborn's letter: 24A/P2.
- */
-type PrintingFacts = Pick<Printing, 'number' | 'promoGrouping' | 'finish'> & {artVariant?: string};
+/** What names a printing. */
+type PrintingFacts = Pick<
+  Printing,
+  'number' | 'promoGrouping' | 'finish' | 'artVariant' | 'printedName'
+>;
 
 /**
  * A promo's code as printed on the card ("25/P1"), or what is known of it: its set alone while its
@@ -81,8 +88,23 @@ export function printedCardNumber(card: LorcanaCard, printing?: Printing): strin
 }
 
 /**
+ * The name printed on a card's printing: its card's own, or the name a promo was printed under
+ * with its card's version, as 26/P2's European printing reads "Vaiana - Adventurer of Land and
+ * Sea" (owner, 2026-10-18). The card window's title, its copies stripe and a printing's art
+ * name it so (#891), as collection mode's promo pocket does.
+ */
+export function printedFullName(
+  card: Pick<LorcanaCard, 'fullName' | 'version'>,
+  printedName?: string,
+): string {
+  if (printedName === undefined) return card.fullName;
+  return card.version ? `${printedName} - ${card.version}` : printedName;
+}
+
+/**
  * What the printing switcher calls an alternate printing (#802): a chase rarity by its name, a
- * promo by the code printed on it plus the finish that only twins carry, and a printing that
+ * promo by the code printed on it plus the name it was printed under where that isn't its card's
+ * (Moana's European 26/P2 Vaiana, #891) and the finish that only twins carry, and a printing that
  * keeps its base card's rarity "Alt foil" (its number alone told nothing, #796).
  */
 export function printingName(printing: PrintingFacts & {rarity: string}): string {
@@ -90,7 +112,8 @@ export function printingName(printing: PrintingFacts & {rarity: string}): string
   if (kind === 'chase') return printing.rarity;
   if (kind === 'altFoil') return 'Alt foil';
   const code = promoCode(printing);
-  return printing.finish ? `${code} ${FINISH_WORD[printing.finish]}` : code;
+  const named = printing.printedName ? `${code} ${printing.printedName}` : code;
+  return printing.finish ? `${named} ${FINISH_WORD[printing.finish]}` : named;
 }
 
 /**
@@ -102,14 +125,21 @@ export function printingSpokenName(printing: PrintingFacts & Pick<Printing, 'lab
   const kind = printingKind(printing.rarity);
   if (kind === 'altFoil') return `Alt foil, #${printing.number}`;
   if (kind !== 'promo') return printing.label;
+  const name = printing.printedName ? `, ${printing.printedName}` : '';
   const finish = printing.finish ? `, ${FINISH_WORD[printing.finish]}` : '';
-  return `Promo ${promoCode(printing)}${finish}`;
+  return `Promo ${promoCode(printing)}${name}${finish}`;
 }
 
-/** Accessible name for a printing's image: the card name, plus the printing's name for a variant. */
+/**
+ * Accessible name for a printing's image: the name printed on it (`printedFullName`), plus the
+ * printing's name for a variant.
+ */
 export function printingAlt(card: LorcanaCard, printing: PrintingFacts & {rarity?: string}): string {
-  const {rarity} = printing;
-  return rarity ? `${card.fullName}, ${printingName({...printing, rarity})} printing` : card.fullName;
+  const {rarity, printedName} = printing;
+  const name = printedFullName(card, printedName);
+  if (!rarity) return name;
+  // The name already says what is printed on the card, so the printing goes by its code alone.
+  return `${name}, ${printingName({...printing, rarity, printedName: undefined})} printing`;
 }
 
 /** Where a promo whose number is unknown sorts by number: after every numbered one. */
@@ -120,7 +150,7 @@ const UNNUMBERED = Number.MAX_SAFE_INTEGER;
  * promos by set and number. Promo numbers restart in every set, so they sort apart, and a promo
  * whose number is unknown comes last in its set (#805).
  */
-function byDisplayOrder(a: CardPrinting, b: CardPrinting): number {
+export function byDisplayOrder(a: CardPrinting, b: CardPrinting): number {
   const promosLast = Number(a.rarity === PROMO_RARITY) - Number(b.rarity === PROMO_RARITY);
   const bySet = (a.promoGrouping ?? '').localeCompare(b.promoGrouping ?? '', undefined, {numeric: true});
   return promosLast || bySet || (a.number ?? UNNUMBERED) - (b.number ?? UNNUMBERED);
@@ -158,6 +188,8 @@ export function printingsOf(card: LorcanaCard): Printing[] {
     number: v.number,
     promoGrouping: v.promoGrouping,
     finish: v.finish,
+    artVariant: v.artVariant,
+    printedName: v.printedName,
     imageUrl: v.imageUrl,
     scanLanguage: v.scanLanguage,
   }));

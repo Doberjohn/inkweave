@@ -1,5 +1,6 @@
 import type {CardPrinting, LorcanaCard, RawCardVariant} from 'inkweave-synergy-engine';
 import {printingCard, toPrinting} from '../cards/loader';
+import {printedFullName} from '../../shared/hooks/usePrintingSelection';
 
 /*
  * Collection mode's promos (#805): every promo in the owner's catalog, as
@@ -22,8 +23,6 @@ export interface RawCollectionPromo extends RawCardVariant {
 
 /** A promo as collection mode holds it: the printing as a card's `variants` hold it, and its card. */
 export interface CollectionPromo extends CardPrinting {
-  artVariant?: string;
-  printedName?: string;
   fullName: string;
   baseId?: string;
 }
@@ -51,8 +50,7 @@ const cardOf = (byId: ReadonlyMap<string, LorcanaCard>, promo: CollectionPromo) 
 function promoPocket(card: LorcanaCard, promo: CollectionPromo): LorcanaCard {
   const pocket = printingCard(card, promo);
   if (promo.printedName === undefined) return pocket;
-  const fullName = card.version ? `${promo.printedName} - ${card.version}` : promo.printedName;
-  return {...pocket, name: promo.printedName, fullName};
+  return {...pocket, name: promo.printedName, fullName: printedFullName(card, promo.printedName)};
 }
 
 /** The pool with a pocket card for each promo whose card it holds (`promoPocket`). */

@@ -10,13 +10,13 @@ import {
   VISUALLY_HIDDEN,
   type SetCode,
 } from '../../../shared/constants';
-import {printedCardNumber, type Printing} from '../../../shared/hooks';
+import {printedCardNumber, printedFullName, type Printing} from '../../../shared/hooks';
 import {pickModalTitleStyle} from './cardOverviewModalStyles';
 
 interface ModalCardTitleProps {
   card: LorcanaCard;
   isMobile: boolean;
-  /** The printing on show, whose number the title reads; the card's own when absent. */
+  /** The printing on show, whose name and number the title reads; the card's own when absent. */
   printing?: Printing;
   /** `h1` in the modal; the loading fallback, a status region, uses a `div`. */
   as?: 'h1' | 'div';
@@ -50,8 +50,9 @@ function CardNumber({number}: {number: string}) {
 export const LOGO_HEIGHT = 34;
 
 /**
- * The card modal's title: the card's name, with its set's logo beside it on desktop
- * (owner, 2026-10-08), then the number printed on the printing on show (owner,
+ * The card modal's title: the name printed on the printing on show (`printedFullName`, so
+ * 26/P2's European printing reads Vaiana, #891), with its set's logo beside it on desktop
+ * (owner, 2026-10-08), then the number printed on that printing (owner,
  * 2026-10-20). Phones show the name alone, since there the logo would put about twice
  * as many names on two lines (27% of them to 59%, measured). The logo and the number
  * sit outside the heading, so the heading reads the name alone. Shared with the loading
@@ -61,9 +62,10 @@ export function ModalCardTitle({card, isMobile, printing, as: Title = 'h1'}: Mod
   const logo = !isMobile && card.setCode ? SET_LOGOS[card.setCode] : undefined;
   const setName = SET_NAMES[card.setCode as SetCode] ?? `Set ${card.setCode}`;
   const number = isMobile ? undefined : printedCardNumber(card, printing);
+  const name = printedFullName(card, printing?.printedName);
   return (
     <div style={{display: 'flex', alignItems: 'center', gap: SPACING.md, flex: 1, minWidth: 0}}>
-      <Title style={{...pickModalTitleStyle(isMobile), flex: '0 1 auto'}}>{card.fullName}</Title>
+      <Title style={{...pickModalTitleStyle(isMobile), flex: '0 1 auto'}}>{name}</Title>
       {logo && (
         <img
           src={logo}

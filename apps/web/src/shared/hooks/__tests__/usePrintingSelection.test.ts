@@ -5,6 +5,7 @@ import {createCard} from '../../test-utils';
 import {trackEvent} from '../../lib/analytics';
 import {
   printedCardNumber,
+  printedFullName,
   printingAlt,
   printingName,
   printingSpokenName,
@@ -247,6 +248,37 @@ describe('printedCardNumber', () => {
   });
 });
 
+/** Moana - Adventurer of Land and Sea, whose European 26/P2 reads "Vaiana" (owner, 2026-10-18). */
+const moana: LorcanaCard = createCard({
+  id: '1589',
+  name: 'Moana',
+  version: 'Adventurer of Land and Sea',
+  fullName: 'Moana - Adventurer of Land and Sea',
+  variants: [
+    {id: '1663', rarity: 'Special', number: 26, promoGrouping: 'P2', printedName: 'Vaiana'},
+  ],
+});
+
+describe('printedFullName', () => {
+  it("names a printing by the name printed on it, with its card's version: 26/P2's Vaiana (#891)", () => {
+    expect(printedFullName(moana, 'Vaiana')).toBe('Vaiana - Adventurer of Land and Sea');
+    expect(printedFullName(moana, undefined)).toBe('Moana - Adventurer of Land and Sea');
+  });
+
+  it("names a promo printed under another name by it too: Moana's two 26/P2s are 26/P2 and 26/P2 Vaiana (#891)", () => {
+    const vaiana = {rarity: 'Special', number: 26, promoGrouping: 'P2', printedName: 'Vaiana'};
+
+    expect(printingName(vaiana)).toBe('26/P2 Vaiana');
+    expect(printingSpokenName({...vaiana, label: '26/P2 Vaiana'})).toBe('Promo 26/P2, Vaiana');
+  });
+
+  it("names a printing's art by the name printed on it, carried from the card's variant (#891)", () => {
+    const [, vaiana] = printingsOf(moana);
+
+    expect(printingAlt(moana, vaiana)).toBe('Vaiana - Adventurer of Land and Sea, 26/P2 printing');
+  });
+});
+
 describe('printingName', () => {
   it('names a promo by the code printed on it, adding the finish only to twins (#802)', () => {
     expect(printingName({rarity: 'Special', number: 25, promoGrouping: 'P1'})).toBe('25/P1');
@@ -325,5 +357,20 @@ describe('printingsOf', () => {
       '20/C2 foil',
       'C2 non-foil',
     ]);
+  });
+
+  it("carries a two-art promo's letter into its label, its spoken name and the header: 24A/P2 (#891)", () => {
+    // Hiro Hamada - Armor Designer's two P2 promos share #24: Dreamborn's 24A/P2 and 24B/P2.
+    const hiro = createCard({
+      id: '1529',
+      setCode: '7',
+      setNumber: 96,
+      variants: [{id: '1661', rarity: 'Special', number: 24, promoGrouping: 'P2', artVariant: 'A'}],
+    });
+    const [, promo] = printingsOf(hiro);
+
+    expect(promo.label).toBe('24A/P2');
+    expect(printingSpokenName(promo)).toBe('Promo 24A/P2');
+    expect(printedCardNumber(hiro, promo)).toBe('24A/P2');
   });
 });

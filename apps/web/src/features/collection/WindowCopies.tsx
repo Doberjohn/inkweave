@@ -6,6 +6,7 @@ import {useCardDataContext} from '../../shared/contexts/CardDataContext';
 import {useCardModal} from '../../shared/contexts/CardModalContext';
 import {useCardWindowSlot} from '../../shared/contexts/cardWindowSlot';
 import {useSession} from '../../shared/contexts/SessionContext';
+import {printedFullName} from '../../shared/hooks/usePrintingSelection';
 import {useCollection} from './CollectionContext';
 import type {CollectionEntry, Finish} from './collectionParser';
 import {finishesOf, type FinishFacts} from './printingFinishes';
@@ -16,9 +17,13 @@ const NO_COPIES: CollectionEntry = {normal: 0, foil: 0};
  * The printing the card window shows: the variant on show, else the card itself. Its finishes
  * (`finishesOf`) are its data's where the data names them, else its rarity's: Enchanted, Epic
  * and Iconic in foil alone (owner, 2026-10-19), and every other card in both. A promo defaults
- * to both (owner, 2026-10-18), and the data names the exceptions (#880).
+ * to both (owner, 2026-10-18), and the data names the exceptions (#880). A promo printed under
+ * another name carries it (`printedName`, #891).
  */
-function shownPrinting(card: LorcanaCard, printingId: string | null): FinishFacts {
+function shownPrinting(
+  card: LorcanaCard,
+  printingId: string | null,
+): FinishFacts & {printedName?: string} {
   if (printingId === null) return card;
   return card.variants?.find((variant) => variant.id === printingId) ?? {};
 }
@@ -79,14 +84,16 @@ export function WindowCopies({onEdit}: {onEdit: (cardId: string) => void}) {
   // A printing is a card of the collection's own: its counts are kept under its id.
   const printingId = shownPrintingId ?? card.id;
   const counts = entries[printingId] ?? NO_COPIES;
-  const finishes = finishesOf(shownPrinting(card, shownPrintingId));
+  const shown = shownPrinting(card, shownPrintingId);
+  const finishes = finishesOf(shown);
+  const cardName = printedFullName(card, shown.printedName);
   const change = (finish: Finish, count: number) => {
     setCount(printingId, finish, count);
     onEdit(printingId);
   };
   return createPortal(
     <div role="group" aria-label={`Your copies: ${finishes.map((finish) => `${counts[finish]} ${finish}`).join(', ')}`}>
-      <CopiesStripe open fit="bar" parts={stripeParts({counts, finishes, cardName: card.fullName, change})} />
+      <CopiesStripe open fit="bar" parts={stripeParts({counts, finishes, cardName, change})} />
     </div>,
     slot,
   );

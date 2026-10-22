@@ -21,11 +21,13 @@ export interface ModalTarget {
  * How a binder card opens in the card modal (#553 Phase C), in three tiers.
  *
  *   1. A Core card opens as it does anywhere else.
- *   2. An alternate printing of a Core card (an Enchanted, Epic or Iconic from sets
- *      9 and later) opens its BASE card on that printing, so it shows the real
- *      synergies. The chunks carry these as cards of their own; the base card
- *      lists them in `variants`, which is the link used here.
- *   3. Anything else is outside Core (sets 1-8) and opens from the collection pool,
+ *   2. A printing (an Enchanted, Epic, Iconic, alt foil or promo) opens its BASE card
+ *      on that printing: a Core card, so it shows the real synergies, or a pre-Core
+ *      card with its "outside Core" note (#891). The chunks and the promo list carry
+ *      printings as cards of their own; the link used here is the base card's
+ *      `variants`, a Core card's from allCards.json, a pre-Core card's from
+ *      `withPreCoreVariants`.
+ *   3. Any other card is outside Core (sets 1-8) and opens from the collection pool,
  *      where the modal shows an "outside Core" note in place of synergies.
  *
  * `resolveCard` covers the cards `CardDataContext` cannot, for the opened card and
@@ -44,12 +46,11 @@ export interface ModalTarget {
  */
 export function collectionModalTarget(
   cardId: string,
-  coreCards: readonly LorcanaCard[],
   pool: readonly LorcanaCard[],
   siblingIds: readonly string[],
 ): ModalTarget {
   const baseOfPrinting = new Map<string, LorcanaCard>();
-  for (const card of coreCards) for (const printing of card.variants ?? []) baseOfPrinting.set(printing.id, card);
+  for (const card of pool) for (const printing of card.variants ?? []) baseOfPrinting.set(printing.id, card);
   const poolById = new Map(pool.map((card) => [card.id, card]));
   const resolveCard = (id: string) => baseOfPrinting.get(id) ?? poolById.get(id);
 
@@ -75,11 +76,11 @@ export function collectionModalTarget(
 export function binderModalTarget(
   cardId: string,
   listing: {cards: readonly LorcanaCard[]; sortOrder: BrowseSortOrder},
-  binder: {coreCards: readonly LorcanaCard[]; pool: readonly LorcanaCard[]; setCode: string; sets: readonly string[]},
+  binder: {pool: readonly LorcanaCard[]; setCode: string; sets: readonly string[]},
 ): ModalTarget {
   const lit = new Set(listing.cards.map((card) => card.id));
   const siblingIds = binderContents(binder.pool, binder.setCode, listing.sortOrder, binder.sets)
     .filter((card) => lit.has(card.id))
     .map((card) => card.id);
-  return collectionModalTarget(cardId, binder.coreCards, binder.pool, siblingIds);
+  return collectionModalTarget(cardId, binder.pool, siblingIds);
 }

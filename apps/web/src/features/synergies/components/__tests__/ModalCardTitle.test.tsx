@@ -34,4 +34,25 @@ describe('ModalCardTitle', () => {
     rerender(<ModalCardTitle card={card} isMobile={false} printing={{key: 'e', label: 'Enchanted', rarity: 'Enchanted', number: 223}} />);
     expect(screen.getByText('223/204')).toBeInTheDocument();
   });
+
+  it('names the heading by the name printed on the printing on show: 26/P2 reads Vaiana (#891)', () => {
+    const moana = createCard({
+      name: 'Moana',
+      version: 'Adventurer of Land and Sea',
+      fullName: 'Moana - Adventurer of Land and Sea',
+      setCode: '7',
+    });
+    const vaiana = {
+      key: '1663',
+      label: '26/P2',
+      rarity: 'Special',
+      number: 26,
+      promoGrouping: 'P2',
+      printedName: 'Vaiana',
+    };
+    render(<ModalCardTitle card={moana} isMobile={false} printing={vaiana} />);
+
+    const heading = screen.getByRole('heading', {level: 1});
+    expect(heading.textContent).toBe('Vaiana - Adventurer of Land and Sea');
+  });
 });

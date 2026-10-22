@@ -131,7 +131,7 @@ export function toPrinting(variant: RawCardVariant): CardPrinting {
  * promo set ("P1" in 25/P1), with its finish and art variant (#805): Browse's promo tiles and
  * collection mode's pockets are such cards.
  */
-export function printingCard(card: LorcanaCard, printing: CardPrinting & {artVariant?: string}): LorcanaCard {
+export function printingCard(card: LorcanaCard, printing: CardPrinting): LorcanaCard {
   return {
     ...card,
     id: printing.id,

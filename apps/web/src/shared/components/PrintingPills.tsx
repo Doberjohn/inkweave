@@ -26,7 +26,7 @@ import promoSymbol from '../../assets/promo.webp?no-inline';
 /** What a chip reads from usePrintingSelection's Printing. */
 type PrintingChip = Pick<
   Printing,
-  'key' | 'label' | 'rarity' | 'number' | 'promoGrouping' | 'finish'
+  'key' | 'label' | 'rarity' | 'number' | 'promoGrouping' | 'finish' | 'artVariant' | 'printedName'
 >;
 
 interface PrintingPillsProps {
@@ -79,10 +79,11 @@ const FOIL_MARKER: CSSProperties = {
 };
 
 /**
- * A promo twin's finish, set lighter after its code. 0.85 keeps the muted text at about 5:1 on
+ * What follows a promo's code to tell it from a sibling under that code, the name it was printed
+ * under (#891) or a twin's finish, set lighter. 0.85 keeps the muted text at about 5:1 on
  * COLORS.surface, above WCAG AA's 4.5:1 for 13px text; the mockup's 0.75 fell to about 4.2:1.
  */
-const FINISH_STYLE: CSSProperties = {fontWeight: 500, opacity: 0.85};
+const QUALIFIER_STYLE: CSSProperties = {fontWeight: 500, opacity: 0.85};
 
 function chipStyle(checked: boolean, hovered: boolean, isMobile: boolean): CSSProperties {
   return {
@@ -105,15 +106,17 @@ function chipStyle(checked: boolean, hovered: boolean, isMobile: boolean): CSSPr
 }
 
 /**
- * A promo's name: the code printed on it, and the finish that only twins carry. The chip's gap
- * spaces the two on screen, and the space a flex item starts with renders nothing, but copying
- * or finding the text needs it ("8/C1 foil", not "8/C1foil").
+ * A promo's name: the code printed on it, then the name it was printed under where that isn't its
+ * card's (26/P2 Vaiana, #891) and the finish that only twins carry. The chip's gap spaces them on
+ * screen, and the space a flex item starts with renders nothing, but copying or finding the text
+ * needs it ("8/C1 foil", not "8/C1foil").
  */
 function PromoName({printing}: {printing: PrintingChip}) {
   return (
     <>
       {promoCode(printing)}
-      {printing.finish && <span style={FINISH_STYLE}>{` ${FINISH_WORD[printing.finish]}`}</span>}
+      {printing.printedName && <span style={QUALIFIER_STYLE}>{` ${printing.printedName}`}</span>}
+      {printing.finish && <span style={QUALIFIER_STYLE}>{` ${FINISH_WORD[printing.finish]}`}</span>}
     </>
   );
 }
