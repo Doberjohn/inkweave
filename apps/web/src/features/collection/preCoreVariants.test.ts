@@ -100,6 +100,38 @@ describe('withPreCoreVariants', () => {
     ]);
   });
 
+  it("passes over a Core card's printings, though Set 4's Belle - Accomplished Mystic shares its name", () => {
+    // Set 9 reprints Belle - Accomplished Mystic (4/36) as a Core card (9/40, id 1976), and the
+    // reprint's Enchanted (#226) and 41/P3 promo name it: allCards.json gives it both.
+    const belle = createCard({
+      id: '727',
+      fullName: 'Belle - Accomplished Mystic',
+      setCode: '4',
+      setNumber: 36,
+      rarity: 'Super Rare',
+    });
+    const coreEnchanted = createCard({
+      ...belle,
+      id: '2144',
+      setCode: '9',
+      setNumber: 226,
+      rarity: 'Enchanted',
+      baseId: '1976',
+    });
+    const corePromo: CollectionPromo = {
+      id: '2462',
+      rarity: 'Special',
+      number: 41,
+      promoGrouping: 'P3',
+      fullName: belle.fullName,
+      baseId: '1976',
+    };
+
+    const [setFourBelle] = withPreCoreVariants([belle, coreEnchanted], [corePromo]);
+
+    expect(setFourBelle.variants).toBeUndefined();
+  });
+
   it("keeps a two-art promo's letter, so Hiro Hamada's 24A/P2 and 24B/P2 stay apart", () => {
     const hiro = createCard({
       id: '1529',
