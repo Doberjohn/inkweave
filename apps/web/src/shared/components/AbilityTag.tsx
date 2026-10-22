@@ -1,4 +1,4 @@
-import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
 
 export type AbilityTagVariant = 'stacked' | 'page';
 
@@ -33,7 +33,9 @@ export function AbilityTag({variant = 'stacked', children}: AbilityTagProps) {
         fontSize: isPage ? `${FONT_SIZES.xl}px` : `${FONT_SIZES.xs}px`,
         letterSpacing: isPage ? '0.06em' : '0.08em',
         textTransform: 'uppercase',
-        padding: isPage ? '10px 22px' : '6px 14px',
+        padding: isPage
+          ? `${SPACING.md}px ${SPACING.xxl}px`
+          : `${SPACING.sm}px ${SPACING.section}px`,
         borderRadius: `${RADIUS.sm}px ${RADIUS.sm}px 0 0`,
       }}>
       {children}

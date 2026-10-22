@@ -1,4 +1,4 @@
-import {FONT_SIZES, RADIUS} from '../constants';
+import {FONT_SIZES, RADIUS, SPACING} from '../constants';
 import type {StrengthTier} from '../../features/synergies/utils/scoreUtils';
 
 type BadgeSize = 'sm' | 'md' | 'lg';
@@ -15,20 +15,24 @@ interface StrengthBadgeProps {
   title?: string;
 }
 
+// The md badge's top and bottom padding: a hairline, under the spacing scale's first step
+// (SPACING.xxs, 2).
+const HAIRLINE = 1;
+
 const SIZE_STYLES: Record<BadgeSize, React.CSSProperties> = {
   sm: {
-    padding: '2px 7px',
+    padding: `${SPACING.xxs}px ${SPACING.sm}px`,
     fontSize: `${FONT_SIZES.xs}px`,
     fontWeight: 600,
     lineHeight: 1.4,
   },
   md: {
-    padding: '1px 6px',
+    padding: `${HAIRLINE}px ${SPACING.sm}px`,
     fontSize: `${FONT_SIZES.xs}px`,
     fontWeight: 500,
   },
   lg: {
-    padding: '3px 8px',
+    padding: `${SPACING.xs}px ${SPACING.sm}px`,
     fontSize: `${FONT_SIZES.base}px`,
     fontWeight: 700,
     minWidth: 28,

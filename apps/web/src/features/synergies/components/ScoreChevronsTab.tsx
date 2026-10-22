@@ -4,6 +4,7 @@ import {
   EASING,
   FONT_SIZES,
   RADIUS,
+  SPACING,
   TABULAR,
   hexRgba,
   whiteRgba,
@@ -48,7 +49,7 @@ export function ScoreChevronsTab({
     fontSize: FONT_SIZES.md,
     fontWeight: 700,
     color: textColor,
-    marginLeft: 2,
+    marginLeft: SPACING.xxs,
   };
   return (
     <button type="button" aria-current={isActive} onClick={onClick} style={tabStyle}>
@@ -68,8 +69,8 @@ const TAB_BASE_STYLE: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'flex-start',
-  gap: 4,
-  padding: '12px 14px 10px',
+  gap: SPACING.xs,
+  padding: `${SPACING.md}px ${SPACING.section}px ${SPACING.sm}px`,
   border: '1px solid',
   borderRadius: RADIUS.card,
   fontFamily: 'inherit',

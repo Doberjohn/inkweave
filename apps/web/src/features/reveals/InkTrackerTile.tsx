@@ -61,7 +61,9 @@ export function InkTrackerTile({ink, count, selected, onSelect, compact = false}
         flexDirection: 'column',
         alignItems: 'center',
         gap: SPACING.sm,
-        padding: compact ? '13px 6px 11px' : '18px 10px 15px',
+        padding: compact
+          ? `${SPACING.section}px ${SPACING.sm}px ${SPACING.md}px`
+          : `${SPACING.xl}px ${SPACING.md}px ${SPACING.lg}px`,
         borderRadius: compact ? RADIUS.card : RADIUS.xl,
         background: selected ? inkRgba(ink, 0.1) : whiteRgba(0.02),
         border: `1.5px solid ${selected ? inkRgba(ink, 0.7) : COLORS.surfaceHover}`,

@@ -106,7 +106,7 @@ export function OptionPicker<T>({ariaLabel, options, value, onChange, isMobile, 
       cursor: 'pointer',
       fontSize: FONT_SIZES.base,
       fontFamily: FONTS.body,
-      padding: '0 12px',
+      padding: `0 ${SPACING.md}px`,
       transition: `all 0.3s ${EASING.bounce}`,
       transform: isPressed ? 'scale(0.97)' : undefined,
       animation: isPulsing

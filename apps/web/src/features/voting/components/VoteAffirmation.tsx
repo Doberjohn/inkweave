@@ -1,4 +1,4 @@
-import {COLORS, FONTS, RADIUS, hexRgba} from '../../../shared/constants';
+import {COLORS, FONTS, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
 
 interface VoteAffirmationProps {
   /** Column accent — gold for engine, amethyst for community. */
@@ -27,8 +27,8 @@ export function VoteAffirmation({accentColor, title, detail}: VoteAffirmationPro
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 10,
-        padding: '8px 12px',
+        gap: SPACING.md,
+        padding: `${SPACING.sm}px ${SPACING.md}px`,
         borderRadius: RADIUS.lg,
         border: `1px dashed ${hexRgba(accentColor, 0.45)}`,
         background: hexRgba(accentColor, 0.06),
@@ -55,7 +55,7 @@ export function VoteAffirmation({accentColor, title, detail}: VoteAffirmationPro
         }}>
         ✓
       </span>
-      <div style={{display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0}}>
+      <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.xxs, minWidth: 0}}>
         <span style={{fontSize: 12, fontWeight: 600, color: COLORS.text, lineHeight: 1.3}}>
           {title}
         </span>

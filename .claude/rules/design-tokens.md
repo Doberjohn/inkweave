@@ -45,9 +45,17 @@ One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spr
   scaffolding, not product). `theme.ts` is not, unlike for the color rules: its one
   value, `VISUALLY_HIDDEN`'s `margin: -1`, is in the ledger (owner, 2026-10-22).
 - **Spacing in a string is invisible.** `padding: '0 14px'` is text to the rule, and
-  the value gate greps token values, so a quoted shorthand's numbers pass both. Put
-  tokens in a shorthand (`` padding: `${SPACING.sm}px ${SPACING.md}px` ``); **#548**
-  converts the quoted px shorthands still in production code. Keyword and
+  the value gate greps token values, so a quoted shorthand's numbers pass both, and so
+  does a value kept under another name (`pagePadding`, a function that returns `'6px'`)
+  or passed as a prop (`gridGap={10}`). Put tokens in a shorthand
+  (`` padding: `${SPACING.sm}px ${SPACING.md}px` ``). **#548** converted them in every
+  file deck-builder never touched; the files it changed wait for its ports. Keyword and
   percentage values (`'0 auto'`, `'50%'`, `calc()`) stay strings.
+- **Off-scale values snap to the nearest step** (owner, 2026-10-20), with shots. A value
+  halfway between two steps (6, 10, 18, 28) takes the larger one, unless that breaks a
+  relationship it had: a ternary's branches stay apart (#865), a shorthand's sides keep
+  their order, a series keeps shrinking, and a skeleton moves with the layout it mirrors.
+  Only a value past the top step (40, 48, 80) or a 1px hairline gets a named const, with
+  a comment saying why; never arithmetic on a token (`SPACING.sm - 2`).
 - Token declaration sites (`theme.ts`, `playstyleUi.ts`), `src/docs/` stories, tests, and the five SVG icon components are permanently exempt from the color rules.
 - Import tokens through the barrel (`shared/constants`), never the theme files directly (`no-restricted-imports` enforces).

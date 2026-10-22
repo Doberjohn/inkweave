@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, TIER_COLORS, Z_INDEX, hexRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SPACING, TIER_COLORS, Z_INDEX, hexRgba} from '../../../shared/constants';
 import {Sparkles} from '../../../shared/components/Sparkles';
 import {useScrollLock} from '../../../shared/hooks';
 import type {Score} from '../../../shared/lib/supabase';
@@ -90,8 +90,8 @@ export function VoteConfirmation({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 16,
-          padding: '32px 24px',
+          gap: SPACING.lg,
+          padding: `${SPACING.xxxl}px ${SPACING.xxl}px`,
           borderRadius: RADIUS.xl,
           background: COLORS.surface,
           border: `1px solid ${COLORS.surfaceBorder}`,
@@ -123,8 +123,8 @@ export function VoteConfirmation({
         </span>
 
         {/* Score comparison */}
-        <div style={{display: 'flex', alignItems: 'center', gap: 24, justifyContent: 'center'}}>
-          <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: SPACING.xxl, justifyContent: 'center'}}>
+          <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.sm}}>
             <span style={{fontSize: FONT_SIZES.xs, color: COLORS.textMuted, fontFamily: FONTS.body}}>Your rating</span>
             <ScoreCircle score={score} size={48} />
           </div>
@@ -133,7 +133,7 @@ export function VoteConfirmation({
             vs
           </span>
 
-          <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6}}>
+          <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.sm}}>
             <span style={{fontSize: FONT_SIZES.xs, color: COLORS.textMuted, fontFamily: FONTS.body}}>Engine score</span>
             <ScoreCircle score={engineScore} size={48} />
           </div>
@@ -141,7 +141,7 @@ export function VoteConfirmation({
 
         {/* Carries */}
         {whoCarries && (
-          <div style={{display: 'flex', alignItems: 'center', gap: 8}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
             <span style={{fontSize: FONT_SIZES.base, color: COLORS.textMuted, fontFamily: FONTS.body}}>Carries:</span>
             <span style={{fontSize: FONT_SIZES.base, fontWeight: 600, color: COLORS.primary500, fontFamily: FONTS.body}}>
               {carriesLabel}

@@ -36,7 +36,7 @@ function ToolbarSkeleton({isMobile}: SynergyResultsSkeletonProps) {
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
+        gap: SPACING.md,
         marginBottom: `${SPACING.lg}px`,
       }}>
       {CHIP_WIDTHS.map((width) => (
@@ -68,7 +68,7 @@ function GroupSkeleton() {
           {
             display: 'grid',
             '--synergy-grid-columns': GRID_COLUMNS,
-            gap: '10px',
+            gap: SPACING.md,
             listStyle: 'none',
             padding: 0,
             margin: 0,

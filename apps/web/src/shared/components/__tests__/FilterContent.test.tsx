@@ -267,7 +267,7 @@ describe('FilterContent art presets', () => {
     expect(standard()).toHaveStyle({padding: '8px 14px'});
     expect(screen.getByRole('button', {name: 'Dual-ink cards'})).toHaveStyle({padding: '8px 14px'});
     rerender(<FilterContent {...defaultProps({...props, variant: 'panel'})} />);
-    expect(standard()).toHaveStyle({padding: '2px 10px'});
+    expect(standard()).toHaveStyle({padding: '2px 12px'});
   });
 });
 

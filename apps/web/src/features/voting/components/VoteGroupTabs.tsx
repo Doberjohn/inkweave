@@ -66,12 +66,12 @@ function getTabStyle(input: TabStyleInput): React.CSSProperties {
     fontWeight: input.isActive ? 700 : 500,
     fontFamily: FONTS.body,
     cursor: 'pointer',
-    padding: '8px 4px',
+    padding: `${SPACING.sm}px ${SPACING.xs}px`,
     transition: `all ${DURATION.base}ms ${EASING.snappy}`,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    gap: 2,
+    gap: SPACING.xxs,
     boxShadow: input.isHovered ? `0 0 12px ${hexRgba(input.accent, 0.08)}` : 'none',
   };
 }

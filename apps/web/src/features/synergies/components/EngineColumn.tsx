@@ -78,7 +78,7 @@ export function EngineColumn({pair, engineScore, onHighlight, compact = false}: 
         display: 'flex',
         flexDirection: 'column',
         gap: SPACING.section,
-        padding: '16px 18px',
+        padding: `${SPACING.lg}px ${SPACING.xl}px`,
         border: `1px solid ${GOLD_GLOW.hoverBorder}`,
         background: GOLD_GLOW.hoverBg,
         borderRadius: 12,
@@ -98,7 +98,7 @@ export function EngineColumn({pair, engineScore, onHighlight, compact = false}: 
         // within comparison view) would silently skip the pulse.
         pulseScoreKey={`${cardA.id}-${cardB.id}`}
         meta={
-          <span style={{display: 'inline-flex', alignItems: 'center', gap: 6}}>
+          <span style={{display: 'inline-flex', alignItems: 'center', gap: SPACING.sm}}>
             <span
               aria-hidden="true"
               style={{

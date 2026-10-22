@@ -1,4 +1,4 @@
-import {COLORS, FONT_SIZES} from '../constants';
+import {COLORS, FONT_SIZES, SPACING} from '../constants';
 
 interface EmptyStateProps {
   icon?: React.ReactNode;
@@ -33,8 +33,8 @@ export function EmptyState({icon = defaultIcon, title, subtitle}: EmptyStateProp
         color: COLORS.gray400,
       }}>
       {icon}
-      <p style={{marginTop: '16px', fontSize: `${FONT_SIZES.xl}px`}}>{title}</p>
-      {subtitle && <p style={{fontSize: `${FONT_SIZES.base}px`, marginTop: '4px'}}>{subtitle}</p>}
+      <p style={{marginTop: SPACING.lg, fontSize: `${FONT_SIZES.xl}px`}}>{title}</p>
+      {subtitle && <p style={{fontSize: `${FONT_SIZES.base}px`, marginTop: SPACING.xs}}>{subtitle}</p>}
     </div>
   );
 }

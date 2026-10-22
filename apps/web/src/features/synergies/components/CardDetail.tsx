@@ -22,7 +22,7 @@ const ART_WIDTH = 240;
 const ART_HEIGHT = Math.round((ART_WIDTH * 368) / 264);
 
 const CHIP_STYLE = {
-  padding: '4px 10px',
+  padding: `${SPACING.xs}px ${SPACING.md}px`,
   borderRadius: `${RADIUS.md}px`,
   fontSize: `${FONT_SIZES.base}px`,
 } as const;
@@ -96,7 +96,7 @@ function CardDetailChips({card}: {card: LorcanaCard}) {
           fontWeight: 500,
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '5px',
+          gap: SPACING.xs,
         }}>
         <InkIcon ink={card.ink} size={16} />
         {card.ink}
@@ -181,7 +181,7 @@ export function CardDetail({card, onClear, headingLevel = 'h2'}: CardDetailProps
       <CardDetailChips card={card} />
       <CardDetailArt card={card} />
       {(card.textSections?.length || card.text) && (
-        <div style={{padding: '12px', background: COLORS.gray50, borderRadius: `${RADIUS.md}px`}}>
+        <div style={{padding: SPACING.md, background: COLORS.gray50, borderRadius: `${RADIUS.md}px`}}>
           <CardTextBlock card={card} />
         </div>
       )}

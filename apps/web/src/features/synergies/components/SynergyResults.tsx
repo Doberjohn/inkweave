@@ -81,7 +81,7 @@ function SynergyResultsHeader({totalSynergyCount}: {totalSynergyCount: number}) 
         style={{
           background: COLORS.calloutBg,
           color: COLORS.primary,
-          padding: '2px 8px',
+          padding: `${SPACING.xxs}px ${SPACING.sm}px`,
           borderRadius: `${RADIUS.sm}px`,
           fontSize: `${FONT_SIZES.xs}px`,
           fontWeight: 700,
@@ -116,7 +116,7 @@ function SynergyGroupToolbar({
     ? {
         overflowX: 'auto',
         flexWrap: 'nowrap',
-        paddingBottom: '4px',
+        paddingBottom: SPACING.xs,
         WebkitOverflowScrolling: 'touch',
         scrollbarWidth: 'none',
       }
@@ -127,7 +127,7 @@ function SynergyGroupToolbar({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
+        gap: SPACING.md,
         marginBottom: `${SPACING.lg}px`,
         ...scrollStyle,
       }}>

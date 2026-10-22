@@ -1,4 +1,4 @@
-import {FONTS} from '../../../shared/constants';
+import {FONTS, SPACING} from '../../../shared/constants';
 
 type BannerType = 'rate_limited' | 'unavailable' | 'error';
 
@@ -29,8 +29,8 @@ export function VoteStatusBanner({type, onRetry}: VoteStatusBannerProps) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 12,
-        padding: '10px 16px',
+        gap: SPACING.md,
+        padding: `${SPACING.md}px ${SPACING.lg}px`,
         borderRadius: 8,
         background: colors.bg,
         border: `1px solid ${colors.border}`,
@@ -44,7 +44,7 @@ export function VoteStatusBanner({type, onRetry}: VoteStatusBannerProps) {
         <button
           onClick={onRetry}
           style={{
-            padding: '4px 12px',
+            padding: `${SPACING.xs}px ${SPACING.md}px`,
             borderRadius: 6,
             border: `1px solid ${colors.border}`,
             background: 'transparent',

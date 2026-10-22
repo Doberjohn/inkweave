@@ -60,20 +60,28 @@ interface HeroSkeletonStyles {
   ctaWidths: [number | string, number | string, number | string];
 }
 
+// The hero's spacing past the scale's top step (SPACING.xxxl, 32).
+const DESKTOP_HERO_PADDING_BOTTOM = 80;
+const PHONE_HERO_PADDING_TOP = 48;
+const PHONE_HERO_PADDING_BOTTOM = 40;
+// HeroSection's phone CTA gap, between SPACING.sm and SPACING.md. The skeleton keeps it until
+// HeroSection's own spacing converges (#548), so the buttons don't move when the page loads.
+const PHONE_HERO_CTA_GAP = 10;
+
 const DESKTOP_HERO_STYLES: HeroSkeletonStyles = {
   section: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    padding: '0 0 80px',
+    padding: `0 0 ${DESKTOP_HERO_PADDING_BOTTOM}px`,
     position: 'relative',
     zIndex: 2,
     width: undefined,
     boxSizing: 'border-box',
   },
-  heading: {margin: 0, marginBottom: 20, lineHeight: 0},
+  heading: {margin: 0, marginBottom: SPACING.xl, lineHeight: 0},
   logo: {display: 'block', width: 600, maxWidth: '100%', height: 'auto', userSelect: 'none'},
-  subtitleContainer: {textAlign: 'center', marginBottom: 32, padding: undefined},
+  subtitleContainer: {textAlign: 'center', marginBottom: SPACING.xxxl, padding: undefined},
   subtitleText: {
     fontSize: '20px',
     color: COLORS.heroSubtitle,
@@ -87,7 +95,7 @@ const DESKTOP_HERO_STYLES: HeroSkeletonStyles = {
     zIndex: Z_INDEX.autocomplete,
   },
   searchHeight: 56,
-  ctaRow: {display: 'flex', flexDirection: 'row', gap: 12, marginTop: 20, width: undefined},
+  ctaRow: {display: 'flex', flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.xl, width: undefined},
   ctaHeight: 44,
   ctaWidths: [168, 172, 152],
 };
@@ -97,15 +105,15 @@ const MOBILE_HERO_STYLES: HeroSkeletonStyles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    padding: `48px ${SPACING.lg}px 40px`,
+    padding: `${PHONE_HERO_PADDING_TOP}px ${SPACING.lg}px ${PHONE_HERO_PADDING_BOTTOM}px`,
     position: 'relative',
     zIndex: 2,
     width: '100%',
     boxSizing: 'border-box',
   },
-  heading: {margin: 0, marginBottom: 16, lineHeight: 0},
+  heading: {margin: 0, marginBottom: SPACING.lg, lineHeight: 0},
   logo: {display: 'block', width: 380, maxWidth: '100%', height: 'auto', userSelect: 'none'},
-  subtitleContainer: {textAlign: 'center', marginBottom: 24, padding: '0 8px'},
+  subtitleContainer: {textAlign: 'center', marginBottom: SPACING.xxl, padding: `0 ${SPACING.sm}px`},
   subtitleText: {
     fontSize: '16px',
     color: COLORS.heroSubtitle,
@@ -119,7 +127,7 @@ const MOBILE_HERO_STYLES: HeroSkeletonStyles = {
     zIndex: Z_INDEX.autocomplete,
   },
   searchHeight: 48,
-  ctaRow: {display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16, width: '100%'},
+  ctaRow: {display: 'flex', flexDirection: 'column', gap: PHONE_HERO_CTA_GAP, marginTop: SPACING.lg, width: '100%'},
   ctaHeight: 48,
   ctaWidths: ['100%', '100%', '100%'],
 };

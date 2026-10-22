@@ -197,7 +197,7 @@ function CardTitleBlock({card}: {card: LorcanaCard}) {
                 fontSize: `${FONT_SIZES.base}px`,
                 fontWeight: 400,
                 color: COLORS.textMuted,
-                marginTop: 3,
+                marginTop: SPACING.xs,
               }}>
               {card.version}
             </span>
@@ -264,8 +264,8 @@ function SynergyBreakdownRow({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
-        padding: '6px 8px',
+        gap: SPACING.md,
+        padding: `${SPACING.xs}px ${SPACING.sm}px`,
         borderRadius: `${RADIUS.sm}px`,
         cursor: 'pointer',
         transition: 'background 0.15s',
@@ -330,13 +330,13 @@ function SynergyBreakdownBox({
           color: COLORS.textMuted,
           letterSpacing: '0.1em',
           textTransform: 'uppercase',
-          marginBottom: 10,
+          marginBottom: SPACING.md,
         }}>
         Synergy Breakdown
       </div>
 
       {/* Rows */}
-      <div style={{display: 'flex', flexDirection: 'column', gap: '2px'}}>
+      <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.xxs}}>
         {synergies.map((group) => (
           <SynergyBreakdownRow
             key={group.groupKey}

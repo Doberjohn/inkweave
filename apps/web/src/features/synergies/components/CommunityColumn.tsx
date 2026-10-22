@@ -146,8 +146,8 @@ function CommunityLoadingSkeleton() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
-          gap: 12,
-          padding: '24px 20px',
+          gap: SPACING.md,
+          padding: `${SPACING.xxl}px ${SPACING.xl}px`,
           background: hexRgba(COMMUNITY_TINT, 0.06),
           border: `1px solid ${COLORS.surfaceBorder}`,
           borderRadius: `${RADIUS.lg}px`,
@@ -156,19 +156,19 @@ function CommunityLoadingSkeleton() {
         {/* Title rect — mirrors h4 'Not enough votes yet' */}
         <Skeleton width={160} height={16} borderRadius={2} />
         {/* Subtitle — 2 lines of description */}
-        <div style={{display: 'flex', flexDirection: 'column', gap: 4}}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.xs}}>
           <Skeleton height={12} borderRadius={2} />
           <Skeleton width="70%" height={12} borderRadius={2} />
         </div>
         {/* Progress bar row */}
-        <div style={{display: 'flex', alignItems: 'center', gap: 10, marginTop: 4}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: SPACING.md, marginTop: SPACING.xs}}>
           <div style={{flex: 1}}>
             <Skeleton height={6} borderRadius={3} />
           </div>
           <Skeleton width={28} height={11} borderRadius={2} />
         </div>
         {/* CTA button */}
-        <div style={{marginTop: 6}}>
+        <div style={{marginTop: SPACING.sm}}>
           <Skeleton height={40} borderRadius={RADIUS.sm} />
         </div>
       </div>
@@ -200,7 +200,7 @@ const SECTION_STYLE: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: SPACING.section,
-  padding: '16px 18px',
+  padding: `${SPACING.lg}px ${SPACING.xl}px`,
   border: `1px solid ${hexRgba(COMMUNITY_TINT, 0.25)}`,
   background: hexRgba(COMMUNITY_TINT, 0.04),
   borderRadius: RADIUS.card,
@@ -321,7 +321,7 @@ function DeltaBadge({delta}: {delta: Delta}) {
         style={{
           background: hexRgba(color, 0.15),
           color,
-          padding: '2px 7px',
+          padding: `${SPACING.xxs}px ${SPACING.sm}px`,
           borderRadius: RADIUS.sm,
           fontSize: FONT_SIZES.sm,
           fontWeight: 700,
@@ -404,7 +404,7 @@ function MetricRow({
         display: 'flex',
         gap: SPACING.section,
         alignItems: 'center',
-        padding: '12px 14px',
+        padding: `${SPACING.md}px ${SPACING.section}px`,
         background: COLORS.surfaceAlt,
         border: `1px solid ${COLORS.surfaceBorder}`,
         borderRadius: RADIUS.lg,
@@ -421,7 +421,7 @@ function MetricRow({
         }}>
         {value}
       </div>
-      <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0}}>
+      <div style={{flex: 1, display: 'flex', flexDirection: 'column', gap: SPACING.xxs, minWidth: 0}}>
         <div
           style={{
             fontSize: FONT_SIZES.sm,

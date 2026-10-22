@@ -1,4 +1,4 @@
-import {COLORS, FONTS, FONT_SIZES, RADIUS} from '../constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
 
 export type AbilityCalloutVariant = 'standalone' | 'stacked-after-tag';
 
@@ -26,7 +26,7 @@ export function AbilityCallout({variant = 'standalone', children}: AbilityCallou
         fontSize: `${FONT_SIZES.base}px`,
         fontWeight: 600,
         lineHeight: 1.4,
-        padding: '10px 14px',
+        padding: `${SPACING.md}px ${SPACING.section}px`,
         borderRadius: variant === 'stacked-after-tag' ? `0 ${r} ${r} ${r}` : r,
         boxShadow: ABILITY_BOX_SHADOW,
       }}>
