@@ -11,9 +11,10 @@
 // easings, and hexes no token declares.
 //
 // Baseline: scripts/known-design-values.json maps file -> hit count at
-// enforcement day. A NEW file with hits, or an INCREASED count, fails; a
-// decreased count prints a prompt to shrink the baseline. Tripwires have no
-// baseline: any hit fails.
+// enforcement day, and a .css or .html file's raw values to an entry of their
+// own, `<file> (raw)`. A NEW entry, or an INCREASED count, fails; a decreased
+// count prints a prompt to shrink the baseline. Tripwires have no baseline:
+// any hit fails.
 //
 // Usage:
 //   node scripts/check-design-tokens.mjs                  # gate (exit 1 on violation)
@@ -40,10 +41,13 @@ const TRIPWIRES = [
   {name: "'Barlow' (legacy font, fully purged)", re: /Barlow/},
   {name: 'backdrop-filter usage', re: /backdrop-filter\s*:|backdropFilter\s*:/},
 ];
-// Raw values in the files ESLint never reads (#546). They count into the same
-// baseline, so today's freeze and new ones fail. A hex needs 6 or 8 digits,
-// since index.css cites issues as #332; a token hex is already a needle above.
+// Raw values in the files ESLint never reads (#546). Their count is baselined
+// apart from the token values, so today's freeze holds, a new one fails, and
+// none can hide behind a token value that the same change removed. A hex needs
+// 6 or 8 digits, since index.css cites issues as #332; a token hex is already a
+// needle above.
 const UNLINTED = /\.(css|html)$/;
+const RAW_ENTRY = ' (raw)';
 const RAW_VALUES = [/rgba?\(\s*\d/g, /cubic-bezier\(|\bease(?:-in-out|-in|-out)?\b/g];
 const HEX_COLOR = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6})\b/g;
 
@@ -89,25 +93,29 @@ function countHits(file) {
   const values =
     sumNeedleHits(text.toLowerCase(), TOKEN_HEXES) +
     sumNeedleHits(text, EASING_STRINGS) +
-    sumNeedleHits(text, FONT_NAMES) +
-    (UNLINTED.test(file) ? countRawValues(text) : 0);
+    sumNeedleHits(text, FONT_NAMES);
+  const raw = UNLINTED.test(file) ? countRawValues(text) : 0;
   const trips = TRIPWIRES.filter((t) => t.re.test(text)).map((t) => t.name);
-  return {values, trips};
+  return {values, raw, trips};
 }
+
+/** How many files the entries cover (a file can have a token entry and a raw one). */
+const fileCount = (entries) => new Set(Object.keys(entries).map((key) => key.replace(RAW_ENTRY, ''))).size;
 
 const current = {};
 const tripHits = [];
 for (const file of files) {
   if (EXEMPT.some((re) => re.test(file))) continue;
   const rel = relative(ROOT, file).replaceAll('\\', '/');
-  const {values, trips} = countHits(file);
+  const {values, raw, trips} = countHits(file);
   if (values > 0) current[rel] = values;
+  if (raw > 0) current[rel + RAW_ENTRY] = raw;
   for (const t of trips) tripHits.push(`${rel}: '${t}'`);
 }
 
 if (process.argv.includes('--update-baseline')) {
   writeFileSync(BASELINE_PATH, JSON.stringify(current, null, 2) + '\n');
-  console.log(`✅ Baseline updated: ${Object.keys(current).length} files carry token-value literals.`);
+  console.log(`✅ Baseline updated: ${fileCount(current)} files carry token-value literals or raw values.`);
   process.exit(0);
 }
 
@@ -143,4 +151,4 @@ if (violations.length > 0) {
   console.error('  In .css and .html, raw rgb()/rgba(), easings and hexes no token declares count too: style inline with tokens, or pass a token in through a CSS variable.');
   process.exit(1);
 }
-console.log(`✅ Design-token value gate passed (${Object.keys(current).length} baselined files, ${TOKEN_HEXES.length} token hexes guarded).`);
+console.log(`✅ Design-token value gate passed (${fileCount(current)} baselined files, ${TOKEN_HEXES.length} token hexes guarded).`);
