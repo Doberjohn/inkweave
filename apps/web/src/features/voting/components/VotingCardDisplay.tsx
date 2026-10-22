@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardImage, CardLightbox} from '../../../shared/components';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, hexRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SHADOWS, SPACING} from '../../../shared/constants';
 
 interface VotingCardDisplayProps {
   card: LorcanaCard;
@@ -83,7 +83,7 @@ function TapToEnlarge({
       onClick={interactive ? onOpen : undefined}
       onKeyDown={interactive ? handleKeyDown : undefined}
       style={{
-        boxShadow: highlighted ? `0 0 16px 2px ${hexRgba(COLORS.primary500, 0.45)}` : 'none',
+        boxShadow: highlighted ? SHADOWS.glowMd : 'none',
         transition: `box-shadow 0.2s ${EASING.snappy}`,
         borderRadius: RADIUS.lg,
       }}>
@@ -121,7 +121,7 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 6,
+          gap: SPACING.sm,
           flex: 1,
           minWidth: 0,
           opacity: dimmed ? 0.4 : 1,
@@ -148,7 +148,7 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
             {name}
           </span>
           {version && (
-            <span style={{fontSize: FONT_SIZES.xs, color: COLORS.textMuted, fontFamily: FONTS.body, textAlign: 'center', marginTop: 2}}>
+            <span style={{fontSize: FONT_SIZES.xs, color: COLORS.textMuted, fontFamily: FONTS.body, textAlign: 'center', marginTop: SPACING.xxs}}>
               {version}
             </span>
           )}
@@ -166,7 +166,7 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
         flexShrink: 0,
         boxSizing: 'border-box',
         borderRadius: RADIUS.card,
-        boxShadow: highlighted ? `0 0 16px 2px ${hexRgba(COLORS.primary500, 0.45)}` : 'none',
+        boxShadow: highlighted ? SHADOWS.glowMd : 'none',
         opacity: dimmed ? 0.4 : 1,
         transition: `box-shadow 0.2s ${EASING.snappy}, opacity 0.2s ${EASING.snappy}`,
       }}>

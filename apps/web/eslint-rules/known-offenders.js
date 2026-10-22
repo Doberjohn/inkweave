@@ -179,7 +179,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/VoteGroupTabs.tsx', // x1
     'src/features/voting/components/VoteStatusBanner.tsx', // x1
     'src/features/voting/components/VoteToast.tsx', // x4
-    'src/features/voting/components/VotingCardDisplay.tsx', // x2
     'src/pages/BrowsePage.tsx', // x1
     'src/pages/HomePageSkeleton.tsx', // x8
     'src/pages/InDepthVotePage.tsx', // x9

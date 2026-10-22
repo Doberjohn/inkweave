@@ -6,6 +6,9 @@
 // the LITERAL VALUES of the tokens themselves — every COLORS hex parsed live
 // from theme.ts (the needle list can never rot), the EASING linear() strings,
 // the font family names, and two hard tripwires ('Barlow', backdrop-filter).
+// In .css and .html, which ESLint never reads, it also counts raw values that
+// are not tokens at all (#546): literal rgb()/rgba(), keyword and bezier
+// easings, and hexes no token declares.
 //
 // Baseline: scripts/known-design-values.json maps file -> hit count at
 // enforcement day. A NEW file with hits, or an INCREASED count, fails; a
@@ -37,6 +40,12 @@ const TRIPWIRES = [
   {name: "'Barlow' (legacy font, fully purged)", re: /Barlow/},
   {name: 'backdrop-filter usage', re: /backdrop-filter\s*:|backdropFilter\s*:/},
 ];
+// Raw values in the files ESLint never reads (#546). They count into the same
+// baseline, so today's freeze and new ones fail. A hex needs 6 or 8 digits,
+// since index.css cites issues as #332; a token hex is already a needle above.
+const UNLINTED = /\.(css|html)$/;
+const RAW_VALUES = [/rgba?\(\s*\d/g, /cubic-bezier\(|\bease(?:-in-out|-in|-out)?\b/g];
+const HEX_COLOR = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6})\b/g;
 
 // ── Scan scope ─────────────────────────────────────────────────────────
 // Declaration sites are exempt; everything else that can carry styles is in.
@@ -69,13 +78,21 @@ function sumNeedleHits(haystack, needles) {
   return needles.reduce((sum, needle) => sum + countOccurrences(haystack, needle), 0);
 }
 
-function countHits(text) {
-  const tokens =
+/** Literal rgb()/rgba(), easings, and hexes that are not token values. */
+function countRawValues(text) {
+  const strayHexes = (text.match(HEX_COLOR) ?? []).filter((hex) => !TOKEN_HEXES.includes(hex.toLowerCase()));
+  return RAW_VALUES.reduce((sum, re) => sum + (text.match(re) ?? []).length, strayHexes.length);
+}
+
+function countHits(file) {
+  const text = readFileSync(file, 'utf8');
+  const values =
     sumNeedleHits(text.toLowerCase(), TOKEN_HEXES) +
     sumNeedleHits(text, EASING_STRINGS) +
-    sumNeedleHits(text, FONT_NAMES);
+    sumNeedleHits(text, FONT_NAMES) +
+    (UNLINTED.test(file) ? countRawValues(text) : 0);
   const trips = TRIPWIRES.filter((t) => t.re.test(text)).map((t) => t.name);
-  return {tokens, trips};
+  return {values, trips};
 }
 
 const current = {};
@@ -83,8 +100,8 @@ const tripHits = [];
 for (const file of files) {
   if (EXEMPT.some((re) => re.test(file))) continue;
   const rel = relative(ROOT, file).replaceAll('\\', '/');
-  const {tokens, trips} = countHits(readFileSync(file, 'utf8'));
-  if (tokens > 0) current[rel] = tokens;
+  const {values, trips} = countHits(file);
+  if (values > 0) current[rel] = values;
   for (const t of trips) tripHits.push(`${rel}: '${t}'`);
 }
 
@@ -106,8 +123,8 @@ const violations = [];
 const shrunk = [];
 for (const [file, count] of Object.entries(current)) {
   const base = baseline[file];
-  if (base === undefined) violations.push(`NEW file restates token values: ${file} (x${count})`);
-  else if (count > base) violations.push(`Token-value count INCREASED: ${file} (${base} -> ${count})`);
+  if (base === undefined) violations.push(`NEW file restates token values or carries raw ones: ${file} (x${count})`);
+  else if (count > base) violations.push(`Value count INCREASED: ${file} (${base} -> ${count})`);
   else if (count < base) shrunk.push(`${file} (${base} -> ${count})`);
 }
 for (const [file, base] of Object.entries(baseline)) {
@@ -123,6 +140,7 @@ if (violations.length > 0) {
   console.error('✗ Design-token value gate failed:');
   for (const v of violations) console.error(`   ${v}`);
   console.error('  Use the token (COLORS.*, EASING.*, FONTS.*) instead of restating its value; see .claude/rules/design-tokens.md.');
+  console.error('  In .css and .html, raw rgb()/rgba(), easings and hexes no token declares count too: style inline with tokens, or pass a token in through a CSS variable.');
   process.exit(1);
 }
 console.log(`✅ Design-token value gate passed (${Object.keys(current).length} baselined files, ${TOKEN_HEXES.length} token hexes guarded).`);
