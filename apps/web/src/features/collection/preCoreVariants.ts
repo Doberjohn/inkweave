@@ -14,11 +14,21 @@ import type {CollectionPromo} from './collectionPromos';
  * already holds as a card, and over every promo, whose pocket comes from the promo list.
  */
 
+/** A chunk card that reprints another: it names that card, and has a rarity of its own. */
+type ChunkPrinting = LorcanaCard & {baseId: string; rarity: string};
+
+const isChunkPrinting = (card: LorcanaCard): card is ChunkPrinting =>
+  card.baseId !== undefined && card.rarity !== undefined;
+
+/** A promo whose card is out: one naming none waits for it (Hades - Dark Usurper). */
+const namesItsCard = (promo: CollectionPromo): promo is CollectionPromo & {baseId: string} =>
+  promo.baseId !== undefined;
+
 /** A chunk card that reprints another, as that card's `variants` hold it. */
-function chunkPrinting(card: LorcanaCard, rarity: string): CardPrinting {
+function chunkPrinting(card: ChunkPrinting): CardPrinting {
   return {
     id: card.id,
-    rarity,
+    rarity: card.rarity,
     number: card.setNumber,
     imageUrl: card.imageUrl,
     imageHashSm: card.imageHashSm,
@@ -52,13 +62,8 @@ function printingsByCard(
   const add = (cardId: string, printing: CardPrinting) => {
     byCard.set(cardId, [...(byCard.get(cardId) ?? []), printing]);
   };
-  for (const card of cards) {
-    if (card.baseId === undefined || card.rarity === undefined) continue;
-    add(card.baseId, chunkPrinting(card, card.rarity));
-  }
-  for (const promo of promos) {
-    if (promo.baseId !== undefined) add(promo.baseId, promoPrinting(promo));
-  }
+  for (const card of cards.filter(isChunkPrinting)) add(card.baseId, chunkPrinting(card));
+  for (const promo of promos.filter(namesItsCard)) add(promo.baseId, promoPrinting(promo));
   return byCard;
 }
 
