@@ -259,6 +259,21 @@ const STARTUP_SHARED = [
 ];
 const matchesAny = (patterns: RegExp[]) => (id: string) => patterns.some((re) => re.test(id));
 
+// Staging's icons (#905). deploy-staging.yml sets INKWEAVE_ICON_SET=staging for its build alone,
+// so staging.inkweave.ink shows the Emerald and Ruby drop from public/brand/staging/, under the
+// same file names, while production and every PR preview keep the gold one.
+const ICON_DIR = process.env.INKWEAVE_ICON_SET === 'staging' ? 'brand/staging/' : '';
+
+function iconSetPlugin(): Plugin {
+  return {
+    name: 'icon-set',
+    transformIndexHtml(html) {
+      if (!ICON_DIR) return html;
+      return html.replace(/href="\/(favicon|apple-touch-icon)\.png"/g, `href="/${ICON_DIR}$1.png"`);
+    },
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   define: {
@@ -279,9 +294,10 @@ export default defineConfig({
     // (our version) and self-filters to jsx/tsx; `target` is only for downgrading
     // to React 17/18. Must run after react() so JSX is lowered first.
     babel({presets: [reactCompilerPreset()]}),
+    iconSetPlugin(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['favicon.png', 'apple-touch-icon.png'],
+      includeAssets: [`${ICON_DIR}favicon.png`, `${ICON_DIR}apple-touch-icon.png`],
       manifest: {
         name: 'Inkweave — Master Lorcana Synergies',
         short_name: 'Inkweave',
@@ -292,9 +308,9 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
         icons: [
-          {src: '/pwa-192x192.png', sizes: '192x192', type: 'image/png'},
-          {src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png'},
-          {src: '/pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable'},
+          {src: `/${ICON_DIR}pwa-192x192.png`, sizes: '192x192', type: 'image/png'},
+          {src: `/${ICON_DIR}pwa-512x512.png`, sizes: '512x512', type: 'image/png'},
+          {src: `/${ICON_DIR}pwa-512x512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable'},
         ],
       },
       workbox: {

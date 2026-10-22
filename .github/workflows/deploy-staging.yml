@@ -139,9 +139,12 @@ jobs:
       - name: Build with the Preview values, SPA-only
         # Without --prod, `vercel build` reads the Preview values just pulled. VERCEL_ENV is
         # Sentry's environment (vite.config.ts, #740), so staging's events report "preview".
+        # INKWEAVE_ICON_SET swaps in staging's Emerald and Ruby icons (vite.config.ts, #905). It
+        # is set here, not as a Preview value, because those also reach every PR preview.
         env:
           VERCEL_ENV: preview
           SKIP_PRERENDER: '1'
+          INKWEAVE_ICON_SET: staging
         run: npx "vercel@${VERCEL_CLI_VERSION:?}" build --token=${{ secrets.VERCEL_TOKEN }}
 
       # Only the alias changes what staging serves, so a failure anywhere before it leaves the
