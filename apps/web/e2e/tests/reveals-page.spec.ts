@@ -111,6 +111,29 @@ test.describe('Reveals page (flag on)', () => {
     }).toPass();
   });
 
+  test("the hero holds its revealed count, never 0, while the card list loads", async ({page}) => {
+    // Held until released: the count comes from the card list (#913).
+    let releaseCardData = () => {};
+    const cardDataHeld = new Promise<void>((resolve) => {
+      releaseCardData = resolve;
+    });
+    await page.route(/\/data\/allCards.*\.json/, async (route) => {
+      await cardDataHeld;
+      await route.continue();
+    });
+
+    await page.goto('/reveals');
+    await expect(page.getByText('Loading reveal cards…')).toBeVisible();
+    // The revealed stat: the count, then " / <set total>" in a span of its own.
+    const stat = page.locator('span').filter({hasText: /^\s*\/ \d+\s*$/}).first().locator('xpath=..');
+    await expect(stat.locator('[aria-busy="true"]')).toHaveCount(1);
+    await expect(stat).not.toHaveText(/^\s*\d/);
+
+    releaseCardData();
+    await expect(stat).toHaveText(/^[1-9]\d* \/ \d+$/, {timeout: 15000});
+    await expect(stat.locator('[aria-busy="true"]')).toHaveCount(0);
+  });
+
   test('mosaic card click opens the card overview modal', async ({page}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 

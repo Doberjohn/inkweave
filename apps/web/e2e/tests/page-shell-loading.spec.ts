@@ -74,6 +74,32 @@ test.describe('Page shell + skeleton during card-data loading', () => {
     await expect(page.locator('[aria-label="Loading playstyles"]')).toBeHidden({timeout: 15000});
   });
 
+  test('InkHubPage holds its count line blank, never "0 cards", while card data loads', async ({page}) => {
+    // Held until released, as in the gallery test above (#913).
+    let releaseCardData = () => {};
+    const cardDataHeld = new Promise<void>((resolve) => {
+      releaseCardData = resolve;
+    });
+    await page.route(/\/data\/allCards.*\.json/, async (route) => {
+      await cardDataHeld;
+      await route.continue();
+    });
+
+    await page.goto('/ink/amber');
+    const heading = page.getByRole('heading', {level: 1, name: 'Amber Cards'});
+    await expect(heading).toBeVisible({timeout: 5000});
+    await expect(page.locator('[aria-label="Loading cards"]')).toBeVisible();
+    // The count line, under the blurb: a non-breaking space holds its line, where the empty
+    // list read "0 cards".
+    const countLine = heading.locator('xpath=following-sibling::div[1]');
+    expect(await countLine.textContent()).toBe('\u00a0');
+    const loadingBox = await countLine.boundingBox();
+
+    releaseCardData();
+    await expect(countLine).toHaveText(/^[1-9]\d* cards?$/, {timeout: 15000});
+    expect((await countLine.boundingBox())?.height).toBeCloseTo(loadingBox?.height ?? 0, 0);
+  });
+
   test('VotePage renders pair + score picker skeleton while queue loads', async ({page}) => {
     await page.goto('/vote');
     await expect(page.getByTestId('compact-header')).toBeVisible({timeout: 3000});

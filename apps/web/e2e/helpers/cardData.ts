@@ -14,6 +14,7 @@ interface RawCard {
   id: number | string;
   fullName: string;
   setCode?: string;
+  type?: string;
   /** Collector number. */
   number?: number;
   variants?: {id: number | string; rarity: string; number?: number; promoGrouping?: string}[];
@@ -63,6 +64,17 @@ export function cardPromoCodes(id: string): string[] {
 
 /** The first set of the Core format (`MIN_CORE_SET` in the engine). */
 const MIN_CORE_SET = 9;
+
+/**
+ * The Core character with the shortest full name: one line in any heading, whatever fonts the
+ * browser has. The card page's loading layout draws the name on one line (#914).
+ */
+export function shortestNamedCoreCharacter(): {id: string; fullName: string} {
+  const card = allCards.cards
+    .filter((c) => Number(c.setCode) >= MIN_CORE_SET && c.type === 'Character')
+    .reduce((shortest, c) => (c.fullName.length < shortest.fullName.length ? c : shortest));
+  return {id: String(card.id), fullName: card.fullName};
+}
 
 /** The newest Core set: the one collection mode's binder opens on. */
 export function newestCoreSet(): string {

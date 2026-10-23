@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-217 tests across 25 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+235 tests across 26 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -202,7 +202,7 @@ At page load, supabase-js is downloaded only when there is a session to restore 
 | a stored session downloads the Supabase SDK to restore it | An `inkweave:auth` entry seeded before load makes `/browse` request the SDK (all projects) |
 | the sign-in control opens the provider dialog | Clicking it opens the `SignInDialog`. Stops at the provider choice: signing in needs a real round-trip no placeholder project can serve |
 
-## `collection-mode.spec.ts`: 26 tests (1 every project, 3 chromium only, 21 desktop only, 1 on every project at a 390px viewport)
+## `collection-mode.spec.ts`: 30 tests (1 every project, 5 chromium only, 22 desktop only, 2 on every project at a 390px viewport)
 
 Covers Browse's collection mode (#553 Phase C), which ships behind `VITE_SHOW_COLLECTION` (default OFF). The flag REQUIRES `VITE_SHOW_ACCOUNTS`, and `playwright.config.ts` pins both ON. The Collection button is gated on sign-in (owner ruling 2026-10-07).
 
@@ -234,10 +234,14 @@ The desktop signed-in tests skip the mobile projects: they find the numbers in t
 | the set picker opens the whole collection's menu on Promo while the Rarity filter picks the promos (owner, 2026-10-20) | `/browse?binder=all&rarity=Special`: the `Binder set` menu opens with its "Promo" tab pressed and the `Promo sets` list showing, where the whole collection otherwise opens on Standard. The URL reaching the picker is what it guards; the rule itself has unit tests |
 | the gear after Collection opens the import from its menu, on the grid too (owner, 2026-10-20) | Signed in with a collection, on `/browse` (the grid, not the binder): the `Collection actions` gear opens its menu, whose "Import collection" opens the `Import your collection` dialog, the Account page's import, and closes the menu |
 | a card glows gold when pointed at, more strongly on the binder's parchment (owner, 2026-10-21) | The one way the app highlights a card. On `/browse?set=<set>` (the grid), a mouse on the first tile gives it a box-shadow with the soft gold glow (`rgba(255, 185, 0, 0.42) 0px 0px 22px 3px`, `CARD_TILE_GLOW`) over its resting shadow, `z-index` 1 so the glow lies over its neighbours, and no `::after` (the gold ring it replaced); the tile sits at least 24px below the top of the grid's scroller (`virtuoso-scroller`), which clips whatever lies outside it, so the glow's top shows whole (it was cut off flush with the first row before). On `/browse?binder=<set>`, a mouse on the first held pocket gives the stronger gold (`0.85`, `22px 4px`) that shows on the parchment. A box-shadow set inline would beat the rule and fail it: the tile keeps its resting shadow in `--tile-shadow` |
+| the first switch draws the binder's frame while its code loads, and the toolbar holds still | #913. Signed in with a collection, the binder's module held (`holdLazyModule(page, 'CollectionBinderSection')`, polled after the press until the hold has caught it): "Show my collection" shows the `Loading your binder` region at once, where the area stayed empty until the chunk arrived. Released, the `Binder` region and the toolbar's `Binder set` picker show, the loading region goes, and every toolbar control drawn while it loaded (`browse-toolbar`'s buttons and inputs, by name) is where it was, within 1 px, by layout box (`offsetLeft`/`offsetTop`/`offsetWidth`/`offsetHeight`: the button the pointer pressed is mid-boop, scaled 1.03, for 200 ms): the set picker's placeholder held its place. The `Binder` locator is exact, since the loading region's name contains the word |
+| a pointer resting on Collection asks for the binder's code before the press | #913. Chromium only: it asserts when the request goes out. A pointer resting on "Show my collection" requests the `CollectionBinderSection` module (polled for, before any press), then the press opens the binder (`onIntent`, which also fires on focus and on pointer down) |
+| opening the collection's actions menu asks for the import dialog's code before Import collection is chosen | #913. Chromium only: it asserts the network. No `ImportCollectionDialog` request on `/browse`; opening the `Collection actions` menu requests it, and choosing "Import collection" opens the dialog with no second request |
 | a signed-in visitor without a collection is asked to import one | Signed in with no local copy and no server row, "Show my collection" opens the `Import your collection` dialog and renders no binder |
 | a pre-Core card's window offers its Enchanted, and the Enchanted's pocket opens the card on it (#891) | `preCoreCardWithEnchanted` (`e2e/helpers/cardData.ts`) reads, from `public/data/collection/{set}.json`, the first card of Sets 1-8 whose one printing in its set is an Enchanted; `/browse?binder=<set>&q=<its name>` narrows the binder to its two pockets. A click near the card's pocket top opens its window with the Standard in front of the card's stack (the slide without `inert`, its art named for the card alone) and a "Next printing: Enchanted" peek: Sets 1-8 keep a card's printings as cards of their own, which collection mode gathers into its `variants`. After the dialog's 100ms initial-focus timer, Escape closes it, and a click on the Enchanted's pocket opens the card itself, titled with its name, with the Enchanted in front (art named ", Enchanted printing"). Before #891 the window offered no printings, and the Enchanted's pocket opened as a lone card |
 | after a search in the grid, collection mode loads only sets 9-14, the search having loaded the rest (#911) | Chromium only: it asserts the network. Signed in as the collector, `/browse?q=Ariel+On+Human` shows the Set 1 card, so the search has loaded sets 1-8 and the promos (`features/collection/collectionChunks.ts`); "Show my collection" then requests only `9.json` to `14.json` by the time the binder's first tile replaces its shimmer (collection mode loads all or nothing) |
 | the set strip reads the set's two percentages and opens its numbers inline | Every project at 390x844, `/browse?binder=<set>`: no `Collection actions` gear shows (owner, 2026-10-20: it wrapped Collection onto a second toolbar row), and the `Set` strip's "Show the numbers" toggle reads the Complete and Master percentages, rounded down as the panel rounds them (`percentOf`), and no `Collection numbers` region shows; clicking it opens the region ("Complete set" visible, the toggle now "Hide the numbers", `aria-expanded`), and a second click folds it away |
+| the first switch draws the binder's frame while its code loads, and the toolbar holds still (phone width) | #913. The desktop test's check at 390x844 on every project, the session known from the sync's read of the account's collection (a phone has no header to show Account): the `Loading your binder` region (the set strip's two rows over a page) shows at once, and the toolbar's controls hold still when the binder arrives |
 
 ## `friends.spec.ts`: 6 tests (5 every project, 1 desktop only)
 
@@ -325,7 +329,7 @@ CardOverviewModal default-mode interactions — chip filtering (→ focused sing
 | a group chip filters the modal to that group (mobile) | Clicking the Discard chip → `data-state="focused"`, one group |
 | the "+N more" tile opens the full expanded group view (mobile) | Clicking the discard `more-tile` once → `data-state="expanded"` with a "Back to all synergies" link |
 
-## `synergy-detail-modal.spec.ts` — 12 tests (5 desktop, 5 mobile, 2 deep-link)
+## `synergy-detail-modal.spec.ts` — 15 tests (5 desktop, 5 mobile, 5 deep-link)
 
 Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #486) transitions CardOverviewModal in-place to the side-by-side comparison view. Desktop uses two columns; mobile uses the tabbed `MobileComparisonView` (#332 #5). Setup opens the modal on the fixture card via `appPage.openCardOverview(name)` (Browse `?q=` + tile click). Deep links open comparison directly via `/compare/A/B/groupKey`.
 
@@ -343,8 +347,11 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 | should exit comparison mode via BACK on mobile | (mobile) BACK returns the modal to `data-mode="default"` |
 | opens directly in comparison with no BACK button (desktop) | (deep link) `/compare/A/B/groupKey` opens straight into comparison; BACK button suppressed (hideBackButton) |
 | opens the mobile tabbed comparison view (mobile) | (deep link) `/compare/A/B/groupKey` opens the mobile MobileComparisonView |
+| the Community column states no votes until the pair score arrives | (deep link, every project) #913. With the pair-score read held (`holdSupabasePath(page, '/rest/v1/pair_scores')` in `e2e/fixtures/supabaseStub.ts`), the comparison opens and, past its 200 ms delay, `community-loading` shows (the first one shown: a phone draws the column twice); a MutationObserver installed before the page loads finds no "N / 1 votes" and no "Not enough votes yet" at any moment before the release (they read a missing score as 0 votes). Released, the stub's empty answer shows the "Not enough votes yet" heading and the skeleton goes |
+| a compare link opens on the window frame, and the window takes over with no gap or second fade | (deep link, every project) #913. With `allCards.json` held, `/compare/A/B/groupKey` shows the window's frame (`status` "Loading comparison"), where the page stayed blank. A `requestAnimationFrame` loop installed by `addInitScript` records each frame's backdrops (`card-overview-fallback-backdrop`, `card-overview-backdrop`) and the most opaque one's opacity: from the frame's first paint to the open comparison, every frame has a backdrop, and the opacity never drops (the window takes over without a second entrance, `openComparison`'s `skipEnter`) |
+| an invalid compare link still ends on the 404 page, with no frame left over | (deep link, every project) `/compare/1947/99999999/<group>`: the `h1` reads 404 once the card list loads, and no `card-overview-fallback` remains |
 
-## `playstyle-detail.spec.ts` — 5 tests (desktop only)
+## `playstyle-detail.spec.ts` — 7 tests (5 desktop only, 2 every project)
 
 | Test | What it verifies |
 |---|---|
@@ -353,6 +360,8 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 | should render card tiles in grid | `/playstyles/location-control` renders 5+ card tiles. It first waits for discard's tiles, since leaving while discard's playstyle data loads aborts that fetch, and WebKit's "TypeError: Load failed" for the abort fails the console guard (#854) |
 | should open the card overview modal from playstyle detail | Clicking a card tile opens the modal; URL stays on the playstyle page |
 | keeps a tile tooltip under the pointer, ignores clicks on it, and hides on Escape | The "Forced Discard" tile's description tooltip stays while the pointer slides onto it and rests there past its 150 ms close delay; a click on it leaves the tile `aria-pressed="false"` (it renders beside the tile's button, so the click no longer bubbles to it through the portal); Escape hides it (WCAG 1.4.13, #836) |
+| shows its loading view, not an empty grid, until the playstyle's cards arrive | (every project) #913. `_playstyles.json` held: once `allCards.json` has answered (and a second for the page to take it in), `[aria-label="Loading playstyle detail"]` still shows; released, the card tiles render and the loading view goes. A MutationObserver installed before the page loads finds "No cards match your filters." at no moment |
+| opened from the gallery, a playstyle shows its cards with no loading view between | (every project) #913. `/playstyles` reads `_playstyles.json`; a click on Lore Denial's tile then shows its cards, and an observer installed before the click never sees `[aria-label="Loading playstyle detail"]`: the playstyle page starts from the gallery's read |
 
 ## `voting.spec.ts` — 17 tests (12 desktop, 5 mobile)
 
@@ -376,7 +385,7 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 | should advance on skip (mobile) | Mobile skip → pair changes |
 | should show mobile bottom navigation | Mobile nav with Browse/Playstyles visible |
 
-## `page-shell-loading.spec.ts` — 4 tests (desktop only)
+## `page-shell-loading.spec.ts` — 5 tests (desktop only)
 
 Regression guard for issue #268 (skeleton-loading UI). Each test intercepts `/data/allCards.json` and `/data/synergies/**` with a 1500 ms delay, navigates to the page, and asserts the chrome landmark + skeleton are both visible during the loading window. (CardPage is now a thin redirect that opens the global modal, so its old skeleton case no longer applies — see the NOTE in the spec.)
 
@@ -384,6 +393,7 @@ Regression guard for issue #268 (skeleton-loading UI). Each test intercepts `/da
 |---|---|
 | PlaystyleDetailPage renders skeleton + CompactHeader while card data loads | CompactHeader visible; aria-busy skeleton visible; `<h1>` with playstyle display name visible after load |
 | PlaystyleGalleryPage renders skeleton inside preserved shell | `<h1>` "playstyles" title visible (shell was already preserved before #268); `[aria-label="Loading playstyles"]` visible, then hidden after load |
+| InkHubPage holds its count line blank, never "0 cards", while card data loads | #913. `allCards.json` held (as in the gallery test): `/ink/amber` shows its `h1` and the `Loading cards` grid, and the count line under the blurb holds a non-breaking space where it read "0 cards"; released, it reads "N cards" (N from 1) at the same height |
 | VotePage renders pair + score picker skeleton while queue loads | CompactHeader visible; `[aria-label="Loading vote pair"]` visible |
 | InDepthVotePage renders pair + form skeleton while pair data loads | CompactHeader visible; `[aria-label="Loading vote pair and form"]` visible |
 
@@ -395,7 +405,7 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 |---|---|
 | loads the pair and renders the interactive vote form | Navigates to `/vote/2730/2718`; the `[aria-label="Loading vote pair and form"]` skeleton becomes hidden, then "Is this synergy real?" + the "Yes" radio are visible (a loop/hang fails by timeout) |
 
-## `reveals-page.spec.ts`: 11 tests (9 desktop, 1 mobile, 1 on every project at a 390px viewport)
+## `reveals-page.spec.ts`: 12 tests (9 desktop, 1 mobile, 1 on every project at a 390px viewport, 1 every project)
 
 **Season-independent by design.** The `beforeEach` reads the reveal set (the `previewCards.json` entry with the latest `releaseDate`) and the tests build their matchers from its `name` and `number`; the franchise's name is read off the tile's own heading. Starting a new season needs no edit here. The `beforeEach` also starts the page's clock two days before that `releaseDate` (`e2e/helpers/revealSeason.ts`), so the suite runs on any date, release day and the weeks before the next set's dates land included: graduation keeps the set's dates in `previewCards.json` and its cards in `allCards.json`. Four tests additionally skip while `cards` is empty.
 
@@ -406,12 +416,27 @@ Terminal-state guard for the in-depth vote page (`/vote/:a/:b`). Complements `pa
 | mobile nav shows Reveals tab | On mobile, `/browse`'s bottom nav has a "Set N reveals" link |
 | promo modal appears on landing page and not on /reveals | `role="complementary" name="Set N reveals"` visible on `/`, absent on `/reveals` |
 | on a phone, the page leaves room under the promo and scrolls focus clear of it | At 390px on `/`, the root's `scroll-padding-bottom` equals the promo's height, and the footer's last link, focused from the top of the page, scrolls into view above the promo (WCAG 2.4.11, accessibility check 2026-10-19) |
+| the hero holds its revealed count, never 0, while the card list loads | (every project) #913. `allCards.json` held: while the board reads "Loading reveal cards…", the hero's revealed stat holds an `aria-busy` placeholder before " / <set total>" and no number; released, it reads "N / <set total>" (N from 1) with the placeholder gone |
 | mosaic card click opens the card overview modal | Clicking a `reveal-card-slot` on `/reveals` opens the modal; URL stays `/reveals` (skips with no cards) |
 | the card modal's arrows step through the board's cards in mosaic order | Opening the first `reveal-card-slot`, then "Next card", shows the second slot's card in the modal's `h1` (slot labels read "View <card>"; skips with fewer than two revealed cards) |
 | franchise card click opens the franchise cards modal | Clicking the first franchise tile (ending "View cards") opens the `dialog` named "<franchise> cards", the franchise read from the tile's `h3`; a card-tile inside opens the overview modal on top (card click skips with no cards) |
 | ?ink= param selects the starting mosaic ink | `/reveals?ink=emerald` makes the Emerald `ink-tracker-tile` the `aria-pressed` (featured) one |
 | clicking a rarity chip dims the other revealed cards | A kit chip in the "Highlight a rarity" group toggles `aria-pressed`; other-rarity slots get `data-dimmed`; clicking again clears it (skips when <2 rarities revealed) |
 | an alt art opens the card modal on that printing | On `/reveals?ink=amber`, clicking the first `reveal-printing-slot` ("View <card>, <rarity> alt art") opens the modal with that very printing in front of the card's stack (the slide without `inert`, its art named exactly "<card>, <rarity> printing") (skips until the Amber board has a revealed Epic/Enchanted/Iconic) |
+
+## `loading-geometry.spec.ts`: 7 tests (chromium and mobile-chrome only; one of them mobile-chrome only)
+
+Loading placeholders sit in the boxes of what replaces them (#914), so nothing moves when code or data lands. Each test holds the one request its moment waits on (`holdLazyModule` for a chunk, `page.route` for a data file or card art, `holdSupabasePath` for a Supabase read), reads the placeholder's box, releases, and reads the loaded element's box: equal within 1 px. It runs at 1440x900 on chromium and 390x844 on mobile-chrome, the sizes the loading-states gallery was shot at; the other projects skip it, since WebKit and Firefox draw classic scrollbars, which change widths once a page scrolls. Each box is read once `document.fonts.ready` settles.
+
+| Test | What it verifies |
+|---|---|
+| the home page keeps its featured heading still across its three loading frames | The "Popular Synergy Starters" label's top is the same in the router's `Loading home` fallback (the `HomePage` chunk held before the first navigation, which waits for DOMContentLoaded, and polled until the hold has caught it), with HomePage in and `featuredCards.json` and `allCards.json` held (its own skeleton row), and loaded (`featured-cards`). On mobile-chrome, the fallback is the phone skeleton: its search bar placeholder is 358 px wide (390 minus two 16 px gutters) and `scrollWidth` is 390 |
+| the first card on /browse lands in its placeholder's box | `allCards.json` held: the `Loading cards` grid's first tile has the first `card-tile`'s box after the release (top, left, width and height): the loaded grid's column minimum for the viewport, gutters and room above the first row |
+| the first card on /ink/amber lands in its placeholder's box | The same on an ink page, where the loaded grid has no padding |
+| a playstyle page's loading grid has its loaded grid's columns and tile width | `/playstyles/lore-denial` with `allCards.json` held: the `Loading playstyle cards` grid's first row has as many tiles as the loaded grid's, as wide (2 columns on a phone, where it had 3) |
+| the card page's loading layout puts the card and the results where the page will | `/card/<id>` for the Core character with the shortest name (`shortestNamedCoreCharacter` in `e2e/helpers/cardData.ts`: one line of name at any font, as the phone placeholder draws it), with `allCards.json` and then its synergies file held: the `Loading card` frame's art placeholder has the loaded card image's box (`card-detail-panel` beside the results on desktop, the results' card block on a phone), and on desktop the results' skeleton (`synergy-results-loading`) keeps its top-left when the card arrives (on a phone the results follow the card's rules text, whose length varies per card) |
+| the phone vote form holds still when the card art arrives | mobile-chrome only. `/vote` with `Math.random` seeded (the same pair every run) and every card image held, then answered with a 1x1 PNG (the box keeps the card's shape whatever arrives): the `Synergy score` radiogroup's top is the same while each card's ink tile holds its place and once the art is in. A character's image box had no height until its art loaded, then pushed the form 88 px down |
+| the account page's Collection section holds still when the friends load | Signed in (`signInAs`) with a friend code and no one yet (`serveFriends`), the `friendships` read held (`holdSupabasePath`): with the profile's handle shown and the Friends section's `Loading your friends` group up, the Collection section's top is the same before and after "No friends yet" arrives |
 
 ## `release-notes.spec.ts`: 3 tests (every project; the last at a 390px viewport)
 

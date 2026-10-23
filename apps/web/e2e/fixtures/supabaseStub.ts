@@ -59,3 +59,22 @@ export async function stubSupabase(page: Page): Promise<void> {
       }),
   );
 }
+
+/**
+ * Holds the placeholder project's requests to `pathname` until the returned release() runs,
+ * then hands each to the handler registered before this one: the stub above, or a spec's own
+ * (`serveFriends`). Register it after those, since Playwright tries the newest handler first.
+ * For a loading state that waits on one read, such as a pair's score (#913).
+ */
+export async function holdSupabasePath(page: Page, pathname: string): Promise<() => void> {
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route(
+    (url) => url.hostname === E2E_SUPABASE_HOST && url.pathname === pathname,
+    async (route) => {
+      await held;
+      await route.fallback();
+    },
+  );
+  return release;
+}
