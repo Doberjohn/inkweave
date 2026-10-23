@@ -1,10 +1,11 @@
 import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {E2E_FRIEND_CODE, holdSupabasePath} from '../fixtures/supabaseStub';
-import {shortestNamedCoreCharacter} from '../helpers/cardData';
+import {everyCardPage, longestPlainNamedCoreCharacter, shortestNamedCoreCharacter} from '../helpers/cardData';
 import {serveFriends, type Player} from '../helpers/friends';
 import {holdLazyModule} from '../helpers/lazyModule';
 import {signInAs} from '../helpers/session';
+import {cardNameHint} from '../../src/pages/cardNameHint';
 
 /**
  * Loading placeholders sit in the boxes of what replaces them (#914), so nothing moves when
@@ -120,24 +121,44 @@ function firstRow(tiles: Locator): Promise<{columns: number; width: number}> {
   });
 }
 
-test("a playstyle page's loading grid has its loaded grid's columns and tile width", async ({page}) => {
+/**
+ * A playstyle page's loading grid against its loaded grid: the first row's columns, and the
+ * first tile's box. The hero and the toolbar draw as loaded, and on desktop a placeholder holds
+ * the mechanics row's box, so the grid starts where the loaded one does.
+ */
+async function expectPlaystyleGridInPlace(page: Page, playstyle: string): Promise<void> {
   const release = await hold(page, CARD_LIST);
-  await page.goto('/playstyles/lore-denial');
+  await page.goto(`/playstyles/${playstyle}`);
   const placeholders = page.locator('[aria-label="Loading playstyle cards"] > div > div');
   await expect(placeholders.first()).toBeVisible();
   const loading = await firstRow(placeholders);
+  const placeholder = await boxOf(placeholders.first());
 
   release();
   const tiles = page.getByTestId('card-tile');
   await expect(tiles.first()).toBeVisible();
-  const loaded = await firstRow(tiles);
-  expect(loaded.columns).toBe(loading.columns);
-  expect(Math.abs(loaded.width - loading.width)).toBeLessThanOrEqual(1);
+  expect((await firstRow(tiles)).columns).toBe(loading.columns);
+  expectSameBox(await boxOf(tiles.first()), placeholder);
+}
+
+// Lore Denial's tagline takes one line on a phone, Ramp's two.
+for (const playstyle of ['lore-denial', 'ramp']) {
+  test(`the ${playstyle} playstyle's loading grid has its loaded grid's place, columns and tiles`, async ({page}) => {
+    await expectPlaystyleGridInPlace(page, playstyle);
+  });
+}
+
+test("on a 360 px phone, the playstyle toolbar's two rows hold the grid in place", async ({page}, testInfo) => {
+  test.skip(!isPhone(testInfo.project.name), "A narrow phone's toolbar");
+  // The toolbar wraps onto a second row here, and the Mechanics button decides where: it holds
+  // its place, off, while the cards load.
+  await page.setViewportSize({width: 360, height: 740});
+  await expectPlaystyleGridInPlace(page, 'ramp');
 });
 
 test("the card page's loading layout puts the card and the results where the page will", async ({page}, testInfo) => {
-  // One line of name on any phone, so the card's art sits where the placeholder's does: a name
-  // on two lines puts it 24 px lower (CardDetailLoading).
+  // Entered by its id alone, so no name in the address: one line of name on any phone, as the
+  // placeholder draws it then (the tests below enter by a card's whole address).
   const card = shortestNamedCoreCharacter();
   const releaseCards = await hold(page, CARD_LIST);
   // Then the card's synergies, so the results' own skeleton shows in the loaded frame.
@@ -160,6 +181,117 @@ test("the card page's loading layout puts the card and the results where the pag
   if (!phone) expectSameBox(await boxOf(page.getByTestId('synergy-results-loading')), results, ['x', 'y']);
   releaseSynergies();
   await expect(page.getByTestId('synergy-results-loading')).toHaveCount(0);
+});
+
+/** The phone heading's line: CardDetail's name, 20 px at a line height of 1.2. */
+const NAME_LINE = 24;
+
+/**
+ * How far down a box the middles of the bars it shows are, in px: the bars whose middle the page
+ * hit-tests to the bar, so none the box cuts off.
+ */
+function barMiddles(box: Locator): Promise<number[]> {
+  return box.evaluate((el) => {
+    const boxTop = el.getBoundingClientRect().top;
+    return [...el.querySelectorAll('.react-loading-skeleton')].flatMap((bar) => {
+      const {left, top, width, height} = bar.getBoundingClientRect();
+      const middle = top + height / 2;
+      return bar.contains(document.elementFromPoint(left + width / 2, middle)) ? [Math.round(middle - boxTop)] : [];
+    });
+  });
+}
+
+/**
+ * The phone card page, entered by a card's own address while the card list loads: the name's
+ * placeholder takes the lines of the name the address spells, a bar in each, so the heading and
+ * the art land in its boxes.
+ */
+async function expectCardNameInPlace(page: Page): Promise<void> {
+  const card = longestPlainNamedCoreCharacter();
+  const releaseCards = await hold(page, CARD_LIST);
+  await page.goto(card.path);
+  const loadingName = page.getByTestId('card-name-loading');
+  const placeholder = await boxOf(loadingName);
+  const lines = Math.round(placeholder.height / NAME_LINE);
+  // Two lines or more, or a one-line placeholder would pass this too.
+  expect(lines, card.fullName).toBeGreaterThanOrEqual(2);
+  // A bar in the middle of each line, and none beyond the last.
+  expect(await barMiddles(loadingName)).toEqual(Array.from({length: lines}, (_, i) => i * NAME_LINE + NAME_LINE / 2));
+  const art = await boxOf(page.locator('main[aria-label="Loading card"] .ink-card-placeholder').first());
+
+  releaseCards();
+  const block = page.locator('section[aria-label="Synergy results"] article');
+  expectSameBox(await boxOf(block.getByRole('heading', {level: 1, name: card.fullName, exact: true})), placeholder);
+  expectSameBox(await boxOf(block.getByRole('img', {name: card.fullName}).first()), art);
+}
+
+test("on a phone, the card page's loading name takes the lines of the name in its address", async ({
+  page,
+}, testInfo) => {
+  test.skip(!isPhone(testInfo.project.name), "The phone's card block");
+  await expectCardNameInPlace(page);
+});
+
+test("on a 360 px phone, the card page's loading name takes the lines of the name in its address", async ({
+  page,
+}, testInfo) => {
+  test.skip(!isPhone(testInfo.project.name), "The phone's card block");
+  await page.setViewportSize({width: 360, height: 740});
+  await expectCardNameInPlace(page);
+});
+
+/** Common phone widths: a small Android, an iPhone, a Pixel. */
+const PHONE_WIDTHS = [360, 390, 412];
+
+/**
+ * The lines each text takes set in one of the name's boxes at the page's width: in the box's
+ * first child (the placeholder's unseen name) or in the box itself (the heading).
+ */
+function linesOf(box: Locator, texts: string[], inFirstChild: boolean): Promise<number[]> {
+  return box.evaluate(
+    (el, {texts, inFirstChild, line}) => {
+      const target = (inFirstChild ? el.firstElementChild : el) ?? el;
+      const shown = target.textContent;
+      const lines = texts.map((text) => {
+        target.textContent = text;
+        return Math.round(el.getBoundingClientRect().height / line);
+      });
+      target.textContent = shown;
+      return lines;
+    },
+    {texts, inFirstChild, line: NAME_LINE},
+  );
+}
+
+test("on phones, the card page's loading name takes the name's lines for all but a few cards", async ({
+  page,
+}, testInfo) => {
+  test.skip(!isPhone(testInfo.project.name), "The phone's card block");
+  // Each card's name as its address spells it, against the name itself, in the boxes the page
+  // draws them in: the placeholder while the card list loads, then the heading.
+  const cards = everyCardPage();
+  const hints = cards.map((card) => cardNameHint(card.path.split('/')[3]));
+  const releaseCards = await hold(page, CARD_LIST);
+  await page.goto(cards[0].path);
+  const placeholder = page.getByTestId('card-name-loading');
+  await boxOf(placeholder);
+  const hinted: number[][] = [];
+  for (const width of PHONE_WIDTHS) {
+    await page.setViewportSize({width, height: PHONE.height});
+    hinted.push(await linesOf(placeholder, hints, true));
+  }
+
+  releaseCards();
+  const heading = page.locator('section[aria-label="Synergy results"] article').getByRole('heading', {level: 1});
+  await boxOf(heading);
+  for (const [i, width] of PHONE_WIDTHS.entries()) {
+    await page.setViewportSize({width, height: PHONE.height});
+    const named = await linesOf(heading, cards.map((card) => card.fullName), false);
+    // Names whose punctuation the address drops, or that have no version, can wrap otherwise:
+    // 15, 5 and 12 of 1,228 at 360, 390 and 412 px when this was written.
+    const misses = cards.filter((_, j) => named[j] !== hinted[i][j]).map((card) => card.fullName);
+    expect(misses.length, `${width} px: ${misses.join('; ')}`).toBeLessThanOrEqual(cards.length * 0.02);
+  }
 });
 
 /** A 1x1 PNG: any art at all, since the box keeps the card's shape whatever arrives. */

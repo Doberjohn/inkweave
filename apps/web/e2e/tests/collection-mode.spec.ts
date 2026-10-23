@@ -174,6 +174,26 @@ function expectToolbarHeld(before: Record<string, Place>, after: Record<string, 
   }
 }
 
+/** The docked set panel's parts, in order: what the binder shows, then the numbers. */
+const setPanelParts = (page: Page) => page.getByRole('complementary', {name: 'Set', exact: true}).locator(':scope > *');
+
+/** An element's box on the page, once the page's fonts are in. */
+async function placeOf(locator: Locator): Promise<Place> {
+  await locator.page().evaluate(() => document.fonts.ready.then(() => undefined));
+  const box = await locator.boundingBox();
+  expect(box, 'the element is on the page').not.toBeNull();
+  return box!;
+}
+
+/** Each part is where its placeholder was, within 1 px. */
+function expectPlacesHeld(parts: {name: string; before: Place; after: Place}[]): void {
+  for (const {name, before, after} of parts) {
+    for (const key of ['x', 'y', 'width', 'height'] as const) {
+      expect(Math.abs(after[key] - before[key]), `${name} ${key}: ${before[key]} -> ${after[key]}`).toBeLessThanOrEqual(1);
+    }
+  }
+}
+
 /**
  * Presses Collection with the binder's code held: the binder's frame shows at once, in place of
  * an empty area. Returns the toolbar as it stood then, and the release.
@@ -931,6 +951,10 @@ test.describe('Collection mode, signed in', () => {
   }) => {
     await signInAsCollector(page, ENTRIES);
     const {before, release} = await pressCollectionWithBinderHeld(page);
+    // The set panel's body, held in its two parts: what the binder shows, then the numbers in
+    // the rest of the panel.
+    await expect(setPanelParts(page)).toHaveCount(2);
+    const [showsHeld, numbersHeld] = [await placeOf(setPanelParts(page).nth(0)), await placeOf(setPanelParts(page).nth(1))];
 
     release();
     await expect(binder(page)).toBeVisible();
@@ -938,6 +962,10 @@ test.describe('Collection mode, signed in', () => {
     await expect(page.getByRole('button', {name: /^Binder set/})).toBeVisible();
     await expect(binderLoading(page)).toHaveCount(0);
     expectToolbarHeld(before, await toolbarPlaces(page));
+    expectPlacesHeld([
+      {name: 'Binder shows', before: showsHeld, after: await placeOf(page.getByRole('group', {name: 'Binder shows'}))},
+      {name: 'Collection numbers', before: numbersHeld, after: await placeOf(numbers(page))},
+    ]);
   });
 
   test("a pointer resting on Collection asks for the binder's code before the press", async ({page}, testInfo) => {

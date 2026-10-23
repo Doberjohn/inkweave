@@ -91,7 +91,7 @@ test.describe('Page shell + skeleton during card-data loading', () => {
     await expect(page.locator('[aria-label="Loading cards"]')).toBeVisible();
     // The count line, under the blurb: a non-breaking space holds its line, where the empty
     // list read "0 cards".
-    const countLine = heading.locator('xpath=following-sibling::div[1]');
+    const countLine = page.getByTestId('ink-hub-count');
     expect(await countLine.textContent()).toBe('\u00a0');
     const loadingBox = await countLine.boundingBox();
 

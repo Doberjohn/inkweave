@@ -110,7 +110,7 @@ test.describe('Playstyle Detail — Desktop', () => {
  * (#913): until both are in, it shows its loading view, never "No cards match your filters."
  */
 test.describe('Playstyle Detail — loading', () => {
-  const LOADING_VIEW = '[aria-label="Loading playstyle detail"]';
+  const LOADING_VIEW = '[aria-label="Loading playstyle cards"]';
   const EMPTY_GRID = 'No cards match your filters.';
 
   test("shows its loading view, not an empty grid, until the playstyle's cards arrive", async ({page}) => {

@@ -24,6 +24,11 @@ export const UninkableSelected: Story = {
   args: {activeValue: 'uninkable', onToggle: () => {}},
 };
 
+/** A playstyle whose cards are all inkable (#914): Uninkable stays in place, dimmed and off. */
+export const UninkableNotOffered: Story = {
+  args: {activeValue: undefined, onToggle: () => {}, offered: ['inkable']},
+};
+
 export const Interactive: Story = {
   render: () => {
     const [value, setValue] = useState<InkwellValue | undefined>(undefined);

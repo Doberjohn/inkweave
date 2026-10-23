@@ -2,8 +2,8 @@ import type {CSSProperties} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
 import {useResponsive} from '../../shared/hooks/useResponsive';
-import {RADIUS, SPACING} from '../../shared/constants';
-import {sectionStyle} from './binderLayout';
+import {FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
+import {BAR, NUMBERS_STYLE, sectionStyle} from './binderLayout';
 
 /*
  * What collection mode draws while the binder's chunk downloads (#913), each in the box of what
@@ -66,9 +66,40 @@ export function BinderChunkFallback() {
   );
 }
 
-/** The docked set panel's body while the chunk downloads: what the binder shows, at its top. */
-export function DockedSetBodyFallback() {
-  return <Block height={SHOWS_HEIGHT} />;
+/**
+ * The set panel's numbers while the pool loads: the headlines' shape, so the numbers land
+ * without the panel jumping. A promo set's numbers have the first headline alone. Here, outside
+ * the binder's chunk, so the docked panel's fallback draws them too; the panel's own numbers
+ * (`CollectionSetPanel`) import them from here.
+ */
+export function NumbersLoading({promo}: {promo: boolean}) {
+  const sizes = promo ? [FONT_SIZES.displaySm] : [FONT_SIZES.displaySm, FONT_SIZES.xl];
+  return (
+    <>
+      {sizes.map((size) => (
+        <div key={size} style={COLUMN}>
+          <Skeleton height={size} width="70%" />
+          <Skeleton height={size === FONT_SIZES.displaySm ? BAR.headline : BAR.second} borderRadius={RADIUS.pill} />
+        </div>
+      ))}
+    </>
+  );
+}
+
+/**
+ * The docked set panel's body while the chunk downloads, as the body lays it out: what the
+ * binder shows at its top, then the numbers filling the rest, in their loading shape. `promo`:
+ * the panel shows a promo scope, whose numbers have one headline.
+ */
+export function DockedSetBodyFallback({promo = false}: {promo?: boolean}) {
+  return (
+    <>
+      <Block height={SHOWS_HEIGHT} />
+      <div style={NUMBERS_STYLE}>
+        <NumbersLoading promo={promo} />
+      </div>
+    </>
+  );
 }
 
 /** The toolbar's set picker while the chunk downloads, filling the picker's place beside Collection. */

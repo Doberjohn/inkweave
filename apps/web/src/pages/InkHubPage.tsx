@@ -64,7 +64,11 @@ export function InkHubPage() {
           width: '100%',
           margin: '0 auto',
         }}>
-        <InkHubHeader ink={hub.ink} blurb={INK_HUB_BLURBS[hub.ink]} cardCount={isLoading ? null : inkCards.length} />
+        <InkHubHeader
+          ink={hub.ink}
+          blurb={INK_HUB_BLURBS[hub.ink]}
+          cardCount={isLoading ? null : inkCards.length}
+        />
 
         {isLoading ? (
           <CardGridSkeleton rows={3} />
@@ -157,6 +161,7 @@ function InkHubHeader({
       {/* Count line, matching SynergyGroup's muted meta treatment. Cheap indexable text,
           and it tells a reader the hub is complete rather than a sample. */}
       <div
+        data-testid="ink-hub-count"
         style={{
           fontSize: `${FONT_SIZES.xs}px`,
           color: COLORS.textMuted,

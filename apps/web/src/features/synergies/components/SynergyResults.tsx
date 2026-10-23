@@ -317,12 +317,13 @@ export function SynergyResults(props: SynergyResultsProps) {
 
 /**
  * The results column while the card itself is still loading (#914), in the loaded column's
- * frame: on a phone the card's block, then the results skeleton.
+ * frame: on a phone the card's block, its name taking `nameHint`'s lines, then the results
+ * skeleton.
  */
-export function SynergyResultsLoading({isMobile}: {isMobile: boolean}) {
+export function SynergyResultsLoading({isMobile, nameHint}: {isMobile: boolean; nameHint?: string}) {
   return (
     <section aria-label="Synergy results" style={buildSectionStyle(isMobile)}>
-      {isMobile && <CardDetailLoading />}
+      {isMobile && <CardDetailLoading nameHint={nameHint} />}
       <SynergyResultsSkeleton isMobile={isMobile} />
     </section>
   );

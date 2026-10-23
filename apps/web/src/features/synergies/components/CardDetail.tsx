@@ -45,6 +45,16 @@ const ARTICLE_STYLE: CSSProperties = {
   gap: `${SPACING.lg}px`,
 };
 const HEADER_STYLE: CSSProperties = {display: 'flex', alignItems: 'flex-start', gap: SPACING.md};
+/** The name's type and its share of the header: the heading's, and its placeholder's. */
+const NAME_STYLE: CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+  margin: 0,
+  fontSize: `${FONT_SIZES.xxl}px`,
+  fontWeight: 700,
+  lineHeight: NAME_LINE_HEIGHT,
+  color: COLORS.text,
+};
 const CHIPS_STYLE: CSSProperties = {display: 'flex', gap: `${SPACING.sm}px`, flexWrap: 'wrap'};
 const ART_ROW_STYLE: CSSProperties = {display: 'flex', justifyContent: 'center'};
 const TEXT_BOX_STYLE: CSSProperties = {
@@ -81,18 +91,7 @@ function CardDetailHeader({
   const Heading = headingLevel;
   return (
     <div style={HEADER_STYLE}>
-      <Heading
-        style={{
-          flex: 1,
-          minWidth: 0,
-          margin: 0,
-          fontSize: `${FONT_SIZES.xxl}px`,
-          fontWeight: 700,
-          lineHeight: NAME_LINE_HEIGHT,
-          color: COLORS.text,
-        }}>
-        {card.fullName}
-      </Heading>
+      <Heading style={NAME_STYLE}>{card.fullName}</Heading>
       <IconButton
         aria-label="Close"
         onClick={onClear}
@@ -214,26 +213,42 @@ function Block({width, height, radius = RADIUS.sm}: {width?: number | string; he
   return <Skeleton inline width={width} height={height} borderRadius={radius} style={{display: 'block'}} />;
 }
 
+/** The name's bars, a line each, longest first: a name shows as many as it takes lines. */
+const NAME_BAR_WIDTHS = ['85%', '60%', '40%'];
+
+/**
+ * The name while the card list loads: `nameHint`, set unseen in the heading's type, so the box
+ * takes the lines the name will. Each line holds a bar, centered in it; the bars run on past the
+ * box, which cuts them off at its last line. With no hint, one line.
+ */
+function NameLoading({nameHint}: {nameHint: string}) {
+  return (
+    <div data-testid="card-name-loading" style={{...NAME_STYLE, position: 'relative', overflow: 'hidden'}}>
+      <div aria-hidden="true" style={{visibility: 'hidden'}}>
+        {nameHint || '\u00a0'}
+      </div>
+      <div style={{position: 'absolute', top: 0, left: 0, right: 0}}>
+        {NAME_BAR_WIDTHS.map((width) => (
+          <div key={width} style={{height: FONT_SIZES.xxl * NAME_LINE_HEIGHT, paddingTop: SPACING.xxs}}>
+            <Block width={width} height={FONT_SIZES.xxl} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /**
  * CardDetail while the card list loads (#914): its frame and boxes, so the card lands where its
- * placeholder was. The name takes one line, as 803 of the 1,228 card names do at 390 px; a
- * longer name lands the art one line lower.
+ * placeholder was. `nameHint` is the card's name as the page's address spells it (the card
+ * page's `cardNameHint`): the name's placeholder takes the lines it takes, so a name on two
+ * lines lands the art where its placeholder sat too.
  */
-export function CardDetailLoading() {
+export function CardDetailLoading({nameHint = ''}: {nameHint?: string}) {
   return (
     <div style={ARTICLE_STYLE}>
       <div style={HEADER_STYLE}>
-        {/* One line of the name, its bar centered in the line. */}
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            height: FONT_SIZES.xxl * NAME_LINE_HEIGHT,
-            paddingTop: SPACING.xxs,
-          }}>
-          <Block width="70%" height={FONT_SIZES.xxl} />
-        </div>
+        <NameLoading nameHint={nameHint} />
         <Block width={CLOSE_SIZE} height={CLOSE_SIZE} radius={RADIUS.pill} />
       </div>
       <div style={CHIPS_STYLE}>

@@ -8,7 +8,10 @@ import {useRef} from 'react';
 interface CardGridSkeletonProps {
   /** Override gap between cards (default: SPACING.md) */
   gap?: number;
-  /** The container's padding: the loaded grid's own, so the first tile starts where its will (default: none). */
+  /**
+   * The container's padding: pass the loaded grid's own, so the first tile starts where the
+   * loaded grid's first tile does (default: none).
+   */
   padding?: string;
   /** Force column count (bypasses dynamic calculation) */
   columns?: number;

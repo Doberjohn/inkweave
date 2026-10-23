@@ -26,3 +26,26 @@ export function sectionStyle(isMobile: boolean, docked = false): CSSProperties {
   const top = docked ? BROWSE_ROW_TOP : SPACING.md;
   return {padding: `${top}px ${sides}px ${gutter}px`, height: '100%', ...(isMobile && {overflowY: 'auto'})};
 }
+
+/** Bar heights, by how much the number above them matters. */
+export const BAR = {headline: 8, second: 6, row: 4} as const;
+
+/** `SIDE_PANEL_STYLE`'s padding, which the numbers reach through: see below. */
+const PANEL_PADDING = SPACING.md;
+
+/**
+ * The set panel's numbers, under its controls (`NumbersRegion`). They scroll on their own, edge
+ * to edge, so their scrollbar sits on the panel's rim as the filters panel's does, and the
+ * controls above never scroll away. The docked panel's fallback (`DockedSetBodyFallback`) holds
+ * the same box while the binder's chunk downloads.
+ */
+export const NUMBERS_STYLE: CSSProperties = {
+  flex: '1 1 auto',
+  minHeight: 0,
+  overflowY: 'auto',
+  margin: `0 -${PANEL_PADDING}px -${PANEL_PADDING}px`,
+  padding: `${SPACING.xs}px ${PANEL_PADDING}px ${PANEL_PADDING}px`,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: SPACING.xl,
+};

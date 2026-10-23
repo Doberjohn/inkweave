@@ -1,5 +1,4 @@
 import {createContext, useContext, useState, type CSSProperties, type ReactNode} from 'react';
-import Skeleton from 'react-loading-skeleton';
 import type {Ink} from 'inkweave-synergy-engine';
 import {CtaButton, IconButton, InkIcon} from '../../shared/components';
 import {useHover} from '../../shared/hooks/useHover';
@@ -18,6 +17,8 @@ import {ALL_PROMO_SETS, WHOLE_COLLECTION, isPromoScope, scopeName, type BinderSh
 import {SetPicker, type SetPickerProps} from './SetPicker';
 import {Segment, Segments} from './Segments';
 import {SIDE_PANEL_STYLE} from '../cards/components/BrowseSidePanel';
+import {NumbersLoading} from './BinderChunkFallback';
+import {BAR, NUMBERS_STYLE} from './binderLayout';
 import {
   ALL_INKS,
   COLORS,
@@ -141,9 +142,6 @@ export interface CollectionSetPanelProps extends SetSwitching, BinderView, AxisC
    */
   filtered?: boolean;
 }
-
-/** Bar heights, by how much the number above them matters. */
-const BAR = {headline: 8, second: 6, row: 4} as const;
 
 /** How long a bar takes to glide to a new length, or to fill from empty when it first appears. */
 const GLIDE_MS = 700;
@@ -558,24 +556,6 @@ function ScopeNumbers({figures, wide, promo, axis: chosen, onAxisChange}: ScopeN
   );
 }
 
-/**
- * While the pool loads: the headlines' shape, so the numbers land without the panel jumping.
- * A promo set's numbers have the first headline alone.
- */
-function NumbersLoading({promo}: {promo: boolean}) {
-  const sizes = promo ? [FONT_SIZES.displaySm] : [FONT_SIZES.displaySm, FONT_SIZES.xl];
-  return (
-    <>
-      {sizes.map((size) => (
-        <div key={size} style={COLUMN}>
-          <Skeleton height={size} width="70%" />
-          <Skeleton height={size === FONT_SIZES.displaySm ? BAR.headline : BAR.second} borderRadius={RADIUS.pill} />
-        </div>
-      ))}
-    </>
-  );
-}
-
 interface NumbersProps extends AxisChoice {
   stats: CollectionStats | null;
   setCode: string;
@@ -597,24 +577,6 @@ function Numbers({stats, setCode, filtered, axis, onAxisChange}: NumbersProps) {
   // The count line above the numbers otherwise went (owner, 2026-10-15).
   return filtered ? <p style={{...DETAIL_STYLE, margin: 0}}>No cards match your filters</p> : null;
 }
-
-/** `SIDE_PANEL_STYLE`'s padding, which the numbers reach through: see below. */
-const PANEL_PADDING = SPACING.md;
-
-/**
- * The numbers scroll on their own, edge to edge, so their scrollbar sits on the panel's rim
- * as the filters panel's does, and the controls above never scroll away.
- */
-const NUMBERS_STYLE: CSSProperties = {
-  flex: '1 1 auto',
-  minHeight: 0,
-  overflowY: 'auto',
-  margin: `0 -${PANEL_PADDING}px -${PANEL_PADDING}px`,
-  padding: `${SPACING.xs}px ${PANEL_PADDING}px ${PANEL_PADDING}px`,
-  display: 'flex',
-  flexDirection: 'column',
-  gap: SPACING.xl,
-};
 
 /**
  * The numbers, under the binder's controls. What the breakdowns count is the page's to keep

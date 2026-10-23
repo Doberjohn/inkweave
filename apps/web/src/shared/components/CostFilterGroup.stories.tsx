@@ -19,6 +19,11 @@ export const SomeSelected: Story = {
   args: {costFilters: [2, 5], onToggleCost: () => {}},
 };
 
+/** A playstyle's toolbar (#914): the costs its cards don't have stay in place, dimmed and off. */
+export const SomeOffered: Story = {
+  args: {costFilters: [3], onToggleCost: () => {}, offered: [1, 2, 3, 4, 5, 6, 7]},
+};
+
 export const Interactive: Story = {
   render: () => {
     const [costs, setCosts] = useState<number[]>([]);

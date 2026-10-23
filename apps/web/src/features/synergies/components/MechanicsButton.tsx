@@ -1,11 +1,13 @@
 import {useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, DISABLED_STYLE, EASING, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
 import {CountBadge} from '../../../shared/components/CountBadge';
 
 interface MechanicsButtonProps {
   onClick: () => void;
   activeCount: number;
   isMobile?: boolean;
+  /** Off while the playstyle's cards load: the button holds its place in the toolbar (#914). */
+  disabled?: boolean;
 }
 
 function MechanicsIcon() {
@@ -31,18 +33,20 @@ function MechanicsIcon() {
  *  Rest:   gold border + gold text + faint gold tint background
  *  Hover:  brighter gold + slightly stronger tint
  *  Active: same gold border + filled gold tint + soft glow (count badge differentiates further) */
-export function MechanicsButton({onClick, activeCount, isMobile}: MechanicsButtonProps) {
+export function MechanicsButton({onClick, activeCount, isMobile, disabled}: MechanicsButtonProps) {
   const [hovered, setHovered] = useState(false);
   const active = activeCount > 0;
+  // A pointer over the button while it's off doesn't light it.
+  const lit = hovered && !disabled;
 
   const background = active
     ? 'rgba(212, 175, 55, 0.14)'
-    : hovered
+    : lit
       ? 'rgba(212, 175, 55, 0.08)'
       : 'rgba(212, 175, 55, 0.04)';
   const boxShadow = active
     ? '0 0 12px rgba(212, 175, 55, 0.25)'
-    : hovered
+    : lit
       ? '0 0 8px rgba(212, 175, 55, 0.15)'
       : 'none';
 
@@ -50,6 +54,7 @@ export function MechanicsButton({onClick, activeCount, isMobile}: MechanicsButto
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       aria-label="Mechanics"
@@ -70,6 +75,7 @@ export function MechanicsButton({onClick, activeCount, isMobile}: MechanicsButto
         alignItems: 'center',
         gap: SPACING.sm,
         transition: `background 0.15s ${EASING.snappy}, box-shadow 0.15s ${EASING.snappy}`,
+        ...(disabled ? DISABLED_STYLE : {}),
       }}>
       <MechanicsIcon />
       Mechanics

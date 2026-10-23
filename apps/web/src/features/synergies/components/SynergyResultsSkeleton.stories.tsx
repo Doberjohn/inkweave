@@ -42,3 +42,13 @@ export const CardLoadingColumnMobile: Story = {
   render: () => <SynergyResultsLoading isMobile />,
   globals: {viewport: {value: 'mobile1'}},
 };
+
+/**
+ * Entered by the card's whole address, the card's block takes the lines of the name the address
+ * spells (`cardNameHint`): here two, with a bar in each.
+ */
+export const CardLoadingColumnMobileLongName: Story = {
+  name: 'Card loading column, phone, two-line name',
+  render: () => <SynergyResultsLoading isMobile nameHint="Russell - Senior Wilderness Explorer" />,
+  globals: {viewport: {value: 'mobile1'}},
+};

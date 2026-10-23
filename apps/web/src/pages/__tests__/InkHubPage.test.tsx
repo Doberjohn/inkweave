@@ -75,15 +75,13 @@ describe('InkHubPage', () => {
   it('holds the count line blank while the card list loads, then counts the ink cards', () => {
     cardList.loading = true;
     renderPage();
-    // The count line comes after the heading and its blurb.
-    const countLine = screen.getByRole('heading', {level: 1}).nextElementSibling?.nextElementSibling;
-    expect(countLine?.textContent).toBe('\u00a0');
+    expect(screen.getByTestId('ink-hub-count').textContent).toBe('\u00a0');
     expect(screen.queryByText(/^\d+ cards?$/)).toBeNull();
 
     cleanup();
     cardList.loading = false;
     renderPage();
-    expect(screen.getByText('2 cards')).toBeInTheDocument();
+    expect(screen.getByTestId('ink-hub-count')).toHaveTextContent('2 cards');
   });
 
   it('tracks a card chosen from the grid as card_selected from the ink hub, then opens it', () => {

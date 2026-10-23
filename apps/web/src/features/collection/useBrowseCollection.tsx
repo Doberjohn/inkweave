@@ -513,7 +513,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     prompts,
     renderSetPanel: (listing) =>
       collectionMode ? (
-        <Suspense fallback={<DockedSetBodyFallback />}>
+        <Suspense fallback={<DockedSetBodyFallback promo={isPromoScope(setCode)} />}>
           <DockedSetBody {...setCounts(listing)} {...panelControls} />
         </Suspense>
       ) : undefined,

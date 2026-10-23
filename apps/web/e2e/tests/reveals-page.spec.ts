@@ -134,6 +134,18 @@ test.describe('Reveals page (flag on)', () => {
     await expect(stat.locator('[aria-busy="true"]')).toHaveCount(0);
   });
 
+  test('a failed card list never shows a revealed count of 0', async ({page}) => {
+    // A failed list counts no cards, so a count would be false (#913). The app's error screen
+    // takes the page's place, hero and all; any alert will do, so a page left on screen with its
+    // own error is held to the same rule.
+    await page.route(/\/data\/allCards.*\.json/, (route) => route.fulfill({status: 500, body: ''}));
+
+    await page.goto('/reveals');
+    await expect(page.getByRole('alert')).toBeVisible();
+    const stats = page.locator('span').filter({hasText: /^\s*\/ \d+\s*$/}).locator('xpath=..');
+    await expect(stats.filter({hasText: /^\s*0 \//})).toHaveCount(0);
+  });
+
   test('mosaic card click opens the card overview modal', async ({page}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 

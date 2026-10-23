@@ -1,5 +1,6 @@
 import {useId, useLayoutEffect, useRef, useState, type RefObject} from 'react';
 import {createPortal} from 'react-dom';
+import Skeleton from 'react-loading-skeleton';
 import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, VISUALLY_HIDDEN, Z_INDEX, blackRgba, hexRgba} from '../../../shared/constants';
 import {useContainerWidth, useTooltip} from '../../../shared/hooks';
 
@@ -188,6 +189,37 @@ export function RoleTileRow({
         <ShowMoreTile hiddenCount={hiddenCount} minHeight={tileMinHeight} onClick={() => setExpanded(true)} />
       )}
     </section>
+  );
+}
+
+/**
+ * The compact row's place while a playstyle's cards load (#914): the row's box, holding as many
+ * tile placeholders as the loaded row fits across, so what follows starts where it will.
+ */
+export function RoleTileRowSkeleton() {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const width = useContainerWidth(rowRef);
+  return (
+    <div
+      ref={rowRef}
+      aria-hidden="true"
+      // The tiles' height inside the row's padding, before the row has measured any tile.
+      style={{
+        ...getSectionStyle({collapsed: true, centered: true}),
+        boxSizing: 'content-box',
+        height: TILE_MIN_HEIGHT_COMPACT,
+      }}>
+      {Array.from({length: cellCapacity(width)}, (_, i) => (
+        <Skeleton
+          key={i}
+          inline
+          width={TILE_WIDTH}
+          height={TILE_MIN_HEIGHT_COMPACT}
+          borderRadius={RADIUS.lg}
+          style={{display: 'block', flexShrink: 0}}
+        />
+      ))}
+    </div>
   );
 }
 
