@@ -331,6 +331,27 @@ describe('CollectionBinder', () => {
       expect(onSelect).not.toHaveBeenCalled();
     });
 
+    it("opens a waiting promo's scan on Enter, and Escape gives the focus back to its pocket", async () => {
+      const user = userEvent.setup();
+      render(binder({slots: [WAITING_HADES]}));
+      const pocket = screen.getByRole('button', {name: HADES_NAME});
+      act(() => pocket.focus());
+      await user.keyboard('{Enter}');
+      expect(screen.getByRole('dialog', {name: /^Enlarged view of Hades/})).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(pocket).toHaveFocus();
+    });
+
+    it("closes a waiting promo's scan on a click outside it, without opening it again", () => {
+      render(binder({slots: [WAITING_HADES]}));
+      fireEvent.click(screen.getByRole('button', {name: HADES_NAME}));
+      // DialogShell's scrim is the sibling before the dialog's wrapper (#510).
+      const scrim = screen.getByRole('dialog').parentElement?.previousElementSibling;
+      fireEvent.click(scrim!);
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
     it("takes a waiting promo's pocket into the arrow keys, as a card's, past an open pocket", async () => {
       const user = userEvent.setup();
       render(
