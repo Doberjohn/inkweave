@@ -5,6 +5,7 @@ import {AppLayout} from './AppLayout';
 import {RevealsGate} from './features/reveals';
 import {HomePageSkeleton} from './pages/HomePageSkeleton';
 import {COLORS, RADIUS, SPACING} from './shared/constants';
+import {useResponsive} from './shared/hooks/useResponsive';
 import {lazyWithRetry} from './shared/lib/lazyWithRetry';
 import {withSpeedInsightsRoutes} from './shared/lib/speedInsightsRoute';
 import {SHOW_COLLECTION} from './features/collection/flag';
@@ -80,6 +81,12 @@ function GenericFallback() {
   );
 }
 
+/** The `/` fallback, in the layout HomePage will use: a phone gets the phone skeleton (#914). */
+function HomeFallback() {
+  const {isMobile} = useResponsive();
+  return <HomePageSkeleton isMobile={isMobile} />;
+}
+
 function SuspenseWrapper({children, fallback}: {children: React.ReactNode; fallback?: React.ReactNode}) {
   return <Suspense fallback={fallback ?? <GenericFallback />}>{children}</Suspense>;
 }
@@ -111,7 +118,7 @@ const routes: RouteObject[] = [
       {
         index: true,
         element: (
-          <SuspenseWrapper fallback={<HomePageSkeleton />}>
+          <SuspenseWrapper fallback={<HomeFallback />}>
             <HomePage />
           </SuspenseWrapper>
         ),

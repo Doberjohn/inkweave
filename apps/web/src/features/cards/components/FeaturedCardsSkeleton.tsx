@@ -8,6 +8,12 @@ import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder'
 export const FEATURED_PHONE_PADDING_BOTTOM = 48;
 
 /**
+ * The section's top and bottom margin, past the spacing scale's top step (SPACING.xxxl, 32).
+ * The loaded row and the skeleton share it, so the heading stays put when the cards land (#914).
+ */
+export const FEATURED_MARGIN = 50;
+
+/**
  * Skeleton row for the landing page's "Popular Synergy Starters" section.
  *
  * Used both by:
@@ -35,7 +41,7 @@ export function FeaturedCardsSkeleton({isMobile = false}: FeaturedCardsSkeletonP
       style={{
         width: isMobile ? '100%' : 1280,
         maxWidth: '100%',
-        margin: '0 auto',
+        margin: `${FEATURED_MARGIN}px auto`,
         padding: isMobile
           ? `0 ${SPACING.lg}px ${FEATURED_PHONE_PADDING_BOTTOM}px`
           : `0 ${SPACING.xxxl}px`,

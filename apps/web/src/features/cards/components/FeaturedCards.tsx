@@ -1,14 +1,12 @@
 import type {LorcanaCard} from '../types';
 import {cardPath} from 'inkweave-synergy-engine/card';
 import {CardTile} from './CardTile';
-import {FEATURED_PHONE_PADDING_BOTTOM, FeaturedCardsSkeleton} from './FeaturedCardsSkeleton';
+import {FEATURED_MARGIN, FEATURED_PHONE_PADDING_BOTTOM, FeaturedCardsSkeleton} from './FeaturedCardsSkeleton';
 import {FEATURED_IDS, pickFeatured, useFeaturedCardsFile} from '../featured';
 import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import {RenderProfiler} from '../../../shared/components';
 
 const FEATURED_COUNT = FEATURED_IDS.length;
-// The section's top and bottom margin, past the spacing scale's top step (SPACING.xxxl, 32).
-const FEATURED_MARGIN = 50;
 
 interface FeaturedCardsProps {
   cards: LorcanaCard[];
