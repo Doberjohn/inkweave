@@ -30,6 +30,7 @@
     "generate-card-slug-map": "node scripts/generate-card-slug-map.mjs",
     "generate-collection-data": "node scripts/generate-collection-data.mjs",
     "prerender": "node scripts/prerender.mjs",
+    "check:prerender-handoff": "node scripts/check-prerender-handoff.mjs",
     "test:scripts": "vitest run --config vitest.scripts.config.mjs",
     "mine-rules": "pnpm build:engine && node scripts/mine-rule-candidates.mjs",
     "refresh-rule-coverage": "pnpm build:engine && node scripts/refresh-rule-coverage.mjs",

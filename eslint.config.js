@@ -17,9 +17,17 @@ export default tseslint.config(
     },
   },
   {
-    // Its page.addInitScript and page.waitForFunction callbacks run in the crawled page, not Node.
-    files: ['scripts/prerender.mjs'],
-    languageOptions: {globals: {window: 'readonly', document: 'readonly'}},
+    // Their page.addInitScript, page.evaluate and page.waitForFunction callbacks run in the
+    // browser's page, not Node.
+    files: ['scripts/prerender.mjs', 'scripts/check-prerender-handoff.mjs'],
+    languageOptions: {
+      globals: {
+        window: 'readonly',
+        document: 'readonly',
+        getComputedStyle: 'readonly',
+        requestAnimationFrame: 'readonly',
+      },
+    },
   },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],

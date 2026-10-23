@@ -23,6 +23,7 @@ import {readFile, writeFile, mkdir} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
 import {resolve, dirname, join, extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {contentType} from './lib/mime.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
@@ -42,25 +43,6 @@ const ANIMATED_LOGO_SRC = '/brand/logo-animated.svg';
 // The script tag <SpeedInsights /> adds to <head> at runtime, matched by its SDK name rather
 // than its src, which varies by environment. cleanPrerenderedHtml drops it.
 const SPEED_INSIGHTS_SCRIPT = /<script\b[^>]*\bdata-sdkn="@vercel\/speed-insights[^"]*"[^>]*><\/script>/g;
-
-const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript',
-  '.mjs': 'text/javascript',
-  '.css': 'text/css',
-  '.json': 'application/json',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.avif': 'image/avif',
-  '.webp': 'image/webp',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.woff2': 'font/woff2',
-  '.ico': 'image/x-icon',
-  '.webmanifest': 'application/manifest+json',
-  '.txt': 'text/plain',
-  '.xml': 'application/xml',
-};
 
 /**
  * Is a reveal season live?
@@ -140,7 +122,7 @@ async function enumerateRoutes() {
  * scripts/prerender.test.mjs.
  */
 export function fileHeaders(ext) {
-  return {'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'max-age=3600'};
+  return {'Content-Type': contentType(ext), 'Cache-Control': 'max-age=3600'};
 }
 
 /**
@@ -316,11 +298,29 @@ export async function hasReadyContent(page, selector) {
     .catch(() => false);
 }
 
+/**
+ * Mark the page with the route it was captured on, and write each select's chosen option into
+ * its markup (#915). Runs in the page through `page.evaluate`, so it uses nothing from this
+ * module; `doc` is the page's own document there, and a stand-in in scripts/prerender.test.mjs.
+ *
+ * - The mark on #root is what index.html's inline script reads: vercel.json serves the home
+ *   page's capture for every route without a file of its own, and the script empties a
+ *   capture whose mark names another route before it can paint.
+ * - A select's chosen option is a property, which `page.content()` never writes into the HTML,
+ *   so Browse's capture showed its sort menu's first option, not the one the app shows.
+ */
+export function markPrerenderedRoot(route, doc = document) {
+  doc.getElementById('root')?.setAttribute('data-prerender-route', route);
+  for (const select of doc.querySelectorAll('select')) {
+    for (const option of select.options) option.toggleAttribute('selected', option.selected);
+  }
+}
+
 const errorMessage = (e) => (e && e.message ? e.message : String(e));
 
 /**
- * One attempt at `route` on a fresh page in its worker's `context`: capture it, clean it,
- * write it, report on it.
+ * One attempt at `route` on a fresh page in its worker's `context`: mark it, capture it, clean
+ * it, write it, report on it.
  */
 async function crawlRouteOnce(context, route, selector) {
   let page;
@@ -347,6 +347,7 @@ async function crawlRouteOnce(context, route, selector) {
       .then(() => true)
       .catch(() => false);
     const contentReady = await hasReadyContent(page, selector);
+    await page.evaluate(markPrerenderedRoot, route);
     const html = cleanPrerenderedHtml(
       await page.content(),
       SHELL_TITLE,

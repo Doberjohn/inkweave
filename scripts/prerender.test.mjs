@@ -1,3 +1,4 @@
+import {createRequire} from 'node:module';
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {
   CARD_READY_SELECTOR,
@@ -7,9 +8,13 @@ import {
   hasReadyContent,
   isCleanShell,
   isRevealSeasonActive,
+  markPrerenderedRoot,
   READY_SELECTORS,
   readySelectorFor,
 } from './prerender.mjs';
+
+// jsdom is apps/web's (its Vitest DOM): a root script can't see it otherwise, as with Playwright.
+const {JSDOM} = createRequire(new URL('../apps/web/package.json', import.meta.url))('jsdom');
 
 const SHELL = 'Inkweave — Master Lorcana Synergies';
 const ORIGIN = 'http://localhost:4179';
@@ -89,6 +94,52 @@ describe('cleanPrerenderedHtml', () => {
     expect(cleanPrerenderedHtml(html, SHELL, ORIGIN)).toBe(
       `<html><head><title>Real</title>${analytics}</head><body>x</body></html>`,
     );
+  });
+});
+
+/**
+ * What the crawl writes into a page just before capturing it (#915), against a jsdom document
+ * standing in for the page's own.
+ */
+describe('markPrerenderedRoot', () => {
+  const documentOf = (body) =>
+    new JSDOM(`<!doctype html><html><body>${body}</body></html>`).window.document;
+
+  it('marks #root with the route the page was captured on', () => {
+    const doc = documentOf('<div id="root"><h1>Browse</h1></div>');
+    markPrerenderedRoot('/browse', doc);
+    expect(doc.body.innerHTML).toBe(
+      '<div id="root" data-prerender-route="/browse"><h1>Browse</h1></div>',
+    );
+  });
+
+  it('writes the option each select shows into its markup, and takes it off the others', () => {
+    // React picks an option through the select's `value` property, which the markup never shows,
+    // so Browse's captured sort menu showed its first option rather than the app's.
+    const doc = documentOf(
+      '<div id="root"><select><option value="color" selected>Color, then Cost</option>' +
+        '<option value="newest">Newest first</option></select></div>',
+    );
+    doc.querySelector('select').value = 'newest';
+    markPrerenderedRoot('/browse', doc);
+    expect(doc.querySelector('select').outerHTML).toBe(
+      '<select><option value="color">Color, then Cost</option>' +
+        '<option value="newest" selected="">Newest first</option></select>',
+    );
+  });
+
+  it('marks nothing on a page without #root, rather than throwing', () => {
+    const doc = documentOf('<main>Error</main>');
+    markPrerenderedRoot('/', doc);
+    expect(doc.body.innerHTML).toBe('<main>Error</main>');
+  });
+
+  it('runs from its own source, as page.evaluate runs it in the page', () => {
+    // page.evaluate sends the function's text, so a name from this module's scope would throw there.
+    const doc = documentOf('<div id="root"></div>');
+    const fromSource = new Function(`return (${markPrerenderedRoot})`)();
+    fromSource('/', doc);
+    expect(doc.getElementById('root').getAttribute('data-prerender-route')).toBe('/');
   });
 });
 
