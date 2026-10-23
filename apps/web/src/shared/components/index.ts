@@ -48,6 +48,7 @@ export {Footer} from './Footer';
 export {Header} from './Header';
 export {LegalPage, legalH2Style, legalLinkStyle} from './LegalPage';
 export {HeroSection} from './HeroSection';
+export {InkCardPlaceholder} from './InkCardPlaceholder';
 export {InkIcon} from './InkIcon';
 export {PencilIcon} from './PencilIcon';
 export {Seo} from './Seo';

@@ -1,4 +1,5 @@
 import {CardImage} from '../../../shared/components';
+import {EASING} from '../../../shared/constants';
 import type {PairPreview} from '../hooks/usePairQueue';
 
 interface PairStackProps {
@@ -15,6 +16,8 @@ const STACK_CONFIG = [
 const CARD_WIDTH = 240;
 const CARD_HEIGHT = 335;
 const CARD_GAP = 40;
+// The room between the stacked pairs, past the spacing scale's top step (SPACING.xxxl, 32).
+const STACK_GAP = 48;
 
 export function PairStack({pairs, side}: PairStackProps) {
   if (pairs.length === 0) return null;
@@ -27,7 +30,7 @@ export function PairStack({pairs, side}: PairStackProps) {
         display: 'flex',
         flexDirection: isLeft ? 'row-reverse' : 'row',
         alignItems: 'center',
-        gap: 48,
+        gap: STACK_GAP,
         pointerEvents: 'none',
         flexShrink: 0,
       }}>
@@ -47,7 +50,7 @@ export function PairStack({pairs, side}: PairStackProps) {
               gap,
               transform: `rotate(${tilt}deg)`,
               opacity: config.opacity,
-              transition: 'opacity 0.5s ease, transform 0.5s ease',
+              transition: `opacity 0.5s ${EASING.smooth}, transform 0.5s ${EASING.smooth}`,
             }}>
             <CardImage
               src={pair.cardA.imageUrl}
@@ -55,6 +58,7 @@ export function PairStack({pairs, side}: PairStackProps) {
               width={w}
               height={h}
               inkColor={pair.cardA.ink}
+              inkColor2={pair.cardA.ink2}
               cost={pair.cardA.cost}
               borderRadius={8}
             />
@@ -64,6 +68,7 @@ export function PairStack({pairs, side}: PairStackProps) {
               width={w}
               height={h}
               inkColor={pair.cardB.ink}
+              inkColor2={pair.cardB.ink2}
               cost={pair.cardB.cost}
               borderRadius={8}
             />

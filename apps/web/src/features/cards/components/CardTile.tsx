@@ -1,10 +1,9 @@
 import {useState, type CSSProperties, type MouseEvent, type ReactNode} from 'react';
-import Skeleton from 'react-loading-skeleton';
 import type {CardPrinting} from 'inkweave-synergy-engine';
 import type {LorcanaCard} from '../types';
+import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
 import {
   INK_COLORS,
-  COLORS,
   CARD_TILE_GLOW,
   EASING,
   FONT_SIZES,
@@ -107,11 +106,14 @@ function tileName(card: LorcanaCard, printing: CardPrinting | undefined): string
   return card.fullName || card.name;
 }
 
-/** Artwork (the card's, or a printing's) with a load skeleton, falling back to the ink-tinted cost badge on error/no src. */
+/**
+ * Artwork (the card's, or a printing's) over its ink placeholder while it loads, falling back
+ * to the ink-tinted cost badge on error/no src.
+ */
 function CardTileImage({
   art,
   name,
-  cost,
+  card,
   colors,
   useSmall,
   priority,
@@ -119,8 +121,8 @@ function CardTileImage({
   art: Pick<LorcanaCard, 'id' | 'imageUrl' | 'imageHashSm'>;
   /** The image's alt text (`tileName`). */
   name: string;
-  /** Shown on the fallback badge. */
-  cost: number;
+  /** The card: its inks tint the placeholder, its cost goes on the fallback badge. */
+  card: Pick<LorcanaCard, 'ink' | 'ink2' | 'cost'>;
   colors: InkColors;
   useSmall?: boolean;
   priority?: boolean;
@@ -145,23 +147,14 @@ function CardTileImage({
           justifyContent: 'center',
         }}>
         <span style={{fontSize: `${FONT_SIZES.xxxl}px`, fontWeight: 600, color: colors.text}}>
-          {cost}
+          {card.cost}
         </span>
       </div>
     );
   }
   return (
     <>
-      {!imgLoaded && (
-        <Skeleton
-          width="100%"
-          height="100%"
-          borderRadius={0}
-          baseColor={COLORS.surfaceAlt}
-          highlightColor={COLORS.surfaceHover}
-          style={{position: 'absolute', inset: 0, display: 'block'}}
-        />
-      )}
+      {!imgLoaded && <InkCardPlaceholder ink={card.ink} ink2={card.ink2} />}
       <img
         className="card-tile-img"
         src={imgSrc}
@@ -292,7 +285,7 @@ export function CardTile({
       key={(printing ?? card).id}
       art={printing ?? card}
       name={name}
-      cost={card.cost}
+      card={card}
       colors={colors}
       useSmall={useSmall}
       priority={priority}

@@ -133,6 +133,7 @@ function CardDetailArt({card}: {card: LorcanaCard}) {
           width={ART_WIDTH}
           height={ART_HEIGHT}
           inkColor={card.ink}
+          inkColor2={card.ink2}
           cost={card.cost}
           lazy={false}
           priority

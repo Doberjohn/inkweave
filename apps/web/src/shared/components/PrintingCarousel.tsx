@@ -452,6 +452,7 @@ function PrintingSlide({
       width={size.width}
       height={size.height}
       inkColor={card.ink}
+      inkColor2={card.ink2}
       cost={card.cost}
       lazy={!first}
       priority={first ? priority : undefined}

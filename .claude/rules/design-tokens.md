@@ -31,7 +31,7 @@ One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spr
 - **Disabled** = `DISABLED_STYLE`, everywhere. **Press** = `scale(${PRESS_SCALE})`.
 - **EASING intent**: `snappy` hover/fast, `bounce` selection/press, `smooth` fades/progress.
 - **Reduced motion**: one source — `shared/utils/prefersReducedMotion` (fn for trigger-time, hook for render gating). No new hand-rolled `matchMedia` checks; new infinite animations MUST have a class in index.css's reduced-motion block. `useBoop` is already guarded.
-- **Loading states**: skeleton for layout-known surfaces (one app-level `SkeletonTheme` in AppLayout — never add local wrappers), text for unknown shapes, spinner only for the SW toast.
+- **Loading states**: skeleton for layout-known surfaces (one app-level `SkeletonTheme` in AppLayout — never add local wrappers), text for unknown shapes, spinner only for the SW toast. Card art is the exception: while a card's art loads, its place holds `InkCardPlaceholder` (shared/components), never a grey `Skeleton`. Pass the card's `ink` and `ink2` once the card is known; before that (a card list still loading), pass none for the neutral tile. Its parent sets the size and corner radius. Like every placeholder it is static (#639).
 - **`surfaceHover` is overloaded** (six jobs); do not add new ones — aliases are deferred to a future ruling.
 
 ## Related

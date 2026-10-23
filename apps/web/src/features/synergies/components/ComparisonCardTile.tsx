@@ -1,5 +1,6 @@
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, GOLD_GLOW, INK_COLORS, RADIUS, blackRgba, hexRgba} from '../../../shared/constants';
+import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
 
 interface ComparisonCardTileProps {
   card: LorcanaCard;
@@ -24,6 +25,7 @@ export function ComparisonCardTile({card, which, onTap, tileRef}: ComparisonCard
       aria-label={`Enlarge ${card.fullName}`}
       onClick={handleClick}
       style={{...CARD_TILE_STYLE, borderColor: inkBorderTint(card.ink)}}>
+      <InkCardPlaceholder ink={card.ink} ink2={card.ink2} />
       <img src={card.imageUrl} alt={card.fullName} style={CARD_IMG_STYLE} />
       <span aria-hidden="true" style={MAGNIFY_HINT_STYLE}>
         <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
@@ -59,7 +61,9 @@ const CARD_TILE_STYLE: React.CSSProperties = {
   fontFamily: 'inherit',
 };
 
+/** Positioned, so the art, once it loads, lies over the ink placeholder before it. */
 const CARD_IMG_STYLE: React.CSSProperties = {
+  position: 'relative',
   width: '100%',
   height: '100%',
   objectFit: 'cover',
