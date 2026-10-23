@@ -7046,7 +7046,19 @@
         "full": "https://api.lorcana.ravensburger.com/images/en/set9/157_eaeb55e9d18d272a77d88764fd4fa54f8324eda1.jpg"
       },
       "imageHash": "c589d2d64819935d",
-      "imageHashSm": "d2542d039d02ee4a"
+      "imageHashSm": "d2542d039d02ee4a",
+      "variants": [
+        {
+          "id": 80057,
+          "rarity": "Special",
+          "number": 44,
+          "promoGrouping": "P2",
+          "scanLanguage": "ja",
+          "finishes": [
+            "foil"
+          ]
+        }
+      ]
     },
     {
       "id": 2094,
