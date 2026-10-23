@@ -44,16 +44,24 @@
 
     <!-- Prerendered pages (#915): a captured #root stays hidden until the script after it
          approves its route; on any other route the script empties it. Opacity as well as
-         visibility, since a descendant can set its own visibility back. -->
+         visibility, since a descendant can set its own visibility back. A phone doesn't lay
+         it out at all, so the desktop capture's lazy images never load there: the script
+         swaps the phone capture in first. -->
     <style>
       #root[data-prerender-route]:not([data-ready]) {
         visibility: hidden;
         opacity: 0;
       }
+      @media (max-width: 767.98px) {
+        #root[data-prerender-route]:not([data-ready]) {
+          display: none;
+        }
+      }
     </style>
     <noscript>
       <style>
         #root[data-prerender-route] {
+          display: block !important;
           visibility: visible !important;
           opacity: 1 !important;
         }
@@ -103,13 +111,16 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- Approves a prerendered #root on its own route and empties it on any other (#915).
+    <!-- Approves a prerendered #root on its own route and empties it on any other (#915). On a
+         phone it first swaps in the phone capture the crawl puts in a template after #root.
          Classic and inline, so it runs as soon as the parser reaches it. -->
     <script>
       (function () {
         var root = document.getElementById('root');
         var route = root && root.getAttribute('data-prerender-route');
         if (!route) return;
+        var phone = document.getElementById('prerender-phone');
+        if (phone) phone.remove();
         var path = location.pathname;
         try {
           // A segment at a time, as React Router decodes a path to match it: an encoded slash
@@ -128,6 +139,10 @@
           root.replaceChildren();
           root.removeAttribute('data-prerender-route');
           return;
+        }
+        if (phone && matchMedia('(max-width: 767.98px)').matches) {
+          root.replaceChildren(phone.content);
+          root.setAttribute('data-layout', 'phone');
         }
         root.setAttribute('data-ready', '');
       })();
