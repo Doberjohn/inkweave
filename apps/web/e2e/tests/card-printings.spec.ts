@@ -63,13 +63,16 @@ async function withFourPrintings(page: Page) {
 
 /**
  * The card window's art height, top and bottom, and its Next arrow's middle, measured once the
- * window has finished scaling in (it opens from 95%).
+ * window has finished scaling in (it opens from 95%) and its card's synergies are in.
  */
 async function windowGeometry(page: Page) {
   const modal = page.getByTestId('card-overview-modal');
   await expect
     .poll(() => modal.evaluate((el) => getComputedStyle(el).transform))
     .toMatch(/^(none|matrix\(1, 0, 0, 1, 0, 0\))$/);
+  // The synergies' filter chips stand over the body once they load: a card measured while its
+  // file is on the way reads shorter.
+  await expect(modal.getByTestId('card-overview-loading')).toHaveCount(0);
   const [art, shell, arrow] = await Promise.all([
     modal.locator('[data-comparison-card-a]').boundingBox(),
     modal.boundingBox(),
@@ -123,7 +126,8 @@ test.describe('Card printings (desktop)', () => {
     page,
   }, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
-    // "father" matches four cards, so the modal has siblings the arrow keys would otherwise page to.
+    // "father" matches seven cards, four Core and three from sets 1-8 (#911), so the modal has
+    // siblings the arrow keys would otherwise page to.
     await page.goto('/browse?q=father');
     await page.getByRole('link', {name: CARD_NAME}).click();
     const modal = appPage.cardOverviewModal;
@@ -181,8 +185,10 @@ test.describe('Card printings (desktop)', () => {
     page,
   }, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
-    // "father" matches four cards: the fixture card, with its printings, and three without.
-    await page.goto('/browse?q=father');
+    // "father" matches four Core cards, in sets 9 to 11: the fixture card, with its printings, and
+    // three without. The Set filter keeps out the three from sets 1-8 the search also lists (#911),
+    // whose Outside Core window has no synergy chips over its body, so it stands shorter.
+    await page.goto('/browse?q=father&set=9,10,11');
     await page.getByRole('link', {name: CARD_NAME}).click();
     const modal = appPage.cardOverviewModal;
     const title = modal.locator('h1');

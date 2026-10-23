@@ -25,6 +25,7 @@ import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
 import type {BrowseCollectionSlots, BrowseListing} from '../features/collection/useBrowseCollection';
 import {browseView, gridModalTarget, printingIdsFor, tilePrintingFor} from './browseView';
+import {usePreCoreSearchCards} from './preCoreSearch';
 
 // =====================================================================
 // Subcomponents — local to this file. Keep BrowsePage's render small
@@ -70,6 +71,8 @@ interface BrowseContentSectionProps {
   onCardSelect: (card: LorcanaCard) => void;
   /** The printing a grid tile shows instead of its card's own art (a picked Enchanted, say). */
   printingFor?: (card: LorcanaCard) => CardPrinting | undefined;
+  /** Whether a grid tile's card has a page to link to: a sets 1-8 card in search results has none (#911). */
+  hasCardPage?: (card: LorcanaCard) => boolean;
   /** Collection mode's content. When set, it replaces the grid entirely. */
   binder?: React.ReactNode;
   /** The docked filters panel (desktop, while open), left of the grid or binder. */
@@ -85,6 +88,7 @@ function BrowseContentSection({
   isLoading,
   onCardSelect,
   printingFor,
+  hasCardPage,
   binder,
   sidePanel,
   setPanel,
@@ -121,13 +125,26 @@ function BrowseContentSection({
       <DockedPanelsRow left={sidePanel} right={setPanel}>
         <ErrorBoundary>
           {binder ?? (
-            <BrowseCardGrid cards={cards} isLoading={isLoading} onCardSelect={onCardSelect} printingFor={printingFor} />
+            <BrowseCardGrid
+              cards={cards}
+              isLoading={isLoading}
+              onCardSelect={onCardSelect}
+              printingFor={printingFor}
+              hasCardPage={hasCardPage}
+            />
           )}
         </ErrorBoundary>
       </DockedPanelsRow>
     </div>
   );
 }
+
+/** The grid's listing, with how the card window opens each of its cards. */
+type GridListing = BrowseListing & {
+  printingFor: (cardId: string) => string | undefined;
+  /** The sets 1-8 cards a search lists (#911), which CardDataContext cannot resolve. */
+  resolveCard: (cardId: string) => LorcanaCard | undefined;
+};
 
 /**
  * Open a card from Browse. The binder holds cards CardDataContext cannot resolve,
@@ -138,10 +155,12 @@ function BrowseContentSection({
 function openFromBrowse(
   openCardModal: ReturnType<typeof useCardModal>['openCardModal'],
   cardId: string,
-  listing: BrowseListing & {printingFor: (cardId: string) => string | undefined},
+  listing: GridListing,
   collection: BrowseCollectionSlots | null,
 ) {
-  const target = collection?.modalTarget?.(cardId, listing) ?? gridModalTarget(cardId, listing.cards, listing.printingFor);
+  const target =
+    collection?.modalTarget?.(cardId, listing) ??
+    gridModalTarget(cardId, listing.cards, listing.printingFor, listing.resolveCard);
   openCardModal(target.cardId, target.siblingIds, target.options);
 }
 
@@ -294,6 +313,25 @@ function collectionToolbar(docked: boolean, collection: BrowseCollectionSlots | 
   };
 }
 
+/**
+ * The sets 1-8 cards Browse's search lists beside Core's (#911), outside the binder, whose pool
+ * holds them already: the cards, lookups over both lists, and whether a tile's card has a page.
+ */
+function useSearchCards(
+  searchQuery: string,
+  binderShows: boolean,
+  getCardById: (id: string) => LorcanaCard | undefined,
+) {
+  const preCore = usePreCoreSearchCards(searchQuery.trim() !== '' && !binderShows);
+  return {
+    cards: preCore.cards,
+    isLoading: preCore.isLoading,
+    findCard: (id: string) => getCardById(id) ?? preCore.byId.get(id),
+    resolveCard: (id: string) => preCore.byId.get(id),
+    hasCardPage: (card: LorcanaCard) => getCardById(card.baseId ?? card.id) !== undefined,
+  };
+}
+
 /** Browse's content, with collection mode's slots when the page wires them in (`BrowseCollectionPage`). */
 export function BrowseBody({collection}: {collection: BrowseCollectionSlots | null}) {
   const {openCardModal} = useCardModal();
@@ -304,18 +342,24 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
   const [showFilters, setShowFilters] = useState(false);
   const docked = useSidePanelDocked();
   const panel = useSidePanelState();
+  const search = useSearchCards(params.searchQuery, collection?.active ?? false, getCardById);
   useFocusSearchParam(isMobile);
 
   if (error) return <BrowsePageError onRetry={retryLoad} />;
 
   const {filters} = params;
-  const {rarities, binderOptions, sortedCards, matchedCards, filtered} = browseView(collection, cards, params);
+  const {rarities, binderOptions, sortedCards, matchedCards, filtered} = browseView(
+    collection,
+    cards,
+    params,
+    search.cards,
+  );
   const listing = {cards: sortedCards, sortOrder: params.sortOrder, matched: matchedCards, filtered};
   const selectCard = (card: LorcanaCard) => {
-    // A binder card from outside Core is not in CardDataContext: count the card handed over.
+    // A card from outside Core is not in CardDataContext: count the card handed over.
     trackCardSelected(getCardById(card.id) ?? card, 'browse');
-    const printingFor = printingIdsFor(getCardById, filters.rarities);
-    openFromBrowse(openCardModal, card.id, {...listing, printingFor}, collection);
+    const printingFor = printingIdsFor(search.findCard, filters.rarities);
+    openFromBrowse(openCardModal, card.id, {...listing, printingFor, resolveCard: search.resolveCard}, collection);
   };
 
   const binder = collection?.renderBinder(listing, selectCard) ?? undefined;
@@ -361,9 +405,11 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
     }),
     setPanel: dockedSetPanel(docked, collection?.renderSetPanel(listing)),
     cards: sortedCards,
-    isLoading,
+    // While sets 1-8 load, a search only they match would otherwise read "No cards match".
+    isLoading: isLoading || (search.isLoading && sortedCards.length === 0),
     onCardSelect: selectCard,
-    printingFor: tilePrintingFor(getCardById, filters.rarities),
+    printingFor: tilePrintingFor(search.findCard, filters.rarities),
+    hasCardPage: search.hasCardPage,
     binder,
   };
 

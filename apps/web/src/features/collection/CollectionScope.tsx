@@ -16,9 +16,10 @@ import {placementsFor} from './placeCopies';
  * so it shipped even with the flag off. As a lazy route it loads only on the pages
  * that read a collection, and never on the home page or a card page.
  *
- * Moving between `/browse` and a card page DOES remount it, which re-reads storage,
- * re-syncs with the server once and refetches the non-Core chunks (HTTP-cached);
- * that is the price of keeping it out of every other page.
+ * Moving between `/browse` and a card page DOES remount it, which re-reads storage and
+ * re-syncs with the server once; that is the price of keeping it out of every other page.
+ * The non-Core chunks it loaded come back without a request: `collectionChunks.ts` keeps
+ * each load for the visit (#911).
  *
  * ONE INSTANCE FOR BOTH PAGES still holds: a pathless layout route stays mounted
  * while you move between its children, so an import on `/account` is already in

@@ -1,5 +1,8 @@
 import {test, expect} from '../fixtures';
 
+/** The collection files a search downloads: sets 1-8 and the promo catalog (#911). */
+const PRE_CORE_FILES = ['1', '2', '3', '4', '5', '6', '7', '8', 'promos'].map((file) => `/data/collection/${file}.json`);
+
 test.describe('Card Search and Filtering', () => {
   // Desktop-only: tests hero search and browse page routing
   test.beforeEach(async ({appPage}, testInfo) => {
@@ -103,5 +106,58 @@ test.describe('Card Search and Filtering', () => {
     // and the query syncs to the URL.
     await expect(page).toHaveURL(/\/playstyles\/ramp/);
     await expect(page).toHaveURL(/q=elsa/);
+  });
+
+  test("a search lists the sets 1-8 cards Core doesn't have, opened in the card window (#911)", async ({page}) => {
+    // The grid is virtual, rendering only the rows in view, so each search here names one card.
+    await page.goto('/browse?q=Ariel+On+Human');
+    const tiles = page.getByTestId('card-tile');
+
+    // A Set 1 card has no page: its tile is a button, and its window says it is outside Core.
+    await page.getByRole('button', {name: 'Ariel - On Human Legs', exact: true}).click();
+    const modal = page.getByTestId('card-overview-modal');
+    await expect(modal.locator('h1')).toHaveText('Ariel - On Human Legs');
+    await expect(modal.getByTestId('card-overview-outside-core')).toBeVisible();
+    // The dialog moves focus to its × 100ms after opening; a 100ms timer set now runs after it.
+    await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    await page.keyboard.press('Escape');
+    await expect(modal).toHaveCount(0);
+
+    // Set 4's Ariel - Singing Mermaid is the Core card Set 9 reprints: one tile, linking to its page.
+    await page.getByTestId('browse-search').fill('Ariel Singing Mermaid');
+    await expect(tiles).toHaveCount(1);
+    await expect(tiles).toHaveAttribute('href', /^\/card\/\d+\/ariel-singing-mermaid$/);
+  });
+
+  test('a search downloads sets 1-8 and the promos once, and never sets 9-14 (#911)', async ({page}, testInfo) => {
+    // One project is enough: this asserts what the network requests, as collection-mode.spec.ts's
+    // request tests do, and the five-browser matrix would only repeat it.
+    if (testInfo.project.name !== 'chromium') test.skip();
+    const requests: string[] = [];
+    page.on('request', (request) => requests.push(new URL(request.url()).pathname));
+    const collectionFiles = () => requests.filter((pathname) => pathname.startsWith('/data/collection/'));
+    const tiles = page.getByTestId('card-tile');
+
+    await page.goto('/browse');
+    await expect(tiles.first()).toBeVisible();
+    expect(collectionFiles()).toEqual([]);
+
+    // The box shows the URL's query, which each change sets in a transition: each fill waits for
+    // the URL, or the next one could land on the box while it still shows the query before.
+    const search = page.getByTestId('browse-search');
+    await search.fill('Ariel');
+    await expect(page).toHaveURL(/[?&]q=Ariel(&|$)/);
+    // A Set 1 card among the results: the search's cards have landed. A longer query, and a new
+    // search once the box is emptied, reuse them.
+    await search.fill('Ariel On Human');
+    await expect(page.getByRole('button', {name: 'Ariel - On Human Legs', exact: true})).toBeVisible();
+    await search.fill('');
+    await expect(page).not.toHaveURL(/[?&]q=/);
+    await search.fill('Stitch');
+    await expect(page).toHaveURL(/[?&]q=Stitch(&|$)/);
+    await expect(tiles.first()).toBeVisible();
+    await page.waitForLoadState('networkidle');
+
+    expect(collectionFiles().sort()).toEqual([...PRE_CORE_FILES].sort());
   });
 });
