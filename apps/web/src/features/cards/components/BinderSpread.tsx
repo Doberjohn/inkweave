@@ -88,6 +88,11 @@ const COVER_BOARD = '/art/backgrounds/binder-cover.webp';
  * every page 48px wide, its padding and gaps alone, with each row's cards piled on one
  * another: measured at 1280x720, against Chromium's 304px. Spelled out, the columns are
  * the same in both.
+ *
+ * FIREFOX FITS THEM ONCE PER LAYOUT (#922). It reads `100cqh` on its first pass and keeps that
+ * answer, though the box may change height later in the same layout, until the box next changes
+ * size. So nothing the pages share their height with may come out a different size on that pass:
+ * the spread map under them once did (see its `FULL_CELL`), and every pocket came out 0 wide.
  */
 const PAGE_CHROME_HEIGHT = 2 * PAGE_PADDING + (PAGE_ROWS - 1) * SPACING.sm;
 const SPREAD_COLUMN = `calc((100cqh - ${PAGE_CHROME_HEIGHT}px) / ${PAGE_ROWS} * ${CARD_ASPECT})`;

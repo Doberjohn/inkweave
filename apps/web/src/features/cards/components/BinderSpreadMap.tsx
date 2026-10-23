@@ -117,6 +117,9 @@ const WINDOW = 11;
  */
 const MINI_WIDTH = 90;
 
+/** A cell in a spread at its widest (`MINI_WIDTH`): 7px across, so 9 tall. */
+const FULL_CELL = 7;
+
 /**
  * Whether the browser can round a length to whole pixels against its container: CSS
  * `round()` with container units (Chrome 125, Firefox 118, Safari 16). Where it cannot,
@@ -124,8 +127,20 @@ const MINI_WIDTH = 90;
  */
 const SNAPS = typeof CSS !== 'undefined' && CSS.supports('width', 'round(down, 1cqw, 1px)');
 
-/** A cell's width: a quarter of its page's width less the gaps, rounded down to a whole pixel. */
-const CELL_WIDTH = `round(down, (100cqw - ${3 * SPACING.xxs}px) / 4, 1px)`;
+/**
+ * A cell's width: a quarter of its page's width less the gaps, rounded down to a whole pixel,
+ * and never wider than a full cell.
+ *
+ * NEVER WIDER THAN A FULL CELL, FOR FIREFOX (#922). Until a page has been laid out, Firefox
+ * reads its `100cqw` as the window's width, so on that first pass each cell came out hundreds
+ * of pixels wide and tall, and the map took all the height the binder's pages had above it.
+ * Firefox fits the pages' pockets to the height their box has on that pass (`SPREAD_COLUMN` in
+ * `BinderSpread`), and fits them again only when the box next changes size, which it never did
+ * where the window's height runs out first: at 1920x900 every pocket had no width, and the cards
+ * piled up. Capped, that pass draws the map at its full size, as it is drawn wherever the height
+ * runs out first (1920x900, 2560x1080), so the pages get their real height.
+ */
+const CELL_WIDTH = `min(${FULL_CELL}px, round(down, (100cqw - ${3 * SPACING.xxs}px) / 4, 1px))`;
 
 /** A cell's size: whole pixels, its height the nearest to a card's shape (7 by 9 at the widest). */
 const CELL_BOX: CSSProperties = SNAPS
