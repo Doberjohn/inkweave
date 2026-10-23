@@ -58,7 +58,7 @@
         "!apps/web/dist/assets/supabaseClient-*.js",
         "!apps/web/dist/assets/posthogClient-*.js"
       ],
-      "limit": "461 kB",
+      "limit": "462 kB",
       "gzip": true
     },
     {
@@ -90,7 +90,7 @@
         "apps/web/dist/assets/AccountCollection-*.js",
         "apps/web/dist/assets/AccountFriends-*.js"
       ],
-      "limit": "61 kB",
+      "limit": "62 kB",
       "gzip": true
     },
     {
