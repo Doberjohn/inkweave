@@ -15,6 +15,12 @@ interface BrowseCardGridProps {
   onCardSelect: (card: LorcanaCard) => void;
   /** The printing a card's tile shows instead of its own art (see `CardTile`'s `printing`). */
   printingFor?: (card: LorcanaCard) => CardPrinting | undefined;
+  /**
+   * Whether a tile's card has a page to link to: by default every card does. A sets 1-8 card
+   * in Browse's search results has none (#911), so its tile is a button that opens the card
+   * window, and never a link to "Card not found".
+   */
+  hasCardPage?: (card: LorcanaCard) => boolean;
 }
 
 interface ListContainerProps {
@@ -71,7 +77,15 @@ const GridFooter = () => <div style={{height: SPACING.xxl}} />;
  */
 const tilePath = (card: LorcanaCard) => cardPath({id: card.baseId ?? card.id, fullName: card.fullName});
 
-export function BrowseCardGrid({cards, isLoading, onCardSelect, printingFor}: BrowseCardGridProps) {
+const everyCardHasAPage = () => true;
+
+export function BrowseCardGrid({
+  cards,
+  isLoading,
+  onCardSelect,
+  printingFor,
+  hasCardPage = everyCardHasAPage,
+}: BrowseCardGridProps) {
   const {isMobile} = useResponsive();
   const paddingX = isMobile ? SPACING.lg : BROWSE_GUTTER;
   const minColWidth = isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth;
@@ -104,18 +118,21 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect, printingFor}: Br
       <VirtuosoGrid
         totalCount={displayedCards.length}
         components={{List: ListContainer, Header: GridHeader, Footer: GridFooter}}
-        itemContent={(index) => (
-          <CardTile
-            card={displayedCards[index]}
-            href={tilePath(displayedCards[index])}
-            isSelected={false}
-            onSelect={onCardSelect}
-            variant="minimal"
-            priority={index < 6}
-            useSmallImage
-            printing={printingFor?.(displayedCards[index])}
-          />
-        )}
+        itemContent={(index) => {
+          const card = displayedCards[index];
+          // No `isSelected`: a card without a page is a plain button that opens it, not a toggle.
+          return (
+            <CardTile
+              card={card}
+              href={hasCardPage(card) ? tilePath(card) : undefined}
+              onSelect={onCardSelect}
+              variant="minimal"
+              priority={index < 6}
+              useSmallImage
+              printing={printingFor?.(card)}
+            />
+          );
+        }}
         style={{height: '100%'}}
       />
     </RenderProfiler>
