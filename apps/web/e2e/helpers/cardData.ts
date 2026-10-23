@@ -89,8 +89,7 @@ export function longestPlainNamedCoreCharacter(): {id: string; fullName: string;
   const card = allCards.cards
     .filter((c) => Number(c.setCode) >= MIN_CORE_SET && c.type === 'Character' && PLAIN_NAME.test(c.fullName))
     .reduce((longest, c) => (c.fullName.length > longest.fullName.length ? c : longest));
-  const slug = card.fullName.toLowerCase().split(/[^a-z]+/).join('-');
-  return {id: String(card.id), fullName: card.fullName, path: `/card/${card.id}/${slug}`};
+  return {id: String(card.id), fullName: card.fullName, path: cardPath(card)};
 }
 
 /** Every card's full name and its card page's address (`cardPath`, slug and all). */

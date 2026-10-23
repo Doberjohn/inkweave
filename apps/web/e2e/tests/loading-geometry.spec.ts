@@ -156,6 +156,39 @@ test("on a 360 px phone, the playstyle toolbar's two rows hold the grid in place
   await expectPlaystyleGridInPlace(page, 'ramp');
 });
 
+/** Every box the locator matches, in document order, once the page's fonts have loaded. */
+async function boxesOf(locator: Locator): Promise<Box[]> {
+  await locator.page().evaluate(() => document.fonts.ready.then(() => undefined));
+  return locator.evaluateAll((elements) =>
+    elements.map((element) => {
+      const {x, y, width, height} = element.getBoundingClientRect();
+      return {x, y, width, height};
+    }),
+  );
+}
+
+// At 1920 px the desktop mechanics row reaches its widest box, where its padding decides how many tiles fit.
+for (const width of [DESKTOP.width, 1920]) {
+  test(`at ${width} px, the mechanics row's placeholders sit in the loaded row's cells`, async ({page}, testInfo) => {
+    test.skip(isPhone(testInfo.project.name), 'The desktop mechanics row');
+    await page.setViewportSize({width, height: 1080});
+    const release = await hold(page, CARD_LIST);
+    // Items has more mechanics than any width fits, so its loaded row fills the row's cells.
+    await page.goto('/playstyles/items');
+    // The row sits over a gold rule, its placeholder in the same place.
+    const placeholders = page.locator('div:has(> hr) > div[aria-hidden="true"] .react-loading-skeleton');
+    await expect(placeholders.first()).toBeVisible();
+    const loading = await boxesOf(placeholders);
+
+    release();
+    const row = page.locator('section[aria-label="Mechanics"]');
+    await expect(row.getByRole('button', {name: /^Show more/})).toBeVisible();
+    const loaded = await boxesOf(row.locator(':scope > button'));
+    expect(loading.length, 'placeholders, against the loaded row cells').toBe(loaded.length);
+    loaded.forEach((box, i) => expectSameBox(box, loading[i]));
+  });
+}
+
 test("the card page's loading layout puts the card and the results where the page will", async ({page}, testInfo) => {
   // Entered by its id alone, so no name in the address: one line of name on any phone, as the
   // placeholder draws it then (the tests below enter by a card's whole address).
