@@ -9,7 +9,7 @@ const holdModalModule = (page: Page) => holdLazyModule(page, 'CardOverviewModal'
 
 test.describe('Card modal on demand', () => {
   test('a cold open shows the loading shell, then the modal takes over', async ({appPage, page}) => {
-    const release = await holdModalModule(page);
+    const {release} = await holdModalModule(page);
     await appPage.goto();
 
     await appPage.featuredCards.getByTestId('card-tile').first().click();
@@ -23,7 +23,7 @@ test.describe('Card modal on demand', () => {
   });
 
   test('the loading shell closes on a scrim click, like the modal', async ({appPage, page}) => {
-    const release = await holdModalModule(page);
+    const {release} = await holdModalModule(page);
     await appPage.goto();
 
     await appPage.featuredCards.getByTestId('card-tile').first().click();

@@ -112,30 +112,6 @@ test.describe('Mobile Viewport', () => {
     await expect(searchInput).toBeVisible();
   });
 
-  test('a search tap that beats the sheet chunk opens it, with a proxy input holding focus', async ({page}) => {
-    // Hold the lazily loaded sheet (#640), then load a page with the bottom nav from scratch. On a
-    // phone the app requests the sheet in its first render, and WebKit holds the load event until
-    // that request ends, so wait for DOMContentLoaded: a `load` wait could wait on the hold itself.
-    const release = await holdLazyModule(page, 'SearchBottomSheet');
-    await page.goto('/browse', {waitUntil: 'domcontentloaded'});
-    await page.getByRole('button', {name: 'Search cards'}).click();
-    await expect(page.getByRole('dialog', {name: 'Search cards'})).toHaveCount(0);
-
-    // The sheet (and its own proxy) doesn't exist yet, so AppLayout's hidden input takes the tap's
-    // focus: on iOS that synchronous focus is what raises the keyboard.
-    await expect
-      .poll(() =>
-        page.evaluate(() => {
-          const el = document.activeElement;
-          return el instanceof HTMLInputElement && el.getAttribute('aria-hidden') === 'true';
-        }),
-      )
-      .toBe(true);
-
-    release();
-    await expect(page.getByRole('dialog', {name: 'Search cards'})).toBeVisible({timeout: 15000});
-  });
-
   test('should close search bottom sheet on backdrop click', async ({page}) => {
     // Navigate to browse so bottom nav appears
     await page.getByTestId('cta-browse').click();
@@ -315,5 +291,41 @@ test.describe('Mobile Viewport', () => {
 
     await page.getByTestId('mechanics-sheet-backdrop').dispatchEvent('click');
     await expect(sheet).toBeHidden({timeout: 5000});
+  });
+});
+
+// No homepage visit: the homepage loads the sheet's chunk too, and WebKit then answers the next
+// page's request for it from its own copy, with no request a route sees (#923). So the hold comes
+// before the tab's first navigation.
+test.describe('Mobile search sheet before its chunk arrives', () => {
+  test('a search tap that beats the sheet chunk opens it, with a proxy input holding focus', async ({
+    page,
+  }, testInfo) => {
+    if (!testInfo.project.name.startsWith('mobile-')) test.skip();
+    // Hold the lazily loaded sheet (#640), then load a page with the bottom nav from scratch. On a
+    // phone the app requests the sheet in its first render, and WebKit holds the load event until
+    // that request ends, so wait for DOMContentLoaded: a `load` wait could wait on the hold itself.
+    const sheet = await holdLazyModule(page, 'SearchBottomSheet');
+    await page.goto('/browse', {waitUntil: 'domcontentloaded'});
+    // The tap must come once the chunk is held: a hold that caught nothing names itself here.
+    await expect
+      .poll(sheet.caught, {message: "the sheet's chunk never reached the hold", timeout: 10000})
+      .toBeGreaterThan(0);
+    await page.getByRole('button', {name: 'Search cards'}).click();
+    await expect(page.getByRole('dialog', {name: 'Search cards'})).toHaveCount(0);
+
+    // The sheet (and its own proxy) doesn't exist yet, so AppLayout's hidden input takes the tap's
+    // focus: on iOS that synchronous focus is what raises the keyboard.
+    await expect
+      .poll(() =>
+        page.evaluate(() => {
+          const el = document.activeElement;
+          return el instanceof HTMLInputElement && el.getAttribute('aria-hidden') === 'true';
+        }),
+      )
+      .toBe(true);
+
+    sheet.release();
+    await expect(page.getByRole('dialog', {name: 'Search cards'})).toBeVisible({timeout: 15000});
   });
 });
