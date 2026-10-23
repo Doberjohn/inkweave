@@ -1,4 +1,4 @@
-import type {Page} from '@playwright/test';
+import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {E2E_SUPABASE_ORIGIN} from '../fixtures/supabaseStub';
 import {
@@ -124,6 +124,13 @@ async function signedIn(page: Page): Promise<void> {
 
 const binder = (page: Page) => page.getByRole('region', {name: 'Binder'});
 const numbers = (page: Page) => page.getByRole('region', {name: 'Collection numbers'});
+
+/** Where an element starts and ends across the page, in CSS pixels. */
+async function span(locator: Locator): Promise<{left: number; right: number}> {
+  const box = await locator.boundingBox();
+  expect(box, 'the element is on the page').not.toBeNull();
+  return {left: box!.x, right: box!.x + box!.width};
+}
 
 test.describe('Collection mode', () => {
   test('the Collection button asks a signed-out visitor to sign in', async ({page}) => {
@@ -500,6 +507,27 @@ test.describe('Collection mode, signed in', () => {
     await expect(shown).toHaveAccessibleName(new RegExp(`^Spread ${spreads} of ${spreads}:`));
     await expect(next).toBeFocused();
     await expect(next).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  test("the spread runs the search bar's length where the window's height runs out first (owner, 2026-10-23)", async ({
+    page,
+  }) => {
+    // At 1920x900 the cards take their size from the height and stop 42px short of the
+    // box's width. The spread ended there, short of the search bar's end; its pages now
+    // take that width as margin, with the Next disc still on their outer edge.
+    await page.setViewportSize({width: 1920, height: 900});
+    await signInAsCollector(page, ENTRIES);
+    await page.goto(`/browse?binder=${SET}`);
+    await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
+
+    const search = await span(page.getByRole('textbox', {name: 'Search cards'}));
+    const cover = await span(binder(page).getByRole('group', {name: 'Front cover'}));
+    const right = await span(binder(page).getByRole('group', {name: 'Right page'}));
+    expect(Math.abs(cover.left - search.left), 'the starts apart').toBeLessThanOrEqual(1);
+    expect(Math.abs(right.right - search.right), 'the ends apart').toBeLessThanOrEqual(1);
+    // The disc's centre sits 2px past the page's edge (`edgeArrowPlace`).
+    const next = await span(binder(page).getByRole('button', {name: 'Next spread'}));
+    expect(Math.abs((next.left + next.right) / 2 - right.right), 'the Next disc off the end').toBeLessThanOrEqual(4);
   });
 
   test("a search narrows the binder, and the panel's numbers count only what it finds", async ({

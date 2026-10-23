@@ -31,7 +31,8 @@ import {blackRgba, COLORS, RADIUS, SPACING} from '../../../shared/constants';
  *
  * WITHOUT ARROWS BESIDE IT WHERE BROWSE DOCKS ITS PANELS (owner, 2026-10-08): the
  * spread takes their width and fills its box from the top, so its left edge meets the
- * search bar's start and its top meets the panels' tops (see `arrows`).
+ * search bar's start, its right edge the search bar's end (owner, 2026-10-23), and its
+ * top meets the panels' tops (see `arrows`).
  *
  * THERE THE ARROWS SIT ON THE SPREAD'S OUTER EDGES (owner, 2026-10-22): a small disc
  * halfway down each, growing under the pointer, where a worded Previous and Next at
@@ -132,6 +133,8 @@ function pageStyle(side: 'left' | 'right', cover = false): CSSProperties {
     gridTemplateRows: `repeat(${PAGE_ROWS}, minmax(0, 1fr))`,
     gap: SPACING.sm,
     padding: PAGE_PADDING,
+    // A page wider than its cards (one widened to its box, see `EDGE_FRAME`) keeps its
+    // pockets together in its middle: the extra width is margin, never slack between them.
     justifyContent: 'center',
     backgroundImage: `url(${cover ? COVER_BOARD : PARCHMENT})`,
     backgroundSize: 'cover',
@@ -315,9 +318,9 @@ interface BinderSpreadProps {
   /**
    * Where the page arrows go: beside the spread (the default), or, where Browse docks its
    * panels, on its outer edges, as small discs that grow under the pointer (owner,
-   * 2026-10-22). There the spread takes the width beside it and fills its box from the
-   * top-left, with no padding of its own, so its edges line up with what the page puts
-   * around it. A lone page keeps its row of arrows under it either way.
+   * 2026-10-22). There the spread fills its box's width from the top, with no padding of
+   * its own, so its edges line up with what the page puts around it. A lone page keeps its
+   * row of arrows under it either way.
    */
   arrows?: 'beside' | 'edges';
   /**
@@ -511,7 +514,8 @@ function FlankedSpread({start, renderSlot, arrows, cardCount}: ViewProps) {
  * halfway down it, the disc's centre a little past the page's edge, so at rest it covers the
  * page's margin and stops at the pockets, the rest of it in the gutter beside the spread.
  * Grown under the pointer, it overlaps the pockets by 6px for as long as the pointer stays.
- * Over them, so a pocket's glow under the pointer never covers it.
+ * A page that takes spare width (see `EDGE_FRAME`) has a wider margin, which keeps the disc
+ * further from its pockets. Over them, so a pocket's glow under the pointer never covers it.
  */
 function edgeArrowPlace(side: 'left' | 'right'): CSSProperties {
   return {
@@ -528,11 +532,22 @@ function onEdge(side: 'left' | 'right', edges: boolean) {
 }
 
 /**
- * The spread itself, hugging its pages in the box the height cap sizes, so the arrows laid
- * over its outer edges sit on the pages' edges wherever the spare width falls. Arrows laid
- * over the row instead landed inside the cards (see `FlankedSpread`).
+ * The spread itself, filling the width of the box the height cap sizes: two equal pages
+ * either side of the spine, so the arrows laid over its outer edges sit on the box's edges.
+ * Arrows laid over the row instead landed inside the cards (see `FlankedSpread`).
+ *
+ * THE PAGES TAKE THE WIDTH THE HEIGHT LEAVES (owner, 2026-10-23). Where the height runs out
+ * first, the cards stop short of the box's width: 42px short at 1920x900. The spread hugged
+ * its pages then, so that width fell to its right, and its right edge stopped short of the
+ * search bar's end. Now each page takes half of it, as margin around its pockets.
  */
-const EDGE_FRAME: CSSProperties = {position: 'relative', display: 'flex', height: '100%'};
+const EDGE_FRAME: CSSProperties = {
+  position: 'relative',
+  display: 'grid',
+  gridTemplateColumns: '1fr auto 1fr',
+  flex: 1,
+  height: '100%',
+};
 
 /**
  * Two facing pages with the arrows on their outer edges, anchored to the top of their box:
@@ -543,9 +558,10 @@ const EDGE_FRAME: CSSProperties = {position: 'relative', display: 'flex', height
  * bottoms, and any height the pages leave over falls between the two. It also holds still
  * when the height cap arrives a frame late: under the pages, the footer rose with them.
  *
- * PINNED LEFT, not centred: the left edge is the one the page lines up, under the
- * search bar's start (owner, 2026-10-08). When the height runs out first and the spread
- * comes out narrower than its box, the spare width goes to the right.
+ * BOTH SIDE EDGES ARE THE BOX'S: the left under the search bar's start (owner, 2026-10-08),
+ * the right under its end (owner, 2026-10-23), the pages widening to meet it where the height
+ * runs out first (see `EDGE_FRAME`). Pinned left, so on the one paint before a resize's new
+ * height cap lands, a spread too wide for its box runs past its right edge, never its left.
  */
 function StackedSpread({start, renderSlot, arrows, footer, cardCount}: ViewProps) {
   const rowRef = useRef<HTMLDivElement>(null);
