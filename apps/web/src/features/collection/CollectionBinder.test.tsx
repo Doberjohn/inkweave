@@ -61,6 +61,19 @@ const PROMO_PAGE = Array.from({length: 12}, (_, i) =>
 /** The pocket holding promo number `n` of that page. */
 const promoPocket = (n: number) => screen.getByRole('button', {name: `Card 1, ${n}/C1 printing`});
 
+/** A waiting promo with a scan (#805): Hades 29/C3, whose card no dataset holds yet. */
+const WAITING_HADES = {
+  open: true,
+  setCode: 'C3',
+  setNumber: 29,
+  id: '80033',
+  fullName: 'Hades - Dark Usurper',
+  imageUrl: '/card-images-preview/80033.avif',
+} as const;
+
+/** Its pocket's name: what it is and why it waits. */
+const HADES_NAME = 'Hades - Dark Usurper, 29/C3 printing: not in our data yet';
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -298,20 +311,52 @@ describe('CollectionBinder', () => {
     });
 
     it("shows a waiting promo's scan, greyed, with what it is and why it waits in its name (owner, 2026-10-19)", () => {
-      const hades = {open: true, setCode: 'C3', setNumber: 29, id: '80033', fullName: 'Hades - Dark Usurper'} as const;
-      render(binder({slots: [{...hades, imageUrl: '/card-images-preview/80033.avif'}]}));
-      const art = screen.getByRole('img', {name: 'Hades - Dark Usurper, 29/C3 printing: not in our data yet'});
+      render(binder({slots: [WAITING_HADES]}));
+      const art = screen.getByRole('img', {name: HADES_NAME});
       expect(art).toHaveAttribute('src', '/card-images-preview/80033-sm.avif');
+      expect(art).toHaveClass('binder-waiting-art');
       expect(screen.queryByText('Not in our data yet')).toBeNull();
-      expect(screen.queryByRole('button', {name: /Hades/})).toBeNull();
     });
 
-    it("falls back to the waiting promo's name and reason when its scan fails to load", () => {
-      const hades = {open: true, setCode: 'C3', setNumber: 29, id: '80033', fullName: 'Hades - Dark Usurper'} as const;
-      render(binder({slots: [{...hades, imageUrl: '/card-images-preview/80033.avif'}]}));
+    it("opens a waiting promo's scan full size and in colour, with no card to open (owner, 2026-10-23)", () => {
+      const onSelect = vi.fn();
+      render(binder({onSelect, slots: [WAITING_HADES]}));
+      fireEvent.click(screen.getByRole('button', {name: HADES_NAME}));
+      const dialog = screen.getByRole('dialog', {
+        name: 'Enlarged view of Hades - Dark Usurper, 29/C3 printing',
+      });
+      const scan = within(dialog).getByRole('img');
+      expect(scan).toHaveAttribute('src', '/card-images-preview/80033.avif');
+      expect(scan).not.toHaveClass('binder-waiting-art');
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it("takes a waiting promo's pocket into the arrow keys, as a card's, past an open pocket", async () => {
+      const user = userEvent.setup();
+      render(
+        binder({
+          slots: [
+            promo('p1', 1),
+            WAITING_HADES,
+            {open: true, setCode: 'C3', setNumber: 30},
+            promo('p4', 4),
+          ],
+        }),
+      );
+      act(() => screen.getByRole('button', {name: 'Card 1, 1/C1 printing'}).focus());
+      await user.keyboard('{ArrowRight}');
+      expect(screen.getByRole('button', {name: HADES_NAME})).toHaveFocus();
+      await user.keyboard('{ArrowRight}');
+      expect(screen.getByRole('button', {name: 'Card 1, 4/C1 printing'})).toHaveFocus();
+    });
+
+    it("falls back to the waiting promo's name and reason when its scan fails to load, and still opens it", () => {
+      render(binder({slots: [WAITING_HADES]}));
       fireEvent.error(screen.getByRole('img'));
       expect(screen.getByText('29/C3').nextSibling).toHaveTextContent('Hades - Dark Usurper');
       expect(screen.getByText('Not in our data yet')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', {name: HADES_NAME}));
+      expect(screen.getByRole('dialog', {name: /^Enlarged view of Hades/})).toBeInTheDocument();
     });
 
     it('says a number its promo set never released was not released, rather than not listed yet', () => {

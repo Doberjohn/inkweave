@@ -9,6 +9,7 @@ import {BinderSpread, PER_PAGE, PER_SPREAD} from '../cards/components/BinderSpre
 import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/BinderSpreadMap';
 import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
 import {printingName} from '../../shared/hooks/usePrintingSelection';
+import {CardImageButton, CardLightbox} from '../../shared/components';
 import {FONT_SIZES, RADIUS, SPACING, blackRgba} from '../../shared/constants';
 
 /**
@@ -30,7 +31,8 @@ import {FONT_SIZES, RADIUS, SPACING, blackRgba} from '../../shared/constants';
  * is a promo whose card is not out yet, named (`promoSetPockets`). An open pocket shows its
  * code; a promo's own pocket shows only its card, with no code over the art (owner, the same
  * day). Its tile's name still says the code ("25/P1 printing"), with a printing's finish
- * where it has one.
+ * where it has one. A waiting promo with a scan shows the scan instead, greyed, and a click
+ * opens it full size (`WaitingPromoPocket`).
  *
  * The parchment, spine and arrows come from `BinderSpread`, the spread map from
  * `BinderSpreadMap`.
@@ -78,11 +80,17 @@ const isOwned = (counts: CollectionEntry) => counts.normal + counts.foil > 0;
 /**
  * A waiting promo's scan, at the small size the pockets use, or none for an open pocket that has
  * no promo or no art. In dev every promo without official art has a scan's URL, so one whose
- * scan is missing shows its pocket's text on the spread (`OpenPocketArt`) but grey in the map.
+ * scan is missing shows its pocket's text on the spread (`WaitingPromoPocket`) but grey in the map.
  */
 function waitingScan({id, imageUrl, imageHashSm}: OpenPocket): string | undefined {
   return id === undefined ? undefined : smallImageUrl({id, imageUrl, imageHashSm});
 }
+
+/**
+ * Whether a pocket takes no focus, so the pockets' Tab stop and arrow keys pass over it: an
+ * open one, unless it shows a waiting promo's scan, which a click or Enter opens full size.
+ */
+const takesNoFocus = (slot: BinderSlot) => isOpenPocket(slot) && waitingScan(slot) === undefined;
 
 /**
  * A pocket as the map draws it: an open one, with a waiting promo's scan or without, or whether
@@ -227,35 +235,63 @@ function OpenPocketText({pocket}: {pocket: OpenPocket}) {
 }
 
 /**
- * A waiting promo's scan (owner, 2026-10-19: the three Hades of Set 15, whose card is not out):
- * greyed as an unowned card is, since no one can hold it yet, with no code over the art, and
- * nothing to open. Its name says what it is and why it waits. A scan that fails to load gives
- * way to the pocket's text.
+ * A waiting promo's pocket (owner, 2026-10-19: the three Hades of Set 15, whose card is not
+ * out): its scan, greyed as an unowned card is, since no one can hold it yet, with no code over
+ * the art and no copies. A click opens the scan full size, in colour (owner, 2026-10-23): the
+ * card window would need the card, which stays out of the data until its set is. Its name says
+ * what it is and why it waits. A scan that fails to load gives way to the pocket's text, which
+ * still opens the full-size scan.
  */
-function OpenPocketArt({pocket, src}: {pocket: OpenPocket; src: string}) {
+function WaitingPromoPocket({
+  pocket,
+  src,
+  tabIndex,
+}: {
+  pocket: OpenPocket;
+  src: string;
+  tabIndex: number;
+}) {
   const [failed, setFailed] = useState(false);
-  if (failed) return <OpenPocketText pocket={pocket} />;
-  const name = `${pocket.fullName}, ${promoLabel(pocket)} printing: ${openReason(pocket).toLowerCase()}`;
+  const [enlarged, setEnlarged] = useState(false);
+  const printing = `${pocket.fullName}, ${promoLabel(pocket)} printing`;
+  const name = `${printing}: ${openReason(pocket).toLowerCase()}`;
   return (
-    <img
-      className="binder-waiting-art"
-      src={src}
-      alt={name}
-      title={name}
-      loading="lazy"
-      decoding="async"
-      onError={() => setFailed(true)}
-      style={{width: '100%', height: '100%', objectFit: 'cover', display: 'block'}}
-    />
+    // `binder-pocket`: its glow is a pocket's, stronger, to show on the parchment (index.css).
+    <div className="binder-pocket" style={{height: '100%'}}>
+      <CardImageButton ariaLabel={name} onClick={() => setEnlarged(true)} tabIndex={tabIndex} tile>
+        {failed ? (
+          <OpenPocketText pocket={pocket} />
+        ) : (
+          <img
+            className="binder-waiting-art"
+            src={src}
+            alt={name}
+            title={name}
+            loading="lazy"
+            decoding="async"
+            onError={() => setFailed(true)}
+            style={{width: '100%', height: '100%', objectFit: 'cover', display: 'block'}}
+          />
+        )}
+      </CardImageButton>
+      {/* Beside the button, not in it: a backdrop click would reach the button and reopen it. */}
+      {enlarged && (
+        <CardLightbox
+          src={pocket.imageUrl ?? src}
+          alt={printing}
+          onClose={() => setEnlarged(false)}
+        />
+      )}
+    </div>
   );
 }
 
 /** An open pocket: a waiting promo's scan where it has one, else its code and why it is open. */
-function OpenPocketView({pocket}: {pocket: OpenPocket}) {
+function OpenPocketView({pocket, tabIndex}: {pocket: OpenPocket; tabIndex: number}) {
   const src = waitingScan(pocket);
   if (src === undefined) return <OpenPocketText pocket={pocket} />;
-  // Keyed by the scan, so a pocket reused for another promo never keeps one's failure.
-  return <OpenPocketArt key={src} pocket={pocket} src={src} />;
+  // Keyed by the scan, so a pocket reused for another promo never keeps one's failure or lightbox.
+  return <WaitingPromoPocket key={src} pocket={pocket} src={src} tabIndex={tabIndex} />;
 }
 
 /**
@@ -305,7 +341,7 @@ export function CollectionBinder({
       arrows={map === undefined ? 'beside' : 'edges'}
       footer={map}
       cardCount={slots.length}
-      isOpen={(index) => isOpenPocket(slots[index])}
+      isOpen={(index) => takesNoFocus(slots[index])}
       onPrev={() => goTo(current - 1)}
       onNext={() => goTo(current + 1)}
       canPrev={current > 0}
@@ -313,7 +349,7 @@ export function CollectionBinder({
       renderSlot={(index, tabIndex) => {
         const slot = slots[index];
         if (!slot) return null;
-        if (isOpenPocket(slot)) return <OpenPocketView pocket={slot} />;
+        if (isOpenPocket(slot)) return <OpenPocketView pocket={slot} tabIndex={tabIndex} />;
         return (
           <CardPocket
             card={slot}

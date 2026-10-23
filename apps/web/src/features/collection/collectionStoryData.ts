@@ -113,9 +113,19 @@ export const STORY_PROMO_CARDS: LorcanaCard[] = [
   storyPromo(BINDER_CARDS[1], undefined),
 ];
 
-/** The story set's promo whose card no dataset holds yet. */
+/**
+ * The story set's promo whose card no dataset holds yet, with its scan where dev finds a
+ * provisional promo's (`toPrinting`): greyed in its pocket, and full size on a click.
+ */
 export const STORY_WAITING: CollectionPromo[] = [
-  {id: '80033', rarity: 'Special', number: 6, promoGrouping: STORY_PROMO_SET, fullName: 'Hades - Dark Usurper'},
+  {
+    id: '80033',
+    rarity: 'Special',
+    number: 6,
+    promoGrouping: STORY_PROMO_SET,
+    fullName: 'Hades - Dark Usurper',
+    imageUrl: '/card-images-preview/80033.avif',
+  },
 ];
 
 /** Half the promos held, the non-foil twin among them. */

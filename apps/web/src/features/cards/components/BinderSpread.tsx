@@ -330,9 +330,10 @@ interface BinderSpreadProps {
    */
   cardCount?: number;
   /**
-   * Whether a pocket the binder fills is open: drawn with no card in it, as a promo set draws
-   * a number that has no card yet (#805), so it takes no focus. The pockets' Tab stop and
-   * arrow keys pass over it. Left out, every pocket the binder fills holds a card.
+   * Whether a pocket the binder fills is open: drawn with nothing in it to press, as a promo set
+   * draws a number that has no card yet (#805), so it takes no focus. The pockets' Tab stop and
+   * arrow keys pass over it. A waiting promo's scan, which opens full size, is not open here.
+   * Left out, every pocket the binder fills holds a card.
    */
   isOpen?: (index: number) => boolean;
 }
