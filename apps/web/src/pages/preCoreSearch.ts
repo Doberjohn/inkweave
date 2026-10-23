@@ -12,7 +12,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
  */
 
 interface PreCoreSearch {
-  status: 'idle' | 'loading' | 'loaded';
+  status: 'idle' | 'loading' | 'loaded' | 'failed';
   cards: LorcanaCard[];
   byId: ReadonlyMap<string, LorcanaCard>;
 }
@@ -35,17 +35,17 @@ function subscribe(listener: () => void) {
 
 const getSearch = () => search;
 
-/** Starts the load unless it is running or done. A failed load goes back to idle, for the next search. */
+/** Starts the load unless it is running or done. After a failure, the next search starts it again. */
 function requestPreCoreCards() {
-  if (search.status !== 'idle') return;
+  if (search.status === 'loading' || search.status === 'loaded') return;
   setSearch({...search, status: 'loading'});
   import('../features/collection/collectionChunks')
     .then((chunks) => chunks.loadPreCoreSearchCards())
     .then(
       (cards) => setSearch({status: 'loaded', cards, byId: new Map(cards.map((card) => [card.id, card]))}),
-      // The search keeps Core's matches, as it had before #911, and the next search tries
-      // again. A failed import (a stale chunk after a deploy) lands here too.
-      () => setSearch({status: 'idle', ...NO_CARDS}),
+      // The search keeps Core's matches, as it had before #911. A failed import (a stale
+      // chunk after a deploy) lands here too.
+      () => setSearch({status: 'failed', ...NO_CARDS}),
     );
 }
 
@@ -54,12 +54,14 @@ function requestPreCoreCards() {
  * `wanted` is true in a visit: the first letter typed, or a page opened with a search.
  *
  * The effect depends on `wanted` alone, so a failed load is tried again only when a new
- * search starts or Browse mounts again, never in a loop.
+ * search starts or Browse mounts again, never in a loop. It is loading from the first render
+ * a search is wanted, before the effect starts the load: that render paints first.
  */
 export function usePreCoreSearchCards(wanted: boolean) {
   const current = useSyncExternalStore(subscribe, getSearch, getSearch);
   useEffect(() => {
     if (wanted) requestPreCoreCards();
   }, [wanted]);
-  return {cards: current.cards, byId: current.byId, isLoading: wanted && current.status === 'loading'};
+  const pending = current.status === 'idle' || current.status === 'loading';
+  return {cards: current.cards, byId: current.byId, isLoading: wanted && pending};
 }

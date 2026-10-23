@@ -19,6 +19,7 @@ const fixtures = vi.hoisted(() => ({
   coreCards: [] as LorcanaCard[],
   openCardModal: vi.fn(),
   loadPreCoreSearchCards: vi.fn(),
+  chunksImported: false,
 }));
 vi.mock('../../shared/contexts/CardDataContext', () => ({
   useCardDataContext: () => ({
@@ -35,10 +36,12 @@ vi.mock('../../shared/contexts/CardDataContext', () => ({
 vi.mock('../../shared/contexts/CardModalContext', () => ({
   useCardModal: () => ({openCardModal: fixtures.openCardModal}),
 }));
-// Browse's search loads sets 1-8 from here (#911).
-vi.mock('../../features/collection/collectionChunks', () => ({
-  loadPreCoreSearchCards: fixtures.loadPreCoreSearchCards,
-}));
+// Browse's search loads sets 1-8 from here (#911). The factory runs when the module is first
+// imported, so a static import from Browse would run it as this file loads.
+vi.mock('../../features/collection/collectionChunks', () => {
+  fixtures.chunksImported = true;
+  return {loadPreCoreSearchCards: fixtures.loadPreCoreSearchCards};
+});
 // jsdom lays nothing out, so the real grid renders no tiles: this one renders them all.
 vi.mock('react-virtuoso', async () => {
   const {createElement, Fragment} = await import('react');
@@ -68,9 +71,11 @@ describe('BrowsePage with the collection flag off', () => {
     // The grid, empty with this fixture, says so in its status line.
     expect(screen.getByText('No cards match your filters.')).toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Show my collection'})).not.toBeInTheDocument();
-    // Sets 1-8 wait for a search (#911).
+    // Sets 1-8 wait for a search (#911), and so does their loader's module, which Browse
+    // imports dynamically so as not to ship collection mode's data layer to every visitor.
     await flush();
     expect(fixtures.loadPreCoreSearchCards).not.toHaveBeenCalled();
+    expect(fixtures.chunksImported).toBe(false);
   });
 
   describe('search over sets 1-8 (#911)', () => {

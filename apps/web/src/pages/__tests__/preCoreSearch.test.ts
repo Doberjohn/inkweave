@@ -30,6 +30,22 @@ describe('usePreCoreSearchCards', () => {
     expect(result.current).toMatchObject({cards: [], isLoading: false});
   });
 
+  it('is loading from the first render a search asks, before its effect starts the load', async () => {
+    loadPreCoreSearchCards.mockReturnValue(new Promise(() => {}));
+    const {usePreCoreSearchCards} = await freshSearch();
+    const rendered: boolean[] = [];
+
+    renderHook(() => {
+      const search = usePreCoreSearchCards(true);
+      rendered.push(search.isLoading);
+      return search;
+    });
+
+    // That render paints before the effect runs: a search only sets 1-8 match would flash
+    // "No cards match your filters." in between.
+    expect(rendered[0]).toBe(true);
+  });
+
   it('loads the cards once and keeps them for the visit, so a later Browse asks for nothing', async () => {
     loadPreCoreSearchCards.mockResolvedValue([onHumanLegs]);
     const {usePreCoreSearchCards} = await freshSearch();
