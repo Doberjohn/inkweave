@@ -73,17 +73,22 @@ describe('CardOverviewModalFallback', () => {
       const {container, unmount} = render(
         <CardOverviewModalFallback card={c} isMobile={false} copiesRow={copiesRow} onClose={vi.fn()} />,
       );
-      const art = container.querySelector<HTMLElement>('.react-loading-skeleton')!;
+      // The card's ink tile comes first, ahead of the synergy column's neutral tiles; its box is the card's.
+      const art = container.querySelector<HTMLElement>('.ink-card-placeholder')!.parentElement!;
       const row = art.closest<HTMLElement>('[style*="display: grid"]')!;
-      const shape = {transform: art.style.transform, row: row.style.height};
+      const shape = {transform: art.style.transform, height: art.style.height, row: row.style.height};
       unmount();
       return shape;
     };
 
-    expect(placeholder(card, true)).toEqual({transform: '', row: '514px'});
-    expect(placeholder(cardWithPrintings, false)).toEqual({transform: '', row: '470px'});
+    expect(placeholder(card, true)).toEqual({transform: '', height: '470px', row: '514px'});
+    expect(placeholder(cardWithPrintings, false)).toEqual({transform: '', height: '470px', row: '470px'});
     // A foreign scan's toggle sits in the header (owner, 2026-10-17), so it takes no room here.
-    expect(placeholder({...card, scanLanguage: 'ja'} as LorcanaCard, false)).toEqual({transform: '', row: '470px'});
+    expect(placeholder({...card, scanLanguage: 'ja'} as LorcanaCard, false)).toEqual({
+      transform: '',
+      height: '470px',
+      row: '470px',
+    });
   });
 
   it("holds the translation toggle's space out of sight in the header on desktop, where the modal puts it", () => {
