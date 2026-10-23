@@ -185,7 +185,13 @@ function literalWeight(v) {
   return /^\d+$/.test(v.value) ? Number(v.value) : NAMED_WEIGHTS[v.value];
 }
 
-const isFontsHero = (v) => v.type === 'MemberExpression' && v.object.name === 'FONTS' && v.property.name === 'hero';
+/** The key a member reads: `hero` in `FONTS.hero` and `FONTS['hero']`, undefined in `FONTS[key]`, which could be any. */
+function memberKey(member) {
+  if (!member.computed) return member.property.name;
+  return isStringLiteral(member.property) ? member.property.value : undefined;
+}
+
+const isFontsHero = (v) => v.type === 'MemberExpression' && v.object.name === 'FONTS' && memberKey(v) === 'hero';
 
 const UNLOADED_WEIGHT_MESSAGE =
   'No face is loaded for this weight, and font-synthesis is none, so it renders as the nearest loaded one. Use 400/500/600/700, or add the woff2 and @font-face first.';

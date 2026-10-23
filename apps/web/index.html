@@ -32,8 +32,9 @@
 
     <!-- Fonts (self-hosted; @font-face declared in index.css). Preload the body weight
          so first paint doesn't wait on the CSS to parse. The hero serif isn't preloaded:
-         neither the homepage nor a card page renders it, so the preload only competed
-         with the entry chunk for bandwidth (#640). -->
+         the homepage doesn't render it on load, and a card page only in its "Card not
+         found" message, so the preload only competed with the entry chunk for
+         bandwidth (#640). -->
     <link
       rel="preload"
       href="/fonts/plus-jakarta-sans-400.woff2"
