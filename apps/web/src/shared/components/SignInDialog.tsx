@@ -15,7 +15,6 @@ import discordLogo from '../../assets/discord.svg?no-inline';
 import googleLogo from '../../assets/google.svg?no-inline';
 import {CtaButton} from './CtaButton';
 import {DialogShell} from './DialogShell';
-import {IconButton} from './IconButton';
 import {signInProviderButtonState} from './signInProviderState';
 
 interface SignInDialogProps {
@@ -68,8 +67,8 @@ const PROVIDER_BUTTON_STYLE: React.CSSProperties = {
  * Sign-in modal (#463): kicks off a Google or Discord OAuth redirect via SessionContext.
  * On success the browser navigates away to the provider, so there is no success state to
  * render here; on failure it surfaces the error inline. Rides the DialogShell overlay
- * contract (#510) — trap, scroll lock, token scrim, Escape + backdrop close. The close ×
- * is its one visible way out, since it has no Cancel button.
+ * contract (#510) — trap, scroll lock, token scrim, Escape + backdrop close. The shell's
+ * close × is its one visible way out, since it has no Cancel button.
  */
 export function SignInDialog({isOpen, onClose, surface}: SignInDialogProps) {
   const {signIn, enabled} = useSession();
@@ -114,21 +113,23 @@ export function SignInDialog({isOpen, onClose, surface}: SignInDialogProps) {
       onClose={handleClose}
       ariaLabel="Sign in to Inkweave"
       size="sm"
-      panelStyle={{position: 'relative', padding: SPACING.xxl, fontFamily: FONTS.body, textAlign: 'center'}}>
-      <IconButton
-        aria-label="Close"
-        onClick={handleClose}
-        style={{position: 'absolute', top: SPACING.sm, right: SPACING.sm, fontSize: FONT_SIZES.xxl}}>
-        ×
-      </IconButton>
-
+      panelStyle={{padding: SPACING.xxl, fontFamily: FONTS.body, textAlign: 'center'}}>
       <img
         src={WORDMARK.src}
         alt=""
         width={WORDMARK.width}
         height={WORDMARK.height}
         draggable={false}
-        style={{display: 'block', height: 40, width: 'auto', margin: `${SPACING.sm}px auto 0`}}
+        // Capped so the centred wordmark keeps clear of the shell's 36px ×, which shares its
+        // row: at 320px wide it would otherwise run under it.
+        style={{
+          display: 'block',
+          height: 40,
+          width: 'auto',
+          maxWidth: 'calc(100% - 72px)',
+          objectFit: 'contain',
+          margin: `${SPACING.sm}px auto 0`,
+        }}
       />
       <h2 style={{...DIALOG_TITLE, marginTop: SPACING.lg}}>Sign in to Inkweave</h2>
       <p style={{...DIALOG_BODY, marginTop: SPACING.sm, textWrap: 'balance'}}>

@@ -48,6 +48,11 @@ describe('CardLightbox', () => {
     expect(defaultProps.onClose).toHaveBeenCalledOnce();
   });
 
+  it('should leave out the shell close button, since a tap outside the card closes it', () => {
+    render(<CardLightbox {...defaultProps} />);
+    expect(screen.queryByRole('button', {name: 'Close'})).not.toBeInTheDocument();
+  });
+
   it('should show fallback message when image fails to load', () => {
     render(<CardLightbox {...defaultProps} />);
     fireEvent.error(screen.getByRole('img'));
