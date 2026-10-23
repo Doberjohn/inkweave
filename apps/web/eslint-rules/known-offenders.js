@@ -130,7 +130,6 @@ export const KNOWN_OFFENDERS = {
   // 23 files, 54 violations at seeding
   'no-raw-easing': [
     'src/features/reveals/WhatsNewSection.tsx', // x1
-    'src/features/voting/components/PairStack.tsx', // x1
     'src/features/voting/components/QuickVoteControl.tsx', // x6
   ],
   // Seeded 2026-10-22 when the rule turned on (#549), after it began reading
@@ -158,7 +157,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/SynergyBreakdown.tsx', // x1
     'src/features/synergies/components/SynergyToolbar.tsx', // x3
     'src/features/voting/components/DistributionBar.tsx', // x4
-    'src/features/voting/components/PairStack.tsx', // x1
     'src/features/voting/components/ScorePicker.tsx', // x5
     'src/pages/BrowsePage.tsx', // x1
     'src/pages/InDepthVotePage.tsx', // x9
