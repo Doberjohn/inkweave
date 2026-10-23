@@ -43,3 +43,14 @@ export const SingleColumn: Story = {
     rows: 4,
   },
 };
+
+/**
+ * A phone (#914): the loaded grid's 140 px column minimum gives two columns, where the desktop
+ * minimum left one wide tile, in the page's 16 px gutter.
+ */
+export const Phone: Story = {
+  args: {
+    padding: '0 16px',
+  },
+  globals: {viewport: {value: 'mobile1'}},
+};

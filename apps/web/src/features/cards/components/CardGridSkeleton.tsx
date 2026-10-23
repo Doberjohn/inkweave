@@ -2,12 +2,13 @@ import Skeleton from 'react-loading-skeleton';
 import {LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
 import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
 import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
+import {useResponsive} from '../../../shared/hooks/useResponsive';
 import {useRef} from 'react';
 
 interface CardGridSkeletonProps {
   /** Override gap between cards (default: SPACING.md) */
   gap?: number;
-  /** Override container padding */
+  /** The container's padding: the loaded grid's own, so the first tile starts where its will (default: none). */
   padding?: string;
   /** Force column count (bypasses dynamic calculation) */
   columns?: number;
@@ -19,10 +20,14 @@ interface CardGridSkeletonProps {
   ariaLabel?: string;
 }
 
-const MIN_COL_WIDTH = LAYOUT.cardGridMinWidth;
 const DEFAULT_CARD_ASPECT = 0.72;
 const DEFAULT_GAP = SPACING.md;
 
+/**
+ * The loading grid, sized as `CardGrid` and `BrowseCardGrid` size theirs (#914): the same
+ * column minimum for the viewport, so a phone gets the loaded grid's two columns, and tiles
+ * exactly as tall as a card of the column's width.
+ */
 export function CardGridSkeleton({
   gap: gapProp,
   padding: paddingProp,
@@ -33,12 +38,14 @@ export function CardGridSkeleton({
 }: CardGridSkeletonProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const containerWidth = useContainerWidth(containerRef);
+  const {isMobile} = useResponsive();
+  const minColWidth = isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth;
 
   const gap = gapProp ?? DEFAULT_GAP;
-  const containerPadding = paddingProp ?? `${SPACING.lg}px ${SPACING.xxxl}px ${SPACING.xxxl}px`;
+  const containerPadding = paddingProp ?? 0;
 
-  const columns = columnsProp ?? Math.max(1, Math.floor((containerWidth + gap) / (MIN_COL_WIDTH + gap)));
-  const colWidth = containerWidth > 0 ? (containerWidth - gap * (columns - 1)) / columns : MIN_COL_WIDTH;
+  const columns = columnsProp ?? Math.max(1, Math.floor((containerWidth + gap) / (minColWidth + gap)));
+  const colWidth = containerWidth > 0 ? (containerWidth - gap * (columns - 1)) / columns : minColWidth;
   const cardHeight = colWidth / aspectRatio;
 
   const totalCards = columns * rowCount;

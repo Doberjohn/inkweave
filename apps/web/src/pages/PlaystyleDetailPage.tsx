@@ -83,6 +83,17 @@ const HERO_MOBILE: HeroLayout = {
   breadcrumbLinkMinHeight: 44,
 };
 
+// ── Card grid ──
+
+/** The room under the card grid, past the spacing scale's top step (SPACING.xxxl, 32). */
+const GRID_PADDING_BOTTOM = 48;
+/**
+ * The card grid's padding on phones and on desktop, shared by the loaded grid and its loading
+ * one, so the loading grid has the loaded grid's columns and tile width (#914).
+ */
+const PHONE_GRID_PADDING = `${SPACING.md}px ${SPACING.lg}px ${GRID_PADDING_BOTTOM}px`;
+const DESKTOP_GRID_PADDING = `${SPACING.xxl}px ${SPACING.xxxl}px ${GRID_PADDING_BOTTOM}px`;
+
 // ── Hero Section ──
 
 function PlaystyleHero({
@@ -751,9 +762,7 @@ function PlaystyleDetailLoadingView({isMobile, goHome}: {isMobile: boolean; goHo
         </>
         <CardGridSkeleton
           rows={3}
-          columns={isMobile ? 3 : undefined}
-          gap={isMobile ? 10 : 12}
-          padding={isMobile ? `${SPACING.lg}px` : '16px 32px 48px'}
+          padding={isMobile ? PHONE_GRID_PADDING : DESKTOP_GRID_PADDING}
           ariaLabel="Loading playstyle cards"
         />
       </div>
@@ -884,7 +893,7 @@ function PlaystyleDetailMobileView({
             cards={roleFilteredCards}
             displayedCards={displayedCards}
             handleCardSelect={handleCardSelect}
-            padding={`${SPACING.md}px ${SPACING.lg}px 48px`}
+            padding={PHONE_GRID_PADDING}
             borderRadius={10}
           />
         </ErrorBoundary>
@@ -984,7 +993,7 @@ function PlaystyleDetailDesktopView({
             cards={roleFilteredCards}
             displayedCards={displayedCards}
             handleCardSelect={handleCardSelect}
-            padding="24px 32px 48px"
+            padding={DESKTOP_GRID_PADDING}
           />
         </ErrorBoundary>
       </div>

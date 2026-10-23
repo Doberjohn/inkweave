@@ -92,7 +92,8 @@ export function BrowseCardGrid({
   const ListContainer = createListContainer({paddingX, minColWidth});
 
   if (isLoading) {
-    return <CardGridSkeleton />;
+    // The loaded grid's room above its first row (`GridHeader`) and its gutters (#914).
+    return <CardGridSkeleton padding={`${BROWSE_ROW_TOP}px ${paddingX}px 0`} />;
   }
 
   const displayedCards = cards.slice(0, LAYOUT.maxDisplayedCards);
