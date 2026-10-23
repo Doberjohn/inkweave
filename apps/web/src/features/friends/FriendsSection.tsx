@@ -1,5 +1,6 @@
 import {useEffect, useId, useRef, useState} from 'react';
 import {flushSync} from 'react-dom';
+import Skeleton from 'react-loading-skeleton';
 import {CtaButton, IconButton} from '../../shared/components';
 import type {CtaVariant} from '../../shared/components/CtaButton';
 import {
@@ -7,6 +8,7 @@ import {
   COLORS,
   FONTS,
   FONT_SIZES,
+  ICON_SIZE,
   LETTER_SPACING,
   RADIUS,
   SPACING,
@@ -53,12 +55,26 @@ const LABEL: React.CSSProperties = {color: COLORS.textMuted, fontSize: `${FONT_S
 const RULE = `1px solid ${hexRgba(COLORS.surfaceBorder, 0.6)}`;
 const DETAIL: React.CSSProperties = {color: COLORS.textMuted, fontSize: `${FONT_SIZES.sm}px`};
 const ANSWER: React.CSSProperties = {fontSize: `${FONT_SIZES.md}px`, margin: `${SPACING.xs}px 0 0`};
+/** The code and its copy button, then the line under them. */
+const CODE_COLUMN: React.CSSProperties = {display: 'flex', flexDirection: 'column'};
+const CODE_LINE: React.CSSProperties = {display: 'inline-flex', alignItems: 'center', gap: SPACING.xxs, flexWrap: 'wrap', minWidth: 0};
+const SEND_FORM: React.CSSProperties = {display: 'flex', alignItems: 'center', gap: SPACING.sm, flexWrap: 'wrap', flex: '1 1 auto', margin: 0};
+const CODE_FIELD_SIZE: React.CSSProperties = {flex: '1 1 160px', minWidth: 0, maxWidth: 240};
+/**
+ * The code field's own width, its default 20 characters at FONT_SIZES.lg with its padding, and
+ * Send's: together they decide whether the form fits beside its label or drops below it, as it
+ * does on a phone.
+ */
+const CODE_FIELD_NATURAL_WIDTH = 203;
+const SEND_WIDTH = 124;
+const LIST_HEADING: React.CSSProperties = {...CAP_LABEL_XS, margin: `${SPACING.xl}px 0 ${SPACING.xs}px`};
+const EMPTY_LINE: React.CSSProperties = {...MUTED, marginTop: SPACING.xs};
 
 /** How long the check and "Copied" stay after a copy. */
 const COPIED_MS = 2000;
 
 export function FriendsSection(props: FriendsSectionProps) {
-  if (props.status === 'loading') return <p style={MUTED}>Loading your friends…</p>;
+  if (props.status === 'loading') return <FriendsLoading />;
   if (props.status === 'failed') return <LoadFailed onRetry={props.onRetry} />;
   return <FriendsReady {...props} />;
 }
@@ -73,6 +89,58 @@ function LoadFailed({onRetry}: {onRetry: () => void}) {
         Try again
       </CtaButton>
     </>
+  );
+}
+
+/** One placeholder exactly its box: no line box around it (`inline`, then drawn as a block). */
+function Block({width, height}: {width?: number | string; height: number}) {
+  return <Skeleton inline width={width} height={height} borderRadius={RADIUS.sm} style={{display: 'block'}} />;
+}
+
+/** A line of text at `size`, its bar centered in the line's box (the body's 1.5 line height). */
+function TextLine({size, width}: {size: number; width: number | string}) {
+  return (
+    <div style={{height: size * 1.5, display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+      <Block width={width} height={size} />
+    </div>
+  );
+}
+
+/**
+ * The section while the friendships load (#914), in the boxes of a loaded section with no
+ * one in it, which every player's has: the code row, the field and its button, the rule, and
+ * Your friends with its one line. Requests and Sent show only when they have rows. The labels
+ * are the loaded ones; what the read brings is a placeholder.
+ */
+function FriendsLoading() {
+  return (
+    <div role="group" aria-busy="true" aria-label="Loading your friends">
+      <Field label={<span style={LABEL}>Your friend code</span>}>
+        <span style={CODE_COLUMN}>
+          <span style={{...CODE_LINE, height: TOUCH_TARGET}}>
+            <Block width={96} height={FONT_SIZES.xl} />
+            {/* The copy button's icon, in its touch target. */}
+            <span style={{width: TOUCH_TARGET, display: 'flex', justifyContent: 'center'}}>
+              <Block width={ICON_SIZE.md} height={ICON_SIZE.md} />
+            </span>
+          </span>
+          <TextLine size={FONT_SIZES.xs} width={260} />
+        </span>
+      </Field>
+      <Field label={<span style={LABEL}>Add a friend</span>}>
+        <div style={SEND_FORM}>
+          <div style={{...CODE_FIELD_SIZE, width: CODE_FIELD_NATURAL_WIDTH}}>
+            <Block height={TOUCH_TARGET} />
+          </div>
+          <Block width={SEND_WIDTH} height={TOUCH_TARGET} />
+        </div>
+      </Field>
+      <div style={{borderTop: RULE, marginTop: SPACING.md}} />
+      <h3 style={LIST_HEADING}>Your friends</h3>
+      <div style={{marginTop: SPACING.xs}}>
+        <TextLine size={FONT_SIZES.md} width="60%" />
+      </div>
+    </div>
   );
 }
 
@@ -238,8 +306,8 @@ function CodeRow({code}: {code: string}) {
   const copied = note?.copied === true;
   return (
     <Field label={<span style={LABEL}>Your friend code</span>}>
-      <span style={{display: 'flex', flexDirection: 'column'}}>
-        <span style={{display: 'inline-flex', alignItems: 'center', gap: SPACING.xxs, flexWrap: 'wrap', minWidth: 0}}>
+      <span style={CODE_COLUMN}>
+        <span style={CODE_LINE}>
           <span
             className="ph-no-capture"
             style={{
@@ -303,7 +371,7 @@ function AddFriend({busy, onSend}: Pick<FriendsSectionProps, 'busy' | 'onSend'>)
         <form
           noValidate
           onSubmit={(event) => void submit(event)}
-          style={{display: 'flex', alignItems: 'center', gap: SPACING.sm, flexWrap: 'wrap', flex: '1 1 auto', margin: 0}}>
+          style={SEND_FORM}>
           <CodeField id={id} ref={fieldRef} value={typed} onChange={setTyped} />
           <CtaButton type="submit" disabled={code === null} aria-disabled={busy || undefined}>
             Send request
@@ -347,9 +415,7 @@ function CodeField({
         // The app's search-field surface: raised, a lighter edge on hover, gold with the
         // focus ring while focused.
         ...searchFieldStyle({focused, hovered}),
-        flex: '1 1 160px',
-        minWidth: 0,
-        maxWidth: 240,
+        ...CODE_FIELD_SIZE,
         height: TOUCH_TARGET,
         boxSizing: 'border-box',
         padding: `0 ${SPACING.md}px`,
@@ -550,7 +616,7 @@ function PeopleList({heading, headingRef, rows, listRef, empty, joiner, meta, bu
   return (
     <>
       {/* Focusable from script only: it takes the focus when a list empties under it. */}
-      <h3 ref={headingRef} tabIndex={-1} style={{...CAP_LABEL_XS, margin: `${SPACING.xl}px 0 ${SPACING.xs}px`}}>
+      <h3 ref={headingRef} tabIndex={-1} style={LIST_HEADING}>
         {heading}
       </h3>
       {joiner && (
@@ -559,7 +625,7 @@ function PeopleList({heading, headingRef, rows, listRef, empty, joiner, meta, bu
         </span>
       )}
       {rows.length === 0 && empty ? (
-        <p style={{...MUTED, marginTop: SPACING.xs}}>{empty}</p>
+        <p style={EMPTY_LINE}>{empty}</p>
       ) : (
         <ul ref={listRef} style={{listStyle: 'none', margin: 0, padding: 0}}>
           {rows.map((row, index) => (

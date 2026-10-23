@@ -200,10 +200,13 @@ describe('FriendsSection', () => {
     expect(screen.getByRole('heading', {name: 'Your friends (1)'})).toHaveFocus();
   });
 
-  it('says so while it loads', () => {
+  // #914: in the boxes of a loaded section, so the page under it stays put when it loads.
+  it('draws its loaded shape while it loads, with nothing to type in', () => {
     setup({status: 'loading', code: null});
-    expect(screen.getByText('Loading your friends…')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Add a friend')).toBeNull();
+    expect(screen.getByRole('group', {name: 'Loading your friends'})).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('heading', {name: 'Your friends'})).toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(screen.queryByRole('button')).toBeNull();
   });
 
   it('offers to try again after a failed load', async () => {
