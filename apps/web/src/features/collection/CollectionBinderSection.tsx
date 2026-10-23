@@ -13,6 +13,7 @@ import {
   type BinderShow,
 } from './binderCards';
 import {tallyCollection} from './collectionStats';
+import {sectionStyle} from './binderLayout';
 import {
   CollectionSetBody,
   CollectionSetRail,
@@ -23,7 +24,7 @@ import {
   type CollectionSetPanelProps,
   type SetSwitching,
 } from './CollectionSetPanel';
-import {BROWSE_GUTTER, BROWSE_ROW_TOP, useSidePanelDocked} from '../cards/components/BrowseSidePanel';
+import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
 import {BinderSpread, BinderSlotSkeleton, PER_PAGE} from '../cards/components/BinderSpread';
 import {BinderSpreadMap} from '../cards/components/BinderSpreadMap';
 import {CtaButton} from '../../shared/components';
@@ -78,29 +79,6 @@ import {COLORS, FONT_SIZES, SPACING, type BrowseSortOrder} from '../../shared/co
 const ZERO: CollectionEntry = {normal: 0, foil: 0};
 
 const NOOP = () => {};
-
-/**
- * Shared by every branch, so the box around them matches.
- *
- * A phone's single page is WIDTH-driven, so its height is not bounded by the
- * space left under the toolbar, and Browse's `<main>` clips overflow. Measured:
- * at 375x667 the arrows clear the bottom by 2px; a shorter phone would hide them.
- * Scrolling the section keeps them reachable at any height. A desktop spread is
- * height-capped and never needs it.
- *
- * DOCKED, THE SIDES ARE BROWSE'S GUTTER (owner, 2026-10-08): the binder, drawn
- * there without arrows or padding of its own, starts where the search bar does,
- * one gutter past the filters panel, and stops one gutter short of the set panel.
- * The top and bottom match the panels' own, so a full-height binder starts and ends
- * level with them. Undocked, it starts where the toolbar's own padding put it
- * before the toolbar came to end at its controls (`BROWSE_ROW_TOP`).
- */
-function sectionStyle(isMobile: boolean, docked = false): React.CSSProperties {
-  const gutter = isMobile ? SPACING.sm : SPACING.xxl;
-  const sides = docked ? BROWSE_GUTTER : gutter;
-  const top = docked ? BROWSE_ROW_TOP : SPACING.md;
-  return {padding: `${top}px ${sides}px ${gutter}px`, height: '100%', ...(isMobile && {overflowY: 'auto'})};
-}
 
 /** What the page passes through to the collection panel: set switching, the binder view and the chosen headline. */
 type PanelControls = SetSwitching & BinderView & AxisChoice;

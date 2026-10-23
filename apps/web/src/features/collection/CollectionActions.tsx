@@ -22,6 +22,11 @@ export interface CollectionActionsProps {
    * as the Account page's button does, so it never races the account's own copy.
    */
   checking: boolean;
+  /**
+   * Told each time the menu opens, before an action is chosen: Browse starts the import dialog's
+   * chunk there (#913), so the dialog opens at once.
+   */
+  onMenuOpen?: () => void;
 }
 
 /**
@@ -32,11 +37,16 @@ export interface CollectionActionsProps {
  * A menu button: opening focuses the first action, the arrows move through the actions,
  * Escape closes the menu onto the gear, and Tab or a press outside closes it.
  */
-export function CollectionActions({onImport, checking}: CollectionActionsProps) {
+export function CollectionActions({onImport, checking, onMenuOpen}: CollectionActionsProps) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
   useCloseOnPressOutside(open, wrapperRef, setOpen);
+
+  const openMenu = () => {
+    setOpen(true);
+    onMenuOpen?.();
+  };
 
   const close = () => {
     setOpen(false);
@@ -55,7 +65,7 @@ export function CollectionActions({onImport, checking}: CollectionActionsProps) 
   function onButtonKeyDown(e: KeyboardEvent<HTMLButtonElement>) {
     if (open || !OPENING_KEYS.has(e.key)) return;
     e.preventDefault();
-    setOpen(true);
+    openMenu();
   }
 
   function onMenuKeyDown(e: KeyboardEvent<HTMLDivElement>) {
@@ -79,7 +89,7 @@ export function CollectionActions({onImport, checking}: CollectionActionsProps) 
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
-        onClick={() => setOpen(!open)}
+        onClick={open ? () => setOpen(false) : openMenu}
         onKeyDown={onButtonKeyDown}
         onBlur={closeOnLeave}
         style={{width: 34, padding: 0}}>
