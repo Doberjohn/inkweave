@@ -7,7 +7,7 @@ import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
 import {RenderProfiler} from '../../../shared/components';
 import {useResponsive} from '../../../shared/hooks';
 import {CardGridSkeleton} from './CardGridSkeleton';
-import {BROWSE_GUTTER} from './BrowseSidePanel';
+import {BROWSE_GUTTER, BROWSE_ROW_TOP} from './BrowseSidePanel';
 
 interface BrowseCardGridProps {
   cards: LorcanaCard[];
@@ -33,7 +33,7 @@ interface ListContainerConfig {
 // virtual scroll positioning. Setting either here would block the effect cycle:
 // hardcoded paddingTop pins items to the top of the List instead of letting
 // them shift to their virtual row. Only horizontal padding is safe to set.
-// Visual top breathing-room comes from the toolbar's bottom padding.
+// The room above and below the cards comes from `GridHeader` and `GridFooter`.
 const createListContainer = ({paddingX, minColWidth}: ListContainerConfig) =>
   forwardRef<HTMLDivElement, ListContainerProps>(function ListContainer(
     {style, children},
@@ -54,6 +54,16 @@ const createListContainer = ({paddingX, minColWidth}: ListContainerConfig) =>
       </div>
     );
   });
+
+/**
+ * The room above the first row, inside the scroller: a pointed-at card's glow reaches past the
+ * tile, and the scroller clips whatever lies outside it. Above the scroller, in the toolbar's
+ * padding, the top of the first row's glow was cut off.
+ */
+const GridHeader = () => <div style={{height: BROWSE_ROW_TOP}} />;
+
+/** The room under the last row, for its glow too: the grid ends level with the panels. */
+const GridFooter = () => <div style={{height: SPACING.xxl}} />;
 
 /**
  * A tile's card page. A promo's tile is its card on that promo (#805), and only the card has a
@@ -93,7 +103,7 @@ export function BrowseCardGrid({cards, isLoading, onCardSelect, printingFor}: Br
     <RenderProfiler id="BrowseCardGrid">
       <VirtuosoGrid
         totalCount={displayedCards.length}
-        components={{List: ListContainer}}
+        components={{List: ListContainer, Header: GridHeader, Footer: GridFooter}}
         itemContent={(index) => (
           <CardTile
             card={displayedCards[index]}

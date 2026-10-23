@@ -23,7 +23,7 @@ import {
   type CollectionSetPanelProps,
   type SetSwitching,
 } from './CollectionSetPanel';
-import {BROWSE_GUTTER, useSidePanelDocked} from '../cards/components/BrowseSidePanel';
+import {BROWSE_GUTTER, BROWSE_ROW_TOP, useSidePanelDocked} from '../cards/components/BrowseSidePanel';
 import {BinderSpread, BinderSlotSkeleton, PER_PAGE} from '../cards/components/BinderSpread';
 import {BinderSpreadMap} from '../cards/components/BinderSpreadMap';
 import {CtaButton} from '../../shared/components';
@@ -91,12 +91,15 @@ const NOOP = () => {};
  * DOCKED, THE SIDES ARE BROWSE'S GUTTER (owner, 2026-10-08): the binder, drawn
  * there without arrows or padding of its own, starts where the search bar does,
  * one gutter past the filters panel, and stops one gutter short of the set panel.
- * The bottom matches the panels' own, so a full-height binder ends level with them.
+ * The top and bottom match the panels' own, so a full-height binder starts and ends
+ * level with them. Undocked, it starts where the toolbar's own padding put it
+ * before the toolbar came to end at its controls (`BROWSE_ROW_TOP`).
  */
 function sectionStyle(isMobile: boolean, docked = false): React.CSSProperties {
   const gutter = isMobile ? SPACING.sm : SPACING.xxl;
   const sides = docked ? BROWSE_GUTTER : gutter;
-  return {padding: `0 ${sides}px ${gutter}px`, height: '100%', ...(isMobile && {overflowY: 'auto'})};
+  const top = docked ? BROWSE_ROW_TOP : SPACING.md;
+  return {padding: `${top}px ${sides}px ${gutter}px`, height: '100%', ...(isMobile && {overflowY: 'auto'})};
 }
 
 /** What the page passes through to the collection panel: set switching, the binder view and the chosen headline. */

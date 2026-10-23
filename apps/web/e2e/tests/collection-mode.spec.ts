@@ -645,6 +645,12 @@ test.describe('Collection mode, signed in', () => {
     await expect(tile).toHaveCSS('box-shadow', /rgba\(255, 185, 0, 0\.4\d*\) 0px 0px 22px 3px/);
     await expect(tile).toHaveCSS('z-index', '1');
     expect(await tile.evaluate((t) => getComputedStyle(t, '::after').content)).toBe('none');
+    // The first row's glow fits inside the grid's scroller, which clips it: 24px above the
+    // tile, past its 3px spread and 22px blur, nothing of it shows any more.
+    const roomAbove = await tile.evaluate(
+      (t) => t.getBoundingClientRect().top - t.closest('[data-testid="virtuoso-scroller"]')!.getBoundingClientRect().top,
+    );
+    expect(roomAbove).toBeGreaterThanOrEqual(24);
 
     // A binder pocket: the stronger gold, which shows on the parchment.
     await page.goto(`/browse?binder=${SET}`);

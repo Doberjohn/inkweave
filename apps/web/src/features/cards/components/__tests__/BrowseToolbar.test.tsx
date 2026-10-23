@@ -305,6 +305,18 @@ describe('BrowseToolbar on Browse', () => {
     rerender(<BrowseToolbar {...props} {...docked(true)} />);
     expect(screen.queryByRole('button', {name: /Character/})).toBeNull();
   });
+
+  it("ends at its controls on Browse, whose grid keeps that room for a card's glow, and not on the playstyle page", () => {
+    const toolbar = () => screen.getByTestId('browse-toolbar');
+    const {rerender} = render(<BrowseToolbar {...defaultProps({flushBottom: true, isMobile: true})} />);
+    expect(toolbar().style.paddingBottom).toBe('0px');
+
+    rerender(<BrowseToolbar {...defaultProps({flushBottom: true, ...docked(true)})} />);
+    expect(toolbar().style.paddingBottom).toBe('0px');
+
+    rerender(<BrowseToolbar {...defaultProps({isMobile: true})} />);
+    expect(toolbar().style.paddingBottom).toBe('12px');
+  });
 });
 
 // The clear button at the search field's right end (owner, 2026-10-22).

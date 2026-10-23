@@ -31,6 +31,14 @@ export const SIDE_PANEL_WIDTH = 260;
  */
 export const BROWSE_GUTTER = 32;
 
+/**
+ * The room between Browse's toolbar, which ends at its controls, and the row under it: the
+ * panels' and the binder's top padding, and the card grid's, inside its scroller, where a
+ * pointed-at card's glow needs it (`.card-tile` in index.css: 22px of blur past a 3px spread).
+ * The toolbar held this room until the glow came, and the scroller cut the glow's top off.
+ */
+export const BROWSE_ROW_TOP = SPACING.xxl;
+
 /** The panel surface, shared with the collection set panel's other layouts. */
 export const SIDE_PANEL_STYLE: CSSProperties = {
   width: SIDE_PANEL_WIDTH,
@@ -111,15 +119,20 @@ export function DockedSetPanel({children}: {children: ReactNode}) {
 
 /**
  * The page's row under the toolbar: the grid or binder, framed by the docked panels. Each
- * panel sits one gutter from the page's edge and is bottom-padded like the binder section,
- * so the boxes end level; the grid or binder brings its own inner padding.
+ * panel sits one gutter from the page's edge and `BROWSE_ROW_TOP` under the toolbar, and is
+ * bottom-padded like the binder section, so the boxes start and end level; the grid or binder
+ * brings its own inner padding.
  */
 export function DockedPanelsRow({left, right, children}: {left?: ReactNode; right?: ReactNode; children: ReactNode}) {
   return (
     <div style={{flex: 1, minHeight: 0, display: 'flex'}}>
-      {left && <div style={{padding: `0 0 ${SPACING.xxl}px ${BROWSE_GUTTER}px`, flexShrink: 0}}>{left}</div>}
+      {left && (
+        <div style={{padding: `${BROWSE_ROW_TOP}px 0 ${SPACING.xxl}px ${BROWSE_GUTTER}px`, flexShrink: 0}}>{left}</div>
+      )}
       <div style={{flex: 1, minWidth: 0, minHeight: 0, position: 'relative'}}>{children}</div>
-      {right && <div style={{padding: `0 ${BROWSE_GUTTER}px ${SPACING.xxl}px 0`, flexShrink: 0}}>{right}</div>}
+      {right && (
+        <div style={{padding: `${BROWSE_ROW_TOP}px ${BROWSE_GUTTER}px ${SPACING.xxl}px 0`, flexShrink: 0}}>{right}</div>
+      )}
     </div>
   );
 }
