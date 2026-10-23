@@ -125,11 +125,11 @@ async function signedIn(page: Page): Promise<void> {
 const binder = (page: Page) => page.getByRole('region', {name: 'Binder'});
 const numbers = (page: Page) => page.getByRole('region', {name: 'Collection numbers'});
 
-/** Where an element starts and ends across the page, in CSS pixels. */
-async function span(locator: Locator): Promise<{left: number; right: number}> {
+/** Where an element's four edges sit on the page, in CSS pixels. */
+async function edges(locator: Locator): Promise<{left: number; right: number; top: number; bottom: number}> {
   const box = await locator.boundingBox();
   expect(box, 'the element is on the page').not.toBeNull();
-  return {left: box!.x, right: box!.x + box!.width};
+  return {left: box!.x, right: box!.x + box!.width, top: box!.y, bottom: box!.y + box!.height};
 }
 
 test.describe('Collection mode', () => {
@@ -509,7 +509,7 @@ test.describe('Collection mode, signed in', () => {
     await expect(next).toHaveAttribute('aria-disabled', 'true');
   });
 
-  test("the spread runs the search bar's length where the window's height runs out first (owner, 2026-10-23)", async ({
+  test("the spread runs the search bar's length where the window's height runs out first, its cards keeping their size (owner, 2026-10-23)", async ({
     page,
   }) => {
     // At 1920x900 the cards take their size from the height and stop 42px short of the
@@ -520,14 +520,29 @@ test.describe('Collection mode, signed in', () => {
     await page.goto(`/browse?binder=${SET}`);
     await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
 
-    const search = await span(page.getByRole('textbox', {name: 'Search cards'}));
-    const cover = await span(binder(page).getByRole('group', {name: 'Front cover'}));
-    const right = await span(binder(page).getByRole('group', {name: 'Right page'}));
+    const search = await edges(page.getByRole('textbox', {name: 'Search cards'}));
+    const cover = await edges(binder(page).getByRole('group', {name: 'Front cover'}));
+    const rightPage = binder(page).getByRole('group', {name: 'Right page'});
+    const right = await edges(rightPage);
     expect(Math.abs(cover.left - search.left), 'the starts apart').toBeLessThanOrEqual(1);
     expect(Math.abs(right.right - search.right), 'the ends apart').toBeLessThanOrEqual(1);
     // The disc's centre sits 2px past the page's edge (`edgeArrowPlace`).
-    const next = await span(binder(page).getByRole('button', {name: 'Next spread'}));
+    const next = await edges(binder(page).getByRole('button', {name: 'Next spread'}));
     expect(Math.abs((next.left + next.right) / 2 - right.right), 'the Next disc off the end').toBeLessThanOrEqual(4);
+
+    // The cards keep the size the height gives them, as on master. Each pocket is a card's
+    // shape, 8px (`SPACING.sm`) from its neighbours across and down, so it fills its row, and
+    // a row's four sit in the middle of their page: the width the page gained is margin
+    // around them, never slack between them.
+    const pockets = rightPage.locator(':scope > div');
+    await expect(pockets).toHaveCount(12);
+    const [first, second, fourth, below] = await Promise.all([0, 1, 3, 4].map((i) => edges(pockets.nth(i))));
+    const shapeOff = first.right - first.left - 0.72 * (first.bottom - first.top);
+    expect(Math.abs(shapeOff), "a pocket off a card's shape").toBeLessThanOrEqual(1);
+    expect(Math.abs(second.left - first.right - 8), 'the gap across').toBeLessThanOrEqual(1);
+    expect(Math.abs(below.top - first.bottom - 8), 'the gap down').toBeLessThanOrEqual(1);
+    const centreOff = first.left - right.left - (right.right - fourth.right);
+    expect(Math.abs(centreOff), 'the pockets off centre').toBeLessThanOrEqual(1);
   });
 
   test("a search narrows the binder, and the panel's numbers count only what it finds", async ({
