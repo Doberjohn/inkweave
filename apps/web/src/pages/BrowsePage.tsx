@@ -250,6 +250,8 @@ function toolbarPropsFrom(
 ): ToolbarProps {
   return {
     ...controls,
+    // The row under the toolbar holds the room below it, the grid inside its scroller (`BROWSE_ROW_TOP`).
+    flushBottom: true,
     activeFilterCount: params.activeFilterCount,
     inkFilters: params.inkFilters,
     typeFilters: params.typeFilters,

@@ -66,6 +66,12 @@ interface BrowseToolbarProps {
    * closed, the button is the ghost outline and the chips are the only sign of them.
    */
   docked?: {panelOpen: boolean};
+  /**
+   * Browse's: the toolbar ends at its controls, and the row under it holds the room below them
+   * (`BROWSE_ROW_TOP`), the card grid inside its scroller, where a pointed-at card's glow can
+   * use it. Docked, the toolbar always ends there.
+   */
+  flushBottom?: boolean;
   /** Optional slot rendered after the filters button (e.g., role filter chips) */
   extraChips?: React.ReactNode;
   /**
@@ -225,10 +231,10 @@ function buildActiveChips(args: ChipBuildArgs): ChipData[] {
   ];
 }
 
-function getToolbarStyle(isMobile: boolean): React.CSSProperties {
+function getToolbarStyle(isMobile: boolean, flushBottom = false): React.CSSProperties {
   const sidePad = isMobile ? SPACING.lg : BROWSE_GUTTER;
   return {
-    padding: `${SPACING.md}px ${sidePad}px ${SPACING.md}px`,
+    padding: `${SPACING.md}px ${sidePad}px ${flushBottom ? 0 : SPACING.md}px`,
     display: 'flex',
     alignItems: 'center',
     gap: isMobile ? SPACING.sm : 10,
@@ -466,12 +472,14 @@ interface ToolbarSlots {
  * 2026-10-20): with the collection's actions after them (`modeActions`) they span the set
  * panel's width, the picker starting where the panel does, one gutter past the search, as
  * the sort ends where the filters panel does. Collection keeps its place in either mode.
+ *
+ * It ends at its controls: the row under it keeps the room below them (`BROWSE_ROW_TOP`).
  */
 function DockedToolbar({filters, sort, search, chips, modeSwitch, modeActions, setPicker}: ToolbarSlots) {
   return (
     <div
       data-testid="browse-toolbar"
-      style={{padding: `${SPACING.md}px ${BROWSE_GUTTER}px`, position: 'relative', zIndex: 1}}>
+      style={{padding: `${SPACING.md}px ${BROWSE_GUTTER}px 0`, position: 'relative', zIndex: 1}}>
       <div style={{display: 'flex', alignItems: 'center'}}>
         <div style={PANEL_SPAN_STYLE}>
           {filters}
@@ -522,6 +530,7 @@ const PANEL_SPAN_STYLE: React.CSSProperties = {
  */
 function FlowToolbar({
   isMobile,
+  flushBottom,
   filters,
   sort,
   search,
@@ -530,9 +539,9 @@ function FlowToolbar({
   modeActions,
   icons,
   extraChips,
-}: ToolbarSlots & {isMobile: boolean; icons: React.ReactNode; extraChips: React.ReactNode}) {
+}: ToolbarSlots & {isMobile: boolean; flushBottom?: boolean; icons: React.ReactNode; extraChips: React.ReactNode}) {
   return (
-    <div data-testid="browse-toolbar" style={getToolbarStyle(isMobile)}>
+    <div data-testid="browse-toolbar" style={getToolbarStyle(isMobile, flushBottom)}>
       {filters}
       {modeSwitch ? sort : null}
       {search}
@@ -582,6 +591,7 @@ export function BrowseToolbar({
   onSearchChange,
   buttonOptions,
   docked,
+  flushBottom,
   rarities,
 }: BrowseToolbarProps) {
   // Cost icons stay inline only on wide desktops; below that they tuck into the
@@ -646,5 +656,7 @@ export function BrowseToolbar({
       options={buttonOptions}
     />
   ) : null;
-  return <FlowToolbar {...slots} isMobile={isMobile} icons={icons} extraChips={extraChips} />;
+  return (
+    <FlowToolbar {...slots} isMobile={isMobile} flushBottom={flushBottom} icons={icons} extraChips={extraChips} />
+  );
 }
