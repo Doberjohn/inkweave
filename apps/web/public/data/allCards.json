@@ -5059,6 +5059,15 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/set9/242_ac6ccdc52438b8f3dcc434df23fa9483d02b3ff8.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/set9/242_05fd1d65021aa88c94d035fb5ce3ca7b04acbfae.jpg"
           }
+        },
+        {
+          "id": 80056,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "P5",
+          "finishes": [
+            "foil"
+          ]
         }
       ]
     },

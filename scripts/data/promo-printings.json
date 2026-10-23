@@ -1,13 +1,13 @@
 {
   "about": "All 264 Disney Lorcana promo printings: the 261 the owner settled on 16 Oct 2026 (Claude Doc 'Promo cards to settle'), less six the owner dropped on 18 Oct (C1's four non-foil twins and its unnumbered 2025 World Champion Mickey, and C2's unnumbered store-event Minnie), and nine the owner added that day, 26/P2's European printing, Vaiana, two Chinese printings, 42/P2 Snow White - Unexpected Houseguest and 43/P2 Stitch - Little Rocket, and six the owner scanned in Japanese, 59/P3 Elsa - Exploring the Unknown, 61/P3 and 62/P3 Maleficent - Monstrous Dragon, 63/P3 Buzz Lightyear - Space Ranger, and 7/P4 and 8/P4 Daisy Duck - Paranormal Investigator. As entries for a card's `variants` array in apps/web/public/data/allCards.json, the shape Epic/Enchanted/Iconic use. Read promo-printings-merge-notes.md first.",
   "stats": {
-    "promoPrintings": 264,
+    "promoPrintings": 265,
     "withLorcanaJsonId": 215,
-    "withProvisionalId": 49,
+    "withProvisionalId": 50,
     "withOfficialArtUrl": 215,
     "foldIntoAllCards": {
-      "printings": 148,
-      "baseCards": 116
+      "printings": 149,
+      "baseCards": 117
     },
     "noBaseCardInAllCards": {
       "printings": 116,
@@ -25,6 +25,7 @@
       "P2": 40,
       "P3": 63,
       "P4": 11,
+      "P5": 1,
       "PD1": 19,
       "RPH": 7
     }
@@ -543,6 +544,23 @@
           "number": 62,
           "promoGrouping": "P3",
           "scanLanguage": "ja",
+          "finishes": [
+            "foil"
+          ]
+        }
+      ]
+    },
+    {
+      "baseId": 2047,
+      "fullName": "Mickey Mouse - Brave Little Prince",
+      "setCode": "9",
+      "number": 111,
+      "variants": [
+        {
+          "id": 80056,
+          "rarity": "Special",
+          "number": 1,
+          "promoGrouping": "P5",
           "finishes": [
             "foil"
           ]
@@ -5008,7 +5026,8 @@
     "80052": "62/P3 Maleficent - Monstrous Dragon",
     "80053": "63/P3 Buzz Lightyear - Space Ranger",
     "80054": "7/P4 Daisy Duck - Paranormal Investigator",
-    "80055": "8/P4 Daisy Duck - Paranormal Investigator"
+    "80055": "8/P4 Daisy Duck - Paranormal Investigator",
+    "80056": "1/P5 Mickey Mouse - Brave Little Prince"
   },
   "notes": [
     {
