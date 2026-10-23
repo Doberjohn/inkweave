@@ -1,7 +1,7 @@
 import {describe, it, expect} from 'vitest';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {createCard} from '../../shared/test-utils';
-import {browseView, gridModalTarget, printingIdsFor, tilePrintingFor} from '../browseView';
+import {browseView, gridModalTarget, printingIdsFor, searchPool, tilePrintingFor} from '../browseView';
 import {binderRarities} from '../../features/collection/binderCards';
 
 // Core folds Elsa's Enchanted printing into her card; the collection's wide pool
@@ -187,5 +187,49 @@ describe('promo tiles', () => {
       '2432',
       '80042',
     ]);
+  });
+});
+
+// A search lists the sets 1-8 cards Core doesn't have too (#911), with their real ids.
+describe("Browse's search over sets 1-8", () => {
+  // Ariel - Singing Mermaid is in Set 4 and Set 9: Core's card stands for both printings.
+  const singing = createCard({id: '1951', name: 'Ariel', fullName: 'Ariel - Singing Mermaid', setCode: '9', rarity: 'Rare'});
+  const singingSet4 = {...singing, id: '694', setCode: '4'};
+  const onHumanLegs = createCard({
+    id: '1',
+    name: 'Ariel',
+    fullName: 'Ariel - On Human Legs',
+    setCode: '1',
+    rarity: 'Uncommon',
+  });
+  // Captain Hook - Forceful Duelist is in sets 1 and 8, both before Core.
+  const hook = createCard({id: '174', name: 'Captain Hook', fullName: 'Captain Hook - Forceful Duelist', setCode: '1'});
+  const hookSet8 = {...hook, id: '1850', setCode: '8'};
+  const preCore = [singingSet4, onHumanLegs, hook, hookSet8];
+  const search = (searchQuery: string) => ({...params(), searchQuery});
+
+  it("adds each sets 1-8 card whose name Core doesn't have, once, from its newest set", () => {
+    expect(ids(searchPool([singing], preCore))).toEqual(['1', '1850', '1951']);
+  });
+
+  it("lists sets 1-8 only while a search is on, and keeps the grid's rarity options Core's", () => {
+    expect(ids(browseView(null, [singing], params(), preCore).sortedCards)).toEqual(['1951']);
+
+    const view = browseView(null, [singing], search('ariel'), preCore);
+    expect(ids(view.sortedCards)).toEqual(['1', '1951']);
+    expect(view.rarities).toEqual(['Rare']);
+  });
+
+  it("leaves the binder's pool as it is, since it holds sets 1-8 already", () => {
+    expect(ids(browseView(binder(true), core, search('ariel'), [onHumanLegs]).sortedCards)).toEqual([]);
+  });
+
+  it('hands the card window the resolver for the cards Core cannot open', () => {
+    const resolveCard = (id: string) => (id === '1' ? onHumanLegs : undefined);
+    const target = gridModalTarget('1', [singing, onHumanLegs], () => undefined, resolveCard);
+
+    expect(target.cardId).toBe('1');
+    expect(target.siblingIds).toEqual(['1951', '1']);
+    expect(target.options.resolveCard).toBe(resolveCard);
   });
 });

@@ -8,8 +8,9 @@
 // The promos load here too (#805), each a pocket built from the card it reprints, and
 // a pre-Core card gets its printings, its set's and its promos, in `variants` (#891).
 //
-// Loading is LAZY: nothing is fetched until collection mode is switched on. A
-// visitor who never opens it pays nothing.
+// Loading is LAZY: nothing is fetched until collection mode is switched on, or Browse's
+// search asks for sets 1-8 (#911). A visitor who does neither pays nothing. The files load
+// through `collectionChunks.ts`, once per visit, so a search and collection mode share them.
 //
 // DESIGN-PHASE SIMPLIFICATION, deliberate and temporary: this loads every set's
 // DETAIL chunk (~444 KB gzip served) rather than the 71 KB index. The index carries no
@@ -20,29 +21,11 @@
 // than its first estimate. Revisit once the binder's needs are settled.
 
 import {createContext, useContext, useEffect, useRef, useState, type ReactNode} from 'react';
-import type {LorcanaJSONCard} from 'inkweave-synergy-engine';
-import {transformRawCards} from '../cards/loader';
 import {withPrintingCards} from './binderCards';
-import {
-  transformPromos,
-  waitingPromos,
-  withPromoPockets,
-  type CollectionPromo,
-  type RawCollectionPromo,
-} from './collectionPromos';
+import {loadCoreSetChunks, loadPreCoreSets} from './collectionChunks';
+import {waitingPromos, withPromoPockets, type CollectionPromo} from './collectionPromos';
 import {withPreCoreVariants} from './preCoreVariants';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-
-/**
- * Every set with a collection chunk. Ordered as a binder would be.
- *
- * MUST MATCH what `generate-collection-data.mjs` actually emits. Q1/Q2 were here
- * until the Quest sets were excluded from the dataset (owner ruling, 2026-10-06):
- * Illumineer's Quest is a separate co-op product, not trading-card boosters. The
- * stale entries were not harmless, because a missing chunk 404s, `Promise.all`
- * rejects, and collection mode gets an empty pool rather than a partial one.
- */
-export const COLLECTION_SETS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14'];
 
 interface CollectionCardsContextValue {
   /**
@@ -77,29 +60,6 @@ interface CollectionCardsContextValue {
 
 const CollectionCardsContext = createContext<CollectionCardsContextValue | null>(null);
 
-async function fetchChunk(setCode: string): Promise<LorcanaCard[]> {
-  const res = await fetch(`/data/collection/${setCode}.json`);
-  if (!res.ok) throw new Error(`set ${setCode}: HTTP ${res.status}`);
-  const cards = (await res.json()) as LorcanaJSONCard[];
-  // The LOADER's transformer, not the engine's. The engine's deliberately leaves
-  // `imageUrl` unset ("a web-app concern"), and the loader wraps it to attach the
-  // resolved URL plus the content-addressed hashes. Calling the engine directly
-  // costs every collection card its artwork: `CardTile` falls back to the plain
-  // cost badge when `imgSrc` is falsy, which looks like 2,009 cards with no image
-  // rather than a missing transform step.
-  return transformRawCards(cards);
-}
-
-/**
- * The collection's promos (#805), beside the set chunks: every promo in the owner's catalog,
- * each built into a pocket from the card it reprints (`withPromoPockets`).
- */
-async function fetchPromos(): Promise<CollectionPromo[]> {
-  const res = await fetch('/data/collection/promos.json');
-  if (!res.ok) throw new Error(`promos: HTTP ${res.status}`);
-  return transformPromos((await res.json()) as RawCollectionPromo[]);
-}
-
 export function CollectionCardsProvider({children}: {children: ReactNode}) {
   const [cards, setCards] = useState<LorcanaCard[]>([]);
   const [promos, setPromos] = useState<CollectionPromo[]>([]);
@@ -125,10 +85,11 @@ export function CollectionCardsProvider({children}: {children: ReactNode}) {
     started.current = true;
     setIsLoading(true);
     setError(null);
-    Promise.all([Promise.all(COLLECTION_SETS.map(fetchChunk)), fetchPromos()])
-      .then(([chunks, loadedPromos]) => {
-        setCards(withPreCoreVariants(chunks.flat(), loadedPromos));
-        setPromos(loadedPromos);
+    // Sets 1-8 may be in already, loaded by a search in Browse (#911).
+    Promise.all([loadPreCoreSets(), loadCoreSetChunks()])
+      .then(([preCore, coreSets]) => {
+        setCards(withPreCoreVariants([...preCore.cards, ...coreSets], preCore.promos));
+        setPromos(preCore.promos);
         setLoaded(true);
       })
       .catch((err: Error) => {

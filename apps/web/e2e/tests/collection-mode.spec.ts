@@ -726,6 +726,29 @@ test.describe('Collection mode, signed in', () => {
     await expect(modal.locator('h1')).toHaveText(card.fullName);
     await expect(inFront).toHaveAttribute('alt', /, Enchanted printing$/);
   });
+
+  test('after a search in the grid, collection mode loads only sets 9-14, the search having loaded the rest (#911)', async ({
+    page,
+  }, testInfo) => {
+    // One project is enough: this asserts what the network requests.
+    if (testInfo.project.name !== 'chromium') test.skip();
+    await signInAsCollector(page, ENTRIES);
+    const requests: string[] = [];
+    page.on('request', (request) => requests.push(new URL(request.url()).pathname));
+    const collectionFiles = () => requests.filter((pathname) => pathname.startsWith('/data/collection/'));
+    await page.goto('/browse?q=Ariel+On+Human');
+    await signedIn(page);
+    // A Set 1 card in the grid: the search's files have landed.
+    await expect(page.getByRole('button', {name: 'Ariel - On Human Legs', exact: true})).toBeVisible();
+    const searchLoaded = collectionFiles().length;
+
+    await page.getByRole('button', {name: 'Show my collection'}).click();
+
+    // The binder's cards, in place of its shimmer once every chunk has landed (it loads all or nothing).
+    await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
+    const coreSets = ['9', '10', '11', '12', '13', '14'].map((set) => `/data/collection/${set}.json`);
+    expect(collectionFiles().slice(searchLoaded).sort()).toEqual(coreSets.sort());
+  });
 });
 
 test.describe('Collection mode, signed in (phone width)', () => {

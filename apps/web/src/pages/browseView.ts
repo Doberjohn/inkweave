@@ -149,8 +149,33 @@ function narrowsList(params: ListParams, filters: CardFilterOptions): boolean {
 }
 
 /**
+ * Browse's pool while a search is on (#911): Core, plus each sets 1-8 card whose full name no
+ * Core card has, one per name, from its newest set. A sets 1-8 card that shares a Core card's
+ * full name is that card's older printing, which Lorcana plays as the same card, so the Core
+ * card stands for it (Ariel - Singing Mermaid, Set 4 and Set 9). Inside sets 1-8, Captain Hook -
+ * Forceful Duelist (sets 1 and 8) and Dalmatian Puppy - Tail Wagger (five Set 3 arts and Set 8)
+ * repeat a name too.
+ */
+export function searchPool(coreCards: LorcanaCard[], preCoreCards: readonly LorcanaCard[]): LorcanaCard[] {
+  const coreNames = new Set(coreCards.map((card) => card.fullName));
+  const byName = new Map<string, LorcanaCard>();
+  for (const card of preCoreCards) {
+    if (coreNames.has(card.fullName)) continue;
+    const kept = byName.get(card.fullName);
+    if (!kept || Number(card.setCode) > Number(kept.setCode)) byName.set(card.fullName, card);
+  }
+  return [...coreCards, ...byName.values()];
+}
+
+/** The grid's pool: Core, and sets 1-8 too while a search is on (#911). */
+function gridPool(coreCards: LorcanaCard[], preCoreCards: readonly LorcanaCard[], searchQuery: string) {
+  return searchQuery.trim() ? searchPool(coreCards, preCoreCards) : coreCards;
+}
+
+/**
  * What Browse lists, and the Rarity options those cards offer (the binder's Keyword and
- * Classification ones too). The grid lists Core; the binder lists the collection's wide
+ * Classification ones too). The grid lists Core, and while a search is on the sets 1-8
+ * cards Core doesn't have (`searchPool`, #911); the binder lists the collection's wide
  * pool, but only while it shows, not while the import dialog has that pool loaded to
  * parse against.
  *
@@ -162,16 +187,19 @@ export function browseView(
   collection: ViewCollection | null,
   coreCards: LorcanaCard[],
   params: ListParams,
+  preCoreCards: readonly LorcanaCard[] = [],
 ) {
   const binderShows = collection?.active ?? false;
-  const pool = collection?.active ? collection.pool : coreCards;
+  const binderPool = collection?.active ? collection.pool : null;
+  const pool = binderPool ?? gridPool(coreCards, preCoreCards, params.searchQuery);
   const filters = appliedFilters(collection, params.filters);
   const combined = buildCombinedFilters(filters, params.inkFilters, params.typeFilters, params.costFilters);
   const matched = applyFilters(pool, params.searchQuery, combined);
   // The binder holds each printing as a card of its own already.
   const sorted = applySortOrder(binderShows ? matched : withPromoTiles(matched, filters.rarities), params.sortOrder);
   return {
-    rarities: rarityOptions(collection, pool),
+    // The grid's options stay Core's, so the filter panels don't change as a query is typed.
+    rarities: rarityOptions(collection, binderPool ?? coreCards),
     binderOptions: binderOptions(binderShows, pool),
     sortedCards: collection?.active ? byOwnership(sorted, collection) : sorted,
     matchedCards: sorted,
@@ -204,14 +232,18 @@ export function tilePrintingFor(getCardById: (id: string) => LorcanaCard | undef
  * (`collectionModalTarget`), so one card can hold several places: Mickey Mouse - True
  * Friend's four promos name him four times, and each place keeps its own printing. A card's
  * own tile opens on the printing it shows (`printingIdFor`).
+ *
+ * `resolveCard` finds the sets 1-8 cards a search lists (#911), which `CardDataContext` can't:
+ * the card window opens one with its Outside Core note, as collection mode's binder does.
  */
 export function gridModalTarget(
   cardId: string,
   tiles: readonly LorcanaCard[],
   printingIdFor: (cardId: string) => string | undefined,
+  resolveCard?: (cardId: string) => LorcanaCard | undefined,
 ) {
   const siblingIndex = tiles.findIndex((tile) => tile.id === cardId);
   const siblingIds = tiles.map((tile) => tile.baseId ?? tile.id);
   const printingFor = (id: string, at: number) => (tiles[at]?.baseId === undefined ? printingIdFor(id) : tiles[at].id);
-  return {cardId: siblingIds[siblingIndex] ?? cardId, siblingIds, options: {siblingIndex, printingFor}};
+  return {cardId: siblingIds[siblingIndex] ?? cardId, siblingIds, options: {siblingIndex, printingFor, resolveCard}};
 }

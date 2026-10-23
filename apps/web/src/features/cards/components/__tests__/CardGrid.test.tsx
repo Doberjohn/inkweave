@@ -1,6 +1,6 @@
 import type {ReactNode} from 'react';
 import {describe, it, expect, vi} from 'vitest';
-import {render, screen} from '@testing-library/react';
+import {fireEvent, render, screen} from '@testing-library/react';
 import {CardGrid} from '../CardGrid';
 import {BrowseCardGrid} from '../BrowseCardGrid';
 import {printingCard} from '../../loader';
@@ -32,6 +32,26 @@ describe('BrowseCardGrid tiles', () => {
 
     const hrefs = screen.getAllByRole('link').map((link) => link.getAttribute('href'));
     expect(hrefs).toEqual(['/card/1949/mickey-mouse-true-friend', '/card/1949/mickey-mouse-true-friend']);
+  });
+
+  it('opens a card that has no page from a plain button, not a link to "Card not found" (#911)', () => {
+    const singing = createCard({id: '1951', name: 'Ariel', fullName: 'Ariel - Singing Mermaid'});
+    const onHumanLegs = createCard({id: '1', name: 'Ariel', fullName: 'Ariel - On Human Legs', setCode: '1'});
+    const onCardSelect = vi.fn();
+    render(
+      <BrowseCardGrid
+        cards={[singing, onHumanLegs]}
+        isLoading={false}
+        onCardSelect={onCardSelect}
+        hasCardPage={(card) => card.id === '1951'}
+      />,
+    );
+
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/card/1951/ariel-singing-mermaid');
+    const button = screen.getByRole('button', {name: /On Human Legs/});
+    expect(button).not.toHaveAttribute('aria-pressed');
+    fireEvent.click(button);
+    expect(onCardSelect).toHaveBeenCalledWith(onHumanLegs);
   });
 });
 

@@ -3,12 +3,8 @@ import {join} from 'node:path';
 import {renderHook, waitFor} from '@testing-library/react';
 import {afterEach, beforeEach, describe, expect, it, vi, type Mock} from 'vitest';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {
-  COLLECTION_SETS,
-  CollectionCardsProvider,
-  useCollectionCards,
-  useCollectionPool,
-} from './CollectionCardsContext';
+import {COLLECTION_SETS} from './collectionChunks';
+import type * as CollectionCards from './CollectionCardsContext';
 
 /*
   Read at module scope, not inside a test body: the repo runs on a 7200 RPM disk and
@@ -19,10 +15,6 @@ const CHUNK_DIR = join(process.cwd(), 'public/data/collection');
 const PROMOS_FILE = 'promos.json';
 const SHIPPED = readdirSync(CHUNK_DIR).filter((f) => f.endsWith('.json') && f !== 'index.json');
 const SHIPPED_SETS = SHIPPED.filter((f) => f !== PROMOS_FILE).map((f) => f.replace('.json', ''));
-
-const wrapper = ({children}: {children: React.ReactNode}) => (
-  <CollectionCardsProvider>{children}</CollectionCardsProvider>
-);
 
 describe('COLLECTION_SETS', () => {
   /*
@@ -50,10 +42,22 @@ describe('COLLECTION_SETS', () => {
 
 describe('CollectionCardsProvider', () => {
   let fetchMock: Mock;
+  let useCollectionCards: typeof CollectionCards.useCollectionCards;
+  let useCollectionPool: typeof CollectionCards.useCollectionPool;
+  let wrapper: ({children}: {children: React.ReactNode}) => React.JSX.Element;
 
-  beforeEach(() => {
+  /*
+    A fresh copy of the provider for each test, and of the visit's loads under it
+    (`collectionChunks.ts`, #911), which outlive any one provider: without it, a load one
+    test finished would answer the next test's, with no request left to count.
+  */
+  beforeEach(async () => {
     fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
+    vi.resetModules();
+    const fresh = await import('./CollectionCardsContext');
+    ({useCollectionCards, useCollectionPool} = fresh);
+    wrapper = ({children}) => <fresh.CollectionCardsProvider>{children}</fresh.CollectionCardsProvider>;
   });
 
   afterEach(() => {
@@ -72,6 +76,21 @@ describe('CollectionCardsProvider', () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(COLLECTION_SETS.length + 1);
     expect(fetchMock).toHaveBeenCalledWith(`/data/collection/${PROMOS_FILE}`);
+  });
+
+  it('fetches only sets 9-14 once a search in Browse has loaded the rest (#911)', async () => {
+    fetchMock.mockImplementation(ok);
+    // The copy the fresh provider imported, since no reset has run since.
+    const {loadPreCoreSets} = await import('./collectionChunks');
+    await loadPreCoreSets();
+    fetchMock.mockClear();
+    const {result} = renderHook(() => useCollectionCards(), {wrapper});
+
+    result.current.ensureLoaded();
+    await waitFor(() => expect(result.current.loaded).toBe(true));
+
+    const coreSets = COLLECTION_SETS.filter((set) => Number(set) >= 9);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(coreSets.map((set) => `/data/collection/${set}.json`));
   });
 
   it('is idempotent, so calling it on every render costs nothing', async () => {
