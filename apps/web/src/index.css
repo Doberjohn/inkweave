@@ -1,20 +1,16 @@
 /* Base styles for Inkweave */
 
 /* Self-hosted fonts (woff2 in /public/fonts, precached by the workbox glob).
-   Tinos = hero/serif (weights 400, 700); Plus Jakarta Sans = body (400/500/600/700). */
+   Marcellus = hero/serif (400 only: it has no bold cut); Plus Jakarta Sans = body (400/500/600/700).
+   Nothing synthesizes: :root sets `font-synthesis: none`, so a weight with no face here renders
+   as the nearest one that exists. Hero text is 400 and body text tops out at 700
+   (`inkweave/no-unloaded-font-weight`); a new weight needs its own woff2 and @font-face. */
 @font-face {
-  font-family: 'Tinos';
+  font-family: 'Marcellus';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/tinos-400.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Tinos';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('/fonts/tinos-700.woff2') format('woff2');
+  src: url('/fonts/marcellus-400.woff2') format('woff2');
 }
 
 @font-face {

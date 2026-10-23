@@ -41,7 +41,8 @@ export const PROVIDER_COLORS = {
 // Font families
 export const FONTS = {
   body: "'Plus Jakarta Sans', 'Inkweave Sans Fallback', -apple-system, BlinkMacSystemFont, sans-serif",
-  hero: "'Tinos', 'Georgia', serif",
+  /** Marcellus ships one weight, 400, and nothing synthesizes bold, so hero text is always set at 400. */
+  hero: "'Marcellus', 'Georgia', serif",
 } as const;
 
 // Layout constants
@@ -427,6 +428,8 @@ export const LETTER_SPACING = {cap: '0.05em', eyebrow: '0.08em'} as const;
 export const DIALOG_TITLE: React.CSSProperties = {
   fontFamily: FONTS.hero,
   fontSize: FONT_SIZES.xxl,
+  // The hero serif's one weight, said out loud: an <h2> asks for bold, which it has no face for.
+  fontWeight: 400,
   color: COLORS.text,
   margin: 0,
 };

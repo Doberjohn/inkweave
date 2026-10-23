@@ -31,7 +31,7 @@ const codeNote: React.CSSProperties = {color: COLORS.descriptionText};
 
 const FONT_FAMILIES = [
   {token: 'FONTS.body', name: 'Plus Jakarta Sans', family: FONTS.body},
-  {token: 'FONTS.hero', name: 'Tinos (serif)', family: FONTS.hero},
+  {token: 'FONTS.hero', name: 'Marcellus (serif, 400 only)', family: FONTS.hero},
 ];
 
 /** Each type-scale step and what it is for. */

@@ -5,7 +5,7 @@
 // strings, quoted CSS shorthands, .css files, or index.html. This gate greps
 // the LITERAL VALUES of the tokens themselves — every COLORS hex parsed live
 // from theme.ts (the needle list can never rot), the EASING linear() strings,
-// the font family names, and two hard tripwires ('Barlow', backdrop-filter).
+// the font family names, and three hard tripwires ('Barlow', 'Tinos', backdrop-filter).
 // In .css and .html, which ESLint never reads, it also counts raw values that
 // are not tokens at all (#546): literal rgb()/rgba(), keyword and bezier
 // easings, and hexes no token declares.
@@ -34,11 +34,12 @@ const THEME = readFileSync(join(ROOT, 'src', 'shared', 'constants', 'theme.ts'),
 const TOKEN_HEXES = [...new Set((THEME.match(/#[0-9a-fA-F]{6}\b/g) ?? []).map((h) => h.toLowerCase()))];
 // The spring curves: any verbatim copy outside theme.ts is a fork that will drift.
 const EASING_STRINGS = THEME.match(/linear\([^)]+\)/g) ?? [];
-const FONT_NAMES = ['Plus Jakarta Sans', 'Tinos'];
+const FONT_NAMES = ['Plus Jakarta Sans', 'Marcellus'];
 // Tripwires: zero tolerance, no baseline. backdrop-filter matches USAGE
 // (declaration/property form), not the prose warning comments at scrim sites.
 const TRIPWIRES = [
   {name: "'Barlow' (legacy font, fully purged)", re: /Barlow/},
+  {name: "'Tinos' (the hero serif before Marcellus, fully purged)", re: /\btinos\b/i},
   {name: 'backdrop-filter usage', re: /backdrop-filter\s*:|backdropFilter\s*:/},
 ];
 // Raw values in the files ESLint never reads (#546). Their count is baselined

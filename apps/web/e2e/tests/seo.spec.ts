@@ -273,8 +273,8 @@ test.describe('SEO', () => {
     });
 
     expect(preloads).toContain('/fonts/plus-jakarta-sans-400.woff2');
-    // The homepage renders no Tinos, so a preload would only compete with the entry chunk (#640).
-    expect(preloads).not.toContain('/fonts/tinos-400.woff2');
+    // The homepage renders no hero serif, so a preload would only compete with the entry chunk (#640).
+    expect(preloads).not.toContain('/fonts/marcellus-400.woff2');
   });
 
   /**
