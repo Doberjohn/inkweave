@@ -1,9 +1,10 @@
 import {useState} from 'react';
-import type {LorcanaCard} from 'inkweave-synergy-engine';
+import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONT_SIZES, RADIUS, SHADOWS, SPACING} from '../constants';
 import {CardTranslationPanel} from './CardTranslationPanel';
 import {CardTranslationToggle} from './CardTranslationToggle';
 import {DialogShell} from './DialogShell';
+import {InkCardPlaceholder} from './InkCardPlaceholder';
 
 interface CardLightboxProps {
   src: string;
@@ -20,6 +21,12 @@ interface CardLightboxProps {
    * also falls back to the card's language.
    */
   language?: string;
+  /**
+   * The card's inks, which tint the placeholder shown until the scan loads. Left out, as for a
+   * waiting promo whose card isn't in the data yet, it is the neutral tile.
+   */
+  ink?: Ink;
+  ink2?: Ink;
   onClose: () => void;
 }
 
@@ -71,25 +78,57 @@ function ImageFallback() {
   );
 }
 
-/** The enlarged scan, framed in gold. A Location's is turned 90°, so its size bounds swap. */
-function EnlargedScan({src, alt, isLocation, onError}: {src: string; alt: string; isLocation?: boolean; onError: () => void}) {
+/** Every scan is 337 x 470, as production serves it: its frame's size, the frame included. */
+const SCAN_WIDTH = 337 + 2 * FRAME;
+const SCAN_RATIO = `${SCAN_WIDTH} / ${470 + 2 * FRAME}`;
+
+/**
+ * The scan's gold frame, the size the scan takes within the lightbox's bounds: 85vh tall, and
+ * 80px narrower than the screen. It holds the card's ink placeholder, which shows until the
+ * scan, laid over it, loads.
+ */
+const SCAN_FRAME: React.CSSProperties = {
+  position: 'relative',
+  margin: '0 auto',
+  width: `min(${SCAN_WIDTH}px, calc(100vw - 80px), calc(85vh * ${SCAN_RATIO}))`,
+  aspectRatio: SCAN_RATIO,
+  borderRadius: `${RADIUS.xl}px`,
+  border: `${FRAME}px solid ${COLORS.primary}`,
+  boxShadow: SHADOWS.glowLg,
+  overflow: 'hidden',
+};
+
+/** A Location's frame is turned 90°, so its bounds swap. */
+const LOCATION_FRAME: React.CSSProperties = {
+  ...SCAN_FRAME,
+  width: `min(${SCAN_WIDTH}px, 85vh, calc((100vw - 80px) * ${SCAN_RATIO}))`,
+  transform: 'rotate(90deg)',
+};
+
+const SCAN: React.CSSProperties = {
+  position: 'relative',
+  display: 'block',
+  width: '100%',
+  height: '100%',
+  objectFit: 'contain',
+};
+
+interface EnlargedScanProps {
+  src: string;
+  alt: string;
+  isLocation?: boolean;
+  ink?: Ink;
+  ink2?: Ink;
+  onError: () => void;
+}
+
+/** The enlarged scan, framed in gold, over the card's ink placeholder until it loads. */
+function EnlargedScan({src, alt, isLocation, ink, ink2, onError}: EnlargedScanProps) {
   return (
-    <img
-      src={src}
-      alt={alt}
-      onError={onError}
-      style={{
-        display: 'block',
-        margin: '0 auto',
-        maxWidth: isLocation ? '85vh' : 'calc(100vw - 80px)',
-        maxHeight: isLocation ? 'calc(100vw - 80px)' : '85vh',
-        borderRadius: `${RADIUS.xl}px`,
-        border: `${FRAME}px solid ${COLORS.primary}`,
-        boxShadow: SHADOWS.glowLg,
-        objectFit: 'contain',
-        transform: isLocation ? 'rotate(90deg)' : undefined,
-      }}
-    />
+    <div style={isLocation ? LOCATION_FRAME : SCAN_FRAME}>
+      <InkCardPlaceholder ink={ink} ink2={ink2} />
+      <img src={src} alt={alt} onError={onError} style={SCAN} />
+    </div>
   );
 }
 
@@ -104,6 +143,8 @@ export function CardLightbox({
   isLocation,
   card,
   language = card?.scanLanguage,
+  ink,
+  ink2,
   onClose,
 }: CardLightboxProps) {
   const [imgError, setImgError] = useState(false);
@@ -125,7 +166,14 @@ export function CardLightbox({
           {imgError ? (
             <ImageFallback />
           ) : (
-            <EnlargedScan src={src} alt={alt} isLocation={isLocation} onError={() => setImgError(true)} />
+            <EnlargedScan
+              src={src}
+              alt={alt}
+              isLocation={isLocation}
+              ink={ink}
+              ink2={ink2}
+              onError={() => setImgError(true)}
+            />
           )}
           {/* Without a scan to cover, the translation stands below the fallback instead. */}
           {showTranslation && card && (

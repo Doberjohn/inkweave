@@ -1,8 +1,9 @@
 import {useEffect, type CSSProperties, type RefObject} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, ICON_SIZE, RADIUS} from '../../../shared/constants';
+import {COLORS, ICON_SIZE, RADIUS, SPACING} from '../../../shared/constants';
 import {IconButton} from '../../../shared/components/IconButton';
+import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
 import {
   hasForeignScan,
   printingsOf,
@@ -28,6 +29,9 @@ import {
 } from './cardOverviewModalStyles';
 import {useModalCardSize} from './useModalCardSize';
 
+/** A synergy tile's height in the loading grid: the modal's mini-card tiles, four to a row. */
+const SYNERGY_TILE_HEIGHT = 170;
+
 /**
  * Right-column placeholder shown while the per-card synergy JSON is in flight
  * (usePrecomputedSynergies.isLoading === true). Mirrors the post-load layout:
@@ -44,9 +48,9 @@ export function SynergiesLoadingSkeleton() {
         data-testid="card-overview-loading"
         aria-busy="true"
         aria-label="Loading synergies"
-        style={{display: 'flex', flexDirection: 'column', gap: 20}}>
+        style={{display: 'flex', flexDirection: 'column', gap: SPACING.xl}}>
         {Array.from({length: 2}).map((_, groupIdx) => (
-          <div key={groupIdx} style={{display: 'flex', flexDirection: 'column', gap: 8}}>
+          <div key={groupIdx} style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
             {/* Label tag */}
             <Skeleton width={92} height={20} borderRadius={2} />
             {/* Cream callout description (2 lines suggested) */}
@@ -56,11 +60,21 @@ export function SynergiesLoadingSkeleton() {
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: 8,
-                marginTop: 4,
+                gap: SPACING.sm,
+                marginTop: SPACING.xs,
               }}>
               {Array.from({length: 3}).map((_, tileIdx) => (
-                <Skeleton key={tileIdx} height={170} borderRadius={5} />
+                // A synergy's card is not known yet: the neutral tile, as tall as the old shimmer.
+                <div
+                  key={tileIdx}
+                  style={{
+                    position: 'relative',
+                    height: SYNERGY_TILE_HEIGHT,
+                    borderRadius: RADIUS.sm,
+                    overflow: 'hidden',
+                  }}>
+                  <InkCardPlaceholder />
+                </div>
               ))}
             </div>
           </div>
@@ -114,9 +128,6 @@ const BODY_STYLE: CSSProperties = {...DEFAULT_BODY_STYLE, overflow: 'hidden'};
 const HIDDEN: CSSProperties = {visibility: 'hidden'};
 const noop = () => {};
 
-/** The card placeholder: block, with no trailing line box. */
-const SKELETON_ART_STYLE: CSSProperties = {display: 'block'};
-
 /**
  * The translation toggle, invisible, for a card with a foreign scan among its printings: the
  * space the modal's takes, under the card on mobile and in the header on desktop.
@@ -150,9 +161,18 @@ function CardPlaceholder({card, isMobile, copiesRow, size: {cardWidth, cardHeigh
   return (
     <div style={pickCardColumnLayout(isMobile)}>
       <div style={CARD_WITH_COPIES_STYLE}>
-        {/* inline + block: no trailing <br> or line box, so the placeholder is exactly
-            the card's height and the synergy column below it lines up (mobile). */}
-        <Skeleton width={cardWidth} height={cardHeight} borderRadius={RADIUS.xl} inline style={SKELETON_ART_STYLE} />
+        {/* A block with no line box after it, so the placeholder is exactly the card's
+            height and the synergy column below it lines up (mobile). */}
+        <div
+          style={{
+            position: 'relative',
+            width: cardWidth,
+            height: cardHeight,
+            borderRadius: RADIUS.xl,
+            overflow: 'hidden',
+          }}>
+          <InkCardPlaceholder ink={card.ink} ink2={card.ink2} />
+        </div>
         {isMobile && copiesRow && <div style={{width: cardWidth, height: copiesRowHeight(cardWidth)}} />}
       </div>
       {isMobile && <ReservedTranslationToggle card={card} />}

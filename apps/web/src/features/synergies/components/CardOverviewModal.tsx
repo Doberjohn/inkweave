@@ -16,7 +16,12 @@ import {
   useModalPrinting,
   useReportShownPrinting,
 } from './modalArtState';
-import {CardTranslationPanel, CtaButton, RenderProfiler} from '../../../shared/components';
+import {
+  CardTranslationPanel,
+  CtaButton,
+  InkCardPlaceholder,
+  RenderProfiler,
+} from '../../../shared/components';
 import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {prefersReducedMotion, usePrefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
@@ -1706,11 +1711,19 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
         filter: highlightedCard === 'b' ? `drop-shadow(0 0 8px ${hexRgba(COLORS.primary500, 0.6)})` : undefined,
         transition: HOVER_FADES,
       }}>
+      <InkCardPlaceholder ink={pair.cardB.ink} ink2={pair.cardB.ink2} />
       {pair.cardB.imageUrl && (
+        // Positioned, so the art, once it loads, lies over the ink placeholder.
         <img
           src={pair.cardB.imageUrl}
           alt={pair.cardB.fullName}
-          style={{width: '100%', height: '100%', display: 'block', objectFit: 'cover'}}
+          style={{
+            position: 'relative',
+            width: '100%',
+            height: '100%',
+            display: 'block',
+            objectFit: 'cover',
+          }}
         />
       )}
     </div>

@@ -1,6 +1,7 @@
 import type {CSSProperties} from 'react';
 import Skeleton from 'react-loading-skeleton';
-import {COLORS, LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
+import {LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
+import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
 
 interface SynergyResultsSkeletonProps {
   isMobile: boolean;
@@ -75,14 +76,15 @@ function GroupSkeleton() {
           } as CSSProperties
         }>
         {Array.from({length: TILES_PER_GROUP}).map((_, i) => (
-          <li key={i} style={{aspectRatio: '0.72'}}>
-            <div
-              className="inkweave-shimmer-tile"
-              style={{
-                borderRadius: `${RADIUS.lg}px`,
-                background: `linear-gradient(110deg, ${COLORS.surfaceAlt} 0%, ${COLORS.surfaceHover} 50%, ${COLORS.surfaceAlt} 100%)`,
-              }}
-            />
+          <li
+            key={i}
+            style={{
+              aspectRatio: '0.72',
+              position: 'relative',
+              borderRadius: `${RADIUS.lg}px`,
+              overflow: 'hidden',
+            }}>
+            <InkCardPlaceholder />
           </li>
         ))}
       </ul>

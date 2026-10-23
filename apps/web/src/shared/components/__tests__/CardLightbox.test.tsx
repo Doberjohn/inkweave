@@ -60,16 +60,24 @@ describe('CardLightbox', () => {
     expect(screen.getByText('Image could not be loaded')).toBeInTheDocument();
   });
 
+  it("lays the scan over the card's ink tile, which holds its place until it loads", () => {
+    render(<CardLightbox {...defaultProps} ink="Sapphire" />);
+    const tile = screen.getByRole('img').previousElementSibling;
+    expect(tile).toHaveClass('ink-card-placeholder');
+    expect(tile).toHaveAttribute('data-ink', 'Sapphire');
+  });
+
   it('should rotate location card images 90 degrees', () => {
     render(<CardLightbox {...defaultProps} isLocation />);
-    const img = screen.getByRole('img');
-    expect(img.style.transform).toBe('rotate(90deg)');
+    // The scan turns with its frame, which holds its placeholder too.
+    const frame = screen.getByRole('img').parentElement!;
+    expect(frame.style.transform).toBe('rotate(90deg)');
   });
 
   it('should not rotate non-location card images', () => {
     render(<CardLightbox {...defaultProps} />);
-    const img = screen.getByRole('img');
-    expect(img.style.transform).toBe('');
+    const frame = screen.getByRole('img').parentElement!;
+    expect(frame.style.transform).toBe('');
   });
 
   describe('translation', () => {

@@ -1,7 +1,7 @@
 import {useState} from 'react';
-import Skeleton from 'react-loading-skeleton';
 import type {Ink} from '../../features/cards';
-import {INK_COLORS, COLORS, FONT_SIZES, RADIUS} from '../constants';
+import {EASING, INK_COLORS, FONT_SIZES, RADIUS} from '../constants';
+import {InkCardPlaceholder} from './InkCardPlaceholder';
 
 interface CardImageProps {
   src: string | undefined;
@@ -9,6 +9,8 @@ interface CardImageProps {
   width: number;
   height: number;
   inkColor: Ink;
+  /** A dual-ink card's second ink, which its loading placeholder shows beside the first. */
+  inkColor2?: Ink;
   cost: number;
   lazy?: boolean;
   borderRadius?: number;
@@ -66,7 +68,7 @@ function CardImg({src, alt, lazy, priority, visible, onLoad, onError}: CardImgPr
         objectFit: 'cover',
         display: 'block',
         opacity: visible ? 1 : 0,
-        transition: 'opacity 0.2s ease',
+        transition: `opacity 0.2s ${EASING.smooth}`,
       }}
     />
   );
@@ -86,6 +88,7 @@ export function CardImage({
   width,
   height,
   inkColor,
+  inkColor2,
   cost,
   lazy = true,
   borderRadius = RADIUS.sm,
@@ -107,16 +110,7 @@ export function CardImage({
         flexShrink: 0,
         ...styleProp,
       }}>
-      {showImg && !imgLoaded && (
-        <Skeleton
-          width="100%"
-          height="100%"
-          borderRadius={0}
-          baseColor={COLORS.surfaceAlt}
-          highlightColor={COLORS.surfaceHover}
-          style={{position: 'absolute', inset: 0, display: 'block'}}
-        />
-      )}
+      {showImg && !imgLoaded && <InkCardPlaceholder ink={inkColor} ink2={inkColor2} />}
       <CardImg
         src={src}
         alt={alt}

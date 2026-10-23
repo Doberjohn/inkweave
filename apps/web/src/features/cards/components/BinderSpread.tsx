@@ -9,7 +9,7 @@ import {
   type RefObject,
   type SyntheticEvent,
 } from 'react';
-import {EDGE_DISC_SIZE, NavArrowButton} from '../../../shared/components';
+import {EDGE_DISC_SIZE, InkCardPlaceholder, NavArrowButton} from '../../../shared/components';
 import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
 import {blackRgba, COLORS, RADIUS, SPACING} from '../../../shared/constants';
 
@@ -259,22 +259,24 @@ function spreadMaxHeight(width: number, withArrows: boolean): number | undefined
 
 
 /**
- * A card-shaped shimmer for one slot, so a binder that is still loading has the
+ * A card-shaped placeholder for one slot, so a binder that is still loading has the
  * SAME geometry as one that is not — the spread's chrome is rendered either way
  * and only the slot contents differ, which is what makes the swap shift-free.
  *
- * Uses the house `inkweave-shimmer-tile` class (one keyframe, one
- * reduced-motion override) rather than a second skeleton recipe.
+ * The cards are not known yet, so it is the neutral ink tile (InkCardPlaceholder).
  */
 export function BinderSlotSkeleton() {
   return (
     <div
-      className="inkweave-shimmer-tile"
       style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
         borderRadius: `${RADIUS.sm}px`,
-        background: `linear-gradient(110deg, ${COLORS.surfaceAlt} 0%, ${COLORS.surfaceHover} 50%, ${COLORS.surfaceAlt} 100%)`,
-      }}
-    />
+        overflow: 'hidden',
+      }}>
+      <InkCardPlaceholder />
+    </div>
   );
 }
 

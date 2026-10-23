@@ -1,5 +1,6 @@
 import Skeleton from 'react-loading-skeleton';
 import {LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
+import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
 import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
 import {useRef} from 'react';
 
@@ -56,9 +57,24 @@ export function CardGridSkeleton({
             gridTemplateColumns: `repeat(${columns}, 1fr)`,
             gap,
           }}>
-            {Array.from({length: totalCards}, (_, i) => (
-              <Skeleton key={i} height={cardHeight} borderRadius={RADIUS.card} />
-            ))}
+            {Array.from({length: totalCards}, (_, i) =>
+              // Card-shaped tiles are cards whose list is still loading: the neutral ink tile.
+              // Any other shape (the playstyle gallery's banners) keeps the plain shimmer.
+              aspectRatio === DEFAULT_CARD_ASPECT ? (
+                <div
+                  key={i}
+                  style={{
+                    position: 'relative',
+                    height: cardHeight,
+                    borderRadius: RADIUS.card,
+                    overflow: 'hidden',
+                  }}>
+                  <InkCardPlaceholder />
+                </div>
+              ) : (
+                <Skeleton key={i} height={cardHeight} borderRadius={RADIUS.card} />
+              ),
+            )}
           </div>
         </>
       )}

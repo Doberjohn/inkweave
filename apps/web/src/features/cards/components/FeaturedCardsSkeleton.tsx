@@ -1,4 +1,5 @@
 import {COLORS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
 
 /**
  * The phone layout's bottom padding, past the spacing scale's top step (SPACING.xxxl, 32).
@@ -74,14 +75,15 @@ export function FeaturedCardsSkeleton({isMobile = false}: FeaturedCardsSkeletonP
           margin: 0,
         }}>
         {Array.from({length: 6}).map((_, i) => (
-          <li key={i} style={{aspectRatio: '0.72'}}>
-            <div
-              className="inkweave-shimmer-tile"
-              style={{
-                borderRadius: tileRadius,
-                background: `linear-gradient(110deg, ${COLORS.surfaceAlt} 0%, ${COLORS.surfaceHover} 50%, ${COLORS.surfaceAlt} 100%)`,
-              }}
-            />
+          <li
+            key={i}
+            style={{
+              aspectRatio: '0.72',
+              position: 'relative',
+              borderRadius: tileRadius,
+              overflow: 'hidden',
+            }}>
+            <InkCardPlaceholder />
           </li>
         ))}
       </ul>
