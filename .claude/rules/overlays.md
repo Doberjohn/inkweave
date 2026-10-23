@@ -31,6 +31,19 @@ mechanically: `aria-modal` in a file that imports neither `DialogShell` /
 
 ## Rulings (binding)
 
+- **Every centered dialog shows a close ×**, supplied by `DialogShell` itself
+  (`showClose`, default true). Escape needs a keyboard and backdrop-tap is
+  undiscoverable, so a touch user otherwise has no visible way out. It is STICKY
+  in a zero-height row: reachable at any scroll position without shifting the
+  content below it. Opt out only with a comment saying why, when the content
+  already carries a visible way out: its own × in a designed header
+  (`FranchiseCardsModal`), or a footer that always shows Cancel or Done
+  (`ImportCollectionDialog`). The card lightbox (`CardLightbox`) opts out too,
+  since the × would sit on the card's art and a tap outside the card closes it
+  (owner, 2026-10-23).
+  - Do NOT add a second dismissal named "Close" beside it. Two controls sharing
+    one accessible name read as two different actions; `ScoreMathModal`'s
+    full-width Close was removed for exactly this.
 - **Backdrop click ALWAYS closes.** `disableBackdropClose` exists as an escape
   hatch but requires a written justification comment at the call site.
 - **No `backdrop-filter` on scrims, ever** (WebKit E2E repaint hang, #444/#445).

@@ -339,6 +339,9 @@ export function ImportCollectionDialog({
       onClose={close}
       ariaLabel="Import your collection"
       size="md"
+      // Opts out of the shell's × (owner, 2026-10-23): its footer always shows Cancel, or
+      // Done once the receipt is up, so a visible way out is already on screen.
+      showClose={false}
       panelStyle={{padding: SPACING.xl, fontFamily: FONTS.body}}>
       <h2 style={DIALOG_TITLE}>{title}</h2>
 

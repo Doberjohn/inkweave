@@ -79,10 +79,33 @@ describe('DialogShell', () => {
 
   it('Tab on the last focusable wraps to the first', () => {
     renderShell();
-    const [first, last] = screen.getAllByRole('button');
-    last.focus();
+    // Taken by position, not by index into a fixed list: the shell's own close ×
+    // is the first focusable, so a destructured [first, last] would compare the
+    // × against the SECOND child rather than the last.
+    const buttons = screen.getAllByRole('button');
+    buttons[buttons.length - 1].focus();
     fireEvent.keyDown(screen.getByRole('dialog'), {key: 'Tab'});
-    expect(document.activeElement).toBe(first);
+    expect(document.activeElement).toBe(buttons[0]);
+  });
+
+  it('renders a close button that dismisses the dialog', () => {
+    const onClose = vi.fn();
+    render(
+      <DialogShell isOpen onClose={onClose} ariaLabel="Test dialog">
+        <button type="button">First</button>
+      </DialogShell>,
+    );
+    fireEvent.click(screen.getByRole('button', {name: 'Close'}));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('omits the close button when the content supplies its own', () => {
+    render(
+      <DialogShell isOpen onClose={vi.fn()} ariaLabel="Test dialog" showClose={false}>
+        <button type="button">First</button>
+      </DialogShell>,
+    );
+    expect(screen.queryByRole('button', {name: 'Close'})).toBeNull();
   });
 
   /** Open the shell, then flip isOpen false; returns with the exit transition pending. */

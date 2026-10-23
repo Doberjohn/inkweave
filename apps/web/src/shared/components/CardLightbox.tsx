@@ -116,6 +116,9 @@ export function CardLightbox({
       ariaLabel={`Enlarged view of ${alt}`}
       scrim="heavy"
       layer="lightbox"
+      // Opts out of the shell's × (owner, 2026-10-23): it would sit on the card's art, and a
+      // tap anywhere outside the card already closes the lightbox.
+      showClose={false}
       panelStyle={BARE_PANEL}>
       <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: SPACING.md}}>
         <div style={{position: 'relative'}}>

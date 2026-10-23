@@ -113,6 +113,17 @@ describe('ImportCollectionDialog', () => {
     expect(screen.getByRole('button', {name: 'Done'})).toHaveFocus();
     expect(screen.getByRole('status')).toHaveTextContent('Collection imported: 1 card.');
   });
+
+  it('leaves out the shell close ×: Cancel, then Done, is its way out', async () => {
+    render(
+      <ImportCollectionDialog isOpen onClose={vi.fn()} pool={POOL} isPoolReady poolError={null} onRetryPool={vi.fn()} onImport={vi.fn(() => null)} context={CONTEXT} />,
+    );
+    expect(screen.queryByRole('button', {name: 'Close'})).toBeNull();
+    expect(screen.getByRole('button', {name: 'Cancel'})).toBeInTheDocument();
+    await act(async () => pick(CSV));
+    expect(screen.queryByRole('button', {name: 'Close'})).toBeNull();
+    expect(screen.getByRole('button', {name: 'Done'})).toBeInTheDocument();
+  });
 });
 
 describe('ImportCollectionDialog analytics', () => {

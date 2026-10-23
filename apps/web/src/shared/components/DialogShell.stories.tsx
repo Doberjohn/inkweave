@@ -13,16 +13,14 @@ const meta: Meta<typeof DialogShell> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-function DemoContent({onClose}: {onClose: () => void}) {
+/** No Close button of its own: the shell draws the ×, and a second "Close" breaks the ruling. */
+function DemoContent() {
   return (
     <div style={{padding: SPACING.lg, color: COLORS.text, fontFamily: FONTS.body}}>
       <h2 style={{margin: 0, fontSize: FONT_SIZES.xl}}>The overlay contract</h2>
       <p style={{color: COLORS.textMuted, fontSize: FONT_SIZES.base}}>
-        Escape closes. Backdrop click closes. Tab cycles inside. Focus restores on close.
+        The × closes. Escape closes. Backdrop click closes. Tab cycles inside. Focus restores on close.
       </p>
-      <CtaButton variant="neutral" onClick={onClose}>
-        Close
-      </CtaButton>
     </div>
   );
 }
@@ -33,7 +31,7 @@ function OpenableShell(props: {size?: 'sm' | 'md' | 'lg'; scrim?: 'default' | 'h
     <div style={{height: 500, padding: SPACING.lg}}>
       <CtaButton onClick={() => setOpen(true)}>Open dialog</CtaButton>
       <DialogShell isOpen={open} onClose={() => setOpen(false)} ariaLabel="Demo dialog" {...props}>
-        <DemoContent onClose={() => setOpen(false)} />
+        <DemoContent />
       </DialogShell>
     </div>
   );
