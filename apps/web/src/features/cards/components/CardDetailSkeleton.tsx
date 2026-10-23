@@ -1,5 +1,6 @@
 import Skeleton from 'react-loading-skeleton';
 import {RADIUS, SPACING} from '../../../shared/constants';
+import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
 
 interface CardDetailSkeletonProps {
   /** Card image width (default: 298, matches CardDetailPanel's image) */
@@ -40,7 +41,17 @@ export function CardDetailSkeleton({
       aria-label={ariaLabel}>
       <>
         <div style={{display: 'flex', justifyContent: 'center'}}>
-          <Skeleton width={imageWidth} height={imageHeight} borderRadius={RADIUS.xl} />
+          {/* The card is not known yet (its list is loading), so the tile is the neutral one. */}
+          <div
+            style={{
+              position: 'relative',
+              width: imageWidth,
+              height: imageHeight,
+              borderRadius: RADIUS.xl,
+              overflow: 'hidden',
+            }}>
+            <InkCardPlaceholder />
+          </div>
         </div>
         <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
           <Skeleton height={28} width="70%" borderRadius={RADIUS.sm} />

@@ -1,7 +1,7 @@
 import {useEffect, type CSSProperties, type RefObject} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, ICON_SIZE, RADIUS} from '../../../shared/constants';
+import {COLORS, ICON_SIZE, RADIUS, SPACING} from '../../../shared/constants';
 import {IconButton} from '../../../shared/components/IconButton';
 import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
 import {
@@ -29,6 +29,9 @@ import {
 } from './cardOverviewModalStyles';
 import {useModalCardSize} from './useModalCardSize';
 
+/** A synergy tile's height in the loading grid: the modal's mini-card tiles, four to a row. */
+const SYNERGY_TILE_HEIGHT = 170;
+
 /**
  * Right-column placeholder shown while the per-card synergy JSON is in flight
  * (usePrecomputedSynergies.isLoading === true). Mirrors the post-load layout:
@@ -45,9 +48,9 @@ export function SynergiesLoadingSkeleton() {
         data-testid="card-overview-loading"
         aria-busy="true"
         aria-label="Loading synergies"
-        style={{display: 'flex', flexDirection: 'column', gap: 20}}>
+        style={{display: 'flex', flexDirection: 'column', gap: SPACING.xl}}>
         {Array.from({length: 2}).map((_, groupIdx) => (
-          <div key={groupIdx} style={{display: 'flex', flexDirection: 'column', gap: 8}}>
+          <div key={groupIdx} style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
             {/* Label tag */}
             <Skeleton width={92} height={20} borderRadius={2} />
             {/* Cream callout description (2 lines suggested) */}
@@ -57,11 +60,21 @@ export function SynergiesLoadingSkeleton() {
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: 8,
-                marginTop: 4,
+                gap: SPACING.sm,
+                marginTop: SPACING.xs,
               }}>
               {Array.from({length: 3}).map((_, tileIdx) => (
-                <Skeleton key={tileIdx} height={170} borderRadius={5} />
+                // A synergy's card is not known yet: the neutral tile, as tall as the old shimmer.
+                <div
+                  key={tileIdx}
+                  style={{
+                    position: 'relative',
+                    height: SYNERGY_TILE_HEIGHT,
+                    borderRadius: RADIUS.sm,
+                    overflow: 'hidden',
+                  }}>
+                  <InkCardPlaceholder />
+                </div>
               ))}
             </div>
           </div>

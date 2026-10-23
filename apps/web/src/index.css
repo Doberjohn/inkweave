@@ -382,16 +382,6 @@ option {
   }
 }
 
-/* Card-slot placeholder tile: FeaturedCardsSkeleton, rendered by both HomePageSkeleton
-   and FeaturedCards while the cards JSON is loading. The tile's inline gradient is its
-   whole look. It used to carry a background-position sweep, but the inline `background`
-   shorthand reset background-size to auto, so the gradient filled the tile and the sweep
-   never moved on screen while still repainting every frame (#639). */
-.inkweave-shimmer-tile {
-  width: 100%;
-  height: 100%;
-}
-
 /* InkCardPlaceholder (shared/components): a card's place while its art loads, the reveals
    board's unrevealed slot (CardSlot) grown to any size. One element, drawn here: it covers its
    parent and takes the parent's radius. The component sets the colors on it as variables, from
@@ -555,11 +545,6 @@ option {
   .idv-progress-fill,
   .idv-submit-btn,
   .pair-mystery-pulse {
-    animation: none !important;
-  }
-  /* The card-slot tile has no animation today (#639). Kept so that any sweep added
-     back stays off for vestibular-sensitive users. */
-  .inkweave-shimmer-tile {
     animation: none !important;
   }
   /* Park the foil sweep. The band's resting position is OFF the left edge (so

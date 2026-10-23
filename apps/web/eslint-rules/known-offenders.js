@@ -151,7 +151,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/reveals/RevealsPromoCard.tsx', // x1
     'src/features/reveals/SpotlightHero.tsx', // x5
     'src/features/reveals/mosaicSizing.ts', // x1
-    'src/features/synergies/components/CardOverviewModalFallback.tsx', // x4
     'src/features/synergies/components/ColumnHeader.tsx', // x5
     'src/features/synergies/components/DeltaPanel.tsx', // x4
     'src/features/synergies/components/MobileComparisonView.tsx', // x4
