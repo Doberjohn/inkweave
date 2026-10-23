@@ -2,6 +2,7 @@ import {useState, type CSSProperties} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {CardDetail, SynergyGroup} from '.';
+import {CardDetailLoading} from './CardDetail';
 import {ExpandedGroupView} from './ExpandedGroupView';
 import {SynergyResultsSkeleton} from './SynergyResultsSkeleton';
 import {Chip, RenderProfiler} from '../../../shared/components';
@@ -311,5 +312,18 @@ export function SynergyResults(props: SynergyResultsProps) {
         <SynergyResultsContent {...props} sortOrder={sortOrder} setSortOrder={setSortOrder} />
       </section>
     </RenderProfiler>
+  );
+}
+
+/**
+ * The results column while the card itself is still loading (#914), in the loaded column's
+ * frame: on a phone the card's block, then the results skeleton.
+ */
+export function SynergyResultsLoading({isMobile}: {isMobile: boolean}) {
+  return (
+    <section aria-label="Synergy results" style={buildSectionStyle(isMobile)}>
+      {isMobile && <CardDetailLoading />}
+      <SynergyResultsSkeleton isMobile={isMobile} />
+    </section>
   );
 }

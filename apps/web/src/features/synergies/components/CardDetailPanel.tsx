@@ -13,6 +13,7 @@ import {
   TierCircle,
 } from '../../../shared/components';
 import {printingAlt, usePrintingSelection, type Printing} from '../../../shared/hooks';
+import {CardDetailSkeleton} from '../../cards/components/CardDetailSkeleton';
 
 interface CardDetailPanelProps {
   card: LorcanaCard;
@@ -72,6 +73,21 @@ const HERO_WIDTH = 298;
 const HERO_HEIGHT = 417;
 /** The panel's padding, between its edge and the hero: the room the printings behind the hero show in. */
 const PANEL_PADDING = SPACING.lg;
+
+/** The panel's frame, shared with its loading state (`CardDetailPanelSkeleton`, #914). */
+const PANEL_STYLE: CSSProperties = {
+  width: `${LAYOUT.cardDetailWidth}px`,
+  minWidth: `${LAYOUT.cardDetailWidth}px`,
+  borderRight: `1px solid ${COLORS.surfaceBorder}`,
+  background: COLORS.surface,
+  overflowY: 'auto',
+  maxHeight: `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`,
+  display: 'flex',
+  flexDirection: 'column',
+  padding: `${PANEL_PADDING}px`,
+  gap: `${SPACING.lg}px`,
+  boxSizing: 'border-box',
+};
 
 type PrintingSelection = ReturnType<typeof usePrintingSelection>;
 
@@ -383,21 +399,7 @@ export function CardDetailPanel({
   const {printings} = selection;
 
   return (
-    <article
-      data-testid="card-detail-panel"
-      style={{
-        width: `${LAYOUT.cardDetailWidth}px`,
-        minWidth: `${LAYOUT.cardDetailWidth}px`,
-        borderRight: `1px solid ${COLORS.surfaceBorder}`,
-        background: COLORS.surface,
-        overflowY: 'auto',
-        maxHeight: `calc(100vh - ${LAYOUT.compactHeaderHeight}px)`,
-        display: 'flex',
-        flexDirection: 'column',
-        padding: `${PANEL_PADDING}px`,
-        gap: `${SPACING.lg}px`,
-        boxSizing: 'border-box',
-      }}>
+    <article data-testid="card-detail-panel" style={PANEL_STYLE}>
       {printings.length > 1 ? (
         <PrintingsHero card={card} selection={selection} onEnlarge={lightbox.open} />
       ) : (
@@ -418,5 +420,17 @@ export function CardDetailPanel({
         />
       )}
     </article>
+  );
+}
+
+/**
+ * The panel while the card list loads (#914): its frame, holding the card's placeholders with
+ * the art in the hero's box, so the card lands where its placeholder was.
+ */
+export function CardDetailPanelSkeleton() {
+  return (
+    <div style={PANEL_STYLE}>
+      <CardDetailSkeleton imageWidth={HERO_WIDTH} aspectRatio={HERO_WIDTH / HERO_HEIGHT} padding={0} />
+    </div>
   );
 }

@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {SynergyResultsSkeleton} from './SynergyResultsSkeleton';
+import {SynergyResultsLoading} from './SynergyResults';
 
 const meta: Meta<typeof SynergyResultsSkeleton> = {
   title: 'Features/SynergyResultsSkeleton',
@@ -23,5 +24,21 @@ export const Desktop: Story = {
 
 export const Mobile: Story = {
   args: {isMobile: true},
+  globals: {viewport: {value: 'mobile1'}},
+};
+
+/**
+ * The card page's results column while the card itself loads (#914), in the loaded column's
+ * frame, beside where the card panel's placeholder sits.
+ */
+export const CardLoadingColumn: Story = {
+  name: 'Card loading column',
+  render: () => <SynergyResultsLoading isMobile={false} />,
+};
+
+/** On a phone the column also holds the card's block, in CardDetail's boxes, above the results. */
+export const CardLoadingColumnMobile: Story = {
+  name: 'Card loading column, phone',
+  render: () => <SynergyResultsLoading isMobile />,
   globals: {viewport: {value: 'mobile1'}},
 };
