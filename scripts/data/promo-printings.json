@@ -1,13 +1,13 @@
 {
-  "about": "All 264 Disney Lorcana promo printings: the 261 the owner settled on 16 Oct 2026 (Claude Doc 'Promo cards to settle'), less six the owner dropped on 18 Oct (C1's four non-foil twins and its unnumbered 2025 World Champion Mickey, and C2's unnumbered store-event Minnie), and nine the owner added that day, 26/P2's European printing, Vaiana, two Chinese printings, 42/P2 Snow White - Unexpected Houseguest and 43/P2 Stitch - Little Rocket, and six the owner scanned in Japanese, 59/P3 Elsa - Exploring the Unknown, 61/P3 and 62/P3 Maleficent - Monstrous Dragon, 63/P3 Buzz Lightyear - Space Ranger, and 7/P4 and 8/P4 Daisy Duck - Paranormal Investigator. As entries for a card's `variants` array in apps/web/public/data/allCards.json, the shape Epic/Enchanted/Iconic use. Read promo-printings-merge-notes.md first.",
+  "about": "Disney Lorcana's promo printings, as entries for a card's `variants` array in apps/web/public/data/allCards.json, the shape Epic/Enchanted/Iconic use. `stats` counts them. The list started from the 261 the owner settled on 16 Oct 2026 (Claude Doc 'Promo cards to settle'), less six the owner dropped on 18 Oct (C1's four non-foil twins and its unnumbered 2025 World Champion Mickey, and C2's unnumbered store-event Minnie), and nine the owner added that day: 26/P2's European printing, Vaiana; two Chinese printings, 42/P2 Snow White - Unexpected Houseguest and 43/P2 Stitch - Little Rocket; and six the owner scanned in Japanese, 59/P3 Elsa - Exploring the Unknown, 61/P3 and 62/P3 Maleficent - Monstrous Dragon, 63/P3 Buzz Lightyear - Space Ranger, and 7/P4 and 8/P4 Daisy Duck - Paranormal Investigator. Printings added since come from admin's Card studio (Doberjohn/inkweave-admin#77) or by hand. Read promo-printings-merge-notes.md first.",
   "stats": {
-    "promoPrintings": 265,
+    "promoPrintings": 266,
     "withLorcanaJsonId": 215,
-    "withProvisionalId": 50,
+    "withProvisionalId": 51,
     "withOfficialArtUrl": 215,
     "foldIntoAllCards": {
-      "printings": 149,
-      "baseCards": 117
+      "printings": 150,
+      "baseCards": 118
     },
     "noBaseCardInAllCards": {
       "printings": 116,
@@ -22,7 +22,7 @@
       "D23": 16,
       "DIS": 9,
       "P1": 41,
-      "P2": 40,
+      "P2": 41,
       "P3": 63,
       "P4": 11,
       "P5": 1,
@@ -700,6 +700,24 @@
             "full": "https://api.lorcana.ravensburger.com/images/en/promo3/12_7b0bd446a1d33dcd75a499885ebef09510d5cd5b.jpg",
             "thumbnail": "https://api.lorcana.ravensburger.com/images/en/promo3/12_ac1fbe10a68128ca08f116b8a661acc8cd22d4af.jpg"
           },
+          "finishes": [
+            "foil"
+          ]
+        }
+      ]
+    },
+    {
+      "baseId": 2093,
+      "fullName": "Judy Hopps - Optimistic Officer",
+      "setCode": "9",
+      "number": 157,
+      "variants": [
+        {
+          "id": 80057,
+          "rarity": "Special",
+          "number": 44,
+          "promoGrouping": "P2",
+          "scanLanguage": "ja",
           "finishes": [
             "foil"
           ]
@@ -5027,7 +5045,8 @@
     "80053": "63/P3 Buzz Lightyear - Space Ranger",
     "80054": "7/P4 Daisy Duck - Paranormal Investigator",
     "80055": "8/P4 Daisy Duck - Paranormal Investigator",
-    "80056": "1/P5 Mickey Mouse - Brave Little Prince"
+    "80056": "1/P5 Mickey Mouse - Brave Little Prince",
+    "80057": "44/P2 Judy Hopps - Optimistic Officer"
   },
   "notes": [
     {

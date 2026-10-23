@@ -1,4 +1,4 @@
-import type {Page} from '@playwright/test';
+import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {E2E_SUPABASE_ORIGIN} from '../fixtures/supabaseStub';
 import {
@@ -194,6 +194,75 @@ async function pressCollectionWithBinderHeld(page: Page): Promise<{before: Recor
     .toBeGreaterThan(0);
   await expect(binderLoading(page)).toBeVisible();
   return {before: await toolbarPlaces(page), release: binderCode.release};
+}
+
+/** Where an element's four edges sit on the page, in CSS pixels. */
+async function edges(locator: Locator): Promise<{left: number; right: number; top: number; bottom: number}> {
+  const box = await locator.boundingBox();
+  expect(box, 'the element is on the page').not.toBeNull();
+  return {left: box!.x, right: box!.x + box!.width, top: box!.y, bottom: box!.y + box!.height};
+}
+
+/** Where a box's middle sits across the page, from its `edges`. */
+const middle = (box: {left: number; right: number}) => (box.left + box.right) / 2;
+
+/**
+ * An element's width once its transitions have run, or -1 while one runs. An edge disc grows
+ * with a bounce that overshoots, and its button's boop scales it 3% on the way, so its width
+ * says how big it is only once both have settled.
+ */
+async function settledWidth(locator: Locator): Promise<number> {
+  return locator.evaluate((el) => (el.getAnimations().length > 0 ? -1 : el.getBoundingClientRect().width));
+}
+
+/** Whether the page shows the element 2px inside each side edge, halfway down: nothing cuts it off or covers it. */
+async function shownSideToSide(locator: Locator): Promise<boolean> {
+  return locator.evaluate((el) => {
+    const box = el.getBoundingClientRect();
+    const y = box.top + box.height / 2;
+    return [box.left + 2, box.right - 2].every((x) => el.contains(document.elementFromPoint(x, y)));
+  });
+}
+
+/**
+ * Opens a collector's binder at `size` and checks what its first spread keeps at every desktop
+ * size (#922, owner 2026-10-23): it starts under the search bar's start and ends under its end,
+ * each within 1px, a disc on each outer edge, and the right page's pockets the size the page's
+ * height gives them. Returns that page's margin beside its pockets.
+ */
+async function checkSpreadAt(page: Page, size: {width: number; height: number}): Promise<number> {
+  await page.setViewportSize(size);
+  await signInAsCollector(page, ENTRIES);
+  await page.goto(`/browse?binder=${SET}`);
+  await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
+
+  const search = await edges(page.getByRole('textbox', {name: 'Search cards'}));
+  const cover = await edges(binder(page).getByRole('group', {name: 'Front cover'}));
+  const rightPage = binder(page).getByRole('group', {name: 'Right page'});
+  const right = await edges(rightPage);
+  expect(Math.abs(cover.left - search.left), 'the starts apart').toBeLessThanOrEqual(1);
+  expect(Math.abs(right.right - search.right), 'the ends apart').toBeLessThanOrEqual(1);
+  // Each disc's centre sits 2px past its page's outer edge (`edgeArrowPlace`).
+  const previous = await edges(binder(page).getByRole('button', {name: 'Previous spread'}));
+  const next = await edges(binder(page).getByRole('button', {name: 'Next spread'}));
+  expect(Math.abs(middle(previous) - cover.left), 'the Previous disc off the start').toBeLessThanOrEqual(4);
+  expect(Math.abs(middle(next) - right.right), 'the Next disc off the end').toBeLessThanOrEqual(4);
+
+  // Each pocket is a card's shape, 8px (`SPACING.sm`) from its neighbours across and down, and
+  // the three rows fill the page's height inside its 12px padding (`PAGE_PADDING`): the height
+  // gives the cards their size, as on master. Across, a row's four sit in the page's middle.
+  const pockets = rightPage.locator(':scope > div');
+  await expect(pockets).toHaveCount(12);
+  const [first, second, fourth, below, last] = await Promise.all([0, 1, 3, 4, 11].map((i) => edges(pockets.nth(i))));
+  const shapeOff = first.right - first.left - 0.72 * (first.bottom - first.top);
+  expect(Math.abs(shapeOff), "a pocket off a card's shape").toBeLessThanOrEqual(1);
+  expect(Math.abs(second.left - first.right - 8), 'the gap across').toBeLessThanOrEqual(1);
+  expect(Math.abs(below.top - first.bottom - 8), 'the gap down').toBeLessThanOrEqual(1);
+  expect(Math.abs(first.top - right.top - 12), 'the margin above the pockets').toBeLessThanOrEqual(1);
+  expect(Math.abs(right.bottom - last.bottom - 12), 'the margin below the pockets').toBeLessThanOrEqual(1);
+  const margin = first.left - right.left;
+  expect(Math.abs(margin - (right.right - fourth.right)), 'the pockets off centre').toBeLessThanOrEqual(1);
+  return margin;
 }
 
 test.describe('Collection mode', () => {
@@ -564,6 +633,8 @@ test.describe('Collection mode, signed in', () => {
     await page.keyboard.press('Tab');
     const next = binder(page).getByRole('button', {name: 'Next spread'});
     await expect(next).toBeFocused();
+    // Focused from the keyboard, an edge disc grows as it does under the pointer (owner, 2026-10-22).
+    await expect.poll(() => settledWidth(next), {message: 'the focused Next disc'}).toBeCloseTo(40, 0);
     const shown = binder(page).getByRole('navigation', {name: 'Binder pages'}).locator('[aria-current="true"]');
     const spreads = Number(/ of (\d+)/.exec((await shown.getAttribute('aria-label')) ?? '')?.[1]);
     expect(spreads, 'spreads in the set').toBeGreaterThan(1);
@@ -571,6 +642,69 @@ test.describe('Collection mode, signed in', () => {
     await expect(shown).toHaveAccessibleName(new RegExp(`^Spread ${spreads} of ${spreads}:`));
     await expect(next).toBeFocused();
     await expect(next).toHaveAttribute('aria-disabled', 'true');
+    // At the binder's end it is small again, though it keeps the focus.
+    await expect.poll(() => settledWidth(next), {message: 'the Next disc at the end'}).toBeCloseTo(28, 0);
+  });
+
+  // Where the window's height runs out first, the cards take their size from it and stop short
+  // of the binder's box: the spread stopped 42px short of the search bar's end at 1920x900, and
+  // 336px at 2560x1080. Its pages now take that width as margin around their pockets.
+  for (const size of [
+    {width: 1920, height: 900},
+    {width: 2560, height: 1080},
+  ]) {
+    test(`the spread runs the search bar's length at ${size.width}x${size.height}, where the window's height runs out first, its cards keeping their size (owner, 2026-10-23)`, async ({
+      page,
+    }) => {
+      const margin = await checkSpreadAt(page, size);
+      // Wider than its padding, or the window no longer tests what it is here for.
+      expect(margin, 'the margin beside the pockets, where the height runs out first').toBeGreaterThan(13);
+    });
+  }
+
+  test("the spread fills its box at 1440x900, where the window's width runs out first, as on master", async ({
+    page,
+  }) => {
+    const margin = await checkSpreadAt(page, {width: 1440, height: 900});
+    // The pockets fill their page's width inside its padding, as before the pages widened.
+    expect(Math.abs(margin - 12), 'the margin beside the pockets').toBeLessThanOrEqual(1);
+  });
+
+  test("the spread's edge discs grow under the pointer, clear of the panels beside it (owner, 2026-10-22)", async ({
+    page,
+  }) => {
+    await page.setViewportSize({width: 1920, height: 900});
+    await signInAsCollector(page, ENTRIES);
+    await page.goto(`/browse?binder=${SET}`);
+    await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
+
+    // A disc grows from 28px to 40px about its centre (`NavArrowButton`), still 2px past its
+    // page's edge, so it reaches 22px into the spread's 32px gutter (`BROWSE_GUTTER`).
+    const next = binder(page).getByRole('button', {name: 'Next spread'});
+    await expect.poll(() => settledWidth(next), {message: 'the Next disc at rest'}).toBeCloseTo(28, 0);
+    await next.hover();
+    await expect.poll(() => settledWidth(next), {message: 'the Next disc grown'}).toBeCloseTo(40, 0);
+    const right = await edges(binder(page).getByRole('group', {name: 'Right page'}));
+    const grownNext = await edges(next);
+    const setPanel = await edges(page.getByRole('complementary', {name: 'Set'}));
+    expect(Math.abs(middle(grownNext) - right.right), 'the grown Next disc off the end').toBeLessThanOrEqual(4);
+    expect(setPanel.left - grownNext.right, 'the grown Next disc into the Set panel').toBeGreaterThan(0);
+    expect(await shownSideToSide(next), 'the grown Next disc cut off or covered').toBe(true);
+
+    // Previous on the second spread: on the first it is dimmed, and stays small.
+    await next.click();
+    const leftPage = binder(page).getByRole('group', {name: 'Left page'});
+    await expect(leftPage).toBeVisible();
+    const previous = binder(page).getByRole('button', {name: 'Previous spread'});
+    await expect.poll(() => settledWidth(previous), {message: 'the Previous disc at rest'}).toBeCloseTo(28, 0);
+    await previous.hover();
+    await expect.poll(() => settledWidth(previous), {message: 'the Previous disc grown'}).toBeCloseTo(40, 0);
+    const left = await edges(leftPage);
+    const grownPrevious = await edges(previous);
+    const filters = await edges(page.getByRole('complementary', {name: 'Filters'}));
+    expect(Math.abs(middle(grownPrevious) - left.left), 'the grown Previous disc off the start').toBeLessThanOrEqual(4);
+    expect(grownPrevious.left - filters.right, 'the grown Previous disc into the Filters panel').toBeGreaterThan(0);
+    expect(await shownSideToSide(previous), 'the grown Previous disc cut off or covered').toBe(true);
   });
 
   test("a search narrows the binder, and the panel's numbers count only what it finds", async ({

@@ -119,6 +119,22 @@ export const ArrowsOnTheEdges: Story = {
 };
 
 /**
+ * The same in a short box (owner, 2026-10-23): the height runs out first, so the cards stop
+ * short of the width, and the pages take what is left as margin around their pockets. The
+ * spread still runs edge to edge, as it does under Browse's search bar.
+ */
+export const ArrowsOnTheEdgesShort: Story = {
+  args: ArrowsOnTheEdges.args,
+  decorators: [
+    (Story) => (
+      <div style={{height: 420, padding: `0 ${BROWSE_GUTTER}px`}}>
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+/**
  * Short viewport. Cards derive from the height budget, so the spread shrinks to
  * fit rather than scrolling — the property the whole layout rests on.
  */
