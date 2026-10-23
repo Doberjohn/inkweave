@@ -160,6 +160,8 @@ function CardLightboxGate({
       isLocation={card.type === 'Location'}
       card={printing.scanLanguage ? card : undefined}
       language={printing.scanLanguage}
+      ink={card.ink}
+      ink2={card.ink2}
       onClose={onClose}
     />
   );

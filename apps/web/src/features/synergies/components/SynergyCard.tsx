@@ -180,6 +180,8 @@ function MaybeLightbox({card, lightboxOpen, setLightboxOpen}: {card: LorcanaCard
       alt={card.fullName}
       isLocation={card.type === 'Location'}
       card={card}
+      ink={card.ink}
+      ink2={card.ink2}
       onClose={() => setLightboxOpen(false)}
     />
   );

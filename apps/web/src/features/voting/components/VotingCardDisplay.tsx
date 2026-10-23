@@ -102,6 +102,8 @@ function VotingCardLightbox({card, open, onClose}: {card: LorcanaCard; open: boo
       alt={card.fullName}
       isLocation={card.type === 'Location'}
       card={card}
+      ink={card.ink}
+      ink2={card.ink2}
       onClose={onClose}
     />
   );
