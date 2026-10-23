@@ -11,13 +11,16 @@ const mockGetPairSynergies = vi.fn<
   (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null
 >();
 const mockSynergiesLoading = vi.fn(() => false);
+const mockSelectedCardId = vi.fn<() => string | null>(() => null);
 
 vi.mock('../../shared/contexts/CardDataContext', () => ({
-  useCardDataContext: () => ({getCardById: mockGetCardById, isLoading: mockCardsLoading()}),
+  // A lookup of its own each render, as the real one is new once the card list loads: the
+  // React Compiler keeps a lookup's result while the function stays the same.
+  useCardDataContext: () => ({getCardById: (id: string) => mockGetCardById(id), isLoading: mockCardsLoading()}),
 }));
 
 vi.mock('../../shared/contexts/CardModalContext', () => ({
-  useCardModal: () => ({openComparison: mockOpenComparison}),
+  useCardModal: () => ({openComparison: mockOpenComparison, selectedCardId: mockSelectedCardId()}),
 }));
 
 vi.mock('../../features/synergies/hooks', () => ({
@@ -35,16 +38,20 @@ vi.mock('../NotFoundPage', () => ({
 
 import {ComparePage} from '../ComparePage';
 
-function renderAt(initialPath: string) {
-  return render(
+function pageAt(initialPath: string) {
+  return (
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
         <Route path="/compare/:idA/:idB" element={<ComparePage />} />
         <Route path="/compare/:idA/:idB/:groupKey" element={<ComparePage />} />
         <Route path="/card/:cardId" element={<div data-testid="redirected-to-card" />} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
+}
+
+function renderAt(initialPath: string) {
+  return render(pageAt(initialPath));
 }
 
 const cardA = {id: 'a1', name: 'Card A', fullName: 'Card A - First'} as unknown as LorcanaCard;
@@ -78,13 +85,45 @@ describe('ComparePage', () => {
     mockGetPairSynergies.mockReset();
     mockCardsLoading.mockReturnValue(false);
     mockSynergiesLoading.mockReturnValue(false);
+    mockSelectedCardId.mockReturnValue(null);
   });
 
   it('opens the modal when IDs, group key, and a connection-bearing pair all resolve', () => {
     mockGetCardById.mockImplementation((id) => (id === 'a1' ? cardA : id === 'b1' ? cardB : undefined));
     mockGetPairSynergies.mockReturnValue(pairWithConnections());
     renderAt('/compare/a1/b1/shift-targets');
-    expect(mockOpenComparison).toHaveBeenCalledWith('a1', 'b1', 'shift-targets');
+    expect(mockOpenComparison).toHaveBeenCalledWith('a1', 'b1', 'shift-targets', {skipEnter: false});
+  });
+
+  // #913: a shared link showed a blank page until the card list arrived.
+  it("draws the card window's frame while the pair loads", () => {
+    mockCardsLoading.mockReturnValue(true);
+    mockGetCardById.mockReturnValue(undefined);
+    renderAt('/compare/a1/b1/shift-targets');
+    expect(screen.getByRole('status', {name: 'Loading comparison'})).toBeInTheDocument();
+  });
+
+  it('hands the frame to the window, which opens without an entrance of its own', () => {
+    mockCardsLoading.mockReturnValue(true);
+    mockGetCardById.mockReturnValue(undefined);
+    const {rerender} = renderAt('/compare/a1/b1/shift-targets');
+
+    mockCardsLoading.mockReturnValue(false);
+    mockGetCardById.mockImplementation((id) => (id === 'a1' ? cardA : id === 'b1' ? cardB : undefined));
+    mockGetPairSynergies.mockReturnValue(pairWithConnections());
+    rerender(pageAt('/compare/a1/b1/shift-targets'));
+
+    expect(mockOpenComparison).toHaveBeenCalledWith('a1', 'b1', 'shift-targets', {skipEnter: true});
+    expect(screen.queryByRole('status', {name: 'Loading comparison'})).toBeNull();
+  });
+
+  // A browser Back onto a compare link, with the window already open: it switches in place.
+  it('draws no frame over a window already open', () => {
+    mockSelectedCardId.mockReturnValue('c1');
+    mockCardsLoading.mockReturnValue(true);
+    mockGetCardById.mockReturnValue(undefined);
+    renderAt('/compare/a1/b1/shift-targets');
+    expect(screen.queryByRole('status', {name: 'Loading comparison'})).toBeNull();
   });
 
   it('renders NotFoundPage for the unfiltered URL (no group key)', () => {

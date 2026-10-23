@@ -1,5 +1,6 @@
 import type {Locator} from '@playwright/test';
 import {test, expect} from '../fixtures';
+import {holdSupabasePath} from '../fixtures/supabaseStub';
 import {cardFullNameById} from '../helpers/cardData';
 import {slidePointerOnto} from '../helpers/pointer';
 import fs from 'node:fs';
@@ -282,5 +283,87 @@ test.describe('Synergy comparison — deep link', () => {
     await expect(appPage.cardOverviewModal).toBeVisible({timeout: 10000});
     await expect(appPage.cardOverviewModal).toHaveAttribute('data-mode', 'comparison', {timeout: 10000});
     await expect(appPage.cardOverviewModal.getByRole('button', {name: /^Engine/})).toBeVisible({timeout: 3000});
+  });
+
+  test('the Community column states no votes until the pair score arrives', async ({appPage, page}) => {
+    // Notes any moment the column states a vote count or the empty-votes message (#913).
+    await page.addInitScript(() => {
+      const seen = window as Window & {sawVoteState?: boolean};
+      seen.sawVoteState = false;
+      new MutationObserver(() => {
+        const text = document.body?.textContent ?? '';
+        if (/\d+ \/ 1 votes|Not enough votes yet/.test(text)) seen.sawVoteState = true;
+      }).observe(document, {childList: true, subtree: true, characterData: true});
+    });
+    const releaseScore = await holdSupabasePath(page, '/rest/v1/pair_scores');
+
+    await page.goto(COMPARE_URL);
+    const modal = appPage.cardOverviewModal;
+    await expect(modal).toHaveAttribute('data-mode', 'comparison', {timeout: 10000});
+    // Past its 200 ms delay the skeleton shows, in the box the empty state will take. A phone
+    // draws the column twice (the window's own, and the comparison's Community tab), so this
+    // takes the first one shown.
+    await expect(modal.getByTestId('community-loading').filter({visible: true}).first()).toBeVisible();
+    expect(await page.evaluate(() => (window as Window & {sawVoteState?: boolean}).sawVoteState)).toBe(false);
+
+    // The stub answers with no rows: no votes yet, as before.
+    releaseScore();
+    await expect(modal.getByRole('heading', {name: 'Not enough votes yet'})).toBeVisible();
+    await expect(modal.getByTestId('community-loading')).toHaveCount(0);
+  });
+
+  test('a compare link opens on the window frame, and the window takes over with no gap or second fade', async ({
+    appPage,
+    page,
+  }) => {
+    // Each frame from the first: how many backdrops are up, and the most opaque one's opacity.
+    await page.addInitScript(() => {
+      const frames: {count: number; opacity: number}[] = [];
+      (window as Window & {backdropFrames?: typeof frames}).backdropFrames = frames;
+      const sample = () => {
+        const backdrops = document.querySelectorAll(
+          '[data-testid="card-overview-fallback-backdrop"], [data-testid="card-overview-backdrop"]',
+        );
+        let opacity = 0;
+        for (const backdrop of backdrops) opacity = Math.max(opacity, Number(getComputedStyle(backdrop).opacity));
+        frames.push({count: backdrops.length, opacity});
+        requestAnimationFrame(sample);
+      };
+      requestAnimationFrame(sample);
+    });
+    let releaseCardData = () => {};
+    const cardDataHeld = new Promise<void>((resolve) => {
+      releaseCardData = resolve;
+    });
+    await page.route(/\/data\/allCards.*\.json/, async (route) => {
+      await cardDataHeld;
+      await route.continue();
+    });
+
+    await page.goto(COMPARE_URL);
+    // The window's frame while the pair loads (#913), where the page used to stay blank.
+    await expect(page.getByRole('status', {name: 'Loading comparison'})).toBeVisible();
+
+    releaseCardData();
+    await expect(appPage.cardOverviewModal).toHaveAttribute('data-mode', 'comparison', {timeout: 10000});
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+
+    const frames = await page.evaluate(
+      () => (window as Window & {backdropFrames?: {count: number; opacity: number}[]}).backdropFrames ?? [],
+    );
+    const shown = frames.slice(frames.findIndex((frame) => frame.count > 0));
+    expect(shown.length).toBeGreaterThan(0);
+    // From the frame's first paint to the open window, a backdrop in every frame...
+    expect(shown.filter((frame) => frame.count === 0)).toHaveLength(0);
+    // ...that never fades back down to fade in again.
+    const drops = shown.filter((frame, i) => i > 0 && frame.opacity < shown[i - 1].opacity - 0.001);
+    expect(drops).toEqual([]);
+  });
+
+  test('an invalid compare link still ends on the 404 page, with no frame left over', async ({page}) => {
+    // No card has this id, so the pair is not found once the card list loads.
+    await page.goto(`/compare/1947/99999999/${COMPARE_GROUP_KEY}`);
+    await expect(page.getByRole('heading', {level: 1})).toHaveText(/404/, {timeout: 10000});
+    await expect(page.getByTestId('card-overview-fallback')).toHaveCount(0);
   });
 });

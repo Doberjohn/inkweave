@@ -26,6 +26,8 @@ import {
 // CommunityBody renders nothing for a null score, so `1` is the effective floor.
 const VOTES_THRESHOLD = 1;
 const COMMUNITY_TINT = INK_COLORS.Amethyst.text; // amethyst family (#511: was a drifted local #b691ff)
+/** Holds the header's meta line while the score loads, so the header keeps its height. */
+const NBSP = '\u00a0';
 
 interface CommunityColumnProps {
   pair: DetailedPairSynergy;
@@ -55,9 +57,10 @@ export function CommunityColumn({pair, engineScore, compact = false}: CommunityC
   const navigate = useNavigate();
   const {closeCardModal} = useCardModal();
   const {score, isLoading} = usePairScore(cardA.id, cardB.id);
-  // Delay-before-show: only mount the skeleton if `isLoading` is still true
-  // after 200ms. Cached / fast (<200ms) Supabase responses never flash a
-  // skeleton — the UI just renders the loaded state immediately.
+  // Delay-before-show: the skeleton only shows if `isLoading` is still true after 200ms.
+  // Cached / fast (<200ms) Supabase responses never flash a skeleton: the UI just renders
+  // the loaded state. Until the score is in, the column states nothing about votes (#913):
+  // a null score read as 0 votes, in the header and, for those 200ms, the empty state.
   const showSkeleton = useDelayedLoading(isLoading, 200);
   const userVotedInDepth = hasInDepthVote({cardA: cardA.id, cardB: cardB.id});
   const visual = deriveCommunityVisualState(score);
@@ -67,8 +70,10 @@ export function CommunityColumn({pair, engineScore, compact = false}: CommunityC
     navigate(`/vote/${cardA.id}/${cardB.id}`);
   };
 
-  const body = showSkeleton ? (
-    <CommunityLoadingSkeleton />
+  const body = isLoading ? (
+    // Invisible for the first 200ms, so a fast answer never flashes a shimmer, but it
+    // already holds the box the empty state will take.
+    <CommunityLoadingSkeleton hidden={!showSkeleton} />
   ) : (
     <CommunityBody
       visual={visual}
@@ -94,11 +99,11 @@ export function CommunityColumn({pair, engineScore, compact = false}: CommunityC
       <ColumnHeader
         title="Community"
         accentColor={COMMUNITY_TINT}
-        score={showSkeleton || visual.hasEmptyState ? '—' : formatScore(visual.communityScore)}
+        score={isLoading || visual.hasEmptyState ? '—' : formatScore(visual.communityScore)}
         scoreColor={COMMUNITY_TINT}
         scoreFontSize={42}
-        showScale={!showSkeleton && !visual.hasEmptyState}
-        meta={<CommunityHeaderMeta visual={visual} engineScore={engineScore} />}
+        showScale={!isLoading && !visual.hasEmptyState}
+        meta={isLoading ? NBSP : <CommunityHeaderMeta visual={visual} engineScore={engineScore} />}
       />
       {body}
     </section>
@@ -133,8 +138,11 @@ function useDelayedLoading(isLoading: boolean, delayMs: number): boolean {
  * in flight. Mirrors the CommunityEmptyState shape (most pairs in beta are
  * still 0-vote) so the cross-fade to the loaded state is structurally
  * stable — no layout shift on the dominant "empty" outcome.
+ *
+ * `hidden` keeps its box but not its look, for the delay before a skeleton shows.
+ * visibility:hidden also keeps it out of the accessibility tree.
  */
-function CommunityLoadingSkeleton() {
+function CommunityLoadingSkeleton({hidden}: {hidden: boolean}) {
   return (
     <>
       <div
@@ -142,6 +150,7 @@ function CommunityLoadingSkeleton() {
         aria-busy="true"
         aria-label="Loading community vote data"
         style={{
+          visibility: hidden ? 'hidden' : undefined,
           flex: 1,
           display: 'flex',
           flexDirection: 'column',

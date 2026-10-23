@@ -26,6 +26,15 @@ export const SomeSelected: Story = {
   },
 };
 
+/** A playstyle's toolbar (#914): the inks its cards don't use stay in place, dimmed and off. */
+export const SomeOffered: Story = {
+  args: {
+    inkFilters: ['Amethyst'] as Ink[],
+    onToggleInk: () => {},
+    offered: ['Amethyst', 'Emerald'] as Ink[],
+  },
+};
+
 export const SmallSize: Story = {
   args: {
     inkFilters: ['Sapphire'] as Ink[],

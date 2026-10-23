@@ -1,5 +1,6 @@
 import {useId, useLayoutEffect, useRef, useState, type RefObject} from 'react';
 import {createPortal} from 'react-dom';
+import Skeleton from 'react-loading-skeleton';
 import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, VISUALLY_HIDDEN, Z_INDEX, blackRgba, hexRgba} from '../../../shared/constants';
 import {useContainerWidth, useTooltip} from '../../../shared/hooks';
 
@@ -41,6 +42,8 @@ const MAX_VISIBLE_TILES = 8;
  */
 const MIN_COLLAPSE_CELLS = 3;
 const ROW_MAX_WIDTH = MAX_VISIBLE_TILES * TILE_WIDTH + (MAX_VISIBLE_TILES - 1) * TILE_GAP;
+/** The row's padding: room around the tiles for the focus ring, and below them for the scrollbar track. */
+const ROW_PADDING = {top: 2, side: 2, bottom: 10};
 /** Tile height with the description shown vs the compact (label + count only) form. */
 const TILE_MIN_HEIGHT_FULL = 120;
 const TILE_MIN_HEIGHT_COMPACT = 76;
@@ -101,7 +104,7 @@ function getSectionStyle({collapsed, centered}: {collapsed: boolean; centered: b
     scrollSnapType: collapsed ? undefined : 'x proximity',
     maxWidth: ROW_MAX_WIDTH,
     margin: '0 auto 28px',
-    padding: '2px 2px 10px', // room for the focus ring + scrollbar track
+    padding: `${ROW_PADDING.top}px ${ROW_PADDING.side}px ${ROW_PADDING.bottom}px`,
   };
 }
 
@@ -188,6 +191,37 @@ export function RoleTileRow({
         <ShowMoreTile hiddenCount={hiddenCount} minHeight={tileMinHeight} onClick={() => setExpanded(true)} />
       )}
     </section>
+  );
+}
+
+/**
+ * The compact row's place while a playstyle's cards load (#914): the row's box, holding as many
+ * tile placeholders as the loaded row fits across, so what follows starts where it will.
+ */
+export function RoleTileRowSkeleton() {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const width = useContainerWidth(rowRef);
+  return (
+    <div
+      ref={rowRef}
+      aria-hidden="true"
+      // The loaded row's box: its padding within the same width, so as many tiles fit, and a compact
+      // tile's height inside that padding before the row has measured any tile.
+      style={{
+        ...getSectionStyle({collapsed: true, centered: true}),
+        height: ROW_PADDING.top + TILE_MIN_HEIGHT_COMPACT + ROW_PADDING.bottom,
+      }}>
+      {Array.from({length: cellCapacity(width)}, (_, i) => (
+        <Skeleton
+          key={i}
+          inline
+          width={TILE_WIDTH}
+          height={TILE_MIN_HEIGHT_COMPACT}
+          borderRadius={RADIUS.lg}
+          style={{display: 'block', flexShrink: 0}}
+        />
+      ))}
+    </div>
   );
 }
 

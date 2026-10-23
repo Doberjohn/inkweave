@@ -2,9 +2,9 @@ import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {CollectionActions} from './CollectionActions';
 
-function renderActions(checking = false) {
+function renderActions(checking = false, onMenuOpen?: () => void) {
   const onImport = vi.fn();
-  render(<CollectionActions onImport={onImport} checking={checking} />);
+  render(<CollectionActions onImport={onImport} checking={checking} onMenuOpen={onMenuOpen} />);
   return onImport;
 }
 
@@ -53,5 +53,17 @@ describe('CollectionActions', () => {
     fireEvent.click(gear());
     fireEvent.pointerDown(document.body);
     expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  // #913: Browse warms the import dialog's chunk here, before an action is chosen.
+  it('tells onMenuOpen each time the menu opens, by press or by key, and not when it closes', () => {
+    const onMenuOpen = vi.fn();
+    renderActions(false, onMenuOpen);
+    fireEvent.click(gear());
+    expect(onMenuOpen).toHaveBeenCalledOnce();
+    fireEvent.click(gear());
+    expect(onMenuOpen).toHaveBeenCalledOnce();
+    fireEvent.keyDown(gear(), {key: 'ArrowDown'});
+    expect(onMenuOpen).toHaveBeenCalledTimes(2);
   });
 });

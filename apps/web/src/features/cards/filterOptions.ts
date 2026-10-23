@@ -118,8 +118,9 @@ function listOf<T>(value: T | undefined): T[] {
 /**
  * Narrows the filter options to the values a fixed card pool (a playstyle's cards) can
  * match, so no option on its own empties the grid. `all` holds the site-wide dropdown
- * lists the pool narrows. An empty pool means its cards are still loading: every option
- * stays, so the toolbar keeps its usual layout until they arrive.
+ * lists the pool narrows. The toolbar dims the button values left out rather than drop
+ * them, so it keeps one size. An empty pool means its cards are still loading: every
+ * option stays on until they arrive.
  */
 export function getPoolFilterOptions(
   cards: LorcanaCard[],

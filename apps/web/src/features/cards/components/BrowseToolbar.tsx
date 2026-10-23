@@ -80,7 +80,11 @@ interface BrowseToolbarProps {
    */
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
-  /** Limits the inline ink, cost and inkwell icons to these values; left out, all show. */
+  /**
+   * The inline ink, cost and inkwell values that can be picked; left out, all can. The rest
+   * still show, dimmed and off, so the toolbar keeps its size whatever the page's cards are,
+   * and a page whose cards load later lays it out once (a playstyle's).
+   */
   buttonOptions?: FilterButtonOptions;
   /**
    * The rarities the page offers, so a whole kind's chip names the art preset that picks
@@ -404,14 +408,14 @@ function DesktopFilterIcons({
 }: DesktopFilterIconsProps) {
   return (
     <>
-      <InkFilterGroup inkFilters={inkFilters} onToggleInk={onToggleInk} inks={options?.inks} />
+      <InkFilterGroup inkFilters={inkFilters} onToggleInk={onToggleInk} offered={options?.inks} />
       <div aria-hidden="true" style={DIVIDER_STYLE} />
       {showCost && (
         <>
           <CostFilterGroup
             costFilters={costFilters}
             onToggleCost={onToggleCost}
-            costs={options?.costs}
+            offered={options?.costs}
             uninkable={inkwell === 'uninkable'}
           />
           <div aria-hidden="true" style={DIVIDER_STYLE} />
@@ -420,7 +424,7 @@ function DesktopFilterIcons({
       <InkwellFilterGroup
         activeValue={inkwell}
         onToggle={onInkwellChange}
-        values={options?.inkwell}
+        offered={options?.inkwell}
       />
     </>
   );

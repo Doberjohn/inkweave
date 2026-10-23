@@ -10,6 +10,11 @@ interface InkFilterGroupProps {
   onToggleInk: (ink: Ink) => void;
   /** The inks to offer (e.g. only those a playstyle's cards use). Defaults to all six. */
   inks?: readonly Ink[];
+  /**
+   * The inks that can be picked: the rest of `inks` show dimmed and off, holding their
+   * places (a playstyle's toolbar). Defaults to every ink shown.
+   */
+  offered?: readonly Ink[];
   size?: FilterButtonSize;
   iconSize?: number;
   style?: React.CSSProperties;
@@ -20,6 +25,7 @@ export function InkFilterGroup({
   inkFilters,
   onToggleInk,
   inks = ALL_INKS,
+  offered = inks,
   size = 'sm',
   iconSize = 28,
   style,
@@ -32,6 +38,7 @@ export function InkFilterGroup({
           size={size}
           active={inkFilters.includes(ink)}
           onClick={() => onToggleInk(ink)}
+          disabled={!offered.includes(ink)}
           activeColor={INK_COLORS[ink].border}
           activeBgColor={INK_COLORS[ink].bg}
           inactiveColor="transparent"

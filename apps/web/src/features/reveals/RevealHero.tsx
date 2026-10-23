@@ -1,4 +1,5 @@
 import type {CSSProperties} from 'react';
+import Skeleton from 'react-loading-skeleton';
 import {SET_TOTAL} from './setComposition';
 import type {CountdownMilestone, CountdownState} from './useCountdown';
 import {COLORS, REVEAL_SET_CODE, REVEAL_SET_LOGO, SET_NAMES} from '../../shared/constants';
@@ -8,8 +9,8 @@ interface RevealHeroProps {
   countdown: CountdownState | null;
   /** Formatted release date, e.g. "July 24, 2026". */
   releaseDate: string;
-  /** Unique cards revealed so far. */
-  totalRevealed: number;
+  /** Unique cards revealed so far; null while the card list loads, which would count 0. */
+  totalRevealed: number | null;
   /** New franchises this set. */
   franchiseCount: number;
   /** Total cards in the set (denominator). */
@@ -154,7 +155,8 @@ export function RevealHero({
         >
           <div style={{padding: '16px 22px', textAlign: 'left'}}>
             <div style={{...bigStat, color: '#e8e8e8'}}>
-              {totalRevealed}
+              {/* Three digits wide at the stat's size, so " / 204" and the label hold still. */}
+              {totalRevealed ?? <Skeleton width="3ch" height={bigStat.fontSize} inline />}
               {/* textMuted, not textDim: textDim gives 3.3:1 on the hero, under the 4.5:1 WCAG asks. */}
               <span style={{...unitStyle, color: COLORS.textMuted}}> / {totalCards}</span>
             </div>

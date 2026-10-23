@@ -70,6 +70,10 @@ export const Busy: Story = {
   args: {received: [RUBY], sent: [STEEL], friends: [EMERALD], busy: true},
 };
 
+/**
+ * While the friendships load (#914): the boxes of a section with no one in it, which every
+ * player's has, so the sections under it hold still when it loads.
+ */
 export const Loading: Story = {
   args: {status: 'loading', code: null},
 };

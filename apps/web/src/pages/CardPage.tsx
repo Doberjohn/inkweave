@@ -5,16 +5,16 @@ import {cardPath} from 'inkweave-synergy-engine/card';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {usePrecomputedSynergies} from '../features/synergies/hooks';
 import {cardSynergySummary} from '../features/synergies/cardSynergySummary';
-import {CardDetailPanel} from '../features/synergies/components/CardDetailPanel';
+import {CardDetailPanel, CardDetailPanelSkeleton} from '../features/synergies/components/CardDetailPanel';
 import {
   trackSynergyCardClicked,
   trackSynergyGroupViewed,
 } from '../features/synergies/lib/synergyAnalytics';
-import {CardDetailSkeleton} from '../features/cards';
-import {SynergyResults} from '../features/synergies/components/SynergyResults';
+import {SynergyResults, SynergyResultsLoading} from '../features/synergies/components/SynergyResults';
 import {CompactHeader, Footer, Seo} from '../shared/components';
 import {useBackOrNavigate, useResponsive} from '../shared/hooks';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING} from '../shared/constants';
+import {cardNameHint} from './cardNameHint';
 
 /**
  * `/card/:cardId` — a real, crawlable card detail page (issue #486).
@@ -54,6 +54,35 @@ function PageShell({children, showFooter = true}: {children: React.ReactNode; sh
   );
 }
 
+/** The page's two columns: on desktop the card panel, held below the header, then the results. */
+const MAIN_STYLE: React.CSSProperties = {flex: 1, display: 'flex', alignItems: 'flex-start'};
+const PANEL_SLOT_STYLE: React.CSSProperties = {
+  position: 'sticky',
+  top: LAYOUT.compactHeaderHeight,
+  alignSelf: 'flex-start',
+};
+
+/**
+ * The page while the card list loads, in the loaded page's frame (#914): the card panel's
+ * placeholder beside the results' on desktop, the card's block above them on a phone, its name
+ * taking the lines of the name the address spells (`slug`). A skeleton, per the #511 loading
+ * rule, with no text flash.
+ */
+function CardPageLoading({isMobile, slug}: {isMobile: boolean; slug: string | undefined}) {
+  return (
+    <PageShell showFooter={false}>
+      <main aria-busy="true" aria-label="Loading card" style={MAIN_STYLE}>
+        {!isMobile && (
+          <div style={PANEL_SLOT_STYLE}>
+            <CardDetailPanelSkeleton />
+          </div>
+        )}
+        <SynergyResultsLoading isMobile={isMobile} nameHint={cardNameHint(slug)} />
+      </main>
+    </PageShell>
+  );
+}
+
 function CenteredMessage({title, body}: {title: string; body: string}) {
   return (
     <main
@@ -76,7 +105,7 @@ function CenteredMessage({title, body}: {title: string; body: string}) {
 }
 
 export function CardPage() {
-  const {cardId} = useParams<{cardId: string}>();
+  const {cardId, slug} = useParams<{cardId: string; slug?: string}>();
   const navigate = useNavigate();
   const {isMobile} = useResponsive();
   const {getCardById, isLoading: cardsLoading} = useCardDataContext();
@@ -100,16 +129,7 @@ export function CardPage() {
   }
 
   if (!card) {
-    if (cardsLoading) {
-      // #511 loading rule: skeleton for layout-known surfaces (no text flash).
-      return (
-        <PageShell showFooter={false}>
-          <main style={{display: 'flex', justifyContent: 'center'}}>
-            <CardDetailSkeleton ariaLabel="Loading card" />
-          </main>
-        </PageShell>
-      );
-    }
+    if (cardsLoading) return <CardPageLoading isMobile={isMobile} slug={slug} />;
     return (
       <PageShell>
         <Seo title="Card not found | Inkweave" canonicalPath={`/card/${cardId ?? ''}`} noindex />
@@ -163,9 +183,9 @@ export function CardPage() {
         description={summary || buildDescription(card)}
         canonicalPath={cardPath(card)}
       />
-      <main style={{flex: 1, display: 'flex', alignItems: 'flex-start'}}>
+      <main style={MAIN_STYLE}>
         {!isMobile && (
-          <div style={{position: 'sticky', top: LAYOUT.compactHeaderHeight, alignSelf: 'flex-start'}}>
+          <div style={PANEL_SLOT_STYLE}>
             <CardDetailPanel
               card={card}
               synergies={synergies}

@@ -64,7 +64,11 @@ export function InkHubPage() {
           width: '100%',
           margin: '0 auto',
         }}>
-        <InkHubHeader ink={hub.ink} blurb={INK_HUB_BLURBS[hub.ink]} cardCount={inkCards.length} />
+        <InkHubHeader
+          ink={hub.ink}
+          blurb={INK_HUB_BLURBS[hub.ink]}
+          cardCount={isLoading ? null : inkCards.length}
+        />
 
         {isLoading ? (
           <CardGridSkeleton rows={3} />
@@ -88,6 +92,15 @@ export function InkHubPage() {
   );
 }
 
+/** Holds the count line's height while the cards load, as the ink gallery's counts do. */
+const NBSP = '\u00a0';
+
+/** The count line: "N cards", or a blank line while the list loads, never a false "0 cards" (#913). */
+function countLine(cardCount: number | null): string {
+  if (cardCount === null) return NBSP;
+  return `${cardCount} card${cardCount !== 1 ? 's' : ''}`;
+}
+
 function InkHubHeader({
   ink,
   blurb,
@@ -95,7 +108,8 @@ function InkHubHeader({
 }: {
   ink: string;
   blurb: string;
-  cardCount: number;
+  /** Null while the card list loads. */
+  cardCount: number | null;
 }) {
   return (
     <>
@@ -147,6 +161,7 @@ function InkHubHeader({
       {/* Count line, matching SynergyGroup's muted meta treatment. Cheap indexable text,
           and it tells a reader the hub is complete rather than a sample. */}
       <div
+        data-testid="ink-hub-count"
         style={{
           fontSize: `${FONT_SIZES.xs}px`,
           color: COLORS.textMuted,
@@ -154,7 +169,7 @@ function InkHubHeader({
           textTransform: 'uppercase',
           marginBottom: `${SPACING.sm}px`,
         }}>
-        {cardCount} card{cardCount !== 1 ? 's' : ''}
+        {countLine(cardCount)}
       </div>
     </>
   );

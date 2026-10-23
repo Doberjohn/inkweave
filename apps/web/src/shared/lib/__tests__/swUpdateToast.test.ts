@@ -1,9 +1,10 @@
-import {afterEach, describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {showUpdateToast} from '../swUpdateToast';
 
 describe('showUpdateToast', () => {
   afterEach(() => {
     document.getElementById('sw-update-toast')?.remove();
+    vi.unstubAllGlobals();
   });
 
   it('mounts a polite live-region toast in the document body', () => {
@@ -29,5 +30,15 @@ describe('showUpdateToast', () => {
 
     expect(second).toBe(first);
     expect(document.querySelectorAll('#sw-update-toast')).toHaveLength(1);
+  });
+
+  // #914: on a phone it sits above the tab bar (110 px) rather than over its active tab.
+  it.each([
+    {width: 390, bottom: '126px'},
+    {width: 1440, bottom: '16px'},
+  ])('sits $bottom from the bottom at $width px wide', ({width, bottom}) => {
+    vi.stubGlobal('innerWidth', width);
+
+    expect(showUpdateToast().style.bottom).toBe(bottom);
   });
 });

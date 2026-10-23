@@ -30,11 +30,10 @@ import {
   type TribalSpec,
 } from 'inkweave-synergy-engine';
 import {usePrecomputedPlaystyleCards} from '../features/synergies/hooks';
-import {RoleTileRow, type RoleTile} from '../features/synergies/components/RoleTileRow';
+import {RoleTileRow, RoleTileRowSkeleton, type RoleTile} from '../features/synergies/components/RoleTileRow';
 import {MechanicsBottomSheet} from '../features/synergies/components/MechanicsBottomSheet';
 import {MechanicsButton} from '../features/synergies/components/MechanicsButton';
 import {Chip} from '../shared/components/Chip';
-import Skeleton from 'react-loading-skeleton';
 import {BrowseToolbar, CardGrid, CardGridSkeleton} from '../features/cards';
 import {
   searchCardsByName,
@@ -50,7 +49,6 @@ import {
   FONT_SIZES,
   LAYOUT,
   LETTER_SPACING,
-  RADIUS,
   SPACING,
   PLAYSTYLE_UI,
   accentRgba,
@@ -82,6 +80,17 @@ const HERO_MOBILE: HeroLayout = {
   headerGap: 10,
   breadcrumbLinkMinHeight: 44,
 };
+
+// ── Card grid ──
+
+/** The room under the card grid, past the spacing scale's top step (SPACING.xxxl, 32). */
+const GRID_PADDING_BOTTOM = 48;
+/**
+ * The card grid's padding on phones and on desktop, shared by the loaded grid and its loading
+ * one, so the loading grid has the loaded grid's columns and tile width (#914).
+ */
+const PHONE_GRID_PADDING = `${SPACING.md}px ${SPACING.lg}px ${GRID_PADDING_BOTTOM}px`;
+const DESKTOP_GRID_PADDING = `${SPACING.xxl}px ${SPACING.xxxl}px ${GRID_PADDING_BOTTOM}px`;
 
 // ── Hero Section ──
 
@@ -553,7 +562,8 @@ export function PlaystyleDetailPage() {
   useDefaultSortParam();
 
   const {playstyle, ui} = useResolvedPlaystyle(playstyleId);
-  const {cards: playstyleCards} = usePrecomputedPlaystyleCards(playstyle?.id);
+  const {cards: playstyleCards, ...playstyleCardsLoad} = usePrecomputedPlaystyleCards(playstyle?.id);
+  const pageLoad = combineLoads({isLoading, error, retry: retryLoad}, playstyleCardsLoad);
 
   const combinedFilters = buildCombinedFilters(filters, inkFilters, typeFilters, costFilters);
   const sortedCards = applyFilterAndSort(playstyleCards, searchQuery, combinedFilters, sortOrder);
@@ -568,15 +578,11 @@ export function PlaystyleDetailPage() {
     openCardModal(card.id, displayedCards.map((c) => c.id));
   };
 
-  // Still loading card data — show skeleton regardless of playstyle resolution.
-  if (isLoading) {
-    return <PlaystyleDetailLoadingView isMobile={isMobile} goHome={goHome} />;
-  }
-
-  // Not loading, but playstyle ID is invalid — redirect to gallery.
+  // An unknown id: the gallery. Ids resolve with no data, so this needs no wait.
   if (!playstyle || !ui) return <Navigate to="/playstyles" replace />;
 
-  if (error) return <PlaystyleDetailError onRetry={retryLoad} />;
+  // A list that failed shows the error once neither list is still loading.
+  if (!pageLoad.isLoading && pageLoad.retry) return <PlaystyleDetailError onRetry={pageLoad.retry} />;
 
   const heroLayout = getHeroLayout(isMobile);
   const {toolbarProps, filterDialogProps} = buildPlaystyleViewProps({
@@ -604,9 +610,14 @@ export function PlaystyleDetailPage() {
     sets,
   });
 
+  // While the card data or the playstyles' own lists load, the views draw the hero and the
+  // toolbar as loaded, with placeholders for the mechanics and the cards, so nothing moves when
+  // the lists land (#914). Waiting for both keeps "No cards match your filters." off the page
+  // until the playstyle's cards arrive (#913).
   if (isMobile) {
     return (
       <PlaystyleDetailMobileView
+        isLoading={pageLoad.isLoading}
         playstyle={playstyle}
         ui={ui}
         heroLayout={heroLayout}
@@ -627,6 +638,7 @@ export function PlaystyleDetailPage() {
 
   return (
     <PlaystyleDetailDesktopView
+      isLoading={pageLoad.isLoading}
       playstyle={playstyle}
       ui={ui}
       heroLayout={heroLayout}
@@ -642,6 +654,25 @@ export function PlaystyleDetailPage() {
       filterDialogProps={filterDialogProps}
     />
   );
+}
+
+/** A list the page loads. */
+interface PageLoad {
+  isLoading: boolean;
+  error: Error | null;
+  retry: () => void;
+}
+
+/**
+ * The card data and the playstyles' lists as one load: loading while either is, and the
+ * retry for whichever failed, the card data first, or null when both loaded.
+ */
+function combineLoads(
+  cardData: PageLoad,
+  playstyleCards: PageLoad,
+): {isLoading: boolean; retry: (() => void) | null} {
+  const failed = [cardData, playstyleCards].find((load) => load.error);
+  return {isLoading: cardData.isLoading || playstyleCards.isLoading, retry: failed?.retry ?? null};
 }
 
 // ── Page sub-views (extracted to keep PlaystyleDetailPage under CC 10) ──
@@ -683,7 +714,12 @@ interface FilterDialogSharedProps {
   buttonOptions: Parameters<typeof FilterDialog>[0]['buttonOptions'];
 }
 
-/** Per-route metadata for a playstyle page (React 19 native, self-referential canonical). */
+/**
+ * Per-route metadata for a playstyle page (React 19 native, self-referential canonical). The
+ * views render it once the cards are in: the prerender captures a page as soon as its title is
+ * the page's own (scripts/prerender.mjs), so a title in the loading page would capture its
+ * placeholders.
+ */
 function PlaystyleSeo({playstyle}: {playstyle: ResolvedPlaystyle}) {
   return (
     <Seo
@@ -691,51 +727,6 @@ function PlaystyleSeo({playstyle}: {playstyle: ResolvedPlaystyle}) {
       description={`${playstyle.tagline} Explore the cards, enablers, and payoffs that define the ${playstyle.name} archetype in Disney Lorcana Core format.`}
       canonicalPath={`/playstyles/${playstyle.id}`}
     />
-  );
-}
-
-function PlaystyleDetailLoadingView({isMobile, goHome}: {isMobile: boolean; goHome: () => void}) {
-  return (
-    <main
-      style={{
-        minHeight: '100vh',
-        background: COLORS.background,
-        fontFamily: FONTS.body,
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-      }}>
-      <EtherealBackground />
-      <CompactHeader onLogoClick={goHome} isMobile={isMobile} />
-      <div style={{flex: 1, position: 'relative', zIndex: 1}}>
-        <>
-          <div
-            style={{
-              padding: isMobile ? SPACING.lg : '20px 32px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: SPACING.md,
-            }}
-            aria-busy="true"
-            aria-label="Loading playstyle detail">
-            <Skeleton width={140} height={14} borderRadius={RADIUS.sm} />
-            <Skeleton width="45%" height={32} borderRadius={RADIUS.sm} />
-            <div style={{display: 'flex', flexDirection: 'column', gap: 6, maxWidth: 640}}>
-              <Skeleton height={12} width="95%" borderRadius={RADIUS.sm} />
-              <Skeleton height={12} width="88%" borderRadius={RADIUS.sm} />
-              <Skeleton height={12} width="60%" borderRadius={RADIUS.sm} />
-            </div>
-          </div>
-        </>
-        <CardGridSkeleton
-          rows={3}
-          columns={isMobile ? 3 : undefined}
-          gap={isMobile ? 10 : 12}
-          padding={isMobile ? `${SPACING.lg}px` : '16px 32px 48px'}
-          ariaLabel="Loading playstyle cards"
-        />
-      </div>
-    </main>
   );
 }
 
@@ -750,19 +741,26 @@ function PlaystyleDetailError({onRetry}: {onRetry: () => void}) {
   );
 }
 
-function CardGridOrEmpty({
+/**
+ * The playstyle's cards: the loading grid, in the loaded grid's padding, until they arrive
+ * (#914), then the grid, or its empty message when no card matches the filters.
+ */
+function PlaystyleCardGrid({
+  isLoading,
   cards,
   displayedCards,
   handleCardSelect,
   padding,
   borderRadius,
 }: {
+  isLoading: boolean;
   cards: LorcanaCard[];
   displayedCards: LorcanaCard[];
   handleCardSelect: (card: LorcanaCard) => void;
   padding: string;
   borderRadius?: number;
 }) {
+  if (isLoading) return <CardGridSkeleton rows={3} padding={padding} ariaLabel="Loading playstyle cards" />;
   return (
     <div style={{padding}}>
       <CardGrid
@@ -777,7 +775,49 @@ function CardGridOrEmpty({
   );
 }
 
+/**
+ * The desktop mechanics row, over a gold rule. While the cards load, its placeholder holds the
+ * row's box, so the grid starts where it will (#914).
+ */
+function DesktopMechanicsRow({
+  isLoading,
+  roleChips,
+  activeRoles,
+  toggleRole,
+}: {
+  isLoading: boolean;
+  roleChips: RoleChip[];
+  activeRoles: ReadonlySet<string>;
+  toggleRole: (role: string) => void;
+}) {
+  if (!isLoading && roleChips.length === 0) return null;
+  return (
+    <div style={{padding: '32px 32px 0'}}>
+      {isLoading ? (
+        <RoleTileRowSkeleton />
+      ) : (
+        <RoleTileRow
+          tiles={roleChips.map(toRoleTile)}
+          activeRoles={activeRoles}
+          onToggle={toggleRole}
+          showDescriptions={false}
+        />
+      )}
+      <hr
+        aria-hidden="true"
+        style={{
+          height: 1,
+          border: 'none',
+          background: `linear-gradient(90deg, transparent, ${COLORS.primary500} 50%, transparent)`,
+          margin: 0,
+        }}
+      />
+    </div>
+  );
+}
+
 function PlaystyleDetailMobileView({
+  isLoading,
   playstyle,
   ui,
   heroLayout,
@@ -793,6 +833,7 @@ function PlaystyleDetailMobileView({
   toolbarProps,
   filterDialogProps,
 }: {
+  isLoading: boolean;
   playstyle: ResolvedPlaystyle;
   ui: PlaystyleUIValue;
   heroLayout: HeroLayout;
@@ -811,14 +852,16 @@ function PlaystyleDetailMobileView({
   const [sheetOpen, setSheetOpen] = useState(false);
 
   // Render MechanicsButton + active role chips into the toolbar's extraChips slot
-  // so they sit alongside ink/cost filter chips instead of in a separate row.
+  // so they sit alongside ink/cost filter chips instead of in a separate row. While the
+  // cards load, the button holds its place, off.
   const toolbarExtras =
-    roleChips.length > 0 ? (
+    isLoading || roleChips.length > 0 ? (
       <>
         <MechanicsButton
           onClick={() => setSheetOpen(true)}
           activeCount={activeRoles.size}
           isMobile
+          disabled={isLoading}
         />
         {[...activeRoles].map((role) => {
           const chip = roleChips.find((c) => c.role === role);
@@ -844,7 +887,7 @@ function PlaystyleDetailMobileView({
         fontFamily: FONTS.body,
         position: 'relative',
       }}>
-      <PlaystyleSeo playstyle={playstyle} />
+      {!isLoading && <PlaystyleSeo playstyle={playstyle} />}
       <EtherealBackground />
       <CompactHeader onLogoClick={goHome} isMobile />
       <div style={{position: 'relative', zIndex: 1}}>
@@ -858,11 +901,12 @@ function PlaystyleDetailMobileView({
         />
         <BrowseToolbar {...toolbarProps} isMobile extraChips={toolbarExtras} />
         <ErrorBoundary>
-          <CardGridOrEmpty
+          <PlaystyleCardGrid
+            isLoading={isLoading}
             cards={roleFilteredCards}
             displayedCards={displayedCards}
             handleCardSelect={handleCardSelect}
-            padding={`${SPACING.md}px ${SPACING.lg}px 48px`}
+            padding={PHONE_GRID_PADDING}
             borderRadius={10}
           />
         </ErrorBoundary>
@@ -881,6 +925,7 @@ function PlaystyleDetailMobileView({
 }
 
 function PlaystyleDetailDesktopView({
+  isLoading,
   playstyle,
   ui,
   heroLayout,
@@ -895,6 +940,7 @@ function PlaystyleDetailDesktopView({
   toolbarProps,
   filterDialogProps,
 }: {
+  isLoading: boolean;
   playstyle: ResolvedPlaystyle;
   ui: PlaystyleUIValue;
   heroLayout: HeroLayout;
@@ -919,7 +965,7 @@ function PlaystyleDetailDesktopView({
         flexDirection: 'column',
         position: 'relative',
       }}>
-      <PlaystyleSeo playstyle={playstyle} />
+      {!isLoading && <PlaystyleSeo playstyle={playstyle} />}
       <EtherealBackground />
       <CompactHeader onLogoClick={goHome} />
       <div
@@ -938,31 +984,19 @@ function PlaystyleDetailDesktopView({
           onPlaystylesBreadcrumb={goPlaystyles}
         />
         <BrowseToolbar {...toolbarProps} isMobile={false} />
-        {roleChips.length > 0 && (
-          <div style={{padding: '32px 32px 0'}}>
-            <RoleTileRow
-              tiles={roleChips.map(toRoleTile)}
-              activeRoles={activeRoles}
-              onToggle={toggleRole}
-              showDescriptions={false}
-            />
-            <hr
-              aria-hidden="true"
-              style={{
-                height: 1,
-                border: 'none',
-                background: `linear-gradient(90deg, transparent, ${COLORS.primary500} 50%, transparent)`,
-                margin: 0,
-              }}
-            />
-          </div>
-        )}
+        <DesktopMechanicsRow
+          isLoading={isLoading}
+          roleChips={roleChips}
+          activeRoles={activeRoles}
+          toggleRole={toggleRole}
+        />
         <ErrorBoundary>
-          <CardGridOrEmpty
+          <PlaystyleCardGrid
+            isLoading={isLoading}
             cards={roleFilteredCards}
             displayedCards={displayedCards}
             handleCardSelect={handleCardSelect}
-            padding="24px 32px 48px"
+            padding={DESKTOP_GRID_PADDING}
           />
         </ErrorBoundary>
       </div>

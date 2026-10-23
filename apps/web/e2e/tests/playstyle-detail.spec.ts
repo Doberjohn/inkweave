@@ -104,3 +104,62 @@ test.describe('Playstyle Detail — Desktop', () => {
     await expect(tooltip).toHaveCount(0);
   });
 });
+
+/**
+ * A playstyle page waits for its own card list, `_playstyles.json`, as well as the card list
+ * (#913): until both are in, it shows its loading view, never "No cards match your filters."
+ */
+test.describe('Playstyle Detail — loading', () => {
+  const LOADING_VIEW = '[aria-label="Loading playstyle cards"]';
+  const EMPTY_GRID = 'No cards match your filters.';
+
+  test("shows its loading view, not an empty grid, until the playstyle's cards arrive", async ({page}) => {
+    // Notes any moment the empty message is on the page, from the first byte on.
+    await page.addInitScript((text) => {
+      const seen = window as Window & {sawEmptyGrid?: boolean};
+      seen.sawEmptyGrid = false;
+      new MutationObserver(() => {
+        if (document.body?.textContent?.includes(text)) seen.sawEmptyGrid = true;
+      }).observe(document, {childList: true, subtree: true, characterData: true});
+    }, EMPTY_GRID);
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/data/synergies/_playstyles.json', async (route) => {
+      await held;
+      await route.continue();
+    });
+    const cardList = page.waitForResponse((response) => response.url().includes('/data/allCards.json'));
+
+    await page.goto('/playstyles/lore-denial');
+    await cardList;
+    // Time for the card list to land in the page, which on its own drew the empty grid.
+    await page.waitForTimeout(1000);
+    await expect(page.locator(LOADING_VIEW)).toBeVisible();
+
+    release();
+    await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 15000});
+    await expect(page.locator(LOADING_VIEW)).toHaveCount(0);
+    expect(await page.evaluate(() => (window as Window & {sawEmptyGrid?: boolean}).sawEmptyGrid)).toBe(false);
+  });
+
+  test('opened from the gallery, a playstyle shows its cards with no loading view between', async ({page}) => {
+    const playstyles = page.waitForResponse((response) => response.url().includes('/data/synergies/_playstyles.json'));
+    await page.goto('/playstyles');
+    await playstyles;
+    const link = page.locator('a[href="/playstyles/lore-denial"]').first();
+    await expect(link).toBeVisible({timeout: 15000});
+
+    // The gallery's read of the list answers the playstyle page's first render (#913).
+    await page.evaluate((selector) => {
+      const seen = window as Window & {sawLoadingView?: boolean};
+      seen.sawLoadingView = false;
+      new MutationObserver(() => {
+        if (document.querySelector(selector)) seen.sawLoadingView = true;
+      }).observe(document.body, {childList: true, subtree: true});
+    }, LOADING_VIEW);
+    await link.click();
+
+    await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 15000});
+    expect(await page.evaluate(() => (window as Window & {sawLoadingView?: boolean}).sawLoadingView)).toBe(false);
+  });
+});

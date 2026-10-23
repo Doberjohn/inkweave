@@ -36,3 +36,8 @@ export const SeveralFranchises: Story = {
 export const Mobile: Story = {
   args: {...SEASON, compact: true},
 };
+
+/** While the card list loads (#913): a placeholder in the count's place, never a false 0. */
+export const Loading: Story = {
+  args: {...SEASON, totalRevealed: null},
+};

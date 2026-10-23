@@ -37,6 +37,11 @@ export const CustomColors: Story = {
   },
 };
 
+/** Dimmed and off: a value none of the page's cards has, in a playstyle's toolbar (#914). */
+export const Disabled: Story = {
+  args: {active: false, children: 'Cost 8', disabled: true},
+};
+
 export const AllStates: Story = {
   render: () => (
     <div style={{display: 'flex', gap: 8, flexWrap: 'wrap'}}>

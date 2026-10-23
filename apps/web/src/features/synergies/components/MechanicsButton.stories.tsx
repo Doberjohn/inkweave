@@ -29,3 +29,8 @@ export const Mobile: Story = {
 export const MobileActive: Story = {
   args: {isMobile: true, activeCount: 3},
 };
+
+/** While the playstyle's cards load, the phone toolbar shows the button off, in its place. */
+export const MobileLoading: Story = {
+  args: {isMobile: true, disabled: true},
+};

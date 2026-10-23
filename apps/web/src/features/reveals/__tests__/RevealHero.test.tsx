@@ -22,4 +22,13 @@ describe('RevealHero', () => {
     render(<RevealHero {...SEASON} countdown={null} />);
     expect(screen.getByText(/^\/ \d+$/)).toHaveStyle({color: COLORS.textMuted});
   });
+
+  // #913: the card list counts 0 until it loads; the hero waits for it instead.
+  it('holds a busy placeholder, not 0, before the set total while the cards load', () => {
+    const {container} = render(<RevealHero {...SEASON} totalRevealed={null} countdown={null} />);
+    const total = screen.getByText(/^\/ \d+$/);
+    // No number before the total: the skeleton holds its place.
+    expect(total.parentElement?.textContent).toMatch(/^\D* \/ 204$/);
+    expect(container.querySelector('[aria-busy="true"]')).not.toBeNull();
+  });
 });

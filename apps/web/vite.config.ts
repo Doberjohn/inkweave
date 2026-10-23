@@ -253,9 +253,10 @@ const STARTUP_SHARED = [
   /src[\\/]shared[\\/]constants[\\/](theme|setLogos|promoSets|cardBar)\.ts$/,
   /src[\\/]shared[\\/]hooks[\\/](useHover|useBoop|usePrintingSelection|useResponsive)\.ts$/,
   /src[\\/]shared[\\/]utils[\\/](touchGuard|prefersReducedMotion)\.ts$/,
-  /src[\\/]shared[\\/]components[\\/](CtaButton|ctaStyles|IconButton)\.tsx?$/,
+  /src[\\/]shared[\\/]components[\\/](CtaButton|ctaStyles|IconButton|Footer)\.tsx?$/,
   /src[\\/]shared[\\/]lib[\\/](analytics|posthog|sentry|whenLoadedAndIdle)\.ts$/,
-  /src[\\/]features[\\/]cards[\\/](loader|previewCards)\.ts$/,
+  /src[\\/]features[\\/]cards[\\/](loader|previewCards|inkHubs)\.ts$/,
+  /src[\\/]pages[\\/]homeFrame\.ts$/,
 ];
 const matchesAny = (patterns: RegExp[]) => (id: string) => patterns.some((re) => re.test(id));
 

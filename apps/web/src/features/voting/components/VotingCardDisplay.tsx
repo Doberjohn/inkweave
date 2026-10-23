@@ -143,7 +143,9 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
               inkColor2={card.ink2}
               cost={card.cost}
               borderRadius={8}
-              style={{maxWidth: '100%', height: 'auto', flexShrink: 1}}
+              // The card's shape holds the box's height while its art loads (#914), and it
+              // still shrinks with a narrow column.
+              style={{maxWidth: '100%', height: 'auto', aspectRatio: `${CARD_ASPECT}`, flexShrink: 1}}
             />
           )}
         </TapToEnlarge>

@@ -1,3 +1,5 @@
+import type {CSSProperties} from 'react';
+import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../../cards';
 import {
   INK_COLORS,
@@ -14,17 +16,52 @@ import {
   InkIcon,
   PrintingCarousel,
 } from '../../../shared/components';
+import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
 import {usePrintingSelection} from '../../../shared/hooks';
 
 /** The card at the size the card modal shows it on mobile (CardOverviewModal). */
 const ART_WIDTH = 240;
 const ART_HEIGHT = Math.round((ART_WIDTH * 368) / 264);
+/** The name's line height, at FONT_SIZES.xxl: one line is 24 px. */
+const NAME_LINE_HEIGHT = 1.2;
+/** The × beside the name. */
+const CLOSE_SIZE = 28;
 
 const CHIP_STYLE = {
   padding: `${SPACING.xs}px ${SPACING.md}px`,
   borderRadius: `${RADIUS.md}px`,
   fontSize: `${FONT_SIZES.base}px`,
 } as const;
+
+// The block's boxes, shared with its loading state (`CardDetailLoading`, #914).
+const ARTICLE_STYLE: CSSProperties = {
+  background: COLORS.surface,
+  borderRadius: `${RADIUS.xl}px`,
+  padding: `${SPACING.xl}px`,
+  marginBottom: `${SPACING.xl}px`,
+  boxShadow: `0 1px 3px ${blackRgba(0.3)}`,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: `${SPACING.lg}px`,
+};
+const HEADER_STYLE: CSSProperties = {display: 'flex', alignItems: 'flex-start', gap: SPACING.md};
+/** The name's type and its share of the header: the heading's, and its placeholder's. */
+const NAME_STYLE: CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+  margin: 0,
+  fontSize: `${FONT_SIZES.xxl}px`,
+  fontWeight: 700,
+  lineHeight: NAME_LINE_HEIGHT,
+  color: COLORS.text,
+};
+const CHIPS_STYLE: CSSProperties = {display: 'flex', gap: `${SPACING.sm}px`, flexWrap: 'wrap'};
+const ART_ROW_STYLE: CSSProperties = {display: 'flex', justifyContent: 'center'};
+const TEXT_BOX_STYLE: CSSProperties = {
+  padding: SPACING.md,
+  background: COLORS.gray50,
+  borderRadius: `${RADIUS.md}px`,
+};
 
 interface CardDetailProps {
   card: LorcanaCard;
@@ -53,23 +90,12 @@ function CardDetailHeader({
 }) {
   const Heading = headingLevel;
   return (
-    <div style={{display: 'flex', alignItems: 'flex-start', gap: SPACING.md}}>
-      <Heading
-        style={{
-          flex: 1,
-          minWidth: 0,
-          margin: 0,
-          fontSize: `${FONT_SIZES.xxl}px`,
-          fontWeight: 700,
-          lineHeight: 1.2,
-          color: COLORS.text,
-        }}>
-        {card.fullName}
-      </Heading>
+    <div style={HEADER_STYLE}>
+      <Heading style={NAME_STYLE}>{card.fullName}</Heading>
       <IconButton
         aria-label="Close"
         onClick={onClear}
-        size={28}
+        size={CLOSE_SIZE}
         style={{
           borderRadius: RADIUS.pill,
           border: `1px solid ${COLORS.surfaceBorder}`,
@@ -86,7 +112,7 @@ function CardDetailHeader({
 function CardDetailChips({card}: {card: LorcanaCard}) {
   const inkColors = INK_COLORS[card.ink];
   return (
-    <div style={{display: 'flex', gap: `${SPACING.sm}px`, flexWrap: 'wrap'}}>
+    <div style={CHIPS_STYLE}>
       <span
         style={{
           ...CHIP_STYLE,
@@ -125,7 +151,7 @@ function CardDetailArt({card}: {card: LorcanaCard}) {
   });
 
   return (
-    <div style={{display: 'flex', justifyContent: 'center'}}>
+    <div style={ART_ROW_STYLE}>
       {printings.length < 2 ? (
         <CardImage
           src={card.imageUrl}
@@ -163,25 +189,91 @@ function CardDetailArt({card}: {card: LorcanaCard}) {
  */
 export function CardDetail({card, onClear, headingLevel = 'h2'}: CardDetailProps) {
   return (
-    <article
-      style={{
-        background: COLORS.surface,
-        borderRadius: `${RADIUS.xl}px`,
-        padding: `${SPACING.xl}px`,
-        marginBottom: `${SPACING.xl}px`,
-        boxShadow: `0 1px 3px ${blackRgba(0.3)}`,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: `${SPACING.lg}px`,
-      }}>
+    <article style={ARTICLE_STYLE}>
       <CardDetailHeader card={card} onClear={onClear} headingLevel={headingLevel} />
       <CardDetailChips card={card} />
       <CardDetailArt card={card} />
       {(card.textSections?.length || card.text) && (
-        <div style={{padding: SPACING.md, background: COLORS.gray50, borderRadius: `${RADIUS.md}px`}}>
+        <div style={TEXT_BOX_STYLE}>
           <CardTextBlock card={card} />
         </div>
       )}
     </article>
+  );
+}
+
+/** A chip's height: its text's line (13 px at the body's 1.5) and its padding. */
+const CHIP_HEIGHT = FONT_SIZES.base * 1.5 + SPACING.xs * 2;
+/** An ink chip with its icon and a "Cost N" chip, as most cards' row starts. */
+const CHIP_WIDTHS = [104, 64];
+const TEXT_LINES = 4;
+
+/** One placeholder exactly its box: no line box around it (`inline`, then drawn as a block). */
+function Block({width, height, radius = RADIUS.sm}: {width?: number | string; height: number; radius?: number}) {
+  return <Skeleton inline width={width} height={height} borderRadius={radius} style={{display: 'block'}} />;
+}
+
+/** The name's bars, a line each, longest first: a name shows as many as it takes lines. */
+const NAME_BAR_WIDTHS = ['85%', '60%', '40%'];
+
+/**
+ * The name while the card list loads: `nameHint`, set unseen in the heading's type, so the box
+ * takes the lines the name will. Each line holds a bar, centered in it; the bars run on past the
+ * box, which cuts them off at its last line. With no hint, one line.
+ */
+function NameLoading({nameHint}: {nameHint: string}) {
+  return (
+    <div data-testid="card-name-loading" style={{...NAME_STYLE, position: 'relative', overflow: 'hidden'}}>
+      <div aria-hidden="true" style={{visibility: 'hidden'}}>
+        {nameHint || '\u00a0'}
+      </div>
+      <div style={{position: 'absolute', top: 0, left: 0, right: 0}}>
+        {NAME_BAR_WIDTHS.map((width) => (
+          <div key={width} style={{height: FONT_SIZES.xxl * NAME_LINE_HEIGHT, paddingTop: SPACING.xxs}}>
+            <Block width={width} height={FONT_SIZES.xxl} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * CardDetail while the card list loads (#914): its frame and boxes, so the card lands where its
+ * placeholder was. `nameHint` is the card's name as the page's address spells it (the card
+ * page's `cardNameHint`): the name's placeholder takes the lines it takes, so a name on two
+ * lines lands the art where its placeholder sat too.
+ */
+export function CardDetailLoading({nameHint = ''}: {nameHint?: string}) {
+  return (
+    <div style={ARTICLE_STYLE}>
+      <div style={HEADER_STYLE}>
+        <NameLoading nameHint={nameHint} />
+        <Block width={CLOSE_SIZE} height={CLOSE_SIZE} radius={RADIUS.pill} />
+      </div>
+      <div style={CHIPS_STYLE}>
+        {CHIP_WIDTHS.map((width) => (
+          <Block key={width} width={width} height={CHIP_HEIGHT} radius={RADIUS.md} />
+        ))}
+      </div>
+      <div style={ART_ROW_STYLE}>
+        {/* The card is not known yet, so the tile is the neutral one. */}
+        <div
+          style={{
+            position: 'relative',
+            width: ART_WIDTH,
+            height: ART_HEIGHT,
+            borderRadius: RADIUS.lg,
+            overflow: 'hidden',
+          }}>
+          <InkCardPlaceholder />
+        </div>
+      </div>
+      <div style={{...TEXT_BOX_STYLE, display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
+        {Array.from({length: TEXT_LINES}, (_, i) => (
+          <Block key={i} width={i === TEXT_LINES - 1 ? '60%' : '100%'} height={12} />
+        ))}
+      </div>
+    </div>
   );
 }

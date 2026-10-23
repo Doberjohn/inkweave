@@ -35,16 +35,21 @@ import {
 import {CollectionModeSwitch} from './CollectionModeSwitch';
 import {CollectionActions} from './CollectionActions';
 import {WindowCopies} from './WindowCopies';
+import {BinderChunkFallback, DockedSetBodyFallback, ToolbarSetPickerFallback} from './BinderChunkFallback';
 
 /*
  * The collection UI is SPLIT FROM BROWSE (#553 Phase C). The binder and the
  * import dialog (with the CSV parser behind it) load only when collection mode or
  * the dialog actually opens, so Browse's own chunk, the app's main route, does not
  * grow by a feature most visitors never switch on. The binder's own loading branch
- * draws its skeleton once its chunk is in; the brief wait for the chunk itself
- * shows nothing, and a dialog has nothing to hold space for. Each loads through
- * `lazyWithRetry`, like every lazy chunk in the app, so a tab left open across a
- * deploy retries a stale chunk rather than failing to the error page.
+ * draws its skeleton once its chunk is in; while the chunk itself downloads, the
+ * binder, the docked set panel and the toolbar's set picker hold their places
+ * (`BinderChunkFallback`, #913), and each chunk is asked for on intent, before it is
+ * needed: the binder's when a pointer or focus reaches Collection (`preloadBinder`),
+ * the import dialog's when the collection's actions menu opens. A dialog has nothing
+ * to hold space for. Each loads through `lazyWithRetry`, like every lazy chunk in the
+ * app, so a tab left open across a deploy retries a stale chunk rather than failing
+ * to the error page.
  */
 const CollectionBinderSection = lazyWithRetry(
   () => import('./CollectionBinderSection'),
@@ -57,6 +62,20 @@ const ImportCollectionDialog = lazyWithRetry(
   () => import('./ImportCollectionDialog'),
   'ImportCollectionDialog',
 );
+
+/**
+ * Starts the binder's chunk on intent (#913): one request for the binder, its docked set panel
+ * and the toolbar's set picker, which share the module. A failed warm-up is harmless: the
+ * binder's own load retries.
+ */
+function preloadBinder(): void {
+  import('./CollectionBinderSection').catch(() => {});
+}
+
+/** Starts the import dialog's chunk when the collection's actions menu opens, before Import collection is chosen. */
+function preloadImportDialog(): void {
+  import('./ImportCollectionDialog').catch(() => {});
+}
 
 /**
  * The NEWEST set, where a set the binder does not have falls back to while the pool
@@ -386,10 +405,19 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     {openSignIn: () => setShowSignIn(true), openImport, enter: enterMode, leave: leaveMode},
   );
 
-  const modeSwitch = <CollectionModeSwitch active={collectionMode} onToggle={onCollectionClick} />;
+  // Warmed only for an account: signed out, Collection opens sign-in, never the binder.
+  const modeSwitch = (
+    <CollectionModeSwitch
+      active={collectionMode}
+      onToggle={onCollectionClick}
+      onIntent={user !== null ? preloadBinder : undefined}
+    />
+  );
   // Every action needs an account: none signed out. The import waits as Account's does.
   const modeActions =
-    user !== null ? <CollectionActions onImport={openImport} checking={syncing && !hasCollection} /> : null;
+    user !== null ? (
+      <CollectionActions onImport={openImport} checking={syncing && !hasCollection} onMenuOpen={preloadImportDialog} />
+    ) : null;
 
   const panelControls = {
     setCode,
@@ -413,7 +441,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   function renderBinder(listing: BrowseListing, onCardSelect: (card: LorcanaCard) => void) {
     if (!collectionMode) return null;
     return (
-      <Suspense fallback={null}>
+      <Suspense fallback={<BinderChunkFallback />}>
         <CollectionBinderSection
           cards={pool}
           waiting={waiting}
@@ -485,13 +513,13 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     prompts,
     renderSetPanel: (listing) =>
       collectionMode ? (
-        <Suspense fallback={null}>
+        <Suspense fallback={<DockedSetBodyFallback promo={isPromoScope(setCode)} />}>
           <DockedSetBody {...setCounts(listing)} {...panelControls} />
         </Suspense>
       ) : undefined,
     renderSetPicker: (listing) =>
       collectionMode ? (
-        <Suspense fallback={null}>
+        <Suspense fallback={<ToolbarSetPickerFallback />}>
           <DockedSetPicker {...setCounts(listing)} {...panelControls} />
         </Suspense>
       ) : undefined,

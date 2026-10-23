@@ -61,3 +61,16 @@ export const MobileWithCopiesRow: Story = {
   args: {isMobile: true, copiesRow: true},
   globals: {viewport: {value: 'mobile1'}},
 };
+
+/**
+ * A shared compare link while the card list loads (#913): the window's frame with no card yet,
+ * which the comparison then takes over without a second entrance.
+ */
+export const ComparisonLoading: Story = {
+  args: {isMobile: false, card: undefined},
+};
+
+export const ComparisonLoadingMobile: Story = {
+  args: {isMobile: true, card: undefined},
+  globals: {viewport: {value: 'mobile1'}},
+};

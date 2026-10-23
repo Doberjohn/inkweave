@@ -169,7 +169,7 @@ export function RevealsPage() {
           <RevealHero
             countdown={countdown}
             releaseDate={releaseDate}
-            totalRevealed={progress.totalRevealed}
+            totalRevealed={loading ? null : progress.totalRevealed}
             franchiseCount={FRANCHISES.length}
             compact={isMobile}
           />

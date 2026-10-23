@@ -10,10 +10,29 @@ import {ToolbarToggle} from '../../shared/components/ToolbarToggle';
  * cards" is the page's resting state and "Collection" is a lens you put on. The
  * toolbar's toggle recipe, shared with Filters (owner, 2026-10-08, replacing
  * "never filled"): filled while the mode is on, the ghost outline while it is off.
+ *
+ * `onIntent` is told when a press looks likely: a pointer over the button, focus on it, or the
+ * press itself starting. The page warms the binder's chunk there (#913), so it is usually in by
+ * the time the press lands.
  */
-export function CollectionModeSwitch({active, onToggle}: {active: boolean; onToggle: () => void}) {
+export function CollectionModeSwitch({
+  active,
+  onToggle,
+  onIntent,
+}: {
+  active: boolean;
+  onToggle: () => void;
+  onIntent?: () => void;
+}) {
   return (
-    <ToolbarToggle active={active} onClick={onToggle} aria-pressed={active} aria-label="Show my collection">
+    <ToolbarToggle
+      active={active}
+      onClick={onToggle}
+      onPointerEnter={onIntent}
+      onFocus={onIntent}
+      onPointerDown={onIntent}
+      aria-pressed={active}
+      aria-label="Show my collection">
       Collection
     </ToolbarToggle>
   );

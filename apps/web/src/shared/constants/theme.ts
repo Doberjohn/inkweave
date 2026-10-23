@@ -58,6 +58,8 @@ export const LAYOUT = {
   /** CardGrid auto-fill minimum column width on mobile. Lower so phones ≥360px viewport fit 2 columns. */
   cardGridMinWidthMobile: 140,
   synergyCardMinWidth: 160,
+  /** The phone tab bar's height (`MobileBottomNav`), here so the entry's update toast can clear it without importing the nav. */
+  mobileNavHeight: 110,
 } as const;
 
 // Spacing scale.

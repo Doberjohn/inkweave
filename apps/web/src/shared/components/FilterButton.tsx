@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, EASING, RADIUS, FONT_SIZES} from '../constants';
+import {COLORS, DISABLED_STYLE, EASING, RADIUS, FONT_SIZES} from '../constants';
 
 type FilterButtonSize = 'sm' | 'md';
 
@@ -13,6 +13,8 @@ interface FilterButtonProps {
   inactiveColor?: string;
   inactiveTextColor?: string;
   size?: FilterButtonSize;
+  /** Dimmed and off: a value none of the page's cards has (a playstyle's toolbar). */
+  disabled?: boolean;
   'aria-label'?: string;
 }
 
@@ -39,9 +41,12 @@ export function FilterButton({
   inactiveColor = COLORS.gray100,
   inactiveTextColor = COLORS.gray700,
   size = 'sm',
+  disabled = false,
   'aria-label': ariaLabel,
 }: FilterButtonProps) {
   const [hovered, setHovered] = useState(false);
+  // A pointer over a button that's off doesn't light it.
+  const lit = hovered && !disabled;
   const sizeStyle = SIZE_STYLES[size];
   const bgColor = activeBgColor ?? activeColor;
 
@@ -49,11 +54,11 @@ export function FilterButton({
     ? {
         border: `1px solid ${activeColor}80`,
         background: bgColor,
-        boxShadow: hovered
+        boxShadow: lit
           ? `0 0 12px ${activeColor}70, inset 0 0 6px ${activeColor}20`
           : `0 0 8px ${activeColor}50`,
       }
-    : hovered
+    : lit
       ? {
           border: `1px solid ${activeColor}40`,
           background: inactiveColor,
@@ -68,6 +73,7 @@ export function FilterButton({
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       aria-pressed={active}
@@ -81,6 +87,7 @@ export function FilterButton({
         cursor: 'pointer',
         boxShadow: hoverStyles.boxShadow,
         transition: `box-shadow 0.2s ${EASING.snappy}, background 0.2s ${EASING.snappy}, border-color 0.2s ${EASING.snappy}`,
+        ...(disabled ? DISABLED_STYLE : {}),
       }}>
       {children}
     </button>

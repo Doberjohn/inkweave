@@ -7,14 +7,7 @@ import {HeroSection, EtherealBackground, ErrorBoundary, Footer, Seo} from '../sh
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
-
-const mainStyle: React.CSSProperties = {
-  flex: 1,
-  position: 'relative',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-};
+import {HOME_PAGE_STYLE, homeMainStyle} from './homeFrame';
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -39,7 +32,7 @@ export function HomePage() {
   const handleVote = () => navigate('/vote');
 
   return (
-    <div style={{minHeight: '100vh', display: 'flex', flexDirection: 'column'}}>
+    <div style={HOME_PAGE_STYLE}>
       <Seo
         title="Inkweave | Disney Lorcana Synergy Finder & Deck Builder"
         description="Free Disney Lorcana synergy finder for Core format. Discover the strongest card combos and archetype pairings, with community-voted synergy scores, and build better decks."
@@ -49,7 +42,7 @@ export function HomePage() {
           anywhere in the page (the search box, a featured card) starts it at once, since both
           need it. */}
       <main
-        style={{...mainStyle, justifyContent: isMobile ? undefined : 'center'}}
+        style={homeMainStyle(isMobile)}
         onPointerDownCapture={requestLoad}
         onFocusCapture={requestLoad}>
         <EtherealBackground isMobile={isMobile} />

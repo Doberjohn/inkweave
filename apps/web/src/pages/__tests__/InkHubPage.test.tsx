@@ -1,12 +1,15 @@
-import {describe, it, expect, vi} from 'vitest';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {afterEach, describe, it, expect, vi} from 'vitest';
+import {cleanup, render, screen, fireEvent} from '@testing-library/react';
 import {MemoryRouter, Route, Routes} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {InkHubPage} from '../InkHubPage';
 import {trackCardSelected} from '../../features/cards/lib/cardAnalytics';
 import {createCard} from '../../shared/test-utils';
 
-const {mockOpenCardModal} = vi.hoisted(() => ({mockOpenCardModal: vi.fn()}));
+const {mockOpenCardModal, cardList} = vi.hoisted(() => ({
+  mockOpenCardModal: vi.fn(),
+  cardList: {loading: false},
+}));
 
 const ELSA = createCard({id: '13001', fullName: 'Elsa - Snow Queen', ink: 'Amethyst'});
 const MICKEY = createCard({
@@ -20,7 +23,8 @@ vi.mock('../../shared/hooks', () => ({
 }));
 
 vi.mock('../../shared/contexts/CardDataContext', () => ({
-  useCardDataContext: () => ({cards: [ELSA, MICKEY], isLoading: false}),
+  useCardDataContext: () =>
+    cardList.loading ? {cards: [], isLoading: true} : {cards: [ELSA, MICKEY], isLoading: false},
 }));
 
 vi.mock('../../shared/contexts/CardModalContext', () => ({
@@ -52,15 +56,36 @@ vi.mock('../../features/cards', async () => {
 
 vi.mock('../../features/cards/lib/cardAnalytics', () => ({trackCardSelected: vi.fn()}));
 
+function renderPage() {
+  render(
+    <MemoryRouter initialEntries={['/ink/amethyst']}>
+      <Routes>
+        <Route path="/ink/:inkSlug" element={<InkHubPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+}
+
 describe('InkHubPage', () => {
+  afterEach(() => {
+    cardList.loading = false;
+  });
+
+  // #913: the count waits for the list, on a line that keeps its height, never a false "0 cards".
+  it('holds the count line blank while the card list loads, then counts the ink cards', () => {
+    cardList.loading = true;
+    renderPage();
+    expect(screen.getByTestId('ink-hub-count').textContent).toBe('\u00a0');
+    expect(screen.queryByText(/^\d+ cards?$/)).toBeNull();
+
+    cleanup();
+    cardList.loading = false;
+    renderPage();
+    expect(screen.getByTestId('ink-hub-count')).toHaveTextContent('2 cards');
+  });
+
   it('tracks a card chosen from the grid as card_selected from the ink hub, then opens it', () => {
-    render(
-      <MemoryRouter initialEntries={['/ink/amethyst']}>
-        <Routes>
-          <Route path="/ink/:inkSlug" element={<InkHubPage />} />
-        </Routes>
-      </MemoryRouter>,
-    );
+    renderPage();
 
     fireEvent.click(screen.getByRole('button', {name: 'Mickey Mouse - Wayward Sorcerer'}));
 

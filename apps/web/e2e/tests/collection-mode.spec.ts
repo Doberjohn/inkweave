@@ -9,6 +9,7 @@ import {
   setCards,
   setPrintings,
 } from '../helpers/cardData';
+import {holdLazyModule} from '../helpers/lazyModule';
 import {storedSession} from '../helpers/session';
 
 /**
@@ -122,8 +123,98 @@ async function signedIn(page: Page): Promise<void> {
   ).toBeVisible();
 }
 
-const binder = (page: Page) => page.getByRole('region', {name: 'Binder'});
+// Exact: the frame drawn while the binder's code loads is named "Loading your binder" (#913).
+const binder = (page: Page) => page.getByRole('region', {name: 'Binder', exact: true});
 const numbers = (page: Page) => page.getByRole('region', {name: 'Collection numbers'});
+
+/** What collection mode draws while the binder's code downloads (#913). */
+const binderLoading = (page: Page) => page.getByRole('region', {name: 'Loading your binder'});
+
+/** A lazy module's request, on the dev server or in a production build (see helpers/lazyModule.ts). */
+const isModuleRequest = (url: string, name: string) => new RegExp(`/${name}(\\.tsx|-[\\w-]+\\.js)(\\?|$)`).test(url);
+
+type Place = {x: number; y: number; width: number; height: number};
+
+/**
+ * Where each of Browse's toolbar controls stands, by name, once the page's fonts are in: its
+ * layout box, which the hover's brief scale on a button (CtaButton's boop) leaves alone, where
+ * getBoundingClientRect would catch the button mid-scale under the pointer that pressed it.
+ */
+async function toolbarPlaces(page: Page): Promise<Record<string, Place>> {
+  // A late font changes the labels' widths, and with them where the controls after them stand.
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  return page
+    .getByTestId('browse-toolbar')
+    .first()
+    .evaluate((toolbar) => {
+      const places: Record<string, Place> = {};
+      for (const control of toolbar.querySelectorAll<HTMLElement>('button, input')) {
+        const name = control.getAttribute('aria-label') ?? control.textContent?.trim() ?? '';
+        let x = 0;
+        let y = 0;
+        for (let box: Element | null = control; box instanceof HTMLElement; box = box.offsetParent) {
+          x += box.offsetLeft;
+          y += box.offsetTop;
+        }
+        places[name] = {x, y, width: control.offsetWidth, height: control.offsetHeight};
+      }
+      return places;
+    });
+}
+
+/** Every control drawn before the binder's code arrived is where it was, within 1 px. */
+function expectToolbarHeld(before: Record<string, Place>, after: Record<string, Place>): void {
+  expect(Object.keys(before).length).toBeGreaterThan(0);
+  for (const [name, place] of Object.entries(before)) {
+    const now = after[name];
+    expect(now, name).toBeDefined();
+    for (const key of ['x', 'y', 'width', 'height'] as const) {
+      expect(Math.abs(now[key] - place[key]), `${name} ${key}`).toBeLessThanOrEqual(1);
+    }
+  }
+}
+
+/** The docked set panel's parts, in order: what the binder shows, then the numbers. */
+const setPanelParts = (page: Page) => page.getByRole('complementary', {name: 'Set', exact: true}).locator(':scope > *');
+
+/** An element's box on the page, once the page's fonts are in. */
+async function placeOf(locator: Locator): Promise<Place> {
+  await locator.page().evaluate(() => document.fonts.ready.then(() => undefined));
+  const box = await locator.boundingBox();
+  expect(box, 'the element is on the page').not.toBeNull();
+  return box!;
+}
+
+/** Each part is where its placeholder was, within 1 px. */
+function expectPlacesHeld(parts: {name: string; before: Place; after: Place}[]): void {
+  for (const {name, before, after} of parts) {
+    for (const key of ['x', 'y', 'width', 'height'] as const) {
+      expect(Math.abs(after[key] - before[key]), `${name} ${key}: ${before[key]} -> ${after[key]}`).toBeLessThanOrEqual(1);
+    }
+  }
+}
+
+/**
+ * Presses Collection with the binder's code held: the binder's frame shows at once, in place of
+ * an empty area. Returns the toolbar as it stood then, and the release.
+ */
+async function pressCollectionWithBinderHeld(page: Page): Promise<{before: Record<string, Place>; release: () => void}> {
+  const binderCode = await holdLazyModule(page, 'CollectionBinderSection');
+  // The session is back once the sync reads the account's copy. The header's Account button
+  // says so too (`signedIn`), but a phone has no header.
+  const synced = page.waitForRequest(
+    (request) => new URL(request.url()).pathname === COLLECTIONS_PATH && request.method() === 'GET',
+  );
+  await page.goto('/browse');
+  await synced;
+  await page.getByRole('button', {name: 'Show my collection'}).click();
+  // A hold that caught nothing names itself here, rather than as a frame that never showed.
+  await expect
+    .poll(binderCode.caught, {message: "the binder's chunk never reached the hold", timeout: 10000})
+    .toBeGreaterThan(0);
+  await expect(binderLoading(page)).toBeVisible();
+  return {before: await toolbarPlaces(page), release: binderCode.release};
+}
 
 /** Where an element's four edges sit on the page, in CSS pixels. */
 async function edges(locator: Locator): Promise<{left: number; right: number; top: number; bottom: number}> {
@@ -855,6 +946,71 @@ test.describe('Collection mode, signed in', () => {
     const coreSets = ['9', '10', '11', '12', '13', '14'].map((set) => `/data/collection/${set}.json`);
     expect(collectionFiles().slice(searchLoaded).sort()).toEqual(coreSets.sort());
   });
+  test("the first switch draws the binder's frame while its code loads, and the toolbar holds still", async ({
+    page,
+  }) => {
+    await signInAsCollector(page, ENTRIES);
+    const {before, release} = await pressCollectionWithBinderHeld(page);
+    // The set panel's body, held in its two parts: what the binder shows, then the numbers in
+    // the rest of the panel.
+    await expect(setPanelParts(page)).toHaveCount(2);
+    const [showsHeld, numbersHeld] = [await placeOf(setPanelParts(page).nth(0)), await placeOf(setPanelParts(page).nth(1))];
+
+    release();
+    await expect(binder(page)).toBeVisible();
+    // The set picker beside Collection, which its placeholder held a place for.
+    await expect(page.getByRole('button', {name: /^Binder set/})).toBeVisible();
+    await expect(binderLoading(page)).toHaveCount(0);
+    expectToolbarHeld(before, await toolbarPlaces(page));
+    expectPlacesHeld([
+      {name: 'Binder shows', before: showsHeld, after: await placeOf(page.getByRole('group', {name: 'Binder shows'}))},
+      {name: 'Collection numbers', before: numbersHeld, after: await placeOf(numbers(page))},
+    ]);
+  });
+
+  test("a pointer resting on Collection asks for the binder's code before the press", async ({page}, testInfo) => {
+    // One project is enough: this asserts when the request goes out.
+    if (testInfo.project.name !== 'chromium') test.skip();
+    await signInAsCollector(page, ENTRIES);
+    const requested: string[] = [];
+    page.on('request', (request) => {
+      if (isModuleRequest(request.url(), 'CollectionBinderSection')) requested.push(request.url());
+    });
+    await page.goto('/browse');
+    await signedIn(page);
+    const toggle = page.getByRole('button', {name: 'Show my collection'});
+
+    await toggle.hover();
+    // Asked for on the pointer's arrival, with no press yet.
+    await expect.poll(() => requested.length).toBeGreaterThan(0);
+    await toggle.click();
+    await expect(binder(page)).toBeVisible();
+  });
+
+  test("opening the collection's actions menu asks for the import dialog's code before Import collection is chosen", async ({
+    page,
+  }, testInfo) => {
+    // One project is enough: this asserts what the network requests.
+    if (testInfo.project.name !== 'chromium') test.skip();
+    await signInAsCollector(page, ENTRIES);
+    const requested: string[] = [];
+    page.on('request', (request) => {
+      if (isModuleRequest(request.url(), 'ImportCollectionDialog')) requested.push(request.url());
+    });
+    await page.goto('/browse');
+    await signedIn(page);
+    expect(requested).toEqual([]);
+
+    await page.getByRole('button', {name: 'Collection actions'}).click();
+    await expect.poll(() => requested.length).toBe(1);
+    await page
+      .getByRole('menu', {name: 'Collection actions'})
+      .getByRole('menuitem', {name: /^Import collection/})
+      .click();
+
+    await expect(page.getByRole('dialog', {name: 'Import your collection'})).toBeVisible();
+    expect(requested).toHaveLength(1);
+  });
 });
 
 test.describe('Collection mode, signed in (phone width)', () => {
@@ -884,5 +1040,18 @@ test.describe('Collection mode, signed in (phone width)', () => {
 
     await hide.click();
     await expect(numbers(page)).toHaveCount(0);
+  });
+
+  test("the first switch draws the binder's frame while its code loads, and the toolbar holds still", async ({
+    page,
+  }) => {
+    await page.setViewportSize({width: 390, height: 844});
+    await signInAsCollector(page, ENTRIES);
+    const {before, release} = await pressCollectionWithBinderHeld(page);
+
+    release();
+    await expect(binder(page)).toBeVisible();
+    await expect(binderLoading(page)).toHaveCount(0);
+    expectToolbarHeld(before, await toolbarPlaces(page));
   });
 });

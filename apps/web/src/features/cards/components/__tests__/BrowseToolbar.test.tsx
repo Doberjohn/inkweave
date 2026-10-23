@@ -218,7 +218,7 @@ describe('BrowseToolbar', () => {
     expect(screen.queryByTestId('role-chip')).not.toBeInTheDocument();
   });
 
-  it('limits the inline ink, cost and inkwell icons to buttonOptions', () => {
+  it('keeps every inline ink, cost and inkwell icon, with those outside buttonOptions off', () => {
     setViewport(1600);
     const buttonOptions = {
       inks: ['Ruby'] as Ink[],
@@ -228,16 +228,20 @@ describe('BrowseToolbar', () => {
     };
     render(<BrowseToolbar {...defaultProps({buttonOptions})} />);
 
-    expect(
-      within(screen.getByRole('group', {name: 'Ink color filters'})).getAllByRole('button'),
-    ).toHaveLength(1);
-    expect(screen.getByRole('button', {name: 'Filter by Ruby'})).toBeInTheDocument();
-    expect(
-      within(screen.getByRole('group', {name: 'Ink cost filters'})).getAllByRole('button'),
-    ).toHaveLength(1);
-    expect(screen.getByRole('button', {name: 'Cost 4'})).toBeInTheDocument();
-    expect(screen.queryByRole('button', {name: 'Filter by Inkable'})).not.toBeInTheDocument();
-    expect(screen.getByRole('button', {name: 'Filter by Uninkable'})).toBeInTheDocument();
+    /** The names of a group's buttons that can be pressed. */
+    const enabledIn = (group: string) =>
+      within(screen.getByRole('group', {name: group}))
+        .getAllByRole('button')
+        .filter((button) => !(button as HTMLButtonElement).disabled)
+        .map((button) => button.getAttribute('aria-label'));
+    const countIn = (group: string) => within(screen.getByRole('group', {name: group})).getAllByRole('button').length;
+
+    expect(countIn('Ink color filters')).toBe(6);
+    expect(enabledIn('Ink color filters')).toEqual(['Filter by Ruby']);
+    expect(countIn('Ink cost filters')).toBe(9);
+    expect(enabledIn('Ink cost filters')).toEqual(['Cost 4']);
+    expect(countIn('Inkwell filters')).toBe(2);
+    expect(enabledIn('Inkwell filters')).toEqual(['Filter by Uninkable']);
   });
 });
 

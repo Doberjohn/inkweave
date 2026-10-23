@@ -54,6 +54,14 @@ interface OpenCardModalOptions {
   resolveCard?: (cardId: string) => LorcanaCard | undefined;
 }
 
+interface OpenComparisonOptions {
+  /**
+   * Open without the window's entrance: a compare link's frame already played it while the pair
+   * loaded (#913, `ComparePage`), so the window takes over from it already on screen.
+   */
+  skipEnter?: boolean;
+}
+
 interface CardModalContextValue {
   selectedCardId: string | null;
   comparisonPartnerId: string | null;
@@ -73,7 +81,7 @@ interface CardModalContextValue {
    * that rule, mirroring the click-from-group flow (`/compare/A/B/shift-targets`). Omit for the
    * full-analysis view (`/compare/A/B`).
    */
-  openComparison: (cardId: string, partnerId: string, groupKey?: string) => void;
+  openComparison: (cardId: string, partnerId: string, groupKey?: string, options?: OpenComparisonOptions) => void;
   closeCardModal: () => void;
   /** Move to the previous (-1) or next (1) sibling in `siblingCardIds`, wrapping at the ends. */
   goToSibling: (direction: 1 | -1) => void;
@@ -122,6 +130,8 @@ export function CardModalProvider({children}: {children: ReactNode}) {
   // an id twice, and finding the first copy sent a binder's arrows back to it in a loop.
   const [siblingIndex, setSiblingIndex] = useState(-1);
   const [initialPrintingId, setInitialPrintingId] = useState<string | null>(null);
+  // This open takes over from a frame already on screen (OpenComparisonOptions.skipEnter).
+  const [skipEnter, setSkipEnter] = useState(false);
   const [windowStores] = useState(createCardWindowStores);
   const [resolveCard, setResolveCard] = useState<((cardId: string) => LorcanaCard | undefined) | null>(null);
   const [printingFor, setPrintingFor] = useState<((cardId: string, index: number) => string | undefined) | null>(
@@ -159,10 +169,16 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     // Wrapped: a bare function passed to a state setter is called as an updater.
     setResolveCard(() => options.resolveCard ?? null);
     setPrintingFor(() => options.printingFor ?? null);
+    setSkipEnter(false);
     // hasUserSeenDefaultState will flip true on the next render via the guard above.
   };
 
-  const openComparison = (cardId: string, partnerId: string, groupKey?: string) => {
+  const openComparison = (
+    cardId: string,
+    partnerId: string,
+    groupKey?: string,
+    {skipEnter: enterOnScreen = false}: OpenComparisonOptions = {},
+  ) => {
     setSelectedCardId(cardId);
     setComparisonPartnerId(partnerId);
     setComparisonGroupKey(groupKey ?? null);
@@ -171,6 +187,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     startOnPrinting(null);
     setResolveCard(null);
     setPrintingFor(null);
+    setSkipEnter(enterOnScreen);
     // Don't touch hasUserSeenDefaultState here — its value is determined by whether the user
     // had previously been in default state for this session. Click flow: openCardModal was
     // called first, flag is already true. Deep link: openComparison is the first call, flag
@@ -188,6 +205,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     setPrintingFor(null);
     // The provider outlives collection mode; a kept resolver would hold its pool.
     setResolveCard(null);
+    setSkipEnter(false);
     if (location.pathname.startsWith('/compare/')) {
       navigate('/');
     }
@@ -234,6 +252,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
           onExitComparison={exitComparisonRoute}
           copiesSlotRef={windowStores.slot.set}
           onShownPrintingChange={windowStores.shownPrintingId.set}
+          skipEnter={skipEnter}
         />
       </CardWindowSlotContext.Provider>
     </CardModalContext.Provider>
@@ -293,6 +312,8 @@ interface CardModalRootProps {
   copiesSlotRef: (el: HTMLElement | null) => void;
   /** Takes the printing the window shows, for `useCardWindowSlot` (#826). */
   onShownPrintingChange: (printingId: string | null) => void;
+  /** The open takes over from a frame already on screen (OpenComparisonOptions.skipEnter). */
+  skipEnter: boolean;
 }
 
 /**
@@ -312,7 +333,13 @@ function resolveModalCard(
   return {card: outside, outsideCore: outside !== null};
 }
 
-function CardModalRoot({onEnterComparison, onExitComparison, copiesSlotRef, onShownPrintingChange}: CardModalRootProps) {
+function CardModalRoot({
+  onEnterComparison,
+  onExitComparison,
+  copiesSlotRef,
+  onShownPrintingChange,
+  skipEnter,
+}: CardModalRootProps) {
   const {
     selectedCardId,
     comparisonPartnerId,
@@ -330,6 +357,8 @@ function CardModalRoot({onEnterComparison, onExitComparison, copiesSlotRef, onSh
   const partnerCard = comparisonPartnerId ? (getCardById(comparisonPartnerId) ?? null) : null;
   const {synergies, getPairSynergies, isLoading: synergiesLoading} = usePrecomputedSynergies(outsideCore ? null : card);
   const {Modal, openedBeforeModalReady} = useModalForOpen(card !== null);
+  // Already on screen when it mounts: after the fallback played the entrance, or after a frame did.
+  const enterOnScreen = openedBeforeModalReady || skipEnter;
   // The row under the card, for the page's copies, while a page holds it (`useHoldCopiesRow`).
   const copiesRow = useCopiesRowHeld();
 
@@ -361,11 +390,12 @@ function CardModalRoot({onEnterComparison, onExitComparison, copiesSlotRef, onSh
           isMobile={isMobile}
           printingId={initialPrintingId}
           copiesRow={copiesRow}
+          startVisible={skipEnter}
           onClose={closeCardModal}
         />
       }>
       <Modal
-        skipEnterTransition={openedBeforeModalReady}
+        skipEnterTransition={enterOnScreen}
         isOpen
         card={card}
         synergies={synergies}

@@ -1,9 +1,9 @@
 import {NavLink, useLocation} from 'react-router-dom';
-import {COLORS, FONTS, REVEAL_SET_NUMBER} from '../constants';
+import {COLORS, FONTS, LAYOUT, REVEAL_SET_NUMBER} from '../constants';
 import {useRevealPhase, type RevealPhase} from '../../features/reveals';
 
 /** Height of the nav bar in CSS px. Used for bottom padding on page content. */
-export const MOBILE_NAV_HEIGHT = 110;
+export const MOBILE_NAV_HEIGHT = LAYOUT.mobileNavHeight;
 
 interface MobileBottomNavProps {
   onSearchClick?: () => void;

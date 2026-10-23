@@ -1,11 +1,15 @@
 import Skeleton from 'react-loading-skeleton';
 import {FeaturedCardsSkeleton} from '../features/cards/components/FeaturedCardsSkeleton';
+import {Footer} from '../shared/components/Footer';
 import {COLORS, HERO_LOGO_IMG, RADIUS, SPACING, Z_INDEX} from '../shared/constants';
+import {HOME_PAGE_STYLE, homeMainStyle} from './homeFrame';
 
 /**
  * Suspense fallback for the `/` route. Mirrors the final HomePage layout:
  * real logo + subtitle (instant static assets), skeletons for the interactive
- * search bar + CTA buttons, and the shared FeaturedCardsSkeleton row.
+ * search bar + CTA buttons, and the shared FeaturedCardsSkeleton row, in
+ * HomePage's own frame with its Footer (`homeFrame.ts`, #914), so the content
+ * is centered in the same space and nothing moves when the page arrives.
  *
  * Once HomePage mounts, FeaturedCards itself renders the same skeleton row
  * while the cards JSON is loading: that hand-off keeps the placeholder row
@@ -13,31 +17,24 @@ import {COLORS, HERO_LOGO_IMG, RADIUS, SPACING, Z_INDEX} from '../shared/constan
  * card section between page-chunk-load and data-fetch.
  *
  * `isMobile` defaults to false so the SSR/early-render path picks the desktop
- * layout. On mount, the responsive hook in HomePage takes over instantly.
+ * layout. The router's fallback passes the viewport's (#914).
  */
 interface HomePageSkeletonProps {
   isMobile?: boolean;
 }
 
-export function HomePageSkeleton({isMobile = false}: HomePageSkeletonProps = {}) {
+export function HomePageSkeleton({isMobile = false}: HomePageSkeletonProps) {
   return (
-    <main
-      aria-busy="true"
-      aria-label="Loading home"
-      style={{
-        minHeight: '100vh',
-        position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: isMobile ? undefined : 'center',
-        background: COLORS.background,
-      }}>
-      <>
+    <div style={HOME_PAGE_STYLE}>
+      <main
+        aria-busy="true"
+        aria-label="Loading home"
+        style={{...homeMainStyle(isMobile), background: COLORS.background}}>
         <HeroSkeleton isMobile={isMobile} />
         <FeaturedCardsSkeleton isMobile={isMobile} />
-      </>
-    </main>
+      </main>
+      <Footer />
+    </div>
   );
 }
 
@@ -61,7 +58,6 @@ interface HeroSkeletonStyles {
 }
 
 // The hero's spacing past the scale's top step (SPACING.xxxl, 32).
-const DESKTOP_HERO_PADDING_BOTTOM = 80;
 const PHONE_HERO_PADDING_TOP = 48;
 const PHONE_HERO_PADDING_BOTTOM = 40;
 // HeroSection's phone CTA gap, between SPACING.sm and SPACING.md. The skeleton keeps it until
@@ -73,7 +69,8 @@ const DESKTOP_HERO_STYLES: HeroSkeletonStyles = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    padding: `0 0 ${DESKTOP_HERO_PADDING_BOTTOM}px`,
+    // None, as HeroSection: the featured row's margin is the space below it (#914).
+    padding: 0,
     position: 'relative',
     zIndex: 2,
     width: undefined,
@@ -97,7 +94,8 @@ const DESKTOP_HERO_STYLES: HeroSkeletonStyles = {
   searchHeight: 56,
   ctaRow: {display: 'flex', flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.xl, width: undefined},
   ctaHeight: 44,
-  ctaWidths: [168, 172, 152],
+  // HeroSection's three buttons at 1440 px, measured (#914).
+  ctaWidths: [165, 179, 157],
 };
 
 const MOBILE_HERO_STYLES: HeroSkeletonStyles = {
@@ -140,6 +138,12 @@ interface HeroSkeletonProps {
   isMobile: boolean;
 }
 
+/**
+ * A skeleton as a block exactly its height, like the field and buttons it stands for: left
+ * inline, each sits in a line box 4 px taller (#914).
+ */
+const SKELETON_BLOCK = {display: 'block'} as const;
+
 function HeroSkeleton({isMobile}: HeroSkeletonProps) {
   const s = pickHeroSkeletonStyles(isMobile);
   return (
@@ -159,12 +163,14 @@ function HeroSkeleton({isMobile}: HeroSkeletonProps) {
           height={s.searchHeight}
           borderRadius={RADIUS.lg}
           containerClassName="inkweave-home-skel-flex"
+          inline
+          style={SKELETON_BLOCK}
         />
       </div>
       <div style={s.ctaRow}>
-        <Skeleton width={s.ctaWidths[0]} height={s.ctaHeight} borderRadius={RADIUS.lg} />
-        <Skeleton width={s.ctaWidths[1]} height={s.ctaHeight} borderRadius={RADIUS.lg} />
-        <Skeleton width={s.ctaWidths[2]} height={s.ctaHeight} borderRadius={RADIUS.lg} />
+        <Skeleton width={s.ctaWidths[0]} height={s.ctaHeight} borderRadius={RADIUS.lg} inline style={SKELETON_BLOCK} />
+        <Skeleton width={s.ctaWidths[1]} height={s.ctaHeight} borderRadius={RADIUS.lg} inline style={SKELETON_BLOCK} />
+        <Skeleton width={s.ctaWidths[2]} height={s.ctaHeight} borderRadius={RADIUS.lg} inline style={SKELETON_BLOCK} />
       </div>
     </section>
   );
