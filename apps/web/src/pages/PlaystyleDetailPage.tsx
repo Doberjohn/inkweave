@@ -553,7 +553,8 @@ export function PlaystyleDetailPage() {
   useDefaultSortParam();
 
   const {playstyle, ui} = useResolvedPlaystyle(playstyleId);
-  const {cards: playstyleCards} = usePrecomputedPlaystyleCards(playstyle?.id);
+  const {cards: playstyleCards, ...playstyleCardsLoad} = usePrecomputedPlaystyleCards(playstyle?.id);
+  const pageLoad = combineLoads({isLoading, error, retry: retryLoad}, playstyleCardsLoad);
 
   const combinedFilters = buildCombinedFilters(filters, inkFilters, typeFilters, costFilters);
   const sortedCards = applyFilterAndSort(playstyleCards, searchQuery, combinedFilters, sortOrder);
@@ -568,15 +569,17 @@ export function PlaystyleDetailPage() {
     openCardModal(card.id, displayedCards.map((c) => c.id));
   };
 
-  // Still loading card data — show skeleton regardless of playstyle resolution.
-  if (isLoading) {
+  // Still loading the card data or the playstyles' own lists: the skeleton, regardless of
+  // playstyle resolution. Without the second wait, the grid said "No cards match your
+  // filters." until the playstyle's cards arrived (#913).
+  if (pageLoad.isLoading) {
     return <PlaystyleDetailLoadingView isMobile={isMobile} goHome={goHome} />;
   }
 
   // Not loading, but playstyle ID is invalid — redirect to gallery.
   if (!playstyle || !ui) return <Navigate to="/playstyles" replace />;
 
-  if (error) return <PlaystyleDetailError onRetry={retryLoad} />;
+  if (pageLoad.retry) return <PlaystyleDetailError onRetry={pageLoad.retry} />;
 
   const heroLayout = getHeroLayout(isMobile);
   const {toolbarProps, filterDialogProps} = buildPlaystyleViewProps({
@@ -642,6 +645,25 @@ export function PlaystyleDetailPage() {
       filterDialogProps={filterDialogProps}
     />
   );
+}
+
+/** A list the page loads. */
+interface PageLoad {
+  isLoading: boolean;
+  error: Error | null;
+  retry: () => void;
+}
+
+/**
+ * The card data and the playstyles' lists as one load: loading while either is, and the
+ * retry for whichever failed, the card data first, or null when both loaded.
+ */
+function combineLoads(
+  cardData: PageLoad,
+  playstyleCards: PageLoad,
+): {isLoading: boolean; retry: (() => void) | null} {
+  const failed = [cardData, playstyleCards].find((load) => load.error);
+  return {isLoading: cardData.isLoading || playstyleCards.isLoading, retry: failed?.retry ?? null};
 }
 
 // ── Page sub-views (extracted to keep PlaystyleDetailPage under CC 10) ──
