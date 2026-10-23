@@ -142,19 +142,20 @@ test.describe('Card Search and Filtering', () => {
     await expect(tiles.first()).toBeVisible();
     expect(collectionFiles()).toEqual([]);
 
-    // The box shows the URL's query, which each change sets in a transition: each fill waits for
-    // the URL, or the next one could land on the box while it still shows the query before.
+    // The box shows the URL's query, which each change sets in a transition, and the URL moves
+    // before the transition renders: each fill waits for the box to show it, or the next one
+    // could land on the box while it still shows the query before ("ArielAriel On Human").
     const search = page.getByTestId('browse-search');
     await search.fill('Ariel');
-    await expect(page).toHaveURL(/[?&]q=Ariel(&|$)/);
+    await expect(search).toHaveValue('Ariel');
     // A Set 1 card among the results: the search's cards have landed. A longer query, and a new
     // search once the box is emptied, reuse them.
     await search.fill('Ariel On Human');
     await expect(page.getByRole('button', {name: 'Ariel - On Human Legs', exact: true})).toBeVisible();
     await search.fill('');
-    await expect(page).not.toHaveURL(/[?&]q=/);
+    await expect(search).toHaveValue('');
     await search.fill('Stitch');
-    await expect(page).toHaveURL(/[?&]q=Stitch(&|$)/);
+    await expect(search).toHaveValue('Stitch');
     await expect(tiles.first()).toBeVisible();
     await page.waitForLoadState('networkidle');
 
