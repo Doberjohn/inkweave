@@ -45,6 +45,7 @@ function RotatedCardImage({card, containerWidth, borderRadius}: {card: LorcanaCa
           width={landscapeHeight}
           height={containerWidth}
           inkColor={card.ink}
+          inkColor2={card.ink2}
           cost={card.cost}
           borderRadius={0}
         />
@@ -137,6 +138,7 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
               width={imageWidth}
               height={imageHeight}
               inkColor={card.ink}
+              inkColor2={card.ink2}
               cost={card.cost}
               borderRadius={8}
               style={{maxWidth: '100%', height: 'auto', flexShrink: 1}}
@@ -179,6 +181,7 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
           width={imageWidth}
           height={imageHeight}
           inkColor={card.ink}
+          inkColor2={card.ink2}
           cost={card.cost}
           borderRadius={12}
         />

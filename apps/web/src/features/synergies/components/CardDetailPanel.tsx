@@ -127,6 +127,7 @@ function CardImageBox({card, onOpenLightbox}: {card: LorcanaCard; onOpenLightbox
           width={HERO_WIDTH}
           height={HERO_HEIGHT}
           inkColor={card.ink}
+          inkColor2={card.ink2}
           cost={card.cost}
           lazy={false}
           priority

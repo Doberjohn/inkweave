@@ -392,6 +392,108 @@ option {
   height: 100%;
 }
 
+/* InkCardPlaceholder (shared/components): a card's place while its art loads, the reveals
+   board's unrevealed slot (CardSlot) grown to any size. One element, drawn here: it covers its
+   parent and takes the parent's radius. The component sets the colors on it as variables, from
+   theme.ts: the card's ink (`--ink`, a dual-ink card's second as `--ink2`), and the ground,
+   recess and sheen every tile shares. The sheen is the top layer of its background, so it lies
+   under the symbols, where the reveals slot lays it over them: at most 8% white on the top of a
+   half-transparent symbol, which no one can see. Its symbols are its ::before (`data-ink`) and
+   ::after (`data-ink2`); a card not known yet has no `data-ink` and shows the Inkweave mark.
+   Static on purpose: a grid draws dozens, and a sweep would repaint each one every frame (#639). */
+.ink-card-placeholder {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, var(--ink-sheen), transparent 46%),
+    radial-gradient(
+      120% 80% at 50% 18%,
+      color-mix(in srgb, var(--ink) 26%, transparent),
+      color-mix(in srgb, var(--ink) 6%, transparent) 70%,
+      transparent
+    ),
+    var(--ink-ground);
+  box-shadow:
+    inset 0 0 0 1.5px color-mix(in srgb, var(--ink) 30%, transparent),
+    inset 0 2px 8px var(--ink-recess);
+}
+/* A dual-ink card glows in both inks: the first from the top left, the second from the bottom
+   right. */
+.ink-card-placeholder[data-ink2] {
+  background:
+    linear-gradient(180deg, var(--ink-sheen), transparent 46%),
+    radial-gradient(
+      120% 80% at 30% 12%,
+      color-mix(in srgb, var(--ink) 26%, transparent),
+      color-mix(in srgb, var(--ink) 6%, transparent) 70%,
+      transparent
+    ),
+    radial-gradient(
+      120% 80% at 70% 88%,
+      color-mix(in srgb, var(--ink2) 26%, transparent),
+      color-mix(in srgb, var(--ink2) 6%, transparent) 70%,
+      transparent
+    ),
+    var(--ink-ground);
+}
+.ink-card-placeholder::before,
+.ink-card-placeholder[data-ink2]::after {
+  content: '';
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  width: 58%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: center / contain no-repeat;
+  opacity: 0.5;
+  filter: drop-shadow(0 1px 4px color-mix(in srgb, var(--ink-shine, var(--ink)) 80%, transparent));
+}
+/* A dual-ink card's two symbols share the row, each glowing in its own ink. */
+.ink-card-placeholder[data-ink2]::before,
+.ink-card-placeholder[data-ink2]::after {
+  left: 29%;
+  width: 38%;
+}
+.ink-card-placeholder[data-ink2]::after {
+  left: 71%;
+  filter: drop-shadow(0 1px 4px color-mix(in srgb, var(--ink2) 80%, transparent));
+}
+/* No card yet: the Inkweave mark, a tall drop rather than a hexagon, glowing in its own gold
+   (`--ink-shine`). Served from public/. */
+.ink-card-placeholder:not([data-ink])::before {
+  width: 40%;
+  aspect-ratio: 84 / 120;
+  background-image: url('/brand/mark.svg');
+}
+/* The symbols are files of their own (`?no-inline`): inlined, all six would ride in index.html. */
+.ink-card-placeholder[data-ink='Amber']::before,
+.ink-card-placeholder[data-ink2='Amber']::after {
+  background-image: url('./assets/amber.svg?no-inline');
+}
+.ink-card-placeholder[data-ink='Amethyst']::before,
+.ink-card-placeholder[data-ink2='Amethyst']::after {
+  background-image: url('./assets/amethyst.svg?no-inline');
+}
+.ink-card-placeholder[data-ink='Emerald']::before,
+.ink-card-placeholder[data-ink2='Emerald']::after {
+  background-image: url('./assets/emerald.svg?no-inline');
+}
+.ink-card-placeholder[data-ink='Ruby']::before,
+.ink-card-placeholder[data-ink2='Ruby']::after {
+  background-image: url('./assets/ruby.svg?no-inline');
+}
+.ink-card-placeholder[data-ink='Sapphire']::before,
+.ink-card-placeholder[data-ink2='Sapphire']::after {
+  background-image: url('./assets/sapphire.svg?no-inline');
+}
+.ink-card-placeholder[data-ink='Steel']::before,
+.ink-card-placeholder[data-ink2='Steel']::after {
+  background-image: url('./assets/steel.svg?no-inline');
+}
+
 /* Force react-loading-skeleton's wrapper span to act as a block-level flex
    item so the search-bar skeleton can fill the hero's max-width row. */
 .inkweave-home-skel-flex {

@@ -132,7 +132,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/reveals/WhatsNewSection.tsx', // x1
     'src/features/voting/components/PairStack.tsx', // x1
     'src/features/voting/components/QuickVoteControl.tsx', // x6
-    'src/shared/components/CardImage.tsx', // x1
   ],
   // Seeded 2026-10-22 when the rule turned on (#549), after it began reading
   // ternary branches, negative values and the logical properties. Stories and

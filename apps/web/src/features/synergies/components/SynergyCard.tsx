@@ -1,10 +1,9 @@
 import {useState, type MouseEvent} from 'react';
-import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from '../../cards';
 import {cardPath} from 'inkweave-synergy-engine/card';
 import {smallImageUrl} from '../../cards';
 import {INK_COLORS, COLORS, CARD_TILE_GLOW, EASING, FONT_SIZES, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
-import {CardLightbox, StrengthBadge} from '../../../shared/components';
+import {CardLightbox, InkCardPlaceholder, StrengthBadge} from '../../../shared/components';
 import {isModifiedClick} from '../../../shared/utils/touchGuard';
 import {getStrengthTier} from '../utils';
 
@@ -114,16 +113,7 @@ function CardImageOrFallback({card, colors}: {card: LorcanaCard; colors: typeof 
   }
   return (
     <>
-      {!imgLoaded && (
-        <Skeleton
-          width="100%"
-          height="100%"
-          borderRadius={0}
-          baseColor={COLORS.surfaceAlt}
-          highlightColor={COLORS.surfaceHover}
-          style={{position: 'absolute', inset: 0, display: 'block'}}
-        />
-      )}
+      {!imgLoaded && <InkCardPlaceholder ink={card.ink} ink2={card.ink2} />}
       <img
         src={imgSrc}
         alt={card.fullName}

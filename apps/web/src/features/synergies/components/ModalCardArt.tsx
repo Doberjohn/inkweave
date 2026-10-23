@@ -78,6 +78,7 @@ export function ModalCardArt({
       width={cardWidth}
       height={cardHeight}
       inkColor={card.ink}
+      inkColor2={card.ink2}
       cost={card.cost}
       borderRadius={RADIUS.xl}
       // No style override: CardImage's root container already sets

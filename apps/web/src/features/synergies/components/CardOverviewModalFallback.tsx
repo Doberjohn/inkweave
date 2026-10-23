@@ -3,6 +3,7 @@ import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, ICON_SIZE, RADIUS} from '../../../shared/constants';
 import {IconButton} from '../../../shared/components/IconButton';
+import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
 import {
   hasForeignScan,
   printingsOf,
@@ -114,9 +115,6 @@ const BODY_STYLE: CSSProperties = {...DEFAULT_BODY_STYLE, overflow: 'hidden'};
 const HIDDEN: CSSProperties = {visibility: 'hidden'};
 const noop = () => {};
 
-/** The card placeholder: block, with no trailing line box. */
-const SKELETON_ART_STYLE: CSSProperties = {display: 'block'};
-
 /**
  * The translation toggle, invisible, for a card with a foreign scan among its printings: the
  * space the modal's takes, under the card on mobile and in the header on desktop.
@@ -150,9 +148,18 @@ function CardPlaceholder({card, isMobile, copiesRow, size: {cardWidth, cardHeigh
   return (
     <div style={pickCardColumnLayout(isMobile)}>
       <div style={CARD_WITH_COPIES_STYLE}>
-        {/* inline + block: no trailing <br> or line box, so the placeholder is exactly
-            the card's height and the synergy column below it lines up (mobile). */}
-        <Skeleton width={cardWidth} height={cardHeight} borderRadius={RADIUS.xl} inline style={SKELETON_ART_STYLE} />
+        {/* A block with no line box after it, so the placeholder is exactly the card's
+            height and the synergy column below it lines up (mobile). */}
+        <div
+          style={{
+            position: 'relative',
+            width: cardWidth,
+            height: cardHeight,
+            borderRadius: RADIUS.xl,
+            overflow: 'hidden',
+          }}>
+          <InkCardPlaceholder ink={card.ink} ink2={card.ink2} />
+        </div>
         {isMobile && copiesRow && <div style={{width: cardWidth, height: copiesRowHeight(cardWidth)}} />}
       </div>
       {isMobile && <ReservedTranslationToggle card={card} />}
