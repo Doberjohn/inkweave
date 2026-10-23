@@ -1,11 +1,13 @@
-import {useEffect, useRef} from 'react';
-import {Navigate, useLocation, useParams} from 'react-router-dom';
+import {useLayoutEffect, useRef} from 'react';
+import {Navigate, useLocation, useNavigate, useParams} from 'react-router-dom';
 import type {LorcanaCard} from '../features/cards';
 import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {usePrecomputedSynergies} from '../features/synergies/hooks';
+import {CardOverviewModalFallback} from '../features/synergies/components/CardOverviewModalFallback';
 import {Seo} from '../shared/components';
+import {useResponsive} from '../shared/hooks';
 import {NotFoundPage} from './NotFoundPage';
 
 /**
@@ -13,7 +15,9 @@ import {NotFoundPage} from './NotFoundPage';
  *
  * Resolves both card IDs against the loaded card data, opens the global card modal directly
  * in comparison state via `useCardModal().openComparison`, and renders only the tab's title. The URL
- * stays at `/compare/A/B/groupKey` so the link remains shareable while the modal is open.
+ * stays at `/compare/A/B/groupKey` so the link remains shareable while the modal is open. While the
+ * pair loads it draws the window's frame (#913), which the modal then takes over without a second
+ * entrance.
  *
  * Group filtering: required for valid deep links. The URL is a strong contract — a valid one
  * always produces a meaningful comparison view. We 404 on:
@@ -28,8 +32,10 @@ import {NotFoundPage} from './NotFoundPage';
 export function ComparePage() {
   const {idA, idB, groupKey} = useParams<{idA: string; idB: string; groupKey?: string}>();
   const {pathname} = useLocation();
+  const navigate = useNavigate();
+  const {isMobile} = useResponsive();
   const {getCardById, isLoading: cardsLoading} = useCardDataContext();
-  const {openComparison} = useCardModal();
+  const {openComparison, selectedCardId} = useCardModal();
   const cardA = idA ? getCardById(idA) : undefined;
   const cardB = idB ? getCardById(idB) : undefined;
   const {getPairSynergies, isLoading: synergiesLoading} = usePrecomputedSynergies(cardA ?? null);
@@ -45,27 +51,37 @@ export function ComparePage() {
     getPairSynergies,
   });
 
+  // The card window's frame while the pair loads (#913): a shared link otherwise shows a blank
+  // page until the card list arrives. Not over a window already open (a browser Back onto a
+  // compare link), which switches to the pair in place.
+  const showFrame = verdict.kind === 'loading' && selectedCardId === null;
+  // Whether the last commit drew the frame: the window then opens without an entrance of its
+  // own, taking over from it.
+  const frameDrawnRef = useRef(false);
+
   // Open the modal once per URL combo, not on every re-render. `verdict` is a fresh object each
   // render so a naive `[verdict, openComparison]` dependency re-fires the effect even when route
   // params haven't changed — and on a BACK click that re-firing races against the URL navigation,
   // restoring `comparisonPartnerId` after the user just cleared it. Tracking the last opened
   // signature breaks the race: any re-render whose URL didn't actually change is a no-op.
+  // A layout effect: the render that drops the frame and the one that opens the window then
+  // reach the screen together, with no frame between them that shows neither.
   const lastOpenedSignatureRef = useRef<string | null>(null);
   const verdictSignature = verdict.kind === 'valid' ? `${verdict.idA}|${verdict.idB}|${verdict.groupKey}` : null;
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (verdict.kind !== 'valid') return;
     if (lastOpenedSignatureRef.current === verdictSignature) return;
     lastOpenedSignatureRef.current = verdictSignature;
-    openComparison(verdict.idA, verdict.idB, verdict.groupKey);
+    openComparison(verdict.idA, verdict.idB, verdict.groupKey, {skipEnter: frameDrawnRef.current});
   }, [verdict, verdictSignature, openComparison]);
+  // After the effect above, which reads what the previous commit drew.
+  useLayoutEffect(() => {
+    frameDrawnRef.current = showFrame;
+  });
 
-  // The modal shows the comparison, so the page renders only the tab's title (2.4.2): without
-  // it, once main.tsx sweeps the prerendered tags, the tab would show the bare address. It names
-  // the pair once both cards resolve, and is generic while they load.
-  const title =
-    cardA && cardB ? `${cardA.fullName} + ${cardB.fullName} | Compare | Inkweave` : 'Compare cards | Inkweave';
-  const seo = <Seo title={title} canonicalPath={pathname} noindex />;
-  return renderComparePage(verdict, seo);
+  // Closing it leaves the link as closing the window does (CardModalContext's `closeCardModal`).
+  const frame = showFrame ? <CardOverviewModalFallback isMobile={isMobile} onClose={() => navigate('/')} /> : null;
+  return renderComparePage(verdict, {cardA, cardB, pathname}, frame);
 }
 
 export default ComparePage;
@@ -137,9 +153,24 @@ function hasMatchingPair({
   return pair.connections.length > 0;
 }
 
-function renderComparePage(verdict: ComparePageVerdict, seo: React.ReactElement): React.ReactElement {
+function renderComparePage(
+  verdict: ComparePageVerdict,
+  {cardA, cardB, pathname}: {cardA: LorcanaCard | undefined; cardB: LorcanaCard | undefined; pathname: string},
+  frame: React.ReactElement | null,
+): React.ReactElement {
   if (verdict.kind === 'same-id') return <Navigate to={`/card/${verdict.idA}`} replace />;
   if (verdict.kind === 'not-found') return <NotFoundPage />;
-  // 'loading' and 'valid' both render only the title — the modal is mounted globally by CardModalProvider.
-  return seo;
+  // The modal shows the comparison, so the page renders only the tab's title (2.4.2): without
+  // it, once main.tsx sweeps the prerendered tags, the tab would show the bare address. It names
+  // the pair once both cards resolve, and is generic while they load. 'loading' adds the
+  // window's frame; 'valid' renders only the title, the modal being mounted globally by
+  // CardModalProvider.
+  const title =
+    cardA && cardB ? `${cardA.fullName} + ${cardB.fullName} | Compare | Inkweave` : 'Compare cards | Inkweave';
+  return (
+    <>
+      <Seo title={title} canonicalPath={pathname} noindex />
+      {frame}
+    </>
+  );
 }

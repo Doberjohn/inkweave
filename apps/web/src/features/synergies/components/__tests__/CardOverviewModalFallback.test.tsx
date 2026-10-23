@@ -127,4 +127,15 @@ describe('CardOverviewModalFallback', () => {
     render(<CardOverviewModalFallback card={card} isMobile={false} onClose={vi.fn()} />);
     expect(document.activeElement).toBe(tile);
   });
+
+  // #913: a shared compare link opens on this frame before either card is known.
+  it.each([false, true])('draws a card-less frame for a comparison still loading (isMobile: %s)', (isMobile) => {
+    const {container} = render(<CardOverviewModalFallback isMobile={isMobile} onClose={vi.fn()} />);
+
+    expect(screen.getByRole('status', {name: 'Loading comparison'})).toBeInTheDocument();
+    expect(screen.queryByText('See translation')).toBeNull();
+    // The art's tile is the neutral one: no card, so no ink.
+    expect(container.querySelector('.ink-card-placeholder')).not.toBeNull();
+    expect(screen.getByRole('button', {name: 'Close'})).toBeInTheDocument();
+  });
 });

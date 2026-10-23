@@ -11,7 +11,7 @@ import {
   useTransitionPresence,
 } from '../../../shared/hooks';
 import {CardTranslationToggle} from '../../../shared/components/CardTranslationToggle';
-import {ModalCardTitle} from './ModalCardTitle';
+import {LOGO_HEIGHT, ModalCardTitle} from './ModalCardTitle';
 import {
   CARD_WITH_COPIES_STYLE,
   CENTERING_WRAPPER_STYLE,
@@ -25,6 +25,7 @@ import {
   pickCardColumnLayout,
   pickCardsRowStyle,
   pickModalShellStyle,
+  pickModalTitleStyle,
   pickSynergyColumnLayout,
 } from './cardOverviewModalStyles';
 import {useModalCardSize} from './useModalCardSize';
@@ -142,8 +143,45 @@ function ReservedTranslationToggle({card}: {card: LorcanaCard}) {
   );
 }
 
+/**
+ * The title's place while no card is known yet (a shared comparison link waiting for the card
+ * list, #913): one line of the title's height, in a row as tall as the title's on desktop, where
+ * the set logo sets it.
+ */
+function TitlePlaceholder({isMobile}: {isMobile: boolean}) {
+  const {fontSize, lineHeight} = pickModalTitleStyle(isMobile);
+  return (
+    <div style={{display: 'flex', alignItems: 'center', flex: 1, minWidth: 0, height: isMobile ? undefined : LOGO_HEIGHT}}>
+      <Skeleton width="40%" height={Number(fontSize) * Number(lineHeight)} borderRadius={RADIUS.sm} containerClassName="inkweave-home-skel-flex" />
+    </div>
+  );
+}
+
+interface FallbackTitleProps {
+  card: LorcanaCard | undefined;
+  isMobile: boolean;
+  printingId: string | null;
+}
+
+/** The header's title: the card's, as the modal's will read, or its placeholder before a card is known. */
+function FallbackTitle({card, isMobile, printingId}: FallbackTitleProps) {
+  if (!card) return <TitlePlaceholder isMobile={isMobile} />;
+  return (
+    <>
+      <ModalCardTitle
+        card={card}
+        isMobile={isMobile}
+        printing={printingsOf(card).find((printing) => printing.key === printingId)}
+        as="div"
+      />
+      {!isMobile && <ReservedTranslationToggle card={card} />}
+    </>
+  );
+}
+
 interface CardPlaceholderProps {
-  card: LorcanaCard;
+  /** Absent before a card is known: the art's place alone, as the neutral tile. */
+  card: LorcanaCard | undefined;
   isMobile: boolean;
   /** The window holds the copies row under its card. */
   copiesRow: boolean;
@@ -171,17 +209,21 @@ function CardPlaceholder({card, isMobile, copiesRow, size: {cardWidth, cardHeigh
             borderRadius: RADIUS.xl,
             overflow: 'hidden',
           }}>
-          <InkCardPlaceholder ink={card.ink} ink2={card.ink2} />
+          <InkCardPlaceholder ink={card?.ink} ink2={card?.ink2} />
         </div>
         {isMobile && copiesRow && <div style={{width: cardWidth, height: copiesRowHeight(cardWidth)}} />}
       </div>
-      {isMobile && <ReservedTranslationToggle card={card} />}
+      {isMobile && card && <ReservedTranslationToggle card={card} />}
     </div>
   );
 }
 
 interface CardOverviewModalFallbackProps {
-  card: LorcanaCard;
+  /**
+   * The card being opened. Absent while a shared comparison link waits for its cards (#913,
+   * `ComparePage`): the window's frame then draws placeholders for the title and the card.
+   */
+  card?: LorcanaCard;
   isMobile: boolean;
   /**
    * The printing the open names (CardModalContext's `initialPrintingId`), whose number the
@@ -190,6 +232,11 @@ interface CardOverviewModalFallbackProps {
   printingId?: string | null;
   /** The window holds the copies row under its card (`useHoldCopiesRow`), as the modal will. */
   copiesRow?: boolean;
+  /**
+   * Mount already visible, with no entrance: for a frame taking over from one that already
+   * played it (a comparison link's frame, `openComparison`'s `skipEnter`).
+   */
+  startVisible?: boolean;
   onClose: () => void;
 }
 
@@ -209,9 +256,10 @@ export function CardOverviewModalFallback({
   isMobile,
   printingId = null,
   copiesRow = false,
+  startVisible = false,
   onClose,
 }: CardOverviewModalFallbackProps) {
-  const {visible} = useTransitionPresence(true);
+  const {visible} = useTransitionPresence(true, {startVisible});
   useScrollLock(true);
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -238,17 +286,11 @@ export function CardOverviewModalFallback({
           <div
             className={`overlay-transition overlay-scale overlay-enter${visibleClass}`}
             role="status"
-            aria-label={`Loading ${card.fullName}`}
+            aria-label={card ? `Loading ${card.fullName}` : 'Loading comparison'}
             data-testid="card-overview-fallback"
             style={pickModalShellStyle(isMobile)}>
             <div style={MODAL_HEADER_STYLE}>
-              <ModalCardTitle
-                card={card}
-                isMobile={isMobile}
-                printing={printingsOf(card).find((printing) => printing.key === printingId)}
-                as="div"
-              />
-              {!isMobile && <ReservedTranslationToggle card={card} />}
+              <FallbackTitle card={card} isMobile={isMobile} printingId={printingId} />
               {/* The modal's own ×: it sets the header's height, so everything below sits
                   exactly where the modal's will. It never takes focus (see above). */}
               <ModalCloseButton onClose={onClose} />
