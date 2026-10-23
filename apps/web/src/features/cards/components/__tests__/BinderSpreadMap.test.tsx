@@ -210,12 +210,12 @@ async function loadMap(canRound: boolean) {
 describe('BinderSpreadMap, cells', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('sizes each cell in whole pixels against its page, where CSS can round', async () => {
+  it('sizes each cell in whole pixels against its page, never wider than a full cell, where CSS can round', async () => {
     const Rounded = await loadMap(true);
     render(<Rounded pockets={POCKETS.slice(0, filling(1))} current={0} onGo={() => {}} />);
     const {page, cell} = firstCell();
     expect(page.style.containerType).toBe('inline-size');
-    expect(cell.style.width).toMatch(/^round\(down, /);
+    expect(cell.style.width).toMatch(/^min\(7px, round\(down, /);
     expect(cell.style.height).toMatch(/^round\(/);
   });
 
