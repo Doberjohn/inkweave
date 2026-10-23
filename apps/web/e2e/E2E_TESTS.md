@@ -277,7 +277,7 @@ server prerenders (the dev server and `vite preview` both serve the shell), so b
 |---|---|
 | should have valid JSON-LD structured data on home page | `@graph` carries Organization + WebSite + WebApplication, cross-linked by `@id`, with the WebSite's SearchAction |
 | should have correct heading hierarchy on home page | Exactly one h1; its accessible name comes from the logo img's `alt` |
-| should preload the self-hosted body font only | `link[rel=preload][as=font]` for plus-jakarta-sans-400 (self-hosted, not a CDN), and none for tinos-400, which `/` never renders (#640) |
+| should preload the self-hosted body font only | `link[rel=preload][as=font]` for plus-jakarta-sans-400 (self-hosted, not a CDN), and none for the hero serif (marcellus-400), which `/` never renders (#640) |
 | should own its title and canonical: `/` | Title leaves the shell fallback; canonical self-references |
 | should own its title and canonical: `/browse` | As above |
 | should own its title and canonical: `/playstyles` | As above |

@@ -5,7 +5,7 @@
 // strings, quoted CSS shorthands, .css files, or index.html. This gate greps
 // the LITERAL VALUES of the tokens themselves — every COLORS hex parsed live
 // from theme.ts (the needle list can never rot), the EASING linear() strings,
-// the font family names, and two hard tripwires ('Barlow', backdrop-filter).
+// the font family names, and three hard tripwires ('Barlow', 'Tinos', backdrop-filter).
 // In .css and .html, which ESLint never reads, it also counts raw values that
 // are not tokens at all (#546): literal rgb()/rgba(), keyword and bezier
 // easings, and hexes no token declares.
@@ -14,7 +14,7 @@
 // enforcement day, and a .css or .html file's raw values to an entry of their
 // own, `<file> (raw)`. A NEW entry, or an INCREASED count, fails; a decreased
 // count prints a prompt to shrink the baseline. Tripwires have no baseline:
-// any hit fails.
+// any hit fails, in public/ and e2e/ as well (#912).
 //
 // Usage:
 //   node scripts/check-design-tokens.mjs                  # gate (exit 1 on violation)
@@ -34,11 +34,12 @@ const THEME = readFileSync(join(ROOT, 'src', 'shared', 'constants', 'theme.ts'),
 const TOKEN_HEXES = [...new Set((THEME.match(/#[0-9a-fA-F]{6}\b/g) ?? []).map((h) => h.toLowerCase()))];
 // The spring curves: any verbatim copy outside theme.ts is a fork that will drift.
 const EASING_STRINGS = THEME.match(/linear\([^)]+\)/g) ?? [];
-const FONT_NAMES = ['Plus Jakarta Sans', 'Tinos'];
+const FONT_NAMES = ['Plus Jakarta Sans', 'Marcellus'];
 // Tripwires: zero tolerance, no baseline. backdrop-filter matches USAGE
 // (declaration/property form), not the prose warning comments at scrim sites.
 const TRIPWIRES = [
   {name: "'Barlow' (legacy font, fully purged)", re: /Barlow/},
+  {name: "'Tinos' (the hero serif before Marcellus, fully purged)", re: /\btinos\b/i},
   {name: 'backdrop-filter usage', re: /backdrop-filter\s*:|backdropFilter\s*:/},
 ];
 // Raw values in the files ESLint never reads (#546). Their count is baselined
@@ -55,19 +56,28 @@ const HEX_COLOR = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6})\b/g;
 // Declaration sites are exempt; everything else that can carry styles is in.
 const EXEMPT = [/src[\\/]shared[\\/]constants[\\/]theme\.ts$/, /src[\\/]shared[\\/]constants[\\/]playstyleUi\.ts$/];
 const EXTENSIONS = /\.(ts|tsx|css|html)$/;
+// The tripwires also read the rest of the app's text (#912): a purged font named
+// in public/ or e2e/ is as stale as one in src/. Only the tripwires, since those
+// files' values are not the app's styles and carry no baseline. public/data is
+// card data and public/mockups git-ignored design scratch, so neither is read.
+const TRIPWIRE_ONLY_DIRS = [join(ROOT, 'public'), join(ROOT, 'e2e')];
+const TEXT_EXTENSIONS = /\.(ts|tsx|js|mjs|css|html|svg|json|md|txt|xml)$/;
+const UNREAD_DIRS = [join(ROOT, 'public', 'data'), join(ROOT, 'public', 'mockups')];
+const BUILD_DIRS = /node_modules|dist|coverage|storybook-static/;
 
-function* walk(dir) {
+function* walk(dir, extensions) {
   for (const entry of readdirSync(dir)) {
     const p = join(dir, entry);
     if (statSync(p).isDirectory()) {
-      if (!/node_modules|dist|coverage|storybook-static/.test(entry)) yield* walk(p);
-    } else if (EXTENSIONS.test(entry)) {
+      if (!BUILD_DIRS.test(entry) && !UNREAD_DIRS.includes(p)) yield* walk(p, extensions);
+    } else if (extensions.test(entry)) {
       yield p;
     }
   }
 }
 
-const files = [...walk(join(ROOT, 'src')), join(ROOT, 'index.html')];
+const files = [...walk(join(ROOT, 'src'), EXTENSIONS), join(ROOT, 'index.html')];
+const tripwireOnlyFiles = TRIPWIRE_ONLY_DIRS.flatMap((dir) => [...walk(dir, TEXT_EXTENSIONS)]);
 
 /** Occurrences of `needle` in `haystack` (plain substring scan). */
 function countOccurrences(haystack, needle) {
@@ -88,6 +98,9 @@ function countRawValues(text) {
   return RAW_VALUES.reduce((sum, re) => sum + (text.match(re) ?? []).length, strayHexes.length);
 }
 
+/** The names of the tripwires `text` trips. */
+const tripwiresIn = (text) => TRIPWIRES.filter((t) => t.re.test(text)).map((t) => t.name);
+
 function countHits(file) {
   const text = readFileSync(file, 'utf8');
   const values =
@@ -95,22 +108,26 @@ function countHits(file) {
     sumNeedleHits(text, EASING_STRINGS) +
     sumNeedleHits(text, FONT_NAMES);
   const raw = UNLINTED.test(file) ? countRawValues(text) : 0;
-  const trips = TRIPWIRES.filter((t) => t.re.test(text)).map((t) => t.name);
-  return {values, raw, trips};
+  return {values, raw, trips: tripwiresIn(text)};
 }
 
 /** How many files the entries cover (a file can have a token entry and a raw one). */
 const fileCount = (entries) => new Set(Object.keys(entries).map((key) => key.replace(RAW_ENTRY, ''))).size;
 
+const relPath = (file) => relative(ROOT, file).replaceAll('\\', '/');
+
 const current = {};
 const tripHits = [];
 for (const file of files) {
   if (EXEMPT.some((re) => re.test(file))) continue;
-  const rel = relative(ROOT, file).replaceAll('\\', '/');
+  const rel = relPath(file);
   const {values, raw, trips} = countHits(file);
   if (values > 0) current[rel] = values;
   if (raw > 0) current[rel + RAW_ENTRY] = raw;
   for (const t of trips) tripHits.push(`${rel}: '${t}'`);
+}
+for (const file of tripwireOnlyFiles) {
+  for (const t of tripwiresIn(readFileSync(file, 'utf8'))) tripHits.push(`${relPath(file)}: '${t}'`);
 }
 
 if (process.argv.includes('--update-baseline')) {
@@ -138,7 +155,7 @@ for (const [file, count] of Object.entries(current)) {
 for (const [file, base] of Object.entries(baseline)) {
   if (current[file] === undefined) shrunk.push(`${file} (${base} -> 0, remove from baseline)`);
 }
-for (const hit of tripHits) violations.push(`TRIPWIRE: ${hit} (zero tolerance — 'Barlow' is purged, backdrop-filter hangs WebKit E2E #444/#445)`);
+for (const hit of tripHits) violations.push(`TRIPWIRE: ${hit} (zero tolerance — 'Barlow' and 'Tinos' are purged, backdrop-filter hangs WebKit E2E #444/#445)`);
 
 if (shrunk.length > 0) {
   console.log('ℹ Files came cleaner than the baseline — shrink it when convenient (--update-baseline):');
@@ -151,4 +168,4 @@ if (violations.length > 0) {
   console.error('  In .css and .html, raw rgb()/rgba(), easings and hexes no token declares count too: style inline with tokens, or pass a token in through a CSS variable.');
   process.exit(1);
 }
-console.log(`✅ Design-token value gate passed (${fileCount(current)} baselined files, ${TOKEN_HEXES.length} token hexes guarded).`);
+console.log(`✅ Design-token value gate passed (${fileCount(current)} baselined files, ${TOKEN_HEXES.length} token hexes guarded, ${tripwireOnlyFiles.length} more files read for the tripwires).`);

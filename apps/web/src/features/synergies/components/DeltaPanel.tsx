@@ -128,7 +128,7 @@ const HEADLINE_STYLE: React.CSSProperties = {
 
 const DELTA_NUMBER_STYLE: React.CSSProperties = {
   fontSize: 28,
-  fontWeight: 800,
+  fontWeight: 700,
   letterSpacing: '-0.02em',
   fontFeatureSettings: '"tnum"',
   lineHeight: 1,

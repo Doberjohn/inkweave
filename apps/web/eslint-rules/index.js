@@ -173,6 +173,79 @@ const noRawFontSize = makePropertyRule({
   message: 'Raw font size. Use FONT_SIZES.* (xs..xxxl, displaySm/Md/Lg for hero sizes) (#508).',
 });
 
+/** The weights with a self-hosted face (index.css): the body sans has four, the hero serif one. */
+const LOADED_FONT_WEIGHTS = new Set([400, 500, 600, 700]);
+const HERO_FONT_WEIGHT = 400;
+const NAMED_WEIGHTS = {normal: 400, bold: 700};
+
+/** A weight literal as a number: `700`, `'700'`, `'bold'`. Anything else (a variable, `'inherit'`) is unknown. */
+function literalWeight(v) {
+  if (isNumberLiteral(v)) return v.value;
+  if (!isStringLiteral(v)) return undefined;
+  return /^\d+$/.test(v.value) ? Number(v.value) : NAMED_WEIGHTS[v.value];
+}
+
+/** The key a member reads: `hero` in `FONTS.hero` and `FONTS['hero']`, undefined in `FONTS[key]`, which could be any. */
+function memberKey(member) {
+  if (!member.computed) return member.property.name;
+  return isStringLiteral(member.property) ? member.property.value : undefined;
+}
+
+const isFontsHero = (v) => v.type === 'MemberExpression' && v.object.name === 'FONTS' && memberKey(v) === 'hero';
+
+const UNLOADED_WEIGHT_MESSAGE =
+  'No face is loaded for this weight, and font-synthesis is none, so it renders as the nearest loaded one. Use 400/500/600/700, or add the woff2 and @font-face first.';
+const HERO_WEIGHT_MESSAGE =
+  'The hero serif (FONTS.hero, Marcellus) ships 400 only and font-synthesis is none, so any other weight renders as 400. Set fontWeight: 400.';
+
+/** Why weight `w` won't render as written, or undefined when it will (or isn't a literal). */
+function weightProblem(w, hero) {
+  if (w === undefined) return undefined;
+  if (hero) return w === HERO_FONT_WEIGHT ? undefined : HERO_WEIGHT_MESSAGE;
+  return LOADED_FONT_WEIGHTS.has(w) ? undefined : UNLOADED_WEIGHT_MESSAGE;
+}
+
+/** Every weight in one style object that has no face to render it, as `context.report` arguments. */
+function unloadedWeights(node) {
+  const props = node.properties.filter((p) => p.type === 'Property');
+  const weight = props.find((p) => keyName(p) === 'fontWeight');
+  if (!weight) return [];
+  const hero = props.some((p) => keyName(p) === 'fontFamily' && isFontsHero(p.value));
+  return ternaryLeaves(weight.value)
+    .map((value) => ({node: value, message: weightProblem(literalWeight(value), hero)}))
+    .filter((report) => report.message);
+}
+
+/**
+ * A weight with no loaded face does not render: `font-synthesis: none` on :root
+ * (index.css) forbids faking one, so the browser silently uses the nearest face
+ * that exists. The body sans at 800 renders as its 700, and the hero serif at
+ * 700 renders as its only face, 400. deck-builder measured both and fixed 18 such
+ * declarations (45458e18, 2026-07-29). The values come from public/fonts, not
+ * from taste: a new weight needs its woff2 and @font-face block first.
+ *
+ * It reads literal weights in a style object, both branches of a ternary, and
+ * holds an object that names FONTS.hero to 400. Not seen: a weight in a cssText
+ * string, a hero style reached through a spread (`{...DIALOG_TITLE, fontWeight:
+ * 700}`), and an <h1>-<h6> that is bold by default, which is why hero headings
+ * set 400 out loud.
+ */
+const noUnloadedFontWeight = {
+  meta: {
+    type: 'problem',
+    docs: {description: 'Only weights with a self-hosted face render: 400-700 for the body sans, 400 for the hero serif'},
+    schema: [],
+  },
+  create(context) {
+    if (isExempt(context, TEST_EXEMPT) || isKnownOffender(context, 'no-unloaded-font-weight')) return {};
+    return {
+      ObjectExpression(node) {
+        for (const report of unloadedWeights(node)) context.report(report);
+      },
+    };
+  },
+};
+
 const noRawRadius = makePropertyRule({
   name: 'no-raw-radius',
   description: 'Use RADIUS.* (incl. RADIUS.pill) instead of numeric border radii',
@@ -438,6 +511,7 @@ export const inkweave = {
     'no-raw-rgba': noRawRgba,
     'no-literal-font-family': noLiteralFontFamily,
     'no-raw-font-size': noRawFontSize,
+    'no-unloaded-font-weight': noUnloadedFontWeight,
     'no-raw-radius': noRawRadius,
     'no-raw-z-index': noRawZIndex,
     'no-raw-easing': noRawEasing,

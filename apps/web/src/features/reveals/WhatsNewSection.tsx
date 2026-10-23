@@ -131,7 +131,7 @@ export function WhatsNewSection({compact = false, onSelectFranchise}: WhatsNewSe
         >
           New this set
         </div>
-        <h2 style={{fontFamily: FONTS.hero, fontWeight: 700, fontSize: s.titleSize, color: '#ececf2', margin: '10px 0 0'}}>
+        <h2 style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: s.titleSize, color: '#ececf2', margin: '10px 0 0'}}>
           What&apos;s new in Set {REVEAL_SET_NUMBER}
         </h2>
       </div>

@@ -81,7 +81,7 @@ export function DisplayNameDialog({isOpen, onClose, userId, current, onSaved}: D
       ariaLabel="Change your display name"
       size="sm"
       panelStyle={{padding: SPACING.xl, fontFamily: FONTS.body}}>
-      <h2 style={{fontFamily: FONTS.hero, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>Your name</h2>
+      <h2 style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>Your name</h2>
       <p
         style={{
           color: COLORS.textMuted,

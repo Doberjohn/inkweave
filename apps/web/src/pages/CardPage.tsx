@@ -67,7 +67,7 @@ function CenteredMessage({title, body}: {title: string; body: string}) {
         padding: `${SPACING.xl}px`,
         textAlign: 'center',
       }}>
-      <h1 style={{fontFamily: FONTS.hero, fontSize: `${FONT_SIZES.xxl}px`, color: COLORS.text, margin: 0}}>
+      <h1 style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: `${FONT_SIZES.xxl}px`, color: COLORS.text, margin: 0}}>
         {title}
       </h1>
       <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.base}px`, margin: 0}}>{body}</p>
