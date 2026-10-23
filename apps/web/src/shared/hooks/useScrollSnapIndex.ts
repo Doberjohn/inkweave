@@ -1,4 +1,4 @@
-import {useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {useEffect, useLayoutEffect, useRef, useState, type RefObject} from 'react';
 import {prefersReducedMotion} from '../utils/prefersReducedMotion';
 
 /** Which slide the scroll-snap viewport is centered on, or null if it has no width yet. */
@@ -13,6 +13,33 @@ const TAKE_OVER_EVENTS = ['touchstart', 'wheel', 'keydown'] as const;
 
 /** Where a browser lacks `scrollend`, the strip is at rest once scroll events stop this long. */
 const SETTLE_QUIET_MS = 150;
+
+/**
+ * How often a `scrollToIndex` checks that its strip is still on the way. A smooth scroll moves the
+ * strip every frame, so a strip that sat still this long short of its slide has stopped there.
+ */
+const LANDING_CHECK_MS = 300;
+
+/**
+ * Sends the strip on to the slide a `scrollToIndex` aimed at if its smooth scroll stops short. A
+ * browser can drop one on the way, even before it moves: on Firefox the strip rested on its first
+ * slide under a pill showing the second, and stayed there, since the scroll listener ignores the
+ * strip until it reaches the target (#859). A scroll that never moved fires no scroll or scrollend
+ * event, so this reads the position instead, until the strip reaches its slide or the user takes it
+ * over (either clears `target`). Returns the cleanup.
+ */
+function watchLanding(root: HTMLElement, target: RefObject<number | null>): () => void {
+  let timer: ReturnType<typeof setTimeout>;
+  const check = (from: number) => {
+    timer = setTimeout(() => {
+      if (target.current === null) return;
+      if (root.scrollLeft !== from) check(root.scrollLeft);
+      else root.scrollTo({left: target.current * root.clientWidth, behavior: 'auto'});
+    }, LANDING_CHECK_MS);
+  };
+  check(root.scrollLeft);
+  return () => clearTimeout(timer);
+}
 
 /**
  * Calls `onRest` each time the strip stops moving. Chrome, Firefox and Safari 26.2+ fire
@@ -76,7 +103,8 @@ interface ScrollSnapOptions {
  * Wires a horizontal scroll-snap viewport of full-width slides to an index, so a control
  * (tab pills, printing pills) can act as an indicator over the scroll position rather than
  * a switch: swiping the strip moves the index, and `scrollToIndex` moves the strip. Both
- * paths converge on the same `activeIndex`.
+ * paths converge on the same `activeIndex`. A `scrollToIndex` the browser drops short of its
+ * slide is finished once the strip has stopped (watchLanding).
  *
  * Each slide is exactly the viewport's width. `onIndexChange` fires for a swipe the user
  * made, once per slide whose midpoint it crosses, and never for `scrollToIndex` (its caller
@@ -110,6 +138,9 @@ export function useScrollSnapIndex({
   const lastRef = useRef(initialIndex);
   // The slide a `scrollToIndex` call is still scrolling to; null while the user has the strip.
   const targetRef = useRef<number | null>(null);
+  // Stops the check that the latest `scrollToIndex` arrives (watchLanding).
+  const stopLandingRef = useRef(() => {});
+  useEffect(() => () => stopLandingRef.current(), []);
   // Whether the user has moved the strip since it last came to rest, and the slide it rested on.
   const userMovedRef = useRef(false);
   const restRef = useRef(initialIndex);
@@ -178,6 +209,8 @@ export function useScrollSnapIndex({
       left: index * root.clientWidth,
       behavior: prefersReducedMotion() ? 'auto' : 'smooth',
     });
+    stopLandingRef.current();
+    stopLandingRef.current = watchLanding(root, targetRef);
   };
 
   return {viewportRef, activeIndex, scrollToIndex};

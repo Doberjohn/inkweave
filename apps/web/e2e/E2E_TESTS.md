@@ -148,6 +148,8 @@ Every other spec sets Browse's filters through the URL. These press the filter b
 
 ## `mobile.spec.ts` — 19 tests (mobile only)
 
+Eighteen run in `Mobile Viewport`, whose `beforeEach` opens the homepage first.
+
 | Test | What it verifies |
 |---|---|
 | should display hero home page on mobile | Hero, search input, and featured cards render on mobile viewport |
@@ -157,7 +159,6 @@ Every other spec sets Browse's filters through the URL. These press the filter b
 | should navigate to browse when searching from hero | Typing "Elsa" + Enter navigates to `/browse?q=Elsa`, hero hidden, browse heading visible |
 | should navigate to browsing view via Browse all cards CTA | "Browse all cards" CTA navigates away from hero, shows browse heading |
 | should open search bottom sheet and focus input when tapping search icon | Tap search icon in bottom nav, sheet opens with focused input |
-| a search tap that beats the sheet chunk opens it, with a proxy input holding focus | With the lazy sheet's module held (#640), a Search tap focuses AppLayout's hidden proxy input (what raises the iOS keyboard); once released, the sheet opens. The navigation waits for DOMContentLoaded, not `load` (see Patterns) |
 | should close search bottom sheet on backdrop click | Open search sheet, click backdrop, sheet dismisses, focus returns to the Search nav button (not the hidden iOS proxy input) |
 | should navigate to browse when pressing Enter in search bottom sheet | Type query in search sheet, press Enter, navigates to `/browse?q=Elsa`, sheet stays closed (the Enter must not also click the refocused Search button) |
 | the search sheet shows highlighted results, and a picked one opens its card window | Types "Elsa" in the sheet and waits out its 150ms debounce, which the Enter test above never does: "N results" shows and the first row's match is a `<mark>` reading "Elsa". Picking the row (it picks on mousedown) opens the card window named "<that card> synergies" |
@@ -169,6 +170,12 @@ Every other spec sets Browse's filters through the URL. These press the filter b
 | should close the overview modal via the close button | ✕ button dismisses the modal on mobile |
 | should close the overview modal via backdrop tap | Backdrop tap dismisses the modal on mobile |
 | should open and dismiss the Mechanics bottom sheet on a playstyle page | Mechanics button opens the `Mechanics filter` sheet; backdrop tap dismisses it |
+
+**`Mobile search sheet before its chunk arrives`** (1 test) starts with no homepage visit: the homepage loads the sheet's chunk too, and WebKit then answers the next page's request for it from its own copy, which no route sees, so a hold set after that visit caught nothing and mobile-safari failed (#923).
+
+| Test | What it verifies |
+|---|---|
+| a search tap that beats the sheet chunk opens it, with a proxy input holding focus | The lazy sheet's module (#640) is held before the tab's first navigation, `/browse`, and the tap waits until the hold has caught its request (`caught()`, failing with "the sheet's chunk never reached the hold" otherwise). The Search tap then focuses AppLayout's hidden proxy input (what raises the iOS keyboard) with no dialog open; once released, the sheet opens. The navigation waits for DOMContentLoaded, not `load` (see Patterns) |
 
 ## `playstyle-pages.spec.ts` — 7 tests (desktop only)
 
@@ -426,6 +433,7 @@ The `/release-notes` page (#765), which shows one committed JSON file per week, 
 - **Navigation back** is tested via both clear/back button and logo click
 - **Image loading** is verified via `loading` and `decoding` attributes (not `src` URLs, which differ between dev proxy and production AVIF)
 - **Holding a request the page makes while it loads** (a lazy chunk behind `page.route`): navigate with `waitUntil: 'domcontentloaded'`. WebKit holds the `load` event until a pending module request ends (Chromium does not), so a `load` wait can wait on the held request and time out. Whether the page makes that request before `load` is a race, so mobile-safari fails some runs and passes others (#663)
+- **Hold a lazy chunk before the tab's first navigation.** WebKit answers a module an earlier page in the same tab loaded from its own copy, in about a millisecond, with no request a route or the server sees, even with routing on and the server saying `no-cache` (#923). A hold set after a `beforeEach` visit can then catch nothing. `holdLazyModule` returns `{release, caught}`: poll `caught()` before the step that needs the chunk held, so a missed hold fails by name
 
 ## Debugging a failed E2E run
 

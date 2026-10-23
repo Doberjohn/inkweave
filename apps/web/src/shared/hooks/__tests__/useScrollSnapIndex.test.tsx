@@ -2,7 +2,7 @@ import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {render, act, createEvent, fireEvent, screen} from '@testing-library/react';
 import {useScrollSnapIndex} from '../useScrollSnapIndex';
 
-/** A four-slide strip, the shape PrintingCarousel renders, exposing the hook through the DOM. */
+/** A four-slide strip, exposing the hook through the DOM. */
 function Strip({
   onIndexChange,
   onSettle,
@@ -302,5 +302,74 @@ describe('useScrollSnapIndex settling', () => {
     pause();
 
     expect(onSettle).not.toHaveBeenCalled();
+  });
+});
+
+// A browser can drop a smooth scroll short of its slide (Firefox, #859): the pill showed the
+// second printing while the strip rested on the first, and nothing moved it on.
+describe('useScrollSnapIndex landing', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Let LANDING_CHECK_MS pass: each check finds the strip moved since the last, or still. */
+  const check = () => {
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+  };
+
+  it('sends the strip to its slide at once when the browser drops the scroll before it moves', () => {
+    render(<Strip />);
+    goToSlide(2);
+
+    check();
+
+    expect(stripScrollTo).toHaveBeenCalledTimes(2);
+    expect(stripScrollTo).toHaveBeenLastCalledWith({left: 300, behavior: 'auto'});
+    expect(activeIndex()).toBe(1);
+  });
+
+  it('sends the strip on when a dropped scroll leaves it back on the slide it started from', () => {
+    render(<Strip />);
+    const viewport = goToSlide(2);
+    scrollTo(100);
+    check();
+
+    scrollTo(0);
+    fireEvent(viewport, new Event('scrollend'));
+    check();
+    check();
+
+    expect(stripScrollTo).toHaveBeenLastCalledWith({left: 300, behavior: 'auto'});
+  });
+
+  it('leaves a scroll that is still on its way to land by itself', () => {
+    render(<Strip />);
+    goToSlide(4);
+
+    for (const left of [200, 500, 800, 900]) {
+      scrollTo(left);
+      check();
+    }
+
+    expect(stripScrollTo).toHaveBeenCalledTimes(1);
+    expect(activeIndex()).toBe(3);
+  });
+
+  it('leaves the strip to a user who takes it over mid-scroll', () => {
+    render(<Strip />);
+    const viewport = goToSlide(4);
+    scrollTo(200);
+
+    fireEvent.touchStart(viewport);
+    check();
+    check();
+
+    expect(stripScrollTo).toHaveBeenCalledTimes(1);
   });
 });
