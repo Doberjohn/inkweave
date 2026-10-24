@@ -19,7 +19,9 @@ const slotsFor = (cards: readonly LorcanaCard[]) => (index: number, tabIndex: nu
 
 /**
  * The shared binder chrome. Both binders render through this: Browse compacts
- * results into it, the collection binder holds fixed slots in it.
+ * results into it, the collection binder holds fixed slots in it. Black pro pages
+ * of clear pockets in a zip binder's board (#941), the sheets under each page along
+ * its foot once it knows how many pockets the binder fills (`cardCount`).
  *
  * THE DECORATOR IS FIXTURE, NOT DECORATION. Every page inside is `height: 100%`
  * and card width is derived from row height, so a decorator with an indefinite
@@ -57,6 +59,20 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 /**
+ * The third spread of a set's nine (#941): one sheet's edge along the left page's foot, for the
+ * spread turned before it, and two along the right's, for the six still to come.
+ */
+export const MiddleOfASet: Story = {
+  args: {
+    start: 36,
+    canPrev: true,
+    canNext: true,
+    cardCount: 204,
+    renderSlot: (index, tabIndex) => slotsFor(BINDER_CARDS)(index % BINDER_CARDS.length, tabIndex),
+  },
+};
+
+/**
  * The first spread (owner, 2026-10-18): the inside front cover on the left, the same plain
  * board as the back cover, and the binder's first twelve cards on the right.
  */
@@ -76,15 +92,15 @@ export const PartlyFilled: Story = {
 /**
  * The last spread of a fourteen-card binder: twelve sat beside the front cover, the last two
  * are on this left page, and the right page, past them, is the inside back cover rather than
- * empty parchment, so the binder reads as ending there.
+ * a page of empty pockets, so the binder reads as ending there.
  */
 export const BackCover: Story = {
   args: {...PartlyFilled.args, cardCount: 14, renderSlot: slotsFor(BINDER_CARDS.slice(0, 14))},
 };
 
 /**
- * Loading. IDENTICAL chrome to every other story — parchment, spine, arrows and
- * footnote — with shimmer in the pockets, which is what makes the arrival of
+ * Loading. IDENTICAL chrome to every other story — board, pages, spine and arrows —
+ * with shimmer in the pockets, which is what makes the arrival of
  * real cards a change of contents rather than a change of layout. Measured after
  * the change: page geometry is byte-identical from 0 images loaded to 24.
  */
@@ -136,16 +152,15 @@ export const ArrowsOnTheEdgesShort: Story = {
 
 /**
  * Short viewport. Cards derive from the height budget, so the spread shrinks to
- * fit rather than scrolling — the property the whole layout rests on.
+ * fit rather than scrolling — the property the whole layout rests on. Inside the
+ * meta's router: a second one round it threw, and the story drew nothing.
  */
 export const ShortViewport: Story = {
   decorators: [
     (Story) => (
-      <MemoryRouter>
-        <div style={{height: 520, background: COLORS.background}}>
-          <Story />
-        </div>
-      </MemoryRouter>
+      <div style={{height: 520, background: COLORS.background}}>
+        <Story />
+      </div>
     ),
   ],
 };

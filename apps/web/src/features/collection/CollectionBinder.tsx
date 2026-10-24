@@ -1,4 +1,4 @@
-import {useState, type CSSProperties, type PointerEvent} from 'react';
+import {useState, type AnimationEvent, type CSSProperties, type PointerEvent} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from '../cards/components/CardTile';
 import {PROMO_RARITY, smallImageUrl} from '../cards/loader';
@@ -8,9 +8,11 @@ import {finishesOf} from './printingFinishes';
 import {BinderSpread, PER_PAGE, PER_SPREAD} from '../cards/components/BinderSpread';
 import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/BinderSpreadMap';
 import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
+import {settleOf} from './binderPockets';
 import {printingName} from '../../shared/hooks/usePrintingSelection';
+import {usePrefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
 import {CardImageButton, CardLightbox} from '../../shared/components';
-import {FONT_SIZES, RADIUS, SPACING, blackRgba} from '../../shared/constants';
+import {COLORS, FONT_SIZES, SPACING} from '../../shared/constants';
 
 /**
  * The collection binder (#553 Phase C): the pockets it is given, in the order it is given them.
@@ -34,7 +36,12 @@ import {FONT_SIZES, RADIUS, SPACING, blackRgba} from '../../shared/constants';
  * where it has one. A waiting promo with a scan shows the scan instead, greyed, and a click
  * opens it full size (`WaitingPromoPocket`).
  *
- * The parchment, spine and arrows come from `BinderSpread`, the spread map from
+ * EACH POCKET HOLDS ITS CARD AS A REAL ONE WOULD (owner, 2026-10-24, #941): the card sits a
+ * hair off straight at its pocket's foot (`settleOf`), a foil you hold wears a holo finish, and
+ * a first copy slides in through the pocket's mouth as its colour comes in, a last one taken
+ * out draining it to grey (`useShownCopies`).
+ *
+ * The pages, pockets, spine and arrows come from `BinderSpread`, the spread map from
  * `BinderSpreadMap`.
  */
 
@@ -68,6 +75,11 @@ interface CollectionBinderProps {
    * since nothing points there (its counts change in the card window).
    */
   onCountChange?: (cardId: string, finish: Finish, count: number) => void;
+  /**
+   * Whether the card window is open over the binder (#941). A pocket whose copies change while
+   * it is plays its slide in or grey out once it closes, where the change can be seen.
+   */
+  windowOpen?: boolean;
 }
 
 /**
@@ -151,6 +163,45 @@ function pocketEditor(
   };
 }
 
+/** The change a pocket plays as its card turns held or not (binder.css): sliding in, or greying out. */
+type Play = 'slide-in' | 'grey-out';
+
+/**
+ * Whether the pocket shows its card as held, and the change it is playing (owner, 2026-10-24,
+ * #941): a first copy slides in through the pocket's mouth as its colour comes in, and the last
+ * one taken out drains it to grey, each once, cleared as its colour settles. Copies changed in
+ * the card window play once it closes, where the pocket can be seen; under reduced motion the
+ * pocket just changes. Set while rendering, as the React Compiler expects, from what the
+ * pocket showed last: a pocket mounted with its counts already there plays nothing.
+ */
+function useShownCopies(owned: boolean, windowOpen: boolean) {
+  const reducedMotion = usePrefersReducedMotion();
+  const [shown, setShown] = useState(owned);
+  const [play, setPlay] = useState<Play | null>(null);
+  if (!windowOpen && owned !== shown) {
+    const change: Play = owned ? 'slide-in' : 'grey-out';
+    setShown(owned);
+    setPlay(reducedMotion ? null : change);
+  }
+  return {
+    shown,
+    play,
+    onAnimationEnd: (e: AnimationEvent) => {
+      if (e.animationName.startsWith('binder-colour')) setPlay(null);
+    },
+  };
+}
+
+/** A pocket's classes for binder.css: the holo on a foil you hold, and the change it is playing. */
+const pocketClass = (foil: boolean, play: Play | null) =>
+  [foil ? 'binder-foil' : '', play ? `binder-${play}` : ''].filter(Boolean).join(' ') || undefined;
+
+/** Where a card sits in its pocket (`settleOf`), as the custom properties binder.css reads. */
+function settleStyle(cardId: string): CSSProperties {
+  const {sx, sy, sr} = settleOf(cardId);
+  return {'--sx': String(sx), '--sy': String(sy), '--sr': String(sr)} as CSSProperties;
+}
+
 /** One position in the binder: the card, greyed while you hold none, and its counts. */
 function CardPocket({
   card,
@@ -158,6 +209,7 @@ function CardPocket({
   onSelect,
   tabIndex,
   onCountChange,
+  windowOpen,
 }: {
   card: LorcanaCard;
   counts: CollectionEntry;
@@ -165,18 +217,23 @@ function CardPocket({
   /** The pocket's place in the Tab order, from `BinderSpread`: one pocket in view is a Tab stop. */
   tabIndex: number;
   onCountChange: CollectionBinderProps['onCountChange'];
+  windowOpen: boolean;
 }) {
   const {pointed, pointerProps} = usePointedByMouse();
+  const {shown, play, onAnimationEnd} = useShownCopies(isOwned(counts), windowOpen);
   return (
-    // `binder-pocket`: a pocket's tile glows stronger, to show on the parchment (index.css).
-    <div className="binder-pocket" style={{position: 'relative', height: '100%'}} {...pointerProps}>
+    <div
+      className={pocketClass(shown && counts.foil > 0, play)}
+      style={{position: 'relative', height: '100%', ...settleStyle(card.id)}}
+      onAnimationEnd={onAnimationEnd}
+      {...pointerProps}>
       {/*
         The unowned treatment greys ONLY the art: `.binder-unowned` (index.css)
         filters the tile's CHILDREN. On the slot it would grey the counts too, and
         on this wrapper it would also grey the tile's gold glow, which a filter on
         the children never reaches.
       */}
-      <div className={isOwned(counts) ? undefined : 'binder-unowned'} style={{height: '100%'}}>
+      <div className={shown ? undefined : 'binder-unowned'} style={{height: '100%'}}>
         <CardTile
           card={card}
           onSelect={onSelect}
@@ -192,8 +249,8 @@ function CardPocket({
 }
 
 /**
- * An open pocket on the parchment: dashed, in the parchment's own brown (black, thinned), with
- * its code over what it waits for.
+ * An open pocket: its code over what it waits for, in muted text on the black page. Its sleeve
+ * shows the pocket empty (#941), where a dashed outline drew it on the parchment.
  */
 const OPEN_STYLE: CSSProperties = {
   height: '100%',
@@ -204,9 +261,7 @@ const OPEN_STYLE: CSSProperties = {
   justifyContent: 'center',
   gap: SPACING.xs,
   padding: SPACING.sm,
-  border: `2px dashed ${blackRgba(0.3)}`,
-  borderRadius: `${RADIUS.sm}px`,
-  color: blackRgba(0.65),
+  color: COLORS.textMuted,
   textAlign: 'center',
 };
 
@@ -256,8 +311,7 @@ function WaitingPromoPocket({
   const printing = `${pocket.fullName}, ${promoLabel(pocket)} printing`;
   const name = `${printing}: ${openReason(pocket).toLowerCase()}`;
   return (
-    // `binder-pocket`: its glow is a pocket's, stronger, to show on the parchment (index.css).
-    <div className="binder-pocket" style={{height: '100%'}}>
+    <div style={{height: '100%'}}>
       <CardImageButton ariaLabel={name} onClick={() => setEnlarged(true)} tabIndex={tabIndex} tile>
         {failed ? (
           <OpenPocketText pocket={pocket} />
@@ -310,6 +364,7 @@ export function CollectionBinder({
   single = false,
   pager = 'arrows',
   onCountChange,
+  windowOpen = false,
 }: CollectionBinderProps) {
   const {perView, lead} = single ? PAGES : SPREADS;
   // Held as the first SLOT in view, not a view number, so crossing the phone
@@ -350,13 +405,17 @@ export function CollectionBinder({
         const slot = slots[index];
         if (!slot) return null;
         if (isOpenPocket(slot)) return <OpenPocketView pocket={slot} tabIndex={tabIndex} />;
+        // Keyed by its card: a search or filter that moves another card into this pocket must
+        // not hand it this card's last shown copies, or it would play a change it never had.
         return (
           <CardPocket
+            key={slot.id}
             card={slot}
             counts={countsFor(slot.id)}
             onSelect={onSelect}
             tabIndex={tabIndex}
             onCountChange={single ? undefined : onCountChange}
+            windowOpen={windowOpen}
           />
         );
       }}

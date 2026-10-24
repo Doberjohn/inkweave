@@ -42,6 +42,7 @@ function isKnownOffender(context, rule) {
 const COLOR_EXEMPT = [
   /shared\/constants\/theme\.ts$/,
   /shared\/constants\/playstyleUi\.ts$/,
+  /features\/cards\/components\/binderLook\.ts$/,
   /src\/docs\//,
   /\.test\.(ts|tsx)$/,
   /shared\/components\/(CostIcon|FilterIcon|SearchIcon|InkIcon|InkwellIcon)\.tsx$/,

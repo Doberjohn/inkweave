@@ -166,7 +166,7 @@ When a later `pnpm sync-variants` prints `! 14221 now has official art, but card
 1. **Before pushing the branch,** set `VITE_IS_REVEAL_SEASON=true` in Vercel for **Production and Preview**. It is safe early: until the switch is merged the phase is `released` and nothing shows.
 2. The flag is read from Vercel by `vercel pull` inside `.github/workflows/deploy.yml`. It is NOT a GitHub Actions variable.
 3. Confirm the repo variable `DEPLOY_VIA_CI` is `true` (`gh variable list`). If it is unset, pushes to `master` deploy nothing, and Vercel's own git deploys for `master` are disabled in `vercel.json`.
-4. `master` has no branch protection, so the PR's checks are advisory. Verify by hand: the four `e2e-tests (…)` jobs (chromium and mobile-chrome share one) and the size-limit check (`RevealsPage-*.js` counts toward "Flag-gated JS", a 61 kB budget it shares with the collection and friends chunks).
+4. `master` has no branch protection, so the PR's checks are advisory. Verify by hand: the four `e2e-tests (…)` jobs (chromium and mobile-chrome share one) and the size-limit check (`RevealsPage-*.js` counts toward "Flag-gated JS", a 65 kB budget it shares with the collection and friends chunks).
 5. On the PR's Vercel preview, confirm `/reveals` renders and a card image loads from `/card-images/{id}.{hash}.avif`. That is the first exercise of the real production image path.
 6. Merge. After the deploy, check the Reveals pill on `/browse` (proves the flag was inlined), then `/reveals`.
 
