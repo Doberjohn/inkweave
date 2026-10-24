@@ -69,15 +69,32 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      # The scrub on the Review step runs Claude's shell commands in a bubblewrap sandbox,
+      # and Claude Code won't start without one. The action installs it only when it lets
+      # in users without write access, so this step does what the action's own does:
+      # installs bubblewrap and socat, and lifts Ubuntu 24.04's AppArmor block on the
+      # unprivileged user namespaces bubblewrap needs.
+      - name: Install the sandbox for Claude's shell commands
+        run: |
+          for attempt in 1 2 3; do
+            sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends bubblewrap socat && break
+            if [ "$attempt" = 3 ]; then exit 1; fi
+            echo "apt-get attempt $attempt failed; retrying..."
+            sleep 5
+          done
+          if [ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+
       # Claude Code's bundled /code-review skill, posting its findings as inline comments.
       # The settings turn off the repo's Claude hooks, which guard a local checkout and
       # have nothing to guard here, and .mcp.json's GitHub server.
       - name: Review
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1
         env:
           GH_TOKEN: ${{ github.token }}
           # Strips the API key from the shell commands Claude runs, which need only the
-          # job's token.
+          # job's token, and runs them in the sandbox above.
           CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: "1"
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
