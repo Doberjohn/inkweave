@@ -119,6 +119,10 @@ jobs:
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      # The quick rollback for the prerendered pages' phone captures (#915): set the repository
+      # variable PRERENDER_PHONE to 0 and the crawl skips them, and the render guard's check 10
+      # with them. Unset, it is empty, and both run.
+      PRERENDER_PHONE: ${{ vars.PRERENDER_PHONE }}
     steps:
       - uses: actions/checkout@v7
 

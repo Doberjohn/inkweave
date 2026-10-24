@@ -4,13 +4,16 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   selectSampleCards,
+  findDesktopOnlyEagerImages,
   findOffenders,
   findOrphanImagePreloads,
   findLazySdkPreloads,
+  findPhoneCaptureProblems,
   readCanonical,
   readPrerenderRoute,
   SITE_ORIGIN,
 } from './check-rendered-html.mjs';
+import {CAPTURE_MEDIA} from './lib/captureMedia.mjs';
 
 /** Stand-in for the engine's cardPath — same shape, no engine dist needed. */
 const cardPath = (c) => `/card/${c.id}/${c.slug}`;
@@ -25,9 +28,16 @@ const FOOTER_HTML =
     .join('') +
   '</footer>';
 
-/** A captured page's #root, marked with the route it was captured on (#915). */
+/** The phone capture the crawl puts right after #root (#915): the page in its phone layout. */
+const phoneCapture = (content) =>
+  `<template id="prerender-phone"><main data-layout="phone">${content}</main></template>`;
+
+/**
+ * A captured page's #root, marked with the route it was captured on, and its phone capture
+ * (#915).
+ */
 const markedRoot = (route, content = '') =>
-  `<div id="root" data-prerender-route="${route}">${content}</div>`;
+  `<div id="root" data-prerender-route="${route}">${content}</div>${phoneCapture(content)}`;
 
 /** A prerendered card page as the crawl actually writes it. */
 const goodCardHtml = (card) =>
@@ -149,6 +159,32 @@ describe('findOrphanImagePreloads', () => {
       '<head><link rel="preload" href="/fonts/plus-jakarta-sans-400.woff2" as="font" type="font/woff2" crossorigin=""></head>';
     expect(findOrphanImagePreloads(html)).toEqual([]);
   });
+
+  describe('on a page with a phone capture (#915)', () => {
+    const ART = `<img alt="" src="${STALE}">`;
+    const preload = (media) => `<link rel="preload" as="image" href="${STALE}"${media}>`;
+    const page = (head, root, phone) =>
+      `<head>${head}</head><body><div id="root">${root}</div>${phoneCapture(phone)}</body>`;
+    const PHONE = ` media="${CAPTURE_MEDIA.phone}"`;
+    const DESKTOP = ` media="${CAPTURE_MEDIA.desktop}"`;
+
+    it("passes each screen's preload whose image the capture for that screen renders", () => {
+      expect(findOrphanImagePreloads(page(preload(PHONE) + preload(DESKTOP), ART, ART))).toEqual(
+        [],
+      );
+    });
+
+    it('flags a preload for the phone whose image only the desktop capture renders', () => {
+      expect(findOrphanImagePreloads(page(preload(PHONE), ART, ''))).toEqual([STALE]);
+    });
+
+    it.each([
+      ['the desktop', DESKTOP],
+      ['every screen', ''],
+    ])('flags a preload for %s whose image only the phone capture renders', (_label, media) => {
+      expect(findOrphanImagePreloads(page(preload(media), '', ART))).toEqual([STALE]);
+    });
+  });
 });
 
 describe('findLazySdkPreloads', () => {
@@ -193,6 +229,60 @@ describe('readPrerenderRoute', () => {
     expect(
       readPrerenderRoute('<body><div id="rooted" data-prerender-route="/"></div></body>'),
     ).toBeUndefined();
+  });
+});
+
+describe('findDesktopOnlyEagerImages', () => {
+  it("finds each eager image in #root that the phone capture doesn't show, once", () => {
+    const desktop =
+      '<img src="/brand/logo.svg" alt=""><img alt="" src="/assets/rare.svg"><img src="/brand/logo.svg">';
+    expect(findDesktopOnlyEagerImages(desktop, '<p>phone</p>')).toEqual([
+      '/brand/logo.svg',
+      '/assets/rare.svg',
+    ]);
+  });
+
+  it('passes the images a phone never fetches before the swap, and the ones its capture shows', () => {
+    const desktop =
+      '<img loading="lazy" src="/brand/logo.svg"><img src="data:image/gif;base64,R0lGOD">' +
+      '<img src="/card-images/1.avif" fetchpriority="high">';
+    const phone = '<img alt="" src="/card-images/1.avif" loading="lazy">';
+    expect(findDesktopOnlyEagerImages(desktop, phone)).toEqual([]);
+  });
+});
+
+describe('findPhoneCaptureProblems', () => {
+  const page = (root, template) =>
+    `<html><body><div id="root" data-prerender-route="/">${root}</div>${template}` +
+    '<script>approve()</script></body></html>';
+
+  it('passes a page with a phone capture of its own', () => {
+    expect(findPhoneCaptureProblems(page('<h1>Desk</h1>', phoneCapture('<h1>Phone</h1>')))).toEqual(
+      [],
+    );
+  });
+
+  it.each([
+    ['none', '', 'has no phone capture, so a phone gets the desktop layout (#915)'],
+    [
+      'an empty one',
+      '<template id="prerender-phone"> </template>',
+      'its phone capture is empty, so a phone shows a blank page (#915)',
+    ],
+    [
+      'the desktop markup again',
+      '<template id="prerender-phone"><h1>Desk</h1></template>',
+      'its phone capture is the desktop markup again (#915)',
+    ],
+  ])('fails a page whose phone capture is %s', (_label, template, reason) => {
+    expect(findPhoneCaptureProblems(page('<h1>Desk</h1>', template))).toEqual([reason]);
+  });
+
+  it("fails a page whose #root has an eager image the phone capture doesn't show", () => {
+    const html = page('<img src="/brand/logo.svg" alt="">', phoneCapture('<h1>Phone</h1>'));
+    expect(findPhoneCaptureProblems(html)).toEqual([
+      "a phone fetches /brand/logo.svg for nothing: eager in #root, and the phone capture doesn't show them (#915)",
+    ]);
   });
 });
 
@@ -387,6 +477,52 @@ describe('findOffenders', () => {
     expect(offenders).toEqual([
       {file: browseFile, reason: '#root is marked with no route, expected "/browse" (#915)'},
     ]);
+  });
+
+  it('fails a card page shipped without its phone capture, and / and /browse too (#915)', () => {
+    seedGoodBuild();
+    const cardFile = path.join(dist, 'card', '1989', 'elsa-snow-queen', 'index.html');
+    for (const file of [
+      cardFile,
+      path.join(dist, 'index.html'),
+      path.join(dist, 'browse', 'index.html'),
+    ]) {
+      fs.writeFileSync(
+        file,
+        fs.readFileSync(file, 'utf8').replace(/<template[\s\S]*<\/template>/, ''),
+      );
+    }
+    const offenders = findOffenders(dist, [CARD], cardPath);
+    expect(offenders.map((o) => o.file)).toEqual([
+      cardFile,
+      path.join(dist, 'index.html'),
+      path.join(dist, 'browse', 'index.html'),
+    ]);
+    expect(new Set(offenders.map((o) => o.reason))).toEqual(
+      new Set(['has no phone capture, so a phone gets the desktop layout (#915)']),
+    );
+  });
+
+  it('skips the phone capture check when the crawl skipped phones (PRERENDER_PHONE=0)', () => {
+    seedGoodBuild();
+    const homeFile = path.join(dist, 'index.html');
+    fs.writeFileSync(
+      homeFile,
+      fs.readFileSync(homeFile, 'utf8').replace(/<template[\s\S]*<\/template>/, ''),
+    );
+    expect(findOffenders(dist, [CARD], cardPath, {phones: false})).toEqual([]);
+  });
+
+  it("reads /browse's card links from its desktop capture alone, as crawlers do", () => {
+    seedGoodBuild();
+    // Only the inert phone capture links a card.
+    fs.writeFileSync(
+      path.join(dist, 'browse', 'index.html'),
+      '<html><body><div id="root" data-prerender-route="/browse"></div>' +
+        `${phoneCapture('<a href="/card/1989/elsa-snow-queen">Elsa</a>')}</body></html>`,
+    );
+    const offenders = findOffenders(dist, [CARD], cardPath);
+    expect(offenders.map((o) => o.reason)).toEqual(['links no /card/ URLs (empty shell?)']);
   });
 
   it('distinguishes a wrong target path from a failed crawl', () => {

@@ -53,6 +53,7 @@ jobs:
               - 'scripts/check-prerender-handoff.mjs'
               - 'scripts/check-rendered-html.mjs'
               - 'scripts/lib/mime.mjs'
+              - 'scripts/lib/captureMedia.mjs'
               - 'vercel.json'
               - '.github/workflows/perf-gates.yml'
               - 'package.json'
@@ -163,10 +164,11 @@ jobs:
           echo "Playwright $version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-  # A prerendered page must paint only on its own route, and hand over to the app without
-  # showing another page first (#915). This builds the app, crawls a sample of its routes and
-  # watches them load in Chromium (scripts/check-prerender-handoff.mjs). Deploy crawls every
-  # route, but on a PR only when the crawl or Deploy itself changes, and never runs this check.
+  # A prerendered page must paint only on its own route, in the layout of the screen it is on,
+  # and hand over to the app without showing another page first (#915). This builds the app,
+  # crawls a sample of its routes and watches them load in Chromium
+  # (scripts/check-prerender-handoff.mjs). Deploy crawls every route, but on a PR only when
+  # the crawl or Deploy itself changes, and never runs this check.
   prerender-handoff:
     name: Prerender Handoff
     needs: handoff-playwright-version

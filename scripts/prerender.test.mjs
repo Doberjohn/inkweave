@@ -4,14 +4,19 @@ import {
   CARD_READY_SELECTOR,
   cleanPrerenderedHtml,
   crawlRoute,
+  deferDesktopOnlyImages,
   fileHeaders,
   hasReadyContent,
+  htmlWithPhone,
   isCleanShell,
   isRevealSeasonActive,
   markPrerenderedRoot,
+  mergePhoneCapture,
+  readPhoneCapture,
   READY_SELECTORS,
   readySelectorFor,
 } from './prerender.mjs';
+import {CAPTURE_MEDIA} from './lib/captureMedia.mjs';
 
 // jsdom is apps/web's (its Vitest DOM): a root script can't see it otherwise, as with Playwright.
 const {JSDOM} = createRequire(new URL('../apps/web/package.json', import.meta.url))('jsdom');
@@ -44,6 +49,18 @@ describe('cleanPrerenderedHtml', () => {
     const out = cleanPrerenderedHtml(capture(14), SHELL, ORIGIN);
     expect(out).not.toContain('localhost');
     expect(out.match(/href="\/assets\/c\d+\.js"/g)).toHaveLength(14);
+  });
+
+  it("cleans the phone capture's template too (#915)", () => {
+    const html =
+      `<html><head><title>Real</title></head><body><div id="root"></div>` +
+      `<template id="prerender-phone"><a href="${ORIGIN}/browse">Browse</a>` +
+      `<img src="/brand/logo-animated.svg" alt="Inkweave"></template></body></html>`;
+    expect(cleanPrerenderedHtml(html, SHELL, ORIGIN)).toBe(
+      `<html><head><title>Real</title></head><body><div id="root"></div>` +
+        `<template id="prerender-phone"><a href="/browse">Browse</a>` +
+        `<img src="/brand/logo-static.svg" alt="Inkweave"></template></body></html>`,
+    );
   });
 
   it('makes the hints root-relative rather than deleting them', () => {
@@ -140,6 +157,166 @@ describe('markPrerenderedRoot', () => {
     const fromSource = new Function(`return (${markPrerenderedRoot})`)();
     fromSource('/', doc);
     expect(doc.getElementById('root').getAttribute('data-prerender-route')).toBe('/');
+  });
+});
+
+/**
+ * The phone capture (#915): read off the phone page, then merged into the desktop page before it
+ * is captured. jsdom documents stand in for both pages.
+ */
+describe('the phone capture', () => {
+  const FONT =
+    '<link rel="preload" href="/fonts/body.woff2" as="font" type="font/woff2" crossorigin="">';
+  const pageOf = (head, body) =>
+    new JSDOM(`<!doctype html><html><head>${head}</head><body>${body}</body></html>`).window
+      .document;
+  const desktopPage = (root = '<h1>Desktop</h1>') =>
+    pageOf(
+      `<title>Browse</title>${FONT}<link rel="preload" as="image" href="/card-images/1.avif">`,
+      `<div id="root">${root}</div><script>approve()</script>`,
+    );
+  const phoneCapture = {
+    html: '<h1>Phone</h1><img src="/card-images/1-sm.avif">',
+    preloads: ['<link rel="preload" as="image" href="/card-images/1-sm.avif">'],
+    media: CAPTURE_MEDIA,
+  };
+  const imagePreloads = (doc) =>
+    [...doc.head.querySelectorAll('link[as="image"]')].map((link) => link.outerHTML);
+
+  describe('readPhoneCapture and mergePhoneCapture', () => {
+    it("reads the phone page's #root markup and its image preloads, and no other preload", () => {
+      const phone = pageOf(
+        `${FONT}<link rel="preload" as="image" href="/card-images/1-sm.avif">`,
+        '<div id="root"><h1>Phone</h1></div>',
+      );
+      expect(readPhoneCapture(phone)).toEqual({
+        html: '<h1>Phone</h1>',
+        preloads: ['<link rel="preload" as="image" href="/card-images/1-sm.avif">'],
+      });
+    });
+
+    it('puts the phone markup in an inert template right after #root, before the inline script', () => {
+      const doc = desktopPage();
+      mergePhoneCapture(phoneCapture, doc);
+      expect(doc.body.innerHTML).toBe(
+        '<div id="root"><h1>Desktop</h1></div>' +
+          '<template id="prerender-phone"><h1>Phone</h1><img src="/card-images/1-sm.avif"></template>' +
+          '<script>approve()</script>',
+      );
+      // Inert: the markup is the template's content, not part of the page.
+      expect(doc.querySelectorAll('h1')).toHaveLength(1);
+    });
+
+    it("limits each capture's image preloads to its own screens, and leaves the font's alone", () => {
+      const doc = desktopPage();
+      mergePhoneCapture(phoneCapture, doc);
+      expect(doc.head.innerHTML).toBe(
+        '<title>Browse</title>' +
+          FONT +
+          '<link rel="preload" as="image" href="/card-images/1.avif" media="(min-width: 768px)">' +
+          '<link rel="preload" as="image" href="/card-images/1-sm.avif" media="(max-width: 767.98px)">',
+      );
+    });
+
+    it('brings nothing of the phone page but its #root, so the page keeps one <title>', () => {
+      const doc = desktopPage();
+      const phone = pageOf('<title>Browse</title>', '<div id="root"><h1>Phone</h1></div>');
+      mergePhoneCapture({...readPhoneCapture(phone), media: CAPTURE_MEDIA}, doc);
+      expect(doc.querySelectorAll('title')).toHaveLength(1);
+      expect(doc.getElementById('prerender-phone').innerHTML).toBe('<h1>Phone</h1>');
+    });
+  });
+
+  describe('deferDesktopOnlyImages', () => {
+    /** The desktop page with `root` in #root and the phone capture merged in. */
+    const mergedPage = (root) => {
+      const doc = desktopPage(root);
+      mergePhoneCapture(phoneCapture, doc);
+      return doc;
+    };
+
+    it("turns lazy each eager image the phone capture doesn't use, and no other", () => {
+      const doc = mergedPage(
+        '<img src="/brand/logo.svg"><img src="/card-images/1-sm.avif">' +
+          '<img src="/card-images/2.avif" loading="lazy"><img src="data:image/gif;base64,R0lGOD">',
+      );
+      deferDesktopOnlyImages(CAPTURE_MEDIA.desktop, doc);
+      expect(doc.getElementById('root').innerHTML).toBe(
+        '<img src="/brand/logo.svg" loading="lazy"><img src="/card-images/1-sm.avif">' +
+          '<img src="/card-images/2.avif" loading="lazy"><img src="data:image/gif;base64,R0lGOD">',
+      );
+    });
+
+    it('preloads each image it turned lazy for desktops, once, and no other image', () => {
+      const doc = mergedPage(
+        '<img src="/brand/logo.svg"><img src="/assets/rare.svg"><img src="/brand/logo.svg">' +
+          '<img src="/card-images/1.avif"><img src="/card-images/3.avif" loading="lazy">' +
+          '<img src="/card-images/1-sm.avif">',
+      );
+      deferDesktopOnlyImages(CAPTURE_MEDIA.desktop, doc);
+      // 1.avif had its preload already, and 3.avif and 1-sm.avif stay as they were.
+      expect(imagePreloads(doc)).toEqual([
+        '<link rel="preload" as="image" href="/card-images/1.avif" media="(min-width: 768px)">',
+        '<link rel="preload" as="image" href="/card-images/1-sm.avif" media="(max-width: 767.98px)">',
+        '<link rel="preload" as="image" href="/brand/logo.svg" media="(min-width: 768px)">',
+        '<link rel="preload" as="image" href="/assets/rare.svg" media="(min-width: 768px)">',
+      ]);
+      const lazyLogos = doc.querySelectorAll('#root img[src="/brand/logo.svg"][loading="lazy"]');
+      expect(lazyLogos).toHaveLength(2);
+    });
+
+    it('gives the preload what decides how the image is fetched, so the image can use it', () => {
+      const doc = mergedPage(
+        '<img src="/art/a.avif" fetchpriority="high" crossorigin="anonymous" ' +
+          'srcset="/art/a.avif 1x, /art/a@2x.avif 2x" sizes="200px" alt="A">',
+      );
+      deferDesktopOnlyImages(CAPTURE_MEDIA.desktop, doc);
+      expect(imagePreloads(doc).at(-1)).toBe(
+        '<link rel="preload" as="image" href="/art/a.avif" media="(min-width: 768px)" ' +
+          'fetchpriority="high" crossorigin="anonymous" ' +
+          'imagesrcset="/art/a.avif 1x, /art/a@2x.avif 2x" imagesizes="200px">',
+      );
+    });
+  });
+
+  describe('htmlWithPhone', () => {
+    /** A Playwright page over `doc`, whose evaluate runs the function in it, as in the browser. */
+    const pageOver = (doc) => ({
+      content: async () => doc.documentElement.outerHTML,
+      evaluate: async (fn, arg) => fn(arg, doc),
+    });
+
+    it('returns the page with the phone capture merged in and its desktop-only images deferred', async () => {
+      const doc = desktopPage('<img src="/brand/logo.svg">');
+      const {html, error} = await htmlWithPhone(pageOver(doc), phoneCapture);
+      expect(error).toBeUndefined();
+      expect(html).toContain('<template id="prerender-phone"><h1>Phone</h1>');
+      expect(html).toContain('<img src="/brand/logo.svg" loading="lazy">');
+    });
+
+    it('ships the page as it was before the merge when the merge fails part way', async () => {
+      // Without #root, the merge limits the preloads to desktops and adds no template, so
+      // deferDesktopOnlyImages throws.
+      const doc = pageOf(
+        '<link rel="preload" as="image" href="/card-images/1.avif">',
+        '<main></main>',
+      );
+      const before = doc.documentElement.outerHTML;
+      const {html, error} = await htmlWithPhone(pageOver(doc), phoneCapture);
+      expect(html).toBe(before);
+      expect(error).toMatch(/^phone: /);
+    });
+  });
+
+  it('all three run from their own source, as page.evaluate runs them in the page', () => {
+    const [read, merge, defer] = [readPhoneCapture, mergePhoneCapture, deferDesktopOnlyImages].map(
+      (fn) => new Function(`return (${fn})`)(),
+    );
+    const doc = desktopPage('<img src="/brand/logo.svg">');
+    merge({...read(pageOf('', '<div id="root"><h1>Phone</h1></div>')), media: CAPTURE_MEDIA}, doc);
+    defer(CAPTURE_MEDIA.desktop, doc);
+    expect(doc.getElementById('prerender-phone').innerHTML).toBe('<h1>Phone</h1>');
+    expect(doc.querySelector('#root img').getAttribute('loading')).toBe('lazy');
   });
 });
 

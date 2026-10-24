@@ -24,7 +24,15 @@
  *   3. Browse's capture shows the sort option the app shows.
  *   4. With the inline script gone from the page (a script that failed), the app still renders
  *      and shows.
- *   5. Without JavaScript, a captured page shows as captured (index.html's <noscript> rule).
+ *   5. Without JavaScript, a captured page shows as captured (index.html's <noscript> rule): on a
+ *      phone too, as its desktop capture.
+ *   6. A route with its own capture shows the capture for the screen (the app's code held): on a
+ *      phone the phone capture, swapped in before any frame shows #root, with nothing wider than
+ *      the screen; on a desktop the desktop capture as captured. At the app's breakpoint, 767 px
+ *      wide gets the phone capture and 768 px the desktop one.
+ *   7. A route with its own capture fetches every image the capture it shows loads at once, and
+ *      no image only the other capture shows (the app's code held). A phone's preload scanner
+ *      reads the desktop capture before the inline script swaps the phone one in.
  *
  * Usage: `pnpm build:web`, `PRERENDER_SAMPLE=1 node scripts/prerender.mjs`, then
  *        `pnpm check:prerender-handoff [--dir apps/web/dist]`
@@ -34,7 +42,7 @@ import {existsSync, readFileSync, readdirSync} from 'node:fs';
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {parseArgs} from 'node:util';
-import {readPrerenderRoute} from './check-rendered-html.mjs';
+import {readCaptures, readImages, readPrerenderRoute} from './check-rendered-html.mjs';
 import {createDistServer} from './serve-dist.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -63,9 +71,12 @@ const PAINT_TIMEOUT_MS = 5000;
 const CONCURRENCY = 4;
 /** index.html's inline script, which the fourth check takes out of the page. */
 const INLINE_SCRIPT = /<script>\s*\(function \(\) \{[\s\S]*?data-prerender-route[\s\S]*?<\/script>/;
-/** index.html's style that hides a marked #root until it is approved, as the build writes it. */
+/**
+ * index.html's style that hides a marked #root until it is approved, as the build writes it: its
+ * phone rule too, which doesn't lay the root out at all.
+ */
 const HIDING_STYLE =
-  /<style>\s*#root\[data-prerender-route\]:not\(\[data-ready\]\)\s*\{[^}]*\}\s*<\/style>/;
+  /<style>\s*#root\[data-prerender-route\]:not\(\[data-ready\]\)\s*\{[\s\S]*?<\/style>/;
 /** A query that takes HIDING_STYLE out of the page (the control check). */
 const UNHIDDEN_QUERY = 'unhidden';
 /**
@@ -127,10 +138,11 @@ function sampleFrames() {
       const style = getComputedStyle(root);
       const children = [...root.children];
       frames.push({
-        shown: style.visibility === 'visible' && style.opacity === '1',
+        shown: style.display !== 'none' && style.visibility === 'visible' && style.opacity === '1',
         approved: root.hasAttribute('data-ready'),
         captured: children.some((node) => !fromReact(node)),
         app: children.some(fromReact),
+        layout: root.getAttribute('data-layout'),
       });
     }
     requestAnimationFrame(sample);
@@ -138,14 +150,37 @@ function sampleFrames() {
   requestAnimationFrame(sample);
 }
 
-/** What a page shows once it has settled: its frames, whether anything painted, and #root. */
+/**
+ * What a page shows once it has settled: its frames, whether anything painted, #root, whether
+ * the phone capture's template is still in the page, and how wide the page is.
+ */
 function readPage() {
   const root = document.getElementById('root');
+  const preloads = document.querySelectorAll('link[rel~="preload"][as="image"]');
   return {
     frames: window.__handoff.frames,
     painted: performance.getEntriesByName('first-contentful-paint').length > 0,
     marked: root.hasAttribute('data-prerender-route'),
     sortValues: [...root.querySelectorAll('select')].map((select) => select.value),
+    markup: root.innerHTML,
+    phoneTemplate: document.getElementById('prerender-phone') !== null,
+    pageWidth: document.documentElement.scrollWidth,
+    // Not innerWidth: a phone browser widens its layout viewport to fit a page wider than the
+    // screen, so innerWidth grows with the page, while the root keeps the screen's width.
+    screenWidth: document.documentElement.clientWidth,
+    // The image preloads that apply to this screen, by their media.
+    preloads: [...preloads]
+      .filter((link) => !link.media || window.matchMedia(link.media).matches)
+      .map((link) => new URL(link.href).pathname),
+    // The images #root's styles draw, such as the ink placeholder's symbol on a card tile whose
+    // art hadn't loaded when the page was captured: they belong to the capture it shows.
+    backgrounds: [...root.querySelectorAll('*')].flatMap((element) =>
+      [null, '::before', '::after'].flatMap((pseudo) =>
+        [...getComputedStyle(element, pseudo).backgroundImage.matchAll(/url\("([^"]+)"\)/g)].map(
+          (match) => new URL(match[1]).pathname,
+        ),
+      ),
+    ),
   };
 }
 
@@ -205,22 +240,33 @@ async function settle(page, {app, waitFor, paints}) {
 }
 
 /**
- * Open `path` on `device` in a fresh context and return what it served and showed. `app` false
- * holds the app's code, so only the captured page and index.html's own script act, and `paints`
- * then waits for its first contentful paint too (for a check that expects one); true waits for
- * the app's own page to show, and then for `waitFor` in it, if given.
+ * Open `path` on `device` in a fresh context (at `viewport`, if given) and return what it
+ * served, fetched and showed. `app` false holds the app's code, so only the captured page and
+ * index.html's own script act, and `paints` then waits for its first contentful paint too (for
+ * a check that expects one); true waits for the app's own page to show, and then for `waitFor`
+ * in it, if given.
  */
-async function visit(browser, base, {device, path, app, strip = false, waitFor, paints = false}) {
-  const context = await browser.newContext({...DEVICES[device], serviceWorkers: 'block'});
+async function visit(
+  browser,
+  base,
+  {device, viewport, path, app, strip = false, waitFor, paints = false},
+) {
+  const screen = viewport ? {...DEVICES[device], viewport} : DEVICES[device];
+  const context = await browser.newContext({...screen, serviceWorkers: 'block'});
   try {
     const page = await context.newPage();
+    const images = [];
+    page.on('request', (request) => {
+      if (request.resourceType() === 'image') images.push(new URL(request.url()).pathname);
+    });
     await page.addInitScript(sampleFrames);
     if (!app) await page.route('**/assets/*.js', (route) => route.abort());
     if (strip) await page.route(`${base}${path}`, withoutInlineScript);
     const response = await page.goto(`${base}${path}`, {waitUntil: 'load'});
-    const servedRoute = readPrerenderRoute(await response.text());
+    const served = await response.text();
     await settle(page, {app, waitFor, paints});
-    return {servedRoute, ...(await page.evaluate(readPage))};
+    const seen = await page.evaluate(readPage);
+    return {served, servedRoute: readPrerenderRoute(served), images, ...seen};
   } finally {
     await context.close();
   }
@@ -288,14 +334,54 @@ async function showsWithoutJavaScript(browser, base, {device, path}) {
     const page = await context.newPage();
     await page.goto(`${base}${path}`, {waitUntil: 'load'});
     const style = await page.locator('#root').evaluate((root) => {
-      const {visibility, opacity} = getComputedStyle(root);
-      return {visibility, opacity, children: root.children.length};
+      const {display, visibility, opacity} = getComputedStyle(root);
+      return {display, visibility, opacity, children: root.children.length};
     });
-    const shown = style.visibility === 'visible' && style.opacity === '1' && style.children > 0;
+    const laidOut = style.display !== 'none' && style.children > 0;
+    const shown = laidOut && style.visibility === 'visible' && style.opacity === '1';
     return shown ? null : `#root is ${JSON.stringify(style)}`;
   } finally {
     await context.close();
   }
+}
+
+/** The capture a page shows on `layout`'s screens, read from the page as served (#915). */
+function captureFor(layout, served) {
+  const captures = readCaptures(served);
+  return layout === 'phone' ? captures?.phone : captures?.desktop;
+}
+
+/** Check 6: the capture for `layout`'s screens shows, swapped in before any frame shows #root. */
+function showsCaptureFor(layout) {
+  const mark = layout === 'phone' ? 'phone' : null;
+  return (seen) => {
+    const capture = captureFor(layout, seen.served);
+    if (capture === undefined) return 'was served without a phone capture';
+    const wrong = seen.frames.find((frame) => frame.shown && frame.layout !== mark);
+    if (wrong) return `a frame showed #root laid out as ${JSON.stringify(wrong.layout)}`;
+    if (seen.phoneTemplate) return "the phone capture's template is still in the page";
+    if (seen.markup !== capture) return `#root doesn't show its ${layout} capture`;
+    if (seen.pageWidth > seen.screenWidth) {
+      return `the page is ${seen.pageWidth} px wide on a ${seen.screenWidth} px screen`;
+    }
+    return null;
+  };
+}
+
+/**
+ * Check 7: the page fetched each image the capture it shows loads at once, its preloads for
+ * this screen included, and nothing that capture doesn't show, in its images or its styles.
+ */
+function fetchesImagesOf(layout) {
+  return (seen) => {
+    const images = readImages(captureFor(layout, seen.served) ?? '');
+    const shows = new Set([...images.map(({src}) => src), ...seen.backgrounds]);
+    const stray = [...new Set(seen.images)].filter((src) => !shows.has(src));
+    if (stray.length > 0) return `fetched ${stray.join(', ')}, not in its ${layout} capture`;
+    const loadsAtOnce = [...images.filter(({lazy}) => !lazy).map(({src}) => src), ...seen.preloads];
+    const missed = [...new Set(loadsAtOnce)].filter((src) => !seen.images.includes(src));
+    return missed.length > 0 ? `never fetched ${missed.join(', ')}` : null;
+  };
 }
 
 /**
@@ -332,6 +418,15 @@ export function routesOf(dist) {
       '/browse',
       '/browse/',
       '/%62rowse',
+      '/playstyles',
+      `/playstyles/${playstyle}`,
+      `/card/${cardId}/${slug}`,
+      '/about',
+    ],
+    // Each page with a capture of its own once, for the phone capture's checks (#915).
+    eachCapture: [
+      '/',
+      '/browse',
       '/playstyles',
       `/playstyles/${playstyle}`,
       `/card/${cardId}/${slug}`,
@@ -410,16 +505,52 @@ function fallbackChecks(device, routes) {
   return [...stripped, noScript];
 }
 
+/** Checks 6 and 7 on `device`: each page's capture for its screen, and the images it fetches. */
+function screenChecks(device, routes) {
+  return routes.flatMap((path) => [
+    {
+      name: `6. ${path} (${device}, app held) shows its ${device} capture`,
+      run: async (browser, base) =>
+        showsCaptureFor(device)(await visit(browser, base, {device, path, app: false})),
+    },
+    {
+      name: `7. ${path} (${device}, app held) fetches its ${device} capture's images, and only those`,
+      run: async (browser, base) =>
+        fetchesImagesOf(device)(await visit(browser, base, {device, path, app: false})),
+    },
+  ]);
+}
+
+/**
+ * Check 6 at the app's breakpoint (useResponsive: a phone below 768 px), on a desktop browser:
+ * 767 px wide gets the phone capture, 768 px the desktop one.
+ */
+function breakpointChecks(path) {
+  return [
+    [767, 'phone'],
+    [768, 'desktop'],
+  ].map(([width, layout]) => ({
+    name: `6. ${path} (${width} px wide, app held) shows its ${layout} capture`,
+    run: async (browser, base) => {
+      const viewport = {width, height: 900};
+      const seen = await visit(browser, base, {device: 'desktop', viewport, path, app: false});
+      return showsCaptureFor(layout)(seen);
+    },
+  }));
+}
+
 /** Every check to run, as {name, run(browser, base) => failure or null}. */
 function planChecks(dist) {
-  const {withoutCapture, withCapture} = routesOf(dist);
-  return Object.keys(DEVICES).flatMap((device) => [
+  const {withoutCapture, withCapture, eachCapture} = routesOf(dist);
+  const perDevice = Object.keys(DEVICES).flatMap((device) => [
     controlCheck(device, withoutCapture[0]),
     ...withoutCaptureChecks(device, withoutCapture),
     ...withCaptureChecks(device, withCapture),
     sortOptionCheck(device),
     ...fallbackChecks(device, ['/browse', withoutCapture[0]]),
+    ...screenChecks(device, eachCapture),
   ]);
+  return [...perDevice, ...breakpointChecks('/browse')];
 }
 
 /** Run `checks` CONCURRENCY at a time; a check that throws fails with its error. */
@@ -445,6 +576,9 @@ function buildProblem(home) {
   const html = readFileSync(home, 'utf8');
   if (readPrerenderRoute(html) === undefined) {
     return `${home} carries no route mark: crawl the build first (${HOW_TO_BUILD}), or the crawl stopped marking its pages (#915)`;
+  }
+  if (!readCaptures(html)) {
+    return `${home} carries no phone capture: crawl with phones (PRERENDER_PHONE unset), or the crawl stopped capturing them (#915)`;
   }
   return HIDING_STYLE.test(html) ? null : `${home} lacks index.html's hiding style (#915)`;
 }

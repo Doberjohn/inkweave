@@ -14,7 +14,8 @@
  * Run AFTER `pnpm build:web`. In CI/Vercel the browser must be installed first
  * (`playwright install chromium`). Set PRERENDER_SAMPLE=1 to crawl a small subset for a fast
  * smoke check. Set PRERENDER_CPU_THROTTLE=<n> to slow each page's CPU n-fold (reproduces
- * render races such as #584's). Set SKIP_PRERENDER=1 to skip the crawl and ship SPA-only:
+ * render races such as #584's). Set PRERENDER_PHONE=0 to skip each route's phone capture
+ * (#915). Set SKIP_PRERENDER=1 to skip the crawl and ship SPA-only:
  * .github/workflows/deploy-staging.yml does, because staging is never indexed (#741).
  */
 import {createRequire} from 'node:module';
@@ -23,6 +24,7 @@ import {readFile, writeFile, mkdir} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
 import {resolve, dirname, join, extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {CAPTURE_MEDIA} from './lib/captureMedia.mjs';
 import {contentType} from './lib/mime.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -43,6 +45,15 @@ const ANIMATED_LOGO_SRC = '/brand/logo-animated.svg';
 // The script tag <SpeedInsights /> adds to <head> at runtime, matched by its SDK name rather
 // than its src, which varies by environment. cleanPrerenderedHtml drops it.
 const SPEED_INSIGHTS_SCRIPT = /<script\b[^>]*\bdata-sdkn="@vercel\/speed-insights[^"]*"[^>]*><\/script>/g;
+// The phone each route is captured on a second time (#915). The app picks its layout in
+// JavaScript (useResponsive: a phone below 768 px), so the desktop capture's inline styles lay a
+// phone's screen out wrong; index.html's inline script swaps the phone capture in there.
+const PHONE = {
+  viewport: {width: 390, height: 844},
+  deviceScaleFactor: 2,
+  isMobile: true,
+  hasTouch: true,
+};
 
 /**
  * Is a reveal season live?
@@ -316,49 +327,188 @@ export function markPrerenderedRoot(route, doc = document) {
   }
 }
 
+/**
+ * Read the phone capture off its page (#915): #root's markup, and the image preloads in <head> as
+ * markup, for mergePhoneCapture to copy. Runs in the page through `page.evaluate`, like
+ * markPrerenderedRoot, after it.
+ */
+export function readPhoneCapture(doc = document) {
+  const preloads = [...doc.head.querySelectorAll('link[rel~="preload"][as="image"]')];
+  return {
+    html: doc.getElementById('root')?.innerHTML ?? '',
+    preloads: preloads.map((link) => link.outerHTML),
+  };
+}
+
+/**
+ * Merge the phone capture into the desktop page before it is captured (#915): its markup in an
+ * inert `<template id="prerender-phone">` right after #root, which index.html's inline script
+ * swaps in on a phone, and each capture's image preloads limited to the screens that show it
+ * (`media`), so neither layout preloads the other's. Runs in the desktop page through
+ * `page.evaluate`, like markPrerenderedRoot, so it uses nothing from this module: `media` is
+ * CAPTURE_MEDIA.
+ */
+export function mergePhoneCapture({html, preloads, media}, doc = document) {
+  const template = doc.createElement('template');
+  template.id = 'prerender-phone';
+  template.innerHTML = html;
+  doc.getElementById('root')?.after(template);
+  for (const link of doc.head.querySelectorAll('link[rel~="preload"][as="image"]')) {
+    link.setAttribute('media', media.desktop);
+  }
+  const phonePreloads = doc.createElement('template');
+  phonePreloads.innerHTML = preloads.join('');
+  for (const link of phonePreloads.content.children) link.setAttribute('media', media.phone);
+  doc.head.append(phonePreloads.content);
+}
+
+/**
+ * Keep a phone from fetching the images only the desktop capture shows (#915). A phone's preload
+ * scanner reads the desktop markup before the inline script swaps the phone capture in, and
+ * fetches every eager image in it, so each eager image in #root that the phone capture doesn't
+ * use turns lazy: index.html doesn't lay an unapproved #root out on a phone, so a lazy one never
+ * loads there. Each also gets a preload limited to `desktopMedia`, carrying what decides how the
+ * image is fetched, so a desktop still fetches it as early as the scanner did. Runs in the
+ * desktop page after mergePhoneCapture, which put the phone capture in the page.
+ */
+export function deferDesktopOnlyImages(desktopMedia, doc = document) {
+  const srcsOf = (nodes, name) => new Set([...nodes].map((node) => node.getAttribute(name)));
+  const phone = doc.getElementById('prerender-phone').content;
+  const phoneSrcs = srcsOf(phone.querySelectorAll('img'), 'src');
+  const preloaded = srcsOf(doc.head.querySelectorAll('link[rel~="preload"][as="image"]'), 'href');
+  // The image's attributes that decide how it is fetched, as its preload names them.
+  const fetchAttributes = (img) =>
+    [
+      ['fetchpriority', 'fetchpriority'],
+      ['crossorigin', 'crossorigin'],
+      ['srcset', 'imagesrcset'],
+      ['sizes', 'imagesizes'],
+    ]
+      .filter(([name]) => img.hasAttribute(name))
+      .map(([name, as]) => [as, img.getAttribute(name)]);
+  const preloadFor = (img) => {
+    const link = doc.createElement('link');
+    const attributes = [
+      ['rel', 'preload'],
+      ['as', 'image'],
+      ['href', img.getAttribute('src')],
+      ['media', desktopMedia],
+      ...fetchAttributes(img),
+    ];
+    for (const [name, value] of attributes) link.setAttribute(name, value);
+    return link;
+  };
+  const eagerImages = doc.querySelectorAll(
+    '#root img[src]:not([loading="lazy"]):not([src^="data:"])',
+  );
+  for (const img of eagerImages) {
+    const src = img.getAttribute('src');
+    if (phoneSrcs.has(src)) continue;
+    img.setAttribute('loading', 'lazy');
+    if (preloaded.has(src)) continue;
+    preloaded.add(src);
+    doc.head.append(preloadFor(img));
+  }
+}
+
 const errorMessage = (e) => (e && e.message ? e.message : String(e));
 
 /**
- * One attempt at `route` on a fresh page in its worker's `context`: mark it, capture it, clean
- * it, write it, report on it.
+ * Load `route` in `page` and wait for its content. Returns why the page isn't ready to capture,
+ * or undefined once it is.
  */
-async function crawlRouteOnce(context, route, selector) {
+async function loadRoute(page, route, selector) {
+  // Tells the app it is being crawled, so it never loads Sentry: its modulepreload would be
+  // baked into the captured HTML (#640; deploy check 7 in check-rendered-html.mjs).
+  await page.addInitScript(() => {
+    window.__INKWEAVE_PRERENDER__ = true;
+  });
+  await applyCpuThrottle(page);
+  await page.goto(`http://localhost:${PORT}${route}`, {waitUntil: 'networkidle', timeout: 30000});
+  // A route is "rendered" once its <Seo> has replaced the shell <title>, i.e. the real content
+  // (not the loading skeleton) is on the page. If that never happens within the timeout, the
+  // capture is just the empty shell — crawlRouteOnce returns ok:false so the failure-rate guard
+  // in main() can catch a broken crawl. Otherwise a timing-out crawl would write content-less
+  // shells for every route and still report success, shipping a hollow "prerender". Routes with
+  // a ready selector are the exception: their content lands after the title, so
+  // hasReadyContent waits for it below (#584, #532).
+  const rendered = await page
+    .waitForFunction((shell) => document.title && document.title !== shell, SHELL_TITLE, {
+      timeout: 15000,
+    })
+    .then(() => true)
+    .catch(() => false);
+  const contentReady = await hasReadyContent(page, selector);
+  if (!rendered) return 'title never left the shell (empty render)';
+  if (!contentReady) return `content never rendered (${selector})`;
+  return undefined;
+}
+
+/**
+ * Capture `route` on a phone (#915), on a fresh page in its worker's phone `context`. Returns
+ * `{capture}` from readPhoneCapture, or `{error}`.
+ */
+async function capturePhone(context, route, selector) {
   let page;
   try {
     page = await context.newPage();
-    // Tells the app it is being crawled, so it never loads Sentry: its modulepreload would be
-    // baked into the captured HTML (#640; deploy check 7 in check-rendered-html.mjs).
-    await page.addInitScript(() => {
-      window.__INKWEAVE_PRERENDER__ = true;
-    });
-    await applyCpuThrottle(page);
-    await page.goto(`http://localhost:${PORT}${route}`, {waitUntil: 'networkidle', timeout: 30000});
-    // A route is "rendered" once its <Seo> has replaced the shell <title>, i.e. the real content
-    // (not the loading skeleton) is on the page. If that never happens within the timeout, the
-    // capture is just the empty shell — return ok:false so the failure-rate guard in main() can
-    // catch a broken crawl. Otherwise a timing-out crawl would write content-less shells for
-    // every route and still report success, shipping a hollow "prerender". Routes with a ready
-    // selector are the exception: their content lands after the title, so hasReadyContent waits
-    // for it below (#584, #532).
-    const rendered = await page
-      .waitForFunction((shell) => document.title && document.title !== shell, SHELL_TITLE, {
-        timeout: 15000,
-      })
-      .then(() => true)
-      .catch(() => false);
-    const contentReady = await hasReadyContent(page, selector);
+    const problem = await loadRoute(page, route, selector);
+    if (problem) return {error: `phone: ${problem}`};
     await page.evaluate(markPrerenderedRoot, route);
-    const html = cleanPrerenderedHtml(
-      await page.content(),
-      SHELL_TITLE,
-      `http://localhost:${PORT}`,
-    );
+    return {capture: await page.evaluate(readPhoneCapture)};
+  } catch (e) {
+    return {error: `phone: ${errorMessage(e)}`};
+  } finally {
+    if (page) await page.close();
+  }
+}
+
+/**
+ * Merge `capture`, a route's phone capture, into the desktop capture open in `page`, and return
+ * the page's HTML (#915). If the merge fails, even part way, the page ships as it was before the
+ * merge, without a phone capture, and `error` says why. Exported for scripts/prerender.test.mjs,
+ * which runs it on a jsdom document.
+ */
+export async function htmlWithPhone(page, capture) {
+  const desktopOnly = await page.content();
+  try {
+    await page.evaluate(mergePhoneCapture, {...capture, media: CAPTURE_MEDIA});
+    await page.evaluate(deferDesktopOnlyImages, CAPTURE_MEDIA.desktop);
+    return {html: await page.content()};
+  } catch (e) {
+    return {html: desktopOnly, error: `phone: ${errorMessage(e)}`};
+  }
+}
+
+/**
+ * The HTML of the desktop capture open in `page`, with `route`'s phone capture added unless the
+ * crawl skips phones (`phone` undefined). When the phone capture or its merge fails, the page
+ * ships without one, so a phone shows its desktop capture, as before #915, and `error` says why.
+ */
+async function captureHtml(page, phone, route, selector) {
+  if (!phone) return {html: await page.content()};
+  const {capture, error} = await capturePhone(phone, route, selector);
+  return capture ? htmlWithPhone(page, capture) : {html: await page.content(), error};
+}
+
+/**
+ * One attempt at `route` on a fresh page in its worker's desktop context: mark it, add its phone
+ * capture, capture it, clean it, write it, report on it. A desktop page that isn't ready is
+ * still written, as it always was, but skips the phone, since the attempt has failed anyway.
+ */
+async function crawlRouteOnce({desktop, phone}, route, selector) {
+  let page;
+  try {
+    page = await desktop.newPage();
+    const problem = await loadRoute(page, route, selector);
+    await page.evaluate(markPrerenderedRoot, route);
+    const captured = await captureHtml(page, problem ? undefined : phone, route, selector);
+    const html = cleanPrerenderedHtml(captured.html, SHELL_TITLE, `http://localhost:${PORT}`);
     const outDir = route === '/' ? DIST : join(DIST, route);
     await mkdir(outDir, {recursive: true});
     await writeFile(join(outDir, 'index.html'), html, 'utf8');
-    if (!rendered) return {route, ok: false, error: 'title never left the shell (empty render)'};
-    if (!contentReady) return {route, ok: false, error: `content never rendered (${selector})`};
-    return {route, ok: true};
+    const error = problem ?? captured.error;
+    return error ? {route, ok: false, error} : {route, ok: true};
   } catch (e) {
     return {route, ok: false, error: errorMessage(e)};
   } finally {
@@ -399,6 +549,16 @@ async function loadBuildShell() {
 }
 
 /**
+ * One crawl worker's browser contexts: a desktop one, and a phone one (PHONE) unless the crawl
+ * skips phones (PRERENDER_PHONE=0).
+ */
+async function openContexts(browser, phones) {
+  const desktop = await browser.newContext({serviceWorkers: 'block'});
+  const phone = phones ? await browser.newContext({serviceWorkers: 'block', ...PHONE}) : undefined;
+  return {desktop, phone};
+}
+
+/**
  * Which routes this invocation crawls.
  *
  * `PRERENDER_URL` takes a single route and `PRERENDER_SAMPLE` takes a thin slice — both
@@ -419,26 +579,29 @@ async function main() {
   const shellHtml = await loadBuildShell();
   const only = process.env.PRERENDER_URL;
   const sample = Number(process.env.PRERENDER_SAMPLE || 0);
+  const phones = process.env.PRERENDER_PHONE !== '0';
   const routes = selectRoutes(await enumerateRoutes(), only, sample);
 
   console.log(
-    `[prerender] ${routes.length} routes @ concurrency ${CONCURRENCY}${sample ? ' (SAMPLE)' : ''}`,
+    `[prerender] ${routes.length} routes @ concurrency ${CONCURRENCY}${sample ? ' (SAMPLE)' : ''}, ` +
+      `each captured on ${phones ? 'desktop and a 390x844 phone' : 'desktop only (PRERENDER_PHONE=0)'}`,
   );
+  const started = Date.now();
   const server = await startServer(shellHtml);
   const browser = await chromium.launch();
 
   let idx = 0;
   let done = 0;
   let failed = 0;
-  // Each worker crawls in one browser context of its own (#867), whose HTTP cache serves
-  // its later pages what its first one fetched (fileHeaders). Service workers are blocked:
-  // the app registers one in every production build, so a fresh context per route installed
-  // it on every page, fetching all of its precache again each time. Sharing a context leaves
-  // the captures unchanged: the app writes storage only when a visitor acts, so no route
-  // leaves state behind for the next.
+  // Each worker crawls in browser contexts of its own (#867), whose HTTP cache serves its
+  // later pages what its first one fetched (fileHeaders). Service workers are blocked: the app
+  // registers one in every production build, so a fresh context per route installed it on
+  // every page, fetching all of its precache again each time. Sharing a context leaves the
+  // captures unchanged: the app writes storage only when a visitor acts, so no route leaves
+  // state behind for the next.
   const worker = async () => {
-    const context = await browser.newContext({serviceWorkers: 'block'});
-    const crawlOnce = (route, selector) => crawlRouteOnce(context, route, selector);
+    const contexts = await openContexts(browser, phones);
+    const crawlOnce = (route, selector) => crawlRouteOnce(contexts, route, selector);
     while (idx < routes.length) {
       const route = routes[idx++];
       const r = await crawlRoute(route, crawlOnce);
@@ -449,13 +612,14 @@ async function main() {
       }
       if (done % 100 === 0) console.log(`[prerender] ${done}/${routes.length} (${failed} failed)`);
     }
-    await context.close();
+    await Promise.all(Object.values(contexts).map((context) => context?.close()));
   };
   await Promise.all(Array.from({length: CONCURRENCY}, worker));
 
   await browser.close();
   server.close();
-  console.log(`[prerender] done: ${done - failed} written, ${failed} failed`);
+  const seconds = Math.round((Date.now() - started) / 1000);
+  console.log(`[prerender] done in ${seconds} s: ${done - failed} written, ${failed} failed`);
   // Guard the build: a broad failure means the crawl is capturing empty shells, not content.
   if (failed > Math.ceil(routes.length * 0.02)) {
     console.error('[prerender] failure rate too high — aborting');

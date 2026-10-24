@@ -16,7 +16,8 @@
  * it to `build:vercel` — that would break preview deploys, which is the exact
  * failure the `|| echo` exists to prevent.
  *
- * Checks, against a sample of card pages plus the /browse hub (and, for checks 6, 7 and 9, the homepage):
+ * Checks, against a sample of card pages plus the /browse hub (and, for checks 6, 7, 9 and 10, the
+ * homepage). Checks 2, 4 and 8 read the desktop capture alone, without the phone capture (#915):
  *   1. dist/card/<id>/<slug>/index.html exists
  *   2. it contains the card's fullName as visible content (not just an SPA shell)
  *   3. its <link rel="canonical"> is self-referential (the slug URL), not the homepage
@@ -34,6 +35,9 @@
  *      The footer waits for the page's synergies (#532): see countInkHubLinks.
  *   9. every sampled card page, / and /browse marks its #root with its own route (#915): see
  *      readPrerenderRoute.
+ *  10. every sampled card page, / and /browse carries a phone capture of its own, and no eager
+ *      image a phone would fetch for the desktop capture alone (#915): see
+ *      findPhoneCaptureProblems. Skipped when the crawl skipped phones (PRERENDER_PHONE=0).
  *
  * Usage: node scripts/check-rendered-html.mjs [targetDir]   (default: apps/web/dist)
  * Bypass: SKIP_RENDER_GUARD=1  (emergency escape hatch)
@@ -41,6 +45,7 @@
 import {readFileSync, readdirSync, existsSync} from 'node:fs';
 import {join, dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {CAPTURE_MEDIA} from './lib/captureMedia.mjs';
 import {SITE_ORIGIN} from './lib/siteOrigin.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -100,15 +105,34 @@ const hasRel = (tag, token) => (attr(tag, 'rel') ?? '').toLowerCase().split(/\s+
  * on purpose). Attributes are read independently of their order, for the reason
  * readCanonical documents.
  *
+ * On a page with a phone capture (#915), each screen preloads for the capture it shows: a
+ * preload for the phone's screens (CAPTURE_MEDIA.phone) counts only if the phone capture renders
+ * its image, and any other only if the page around the phone capture does.
+ *
  * @param {string} html - one captured page
  * @returns {string[]} hrefs of image preloads with no matching `<img src>`
  */
 export function findOrphanImagePreloads(html) {
-  const rendered = new Set([...html.matchAll(/<img\b[^>]*\ssrc="([^"]*)"/gi)].map((m) => m[1]));
+  const srcsIn = (markup) =>
+    new Set([...markup.matchAll(/<img\b[^>]*\ssrc="([^"]*)"/gi)].map((m) => m[1]));
+  const desktop = srcsIn(withoutPhoneCapture(html));
+  const phone = srcsIn(readCaptures(html)?.phone ?? html);
+  return readImagePreloads(html)
+    .filter(({href, media}) => href && !(media === CAPTURE_MEDIA.phone ? phone : desktop).has(href))
+    .map(({href}) => href);
+}
+
+/**
+ * The image preloads in a captured page, each with the screens it is for (`media`, #915), read
+ * whatever order their attributes come in (see readCanonical).
+ *
+ * @param {string} html - one captured page
+ * @returns {Array<{href: string | undefined, media: string | undefined}>}
+ */
+export function readImagePreloads(html) {
   return (html.match(/<link\b[^>]*>/gi) ?? [])
     .filter((tag) => hasRel(tag, 'preload') && attr(tag, 'as') === 'image')
-    .map((tag) => attr(tag, 'href'))
-    .filter((href) => href && !rendered.has(href));
+    .map((tag) => ({href: attr(tag, 'href'), media: attr(tag, 'media')}));
 }
 
 /** The offender reason shared by every page the orphan-preload check covers. */
@@ -210,6 +234,89 @@ const routeMarkReason = (mark, route) =>
   `#root is marked ${mark === undefined ? 'with no route' : `"${mark}"`}, expected "${route}" (#915)`;
 
 /**
+ * The phone capture prerender.mjs puts right after #root (#915), its markup captured. Template
+ * content is inert, so no crawler indexes it and no browser fetches what it names.
+ */
+const PHONE_CAPTURE = /<template\b[^>]*\sid="prerender-phone"[^>]*>([\s\S]*?)<\/template>/i;
+
+/** A captured page as crawlers read it: the desktop capture, without the phone capture. */
+const withoutPhoneCapture = (html) => html.replace(PHONE_CAPTURE, '');
+
+/** #root's markup in a captured page, up to `end`, where the phone capture starts. */
+function rootMarkupBefore(html, end) {
+  const open = html.match(/<div\b[^>]*\sid="root"[^>]*>/i);
+  if (!open) return '';
+  return html.slice(open.index + open[0].length, end).replace(/<\/div>\s*$/, '');
+}
+
+/**
+ * A captured page's two captures (#915): #root's markup, and the phone capture's after it.
+ *
+ * @param {string} html - one captured page
+ * @returns {{desktop: string, phone: string} | undefined} undefined without a phone capture
+ */
+export function readCaptures(html) {
+  const capture = html.match(PHONE_CAPTURE);
+  return capture ? {desktop: rootMarkupBefore(html, capture.index), phone: capture[1]} : undefined;
+}
+
+/**
+ * Each image `markup` renders, data: URIs aside, and whether it waits to load (`loading`).
+ *
+ * @param {string} markup - a capture's markup
+ * @returns {Array<{src: string, lazy: boolean}>}
+ */
+export function readImages(markup) {
+  return (markup.match(/<img\b[^>]*>/gi) ?? [])
+    .map((tag) => ({src: attr(tag, 'src'), lazy: attr(tag, 'loading')?.toLowerCase() === 'lazy'}))
+    .filter(({src}) => src && !src.startsWith('data:'));
+}
+
+/**
+ * The images a phone fetches for nothing on a captured page (#915): eager ones in #root that the
+ * phone capture doesn't show. A phone's preload scanner reads the desktop markup before
+ * index.html's inline script swaps the phone capture in, and fetches every eager image it finds;
+ * prerender.mjs's deferDesktopOnlyImages makes these lazy, and index.html never lays an
+ * unapproved #root out on a phone, so a lazy one never loads there.
+ *
+ * @param {string} desktop - #root's markup
+ * @param {string} phone - the phone capture's markup
+ * @returns {string[]} their srcs, each once
+ */
+export function findDesktopOnlyEagerImages(desktop, phone) {
+  const phoneSrcs = new Set(readImages(phone).map(({src}) => src));
+  const eager = readImages(desktop).filter(({src, lazy}) => !lazy && !phoneSrcs.has(src));
+  return [...new Set(eager.map(({src}) => src))];
+}
+
+/**
+ * Why a captured page's phone capture fails check 10 (#915), if it does. On a phone,
+ * index.html's inline script swaps the capture's `<template id="prerender-phone">` into #root,
+ * so a page without one shows a phone the desktop layout, an empty one shows it a blank page, and
+ * one that repeats #root's markup was captured at desktop width.
+ *
+ * @param {string} html - one captured page
+ * @returns {string[]} the reasons, none when the phone capture is sound
+ */
+export function findPhoneCaptureProblems(html) {
+  const captures = readCaptures(html);
+  if (!captures) return ['has no phone capture, so a phone gets the desktop layout (#915)'];
+  const {desktop, phone} = captures;
+  if (!phone.trim()) return ['its phone capture is empty, so a phone shows a blank page (#915)'];
+  if (phone === desktop) return ['its phone capture is the desktop markup again (#915)'];
+  const wasted = findDesktopOnlyEagerImages(desktop, phone);
+  if (wasted.length === 0) return [];
+  return [
+    `a phone fetches ${wasted.join(', ')} for nothing: eager in #root, and the phone capture ` +
+      "doesn't show them (#915)",
+  ];
+}
+
+/** Check 10's offenders on one page, or none when the crawl skipped phones (PRERENDER_PHONE=0). */
+const phoneCaptureOffenders = (file, html, phones) =>
+  phones ? findPhoneCaptureProblems(html).map((reason) => ({file, reason})) : [];
+
+/**
  * Choose which card pages this guard verifies.
  *
  * The prerender already aborts on a >2% route failure rate, so this guard is not
@@ -258,21 +365,22 @@ export function selectSampleCards(cards) {
  * @param {string} targetDir - build output root to inspect
  * @param {{id: number, fullName: string}} card - the sampled card
  * @param {string} route - the card's slug path, from the engine's cardPath
- * @param {Map<string, string>} sdkChunks - from findLazySdkChunks
+ * @param {{sdkChunks: Map<string, string>, phones: boolean}} checks - see findOffenders
  * @returns {Array<{file: string, reason: string}>} empty when the page is sound
  */
-function findCardPageOffenders(targetDir, card, route, sdkChunks) {
+function findCardPageOffenders(targetDir, card, route, {sdkChunks, phones}) {
   const file = join(targetDir, route, 'index.html');
   if (!existsSync(file)) {
     return [{file, reason: 'prerendered card page missing (crawl did not run?)'}];
   }
 
   const html = readFileSync(file, 'utf8');
+  const desktopHtml = withoutPhoneCapture(html);
   const canonical = readCanonical(html);
   const expectedCanonical = `${SITE_ORIGIN}${route}`;
   const orphanPreloads = findOrphanImagePreloads(html);
   const sdkPreloads = findLazySdkPreloads(html, sdkChunks);
-  const inkHubs = countInkHubLinks(html);
+  const inkHubs = countInkHubLinks(desktopHtml);
   const mark = readPrerenderRoute(html);
 
   // Each entry is one assertion: [failed?, why]. A table rather than a chain of ifs
@@ -281,7 +389,7 @@ function findCardPageOffenders(targetDir, card, route, sdkChunks) {
     // The card's own name is the cheapest proof that real content rendered: an SPA
     // shell contains the app skeleton and nothing card-specific.
     [
-      !html.includes(card.fullName),
+      !desktopHtml.includes(card.fullName),
       `does not contain its card name "${card.fullName}" (empty shell?)`,
     ],
     // #486's central acceptance criterion: every route self-references. A homepage
@@ -323,14 +431,15 @@ function findCardPageOffenders(targetDir, card, route, sdkChunks) {
     [mark !== route, routeMarkReason(mark, route)],
   ]
     .filter(([failed]) => failed)
-    .map(([, reason]) => ({file, reason}));
+    .map(([, reason]) => ({file, reason}))
+    .concat(phoneCaptureOffenders(file, html, phones));
 }
 
 /** /browse is the corpus hub; a shell there is a failed crawl even if cards rendered. */
 function findBrowseHubOffenders(targetDir) {
   const file = join(targetDir, 'browse', 'index.html');
   if (!existsSync(file)) return [{file, reason: 'prerendered /browse missing'}];
-  if (!readFileSync(file, 'utf8').includes('href="/card/')) {
+  if (!withoutPhoneCapture(readFileSync(file, 'utf8')).includes('href="/card/')) {
     return [{file, reason: 'links no /card/ URLs (empty shell?)'}];
   }
   return [];
@@ -343,13 +452,13 @@ const ENTRY_PAGES = [
 ];
 
 /**
- * The orphan-preload (#627), lazy-SDK-preload (#640, #827) and route-mark (#915) checks on the
- * two entry pages the card sample does not cover: `/`, the page PSI measures and the capture
- * vercel.json serves for every route without its own, and `/browse`. A missing file is
- * skipped: findBrowseHubOffenders already reports a missing /browse, and the build always
+ * The orphan-preload (#627), lazy-SDK-preload (#640, #827), route-mark and phone-capture (#915)
+ * checks on the two entry pages the card sample does not cover: `/`, the page PSI measures and
+ * the capture vercel.json serves for every route without its own, and `/browse`. A missing file
+ * is skipped: findBrowseHubOffenders already reports a missing /browse, and the build always
  * writes a root index.html (the Vite shell).
  */
-function findEntryPageOffenders(targetDir, sdkChunks) {
+function findEntryPageOffenders(targetDir, {sdkChunks, phones}) {
   return ENTRY_PAGES.flatMap(({rel, route}) => {
     const file = join(targetDir, rel);
     if (!existsSync(file)) return [];
@@ -363,7 +472,8 @@ function findEntryPageOffenders(targetDir, sdkChunks) {
       [mark !== route, routeMarkReason(mark, route)],
     ]
       .filter(([failed]) => failed)
-      .map(([, reason]) => ({file, reason}));
+      .map(([, reason]) => ({file, reason}))
+      .concat(phoneCaptureOffenders(file, html, phones));
   });
 }
 
@@ -376,10 +486,19 @@ function findEntryPageOffenders(targetDir, sdkChunks) {
  * @param {string} targetDir - build output root to inspect
  * @param {Array<{id: number, fullName: string}>} samples - card pages to verify
  * @param {(card: object) => string} cardPath - the engine's slug-path builder
- * @param {Map<string, string>} [sdkChunks] - the build's lazy SDK chunks (default: read from targetDir)
+ * @param {object} [checks]
+ * @param {Map<string, string>} [checks.sdkChunks] - the build's lazy SDK chunks (default: read
+ *   from targetDir)
+ * @param {boolean} [checks.phones] - whether the crawl captured phones, so check 10 runs
+ *   (default: true; main reads PRERENDER_PHONE)
  * @returns {Array<{file: string, reason: string}>} empty when the build is sound
  */
-export function findOffenders(targetDir, samples, cardPath, sdkChunks = findLazySdkChunks(targetDir)) {
+export function findOffenders(
+  targetDir,
+  samples,
+  cardPath,
+  {sdkChunks = findLazySdkChunks(targetDir), phones = true} = {},
+) {
   // Distinguish "wrong path" from "bad crawl" before anything else. Without this,
   // a mistyped targetDir reports every sampled page as missing and blocks the
   // deploy for a reason that has nothing to do with the prerender — the most
@@ -390,10 +509,11 @@ export function findOffenders(targetDir, samples, cardPath, sdkChunks = findLazy
     ];
   }
 
+  const checks = {sdkChunks, phones};
   return [
-    ...samples.flatMap((card) => findCardPageOffenders(targetDir, card, cardPath(card), sdkChunks)),
+    ...samples.flatMap((card) => findCardPageOffenders(targetDir, card, cardPath(card), checks)),
     ...findBrowseHubOffenders(targetDir),
-    ...findEntryPageOffenders(targetDir, sdkChunks),
+    ...findEntryPageOffenders(targetDir, checks),
   ];
 }
 
@@ -417,7 +537,9 @@ async function main() {
   }
 
   const sdkChunks = findLazySdkChunks(targetDir);
-  const offenders = findOffenders(targetDir, samples, cardPath, sdkChunks);
+  // PRERENDER_PHONE=0 skips the crawl's phone captures (#915), so it skips check 10 with them.
+  const phones = process.env.PRERENDER_PHONE !== '0';
+  const offenders = findOffenders(targetDir, samples, cardPath, {sdkChunks, phones});
 
   if (offenders.length > 0) {
     console.error(`✖ Render guard failed in "${targetDir}":`);
@@ -435,7 +557,8 @@ async function main() {
   // counts 0 until Vercel Production has its key (#827).
   console.log(
     `✓ Prerendered HTML verified in "${targetDir}" (${samples.length} card page(s), /browse and /; ` +
-      `lazy SDK chunks checked: ${countBySdk(sdkChunks)}).`,
+      `lazy SDK chunks checked: ${countBySdk(sdkChunks)}; ` +
+      `phone captures ${phones ? 'checked' : 'skipped, PRERENDER_PHONE=0'}).`,
   );
 }
 
