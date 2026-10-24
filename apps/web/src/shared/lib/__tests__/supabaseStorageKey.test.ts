@@ -1,30 +1,24 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
 import {AUTH_OPTIONS, AUTH_STORAGE_KEY} from '../supabase';
 import {createSupabaseClient} from '../supabaseClient';
+import {fakeAccessToken} from '../../test-utils';
 
 /*
-  SessionContext skips downloading supabase-js unless localStorage holds AUTH_STORAGE_KEY
-  (#729). That only works while supabase-js persists the session under exactly that key, an
-  internal detail an SDK upgrade could change: every returning user would then look anonymous
-  and be silently signed out. This runs the REAL supabase-js (no module mock) with the app's
+  SessionContext skips downloading the Supabase SDK unless localStorage holds AUTH_STORAGE_KEY
+  (#729). That only works while its auth client (auth-js) persists the session under exactly
+  that key, an internal detail an SDK upgrade could change: every returning user would then look
+  anonymous and be silently signed out. This runs the REAL client (no module mock) with the app's
   own auth options and checks where the session lands.
 */
 
 const URL_BASE = 'https://pin.placeholder.supabase.co';
-
-/** An unsigned JWT that supabase-js decodes but never verifies. Expires in an hour. */
-function fakeAccessToken(): string {
-  const encode = (value: object) => btoa(JSON.stringify(value)).replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_');
-  const exp = Math.floor(Date.now() / 1000) + 3600;
-  return `${encode({alg: 'HS256', typ: 'JWT'})}.${encode({sub: 'u1', exp, role: 'authenticated'})}.sig`;
-}
 
 afterEach(() => {
   vi.restoreAllMocks();
   localStorage.clear();
 });
 
-describe('supabase-js session storage key', () => {
+describe('Supabase session storage key', () => {
   it('persists the session under AUTH_STORAGE_KEY', async () => {
     // setSession validates the token by fetching the user; answer that one call.
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(

@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {act, render, screen} from '@testing-library/react';
 import {RouterProvider, createMemoryRouter} from 'react-router-dom';
-import type {Session} from '@supabase/supabase-js';
+import type {Session} from '@supabase/auth-js';
 import {AuthCallbackPage} from '../AuthCallbackPage';
 import {trackSignInCompleted, trackSignInFailed} from '../../shared/lib/signInAnalytics';
 

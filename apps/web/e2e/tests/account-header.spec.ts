@@ -26,12 +26,13 @@ test.describe('Account header control', () => {
   });
 
   /*
-    supabase-js loads only when there is a session to restore (#729). These watch the network
-    for the SDK itself: under Vite dev it arrives as our supabaseClient.ts module plus the
-    prebundled @supabase/supabase-js dependency, and in a production build as the
-    supabaseClient-<hash>.js chunk.
+    The Supabase SDK loads only when there is a session to restore (#729). These watch the
+    network for the SDK itself: under Vite dev it arrives as our supabaseClient.ts module plus
+    the prebundled @supabase/auth-js and @supabase/postgrest-js dependencies, and in a production
+    build as the supabaseClient-<hash>.js chunk.
   */
-  const isSdkRequest = (url: string) => url.includes('supabaseClient') || url.includes('supabase_supabase-js');
+  const isSdkRequest = (url: string) =>
+    url.includes('supabaseClient') || url.includes('/@supabase_');
 
   test('an anonymous visit never downloads the Supabase SDK', async ({page}, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();

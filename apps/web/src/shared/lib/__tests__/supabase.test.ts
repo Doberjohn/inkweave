@@ -1,5 +1,4 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
-import {createClient} from '@supabase/supabase-js';
 import {
   isSupabaseConfigured,
   loadSupabase,
@@ -9,6 +8,7 @@ import {
   type PairScore,
   _resetClient,
 } from '../supabase';
+import {createSupabaseClient} from '../supabaseClient';
 
 // Chainable mock for .from().select().eq().eq().maybeSingle()
 const mockMaybeSingle = vi.fn();
@@ -18,8 +18,8 @@ const mockSelect = vi.fn(() => ({eq: mockEq1}));
 const mockFrom = vi.fn(() => ({select: mockSelect}));
 const mockRpc = vi.fn();
 
-vi.mock('@supabase/supabase-js', () => ({
-  createClient: vi.fn(() => ({rpc: mockRpc, from: mockFrom})),
+vi.mock('../supabaseClient', () => ({
+  createSupabaseClient: vi.fn(() => ({rpc: mockRpc, from: mockFrom})),
   SupabaseClient: class SupabaseClient {},
 }));
 
@@ -59,7 +59,7 @@ describe('isSupabaseConfigured', () => {
 describe('loadSupabase', () => {
   it('resolves null without creating a client when env vars are missing', async () => {
     await expect(loadSupabase()).resolves.toBeNull();
-    expect(createClient).not.toHaveBeenCalled();
+    expect(createSupabaseClient).not.toHaveBeenCalled();
   });
 
   it('creates the client once and returns the same singleton', async () => {
@@ -70,7 +70,7 @@ describe('loadSupabase', () => {
     const b = await loadSupabase();
     expect(a).not.toBeNull();
     expect(a).toBe(b);
-    expect(createClient).toHaveBeenCalledOnce();
+    expect(createSupabaseClient).toHaveBeenCalledOnce();
   });
 
   // A failed download (or, in production, the empty module main.tsx leaves behind) must not
@@ -78,8 +78,8 @@ describe('loadSupabase', () => {
   it('retries after a failed load', async () => {
     vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
-    vi.mocked(createClient).mockImplementationOnce(() => {
-      throw new TypeError('createClient is not a function');
+    vi.mocked(createSupabaseClient).mockImplementationOnce(() => {
+      throw new TypeError('createSupabaseClient is not a function');
     });
 
     await expect(loadSupabase()).rejects.toThrow(TypeError);
@@ -98,7 +98,7 @@ describe("Sentry's Supabase integration (#640)", () => {
     const supabase = await import('../supabase');
     const {loadSentry} = await import('../sentry');
     const Sentry = await import('@sentry/react');
-    const {SupabaseClient} = await import('@supabase/supabase-js');
+    const {SupabaseClient} = await import('../supabaseClient');
     return {loadSupabase: supabase.loadSupabase, loadSentry, Sentry, SupabaseClient};
   }
 

@@ -34,8 +34,8 @@ export function startPostHog(key: string, onError: (error: unknown) => void): Po
       // would otherwise switch it on and store a ph_debug flag in localStorage.
       debug: false,
       // Masks a sign-in's one-time code, and ad-click ids such as gclid and fbclid, in each event's
-      // URL and the visit's first URL. supabase-js clears the code from the address bar only after
-      // a successful exchange, so a failed sign-in leaves it there. Referrers are not masked.
+      // URL and the visit's first URL. The Supabase SDK clears the code from the address bar only
+      // after a successful exchange, so a failed sign-in leaves it there. Referrers are not masked.
       mask_personal_data_properties: true,
       custom_personal_data_properties: ['code'],
       // Decided here, never in PostHog's settings: with remote config off, nobody can switch on

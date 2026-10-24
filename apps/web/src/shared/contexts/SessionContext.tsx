@@ -3,13 +3,13 @@
 // sign-out. When Supabase env is unset auth is `enabled: false` and the actions are safe
 // no-ops, so the app degrades gracefully, exactly like voting.
 //
-// This provider downloads supabase-js only when there is a session to restore (#729): a stored
-// one, or an OAuth code on its way back. For an anonymous visitor it fetches nothing; their
-// sign-in click loads the SDK on the way to the provider. (Other features still load it on
+// This provider downloads the Supabase SDK only when there is a session to restore (#729): a
+// stored one, or an OAuth code on its way back. For an anonymous visitor it fetches nothing;
+// their sign-in click loads the SDK on the way to the provider. (Other features still load it on
 // first use: a vote, a pair's community scores, a profile call.) The accepted cost: a sign-in completed in another tab
 // shows up here only after a reload, since no client is listening for it.
 import {createContext, useContext, useEffect, useState, type ReactNode} from 'react';
-import type {Session, User} from '@supabase/supabase-js';
+import type {Session, User} from '@supabase/auth-js';
 import {AUTH_STORAGE_KEY, isSupabaseConfigured, loadSupabase} from '../lib/supabase';
 
 export type AuthProvider = 'google' | 'discord';
@@ -32,8 +32,8 @@ const SessionContext = createContext<SessionContextValue | null>(null);
 const AUTH_CALLBACK_PATH = '/auth/callback';
 
 /**
- * Whether this visit has a session for supabase-js to restore: a stored one, or the OAuth
- * code the provider just sent back. The code is checked as well as the path because Supabase
+ * Whether this visit has a session for the Supabase SDK to restore: a stored one, or the
+ * OAuth code the provider just sent back. The code is checked as well as the path because Supabase
  * falls back to the Site URL (`/?code=…`) when it rejects `redirectTo`. When storage cannot be
  * read we cannot rule a session out, so the answer is yes and the SDK loads, as it did for
  * everyone before #729.
@@ -93,8 +93,8 @@ async function endSession(): Promise<{error: string | null}> {
 }
 
 /**
- * The session supabase-js restores, and whether that lookup is still running. With nothing
- * to restore it downloads nothing and resolves at once: no session, not loading.
+ * The session the Supabase SDK restores, and whether that lookup is still running. With
+ * nothing to restore it downloads nothing and resolves at once: no session, not loading.
  */
 function useRestoredSession(restoring: boolean): {session: Session | null; loading: boolean} {
   const [session, setSession] = useState<Session | null>(null);
@@ -138,7 +138,7 @@ function useRestoredSession(restoring: boolean): {session: Session | null; loadi
 export function SessionProvider({children}: {children: ReactNode}) {
   const enabled = isSupabaseConfigured();
   // Decided once per page load: the stored session only appears or disappears through
-  // supabase-js itself, which is already loaded by then.
+  // the Supabase SDK itself, which is already loaded by then.
   const [restoring] = useState(() => enabled && hasSessionToRestore());
   const {session, loading} = useRestoredSession(restoring);
 

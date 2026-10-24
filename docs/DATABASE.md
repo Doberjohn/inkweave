@@ -297,26 +297,26 @@ The limit holds only because the IP hash can't be forged: `hash_client_ip()` ign
 
 ## Client SDK
 
-The TypeScript client lives at `apps/web/src/shared/lib/supabase.ts`. It provides a thin wrapper over the Supabase JS client.
+The TypeScript client lives at `apps/web/src/shared/lib/supabase.ts`. It provides a thin wrapper over the Supabase client, which `supabaseClient.ts` builds from `@supabase/auth-js` and `@supabase/postgrest-js` (#933).
 
 ### Environment Gating and Lazy Loading
 
-supabase-js is **not** in the entry chunk (#729). `supabase.ts` imports only its types; the SDK sits behind a dynamic import of `supabaseClient.ts`, the one module that imports it as a value, and ships as its own `supabaseClient-*.js` chunk with its own size budget.
+The Supabase SDK is **not** in the entry chunk (#729). `supabase.ts` imports only its types; the SDK sits behind a dynamic import of `supabaseClient.ts`, the one module that imports it as a value, and ships as its own `supabaseClient-*.js` chunk with its own size budget.
 
 ```typescript
 // Synchronous, download-free: is voting/auth available at all?
 export function isSupabaseConfigured(): boolean;
 
-// Imports supabase-js and creates the client, once. Resolves null without credentials;
+// Imports the Supabase SDK and creates the client, once. Resolves null without credentials;
 // rejects if the SDK fails to download, and the next call retries.
-export function loadSupabase(): Promise<SupabaseClient<Database> | null>;
+export function loadSupabase(): Promise<InkweaveSupabase | null>;
 ```
 
 When env vars are missing, `isSupabaseConfigured()` is false, `loadSupabase()` resolves `null`, and all voting features gracefully degrade. The app works fully without Supabase — you just can't submit votes. Builds without credentials drop the SDK import entirely.
 
-**Who downloads the SDK:** nobody on page load without a session. It loads on first use: a vote, a pair-score read (opening a synergy pair's comparison), a profile call, a sign-in click; and `SessionContext` loads it at page load when there is a session to restore: an `inkweave:auth` entry in localStorage (`AUTH_STORAGE_KEY`, pinned against the real supabase-js by `supabaseStorageKey.test.ts`), the `/auth/callback` path or an OAuth `code` in the URL, or unreadable storage.
+**Who downloads the SDK:** nobody on page load without a session. It loads on first use: a vote, a pair-score read (opening a synergy pair's comparison), a profile call, a sign-in click; and `SessionContext` loads it at page load when there is a session to restore: an `inkweave:auth` entry in localStorage (`AUTH_STORAGE_KEY`, pinned against the real auth client by `supabaseStorageKey.test.ts`), the `/auth/callback` path or an OAuth `code` in the URL, or unreadable storage.
 
-**Never import `@supabase/supabase-js` as a value anywhere else.** A static import puts the SDK back in the entry chunk. Type imports (`import type`) are fine.
+**Never import `@supabase/auth-js` or `@supabase/postgrest-js` as a value anywhere else.** A static import puts the SDK back in the entry chunk. Type imports (`import type`) are fine. The app never imports `@supabase/supabase-js`, which builds the realtime, storage and functions clients too: it stays a dev dependency, for `pnpm test:supabase` and for `supabaseClient.test.ts`, which checks that the app's client sends the requests supabase-js sends.
 
 ### Vote Submission
 
@@ -527,12 +527,14 @@ Schema changes follow this process using Supabase MCP tools:
 
 22 test cases (the chart below counts the 17 for the three client entry points; the rest cover the Sentry integration and `deriveAccuracyDistribution`):
 - `isSupabaseConfigured()` / `loadSupabase()` — null without env vars and no client created, singleton behavior, retry after a failed load
-
-Plus `supabaseStorageKey.test.ts` (1 test): the real supabase-js persists the session under `AUTH_STORAGE_KEY`, which `SessionContext` relies on to skip the SDK at page load when there is no session.
 - `submitVote()` — RPC call params, rate limit detection (P0429), network error handling, success path
 - `getPairScore()` — view query, canonical ordering, PGRST116 (no rows) handling
 
-Uses `vi.mock('@supabase/supabase-js')` and `vi.stubEnv()` for isolated testing without a live database.
+Uses `vi.mock('../supabaseClient')` and `vi.stubEnv()` for isolated testing without a live database.
+
+Plus `supabaseStorageKey.test.ts` (1 test): the real auth client (auth-js) persists the session under `AUTH_STORAGE_KEY`, which `SessionContext` relies on to skip the SDK at page load when there is no session.
+
+And `supabaseClient.test.ts` (2 tests): the app's client sends the requests supabase-js's `createClient` sends, X-Client-Info aside, with the anon key as the bearer token until sign-in and the access token after it (#933).
 
 ### Integration Tests (Live Database)
 

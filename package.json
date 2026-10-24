@@ -65,7 +65,7 @@
     {
       "name": "Supabase SDK (lazy)",
       "path": "apps/web/dist/assets/supabaseClient-*.js",
-      "limit": "60 kB",
+      "limit": "31 kB",
       "gzip": true
     },
     {

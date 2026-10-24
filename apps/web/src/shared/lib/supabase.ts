@@ -1,13 +1,13 @@
-import type { SupabaseClient, SupabaseClientOptions } from '@supabase/supabase-js';
 import type { Database } from './database.types';
+import type { AuthOptions, SupabaseClient } from './supabaseClient';
 import { onSentryReady } from './sentry';
 
-export type InkweaveSupabase = SupabaseClient<Database>;
+export type InkweaveSupabase = SupabaseClient;
 
 /**
- * Where supabase-js persists the session in localStorage. SessionContext reads it to decide
- * whether a visitor has a session worth restoring, so the key and the client must agree; a
- * test pins that the real supabase-js stores the session under exactly this key.
+ * Where the SDK's auth client (auth-js) persists the session in localStorage. SessionContext
+ * reads it to decide whether a visitor has a session worth restoring, so the key and the client
+ * must agree; a test pins that the real auth-js stores the session under exactly this key.
  */
 export const AUTH_STORAGE_KEY = 'inkweave:auth';
 
@@ -19,11 +19,11 @@ export const AUTH_OPTIONS = {
   detectSessionInUrl: true,
   flowType: 'pkce',
   storageKey: AUTH_STORAGE_KEY,
-} satisfies SupabaseClientOptions<'public'>['auth'];
+} satisfies AuthOptions;
 
 /*
- * supabase-js, kept off the critical path (#729). It used to be a static import, which put the
- * SDK in the entry chunk for every visitor, though most never sign in or vote. It now loads on
+ * The Supabase SDK, kept off the critical path (#729). It used to be a static import, which put
+ * it in the entry chunk for every visitor, though most never sign in or vote. It now loads on
  * the first call that needs a client: a vote, a pair-score read, a profile call, a sign-in, or
  * SessionContext restoring a stored session.
  */
@@ -48,7 +48,7 @@ export function isSupabaseConfigured(): boolean {
 }
 
 /**
- * Imports supabase-js and creates the client, once. Resolves to null when this build has no
+ * Imports the Supabase SDK and creates the client, once. Resolves to null when this build has no
  * credentials, so voting and auth degrade gracefully. Rejects when the SDK fails to download
  * (offline, a stale deploy), and forgets that attempt so the next call retries.
  */
@@ -58,7 +58,7 @@ export function loadSupabase(): Promise<InkweaveSupabase | null> {
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !key) return Promise.resolve(null);
 
-  // A local module rather than supabase-js itself, so the chunk is named after it and the
+  // A local module rather than the SDK's own packages, so the chunk is named after it and the
   // size budget can find it.
   loading ??= import('./supabaseClient')
     // Read the module only as `sdk.<name>` inside this callback, and never pass it on: Rolldown
@@ -67,15 +67,15 @@ export function loadSupabase(): Promise<InkweaveSupabase | null> {
     .then((sdk): InkweaveSupabase => {
       const client = sdk.createSupabaseClient(url, key, AUTH_OPTIONS);
       // Sentry's Supabase integration instruments the SupabaseClient class, so it covers this
-      // client whether Sentry loads before or after it exists. Registered here, where supabase-js
+      // client whether Sentry loads before or after it exists. Registered here, where the SDK
       // is already loaded, rather than in Sentry's init, which would download it on every page.
       const clientClass = sdk.SupabaseClient;
       onSentryReady((sentry) => sentry.addSupabaseIntegration(clientClass));
       return client;
     })
     // A failed import rejects, except in production builds, where main.tsx cancels Vite's
-    // preload error and the import resolves empty, so `createClient` above throws. Both land
-    // here; clearing the cache lets a later call try again instead of failing forever.
+    // preload error and the import resolves empty, so `createSupabaseClient` above throws. Both
+    // land here; clearing the cache lets a later call try again instead of failing forever.
     .catch((error: unknown) => {
       loading = null;
       throw error;

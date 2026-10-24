@@ -6,4 +6,5 @@ export {
   createVotingPair,
 } from './factories';
 export {swipeCard} from './printingSwipe';
+export {fakeAccessToken} from './supabaseSession';
 // Note: setup.ts is imported by vitest.config.ts, not re-exported here
