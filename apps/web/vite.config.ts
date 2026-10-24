@@ -411,9 +411,17 @@ export default defineConfig({
         // ships with full sourcesContent (issue #358). We don't upload the SW
         // map to Sentry anyway, so generating it has no upside.
         sourcemap: false,
-        globPatterns: ['**/*.{js,css,html,woff2}'],
+        globPatterns: [
+          '**/*.{js,css,html,woff2}',
+          // The small symbols the app draws all over (#934): the inks, then the inkwell and the
+          // common and uncommon rarity. They are files rather than inlined into the JavaScript, so
+          // they are named here to keep each of them on screen offline. The bigger rarity art and
+          // the printing symbols load as pages show them, as before.
+          'assets/{amber,amethyst,emerald,ruby,sapphire,steel}-*.svg',
+          'assets/{inkable,uninkable,common,uncommon}-*.svg',
+        ],
         // Leave out the chunks no page loads (#928), which every new visitor downloaded. It drops
-        // only JavaScript chunk files.
+        // only JavaScript chunk files, so the symbols above stay in.
         manifestTransforms: [
           (entries) => ({
             manifest: entries.filter((entry) => !unloadableChunks.has(entry.url)),

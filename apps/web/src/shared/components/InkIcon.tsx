@@ -1,11 +1,13 @@
 import type {Ink} from '../../features/cards';
 
-import amberSvg from '../../assets/amber.svg';
-import amethystSvg from '../../assets/amethyst.svg';
-import emeraldSvg from '../../assets/emerald.svg';
-import rubySvg from '../../assets/ruby.svg';
-import sapphireSvg from '../../assets/sapphire.svg';
-import steelSvg from '../../assets/steel.svg';
+// Files of their own (`?no-inline`, #934): the card placeholders draw the same six symbols from
+// index.css, so a page showing both downloads each once, and the JavaScript carries none of them.
+import amberSvg from '../../assets/amber.svg?no-inline';
+import amethystSvg from '../../assets/amethyst.svg?no-inline';
+import emeraldSvg from '../../assets/emerald.svg?no-inline';
+import rubySvg from '../../assets/ruby.svg?no-inline';
+import sapphireSvg from '../../assets/sapphire.svg?no-inline';
+import steelSvg from '../../assets/steel.svg?no-inline';
 
 const INK_ICONS: Record<Ink, string> = {
   Amber: amberSvg,
