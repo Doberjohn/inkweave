@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-250 tests across 27 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+252 tests across 27 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -355,7 +355,7 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 | a compare link opens on the window frame, and the window takes over with no gap or second fade | (deep link, every project) #913. With `allCards.json` held, `/compare/A/B/groupKey` shows the window's frame (`status` "Loading comparison"), where the page stayed blank. A `requestAnimationFrame` loop installed by `addInitScript` records each frame's backdrops (`card-overview-fallback-backdrop`, `card-overview-backdrop`) and the most opaque one's opacity: from the frame's first paint to the open comparison, every frame has a backdrop, and the opacity never drops (the window takes over without a second entrance, `openComparison`'s `skipEnter`) |
 | an invalid compare link still ends on the 404 page, with no frame left over | (deep link, every project) `/compare/1947/99999999/<group>`: the `h1` reads 404 once the card list loads, and no `card-overview-fallback` remains |
 
-## `playstyle-detail.spec.ts` — 7 tests (5 desktop only, 2 every project)
+## `playstyle-detail.spec.ts` — 9 tests (6 desktop only, 3 every project)
 
 | Test | What it verifies |
 |---|---|
@@ -365,7 +365,9 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 | should open the card overview modal from playstyle detail | Clicking a card tile opens the modal; URL stays on the playstyle page |
 | keeps a tile tooltip under the pointer, ignores clicks on it, and hides on Escape | The "Forced Discard" tile's description tooltip stays while the pointer slides onto it and rests there past its 150 ms close delay; a click on it leaves the tile `aria-pressed="false"` (it renders beside the tile's button, so the click no longer bubbles to it through the portal); Escape hides it (WCAG 1.4.13, #836) |
 | shows its loading view, not an empty grid, until the playstyle's cards arrive | (every project) #913. `_playstyles.json` held: once `allCards.json` has answered (and a second for the page to take it in), the loading grid (`[aria-label="Loading playstyle cards"]`) still shows; released, the card tiles render and the loading grid goes. A MutationObserver installed before the page loads finds "No cards match your filters." at no moment |
-| opened from the gallery, a playstyle shows its cards with no loading view between | (every project) #913. `/playstyles` reads `_playstyles.json`; a click on Lore Denial's tile then shows its cards, and an observer installed before the click never sees the loading grid (`[aria-label="Loading playstyle cards"]`): the playstyle page starts from the gallery's read |
+| draws its mechanic tiles in the same render as its cards | (desktop only) #930. `_playstyleMechanics.json` held: once `allCards.json` and `_playstyles.json` have answered (and a second for the page to take them in), the loading grid still shows; released, the Forced Discard tile and the card tiles render. A MutationObserver installed before the page loads never finds a card tile without a tile in the Mechanics row (`section[aria-label="Mechanics"] button`), so the tiles never arrive after the cards and push the grid down |
+| the gallery asks for the mechanic ids only once it has drawn with its own card ids | (every project) #930. `_playstyles.json` held: once the gallery shows Lore Denial's tile (and a second more), no request for `_playstyleMechanics.json` has gone out, so it never competes with the gallery's own files; released, the gallery asks for it |
+| opened from the gallery, a playstyle shows its cards with no loading view between | (every project) #913. `/playstyles` reads `_playstyles.json`, and `_playstyleMechanics.json` once it has drawn (#930); a click on Lore Denial's tile then shows its cards, and an observer installed before the click never sees the loading grid (`[aria-label="Loading playstyle cards"]`): the playstyle page starts from the gallery's read |
 
 ## `voting.spec.ts` — 17 tests (12 desktop, 5 mobile)
 

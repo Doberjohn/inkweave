@@ -1,29 +1,98 @@
 import {useEffect, useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
-import {fetchPlaystyleCardIds, playstyleCardIdsIfLoaded} from './playstyleCardIds';
+import {
+  fetchPlaystyleCardIds,
+  fetchPlaystyleMechanicIds,
+  playstyleCardIdsIfLoaded,
+  playstyleMechanicIdsIfLoaded,
+  type MechanicIdsByCard,
+} from './playstyleFiles';
 
 // ── Hooks ──
 
 /**
  * Fetches pre-computed playstyle card lists.
- * Used by PlaystyleDetailPage for a single playstyle's cards.
+ * Used by PlaystyleDetailPage for a single playstyle's cards and their mechanic ids (#930). It
+ * loads until both have arrived, so the page draws its cards and their tiles in one render, as
+ * when it worked the tiles out itself. If the mechanic ids fail, the cards still show, without
+ * tiles, and `retry` asks for them again as well.
  */
 export function usePrecomputedPlaystyleCards(playstyleId: string | undefined): {
   cards: LorcanaCard[];
+  mechanicIds: MechanicIdsByCard;
   isLoading: boolean;
   error: Error | null;
   retry: () => void;
 } {
   const {data, isLoading: allLoading, error, retry} = useAllPlaystyleCards();
+  const mechanics = usePlaystyleMechanicIds();
+  const psData = playstyleId ? data.get(playstyleId) : undefined;
+  const mechanicIds = playstyleId ? mechanics.ids?.[playstyleId] : undefined;
 
-  const cards = (() => {
-    if (!playstyleId) return [];
-    const psData = data.get(playstyleId);
-    return psData?.allCards ?? [];
-  })();
+  return {
+    cards: psData?.allCards ?? [],
+    mechanicIds: mechanicIds ?? {},
+    isLoading: allLoading || mechanics.isLoading,
+    error,
+    // When both files failed, a retry of the cards alone would bring them back without tiles.
+    retry: () => {
+      retry();
+      mechanics.retry();
+    },
+  };
+}
 
-  return {cards, isLoading: allLoading, error, retry};
+/**
+ * Every playstyle card's mechanic ids, starting from the shared request's result (#913). A
+ * failure leaves the tiles out rather than failing the page: it is logged, and `retry` or the
+ * next visit asks again.
+ */
+function usePlaystyleMechanicIds(): {
+  ids: Record<string, MechanicIdsByCard> | null;
+  isLoading: boolean;
+  retry: () => void;
+} {
+  const [ids, setIds] = useState(playstyleMechanicIdsIfLoaded);
+  const [isLoading, setIsLoading] = useState(() => playstyleMechanicIdsIfLoaded() === null);
+  // Bumped by `retry`: a new attempt runs the fetch effect again.
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const settle = (data: Record<string, MechanicIdsByCard> | null) => {
+      if (cancelled) return;
+      setIds(data);
+      setIsLoading(false);
+    };
+
+    fetchPlaystyleMechanicIds().then(settle, (err: unknown) => {
+      console.error('Failed to load playstyle mechanics:', err);
+      settle(null);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [attempt]);
+
+  const retry = () => {
+    setIsLoading(true);
+    setAttempt((n) => n + 1);
+  };
+
+  return {ids, isLoading, retry};
+}
+
+/**
+ * Starts every playstyle card's mechanic ids once the gallery is `drawn`, so a playstyle opened
+ * from it draws its cards and tiles on its first render (#913, #930), and the request never
+ * competes with the gallery's own. The playstyle's page logs a failure, and asks again.
+ */
+export function usePreloadPlaystyleMechanics(drawn: boolean): void {
+  useEffect(() => {
+    if (drawn) fetchPlaystyleMechanicIds().catch(() => undefined);
+  }, [drawn]);
 }
 
 /**

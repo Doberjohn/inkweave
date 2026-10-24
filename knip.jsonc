@@ -18,5 +18,9 @@
       // generate-docs.mjs opens the docs hub with the system's own opener.
       "ignoreBinaries": ["xdg-open"],
     },
+    "packages/synergy-engine": {
+      // tsup.config.ts's onSuccess runs it after every engine build (catalog.json, #930).
+      "entry": ["scripts/write-catalog.mjs"],
+    },
   },
 }
