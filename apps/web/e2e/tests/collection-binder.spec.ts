@@ -504,38 +504,44 @@ test.describe("Collection mode, the binder's pages and pockets (#941)", () => {
     const [missingName, heldName] = [HELD_BASE.length, HELD_BASE.length - 1].map((i) => BASE[i].fullName);
     await expect(missing).toHaveAccessibleName(missingName);
     await logBinderMotion(page);
+    // Every step from the keyboard: a click waits for its target to hold still, which took a
+    // second or more on CI's WebKit with the binder's pockets under the window.
+    const press = async (target: Locator) => {
+      await target.focus();
+      await page.keyboard.press('Enter');
+    };
 
     // A first copy of the missing card in its window, then the last copy of the held card before
-    // it, which the window's arrows reach. Clicked near the card's top, clear of its stripe.
-    await missing.click({position: {x: 10, y: 10}});
+    // it, which the window's arrows reach.
+    await press(missing);
     const modal = page.getByTestId('card-overview-modal');
     await expect(modal.locator('h1')).toHaveText(missingName);
     const copies = page.getByTestId('card-overview-copies-slot').getByRole('group');
     // The dialog moves focus to its × 100ms after opening; a 100ms timer set now runs after it.
     await page.evaluate(() => new Promise((resolve) => setTimeout(resolve, 100)));
-    await copies.getByRole('button', {name: `Add one copy of ${missingName}`, exact: true}).focus();
-    await page.keyboard.press('Enter');
+    await press(copies.getByRole('button', {name: `Add one copy of ${missingName}`, exact: true}));
     await expect(copies).toHaveAccessibleName('Your copies: 1 normal, 0 foil');
     await page.keyboard.press('ArrowLeft');
     await expect(modal.locator('h1')).toHaveText(heldName);
-    await copies.getByRole('button', {name: `Remove one copy of ${heldName}`, exact: true}).focus();
-    await page.keyboard.press('Enter');
+    await press(copies.getByRole('button', {name: `Remove one copy of ${heldName}`, exact: true}));
     await expect(copies).toHaveAccessibleName('Your copies: 0 normal, 0 foil');
 
     // While the window is open, the pockets show the cards as they were, and nothing plays: also
     // over an expanded group and a comparison, which take away the slot under the window's card.
+    // Read as soon as each shows: the slot goes in the same commit, and a pocket that heard it
+    // would change in that task.
     const stillWaiting = async (over: string) => {
-      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       expect(await artFilter(missing), over).toBe(MISSING_GREY);
       expect(await artFilter(held), over).toBe('none');
       expect(await binderMotion(page), over).toEqual([]);
     };
     await stillWaiting('the window');
-    await modal.locator('[data-group-key] [data-testid="more-tile"]').first().click();
+    await press(modal.locator('[data-group-key] [data-testid="more-tile"]').first());
     await expect(modal).toHaveAttribute('data-state', 'expanded');
     await stillWaiting('an expanded group');
-    await modal.getByText(/back to all synergies/i).click();
-    await modal.locator('[data-group-key] a.card-tile').first().click();
+    await press(modal.getByRole('button', {name: 'Back to all synergies'}));
+    await expect(modal).toHaveAttribute('data-state', 'default');
+    await press(modal.locator('[data-group-key] a.card-tile').first());
     await expect(modal).toHaveAttribute('data-mode', 'comparison');
     await stillWaiting('a comparison');
     // Escape steps out of the comparison, and then closes the window.

@@ -154,6 +154,15 @@ async function settledWidth(locator: Locator): Promise<number> {
   return locator.evaluate((el) => (el.getAnimations().length > 0 ? -1 : el.getBoundingClientRect().width));
 }
 
+/**
+ * Moves the pointer straight to the element's centre. A hover first waits for its target to
+ * hold still, which took CI's WebKit up to 5.6s for an edge disc beside the binder's pockets.
+ */
+async function pointAt(locator: Locator): Promise<void> {
+  const {x, y, width, height} = await placeOf(locator);
+  await locator.page().mouse.move(x + width / 2, y + height / 2);
+}
+
 /** Whether the page shows the element 2px inside each side edge, halfway down: nothing cuts it off or covers it. */
 async function shownSideToSide(locator: Locator): Promise<boolean> {
   return locator.evaluate((el) => {
@@ -635,7 +644,7 @@ test.describe('Collection mode, signed in', () => {
     // (`BROWSE_GUTTER`).
     const next = binder(page).getByRole('button', {name: 'Next spread'});
     await expect.poll(() => settledWidth(next), {message: 'the Next disc at rest'}).toBeCloseTo(28, 0);
-    await next.hover();
+    await pointAt(next);
     await expect.poll(() => settledWidth(next), {message: 'the Next disc grown'}).toBeCloseTo(40, 0);
     const frame = await edges(board(page));
     const grownNext = await edges(next);
@@ -650,7 +659,7 @@ test.describe('Collection mode, signed in', () => {
     await expect(leftPage).toBeVisible();
     const previous = binder(page).getByRole('button', {name: 'Previous spread'});
     await expect.poll(() => settledWidth(previous), {message: 'the Previous disc at rest'}).toBeCloseTo(28, 0);
-    await previous.hover();
+    await pointAt(previous);
     await expect.poll(() => settledWidth(previous), {message: 'the Previous disc grown'}).toBeCloseTo(40, 0);
     const grownPrevious = await edges(previous);
     const filters = await edges(page.getByRole('complementary', {name: 'Filters'}));
