@@ -52,12 +52,14 @@ jobs:
       # comment's event doesn't carry it. A comment can also ask about any pull request,
       # and a fork's branch could bring its own CLAUDE.md and .claude/ skills to steer a
       # run that holds the API key, so a fork's is refused. (A fork's pull request never
-      # gets secrets on the pull_request event.)
+      # gets secrets on the pull_request event.) The start time lets the last step tell
+      # this run's comments from earlier ones.
       - name: Read the pull request's base branch
         id: pr
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          echo "started=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
           info=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json isCrossRepository,baseRefName --jq '"\(.isCrossRepository) \(.baseRefName)"')
           if [ "${info%% *}" != false ]; then
             echo "::error::Claude reviews only pull requests whose branch is in this repository."
@@ -102,6 +104,7 @@ jobs:
       # with Claude Code's read-only tools and commands, and its one other tool posts an
       # inline comment on this pull request.
       - name: Review
+        id: review
         uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1
         env:
           # Keeps the API key and the job's token out of the shell commands Claude runs,
@@ -121,3 +124,32 @@ jobs:
             --append-system-prompt "Pull request ${{ env.PR_NUMBER }} is checked out at HEAD, with full history.
             The shell has no GitHub token, so gh can't reach GitHub: read the diff with
             git diff origin/${{ steps.pr.outputs.base }}...HEAD instead."
+
+      # The skill posts nothing when it finds nothing, so this step says so on the pull
+      # request, quoting the review's closing summary, which also shows why a review that
+      # failed to post its findings posted none. The run's cost goes on its summary page.
+      - name: Report the review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXECUTION_FILE: ${{ steps.review.outputs.execution_file }}
+          STARTED: ${{ steps.pr.outputs.started }}
+        run: |
+          last_result() {
+            jq -r --arg key "$1" '[if type == "array" then .[] else . end | select(.type? == "result")] | last | .[$key] // empty' "$EXECUTION_FILE" 2>/dev/null || true
+          }
+          cost=$(last_result total_cost_usd)
+          if [ -n "$cost" ]; then
+            echo "Review cost: US\$$cost" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          posted=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/comments" --paginate \
+            --jq '[.[] | select(.user.login == "github-actions[bot]" and .created_at >= env.STARTED)] | length' \
+            | awk '{ n += $1 } END { print n + 0 }')
+          if [ "$posted" -gt 0 ]; then
+            exit 0
+          fi
+          body="Claude Code reviewed $(git rev-parse --short HEAD) and posted no inline comments."
+          summary=$(last_result result)
+          if [ -n "$summary" ]; then
+            body+=$'\n\n'"> ${summary//$'\n'/$'\n'> }"
+          fi
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$body"
