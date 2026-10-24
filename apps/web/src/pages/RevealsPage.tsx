@@ -26,6 +26,10 @@ import {
 } from '../features/reveals';
 
 const CONTENT_MAX_WIDTH = 1180;
+// Spacing past the scale's top step (SPACING.xxxl, 32): the gap above What's new, and the room
+// under the page.
+const WHATS_NEW_GAP = 64;
+const PAGE_PADDING_BOTTOM = 110;
 
 function formatReleaseDate(date: Date): string {
   return date.toLocaleDateString('en-US', {month: 'long', day: 'numeric'});
@@ -97,7 +101,7 @@ function RevealsBody({loading, error, progress, selectedInk, onSelectInk, onOpen
           compact={compact}
         />
       </div>
-      <div style={{marginTop: 64}}>
+      <div style={{marginTop: WHATS_NEW_GAP}}>
         <WhatsNewSection onSelectFranchise={onSelectFranchise} compact={compact} />
       </div>
     </>
@@ -161,7 +165,14 @@ export function RevealsPage() {
       />
       <EtherealBackground />
       <CompactHeader isMobile={isMobile} />
-      <main style={{minHeight: '100vh', paddingTop: SPACING.lg, paddingBottom: 110, position: 'relative', zIndex: 1}}>
+      <main
+        style={{
+          minHeight: '100vh',
+          paddingTop: SPACING.lg,
+          paddingBottom: PAGE_PADDING_BOTTOM,
+          position: 'relative',
+          zIndex: 1,
+        }}>
         <h1 style={VISUALLY_HIDDEN}>
           {SET_NAMES[REVEAL_SET_CODE]}: Set {REVEAL_SET_NUMBER} reveals
         </h1>

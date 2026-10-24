@@ -12,7 +12,6 @@ export const KNOWN_OFFENDERS = {
   // 72 files, 229 violations at seeding
   'no-raw-hex-colors': [
     'src/features/cards/components/CardDetailSkeleton.stories.tsx', // x1
-    'src/features/cards/components/CardGridSkeleton.stories.tsx', // x1
     'src/features/playstyles/PlaystyleFanTile.stories.tsx', // x2
     'src/features/playstyles/PlaystyleFanTile.tsx', // x2
     'src/features/playstyles/PlaystyleSection.stories.tsx', // x2
@@ -61,7 +60,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/reveals/WhatsNewSection.tsx', // x4
     'src/features/reveals/inkTint.ts', // x2
     'src/features/synergies/components/DeltaPanel.tsx', // x4
-    'src/features/synergies/components/MechanicsButton.tsx', // x5
     'src/features/voting/components/DistributionBar.tsx', // x3
     'src/features/voting/components/OptionPicker.stories.tsx', // x3
     'src/features/voting/components/QuickVoteControl.tsx', // x21
@@ -88,7 +86,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/voting/components/VoteAffirmation.tsx', // x3
     'src/features/voting/components/VoteProgress.tsx', // x1
     'src/features/voting/components/VoteStatusBanner.tsx', // x2
-    'src/pages/HomePageSkeleton.tsx', // x2
     'src/shared/components/CardImage.stories.tsx', // x1
     'src/shared/components/CollapsibleSection.stories.tsx', // x2
     'src/shared/components/EmptyState.stories.tsx', // x3
@@ -138,7 +135,6 @@ export const KNOWN_OFFENDERS = {
   // 66 files, 191 violations at seeding
   'no-raw-spacing': [
     'src/features/cards/components/BinderSpreadMap.tsx', // x1
-    'src/features/cards/components/BrowseCardGrid.tsx', // x1
     'src/features/cards/components/BrowseToolbar.tsx', // x6
     'src/features/cards/components/CardGrid.tsx', // x1
     'src/features/collection/CollectionBinderSection.tsx', // x1
@@ -165,18 +161,14 @@ export const KNOWN_OFFENDERS = {
     'src/pages/PlaystyleDetailPage.tsx', // x2
     'src/pages/PlaystyleGalleryPage.tsx', // x1
     'src/pages/PrivacyPage.tsx', // x1
-    'src/pages/RevealsPage.tsx', // x2
     'src/pages/VotePage.tsx', // x7
     'src/shared/components/BetaNotice.tsx', // x1
     'src/shared/components/Chip.tsx', // x2
     'src/shared/components/CompactHeader.tsx', // x2
     'src/shared/components/ConnectionGroup.tsx', // x2
-    'src/shared/components/CostFilterGroup.tsx', // x1
     'src/shared/components/CtaButton.tsx', // x1
     'src/shared/components/DialogShell.tsx', // x1
     'src/shared/components/HeroSection.tsx', // x8
-    'src/shared/components/InkFilterGroup.tsx', // x1
-    'src/shared/components/InkwellFilterGroup.tsx', // x1
     'src/shared/components/SearchBottomSheet.tsx', // x2
     'src/shared/components/TabList.tsx', // x1
     'src/shared/constants/theme.ts', // x1
@@ -188,7 +180,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/reveals/NewFranchises.tsx', // x1
     'src/features/reveals/RevealsPromoCard.tsx', // x1
     'src/features/reveals/WhatsNewSection.tsx', // x1
-    'src/features/synergies/components/MechanicsButton.tsx', // x1
     'src/features/voting/components/VoteStatusBanner.tsx', // x1
   ],
 };

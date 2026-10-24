@@ -1,4 +1,4 @@
-import {COST_BUTTONS, COLORS} from '../constants';
+import {COST_BUTTONS, COLORS, SPACING} from '../constants';
 import {FilterButton} from './FilterButton';
 import {CostIcon} from './CostIcon';
 
@@ -26,7 +26,10 @@ export function CostFilterGroup({
   uninkable = false,
 }: CostFilterGroupProps) {
   return (
-    <div role="group" aria-label="Ink cost filters" style={{display: 'flex', gap: 4, ...style}}>
+    <div
+      role="group"
+      aria-label="Ink cost filters"
+      style={{display: 'flex', gap: SPACING.xs, ...style}}>
       {COST_BUTTONS.map((cost) => (
         <FilterButton
           key={cost}
