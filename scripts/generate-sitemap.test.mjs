@@ -30,6 +30,15 @@ describe('generate-sitemap', () => {
     expect(urls.some((u) => u.loc.includes('www.'))).toBe(false);
   });
 
+  // The crawl prerenders the routes apps/web/src/prerenderedRoutes.json lists (plus /reveals in
+  // season, which stays out of the sitemap): every hub the sitemap names needs its own page.
+  it('names the same static routes the prerender crawl captures', () => {
+    const prerendered = JSON.parse(
+      fs.readFileSync(path.join(ROOT, 'apps/web/src/prerenderedRoutes.json'), 'utf8'),
+    );
+    expect(prerendered).toEqual(STATIC_ROUTES);
+  });
+
   it('keeps the /vote hub but excludes the /compare + /vote pair crawl-traps', async () => {
     const urls = await buildSitemapUrls();
     expect(urls.some((u) => u.loc === 'https://inkweave.ink/vote')).toBe(true);

@@ -1,12 +1,19 @@
+import {StrictMode} from 'react';
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {renderHook, act, waitFor} from '@testing-library/react';
-import {usePairQueue} from '../usePairQueue';
+import {_resetFirstPair, startFirstPair, usePairQueue} from '../usePairQueue';
+import {_resetPairsIndexRequest} from '../../pairsIndexRequest';
+import {startCardList} from '../../../cards/cardListRequest';
 import {useCardDataContext} from '../../../../shared/contexts/CardDataContext';
 import {fetchCardSynergies} from '../../../synergies/hooks/usePrecomputedSynergies';
 import {createCard} from '../../../../shared/test-utils';
 
 vi.mock('../../../../shared/contexts/CardDataContext', () => ({
   useCardDataContext: vi.fn(),
+}));
+
+vi.mock('../../../cards/cardListRequest', () => ({
+  startCardList: vi.fn(),
 }));
 
 vi.mock('../../../synergies/hooks/usePrecomputedSynergies', () => ({
@@ -66,6 +73,7 @@ function setupMocks() {
     error: null,
   } as ReturnType<typeof useCardDataContext>);
   vi.mocked(fetchCardSynergies).mockImplementation(mockFetchCardSynergies);
+  vi.mocked(startCardList).mockResolvedValue({cards: Object.values(mockCards), sets: []});
 }
 
 function mockFetchResponse(data: unknown, ok = true) {
@@ -80,6 +88,8 @@ describe('usePairQueue', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    _resetPairsIndexRequest();
+    _resetFirstPair();
     setupMocks();
     // Seed Math.random to make shuffle deterministic (identity shuffle)
     vi.spyOn(Math, 'random').mockReturnValue(0);
@@ -91,6 +101,7 @@ describe('usePairQueue', () => {
     if ('fetch' in global) {
       (global as Record<string, unknown>).fetch = undefined;
     }
+    delete window.__INKWEAVE_PRERENDER__;
   });
 
   // ── Initialization ──
@@ -156,6 +167,99 @@ describe('usePairQueue', () => {
       // First pair drawn should be from the interesting bucket (nextBucket starts as 'interesting')
       expect(result.current.currentPair).not.toBeNull();
       expect(result.current.currentPair!.aggregateScore).toBeGreaterThanOrEqual(7);
+    });
+  });
+
+  // ── The first pair main.tsx's hold draws on a prerendered /vote (#915) ──
+
+  describe("the hold's first pair", () => {
+    it('shows from the first render, and nothing more is drawn', async () => {
+      mockFetchResponse(mockPairsIndex);
+      const drawn = await startFirstPair();
+      vi.mocked(fetchCardSynergies).mockClear();
+
+      const {result} = renderHook(() => usePairQueue(), {wrapper: StrictMode});
+
+      expect(result.current.isLoading).toBe(false);
+      expect(result.current.currentPair).toBe(drawn.first.pair);
+      expect(result.current.upcomingPreviews.length).toBeGreaterThan(0);
+      await new Promise((resolve) => setTimeout(resolve));
+      expect(result.current.currentPair).toBe(drawn.first.pair);
+      expect(fetchCardSynergies).not.toHaveBeenCalled();
+    });
+
+    it('is taken once drawn by a queue that mounts while the hold still draws', async () => {
+      mockFetchResponse(mockPairsIndex);
+      const drawing = startFirstPair();
+
+      const {result} = renderHook(() => usePairQueue());
+
+      expect(result.current.isLoading).toBe(true);
+      const drawn = await drawing;
+      await waitFor(() => expect(result.current.currentPair).toBe(drawn.first.pair));
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // A queue that mounts after the draw takes it as it starts, one that mounts during it once drawn.
+    it.each([
+      {mounts: 'after the draw', drawFirst: true},
+      {mounts: 'during the draw', drawFirst: false},
+    ])('goes to one queue, mounted $mounts: the next draws its own', async ({drawFirst}) => {
+      mockFetchResponse(mockPairsIndex);
+      const drawing = startFirstPair();
+      if (drawFirst) await drawing;
+      const first = renderHook(() => usePairQueue());
+      const drawn = await drawing;
+      await waitFor(() => expect(first.result.current.currentPair).toBe(drawn.first.pair));
+      first.unmount();
+
+      const {result} = renderHook(() => usePairQueue());
+
+      expect(result.current.isLoading).toBe(true);
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.currentPair).not.toBeNull();
+      expect(result.current.currentPair).not.toBe(drawn.first.pair);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('is drawn once for the page, and a failed draw is forgotten', async () => {
+      mockFetchResponse(null, false);
+      await expect(startFirstPair()).rejects.toThrow('Failed to load pairs index');
+      mockFetchResponse(mockPairsIndex);
+
+      const drawn = await startFirstPair();
+
+      expect(await startFirstPair()).toBe(drawn);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      {mounts: 'after it failed', failFirst: true},
+      {mounts: 'during it', failFirst: false},
+    ])('leaves a queue mounted $mounts to draw its own when it fails', async ({failFirst}) => {
+      mockFetchResponse(null, false);
+      const drawing = startFirstPair();
+      mockFetchResponse(mockPairsIndex);
+      if (failFirst) await drawing.catch(() => undefined);
+
+      const {result} = renderHook(() => usePairQueue());
+
+      await expect(drawing).rejects.toThrow('Failed to load pairs index');
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      expect(result.current.error).toBeNull();
+      expect(result.current.currentPair).not.toBeNull();
+    });
+
+    it('is never drawn during the prerender crawl, so its capture shows the page loading', async () => {
+      window.__INKWEAVE_PRERENDER__ = true;
+      mockFetchResponse(mockPairsIndex);
+
+      const {result} = renderHook(() => usePairQueue());
+
+      await new Promise((resolve) => setTimeout(resolve));
+      expect(result.current.isLoading).toBe(true);
+      expect(result.current.currentPair).toBeNull();
+      expect(global.fetch).not.toHaveBeenCalled();
     });
   });
 

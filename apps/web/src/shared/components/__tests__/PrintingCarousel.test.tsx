@@ -3,6 +3,8 @@ import {describe, it, expect, vi, beforeEach, afterEach, type MockInstance} from
 import {render, screen, fireEvent, act, waitFor, createEvent} from '@testing-library/react';
 import {createCard, swipeCard} from '../../test-utils';
 import type {Printing} from '../../hooks';
+import {_resetPrerenderedArt} from '../../lib/prerenderedArt';
+import {showPrerenderedArt} from '../../test-utils/loadedArt';
 import {PrintingCarousel} from '../PrintingCarousel';
 
 const card = createCard({id: '1938', fullName: 'Pongo - Determined Father'});
@@ -597,5 +599,29 @@ describe('PrintingCarousel variant art', () => {
     rerender(<PrintingCarousel card={card} printings={PRINTINGS} index={1} onIndexChange={() => {}} width={WIDTH} height={HEIGHT} />);
 
     expect(variantArt()).toEqual(loaded);
+  });
+
+  describe('as the app takes over from a prerendered page (#915)', () => {
+    /** The page showed `srcs`; the app's own images report nothing loaded, as in Chromium. */
+    const prerenderedShowing = (...srcs: string[]) => {
+      complete.mockRestore();
+      showPrerenderedArt(...srcs);
+      complete = vi.spyOn(HTMLImageElement.prototype, 'complete', 'get').mockReturnValue(false);
+    };
+    afterEach(() => _resetPrerenderedArt());
+
+    it('loads the variant art at once when the page showed it', () => {
+      prerenderedShowing('/card-images/1938.avif', '/card-images/2141.avif');
+      renderCarousel();
+
+      expect(variantArt()).toEqual(loaded);
+    });
+
+    it('still holds the variant art back when the page showed only the Standard art', () => {
+      prerenderedShowing('/card-images/1938.avif');
+      renderCarousel();
+
+      expect(variantArt()).toEqual([null, null]);
+    });
   });
 });

@@ -33,6 +33,29 @@ interface ListContainerConfig {
   minColWidth: number;
 }
 
+interface GridLayout extends ListContainerConfig {
+  /**
+   * The tiles above the fold, measured on /browse. VirtuosoGrid draws no tile until it has
+   * measured its box, so its first render draws these, and the app's first frame after the
+   * prerendered page keeps that page's tiles (#915).
+   */
+  foldTiles: number;
+}
+
+/** A phone's grid: 2 columns by 3 rows above the fold at 390x844. */
+const PHONE_GRID: GridLayout = {
+  paddingX: SPACING.lg,
+  minColWidth: LAYOUT.cardGridMinWidthMobile,
+  foldTiles: 6,
+};
+
+/** A wider screen's: 5 columns by 3 rows above the fold at 1440x900. */
+const DESKTOP_GRID: GridLayout = {
+  paddingX: BROWSE_GUTTER,
+  minColWidth: LAYOUT.cardGridMinWidth,
+  foldTiles: 15,
+};
+
 // CSS Grid handles responsive column count via auto-fill + minmax.
 // IMPORTANT: VirtuosoGrid imperatively writes BOTH `paddingTop` (offset for
 // items above the rendered range) and `paddingBottom` (offset below) for its
@@ -90,13 +113,12 @@ export function BrowseCardGrid({
   hasCardPage = everyCardHasAPage,
 }: BrowseCardGridProps) {
   const {isMobile} = useResponsive();
-  const paddingX = isMobile ? SPACING.lg : BROWSE_GUTTER;
-  const minColWidth = isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth;
-  const ListContainer = createListContainer({paddingX, minColWidth});
+  const grid = isMobile ? PHONE_GRID : DESKTOP_GRID;
+  const ListContainer = createListContainer(grid);
 
   if (isLoading) {
     // The loaded grid's room above its first row (`GridHeader`) and its gutters (#914).
-    return <CardGridSkeleton padding={`${BROWSE_ROW_TOP}px ${paddingX}px 0`} />;
+    return <CardGridSkeleton padding={`${BROWSE_ROW_TOP}px ${grid.paddingX}px 0`} />;
   }
 
   const displayedCards = cards.slice(0, LAYOUT.maxDisplayedCards);
@@ -121,6 +143,7 @@ export function BrowseCardGrid({
     <RenderProfiler id="BrowseCardGrid">
       <VirtuosoGrid
         totalCount={displayedCards.length}
+        initialItemCount={Math.min(displayedCards.length, grid.foldTiles)}
         components={{List: ListContainer, Header: GridHeader, Footer: GridFooter}}
         itemContent={(index) => {
           const card = displayedCards[index];

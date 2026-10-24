@@ -1,5 +1,5 @@
-import {useEffect, useRef, useState} from 'react';
-import {useParams, useNavigate, useSearchParams, Navigate} from 'react-router-dom';
+import {useState} from 'react';
+import {useParams, useNavigate, Navigate} from 'react-router-dom';
 import {
   getPlaystyleById,
   getLocationRoles,
@@ -508,27 +508,6 @@ function usePlaystyleNavReset(
   }
 }
 
-/** Default sort to ink-cost on mount (skipped if URL already has a sort param).
- * useEffect + ref guard: setSearchParams mutates URL (side effect), not state —
- * calling it during render violates React's purity model. */
-function useDefaultSortParam() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const applied = useRef(false);
-  useEffect(() => {
-    if (applied.current) return;
-    applied.current = true;
-    if (searchParams.has('sort')) return;
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        next.set('sort', 'ink-cost');
-        return next;
-      },
-      {replace: true},
-    );
-  }, [searchParams, setSearchParams]);
-}
-
 // ── Page ──
 
 export function PlaystyleDetailPage() {
@@ -554,12 +533,12 @@ export function PlaystyleDetailPage() {
     activeFilterCount,
     sortOrder,
     setSortOrder,
-  } = useFilterParams();
+    // A playstyle's cards show by colour, then cost, from the first render on (#915).
+  } = useFilterParams({defaultSort: 'ink-cost'});
   const [showFilters, setShowFilters] = useState(false);
   const [activeRoles, setActiveRoles] = useState<Set<string>>(() => new Set());
   usePlaystyleNavReset(playstyleId, setActiveRoles);
   const toggleRole = (role: string) => setActiveRoles((prev) => toggleSetMember(prev, role));
-  useDefaultSortParam();
 
   const {playstyle, ui} = useResolvedPlaystyle(playstyleId);
   const {cards: playstyleCards, ...playstyleCardsLoad} = usePrecomputedPlaystyleCards(playstyle?.id);

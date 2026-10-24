@@ -2,7 +2,8 @@ import {useState, type MouseEvent} from 'react';
 import type {LorcanaCard} from '../../cards';
 import {cardPath} from 'inkweave-synergy-engine/card';
 import {smallImageUrl} from '../../cards';
-import {INK_COLORS, COLORS, CARD_TILE_GLOW, EASING, FONT_SIZES, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
+import {INK_COLORS, COLORS, CARD_TILE_GLOW, FONT_SIZES, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
+import {useArtLoad} from '../../../shared/hooks/useArtLoad';
 import {CardLightbox, InkCardPlaceholder, StrengthBadge} from '../../../shared/components';
 import {isModifiedClick} from '../../../shared/utils/touchGuard';
 import {getStrengthTier} from '../utils';
@@ -93,8 +94,8 @@ export function SynergyCard({
 
 function CardImageOrFallback({card, colors}: {card: LorcanaCard; colors: typeof INK_COLORS[keyof typeof INK_COLORS]}) {
   const [imgError, setImgError] = useState(false);
-  const [imgLoaded, setImgLoaded] = useState(false);
   const imgSrc = smallImageUrl(card);
+  const {loaded: imgLoaded, transition, artProps} = useArtLoad(imgSrc);
 
   if (!imgSrc || imgError) {
     return (
@@ -119,7 +120,7 @@ function CardImageOrFallback({card, colors}: {card: LorcanaCard; colors: typeof 
         alt={card.fullName}
         loading="lazy"
         decoding="async"
-        onLoad={() => setImgLoaded(true)}
+        {...artProps}
         onError={() => setImgError(true)}
         style={{
           width: '100%',
@@ -127,7 +128,7 @@ function CardImageOrFallback({card, colors}: {card: LorcanaCard; colors: typeof 
           objectFit: 'cover',
           display: 'block',
           opacity: imgLoaded ? 1 : 0,
-          transition: `opacity 0.2s ${EASING.smooth}`,
+          transition,
         }}
       />
     </>

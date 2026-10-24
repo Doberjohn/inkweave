@@ -1,12 +1,12 @@
 import {useState, useEffect} from 'react';
 import type {LorcanaCard, SetInfo} from '../../cards';
 import {
-  fetchCardsFromLocal,
   getUniqueKeywords,
   getUniqueClassifications,
   getUniqueRarities,
   getUniqueSets,
 } from '../../cards';
+import {cardListIfLoaded, startCardList} from '../../cards/cardListRequest';
 import {whenLoadedAndIdle} from '../../../shared/lib/whenLoadedAndIdle';
 
 /**
@@ -61,12 +61,20 @@ function useLoadRequest(deferInitialLoad: boolean): [boolean, () => void] {
 }
 
 /**
+ * The list a first render starts from: one main.tsx's hold already loaded (#915), so the page
+ * that render shows is the loaded one, never its skeleton, or none yet.
+ */
+function firstCardList(): {cards: LorcanaCard[]; sets: SetInfo[]} {
+  return cardListIfLoaded() ?? {cards: [], sets: []};
+}
+
+/**
  * Hook to load card data and extract filter metadata (keywords, classifications, sets).
  */
 export function useCardData({deferInitialLoad = false}: UseCardDataOptions = {}): UseCardDataReturn {
-  const [cards, setCards] = useState<LorcanaCard[]>([]);
-  const [sets, setSets] = useState<SetInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [cards, setCards] = useState<LorcanaCard[]>(() => firstCardList().cards);
+  const [sets, setSets] = useState<SetInfo[]>(() => firstCardList().sets);
+  const [isLoading, setIsLoading] = useState(() => cardListIfLoaded() === null);
   const [error, setError] = useState<Error | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const [loadRequested, requestLoad] = useLoadRequest(deferInitialLoad);
@@ -81,9 +89,10 @@ export function useCardData({deferInitialLoad = false}: UseCardDataOptions = {})
 
     async function loadCards() {
       try {
-        setIsLoading(true);
+        // A list already in settles without a loading frame.
+        if (!cardListIfLoaded()) setIsLoading(true);
         setError(null);
-        const data = await fetchCardsFromLocal();
+        const data = await startCardList();
         if (!cancelled) {
           setCards(data.cards);
           setSets(data.sets);

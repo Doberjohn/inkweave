@@ -14,6 +14,7 @@ import {printingAlt, type Printing} from '../hooks';
 import {useCardThrow} from '../hooks/useCardThrow';
 import {useFinePointer} from '../hooks/useFinePointer';
 import {useWheelTurn} from '../hooks/useWheelTurn';
+import {prerenderedArtShown} from '../lib/prerenderedArt';
 import {whenIdle} from '../lib/whenLoadedAndIdle';
 import {focusedByKeyboard} from '../utils/focusedByKeyboard';
 import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
@@ -73,15 +74,22 @@ function stackTabIndex({onEnlarge, locked}: Pick<PrintingCarouselProps, 'onEnlar
   return onEnlarge || locked ? undefined : 0;
 }
 
+/** Whether a carousel's first render loads its variants' art: turned to one, or one already shown. */
+function variantArtFirstWanted(index: number, printings: Printing[]): boolean {
+  return index > 0 || printings.slice(1).some((printing) => prerenderedArtShown(printing.imageUrl));
+}
+
 /**
  * Whether variant slides may load their art yet: not until the Standard art has loaded
  * and the main thread is idle. `loading="lazy"` can't hold back a printing behind the card
  * (it sits in the viewport), and Chrome even raises that fetch to High, so on a card page the
  * variant art would compete with the LCP image. Reaching for another printing loads it at once:
  * `reach` (a touch, a wheel, a mouse over the card or keyboard focus on it), or a turn to one.
+ * So does a prerendered page that showed a variant's art (#915): the browser has it already, and
+ * holding it back would blink it out as the app takes over.
  */
-function useVariantArt(rootRef: RefObject<HTMLDivElement | null>, index: number) {
-  const [wanted, setWanted] = useState(index > 0);
+function useVariantArt(rootRef: RefObject<HTMLDivElement | null>, index: number, printings: Printing[]) {
+  const [wanted, setWanted] = useState(() => variantArtFirstWanted(index, printings));
   if (index > 0 && !wanted) setWanted(true);
 
   useEffect(() => {
@@ -347,7 +355,7 @@ export function PrintingCarousel({
   const reducedMotion = usePrefersReducedMotion();
   const count = printings.length;
   const turnable = !locked && count > 1;
-  const variantArt = useVariantArt(rootRef, index);
+  const variantArt = useVariantArt(rootRef, index, printings);
   const mouse = usePeekHover({size: {width, height}, turnable, fine, reach: variantArt.reach});
   const {front, turns, turn} = useTurns(rootRef, {index, count, turnable, onIndexChange, onSettle, onTurn: mouse.clear});
   const tucked = useTucked(front, reducedMotion);

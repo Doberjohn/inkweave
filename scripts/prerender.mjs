@@ -30,6 +30,7 @@ import {contentType} from './lib/mime.mjs';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
 const DIST = resolve(ROOT, 'apps/web/dist');
+const STATIC_ROUTES_FILE = resolve(ROOT, 'apps/web/src/prerenderedRoutes.json');
 // Resolve Playwright from apps/web's node_modules (where @playwright/test is installed) —
 // a root script can't see it otherwise.
 const require = createRequire(resolve(ROOT, 'apps', 'web', 'package.json'));
@@ -90,27 +91,14 @@ async function enumerateRoutes() {
   );
   const cardData = JSON.parse(await readFile(join(DIST, 'data', 'allCards.json'), 'utf8'));
   return {
-    // Must stay in sync with STATIC_ROUTES in scripts/generate-sitemap.mjs. /vote was
+    // apps/web/src/prerenderedRoutes.json, which the app's routeReadiness test reads too: each
+    // of these routes says what its page waits for before main.tsx stops holding it (#915).
+    // It must match STATIC_ROUTES in scripts/generate-sitemap.mjs (its test checks). /vote was
     // missing here while present there (#525), so the deploy logged 1053 sitemap URLs
     // against 1052 prerendered routes and /vote fell through to the SPA rewrite —
     // serving the homepage's prerendered HTML, canonical and all.
     staticRoutes: [
-      '/',
-      '/browse',
-      '/playstyles',
-      '/vote',
-      '/inks',
-      '/ink/amber',
-      '/ink/amethyst',
-      '/ink/emerald',
-      '/ink/ruby',
-      '/ink/sapphire',
-      '/ink/steel',
-      '/about',
-      '/release-notes',
-      '/privacy',
-      '/terms',
-      '/disclaimer',
+      ...JSON.parse(await readFile(STATIC_ROUTES_FILE, 'utf8')),
       // In season only. Deliberately NOT in generate-sitemap.mjs's STATIC_ROUTES: the
       // page is noindex, because it is live for a few weeks a year and redirects the
       // rest, and reveal card ids are renumbered at graduation. Prerendering it is for
@@ -419,7 +407,8 @@ const errorMessage = (e) => (e && e.message ? e.message : String(e));
  */
 async function loadRoute(page, route, selector) {
   // Tells the app it is being crawled, so it never loads Sentry: its modulepreload would be
-  // baked into the captured HTML (#640; deploy check 7 in check-rendered-html.mjs).
+  // baked into the captured HTML (#640; deploy check 7 in check-rendered-html.mjs). The vote
+  // page draws no pair either, since each visit draws its own (#915).
   await page.addInitScript(() => {
     window.__INKWEAVE_PRERENDER__ = true;
   });
