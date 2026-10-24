@@ -12,7 +12,11 @@
 // eslint.config.js (#291). Zero dependencies — flat config supports inline
 // plugin objects natively. The rules are built from two factories (string-scan
 // and property-value) so each rule is data, not a bespoke visitor.
+//
+// One rule here isn't about tokens: no-compiler-opt-out (#937, in its own file)
+// keeps React Compiler's checks on.
 import {KNOWN_OFFENDERS} from './known-offenders.js';
+import {noCompilerOptOut} from './no-compiler-opt-out.js';
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -520,5 +524,6 @@ export const inkweave = {
     'no-adhoc-buttons': noAdhocButtons,
     'no-unshelled-dialogs': noUnshelledDialogs,
     'no-dim-text': noDimText,
+    'no-compiler-opt-out': noCompilerOptOut,
   },
 };
