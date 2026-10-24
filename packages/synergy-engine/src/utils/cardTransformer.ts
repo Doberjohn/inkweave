@@ -52,7 +52,8 @@ export interface LorcanaJSONCard {
   type: string;
   subtypes?: string[];
   abilities?: Array<{
-    fullText: string;
+    /** Absent in the web build's card data, which keeps only keyword abilities (slimRawCard). */
+    fullText?: string;
     type: string;
     keyword?: string;
     keywordValue?: string;
@@ -143,8 +144,13 @@ function nativeKeywords(raw: LorcanaJSONCard): string[] {
  * keyword-type abilities, so their named-ability text lives solely in `fullText`.
  */
 function conditionalTexts(raw: LorcanaJSONCard): string[] {
-  const abilityTexts = (raw.abilities ?? []).map((a) => a.effect ?? a.fullText);
-  return [...abilityTexts, raw.fullText ?? ''];
+  const abilityTexts = (raw.abilities ?? []).map((a) => a.effect ?? a.fullText ?? '');
+  return [...abilityTexts, cardText(raw) ?? ''];
+}
+
+/** The card's whole text. The web build's card data keeps it only as sections (slimRawCard). */
+function cardText(raw: LorcanaJSONCard): string | undefined {
+  return raw.fullText ?? raw.fullTextSections?.join('\n');
 }
 
 /** The first read of `pattern` across `texts` as a keyword string ("Shift 0"), or null. */
@@ -213,7 +219,7 @@ export function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     type,
     isSong,
     classifications,
-    text: raw.fullText,
+    text: cardText(raw),
     textSections: nonEmptySections(raw.fullTextSections),
     moveCost: raw.moveCost,
     // Characters with missing strength (data-entry gaps in preview sets) default to 0.
@@ -227,6 +233,28 @@ export function transformCard(raw: LorcanaJSONCard): LorcanaCard | null {
     franchise: raw.franchise,
     rarity: raw.rarity,
   };
+}
+
+/** A keyword ability as the slimmed data keeps it: what nativeKeywords reads. */
+function keywordOnly({type, keyword, keywordValue}: NonNullable<LorcanaJSONCard['abilities']>[number]) {
+  return {type, keyword, ...(keywordValue ? {keywordValue} : {})};
+}
+
+/**
+ * The raw card without what transformCard rebuilds or never reads (#929): `fullText` when its
+ * sections join back into it (Card studio keeps a blank line between abilities in `fullText`
+ * alone, so such a card keeps it), every ability but the keywords (the card text holds their
+ * words), and `keywordAbilities`. The web build ships its card data this way; transformCard turns
+ * a slimmed card into the same card, which a test checks for every card in the data.
+ */
+export function slimRawCard(raw: LorcanaJSONCard): LorcanaJSONCard {
+  const slim = {...raw};
+  if (slim.fullTextSections?.join('\n') === slim.fullText) delete slim.fullText;
+  const keywords = (slim.abilities ?? []).filter((a) => a.type === 'keyword').map(keywordOnly);
+  if (keywords.length > 0) slim.abilities = keywords;
+  else delete slim.abilities;
+  delete slim.keywordAbilities;
+  return slim;
 }
 
 /**

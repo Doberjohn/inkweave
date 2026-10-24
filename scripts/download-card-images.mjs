@@ -35,6 +35,7 @@ import {
   indexById,
   planFor,
   verifyRestored,
+  withImageSources,
 } from './lib/imageRestore.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -46,6 +47,8 @@ const OUTPUT_DIR = path.join(ROOT, 'apps/web/public/card-images');
 const PREVIEW_AVIFS_DIR = path.join(ROOT, 'apps/web/public/card-images-preview');
 /** The deployed card data — already the record of what production is serving. */
 const PROD_DATA_PATH = '/data/allCards.json';
+/** Where production keeps the source URLs once its card files no longer carry them (#932). */
+const PROD_SOURCES_PATH = '/data/image-sources.json';
 /**
  * Restore is an optimisation, so it must never be able to hold the build open. Node's
  * fetch has no default timeout: a stalled origin would hang rather than fall through to
@@ -469,6 +472,22 @@ export async function fetchChunkIndex(file) {
 }
 
 /**
+ * Production's source URLs by image id (#932), or {} when it serves no record: a deployment
+ * older than the record, whose card files still carry their URLs, or one that cannot be read,
+ * which costs those images a download.
+ */
+export async function fetchImageSources() {
+  try {
+    const res = await fetch(`${RESTORE_ORIGIN}${PROD_SOURCES_PATH}`, {
+      signal: AbortSignal.timeout(RESTORE_TIMEOUT_MS),
+    });
+    return res.ok ? await res.json() : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
  * Fetch the deployed card data, which publishes the hashes production is serving
  * alongside the source URLs they were built from.
  *
@@ -476,7 +495,7 @@ export async function fetchChunkIndex(file) {
  * warning: with no deployment to restore from, every card downloads, which is
  * precisely the pre-#554 behaviour.
  */
-async function fetchDeployedCards() {
+export async function fetchDeployedCards() {
   if (!RESTORE_ENABLED) return new Map();
   try {
     const res = await fetch(`${RESTORE_ORIGIN}${PROD_DATA_PATH}`, {
@@ -488,7 +507,10 @@ async function fetchDeployedCards() {
     // Fetched per set rather than as one file because that is how they deploy, and
     // CONCURRENTLY because a serial loop multiplies RESTORE_TIMEOUT_MS by the chunk
     // count: thirteen stalled sets would add over three minutes to the build.
-    const chunks = await Promise.allSettled(collectionChunkFiles().map(fetchChunkIndex));
+    const [chunks, sources] = await Promise.all([
+      Promise.allSettled(collectionChunkFiles().map(fetchChunkIndex)),
+      fetchImageSources(),
+    ]);
     // Applied in chunk order rather than completion order, so the result cannot
     // depend on which request happened to win the race.
     for (const chunk of chunks) {
@@ -496,7 +518,8 @@ async function fetchDeployedCards() {
       if (chunk.status !== 'fulfilled' || !chunk.value) continue;
       for (const [id, card] of chunk.value) deployed.set(id, card);
     }
-    return deployed;
+    // Once the card files carry no source URLs, production keeps them in one record (#932).
+    return withImageSources(deployed, sources);
   } catch (err) {
     console.warn(`  ! Could not read ${RESTORE_ORIGIN}${PROD_DATA_PATH} (${err.message}) — downloading everything.\n`);
     return new Map();

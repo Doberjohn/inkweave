@@ -6,6 +6,7 @@ import {
   planFor,
   sourceHash,
   verifyRestored,
+  withImageSources,
 } from '../imageRestore.mjs';
 
 const CDN = 'https://api.lorcana.ravensburger.com/images/en/set9';
@@ -82,6 +83,36 @@ describe('indexById', () => {
     const index = indexById([{id: 1936, variants: [{id: '1936-ench'}]}]);
     expect(index.get('1936-ench')).toEqual({id: '1936-ench'});
     expect(index.get('1936')).toEqual({id: 1936, variants: [{id: '1936-ench'}]});
+  });
+});
+
+describe('withImageSources', () => {
+  // A deployed entry once the build keeps its source URLs in the record (#932): hashes, no URLs.
+  const withoutUrls = () => {
+    const entry = deployed();
+    delete entry.images;
+    return entry;
+  };
+
+  it("gives a deployed entry production's recorded URLs, so unchanged art still restores", () => {
+    const index = withImageSources(new Map([['1936', withoutUrls()]]), {1936: card().images});
+    expect(planFor(card(), index.get('1936'))).toEqual({
+      action: 'restore',
+      full: 'ffff000011112222',
+      sm: 'aaaa333344445555',
+    });
+  });
+
+  it('keeps the URLs an entry carries itself, from a deployment older than the record', () => {
+    const index = withImageSources(new Map([['1936', deployed()]]), {
+      1936: {full: `${CDN}/1_${OTHER_SRC}.jpg`},
+    });
+    expect(index.get('1936').images).toEqual(card().images);
+  });
+
+  it('leaves the index as it is when production serves no record', () => {
+    const index = withImageSources(new Map([['1936', withoutUrls()]]), {});
+    expect(planFor(card(), index.get('1936')).action).toBe('download');
   });
 });
 

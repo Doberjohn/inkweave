@@ -4,6 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   fetchChunkIndex,
+  fetchDeployedCards,
+  fetchImageSources,
   imageSubjects,
   injectManifest,
   missingVariantHashes,
@@ -170,5 +172,38 @@ describe('collection chunk restore', () => {
   it('returns null for a chunk production does not serve, so that set downloads', async () => {
     vi.stubGlobal('fetch', async () => ({ok: false, status: 404}));
     expect(await fetchChunkIndex('99.json')).toBeNull();
+  });
+
+  it("restores a printing whose URLs only production's record holds (#932)", async () => {
+    const served = {
+      '/data/allCards.json': {
+        cards: [
+          {
+            id: 'c1',
+            variants: [
+              {id: 'c1-ench', imageHash: '3333333333333333', imageHashSm: '4444444444444444'},
+            ],
+          },
+        ],
+      },
+      '/data/image-sources.json': {'c1-ench': {full: VARIANT_SRC}},
+    };
+    vi.stubGlobal('fetch', async (url) => {
+      const body = served[new URL(url).pathname];
+      return body ? {ok: true, json: async () => body} : {ok: false, status: 404};
+    });
+
+    const deployed = await fetchDeployedCards();
+
+    expect(planFor({id: 'c1-ench', images: {full: VARIANT_SRC}}, deployed.get('c1-ench'))).toEqual({
+      action: 'restore',
+      full: '3333333333333333',
+      sm: '4444444444444444',
+    });
+  });
+
+  it('reads no record from a deployment older than it, whose card files carry the URLs', async () => {
+    vi.stubGlobal('fetch', async () => ({ok: false, status: 404}));
+    expect(await fetchImageSources()).toEqual({});
   });
 });

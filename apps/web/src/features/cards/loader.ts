@@ -41,12 +41,23 @@ const PREVIEW_IMAGE_CDN_ORIGIN = 'https://lorcanaplayer.com/wp-content/uploads/'
 /** A card, or one of its variant printings (#625): anything with its own id and art. */
 type ImageSource = Pick<LorcanaJSONCard, 'id' | 'images' | 'imageHash'>;
 
+/**
+ * Whether the card's only art is its hashed file, whatever the build: it has the hash a deploy
+ * injects and no links, as every card in a production deployment's data has (#932). Admin reads
+ * inkweave.ink's card data in a build without VITE_LOCAL_IMAGES, so this is how it shows the art
+ * the site serves. The repo's data keeps its links, and an owner's scan has no hash until a
+ * build hashes it.
+ */
+function hasHashedArtOnly(raw: ImageSource): boolean {
+  return raw.imageHash !== undefined && raw.images === undefined;
+}
+
 function resolveImageUrl(raw: ImageSource): string | undefined {
   // Production: content-addressed URL using the hash injected into the data
   // file by scripts/download-card-images.mjs. Returning undefined when no
   // hash is present is intentional — surfaces a build mismatch as a broken
   // image rather than a silently-stale one. See issue #323.
-  if (USE_LOCAL_IMAGES) {
+  if (USE_LOCAL_IMAGES || hasHashedArtOnly(raw)) {
     return raw.imageHash ? `/card-images/${raw.id}.${raw.imageHash}.avif` : undefined;
   }
   const rawUrl = raw.images?.thumbnail;
@@ -66,11 +77,20 @@ function resolveImageUrl(raw: ImageSource): string | undefined {
 }
 
 /**
+ * Whether the card draws its hashed files: every card in a local-images build, and in any build a
+ * card whose art URL is its hashed file's (resolveImageUrl), not a link's or a scan's (#932).
+ */
+function drawsHashedArt(card: Pick<LorcanaCard, 'id' | 'imageUrl'>): boolean {
+  return USE_LOCAL_IMAGES || card.imageUrl?.startsWith(`/card-images/${card.id}.`) === true;
+}
+
+/**
  * Derive the small-size image URL for a card.
  *
- * Production (USE_LOCAL_IMAGES): builds `/card-images/{id}.{hashSm}-sm.avif`
- * from the per-size hash injected into the card data. The small variant has
- * a different hash than the full variant because the bytes differ.
+ * Production (USE_LOCAL_IMAGES), and any card whose art is its hashed file
+ * (#932): builds `/card-images/{id}.{hashSm}-sm.avif` from the per-size hash
+ * injected into the card data. The small variant has a different hash than
+ * the full variant because the bytes differ.
  *
  * Dev/CI: falls back to the legacy string-transform on `card.imageUrl`
  * (`.avif` → `-sm.avif`) so the existing proxy paths keep working.
@@ -78,7 +98,7 @@ function resolveImageUrl(raw: ImageSource): string | undefined {
 export function smallImageUrl(
   card: Pick<LorcanaCard, 'id' | 'imageUrl' | 'imageHashSm'>,
 ): string | undefined {
-  if (USE_LOCAL_IMAGES && card.imageHashSm) {
+  if (card.imageHashSm && drawsHashedArt(card)) {
     return `/card-images/${card.id}.${card.imageHashSm}-sm.avif`;
   }
   const url = card.imageUrl;

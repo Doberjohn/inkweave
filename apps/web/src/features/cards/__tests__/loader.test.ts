@@ -833,6 +833,80 @@ describe('smallImageUrl', () => {
   });
 });
 
+describe('card art without image links', () => {
+  // A production deployment's card data has each card's image hashes and no links (#932): its art
+  // must come from the id and the hashes alone, in production and in admin, which reads that data
+  // in a build without VITE_LOCAL_IMAGES.
+  const SRC = 'https://api.lorcana.ravensburger.com/images/en/set9';
+  const enchanted = {
+    id: 2201,
+    rarity: 'Enchanted',
+    imageHash: '3333333333333333',
+    imageHashSm: '4444444444444444',
+  };
+  const card = {
+    id: 1936,
+    name: 'Ariel',
+    fullName: 'Ariel - Spectacular Singer',
+    cost: 3,
+    color: 'Amber',
+    inkwell: true,
+    type: 'Character',
+    setCode: '9',
+    imageHash: 'ffff000011112222',
+    imageHashSm: 'aaaa333344445555',
+  };
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  it('draws a card and its printings the same without their links in a local-images build', async () => {
+    vi.stubEnv('VITE_LOCAL_IMAGES', 'true');
+    vi.resetModules();
+    const {transformRawCards: transformLocal} = await import('../loader');
+
+    const [linked, unlinked] = transformLocal([
+      {
+        ...card,
+        images: {
+          full: `${SRC}/1_${'a'.repeat(40)}.jpg`,
+          thumbnail: `${SRC}/1_${'b'.repeat(40)}.jpg`,
+        },
+        variants: [{...enchanted, images: {full: `${SRC}/216_${'c'.repeat(40)}.jpg`}}],
+      },
+      {...card, variants: [enchanted]},
+    ]);
+
+    expect(unlinked).toEqual(linked);
+    expect(unlinked.imageUrl).toBe('/card-images/1936.ffff000011112222.avif');
+  });
+
+  it('draws a card and its printings with hashes and no links from their hashed files in any build', () => {
+    const [ariel] = transformRawCards([{...card, variants: [enchanted]}]);
+    const [printing] = ariel.variants ?? [];
+
+    expect([ariel.imageUrl, smallImageUrl(ariel)]).toEqual([
+      '/card-images/1936.ffff000011112222.avif',
+      '/card-images/1936.aaaa333344445555-sm.avif',
+    ]);
+    expect([printing.imageUrl, smallImageUrl(printing)]).toEqual([
+      '/card-images/2201.3333333333333333.avif',
+      '/card-images/2201.4444444444444444-sm.avif',
+    ]);
+  });
+
+  it("keeps a card's links where it has hashes too, as the repo's data has after a local download-images run", () => {
+    const [ariel] = transformRawCards([{...card, images: {thumbnail: `${SRC}/1_t.jpg`}}]);
+
+    expect([ariel.imageUrl, smallImageUrl(ariel)]).toEqual([
+      '/card-images/en/set9/1_t.jpg',
+      '/card-images/en/set9/1_t.jpg',
+    ]);
+  });
+});
+
 describe('applySortOrder - ink-cost', () => {
   const cards: LorcanaCard[] = [
     createCard({id: '1', ink: 'Sapphire', cost: 3, fullName: 'Zephyr'}),
