@@ -1,5 +1,5 @@
 import {afterEach, describe, it, expect, vi, beforeEach} from 'vitest';
-import type {Session} from '@supabase/supabase-js';
+import type {Session} from '@supabase/auth-js';
 import {callbackFailureReason} from '../signInAnalytics';
 
 // Hoisted, so every fresh copy of the helpers sends through the same mock.

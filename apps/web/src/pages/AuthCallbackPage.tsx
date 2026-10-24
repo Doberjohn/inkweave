@@ -10,8 +10,8 @@ import {CtaButton} from '../shared/components';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
 
 /**
- * `/auth/callback` (#463) — the OAuth provider redirects here after consent. supabase-js
- * (detectSessionInUrl + PKCE) exchanges the code automatically; SessionContext then
+ * `/auth/callback` (#463) — the OAuth provider redirects here after consent. The Supabase
+ * SDK (detectSessionInUrl + PKCE) exchanges the code automatically; SessionContext then
  * observes the new session and we route onward. A short grace period guards against a
  * failed/invalid exchange so the user isn't stuck on a spinner.
  */
