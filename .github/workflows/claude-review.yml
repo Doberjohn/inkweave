@@ -51,9 +51,9 @@ jobs:
       # The review diffs against the pull request's base branch, read here because a
       # comment's event doesn't carry it. A comment can also ask about any pull request,
       # and a fork's branch could bring its own CLAUDE.md and .claude/ skills to steer a
-      # run that holds the API key, so a fork's is refused. (A fork's pull request never
-      # gets secrets on the pull_request event.) The start time lets the last step tell
-      # this run's comments from earlier ones.
+      # run that holds the Claude token, so a fork's is refused. (A fork's pull request
+      # never gets secrets on the pull_request event.) The start time lets the last step
+      # tell this run's comments from earlier ones.
       - name: Read the pull request's base branch
         id: pr
         env:
@@ -102,18 +102,19 @@ jobs:
       # The settings turn off the repo's Claude hooks, which guard a local checkout and
       # have nothing to guard here, and .mcp.json's GitHub server. Claude reads the code
       # with Claude Code's read-only tools and commands, and its one other tool posts an
-      # inline comment on this pull request.
+      # inline comment on this pull request. It runs on the owner's Claude Max plan,
+      # through a token from `claude setup-token`.
       - name: Review
         id: review
         uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1
         env:
-          # Keeps the API key and the job's token out of the shell commands Claude runs,
-          # and runs them in the sandbox above. So gh can't reach GitHub from there: Claude
-          # reads the diff with git, and the action's comment tool, outside the sandbox,
-          # posts the findings.
+          # Keeps the Claude token and the job's GitHub token out of the shell commands
+          # Claude runs, and runs them in the sandbox above. So gh can't reach GitHub from
+          # there: Claude reads the diff with git, and the action's comment tool, outside
+          # the sandbox, posts the findings.
           CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: "1"
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ github.token }}
           prompt: /code-review high --comment ${{ env.PR_NUMBER }}
           settings: '{"disableAllHooks":true,"disabledMcpjsonServers":["github"]}'
@@ -128,8 +129,8 @@ jobs:
       # The skill posts nothing when it finds nothing, so this step says so on the pull
       # request, quoting the review's closing summary, which also shows why a review that
       # failed to post its findings posted none. A review that didn't finish gets a comment
-      # saying so, with the reason when there is one, and turns the run red. The run's
-      # cost goes on its summary page.
+      # saying so, with the reason when there is one, and turns the run red. What the run
+      # would cost at API prices goes on its summary page.
       - name: Report the review
         if: ${{ !cancelled() && steps.review.outcome != 'skipped' }}
         env:
@@ -143,17 +144,21 @@ jobs:
           }
           cost=$(last_result total_cost_usd)
           if [ -n "$cost" ]; then
-            echo "Review cost: US\$$cost" >> "$GITHUB_STEP_SUMMARY"
+            echo "Review cost at API prices: US\$$cost" >> "$GITHUB_STEP_SUMMARY"
           fi
           summary=$(last_result result)
           turns=$(last_result num_turns)
           # The action counts a review that never got going as a success: Claude Code reports
-          # an API call the API refused as a result with no turns.
+          # an API call the API refused as a result with no turns. A review that the plan's
+          # usage limit stopped ends as a success too, its result starting "You've hit your".
+          stopped="^(API Error|You've hit your|You've reached your|You're out of)"
           if [ "$REVIEW_OUTCOME" = success ] && [ "${turns:-0}" -gt 0 ] \
-            && [ "$(last_result is_error)" != true ] && [[ "$summary" != "API Error"* ]]; then
-            posted=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/comments" --paginate \
-              --jq '[.[] | select(.user.login == "github-actions[bot]" and .created_at >= env.STARTED)] | length' \
-              | awk '{ n += $1 } END { print n + 0 }')
+            && [ "$(last_result is_error)" != true ] && ! [[ "$summary" =~ $stopped ]]; then
+            # gh prints a count per page. The call has its own line so that a failed call fails
+            # the step, where a pipe into awk would count it as no comments.
+            counts=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/comments" --paginate \
+              --jq '[.[] | select(.user.login == "github-actions[bot]" and .created_at >= env.STARTED)] | length')
+            posted=$(awk '{ n += $1 } END { print n + 0 }' <<< "$counts")
             if [ "$posted" -gt 0 ]; then
               exit 0
             fi
