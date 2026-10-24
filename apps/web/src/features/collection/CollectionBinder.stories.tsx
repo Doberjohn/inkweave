@@ -23,8 +23,8 @@ import {COLORS} from '../../shared/constants';
  *   unowned   desaturated, no counts: the card exists, you do not have it
  *
  * Each card sits in its pocket's sleeve under the front sheet, a hair off straight at the
- * pocket's foot (#941). These fixtures have no art, so judge the pockets against real cards in
- * the app (see `binderStoryCards`).
+ * pocket's foot (#941). These fixtures (`binderStoryCards`) have no art, so judge the pockets
+ * against real cards in the running app's binder.
  *
  * A mouse pointing at a pocket opens its counts into steppers, an unheld finish at 0
  * (#826). Here a click reports to the Actions panel and the counts stay put.

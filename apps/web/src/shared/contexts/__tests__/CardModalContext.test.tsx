@@ -1,17 +1,34 @@
+import {useContext, useSyncExternalStore} from 'react';
 import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import {CardModalProvider, useCardModal} from '../CardModalContext';
-import {useCardWindowSlot} from '../cardWindowSlot';
+import {CardWindowSlotContext, useCardWindowSlot} from '../cardWindowSlot';
 import {CardDataProvider} from '../CardDataContext';
 
+/** The window's open flag, as a page reads it (`CollectionBinderSection`). */
+function useWindowOpen(): boolean {
+  const {open} = useContext(CardWindowSlotContext)!;
+  return useSyncExternalStore(open.subscribe, open.get);
+}
+
 function Probe() {
-  const {selectedCardId, siblingCardIds, initialPrintingId, resolveCard, openCardModal, closeCardModal, goToSibling} =
-    useCardModal();
+  const {
+    selectedCardId,
+    siblingCardIds,
+    initialPrintingId,
+    resolveCard,
+    openCardModal,
+    openComparison,
+    closeCardModal,
+    goToSibling,
+  } = useCardModal();
   const {shownPrintingId} = useCardWindowSlot();
+  const windowOpen = useWindowOpen();
   return (
     <div>
       <span data-testid="selected">{selectedCardId ?? 'none'}</span>
+      <span data-testid="open">{String(windowOpen)}</span>
       <span data-testid="siblings">{siblingCardIds.join(',')}</span>
       <span data-testid="printing">{initialPrintingId ?? 'none'}</span>
       <span data-testid="shown">{shownPrintingId ?? 'none'}</span>
@@ -35,6 +52,7 @@ function Probe() {
         }>
         open-binder
       </button>
+      <button onClick={() => openComparison('b', 'c')}>compare</button>
       <button onClick={closeCardModal}>close</button>
       <button onClick={() => goToSibling(1)}>next</button>
       <button onClick={() => goToSibling(-1)}>prev</button>
@@ -138,4 +156,25 @@ test('a list holding a card twice pages by place, each place keeping its own pri
 
   await user.click(screen.getByText('next')); // on to a, not back to b's first place
   expect(screen.getByTestId('selected')).toHaveTextContent('a');
+});
+
+test('the window counts as open from its open to its close, through the arrows (#941)', async () => {
+  // A page holds back what changed in the window until it closes; the window's own views (an
+  // expanded group, a comparison) never reach the provider, so they keep it open too.
+  const user = userEvent.setup();
+  renderProbe();
+  expect(screen.getByTestId('open')).toHaveTextContent('false');
+
+  await user.click(screen.getByText('open-b'));
+  expect(screen.getByTestId('open')).toHaveTextContent('true');
+  await user.click(screen.getByText('next'));
+  expect(screen.getByTestId('open')).toHaveTextContent('true');
+  await user.click(screen.getByText('close'));
+  expect(screen.getByTestId('open')).toHaveTextContent('false');
+
+  // A compare link opens straight on a pair.
+  await user.click(screen.getByText('compare'));
+  expect(screen.getByTestId('open')).toHaveTextContent('true');
+  await user.click(screen.getByText('close'));
+  expect(screen.getByTestId('open')).toHaveTextContent('false');
 });

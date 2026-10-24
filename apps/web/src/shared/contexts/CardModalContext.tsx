@@ -160,6 +160,8 @@ export function CardModalProvider({children}: {children: ReactNode}) {
 
   const openCardModal = (cardId: string, siblingIds: string[] = [], options: OpenCardModalOptions = {}) => {
     setSelectedCardId(cardId);
+    // The window's open flag (`CardWindowStores`), set beside its card in each open and in the close.
+    windowStores.open.set(true);
     setComparisonPartnerId(null);
     setComparisonGroupKey(null);
     const index = options.siblingIndex ?? siblingIds.indexOf(cardId);
@@ -180,6 +182,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     {skipEnter: enterOnScreen = false}: OpenComparisonOptions = {},
   ) => {
     setSelectedCardId(cardId);
+    windowStores.open.set(true);
     setComparisonPartnerId(partnerId);
     setComparisonGroupKey(groupKey ?? null);
     setSiblingCardIds([]);
@@ -196,6 +199,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
 
   const closeCardModal = () => {
     setSelectedCardId(null);
+    windowStores.open.set(false);
     setComparisonPartnerId(null);
     setComparisonGroupKey(null);
     setHasUserSeenDefaultState(false);

@@ -26,12 +26,13 @@ const HOLO_BANDS = ['#ff5cba 0%', '#ffd65c 7%', '#5cffc4 14%', '#5ca4ff 21%', '#
  * BESIDE THE BINDER, NOT IN THEME.TS: only `BinderSpread` imports it, so these strings (the
  * weld and the holo the heaviest) load with the binder's own code, never at startup.
  *
- * THE BLACKS ARE EACH A STEP FROM THE PAGE'S BACKGROUND ON PURPOSE: the board a shade lighter,
- * so it reads against the page round it; the zip's tape and the gaps between the sheets darker,
- * so they read against the board.
+ * THE BLACKS ARE EACH A STEP FROM THE APP'S BACKGROUND (`COLORS.background`) ON PURPOSE: the
+ * board a shade lighter, so it reads against the screen round it, and the binder's pages a shade
+ * lighter again; the zip's tape and the gaps between the sheets darker, so they read against the
+ * board.
  */
 export const BINDER_LOOK = {
-  // The board the pages sit in: a fine grain over near-black, lifted off the page by its shadow.
+  // The board the pages sit in: a fine grain over near-black, lifted off the screen by its shadow.
   '--binder-board': '#101015',
   '--binder-board-grain': whiteRgba(0.05),
   '--binder-board-drop': blackRgba(0.85),

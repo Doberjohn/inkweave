@@ -2,7 +2,7 @@ import {describe, it, expect} from 'vitest';
 import {sheetCount, viewSheets} from '../binderSheets';
 
 describe('binderSheets', () => {
-  it('draws three sheets under the right page of a set\'s second spread, and none under the left', () => {
+  it("draws three sheets under the right page of a set's second spread, and none under the left", () => {
     // Nine spreads, the first opening on the front cover: the second is view 1.
     expect(viewSheets(1, 9, false)).toEqual({left: 0, right: 3});
   });

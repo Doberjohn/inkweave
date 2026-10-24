@@ -255,26 +255,28 @@ test.describe("Collection mode, the binder's pages and pockets (#941)", () => {
     const shown = binder(page).getByRole('navigation', {name: 'Binder pages'}).locator('[aria-current="true"]');
     const spreads = Number(/ of (\d+)/.exec((await shown.getAttribute('aria-label')) ?? '')?.[1]);
     expect(spreads, 'spreads in the set').toBeGreaterThan(3);
-    const next = binder(page).getByRole('button', {name: 'Next spread'});
     // Each side's sheet: a page, or the cover where there is none.
     const leftSide = binder(page).getByRole('group', {name: /^(Left page|Front cover)$/});
     const rightSide = binder(page).getByRole('group', {name: /^(Right page|Back cover)$/});
     const sheetsAt = async (spread: number) => {
       await expect(shown).toHaveAccessibleName(new RegExp(`^Spread ${spread} of ${spreads}:`));
-      // Away from the pockets, whose glow under the pointer reaches past the page's foot.
-      await page.mouse.move(0, 0);
       return [await sheetEdgesUnder(page, leftSide), await sheetEdgesUnder(page, rightSide)];
     };
+    // Paged from the keyboard, so the pointer never meets the pockets, whose glow under it reaches
+    // past the page's foot. A click also waits for the Next button to hold still, which took
+    // WebKit on CI up to 2.7s a turn.
+    await binder(page).getByRole('button', {name: 'Next spread'}).focus();
+    const turn = () => page.keyboard.press('Enter');
 
     // Spread 2: every sheet still to come under the right page, none turned under the left.
-    await next.click();
+    await turn();
     expect(await sheetsAt(2), 'spread 2: under the left page, under the right').toEqual([0, 3]);
     // Spread 3: one turned, and fewer to come.
-    await next.click();
+    await turn();
     const third = viewSheets(2, spreads, false);
     expect(await sheetsAt(3), 'spread 3').toEqual([third.left, third.right]);
     // The last spread: the reverse of the second.
-    for (let turn = 3; turn < spreads; turn++) await next.click();
+    for (let at = 3; at < spreads; at++) await turn();
     expect(await sheetsAt(spreads), 'the last spread').toEqual([3, 0]);
   });
 
@@ -520,10 +522,25 @@ test.describe("Collection mode, the binder's pages and pockets (#941)", () => {
     await page.keyboard.press('Enter');
     await expect(copies).toHaveAccessibleName('Your copies: 0 normal, 0 foil');
 
-    // While the window is open, the pockets show the cards as they were, and nothing plays.
-    expect(await artFilter(missing)).toBe(MISSING_GREY);
-    expect(await artFilter(held)).toBe('none');
-    expect(await binderMotion(page)).toEqual([]);
+    // While the window is open, the pockets show the cards as they were, and nothing plays: also
+    // over an expanded group and a comparison, which take away the slot under the window's card.
+    const stillWaiting = async (over: string) => {
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      expect(await artFilter(missing), over).toBe(MISSING_GREY);
+      expect(await artFilter(held), over).toBe('none');
+      expect(await binderMotion(page), over).toEqual([]);
+    };
+    await stillWaiting('the window');
+    await modal.locator('[data-group-key] [data-testid="more-tile"]').first().click();
+    await expect(modal).toHaveAttribute('data-state', 'expanded');
+    await stillWaiting('an expanded group');
+    await modal.getByText(/back to all synergies/i).click();
+    await modal.locator('[data-group-key] a.card-tile').first().click();
+    await expect(modal).toHaveAttribute('data-mode', 'comparison');
+    await stillWaiting('a comparison');
+    // Escape steps out of the comparison, and then closes the window.
+    await page.keyboard.press('Escape');
+    await expect(modal).toHaveAttribute('data-mode', 'default');
 
     const closedAt = await page.evaluate(() => performance.now());
     await page.keyboard.press('Escape');

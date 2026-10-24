@@ -1030,10 +1030,11 @@ test.describe('Collection mode, signed in (phone width)', () => {
     // One zip, as a cover's on a desktop spread: along the top from end to end, over the spine
     // too, and down the outer side, but not down the spine's side, where the binder bends.
     const strip = {y: frame.top + 40, width: 4, height: 120};
-    expect(
-      await teethIn(page, {x: frame.left + 24, y: frame.top + 3, width: (frame.right - frame.left) / 3, height: 4}),
-      'teeth along the top',
-    ).toBeGreaterThan(0.25);
+    const third = (frame.right - frame.left - 48) / 3;
+    for (const [i, end] of ['the spine end', 'the middle', 'the outer end'].entries()) {
+      const top = {x: frame.left + 24 + i * third, y: frame.top + 3, width: third, height: 4};
+      expect(await teethIn(page, top), `teeth along the top, ${end}`).toBeGreaterThan(0.25);
+    }
     expect(await teethIn(page, {...strip, x: frame.right - 7}), 'teeth down the outer side').toBeGreaterThan(0.25);
     expect(await teethIn(page, {...strip, x: frame.left + 3}), "teeth down the spine's side").toBe(0);
   });

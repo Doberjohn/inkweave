@@ -493,8 +493,11 @@ describe('CollectionBinder', () => {
     };
 
     it('gives each pocket on a page of cards a sleeve, a card or no card in it, and the covers none', () => {
-      render(binder());
-      expect(screen.getByRole('group', {name: 'Right page'}).querySelectorAll(':scope > .binder-pocket')).toHaveLength(12);
+      // Five cards: the right page holds them, then seven empty sleeves.
+      render(binder({slots: CARDS.slice(0, 5)}));
+      const pockets = [...screen.getByRole('group', {name: 'Right page'}).querySelectorAll(':scope > .binder-pocket')];
+      expect(pockets).toHaveLength(12);
+      expect(pockets.filter((sleeve) => sleeve.childElementCount === 0)).toHaveLength(7);
       expect(screen.getByRole('group', {name: 'Front cover'}).querySelector('.binder-pocket')).toBeNull();
     });
 

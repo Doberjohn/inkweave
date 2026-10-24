@@ -82,18 +82,18 @@ const ZERO: CollectionEntry = {normal: 0, foil: 0};
 const NOOP = () => {};
 
 /** No card window to watch: outside its provider, as in this section's tests and stories. */
-const NO_WINDOW = {subscribe: () => NOOP, get: () => null};
+const NO_WINDOW = {subscribe: () => NOOP, get: () => false};
 
 /**
  * Whether the card window is open over the binder (#941), so a pocket whose copies change there
- * plays the change once it closes. Read from the window's slot under its card, where its copies
- * stripe goes: on the page while a window is open over a collection, the one way a pocket's
- * copies change from it. A store, so this section alone re-renders as the window opens and
- * closes, never the page round it.
+ * plays the change once it closes. From its open to its close, an expanded group and a desktop
+ * comparison included, though those take away the slot under its card where the copies stripe
+ * goes. A store, so this section alone re-renders as the window opens and closes, never the page
+ * round it.
  */
 function useCardWindowOpen(): boolean {
-  const slot = useContext(CardWindowSlotContext)?.slot ?? NO_WINDOW;
-  return useSyncExternalStore(slot.subscribe, () => slot.get() !== null, () => false);
+  const open = useContext(CardWindowSlotContext)?.open ?? NO_WINDOW;
+  return useSyncExternalStore(open.subscribe, open.get, () => false);
 }
 
 /** What the page passes through to the collection panel: set switching, the binder view and the chosen headline. */
