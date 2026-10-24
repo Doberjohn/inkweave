@@ -12,6 +12,15 @@ type TestFixtures = {
   votePage: VotePage;
 };
 
+type TestOptions = {
+  /**
+   * Console errors a test causes on purpose, such as the log of a fetch it fails to check the
+   * page's failed state (#930). Unlike BENIGN_CONSOLE, which every test shares, only the tests
+   * that set it with `test.use` allow them, so the same message anywhere else still fails.
+   */
+  expectedConsoleErrors: readonly RegExp[];
+};
+
 /**
  * Console-error guard allowlist.
  *
@@ -71,9 +80,10 @@ const BENIGN_CONSOLE: readonly RegExp[] = [
 
 // Extend base test with custom fixtures + a global console-error guard.
 // Note: `use` is Playwright's fixture function, not a React Hook.
-export const test = base.extend<TestFixtures>({
+export const test = base.extend<TestFixtures & TestOptions>({
+  expectedConsoleErrors: [[], {option: true}],
   // Override the built-in `page` fixture so every spec inherits the guard.
-  page: async ({page}, use) => {
+  page: async ({page, expectedConsoleErrors}, use) => {
     // Before anything navigates: the placeholder Supabase host does not resolve, and the
     // guard below would fail on the resulting network errors. See supabaseStub.ts.
     await stubSupabase(page);
@@ -93,7 +103,8 @@ export const test = base.extend<TestFixtures>({
 
     await use(page);
 
-    const fatal = errors.filter((text) => !BENIGN_CONSOLE.some((re) => re.test(text)));
+    const allowed = [...BENIGN_CONSOLE, ...expectedConsoleErrors];
+    const fatal = errors.filter((text) => !allowed.some((re) => re.test(text)));
     expect(
       fatal,
       `Page logged ${fatal.length} unexpected console error(s):\n${fatal.join('\n---\n')}`,

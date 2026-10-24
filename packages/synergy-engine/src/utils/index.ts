@@ -162,6 +162,7 @@ export {
   tribalMechanicDescription,
 } from './mechanics.js';
 export type {Mechanic} from './mechanics.js';
+export {getPlaystyleMechanicIds} from './playstyleMechanics.js';
 
 export {slimRawCard, transformCard, transformCards} from './cardTransformer.js';
 export type {LorcanaJSONCard, RawCardVariant} from './cardTransformer.js';

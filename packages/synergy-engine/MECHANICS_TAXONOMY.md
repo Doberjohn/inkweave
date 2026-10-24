@@ -3,7 +3,7 @@
 **Status:** ✅ Implemented (item 3 — auto-generated mechanics tiles).
 **Goal:** Replace the hardcoded, per-playstyle "mechanics cards" wiring (`RoleTileRow`) with a single, regex-driven mechanics catalog that every playstyle draws from deterministically in the engine loop. Adding a playstyle should surface its mechanics tiles with **zero per-mechanic boilerplate**; an unseen mechanic should be **one new regex** in the catalog.
 
-**Delivered:** the catalog (`mechanics.ts`) is the single source of truth for every tile's id/label/description. `getRoleChips` (web) builds tiles from each playstyle's structural roles ∪ `getCardMechanics`, canonicalised + deduped, with labels from `mechanicLabel`/`mechanicDescription`. The per-playstyle `*_ROLE_CHIP_LABELS`/`*_DESCRIPTIONS` maps were removed (only `LOCATION_ROLE_*` remain — `ConnectionGroup` uses their location-name-templated descriptions, a different surface). `RoleTileRow` is a horizontal-scroll carousel (~8 tiles visible). Result: the same mechanic reads identically in every playstyle, and every playstyle surfaces all mechanics its cards exhibit. One exception: on a classification tribe's page, `in-play-check` and `trigger` (whose catalog text is worded for Location Control and Floodborns) name the tribe through `tribalMechanicDescription`, e.g. "Get benefits tied to a Madrigal character, such as having one in play" (the tribal check also covers "if you played / returned a X" and "if a X is chosen").
+**Delivered:** the catalog (`mechanics.ts`) is the single source of truth for every tile's id/label/description. `getPlaystyleMechanicIds` (engine) lists a card's tile ids, its playstyle's structural roles ∪ `getCardMechanics`, canonicalised + deduped; precompute writes them per card to `_playstyleMechanics.json`, and `getRoleChips` (web) tallies them, with each tile's text from the engine's display catalog (`dist/catalog.json`, built from `mechanicLabel`/`mechanicDescription`). The per-playstyle `*_ROLE_CHIP_LABELS`/`*_DESCRIPTIONS` maps were removed (only `LOCATION_ROLE_*` remain — `ConnectionGroup` uses their location-name-templated descriptions, a different surface). `RoleTileRow` is a horizontal-scroll carousel (~8 tiles visible). Result: the same mechanic reads identically in every playstyle, and every playstyle surfaces all mechanics its cards exhibit. One exception: on a classification tribe's page, `in-play-check` and `trigger` (whose catalog text is worded for Location Control and Floodborns) name the tribe through `tribalMechanicDescription`, e.g. "Get benefits tied to a Madrigal character, such as having one in play" (the tribal check also covers "if you played / returned a X" and "if a X is chosen").
 
 ---
 
@@ -146,6 +146,8 @@ function getPlaystyleMechanics(playstyleId, cards): MechanicTile[];
 ```
 
 `ROLE_CONFIGS` (web) collapses into a single generic path that calls the engine-exported `getPlaystyleMechanics`. Adding a playstyle requires **no** web wiring.
+
+Delivered as `getPlaystyleMechanicIds` (#930): `ROLE_CONFIGS` moved into the engine as `PLAYSTYLE_ROLES` (`src/utils/playstyleMechanics.ts`), precompute runs it on every playstyle card, and the page only tallies the ids it fetches, so the web app ships no detector. A new playstyle still needs its `PLAYSTYLE_UI` entry (its accent color, gallery kind and hero card).
 
 ---
 

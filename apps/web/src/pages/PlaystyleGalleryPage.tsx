@@ -1,11 +1,8 @@
 import {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {
-  getAllPlaystyles,
-  type LorcanaCard,
-  type Playstyle,
-} from 'inkweave-synergy-engine';
-import {useAllPlaystyleCards} from '../features/synergies/hooks';
+import type {LorcanaCard, Playstyle} from 'inkweave-synergy-engine';
+import {getAllPlaystyles} from '../features/synergies/engineCatalog';
+import {useAllPlaystyleCards, usePreloadPlaystyleMechanics} from '../features/synergies/hooks';
 import {CardGridSkeleton} from '../features/cards';
 import {CompactHeader, CtaButton, ErrorBoundary, EtherealBackground, Seo} from '../shared/components';
 import {PlaystyleFanTile, PlaystyleSection} from '../features/playstyles';
@@ -211,6 +208,7 @@ export function PlaystyleGalleryPage() {
   };
 
   const {data: playstyleCardData} = useAllPlaystyleCards();
+  usePreloadPlaystyleMechanics(!isLoading && playstyleCardData.size > 0);
   const activePlaystyles = buildActivePlaystyles(playstyleCardData);
   const onPlaystyleClick = (id: string) => {
     const name = activePlaystyles.find((e) => e.playstyle.id === id)?.playstyle.name ?? id;

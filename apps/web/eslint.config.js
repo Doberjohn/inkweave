@@ -112,5 +112,28 @@ export default tseslint.config(
       ],
     },
   },
+  // The app imports only types from the engine's root (#930): its display text comes from
+  // `inkweave-synergy-engine/catalog.json` (features/synergies/engineCatalog.ts) and its card
+  // helpers from `inkweave-synergy-engine/card`, so no rule or detector reaches the bundle.
+  // Precompute runs the detectors at build time. Tests and stories may import the whole engine.
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/**/__tests__/**', 'src/**/*.test.{ts,tsx}', 'src/**/*.stories.tsx', 'src/shared/test-utils/**'],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'inkweave-synergy-engine',
+              allowTypeImports: true,
+              message:
+                "Import types only: values come from features/synergies/engineCatalog or 'inkweave-synergy-engine/card', so the engine's rules stay out of the bundle.",
+            },
+          ],
+        },
+      ],
+    },
+  },
   storybook.configs['flat/recommended'],
 );

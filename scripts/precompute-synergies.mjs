@@ -8,6 +8,7 @@
  *
  * Plus metadata:
  *   apps/web/public/data/synergies/_playstyles.json  — playstyleId → cardId[]
+ *   apps/web/public/data/synergies/_playstyleMechanics.json: playstyleId → cardId → mechanic ids
  *   apps/web/public/data/synergies/_manifest.json    — cardIds with synergy files
  *
  * And the homepage's featured cards (#641):
@@ -42,7 +43,7 @@ async function main() {
     process.exit(1);
   }
   const engineUrl = new URL(`file:///${enginePath.replace(/\\/g, '/')}`);
-  const {synergyEngine, getAllPlaystyles, transformCards, isCoreSet, MIN_CORE_SET} =
+  const {synergyEngine, getAllPlaystyles, getPlaystyleMechanicIds, transformCards, isCoreSet, MIN_CORE_SET} =
     await import(engineUrl.href);
 
   // Load and transform card data (main + optional preview) using the engine's shared transformer
@@ -153,13 +154,20 @@ async function main() {
     }
   }
 
-  // Pre-compute playstyle card lists
+  // Pre-compute playstyle card lists, and each card's mechanic ids for its playstyle page's tiles
+  // (#930): the page reads them instead of running the engine's detectors. A card with
+  // none is left out. A file of its own, so a page still running the old code reads
+  // _playstyles.json in the shape it knows.
   const playstyles = {};
+  const playstyleMechanics = {};
   for (const ps of getAllPlaystyles()) {
     const psCards = synergyEngine.getPlaystyleCards(ps.id, cards);
     playstyles[ps.id] = psCards.map((c) => c.id);
+    const mechanicIds = psCards.map((c) => [c.id, getPlaystyleMechanicIds(ps.id, c)]);
+    playstyleMechanics[ps.id] = Object.fromEntries(mechanicIds.filter(([, ids]) => ids.length > 0));
   }
   fs.writeFileSync(path.join(OUTPUT_DIR, '_playstyles.json'), JSON.stringify(playstyles));
+  fs.writeFileSync(path.join(OUTPUT_DIR, '_playstyleMechanics.json'), JSON.stringify(playstyleMechanics));
 
   // The homepage's featured cards (#641). Written before the manifest, so the manifest stays the
   // newest file the Vite plugin's staleness check compares against.
@@ -205,6 +213,7 @@ async function main() {
   const newFiles = new Set([
     ...manifest.map((id) => `${id}.json`),
     '_playstyles.json',
+    '_playstyleMechanics.json',
     '_manifest.json',
     '_pairs_index.json',
   ]);

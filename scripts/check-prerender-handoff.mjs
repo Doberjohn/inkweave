@@ -34,10 +34,11 @@
  *      no image only the other capture shows (the app's code held). A phone's preload scanner
  *      reads the desktop capture before the inline script swaps the phone one in.
  *   8. With the data a page waits for held back DATA_HOLD_MS (the home page's featured cards, the
- *      card list, a playstyle's card ids, the synergy file of the vote page's first pair), the
- *      page asks for all of its data before the app renders (a card page its synergy file too, a
- *      playstyle's page the card list, the vote page the card list and the pairs index) and for
- *      none it defers (the home page's card list, #641), its capture stays on screen until the
+ *      card list, a playstyle's card ids and their mechanic ids, the synergy file of the vote
+ *      page's first pair), the page asks for all of its data before the app renders (a card page
+ *      its synergy file too, a playstyle's page the card list and its other playstyle file, the
+ *      vote page the card list and the pairs index) and for none it defers (the home page's card
+ *      list, #641; the gallery's mechanic ids, #930), its capture stays on screen until the
  *      data arrives, then the app's page replaces it whole, within a frame of letting go: no frame
  *      shows a loading state (`[aria-busy="true"]`, the route's fallback included) or an empty
  *      #root, the app's first frame shows every image the capture showed on screen, at full
@@ -760,7 +761,7 @@ export function routesOf(dist) {
     // before the app renders (`wants`) and those it leaves to the app (`avoids`): the home page
     // doesn't wait for the card list (#641) unless its featured file can't be used (`missing`),
     // when it shows the featured cards from that list, and a playstyle's page waits for its card
-    // ids too.
+    // ids and their mechanic ids too (#930), which the gallery leaves to the app.
     // The vote page's first pair is drawn at random, so the synergy files it asks for are held
     // by pattern (`match`), and its capture is its loading view (`loadingCapture`): the crawl
     // draws no pair.
@@ -773,7 +774,17 @@ export function routesOf(dist) {
         file: 'allCards.json',
         wants: [`synergies/${cardId}.json`],
       },
-      {path: `/playstyles/${playstyle}`, file: '_playstyles.json', wants: ['allCards.json']},
+      {path: '/playstyles', file: '_playstyles.json', avoids: ['_playstyleMechanics.json']},
+      {
+        path: `/playstyles/${playstyle}`,
+        file: '_playstyles.json',
+        wants: ['allCards.json', '_playstyleMechanics.json'],
+      },
+      {
+        path: `/playstyles/${playstyle}`,
+        file: '_playstyleMechanics.json',
+        wants: ['allCards.json', '_playstyles.json'],
+      },
       {
         path: '/vote',
         file: 'synergies/<card>.json',

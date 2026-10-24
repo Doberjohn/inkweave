@@ -11,4 +11,6 @@ export default defineConfig({
   sourcemap: true,
   minify: false,
   treeshake: true,
+  // The display text the web app imports (`./catalog.json`), written from the fresh build.
+  onSuccess: 'node scripts/write-catalog.mjs',
 });

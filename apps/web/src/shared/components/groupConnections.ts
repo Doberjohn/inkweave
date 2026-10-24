@@ -1,5 +1,5 @@
 import type {PairSynergyConnection, PlaystyleId} from 'inkweave-synergy-engine';
-import {getPlaystyleById} from 'inkweave-synergy-engine';
+import {getPlaystyleById} from '../../features/synergies/engineCatalog';
 
 /** Aggregated rule grouping for the synergy detail modal. */
 export interface ConnectionGroupData {
