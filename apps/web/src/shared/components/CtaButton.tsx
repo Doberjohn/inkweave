@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {COLORS, DISABLED_STYLE, EASING, FONTS, FONT_SIZES, PRESS_SCALE, RADIUS, hexRgba} from '../constants';
 import {useBoop} from '../hooks';
 import {CTA_FILLED_STYLE} from './ctaStyles';
+import {isOff} from './isOff';
 
 /**
  * The blessed CTA variants (#509, one component per the owner ruling):
@@ -37,16 +38,6 @@ function variantStyle(variant: CtaVariant, hot: boolean): React.CSSProperties {
   return styles[variant];
 }
 
-
-/**
- * Whether the button is off: `disabled`, or `aria-disabled`, which keeps it focusable
- * (WAI-ARIA APG) where a native `disabled` would drop the focus it holds to the page.
- * Either way it looks off and the pointer does nothing to it; what a click does stays
- * the caller's, so `aria-disabled` alone still delivers one (#790).
- */
-function isOff(disabled: boolean | undefined, ariaDisabled: React.AriaAttributes['aria-disabled']): boolean {
-  return disabled === true || ariaDisabled === true || ariaDisabled === 'true';
-}
 
 type MouseHandlers = Pick<
   React.ButtonHTMLAttributes<HTMLButtonElement>,

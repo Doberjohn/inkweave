@@ -40,4 +40,20 @@ describe('LinkButton', () => {
     expect(btn.style.opacity).toBe('0.4');
     expect(btn.style.cursor).toBe('not-allowed');
   });
+
+  it('holds its resting colour under aria-disabled, focusable and still clickable', () => {
+    const onClick = vi.fn();
+    render(
+      <LinkButton aria-disabled="true" onClick={onClick}>
+        Edit
+      </LinkButton>,
+    );
+    const btn = screen.getByRole('button');
+    fireEvent.mouseEnter(btn);
+    expect(btn.style.color).toBe('rgb(255, 185, 0)'); // COLORS.primary, not primaryHover
+    expect(btn.style.opacity).toBe('0.4');
+    expect(btn).not.toBeDisabled();
+    fireEvent.click(btn);
+    expect(onClick).toHaveBeenCalledOnce();
+  });
 });
