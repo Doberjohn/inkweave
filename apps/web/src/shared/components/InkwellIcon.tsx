@@ -1,5 +1,6 @@
-import inkableSvg from '../../assets/inkable.svg';
-import uninkableSvg from '../../assets/uninkable.svg';
+// Files of their own (`?no-inline`, #934), kept out of the JavaScript that shows them.
+import inkableSvg from '../../assets/inkable.svg?no-inline';
+import uninkableSvg from '../../assets/uninkable.svg?no-inline';
 
 export type InkwellValue = 'inkable' | 'uninkable';
 

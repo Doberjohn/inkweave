@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-247 tests across 26 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+250 tests across 27 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -459,6 +459,16 @@ The `/release-notes` page (#765), which shows one committed JSON file per week, 
 | shows a week with its sections in order | The h1 "Release notes", and the "September 28 to October 4, 2026" region's h3s read New, Improved, Fixed, Synergy engine |
 | the footer links to it | From `/about`, the site footer's "Release notes" link opens `/release-notes` |
 | does not scroll sideways on a phone | At 390px, `document.documentElement.scrollWidth <= clientWidth` once the week has rendered |
+
+## `precache.spec.ts`: 3 tests (2 on a production build only, 1 on every project)
+
+The service worker's precache (#928) and the small symbols it keeps on screen offline (#934). Every context blocks service workers, so the first two read the list a production build's `sw.js` would install rather than run it, and skip on the dev server, which writes none: CI runs them on firefox, webkit and mobile-safari. E2E builds with every flag on, where each chunk is one some page loads; with production's flags (collection and friends off) the build leaves out their five chunks, which no CI job builds.
+
+| Test | What it verifies |
+|---|---|
+| lists every script the pages load | `/`, `/browse`, `/card/1939`, `/playstyles`, `/playstyles/discard`, `/vote`, `/inks`, `/ink/amber`, `/about`, `/release-notes`, `/account` and a missing page, each loaded to network idle: every `/assets/*.js` file they request is in `sw.js`'s manifest |
+| lists exactly the ten small symbols | `sw.js` lists the six ink symbols, inkable, uninkable, common and uncommon as `.svg` files, and no other SVG |
+| are files, each ink the one its card placeholders draw | On `/browse`, in the docked panel (desktop) or the Filters drawer (phones): no ink, inkwell or rarity symbol is a `data:` URI, and each ink's icon has the address its `.ink-card-placeholder` draws (`index.css`), so a page showing both downloads it once. A production build inlines an imported file under 4 kB unless it is imported `?no-inline`; the dev server serves every asset as a file, so there only the ink check can fail |
 
 ## Patterns
 

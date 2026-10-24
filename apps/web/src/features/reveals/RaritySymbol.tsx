@@ -1,8 +1,10 @@
-import commonSvg from '../../assets/common.svg';
-import uncommonSvg from '../../assets/uncommon.svg';
-import rareSvg from '../../assets/rare.svg';
-import superRareSvg from '../../assets/super_rare.svg';
-import legendarySvg from '../../assets/legendary.svg';
+// Every symbol is a file of its own (`?no-inline`, #934): the JavaScript that shows them carries
+// none of their bytes, and a page downloads only the symbols it shows.
+import commonSvg from '../../assets/common.svg?no-inline';
+import uncommonSvg from '../../assets/uncommon.svg?no-inline';
+import rareSvg from '../../assets/rare.svg?no-inline';
+import superRareSvg from '../../assets/super_rare.svg?no-inline';
+import legendarySvg from '../../assets/legendary.svg?no-inline';
 // The special printings' and promos' symbols are the files a printing's name shows (PrintingName).
 import enchantedSymbol from '../../assets/enchanted.webp?no-inline';
 import epicSymbol from '../../assets/epic.webp?no-inline';
