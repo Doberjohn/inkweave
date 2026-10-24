@@ -27,7 +27,7 @@ function wrapper({children}: {children: ReactNode}) {
 }
 const render = () => renderHook(() => useSession(), {wrapper});
 
-/** A returning visitor: supabase-js has persisted a session under its storage key. */
+/** A returning visitor: the Supabase SDK has persisted a session under its storage key. */
 function storeSession() {
   localStorage.setItem('inkweave:auth', '{"access_token":"stored"}');
 }
@@ -49,7 +49,7 @@ afterEach(() => {
 });
 
 describe('SessionContext', () => {
-  // The point of #729: an anonymous visitor never downloads supabase-js.
+  // The point of #729: an anonymous visitor never downloads the Supabase SDK.
   it('does not load the SDK when there is no session to restore', () => {
     const {result} = render();
     expect(result.current.enabled).toBe(true);

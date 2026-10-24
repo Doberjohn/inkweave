@@ -4,12 +4,12 @@ import type {Page} from '@playwright/test';
 const base64url = (value: object) => Buffer.from(JSON.stringify(value)).toString('base64url');
 
 /**
- * A session supabase-js restores from storage as it stands: unexpired (a day out, far past
- * its refresh margin), with the user the app reads `user` from. The token is shaped like a
+ * A session the Supabase SDK restores from storage as it stands: unexpired (a day out, far
+ * past its refresh margin), with the user the app reads `user` from. The token is shaped like a
  * JWT; nothing in the browser verifies its signature.
  *
  * SIGNED IN WITHOUT SIGNING IN: an OAuth round-trip is out of E2E's reach, but a session
- * supabase-js RESTORES needs none. Stored under the app's auth key before the first
+ * the Supabase SDK RESTORES needs none. Stored under the app's auth key before the first
  * navigation, `getSession()` hands it back without a network check.
  */
 export function storedSession(userId: string) {
