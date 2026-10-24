@@ -87,7 +87,15 @@ export function createDistServer(dist, {headers = readSiteHeaders(), sendPage} =
         res.end('not found');
         return;
       }
-      const body = await readFile(file);
+      let body;
+      try {
+        body = await readFile(file);
+      } catch {
+        // Gone since it was found, as when a rebuild empties dist under a running server.
+        res.writeHead(500, headers);
+        res.end('could not read the file');
+        return;
+      }
       res.writeHead(200, {...headers, 'Content-Type': contentType(extname(file))});
       if (sendPage && extname(file) === '.html') sendPage(res, body, url);
       else res.end(body);

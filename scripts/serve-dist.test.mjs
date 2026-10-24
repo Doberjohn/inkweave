@@ -110,6 +110,21 @@ describe('createDistServer', () => {
     }
   });
 
+  it('answers 500 for a file it cannot read, and keeps serving', async () => {
+    // A rebuild empties dist under a running server: the rewrite names an index.html that is gone.
+    const emptied = fs.mkdtempSync(path.join(os.tmpdir(), 'serve-dist-emptied-'));
+    const server = createDistServer(emptied, {headers: {}});
+    await new Promise((done) => server.listen(0, done));
+    try {
+      const base = `http://localhost:${server.address().port}`;
+      expect((await fetch(`${base}/compare/1989/1990`)).status).toBe(500);
+      expect((await fetch(`${base}/browse`)).status).toBe(500);
+    } finally {
+      server.close();
+      fs.rmSync(emptied, {recursive: true, force: true});
+    }
+  });
+
   it('hands each page to sendPage with its URL, and sends any other file whole', async () => {
     const urls = [];
     const sendPage = (res, body, url) => {

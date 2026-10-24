@@ -3,7 +3,7 @@
  * The handoff from a prerendered page to the app, checked in Chromium on a crawled build (#915).
  * A check script rather than a *.test.mjs, so `pnpm test:scripts` needs no build: CI's
  * perf-gates.yml builds, crawls a sample and runs it when the crawl, index.html, main.tsx, the
- * Vite config, vercel.json or this check change.
+ * Vite config, vercel.json, this check or the dependencies change.
  *
  * The build is served as vercel.json serves it (serve-dist.mjs), each page in two parts: the
  * second, from the inline script after #root on, comes STALL_MS later, as on a slow network.
@@ -17,7 +17,8 @@
  *   1. A route without a capture of its own (a compare link, an in-depth vote link, /account,
  *      /auth/callback, a card page by its id alone, an unknown page) is served the home page's
  *      capture and never paints it: with the app's code held nothing paints at all, and with
- *      it no frame shows a captured node before the app's own page.
+ *      it no frame shows a captured node before the app's own page. The same holds for
+ *      /browse%2F, served Browse's capture here while React Router shows the not-found page.
  *   2. A route with its own capture paints it once the inline script approves it, and never
  *      before (the app's code held).
  *   3. Browse's capture shows the sort option the app shows.
@@ -56,6 +57,8 @@ const STALL_MS = 400;
 const SETTLE_FRAMES = 20;
 /** How long the app's own page may take to show. */
 const APP_TIMEOUT_MS = 15000;
+/** How long a page with the app's code held may take to report its first contentful paint. */
+const PAINT_TIMEOUT_MS = 5000;
 /** Pages checked at once, each in a browser context of its own. */
 const CONCURRENCY = 4;
 /** index.html's inline script, which the fourth check takes out of the page. */
@@ -158,6 +161,16 @@ function waitFrames(count) {
 /** In the page: has a frame shown the app's own page? */
 const showsApp = () => window.__handoff.frames.some((frame) => frame.app && frame.shown);
 
+/**
+ * Wait for the page to report its first contentful paint, which a page can do well after it
+ * shows its capture: Playstyles 300 to 600 ms after, past SETTLE_FRAMES' 330 ms or so. A page
+ * that never paints is its check's to report, so the wait gives up quietly.
+ */
+async function waitForPaint(page) {
+  const painted = () => performance.getEntriesByName('first-contentful-paint').length > 0;
+  await page.waitForFunction(painted, null, {timeout: PAINT_TIMEOUT_MS}).catch(() => {});
+}
+
 /** Wait for a frame that shows the app's own page, or fail with the last frame seen. */
 async function waitForApp(page) {
   try {
@@ -177,11 +190,27 @@ async function withoutInlineScript(route) {
 }
 
 /**
- * Open `path` on `device` in a fresh context and return what it served and showed. `app` false
- * holds the app's code, so only the captured page and index.html's own script act; true waits
- * for the app's own page to show, and then for `waitFor` in it, if given.
+ * Wait, once a page has loaded, for what its check reads: with the app's code held,
+ * SETTLE_FRAMES for a late paint and then, when `paints`, the page's first contentful paint;
+ * with it running, the app's own page and then `waitFor` in it, if given.
  */
-async function visit(browser, base, {device, path, app, strip = false, waitFor}) {
+async function settle(page, {app, waitFor, paints}) {
+  if (!app) {
+    await page.evaluate(waitFrames, SETTLE_FRAMES);
+    if (paints) await waitForPaint(page);
+    return;
+  }
+  await waitForApp(page);
+  if (waitFor) await page.waitForSelector(waitFor, {state: 'attached', timeout: APP_TIMEOUT_MS});
+}
+
+/**
+ * Open `path` on `device` in a fresh context and return what it served and showed. `app` false
+ * holds the app's code, so only the captured page and index.html's own script act, and `paints`
+ * then waits for its first contentful paint too (for a check that expects one); true waits for
+ * the app's own page to show, and then for `waitFor` in it, if given.
+ */
+async function visit(browser, base, {device, path, app, strip = false, waitFor, paints = false}) {
   const context = await browser.newContext({...DEVICES[device], serviceWorkers: 'block'});
   try {
     const page = await context.newPage();
@@ -190,32 +219,35 @@ async function visit(browser, base, {device, path, app, strip = false, waitFor})
     if (strip) await page.route(`${base}${path}`, withoutInlineScript);
     const response = await page.goto(`${base}${path}`, {waitUntil: 'load'});
     const servedRoute = readPrerenderRoute(await response.text());
-    if (app) {
-      await waitForApp(page);
-      if (waitFor)
-        await page.waitForSelector(waitFor, {state: 'attached', timeout: APP_TIMEOUT_MS});
-    } else {
-      await page.evaluate(waitFrames, SETTLE_FRAMES);
-    }
+    await settle(page, {app, waitFor, paints});
     return {servedRoute, ...(await page.evaluate(readPage))};
   } finally {
     await context.close();
   }
 }
 
-/** The route `path` names, as index.html's inline script reads it. */
-const routeOf = (path) => decodeURIComponent(path.split('?')[0]).replace(/\/+$/, '') || '/';
+/**
+ * The route `path` names, as index.html's inline script reads it: decoded a segment at a time,
+ * an encoded slash kept inside its segment, and trailing slashes dropped.
+ */
+function routeOf(path) {
+  const segments = path.split('?')[0].split('/');
+  const decoded = segments.map((segment) => decodeURIComponent(segment).replace(/\//g, '%2F'));
+  return decoded.join('/').replace(/\/+$/, '') || '/';
+}
 
-/** Check 1, the app's code held: the home page's capture, served here, never paints. */
-function neverPaintsHome(seen) {
-  if (seen.servedRoute !== '/')
-    return `served a capture marked "${seen.servedRoute}", not the home page's`;
-  if (seen.painted)
-    return 'painted content (first-contentful-paint), with only the capture to paint';
-  if (seen.frames.some((frame) => frame.captured && frame.shown))
-    return 'a frame showed the captured page';
-  if (seen.marked) return '#root kept its mark';
-  return null;
+/** Check 1, the app's code held: the capture served here, another route's, never paints. */
+function neverPaintsCapture(path) {
+  return (seen) => {
+    if (seen.servedRoute === undefined || seen.servedRoute === routeOf(path))
+      return `served a capture marked "${seen.servedRoute}", not another route's`;
+    if (seen.painted)
+      return 'painted content (first-contentful-paint), with only the capture to paint';
+    if (seen.frames.some((frame) => frame.captured && frame.shown))
+      return 'a frame showed the captured page';
+    if (seen.marked) return '#root kept its mark';
+    return null;
+  };
 }
 
 /** Check 1, the app's code running: no frame shows the capture, and the app's own page shows. */
@@ -266,16 +298,24 @@ async function showsWithoutJavaScript(browser, base, {device, path}) {
   }
 }
 
-/** The routes the checks visit, read from the crawl: its first card page and playstyle. */
-function routesOf(dist) {
-  const [cardId] = readdirSync(join(dist, 'card')).sort();
+/**
+ * The routes the checks visit, read from the crawl: its first card page with a synergy file
+ * (precompute writes none for a card without synergies, and the compare links need a partner)
+ * and its first playstyle. Exported for scripts/check-prerender-handoff.test.mjs.
+ */
+export function routesOf(dist) {
+  const synergyFile = (id) => join(dist, 'data', 'synergies', `${id}.json`);
+  const cardId = readdirSync(join(dist, 'card'))
+    .sort()
+    .find((id) => existsSync(synergyFile(id)));
+  if (!cardId) throw new Error(`no card page in ${dist} has a synergy file to link a compare page`);
   const [slug] = readdirSync(join(dist, 'card', cardId));
   const [playstyle] = readdirSync(join(dist, 'playstyles')).filter((name) => name !== 'index.html');
-  const {groups} = JSON.parse(
-    readFileSync(join(dist, 'data', 'synergies', `${cardId}.json`), 'utf8'),
-  );
+  const {groups} = JSON.parse(readFileSync(synergyFile(cardId), 'utf8'));
   const partner = groups[0].synergies[0].cardId;
   return {
+    // '/browse%2F' is the not-found page to React Router, which keeps an encoded slash inside
+    // its segment, while this server decodes it and serves Browse's capture.
     withoutCapture: [
       `/compare/${cardId}/${partner}`,
       `/compare/${cardId}/${partner}/${groups[0].groupKey}`,
@@ -284,6 +324,7 @@ function routesOf(dist) {
       '/auth/callback',
       `/card/${cardId}`,
       '/no-such-page',
+      '/browse%2F',
     ],
     // '/browse/' and '/%62rowse' are /browse too: the inline script drops the slash and decodes.
     withCapture: [
@@ -307,7 +348,7 @@ function controlCheck(device, path) {
   return {
     name: `0. ${path} (${device}, app held) paints the home page once the hiding style is gone`,
     run: async (browser, base) => {
-      const unhidden = {device, path: `${path}?${UNHIDDEN_QUERY}`, app: false};
+      const unhidden = {device, path: `${path}?${UNHIDDEN_QUERY}`, app: false, paints: true};
       if ((await visit(browser, base, unhidden)).painted) return null;
       return 'nothing painted: the pause no longer lets a captured page paint, so check 1 would pass one that shows';
     },
@@ -317,12 +358,12 @@ function controlCheck(device, path) {
 /** Check 1 on `device`: each route without a capture, with the app's code held and running. */
 function withoutCaptureChecks(device, routes) {
   const held = [...routes, `${routes[0]}?${VISIBLE_NODE_QUERY}`].map((path) => ({
-    name: `1. ${path} (${device}, app held) never paints the home page`,
+    name: `1. ${path} (${device}, app held) never paints another route's capture`,
     run: async (browser, base) =>
-      neverPaintsHome(await visit(browser, base, {device, path, app: false})),
+      neverPaintsCapture(path)(await visit(browser, base, {device, path, app: false})),
   }));
   const running = routes.map((path) => ({
-    name: `1. ${path} (${device}) shows the app's page, never the home page's capture`,
+    name: `1. ${path} (${device}) shows the app's page, never another route's capture`,
     run: async (browser, base) =>
       appTakesOver(await visit(browser, base, {device, path, app: true})),
   }));
@@ -334,7 +375,7 @@ function withCaptureChecks(device, routes) {
   return routes.map((path) => ({
     name: `2. ${path} (${device}, app held) paints its own capture once approved`,
     run: async (browser, base) =>
-      paintsOwnCapture(path)(await visit(browser, base, {device, path, app: false})),
+      paintsOwnCapture(path)(await visit(browser, base, {device, path, app: false, paints: true})),
   }));
 }
 

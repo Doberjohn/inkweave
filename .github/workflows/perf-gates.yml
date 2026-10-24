@@ -39,7 +39,8 @@ jobs:
         with:
           # handoff: what decides how a prerendered page hands over to the app (#915): the
           # page and its inline script, the build that transforms it, the crawl that marks it,
-          # how Vercel serves it, and the check itself.
+          # how Vercel serves it, the check itself, and the dependencies they all run on (a
+          # React Router, Vite or Playwright bump can change the handoff with no file here).
           filters: |
             engine:
               - 'packages/synergy-engine/**'
@@ -54,6 +55,9 @@ jobs:
               - 'scripts/lib/mime.mjs'
               - 'vercel.json'
               - '.github/workflows/perf-gates.yml'
+              - 'package.json'
+              - 'apps/web/package.json'
+              - 'pnpm-lock.yaml'
 
   bundle-size:
     name: Bundle Size
