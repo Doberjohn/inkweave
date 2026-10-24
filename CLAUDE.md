@@ -150,6 +150,10 @@ Convention files that auto-load only when editing files matching their `paths:` 
 
 The miner itself (`scripts/mine-rule-candidates.mjs`, run via `pnpm mine-rules`) uses the live `SynergyEngine` as a coverage oracle: cards it finds zero synergies for are clustered by shared mechanical phrase, near-duplicates collapsed by card-set overlap, and ranked into `reports/rule-candidates.json` (git-ignored). Ranking is **payoff-aware** (#363): each mechanic in the `MECHANICS` table pairs an enabler anchor with a payoff/trigger pattern, and `rankCluster` weights a cluster by its `payoffCount` (the size of its two-sided axis) so good-stuff mechanics with no payoff side sink. See issues #359 and #363.
 
+### PR reviews
+
+`.github/workflows/claude-review.yml` (#952) has Claude Code review each pull request once, when it opens ready for review or a draft is marked ready: the bundled `/code-review` skill, at `high` effort on Opus, posts its findings as inline comments from `github-actions[bot]`. A top-level PR comment starting `@claude review` from someone with write access asks for another pass. Drafts, forks and Dependabot's PRs get none. The job's token only reads code and writes PR comments, and the run turns off `.claude/settings.json`'s hooks and `.mcp.json`'s server. It bills the `ANTHROPIC_API_KEY` Actions secret, a Claude Console key in a workspace that caps the monthly spend. A failed review run is advisory: nothing waits on it.
+
 ## Synergy Rules
 
 Rules live in `packages/synergy-engine/src/engine/rules.ts` and run at build time only; the web app consumes pre-computed JSON.
