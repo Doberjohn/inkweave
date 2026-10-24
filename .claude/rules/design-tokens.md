@@ -57,5 +57,5 @@ One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spr
   their order, a series keeps shrinking, and a skeleton moves with the layout it mirrors.
   Only a value past the top step (40, 48, 80) or a 1px hairline gets a named const, with
   a comment saying why; never arithmetic on a token (`SPACING.sm - 2`).
-- Token declaration sites (`theme.ts`, `playstyleUi.ts`), `src/docs/` stories, tests, and the five SVG icon components are permanently exempt from the color rules.
+- Token declaration sites (`theme.ts`, `playstyleUi.ts`, and the collection binder's `binderLook.ts`, kept beside the binder so its look loads with it, #941), `src/docs/` stories, tests, and the five SVG icon components are permanently exempt from the color rules.
 - Import tokens through the barrel (`shared/constants`), never the theme files directly (`no-restricted-imports` enforces).
