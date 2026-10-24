@@ -19,8 +19,12 @@ import {COLORS} from '../../shared/constants';
  * so unfiltered it is the whole set in collector order.
  *
  * Two states share the pockets and must stay distinguishable:
- *   owned     full colour, with counts per finish
+ *   owned     full colour, with counts per finish, and a holo finish on a foil you hold
  *   unowned   desaturated, no counts: the card exists, you do not have it
+ *
+ * Each card sits in its pocket's sleeve under the front sheet, a hair off straight at the
+ * pocket's foot (#941). These fixtures have no art, so judge the pockets against real cards in
+ * the app (see `binderStoryCards`).
  *
  * A mouse pointing at a pocket opens its counts into steppers, an unheld finish at 0
  * (#826). Here a click reports to the Actions panel and the counts stay put.

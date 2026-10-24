@@ -57,6 +57,8 @@ export function CollectionSlotCounts({counts, editor}: CollectionSlotCountsProps
   const named = open ? printed : printed.filter((finish) => counts[finish] > 0);
   return (
     <div
+      // `binder-copies`: in a binder pocket, the stripe moves with the card as it settles (binder.css).
+      className="binder-copies"
       role={named.length > 0 ? 'group' : undefined}
       aria-label={named.length > 0 ? named.map((finish) => `${counts[finish]} ${finish}`).join(', ') : undefined}
       style={{

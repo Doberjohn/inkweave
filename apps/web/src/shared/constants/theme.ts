@@ -548,13 +548,11 @@ export const INSET_FOCUS_RING = {'--inkweave-gold': COLORS.primary} as React.CSS
  * The card tiles' hover glow (owner, 2026-10-21): the gold behind a card a pointer is on or
  * keyboard focus has reached, the one way the app highlights a card (`.card-tile` and
  * `.synergy-more-tile`, index.css). Spread into each tile's own style, as INSET_FOCUS_RING
- * is, so the glow shows wherever a tile renders. `strong` is the binder's, where the soft one
- * barely shows on the parchment: 85% measured as plain there as 42% does on the dark pages
- * (a colour difference of about 24 ΔE each).
+ * is, so the glow shows wherever a tile renders. The binder's pockets light the same one
+ * (#941): its black pages show it as plainly as every grid does.
  */
 export const CARD_TILE_GLOW = {
   '--tile-glow-soft': hexRgba(COLORS.primary, 0.42),
-  '--tile-glow-strong': hexRgba(COLORS.primary, 0.85),
 } as React.CSSProperties;
 
 /**

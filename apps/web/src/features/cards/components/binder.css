@@ -1,0 +1,231 @@
+/* The collection binder's look (#941): black pro pages of clear pockets in a zip binder's
+   board, as the owner picked it on 2026-10-24. Every colour, gradient and curve is a custom
+   property from `binderLook.ts`, which `BinderSpread` spreads on the binder, so nothing here
+   restates a value. `BinderSpread` alone imports it, so it loads with the binder's code. */
+
+/* ── The board ──────────────────────────────────────────────────────────
+   The pages sit in the binder's cover board, a fine grain over near-black, its padding set
+   inline (`BOARD`, which the spread's sizing counts). A zip runs round its outer edge: along
+   each cover's top, round its outer side and back along its bottom to the spine. A phone's
+   lone page has the one zip, along its top, outer side and bottom. Isolated, so the zip and
+   the sheet edges lie under the pages without dropping behind the board. */
+.binder-board {
+  position: relative;
+  isolation: isolate;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle, var(--binder-board-grain) 0 0.5px, transparent 1px) 0 0 / 3px 3px,
+    var(--binder-board);
+  box-shadow:
+    0 18px 40px -16px var(--binder-board-drop),
+    inset 0 1px 0 var(--binder-board-rim),
+    inset 0 0 0 1px var(--binder-board-line);
+}
+.binder-board::before,
+.binder-board::after {
+  --binder-teeth: repeating-conic-gradient(var(--binder-zip-teeth) 0 25%, transparent 0 50%);
+  --binder-tape: linear-gradient(var(--binder-zip-tape), var(--binder-zip-tape));
+  content: '';
+  position: absolute;
+  z-index: -1;
+  top: 2px;
+  bottom: 2px;
+  width: calc(50% - 2px - var(--binder-spine) / 2);
+  pointer-events: none;
+}
+.binder-board::before {
+  left: 2px;
+  border-radius: 18px 0 0 18px;
+  background:
+    var(--binder-teeth) left 1px top 1px / 4px 4px repeat-x,
+    var(--binder-teeth) left 1px bottom 1px / 4px 4px repeat-x,
+    var(--binder-teeth) left 1px top 1px / 4px 4px repeat-y,
+    var(--binder-tape) top / 100% 6px no-repeat,
+    var(--binder-tape) bottom / 100% 6px no-repeat,
+    var(--binder-tape) left / 6px 100% no-repeat;
+}
+.binder-board::after {
+  right: 2px;
+  border-radius: 0 18px 18px 0;
+  background:
+    var(--binder-teeth) right 1px top 1px / 4px 4px repeat-x,
+    var(--binder-teeth) right 1px bottom 1px / 4px 4px repeat-x,
+    var(--binder-teeth) right 1px top 1px / 4px 4px repeat-y,
+    var(--binder-tape) top / 100% 6px no-repeat,
+    var(--binder-tape) bottom / 100% 6px no-repeat,
+    var(--binder-tape) right / 6px 100% no-repeat;
+}
+.binder-board-single::before {
+  display: none;
+}
+.binder-board-single::after {
+  width: calc(100% - 4px);
+  border-radius: 18px;
+}
+/* The zip's pull, parked on the top edge near the right-hand corner. */
+.binder-zip-pull {
+  position: absolute;
+  top: 1px;
+  right: 54px;
+  width: 26px;
+  height: 8px;
+  border-radius: 2px 4px 4px 2px;
+  background: var(--binder-zip-pull);
+  box-shadow: 0 2px 4px var(--binder-zip-drop);
+  pointer-events: none;
+}
+.binder-zip-pull::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 9px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--binder-zip-slot);
+}
+
+/* ── The pages ──────────────────────────────────────────────────────────
+   A pro page: black, finely textured, catching a little light from the top left, and shaded
+   where it falls away into the spine. A cover keeps its blue board, set inline. */
+.binder-page {
+  position: relative;
+  background:
+    radial-gradient(130% 90% at 25% 0%, var(--binder-page-light), transparent 60%),
+    radial-gradient(circle, var(--binder-page-grain) 0 0.6px, transparent 1px) 0 0 / 4px 4px,
+    var(--binder-page);
+}
+.binder-page-left {
+  --n: var(--sheets-l, 0);
+  box-shadow: inset -10px 0 14px -10px var(--binder-page-shade);
+}
+.binder-page-right {
+  --n: var(--sheets-r, 0);
+  box-shadow: inset 10px 0 14px -10px var(--binder-page-shade);
+}
+.binder-page.binder-cover {
+  box-shadow: none;
+}
+
+/* Page edges under the page: the sheets under each page say how far through the binder you
+   are, more under the right page near the start and more under the left near the end. Seen
+   from your seat, their edges show along each page's foot, the way a book lying open on a
+   desk shows them: up to three sheets, 2px each (`--n`, from `--sheets-l` and `--sheets-r`;
+   see `binderSheets`). Each edge's offset stops at the sheets there are, so the ones past
+   them hide behind the last, and with none there the soft shadow under them goes too. */
+.binder-page::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    0 calc(min(1, 2 * var(--n, 0)) * 1px) 0 var(--binder-sheet-edge),
+    0 calc(min(2, 2 * var(--n, 0)) * 1px) 0 var(--binder-sheet-gap),
+    0 calc(min(3, 2 * var(--n, 0)) * 1px) 0 var(--binder-sheet-edge),
+    0 calc(min(4, 2 * var(--n, 0)) * 1px) 0 var(--binder-sheet-gap),
+    0 calc(min(5, 2 * var(--n, 0)) * 1px) 0 var(--binder-sheet-edge),
+    0 calc(min(6, 2 * var(--n, 0)) * 1px) 0 var(--binder-sheet-gap),
+    0 calc(min(6, 2 * var(--n, 0)) * 1px + 1px) 4px
+      color-mix(in srgb, var(--binder-sheet-shadow) calc(min(1, var(--n, 0)) * 100%), transparent);
+  pointer-events: none;
+}
+
+/* ── A pocket ───────────────────────────────────────────────────────────
+   A little bigger than its card all round: a frosted sleeve behind the card, and a clear
+   front sheet over it, whose cut top edge is the pocket's mouth and whose border is the seam
+   of welded dots joining it to the next pocket. Every pocket on a page of cards has both, an
+   empty one too, which then shows its sleeve. Neither takes a press, so every press reaches
+   the card under them. The copies stripe lies over the front sheet. */
+.binder-pocket {
+  position: relative;
+}
+.binder-pocket::before,
+.binder-pocket::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+.binder-pocket::before {
+  inset: -3px;
+  border-radius: 2px;
+  background:
+    radial-gradient(circle, var(--binder-sleeve-grain) 0 0.5px, transparent 0.9px) 0 0 / 3px 3px,
+    var(--binder-sleeve);
+  box-shadow:
+    inset 1px 1px 0 var(--binder-sleeve-light),
+    inset -1px -1px 0 var(--binder-sleeve-rim),
+    0 0 0 1px var(--binder-sleeve-line);
+}
+.binder-pocket::after {
+  z-index: 2;
+  inset: -5px;
+  border: 2px solid transparent;
+  border-image: var(--binder-weld) 2 round;
+  /* 4px less the 2px weld rounds the sheet's own corners 2px, as the sleeve's are. */
+  border-radius: 4px;
+  background:
+    linear-gradient(var(--binder-cut), var(--binder-cut)) 0 1px / 100% 1px no-repeat,
+    linear-gradient(var(--binder-cut-shadow), var(--binder-cut-shadow)) 0 2px / 100% 1px no-repeat,
+    var(--binder-sheen);
+  background-clip: padding-box;
+}
+.binder-pocket:empty::after {
+  opacity: 0.9;
+}
+
+/* Holo: a card you hold in foil wears a still rainbow finish under a fine grain of glints, so
+   foils stand out across a page at a glance. On the tile, which clips it to the card. */
+.binder-foil .card-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--binder-holo);
+  mix-blend-mode: soft-light;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Cards settle: each card sinks to its pocket's foot and sits a hair off straight, as real
+   cards never line up perfectly, the same card always the same way (`settleOf`, which sets
+   `--sx`, `--sy` and `--sr` on its pocket). Its copies stripe moves with it. */
+.binder-pocket .card-tile {
+  translate: calc(var(--sx, 0) * 1px) calc(var(--sy, 0) * 1px);
+  rotate: calc(var(--sr, 0) * 1deg);
+}
+.binder-pocket .binder-copies {
+  translate: calc(var(--sx, 0) * 1px) calc(var(--sy, 0) * 1px);
+}
+
+/* Slide in, grey out: a first copy slides into its pocket through the mouth at the top as its
+   colour comes in, held over the pockets round it until it is in, and taking out the last
+   copy drains it back to grey. Under reduced motion none of it runs: `CollectionBinder` sets
+   neither class then, and these rules would not apply anyway. */
+@media (prefers-reduced-motion: no-preference) {
+  .binder-slide-in .card-tile {
+    z-index: 4;
+    animation: binder-slide 0.42s var(--binder-motion);
+  }
+  .binder-slide-in .card-tile > * {
+    animation: binder-colour-in 0.45s var(--binder-motion);
+  }
+  .binder-grey-out .card-tile > * {
+    animation: binder-colour-out 0.32s var(--binder-motion);
+  }
+}
+@keyframes binder-slide {
+  from {
+    translate: 0 -34%;
+  }
+}
+@keyframes binder-colour-in {
+  from {
+    filter: grayscale(1) brightness(0.45);
+  }
+}
+@keyframes binder-colour-out {
+  from {
+    filter: none;
+  }
+}
