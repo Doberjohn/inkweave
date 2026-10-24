@@ -147,7 +147,7 @@ function getPlaystyleMechanics(playstyleId, cards): MechanicTile[];
 
 `ROLE_CONFIGS` (web) collapses into a single generic path that calls the engine-exported `getPlaystyleMechanics`. Adding a playstyle requires **no** web wiring.
 
-Delivered as `getPlaystyleMechanicIds` (#930): `ROLE_CONFIGS` moved into the engine as `PLAYSTYLE_ROLES` (`src/utils/playstyleMechanics.ts`), precompute runs it on every playstyle card, and the page only tallies the ids it fetches, so the web app ships no detector. A new playstyle still needs its `PLAYSTYLE_UI` entry (accent and icon).
+Delivered as `getPlaystyleMechanicIds` (#930): `ROLE_CONFIGS` moved into the engine as `PLAYSTYLE_ROLES` (`src/utils/playstyleMechanics.ts`), precompute runs it on every playstyle card, and the page only tallies the ids it fetches, so the web app ships no detector. A new playstyle still needs its `PLAYSTYLE_UI` entry (its accent color, gallery kind and hero card).
 
 ---
 

@@ -435,12 +435,12 @@ Synergy engine runs across the full merged card pool.
 
 | Stage | Code | Behavior |
 |---|---|---|
-| Engine import | `precompute-synergies.mjs:33-39` | Dynamic `import` of `packages/synergy-engine/dist/index.js`; exits if not built |
-| Load + merge | `precompute-synergies.mjs:42-53` | Reads `allCards.json`; reads `previewCards.json` if present; filters preview cards to those whose id is not in `mainIds`; concatenates into `mergedRaw` |
-| Transform | `precompute-synergies.mjs:56` | Calls engine's `transformCards(mergedRaw)` — same transformer the web loader uses (single source of truth in `cardTransformer.ts`) |
-| Per-card synergies | `precompute-synergies.mjs:122-138` | For every transformed card, runs `synergyEngine.findSynergies(card, cards)`, serializes via `serializeCardData(card, groups)` to `{groups, pairs}`, writes `apps/web/public/data/synergies/{cardId}.json` |
-| Aggregate files | `precompute-synergies.mjs:140-166` | Writes `_playstyles.json` (playstyleId → cardId[]), `_playstyleMechanics.json` (playstyleId → cardId → the mechanic ids its playstyle page tiles, from the engine's `getPlaystyleMechanicIds`), `_manifest.json` (cardIds that have synergies — the staleness marker), `_pairs_index.json` (sorted unique pairs for the voting page) |
-| Cleanup | `precompute-synergies.mjs:168-179` | Deletes any file in `synergies/` not in the new manifest |
+| Engine import | `precompute-synergies.mjs:39-47` | Dynamic `import` of `packages/synergy-engine/dist/index.js`; exits if not built |
+| Load + merge | `precompute-synergies.mjs:49-62` | Reads `allCards.json`; reads `previewCards.json` if present; filters preview cards to those whose id is not in `mainIds`; concatenates into `mergedRaw` |
+| Transform | `precompute-synergies.mjs:73` | Calls engine's `transformCards(mergedRaw)` — same transformer the web loader uses (single source of truth in `cardTransformer.ts`) |
+| Per-card synergies | `precompute-synergies.mjs:134-155` | For every transformed card, runs `synergyEngine.findSynergies(card, cards)`, serializes via `serializeCardData(card, groups)` to `{groups, pairs}`, writes `apps/web/public/data/synergies/{cardId}.json` |
+| Aggregate files | `precompute-synergies.mjs:157-170, 192-210` | Writes `_playstyles.json` (playstyleId → cardId[]), `_playstyleMechanics.json` (playstyleId → cardId → the mechanic ids its playstyle page tiles, from the engine's `getPlaystyleMechanicIds`), `_manifest.json` (cardIds that have synergies — the staleness marker), `_pairs_index.json` (sorted unique pairs for the voting page) |
+| Cleanup | `precompute-synergies.mjs:212-224` | Deletes any file in `synergies/` not in the new manifest |
 
 The `synergies/` directory is git-ignored per `.gitignore:59`.
 
