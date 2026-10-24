@@ -34,7 +34,7 @@ import {PER_PAGE, PER_SPREAD} from './BinderSpread';
  * dropped the same day.
  *
  * THE LAST SPREAD'S EMPTY RIGHT PAGE IS THE BACK COVER HERE TOO (owner, 2026-10-12):
- * tinted the cover's blue, not the parchment's gold, as `BinderSpread` draws it.
+ * tinted the cover's blue, as `BinderSpread` draws it.
  *
  * AND THE FIRST SPREAD'S LEFT PAGE IS THE FRONT COVER (owner, 2026-10-18), so the spreads
  * here page as the binder's do, a page in (`LEAD`), and each names the cards it shows.
@@ -233,7 +233,7 @@ interface SpreadPages {
 /**
  * A spread's pages: the first spread's left one is the front cover, and a right one past the
  * binder's last card the back cover. The loading map's one spread holds no pockets, so its
- * right page stays parchment, like the spread it stands for.
+ * right page stays a page, like the spread it stands for.
  */
 function spreadPages(pockets: readonly Pocket[], {spread}: Pick<SpreadPlace, 'spread'>): SpreadPages {
   const from = spread * PER_SPREAD - LEAD;

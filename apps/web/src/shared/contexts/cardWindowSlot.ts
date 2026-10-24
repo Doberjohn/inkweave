@@ -32,6 +32,10 @@ function createWindowStore<T>(initial: T): WindowStore<T> {
  * one of each and hands their setters to the window. The row is there only while a page asks for
  * it (`useHoldCopiesRow`), which the provider reads (`useCopiesRowHeld`).
  *
+ * `open` is whether a window is open at all (#941), which the provider sets as it opens and
+ * closes one, for a page that holds back what changed in the window until it closes. The slot
+ * can't say: an expanded group and a desktop comparison take it away, the window still open.
+ *
  * STORES, NOT THE PROVIDER'S STATE. Every page reads `useCardModal()`, so a value in its state
  * re-renders the page behind the window on each change, and the printing on show changes with
  * each printing a swipe crosses. Kept here, they re-render only the one component that fills
@@ -41,12 +45,14 @@ export interface CardWindowStores {
   slot: WindowStore<HTMLElement | null>;
   shownPrintingId: WindowStore<string | null>;
   copiesRow: WindowStore<boolean>;
+  open: WindowStore<boolean>;
 }
 
 export const createCardWindowStores = (): CardWindowStores => ({
   slot: createWindowStore<HTMLElement | null>(null),
   shownPrintingId: createWindowStore<string | null>(null),
   copiesRow: createWindowStore(false),
+  open: createWindowStore(false),
 });
 
 export const CardWindowSlotContext = createContext<CardWindowStores | null>(null);

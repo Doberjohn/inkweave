@@ -1,4 +1,4 @@
-import {useRef, type ReactNode} from 'react';
+import {useContext, useRef, useSyncExternalStore, type ReactNode} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries, CollectionEntry, Finish} from './collectionParser';
 import type {CollectionPromo} from './collectionPromos';
@@ -28,6 +28,7 @@ import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
 import {BinderSpread, BinderSlotSkeleton, PER_PAGE} from '../cards/components/BinderSpread';
 import {BinderSpreadMap} from '../cards/components/BinderSpreadMap';
 import {CtaButton} from '../../shared/components';
+import {CardWindowSlotContext} from '../../shared/contexts/cardWindowSlot';
 import {useResponsive} from '../../shared/hooks/useResponsive';
 import {COLORS, FONT_SIZES, SPACING, type BrowseSortOrder} from '../../shared/constants';
 
@@ -79,6 +80,21 @@ import {COLORS, FONT_SIZES, SPACING, type BrowseSortOrder} from '../../shared/co
 const ZERO: CollectionEntry = {normal: 0, foil: 0};
 
 const NOOP = () => {};
+
+/** No card window to watch: outside its provider, as in this section's tests and stories. */
+const NO_WINDOW = {subscribe: () => NOOP, get: () => false};
+
+/**
+ * Whether the card window is open over the binder (#941), so a pocket whose copies change there
+ * plays the change once it closes. From its open to its close, an expanded group and a desktop
+ * comparison included, though those take away the slot under its card where the copies stripe
+ * goes. A store, so this section alone re-renders as the window opens and closes, never the page
+ * round it.
+ */
+function useCardWindowOpen(): boolean {
+  const open = useContext(CardWindowSlotContext)?.open ?? NO_WINDOW;
+  return useSyncExternalStore(open.subscribe, open.get, () => false);
+}
 
 /** What the page passes through to the collection panel: set switching, the binder view and the chosen headline. */
 type PanelControls = SetSwitching & BinderView & AxisChoice;
@@ -211,6 +227,7 @@ function SectionContent({
   const {isMobile} = useResponsive();
   // Docked, the spread's arrows sit on its edges; the skeleton's too, so it has the binder's geometry.
   const docked = useSidePanelDocked();
+  const windowOpen = useCardWindowOpen();
   const {setCode} = controls;
 
   // Both states are rendered rather than falling through to an empty binder.
@@ -266,6 +283,7 @@ function SectionContent({
           countsFor={(cardId) => entries[cardId] ?? ZERO}
           onSelect={onCardSelect}
           onCountChange={onCountChange}
+          windowOpen={windowOpen}
           single={isMobile}
           pager={docked ? 'map' : 'arrows'}
         />

@@ -4,6 +4,7 @@ import userEvent, {type UserEvent} from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CollectionBinder} from './CollectionBinder';
+import {settleOf} from './binderPockets';
 
 /** A 48-card set: three spreads, the first opening on the front cover, or four single pages. */
 const CARDS = Array.from(
@@ -76,6 +77,7 @@ const HADES_NAME = 'Hades - Dark Usurper, 29/C3 printing: not in our data yet';
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('CollectionBinder', () => {
@@ -455,6 +457,123 @@ describe('CollectionBinder', () => {
       render(binder({single: true, onCountChange: vi.fn()}));
       point(pocket(1));
       expect(screen.queryByRole('group', {name: '1 normal, 0 foil'})).toBeNull();
+    });
+  });
+
+  describe('a card in its pocket, as a real one sits (#941)', () => {
+    /** What pocket `n` wears for binder.css: the element round its card and its copies. */
+    const look = (n: number) => pocket(n).closest<HTMLElement>('.binder-pocket > div')!;
+
+    /** The held cards' copies, changed between renders: card 1 held, card 2 not, unless set. */
+    function heldBinder(held: Record<string, {normal: number; foil: number}>) {
+      const countsOf = (cardId: string) => held[cardId] ?? {normal: 0, foil: 0};
+      return (windowOpen = false) => binder({countsFor: countsOf, windowOpen});
+    }
+
+    /** Reduced motion on, as the OS setting asks for it. */
+    const stubReducedMotion = () =>
+      vi.stubGlobal(
+        'matchMedia',
+        vi.fn((query: string) => ({
+          matches: query.includes('reduce'),
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn(),
+        })),
+      );
+
+    /**
+     * The browser saying an animation in pocket `n` has run its course. Under both names: jsdom
+     * has no AnimationEvent, so React listens for the prefixed one there, and the plain one in a
+     * browser.
+     */
+    const animationEnd = (n: number, animationName: string) => {
+      for (const type of ['animationend', 'webkitAnimationEnd']) {
+        fireEvent(look(n), Object.assign(new Event(type, {bubbles: true}), {animationName}));
+      }
+    };
+
+    it('gives each pocket on a page of cards a sleeve, a card or no card in it, and the covers none', () => {
+      // Five cards: the right page holds them, then seven empty sleeves.
+      render(binder({slots: CARDS.slice(0, 5)}));
+      const pockets = [...screen.getByRole('group', {name: 'Right page'}).querySelectorAll(':scope > .binder-pocket')];
+      expect(pockets).toHaveLength(12);
+      expect(pockets.filter((sleeve) => sleeve.childElementCount === 0)).toHaveLength(7);
+      expect(screen.getByRole('group', {name: 'Front cover'}).querySelector('.binder-pocket')).toBeNull();
+    });
+
+    it('wears the holo on a card held in foil, and on no other', () => {
+      render(heldBinder({c1: {normal: 0, foil: 1}, c2: {normal: 2, foil: 0}})());
+      expect(look(1)).toHaveClass('binder-foil');
+      expect(look(2)).not.toHaveClass('binder-foil');
+    });
+
+    it('settles each card by its id, the same way on every visit', () => {
+      const first = render(binder());
+      const settled = look(1).getAttribute('style');
+      first.unmount();
+      render(binder());
+      expect(look(1).getAttribute('style')).toBe(settled);
+      const {sx, sy, sr} = settleOf('c1');
+      expect(look(1).style.getPropertyValue('--sx')).toBe(String(sx));
+      expect(look(1).style.getPropertyValue('--sy')).toBe(String(sy));
+      expect(look(1).style.getPropertyValue('--sr')).toBe(String(sr));
+    });
+
+    it('slides a first copy in and greys the last one out, each once its colour settles', () => {
+      const held = {c1: {normal: 1, foil: 0}};
+      const view = render(heldBinder(held)());
+      held.c1 = {normal: 0, foil: 0};
+      Object.assign(held, {c2: {normal: 1, foil: 0}});
+      view.rerender(heldBinder(held)());
+      expect(look(1)).toHaveClass('binder-grey-out');
+      expect(look(2)).toHaveClass('binder-slide-in');
+      expect(look(2).querySelector('.binder-unowned')).toBeNull();
+      // The slide ends first; only its colour coming in ends the change.
+      animationEnd(2, 'binder-slide');
+      expect(look(2)).toHaveClass('binder-slide-in');
+      animationEnd(2, 'binder-colour-in');
+      animationEnd(1, 'binder-colour-out');
+      expect(look(2)).not.toHaveClass('binder-slide-in');
+      expect(look(1)).not.toHaveClass('binder-grey-out');
+    });
+
+    it('plays nothing for the counts it opens with', () => {
+      render(heldBinder({c1: {normal: 1, foil: 0}})());
+      expect(look(1).className).not.toMatch(/binder-(slide-in|grey-out)/);
+      expect(look(2).className).not.toMatch(/binder-(slide-in|grey-out)/);
+    });
+
+    it('plays nothing when a search or a filter moves another card into a pocket', () => {
+      // Cards 1 and 3 held: without card 1, card 2, not held, moves into the first pocket, and
+      // card 3, held, into the second. Neither copy count changed.
+      const held: Record<string, {normal: number; foil: number}> = {c1: {normal: 1, foil: 0}, c3: {normal: 1, foil: 0}};
+      const countsOf = (cardId: string) => held[cardId] ?? {normal: 0, foil: 0};
+      const view = render(binder({countsFor: countsOf}));
+      view.rerender(binder({slots: CARDS.slice(1), countsFor: countsOf}));
+      expect(look(2).className).not.toMatch(/binder-(slide-in|grey-out)/);
+      expect(look(3).className).not.toMatch(/binder-(slide-in|grey-out)/);
+    });
+
+    it('plays a copy added in the card window once the window closes', () => {
+      const held: Record<string, {normal: number; foil: number}> = {};
+      const view = render(heldBinder(held)(true));
+      held.c2 = {normal: 1, foil: 0};
+      view.rerender(heldBinder(held)(true));
+      // Behind the window, the pocket still shows what it showed.
+      expect(look(2)).not.toHaveClass('binder-slide-in');
+      expect(look(2).querySelector('.binder-unowned')).not.toBeNull();
+      view.rerender(heldBinder(held)(false));
+      expect(look(2)).toHaveClass('binder-slide-in');
+    });
+
+    it('just changes under reduced motion', () => {
+      stubReducedMotion();
+      const held: Record<string, {normal: number; foil: number}> = {};
+      const view = render(heldBinder(held)());
+      held.c2 = {normal: 1, foil: 0};
+      view.rerender(heldBinder(held)());
+      expect(look(2).className).not.toMatch(/binder-slide-in/);
+      expect(look(2).querySelector('.binder-unowned')).toBeNull();
     });
   });
 });

@@ -1,6 +1,5 @@
 import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
-import {E2E_SUPABASE_ORIGIN} from '../fixtures/supabaseStub';
 import {
   cardFullNameById,
   newestCoreSet,
@@ -9,26 +8,32 @@ import {
   setCards,
   setPrintings,
 } from '../helpers/cardData';
+import {
+  artFilter,
+  binder,
+  board,
+  BOARD,
+  COLLECTIONS_PATH,
+  type Entries,
+  hasStyleFor,
+  MISSING_GREY,
+  signInAsCollector,
+  teethIn,
+} from '../helpers/collector';
 import {holdLazyModule} from '../helpers/lazyModule';
-import {storedSession} from '../helpers/session';
+import {colourOf, contrast, edges, lightestIn, middle, type Place, placeOf, type Rgb} from '../helpers/screen';
 
 /**
  * Collection mode (#553 Phase C), behind `VITE_SHOW_COLLECTION` and pinned on in
  * `playwright.config.ts` together with the accounts flag it requires.
  *
- * SIGNED IN WITHOUT SIGNING IN: an OAuth round-trip is out of E2E's reach, but a session
- * the Supabase SDK RESTORES needs none. `signInAsCollector` stores an unexpired session,
- * which `getSession()` hands back without a network check, and the collector's collection, both
- * locally and as the server row the sync adopts on every load (`resolveCollectionSync`).
- * Everything else the placeholder project is asked answers empty (`supabaseStub`).
+ * Signed in without signing in: `signInAsCollector` (`helpers/collector.ts`) restores a stored
+ * session and the collector's collection. The binder's look (#941), its pages, pockets and
+ * motion, has its own spec, `collection-binder.spec.ts`.
  *
  * The collection is drawn from the card data, not hardcoded: the newest set's first three
  * cards and its first alt-art printing, so the suite follows the data when a set graduates.
  */
-
-/** The collector's uid: the session's user, and the owner stamped on the local copy. */
-const COLLECTOR_ID = 'e2e-collector';
-const IMPORTED_AT = Date.parse('2026-10-12T10:00:00Z');
 
 const SET = newestCoreSet();
 const BASE = setCards(SET);
@@ -37,8 +42,6 @@ const PRINTINGS = setPrintings(SET);
 const SET_TOTAL = BASE.length + PRINTINGS.length;
 const HELD_BASE = BASE.slice(0, 3);
 const HELD_ALT = PRINTINGS[0];
-
-type Entries = Record<string, {normal: number; foil: number}>;
 
 const ENTRIES: Entries = {
   ...Object.fromEntries(HELD_BASE.map((card) => [String(card.id), {normal: 1, foil: 0}])),
@@ -54,68 +57,6 @@ const MASTER = HELD_ALT ? 1 : 0;
 /** A share of the set as the panel writes it: a whole percent, rounded down (`percentOf`). */
 const percentOfSet = (count: number) => Math.floor((count / SET_TOTAL) * 100);
 
-const COLLECTIONS_PATH = '/rest/v1/collections';
-
-interface CollectorOptions {
-  /** Also store the local copy. False is a new browser: the collection is the server row alone. */
-  local?: boolean;
-  /** The server holds its answer until this settles, so a test can act before the sync hears. */
-  answered?: Promise<void>;
-}
-
-/** The collections a page wrote to the account, oldest first (#826). */
-type AccountWrites = Entries[];
-
-/**
- * Signs the page in as a collector holding `entries`, or holding nothing for `null`: the
- * stored session, the local copy (stamped as the server's, so it is never uploaded back),
- * and the server row. Call before the first navigation.
- *
- * The row is the stub's to keep: an upload replaces it, as the table's one row per user is
- * replaced, and every later read answers with it. Returns the uploads, as the account saw them.
- */
-async function signInAsCollector(
-  page: Page,
-  entries: Entries | null,
-  {local: storeLocal = true, answered}: CollectorOptions = {},
-): Promise<AccountWrites> {
-  const local = storeLocal && entries && {
-    schemaVersion: 1,
-    importedAt: IMPORTED_AT,
-    entries,
-    ownerUid: COLLECTOR_ID,
-    source: 'server',
-  };
-  await page.addInitScript(
-    ({session, collection}) => {
-      localStorage.setItem('inkweave:auth', JSON.stringify(session));
-      if (collection) localStorage.setItem('inkweave:collection', JSON.stringify(collection));
-    },
-    {session: storedSession(COLLECTOR_ID), collection: local},
-  );
-  // Registered after the fixture's catch-all stub, so it wins for this table.
-  let rows: object[] = entries
-    ? [{entries, imported_at: new Date(IMPORTED_AT).toISOString(), schema_version: 1}]
-    : [];
-  const writes: AccountWrites = [];
-  await page.route(
-    (url) => url.origin === E2E_SUPABASE_ORIGIN && url.pathname === COLLECTIONS_PATH,
-    async (route) => {
-      if (route.request().method() === 'POST') {
-        // `upsertCollection`: the row it sends replaces the one held.
-        const sent = route.request().postDataJSON() as {entries: Entries; imported_at: string; schema_version: number};
-        writes.push(sent.entries);
-        rows = [{entries: sent.entries, imported_at: sent.imported_at, schema_version: sent.schema_version}];
-        await route.fulfill({status: 201, body: ''});
-        return;
-      }
-      await answered;
-      await route.fulfill({status: 200, contentType: 'application/json', body: JSON.stringify(rows)});
-    },
-  );
-  return writes;
-}
-
 /** Waits for the restored session: the header's control turns from "Sign in" to "Account". */
 async function signedIn(page: Page): Promise<void> {
   await expect(
@@ -123,8 +64,6 @@ async function signedIn(page: Page): Promise<void> {
   ).toBeVisible();
 }
 
-// Exact: the frame drawn while the binder's code loads is named "Loading your binder" (#913).
-const binder = (page: Page) => page.getByRole('region', {name: 'Binder', exact: true});
 const numbers = (page: Page) => page.getByRole('region', {name: 'Collection numbers'});
 
 /** What collection mode draws while the binder's code downloads (#913). */
@@ -132,8 +71,6 @@ const binderLoading = (page: Page) => page.getByRole('region', {name: 'Loading y
 
 /** A lazy module's request, on the dev server or in a production build (see helpers/lazyModule.ts). */
 const isModuleRequest = (url: string, name: string) => new RegExp(`/${name}(\\.tsx|-[\\w-]+\\.js)(\\?|$)`).test(url);
-
-type Place = {x: number; y: number; width: number; height: number};
 
 /**
  * Where each of Browse's toolbar controls stands, by name, once the page's fonts are in: its
@@ -177,14 +114,6 @@ function expectToolbarHeld(before: Record<string, Place>, after: Record<string, 
 /** The docked set panel's parts, in order: what the binder shows, then the numbers. */
 const setPanelParts = (page: Page) => page.getByRole('complementary', {name: 'Set', exact: true}).locator(':scope > *');
 
-/** An element's box on the page, once the page's fonts are in. */
-async function placeOf(locator: Locator): Promise<Place> {
-  await locator.page().evaluate(() => document.fonts.ready.then(() => undefined));
-  const box = await locator.boundingBox();
-  expect(box, 'the element is on the page').not.toBeNull();
-  return box!;
-}
-
 /** Each part is where its placeholder was, within 1 px. */
 function expectPlacesHeld(parts: {name: string; before: Place; after: Place}[]): void {
   for (const {name, before, after} of parts) {
@@ -216,16 +145,6 @@ async function pressCollectionWithBinderHeld(page: Page): Promise<{before: Recor
   return {before: await toolbarPlaces(page), release: binderCode.release};
 }
 
-/** Where an element's four edges sit on the page, in CSS pixels. */
-async function edges(locator: Locator): Promise<{left: number; right: number; top: number; bottom: number}> {
-  const box = await locator.boundingBox();
-  expect(box, 'the element is on the page').not.toBeNull();
-  return {left: box!.x, right: box!.x + box!.width, top: box!.y, bottom: box!.y + box!.height};
-}
-
-/** Where a box's middle sits across the page, from its `edges`. */
-const middle = (box: {left: number; right: number}) => (box.left + box.right) / 2;
-
 /**
  * An element's width once its transitions have run, or -1 while one runs. An edge disc grows
  * with a bounce that overshoots, and its button's boop scales it 3% on the way, so its width
@@ -248,7 +167,8 @@ async function shownSideToSide(locator: Locator): Promise<boolean> {
  * Opens a collector's binder at `size` and checks what its first spread keeps at every desktop
  * size (#922, owner 2026-10-23): it starts under the search bar's start and ends under its end,
  * each within 1px, a disc on each outer edge, and the right page's pockets the size the page's
- * height gives them. Returns that page's margin beside its pockets.
+ * height gives them. Since #941 those edges are the board's, the pages 14px inside it. Returns
+ * the right page's margin beside its pockets.
  */
 async function checkSpreadAt(page: Page, size: {width: number; height: number}): Promise<number> {
   await page.setViewportSize(size);
@@ -257,16 +177,21 @@ async function checkSpreadAt(page: Page, size: {width: number; height: number}):
   await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
 
   const search = await edges(page.getByRole('textbox', {name: 'Search cards'}));
+  const frame = await edges(board(page));
   const cover = await edges(binder(page).getByRole('group', {name: 'Front cover'}));
   const rightPage = binder(page).getByRole('group', {name: 'Right page'});
   const right = await edges(rightPage);
-  expect(Math.abs(cover.left - search.left), 'the starts apart').toBeLessThanOrEqual(1);
-  expect(Math.abs(right.right - search.right), 'the ends apart').toBeLessThanOrEqual(1);
-  // Each disc's centre sits 2px past its page's outer edge (`edgeArrowPlace`).
+  expect(Math.abs(frame.left - search.left), 'the starts apart').toBeLessThanOrEqual(1);
+  expect(Math.abs(frame.right - search.right), 'the ends apart').toBeLessThanOrEqual(1);
+  expect(Math.abs(cover.left - frame.left - BOARD), 'the board beside the front cover').toBeLessThanOrEqual(1);
+  expect(Math.abs(frame.right - right.right - BOARD), 'the board beside the right page').toBeLessThanOrEqual(1);
+  expect(Math.abs(right.top - frame.top - BOARD), 'the board above the pages').toBeLessThanOrEqual(1);
+  expect(Math.abs(frame.bottom - right.bottom - BOARD), 'the board below the pages').toBeLessThanOrEqual(1);
+  // Each disc's centre sits 2px past the board's outer edge (`edgeArrowPlace`).
   const previous = await edges(binder(page).getByRole('button', {name: 'Previous spread'}));
   const next = await edges(binder(page).getByRole('button', {name: 'Next spread'}));
-  expect(Math.abs(middle(previous) - cover.left), 'the Previous disc off the start').toBeLessThanOrEqual(4);
-  expect(Math.abs(middle(next) - right.right), 'the Next disc off the end').toBeLessThanOrEqual(4);
+  expect(Math.abs(middle(previous) - frame.left), 'the Previous disc off the start').toBeLessThanOrEqual(4);
+  expect(Math.abs(middle(next) - frame.right), 'the Next disc off the end').toBeLessThanOrEqual(4);
 
   // Each pocket is a card's shape, 8px (`SPACING.sm`) from its neighbours across and down, and
   // the three rows fill the page's height inside its 12px padding (`PAGE_PADDING`): the height
@@ -284,6 +209,12 @@ async function checkSpreadAt(page: Page, size: {width: number; height: number}):
   expect(Math.abs(margin - (right.right - fourth.right)), 'the pockets off centre').toBeLessThanOrEqual(1);
   return margin;
 }
+
+/** How gold a colour leans: its red over its blue. The board and the pages lean a little blue. */
+const goldOf = ([r, , b]: Rgb) => r - b;
+
+/** The standard card glow (`--tile-glow`, owner 2026-10-21), as a computed box-shadow lists it. */
+const STANDARD_GLOW = /rgba\(255, 185, 0, 0\.42\) 0px 0px 22px 3px/;
 
 test.describe('Collection mode', () => {
   test('the Collection button asks a signed-out visitor to sign in', async ({page}) => {
@@ -311,9 +242,10 @@ test.describe('Collection mode', () => {
     await expect(page.getByRole('button', {name: 'Show my collection'})).toBeVisible();
     await page.waitForLoadState('networkidle');
 
-    // Neither the 14 non-Core chunks nor the binder's lazy component.
+    // Neither the 14 non-Core chunks nor the binder's lazy component, nor its stylesheet (#941).
     expect(requests.filter((url) => url.includes('/data/collection/'))).toEqual([]);
     expect(requests.filter((url) => url.includes('CollectionBinderSection'))).toEqual([]);
+    expect(await hasStyleFor(page, '.binder-board')).toBe(false);
   });
 
   test('signed out, a binder link keeps the grid and a Set filter picked on it', async ({page}, testInfo) => {
@@ -698,16 +630,17 @@ test.describe('Collection mode, signed in', () => {
     await page.goto(`/browse?binder=${SET}`);
     await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
 
-    // A disc grows from 28px to 40px about its centre (`NavArrowButton`), still 2px past its
-    // page's edge, so it reaches 22px into the spread's 32px gutter (`BROWSE_GUTTER`).
+    // A disc grows from 28px to 40px about its centre (`NavArrowButton`), still 2px past the
+    // board's edge (the page's, before #941), so it reaches 22px into the spread's 32px gutter
+    // (`BROWSE_GUTTER`).
     const next = binder(page).getByRole('button', {name: 'Next spread'});
     await expect.poll(() => settledWidth(next), {message: 'the Next disc at rest'}).toBeCloseTo(28, 0);
     await next.hover();
     await expect.poll(() => settledWidth(next), {message: 'the Next disc grown'}).toBeCloseTo(40, 0);
-    const right = await edges(binder(page).getByRole('group', {name: 'Right page'}));
+    const frame = await edges(board(page));
     const grownNext = await edges(next);
     const setPanel = await edges(page.getByRole('complementary', {name: 'Set'}));
-    expect(Math.abs(middle(grownNext) - right.right), 'the grown Next disc off the end').toBeLessThanOrEqual(4);
+    expect(Math.abs(middle(grownNext) - frame.right), 'the grown Next disc off the end').toBeLessThanOrEqual(4);
     expect(setPanel.left - grownNext.right, 'the grown Next disc into the Set panel').toBeGreaterThan(0);
     expect(await shownSideToSide(next), 'the grown Next disc cut off or covered').toBe(true);
 
@@ -719,10 +652,9 @@ test.describe('Collection mode, signed in', () => {
     await expect.poll(() => settledWidth(previous), {message: 'the Previous disc at rest'}).toBeCloseTo(28, 0);
     await previous.hover();
     await expect.poll(() => settledWidth(previous), {message: 'the Previous disc grown'}).toBeCloseTo(40, 0);
-    const left = await edges(leftPage);
     const grownPrevious = await edges(previous);
     const filters = await edges(page.getByRole('complementary', {name: 'Filters'}));
-    expect(Math.abs(middle(grownPrevious) - left.left), 'the grown Previous disc off the start').toBeLessThanOrEqual(4);
+    expect(Math.abs(middle(grownPrevious) - frame.left), 'the grown Previous disc off the start').toBeLessThanOrEqual(4);
     expect(grownPrevious.left - filters.right, 'the grown Previous disc into the Filters panel').toBeGreaterThan(0);
     expect(await shownSideToSide(previous), 'the grown Previous disc cut off or covered').toBe(true);
   });
@@ -795,7 +727,14 @@ test.describe('Collection mode, signed in', () => {
     }
     // A number with no promo is an open pocket, which shows the number's code (owner, 2026-10-17,
     // layout 1): why it is open (not listed, not released) is the promo set's to say.
-    await expect(binder(page).getByText(promoSet.openPocket, {exact: true})).toBeVisible();
+    const code = binder(page).getByText(promoSet.openPocket, {exact: true});
+    await expect(code).toBeVisible();
+    // Readable on the black page (#941): the heart of the code's strokes against the pocket just
+    // above it, both as the page draws them, under the pocket's front sheet, by WCAG's measure.
+    const place = await placeOf(code);
+    const ground = await colourOf(page, {...place, y: place.y - 8, height: 4});
+    const ink = await lightestIn(page, place);
+    expect(contrast(ink, ground), `the open pocket's code, ${ink} on ${ground}`).toBeGreaterThanOrEqual(4.5);
   });
 
   test("the set picker's Promo tab opens every promo set at once, counted as promos, with no Rarity filter (owner, 2026-10-20)", async ({
@@ -858,7 +797,7 @@ test.describe('Collection mode, signed in', () => {
     await expect(page.getByRole('menu', {name: 'Collection actions'})).toHaveCount(0);
   });
 
-  test("a card glows gold when pointed at, more strongly on the binder's parchment (owner, 2026-10-21)", async ({
+  test('a card glows gold when pointed at or focused, in the grid and in the binder alike (owner, 2026-10-21, #941)', async ({
     page,
   }) => {
     await signInAsCollector(page, ENTRIES);
@@ -867,7 +806,7 @@ test.describe('Collection mode, signed in', () => {
     await page.goto(`/browse?set=${SET}`);
     const tile = page.getByTestId('card-tile').first();
     await tile.hover();
-    await expect(tile).toHaveCSS('box-shadow', /rgba\(255, 185, 0, 0\.4\d*\) 0px 0px 22px 3px/);
+    await expect(tile).toHaveCSS('box-shadow', STANDARD_GLOW);
     await expect(tile).toHaveCSS('z-index', '1');
     expect(await tile.evaluate((t) => getComputedStyle(t, '::after').content)).toBe('none');
     // The first row's glow fits inside the grid's scroller, which clips it: 24px above the
@@ -877,11 +816,41 @@ test.describe('Collection mode, signed in', () => {
     );
     expect(roomAbove).toBeGreaterThanOrEqual(24);
 
-    // A binder pocket: the stronger gold, which shows on the parchment.
+    // A binder pocket: the same glow, which shows on the black pages as on any grid (#941),
+    // and the card stays where it settled.
     await page.goto(`/browse?binder=${SET}`);
     const pocket = binder(page).getByRole('button', {name: HELD_BASE[0].fullName, exact: true});
+    await expect(pocket).toBeVisible();
+    const resting = await pocket.boundingBox();
     await pocket.hover();
-    await expect(pocket).toHaveCSS('box-shadow', /rgba\(255, 185, 0, 0\.8\d*\) 0px 0px 22px 4px/);
+    await expect(pocket).toHaveCSS('box-shadow', STANDARD_GLOW);
+    expect(await pocket.boundingBox(), 'the pointed-at card moved').toEqual(resting);
+    // The binder's stronger glow is gone, from its tiles and from every stylesheet.
+    expect(await pocket.evaluate((t) => getComputedStyle(t).getPropertyValue('--tile-glow-strong'))).toBe('');
+    expect(await hasStyleFor(page, '--tile-glow-strong')).toBe(false);
+
+    // A missing card glows as gold: the grey is on its art alone. Measured on the page's margin
+    // beside it, past its front sheet's edge.
+    const missing = binder(page).getByTestId('card-tile').nth(HELD_BASE.length);
+    await page.mouse.move(0, 0);
+    const box = await edges(missing);
+    const beside = {x: box.right + 7, y: (box.top + box.bottom) / 2 - 2, width: 3, height: 4};
+    const dark = await colourOf(page, beside);
+    await missing.hover();
+    await expect(missing).toHaveCSS('box-shadow', STANDARD_GLOW);
+    const lit = await colourOf(page, beside);
+    expect(goldOf(lit) - goldOf(dark), `the missing card's glow beside it: ${dark} to ${lit}`).toBeGreaterThan(15);
+
+    // Focused from the keyboard, with the mouse away: the glow and the gold focus ring, the
+    // missing card's too. The pockets are one Tab stop, the arrows move between them (#790).
+    await page.mouse.move(0, 0);
+    await binder(page).getByRole('button', {name: 'Previous spread'}).focus();
+    await page.keyboard.press('Tab');
+    for (let step = 0; step < HELD_BASE.length; step++) await page.keyboard.press('ArrowRight');
+    await expect(missing).toBeFocused();
+    await expect(missing).toHaveCSS('box-shadow', STANDARD_GLOW);
+    await expect(missing).toHaveCSS('outline-color', 'rgb(212, 175, 55)');
+    expect(await artFilter(missing)).toBe(MISSING_GREY);
   });
 
   test('a signed-in visitor without a collection is asked to import one', async ({page}) => {
@@ -1040,6 +1009,34 @@ test.describe('Collection mode, signed in (phone width)', () => {
 
     await hide.click();
     await expect(numbers(page)).toHaveCount(0);
+  });
+
+  test('the lone page sits in its board, one zip round its outer edge, with no scroll sideways (#941)', async ({
+    page,
+  }) => {
+    await page.setViewportSize({width: 390, height: 844});
+    await signInAsCollector(page, ENTRIES);
+    await page.goto(`/browse?binder=${SET}`);
+    await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
+    await expect(board(page)).toHaveClass(/\bbinder-board-single\b/);
+    const lone = await edges(binder(page).getByRole('group', {name: 'Page', exact: true}));
+    const frame = await edges(board(page));
+    expect(Math.abs(frame.right - lone.right - BOARD), 'the board beside the page').toBeLessThanOrEqual(1);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth),
+      'the page scrolls sideways by',
+    ).toBeLessThanOrEqual(0);
+
+    // One zip, as a cover's on a desktop spread: along the top from end to end, over the spine
+    // too, and down the outer side, but not down the spine's side, where the binder bends.
+    const strip = {y: frame.top + 40, width: 4, height: 120};
+    const third = (frame.right - frame.left - 48) / 3;
+    for (const [i, end] of ['the spine end', 'the middle', 'the outer end'].entries()) {
+      const top = {x: frame.left + 24 + i * third, y: frame.top + 3, width: third, height: 4};
+      expect(await teethIn(page, top), `teeth along the top, ${end}`).toBeGreaterThan(0.25);
+    }
+    expect(await teethIn(page, {...strip, x: frame.right - 7}), 'teeth down the outer side').toBeGreaterThan(0.25);
+    expect(await teethIn(page, {...strip, x: frame.left + 3}), "teeth down the spine's side").toBe(0);
   });
 
   test("the first switch draws the binder's frame while its code loads, and the toolbar holds still", async ({
