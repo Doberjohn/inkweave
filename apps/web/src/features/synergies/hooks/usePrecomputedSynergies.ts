@@ -41,6 +41,8 @@ interface PrecomputedCardData {
 // ── Module-level fetch cache ──
 
 const synergyFetchCache = new Map<string, PrecomputedCardData>();
+/** Fetches in flight, so main.tsx's hold (#915) and the card page share one per card. */
+const synergyRequests = new Map<string, Promise<PrecomputedCardData>>();
 
 /** Caches and returns an empty result, for a card whose synergy file holds nothing to show. */
 function cacheEmptyResult(cardId: string): PrecomputedCardData {
@@ -49,10 +51,24 @@ function cacheEmptyResult(cardId: string): PrecomputedCardData {
   return empty;
 }
 
+/**
+ * A card's synergy file, fetched once for the page. A request that throws (offline, or a body
+ * that won't parse) is forgotten, so a retry fetches again. Any other answer is kept for the
+ * page, and one that isn't a synergy file (a card with none, an error status) reads as none.
+ */
 export async function fetchCardSynergies(cardId: string): Promise<PrecomputedCardData> {
   const cached = synergyFetchCache.get(cardId);
   if (cached) return cached;
 
+  let request = synergyRequests.get(cardId);
+  if (!request) {
+    request = loadCardSynergies(cardId).finally(() => synergyRequests.delete(cardId));
+    synergyRequests.set(cardId, request);
+  }
+  return request;
+}
+
+async function loadCardSynergies(cardId: string): Promise<PrecomputedCardData> {
   const response = await fetch(`/data/synergies/${cardId}.json`);
   // Card has no synergies (not in manifest). Cache the empty result.
   if (!response.ok) return cacheEmptyResult(cardId);
@@ -196,15 +212,69 @@ const INITIAL_STATE: SynergyState = {
 const NO_SYNERGIES: SynergyGroup[] = [];
 const NO_PAIRS: Record<string, PrecomputedPairData> = {};
 
+/** A card's groups and pairs from its fetched file. */
+function settledState(
+  cardId: string,
+  data: PrecomputedCardData,
+  getCardById: (id: string) => LorcanaCard | undefined,
+): SynergyState {
+  return {
+    cardId,
+    synergies: resolveGroups(data.groups, getCardById, getCardById(cardId)),
+    pairs: data.pairs,
+    isLoading: false,
+    error: null,
+  };
+}
+
 /**
  * The state as it applies to `cardId`. The fetch starts in an effect, so on the render where a
  * card arrives or changes, `state` still describes no card or the previous one. That render
  * reports loading with nothing loaded, never a settled empty result, and never the previous
- * card's groups. The card page keeps its footer out until this settles (#532).
+ * card's groups. The card page keeps its footer out until this settles (#532). A file this page
+ * has fetched already, such as the one main.tsx's hold waited for (#915), settles that render.
  */
-function stateForCard(state: SynergyState, cardId: string | undefined): SynergyState {
+function stateForCard(
+  state: SynergyState,
+  cardId: string | undefined,
+  getCardById: (id: string) => LorcanaCard | undefined,
+): SynergyState {
   if (state.cardId === cardId) return state;
-  return {cardId, synergies: NO_SYNERGIES, pairs: NO_PAIRS, isLoading: cardId !== undefined, error: null};
+  if (cardId === undefined) return INITIAL_STATE;
+  const cached = synergyFetchCache.get(cardId);
+  if (cached) return settledState(cardId, cached, getCardById);
+  return {cardId, synergies: NO_SYNERGIES, pairs: NO_PAIRS, isLoading: true, error: null};
+}
+
+/**
+ * The effect's work for a card: settles it at once from a file already fetched, or fetches the
+ * file. Returns the effect's cleanup, which drops a response that lands after it.
+ */
+function loadSynergies(
+  cardId: string,
+  getCardById: (id: string) => LorcanaCard | undefined,
+  dispatch: (action: SynergyAction) => void,
+): () => void {
+  let cancelled = false;
+  const settle = (data: PrecomputedCardData) => {
+    if (cancelled) return;
+    const {synergies, pairs} = settledState(cardId, data, getCardById);
+    dispatch({type: 'FETCH_SUCCESS', cardId, synergies, pairs});
+  };
+  const fail = (err: unknown) => {
+    if (cancelled) return;
+    console.error(`Failed to load synergies for card ${cardId}:`, err);
+    dispatch({type: 'FETCH_ERROR', cardId, error: err instanceof Error ? err : new Error(String(err))});
+  };
+
+  dispatch({type: 'FETCH_START', cardId});
+  // Batched with FETCH_START, so a file already fetched never renders a loading frame.
+  const cached = synergyFetchCache.get(cardId);
+  if (cached) settle(cached);
+  else fetchCardSynergies(cardId).then(settle).catch(fail);
+  return () => {
+    cancelled = true;
+  };
 }
 
 /**
@@ -225,36 +295,10 @@ export function usePrecomputedSynergies(
       dispatch({type: 'RESET'});
       return;
     }
-
-    let cancelled = false;
-    dispatch({type: 'FETCH_START', cardId});
-
-    fetchCardSynergies(cardId)
-      .then((data) => {
-        if (cancelled) return;
-        dispatch({
-          type: 'FETCH_SUCCESS',
-          cardId,
-          synergies: resolveGroups(data.groups, getCardById, getCardById(cardId)),
-          pairs: data.pairs,
-        });
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error(`Failed to load synergies for card ${cardId}:`, err);
-        dispatch({
-          type: 'FETCH_ERROR',
-          cardId,
-          error: err instanceof Error ? err : new Error(String(err)),
-        });
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    return loadSynergies(cardId, getCardById, dispatch);
   }, [cardId, getCardById]);
 
-  const current = stateForCard(state, cardId);
+  const current = stateForCard(state, cardId, getCardById);
   const getPairSynergies = buildPairResolver(selectedCard, current.pairs);
 
   return {

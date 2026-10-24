@@ -329,6 +329,38 @@ describe('useFilterParams', () => {
     });
   });
 
+  describe('the default sort (#915)', () => {
+    it("reports a page's own default from the first render, with no sort param", () => {
+      const {result} = renderHook(() => useFilterParams({defaultSort: 'ink-cost'}), {
+        wrapper: createWrapper(['/playstyles/discard']),
+      });
+
+      expect(result.current.sortOrder).toBe('ink-cost');
+    });
+
+    it('keeps the sort the URL names over that default', () => {
+      const {result} = renderHook(() => useFilterParams({defaultSort: 'ink-cost'}), {
+        wrapper: createWrapper(['/playstyles/discard?sort=newest']),
+      });
+
+      expect(result.current.sortOrder).toBe('newest');
+    });
+
+    it('writes every other order to the URL, and the default by leaving it out', () => {
+      const {result} = renderHook(
+        () => ({filters: useFilterParams({defaultSort: 'ink-cost'}), url: useSearchParams()[0]}),
+        {wrapper: createWrapper(['/playstyles/discard'])},
+      );
+
+      act(() => result.current.filters.setSortOrder('newest'));
+      expect(result.current.url.get('sort')).toBe('newest');
+
+      act(() => result.current.filters.setSortOrder('ink-cost'));
+      expect(result.current.url.has('sort')).toBe(false);
+      expect(result.current.filters.sortOrder).toBe('ink-cost');
+    });
+  });
+
   describe('params outside the filters', () => {
     it("leaves collection mode's own params alone when the filters are written or cleared", () => {
       // `owned` is the binder view and `binder` the mode: neither is a filter, so

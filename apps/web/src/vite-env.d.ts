@@ -25,8 +25,9 @@ interface ImportMeta {
 interface Window {
   /**
    * Set only by our own prerender crawl (scripts/prerender.mjs), so the captured pages never
-   * load Sentry or PostHog, or bake in their modulepreloads (#640, #827). Real visitors and
-   * PageSpeed never have it.
+   * load Sentry or PostHog, or bake in their modulepreloads (#640, #827), and /vote's capture
+   * shows no pair, since each visit draws its own (#915). Real visitors and PageSpeed never
+   * have it.
    */
   __INKWEAVE_PRERENDER__?: boolean;
 }

@@ -1,19 +1,24 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {renderHook, act} from '@testing-library/react';
 import {useCardData} from '../useCardData';
-import {fetchCardsFromLocal} from '../../../cards';
+import {fetchCardsFromLocal} from '../../../cards/loader';
+import {_resetCardListRequest, startCardList} from '../../../cards/cardListRequest';
+import {createCard} from '../../../../shared/test-utils';
 
-vi.mock('../../../cards', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../../cards')>()),
+vi.mock('../../../cards/loader', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../cards/loader')>()),
   fetchCardsFromLocal: vi.fn(() => Promise.resolve({cards: [], sets: []})),
 }));
 
 /** Lets the mocked fetch resolve and its state updates land inside act. */
 const settle = () => act(async () => {});
 
+const LIST = {cards: [createCard({id: '1936'})], sets: [{code: '9', name: 'Fabled', number: 9}]};
+
 beforeEach(() => {
   vi.useFakeTimers();
   vi.mocked(fetchCardsFromLocal).mockClear();
+  _resetCardListRequest();
 });
 
 afterEach(() => {
@@ -50,5 +55,51 @@ describe('useCardData', () => {
 
     await act(() => vi.advanceTimersByTimeAsync(100));
     expect(fetchCardsFromLocal).toHaveBeenCalledOnce();
+  });
+
+  // main.tsx's hold loads the list before the app renders (#915): the page's first render must
+  // be the loaded one, or the prerendered page gives way to a skeleton for a frame.
+  it('starts from a card list that has already loaded, with no loading render', async () => {
+    vi.mocked(fetchCardsFromLocal).mockResolvedValueOnce(LIST);
+    await startCardList();
+    const loadingRenders: boolean[] = [];
+
+    const {result} = renderHook(() => {
+      const data = useCardData();
+      loadingRenders.push(data.isLoading);
+      return data;
+    });
+    await settle();
+
+    expect(loadingRenders).not.toContain(true);
+    expect(result.current.cards).toBe(LIST.cards);
+    expect(result.current.sets).toBe(LIST.sets);
+    expect(fetchCardsFromLocal).toHaveBeenCalledOnce();
+  });
+
+  it('shares the request the hold started instead of fetching again', async () => {
+    vi.mocked(fetchCardsFromLocal).mockResolvedValueOnce(LIST);
+    void startCardList();
+
+    const {result} = renderHook(() => useCardData());
+    await settle();
+
+    expect(result.current.cards).toBe(LIST.cards);
+    expect(fetchCardsFromLocal).toHaveBeenCalledOnce();
+  });
+
+  it('fetches again on a retry after a failed load', async () => {
+    vi.mocked(fetchCardsFromLocal).mockRejectedValueOnce(new Error('offline'));
+    vi.mocked(fetchCardsFromLocal).mockResolvedValueOnce(LIST);
+    const {result} = renderHook(() => useCardData());
+    await settle();
+    expect(result.current.error?.message).toBe('offline');
+
+    act(() => result.current.retryLoad());
+    await settle();
+
+    expect(result.current.error).toBeNull();
+    expect(result.current.cards).toBe(LIST.cards);
+    expect(fetchCardsFromLocal).toHaveBeenCalledTimes(2);
   });
 });

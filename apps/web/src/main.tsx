@@ -5,6 +5,9 @@ import {registerSW} from 'virtual:pwa-register';
 import 'react-loading-skeleton/dist/skeleton.css';
 import './index.css';
 import {router} from './router';
+import {HOLD_CAP_MS, holdPrerenderedPage} from './shared/lib/prerenderHold';
+import {renderOverPrerenderedPage} from './shared/lib/prerenderedArt';
+import {whenRouteReady} from './shared/lib/routeReadiness';
 import {showUpdateToast} from './shared/lib/swUpdateToast';
 import {reloadForStaleChunk} from './shared/lib/staleChunkReload';
 import {loadSentryWhenIdle} from './shared/lib/sentry';
@@ -83,8 +86,9 @@ if (import.meta.env.PROD) {
  * (og:type, og:image:width/height, og:locale, twitter:card) are left alone — those are
  * not duplicated and must survive.
  *
- * Runs before render, so the brief gap with no metadata coincides with the gap where
- * createRoot has emptied #root anyway. Nothing samples the document in between.
+ * Runs when the app starts to render, not while a prerendered page is held (#915), so a held
+ * page keeps its metadata. Nothing samples the document in the brief gap before React's first
+ * commit adds the app's own tags.
  */
 function sweepPrerenderedSeoTags() {
   for (const tag of document.head.querySelectorAll('[data-seo]')) {
@@ -92,14 +96,27 @@ function sweepPrerenderedSeoTags() {
   }
 }
 
-sweepPrerenderedSeoTags();
-
 const rootElement = document.getElementById('root')!;
-// index.html hides a prerendered page until its inline script approves it (#915). Had that
-// script failed, the mark would hide the app too, so it goes before React renders.
-rootElement.removeAttribute('data-prerender-route');
-createRoot(rootElement).render(
-  <StrictMode>
-    <RouterProvider router={router} />
-  </StrictMode>,
-);
+
+function renderApp() {
+  // index.html hides a prerendered page until its inline script approves it (#915). Had that
+  // script failed, the mark would hide the app too, so it goes before React renders.
+  rootElement.removeAttribute('data-prerender-route');
+  sweepPrerenderedSeoTags();
+  const root = createRoot(rootElement);
+  renderOverPrerenderedPage(rootElement, () =>
+    root.render(
+      <StrictMode>
+        <RouterProvider router={router} />
+      </StrictMode>,
+    ),
+  );
+}
+
+// Only a page the inline script approved is held (#915); an emptied or unapproved root renders
+// at once.
+if (rootElement.hasAttribute('data-ready') && HOLD_CAP_MS > 0) {
+  holdPrerenderedPage(whenRouteReady(router.routes, window.location.pathname), renderApp);
+} else {
+  renderApp();
+}

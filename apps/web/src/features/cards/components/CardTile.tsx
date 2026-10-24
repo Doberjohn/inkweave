@@ -5,12 +5,12 @@ import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder'
 import {
   INK_COLORS,
   CARD_TILE_GLOW,
-  EASING,
   FONT_SIZES,
   RADIUS,
   blackRgba,
   whiteRgba,
 } from '../../../shared/constants';
+import {useArtLoad} from '../../../shared/hooks/useArtLoad';
 import {printingAlt} from '../../../shared/hooks/usePrintingSelection';
 import {PROMO_RARITY, isChaseRarity, smallImageUrl} from '../loader';
 import {isModifiedClick} from '../../../shared/utils/touchGuard';
@@ -128,8 +128,8 @@ function CardTileImage({
   priority?: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
-  const [imgLoaded, setImgLoaded] = useState(false);
   const imgSrc = useSmall ? smallImageUrl(art) : art.imageUrl;
+  const {loaded: imgLoaded, transition, artProps} = useArtLoad(imgSrc);
   // Above-fold LCP candidates load eagerly + decode synchronously; the rest defer (one flag, one branch).
   const {loading, decoding} = priority
     ? ({loading: 'eager', decoding: 'sync'} as const)
@@ -161,7 +161,7 @@ function CardTileImage({
         alt={name}
         loading={loading}
         decoding={decoding}
-        onLoad={() => setImgLoaded(true)}
+        {...artProps}
         onError={() => setImgError(true)}
         style={{
           width: '100%',
@@ -169,7 +169,7 @@ function CardTileImage({
           objectFit: 'cover',
           display: 'block',
           opacity: imgLoaded ? 1 : 0,
-          transition: `opacity 0.2s ${EASING.smooth}`,
+          transition,
         }}
       />
     </>

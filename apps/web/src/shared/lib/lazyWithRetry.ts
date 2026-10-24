@@ -1,4 +1,4 @@
-import {lazy, type ComponentType} from 'react';
+import {createElement, lazy, useState, type ComponentProps, type ComponentType} from 'react';
 import {reloadForStaleChunk} from './staleChunkReload';
 
 /**
@@ -28,6 +28,10 @@ export class PageLoadError extends Error {
  * reloadForStaleChunk (loop-guarded) so the fresh index.html points at current chunks, and keeps
  * the Suspense fallback up until the reload lands, so the visitor never sees an error. When the
  * guard refuses, this is the reloaded page failing again, and it throws PageLoadError.
+ *
+ * `preload()` starts the import ahead of the render, and once it has resolved the page renders
+ * its component directly: a `React.lazy` whose import has already resolved still suspends once,
+ * which would show its fallback for a frame between the prerendered page and the app's (#915).
  */
 // ComponentType<any> is React.lazy's own constraint; `never` fails on class components.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,13 +40,24 @@ export function lazyWithRetry<K extends string, M extends Record<K, ComponentTyp
   exportName: K,
   retries = 2,
 ) {
-  return lazy(() => {
-    const load = (attempt: number): Promise<{default: M[K]}> =>
-      importFn()
-        .then((m) => ({default: namedExport(m, exportName)}))
-        .catch((err: unknown) => (attempt < retries ? load(attempt + 1) : giveUp(err)));
-    return load(0);
-  });
+  let loaded: M[K] | undefined;
+  let request: Promise<M[K]> | undefined;
+  const load = (attempt: number): Promise<M[K]> =>
+    importFn()
+      .then((m) => (loaded = namedExport(m, exportName)))
+      .catch((err: unknown) => (attempt < retries ? load(attempt + 1) : giveUp(err)));
+  // One import for the page, shared by preload() and the render: React keeps a lazy component's
+  // failed import too.
+  const preload = () => (request ??= load(0));
+  const Lazy = lazy(() => preload().then((component) => ({default: component})));
+  function LazyWithRetry(props: ComponentProps<M[K]>) {
+    // The type this mount began with: a render that swapped Lazy for the loaded component would
+    // remount the page.
+    const [Component] = useState(() => loaded ?? Lazy);
+    return createElement(Component, props);
+  }
+  LazyWithRetry.preload = preload;
+  return LazyWithRetry;
 }
 
 /**
