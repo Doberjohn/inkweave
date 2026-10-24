@@ -1,8 +1,9 @@
 name: Claude review
 
-# Claude Code reviews each pull request once: when it opens ready for review, or when a
-# draft is marked ready. Comment "@claude review" on a pull request to ask for another
-# pass (#952). Drafts, forks and bot pull requests (Dependabot's) get no review.
+# Claude Code reviews a pull request when it opens ready for review, and when a draft is
+# marked ready; later pushes start none. Comment "@claude review" on an open pull request
+# to ask for another pass (#952). Drafts, forks and bot pull requests (Dependabot's) get
+# no automatic review, and a fork's gets none on request either.
 #
 # The review reads the code and posts comments on the pull request, nothing else. It runs
 # on the job's own token, which can't push, merge or edit a file, rather than on the
@@ -28,6 +29,7 @@ jobs:
         && github.event.pull_request.user.type != 'Bot')
       || (github.event_name == 'issue_comment'
         && github.event.issue.pull_request
+        && github.event.issue.state == 'open'
         && startsWith(github.event.comment.body, '@claude review')
         && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association))
     runs-on: ubuntu-latest
@@ -46,20 +48,28 @@ jobs:
       PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
 
     steps:
-      # A comment can ask about any pull request, and a fork's branch could bring its own
-      # CLAUDE.md and .claude/ skills to steer a run that holds the API key. Fork pull
-      # requests never get secrets on the pull_request event, so only the comment path
-      # needs this check.
-      - name: Check the branch is in this repository
-        if: github.event_name == 'issue_comment'
+      # The review diffs against the pull request's base branch, read here because a
+      # comment's event doesn't carry it. A comment can also ask about any pull request,
+      # and a fork's branch could bring its own CLAUDE.md and .claude/ skills to steer a
+      # run that holds the API key, so a fork's is refused. (A fork's pull request never
+      # gets secrets on the pull_request event.)
+      - name: Read the pull request's base branch
+        id: pr
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cross=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json isCrossRepository --jq .isCrossRepository)
-          if [ "$cross" != false ]; then
+          info=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json isCrossRepository,baseRefName --jq '"\(.isCrossRepository) \(.baseRefName)"')
+          if [ "${info%% *}" != false ]; then
             echo "::error::Claude reviews only pull requests whose branch is in this repository."
             exit 1
           fi
+          base=${info#* }
+          # The name goes into Claude's instructions, so only a plain branch name passes.
+          if ! [[ "$base" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+            echo "::error::The base branch's name has characters this workflow doesn't pass on."
+            exit 1
+          fi
+          echo "base=$base" >> "$GITHUB_OUTPUT"
 
       # Full history, so the review can read git log and blame for the lines it changes.
       - name: Checkout the pull request
@@ -88,13 +98,16 @@ jobs:
 
       # Claude Code's bundled /code-review skill, posting its findings as inline comments.
       # The settings turn off the repo's Claude hooks, which guard a local checkout and
-      # have nothing to guard here, and .mcp.json's GitHub server.
+      # have nothing to guard here, and .mcp.json's GitHub server. Claude reads the code
+      # with Claude Code's read-only tools and commands, and its one other tool posts an
+      # inline comment on this pull request.
       - name: Review
         uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1
         env:
-          GH_TOKEN: ${{ github.token }}
-          # Strips the API key from the shell commands Claude runs, which need only the
-          # job's token, and runs them in the sandbox above.
+          # Keeps the API key and the job's token out of the shell commands Claude runs,
+          # and runs them in the sandbox above. So gh can't reach GitHub from there: Claude
+          # reads the diff with git, and the action's comment tool, outside the sandbox,
+          # posts the findings.
           CLAUDE_CODE_SUBPROCESS_ENV_SCRUB: "1"
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -103,5 +116,8 @@ jobs:
           settings: '{"disableAllHooks":true,"disabledMcpjsonServers":["github"]}'
           claude_args: >-
             --model opus
-            --disallowedTools "Edit,Write,NotebookEdit"
-            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr view *),Bash(gh pr diff *),Bash(gh pr comment *),Bash(gh api *),Bash(git log *),Bash(git diff *),Bash(git show *),Bash(git blame *)"
+            --disallowedTools "Edit,Write,NotebookEdit,WebFetch,WebSearch"
+            --allowedTools "mcp__github_inline_comment__create_inline_comment"
+            --append-system-prompt "Pull request ${{ env.PR_NUMBER }} is checked out at HEAD, with full history.
+            The shell has no GitHub token, so gh can't reach GitHub: read the diff with
+            git diff origin/${{ steps.pr.outputs.base }}...HEAD instead."
