@@ -5,7 +5,6 @@ import js from '@eslint/js';
 import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
-import reactCompiler from 'eslint-plugin-react-compiler';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
 import tseslint from 'typescript-eslint';
 import {inkweave} from './eslint-rules/index.js';
@@ -22,14 +21,20 @@ export default tseslint.config(
     plugins: {
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
-      'react-compiler': reactCompiler,
       'jsx-a11y': jsxA11y,
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
       ...jsxA11y.flatConfigs.recommended.rules,
       'react-refresh/only-export-components': ['warn', {allowConstantExport: true}],
-      'react-compiler/react-compiler': 'error',
+      // React Compiler's checks come from eslint-plugin-react-hooks, which replaced
+      // eslint-plugin-react-compiler (#937). Its recommended set leaves off two that the old
+      // plugin reported: a hook used as a value or swapped between renders (hooks), and code
+      // the compiler reads as invalid JavaScript (syntax). Two more things only the old plugin
+      // caught, a turned-off react-hooks rule and a 'use no memo' directive, are
+      // inkweave/no-compiler-opt-out below.
+      'react-hooks/hooks': 'error',
+      'react-hooks/syntax': 'error',
       // Ban manual memoization. The React Compiler (wired in vite.config.ts via
       // reactCompilerPreset) auto-memoizes component/hook values keyed on their
       // reactive deps, so useMemo/useCallback are redundant. This guard stops the
@@ -76,6 +81,13 @@ export default tseslint.config(
       'inkweave/no-dim-text': 'error',
       'inkweave/no-raw-spacing': 'error',
     },
+  },
+  // React Compiler builds the components and hooks under src/ (vite.config.ts), in stories and
+  // tests too, and skips code that opts out of its checks without a word (#937).
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    plugins: {inkweave},
+    rules: {'inkweave/no-compiler-opt-out': 'error'},
   },
   // No-new-styling-infrastructure + use-the-barrel guards (#508).
   {
