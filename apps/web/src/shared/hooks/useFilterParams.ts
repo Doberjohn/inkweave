@@ -147,7 +147,12 @@ export interface UseFilterParamsReturn {
   setSortOrder: (order: BrowseSortOrder) => void;
 }
 
-export function useFilterParams(): UseFilterParamsReturn {
+/**
+ * The filters and sort in the URL. `defaultSort` is the order a page without a sort param shows,
+ * from its first render on (#915: a playstyle page sorted itself in an effect, so its first
+ * render ordered the cards differently from the prerendered page it replaced).
+ */
+export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseSortOrder} = {}): UseFilterParamsReturn {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Read filter state from URL params
@@ -163,7 +168,7 @@ export function useFilterParams(): UseFilterParamsReturn {
 
   const sortOrder: BrowseSortOrder = (() => {
     const raw = searchParams.get(SORT_PARAM);
-    return raw && VALID_SORTS.has(raw) ? (raw as BrowseSortOrder) : 'newest';
+    return raw && VALID_SORTS.has(raw) ? (raw as BrowseSortOrder) : defaultSort;
   })();
 
   // Every picked value counts, as each ink and type already does (see countFilterOptions).
@@ -259,7 +264,7 @@ export function useFilterParams(): UseFilterParamsReturn {
       trackEvent('sort_changed', {sortOrder: order, previousSort: sortOrder});
     }
     updateParams((p) => {
-      if (order === 'newest') p.delete(SORT_PARAM);
+      if (order === defaultSort) p.delete(SORT_PARAM);
       else p.set(SORT_PARAM, order);
     });
   };

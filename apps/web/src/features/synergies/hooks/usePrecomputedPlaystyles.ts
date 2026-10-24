@@ -1,27 +1,7 @@
 import {useEffect, useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
-
-// ── Module-level fetch cache ──
-
-let playstyleFetchCache: Record<string, string[]> | null = null;
-
-async function fetchPlaystyleCardIds(): Promise<Record<string, string[]>> {
-  if (playstyleFetchCache) return playstyleFetchCache;
-
-  const response = await fetch('/data/synergies/_playstyles.json');
-  if (!response.ok) throw new Error(`Failed to fetch playstyle data: ${response.status}`);
-
-  // Guard against SPA fallback returning HTML instead of JSON
-  const contentType = response.headers.get('content-type') ?? '';
-  if (!contentType.includes('application/json')) {
-    throw new Error('Playstyle data unavailable (received HTML instead of JSON)');
-  }
-
-  const data: Record<string, string[]> = await response.json();
-  playstyleFetchCache = data;
-  return data;
-}
+import {fetchPlaystyleCardIds, playstyleCardIdsIfLoaded} from './playstyleCardIds';
 
 // ── Hooks ──
 
@@ -61,8 +41,8 @@ export function useAllPlaystyleCards(): {
   retry: () => void;
 } {
   const {getCardById} = useCardDataContext();
-  const [rawData, setRawData] = useState<Record<string, string[]> | null>(() => playstyleFetchCache);
-  const [isLoading, setIsLoading] = useState(() => playstyleFetchCache === null);
+  const [rawData, setRawData] = useState<Record<string, string[]> | null>(playstyleCardIdsIfLoaded);
+  const [isLoading, setIsLoading] = useState(() => playstyleCardIdsIfLoaded() === null);
   const [error, setError] = useState<Error | null>(null);
   // Bumped by `retry`: a new attempt runs the fetch effect again.
   const [attempt, setAttempt] = useState(0);

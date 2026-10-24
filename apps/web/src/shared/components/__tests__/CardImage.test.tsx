@@ -1,6 +1,8 @@
-import {describe, it, expect} from 'vitest';
+import {afterEach, describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {CardImage} from '../CardImage';
+import {_resetPrerenderedArt} from '../../lib/prerenderedArt';
+import {showPrerenderedArt, stubLoadedArt} from '../../test-utils/loadedArt';
 
 describe('CardImage', () => {
   const defaultProps = {
@@ -55,6 +57,53 @@ describe('CardImage', () => {
     expect(img).toBeInTheDocument();
     expect(img).toHaveStyle({opacity: '0'});
     expect(screen.getByText('3')).toBeInTheDocument();
+  });
+
+  describe('art the browser already has (#915)', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+      _resetPrerenderedArt();
+    });
+
+    it('shows art the prerendered page showed at once, with no fade and no placeholder', () => {
+      showPrerenderedArt(defaultProps.src);
+      const {container} = render(<CardImage {...defaultProps} />);
+
+      const img = screen.getByRole('img');
+      expect(img.style.opacity).toBe('1');
+      expect(img.style.transition).toBe('');
+      expect(container.querySelector('.ink-card-placeholder')).toBeNull();
+    });
+
+    it('shows art complete as it mounts at once, with no fade and no placeholder', () => {
+      stubLoadedArt();
+      const {container} = render(<CardImage {...defaultProps} />);
+
+      const img = screen.getByRole('img');
+      expect(img.style.opacity).toBe('1');
+      expect(img.style.transition).toBe('');
+      expect(container.querySelector('.ink-card-placeholder')).toBeNull();
+    });
+
+    it('fades in art that arrives after it mounts', () => {
+      showPrerenderedArt('https://example.com/another-card.jpg');
+      const {container} = render(<CardImage {...defaultProps} />);
+      const img = screen.getByRole('img');
+      expect(img.style.opacity).toBe('0');
+      expect(container.querySelector('.ink-card-placeholder')).not.toBeNull();
+
+      fireEvent.load(img);
+
+      expect(img.style.opacity).toBe('1');
+      expect(img.style.transition).toContain('opacity 0.2s');
+    });
+
+    it('does not take a broken image, complete without pixels, for art', () => {
+      stubLoadedArt(0);
+      render(<CardImage {...defaultProps} />);
+
+      expect(screen.getByRole('img').style.opacity).toBe('0');
+    });
   });
 
   it('should apply custom border radius to wrapper', () => {

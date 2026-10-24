@@ -39,14 +39,48 @@ jobs:
         with:
           # handoff: what decides how a prerendered page hands over to the app (#915): the
           # page and its inline script, the build that transforms it, the crawl that marks it,
-          # how Vercel serves it, the check itself, and the dependencies they all run on (a
-          # React Router, Vite or Playwright bump can change the handoff with no file here).
+          # how Vercel serves it, how long the app holds it and what each route waits for, the
+          # first render each page makes from that data and the capture's art, the check
+          # itself, and the dependencies they all run on (a React Router, Vite or Playwright
+          # bump can change the handoff with no file here).
           filters: |
             engine:
               - 'packages/synergy-engine/**'
             handoff:
               - 'apps/web/index.html'
               - 'apps/web/src/main.tsx'
+              - 'apps/web/src/router.tsx'
+              - 'apps/web/src/prerenderedRoutes.json'
+              - 'apps/web/src/AppLayout.tsx'
+              - 'apps/web/src/shared/lib/prerenderHold.ts'
+              - 'apps/web/src/shared/lib/prerenderedArt.ts'
+              - 'apps/web/src/shared/lib/routeReadiness.ts'
+              - 'apps/web/src/shared/lib/lazyWithRetry.ts'
+              - 'apps/web/src/shared/hooks/useArtLoad.ts'
+              - 'apps/web/src/shared/hooks/useFilterParams.ts'
+              - 'apps/web/src/shared/hooks/useScrollToTopOnRouteChange.ts'
+              - 'apps/web/src/shared/components/CardImage.tsx'
+              - 'apps/web/src/shared/components/PrintingCarousel.tsx'
+              - 'apps/web/src/features/cards/cardListRequest.ts'
+              - 'apps/web/src/features/cards/featured.ts'
+              - 'apps/web/src/features/cards/components/BrowseCardGrid.tsx'
+              - 'apps/web/src/features/cards/components/CardTile.tsx'
+              - 'apps/web/src/features/cards/components/FeaturedCards.tsx'
+              - 'apps/web/src/features/synergies/components/SynergyCard.tsx'
+              - 'apps/web/src/features/synergies/hooks/playstyleCardIds.ts'
+              - 'apps/web/src/features/synergies/hooks/useCardData.ts'
+              - 'apps/web/src/features/synergies/hooks/usePrecomputedPlaystyles.ts'
+              - 'apps/web/src/features/synergies/hooks/usePrecomputedSynergies.ts'
+              - 'apps/web/src/features/voting/hooks/usePairQueue.ts'
+              - 'apps/web/src/features/voting/pairsIndexRequest.ts'
+              - 'apps/web/src/pages/AboutPage.tsx'
+              - 'apps/web/src/pages/BrowsePage.tsx'
+              - 'apps/web/src/pages/CardPage.tsx'
+              - 'apps/web/src/pages/HomePage.tsx'
+              - 'apps/web/src/pages/PlaystyleDetailPage.tsx'
+              - 'apps/web/src/pages/PlaystyleGalleryPage.tsx'
+              - 'apps/web/src/pages/VotePage.tsx'
+              - 'apps/web/src/pages/votePageChunk.ts'
               - 'apps/web/vite.config.ts'
               - 'scripts/prerender.mjs'
               - 'scripts/serve-dist.mjs'

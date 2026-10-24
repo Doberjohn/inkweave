@@ -33,6 +33,26 @@
  *   7. A route with its own capture fetches every image the capture it shows loads at once, and
  *      no image only the other capture shows (the app's code held). A phone's preload scanner
  *      reads the desktop capture before the inline script swaps the phone one in.
+ *   8. With the data a page waits for held back DATA_HOLD_MS (the home page's featured cards, the
+ *      card list, a playstyle's card ids, the synergy file of the vote page's first pair), the
+ *      page asks for all of its data before the app renders (a card page its synergy file too, a
+ *      playstyle's page the card list, the vote page the card list and the pairs index) and for
+ *      none it defers (the home page's card list, #641), its capture stays on screen until the
+ *      data arrives, then the app's page replaces it whole, within a frame of letting go: no frame
+ *      shows a loading state (`[aria-busy="true"]`, the route's fallback included) or an empty
+ *      #root, the app's first frame shows every image the capture showed on screen, at full
+ *      opacity, and no later frame leaves out or fades its card art. Each page runs again with
+ *      view transitions taken away, as in Firefox before 144 and Safari before 18, which the
+ *      app's first render must pass alone: there the images go unchecked, since Chromium draws a
+ *      new `<img>` blank for a frame without a transition to hold the page. The vote page's
+ *      capture is its loading view, since the crawl draws no pair and each visit draws its own:
+ *      there the capture must show that view, and no frame of the app's page a loading state.
+ *   9. With the card list held past the hold's cap, Browse lets go at the cap, counted from the
+ *      start of the visit, and the app shows its loading state.
+ *  10. During the hold, a click or a key press shows the app's page at once, a click on one of
+ *      the capture's links loads that link's page, and a scroll keeps the hold, and the app's page
+ *      keeps the visitor's place.
+ *  Checks 8 to 10 are left out when HOLD_CAP_MS is 0, which turns the hold off.
  *
  * Usage: `pnpm build:web`, `PRERENDER_SAMPLE=1 node scripts/prerender.mjs`, then
  *        `pnpm check:prerender-handoff [--dir apps/web/dist]`
@@ -69,6 +89,16 @@ const APP_TIMEOUT_MS = 15000;
 const PAINT_TIMEOUT_MS = 5000;
 /** Pages checked at once, each in a browser context of its own. */
 const CONCURRENCY = 4;
+/** How long checks 8 holds back the data a page waits for (see the header). */
+const DATA_HOLD_MS = 2000;
+/** How soon after its data arrives a held page's app must show (check 8). */
+const DATA_SLACK_MS = 1000;
+/** How long checks 10 hold back the home page's featured cards, so the hold outlasts the press. */
+const PRESS_HOLD_MS = 6000;
+/** How soon after a press during the hold the app's page must show (check 10). */
+const PRESS_SLACK_MS = 500;
+/** How soon after the hold's cap the app's page must show (check 9). */
+const CAP_SLACK_MS = 1500;
 /** index.html's inline script, which the fourth check takes out of the page. */
 const INLINE_SCRIPT = /<script>\s*\(function \(\) \{[\s\S]*?data-prerender-route[\s\S]*?<\/script>/;
 /**
@@ -130,19 +160,68 @@ function startServer(dist) {
  */
 function sampleFrames() {
   const frames = [];
-  window.__handoff = {frames};
+  window.__handoff = {frames, pressedAt: null};
+  // Room for every request a page makes, so the held data's entry is there to read.
+  performance.setResourceTimingBufferSize(1000);
+  for (const type of ['click', 'keydown']) {
+    window.addEventListener(type, () => (window.__handoff.pressedAt ??= performance.now()), {
+      capture: true,
+    });
+  }
   const fromReact = (node) => Object.keys(node).some((key) => key.startsWith('__reactFiber$'));
+  const loaded = (img) => img.complete && img.naturalWidth > 0;
+  const onScreen = (img) => {
+    const box = img.getBoundingClientRect();
+    const across = box.right > 0 && box.left < window.innerWidth;
+    return box.width > 0 && across && box.bottom > 0 && box.top < window.innerHeight;
+  };
+  const cardArt = (src) => new URL(src).pathname.startsWith('/card-images/');
+  // The images the captured page showed on screen, as of its last frame. The app's first frame
+  // must show all of them, at full opacity, and every later frame all of their card art:
+  // anything less blinks. Other images may change later: the hero logo swaps to an animated copy.
+  let shownImages = [];
+  let appFrames = 0;
+  // A frame of the captured page notes the images it shows on screen; a frame of the app's page
+  // counts those it leaves out or shows faded.
+  const unshownIn = (root, app) => {
+    const images = [...root.querySelectorAll('img')];
+    if (!app) {
+      shownImages = images
+        .filter((img) => loaded(img) && onScreen(img))
+        .map((img) => img.currentSrc);
+      return 0;
+    }
+    const due = appFrames++ > 0 ? shownImages.filter(cardArt) : shownImages;
+    const showing = new Set(
+      images
+        .filter((img) => loaded(img) && getComputedStyle(img).opacity === '1')
+        .map((img) => img.currentSrc),
+    );
+    return due.filter((src) => !showing.has(src)).length;
+  };
   const sample = () => {
     const root = document.getElementById('root');
     if (root) {
       const style = getComputedStyle(root);
       const children = [...root.children];
+      const busy = root.querySelector('[aria-busy="true"]');
+      const app = children.some(fromReact);
       frames.push({
+        // When the frame was sampled, not its rAF timestamp: input handled in the frame, before
+        // its callbacks run, comes after that timestamp.
+        time: performance.now(),
         shown: style.display !== 'none' && style.visibility === 'visible' && style.opacity === '1',
         approved: root.hasAttribute('data-ready'),
+        // main.tsx takes the mark off as it lets go of a held page.
+        marked: root.hasAttribute('data-prerender-route'),
         captured: children.some((node) => !fromReact(node)),
-        app: children.some(fromReact),
+        app,
         layout: root.getAttribute('data-layout'),
+        // The captured page's on-screen images that the app's page leaves out or shows faded.
+        unshown: unshownIn(root, app),
+        busy: busy && (busy.getAttribute('aria-label') ?? busy.tagName.toLowerCase()),
+        empty: children.length === 0,
+        scrollY: window.scrollY,
       });
     }
     requestAnimationFrame(sample);
@@ -151,14 +230,42 @@ function sampleFrames() {
 }
 
 /**
- * What a page shows once it has settled: its frames, whether anything painted, #root, whether
- * the phone capture's template is still in the page, and how wide the page is.
+ * Runs in a page before any of its own scripts: takes view transitions away, as in a browser
+ * without them (Firefox before 144, Safari before 18), so main.tsx renders the app straight over
+ * the captured page.
  */
-function readPage() {
+function withoutViewTransitions() {
+  delete window.Document.prototype.startViewTransition;
+}
+
+/**
+ * What a page shows once it has settled: its frames, whether anything painted, #root, whether
+ * the phone capture's template is still in the page, and how wide the page is. For the hold
+ * checks, also when the visitor first pressed, when the last of the held files (those whose
+ * path `match` matches, from heldPattern) arrived, and when the page first asked for each file
+ * `wants` and `avoids` name.
+ */
+function readPage({match, wants = [], avoids = []}) {
   const root = document.getElementById('root');
   const preloads = document.querySelectorAll('link[rel~="preload"][as="image"]');
+  const resources = performance.getEntriesByType('resource');
+  const requestsFor = (name) =>
+    resources.filter((entry) => new URL(entry.name).pathname.endsWith(`/${name}`));
+  const firstRequest = (name) => {
+    const starts = requestsFor(name).map((entry) => entry.startTime);
+    return {file: name, at: starts.length > 0 ? Math.min(...starts) : null};
+  };
+  const held = match
+    ? resources.filter((entry) => new RegExp(match).test(new URL(entry.name).pathname))
+    : [];
   return {
     frames: window.__handoff.frames,
+    path: window.location.pathname,
+    pressedAt: window.__handoff.pressedAt,
+    heldArrivedAt: held.length > 0 ? Math.max(...held.map((entry) => entry.responseEnd)) : null,
+    wanted: wants.map(firstRequest),
+    avoided: avoids.map(firstRequest),
+    transitions: 'startViewTransition' in document,
     painted: performance.getEntriesByName('first-contentful-paint').length > 0,
     marked: root.hasAttribute('data-prerender-route'),
     sortValues: [...root.querySelectorAll('select')].map((select) => select.value),
@@ -224,52 +331,113 @@ async function withoutInlineScript(route) {
   await route.fulfill({response, body: (await response.text()).replace(INLINE_SCRIPT, '')});
 }
 
+/** A route handler that answers 404, for a file the deploy lacks (check 8). */
+async function answerMissing(route) {
+  await route.fulfill({status: 404, body: 'Not found'}).catch(() => {});
+}
+
+/** A route handler that answers `ms` late, as a slow network would (checks 8 to 10). */
+function holdBack(ms) {
+  return async (route) => {
+    await new Promise((done) => setTimeout(done, ms));
+    // The check may have closed the page by then.
+    await route.continue().catch(() => {});
+  };
+}
+
 /**
  * Wait, once a page has loaded, for what its check reads: with the app's code held,
- * SETTLE_FRAMES for a late paint and then, when `paints`, the page's first contentful paint;
- * with it running, the app's own page and then `waitFor` in it, if given.
+ * SETTLE_FRAMES for a late paint; with it running, the app's own page, then `waitFor` in it, if
+ * given, and SETTLE_FRAMES more. `paints` then waits for the page's first contentful paint too,
+ * which can come after `load` and those frames.
  */
 async function settle(page, {app, waitFor, paints}) {
-  if (!app) {
-    await page.evaluate(waitFrames, SETTLE_FRAMES);
-    if (paints) await waitForPaint(page);
-    return;
+  if (app) {
+    await waitForApp(page);
+    if (waitFor) await page.waitForSelector(waitFor, {state: 'attached', timeout: APP_TIMEOUT_MS});
   }
-  await waitForApp(page);
-  if (waitFor) await page.waitForSelector(waitFor, {state: 'attached', timeout: APP_TIMEOUT_MS});
+  await page.evaluate(waitFrames, SETTLE_FRAMES);
+  if (paints) await waitForPaint(page);
 }
 
 /**
  * Open `path` on `device` in a fresh context (at `viewport`, if given) and return what it
  * served, fetched and showed. `app` false holds the app's code, so only the captured page and
- * index.html's own script act, and `paints` then waits for its first contentful paint too (for
- * a check that expects one); true waits for the app's own page to show, and then for `waitFor`
- * in it, if given.
+ * index.html's own script act; true waits for the app's own page to show, and then for
+ * `waitFor` in it, if given. `paints` waits for its first contentful paint as well (for a check
+ * that expects one). `hold` sends the file it names (`file`, or each its `match` names) `ms`
+ * late, and with `arrive` watches the page until one has arrived, so a page that didn't wait for
+ * it shows what it did meanwhile; its `wants` and `avoids` name files whose first request the
+ * visit reports, and its `missing` a file answered 404 at once, as a deploy without it would.
+ * `transitions` false takes view transitions away, as in a browser without them. `act` acts on
+ * the page once it has loaded, as a visitor would.
  */
-async function visit(
-  browser,
-  base,
-  {device, viewport, path, app, strip = false, waitFor, paints = false},
-) {
+async function visit(browser, base, options) {
+  const {device, viewport, path, app, waitFor, paints, hold, act} = options;
   const screen = viewport ? {...DEVICES[device], viewport} : DEVICES[device];
   const context = await browser.newContext({...screen, serviceWorkers: 'block'});
   try {
     const page = await context.newPage();
-    const images = [];
-    page.on('request', (request) => {
-      if (request.resourceType() === 'image') images.push(new URL(request.url()).pathname);
-    });
-    await page.addInitScript(sampleFrames);
-    if (!app) await page.route('**/assets/*.js', (route) => route.abort());
-    if (strip) await page.route(`${base}${path}`, withoutInlineScript);
+    const requests = recordRequests(page);
+    await prepare(page, base, options);
+    const arrived = arrival(page, hold);
     const response = await page.goto(`${base}${path}`, {waitUntil: 'load'});
     const served = await response.text();
+    await act?.(page);
+    await arrived;
     await settle(page, {app, waitFor, paints});
-    const seen = await page.evaluate(readPage);
-    return {served, servedRoute: readPrerenderRoute(served), images, ...seen};
+    const seen = await page.evaluate(readPage, hold ? {...hold, match: heldPattern(hold)} : {});
+    return {served, servedRoute: readPrerenderRoute(served), ...requests, ...seen};
   } finally {
     await context.close();
   }
+}
+
+/** The images and pages `page` requests from now on, by path. */
+function recordRequests(page) {
+  const requests = {images: [], documents: []};
+  page.on('request', (request) => {
+    const {pathname} = new URL(request.url());
+    if (request.resourceType() === 'image') requests.images.push(pathname);
+    if (request.isNavigationRequest()) requests.documents.push(pathname);
+  });
+  return requests;
+}
+
+/** Sets a visit's page up before it loads: samples its frames, and holds back what `visit` asks. */
+async function prepare(page, base, {path, app, strip, hold, transitions = true}) {
+  await page.addInitScript(sampleFrames);
+  if (!transitions) await page.addInitScript(withoutViewTransitions);
+  if (!app) await page.route('**/assets/*.js', (route) => route.abort());
+  if (strip) await page.route(`${base}${path}`, withoutInlineScript);
+  if (hold) await page.route(heldBy(hold), holdBack(hold.ms));
+  if (hold?.missing) await page.route(heldBy({file: hold.missing}), answerMissing);
+}
+
+/** `text` as a RegExp's source that matches it as written. */
+const literally = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * The paths of the files `hold` holds back, as a RegExp's source: its `match`, for a file the
+ * page names at random (the vote page's first pair), or else its `file`.
+ */
+const heldPattern = ({file, match}) => match ?? `/${literally(file)}$`;
+
+/** Does a URL name one of the files `hold` holds back? */
+function heldBy(hold) {
+  const pattern = new RegExp(heldPattern(hold));
+  return (url) => pattern.test(new URL(url).pathname);
+}
+
+/** Settles once a file `hold` holds back has arrived, if it asks to be watched (`arrive`). */
+function arrival(page, hold) {
+  if (!hold?.arrive) return null;
+  const held = heldBy(hold);
+  return page
+    .waitForResponse((answer) => held(answer.url()), {
+      timeout: hold.ms + APP_TIMEOUT_MS,
+    })
+    .catch(() => null);
 }
 
 /**
@@ -384,6 +552,161 @@ function fetchesImagesOf(layout) {
   };
 }
 
+/** A time in a page, from the start of its visit. */
+const ms = (time) => `${Math.round(time)} ms`;
+
+/** The first frame that shows the app's own page. */
+const firstAppFrame = (seen) => seen.frames.find((frame) => frame.app && frame.shown);
+
+/**
+ * Check 8: the capture stays until the data arrives, then the app's page replaces it whole,
+ * within a frame of letting go: no frame shows a loading state or an empty #root. A capture that
+ * is its page's loading view (`loadingCapture`) must show that view instead.
+ */
+function handsOverWhole(seen, {loadingCapture = false} = {}) {
+  if (seen.heldArrivedAt === null) return 'never fetched the data it was held for';
+  const asked = asksBeforeRendering(seen);
+  if (asked) return asked;
+  const shown = seen.frames.filter((frame) => frame.shown);
+  const loading = loadingStateIn(shown, loadingCapture);
+  if (loading) return loading;
+  if (shown.some((frame) => frame.empty)) return 'a frame showed #root empty';
+  return showsAppOnArrival(seen);
+}
+
+/**
+ * Check 8: a loading state in the frames shown, where only a capture that is its page's loading
+ * view (`loadingCapture`, the vote page's) may show one, and must.
+ */
+function loadingStateIn(shown, loadingCapture) {
+  if (!loadingCapture) return loadingFrameIn(shown);
+  const capturedLoading = shown.some((frame) => frame.captured && frame.busy);
+  if (!capturedLoading) return "the capture showed a page of its own, not the page's loading view";
+  return loadingFrameIn(shown.filter((frame) => frame.app));
+}
+
+/** Check 8: the first of `frames` to show a loading state, as a failure. */
+function loadingFrameIn(frames) {
+  const loading = frames.find((frame) => frame.busy);
+  return loading ? `a frame showed a loading state ("${loading.busy}")` : null;
+}
+
+/**
+ * Check 8: main.tsx's route readiness asked for every file the page waits for (`wanted`) before
+ * the app rendered, and for none the page defers (`avoided`). The hold lets go only once the
+ * held file has arrived, so a request after that came from the app's page, and one before it
+ * from the hold.
+ */
+function asksBeforeRendering(seen) {
+  const late = seen.wanted.find(({at}) => at === null || at > seen.heldArrivedAt);
+  if (late?.at === null) return `never asked for ${late.file}`;
+  if (late) {
+    return `asked for ${late.file} at ${ms(late.at)}, after the held data arrived at ${ms(seen.heldArrivedAt)}: the app's page asked, not the hold`;
+  }
+  const early = seen.avoided.find(({at}) => at !== null && at < seen.heldArrivedAt);
+  return early
+    ? `asked for ${early.file} at ${ms(early.at)}, before the app rendered, though the page defers it`
+    : null;
+}
+
+/**
+ * Check 8, past its loading states: the app's page shows once the data arrives, with the
+ * capture's images, and within a frame of letting go. Without view transitions Chromium draws a
+ * new `<img>` blank for a frame, even art on screen, so there the images go unchecked.
+ */
+function showsAppOnArrival(seen) {
+  const app = firstAppFrame(seen);
+  if (app.time < seen.heldArrivedAt) {
+    return `the app's page showed at ${ms(app.time)}, before its data arrived at ${ms(seen.heldArrivedAt)}`;
+  }
+  if (app.time > seen.heldArrivedAt + DATA_SLACK_MS) {
+    return `the app's page showed ${ms(app.time - seen.heldArrivedAt)} after its data arrived`;
+  }
+  const blink = seen.transitions && seen.frames.find((frame) => frame.unshown > 0);
+  if (blink) {
+    return `a frame left out or faded ${blink.unshown} of the images the capture showed`;
+  }
+  // Let go but not yet rendered: main.tsx took the mark off, and React hasn't committed.
+  const waiting = seen.frames.filter((frame) => !frame.marked && !frame.app).length;
+  return waiting > 1 ? `the app's page showed ${waiting} frames after the hold let go` : null;
+}
+
+/** Check 9: with the data held past the cap, the app's page shows at the cap, loading. */
+function letsGoAtCap(cap) {
+  return (seen) => {
+    const app = firstAppFrame(seen);
+    if (app.time < cap)
+      return `the app's page showed at ${ms(app.time)}, before the ${ms(cap)} cap`;
+    if (app.time > cap + CAP_SLACK_MS) {
+      return `the app's page showed at ${ms(app.time)}, ${ms(app.time - cap)} after the cap`;
+    }
+    return app.busy ? null : "the app's first frame showed no loading state, its data still held";
+  };
+}
+
+/** Check 10: a click or a key press during the hold shows the app's page at once. */
+function showsAppOnPress(seen) {
+  if (seen.pressedAt === null) return 'the press never reached the page';
+  const app = firstAppFrame(seen);
+  if (app.time < seen.pressedAt) {
+    return `the app's page showed at ${ms(app.time)}, before the press at ${ms(seen.pressedAt)}: the hold was over`;
+  }
+  const after = app.time - seen.pressedAt;
+  return after > PRESS_SLACK_MS ? `the app's page showed ${ms(after)} after the press` : null;
+}
+
+/** Check 10: a click on one of the capture's links loads that link's page. */
+function loadsLinkedPage(href) {
+  return (seen) => {
+    if (!seen.documents.includes(href)) return `never loaded ${href} as a page of its own`;
+    return seen.path === href ? null : `ended on ${seen.path}, not ${href}`;
+  };
+}
+
+/**
+ * Check 10: a scroll during the hold keeps it, so the handoff is as check 8's, and the app's page
+ * keeps the visitor's place.
+ */
+function keepsHoldThroughScroll(seen) {
+  const app = firstAppFrame(seen);
+  const held = seen.frames.filter((frame) => frame.time < app.time);
+  if (!held.some((frame) => frame.scrollY > 0)) return 'the page never scrolled during the hold';
+  const top = seen.frames.find((frame) => frame.app && frame.scrollY === 0);
+  if (top)
+    return `the app's page went back to the top at ${ms(top.time)}, losing the visitor's place`;
+  return handsOverWhole(seen);
+}
+
+/**
+ * Swipes up from the middle of a phone's screen, over a card link on the home page, as touch
+ * events do: a page scrolls, and nothing is clicked.
+ */
+async function swipe(page) {
+  const cdp = await page.context().newCDPSession(page);
+  const touch = (type, y) =>
+    cdp.send('Input.dispatchTouchEvent', {type, touchPoints: y === null ? [] : [{x: 200, y}]});
+  await touch('touchStart', 600);
+  for (let step = 1; step <= 10; step++) await touch('touchMove', 600 - step * 40);
+  await touch('touchEnd', null);
+}
+
+/** Taps on a phone, clicks elsewhere. */
+const press = (device, locator) => (device === 'phone' ? locator.tap() : locator.click());
+
+/**
+ * What a visitor does during the hold in check 10, on `device`: click the page's heading, press
+ * Tab, follow its first card link, or scroll it (a swipe on a phone, the mouse wheel elsewhere).
+ */
+const ACTIONS = {
+  click: (device) => (page) => press(device, page.locator('#root h1').first()),
+  key: () => (page) => page.keyboard.press('Tab'),
+  link: (device, href) => async (page) => {
+    const link = page.locator(`#root a[href="${href}"]:visible`).first();
+    await Promise.all([page.waitForURL(`**${href}`), press(device, link)]);
+  },
+  scroll: (device) => (page) => (device === 'phone' ? swipe(page) : page.mouse.wheel(0, 600)),
+};
+
 /**
  * The routes the checks visit, read from the crawl: its first card page with a synergy file
  * (precompute writes none for a card without synergies, and the compare links need a partner)
@@ -431,8 +754,44 @@ export function routesOf(dist) {
       `/playstyles/${playstyle}`,
       `/card/${cardId}/${slug}`,
       '/about',
+      '/vote',
     ],
+    // Each page held for the data it waits for (check 8), with the other files it asks for
+    // before the app renders (`wants`) and those it leaves to the app (`avoids`): the home page
+    // doesn't wait for the card list (#641) unless its featured file can't be used (`missing`),
+    // when it shows the featured cards from that list, and a playstyle's page waits for its card
+    // ids too.
+    // The vote page's first pair is drawn at random, so the synergy files it asks for are held
+    // by pattern (`match`), and its capture is its loading view (`loadingCapture`): the crawl
+    // draws no pair.
+    held: [
+      {path: '/', file: 'featuredCards.json', avoids: ['allCards.json']},
+      {path: '/', missing: 'featuredCards.json', file: 'allCards.json'},
+      {path: '/browse', file: 'allCards.json'},
+      {
+        path: `/card/${cardId}/${slug}`,
+        file: 'allCards.json',
+        wants: [`synergies/${cardId}.json`],
+      },
+      {path: `/playstyles/${playstyle}`, file: '_playstyles.json', wants: ['allCards.json']},
+      {
+        path: '/vote',
+        file: 'synergies/<card>.json',
+        match: '/synergies/\\d+\\.json$',
+        wants: ['allCards.json', '_pairs_index.json'],
+        loadingCapture: true,
+      },
+    ],
+    homeLink: homeCardLink(dist),
   };
+}
+
+/** The home page's first card link, which check 10 follows during the hold. */
+function homeCardLink(dist) {
+  const home = join(dist, 'index.html');
+  const link = /<a\b[^>]*\bhref="(\/card\/[^"]+)"/.exec(readFileSync(home, 'utf8'));
+  if (!link) throw new Error(`${home} has no card link for check 10 to follow during the hold`);
+  return link[1];
 }
 
 /**
@@ -539,9 +898,80 @@ function breakpointChecks(path) {
   }));
 }
 
+/**
+ * Check 8's runs of each page: in Chromium as it is, and with view transitions taken away, as
+ * in Firefox before 144 and Safari before 18.
+ */
+const HANDOFFS = [
+  {transitions: true, label: ''},
+  {transitions: false, label: ', no view transitions'},
+];
+
+/** Check 8's name for the file a page is held for, after the one it finds missing, if any. */
+const heldFiles = (file, missing) => (missing ? `${missing} missing, ${file}` : file);
+
+/** Checks 8 to 10 on `device` (#915): the hold, its cap, and what a visitor does during it. */
+function holdChecks(device, {held, homeLink}, cap) {
+  const whole = held.flatMap(({path, file, match, wants, avoids, missing, loadingCapture}) =>
+    HANDOFFS.map(({transitions, label}) => ({
+      name: `8. ${path} (${device}${label}), ${heldFiles(file, missing)} held ${DATA_HOLD_MS} ms, hands over whole`,
+      run: async (browser, base) =>
+        handsOverWhole(
+          await visit(browser, base, {
+            device,
+            path,
+            app: true,
+            transitions,
+            hold: {file, match, ms: DATA_HOLD_MS, arrive: true, wants, avoids, missing},
+          }),
+          {loadingCapture},
+        ),
+    })),
+  );
+  const capped = {
+    name: `9. /browse (${device}), allCards.json held past the cap, lets go at the cap`,
+    run: async (browser, base) => {
+      const hold = {file: 'allCards.json', ms: cap + CAP_SLACK_MS + 2000};
+      return letsGoAtCap(cap)(
+        await visit(browser, base, {device, path: '/browse', app: true, hold}),
+      );
+    },
+  };
+  const during = (action, check, watch) => async (browser, base) => {
+    const hold = {file: 'featuredCards.json', ms: PRESS_HOLD_MS, ...watch};
+    return check(await visit(browser, base, {device, path: '/', app: true, hold, act: action}));
+  };
+  const pressed = [
+    {name: 'a click', run: during(ACTIONS.click(device), showsAppOnPress)},
+    {name: 'a key press', run: during(ACTIONS.key(), showsAppOnPress)},
+    {
+      name: 'a click on a card link',
+      run: during(ACTIONS.link(device, homeLink), loadsLinkedPage(homeLink)),
+    },
+    // The hold outlasts a scroll, so this visit watches until the held data arrives, as check 8's.
+    {
+      name: 'a scroll',
+      run: during(ACTIONS.scroll(device), keepsHoldThroughScroll, {arrive: true}),
+    },
+  ].map(({name, run}) => ({name: `10. / (${device}), ${name} during the hold`, run}));
+  return [...whole, capped, ...pressed];
+}
+
+/**
+ * main.tsx's longest hold, HOLD_CAP_MS in apps/web/src/shared/lib/prerenderHold.ts; 0 turns the
+ * hold off.
+ */
+function readHoldCap() {
+  const source = readFileSync(resolve(ROOT, 'apps/web/src/shared/lib/prerenderHold.ts'), 'utf8');
+  const cap = /export const HOLD_CAP_MS = (\d+);/.exec(source);
+  if (!cap) throw new Error('HOLD_CAP_MS not found in prerenderHold.ts');
+  return Number(cap[1]);
+}
+
 /** Every check to run, as {name, run(browser, base) => failure or null}. */
-function planChecks(dist) {
-  const {withoutCapture, withCapture, eachCapture} = routesOf(dist);
+function planChecks(dist, cap) {
+  const routes = routesOf(dist);
+  const {withoutCapture, withCapture, eachCapture} = routes;
   const perDevice = Object.keys(DEVICES).flatMap((device) => [
     controlCheck(device, withoutCapture[0]),
     ...withoutCaptureChecks(device, withoutCapture),
@@ -549,6 +979,7 @@ function planChecks(dist) {
     sortOptionCheck(device),
     ...fallbackChecks(device, ['/browse', withoutCapture[0]]),
     ...screenChecks(device, eachCapture),
+    ...(cap > 0 ? holdChecks(device, routes, cap) : []),
   ]);
   return [...perDevice, ...breakpointChecks('/browse')];
 }
@@ -591,10 +1022,13 @@ async function main() {
     console.error(`✖ ${problem}`);
     process.exit(1);
   }
+  const cap = readHoldCap();
+  if (cap === 0)
+    console.log('HOLD_CAP_MS is 0, which turns the hold off: checks 8 to 10 left out.');
   const server = await startServer(dist);
   const browser = await chromium.launch();
   const results = await runChecks(
-    planChecks(dist),
+    planChecks(dist, cap),
     browser,
     `http://localhost:${server.address().port}`,
   );

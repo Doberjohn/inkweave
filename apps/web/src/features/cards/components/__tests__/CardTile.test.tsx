@@ -2,6 +2,8 @@ import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {CardTile} from '../CardTile';
 import {createCard} from '../../../../shared/test-utils';
+import {_resetPrerenderedArt} from '../../../../shared/lib/prerenderedArt';
+import {showPrerenderedArt, stubLoadedArt} from '../../../../shared/test-utils/loadedArt';
 
 describe('CardTile', () => {
   const mockCard = createCard({
@@ -30,6 +32,25 @@ describe('CardTile', () => {
     const img = container.querySelector('img');
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute('src', 'https://example.com/elsa.avif');
+  });
+
+  it.each([
+    ['the browser already has', stubLoadedArt, () => vi.restoreAllMocks()],
+    [
+      'the prerendered page showed',
+      () => showPrerenderedArt('https://example.com/elsa.avif'),
+      _resetPrerenderedArt,
+    ],
+  ])('shows art %s at once, without fading it in (#915)', (_, arrange, restore) => {
+    arrange();
+    const card = createCard({...mockCard, imageUrl: 'https://example.com/elsa.avif'});
+    const {container} = render(<CardTile {...defaultProps} card={card} />);
+    restore();
+
+    const img = container.querySelector('img');
+    expect(img?.style.opacity).toBe('1');
+    expect(img?.style.transition).toBe('');
+    expect(container.querySelector('.ink-card-placeholder')).toBeNull();
   });
 
   it('should use small image URL when useSmallImage is true', () => {

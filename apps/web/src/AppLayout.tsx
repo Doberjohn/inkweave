@@ -18,7 +18,7 @@ import {SessionProvider} from './shared/contexts/SessionContext';
 import {CardModalProvider} from './shared/contexts/CardModalContext';
 import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
-import {useResponsive} from './shared/hooks';
+import {useResponsive, useScrollToTopOnRouteChange} from './shared/hooks';
 import {lazyWithRetry} from './shared/lib/lazyWithRetry';
 import {useSpeedInsightsRoute} from './shared/lib/speedInsightsRoute';
 
@@ -134,10 +134,7 @@ function AppContent() {
   const earlyProxyRef = useRef<HTMLInputElement>(null);
   const searchButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Scroll to top on route change
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+  useScrollToTopOnRouteChange(pathname);
 
   // The card list may wait on the homepage (#641); every other page needs it at once.
   useEffect(() => {

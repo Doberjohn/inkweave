@@ -1,7 +1,9 @@
-import {describe, it, expect, vi} from 'vitest';
+import {afterEach, describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {SynergyCard} from '../SynergyCard';
 import type {LorcanaCard} from '../../../cards';
+import {_resetPrerenderedArt} from '../../../../shared/lib/prerenderedArt';
+import {showPrerenderedArt, stubLoadedArt} from '../../../../shared/test-utils/loadedArt';
 
 vi.mock('../../../shared/components', () => ({
   CardLightbox: () => null,
@@ -31,6 +33,11 @@ const mockCard: LorcanaCard = {
 } as LorcanaCard;
 
 describe('SynergyCard', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    _resetPrerenderedArt();
+  });
+
   it('should render card image with descriptive alt text', () => {
     render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
     const img = screen.getByRole('img');
@@ -41,6 +48,36 @@ describe('SynergyCard', () => {
     render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute('src', 'https://example.com/elsa-sm.avif');
+  });
+
+  it('shows art the browser already has at once, without fading it in (#915)', () => {
+    stubLoadedArt();
+    const {container} = render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
+
+    const img = screen.getByRole('img');
+    expect(img.style.opacity).toBe('1');
+    expect(img.style.transition).toBe('');
+    expect(container.querySelector('.ink-card-placeholder')).toBeNull();
+  });
+
+  it('shows art the prerendered page showed at once, without fading it in (#915)', () => {
+    showPrerenderedArt('https://example.com/elsa-sm.avif');
+    const {container} = render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
+
+    const img = screen.getByRole('img');
+    expect(img.style.opacity).toBe('1');
+    expect(img.style.transition).toBe('');
+    expect(container.querySelector('.ink-card-placeholder')).toBeNull();
+  });
+
+  // A lazy one would wait to be laid out on screen, which the handoff's view transition holds off.
+  it('loads art the prerendered page showed at once (#915)', () => {
+    showPrerenderedArt('https://example.com/elsa-sm.avif');
+    render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
+
+    const img = screen.getByRole('img');
+    expect(img).toHaveAttribute('loading', 'eager');
+    expect(img).toHaveAttribute('decoding', 'sync');
   });
 
   it('should include score in strength badge', () => {

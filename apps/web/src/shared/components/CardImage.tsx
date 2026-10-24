@@ -1,6 +1,7 @@
 import {useState} from 'react';
 import type {Ink} from '../../features/cards';
-import {EASING, INK_COLORS, FONT_SIZES, RADIUS} from '../constants';
+import {INK_COLORS, FONT_SIZES, RADIUS} from '../constants';
+import {useArtLoad, type ArtProps} from '../hooks/useArtLoad';
 import {InkCardPlaceholder} from './InkCardPlaceholder';
 
 interface CardImageProps {
@@ -45,11 +46,13 @@ interface CardImgProps {
   lazy: boolean;
   priority: boolean | undefined;
   visible: boolean;
-  onLoad: () => void;
+  /** The fade in, or none for art the browser already had. */
+  transition: string | undefined;
+  artProps: ArtProps;
   onError: () => void;
 }
 
-function CardImg({src, alt, lazy, priority, visible, onLoad, onError}: CardImgProps) {
+function CardImg({src, alt, lazy, priority, visible, transition, artProps, onError}: CardImgProps) {
   return (
     <img
       {...(src ? {src} : {})}
@@ -60,7 +63,7 @@ function CardImg({src, alt, lazy, priority, visible, onLoad, onError}: CardImgPr
       // image into the high-priority fetch queue ahead of other resources.
       // React 19 lowercases the attribute; the DOM property name is fetchPriority.
       fetchPriority={priority ? 'high' : undefined}
-      onLoad={onLoad}
+      {...artProps}
       onError={onError}
       style={{
         width: '100%',
@@ -68,7 +71,7 @@ function CardImg({src, alt, lazy, priority, visible, onLoad, onError}: CardImgPr
         objectFit: 'cover',
         display: 'block',
         opacity: visible ? 1 : 0,
-        transition: `opacity 0.2s ${EASING.smooth}`,
+        transition,
       }}
     />
   );
@@ -96,7 +99,7 @@ export function CardImage({
   style: styleProp,
 }: CardImageProps) {
   const [imgError, setImgError] = useState(false);
-  const [imgLoaded, setImgLoaded] = useState(false);
+  const {loaded: imgLoaded, transition, artProps} = useArtLoad(src);
   const showImg = Boolean(src) && !imgError;
 
   return (
@@ -117,7 +120,8 @@ export function CardImage({
         lazy={lazy}
         priority={priority}
         visible={showImg && imgLoaded}
-        onLoad={() => setImgLoaded(true)}
+        transition={transition}
+        artProps={artProps}
         onError={() => setImgError(true)}
       />
       {!showImg && <CostFallback inkColor={inkColor} cost={cost} height={height} />}
