@@ -1,6 +1,8 @@
-import {describe, expect, it, vi} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {matchRoutes, type RouteObject} from 'react-router-dom';
+import {_resetPrerenderedArt, prerenderedArtShown} from '../prerenderedArt';
 import {readyWhen, whenRouteReady} from '../routeReadiness';
+import {showPrerenderedArt} from '../../test-utils/loadedArt';
 import prerenderedRoutes from '../../../prerenderedRoutes.json';
 
 /** A promise and the function that settles it, so a test can hold a ready open. */
@@ -40,7 +42,7 @@ describe('whenRouteReady', () => {
     await expect(whenRouteReady(routes, '/no-such-page')).resolves.toBeUndefined();
   });
 
-  // A failure first still leaves the page to show whole, with its error.
+  // A failure first doesn't end the hold while the rest are still coming.
   it('settles once each route has what it waits for or has failed to get it', async () => {
     const page = held();
     const routes: RouteObject[] = [
@@ -99,5 +101,21 @@ describe("router.tsx's readiness rules", () => {
     });
 
     expect(without).toEqual([]);
+  });
+});
+
+describe("router.tsx and the prerendered page's art", () => {
+  afterEach(() => _resetPrerenderedArt());
+
+  // A page that shows no art looks none up, so only the router can tell that the visitor left.
+  it('forgets the art once the visitor leaves its page, through pages without art too', async () => {
+    const {router} = await import('../../../router');
+    const page = router.state.location.pathname;
+    showPrerenderedArt('/card-images/1936.avif');
+
+    await router.navigate('/about');
+    await router.navigate(page);
+
+    expect(prerenderedArtShown('/card-images/1936.avif')).toBe(false);
   });
 });

@@ -331,6 +331,11 @@ async function withoutInlineScript(route) {
   await route.fulfill({response, body: (await response.text()).replace(INLINE_SCRIPT, '')});
 }
 
+/** A route handler that answers 404, for a file the deploy lacks (check 8). */
+async function answerMissing(route) {
+  await route.fulfill({status: 404, body: 'Not found'}).catch(() => {});
+}
+
 /** A route handler that answers `ms` late, as a slow network would (checks 8 to 10). */
 function holdBack(ms) {
   return async (route) => {
@@ -363,8 +368,9 @@ async function settle(page, {app, waitFor, paints}) {
  * that expects one). `hold` sends the file it names (`file`, or each its `match` names) `ms`
  * late, and with `arrive` watches the page until one has arrived, so a page that didn't wait for
  * it shows what it did meanwhile; its `wants` and `avoids` name files whose first request the
- * visit reports. `transitions` false takes view transitions away, as in a browser without them.
- * `act` acts on the page once it has loaded, as a visitor would.
+ * visit reports, and its `missing` a file answered 404 at once, as a deploy without it would.
+ * `transitions` false takes view transitions away, as in a browser without them. `act` acts on
+ * the page once it has loaded, as a visitor would.
  */
 async function visit(browser, base, options) {
   const {device, viewport, path, app, waitFor, paints, hold, act} = options;
@@ -405,6 +411,7 @@ async function prepare(page, base, {path, app, strip, hold, transitions = true})
   if (!app) await page.route('**/assets/*.js', (route) => route.abort());
   if (strip) await page.route(`${base}${path}`, withoutInlineScript);
   if (hold) await page.route(heldBy(hold), holdBack(hold.ms));
+  if (hold?.missing) await page.route(heldBy({file: hold.missing}), answerMissing);
 }
 
 /** `text` as a RegExp's source that matches it as written. */
@@ -751,12 +758,15 @@ export function routesOf(dist) {
     ],
     // Each page held for the data it waits for (check 8), with the other files it asks for
     // before the app renders (`wants`) and those it leaves to the app (`avoids`): the home page
-    // doesn't wait for the card list (#641), and a playstyle's page waits for its card ids too.
+    // doesn't wait for the card list (#641) unless its featured file can't be used (`missing`),
+    // when it shows the featured cards from that list, and a playstyle's page waits for its card
+    // ids too.
     // The vote page's first pair is drawn at random, so the synergy files it asks for are held
     // by pattern (`match`), and its capture is its loading view (`loadingCapture`): the crawl
     // draws no pair.
     held: [
       {path: '/', file: 'featuredCards.json', avoids: ['allCards.json']},
+      {path: '/', missing: 'featuredCards.json', file: 'allCards.json'},
       {path: '/browse', file: 'allCards.json'},
       {
         path: `/card/${cardId}/${slug}`,
@@ -897,11 +907,14 @@ const HANDOFFS = [
   {transitions: false, label: ', no view transitions'},
 ];
 
+/** Check 8's name for the file a page is held for, after the one it finds missing, if any. */
+const heldFiles = (file, missing) => (missing ? `${missing} missing, ${file}` : file);
+
 /** Checks 8 to 10 on `device` (#915): the hold, its cap, and what a visitor does during it. */
 function holdChecks(device, {held, homeLink}, cap) {
-  const whole = held.flatMap(({path, file, match, wants, avoids, loadingCapture}) =>
+  const whole = held.flatMap(({path, file, match, wants, avoids, missing, loadingCapture}) =>
     HANDOFFS.map(({transitions, label}) => ({
-      name: `8. ${path} (${device}${label}), ${file} held ${DATA_HOLD_MS} ms, hands over whole`,
+      name: `8. ${path} (${device}${label}), ${heldFiles(file, missing)} held ${DATA_HOLD_MS} ms, hands over whole`,
       run: async (browser, base) =>
         handsOverWhole(
           await visit(browser, base, {
@@ -909,7 +922,7 @@ function holdChecks(device, {held, homeLink}, cap) {
             path,
             app: true,
             transitions,
-            hold: {file, match, ms: DATA_HOLD_MS, arrive: true, wants, avoids},
+            hold: {file, match, ms: DATA_HOLD_MS, arrive: true, wants, avoids, missing},
           }),
           {loadingCapture},
         ),

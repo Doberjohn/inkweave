@@ -1,4 +1,4 @@
-import {describe, it, expect, vi} from 'vitest';
+import {afterEach, describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {SynergyCard} from '../SynergyCard';
 import type {LorcanaCard} from '../../../cards';
@@ -33,6 +33,11 @@ const mockCard: LorcanaCard = {
 } as LorcanaCard;
 
 describe('SynergyCard', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    _resetPrerenderedArt();
+  });
+
   it('should render card image with descriptive alt text', () => {
     render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
     const img = screen.getByRole('img');
@@ -48,7 +53,6 @@ describe('SynergyCard', () => {
   it('shows art the browser already has at once, without fading it in (#915)', () => {
     stubLoadedArt();
     const {container} = render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
-    vi.restoreAllMocks();
 
     const img = screen.getByRole('img');
     expect(img.style.opacity).toBe('1');
@@ -59,7 +63,6 @@ describe('SynergyCard', () => {
   it('shows art the prerendered page showed at once, without fading it in (#915)', () => {
     showPrerenderedArt('https://example.com/elsa-sm.avif');
     const {container} = render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
-    _resetPrerenderedArt();
 
     const img = screen.getByRole('img');
     expect(img.style.opacity).toBe('1');
@@ -71,7 +74,6 @@ describe('SynergyCard', () => {
   it('loads art the prerendered page showed at once (#915)', () => {
     showPrerenderedArt('https://example.com/elsa-sm.avif');
     render(<SynergyCard card={mockCard} score={7} explanation="Test synergy" />);
-    _resetPrerenderedArt();
 
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute('loading', 'eager');

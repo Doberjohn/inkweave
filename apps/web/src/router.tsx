@@ -7,11 +7,12 @@ import {HomePageSkeleton} from './pages/HomePageSkeleton';
 import {COLORS, RADIUS, SPACING} from './shared/constants';
 import {useResponsive} from './shared/hooks/useResponsive';
 import {lazyWithRetry} from './shared/lib/lazyWithRetry';
+import {forgetArtOnLeave} from './shared/lib/prerenderedArt';
 import {readyWhen} from './shared/lib/routeReadiness';
 import {withSpeedInsightsRoutes} from './shared/lib/speedInsightsRoute';
 import {SHOW_COLLECTION} from './features/collection/flag';
 import {startCardList} from './features/cards/cardListRequest';
-import {fetchFeaturedCards} from './features/cards/featured';
+import {startFeaturedCards} from './features/cards/featured';
 import {fetchCardSynergies} from './features/synergies/hooks/usePrecomputedSynergies';
 import {fetchPlaystyleCardIds} from './features/synergies/hooks/playstyleCardIds';
 import {fetchPairsIndex} from './features/voting/pairsIndexRequest';
@@ -132,7 +133,7 @@ const routes: RouteObject[] = [
     children: [
       {
         index: true,
-        handle: readyWhen(HomePage, fetchFeaturedCards),
+        handle: readyWhen(HomePage, startFeaturedCards),
         element: (
           <SuspenseWrapper fallback={<HomeFallback />}>
             <HomePage />
@@ -338,3 +339,6 @@ const routes: RouteObject[] = [
 
 // Every route carries the label Speed Insights files its visits under (#688).
 export const router = createBrowserRouter(withSpeedInsightsRoutes(routes));
+
+// Art the prerendered page showed counts as shown only until the visitor leaves it (#915).
+router.subscribe(forgetArtOnLeave);

@@ -10,8 +10,9 @@ type RouteReady = (params: Params) => Promise<unknown>;
 /**
  * A prerendered route's `handle`: what it waits for before main.tsx stops holding its page (#915),
  * the page's code plus the data it would otherwise show a skeleton for. It settles once each has
- * arrived or failed, so a request that fails first leaves the others to arrive, and the app's
- * first render shows the page whole, with its error where the failed data would be.
+ * arrived or failed, so a request that fails first doesn't end the hold while the others are
+ * still coming. A failed request is forgotten, so the page asks again as it renders: it shows its
+ * loading state meanwhile, and its error if that attempt fails too.
  */
 export function readyWhen(
   page: {preload: () => Promise<unknown>},

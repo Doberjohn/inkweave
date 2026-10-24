@@ -51,7 +51,11 @@ function cacheEmptyResult(cardId: string): PrecomputedCardData {
   return empty;
 }
 
-/** A card's synergy file, fetched once for the page. A failure is forgotten, so a retry fetches again. */
+/**
+ * A card's synergy file, fetched once for the page. A request that throws (offline, or a body
+ * that won't parse) is forgotten, so a retry fetches again. Any other answer is kept for the
+ * page, and one that isn't a synergy file (a card with none, an error status) reads as none.
+ */
 export async function fetchCardSynergies(cardId: string): Promise<PrecomputedCardData> {
   const cached = synergyFetchCache.get(cardId);
   if (cached) return cached;

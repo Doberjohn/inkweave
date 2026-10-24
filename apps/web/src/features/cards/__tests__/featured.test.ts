@@ -1,11 +1,15 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {renderHook, waitFor} from '@testing-library/react';
+import {startCardList} from '../cardListRequest';
 import {
   DEFAULT_FEATURED_IDS,
   fetchFeaturedCards,
+  startFeaturedCards,
   useFeaturedCardsFile,
   _resetFeaturedCardsCache,
 } from '../featured';
+
+vi.mock('../cardListRequest', () => ({startCardList: vi.fn()}));
 
 /** The featured-cards file as precompute writes it: raw cards in allCards.json's shape. */
 function featuredFile(ids: string[]) {
@@ -36,6 +40,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   mockFetch.mockReset();
+  vi.mocked(startCardList).mockReset();
 });
 
 describe('fetchFeaturedCards', () => {
@@ -77,6 +82,31 @@ describe('fetchFeaturedCards', () => {
     await fetchFeaturedCards();
     await expect(fetchFeaturedCards()).resolves.toBeNull();
     expect(mockFetch).toHaveBeenCalledOnce();
+  });
+});
+
+describe('startFeaturedCards', () => {
+  it("waits for the full card list when the file can't be used, since the page shows them from it", async () => {
+    mockFetch.mockResolvedValue({ok: false, status: 404});
+    let release!: () => void;
+    const list = new Promise<void>((resolve) => (release = resolve));
+    vi.mocked(startCardList).mockReturnValue(list as unknown as ReturnType<typeof startCardList>);
+    let settled = false;
+    void startFeaturedCards().then(() => (settled = true));
+
+    await vi.waitFor(() => expect(startCardList).toHaveBeenCalledOnce());
+    await new Promise((resolve) => setTimeout(resolve));
+    expect(settled).toBe(false);
+    release();
+    await vi.waitFor(() => expect(settled).toBe(true));
+  });
+
+  it('leaves the card list for later when the file has the featured cards (#641)', async () => {
+    mockFetch.mockResolvedValue(respond(featuredFile(DEFAULT_FEATURED_IDS)));
+
+    await startFeaturedCards();
+
+    expect(startCardList).not.toHaveBeenCalled();
   });
 });
 

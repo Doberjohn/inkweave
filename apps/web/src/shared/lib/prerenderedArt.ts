@@ -22,12 +22,20 @@ export function rememberPrerenderedArt(root: HTMLElement): void {
 }
 
 /**
- * Whether the prerendered page showed the art at `src`, as its own `<img>` names it. Once the
- * visitor leaves that page, its art loads as any other on every page, that one too.
+ * Whether the prerendered page showed the art at `src`, as its own `<img>` names it, while the
+ * visitor is still on that page (`forgetArtOnLeave`).
  */
 export function prerenderedArtShown(src: string | undefined): boolean {
-  if (window.location.pathname !== shownOn) shownArt.clear();
   return src !== undefined && shownArt.has(new URL(src, document.baseURI).href);
+}
+
+/**
+ * Forgets the prerendered page's art for good once the router leaves that page's path, before
+ * the next page renders: from then on its art loads as any other on every page, that one too,
+ * even after a visit to pages that show no art. router.tsx subscribes it to the router.
+ */
+export function forgetArtOnLeave({location}: {location: {pathname: string}}): void {
+  if (location.pathname !== shownOn) shownArt.clear();
 }
 
 /**

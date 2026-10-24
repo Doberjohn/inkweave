@@ -4,6 +4,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {
   ART_WAIT_MS,
   _resetPrerenderedArt,
+  forgetArtOnLeave,
   prerenderedArtShown,
   rememberPrerenderedArt,
   renderOverPrerenderedPage,
@@ -58,16 +59,22 @@ describe('prerenderedArt', () => {
     expect(prerenderedArtShown('/card-images/1936.avif')).toBe(false);
   });
 
-  it('forgets the art once the visitor leaves the page that showed it, for good', () => {
-    const page = location.pathname;
+  it('forgets the art for good once the router leaves the page that showed it', () => {
     rememberPrerenderedArt(pageWith('/card-images/1936.avif'));
 
-    history.pushState(null, '', '/browse');
-    const elsewhere = prerenderedArtShown('/card-images/1936.avif');
-    history.pushState(null, '', page);
+    forgetArtOnLeave({location: {pathname: '/about'}});
+    forgetArtOnLeave({location: {pathname: location.pathname}});
 
-    expect(elsewhere).toBe(false);
     expect(prerenderedArtShown('/card-images/1936.avif')).toBe(false);
+  });
+
+  // The router reports every change to its state, a search on the same page among them.
+  it('keeps the art while the router stays on the page that showed it', () => {
+    rememberPrerenderedArt(pageWith('/card-images/1936.avif'));
+
+    forgetArtOnLeave({location: {pathname: location.pathname}});
+
+    expect(prerenderedArtShown('/card-images/1936.avif')).toBe(true);
   });
 });
 

@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import featuredCardIds from './featuredCardIds.json';
+import {startCardList} from './cardListRequest';
 import {loadCardsFromJSON, type LorcanaJSONData} from './loader';
 import type {LorcanaCard} from './types';
 
@@ -63,6 +64,15 @@ export function fetchFeaturedCards(): Promise<LorcanaCard[] | null> {
     })
     .catch(forgetRequest);
   return request;
+}
+
+/**
+ * What the home page's featured row renders from, for main.tsx's hold (#915): the small file,
+ * or, when that file can't be used, the full card list, which the page otherwise leaves for
+ * later (#641) but then shows the featured cards from.
+ */
+export async function startFeaturedCards(): Promise<unknown> {
+  return (await fetchFeaturedCards()) ?? startCardList();
 }
 
 /**
