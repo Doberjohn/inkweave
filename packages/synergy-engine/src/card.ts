@@ -8,4 +8,4 @@
  */
 export {isCoreSet} from './constants';
 export {cardPath} from './utils/cardSlug';
-export {transformCard} from './utils/cardTransformer';
+export {slimRawCard, transformCard} from './utils/cardTransformer';

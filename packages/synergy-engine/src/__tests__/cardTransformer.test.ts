@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {transformCard, type LorcanaJSONCard} from '../utils';
+import {slimRawCard, transformCard, type LorcanaJSONCard} from '../utils';
 
 const raw = (overrides: Partial<LorcanaJSONCard> = {}): LorcanaJSONCard => ({
   id: 1,
@@ -83,5 +83,43 @@ describe('transformCard', () => {
     const card = transformCard(raw({type: 'Action', subtypes: ['Song']}));
     expect(card?.isSong).toBe(true);
     expect(card?.classifications).toBeUndefined();
+  });
+});
+
+describe('slimRawCard', () => {
+  const sections = ['Singer 5', 'PANDA POWER When you play this character, this character gains Shift 2.'];
+  const full = raw({
+    abilities: [
+      nativeSinger5,
+      {type: 'triggered', name: 'PANDA POWER', effect: 'When you play this character, this character gains Shift 2.', fullText: sections[1]},
+    ],
+    fullText: sections.join('\n'),
+    fullTextSections: sections,
+    keywordAbilities: ['Singer'],
+  });
+
+  it('keeps the text once, as sections, and only the keyword abilities', () => {
+    expect(slimRawCard(full)).toEqual(
+      raw({abilities: [{type: 'keyword', keyword: 'Singer', keywordValue: '5'}], fullTextSections: sections}),
+    );
+  });
+
+  it('transforms to the same card as the full entry', () => {
+    expect(transformCard(slimRawCard(full))).toEqual(transformCard(full));
+  });
+
+  it('keeps fullText on a card without sections', () => {
+    const card = raw({fullText: 'Draw a card.'});
+    expect(slimRawCard(card)).toEqual(card);
+  });
+
+  it('keeps fullText when its sections leave out a blank line of it', () => {
+    // Card studio's shape: canonicalizeCardFullText keeps the blank line, and the sections drop it.
+    const card = raw({fullText: 'Rush\n\nNIFTY TECH Draw a card.', fullTextSections: ['Rush', 'NIFTY TECH Draw a card.']});
+    expect(transformCard(slimRawCard(card))).toEqual(transformCard(card));
+  });
+
+  it('drops an abilities list with no keyword in it', () => {
+    expect(slimRawCard(raw({abilities: [{type: 'static', fullText: 'x'}]})).abilities).toBeUndefined();
   });
 });
