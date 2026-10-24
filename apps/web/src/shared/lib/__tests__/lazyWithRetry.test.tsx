@@ -111,4 +111,38 @@ describe('lazyWithRetry', () => {
     expect(caught).toBeInstanceOf(PageLoadError);
     expect((caught as PageLoadError).cause).toEqual(new Error('chunk 404'));
   });
+
+  // A React.lazy whose import has already resolved still suspends once: the prerendered page
+  // would give way to the route's fallback for a frame (#915).
+  it('renders a preloaded page at once, never its fallback', async () => {
+    const importFn = vi.fn(() => Promise.resolve({Greeting}));
+    const Lazy = lazyWithRetry(importFn, 'Greeting');
+    await Lazy.preload();
+
+    render(
+      <Suspense fallback={<p>loading</p>}>
+        <Lazy name="Elsa" />
+      </Suspense>,
+    );
+
+    expect(screen.getByText('hello Elsa')).toBeInTheDocument();
+    expect(screen.queryByText('loading')).not.toBeInTheDocument();
+    expect(importFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('shares one import between preload() and a render that starts before it resolves', async () => {
+    const importFn = vi.fn(() => Promise.resolve({Greeting}));
+    const Lazy = lazyWithRetry(importFn, 'Greeting');
+    const preloaded = Lazy.preload();
+    render(
+      <Suspense fallback={<p>loading</p>}>
+        <Lazy name="Elsa" />
+      </Suspense>,
+    );
+
+    await act(() => preloaded);
+
+    expect(screen.getByText('hello Elsa')).toBeInTheDocument();
+    expect(importFn).toHaveBeenCalledTimes(1);
+  });
 });

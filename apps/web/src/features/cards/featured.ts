@@ -35,6 +35,8 @@ export function pickFeatured(cards: LorcanaCard[]): LorcanaCard[] {
 
 const FEATURED_CARDS_PATH = '/data/featuredCards.json';
 let request: Promise<LorcanaCard[] | null> | null = null;
+/** The featured cards once the file has loaded them, for a first render to start from (#915). */
+let loaded: LorcanaCard[] | undefined;
 
 /** Drops the cached request, so the next caller fetches again, and resolves this one to null. */
 function forgetRequest(): null {
@@ -57,7 +59,7 @@ export function fetchFeaturedCards(): Promise<LorcanaCard[] | null> {
     })
     .then((data) => {
       const featured = data ? pickFeatured(loadCardsFromJSON(data)) : [];
-      return featured.length === FEATURED_IDS.length ? featured : null;
+      return featured.length === FEATURED_IDS.length ? (loaded = featured) : null;
     })
     .catch(forgetRequest);
   return request;
@@ -65,10 +67,13 @@ export function fetchFeaturedCards(): Promise<LorcanaCard[] | null> {
 
 /**
  * The featured cards from the small file while `enabled`, so the homepage doesn't wait on the
- * full card list for them. `undefined` while loading, `null` when the file can't be used.
+ * full card list for them. `undefined` while loading, `null` when the file can't be used. A file
+ * main.tsx's hold already loaded (#915) is there on the first render, when that render enables it.
  */
 export function useFeaturedCardsFile(enabled: boolean): LorcanaCard[] | null | undefined {
-  const [cards, setCards] = useState<LorcanaCard[] | null | undefined>(undefined);
+  const [cards, setCards] = useState<LorcanaCard[] | null | undefined>(() =>
+    enabled ? loaded : undefined,
+  );
   useEffect(() => {
     if (!enabled) return;
     let live = true;
@@ -85,4 +90,5 @@ export function useFeaturedCardsFile(enabled: boolean): LorcanaCard[] | null | u
 /** @internal reset for testing */
 export function _resetFeaturedCardsCache(): void {
   request = null;
+  loaded = undefined;
 }

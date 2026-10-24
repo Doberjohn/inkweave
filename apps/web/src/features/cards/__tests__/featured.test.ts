@@ -1,5 +1,11 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
-import {DEFAULT_FEATURED_IDS, fetchFeaturedCards, _resetFeaturedCardsCache} from '../featured';
+import {renderHook, waitFor} from '@testing-library/react';
+import {
+  DEFAULT_FEATURED_IDS,
+  fetchFeaturedCards,
+  useFeaturedCardsFile,
+  _resetFeaturedCardsCache,
+} from '../featured';
 
 /** The featured-cards file as precompute writes it: raw cards in allCards.json's shape. */
 function featuredFile(ids: string[]) {
@@ -71,5 +77,46 @@ describe('fetchFeaturedCards', () => {
     await fetchFeaturedCards();
     await expect(fetchFeaturedCards()).resolves.toBeNull();
     expect(mockFetch).toHaveBeenCalledOnce();
+  });
+});
+
+describe('useFeaturedCardsFile', () => {
+  /** Renders the hook, keeping what each render returned. */
+  function renderFile() {
+    const byRender: (unknown[] | null | undefined)[] = [];
+    const view = renderHook(() => {
+      const cards = useFeaturedCardsFile(true);
+      byRender.push(cards);
+      return cards;
+    });
+    return {...view, byRender};
+  }
+
+  it('starts from a file main.tsx already loaded, with no loading render (#915)', async () => {
+    mockFetch.mockResolvedValue(respond(featuredFile(DEFAULT_FEATURED_IDS)));
+    await fetchFeaturedCards();
+
+    const {byRender} = renderFile();
+
+    expect(byRender[0]).toHaveLength(DEFAULT_FEATURED_IDS.length);
+    expect(mockFetch).toHaveBeenCalledOnce();
+  });
+
+  it('gives nothing while disabled, though the file has loaded', async () => {
+    mockFetch.mockResolvedValue(respond(featuredFile(DEFAULT_FEATURED_IDS)));
+    await fetchFeaturedCards();
+
+    const {result} = renderHook(() => useFeaturedCardsFile(false));
+
+    expect(result.current).toBeUndefined();
+  });
+
+  it('loads on its first render while the file is still on its way', async () => {
+    mockFetch.mockResolvedValue(respond(featuredFile(DEFAULT_FEATURED_IDS)));
+
+    const {result, byRender} = renderFile();
+
+    expect(byRender[0]).toBeUndefined();
+    await waitFor(() => expect(result.current).toHaveLength(DEFAULT_FEATURED_IDS.length));
   });
 });

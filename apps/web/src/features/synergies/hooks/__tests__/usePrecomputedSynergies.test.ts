@@ -1,7 +1,7 @@
 import {afterEach, describe, it, expect, vi} from 'vitest';
 import {renderHook, waitFor} from '@testing-library/react';
 import type {LorcanaCard, PairSynergyConnection} from 'inkweave-synergy-engine';
-import {filterPairByGroup, usePrecomputedSynergies} from '../usePrecomputedSynergies';
+import {fetchCardSynergies, filterPairByGroup, usePrecomputedSynergies} from '../usePrecomputedSynergies';
 import type {PrecomputedPairData} from '../usePrecomputedSynergies';
 
 const mockCardsById: Record<string, LorcanaCard> = {};
@@ -70,6 +70,39 @@ describe('usePrecomputedSynergies', () => {
     // The fetch starts in an effect, after this first render. Reporting "settled" here let the
     // card page render its footer for a frame, under content still to arrive (#532).
     expect(loadingByRender[0]).toBe(true);
+  });
+
+  it('settles its first render from a file the page already fetched (#915)', async () => {
+    const release = holdSynergyFetches();
+    const selected = card('9601');
+    card('9602');
+    const fetched = fetchCardSynergies('9601');
+    release('9601', '9602');
+    await fetched;
+    const loadingByRender: boolean[] = [];
+
+    const {result} = renderHook(() => {
+      const synergies = usePrecomputedSynergies(selected);
+      loadingByRender.push(synergies.isLoading);
+      return synergies;
+    });
+
+    expect(loadingByRender).not.toContain(true);
+    expect(result.current.synergies[0].synergies[0].card.id).toBe('9602');
+  });
+
+  it("shares the hold's request for a file still on its way (#915)", async () => {
+    const release = holdSynergyFetches();
+    const selected = card('9701');
+    card('9702');
+    const held = fetchCardSynergies('9701');
+
+    const {result} = renderHook(() => usePrecomputedSynergies(selected));
+    release('9701', '9702');
+    await held;
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(vi.mocked(fetch)).toHaveBeenCalledOnce();
   });
 
   it("settles with the card's groups once its fetch resolves", async () => {

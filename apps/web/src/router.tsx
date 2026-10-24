@@ -1,5 +1,5 @@
 import {Suspense} from 'react';
-import {createBrowserRouter, Navigate, type RouteObject} from 'react-router-dom';
+import {createBrowserRouter, Navigate, type Params, type RouteObject} from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
 import {AppLayout} from './AppLayout';
 import {RevealsGate} from './features/reveals';
@@ -7,8 +7,14 @@ import {HomePageSkeleton} from './pages/HomePageSkeleton';
 import {COLORS, RADIUS, SPACING} from './shared/constants';
 import {useResponsive} from './shared/hooks/useResponsive';
 import {lazyWithRetry} from './shared/lib/lazyWithRetry';
+import {readyWhen} from './shared/lib/routeReadiness';
 import {withSpeedInsightsRoutes} from './shared/lib/speedInsightsRoute';
 import {SHOW_COLLECTION} from './features/collection/flag';
+import {startCardList} from './features/cards/cardListRequest';
+import {fetchFeaturedCards} from './features/cards/featured';
+import {fetchCardSynergies} from './features/synergies/hooks/usePrecomputedSynergies';
+import {fetchPlaystyleCardIds} from './features/synergies/hooks/playstyleCardIds';
+import {fetchPairsIndex} from './features/voting/pairsIndexRequest';
 
 // Lazy-load page components for code splitting (with retry on chunk load failure)
 const HomePage = lazyWithRetry(() => import('./pages/HomePage'), 'HomePage');
@@ -30,7 +36,8 @@ const PlaystyleDetailPage = lazyWithRetry(
   () => import('./pages/PlaystyleDetailPage'),
   'PlaystyleDetailPage',
 );
-const VotePage = lazyWithRetry(() => import('./pages/VotePage'), 'VotePage');
+const votePageChunk = () => import('./pages/votePageChunk');
+const VotePage = lazyWithRetry(votePageChunk, 'VotePage');
 const InDepthVotePage = lazyWithRetry(
   () => import('./pages/InDepthVotePage'),
   'InDepthVotePage',
@@ -91,6 +98,13 @@ function SuspenseWrapper({children, fallback}: {children: React.ReactNode; fallb
   return <Suspense fallback={fallback ?? <GenericFallback />}>{children}</Suspense>;
 }
 
+/** The card page's synergy file, which its groups render from. */
+const cardSynergies = ({cardId}: Params) =>
+  cardId ? fetchCardSynergies(cardId) : Promise.resolve();
+
+/** The vote page's first pair, drawn for the visit while main.tsx holds the page (#915). */
+const firstVotePair = () => votePageChunk().then((chunk) => chunk.startFirstPair());
+
 /**
  * `/browse` and `/account` under the collection layout route while `SHOW_COLLECTION`
  * is on, and as plain siblings otherwise, so a dark feature adds nothing to either.
@@ -105,6 +119,7 @@ function withCollectionScope(children: RouteObject[]): RouteObject[] {
           <CollectionScope />
         </SuspenseWrapper>
       ),
+      handle: readyWhen(CollectionScope),
       children,
     },
   ];
@@ -117,6 +132,7 @@ const routes: RouteObject[] = [
     children: [
       {
         index: true,
+        handle: readyWhen(HomePage, fetchFeaturedCards),
         element: (
           <SuspenseWrapper fallback={<HomeFallback />}>
             <HomePage />
@@ -126,6 +142,7 @@ const routes: RouteObject[] = [
       ...withCollectionScope([
         {
           path: 'browse',
+          handle: readyWhen(BrowsePage, startCardList),
           element: (
             <SuspenseWrapper>
               <BrowsePage />
@@ -146,6 +163,7 @@ const routes: RouteObject[] = [
       ]),
       {
         path: 'card/:cardId',
+        handle: readyWhen(CardPage, startCardList, cardSynergies),
         element: (
           <SuspenseWrapper>
             <CardPage />
@@ -156,6 +174,7 @@ const routes: RouteObject[] = [
         // Slug URL (#498). CardPage looks the card up by :cardId; :slug is decorative and
         // canonicalizes to cardPath(). A wrong or absent slug still renders the right card.
         path: 'card/:cardId/:slug',
+        handle: readyWhen(CardPage, startCardList, cardSynergies),
         element: (
           <SuspenseWrapper>
             <CardPage />
@@ -181,6 +200,7 @@ const routes: RouteObject[] = [
       {
         // Parent of the six hubs (#530) — the breadcrumb on every hub resolves here.
         path: 'inks',
+        handle: readyWhen(InkGalleryPage, startCardList),
         element: (
           <SuspenseWrapper>
             <InkGalleryPage />
@@ -191,6 +211,7 @@ const routes: RouteObject[] = [
         // Six ink hub pages (#530). Ink is the only total partition of the corpus, so these
         // guarantee every card an inbound crawlable link independent of the sitemap.
         path: 'ink/:inkSlug',
+        handle: readyWhen(InkHubPage, startCardList),
         element: (
           <SuspenseWrapper>
             <InkHubPage />
@@ -199,6 +220,7 @@ const routes: RouteObject[] = [
       },
       {
         path: 'playstyles',
+        handle: readyWhen(PlaystyleGalleryPage, startCardList, fetchPlaystyleCardIds),
         element: (
           <SuspenseWrapper>
             <PlaystyleGalleryPage />
@@ -212,6 +234,7 @@ const routes: RouteObject[] = [
       },
       {
         path: 'playstyles/:playstyleId',
+        handle: readyWhen(PlaystyleDetailPage, startCardList, fetchPlaystyleCardIds),
         element: (
           <SuspenseWrapper>
             <PlaystyleDetailPage />
@@ -219,7 +242,10 @@ const routes: RouteObject[] = [
         ),
       },
       {
+        // Held until the visit's own first pair is drawn (#915). The crawl draws none, so the
+        // capture shows the page loading, never a pair the visitor can't vote on.
         path: 'vote',
+        handle: readyWhen(VotePage, startCardList, fetchPairsIndex, firstVotePair),
         element: (
           <SuspenseWrapper>
             <VotePage />
@@ -236,6 +262,7 @@ const routes: RouteObject[] = [
       },
       {
         path: 'reveals',
+        handle: readyWhen(RevealsPage, startCardList),
         element: (
           <RevealsGate>
             <SuspenseWrapper>
@@ -254,6 +281,7 @@ const routes: RouteObject[] = [
       },
       {
         path: 'privacy',
+        handle: readyWhen(PrivacyPage),
         element: (
           <SuspenseWrapper>
             <PrivacyPage />
@@ -262,6 +290,7 @@ const routes: RouteObject[] = [
       },
       {
         path: 'terms',
+        handle: readyWhen(TermsPage),
         element: (
           <SuspenseWrapper>
             <TermsPage />
@@ -270,6 +299,7 @@ const routes: RouteObject[] = [
       },
       {
         path: 'disclaimer',
+        handle: readyWhen(DisclaimerPage),
         element: (
           <SuspenseWrapper>
             <DisclaimerPage />
@@ -278,6 +308,7 @@ const routes: RouteObject[] = [
       },
       {
         path: 'about',
+        handle: readyWhen(AboutPage),
         element: (
           <SuspenseWrapper>
             <AboutPage />
@@ -286,6 +317,7 @@ const routes: RouteObject[] = [
       },
       {
         path: 'release-notes',
+        handle: readyWhen(ReleaseNotesPage),
         element: (
           <SuspenseWrapper>
             <ReleaseNotesPage />
