@@ -5,3 +5,12 @@ coverage
 storybook-static
 pnpm-lock.yaml
 *.md
+
+# Generated data files: each writer sets its own format, and admin's publishes refuse a file that
+# isn't in it (Doberjohn/inkweave-admin#86). Indented with a newline: allCards.json and
+# previewCards.json. One line with a newline: collection/*.json and card-slugs.json. Indented
+# with no newline: promo-printings.json.
+apps/web/public/data/*.json
+apps/web/public/data/collection/
+middleware-data/card-slugs.json
+scripts/data/promo-printings.json
