@@ -338,5 +338,6 @@ export class SynergyEngine {
   }
 }
 
-// Default singleton instance
-export const synergyEngine = new SynergyEngine();
+// Default singleton instance. Pure, so a bundle that never reads it drops it, and with it every
+// rule its constructor loads (getAllRules). The web app never reads it.
+export const synergyEngine = /* @__PURE__ */ new SynergyEngine();

@@ -1110,7 +1110,10 @@ function findBeckonAnchors(enabler: LorcanaCard, allCards: LorcanaCard[]): Syner
 // SYNERGY RULES
 // ============================================
 
-export const synergyRules: SynergyRule[] = [
+// Pure, like the two singletons: the list is built by calls (createLocationRules, makeTribalRule)
+// a bundler can't prove harmless, so without this every rule stays in any chunk that imports
+// anything from the engine. The web app reads no rule.
+export const synergyRules: SynergyRule[] = /* @__PURE__ */ (() => [
   // --------------------------------------------
   // SHIFT TARGETS
   // --------------------------------------------
@@ -1587,7 +1590,7 @@ export const synergyRules: SynergyRule[] = [
     findSynergies: (card, allCards) =>
       pairFindSynergies(card, allCards, getInkDropRoles, scoreInkDropPair),
   },
-];
+])();
 
 // Get all rules
 export const getAllRules = (): SynergyRule[] => synergyRules;

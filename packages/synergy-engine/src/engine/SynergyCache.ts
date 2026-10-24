@@ -116,4 +116,5 @@ export class SynergyCache {
   }
 }
 
-export const synergyCache = new SynergyCache(synergyEngine);
+// Pure for the same reason as synergyEngine: the web app never reads it.
+export const synergyCache = /* @__PURE__ */ new SynergyCache(synergyEngine);
