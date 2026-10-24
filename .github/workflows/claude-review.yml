@@ -33,12 +33,15 @@ jobs:
         && startsWith(github.event.comment.body, '@claude review')
         && contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association))
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    # A new request for the same pull request replaces the review still running. The group
-    # sits on the job, not the workflow, so the many comments that skip the job never
-    # cancel a review.
+    # Above the Review step's own 25 minutes plus the steps around it.
+    timeout-minutes: 35
+    # A new request for the same pull request replaces the review still running. Any
+    # other comment gets a group of its own run, so the job it skips can't cancel one.
     concurrency:
-      group: claude-review-${{ github.event.pull_request.number || github.event.issue.number }}
+      group: >-
+        ${{ github.event_name == 'issue_comment' && !startsWith(github.event.comment.body, '@claude review')
+          && format('claude-review-skip-{0}', github.run_id)
+          || format('claude-review-{0}', github.event.pull_request.number || github.event.issue.number) }}
       cancel-in-progress: true
     permissions:
       contents: read # check out the pull request
@@ -110,7 +113,7 @@ jobs:
 
       # Claude Code's bundled /code-review skill, posting its findings as inline comments.
       # The settings turn off the repo's Claude hooks, which guard a local checkout and
-      # have nothing to guard here, and .mcp.json's GitHub server. Claude reads the code
+      # have nothing to guard here, and .mcp.json's servers. Claude reads the code
       # with Claude Code's read-only tools and commands, and its one other tool posts an
       # inline comment on this pull request. It runs on the owner's Claude Max plan,
       # through a token from `claude setup-token`.
@@ -118,6 +121,7 @@ jobs:
         id: review
         # A job that hits its own timeout counts as cancelled and skips the report, so the
         # step's shorter one leaves the report time to say the review didn't finish.
+        # Setup takes under a minute, well inside the job's 35.
         timeout-minutes: 25
         uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1
         env:
@@ -130,7 +134,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ github.token }}
           prompt: /code-review high --comment ${{ env.PR_NUMBER }}
-          settings: '{"disableAllHooks":true,"disabledMcpjsonServers":["github"]}'
+          settings: '{"disableAllHooks":true,"enableAllProjectMcpServers":false,"disabledMcpjsonServers":["github"]}'
           claude_args: >-
             --model opus
             --disallowedTools "Edit,Write,NotebookEdit,WebFetch,WebSearch"
