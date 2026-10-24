@@ -216,6 +216,42 @@ function inlineCssPlugin(): Plugin {
   };
 }
 
+/** Chunk files no page can load, found by unloadableChunksPlugin as the bundle is written. */
+const unloadableChunks = new Set<string>();
+
+/**
+ * Finds the chunks no page can load (#928). A lazy import behind a flag that is off never runs, but
+ * Rolldown still emits its chunk, and the service worker precached it for every new visitor. A
+ * chunk is loadable when index.html, or a loadable chunk, names its file: static imports, dynamic
+ * imports and Vite's preload lists all spell out file names. It reads the bundle as written, so
+ * the names are final, and VitePWA writes the service worker after it, in closeBundle.
+ */
+function unloadableChunksPlugin(): Plugin {
+  return {
+    name: 'unloadable-chunks',
+    apply: 'build',
+    writeBundle(_options, bundle) {
+      const outputs = Object.values(bundle);
+      const chunks = outputs.filter((output) => output.type === 'chunk');
+      const sources = outputs
+        .filter((output) => output.type === 'asset')
+        .filter((asset) => asset.fileName.endsWith('.html'))
+        .map((page) => String(page.source));
+      const loadable = new Set<string>();
+      for (let source = sources.pop(); source !== undefined; source = sources.pop()) {
+        for (const chunk of chunks) {
+          if (!loadable.has(chunk.fileName) && source.includes(path.basename(chunk.fileName))) {
+            loadable.add(chunk.fileName);
+            sources.push(chunk.code);
+          }
+        }
+      }
+      unloadableChunks.clear();
+      for (const chunk of chunks) if (!loadable.has(chunk.fileName)) unloadableChunks.add(chunk.fileName);
+    },
+  };
+}
+
 /**
  * Local Windows runs cap Vitest at 4 workers (#720). The repo sits on a spinning disk there, and
  * on a cold file cache the default first wave (11 workers on the 12-thread dev box) needs over
@@ -376,6 +412,14 @@ export default defineConfig({
         // map to Sentry anyway, so generating it has no upside.
         sourcemap: false,
         globPatterns: ['**/*.{js,css,html,woff2}'],
+        // Leave out the chunks no page loads (#928), which every new visitor downloaded. It drops
+        // only JavaScript chunk files.
+        manifestTransforms: [
+          (entries) => ({
+            manifest: entries.filter((entry) => !unloadableChunks.has(entry.url)),
+            warnings: [...unloadableChunks].map((file) => `Not precached, no page loads it: ${file}`),
+          }),
+        ],
         // Don't fall back to index.html for static-asset paths — they're real
         // files, not SPA routes. Without this, pasting a direct asset URL into
         // a new tab returns the SPA shell, which boots React Router, fails to
@@ -421,6 +465,7 @@ export default defineConfig({
       },
     }),
     inlineCssPlugin(),
+    unloadableChunksPlugin(),
     !!process.env.SENTRY_AUTH_TOKEN &&
       sentryVitePlugin({
         org: process.env.SENTRY_ORG,
