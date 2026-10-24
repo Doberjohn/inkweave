@@ -42,6 +42,24 @@
       type="font/woff2"
       crossorigin />
 
+    <!-- Prerendered pages (#915): a captured #root stays hidden until the script after it
+         approves its route; on any other route the script empties it. Opacity as well as
+         visibility, since a descendant can set its own visibility back. -->
+    <style>
+      #root[data-prerender-route]:not([data-ready]) {
+        visibility: hidden;
+        opacity: 0;
+      }
+    </style>
+    <noscript>
+      <style>
+        #root[data-prerender-route] {
+          visibility: visible !important;
+          opacity: 1 !important;
+        }
+      </style>
+    </noscript>
+
     <!-- Structured Data: site-entity @graph (Organization + WebSite + WebApplication). #496 -->
     <script type="application/ld+json">
       {
@@ -85,6 +103,35 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Approves a prerendered #root on its own route and empties it on any other (#915).
+         Classic and inline, so it runs as soon as the parser reaches it. -->
+    <script>
+      (function () {
+        var root = document.getElementById('root');
+        var route = root && root.getAttribute('data-prerender-route');
+        if (!route) return;
+        var path = location.pathname;
+        try {
+          // A segment at a time, as React Router decodes a path to match it: an encoded slash
+          // stays inside its segment, so /browse%2F is the not-found page, not /browse.
+          path = path
+            .split('/')
+            .map(function (segment) {
+              return decodeURIComponent(segment).replace(/\//g, '%2F');
+            })
+            .join('/');
+        } catch (e) {
+          // A malformed escape: compare the raw path, as React Router does.
+        }
+        var here = path.replace(/\/+$/, '') || '/';
+        if (route !== here) {
+          root.replaceChildren();
+          root.removeAttribute('data-prerender-route');
+          return;
+        }
+        root.setAttribute('data-ready', '');
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

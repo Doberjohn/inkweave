@@ -16,7 +16,7 @@
  * it to `build:vercel` — that would break preview deploys, which is the exact
  * failure the `|| echo` exists to prevent.
  *
- * Checks, against a sample of card pages plus the /browse hub (and, for checks 6 and 7, the homepage):
+ * Checks, against a sample of card pages plus the /browse hub (and, for checks 6, 7 and 9, the homepage):
  *   1. dist/card/<id>/<slug>/index.html exists
  *   2. it contains the card's fullName as visible content (not just an SPA shell)
  *   3. its <link rel="canonical"> is self-referential (the slug URL), not the homepage
@@ -32,6 +32,8 @@
  *      Sentry's (#640) or PostHog's (#827): see findLazySdkPreloads.
  *   8. every sampled card page links all six ink hubs, which only its footer does (#530).
  *      The footer waits for the page's synergies (#532): see countInkHubLinks.
+ *   9. every sampled card page, / and /browse marks its #root with its own route (#915): see
+ *      readPrerenderRoute.
  *
  * Usage: node scripts/check-rendered-html.mjs [targetDir]   (default: apps/web/dist)
  * Bypass: SKIP_RENDER_GUARD=1  (emergency escape hatch)
@@ -188,6 +190,26 @@ export function countInkHubLinks(html) {
 }
 
 /**
+ * The route a captured page's #root is marked with (#915), or undefined. index.html's inline
+ * script shows a captured page only on the route its mark names and empties it anywhere else,
+ * and vercel.json serves the home page's capture for every route without a file of its own: so
+ * a home page without its mark paints on every such route, and a page marked with another
+ * route is emptied on its own. Attributes are read independently of their order, for the
+ * reason readCanonical documents.
+ *
+ * @param {string} html - one captured page
+ * @returns {string | undefined} the route its #root names
+ */
+export function readPrerenderRoute(html) {
+  const root = html.match(/<div\b[^>]*\sid="root"[^>]*>/i)?.[0];
+  return root && attr(root, 'data-prerender-route');
+}
+
+/** The offender reason shared by every page the route-mark check covers. */
+const routeMarkReason = (mark, route) =>
+  `#root is marked ${mark === undefined ? 'with no route' : `"${mark}"`}, expected "${route}" (#915)`;
+
+/**
  * Choose which card pages this guard verifies.
  *
  * The prerender already aborts on a >2% route failure rate, so this guard is not
@@ -251,6 +273,7 @@ function findCardPageOffenders(targetDir, card, route, sdkChunks) {
   const orphanPreloads = findOrphanImagePreloads(html);
   const sdkPreloads = findLazySdkPreloads(html, sdkChunks);
   const inkHubs = countInkHubLinks(html);
+  const mark = readPrerenderRoute(html);
 
   // Each entry is one assertion: [failed?, why]. A table rather than a chain of ifs
   // so a new check is one row, not another branch in an already-dense function.
@@ -295,6 +318,9 @@ function findCardPageOffenders(targetDir, card, route, sdkChunks) {
       inkHubs < INK_HUB_COUNT,
       `links ${inkHubs} of the ${INK_HUB_COUNT} ink hubs (footer not rendered when captured? #532)`,
     ],
+    // index.html's inline script empties a captured page whose mark names another route, so a
+    // page without its own route would never paint its capture (#915).
+    [mark !== route, routeMarkReason(mark, route)],
   ]
     .filter(([failed]) => failed)
     .map(([, reason]) => ({file, reason}));
@@ -310,23 +336,34 @@ function findBrowseHubOffenders(targetDir) {
   return [];
 }
 
+/** The two entry pages the card sample does not cover, each with the route it is served on. */
+const ENTRY_PAGES = [
+  {rel: 'index.html', route: '/'},
+  {rel: join('browse', 'index.html'), route: '/browse'},
+];
+
 /**
- * The orphan-preload (#627) and lazy-SDK-preload (#640, #827) checks on the two entry pages the
- * card sample does not cover: `/`, the page PSI measures, and `/browse`. A missing file is
+ * The orphan-preload (#627), lazy-SDK-preload (#640, #827) and route-mark (#915) checks on the
+ * two entry pages the card sample does not cover: `/`, the page PSI measures and the capture
+ * vercel.json serves for every route without its own, and `/browse`. A missing file is
  * skipped: findBrowseHubOffenders already reports a missing /browse, and the build always
  * writes a root index.html (the Vite shell).
  */
 function findEntryPageOffenders(targetDir, sdkChunks) {
-  return ['index.html', join('browse', 'index.html')].flatMap((rel) => {
+  return ENTRY_PAGES.flatMap(({rel, route}) => {
     const file = join(targetDir, rel);
     if (!existsSync(file)) return [];
     const html = readFileSync(file, 'utf8');
     const orphans = findOrphanImagePreloads(html);
     const sdks = findLazySdkPreloads(html, sdkChunks);
+    const mark = readPrerenderRoute(html);
     return [
-      ...(orphans.length > 0 ? [{file, reason: orphanPreloadReason(orphans)}] : []),
-      ...(sdks.length > 0 ? [{file, reason: lazySdkPreloadReason(sdks)}] : []),
-    ];
+      [orphans.length > 0, orphanPreloadReason(orphans)],
+      [sdks.length > 0, lazySdkPreloadReason(sdks)],
+      [mark !== route, routeMarkReason(mark, route)],
+    ]
+      .filter(([failed]) => failed)
+      .map(([, reason]) => ({file, reason}));
   });
 }
 

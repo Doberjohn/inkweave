@@ -94,7 +94,11 @@ function sweepPrerenderedSeoTags() {
 
 sweepPrerenderedSeoTags();
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root')!;
+// index.html hides a prerendered page until its inline script approves it (#915). Had that
+// script failed, the mark would hide the app too, so it goes before React renders.
+rootElement.removeAttribute('data-prerender-route');
+createRoot(rootElement).render(
   <StrictMode>
     <RouterProvider router={router} />
   </StrictMode>,

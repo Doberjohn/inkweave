@@ -102,8 +102,8 @@ jobs:
   # only work with the matching Playwright. Reading it from the lockfile means a Playwright bump
   # moves the image tag in the same commit (#690), and this sparse checkout takes seconds, so
   # the E2E jobs start with the run instead of after build-and-test (#854). Anything but X.Y.Z
-  # fails here, not as an unpullable image in every e2e job. deploy.yml and deploy-staging.yml
-  # run the same job.
+  # fails here, not as an unpullable image in every e2e job. deploy.yml, deploy-staging.yml and
+  # perf-gates.yml (as handoff-playwright-version) run the same job.
   playwright-version:
     runs-on: ubuntu-latest
     timeout-minutes: 5

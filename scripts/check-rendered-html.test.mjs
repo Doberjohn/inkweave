@@ -8,6 +8,7 @@ import {
   findOrphanImagePreloads,
   findLazySdkPreloads,
   readCanonical,
+  readPrerenderRoute,
   SITE_ORIGIN,
 } from './check-rendered-html.mjs';
 
@@ -24,11 +25,15 @@ const FOOTER_HTML =
     .join('') +
   '</footer>';
 
+/** A captured page's #root, marked with the route it was captured on (#915). */
+const markedRoot = (route, content = '') =>
+  `<div id="root" data-prerender-route="${route}">${content}</div>`;
+
 /** A prerendered card page as the crawl actually writes it. */
 const goodCardHtml = (card) =>
   `<!doctype html><html><head><title>${card.fullName} | Lorcana Synergies | Inkweave</title>` +
   `<link rel="canonical" href="${SITE_ORIGIN}${cardPath(card)}"/></head>` +
-  `<body><h1>${card.fullName}</h1>${FOOTER_HTML}</body></html>`;
+  `<body>${markedRoot(cardPath(card), `<h1>${card.fullName}</h1>${FOOTER_HTML}`)}</body></html>`;
 
 /**
  * The same page as React actually hoists it since #535: `<Seo>` stamps `data-seo`
@@ -40,7 +45,7 @@ const goodCardHtml = (card) =>
 const goodCardHtmlWithSeoMarker = (card) =>
   `<!doctype html><html><head><title data-seo="">${card.fullName} | Lorcana Synergies | Inkweave</title>` +
   `<link data-seo="" rel="canonical" href="${SITE_ORIGIN}${cardPath(card)}"/></head>` +
-  `<body><h1>${card.fullName}</h1>${FOOTER_HTML}</body></html>`;
+  `<body>${markedRoot(cardPath(card), `<h1>${card.fullName}</h1>${FOOTER_HTML}`)}</body></html>`;
 
 /** The SPA shell Vercel's rewrite serves when no prerendered file exists. */
 const shellHtml =
@@ -48,6 +53,10 @@ const shellHtml =
   `<link rel="canonical" href="${SITE_ORIGIN}/"/></head><body><div id="root"></div></body></html>`;
 
 let dist;
+
+/** The home page's capture, with `head` in its <head>. */
+const homeHtml = (head = '') =>
+  `<!doctype html><html><head>${head}</head><body>${markedRoot('/', '<h1>Inkweave</h1>')}</body></html>`;
 
 /** Write a well-formed build output; individual tests then break one thing. */
 function seedGoodBuild(card = CARD) {
@@ -59,8 +68,10 @@ function seedGoodBuild(card = CARD) {
   fs.mkdirSync(browseDir, {recursive: true});
   fs.writeFileSync(
     path.join(browseDir, 'index.html'),
-    `<!doctype html><html><body><a href="/card/${card.id}/${card.slug}">${card.fullName}</a></body></html>`,
+    `<!doctype html><html><body>${markedRoot('/browse', `<a href="/card/${card.id}/${card.slug}">${card.fullName}</a>`)}</body></html>`,
   );
+
+  fs.writeFileSync(path.join(dist, 'index.html'), homeHtml());
 }
 
 beforeEach(() => {
@@ -168,6 +179,23 @@ describe('findLazySdkPreloads', () => {
   });
 });
 
+describe('readPrerenderRoute', () => {
+  // Same attribute-order lesson as readCanonical.
+  it.each([
+    ['id first', '<div id="root" data-prerender-route="/browse">'],
+    ['the mark first', '<div data-prerender-route="/browse" id="root">'],
+  ])("reads #root's route with %s", (_label, tag) => {
+    expect(readPrerenderRoute(`<body>${tag}<a href="/card/1">x</a></div></body>`)).toBe('/browse');
+  });
+
+  it('reads no route from an unmarked #root, nor from a mark on another element', () => {
+    expect(readPrerenderRoute('<body><div id="root"></div></body>')).toBeUndefined();
+    expect(
+      readPrerenderRoute('<body><div id="rooted" data-prerender-route="/"></div></body>'),
+    ).toBeUndefined();
+  });
+});
+
 describe('findOffenders', () => {
   it('passes a well-formed build', () => {
     seedGoodBuild();
@@ -202,7 +230,11 @@ describe('findOffenders', () => {
 
   it('fails when /browse links no card URLs', () => {
     seedGoodBuild();
-    fs.writeFileSync(path.join(dist, 'browse', 'index.html'), shellHtml);
+    // Captured before its grid drew a card link (#584).
+    fs.writeFileSync(
+      path.join(dist, 'browse', 'index.html'),
+      `<html><body>${markedRoot('/browse')}</body></html>`,
+    );
     const offenders = findOffenders(dist, [CARD], cardPath);
     expect(offenders).toHaveLength(1);
     expect(offenders[0].reason).toMatch(/no \/card\/ URLs/);
@@ -247,7 +279,7 @@ describe('findOffenders', () => {
     seedGoodBuild();
     fs.writeFileSync(
       path.join(dist, 'index.html'),
-      '<!doctype html><html><head><link rel="preload" as="image" href="/card-images/1936.a-sm.avif"></head><body></body></html>',
+      homeHtml('<link rel="preload" as="image" href="/card-images/1936.a-sm.avif">'),
     );
     const offenders = findOffenders(dist, [CARD], cardPath);
     expect(offenders).toHaveLength(1);
@@ -261,8 +293,10 @@ describe('findOffenders', () => {
     fs.writeFileSync(path.join(dist, 'assets', 'loader-def67890.js'), 'export const load = 1;');
     fs.writeFileSync(
       path.join(dist, 'index.html'),
-      '<!doctype html><html><head><link rel="modulepreload" href="/assets/loader-def67890.js">' +
-        '<link rel="modulepreload" as="script" href="/assets/esm-abc12345.js"></head><body></body></html>',
+      homeHtml(
+        '<link rel="modulepreload" href="/assets/loader-def67890.js">' +
+          '<link rel="modulepreload" as="script" href="/assets/esm-abc12345.js">',
+      ),
     );
     const offenders = findOffenders(dist, [CARD], cardPath);
     expect(offenders).toHaveLength(1);
@@ -309,6 +343,50 @@ describe('findOffenders', () => {
     const offenders = findOffenders(dist, [CARD], cardPath);
     expect(offenders).toHaveLength(1);
     expect(offenders[0].reason).toMatch(/links 5 of the 6 ink hubs/);
+  });
+
+  it('fails a card page captured without its route mark (#915)', () => {
+    seedGoodBuild();
+    const cardFile = path.join(dist, 'card', '1989', 'elsa-snow-queen', 'index.html');
+    fs.writeFileSync(
+      cardFile,
+      goodCardHtml(CARD).replace(' data-prerender-route="/card/1989/elsa-snow-queen"', ''),
+    );
+    const offenders = findOffenders(dist, [CARD], cardPath);
+    expect(offenders).toEqual([
+      {
+        file: cardFile,
+        reason: '#root is marked with no route, expected "/card/1989/elsa-snow-queen" (#915)',
+      },
+    ]);
+  });
+
+  it('fails a home page marked with another route, which every route without a capture is served (#915)', () => {
+    seedGoodBuild();
+    fs.writeFileSync(
+      path.join(dist, 'index.html'),
+      homeHtml().replace('data-prerender-route="/"', 'data-prerender-route="/browse"'),
+    );
+    const offenders = findOffenders(dist, [CARD], cardPath);
+    expect(offenders).toEqual([
+      {
+        file: path.join(dist, 'index.html'),
+        reason: '#root is marked "/browse", expected "/" (#915)',
+      },
+    ]);
+  });
+
+  it('fails a /browse capture without its route mark (#915)', () => {
+    seedGoodBuild();
+    const browseFile = path.join(dist, 'browse', 'index.html');
+    fs.writeFileSync(
+      browseFile,
+      fs.readFileSync(browseFile, 'utf8').replace(' data-prerender-route="/browse"', ''),
+    );
+    const offenders = findOffenders(dist, [CARD], cardPath);
+    expect(offenders).toEqual([
+      {file: browseFile, reason: '#root is marked with no route, expected "/browse" (#915)'},
+    ]);
   });
 
   it('distinguishes a wrong target path from a failed crawl', () => {
