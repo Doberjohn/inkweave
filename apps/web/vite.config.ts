@@ -8,6 +8,7 @@ import {VitePWA} from 'vite-plugin-pwa';
 import {visualizer} from 'rollup-plugin-visualizer';
 import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
+import {createRequire} from 'node:module';
 import path from 'node:path';
 
 // import.meta.dirname, not __dirname: under Vite's native config loader (the planned
@@ -275,6 +276,56 @@ function iconSetPlugin(): Plugin {
   };
 }
 
+/**
+ * The production builds of two libraries, for `vite build` only (#927). React Router's package
+ * points every export condition at its development build, so production shipped its dev warnings;
+ * the alias swaps in `dist/production`. Sentry keeps a debug logger unless `__SENTRY_DEBUG__` is
+ * false, and the app never turns `debug` on. `pnpm dev` and Vitest keep both, for their warnings.
+ */
+function productionLibrariesPlugin(): Plugin {
+  // react-router is react-router-dom's dependency, not the app's, so resolve it from there.
+  const fromRouterDom = createRequire(createRequire(import.meta.url).resolve('react-router-dom/package.json'));
+  const routerDir = path.dirname(fromRouterDom.resolve('react-router/package.json'));
+  return {
+    name: 'production-libraries',
+    apply: 'build',
+    config: () => ({
+      define: {__SENTRY_DEBUG__: 'false'},
+      resolve: {
+        alias: [
+          {find: /^react-router$/, replacement: path.join(routerDir, 'dist/production/index.mjs')},
+          {find: /^react-router\/dom$/, replacement: path.join(routerDir, 'dist/production/dom-export.mjs')},
+        ],
+      },
+    }),
+  };
+}
+
+/** The card data the app fetches whole. public/ keeps them indented, for readable diffs. */
+const MINIFIED_DATA = ['allCards.json', 'previewCards.json'];
+
+/**
+ * Writes the build's copies of the card data without whitespace (#927): allCards.json, which every
+ * visit downloads, is 10.4 kB smaller gzipped. The deploy injects the image hashes into public/
+ * before it builds (download-card-images.mjs), so the copy this minifies has them.
+ */
+function minifyCardDataPlugin(): Plugin {
+  let outDir = '';
+  return {
+    name: 'minify-card-data',
+    apply: 'build',
+    configResolved(config) {
+      outDir = path.resolve(config.root, config.build.outDir);
+    },
+    closeBundle() {
+      for (const name of MINIFIED_DATA) {
+        const file = path.join(outDir, 'data', name);
+        if (fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify(JSON.parse(fs.readFileSync(file, 'utf8'))));
+      }
+    },
+  };
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   define: {
@@ -296,6 +347,8 @@ export default defineConfig({
     // to React 17/18. Must run after react() so JSX is lowered first.
     babel({presets: [reactCompilerPreset()]}),
     iconSetPlugin(),
+    productionLibrariesPlugin(),
+    minifyCardDataPlugin(),
     VitePWA({
       registerType: 'prompt',
       includeAssets: [`${ICON_DIR}favicon.png`, `${ICON_DIR}apple-touch-icon.png`],
@@ -401,6 +454,9 @@ export default defineConfig({
   build: {
     sourcemap: 'hidden',
     rolldownOptions: {
+      // Inline imported constants wherever they are used, not only in conditions (the default
+      // 'smart' mode, one pass). Measured with #927: User-facing JS 620 B smaller.
+      optimization: {inlineConst: {mode: 'all', pass: 3}},
       output: {
         codeSplitting: {
           // A group also takes the modules its own modules import. The vendor group's higher
