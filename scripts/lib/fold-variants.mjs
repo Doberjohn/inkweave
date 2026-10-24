@@ -116,6 +116,8 @@ function upsert(base, entry) {
   if (at < 0) {
     variants.push(entry);
     base.variants = variants.sort(byPrintingOrder);
+    // A card's first `variants` lands after its own `finishes`, which stays its last key.
+    placeFinishes(base, base.finishes);
     return 'folded';
   }
   if (sameEntry(variants[at], entry)) return 'unchanged';

@@ -237,6 +237,14 @@ describe('foldVariants', () => {
       expect(cards[0].variants[0].finishes).toEqual(['normal', 'foil']);
     });
 
+    it("keeps a Core card's own versions its last key when it gains its first printing", () => {
+      const cards = [base({finishes: ['foil']})];
+      foldVariants(cards, [variant()], byBaseId);
+
+      expect(Object.keys(cards[0]).at(-1)).toBe('finishes');
+      expect(cards[0].finishes).toEqual(['foil']);
+    });
+
     it('leaves the data byte for byte as it was when run again', () => {
       const cards = [base()];
       foldVariants(cards, [variant({foilTypes: ['Cold']}), altFoil()], byBaseId);
