@@ -464,18 +464,31 @@ async function capturePhone(context, route, selector) {
 }
 
 /**
- * Add `route`'s phone capture to the desktop capture open in `page`, unless the crawl skips
- * phones (`phone` undefined). Returns why the phone capture failed, if it did: the page then
- * ships without one, so a phone shows its desktop capture, as before #915.
+ * Merge `capture`, a route's phone capture, into the desktop capture open in `page`, and return
+ * the page's HTML (#915). If the merge fails, even part way, the page ships as it was before the
+ * merge, without a phone capture, and `error` says why. Exported for scripts/prerender.test.mjs,
+ * which runs it on a jsdom document.
  */
-async function addPhone(page, phone, route, selector) {
-  if (!phone) return undefined;
-  const {capture, error} = await capturePhone(phone, route, selector);
-  if (capture) {
+export async function htmlWithPhone(page, capture) {
+  const desktopOnly = await page.content();
+  try {
     await page.evaluate(mergePhoneCapture, {...capture, media: CAPTURE_MEDIA});
     await page.evaluate(deferDesktopOnlyImages, CAPTURE_MEDIA.desktop);
+    return {html: await page.content()};
+  } catch (e) {
+    return {html: desktopOnly, error: `phone: ${errorMessage(e)}`};
   }
-  return error;
+}
+
+/**
+ * The HTML of the desktop capture open in `page`, with `route`'s phone capture added unless the
+ * crawl skips phones (`phone` undefined). When the phone capture or its merge fails, the page
+ * ships without one, so a phone shows its desktop capture, as before #915, and `error` says why.
+ */
+async function captureHtml(page, phone, route, selector) {
+  if (!phone) return {html: await page.content()};
+  const {capture, error} = await capturePhone(phone, route, selector);
+  return capture ? htmlWithPhone(page, capture) : {html: await page.content(), error};
 }
 
 /**
@@ -489,16 +502,12 @@ async function crawlRouteOnce({desktop, phone}, route, selector) {
     page = await desktop.newPage();
     const problem = await loadRoute(page, route, selector);
     await page.evaluate(markPrerenderedRoot, route);
-    const phoneProblem = problem ? undefined : await addPhone(page, phone, route, selector);
-    const html = cleanPrerenderedHtml(
-      await page.content(),
-      SHELL_TITLE,
-      `http://localhost:${PORT}`,
-    );
+    const captured = await captureHtml(page, problem ? undefined : phone, route, selector);
+    const html = cleanPrerenderedHtml(captured.html, SHELL_TITLE, `http://localhost:${PORT}`);
     const outDir = route === '/' ? DIST : join(DIST, route);
     await mkdir(outDir, {recursive: true});
     await writeFile(join(outDir, 'index.html'), html, 'utf8');
-    const error = problem ?? phoneProblem;
+    const error = problem ?? captured.error;
     return error ? {route, ok: false, error} : {route, ok: true};
   } catch (e) {
     return {route, ok: false, error: errorMessage(e)};

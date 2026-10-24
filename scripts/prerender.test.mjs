@@ -7,6 +7,7 @@ import {
   deferDesktopOnlyImages,
   fileHeaders,
   hasReadyContent,
+  htmlWithPhone,
   isCleanShell,
   isRevealSeasonActive,
   markPrerenderedRoot,
@@ -275,6 +276,35 @@ describe('the phone capture', () => {
           'fetchpriority="high" crossorigin="anonymous" ' +
           'imagesrcset="/art/a.avif 1x, /art/a@2x.avif 2x" imagesizes="200px">',
       );
+    });
+  });
+
+  describe('htmlWithPhone', () => {
+    /** A Playwright page over `doc`, whose evaluate runs the function in it, as in the browser. */
+    const pageOver = (doc) => ({
+      content: async () => doc.documentElement.outerHTML,
+      evaluate: async (fn, arg) => fn(arg, doc),
+    });
+
+    it('returns the page with the phone capture merged in and its desktop-only images deferred', async () => {
+      const doc = desktopPage('<img src="/brand/logo.svg">');
+      const {html, error} = await htmlWithPhone(pageOver(doc), phoneCapture);
+      expect(error).toBeUndefined();
+      expect(html).toContain('<template id="prerender-phone"><h1>Phone</h1>');
+      expect(html).toContain('<img src="/brand/logo.svg" loading="lazy">');
+    });
+
+    it('ships the page as it was before the merge when the merge fails part way', async () => {
+      // Without #root, the merge limits the preloads to desktops and adds no template, so
+      // deferDesktopOnlyImages throws.
+      const doc = pageOf(
+        '<link rel="preload" as="image" href="/card-images/1.avif">',
+        '<main></main>',
+      );
+      const before = doc.documentElement.outerHTML;
+      const {html, error} = await htmlWithPhone(pageOver(doc), phoneCapture);
+      expect(html).toBe(before);
+      expect(error).toMatch(/^phone: /);
     });
   });
 
