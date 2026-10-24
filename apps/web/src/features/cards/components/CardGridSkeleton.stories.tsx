@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
+import {COLORS} from '../../../shared/constants';
 import {CardGridSkeleton} from './CardGridSkeleton';
 
 const meta: Meta<typeof CardGridSkeleton> = {
@@ -9,7 +10,7 @@ const meta: Meta<typeof CardGridSkeleton> = {
   },
   decorators: [
     (Story) => (
-      <div style={{background: '#0d0d14', minHeight: '100vh'}}>
+      <div style={{background: COLORS.background, minHeight: '100vh'}}>
         <Story />
       </div>
     ),

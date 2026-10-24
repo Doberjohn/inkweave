@@ -1,7 +1,7 @@
 import type {InkwellValue} from './InkwellIcon';
 import {FilterButton} from './FilterButton';
 import {InkwellIcon} from './InkwellIcon';
-import {COLORS} from '../constants';
+import {COLORS, SPACING} from '../constants';
 
 const INKWELL_OPTIONS: {value: InkwellValue; label: string}[] = [
   {value: 'inkable', label: 'Inkable'},
@@ -37,7 +37,10 @@ export function InkwellFilterGroup({
   };
 
   return (
-    <div role="group" aria-label="Inkwell filters" style={{display: 'flex', gap: 4, ...style}}>
+    <div
+      role="group"
+      aria-label="Inkwell filters"
+      style={{display: 'flex', gap: SPACING.xs, ...style}}>
       {INKWELL_OPTIONS.map(({value, label}) => (
         <FilterButton
           key={value}

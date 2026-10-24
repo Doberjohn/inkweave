@@ -71,6 +71,9 @@ const GridHeader = () => <div style={{height: BROWSE_ROW_TOP}} />;
 /** The room under the last row, for its glow too: the grid ends level with the panels. */
 const GridFooter = () => <div style={{height: SPACING.xxl}} />;
 
+/** The room around "No cards match", past the spacing scale's top step (SPACING.xxxl, 32). */
+const NO_MATCH_PADDING = 64;
+
 /**
  * A tile's card page. A promo's tile is its card on that promo (#805), and only the card has a
  * page, so the tile links there: a click opens the promo in the modal, a new tab opens the card.
@@ -105,7 +108,7 @@ export function BrowseCardGrid({
         aria-live="polite"
         style={{
           textAlign: 'center',
-          padding: 64,
+          padding: NO_MATCH_PADDING,
           color: COLORS.textMuted,
           fontSize: `${FONT_SIZES.xl}px`,
         }}>

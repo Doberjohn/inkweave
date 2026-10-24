@@ -1,5 +1,5 @@
 import type {Ink} from 'inkweave-synergy-engine';
-import {ALL_INKS, INK_COLORS} from '../constants';
+import {ALL_INKS, INK_COLORS, SPACING} from '../constants';
 import {FilterButton} from './FilterButton';
 import {InkIcon} from './InkIcon';
 
@@ -31,7 +31,10 @@ export function InkFilterGroup({
   style,
 }: InkFilterGroupProps) {
   return (
-    <div role="group" aria-label="Ink color filters" style={{display: 'flex', gap: 4, ...style}}>
+    <div
+      role="group"
+      aria-label="Ink color filters"
+      style={{display: 'flex', gap: SPACING.xs, ...style}}>
       {inks.map((ink) => (
         <FilterButton
           key={ink}

@@ -1,6 +1,6 @@
-import {useState} from 'react';
-import {COLORS, DISABLED_STYLE, EASING, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {GOLD_GLOW} from '../../../shared/constants';
 import {CountBadge} from '../../../shared/components/CountBadge';
+import {ToolbarToggle} from '../../../shared/components/ToolbarToggle';
 
 interface MechanicsButtonProps {
   onClick: () => void;
@@ -28,58 +28,29 @@ function MechanicsIcon() {
   );
 }
 
-/** Gold-outlined "Mechanics" button — primary-accent treatment that stands out
- *  against neutral chrome while staying distinct from FiltersButton's filled gradient.
- *  Rest:   gold border + gold text + faint gold tint background
- *  Hover:  brighter gold + slightly stronger tint
- *  Active: same gold border + filled gold tint + soft glow (count badge differentiates further) */
+/** With mechanics chosen, the outline fills with the gold selection tint and glow. */
+const CHOSEN_STYLE: React.CSSProperties = {
+  background: GOLD_GLOW.activeBg,
+  boxShadow: GOLD_GLOW.shadow,
+};
+
+/**
+ * The phone toolbar's "Mechanics" button, which opens the mechanics sheet: a ToolbarToggle in its
+ * ghost outline beside the filled Filters button. Chosen mechanics fill it with the gold
+ * selection tint and glow, and its count badge says how many.
+ */
 export function MechanicsButton({onClick, activeCount, isMobile, disabled}: MechanicsButtonProps) {
-  const [hovered, setHovered] = useState(false);
-  const active = activeCount > 0;
-  // A pointer over the button while it's off doesn't light it.
-  const lit = hovered && !disabled;
-
-  const background = active
-    ? 'rgba(212, 175, 55, 0.14)'
-    : lit
-      ? 'rgba(212, 175, 55, 0.08)'
-      : 'rgba(212, 175, 55, 0.04)';
-  const boxShadow = active
-    ? '0 0 12px rgba(212, 175, 55, 0.25)'
-    : lit
-      ? '0 0 8px rgba(212, 175, 55, 0.15)'
-      : 'none';
-
   return (
-    <button
-      type="button"
+    <ToolbarToggle
+      active={false}
+      isMobile={isMobile}
       onClick={onClick}
       disabled={disabled}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       aria-label="Mechanics"
-      style={{
-        height: 34,
-        padding: isMobile ? `0 ${SPACING.md}px` : `0 ${SPACING.section}px`,
-        border: `1px solid ${COLORS.primary}`,
-        background,
-        color: COLORS.primary,
-        fontFamily: FONTS.body,
-        fontSize: `${FONT_SIZES.base}px`,
-        fontWeight: 500,
-        borderRadius: `${RADIUS.lg}px`,
-        boxShadow,
-        cursor: 'pointer',
-        flexShrink: 0,
-        display: 'flex',
-        alignItems: 'center',
-        gap: SPACING.sm,
-        transition: `background 0.15s ${EASING.snappy}, box-shadow 0.15s ${EASING.snappy}`,
-        ...(disabled ? DISABLED_STYLE : {}),
-      }}>
+      style={activeCount > 0 ? CHOSEN_STYLE : undefined}>
       <MechanicsIcon />
       Mechanics
       <CountBadge count={activeCount} />
-    </button>
+    </ToolbarToggle>
   );
 }

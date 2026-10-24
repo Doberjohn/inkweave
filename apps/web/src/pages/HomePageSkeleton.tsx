@@ -1,7 +1,7 @@
 import Skeleton from 'react-loading-skeleton';
 import {FeaturedCardsSkeleton} from '../features/cards/components/FeaturedCardsSkeleton';
 import {Footer} from '../shared/components/Footer';
-import {COLORS, HERO_LOGO_IMG, RADIUS, SPACING, Z_INDEX} from '../shared/constants';
+import {COLORS, FONT_SIZES, HERO_LOGO_IMG, RADIUS, SPACING, Z_INDEX} from '../shared/constants';
 import {HOME_PAGE_STYLE, homeMainStyle} from './homeFrame';
 
 /**
@@ -80,7 +80,7 @@ const DESKTOP_HERO_STYLES: HeroSkeletonStyles = {
   logo: {display: 'block', width: 600, maxWidth: '100%', height: 'auto', userSelect: 'none'},
   subtitleContainer: {textAlign: 'center', marginBottom: SPACING.xxxl, padding: undefined},
   subtitleText: {
-    fontSize: '20px',
+    fontSize: `${FONT_SIZES.xxl}px`,
     color: COLORS.heroSubtitle,
     margin: 0,
     lineHeight: '28px',
@@ -113,7 +113,7 @@ const MOBILE_HERO_STYLES: HeroSkeletonStyles = {
   logo: {display: 'block', width: 380, maxWidth: '100%', height: 'auto', userSelect: 'none'},
   subtitleContainer: {textAlign: 'center', marginBottom: SPACING.xxl, padding: `0 ${SPACING.sm}px`},
   subtitleText: {
-    fontSize: '16px',
+    fontSize: `${FONT_SIZES.xl}px`,
     color: COLORS.heroSubtitle,
     margin: 0,
     lineHeight: '22px',
