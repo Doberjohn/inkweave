@@ -74,6 +74,21 @@ describe('CtaButton', () => {
     expect(btn.style.cursor).toBe('not-allowed');
   });
 
+  it('looks off under aria-disabled without warming on hover or scaling on press (#790)', () => {
+    render(
+      <CtaButton variant="neutral" aria-disabled="true">
+        Next
+      </CtaButton>,
+    );
+    const btn = screen.getByRole('button');
+    fireEvent.mouseEnter(btn);
+    fireEvent.mouseDown(btn);
+    expect(btn.style.border).toContain('51, 51, 85'); // surfaceBorder, not gold
+    expect(btn.style.transform).not.toBe('scale(0.97)');
+    expect(btn.style.opacity).toBe('0.4');
+    expect(btn).not.toBeDisabled();
+  });
+
   it('scales down while pressed and recovers on release', () => {
     render(<CtaButton>Press</CtaButton>);
     const btn = screen.getByRole('button');

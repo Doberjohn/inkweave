@@ -21,3 +21,6 @@ export const SmallMutedUnderline: Story = {
 };
 
 export const Disabled: Story = {args: {disabled: true, children: 'Undo'}};
+
+// Held off but focusable: looks disabled and stays at rest on hover (#790).
+export const AriaDisabled: Story = {args: {'aria-disabled': true, children: 'Edit'}};
