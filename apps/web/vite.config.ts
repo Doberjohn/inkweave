@@ -18,6 +18,8 @@ const SYNERGY_DIR = path.resolve(import.meta.dirname, 'public/data/synergies');
 const MANIFEST = path.join(SYNERGY_DIR, '_manifest.json');
 const ENGINE_SRC = path.join(ROOT, 'packages/synergy-engine/src');
 const CARD_DATA = path.resolve(import.meta.dirname, 'public/data/allCards.json');
+/** A hashed card image, as download-card-images.mjs names them: /card-images/{id}.{hash}.avif. */
+const HASHED_ART = /^\/card-images\/[^/]+\.[0-9a-f]{16}(-sm)?\.avif$/;
 const PREVIEW_DATA = path.resolve(import.meta.dirname, 'public/data/previewCards.json');
 // Precompute also writes the homepage's featured cards (#641), from this list or the env files'
 // VITE_FEATURED_CARD_IDS.
@@ -501,6 +503,9 @@ export default defineConfig({
         target: 'https://api.lorcana.ravensburger.com/images',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/card-images/, ''),
+        // A hashed file ({id}.{hash}.avif) is ours, never Ravensburger's: `pnpm download-images`
+        // writes them into public/, and a card with hashes and no links draws from them (#932).
+        bypass: (req) => (HASHED_ART.test(req.url ?? '') ? req.url : undefined),
       },
     },
   },

@@ -32,6 +32,8 @@ The Ravensburger rewrite in `vercel.json` is now a dev-only fallback, dead in pr
 
 `smallImageUrl` falls back to the `.avif` → `-sm.avif` string transform.
 
+A card with image hashes and no links, as every card in a production deployment's data is (#932), draws from its hashed files in this mode too: admin reads inkweave.ink's card data in such a build. The dev proxy serves a hashed path from `public/card-images/` (which `pnpm download-images` fills) rather than forwarding it to Ravensburger.
+
 ## Service worker
 
 Caches `/card-images/.+\.avif$` with workbox `CacheFirst` (30 days). Content-addressed URLs make this safe. The SW's `navigateFallbackDenylist` excludes `/card-images/*`, `/card-images-preview/*`, and `/data/*`, so direct asset-URL navigations hit the file rather than the SPA's NotFoundPage.
