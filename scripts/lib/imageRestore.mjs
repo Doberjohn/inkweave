@@ -12,7 +12,8 @@
  *   2. OUR DEPLOYED `allCards.json` IS ALREADY THE RECORD OF WHAT WE BUILT. The
  *      build injects `imageHash`/`imageHashSm` into it, and it ships. So the live
  *      site publishes both the hashes it is serving AND the source URLs they came
- *      from.
+ *      from: in the card files, or in `data/image-sources.json` from a build that
+ *      moves them out of those (#932; `withImageSources` puts them back).
  *
  * WHY THERE IS NO COMMITTED MANIFEST. The first design recorded our output hashes
  * in a committed file. That cannot work: AVIF encoding is not reproducible across
@@ -83,6 +84,20 @@ export function indexById(cards) {
     for (const variant of card.variants ?? []) index.set(String(variant.id), variant);
   }
   return index;
+}
+
+/**
+ * Give each deployed entry its source URLs back from production's record of them (#932). A
+ * local-images build that moves every card's and printing's `images` out of the card files keeps
+ * them in `data/image-sources.json`, so the entries `planFor` compares carry none of their own. An
+ * entry that still carries its URLs, from a deployment older than the record, keeps them.
+ */
+export function withImageSources(deployed, sources) {
+  for (const [id, images] of Object.entries(sources ?? {})) {
+    const entry = deployed.get(id);
+    if (entry && !entry.images) deployed.set(id, {...entry, images});
+  }
+  return deployed;
 }
 
 /**

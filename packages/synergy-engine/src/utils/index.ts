@@ -163,7 +163,7 @@ export {
 } from './mechanics.js';
 export type {Mechanic} from './mechanics.js';
 
-export {transformCard, transformCards} from './cardTransformer.js';
+export {slimRawCard, transformCard, transformCards} from './cardTransformer.js';
 export type {LorcanaJSONCard, RawCardVariant} from './cardTransformer.js';
 
 export {cardSlug, cardPath} from './cardSlug.js';

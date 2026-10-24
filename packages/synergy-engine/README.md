@@ -40,7 +40,7 @@ if (result.hasSynergy) {
 
 ### Card utilities without the rules
 
-The root builds into a single module, so importing anything from it brings the whole rule set along. `inkweave-synergy-engine/card` exports the three card utilities with no rule dependencies on their own. The web app imports them from there, which keeps the rules out of its page bundles (#640).
+The root builds into a single module, so importing anything from it brings the whole rule set along. `inkweave-synergy-engine/card` exports four card utilities with no rule dependencies of their own. The web app imports three of them from there, which keeps the rules out of its page bundles (#640). The fourth, `slimRawCard`, is the slimming `transformCard` reverses, for the card data the build will ship (#929).
 
 ```typescript
 import { cardPath, isCoreSet, transformCard } from "inkweave-synergy-engine/card";
