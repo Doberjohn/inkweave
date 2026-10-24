@@ -1,8 +1,23 @@
 import {useId, useLayoutEffect, useRef, useState, type RefObject} from 'react';
 import {createPortal} from 'react-dom';
 import Skeleton from 'react-loading-skeleton';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, VISUALLY_HIDDEN, Z_INDEX, blackRgba, hexRgba} from '../../../shared/constants';
+import {
+  COLORS,
+  EASING,
+  FONTS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  VISUALLY_HIDDEN,
+  Z_INDEX,
+  blackRgba,
+  hexRgba,
+} from '../../../shared/constants';
+import {CtaButton} from '../../../shared/components';
 import {useContainerWidth, useTooltip} from '../../../shared/hooks';
+
+/** Where a playstyle's mechanic tiles stand: loading, failed to load, or loaded (#930). */
+export type RoleTilesStatus = 'loading' | 'failed' | 'loaded';
 
 export interface RoleTile {
   role: string;
@@ -195,22 +210,41 @@ export function RoleTileRow({
 }
 
 /**
+ * A playstyle's mechanic tiles in the state they stand in (#930): their placeholder while they
+ * load, a line saying they failed with a Try again that loads them alone, or the tiles.
+ */
+export function RoleTiles({
+  status,
+  onRetry,
+  ...row
+}: RoleTileRowProps & {status: RoleTilesStatus; onRetry: () => void}) {
+  if (status === 'loading') {
+    return row.layout === 'grid' ? <RoleTileGridSkeleton /> : <RoleTileRowSkeleton />;
+  }
+  if (status === 'failed') return <RoleTilesFailed layout={row.layout} onRetry={onRetry} />;
+  return <RoleTileRow {...row} />;
+}
+
+/**
+ * The loaded compact row's box: its padding within the same width, so as many tiles fit, and a
+ * compact tile's height inside that padding before the row has measured any tile.
+ */
+function rowBoxStyle(): React.CSSProperties {
+  return {
+    ...getSectionStyle({collapsed: true, centered: true}),
+    height: ROW_PADDING.top + TILE_MIN_HEIGHT_COMPACT + ROW_PADDING.bottom,
+  };
+}
+
+/**
  * The compact row's place while a playstyle's cards load (#914): the row's box, holding as many
  * tile placeholders as the loaded row fits across, so what follows starts where it will.
  */
-export function RoleTileRowSkeleton() {
+function RoleTileRowSkeleton() {
   const rowRef = useRef<HTMLDivElement>(null);
   const width = useContainerWidth(rowRef);
   return (
-    <div
-      ref={rowRef}
-      aria-hidden="true"
-      // The loaded row's box: its padding within the same width, so as many tiles fit, and a compact
-      // tile's height inside that padding before the row has measured any tile.
-      style={{
-        ...getSectionStyle({collapsed: true, centered: true}),
-        height: ROW_PADDING.top + TILE_MIN_HEIGHT_COMPACT + ROW_PADDING.bottom,
-      }}>
+    <div ref={rowRef} aria-hidden="true" style={rowBoxStyle()}>
       {Array.from({length: cellCapacity(width)}, (_, i) => (
         <Skeleton
           key={i}
@@ -221,6 +255,57 @@ export function RoleTileRowSkeleton() {
           style={{display: 'block', flexShrink: 0}}
         />
       ))}
+    </div>
+  );
+}
+
+/** The sheet grid's place while its tiles load again (#930): two rows of tile placeholders. */
+function RoleTileGridSkeleton() {
+  return (
+    <div aria-hidden="true" style={getGridStyle()}>
+      {Array.from({length: 4}, (_, i) => (
+        <Skeleton
+          key={i}
+          inline
+          height={TILE_MIN_HEIGHT_FULL}
+          borderRadius={RADIUS.lg}
+          style={{display: 'block'}}
+        />
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The tiles' place when they failed to load and the cards did not (#930): what happened, and a
+ * Try again. In the row it keeps the row's box, as the placeholder does, so the cards below stay
+ * put through the retry. An alert, as the binder's failure is (#790): it takes the place of tiles
+ * the reader was waiting for.
+ */
+function RoleTilesFailed({
+  onRetry,
+  layout,
+}: {
+  onRetry: () => void;
+  layout: RoleTileRowProps['layout'];
+}) {
+  const box = layout === 'grid' ? {padding: `${SPACING.xxl}px 0`} : rowBoxStyle();
+  return (
+    <div
+      style={{
+        ...box,
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: SPACING.md,
+      }}>
+      <p role="alert" style={{margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.lg}px`}}>
+        Couldn&apos;t load this playstyle&apos;s mechanics.
+      </p>
+      <CtaButton variant="ghost" onClick={onRetry}>
+        Try again
+      </CtaButton>
     </div>
   );
 }
@@ -264,7 +349,7 @@ function getRoleTileButtonStyle({active, hovered, minHeight, fill}: RoleTileButt
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     minHeight,
     transition: `transform 0.15s ${EASING.snappy}, border-color 0.15s ${EASING.snappy}, background 0.15s ${EASING.snappy}, box-shadow 0.2s ${EASING.snappy}`,
     transform: hovered && !active ? 'translateY(-1px)' : 'translateY(0)',
@@ -445,7 +530,7 @@ function getShowMoreTileStyle({hovered, minHeight}: {hovered: boolean; minHeight
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: SPACING.sm,
     minHeight,
     transition: `border-color 0.15s ${EASING.snappy}, background 0.15s ${EASING.snappy}, transform 0.15s ${EASING.snappy}`,
     transform: hovered ? 'translateY(-1px)' : 'translateY(0)',

@@ -1,9 +1,17 @@
-import {useState} from 'react';
+import {useRef, useState} from 'react';
 import {useParams, useNavigate, Navigate} from 'react-router-dom';
 import type {PlaystyleId, LorcanaCard} from 'inkweave-synergy-engine';
 import {getPlaystyleById, mechanicDescription, mechanicLabel} from '../features/synergies/engineCatalog';
-import {usePrecomputedPlaystyleCards, type MechanicIdsByCard} from '../features/synergies/hooks';
-import {RoleTileRow, RoleTileRowSkeleton, type RoleTile} from '../features/synergies/components/RoleTileRow';
+import {
+  usePrecomputedPlaystyleCards,
+  type MechanicIdsByCard,
+  type MechanicsStatus,
+} from '../features/synergies/hooks';
+import {
+  RoleTiles,
+  type RoleTile,
+  type RoleTilesStatus,
+} from '../features/synergies/components/RoleTileRow';
 import {MechanicsBottomSheet} from '../features/synergies/components/MechanicsBottomSheet';
 import {MechanicsButton} from '../features/synergies/components/MechanicsButton';
 import {Chip} from '../shared/components/Chip';
@@ -119,7 +127,7 @@ function PlaystyleHero({
             color: COLORS.textMuted,
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
+            gap: SPACING.sm,
           }}>
           <a
             href="/playstyles"
@@ -435,12 +443,8 @@ export function PlaystyleDetailPage() {
   const toggleRole = (role: string) => setActiveRoles((prev) => toggleSetMember(prev, role));
 
   const {playstyle, ui} = useResolvedPlaystyle(playstyleId);
-  const {
-    cards: playstyleCards,
-    mechanicIds,
-    ...playstyleCardsLoad
-  } = usePrecomputedPlaystyleCards(playstyle?.id);
-  const pageLoad = combineLoads({isLoading, error, retry: retryLoad}, playstyleCardsLoad);
+  const playstyleLoad = usePlaystyleDetailLoad(playstyle?.id, {isLoading, error, retry: retryLoad});
+  const {cards: playstyleCards, mechanicIds, pageLoad, tileRow} = playstyleLoad;
 
   const combinedFilters = buildCombinedFilters(filters, inkFilters, typeFilters, costFilters);
   const sortedCards = applyFilterAndSort(playstyleCards, searchQuery, combinedFilters, sortOrder);
@@ -501,6 +505,7 @@ export function PlaystyleDetailPage() {
         goHome={goHome}
         goPlaystyles={goPlaystyles}
         handleCardSelect={handleCardSelect}
+        tileRow={tileRow}
         roleChips={roleChips}
         activeRoles={activeRoles}
         toggleRole={toggleRole}
@@ -522,6 +527,7 @@ export function PlaystyleDetailPage() {
       goHome={goHome}
       goPlaystyles={goPlaystyles}
       handleCardSelect={handleCardSelect}
+      tileRow={tileRow}
       roleChips={roleChips}
       activeRoles={activeRoles}
       toggleRole={toggleRole}
@@ -550,6 +556,36 @@ function combineLoads(
 ): {isLoading: boolean; retry: (() => void) | null} {
   const failed = [cardData, playstyleCards].find((load) => load.error);
   return {isLoading: cardData.isLoading || playstyleCards.isLoading, retry: failed?.retry ?? null};
+}
+
+/** The mechanic tiles' state on the page, and the retry their failure offers (#930). */
+interface TileRow {
+  status: RoleTilesStatus;
+  retry: () => void;
+}
+
+/**
+ * The mechanic tiles' state: loading while the page is, and while they load again after a
+ * failure, which only the tiles wait for (#930).
+ */
+function tileRowStatus(pageLoading: boolean, mechanics: MechanicsStatus): RoleTilesStatus {
+  if (pageLoading || mechanics === 'reloading') return 'loading';
+  return mechanics === 'failed' ? 'failed' : 'loaded';
+}
+
+/**
+ * The playstyle's cards and mechanic ids, the page's load over them and the card data, and the
+ * tiles' own state, which fails without failing the page (#930).
+ */
+function usePlaystyleDetailLoad(playstyleId: PlaystyleId | undefined, cardData: PageLoad) {
+  const {cards, mechanicIds, mechanicsStatus, retryMechanics, ...playstyleCardsLoad} =
+    usePrecomputedPlaystyleCards(playstyleId);
+  const pageLoad = combineLoads(cardData, playstyleCardsLoad);
+  const tileRow: TileRow = {
+    status: tileRowStatus(pageLoad.isLoading, mechanicsStatus),
+    retry: retryMechanics,
+  };
+  return {cards, mechanicIds, pageLoad, tileRow};
 }
 
 // ── Page sub-views (extracted to keep PlaystyleDetailPage under CC 10) ──
@@ -654,32 +690,43 @@ function PlaystyleCardGrid({
 
 /**
  * The desktop mechanics row, over a gold rule. While the cards load, its placeholder holds the
- * row's box, so the grid starts where it will (#914).
+ * row's box, so the grid starts where it will (#914). When the tiles failed and the cards did
+ * not, the row says so in the same box, with a Try again (#930).
  */
 function DesktopMechanicsRow({
-  isLoading,
+  tileRow,
   roleChips,
   activeRoles,
   toggleRole,
 }: {
-  isLoading: boolean;
+  tileRow: TileRow;
   roleChips: RoleChip[];
   activeRoles: ReadonlySet<string>;
   toggleRole: (role: string) => void;
 }) {
-  if (!isLoading && roleChips.length === 0) return null;
+  const rowRef = useRef<HTMLDivElement>(null);
+  if (tileRow.status === 'loaded' && roleChips.length === 0) return null;
+  // Try again swaps its line for the placeholder, which unmounts the button that had focus, so
+  // the row takes focus first and keeps it while the tiles load, as the binder does (#790).
+  const retry = () => {
+    rowRef.current?.focus();
+    tileRow.retry();
+  };
   return (
-    <div style={{padding: '32px 32px 0'}}>
-      {isLoading ? (
-        <RoleTileRowSkeleton />
-      ) : (
-        <RoleTileRow
-          tiles={roleChips.map(toRoleTile)}
-          activeRoles={activeRoles}
-          onToggle={toggleRole}
-          showDescriptions={false}
-        />
-      )}
+    <div
+      ref={rowRef}
+      tabIndex={-1}
+      role="group"
+      aria-label="Mechanics"
+      style={{padding: '32px 32px 0'}}>
+      <RoleTiles
+        status={tileRow.status}
+        onRetry={retry}
+        tiles={roleChips.map(toRoleTile)}
+        activeRoles={activeRoles}
+        onToggle={toggleRole}
+        showDescriptions={false}
+      />
       <hr
         aria-hidden="true"
         style={{
@@ -701,6 +748,7 @@ function PlaystyleDetailMobileView({
   goHome,
   goPlaystyles,
   handleCardSelect,
+  tileRow,
   roleChips,
   activeRoles,
   toggleRole,
@@ -717,6 +765,7 @@ function PlaystyleDetailMobileView({
   goHome: () => void;
   goPlaystyles: () => void;
   handleCardSelect: (card: {id: string}) => void;
+  tileRow: TileRow;
   roleChips: RoleChip[];
   activeRoles: ReadonlySet<string>;
   toggleRole: (role: string) => void;
@@ -730,9 +779,10 @@ function PlaystyleDetailMobileView({
 
   // Render MechanicsButton + active role chips into the toolbar's extraChips slot
   // so they sit alongside ink/cost filter chips instead of in a separate row. While the
-  // cards load, the button holds its place, off.
+  // cards load, the button holds its place, off. When the tiles failed, it opens the sheet
+  // that says so, with its Try again (#930).
   const toolbarExtras =
-    isLoading || roleChips.length > 0 ? (
+    tileRow.status !== 'loaded' || roleChips.length > 0 ? (
       <>
         <MechanicsButton
           onClick={() => setSheetOpen(true)}
@@ -793,6 +843,8 @@ function PlaystyleDetailMobileView({
         isOpen={sheetOpen}
         onClose={() => setSheetOpen(false)}
         tiles={roleChips.map(toRoleTile)}
+        status={tileRow.status}
+        onRetry={tileRow.retry}
         activeRoles={activeRoles}
         onToggle={toggleRole}
         onClearAll={clearRoles}
@@ -809,6 +861,7 @@ function PlaystyleDetailDesktopView({
   goHome,
   goPlaystyles,
   handleCardSelect,
+  tileRow,
   roleChips,
   activeRoles,
   toggleRole,
@@ -824,6 +877,7 @@ function PlaystyleDetailDesktopView({
   goHome: () => void;
   goPlaystyles: () => void;
   handleCardSelect: (card: {id: string}) => void;
+  tileRow: TileRow;
   roleChips: RoleChip[];
   activeRoles: ReadonlySet<string>;
   toggleRole: (role: string) => void;
@@ -862,7 +916,7 @@ function PlaystyleDetailDesktopView({
         />
         <BrowseToolbar {...toolbarProps} isMobile={false} />
         <DesktopMechanicsRow
-          isLoading={isLoading}
+          tileRow={tileRow}
           roleChips={roleChips}
           activeRoles={activeRoles}
           toggleRole={toggleRole}

@@ -1,6 +1,6 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
-import {RoleTileRow, type RoleTile} from '../RoleTileRow';
+import {RoleTileRow, RoleTiles, type RoleTile, type RoleTilesStatus} from '../RoleTileRow';
 
 const tiles: RoleTile[] = [
   {role: 'location', label: 'Locations', description: 'Location cards', count: 54},
@@ -111,5 +111,42 @@ describe('RoleTileRow', () => {
     fireEvent.focus(tile);
     expect(tile).toHaveAccessibleDescription('Boost description');
     expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+});
+
+/** RoleTiles in `status`, holding the tiles above. */
+function renderTiles(status: RoleTilesStatus, layout: 'carousel' | 'grid', onRetry = vi.fn()) {
+  render(
+    <RoleTiles
+      status={status}
+      onRetry={onRetry}
+      tiles={tiles}
+      activeRoles={new Set()}
+      onToggle={vi.fn()}
+      layout={layout}
+    />,
+  );
+}
+
+describe('RoleTiles', () => {
+  it.each(['carousel', 'grid'] as const)(
+    'says in the %s layout that the tiles failed, and asks again on Try again (#930)',
+    (layout) => {
+      const onRetry = vi.fn();
+      renderTiles('failed', layout, onRetry);
+
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        "Couldn't load this playstyle's mechanics.",
+      );
+      expect(screen.queryByRole('button', {name: /^Boost\b/})).toBeNull();
+      fireEvent.click(screen.getByRole('button', {name: 'Try again'}));
+      expect(onRetry).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each(['carousel', 'grid'] as const)('shows no tile or button while loading, %s', (layout) => {
+    renderTiles('loading', layout);
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 });

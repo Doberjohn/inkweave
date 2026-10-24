@@ -25,7 +25,9 @@ const meta: Meta<typeof MechanicsBottomSheet> = {
     onClose: fn(),
     onToggle: fn(),
     onClearAll: fn(),
+    onRetry: fn(),
     tiles: toyTiles,
+    status: 'loaded',
     activeRoles: new Set<string>(),
   },
 };
@@ -48,4 +50,14 @@ export const SinglePopulatedMechanic: Story = {
 
 export const Closed: Story = {
   args: {isOpen: false},
+};
+
+/** The tiles failed to load while the cards loaded (#930): the sheet says so, with a Try again. */
+export const Failed: Story = {
+  args: {status: 'failed', tiles: []},
+};
+
+/** After Try again, until the tiles arrive: placeholders where they will be (#930). */
+export const LoadingAgain: Story = {
+  args: {status: 'loading', tiles: []},
 };

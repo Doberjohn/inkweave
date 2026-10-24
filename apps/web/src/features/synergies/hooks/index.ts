@@ -7,4 +7,5 @@ export {
   useAllPlaystyleCards,
   usePreloadPlaystyleMechanics,
 } from './usePrecomputedPlaystyles';
+export type {MechanicsStatus} from './usePrecomputedPlaystyles';
 export type {MechanicIdsByCard} from './playstyleFiles';

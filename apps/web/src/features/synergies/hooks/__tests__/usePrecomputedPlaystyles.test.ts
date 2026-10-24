@@ -133,7 +133,7 @@ describe('usePrecomputedPlaystyleCards', () => {
     expect(result.current.mechanicIds).toEqual(MECHANICS['lore-denial']);
   });
 
-  it('still shows the cards when the mechanic ids fail, without tiles, and logs why', async () => {
+  it('shows the cards when the mechanic ids fail, says so, and logs why', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.stubGlobal(
       'fetch',
@@ -145,11 +145,55 @@ describe('usePrecomputedPlaystyleCards', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.cards.map((c) => c.id)).toEqual(['1', '2']);
     expect(result.current.mechanicIds).toEqual({});
+    expect(result.current.mechanicsStatus).toBe('failed');
     expect(result.current.error).toBeNull();
     expect(consoleError).toHaveBeenCalledWith(
       'Failed to load playstyle mechanics:',
       expect.any(Error),
     );
+  });
+
+  it('asks for the mechanic ids alone on retryMechanics, with the cards still shown', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const answers = [{ok: false, status: 503}, json(MECHANICS)];
+    const fetchMock = byFile(() => answers.shift());
+    vi.stubGlobal('fetch', fetchMock);
+    const loadingByRender: boolean[] = [];
+
+    const {result} = renderHook(() => {
+      const playstyle = usePrecomputedPlaystyleCards('lore-denial');
+      loadingByRender.push(playstyle.isLoading);
+      return playstyle;
+    });
+    await waitFor(() => expect(result.current.mechanicsStatus).toBe('failed'));
+    const fromRetry = loadingByRender.length;
+    act(() => result.current.retryMechanics());
+    expect(result.current.mechanicsStatus).toBe('reloading');
+
+    await waitFor(() => expect(result.current.mechanicsStatus).toBe('loaded'));
+    expect(result.current.mechanicIds).toEqual(MECHANICS['lore-denial']);
+    // The page kept its cards through the retry, and asked for its card ids only once.
+    expect(loadingByRender.slice(fromRetry)).not.toContain(true);
+    const cardIdRequests = fetchMock.mock.calls.filter(([url]) =>
+      url.endsWith('/_playstyles.json'),
+    );
+    expect(cardIdRequests).toHaveLength(1);
+  });
+
+  it('says the tiles failed again when a retry of the mechanic ids fails', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      byFile(() => ({ok: false, status: 503})),
+    );
+
+    const {result} = renderHook(() => usePrecomputedPlaystyleCards('lore-denial'));
+    await waitFor(() => expect(result.current.mechanicsStatus).toBe('failed'));
+    act(() => result.current.retryMechanics());
+
+    await waitFor(() => expect(result.current.mechanicsStatus).toBe('failed'));
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
   });
 
   it('asks for the mechanic ids again on the next visit after they failed', async () => {
@@ -187,6 +231,7 @@ describe('usePrecomputedPlaystyleCards', () => {
     expect(result.current.error).not.toBeNull();
     act(() => result.current.retry());
 
+    await waitFor(() => expect(result.current.mechanicsStatus).toBe('loaded'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.cards.map((c) => c.id)).toEqual(['1', '2']);
     expect(result.current.mechanicIds).toEqual(MECHANICS['lore-denial']);

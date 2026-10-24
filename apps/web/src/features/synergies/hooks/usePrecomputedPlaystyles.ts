@@ -9,14 +9,21 @@ import {
   type MechanicIdsByCard,
 } from './playstyleFiles';
 
+/**
+ * Where a playstyle's mechanic ids stand (#930): their first load, which the page waits for; a
+ * load after they failed, which only the tiles wait for; failed; or loaded.
+ */
+export type MechanicsStatus = 'loading' | 'reloading' | 'failed' | 'loaded';
+
 // ── Hooks ──
 
 /**
  * Fetches pre-computed playstyle card lists.
  * Used by PlaystyleDetailPage for a single playstyle's cards and their mechanic ids (#930). It
- * loads until both have arrived, so the page draws its cards and their tiles in one render, as
- * when it worked the tiles out itself. If the mechanic ids fail, the cards still show, without
- * tiles, and `retry` asks for them again as well.
+ * loads until both have first answered, so the page draws its cards and their tiles in one
+ * render, as when it worked the tiles out itself. If the mechanic ids fail, the cards still show:
+ * `mechanicsStatus` says so, and `retryMechanics` asks for the ids again while the cards stay.
+ * `retry`, for cards that failed, asks for both.
  */
 export function usePrecomputedPlaystyleCards(playstyleId: string | undefined): {
   cards: LorcanaCard[];
@@ -24,6 +31,8 @@ export function usePrecomputedPlaystyleCards(playstyleId: string | undefined): {
   isLoading: boolean;
   error: Error | null;
   retry: () => void;
+  mechanicsStatus: MechanicsStatus;
+  retryMechanics: () => void;
 } {
   const {data, isLoading: allLoading, error, retry} = useAllPlaystyleCards();
   const mechanics = usePlaystyleMechanicIds();
@@ -33,55 +42,62 @@ export function usePrecomputedPlaystyleCards(playstyleId: string | undefined): {
   return {
     cards: psData?.allCards ?? [],
     mechanicIds: mechanicIds ?? {},
-    isLoading: allLoading || mechanics.isLoading,
+    isLoading: allLoading || mechanics.status === 'loading',
     error,
     // When both files failed, a retry of the cards alone would bring them back without tiles.
     retry: () => {
       retry();
       mechanics.retry();
     },
+    mechanicsStatus: mechanics.status,
+    retryMechanics: mechanics.retry,
   };
 }
 
 /**
  * Every playstyle card's mechanic ids, starting from the shared request's result (#913). A
- * failure leaves the tiles out rather than failing the page: it is logged, and `retry` or the
- * next visit asks again.
+ * failure leaves the tiles out rather than failing the page: it is logged, `status` says so, and
+ * `retry` or the next visit asks again.
  */
 function usePlaystyleMechanicIds(): {
   ids: Record<string, MechanicIdsByCard> | null;
-  isLoading: boolean;
+  status: MechanicsStatus;
   retry: () => void;
 } {
   const [ids, setIds] = useState(playstyleMechanicIdsIfLoaded);
-  const [isLoading, setIsLoading] = useState(() => playstyleMechanicIdsIfLoaded() === null);
+  const [status, setStatus] = useState<MechanicsStatus>(() =>
+    playstyleMechanicIdsIfLoaded() === null ? 'loading' : 'loaded',
+  );
   // Bumped by `retry`: a new attempt runs the fetch effect again.
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    const settle = (data: Record<string, MechanicIdsByCard> | null) => {
-      if (cancelled) return;
-      setIds(data);
-      setIsLoading(false);
-    };
 
-    fetchPlaystyleMechanicIds().then(settle, (err: unknown) => {
-      console.error('Failed to load playstyle mechanics:', err);
-      settle(null);
-    });
+    fetchPlaystyleMechanicIds().then(
+      (data) => {
+        if (cancelled) return;
+        setIds(data);
+        setStatus('loaded');
+      },
+      (err: unknown) => {
+        console.error('Failed to load playstyle mechanics:', err);
+        if (!cancelled) setStatus('failed');
+      },
+    );
 
     return () => {
       cancelled = true;
     };
   }, [attempt]);
 
+  // A load after a failure: the page keeps its cards, and only the tiles wait for it.
   const retry = () => {
-    setIsLoading(true);
+    setStatus('reloading');
     setAttempt((n) => n + 1);
   };
 
-  return {ids, isLoading, retry};
+  return {ids, status, retry};
 }
 
 /**

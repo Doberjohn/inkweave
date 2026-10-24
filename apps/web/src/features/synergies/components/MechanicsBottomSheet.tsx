@@ -2,12 +2,15 @@ import {useRef} from 'react';
 import {COLORS, EASING, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import {BottomSheet, IconButton, LinkButton} from '../../../shared/components';
 import {useDialogFocus, useScrollLock, useTransitionPresence} from '../../../shared/hooks';
-import {RoleTileRow, type RoleTile} from './RoleTileRow';
+import {RoleTiles, type RoleTile, type RoleTilesStatus} from './RoleTileRow';
 
 interface MechanicsBottomSheetProps {
   isOpen: boolean;
   onClose: () => void;
   tiles: RoleTile[];
+  /** Where the tiles stand: failed, the sheet offers a Try again that loads them (#930). */
+  status: RoleTilesStatus;
+  onRetry: () => void;
   activeRoles: ReadonlySet<string>;
   onToggle: (role: string) => void;
   onClearAll: () => void;
@@ -55,6 +58,8 @@ export function MechanicsBottomSheet({
   isOpen,
   onClose,
   tiles,
+  status,
+  onRetry,
   activeRoles,
   onToggle,
   onClearAll,
@@ -74,6 +79,12 @@ export function MechanicsBottomSheet({
   if (!mounted) return null;
 
   const hasActive = activeRoles.size > 0;
+  // Try again swaps its line for the placeholder, which unmounts the button that had focus: the
+  // sheet takes focus, as when it opened, so it stays inside the sheet.
+  const retry = () => {
+    sheetRef.current?.focus();
+    onRetry();
+  };
 
   return (
     <BottomSheet
@@ -96,7 +107,14 @@ export function MechanicsBottomSheet({
           WebkitOverflowScrolling: 'touch',
           padding: `${SPACING.md}px ${SPACING.lg}px ${SPACING.lg}px`,
         }}>
-        <RoleTileRow tiles={tiles} activeRoles={activeRoles} onToggle={onToggle} layout="grid" />
+        <RoleTiles
+          status={status}
+          onRetry={retry}
+          tiles={tiles}
+          activeRoles={activeRoles}
+          onToggle={onToggle}
+          layout="grid"
+        />
       </div>
     </BottomSheet>
   );

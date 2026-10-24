@@ -149,7 +149,6 @@ export const KNOWN_OFFENDERS = {
     'src/features/synergies/components/ColumnHeader.tsx', // x5
     'src/features/synergies/components/DeltaPanel.tsx', // x4
     'src/features/synergies/components/MobileComparisonView.tsx', // x4
-    'src/features/synergies/components/RoleTileRow.tsx', // x2
     'src/features/synergies/components/SynergyBreakdown.tsx', // x1
     'src/features/synergies/components/SynergyToolbar.tsx', // x3
     'src/features/voting/components/DistributionBar.tsx', // x4
@@ -158,7 +157,6 @@ export const KNOWN_OFFENDERS = {
     'src/pages/InDepthVotePage.tsx', // x9
     'src/pages/InkHubPage.tsx', // x1
     'src/pages/NotFoundPage.tsx', // x1
-    'src/pages/PlaystyleDetailPage.tsx', // x2
     'src/pages/PlaystyleGalleryPage.tsx', // x1
     'src/pages/PrivacyPage.tsx', // x1
     'src/pages/VotePage.tsx', // x7
