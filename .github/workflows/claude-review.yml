@@ -185,13 +185,15 @@ jobs:
             finished=false
           fi
           if [ -n "$summary" ]; then
-            # GitHub takes a comment of up to 65,536 characters, and a zero-width space after
-            # each @ keeps the quoted summary from mentioning anyone.
-            if [ "${#summary}" -gt 60000 ]; then
-              summary="${summary:0:60000} (cut short)"
-            fi
+            # A zero-width space after each @ keeps the quoted summary from mentioning anyone,
+            # and GitHub takes a comment of up to 65,536 characters, so the quote is cut after
+            # both have lengthened it.
             summary=${summary//@/@$'\xe2\x80\x8b'}
-            body+=$'\n\n'"> ${summary//$'\n'/$'\n'> }"
+            quote="> ${summary//$'\n'/$'\n'> }"
+            if [ "${#quote}" -gt 60000 ]; then
+              quote="${quote:0:60000} (cut short)"
+            fi
+            body+=$'\n\n'"$quote"
           fi
           gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$body"
           if [ "$finished" = false ]; then
