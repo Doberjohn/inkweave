@@ -41,7 +41,7 @@ function playwrightCoreDir() {
 function shippedBrowsersDir(coreDir) {
   const configured = process.env.PLAYWRIGHT_BROWSERS_PATH;
   if (configured === '0') return join(coreDir, '.local-browsers');
-  return configured || join(homedir(), '.cache', 'ms-playwright');
+  return configured ? resolve(ROOT, configured) : join(homedir(), '.cache', 'ms-playwright');
 }
 
 /** The commit the branch left origin/master at, so master's own later changes don't count. */
