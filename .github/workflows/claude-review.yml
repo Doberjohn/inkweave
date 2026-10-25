@@ -36,10 +36,15 @@ jobs:
     # Above the Review step's own 25 minutes plus the steps around it.
     timeout-minutes: 35
     # A new request for the same pull request replaces the review still running. Any
-    # other comment gets a group of its own run, so the job it skips can't cancel one.
+    # other comment, a request from someone without write access included, gets a group
+    # of its own run, so the job it skips can't cancel one.
     concurrency:
       group: >-
-        ${{ github.event_name == 'issue_comment' && !startsWith(github.event.comment.body, '@claude review')
+        ${{ github.event_name == 'issue_comment'
+          && (!github.event.issue.pull_request
+            || github.event.issue.state != 'open'
+            || !startsWith(github.event.comment.body, '@claude review')
+            || !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association))
           && format('claude-review-skip-{0}', github.run_id)
           || format('claude-review-{0}', github.event.pull_request.number || github.event.issue.number) }}
       cancel-in-progress: true
