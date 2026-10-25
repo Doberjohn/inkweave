@@ -6,6 +6,7 @@ import react, {reactCompilerPreset} from '@vitejs/plugin-react';
 import babel from '@rolldown/plugin-babel';
 import {VitePWA} from 'vite-plugin-pwa';
 import {visualizer} from 'rollup-plugin-visualizer';
+import {isSharedModule, isVendorModule, startupGroupsGuard, uiCompilerGuard} from './build-guards.ts';
 import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import {createRequire} from 'node:module';
@@ -253,27 +254,46 @@ function resolveVitestWorkers(): number | undefined {
  * re-downloads none of the libraries. In the app group, every deploy that touched one of its
  * modules would re-download react-router too. List only modules the startup code already loads.
  * `tags: ['$initial']` drops a listed module from its group once nothing at startup imports it,
- * but a module that newly becomes shared splits out on its own until it is listed here.
+ * but a module that newly becomes shared splits out on its own until it is listed here. Each entry
+ * names one module, a package or a repo-relative file, so a module that moves (into inkweave-ui,
+ * say) changes its line, and the build fails on a line that matches no module
+ * (startupGroupsGuard in build-guards.ts).
  */
 const STARTUP_VENDOR = [
-  /node_modules[\\/]react[\\/]/,
-  /node_modules[\\/]react-dom[\\/]/,
-  /node_modules[\\/]scheduler[\\/]/,
-  /node_modules[\\/]react-router[\\/]/,
-  /node_modules[\\/]@vercel[\\/]analytics[\\/]/,
-  /node_modules[\\/]@vercel[\\/]speed-insights[\\/]/,
-  /node_modules[\\/]react-loading-skeleton[\\/]/,
+  'react',
+  'react-dom',
+  'scheduler',
+  'react-router',
+  '@vercel/analytics',
+  '@vercel/speed-insights',
+  'react-loading-skeleton',
 ];
 const STARTUP_SHARED = [
-  /src[\\/]shared[\\/]constants[\\/](theme|setLogos|promoSets|cardBar)\.ts$/,
-  /src[\\/]shared[\\/]hooks[\\/](useHover|useBoop|usePrintingSelection|useResponsive)\.ts$/,
-  /src[\\/]shared[\\/]utils[\\/](touchGuard|prefersReducedMotion)\.ts$/,
-  /src[\\/]shared[\\/]components[\\/](CtaButton|ctaStyles|IconButton|Footer)\.tsx?$/,
-  /src[\\/]shared[\\/]lib[\\/](analytics|posthog|sentry|whenLoadedAndIdle)\.ts$/,
-  /src[\\/]features[\\/]cards[\\/](loader|previewCards|inkHubs)\.ts$/,
-  /src[\\/]pages[\\/]homeFrame\.ts$/,
+  'apps/web/src/shared/constants/theme.ts',
+  'apps/web/src/shared/constants/setLogos.ts',
+  'apps/web/src/shared/constants/promoSets.ts',
+  'apps/web/src/shared/constants/cardBar.ts',
+  'apps/web/src/shared/hooks/useHover.ts',
+  'apps/web/src/shared/hooks/useBoop.ts',
+  'apps/web/src/shared/hooks/usePrintingSelection.ts',
+  'apps/web/src/shared/hooks/useResponsive.ts',
+  'apps/web/src/shared/utils/touchGuard.ts',
+  'apps/web/src/shared/utils/prefersReducedMotion.ts',
+  'apps/web/src/shared/components/CtaButton.tsx',
+  'apps/web/src/shared/components/ctaStyles.ts',
+  'apps/web/src/shared/components/IconButton.tsx',
+  'apps/web/src/shared/components/Footer.tsx',
+  'apps/web/src/shared/lib/analytics.ts',
+  'apps/web/src/shared/lib/posthog.ts',
+  'apps/web/src/shared/lib/sentry.ts',
+  'apps/web/src/shared/lib/whenLoadedAndIdle.ts',
+  'apps/web/src/features/cards/loader.ts',
+  'apps/web/src/features/cards/previewCards.ts',
+  'apps/web/src/features/cards/inkHubs.ts',
+  'apps/web/src/pages/homeFrame.ts',
 ];
-const matchesAny = (patterns: RegExp[]) => (id: string) => patterns.some((re) => re.test(id));
+const inStartupVendor = (id: string) => STARTUP_VENDOR.some((name) => isVendorModule(name)(id));
+const inStartupShared = (id: string) => STARTUP_SHARED.some((file) => isSharedModule(file)(id));
 
 // Staging's icons (#905). deploy-staging.yml sets INKWEAVE_ICON_SET=staging for its build alone,
 // so staging.inkweave.ink shows the Emerald and Ruby drop from public/brand/staging/, under the
@@ -503,6 +523,8 @@ export default defineConfig({
     }),
     inlineCssPlugin(),
     unloadableChunksPlugin(),
+    startupGroupsGuard({vendor: STARTUP_VENDOR, shared: STARTUP_SHARED}),
+    uiCompilerGuard(),
     !!process.env.SENTRY_AUTH_TOKEN &&
       sentryVitePlugin({
         org: process.env.SENTRY_ORG,
@@ -551,13 +573,13 @@ export default defineConfig({
               name: 'startup-vendor',
               priority: 2,
               tags: ['$initial'],
-              test: matchesAny(STARTUP_VENDOR),
+              test: inStartupVendor,
             },
             {
               name: 'startup-shared',
               priority: 1,
               tags: ['$initial'],
-              test: matchesAny(STARTUP_SHARED),
+              test: inStartupShared,
             },
           ],
         },
