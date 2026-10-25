@@ -21,18 +21,18 @@ const CARD_DATA = path.resolve(import.meta.dirname, 'public/data/allCards.json')
 /** A hashed card image, as download-card-images.mjs names them: /card-images/{id}.{hash}.avif. */
 const HASHED_ART = /^\/card-images\/[^/]+\.[0-9a-f]{16}(-sm)?\.avif$/;
 const PREVIEW_DATA = path.resolve(import.meta.dirname, 'public/data/previewCards.json');
-// Precompute also writes the homepage's featured cards (#641), from this list or the env files'
-// VITE_FEATURED_CARD_IDS.
+// Precompute also writes the homepage's featured cards (#641) from featuredCardIds.json, their
+// only source (#957).
 const FEATURED_CARDS = path.resolve(import.meta.dirname, 'public/data/featuredCards.json');
-const FEATURED_INPUTS = ['src/features/cards/featuredCardIds.json', '.env.local', '.env'].map((file) =>
-  path.resolve(import.meta.dirname, file),
+const FEATURED_IDS_FILE = path.resolve(
+  import.meta.dirname,
+  'src/features/cards/featuredCardIds.json',
 );
 
 /**
  * Rebuilds the engine and regenerates pre-computed synergies on dev server start
  * when missing or stale. Compares engine source, card and preview data and the
- * featured-card inputs' mtimes against _manifest.json, and a shell
- * VITE_FEATURED_CARD_IDS against the one featuredCards.json was built with.
+ * featured-card list's mtimes against _manifest.json.
  */
 function ensureSynergiesPlugin(): Plugin {
   return {
@@ -80,7 +80,6 @@ function checkStep(label: string, {error, status}: {error?: Error; status: numbe
 function synergyDataRefreshReason(): string | null {
   if (!fs.existsSync(MANIFEST) || !fs.existsSync(FEATURED_CARDS)) return 'missing';
   if (inputsNewerThanManifest()) return 'stale (engine source, card data or featured cards changed)';
-  if (featuredEnvChanged()) return 'stale (VITE_FEATURED_CARD_IDS changed in the environment)';
   return null;
 }
 
@@ -91,31 +90,8 @@ function inputsNewerThanManifest(): boolean {
     fs.existsSync(file) && fs.statSync(file).mtimeMs > manifestMtime;
   return (
     isNewerRecursive(ENGINE_SRC, manifestMtime) ||
-    [CARD_DATA, PREVIEW_DATA, ...FEATURED_INPUTS].some(newerThanManifest)
+    [CARD_DATA, PREVIEW_DATA, FEATURED_IDS_FILE].some(newerThanManifest)
   );
-}
-
-/**
- * Whether the shell's VITE_FEATURED_CARD_IDS differs from the value featuredCards.json was built
- * with. Env files are checked by date instead.
- */
-function featuredEnvChanged(): boolean {
-  return recordedFeaturedEnv() !== (process.env.VITE_FEATURED_CARD_IDS ?? null);
-}
-
-/**
- * The shell VITE_FEATURED_CARD_IDS featuredCards.json was built with, which precompute records as
- * metadata.envFeaturedIds (null when unset); undefined when the file can't be read, so it rebuilds.
- */
-function recordedFeaturedEnv(): string | null | undefined {
-  try {
-    const file = JSON.parse(fs.readFileSync(FEATURED_CARDS, 'utf8')) as {
-      metadata?: {envFeaturedIds?: string | null};
-    };
-    return file.metadata?.envFeaturedIds ?? null;
-  } catch {
-    return undefined;
-  }
 }
 
 /** Check if any file under `dir` has mtime newer than `threshold`. */
@@ -543,14 +519,6 @@ export default defineConfig({
     maxWorkers: resolveVitestWorkers(),
     setupFiles: ['./src/shared/test-utils/setup.ts'],
     exclude: ['**/node_modules/**', '**/e2e/**'],
-    // Pin render-gating feature-flag env vars to their default (unset) state so a
-    // developer's local .env.local override can't break unit tests. FeaturedCards
-    // reads VITE_FEATURED_CARD_IDS at module load and renders null when its curated
-    // IDs are unknown; without this pin, a local override makes its tests (which
-    // assume the default IDs) fail locally while passing in CI.
-    env: {
-      VITE_FEATURED_CARD_IDS: '',
-    },
     coverage: {
       reporter: ['text', 'json-summary', 'html'],
       exclude: [

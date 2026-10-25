@@ -12,7 +12,6 @@ interface ImportMetaEnv {
   readonly VITE_SHOW_ACCOUNTS?: string;
   readonly VITE_SHOW_COLLECTION?: string;
   readonly VITE_SHOW_FRIENDS?: string;
-  readonly VITE_FEATURED_CARD_IDS?: string;
 }
 
 /** The Vercel deployment environment the build ran for, or 'unknown' (vite.config.ts, #740). */

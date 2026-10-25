@@ -5,26 +5,12 @@ import {loadCardsFromJSON, type LorcanaJSONData} from './loader';
 import type {LorcanaCard} from './types';
 
 /**
- * The homepage's curated featured cards, one per ink. The list lives in featuredCardIds.json so
- * scripts/precompute-synergies.mjs can read it too; keep exactly 6 so the desktop 6-column and
- * mobile 3x2 grids stay symmetrical.
+ * The homepage's curated featured cards, one per ink, in display order. featuredCardIds.json is
+ * their only source (#957): scripts/precompute-synergies.mjs reads it too, and admin's Featured
+ * cards page edits it by committing to master, so a change ships with the next deploy. Keep
+ * exactly 6 so the desktop 6-column and mobile 3x2 grids stay symmetrical.
  */
-export const DEFAULT_FEATURED_IDS: string[] = featuredCardIds.map((entry) => entry.id);
-
-/**
- * The featured IDs from the build-time env var, falling back to the defaults. Vite inlines env
- * vars at build time, so changing this on Vercel requires a redeploy (the intended workflow).
- * Keep in step with resolveFeaturedIds in scripts/featured-cards.mjs.
- */
-export function resolveFeaturedIds(raw: string | undefined): string[] {
-  const parsed = (raw ?? '')
-    .split(',')
-    .map((id) => id.trim())
-    .filter(Boolean);
-  return parsed.length > 0 ? parsed : DEFAULT_FEATURED_IDS;
-}
-
-export const FEATURED_IDS = resolveFeaturedIds(import.meta.env.VITE_FEATURED_CARD_IDS);
+export const FEATURED_IDS: string[] = featuredCardIds.map((entry) => entry.id);
 
 /** The featured cards found in `cards`, in display order, skipping any without art. */
 export function pickFeatured(cards: LorcanaCard[]): LorcanaCard[] {
@@ -47,10 +33,10 @@ function forgetRequest(): null {
 
 /**
  * The featured cards from the small file precompute writes (#641), fetched once per page. Resolves
- * null when the file is missing, fails to load or doesn't hold every featured ID (an env override
- * the script didn't see), so the caller falls back to the full card list. Only a missing file (a
- * 404) or an incomplete one is kept for the page; any other failure is forgotten, so the next
- * caller tries again.
+ * null when the file is missing, fails to load or doesn't hold every featured ID (a card it
+ * couldn't find, or a file from an older build), so the caller falls back to the full card list.
+ * Only a missing file (a 404) or an incomplete one is kept for the page; any other failure is
+ * forgotten, so the next caller tries again.
  */
 export function fetchFeaturedCards(): Promise<LorcanaCard[] | null> {
   request ??= fetch(FEATURED_CARDS_PATH)

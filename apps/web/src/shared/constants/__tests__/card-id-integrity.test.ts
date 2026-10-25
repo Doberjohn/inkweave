@@ -2,7 +2,7 @@ import {describe, it, expect} from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import {PLAYSTYLE_UI} from '../playstyleUi';
-import {DEFAULT_FEATURED_IDS} from '../../../features/cards/featured';
+import {FEATURED_IDS} from '../../../features/cards/featured';
 
 // Referential-integrity guard for hard-coded card ids in prod-facing config.
 //
@@ -33,8 +33,8 @@ describe('hard-coded card-id integrity', () => {
     expect(dangling).toEqual([]);
   });
 
-  it('every DEFAULT_FEATURED_ID resolves to a card in the pool', () => {
-    const dangling = DEFAULT_FEATURED_IDS.filter((id) => !pool.has(String(id)));
+  it('every FEATURED_ID resolves to a card in the pool', () => {
+    const dangling = FEATURED_IDS.filter((id) => !pool.has(String(id)));
     expect(dangling).toEqual([]);
   });
 });
