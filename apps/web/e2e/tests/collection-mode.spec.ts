@@ -825,7 +825,7 @@ test.describe('Collection mode, signed in', () => {
     // The first row's glow fits inside the grid's scroller, which clips it: 24px above the
     // tile, past its 3px spread and 22px blur, nothing of it shows any more.
     const roomAbove = await tile.evaluate(
-      (t) => t.getBoundingClientRect().top - t.closest('[data-testid="virtuoso-scroller"]')!.getBoundingClientRect().top,
+      (t) => t.getBoundingClientRect().top - t.closest('[data-testid="browse-grid-scroller"]')!.getBoundingClientRect().top,
     );
     expect(roomAbove).toBeGreaterThanOrEqual(24);
 

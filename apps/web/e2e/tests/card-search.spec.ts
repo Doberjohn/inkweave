@@ -151,6 +151,7 @@ test.describe('Card Search and Filtering', () => {
     // A Set 1 card among the results: the search's cards have landed. A longer query, and a new
     // search once the box is emptied, reuse them.
     await search.fill('Ariel On Human');
+    await expect(search).toHaveValue('Ariel On Human');
     await expect(page.getByRole('button', {name: 'Ariel - On Human Legs', exact: true})).toBeVisible();
     await search.fill('');
     await expect(search).toHaveValue('');

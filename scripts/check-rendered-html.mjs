@@ -17,11 +17,12 @@
  * failure the `|| echo` exists to prevent.
  *
  * Checks, against a sample of card pages plus the /browse hub (and, for checks 6, 7, 9 and 10, the
- * homepage). Checks 2, 4 and 8 read the desktop capture alone, without the phone capture (#915):
+ * homepage). Checks 2, 4 and 8 read the desktop capture apart from the phone capture (#915):
  *   1. dist/card/<id>/<slug>/index.html exists
  *   2. it contains the card's fullName as visible content (not just an SPA shell)
  *   3. its <link rel="canonical"> is self-referential (the slug URL), not the homepage
- *   4. dist/browse/index.html links at least one /card/ URL
+ *   4. dist/browse/index.html links at least one /card/ URL, and so does its phone capture when
+ *      it has one (#931)
  *   5. no sampled page contains the crawl server's origin (#525) — Vite's __vitePreload
  *      resolves modulepreload hrefs against the page origin, so an uncleaned capture bakes
  *      http://localhost:PORT into 7-14 hints per page; vercel.json's `default-src 'self'`
@@ -435,12 +436,23 @@ function findCardPageOffenders(targetDir, card, route, {sdkChunks, phones}) {
     .concat(phoneCaptureOffenders(file, html, phones));
 }
 
-/** /browse is the corpus hub; a shell there is a failed crawl even if cards rendered. */
+/**
+ * /browse is the corpus hub; a shell there is a failed crawl even if cards rendered. Its phone
+ * capture links cards too: index.html swaps it in on a phone, and one read while the grid drew no
+ * rows shows a phone none (#931). Check 10 reports a phone capture that is missing or empty.
+ */
 function findBrowseHubOffenders(targetDir) {
   const file = join(targetDir, 'browse', 'index.html');
   if (!existsSync(file)) return [{file, reason: 'prerendered /browse missing'}];
-  if (!withoutPhoneCapture(readFileSync(file, 'utf8')).includes('href="/card/')) {
+  const html = readFileSync(file, 'utf8');
+  if (!withoutPhoneCapture(html).includes('href="/card/')) {
     return [{file, reason: 'links no /card/ URLs (empty shell?)'}];
+  }
+  const phone = readCaptures(html)?.phone.trim();
+  if (phone && !phone.includes('href="/card/')) {
+    return [
+      {file, reason: 'its phone capture links no /card/ URLs, so a phone shows no cards (#931)'},
+    ];
   }
   return [];
 }

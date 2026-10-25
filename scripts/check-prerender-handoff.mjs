@@ -21,7 +21,7 @@
  *      /browse%2F, served Browse's capture here while React Router shows the not-found page.
  *   2. A route with its own capture paints it once the inline script approves it, and never
  *      before (the app's code held).
- *   3. Browse's capture shows the sort option the app shows.
+ *   3. Browse's capture shows its cards on each screen (#931), and the sort option the app shows.
  *   4. With the inline script gone from the page (a script that failed), the app still renders
  *      and shows.
  *   5. Without JavaScript, a captured page shows as captured (index.html's <noscript> rule): on a
@@ -844,13 +844,18 @@ function withCaptureChecks(device, routes) {
   }));
 }
 
-/** Check 3 on `device`: Browse's captured sort option against the one the app shows. */
-function sortOptionCheck(device) {
+/**
+ * Check 3 on `device`: Browse's capture for this screen shows cards, and the sort option the app
+ * shows. The crawl reads a phone page after marking it, which takes it out of a phone's layout,
+ * so a grid that measured itself then would have drawn no rows (#931).
+ */
+function browseCaptureCheck(device) {
   return {
-    name: `3. /browse (${device}) captures the sort option the app shows`,
+    name: `3. /browse (${device}) captures its cards and the sort option the app shows`,
     run: async (browser, base) => {
-      const captured = (await visit(browser, base, {device, path: '/browse', app: false}))
-        .sortValues;
+      const held = await visit(browser, base, {device, path: '/browse', app: false});
+      if (!held.markup.includes('href="/card/')) return `its ${device} capture shows no card`;
+      const captured = held.sortValues;
       const browse = {device, path: '/browse', app: true, waitFor: '#root select'};
       const shown = (await visit(browser, base, browse)).sortValues;
       const same = captured.length > 0 && JSON.stringify(captured) === JSON.stringify(shown);
@@ -987,7 +992,7 @@ function planChecks(dist, cap) {
     controlCheck(device, withoutCapture[0]),
     ...withoutCaptureChecks(device, withoutCapture),
     ...withCaptureChecks(device, withCapture),
-    sortOptionCheck(device),
+    browseCaptureCheck(device),
     ...fallbackChecks(device, ['/browse', withoutCapture[0]]),
     ...screenChecks(device, eachCapture),
     ...(cap > 0 ? holdChecks(device, routes, cap) : []),
