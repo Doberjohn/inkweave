@@ -193,8 +193,8 @@ async function walkCards(page: Page, key: string) {
   const cards: string[] = [];
   const hidden: string[] = [];
   for (let focused = await focusedCard(page); focused; focused = await focusedCard(page)) {
-    // A press past the page's last link takes focus out of the page. Chromium then makes the
-    // body the active element, but Firefox keeps the card: a card twice running ends the walk.
+    // Chromium takes focus out of the page at a press past its last link; Playwright's Firefox
+    // leaves focus on that link. Either ends the walk.
     if (focused.card === cards.at(-1)) break;
     cards.push(focused.card);
     if (!focused.inView) hidden.push(focused.card);
@@ -225,8 +225,11 @@ test.describe('Accessibility: keyboard', () => {
     expect(new Set(forward.cards).size).toBe(LAYOUT.maxDisplayedCards);
     expect(forward.hidden).toEqual([]);
 
-    // Shift+Tab comes back to the last card and walks back through them all to the first.
-    await page.keyboard.press('Shift+Tab');
+    // Shift+Tab comes back to the last card and walks back through them all to the first. In
+    // Firefox the press past the last card left focus on it, so the walk starts there.
+    if ((await focusedCard(page))?.card !== forward.cards.at(-1)) {
+      await page.keyboard.press('Shift+Tab');
+    }
     const back = await walkCards(page, 'Shift+Tab');
     expect(back.cards).toEqual([...forward.cards].reverse());
     expect(back.hidden).toEqual([]);
