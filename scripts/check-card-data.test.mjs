@@ -118,6 +118,22 @@ describe('cardDataProblems', () => {
     ]);
   });
 
+  it('reports a build without the record when the deploy expects one', () => {
+    const kept = built();
+    kept['allCards.json'].cards[0].images = ART;
+    kept['allCards.json'].cards[0].variants[0].images = PRINTING_ART;
+    kept['collection/promos.json'][0].images = PROMO_ART;
+    expect(cardDataProblems({repo: repo(), built: kept, record: null, transformCard, expectRecord: true})).toEqual([
+      'image-sources.json: missing from the build',
+    ]);
+  });
+
+  it('reports a repo with no card files, which would check nothing', () => {
+    expect(cardDataProblems({repo: {}, built: {}, record: null, transformCard})).toEqual([
+      "no card files in the repo's data",
+    ]);
+  });
+
   it('never transforms promos.json, whose printings carry no text of their own', () => {
     const throwing = (card) => {
       if (card.baseId !== undefined) throw new Error('transformed a promo printing');

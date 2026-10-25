@@ -811,35 +811,38 @@ described below. Nothing it does feeds a synergy calculation.
 All figures below are what `size-limit` measures, **gzip level 9** in kB of 1,000
 bytes (`gzip -c` defaults to level 6 and reads a little larger), and they distinguish
 COMMITTED from SERVED. The build injects two 16-hex hashes per subject into every
-chunk, so a chunk is larger in production than in git. The index is never imaged, so
-it is served exactly as committed. Mixing the two bases is easy and gives numbers that
-look right and are not.
+chunk, then slims each chunk (#929: `slimRawCard`, the text once and only keyword
+abilities) and moves its image links into `data/image-sources.json` (#932), so a chunk
+is smaller in production than in git, though larger than a build without the hashes,
+such as CI's. The index is never imaged or slimmed, so it is served exactly as
+committed. Mixing the bases is easy and gives numbers that look right and are not.
 
 | File | Contents | committed | served |
 |---|---|---|---|
-| `collection/index.json` | all 2,009, light projection: grid, filters, name search | 65 kB | 65 kB |
-| `collection/{set}.json` | one per set: card text, stats, abilities, image URLs | 8-41 kB | 9-47 kB |
-| `collection/promos.json` | the catalog's 264 promos: printing fields, art, card name and id | 18 kB | 24 kB |
-| whole dataset | 16 files, 2.8 MB on disk | 438 kB | 495 kB |
+| `collection/index.json` | all 2,009, light projection: grid, filters, name search | 66 kB | 66 kB |
+| `collection/{set}.json` | one per set: card text, stats, abilities (image URLs committed only) | 8-41 kB | 5-24 kB |
+| `collection/promos.json` | the catalog's 264 promos: printing fields, art, card name and id | 19 kB | 12 kB |
+| whole dataset | 16 files, 2.8 MB on disk | 442 kB | 290 kB |
 
-The served column was measured by #729 before #805, and re-estimated for #805 by writing
-random 16-hex hashes where the build writes real ones: the same method reproduces #729's
-446 kB within 1%.
+The served column was measured for #929 and #932 on 2026-10-25 by running production's
+files, which carry the hashes, through `slimRawCard` less their `images`, as the build
+does. Before them the chunks were served at 430 kB.
 
 Both tiers are budgeted in `package.json`, and **deliberately as two entries rather
 than one**: collection mode is designed to load the index once plus the one chunk for
-the set being viewed, a **per-visit worst case of 112 kB** (65 kB index plus set 8 at
-47 kB served), under a quarter of the 495 kB total. `Collection index JSON` guards
+the set being viewed, a **per-visit worst case of 90 kB** (66 kB index plus set 8 at
+24 kB served), under a third of the 290 kB total. `Collection index JSON` guards
 that per-visit cost; `Collection set chunks` is a growth guard on the data as a whole,
 `promos.json` included. Until that tiering lands, `CollectionCardsProvider` loads every
-detail chunk and `promos.json`, all or nothing, and no index (430 kB served), a
+detail chunk and `promos.json`, all or nothing, and no index (225 kB served), a
 design-phase simplification explained at the top of `CollectionCardsContext.tsx`.
 
 **The chunk budget is set against the SERVED size, not the committed size.**
-Its files, the chunks and `promos.json`, gzip to 373 kB committed; because
-content-addressed hashes are high-entropy they barely compress, so injection adds about
-**57 kB**, to roughly 430 kB, against a 470 kB limit (#729 measured 391 kB committed and
-446 kB served before #805 took the Special cards out). Measuring the committed files
+Its files, the chunks and `promos.json`, gzip to about 160 kB as CI builds them, slimmed
+but without hashes; because content-addressed hashes are high-entropy they barely
+compress, so injection adds about **60 kB**, to roughly 225 kB, against a 250 kB limit
+(before #929 slimmed them: 373 kB committed and 430 kB served against 470 kB; #729
+measured 391 kB committed and 446 kB served before #805 took the Special cards out). Measuring the committed files
 would set a limit against an artifact nobody is served, which is the defect
 [#729](https://github.com/Doberjohn/inkweave/issues/729) describes. The index is not
 imaged, so its budget needs no such allowance.
@@ -1116,7 +1119,7 @@ Not part of this pipeline: `codescene-gate.mjs`, `test-supabase-integration.mjs`
 | `apps/web/vite.config.ts:142-192` | VitePWA workbox: navigateFallbackDenylist + runtimeCaching rules |
 | `apps/web/vite.config.ts:213-225` | Vite dev proxy for `/card-images/` → Ravensburger |
 | `package.json:24-26` | Script aliases: `download-images`, `convert-preview-images`, `precompute-synergies` |
-| `package.json:38-43` | `size-limit` budget: `allCards.json` ≤ 360 kB gzipped |
+| `package.json` `size-limit` | `Card data JSON` budget: the built `allCards.json` ≤ 160 kB gzipped (about 140 kB served, slimmed, #929) |
 | `.claude/hooks/engine-auto-rebuild.sh` | PostToolUse: rebuild engine + precompute + refresh rule-doc coverage on engine source edits |
 | `.claude/hooks/preview-data-auto-precompute.sh` | PostToolUse: precompute on `previewCards.json` edits |
 | `.claude/hooks/preview-images-auto-convert.sh` | PostToolUse: convert AVIFs on `card-images-raw/` edits |
@@ -1243,7 +1246,7 @@ Six rules apply when integrating canonical LorcanaJSON data into `allCards.json`
 | 2 | **Adopt canonical IDs unconditionally** | LorcanaJSON's sequential ids (`2716`...) are the permanent identity; preview composite ids (`121204`...) are placeholders. Pre-graduation URLs break — acceptable in beta. Votes, cloud collection keys and deck cards move to the canonical ids through the remap migration the script writes (#748). |
 | 3 | **Adopt canonical names** | LorcanaJSON is source of truth; preview curation can have typos / wording corrections. Rule 2 makes this automatic since canonical entries fully replace preview entries. |
 | 4 | **Keep LorcanaJSON's `story` as `franchise`** (since Set 14) | `/reveals` tiers its debut franchises by `franchise`, and a set usually graduates before its release day, when the page hides itself. `story` holds the same value the preview cards carried (all 27 of Set 14's Coco cards), so the page keeps working. Costs under 1 kB gzipped per set. Sets graduated earlier had it stripped. |
-| 5 | **Strip extra metadata**: `artists`, `flavorText`, `foilTypes`, `enchantedId`, `iconicId`, `epicId`, `promoIds`, `fullIdentifier`, `simpleName`, etc. (`story` survives only as Rule 4's `franchise`, and `foilTypes`' versions as `finishes` on a card or printing where they differ from the app's rarity rule, #880, see [Promo printings](#promo-printings-805)) | App uses none of these; bloats `size-limit` budget (360 kB gzipped). Collection mode needs the versions, not the foil types' names. |
+| 5 | **Strip extra metadata**: `artists`, `flavorText`, `foilTypes`, `enchantedId`, `iconicId`, `epicId`, `promoIds`, `fullIdentifier`, `simpleName`, etc. (`story` survives only as Rule 4's `franchise`, and `foilTypes`' versions as `finishes` on a card or printing where they differ from the app's rarity rule, #880, see [Promo printings](#promo-printings-805)) | App uses none of these; bloats the `Card data JSON` budget (160 kB gzipped). Collection mode needs the versions, not the foil types' names. |
 | 6 | **Strip `images.foilMask`** — keep only `full` + `thumbnail` | App doesn't render foil overlays. |
 
 The "keep" allow-list = `LorcanaJSONCard` in `packages/synergy-engine/src/utils/cardTransformer.ts`. Everything outside that interface gets stripped at integration time, not at runtime.

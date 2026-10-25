@@ -177,8 +177,10 @@ jobs:
       # The build ships the card files slimmed, and without their image links, which it moves to
       # data/image-sources.json (#929, #932). Every card must still transform as the repo's copy
       # does, and every link must have moved, or production would lose card text or art links.
+      # --expect-record: production's build is a local-images one, so a build without the record
+      # lost VITE_LOCAL_IMAGES and fails here.
       - name: Verify the slimmed card data
-        run: node scripts/check-card-data.mjs .vercel/output/static
+        run: node scripts/check-card-data.mjs .vercel/output/static --expect-record
 
       # One upload error fails a Vercel deploy outright (@vercel/client retries only a fixed
       # list of error messages, #698); the script retries once.

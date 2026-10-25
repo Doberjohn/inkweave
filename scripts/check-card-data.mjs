@@ -16,9 +16,11 @@
  *      entry keeps its own. transformCard never reads the links, so check 1 can't see them.
  *
  * `.github/workflows/deploy.yml` runs it between `vercel build` and the deploy, so production never
- * ships card data that loses a card's text, keywords or art links.
+ * ships card data that loses a card's text, keywords or art links. It passes `--expect-record`, since
+ * production's build is a local-images one: a deploy build without data/image-sources.json lost
+ * VITE_LOCAL_IMAGES, so it fails rather than pass as a build that keeps its links.
  *
- * Usage: node scripts/check-card-data.mjs [targetDir]   (default: apps/web/dist)
+ * Usage: node scripts/check-card-data.mjs [targetDir] [--expect-record]   (default: apps/web/dist)
  */
 import {existsSync, readFileSync, readdirSync} from 'node:fs';
 import {dirname, join, resolve} from 'node:path';
@@ -85,12 +87,21 @@ function lostLinkProblems(name, repoCards, builtCards, record) {
     .map((entry) => `${name}: ${where} lacks ${entry.id}'s image links`);
 }
 
+/** A guard that would check nothing, or a deploy build that never wrote its image record. */
+function setupProblems(repo, record, expectRecord) {
+  const problems = [];
+  if (Object.keys(repo).length === 0) problems.push("no card files in the repo's data");
+  if (expectRecord && record === null) problems.push(`${IMAGE_SOURCES}: missing from the build`);
+  return problems;
+}
+
 /**
  * Every problem with a build's card files, given both copies' files by name ({name: parsed JSON})
  * and the build's image record, or null when the build kept its links in the card files.
+ * `expectRecord` fails a build without the record.
  */
-export function cardDataProblems({repo, built, record, transformCard}) {
-  const problems = [];
+export function cardDataProblems({repo, built, record, transformCard, expectRecord = false}) {
+  const problems = setupProblems(repo, record, expectRecord);
   for (const [name, data] of Object.entries(repo)) {
     if (!(name in built)) {
       problems.push(`${name}: missing from the build`);
@@ -114,7 +125,10 @@ async function main() {
     console.log('Card data guard skipped (SKIP_CARD_DATA_GUARD=1)');
     return;
   }
-  const targetData = join(resolve(process.argv[2] ?? join(ROOT, 'apps/web/dist')), 'data');
+  const args = process.argv.slice(2);
+  const expectRecord = args.includes('--expect-record');
+  const target = args.find((arg) => !arg.startsWith('--')) ?? join(ROOT, 'apps/web/dist');
+  const targetData = join(resolve(target), 'data');
   const names = cardFiles(REPO_DATA);
   const repo = Object.fromEntries(names.map((name) => [name, readJson(join(REPO_DATA, name))]));
   const built = Object.fromEntries(
@@ -124,7 +138,7 @@ async function main() {
   const record = existsSync(recordFile) ? readJson(recordFile) : null;
   const {transformCard} = await import(pathToFileURL(join(ROOT, 'packages/synergy-engine/dist/card.js')).href);
 
-  const problems = cardDataProblems({repo, built, record, transformCard});
+  const problems = cardDataProblems({repo, built, record, transformCard, expectRecord});
   if (problems.length > 0) {
     console.error(`Card data guard failed (${problems.length}):`);
     for (const problem of problems.slice(0, 50)) console.error(`  - ${problem}`);
