@@ -1,7 +1,8 @@
 import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
+import {fn} from 'storybook/test';
 import {COLORS} from '../../../shared/constants';
-import {RoleTileRow, type RoleTile} from './RoleTileRow';
+import {RoleTileRow, RoleTiles, type RoleTile} from './RoleTileRow';
 
 const locationTiles: RoleTile[] = [
   {role: 'location', label: 'Locations', description: 'Location cards', count: 54},
@@ -98,4 +99,21 @@ export const ManyMechanics: Story = {
     }));
     return <InteractiveTileRow tiles={manyTiles} />;
   },
+};
+
+/** The desktop row's placeholder while the cards load (#914), or the tiles load again (#930). */
+export const Loading: Story = {
+  render: () => (
+    <RoleTiles status="loading" onRetry={fn()} tiles={[]} activeRoles={new Set()} onToggle={fn()} />
+  ),
+};
+
+/**
+ * The tiles failed to load while the cards loaded (#930): the row's box says so, with a Try
+ * again that loads the tiles alone.
+ */
+export const Failed: Story = {
+  render: () => (
+    <RoleTiles status="failed" onRetry={fn()} tiles={[]} activeRoles={new Set()} onToggle={fn()} />
+  ),
 };

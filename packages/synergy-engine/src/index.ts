@@ -40,8 +40,9 @@ export {
   getPlaystyleById,
   LOCATION_ROLE_CHIP_LABELS,
   LOCATION_ROLE_TOOLTIP,
+  getDisplayCatalog,
 } from './engine';
-export type {SynergyEngineOptions, CachedSynergyResult} from './engine';
+export type {SynergyEngineOptions, CachedSynergyResult, DisplayCatalog, MechanicText} from './engine';
 
 // Utilities (for custom rule authors)
 export {
@@ -143,6 +144,7 @@ export {
   MECHANIC_BY_ID,
   STRUCTURAL_ROLE_TO_MECHANIC,
   getCardMechanics,
+  getPlaystyleMechanicIds,
   mechanicLabel,
   mechanicDescription,
   tribalMechanicDescription,

@@ -15,7 +15,8 @@
     "./card": {
       "import": "./dist/card.js",
       "types": "./dist/card.d.ts"
-    }
+    },
+    "./catalog.json": "./dist/catalog.json"
   },
   "files": [
     "dist"

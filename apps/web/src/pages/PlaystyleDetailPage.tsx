@@ -1,36 +1,17 @@
-import {useState} from 'react';
+import {useRef, useState} from 'react';
 import {useParams, useNavigate, Navigate} from 'react-router-dom';
+import type {PlaystyleId, LorcanaCard} from 'inkweave-synergy-engine';
+import {getPlaystyleById, mechanicDescription, mechanicLabel} from '../features/synergies/engineCatalog';
 import {
-  getPlaystyleById,
-  getLocationRoles,
-  getDiscardRoles,
-  getSelfDiscardRoles,
-  getSacrificeRoles,
-  getRampRoles,
-  getLoreDenialRoles,
-  getToyRoles,
-  getDwarfsRoles,
-  getFloodbornRoles,
-  getHunnyRoles,
-  getRedPandaRoles,
-  getItemRoles,
-  getHealRoles,
-  getExertRoles,
-  getBounceRoles,
-  getInkDropRoles,
-  getTribalRoles,
-  TRIBAL_SPECS,
-  getCardMechanics,
-  STRUCTURAL_ROLE_TO_MECHANIC,
-  mechanicLabel,
-  mechanicDescription,
-  tribalMechanicDescription,
-  type PlaystyleId,
-  type LorcanaCard,
-  type TribalSpec,
-} from 'inkweave-synergy-engine';
-import {usePrecomputedPlaystyleCards} from '../features/synergies/hooks';
-import {RoleTileRow, RoleTileRowSkeleton, type RoleTile} from '../features/synergies/components/RoleTileRow';
+  usePrecomputedPlaystyleCards,
+  type MechanicIdsByCard,
+  type MechanicsStatus,
+} from '../features/synergies/hooks';
+import {
+  RoleTiles,
+  type RoleTile,
+  type RoleTilesStatus,
+} from '../features/synergies/components/RoleTileRow';
 import {MechanicsBottomSheet} from '../features/synergies/components/MechanicsBottomSheet';
 import {MechanicsButton} from '../features/synergies/components/MechanicsButton';
 import {Chip} from '../shared/components/Chip';
@@ -146,7 +127,7 @@ function PlaystyleHero({
             color: COLORS.textMuted,
             display: 'flex',
             alignItems: 'center',
-            gap: 8,
+            gap: SPACING.sm,
           }}>
           <a
             href="/playstyles"
@@ -220,99 +201,33 @@ interface RoleChip {
 /** Synthetic role for Location card type (not a real engine role) */
 const LOCATION_CARD_ROLE = 'location' as const;
 
-interface RoleConfig {
-  getRoles: (card: LorcanaCard) => readonly string[];
-  extraChips?: (cards: LorcanaCard[]) => RoleChip[];
-  /** A tile's description; `mechanicDescription` unless the playstyle words a role its own way. */
-  describe?: (mechanicId: string) => string;
-}
-
-/**
- * A classification tribe's tiles: its tribal roles, with While in Play and Trigger naming the
- * tribe (the catalog words those two for Location Control and Floodborns).
- */
-function tribalConfig(spec: TribalSpec): RoleConfig {
-  return {
-    getRoles: (card) => getTribalRoles(card, spec).filter((r) => r !== 'member'),
-    describe: (id) => tribalMechanicDescription(id, spec),
-  };
-}
-
-/**
- * Per-playstyle structural-role DETECTORS only. Labels/descriptions are NOT here —
- * every tile's text comes from the one mechanics catalog (mechanicLabel/Description),
- * so the same mechanic reads identically in every playstyle; a tribe's two shared roles
- * name the tribe (`tribalConfig`). `member` is structural membership, not a displayed
- * mechanic, so it's filtered out. See MECHANICS_TAXONOMY.md.
- */
-const ROLE_CONFIGS: Record<PlaystyleId, RoleConfig> = {
-  'location-control': {
-    getRoles: (card) => getLocationRoles(card),
-    extraChips: (cards) => {
-      const count = cards.filter((c) => c.type === 'Location').length;
-      return count > 0
-        ? [{role: LOCATION_CARD_ROLE, label: 'Locations', tooltip: 'Location cards', count}]
-        : [];
-    },
-  },
-  discard: {getRoles: (card) => getDiscardRoles(card)},
-  'self-discard': {getRoles: (card) => getSelfDiscardRoles(card)},
-  sacrifice: {getRoles: (card) => getSacrificeRoles(card)},
-  ramp: {getRoles: (card) => getRampRoles(card)},
-  'lore-denial': {getRoles: (card) => getLoreDenialRoles(card)},
-  toy: {getRoles: (card) => getToyRoles(card).filter((r) => r !== 'member')},
-  dwarfs: {getRoles: (card) => getDwarfsRoles(card).filter((r) => r !== 'member')},
-  floodborn: {getRoles: (card) => getFloodbornRoles(card).filter((r) => r !== 'member')},
-  hunny: {getRoles: (card) => getHunnyRoles(card).filter((r) => r !== 'member')},
-  'red-panda': {getRoles: (card) => getRedPandaRoles(card).filter((r) => r !== 'member')},
-  items: {getRoles: (card) => getItemRoles(card).filter((r) => r !== 'member')},
-  healing: {getRoles: (card) => getHealRoles(card)},
-  exert: {getRoles: (card) => getExertRoles(card)},
-  bounce: {getRoles: (card) => getBounceRoles(card)},
-  'ink-drops': {getRoles: (card) => getInkDropRoles(card)},
-  monster: tribalConfig(TRIBAL_SPECS.monster),
-  princess: tribalConfig(TRIBAL_SPECS.princess),
-  hero: tribalConfig(TRIBAL_SPECS.hero),
-  super: tribalConfig(TRIBAL_SPECS.super),
-  royalty: tribalConfig(TRIBAL_SPECS.royalty),
-  detective: tribalConfig(TRIBAL_SPECS.detective),
-  gargoyle: tribalConfig(TRIBAL_SPECS.gargoyle),
-  madrigal: tribalConfig(TRIBAL_SPECS.madrigal),
-  villain: tribalConfig(TRIBAL_SPECS.villain),
-};
-
-/**
- * The canonical mechanic ids a card contributes to its playstyle's tiles: the
- * rule's structural roles (each canonicalised to its catalog twin, e.g.
- * `burn`→`lore-burn`) unioned with every generic catalog mechanic. Canonicalising
- * means a structural role and its catalog twin collapse to ONE id automatically;
- * labels are resolved from the catalog so a mechanic reads identically everywhere.
- */
-function cardMechanicIds(config: RoleConfig, card: LorcanaCard): string[] {
-  const ids = new Set<string>();
-  for (const role of config.getRoles(card)) ids.add(STRUCTURAL_ROLE_TO_MECHANIC[role] ?? role);
-  for (const id of getCardMechanics(card)) ids.add(id);
-  return [...ids];
+/** Location Control's extra tile: its Location cards, a card type rather than a mechanic. */
+function locationCardChips(cards: LorcanaCard[]): RoleChip[] {
+  const count = cards.filter((c) => c.type === 'Location').length;
+  return count > 0 ? [{role: LOCATION_CARD_ROLE, label: 'Locations', tooltip: 'Location cards', count}] : [];
 }
 
 /**
  * Aggregate a playstyle's cards into deduped mechanic chips — one chip per
  * canonical mechanic id, counted across the cards, labelled from the catalog.
+ * Precompute lists each card's ids (`getPlaystyleMechanicIds`, `_playstyleMechanics.json`),
+ * so this page runs no detector. See MECHANICS_TAXONOMY.md.
  */
-function getRoleChips(playstyleId: PlaystyleId | undefined, cards: LorcanaCard[]): RoleChip[] {
+function getRoleChips(
+  playstyleId: PlaystyleId | undefined,
+  cards: LorcanaCard[],
+  mechanicIds: MechanicIdsByCard,
+): RoleChip[] {
   if (!playstyleId) return [];
-  const config = ROLE_CONFIGS[playstyleId];
-  if (!config) return [];
   const counts = new Map<string, number>();
   for (const card of cards) {
-    for (const id of cardMechanicIds(config, card)) counts.set(id, (counts.get(id) ?? 0) + 1);
+    for (const id of mechanicIds[card.id] ?? []) counts.set(id, (counts.get(id) ?? 0) + 1);
   }
-  const extras = config.extraChips?.(cards) ?? [];
-  const describe = config.describe ?? mechanicDescription;
+  const extras = playstyleId === 'location-control' ? locationCardChips(cards) : [];
   const chips = [...counts].map(([role, count]) => ({
     role,
     label: mechanicLabel(role),
-    tooltip: describe(role),
+    tooltip: mechanicDescription(role, playstyleId),
     count,
   }));
   return [...extras, ...chips];
@@ -327,25 +242,17 @@ function toRoleTile(chip: RoleChip): RoleTile {
   };
 }
 
-/**
- * Check if a card has a specific role within its playstyle. Pass `precomputedIds`
- * (the card's canonical mechanic-id set) when checking many roles for the same
- * card to avoid recomputing the regex/role detection per role.
- */
+/** Check if a card has a specific role within its playstyle: the same ids that build the tiles. */
 function cardHasRole(
   playstyleId: PlaystyleId,
   card: LorcanaCard,
   role: string,
-  precomputedIds?: ReadonlySet<string>,
+  mechanicIds: MechanicIdsByCard,
 ): boolean {
   if (playstyleId === 'location-control' && role === LOCATION_CARD_ROLE) {
     return card.type === 'Location';
   }
-  const config = ROLE_CONFIGS[playstyleId];
-  if (!config) return false;
-  // Match against the same canonical id set used to build the tiles.
-  if (precomputedIds) return precomputedIds.has(role);
-  return cardMechanicIds(config, card).includes(role);
+  return mechanicIds[card.id]?.includes(role) ?? false;
 }
 
 // ── Centered page style ──
@@ -390,16 +297,11 @@ function applyRoleFilter(
   cards: LorcanaCard[],
   activeRoles: ReadonlySet<string>,
   playstyleId: PlaystyleId | undefined,
+  mechanicIds: MechanicIdsByCard,
 ): LorcanaCard[] {
   if (activeRoles.size === 0 || !playstyleId) return cards;
-  const config = ROLE_CONFIGS[playstyleId];
-  if (!config) return cards;
   const roles = [...activeRoles];
-  return cards.filter((card) => {
-    // Compute the card's mechanic-id set once, then test every active role against it.
-    const ids = new Set(cardMechanicIds(config, card));
-    return roles.some((r) => cardHasRole(playstyleId, card, r, ids));
-  });
+  return cards.filter((card) => roles.some((r) => cardHasRole(playstyleId, card, r, mechanicIds)));
 }
 
 function getHeroLayout(isMobile: boolean): HeroLayout {
@@ -541,13 +443,13 @@ export function PlaystyleDetailPage() {
   const toggleRole = (role: string) => setActiveRoles((prev) => toggleSetMember(prev, role));
 
   const {playstyle, ui} = useResolvedPlaystyle(playstyleId);
-  const {cards: playstyleCards, ...playstyleCardsLoad} = usePrecomputedPlaystyleCards(playstyle?.id);
-  const pageLoad = combineLoads({isLoading, error, retry: retryLoad}, playstyleCardsLoad);
+  const playstyleLoad = usePlaystyleDetailLoad(playstyle?.id, {isLoading, error, retry: retryLoad});
+  const {cards: playstyleCards, mechanicIds, pageLoad, tileRow} = playstyleLoad;
 
   const combinedFilters = buildCombinedFilters(filters, inkFilters, typeFilters, costFilters);
   const sortedCards = applyFilterAndSort(playstyleCards, searchQuery, combinedFilters, sortOrder);
-  const roleChips = getRoleChips(playstyle?.id, sortedCards);
-  const roleFilteredCards = applyRoleFilter(sortedCards, activeRoles, playstyle?.id);
+  const roleChips = getRoleChips(playstyle?.id, sortedCards, mechanicIds);
+  const roleFilteredCards = applyRoleFilter(sortedCards, activeRoles, playstyle?.id, mechanicIds);
   const displayedCards = roleFilteredCards.slice(0, LAYOUT.maxDisplayedCards);
 
   const goHome = () => navigate('/');
@@ -603,6 +505,7 @@ export function PlaystyleDetailPage() {
         goHome={goHome}
         goPlaystyles={goPlaystyles}
         handleCardSelect={handleCardSelect}
+        tileRow={tileRow}
         roleChips={roleChips}
         activeRoles={activeRoles}
         toggleRole={toggleRole}
@@ -624,6 +527,7 @@ export function PlaystyleDetailPage() {
       goHome={goHome}
       goPlaystyles={goPlaystyles}
       handleCardSelect={handleCardSelect}
+      tileRow={tileRow}
       roleChips={roleChips}
       activeRoles={activeRoles}
       toggleRole={toggleRole}
@@ -652,6 +556,36 @@ function combineLoads(
 ): {isLoading: boolean; retry: (() => void) | null} {
   const failed = [cardData, playstyleCards].find((load) => load.error);
   return {isLoading: cardData.isLoading || playstyleCards.isLoading, retry: failed?.retry ?? null};
+}
+
+/** The mechanic tiles' state on the page, and the retry their failure offers (#930). */
+interface TileRow {
+  status: RoleTilesStatus;
+  retry: () => void;
+}
+
+/**
+ * The mechanic tiles' state: loading while the page is, and while they load again after a
+ * failure, which only the tiles wait for (#930).
+ */
+function tileRowStatus(pageLoading: boolean, mechanics: MechanicsStatus): RoleTilesStatus {
+  if (pageLoading || mechanics === 'reloading') return 'loading';
+  return mechanics === 'failed' ? 'failed' : 'loaded';
+}
+
+/**
+ * The playstyle's cards and mechanic ids, the page's load over them and the card data, and the
+ * tiles' own state, which fails without failing the page (#930).
+ */
+function usePlaystyleDetailLoad(playstyleId: PlaystyleId | undefined, cardData: PageLoad) {
+  const {cards, mechanicIds, mechanicsStatus, retryMechanics, ...playstyleCardsLoad} =
+    usePrecomputedPlaystyleCards(playstyleId);
+  const pageLoad = combineLoads(cardData, playstyleCardsLoad);
+  const tileRow: TileRow = {
+    status: tileRowStatus(pageLoad.isLoading, mechanicsStatus),
+    retry: retryMechanics,
+  };
+  return {cards, mechanicIds, pageLoad, tileRow};
 }
 
 // ── Page sub-views (extracted to keep PlaystyleDetailPage under CC 10) ──
@@ -756,32 +690,43 @@ function PlaystyleCardGrid({
 
 /**
  * The desktop mechanics row, over a gold rule. While the cards load, its placeholder holds the
- * row's box, so the grid starts where it will (#914).
+ * row's box, so the grid starts where it will (#914). When the tiles failed and the cards did
+ * not, the row says so in the same box, with a Try again (#930).
  */
 function DesktopMechanicsRow({
-  isLoading,
+  tileRow,
   roleChips,
   activeRoles,
   toggleRole,
 }: {
-  isLoading: boolean;
+  tileRow: TileRow;
   roleChips: RoleChip[];
   activeRoles: ReadonlySet<string>;
   toggleRole: (role: string) => void;
 }) {
-  if (!isLoading && roleChips.length === 0) return null;
+  const rowRef = useRef<HTMLDivElement>(null);
+  if (tileRow.status === 'loaded' && roleChips.length === 0) return null;
+  // Try again swaps its line for the placeholder, which unmounts the button that had focus, so
+  // the row takes focus first and keeps it while the tiles load, as the binder does (#790).
+  const retry = () => {
+    rowRef.current?.focus();
+    tileRow.retry();
+  };
   return (
-    <div style={{padding: '32px 32px 0'}}>
-      {isLoading ? (
-        <RoleTileRowSkeleton />
-      ) : (
-        <RoleTileRow
-          tiles={roleChips.map(toRoleTile)}
-          activeRoles={activeRoles}
-          onToggle={toggleRole}
-          showDescriptions={false}
-        />
-      )}
+    <div
+      ref={rowRef}
+      tabIndex={-1}
+      role="group"
+      aria-label="Mechanics"
+      style={{padding: '32px 32px 0'}}>
+      <RoleTiles
+        status={tileRow.status}
+        onRetry={retry}
+        tiles={roleChips.map(toRoleTile)}
+        activeRoles={activeRoles}
+        onToggle={toggleRole}
+        showDescriptions={false}
+      />
       <hr
         aria-hidden="true"
         style={{
@@ -803,6 +748,7 @@ function PlaystyleDetailMobileView({
   goHome,
   goPlaystyles,
   handleCardSelect,
+  tileRow,
   roleChips,
   activeRoles,
   toggleRole,
@@ -819,6 +765,7 @@ function PlaystyleDetailMobileView({
   goHome: () => void;
   goPlaystyles: () => void;
   handleCardSelect: (card: {id: string}) => void;
+  tileRow: TileRow;
   roleChips: RoleChip[];
   activeRoles: ReadonlySet<string>;
   toggleRole: (role: string) => void;
@@ -832,9 +779,10 @@ function PlaystyleDetailMobileView({
 
   // Render MechanicsButton + active role chips into the toolbar's extraChips slot
   // so they sit alongside ink/cost filter chips instead of in a separate row. While the
-  // cards load, the button holds its place, off.
+  // cards load, the button holds its place, off. When the tiles failed, it opens the sheet
+  // that says so, with its Try again (#930).
   const toolbarExtras =
-    isLoading || roleChips.length > 0 ? (
+    tileRow.status !== 'loaded' || roleChips.length > 0 ? (
       <>
         <MechanicsButton
           onClick={() => setSheetOpen(true)}
@@ -895,6 +843,8 @@ function PlaystyleDetailMobileView({
         isOpen={sheetOpen}
         onClose={() => setSheetOpen(false)}
         tiles={roleChips.map(toRoleTile)}
+        status={tileRow.status}
+        onRetry={tileRow.retry}
         activeRoles={activeRoles}
         onToggle={toggleRole}
         onClearAll={clearRoles}
@@ -911,6 +861,7 @@ function PlaystyleDetailDesktopView({
   goHome,
   goPlaystyles,
   handleCardSelect,
+  tileRow,
   roleChips,
   activeRoles,
   toggleRole,
@@ -926,6 +877,7 @@ function PlaystyleDetailDesktopView({
   goHome: () => void;
   goPlaystyles: () => void;
   handleCardSelect: (card: {id: string}) => void;
+  tileRow: TileRow;
   roleChips: RoleChip[];
   activeRoles: ReadonlySet<string>;
   toggleRole: (role: string) => void;
@@ -964,7 +916,7 @@ function PlaystyleDetailDesktopView({
         />
         <BrowseToolbar {...toolbarProps} isMobile={false} />
         <DesktopMechanicsRow
-          isLoading={isLoading}
+          tileRow={tileRow}
           roleChips={roleChips}
           activeRoles={activeRoles}
           toggleRole={toggleRole}

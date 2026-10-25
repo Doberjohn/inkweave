@@ -14,7 +14,10 @@ import {SHOW_COLLECTION} from './features/collection/flag';
 import {startCardList} from './features/cards/cardListRequest';
 import {startFeaturedCards} from './features/cards/featured';
 import {fetchCardSynergies} from './features/synergies/hooks/usePrecomputedSynergies';
-import {fetchPlaystyleCardIds} from './features/synergies/hooks/playstyleCardIds';
+import {
+  fetchPlaystyleCardIds,
+  fetchPlaystyleMechanicIds,
+} from './features/synergies/hooks/playstyleFiles';
 import {fetchPairsIndex} from './features/voting/pairsIndexRequest';
 
 // Lazy-load page components for code splitting (with retry on chunk load failure)
@@ -235,7 +238,13 @@ const routes: RouteObject[] = [
       },
       {
         path: 'playstyles/:playstyleId',
-        handle: readyWhen(PlaystyleDetailPage, startCardList, fetchPlaystyleCardIds),
+        // Its mechanic ids too: the page draws its cards and their tiles in one render (#930).
+        handle: readyWhen(
+          PlaystyleDetailPage,
+          startCardList,
+          fetchPlaystyleCardIds,
+          fetchPlaystyleMechanicIds,
+        ),
         element: (
           <SuspenseWrapper>
             <PlaystyleDetailPage />

@@ -1,3 +1,4 @@
+import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {slidePointerOnto} from '../helpers/pointer';
 
@@ -108,6 +109,8 @@ test.describe('Playstyle Detail — Desktop', () => {
 /**
  * A playstyle page waits for its own card list, `_playstyles.json`, as well as the card list
  * (#913): until both are in, it shows its loading view, never "No cards match your filters."
+ * It waits for its cards' mechanic tiles too, `_playstyleMechanics.json` (#930), so the tiles
+ * never arrive after the cards.
  */
 test.describe('Playstyle Detail — loading', () => {
   const LOADING_VIEW = '[aria-label="Loading playstyle cards"]';
@@ -142,10 +145,76 @@ test.describe('Playstyle Detail — loading', () => {
     expect(await page.evaluate(() => (window as Window & {sawEmptyGrid?: boolean}).sawEmptyGrid)).toBe(false);
   });
 
-  test('opened from the gallery, a playstyle shows its cards with no loading view between', async ({page}) => {
-    const playstyles = page.waitForResponse((response) => response.url().includes('/data/synergies/_playstyles.json'));
+  test('draws its mechanic tiles in the same render as its cards', async ({page}, testInfo) => {
+    // A phone keeps the tiles in a sheet; the desktop row shows them beside the cards.
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    // Notes any moment a card is on the page with no mechanic tile, from the first byte on.
+    await page.addInitScript(() => {
+      const seen = window as Window & {sawCardsWithoutTiles?: boolean};
+      seen.sawCardsWithoutTiles = false;
+      new MutationObserver(() => {
+        const card = document.querySelector('[data-testid="card-tile"]');
+        const tile = document.querySelector('section[aria-label="Mechanics"] button');
+        if (card && !tile) seen.sawCardsWithoutTiles = true;
+      }).observe(document, {childList: true, subtree: true});
+    });
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/data/synergies/_playstyleMechanics.json', async (route) => {
+      await held;
+      await route.continue();
+    });
+    const cardList = page.waitForResponse((response) => response.url().includes('/data/allCards.json'));
+    const cardIds = page.waitForResponse((response) => response.url().includes('/data/synergies/_playstyles.json'));
+
+    await page.goto('/playstyles/discard');
+    await Promise.all([cardList, cardIds]);
+    // Time for both lists to land in the page, which could then draw its cards without their tiles.
+    await page.waitForTimeout(1000);
+    await expect(page.locator(LOADING_VIEW)).toBeVisible();
+
+    release();
+    await expect(page.getByRole('button', {name: /Forced Discard/})).toBeVisible({timeout: 15000});
+    await expect(page.getByTestId('card-tile').first()).toBeVisible();
+    expect(
+      await page.evaluate(() => (window as Window & {sawCardsWithoutTiles?: boolean}).sawCardsWithoutTiles),
+    ).toBe(false);
+  });
+
+  test('the gallery asks for the mechanic ids only once it has drawn with its own card ids', async ({page}) => {
+    let mechanicsAsked = false;
+    page.on('request', (request) => {
+      if (request.url().includes('/data/synergies/_playstyleMechanics.json')) mechanicsAsked = true;
+    });
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/data/synergies/_playstyles.json', async (route) => {
+      await held;
+      await route.continue();
+    });
+
     await page.goto('/playstyles');
-    await playstyles;
+    await expect(page.locator('a[href="/playstyles/lore-denial"]').first()).toBeVisible({timeout: 15000});
+    // Time for a request the gallery would make before its card ids, competing with them.
+    await page.waitForTimeout(1000);
+    expect(mechanicsAsked).toBe(false);
+
+    const mechanics = page.waitForResponse((response) =>
+      response.url().includes('/data/synergies/_playstyleMechanics.json'),
+    );
+    release();
+    await mechanics;
+  });
+
+  test('opened from the gallery, a playstyle shows its cards with no loading view between', async ({page}) => {
+    // The gallery reads both files a playstyle page waits for: the mechanic ids once it has drawn.
+    const playstyleFiles = Promise.all(
+      ['_playstyles.json', '_playstyleMechanics.json'].map((file) =>
+        page.waitForResponse((response) => response.url().includes(`/data/synergies/${file}`)),
+      ),
+    );
+    await page.goto('/playstyles');
+    await playstyleFiles;
     const link = page.locator('a[href="/playstyles/lore-denial"]').first();
     await expect(link).toBeVisible({timeout: 15000});
 
@@ -161,5 +230,80 @@ test.describe('Playstyle Detail — loading', () => {
 
     await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 15000});
     expect(await page.evaluate(() => (window as Window & {sawLoadingView?: boolean}).sawLoadingView)).toBe(false);
+  });
+});
+
+/**
+ * When `_playstyleMechanics.json` fails and the card lists load, the page keeps its cards and
+ * says in the tiles' place that they failed, with a Try again that loads them alone (#930).
+ */
+test.describe('Playstyle Detail — tiles that failed to load', () => {
+  // The page logs the failure it then shows.
+  test.use({expectedConsoleErrors: [/^Failed to load playstyle mechanics:/]});
+  const FAILED = "Couldn't load this playstyle's mechanics.";
+
+  /** Fails every request for the mechanic ids until the function it returns lets them through. */
+  async function failMechanics(page: Page): Promise<() => void> {
+    let failing = true;
+    await page.route('**/data/synergies/_playstyleMechanics.json', (route) =>
+      failing ? route.fulfill({status: 503, body: ''}) : route.continue(),
+    );
+    return () => {
+      failing = false;
+    };
+  }
+
+  /** From now on, notes any moment the card grid's loading view shows, as a reload would show it. */
+  async function watchCardGrid(page: Page) {
+    await page.evaluate(() => {
+      const seen = window as Window & {sawCardsLoading?: boolean};
+      seen.sawCardsLoading = false;
+      new MutationObserver(() => {
+        const loading = document.querySelector('[aria-label="Loading playstyle cards"]');
+        if (loading) seen.sawCardsLoading = true;
+      }).observe(document.body, {childList: true, subtree: true});
+    });
+  }
+
+  const sawCardsLoading = (page: Page) =>
+    page.evaluate(() => (window as Window & {sawCardsLoading?: boolean}).sawCardsLoading);
+
+  test('keeps the cards, and Try again draws the tiles in their row', async ({page}, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    const letThrough = await failMechanics(page);
+
+    await page.goto('/playstyles/discard');
+    const row = page.getByRole('group', {name: 'Mechanics'});
+    await expect(row.getByRole('alert')).toHaveText(FAILED, {timeout: 15000});
+    await expect(page.getByTestId('card-tile').first()).toBeVisible();
+
+    letThrough();
+    await watchCardGrid(page);
+    await row.getByRole('button', {name: 'Try again'}).click();
+    await expect(row.getByRole('button', {name: /Forced Discard/})).toBeVisible({timeout: 15000});
+    await expect(row.getByRole('alert')).toHaveCount(0);
+    // The button it pressed is gone, so the row holds focus: the next Tab reaches the first tile.
+    await expect(row).toBeFocused();
+    expect(await sawCardsLoading(page)).toBe(false);
+  });
+
+  test('on a phone, the Mechanics sheet says so, and Try again draws the tiles in it', async ({
+    page,
+  }, testInfo) => {
+    if (!testInfo.project.name.startsWith('mobile-')) test.skip();
+    const letThrough = await failMechanics(page);
+
+    await page.goto('/playstyles/discard');
+    await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 15000});
+    await page.getByRole('button', {name: 'Mechanics', exact: true}).click();
+    const sheet = page.getByRole('dialog', {name: 'Mechanics filter'});
+    await expect(sheet.getByRole('alert')).toHaveText(FAILED);
+
+    letThrough();
+    await watchCardGrid(page);
+    await sheet.getByRole('button', {name: 'Try again'}).click();
+    await expect(sheet.getByRole('button', {name: /Forced Discard/})).toBeVisible({timeout: 15000});
+    await expect(sheet).toBeFocused();
+    expect(await sawCardsLoading(page)).toBe(false);
   });
 });

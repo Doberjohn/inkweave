@@ -67,7 +67,7 @@ jobs:
               - 'apps/web/src/features/cards/components/CardTile.tsx'
               - 'apps/web/src/features/cards/components/FeaturedCards.tsx'
               - 'apps/web/src/features/synergies/components/SynergyCard.tsx'
-              - 'apps/web/src/features/synergies/hooks/playstyleCardIds.ts'
+              - 'apps/web/src/features/synergies/hooks/playstyleFiles.ts'
               - 'apps/web/src/features/synergies/hooks/useCardData.ts'
               - 'apps/web/src/features/synergies/hooks/usePrecomputedPlaystyles.ts'
               - 'apps/web/src/features/synergies/hooks/usePrecomputedSynergies.ts'

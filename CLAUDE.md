@@ -150,6 +150,10 @@ Convention files that auto-load only when editing files matching their `paths:` 
 
 The miner itself (`scripts/mine-rule-candidates.mjs`, run via `pnpm mine-rules`) uses the live `SynergyEngine` as a coverage oracle: cards it finds zero synergies for are clustered by shared mechanical phrase, near-duplicates collapsed by card-set overlap, and ranked into `reports/rule-candidates.json` (git-ignored). Ranking is **payoff-aware** (#363): each mechanic in the `MECHANICS` table pairs an enabler anchor with a payoff/trigger pattern, and `rankCluster` weights a cluster by its `payoffCount` (the size of its two-sided axis) so good-stuff mechanics with no payoff side sink. See issues #359 and #363.
 
+### PR reviews
+
+`.github/workflows/claude-review.yml` (#952) has Claude Code review a pull request when it opens ready for review and when a draft is marked ready, never on a push: the bundled `/code-review` skill, at `high` effort on Opus, posts its findings as inline comments from `github-actions[bot]`, or one comment saying it posted none, and the run's summary page shows what it would cost at API prices. A review that doesn't finish, such as one the API refuses or the plan's usage limit stops, comments why instead and turns its run red, which is advisory: nothing waits on it. A top-level comment starting `@claude review` on an open PR, from someone with write access, asks for another pass. Drafts and Dependabot's PRs get no automatic review, and forks get none at all. The job's token only reads code and writes PR comments, and the run turns off `.claude/settings.json`'s hooks and `.mcp.json`'s servers. Claude's shell commands run in a sandbox that holds neither the Claude token nor the GitHub token, so the review reads the diff with git, never `gh`. It runs on the owner's Claude Max plan through the `CLAUDE_CODE_OAUTH_TOKEN` Actions secret, a token from `claude setup-token`, so the reviews share the plan's usage limits.
+
 ## Synergy Rules
 
 Rules live in `packages/synergy-engine/src/engine/rules.ts` and run at build time only; the web app consumes pre-computed JSON.
@@ -220,6 +224,7 @@ pnpm test:supabase    # Run Supabase integration tests (requires .env.local)
 - SynergyEngine uses pluggable rules pattern - add rules via `SynergyRule` interface (runs at build time only; web app fetches pre-computed JSON)
 - Synergies pre-computed at build time via `scripts/precompute-synergies.mjs`, fetched on demand per card selection
 - Card data loaded once on init from `allCards.json`; synergy data lazy-loaded per card from `/data/synergies/{cardId}.json`
+- **The web app imports only types from the engine's root** (#930, lint-enforced in `apps/web/eslint.config.js`), so no rule or detector ships: display text comes from `inkweave-synergy-engine/catalog.json` (written by the engine's build) through `features/synergies/engineCatalog.ts`, card helpers from `inkweave-synergy-engine/card`, and a playstyle page's mechanic tiles from precompute's `/data/synergies/_playstyleMechanics.json`
 - **Browse's search over sets 1-8** (#911): while a query is on, Browse's grid also lists the sets 1-8 cards whose full name no Core card has, one per name, loaded on the visit's first search through `features/collection/collectionChunks.ts`, whose loads collection mode shares (sets 1-8 and the promos, then sets 9-14 for the binder alone). They open in the card window with the Outside Core note, have no card page, and never enter `CardDataContext`
 - Card data pre-deduplicated in `allCards.json` (same card in multiple sets appears once); loader expects clean data
 - Multi-page SPA via react-router (home, browse, card detail, playstyles, deck builder, voting). Routes in `router.tsx`; `AppLayout` mounts the providers plus `<Outlet />`

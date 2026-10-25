@@ -1,7 +1,7 @@
 import {useState, useEffect} from 'react';
 import type {LorcanaCard} from '../../features/cards';
 import type {LocationRole, PairSynergyConnection} from 'inkweave-synergy-engine';
-import {LOCATION_ROLE_CHIP_LABELS} from 'inkweave-synergy-engine';
+import {LOCATION_ROLE_CHIP_LABELS} from '../../features/synergies/engineCatalog';
 import {
   COLORS,
   DURATION,
