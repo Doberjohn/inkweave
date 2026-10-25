@@ -250,11 +250,15 @@ function CardPocket({
 
 /**
  * An open pocket: its code over what it waits for, in muted text on the black page. Its sleeve
- * shows the pocket empty (#941), where a dashed outline drew it on the parchment.
+ * shows the pocket empty (#941), where a dashed outline drew it on the parchment. The text never
+ * sizes its pocket (#973), as a card tile, an inline-size container, never does: a code
+ * Chromium keeps whole widened the pocket and every row on its spread, and ran the pages past the
+ * board. A code wider than the room inside the padding runs into the padding instead.
  */
 const OPEN_STYLE: CSSProperties = {
   height: '100%',
   boxSizing: 'border-box',
+  contain: 'inline-size',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -282,7 +286,8 @@ function openReason(pocket: OpenPocket) {
 function OpenPocketText({pocket}: {pocket: OpenPocket}) {
   return (
     <div style={OPEN_STYLE}>
-      <span style={{fontSize: `${FONT_SIZES.xl}px`, fontWeight: 700}}>{promoLabel(pocket)}</span>
+      {/* One line: Firefox breaks a code after its slash, "19/" over "C2" (#973). */}
+      <span style={{fontSize: `${FONT_SIZES.xl}px`, fontWeight: 700, whiteSpace: 'nowrap'}}>{promoLabel(pocket)}</span>
       {pocket.fullName && <span style={{fontSize: `${FONT_SIZES.xs}px`, fontWeight: 700}}>{pocket.fullName}</span>}
       <span style={{fontSize: `${FONT_SIZES.xs}px`, lineHeight: 1.3}}>{openReason(pocket)}</span>
     </div>

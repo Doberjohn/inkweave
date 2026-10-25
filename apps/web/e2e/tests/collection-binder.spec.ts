@@ -1,6 +1,6 @@
 import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
-import {newestCoreSet, setCards} from '../helpers/cardData';
+import {newestCoreSet, promoSetsWithOpenPockets, setCards} from '../helpers/cardData';
 import {
   artFilter,
   binder,
@@ -9,6 +9,7 @@ import {
   type Entries,
   hasStyleFor,
   MISSING_GREY,
+  openPromoBinder,
   signInAsCollector,
   teethIn,
 } from '../helpers/collector';
@@ -112,6 +113,36 @@ function placeInPocket(tile: Locator): Promise<{top: number; height: number}> {
 /** The classes on a card's pocket that play its slide in or grey out, or '' for none. */
 const pocketPlay = (tile: Locator) =>
   tile.evaluate((t) => /binder-(slide-in|grey-out)/.exec(t.closest('.binder-pocket > div')?.className ?? '')?.[0] ?? '');
+
+/**
+ * Every open pocket on the spread (#805), found by why it is open: how many lines its code
+ * takes, and how far inside the pocket its text sits, the code's sides and top and the reason's
+ * foot, each from the pocket's own edge.
+ */
+const openPocketsFit = (page: Page) =>
+  binder(page)
+    .locator('.binder-pocket')
+    .evaluateAll((pockets) =>
+      pockets.flatMap((pocket) => {
+        const reason = Array.from(pocket.querySelectorAll('span')).find((span) =>
+          /^Not (in our data|released|listed)/.test(span.textContent ?? ''),
+        );
+        if (!reason) return [];
+        const code = reason.parentElement!.firstElementChild!;
+        const lines = document.createRange();
+        lines.selectNodeContents(code);
+        const [room, box] = [pocket.getBoundingClientRect(), code.getBoundingClientRect()];
+        return [
+          {
+            code: code.textContent,
+            lines: new Set(Array.from(lines.getClientRects(), (line) => Math.round(line.top))).size,
+            sides: Math.min(box.left - room.left, room.right - box.right),
+            top: box.top - room.top,
+            bottom: room.bottom - reason.getBoundingClientRect().bottom,
+          },
+        ];
+      }),
+    );
 
 /**
  * Holds every binder animation `at` ms in as it starts, so a test measures one frame part way
@@ -562,5 +593,47 @@ test.describe("Collection mode, the binder's pages and pockets (#941)", () => {
     await expect.poll(() => pocketPlay(held)).toBe('');
     expect(await artFilter(missing)).toBe('none');
     expect(await artFilter(held)).toBe(MISSING_GREY);
+  });
+
+  test("every promo spread keeps the binder's pockets, each open pocket's code on one line inside it", async ({
+    page,
+  }) => {
+    await signInAsCollector(page, ENTRIES);
+    await page.goto(`/browse?binder=${SET}`);
+    await expect(binder(page)).toBeVisible();
+    // Every spread of every promo set with an open pocket, at the window's own size (#973): a code
+    // too wide for its pocket broke over two lines in Firefox and ran out of the pocket, and in
+    // Chromium stretched the pocket and every row with it, the pages past the board. The turns go
+    // under reduced motion, which swaps the spread at once (#942).
+    await page.emulateMedia({reducedMotion: 'reduce'});
+    for (const {code, promos} of promoSetsWithOpenPockets()) {
+      await openPromoBinder(page, code);
+      // The set's own numbers, and its front cover: its binder is on show, from the start.
+      await expect(page.getByRole('region', {name: 'Collection numbers'})).toContainText(`0 of ${promos} promos`);
+      await expect(binder(page).getByRole('group', {name: 'Front cover'})).toBeVisible();
+      let open = 0;
+      for (let spread = 1; ; spread++) {
+        const at = `${code} spread ${spread}`;
+        await expect(binder(page).locator('.binder-turn')).toHaveCount(0);
+        for (const pocket of await openPocketsFit(page)) {
+          open++;
+          expect(pocket.lines, `${at}: ${pocket.code} on one line`).toBe(1);
+          expect(pocket.sides, `${at}: ${pocket.code} inside its pocket's sides`).toBeGreaterThanOrEqual(0);
+          expect(pocket.top, `${at}: ${pocket.code} starts inside its pocket`).toBeGreaterThanOrEqual(0);
+          expect(pocket.bottom, `${at}: ${pocket.code}'s words end inside it`).toBeGreaterThanOrEqual(0);
+        }
+        const pagesEnd = Math.max(
+          ...(await binder(page)
+            .locator('.binder-page:not(.binder-cover)')
+            .evaluateAll((pages) => pages.map((sheet) => sheet.getBoundingClientRect().bottom))),
+        );
+        const padding = (await edges(board(page))).bottom - pagesEnd;
+        expect(padding, `${at}: the board's padding under the pages`).toBeCloseTo(BOARD, 0);
+        const next = binder(page).getByRole('button', {name: 'Next spread'}).last();
+        if ((await next.getAttribute('aria-disabled')) === 'true') break;
+        await next.click();
+      }
+      expect(open, `${code}'s binder shows its open pockets`).toBeGreaterThan(0);
+    }
   });
 });

@@ -203,3 +203,16 @@ export function promoSetWithOpenPocket(): {code: string; promos: string[]; openP
   }
   throw new Error('Fixture broken: every promo set in promos.json numbers its promos without a gap');
 }
+
+/**
+ * Every promo set whose numbers skip one (#805), so its binder holds open pockets, with how many
+ * of its promos have a card: the count its binder's numbers show.
+ */
+export function promoSetsWithOpenPockets(): {code: string; promos: number}[] {
+  return Array.from(new Set(collectionPromos.map((promo) => promo.promoGrouping))).flatMap((code) => {
+    const promos = collectionPromos.filter((promo) => promo.promoGrouping === code);
+    const numbers = new Set(promos.flatMap((promo) => (promo.number === undefined ? [] : [promo.number])));
+    const skips = Array.from({length: Math.max(0, ...numbers)}, (_, i) => i + 1).some((n) => !numbers.has(n));
+    return skips ? [{code, promos: promos.filter((promo) => promo.baseId !== undefined).length}] : [];
+  });
+}
