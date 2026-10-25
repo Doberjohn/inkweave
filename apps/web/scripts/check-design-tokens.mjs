@@ -6,6 +6,7 @@
 // the LITERAL VALUES of the tokens themselves — every COLORS hex parsed live
 // from theme.ts (the needle list can never rot), the EASING linear() strings,
 // the font family names, and three hard tripwires ('Barlow', 'Tinos', backdrop-filter).
+// It reads the app's source and inkweave-ui's (packages/ui/src), keyed from the repo root.
 // In .css and .html, which ESLint never reads, it also counts raw values that
 // are not tokens at all (#546): literal rgb()/rgba(), keyword and bezier
 // easings, and hexes no token declares.
@@ -25,13 +26,25 @@ import {readdirSync, readFileSync, writeFileSync, statSync} from 'node:fs';
 import {join, relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
-const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..');
+const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..'); // apps/web
+const REPO = join(ROOT, '..', '..');
 const BASELINE_PATH = join(ROOT, 'scripts', 'known-design-values.json');
-const THEME = readFileSync(join(ROOT, 'src', 'shared', 'constants', 'theme.ts'), 'utf8');
+// The files that declare token values: every hex they hold is a needle, so a token file that
+// moves into inkweave-ui changes this one list.
+const TOKEN_FILES = [join(ROOT, 'src', 'shared', 'constants', 'theme.ts')];
+// Declaration sites are exempt from the scan.
+const DECLARATION_FILES = [...TOKEN_FILES, join(ROOT, 'src', 'shared', 'constants', 'playstyleUi.ts')];
+const THEME = TOKEN_FILES.map((file) => readFileSync(file, 'utf8')).join('\n');
+// The app's source and the shared package's. A missing folder throws: never scan less in silence.
+const SOURCE_DIRS = [join(ROOT, 'src'), join(REPO, 'packages', 'ui', 'src')];
 
 // ── Needles ────────────────────────────────────────────────────────────
 // Every hex the theme declares, longest-first so #d4af37 wins over #d4a.
 const TOKEN_HEXES = [...new Set((THEME.match(/#[0-9a-fA-F]{6}\b/g) ?? []).map((h) => h.toLowerCase()))];
+if (TOKEN_HEXES.length === 0) {
+  console.error('✗ TOKEN_FILES declare no hex: is a token file missing?');
+  process.exit(2);
+}
 // The spring curves: any verbatim copy outside theme.ts is a fork that will drift.
 const EASING_STRINGS = THEME.match(/linear\([^)]+\)/g) ?? [];
 const FONT_NAMES = ['Plus Jakarta Sans', 'Marcellus'];
@@ -53,8 +66,7 @@ const RAW_VALUES = [/rgba?\(\s*\d/g, /cubic-bezier\(|\bease(?:-in-out|-in|-out)?
 const HEX_COLOR = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6})\b/g;
 
 // ── Scan scope ─────────────────────────────────────────────────────────
-// Declaration sites are exempt; everything else that can carry styles is in.
-const EXEMPT = [/src[\\/]shared[\\/]constants[\\/]theme\.ts$/, /src[\\/]shared[\\/]constants[\\/]playstyleUi\.ts$/];
+// Everything that can carry styles is in, but DECLARATION_FILES.
 const EXTENSIONS = /\.(ts|tsx|css|html)$/;
 // The tripwires also read the rest of the app's text (#912): a purged font named
 // in public/ or e2e/ is as stale as one in src/. Only the tripwires, since those
@@ -76,7 +88,7 @@ function* walk(dir, extensions) {
   }
 }
 
-const files = [...walk(join(ROOT, 'src'), EXTENSIONS), join(ROOT, 'index.html')];
+const files = [...SOURCE_DIRS.flatMap((dir) => [...walk(dir, EXTENSIONS)]), join(ROOT, 'index.html')];
 const tripwireOnlyFiles = TRIPWIRE_ONLY_DIRS.flatMap((dir) => [...walk(dir, TEXT_EXTENSIONS)]);
 
 /** Occurrences of `needle` in `haystack` (plain substring scan). */
@@ -114,12 +126,12 @@ function countHits(file) {
 /** How many files the entries cover (a file can have a token entry and a raw one). */
 const fileCount = (entries) => new Set(Object.keys(entries).map((key) => key.replace(RAW_ENTRY, ''))).size;
 
-const relPath = (file) => relative(ROOT, file).replaceAll('\\', '/');
+const relPath = (file) => relative(REPO, file).replaceAll('\\', '/');
 
 const current = {};
 const tripHits = [];
 for (const file of files) {
-  if (EXEMPT.some((re) => re.test(file))) continue;
+  if (DECLARATION_FILES.includes(file)) continue;
   const rel = relPath(file);
   const {values, raw, trips} = countHits(file);
   if (values > 0) current[rel] = values;
