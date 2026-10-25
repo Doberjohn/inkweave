@@ -1,6 +1,7 @@
 import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {cardFullNameById, cardPromoCodes, cardVariantRarities} from '../helpers/cardData';
+import {fingerPath, keptTouchMoves, scrolledRound, swipeThrough, watchTouchMoves, type Point} from '../helpers/touch';
 
 // Card 1938 (Pongo - Determined Father) has one alternate printing, an Enchanted one (#625).
 // Read from the card data so a pool change fails here with a clear message, not a timeout.
@@ -61,18 +62,23 @@ async function withFourPrintings(page: Page) {
   });
 }
 
-/**
- * The card window's art height, top and bottom, and its Next arrow's middle, measured once the
- * window has finished scaling in (it opens from 95%) and its card's synergies are in.
- */
-async function windowGeometry(page: Page) {
+/** The card window once it has finished scaling in (it opens from 95%) and its card's synergies are in. */
+async function settledWindow(page: Page) {
   const modal = page.getByTestId('card-overview-modal');
   await expect
     .poll(() => modal.evaluate((el) => getComputedStyle(el).transform))
     .toMatch(/^(none|matrix\(1, 0, 0, 1, 0, 0\))$/);
-  // The synergies' filter chips stand over the body once they load: a card measured while its
-  // file is on the way reads shorter.
   await expect(modal.getByTestId('card-overview-loading')).toHaveCount(0);
+  return modal;
+}
+
+/**
+ * The card window's art height, top and bottom, and its Next arrow's middle, measured once the
+ * window has settled. The synergies' filter chips stand over the body once they load: a card
+ * measured while its file is on the way reads shorter.
+ */
+async function windowGeometry(page: Page) {
+  const modal = await settledWindow(page);
   const [art, shell, arrow] = await Promise.all([
     modal.locator('[data-comparison-card-a]').boundingBox(),
     modal.boundingBox(),
@@ -245,5 +251,65 @@ test.describe('Card printings (phone width)', () => {
     await expect.poll(() => printingInFront(page)).toBe(0);
     await expect(status).toHaveText('Standard, 1 of 4');
     expect(await fits()).toBe(true);
+  });
+});
+
+test.describe('Card printings (a finger on a phone)', () => {
+  // A finger on the card window's card at a forced phone width, as above. Its touches go through
+  // Chromium's DevTools protocol, so these run in Chromium's two projects only.
+  test.use({hasTouch: true});
+
+  /** The card window open on the fixture card at 390x844, settled, so its body scrolls under the card. */
+  async function openWindow(page: Page) {
+    await page.setViewportSize({width: 390, height: 844});
+    await page.addInitScript(watchTouchMoves);
+    await page.goto(`/browse?q=${encodeURIComponent(CARD_NAME)}`);
+    await page.getByRole('link', {name: CARD_NAME}).click();
+    const stack = (await settledWindow(page)).getByRole('group', {name: `${CARD_NAME} printings`});
+    await expect.poll(() => printingInFront(page)).toBe(0);
+    const box = (await stack.boundingBox())!;
+    const middle: Point = [box.x + box.width / 2, box.y + box.height / 2];
+    return {stack, middle};
+  }
+
+  test("a finger's sideways swipe on the card turns it though the finger drifts down, each move kept from the window's scroll", async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', "Touch goes through Chromium's DevTools protocol");
+    const {stack, middle} = await openWindow(page);
+    const cdp = await page.context().newCDPSession(page);
+    const before = await scrolledRound(stack);
+    await keptTouchMoves(page);
+
+    // 60px across, then 48px more as the finger drifts 80px down: a thumb's arc. On an iPhone the
+    // drift started the window's scroll, which cancelled the throw (owner, 2026-10-25).
+    await swipeThrough(page, cdp, fingerPath(middle, [6, [-10, 0]], [8, [-6, 10]]));
+    await expect.poll(() => printingInFront(page)).toBe(1);
+    // Every move is 10px or more from the press, past the 6px the card waits for: each is the throw's.
+    const kept = await keptTouchMoves(page);
+    expect(kept.length, 'the moves the page saw').toBeGreaterThan(5);
+    expect(kept, 'each kept from the scroll').toEqual(kept.map(() => true));
+    expect(await scrolledRound(stack), "how far the window's body scrolled").toBe(before);
+  });
+
+  test("a finger's swipe up the card scrolls the window and turns nothing, no move kept from the scroll", async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', "Touch goes through Chromium's DevTools protocol");
+    const {stack, middle} = await openWindow(page);
+    const cdp = await page.context().newCDPSession(page);
+    const before = await scrolledRound(stack);
+    await keptTouchMoves(page);
+
+    await swipeThrough(page, cdp, fingerPath(middle, [10, [0, -12]]));
+    await expect
+      .poll(() => scrolledRound(stack), {message: "how far the window's body scrolled"})
+      .toBeGreaterThan(before + 50);
+    const kept = await keptTouchMoves(page);
+    expect(kept.length, 'the moves the page saw').toBeGreaterThan(0);
+    expect(kept, 'none kept from the scroll').toEqual(kept.map(() => false));
+    expect(await printingInFront(page)).toBe(0);
   });
 });

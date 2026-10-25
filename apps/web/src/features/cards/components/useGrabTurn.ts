@@ -1,4 +1,5 @@
-import {useEffect, useRef, useState, type MouseEvent, type PointerEvent} from 'react';
+import {useEffect, useRef, useState, type MouseEvent, type PointerEvent, type RefObject} from 'react';
+import {useTouchHold} from '../../../shared/hooks/useTouchHold';
 import {easeOut, flickSpeed, glideMs, grabProgress, landsOnRelease, poseLeaf, SLOP, type Grip} from './pageTurnMath';
 import type {Turn} from './usePageTurns';
 
@@ -72,6 +73,11 @@ interface GrabOptions {
   reducedMotion: boolean;
   /** The spine's width: a held page swings about its middle. */
   spine: number;
+  /**
+   * The binder round the board, where a page in hand keeps its touch (`useTouchHold`). It stays
+   * on the page as the view changes, as the board doesn't: a phone's lone page has its own.
+   */
+  binder: RefObject<HTMLElement | null>;
 }
 
 interface Grab extends GrabOptions {
@@ -161,6 +167,13 @@ function follow(e: PointerEvent<HTMLElement>, trail: Press['trail'], lift: Lift)
 /** The press a pointer event belongs to: none for another pointer's. */
 const pressOf = (e: PointerEvent, {press}: GrabState) => (press?.id === e.pointerId ? press : null);
 
+/**
+ * Whether a page is in hand, on a board still in the binder: a change of view between a phone's
+ * lone page and the spread swaps the board for another, and the release the press waits for may
+ * never reach the new one.
+ */
+const pageInHand = ({press}: GrabState) => press?.lift !== undefined && press.page.isConnected;
+
 function pointerMoved(e: PointerEvent<HTMLElement>, state: GrabState, g: Grab) {
   const press = pressOf(e, state);
   if (!press || press.idle) return;
@@ -249,11 +262,17 @@ function swallowDragClick(e: MouseEvent, state: GrabState) {
 
 /**
  * The board's pointer handlers, and whether a page is in hand, for its `binder-grabbing` cursor.
- * The sheet for a page in hand is the binder's (`usePageTurns`, `PageTurn`), which this poses.
+ * The sheet for a page in hand is the binder's (`usePageTurns`, `PageTurn`), which this poses. A
+ * page in hand keeps its touch: on an iPhone a drift down would scroll the page and drop it.
  */
 export function useGrabTurn(options: GrabOptions) {
   const state = useRef<GrabState>({press: null, swallow: false, frame: 0});
   const [grabbing, setGrabbing] = useState(false);
+  // Only while a page can turn: a scroll that starts in the binder waits on its listener.
+  useTouchHold(options.binder, {
+    enabled: options.canPrev || options.canNext,
+    holding: () => pageInHand(state.current),
+  });
   useEffect(() => {
     const grab = state.current;
     return () => cancelAnimationFrame(grab.frame);

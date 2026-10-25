@@ -360,7 +360,7 @@ export function PrintingCarousel({
   const {front, turns, turn} = useTurns(rootRef, {index, count, turnable, onIndexChange, onSettle, onTurn: mouse.clear});
   const tucked = useTucked(front, reducedMotion);
   const keys = useStackKeys({locked, turn, reach: variantArt.reach});
-  const drag = useCardThrow({width, enabled: turnable, onThrow: turn});
+  const drag = useCardThrow(rootRef, {width, enabled: turnable, onThrow: turn});
   const heading = useHeading(drag.dx);
   useWheelTurn(rootRef, {enabled: turnable, onTurn: turn});
 

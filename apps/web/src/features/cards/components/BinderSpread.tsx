@@ -903,6 +903,8 @@ const turnClass = (turning: boolean, grabbing: boolean) =>
 
 type TurnProps = Pick<BinderSpreadProps, 'start' | 'renderSlot' | 'onPrev' | 'onNext' | 'canPrev' | 'canNext' | 'cardCount'> & {
   single: boolean;
+  /** The binder's section, where a page in hand keeps its touch (`useGrabTurn`). */
+  binder: RefObject<HTMLElement | null>;
 };
 
 interface TurnSheetProps {
@@ -1038,7 +1040,7 @@ export function BinderSpread({
     footer,
     cardCount,
     sheets: sheetsAt(start, single, cardCount),
-    turn: useViewTurn({start, single, renderSlot, onPrev, onNext, canPrev, canNext, cardCount}),
+    turn: useViewTurn({start, single, renderSlot, onPrev, onNext, canPrev, canNext, cardCount, binder: sectionRef}),
     arrows: {
       prev: (
         <NavArrowButton
