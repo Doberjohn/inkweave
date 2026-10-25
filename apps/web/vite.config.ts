@@ -570,12 +570,18 @@ export default defineConfig({
     maxWorkers: resolveVitestWorkers(),
     setupFiles: ['./src/shared/test-utils/setup.ts'],
     exclude: ['**/node_modules/**', '**/e2e/**'],
+    // CI collects it only on master pushes, where it feeds CodeScene's coverage views (#964).
+    // `include` lists every source file, not only those a test loaded, because CodeScene counts
+    // a file missing from the report as 0%; lcov's paths start at the repo root, as CodeScene's do.
     coverage: {
-      reporter: ['text', 'json-summary', 'html'],
+      include: ['src/**/*.{ts,tsx}'],
+      reporter: ['text', 'json-summary', 'html', ['lcovonly', {projectRoot: ROOT}]],
       exclude: [
         '**/node_modules/**',
         '**/dist/**',
         '**/*.test.{ts,tsx}',
+        '**/*.stories.tsx',
+        '**/__tests__/**',
         '**/test-utils/**',
         '**/index.ts', // Barrel files (re-exports only)
       ],
