@@ -581,6 +581,7 @@ export default defineConfig({
         '**/dist/**',
         '**/*.test.{ts,tsx}',
         '**/*.stories.tsx',
+        '**/*.d.ts',
         '**/__tests__/**',
         '**/test-utils/**',
         '**/index.ts', // Barrel files (re-exports only)

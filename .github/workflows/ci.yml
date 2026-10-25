@@ -101,19 +101,25 @@ jobs:
       # CodeScene's coverage views (#964): line and branch coverage for the engine and the web
       # app, for the commit its next analysis reads. Runs from the repo root, as cs-coverage
       # requires. A CodeScene outage must not turn master red, so failures only warn, and the
-      # step skips until the owner sets the CODESCENE_COVERAGE_TOKEN secret.
+      # step skips until the owner sets the CODESCENE_COVERAGE_TOKEN secret. The installer runs
+      # in a step of its own, so the script it fetches never sees the token.
+      - name: Install CodeScene's coverage tool
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        continue-on-error: true
+        env:
+          CS_COVERAGE_VERSION: 1.0.40
+        run: curl -fsSL https://downloads.codescene.io/enterprise/cli/install-cs-coverage-tool.sh | sh -s -- -y "$CS_COVERAGE_VERSION"
+
       - name: Upload coverage to CodeScene
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         continue-on-error: true
         env:
           CS_ACCESS_TOKEN: ${{ secrets.CODESCENE_COVERAGE_TOKEN }}
-          CS_COVERAGE_VERSION: 1.0.40
         run: |
           if [ -z "$CS_ACCESS_TOKEN" ]; then
             echo "::notice::CODESCENE_COVERAGE_TOKEN is not set; skipping the coverage upload."
             exit 0
           fi
-          curl -fsSL https://downloads.codescene.io/enterprise/cli/install-cs-coverage-tool.sh | sh -s -- -y "$CS_COVERAGE_VERSION"
           export PATH="$HOME/.local/bin:$PATH"
           for report in packages/synergy-engine/coverage/lcov.info apps/web/coverage/lcov.info; do
             for metric in line-coverage branch-coverage; do
