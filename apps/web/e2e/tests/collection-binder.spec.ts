@@ -598,6 +598,8 @@ test.describe("Collection mode, the binder's pages and pockets (#941)", () => {
   test("every promo spread keeps the binder's pockets, each open pocket's code on one line inside it", async ({
     page,
   }) => {
+    // A dozen spreads or so, more as promo sets gain open pockets, each set opened from its menu.
+    test.slow();
     await signInAsCollector(page, ENTRIES);
     await page.goto(`/browse?binder=${SET}`);
     await expect(binder(page)).toBeVisible();
@@ -606,34 +608,39 @@ test.describe("Collection mode, the binder's pages and pockets (#941)", () => {
     // Chromium stretched the pocket and every row with it, the pages past the board. The turns go
     // under reduced motion, which swaps the spread at once (#942).
     await page.emulateMedia({reducedMotion: 'reduce'});
-    for (const {code, promos} of promoSetsWithOpenPockets()) {
-      await openPromoBinder(page, code);
-      // The set's own numbers, and its front cover: its binder is on show, from the start.
-      await expect(page.getByRole('region', {name: 'Collection numbers'})).toContainText(`0 of ${promos} promos`);
-      await expect(binder(page).getByRole('group', {name: 'Front cover'})).toBeVisible();
-      let open = 0;
-      for (let spread = 1; ; spread++) {
-        const at = `${code} spread ${spread}`;
-        await expect(binder(page).locator('.binder-turn')).toHaveCount(0);
-        for (const pocket of await openPocketsFit(page)) {
-          open++;
-          expect(pocket.lines, `${at}: ${pocket.code} on one line`).toBe(1);
-          expect(pocket.sides, `${at}: ${pocket.code} inside its pocket's sides`).toBeGreaterThanOrEqual(0);
-          expect(pocket.top, `${at}: ${pocket.code} starts inside its pocket`).toBeGreaterThanOrEqual(0);
-          expect(pocket.bottom, `${at}: ${pocket.code}'s words end inside it`).toBeGreaterThanOrEqual(0);
-        }
-        const pagesEnd = Math.max(
-          ...(await binder(page)
-            .locator('.binder-page:not(.binder-cover)')
-            .evaluateAll((pages) => pages.map((sheet) => sheet.getBoundingClientRect().bottom))),
+    for (const {code, promos, gaps} of promoSetsWithOpenPockets()) {
+      await test.step(code, async () => {
+        await openPromoBinder(page, code);
+        // The set's own numbers, and its front cover: its binder is on show, from the start.
+        await expect(page.getByRole('region', {name: 'Collection numbers'})).toContainText(
+          `0 of ${promos.length} promos`,
         );
-        const padding = (await edges(board(page))).bottom - pagesEnd;
-        expect(padding, `${at}: the board's padding under the pages`).toBeCloseTo(BOARD, 0);
-        const next = binder(page).getByRole('button', {name: 'Next spread'}).last();
-        if ((await next.getAttribute('aria-disabled')) === 'true') break;
-        await next.click();
-      }
-      expect(open, `${code}'s binder shows its open pockets`).toBeGreaterThan(0);
+        await expect(binder(page).getByRole('group', {name: 'Front cover'})).toBeVisible();
+        let open = 0;
+        for (let spread = 1; ; spread++) {
+          const at = `${code} spread ${spread}`;
+          await expect(binder(page).locator('.binder-turn')).toHaveCount(0);
+          for (const pocket of await openPocketsFit(page)) {
+            open++;
+            expect(pocket.lines, `${at}: ${pocket.code} on one line`).toBe(1);
+            expect(pocket.sides, `${at}: ${pocket.code} inside its pocket's sides`).toBeGreaterThanOrEqual(0);
+            expect(pocket.top, `${at}: ${pocket.code} starts inside its pocket`).toBeGreaterThanOrEqual(0);
+            expect(pocket.bottom, `${at}: ${pocket.code}'s words end inside it`).toBeGreaterThanOrEqual(0);
+          }
+          const pagesEnd = Math.max(
+            ...(await binder(page)
+              .locator('.binder-page:not(.binder-cover)')
+              .evaluateAll((pages) => pages.map((sheet) => sheet.getBoundingClientRect().bottom))),
+          );
+          const padding = (await edges(board(page))).bottom - pagesEnd;
+          expect(padding, `${at}: the board's padding under the pages`).toBeCloseTo(BOARD, 0);
+          const next = binder(page).getByRole('button', {name: 'Next spread'}).last();
+          if ((await next.getAttribute('aria-disabled')) === 'true') break;
+          await next.click();
+        }
+        // Each number it skips shows its code; a waiting promo shows its scan, its text only when that fails.
+        expect(open, `${code}'s binder shows a pocket for each number it skips`).toBeGreaterThanOrEqual(gaps.length);
+      });
     }
   });
 });
