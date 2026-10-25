@@ -44,6 +44,11 @@ jobs:
 
   build-and-test:
     runs-on: ubuntu-latest
+    # Coverage is collected and uploaded on master pushes only (#964). The second value says
+    # whether the token is set, so no step needs the token itself to decide.
+    env:
+      COLLECT_COVERAGE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+      CODESCENE_TOKEN_SET: ${{ secrets.CODESCENE_COVERAGE_TOKEN != '' }}
 
     steps:
       - name: Checkout code
@@ -93,39 +98,45 @@ jobs:
       # A push to master collects coverage for CodeScene's coverage views (#964). A PR collects
       # none (#867): nothing reads it there, and it adds about 25 s.
       - name: Run engine tests
-        run: pnpm --filter inkweave-synergy-engine test:run ${{ github.event_name == 'push' && '--coverage' || '' }}
+        run: pnpm --filter inkweave-synergy-engine test:run ${{ env.COLLECT_COVERAGE == 'true' && '--coverage' || '' }}
 
       - name: Run web tests
-        run: pnpm --filter inkweave-web test:run ${{ github.event_name == 'push' && '--coverage' || '' }}
+        run: pnpm --filter inkweave-web test:run ${{ env.COLLECT_COVERAGE == 'true' && '--coverage' || '' }}
 
       # CodeScene's coverage views (#964): line and branch coverage for the engine and the web
-      # app, for the commit its next analysis reads. Runs from the repo root, as cs-coverage
-      # requires. A CodeScene outage must not turn master red, so failures only warn, and the
-      # step skips until the owner sets the CODESCENE_COVERAGE_TOKEN secret. The installer runs
-      # in a step of its own, so the script it fetches never sees the token.
+      # app, uploaded for this commit; CodeScene's analysis reads the newest upload at or before
+      # the commit it analyses. A CodeScene outage must not turn master red, so both steps only
+      # warn, and neither runs until the owner sets the CODESCENE_COVERAGE_TOKEN secret. The
+      # installer runs in a step of its own, so the script it fetches never sees the token.
       - name: Install CodeScene's coverage tool
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: env.COLLECT_COVERAGE == 'true'
         continue-on-error: true
+        shell: bash
         env:
           CS_COVERAGE_VERSION: 1.0.40
-        run: curl -fsSL https://downloads.codescene.io/enterprise/cli/install-cs-coverage-tool.sh | sh -s -- -y "$CS_COVERAGE_VERSION"
+        run: |
+          if [ "$CODESCENE_TOKEN_SET" != true ]; then
+            echo "::notice::CODESCENE_COVERAGE_TOKEN is not set; skipping the coverage upload."
+            exit 0
+          fi
+          curl -fsSL https://downloads.codescene.io/enterprise/cli/install-cs-coverage-tool.sh | sh -s -- -y "$CS_COVERAGE_VERSION"
 
+      # One report for both packages, uploaded from the repo root, as cs-coverage requires.
       - name: Upload coverage to CodeScene
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: env.COLLECT_COVERAGE == 'true' && env.CODESCENE_TOKEN_SET == 'true'
         continue-on-error: true
         env:
           CS_ACCESS_TOKEN: ${{ secrets.CODESCENE_COVERAGE_TOKEN }}
         run: |
-          if [ -z "$CS_ACCESS_TOKEN" ]; then
-            echo "::notice::CODESCENE_COVERAGE_TOKEN is not set; skipping the coverage upload."
+          export PATH="$HOME/.local/bin:$PATH"
+          if ! command -v cs-coverage > /dev/null; then
+            echo "::warning::cs-coverage did not install; see the step above. Nothing was uploaded."
             exit 0
           fi
-          export PATH="$HOME/.local/bin:$PATH"
-          for report in packages/synergy-engine/coverage/lcov.info apps/web/coverage/lcov.info; do
-            for metric in line-coverage branch-coverage; do
-              cs-coverage upload --format lcov --metric "$metric" "$report" \
-                || echo "::warning::CodeScene coverage upload failed: $report ($metric)"
-            done
+          cat packages/synergy-engine/coverage/lcov.info apps/web/coverage/lcov.info > coverage.lcov
+          for metric in line-coverage branch-coverage; do
+            cs-coverage upload --format lcov --metric "$metric" coverage.lcov \
+              || echo "::warning::CodeScene coverage upload failed ($metric)"
           done
 
   # e2e-tests runs in Playwright's image for this exact version, because an image's browsers
