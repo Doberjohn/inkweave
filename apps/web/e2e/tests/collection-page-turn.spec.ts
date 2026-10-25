@@ -315,8 +315,14 @@ function expectSameBox(actual: Box | null | undefined, expected: Box | null | un
   }
 }
 
+/** Where a stamped drag lets go instead of its last point, and how long after it. */
+interface Release {
+  to: [number, number];
+  afterMs: number;
+}
+
 /** Sends a mouse press, moves and release through Chromium's protocol, each with its own time. */
-async function stampedDrag(cdp: CDPSession, path: [number, number][], stepMs: number): Promise<void> {
+async function stampedDrag(cdp: CDPSession, path: [number, number][], stepMs: number, release?: Release): Promise<void> {
   const t0 = Date.now() / 1000;
   const [[x0, y0]] = path;
   const at = (i: number) => t0 + (i * stepMs) / 1000;
@@ -325,7 +331,7 @@ async function stampedDrag(cdp: CDPSession, path: [number, number][], stepMs: nu
   for (const [i, [x, y]] of path.slice(1).entries()) {
     await cdp.send('Input.dispatchMouseEvent', {type: 'mouseMoved', x, y, button: 'left', buttons: 1, timestamp: at(i + 1)});
   }
-  const [x, y] = path[path.length - 1];
+  const [x, y] = release?.to ?? path[path.length - 1];
   await cdp.send('Input.dispatchMouseEvent', {
     type: 'mouseReleased',
     x,
@@ -333,7 +339,7 @@ async function stampedDrag(cdp: CDPSession, path: [number, number][], stepMs: nu
     button: 'left',
     buttons: 0,
     clickCount: 1,
-    timestamp: at(path.length - 1),
+    timestamp: at(path.length - 1) + (release?.afterMs ?? 0) / 1000,
   });
 }
 
@@ -346,7 +352,9 @@ test.describe("Collection mode, turning the binder's pages (#942)", () => {
 
   test("Next lifts the right page and lands it as the next spread's left in 0.7s, the map marking spread 2 at once", async ({
     page,
+    browserName,
   }) => {
+    const timesTheKey = process.env.E2E_SERVER === 'preview' && browserName === 'chromium';
     await openBinder(page);
     const next = binder(page).getByRole('button', {name: 'Next spread'});
     await next.focus();
@@ -362,10 +370,12 @@ test.describe("Collection mode, turning the binder's pages (#942)", () => {
     // sends Enter's click as a task of its own, a frame after the keydown at times). A frame's own
     // time is when it was due, which can come before a slow commit that held it up, so the frame
     // looks for the sheet instead of comparing times. Within 100 ms of the key on a production
-    // build, about 60 in a 4-vCPU container. The dev server's React takes 150 to 250 ms to draw
-    // the same commit, and 50 to 100 for the change alone (2026-10-24).
+    // build in Chromium, about 60 in a 4-vCPU container. The dev server's React takes 150 to 250
+    // ms to draw the same commit, and 50 to 100 for the change alone (2026-10-24); CI's Firefox
+    // and WebKit runners take 190 to 280 ms on a production build (2026-10-25), so the wall-clock
+    // bounds hold Chromium's production build alone.
     expect(click.framed, "drawn by the first frame after the key's click").toBe(true);
-    if (process.env.E2E_SERVER === 'preview') {
+    if (timesTheKey) {
       expect(turn.drawnAt - keydown.at, 'ms from the key to the sheet').toBeLessThan(100);
     }
     expect(turn.map, 'the spread the map marked as the sheet was drawn').toMatch(spreadNamed(2));
@@ -384,7 +394,7 @@ test.describe("Collection mode, turning the binder's pages (#942)", () => {
     // second from the key on a production build.
     expect(turn.goneAt! - turn.drawnAt, 'ms the sheet was drawn').toBeGreaterThanOrEqual(TURN_MS);
     expect(turn.goneAt! - turn.drawnAt, 'ms the sheet was drawn').toBeLessThan(1000);
-    if (process.env.E2E_SERVER === 'preview') {
+    if (timesTheKey) {
       expect(turn.goneAt! - keydown.at, 'ms from the key to the sheet gone').toBeLessThan(1000);
     }
     await expect(firstCardOn(page, 'Left page')).toHaveAccessibleName(BASE[12].fullName);
@@ -434,9 +444,13 @@ test.describe("Collection mode, turning the binder's pages (#942)", () => {
   test('a map press four spreads on turns one sheet, and the map still turns while it does', async ({page}) => {
     await openBinder(page);
     const map = binder(page).getByRole('navigation', {name: 'Binder pages'});
+    // Both presses straight after each other, with no wait for the buttons in between: the second
+    // has to come while the first one's sheet turns, which a slow runner's waits could outlast.
+    const [five, two] = await Promise.all(
+      [5, 2].map(async (spread) => (await map.getByRole('button', {name: spreadNamed(spread)}).boundingBox())!),
+    );
     await clearTurns(page);
-    await map.getByRole('button', {name: spreadNamed(5)}).click();
-    await map.getByRole('button', {name: spreadNamed(2)}).click();
+    for (const box of [five, two]) await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 
     await expect(shown(page)).toHaveAccessibleName(spreadNamed(2));
     const [jump, back] = await endedTurns(page);
@@ -522,6 +536,20 @@ test.describe("Collection mode, turning the binder's pages (#942)", () => {
     const box = await edges(card);
     await page.mouse.click(middle(box), (box.top + box.bottom) / 2);
     await expect(page.getByTestId('card-overview-modal').locator('h1')).toHaveText(BASE[0].fullName);
+  });
+
+  test('a page let go past the spine lands, though its last move stopped short of it', async ({page, browserName}) => {
+    test.skip(browserName !== 'chromium', "Stamped mouse events go through Chromium's DevTools protocol");
+    await openBinder(page);
+    const grip = await marginGrip(page);
+    const path = Array.from({length: 6}, (_, i): [number, number] => [pointerAt(grip, (0.3 * i) / 5), grip.y]);
+    // The last move holds it 0.3 of the way over; the release, 200 ms later with no flick, is past the spine.
+    await clearTurns(page);
+    const cdp = await page.context().newCDPSession(page);
+    await stampedDrag(cdp, path, 30, {to: [pointerAt(grip, 0.75), grip.y], afterMs: 200});
+    await expect(shown(page)).toHaveAccessibleName(spreadNamed(2));
+    await endedTurns(page);
+    await expect(cardWindow(page)).toHaveCount(0);
   });
 
   test('a flick turns the page where the same drag let go still falls back', async ({page, browserName}) => {
@@ -672,6 +700,13 @@ test.describe("Collection mode, turning the binder's pages (#942)", () => {
     await page.mouse.move(grip.x0 - 0.2 * grip.width, grip.y, {steps: 8});
     await page.mouse.up();
     expect(await settled('pointerup')).toMatch(spreadNamed(6));
+    // Lifted leftward, then taken a third of the page back the other way: it stays.
+    await page.mouse.move(grip.x0, grip.y);
+    await page.mouse.down();
+    await page.mouse.move(grip.x0 - 0.05 * grip.width, grip.y, {steps: 4});
+    await page.mouse.move(grip.x0 + 0.3 * grip.width, grip.y, {steps: 8});
+    await page.mouse.up();
+    expect(await settled('pointerup'), 'the map once a drag back the other way let go').toMatch(spreadNamed(6));
 
     await pause(page, 100);
     expect((await turnLog(page)).turns, 'sheets drawn').toEqual([]);
@@ -795,6 +830,31 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     await expect(first, "the focus on page 2's first card").toBeFocused();
     await swipe(page, cdp, [box.left + 20, y], [box.right - 20, y]);
     await expect(first).toHaveAccessibleName(BASE[0].fullName);
+    await expect(sheets(page)).toHaveCount(0);
+    await expect(cardWindow(page)).toHaveCount(0);
+  });
+
+  test('a second finger on the page leaves the first one turning it', async ({page, browserName}) => {
+    test.skip(browserName !== 'chromium', "Touch goes through Chromium's DevTools protocol");
+    await openBinder(page, PHONE);
+    const cdp = await page.context().newCDPSession(page);
+    const box = await edges(lonePage(page));
+    const y = box.top + (box.bottom - box.top) / 3;
+    const [from, to] = [box.right - 20, box.left + 20];
+    const finger = (i: number) => ({x: from + ((to - from) * i) / 10, y, id: 0});
+    const second = {x: middle(box), y: box.bottom - 40, id: 1};
+    await cdp.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [finger(0)]});
+    for (let i = 1; i <= 10; i++) {
+      // A second finger lands a third of the way across, and lifts two moves later: the protocol
+      // lifts any finger a move leaves out.
+      if (i === 4) await cdp.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [finger(3), second]});
+      if (i === 6) await cdp.send('Input.dispatchTouchEvent', {type: 'touchMove', touchPoints: [finger(5)]});
+      const points = i === 4 || i === 5 ? [finger(i), second] : [finger(i)];
+      await cdp.send('Input.dispatchTouchEvent', {type: 'touchMove', touchPoints: points});
+      await pause(page, 16);
+    }
+    await cdp.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []});
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[12].fullName);
     await expect(sheets(page)).toHaveCount(0);
     await expect(cardWindow(page)).toHaveCount(0);
   });

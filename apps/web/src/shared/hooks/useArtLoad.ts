@@ -16,15 +16,19 @@ const HELD_ART = {loading: 'eager', decoding: 'sync'} as const;
 
 /**
  * Art that was on screen a moment ago and is drawn again in a copy: the binder's pages a page turn
- * lifts (#942). Its art starts loaded, as art the browser already holds does. Chromium gives the
- * copy's `<img>` its image a task after it mounts (see `renderOverPrerenderedPage`), so the art
- * draws blank that long at most, where the ink placeholder would show and fade back in.
+ * lifts (#942). Art that had drawn starts loaded, as art the browser already holds does. Chromium
+ * gives the copy's `<img>` its image a task after it mounts (see `renderOverPrerenderedPage`), so
+ * the art draws blank that long at most, where the ink placeholder would show and fade back in.
+ * Art still on its way keeps its placeholder in the copy too.
  */
 export const ArtOnScreen = createContext(false);
 
-/** Art starts loaded where a copy draws it again (`ArtOnScreen`), or where the prerendered page showed it. */
+/** The art that has drawn in this tab: the copies `ArtOnScreen` marks may start with it loaded. */
+const drawn = new Set<string>();
+
+/** Art starts loaded where a copy draws it again (`ArtOnScreen`) after it drew, or where the prerendered page showed it. */
 const firstLoad = (src: string | undefined, onScreen: boolean): ArtLoad =>
-  onScreen || prerenderedArtShown(src) ? 'cached' : 'loading';
+  (onScreen && src !== undefined && drawn.has(src)) || prerenderedArtShown(src) ? 'cached' : 'loading';
 
 /**
  * Load state for card art drawn over its ink placeholder (#919). Art the browser already holds
@@ -40,7 +44,10 @@ const firstLoad = (src: string | undefined, onScreen: boolean): ArtLoad =>
 export function useArtLoad(src: string | undefined) {
   const onScreen = useContext(ArtOnScreen);
   const [load, setLoad] = useState(() => firstLoad(src, onScreen));
-  const settle = (next: ArtLoad) => setLoad((current) => (current === 'loading' ? next : current));
+  const settle = (next: ArtLoad) => {
+    if (src) drawn.add(src);
+    setLoad((current) => (current === 'loading' ? next : current));
+  };
   return {
     loaded: load !== 'loading',
     transition: load === 'cached' ? undefined : FADE_IN,

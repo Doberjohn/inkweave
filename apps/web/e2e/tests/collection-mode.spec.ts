@@ -730,12 +730,14 @@ test.describe('Collection mode, signed in', () => {
     await expect(numbers(page)).toContainText(`1 of ${promoSet.promos.length} promos`);
     await expect(numbers(page).getByRole('button', {name: /^Master/})).toHaveCount(0);
     // The promo set's binder is on show, so the turns go to it. It opens on the front cover
-    // (#806), so the open pocket can be a spread or more in.
+    // (#806), so the open pocket can be a spread or more in. The turns go under reduced motion,
+    // which swaps the spread at once (#942): the page turn isn't what this test measures.
+    await page.emulateMedia({reducedMotion: 'reduce'});
     for (let spread = 1; spread < promoSet.openSpread; spread++) {
       await page.getByRole('button', {name: 'Next spread'}).last().click();
     }
-    // Once the turn's sheet has landed (#942): until then it draws a copy of the pages over them.
     await expect(binder(page).locator('.binder-turn')).toHaveCount(0);
+    await page.emulateMedia({reducedMotion: 'no-preference'});
     // A number with no promo is an open pocket, which shows the number's code (owner, 2026-10-17,
     // layout 1): why it is open (not listed, not released) is the promo set's to say.
     const code = binder(page).getByText(promoSet.openPocket, {exact: true});

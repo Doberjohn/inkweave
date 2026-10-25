@@ -79,11 +79,11 @@ interface Grab extends GrabOptions {
 }
 
 /**
- * The page a press may take: with the primary button, pen or finger, on a page that can turn
+ * The page a press may take: with the main button, a pen or a finger, on a page that can turn
  * (`data-grab`), and off anything marked `data-no-grab`, such as an open copies stripe.
  */
 function pageToGrab(e: PointerEvent): HTMLElement | null {
-  if (!e.isPrimary || e.button !== 0) return null;
+  if (e.button !== 0) return null;
   const target = e.target as Element;
   return target.closest('[data-no-grab]') ? null : target.closest<HTMLElement>('.binder-page[data-grab]');
 }
@@ -117,6 +117,8 @@ const isDrawn = (lift: Lift): lift is DrawnLift => lift.held !== undefined;
 const leafIn = (board: HTMLElement) => board.querySelector<HTMLElement>('.binder-turn .binder-leaf');
 
 function pressDown(e: PointerEvent<HTMLElement>, state: GrabState, g: Grab) {
+  // A second finger leaves the press in hand as it was: its own pointerup would never end it.
+  if (!e.isPrimary) return;
   state.swallow = false;
   const page = g.turning ? null : pageToGrab(e);
   state.press = page && {
@@ -193,6 +195,8 @@ function letGo(
   g: Grab,
 ) {
   trail.push([e.timeStamp, e.clientX]);
+  // Where it was let go, which can lie past the last move.
+  lift.t = grabProgress(e.clientX, lift.grip);
   const toward = -lift.dir * flickSpeed(trail);
   const lands = !cancelled && landsOnRelease(lift.t, toward);
   const settle = () => (lands ? turnTo(lift.dir, g) : g.end(lift.held));
@@ -201,9 +205,12 @@ function letGo(
   else settle();
 }
 
-/** Under reduced motion the page turns at once on letting go, if it went past a quarter of the page. */
+/**
+ * Under reduced motion the page turns at once on letting go, if it went past a quarter of the
+ * page the way it turns: leftward forward, rightward back.
+ */
 function turnAtOnce(e: PointerEvent<HTMLElement>, x0: number, lift: Lift, g: Grab) {
-  if (Math.abs(e.clientX - x0) > lift.grip.width / 4) turnTo(lift.dir, g);
+  if ((x0 - e.clientX) * lift.dir > lift.grip.width / 4) turnTo(lift.dir, g);
 }
 
 function release(e: PointerEvent<HTMLElement>, state: GrabState, g: Grab, cancelled: boolean) {
