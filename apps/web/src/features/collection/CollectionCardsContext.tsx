@@ -13,10 +13,10 @@
 // through `collectionChunks.ts`, once per visit, so a search and collection mode share them.
 //
 // DESIGN-PHASE SIMPLIFICATION, deliberate and temporary: this loads every set's
-// DETAIL chunk (~444 KB gzip served) rather than the 71 KB index. The index carries no
-// keywords and no card text, and both are real filters — measured on Set 1,
-// "Evasive" hits 11 cards across 6 spreads and the text "banish" hits 27 across
-// all 9. Deciding the production tiering before the UI exists would be sizing a
+// DETAIL chunk (~225 kB gzip served, since #929 slimmed them) rather than the 66 kB
+// index. The index carries no keywords and no card text, and both are real filters:
+// measured on Set 1, "Evasive" hits 11 cards across 6 spreads and the text "banish"
+// hits 27 across all 9. Deciding the production tiering before the UI exists would be sizing a
 // payload against a guess, which is the mistake that made this dataset 4x bigger
 // than its first estimate. Revisit once the binder's needs are settled.
 

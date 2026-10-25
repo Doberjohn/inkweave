@@ -315,26 +315,77 @@ function productionLibrariesPlugin(): Plugin {
   };
 }
 
-/** The card data the app fetches whole. public/ keeps them indented, for readable diffs. */
-const MINIFIED_DATA = ['allCards.json', 'previewCards.json'];
+/** The card files the app transforms: the card list, the preview cards and the collection's set chunks. */
+function cardDataFiles(dataDir: string): string[] {
+  const collection = path.join(dataDir, 'collection');
+  const chunks = fs.existsSync(collection)
+    ? fs.readdirSync(collection).filter((name) => name.endsWith('.json') && name !== 'index.json')
+    : [];
+  return ['allCards.json', 'previewCards.json', ...chunks.map((name) => `collection/${name}`)]
+    .map((name) => path.join(dataDir, name))
+    .filter((file) => fs.existsSync(file));
+}
+
+/** Where a local-images build keeps each image's source links, by card or printing id (#932). */
+const IMAGE_SOURCES = 'image-sources.json';
+
+/** A card or printing in the card files: what moving its image links reads. */
+interface ImageSubject {
+  id: number | string;
+  images?: unknown;
+  variants?: ImageSubject[];
+}
+
+/** The entry less its image links, which `sources` takes by id, as its printings' (#932). */
+function withoutImages<T extends ImageSubject>(
+  {images, ...entry}: T,
+  sources: Record<string, unknown>,
+): T {
+  if (images) sources[String(entry.id)] = images;
+  const variants = entry.variants?.map((variant) => withoutImages(variant, sources));
+  return (variants ? {...entry, variants} : entry) as T;
+}
 
 /**
- * Writes the build's copies of the card data without whitespace (#927): allCards.json, which every
- * visit downloads, is 10.4 kB smaller gzipped. The deploy injects the image hashes into public/
- * before it builds (download-card-images.mjs), so the copy this minifies has them.
+ * Writes the build's copies of the card data minified (#927) and slimmed (#929): each card goes
+ * through slimRawCard, which keeps its text once and only its keyword abilities, and which
+ * transformCard reverses. public/ keeps the full, indented copies that scripts and admin read.
+ * The deploy injects the image hashes into public/ before it builds (download-card-images.mjs),
+ * so the copies this writes have them.
+ *
+ * A local-images build (#932), whose loader makes every art URL from the card's id and image hash,
+ * also moves each card's and printing's `images` links out of the card files into
+ * data/image-sources.json, which no page loads. The image restore (download-card-images.mjs)
+ * reads them back from production there.
  */
-function minifyCardDataPlugin(): Plugin {
+function cardDataPlugin(): Plugin {
   let outDir = '';
+  let localImages = false;
   return {
-    name: 'minify-card-data',
+    name: 'card-data',
     apply: 'build',
     configResolved(config) {
       outDir = path.resolve(config.root, config.build.outDir);
+      localImages = config.env.VITE_LOCAL_IMAGES === 'true';
     },
-    closeBundle() {
-      for (const name of MINIFIED_DATA) {
-        const file = path.join(outDir, 'data', name);
-        if (fs.existsSync(file)) fs.writeFileSync(file, JSON.stringify(JSON.parse(fs.readFileSync(file, 'utf8'))));
+    async closeBundle() {
+      // Imported here rather than at the top: on a fresh clone the config loads before the engine
+      // is built, and a build has always built it by now (the app imports it too).
+      const {slimRawCard} = await import('inkweave-synergy-engine/card');
+      const sources: Record<string, unknown> = {};
+      const slimCard: typeof slimRawCard = (card) =>
+        localImages ? withoutImages(slimRawCard(card), sources) : slimRawCard(card);
+      for (const file of cardDataFiles(path.join(outDir, 'data'))) {
+        const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+        const slim = Array.isArray(data)
+          ? data.map(slimCard)
+          : {...data, cards: data.cards.map(slimCard)};
+        fs.writeFileSync(file, JSON.stringify(slim));
+      }
+      // Only a run that moved links writes the record: a second run over the same outDir finds
+      // its own output, with nothing left to move, and must not overwrite the record with {}.
+      if (localImages && Object.keys(sources).length > 0) {
+        fs.writeFileSync(path.join(outDir, 'data', IMAGE_SOURCES), JSON.stringify(sources));
       }
     },
   };
@@ -362,7 +413,7 @@ export default defineConfig({
     babel({presets: [reactCompilerPreset()]}),
     iconSetPlugin(),
     productionLibrariesPlugin(),
-    minifyCardDataPlugin(),
+    cardDataPlugin(),
     VitePWA({
       registerType: 'prompt',
       includeAssets: [`${ICON_DIR}favicon.png`, `${ICON_DIR}apple-touch-icon.png`],
