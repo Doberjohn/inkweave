@@ -2,16 +2,9 @@ import path from 'node:path';
 import babel from '@rolldown/plugin-babel';
 import react, {reactCompilerPreset} from '@vitejs/plugin-react';
 import {defineConfig} from 'vitest/config';
+import {resolveVitestWorkers} from '../../apps/web/vitest-workers.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
-
-/** The app's Windows worker cap (#720), as resolveVitestWorkers in apps/web/vite.config.ts sets it. */
-function resolveVitestWorkers(): number | undefined {
-  const override = Number.parseInt(process.env.VITEST_MAX_WORKERS ?? '', 10);
-  if (override > 0) return override;
-  if (process.env.CI) return undefined;
-  return process.platform === 'win32' ? 4 : undefined;
-}
 
 export default defineConfig({
   // The React Compiler pass the app's build applies to this source, so the tests run what ships.
@@ -22,7 +15,8 @@ export default defineConfig({
     maxWorkers: resolveVitestWorkers(),
     setupFiles: ['./src/test-utils/setup.ts'],
     // CodeScene's coverage views (#964), as the app collects them: CI uploads this lcov with the
-    // engine's and the app's, and the exclusions match theirs.
+    // engine's and the app's, and the exclusions are the app's (bar its generated Supabase types),
+    // each also in project 79825's coverage exclusions.
     coverage: {
       include: ['src/**/*.{ts,tsx}'],
       reporter: [
@@ -33,11 +27,14 @@ export default defineConfig({
       ],
       exclude: [
         '**/node_modules/**',
+        '**/dist/**',
         '**/*.test.{ts,tsx}',
         '**/*.stories.tsx',
+        '**/*Story*.ts', // Data only stories load
         '**/*.d.ts',
         '**/__tests__/**',
         '**/test-utils/**',
+        '**/index.ts', // Barrel files (re-exports only)
       ],
     },
   },

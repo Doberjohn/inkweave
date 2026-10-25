@@ -7,6 +7,7 @@ import babel from '@rolldown/plugin-babel';
 import {VitePWA} from 'vite-plugin-pwa';
 import {visualizer} from 'rollup-plugin-visualizer';
 import {isSharedModule, isVendorModule, startupGroupsGuard, uiCompilerGuard} from './build-guards.ts';
+import {resolveVitestWorkers} from './vitest-workers.ts';
 import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
 import {createRequire} from 'node:module';
@@ -232,20 +233,6 @@ function unloadableChunksPlugin(): Plugin {
 }
 
 /**
- * Local Windows runs cap Vitest at 4 workers (#720). The repo sits on a spinning disk there, and
- * on a cold file cache the default first wave (11 workers on the 12-thread dev box) needs over
- * 60 s to start, mostly loading jsdom, past Vitest's hardcoded worker-start limit, so none of its
- * files run. Four workers measured 35 to 43 s. CI keeps Vitest's default: it has never hit this.
- * VITEST_MAX_WORKERS overrides the cap.
- */
-function resolveVitestWorkers(): number | undefined {
-  const override = Number.parseInt(process.env.VITEST_MAX_WORKERS ?? '', 10);
-  if (override > 0) return override;
-  if (process.env.CI) return undefined;
-  return process.platform === 'win32' ? 4 : undefined;
-}
-
-/**
  * Startup chunk groups (#789). The entry shares these modules with lazy chunks, and Rolldown's
  * automatic splitting gave most of them a small startup file each: startup loaded ten files, and
  * with these two groups it loads four. The libraries get a group of their own, which changes only
@@ -292,8 +279,10 @@ const STARTUP_SHARED = [
   'apps/web/src/features/cards/inkHubs.ts',
   'apps/web/src/pages/homeFrame.ts',
 ];
-const inStartupVendor = (id: string) => STARTUP_VENDOR.some((name) => isVendorModule(name)(id));
-const inStartupShared = (id: string) => STARTUP_SHARED.some((file) => isSharedModule(file)(id));
+const VENDOR_TESTS = STARTUP_VENDOR.map(isVendorModule);
+const SHARED_TESTS = STARTUP_SHARED.map(isSharedModule);
+const inStartupVendor = (id: string) => VENDOR_TESTS.some((test) => test(id));
+const inStartupShared = (id: string) => SHARED_TESTS.some((test) => test(id));
 
 // Staging's icons (#905). deploy-staging.yml sets INKWEAVE_ICON_SET=staging for its build alone,
 // so staging.inkweave.ink shows the Emerald and Ruby drop from public/brand/staging/, under the

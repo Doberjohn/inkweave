@@ -32,6 +32,31 @@ describe("inkweave-ui's lint config", () => {
     });
   });
 
+  it.each([
+    ['the router', "import('react-router')", 'never routes'],
+    ['Sentry', 'import(`@sentry/${name}`)', 'never reports analytics'],
+    ['the app by path', "import('../../../apps/web/src/main')", 'never imports the app'],
+    ['the router, miscased', "import('React-Router')", 'never routes'],
+  ])('stops package source importing %s lazily', async (_what, load, message) => {
+    const code = `const name = 'react';\nexport const load = () => ${load};\n`;
+    const messages = await lint(PACKAGE, COMPONENT, code);
+    expect(messages).toContainEqual({
+      ruleId: 'no-restricted-syntax',
+      message: expect.stringContaining(message),
+    });
+  });
+
+  it.each([
+    ['the router', "typeof import('react-router')", 'never routes'],
+    ['the app', "import('../../../apps/web/src/main').Root", 'never imports the app'],
+  ])('stops package source taking a type from %s by import()', async (_what, type, message) => {
+    const messages = await lint(PACKAGE, COMPONENT, `export type Probe = ${type};\n`);
+    expect(messages).toContainEqual({
+      ruleId: 'no-restricted-syntax',
+      message: expect.stringContaining(message),
+    });
+  });
+
   it("holds package source to the app's design-token and compiler rules", async () => {
     const code =
       "import {useMemo} from 'react';\nexport const color = '#123456';\nexport const v = () => useMemo(() => 1, []);\n";
@@ -77,10 +102,23 @@ describe("the app's door into inkweave-ui", () => {
     expect(rules).toContain('no-restricted-imports');
   });
 
+  it.each([
+    ['src/App.tsx', "import('inkweave-ui')"],
+    ['src/App.tsx', "import('Inkweave-UI')"],
+    ['src/App.tsx', "import('../../../packages/ui/src/components/CtaButton')"],
+    ['src/App.tsx', 'import(`../../packages/ui/src/components/${name}`)'],
+    ['e2e/probe.spec.ts', "import('inkweave-ui/src/tokens/theme')"],
+    ['.storybook/preview.tsx', "import('../../packages/ui/src/tokens/theme')"],
+  ])('stops %s importing lazily with %s', async (file, load) => {
+    const code = `const name = 'CtaButton';\nexport const load = () => ${load};\n`;
+    const rules = (await lint(APP, file, code)).map(({ruleId}) => ruleId);
+    expect(rules).toContain('no-restricted-syntax');
+  });
+
   it('lets the app import a subpath from the exports map', async () => {
-    const rules = (await lint(APP, 'src/App.tsx', imports('inkweave-ui/components/CtaButton'))).map(
-      ({ruleId}) => ruleId,
-    );
+    const code = `${imports('inkweave-ui/components/CtaButton')}export const load = () => import('inkweave-ui/hooks/useHover');\n`;
+    const rules = (await lint(APP, 'src/App.tsx', code)).map(({ruleId}) => ruleId);
     expect(rules).not.toContain('no-restricted-imports');
+    expect(rules).not.toContain('no-restricted-syntax');
   });
 });

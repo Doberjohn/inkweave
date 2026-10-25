@@ -31,6 +31,39 @@ const UI_PACKAGE_DOOR = [
   },
 ];
 
+// Ban manual memoization. The React Compiler (wired in vite.config.ts via reactCompilerPreset)
+// auto-memoizes component/hook values keyed on their reactive deps, so useMemo/useCallback are
+// redundant. This guard stops the codebase from regressing after the #291 sweep (zero call sites
+// remain). Exported for inkweave-ui's config, which restates its no-restricted-syntax options.
+export const MEMO_BANS = [
+  {
+    selector: "CallExpression[callee.name='useMemo']",
+    message:
+      'Avoid useMemo — the React Compiler (vite.config.ts) auto-memoizes. Drop the wrapper and return the value directly (#291).',
+  },
+  {
+    selector: "CallExpression[callee.name='useCallback']",
+    message:
+      'Avoid useCallback — the React Compiler (vite.config.ts) auto-memoizes. Drop the wrapper and use a plain function (#291).',
+  },
+];
+
+/**
+ * no-restricted-imports reads import and export declarations, never import(), so each
+ * `{regex, message}` pattern also stands as two no-restricted-syntax selectors: a string
+ * specifier, in code or in a type (`typeof import('x')`), and a template's first part
+ * (`../packages/ui/${name}`). Both ignore case, as no-restricted-imports does by default.
+ */
+export function dynamicImportBans(patterns) {
+  return patterns.flatMap(({regex, message}) => {
+    const value = `/${regex.replaceAll('/', '\\/')}/iu`;
+    return [
+      {selector: `:matches(ImportExpression, TSImportType) > Literal.source[value=${value}]`, message},
+      {selector: `ImportExpression > TemplateLiteral.source > TemplateElement:first-child[value.cooked=${value}]`, message},
+    ];
+  });
+}
+
 export default tseslint.config(
   {ignores: ['dist', 'storybook-static', 'coverage']},
   {
@@ -57,26 +90,12 @@ export default tseslint.config(
       // inkweave/no-compiler-opt-out below.
       'react-hooks/hooks': 'error',
       'react-hooks/syntax': 'error',
-      // Ban manual memoization. The React Compiler (wired in vite.config.ts via
-      // reactCompilerPreset) auto-memoizes component/hook values keyed on their
-      // reactive deps, so useMemo/useCallback are redundant. This guard stops the
-      // codebase from regressing after the #291 sweep (zero call sites remain).
-      // NOTE: do NOT reach for eslint-disable to silence the exhaustive-deps
+      // MEMO_BANS above. NOTE: do NOT reach for eslint-disable to silence the exhaustive-deps
       // warnings this creates — disabling a react-hooks rule makes the compiler
       // skip optimizing the whole component. Fix at the source or leave the warning.
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: "CallExpression[callee.name='useMemo']",
-          message:
-            'Avoid useMemo — the React Compiler (vite.config.ts) auto-memoizes. Drop the wrapper and return the value directly (#291).',
-        },
-        {
-          selector: "CallExpression[callee.name='useCallback']",
-          message:
-            'Avoid useCallback — the React Compiler (vite.config.ts) auto-memoizes. Drop the wrapper and use a plain function (#291).',
-        },
-      ],
+      // inkweave-ui's door holds for import() too, in every .ts and .tsx file here, configs
+      // included (the static door below covers src/, e2e/ and .storybook/).
+      'no-restricted-syntax': ['error', ...MEMO_BANS, ...dynamicImportBans(UI_PACKAGE_DOOR)],
     },
   },
   // Design-token discipline (#508, Design System Enforcement Wave 1) — scoped

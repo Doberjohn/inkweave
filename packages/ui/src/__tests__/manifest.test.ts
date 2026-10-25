@@ -42,5 +42,6 @@ describe('inkweave-ui manifest', () => {
   it('takes React from the app that imports it', () => {
     expect(Object.keys(pkg.peerDependencies)).toEqual(['react', 'react-dom']);
     expect(pkg.dependencies?.react).toBeUndefined();
+    expect(pkg.dependencies?.['react-dom']).toBeUndefined();
   });
 });

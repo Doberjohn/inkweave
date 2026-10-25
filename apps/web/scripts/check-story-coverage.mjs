@@ -131,12 +131,16 @@ function getScanRoster() {
 }
 
 /**
- * Every inkweave-ui folder. components/ and lorcana/ hold only components, so no JSX sniff (like
- * shared/components); the other folders count only the files that render.
+ * Every inkweave-ui folder but the tests' and their helpers' (test-utils/, which the app's
+ * shared/test-utils mirrors and this script never scans either). components/ and lorcana/ hold
+ * only components, so no JSX sniff (like shared/components); the other folders count only the
+ * files that render.
  */
 function getPackageRoster() {
   return readdirSync(uiSrcDir, {withFileTypes: true})
-    .filter((entry) => entry.isDirectory() && !entry.name.startsWith('__'))
+    .filter(
+      (entry) => entry.isDirectory() && !entry.name.startsWith('__') && entry.name !== 'test-utils',
+    )
     .map((entry) => {
       const strict = entry.name === 'components' || entry.name === 'lorcana';
       return [join(uiSrcDir, entry.name), strict ? {} : {requireJsx: true}];

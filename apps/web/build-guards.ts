@@ -56,9 +56,12 @@ export interface ModuleImports {
   importedIds: readonly string[];
 }
 
+/** True for a module id that is one of inkweave-ui's shipped components. */
+const isUiComponent = (id: string) => UI_COMPONENT.test(posix(id)) && !NOT_SHIPPED.test(id);
+
 /** inkweave-ui's components in a build, split by whether React Compiler compiled them. */
 export function uiCompilerReport(modules: readonly ModuleImports[]) {
-  const ui = modules.filter(({id}) => UI_COMPONENT.test(posix(id)) && !NOT_SHIPPED.test(id));
+  const ui = modules.filter(({id}) => isUiComponent(id));
   const isCompiled = ({importedIds}: ModuleImports) =>
     importedIds.some((dep) => COMPILER_RUNTIME.test(posix(dep)));
   return {
@@ -76,7 +79,8 @@ export function uiCompilerGuard(): Plugin {
     name: 'inkweave:ui-compiler-guard',
     apply: 'build',
     generateBundle() {
-      const modules = [...this.getModuleIds()].map((id) => ({
+      // Only the package's components need their imports, so only theirs cross into Rolldown.
+      const modules = [...this.getModuleIds()].filter(isUiComponent).map((id) => ({
         id,
         importedIds: this.getModuleInfo(id)?.importedIds ?? [],
       }));

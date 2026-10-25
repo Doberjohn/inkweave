@@ -1,29 +1,11 @@
 {
-  // The app's strict settings (apps/web/tsconfig.app.json), for the package's own source, tests
-  // and configs. The app type-checks the modules it imports from here as part of its own tsc -b.
+  // The app's compiler options, for the package's own source, tests and configs: only the build
+  // info file, the ambient types and the files differ. The app type-checks the modules it imports
+  // from here as part of its own tsc -b.
+  "extends": "../../apps/web/tsconfig.app.json",
   "compilerOptions": {
-    "target": "ES2022",
-    "useDefineForClassFields": true,
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "types": ["vite/client", "vitest/globals", "node"],
-    "skipLibCheck": true,
-
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-    "jsx": "react-jsx",
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
+    "types": ["vite/client", "vitest/globals", "node"]
   },
   "include": ["src", "vitest.config.ts"]
 }

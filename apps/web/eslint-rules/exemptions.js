@@ -1,9 +1,10 @@
 // Where the design-token rules stop (#508). Every path is repo-relative, so one table covers the
 // app (apps/web/) and inkweave-ui (packages/ui/), and each entry names one file, or one folder when
 // it ends in "/". A file outside both, such as admin's own (admin lints with these rules), keeps
-// its absolute path and matches no entry.
+// its absolute path and matches no path entry. The patterns match by file kind, anywhere.
 
-const WORKSPACE_PATH = /(?:^|\/)((?:apps\/web|packages\/ui)\/.*)$/;
+// The last apps/web or packages/ui in the path, so a checkout under a folder of either name works.
+const WORKSPACE_PATH = /^(?:.*\/)?((?:apps\/web|packages\/ui)\/.*)$/;
 
 /** apps/web/... or packages/ui/..., with forward slashes; any other file keeps its absolute path. */
 export function relName(context) {
@@ -16,6 +17,8 @@ export function isUnder(name, entry) {
   return entry.endsWith('/') ? name.startsWith(entry) : name === entry;
 }
 
+// Admin's own tests and stories rely on these, so fencing them to this repo would fail its lint at
+// the next pin bump.
 const TEST_FILE = /\.test\.(ts|tsx)$/;
 const STORY_FILE = /\.stories\.tsx$/;
 

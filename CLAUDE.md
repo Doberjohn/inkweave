@@ -269,7 +269,7 @@ Dark fantasy theme inspired by Lorcana:
 
 ### Pre-Commit & Pre-Push (automated)
 - **Pre-commit hook** runs lint + tests on every `git commit`. Do not skip.
-- **Local Windows Vitest runs use 4 workers** (`resolveVitestWorkers` in `apps/web/vite.config.ts`, #720): on a cold disk cache, Vitest's default first wave misses its hardcoded 60 s worker-start limit and those files never run. CI keeps Vitest's default; `VITEST_MAX_WORKERS` overrides the cap.
+- **Local Windows Vitest runs use 4 workers** (`resolveVitestWorkers` in `apps/web/vitest-workers.ts`, which inkweave-ui's config shares, #720): on a cold disk cache, Vitest's default first wave misses its hardcoded 60 s worker-start limit and those files never run. CI keeps Vitest's default; `VITEST_MAX_WORKERS` overrides the cap.
 - **Pre-push hook** (husky) runs E2E chromium on every `git push`. Do not skip.
 - Full 5-browser E2E suite runs in CI as safety net: chromium and mobile-chrome on the dev server, firefox, webkit and mobile-safari on a production build (`E2E_SERVER=preview`, #869; reproduce one with `E2E_SERVER=preview pnpm test:e2e --project=<name>` in Bash, or the PowerShell form in `apps/web/e2e/E2E_TESTS.md`). The pre-push hook always runs the dev server.
 - **Unit coverage goes to CodeScene from master only** (#964): CI's build-and-test runs the engine, web and inkweave-ui suites with `--coverage` on master pushes and uploads one concatenated lcov per metric (line and branch) to project 79825 with the `CODESCENE_COVERAGE_TOKEN` secret (without it the upload skips). PRs collect none. A file the report leaves out counts as 0% there, so a new `coverage.exclude` pattern also goes in the project's coverage exclusions.

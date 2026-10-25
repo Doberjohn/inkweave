@@ -23,5 +23,5 @@ When a PR changes any of the following, refresh the design system project afterw
 ## How to refresh
 
 1. Open the design system project in Claude.
-2. Say: *"refresh against the latest of Doberjohn/inkweave master, focus on `theme.ts`, the storybook docs, and anything in `public/brand` or `public/art` that changed."*
+2. Say: *"refresh against the latest of Doberjohn/inkweave master, focus on the tokens (`theme.ts`), the storybook docs, the ink icons and glyphs, and anything in `public/brand` or `public/art` that changed."* Once inkweave-ui holds the tokens and icons, point the prompt at `packages/ui/src/tokens/` and `packages/ui/src/assets/` for them. The drift workflow's comment lists the exact files a PR touched.
 3. Review the diff before approving.

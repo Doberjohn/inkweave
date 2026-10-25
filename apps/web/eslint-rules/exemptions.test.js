@@ -5,7 +5,7 @@ import {describe, expect, it} from 'vitest';
 import * as exemptions from './exemptions.js';
 import {KNOWN_OFFENDERS} from './known-offenders.js';
 
-const {ADHOC_BUTTON_EXEMPT, isExempt, isUnder, relName} = exemptions;
+const {ADHOC_BUTTON_EXEMPT, COLOR_EXEMPT, SPACING_EXEMPT, isExempt, isUnder, relName} = exemptions;
 const REPO = fileURLToPath(new URL('../../../', import.meta.url));
 const at = (filename) => ({filename});
 
@@ -19,6 +19,15 @@ describe('relName', () => {
     expect(relName(at('/repo/apps/web/src/App.tsx'))).toBe('apps/web/src/App.tsx');
     expect(relName(at('C:\\repo\\packages\\ui\\src\\components\\X.tsx'))).toBe(
       'packages/ui/src/components/X.tsx',
+    );
+  });
+
+  it('cuts at the last apps/web or packages/ui, so a checkout under either name works', () => {
+    expect(relName(at('/home/me/apps/web/inkweave/apps/web/src/App.tsx'))).toBe(
+      'apps/web/src/App.tsx',
+    );
+    expect(relName(at('/srv/packages/ui/inkweave/packages/ui/src/tokens/theme.ts'))).toBe(
+      'packages/ui/src/tokens/theme.ts',
     );
   });
 
@@ -47,6 +56,12 @@ describe('isExempt', () => {
     expect(isExempt(at(`/repo/apps/web/src/${tile}`), ADHOC_BUTTON_EXEMPT)).toBe(true);
     expect(isExempt(at(`/repo/packages/ui/src/${tile}`), ADHOC_BUTTON_EXEMPT)).toBe(false);
     expect(isExempt(at(`/work/inkweave-admin/src/${tile}`), ADHOC_BUTTON_EXEMPT)).toBe(false);
+  });
+
+  it("exempts a test or a story by its kind anywhere, as admin's lint relies on", () => {
+    const admin = '/work/inkweave-admin/src';
+    expect(isExempt(at(`${admin}/theme/__tests__/adminTheme.test.ts`), COLOR_EXEMPT)).toBe(true);
+    expect(isExempt(at(`${admin}/ui/Primitives.stories.tsx`), SPACING_EXEMPT)).toBe(true);
   });
 });
 

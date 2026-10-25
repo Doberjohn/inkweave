@@ -1,8 +1,12 @@
 // inkweave-ui lints with the app's own config, so a component, a test or a story gets the same
 // rules here as in apps/web: React Compiler's checks, the useMemo/useCallback ban and every
 // design-token rule (#508). The block below replaces the app's import restrictions with the
-// package's: the same styling bans, plus what package source never reaches.
-import appConfig, {STYLING_BANS} from '../../apps/web/eslint.config.js';
+// package's: the same styling bans, plus what package source never reaches, by import() too.
+import appConfig, {
+  MEMO_BANS,
+  STYLING_BANS,
+  dynamicImportBans,
+} from '../../apps/web/eslint.config.js';
 
 const APP =
   'inkweave-ui never imports the app: move the module into the package, or take the value as a prop.';
@@ -38,7 +42,10 @@ export default [
   ...appConfig,
   {
     files: ['src/**/*.{ts,tsx}'],
-    rules: {'no-restricted-imports': ['error', {paths: STYLING_BANS, patterns: BOUNDARY}]},
+    rules: {
+      'no-restricted-imports': ['error', {paths: STYLING_BANS, patterns: BOUNDARY}],
+      'no-restricted-syntax': ['error', ...MEMO_BANS, ...dynamicImportBans(BOUNDARY)],
+    },
   },
   {
     files: ['src/**/*.{ts,tsx}'],
