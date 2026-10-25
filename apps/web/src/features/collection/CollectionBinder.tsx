@@ -9,7 +9,7 @@ import {BinderSpread, PER_PAGE, PER_SPREAD} from '../cards/components/BinderSpre
 import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/BinderSpreadMap';
 import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
 import {settleOf} from './binderPockets';
-import {printingName} from '../../shared/hooks/usePrintingSelection';
+import {FINISH_WORD, printingName, promoCode} from '../../shared/hooks/usePrintingSelection';
 import {usePrefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
 import {CardImageButton, CardLightbox} from '../../shared/components';
 import {COLORS, FONT_SIZES, SPACING} from '../../shared/constants';
@@ -123,6 +123,10 @@ function mapSets(slots: readonly BinderSlot[]): MapSet[] {
 /** An open pocket's code, as its promo's card would print it ("25/P1"), with its finish if it has one. */
 const promoLabel = ({setNumber, setCode, finish, artVariant}: OpenPocket) =>
   printingName({rarity: PROMO_RARITY, number: setNumber, promoGrouping: setCode, finish, artVariant});
+
+/** The code alone, without a twin's finish: the part of the label that never wraps (#973). */
+const pocketCode = ({setNumber, setCode, artVariant}: OpenPocket) =>
+  promoCode({number: setNumber, promoGrouping: setCode, artVariant});
 
 /**
  * Whether a MOUSE rests on the element (#826). A touch or a pen never counts, so a tap on a
@@ -250,7 +254,9 @@ function CardPocket({
 
 /**
  * An open pocket: its code over what it waits for, in muted text on the black page. Its sleeve
- * shows the pocket empty (#941), where a dashed outline drew it on the parchment.
+ * shows the pocket empty (#941), where a dashed outline drew it on the parchment. A code wider
+ * than the room inside the padding runs into the padding: the text never sizes its pocket
+ * (`slotStyle` in BinderSpread.tsx, #973).
  */
 const OPEN_STYLE: CSSProperties = {
   height: '100%',
@@ -265,6 +271,9 @@ const OPEN_STYLE: CSSProperties = {
   textAlign: 'center',
 };
 
+/** An open pocket's code, and a twin's finish after it. */
+const CODE_STYLE: CSSProperties = {fontSize: `${FONT_SIZES.xl}px`, fontWeight: 700};
+
 /**
  * Why an open pocket is empty: its promo's card is not out yet, its set never released it or
  * has yet to, or nobody has listed it.
@@ -276,13 +285,17 @@ function openReason(pocket: OpenPocket) {
 }
 
 /**
- * A pocket with no card in it (#805): its code, the card a waiting promo is for, and why the
- * pocket is empty.
+ * A pocket with no card in it (#805): its code and a twin's finish, the card a waiting promo is
+ * for, and why the pocket is empty.
  */
 function OpenPocketText({pocket}: {pocket: OpenPocket}) {
   return (
     <div style={OPEN_STYLE}>
-      <span style={{fontSize: `${FONT_SIZES.xl}px`, fontWeight: 700}}>{promoLabel(pocket)}</span>
+      {/* One line: Firefox breaks a code after its slash, "19/" over "C2" (#973). */}
+      <span style={{...CODE_STYLE, whiteSpace: 'nowrap'}}>{pocketCode(pocket)}</span>
+      {/* A twin's finish goes on lines of its own: on the code's, "28/C3 non-foil" ran past the pocket's
+          sides. Its leading space renders nothing there and keeps the text "28/C3 non-foil". */}
+      {pocket.finish && <span style={CODE_STYLE}>{` ${FINISH_WORD[pocket.finish]}`}</span>}
       {pocket.fullName && <span style={{fontSize: `${FONT_SIZES.xs}px`, fontWeight: 700}}>{pocket.fullName}</span>}
       <span style={{fontSize: `${FONT_SIZES.xs}px`, lineHeight: 1.3}}>{openReason(pocket)}</span>
     </div>
