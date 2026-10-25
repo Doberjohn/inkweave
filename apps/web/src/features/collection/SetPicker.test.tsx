@@ -92,7 +92,10 @@ describe('SetPicker', () => {
     it("shows the set's logo and its name over the figures, says them in words after its text, and opens the same list", () => {
       renderPicker({size: 'row', figures});
       expect(button()).toHaveAccessibleName('Binder set: Attack of the Vine!, 36% · 12%: 36% complete, 12% master');
-      expect(button()).toHaveTextContent(/^Attack of the Vine!36% · 12%$/);
+      // Named by a line only screen readers get, never an aria-label, which would have to hold
+      // the drawn lines' text as axe reads it, run together (WCAG 2.5.3).
+      expect(button()).not.toHaveAttribute('aria-label');
+      expect(button().querySelector(':scope > [aria-hidden="true"]')).toHaveTextContent(/^Attack of the Vine!36% · 12%$/);
       expect(button()).toHaveStyle({minHeight: '40px'});
       expect(button().querySelector('img')).not.toBeNull();
       fireEvent.click(button());

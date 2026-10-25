@@ -1,4 +1,5 @@
 import type {Locator, Page} from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import {test, expect} from '../fixtures';
 import {
   cardFullNameById,
@@ -78,6 +79,50 @@ const TOOLBAR = 'browse-toolbar';
 const PHONE_ROW = 'phone-binder-row';
 
 const phoneRow = (page: Page) => page.getByTestId(PHONE_ROW);
+
+/**
+ * The open page's mini in a phone's page map (#969), named like "Page 5 of 27: 4 missing". Found
+ * by CSS, so it reads under the Binder sheet too, where the page behind is hidden from the
+ * accessibility tree.
+ */
+const shownPage = (page: Page) => page.locator('nav[aria-label="Binder pages"] [aria-current="true"]');
+
+/** The Binder sheet, which Binder options opens on a phone (#969): not the "Binder set" list. */
+const binderSheet = (page: Page) => page.getByRole('dialog', {name: 'Binder', exact: true});
+
+/**
+ * Opens a phone's binder at `url`, and waits for its page map: the binder's own, which is named,
+ * not the one it draws while its cards load, hidden since it holds none.
+ */
+async function openPhoneBinder(page: Page, url: string): Promise<void> {
+  await page.goto(url);
+  await expect(binder(page).getByRole('navigation', {name: 'Binder pages'})).toBeVisible();
+}
+
+/** A 1x1 PNG: any card art at all. */
+const ART = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+  'base64',
+);
+
+type UrlWrites = Window & {urlWrites?: string[]};
+
+/** Records the page's URL writes (`history.replaceState`), from before its first navigation. */
+async function countUrlWrites(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const writes: string[] = [];
+    (window as UrlWrites).urlWrites = writes;
+    const replace = history.replaceState.bind(history);
+    history.replaceState = (state: unknown, unused: string, url?: string | URL | null) => {
+      writes.push(String(url));
+      replace(state, unused, url);
+    };
+  });
+}
+
+/** The URL writes since the last clear. */
+const urlWrites = (page: Page) => page.evaluate(() => (window as UrlWrites).urlWrites ?? []);
+const clearUrlWrites = (page: Page) => page.evaluate(() => (window as UrlWrites).urlWrites?.splice(0));
 
 /**
  * Where each of Browse's toolbar controls stands, by name, once the page's fonts are in: its
@@ -1066,14 +1111,16 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await expect(page.getByRole('button', {name: 'Collection actions'})).toHaveCount(0);
 
     // At the head of the row over the binder (#969): the set's name over its two headline
-    // percentages, Complete then Master, which its name says in words after its visible text.
+    // percentages, Complete then Master. Its name, a line only screen readers get, says what it
+    // draws and then the figures in words.
     const [complete, master] = [percentOfSet(HELD), percentOfSet(MASTER)];
     const button = phoneRow(page).getByRole('button', {name: /^Binder set: /});
-    await expect(button).toContainText(`${complete}% · ${master}%`);
-    const name = await button.getAttribute('aria-label');
-    const words = new RegExp(`^Binder set: (.+), ${complete}% · ${master}%: ${complete}% complete, ${master}% master$`);
-    expect(name).toMatch(words);
-    expect(await button.innerText()).toContain(words.exec(name!)![1]);
+    const drawn = button.locator(':scope > span[aria-hidden="true"]');
+    await expect(drawn).toContainText(`${complete}% · ${master}%`);
+    const setName = (await drawn.locator('span').first().innerText()).trim();
+    await expect(button).toHaveAccessibleName(
+      `Binder set: ${setName}, ${complete}% · ${master}%: ${complete}% complete, ${master}% master`,
+    );
 
     await button.click();
     const set = page.getByRole('dialog', {name: 'Binder set'}).getByRole('option', {name: new RegExp(`^Set ${SET},`)});
@@ -1153,5 +1200,82 @@ test.describe('Collection mode, signed in (phone width)', () => {
     // The set button lands in its placeholder's box.
     const button = await placeOf(phoneRow(page).getByRole('button', {name: /^Binder set: /}));
     expectPlacesHeld([{name: 'the set button', before: placeholder, after: button}]);
+  });
+
+  test('the Binder sheet applies Show, the sort and the filters together, in one write', async ({page}) => {
+    await page.setViewportSize({width: 390, height: 844});
+    await countUrlWrites(page);
+    await signInAsCollector(page, ENTRIES);
+    await openPhoneBinder(page, `/browse?binder=${SET}`);
+    const before = {url: page.url(), page: await shownPage(page).getAttribute('aria-label')};
+    const options = phoneRow(page).getByRole('button', {name: 'Binder options'});
+    await expect(options, 'no badge with nothing on').toHaveText('');
+    await clearUrlWrites(page);
+
+    await options.click();
+    const sheet = binderSheet(page);
+    await sheet.getByRole('group', {name: 'Binder shows'}).getByRole('button', {name: 'Missing', exact: true}).click();
+    await sheet.getByRole('combobox', {name: 'Sort cards'}).selectOption('name-asc');
+    await sheet.getByRole('button', {name: 'Filter by Amber'}).click();
+    // Picked, not applied: the link and the binder behind the sheet are as they were.
+    expect(await urlWrites(page)).toEqual([]);
+    expect(page.url()).toBe(before.url);
+    await expect(shownPage(page)).toHaveAttribute('aria-label', before.page!);
+
+    await sheet.getByRole('button', {name: 'Apply', exact: true}).click();
+    await expect(sheet).toHaveCount(0);
+    // The badge counts what the link holds, so once it reads 2 every write Apply makes is in.
+    await expect(options, 'Amber, and Missing').toHaveText('2');
+    const params = new URL(page.url()).searchParams;
+    expect([params.get('owned'), params.get('sort'), params.get('ink')]).toEqual(['missing', 'name-asc', 'Amber']);
+    expect(await urlWrites(page), 'Apply writes the link once').toHaveLength(1);
+    await expect(shownPage(page)).not.toHaveAttribute('aria-label', before.page!);
+  });
+
+  test('closing the Binder sheet keeps Show, the sort and the filters as they were', async ({page}) => {
+    await page.setViewportSize({width: 390, height: 844});
+    await signInAsCollector(page, ENTRIES);
+    await openPhoneBinder(page, `/browse?binder=${SET}&owned=missing&sort=name-asc&ink=Amber`);
+    const before = page.url();
+    const options = phoneRow(page).getByRole('button', {name: 'Binder options'});
+    await expect(options).toHaveText('2');
+
+    await options.click();
+    const sheet = binderSheet(page);
+    const shows = sheet.getByRole('group', {name: 'Binder shows'});
+    await shows.getByRole('button', {name: 'All', exact: true}).click();
+    await sheet.getByRole('combobox', {name: 'Sort cards'}).selectOption('cost-desc');
+    await sheet.getByRole('button', {name: 'Filter by Amber'}).click();
+    // A press on the backdrop, above the sheet, closes it without Apply.
+    await page.getByTestId('filter-drawer-backdrop').click({position: {x: 195, y: 40}});
+    await expect(sheet).toHaveCount(0);
+    expect(page.url()).toBe(before);
+    await expect(options).toHaveText('2');
+
+    // Opened again, it starts from what the binder shows.
+    await options.click();
+    await expect(shows.getByRole('button', {name: 'Missing', exact: true})).toHaveAttribute('aria-pressed', 'true');
+    await expect(sheet.getByRole('combobox', {name: 'Sort cards'})).toHaveValue('name-asc');
+    await expect(sheet.getByRole('button', {name: 'Filter by Amber'})).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('the phone binder has no axe violations, with the Binder sheet closed and open', async ({page}, testInfo) => {
+    // Desktop only, as accessibility.spec.ts's audits are: a phone's size draws the phone binder.
+    test.skip(testInfo.project.name.startsWith('mobile-'), 'axe audits run on the desktop projects');
+    // A pocket whose art fails to load shows the card's cost, which its name lacks (axe's
+    // label-content-name-mismatch): any art at all keeps each pocket a card, as CI's real art does.
+    await page.route('**/card-images/**', (route) =>
+      route.request().resourceType() === 'image'
+        ? route.fulfill({contentType: 'image/png', body: ART})
+        : route.fallback(),
+    );
+    await page.setViewportSize({width: 390, height: 844});
+    await signInAsCollector(page, ENTRIES);
+    await openPhoneBinder(page, `/browse?binder=${SET}`);
+    expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+
+    await phoneRow(page).getByRole('button', {name: 'Binder options'}).click();
+    await expect(binderSheet(page)).toBeVisible();
+    expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
   });
 });

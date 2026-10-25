@@ -40,6 +40,7 @@ import {
   SPACING,
   TABULAR,
   TRUNCATE,
+  VISUALLY_HIDDEN,
 } from '../../shared/constants';
 
 /** How far through one set you are, of the cards counted; a set's tally carries both. Filtered, a set may count none. */
@@ -201,7 +202,7 @@ const MENU_MAX_HEIGHT = 'min(440px, 50vh)';
  * ON A PHONE IT LEADS THE BINDER'S ROW (owner, 2026-10-25, #969): 40px tall beside Binder
  * options and Collection, a small logo, and the scope's name over its two percentages, "73% ·
  * 19%", at 13px, the panel's smallest type. Its name says them in words after its visible
- * text: "Binder set: Winterspell, 73% · 19%: 73% complete, 19% master".
+ * text: "Binder set: Winterspell, 73% · 19%: 73% complete, 19% master" (`RowLabel`).
  *
  * A popup in the select's manner: opening focuses the open choice. Up, down, Home and End
  * move down a column, the chosen tab over the sets, and left and right move along the
@@ -570,19 +571,27 @@ const SHIMMER_INSET = SPACING.xxs;
 /**
  * The row's words: the scope's name, cut short, over its figures, or a 60px shimmer holding
  * their line while the numbers load.
+ *
+ * ITS NAME IS ONE SCREEN-READER-ONLY LINE, and the two lines drawn are hidden from screen
+ * readers, as a mechanic tile's are (`RoleTileRow`). An `aria-label` must hold the visible text
+ * (WCAG 2.5.3), and axe reads these two lines run together, "Winterspell73% · 19%", which no
+ * name holds.
  */
 function RowLabel({setCode, figures}: Pick<TriggerProps, 'setCode' | 'figures'>) {
   return (
-    <span style={{minWidth: 0, display: 'flex', flexDirection: 'column'}}>
-      <span style={{...ROW_LINE, ...TRUNCATE, fontWeight: 700}}>{scopeName(setCode)}</span>
-      {figures ? (
-        <span style={ROW_FIGURES}>{figures.shown}</span>
-      ) : (
-        <span style={{...ROW_FIGURES, display: 'flex', padding: `${SHIMMER_INSET}px 0`, height: '1.25em'}}>
-          <Skeleton inline width={60} style={{display: 'block', height: '100%'}} />
-        </span>
-      )}
-    </span>
+    <>
+      <span aria-hidden="true" style={{minWidth: 0, display: 'flex', flexDirection: 'column'}}>
+        <span style={{...ROW_LINE, ...TRUNCATE, fontWeight: 700}}>{scopeName(setCode)}</span>
+        {figures ? (
+          <span style={ROW_FIGURES}>{figures.shown}</span>
+        ) : (
+          <span style={{...ROW_FIGURES, display: 'flex', padding: `${SHIMMER_INSET}px 0`, height: '1.25em'}}>
+            <Skeleton inline width={60} style={{display: 'block', height: '100%'}} />
+          </span>
+        )}
+      </span>
+      <span style={VISUALLY_HIDDEN}>{triggerName({setCode, size: 'row', figures})}</span>
+    </>
   );
 }
 
@@ -618,7 +627,8 @@ function Trigger({setCode, sets, size, figures, open, menuId, disabled, onToggle
       aria-haspopup="dialog"
       aria-expanded={open}
       aria-controls={open ? menuId : undefined}
-      aria-label={triggerName({setCode, size, figures})}
+      // The row's button is named by its words' hidden line (`RowLabel`).
+      aria-label={size === 'row' ? undefined : triggerName({setCode, size, figures})}
       // The toolbar's short label names a set by its number or code alone: whole on hover.
       title={size === 'toolbar' ? choiceLabel(setCode) : undefined}
       disabled={disabled}
