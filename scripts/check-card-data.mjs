@@ -26,6 +26,7 @@ import {existsSync, readFileSync, readdirSync} from 'node:fs';
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {isDeepStrictEqual} from 'node:util';
+import {indexById} from './lib/imageRestore.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_DATA = join(ROOT, 'apps/web/public/data');
@@ -48,13 +49,8 @@ const cardsOf = (data) => (Array.isArray(data) ? data : data.cards);
 /** promos.json holds printings of other cards, with no text of their own, so check 1 leaves it out. */
 const holdsCards = (name) => name !== 'collection/promos.json';
 
-/** Every card and printing in the list, printings after their card. */
-function* entries(cards) {
-  for (const card of cards) {
-    yield card;
-    yield* card.variants ?? [];
-  }
-}
+/** Every card and printing in the list, printings after their card, as the image restore indexes them. */
+const entries = (cards) => [...indexById(cards).values()];
 
 /** Check 1: a built card that transforms otherwise than the repo's, or a file whose cards differ. */
 function transformProblems(name, repoCards, builtCards, transformCard) {
@@ -72,17 +68,17 @@ function transformProblems(name, repoCards, builtCards, transformCard) {
 
 /** Check 2: a built entry that still carries links the build moved into the record. */
 function leftLinkProblems(name, builtCards) {
-  return [...entries(builtCards)]
+  return entries(builtCards)
     .filter((entry) => 'images' in entry)
     .map((entry) => `${name}: ${entry.id} still carries its image links`);
 }
 
 /** Check 2: a repo link the build kept nowhere, in the record or else in the built entry. */
 function lostLinkProblems(name, repoCards, builtCards, record) {
-  const builtById = new Map([...entries(builtCards)].map((entry) => [String(entry.id), entry]));
+  const builtById = record === null ? indexById(builtCards) : null;
   const where = record === null ? 'its built entry' : IMAGE_SOURCES;
   const kept = (id) => (record === null ? builtById.get(id)?.images : record[id]);
-  return [...entries(repoCards)]
+  return entries(repoCards)
     .filter((entry) => entry.images && !isDeepStrictEqual(kept(String(entry.id)), entry.images))
     .map((entry) => `${name}: ${where} lacks ${entry.id}'s image links`);
 }

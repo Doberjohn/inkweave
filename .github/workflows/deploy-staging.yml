@@ -147,6 +147,11 @@ jobs:
           INKWEAVE_ICON_SET: staging
         run: npx "vercel@${VERCEL_CLI_VERSION:?}" build --token=${{ secrets.VERCEL_TOKEN }}
 
+      # As in deploy.yml (#929, #932): every built card transforms as the repo's copy does, and
+      # every image link moved into data/image-sources.json.
+      - name: Verify the slimmed card data
+        run: node scripts/check-card-data.mjs .vercel/output/static --expect-record
+
       # Only the alias changes what staging serves, so a failure anywhere before it leaves the
       # previous build up. A PR's dry run stops before this step.
       - name: Deploy and point staging.inkweave.ink at it

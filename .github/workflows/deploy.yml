@@ -12,7 +12,8 @@
 # aren't indexed, so they don't need the crawl). vercel.json sets git.deploymentEnabled.master
 # = false so Vercel does NOT also deploy master (no double / flip-flopping production deploy).
 # One exception: a PR that changes this file, scripts/vercel-deploy.mjs, the crawl itself
-# (scripts/prerender.mjs) or the card data guard (scripts/check-card-data.mjs) gets a dry run
+# (scripts/prerender.mjs), or the card data guard (scripts/check-card-data.mjs) or the code it
+# checks (vite.config.ts's cardDataPlugin and the engine's slimRawCard) gets a dry run
 # (#694, #698, #867, #929). It runs the same pull, build and
 # prerender check, then uploads the build as a staged production deployment that never receives
 # inkweave.ink and is removed in the same run. It never pings IndexNow.
@@ -28,8 +29,9 @@ on:
   push:
     branches: [master]
   # A dry run for PRs that change this file, the script that runs `vercel deploy` (#698), the
-  # prerender crawl (#867) or the card data guard (#929), which nothing else runs before a
-  # deploy: build, verify and stage-deploy, never promote.
+  # prerender crawl (#867), or the card data guard and the code it checks (#929): no other PR
+  # job builds with production's VITE_LOCAL_IMAGES and checks the card data. Build, verify and
+  # stage-deploy, never promote.
   pull_request:
     branches: [master]
     paths:
@@ -37,6 +39,8 @@ on:
       - 'scripts/vercel-deploy.mjs'
       - 'scripts/prerender.mjs'
       - 'scripts/check-card-data.mjs'
+      - 'apps/web/vite.config.ts'
+      - 'packages/synergy-engine/src/utils/cardTransformer.ts'
 
 # Only actions/checkout uses GITHUB_TOKEN here: Vercel authenticates with VERCEL_TOKEN, and
 # actions/cache with the runner's own token. Declared, so PR dry runs (#694) stay read-only

@@ -406,7 +406,9 @@ function cardDataPlugin(): Plugin {
           : {...data, cards: data.cards.map(slimCard)};
         fs.writeFileSync(file, JSON.stringify(slim));
       }
-      if (localImages) {
+      // Only a run that moved links writes the record: a second run over the same outDir finds
+      // its own output, with nothing left to move, and must not overwrite the record with {}.
+      if (localImages && Object.keys(sources).length > 0) {
         fs.writeFileSync(path.join(outDir, 'data', IMAGE_SOURCES), JSON.stringify(sources));
       }
     },
