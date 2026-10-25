@@ -72,7 +72,11 @@ describe('linkShippedBrowsers', () => {
   it('replaces the links a previous run left', () => {
     ship('chromium-1243', 'chromium_headless_shell-1243', 'ffmpeg-1011');
     linkShippedBrowsers({shippedDir, linkDir, wanted: WANTED});
-    expect(() => linkShippedBrowsers({shippedDir, linkDir, wanted: WANTED})).not.toThrow();
+    ship('chromium-1244');
+    linkShippedBrowsers({shippedDir, linkDir, wanted: WANTED});
+    expect(realpathSync(join(linkDir, 'chromium-1248'))).toBe(
+      realpathSync(join(shippedDir, 'chromium-1244')),
+    );
   });
 
   it('names the browsers folder when it is missing', () => {
