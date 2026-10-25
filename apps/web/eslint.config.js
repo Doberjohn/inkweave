@@ -9,6 +9,28 @@ import jsxA11y from 'eslint-plugin-jsx-a11y';
 import tseslint from 'typescript-eslint';
 import {inkweave} from './eslint-rules/index.js';
 
+// No new styling infrastructure (#508). Exported for inkweave-ui's config, which lints with this
+// one and restates these beside its own import boundary.
+export const STYLING_BANS = [
+  {name: 'tailwindcss', message: 'Inkweave styles with inline CSS + design tokens; no Tailwind (CLAUDE.md Tech Stack).'},
+  {name: 'styled-components', message: 'Inkweave styles with inline CSS + design tokens; no CSS-in-JS libraries.'},
+  {name: '@emotion/react', message: 'Inkweave styles with inline CSS + design tokens; no CSS-in-JS libraries.'},
+  {name: '@emotion/styled', message: 'Inkweave styles with inline CSS + design tokens; no CSS-in-JS libraries.'},
+];
+
+// inkweave-ui's only door is its exports map: no path into packages/ui, and neither its root (it
+// has none) nor its src/ around the map.
+const UI_PACKAGE_DOOR = [
+  {
+    regex: '(^|/)packages/ui(/|$)',
+    message: "Import inkweave-ui through its exports, such as 'inkweave-ui/components/CtaButton', never by path.",
+  },
+  {
+    regex: '^inkweave-ui(/src(/.*)?)?$',
+    message: "inkweave-ui has no root export and no src/ door: import a subpath such as 'inkweave-ui/components/CtaButton'.",
+  },
+];
+
 export default tseslint.config(
   {ignores: ['dist', 'storybook-static', 'coverage']},
   {
@@ -89,24 +111,20 @@ export default tseslint.config(
     plugins: {inkweave},
     rules: {'inkweave/no-compiler-opt-out': 'error'},
   },
-  // No-new-styling-infrastructure + use-the-barrel guards (#508).
+  // No-new-styling-infrastructure + use-the-barrel guards (#508), and inkweave-ui's door.
   {
     files: ['src/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
         'error',
         {
-          paths: [
-            {name: 'tailwindcss', message: 'Inkweave styles with inline CSS + design tokens; no Tailwind (CLAUDE.md Tech Stack).'},
-            {name: 'styled-components', message: 'Inkweave styles with inline CSS + design tokens; no CSS-in-JS libraries.'},
-            {name: '@emotion/react', message: 'Inkweave styles with inline CSS + design tokens; no CSS-in-JS libraries.'},
-            {name: '@emotion/styled', message: 'Inkweave styles with inline CSS + design tokens; no CSS-in-JS libraries.'},
-          ],
+          paths: STYLING_BANS,
           patterns: [
             {
               group: ['**/shared/constants/theme', '**/shared/constants/playstyleUi'],
               message: 'Import tokens through the barrel (shared/constants), not the theme files directly.',
             },
+            ...UI_PACKAGE_DOOR,
           ],
         },
       ],
@@ -134,6 +152,11 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  // The e2e specs and Storybook's config reach inkweave-ui through its exports too.
+  {
+    files: ['e2e/**/*.ts', '.storybook/**/*.{ts,tsx}'],
+    rules: {'no-restricted-imports': ['error', {patterns: UI_PACKAGE_DOOR}]},
   },
   storybook.configs['flat/recommended'],
 );

@@ -21,6 +21,7 @@ ruleTester.run('no-raw-hex-colors', inkweave.rules['no-raw-hex-colors'], {
     // Comments are never scanned, so an issue ref there is safe.
     ok('const s = {color: COLORS.primary}; // #511'),
     ok("const COLORS = {primary: '#ffb900'};", '/repo/apps/web/src/shared/constants/theme.ts'),
+    ok("const COLORS = {primary: '#ffb900'};", 'C:\\repo\\apps\\web\\src\\shared\\constants\\theme.ts'),
   ],
   invalid: [
     hex("const s = {color: '#fff'};"),
@@ -30,5 +31,10 @@ ruleTester.run('no-raw-hex-colors', inkweave.rules['no-raw-hex-colors'], {
     // It takes 3 to 8 digits, so it can't tell an issue ref in a string from a short hex
     // (#546). Six digits only would let '#fff' through; keep refs in comments instead.
     hex('const label = `see #511`;'),
+    // The exemptions name repo paths exactly: inkweave-ui's files, and admin's (which lints with
+    // these rules), get no pass from sharing a name with an exempt app file.
+    {...hex("const s = {color: '#ffb900'};"), filename: '/repo/packages/ui/src/components/Demo.tsx'},
+    {...hex("const s = {color: '#ffb900'};"), filename: '/repo/packages/ui/src/shared/constants/theme.ts'},
+    {...hex("const s = {color: '#ffb900'};"), filename: '/work/inkweave-admin/src/shared/constants/theme.ts'},
   ],
 });

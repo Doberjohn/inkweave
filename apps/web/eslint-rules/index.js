@@ -17,51 +17,23 @@
 // keeps React Compiler's checks on.
 import {KNOWN_OFFENDERS} from './known-offenders.js';
 import {noCompilerOptOut} from './no-compiler-opt-out.js';
+import {
+  ADHOC_BUTTON_EXEMPT,
+  ARIA_MODAL_EXEMPT,
+  COLOR_EXEMPT,
+  SPACING_EXEMPT,
+  TEST_EXEMPT,
+  isExempt,
+  relName,
+} from './exemptions.js';
 
 // ---------------------------------------------------------------------------
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-/** Repo-relative, forward-slash filename for stable matching on Windows. */
-function relName(context) {
-  return context.filename.replace(/\\/g, '/').replace(/^.*?apps\/web\//, 'apps/web/');
-}
-
-/** True when the file is grandfathered for the given rule. */
+/** True when the file is grandfathered for the given rule: the ledger names it exactly. */
 function isKnownOffender(context, rule) {
-  const list = KNOWN_OFFENDERS[rule] ?? [];
-  const name = relName(context);
-  return list.some((entry) => name.endsWith(entry));
-}
-
-/**
- * Permanently exempt files for the color rules: token declaration sites, the
- * token documentation stories (they must show literals), unit tests (assertion
- * pins), and the SVG icon components (vector art, not themed UI).
- */
-const COLOR_EXEMPT = [
-  /shared\/constants\/theme\.ts$/,
-  /shared\/constants\/playstyleUi\.ts$/,
-  /features\/cards\/components\/binderLook\.ts$/,
-  /src\/docs\//,
-  /\.test\.(ts|tsx)$/,
-  /shared\/components\/(CostIcon|FilterIcon|SearchIcon|InkIcon|InkwellIcon)\.tsx$/,
-];
-
-const TEST_EXEMPT = [/\.test\.(ts|tsx)$/];
-
-/**
- * Stories and the token-showcase docs are fixtures: their padding is
- * scaffolding, not product (owner ruling, 2026-07-31). Mirrors the color rules,
- * which already exempt src/docs/. theme.ts is not exempt, unlike for the color
- * rules: its raw spacing goes in the ledger like any other file's (owner,
- * 2026-10-22).
- */
-const SPACING_EXEMPT = [...TEST_EXEMPT, /\.stories\.tsx$/, /src\/docs\//];
-
-function isExempt(context, exemptPatterns) {
-  const name = relName(context);
-  return exemptPatterns.some((re) => re.test(name));
+  return (KNOWN_OFFENDERS[rule] ?? []).includes(relName(context));
 }
 
 /** Walk string-ish nodes: string Literals and template quasis. */
@@ -90,7 +62,7 @@ function ternaryLeaves(node) {
 // ---------------------------------------------------------------------------
 
 /** A rule that flags any string literal/template chunk matching `re`. */
-function makeStringScanRule({name, description, re, message, exempt = []}) {
+function makeStringScanRule({name, description, re, message, exempt = {}}) {
   return {
     meta: {type: 'problem', docs: {description}, schema: []},
     create(context) {
@@ -111,7 +83,7 @@ function makeStringScanRule({name, description, re, message, exempt = []}) {
  * `values` picks the nodes a property's value is checked as: by default the
  * value itself, or `ternaryLeaves` to check each branch of a ternary.
  */
-function makePropertyRule({name, description, props, valueTest, message, exempt = [], values = (v) => [v]}) {
+function makePropertyRule({name, description, props, valueTest, message, exempt = {}, values = (v) => [v]}) {
   const propSet = new Set(props);
   return {
     meta: {type: 'problem', docs: {description}, schema: []},
@@ -344,30 +316,8 @@ const noBackdropFilter = {
   },
 };
 
-/**
- * The blessed button menu is closed (#509): a raw `<button style={…}>` in
- * feature code is an ad-hoc recipe the kit already covers. The kit's own
- * internals (shared/components/**) and the domain families below are the only
- * legitimate styled-button authors.
- */
-const ADHOC_BUTTON_EXEMPT = [
-  /src[\\/]shared[\\/]components[\\/]/, // the kit itself
-  /QuantityStepper\.tsx$/, // domain stepper family
-  /OptionPicker\.tsx$/, // vote picker family (CarriesPicker adapts it)
-  /ScorePicker\.tsx$/, // vote score row
-  /QuickVoteControl\.tsx$/, // vote control family
-  /RoleTileRow\.tsx$/, // tile-toggle family
-  /CardTile\.tsx$/, // card-grid tile family
-  /SynergyMoreTile\.tsx$/, // card-grid tile family: a synergy group's "+N more" tile
-  /CardSlot\.tsx$/, // reveals tile family
-  /InkTrackerTile\.tsx$/, // reveals ink-selection tile family (#511)
-  /SpotlightHero\.tsx$/, // reveals spotlight tile family (#835)
-  /ComparisonCardTile\.tsx$/, // phone comparison card tile family (#835)
-  /ScoreChevronsTab\.tsx$/, // phone comparison score tab family (#835)
-  /VoteGroupTabs\.tsx$/, // in-depth vote group tab family (#835)
-  /\.stories\.tsx$/,
-  /\.test\.(ts|tsx)$/,
-];
+// The blessed button menu is closed (#509): ADHOC_BUTTON_EXEMPT (exemptions.js) names the kit and
+// the domain families, the only legitimate styled-button authors.
 const ADHOC_BUTTON_MESSAGE =
   'Ad-hoc styled <button>. Use the kit: CtaButton (filled/ghost/neutral/pill), LinkButton, TabList, IconButton, FiltersButton, Chip — or extend a kit component (#509)';
 const noAdhocButtons = {
@@ -390,18 +340,9 @@ const noAdhocButtons = {
   },
 };
 
-/**
- * The overlay contract (#510): a surface claiming aria-modal must get its
- * behavior from the house machinery — DialogShell / BottomSheet (which wire
- * the hook trio) or useDialogFocus directly. FilterDialog is the documented
- * Radix exception (.claude/rules/overlays.md).
- */
-const ARIA_MODAL_EXEMPT = [
-  /src[\\/]shared[\\/]components[\\/](DialogShell|BottomSheet)\.tsx$/,
-  /FilterDialog\.tsx$/, // Radix Dialog supplies trap/lock/Escape — the one sanctioned alternative
-  /\.stories\.tsx$/,
-  /\.test\.(ts|tsx)$/,
-];
+// The overlay contract (#510): a surface claiming aria-modal must get its behavior from the house
+// machinery, DialogShell / BottomSheet (which wire the hook trio) or useDialogFocus directly.
+// ARIA_MODAL_EXEMPT (exemptions.js) names those and FilterDialog, the documented Radix exception.
 const UNSHELLED_MESSAGE =
   'aria-modal without the overlay contract. Render through DialogShell / BottomSheet, or wire useDialogFocus + useScrollLock + useTransitionPresence directly (#510, .claude/rules/overlays.md)';
 const noUnshelledDialogs = {
