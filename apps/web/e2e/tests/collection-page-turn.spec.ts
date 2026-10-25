@@ -758,6 +758,9 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
   test.use({hasTouch: true});
 
   const PHONE = {width: 390, height: 844};
+  // The row, the 3x3 page and its map fit a 390x844 phone, so nothing scrolls there (#969): the
+  // swipes that check the page's scroll take a phone short enough for the binder to scroll.
+  const SHORT_PHONE = {width: 390, height: 520};
   const lonePage = (page: Page) => binder(page).getByRole('group', {name: 'Page', exact: true});
 
   /** A finger's swipe through Chromium's protocol, in ten moves a frame apart. */
@@ -878,7 +881,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
   }) => {
     test.skip(browserName !== 'chromium', "Touch goes through Chromium's DevTools protocol");
     await page.addInitScript(watchTouchMoves);
-    await openBinder(page, PHONE);
+    await openBinder(page, SHORT_PHONE);
     const cdp = await page.context().newCDPSession(page);
     const box = await edges(lonePage(page));
     const y = box.top + (box.bottom - box.top) / 3;
@@ -901,7 +904,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
 
   test('a mostly vertical swipe scrolls the page and turns nothing', async ({page, browserName}) => {
     test.skip(browserName !== 'chromium', "Touch goes through Chromium's DevTools protocol");
-    await openBinder(page, PHONE);
+    await openBinder(page, SHORT_PHONE);
     const cdp = await page.context().newCDPSession(page);
     const box = await edges(lonePage(page));
     const x = middle(box);

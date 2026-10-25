@@ -17,13 +17,13 @@ import {sectionStyle} from './binderLayout';
 import {
   CollectionSetBody,
   CollectionSetRail,
-  CollectionSetStrip,
+  RowSetPicker,
   ToolbarSetPicker,
   type AxisChoice,
-  type BinderView,
   type CollectionSetPanelProps,
   type SetSwitching,
 } from './CollectionSetPanel';
+import type {BinderView} from './BinderShows';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
 import {BinderSpread, BinderSlotSkeleton, PER_PAGE} from '../cards/components/BinderSpread';
 import {BinderSpreadMap} from '../cards/components/BinderSpreadMap';
@@ -37,15 +37,18 @@ import {COLORS, FONT_SIZES, SPACING, type BrowseSortOrder} from '../../shared/co
  *
  * THE SET IS CHOSEN IN THE SET PICKER, through the `?binder=` param, and only there: the
  * filters panel drops its Set section in collection mode. On desktop it sits in the
- * toolbar beside Collection (owner, 2026-10-20; `DockedSetPicker`), on tablets and phones
- * in the collection panel's rail and strip (owner, 2026-10-12; a picker under the set's
- * logo before). See `CollectionSetPanel`.
+ * toolbar beside Collection (owner, 2026-10-20; `DockedSetPicker`), on tablets in the
+ * collection panel's rail (owner, 2026-10-12; a picker under the set's logo before), and
+ * on phones at the head of the binder's row (owner, 2026-10-25, #969; `PhoneSetPicker`).
+ * See `CollectionSetPanel`.
  *
  * THE PANEL ADAPTS (owner, 2026-10-07): on desktop it is docked on the binder's
  * right, under the Collection button (owner, 2026-10-08; it was a tab beside the
  * filters before), and the PAGE renders it (see `DockedSetBody`), so this section
- * draws only the binder; on tablets, where nothing docks, a collapsible rail; on
- * phones, a strip above the page.
+ * draws only the binder; on tablets, where nothing docks, a collapsible rail. On phones
+ * the binder has the section to itself (owner, 2026-10-25, #969): the page draws the
+ * set picker in the row above it, in place of Browse's title, toolbar and the set strip
+ * that sat here.
  *
  * THE BINDER HOLDS WHAT THE PAGE LISTS: the set's cards that pass its filters (owner,
  * 2026-10-12; they used to dim in place), in its sort (owner, 2026-10-08), packed pocket
@@ -101,22 +104,14 @@ function useCardWindowOpen(): boolean {
 type PanelControls = SetSwitching & BinderView & AxisChoice;
 
 /**
- * The set panel around the binder, where the page does not dock it: a strip
- * above the page on a phone, so the page keeps the full width, and a rail beside
- * the binder on a tablet.
+ * The set panel around the binder, where the page does not dock it: a rail beside the
+ * binder on a tablet. A phone's binder sits in the section alone, the page's row above it
+ * holding its set picker (#969).
  */
 function PanelLayout({panel, children}: {panel: CollectionSetPanelProps; children: ReactNode}) {
   const {isMobile} = useResponsive();
   const docked = useSidePanelDocked();
-  if (docked) return <div style={sectionStyle(false, true)}>{children}</div>;
-  if (isMobile) {
-    return (
-      <div style={sectionStyle(true)}>
-        <CollectionSetStrip {...panel} />
-        {children}
-      </div>
-    );
-  }
+  if (docked || isMobile) return <div style={sectionStyle(isMobile, docked)}>{children}</div>;
   return (
     <div style={sectionStyle(false)}>
       <div style={{display: 'flex', gap: SPACING.md, height: '100%', minHeight: 0}}>
@@ -260,8 +255,9 @@ function SectionContent({
     );
   }
 
-  // Docked, the page renders the panel itself (`DockedSetBody`); no need to count here.
-  const stats = docked ? null : tallyCollection(counted, entries, controls.sets);
+  // Docked, the page renders the panel itself (`DockedSetBody`), and on a phone its set picker
+  // (`PhoneSetPicker`): only the tablet's rail counts here.
+  const stats = docked || isMobile ? null : tallyCollection(counted, entries, controls.sets);
   const shown = binderContents(cards, setCode, sortOrder, controls.sets).filter((card) => matchedIds.has(card.id));
   const slots = binderSlots(shown, {
     scope: setCode,
@@ -355,4 +351,12 @@ export function DockedSetBody(props: DockedSetBodyProps) {
  */
 export function DockedSetPicker(props: DockedSetBodyProps) {
   return <ToolbarSetPicker {...dockedPanel(props)} />;
+}
+
+/**
+ * The set picker at the head of a phone's binder row (owner, 2026-10-25, #969), with the
+ * headlines' percentages, which count what the docked panel counts.
+ */
+export function PhoneSetPicker(props: DockedSetBodyProps) {
+  return <RowSetPicker {...dockedPanel(props)} />;
 }

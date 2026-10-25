@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, it, expect, vi} from 'vitest';
-import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {act, cleanup, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {BrowseBody, BrowsePage} from '../BrowsePage';
@@ -142,15 +142,61 @@ describe('BrowseBody with collection mode on', () => {
     prompts: null,
     renderSetPanel: () => undefined,
     renderSetPicker: () => undefined,
+    renderPhoneRow: (_listing, {count, onOpen}) => (
+      <div data-testid="phone-binder-row">
+        <button onClick={onOpen}>{`Binder options ${count}`}</button>
+      </div>
+    ),
   };
 
-  it('counts a binder click on a card from outside Core in the card analytics', () => {
+  function renderBody(url = '/browse?binder=3', collection = slots) {
     render(
-      <MemoryRouter initialEntries={['/browse?binder=3']}>
-        <BrowseBody collection={slots} />
+      <MemoryRouter initialEntries={[url]}>
+        <BrowseBody collection={collection} />
       </MemoryRouter>,
     );
+  }
+
+  it('counts a binder click on a card from outside Core in the card analytics', () => {
+    renderBody();
     fireEvent.click(screen.getByRole('button', {name: 'binder card'}));
     expect(trackCardSelected).toHaveBeenCalledWith(outside, 'browse');
   });
+
+  describe("on a phone, the binder's one row (#969)", () => {
+    beforeEach(() => {
+      vi.stubGlobal('innerWidth', 390);
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("stands in for the toolbar and the title, which stays the page's heading for screen readers", () => {
+      renderBody();
+      expect(screen.getByTestId('phone-binder-row')).toBeInTheDocument();
+      expect(screen.queryByTestId('browse-toolbar')).toBeNull();
+      const title = screen.getByRole('heading', {level: 1, name: 'Browse Cards'});
+      expect(title).toHaveStyle({position: 'absolute', width: '1px', height: '1px', overflow: 'hidden'});
+    });
+
+    it('counts the filters on, and Owned or Missing, on Binder options, which opens the filters', () => {
+      renderBody('/browse?binder=3&ink=Amber,Ruby');
+      expect(screen.getByRole('button', {name: 'Binder options 2'})).toBeInTheDocument();
+      cleanupAndRender({...slots, show: 'missing'}, '/browse?binder=3&ink=Amber');
+      fireEvent.click(screen.getByRole('button', {name: 'Binder options 2'}));
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    it('keeps the toolbar and the title in grid mode', () => {
+      renderBody('/browse', {...slots, active: false, renderBinder: () => null, renderPhoneRow: () => undefined});
+      expect(screen.getByTestId('browse-toolbar')).toBeInTheDocument();
+      expect(screen.getByRole('heading', {level: 1, name: 'Browse Cards'})).not.toHaveStyle({position: 'absolute'});
+    });
+  });
+
+  /** A second page in the same test, the first one gone. */
+  function cleanupAndRender(collection: BrowseCollectionSlots, url: string) {
+    cleanup();
+    renderBody(url, collection);
+  }
 });

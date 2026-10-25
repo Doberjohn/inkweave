@@ -73,16 +73,23 @@ const binderLoading = (page: Page) => page.getByRole('region', {name: 'Loading y
 /** A lazy module's request, on the dev server or in a production build (see helpers/lazyModule.ts). */
 const isModuleRequest = (url: string, name: string) => new RegExp(`/${name}(\\.tsx|-[\\w-]+\\.js)(\\?|$)`).test(url);
 
+/** Browse's toolbar, and the row a phone draws in its place in collection mode (#969). */
+const TOOLBAR = 'browse-toolbar';
+const PHONE_ROW = 'phone-binder-row';
+
+const phoneRow = (page: Page) => page.getByTestId(PHONE_ROW);
+
 /**
  * Where each of Browse's toolbar controls stands, by name, once the page's fonts are in: its
  * layout box, which the hover's brief scale on a button (CtaButton's boop) leaves alone, where
  * getBoundingClientRect would catch the button mid-scale under the pointer that pressed it.
+ * `testId` names the toolbar, or a phone's row.
  */
-async function toolbarPlaces(page: Page): Promise<Record<string, Place>> {
+async function toolbarPlaces(page: Page, testId = TOOLBAR): Promise<Record<string, Place>> {
   // A late font changes the labels' widths, and with them where the controls after them stand.
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
   return page
-    .getByTestId('browse-toolbar')
+    .getByTestId(testId)
     .first()
     .evaluate((toolbar) => {
       const places: Record<string, Place> = {};
@@ -126,9 +133,13 @@ function expectPlacesHeld(parts: {name: string; before: Place; after: Place}[]):
 
 /**
  * Presses Collection with the binder's code held: the binder's frame shows at once, in place of
- * an empty area. Returns the toolbar as it stood then, and the release.
+ * an empty area. Returns the toolbar (`testId`, or a phone's row) as it stood then, and the
+ * release.
  */
-async function pressCollectionWithBinderHeld(page: Page): Promise<{before: Record<string, Place>; release: () => void}> {
+async function pressCollectionWithBinderHeld(
+  page: Page,
+  testId = TOOLBAR,
+): Promise<{before: Record<string, Place>; release: () => void}> {
   const binderCode = await holdLazyModule(page, 'CollectionBinderSection');
   // The session is back once the sync reads the account's copy. The header's Account button
   // says so too (`signedIn`), but a phone has no header.
@@ -143,7 +154,7 @@ async function pressCollectionWithBinderHeld(page: Page): Promise<{before: Recor
     .poll(binderCode.caught, {message: "the binder's chunk never reached the hold", timeout: 10000})
     .toBeGreaterThan(0);
   await expect(binderLoading(page)).toBeVisible();
-  return {before: await toolbarPlaces(page), release: binderCode.release};
+  return {before: await toolbarPlaces(page, testId), release: binderCode.release};
 }
 
 /**
@@ -279,8 +290,8 @@ test.describe('Collection mode', () => {
 test.describe('Collection mode, signed in', () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   test.beforeEach(async ({page: _}, testInfo) => {
-    // The docked collection and Filters panels are the desktop layout. Phones get the set
-    // strip (tested at phone width below) and the filter drawer, which these locators miss.
+    // The docked collection and Filters panels are the desktop layout. Phones get the binder's
+    // row (tested at phone width below) and the filter drawer, which these locators miss.
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
   });
 
@@ -1003,12 +1014,50 @@ test.describe('Collection mode, signed in', () => {
   });
 });
 
+/** Phones' screens in CSS pixels, with the browser's bars showing, as #969 measured them. */
+const PHONES = [
+  {width: 393, height: 659}, // iPhone 15, Safari
+  {width: 375, height: 629}, // iPhone 13 mini, Safari
+  {width: 430, height: 739}, // iPhone 15 Pro Max, Safari
+  {width: 360, height: 732}, // a 360px Android (Galaxy S24 class), Chrome
+  {width: 412, height: 839}, // a Pixel 7 class Android, Chrome
+];
+
+type Span = {top: number; bottom: number};
+
+/**
+ * How a phone's binder sits on its screen: `<main>`, the board and the page map, the open page's
+ * pockets and columns, how far the box round the binder that scrolls (the section's) has to
+ * scroll, and the page sideways. `scrollToEnd` scrolls that box to its end first.
+ */
+async function phoneBinderFit(page: Page, {scrollToEnd = false} = {}) {
+  const pockets = binder(page).getByRole('group', {name: 'Page', exact: true}).locator('.binder-pocket');
+  const lefts = await pockets.evaluateAll((all) => all.map((pocket) => Math.round(pocket.getBoundingClientRect().left)));
+  const boxes = await binder(page).evaluate((section, toEnd) => {
+    let scroller = section.parentElement;
+    while (scroller && !['auto', 'scroll'].includes(getComputedStyle(scroller).overflowY)) scroller = scroller.parentElement;
+    if (!scroller) throw new Error('nothing round the binder scrolls');
+    if (toEnd) scroller.scrollTop = scroller.scrollHeight;
+    const span = (element: Element | null): Span => {
+      if (!element) throw new Error('a part of the page is missing');
+      const {top, bottom} = element.getBoundingClientRect();
+      return {top, bottom};
+    };
+    return {
+      main: span(document.querySelector('main')),
+      board: span(section.querySelector('.binder-board')),
+      map: span(section.querySelector('nav[aria-label="Binder pages"]')),
+      overflow: scroller.scrollHeight - scroller.clientHeight,
+      sideways: document.documentElement.scrollWidth - window.innerWidth,
+    };
+  }, scrollToEnd);
+  return {...boxes, pockets: lefts.length, columns: new Set(lefts).size};
+}
+
 test.describe('Collection mode, signed in (phone width)', () => {
-  // Runs on every project, not just mobile-*: the strip is chosen by width (useResponsive), so a
+  // Runs on every project, not just mobile-*: the row is chosen by width (useResponsive), so a
   // forced phone viewport renders it anywhere, including the chromium-only Windows pre-push.
-  test("the set strip reads the set's two percentages and opens its numbers inline", async ({
-    page,
-  }) => {
+  test("the set button reads the set's two percentages, in words too, and opens the set list", async ({page}) => {
     await page.setViewportSize({width: 390, height: 844});
     await signInAsCollector(page, ENTRIES);
     await page.goto(`/browse?binder=${SET}`);
@@ -1016,20 +1065,49 @@ test.describe('Collection mode, signed in (phone width)', () => {
     // No gear on phones (owner, 2026-10-20): it wrapped Collection onto a row of its own.
     await expect(page.getByRole('button', {name: 'Collection actions'})).toHaveCount(0);
 
-    // Above the page, in place of the docked panel: the numbers stay folded behind a toggle
-    // that reads the two headline percentages, Complete then Master.
-    const strip = page.getByRole('region', {name: 'Set', exact: true});
-    const show = strip.getByRole('button', {name: 'Show the numbers'});
-    await expect(show).toHaveText(`${percentOfSet(HELD)}% · ${percentOfSet(MASTER)}%`);
-    await expect(numbers(page)).toHaveCount(0);
+    // At the head of the row over the binder (#969): the set's name over its two headline
+    // percentages, Complete then Master, which its name says in words after its visible text.
+    const [complete, master] = [percentOfSet(HELD), percentOfSet(MASTER)];
+    const button = phoneRow(page).getByRole('button', {name: /^Binder set: /});
+    await expect(button).toContainText(`${complete}% · ${master}%`);
+    const name = await button.getAttribute('aria-label');
+    const words = new RegExp(`^Binder set: (.+), ${complete}% · ${master}%: ${complete}% complete, ${master}% master$`);
+    expect(name).toMatch(words);
+    expect(await button.innerText()).toContain(words.exec(name!)![1]);
 
-    await show.click();
-    const hide = strip.getByRole('button', {name: 'Hide the numbers'});
-    await expect(hide).toHaveAttribute('aria-expanded', 'true');
-    await expect(numbers(page).getByText('Complete set', {exact: true})).toBeVisible();
+    await button.click();
+    const set = page.getByRole('dialog', {name: 'Binder set'}).getByRole('option', {name: new RegExp(`^Set ${SET},`)});
+    await expect(set).toHaveAttribute('aria-selected', 'true');
+  });
 
-    await hide.click();
-    await expect(numbers(page)).toHaveCount(0);
+  test('the binder opens whole on a phone: the row, a 3x3 page and its map on screen, nothing to scroll', async ({
+    page,
+  }) => {
+    await signInAsCollector(page, ENTRIES);
+    for (const size of PHONES) {
+      await page.setViewportSize(size);
+      await page.goto(`/browse?binder=${SET}`);
+      await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
+      const at = `at ${size.width}x${size.height}`;
+      const fit = await phoneBinderFit(page);
+      expect(fit.pockets, `the page's pockets ${at}`).toBe(9);
+      expect(fit.columns, `their columns ${at}`).toBe(3);
+      expect(fit.board.top, `the board's top ${at}`).toBeGreaterThanOrEqual(fit.main.top);
+      expect(fit.map.bottom, `the map's foot ${at}`).toBeLessThanOrEqual(fit.main.bottom);
+      expect(fit.overflow, `what the binder section scrolls ${at}`).toBeLessThanOrEqual(0);
+      expect(fit.sideways, `what the page scrolls sideways ${at}`).toBeLessThanOrEqual(0);
+      await expect(page.getByTestId('browse-toolbar')).toHaveCount(0);
+      await expect(page.getByRole('heading', {level: 1, name: 'Browse Cards'})).toBeAttached();
+    }
+
+    // A shorter screen than any of them: the section scrolls, and at its end shows the map whole.
+    await page.setViewportSize({width: 375, height: 548});
+    await page.goto(`/browse?binder=${SET}`);
+    await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
+    expect((await phoneBinderFit(page)).overflow, 'what the binder section scrolls at 375x548').toBeGreaterThan(0);
+    const end = await phoneBinderFit(page, {scrollToEnd: true});
+    expect(end.map.top, "the map's top, scrolled to the end").toBeGreaterThanOrEqual(end.main.top);
+    expect(end.map.bottom, "the map's foot, scrolled to the end").toBeLessThanOrEqual(end.main.bottom);
   });
 
   test('the lone page sits in its board, one zip round its outer edge, with no scroll sideways (#941)', async ({
@@ -1060,16 +1138,20 @@ test.describe('Collection mode, signed in (phone width)', () => {
     expect(await teethIn(page, {...strip, x: frame.left + 3}), "teeth down the spine's side").toBe(0);
   });
 
-  test("the first switch draws the binder's frame while its code loads, and the toolbar holds still", async ({
+  test("the first switch draws the binder's frame while its code loads, and the row holds still", async ({
     page,
   }) => {
     await page.setViewportSize({width: 390, height: 844});
     await signInAsCollector(page, ENTRIES);
-    const {before, release} = await pressCollectionWithBinderHeld(page);
+    const {before, release} = await pressCollectionWithBinderHeld(page, PHONE_ROW);
+    const placeholder = await placeOf(phoneRow(page).locator('.react-loading-skeleton'));
 
     release();
     await expect(binder(page)).toBeVisible();
     await expect(binderLoading(page)).toHaveCount(0);
-    expectToolbarHeld(before, await toolbarPlaces(page));
+    expectToolbarHeld(before, await toolbarPlaces(page, PHONE_ROW));
+    // The set button lands in its placeholder's box.
+    const button = await placeOf(phoneRow(page).getByRole('button', {name: /^Binder set: /}));
+    expectPlacesHeld([{name: 'the set button', before: placeholder, after: button}]);
   });
 });

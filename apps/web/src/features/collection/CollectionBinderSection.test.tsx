@@ -118,6 +118,14 @@ describe('CollectionBinderSection', () => {
     expect(screen.getByRole('complementary', {name: 'Set'})).toHaveTextContent('filtered · 100% complete · 0% master');
   });
 
+  it("draws a phone's binder alone, its set picker in the row Browse draws above it (#969)", () => {
+    vi.stubGlobal('innerWidth', 390);
+    renderSection(['a']);
+    expect(pockets()).toEqual(['Card a']);
+    expect(screen.queryByRole('region', {name: 'Set'})).toBeNull();
+    expect(screen.queryByRole('button', {name: /^Binder set/})).toBeNull();
+  });
+
   it('opens at the first spread when a filter changes what it holds', () => {
     // Thirty of Set 9's cards fill two spreads. Narrowing them must not leave the reader
     // on the second, which would now hold other cards.

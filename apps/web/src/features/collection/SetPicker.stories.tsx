@@ -11,6 +11,9 @@ import {
   STORY_STATS,
 } from './collectionStoryData';
 
+/** What an iPhone 15's 393px leave the row's set button, beside Binder options and Collection (#969). */
+const ROW_WIDTH = 210;
+
 /** Each set's progress, by code, the whole collection's and every promo set's. */
 const progressOf = (stats: typeof STORY_STATS) =>
   new Map<string, {complete: number; cards: number}>([
@@ -92,7 +95,7 @@ export const Loading: Story = {args: {sets: ['13'], setsLoading: true, progress:
  * no picture, in the 111px left beside Collection and the gear.
  */
 export const Compact: Story = {
-  args: {compact: true},
+  args: {size: 'toolbar'},
   decorators: [
     (Story) => (
       <div style={{width: 111}}>
@@ -103,13 +106,32 @@ export const Compact: Story = {
 };
 
 /** The toolbar's button on the whole collection: "All sets". */
-export const CompactWholeCollection: Story = {...Compact, args: {compact: true, setCode: 'all'}};
+export const CompactWholeCollection: Story = {...Compact, args: {size: 'toolbar', setCode: 'all'}};
 
 /** The toolbar's button on a promo set: the set's code, whole on hover. */
-export const CompactPromoSet: Story = {...Compact, args: {compact: true, setCode: STORY_PROMO_SET}};
+export const CompactPromoSet: Story = {...Compact, args: {size: 'toolbar', setCode: STORY_PROMO_SET}};
 
 /** The toolbar's button on every promo set (owner, 2026-10-20): "Promos". */
-export const CompactAllPromoSets: Story = {...Compact, args: {compact: true, setCode: 'promos'}};
+export const CompactAllPromoSets: Story = {...Compact, args: {size: 'toolbar', setCode: 'promos'}};
+
+/**
+ * The phone binder row's button (owner, 2026-10-25, #969): the set's logo, its name over its two
+ * percentages, 40px tall, at the width an iPhone 15's row leaves it beside Binder options and
+ * Collection. Its list is the panel's.
+ */
+export const Row: Story = {
+  args: {size: 'row', figures: {shown: '36% · 12%', words: '36% complete, 12% master'}},
+  decorators: [
+    (Story) => (
+      <div style={{width: ROW_WIDTH}}>
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+/** The row's button while the numbers load: a shimmer holds the figures' line. */
+export const RowLoading: Story = {...Row, args: {size: 'row'}};
 
 /**
  * Every promo set picked (owner, 2026-10-20): the promo symbol, the number of promo sets, and

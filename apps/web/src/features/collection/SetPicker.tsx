@@ -9,8 +9,10 @@ import {
   type MouseEvent,
   type RefObject,
 } from 'react';
+import Skeleton from 'react-loading-skeleton';
 import {CtaButton} from '../../shared/components';
 import {useHover} from '../../shared/hooks/useHover';
+import {useResponsive} from '../../shared/hooks/useResponsive';
 import {RaritySymbol} from '../reveals/RaritySymbol';
 import loreSymbol from '../../assets/lore.webp?no-inline';
 import {isFinished, percentOf} from './collectionStats';
@@ -60,12 +62,28 @@ export interface SetPickerProps {
    */
   progress: ReadonlyMap<string, Progress> | null;
   /**
-   * The toolbar's button beside Collection (desktop, owner 2026-10-20): as tall as the
-   * toolbar's controls, a short label and no picture, rather than the panel's two lines.
+   * Where the button is drawn: the panel's two lines (the default); the desktop toolbar's,
+   * beside Collection (owner, 2026-10-20), as tall as the toolbar's controls, a short label
+   * and no picture; or the phone binder's row (owner, 2026-10-25, #969), a small logo and the
+   * scope's name over its `figures`.
    */
-  compact?: boolean;
+  size?: TriggerSize;
+  /** The row's figures, or none while the numbers load: a shimmer then holds their line. */
+  figures?: RowFigures;
   /** The page's Rarity filter picks the promos: the whole collection's menu opens on Promo. */
   picksPromos?: boolean;
+}
+
+/** Where the button is drawn (see `SetPickerProps.size`). */
+type TriggerSize = 'panel' | 'toolbar' | 'row';
+
+/**
+ * The row button's figures, the headlines' percentages: as drawn, "73% · 19%", and in words
+ * for its name, "73% complete, 19% master" (#969).
+ */
+export interface RowFigures {
+  shown: string;
+  words: string;
 }
 
 /**
@@ -126,6 +144,31 @@ const TOOLBAR_TRIGGER: TriggerGeometry = {
 };
 
 /**
+ * The phone binder row's button (owner, 2026-10-25, #969): as tall as Binder options beside
+ * it, a small logo, the scope's name over its figures. Its list is the panel's.
+ */
+const ROW_TRIGGER: TriggerGeometry = {
+  height: 40,
+  logoBox: {...LOGO_BOX, width: 44, height: 26},
+  chevron: {width: 10, height: 6},
+  gap: SPACING.sm,
+  padding: `0 ${SPACING.md}px 0 ${SPACING.xs}px`,
+};
+
+/** The row's button on the narrowest phones: its words alone, inset as the toolbar's are. */
+const NARROW_ROW_TRIGGER: TriggerGeometry = {...ROW_TRIGGER, logoBox: undefined, padding: TOOLBAR_TRIGGER.padding};
+
+const TRIGGERS: Record<TriggerSize, TriggerGeometry> = {panel: PANEL_TRIGGER, toolbar: TOOLBAR_TRIGGER, row: ROW_TRIGGER};
+
+/** Below this window width the row's button leaves its logo out, so at 320px its words keep 93px (#969). */
+const ROW_LOGO_MIN_WIDTH = 360;
+
+/** The button's geometry where it is drawn: the row's, on the narrowest phones, without its logo. */
+function triggerGeometry(size: TriggerSize, windowWidth: number): TriggerGeometry {
+  return size === 'row' && windowWidth < ROW_LOGO_MIN_WIDTH ? NARROW_ROW_TRIGGER : TRIGGERS[size];
+}
+
+/**
  * The tabs and about ten rows, past which the list scrolls. Half the window at most, so on
  * a short laptop (about 650px tall) the menu still ends inside the panel it opens over.
  */
@@ -151,9 +194,14 @@ const MENU_MAX_HEIGHT = 'min(440px, 50vh)';
  *
  * ON DESKTOP IT SITS IN THE TOOLBAR, BESIDE COLLECTION (owner, 2026-10-20): it, Collection and
  * the collection's actions span the set panel as Filters and the sort span the filters panel,
- * so it is 111px wide and as tall as Collection, a short label with no picture (`compact`):
- * "All sets", "Set 13" or "P1". Its menu stays the panel's width. The set panel starts at
- * what the binder shows. The tablet rail's panel and the phone strip keep the two-line button.
+ * so it is 111px wide and as tall as Collection, a short label with no picture (`size`
+ * "toolbar"): "All sets", "Set 13" or "P1". Its menu stays the panel's width. The set panel
+ * starts at what the binder shows. The tablet rail's panel keeps the two-line button.
+ *
+ * ON A PHONE IT LEADS THE BINDER'S ROW (owner, 2026-10-25, #969): 40px tall beside Binder
+ * options and Collection, a small logo, and the scope's name over its two percentages, "73% ·
+ * 19%", at 13px, the panel's smallest type. Its name says them in words after its visible
+ * text: "Binder set: Winterspell, 73% · 19%: 73% complete, 19% master".
  *
  * A popup in the select's manner: opening focuses the open choice. Up, down, Home and End
  * move down a column, the chosen tab over the sets, and left and right move along the
@@ -166,7 +214,8 @@ export function SetPicker({
   setsLoading,
   onSetChange,
   progress,
-  compact = false,
+  size = 'panel',
+  figures,
   picksPromos = false,
 }: SetPickerProps) {
   const [open, setOpen] = useState(false);
@@ -215,7 +264,8 @@ export function SetPicker({
       <Trigger
         setCode={setCode}
         sets={sets}
-        compact={compact}
+        size={size}
+        figures={figures}
         open={open}
         menuId={menuId}
         disabled={setsLoading}
@@ -437,7 +487,8 @@ interface TriggerProps {
   setCode: string;
   /** The sets the binder can show, which a scope spanning them counts on its first line. */
   sets: readonly string[];
-  compact: boolean;
+  size: TriggerSize;
+  figures: RowFigures | undefined;
   open: boolean;
   menuId: string;
   disabled: boolean;
@@ -498,14 +549,47 @@ function compactLabel(setCode: string): string {
   return SPAN_WORDS[setCode]?.compact ?? (isPromoSet(setCode) ? setCode : `Set ${setCode}`);
 }
 
-/** The button's name: the choice, with the toolbar's words in it for a scope spanning sets. */
-function triggerName(setCode: string, compact: boolean): string {
-  return `Binder set: ${(compact ? SPAN_WORDS[setCode]?.compactName : undefined) ?? choiceLabel(setCode)}`;
+/**
+ * The button's name: the choice, with the toolbar's words in it for a scope spanning sets; the
+ * row's, its visible text and then its figures in words (#969).
+ */
+function triggerName({setCode, size, figures}: Pick<TriggerProps, 'setCode' | 'size' | 'figures'>): string {
+  if (size === 'row') return `Binder set: ${scopeName(setCode)}${figures ? `, ${figures.shown}: ${figures.words}` : ''}`;
+  return `Binder set: ${(size === 'toolbar' ? SPAN_WORDS[setCode]?.compactName : undefined) ?? choiceLabel(setCode)}`;
 }
 
-/** The button's words: the kicker over the name in the panel, or the toolbar's short label. */
-function TriggerLabel({setCode, sets, compact}: Pick<TriggerProps, 'setCode' | 'sets' | 'compact'>) {
-  if (compact) {
+/** Each of the row's two lines: 13px, the set panel's smallest type. */
+const ROW_LINE: CSSProperties = {fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.25};
+
+/** The figures' line: gold, as the strip's figures were, in tabular digits. */
+const ROW_FIGURES: CSSProperties = {...ROW_LINE, ...TABULAR, color: COLORS.primary, whiteSpace: 'nowrap'};
+
+/** What the figures' shimmer leaves of their line, above and below, so the line keeps its height. */
+const SHIMMER_INSET = SPACING.xxs;
+
+/**
+ * The row's words: the scope's name, cut short, over its figures, or a 60px shimmer holding
+ * their line while the numbers load.
+ */
+function RowLabel({setCode, figures}: Pick<TriggerProps, 'setCode' | 'figures'>) {
+  return (
+    <span style={{minWidth: 0, display: 'flex', flexDirection: 'column'}}>
+      <span style={{...ROW_LINE, ...TRUNCATE, fontWeight: 700}}>{scopeName(setCode)}</span>
+      {figures ? (
+        <span style={ROW_FIGURES}>{figures.shown}</span>
+      ) : (
+        <span style={{...ROW_FIGURES, display: 'flex', padding: `${SHIMMER_INSET}px 0`, height: '1.25em'}}>
+          <Skeleton inline width={60} style={{display: 'block', height: '100%'}} />
+        </span>
+      )}
+    </span>
+  );
+}
+
+/** The button's words: the kicker over the name in the panel, the toolbar's short label, or the row's two lines. */
+function TriggerLabel({setCode, sets, size, figures}: Pick<TriggerProps, 'setCode' | 'sets' | 'size' | 'figures'>) {
+  if (size === 'row') return <RowLabel setCode={setCode} figures={figures} />;
+  if (size === 'toolbar') {
     return <span style={{...TRUNCATE, fontSize: `${FONT_SIZES.lg}px`, fontWeight: 700}}>{compactLabel(setCode)}</span>;
   }
   return (
@@ -519,12 +603,13 @@ function TriggerLabel({setCode, sets, compact}: Pick<TriggerProps, 'setCode' | '
 const KICKER_STYLE: CSSProperties = {fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.25, color: COLORS.textMuted};
 
 /**
- * The button: the choice's picture (the two-line button's alone), its words, and a chevron
- * that turns over while open.
+ * The button: the choice's picture (the two-line button's and the row's), its words, and a
+ * chevron that turns over while open.
  */
-function Trigger({setCode, sets, compact, open, menuId, disabled, onToggle, onKeyDown, onBlur}: TriggerProps) {
+function Trigger({setCode, sets, size, figures, open, menuId, disabled, onToggle, onKeyDown, onBlur}: TriggerProps) {
   const {hovered, hoverProps} = useHover();
-  const geometry = compact ? TOOLBAR_TRIGGER : PANEL_TRIGGER;
+  const {windowWidth} = useResponsive();
+  const geometry = triggerGeometry(size, windowWidth);
   const art = geometry.logoBox && choiceArt(setCode, geometry.logoBox);
   return (
     <CtaButton
@@ -533,16 +618,16 @@ function Trigger({setCode, sets, compact, open, menuId, disabled, onToggle, onKe
       aria-haspopup="dialog"
       aria-expanded={open}
       aria-controls={open ? menuId : undefined}
-      aria-label={triggerName(setCode, compact)}
+      aria-label={triggerName({setCode, size, figures})}
       // The toolbar's short label names a set by its number or code alone: whole on hover.
-      title={compact ? choiceLabel(setCode) : undefined}
+      title={size === 'toolbar' ? choiceLabel(setCode) : undefined}
       disabled={disabled}
       onClick={onToggle}
       onKeyDown={onKeyDown}
       onBlur={onBlur}
       style={triggerStyle({on: open, hovered: hovered && !disabled}, {withArt: art !== undefined, geometry})}>
       {art !== undefined && <span style={geometry.logoBox}>{art}</span>}
-      <TriggerLabel setCode={setCode} sets={sets} compact={compact} />
+      <TriggerLabel setCode={setCode} sets={sets} size={size} figures={figures} />
       <svg
         width={geometry.chevron.width}
         height={geometry.chevron.height}

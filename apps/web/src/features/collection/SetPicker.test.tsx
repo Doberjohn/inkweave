@@ -1,4 +1,4 @@
-import {describe, it, expect, vi} from 'vitest';
+import {afterEach, describe, it, expect, vi} from 'vitest';
 import {cleanup, render, screen, fireEvent, within} from '@testing-library/react';
 import {SetPicker} from './SetPicker';
 
@@ -70,16 +70,51 @@ describe('SetPicker', () => {
   });
 
   it("fits the toolbar's 111px beside Collection and the gear: a set's number, All sets, or Promos, with no picture (owner, 2026-10-20)", () => {
-    renderPicker({compact: true});
+    renderPicker({size: 'toolbar'});
     expect(button()).toHaveTextContent(/^Set 13$/);
     expect(button()).toHaveStyle({minHeight: '34px'});
-    renderPicker({compact: true, setCode: 'all'});
+    renderPicker({size: 'toolbar', setCode: 'all'});
     expect(screen.getByRole('button', {name: 'Binder set: All sets, the whole collection'})).toHaveTextContent(/^All sets$/);
-    renderPicker({compact: true, setCode: 'promos', sets: ['14', 'P1']});
+    renderPicker({size: 'toolbar', setCode: 'promos', sets: ['14', 'P1']});
     expect(screen.getByRole('button', {name: 'Binder set: Promos, every promo set'})).toHaveTextContent(/^Promos$/);
     for (const toolbarButton of screen.getAllByRole('button', {name: /^Binder set/})) {
       expect(toolbarButton.querySelector('img')).toBeNull();
     }
+  });
+
+  describe("in the phone binder's row (#969)", () => {
+    const figures = {shown: '36% · 12%', words: '36% complete, 12% master'};
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("shows the set's logo and its name over the figures, says them in words after its text, and opens the same list", () => {
+      renderPicker({size: 'row', figures});
+      expect(button()).toHaveAccessibleName('Binder set: Attack of the Vine!, 36% · 12%: 36% complete, 12% master');
+      expect(button()).toHaveTextContent(/^Attack of the Vine!36% · 12%$/);
+      expect(button()).toHaveStyle({minHeight: '40px'});
+      expect(button().querySelector('img')).not.toBeNull();
+      fireEvent.click(button());
+      fireEvent.click(option('12'));
+      expect(button()).toHaveFocus();
+    });
+
+    it("holds the figures' line with a shimmer while the numbers load, and names the scope alone", () => {
+      renderPicker({size: 'row'});
+      expect(button()).toHaveAccessibleName('Binder set: Attack of the Vine!');
+      expect(button().querySelector('.react-loading-skeleton')).not.toBeNull();
+    });
+
+    it('leaves its logo out below 360px, so its words keep their room', () => {
+      vi.stubGlobal('innerWidth', 359);
+      renderPicker({size: 'row', figures});
+      expect(button().querySelector('img')).toBeNull();
+      cleanup();
+      vi.stubGlobal('innerWidth', 360);
+      renderPicker({size: 'row', figures});
+      expect(button().querySelector('img')).not.toBeNull();
+    });
   });
 
   it('shows no tabs without a promo set, and moves through the list with the arrows, Home and End', () => {

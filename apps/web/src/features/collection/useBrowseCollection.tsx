@@ -35,7 +35,13 @@ import {
 import {CollectionModeSwitch} from './CollectionModeSwitch';
 import {CollectionActions} from './CollectionActions';
 import {WindowCopies} from './WindowCopies';
-import {BinderChunkFallback, DockedSetBodyFallback, ToolbarSetPickerFallback} from './BinderChunkFallback';
+import {PhoneBinderRow} from './PhoneBinderRow';
+import {
+  BinderChunkFallback,
+  DockedSetBodyFallback,
+  RowSetPickerFallback,
+  ToolbarSetPickerFallback,
+} from './BinderChunkFallback';
 
 /*
  * The collection UI is SPLIT FROM BROWSE (#553 Phase C). The binder and the
@@ -55,9 +61,11 @@ const CollectionBinderSection = lazyWithRetry(
   () => import('./CollectionBinderSection'),
   'CollectionBinderSection',
 );
-// Same module as the binder, so the same chunk: the docked set panel costs no request of its own.
+// Same module as the binder, so the same chunk: the docked set panel costs no request of its own,
+// nor does a phone row's set picker.
 const DockedSetBody = lazyWithRetry(() => import('./CollectionBinderSection'), 'DockedSetBody');
 const DockedSetPicker = lazyWithRetry(() => import('./CollectionBinderSection'), 'DockedSetPicker');
+const PhoneSetPicker = lazyWithRetry(() => import('./CollectionBinderSection'), 'PhoneSetPicker');
 const ImportCollectionDialog = lazyWithRetry(
   () => import('./ImportCollectionDialog'),
   'ImportCollectionDialog',
@@ -65,8 +73,8 @@ const ImportCollectionDialog = lazyWithRetry(
 
 /**
  * Starts the binder's chunk on intent (#913): one request for the binder, its docked set panel
- * and the toolbar's set picker, which share the module. A failed warm-up is harmless: the
- * binder's own load retries.
+ * and the toolbar's set picker, or a phone row's, which share the module. A failed warm-up is
+ * harmless: the binder's own load retries.
  */
 function preloadBinder(): void {
   import('./CollectionBinderSection').catch(() => {});
@@ -326,6 +334,20 @@ export interface BrowseCollectionSlots {
    * (desktop, owner 2026-10-20), while collection mode is on, else undefined.
    */
   renderSetPicker: (listing: BrowseListing) => ReactNode | undefined;
+  /**
+   * A phone's one row over the binder (owner, 2026-10-25, #969) while collection mode is on,
+   * else undefined: the set button, Binder options with its `count`, and Collection. The page
+   * draws it in place of its title and toolbar.
+   */
+  renderPhoneRow: (listing: BrowseListing, options: PhoneRowOptions) => ReactNode | undefined;
+}
+
+/** What the page hands a phone's binder row: Binder options' badge and press. */
+interface PhoneRowOptions {
+  /** The filters on, plus one while the binder shows only Owned or Missing. */
+  count: number;
+  /** Opens the Binder sheet. */
+  onOpen: () => void;
 }
 
 /**
@@ -522,6 +544,19 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
         <Suspense fallback={<ToolbarSetPickerFallback />}>
           <DockedSetPicker {...setCounts(listing)} {...panelControls} />
         </Suspense>
+      ) : undefined,
+    renderPhoneRow: (listing, {count, onOpen}) =>
+      collectionMode ? (
+        <PhoneBinderRow
+          setPicker={
+            <Suspense fallback={<RowSetPickerFallback />}>
+              <PhoneSetPicker {...setCounts(listing)} {...panelControls} />
+            </Suspense>
+          }
+          count={count}
+          onOpen={onOpen}
+          modeSwitch={modeSwitch}
+        />
       ) : undefined,
   };
 }

@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn, userEvent, within} from 'storybook/test';
-import {CollectionSetBody, CollectionSetRail, CollectionSetStrip, type CollectionSetPanelProps} from './CollectionSetPanel';
+import {CollectionSetBody, CollectionSetRail, type CollectionSetPanelProps} from './CollectionSetPanel';
 import {SIDE_PANEL_STYLE} from '../cards/components/BrowseSidePanel';
 import type {BinderShow} from './binderCards';
 import {
@@ -24,7 +24,7 @@ import {COLORS} from '../../shared/constants';
  * choose a headline, or choose what the binder shows. The fixture holds each set in its
  * own way; see `collectionStoryData`.
  */
-function LivePanel({layout, ...args}: CollectionSetPanelProps & {layout: 'docked' | 'rail' | 'strip'}) {
+function LivePanel({layout, ...args}: CollectionSetPanelProps & {layout: 'docked' | 'rail'}) {
   const [setCode, setSetCode] = useState(args.setCode);
   const [show, setShow] = useState<BinderShow>(args.show);
   const [axis, setAxis] = useState<Axis>(args.axis);
@@ -38,7 +38,6 @@ function LivePanel({layout, ...args}: CollectionSetPanelProps & {layout: 'docked
     onAxisChange: setAxis,
   };
   if (layout === 'rail') return <CollectionSetRail {...props} />;
-  if (layout === 'strip') return <CollectionSetStrip {...props} />;
   return (
     <div style={{...SIDE_PANEL_STYLE, height: 683}}>
       <CollectionSetBody {...props} />
@@ -140,16 +139,3 @@ export const Loading: Story = {args: {stats: null, sets: ['13'], setsLoading: tr
 
 /** The collapsed rail, for widths where the open panel would starve the cards. Tap to open over the binder. */
 export const Rail: Story = {args: {layout: 'rail'}};
-
-/** Phones: the picker, the headline numbers and what the binder shows in a strip above the page; the tabs open inline. */
-export const PhoneStrip: Story = {
-  args: {layout: 'strip'},
-  decorators: [
-    (Story) => (
-      <div style={{width: 360}}>
-        <Story />
-      </div>
-    ),
-  ],
-  globals: {viewport: {value: 'mobile1'}},
-};

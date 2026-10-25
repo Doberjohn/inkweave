@@ -13,9 +13,9 @@ import {
   type tallyCollection,
   type tallySet,
 } from './collectionStats';
-import {ALL_PROMO_SETS, WHOLE_COLLECTION, isPromoScope, scopeName, type BinderShow} from './binderCards';
-import {SetPicker, type SetPickerProps} from './SetPicker';
-import {Segment, Segments} from './Segments';
+import {ALL_PROMO_SETS, WHOLE_COLLECTION, isPromoScope, scopeName} from './binderCards';
+import {SetPicker, type RowFigures, type SetPickerProps} from './SetPicker';
+import {BinderShows, type BinderView} from './BinderShows';
 import {SIDE_PANEL_STYLE} from '../cards/components/BrowseSidePanel';
 import {NumbersLoading} from './BinderChunkFallback';
 import {BAR, NUMBERS_STYLE} from './binderLayout';
@@ -122,12 +122,6 @@ export interface SetSwitching {
   onSetChange: (set: string) => void;
   /** The page's Rarity filter picks the promos: the set picker's whole collection opens on Promo. */
   picksPromos?: boolean;
-}
-
-/** What the binder shows, and how to change it. */
-export interface BinderView {
-  show: BinderShow;
-  onShowChange: (show: BinderShow) => void;
 }
 
 export interface CollectionSetPanelProps extends SetSwitching, BinderView, AxisChoice {
@@ -598,23 +592,6 @@ function NumbersRegion({stats, setCode, filtered, axis, onAxisChange}: NumbersPr
   );
 }
 
-const SHOW_OPTIONS: {value: BinderShow; label: string}[] = [
-  {value: 'all', label: 'All'},
-  {value: 'owned', label: 'Owned'},
-  {value: 'missing', label: 'Missing'},
-];
-
-/** What the binder shows: every card, the ones you hold, or the ones you are missing. */
-function BinderShows({show, onShowChange}: BinderView) {
-  return (
-    <Segments label="Binder shows" columns="repeat(3, 1fr)">
-      {SHOW_OPTIONS.map(({value, label}) => (
-        <Segment key={value} label={label} active={show === value} onSelect={() => onShowChange(value)} />
-      ))}
-    </Segments>
-  );
-}
-
 /**
  * The picker's view of the panel's props: each set's progress, the whole collection's and
  * every promo set's, once the pool is in. Filtered, they are the filtered cards' too (owner,
@@ -662,7 +639,16 @@ export function CollectionSetBody({withPicker = true, ...props}: CollectionSetPa
 
 /** The set picker as the desktop toolbar holds it, beside Collection: a short label with no picture, as tall as Collection. */
 export function ToolbarSetPicker(props: CollectionSetPanelProps) {
-  return <SetPicker {...pickerProps(props)} compact />;
+  return <SetPicker {...pickerProps(props)} size="toolbar" />;
+}
+
+/**
+ * The set picker as a phone's binder row holds it (owner, 2026-10-25, #969): a small logo and
+ * the scope's name over its two headline percentages, which its name says in words.
+ */
+export function RowSetPicker(props: CollectionSetPanelProps) {
+  const t = shownTally(props);
+  return <SetPicker {...pickerProps(props)} size="row" figures={t === null ? undefined : rowFigures(t, isPromoScope(props.setCode))} />;
 }
 
 /** The headline figures of what the picker shows, once the pool is in. */
@@ -670,24 +656,31 @@ function shownTally(props: CollectionSetPanelProps) {
   return props.stats ? (scopeTally(props.stats, props.setCode) ?? null) : null;
 }
 
-/** What the rail and the strip read of a tally: its two headlines. */
+/** What the rail and the row read of a tally: its two headlines. */
 type Headlines = Pick<Tally, 'complete' | 'master' | 'cards'>;
 
 /**
- * The rail's sideways figures, complete alone for a promo set, which shows no master. With no
- * card to count, said in words: 0% of nothing reads as owning none.
+ * The headlines in words, complete alone for a promo set, which shows no master. With no card to
+ * count, said in words: 0% of nothing reads as owning none.
  */
-function railFigures({complete, master, cards}: Headlines, promo: boolean): string {
-  if (cards === 0) return 'no matching cards';
+function headlineWords({complete, master, cards}: Headlines, promo: boolean): string[] {
+  if (cards === 0) return ['no matching cards'];
   const done = `${percentOf(complete, cards)}% complete`;
-  return promo ? done : `${done} · ${percentOf(master, cards)}% master`;
+  return promo ? [done] : [done, `${percentOf(master, cards)}% master`];
 }
 
-/** The strip's toggle: the percentages the panel shows, or the set picker's dash when there is no card to count. */
-function stripFigures({complete, master, cards}: Headlines, promo: boolean): string {
-  if (cards === 0) return '–';
-  const done = `${percentOf(complete, cards)}%`;
-  return promo ? done : `${done} · ${percentOf(master, cards)}%`;
+/** The rail's sideways figures: the headlines in words. */
+const railFigures = (t: Headlines, promo: boolean) => headlineWords(t, promo).join(' · ');
+
+/**
+ * The row button's figures: the percentages the panel shows, or the set list's dash when there is
+ * no card to count, and the headlines in words for its name.
+ */
+function rowFigures(t: Headlines, promo: boolean): RowFigures {
+  const words = headlineWords(t, promo).join(', ');
+  if (t.cards === 0) return {shown: '–', words};
+  const done = `${percentOf(t.complete, t.cards)}%`;
+  return {shown: promo ? done : `${done} · ${percentOf(t.master, t.cards)}%`, words};
 }
 
 const panelStyle = SIDE_PANEL_STYLE;
@@ -745,51 +738,5 @@ export function CollectionSetRail(props: CollectionSetPanelProps) {
         </div>
       )}
     </aside>
-  );
-}
-
-/**
- * Phones: the picker, the two headline numbers and what the binder shows in a strip above
- * the page, the rest of the numbers one tap away and opening inline (the section scrolls),
- * so the binder page keeps the whole width.
- */
-export function CollectionSetStrip(props: CollectionSetPanelProps) {
-  const [open, setOpen] = useState(false);
-  const t = shownTally(props);
-  return (
-    <section aria-label="Set" style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm, padding: `${SPACING.sm}px 0`}}>
-      <div style={{display: 'flex', gap: SPACING.sm, alignItems: 'center'}}>
-        <div style={{flex: 1, minWidth: 0}}>
-          <SetPicker {...pickerProps(props)} />
-        </div>
-        {t !== null && (
-          <ToggleNumbers
-            open={open}
-            onToggle={() => setOpen(!open)}
-            figures={stripFigures(t, isPromoScope(props.setCode))}
-          />
-        )}
-      </div>
-      <BinderShows show={props.show} onShowChange={props.onShowChange} />
-      {open && props.stats && (
-        <div style={{...panelStyle, width: '100%'}}>
-          <NumbersRegion {...numbersProps(props)} />
-        </div>
-      )}
-    </section>
-  );
-}
-
-/** The strip's figures, named with what they show first, so a voice command can say what it sees. */
-function ToggleNumbers({open, onToggle, figures}: {open: boolean; onToggle: () => void; figures: string}) {
-  return (
-    <IconButton
-      aria-label={`${figures}, ${open ? 'hide' : 'show'} the numbers`}
-      aria-expanded={open}
-      size={34}
-      onClick={onToggle}
-      style={{...TABULAR, width: 'auto', padding: `0 ${SPACING.sm}px`, color: COLORS.primary, fontSize: `${FONT_SIZES.base}px`, whiteSpace: 'nowrap'}}>
-      {figures}
-    </IconButton>
   );
 }

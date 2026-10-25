@@ -7,17 +7,18 @@ import {BAR, NUMBERS_STYLE, sectionStyle} from './binderLayout';
 
 /*
  * What collection mode draws while the binder's chunk downloads (#913), each in the box of what
- * replaces it: the binder section, the docked set panel's body and the toolbar's set picker. The
- * first switch to the mode otherwise left the area empty until the chunk arrived. They live
- * outside that chunk, in Browse's collection chunk, so they are kept to a few blocks of the
- * app's skeleton shimmer; the chunk's own loading binder takes over from them.
+ * replaces it: the binder section, the docked set panel's body, and the set picker in the
+ * toolbar or a phone's row (#969). The first switch to the mode otherwise left the area empty
+ * until the chunk arrived. They live outside that chunk, in Browse's collection chunk, so they
+ * are kept to a few blocks of the app's skeleton shimmer; the chunk's own loading binder takes
+ * over from them.
  */
 
 /** The toolbar's set picker and Collection beside it are as tall (`TOOLBAR_TRIGGER` in SetPicker.tsx). */
 const TOOLBAR_CONTROL_HEIGHT = 34;
-/** The phone strip's set picker, the two-line button (`PANEL_TRIGGER` in SetPicker.tsx). */
-const STRIP_PICKER_HEIGHT = 72;
-/** What the binder shows, All, Owned or Missing (`Segments`), in the strip and the docked panel. */
+/** A phone row's set picker, as tall as Binder options beside it (`ROW_TRIGGER` in SetPicker.tsx). */
+const ROW_CONTROL_HEIGHT = 40;
+/** What the binder shows, All, Owned or Missing (`Segments`), in the docked panel. */
 const SHOWS_HEIGHT = 42;
 
 /**
@@ -40,7 +41,7 @@ function Block({height, style}: {height?: number; style?: CSSProperties}) {
 
 /**
  * The binder section while its chunk downloads: the section's box (`sectionStyle`), holding one
- * placeholder in the shape of what arrives, a spread, or on a phone the set strip over a page.
+ * placeholder in the shape of what arrives, a spread, or on a phone a page.
  */
 export function BinderChunkFallback() {
   const {isMobile} = useResponsive();
@@ -50,18 +51,7 @@ export function BinderChunkFallback() {
       aria-busy="true"
       aria-label="Loading your binder"
       style={{...sectionStyle(isMobile, docked), ...COLUMN, containerType: 'size'}}>
-      {isMobile ? (
-        <>
-          {/* The set strip's two rows, in its padding. */}
-          <div style={{...COLUMN, padding: `${SPACING.sm}px 0`}}>
-            <Block height={STRIP_PICKER_HEIGHT} />
-            <Block height={SHOWS_HEIGHT} />
-          </div>
-          <Block style={PAGE_SHAPE} />
-        </>
-      ) : (
-        <Block style={SPREAD_SHAPE} />
-      )}
+      <Block style={isMobile ? PAGE_SHAPE : SPREAD_SHAPE} />
     </section>
   );
 }
@@ -105,4 +95,9 @@ export function DockedSetBodyFallback({promo = false}: {promo?: boolean}) {
 /** The toolbar's set picker while the chunk downloads, filling the picker's place beside Collection. */
 export function ToolbarSetPickerFallback() {
   return <Block height={TOOLBAR_CONTROL_HEIGHT} />;
+}
+
+/** A phone row's set picker while the chunk downloads, filling its place before Binder options (#969). */
+export function RowSetPickerFallback() {
+  return <Block height={ROW_CONTROL_HEIGHT} />;
 }

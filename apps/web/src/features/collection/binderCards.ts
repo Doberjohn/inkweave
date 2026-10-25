@@ -95,7 +95,8 @@ export const setLabel = (setCode: string) =>
  * you don't, toward the headline chosen beside it (owner, 2026-10-20): under Master set, a
  * card held in one finish only is missing, unless that is the one finish it comes in
  * (`isHeld`, #880). A view of the binder chosen in the collection panel, not one of the page's
- * filters: the Filters count and Clear all leave it be.
+ * filters: the Filters count and Clear all leave it be. A phone's Binder options counts it in
+ * its badge with the filters, Owned or Missing as one (#969).
  */
 export type BinderShow = 'all' | 'owned' | 'missing';
 

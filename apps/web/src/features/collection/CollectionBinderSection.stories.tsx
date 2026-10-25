@@ -10,10 +10,11 @@ import {COLORS} from '../../shared/constants';
  * Collection mode's content: the set panel and one set's binder, plus the
  * loading and failure states that must never fall through to an empty binder.
  * The section draws the set panel only where the page does not dock it: as its
- * rail from 768 to 1023px of viewport, as a strip on phones. At 1024px and up
- * (`useSidePanelDocked`) the page renders the panel itself, so these stories show
- * the binder alone; the set panel's own stories cover its numbers. The fixture
- * cards are Set 9.
+ * rail from 768 to 1023px of viewport. At 1024px and up (`useSidePanelDocked`)
+ * the page renders the panel itself, and on a phone the set picker leads the row
+ * Browse draws above the binder (#969), so these stories show the binder alone
+ * there; the set panel's own stories cover its numbers. The fixture cards are
+ * Set 9.
  */
 const entries: CollectionEntries = Object.fromEntries(
   BINDER_CARDS.map((card) => {

@@ -1,9 +1,9 @@
 import type {ReactNode} from 'react';
 import {beforeEach, describe, it, expect, vi} from 'vitest';
-import {act, fireEvent, render, renderHook, screen} from '@testing-library/react';
+import {act, fireEvent, render, renderHook, screen, within} from '@testing-library/react';
 import {MemoryRouter, useSearchParams} from 'react-router-dom';
 import {trackEvent} from '../../shared/lib/analytics';
-import {useBinderParams, useBrowseCollection} from './useBrowseCollection';
+import {useBinderParams, useBrowseCollection, type BrowseListing} from './useBrowseCollection';
 
 // Who presses Collection, for useBrowseCollection's own cases; useBinderParams reads none of it.
 const {account} = vi.hoisted(() => ({account: {signedIn: true, hasCollection: true, syncing: false}}));
@@ -174,5 +174,39 @@ describe('useBrowseCollection analytics', () => {
 
       expect(trackEvent).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("useBrowseCollection's phone row (#969)", () => {
+  beforeEach(() => {
+    account.signedIn = true;
+    account.hasCollection = true;
+    account.syncing = false;
+  });
+
+  const LISTING: BrowseListing = {cards: [], sortOrder: 'newest', matched: [], filtered: false};
+
+  /** The row the hook draws for a phone, as Browse asks for it, with two things on. */
+  function PhoneRow() {
+    return <>{useBrowseCollection([]).renderPhoneRow(LISTING, {count: 2, onOpen: () => {}})}</>;
+  }
+
+  const renderRow = (url: string) =>
+    render(
+      <MemoryRouter initialEntries={[url]}>
+        <PhoneRow />
+      </MemoryRouter>,
+    );
+
+  it('draws nothing in grid mode, where the toolbar stays', () => {
+    renderRow('/browse');
+    expect(screen.queryByTestId('phone-binder-row')).toBeNull();
+  });
+
+  it('draws the row in collection mode: Binder options with its count, then Collection, on', () => {
+    renderRow('/browse?binder=9');
+    const row = within(screen.getByTestId('phone-binder-row'));
+    expect(row.getByRole('button', {name: 'Binder options'})).toHaveTextContent(/^2$/);
+    expect(row.getByRole('button', {name: 'Show my collection'})).toHaveAttribute('aria-pressed', 'true');
   });
 });
