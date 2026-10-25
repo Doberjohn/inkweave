@@ -6,14 +6,21 @@ import {
   type FocusEvent,
   type KeyboardEvent,
   type ReactNode,
+  type Ref,
   type RefObject,
   type SyntheticEvent,
 } from 'react';
 import {EDGE_DISC_SIZE, InkCardPlaceholder, NavArrowButton} from '../../../shared/components';
+import {ArtOnScreen} from '../../../shared/hooks/useArtLoad';
 import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
 import {blackRgba, COLORS, RADIUS, SPACING} from '../../../shared/constants';
+import {usePrefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
 import {BINDER_LOOK} from './binderLook';
 import {viewSheets, type ViewSheets} from './binderSheets';
+import {PageTurn} from './PageTurn';
+import type {TurnPage} from './pageTurnMath';
+import {useGrabTurn} from './useGrabTurn';
+import {usePageTurns, type Turn} from './usePageTurns';
 import './binder.css';
 
 /**
@@ -389,18 +396,36 @@ function Spine() {
 const BOARD_ROW: CSSProperties = {display: 'flex', alignItems: 'stretch'};
 
 /**
+ * What turning the pages adds to a view (#942): the board's classes, the grab's handlers on it and
+ * the turning sheet in it, and the real pages' refs and which of them take a grab.
+ */
+interface ViewTurn {
+  /** `binder-turning` while a sheet is drawn, and `binder-grabbing` while a page is in hand. */
+  boardClass: string;
+  boardProps: ReturnType<typeof useGrabTurn>['boardProps'];
+  sheet: ReactNode;
+  left: RefObject<HTMLDivElement | null>;
+  right: RefObject<HTMLDivElement | null>;
+  /** The left page turns back while there is a view before; the right forward while there is one after. */
+  grab: {left: boolean; right: boolean};
+}
+
+/**
  * The binder's cover board round the pages and spine (#941), with the zip running round its
  * outer edge and its pull: the look is binder.css's, and its padding is `BOARD`, which the
  * spread's sizing counts. It tells binder.css how many sheet edges to draw under each page
- * (`sheets`) and how wide the spine between the two zips is.
+ * (`sheets`) and how wide the spine between the two zips is. A page turn draws its sheet in it,
+ * and the grab takes its pointer (#942).
  */
 function Board({
   sheets,
+  turn,
   single = false,
   layout = BOARD_ROW,
   children,
 }: {
   sheets: ViewSheets;
+  turn: ViewTurn;
   single?: boolean;
   /** How it lays out what it holds: a row by default. */
   layout?: CSSProperties;
@@ -414,8 +439,12 @@ function Board({
     '--sheets-r': String(sheets.right),
   } as CSSProperties;
   return (
-    <div className={single ? 'binder-board binder-board-single' : 'binder-board'} style={style}>
+    <div
+      className={`binder-board${single ? ' binder-board-single' : ''}${turn.boardClass}`}
+      style={style}
+      {...turn.boardProps}>
       {children}
+      {turn.sheet}
       <span className="binder-zip-pull" aria-hidden="true" />
     </div>
   );
@@ -431,6 +460,10 @@ interface BinderPageProps {
   renderSlot: (index: number) => ReactNode;
   /** Drawn as a cover, which holds no cards. */
   cover?: Cover;
+  /** The page itself, which a page turn lines its sheet up with (#942). */
+  pageRef?: Ref<HTMLDivElement>;
+  /** It turns when dragged sideways (`useGrabTurn`): binder.css gives it the grab cursor. */
+  grab?: boolean;
 }
 
 const COVER_LABELS: Record<Cover, string> = {front: 'Front cover', back: 'Back cover'};
@@ -446,6 +479,13 @@ function pageLabel({side, single, cover}: Pick<BinderPageProps, 'side' | 'single
 const pageClass = (side: 'left' | 'right', cover: Cover | undefined) =>
   `binder-page binder-page-${side}${cover ? ' binder-cover' : ''}`;
 
+/** Whether a page is a cover: the inside front cover before the first page, the back past the last card. */
+function coverOf({from, side}: TurnPage, single: boolean, cardCount: number | undefined): Cover | undefined {
+  if (single) return undefined;
+  if (side === 'left') return from < 0 ? 'front' : undefined;
+  return cardCount !== undefined && from >= cardCount ? 'back' : undefined;
+}
+
 /**
  * One page of twelve pockets, slots sized for a spread or for a lone page. A cover keeps
  * its twelve slots, empty: a page takes its width from them, and without them it would
@@ -453,10 +493,12 @@ const pageClass = (side: 'left' | 'right', cover: Cover | undefined) =>
  * Every slot on a page of cards is a pocket (`binder-pocket`), its sleeve and front sheet
  * drawn round whatever it holds, so one past the last card shows an empty sleeve.
  */
-function BinderPage({from, side, single, renderSlot, cover}: BinderPageProps) {
+export function BinderPage({from, side, single, renderSlot, cover, pageRef, grab}: BinderPageProps) {
   return (
     <div
+      ref={pageRef}
       className={pageClass(side, cover)}
+      data-grab={grab || undefined}
       // A labelled GROUP, not a section: three region landmarks for one binder
       // made the landmark list noise. The binder itself is the one region.
       role="group"
@@ -482,13 +524,14 @@ interface ViewProps {
   cardCount?: number;
   /** The sheets under each page, by how far through the binder the view is (see `viewSheets`). */
   sheets: ViewSheets;
+  turn: ViewTurn;
 }
 
 /**
  * The two facing pages and the spine between them: the left one the front cover before the
  * first page, the right one the back cover once the cards run out.
  */
-function Pages({start, renderSlot, cardCount}: Pick<ViewProps, 'start' | 'renderSlot' | 'cardCount'>) {
+function Pages({start, renderSlot, cardCount, turn}: Pick<ViewProps, 'start' | 'renderSlot' | 'cardCount' | 'turn'>) {
   const right = start + PER_PAGE;
   return (
     <>
@@ -497,7 +540,9 @@ function Pages({start, renderSlot, cardCount}: Pick<ViewProps, 'start' | 'render
         side="left"
         single={false}
         renderSlot={renderSlot}
-        cover={start < 0 ? 'front' : undefined}
+        cover={coverOf({from: start, side: 'left'}, false, cardCount)}
+        pageRef={turn.left}
+        grab={turn.grab.left}
       />
       <Spine />
       <BinderPage
@@ -505,7 +550,9 @@ function Pages({start, renderSlot, cardCount}: Pick<ViewProps, 'start' | 'render
         side="right"
         single={false}
         renderSlot={renderSlot}
-        cover={cardCount !== undefined && right >= cardCount ? 'back' : undefined}
+        cover={coverOf({from: right, side: 'right'}, false, cardCount)}
+        pageRef={turn.right}
+        grab={turn.grab.right}
       />
     </>
   );
@@ -555,7 +602,7 @@ function useRowWidth(ref: RefObject<HTMLDivElement | null>): number {
 }
 
 /** Two facing pages, sized from the height they are given, arrows either side. */
-function FlankedSpread({start, renderSlot, arrows, cardCount, sheets}: ViewProps) {
+function FlankedSpread({start, renderSlot, arrows, cardCount, sheets, turn}: ViewProps) {
   const rowRef = useRef<HTMLDivElement>(null);
   const maxHeight = spreadMaxHeight(useRowWidth(rowRef), true);
   return (
@@ -577,8 +624,8 @@ function FlankedSpread({start, renderSlot, arrows, cardCount, sheets}: ViewProps
       }}>
       {arrows.prev}
       <div style={{...PAGES_BOX, flex: '1 1 0', height: '100%', maxHeight}}>
-        <Board sheets={sheets}>
-          <Pages start={start} renderSlot={renderSlot} cardCount={cardCount} />
+        <Board sheets={sheets} turn={turn}>
+          <Pages start={start} renderSlot={renderSlot} cardCount={cardCount} turn={turn} />
         </Board>
       </div>
       {arrows.next}
@@ -598,7 +645,8 @@ function FlankedSpread({start, renderSlot, arrows, cardCount, sheets}: ViewProps
 function edgeArrowPlace(side: 'left' | 'right'): CSSProperties {
   return {
     position: 'absolute',
-    zIndex: 2,
+    // Over a turning sheet too, whose layer is 5 (binder.css): a disc still turns the page mid-turn.
+    zIndex: 6,
     top: `calc(50% - ${EDGE_DISC_SIZE / 2}px)`,
     [side]: PAGE_PADDING - EDGE_DISC_SIZE,
   };
@@ -642,7 +690,7 @@ const EDGE_FRAME: CSSProperties = {
  * runs out first (see `EDGE_FRAME`). Pinned left, so on the one paint before a resize's new
  * height cap lands, a spread too wide for its box runs past its right edge, never its left.
  */
-function StackedSpread({start, renderSlot, arrows, footer, cardCount, sheets}: ViewProps) {
+function StackedSpread({start, renderSlot, arrows, footer, cardCount, sheets, turn}: ViewProps) {
   const rowRef = useRef<HTMLDivElement>(null);
   const maxHeight = spreadMaxHeight(useRowWidth(rowRef), false);
   return (
@@ -650,9 +698,9 @@ function StackedSpread({start, renderSlot, arrows, footer, cardCount, sheets}: V
       ref={rowRef}
       style={{flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between'}}>
       <div style={{...PAGES_BOX, justifyContent: 'flex-start', flex: '1 1 0', minHeight: 0, maxHeight}}>
-        <Board sheets={sheets} layout={EDGE_FRAME}>
+        <Board sheets={sheets} turn={turn} layout={EDGE_FRAME}>
           {arrows.prev}
-          <Pages start={start} renderSlot={renderSlot} cardCount={cardCount} />
+          <Pages start={start} renderSlot={renderSlot} cardCount={cardCount} turn={turn} />
           {arrows.next}
         </Board>
       </div>
@@ -673,13 +721,20 @@ function SpreadView({edges, ...props}: ViewProps & {edges: boolean}) {
  * round it (#941). Nothing here is measured, which is what keeps the arrows below
  * it from moving after first paint.
  */
-function SingleView({start, renderSlot, arrows, sheets}: ViewProps) {
+function SingleView({start, renderSlot, arrows, sheets, turn}: ViewProps) {
   return (
     <>
       <div style={{padding: `${SPACING.sm}px ${SPACING.sm}px 0`}}>
-        <Board sheets={sheets} single>
+        <Board sheets={sheets} turn={turn} single>
           <Spine />
-          <BinderPage from={start} side="right" single renderSlot={renderSlot} />
+          <BinderPage
+            from={start}
+            side="right"
+            single
+            renderSlot={renderSlot}
+            pageRef={turn.right}
+            grab={turn.grab.right}
+          />
         </Board>
       </div>
       <div style={{display: 'flex', justifyContent: 'center', gap: SPACING.xxl, paddingTop: SPACING.sm}}>
@@ -778,7 +833,10 @@ function focusableInView(
  * pockets than the view holds, so the tiles have the last word on how many cards there are.
  */
 function cardsAt(e: SyntheticEvent<HTMLElement>, view: PocketView) {
-  const tiles = [...e.currentTarget.querySelectorAll<HTMLElement>('[data-roving-item]')];
+  // A page turn's copies are real pockets made inert (#942), never among the cards in view.
+  const tiles = [...e.currentTarget.querySelectorAll<HTMLElement>('[data-roving-item]')].filter(
+    (tile) => !tile.closest('[inert]'),
+  );
   const focusable = view.focusable.slice(0, tiles.length);
   const tile = tiles.indexOf(e.target as HTMLElement);
   return {tiles, view: {...view, focusable}, from: tile < 0 ? undefined : focusable[tile]};
@@ -830,6 +888,120 @@ function sheetsAt(start: number, single: boolean, cardCount: number | undefined)
   return viewSheets((start + lead) / perView, Math.max(1, Math.ceil((cardCount + lead) / perView)), single);
 }
 
+/** Whether a turn's page was in view as the turn began, its art on screen a moment ago. */
+const wasInView = ({from}: TurnPage, turn: Turn, perView: number) => from >= turn.from && from < turn.from + perView;
+
+/** Which pages take a grab: the left while there is a view before, the right while there is one after, a phone's either. */
+const grabMarks = ({single, canPrev, canNext}: Pick<TurnProps, 'single' | 'canPrev' | 'canNext'>) => ({
+  left: canPrev && !single,
+  right: canNext || (single && canPrev),
+});
+
+/** The board's classes for a turn: a sheet drawn, a page in hand. */
+const turnClass = (turning: boolean, grabbing: boolean) =>
+  `${turning ? ' binder-turning' : ''}${grabbing ? ' binder-grabbing' : ''}`;
+
+type TurnProps = Pick<BinderSpreadProps, 'start' | 'renderSlot' | 'onPrev' | 'onNext' | 'canPrev' | 'canNext' | 'cardCount'> & {
+  single: boolean;
+};
+
+interface TurnSheetProps {
+  turn: Turn;
+  /** A copy of a page; `shown` when its art was on screen as the turn began. */
+  copy: (page: TurnPage, shown: boolean) => ReactNode;
+  perView: number;
+  pages: {left: RefObject<HTMLDivElement | null>; right: RefObject<HTMLDivElement | null>};
+  end: (turn: Turn) => void;
+}
+
+/** The turn's sheet over the pages: a page in hand is held at its first pose, for the grab to pose; any other turns. */
+function TurnSheet({turn, copy, perView, pages, end}: TurnSheetProps) {
+  return (
+    <PageTurn
+      plan={turn.plan}
+      renderPage={(page) => copy(page, wasInView(page, turn, perView))}
+      pages={pages}
+      spine={SPINE_WIDTH}
+      at={turn.held ? 0 : undefined}
+      onDone={() => end(turn)}
+    />
+  );
+}
+
+/** A turn's sheet keeps its key while it turns, so one that replaces it draws a new sheet. */
+const turnKey = ({from, to, held}: Turn) => `${from}>${to}${held ? ' held' : ''}`;
+
+/**
+ * TURNING THE PAGES LIKE A REAL BINDER (owner, 2026-10-24, #942): every way the view changes
+ * turns a sheet over the rings (`usePageTurns`), and a page dragged sideways turns under the
+ * pointer (`useGrabTurn`). The view changes at once, so the spread map, the focus and the keys
+ * see it; the sheet is a copy drawn over it (`PageTurn`).
+ */
+function useViewTurn(props: TurnProps): ViewTurn {
+  const {start, single, renderSlot, cardCount} = props;
+  const perView = single ? PER_PAGE : PER_SPREAD;
+  const reducedMotion = usePrefersReducedMotion();
+  const {turn, hold, end} = usePageTurns(start, {single, perPage: PER_PAGE, reducedMotion});
+  const grab = useGrabTurn({...props, perView, turning: turn !== null, hold, end, reducedMotion, spine: SPINE_WIDTH});
+  const left = useRef<HTMLDivElement>(null);
+  const right = useRef<HTMLDivElement>(null);
+  const copy = (page: TurnPage, shown: boolean) => (
+    <ArtOnScreen.Provider value={shown}>
+      <BinderPage
+        from={page.from}
+        side={page.side}
+        single={single}
+        renderSlot={(index) => renderSlot(index, -1)}
+        cover={coverOf(page, single, cardCount)}
+      />
+    </ArtOnScreen.Provider>
+  );
+  return {
+    boardClass: turnClass(turn !== null, grab.grabbing),
+    boardProps: grab.boardProps,
+    sheet: turn && (
+      <TurnSheet key={turnKey(turn)} turn={turn} copy={copy} perView={perView} pages={{left, right}} end={end} />
+    ),
+    left,
+    right,
+    grab: grabMarks(props),
+  };
+}
+
+/** Whether focus is on one of the binder's cards. */
+const isCard = (el: EventTarget | null): el is HTMLElement =>
+  el instanceof HTMLElement && el.hasAttribute('data-roving-item');
+
+/**
+ * THE FOCUS FOLLOWS THE VIEW (#942). When the view changes while the focus sits on one of its
+ * cards, the card leaves the page with the old view, and the focus would fall to the page's body:
+ * it moves to the new view's Tab stop, its first card. A drag or swipe that turns the page does
+ * this, and so does a click on a disc in a browser that doesn't focus a clicked button, as Safari
+ * on a Mac doesn't. A key on a disc keeps the focus on the disc, as before.
+ *
+ * The card focused last is noted as focus moves, and forgotten when focus moves anywhere else.
+ * React hears no blur as a focused card leaves the page, whatever the browser sends, so a card
+ * noted but gone from the page once the view has changed is one the view change took.
+ */
+function useFocusFollowsView(section: RefObject<HTMLElement | null>, start: number, single: boolean) {
+  const focused = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    const card = focused.current;
+    if (!card || card.isConnected) return;
+    focused.current = null;
+    const stop = section.current?.querySelector<HTMLElement>('[data-roving-item][tabindex="0"]');
+    if (document.activeElement === document.body) stop?.focus({preventScroll: true});
+  }, [section, start, single]);
+  return {
+    noteFocus: (e: FocusEvent) => {
+      focused.current = isCard(e.target) ? e.target : null;
+    },
+    onBlur: (e: FocusEvent) => {
+      if (!isCard(e.relatedTarget)) focused.current = null;
+    },
+  };
+}
+
 export function BinderSpread({
   start,
   renderSlot,
@@ -847,6 +1019,8 @@ export function BinderSpread({
   const perView = single ? PER_PAGE : PER_SPREAD;
   const focusable = focusableInView(start, perView, {cardCount, isOpen});
   const pockets = usePocketFocus(start, {focusable, pages: single ? 1 : 2});
+  const sectionRef = useRef<HTMLElement>(null);
+  const follow = useFocusFollowsView(sectionRef, start, single);
   const edges = arrows === 'edges' && !single;
   const views: ViewProps = {
     start,
@@ -854,6 +1028,7 @@ export function BinderSpread({
     footer,
     cardCount,
     sheets: sheetsAt(start, single, cardCount),
+    turn: useViewTurn({start, single, renderSlot, onPrev, onNext, canPrev, canNext, cardCount}),
     arrows: {
       prev: (
         <NavArrowButton
@@ -878,9 +1053,14 @@ export function BinderSpread({
   return (
     // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- roving tabindex: the arrow keys move between the pockets (#790)
     <section
+      ref={sectionRef}
       aria-label="Binder"
       onKeyDown={pockets.onKeyDown}
-      onFocus={pockets.onFocus}
+      onFocus={(e) => {
+        pockets.onFocus(e);
+        follow.noteFocus(e);
+      }}
+      onBlur={follow.onBlur}
       style={{...BINDER_LOOK, height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0}}>
       {single ? <SingleView {...views} /> : <SpreadView {...views} edges={edges} />}
     </section>

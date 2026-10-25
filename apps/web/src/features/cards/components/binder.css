@@ -229,3 +229,98 @@
     filter: none;
   }
 }
+
+/* ── The page turn (#942) ───────────────────────────────────────────────
+   A sheet lifts off one page, swings over the rings in 0.7s and lands on the other, as the owner
+   picked it on 2026-10-24. The binder already shows where the turn goes (or, while a page is
+   held, still shows where it lay), and `PageTurn` draws copies over it in this layer: the sheet,
+   and a flat page where the picture under the sheet differs from the binder's. The layer holds
+   only copies, so it alone takes the turn's perspective, set inline: the board never gains one,
+   which would move a popover inside it. Over the pockets, whose front sheets, copies stripes and
+   a card sliding in reach z-index 4, and under the edge discs (6). */
+.binder-turn {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+.binder-turn-flat,
+.binder-leaf {
+  position: absolute;
+}
+/* Each copy keeps its pockets' z-indexes to itself: loose in the layer, the flat page's front
+   sheets would draw over the sheet turning above it, and a face's over the face behind it. */
+.binder-turn-flat,
+.binder-leaf-face {
+  display: flex;
+  isolation: isolate;
+}
+.binder-turn-flat > .binder-page,
+.binder-leaf-face > .binder-page {
+  flex: 1;
+}
+/* A copy carries no sheet edges under it: the binder's own pages draw them. */
+.binder-turn .binder-page::before {
+  display: none;
+}
+.binder-leaf {
+  transform-style: preserve-3d;
+}
+.binder-leaf-face {
+  position: absolute;
+  inset: 0;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.binder-leaf-back {
+  transform: rotateY(180deg);
+}
+/* The shade crossing the sheet, none flat and darkest on edge: `--binder-shade`, which
+   `poseLeaf` sets while a page is held, or the keyframes below while it turns. */
+.binder-leaf .binder-page::after {
+  content: '';
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--binder-leaf-shade);
+  opacity: var(--binder-shade, 0);
+  pointer-events: none;
+}
+.binder-leaf-back .binder-page::after {
+  background: var(--binder-leaf-shade-back);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .binder-leaf-turning {
+    transition: transform var(--binder-turn-ms) var(--binder-turn-curve);
+  }
+  .binder-leaf-turning .binder-page::after {
+    animation: binder-leaf-shade var(--binder-turn-ms) var(--binder-turn-curve) both;
+  }
+}
+@keyframes binder-leaf-shade {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+/* While a sheet turns, a press on the pages waits for it to land. */
+.binder-turning .binder-page {
+  pointer-events: none;
+}
+
+/* Grab the page: a page that can turn takes a drag sideways and leaves an up-and-down one to the
+   browser, so the page still scrolls. */
+.binder-page[data-grab] {
+  cursor: grab;
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.binder-grabbing,
+.binder-grabbing * {
+  cursor: grabbing !important;
+}

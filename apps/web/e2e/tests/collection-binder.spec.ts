@@ -260,6 +260,8 @@ test.describe("Collection mode, the binder's pages and pockets (#941)", () => {
     const rightSide = binder(page).getByRole('group', {name: /^(Right page|Back cover)$/});
     const sheetsAt = async (spread: number) => {
       await expect(shown).toHaveAccessibleName(new RegExp(`^Spread ${spread} of ${spreads}:`));
+      // Once the turn's sheet has landed (#942): until then it draws over the pages' feet.
+      await expect(board(page).locator('.binder-turn')).toHaveCount(0);
       return [await sheetEdgesUnder(page, leftSide), await sheetEdgesUnder(page, rightSide)];
     };
     // Paged from the keyboard, so the pointer never meets the pockets, whose glow under it reaches
