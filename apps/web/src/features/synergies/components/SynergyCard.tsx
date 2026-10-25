@@ -71,8 +71,9 @@ export function SynergyCard({
           // The gold glow while pointed at or focused (`.card-tile`, index.css).
           ...CARD_TILE_GLOW,
           position: 'relative',
-          // Mockup `.mini-tile`: 5px radius + neutral var(--border). Wider contexts get the inkier 8px tinted border.
-          borderRadius: `${compact ? RADIUS.sm + 1 : RADIUS.lg}px`,
+          // Mockup `.mini-tile` (its 5px radius on the scale's next step, #962) + neutral var(--border).
+          // Wider contexts get the inkier 8px tinted border.
+          borderRadius: `${compact ? RADIUS.md : RADIUS.lg}px`,
           border: `1px solid ${compact ? COLORS.surfaceBorder : `${colors.border}40`}`,
           background: COLORS.surface,
           cursor: 'pointer',

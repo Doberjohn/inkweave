@@ -52,9 +52,10 @@ function cacheEmptyResult(cardId: string): PrecomputedCardData {
 }
 
 /**
- * A card's synergy file, fetched once for the page. A request that throws (offline, or a body
- * that won't parse) is forgotten, so a retry fetches again. Any other answer is kept for the
- * page, and one that isn't a synergy file (a card with none, an error status) reads as none.
+ * A card's synergy file, fetched once for the page. A card with no file (a 404, or the dev
+ * server's page in its place) reads as none, and that answer is kept for the page. Any other
+ * failure (offline, an error status, a body that won't parse) throws and is forgotten, so the
+ * next ask fetches again: a passing 5xx never leaves a card reading as none for the visit.
  */
 export async function fetchCardSynergies(cardId: string): Promise<PrecomputedCardData> {
   const cached = synergyFetchCache.get(cardId);
@@ -71,7 +72,8 @@ export async function fetchCardSynergies(cardId: string): Promise<PrecomputedCar
 async function loadCardSynergies(cardId: string): Promise<PrecomputedCardData> {
   const response = await fetch(`/data/synergies/${cardId}.json`);
   // Card has no synergies (not in manifest). Cache the empty result.
-  if (!response.ok) return cacheEmptyResult(cardId);
+  if (response.status === 404) return cacheEmptyResult(cardId);
+  if (!response.ok) throw new Error(`Synergy file for card ${cardId} answered ${response.status}`);
 
   // Guard against SPA fallback: Vite dev server returns 200 + HTML for missing files
   const contentType = response.headers.get('content-type') ?? '';

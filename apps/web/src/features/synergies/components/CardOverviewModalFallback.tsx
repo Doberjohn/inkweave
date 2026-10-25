@@ -1,7 +1,7 @@
 import {useEffect, type CSSProperties, type RefObject} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, ICON_SIZE, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, ICON_SIZE, LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
 import {IconButton} from '../../../shared/components/IconButton';
 import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
 import {
@@ -20,18 +20,34 @@ import {
   DEFAULT_BODY_STYLE,
   desktopCardRowHeight,
   MODAL_BACKDROP_STYLE,
-  MODAL_FRAME_STYLE,
   MODAL_HEADER_STYLE,
   pickCardColumnLayout,
   pickCardsRowStyle,
+  pickModalFrameStyle,
   pickModalShellStyle,
   pickModalTitleStyle,
   pickSynergyColumnLayout,
 } from './cardOverviewModalStyles';
 import {useModalCardSize} from './useModalCardSize';
 
-/** A synergy tile's height in the loading grid: the modal's mini-card tiles, four to a row. */
-const SYNERGY_TILE_HEIGHT = 170;
+/**
+ * The loading grid's columns: the modal's own (SynergyGroup's `gridColumns={4}`), passed as
+ * SynergyCardList passes them, so index.css's .synergy-card-grid narrows a phone's to three.
+ */
+const SYNERGY_GRID_STYLE = {
+  display: 'grid',
+  '--synergy-grid-columns': 'repeat(4, 1fr)',
+  gap: SPACING.sm,
+  marginTop: SPACING.xs,
+} as CSSProperties;
+
+/** A loading tile: card-shaped, a compact SynergyCard's radius, so its card's tile replaces it in place. */
+const SYNERGY_TILE_STYLE: CSSProperties = {
+  position: 'relative',
+  aspectRatio: LAYOUT.cardAspect,
+  borderRadius: RADIUS.md,
+  overflow: 'hidden',
+};
 
 /**
  * Right-column placeholder shown while the per-card synergy JSON is in flight
@@ -56,24 +72,11 @@ export function SynergiesLoadingSkeleton() {
             <Skeleton width={92} height={20} borderRadius={2} />
             {/* Cream callout description (2 lines suggested) */}
             <Skeleton height={36} borderRadius={4} />
-            {/* Mini-card tile grid — matches modal's gridColumns={4}, 3 visible per group */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: SPACING.sm,
-                marginTop: SPACING.xs,
-              }}>
+            {/* Mini-card tile grid: the modal's columns, 3 visible per group */}
+            <div className="synergy-card-grid" style={SYNERGY_GRID_STYLE}>
               {Array.from({length: 3}).map((_, tileIdx) => (
-                // A synergy's card is not known yet: the neutral tile, as tall as the old shimmer.
-                <div
-                  key={tileIdx}
-                  style={{
-                    position: 'relative',
-                    height: SYNERGY_TILE_HEIGHT,
-                    borderRadius: RADIUS.sm,
-                    overflow: 'hidden',
-                  }}>
+                // A synergy's card is not known yet: the neutral tile.
+                <div key={tileIdx} style={SYNERGY_TILE_STYLE}>
                   <InkCardPlaceholder />
                 </div>
               ))}
@@ -282,7 +285,7 @@ export function CardOverviewModalFallback({
         style={MODAL_BACKDROP_STYLE}
       />
       <div style={CENTERING_WRAPPER_STYLE}>
-        <div style={MODAL_FRAME_STYLE}>
+        <div style={pickModalFrameStyle(isMobile)}>
           <div
             className={`overlay-transition overlay-scale overlay-enter${visibleClass}`}
             role="status"
