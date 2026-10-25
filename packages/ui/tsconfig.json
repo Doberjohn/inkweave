@@ -1,0 +1,11 @@
+{
+  // The app's compiler options, for the package's own source, tests and configs: only the build
+  // info file, the ambient types and the files differ. The app type-checks the modules it imports
+  // from here as part of its own tsc -b.
+  "extends": "../../apps/web/tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
+    "types": ["vite/client", "vitest/globals", "node"]
+  },
+  "include": ["src", "vitest.config.ts"]
+}

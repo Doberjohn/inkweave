@@ -16,7 +16,7 @@ If a focus area was given as an argument, scope the map to that feature; otherwi
 
 Return a single structured report with these sections:
 
-1. **Workspace layout**: the pnpm workspaces (`packages/synergy-engine`, `apps/web`) and what each owns.
+1. **Workspace layout**: the pnpm workspaces (`packages/synergy-engine`, `packages/ui`, `apps/web`) and what each owns.
 2. **Engine**: the public API from `packages/synergy-engine/src/index.ts`, and the rule registry (which `SynergyRule`s are wired in `packages/synergy-engine/src/engine/`).
 3. **Web data flow**: trace `apps/web/src` from card load (`allCards.json` to `features/cards/loader.ts`) to synergy fetch (`/data/synergies/{cardId}.json`) to UI (`features/synergies`).
 4. **Precompute**: where the per-card synergy JSON comes from (`scripts/precompute-synergies.mjs`) and that it runs at build time.

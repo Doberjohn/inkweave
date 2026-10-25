@@ -1,5 +1,7 @@
 ---
-paths: "apps/web/src/**/*.tsx"
+paths:
+  - "apps/web/src/**/*.tsx"
+  - "packages/ui/src/**/*.tsx"
 ---
 
 # Overlay contract (#510, milestone #4)
