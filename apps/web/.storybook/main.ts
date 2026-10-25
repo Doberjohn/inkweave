@@ -1,7 +1,17 @@
 import type {StorybookConfig} from '@storybook/react-vite';
 
+// The app build's own plugins: the PWA, and the startup-groups guard, whose modules a Storybook
+// build never loads.
+const SKIPPED_PLUGINS = /^(vite-plugin-pwa|inkweave:startup-groups-guard$)/;
+
 const config: StorybookConfig = {
-  stories: ['../src/**/*.mdx', '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
+  stories: [
+    '../src/**/*.mdx',
+    '../src/**/*.stories.@(js|jsx|mjs|ts|tsx)',
+    // inkweave-ui's stories: one Storybook for the app and the package. check:stories fails a
+    // story file none of these globs loads.
+    '../../../packages/ui/src/**/*.stories.@(ts|tsx)',
+  ],
   // Serve public/ so stories that reference public assets (card art, franchise/
   // playstyle art, /card-images-preview) render their images instead of 0x0 broken refs.
   staticDirs: ['../public'],
@@ -14,13 +24,7 @@ const config: StorybookConfig = {
     config.plugins = config.plugins
       ?.flat()
       .filter(
-        (p) =>
-          !(
-            p &&
-            typeof p === 'object' &&
-            'name' in p &&
-            String(p.name).startsWith('vite-plugin-pwa')
-          ),
+        (p) => !(p && typeof p === 'object' && 'name' in p && SKIPPED_PLUGINS.test(String(p.name))),
       );
     return config;
   },

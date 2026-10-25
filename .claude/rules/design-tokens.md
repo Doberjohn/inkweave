@@ -2,6 +2,8 @@
 paths:
   - "apps/web/src/**/*.tsx"
   - "apps/web/src/**/*.ts"
+  - "packages/ui/src/**/*.tsx"
+  - "packages/ui/src/**/*.ts"
 ---
 
 # Design-token discipline (#508, milestone #4)
@@ -9,7 +11,7 @@ paths:
 Two mechanisms enforce the token system; both run automatically:
 
 1. **`inkweave/*` ESLint rules** (`apps/web/eslint-rules/index.js`, per-commit + CI): no raw hex colors, `rgba()`, font-family strings, font sizes, radii, spacing (padding, margin, gap), app-layer z-indexes (≥50), keyword/bezier easings, or `backdrop-filter` (WebKit E2E trap, #444/#445). Every message names the replacement token. **`no-adhoc-buttons`** (#509) additionally blocks any `<button style={…}>` in feature code: buttons come from the kit (`CtaButton` filled/ghost/neutral/pill, `LinkButton`, `TabList`, `IconButton`, `FiltersButton`, `Chip`); the exempt domain families (steppers, vote pickers, tile toggles) are listed in the rule itself. **`no-dim-text`** keeps `COLORS.textDim` off text (2.6:1 to 3.5:1 on every surface, WCAG 1.4.3): use `COLORS.textMuted`. textDim stays for borders, strokes, disabled states and `aria-hidden` decoration. **`no-unloaded-font-weight`** allows only weights with a self-hosted face: 400 to 700 for the body sans, and 400 for the hero serif (Marcellus has no bold cut), in any style object that names `FONTS.hero`. `font-synthesis: none` means any other weight silently renders as the nearest face. It can't see a heading that is bold by default, so a hero `<h1>`-`<h6>` sets `fontWeight: 400` itself, as `DIALOG_TITLE` does.
-2. **Value-grep gate** (`check:design` → `scripts/check-design-tokens.mjs`, pre-push + CI): greps the LITERAL values of the tokens (theme hexes, EASING strings, font names) across ts/tsx/css/html — it catches `cssText` strings and quoted shorthands the AST cannot see. In `.css` and `.html`, which ESLint never reads, it also counts raw `rgb()`/`rgba()`, easing keywords, `cubic-bezier()` and 6- or 8-digit hexes no token declares (#546), in a baseline entry of their own (`src/index.css (raw)`), so a raw value can't hide behind a token value the same change removed. `'Barlow'`, `'Tinos'` (the hero serif before Marcellus) and `backdrop-filter:` usage are zero-tolerance tripwires, which also read the text files in `public/` and `e2e/` (#912), with no baseline, skipping `public/data` and the git-ignored `public/mockups`.
+2. **Value-grep gate** (`check:design` → `scripts/check-design-tokens.mjs`, pre-push + CI): greps the LITERAL values of the tokens (theme hexes, EASING strings, font names) across ts/tsx/css/html — it catches `cssText` strings and quoted shorthands the AST cannot see. In `.css` and `.html`, which ESLint never reads, it also counts raw `rgb()`/`rgba()`, easing keywords, `cubic-bezier()` and 6- or 8-digit hexes no token declares (#546), in a baseline entry of their own (`apps/web/src/index.css (raw)`), so a raw value can't hide behind a token value the same change removed. `'Barlow'`, `'Tinos'` (the hero serif before Marcellus) and `backdrop-filter:` usage are zero-tolerance tripwires, which also read the text files in `public/` and `e2e/` (#912), with no baseline, skipping `public/data` and the git-ignored `public/mockups`. Both mechanisms cover inkweave-ui (`packages/ui/src`) as they cover the app: the package lints with the app's config, and the gate scans its source, reading its needles from the files `TOKEN_FILES` lists.
 
 ## When a rule fires on you
 
@@ -18,7 +20,7 @@ Two mechanisms enforce the token system; both run automatically:
 
 ## The grandfather ledger
 
-`apps/web/eslint-rules/known-offenders.js` lists pre-enforcement files per rule. It ONLY SHRINKS: when you touch a listed file, converge its violations to tokens and remove its entry. Never add entries. The value gate's baseline (`scripts/known-design-values.json`) works the same way — counts may only decrease (`--update-baseline` after shrinking).
+`apps/web/eslint-rules/known-offenders.js` lists pre-enforcement files per rule, each by its repo path (`apps/web/src/...`), which matches that one file only; the rules' exemptions (`eslint-rules/exemptions.js`) name paths the same way. It ONLY SHRINKS: when you touch a listed file, converge its violations to tokens and remove its entry. Never add entries. The value gate's baseline (`scripts/known-design-values.json`) works the same way — counts may only decrease (`--update-baseline` after shrinking).
 
 ## The micro-pattern consts (#511)
 

@@ -1,7 +1,8 @@
 // Story coverage checker — finds React components without Storybook stories,
 // and orphaned stories without components (#512: reverse direction).
 // Scans shared/components, features/*/components, feature ROOTS (reveals,
-// playstyles, ...), and src/pages.
+// playstyles, ...), src/pages, and every folder of inkweave-ui (packages/ui/src),
+// and fails a story file that none of Storybook's stories globs loads.
 //
 // Fails CI only when NEW components are added without stories (or a story's
 // component vanishes). Pre-existing gaps are tracked in KNOWN_MISSING and
@@ -10,11 +11,17 @@
 // Usage: node apps/web/scripts/check-story-coverage.mjs
 
 import {readdirSync, existsSync, readFileSync} from 'fs';
-import {join, basename, dirname} from 'path';
-import {fileURLToPath} from 'url';
+import {join, basename, dirname, posix, relative} from 'path';
+import {fileURLToPath, pathToFileURL} from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const srcDir = join(__dirname, '..', 'src');
+const appDir = join(__dirname, '..');
+const repoDir = join(appDir, '..', '..');
+const srcDir = join(appDir, 'src');
+const uiSrcDir = join(repoDir, 'packages', 'ui', 'src');
+const SOURCE_ROOTS = [srcDir, uiSrcDir];
+/** Repo-relative, forward slashes: apps/web/src/... or packages/ui/src/... */
+const fromRepo = (p) => relative(repoDir, p).replaceAll('\\', '/');
 
 // Components that intentionally don't need stories
 const EXCLUDED = new Set([
@@ -70,12 +77,12 @@ const PAGE_EXCLUDE_RE = /Page\.tsx$/;
 
 // Pre-existing components without stories (tracked debt — remove as stories are added)
 const KNOWN_MISSING = new Set([
-  '/src/features/cards/components/BrowseCardGrid.tsx',
-  '/src/features/cards/components/FeaturedCards.tsx',
-  '/src/features/synergies/components/CardDetailPanel.tsx',
-  '/src/features/synergies/components/ExpandedGroupView.tsx',
-  '/src/features/synergies/components/SynergyResults.tsx',
-  '/src/shared/components/SearchBottomSheet.tsx',
+  'apps/web/src/features/cards/components/BrowseCardGrid.tsx',
+  'apps/web/src/features/cards/components/FeaturedCards.tsx',
+  'apps/web/src/features/synergies/components/CardDetailPanel.tsx',
+  'apps/web/src/features/synergies/components/ExpandedGroupView.tsx',
+  'apps/web/src/features/synergies/components/SynergyResults.tsx',
+  'apps/web/src/shared/components/SearchBottomSheet.tsx',
 ]);
 
 /** True when the file default- or named-exports a component-looking symbol. */
@@ -120,7 +127,28 @@ function getScanRoster() {
     }
   }
   roster.push([join(srcDir, 'pages'), {requireJsx: true}]);
-  return roster;
+  return [...roster, ...getPackageRoster()];
+}
+
+// The tests' folders and their helpers' (test-utils/, which the app's shared/test-utils mirrors
+// and this script never scans either).
+const NOT_SCANNED = /^(__|test-utils$)/;
+
+function isScannedFolder(entry) {
+  return entry.isDirectory() && !NOT_SCANNED.test(entry.name);
+}
+
+/**
+ * Every inkweave-ui folder but NOT_SCANNED. components/ and lorcana/ hold only components, so no
+ * JSX sniff (like shared/components); the other folders count only the files that render.
+ */
+function getPackageRoster() {
+  return readdirSync(uiSrcDir, {withFileTypes: true})
+    .filter(isScannedFolder)
+    .map((entry) => {
+      const strict = entry.name === 'components' || entry.name === 'lorcana';
+      return [join(uiSrcDir, entry.name), strict ? {} : {requireJsx: true}];
+    });
 }
 
 /** True when a `.stories.tsx` file has no sibling component (concept-file rot, #512). */
@@ -131,18 +159,26 @@ function isOrphanedStory(fullPath) {
   return !existsSync(fullPath.replace('.stories.tsx', '.tsx'));
 }
 
-function findOrphanedStories() {
-  const orphans = [];
-  const stack = [srcDir];
+/** Every .stories.tsx under the app's and the package's src. */
+function findStoryFiles() {
+  const stories = [];
+  const stack = [...SOURCE_ROOTS];
   while (stack.length) {
     const dir = stack.pop();
     for (const entry of readdirSync(dir, {withFileTypes: true})) {
       const full = join(dir, entry.name);
       if (entry.isDirectory()) stack.push(full);
-      else if (isOrphanedStory(full)) orphans.push(full.replace(join(srcDir, '..'), '').replaceAll('\\', '/'));
+      else if (entry.name.endsWith('.stories.tsx')) stories.push(full);
     }
   }
-  return orphans;
+  return stories;
+}
+
+/** Storybook's stories globs as repo-relative patterns (Node 24 strips main.ts's types). */
+async function storybookGlobs() {
+  const mainPath = join(appDir, '.storybook', 'main.ts');
+  const {default: config} = await import(pathToFileURL(mainPath).href);
+  return config.stories.map((glob) => posix.join(fromRepo(dirname(mainPath)), glob));
 }
 
 const missing = [];
@@ -158,23 +194,26 @@ for (const [dir, options] of getScanRoster()) {
     if (seen.has(compPath)) continue;
     seen.add(compPath);
 
-    const relative = compPath.replace(join(srcDir, '..'), '').replaceAll('\\', '/');
+    const rel = fromRepo(compPath);
     const storyPath = compPath.replace('.tsx', '.stories.tsx');
     const hasStory = existsSync(storyPath);
 
-    if (KNOWN_MISSING.has(relative)) {
+    if (KNOWN_MISSING.has(rel)) {
       if (hasStory) {
-        knownNowCovered.push(relative);
+        knownNowCovered.push(rel);
       } else {
-        knownStillMissing.push(relative);
+        knownStillMissing.push(rel);
       }
     } else if (!hasStory) {
-      missing.push(relative);
+      missing.push(rel);
     }
   }
 }
 
-const orphanedStories = findOrphanedStories();
+const stories = findStoryFiles();
+const orphanedStories = stories.filter(isOrphanedStory).map(fromRepo);
+const globs = await storybookGlobs();
+const unloadedStories = stories.map(fromRepo).filter((rel) => !globs.some((glob) => posix.matchesGlob(rel, glob)));
 
 // Report
 let hasError = false;
@@ -194,6 +233,15 @@ if (orphanedStories.length > 0) {
     console.error(`  • ${path}`);
   }
   console.error('\nDelete the story or restore its component (concept-file rot guard, #512).\n');
+  hasError = true;
+}
+
+if (unloadedStories.length > 0) {
+  console.error(`\n❌ ${unloadedStories.length} story file(s) Storybook never loads:\n`);
+  for (const path of unloadedStories.sort()) {
+    console.error(`  • ${path}`);
+  }
+  console.error('\nAdd their folder to stories in apps/web/.storybook/main.ts.\n');
   hasError = true;
 }
 
