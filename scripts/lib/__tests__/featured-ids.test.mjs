@@ -70,7 +70,9 @@ describe('featuredListProblem', () => {
   it('names the inks no card carries', () => {
     const cards = oneOfEach().map((card) => (card.id === 6 ? {...card, inks: ['Ruby']} : card));
 
-    expect(featuredListProblem(cards)).toBe('pick one card of each ink (none is Steel)');
+    expect(featuredListProblem(cards)).toBe(
+      'pick cards that carry every ink between them (no card is Steel)',
+    );
   });
 });
 

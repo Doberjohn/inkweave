@@ -47,7 +47,9 @@ export function featuredListProblem(cards) {
     return `pick ${FEATURED_COUNT} different cards`;
   }
   const missing = missingFeaturedInks(cards.map(({inks}) => inks));
-  return missing.length > 0 ? `pick one card of each ink (none is ${missing.join(' or ')})` : null;
+  return missing.length > 0
+    ? `pick cards that carry every ink between them (no card is ${missing.join(' or ')})`
+    : null;
 }
 
 /**

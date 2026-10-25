@@ -320,7 +320,7 @@ describe('featured cards (graduation)', () => {
     const secondRuby = {id: 3290, number: 96, color: 'Ruby', fullName: 'Mulan - Reflecting'};
 
     expect(featuredEntriesFor('7 30 61 95 96 170', [...setCards, secondRuby]).error).toBe(
-      'pick one card of each ink (none is Sapphire)',
+      'pick cards that carry every ink between them (no card is Sapphire)',
     );
   });
 });
