@@ -254,15 +254,13 @@ function CardPocket({
 
 /**
  * An open pocket: its code over what it waits for, in muted text on the black page. Its sleeve
- * shows the pocket empty (#941), where a dashed outline drew it on the parchment. The text never
- * sizes its pocket (#973), as a card tile, an inline-size container, never does: a code
- * Chromium keeps whole widened the pocket and every row on its spread, and ran the pages past the
- * board. A code wider than the room inside the padding runs into the padding instead.
+ * shows the pocket empty (#941), where a dashed outline drew it on the parchment. A code wider
+ * than the room inside the padding runs into the padding: the text never sizes its pocket
+ * (`slotStyle` in BinderSpread.tsx, #973).
  */
 const OPEN_STYLE: CSSProperties = {
   height: '100%',
   boxSizing: 'border-box',
-  contain: 'inline-size',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
