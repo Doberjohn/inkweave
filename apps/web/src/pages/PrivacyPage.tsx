@@ -10,7 +10,7 @@ const EMAIL = 'support.inkweave@gmail.com';
 const LAST_UPDATED = '26 October 2026';
 
 const DESCRIPTION =
-  'What Inkweave collects (anonymous synergy votes, cookieless analytics and error reports), where it is stored, how long it is kept, and your rights.';
+  'What Inkweave collects (anonymous synergy votes, cookieless analytics, error reports, optional account data), where it is kept, for how long, and your rights.';
 
 export function PrivacyPage() {
   return (
