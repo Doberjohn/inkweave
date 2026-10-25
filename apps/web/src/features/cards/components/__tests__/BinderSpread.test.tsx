@@ -244,6 +244,18 @@ describe('BinderSpread lone page (#969)', () => {
     expect(card(9)).toHaveFocus();
   });
 
+  it("draws a footer in its arrows' place, half as far under the board's top edge", () => {
+    // The phone binder's page map (#969).
+    const view = render(spread({single: true, start: 9}));
+    const above = () => document.querySelector<HTMLElement>('.binder-board')!.parentElement!.style.padding;
+    expect(screen.getByRole('button', {name: 'Next page'})).toBeInTheDocument();
+    expect(above()).toBe('8px 8px 0px');
+    view.rerender(spread({single: true, start: 9, footer: <nav aria-label="Binder pages" />}));
+    expect(screen.queryByRole('button', {name: /(Previous|Next) page/})).toBeNull();
+    expect(screen.getByRole('navigation', {name: 'Binder pages'})).toBeInTheDocument();
+    expect(above()).toBe('4px 8px 0px');
+  });
+
   it("keeps a spread's pages at twelve pockets", () => {
     render(spread());
     expect(pocketsOn('Left page')).toHaveLength(12);

@@ -361,12 +361,13 @@ interface BinderSpreadProps {
    * panels, on its outer edges, as small discs that grow under the pointer (owner,
    * 2026-10-22). There the spread fills its box's width from the top, with no padding of
    * its own, so its edges line up with what the page puts around it. A lone page keeps its
-   * row of arrows under it either way.
+   * row of arrows under it either way, unless a `footer` takes its place.
    */
   arrows?: 'beside' | 'edges';
   /**
-   * Drawn directly under a spread with its arrows on its edges: the collection binder's
-   * spread map. The spread gives up only the height it needs.
+   * Drawn directly under a spread with its arrows on its edges, or under a lone page in its
+   * arrows' place: the collection binder's map (#969). The spread gives up only the height
+   * it needs.
    */
   footer?: ReactNode;
   /**
@@ -523,7 +524,10 @@ interface ViewProps {
   renderSlot: (index: number) => ReactNode;
   /** The page arrows: beside a spread or on its outer edges, or in a row under a lone page. */
   arrows: {prev: ReactNode; next: ReactNode};
-  /** Under a spread with its arrows on its edges (see `BinderSpreadProps.footer`). */
+  /**
+   * Under a spread with its arrows on its edges, or under a lone page in its arrows' place
+   * (see `BinderSpreadProps.footer`).
+   */
   footer?: ReactNode;
   /** How many pockets the binder fills (see `BinderSpreadProps.cardCount`). */
   cardCount?: number;
@@ -720,16 +724,17 @@ function SpreadView({edges, ...props}: ViewProps & {edges: boolean}) {
 }
 
 /**
- * One page, sized from the width (see `singlePageStyle`), arrows in a row below.
- * The lone page is the RIGHT-hand sheet: rings on its left edge, so it still reads
- * as a page in a binder rather than a loose card grid, in a board with one zip
- * round it (#941). Nothing here is measured, which is what keeps the arrows below
- * it from moving after first paint.
+ * One page, sized from the width (see `singlePageStyle`), with its footer below it, or a
+ * row of arrows where it has none. The lone page is the RIGHT-hand sheet: rings on its
+ * left edge, so it still reads as a page in a binder rather than a loose card grid, in a
+ * board with one zip round it (#941). Nothing here is measured, which is what keeps what
+ * lies below it from moving after first paint.
  */
-function SingleView({start, renderSlot, arrows, sheets, turn}: ViewProps) {
+function SingleView({start, renderSlot, arrows, footer, sheets, turn}: ViewProps) {
   return (
     <>
-      <div style={{padding: `${SPACING.sm}px ${SPACING.sm}px 0`}}>
+      {/* Over a footer, half the room above the board: the map's band needs it (#969). */}
+      <div style={{padding: `${footer ? SPACING.xs : SPACING.sm}px ${SPACING.sm}px 0`}}>
         <Board sheets={sheets} turn={turn} single>
           <Spine />
           <BinderPage
@@ -742,10 +747,12 @@ function SingleView({start, renderSlot, arrows, sheets, turn}: ViewProps) {
           />
         </Board>
       </div>
-      <div style={{display: 'flex', justifyContent: 'center', gap: SPACING.xxl, paddingTop: SPACING.sm}}>
-        {arrows.prev}
-        {arrows.next}
-      </div>
+      {footer ?? (
+        <div style={{display: 'flex', justifyContent: 'center', gap: SPACING.xxl, paddingTop: SPACING.sm}}>
+          {arrows.prev}
+          {arrows.next}
+        </div>
+      )}
     </>
   );
 }

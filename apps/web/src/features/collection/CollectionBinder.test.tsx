@@ -269,10 +269,15 @@ describe('CollectionBinder', () => {
       expect(screen.getByRole('button', {name: 'Spread 1 of 1: nothing missing'})).toBeInTheDocument();
     });
 
-    it('leaves a lone page its arrows: the map draws spreads', () => {
+    it("draws pages under a phone's lone page, in its arrows' place, and turns to the one tapped (#969)", () => {
+      // Six pages of nine: cards 22 to 24, the ones missing, on the third.
       render(binder({pager: 'map', single: true}));
-      expect(screen.queryByRole('navigation', {name: 'Binder pages'})).toBeNull();
-      expect(screen.getByRole('button', {name: 'Next page'})).toBeInTheDocument();
+      const map = screen.getByRole('navigation', {name: 'Binder pages'});
+      expect(within(map).getAllByRole('button')).toHaveLength(6);
+      expect(screen.queryByRole('button', {name: /(Previous|Next) page/})).toBeNull();
+      fireEvent.click(screen.getByRole('button', {name: 'Page 3 of 6: 3 missing'}));
+      expect(firstShown()).toBe('Card 19');
+      expect(screen.getByRole('button', {name: 'Page 3 of 6: 3 missing'})).toHaveAttribute('aria-current', 'true');
     });
 
     it("never counts an open pocket as a missing card: there's no card in it", () => {

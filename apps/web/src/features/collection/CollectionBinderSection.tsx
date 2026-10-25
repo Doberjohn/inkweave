@@ -62,7 +62,8 @@ import {COLORS, FONT_SIZES, SPACING, type BrowseSortOrder} from '../../shared/co
  * across every set in any other sort. See `binderContents`.
  *
  * WHERE THE PAGE DOCKS ITS PANELS, THE SPREAD MAP TURNS THE PAGES (owner, 2026-10-12),
- * in the band under the spread; see `BinderSpreadMap`.
+ * in the band under the spread, AND ON A PHONE A MAP OF PAGES DOES (owner, 2026-10-25,
+ * #969), under the lone page in its arrows' place; see `BinderSpreadMap`.
  *
  * COUNTS CHANGE WHERE A MOUSE POINTS (#826): a spread's pocket opens its copies stripe
  * (`CollectionSlotCounts`), and the card window's stripe changes them too (`WindowCopies`).
@@ -190,13 +191,14 @@ function LoadingBinder({single, docked}: {single: boolean; docked: boolean}) {
       start={single ? 0 : -PER_PAGE}
       single={single}
       arrows={docked ? 'edges' : 'beside'}
-      // Docked, a map of one empty spread holds the band the real map will fill. It holds
-      // no cards yet, so it is out of the Tab order and the accessibility tree: it would
-      // otherwise announce "nothing missing" about a collection that has not loaded.
+      // Docked, or on a phone, a map of one empty spread or page holds the band the real map
+      // will fill. It holds no cards yet, so it is out of the Tab order and the accessibility
+      // tree: it would otherwise announce "nothing missing" about a collection that has not
+      // loaded.
       footer={
-        docked ? (
+        docked || single ? (
           <div inert aria-hidden="true">
-            <BinderSpreadMap pockets={[]} current={0} onGo={NOOP} />
+            <BinderSpreadMap single={single} pockets={[]} current={0} onGo={NOOP} />
           </div>
         ) : undefined
       }
@@ -285,7 +287,7 @@ function SectionContent({
           onCountChange={onCountChange}
           windowOpen={windowOpen}
           single={isMobile}
-          pager={docked ? 'map' : 'arrows'}
+          pager={docked || isMobile ? 'map' : 'arrows'}
         />
       )}
     </PanelLayout>

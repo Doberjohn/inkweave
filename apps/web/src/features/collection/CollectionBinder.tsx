@@ -65,9 +65,9 @@ interface CollectionBinderProps {
   single?: boolean;
   /**
    * What turns the pages: arrows beside the spread, or under a lone page (the
-   * default); or, where Browse docks its panels, the spread map under the spread
-   * (owner, 2026-10-12) and small discs on its outer edges (owner, 2026-10-22). The
-   * map draws spreads, so a lone page keeps its arrows.
+   * default); or the map, under the spread where Browse docks its panels (owner,
+   * 2026-10-12), with small discs on the spread's outer edges (owner, 2026-10-22),
+   * and under a phone's lone page in its arrows' place, drawing pages (#969).
    */
   pager?: 'arrows' | 'map';
   /**
@@ -394,8 +394,9 @@ export function CollectionBinder({
   };
 
   const map =
-    pager === 'map' && !single ? (
+    pager === 'map' ? (
       <BinderSpreadMap
+        single={single}
         pockets={slots.map((slot) => pocketOf(slot, countsFor))}
         current={current}
         onGo={goTo}

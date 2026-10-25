@@ -223,7 +223,7 @@ async function endedTurns(page: Page): Promise<SeenTurn[]> {
 /** The turning sheet's layer: a copy of pages, never the binder's own. */
 const sheets = (page: Page) => binder(page).locator('.binder-turn');
 
-/** The spread the map marks. */
+/** The spread the map marks, or on a phone the page (#969). */
 const shown = (page: Page) => binder(page).getByRole('navigation', {name: 'Binder pages'}).locator('[aria-current="true"]');
 
 const spreadNamed = (spread: number) => new RegExp(`^Spread ${spread} of `);
@@ -764,12 +764,15 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
   const swipe = (page: Page, cdp: CDPSession, [x0, y0]: Point, [x1, y1]: Point) =>
     swipeThrough(page, cdp, fingerPath([x0, y0], [10, [(x1 - x0) / 10, (y1 - y0) / 10]]));
 
-  test('Next swings the page away, Previous swings the page before back in over it, with no scroll sideways', async ({
+  /** The mini for page `n` in the map under the page, which turns the pages on a phone (#969). */
+  const mini = (page: Page, n: number) => binder(page).getByRole('button', {name: new RegExp(`^Page ${n} of `)});
+
+  test("a tap on the next page's mini swings the page away, and on the page before's swings it back in over it, with no scroll sideways", async ({
     page,
   }) => {
     await openBinder(page, PHONE);
     await clearTurns(page);
-    await binder(page).getByRole('button', {name: 'Next page'}).click();
+    await mini(page, 2).click();
     await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[9].fullName);
     const [away] = await endedTurns(page);
     expect([away.front, away.back, away.flat]).toEqual([BASE[0].fullName, null, null]);
@@ -780,7 +783,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     expect(awayAt[4], 'swung away').toBeCloseTo(-100, 0);
 
     await clearTurns(page);
-    await binder(page).getByRole('button', {name: 'Previous page'}).click();
+    await mini(page, 1).click();
     await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[0].fullName);
     const [back] = await endedTurns(page);
     // Page 1 swings in over page 2, drawn flat beneath it.
@@ -794,6 +797,14 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     // At every pose of both turns, nothing scrolls sideways.
     expect([...away.poses, ...back.poses].map((pose) => pose.sideways)).toEqual(Array(10).fill(expect.any(Number)));
     expect(Math.max(...[...away.poses, ...back.poses].map((pose) => pose.sideways)), 'sideways scroll during a turn').toBeLessThanOrEqual(0);
+  });
+
+  test("a tap on a page's mini turns to that page, which the map then marks", async ({page}) => {
+    await openBinder(page, PHONE);
+    await expect(shown(page)).toHaveAccessibleName(/^Page 1 of /);
+    await mini(page, 5).click();
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[36].fullName);
+    await expect(shown(page)).toHaveAccessibleName(/^Page 5 of /);
   });
 
   test('a page dragged across the phone turns with no scroll sideways', async ({page}) => {
@@ -829,6 +840,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     await swipe(page, cdp, [box.right - 20, y], [box.left + 20, y]);
     await expect(first).toHaveAccessibleName(BASE[9].fullName);
     await expect(first, "the focus on page 2's first card").toBeFocused();
+    await expect(shown(page), 'the map following the swipe').toHaveAccessibleName(/^Page 2 of /);
     await swipe(page, cdp, [box.left + 20, y], [box.right - 20, y]);
     await expect(first).toHaveAccessibleName(BASE[0].fullName);
     await expect(sheets(page)).toHaveCount(0);
