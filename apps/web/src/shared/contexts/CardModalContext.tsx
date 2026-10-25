@@ -9,11 +9,12 @@ import {
 } from 'react';
 import {useNavigate, useLocation} from 'react-router-dom';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
-import {usePrecomputedSynergies} from '../../features/synergies/hooks';
+import {usePrecomputedSynergies, usePreloadSiblingSynergies} from '../../features/synergies/hooks';
 import {CardOverviewModalFallback} from '../../features/synergies/components/CardOverviewModalFallback';
 import {useCardDataContext} from './CardDataContext';
 import {useResponsive} from '../hooks';
 import {lazyWithRetry} from '../lib/lazyWithRetry';
+import {siblingStep} from '../utils/siblingStep';
 import {
   getLoadedCardOverviewModal,
   loadCardOverviewModal,
@@ -71,6 +72,8 @@ interface CardModalContextValue {
   hasUserSeenDefaultState: boolean;
   /** Ordered snapshot of the grid the modal was opened from, for prev/next navigation. */
   siblingCardIds: string[];
+  /** The open card's place in `siblingCardIds`, or -1. */
+  siblingIndex: number;
   /** The printing this open started on (see OpenCardModalOptions), or null for the Standard art. */
   initialPrintingId: string | null;
   /** The open's fallback resolver (see OpenCardModalOptions), or null. */
@@ -216,9 +219,8 @@ export function CardModalProvider({children}: {children: ReactNode}) {
   };
 
   const goToSibling = (direction: 1 | -1) => {
-    if (!selectedCardId || siblingCardIds.length < 2 || siblingIndex === -1) return;
-    const n = siblingCardIds.length;
-    const next = (siblingIndex + direction + n) % n;
+    const next = siblingStep(siblingCardIds, siblingIndex, direction);
+    if (!selectedCardId || next === -1) return;
     const nextId = siblingCardIds[next];
     setSelectedCardId(nextId);
     setSiblingIndex(next);
@@ -239,6 +241,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     comparisonGroupKey,
     hasUserSeenDefaultState,
     siblingCardIds,
+    siblingIndex,
     initialPrintingId,
     resolveCard,
     openCardModal,
@@ -350,6 +353,7 @@ function CardModalRoot({
     comparisonGroupKey,
     hasUserSeenDefaultState,
     siblingCardIds,
+    siblingIndex,
     initialPrintingId,
     resolveCard,
     closeCardModal,
@@ -360,6 +364,8 @@ function CardModalRoot({
   const {card, outsideCore} = resolveModalCard(selectedCardId, getCardById, resolveCard);
   const partnerCard = comparisonPartnerId ? (getCardById(comparisonPartnerId) ?? null) : null;
   const {synergies, getPairSynergies, isLoading: synergiesLoading} = usePrecomputedSynergies(outsideCore ? null : card);
+  // The synergies of the cards the arrows reach next, so a step shows no loading tiles.
+  usePreloadSiblingSynergies({ids: siblingCardIds, index: siblingIndex, settled: !synergiesLoading});
   const {Modal, openedBeforeModalReady} = useModalForOpen(card !== null);
   // Already on screen when it mounts: after the fallback played the entrance, or after a frame did.
   const enterOnScreen = openedBeforeModalReady || skipEnter;

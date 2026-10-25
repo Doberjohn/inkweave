@@ -19,6 +19,24 @@ interface E2ESynergyData {
 }
 const readSynergyData = (cardId: string): E2ESynergyData =>
   JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'public/data/synergies', `${cardId}.json`), 'utf8'));
+const SYNERGY_FILE = /\/data\/synergies\/(\d+)\.json/;
+
+/**
+ * From here on, marks the page's body once the card window draws its loading synergy tiles,
+ * even for a single frame: the mark stays after they go.
+ */
+function noteLoadingTiles(page: Page): Promise<void> {
+  return page.evaluate(() => {
+    const tiles = '[data-testid="card-overview-loading"]';
+    const drawsTiles = (node: Node) => node instanceof Element && node.matches(`${tiles}, :has(${tiles})`);
+    new MutationObserver((records) => {
+      if (records.some((record) => [...record.addedNodes].some(drawsTiles))) {
+        document.body.dataset.loadingTilesDrawn = 'true';
+      }
+    }).observe(document.body, {childList: true, subtree: true});
+  });
+}
+
 const expandData = readSynergyData(EXPAND_CARD_ID);
 const expandGroup = (expandData.groups ?? []).find((g) => g.groupKey === EXPAND_GROUP);
 if (!expandGroup || expandGroup.synergies.length <= 3) {
@@ -197,6 +215,36 @@ test.describe('Card Detail: Show More and sibling navigation (desktop)', () => {
     // border), so query them at the page level rather than scoped to the modal element.
     await page.getByRole('button', {name: 'Next card'}).click();
     await expect(modal.locator('h1')).not.toHaveText(firstName ?? '');
+  });
+});
+
+test.describe('Card window: sibling steps on every screen', () => {
+  test("an arrow step draws the next card's synergy tiles at once, fetched while the card before it was open", async ({
+    appPage,
+    page,
+  }) => {
+    const fetched = new Set<string>();
+    page.on('requestfinished', (request) => {
+      const id = SYNERGY_FILE.exec(request.url())?.[1];
+      if (id) fetched.add(id);
+    });
+    // A playstyle's cards all have synergies, so the step has tiles to draw.
+    await page.goto('/playstyles/lore-denial');
+    await page.getByTestId('card-tile').first().click();
+    const modal = appPage.cardOverviewModal;
+    await expect(modal.getByRole('list', {name: 'Synergy cards'}).first()).toBeVisible();
+    // The open card's file, then the previous and the next card's.
+    await expect.poll(() => fetched.size).toBe(3);
+
+    // No synergy file arrives from here on, so the step has only what came ahead of it.
+    await page.route(SYNERGY_FILE, () => {});
+    await noteLoadingTiles(page);
+    const firstName = await modal.locator('h1').textContent();
+    await page.getByRole('button', {name: 'Next card'}).click();
+    await expect(modal.locator('h1')).not.toHaveText(firstName ?? '');
+    await expect(modal.getByRole('list', {name: 'Synergy cards'}).first()).toBeVisible();
+    // Not even for a frame.
+    await expect(page.locator('body')).not.toHaveAttribute('data-loading-tiles-drawn');
   });
 });
 

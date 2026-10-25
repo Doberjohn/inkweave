@@ -66,7 +66,7 @@ function pickMoreTileConfig(compact: boolean): MoreTileConfig {
       countFontSize: FONT_SIZES.sm,
       labelFontSize: 9,
       labelText: 'more',
-      borderRadius: RADIUS.sm + 1,
+      borderRadius: RADIUS.md,
       labelTextTransform: 'uppercase',
       labelLetterSpacing: '0.06em',
     };
