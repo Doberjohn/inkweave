@@ -1,4 +1,4 @@
-import type {CDPSession, Page} from '@playwright/test';
+import type {CDPSession, Locator, Page} from '@playwright/test';
 
 /**
  * A finger on the page, through Chromium's DevTools protocol, and what the page did with its
@@ -22,6 +22,20 @@ export function watchTouchMoves() {
 /** Whether the page kept each touchmove from the scroll since the last call, which starts the list afresh. */
 export const keptTouchMoves = (page: Page) =>
   page.evaluate(() => (window as unknown as {keptTouchMoves: boolean[]}).keptTouchMoves.splice(0));
+
+/**
+ * How far the page has scrolled at `el`: the window, `el` and every box round it, each counted
+ * once (the document's own scroller is the window's).
+ */
+export const scrolledRound = (el: Locator) =>
+  el.evaluate((node) => {
+    const top = document.scrollingElement;
+    let sum = window.scrollY;
+    for (let box: Element | null = node; box && box !== top; box = box.parentElement) {
+      sum += box.scrollTop;
+    }
+    return sum;
+  });
 
 /** A finger's path from `start`: each leg is `count` moves of `[dx, dy]`, one leg after the other. */
 export function fingerPath(start: Point, ...legs: [count: number, step: Point][]): Point[] {

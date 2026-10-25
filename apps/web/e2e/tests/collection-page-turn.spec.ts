@@ -3,7 +3,7 @@ import {test, expect} from '../fixtures';
 import {newestCoreSet, setCards} from '../helpers/cardData';
 import {binder, type Entries, signInAsCollector} from '../helpers/collector';
 import {edges, middle} from '../helpers/screen';
-import {fingerPath, keptTouchMoves, swipeThrough, watchTouchMoves, type Point} from '../helpers/touch';
+import {fingerPath, keptTouchMoves, scrolledRound, swipeThrough, watchTouchMoves, type Point} from '../helpers/touch';
 import {FLICK_SPEED, SLOP} from '../../src/features/cards/components/pageTurnMath';
 
 /**
@@ -763,14 +763,6 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
   const swipe = (page: Page, cdp: CDPSession, [x0, y0]: Point, [x1, y1]: Point) =>
     swipeThrough(page, cdp, fingerPath([x0, y0], [10, [(x1 - x0) / 10, (y1 - y0) / 10]]));
 
-  /** How far the page, the window or a scroller round the binder, has scrolled down. */
-  const scrolledDown = (page: Page) =>
-    page.evaluate(() => {
-      let sum = window.scrollY;
-      for (let el = document.querySelector('[aria-label="Binder"]'); el; el = el.parentElement) sum += el.scrollTop;
-      return sum;
-    });
-
   test('Next swings the page away, Previous swings the page before back in over it, with no scroll sideways', async ({
     page,
   }) => {
@@ -878,7 +870,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     const box = await edges(lonePage(page));
     const y = box.top + (box.bottom - box.top) / 3;
     const step = (box.right - box.left - 40) / 10;
-    const before = await scrolledDown(page);
+    const before = await scrolledRound(binder(page));
     await keptTouchMoves(page);
 
     // Halfway across, then on to 20px inside the page's left edge as the finger drifts 100px
@@ -889,7 +881,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     const kept = await keptTouchMoves(page);
     expect(kept.length, 'the moves the page saw').toBeGreaterThan(5);
     expect(kept, 'each kept from the scroll').toEqual(kept.map(() => true));
-    expect(await scrolledDown(page), 'how far the page scrolled down').toBe(before);
+    expect(await scrolledRound(binder(page)), 'how far the page scrolled down').toBe(before);
     await expect(sheets(page)).toHaveCount(0);
     await expect(cardWindow(page)).toHaveCount(0);
   });
@@ -901,11 +893,13 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     const box = await edges(lonePage(page));
     const x = middle(box);
     const y = box.top + (box.bottom - box.top) / 2;
-    const before = await scrolledDown(page);
+    const before = await scrolledRound(binder(page));
     await clearTurns(page);
 
     await swipe(page, cdp, [x, y + 100], [x - 10, y - 150]);
-    await expect.poll(() => scrolledDown(page), {message: 'how far the page scrolled down'}).toBeGreaterThan(before + 50);
+    await expect
+      .poll(() => scrolledRound(binder(page)), {message: 'how far the page scrolled down'})
+      .toBeGreaterThan(before + 50);
     await pause(page, 100);
     expect((await turnLog(page)).turns, 'sheets drawn').toEqual([]);
     await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[0].fullName);

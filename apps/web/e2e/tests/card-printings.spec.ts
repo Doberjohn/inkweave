@@ -1,7 +1,7 @@
-import type {Locator, Page} from '@playwright/test';
+import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {cardFullNameById, cardPromoCodes, cardVariantRarities} from '../helpers/cardData';
-import {fingerPath, keptTouchMoves, swipeThrough, watchTouchMoves, type Point} from '../helpers/touch';
+import {fingerPath, keptTouchMoves, scrolledRound, swipeThrough, watchTouchMoves, type Point} from '../helpers/touch';
 
 // Card 1938 (Pongo - Determined Father) has one alternate printing, an Enchanted one (#625).
 // Read from the card data so a pool change fails here with a clear message, not a timeout.
@@ -271,14 +271,6 @@ test.describe('Card printings (a finger on a phone)', () => {
     const middle: Point = [box.x + box.width / 2, box.y + box.height / 2];
     return {stack, middle};
   }
-
-  /** How far the window's body, and anything else round the card, has scrolled down. */
-  const scrolledRound = (stack: Locator) =>
-    stack.evaluate((el) => {
-      let sum = window.scrollY;
-      for (let box = el.parentElement; box; box = box.parentElement) sum += box.scrollTop;
-      return sum;
-    });
 
   test("a finger's sideways swipe on the card turns it though the finger drifts down, each move kept from the window's scroll", async ({
     page,

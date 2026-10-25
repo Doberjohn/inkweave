@@ -1,13 +1,15 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
-import {act, render, screen} from '@testing-library/react';
+import {act, fireEvent, render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {touchMoveKept} from '../../../../shared/test-utils';
 import {BinderSpread} from '../BinderSpread';
 import {TURN_MS} from '../PageTurn';
 
 /**
  * The page turn (#942): every change of view draws a turning sheet over the pages, built from
  * copies of them. How it looks and moves, and the grab, are measured in a real browser
- * (`collection-page-turn.spec.ts`); jsdom has no layout to turn or drag across.
+ * (`collection-page-turn.spec.ts`); jsdom has no layout to turn or drag across, so here a grab
+ * only shows whether it keeps its finger's touch.
  */
 
 /** Slot n holds card n + 1, focusable as `CardTile` is, and marked for the #790 keys. */
@@ -143,5 +145,73 @@ describe('BinderSpread page turn (#942)', () => {
     act(() => card(15).focus());
     view.rerender(spread({start: 36}));
     expect(card(37)).toHaveFocus();
+  });
+});
+
+// An iPhone scrolls the page as a finger holding a page drifts down, and the scroll's
+// pointercancel dropped the page (#963): a page in hand keeps its finger's touch.
+describe('BinderSpread page in hand (#963)', () => {
+  const page = (name: string) => screen.getByRole('group', {name});
+
+  /** A finger's pointer event on `el`, `dx` across and `dy` down from where it presses. */
+  const finger = (type: 'pointerDown' | 'pointerMove' | 'pointerUp', el: Element, dx = 0, dy = 0) =>
+    fireEvent[type](el, {pointerId: 1, pointerType: 'touch', isPrimary: true, clientX: 300 + dx, clientY: 200 + dy});
+
+  /** Presses a finger on the page named `name`. jsdom has no pointer capture, which a lift takes. */
+  function press(name: string) {
+    document.querySelector<HTMLElement>('.binder-board')!.setPointerCapture = vi.fn();
+    finger('pointerDown', page(name));
+    return page(name);
+  }
+
+  it("keeps a finger's touch from the page's scroll while it holds a page, and only then", () => {
+    render(spread());
+    const right = press('Right page');
+    expect(touchMoveKept(right), 'pressed').toBe(false);
+
+    finger('pointerMove', right, -20, 6);
+    expect(touchMoveKept(right), 'in hand, drifting down').toBe(true);
+    finger('pointerUp', right, -20, 6);
+    expect(touchMoveKept(right), 'let go').toBe(false);
+  });
+
+  it("leaves a finger's touch to the scroll when it goes down first, or the way its page doesn't turn", () => {
+    render(spread());
+    const right = press('Right page');
+    finger('pointerMove', right, 2, 20);
+    expect(touchMoveKept(right), 'down first').toBe(false);
+    finger('pointerUp', right, 2, 20);
+
+    const left = press('Left page');
+    finger('pointerMove', left, -20);
+    expect(touchMoveKept(left), 'the left page, leftward').toBe(false);
+  });
+
+  /** A listener that can keep a touchmove from the scroll. React's own, at its root, are passive. */
+  const holdsTouch = ([type, , options]: Parameters<EventTarget['addEventListener']>) =>
+    type === 'touchmove' && typeof options === 'object' && options.passive === false;
+
+  // A listener that can hold a touch makes a scroll that starts on the binder wait for it (PR #965).
+  it('listens for the touch only while a page can turn', () => {
+    const listen = vi.spyOn(EventTarget.prototype, 'addEventListener');
+    const holds = () => listen.mock.calls.filter(holdsTouch).length;
+    try {
+      const view = render(spread({canPrev: false, canNext: false}));
+      expect(holds(), 'no page can turn').toBe(0);
+      view.rerender(spread());
+      expect(holds(), 'a page can turn').toBe(1);
+    } finally {
+      listen.mockRestore();
+    }
+  });
+
+  // The new view's board never hears the pointerup that would end the press (PR #965).
+  it('lets the touch go once a change of view swaps the page in hand out', () => {
+    const view = render(spread());
+    finger('pointerMove', press('Right page'), -20);
+
+    view.rerender(spread({single: true}));
+
+    expect(touchMoveKept(page('Page'))).toBe(false);
   });
 });

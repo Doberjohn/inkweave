@@ -167,6 +167,13 @@ function follow(e: PointerEvent<HTMLElement>, trail: Press['trail'], lift: Lift)
 /** The press a pointer event belongs to: none for another pointer's. */
 const pressOf = (e: PointerEvent, {press}: GrabState) => (press?.id === e.pointerId ? press : null);
 
+/**
+ * Whether a page is in hand, on a board still in the binder: a change of view between a phone's
+ * lone page and the spread swaps the board for another, and the release the press waits for may
+ * never reach the new one.
+ */
+const pageInHand = ({press}: GrabState) => press?.lift !== undefined && press.page.isConnected;
+
 function pointerMoved(e: PointerEvent<HTMLElement>, state: GrabState, g: Grab) {
   const press = pressOf(e, state);
   if (!press || press.idle) return;
@@ -261,7 +268,11 @@ function swallowDragClick(e: MouseEvent, state: GrabState) {
 export function useGrabTurn(options: GrabOptions) {
   const state = useRef<GrabState>({press: null, swallow: false, frame: 0});
   const [grabbing, setGrabbing] = useState(false);
-  useTouchHold(options.binder, {enabled: true, holding: () => state.current.press?.lift !== undefined});
+  // Only while a page can turn: a scroll that starts in the binder waits on its listener.
+  useTouchHold(options.binder, {
+    enabled: options.canPrev || options.canNext,
+    holding: () => pageInHand(state.current),
+  });
   useEffect(() => {
     const grab = state.current;
     return () => cancelAnimationFrame(grab.frame);

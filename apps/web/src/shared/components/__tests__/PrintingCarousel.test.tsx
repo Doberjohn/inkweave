@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import {describe, it, expect, vi, beforeEach, afterEach, type MockInstance} from 'vitest';
 import {render, screen, fireEvent, act, waitFor, createEvent} from '@testing-library/react';
-import {createCard, swipeCard} from '../../test-utils';
+import {createCard, swipeCard, touchMoveKept} from '../../test-utils';
 import type {Printing} from '../../hooks';
 import {_resetPrerenderedArt} from '../../lib/prerenderedArt';
 import {showPrerenderedArt} from '../../test-utils/loadedArt';
@@ -283,7 +283,8 @@ describe('PrintingCarousel throw', () => {
     type: 'pointerDown' | 'pointerMove' | 'pointerUp',
     {dx = 0, dy = 0, time = 0, pointerType = 'touch'}: {dx?: number; dy?: number; time?: number; pointerType?: string},
   ) {
-    const event = createEvent[type](stack(), {pointerType, pointerId: 1, button: 0, clientX: 200 + dx, clientY: 200 + dy});
+    const at = {pointerType, pointerId: 1, isPrimary: true, button: 0, clientX: 200 + dx, clientY: 200 + dy};
+    const event = createEvent[type](stack(), at);
     Object.defineProperty(event, 'timeStamp', {value: 1000 + time});
     fireEvent(stack(), event);
   }
@@ -294,13 +295,6 @@ describe('PrintingCarousel throw', () => {
     point('pointerMove', {dx: dx / 2, time: ms / 2, pointerType});
     point('pointerMove', {dx, time: ms, pointerType});
     point('pointerUp', {dx, time: ms, pointerType});
-  }
-
-  /** Whether a finger's move on the card now is kept from the page's scroll (useTouchHold). */
-  function touchMoveKept() {
-    const move = new Event('touchmove', {bubbles: true, cancelable: true});
-    stack().dispatchEvent(move);
-    return move.defaultPrevented;
   }
 
   it('throws the card to the next printing on a swipe past a fifth of it, and records it', () => {
@@ -401,7 +395,7 @@ describe('PrintingCarousel throw', () => {
     point('pointerMove', {dx: -150, dy: 40, time: 60});
 
     expect(poseOf(0).x).toBe(0);
-    expect(touchMoveKept(), "the touch, the page's scroll's").toBe(false);
+    expect(touchMoveKept(stack()), "the touch, the page's scroll's").toBe(false);
   });
 
   // An iPhone scrolls the page as a dragging finger drifts down, wherever the touch set out, and
@@ -411,11 +405,26 @@ describe('PrintingCarousel throw', () => {
 
     point('pointerDown', {});
     point('pointerMove', {dx: -3, time: 10});
-    expect(touchMoveKept(), 'before the card follows').toBe(false);
+    expect(touchMoveKept(stack()), 'before the card follows').toBe(false);
     point('pointerMove', {dx: -40, dy: 30, time: 40});
-    expect(touchMoveKept(), 'as it follows, drifting down').toBe(true);
+    expect(touchMoveKept(stack()), 'as it follows, drifting down').toBe(true);
     point('pointerUp', {dx: -40, dy: 30, time: 40});
-    expect(touchMoveKept(), 'once let go').toBe(false);
+    expect(touchMoveKept(stack()), 'once let go').toBe(false);
+  });
+
+  // A second finger took the drag over, and the card stayed posed aside once both let go (PR #965).
+  it('leaves the drag to the first finger when a second one lands', () => {
+    render(<Turnable />);
+
+    point('pointerDown', {});
+    point('pointerMove', {dx: -40, time: 40});
+    const second = {pointerType: 'touch', pointerId: 2, isPrimary: false, clientX: 300, clientY: 200};
+    fireEvent.pointerDown(stack(), second);
+    expect(touchMoveKept(stack()), 'the first finger, still holding the card').toBe(true);
+    point('pointerUp', {dx: -40, time: 400});
+    fireEvent.pointerUp(stack(), second);
+
+    expect(poseOf(0).x).toBe(0);
   });
 
   // A mouse never scrolls the page by dragging (cubic, PR #902).

@@ -113,6 +113,9 @@ export function useCardThrow(ref: RefObject<HTMLElement | null>, {width, enabled
   useTouchHold(ref, {enabled, holding: () => dragRef.current?.moved === true});
 
   const onPointerDown = (e: PointerEvent<HTMLElement>) => {
+    // A second finger leaves the drag to the first: taking it over, it left the first's release
+    // nothing to end, and the card posed aside.
+    if (!e.isPrimary) return;
     swallowClickRef.current = false;
     if (enabled) dragRef.current = dragFrom(e);
   };

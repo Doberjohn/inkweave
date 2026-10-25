@@ -1,6 +1,7 @@
 import {useRef} from 'react';
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen} from '@testing-library/react';
+import {fingerMove, touchMoveKept} from '../../test-utils';
 import {useTouchHold} from '../useTouchHold';
 
 function Held({enabled = true, holding}: {enabled?: boolean; holding: () => boolean}) {
@@ -9,40 +10,43 @@ function Held({enabled = true, holding}: {enabled?: boolean; holding: () => bool
   return <div ref={ref} data-testid="held" />;
 }
 
-/** A finger's move on the element, after its listeners have run. */
-function touchMove({cancelable = true} = {}) {
-  const move = new Event('touchmove', {bubbles: true, cancelable});
-  const preventDefault = vi.spyOn(move, 'preventDefault');
-  screen.getByTestId('held').dispatchEvent(move);
-  return {kept: move.defaultPrevented, preventDefault};
-}
+const held = () => screen.getByTestId('held');
 
 describe('useTouchHold', () => {
   it('keeps a touch from the page while a drag holds it, and only then', () => {
     let holding = false;
     render(<Held holding={() => holding} />);
 
-    expect(touchMove().kept).toBe(false);
+    expect(touchMoveKept(held())).toBe(false);
     holding = true;
-    expect(touchMove().kept).toBe(true);
+    expect(touchMoveKept(held())).toBe(true);
   });
 
   // Chrome warns of a cancel it ignores: a move it has given its scroll already can't be kept.
   it('leaves a move the browser can no longer cancel alone', () => {
     render(<Held holding={() => true} />);
+    const move = fingerMove({cancelable: false});
+    const preventDefault = vi.spyOn(move, 'preventDefault');
 
-    expect(touchMove({cancelable: false}).preventDefault).not.toHaveBeenCalled();
+    held().dispatchEvent(move);
+
+    expect(preventDefault).not.toHaveBeenCalled();
+  });
+
+  // A pinch on the card zooms the page, a drag under way or not (cubic, PR #965).
+  it("leaves a second finger's moves to the browser", () => {
+    render(<Held holding={() => true} />);
+
+    expect(touchMoveKept(held(), 2)).toBe(false);
   });
 
   it('holds nothing while disabled, or once unmounted', () => {
     const {rerender, unmount} = render(<Held enabled={false} holding={() => true} />);
-    expect(touchMove().kept).toBe(false);
+    expect(touchMoveKept(held())).toBe(false);
 
     rerender(<Held holding={() => true} />);
-    const el = screen.getByTestId('held');
+    const el = held();
     unmount();
-    const move = new Event('touchmove', {bubbles: true, cancelable: true});
-    el.dispatchEvent(move);
-    expect(move.defaultPrevented).toBe(false);
+    expect(touchMoveKept(el)).toBe(false);
   });
 });
