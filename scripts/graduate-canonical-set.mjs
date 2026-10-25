@@ -286,7 +286,7 @@ function retargetHardcodedIds(previewToCanonical) {
 /**
  * Points the hardcoded card ids at the graduated set: step 7's retarget, then any new
  * featured cards. featuredCardIds.json is the featured list's only source (#957), which admin's
- * Featured cards page will edit too (Doberjohn/inkweave-admin#95), so there is nothing to set
+ * Featured cards page edits too (Doberjohn/inkweave-admin#95), so there is nothing to set
  * outside the repo.
  */
 function updateCardIdReferences(previewToCanonical, featuredEntries) {

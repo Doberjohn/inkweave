@@ -76,7 +76,7 @@ describe('featuredListProblem', () => {
   });
 });
 
-// Admin's Featured cards page (Doberjohn/inkweave-admin#95) is to commit featuredCardIds.json
+// Admin's Featured cards page (Doberjohn/inkweave-admin#95) commits featuredCardIds.json
 // straight to master, so the committed list is checked against the real cards here too.
 describe('featuredCardIds.json', () => {
   it('names six different cards that carry every ink between them', () => {
