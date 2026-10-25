@@ -8,8 +8,9 @@ describe('siblingStep', () => {
     expect(siblingStep(['a', 'b', 'c'], 0, -1)).toBe(2);
   });
 
-  it('steps nowhere from a list of one card, or from a card not in the list', () => {
+  it('steps nowhere from a list of one card, or from a place not in the list', () => {
     expect(siblingStep(['a'], 0, 1)).toBe(-1);
     expect(siblingStep(['a', 'b'], -1, 1)).toBe(-1);
+    expect(siblingStep(['a', 'b'], 2, 1)).toBe(-1);
   });
 });
