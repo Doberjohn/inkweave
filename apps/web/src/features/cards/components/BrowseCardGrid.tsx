@@ -97,9 +97,6 @@ export function BrowseCardGrid({
  */
 const EAGER_TILES = 6;
 
-/** A tile's width over its height: CardTile's `aspectRatio`. */
-const TILE_ASPECT = 0.72;
-
 /** Rows drawn past each edge of the view: keyboard Tab moves into one, and focus scrolls it in. */
 const OVERSCAN_ROWS = 1;
 
@@ -107,46 +104,65 @@ const OVERSCAN_ROWS = 1;
 const TILE_GAP = SPACING.md;
 
 interface ScrollerView {
+  /** The grid's width, unrounded, as auto-fill lays out its columns in it. */
   width: number;
   top: number;
   height: number;
 }
 
+const UNMEASURED: ScrollerView = {width: 0, top: 0, height: 0};
+
 /**
- * The scroller's width, scroll offset and height: read before paint, then on scroll and resize.
- * A scroll is drawn inside its own event, as react-virtuoso drew it: a render left for later
- * reaches the screen a frame after the scroll, and a fast scroll shows blank rows meanwhile. A
- * hidden scroller measures 0 wide and keeps its last view: the prerender crawl marks a phone
- * page's #root before it reads it, which takes the root out of the layout there (#915).
+ * The scroller's view: the grid's width, the scroll offset and the scroller's height, read before
+ * paint, then on scroll and resize. A scroll is drawn inside its own event, as react-virtuoso drew
+ * it: a render left for later reaches the screen a frame after the scroll, and a fast scroll shows
+ * blank rows meanwhile. A read that would draw the same tiles (`sameWindow`) renders nothing,
+ * keeping the view last drawn: a list that changes before the next scroll counts its rows from an
+ * offset at most a row from the real one, which `OVERSCAN_ROWS` covers. A hidden scroller measures 0 wide and keeps its last view: the prerender crawl marks a phone
+ * page's #root before it reads it, which takes the root out of the layout there (#915). Without
+ * ResizeObserver nothing is read, so a resize can't leave a stale window: every tile is drawn.
  */
-function useScrollerView(ref: RefObject<HTMLElement | null>): ScrollerView {
-  const [view, setView] = useState<ScrollerView>({width: 0, top: 0, height: 0});
+function useScrollerView(
+  scrollerRef: RefObject<HTMLElement | null>,
+  gridRef: RefObject<HTMLElement | null>,
+  sameWindow: (shown: ScrollerView, next: ScrollerView) => boolean,
+): ScrollerView {
+  const [view, setView] = useState(UNMEASURED);
+  const sameWindowRef = useRef(sameWindow);
   useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+    sameWindowRef.current = sameWindow;
+  });
+  useLayoutEffect(() => {
+    if (typeof ResizeObserver === 'undefined') return;
+    const scroller = scrollerRef.current;
+    const grid = gridRef.current;
+    if (!scroller || !grid) return;
+    let shown = UNMEASURED;
     const read = () => {
-      if (el.clientWidth === 0) return;
-      setView({width: el.clientWidth, top: el.scrollTop, height: el.clientHeight});
+      const width = grid.getBoundingClientRect().width;
+      if (width === 0) return;
+      const next = {width, top: scroller.scrollTop, height: scroller.clientHeight};
+      if (sameWindowRef.current(shown, next)) return;
+      shown = next;
+      setView(next);
     };
     const onScroll = () => flushSync(read);
     read();
-    if (typeof ResizeObserver === 'undefined') return;
-    el.addEventListener('scroll', onScroll, {passive: true});
+    scroller.addEventListener('scroll', onScroll, {passive: true});
     const observer = new ResizeObserver(read);
-    observer.observe(el);
+    observer.observe(scroller);
     return () => {
-      el.removeEventListener('scroll', onScroll);
+      scroller.removeEventListener('scroll', onScroll);
       observer.disconnect();
     };
-  }, [ref]);
+  }, [scrollerRef, gridRef]);
   return view;
 }
 
-/** The tiles a render draws, as [first, end), the grid's columns, and the undrawn rows' room. */
+/** The tiles a render draws, as [first, end), and the undrawn rows' room. */
 interface DrawnTiles {
   first: number;
   end: number;
-  columns: string;
   roomAbove: number;
   roomBelow: number;
 }
@@ -162,14 +178,13 @@ interface TileSizing {
  * their images as it renders the grid, often well before the commit that measures the scroller,
  * and the browser starts loading their art then, so it can be in hand as they mount and show
  * with no fade, as react-virtuoso's first tiles did (#931). A browser measures the scroller
- * before its first paint unless it is hidden, and auto-fill lays these tiles out in the columns
- * `tilesInView` counts. jsdom never measures it, so there every tile is drawn.
+ * before its first paint unless it is hidden. jsdom never measures it, so there every tile is
+ * drawn.
  */
-function firstTiles(count: number, sizing: TileSizing): DrawnTiles {
+function firstTiles(count: number): DrawnTiles {
   return {
     first: 0,
     end: typeof ResizeObserver === 'undefined' ? count : EAGER_TILES,
-    columns: `repeat(auto-fill, minmax(${sizing.minColWidth}px, 1fr))`,
     roomAbove: 0,
     roomBelow: 0,
   };
@@ -177,21 +192,31 @@ function firstTiles(count: number, sizing: TileSizing): DrawnTiles {
 
 /**
  * The tiles of the rows in view and `OVERSCAN_ROWS` past each edge. Every tile is the same
- * size, so a row's height follows from the scroller's width.
+ * size, so a row's height follows from the grid's width, in the columns auto-fill fits there.
  */
 function tilesInView(view: ScrollerView, count: number, sizing: TileSizing): DrawnTiles {
   const inner = view.width - 2 * sizing.paddingX;
   const columns = Math.max(1, Math.floor((inner + TILE_GAP) / (sizing.minColWidth + TILE_GAP)));
-  const rowHeight = (inner - (columns - 1) * TILE_GAP) / columns / TILE_ASPECT + TILE_GAP;
+  const rowHeight = (inner - (columns - 1) * TILE_GAP) / columns / LAYOUT.cardAspect + TILE_GAP;
   const rowCount = Math.ceil(count / columns);
   const [firstRow, endRow] = rowWindow(view, rowHeight, rowCount);
   return {
     first: firstRow * columns,
     end: endRow * columns,
-    columns: `repeat(${columns}, 1fr)`,
     roomAbove: firstRow * rowHeight,
     roomBelow: (rowCount - endRow) * rowHeight,
   };
+}
+
+/**
+ * Whether two views draw the same tiles: the same size, and the same rows. The rows' room follows
+ * from those, so the render would be the same.
+ */
+function sameTiles(shown: ScrollerView, next: ScrollerView, count: number, sizing: TileSizing) {
+  if (shown.width !== next.width || shown.height !== next.height) return false;
+  const a = tilesInView(shown, count, sizing);
+  const b = tilesInView(next, count, sizing);
+  return a.first === b.first && a.end === b.end;
 }
 
 /**
@@ -227,20 +252,27 @@ function TileRows({
   renderTile: (card: LorcanaCard, index: number) => ReactNode;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const view = useScrollerView(scrollerRef);
+  const gridRef = useRef<HTMLDivElement>(null);
   const sizing = {paddingX, minColWidth};
-  const tiles =
-    view.width > 0 ? tilesInView(view, cards.length, sizing) : firstTiles(cards.length, sizing);
+  const view = useScrollerView(scrollerRef, gridRef, (shown, next) =>
+    sameTiles(shown, next, cards.length, sizing),
+  );
+  const tiles = view.width > 0 ? tilesInView(view, cards.length, sizing) : firstTiles(cards.length);
 
   return (
     <div
       ref={scrollerRef}
       data-testid="browse-grid-scroller"
-      style={{height: '100%', overflowY: 'auto'}}>
+      // No scroll anchoring: the drawn rows change under it as it scrolls, and the padding that
+      // replaces them already keeps every tile in place.
+      style={{height: '100%', overflowY: 'auto', overflowAnchor: 'none'}}>
       <div
+        ref={gridRef}
         style={{
           display: 'grid',
-          gridTemplateColumns: tiles.columns,
+          // auto-fill, even once measured: a prerendered page shown on a screen of another width
+          // lays its tiles out in that screen's columns, as `tilesInView` counts them.
+          gridTemplateColumns: `repeat(auto-fill, minmax(${minColWidth}px, 1fr))`,
           gap: TILE_GAP,
           // Room above the first row and under the last, inside the scroller: a pointed-at
           // card's glow reaches past its tile, and the scroller clips whatever lies outside it.

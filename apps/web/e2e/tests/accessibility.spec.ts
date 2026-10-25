@@ -165,10 +165,14 @@ test.describe('Accessibility: reflow at 320px', () => {
 
 /**
  * The card that has focus (its link and name), and whether it shows in the grid's scroller; null
- * once focus has left the grid.
+ * once focus has left the grid. Read two frames on: focus scrolls the grid at once, but the
+ * scroll event that draws the rows past the new view fires at the next frame. A person's presses
+ * always leave it that frame; Playwright's come faster. One call waits and reads: each call is a
+ * round trip, and WebKit's take about 370ms a press in CI.
  */
 function focusedCard(page: Page) {
-  return page.evaluate(() => {
+  return page.evaluate(async () => {
+    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
     const tile = document.activeElement?.closest('[data-testid="card-tile"]');
     const scroller = tile?.closest('[data-testid="browse-grid-scroller"]');
     if (!tile || !scroller) return null;
@@ -189,16 +193,13 @@ async function walkCards(page: Page, key: string) {
   const cards: string[] = [];
   const hidden: string[] = [];
   for (let focused = await focusedCard(page); focused; focused = await focusedCard(page)) {
+    // A press past the page's last link takes focus out of the page. Chromium then makes the
+    // body the active element, but Firefox keeps the card: a card twice running ends the walk.
+    if (focused.card === cards.at(-1)) break;
     cards.push(focused.card);
     if (!focused.inView) hidden.push(focused.card);
     if (cards.length > LAYOUT.maxDisplayedCards) break;
     await page.keyboard.press(key);
-    // Focus scrolls the grid at once, but the scroll event that draws the rows past the new
-    // view fires at the next frame. A person's presses always leave it that frame;
-    // Playwright's come faster, so wait two.
-    await page.evaluate(
-      () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))),
-    );
   }
   return {cards, hidden};
 }
@@ -213,8 +214,8 @@ test.describe('Accessibility: keyboard', () => {
   test("Tab walks Browse's cards to the last one shown, and Shift+Tab walks back", async ({
     page,
   }) => {
-    // About 400 presses, each followed by two frames.
-    test.slow();
+    // About 400 presses, each followed by two frames: WebKit's take 2.5 minutes in CI.
+    test.setTimeout(240_000);
     await page.goto('/browse');
     await page.getByTestId('card-tile').first().focus();
 

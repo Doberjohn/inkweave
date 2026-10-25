@@ -176,7 +176,7 @@ async function expectGridAsBefore(page: Page, isPhone: boolean) {
 
   expect(layout.columns, JSON.stringify(layout)).toBe(layout.autoFill.columns);
   expect(layout.tile.width).toBeCloseTo(layout.autoFill.width, 0);
-  expect(layout.tile.height).toBeCloseTo(layout.tile.width / 0.72, 0);
+  expect(layout.tile.height).toBeCloseTo(layout.tile.width / LAYOUT.cardAspect, 0);
   if (layout.columnGap !== null) expect(layout.columnGap).toBeCloseTo(SPACING.md, 0);
   expect(layout.rowGap).toBeCloseTo(SPACING.md, 0);
   expect(layout.roomAbove).toBeCloseTo(ROOM, 0);

@@ -1,4 +1,5 @@
 import {afterEach, describe, it, expect, vi} from 'vitest';
+import {Profiler} from 'react';
 import {act, fireEvent, render, screen} from '@testing-library/react';
 import {flushSync} from 'react-dom';
 import {createRoot} from 'react-dom/client';
@@ -20,35 +21,46 @@ const cards = Array.from({length: 40}, (_, i) =>
   createCard({id: String(1000 + i), fullName: `Card ${i + 1} - Test`}),
 );
 
-// jsdom lays nothing out, so these tests give the grid's scroller the size a browser measures
-// before its first paint. A desktop scroller 820px wide holds 4 columns of 180px tiles, 250px
-// tall: rows 262px apart.
+// jsdom lays nothing out, so these tests give the grid and its scroller the size a browser
+// measures before its first paint. A desktop grid 820px wide holds 4 columns of 180px tiles,
+// 250px tall: rows 262px apart.
 const ROW = 262;
 const view = {width: 820, height: 600, top: 0};
 
 /** The grid's ResizeObserver callback, which a test calls as a browser does on a resize. */
 let resized = () => {};
 
-function measureScroller() {
-  vi.stubGlobal(
-    'ResizeObserver',
-    class {
-      constructor(callback: () => void) {
-        resized = callback;
-      }
-      observe() {}
-      disconnect() {}
-    },
-  );
-  const size = (key: 'width' | 'height' | 'top') => ({configurable: true, get: () => view[key]});
-  Object.defineProperty(HTMLElement.prototype, 'clientWidth', size('width'));
-  Object.defineProperty(HTMLElement.prototype, 'clientHeight', size('height'));
-  Object.defineProperty(HTMLElement.prototype, 'scrollTop', size('top'));
+const MEASURED = ['clientWidth', 'clientHeight', 'scrollTop', 'getBoundingClientRect'] as const;
+
+/** Gives every element the view's size; with no ResizeObserver, as an old browser has none. */
+function measureScroller({observer = true} = {}) {
+  if (observer) {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: () => void) {
+          resized = callback;
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+  }
+  const size = (read: () => unknown) => ({configurable: true, get: read});
+  // A browser rounds clientWidth to whole pixels, and lays out auto-fill's columns in the
+  // unrounded width that getBoundingClientRect reads.
+  Object.defineProperty(HTMLElement.prototype, 'clientWidth', size(() => Math.round(view.width)));
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', size(() => view.height));
+  Object.defineProperty(HTMLElement.prototype, 'scrollTop', size(() => view.top));
+  Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({width: view.width, height: view.height}),
+  });
 }
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  for (const key of ['clientWidth', 'clientHeight', 'scrollTop']) {
+  for (const key of MEASURED) {
     delete (HTMLElement.prototype as never)[key];
   }
   Object.assign(view, {width: 820, height: 600, top: 0});
@@ -108,9 +120,9 @@ describe('BrowseCardGrid window', () => {
     measureScroller();
     render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
 
-    expect(grid().style.gridTemplateColumns).toBe('repeat(2, 1fr)');
-    expect(grid().style.paddingLeft).toBe('16px');
+    // Rows 1 to 3 in view, and row 4.
     expect(tileNames()).toEqual(cards.slice(0, 8).map((card) => card.fullName));
+    expect(grid().style.paddingLeft).toBe('16px');
   });
 
   it('keeps its rows while its scroller is hidden', () => {
@@ -160,15 +172,69 @@ describe('BrowseCardGrid window', () => {
   });
 
   it('fits as many columns as auto-fill does, gaps included', () => {
-    // 900px inside the gutters: five 180px tiles fit only without their four 12px gaps.
+    // 900px inside the gutters: five 180px tiles fit only without their four 12px gaps. Four
+    // columns of 216px tiles draw three rows of four; five would draw four rows of five.
     view.width = 964;
     measureScroller();
     render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
 
-    expect(grid().style.gridTemplateColumns).toBe('repeat(4, 1fr)');
+    expect(tileNames()).toHaveLength(12);
+  });
+
+  it('counts columns in the unrounded width auto-fill lays them out in', () => {
+    // Five columns need 948px inside the gutters: 1011.6px is 947.6 there, though it rounds up
+    // to 1012. Four columns draw three rows of four; five would draw four rows of five.
+    view.width = 1011.6;
+    measureScroller();
+    render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
+
+    expect(tileNames()).toHaveLength(12);
+  });
+
+  it('lays its tiles out with auto-fill once measured, as a prerendered page is on any screen', () => {
+    // A page prerendered at one width can be shown at another before the app takes it over
+    // (#915): its tiles take that screen's columns, as the app's first render then counts them.
+    measureScroller();
+    render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
+
+    expect(grid().style.gridTemplateColumns).toBe('repeat(auto-fill, minmax(180px, 1fr))');
+  });
+
+  it('keeps the browser from anchoring its scroll on tiles it swaps for padding', () => {
+    render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
+
+    expect(screen.getByTestId('browse-grid-scroller').style.overflowAnchor).toBe('none');
+  });
+
+  it('renders nothing for a scroll that keeps the same rows in view', () => {
+    measureScroller();
+    const onRender = vi.fn();
+    render(
+      <Profiler id="grid" onRender={onRender}>
+        <BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />
+      </Profiler>,
+    );
+    const renders = onRender.mock.calls.length;
+    const scroller = screen.getByTestId('browse-grid-scroller');
+
+    view.top = 100;
+    fireEvent.scroll(scroller);
+    expect(onRender).toHaveBeenCalledTimes(renders);
+
+    // Row 1 leaves the view's top and row 5 comes within one row of its bottom.
+    view.top = 24 + ROW + 1;
+    fireEvent.scroll(scroller);
+    expect(onRender).toHaveBeenCalledTimes(renders + 1);
   });
 
   it('draws every tile where the scroller cannot be measured (jsdom)', () => {
+    render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
+
+    expect(screen.getAllByRole('link')).toHaveLength(40);
+  });
+
+  it('draws every tile without ResizeObserver, which would miss its resizes', () => {
+    measureScroller({observer: false});
     render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
 
     expect(screen.getAllByRole('link')).toHaveLength(40);

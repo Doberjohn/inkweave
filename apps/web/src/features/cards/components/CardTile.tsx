@@ -6,6 +6,7 @@ import {
   INK_COLORS,
   CARD_TILE_GLOW,
   FONT_SIZES,
+  LAYOUT,
   RADIUS,
   blackRgba,
   whiteRgba,
@@ -84,7 +85,7 @@ function buildTileStyle(
     padding: 0,
     overflow: 'hidden',
     width: '100%',
-    aspectRatio: '0.72',
+    aspectRatio: String(LAYOUT.cardAspect),
   };
 }
 
