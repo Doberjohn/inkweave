@@ -150,6 +150,10 @@ Convention files that auto-load only when editing files matching their `paths:` 
 
 The miner itself (`scripts/mine-rule-candidates.mjs`, run via `pnpm mine-rules`) uses the live `SynergyEngine` as a coverage oracle: cards it finds zero synergies for are clustered by shared mechanical phrase, near-duplicates collapsed by card-set overlap, and ranked into `reports/rule-candidates.json` (git-ignored). Ranking is **payoff-aware** (#363): each mechanic in the `MECHANICS` table pairs an enabler anchor with a payoff/trigger pattern, and `rankCluster` weights a cluster by its `payoffCount` (the size of its two-sided axis) so good-stuff mechanics with no payoff side sink. See issues #359 and #363.
 
+### PR reviews
+
+`.github/workflows/claude-review.yml` (#952) has Claude Code review a pull request when it opens ready for review and when a draft is marked ready, never on a push: the bundled `/code-review` skill, at `high` effort on Opus, posts its findings as inline comments from `github-actions[bot]`, or one comment saying it posted none, and the run's summary page shows what it would cost at API prices. A review that doesn't finish, such as one the API refuses or the plan's usage limit stops, comments why instead and turns its run red, which is advisory: nothing waits on it. A top-level comment starting `@claude review` on an open PR, from someone with write access, asks for another pass. Drafts and Dependabot's PRs get no automatic review, and forks get none at all. The job's token only reads code and writes PR comments, and the run turns off `.claude/settings.json`'s hooks and `.mcp.json`'s servers. Claude's shell commands run in a sandbox that holds neither the Claude token nor the GitHub token, so the review reads the diff with git, never `gh`. It runs on the owner's Claude Max plan through the `CLAUDE_CODE_OAUTH_TOKEN` Actions secret, a token from `claude setup-token`, so the reviews share the plan's usage limits.
+
 ## Synergy Rules
 
 Rules live in `packages/synergy-engine/src/engine/rules.ts` and run at build time only; the web app consumes pre-computed JSON.
