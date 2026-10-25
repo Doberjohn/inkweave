@@ -8,7 +8,7 @@
  * the newest one the container has, in a folder of links that PLAYWRIGHT_BROWSERS_PATH then
  * names. WebKit and Firefox aren't shipped at all, so the cloud pre-push leaves them to CI.
  */
-import {mkdirSync, readdirSync, rmSync, symlinkSync} from 'node:fs';
+import {existsSync, mkdirSync, readdirSync, rmSync, symlinkSync} from 'node:fs';
 import {join} from 'node:path';
 
 /** The browsers the chromium and mobile-chrome projects launch. */
@@ -35,6 +35,24 @@ function newestShipped(shipped, dir) {
   return revisions.sort((a, b) => Number(b) - Number(a))[0];
 }
 
+/** The folders in `shippedDir`, or an error that names it when it is missing. */
+function shippedFolders(shippedDir) {
+  if (!existsSync(shippedDir)) {
+    throw new Error(
+      `No browsers folder at ${shippedDir}; set PLAYWRIGHT_BROWSERS_PATH to the one this machine has`,
+    );
+  }
+  return readdirSync(shippedDir);
+}
+
+/** Point `link` at `target`, replacing a link an earlier run left. */
+function replaceLink(target, link) {
+  // Never recursive: that could follow the link into the shipped build.
+  rmSync(link, {force: true});
+  // A junction needs no admin rights on Windows, where the script tests also run.
+  symlinkSync(target, link, process.platform === 'win32' ? 'junction' : 'dir');
+}
+
 /**
  * Where Playwright should look for its browsers. When `shippedDir` already holds every
  * wanted revision, that is `shippedDir` itself and nothing is written. Otherwise `linkDir`
@@ -42,7 +60,7 @@ function newestShipped(shipped, dir) {
  * newest shipped one when it isn't, and `linked` lists the substitutions.
  */
 export function linkShippedBrowsers({shippedDir, linkDir, wanted}) {
-  const shipped = readdirSync(shippedDir);
+  const shipped = shippedFolders(shippedDir);
   const isShipped = ({dir, revision}) => shipped.includes(`${dir}-${revision}`);
   if (wanted.every(isShipped)) return {browsersPath: shippedDir, linked: []};
 
@@ -53,9 +71,7 @@ export function linkShippedBrowsers({shippedDir, linkDir, wanted}) {
     const source = isShipped(browser) ? revision : newestShipped(shipped, dir);
     if (source === null)
       throw new Error(`No ${dir} build in ${shippedDir} to stand in for ${dir}-${revision}`);
-    const link = join(linkDir, `${dir}-${revision}`);
-    rmSync(link, {force: true, recursive: true});
-    symlinkSync(join(shippedDir, `${dir}-${source}`), link, 'dir');
+    replaceLink(join(shippedDir, `${dir}-${source}`), join(linkDir, `${dir}-${revision}`));
     if (source !== revision) linked.push(`${dir}-${revision} -> ${dir}-${source}`);
   }
   return {browsersPath: linkDir, linked};

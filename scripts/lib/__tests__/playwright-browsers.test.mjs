@@ -1,5 +1,5 @@
 import {describe, it, expect, beforeEach, afterEach} from 'vitest';
-import {mkdirSync, mkdtempSync, readlinkSync, readdirSync, rmSync} from 'node:fs';
+import {mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {linkShippedBrowsers, wantedBrowsers} from '../playwright-browsers.mjs';
@@ -61,14 +61,24 @@ describe('linkShippedBrowsers', () => {
         'chromium_headless_shell-1248 -> chromium_headless_shell-1243',
       ],
     });
-    expect(readlinkSync(join(linkDir, 'chromium-1248'))).toBe(join(shippedDir, 'chromium-1243'));
-    expect(readlinkSync(join(linkDir, 'ffmpeg-1013'))).toBe(join(shippedDir, 'ffmpeg-1013'));
+    expect(realpathSync(join(linkDir, 'chromium-1248'))).toBe(
+      realpathSync(join(shippedDir, 'chromium-1243')),
+    );
+    expect(realpathSync(join(linkDir, 'ffmpeg-1013'))).toBe(
+      realpathSync(join(shippedDir, 'ffmpeg-1013')),
+    );
   });
 
   it('replaces the links a previous run left', () => {
     ship('chromium-1243', 'chromium_headless_shell-1243', 'ffmpeg-1011');
     linkShippedBrowsers({shippedDir, linkDir, wanted: WANTED});
     expect(() => linkShippedBrowsers({shippedDir, linkDir, wanted: WANTED})).not.toThrow();
+  });
+
+  it('names the browsers folder when it is missing', () => {
+    expect(() =>
+      linkShippedBrowsers({shippedDir: join(root, 'absent'), linkDir, wanted: WANTED}),
+    ).toThrow(/No browsers folder at .*absent/);
   });
 
   it('names the browser the container has no build of', () => {

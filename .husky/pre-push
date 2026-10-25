@@ -61,7 +61,7 @@ export E2E_SERVER=dev
 if [ "$IS_WINDOWS" = "1" ] && [ "${PRE_PUSH_FULL:-0}" != "1" ]; then
   pnpm --filter inkweave-web test:e2e --project chromium $WORKERS_ARG || exit $?
 elif [ "$IS_WINDOWS" != "1" ] && [ "${CLAUDE_CODE_REMOTE:-}" = "true" ]; then
-  node scripts/pre-push-cloud-e2e.mjs || exit $?
+  node scripts/pre-push-cloud-e2e.mjs $WORKERS_ARG || exit $?
 else
   pnpm --filter inkweave-web test:e2e --project chromium --project webkit --project mobile-chrome $WORKERS_ARG || exit $?
 fi
