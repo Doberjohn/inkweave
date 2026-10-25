@@ -215,3 +215,38 @@ describe('BinderSpread page in hand (#963)', () => {
     expect(touchMoveKept(page('Page'))).toBe(false);
   });
 });
+
+// A phone's lone page is 3 by 3 (owner, 2026-10-25): nine pockets, three across, where it held
+// twelve, four across. A spread's pages keep their 4 by 3.
+describe('BinderSpread lone page (#969)', () => {
+  const page = (name: string) => screen.getByRole('group', {name});
+  const pocketsOn = (name: string) => page(name).querySelectorAll('.binder-pocket');
+
+  it('holds nine pockets in three columns', () => {
+    render(spread({single: true, start: 9}));
+    expect(pocketsOn('Page')).toHaveLength(9);
+    expect(page('Page').style.gridTemplateColumns).toBe('repeat(3, minmax(0, 1fr))');
+    expect(card(10)).toBeInTheDocument();
+    expect(card(18)).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Card 19'})).toBeNull();
+  });
+
+  it("moves on that grid with the arrow keys: Right stops at a row's third card, Down goes to the next row", async () => {
+    const user = userEvent.setup();
+    render(spread({single: true, start: 0, canPrev: false}));
+    act(() => card(3).focus());
+    await user.keyboard('{ArrowRight}');
+    expect(card(3)).toHaveFocus();
+    act(() => card(1).focus());
+    await user.keyboard('{ArrowDown}');
+    expect(card(4)).toHaveFocus();
+    await user.keyboard('{End}');
+    expect(card(9)).toHaveFocus();
+  });
+
+  it("keeps a spread's pages at twelve pockets", () => {
+    render(spread());
+    expect(pocketsOn('Left page')).toHaveLength(12);
+    expect(pocketsOn('Right page')).toHaveLength(12);
+  });
+});

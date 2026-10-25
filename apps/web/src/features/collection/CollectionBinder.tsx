@@ -6,6 +6,7 @@ import {CollectionSlotCounts, type SlotCountsEditor} from './CollectionSlotCount
 import type {CollectionEntry, Finish} from './collectionParser';
 import {finishesOf} from './printingFinishes';
 import {BinderSpread, PER_PAGE, PER_SPREAD} from '../cards/components/BinderSpread';
+import {PER_LONE_PAGE} from '../cards/components/binderGeometry';
 import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/BinderSpreadMap';
 import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
 import {settleOf} from './binderPockets';
@@ -362,11 +363,11 @@ function OpenPocketView({pocket, tabIndex}: {pocket: OpenPocket; tabIndex: numbe
 }
 
 /**
- * How the binder pages: a phone a lone page at a time, and a spread binder two pages at a
- * time, opening on the inside front cover (owner, 2026-10-18). The cover takes the first
- * spread's left page, so a spread's cards start a page in: the `lead`.
+ * How the binder pages: a phone a lone page of nine at a time (#969), and a spread binder two
+ * pages of twelve at a time, opening on the inside front cover (owner, 2026-10-18). The cover
+ * takes the first spread's left page, so a spread's cards start a page in: the `lead`.
  */
-const PAGES = {perView: PER_PAGE, lead: 0};
+const PAGES = {perView: PER_LONE_PAGE, lead: 0};
 const SPREADS = {perView: PER_SPREAD, lead: PER_PAGE};
 
 export function CollectionBinder({
@@ -382,8 +383,8 @@ export function CollectionBinder({
   const {perView, lead} = single ? PAGES : SPREADS;
   // Held as the first SLOT in view, not a view number, so crossing the phone
   // breakpoint stays in the same part of the set: from spread 2 (slots 12-35) a
-  // phone opens page 2 (slots 12-23), the first page of that spread's cards, and
-  // back again. A stored view NUMBER would have jumped to other cards instead.
+  // phone opens page 2 (slots 9-17), the page that holds slot 12, and back again.
+  // A stored view NUMBER would have jumped to other cards instead.
   const [firstSlot, setFirstSlot] = useState(0);
   const total = Math.max(1, Math.ceil((slots.length + lead) / perView));
   const current = Math.min(Math.floor((firstSlot + lead) / perView), total - 1);

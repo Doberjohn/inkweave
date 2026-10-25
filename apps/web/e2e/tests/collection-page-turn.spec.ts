@@ -729,9 +729,10 @@ test.describe("Collection mode, turning the binder's pages (#942)", () => {
     await expect(sheets(page)).toHaveCount(0);
     await clearTurns(page);
 
-    // Spread 2 holds slots 12 to 35: a phone opens page 2, slots 12 to 23. And back to the spread.
+    // Spread 2 holds slots 12 to 35: a phone opens page 2, slots 9 to 17, which holds slot 12
+    // (#969). And back to the spread.
     await page.setViewportSize({width: 390, height: 844});
-    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[12].fullName);
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[9].fullName);
     await page.setViewportSize({width: 1440, height: 900});
     await expect(shown(page)).toBeVisible();
     await pause(page, 100);
@@ -769,7 +770,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     await openBinder(page, PHONE);
     await clearTurns(page);
     await binder(page).getByRole('button', {name: 'Next page'}).click();
-    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[12].fullName);
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[9].fullName);
     const [away] = await endedTurns(page);
     expect([away.front, away.back, away.flat]).toEqual([BASE[0].fullName, null, null]);
     expectSameBox(away.poses[0].box, away.pages.right, 'the page as it starts to swing, over the lone page');
@@ -783,7 +784,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[0].fullName);
     const [back] = await endedTurns(page);
     // Page 1 swings in over page 2, drawn flat beneath it.
-    expect([back.front, back.flat]).toEqual([BASE[0].fullName, BASE[12].fullName]);
+    expect([back.front, back.flat]).toEqual([BASE[0].fullName, BASE[9].fullName]);
     const backAt = back.poses.map((pose) => pose.angle);
     expect(backAt[0], 'swung away as it starts').toBeCloseTo(-100, 0);
     expect(backAt[2], 'the angle at 350 ms').toBeGreaterThan(-95);
@@ -808,7 +809,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     }
     await pause(page, STILL_MS);
     await page.mouse.up();
-    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[12].fullName);
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[9].fullName);
     await expect(sheets(page)).toHaveCount(0);
     expect(Math.max(...scrolled), 'sideways scroll during the drag').toBeLessThanOrEqual(0);
   });
@@ -826,7 +827,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     await first.focus();
 
     await swipe(page, cdp, [box.right - 20, y], [box.left + 20, y]);
-    await expect(first).toHaveAccessibleName(BASE[12].fullName);
+    await expect(first).toHaveAccessibleName(BASE[9].fullName);
     await expect(first, "the focus on page 2's first card").toBeFocused();
     await swipe(page, cdp, [box.left + 20, y], [box.right - 20, y]);
     await expect(first).toHaveAccessibleName(BASE[0].fullName);
@@ -854,7 +855,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
       await pause(page, 16);
     }
     await cdp.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []});
-    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[12].fullName);
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[9].fullName);
     await expect(sheets(page)).toHaveCount(0);
     await expect(cardWindow(page)).toHaveCount(0);
   });
@@ -876,7 +877,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     // Halfway across, then on to 20px inside the page's left edge as the finger drifts 100px
     // down. On an iPhone the drift started the page's scroll, which cancelled the turn (2026-10-25).
     await swipeThrough(page, cdp, fingerPath([box.right - 20, y], [5, [-step, 0]], [5, [-step, 20]]));
-    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[12].fullName);
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[9].fullName);
     // Every move is a tenth of the page or more from the press, past the slop that lifts the page.
     const kept = await keptTouchMoves(page);
     expect(kept.length, 'the moves the page saw').toBeGreaterThan(5);
