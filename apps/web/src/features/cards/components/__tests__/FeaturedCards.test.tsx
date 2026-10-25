@@ -36,8 +36,7 @@ function makeCard(ink: string, id: string, name: string): LorcanaCard {
 }
 
 // One card per entry of featuredCardIds.json, in its order, so the tests follow the curated list
-// when a set graduation changes it. vite.config.ts empties VITE_FEATURED_CARD_IDS for tests, so
-// the file decides which cards are featured.
+// when a set graduation or admin's Featured cards page changes it.
 const mockCards: LorcanaCard[] = featuredCardIds.map(({id, card}) => {
   const [colors, name] = card.split(': ');
   return makeCard(colors.split('-')[0], id, name);

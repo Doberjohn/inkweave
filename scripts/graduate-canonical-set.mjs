@@ -84,7 +84,6 @@ const ALL_CARDS = path.join(ROOT, 'apps/web/public/data/allCards.json');
 const PREVIEW = path.join(ROOT, 'apps/web/public/data/previewCards.json');
 const PROMO_CATALOG = path.join(ROOT, 'scripts/data/promo-printings.json');
 const FEATURED_IDS_JSON = path.join(ROOT, 'apps/web/src/features/cards/featuredCardIds.json');
-const ENV_EXAMPLE = path.join(ROOT, 'apps/web/.env.example');
 const MIGRATIONS = path.join(ROOT, 'supabase/migrations');
 
 /**
@@ -99,7 +98,6 @@ const MIGRATIONS = path.join(ROOT, 'supabase/migrations');
 const ID_REFERENCE_FILES = [
   'apps/web/src/features/cards/featuredCardIds.json',
   'apps/web/src/shared/constants/playstyleUi.ts',
-  'apps/web/.env.example',
   'apps/web/src/features/reveals/InkBoard.stories.tsx',
   'apps/web/src/features/reveals/CardMosaic.stories.tsx',
   'apps/web/src/features/reveals/FranchiseCardsModal.stories.tsx',
@@ -290,13 +288,12 @@ function retargetHardcodedIds(previewToCanonical) {
 
 /**
  * Points the hardcoded card ids at the graduated set: step 7's retarget, then any new
- * featured cards. The Vercel `VITE_FEATURED_CARD_IDS` env var lives outside the repo and
- * can't be written here, so the featured ids are printed for a manual paste + redeploy.
+ * featured cards. featuredCardIds.json is the featured list's only source (#957), which admin's
+ * Featured cards page edits too, so there is nothing to set outside the repo.
  */
 function updateCardIdReferences(previewToCanonical, featuredEntries) {
-  const retargeted = retargetHardcodedIds(previewToCanonical);
-  const picked = writeFeaturedEntries(featuredEntries);
-  if (retargeted || picked) printFeaturedVercelHint();
+  retargetHardcodedIds(previewToCanonical);
+  writeFeaturedEntries(featuredEntries);
 }
 
 /**
@@ -490,31 +487,12 @@ async function askFeaturedEntries(setCode, baseCards) {
   }
 }
 
-/** Writes new featured entries, and the .env.example example to match; true when it wrote. */
+/** Writes new featured entries to featuredCardIds.json; null keeps today's list. */
 function writeFeaturedEntries(entries) {
-  if (!entries) return false;
-  const before = readFeaturedEntries().map((entry) => entry.id);
+  if (!entries) return;
   fs.writeFileSync(FEATURED_IDS_JSON, featuredIdsJson(entries));
-  const example = fs.readFileSync(ENV_EXAMPLE, 'utf8');
-  const after = entries.map((entry) => entry.id);
-  fs.writeFileSync(
-    ENV_EXAMPLE,
-    example.replace(
-      `VITE_FEATURED_CARD_IDS=${before.join(',')}`,
-      `VITE_FEATURED_CARD_IDS=${after.join(',')}`,
-    ),
-  );
   console.log(`  Featured cards:             ${entries.length} from the graduated set`);
   for (const entry of entries) console.log(`    ${entry.id}  ${entry.card}`);
-  return true;
-}
-
-/** Print the ordered canonical featured ids for the manual Vercel env update. */
-function printFeaturedVercelHint() {
-  const ordered = JSON.parse(fs.readFileSync(FEATURED_IDS_JSON, 'utf8')).map((entry) => entry.id);
-  if (ordered.length === 0) return;
-  console.log(`\n  ⚠ Set the Vercel env var (external to repo — paste + redeploy):`);
-  console.log(`    VITE_FEATURED_CARD_IDS=${ordered.join(',')}\n`);
 }
 
 /** The run's flags: what it may drop or leave behind, and how the featured cards are settled. */

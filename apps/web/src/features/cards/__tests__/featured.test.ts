@@ -1,8 +1,9 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {renderHook, waitFor} from '@testing-library/react';
 import {startCardList} from '../cardListRequest';
+import featuredCardIds from '../featuredCardIds.json';
 import {
-  DEFAULT_FEATURED_IDS,
+  FEATURED_IDS,
   fetchFeaturedCards,
   startFeaturedCards,
   useFeaturedCardsFile,
@@ -45,11 +46,11 @@ afterEach(() => {
 
 describe('fetchFeaturedCards', () => {
   it('resolves the featured cards in display order, fetching the file once per page', async () => {
-    mockFetch.mockResolvedValue(respond(featuredFile([...DEFAULT_FEATURED_IDS].reverse())));
+    mockFetch.mockResolvedValue(respond(featuredFile([...FEATURED_IDS].reverse())));
 
     const [first, second] = await Promise.all([fetchFeaturedCards(), fetchFeaturedCards()]);
 
-    expect(first?.map((card) => card.id)).toEqual(DEFAULT_FEATURED_IDS);
+    expect(first?.map((card) => card.id)).toEqual(FEATURED_IDS);
     expect(second).toBe(first);
     expect(mockFetch).toHaveBeenCalledOnce();
     expect(mockFetch).toHaveBeenCalledWith('/data/featuredCards.json');
@@ -57,7 +58,7 @@ describe('fetchFeaturedCards', () => {
 
   it.each([
     ['is missing', () => mockFetch.mockResolvedValue({ok: false, status: 404})],
-    ['lacks a featured card', () => mockFetch.mockResolvedValue(respond(featuredFile(DEFAULT_FEATURED_IDS.slice(1))))],
+    ['lacks a featured card', () => mockFetch.mockResolvedValue(respond(featuredFile(FEATURED_IDS.slice(1))))],
     ['fails to load', () => mockFetch.mockRejectedValue(new TypeError('Failed to fetch'))],
   ])('resolves null when the file %s, so the full list takes over', async (_label, setUp) => {
     setUp();
@@ -67,12 +68,12 @@ describe('fetchFeaturedCards', () => {
   it('forgets a server error, so the next call fetches the file again', async () => {
     mockFetch
       .mockResolvedValueOnce({ok: false, status: 503})
-      .mockResolvedValueOnce(respond(featuredFile(DEFAULT_FEATURED_IDS)));
+      .mockResolvedValueOnce(respond(featuredFile(FEATURED_IDS)));
 
     await expect(fetchFeaturedCards()).resolves.toBeNull();
     const featured = await fetchFeaturedCards();
 
-    expect(featured?.map((card) => card.id)).toEqual(DEFAULT_FEATURED_IDS);
+    expect(featured?.map((card) => card.id)).toEqual(FEATURED_IDS);
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
@@ -102,7 +103,7 @@ describe('startFeaturedCards', () => {
   });
 
   it('leaves the card list for later when the file has the featured cards (#641)', async () => {
-    mockFetch.mockResolvedValue(respond(featuredFile(DEFAULT_FEATURED_IDS)));
+    mockFetch.mockResolvedValue(respond(featuredFile(FEATURED_IDS)));
 
     await startFeaturedCards();
 
@@ -123,17 +124,17 @@ describe('useFeaturedCardsFile', () => {
   }
 
   it('starts from a file main.tsx already loaded, with no loading render (#915)', async () => {
-    mockFetch.mockResolvedValue(respond(featuredFile(DEFAULT_FEATURED_IDS)));
+    mockFetch.mockResolvedValue(respond(featuredFile(FEATURED_IDS)));
     await fetchFeaturedCards();
 
     const {byRender} = renderFile();
 
-    expect(byRender[0]).toHaveLength(DEFAULT_FEATURED_IDS.length);
+    expect(byRender[0]).toHaveLength(FEATURED_IDS.length);
     expect(mockFetch).toHaveBeenCalledOnce();
   });
 
   it('gives nothing while disabled, though the file has loaded', async () => {
-    mockFetch.mockResolvedValue(respond(featuredFile(DEFAULT_FEATURED_IDS)));
+    mockFetch.mockResolvedValue(respond(featuredFile(FEATURED_IDS)));
     await fetchFeaturedCards();
 
     const {result} = renderHook(() => useFeaturedCardsFile(false));
@@ -142,11 +143,29 @@ describe('useFeaturedCardsFile', () => {
   });
 
   it('loads on its first render while the file is still on its way', async () => {
-    mockFetch.mockResolvedValue(respond(featuredFile(DEFAULT_FEATURED_IDS)));
+    mockFetch.mockResolvedValue(respond(featuredFile(FEATURED_IDS)));
 
     const {result, byRender} = renderFile();
 
     expect(byRender[0]).toBeUndefined();
-    await waitFor(() => expect(result.current).toHaveLength(DEFAULT_FEATURED_IDS.length));
+    await waitFor(() => expect(result.current).toHaveLength(FEATURED_IDS.length));
+  });
+});
+
+describe('FEATURED_IDS', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  // featuredCardIds.json is the only source (#957): admin's Featured cards page commits it, so a
+  // Vercel variable left set must never override what admin saved.
+  it("is featuredCardIds.json's list even when VITE_FEATURED_CARD_IDS is set", async () => {
+    vi.stubEnv('VITE_FEATURED_CARD_IDS', '1,2,3');
+    vi.resetModules();
+
+    const fresh = await import('../featured');
+
+    expect(fresh.FEATURED_IDS).toEqual(featuredCardIds.map((entry) => entry.id));
   });
 });

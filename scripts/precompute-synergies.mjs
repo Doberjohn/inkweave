@@ -21,7 +21,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {buildFeaturedCards, featuredIdsSetting, resolveFeaturedIds} from './featured-cards.mjs';
+import {buildFeaturedCards} from './featured-cards.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -171,19 +171,9 @@ async function main() {
 
   // The homepage's featured cards (#641). Written before the manifest, so the manifest stays the
   // newest file the Vite plugin's staleness check compares against.
-  const defaultFeaturedIds = JSON.parse(fs.readFileSync(FEATURED_IDS_FILE, 'utf-8')).map((entry) => entry.id);
-  const readWebEnvFile = (name) => {
-    const file = path.join(ROOT, 'apps/web', name);
-    return fs.existsSync(file) ? fs.readFileSync(file, 'utf-8') : null;
-  };
-  const featuredIds = resolveFeaturedIds(featuredIdsSetting(process.env, readWebEnvFile), defaultFeaturedIds);
-  const featured = buildFeaturedCards({
-    main: mainData,
-    preview: previewData,
-    ids: featuredIds,
-    isCoreSet,
-    envSetting: process.env.VITE_FEATURED_CARD_IDS,
-  });
+  // featuredCardIds.json is the list's only source (#957).
+  const featuredIds = JSON.parse(fs.readFileSync(FEATURED_IDS_FILE, 'utf-8')).map((entry) => entry.id);
+  const featured = buildFeaturedCards({main: mainData, preview: previewData, ids: featuredIds, isCoreSet});
   fs.writeFileSync(FEATURED_OUTPUT, JSON.stringify(featured));
   if (featured.cards.length < featuredIds.length) {
     console.warn(`  ⚠ featuredCards.json holds ${featured.cards.length}/${featuredIds.length} featured cards; the homepage falls back to the full list`);

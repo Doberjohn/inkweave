@@ -1172,8 +1172,8 @@ flowchart TD
 #    stories) from preview to canonical ids. When the homepage features none of the
 #    set's cards, it asks for six of them by collector number, one per ink from Amber
 #    to Steel (Enter keeps today's; without a terminal, answer with
-#    --featured=<numbers> or --keep-featured). It prints the canonical
-#    VITE_FEATURED_CARD_IDS value to paste into Vercel (see step 6), and writes
+#    --featured=<numbers> or --keep-featured). It writes the featured cards to
+#    featuredCardIds.json, their only source (#957), and writes
 #    supabase/migrations/<stamp>_remap_set<N>_preview_ids.sql for step 9.
 #    Default: reads apps/web/public/data/set{N}data.json
 pnpm graduate-set <set-code>
@@ -1196,13 +1196,11 @@ pnpm download-images
 # 5. Confirm no regressions
 pnpm test
 
-# 6. In Vercel env (+ redeploy): set VITE_FEATURED_CARD_IDS (Production and Preview)
-#    to the canonical value the script printed in step 2 (or delete it to use the
-#    in-code default, which the script already retargeted). Once the set is released,
-#    flip VITE_IS_REVEAL_SEASON=false. /reveals hides itself on release day anyway,
-#    and a set graduated before then keeps its page working (Rule 4 keeps the
-#    franchise tags, and spotlight art lives in public/art/spotlights/). Both are
-#    external to the repo.
+# 6. Once the set is released, flip VITE_IS_REVEAL_SEASON=false in Vercel env
+#    (+ redeploy). /reveals hides itself on release day anyway, and a set graduated
+#    before then keeps its page working (Rule 4 keeps the franchise tags, and
+#    spotlight art lives in public/art/spotlights/). The flag is external to the
+#    repo; the featured cards are not (step 2 already wrote featuredCardIds.json).
 
 # 7. Optionally: delete the canonical input file once migration succeeded
 #    (it served its purpose; LorcanaJSON evolves so the snapshot is short-lived)

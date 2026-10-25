@@ -110,8 +110,7 @@ jobs:
     # VITE_* that Vercel Production sets, plus VITE_LOCAL_IMAGES from build:vercel.
     # The boolean flags are set by name from Vercel's list; their production values are not
     # read here, so they are pinned 'true', which builds the heavier shape: a flag that is off
-    # in production makes the gate over-measure, never under-measure. VITE_FEATURED_CARD_IDS
-    # is left out: it only swaps one six-id array for another, so it is bundle-neutral.
+    # in production makes the gate over-measure, never under-measure.
     env:
       VITE_SUPABASE_URL: https://ci.placeholder.supabase.co
       VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
