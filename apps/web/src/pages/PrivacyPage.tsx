@@ -1,19 +1,21 @@
 import {LegalPage, legalH2Style, legalLinkStyle} from '../shared/components';
 import {COLORS} from '../shared/constants';
+import {SHOW_COLLECTION} from '../features/collection/flag';
 import {SHOW_FRIENDS} from '../features/friends/flag';
 
 const EMAIL = 'support.inkweave@gmail.com';
+
+// Every build's text changed on this date (the sign-in item, #878). A flag flip can't date
+// itself, so the launch PR (Phase 2 of #878) re-dates the page on launch day.
+const LAST_UPDATED = '26 October 2026';
 
 const DESCRIPTION =
   'What Inkweave collects (anonymous synergy votes, cookieless analytics and error reports), where it is stored, how long it is kept, and your rights.';
 
 export function PrivacyPage() {
-  // The friends sentence below shows only while friends is on (#852), and the date moves
-  // with it, so the date always says when the text on screen last changed.
-  const lastUpdated = SHOW_FRIENDS ? '21 October 2026' : '20 October 2026';
   return (
     <LegalPage title="Privacy Policy" description={DESCRIPTION}>
-      <p style={{marginTop: 0, color: COLORS.textMuted}}>Last updated: {lastUpdated}</p>
+      <p style={{marginTop: 0, color: COLORS.textMuted}}>Last updated: {LAST_UPDATED}</p>
 
       <p>
         I built Inkweave as a free fan project, and I collect as little as possible. You can browse cards,
@@ -46,18 +48,32 @@ export function PrivacyPage() {
           recent searches are saved only in your browser and never sent to me. You can clear them any time.
         </li>
         <li>
-          <strong>If you sign in (optional).</strong> Signing in with Google or Discord is only needed to save
-          decks to an account. If you do, I receive basic account identity from that provider (such as your
-          email and a provider id). Your session is stored in your browser, not in a cookie.
-          {/* LAUNCH STEP: once friends is on in production, drop this condition (and the date's)
+          <strong>If you sign in (optional).</strong> Signing in with Google or Discord is only needed for the
+          parts of Inkweave that use an account. If you do, I receive basic account identity from that
+          provider (such as your email and a provider id). Your account also gets a made-up public name and
+          handle, such as Emerald Princess 330, which anyone can see. You can change the name. Your session
+          is stored in your browser, not in a cookie.
+          {/* LAUNCH STEP (Phase 2 of #878): once the collection is on in production, drop this
+              condition so the sentence always shows. Turning the flag off later keeps every
+              collection in the database, and the policy must keep describing them. */}
+          {SHOW_COLLECTION && (
+            <>
+              {' '}
+              If you keep your collection on Inkweave, I store it with your account: how many copies of each
+              card you own, normal and foil, so it&rsquo;s there on any device you sign in on. Only you can see
+              it. A copy also stays in this browser, even after you sign out. Clearing your collection on your
+              account page deletes both.
+            </>
+          )}
+          {/* LAUNCH STEP (Phase 2 of #878): once friends is on in production, drop this condition
               so the sentence always shows. Turning the flag off later keeps every code and
               friendship in the database, and the policy must keep describing them. */}
           {SHOW_FRIENDS && (
             <>
               {' '}
               Opening your account page also gives you a friend code, which I store. If you add friends, I store
-              who your friends and friend requests are. Your friends see your display name and handle, which
-              anyone can see.
+              who your friends and friend requests are. To stop anyone guessing codes, I also note when you try
+              one. Your friends see your public name and handle.
             </>
           )}
         </li>
