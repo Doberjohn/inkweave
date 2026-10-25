@@ -1,5 +1,5 @@
-import {forwardRef, type CSSProperties, type ReactNode} from 'react';
-import {VirtuosoGrid} from 'react-virtuoso';
+import {useLayoutEffect, useRef, useState, type ReactNode, type RefObject} from 'react';
+import {flushSync} from 'react-dom';
 import type {CardPrinting, LorcanaCard} from 'inkweave-synergy-engine';
 import {cardPath} from 'inkweave-synergy-engine/card';
 import {CardTile} from './CardTile';
@@ -23,77 +23,6 @@ interface BrowseCardGridProps {
   hasCardPage?: (card: LorcanaCard) => boolean;
 }
 
-interface ListContainerProps {
-  style?: CSSProperties;
-  children?: ReactNode;
-}
-
-interface ListContainerConfig {
-  paddingX: number;
-  minColWidth: number;
-}
-
-interface GridLayout extends ListContainerConfig {
-  /**
-   * The tiles above the fold, measured on /browse. VirtuosoGrid draws no tile until it has
-   * measured its box, so its first render draws these, and the app's first frame after the
-   * prerendered page keeps that page's tiles (#915).
-   */
-  foldTiles: number;
-}
-
-/** A phone's grid: 2 columns by 3 rows above the fold at 390x844. */
-const PHONE_GRID: GridLayout = {
-  paddingX: SPACING.lg,
-  minColWidth: LAYOUT.cardGridMinWidthMobile,
-  foldTiles: 6,
-};
-
-/** A wider screen's: 5 columns by 3 rows above the fold at 1440x900. */
-const DESKTOP_GRID: GridLayout = {
-  paddingX: BROWSE_GUTTER,
-  minColWidth: LAYOUT.cardGridMinWidth,
-  foldTiles: 15,
-};
-
-// CSS Grid handles responsive column count via auto-fill + minmax.
-// IMPORTANT: VirtuosoGrid imperatively writes BOTH `paddingTop` (offset for
-// items above the rendered range) and `paddingBottom` (offset below) for its
-// virtual scroll positioning. Setting either here would block the effect cycle:
-// hardcoded paddingTop pins items to the top of the List instead of letting
-// them shift to their virtual row. Only horizontal padding is safe to set.
-// The room above and below the cards comes from `GridHeader` and `GridFooter`.
-const createListContainer = ({paddingX, minColWidth}: ListContainerConfig) =>
-  forwardRef<HTMLDivElement, ListContainerProps>(function ListContainer(
-    {style, children},
-    ref,
-  ) {
-    return (
-      <div
-        ref={ref}
-        style={{
-          ...style,
-          display: 'grid',
-          gridTemplateColumns: `repeat(auto-fill, minmax(${minColWidth}px, 1fr))`,
-          gap: SPACING.md,
-          paddingLeft: paddingX,
-          paddingRight: paddingX,
-        }}>
-        {children}
-      </div>
-    );
-  });
-
-/**
- * The room above the first row, inside the scroller: a pointed-at card's glow reaches past the
- * tile, and the scroller clips whatever lies outside it. Above the scroller, in the toolbar's
- * padding, the top of the first row's glow was cut off.
- */
-const GridHeader = () => <div style={{height: BROWSE_ROW_TOP}} />;
-
-/** The room under the last row, for its glow too: the grid ends level with the panels. */
-const GridFooter = () => <div style={{height: SPACING.xxl}} />;
-
 /** The room around "No cards match", past the spacing scale's top step (SPACING.xxxl, 32). */
 const NO_MATCH_PADDING = 64;
 
@@ -113,12 +42,11 @@ export function BrowseCardGrid({
   hasCardPage = everyCardHasAPage,
 }: BrowseCardGridProps) {
   const {isMobile} = useResponsive();
-  const grid = isMobile ? PHONE_GRID : DESKTOP_GRID;
-  const ListContainer = createListContainer(grid);
+  const paddingX = isMobile ? SPACING.lg : BROWSE_GUTTER;
 
   if (isLoading) {
-    // The loaded grid's room above its first row (`GridHeader`) and its gutters (#914).
-    return <CardGridSkeleton padding={`${BROWSE_ROW_TOP}px ${grid.paddingX}px 0`} />;
+    // The loaded grid's room above its first row (`BROWSE_ROW_TOP`) and its gutters (#914).
+    return <CardGridSkeleton padding={`${BROWSE_ROW_TOP}px ${paddingX}px 0`} />;
   }
 
   const displayedCards = cards.slice(0, LAYOUT.maxDisplayedCards);
@@ -141,27 +69,189 @@ export function BrowseCardGrid({
 
   return (
     <RenderProfiler id="BrowseCardGrid">
-      <VirtuosoGrid
-        totalCount={displayedCards.length}
-        initialItemCount={Math.min(displayedCards.length, grid.foldTiles)}
-        components={{List: ListContainer, Header: GridHeader, Footer: GridFooter}}
-        itemContent={(index) => {
-          const card = displayedCards[index];
+      <TileRows
+        cards={displayedCards}
+        paddingX={paddingX}
+        minColWidth={isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth}
+        renderTile={(card, index) => (
           // No `isSelected`: a card without a page is a plain button that opens it, not a toggle.
-          return (
-            <CardTile
-              card={card}
-              href={hasCardPage(card) ? tilePath(card) : undefined}
-              onSelect={onCardSelect}
-              variant="minimal"
-              priority={index < 6}
-              useSmallImage
-              printing={printingFor?.(card)}
-            />
-          );
-        }}
-        style={{height: '100%'}}
+          <CardTile
+            key={card.id}
+            card={card}
+            href={hasCardPage(card) ? tilePath(card) : undefined}
+            onSelect={onCardSelect}
+            variant="minimal"
+            priority={index < EAGER_TILES}
+            useSmallImage
+            printing={printingFor?.(card)}
+          />
+        )}
       />
     </RenderProfiler>
+  );
+}
+
+/**
+ * Tiles whose art loads at once, since the page's largest paint is one of them: the first six,
+ * a phone's first three rows. The rest load as they near the view.
+ */
+const EAGER_TILES = 6;
+
+/** A tile's width over its height: CardTile's `aspectRatio`. */
+const TILE_ASPECT = 0.72;
+
+/** Rows drawn past each edge of the view: keyboard Tab moves into one, and focus scrolls it in. */
+const OVERSCAN_ROWS = 1;
+
+/** The gap between tiles, across and down. */
+const TILE_GAP = SPACING.md;
+
+interface ScrollerView {
+  width: number;
+  top: number;
+  height: number;
+}
+
+/**
+ * The scroller's width, scroll offset and height: read before paint, then on scroll and resize.
+ * A scroll is drawn inside its own event, as react-virtuoso drew it: a render left for later
+ * reaches the screen a frame after the scroll, and a fast scroll shows blank rows meanwhile. A
+ * hidden scroller measures 0 wide and keeps its last view: the prerender crawl marks a phone
+ * page's #root before it reads it, which takes the root out of the layout there (#915).
+ */
+function useScrollerView(ref: RefObject<HTMLElement | null>): ScrollerView {
+  const [view, setView] = useState<ScrollerView>({width: 0, top: 0, height: 0});
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const read = () => {
+      if (el.clientWidth === 0) return;
+      setView({width: el.clientWidth, top: el.scrollTop, height: el.clientHeight});
+    };
+    const onScroll = () => flushSync(read);
+    read();
+    if (typeof ResizeObserver === 'undefined') return;
+    el.addEventListener('scroll', onScroll, {passive: true});
+    const observer = new ResizeObserver(read);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      observer.disconnect();
+    };
+  }, [ref]);
+  return view;
+}
+
+/** The tiles a render draws, as [first, end), the grid's columns, and the undrawn rows' room. */
+interface DrawnTiles {
+  first: number;
+  end: number;
+  columns: string;
+  roomAbove: number;
+  roomBelow: number;
+}
+
+/** What sizes a tile: the gutters either side of the grid, and a column's narrowest width. */
+interface TileSizing {
+  paddingX: number;
+  minColWidth: number;
+}
+
+/**
+ * The tiles to draw before the scroller is measured: the first `EAGER_TILES`. React creates
+ * their images as it renders the grid, often well before the commit that measures the scroller,
+ * and the browser starts loading their art then, so it can be in hand as they mount and show
+ * with no fade, as react-virtuoso's first tiles did (#931). A browser measures the scroller
+ * before its first paint unless it is hidden, and auto-fill lays these tiles out in the columns
+ * `tilesInView` counts. jsdom never measures it, so there every tile is drawn.
+ */
+function firstTiles(count: number, sizing: TileSizing): DrawnTiles {
+  return {
+    first: 0,
+    end: typeof ResizeObserver === 'undefined' ? count : EAGER_TILES,
+    columns: `repeat(auto-fill, minmax(${sizing.minColWidth}px, 1fr))`,
+    roomAbove: 0,
+    roomBelow: 0,
+  };
+}
+
+/**
+ * The tiles of the rows in view and `OVERSCAN_ROWS` past each edge. Every tile is the same
+ * size, so a row's height follows from the scroller's width.
+ */
+function tilesInView(view: ScrollerView, count: number, sizing: TileSizing): DrawnTiles {
+  const inner = view.width - 2 * sizing.paddingX;
+  const columns = Math.max(1, Math.floor((inner + TILE_GAP) / (sizing.minColWidth + TILE_GAP)));
+  const rowHeight = (inner - (columns - 1) * TILE_GAP) / columns / TILE_ASPECT + TILE_GAP;
+  const rowCount = Math.ceil(count / columns);
+  const [firstRow, endRow] = rowWindow(view, rowHeight, rowCount);
+  return {
+    first: firstRow * columns,
+    end: endRow * columns,
+    columns: `repeat(${columns}, 1fr)`,
+    roomAbove: firstRow * rowHeight,
+    roomBelow: (rowCount - endRow) * rowHeight,
+  };
+}
+
+/**
+ * The rows to draw, as [first, end): those in view and `OVERSCAN_ROWS` past each edge. A shorter
+ * list (a filter, scrolled far down) lowers the grid, and the browser pulls the scroller's offset
+ * back within it: the rows are those of the offset it will have, so they show at once.
+ */
+function rowWindow(view: ScrollerView, rowHeight: number, rowCount: number): [number, number] {
+  const height = BROWSE_ROW_TOP + rowCount * rowHeight - TILE_GAP + SPACING.xxl;
+  const top = Math.max(0, Math.min(view.top, height - view.height));
+  const clamp = (row: number, min: number) => Math.min(rowCount, Math.max(min, row));
+  const first = clamp(Math.floor((top - BROWSE_ROW_TOP) / rowHeight) - OVERSCAN_ROWS, 0);
+  const end = clamp(
+    Math.ceil((top + view.height - BROWSE_ROW_TOP) / rowHeight) + OVERSCAN_ROWS,
+    first,
+  );
+  return [first, end];
+}
+
+/**
+ * The scroller and the rows of tiles near its view: the rest are drawn as they scroll near, and
+ * the grid's padding holds their room.
+ */
+function TileRows({
+  cards,
+  paddingX,
+  minColWidth,
+  renderTile,
+}: {
+  cards: LorcanaCard[];
+  paddingX: number;
+  minColWidth: number;
+  renderTile: (card: LorcanaCard, index: number) => ReactNode;
+}) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const view = useScrollerView(scrollerRef);
+  const sizing = {paddingX, minColWidth};
+  const tiles =
+    view.width > 0 ? tilesInView(view, cards.length, sizing) : firstTiles(cards.length, sizing);
+
+  return (
+    <div
+      ref={scrollerRef}
+      data-testid="browse-grid-scroller"
+      style={{height: '100%', overflowY: 'auto'}}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: tiles.columns,
+          gap: TILE_GAP,
+          // Room above the first row and under the last, inside the scroller: a pointed-at
+          // card's glow reaches past its tile, and the scroller clips whatever lies outside it.
+          // The last row ends level with the docked panels. Undrawn rows add their own height.
+          paddingTop: BROWSE_ROW_TOP + tiles.roomAbove,
+          paddingBottom: SPACING.xxl + tiles.roomBelow,
+          paddingLeft: paddingX,
+          paddingRight: paddingX,
+        }}>
+        {cards.slice(tiles.first, tiles.end).map((card, i) => renderTile(card, tiles.first + i))}
+      </div>
+    </div>
   );
 }

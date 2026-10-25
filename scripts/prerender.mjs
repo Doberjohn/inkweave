@@ -228,7 +228,7 @@ export function isCleanShell(html, shellTitle) {
 
 /**
  * Routes whose real content lands AFTER their <Seo> title, so the title check passes too
- * early (#584). /browse: VirtuosoGrid mounts no tiles until it has measured its container,
+ * early (#584). /browse: the grid draws no tiles until it has measured its scroller,
  * and tiles are what start the image requests, so `networkidle` can settle before one card
  * link exists. These routes also wait for their selector, and any failed attempt re-crawls
  * the route on a fresh page, READY_ATTEMPTS attempts in all. The /browse selector is what

@@ -310,8 +310,8 @@ test.describe('SEO', () => {
   });
 
   /**
-   * A hub must emit a real anchor per card, not a virtualized window. BrowseCardGrid's
-   * Virtuoso only mounts visible rows, so swapping it in here would render correctly in a
+   * A hub must emit a real anchor per card, not a virtualized window. BrowseCardGrid only
+   * draws the rows near its view, so swapping it in here would render correctly in a
    * browser while emitting a fraction of the links to a crawler — silently defeating the
    * only thing these pages exist to do.
    */

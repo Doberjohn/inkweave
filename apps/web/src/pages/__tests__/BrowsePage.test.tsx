@@ -1,4 +1,3 @@
-import type {ReactNode} from 'react';
 import {afterEach, beforeEach, describe, it, expect, vi} from 'vitest';
 import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
@@ -41,14 +40,6 @@ vi.mock('../../shared/contexts/CardModalContext', () => ({
 vi.mock('../../features/collection/collectionChunks', () => {
   fixtures.chunksImported = true;
   return {loadPreCoreSearchCards: fixtures.loadPreCoreSearchCards};
-});
-// jsdom lays nothing out, so the real grid renders no tiles: this one renders them all.
-vi.mock('react-virtuoso', async () => {
-  const {createElement, Fragment} = await import('react');
-  return {
-    VirtuosoGrid: ({totalCount, itemContent}: {totalCount: number; itemContent: (index: number) => ReactNode}) =>
-      createElement(Fragment, null, ...Array.from({length: totalCount}, (_, index) => itemContent(index))),
-  };
 });
 vi.mock('../../shared/components', async () => {
   const actual = await vi.importActual('../../shared/components');

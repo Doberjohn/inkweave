@@ -121,7 +121,7 @@ function BrowseContentSection({
       {/* The toolbar serves BOTH modes: in collection mode its filters decide which
           binder slots stay lit rather than which cards are listed. */}
       <BrowseToolbar {...toolbarProps} />
-      {/* Card grid or binder between the docked panels; VirtuosoGrid scrolls inside. */}
+      {/* Card grid or binder between the docked panels; the grid scrolls inside. */}
       <DockedPanelsRow left={sidePanel} right={setPanel}>
         <ErrorBoundary>
           {binder ?? (

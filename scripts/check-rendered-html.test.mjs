@@ -525,6 +525,21 @@ describe('findOffenders', () => {
     expect(offenders.map((o) => o.reason)).toEqual(['links no /card/ URLs (empty shell?)']);
   });
 
+  it('fails a /browse phone capture that links no card URLs (#931)', () => {
+    seedGoodBuild();
+    // Read while the phone page's grid drew no rows.
+    fs.writeFileSync(
+      path.join(dist, 'browse', 'index.html'),
+      '<html><body><div id="root" data-prerender-route="/browse">' +
+        `<a href="/card/1989/elsa-snow-queen">Elsa</a></div>${phoneCapture('<h1>Browse</h1>')}` +
+        '</body></html>',
+    );
+    const offenders = findOffenders(dist, [CARD], cardPath);
+    expect(offenders.map((o) => o.reason)).toEqual([
+      'its phone capture links no /card/ URLs, so a phone shows no cards (#931)',
+    ]);
+  });
+
   it('distinguishes a wrong target path from a failed crawl', () => {
     const offenders = findOffenders(path.join(dist, 'no-such-dir'), [CARD], cardPath);
     expect(offenders).toHaveLength(1);
