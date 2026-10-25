@@ -1,4 +1,5 @@
-import {useRef, useState, type MouseEvent, type PointerEvent} from 'react';
+import {useRef, useState, type MouseEvent, type PointerEvent, type RefObject} from 'react';
+import {useTouchHold} from './useTouchHold';
 
 /** How far, in the card's own pixels, a pointer moves across before it drags the card. */
 const DRAG_START_PX = 6;
@@ -98,16 +99,18 @@ function thrown(drag: Drag, width: number, scale: number): boolean {
  * behind the card, and a swipe turns it as on a phone). The card follows the drag, and a drag
  * let go past a fifth of the card, or flicked, throws it; anything less springs back, and so does
  * a drag that rests before it is let go. A touch that moves down first is left to the page's
- * scroll (the caller's `touch-action: pan-y`).
+ * scroll (the caller's `touch-action: pan-y`), and once the card follows a finger the touch is
+ * the card's (`useTouchHold`): on an iPhone a drift down would scroll the page and drop the card.
  *
  * `dx` is the drag's offset in the card's own pixels, null when none is under way. Spread
- * `handlers` on the card's box: they also swallow the click a drag ends with, which would
- * otherwise enlarge the card or turn a peek.
+ * `handlers` on the card's box, the element `ref` holds: they also swallow the click a drag ends
+ * with, which would otherwise enlarge the card or turn a peek.
  */
-export function useCardThrow({width, enabled, onThrow}: CardThrowOptions) {
+export function useCardThrow(ref: RefObject<HTMLElement | null>, {width, enabled, onThrow}: CardThrowOptions) {
   const dragRef = useRef<Drag | null>(null);
   const swallowClickRef = useRef(false);
   const [dx, setDx] = useState<number | null>(null);
+  useTouchHold(ref, {enabled, holding: () => dragRef.current?.moved === true});
 
   const onPointerDown = (e: PointerEvent<HTMLElement>) => {
     swallowClickRef.current = false;

@@ -296,6 +296,13 @@ describe('PrintingCarousel throw', () => {
     point('pointerUp', {dx, time: ms, pointerType});
   }
 
+  /** Whether a finger's move on the card now is kept from the page's scroll (useTouchHold). */
+  function touchMoveKept() {
+    const move = new Event('touchmove', {bubbles: true, cancelable: true});
+    stack().dispatchEvent(move);
+    return move.defaultPrevented;
+  }
+
   it('throws the card to the next printing on a swipe past a fifth of it, and records it', () => {
     const onSettle = vi.fn();
     render(<Turnable onSettle={onSettle} />);
@@ -394,6 +401,21 @@ describe('PrintingCarousel throw', () => {
     point('pointerMove', {dx: -150, dy: 40, time: 60});
 
     expect(poseOf(0).x).toBe(0);
+    expect(touchMoveKept(), "the touch, the page's scroll's").toBe(false);
+  });
+
+  // An iPhone scrolls the page as a dragging finger drifts down, wherever the touch set out, and
+  // the scroll's pointercancel dropped the card (owner, 2026-10-25).
+  it("keeps a finger's touch from the page's scroll once the card follows it, until it lets go", () => {
+    render(<Turnable />);
+
+    point('pointerDown', {});
+    point('pointerMove', {dx: -3, time: 10});
+    expect(touchMoveKept(), 'before the card follows').toBe(false);
+    point('pointerMove', {dx: -40, dy: 30, time: 40});
+    expect(touchMoveKept(), 'as it follows, drifting down').toBe(true);
+    point('pointerUp', {dx: -40, dy: 30, time: 40});
+    expect(touchMoveKept(), 'once let go').toBe(false);
   });
 
   // A mouse never scrolls the page by dragging (cubic, PR #902).

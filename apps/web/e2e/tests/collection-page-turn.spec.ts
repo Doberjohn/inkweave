@@ -3,6 +3,7 @@ import {test, expect} from '../fixtures';
 import {newestCoreSet, setCards} from '../helpers/cardData';
 import {binder, type Entries, signInAsCollector} from '../helpers/collector';
 import {edges, middle} from '../helpers/screen';
+import {fingerPath, keptTouchMoves, swipeThrough, watchTouchMoves, type Point} from '../helpers/touch';
 import {FLICK_SPEED, SLOP} from '../../src/features/cards/components/pageTurnMath';
 
 /**
@@ -759,15 +760,16 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
   const lonePage = (page: Page) => binder(page).getByRole('group', {name: 'Page', exact: true});
 
   /** A finger's swipe through Chromium's protocol, in ten moves a frame apart. */
-  async function swipe(page: Page, cdp: CDPSession, [x0, y0]: [number, number], [x1, y1]: [number, number]) {
-    await cdp.send('Input.dispatchTouchEvent', {type: 'touchStart', touchPoints: [{x: x0, y: y0}]});
-    for (let i = 1; i <= 10; i++) {
-      const point = {x: x0 + ((x1 - x0) * i) / 10, y: y0 + ((y1 - y0) * i) / 10};
-      await cdp.send('Input.dispatchTouchEvent', {type: 'touchMove', touchPoints: [point]});
-      await pause(page, 16);
-    }
-    await cdp.send('Input.dispatchTouchEvent', {type: 'touchEnd', touchPoints: []});
-  }
+  const swipe = (page: Page, cdp: CDPSession, [x0, y0]: Point, [x1, y1]: Point) =>
+    swipeThrough(page, cdp, fingerPath([x0, y0], [10, [(x1 - x0) / 10, (y1 - y0) / 10]]));
+
+  /** How far the page, the window or a scroller round the binder, has scrolled down. */
+  const scrolledDown = (page: Page) =>
+    page.evaluate(() => {
+      let sum = window.scrollY;
+      for (let el = document.querySelector('[aria-label="Binder"]'); el; el = el.parentElement) sum += el.scrollTop;
+      return sum;
+    });
 
   test('Next swings the page away, Previous swings the page before back in over it, with no scroll sideways', async ({
     page,
@@ -865,6 +867,33 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     await expect(cardWindow(page)).toHaveCount(0);
   });
 
+  test("a finger's swipe across the page turns it though the finger drifts down, each move kept from the page's scroll", async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', "Touch goes through Chromium's DevTools protocol");
+    await page.addInitScript(watchTouchMoves);
+    await openBinder(page, PHONE);
+    const cdp = await page.context().newCDPSession(page);
+    const box = await edges(lonePage(page));
+    const y = box.top + (box.bottom - box.top) / 3;
+    const step = (box.right - box.left - 40) / 10;
+    const before = await scrolledDown(page);
+    await keptTouchMoves(page);
+
+    // Halfway across, then on to 20px inside the page's left edge as the finger drifts 100px
+    // down. On an iPhone the drift started the page's scroll, which cancelled the turn (2026-10-25).
+    await swipeThrough(page, cdp, fingerPath([box.right - 20, y], [5, [-step, 0]], [5, [-step, 20]]));
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[12].fullName);
+    // Every move is a tenth of the page or more from the press, past the slop that lifts the page.
+    const kept = await keptTouchMoves(page);
+    expect(kept.length, 'the moves the page saw').toBeGreaterThan(5);
+    expect(kept, 'each kept from the scroll').toEqual(kept.map(() => true));
+    expect(await scrolledDown(page), 'how far the page scrolled down').toBe(before);
+    await expect(sheets(page)).toHaveCount(0);
+    await expect(cardWindow(page)).toHaveCount(0);
+  });
+
   test('a mostly vertical swipe scrolls the page and turns nothing', async ({page, browserName}) => {
     test.skip(browserName !== 'chromium', "Touch goes through Chromium's DevTools protocol");
     await openBinder(page, PHONE);
@@ -872,17 +901,11 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     const box = await edges(lonePage(page));
     const x = middle(box);
     const y = box.top + (box.bottom - box.top) / 2;
-    const scrolledDown = () =>
-      page.evaluate(() => {
-        let sum = window.scrollY;
-        for (let el = document.querySelector('[aria-label="Binder"]'); el; el = el.parentElement) sum += el.scrollTop;
-        return sum;
-      });
-    const before = await scrolledDown();
+    const before = await scrolledDown(page);
     await clearTurns(page);
 
     await swipe(page, cdp, [x, y + 100], [x - 10, y - 150]);
-    await expect.poll(scrolledDown, {message: 'how far the page scrolled down'}).toBeGreaterThan(before + 50);
+    await expect.poll(() => scrolledDown(page), {message: 'how far the page scrolled down'}).toBeGreaterThan(before + 50);
     await pause(page, 100);
     expect((await turnLog(page)).turns, 'sheets drawn').toEqual([]);
     await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[0].fullName);
