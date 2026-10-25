@@ -40,3 +40,21 @@ export const BOARD = SPACING.section;
  * leather texture would compete with the pages and need its own asset.
  */
 export const SPINE_WIDTH = SPACING.xxl;
+
+/** How far a phone's lone board sits in from the binder's sides (`SingleView`). */
+export const LONE_INSET = SPACING.sm;
+
+/** How far it sits below the binder's top over its page map (#969): half its room over arrows. */
+export const LONE_TOP_OVER_MAP = SPACING.xs;
+
+/**
+ * How tall a phone's lone board draws in `width`, a CSS length, as CSS (#969): three rows of
+ * cards as wide as the page's three columns leave, with the page's padding and gaps and the
+ * board round them. The page is width-driven, so this is all its height; the binder's loading
+ * frame sizes its page by it, in container units.
+ */
+export function loneBoardHeight(width: string): string {
+  const across = 2 * BOARD + SPINE_WIDTH + 2 * PAGE_PADDING + (LONE_PAGE.columns - 1) * POCKET_GAP;
+  const down = 2 * BOARD + 2 * PAGE_PADDING + (LONE_PAGE.rows - 1) * POCKET_GAP;
+  return `calc(${down}px + ${LONE_PAGE.rows} * (${width} - ${across}px) / ${LONE_PAGE.columns} / ${CARD_ASPECT})`;
+}

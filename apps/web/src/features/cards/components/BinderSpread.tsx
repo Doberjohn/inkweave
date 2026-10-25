@@ -18,7 +18,9 @@ import {usePrefersReducedMotion} from '../../../shared/utils/prefersReducedMotio
 import {
   BOARD,
   CARD_ASPECT,
+  LONE_INSET,
   LONE_PAGE,
+  LONE_TOP_OVER_MAP,
   PAGE_PADDING,
   PER_LONE_PAGE,
   POCKET_GAP,
@@ -734,7 +736,7 @@ function SingleView({start, renderSlot, arrows, footer, sheets, turn}: ViewProps
   return (
     <>
       {/* Over a footer, half the room above the board: the map's band needs it (#969). */}
-      <div style={{padding: `${footer ? SPACING.xs : SPACING.sm}px ${SPACING.sm}px 0`}}>
+      <div style={{padding: `${footer ? LONE_TOP_OVER_MAP : SPACING.sm}px ${LONE_INSET}px 0`}}>
         <Board sheets={sheets} turn={turn} single>
           <Spine />
           <BinderPage

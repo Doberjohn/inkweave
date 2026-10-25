@@ -1,6 +1,7 @@
 import type {CSSProperties} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
+import {LONE_INSET, LONE_TOP_OVER_MAP, loneBoardHeight} from '../cards/components/binderGeometry';
 import {useResponsive} from '../../shared/hooks/useResponsive';
 import {FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
 import {BAR, NUMBERS_STYLE, SHEET_NUMBERS_STYLE, sectionStyle} from './binderLayout';
@@ -26,8 +27,15 @@ const SHOWS_HEIGHT = 42;
  * lets it be, and on a wide, short window as tall (the section is a size container).
  */
 const SPREAD_SHAPE: CSSProperties = {width: 'min(100%, 200cqh)', aspectRatio: '2'};
-/** A phone's lone page with the spine beside it, measured at 390 wide: 374x346. */
-const PAGE_SHAPE: CSSProperties = {width: '100%', aspectRatio: '374 / 346'};
+/**
+ * A phone's lone board, as tall as the binder draws it at the section's width (#969): the section
+ * is a size container, so `100cqw` is that width, and the board comes in from both its sides.
+ */
+const LONE_BOARD: CSSProperties = {height: loneBoardHeight(`100cqw - ${2 * LONE_INSET}px`)};
+/** The board's room in the section, as the binder's lone page has it over its map (`SingleView`). */
+const LONE_ROOM: CSSProperties = {padding: `${LONE_TOP_OVER_MAP}px ${LONE_INSET}px 0`};
+/** A phone's page map under the board: 4px, then a mini page 41 tall (`PageMap` in BinderSpreadMap.tsx). */
+const MAP_BAND_HEIGHT = 45;
 
 const COLUMN: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.sm};
 
@@ -40,8 +48,24 @@ function Block({height, style}: {height?: number; style?: CSSProperties}) {
 }
 
 /**
- * The binder section while its chunk downloads: the section's box (`sectionStyle`), holding one
- * placeholder in the shape of what arrives, a spread, or on a phone a page.
+ * A phone's page while the chunk downloads (#969): the board in its place over the map, and the
+ * map's band under it, empty, so the binder that replaces them draws its page and map in their
+ * boxes. One box, so the section's column gap never comes between the two.
+ */
+function LonePageFallback() {
+  return (
+    <div>
+      <div style={LONE_ROOM}>
+        <Block style={LONE_BOARD} />
+      </div>
+      <div data-testid="binder-map-band" style={{height: MAP_BAND_HEIGHT}} />
+    </div>
+  );
+}
+
+/**
+ * The binder section while its chunk downloads: the section's box (`sectionStyle`), holding the
+ * shape of what arrives, a spread, or on a phone a page over its map.
  */
 export function BinderChunkFallback() {
   const {isMobile} = useResponsive();
@@ -51,7 +75,7 @@ export function BinderChunkFallback() {
       aria-busy="true"
       aria-label="Loading your binder"
       style={{...sectionStyle(isMobile, docked), ...COLUMN, containerType: 'size'}}>
-      <Block style={isMobile ? PAGE_SHAPE : SPREAD_SHAPE} />
+      {isMobile ? <LonePageFallback /> : <Block style={SPREAD_SHAPE} />}
     </section>
   );
 }

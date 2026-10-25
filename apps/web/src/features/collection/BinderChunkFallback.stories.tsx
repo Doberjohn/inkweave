@@ -33,7 +33,7 @@ type Story = StoryObj<typeof meta>;
 /** At 1024 px and up the section is the docked binder's: one spread. */
 export const Desktop: Story = {};
 
-/** A phone: one page, under the row the page draws above the section (#969). */
+/** A phone (#969): the board of a page of nine, and the empty band its map takes under it. */
 export const Mobile: Story = {
   globals: {viewport: {value: 'mobile1'}},
 };

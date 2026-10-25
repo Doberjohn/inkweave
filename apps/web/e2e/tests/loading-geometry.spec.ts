@@ -4,9 +4,12 @@ import {E2E_FRIEND_CODE, holdSupabasePath} from '../fixtures/supabaseStub';
 import {
   everyCardPage,
   longestPlainNamedCoreCharacter,
+  newestCoreSet,
+  setCards,
   shortestNamedCardWithSynergies,
   shortestNamedCoreCharacter,
 } from '../helpers/cardData';
+import {binder, board, COLLECTIONS_PATH, type Entries, signInAsCollector} from '../helpers/collector';
 import {serveFriends, type Player} from '../helpers/friends';
 import {holdLazyModule} from '../helpers/lazyModule';
 import {signInAs} from '../helpers/session';
@@ -423,4 +426,58 @@ test("the account page's Collection section holds still when the friends load", 
   releaseFriends();
   await expect(friends.getByText("No friends yet. Share your code, or enter a friend's.")).toBeVisible();
   expectSameBox(await boxOf(collection), friendsLoading, ['y']);
+});
+
+/** The newest set's first three cards, held: a page of cards and gaps, as a collector's binder has. */
+const HELD: Entries = Object.fromEntries(
+  setCards(newestCoreSet())
+    .slice(0, 3)
+    .map((card) => [String(card.id), {normal: 1, foil: 0}]),
+);
+
+/**
+ * A phone's binder is one page of nine over its map (#969). While the binder's code downloads,
+ * its section holds the board, sized from the section's width, and the band the map takes; while
+ * its cards load, the binder draws its board with empty pockets over an empty map. The binder
+ * then draws its page and map in both frames' boxes.
+ */
+test("on a phone, the binder's loading frames hold the page and its map where the binder draws them", async ({
+  page,
+}, testInfo) => {
+  test.skip(!isPhone(testInfo.project.name), "A phone's lone page");
+  const binderCode = await holdLazyModule(page, 'CollectionBinderSection');
+  const releaseCards = await hold(page, /\/data\/collection\//);
+  await signInAsCollector(page, HELD);
+  // The session is back once the sync reads the account's copy: a phone has no header to say so.
+  const synced = page.waitForRequest(
+    (request) => new URL(request.url()).pathname === COLLECTIONS_PATH && request.method() === 'GET',
+  );
+  await page.goto('/browse');
+  await synced;
+  await page.getByRole('button', {name: 'Show my collection'}).click();
+  await expect
+    .poll(binderCode.caught, {message: "the binder's chunk never reached the hold", timeout: 10000})
+    .toBeGreaterThan(0);
+  const frame = page.getByRole('region', {name: 'Loading your binder'});
+  await expect(frame).toBeVisible();
+  const codeLoading = {
+    board: await boxOf(frame.locator('.react-loading-skeleton')),
+    map: await boxOf(frame.getByTestId('binder-map-band')),
+  };
+
+  binderCode.release();
+  await expect(frame).toHaveCount(0);
+  // The map drawn while the cards load is out of the accessibility tree: it holds no cards yet.
+  const loadingMap = binder(page).locator('[inert]');
+  await expect(loadingMap, 'the loading binder draws its map').toBeVisible();
+  const cardsLoading = {board: await boxOf(board(page)), map: await boxOf(loadingMap)};
+
+  releaseCards();
+  const map = binder(page).getByRole('navigation', {name: 'Binder pages'});
+  await expect(map).toBeVisible();
+  const loaded = {board: await boxOf(board(page)), map: await boxOf(map.locator('..'))};
+  expectSameBox(loaded.board, codeLoading.board);
+  expectSameBox(loaded.map, codeLoading.map);
+  expectSameBox(loaded.board, cardsLoading.board);
+  expectSameBox(loaded.map, cardsLoading.map);
 });
