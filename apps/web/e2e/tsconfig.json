@@ -4,7 +4,8 @@
     "target": "ES2023",
     "lib": ["ES2023", "DOM"],
     "module": "ESNext",
-    "types": ["node"],
+    // The specs import the app's layout constants, and theme.ts names React.CSSProperties.
+    "types": ["node", "react"],
     "skipLibCheck": true,
 
     /* Bundler mode */

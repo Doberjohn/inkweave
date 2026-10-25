@@ -1,6 +1,8 @@
+import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import AxeBuilder from '@axe-core/playwright';
 import {startClockInRevealSeason} from '../helpers/revealSeason';
+import {LAYOUT} from '../../src/shared/constants/theme';
 
 test.describe('Accessibility — axe audits', () => {
   // Desktop-only — mobile viewports have different layouts tested elsewhere
@@ -159,4 +161,77 @@ test.describe('Accessibility: reflow at 320px', () => {
       expect(strays).toBe(0);
     });
   }
+});
+
+/**
+ * The card that has focus (its link and name), and whether it shows in the grid's scroller; null
+ * once focus has left the grid. Read two frames on: focus scrolls the grid at once, but the
+ * scroll event that draws the rows past the new view fires at the next frame. A person's presses
+ * always leave it that frame; Playwright's come faster. One call waits and reads: each call is a
+ * round trip, and WebKit's take about 370ms a press in CI.
+ */
+function focusedCard(page: Page) {
+  return page.evaluate(async () => {
+    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+    const tile = document.activeElement?.closest('[data-testid="card-tile"]');
+    const scroller = tile?.closest('[data-testid="browse-grid-scroller"]');
+    if (!tile || !scroller) return null;
+    const t = tile.getBoundingClientRect();
+    const s = scroller.getBoundingClientRect();
+    return {
+      card: `${tile.getAttribute('href')} ${tile.getAttribute('aria-label')}`,
+      inView: t.bottom > s.top && t.top < s.bottom,
+    };
+  });
+}
+
+/**
+ * Presses `key` from the focused card until focus leaves the grid: the cards it landed on, and
+ * those of them out of view.
+ */
+async function walkCards(page: Page, key: string) {
+  const cards: string[] = [];
+  const hidden: string[] = [];
+  for (let focused = await focusedCard(page); focused; focused = await focusedCard(page)) {
+    // Chromium takes focus out of the page at a press past its last link; Playwright's Firefox
+    // leaves focus on that link. Either ends the walk.
+    if (focused.card === cards.at(-1)) break;
+    cards.push(focused.card);
+    if (!focused.inView) hidden.push(focused.card);
+    if (cards.length > LAYOUT.maxDisplayedCards) break;
+    await page.keyboard.press(key);
+  }
+  return {cards, hidden};
+}
+
+/**
+ * Keyboard access to Browse's cards (WCAG 2.1.1): the grid draws only the rows near its view, so
+ * Tab must keep finding cards past them. Under react-virtuoso focus left the grid after the rows
+ * on screen (15 cards at 1440×900) and fell to the page itself. The grid now draws a row past
+ * each edge, and focusing a card scrolls it into view, which draws the next row (#931).
+ */
+test.describe('Accessibility: keyboard', () => {
+  test("Tab walks Browse's cards to the last one shown, and Shift+Tab walks back", async ({
+    page,
+  }) => {
+    // About 400 presses, each followed by two frames: WebKit's take 2.5 minutes in CI.
+    test.setTimeout(240_000);
+    await page.goto('/browse');
+    await page.getByTestId('card-tile').first().focus();
+
+    // Tab lands on each card in turn, every one in view, until focus leaves the last one.
+    const forward = await walkCards(page, 'Tab');
+    expect(forward.cards).toHaveLength(LAYOUT.maxDisplayedCards);
+    expect(new Set(forward.cards).size).toBe(LAYOUT.maxDisplayedCards);
+    expect(forward.hidden).toEqual([]);
+
+    // Shift+Tab comes back to the last card and walks back through them all to the first. In
+    // Firefox the press past the last card left focus on it, so the walk starts there.
+    if ((await focusedCard(page))?.card !== forward.cards.at(-1)) {
+      await page.keyboard.press('Shift+Tab');
+    }
+    const back = await walkCards(page, 'Shift+Tab');
+    expect(back.cards).toEqual([...forward.cards].reverse());
+    expect(back.hidden).toEqual([]);
+  });
 });

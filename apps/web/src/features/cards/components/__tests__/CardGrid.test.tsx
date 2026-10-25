@@ -1,19 +1,9 @@
-import type {ReactNode} from 'react';
 import {describe, it, expect, vi} from 'vitest';
 import {fireEvent, render, screen} from '@testing-library/react';
 import {CardGrid} from '../CardGrid';
 import {BrowseCardGrid} from '../BrowseCardGrid';
 import {printingCard} from '../../loader';
 import {createCard} from '../../../../shared/test-utils';
-
-// jsdom lays nothing out, so the real grid renders no tiles: this one renders them all.
-vi.mock('react-virtuoso', async () => {
-  const {createElement, Fragment} = await import('react');
-  return {
-    VirtuosoGrid: ({totalCount, itemContent}: {totalCount: number; itemContent: (index: number) => ReactNode}) =>
-      createElement(Fragment, null, ...Array.from({length: totalCount}, (_, index) => itemContent(index))),
-  };
-});
 
 describe('CardGrid tiles', () => {
   it('opens a card from a plain button, not a toggle that reads "not pressed"', () => {
