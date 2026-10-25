@@ -31,21 +31,36 @@ export const CENTERING_WRAPPER_STYLE: CSSProperties = {
   padding: SPACING.xxl,
 };
 
-/**
- * Shrink-wraps the modal shell so the sibling nav arrows can be positioned against its edges.
- * Every card's window is one height (owner, 2026-10-20), so paging from card to card moves
- * neither the window's top nor the arrows centred on it: no card has a row under it that
- * another lacks (`desktopCardRowHeight`).
- */
-export const MODAL_FRAME_STYLE: CSSProperties = {
+/** The widest a phone's window grows. */
+const MOBILE_SHELL_MAX_WIDTH = 580;
+
+const MODAL_FRAME_STYLE: CSSProperties = {
   position: 'relative',
   pointerEvents: 'none',
 };
 
+const MOBILE_MODAL_FRAME_STYLE: CSSProperties = {
+  ...MODAL_FRAME_STYLE,
+  width: '100%',
+  maxWidth: MOBILE_SHELL_MAX_WIDTH,
+};
+
+/**
+ * Wraps the modal shell so the sibling nav arrows can be positioned against its edges.
+ * Every card's window is one height (owner, 2026-10-20), so paging from card to card moves
+ * neither the window's top nor the arrows centred on it: no card has a row under it that
+ * another lacks (`desktopCardRowHeight`). On desktop the shell sets its width. A phone's window
+ * takes the screen's width (up to its widest) from its first frame: shrink-wrapped, it was as wide
+ * as its widest line, so it opened narrower while its synergies loaded and widened as they arrived.
+ */
+export function pickModalFrameStyle(isMobile: boolean): CSSProperties {
+  return isMobile ? MOBILE_MODAL_FRAME_STYLE : MODAL_FRAME_STYLE;
+}
+
 export function pickModalShellStyle(isMobile: boolean): CSSProperties {
   return {
     width: isMobile ? '100%' : 1000,
-    maxWidth: isMobile ? 580 : 'calc(100vw - 48px)',
+    maxWidth: isMobile ? MOBILE_SHELL_MAX_WIDTH : 'calc(100vw - 48px)',
     maxHeight: 'calc(100vh - 48px)',
     background: COLORS.surface,
     borderRadius: `${RADIUS.card}px`,

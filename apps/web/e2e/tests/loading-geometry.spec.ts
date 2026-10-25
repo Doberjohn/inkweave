@@ -1,7 +1,12 @@
 import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {E2E_FRIEND_CODE, holdSupabasePath} from '../fixtures/supabaseStub';
-import {everyCardPage, longestPlainNamedCoreCharacter, shortestNamedCoreCharacter} from '../helpers/cardData';
+import {
+  everyCardPage,
+  longestPlainNamedCoreCharacter,
+  shortestNamedCardWithSynergies,
+  shortestNamedCoreCharacter,
+} from '../helpers/cardData';
 import {serveFriends, type Player} from '../helpers/friends';
 import {holdLazyModule} from '../helpers/lazyModule';
 import {signInAs} from '../helpers/session';
@@ -214,6 +219,38 @@ test("the card page's loading layout puts the card and the results where the pag
   if (!phone) expectSameBox(await boxOf(page.getByTestId('synergy-results-loading')), results, ['x', 'y']);
   releaseSynergies();
   await expect(page.getByTestId('synergy-results-loading')).toHaveCount(0);
+});
+
+const SYNERGY_FILES = /\/data\/synergies\/\d+\.json/;
+
+/** How many columns a grid lays out. */
+function columnsOf(grid: Locator): Promise<number> {
+  return grid.evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length);
+}
+
+test("the card window's loading synergy tiles take the columns and the boxes of the tiles that replace them", async ({
+  page,
+}) => {
+  // On a phone a short name leaves the window as wide as its card while the synergies load.
+  const {fullName} = shortestNamedCardWithSynergies();
+  await page.goto(`/browse?q=${encodeURIComponent(fullName)}`);
+  const card = page.getByTestId('card-tile').and(page.getByLabel(fullName, {exact: true}));
+  await expect(card).toBeVisible();
+  const release = await hold(page, SYNERGY_FILES);
+  await card.click();
+  // The window itself, past the frame its code loads behind (#640), which draws the same tiles.
+  const cardWindow = page.getByTestId('card-overview-modal');
+  const loadingGrid = cardWindow.getByTestId('card-overview-loading').filter({visible: true}).locator('.synergy-card-grid');
+  await expect(loadingGrid.first()).toBeVisible();
+  const columns = await columnsOf(loadingGrid.first());
+  const placeholder = await boxOf(loadingGrid.first().locator('.ink-card-placeholder').first());
+
+  release();
+  const grid = cardWindow.getByRole('list', {name: 'Synergy cards'}).first();
+  await expect(grid).toBeVisible();
+  expect(await columnsOf(grid)).toBe(columns);
+  // Not its top: the group chips come in with the synergies, above the list.
+  expectSameBox(await boxOf(grid.locator('.card-tile').first()), placeholder, ['x', 'width', 'height']);
 });
 
 /** The phone heading's line: CardDetail's name, 20 px at a line height of 1.2. */

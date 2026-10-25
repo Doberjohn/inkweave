@@ -46,13 +46,13 @@ import {
   CENTERING_WRAPPER_STYLE,
   DEFAULT_BODY_STYLE,
   MODAL_BACKDROP_STYLE,
-  MODAL_FRAME_STYLE,
   MODAL_HEADER_STYLE,
   PAIR_CONNECTOR_WIDTH,
   comparisonCardInset,
   desktopCardRowHeight,
   pickCardColumnLayout,
   pickCardsRowStyle,
+  pickModalFrameStyle,
   pickModalShellStyle,
   pickSynergyColumnLayout,
 } from './cardOverviewModalStyles';
@@ -481,7 +481,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               border without the shell's own overflow:hidden clipping them. The frame also owns the
               focus trap + arrow-key handling so the arrows (outside the dialog) stay reachable. */}
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- see comment above */}
-          <div ref={frameRef} style={MODAL_FRAME_STYLE} onKeyDown={handleShellKeyDown}>
+          <div ref={frameRef} style={pickModalFrameStyle(isMobile)} onKeyDown={handleShellKeyDown}>
           <div
             ref={modalRef}
             className={`overlay-transition overlay-scale overlay-enter ${visible ? 'overlay-visible' : ''}`}

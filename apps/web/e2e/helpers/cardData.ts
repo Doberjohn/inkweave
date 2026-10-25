@@ -77,6 +77,22 @@ export function shortestNamedCoreCharacter(): {id: string; fullName: string} {
   return {id: String(card.id), fullName: card.fullName};
 }
 
+/** The cards with a synergy file (`public/data/synergies/_manifest.json`). */
+const cardsWithSynergies = new Set<string>(
+  JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'public/data/synergies/_manifest.json'), 'utf8')),
+);
+
+/**
+ * The Core card with synergies whose full name is the shortest: in the card window on a phone its
+ * name is narrower than its card, so the window's width comes from the card and the synergies alone.
+ */
+export function shortestNamedCardWithSynergies(): {id: string; fullName: string} {
+  const card = allCards.cards
+    .filter((c) => Number(c.setCode) >= MIN_CORE_SET && cardsWithSynergies.has(String(c.id)))
+    .reduce((shortest, c) => (c.fullName.length < shortest.fullName.length ? c : shortest));
+  return {id: String(card.id), fullName: card.fullName};
+}
+
 /** A name of plain words with the one " - " after its first: "Russell - Senior Wilderness Explorer". */
 const PLAIN_NAME = /^[A-Z][a-z]+ - [A-Z][a-z]+( [A-Z][a-z]+)*$/;
 

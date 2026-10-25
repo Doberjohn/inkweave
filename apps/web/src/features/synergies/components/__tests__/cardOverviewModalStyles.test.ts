@@ -5,7 +5,17 @@ import {
   modalCardSize,
   pickCardColumnLayout,
   pickCardsRowStyle,
+  pickModalFrameStyle,
+  pickModalShellStyle,
 } from '../cardOverviewModalStyles';
+
+// A phone's window used to shrink-wrap its widest line, so it widened when the synergies landed.
+describe('the frame', () => {
+  it("takes a phone's width from the start, up to the shell's widest, and leaves desktop's to the shell", () => {
+    expect(pickModalFrameStyle(true)).toMatchObject({width: '100%', maxWidth: pickModalShellStyle(true).maxWidth});
+    expect(pickModalFrameStyle(false).width).toBeUndefined();
+  });
+});
 
 describe('modalCardSize', () => {
   it('keeps a desktop card at its full 337x470 where its window fits', () => {
