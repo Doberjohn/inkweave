@@ -29,6 +29,8 @@ const view = {width: 820, height: 600, top: 0};
 
 /** The grid's ResizeObserver callback, which a test calls as a browser does on a resize. */
 let resized = () => {};
+/** The elements it observes. */
+let observed: Element[] = [];
 
 const MEASURED = ['clientWidth', 'clientHeight', 'scrollTop', 'getBoundingClientRect'] as const;
 
@@ -41,7 +43,9 @@ function measureScroller({observer = true} = {}) {
         constructor(callback: () => void) {
           resized = callback;
         }
-        observe() {}
+        observe(element: Element) {
+          observed.push(element);
+        }
         disconnect() {}
       },
     );
@@ -60,6 +64,7 @@ function measureScroller({observer = true} = {}) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  observed = [];
   for (const key of MEASURED) {
     delete (HTMLElement.prototype as never)[key];
   }
@@ -137,6 +142,13 @@ describe('BrowseCardGrid window', () => {
     act(() => resized());
 
     expect(tileNames()).toEqual(cards.slice(0, 8).map((card) => card.fullName));
+  });
+
+  it("watches the grid's width as well as the scroller, since a scrollbar narrows only the grid", () => {
+    measureScroller();
+    render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
+
+    expect(observed).toEqual([screen.getByTestId('browse-grid-scroller'), grid()]);
   });
 
   it('moves the window as the scroller scrolls', () => {

@@ -150,7 +150,10 @@ function useScrollerView(
     read();
     scroller.addEventListener('scroll', onScroll, {passive: true});
     const observer = new ResizeObserver(read);
+    // The grid too, which a scrollbar narrows: on CI's WebKit, watching the scroller alone once
+    // left the undrawn rows' room measured from the width before its scrollbar appeared.
     observer.observe(scroller);
+    observer.observe(grid);
     return () => {
       scroller.removeEventListener('scroll', onScroll);
       observer.disconnect();
