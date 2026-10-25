@@ -72,4 +72,11 @@ export const BINDER_LOOK = {
   ].join(', '),
   // A card sliding in, and its colour coming in or draining out.
   '--binder-motion': EASING.smooth,
+  // The page turn (#942): a slow lift, a quick swing and a soft landing, the check-in page's
+  // curve (control points 0.45, 0.05, 0.3, 1) sampled as `linear()`, as the theme's easings are,
+  // within 0.5% of it; and the shade crossing the sheet, darkest toward its outer edge.
+  '--binder-turn-curve':
+    'linear(0, 0.014, 0.044, 0.098, 0.181, 0.3, 0.445, 0.588, 0.706, 0.796, 0.863, 0.913, 0.948, 0.973, 0.989, 0.997, 1)',
+  '--binder-leaf-shade': `linear-gradient(90deg, ${blackRgba(0.2)}, ${blackRgba(0.6)})`,
+  '--binder-leaf-shade-back': `linear-gradient(270deg, ${blackRgba(0.2)}, ${blackRgba(0.6)})`,
 } as CSSProperties;
