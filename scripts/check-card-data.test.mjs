@@ -118,6 +118,19 @@ describe('cardDataProblems', () => {
     ]);
   });
 
+  it('checks every copy of an id the repo repeats, not only the last', () => {
+    const twice = repo();
+    const other = {full: 'https://example.test/other.jpg'};
+    twice['allCards.json'].cards[0].variants[0].images = other;
+    const reprint = {id: 4, fullName: 'Ariel - Reprint', fullText: 'Draw a card.'};
+    twice['allCards.json'].cards.push({...reprint, variants: [{id: 2, rarity: 'Enchanted', images: PRINTING_ART}]});
+    const builtTwice = built();
+    builtTwice['allCards.json'].cards.push({...reprint, variants: [{id: 2, rarity: 'Enchanted'}]});
+    expect(cardDataProblems({repo: twice, built: builtTwice, record: record(), transformCard})).toEqual([
+      "allCards.json: image-sources.json lacks 2's image links",
+    ]);
+  });
+
   it('reports a build without the record when the deploy expects one', () => {
     const kept = built();
     kept['allCards.json'].cards[0].images = ART;

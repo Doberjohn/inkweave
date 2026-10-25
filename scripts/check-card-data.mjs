@@ -49,8 +49,8 @@ const cardsOf = (data) => (Array.isArray(data) ? data : data.cards);
 /** promos.json holds printings of other cards, with no text of their own, so check 1 leaves it out. */
 const holdsCards = (name) => name !== 'collection/promos.json';
 
-/** Every card and printing in the list, printings after their card, as the image restore indexes them. */
-const entries = (cards) => [...indexById(cards).values()];
+/** Every card and printing in the list, printings after their card, a repeated id each time. */
+const entries = (cards) => cards.flatMap((card) => [card, ...(card.variants ?? [])]);
 
 /** Check 1: a built card that transforms otherwise than the repo's, or a file whose cards differ. */
 function transformProblems(name, repoCards, builtCards, transformCard) {
