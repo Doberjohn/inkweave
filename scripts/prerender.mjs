@@ -228,9 +228,9 @@ export function isCleanShell(html, shellTitle) {
 
 /**
  * Routes whose real content lands AFTER their <Seo> title, so the title check passes too
- * early (#584). /browse: the grid draws no tiles until it has measured its scroller,
- * and tiles are what start the image requests, so `networkidle` can settle before one card
- * link exists. These routes also wait for their selector, and any failed attempt re-crawls
+ * early (#584). /browse: the grid draws its first six tiles before it has measured its
+ * scroller and the rest once it has, and tiles are what start the image requests, so
+ * `networkidle` can settle before one card link exists. These routes also wait for their selector, and any failed attempt re-crawls
  * the route on a fresh page, READY_ATTEMPTS attempts in all. The /browse selector is what
  * scripts/check-rendered-html.mjs demands of the capture: at least one href="/card/.
  */
