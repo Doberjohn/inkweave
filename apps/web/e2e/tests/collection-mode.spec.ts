@@ -17,6 +17,7 @@ import {
   type Entries,
   hasStyleFor,
   MISSING_GREY,
+  openPromoBinder,
   signInAsCollector,
   teethIn,
 } from '../helpers/collector';
@@ -718,14 +719,7 @@ test.describe('Collection mode, signed in', () => {
     await page.goto(`/browse?binder=${SET}`);
     await expect(binder(page)).toBeVisible();
 
-    await page.getByRole('button', {name: /^Binder set/}).click();
-    await page.getByRole('dialog', {name: 'Binder set'}).getByRole('button', {name: 'Promo', exact: true}).click();
-    await page
-      .getByRole('listbox', {name: 'Promo sets'})
-      .getByRole('option', {name: new RegExp(`^Promo set ${promoSet.code},`)})
-      .click();
-
-    await expect(page).toHaveURL(new RegExp(`[?&]binder=${promoSet.code}(&|$)`));
+    await openPromoBinder(page, promoSet.code);
     // Complete set alone, counting promos: a promo set's numbers show no Master (#805).
     await expect(numbers(page)).toContainText(`1 of ${promoSet.promos.length} promos`);
     await expect(numbers(page).getByRole('button', {name: /^Master/})).toHaveCount(0);
@@ -742,12 +736,26 @@ test.describe('Collection mode, signed in', () => {
     // layout 1): why it is open (not listed, not released) is the promo set's to say.
     const code = binder(page).getByText(promoSet.openPocket, {exact: true});
     await expect(code).toBeVisible();
-    // Readable on the black page (#941): the heart of the code's strokes against the pocket just
-    // above it, both as the page draws them, under the pocket's front sheet, by WCAG's measure.
+    // Readable on the black page (#941): the heart of the code's strokes against its pocket's own
+    // ground, beside the code in the pocket's padding on either side, both as the page draws them,
+    // under the pocket's front sheet, by WCAG's measure. Both sides, since the page's shade by the
+    // spine shows through the sleeve and darkens a pocket's padding there. Never above the code:
+    // there a code broken over two lines read the pocket above's card as it faded in (#973).
+    const pocket = binder(page)
+      .locator('.binder-pocket')
+      .filter({has: page.getByText(promoSet.openPocket, {exact: true})});
+    const room = await edges(pocket);
     const place = await placeOf(code);
-    const ground = await colourOf(page, {...place, y: place.y - 8, height: 4});
+    const y = place.y + place.height / 2 - 2;
+    const left = {x: room.left + 1, y, width: 4, height: 4};
+    const right = {x: room.right - 5, y, width: 4, height: 4};
+    expect(left.x + left.width, 'the ground left of the code is clear of it').toBeLessThanOrEqual(place.x);
+    expect(right.x, 'the ground right of the code is clear of it').toBeGreaterThanOrEqual(place.x + place.width);
     const ink = await lightestIn(page, place);
-    expect(contrast(ink, ground), `the open pocket's code, ${ink} on ${ground}`).toBeGreaterThanOrEqual(4.5);
+    for (const beside of [left, right]) {
+      const ground = await colourOf(page, beside);
+      expect(contrast(ink, ground), `the open pocket's code, ${ink} on ${ground}`).toBeGreaterThanOrEqual(4.5);
+    }
   });
 
   test("the set picker's Promo tab opens every promo set at once, counted as promos, with no Rarity filter (owner, 2026-10-20)", async ({

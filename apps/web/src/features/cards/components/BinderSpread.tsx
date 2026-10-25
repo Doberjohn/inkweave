@@ -229,6 +229,12 @@ const ringStyle: CSSProperties = {
  * row height is definite — `minHeight: 0` is what stops the slot's own
  * min-content re-imposing the floor the row just gave up.
  *
+ * NOTHING A POCKET HOLDS SIZES IT (#973): the slot is an inline-size container, as a card tile
+ * is. An open pocket's code, kept on one line, was wider than its pocket's padding left it, and
+ * in Chromium it widened the pocket, every row on its spread with it, and ran the pages up to
+ * 19px past the board. `minWidth: 0` here did not stop it: measured, C2's second spread still
+ * left 7.2px of board under its pages, as before. The containment does.
+ *
  * A version sized from WIDTH (`width: 100%` + `maxHeight: 100%`) was tried on
  * 2026-08-14 and reverted the same day. It looks like it fits both axes and does
  * not: `max-height` clamps the height but `aspect-ratio` does NOT re-derive the
@@ -242,6 +248,7 @@ const ringStyle: CSSProperties = {
 const slotStyle: CSSProperties = {
   height: '100%',
   minHeight: 0,
+  contain: 'inline-size',
   margin: 'auto',
   aspectRatio: `${CARD_ASPECT}`,
 };

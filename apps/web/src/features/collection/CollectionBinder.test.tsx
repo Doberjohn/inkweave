@@ -382,6 +382,15 @@ describe('CollectionBinder', () => {
       expect(screen.getByRole('dialog', {name: /^Enlarged view of Hades/})).toBeInTheDocument();
     });
 
+    it("keeps a twin's code on one line, and its finish on lines of its own after it (#973)", () => {
+      render(binder({slots: [{...WAITING_HADES, finish: 'normal'}]}));
+      fireEvent.error(screen.getByRole('img'));
+      const code = screen.getByText('29/C3');
+      expect(code).toHaveStyle({whiteSpace: 'nowrap'});
+      expect(code.nextSibling).toHaveTextContent(/^non-foil$/);
+      expect(code.parentElement).toHaveTextContent(/^29\/C3 non-foil/);
+    });
+
     it('says a number its promo set never released was not released, rather than not listed yet', () => {
       render(binder({slots: [{open: true, setCode: 'P2', setNumber: 37, unreleased: true}]}));
       expect(screen.getByText('37/P2').nextSibling).toHaveTextContent(/^Not released$/);
