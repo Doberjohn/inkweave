@@ -986,12 +986,14 @@ Cardmarket.
 Before falling back to Ravensburger, a cache miss tries to fetch the
 already-converted AVIF from a live deployment.
 
-**The deployed `allCards.json` is the record of what production serves.** The build
+**The deployed card data is the record of what production serves.** The build
 injects `imageHash`/`imageHashSm` into it (`download-card-images.mjs:262`)
-and it ships, so the live file publishes both the hashes in use AND the
-`images.full` source URLs they were built from. `fetchDeployedCards` reads it back
-from `{ORIGIN}/data/allCards.json`; `planFor` in `scripts/lib/imageRestore.mjs`
-restores only when the source URL still matches and both hashes are present.
+and it ships, so the live files publish the hashes in use, and
+`data/image-sources.json` the `images.full` source URLs they were built from (the
+card files themselves carried those until #932). `fetchDeployedCards` reads both back
+from `{ORIGIN}/data/`, and `withImageSources` hands each entry its URLs; `planFor` in
+`scripts/lib/imageRestore.mjs` restores only when the source URL still matches and
+both hashes are present.
 
 | Situation | Action |
 |---|---|

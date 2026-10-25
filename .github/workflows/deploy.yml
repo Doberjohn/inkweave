@@ -11,8 +11,9 @@
 # SCOPE: production only. PR previews stay on Vercel's own git integration (fast SPA — previews
 # aren't indexed, so they don't need the crawl). vercel.json sets git.deploymentEnabled.master
 # = false so Vercel does NOT also deploy master (no double / flip-flopping production deploy).
-# One exception: a PR that changes this file, scripts/vercel-deploy.mjs or the crawl itself
-# (scripts/prerender.mjs) gets a dry run (#694, #698, #867). It runs the same pull, build and
+# One exception: a PR that changes this file, scripts/vercel-deploy.mjs, the crawl itself
+# (scripts/prerender.mjs) or the card data guard (scripts/check-card-data.mjs) gets a dry run
+# (#694, #698, #867, #929). It runs the same pull, build and
 # prerender check, then uploads the build as a staged production deployment that never receives
 # inkweave.ink and is removed in the same run. It never pings IndexNow.
 #
@@ -26,15 +27,16 @@ name: Deploy
 on:
   push:
     branches: [master]
-  # A dry run for PRs that change this file, the script that runs `vercel deploy` (#698) or the
-  # prerender crawl, which nothing else runs before a deploy (#867): build, verify and
-  # stage-deploy, never promote.
+  # A dry run for PRs that change this file, the script that runs `vercel deploy` (#698), the
+  # prerender crawl (#867) or the card data guard (#929), which nothing else runs before a
+  # deploy: build, verify and stage-deploy, never promote.
   pull_request:
     branches: [master]
     paths:
       - '.github/workflows/deploy.yml'
       - 'scripts/vercel-deploy.mjs'
       - 'scripts/prerender.mjs'
+      - 'scripts/check-card-data.mjs'
 
 # Only actions/checkout uses GITHUB_TOKEN here: Vercel authenticates with VERCEL_TOKEN, and
 # actions/cache with the runner's own token. Declared, so PR dry runs (#694) stay read-only
@@ -171,6 +173,12 @@ jobs:
       # `.vercel/output/static` is the Build Output API v3 static root.
       - name: Verify the prerender actually produced content
         run: node scripts/check-rendered-html.mjs .vercel/output/static
+
+      # The build ships the card files slimmed, and without their image links, which it moves to
+      # data/image-sources.json (#929, #932). Every card must still transform as the repo's copy
+      # does, and every link must have moved, or production would lose card text or art links.
+      - name: Verify the slimmed card data
+        run: node scripts/check-card-data.mjs .vercel/output/static
 
       # One upload error fails a Vercel deploy outright (@vercel/client retries only a fixed
       # list of error messages, #698); the script retries once.
