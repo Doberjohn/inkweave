@@ -133,7 +133,7 @@ Either way, once the cards are on `master`, `.github/workflows/refresh-rule-cove
 
 How to run both, and what each refuses to write: [`docs/REVEAL_RUNBOOK.md`](https://github.com/Doberjohn/inkweave-admin/blob/main/docs/REVEAL_RUNBOOK.md) in admin.
 
-**Merge the season switch, then bump admin's pin past it, before anything is published.** Admin reads the season from its pinned copy of this repo, and Card studio commits to `master`, the only branch the convert workflow runs on. Until the pin moves, Card studio's New card offers no set: its first step takes a card only for the set in reveal season at admin's pin, while one of its numbers is free.
+**Merge the season switch, then bump admin's pin past it, before anything is published.** Admin reads the season from its pinned copy of this repo, and Card studio commits to `master`, the only branch the convert workflow runs on. Until the pin moves, `REVEAL_SET_CODE` at admin's pin still names the previous season's set. Card studio's New card takes a card only for that set, and only while that set has a collector number up to `SET_TOTAL` that no card holds. Once that set has graduated, released cards hold all of those numbers, so New card offers no set.
 
 ### Variant printings (Epic, Enchanted, Iconic)
 
