@@ -31,8 +31,8 @@ export const CENTERING_WRAPPER_STYLE: CSSProperties = {
   padding: SPACING.xxl,
 };
 
-/** The widest a phone's window grows. */
-const MOBILE_SHELL_MAX_WIDTH = 580;
+/** The widest a phone's window grows: its frame holds it, and the shell fills the frame. */
+const MOBILE_WINDOW_MAX_WIDTH = 580;
 
 const MODAL_FRAME_STYLE: CSSProperties = {
   position: 'relative',
@@ -42,7 +42,7 @@ const MODAL_FRAME_STYLE: CSSProperties = {
 const MOBILE_MODAL_FRAME_STYLE: CSSProperties = {
   ...MODAL_FRAME_STYLE,
   width: '100%',
-  maxWidth: MOBILE_SHELL_MAX_WIDTH,
+  maxWidth: MOBILE_WINDOW_MAX_WIDTH,
 };
 
 /**
@@ -60,7 +60,7 @@ export function pickModalFrameStyle(isMobile: boolean): CSSProperties {
 export function pickModalShellStyle(isMobile: boolean): CSSProperties {
   return {
     width: isMobile ? '100%' : 1000,
-    maxWidth: isMobile ? MOBILE_SHELL_MAX_WIDTH : 'calc(100vw - 48px)',
+    maxWidth: isMobile ? undefined : 'calc(100vw - 48px)',
     maxHeight: 'calc(100vh - 48px)',
     background: COLORS.surface,
     borderRadius: `${RADIUS.card}px`,

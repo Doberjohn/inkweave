@@ -11,9 +11,15 @@ import {
 
 // A phone's window used to shrink-wrap its widest line, so it widened when the synergies landed.
 describe('the frame', () => {
-  it("takes a phone's width from the start, up to the shell's widest, and leaves desktop's to the shell", () => {
-    expect(pickModalFrameStyle(true)).toMatchObject({width: '100%', maxWidth: pickModalShellStyle(true).maxWidth});
+  it("holds a phone's window at the screen's width, up to 580 px, from the start, and the shell fills it", () => {
+    expect(pickModalFrameStyle(true)).toMatchObject({width: '100%', maxWidth: 580});
+    expect(pickModalShellStyle(true).width).toBe('100%');
+    expect(pickModalShellStyle(true).maxWidth).toBeUndefined();
+  });
+
+  it("leaves a desktop window's width to the shell", () => {
     expect(pickModalFrameStyle(false).width).toBeUndefined();
+    expect(pickModalShellStyle(false).width).toBe(1000);
   });
 });
 

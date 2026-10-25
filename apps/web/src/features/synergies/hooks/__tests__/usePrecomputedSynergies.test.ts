@@ -179,6 +179,29 @@ describe('usePrecomputedSynergies', () => {
   });
 });
 
+describe('fetchCardSynergies', () => {
+  it('keeps a card with no file (a 404) as none for the page', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ok: false, status: 404});
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchCardSynergies('9801')).resolves.toEqual({groups: [], pairs: {}});
+    await expect(fetchCardSynergies('9801')).resolves.toEqual({groups: [], pairs: {}});
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('forgets an error status, so the next ask fetches the file again', async () => {
+    const data = {groups: [], pairs: {9902: {connections: [], aggregateScore: 5}}};
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ok: false, status: 503})
+      .mockResolvedValueOnce({ok: true, status: 200, headers: {get: () => 'application/json'}, json: async () => data});
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(fetchCardSynergies('9901')).rejects.toThrow('answered 503');
+    await expect(fetchCardSynergies('9901')).resolves.toEqual(data);
+  });
+});
+
 const directConnection = (overrides: Partial<PairSynergyConnection> = {}): PairSynergyConnection => ({
   ruleId: 'shift-targets',
   ruleName: 'Shift Targets',

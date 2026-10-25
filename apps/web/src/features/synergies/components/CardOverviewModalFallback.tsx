@@ -45,7 +45,7 @@ const SYNERGY_GRID_STYLE = {
 const SYNERGY_TILE_STYLE: CSSProperties = {
   position: 'relative',
   aspectRatio: LAYOUT.cardAspect,
-  borderRadius: RADIUS.sm + 1,
+  borderRadius: RADIUS.md,
   overflow: 'hidden',
 };
 

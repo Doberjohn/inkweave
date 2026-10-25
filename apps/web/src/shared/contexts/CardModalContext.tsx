@@ -14,6 +14,7 @@ import {CardOverviewModalFallback} from '../../features/synergies/components/Car
 import {useCardDataContext} from './CardDataContext';
 import {useResponsive} from '../hooks';
 import {lazyWithRetry} from '../lib/lazyWithRetry';
+import {siblingStep} from '../utils/siblingStep';
 import {
   getLoadedCardOverviewModal,
   loadCardOverviewModal,
@@ -218,9 +219,8 @@ export function CardModalProvider({children}: {children: ReactNode}) {
   };
 
   const goToSibling = (direction: 1 | -1) => {
-    if (!selectedCardId || siblingCardIds.length < 2 || siblingIndex === -1) return;
-    const n = siblingCardIds.length;
-    const next = (siblingIndex + direction + n) % n;
+    const next = siblingStep(siblingCardIds, siblingIndex, direction);
+    if (!selectedCardId || next === -1) return;
     const nextId = siblingCardIds[next];
     setSelectedCardId(nextId);
     setSiblingIndex(next);
@@ -364,7 +364,7 @@ function CardModalRoot({
   const {card, outsideCore} = resolveModalCard(selectedCardId, getCardById, resolveCard);
   const partnerCard = comparisonPartnerId ? (getCardById(comparisonPartnerId) ?? null) : null;
   const {synergies, getPairSynergies, isLoading: synergiesLoading} = usePrecomputedSynergies(outsideCore ? null : card);
-  // The synergies of the cards an arrow or a swipe reaches next, so a step shows no loading tiles.
+  // The synergies of the cards the arrows reach next, so a step shows no loading tiles.
   usePreloadSiblingSynergies({ids: siblingCardIds, index: siblingIndex, settled: !synergiesLoading});
   const {Modal, openedBeforeModalReady} = useModalForOpen(card !== null);
   // Already on screen when it mounts: after the fallback played the entrance, or after a frame did.
