@@ -171,7 +171,7 @@ async function expectGridAsBefore(page: Page, isPhone: boolean) {
   await openBrowse(page);
   const layout = await readLayout(
     page,
-    isPhone ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth,
+    isPhone ? LAYOUT.browseGridMinWidthMobile : LAYOUT.cardGridMinWidth,
   );
 
   expect(layout.columns, JSON.stringify(layout)).toBe(layout.autoFill.columns);
@@ -212,6 +212,7 @@ async function expectGridAsBefore(page: Page, isPhone: boolean) {
   // And back to the top in one jump.
   const top = await scrollTo(page, 0);
   expect(top.firstTop - top.viewTop).toBeCloseTo(ROOM, 0);
+  return layout;
 }
 
 /**
@@ -250,6 +251,59 @@ async function search(page: Page, isPhone: boolean, name: string) {
   }
 }
 
+/** A 1x1 PNG: art for a tile, which keeps its image only while its art loads. */
+const ART = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+  'base64',
+);
+
+/**
+ * Phones as their browsers show a page, with the bars showing: the five the owner compared before
+ * picking three cards across (#968).
+ */
+const PHONES = [
+  {name: 'iPhone 15', width: 393, height: 659},
+  {name: 'iPhone 13 mini', width: 375, height: 629},
+  {name: 'iPhone 15 Pro Max', width: 430, height: 739},
+  {name: '360 px Android', width: 360, height: 732},
+  {name: 'Pixel 7', width: 412, height: 839},
+];
+
+/** The first row: its tiles, the gaps between them, and the room either side, inside the grid. */
+function readFirstRow(page: Page) {
+  return page.locator(SCROLLER).evaluate((scroller) => {
+    const grid = scroller.firstElementChild!.getBoundingClientRect();
+    const boxes = [...scroller.querySelectorAll('[data-testid="card-tile"]')].map((tile) =>
+      tile.getBoundingClientRect(),
+    );
+    const row = boxes.filter((box) => Math.abs(box.top - boxes[0].top) < 1);
+    const px = (value: number) => Math.round(value * 10) / 10;
+    return {
+      columns: row.length,
+      gaps: row.slice(1).map((box, i) => px(box.left - row[i].right)),
+      left: px(row[0].left - grid.left),
+      right: px(grid.right - row[row.length - 1].right),
+    };
+  });
+}
+
+/** The tiles wholly on screen: inside the scroller's view, above the phone's tab bar. */
+function wholeTilesOnScreen(page: Page) {
+  return page.locator(SCROLLER).evaluate((scroller) => {
+    const top = scroller.getBoundingClientRect().top;
+    const tabBar = document.querySelector('nav[aria-label="Mobile navigation"]');
+    const bottom = Math.min(
+      top + scroller.clientHeight,
+      tabBar?.getBoundingClientRect().top ?? Infinity,
+      window.innerHeight,
+    );
+    return [...scroller.querySelectorAll('[data-testid="card-tile"]')].filter((tile) => {
+      const box = tile.getBoundingClientRect();
+      return box.top >= top - 0.5 && box.bottom <= bottom + 0.5;
+    }).length;
+  });
+}
+
 test.describe("Browse's grid", () => {
   test('lays out its rows as before at the project viewport', async ({page}, testInfo) => {
     await expectGridAsBefore(page, onPhone(testInfo));
@@ -263,11 +317,48 @@ test.describe("Browse's grid", () => {
     });
   }
 
-  // At 320 px, the narrowest phones' width, the grid has one column. Columns counted without their
-  // gaps would come to two there, a fault the phone projects' own widths can't show.
-  test('lays out its rows as before at 320 px, in one column', async ({page}) => {
+  // At 320 px, the narrowest phones' width, the grid has two columns. Columns counted without their
+  // gaps would come to three there, a fault the phone projects' own widths can't show.
+  test('lays out its rows as before at 320 px, in two columns', async ({page}) => {
     await page.setViewportSize({width: 320, height: 640});
-    await expectGridAsBefore(page, true);
+    expect((await expectGridAsBefore(page, true)).columns).toBe(2);
+  });
+
+  test('shows three cards across on phones, six whole on an iPhone 15, the first nine loading at once', async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name === 'firefox' || testInfo.project.name === 'webkit',
+      'Desktop Firefox and WebKit draw a classic scrollbar inside the grid, which a phone never does',
+    );
+    // Art for every tile that has some, so none swaps its image for its cost badge.
+    await page.route(/\/card-images(-preview)?\//, (route) =>
+      route.fulfill({contentType: 'image/png', body: ART}),
+    );
+    const [iPhone15, ...others] = PHONES;
+    await page.setViewportSize(iPhone15);
+    await openBrowse(page);
+
+    for (const phone of [iPhone15, ...others]) {
+      await page.setViewportSize(phone);
+      const row = await readFirstRow(page);
+      expect(row, phone.name).toEqual({
+        columns: 3,
+        gaps: [SPACING.md, SPACING.md],
+        left: SPACING.lg,
+        right: SPACING.lg,
+      });
+    }
+
+    await page.setViewportSize(iPhone15);
+    expect(await wholeTilesOnScreen(page), 'whole cards on an iPhone 15').toBeGreaterThanOrEqual(6);
+    const art = (tile: number) => page.getByTestId('card-tile').nth(tile).locator('img');
+    // A card with no art at all draws its cost, and no image to read.
+    for (let tile = 0; tile < 10; tile++) {
+      await expect(art(tile), `tile ${tile + 1}'s image`).toHaveCount(1);
+    }
+    for (let tile = 0; tile < 9; tile++) await expect(art(tile)).toHaveAttribute('loading', 'eager');
+    await expect(art(9)).toHaveAttribute('loading', 'lazy');
   });
 
   test('draws a whole row past each edge of its view, the one Tab moves into', async ({page}) => {
