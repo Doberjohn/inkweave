@@ -1,4 +1,5 @@
 import type {Locator, Page} from '@playwright/test';
+import {expect} from '../fixtures';
 import {E2E_SUPABASE_ORIGIN} from '../fixtures/supabaseStub';
 import {luminance, pixelsIn, type Place} from './screen';
 import {storedSession} from './session';
@@ -90,6 +91,17 @@ export const board = (page: Page) => binder(page).locator('.binder-board');
 
 /** The board's padding round the pages (`BOARD` in BinderSpread.tsx). */
 export const BOARD = 14;
+
+/** Opens promo set `code`'s binder from the Binder set menu's Promo tab (#805). */
+export async function openPromoBinder(page: Page, code: string): Promise<void> {
+  await page.getByRole('button', {name: /^Binder set/}).click();
+  await page.getByRole('dialog', {name: 'Binder set'}).getByRole('button', {name: 'Promo', exact: true}).click();
+  await page
+    .getByRole('listbox', {name: 'Promo sets'})
+    .getByRole('option', {name: new RegExp(`^Promo set ${code},`)})
+    .click();
+  await expect(page).toHaveURL(new RegExp(`[?&]binder=${code}(&|$)`));
+}
 
 /** A pixel lighter than this is a zip's metal tooth (#8a8a9c, about 139): its tape and the board are under 30. */
 const TOOTH_LIGHT = 90;

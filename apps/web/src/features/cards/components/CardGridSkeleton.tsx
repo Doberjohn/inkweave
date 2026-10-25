@@ -15,6 +15,8 @@ interface CardGridSkeletonProps {
   padding?: string;
   /** Force column count (bypasses dynamic calculation) */
   columns?: number;
+  /** The loaded grid's column minimum, where it is not CardGrid's (Browse's phone grid). */
+  minColWidth?: number;
   /** Number of skeleton rows to show (default: 3) */
   rows?: number;
   /** Width / height ratio of each placeholder (default: 0.72, matches Lorcana card portrait). Use >1 for landscape tiles. */
@@ -28,13 +30,15 @@ const DEFAULT_GAP = SPACING.md;
 
 /**
  * The loading grid, sized as `CardGrid` and `BrowseCardGrid` size theirs (#914): the same
- * column minimum for the viewport, so a phone gets the loaded grid's two columns, and tiles
- * exactly as tall as a card of the column's width.
+ * column minimum, CardGrid's for the viewport unless the caller passes its grid's own, so a
+ * phone gets the loaded grid's columns, and tiles exactly as tall as a card of the column's
+ * width.
  */
 export function CardGridSkeleton({
   gap: gapProp,
   padding: paddingProp,
   columns: columnsProp,
+  minColWidth: minColWidthProp,
   rows: rowCount = 3,
   aspectRatio = DEFAULT_CARD_ASPECT,
   ariaLabel = 'Loading cards',
@@ -42,7 +46,8 @@ export function CardGridSkeleton({
   const containerRef = useRef<HTMLDivElement>(null);
   const containerWidth = useContainerWidth(containerRef);
   const {isMobile} = useResponsive();
-  const minColWidth = isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth;
+  const minColWidth =
+    minColWidthProp ?? (isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth);
 
   const gap = gapProp ?? DEFAULT_GAP;
   const containerPadding = paddingProp ?? 0;
