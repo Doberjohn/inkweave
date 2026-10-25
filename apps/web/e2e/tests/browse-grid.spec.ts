@@ -331,7 +331,7 @@ test.describe("Browse's grid", () => {
       testInfo.project.name === 'firefox' || testInfo.project.name === 'webkit',
       'Desktop Firefox and WebKit draw a classic scrollbar inside the grid, which a phone never does',
     );
-    // Art for every tile, so none swaps its image for the cost badge.
+    // Art for every tile that has some, so none swaps its image for its cost badge.
     await page.route(/\/card-images(-preview)?\//, (route) =>
       route.fulfill({contentType: 'image/png', body: ART}),
     );
@@ -353,6 +353,10 @@ test.describe("Browse's grid", () => {
     await page.setViewportSize(iPhone15);
     expect(await wholeTilesOnScreen(page), 'whole cards on an iPhone 15').toBeGreaterThanOrEqual(6);
     const art = (tile: number) => page.getByTestId('card-tile').nth(tile).locator('img');
+    // A card with no art at all draws its cost, and no image to read.
+    for (let tile = 0; tile < 10; tile++) {
+      await expect(art(tile), `tile ${tile + 1}'s image`).toHaveCount(1);
+    }
     for (let tile = 0; tile < 9; tile++) await expect(art(tile)).toHaveAttribute('loading', 'eager');
     await expect(art(9)).toHaveAttribute('loading', 'lazy');
   });

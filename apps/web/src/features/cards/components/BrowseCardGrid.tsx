@@ -44,6 +44,7 @@ export function BrowseCardGrid({
   const {isMobile} = useResponsive();
   const paddingX = isMobile ? SPACING.lg : BROWSE_GUTTER;
   const minColWidth = isMobile ? LAYOUT.browseGridMinWidthMobile : LAYOUT.cardGridMinWidth;
+  const eagerTiles = isMobile ? PHONE_EAGER_TILES : EAGER_TILES;
 
   if (isLoading) {
     // The loaded grid's room above its first row (`BROWSE_ROW_TOP`), its gutters and its
@@ -77,6 +78,7 @@ export function BrowseCardGrid({
         cards={displayedCards}
         paddingX={paddingX}
         minColWidth={minColWidth}
+        eagerTiles={eagerTiles}
         renderTile={(card, index) => (
           // No `isSelected`: a card without a page is a plain button that opens it, not a toggle.
           <CardTile
@@ -85,7 +87,7 @@ export function BrowseCardGrid({
             href={hasCardPage(card) ? tilePath(card) : undefined}
             onSelect={onCardSelect}
             variant="minimal"
-            priority={index < EAGER_TILES}
+            priority={index < eagerTiles}
             useSmallImage
             printing={printingFor?.(card)}
           />
@@ -96,10 +98,13 @@ export function BrowseCardGrid({
 }
 
 /**
- * Tiles whose art loads at once, since the page's largest paint is one of them: the first nine,
- * a phone's first three rows. The rest load as they near the view.
+ * Tiles whose art loads at once, since the page's largest paint is one of them: the first six,
+ * a tablet's or a desktop's first row or two. The rest load as they near the view.
  */
-const EAGER_TILES = 9;
+const EAGER_TILES = 6;
+
+/** On a phone, nine: its first three rows, three across (#968). */
+const PHONE_EAGER_TILES = 9;
 
 /** Rows drawn past each edge of the view: keyboard Tab moves into one, and focus scrolls it in. */
 const OVERSCAN_ROWS = 1;
@@ -181,17 +186,17 @@ interface TileSizing {
 }
 
 /**
- * The tiles to draw before the scroller is measured: the first `EAGER_TILES`. React creates
+ * The tiles to draw before the scroller is measured: those whose art loads at once. React creates
  * their images as it renders the grid, often well before the commit that measures the scroller,
  * and the browser starts loading their art then, so it can be in hand as they mount and show
  * with no fade, as react-virtuoso's first tiles did (#931). A browser measures the scroller
  * before its first paint unless it is hidden. jsdom never measures it, so there every tile is
  * drawn.
  */
-function firstTiles(count: number): DrawnTiles {
+function firstTiles(count: number, eagerTiles: number): DrawnTiles {
   return {
     first: 0,
-    end: typeof ResizeObserver === 'undefined' ? count : EAGER_TILES,
+    end: typeof ResizeObserver === 'undefined' ? count : eagerTiles,
     roomAbove: 0,
     roomBelow: 0,
   };
@@ -251,11 +256,14 @@ function TileRows({
   cards,
   paddingX,
   minColWidth,
+  eagerTiles,
   renderTile,
 }: {
   cards: LorcanaCard[];
   paddingX: number;
   minColWidth: number;
+  /** The tiles drawn before the scroller is measured, whose art loads at once. */
+  eagerTiles: number;
   renderTile: (card: LorcanaCard, index: number) => ReactNode;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -264,7 +272,8 @@ function TileRows({
   const view = useScrollerView(scrollerRef, gridRef, (shown, next) =>
     sameTiles(shown, next, cards.length, sizing),
   );
-  const tiles = view.width > 0 ? tilesInView(view, cards.length, sizing) : firstTiles(cards.length);
+  const tiles =
+    view.width > 0 ? tilesInView(view, cards.length, sizing) : firstTiles(cards.length, eagerTiles);
 
   return (
     <div
