@@ -11,10 +11,10 @@ vi.mock('../../../../shared/hooks/useResponsive', () => ({
   useResponsive: () => ({isMobile: layout.isMobile, isTablet: false, isDesktop: !layout.isMobile, windowWidth: 0}),
 }));
 
-function renderGrid(width: number, isMobile: boolean) {
+function renderGrid(width: number, isMobile: boolean, minColWidth?: number) {
   layout.width = width;
   layout.isMobile = isMobile;
-  render(<CardGridSkeleton rows={1} />);
+  render(<CardGridSkeleton rows={1} minColWidth={minColWidth} />);
   const grid = screen.getByLabelText('Loading cards').firstElementChild as HTMLElement;
   return {grid, tiles: [...grid.children] as HTMLElement[]};
 }
@@ -29,6 +29,13 @@ describe('CardGridSkeleton', () => {
     expect(LAYOUT.cardGridMinWidthMobile).toBe(140);
     expect(grid.style.gridTemplateColumns).toBe('repeat(2, 1fr)');
     expect(tiles).toHaveLength(2);
+  });
+
+  it("takes the loaded grid's minimum when given one", () => {
+    // Browse's phone grid has its own: three 96px columns fit 358px, gaps included.
+    const {grid, tiles} = renderGrid(358, true, LAYOUT.browseGridMinWidthMobile);
+    expect(grid.style.gridTemplateColumns).toBe('repeat(3, 1fr)');
+    expect(tiles).toHaveLength(3);
   });
 
   it('gives a wide desktop grid seven columns, at the desktop minimum', () => {

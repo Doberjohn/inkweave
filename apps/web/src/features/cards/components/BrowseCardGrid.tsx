@@ -43,10 +43,14 @@ export function BrowseCardGrid({
 }: BrowseCardGridProps) {
   const {isMobile} = useResponsive();
   const paddingX = isMobile ? SPACING.lg : BROWSE_GUTTER;
+  const minColWidth = isMobile ? LAYOUT.browseGridMinWidthMobile : LAYOUT.cardGridMinWidth;
 
   if (isLoading) {
-    // The loaded grid's room above its first row (`BROWSE_ROW_TOP`) and its gutters (#914).
-    return <CardGridSkeleton padding={`${BROWSE_ROW_TOP}px ${paddingX}px 0`} />;
+    // The loaded grid's room above its first row (`BROWSE_ROW_TOP`), its gutters and its
+    // columns (#914).
+    return (
+      <CardGridSkeleton padding={`${BROWSE_ROW_TOP}px ${paddingX}px 0`} minColWidth={minColWidth} />
+    );
   }
 
   const displayedCards = cards.slice(0, LAYOUT.maxDisplayedCards);
@@ -72,7 +76,7 @@ export function BrowseCardGrid({
       <TileRows
         cards={displayedCards}
         paddingX={paddingX}
-        minColWidth={isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth}
+        minColWidth={minColWidth}
         renderTile={(card, index) => (
           // No `isSelected`: a card without a page is a plain button that opens it, not a toggle.
           <CardTile
@@ -92,10 +96,10 @@ export function BrowseCardGrid({
 }
 
 /**
- * Tiles whose art loads at once, since the page's largest paint is one of them: the first six,
+ * Tiles whose art loads at once, since the page's largest paint is one of them: the first nine,
  * a phone's first three rows. The rest load as they near the view.
  */
-const EAGER_TILES = 6;
+const EAGER_TILES = 9;
 
 /** Rows drawn past each edge of the view: keyboard Tab moves into one, and focus scrolls it in. */
 const OVERSCAN_ROWS = 1;

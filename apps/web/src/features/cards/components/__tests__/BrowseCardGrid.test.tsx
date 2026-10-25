@@ -104,7 +104,7 @@ describe('BrowseCardGrid window', () => {
     }
   });
 
-  it('draws its first six tiles before it measures its scroller', () => {
+  it('draws its first nine tiles before it measures its scroller', () => {
     // React creates their images in the render that mounts the grid, which can run well before
     // the commit that measures the scroller, so their art starts loading then (#931). A scroller
     // hidden at mount measures 0 wide: the tiles are laid out as auto-fill would, with no room
@@ -113,21 +113,44 @@ describe('BrowseCardGrid window', () => {
     measureScroller();
     render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
 
-    expect(tileNames()).toEqual(cards.slice(0, 6).map((card) => card.fullName));
+    expect(tileNames()).toEqual(cards.slice(0, 9).map((card) => card.fullName));
     expect(grid().style.gridTemplateColumns).toBe('repeat(auto-fill, minmax(180px, 1fr))');
     expect(grid().style.paddingBottom).toBe('24px');
   });
 
-  it("draws a phone's two columns inside its 16px gutters", () => {
-    // 358px inside the gutters fits two 140px columns: tiles 173px wide, rows 252.28px apart.
+  it("draws a phone's three columns inside its 16px gutters", () => {
+    // 358px inside the gutters fits three 96px columns: tiles 111.33px wide, rows 166.63px apart.
     layout.isMobile = true;
     view.width = 390;
     measureScroller();
     render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
 
-    // Rows 1 to 3 in view, and row 4.
-    expect(tileNames()).toEqual(cards.slice(0, 8).map((card) => card.fullName));
+    // Rows 1 to 4 in view, and row 5.
+    expect(tileNames()).toEqual(cards.slice(0, 15).map((card) => card.fullName));
+    expect(grid().style.gridTemplateColumns).toBe('repeat(auto-fill, minmax(96px, 1fr))');
     expect(grid().style.paddingLeft).toBe('16px');
+  });
+
+  it("gives its loading grid a phone's three columns", () => {
+    // The placeholders stand where the loaded tiles will (#914): 358px inside the gutters.
+    layout.isMobile = true;
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        callback: ResizeObserverCallback;
+        constructor(callback: ResizeObserverCallback) {
+          this.callback = callback;
+        }
+        observe() {
+          this.callback([{contentRect: {width: 358}} as ResizeObserverEntry], this as never);
+        }
+        disconnect() {}
+      },
+    );
+    render(<BrowseCardGrid cards={[]} isLoading onCardSelect={vi.fn()} />);
+
+    const placeholders = screen.getByLabelText('Loading cards').firstElementChild as HTMLElement;
+    expect(placeholders.style.gridTemplateColumns).toBe('repeat(3, 1fr)');
   });
 
   it('keeps its rows while its scroller is hidden', () => {
@@ -141,7 +164,7 @@ describe('BrowseCardGrid window', () => {
     Object.assign(view, {width: 0, height: 0});
     act(() => resized());
 
-    expect(tileNames()).toEqual(cards.slice(0, 8).map((card) => card.fullName));
+    expect(tileNames()).toEqual(cards.slice(0, 15).map((card) => card.fullName));
   });
 
   it("watches the grid's width as well as the scroller, since a scrollbar narrows only the grid", () => {
