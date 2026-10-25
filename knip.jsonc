@@ -11,6 +11,7 @@
       "entry": [
         "scripts/check-sourcemaps.mjs",
         "scripts/codescene-gate.mjs",
+        "scripts/pre-push-cloud-e2e.mjs",
         ".claude/hooks/lib/run-hook.mjs",
       ],
       // Root scripts load these from apps/web on purpose, through createRequire.

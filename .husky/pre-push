@@ -53,8 +53,15 @@ fi
 # Always the dev server (#869), where the console guard catches React's development-only errors,
 # even in a shell that set E2E_SERVER=preview to reproduce a CI failure.
 export E2E_SERVER=dev
+#
+# Claude Code cloud sessions (CLAUDE_CODE_REMOTE=true) have no WebKit, so they run
+# chromium + mobile-chrome on the specs changed since origin/master instead (#983):
+# a plain push then runs every gate a container can, where --no-verify ran none.
+# It comes after the Windows branch, so the owner's machine never takes it.
 if [ "$IS_WINDOWS" = "1" ] && [ "${PRE_PUSH_FULL:-0}" != "1" ]; then
   pnpm --filter inkweave-web test:e2e --project chromium $WORKERS_ARG || exit $?
+elif [ "$IS_WINDOWS" != "1" ] && [ "${CLAUDE_CODE_REMOTE:-}" = "true" ]; then
+  node scripts/pre-push-cloud-e2e.mjs $WORKERS_ARG || exit $?
 else
   pnpm --filter inkweave-web test:e2e --project chromium --project webkit --project mobile-chrome $WORKERS_ARG || exit $?
 fi
