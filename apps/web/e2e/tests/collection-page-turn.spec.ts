@@ -354,7 +354,9 @@ test.describe("Collection mode, turning the binder's pages (#942)", () => {
     page,
     browserName,
   }) => {
-    const timesTheKey = process.env.E2E_SERVER === 'preview' && browserName === 'chromium';
+    // CI's Firefox and WebKit runners are too slow to time (below), so the clock is Chromium's.
+    const timed = browserName === 'chromium';
+    const timesTheKey = timed && process.env.E2E_SERVER === 'preview';
     await openBinder(page);
     const next = binder(page).getByRole('button', {name: 'Next spread'});
     await next.focus();
@@ -371,10 +373,12 @@ test.describe("Collection mode, turning the binder's pages (#942)", () => {
     // time is when it was due, which can come before a slow commit that held it up, so the frame
     // looks for the sheet instead of comparing times. Within 100 ms of the key on a production
     // build in Chromium, about 60 in a 4-vCPU container. The dev server's React takes 150 to 250
-    // ms to draw the same commit, and 50 to 100 for the change alone (2026-10-24); CI's Firefox
-    // and WebKit runners take 190 to 280 ms on a production build (2026-10-25), so the wall-clock
-    // bounds hold Chromium's production build alone.
-    expect(click.framed, "drawn by the first frame after the key's click").toBe(true);
+    // ms to draw the same commit, and 50 to 100 for the change alone (2026-10-24), so the bounds
+    // from the key hold a production build alone. CI's Firefox and WebKit runners took 190 to 280
+    // ms from the key to the sheet, WebKit's first frame came before it at times, and its sheet
+    // stayed up to 2.2 s while the watcher posed it (2026-10-25), so every wall-clock check holds
+    // Chromium alone; the map marking spread 2 as the sheet is drawn holds everywhere.
+    if (timed) expect(click.framed, "drawn by the first frame after the key's click").toBe(true);
     if (timesTheKey) {
       expect(turn.drawnAt - keydown.at, 'ms from the key to the sheet').toBeLessThan(100);
     }
@@ -393,7 +397,7 @@ test.describe("Collection mode, turning the binder's pages (#942)", () => {
     // It turns for 0.7s and is gone within a second, the binder showing spread 2's own cards: a
     // second from the key on a production build.
     expect(turn.goneAt! - turn.drawnAt, 'ms the sheet was drawn').toBeGreaterThanOrEqual(TURN_MS);
-    expect(turn.goneAt! - turn.drawnAt, 'ms the sheet was drawn').toBeLessThan(1000);
+    if (timed) expect(turn.goneAt! - turn.drawnAt, 'ms the sheet was drawn').toBeLessThan(1000);
     if (timesTheKey) {
       expect(turn.goneAt! - keydown.at, 'ms from the key to the sheet gone').toBeLessThan(1000);
     }
@@ -522,7 +526,9 @@ test.describe("Collection mode, turning the binder's pages (#942)", () => {
     const grip = await marginGrip(page);
     await page.mouse.move(grip.x0, grip.y);
     await page.mouse.down();
-    await page.mouse.move(pointerAt(grip, 0.25), grip.y, {steps: 6});
+    // In one move: the page lifts and reaches a quarter in the same event, before its sheet is
+    // drawn, as a slow runner's moves can all come before it. The sheet still shows where it is.
+    await page.mouse.move(pointerAt(grip, 0.25), grip.y);
     const quarter = await sheetAngle(page);
     expect(Math.abs(quarter + 45), `a quarter of the way, at ${quarter}°`).toBeLessThanOrEqual(5);
     await pause(page, STILL_MS);

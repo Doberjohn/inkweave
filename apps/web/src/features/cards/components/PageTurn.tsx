@@ -53,7 +53,7 @@ function layOut(
   const under = plan.flat && pageOn(pages, plan.flat.side);
   if (flat && under) placeOver(flat, under);
   sheet.style.transformOrigin = originFor(plan.lifts, spine);
-  poseLeaf(sheet, plan, at ?? 0);
+  poseLeaf(sheet, plan, typeof at === 'function' ? at() : (at ?? 0));
   return sheet;
 }
 
@@ -89,10 +89,10 @@ interface PageTurnProps {
   /** The spine's width: the sheet swings about its middle. */
   spine: number;
   /**
-   * Held still at this pose, 0 to 1: the grab's starting pose, from which it poses the sheet
-   * itself (`poseLeaf`), and the stories'. Left out, it turns.
+   * Held still at this pose, 0 to 1: the stories', or the grab's, read as the sheet is laid out,
+   * from which the grab poses it itself (`poseLeaf`). Left out, it turns.
    */
-  at?: number;
+  at?: number | (() => number);
   onDone?: () => void;
 }
 

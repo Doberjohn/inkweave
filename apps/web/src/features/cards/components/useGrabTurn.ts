@@ -261,6 +261,12 @@ export function useGrabTurn(options: GrabOptions) {
   const g: Grab = {...options, setGrabbing};
   return {
     grabbing,
+    /**
+     * Where the page in hand has got to, read as its sheet is drawn (`PageTurn`'s `at`): the move
+     * that lifts the page comes before its sheet is drawn, and so can every move after it, which
+     * find no sheet to pose. Drawn there, it never shows flat.
+     */
+    heldAt: () => state.current.press?.lift?.t ?? 0,
     boardProps: {
       onPointerDown: (e: PointerEvent<HTMLElement>) => pressDown(e, state.current, g),
       onPointerMove: (e: PointerEvent<HTMLElement>) => pointerMoved(e, state.current, g),

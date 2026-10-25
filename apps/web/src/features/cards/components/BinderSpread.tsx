@@ -912,17 +912,19 @@ interface TurnSheetProps {
   perView: number;
   pages: {left: RefObject<HTMLDivElement | null>; right: RefObject<HTMLDivElement | null>};
   end: (turn: Turn) => void;
+  /** Where a page in hand has got to (`useGrabTurn`). */
+  heldAt: () => number;
 }
 
-/** The turn's sheet over the pages: a page in hand is held at its first pose, for the grab to pose; any other turns. */
-function TurnSheet({turn, copy, perView, pages, end}: TurnSheetProps) {
+/** The turn's sheet over the pages: a page in hand is held where it has got to, for the grab to pose; any other turns. */
+function TurnSheet({turn, copy, perView, pages, end, heldAt}: TurnSheetProps) {
   return (
     <PageTurn
       plan={turn.plan}
       renderPage={(page) => copy(page, wasInView(page, turn, perView))}
       pages={pages}
       spine={SPINE_WIDTH}
-      at={turn.held ? 0 : undefined}
+      at={turn.held ? heldAt : undefined}
       onDone={() => end(turn)}
     />
   );
@@ -960,7 +962,15 @@ function useViewTurn(props: TurnProps): ViewTurn {
     boardClass: turnClass(turn !== null, grab.grabbing),
     boardProps: grab.boardProps,
     sheet: turn && (
-      <TurnSheet key={turnKey(turn)} turn={turn} copy={copy} perView={perView} pages={{left, right}} end={end} />
+      <TurnSheet
+        key={turnKey(turn)}
+        turn={turn}
+        copy={copy}
+        perView={perView}
+        pages={{left, right}}
+        end={end}
+        heldAt={grab.heldAt}
+      />
     ),
     left,
     right,
