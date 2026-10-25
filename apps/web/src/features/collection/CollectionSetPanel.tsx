@@ -18,7 +18,7 @@ import {SetPicker, type RowFigures, type SetPickerProps} from './SetPicker';
 import {BinderShows, type BinderView} from './BinderShows';
 import {SIDE_PANEL_STYLE} from '../cards/components/BrowseSidePanel';
 import {NumbersLoading} from './BinderChunkFallback';
-import {BAR, NUMBERS_STYLE} from './binderLayout';
+import {BAR, NUMBERS_STYLE, SHEET_NUMBERS_STYLE} from './binderLayout';
 import {
   ALL_INKS,
   COLORS,
@@ -573,20 +573,15 @@ function Numbers({stats, setCode, filtered, axis, onAxisChange}: NumbersProps) {
 }
 
 /**
- * The numbers, under the binder's controls. What the breakdowns count is the page's to keep
- * (see the header), so it survives a switch from set to set or to the whole collection.
+ * The numbers, under the binder's controls, in the panel's scrolling box unless `style` gives
+ * another (the Binder sheet's, #969). What the breakdowns count is the page's to keep (see the
+ * header), so it survives a switch from set to set or to the whole collection.
  */
-function NumbersRegion({stats, setCode, filtered, axis, onAxisChange}: NumbersProps) {
+function NumbersRegion({style = NUMBERS_STYLE, ...props}: NumbersProps & {style?: CSSProperties}) {
   return (
-    <div role="region" aria-label="Collection numbers" aria-busy={stats === null} style={NUMBERS_STYLE}>
-      <BarPass.Provider value={`${setCode}:${axis}`}>
-        <Numbers
-          stats={stats}
-          setCode={setCode}
-          filtered={filtered}
-          axis={axis}
-          onAxisChange={onAxisChange}
-        />
+    <div role="region" aria-label="Collection numbers" aria-busy={props.stats === null} style={style}>
+      <BarPass.Provider value={`${props.setCode}:${props.axis}`}>
+        <Numbers {...props} />
       </BarPass.Provider>
     </div>
   );
@@ -635,6 +630,14 @@ export function CollectionSetBody({withPicker = true, ...props}: CollectionSetPa
       <NumbersRegion {...numbersProps(props)} />
     </>
   );
+}
+
+/**
+ * The numbers alone, as a phone's Binder sheet holds them under Progress (#969), in the sheet's
+ * flow. Their Complete / Master choice acts at once, as in the panel.
+ */
+export function SheetNumbers(props: CollectionSetPanelProps) {
+  return <NumbersRegion {...numbersProps(props)} style={SHEET_NUMBERS_STYLE} />;
 }
 
 /** The set picker as the desktop toolbar holds it, beside Collection: a short label with no picture, as tall as Collection. */

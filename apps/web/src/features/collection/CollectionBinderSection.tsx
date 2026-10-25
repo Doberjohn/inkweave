@@ -18,6 +18,7 @@ import {
   CollectionSetBody,
   CollectionSetRail,
   RowSetPicker,
+  SheetNumbers,
   ToolbarSetPicker,
   type AxisChoice,
   type CollectionSetPanelProps,
@@ -359,4 +360,13 @@ export function DockedSetPicker(props: DockedSetBodyProps) {
  */
 export function PhoneSetPicker(props: DockedSetBodyProps) {
   return <RowSetPicker {...dockedPanel(props)} />;
+}
+
+/**
+ * The numbers in a phone's Binder sheet, under Progress (#969), counting what the docked panel
+ * counts. Here, so they ride the binder's chunk, which a phone in collection mode has asked for
+ * by the time Binder options opens the sheet.
+ */
+export function PhoneSetNumbers(props: DockedSetBodyProps) {
+  return <SheetNumbers {...dockedPanel(props)} />;
 }

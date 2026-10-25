@@ -30,16 +30,19 @@ import {
   spansSets,
   strayParams,
   withoutStrays,
+  writeShowParam,
   type BinderShow,
 } from './binderCards';
 import {CollectionModeSwitch} from './CollectionModeSwitch';
 import {CollectionActions} from './CollectionActions';
 import {WindowCopies} from './WindowCopies';
 import {PhoneBinderRow} from './PhoneBinderRow';
+import {BinderSheet, type BinderSheetProps} from './BinderSheet';
 import {
   BinderChunkFallback,
   DockedSetBodyFallback,
   RowSetPickerFallback,
+  SheetNumbersFallback,
   ToolbarSetPickerFallback,
 } from './BinderChunkFallback';
 
@@ -49,8 +52,9 @@ import {
  * the dialog actually opens, so Browse's own chunk, the app's main route, does not
  * grow by a feature most visitors never switch on. The binder's own loading branch
  * draws its skeleton once its chunk is in; while the chunk itself downloads, the
- * binder, the docked set panel and the toolbar's set picker hold their places
- * (`BinderChunkFallback`, #913), and each chunk is asked for on intent, before it is
+ * binder, the docked set panel, the set picker in the toolbar or a phone's row, and
+ * the numbers in a phone's Binder sheet hold their places (`BinderChunkFallback`,
+ * #913, #969), and each chunk is asked for on intent, before it is
  * needed: the binder's when a pointer or focus reaches Collection (`preloadBinder`),
  * the import dialog's when the collection's actions menu opens. A dialog has nothing
  * to hold space for. Each loads through `lazyWithRetry`, like every lazy chunk in the
@@ -62,10 +66,11 @@ const CollectionBinderSection = lazyWithRetry(
   'CollectionBinderSection',
 );
 // Same module as the binder, so the same chunk: the docked set panel costs no request of its own,
-// nor does a phone row's set picker.
+// nor do a phone row's set picker and its Binder sheet's numbers.
 const DockedSetBody = lazyWithRetry(() => import('./CollectionBinderSection'), 'DockedSetBody');
 const DockedSetPicker = lazyWithRetry(() => import('./CollectionBinderSection'), 'DockedSetPicker');
 const PhoneSetPicker = lazyWithRetry(() => import('./CollectionBinderSection'), 'PhoneSetPicker');
+const PhoneSetNumbers = lazyWithRetry(() => import('./CollectionBinderSection'), 'PhoneSetNumbers');
 const ImportCollectionDialog = lazyWithRetry(
   () => import('./ImportCollectionDialog'),
   'ImportCollectionDialog',
@@ -223,8 +228,7 @@ export function useBinderParams(reader: BinderReader) {
         },
         {replace: true},
       ),
-    writeShow: (show: BinderShow) =>
-      rewrite((next) => (show === 'all' ? next.delete(OWNED_PARAM) : next.set(OWNED_PARAM, show))),
+    writeShow: (show: BinderShow) => rewrite((next) => writeShowParam(next, show)),
   };
 }
 
@@ -340,7 +344,16 @@ export interface BrowseCollectionSlots {
    * draws it in place of its title and toolbar.
    */
   renderPhoneRow: (listing: BrowseListing, options: PhoneRowOptions) => ReactNode | undefined;
+  /**
+   * A phone's Binder sheet (#969), which Binder options opens, while collection mode is on, else
+   * undefined: Show and the sort above the filters, the scope's numbers after them, all three
+   * applied in the page's one URL write. The page draws it in place of its filter sheet.
+   */
+  renderPhoneSheet: (listing: BrowseListing, sheet: PhoneSheetOptions) => ReactNode | undefined;
 }
+
+/** What the page hands a phone's Binder sheet: its filter sheet's props, the sort, and its one write. */
+export type PhoneSheetOptions = Omit<BinderSheetProps, 'show' | 'progress'>;
 
 /** What the page hands a phone's binder row: Binder options' badge and press. */
 interface PhoneRowOptions {
@@ -556,6 +569,18 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           count={count}
           onOpen={onOpen}
           modeSwitch={modeSwitch}
+        />
+      ) : undefined,
+    renderPhoneSheet: (listing, sheet) =>
+      collectionMode ? (
+        <BinderSheet
+          {...sheet}
+          show={show}
+          progress={
+            <Suspense fallback={<SheetNumbersFallback promo={isPromoScope(setCode)} />}>
+              <PhoneSetNumbers {...setCounts(listing)} {...panelControls} />
+            </Suspense>
+          }
         />
       ) : undefined,
   };

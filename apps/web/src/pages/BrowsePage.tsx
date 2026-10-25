@@ -192,13 +192,14 @@ function BrowseShell({
   isMobile,
   goHome,
   contentProps,
-  filterDialogProps,
+  filterSheet,
   prompts,
 }: {
   isMobile: boolean;
   goHome: () => void;
   contentProps: React.ComponentProps<typeof BrowseContentSection>;
-  filterDialogProps: Omit<React.ComponentProps<typeof FilterDialog>, 'variant'>;
+  /** The filter dialog, or on a phone in collection mode the Binder sheet (`filterSheet`). */
+  filterSheet: React.ReactNode;
   prompts: React.ReactNode;
 }) {
   return (
@@ -216,7 +217,7 @@ function BrowseShell({
       <EtherealBackground />
       <CompactHeader onLogoClick={goHome} isMobile={isMobile} />
       <BrowseContentSection {...contentProps} />
-      <FilterDialog {...filterDialogProps} variant={isMobile ? 'drawer' : 'modal'} />
+      {filterSheet}
       {prompts}
     </main>
   );
@@ -334,6 +335,27 @@ function phoneRow(
   return collection.renderPhoneRow(listing, {count: filtersOn + (collection.show === 'all' ? 0 : 1), onOpen});
 }
 
+/** The filter dialog's props apart from its variant and its Apply, which the page's sheets set. */
+type FilterSheetProps = Omit<React.ComponentProps<typeof FilterDialog>, 'variant' | 'onApply'>;
+
+/**
+ * What Filters or Binder options opens: on a phone in collection mode the Binder sheet (#969),
+ * whose Apply writes Show and the sort with the filters in one write; elsewhere the filter dialog,
+ * a sheet from the bottom on a phone.
+ */
+function filterSheet(
+  collection: BrowseCollectionSlots | null,
+  listing: BrowseListing,
+  {isMobile, dialog, params}: {isMobile: boolean; dialog: FilterSheetProps; params: FilterParams},
+) {
+  const binderSheet = isMobile
+    ? collection?.renderPhoneSheet(listing, {...dialog, sortOrder: params.sortOrder, onApply: params.applyDraft})
+    : undefined;
+  return (
+    binderSheet ?? <FilterDialog {...dialog} onApply={params.replaceFilters} variant={isMobile ? 'drawer' : 'modal'} />
+  );
+}
+
 /**
  * The sets 1-8 cards Browse's search lists beside Core's (#911), outside the binder, whose pool
  * holds them already: the cards, lookups over both lists, and whether a tile's card has a page.
@@ -444,12 +466,11 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
       isMobile={isMobile}
       goHome={params.clearAllFilters}
       contentProps={contentProps}
-      filterDialogProps={{
-        ...filterOptions,
-        isOpen: showFilters,
-        onClose: () => setShowFilters(false),
-        onApply: params.replaceFilters,
-      }}
+      filterSheet={filterSheet(collection, listing, {
+        isMobile,
+        dialog: {...filterOptions, isOpen: showFilters, onClose: () => setShowFilters(false)},
+        params,
+      })}
       prompts={collection?.prompts}
     />
   );

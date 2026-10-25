@@ -3,7 +3,15 @@ import {beforeEach, describe, it, expect, vi} from 'vitest';
 import {act, fireEvent, render, renderHook, screen, within} from '@testing-library/react';
 import {MemoryRouter, useSearchParams} from 'react-router-dom';
 import {trackEvent} from '../../shared/lib/analytics';
-import {useBinderParams, useBrowseCollection, type BrowseListing} from './useBrowseCollection';
+import {
+  useBinderParams,
+  useBrowseCollection,
+  type BrowseListing,
+  type PhoneSheetOptions,
+} from './useBrowseCollection';
+// The binder's chunk, which the Binder sheet's numbers come from, imported with this file: a cold
+// import inside a test can outlast its wait (#712).
+import './CollectionBinderSection';
 
 // Who presses Collection, for useBrowseCollection's own cases; useBinderParams reads none of it.
 const {account} = vi.hoisted(() => ({account: {signedIn: true, hasCollection: true, syncing: false}}));
@@ -68,6 +76,14 @@ describe('useBinderParams', () => {
   it("drops the binder's view from the grid, which has no collection to view", () => {
     const {result} = renderBinderParams('/browse?owned=missing&ink=Amber', SIGNED_OUT);
     expect(result.current.search).toBe('ink=Amber');
+  });
+
+  it('writes what the binder shows, All by dropping the param', () => {
+    const {result} = renderBinderParams('/browse?binder=14&ink=Amber', COLLECTOR);
+    act(() => result.current.writeShow('missing'));
+    expect(result.current.search).toBe('binder=14&ink=Amber&owned=missing');
+    act(() => result.current.writeShow('all'));
+    expect(result.current.search).toBe('binder=14&ink=Amber');
   });
 
   it("drops a set filter once the binder is known to be the reader's", () => {
@@ -208,5 +224,55 @@ describe("useBrowseCollection's phone row (#969)", () => {
     const row = within(screen.getByTestId('phone-binder-row'));
     expect(row.getByRole('button', {name: 'Binder options'})).toHaveTextContent(/^2$/);
     expect(row.getByRole('button', {name: 'Show my collection'})).toHaveAttribute('aria-pressed', 'true');
+  });
+});
+
+describe("useBrowseCollection's Binder sheet (#969)", () => {
+  beforeEach(() => {
+    account.signedIn = true;
+    account.hasCollection = true;
+    account.syncing = false;
+  });
+
+  const LISTING: BrowseListing = {cards: [], sortOrder: 'newest', matched: [], filtered: false};
+  const SHEET: PhoneSheetOptions = {
+    isOpen: true,
+    onClose: () => {},
+    onApply: () => {},
+    sortOrder: 'newest',
+    inkFilters: [],
+    typeFilters: [],
+    costFilters: [],
+    filters: {},
+    uniqueKeywords: [],
+    uniqueClassifications: [],
+    uniqueRarities: [],
+    sets: [],
+  };
+
+  /** The sheet the hook draws for a phone, open, as Browse asks for it. */
+  function PhoneSheet() {
+    return <>{useBrowseCollection([]).renderPhoneSheet(LISTING, SHEET)}</>;
+  }
+
+  const renderSheet = (url: string) =>
+    render(
+      <MemoryRouter initialEntries={[url]}>
+        <PhoneSheet />
+      </MemoryRouter>,
+    );
+
+  it('draws nothing in grid mode, where the filter sheet stays', () => {
+    renderSheet('/browse');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it("draws the sheet in collection mode, from what the binder shows, with the scope's numbers under Progress", async () => {
+    renderSheet('/browse?binder=9&owned=missing');
+    expect(screen.getByRole('heading', {name: 'Binder'})).toBeInTheDocument();
+    const shows = within(screen.getByRole('group', {name: 'Binder shows'}));
+    expect(shows.getByRole('button', {pressed: true})).toHaveTextContent('Missing');
+    // From the binder's chunk, once it is in.
+    expect(await screen.findByRole('region', {name: 'Collection numbers'})).toBeInTheDocument();
   });
 });

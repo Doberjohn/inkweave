@@ -295,3 +295,46 @@ describe('FilterDialog drawer-specific', () => {
     expect(screen.getByRole('button', {name: /apply/i})).toBeInTheDocument();
   });
 });
+
+describe("FilterDialog with a caller's own controls (the Binder sheet, #969)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('takes a title in place of "Filters (n)"', () => {
+    render(<FilterDialog {...defaultProps} variant="drawer" title="Binder" inkFilters={['Amber']} />);
+
+    expect(screen.getByRole('heading', {name: 'Binder'})).toBeInTheDocument();
+    expect(screen.queryByText(/filters \(1\)/i)).not.toBeInTheDocument();
+  });
+
+  it('draws the prelude above the filters and the postlude after them', () => {
+    render(
+      <FilterDialog
+        {...defaultProps}
+        variant="drawer"
+        prelude={<p>Before the filters</p>}
+        postlude={<p>After the filters</p>}
+      />,
+    );
+
+    const type = screen.getByRole('button', {name: /character/i});
+    const before = screen.getByText('Before the filters');
+    const after = screen.getByText('After the filters');
+    expect(before.compareDocumentPosition(type) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(after.compareDocumentPosition(type) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+  });
+
+  it("shows Clear all for the caller's own changes alone, and its press clears them and the filters", () => {
+    const onClearAll = vi.fn();
+    render(<FilterDialog {...defaultProps} variant="drawer" extraCount={1} onClearAll={onClearAll} />);
+    // No filter on yet: the caller's change alone shows it.
+    const clear = screen.getByRole('button', {name: /clear all/i});
+    fireEvent.click(screen.getByRole('button', {name: /character/i}));
+
+    fireEvent.click(clear);
+
+    expect(onClearAll).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', {name: /character/i})).toHaveAttribute('aria-pressed', 'false');
+  });
+});

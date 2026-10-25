@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, describe, it, expect, vi} from 'vitest';
-import {act, cleanup, fireEvent, render, screen, waitFor} from '@testing-library/react';
-import {MemoryRouter} from 'react-router-dom';
+import {act, cleanup, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
+import {MemoryRouter, useLocation} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {BrowseBody, BrowsePage} from '../BrowsePage';
 import {trackCardSelected} from '../../features/cards/lib/cardAnalytics';
@@ -147,12 +147,34 @@ describe('BrowseBody with collection mode on', () => {
         <button onClick={onOpen}>{`Binder options ${count}`}</button>
       </div>
     ),
+    // A stand-in for the Binder sheet (#969): it names the sort the page handed it, and its Apply
+    // goes through the page's one write with what a sheet drafts beside the filters.
+    renderPhoneSheet: (_listing, sheet) =>
+      sheet.isOpen ? (
+        <div role="dialog" aria-label={`Binder sheet, sorted ${sheet.sortOrder}`}>
+          <button
+            onClick={() =>
+              sheet.onApply(
+                {inks: ['Amber'], types: [], costs: [], opts: {}},
+                {sortOrder: 'name-asc', edit: (params) => params.set('owned', 'missing')},
+              )
+            }>
+            Apply the sheet
+          </button>
+        </div>
+      ) : null,
   };
+
+  /** The URL's params, which the page's writes change. */
+  function SearchProbe() {
+    return <output data-testid="url-search">{useLocation().search}</output>;
+  }
 
   function renderBody(url = '/browse?binder=3', collection = slots) {
     render(
       <MemoryRouter initialEntries={[url]}>
         <BrowseBody collection={collection} />
+        <SearchProbe />
       </MemoryRouter>,
     );
   }
@@ -179,18 +201,53 @@ describe('BrowseBody with collection mode on', () => {
       expect(title).toHaveStyle({position: 'absolute', width: '1px', height: '1px', overflow: 'hidden'});
     });
 
-    it('counts the filters on, and Owned or Missing, on Binder options, which opens the filters', () => {
+    it('counts the filters on, and Owned or Missing, on Binder options', () => {
       renderBody('/browse?binder=3&ink=Amber,Ruby');
       expect(screen.getByRole('button', {name: 'Binder options 2'})).toBeInTheDocument();
       cleanupAndRender({...slots, show: 'missing'}, '/browse?binder=3&ink=Amber');
-      fireEvent.click(screen.getByRole('button', {name: 'Binder options 2'}));
-      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByRole('button', {name: 'Binder options 2'})).toBeInTheDocument();
     });
 
-    it('keeps the toolbar and the title in grid mode', () => {
-      renderBody('/browse', {...slots, active: false, renderBinder: () => null, renderPhoneRow: () => undefined});
-      expect(screen.getByTestId('browse-toolbar')).toBeInTheDocument();
+    it('opens the Binder sheet in place of the filter sheet, and its Apply writes all it holds at once', async () => {
+      renderBody('/browse?binder=3&sort=cost-desc');
+      fireEvent.click(screen.getByRole('button', {name: 'Binder options 0'}));
+      expect(screen.getByRole('dialog', {name: 'Binder sheet, sorted cost-desc'})).toBeInTheDocument();
+      expect(screen.queryByTestId('filter-drawer')).toBeNull();
+
+      fireEvent.click(screen.getByRole('button', {name: 'Apply the sheet'}));
+
+      await waitFor(() =>
+        expect(screen.getByTestId('url-search')).toHaveTextContent('?binder=3&sort=name-asc&ink=Amber&owned=missing'),
+      );
+    });
+
+    it('keeps the toolbar, the title and the filter sheet in grid mode', () => {
+      const grid = {
+        ...slots,
+        active: false,
+        renderBinder: () => null,
+        renderPhoneRow: () => undefined,
+        renderPhoneSheet: () => undefined,
+      };
+      renderBody('/browse', grid);
       expect(screen.getByRole('heading', {level: 1, name: 'Browse Cards'})).not.toHaveStyle({position: 'absolute'});
+      fireEvent.click(within(screen.getByTestId('browse-toolbar')).getByRole('button', {name: /filters/i}));
+      expect(screen.getByTestId('filter-drawer')).toBeInTheDocument();
+    });
+  });
+
+  describe('on a tablet', () => {
+    beforeEach(() => {
+      vi.stubGlobal('innerWidth', 800);
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('keeps the filter dialog in collection mode, opened from the toolbar', () => {
+      renderBody();
+      fireEvent.click(within(screen.getByTestId('browse-toolbar')).getByRole('button', {name: /filters/i}));
+      expect(screen.getByTestId('filter-modal')).toBeInTheDocument();
     });
   });
 

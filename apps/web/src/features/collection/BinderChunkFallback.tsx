@@ -3,7 +3,7 @@ import Skeleton from 'react-loading-skeleton';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
 import {useResponsive} from '../../shared/hooks/useResponsive';
 import {FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
-import {BAR, NUMBERS_STYLE, sectionStyle} from './binderLayout';
+import {BAR, NUMBERS_STYLE, SHEET_NUMBERS_STYLE, sectionStyle} from './binderLayout';
 
 /*
  * What collection mode draws while the binder's chunk downloads (#913), each in the box of what
@@ -89,6 +89,18 @@ export function DockedSetBodyFallback({promo = false}: {promo?: boolean}) {
         <NumbersLoading promo={promo} />
       </div>
     </>
+  );
+}
+
+/**
+ * A phone's Binder sheet's numbers while the chunk downloads (#969), in the column they draw in.
+ * `promo`: the sheet counts a promo scope, whose numbers have one headline.
+ */
+export function SheetNumbersFallback({promo}: {promo: boolean}) {
+  return (
+    <div style={SHEET_NUMBERS_STYLE}>
+      <NumbersLoading promo={promo} />
+    </div>
   );
 }
 

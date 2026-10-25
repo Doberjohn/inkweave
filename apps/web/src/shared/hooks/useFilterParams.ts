@@ -123,6 +123,22 @@ function parseCommaSeparated<T extends string>(
   return raw.split(',').filter(isValid);
 }
 
+/** The filters as a dialog drafts them, which its Apply writes at once. */
+export interface FilterDraft {
+  inks: Ink[];
+  types: CardTypeFilter[];
+  costs: number[];
+  opts: CardFilterOptions;
+}
+
+/** What `applyDraft` writes beside the filters, in the same one URL write (#969). */
+export interface AlsoWrite {
+  /** The sort: `sort_changed` goes out when it moves, as from `setSortOrder`. */
+  sortOrder?: BrowseSortOrder;
+  /** More params to edit in the same write: a phone binder's Show (`writeShowParam`). */
+  edit?: (params: URLSearchParams) => void;
+}
+
 export interface UseFilterParamsReturn {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -141,6 +157,12 @@ export interface UseFilterParamsReturn {
     costs: number[],
     opts: CardFilterOptions,
   ) => void;
+  /**
+   * Every filter at once, as `replaceFilters` writes them, and `also` in the same write: two
+   * writers in one tick can lose one of the two (see `useBinderParams`). The Binder sheet's
+   * Apply (#969).
+   */
+  applyDraft: (draft: FilterDraft, also?: AlsoWrite) => void;
   clearAllFilters: () => void;
   activeFilterCount: number;
   sortOrder: BrowseSortOrder;
@@ -245,28 +267,34 @@ export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseS
     updateParams((p) => serializeFilterOptions(p, newFilters));
   };
 
-  const replaceFilters = (
-    inks: Ink[],
-    types: CardTypeFilter[],
-    costs: number[],
-    opts: CardFilterOptions,
-  ) => {
+  // A sort that moves, from the toolbar's select or with the filters (the Binder sheet's Apply).
+  const trackSortChange = (order: BrowseSortOrder) => {
+    if (order !== sortOrder) trackEvent('sort_changed', {sortOrder: order, previousSort: sortOrder});
+  };
+  // The page's own default by leaving the param out.
+  const writeSort = (p: URLSearchParams, order: BrowseSortOrder) => {
+    if (order === defaultSort) p.delete(SORT_PARAM);
+    else p.set(SORT_PARAM, order);
+  };
+
+  const applyDraft = ({inks, types, costs, opts}: FilterDraft, {sortOrder: order, edit}: AlsoWrite = {}) => {
+    if (order) trackSortChange(order);
     updateParams((p) => {
       setOrDelete(p, 'ink', inks.join(','));
       setOrDelete(p, 'type', types.join(','));
       setOrDelete(p, 'cost', costs.join(','));
       serializeFilterOptions(p, opts);
+      if (order) writeSort(p, order);
+      edit?.(p);
     });
   };
 
+  const replaceFilters = (inks: Ink[], types: CardTypeFilter[], costs: number[], opts: CardFilterOptions) =>
+    applyDraft({inks, types, costs, opts});
+
   const setSortOrder = (order: BrowseSortOrder) => {
-    if (order !== sortOrder) {
-      trackEvent('sort_changed', {sortOrder: order, previousSort: sortOrder});
-    }
-    updateParams((p) => {
-      if (order === defaultSort) p.delete(SORT_PARAM);
-      else p.set(SORT_PARAM, order);
-    });
+    trackSortChange(order);
+    updateParams((p) => writeSort(p, order));
   };
 
   const clearAllFilters = () => {
@@ -288,6 +316,7 @@ export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseS
     filters,
     setFilters,
     replaceFilters,
+    applyDraft,
     clearAllFilters,
     activeFilterCount,
     sortOrder,

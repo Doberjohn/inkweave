@@ -1,0 +1,101 @@
+import {useState} from 'react';
+import type {Meta, StoryObj} from '@storybook/react-vite';
+import type {Ink} from 'inkweave-synergy-engine';
+import {BinderSheet} from './BinderSheet';
+import {SheetNumbers} from './CollectionSetPanel';
+import {OWNED_PARAM, parseBinderShow, type BinderShow} from './binderCards';
+import {tallyCollection, type Axis} from './collectionStats';
+import {STORY_ENTRIES, STORY_POOL, STORY_SETS} from './collectionStoryData';
+import {CtaButton} from '../../shared/components';
+import type {BrowseSortOrder} from '../../shared/constants';
+
+interface LiveSheetProps {
+  /** Whether the sheet starts open. */
+  open: boolean;
+  /** What the binder shows when the sheet opens. */
+  show: BinderShow;
+  /** The inks the binder is filtered to when the sheet opens. */
+  inks: Ink[];
+}
+
+/** The set the stories' numbers count. */
+const SET = '13';
+
+/**
+ * The Binder sheet over a phone's binder, live: Binder options opens it, and its Apply sets what
+ * the binder shows, its sort and its inks at once, as Browse's one URL write does. The numbers
+ * under Progress count the inks applied, and their headlines choose what the breakdowns count.
+ */
+function LiveSheet({open, show: startShow, inks: startInks}: LiveSheetProps) {
+  const [isOpen, setOpen] = useState(open);
+  const [show, setShow] = useState(startShow);
+  const [sortOrder, setSortOrder] = useState<BrowseSortOrder>('newest');
+  const [inks, setInks] = useState(startInks);
+  const [axis, setAxis] = useState<Axis>('complete');
+  const counted = inks.length > 0 ? STORY_POOL.filter((card) => inks.includes(card.ink)) : STORY_POOL;
+  return (
+    <>
+      <CtaButton onClick={() => setOpen(true)}>Binder options</CtaButton>
+      <BinderSheet
+        isOpen={isOpen}
+        onClose={() => setOpen(false)}
+        onApply={(draft, also) => {
+          const params = new URLSearchParams();
+          also.edit?.(params);
+          setShow(parseBinderShow(params.get(OWNED_PARAM)));
+          if (also.sortOrder) setSortOrder(also.sortOrder);
+          setInks(draft.inks);
+        }}
+        show={show}
+        sortOrder={sortOrder}
+        progress={
+          <SheetNumbers
+            setCode={SET}
+            sets={STORY_SETS}
+            setsLoading={false}
+            onSetChange={() => {}}
+            show={show}
+            onShowChange={() => {}}
+            axis={axis}
+            onAxisChange={setAxis}
+            stats={tallyCollection(counted, STORY_ENTRIES, STORY_SETS)}
+            filtered={inks.length > 0}
+          />
+        }
+        inkFilters={inks}
+        typeFilters={[]}
+        costFilters={[]}
+        filters={{}}
+        uniqueKeywords={['Evasive', 'Rush', 'Singer', 'Shift', 'Ward']}
+        uniqueClassifications={['Floodborn', 'Dreamborn', 'Storyborn']}
+        uniqueRarities={['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', 'Enchanted']}
+        sets={[]}
+      />
+    </>
+  );
+}
+
+/**
+ * A phone's Binder sheet (owner, 2026-10-25, #969): the filter sheet, titled Binder, with what the
+ * binder shows and its sort above the filters and the set's numbers, Progress, after them. All of
+ * it waits for Apply; closing the sheet any other way drops it.
+ */
+const meta: Meta<typeof LiveSheet> = {
+  title: 'Collection/BinderSheet',
+  component: LiveSheet,
+  parameters: {layout: 'fullscreen'},
+  tags: ['autodocs'],
+  args: {open: true, show: 'all', inks: []},
+};
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+/** Closed: Binder options opens it. */
+export const Closed: Story = {args: {open: false}, globals: {viewport: {value: 'mobile1'}}};
+
+/** Open over a binder filtered to two inks: Clear all shows, and the numbers count those inks. */
+export const OpenWithFilters: Story = {args: {inks: ['Amber', 'Steel']}, globals: {viewport: {value: 'mobile1'}}};
+
+/** Open over a binder showing Owned, which Clear all puts back to All with no filter on. */
+export const OwnedOn: Story = {args: {show: 'owned'}, globals: {viewport: {value: 'mobile1'}}};

@@ -51,3 +51,10 @@ export const NUMBERS_STYLE: CSSProperties = {
   flexDirection: 'column',
   gap: SPACING.xl,
 };
+
+/**
+ * The numbers in a phone's Binder sheet, under Progress (#969): in the sheet's flow, which
+ * scrolls them with the filters, so they keep the panel's column and gap but none of its
+ * scrolling box. Their fallback (`SheetNumbersFallback`) holds the same column.
+ */
+export const SHEET_NUMBERS_STYLE: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.xl};
