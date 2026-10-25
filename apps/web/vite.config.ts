@@ -24,7 +24,10 @@ const PREVIEW_DATA = path.resolve(import.meta.dirname, 'public/data/previewCards
 // Precompute also writes the homepage's featured cards (#641) from featuredCardIds.json, their
 // only source (#957).
 const FEATURED_CARDS = path.resolve(import.meta.dirname, 'public/data/featuredCards.json');
-const FEATURED_IDS = path.resolve(import.meta.dirname, 'src/features/cards/featuredCardIds.json');
+const FEATURED_IDS_FILE = path.resolve(
+  import.meta.dirname,
+  'src/features/cards/featuredCardIds.json',
+);
 
 /**
  * Rebuilds the engine and regenerates pre-computed synergies on dev server start
@@ -87,7 +90,7 @@ function inputsNewerThanManifest(): boolean {
     fs.existsSync(file) && fs.statSync(file).mtimeMs > manifestMtime;
   return (
     isNewerRecursive(ENGINE_SRC, manifestMtime) ||
-    [CARD_DATA, PREVIEW_DATA, FEATURED_IDS].some(newerThanManifest)
+    [CARD_DATA, PREVIEW_DATA, FEATURED_IDS_FILE].some(newerThanManifest)
   );
 }
 

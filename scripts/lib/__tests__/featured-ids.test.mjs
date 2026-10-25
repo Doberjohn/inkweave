@@ -4,13 +4,16 @@ import {
   FEATURED_INKS,
   featuredEntry,
   featuredIdsJson,
+  featuredListProblem,
   missingFeaturedInks,
 } from '../featured-ids.mjs';
 
-const FEATURED_FILE = fs.readFileSync(
-  new URL('../../../apps/web/src/features/cards/featuredCardIds.json', import.meta.url),
-  'utf8',
-);
+const WEB = new URL('../../../apps/web/', import.meta.url);
+const readWeb = (file) => fs.readFileSync(new URL(file, WEB), 'utf8');
+const FEATURED_FILE = readWeb('src/features/cards/featuredCardIds.json');
+
+/** One card per ink, ids 1 to 6. */
+const oneOfEach = () => FEATURED_INKS.map((ink, i) => ({id: i + 1, inks: [ink]}));
 
 describe('featuredEntry', () => {
   it('names a card by its ink and full name, its id as a string', () => {
@@ -48,6 +51,40 @@ describe('missingFeaturedInks', () => {
     const cards = [['Amber', 'Amethyst'], ['Emerald'], ['Ruby', 'Sapphire'], ['Steel']];
 
     expect(missingFeaturedInks(cards)).toEqual([]);
+  });
+});
+
+describe('featuredListProblem', () => {
+  it('accepts six different cards that carry every ink', () => {
+    expect(featuredListProblem(oneOfEach())).toBeNull();
+  });
+
+  it.each([
+    ['five cards', oneOfEach().slice(1)],
+    ['seven cards', [...oneOfEach(), {id: 7, inks: ['Ruby']}]],
+    ['the same card twice', [...oneOfEach().slice(1), {id: '2', inks: ['Amber']}]],
+  ])('refuses %s', (_label, cards) => {
+    expect(featuredListProblem(cards)).toBe('pick 6 different cards');
+  });
+
+  it('names the inks no card carries', () => {
+    const cards = oneOfEach().map((card) => (card.id === 6 ? {...card, inks: ['Ruby']} : card));
+
+    expect(featuredListProblem(cards)).toBe('pick one card of each ink (none is Steel)');
+  });
+});
+
+// Admin's Featured cards page (Doberjohn/inkweave-admin#95) is to commit featuredCardIds.json
+// straight to master, so the committed list is checked against the real cards here too.
+describe('featuredCardIds.json', () => {
+  it('names six different cards that carry every ink between them', () => {
+    const cards = ['public/data/allCards.json', 'public/data/previewCards.json'].flatMap(
+      (file) => JSON.parse(readWeb(file)).cards,
+    );
+    const inksById = new Map(cards.map((card) => [String(card.id), card.color.split('-')]));
+    const listed = JSON.parse(FEATURED_FILE).map(({id}) => ({id, inks: inksById.get(id) ?? []}));
+
+    expect(featuredListProblem(listed)).toBeNull();
   });
 });
 

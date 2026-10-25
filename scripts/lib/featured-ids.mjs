@@ -1,8 +1,8 @@
 /**
  * The homepage's featured-card list, apps/web/src/features/cards/featuredCardIds.json: its
  * shape, the rule six cards must meet, and the file's text. Graduation writes the file through
- * these, and so does admin's Featured cards page (Doberjohn/inkweave-admin#95), which bridges
- * this module into the browser, so it imports nothing from Node.
+ * these, and so will admin's Featured cards page (Doberjohn/inkweave-admin#95), which is to
+ * bridge this module into the browser, so it imports nothing from Node.
  */
 
 /** The homepage shows exactly six featured cards (featured.ts). */
@@ -31,6 +31,23 @@ export function featuredEntry({id, inks, fullName}) {
 export function missingFeaturedInks(cardInks) {
   const carried = new Set(cardInks.flat());
   return FEATURED_INKS.filter((ink) => !carried.has(ink));
+}
+
+/**
+ * Why a featured list can't be used, or null when it can: it must name FEATURED_COUNT different
+ * cards that carry every ink between them. Graduation checks its answer with this, and admin's
+ * Featured cards page is to check a list with it before committing it.
+ *
+ * @param {readonly {id: string | number, inks: readonly string[]}[]} cards
+ * @returns {string | null}
+ */
+export function featuredListProblem(cards) {
+  const ids = new Set(cards.map(({id}) => String(id)));
+  if (cards.length !== FEATURED_COUNT || ids.size !== FEATURED_COUNT) {
+    return `pick ${FEATURED_COUNT} different cards`;
+  }
+  const missing = missingFeaturedInks(cards.map(({inks}) => inks));
+  return missing.length > 0 ? `pick one card of each ink (none is ${missing.join(' or ')})` : null;
 }
 
 /**

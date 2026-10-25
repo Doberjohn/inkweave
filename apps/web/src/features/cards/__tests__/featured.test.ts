@@ -158,8 +158,8 @@ describe('FEATURED_IDS', () => {
     vi.resetModules();
   });
 
-  // featuredCardIds.json is the only source (#957): admin's Featured cards page commits it, so a
-  // Vercel variable left set must never override what admin saved.
+  // featuredCardIds.json is the only source (#957): admin's Featured cards page is to commit it
+  // (Doberjohn/inkweave-admin#95), so a Vercel variable left set must never override it.
   it("is featuredCardIds.json's list even when VITE_FEATURED_CARD_IDS is set", async () => {
     vi.stubEnv('VITE_FEATURED_CARD_IDS', '1,2,3');
     vi.resetModules();

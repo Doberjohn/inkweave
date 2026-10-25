@@ -34,9 +34,9 @@ function forgetRequest(): null {
 /**
  * The featured cards from the small file precompute writes (#641), fetched once per page. Resolves
  * null when the file is missing, fails to load or doesn't hold every featured ID (a card it
- * couldn't find, or a file from an older build), so the caller falls back to the full card list. Only a missing file (a
- * 404) or an incomplete one is kept for the page; any other failure is forgotten, so the next
- * caller tries again.
+ * couldn't find, or a file from an older build), so the caller falls back to the full card list.
+ * Only a missing file (a 404) or an incomplete one is kept for the page; any other failure is
+ * forgotten, so the next caller tries again.
  */
 export function fetchFeaturedCards(): Promise<LorcanaCard[] | null> {
   request ??= fetch(FEATURED_CARDS_PATH)

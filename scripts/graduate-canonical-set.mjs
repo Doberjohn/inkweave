@@ -73,7 +73,7 @@ import {
   FEATURED_COUNT,
   featuredEntry,
   featuredIdsJson,
-  missingFeaturedInks,
+  featuredListProblem,
 } from './lib/featured-ids.mjs';
 import {foldVariants, isPrinting} from './lib/fold-variants.mjs';
 import {mergePromoPrintings} from './lib/promo-printings.mjs';
@@ -267,29 +267,27 @@ export function droppedVariants(previewCards, {cards, fold}, setCode) {
  * so every such reference would otherwise dangle. This rewrites those files in place
  * through the preview id -> canonical id map (buildPreviewToCanonicalMap). A featured
  * list that holds none of the set's cards gets new ones from chooseFeaturedEntries.
- *
- * Returns true when it changed a file.
  */
 function retargetHardcodedIds(previewToCanonical) {
   if (previewToCanonical.size === 0) {
     console.log(`  Card-id refs:               previewCards empty — skipped\n`);
-    return false;
+    return;
   }
 
   const touched = retargetIdsInFiles(previewToCanonical);
   if (touched === 0) {
     console.log(`  Card-id refs:               no graduating-set ids referenced — nothing to retarget\n`);
-    return false;
+    return;
   }
 
   console.log(`  Card-id refs:               retargeted across ${touched} file(s) to canonical`);
-  return true;
 }
 
 /**
  * Points the hardcoded card ids at the graduated set: step 7's retarget, then any new
  * featured cards. featuredCardIds.json is the featured list's only source (#957), which admin's
- * Featured cards page edits too, so there is nothing to set outside the repo.
+ * Featured cards page will edit too (Doberjohn/inkweave-admin#95), so there is nothing to set
+ * outside the repo.
  */
 function updateCardIdReferences(previewToCanonical, featuredEntries) {
   retargetHardcodedIds(previewToCanonical);
@@ -417,10 +415,8 @@ export function featuredEntriesFor(answer, baseCards) {
   const unknown = numbers.filter((number) => !byNumber.has(number));
   if (unknown.length > 0) return {error: `this set has no card numbered ${unknown.join(', ')}`};
   const cards = numbers.map((number) => byNumber.get(number));
-  const missing = missingFeaturedInks(cards.map(inksOf));
-  if (missing.length > 0) {
-    return {error: `pick one card of each ink (none is ${missing.join(' or ')})`};
-  }
+  const problem = featuredListProblem(cards.map((card) => ({id: card.id, inks: inksOf(card)})));
+  if (problem) return {error: problem};
   const entries = cards.map((card) =>
     featuredEntry({id: card.id, inks: inksOf(card), fullName: card.fullName}),
   );
