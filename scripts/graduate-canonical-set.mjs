@@ -69,6 +69,12 @@ import path from 'node:path';
 import readline from 'node:readline/promises';
 import {fileURLToPath} from 'node:url';
 import {finishesById, finishesReport, givenFinishes, lorcanaFinishes, placeFinishes} from './lib/finishes.mjs';
+import {
+  FEATURED_COUNT,
+  featuredEntry,
+  featuredIdsJson,
+  missingFeaturedInks,
+} from './lib/featured-ids.mjs';
 import {foldVariants, isPrinting} from './lib/fold-variants.mjs';
 import {mergePromoPrintings} from './lib/promo-printings.mjs';
 
@@ -80,9 +86,6 @@ const PROMO_CATALOG = path.join(ROOT, 'scripts/data/promo-printings.json');
 const FEATURED_IDS_JSON = path.join(ROOT, 'apps/web/src/features/cards/featuredCardIds.json');
 const ENV_EXAMPLE = path.join(ROOT, 'apps/web/.env.example');
 const MIGRATIONS = path.join(ROOT, 'supabase/migrations');
-// The homepage's grids hold exactly six featured cards, one per ink (featured.ts).
-const FEATURED_COUNT = 6;
-const INKS = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
 
 /**
  * Committed source that hardcodes REAL card ids from a set: the landing-page
@@ -397,13 +400,8 @@ export function featuresGraduatingSet(entries, baseCards, previewToCanonical) {
   return entries.some(({id}) => previewToCanonical.has(String(id)) || canonicalIds.has(String(id)));
 }
 
-const featuredEntry = (card) => ({id: String(card.id), card: `${card.color}: ${card.fullName}`});
-
-/** The inks none of `cards` carries; a dual-ink card ("Amber-Emerald") carries both. */
-function missingInks(cards) {
-  const inks = new Set(cards.flatMap((card) => card.color.split('-')));
-  return INKS.filter((ink) => !inks.has(ink));
-}
+/** A LorcanaJSON card's inks: a dual-ink card ("Amber-Emerald") carries both. */
+const inksOf = (card) => card.color.split('-');
 
 /**
  * The featured-list entries for an answer of collector numbers, in the order given, or why
@@ -422,19 +420,14 @@ export function featuredEntriesFor(answer, baseCards) {
   const unknown = numbers.filter((number) => !byNumber.has(number));
   if (unknown.length > 0) return {error: `this set has no card numbered ${unknown.join(', ')}`};
   const cards = numbers.map((number) => byNumber.get(number));
-  const missing = missingInks(cards);
+  const missing = missingFeaturedInks(cards.map(inksOf));
   if (missing.length > 0) {
     return {error: `pick one card of each ink (none is ${missing.join(' or ')})`};
   }
-  return {entries: cards.map(featuredEntry)};
-}
-
-/** featuredCardIds.json's text: one entry per line, as the file is kept. */
-export function featuredIdsJson(entries) {
-  const lines = entries.map(
-    ({id, card}) => `  {"id": ${JSON.stringify(id)}, "card": ${JSON.stringify(card)}}`,
+  const entries = cards.map((card) =>
+    featuredEntry({id: card.id, inks: inksOf(card), fullName: card.fullName}),
   );
-  return `[\n${lines.join(',\n')}\n]\n`;
+  return {entries};
 }
 
 /**

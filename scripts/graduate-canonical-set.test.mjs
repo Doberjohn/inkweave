@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import {describe, it, expect} from 'vitest';
 import {finishesById} from './lib/finishes.mjs';
 import {
@@ -6,7 +5,6 @@ import {
   buildPreviewToCanonicalMap,
   droppedVariants,
   featuredEntriesFor,
-  featuredIdsJson,
   featuresGraduatingSet,
   graduatedFinishes,
   previewVariantsMissingFrom,
@@ -15,11 +13,6 @@ import {
   replaceSetCards,
   unmappedPreviewCards,
 } from './graduate-canonical-set.mjs';
-
-const FEATURED_FILE = fs.readFileSync(
-  new URL('../apps/web/src/features/cards/featuredCardIds.json', import.meta.url),
-  'utf8',
-);
 
 const IMAGES = {full: 'full.jpg', thumbnail: 'thumb.jpg', foilMask: 'mask.jpg'};
 
@@ -329,9 +322,5 @@ describe('featured cards (graduation)', () => {
     expect(featuredEntriesFor('7 30 61 95 96 170', [...setCards, secondRuby]).error).toBe(
       'pick one card of each ink (none is Sapphire)',
     );
-  });
-
-  it('writes featuredCardIds.json in the format the file is kept in', () => {
-    expect(featuredIdsJson(JSON.parse(FEATURED_FILE))).toBe(FEATURED_FILE);
   });
 });
