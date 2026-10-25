@@ -91,12 +91,12 @@ If one of these needs a per-season edit, something regressed:
 ### Ids and filenames
 
 - Numbered card: `id = REVEAL_ID_BASE + collector number` (Set 14 #50 is `14050`).
-- Card revealed WITHOUT a collector number (common early on; 10 of 89 at Set 13's start): an id in the reserved `+900..+999` band and no `number` field, per [`PREVIEW_CARD_PARSER.md`](https://github.com/Doberjohn/inkweave-admin/blob/main/docs/PREVIEW_CARD_PARSER.md) in admin. Renumber it once the collector number is known. These can only be added, and renumbered, by PR: Card studio's New reveal requires a number, and its Edit card keeps a card's id and number as they are (admin's runbook, "Ids and filenames").
+- Card revealed WITHOUT a collector number (common early on; 10 of 89 at Set 13's start): an id in the reserved `+900..+999` band and no `number` field, per [`PREVIEW_CARD_PARSER.md`](https://github.com/Doberjohn/inkweave-admin/blob/main/docs/PREVIEW_CARD_PARSER.md) in admin. Renumber it once the collector number is known. These can only be added, and renumbered, by PR: Card studio's New card requires a number, and its Edit card keeps a card's id and number as they are (admin's runbook, "Ids and filenames").
 - Raw scans go in `apps/web/public/card-images-raw/` and the filename stem MUST be the numeric card id (`14050.jpg`). One bad filename fails the whole convert run.
 
 ### Ink blocks
 
-A set is numbered ink by ink in `ALL_INKS` order, so the collector number implies the ink. `inkBlock(ink)` gives each range. **A dual-ink card sits in the block of its FIRST ink.** Admin's Card studio rejects an ink that does not own the number, because both wrong-ink publishes in Set 13 were the form's default ink (`Amber`) left unchanged. Its New reveal also refuses every number above `SET_TOTAL`, since each is an Epic, Enchanted or Iconic printing of a card in the set (admin's runbook, "Ink blocks"), and a number that a released card of the reveal set already holds, which matters once a set graduates. `/fetch-reveals` refuses that number too (Doberjohn/inkweave-admin#51). If the set turns out to split unevenly (Set 13 ran 37 down to 32), fix `PER_INK` and the matching `ROWS`.
+A set is numbered ink by ink in `ALL_INKS` order, so the collector number implies the ink. `inkBlock(ink)` gives each range. **A dual-ink card sits in the block of its FIRST ink.** Admin's Card studio rejects an ink that does not own the number, because both wrong-ink publishes in Set 13 were the form's default ink (`Amber`) left unchanged. Its New card also refuses every number above `SET_TOTAL`, since each is an Epic, Enchanted or Iconic printing of a card in the set (admin's runbook, "Ink blocks"), and a number that a released card of the reveal set already holds, which matters once a set graduates. `/fetch-reveals` refuses that number too (Doberjohn/inkweave-admin#51). If the set turns out to split unevenly (Set 13 ran 37 down to 32), fix `PER_INK` and the matching `ROWS`.
 
 ### Record conventions
 
@@ -133,11 +133,11 @@ Either way, once the cards are on `master`, `.github/workflows/refresh-rule-cove
 
 How to run both, and what each refuses to write: [`docs/REVEAL_RUNBOOK.md`](https://github.com/Doberjohn/inkweave-admin/blob/main/docs/REVEAL_RUNBOOK.md) in admin.
 
-**Merge the season switch, then bump admin's pin past it, before anything is published.** Admin reads the season from its pinned copy of this repo, and Card studio commits to `master`, the only branch the convert workflow runs on.
+**Merge the season switch, then bump admin's pin past it, before anything is published.** Admin reads the season from its pinned copy of this repo, and Card studio commits to `master`, the only branch the convert workflow runs on. Until the pin moves, `REVEAL_SET_CODE` at admin's pin still names the previous season's set. Card studio's New card takes a card only for that set, and only while that set has a collector number up to `SET_TOTAL` that no card holds. Once that set has graduated, released cards hold all of those numbers, so New card offers no set.
 
 ### Variant printings (Epic, Enchanted, Iconic)
 
-A variant printing is alternate art for a card that is already in, not a card of its own: it goes in the base card's `variants` array, and the app shows it as a `Standard | <Rarity>` switcher (#625). Never add one as its own entry. Admin's `/fetch-reveals` and Card studio never add one as a card: the fetch pipeline's rarity gate rejects variants, and Card studio's New reveal refuses a collector number past the set and points to admin's variants script. Use one of these three paths. All three give the variant the id `REVEAL_ID_BASE + collector number` (Iconic #241 is `14241`), so they converge on one id, and `reveal-set-integrity.test.ts` enforces it.
+A variant printing is alternate art for a card that is already in, not a card of its own: it goes in the base card's `variants` array, and the app shows it as a `Standard | <Rarity>` switcher (#625). Never add one as its own entry. Admin's `/fetch-reveals` and Card studio never add one as a card: the fetch pipeline's rarity gate rejects variants, and Card studio's New card refuses a collector number past the set and points to admin's variants script. Use one of these three paths. All three give the variant the id `REVEAL_ID_BASE + collector number` (Iconic #241 is `14241`), so they converge on one id, and `reveal-set-integrity.test.ts` enforces it.
 
 **Official art, once LorcanaJSON lists the variant** (preferred):
 
