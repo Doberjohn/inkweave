@@ -69,6 +69,9 @@ jobs:
       - name: Type-check
         run: pnpm --filter inkweave-web typecheck
 
+      - name: Type-check the UI package
+        run: pnpm --filter inkweave-ui typecheck
+
       - name: Build packages
         run: pnpm build
 
@@ -103,11 +106,14 @@ jobs:
       - name: Run web tests
         run: pnpm --filter inkweave-web test:run ${{ env.COLLECT_COVERAGE == 'true' && '--coverage' || '' }}
 
-      # CodeScene's coverage views (#964): line and branch coverage for the engine and the web
-      # app, uploaded for this commit; CodeScene's analysis reads the newest upload at or before
-      # the commit it analyses. A CodeScene outage must not turn master red, so both steps only
-      # warn, and neither runs until the owner sets the CODESCENE_COVERAGE_TOKEN secret. The
-      # installer runs in a step of its own, so the script it fetches never sees the token.
+      - name: Run UI package tests
+        run: pnpm --filter inkweave-ui test:run ${{ env.COLLECT_COVERAGE == 'true' && '--coverage' || '' }}
+
+      # CodeScene's coverage views (#964): line and branch coverage for the engine, the web app
+      # and inkweave-ui, uploaded for this commit; CodeScene's analysis reads the newest upload at
+      # or before the commit it analyses. A CodeScene outage must not turn master red, so both
+      # steps only warn, and neither runs until the owner sets the CODESCENE_COVERAGE_TOKEN secret.
+      # The installer runs in a step of its own, so the script it fetches never sees the token.
       - name: Install CodeScene's coverage tool
         if: env.COLLECT_COVERAGE == 'true'
         continue-on-error: true
@@ -121,7 +127,7 @@ jobs:
           fi
           curl -fsSL https://downloads.codescene.io/enterprise/cli/install-cs-coverage-tool.sh | sh -s -- -y "$CS_COVERAGE_VERSION"
 
-      # One report for both packages, uploaded from the repo root, as cs-coverage requires.
+      # One report for all three, uploaded from the repo root, as cs-coverage requires.
       - name: Upload coverage to CodeScene
         if: env.COLLECT_COVERAGE == 'true' && env.CODESCENE_TOKEN_SET == 'true'
         continue-on-error: true
@@ -133,7 +139,8 @@ jobs:
             echo "::warning::cs-coverage did not install; see the step above. Nothing was uploaded."
             exit 0
           fi
-          cat packages/synergy-engine/coverage/lcov.info apps/web/coverage/lcov.info > coverage.lcov
+          cat packages/synergy-engine/coverage/lcov.info apps/web/coverage/lcov.info \
+            packages/ui/coverage/lcov.info > coverage.lcov
           for metric in line-coverage branch-coverage; do
             cs-coverage upload --format lcov --metric "$metric" coverage.lcov \
               || echo "::warning::CodeScene coverage upload failed ($metric)"

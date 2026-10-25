@@ -32,14 +32,15 @@ inkweave/
 ├── package.json              # Root workspace config
 ├── pnpm-workspace.yaml
 ├── packages/
-│   └── synergy-engine/       # Standalone synergy detection package
-│       ├── package.json      # inkweave-synergy-engine
-│       ├── tsup.config.ts    # Build config
-│       └── src/
-│           ├── index.ts      # Public API exports
-│           ├── types/        # LorcanaCard, Synergy types
-│           ├── utils/        # Card helpers (textContains, hasKeyword, etc.)
-│           └── engine/       # SynergyEngine class + rules
+│   ├── synergy-engine/       # Standalone synergy detection package
+│   │   ├── package.json      # inkweave-synergy-engine
+│   │   ├── tsup.config.ts    # Build config
+│   │   └── src/
+│   │       ├── index.ts      # Public API exports
+│   │       ├── types/        # LorcanaCard, Synergy types
+│   │       ├── utils/        # Card helpers (textContains, hasKeyword, etc.)
+│   │       └── engine/       # SynergyEngine class + rules
+│   └── ui/                   # inkweave-ui: shared tokens, components and hooks, consumed as source
 └── apps/
     └── web/                  # React web application
         ├── package.json      # inkweave-web
@@ -66,6 +67,10 @@ const engine = new SynergyEngine();
 const synergies = engine.findSynergies(card, allCards);
 const result = engine.checkSynergy(cardA, cardB);
 ```
+
+### inkweave-ui
+
+The home of Inkweave's design tokens, UI primitives and Lorcana display components, for the app and admin to share. They move in phase by phase (milestone #11, "Shared component library"). It is private and source-first: no build step, only the subpath exports in its `package.json` (`inkweave-ui/components/CtaButton`, never a root import or a path into `packages/ui`, which `apps/web/eslint.config.js` blocks), and each consumer compiles it with its own Vite and React Compiler. `apps/web/build-guards.ts` fails the app's build if React Compiler compiled none of its components. It never imports the app, a router, Supabase, Vercel, PostHog or Sentry (`packages/ui/eslint.config.js`, which otherwise lints with the app's config, plus admin's React Compiler bailout rules, since admin compiles it too): it takes data, links and callbacks as props. The app's gates cover it too: the design-token rules and `check:design`, `check:stories` and the app's one Storybook, knip, CI's typecheck and tests, and pre-push's typecheck. A startup module that moves into it changes its `STARTUP_SHARED` line in `apps/web/vite.config.ts`, and the build fails on a line that matches no module.
 
 ### inkweave-web
 
@@ -104,7 +109,7 @@ Claude Code hooks, skills, agents, and path-scoped rules enforce workflow rules 
 | `preview-data-auto-precompute.sh` | PostToolUse/Edit\|Write | Auto `pnpm precompute-synergies` after `apps/web/public/data/previewCards.json` writes (engine hook already covers engine-src changes) |
 | `issue-create-guard.sh` | PreToolUse/Bash\|PowerShell\|Monitor | Redirects direct `gh issue create` to `/draft-issue` skill (`SKILL_APPROVED=1` bypass, Bash only) |
 | `agent-tool-substitution-guard.sh` | PostToolUse/Agent | Halts when a subagent reports a missing tool, so the fix lands in that agent's `tools:` frontmatter instead of the main session silently substituting |
-| Husky pre-push | git push | Runs `typecheck` (`tsc -b`), `check:stories` (story coverage), `check:design` (design-token value gate, #508), E2E, then the CodeScene gate. E2E starts its own Vite (by default on a free port in 5200-5299), never reuses a running server, and warms it up before the first test (`e2e/global-setup.ts`, #664); local Windows runs use 3 workers (set in `playwright.config.ts`; `PRE_PUSH_E2E_WORKERS` overrides). **On Windows only chromium runs** (webkit + mobile-chrome workers hang past Playwright's stop timeout), after logging free commit memory; set `PRE_PUSH_FULL=1` to force webkit + mobile-chrome. Elsewhere: chromium + webkit + mobile-chrome. Full 5-browser matrix in CI. Worktree commits and pushes enter through the main checkout's `.husky` (`core.hooksPath`); once the main checkout's branch has `.husky/handoff.sh`, it runs the worktree's own `pre-commit`/`pre-push` (skip with `INKWEAVE_HOOK_HANDOFF=1`, written after `USER_APPROVED=1` in a Claude session) |
+| Husky pre-push | git push | Runs `typecheck` (`tsc -b`) and inkweave-ui's, `check:stories` (story coverage), `check:design` (design-token value gate, #508), E2E, then the CodeScene gate. E2E starts its own Vite (by default on a free port in 5200-5299), never reuses a running server, and warms it up before the first test (`e2e/global-setup.ts`, #664); local Windows runs use 3 workers (set in `playwright.config.ts`; `PRE_PUSH_E2E_WORKERS` overrides). **On Windows only chromium runs** (webkit + mobile-chrome workers hang past Playwright's stop timeout), after logging free commit memory; set `PRE_PUSH_FULL=1` to force webkit + mobile-chrome. Elsewhere: chromium + webkit + mobile-chrome. Full 5-browser matrix in CI. Worktree commits and pushes enter through the main checkout's `.husky` (`core.hooksPath`); once the main checkout's branch has `.husky/handoff.sh`, it runs the worktree's own `pre-commit`/`pre-push` (skip with `INKWEAVE_HOOK_HANDOFF=1`, written after `USER_APPROVED=1` in a Claude session) |
 
 ### Skills (`.claude/skills/`)
 | Skill | Arg | What it does |
@@ -129,8 +134,8 @@ Convention files that auto-load only when editing files matching their `paths:` 
 | `stories.md` | `**/*.stories.tsx` | Storybook conventions (imports, decorators, mock-data shape) |
 | `migrations.md` | `supabase/migrations/**` | Supabase MCP migration workflow; every migration that creates or recreates a table or view declares its privileges (#706) |
 | `engine.md` | `packages/synergy-engine/src/**` | engine rule pattern, 5-baseline scoring anchors, doc-sync, auto-rebuild |
-| `design-tokens.md` | `apps/web/src/**/*.ts(x)` | design-token lint rules (#508): the `inkweave/*` ESLint rules + value-grep gate, the shrink-only grandfather ledgers, and what to do when a rule fires |
-| `overlays.md` | `apps/web/src/**/*.tsx` | overlay contract (#510): DialogShell/BottomSheet + hook trio, backdrop-always-closes, scrim tokens, the FilterDialog Radix exception, E2E backdrop/unmount invariants |
+| `design-tokens.md` | `apps/web/src/**/*.ts(x)`, `packages/ui/src/**/*.ts(x)` | design-token lint rules (#508): the `inkweave/*` ESLint rules + value-grep gate, the shrink-only grandfather ledgers, and what to do when a rule fires |
+| `overlays.md` | `apps/web/src/**/*.tsx`, `packages/ui/src/**/*.tsx` | overlay contract (#510): DialogShell/BottomSheet + hook trio, backdrop-always-closes, scrim tokens, the FilterDialog Radix exception, E2E backdrop/unmount invariants |
 | `mockups.md` | `apps/web/public/mockups/**` | design-session workflow, mockup token set, audit passes |
 
 ### Agents (`.claude/agents/`)
@@ -267,7 +272,7 @@ Dark fantasy theme inspired by Lorcana:
 - **Local Windows Vitest runs use 4 workers** (`resolveVitestWorkers` in `apps/web/vite.config.ts`, #720): on a cold disk cache, Vitest's default first wave misses its hardcoded 60 s worker-start limit and those files never run. CI keeps Vitest's default; `VITEST_MAX_WORKERS` overrides the cap.
 - **Pre-push hook** (husky) runs E2E chromium on every `git push`. Do not skip.
 - Full 5-browser E2E suite runs in CI as safety net: chromium and mobile-chrome on the dev server, firefox, webkit and mobile-safari on a production build (`E2E_SERVER=preview`, #869; reproduce one with `E2E_SERVER=preview pnpm test:e2e --project=<name>` in Bash, or the PowerShell form in `apps/web/e2e/E2E_TESTS.md`). The pre-push hook always runs the dev server.
-- **Unit coverage goes to CodeScene from master only** (#964): CI's build-and-test runs the engine and web suites with `--coverage` on master pushes and uploads one concatenated lcov per metric (line and branch) to project 79825 with the `CODESCENE_COVERAGE_TOKEN` secret (without it the upload skips). PRs collect none. A file the report leaves out counts as 0% there, so a new `coverage.exclude` pattern also goes in the project's coverage exclusions.
+- **Unit coverage goes to CodeScene from master only** (#964): CI's build-and-test runs the engine, web and inkweave-ui suites with `--coverage` on master pushes and uploads one concatenated lcov per metric (line and branch) to project 79825 with the `CODESCENE_COVERAGE_TOKEN` secret (without it the upload skips). PRs collect none. A file the report leaves out counts as 0% there, so a new `coverage.exclude` pattern also goes in the project's coverage exclusions.
 - Script suites (`pnpm test:scripts`) also run on Windows in CI (`script-tests-windows.yml`) when `scripts/`, `.claude/hooks/`, the root `package.json` or the lockfile change, so the worktree remover's Windows-only tests run.
 - After pushing, always confirm with clear output (e.g., git log showing commit on origin/master).
 - **When pre-push fails on tests unrelated to your change:** (1) confirm it's pre-existing by checking whether the same test was accepted on `origin/HEAD` — if yes, something drifted since then; (2) surface scope options to the user (fix in scope / fix separately / defer / `--no-verify` with explicit approval) before digging into root-cause; (3) do NOT silently investigate the unrelated breakage — that's scope drift. Pause and ask.
