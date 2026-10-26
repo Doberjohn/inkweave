@@ -1,5 +1,5 @@
 import type {SentryApi} from './sentryClient';
-import {whenLoadedAndIdle} from './whenLoadedAndIdle';
+import {whenLoadedAndIdle} from 'inkweave-ui/lib/whenLoadedAndIdle';
 
 export type {SentryApi};
 

@@ -1,8 +1,10 @@
 import {useState} from 'react';
 import {describe, it, expect, vi, beforeEach, afterEach, type MockInstance} from 'vitest';
 import {render, screen, fireEvent, act, waitFor, createEvent} from '@testing-library/react';
-import {createCard, swipeCard, touchMoveKept} from '../../test-utils';
-import type {Printing} from '../../hooks';
+import {createCard} from '../../test-utils/cards';
+import {swipeCard} from '../../test-utils/printingSwipe';
+import {touchMoveKept} from '../../test-utils/touchMove';
+import type {Printing} from '../../lib/printings';
 import {_resetPrerenderedArt} from '../../lib/prerenderedArt';
 import {showPrerenderedArt} from '../../test-utils/loadedArt';
 import {PrintingCarousel} from '../PrintingCarousel';

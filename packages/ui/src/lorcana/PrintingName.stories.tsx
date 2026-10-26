@@ -1,8 +1,8 @@
 import type {CSSProperties} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {PrintingName, type NamedPrinting} from './PrintingName';
-import {COLORS, FONTS, FONT_SIZES, SPACING} from '../constants';
-import {printingName, type Printing} from 'inkweave-ui/lib/printings';
+import {COLORS, FONTS, FONT_SIZES, SPACING} from '../tokens/theme';
+import {printingName, type Printing} from '../lib/printings';
 
 const meta: Meta<typeof PrintingName> = {
   title: 'Shared/PrintingName',

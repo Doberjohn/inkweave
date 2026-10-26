@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
 import {render, screen, fireEvent, act} from '@testing-library/react';
 import {PeekButton, TurnNotice} from '../PrintingPeek';
-import type {Printing} from '../../hooks';
+import type {Printing} from '../../lib/printings';
 
 const enchanted: Printing = {key: '2141', label: 'Enchanted', rarity: 'Enchanted'};
 

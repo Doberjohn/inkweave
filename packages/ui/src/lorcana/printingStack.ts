@@ -1,5 +1,5 @@
 import type {CSSProperties} from 'react';
-import {DURATION, EASING, SHADOWS, SPACING} from '../constants';
+import {DURATION, EASING, SHADOWS, SPACING} from '../tokens/theme';
 import type {PeekSide} from './PrintingPeek';
 
 /** How big the printings behind the card are, beside it. */

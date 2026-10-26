@@ -1,5 +1,5 @@
 import {createContext, useContext, useState} from 'react';
-import {DURATION, EASING} from '../constants';
+import {DURATION, EASING} from '../tokens/theme';
 import {prerenderedArtShown} from '../lib/prerenderedArt';
 
 /**

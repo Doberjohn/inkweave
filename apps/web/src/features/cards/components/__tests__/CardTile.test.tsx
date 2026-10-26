@@ -2,8 +2,8 @@ import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {CardTile} from '../CardTile';
 import {createCard} from '../../../../shared/test-utils';
-import {_resetPrerenderedArt} from '../../../../shared/lib/prerenderedArt';
-import {showPrerenderedArt, stubLoadedArt} from '../../../../shared/test-utils/loadedArt';
+import {_resetPrerenderedArt} from 'inkweave-ui/lib/prerenderedArt';
+import {showPrerenderedArt, stubLoadedArt} from 'inkweave-ui/test-utils/loadedArt';
 
 describe('CardTile', () => {
   const mockCard = createCard({

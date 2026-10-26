@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState, type MouseEvent, type PointerEvent, type RefObject} from 'react';
-import {useTouchHold} from '../../../shared/hooks/useTouchHold';
+import {useTouchHold} from 'inkweave-ui/hooks/useTouchHold';
 import {easeOut, flickSpeed, glideMs, grabProgress, landsOnRelease, poseLeaf, SLOP, type Grip} from './pageTurnMath';
 import type {Turn} from './usePageTurns';
 

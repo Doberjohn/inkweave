@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import {CopiesStripe} from './CopiesStripe';
-import {COLORS} from '../constants';
+import {COLORS} from '../tokens/theme';
 
 /** A 1920px screen's binder pocket, the size the pocket's stripe is drawn for at 90%. */
 const POCKET = {width: 144, height: 200};

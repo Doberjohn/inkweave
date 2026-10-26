@@ -3,7 +3,7 @@ import type {LorcanaCard} from '../../cards';
 import {cardPath} from 'inkweave-synergy-engine/card';
 import {smallImageUrl} from '../../cards';
 import {INK_COLORS, COLORS, CARD_TILE_GLOW, FONT_SIZES, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
-import {useArtLoad} from '../../../shared/hooks/useArtLoad';
+import {useArtLoad} from 'inkweave-ui/hooks/useArtLoad';
 import {CardLightbox, InkCardPlaceholder, StrengthBadge} from '../../../shared/components';
 import {isModifiedClick} from 'inkweave-ui/utils/touchGuard';
 import {getStrengthTier} from '../utils';

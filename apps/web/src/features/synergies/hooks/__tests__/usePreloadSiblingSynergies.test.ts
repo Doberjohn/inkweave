@@ -16,7 +16,7 @@ vi.mock('../../../../shared/contexts/CardDataContext', () => ({
 /** The work waiting for the page to go idle, which a test runs with `goIdle`. */
 const idleWork = new Set<() => void>();
 
-vi.mock('../../../../shared/lib/whenLoadedAndIdle', () => ({
+vi.mock('inkweave-ui/lib/whenLoadedAndIdle', () => ({
   whenIdle: (callback: () => void) => {
     idleWork.add(callback);
     return () => idleWork.delete(callback);

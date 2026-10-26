@@ -1,11 +1,7 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {CardImageButton} from './CardImageButton';
-import {InkCardPlaceholder} from './InkCardPlaceholder';
+import {CardImage} from './CardImage';
 import {RADIUS} from '../tokens/theme';
-
-// The app wraps its CardImage, which stays in the app until #980: the art and a placeholder of
-// the hero's size stand in for it here.
-const ART = {width: 298, height: 417, borderRadius: RADIUS.xl};
 
 const meta: Meta<typeof CardImageButton> = {
   title: 'Shared/CardImageButton',
@@ -23,12 +19,14 @@ export const EnlargeableArt: Story = {
     onClick: () => {},
     borderRadius: RADIUS.xl,
     children: (
-      <img
+      <CardImage
         src="/card-images-preview/14023.avif"
         alt="Mickey Mouse - Best in Town"
-        width={ART.width}
-        height={ART.height}
-        style={{display: 'block', borderRadius: ART.borderRadius}}
+        width={298}
+        height={417}
+        inkColor="Amber"
+        cost={1}
+        borderRadius={RADIUS.xl}
       />
     ),
   },
@@ -42,9 +40,15 @@ export const WithoutArt: Story = {
     enlargeable: false,
     borderRadius: RADIUS.xl,
     children: (
-      <span style={{...ART, display: 'block', position: 'relative'}}>
-        <InkCardPlaceholder ink="Amber" />
-      </span>
+      <CardImage
+        src={undefined}
+        alt="Mickey Mouse - Best in Town"
+        width={298}
+        height={417}
+        inkColor="Amber"
+        cost={1}
+        borderRadius={RADIUS.xl}
+      />
     ),
   },
 };

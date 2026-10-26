@@ -1,7 +1,7 @@
 import {useEffect} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
-import {whenIdle} from '../../../shared/lib/whenLoadedAndIdle';
+import {whenIdle} from 'inkweave-ui/lib/whenLoadedAndIdle';
 import {siblingStep} from '../../../shared/utils/siblingStep';
 import {fetchCardSynergies} from './usePrecomputedSynergies';
 

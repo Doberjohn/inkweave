@@ -1,10 +1,10 @@
 import {useState, type ReactNode} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {CardImage} from './CardImage';
-import {CtaButton} from 'inkweave-ui/components/CtaButton';
+import {CtaButton} from '../components/CtaButton';
 import {TurnNotice} from './PrintingPeek';
-import {RADIUS, SPACING} from '../constants';
-import type {Printing} from 'inkweave-ui/lib/printings';
+import {RADIUS, SPACING} from '../tokens/theme';
+import type {Printing} from '../lib/printings';
 
 const meta: Meta<typeof TurnNotice> = {
   title: 'Shared/PrintingPeek',

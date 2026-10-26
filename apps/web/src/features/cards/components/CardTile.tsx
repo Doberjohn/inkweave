@@ -11,7 +11,7 @@ import {
   blackRgba,
   whiteRgba,
 } from '../../../shared/constants';
-import {useArtLoad} from '../../../shared/hooks/useArtLoad';
+import {useArtLoad} from 'inkweave-ui/hooks/useArtLoad';
 import {PROMO_RARITY, isChaseRarity, printingAlt} from 'inkweave-ui/lib/printings';
 import {smallImageUrl} from '../loader';
 import {isModifiedClick} from 'inkweave-ui/utils/touchGuard';

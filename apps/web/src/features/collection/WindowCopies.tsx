@@ -1,7 +1,7 @@
 import {createPortal} from 'react-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CopiesStripe} from '../../shared/components';
-import type {StripePart} from '../../shared/components/CopiesStripe';
+import type {StripePart} from 'inkweave-ui/lorcana/CopiesStripe';
 import {useCardDataContext} from '../../shared/contexts/CardDataContext';
 import {useCardModal} from '../../shared/contexts/CardModalContext';
 import {useCardWindowSlot, useHoldCopiesRow} from '../../shared/contexts/cardWindowSlot';
