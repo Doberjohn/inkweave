@@ -1,6 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {MemoryRouter} from 'react-router-dom';
-import {fn} from 'storybook/test';
+import {fn, userEvent} from 'storybook/test';
 import {CompactHeader} from './CompactHeader';
 import {SessionProvider} from '../contexts/SessionContext';
 
@@ -44,6 +44,14 @@ export const WithSearch: Story = {
     searchQuery: '',
     onSearchChange: fn(),
     onSearchSubmit: fn(),
+  },
+};
+
+/** The skip link (WCAG 2.4.1), shown while it has focus: the first Tab stop on every page with the header. */
+export const SkipLinkFocused: Story = {
+  args: {},
+  play: async () => {
+    await userEvent.tab();
   },
 };
 

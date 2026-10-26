@@ -1,7 +1,7 @@
 import {type ReactNode, useState} from 'react';
 import {Link, NavLink} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX, searchFieldStyle} from '../constants';
+import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, VISUALLY_HIDDEN, Z_INDEX, searchFieldStyle} from '../constants';
 import {useAutocomplete, useHover} from '../hooks';
 import {suggestCardsByName} from '../../features/cards/loader';
 import {useRevealPhase} from '../../features/reveals';
@@ -465,6 +465,50 @@ function DesktopNav({isRevealSeason}: DesktopNavProps) {
   );
 }
 
+/** Where the skip link lands: the spot right after the header. */
+const MAIN_CONTENT_ID = 'main-content';
+
+/** The skip link while it has focus: the top corner, above the sticky header. */
+const SKIP_LINK_SHOWN: React.CSSProperties = {
+  ...CTA_FILLED_STYLE,
+  position: 'fixed',
+  top: SPACING.md,
+  left: SPACING.md,
+  zIndex: Z_INDEX.popover,
+  padding: `${SPACING.sm}px ${SPACING.lg}px`,
+  borderRadius: `${RADIUS.lg}px`,
+  fontFamily: FONTS.body,
+  fontSize: `${FONT_SIZES.base}px`,
+  fontWeight: 600,
+  textDecoration: 'none',
+};
+
+/** Out of the page's flex or grid flow, and no ring: the target is never a Tab stop or a control. */
+const SKIP_TARGET_STYLE: React.CSSProperties = {position: 'absolute', outline: 'none'};
+
+/**
+ * "Skip to main content" (WCAG 2.4.1): the first Tab stop on every page with the header, shown
+ * only while focused. Its target renders with it, after the header, so axe's skip-link rule
+ * always finds it; several pages put the header inside their <main>, so <main> can't be the
+ * target. The click focuses the target itself, so the address never gains the fragment.
+ */
+function SkipLink() {
+  const [shown, setShown] = useState(false);
+  return (
+    <a
+      href={`#${MAIN_CONTENT_ID}`}
+      onFocus={() => setShown(true)}
+      onBlur={() => setShown(false)}
+      onClick={(event) => {
+        event.preventDefault();
+        document.getElementById(MAIN_CONTENT_ID)?.focus();
+      }}
+      style={shown ? SKIP_LINK_SHOWN : VISUALLY_HIDDEN}>
+      Skip to main content
+    </a>
+  );
+}
+
 // =====================================================================
 // Public component — layout shell that delegates to subcomponents above.
 // =====================================================================
@@ -493,21 +537,25 @@ export function CompactHeader({
   const hasSearch = searchQuery !== undefined && onSearchChange !== undefined;
 
   return (
-    <header data-testid="compact-header" style={getHeaderStyle(viewport)}>
-      <HeaderLogo viewport={viewport} showBackArrow={showBackArrow} onClick={onLogoClick} />
-      {hasSearch && (
-        <HeaderSearch
-          cards={cards}
-          query={searchQuery}
-          onChange={onSearchChange}
-          onSubmit={onSearchSubmit}
-          onCardSelect={onCardSelect}
-          viewport={viewport}
-        />
-      )}
-      {!viewport.isMobile && <DesktopNav isRevealSeason={isRevealSeason} />}
-      {headerActions}
-      {SHOW_ACCOUNTS && <HeaderAuth />}
-    </header>
+    <>
+      <SkipLink />
+      <header data-testid="compact-header" style={getHeaderStyle(viewport)}>
+        <HeaderLogo viewport={viewport} showBackArrow={showBackArrow} onClick={onLogoClick} />
+        {hasSearch && (
+          <HeaderSearch
+            cards={cards}
+            query={searchQuery}
+            onChange={onSearchChange}
+            onSubmit={onSearchSubmit}
+            onCardSelect={onCardSelect}
+            viewport={viewport}
+          />
+        )}
+        {!viewport.isMobile && <DesktopNav isRevealSeason={isRevealSeason} />}
+        {headerActions}
+        {SHOW_ACCOUNTS && <HeaderAuth />}
+      </header>
+      <span id={MAIN_CONTENT_ID} tabIndex={-1} style={SKIP_TARGET_STYLE} />
+    </>
   );
 }
