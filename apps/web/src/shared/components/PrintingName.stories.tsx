@@ -2,7 +2,7 @@ import type {CSSProperties} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {PrintingName, type NamedPrinting} from './PrintingName';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../constants';
-import {printingName, type Printing} from '../hooks/usePrintingSelection';
+import {printingName, type Printing} from 'inkweave-ui/lib/printings';
 
 const meta: Meta<typeof PrintingName> = {
   title: 'Shared/PrintingName',
@@ -18,7 +18,7 @@ type VariantFacts = Pick<Printing, 'number' | 'promoGrouping' | 'finish' | 'artV
   rarity: string;
 };
 
-/** A variant shaped like usePrintingSelection's printings, named by the same `printingName`. */
+/** A variant shaped like `printingsOf`'s printings, named by the same `printingName`. */
 function named(key: string, facts: VariantFacts): NamedPrinting {
   return {...facts, key, label: printingName(facts)};
 }

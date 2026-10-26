@@ -4,7 +4,7 @@ import {CardImage} from './CardImage';
 import {CtaButton} from 'inkweave-ui/components/CtaButton';
 import {TurnNotice} from './PrintingPeek';
 import {RADIUS, SPACING} from '../constants';
-import type {Printing} from '../hooks/usePrintingSelection';
+import type {Printing} from 'inkweave-ui/lib/printings';
 
 const meta: Meta<typeof TurnNotice> = {
   title: 'Shared/PrintingPeek',

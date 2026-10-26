@@ -12,8 +12,8 @@ import {
   whiteRgba,
 } from '../../../shared/constants';
 import {useArtLoad} from '../../../shared/hooks/useArtLoad';
-import {printingAlt} from '../../../shared/hooks/usePrintingSelection';
-import {PROMO_RARITY, isChaseRarity, smallImageUrl} from '../loader';
+import {PROMO_RARITY, isChaseRarity, printingAlt} from 'inkweave-ui/lib/printings';
+import {smallImageUrl} from '../loader';
 import {isModifiedClick} from 'inkweave-ui/utils/touchGuard';
 import {preloadCardOverviewModal} from '../../../shared/contexts/cardOverviewModalLoader';
 

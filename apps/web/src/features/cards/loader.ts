@@ -1,7 +1,8 @@
-import type {CardPrinting, LorcanaJSONCard, RawCardVariant, VariantRarity} from 'inkweave-synergy-engine';
+import type {CardPrinting, LorcanaJSONCard, RawCardVariant} from 'inkweave-synergy-engine';
 import {transformCard as baseTransformCard, isCoreSet} from 'inkweave-synergy-engine/card';
 import type {LorcanaCard, Ink, CardType} from './types';
 import {fetchPreviewCards} from './previewCards';
+import {PROMO_RARITY, isChaseRarity} from 'inkweave-ui/lib/printings';
 import {ALL_INKS, binderSetOf, editionRank, promoSetRank, type BrowseSortOrder} from '../../shared/constants';
 
 interface LorcanaJSONSet {
@@ -377,8 +378,8 @@ export interface CardFilterOptions {
 /** The two kinds of printing the art presets pick: standard cards, and the alternate-art printings. */
 export type ArtKind = 'standard' | 'alt';
 
-/** The rarity LorcanaJSON gives every promo printing, shown as "Promo" (`rarityLabel`). */
-export const PROMO_RARITY = 'Special';
+/** Both live in inkweave-ui (#980); the loader forwards them for its importers. */
+export {PROMO_RARITY, isChaseRarity};
 
 /**
  * The rarities of each kind (owner, 2026-10-15): the five a standard card comes in, and
@@ -389,14 +390,6 @@ export const RARITIES_BY_ART: Readonly<Record<ArtKind, readonly string[]>> = {
   standard: ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary'],
   alt: ['Epic', 'Enchanted', 'Iconic', PROMO_RARITY],
 };
-
-/** The chase printings' rarities, each with a symbol of its own: the engine's `VariantRarity`. */
-const CHASE_RARITIES: ReadonlySet<string> = new Set<VariantRarity>(['Epic', 'Enchanted', 'Iconic']);
-
-/** Whether a rarity is a chase printing's (Epic, Enchanted, Iconic; not a promo's), narrowed to it. */
-export function isChaseRarity(rarity: string | undefined): rarity is VariantRarity {
-  return rarity !== undefined && CHASE_RARITIES.has(rarity);
-}
 
 type CardFilterPredicate = (card: LorcanaCard, options: CardFilterOptions) => boolean;
 

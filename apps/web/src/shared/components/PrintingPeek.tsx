@@ -1,5 +1,5 @@
 import {useEffect, useState, type CSSProperties} from 'react';
-import {printingSpokenName} from '../hooks/usePrintingSelection';
+import {printingSpokenName} from 'inkweave-ui/lib/printings';
 import {
   COLORS,
   DURATION,

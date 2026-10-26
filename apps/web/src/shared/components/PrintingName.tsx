@@ -1,12 +1,12 @@
 import type {CSSProperties} from 'react';
-import {FINISH_WORD, printingKind, promoCode, type Printing} from '../hooks/usePrintingSelection';
+import {FINISH_WORD, printingKind, promoCode, type Printing} from 'inkweave-ui/lib/printings';
 import {COLORS, FOIL_SHEEN, GOLD_GLOW, ICON_SIZE, RADIUS} from '../constants';
 import enchantedSymbol from 'inkweave-ui/assets/enchanted.webp?no-inline';
 import epicSymbol from 'inkweave-ui/assets/epic.webp?no-inline';
 import iconicSymbol from 'inkweave-ui/assets/iconic.webp?no-inline';
 import promoSymbol from 'inkweave-ui/assets/promo.webp?no-inline';
 
-/** What a printing's name reads from usePrintingSelection's Printing. */
+/** What a printing's name reads from a Printing (`printingsOf`). */
 export type NamedPrinting = Pick<
   Printing,
   'key' | 'label' | 'rarity' | 'number' | 'promoGrouping' | 'finish' | 'artVariant' | 'printedName'

@@ -10,7 +10,7 @@ import {pagingOf, type BinderPaging} from '../cards/components/binderGeometry';
 import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/BinderSpreadMap';
 import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
 import {settleOf} from './binderPockets';
-import {FINISH_WORD, printingName, promoCode} from '../../shared/hooks/usePrintingSelection';
+import {FINISH_WORD, printingName, promoCode} from 'inkweave-ui/lib/printings';
 import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
 import {preloadArt} from './preloadArt';
 import {CardImageButton, CardLightbox} from '../../shared/components';

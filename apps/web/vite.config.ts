@@ -282,6 +282,7 @@ const STARTUP_SHARED = [
   'packages/ui/src/hooks/useHover.ts',
   'packages/ui/src/hooks/useBoop.ts',
   'apps/web/src/shared/hooks/usePrintingSelection.ts',
+  'packages/ui/src/lib/printings.ts',
   'packages/ui/src/hooks/useResponsive.ts',
   'packages/ui/src/utils/touchGuard.ts',
   'packages/ui/src/utils/prefersReducedMotion.ts',

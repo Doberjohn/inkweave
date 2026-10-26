@@ -1,6 +1,6 @@
 import type {CardPrinting, LorcanaCard, RawCardVariant} from 'inkweave-synergy-engine';
 import {printingCard, toPrinting} from '../cards/loader';
-import {printedFullName} from '../../shared/hooks/usePrintingSelection';
+import {printedFullName} from 'inkweave-ui/lib/printings';
 
 /*
  * Collection mode's promos (#805): every promo in the owner's catalog, as
