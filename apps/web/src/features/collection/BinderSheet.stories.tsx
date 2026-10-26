@@ -34,7 +34,7 @@ function optionsOf({inks, types, costs, opts}: FilterDraft): CardFilterOptions {
 }
 
 /**
- * The Binder sheet over a phone's binder, live: Binder options opens it, and its Apply sets what
+ * The Binder sheet over a phone's binder, live: the row's Filters opens it, and its Apply sets what
  * the binder shows, its sort and its filters at once, as Browse's one URL write does. The numbers
  * under Progress count the cards the filters let through, and their headlines choose what the
  * breakdowns count.
@@ -50,7 +50,7 @@ function LiveSheet({open, show: startShow, inks: startInks}: LiveSheetProps) {
   const counted = filtered ? filterCards(STORY_POOL, options) : STORY_POOL;
   return (
     <>
-      <CtaButton onClick={() => setOpen(true)}>Binder options</CtaButton>
+      <CtaButton onClick={() => setOpen(true)}>Filters</CtaButton>
       <BinderSheet
         isOpen={isOpen}
         onClose={() => setOpen(false)}
@@ -108,7 +108,7 @@ const meta: Meta<typeof LiveSheet> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Closed: Binder options opens it. */
+/** Closed: the row's Filters opens it. */
 export const Closed: Story = {args: {open: false}, globals: {viewport: {value: 'mobile1'}}};
 
 /** Open over a binder filtered to two inks: Clear all shows, and the numbers count those inks. */

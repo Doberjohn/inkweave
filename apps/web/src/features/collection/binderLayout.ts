@@ -7,12 +7,13 @@ import {SPACING} from '../../shared/constants';
  * around them matches, and by `BinderChunkFallback`, drawn in it while the section's chunk
  * downloads (#913). A module of its own, so that fallback doesn't pull in the chunk.
  *
- * A phone's single page is WIDTH-driven, so its height is not bounded by the
- * space left under the row above it, and Browse's `<main>` clips overflow. On the
- * five phones #969 measured, the row, the page and its map fit with the browser's
- * bars showing, 1px to spare on an iPhone 13 mini (375x629) once the section's
- * padding came down to 4px above and below the binder; a shorter screen would hide
- * the map. Scrolling the section keeps it reachable at any height. A desktop spread
+ * A phone's single page is WIDTH-driven at 3 rows, so its height is not bounded by
+ * the space left under the row above it, and Browse's `<main>` clips overflow. Where
+ * the section is tall enough it draws 4 rows instead, fitted to its height
+ * (`loneFitFor`, #1000), which the section is measured for (`useLoneFit`): so it
+ * has no padding above, the row's own 8px under its controls being the gap, and 4px
+ * below. A short phone's 3-row page and map can still run past the section's foot,
+ * so scrolling the section keeps the map reachable at any height. A desktop spread
  * is height-capped and never needs it.
  *
  * DOCKED, THE SIDES ARE BROWSE'S GUTTER (owner, 2026-10-08): the binder, drawn
@@ -23,18 +24,18 @@ import {SPACING} from '../../shared/constants';
  * before the toolbar came to end at its controls (`BROWSE_ROW_TOP`).
  */
 export function sectionStyle(isMobile: boolean, docked = false): CSSProperties {
-  if (isMobile) return {padding: `${SPACING.xs}px ${SPACING.sm}px`, height: '100%', overflowY: 'auto'};
+  if (isMobile) return {padding: `0 ${SPACING.sm}px ${SPACING.xs}px`, height: '100%', overflowY: 'auto'};
   const sides = docked ? BROWSE_GUTTER : SPACING.xxl;
   const top = docked ? BROWSE_ROW_TOP : SPACING.md;
   return {padding: `${top}px ${sides}px ${SPACING.xxl}px`, height: '100%'};
 }
 
 /**
- * How tall a phone binder row's controls are (#969): the set button (`ROW_TRIGGER` in
- * SetPicker.tsx), Binder options beside it (`PhoneBinderRow`), and the set button's placeholder
- * while the binder's chunk downloads (`BinderChunkFallback`).
+ * How tall a phone binder row's set button is (`ROW_TRIGGER` in SetPicker.tsx), and its
+ * placeholder while the binder's chunk downloads (`BinderChunkFallback`): 34px, as Filters and
+ * Collection either side of it are, the row grid mode has (owner, 2026-10-26, #1000).
  */
-export const ROW_CONTROL_HEIGHT = 40;
+export const ROW_CONTROL_HEIGHT = 34;
 
 /** Bar heights, by how much the number above them matters. */
 export const BAR = {headline: 8, second: 6, row: 4} as const;

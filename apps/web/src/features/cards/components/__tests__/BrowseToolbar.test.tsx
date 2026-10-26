@@ -57,7 +57,7 @@ describe('BrowseToolbar', () => {
   it('shows filter count badge when activeFilterCount > 0', () => {
     render(<BrowseToolbar {...defaultProps({activeFilterCount: 3})} />);
 
-    const filtersBtn = screen.getByLabelText('Filters');
+    const filtersBtn = screen.getByRole('button', {name: 'Filters, 3 on'});
     expect(within(filtersBtn).getByText('3')).toBeInTheDocument();
   });
 

@@ -68,7 +68,7 @@ function SheetPrelude({show, setShow, sortOrder, setSortOrder}: SheetDrafts) {
 }
 
 /**
- * A phone's Binder sheet (owner, 2026-10-25, #969), which Binder options opens: the filter
+ * A phone's Binder sheet (owner, 2026-10-25, #969), which the binder row's Filters opens: the filter
  * sheet, titled Binder, with Show and the sort above the filters and the scope's numbers after
  * them. THE SHEET IS ONE CHANGE: Show and the sort wait for Apply, as the filters do, and Apply
  * writes all three in the page's one URL write, since two writers in one tick can lose one of

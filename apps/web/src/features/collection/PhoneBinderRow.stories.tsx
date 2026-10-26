@@ -49,9 +49,9 @@ function LiveRow({setCode, count, loading = false}: LiveRowProps) {
 }
 
 /**
- * A phone's one row over the binder in collection mode (owner, 2026-10-25, #969): the set
- * button, Binder options and Collection, at an iPhone 15's 393px. Press the set button for the
- * set list.
+ * A phone's one row over the binder in collection mode (owner, 2026-10-25, #969): grid mode's
+ * row, Filters, the set button where the sort sits, and Collection (#1000), at an iPhone 15's
+ * 393px. Press the set button for the set list.
  */
 const meta: Meta<typeof LiveRow> = {
   title: 'Collection/PhoneBinderRow',
@@ -71,7 +71,7 @@ const meta: Meta<typeof LiveRow> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Nothing on: Binder options has no badge. */
+/** Nothing on: Filters has no badge. */
 export const NoFilters: Story = {};
 
 /** Two on, say an ink and Missing: the badge counts them. */
@@ -83,7 +83,7 @@ export const LongSetName: Story = {args: {setCode: '10'}};
 /** While the numbers load, a shimmer holds the figures' line. */
 export const NumbersLoading: Story = {args: {loading: true}};
 
-/** At 320px the set button leaves its logo out, so its words keep their room. */
+/** Below 393px, here at 320, the set button leaves its logo out, so its words keep their room. */
 export const Narrowest: Story = {
   args: {setCode: '10', count: 1},
   decorators: [

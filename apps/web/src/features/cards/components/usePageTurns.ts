@@ -17,26 +17,33 @@ interface TurnOptions {
   reducedMotion: boolean;
 }
 
-/** The view the binder showed last. */
+/** The view the binder showed last, and how many pockets its pages held. */
 interface Seen {
   start: number;
   single: boolean;
+  perPage: number;
 }
 
 /** A change of view, as `turnsTo` weighs it. */
-interface Change extends Pick<TurnOptions, 'single' | 'reducedMotion'> {
+interface Change extends Pick<TurnOptions, 'single' | 'perPage' | 'reducedMotion'> {
   seen: Seen;
   /** The turn drawn as the view changed. */
   turn: Turn | null;
 }
 
+/** Whether the binder still draws the pages it drew: as wide, with as many pockets (#1000). */
+function sameShape(seen: Seen, {single, perPage}: Pick<Seen, 'single' | 'perPage'>) {
+  return single === seen.single && perPage === seen.perPage;
+}
+
 /**
- * Whether the view changing to `start` turns a page: not across the phone width, nor under
- * reduced motion, nor once a page in hand has landed there, which has already shown its turn.
+ * Whether the view changing to `start` turns a page: not across the phone width, nor as a phone's
+ * page gains or loses a row (#1000), nor under reduced motion, nor once a page in hand has landed
+ * there, which has already shown its turn.
  */
-function turnsTo(start: number, {seen, turn, single, reducedMotion}: Change) {
+function turnsTo(start: number, {seen, turn, single, perPage, reducedMotion}: Change) {
   const landed = turn?.held === true && turn.to === start;
-  return single === seen.single && !reducedMotion && !landed;
+  return sameShape(seen, {single, perPage}) && !reducedMotion && !landed;
 }
 
 /**
@@ -47,13 +54,13 @@ function turnsTo(start: number, {seen, turn, single, reducedMotion}: Change) {
  * A TURN THAT STARTS WHILE ONE RUNS REPLACES IT, so quick presses all land and never queue
  * behind one another (the #790 keyboard test presses Enter through a whole set): the running
  * sheet snaps to where it was going and the new one lifts from there. Crossing the phone width
- * turns nothing, and nor does a new set, sort or filter, which remounts the binder. Under reduced
- * motion the view just changes.
+ * turns nothing, nor does a phone's page gaining or losing a row, nor a new set, sort or filter,
+ * which remounts the binder. Under reduced motion the view just changes.
  *
  * Set while rendering, as the React Compiler expects, from the view the binder showed last.
  */
 export function usePageTurns(start: number, {single, perPage, reducedMotion}: TurnOptions) {
-  const [seen, setSeen] = useState<Seen>({start, single});
+  const [seen, setSeen] = useState<Seen>({start, single, perPage});
   const [turn, setTurn] = useState<Turn | null>(null);
   const turnOf = (from: number, to: number, held: boolean): Turn => ({
     from,
@@ -61,9 +68,9 @@ export function usePageTurns(start: number, {single, perPage, reducedMotion}: Tu
     held,
     plan: turnPlan(from, to, {single, held, perPage}),
   });
-  if (start !== seen.start || single !== seen.single) {
-    setSeen({start, single});
-    setTurn(turnsTo(start, {seen, turn, single, reducedMotion}) ? turnOf(seen.start, start, false) : null);
+  if (start !== seen.start || !sameShape(seen, {single, perPage})) {
+    setSeen({start, single, perPage});
+    setTurn(turnsTo(start, {seen, turn, single, perPage, reducedMotion}) ? turnOf(seen.start, start, false) : null);
   }
   return {
     turn,

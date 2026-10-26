@@ -144,7 +144,7 @@ describe('BrowseBody with collection mode on', () => {
     renderSetPicker: () => undefined,
     renderPhoneRow: (_listing, {count, onOpen}) => (
       <div data-testid="phone-binder-row">
-        <button onClick={onOpen}>{`Binder options ${count}`}</button>
+        <button onClick={onOpen}>{`Filters ${count}`}</button>
       </div>
     ),
     // A stand-in for the Binder sheet (#969): it names the sort the page handed it, and its Apply
@@ -201,16 +201,16 @@ describe('BrowseBody with collection mode on', () => {
       expect(title).toHaveStyle({position: 'absolute', width: '1px', height: '1px', overflow: 'hidden'});
     });
 
-    it('counts the filters on, and Owned or Missing, on Binder options', () => {
+    it("counts the filters on, and Owned or Missing, on the row's Filters", () => {
       renderBody('/browse?binder=3&ink=Amber,Ruby');
-      expect(screen.getByRole('button', {name: 'Binder options 2'})).toBeInTheDocument();
+      expect(screen.getByRole('button', {name: 'Filters 2'})).toBeInTheDocument();
       cleanupAndRender({...slots, show: 'missing'}, '/browse?binder=3&ink=Amber');
-      expect(screen.getByRole('button', {name: 'Binder options 2'})).toBeInTheDocument();
+      expect(screen.getByRole('button', {name: 'Filters 2'})).toBeInTheDocument();
     });
 
     it('opens the Binder sheet in place of the filter sheet, and its Apply writes all it holds at once', async () => {
       renderBody('/browse?binder=3&sort=cost-desc');
-      fireEvent.click(screen.getByRole('button', {name: 'Binder options 0'}));
+      fireEvent.click(screen.getByRole('button', {name: 'Filters 0'}));
       expect(screen.getByRole('dialog', {name: 'Binder sheet, sorted cost-desc'})).toBeInTheDocument();
       expect(screen.queryByTestId('filter-drawer')).toBeNull();
 
@@ -223,7 +223,7 @@ describe('BrowseBody with collection mode on', () => {
 
     it('closes the Binder sheet when the window widens past a phone, rather than swap in the filter dialog', async () => {
       renderBody();
-      fireEvent.click(screen.getByRole('button', {name: 'Binder options 0'}));
+      fireEvent.click(screen.getByRole('button', {name: 'Filters 0'}));
       expect(screen.getByRole('dialog', {name: /^Binder sheet/})).toBeInTheDocument();
 
       vi.stubGlobal('innerWidth', 800);

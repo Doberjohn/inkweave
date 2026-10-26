@@ -88,7 +88,7 @@ const phoneRow = (page: Page) => page.getByTestId(PHONE_ROW);
  */
 const shownPage = (page: Page) => page.locator('nav[aria-label="Binder pages"] [aria-current="true"]');
 
-/** The Binder sheet, which Binder options opens on a phone (#969): not the "Binder set" list. */
+/** The Binder sheet, which the row's Filters opens on a phone (#969, #1000): not the "Binder set" list. */
 const binderSheet = (page: Page) => page.getByRole('dialog', {name: 'Binder', exact: true});
 
 /**
@@ -146,6 +146,17 @@ async function toolbarPlaces(page: Page, testId = TOOLBAR): Promise<Record<strin
       return places;
     });
 }
+
+/** The room a toolbar (`testId`, or a phone's row) keeps above its first control and below it, to the pixel. */
+const roomRound = (page: Page, testId: string) =>
+  page.getByTestId(testId).evaluate((toolbar) => {
+    const box = toolbar.getBoundingClientRect();
+    const control = toolbar.querySelector('button')!.getBoundingClientRect();
+    return {
+      above: Math.round(control.top - box.top),
+      below: Math.round(box.bottom - control.bottom),
+    };
+  });
 
 /** Every control drawn before the binder's code arrived is where it was, within 1 px. */
 function expectToolbarHeld(before: Record<string, Place>, after: Record<string, Place>): void {
@@ -1054,14 +1065,22 @@ test.describe('Collection mode, signed in', () => {
   });
 });
 
-/** Phones' screens in CSS pixels, with the browser's bars showing, as #969 measured them. */
+/**
+ * Phones' screens in CSS pixels, with the browser's bars showing, as #969 measured them, and the
+ * rows their page has (#1000): four where they keep the cards at 90% or more of the 3-row page's
+ * width, as the owner's iPhone on iOS 26 does.
+ */
 const PHONES = [
-  {width: 393, height: 659}, // iPhone 15, Safari
-  {width: 375, height: 629}, // iPhone 13 mini, Safari
-  {width: 430, height: 739}, // iPhone 15 Pro Max, Safari
-  {width: 360, height: 732}, // a 360px Android (Galaxy S24 class), Chrome
-  {width: 412, height: 839}, // a Pixel 7 class Android, Chrome
+  {width: 393, height: 659, rows: 3}, // iPhone 15, Safari
+  {width: 375, height: 629, rows: 3}, // iPhone 13 mini, Safari
+  {width: 430, height: 739, rows: 3}, // iPhone 15 Pro Max, Safari
+  {width: 360, height: 732, rows: 4}, // a 360px Android (Galaxy S24 class), Chrome
+  {width: 412, height: 839, rows: 4}, // a Pixel 7 class Android, Chrome
+  {width: 393, height: 815, rows: 4}, // an iPhone on iOS 26, Safari
 ];
+
+/** How far under a 4-row page's map `<main>` may end: an iOS 26 iPhone's page, as wide as its screen lets it be, leaves 18px. */
+const FOUR_ROWS_ROOM_LEFT = 24;
 
 type Span = {top: number; bottom: number};
 
@@ -1122,20 +1141,26 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await expect(set).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('the binder opens whole on a phone: the row, a 3x3 page and its map on screen, nothing to scroll', async ({
+  test('the binder opens whole on a phone: the row, a page of the rows that fit and its map on screen, nothing to scroll', async ({
     page,
   }) => {
     await signInAsCollector(page, ENTRIES);
-    for (const size of PHONES) {
+    for (const {rows, ...size} of PHONES) {
       await page.setViewportSize(size);
       await page.goto(`/browse?binder=${SET}`);
       await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
       const at = `at ${size.width}x${size.height}`;
       const fit = await phoneBinderFit(page);
-      expect(fit.pockets, `the page's pockets ${at}`).toBe(9);
+      expect(fit.pockets, `the page's pockets ${at}`).toBe(3 * rows);
       expect(fit.columns, `their columns ${at}`).toBe(3);
       expect(fit.board.top, `the board's top ${at}`).toBeGreaterThanOrEqual(fit.main.top);
       expect(fit.map.bottom, `the map's foot ${at}`).toBeLessThanOrEqual(fit.main.bottom);
+      // Four rows fill the screen (owner, 2026-10-26): the page grows to the room under it.
+      if (rows === 4)
+        expect(
+          fit.main.bottom - fit.map.bottom,
+          `the room under the map ${at}`,
+        ).toBeLessThanOrEqual(FOUR_ROWS_ROOM_LEFT);
       expect(fit.overflow, `what the binder section scrolls ${at}`).toBeLessThanOrEqual(0);
       expect(fit.sideways, `what the page scrolls sideways ${at}`).toBeLessThanOrEqual(0);
       await expect(page.getByTestId('browse-toolbar')).toHaveCount(0);
@@ -1150,6 +1175,47 @@ test.describe('Collection mode, signed in (phone width)', () => {
     const end = await phoneBinderFit(page, {scrollToEnd: true});
     expect(end.map.top, "the map's top, scrolled to the end").toBeGreaterThanOrEqual(end.main.top);
     expect(end.map.bottom, "the map's foot, scrolled to the end").toBeLessThanOrEqual(end.main.bottom);
+  });
+
+  test("the row is grid mode's: Filters, the set button where the sort sits, then Collection, and the map pages alone (#1000)", async ({
+    page,
+  }) => {
+    await page.setViewportSize({width: 393, height: 659});
+    await signInAsCollector(page, ENTRIES);
+    await page.goto('/browse');
+    await expect(page.getByTestId(TOOLBAR)).toBeVisible();
+    const grid = await toolbarPlaces(page);
+    const gridRoom = await roomRound(page, TOOLBAR);
+    const sort = await placeOf(
+      page.getByTestId(TOOLBAR).getByRole('combobox', {name: 'Sort cards'}),
+    );
+    await page.getByRole('button', {name: 'Show my collection'}).click();
+    await expect(binder(page).getByRole('navigation', {name: 'Binder pages'})).toBeVisible();
+    const row = await toolbarPlaces(page, PHONE_ROW);
+
+    // In order, the set button named by its words: the scope's name over its figures.
+    const [filters, setButton, collection] = Object.keys(row);
+    expect([filters, collection]).toEqual(['Filters', 'Show my collection']);
+    // Across, each where grid mode draws it, within 1 px; the row stands where the title was (#969).
+    for (const name of [filters, collection]) {
+      for (const key of ['x', 'width', 'height'] as const) {
+        expect(Math.abs(row[name][key] - grid[name][key]), `${name} ${key}`).toBeLessThanOrEqual(1);
+      }
+    }
+    expect(
+      Math.abs(row[setButton].x - sort.x),
+      "the set button's left, at the sort's",
+    ).toBeLessThanOrEqual(1);
+    // All three 34px tall, the set button's two lines inside it, with grid mode's room above
+    // them and below (#998: 12px and 8px).
+    for (const [name, place] of Object.entries(row)) {
+      expect(place.height, `${name}'s height`).toBeCloseTo(34, 1);
+    }
+    expect(await roomRound(page, PHONE_ROW)).toEqual(gridRoom);
+
+    // The map's minis alone, with no "5 / 27" after them.
+    const map = binder(page).getByRole('navigation', {name: 'Binder pages'});
+    await expect(map.locator('..')).not.toContainText(/\d+ \/ \d+/);
   });
 
   test('the lone page sits in its board, one zip round its outer edge, with no scroll sideways (#941)', async ({
@@ -1203,11 +1269,11 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await signInAsCollector(page, ENTRIES);
     await openPhoneBinder(page, `/browse?binder=${SET}`);
     const before = {url: page.url(), page: await shownPage(page).getAttribute('aria-label')};
-    const options = phoneRow(page).getByRole('button', {name: /^Binder options/});
-    await expect(options, 'no badge with nothing on').toHaveText('');
+    const filters = phoneRow(page).getByRole('button', {name: /^Filters/});
+    await expect(filters, 'no count with nothing on').toHaveAccessibleName('Filters');
     await clearUrlWrites(page);
 
-    await options.click();
+    await filters.click();
     const sheet = binderSheet(page);
     await sheet.getByRole('group', {name: 'Binder shows'}).getByRole('button', {name: 'Missing', exact: true}).click();
     await sheet.getByRole('combobox', {name: 'Sort cards'}).selectOption('name-asc');
@@ -1220,7 +1286,7 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await sheet.getByRole('button', {name: 'Apply', exact: true}).click();
     await expect(sheet).toHaveCount(0);
     // The badge counts what the link holds, so once it reads 2 every write Apply makes is in.
-    await expect(options, 'Amber, and Missing').toHaveText('2');
+    await expect(filters, 'Amber, and Missing').toHaveAccessibleName('Filters, 2 on');
     const params = new URL(page.url()).searchParams;
     expect([params.get('owned'), params.get('sort'), params.get('ink')]).toEqual(['missing', 'name-asc', 'Amber']);
     expect(await urlWrites(page), 'Apply writes the link once').toHaveLength(1);
@@ -1232,10 +1298,10 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await signInAsCollector(page, ENTRIES);
     await openPhoneBinder(page, `/browse?binder=${SET}&owned=missing&sort=name-asc&ink=Amber`);
     const before = page.url();
-    const options = phoneRow(page).getByRole('button', {name: /^Binder options/});
-    await expect(options).toHaveText('2');
+    const filters = phoneRow(page).getByRole('button', {name: /^Filters/});
+    await expect(filters).toHaveAccessibleName('Filters, 2 on');
 
-    await options.click();
+    await filters.click();
     const sheet = binderSheet(page);
     const shows = sheet.getByRole('group', {name: 'Binder shows'});
     await shows.getByRole('button', {name: 'All', exact: true}).click();
@@ -1245,10 +1311,10 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await page.getByTestId('filter-drawer-backdrop').click({position: {x: 195, y: 40}});
     await expect(sheet).toHaveCount(0);
     expect(page.url()).toBe(before);
-    await expect(options).toHaveText('2');
+    await expect(filters).toHaveAccessibleName('Filters, 2 on');
 
     // Opened again, it starts from what the binder shows.
-    await options.click();
+    await filters.click();
     await expect(shows.getByRole('button', {name: 'Missing', exact: true})).toHaveAttribute('aria-pressed', 'true');
     await expect(sheet.getByRole('combobox', {name: 'Sort cards'})).toHaveValue('name-asc');
     await expect(sheet.getByRole('button', {name: 'Filter by Amber'})).toHaveAttribute('aria-pressed', 'true');
@@ -1265,7 +1331,7 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await openPhoneBinder(page, `/browse?binder=${SET}`);
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
 
-    await phoneRow(page).getByRole('button', {name: /^Binder options/}).click();
+    await phoneRow(page).getByRole('button', {name: /^Filters/}).click();
     await expect(binderSheet(page)).toBeVisible();
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
   });

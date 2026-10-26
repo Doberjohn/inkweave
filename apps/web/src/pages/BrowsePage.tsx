@@ -323,8 +323,8 @@ function collectionToolbar(docked: boolean, collection: BrowseCollectionSlots | 
 }
 
 /**
- * A phone's binder row (owner, 2026-10-25, #969), in collection mode only. Binder options' badge
- * counts the filters on, and one more while the binder shows only Owned or Missing.
+ * A phone's binder row (owner, 2026-10-25, #969), in collection mode only. Its Filters' badge
+ * counts the filters on, and one more while the binder shows only Owned or Missing (#1000).
  */
 function phoneRow(
   collection: BrowseCollectionSlots | null,
@@ -339,9 +339,9 @@ function phoneRow(
 type FilterSheetProps = Omit<React.ComponentProps<typeof FilterDialog>, 'variant' | 'onApply'>;
 
 /**
- * What Filters or Binder options opens: on a phone in collection mode the Binder sheet (#969),
- * whose Apply writes Show and the sort with the filters in one write; elsewhere the filter dialog,
- * a sheet from the bottom on a phone.
+ * What Filters opens: on a phone in collection mode, from the binder's row, the Binder sheet
+ * (#969), whose Apply writes Show and the sort with the filters in one write; elsewhere the
+ * filter dialog, a sheet from the bottom on a phone.
  */
 function filterSheet(
   collection: BrowseCollectionSlots | null,
@@ -376,9 +376,9 @@ function useSearchCards(
 }
 
 /**
- * Whether Filters or Binder options' sheet is open. A phone in collection mode opens the Binder
- * sheet and anything wider the filter dialog, so crossing that line closes the open one, which
- * would otherwise swap for the other mid-edit.
+ * Whether Filters' sheet is open. A phone in collection mode opens the Binder sheet and anything
+ * wider the filter dialog, so crossing that line closes the open one, which would otherwise swap
+ * for the other mid-edit.
  */
 function useSheetOpen(isMobile: boolean, collection: BrowseCollectionSlots | null) {
   const binderSheet = isMobile && (collection?.active ?? false);

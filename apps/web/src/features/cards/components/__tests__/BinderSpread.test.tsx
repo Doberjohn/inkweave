@@ -95,6 +95,14 @@ describe('BinderSpread page turn (#942)', () => {
     expect(sheets()).toHaveLength(0);
   });
 
+  it("turns nothing when a phone's page gains a row, which moves its view back to a page of twelve", () => {
+    // Page 4 of nine (cards 28 to 36) becomes page 3 of twelve (25 to 36), as `CollectionBinder` pages it (#1000).
+    const view = render(spread({single: true, start: 27}));
+    view.rerender(spread({single: true, start: 24, loneFit: {rows: 4}}));
+    expect(sheets()).toHaveLength(0);
+    expect(card(25)).toBeInTheDocument();
+  });
+
   it('takes the sheet away once it lands, and not for an art fade inside it', () => {
     const view = render(spread());
     view.rerender(spread({start: 36}));
@@ -246,8 +254,8 @@ describe('BinderSpread lone page (#969)', () => {
     expect(card(1)).toHaveFocus();
   });
 
-  it("draws a footer in its arrows' place, half as far under the board's top edge", () => {
-    // The phone binder's page map (#969).
+  it("draws a footer in its arrows' place, the board a quarter as far under the binder's top", () => {
+    // The phone binder's page map (#969), whose band a fourth row's page wants the room for (#1000).
     const view = render(spread({single: true, start: 9}));
     const above = () => document.querySelector<HTMLElement>('.binder-board')!.parentElement!.style.padding;
     expect(screen.getByRole('button', {name: 'Next page'})).toBeInTheDocument();
@@ -255,7 +263,27 @@ describe('BinderSpread lone page (#969)', () => {
     view.rerender(spread({single: true, start: 9, footer: <nav aria-label="Binder pages" />}));
     expect(screen.queryByRole('button', {name: /(Previous|Next) page/})).toBeNull();
     expect(screen.getByRole('navigation', {name: 'Binder pages'})).toBeInTheDocument();
-    expect(above()).toBe('4px 8px 0px');
+    expect(above()).toBe('2px 8px 0px');
+  });
+
+  it('holds twelve pockets at four rows, three across, in a box no wider than the fit lets it be', async () => {
+    const user = userEvent.setup();
+    render(spread({single: true, start: 12, loneFit: {rows: 4, maxWidth: 331}}));
+    expect(pocketsOn('Page')).toHaveLength(12);
+    expect(page('Page').style.gridTemplateColumns).toBe('repeat(3, minmax(0, 1fr))');
+    expect(card(24)).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Card 25'})).toBeNull();
+    const box = document.querySelector<HTMLElement>('.binder-board')!.parentElement!.style;
+    expect([box.maxWidth, box.width, box.margin]).toEqual(['331px', '100%', '0px auto']);
+    act(() => card(13).focus());
+    await user.keyboard('{End}');
+    expect(card(24)).toHaveFocus();
+  });
+
+  it('draws its box as wide as the binder at three rows', () => {
+    render(spread({single: true, start: 9, loneFit: {rows: 3}}));
+    expect(pocketsOn('Page')).toHaveLength(9);
+    expect(document.querySelector<HTMLElement>('.binder-board')!.parentElement!.style.maxWidth).toBe('');
   });
 
   it("keeps a spread's pages at twelve pockets", () => {

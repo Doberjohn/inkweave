@@ -436,48 +436,63 @@ const HELD: Entries = Object.fromEntries(
 );
 
 /**
- * A phone's binder is one page of nine over its map (#969). While the binder's code downloads,
- * its section holds the board, sized from the section's width, and the band the map takes; while
- * its cards load, the binder draws its board with empty pockets over an empty map. The binder
- * then draws its page and map in both frames' boxes.
+ * A phone's binder is one page over its map (#969), of three rows, or four where the screen is
+ * tall enough (#1000): an iPhone 15's 393x659 with the browser's bars showing, and a Pixel 7's
+ * 412x839. While the binder's code downloads, its section holds the board, sized from the
+ * section's width and height, and the band the map takes; while its cards load, the binder draws
+ * its board with empty pockets over an empty map. The binder then draws its page and map in both
+ * frames' boxes.
  */
-test("on a phone, the binder's loading frames hold the page and its map where the binder draws them", async ({
-  page,
-}, testInfo) => {
-  test.skip(!isPhone(testInfo.project.name), "A phone's lone page");
-  const binderCode = await holdLazyModule(page, 'CollectionBinderSection');
-  const releaseCards = await hold(page, /\/data\/collection\//);
-  await signInAsCollector(page, HELD);
-  // The session is back once the sync reads the account's copy: a phone has no header to say so.
-  const synced = page.waitForRequest(
-    (request) => new URL(request.url()).pathname === COLLECTIONS_PATH && request.method() === 'GET',
-  );
-  await page.goto('/browse');
-  await synced;
-  await page.getByRole('button', {name: 'Show my collection'}).click();
-  await expect
-    .poll(binderCode.caught, {message: "the binder's chunk never reached the hold", timeout: 10000})
-    .toBeGreaterThan(0);
-  const frame = page.getByRole('region', {name: 'Loading your binder'});
-  await expect(frame).toBeVisible();
-  const codeLoading = {
-    board: await boxOf(frame.locator('.react-loading-skeleton')),
-    map: await boxOf(frame.getByTestId('binder-map-band')),
-  };
+for (const [rows, size] of [
+  [3, {width: 393, height: 659}],
+  [4, {width: 412, height: 839}],
+] as const) {
+  test(`on a phone, the binder's loading frames hold the page and its map where the binder draws them, at ${rows} rows`, async ({
+    page,
+  }, testInfo) => {
+    test.skip(!isPhone(testInfo.project.name), "A phone's lone page");
+    await page.setViewportSize(size);
+    const binderCode = await holdLazyModule(page, 'CollectionBinderSection');
+    const releaseCards = await hold(page, /\/data\/collection\//);
+    await signInAsCollector(page, HELD);
+    // The session is back once the sync reads the account's copy: a phone has no header to say so.
+    const synced = page.waitForRequest(
+      (request) =>
+        new URL(request.url()).pathname === COLLECTIONS_PATH && request.method() === 'GET',
+    );
+    await page.goto('/browse');
+    await synced;
+    await page.getByRole('button', {name: 'Show my collection'}).click();
+    await expect
+      .poll(binderCode.caught, {
+        message: "the binder's chunk never reached the hold",
+        timeout: 10000,
+      })
+      .toBeGreaterThan(0);
+    const frame = page.getByRole('region', {name: 'Loading your binder'});
+    await expect(frame).toBeVisible();
+    const codeLoading = {
+      board: await boxOf(frame.locator('.react-loading-skeleton')),
+      map: await boxOf(frame.getByTestId('binder-map-band')),
+    };
 
-  binderCode.release();
-  await expect(frame).toHaveCount(0);
-  // The map drawn while the cards load is out of the accessibility tree: it holds no cards yet.
-  const loadingMap = binder(page).locator('[inert]');
-  await expect(loadingMap, 'the loading binder draws its map').toBeVisible();
-  const cardsLoading = {board: await boxOf(board(page)), map: await boxOf(loadingMap)};
+    binderCode.release();
+    await expect(frame).toHaveCount(0);
+    // The map drawn while the cards load is out of the accessibility tree: it holds no cards yet.
+    const loadingMap = binder(page).locator('[inert]');
+    await expect(loadingMap, 'the loading binder draws its map').toBeVisible();
+    const cardsLoading = {board: await boxOf(board(page)), map: await boxOf(loadingMap)};
 
-  releaseCards();
-  const map = binder(page).getByRole('navigation', {name: 'Binder pages'});
-  await expect(map).toBeVisible();
-  const loaded = {board: await boxOf(board(page)), map: await boxOf(map.locator('..'))};
-  expectSameBox(loaded.board, codeLoading.board);
-  expectSameBox(loaded.map, codeLoading.map);
-  expectSameBox(loaded.board, cardsLoading.board);
-  expectSameBox(loaded.map, cardsLoading.map);
-});
+    releaseCards();
+    const map = binder(page).getByRole('navigation', {name: 'Binder pages'});
+    await expect(map).toBeVisible();
+    const loaded = {board: await boxOf(board(page)), map: await boxOf(map.locator('..'))};
+    expectSameBox(loaded.board, codeLoading.board);
+    expectSameBox(loaded.map, codeLoading.map);
+    expectSameBox(loaded.board, cardsLoading.board);
+    expectSameBox(loaded.map, cardsLoading.map);
+    await expect(
+      binder(page).getByRole('group', {name: 'Page', exact: true}).locator('.binder-pocket'),
+    ).toHaveCount(3 * rows);
+  });
+}

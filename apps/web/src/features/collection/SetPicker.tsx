@@ -147,12 +147,13 @@ const TOOLBAR_TRIGGER: TriggerGeometry = {
 };
 
 /**
- * The phone binder row's button (owner, 2026-10-25, #969): as tall as Binder options beside
- * it, a small logo, the scope's name over its figures. Its list is the panel's.
+ * The phone binder row's button (owner, 2026-10-25, #969): as tall as Filters and Collection
+ * either side of it (#1000), a small logo, the scope's name over its figures. Its list is the
+ * panel's.
  */
 const ROW_TRIGGER: TriggerGeometry = {
   height: ROW_CONTROL_HEIGHT,
-  logoBox: {...LOGO_BOX, width: 44, height: 26},
+  logoBox: {...LOGO_BOX, width: 38, height: 22},
   chevron: {width: 10, height: 6},
   gap: SPACING.sm,
   padding: `0 ${SPACING.md}px 0 ${SPACING.xs}px`,
@@ -163,8 +164,12 @@ const NARROW_ROW_TRIGGER: TriggerGeometry = {...ROW_TRIGGER, logoBox: undefined,
 
 const TRIGGERS: Record<TriggerSize, TriggerGeometry> = {panel: PANEL_TRIGGER, toolbar: TOOLBAR_TRIGGER, row: ROW_TRIGGER};
 
-/** Below this window width the row's button leaves its logo out, so at 320px its words keep 93px (#969). */
-const ROW_LOGO_MIN_WIDTH = 360;
+/**
+ * Below this window width the row's button leaves its logo out (#969): Filters before it took
+ * the room Binder options left (#1000), so on an iPhone 15 the logo stays, and on a 375 or 360
+ * phone the words keep it.
+ */
+const ROW_LOGO_MIN_WIDTH = 393;
 
 /**
  * The tabs and about ten rows, past which the list scrolls. Half the window at most, so on
@@ -196,8 +201,9 @@ const MENU_MAX_HEIGHT = 'min(440px, 50vh)';
  * "toolbar"): "All sets", "Set 13" or "P1". Its menu stays the panel's width. The set panel
  * starts at what the binder shows. The tablet rail's panel keeps the two-line button.
  *
- * ON A PHONE IT LEADS THE BINDER'S ROW (owner, 2026-10-25, #969): 40px tall beside Binder
- * options and Collection, a small logo, and the scope's name over its two percentages, "73% ·
+ * ON A PHONE IT SITS IN THE BINDER'S ROW (owner, 2026-10-25, #969), where grid mode's sort
+ * sits, between Filters and Collection and as tall, 34px (owner, 2026-10-26, #1000): a small
+ * logo, and the scope's name over its two percentages, "73% ·
  * 19%", at 13px, the panel's smallest type. Its name says them in words after its visible
  * text: "Binder set: Winterspell, 73% · 19%: 73% complete, 19% master" (`RowLabel`).
  *
@@ -556,8 +562,11 @@ function triggerName({setCode, size, figures}: Pick<TriggerProps, 'setCode' | 's
   return `Binder set: ${(size === 'toolbar' ? SPAN_WORDS[setCode]?.compactName : undefined) ?? choiceLabel(setCode)}`;
 }
 
-/** Each of the row's two lines: 13px, the set panel's smallest type. */
-const ROW_LINE: CSSProperties = {fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.25};
+/**
+ * Each of the row's two lines: 13px, the set panel's smallest type, set tight enough that the
+ * two and the button's border stay inside the row's 34px (#1000).
+ */
+const ROW_LINE: CSSProperties = {fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.2};
 
 /** The figures' line: gold, as the strip's figures were, in tabular digits. */
 const ROW_FIGURES: CSSProperties = {...ROW_LINE, ...TABULAR, color: COLORS.primary, whiteSpace: 'nowrap'};
@@ -582,7 +591,7 @@ function RowLabel({setCode, figures}: Pick<TriggerProps, 'setCode' | 'figures'>)
         {figures ? (
           <span style={ROW_FIGURES}>{figures.shown}</span>
         ) : (
-          <span style={{...ROW_FIGURES, display: 'flex', padding: `${SHIMMER_INSET}px 0`, height: '1.25em'}}>
+          <span style={{...ROW_FIGURES, display: 'flex', padding: `${SHIMMER_INSET}px 0`, height: '1.2em'}}>
             <Skeleton inline width={60} style={{display: 'block', height: '100%'}} />
           </span>
         )}
