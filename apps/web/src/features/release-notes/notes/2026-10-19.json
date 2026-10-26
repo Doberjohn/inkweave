@@ -104,6 +104,17 @@
         ]
       },
       {
+        "title": "An updated privacy policy",
+        "body": "The privacy policy's sign-in section has changed. It now says signing in with Google or Discord is for the parts of Inkweave that use an account, not just for saving decks, and that every account gets a made-up public name and handle, such as Emerald Princess 330, which anyone can see. You can change the name.",
+        "link": {
+          "label": "Read the privacy policy",
+          "to": "/privacy"
+        },
+        "prs": [
+          975
+        ]
+      },
+      {
         "title": "Release notes by week",
         "body": "This page now shows one entry per week, Monday to Sunday, newest first, where it showed one per month.",
         "prs": [
@@ -169,5 +180,5 @@
       }
     ]
   },
-  "behindTheScenes": "Plus 60 behind-the-scenes changes: dependency updates, CI, test and tooling work, design cleanups, analytics, and work on features that aren't switched on yet."
+  "behindTheScenes": "Plus 59 behind-the-scenes changes: dependency updates, CI, test and tooling work, design cleanups, analytics, and work on features that aren't switched on yet."
 }
