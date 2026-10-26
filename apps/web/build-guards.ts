@@ -130,19 +130,15 @@ function stylesheets(bundle: BuiltFiles): Stylesheet[] {
   });
 }
 
-/** A url's path with its percent escapes decoded, or as written when one is malformed. */
-function decodedPath(file: string): string {
-  try {
-    return decodeURIComponent(file);
-  } catch {
-    return file;
-  }
-}
-
 /** The file a stylesheet's url names, as a path from the build's root, or null if no file backs it. */
 function urlTarget(url: string, stylesheet: string): string | null {
   if (url === '' || NOT_A_FILE.test(url)) return null;
-  const file = decodedPath(url.replace(/[?#].*$/, ''));
+  let file = url.replace(/[?#].*$/, '');
+  try {
+    file = decodeURIComponent(file);
+  } catch {
+    // A malformed escape, such as a bare `%`: the url names its file as written.
+  }
   if (file.startsWith('/')) return file.slice(1);
   return path.posix.join(path.posix.dirname(stylesheet), file);
 }

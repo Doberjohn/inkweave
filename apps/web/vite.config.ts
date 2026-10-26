@@ -160,18 +160,18 @@ function missingStylesheets(bundle: OutputBundle): string[] {
  * absolute base, a path or an origin, gives every url its whole path, so those builds inline.
  */
 function inlineCssPlugin(): Plugin {
-  let base = '/';
+  let relativeBase = false;
   return {
     name: 'inline-css',
     enforce: 'post',
     apply: 'build',
-    configResolved(config) {
-      ({base} = config);
+    configResolved({base}) {
+      relativeBase = base === '' || base.startsWith('.');
     },
     transformIndexHtml: {
       order: 'post',
       handler(html, ctx) {
-        if (!ctx.bundle || base === '' || base.startsWith('.')) return html;
+        if (!ctx.bundle || relativeBase) return html;
 
         for (const [fileName, chunk] of Object.entries(ctx.bundle)) {
           if (chunk.type === 'asset' && fileName.endsWith('.css')) {
