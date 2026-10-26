@@ -493,6 +493,14 @@ option {
   grid-template-columns: var(--synergy-grid-columns, repeat(auto-fill, minmax(140px, 1fr)));
 }
 
+/* The header's skip link (CompactHeader.tsx), clipped to nothing until it has focus. A rule
+   rather than React state, so a prerendered page's own copy shows it on the first Tab too,
+   before the app takes over. The clip also keeps it from catching clicks meant for the logo
+   under it, and leaves it in the Tab order and the accessibility tree. */
+.skip-link:not(:focus) {
+  clip-path: inset(50%);
+}
+
 /* Mobile-specific styles */
 @media (max-width: 767px) {
   .synergy-card-grid {

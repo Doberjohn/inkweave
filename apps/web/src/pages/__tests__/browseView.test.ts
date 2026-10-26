@@ -1,8 +1,9 @@
 import {describe, it, expect} from 'vitest';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {createCard} from '../../shared/test-utils';
-import {browseView, gridModalTarget, printingIdsFor, searchPool, tilePrintingFor} from '../browseView';
+import {browseCountMessage, browseView, gridModalTarget, printingIdsFor, searchPool, tilePrintingFor} from '../browseView';
 import {binderRarities} from '../../features/collection/binderCards';
+import {LAYOUT} from '../../shared/constants';
 
 // Core folds Elsa's Enchanted printing into her card; the collection's wide pool
 // also holds that printing as a card of its own, and cards from before Core.
@@ -231,5 +232,21 @@ describe("Browse's search over sets 1-8", () => {
     expect(target.cardId).toBe('1');
     expect(target.siblingIds).toEqual(['1951', '1']);
     expect(target.options.resolveCard).toBe(resolveCard);
+  });
+});
+
+describe("Browse's status line", () => {
+  const max = LAYOUT.maxDisplayedCards;
+
+  it('counts the cards the grid lists, and says when none match', () => {
+    expect(browseCountMessage(0)).toBe('No cards match your filters.');
+    expect(browseCountMessage(1)).toBe('1 card');
+    expect(browseCountMessage(3)).toBe('3 cards');
+    expect(browseCountMessage(max)).toBe(`${max} cards`);
+  });
+
+  it('says the grid lists only its first cards when more match, the total digits grouped', () => {
+    expect(browseCountMessage(max + 1)).toBe(`Showing ${max} of ${max + 1} cards`);
+    expect(browseCountMessage(1393)).toBe(`Showing ${max} of 1,393 cards`);
   });
 });

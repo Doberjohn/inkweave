@@ -52,9 +52,10 @@ describe('empty card grids', () => {
     expect(screen.getByRole('status')).toHaveTextContent('No cards match your filters.');
   });
 
-  it('BrowseCardGrid announces that no cards match as a status', () => {
+  it("BrowseCardGrid shows that no cards match, and leaves saying it to Browse's status line", () => {
     render(<BrowseCardGrid cards={[]} isLoading={false} onCardSelect={vi.fn()} />);
 
-    expect(screen.getByRole('status')).toHaveTextContent('No cards match your filters.');
+    expect(screen.getByText('No cards match your filters.')).toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });
