@@ -23,6 +23,9 @@ ruleTester.run('no-unshelled-dialogs', inkweave.rules['no-unshelled-dialogs'], {
       code: `import {DialogShell} from 'inkweave-ui/components/DialogShell';\n${ARIA_MODAL}`,
       filename: '/repo/apps/web/src/features/demo/Demo.tsx',
     },
+    // A story or test may draw an aria-modal surface; only Radix stays out of them.
+    {code: ARIA_MODAL, filename: '/repo/packages/ui/src/components/Demo.stories.tsx'},
+    {code: ARIA_MODAL, filename: '/repo/apps/web/src/features/demo/Demo.test.tsx'},
   ],
   invalid: [
     {
@@ -30,7 +33,7 @@ ruleTester.run('no-unshelled-dialogs', inkweave.rules['no-unshelled-dialogs'], {
       filename: '/repo/apps/web/src/shared/components/CardFilterDialog.tsx',
       errors: [{message: /^aria-modal without/}],
     },
-    // The exception moved with the file (#981): its old path is a file like any other.
+    // Only the package's FilterDialog is the exception; an app file of the same name is not.
     {
       code: ARIA_MODAL,
       filename: '/repo/apps/web/src/shared/components/FilterDialog.tsx',
@@ -38,5 +41,10 @@ ruleTester.run('no-unshelled-dialogs', inkweave.rules['no-unshelled-dialogs'], {
     },
     radix('/repo/packages/ui/src/lorcana/FilterDialog.tsx'),
     radix('/repo/apps/web/src/features/demo/Demo.tsx'),
+    // The overlay contract's other entry points, and the files it exempts from aria-modal, still
+    // keep Radix out.
+    radix('/repo/packages/ui/src/components/DialogShell.tsx'),
+    radix('/repo/packages/ui/src/components/FilterDialog.stories.tsx'),
+    radix('/repo/packages/ui/src/components/__tests__/FilterDialog.test.tsx'),
   ],
 });

@@ -25,6 +25,7 @@ import {
   ADHOC_BUTTON_EXEMPT,
   ARIA_MODAL_EXEMPT,
   COLOR_EXEMPT,
+  RADIX_DIALOG_EXEMPT,
   SPACING_EXEMPT,
   TEST_EXEMPT,
   isExempt,
@@ -348,13 +349,23 @@ const noAdhocButtons = {
 // machinery, DialogShell / BottomSheet (which wire the hook trio) or useDialogFocus directly.
 // ARIA_MODAL_EXEMPT (exemptions.js) names those and FilterDialog, the documented Radix exception.
 // Radix sets aria-modal at run time, where the attribute check can't see it, so its import is
-// reported too: outside the exception, Radix Dialog is a surface the contract never wired (#981).
+// reported too, everywhere but FilterDialog (RADIX_DIALOG_EXEMPT): the aria-modal exemptions and
+// the ledger don't cover it, since outside FilterDialog a Radix Dialog is a surface the contract
+// never wired, in a shell, a story or a test alike.
 const UNSHELLED_MESSAGE =
   'aria-modal without the overlay contract. Render through DialogShell / BottomSheet, or wire useDialogFocus + useScrollLock + useTransitionPresence directly (#510, .claude/rules/overlays.md)';
 const RADIX_DIALOG_MESSAGE =
   'Radix Dialog outside the overlay contract. FilterDialog is its one exception; render through DialogShell / BottomSheet (#510, .claude/rules/overlays.md)';
-function reportRadixDialog(context, node) {
-  if (node.source.value === '@radix-ui/react-dialog') context.report({node, message: RADIX_DIALOG_MESSAGE});
+/** Reports an import of Radix Dialog, or nothing in FilterDialog. */
+function radixDialogReporter(context) {
+  if (isExempt(context, RADIX_DIALOG_EXEMPT)) return () => {};
+  return (node) => {
+    if (node.source.value === '@radix-ui/react-dialog') context.report({node, message: RADIX_DIALOG_MESSAGE});
+  };
+}
+/** Whether the file must wire the overlay contract for its aria-modal: not its entry points, tests, stories or the ledger. */
+function contractApplies(context) {
+  return !isExempt(context, ARIA_MODAL_EXEMPT) && !isKnownOffender(context, 'no-unshelled-dialogs');
 }
 const noUnshelledDialogs = {
   meta: {
@@ -366,12 +377,13 @@ const noUnshelledDialogs = {
     schema: [],
   },
   create(context) {
-    if (isExempt(context, ARIA_MODAL_EXEMPT) || isKnownOffender(context, 'no-unshelled-dialogs')) return {};
+    const reportRadix = radixDialogReporter(context);
+    if (!contractApplies(context)) return {ImportDeclaration: reportRadix};
     let sanctioned = false;
     let firstAriaModal = null;
     return {
       ImportDeclaration(node) {
-        reportRadixDialog(context, node);
+        reportRadix(node);
         if (/DialogShell|BottomSheet|useDialogFocus/.test(context.sourceCode.getText(node))) sanctioned = true;
       },
       JSXAttribute(node) {

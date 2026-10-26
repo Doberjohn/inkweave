@@ -36,7 +36,7 @@ export interface FilterContentProps {
   onToggleType: (type: CardTypeFilter) => void;
   onToggleCost: (cost: number) => void;
   onFiltersChange: (filters: FilterPicks) => void;
-  /** The app's words and rules: rarity names, set logos, art presets, Dual-ink and the default buttons (#981). */
+  /** The app's words and rules: rarity names, set logos, art presets, Dual-ink and the default buttons. */
   vocabulary: FilterVocabulary;
   /**
    * Layout variant controls icon sizing and flex layout per section. `panel` is

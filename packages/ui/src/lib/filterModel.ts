@@ -59,7 +59,7 @@ export interface ArtPreset {
   rarities: readonly string[];
 }
 
-/** The app's words and rules that FilterContent shows, passed as its `vocabulary` (#981). */
+/** The app's words and rules that FilterContent shows, passed as its `vocabulary`. */
 export interface FilterVocabulary {
   /** The button values a page shows when it doesn't narrow them (`buttonOptions`). */
   allButtons: FilterButtonOptions;

@@ -7,7 +7,7 @@ import type {Ink} from '../types';
 import type {CardTypeFilter} from '../../../shared/constants';
 
 // inkweave-ui's FilterContent with the app's vocabulary: the app's rarity names, presets,
-// Dual-ink rule and buttons (#981). The package's own test proves it reads each member.
+// Dual-ink rule and buttons. The package's own test proves it reads each member.
 
 function defaultProps(overrides = {}) {
   return {

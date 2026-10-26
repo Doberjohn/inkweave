@@ -341,7 +341,7 @@ export function searchCardsByName(cards: LorcanaCard[], query: string): LorcanaC
 /**
  * The search box's suggestions: what `searchCardsByName` finds, newest set first by
  * `parseSetOrder`, so quest sets come last. inkweave-ui's `useAutocomplete` takes it as its
- * `search` (#981).
+ * `search`.
  */
 export function suggestCardsByName(cards: LorcanaCard[], term: string): LorcanaCard[] {
   return searchCardsByName(cards, term).sort((a, b) => parseSetOrder(b.setCode) - parseSetOrder(a.setCode));

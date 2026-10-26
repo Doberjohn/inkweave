@@ -8,7 +8,7 @@ import type {CardTypeFilter} from '../constants';
 import {useDraftFilters} from '../hooks/useDraftFilters';
 import {useInlineCostFilters} from '../hooks';
 
-/** Shared props for FilterModal (desktop) and FilterDrawer (mobile). */
+/** The props every card filter dialog takes, the desktop modal and the phone drawer alike. */
 export interface FilterPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -32,9 +32,9 @@ export interface FilterPanelProps {
    * pool). Left out, every value shows.
    */
   buttonOptions?: FilterButtonOptions;
-  /** Offer the Set filter (the default); collection mode turns it off (see `FilterContentProps`). */
+  /** Offer the Set filter (the default); collection mode turns it off (inkweave-ui's `FilterContentProps`). */
   showSetFilter?: boolean;
-  /** Offer the art presets under the rarities; Browse does (see `FilterContentProps`). */
+  /** Offer the art presets under the rarities; Browse does (inkweave-ui's `FilterContentProps`). */
   showArtPresets?: boolean;
 }
 
@@ -57,13 +57,14 @@ interface CardFilterDialogProps extends FilterPanelProps {
   /**
    * What the caller drafts beside the filters, which Clear all puts back too (the Binder sheet's
    * Show, #969): while `count` is above 0, Clear all shows, and pressing it also calls `onClear`.
-   * One prop, so a count never comes without the clear that takes it away.
+   * Without a `title`, the count also joins the one in "Filters (n)". One prop, so a count never
+   * comes without the clear that takes it away.
    */
   extra?: {count: number; onClear: () => void};
 }
 
 /**
- * The card filters in inkweave-ui's FilterDialog shell (#981): a draft of the page's filters
+ * The card filters in inkweave-ui's FilterDialog shell: a draft of the page's filters
  * that Apply hands over and any other close drops, and the app's words for FilterContent.
  */
 export function CardFilterDialog({

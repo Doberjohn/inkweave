@@ -18,7 +18,7 @@ import {INK_CHIP_COLORS} from '../tokens/lorcana';
 import {chipCardName} from '../lib/chipNames';
 import {useResponsive} from '../hooks/useResponsive';
 
-/** A pair connection with the words its row shows: a location role's chip label, or the rule's name (#981). */
+/** A pair connection with the words its row shows: a location role's chip label, or the rule's name. */
 export type LabelledConnection = PairSynergyConnection & {roleLabel: string};
 
 /** Aggregated rule grouping for the synergy detail modal. The app's `groupConnections` builds it. */

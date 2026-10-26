@@ -103,7 +103,7 @@ export const artPresetsFor = (offered: readonly string[]): ArtPreset[] =>
     return {value, label, title: title(rarities), rarities};
   });
 
-/** The app's words and rules for inkweave-ui's FilterContent (#981). */
+/** The app's words and rules for inkweave-ui's FilterContent. */
 export const FILTER_VOCABULARY: FilterVocabulary = {
   allButtons: ALL_FILTER_BUTTONS,
   setLogo: (code) => SET_LOGOS[code],

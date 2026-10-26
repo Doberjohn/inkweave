@@ -3,7 +3,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 
 /**
  * The cards a term suggests, in the order the list shows them. The app passes its loader's
- * `suggestCardsByName` (#981).
+ * `suggestCardsByName`.
  */
 export type CardSearch = (cards: LorcanaCard[], term: string) => LorcanaCard[];
 

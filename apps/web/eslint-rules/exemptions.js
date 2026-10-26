@@ -101,3 +101,9 @@ export const ARIA_MODAL_EXEMPT = {
   ],
   patterns: [TEST_FILE, STORY_FILE],
 };
+
+/**
+ * Where Radix Dialog may be imported: FilterDialog alone, with no test or story pattern, since a
+ * story or test that builds its own Radix dialog shows a surface the overlay contract never wired.
+ */
+export const RADIX_DIALOG_EXEMPT = {paths: ['packages/ui/src/components/FilterDialog.tsx']};

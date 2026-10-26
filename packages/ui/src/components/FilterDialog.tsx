@@ -7,7 +7,7 @@ import {LinkButton} from './LinkButton';
 
 /**
  * The filter dialog's shell: the overlay contract's one Radix exception (#510,
- * .claude/rules/overlays.md), which the caller fills with its filters and drafts (#981).
+ * .claude/rules/overlays.md), which the caller fills with its filters and drafts.
  */
 export interface FilterDialogProps {
   isOpen: boolean;

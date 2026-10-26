@@ -40,7 +40,6 @@ export {Chip} from 'inkweave-ui/components/Chip';
 export type {ChipProps} from 'inkweave-ui/components/Chip';
 export {FilterIcon} from 'inkweave-ui/components/FilterIcon';
 export {FiltersButton} from 'inkweave-ui/components/FiltersButton';
-export {FilterContent} from 'inkweave-ui/lorcana/FilterContent';
 export {CardFilterDialog} from './CardFilterDialog';
 export type {FilterPanelProps} from './CardFilterDialog';
 export {FilterSection} from 'inkweave-ui/components/FilterSection';
