@@ -32,6 +32,7 @@ import {SIDE_PANEL_WIDTH} from '../cards/components/BrowseSidePanel';
 import {ROW_CONTROL_HEIGHT} from './binderLayout';
 import {
   COLORS,
+  DURATION,
   EASING,
   FONT_SIZES,
   GOLD_GLOW,
@@ -466,7 +467,7 @@ function triggerStyle({on: open, hovered}: Look, {withArt, geometry}: Shape): CS
     textAlign: 'left',
     // A select doesn't boop: the kit button's hover scale is dropped.
     transform: undefined,
-    transition: `border-color 0.15s ${EASING.snappy}, box-shadow 0.15s ${EASING.snappy}`,
+    transition: `border-color ${DURATION.fast}ms ${EASING.snappy}, box-shadow ${DURATION.fast}ms ${EASING.snappy}`,
   };
 }
 
@@ -664,7 +665,7 @@ function TriggerButton({
         viewBox="0 0 10 6"
         fill="none"
         aria-hidden="true"
-        style={{transform: open ? 'rotate(180deg)' : undefined, transition: `transform 0.15s ${EASING.snappy}`}}>
+        style={{transform: open ? 'rotate(180deg)' : undefined, transition: `transform ${DURATION.fast}ms ${EASING.snappy}`}}>
         <path d="M1 1l4 4 4-4" stroke={COLORS.text} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </CtaButton>
@@ -726,7 +727,7 @@ function optionStyle({on: selected, hovered}: Look): CSSProperties {
     textAlign: 'left',
     // Rows don't boop: a growing row would clip against the list's edge.
     transform: undefined,
-    transition: `background 0.15s ${EASING.snappy}`,
+    transition: `background ${DURATION.fast}ms ${EASING.snappy}`,
   };
 }
 

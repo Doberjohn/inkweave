@@ -1,5 +1,5 @@
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, GOLD_GLOW, INK_COLORS, RADIUS, blackRgba, hexRgba} from '../../../shared/constants';
+import {COLORS, GOLD_GLOW, INK_COLORS, RADIUS, SHADOWS, hexRgba} from '../../../shared/constants';
 import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
 
 interface ComparisonCardTileProps {
@@ -55,7 +55,7 @@ const CARD_TILE_STYLE: React.CSSProperties = {
   overflow: 'hidden',
   border: '1.5px solid',
   cursor: 'zoom-in',
-  boxShadow: `0 6px 18px ${blackRgba(0.45)}`,
+  boxShadow: SHADOWS.float,
   padding: 0,
   background: COLORS.surfaceAlt,
   fontFamily: 'inherit',

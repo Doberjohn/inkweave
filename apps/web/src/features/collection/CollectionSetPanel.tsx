@@ -158,7 +158,7 @@ const BarPass = createContext('');
  * fill, so it holds still while the fill glides.
  */
 const GRADIENT: CSSProperties = {
-  backgroundImage: `linear-gradient(90deg, ${hexRgba(COLORS.primary, 0.2)}, ${COLORS.primary})`,
+  backgroundImage: `linear-gradient(90deg, ${GOLD_GLOW.hoverBorder}, ${COLORS.primary})`,
   backgroundSize: '100cqw 100%',
   backgroundRepeat: 'no-repeat',
 };
@@ -196,7 +196,7 @@ function trackStyle({height, full, delay}: BarLook): CSSProperties {
     overflow: 'hidden',
     // The container the fill's gradient is sized to.
     containerType: 'inline-size',
-    boxShadow: full ? `0 0 ${height === BAR.row ? 6 : 8}px ${hexRgba(COLORS.primary, 0.45)}` : 'none',
+    boxShadow: full ? `0 0 ${height === BAR.row ? 6 : 8}px ${GOLD_GLOW.activeBorder}` : 'none',
     transition: delay === null ? undefined : `box-shadow ${DURATION.slow}ms ${EASING.smooth} ${GLIDE_MS + delay}ms`,
   };
 }
@@ -354,7 +354,7 @@ function choosableStyle(chosen: boolean, hovered: boolean): CSSProperties {
     textAlign: 'left',
     // No boop: a growing headline would overhang the panel.
     transform: undefined,
-    transition: `background 0.15s ${EASING.snappy}, border-color 0.15s ${EASING.snappy}`,
+    transition: `background ${DURATION.fast}ms ${EASING.snappy}, border-color ${DURATION.fast}ms ${EASING.snappy}`,
   };
 }
 

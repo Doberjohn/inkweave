@@ -1,6 +1,7 @@
 import {afterEach, describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {CardImage} from '../CardImage';
+import {DURATION} from '../../constants';
 import {_resetPrerenderedArt} from '../../lib/prerenderedArt';
 import {showPrerenderedArt, stubLoadedArt} from '../../test-utils/loadedArt';
 
@@ -95,7 +96,7 @@ describe('CardImage', () => {
       fireEvent.load(img);
 
       expect(img.style.opacity).toBe('1');
-      expect(img.style.transition).toContain('opacity 0.2s');
+      expect(img.style.transition).toContain(`opacity ${DURATION.base}ms`);
     });
 
     it('does not take a broken image, complete without pixels, for art', () => {

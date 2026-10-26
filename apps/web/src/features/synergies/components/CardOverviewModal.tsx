@@ -34,9 +34,10 @@ import {
   FONT_SIZES,
   LETTER_SPACING,
   RADIUS,
+  SHADOWS,
   SPACING,
+  TOUCH_TARGET,
   VISUALLY_HIDDEN,
-  hexRgba,
 } from '../../../shared/constants';
 import {Chip} from 'inkweave-ui/components/Chip';
 import {LinkButton} from 'inkweave-ui/components/LinkButton';
@@ -718,10 +719,10 @@ function ModalContentRegion({
  */
 const SIBLING_BTN_STYLE: React.CSSProperties = {
   position: 'absolute',
-  top: 'calc(50% - 22px)',
+  top: `calc(50% - ${TOUCH_TARGET / 2}px)`,
   zIndex: 4,
-  width: 44,
-  height: 44,
+  width: TOUCH_TARGET,
+  height: TOUCH_TARGET,
   padding: 0,
   pointerEvents: 'auto',
 };
@@ -1237,7 +1238,7 @@ function HeroDivider({inComparison}: HeroDividerProps) {
       style={{
         height: 1,
         border: 'none',
-        background: `linear-gradient(90deg, transparent, ${COLORS.primary500} 50%, transparent)`,
+        background: `linear-gradient(90deg, transparent, ${COLORS.primary} 50%, transparent)`,
         margin: `${SPACING.lg}px 0 0`,
         opacity: inComparison ? 0 : 1,
         transition: `opacity 250ms ${EASING.smooth}`,
@@ -1533,6 +1534,9 @@ const OVER_MODAL_SCAN: React.CSSProperties = {
 /** The hover dimming and glow, which fade, shared by card A and card B. */
 const HOVER_FADES = `opacity ${DURATION.base}ms ${EASING.smooth}, filter ${DURATION.base}ms ${EASING.smooth}`;
 
+/** The glow on the card a hovered name chip points at, card A or card B, while the other dims. */
+const LIT_CARD_GLOW = `drop-shadow(${SHADOWS.glowSm})`;
+
 /** Card A's transition: its hover fades, and its slide into a comparison unless reduced motion skips it (#790). */
 function cardWrapperTransition(reducedMotion: boolean): string {
   return reducedMotion ? HOVER_FADES : `${HOVER_FADES}, transform ${FLIP_DURATION}ms ${FLIP_EASING}`;
@@ -1556,11 +1560,11 @@ function pickCardWrapperStyle({isMobile, cardWidth, highlightedCard, inCompariso
     transform: inset ? `translateX(${inset}px)` : undefined,
     transition: cardWrapperTransition(reducedMotion),
     opacity: highlightedCard === 'b' ? 0.4 : 1,
-    filter: highlightedCard === 'a' ? `drop-shadow(0 0 8px ${hexRgba(COLORS.primary500, 0.6)})` : undefined,
+    filter: highlightedCard === 'a' ? LIT_CARD_GLOW : undefined,
     // borderRadius matches CardImage's so the ambient glow's box-shadow follows the rounded
     // card silhouette instead of a rectangular bounding box. Only applied in comparison mode
     // (when the glow class is also active); default state stays as-is.
-    borderRadius: inset ? 14 : undefined,
+    borderRadius: inset ? RADIUS.xl : undefined,
   };
 }
 
@@ -1708,7 +1712,7 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
         // so React doesn't manage the property — that way the exit FLIP's `el.style.opacity = '0'`
         // (#332 #7) persists across re-renders during the 480ms exit window.
         opacity: highlightedCard === 'a' ? 0.4 : undefined,
-        filter: highlightedCard === 'b' ? `drop-shadow(0 0 8px ${hexRgba(COLORS.primary500, 0.6)})` : undefined,
+        filter: highlightedCard === 'b' ? LIT_CARD_GLOW : undefined,
         transition: HOVER_FADES,
       }}>
       <InkCardPlaceholder ink={pair.cardB.ink} ink2={pair.cardB.ink2} />
@@ -1829,7 +1833,7 @@ function PairConnector({cardHeight, exiting}: PairConnectorProps) {
           display: 'block',
           width: '100%',
           height: 2,
-          backgroundImage: `repeating-linear-gradient(to right, ${COLORS.primary500} 0, ${COLORS.primary500} 6px, transparent 6px, transparent 12px)`,
+          backgroundImage: `repeating-linear-gradient(to right, ${COLORS.primary} 0, ${COLORS.primary} 6px, transparent 6px, transparent 12px)`,
           backgroundSize: '12px 2px',
           opacity: 0.7,
           animation: exiting
