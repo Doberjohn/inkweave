@@ -11,6 +11,7 @@ export {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 export {useRovingTabIndex} from 'inkweave-ui/hooks/useRovingTabIndex';
 export {useScrollLock} from 'inkweave-ui/hooks/useScrollLock';
 export {useScrollToTopOnRouteChange} from './useScrollToTopOnRouteChange';
+export {useSettledValue} from './useSettledValue';
 export {useScrollSnapIndex} from 'inkweave-ui/hooks/useScrollSnapIndex';
 export {useTooltip} from 'inkweave-ui/hooks/useTooltip';
 export {useBackOrNavigate} from './useBackOrNavigate';
