@@ -595,13 +595,11 @@ function contentWidth(el: HTMLElement): number {
 /**
  * The row's width, from before the first paint and on every resize after it.
  *
- * MEASURED IN A LAYOUT EFFECT TOO (#790). `useContainerWidth` read its first width
- * after the first paint then, and the collection binder remounts on every new set, sort
- * or filter (keyed by its cards, see `CollectionBinderSection`), so each switch painted a
+ * MEASURED IN A LAYOUT EFFECT TOO (#790). `useContainerWidth` reads its first width
+ * after the first paint, and the collection binder remounts on every new set, sort or
+ * filter (keyed by its cards, see `CollectionBinderSection`), so each switch painted a
  * frame with no height cap: at 1920x1080, one frame of 257px cards before the capped
- * 200px, on every switch. The layout effect reads it before that paint. The hook now
- * renders its first width before the paint too (2026-10-26), so this read is what sets
- * the cap only where no ResizeObserver runs, as in jsdom.
+ * 200px, on every switch. The layout effect reads it before that paint.
  */
 function useRowWidth(ref: RefObject<HTMLDivElement | null>): number {
   const observed = useContainerWidth(ref);

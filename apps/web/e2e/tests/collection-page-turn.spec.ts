@@ -235,10 +235,12 @@ interface StripeLog {
 /**
  * The page's watch on its count stripes' size (owner, 2026-10-26: counts drawn large for a frame
  * as a page turned), set up before it loads. A stripe sizes its counts to its pocket from the
- * width it measures, and that size has to land before the stripe first paints. Each new stripe
- * gets a ResizeObserver of its own, made after the app's, so in the step that runs both, before
- * the paint, it reads the zoom the stripe is drawn at: 1 is the full size of a stripe not yet
- * measured. A stripe with no width yet is judged once it has one.
+ * width it measures, and that size has to land before the stripe first paints. Each new stripe's
+ * pocket gets a ResizeObserver of its own, made after the app's, so in the step that runs both,
+ * before the paint, it reads the zoom the stripe is drawn at: 1 is the full size of a stripe not
+ * yet measured. A stripe with no width yet is judged once it has one. It watches the pocket, not
+ * the stripe, whose height that zoom changes: WebKit reports a box observed there that changes
+ * size in that step as an uncaught error.
  */
 function watchStripes() {
   const log: StripeLog = {seen: 0, fullSize: 0};
@@ -251,7 +253,7 @@ function watchStripes() {
       const row = stripe.querySelector<HTMLElement>('[style*="zoom"]');
       if (row && getComputedStyle(row).zoom === '1') log.fullSize += 1;
     });
-    observer.observe(stripe);
+    observer.observe(stripe.parentElement ?? stripe);
   };
   new MutationObserver((records) => {
     for (const node of records.flatMap((record) => [...record.addedNodes])) {
@@ -1026,11 +1028,14 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     expect(second.length, "page 2's art").toBeGreaterThan(0);
     expect(second.filter((src) => !before.has(src)), "page 2's art not asked for before the turn").toEqual([]);
 
+    // On page 2, the pages either side are 1 and 3: page 4's art waits for a turn to page 3.
+    await page.waitForLoadState('networkidle');
+    const onSecond = new Set(asked);
     await mini(page, 4).click();
     await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[27].fullName);
     const fourth = await artInView();
     expect(fourth.length, "page 4's art").toBeGreaterThan(0);
-    expect(fourth.filter((src) => before.has(src)), "page 4's art asked for before the first turn").toEqual([]);
+    expect(fourth.filter((src) => onSecond.has(src)), "page 4's art asked for while page 2 showed").toEqual([]);
   });
 
   test('a turn lands on cards already drawn, with no placeholder between, both ways (owner, 2026-10-26)', async ({page}) => {

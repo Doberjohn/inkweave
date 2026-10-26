@@ -130,7 +130,7 @@ function CardTileImage({
 }) {
   const [imgError, setImgError] = useState(false);
   const imgSrc = useSmall ? smallImageUrl(art) : art.imageUrl;
-  const {loaded: imgLoaded, transition, artProps} = useArtLoad(imgSrc);
+  const {loaded: imgLoaded, underlay, transition, artProps} = useArtLoad(imgSrc);
   // Above-fold LCP candidates load eagerly + decode synchronously; the rest defer (one flag, one branch).
   const {loading, decoding} = priority
     ? ({loading: 'eager', decoding: 'sync'} as const)
@@ -155,7 +155,7 @@ function CardTileImage({
   }
   return (
     <>
-      {!imgLoaded && <InkCardPlaceholder ink={card.ink} ink2={card.ink2} />}
+      {(!imgLoaded || underlay) && <InkCardPlaceholder ink={card.ink} ink2={card.ink2} />}
       <img
         className="card-tile-img"
         src={imgSrc}
@@ -165,6 +165,8 @@ function CardTileImage({
         {...artProps}
         onError={() => setImgError(true)}
         style={{
+          // Positioned, so it is drawn over the placeholder it keeps under it (`underlay`).
+          position: 'relative',
           width: '100%',
           height: '100%',
           objectFit: 'cover',

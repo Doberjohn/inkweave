@@ -363,14 +363,14 @@ function OpenPocketView({pocket, tabIndex}: {pocket: OpenPocket; tabIndex: numbe
   return <WaitingPromoPocket key={src} pocket={pocket} src={src} tabIndex={tabIndex} />;
 }
 
-/** The art of the cards in view `view`: the pockets' small art, open pockets aside. */
+/** The art of the cards in view `view`: the pockets' small art, and the waiting promos' scans. */
 function viewArt(slots: readonly BinderSlot[], view: number, {perView, lead}: BinderPaging): string[] {
   if (view < 0) return [];
   // A spread binder's first view starts a page before its first slot, at the front cover.
   const from = view * perView - lead;
   return slots
     .slice(Math.max(0, from), from + perView)
-    .flatMap((slot) => (isOpenPocket(slot) ? [] : (smallImageUrl(slot) ?? [])));
+    .flatMap((slot) => (isOpenPocket(slot) ? waitingScan(slot) : smallImageUrl(slot)) ?? []);
 }
 
 /**
@@ -379,7 +379,7 @@ function viewArt(slots: readonly BinderSlot[], view: number, {perView, lead}: Bi
  */
 function usePreloadNeighbours(slots: readonly BinderSlot[], current: number, paging: BinderPaging) {
   useEffect(() => {
-    for (const src of [...viewArt(slots, current + 1, paging), ...viewArt(slots, current - 1, paging)]) preloadArt(src);
+    preloadArt([...viewArt(slots, current + 1, paging), ...viewArt(slots, current - 1, paging)]);
   }, [slots, current, paging]);
 }
 

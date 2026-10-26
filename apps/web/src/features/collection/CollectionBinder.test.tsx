@@ -121,7 +121,7 @@ describe('CollectionBinder', () => {
     const artOf = (from: number, to: number) =>
       Array.from({length: to - from + 1}, (_, i) => `/art/c${from + i}-sm.avif`);
     const askedFor = () => {
-      const asked = vi.mocked(preloadArt).mock.calls.map(([src]) => src);
+      const asked = vi.mocked(preloadArt).mock.calls.flatMap(([srcs]) => srcs);
       vi.mocked(preloadArt).mockClear();
       return asked.sort();
     };
@@ -139,6 +139,13 @@ describe('CollectionBinder', () => {
       vi.mocked(preloadArt).mockClear();
       render(binder({slots: WITH_ART}));
       expect(askedFor()).toEqual(artOf(13, 36).sort());
+    });
+
+    it("loads a waiting promo's scan ahead too, and nothing for an empty pocket (Claude review, PR #1002)", () => {
+      vi.mocked(preloadArt).mockClear();
+      const empty = {open: true, setCode: 'C3', setNumber: 30} as const;
+      render(binder({slots: [...WITH_ART.slice(0, 9), WAITING_HADES, empty], single: true}));
+      expect(askedFor()).toEqual(['/card-images-preview/80033-sm.avif']);
     });
   });
 
