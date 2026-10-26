@@ -428,7 +428,8 @@ export const GOLD_GLOW = {
   activeBg: hexRgba(COLORS.primary, 0.12),
   hoverBg: hexRgba(COLORS.primary, 0.06),
   shadow: `0 0 12px ${hexRgba(COLORS.primary, 0.15)}, inset 0 0 8px ${hexRgba(COLORS.primary, 0.05)}`,
-  focusRing: `0 0 0 2px ${hexRgba(COLORS.primary, 0.15)}, 0 0 12px ${hexRgba(COLORS.primary, 0.08)}`,
+  // A solid 2 px ring (WCAG 2.4.13's 3:1 against the page), with a soft glow past it.
+  focusRing: `0 0 0 2px ${COLORS.primary}, 0 0 12px ${hexRgba(COLORS.primary, 0.08)}`,
 } as const;
 
 /** A search field's edge: gold while focused, lighter while hovered, the raised edge at rest. */
