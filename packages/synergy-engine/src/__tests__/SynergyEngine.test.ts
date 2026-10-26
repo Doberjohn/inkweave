@@ -1,5 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {SynergyEngine} from '../engine';
+import {TUNING} from '../data/tuning';
 
 import type {LorcanaCard, SynergyRule} from '../types';
 import {createCard} from './fixtures.js';
@@ -102,7 +103,8 @@ describe('SynergyEngine', () => {
 
       expect(locationGroups).toHaveLength(1);
       expect(locationGroups[0].category).toBe('playstyle');
-      expect(locationGroups[0].label).toBe('Locations');
+      // Group labels are playstyle names, which admin's tuning editor can change.
+      expect(locationGroups[0].label).toBe(TUNING.playstyles['location-control'].name);
     });
 
     it('should group discard enablers and payoffs under the discard playstyle', () => {
@@ -125,7 +127,7 @@ describe('SynergyEngine', () => {
 
       expect(discardGroup).toBeDefined();
       expect(discardGroup!.category).toBe('playstyle');
-      expect(discardGroup!.label).toBe('Discard');
+      expect(discardGroup!.label).toBe(TUNING.playstyles.discard.name);
       expect(discardGroup!.synergies).toHaveLength(1);
       expect(discardGroup!.synergies[0].card.id).toBe('discard-payoff');
       expect(discardGroup!.synergies[0].score).toBe(8);

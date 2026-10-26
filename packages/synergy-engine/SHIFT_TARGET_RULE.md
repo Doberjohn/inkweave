@@ -420,27 +420,29 @@ Tests live in `packages/synergy-engine/src/__tests__/shift-targets.test.ts` unde
 | Not match non-Character cards | Actions/Items with Shift keyword are excluded |
 
 ### Scoring tests
-| Test | Score | Scenario |
-|------|-------|----------|
-| On-curve inkable base | 8 | Gap=1, both inkable (default fixture) |
-| On-curve one inkable | 8 | Gap=1, shift inkable, base not inkable |
-| On-curve neither inkable | 7 | Gap=1, both explicitly not inkable |
-| CurveGap 2 | 7 | Gap=2, inkable base |
-| CurveGap 3 | 5 | Gap=3 (wide, slow setup) |
-| CurveGap 4+ | 3 | Gap=4+ (poor alignment) |
-| Same cost (gap 0) | 5 | No ink savings |
-| Consistent reverse direction | 8 | Forward and reverse produce identical scores |
-| Regression: small shift onto cheap base | 8 | Shift 3 onto cost 2 (gap=1, was incorrectly scored 3) |
-| Regression: huge shift onto tiny base | 3 | Shift 8 onto cost 2 (gap=6, was incorrectly scored high) |
-| Free Shift + condition activation | 10 | Shift 0, cheap base, discard condition satisfied |
-| Free Shift onto cheap base | 9 | Shift 0, base cost 2 |
-| Free Shift onto mid-cost base | 7 | Shift 0, base cost 4 |
-| Free Shift onto expensive base | 5 | Shift 0, base cost 7 |
-| Duo Shift onto one half, by its cost | 7 / 5 / 3 | Mickey Mouse & Minnie Mouse - Adventuring Duo onto a cost-3, cost-4 and cost-6 Mickey; forward and reverse |
-| Duo Shift line | 7 | the half's page says its other half must be in play too |
+
+Each test expects the score and line of the tier it names, read from `tuning.json` (`ruleTexts['shift-targets']`), never written as literals, because admin's tuning editor changes them. The line tells apart tiers that share a score. CI's `test:perturbed` run changes every tuned value and fails a test that pins one.
+
+| Test | Tier | Scenario |
+|------|------|----------|
+| On-curve inkable base | `curve.bothInkable` | Gap=1, both inkable (default fixture) |
+| On-curve one inkable | `curve.oneInkable` | Gap=1, shift inkable, base not inkable |
+| On-curve neither inkable | `curve.neitherInkable` | Gap=1, both explicitly not inkable |
+| CurveGap 2 | `curve.gap2` | Gap=2, inkable base |
+| CurveGap 3 | `curve.gap3` | Gap=3 (wide, slow setup) |
+| CurveGap 4+ | `curve.poor` | Gap=4+ (poor alignment) |
+| Same cost (gap 0) | `curve.gap0` | No ink savings |
+| Consistent reverse direction | n/a | Forward and reverse produce identical scores |
+| Regression: small shift onto cheap base | `curve.bothInkable` | Shift 3 onto cost 2 (gap=1, was incorrectly read as `curve.poor`) |
+| Regression: huge shift onto tiny base | `curve.poor` | Shift 8 onto cost 2 (gap=6, was incorrectly scored high) |
+| Free Shift + condition activation | `activationBonus` | Shift 0, cheap base, discard condition satisfied: one above `free.cheapBase`, at most 10 |
+| Free Shift onto cheap base | `free.cheapBase` | Shift 0, base cost 2 |
+| Free Shift onto mid-cost base | `free.midBase` | Shift 0, base cost 4 |
+| Free Shift onto expensive base | `free.expensiveBase` | Shift 0, base cost 7 |
+| Duo Shift onto one half, by its cost | `duo.cheapHalf` / `duo.midHalf` / `duo.expensiveHalf` | Mickey Mouse & Minnie Mouse - Adventuring Duo onto a cost-3, cost-4 and cost-6 Mickey; forward and reverse, each with that side's line |
 | Combo Shift is no Duo Shift | n/a | `isDuoShift` reads Duo's "two of your characters" reminder, not Combo's "or one of each" |
-| Ink-drop Shift, base gets the drops | 8 | "Shift Remove 2 ink drops" onto a cost-4 base that gets 2 ink drops; forward and reverse |
-| Ink-drop Shift, base gets too few drops | 5 | Cost-1 base that gets 1 ink drop (the ink curve would give 8 and the free path 9) |
+| Ink-drop Shift, base gets the drops | `drops.basePays` | "Shift Remove 2 ink drops" onto a cost-4 base that gets 2 ink drops; forward and reverse |
+| Ink-drop Shift, base gets too few drops | `drops.outside` | Cost-1 base that gets 1 ink drop (the ink curve would read `curve.bothInkable` and the free path `free.cheapBase`) |
 
 ### Transformer tests
 Located in `packages/synergy-engine/src/__tests__/cardTransformer.test.ts` (plus a mirror in `apps/web/src/features/cards/__tests__/loader.test.ts`):

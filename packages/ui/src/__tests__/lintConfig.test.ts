@@ -5,9 +5,22 @@ import {ESLint} from 'eslint';
 const PACKAGE = path.resolve(import.meta.dirname, '../..');
 const APP = path.resolve(PACKAGE, '../../apps/web');
 
+const eslints = new Map<string, ESLint>();
+
+// Loading a config (typescript-eslint, React Compiler's Babel, jsx-a11y) takes seconds, more
+// while the pre-commit hook lints beside the tests, so it happens once here, outside any
+// test's 5 s timeout.
+beforeAll(async () => {
+  for (const cwd of [PACKAGE, APP]) {
+    const eslint = new ESLint({cwd});
+    await eslint.lintText('export {};\n', {filePath: path.join(cwd, 'src/Warmup.tsx')});
+    eslints.set(cwd, eslint);
+  }
+}, 120_000);
+
 /** The rule ids and messages ESLint reports for `code`, linted as if it were `file` under `cwd`. */
 async function lint(cwd: string, file: string, code: string) {
-  const [result] = await new ESLint({cwd}).lintText(code, {filePath: path.join(cwd, file)});
+  const [result] = await eslints.get(cwd)!.lintText(code, {filePath: path.join(cwd, file)});
   return result.messages.map(({ruleId, message}) => ({ruleId, message}));
 }
 

@@ -103,6 +103,12 @@ jobs:
       - name: Run engine tests
         run: pnpm --filter inkweave-synergy-engine test:run ${{ env.COLLECT_COVERAGE == 'true' && '--coverage' || '' }}
 
+      # Admin's tuning editor commits tuning.json straight to master, so engine tests read tuned
+      # values from TUNING, never as literals. This run changes every value the editor can, and
+      # fails a test that pins one or reads the wrong key (src/__tests__/perturbTuning.ts, #1015).
+      - name: Run engine tests with every tuned value edited
+        run: pnpm --filter inkweave-synergy-engine test:perturbed
+
       - name: Run web tests
         run: pnpm --filter inkweave-web test:run ${{ env.COLLECT_COVERAGE == 'true' && '--coverage' || '' }}
 

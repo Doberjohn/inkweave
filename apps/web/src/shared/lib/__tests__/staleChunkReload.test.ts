@@ -67,8 +67,9 @@ describe('reloadForStaleChunk', () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
-  it('allows another reload once the window has elapsed (new stale episode)', () => {
+  it('allows another reload once the window has elapsed (new stale episode)', async () => {
     reloadForStaleChunk();
+    await loadPage(); // the reloaded page, which then stays open across a later deploy
     vi.advanceTimersByTime(60_000); // well past the 30s window
     reloadForStaleChunk();
     expect(reload).toHaveBeenCalledTimes(2);
@@ -76,7 +77,7 @@ describe('reloadForStaleChunk', () => {
 
   // Fail-open guard: a non-finite or future stored timestamp must never wedge
   // recovery (a naive NaN-only check would block forever on "Infinity").
-  it('fails open on a non-finite or future stored timestamp', () => {
+  it('fails open on a non-finite or future stored timestamp', async () => {
     const KEY = 'stale-chunk-reload-at';
 
     sessionStorage.setItem(KEY, 'Infinity');
@@ -84,8 +85,19 @@ describe('reloadForStaleChunk', () => {
     expect(reload).toHaveBeenCalledTimes(1);
 
     reload.mockClear();
+    await loadPage();
     sessionStorage.setItem(KEY, String(Date.now() + 1_000_000)); // backward clock jump
     reloadForStaleChunk();
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  // pageReload.ts is the page's one guard: a service worker update can ask first.
+  it('leaves the reload to an update that already asked for one', async () => {
+    const {reloadOnce} = await import('../pageReload');
+    reloadOnce(600);
+
+    expect(reloadForStaleChunk()).toBe(true);
+    vi.advanceTimersByTime(600);
     expect(reload).toHaveBeenCalledTimes(1);
   });
 });

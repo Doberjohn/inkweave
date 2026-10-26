@@ -92,28 +92,7 @@ const biResult = cache.checkBidirectionalSynergy(cardA, cardB);
 
 ### Built-in Rules
 
-The engine includes 13 built-in synergy rules across two categories:
-
-**Direct** (pair-specific synergies):
-
-- **Shift Targets** — Shift cards + same-named base characters (bidirectional)
-- **Named Companions** — Cards referencing specific named entities, scored by effect tier
-- **Singer + Songs** — Singer characters + cost-compatible Song action cards (bidirectional)
-
-**Playstyle** (strategy-reinforcing synergies):
-
-- **Lore Loss** (`lore-denial`) — Burn (opponent loses lore) + steal (opponent loses, you gain). Tiered 5/6/7 by role pair.
-- **At Location Payoff** (`location-control`) — "At location" payoff effects + Locations
-- **Location Play Trigger** (`location-control`) — "When you play a location" triggers
-- **Location Buff** (`location-control`) — Cards that buff locations
-- **Location Ramp** (`location-control`) — Reduces location play cost
-- **Move to Location** (`location-control`) — Move-to-location effects
-- **Location In-Play Check** (`location-control`) — "If you have a location" checks
-- **Location Search** (`location-control`) — Location search effects
-- **Location Boost** (`location-control`) — Boost mechanic on characters/locations
-- **Discard** (`discard`) — Enablers (force opponent discard) + hand-size payoffs. 5-baseline floor, 8 for the asymmetric kill combo.
-- **Ramp** (`ramp`) — Inkwell-ramp + inkwell-trigger + cost-reduction. 5-baseline floor + 7 for ramp ↔ trigger chains.
-- **Toy** (`toy`) — Toy-classification members + tribal payoffs (search, banish-trigger, self-discount) + composed generic mechanics. Role-driven 5/7/8 matrix.
+The built-in rules come in two categories: `direct` (pair-specific synergies, such as Shift Targets) and `playstyle` (strategy-reinforcing synergies, grouped by `playstyleId`). Each rule's spec is its own `*_RULE.md` in this package, and the [Synergy Rules registry](../../CLAUDE.md#synergy-rules) lists them all.
 
 ### Custom Rules
 
@@ -229,11 +208,10 @@ interface LorcanaCard {
 type Ink = "Amber" | "Amethyst" | "Emerald" | "Ruby" | "Sapphire" | "Steel";
 type CardType = "Character" | "Action" | "Item" | "Location";
 type SynergyCategory = "direct" | "playstyle";
-type PlaystyleId = "lore-denial" | "location-control" | "discard";
+// PlaystyleId: a union of every playstyle's id (src/types/playstyle.ts)
 
-// Synergy scores use a 1-10 numeric scale (see SCORING_DESIGN.md)
-// Engine assigns anchor points: 1, 3, 5, 7, 9
-// Community voting (#9) can nudge with decimals (e.g., 7.3)
+// Synergy scores are integers 1-10, anchored at 5 = neutral same-deck density
+// (see SCORING_DESIGN.md)
 
 // Rules use a discriminated union — category determines whether playstyleId is present
 type SynergyRule = DirectSynergyRule | PlaystyleSynergyRule;
