@@ -66,6 +66,7 @@ export const ADHOC_BUTTON_EXEMPT = {
   paths: [
     'packages/ui/src/components/', // the kit itself, QuantityStepper's domain stepper family too
     'packages/ui/src/lorcana/CardImageButton.tsx', // a card's enlargeable art
+    'packages/ui/src/lorcana/CardTile.tsx', // card-grid tile family
     'packages/ui/src/lorcana/CopiesStripe.tsx', // the collection's copies stepper family
     'packages/ui/src/lorcana/PrintingPeek.tsx', // the printing stack's peek arrows
     'apps/web/src/shared/components/BackLink.tsx', // back-navigation link
@@ -81,7 +82,6 @@ export const ADHOC_BUTTON_EXEMPT = {
     'apps/web/src/features/synergies/components/SynergyMoreTile.tsx', // a synergy group's "+N more" tile
     'apps/web/src/features/synergies/components/ComparisonCardTile.tsx', // phone comparison card tile family (#835)
     'apps/web/src/features/synergies/components/ScoreChevronsTab.tsx', // phone comparison score tab family (#835)
-    'apps/web/src/features/cards/components/CardTile.tsx', // card-grid tile family
     'apps/web/src/features/reveals/CardSlot.tsx', // reveals tile family
     'apps/web/src/features/reveals/InkTrackerTile.tsx', // reveals ink-selection tile family (#511)
     'apps/web/src/features/reveals/SpotlightHero.tsx', // reveals spotlight tile family (#835)

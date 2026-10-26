@@ -3,7 +3,11 @@ import {render, screen, fireEvent} from '@testing-library/react';
 import {CardTile} from '../CardTile';
 import {createCard} from '../../../../shared/test-utils';
 import {_resetPrerenderedArt} from 'inkweave-ui/lib/prerenderedArt';
+import {ArtOnScreen, markArtDrawn} from 'inkweave-ui/hooks/useArtLoad';
 import {showPrerenderedArt, stubLoadedArt} from 'inkweave-ui/test-utils/loadedArt';
+
+const {preloadCardOverviewModal} = vi.hoisted(() => ({preloadCardOverviewModal: vi.fn()}));
+vi.mock('../../../../shared/contexts/cardOverviewModalLoader', () => ({preloadCardOverviewModal}));
 
 describe('CardTile', () => {
   const mockCard = createCard({
@@ -155,4 +159,41 @@ describe('CardTile', () => {
     expect(screen.getByRole('button', {name})).toBeInTheDocument();
   });
 
+  // The click opens the card modal, so heading for a link tile starts its chunk (#640).
+  it('warms the card modal as the visitor heads for a link tile: pointer enter, focus', () => {
+    preloadCardOverviewModal.mockClear();
+    render(<CardTile card={mockCard} href="/card/card-1" onSelect={vi.fn()} />);
+    const tile = screen.getByRole('link');
+
+    fireEvent.pointerEnter(tile);
+    expect(preloadCardOverviewModal).toHaveBeenCalledTimes(1);
+    fireEvent.focus(tile);
+    expect(preloadCardOverviewModal).toHaveBeenCalledTimes(2);
+  });
+
+  it('never warms the card modal from a button tile', () => {
+    preloadCardOverviewModal.mockClear();
+    render(<CardTile {...defaultProps} />);
+    const tile = screen.getByRole('button');
+
+    fireEvent.pointerEnter(tile);
+    fireEvent.focus(tile);
+    expect(preloadCardOverviewModal).not.toHaveBeenCalled();
+  });
+
+  // The binder's pockets remount on every turn (#942). Its ArtOnScreen, imported here as
+  // BinderSpread imports it, must be the one the package's tile reads.
+  it("draws art drawn a moment ago at once inside the binder's ArtOnScreen (#942)", () => {
+    const src = '/card-images/card-1-turned.avif';
+    markArtDrawn(src);
+    const {container} = render(
+      <ArtOnScreen.Provider value>
+        <CardTile card={createCard({...mockCard, imageUrl: src})} onSelect={vi.fn()} />
+      </ArtOnScreen.Provider>,
+    );
+
+    const img = container.querySelector('img');
+    expect(img?.style.opacity).toBe('1');
+    expect(img?.style.transition).toBe('');
+  });
 });

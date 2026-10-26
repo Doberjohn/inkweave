@@ -65,6 +65,7 @@ jobs:
               - 'apps/web/src/features/cards/featured.ts'
               - 'apps/web/src/features/cards/components/BrowseCardGrid.tsx'
               - 'apps/web/src/features/cards/components/CardTile.tsx'
+              - 'packages/ui/src/lorcana/CardTile.tsx'
               - 'apps/web/src/features/cards/components/FeaturedCards.tsx'
               - 'apps/web/src/features/synergies/components/SynergyCard.tsx'
               - 'apps/web/src/features/synergies/hooks/playstyleFiles.ts'
