@@ -20,6 +20,7 @@ import {
   MISSING_GREY,
   openPromoBinder,
   signInAsCollector,
+  stubCardArt,
   teethIn,
 } from '../helpers/collector';
 import {holdLazyModule} from '../helpers/lazyModule';
@@ -98,12 +99,6 @@ async function openPhoneBinder(page: Page, url: string): Promise<void> {
   await page.goto(url);
   await expect(binder(page).getByRole('navigation', {name: 'Binder pages'})).toBeVisible();
 }
-
-/** A 1x1 PNG: any card art at all. */
-const ART = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-  'base64',
-);
 
 type UrlWrites = Window & {urlWrites?: string[]};
 
@@ -1264,11 +1259,7 @@ test.describe('Collection mode, signed in (phone width)', () => {
     test.skip(testInfo.project.name.startsWith('mobile-'), 'axe audits run on the desktop projects');
     // A pocket whose art fails to load shows the card's cost, which its name lacks (axe's
     // label-content-name-mismatch): any art at all keeps each pocket a card, as CI's real art does.
-    await page.route('**/card-images/**', (route) =>
-      route.request().resourceType() === 'image'
-        ? route.fulfill({contentType: 'image/png', body: ART})
-        : route.fallback(),
-    );
+    await stubCardArt(page);
     await page.setViewportSize({width: 390, height: 844});
     await signInAsCollector(page, ENTRIES);
     await openPhoneBinder(page, `/browse?binder=${SET}`);
