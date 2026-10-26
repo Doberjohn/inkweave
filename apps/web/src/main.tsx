@@ -9,8 +9,8 @@ import {router} from './router';
 import {HOLD_CAP_MS, holdPrerenderedPage} from './shared/lib/prerenderHold';
 import {renderOverPrerenderedPage} from './shared/lib/prerenderedArt';
 import {whenRouteReady} from './shared/lib/routeReadiness';
-import {applyWaitingUpdate, reloadOnce} from './shared/lib/swUpdate';
-import {showUpdateToast} from './shared/lib/swUpdateToast';
+import {applyWaitingUpdate, reloadOntoNewVersion} from './shared/lib/swUpdate';
+import {UPDATE_TOAST_LEAD_MS, showUpdateToast} from './shared/lib/swUpdateToast';
 import {reloadForStaleChunk} from './shared/lib/staleChunkReload';
 import {loadSentryWhenIdle} from './shared/lib/sentry';
 import {loadPostHogWhenIdle} from './shared/lib/posthog';
@@ -34,8 +34,9 @@ loadSentryWhenIdle();
 loadPostHogWhenIdle();
 
 // Register service worker with auto-update flow: when a new SW reaches
-// `waiting` state, show a bottom-right toast for ~600ms so the user sees the
-// version swap, then activate + reload automatically (shared/lib/swUpdate.ts).
+// `waiting` state, show a bottom-right toast so the user sees the version
+// swap, ask the new SW to take over UPDATE_TOAST_LEAD_MS later, and reload
+// once it has (shared/lib/swUpdate.ts).
 if (import.meta.env.PROD) {
   // Reload once a new SW takes control of this page, whichever tab asked it to
   // (vite-plugin-pwa's own reload only follows an update this page was told
@@ -46,15 +47,20 @@ if (import.meta.env.PROD) {
   if ('serviceWorker' in navigator) {
     const hadController = Boolean(navigator.serviceWorker.controller);
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (hadController) reloadOnce();
+      if (hadController) reloadOntoNewVersion();
     });
   }
 
   registerSW({
     onNeedRefresh() {
       showUpdateToast();
-      window.setTimeout(() => void applyWaitingUpdate(navigator.serviceWorker), 600);
+      window.setTimeout(
+        () => void applyWaitingUpdate(navigator.serviceWorker),
+        UPDATE_TOAST_LEAD_MS,
+      );
     },
+    // vite-plugin-pwa's own reload, when this page's controller changes: the same guarded one.
+    onNeedReload: reloadOntoNewVersion,
     onOfflineReady() {
       console.log('Inkweave is ready for offline use');
     },

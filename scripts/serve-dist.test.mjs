@@ -144,4 +144,21 @@ describe('createDistServer', () => {
       server.close();
     }
   });
+
+  // scripts/check-sw-update.mjs serves two deploys of one build this way.
+  it("answers with bodyFor's body, or with the file's own where it gives none", async () => {
+    const bodyFor = async (file, url) =>
+      url === '/browse' ? `${path.relative(dist, file)}, swapped` : undefined;
+    const server = createDistServer(dist, {headers: {}, bodyFor});
+    await new Promise((done) => server.listen(0, done));
+    try {
+      const base = `http://localhost:${server.address().port}`;
+      const page = await fetch(`${base}/browse`);
+      expect(page.headers.get('content-type')).toBe('text/html; charset=utf-8');
+      expect(await page.text()).toBe(`${path.join('browse', 'index.html')}, swapped`);
+      expect(await (await fetch(`${base}/assets/index-abc.js`)).text()).toBe('export {};');
+    } finally {
+      server.close();
+    }
+  });
 });

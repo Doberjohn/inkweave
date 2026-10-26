@@ -10,31 +10,34 @@
  * page also watches the waiting worker itself.
  */
 
-/** Set once this page has asked to reload; it is on its way out from then on. */
-let reloadRequested = false;
+import {isReloading, reloadOnce} from './pageReload';
+import {announceReload} from './swUpdateToast';
 
-/** Reloads the page, once however many of the swap's signals arrive. */
-export function reloadOnce(): void {
-  if (reloadRequested) return;
-  reloadRequested = true;
-  window.location.reload();
+/**
+ * Reloads the page onto the new version, with the update toast on screen first, once however
+ * many of the swap's signals arrive (pageReload.ts).
+ */
+export function reloadOntoNewVersion(): void {
+  if (isReloading()) return;
+  reloadOnce(announceReload());
 }
 
 /**
  * Asks the waiting worker to take over (its SKIP_WAITING listener calls skipWaiting()) and
- * reloads once it has: when it is activated, or redundant because a newer worker replaced it.
- * Chrome holds it back until the old worker's requests finish, for up to five minutes. With no
- * worker waiting any more, it has taken over already (another tab asked first), so the page
- * reloads at once.
+ * reloads once it is activated. Chrome holds it back until the old worker's requests finish, for
+ * up to five minutes. A newer deploy's worker that takes its place makes it redundant, and gets
+ * asked in turn. With no worker waiting any more, it has taken over already (another tab asked
+ * first), so the page reloads at once.
  */
 export async function applyWaitingUpdate(container: ServiceWorkerContainer): Promise<void> {
   const waiting = (await container.getRegistration())?.waiting;
   if (!waiting) {
-    reloadOnce();
+    reloadOntoNewVersion();
     return;
   }
   waiting.addEventListener('statechange', () => {
-    if (waiting.state === 'activated' || waiting.state === 'redundant') reloadOnce();
+    if (waiting.state === 'activated') reloadOntoNewVersion();
+    else if (waiting.state === 'redundant') void applyWaitingUpdate(container);
   });
   waiting.postMessage({type: 'SKIP_WAITING'});
 }

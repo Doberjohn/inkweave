@@ -1,5 +1,10 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
-import {UPDATE_TOAST_MAX_MS, showUpdateToast} from '../swUpdateToast';
+import {
+  UPDATE_TOAST_LEAD_MS,
+  UPDATE_TOAST_MAX_MS,
+  announceReload,
+  showUpdateToast,
+} from '../swUpdateToast';
 
 describe('showUpdateToast', () => {
   afterEach(() => {
@@ -52,5 +57,23 @@ describe('showUpdateToast', () => {
     vi.stubGlobal('innerWidth', width);
 
     expect(showUpdateToast().style.bottom).toBe(bottom);
+  });
+});
+
+describe('announceReload', () => {
+  afterEach(() => {
+    document.getElementById('sw-update-toast')?.remove();
+  });
+
+  it('asks for no wait while the toast is up', () => {
+    showUpdateToast();
+
+    expect(announceReload()).toBe(0);
+  });
+
+  // Chrome can hold the swap past UPDATE_TOAST_MAX_MS, and the reload still comes then.
+  it('shows the toast again, and asks for UPDATE_TOAST_LEAD_MS, once it went', () => {
+    expect(announceReload()).toBe(UPDATE_TOAST_LEAD_MS);
+    expect(document.getElementById('sw-update-toast')).not.toBeNull();
   });
 });

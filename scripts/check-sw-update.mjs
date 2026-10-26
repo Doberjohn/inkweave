@@ -3,8 +3,8 @@
  * The service worker's update flow, checked in Chromium over two versions of one build. E2E
  * blocks service workers, so nothing else drives it. A check script rather than a *.test.mjs, so
  * `pnpm test:scripts` needs no build: CI's perf-gates.yml builds the app and runs it when
- * main.tsx, the update modules, the Vite config, vercel.json, this check or the dependencies
- * change.
+ * index.html, main.tsx, the update modules, the Vite config, vercel.json, this check or the
+ * dependencies change.
  *
  * The build is served as vercel.json serves it (serve-dist.mjs), as two deploys: the second's
  * sw.js differs (index.html's precache revision), and each version's index.html names it in a
@@ -19,20 +19,18 @@
  *   3. The same for a tab on its first visit, which the worker installed under but doesn't
  *      control.
  *   4. With the old worker's allCards.json request held past UPDATE_TOAST_MAX_MS, so Chrome holds
- *      the new worker back, the toast goes UPDATE_TOAST_MAX_MS after it shows, and the page still
- *      reloads onto the new version once the request ends.
+ *      the new worker back, the toast goes UPDATE_TOAST_MAX_MS after it shows, and once the
+ *      request ends the page shows it again, UPDATE_TOAST_LEAD_MS before it reloads onto the new
+ *      version.
  *
  * Usage: `pnpm build:web`, then `pnpm check:sw-update [--dir apps/web/dist]`
  */
-import {createServer} from 'node:http';
 import {createRequire} from 'node:module';
 import {existsSync, readFileSync} from 'node:fs';
-import {readFile} from 'node:fs/promises';
-import {dirname, extname, join, resolve} from 'node:path';
+import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {parseArgs} from 'node:util';
-import {contentType} from './lib/mime.mjs';
-import {readSiteHeaders, resolveDistFile} from './serve-dist.mjs';
+import {createDistServer} from './serve-dist.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // Playwright is apps/web's, as for prerender.mjs: a root script can't see it otherwise.
@@ -47,17 +45,27 @@ const LOAD_TIMEOUT_MS = 30000;
 const UPDATE_TIMEOUT_MS = 30000;
 /** How far from UPDATE_TOAST_MAX_MS the held toast may go (check 4). */
 const CAP_SLACK_MS = 1500;
+/** How much sooner than UPDATE_TOAST_LEAD_MS after the toast the late reload may come (check 4). */
+const LEAD_SLACK_MS = 100;
 /** How much longer than UPDATE_TOAST_MAX_MS check 4 holds the old worker's request. */
 const HOLD_PAST_CAP_MS = 5000;
 /** The request check 4 holds: a StaleWhileRevalidate route, so the old worker waits on it. */
 const HELD_REQUEST = /^\/data\/allCards\.json/;
 
-/** UPDATE_TOAST_MAX_MS, read from the source. */
-function readToastCap() {
+/**
+ * The number `source` exports as `name`, written with or without a type or numeric separators.
+ * Exported for scripts/check-sw-update.test.mjs.
+ */
+export function toastConstant(source, name) {
+  const found = new RegExp(`export const ${name}(?::\\s*number)?\\s*=\\s*([\\d_]+);`).exec(source);
+  if (!found) throw new Error(`${name} not found in swUpdateToast.ts`);
+  return Number(found[1].replaceAll('_', ''));
+}
+
+/** A number swUpdateToast.ts exports, such as UPDATE_TOAST_MAX_MS, read from the source. */
+function readToastConstant(name) {
   const source = readFileSync(resolve(ROOT, 'apps/web/src/shared/lib/swUpdateToast.ts'), 'utf8');
-  const cap = /export const UPDATE_TOAST_MAX_MS = (\d+);/.exec(source);
-  if (!cap) throw new Error('UPDATE_TOAST_MAX_MS not found in swUpdateToast.ts');
-  return Number(cap[1]);
+  return toastConstant(source, name);
 }
 
 /**
@@ -68,9 +76,11 @@ function readToastCap() {
 export function versionsOf(indexHtml, swSource) {
   const revision = /(\{url:"index\.html",revision:")([0-9a-f]+)(")/;
   const found = revision.exec(swSource);
-  if (!found) throw new Error('sw.js precaches no index.html with a revision: is it a production build?');
+  if (!found)
+    throw new Error('sw.js precaches no index.html with a revision: is it a production build?');
   if (!indexHtml.includes('<head>')) throw new Error('index.html has no <head> to mark');
-  const mark = (name) => indexHtml.replace('<head>', `<head><meta name="sw-check-version" content="${name}">`);
+  const mark = (name) =>
+    indexHtml.replace('<head>', `<head><meta name="sw-check-version" content="${name}">`);
   const otherRevision = found[2].replace(/./g, (digit) => (digit === '0' ? '1' : '0'));
   return {
     old: {index: mark('old'), sw: swSource},
@@ -79,53 +89,49 @@ export function versionsOf(indexHtml, swSource) {
 }
 
 /**
- * A server over `dist` that answers as vercel.json does, with index.html and sw.js from the
- * version `deploy.current` names, and HELD_REQUEST held `deploy.holdMs`, which check 4 sets as the
- * new version goes out.
+ * A server over `dist` that answers as vercel.json does (serve-dist.mjs), with index.html and
+ * sw.js from the version `deploy.current` names, and HELD_REQUEST held `deploy.holdMs`, which
+ * check 4 sets as the new version goes out.
  */
 function startServer(dist, versions, deploy) {
-  const headers = readSiteHeaders();
-  const server = createServer((req, res) => {
-    void (async () => {
-      const url = req.url ?? '/';
-      const file = resolveDistFile(dist, url);
-      if (!file) {
-        res.writeHead(404, headers);
-        res.end('not found');
-        return;
-      }
-      if (deploy.holdMs && HELD_REQUEST.test(url)) {
-        await new Promise((done) => setTimeout(done, deploy.holdMs));
-      }
-      const version = versions[deploy.current];
-      let body;
-      if (file === join(dist, 'index.html')) body = version.index;
-      else if (file === join(dist, 'sw.js')) body = version.sw;
-      else body = await readFile(file);
-      res.writeHead(200, {...headers, 'Content-Type': contentType(extname(file))});
-      res.end(body);
-    })();
-  });
+  const bodyFor = async (file, url) => {
+    if (deploy.holdMs && HELD_REQUEST.test(url)) {
+      await new Promise((done) => setTimeout(done, deploy.holdMs));
+    }
+    const version = versions[deploy.current];
+    return {[join(dist, 'index.html')]: version.index, [join(dist, 'sw.js')]: version.sw}[file];
+  };
+  const server = createDistServer(dist, {bodyFor});
   return new Promise((done) => server.listen(0, () => done(server)));
 }
 
 /**
- * Runs in each page before its own scripts: counts the tab's page loads and records when the
- * update toast shows and goes, in sessionStorage, which a reload keeps.
+ * Runs in each page before its own scripts: counts the tab's page loads, when each one first
+ * asked to leave, and when the update toast shows and goes, in sessionStorage, which a reload
+ * keeps.
  */
 function recordTab(toastId) {
   const KEY = 'sw-check';
-  const read = () => JSON.parse(sessionStorage.getItem(KEY) ?? '{"loads":0,"toasts":[]}');
+  const read = () =>
+    JSON.parse(sessionStorage.getItem(KEY) ?? '{"loads":0,"leftAt":{},"toasts":[]}');
   const write = (state) => sessionStorage.setItem(KEY, JSON.stringify(state));
   const state = read();
   state.loads += 1;
   write(state);
   const load = state.loads;
+  // A reload's beforeunload fires as the page asks for it, however long the reload then takes.
+  window.addEventListener('beforeunload', () => {
+    const next = read();
+    next.leftAt[load] ??= Date.now();
+    write(next);
+  });
   const note = (field) => {
     const next = read();
     if (field === 'shownAt') next.toasts.push({load, shownAt: Date.now()});
     else {
-      const toast = next.toasts.findLast((entry) => entry.load === load && entry.goneAt === undefined);
+      const toast = next.toasts.findLast(
+        (entry) => entry.load === load && entry.goneAt === undefined,
+      );
       if (toast) toast.goneAt = Date.now();
     }
     write(next);
@@ -141,7 +147,9 @@ function recordTab(toastId) {
 /** What a tab shows now: its version, its controller, the toast, and what recordTab kept. */
 async function readTab(page) {
   return page.evaluate((toastId) => {
-    const kept = JSON.parse(sessionStorage.getItem('sw-check') ?? '{"loads":0,"toasts":[]}');
+    const kept = JSON.parse(
+      sessionStorage.getItem('sw-check') ?? '{"loads":0,"leftAt":{},"toasts":[]}',
+    );
     return {
       version: document.querySelector('meta[name="sw-check-version"]')?.content ?? null,
       controlled: Boolean(navigator.serviceWorker.controller),
@@ -184,26 +192,50 @@ async function controlledTab(context, base) {
 /** Shift+reload: the browser loads the page past the worker, which then controls nothing in it. */
 async function hardReload(page) {
   const cdp = await page.context().newCDPSession(page);
-  await cdp.send('Page.reload', {ignoreCache: true});
-  await page.waitForLoadState('load');
+  // Page.reload answers before the new document commits: wait for that document's own load.
+  await Promise.all([page.waitForEvent('load'), cdp.send('Page.reload', {ignoreCache: true})]);
   await cdp.detach();
 }
 
-/** Why `tab` (null: it never got there) isn't on the new version after one update reload, or null. */
+/** Why `tab`, on the new version, didn't get there by one update reload with the toast, or null. */
 function updateFailure(tab, loadsBefore) {
-  if (!tab) return `never reached the new version without its toast within ${UPDATE_TIMEOUT_MS} ms`;
-  if (tab.loads !== loadsBefore + 1) return `loaded ${tab.loads - loadsBefore} times for one update`;
-  if (!tab.toasts.some((toast) => toast.load === loadsBefore)) return 'never showed the update toast';
+  if (tab.loads !== loadsBefore + 1)
+    return `loaded ${tab.loads - loadsBefore} times for one update`;
+  if (!tab.toasts.some((toast) => toast.load === loadsBefore))
+    return 'never showed the update toast';
   return null;
 }
 
-/** Waits for a tab on the new version, without the toast, and says why not, or null. */
-async function newVersionFailure(page, loadsBefore) {
+/**
+ * Waits for a tab on the new version, without the toast, and says why not, or null; then why the
+ * settled tab fails `alsoFailure`, a check's own question, if it does.
+ */
+async function newVersionFailure(page, loadsBefore, alsoFailure = () => null) {
   const reached = (state) => state.version === 'new' && !state.toast && state.loads > loadsBefore;
-  const tab = await waitForTab(page, reached, UPDATE_TIMEOUT_MS);
-  // A second reload would land shortly after the first.
+  if (!(await waitForTab(page, reached, UPDATE_TIMEOUT_MS))) {
+    return `never reached the new version without its toast within ${UPDATE_TIMEOUT_MS} ms`;
+  }
+  // A second reload would land shortly after the first, and a read it cuts off retries.
   await new Promise((settle) => setTimeout(settle, 1000));
-  return updateFailure(tab && (await readTab(page)), loadsBefore);
+  const settled = await waitForTab(page, () => true, 2000);
+  if (!settled) return 'kept reloading after it reached the new version';
+  return updateFailure(settled, loadsBefore) ?? alsoFailure(settled);
+}
+
+/**
+ * Why the reload that left load `load` of `tab` came without the toast again, or too soon after
+ * it for anyone to read it, or null.
+ */
+function lateToastFailure(tab, load, lead) {
+  const late = tab.toasts.filter((toast) => toast.load === load)[1];
+  if (!late) return 'the late reload never showed the toast again';
+  // Up to the page asking to reload (recordTab's beforeunload), not to the next page's start: a
+  // slow navigation that a second reload replaces would push that past a reload that came too soon.
+  const shownFor = tab.leftAt[load] - late.shownAt;
+  if (!(shownFor >= lead - LEAD_SLACK_MS)) {
+    return `the late reload came ${shownFor} ms after the toast, not ${lead}`;
+  }
+  return null;
 }
 
 const checks = [
@@ -224,7 +256,8 @@ const checks = [
       const page = await controlledTab(context, base);
       await hardReload(page);
       const before = await readTab(page);
-      if (before.controlled) return 'the hard reload left the tab controlled: the check needs one that is not';
+      if (before.controlled)
+        return 'the hard reload left the tab controlled: the check needs one that is not';
       deploy.current = 'new';
       await other.reload();
       return newVersionFailure(page, before.loads);
@@ -238,15 +271,16 @@ const checks = [
       await waitForWorker(page);
       const other = await controlledTab(context, base);
       const before = await readTab(page);
-      if (before.controlled) return 'the first visit is controlled: the check needs one that is not';
+      if (before.controlled)
+        return 'the first visit is controlled: the check needs one that is not';
       deploy.current = 'new';
       await other.reload();
       return newVersionFailure(page, before.loads);
     },
   },
   {
-    name: '4. the toast goes after UPDATE_TOAST_MAX_MS while Chrome holds the new worker back',
-    async run({context, base, deploy, cap}) {
+    name: '4. the toast goes after UPDATE_TOAST_MAX_MS while Chrome holds the new worker back, and shows again before the late reload',
+    async run({context, base, deploy, cap, lead}) {
       const page = await controlledTab(context, base);
       deploy.current = 'new';
       deploy.holdMs = cap + HOLD_PAST_CAP_MS;
@@ -255,19 +289,26 @@ const checks = [
       // The app asks for the card list itself; this makes sure a request is out when the toast is.
       // The reload may end the page before the request does, which rejects the evaluation.
       page.evaluate(() => fetch('/data/allCards.json')).catch(() => {});
-      const held = await waitForTab(page, (state) => state.toasts.some((toast) => toast.goneAt), cap * 2);
+      const held = await waitForTab(
+        page,
+        (state) => state.toasts.some((toast) => toast.goneAt),
+        cap * 2,
+      );
       if (!held) return `the toast never went (or never showed) within ${cap * 2} ms`;
       const toast = held.toasts.find((entry) => entry.goneAt);
       const shownFor = toast.goneAt - toast.shownAt;
-      if (Math.abs(shownFor - cap) > CAP_SLACK_MS) return `the toast stayed ${shownFor} ms, not ${cap}`;
-      if (held.version !== 'old') return 'the page reloaded before the held request ended: nothing held the new worker back';
-      return newVersionFailure(page, loads);
+      if (Math.abs(shownFor - cap) > CAP_SLACK_MS)
+        return `the toast stayed ${shownFor} ms, not ${cap}`;
+      if (held.version !== 'old')
+        return 'the page reloaded before the held request ended: nothing held the new worker back';
+      // The reload comes after the toast went, so it shows the toast again first (announceReload).
+      return newVersionFailure(page, loads, (tab) => lateToastFailure(tab, loads, lead));
     },
   },
 ];
 
 /** Runs each check in a context of its own, against a server it starts over the two versions. */
-async function runChecks(dist, versions, cap) {
+async function runChecks(dist, versions, {cap, lead}) {
   const browser = await chromium.launch();
   const results = [];
   for (const check of checks) {
@@ -279,7 +320,7 @@ async function runChecks(dist, versions, cap) {
     await context.addInitScript(recordTab, TOAST_ID);
     let failure;
     try {
-      failure = await check.run({context, base, deploy, cap});
+      failure = await check.run({context, base, deploy, cap, lead});
     } catch (error) {
       failure = `crashed: ${error.message}`;
     }
@@ -302,10 +343,16 @@ async function main() {
     readFileSync(join(dist, 'index.html'), 'utf8'),
     readFileSync(join(dist, 'sw.js'), 'utf8'),
   );
-  const results = await runChecks(dist, versions, readToastCap());
-  for (const {name, failure} of results) console.log(failure ? `✖ ${name}: ${failure}` : `✓ ${name}`);
+  const results = await runChecks(dist, versions, {
+    cap: readToastConstant('UPDATE_TOAST_MAX_MS'),
+    lead: readToastConstant('UPDATE_TOAST_LEAD_MS'),
+  });
+  for (const {name, failure} of results)
+    console.log(failure ? `✖ ${name}: ${failure}` : `✓ ${name}`);
   const failed = results.filter((result) => result.failure).length;
-  console.log(`\n${results.length - failed} of ${results.length} service worker update checks passed.`);
+  console.log(
+    `\n${results.length - failed} of ${results.length} service worker update checks passed.`,
+  );
   if (failed > 0) process.exit(1);
 }
 

@@ -1,4 +1,5 @@
-import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import {UPDATE_TOAST_LEAD_MS, showUpdateToast} from '../swUpdateToast';
 
 let swUpdate: typeof import('../swUpdate');
 
@@ -13,10 +14,21 @@ class FakeWorker extends EventTarget {
   }
 }
 
+/** A registration as the page reads it: whichever worker waits now, or none. */
+type Registration = {waiting: FakeWorker | null};
+
+/** A container that hands out `registration` as it stands at each call, as the browser's does. */
+function containerFor(registration: Registration) {
+  return {getRegistration: async () => registration} as unknown as ServiceWorkerContainer;
+}
+
 /** A container whose registration has `waiting` waiting, or no worker waiting at all. */
 function containerWith(waiting: FakeWorker | null) {
-  return {getRegistration: async () => ({waiting})} as unknown as ServiceWorkerContainer;
+  return containerFor({waiting});
 }
+
+/** Lets the page's pending promises run, as the browser's answer to getRegistration() would. */
+const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('applyWaitingUpdate', () => {
   const reload = vi.fn();
@@ -30,6 +42,13 @@ describe('applyWaitingUpdate', () => {
       configurable: true,
       value: {...window.location, reload},
     });
+    // main.tsx's onNeedRefresh shows the toast before it asks the worker to take over.
+    showUpdateToast();
+  });
+
+  afterEach(() => {
+    document.getElementById('sw-update-toast')?.remove();
+    vi.useRealTimers();
   });
 
   it('asks the waiting worker to take over, and waits for it before reloading', async () => {
@@ -51,11 +70,20 @@ describe('applyWaitingUpdate', () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
-  it('reloads when a newer worker replaces the waiting one', async () => {
+  // A newer deploy's worker that finishes installing takes the waiting one's place, still waiting.
+  it('asks the newer worker that replaces the waiting one, and reloads once it is activated', async () => {
     const worker = new FakeWorker();
-    await swUpdate.applyWaitingUpdate(containerWith(worker));
+    const registration: Registration = {waiting: worker};
+    await swUpdate.applyWaitingUpdate(containerFor(registration));
 
+    const newer = new FakeWorker();
+    registration.waiting = newer;
     worker.become('redundant');
+    await settle();
+
+    expect(reload).not.toHaveBeenCalled();
+    expect(newer.postMessage).toHaveBeenCalledWith({type: 'SKIP_WAITING'});
+    newer.become('activated');
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
@@ -66,13 +94,41 @@ describe('applyWaitingUpdate', () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 
-  // main.tsx's controllerchange reload and the worker's activation both arrive on a controlled page.
+  // Chrome can hold the swap for minutes, past the toast's cap: the reload never comes unannounced.
+  it('shows the toast again before a reload that comes after it went', async () => {
+    const worker = new FakeWorker();
+    await swUpdate.applyWaitingUpdate(containerWith(worker));
+    vi.useFakeTimers();
+    document.getElementById('sw-update-toast')?.remove();
+
+    worker.become('activated');
+    expect(document.getElementById('sw-update-toast')).not.toBeNull();
+    vi.advanceTimersByTime(UPDATE_TOAST_LEAD_MS - 1);
+    expect(reload).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  // main.tsx's controllerchange, vite-plugin-pwa's onNeedReload and the worker's activation all
+  // arrive on a controlled page.
   it('reloads once however many signals arrive', async () => {
     const worker = new FakeWorker();
     await swUpdate.applyWaitingUpdate(containerWith(worker));
 
-    swUpdate.reloadOnce();
+    swUpdate.reloadOntoNewVersion();
+    swUpdate.reloadOntoNewVersion();
     worker.become('activated');
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  // A stale chunk's reload (staleChunkReload.ts) is taking the page onto the new version already.
+  it('leaves a page that is already reloading as it is', async () => {
+    document.getElementById('sw-update-toast')?.remove();
+    const {reloadOnce} = await import('../pageReload');
+    reloadOnce();
+
+    swUpdate.reloadOntoNewVersion();
+    expect(document.getElementById('sw-update-toast')).toBeNull();
     expect(reload).toHaveBeenCalledTimes(1);
   });
 });
