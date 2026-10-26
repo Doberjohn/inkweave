@@ -3,7 +3,10 @@ import {compareProblems, readShape, shapeProblems, sizeDeltas} from './check-bun
 
 const CRITICAL_CSS =
   'body{margin:0}:focus-visible{outline:2px solid}.inset-focus-ring{outline-offset:-2px}' +
-  '.overlay-transition{transition:opacity .2s}@keyframes inkweave-qty-pop{50%{scale:1.2}}';
+  '@keyframes inkweave-foil-sweep{to{background-position:160% 0}}' +
+  '@keyframes inkweave-qty-pop{50%{scale:1.2}}.overlay-transition{transition:opacity .2s}' +
+  '.touch-target{min-width:44px}@media (prefers-reduced-motion:reduce){' +
+  '.inkweave-foil-shimmer{animation:none!important}.overlay-transition{transition:none!important}}';
 
 /** index.html as the build writes it: the entry, its modulepreloads and the inlined CSS. */
 function indexHtml({
@@ -58,10 +61,20 @@ describe('shapeProblems', () => {
   });
 
   it('names each critical rule the inlined CSS lacks', () => {
-    expect(shapeProblems(indexHtml({css: '.card-tile{color:red}'}))).toHaveLength(4);
+    expect(shapeProblems(indexHtml({css: '.card-tile{color:red}'}))).toHaveLength(7);
     expect(
       shapeProblems(indexHtml({css: CRITICAL_CSS.replace('.overlay-transition{', '.x{')})),
     ).toEqual([expect.stringContaining('overlay-transition')]);
+  });
+
+  it('takes the reduced-motion overlay override only inside its media query', () => {
+    const outside = CRITICAL_CSS.replace(
+      '@media (prefers-reduced-motion:reduce){',
+      '@media print{',
+    );
+    expect(shapeProblems(indexHtml({css: outside}))).toEqual([
+      expect.stringContaining('prefers-reduced-motion'),
+    ]);
   });
 
   it('takes only a bare :focus-visible rule, not one for a single class', () => {

@@ -151,18 +151,21 @@ jobs:
 
       # Startup loads four JS files and the kit's critical CSS (#978): a module newly shared with
       # a lazy chunk that no STARTUP_SHARED line names splits into a fifth file, which the size
-      # budgets barely see. Runs before the size check, which leaves the base's build in dist.
+      # budgets barely see. This is the PR's one build: the size check measures it, then builds
+      # its base into dist.
       - name: Startup shape (PR)
         if: github.event_name == 'pull_request'
         run: pnpm build && node scripts/check-bundle-shape.mjs apps/web/dist
 
-      # Builds the PR and its base and comments the difference.
+      # Measures the PR's build above, builds its base and comments the difference. skip_step
+      # applies to the PR's side only (it skips the install and the build there); the base side
+      # always installs and builds.
       - name: Check bundle size
         if: github.event_name == 'pull_request'
         uses: andresz1/size-limit-action@94bc357df29c36c8f8d50ea497c3e225c3c95d1d # v1.8.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          skip_step: install
+          skip_step: build
           build_script: 'build'
 
       # The action above throws on anything but a pull_request event, so master runs size-limit

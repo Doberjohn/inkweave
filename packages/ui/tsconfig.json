@@ -5,7 +5,11 @@
   "extends": "../../apps/web/tsconfig.app.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo",
-    "types": ["vite/client", "vitest/globals", "node"]
+    "types": ["vite/client", "vitest/globals", "node"],
+    // The package takes only types from the engine (tokens/lorcana.ts's Ink), so it reads them
+    // from the engine's source and its type-check needs no engine build. A value import from the
+    // engine fails here, as it should.
+    "paths": {"inkweave-synergy-engine": ["../synergy-engine/src/types/index.ts"]}
   },
   "include": ["src", "vitest.config.ts"]
 }

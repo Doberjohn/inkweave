@@ -6,8 +6,9 @@
  * the two STARTUP_* groups in apps/web/vite.config.ts, #789). A module that a lazy chunk newly
  * shares, and no STARTUP_SHARED line names, splits into a fifth file; startupGroupsGuard fails a
  * stale line but never sees that, and size-limit's budgets barely move. The critical CSS that
- * the inline-css plugin puts in index.html must also keep the kit's focus ring, overlay
- * transitions and quantity pop, wherever their stylesheet lives.
+ * the inline-css plugin puts in index.html must also keep the kit's focus rings, overlay
+ * transitions (and their reduced-motion override), foil sweep, quantity pop and touch target,
+ * wherever their stylesheet lives.
  *
  * Usage:
  *   node scripts/check-bundle-shape.mjs <distDir>
@@ -27,8 +28,11 @@ export const STARTUP_JS_FILES = 4;
 export const REQUIRED_STARTUP_CSS = [
   /(^|[}>,\s]):focus-visible\{/,
   /\.inset-focus-ring\{/,
-  /\.overlay-transition\{/,
+  /\.overlay-transition\{transition:(?!none)/,
+  /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[^@]*\.overlay-transition\{transition:none\s*!important/,
+  /@keyframes inkweave-foil-sweep\b/,
   /@keyframes inkweave-qty-pop\b/,
+  /\.touch-target\{/,
 ];
 export const MAX_GROWTH_BYTES = 100;
 export const WATCHED_ROWS = ['User-facing JS', 'Entry chunk'];

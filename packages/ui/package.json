@@ -19,7 +19,7 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "typecheck": "pnpm --filter inkweave-synergy-engine build && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json",
     "test": "vitest",
     "test:run": "vitest run"
   },
