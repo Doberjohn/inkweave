@@ -55,7 +55,7 @@
       },
       {
         "title": "A lighter, faster site",
-        "body": "The card data the site downloads is about half the size it was, around 145 kB compressed instead of 275 kB, and the site's scripts shrank too. Startup now loads four script files instead of ten, so after an update a returning visitor downloads much less again, and the site's offline copy skips code no page loads.",
+        "body": "The card data the site downloads is about half the size it was, roughly 140 kB compressed instead of 270 kB, and the site's scripts shrank too. Startup now loads four script files instead of ten, so after an update a returning visitor downloads much less again, and the site's offline copy skips code no page loads.",
         "highlight": true,
         "prs": [
           853,
@@ -169,7 +169,7 @@
     "engine": [
       {
         "title": "Ramp and Shift scores follow the votes",
-        "body": "Three scores moved closer to how players rate these pairs in community votes: deck ramp with a repeating inkwell trigger now scores 8 instead of 9, deck ramp with a once-per-turn trigger 7 instead of 8, and a Shift onto its base the turn after, with both cards inkable, 8 instead of 9.",
+        "body": "Three scores moved closer to how players rate these pairs in community votes: deck ramp with a repeating inkwell trigger now scores 8 instead of 9; deck ramp with a once-per-turn trigger, or any other ramp with a repeating one, 7 instead of 8; and a Shift onto its base the turn after, with both cards inkable, 8 instead of 9.",
         "link": {
           "label": "Vote on synergies",
           "to": "/vote"
