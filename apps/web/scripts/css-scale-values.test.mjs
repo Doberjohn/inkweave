@@ -13,16 +13,36 @@ describe('countScaleValues', () => {
   });
 
   it('leaves out zero, keywords, percentages and variables', () => {
-    const css = '.a { border-radius: 0; box-shadow: none; border-radius: 50%; font-size: var(--size); transition: var(--fade); }';
+    const css = '.a { border-radius: 0; box-shadow: none; border-radius: 50%; font-size: var(--size); transition: var(--fade); transition-delay: 0s; }';
     expect(countScaleValues(css)).toBe(0);
   });
 
-  it("leaves out a decorative infinite animation's timings, and counts a finite one", () => {
-    expect(countScaleValues('.a { animation: spin 2s linear infinite; } .b { animation: pop 450ms both; }')).toBe(1);
+  it('leaves out unitless numbers: a calc() factor and the digits in a name', () => {
+    const css = '.a { font-size: calc(var(--fs-base) * 1.25); border-radius: calc(var(--radius) / 2); box-shadow: 0 0 0 var(--elev-2-1); }';
+    expect(countScaleValues(css)).toBe(0);
   });
 
-  it("reads a shadow's geometry, not the numbers in its colours or a variable's name", () => {
-    const css = '.a { text-shadow: 0 0 rgba(0, 0, 0, 0.5); box-shadow: 0 0 0 var(--glow-2); } .b { box-shadow: 0 1px #00000080; }';
+  it("leaves out an infinite animation's timings and a negative delay, and counts a finite animation beside an infinite one", () => {
+    const css = `.a { animation: spin 2s linear infinite; } .b { animation-delay: -1.8s; } .c { animation: fade 300ms ease, pulse 2s infinite; } .d { animation: infinite-scroll 400ms ease; }`;
+    expect(countScaleValues(css)).toBe(2);
+  });
+
+  it("reads a shadow's geometry, not the numbers in its colours", () => {
+    const css = '.a { text-shadow: 0 0 rgba(0, 0, 0, 0.5); box-shadow: var(--geom) rgba(var(--accent-rgb), 0.4); } .b { box-shadow: 0 1px #00000080; }';
+    expect(countScaleValues(css)).toBe(1);
+  });
+
+  it("reads a filter's drop-shadow(), and no other filter", () => {
+    const css = '.a { filter: drop-shadow(0 1px 4px color-mix(in srgb, var(--ink) 80%, transparent)); } .b { filter: drop-shadow(0 0 0 transparent) blur(4px); }';
+    expect(countScaleValues(css)).toBe(1);
+  });
+
+  it('reads the font shorthand and vendor-prefixed properties', () => {
+    expect(countScaleValues('.a { font: 600 14px/1.2 sans-serif; -webkit-box-shadow: 0 2px 4px black; }')).toBe(2);
+  });
+
+  it('counts a custom property a scale property in the stylesheet reads, and no other', () => {
+    const css = '.a { --glow: 0 0 22px 3px var(--soft); --card-w: 200px; width: var(--card-w); } .a:hover { box-shadow: var(--glow); }';
     expect(countScaleValues(css)).toBe(1);
   });
 

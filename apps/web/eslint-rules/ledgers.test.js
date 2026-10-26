@@ -3,15 +3,16 @@
 // rule still lets through, and known-design-values.json, check:design's per-file value counts. A
 // file that moves (into inkweave-ui, #978) must take its entries along, never gain new ones, so
 // each total holds at a ceiling. Lower a ceiling when an entry goes; never raise one. The baseline's
-// ceiling rose once, from 207 to 257, when check:design began counting the 52 radii, font sizes,
-// shadows and durations typed into .css files (#1013): values there all along, newly counted.
+// ceiling rose once (#1013): check:design began counting the 56 radii, font sizes, shadows and
+// durations typed into .css files, values there all along, so the total went from 205 to 261 and
+// the ceiling from 207 to that exact total.
 import {readFileSync, statSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {describe, expect, it} from 'vitest';
 import {KNOWN_OFFENDERS} from './known-offenders.js';
 
 const LEDGER_CEILING = 138;
-const BASELINE_CEILING = 257;
+const BASELINE_CEILING = 261;
 
 const REPO = fileURLToPath(new URL('../../../', import.meta.url));
 const BASELINE = JSON.parse(
