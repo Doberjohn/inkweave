@@ -154,16 +154,23 @@ function missingStylesheets(bundle: OutputBundle): string[] {
  * once when the preload failed. E2E on a production build caught it (#874). dropInlinedCss takes
  * an inlined file off those lists, and the build fails if a chunk still names a stylesheet the
  * bundle doesn't have.
+ *
+ * A build with a relative base (Storybook's `./`) keeps its stylesheets as files. Vite writes their
+ * urls relative to the stylesheet, so in a page one folder up they would name nothing (#979).
  */
 function inlineCssPlugin(): Plugin {
+  let base = '/';
   return {
     name: 'inline-css',
     enforce: 'post',
     apply: 'build',
+    configResolved(config) {
+      ({base} = config);
+    },
     transformIndexHtml: {
       order: 'post',
       handler(html, ctx) {
-        if (!ctx.bundle) return html;
+        if (!ctx.bundle || base !== '/') return html;
 
         for (const [fileName, chunk] of Object.entries(ctx.bundle)) {
           if (chunk.type === 'asset' && fileName.endsWith('.css')) {

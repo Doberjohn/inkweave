@@ -105,7 +105,8 @@ const CSS_URL = /url\(\s*(['"]?)(.*?)\1\s*\)/g;
 /** Urls no file of the build backs: inline data, other origins and fragment references. */
 const NOT_A_FILE = /^(?:[a-z][a-z\d+.-]*:|\/\/|#)/i;
 const STYLE_BLOCK = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
-const STYLESHEET_FILE = /\.(css|html)$/;
+/** The page inline-css writes styles into. Another, such as Storybook's iframe.html, holds its tool's. */
+const INLINED_PAGE = 'index.html';
 
 /** The part of a bundle the url guard reads: Rolldown's OutputBundle fits it. */
 export type BuiltFiles = Readonly<
@@ -117,11 +118,12 @@ interface Stylesheet {
   text: string;
 }
 
-/** The stylesheets a bundle writes: each `.css` file, and the `<style>` blocks of each `.html` one. */
+/** The stylesheets a bundle writes: each `.css` file, and index.html's `<style>` blocks. */
 function stylesheets(bundle: BuiltFiles): Stylesheet[] {
   return Object.values(bundle).flatMap((output) => {
-    if (output.type !== 'asset' || !STYLESHEET_FILE.test(output.fileName)) return [];
+    if (output.type !== 'asset') return [];
     const {fileName, source} = output;
+    if (!fileName.endsWith('.css') && fileName !== INLINED_PAGE) return [];
     const text = typeof source === 'string' ? source : new TextDecoder().decode(source);
     if (fileName.endsWith('.css')) return [{fileName, text}];
     return [...text.matchAll(STYLE_BLOCK)].map(([, block]) => ({fileName, text: block}));
@@ -157,25 +159,22 @@ export function unresolvedCssUrls(bundle: BuiltFiles, publicDir: string): string
  * Fails the build on a stylesheet url() that names no file (#979). Vite fails a JS import of a
  * missing file, but only warns on a CSS url() it can't resolve and ships it as written, so moving a
  * symbol its stylesheet names would leave the url pointing at nothing. It reads the `.css` files
- * and index.html's inlined `<style>`, against the bundle and the public folder. A relative base
- * (Storybook's `./`) leaves urls for the browser to resolve, so it checks only a build served
- * from `/`.
+ * and index.html's inlined `<style>`, against the bundle and the public folder, in the app's build
+ * and Storybook's.
  */
 export function cssUrlGuard(): Plugin {
-  let base = '/';
   let publicDir = '';
   return {
     name: 'inkweave:css-url-guard',
     apply: 'build',
     enforce: 'post',
     configResolved(config) {
-      ({base, publicDir} = config);
+      ({publicDir} = config);
     },
     // `post`, so it reads index.html once vite:build-html has emitted it with inline-css's styles.
     generateBundle: {
       order: 'post',
       handler(_options, bundle) {
-        if (base !== '/') return;
         const unresolved = unresolvedCssUrls(bundle, publicDir);
         if (unresolved.length > 0) {
           this.error(`Stylesheets name files this build doesn't have: ${unresolved.join(', ')}`);

@@ -97,12 +97,17 @@ describe('unresolvedCssUrls', () => {
     ]);
   });
 
-  it('skips inline data, other origins and fragments, and text outside a stylesheet', () => {
+  it("skips inline data, other origins and fragments, text outside a stylesheet, and another page's styles", () => {
     const bundle = build(
       html('.h{background:url(data:image/svg+xml,%3Csvg%3E)}.i{filter:url(#glow)}'),
       asset('assets/Page-BBBB.css', '.j{background:url(https://x.test/a.png),url(//x.test/b.png)}'),
       asset('assets/note.svg', '<svg><rect fill="url(./missing.png)"/></svg>'),
       asset('page.html', '<p>url(./missing.png)</p><style>.k{}</style>'),
+      // Storybook's page, whose own fonts it copies in after the build.
+      asset(
+        'iframe.html',
+        '<style>.m{src:url(./sb-common-assets/nunito-sans-regular.woff2)}</style>',
+      ),
     );
     expect(unresolvedCssUrls(bundle, PUBLIC)).toEqual([]);
   });
