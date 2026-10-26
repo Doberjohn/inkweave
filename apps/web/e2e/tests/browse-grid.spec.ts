@@ -15,6 +15,11 @@ import {LAYOUT, SPACING} from 'inkweave-ui/tokens/theme';
 const SCROLLER = '[data-testid="browse-grid-scroller"]';
 /** The glow room above the first row and under the last. */
 const ROOM = SPACING.xxl;
+/**
+ * The room above the first row: on a phone, less the 8 px Browse's toolbar keeps under its
+ * buttons (owner, 2026-10-26), so the cards at rest sit where they did.
+ */
+const roomAbove = (isPhone: boolean) => (isPhone ? ROOM - SPACING.sm : ROOM);
 /** A name only one card has. */
 const ONE_CARD = 'Ariel Singing Mermaid';
 
@@ -171,7 +176,7 @@ async function expectGridAsBefore(page: Page, isPhone: boolean) {
   await openBrowse(page);
   const layout = await readLayout(
     page,
-    isPhone ? LAYOUT.browseGridMinWidthMobile : LAYOUT.cardGridMinWidth,
+    isPhone ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth,
   );
 
   expect(layout.columns, JSON.stringify(layout)).toBe(layout.autoFill.columns);
@@ -179,11 +184,11 @@ async function expectGridAsBefore(page: Page, isPhone: boolean) {
   expect(layout.tile.height).toBeCloseTo(layout.tile.width / LAYOUT.cardAspect, 0);
   if (layout.columnGap !== null) expect(layout.columnGap).toBeCloseTo(SPACING.md, 0);
   expect(layout.rowGap).toBeCloseTo(SPACING.md, 0);
-  expect(layout.roomAbove).toBeCloseTo(ROOM, 0);
+  expect(layout.roomAbove).toBeCloseTo(roomAbove(isPhone), 0);
   // As tall as all its rows would be, drawn. Layout puts each row on a 1/64 px grid (Firefox's
   // is 1/60) and scrollHeight on whole pixels, so the sum can stray by that much per row.
   const rows = Math.ceil(LAYOUT.maxDisplayedCards / layout.columns);
-  const fullHeight = 2 * ROOM + rows * layout.tile.height + (rows - 1) * SPACING.md;
+  const fullHeight = roomAbove(isPhone) + ROOM + rows * layout.tile.height + (rows - 1) * SPACING.md;
   expect(
     Math.abs(layout.scrollHeight - fullHeight),
     `scrollHeight ${layout.scrollHeight} against ${rows} rows' ${fullHeight}`,
@@ -211,7 +216,7 @@ async function expectGridAsBefore(page: Page, isPhone: boolean) {
   }
   // And back to the top in one jump.
   const top = await scrollTo(page, 0);
-  expect(top.firstTop - top.viewTop).toBeCloseTo(ROOM, 0);
+  expect(top.firstTop - top.viewTop).toBeCloseTo(roomAbove(isPhone), 0);
   return layout;
 }
 
@@ -285,6 +290,20 @@ function readFirstRow(page: Page) {
       right: px(grid.right - row[row.length - 1].right),
     };
   });
+}
+
+/** How far under the toolbar's buttons, the lowest of them, the scroller and the first row start. */
+function underToolbar(page: Page) {
+  return page.evaluate((selector) => {
+    const controls = document.querySelectorAll('[data-testid="browse-toolbar"] :is(button, select, input)');
+    const buttons = Math.max(...[...controls].map((control) => control.getBoundingClientRect().bottom));
+    const scroller = document.querySelector(selector)!;
+    const tile = scroller.querySelector('[data-testid="card-tile"]')!;
+    return {
+      scroller: scroller.getBoundingClientRect().top - buttons,
+      firstRow: tile.getBoundingClientRect().top - buttons,
+    };
+  }, SCROLLER);
 }
 
 /** The tiles wholly on screen: inside the scroller's view, above the phone's tab bar. */
@@ -361,6 +380,20 @@ test.describe("Browse's grid", () => {
     await expect(art(9)).toHaveAttribute('loading', 'lazy');
   });
 
+  test("keeps 8 px of page under the toolbar's buttons on phones, its first row where it was (owner, 2026-10-26)", async ({
+    page,
+  }) => {
+    const [iPhone15] = PHONES;
+    await page.setViewportSize(iPhone15);
+    await openBrowse(page);
+    for (const phone of PHONES) {
+      await page.setViewportSize(phone);
+      const under = await underToolbar(page);
+      expect(under.scroller, `${phone.name}: the scroller under the buttons`).toBeCloseTo(SPACING.sm, 0);
+      expect(under.firstRow, `${phone.name}: the first row under the buttons`).toBeCloseTo(ROOM, 0);
+    }
+  });
+
   test('draws a whole row past each edge of its view, the one Tab moves into', async ({page}) => {
     await openBrowse(page);
     const maxTop = await maxScrollTop(page);
@@ -398,7 +431,7 @@ test.describe("Browse's grid", () => {
     };
     const blank = await blankFramesDuring(page, async () => {
       await wheelUntil(600, (drawn) => drawn.atEnd);
-      await wheelUntil(-600, (drawn) => drawn.firstTop - drawn.viewTop > ROOM - 0.5);
+      await wheelUntil(-600, (drawn) => drawn.firstTop - drawn.viewTop > roomAbove(onPhone(testInfo)) - 0.5);
     });
     expect(blank, 'frames with a blank row').toBe(0);
   });

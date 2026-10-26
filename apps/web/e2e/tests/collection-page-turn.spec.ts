@@ -1,7 +1,7 @@
 import type {CDPSession, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {newestCoreSet, setCards} from '../helpers/cardData';
-import {binder, type Entries, signInAsCollector} from '../helpers/collector';
+import {binder, type Entries, signInAsCollector, stubCardArt} from '../helpers/collector';
 import {edges, middle} from '../helpers/screen';
 import {fingerPath, keptTouchMoves, scrolledRound, swipeThrough, watchTouchMoves, type Point} from '../helpers/touch';
 import {FLICK_SPEED, SLOP} from '../../src/features/cards/components/pageTurnMath';
@@ -37,12 +37,6 @@ const TURN_MS = 700;
 const POSES = [0, TURN_MS / 4, TURN_MS / 2, (3 * TURN_MS) / 4, TURN_MS];
 /** A pause the pointer makes before letting go, so it lets go with no speed: past the flick's 80 ms. */
 const STILL_MS = 150;
-
-/** A 1x1 PNG: any card art at all. */
-const ART = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-  'base64',
-);
 
 interface Box {
   x: number;
@@ -316,6 +310,7 @@ const pause = (page: Page, ms: number) => page.evaluate((t) => new Promise((reso
 async function openBinder(page: Page, size = {width: 1440, height: 900}): Promise<void> {
   await page.setViewportSize(size);
   await page.addInitScript(watchTurns, POSES);
+  await stubCardArt(page);
   await signInAsCollector(page, ENTRIES);
   await page.goto(`/browse?binder=${SET}`);
   await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
@@ -842,14 +837,6 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
   const swipe = (page: Page, cdp: CDPSession, [x0, y0]: Point, [x1, y1]: Point) =>
     swipeThrough(page, cdp, fingerPath([x0, y0], [10, [(x1 - x0) / 10, (y1 - y0) / 10]]));
 
-  /** Any art at all, so every pocket keeps its image: one whose art fails shows the card's cost. */
-  const stubArt = (page: Page) =>
-    page.route('**/card-images/**', (route) =>
-      route.request().resourceType() === 'image'
-        ? route.fulfill({contentType: 'image/png', body: ART})
-        : route.fallback(),
-    );
-
   /** The mini for page `n` in the map under the page, which turns the pages on a phone (#969). */
   const mini = (page: Page, n: number) => binder(page).getByRole('button', {name: new RegExp(`^Page ${n} of `)});
 
@@ -1008,7 +995,6 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
   test("the pages either side load their art before a turn shows them, and the pages past them don't (owner, 2026-10-26)", async ({
     page,
   }) => {
-    await stubArt(page);
     const asked = new Set<string>();
     page.on('request', (request) => {
       if (request.resourceType() === 'image') asked.add(request.url());
@@ -1039,7 +1025,6 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
   });
 
   test('a turn lands on cards already drawn, with no placeholder between, both ways (owner, 2026-10-26)', async ({page}) => {
-    await stubArt(page);
     await page.addInitScript(watchArt);
     // Every <img> reports itself not complete, as Safari reported the art it held as a page's
     // pockets remounted: Chromium reports such art complete as its <img> mounts, so it starts

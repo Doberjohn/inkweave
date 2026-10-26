@@ -1,5 +1,5 @@
 import {useId, useState} from 'react';
-import {COLORS, DURATION, EASING, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, TRUNCATE} from '../tokens/theme';
+import {COLORS, DURATION, EASING, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, TOUCH_TARGET, TRUNCATE} from '../tokens/theme';
 import {useHover} from '../hooks/useHover';
 import {LinkButton} from './LinkButton';
 
@@ -9,10 +9,12 @@ interface FilterSectionProps {
   compact?: boolean;
   /**
    * Make the header a toggle that folds the section (Browse's docked panel, owner
-   * 2026-10-08). The value is whether it STARTS open; after that the reader owns
-   * it. Left undefined, the section is always open, as in the dialog and drawer.
+   * 2026-10-08, and a phone's filter sheet, owner 2026-10-26). `defaultOpen` is whether
+   * it STARTS open; after that the reader owns it. `touch` gives the toggle a
+   * `TOUCH_TARGET`-tall tap area, for a phone. Left undefined, the section is always
+   * open, as in the desktop dialog.
    */
-  collapsible?: {defaultOpen: boolean};
+  collapsible?: {defaultOpen: boolean; touch?: boolean};
   /**
    * What is selected inside, shown beside the label WHILE FOLDED ("Type · Character"),
    * so a filter is never active and invisible at once.
@@ -40,6 +42,17 @@ const labelStyle = (compact: boolean): React.CSSProperties => ({
  */
 const WASH_BLEED = 6;
 
+/** The folding header's height at rest: its 13 px label's 16 px line, and 4 px above and below. */
+const HEADER_LINE = 24;
+
+/**
+ * On a phone, how far the toggle's tap area reaches above and below the header line, so
+ * it is `TOUCH_TARGET` tall. Negative margins give the room back, so the line keeps its
+ * height, and the section's contents, later in the page, keep their taps where they meet.
+ * The toggle's `minHeight` holds the target if the line comes out shorter than 16 px.
+ */
+const TOUCH_REACH = (TOUCH_TARGET - HEADER_LINE) / 2;
+
 /**
  * The header line: the label or its toggle, and the action at the far end when there is
  * one. The gap covers the wash's bleed past the toggle and a clear `SPACING.sm` after it,
@@ -60,16 +73,18 @@ function HeaderLine({action, children}: {action?: React.ReactNode; children: Rea
  * LINE is the toggle (owner, 2026-10-12), and hovering it lays a faint gold wash across
  * the line as well as lifting the text, so the line, not just the word, reads as the control.
  */
-function ToggleLabel({label, open, summary, controls, onToggle}: {
+function ToggleLabel({label, open, summary, controls, touch, onToggle}: {
   label: string;
   open: boolean;
   summary?: string;
   controls: string;
+  touch?: boolean;
   onToggle: () => void;
 }) {
   // LinkButton keeps its own hover (it lifts the text) and passes no mouse handlers
   // through, so the wash reads the same pointer from this wrapper, which the button fills.
   const {hovered, hoverProps} = useHover();
+  const reach = touch ? TOUCH_REACH : 0;
   return (
     <div {...hoverProps}>
       <LinkButton
@@ -86,9 +101,11 @@ function ToggleLabel({label, open, summary, controls, onToggle}: {
           gap: SPACING.xs,
           width: `calc(100% + ${2 * WASH_BLEED}px)`,
           // LinkButton's own 2px of vertical padding, plus 2px of wash that the margin
-          // gives back, so the header line keeps its height.
-          margin: `-${SPACING.xxs}px -${WASH_BLEED}px`,
-          padding: `${SPACING.xs}px ${WASH_BLEED}px`,
+          // gives back, so the header line keeps its height. On a phone, the tap area's
+          // reach too.
+          margin: `-${SPACING.xxs + reach}px -${WASH_BLEED}px`,
+          padding: `${SPACING.xs + reach}px ${WASH_BLEED}px`,
+          minHeight: touch ? TOUCH_TARGET : undefined,
           borderRadius: RADIUS.sm,
           background: hovered ? GOLD_GLOW.hoverBg : 'transparent',
           transition: `color ${DURATION.fast}ms ${EASING.snappy}, background ${DURATION.fast}ms ${EASING.snappy}`,
@@ -108,7 +125,14 @@ export function FilterSection({label, children, compact = false, collapsible, su
   const [open, setOpen] = useState(collapsible?.defaultOpen ?? true);
   const bodyId = useId();
   const header = collapsible ? (
-    <ToggleLabel label={label} open={open} summary={summary} controls={bodyId} onToggle={() => setOpen(!open)} />
+    <ToggleLabel
+      label={label}
+      open={open}
+      summary={summary}
+      controls={bodyId}
+      touch={collapsible.touch}
+      onToggle={() => setOpen(!open)}
+    />
   ) : (
     label
   );

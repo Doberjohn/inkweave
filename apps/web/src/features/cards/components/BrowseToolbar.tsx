@@ -14,7 +14,7 @@ import {InkwellFilterGroup} from 'inkweave-ui/lorcana/InkwellFilterGroup';
 import {SortSelect} from 'inkweave-ui/components/SortSelect';
 import {useHover, useInlineCostFilters} from '../../../shared/hooks';
 import type {ChipData} from '../../../shared/types';
-import {BROWSE_GUTTER, SIDE_PANEL_WIDTH} from './BrowseSidePanel';
+import {BROWSE_GUTTER, BROWSE_PHONE_TOOLBAR_BOTTOM, SIDE_PANEL_WIDTH} from './BrowseSidePanel';
 
 interface BrowseToolbarProps {
   onFiltersClick: () => void;
@@ -69,7 +69,8 @@ interface BrowseToolbarProps {
   /**
    * Browse's: the toolbar ends at its controls, and the row under it holds the room below them
    * (`BROWSE_ROW_TOP`), the card grid inside its scroller, where a pointed-at card's glow can
-   * use it. Docked, the toolbar always ends there.
+   * use it. On a phone it keeps `BROWSE_PHONE_TOOLBAR_BOTTOM` under them, so scrolled cards stop
+   * short of the buttons. Docked, the toolbar always ends there.
    */
   flushBottom?: boolean;
   /** Optional slot rendered after the filters button (e.g., role filter chips) */
@@ -235,10 +236,16 @@ function buildActiveChips(args: ChipBuildArgs): ChipData[] {
   ];
 }
 
+/** Under the toolbar's controls: Browse's row holds the room below them, less on a phone. */
+function toolbarBottom(isMobile: boolean, flushBottom: boolean): number {
+  if (!flushBottom) return SPACING.md;
+  return isMobile ? BROWSE_PHONE_TOOLBAR_BOTTOM : 0;
+}
+
 function getToolbarStyle(isMobile: boolean, flushBottom = false): React.CSSProperties {
   const sidePad = isMobile ? SPACING.lg : BROWSE_GUTTER;
   return {
-    padding: `${SPACING.md}px ${sidePad}px ${flushBottom ? 0 : SPACING.md}px`,
+    padding: `${SPACING.md}px ${sidePad}px ${toolbarBottom(isMobile, flushBottom)}px`,
     display: 'flex',
     alignItems: 'center',
     gap: isMobile ? SPACING.sm : 10,

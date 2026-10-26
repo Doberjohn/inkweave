@@ -125,15 +125,17 @@ function shouldShowSection(isDesktop: boolean, shownInline: boolean): boolean {
 // is left as a thin composition shell. Mirrors the original CostFilterSection.
 
 /**
- * How a section folds in the docked panel (owner, 2026-10-08): Ink, Inkwell and
- * Ink Cost start open, the rest folded. Undefined everywhere else, where sections
- * never fold. Spread into `FilterSection`.
+ * How a section folds in the docked panel (owner, 2026-10-08) and a phone's filter
+ * sheet (owner, 2026-10-26): Ink, Inkwell, Ink Cost and Rarity start open, the rest
+ * folded. On a phone the header takes a touch-sized tap area. Undefined in the desktop
+ * dialog, where sections never fold. Spread into `FilterSection`.
  */
-type Fold = {collapsible: {defaultOpen: boolean}} | undefined;
+type Fold = {collapsible: {defaultOpen: boolean; touch?: boolean}} | undefined;
 
-/** The panel's fold for a section that starts open or folded; none elsewhere. */
-function foldFor(isPanel: boolean, defaultOpen: boolean): Fold {
-  return isPanel ? {collapsible: {defaultOpen}} : undefined;
+/** The fold for a section that starts open or folded, in the panel and on a phone; none elsewhere. */
+function foldFor(variant: FilterContentProps['variant'], defaultOpen: boolean): Fold {
+  if (variant === 'panel') return {collapsible: {defaultOpen}};
+  return variant === 'mobile' ? {collapsible: {defaultOpen, touch: true}} : undefined;
 }
 
 /** "3, 5": the selected costs in order, for a folded Ink Cost header. */
@@ -755,8 +757,8 @@ export function FilterContent({
   const isMobile = variant === 'mobile';
   const showCostSection = shouldShowSection(isDesktop, showInlineCost);
   const showInkwellSection = shouldShowSection(isDesktop, showInlineInkwell);
-  const open = foldFor(isPanel, true);
-  const folded = foldFor(isPanel, false);
+  const open = foldFor(variant, true);
+  const folded = foldFor(variant, false);
 
   return (
     <>

@@ -131,3 +131,26 @@ export const MISSING_GREY = 'grayscale(1) brightness(0.45)';
 
 /** The filter on a card tile's art: its first child, which the grey and the colour animations reach. */
 export const artFilter = (tile: Locator) => tile.evaluate((t) => getComputedStyle(t.firstElementChild!).filter);
+
+/** A 1x1 PNG: any card art at all. */
+const ART = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+  'base64',
+);
+
+/**
+ * Answers every card art request with any art at all, at once. Call before the first navigation.
+ *
+ * In dev and CI the art is proxied to Ravensburger's CDN through the dev server, whose HTTP/1.1
+ * gives the page six connections to it. Art that hangs there, with the binder's loads of the
+ * pages either side of the one in view (#997), can hold all six, and a card window's code then
+ * waits behind them past a test's timeout (#1022). Art that fails instead shows the card's cost,
+ * which a pocket's name lacks.
+ */
+export async function stubCardArt(page: Page): Promise<void> {
+  await page.route('**/card-images/**', (route) =>
+    route.request().resourceType() === 'image'
+      ? route.fulfill({contentType: 'image/png', body: ART})
+      : route.fallback(),
+  );
+}

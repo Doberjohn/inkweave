@@ -450,3 +450,45 @@ test.describe('Playstyle Detail — cards that failed to load', () => {
     release();
   });
 });
+
+// On a phone a playstyle page and an ink page show their cards as Browse does: three a row,
+// as wide as Browse's (owner, 2026-10-26).
+test.describe('Card grids on a phone', () => {
+  const firstTile = (page: Page) => page.getByTestId('card-tile').first();
+  /**
+   * The first row's columns, the gaps between them, and its room either side, inside the box that
+   * scrolls it: Browse's own scroller, or the page. Equal, they make the cards equally wide on a
+   * phone, whose scrollbars take no room. CI's WebKit draws classic ones, 8 px wide, which
+   * narrow Browse's scroller and, on mobile-safari, not the page, so the widths themselves differ
+   * there by a third of 8 px.
+   */
+  const firstRow = (page: Page) =>
+    page.getByTestId('card-tile').evaluateAll((tiles) => {
+      let scroller = tiles[0].parentElement;
+      while (scroller && !/auto|scroll/.test(getComputedStyle(scroller).overflowY)) scroller = scroller.parentElement;
+      const start = scroller ? scroller.getBoundingClientRect().left + scroller.clientLeft : 0;
+      const end = start + (scroller ?? document.documentElement).clientWidth;
+      const boxes = tiles.map((tile) => tile.getBoundingClientRect());
+      const row = boxes.filter((box) => Math.abs(box.top - boxes[0].top) < 1);
+      const px = (value: number) => Math.round(value * 10) / 10;
+      return {
+        columns: row.length,
+        gaps: row.slice(1).map((box, i) => px(box.left - row[i].right)),
+        left: px(row[0].left - start),
+        right: px(end - row[row.length - 1].right),
+      };
+    });
+
+  test("a playstyle page and an ink page show three cards a row, as wide as Browse's", async ({page}) => {
+    await page.setViewportSize({width: 393, height: 659});
+    await page.goto('/browse');
+    await expect(firstTile(page)).toBeVisible({timeout: 15000});
+    const browse = await firstRow(page);
+    expect(browse.columns).toBe(3);
+    for (const path of ['/playstyles/lore-denial', '/ink/amber']) {
+      await page.goto(path);
+      await expect(firstTile(page)).toBeVisible({timeout: 15000});
+      expect(await firstRow(page), path).toEqual(browse);
+    }
+  });
+});

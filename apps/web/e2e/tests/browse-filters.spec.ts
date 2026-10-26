@@ -95,4 +95,27 @@ test.describe('Browse filters picked in the phone drawer', () => {
     await expect(page).toHaveURL(/[?&]cost=3(&|$)/);
     await expect(drawer).toHaveCount(0);
   });
+
+  test('a keyword, in its section folded as in the panel, which says the pick once folded again (owner, 2026-10-26)', async ({
+    page,
+  }) => {
+    const filters = page.getByRole('button', {name: 'Filters', exact: true});
+    await filters.click();
+    const drawer = page.getByRole('dialog', {name: 'Filters'});
+    const keyword = drawer.getByRole('button', {name: 'Keyword', exact: true});
+    await expect(keyword).toHaveAttribute('aria-expanded', 'false');
+    await expect(drawer.getByRole('button', {name: 'Evasive', exact: true})).toBeHidden();
+    // The header's tap area is touch-sized.
+    expect((await keyword.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+
+    await keyword.click();
+    await drawer.getByRole('button', {name: 'Evasive', exact: true}).click();
+    await drawer.getByRole('button', {name: 'Apply', exact: true}).click();
+    await expect(page).toHaveURL(/[?&]keyword=Evasive(&|$)/);
+    await expect(drawer).toHaveCount(0);
+
+    // Opened again, the section is folded, and its header names the pick.
+    await filters.click();
+    await expect(drawer.getByRole('button', {name: /^Keyword\s*· Evasive$/})).toHaveAttribute('aria-expanded', 'false');
+  });
 });
