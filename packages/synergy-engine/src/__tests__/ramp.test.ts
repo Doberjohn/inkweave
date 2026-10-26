@@ -471,7 +471,7 @@ describe('Ramp: a deck look that puts a card into your inkwell', () => {
 });
 
 // Every chain shape scores the same today, so the tuned scores can't show which key a pair
-// reads. These tests give each key its own score to pin the routing itself.
+// reads. These tests give each key its own score to pin the routing itself, from either card.
 describe('Ramp: each chain shape reads its own tuning key', () => {
   const scores = TUNING.ruleTexts.ramp.scores;
   const tuned = {...scores};
@@ -498,5 +498,14 @@ describe('Ramp: each chain shape reads its own tuning key', () => {
   it('reads chain.neither for self-sacrifice with a once-per-turn trigger', () => {
     expect(rampPair(closetDoorPortal, chiefTui)?.score).toBe(6);
     expect(rampPair(winnieThePooh, fairyGodmothersWand)?.score).toBe(6);
+  });
+
+  it('reads the same keys from the trigger card, naming the ramp card {B}', () => {
+    const template = TUNING.ruleTexts.ramp.templates['ramp-trigger'];
+    const rampAsB = template.replace('{RAMP}', '{B}').replace('{TRIGGER}', '{A}');
+    expect(rampPair(scrooge, mamaOdie)).toMatchObject({score: 9, explanation: rampAsB});
+    expect(rampPair(chiefTui, mamaOdie)).toMatchObject({score: 8, explanation: rampAsB});
+    expect(rampPair(scrooge, closetDoorPortal)).toMatchObject({score: 8, explanation: rampAsB});
+    expect(rampPair(chiefTui, closetDoorPortal)).toMatchObject({score: 6, explanation: rampAsB});
   });
 });
