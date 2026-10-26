@@ -112,7 +112,7 @@ The engine includes 13 built-in synergy rules across two categories:
 - **Location Search** (`location-control`) — Location search effects
 - **Location Boost** (`location-control`) — Boost mechanic on characters/locations
 - **Discard** (`discard`) — Enablers (force opponent discard) + hand-size payoffs. 5-baseline floor, 8 for the asymmetric kill combo.
-- **Ramp** (`ramp`) — Inkwell-ramp + inkwell-trigger + cost-reduction. 5-baseline floor + chain ladder (7–8) for ramp ↔ trigger pairs.
+- **Ramp** (`ramp`) — Inkwell-ramp + inkwell-trigger + cost-reduction. 5-baseline floor + chain ladder (7) for ramp ↔ trigger pairs.
 - **Toy** (`toy`) — Toy-classification members + tribal payoffs (search, banish-trigger, self-discount) + composed generic mechanics. Role-driven 5/7/8 matrix.
 
 ### Custom Rules

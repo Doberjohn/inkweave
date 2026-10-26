@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 2,
+  "week": "2026-10-19",
+  "title": "October 19 to 25, 2026",
+  "summary": "A card's printings now stack behind it, with 150 promo printings to turn to, Browse's search finds cards from sets 1 to 8, phones show three cards across, and the card data downloads at half its size.",
+  "sections": {
+    "new": [
+      {
+        "title": "Printings stack behind the card",
+        "body": "On the card page and in the card window, a card's other printings now sit behind it, fanned out, in place of the row of printing buttons. Rest the mouse near either edge to peek at the printing behind, then click, drag, swipe or press an arrow key to turn the card to it; the turns loop, and on phones you throw the card aside. On iPhones, a sideways swipe no longer turns into a page scroll halfway through.",
+        "highlight": true,
+        "prs": [
+          902,
+          965
+        ]
+      },
+      {
+        "title": "Promo printings",
+        "body": "148 promo printings of 116 Core cards joined the printings you can turn to, such as Mickey Mouse - True Friend's 25/P1, 15/P2, 36/P2 and 10/P3, and Mickey Mouse - Brave Little Prince's 1/P5 and Judy Hopps - Optimistic Officer's 44/P2 followed on October 23. Browse's Rarity filter has a Promo option for them.",
+        "highlight": true,
+        "prs": [
+          819
+        ]
+      },
+      {
+        "title": "Cards from sets 1 to 8 in Browse's search",
+        "body": "A search in Browse now also lists the cards from sets 1 to 8 that no Core card reprints, so a search for Ariel finds 12 cards instead of 7. They open in the card window marked as outside Core, and an × at the end of the search bar clears the search.",
+        "highlight": true,
+        "link": {
+          "label": "Search the cards",
+          "to": "/browse"
+        },
+        "prs": [
+          920,
+          902
+        ]
+      },
+      {
+        "title": "A new logo",
+        "body": "The Woven Drop, an ink drop woven from gold and Amethyst strands, replaces the quill as Inkweave's icon in browser tabs and on home screens. The not-found pages' headings switched to the Marcellus serif.",
+        "prs": [
+          903,
+          918
+        ]
+      }
+    ],
+    "improved": [
+      {
+        "title": "Three cards across on phones",
+        "body": "Browse shows three cards across on most phones, where it showed two, and two on the narrowest screens, where it showed one.",
+        "highlight": true,
+        "prs": [
+          972
+        ]
+      },
+      {
+        "title": "A lighter, faster site",
+        "body": "The card data the site downloads is about half the size it was, roughly 140 kB compressed instead of 270 kB, and the site's scripts shrank too. Startup now loads four script files instead of ten, so after an update a returning visitor downloads much less again, and the site's offline copy skips code no page loads.",
+        "highlight": true,
+        "prs": [
+          853,
+          939,
+          944,
+          946,
+          948,
+          953,
+          955,
+          959
+        ]
+      },
+      {
+        "title": "Pages appear whole on a first visit",
+        "body": "On a first visit, the page shown while the site starts now stays until the site can show the same page in full, with no blank or loading frame between. Phones get their own phone-shaped copy of each page, and shared links to comparisons and votes no longer flash the homepage first.",
+        "prs": [
+          940,
+          943,
+          945
+        ]
+      },
+      {
+        "title": "Calmer loading",
+        "body": "While card art loads, its place shows the card's ink colors and symbol instead of a grey shimmer. Loading screens no longer flash \"No cards match your filters\" or \"0 cards\" while a list is on its way, placeholders sit where the content will land, and the card window loads the next and previous cards' synergies before you reach them.",
+        "prs": [
+          921,
+          926,
+          966
+        ]
+      },
+      {
+        "title": "The card window",
+        "body": "On wider screens, its header shows the number printed on the card, such as 52/204 or 25/P1, in a small tag before the set's logo. Every card's art is now one height, so paging with the arrows no longer moves the window or its arrows.",
+        "prs": [
+          873,
+          896
+        ]
+      },
+      {
+        "title": "One gold glow",
+        "body": "Pointing at a card or reaching it by keyboard fades in a soft gold glow behind it, in every grid, in place of the old inner ring, lift and View details label. Browse leaves room for the glow above the first row, and the card comparison now uses one gold throughout.",
+        "prs": [
+          873,
+          917,
+          871
+        ]
+      },
+      {
+        "title": "An updated privacy policy",
+        "body": "The privacy policy's sign-in section has changed. It now says signing in with Google or Discord is for the parts of Inkweave that use an account, not just for saving decks, and that every account gets a made-up public name and handle, such as Emerald Princess 330, which anyone can see. You can change the name.",
+        "link": {
+          "label": "Read the privacy policy",
+          "to": "/privacy"
+        },
+        "prs": [
+          975
+        ]
+      },
+      {
+        "title": "Release notes by week",
+        "body": "This page now shows one entry per week, Monday to Sunday, newest first, where it showed one per month.",
+        "prs": [
+          818
+        ]
+      },
+      {
+        "title": "Store release countdown",
+        "body": "In the last days before Set 14's store release on October 23, the Reveals page counted down to the release instead of reading 0 days until pre-release.",
+        "prs": [
+          821
+        ]
+      }
+    ],
+    "fixed": [
+      {
+        "title": "Synergy tiles on tablets",
+        "body": "On an iPad, an Android tablet or a touch laptop, tapping a synergy tile did nothing. It now opens the card or the comparison, as a click does.",
+        "prs": [
+          846
+        ]
+      },
+      {
+        "title": "Ink pages on phones",
+        "body": "On phones, the ink pages showed the desktop header with its Reveals button cut off, and scrolled sideways. They now use the phone layout, like every other page.",
+        "prs": [
+          831
+        ]
+      },
+      {
+        "title": "Keyboard and screen readers",
+        "body": "The focus ring now shows on card art, and closing Filters or a comparison puts focus back on the control that opened it. Screen readers hear card names in synergy lines instead of single letters, as in \"Pocahontas plays Miguel Rivera for free\", and now read the score and mechanic tooltips, which stay open while you move onto them and close with Escape. Faint labels gained contrast, and links in the legal pages are underlined.",
+        "prs": [
+          830,
+          831,
+          841,
+          847,
+          851,
+          817,
+          822
+        ]
+      },
+      {
+        "title": "Fewer reloads",
+        "body": "A failed download of the error-reporting script no longer reloads the page, and pages stopped waiting on a request for a file that no longer existed.",
+        "prs": [
+          840,
+          875
+        ]
+      }
+    ],
+    "engine": [
+      {
+        "title": "Ramp and Shift scores follow the votes",
+        "body": "Three scores moved closer to how players rate these pairs in community votes: deck ramp with a repeating inkwell trigger now scores 8 instead of 9; deck ramp with a once-per-turn trigger, or any other ramp with a repeating one, 7 instead of 8; and a Shift onto its base the turn after, with both cards inkable, 8 instead of 9.",
+        "link": {
+          "label": "Vote on synergies",
+          "to": "/vote"
+        },
+        "prs": [
+          811
+        ]
+      }
+    ]
+  },
+  "behindTheScenes": "Plus 59 behind-the-scenes changes: dependency updates, CI, test and tooling work, design cleanups, analytics, and work on features that aren't switched on yet."
+}
