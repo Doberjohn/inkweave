@@ -88,7 +88,7 @@ const phoneRow = (page: Page) => page.getByTestId(PHONE_ROW);
  */
 const shownPage = (page: Page) => page.locator('nav[aria-label="Binder pages"] [aria-current="true"]');
 
-/** The Binder sheet, which the row's Filters opens on a phone (#969, #1000): not the "Binder set" list. */
+/** The Binder sheet, which the row's Filters opens on a phone: not the "Binder set" list. */
 const binderSheet = (page: Page) => page.getByRole('dialog', {name: 'Binder', exact: true});
 
 /**
@@ -1067,7 +1067,7 @@ test.describe('Collection mode, signed in', () => {
 
 /**
  * Phones' screens in CSS pixels, with the browser's bars showing, as #969 measured them, and the
- * rows their page has (#1000): four where they keep the cards at 90% or more of the 3-row page's
+ * rows their page has: four where they keep the cards at 90% or more of the 3-row page's
  * width, as the owner's iPhone on iOS 26 does.
  */
 const PHONES = [
@@ -1196,7 +1196,7 @@ test.describe('Collection mode, signed in (phone width)', () => {
     // In order, the set button named by its words: the scope's name over its figures.
     const [filters, setButton, collection] = Object.keys(row);
     expect([filters, collection]).toEqual(['Filters', 'Show my collection']);
-    // Across, each where grid mode draws it, within 1 px; the row stands where the title was (#969).
+    // Across, each where grid mode draws it, within 1 px; the row stands where the title was.
     for (const name of [filters, collection]) {
       for (const key of ['x', 'width', 'height'] as const) {
         expect(Math.abs(row[name][key] - grid[name][key]), `${name} ${key}`).toBeLessThanOrEqual(1);

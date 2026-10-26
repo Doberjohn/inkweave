@@ -34,8 +34,8 @@ const SHOWS_HEIGHT = 42;
  */
 const SPREAD_SHAPE: CSSProperties = {width: 'min(100%, 200cqh)', aspectRatio: '2'};
 /**
- * A phone's lone board, as tall as the binder draws its `rows` at the section's width (#969), or at
- * `maxWidth` where the page's height caps it (#1000): the section is a size container, so `100cqw`
+ * A phone's lone board, as tall as the binder draws its `rows` at the section's width, or at
+ * `maxWidth` where the page's height caps it: the section is a size container, so `100cqw`
  * is that width, and the board comes in from both its sides.
  */
 function loneBoard({rows, maxWidth}: LoneFit): CSSProperties {
@@ -56,7 +56,7 @@ function Block({height, style}: {height?: number; style?: CSSProperties}) {
 /**
  * A phone's page while the chunk downloads (#969): the board in its place over the map, and the
  * map's band under it, empty, so the binder that replaces them draws its page and map in their
- * boxes, with the rows it will draw (#1000). One box, so the section's column gap never comes
+ * boxes, with the rows it will draw. One box, so the section's column gap never comes
  * between the two.
  */
 function LonePageFallback({fit}: {fit: LoneFit}) {
@@ -145,7 +145,7 @@ export function ToolbarSetPickerFallback() {
 
 /**
  * A phone row's set picker while the chunk downloads, filling its place between Filters and
- * Collection (#969, #1000).
+ * Collection.
  */
 export function RowSetPickerFallback() {
   return <Block height={ROW_CONTROL_HEIGHT} />;

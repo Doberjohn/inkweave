@@ -11,7 +11,7 @@ import {
   STORY_STATS,
 } from './collectionStoryData';
 
-/** What an iPhone 15's 393px leave the row's set button, between Filters and Collection (#969, #1000). */
+/** What an iPhone 15's 393px leave the row's set button, between Filters and Collection. */
 const ROW_WIDTH = 164;
 
 /** Each set's progress, by code, the whole collection's and every promo set's. */
@@ -116,8 +116,8 @@ export const CompactAllPromoSets: Story = {...Compact, args: {size: 'toolbar', s
 
 /**
  * The phone binder row's button (owner, 2026-10-25, #969): the set's logo, its name over its two
- * percentages, 34px tall, at the width an iPhone 15's row leaves it between Filters and Collection
- * (#1000). Its list is the panel's.
+ * percentages, 34px tall, at the width an iPhone 15's row leaves it between Filters and
+ * Collection. Its list is the panel's.
  */
 export const Row: Story = {
   args: {size: 'row', figures: {shown: '36% · 12%', words: '36% complete, 12% master'}},

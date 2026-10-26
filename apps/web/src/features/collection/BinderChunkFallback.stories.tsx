@@ -34,8 +34,8 @@ type Story = StoryObj<typeof meta>;
 export const Desktop: Story = {};
 
 /**
- * A phone (#969): the board of the page the binder will draw, and the empty band its map takes
- * under it. In this 800px box a 320px phone's page has four rows (#1000).
+ * A phone: the board of the page the binder will draw, and the empty band its map takes
+ * under it. In this 800px box a 320px phone's page has four rows.
  */
 export const Mobile: Story = {
   globals: {viewport: {value: 'mobile1'}},

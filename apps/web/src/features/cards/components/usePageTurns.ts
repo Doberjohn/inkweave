@@ -31,14 +31,14 @@ interface Change extends Pick<TurnOptions, 'single' | 'perPage' | 'reducedMotion
   turn: Turn | null;
 }
 
-/** Whether the binder still draws the pages it drew: as wide, with as many pockets (#1000). */
+/** Whether the binder still draws the pages it drew: as wide, with as many pockets. */
 function sameShape(seen: Seen, {single, perPage}: Pick<Seen, 'single' | 'perPage'>) {
   return single === seen.single && perPage === seen.perPage;
 }
 
 /**
  * Whether the view changing to `start` turns a page: not across the phone width, nor as a phone's
- * page gains or loses a row (#1000), nor under reduced motion, nor once a page in hand has landed
+ * page gains or loses a row, nor under reduced motion, nor once a page in hand has landed
  * there, which has already shown its turn.
  */
 function turnsTo(start: number, {seen, turn, single, perPage, reducedMotion}: Change) {

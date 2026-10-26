@@ -96,7 +96,7 @@ describe('BinderSpread page turn (#942)', () => {
   });
 
   it("turns nothing when a phone's page gains a row, which moves its view back to a page of twelve", () => {
-    // Page 4 of nine (cards 28 to 36) becomes page 3 of twelve (25 to 36), as `CollectionBinder` pages it (#1000).
+    // Page 4 of nine (cards 28 to 36) becomes page 3 of twelve (25 to 36), as `CollectionBinder` pages it.
     const view = render(spread({single: true, start: 27}));
     view.rerender(spread({single: true, start: 24, loneFit: {rows: 4}}));
     expect(sheets()).toHaveLength(0);
@@ -255,7 +255,7 @@ describe('BinderSpread lone page (#969)', () => {
   });
 
   it("draws a footer in its arrows' place, the board a quarter as far under the binder's top", () => {
-    // The phone binder's page map (#969), whose band a fourth row's page wants the room for (#1000).
+    // The phone binder's page map, whose band a fourth row's page wants the room for.
     const view = render(spread({single: true, start: 9}));
     const above = () => document.querySelector<HTMLElement>('.binder-board')!.parentElement!.style.padding;
     expect(screen.getByRole('button', {name: 'Next page'})).toBeInTheDocument();

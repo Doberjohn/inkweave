@@ -49,8 +49,8 @@ function LiveRow({setCode, count, loading = false}: LiveRowProps) {
 }
 
 /**
- * A phone's one row over the binder in collection mode (owner, 2026-10-25, #969): grid mode's
- * row, Filters, the set button where the sort sits, and Collection (#1000), at an iPhone 15's
+ * A phone's one row over the binder in collection mode (owner, 2026-10-25): grid mode's
+ * row, Filters, the set button where the sort sits, and Collection, at an iPhone 15's
  * 393px. Press the set button for the set list.
  */
 const meta: Meta<typeof LiveRow> = {

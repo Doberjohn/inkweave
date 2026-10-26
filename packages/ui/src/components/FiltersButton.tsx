@@ -18,13 +18,13 @@ interface FiltersButtonProps {
   active?: boolean;
 }
 
-/** Its name, with the badge's count, which screen readers otherwise never hear (#1000). */
+/** Its name, with the badge's count, which screen readers otherwise never hear. */
 const filtersName = (count: number) => (count > 0 ? `Filters, ${count} on` : 'Filters');
 
 /**
  * The toolbar "Filters" button (#509): a ToolbarToggle, the toolbar's filled-or-ghost
  * recipe it shares with Browse's Collection button. A phone's binder row opens its Binder
- * sheet with it (#1000), where its count is all that shows the binder narrowed to Owned or
+ * sheet with it, where its count is all that shows the binder narrowed to Owned or
  * Missing.
  */
 export function FiltersButton({onClick, activeCount, isMobile, expanded, active = true}: FiltersButtonProps) {

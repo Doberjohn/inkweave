@@ -30,11 +30,11 @@ const ROW_STYLE: CSSProperties = {
 const SET_SLOT: CSSProperties = {flex: 1, minWidth: 0};
 
 /**
- * A phone's one row over the binder in collection mode (owner, 2026-10-25, #969), in place of
+ * A phone's one row over the binder in collection mode (owner, 2026-10-25), in place of
  * Browse's title, its toolbar and the set strip, which took the top 277px of an iPhone 15 and
  * left the page's last row cut short. The binder under it is the page's protagonist.
  *
- * IT IS GRID MODE'S ROW (owner, 2026-10-26, #1000): Filters first, the set button where the sort
+ * IT IS GRID MODE'S ROW (owner, 2026-10-26): Filters first, the set button where the sort
  * sits, then Collection, each 34px tall, with Browse's room above and below, so switching modes
  * moves nothing in it. Filters opens the Binder sheet, which holds what the binder shows, its
  * sort, the filters and the numbers, its badge counting the filters on and Owned or Missing, and

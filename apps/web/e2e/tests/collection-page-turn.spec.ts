@@ -799,8 +799,8 @@ test.describe("Collection mode, turning the binder's pages (#942)", () => {
     await expect(sheets(page)).toHaveCount(0);
     await clearTurns(page);
 
-    // Spread 2 holds slots 12 to 35: a phone opens the page that holds slot 12 (#969), at 390x844
-    // page 2 of twelve, slots 12 to 23 (#1000). And back to the spread.
+    // Spread 2 holds slots 12 to 35: a phone opens the page that holds slot 12, at 390x844
+    // page 2 of twelve, slots 12 to 23. And back to the spread.
     await page.setViewportSize({width: 390, height: 844});
     await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[12].fullName);
     await page.setViewportSize({width: 1440, height: 900});
@@ -828,7 +828,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
   test.use({hasTouch: true});
 
   // A 390x844 phone's page has four rows, twelve cards, and its row, page and map fit, so nothing
-  // scrolls there (#969, #1000): the swipes that check the page's scroll take a phone short enough
+  // scrolls there: the swipes that check the page's scroll take a phone short enough
   // for the binder to scroll, whose page keeps three rows, nine cards. So the turns, swipes and
   // keys here run at both sizes of page.
   const PHONE = {width: 390, height: 844};

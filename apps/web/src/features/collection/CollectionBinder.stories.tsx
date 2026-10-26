@@ -90,7 +90,7 @@ export const SinglePage: Story = {
 };
 
 /**
- * A tall phone: one page of twelve, four rows of three (#1000), as the section measured them
+ * A tall phone: one page of twelve, four rows of three, as the section measured them
  * (`useLoneFit`); its board no wider than lets the page and its map fit the screen.
  */
 export const SinglePageFourRows: Story = {

@@ -340,12 +340,12 @@ export interface BrowseCollectionSlots {
   renderSetPicker: (listing: BrowseListing) => ReactNode | undefined;
   /**
    * A phone's one row over the binder (owner, 2026-10-25, #969) while collection mode is on,
-   * else undefined: Filters with its `count`, the set button and Collection (#1000). The page
+   * else undefined: Filters with its `count`, the set button and Collection. The page
    * draws it in place of its title and toolbar.
    */
   renderPhoneRow: (listing: BrowseListing, options: PhoneRowOptions) => ReactNode | undefined;
   /**
-   * A phone's Binder sheet (#969), which the row's Filters opens, while collection mode is on, else
+   * A phone's Binder sheet, which the row's Filters opens, while collection mode is on, else
    * undefined: Show and the sort above the filters, the scope's numbers after them, all three
    * applied in the page's one URL write. The page draws it in place of its filter sheet.
    */

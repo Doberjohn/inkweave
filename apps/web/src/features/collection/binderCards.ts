@@ -96,8 +96,8 @@ export const setLabel = (setCode: string) =>
  * card held in one finish only is missing, unless that is the one finish it comes in
  * (`isHeld`, #880). A view of the binder chosen in the collection panel, not one of the page's
  * filters: the toolbar's Filters count and Clear all leave it be. On a phone it is chosen in the
- * Binder sheet with the filters (#969): the binder row's Filters counts it in its badge, Owned or
- * Missing as one (#1000), and the sheet's Clear all puts back All.
+ * Binder sheet with the filters: the binder row's Filters counts it in its badge, Owned or
+ * Missing as one, and the sheet's Clear all puts back All.
  */
 export type BinderShow = 'all' | 'owned' | 'missing';
 

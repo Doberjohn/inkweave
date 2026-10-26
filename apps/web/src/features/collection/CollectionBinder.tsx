@@ -65,7 +65,7 @@ interface CollectionBinderProps {
    */
   single?: boolean;
   /**
-   * How a phone's lone page fits the section (#1000): its rows, 3 or 4, change the paging step
+   * How a phone's lone page fits the section: its rows, 3 or 4, change the paging step
    * as `single` does, so this component pages by them and hands them to `BinderSpread`.
    */
   loneFit?: LoneFit;

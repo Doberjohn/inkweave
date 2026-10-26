@@ -21,7 +21,7 @@ function roomOf(section: HTMLElement): LoneRoom {
 const sameFit = (a: LoneFit, b: LoneFit) => a.rows === b.rows && a.maxWidth === b.maxWidth;
 
 /**
- * How a phone's lone page fits the binder's section (`loneFitFor`, #1000): measured in a layout
+ * How a phone's lone page fits the binder's section (`loneFitFor`): measured in a layout
  * effect, so the first paint already has the page's rows, and again whenever the section resizes
  * (a rotation, the browser's bars). The loaded binder and its loading frame both read it, so the
  * one takes over the other's rows. `on`: only a phone's section is measured.

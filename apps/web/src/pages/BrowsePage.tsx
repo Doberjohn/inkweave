@@ -323,8 +323,8 @@ function collectionToolbar(docked: boolean, collection: BrowseCollectionSlots | 
 }
 
 /**
- * A phone's binder row (owner, 2026-10-25, #969), in collection mode only. Its Filters' badge
- * counts the filters on, and one more while the binder shows only Owned or Missing (#1000).
+ * A phone's binder row (owner, 2026-10-25), in collection mode only. Its Filters' badge
+ * counts the filters on, and one more while the binder shows only Owned or Missing.
  */
 function phoneRow(
   collection: BrowseCollectionSlots | null,
@@ -340,7 +340,7 @@ type FilterSheetProps = Omit<React.ComponentProps<typeof CardFilterDialog>, 'var
 
 /**
  * What Filters opens: on a phone in collection mode, from the binder's row, the Binder sheet
- * (#969), whose Apply writes Show and the sort with the filters in one write; elsewhere the
+ *, whose Apply writes Show and the sort with the filters in one write; elsewhere the
  * filter dialog, a sheet from the bottom on a phone.
  */
 function filterSheet(

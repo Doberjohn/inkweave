@@ -109,7 +109,7 @@ type PanelControls = SetSwitching & BinderView & AxisChoice;
 /**
  * The set panel around the binder, where the page does not dock it: a rail beside the
  * binder on a tablet. A phone's binder sits in the section alone, the page's row above it
- * holding its set picker (#969), and the section is what its page's rows fit (`section`, #1000).
+ * holding its set picker, and the section is what its page's rows fit (`section`).
  */
 function PanelLayout({panel, section, children}: {
   panel: CollectionSetPanelProps;
@@ -239,7 +239,7 @@ function SectionContent({
   // Docked, the spread's arrows sit on its edges; the skeleton's too, so it has the binder's geometry.
   const docked = useSidePanelDocked();
   const windowOpen = useCardWindowOpen();
-  // A phone's page has the rows its section fits (#1000), the loading binder's as the loaded one's.
+  // A phone's page has the rows its section fits, the loading binder's as the loaded one's.
   const section = useRef<HTMLDivElement>(null);
   const loneFit = useLoneFit(section, isMobile);
   const {setCode} = controls;

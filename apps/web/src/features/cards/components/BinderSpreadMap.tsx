@@ -71,8 +71,8 @@ import {
  *
  * UNDER A PHONE'S LONE PAGE IT DRAWS PAGES (owner, 2026-10-25, #969), where the page's arrows
  * were: one mini per page, its 3 by 3 or 3 by 4 cells always at full size, the window holding as
- * many as fit and moving as the spreads' does. Since #1000 nothing follows them: the row is all
- * minis (owner, 2026-10-26). Pages have no covers.
+ * many as fit and moving as the spreads' does, and nothing after them: the row is all minis
+ * (owner, 2026-10-26). Pages have no covers.
  */
 
 /** A pocket in the map: whether you hold its card, and the card's ink, or two for a dual-ink card. */
@@ -120,9 +120,9 @@ interface BinderSpreadMapProps {
   onGo: (spread: number) => void;
   /** Where each set starts, in pocket order, when the binder goes set by set; its spreads then name them. */
   sets?: readonly MapSet[];
-  /** A phone's lone pages (#969): a mini per page, in place of the spreads. */
+  /** A phone's lone pages: a mini per page, in place of the spreads. */
   single?: boolean;
-  /** A lone page's rows, 3 or 4 (#1000), which its mini draws. */
+  /** A lone page's rows, 3 or 4, which its mini draws. */
   rows?: LoneRows;
 }
 
@@ -335,7 +335,7 @@ function miniStyle({on, hovered}: Look): CSSProperties {
   };
 }
 
-/** A page of nine or twelve in miniature (#969, #1000): the page itself is the button, never squeezed. */
+/** A page of nine or twelve in miniature: the page itself is the button, never squeezed. */
 function lonePageStyle(look: Look): CSSProperties {
   const style = miniStyle(look);
   return {...style, width: 'auto', flexShrink: 0, background: look.on || look.hovered ? style.background : PAGE_TINT};
@@ -543,8 +543,8 @@ function SpreadMap({pockets, current, onGo, sets = []}: MapProps) {
 }
 
 /**
- * A phone's map (#969): a mini per page, 4px under the page, as many as fit the row, and
- * nothing after them (#1000): the open mini's name and `aria-current` say where the page is,
+ * A phone's map: a mini per page, 4px under the page, as many as fit the row, and
+ * nothing after them: the open mini's name and `aria-current` say where the page is,
  * and "5 / 27" took the room of two minis. Each mini draws its page's rows, 3 or 4.
  */
 function PageMap({pockets, current, onGo, sets = [], rows}: MapProps & {rows: LoneRows}) {

@@ -20,11 +20,11 @@ export const PER_SPREAD = PER_PAGE * 2;
 
 /**
  * How many rows a phone's lone page has: 3, or 4 where the screen is tall enough that they keep
- * their cards near the 3-row page's size (`loneRowsFor`, owner 2026-10-26, #1000).
+ * their cards near the 3-row page's size (`loneFitFor`, owner 2026-10-26).
  */
 export type LoneRows = 3 | 4;
 
-/** A phone's lone page, 3 across (owner, 2026-10-25, #969): its pockets about 38% wider than 4 across. */
+/** A phone's lone page, 3 across (owner, 2026-10-25): its pockets about 38% wider than 4 across. */
 const LONE_PAGES: Record<LoneRows, PageGrid> = {3: {columns: 3, rows: 3}, 4: {columns: 3, rows: 4}};
 export const lonePage = (rows: LoneRows): PageGrid => LONE_PAGES[rows];
 export const perLonePage = (rows: LoneRows) => LONE_PAGES[rows].columns * rows;
@@ -44,7 +44,7 @@ export interface BinderPaging {
  */
 export const SPREAD_PAGING: BinderPaging = {perView: PER_SPREAD, lead: PER_PAGE};
 /**
- * A phone pages a lone page at a time, nine or twelve, with no covers (#969). One object per row
+ * A phone pages a lone page at a time, nine or twelve, with no covers. One object per row
  * count, so a caller that keeps it in a dependency list sees a change only when the rows change.
  */
 const LONE_PAGINGS: Record<LoneRows, BinderPaging> = {3: {perView: perLonePage(3), lead: 0}, 4: {perView: perLonePage(4), lead: 0}};
@@ -78,14 +78,14 @@ export const SPINE_WIDTH = SPACING.xxl;
 export const LONE_INSET = SPACING.sm;
 
 /**
- * How far it sits below the binder's top over its page map: half its room over arrows (#969), and
- * half that again since the phone's page gained a fourth row, which short phones paid for (#1000).
+ * How far it sits below the binder's top over its page map: a quarter of its room over arrows,
+ * which a short phone needs for a fourth row.
  */
 export const LONE_TOP_OVER_MAP = SPACING.xxs;
 
 /**
  * The lone board's box: `top` above it, `LONE_INSET` either side, and where the page's height caps
- * it (`LoneFit.maxWidth`, #1000) no wider than that, centred. The binder (`SingleView`) and its
+ * it (`LoneFit.maxWidth`) no wider than that, centred. The binder (`SingleView`) and its
  * loading frame (`BinderChunkFallback`) both draw it, so the one takes over the other's place.
  */
 export function loneBoxStyle(top: number, maxWidth: number | undefined): CSSProperties {
@@ -100,7 +100,7 @@ const LONE_ACROSS = 2 * BOARD + SPINE_WIDTH + 2 * PAGE_PADDING + (LONE_PAGES[3].
 const loneDown = (rows: LoneRows) => 2 * BOARD + 2 * PAGE_PADDING + (rows - 1) * POCKET_GAP;
 
 /**
- * How tall a phone's lone board draws in `width`, a CSS length, as CSS (#969): `rows` of cards as
+ * How tall a phone's lone board draws in `width`, a CSS length, as CSS: `rows` of cards as
  * wide as the page's three columns leave, with the page's padding and gaps and the board round
  * them. The page is width-driven, so this is all its height; the binder's loading frame sizes its
  * page by it, in container units.
@@ -123,7 +123,7 @@ export const MINI_BORDER = 1;
 const miniSide = (cells: number, cell: number) =>
   cells * cell + (cells - 1) * MAP_CELL_GAP + 2 * (MINI_PADDING + MINI_BORDER);
 
-/** A phone's mini page, at full size as it always is (#969): 35 wide, 41 tall at 3 rows and 52 at 4. */
+/** A phone's mini page, at full size as it always is: 35 wide, 41 tall at 3 rows and 52 at 4. */
 export const LONE_MINI_WIDTH = miniSide(LONE_PAGES[3].columns, MAP_CELL.width);
 const loneMiniHeight = (rows: LoneRows) => miniSide(rows, MAP_CELL.height);
 
@@ -156,11 +156,11 @@ function loneCardWidth({width, height}: LoneRoom, rows: LoneRows): number {
   return Math.min(byWidth, byHeight);
 }
 
-/** How much of the 3-row page's card width a 4-row page must keep to be drawn (owner, 2026-10-26, #1000). */
+/** How much of the 3-row page's card width a 4-row page must keep to be drawn (owner, 2026-10-26). */
 const FOUR_ROWS_SHARE = 0.9;
 
 /**
- * ROWS THAT FIT (owner, 2026-10-26, #1000): a phone's page has 4 rows where, narrowed to fit the
+ * ROWS THAT FIT (owner, 2026-10-26): a phone's page has 4 rows where, narrowed to fit the
  * height with its map, their cards keep 90% or more of the 3-row page's width, so a tall phone's
  * page fills its screen; else 3, width-driven as before, which a short phone scrolls to its map.
  * At 4 rows the board's box is capped to the width whose height fits (`maxWidth`), and centred.

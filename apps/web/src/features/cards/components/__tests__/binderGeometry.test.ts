@@ -2,7 +2,7 @@ import {describe, it, expect} from 'vitest';
 import {loneFitFor, mapBandHeight, pagingOf, perLonePage} from '../binderGeometry';
 
 /**
- * Rows that fit (#1000). A room 378 wide gives the 3-row page cards 90px wide: 378, less 16 for
+ * Rows that fit. A room 378 wide gives the 3-row page cards 90px wide: 378, less 16 for
  * the board's inset and 92 for the board, spine, padding and gaps across, over three. Down, a
  * 4-row page takes 134 besides its cards (2 over the map, the map's band of 56, and 76 of board,
  * padding and gaps), so its cards are (height - 134) x 0.72 / 4 wide, and keep 90% of 90 from a

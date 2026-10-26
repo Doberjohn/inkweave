@@ -436,8 +436,8 @@ const HELD: Entries = Object.fromEntries(
 );
 
 /**
- * A phone's binder is one page over its map (#969), of three rows, or four where the screen is
- * tall enough (#1000): an iPhone 15's 393x659 with the browser's bars showing, and a Pixel 7's
+ * A phone's binder is one page over its map, of three rows, or four where the screen is
+ * tall enough: an iPhone 15's 393x659 with the browser's bars showing, and a Pixel 7's
  * 412x839. While the binder's code downloads, its section holds the board, sized from the
  * section's width and height, and the band the map takes; while its cards load, the binder draws
  * its board with empty pockets over an empty map. The binder then draws its page and map in both

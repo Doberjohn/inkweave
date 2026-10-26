@@ -10,7 +10,7 @@ import {SPACING} from '../../shared/constants';
  * A phone's single page is WIDTH-driven at 3 rows, so its height is not bounded by
  * the space left under the row above it, and Browse's `<main>` clips overflow. Where
  * the section is tall enough it draws 4 rows instead, fitted to its height
- * (`loneFitFor`, #1000), which the section is measured for (`useLoneFit`): so it
+ * (`loneFitFor`), which the section is measured for (`useLoneFit`): so it
  * has no padding above, the row's own 8px under its controls being the gap, and 4px
  * below. A short phone's 3-row page and map can still run past the section's foot,
  * so scrolling the section keeps the map reachable at any height. A desktop spread
@@ -33,7 +33,7 @@ export function sectionStyle(isMobile: boolean, docked = false): CSSProperties {
 /**
  * How tall a phone binder row's set button is (`ROW_TRIGGER` in SetPicker.tsx), and its
  * placeholder while the binder's chunk downloads (`BinderChunkFallback`): 34px, as Filters and
- * Collection either side of it are, the row grid mode has (owner, 2026-10-26, #1000).
+ * Collection either side of it are, the row grid mode has (owner, 2026-10-26).
  */
 export const ROW_CONTROL_HEIGHT = 34;
 
