@@ -6,7 +6,13 @@ import react, {reactCompilerPreset} from '@vitejs/plugin-react';
 import babel from '@rolldown/plugin-babel';
 import {VitePWA} from 'vite-plugin-pwa';
 import {visualizer} from 'rollup-plugin-visualizer';
-import {isSharedModule, isVendorModule, startupGroupsGuard, uiCompilerGuard} from './build-guards.ts';
+import {
+  cssUrlGuard,
+  isSharedModule,
+  isVendorModule,
+  startupGroupsGuard,
+  uiCompilerGuard,
+} from './build-guards.ts';
 import {resolveVitestWorkers} from './vitest-workers.ts';
 import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
@@ -148,20 +154,31 @@ function missingStylesheets(bundle: OutputBundle): string[] {
  * once when the preload failed. E2E on a production build caught it (#874). dropInlinedCss takes
  * an inlined file off those lists, and the build fails if a chunk still names a stylesheet the
  * bundle doesn't have.
+ *
+ * A build with a relative base (Storybook's `./`) keeps its stylesheets as files. Vite writes their
+ * urls relative to the stylesheet, so in a page one folder up they would name nothing (#979). An
+ * absolute base, a path or an origin, gives every url its whole path, so those builds inline.
  */
 function inlineCssPlugin(): Plugin {
+  let relativeBase = false;
   return {
     name: 'inline-css',
     enforce: 'post',
     apply: 'build',
+    configResolved({base}) {
+      relativeBase = base === '' || base.startsWith('.');
+    },
     transformIndexHtml: {
       order: 'post',
       handler(html, ctx) {
-        if (!ctx.bundle) return html;
+        if (!ctx.bundle || relativeBase) return html;
 
         for (const [fileName, chunk] of Object.entries(ctx.bundle)) {
           if (chunk.type === 'asset' && fileName.endsWith('.css')) {
-            const cssContent = typeof chunk.source === 'string' ? chunk.source : '';
+            const cssContent =
+              typeof chunk.source === 'string'
+                ? chunk.source
+                : new TextDecoder().decode(chunk.source);
             const before = html;
             // Replace the entry <link> tag with an inline <style> tag
             html = html.replace(
@@ -523,6 +540,7 @@ export default defineConfig({
       },
     }),
     inlineCssPlugin(),
+    cssUrlGuard(),
     unloadableChunksPlugin(),
     startupGroupsGuard({vendor: STARTUP_VENDOR, shared: STARTUP_SHARED}),
     uiCompilerGuard(),

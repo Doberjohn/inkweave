@@ -16,7 +16,7 @@ import {
   InkIcon,
   PrintingCarousel,
 } from '../../../shared/components';
-import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
+import {InkCardPlaceholder} from 'inkweave-ui/lorcana/InkCardPlaceholder';
 import {usePrintingSelection} from '../../../shared/hooks';
 
 /** The card at the size the card modal shows it on mobile (CardOverviewModal). */

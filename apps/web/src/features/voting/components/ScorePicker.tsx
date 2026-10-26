@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {EASING, FONTS} from '../../../shared/constants';
 import type {Score} from '../../../shared/lib/supabase';
-import {getStrengthTier} from '../../synergies/utils/scoreUtils';
+import {getStrengthTier} from 'inkweave-ui/lib/scoreUtils';
 
 interface ScorePickerProps {
   value: Score | null;

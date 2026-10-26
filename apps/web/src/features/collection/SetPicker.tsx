@@ -13,7 +13,7 @@ import Skeleton from 'react-loading-skeleton';
 import {CtaButton} from '../../shared/components';
 import {useHover} from 'inkweave-ui/hooks/useHover';
 import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
-import {RaritySymbol} from '../reveals/RaritySymbol';
+import {RaritySymbol} from 'inkweave-ui/lorcana/RaritySymbol';
 import loreSymbol from '../../assets/lore.webp?no-inline';
 import {isFinished, percentOf} from './collectionStats';
 import {

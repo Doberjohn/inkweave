@@ -5,6 +5,7 @@ import 'react-loading-skeleton/dist/skeleton.css';
 // unowned grey, the foil shimmer and every keyframe, so stories quietly differed
 // from the app.
 import 'inkweave-ui/styles/primitives.css';
+import 'inkweave-ui/styles/lorcana.css';
 import '../src/index.css';
 import type {Preview} from '@storybook/react-vite';
 import {SkeletonTheme} from 'react-loading-skeleton';

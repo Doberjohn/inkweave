@@ -3,14 +3,14 @@ import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, ICON_SIZE, LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
 import {IconButton} from 'inkweave-ui/components/IconButton';
-import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
+import {InkCardPlaceholder} from 'inkweave-ui/lorcana/InkCardPlaceholder';
 import {
   hasForeignScan,
   printingsOf,
   useScrollLock,
   useTransitionPresence,
 } from '../../../shared/hooks';
-import {CardTranslationToggle} from '../../../shared/components/CardTranslationToggle';
+import {CardTranslationToggle} from 'inkweave-ui/lorcana/CardTranslationToggle';
 import {LOGO_HEIGHT, ModalCardTitle} from './ModalCardTitle';
 import {
   CARD_WITH_COPIES_STYLE,

@@ -562,7 +562,7 @@ The service worker's precache (#928) and the small symbols it keeps on screen of
 |---|---|
 | lists every script the pages load | `/`, `/browse`, `/card/1939`, `/playstyles`, `/playstyles/discard`, `/vote`, `/inks`, `/ink/amber`, `/about`, `/release-notes`, `/account` and a missing page, each loaded to network idle: every `/assets/*.js` file they request is in `sw.js`'s manifest |
 | lists exactly the ten small symbols | `sw.js` lists the six ink symbols, inkable, uninkable, common and uncommon as `.svg` files, and no other SVG |
-| are files, each ink the one its card placeholders draw | On `/browse`, in the docked panel (desktop) or the Filters drawer (phones): no ink, inkwell or rarity symbol is a `data:` URI, and each ink's icon has the address its `.ink-card-placeholder` draws (`index.css`), so a page showing both downloads it once. A production build inlines an imported file under 4 kB unless it is imported `?no-inline`; the dev server serves every asset as a file, so there only the ink check can fail |
+| are files, each ink the one its card placeholders draw | On `/browse`, in the docked panel (desktop) or the Filters drawer (phones): no ink, inkwell or rarity symbol is a `data:` URI, and each ink's icon has the address its `.ink-card-placeholder` draws (inkweave-ui's `styles/lorcana.css`), so a page showing both downloads it once. A production build inlines an imported file under 4 kB unless it is imported `?no-inline`; the dev server serves every asset as a file, so there only the ink check can fail |
 
 ## Patterns
 

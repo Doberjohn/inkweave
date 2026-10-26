@@ -39,11 +39,11 @@ export const COLOR_EXEMPT = {
     'apps/web/src/shared/constants/playstyleUi.ts',
     'apps/web/src/features/cards/components/binderLook.ts',
     'packages/ui/src/docs/',
-    'apps/web/src/shared/components/CostIcon.tsx',
     'packages/ui/src/components/FilterIcon.tsx',
     'packages/ui/src/components/SearchIcon.tsx',
-    'apps/web/src/shared/components/InkIcon.tsx',
-    'apps/web/src/shared/components/InkwellIcon.tsx',
+    'packages/ui/src/lorcana/CostIcon.tsx',
+    'packages/ui/src/lorcana/InkIcon.tsx',
+    'packages/ui/src/lorcana/InkwellIcon.tsx',
   ],
   patterns: [TEST_FILE],
 };
@@ -65,8 +65,8 @@ export const SPACING_EXEMPT = {paths: ['packages/ui/src/docs/'], patterns: [TEST
 export const ADHOC_BUTTON_EXEMPT = {
   paths: [
     'packages/ui/src/components/', // the kit itself, QuantityStepper's domain stepper family too
+    'packages/ui/src/lorcana/CardImageButton.tsx', // a card's enlargeable art
     'apps/web/src/shared/components/BackLink.tsx', // back-navigation link
-    'apps/web/src/shared/components/CardImageButton.tsx', // a card's enlargeable art
     'apps/web/src/shared/components/ConnectionGroup.tsx', // a synergy group's expand toggle
     'apps/web/src/shared/components/CopiesStripe.tsx', // the collection's copies stepper family
     'apps/web/src/shared/components/ErrorBoundary.tsx', // the error screen's action

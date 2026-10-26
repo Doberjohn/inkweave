@@ -1,0 +1,56 @@
+import type {VariantRarity} from 'inkweave-synergy-engine';
+
+export interface RarityConfig {
+  /** Lowercased match key against `card.rarity` (e.g. "super rare"). */
+  key: string;
+  name: string;
+}
+
+/**
+ * The five main-set rarities, in display order. `key` is compared case-insensitively
+ * against `card.rarity`; the glyph is rendered by RaritySymbol from the vendored SVGs.
+ * The board's breakdown shows actual revealed counts per rarity (the set's real
+ * composition differs from the old 12/9/8/3/2 assumption), so no per-rarity total is
+ * stored here. Epic, Enchanted and Iconic are printings of these cards rather than
+ * cards of their own: see SPECIAL_RARITIES.
+ */
+export const RARITIES: readonly RarityConfig[] = [
+  {key: 'common', name: 'Common'},
+  {key: 'uncommon', name: 'Uncommon'},
+  {key: 'rare', name: 'Rare'},
+  {key: 'super rare', name: 'Super rare'},
+  {key: 'legendary', name: 'Legendary'},
+];
+
+/**
+ * The special printings (#625), shown in their own row under the board's diamond. Keyed by
+ * the printing's rarity; `key` is that rarity lowercased, in the same key space as RARITIES,
+ * so one highlight state covers both.
+ */
+export const SPECIAL_RARITIES: Readonly<Record<VariantRarity, RarityConfig>> = {
+  Epic: {key: 'epic', name: 'Epic'},
+  Enchanted: {key: 'enchanted', name: 'Enchanted'},
+  Iconic: {key: 'iconic', name: 'Iconic'},
+};
+
+/** Look up a rarity config from a raw `card.rarity` string (case-insensitive). */
+export function rarityConfigOf(rarity: string | undefined): RarityConfig | undefined {
+  if (!rarity) return undefined;
+  const key = rarity.trim().toLowerCase();
+  return RARITIES.find((r) => r.key === key);
+}
+
+/**
+ * The keys RaritySymbol draws: the five main-set rarities, the special printings, and
+ * "special", the rarity LorcanaJSON gives every promo printing (#805).
+ */
+const SYMBOL_KEYS = new Set([
+  ...RARITIES.map((r) => r.key),
+  ...Object.values(SPECIAL_RARITIES).map((r) => r.key),
+  'special',
+]);
+
+/** Whether a raw `card.rarity` has a symbol (case-insensitive). */
+export function hasRaritySymbol(rarity: string): boolean {
+  return SYMBOL_KEYS.has(rarity.trim().toLowerCase());
+}

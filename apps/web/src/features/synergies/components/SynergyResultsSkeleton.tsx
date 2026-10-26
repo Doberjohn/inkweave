@@ -1,7 +1,7 @@
 import type {CSSProperties} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import {LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
-import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
+import {InkCardPlaceholder} from 'inkweave-ui/lorcana/InkCardPlaceholder';
 
 interface SynergyResultsSkeletonProps {
   isMobile: boolean;

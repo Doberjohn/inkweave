@@ -15,10 +15,10 @@ declare module 'vitest' {
   }
 }
 import {Chip} from 'inkweave-ui/components/Chip';
-import {StrengthBadge} from '../StrengthBadge';
-import {TierCircle} from '../TierCircle';
-import {AbilityCallout} from '../AbilityCallout';
-import {AbilityTag} from '../AbilityTag';
+import {StrengthBadge} from 'inkweave-ui/lorcana/StrengthBadge';
+import {TierCircle} from 'inkweave-ui/lorcana/TierCircle';
+import {AbilityCallout} from 'inkweave-ui/lorcana/AbilityCallout';
+import {AbilityTag} from 'inkweave-ui/lorcana/AbilityTag';
 import {BackLink} from '../BackLink';
 import {EmptyState} from 'inkweave-ui/components/EmptyState';
 import {CtaButton} from 'inkweave-ui/components/CtaButton';

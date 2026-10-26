@@ -2,7 +2,7 @@ import type {CSSProperties, MouseEvent} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {cardPath} from 'inkweave-synergy-engine/card';
 import {isModifiedClick} from 'inkweave-ui/utils/touchGuard';
-import {InkIcon} from '../../shared/components/InkIcon';
+import {InkIcon} from 'inkweave-ui/lorcana/InkIcon';
 import {
   CAP_LABEL,
   COLORS,
