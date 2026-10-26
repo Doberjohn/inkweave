@@ -11,9 +11,9 @@ import {
   TABULAR,
   hexRgba,
 } from '../constants';
-import {useContainerWidth} from '../hooks/useContainerWidth';
-import {useHover} from '../hooks/useHover';
-import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
+import {useContainerWidth} from 'inkweave-ui/hooks/useContainerWidth';
+import {useHover} from 'inkweave-ui/hooks/useHover';
+import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
 
 /** One finish's part of the stripe: its count, and how the − and + change it. */
 export interface StripePart {

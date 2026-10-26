@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SPACING, TIER_COLORS, Z_INDEX, hexRgba} from '../../../shared/constants';
-import {Sparkles} from '../../../shared/components/Sparkles';
+import {Sparkles} from 'inkweave-ui/components/Sparkles';
 import {useScrollLock} from '../../../shared/hooks';
 import type {Score} from '../../../shared/lib/supabase';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';

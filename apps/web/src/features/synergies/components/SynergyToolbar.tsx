@@ -8,11 +8,11 @@ import type {SynergyFilterState, StrengthTierFilter} from '../utils/filterSynerg
 import {EMPTY_SYNERGY_FILTERS, withoutStaleDualOnly} from '../utils/filterSynergyCards';
 import {SYNERGY_SORT_OPTIONS, SPACING} from '../../../shared/constants';
 import {FilterDialog} from '../../../shared/components/FilterDialog';
-import {LinkButton} from '../../../shared/components/LinkButton';
-import {Chip} from '../../../shared/components/Chip';
-import {FiltersButton} from '../../../shared/components/FiltersButton';
+import {LinkButton} from 'inkweave-ui/components/LinkButton';
+import {Chip} from 'inkweave-ui/components/Chip';
+import {FiltersButton} from 'inkweave-ui/components/FiltersButton';
 import {InkFilterGroup} from '../../../shared/components/InkFilterGroup';
-import {SortSelect} from '../../../shared/components/SortSelect';
+import {SortSelect} from 'inkweave-ui/components/SortSelect';
 import type {ChipData} from '../../../shared/types';
 
 interface SynergyToolbarProps {

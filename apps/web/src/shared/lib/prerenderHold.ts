@@ -1,4 +1,4 @@
-import {isModifiedClick} from '../utils/touchGuard';
+import {isModifiedClick} from 'inkweave-ui/utils/touchGuard';
 
 /** The longest a prerendered page is held for the app, from navigation start (#915). */
 export const HOLD_CAP_MS = 8000;

@@ -2,7 +2,7 @@ import type {CSSProperties} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
 import {LONE_INSET, LONE_TOP_OVER_MAP, MAP_BAND_HEIGHT, loneBoardHeight} from '../cards/components/binderGeometry';
-import {useResponsive} from '../../shared/hooks/useResponsive';
+import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 import {FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
 import {BAR, NUMBERS_STYLE, ROW_CONTROL_HEIGHT, SHEET_NUMBERS_STYLE, sectionStyle} from './binderLayout';
 

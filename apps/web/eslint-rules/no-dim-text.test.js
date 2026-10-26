@@ -25,7 +25,7 @@ ruleTester.run('no-dim-text', inkweave.rules['no-dim-text'], {
     ok('const e = <span aria-hidden="true" style={{color: COLORS.textDim}}>/</span>;'),
     ok('const e = <span aria-hidden style={{color: COLORS.textDim}}>·</span>;'),
     ok('const s = {color: COLORS.textMuted};'),
-    ok('const s = {color: COLORS.textDim};', '/repo/apps/web/src/shared/constants/theme.ts'),
+    ok('const s = {color: COLORS.textDim};', '/repo/packages/ui/src/tokens/theme.ts'),
   ],
   invalid: [
     dim('const e = <span style={{color: COLORS.textDim}}>12</span>;'),

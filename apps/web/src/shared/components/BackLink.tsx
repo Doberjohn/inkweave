@@ -1,5 +1,5 @@
 import {COLORS, EASING, FONTS, FONT_SIZES} from '../constants';
-import {useHover} from '../hooks/useHover';
+import {useHover} from 'inkweave-ui/hooks/useHover';
 
 interface BackLinkProps {
   onClick: () => void;

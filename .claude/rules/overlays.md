@@ -14,7 +14,7 @@ mechanically: `aria-modal` in a file that imports neither `DialogShell` /
 
 ## How to build an overlay
 
-- **Centered dialog** → `<DialogShell>` (`shared/components/DialogShell.tsx`):
+- **Centered dialog** → `<DialogShell>` (`inkweave-ui/components/DialogShell`):
   portal, scrim (`COLORS.scrim`, `scrim="heavy"` for lightboxes), size presets
   sm/md/lg, `layer` tiers (`modal` / `underModal` / `lightbox`), hook trio
   wired, reduced-motion-safe unmount. `panelStyle` overrides the panel;
@@ -26,7 +26,7 @@ mechanically: `aria-modal` in a file that imports neither `DialogShell` /
   (or `swUpdate`); never `aria-modal`, never a trap.
 - **Tooltip / popover** → `role="tooltip"`, `pointerEvents: none`,
   `Z_INDEX.popover`. Exception (owner ruling 2026-10-20, WCAG 1.4.13): the
-  score help tooltip (`shared/components/Tooltip.tsx`) and the mechanic tile
+  score help tooltip (`inkweave-ui/components/Tooltip`) and the mechanic tile
   tooltip (`RoleTileRow.tsx`) take the pointer, close 150 ms after it leaves,
   and hide on Escape without closing a dialog, all through `useTooltip`. Both
   render only while shown (a hidden portal would ship in prerendered pages).

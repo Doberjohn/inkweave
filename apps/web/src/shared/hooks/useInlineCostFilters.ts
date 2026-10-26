@@ -1,5 +1,5 @@
 import {INLINE_COST_FILTER_MIN_WIDTH} from '../constants';
-import {useResponsive} from './useResponsive';
+import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 
 /**
  * Whether the cost-filter group is shown inline in the toolbar (wide desktop) vs.

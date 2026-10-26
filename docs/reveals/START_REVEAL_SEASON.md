@@ -37,7 +37,7 @@ node -e "require('sharp')('apps/web/public/art/sets/<slug>.webp').resize({width:
 
 `REVEAL_SET_NUMBER`, `REVEAL_ID_BASE`, `SET_TOTAL`, `INK_BASE` and `inkBlock()` are all derived. Do not hand-type them.
 
-`REVEAL_SET_CODE` is declared `satisfies SetCode`, so it will not compile until `theme.ts` knows the set. Add the new code to the `SetCode` union, `SET_ABBREVIATIONS` and `SET_NAMES` in `apps/web/src/shared/constants/theme.ts`. All page copy ("Set 15 reveals", the hero alt text, the returning-franchises label) reads from these, so there are no copy strings to hunt down.
+`REVEAL_SET_CODE` is declared `satisfies SetCode`, so it will not compile until `appConstants.ts` knows the set. Add the new code to the `SetCode` union, `SET_ABBREVIATIONS` and `SET_NAMES` in `apps/web/src/shared/constants/appConstants.ts`. All page copy ("Set 15 reveals", the hero alt text, the returning-franchises label) reads from these, so there are no copy strings to hunt down.
 
 ### 2. The data block
 
@@ -185,7 +185,7 @@ When a later `pnpm sync-variants` prints `! 14221 now has official art, but card
 ## Checklist
 
 - [ ] `revealSet.ts`: `REVEAL_SET_CODE`, `REVEAL_SET_LOGO`, `REVEAL_SET_LOGO_SM` (with the `-sm` file generated), `PER_INK`, `SPECIAL_BLOCKS`, `ICONIC_INKS`
-- [ ] `theme.ts`: `SetCode`, `SET_ABBREVIATIONS`, `SET_NAMES`
+- [ ] `appConstants.ts`: `SetCode`, `SET_ABBREVIATIONS`, `SET_NAMES`
 - [ ] `previewCards.json`: new `sets[code]` with future dates, old entry dropped
 - [ ] `franchise.ts`, plus admin's `FEATURED_FRANCHISE_HINT`
 - [ ] `CardMosaic.tsx` rows sum to `PER_INK`

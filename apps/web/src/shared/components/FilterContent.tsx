@@ -11,11 +11,11 @@ import {
 import type {CardTypeFilter} from '../constants';
 import type {InkwellValue} from './InkwellIcon';
 import {CARD_TYPE_FILTERS, COST_BUTTONS, COLORS, FONT_SIZES, SET_LOGOS, SPACING} from '../constants';
-import {Chip} from './Chip';
+import {Chip} from 'inkweave-ui/components/Chip';
 import {offersDualOnly} from '../../features/cards/loader';
 import {CostIcon} from './CostIcon';
-import {FilterButton} from './FilterButton';
-import {FilterSection} from './FilterSection';
+import {FilterButton} from 'inkweave-ui/components/FilterButton';
+import {FilterSection} from 'inkweave-ui/components/FilterSection';
 import {InkFilterGroup} from './InkFilterGroup';
 import {InkwellIcon} from './InkwellIcon';
 import {RaritySymbol} from '../../features/reveals/RaritySymbol';

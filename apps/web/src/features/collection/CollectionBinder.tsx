@@ -11,7 +11,7 @@ import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/Bin
 import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
 import {settleOf} from './binderPockets';
 import {FINISH_WORD, printingName, promoCode} from '../../shared/hooks/usePrintingSelection';
-import {usePrefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
+import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
 import {CardImageButton, CardLightbox} from '../../shared/components';
 import {COLORS, FONT_SIZES, SPACING} from '../../shared/constants';
 

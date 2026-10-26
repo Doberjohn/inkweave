@@ -14,7 +14,7 @@ import {
 import {useArtLoad} from '../../../shared/hooks/useArtLoad';
 import {printingAlt} from '../../../shared/hooks/usePrintingSelection';
 import {PROMO_RARITY, isChaseRarity, smallImageUrl} from '../loader';
-import {isModifiedClick} from '../../../shared/utils/touchGuard';
+import {isModifiedClick} from 'inkweave-ui/utils/touchGuard';
 import {preloadCardOverviewModal} from '../../../shared/contexts/cardOverviewModalLoader';
 
 type InkColors = (typeof INK_COLORS)[keyof typeof INK_COLORS];

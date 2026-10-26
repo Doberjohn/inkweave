@@ -20,11 +20,11 @@ Two mechanisms enforce the token system; both run automatically:
 
 ## The grandfather ledger
 
-`apps/web/eslint-rules/known-offenders.js` lists pre-enforcement files per rule, each by its repo path (`apps/web/src/...`), which matches that one file only; the rules' exemptions (`eslint-rules/exemptions.js`) name paths the same way. It ONLY SHRINKS: when you touch a listed file, converge its violations to tokens and remove its entry. Never add entries. The value gate's baseline (`scripts/known-design-values.json`) works the same way — counts may only decrease (`--update-baseline` after shrinking).
+`apps/web/eslint-rules/known-offenders.js` lists pre-enforcement files per rule, each by its repo path (`apps/web/src/...` or `packages/ui/src/...`), which matches that one file only; the rules' exemptions (`eslint-rules/exemptions.js`) name paths the same way. It ONLY SHRINKS: when you touch a listed file, converge its violations to tokens and remove its entry. Never add entries. The value gate's baseline (`scripts/known-design-values.json`) works the same way — counts may only decrease (`--update-baseline` after shrinking). `eslint-rules/ledgers.test.js` caps both totals (and, with `exemptions.test.js`, fails on a row or key whose file no longer exists): lower a ceiling when you remove an entry, never raise one.
 
 ## The micro-pattern consts (#511)
 
-One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spread, then override:
+One source per retyped idiom, in inkweave-ui's `tokens/theme.ts` (Storybook: Docs/MicroPatterns). Spread, then override:
 `CAP_LABEL` / `CAP_LABEL_XS` (uppercase section labels; `LETTER_SPACING.cap`/`.eyebrow`), `SURFACE_CARD` (radius rule: `RADIUS.card` standalone panels, `RADIUS.lg` nested cards), `EMPTY_BOX` (centered dashed empty states — NOT prose notices), `TRUNCATE` (needs ancestor `minWidth: 0`), `TABULAR` (any numeral column that must not jitter), `VISUALLY_HIDDEN` (screen-reader-only text, such as a chip's card name or a heading the layout implies; never a local copy), `GOLD_GLOW` (the one-gold selection/hover/focus recipe — never hand-mix gold alphas), `TOUCH_TARGET`, `ICON_SIZE`, `PRESS_SCALE`, `DISABLED_STYLE`. Dynamic playstyle accents compose via `accentRgba` (playstyleUi.ts).
 
 ## Interaction conventions (#511)
@@ -32,7 +32,7 @@ One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spr
 - **Selection is border + glow (GOLD_GLOW), never `outline`**; the focus ring is never suppressed without a visible replacement (`GOLD_GLOW.focusRing`).
 - **Disabled** = `DISABLED_STYLE`, everywhere. **Press** = `scale(${PRESS_SCALE})`.
 - **EASING intent**: `snappy` hover/fast, `bounce` selection/press, `smooth` fades/progress.
-- **Reduced motion**: one source — `shared/utils/prefersReducedMotion` (fn for trigger-time, hook for render gating). No new hand-rolled `matchMedia` checks; new infinite animations MUST have a class in index.css's reduced-motion block. `useBoop` is already guarded.
+- **Reduced motion**: one source — `inkweave-ui/utils/prefersReducedMotion` (fn for trigger-time, hook for render gating). No new hand-rolled `matchMedia` checks; a new infinite animation MUST have a class in its own stylesheet's reduced-motion block (the app's `index.css`, or the package's `styles/primitives.css`). `useBoop` is already guarded.
 - **Loading states**: skeleton for layout-known surfaces (one app-level `SkeletonTheme` in AppLayout — never add local wrappers), text for unknown shapes, spinner only for the SW toast. Card art is the exception: while a card's art loads, its place holds `InkCardPlaceholder` (shared/components), never a grey `Skeleton`. Pass the card's `ink` and `ink2` once the card is known; before that (a card list still loading), pass none for the neutral tile. Its parent sets the size and corner radius. Like every placeholder it is static (#639).
 - **`surfaceHover` is overloaded** (six jobs); do not add new ones — aliases are deferred to a future ruling.
 
@@ -43,7 +43,7 @@ One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spr
   `marginBlockStart`…), negative values (`marginTop: -14`; `-SPACING.md` passes),
   and both branches of a ternary (`gap: isMobile ? 8 : 12`). Its ledger was seeded
   the day it turned on, from a measured run: 66 files, 191 values. Stories and
-  `src/docs/` are exempt, like tests (owner ruling, 2026-07-31: their padding is
+  inkweave-ui's `src/docs/` are exempt, like tests (owner ruling, 2026-07-31: their padding is
   scaffolding, not product). `theme.ts` is not, unlike for the color rules: its one
   value, `VISUALLY_HIDDEN`'s `margin: -1`, is in the ledger (owner, 2026-10-22).
 - **Spacing in a string is invisible.** `padding: '0 14px'` is text to the rule, and
@@ -59,5 +59,5 @@ One source per retyped idiom, in `theme.ts` (Storybook: Docs/MicroPatterns). Spr
   their order, a series keeps shrinking, and a skeleton moves with the layout it mirrors.
   Only a value past the top step (40, 48, 80) or a 1px hairline gets a named const, with
   a comment saying why; never arithmetic on a token (`SPACING.sm - 2`).
-- Token declaration sites (`theme.ts`, `playstyleUi.ts`, and the collection binder's `binderLook.ts`, kept beside the binder so its look loads with it, #941), `src/docs/` stories, tests, and the five SVG icon components are permanently exempt from the color rules.
-- Import tokens through the barrel (`shared/constants`), never the theme files directly (`no-restricted-imports` enforces).
+- Token declaration sites (inkweave-ui's `tokens/`, the app's `playstyleUi.ts`, and the collection binder's `binderLook.ts`, kept beside the binder so its look loads with it, #941), inkweave-ui's `src/docs/` stories, tests, and the five SVG icon components are permanently exempt from the color rules.
+- Import tokens through the barrel (`shared/constants`), never the token files directly: not `inkweave-ui/tokens/*`, `appConstants.ts` or `playstyleUi.ts` (`no-restricted-imports` enforces). Only the barrel's own folder imports them, and inkweave-ui's source imports `../tokens/theme`.

@@ -1,18 +1,18 @@
 export {useAutocomplete} from './useAutocomplete';
 export type {UseAutocompleteReturn} from './useAutocomplete';
-export {useContainerWidth} from './useContainerWidth';
-export {useDialogFocus} from './useDialogFocus';
+export {useContainerWidth} from 'inkweave-ui/hooks/useContainerWidth';
+export {useDialogFocus} from 'inkweave-ui/hooks/useDialogFocus';
 export {useDraftFilters} from './useDraftFilters';
 export {useFilterParams} from './useFilterParams';
 export {useHeroLogoSrc} from './useHeroLogoSrc';
-export {useHover} from './useHover';
+export {useHover} from 'inkweave-ui/hooks/useHover';
 export {useInlineCostFilters} from './useInlineCostFilters';
-export {useResponsive} from './useResponsive';
-export {useRovingTabIndex} from './useRovingTabIndex';
-export {useScrollLock} from './useScrollLock';
+export {useResponsive} from 'inkweave-ui/hooks/useResponsive';
+export {useRovingTabIndex} from 'inkweave-ui/hooks/useRovingTabIndex';
+export {useScrollLock} from 'inkweave-ui/hooks/useScrollLock';
 export {useScrollToTopOnRouteChange} from './useScrollToTopOnRouteChange';
-export {useScrollSnapIndex} from './useScrollSnapIndex';
-export {useTooltip} from './useTooltip';
+export {useScrollSnapIndex} from 'inkweave-ui/hooks/useScrollSnapIndex';
+export {useTooltip} from 'inkweave-ui/hooks/useTooltip';
 export {useBackOrNavigate} from './useBackOrNavigate';
 export {
   usePrintingSelection,
@@ -23,5 +23,5 @@ export {
   hasForeignScan,
 } from './usePrintingSelection';
 export type {Printing} from './usePrintingSelection';
-export {useTransitionPresence} from './useTransitionPresence';
-export {useBoop} from './useBoop';
+export {useTransitionPresence} from 'inkweave-ui/hooks/useTransitionPresence';
+export {useBoop} from 'inkweave-ui/hooks/useBoop';

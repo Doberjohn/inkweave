@@ -2,7 +2,7 @@ import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import AxeBuilder from '@axe-core/playwright';
 import {startClockInRevealSeason} from '../helpers/revealSeason';
-import {LAYOUT} from '../../src/shared/constants/theme';
+import {LAYOUT} from 'inkweave-ui/tokens/theme';
 
 test.describe('Accessibility — axe audits', () => {
   // Desktop-only — mobile viewports have different layouts tested elsewhere

@@ -1,6 +1,6 @@
 import {useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
-import {CtaButton} from '../../../shared/components/CtaButton';
+import {CtaButton} from 'inkweave-ui/components/CtaButton';
 import {
   COLORS,
   FONT_SIZES,
@@ -11,7 +11,7 @@ import {
   TABULAR,
   hexRgba,
 } from '../../../shared/constants';
-import {useHover} from '../../../shared/hooks/useHover';
+import {useHover} from 'inkweave-ui/hooks/useHover';
 import {
   LONE_MINI,
   LONE_PAGE,

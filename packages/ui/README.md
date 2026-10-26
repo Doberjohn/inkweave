@@ -2,6 +2,20 @@
 
 Inkweave's design tokens, UI primitives and Lorcana display components, for the app (`apps/web`) and admin (`Doberjohn/inkweave-admin`) to share. They move in from the app phase by phase (milestone "Shared component library").
 
+## What's here
+
+| Folder | Holds | Import |
+|---|---|---|
+| `tokens/` | `theme.ts`, the design tokens (colors, type, spacing, radii, easings, shadows and the micro-pattern styles), and `lorcana.ts`, the ink colors, ink order and cost buttons | `inkweave-ui/tokens/theme` |
+| `components/` | The primitives: buttons (`CtaButton`, `LinkButton`, `IconButton`, `NavArrowButton`), chips and tags, `DialogShell` and `BottomSheet`, `Tooltip`, `TabList`, `SortSelect`, `QuantityStepper`, the filter controls and the small icons | `inkweave-ui/components/CtaButton` |
+| `hooks/` | `useBoop`, `useContainerWidth`, `useDialogFocus`, `useFinePointer`, `useHover`, `useResponsive`, `useRovingTabIndex`, `useScrollLock`, `useScrollSnapIndex`, `useTooltip`, `useTransitionPresence` and `useWheelTurn` | `inkweave-ui/hooks/useHover` |
+| `utils/` | `focusedByKeyboard`, `prefersReducedMotion` and `touchGuard` | `inkweave-ui/utils/touchGuard` |
+| `lib/` | `ctaStyles` and `isOff`, which the buttons share | `inkweave-ui/lib/ctaStyles` |
+| `styles/` | `primitives.css`: the focus rings, overlay transitions, foil sweep, quantity pop and touch target the components draw with. A consumer imports it before its own stylesheet | `inkweave-ui/styles/primitives.css` |
+| `docs/` | The design-system docs stories (Colors, Typography, Spacing & Layout, MicroPatterns) | Storybook only |
+
+The app's barrels (`shared/constants`, `shared/components`, `shared/hooks`) forward these names, so app code keeps importing tokens through `shared/constants`; a direct `inkweave-ui/tokens/*` import there fails lint. The app's own constants (set codes and names, sort and card-type options) stay in `apps/web/src/shared/constants/appConstants.ts`.
+
 ## Rules
 
 - **Source, not a build.** The package ships `.ts` and `.tsx` files and has no build step. Each consumer compiles it with its own Vite and React Compiler. `apps/web/build-guards.ts` fails the app's build when React Compiler compiled none of its components.

@@ -14,15 +14,15 @@ declare module 'vitest' {
     toHaveNoViolations(): R;
   }
 }
-import {Chip} from '../Chip';
+import {Chip} from 'inkweave-ui/components/Chip';
 import {StrengthBadge} from '../StrengthBadge';
 import {TierCircle} from '../TierCircle';
 import {AbilityCallout} from '../AbilityCallout';
 import {AbilityTag} from '../AbilityTag';
 import {BackLink} from '../BackLink';
-import {EmptyState} from '../EmptyState';
-import {CtaButton} from '../CtaButton';
-import {DialogShell} from '../DialogShell';
+import {EmptyState} from 'inkweave-ui/components/EmptyState';
+import {CtaButton} from 'inkweave-ui/components/CtaButton';
+import {DialogShell} from 'inkweave-ui/components/DialogShell';
 
 expect.extend(matchers);
 

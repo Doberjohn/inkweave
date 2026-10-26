@@ -6,8 +6,8 @@ import {LAYOUT, SPACING} from '../../../../shared/constants';
 const {layout} = vi.hoisted(() => ({layout: {width: 0, isMobile: false}}));
 
 // jsdom lays nothing out: the grid's width and the viewport are what each case sets.
-vi.mock('../../../../shared/hooks/useContainerWidth', () => ({useContainerWidth: () => layout.width}));
-vi.mock('../../../../shared/hooks/useResponsive', () => ({
+vi.mock('inkweave-ui/hooks/useContainerWidth', () => ({useContainerWidth: () => layout.width}));
+vi.mock('inkweave-ui/hooks/useResponsive', () => ({
   useResponsive: () => ({isMobile: layout.isMobile, isTablet: false, isDesktop: !layout.isMobile, windowWidth: 0}),
 }));
 

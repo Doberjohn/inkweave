@@ -13,7 +13,7 @@ import {
   VISUALLY_HIDDEN,
   hexRgba,
 } from '../constants';
-import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
+import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
 import {PrintingName, type NamedPrinting} from './PrintingName';
 
 /** Which side of the card a printing behind it sits on. */

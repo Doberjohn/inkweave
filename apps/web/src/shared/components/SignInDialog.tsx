@@ -13,8 +13,8 @@ import {
 } from '../constants';
 import discordLogo from '../../assets/discord.svg?no-inline';
 import googleLogo from '../../assets/google.svg?no-inline';
-import {CtaButton} from './CtaButton';
-import {DialogShell} from './DialogShell';
+import {CtaButton} from 'inkweave-ui/components/CtaButton';
+import {DialogShell} from 'inkweave-ui/components/DialogShell';
 import {signInProviderButtonState} from './signInProviderState';
 
 interface SignInDialogProps {

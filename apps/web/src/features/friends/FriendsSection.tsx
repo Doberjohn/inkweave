@@ -2,7 +2,7 @@ import {useEffect, useId, useRef, useState} from 'react';
 import {flushSync} from 'react-dom';
 import Skeleton from 'react-loading-skeleton';
 import {CtaButton, IconButton} from '../../shared/components';
-import type {CtaVariant} from '../../shared/components/CtaButton';
+import type {CtaVariant} from 'inkweave-ui/components/CtaButton';
 import {
   CAP_LABEL_XS,
   COLORS,

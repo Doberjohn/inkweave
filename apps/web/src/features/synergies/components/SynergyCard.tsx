@@ -5,7 +5,7 @@ import {smallImageUrl} from '../../cards';
 import {INK_COLORS, COLORS, CARD_TILE_GLOW, FONT_SIZES, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
 import {useArtLoad} from '../../../shared/hooks/useArtLoad';
 import {CardLightbox, InkCardPlaceholder, StrengthBadge} from '../../../shared/components';
-import {isModifiedClick} from '../../../shared/utils/touchGuard';
+import {isModifiedClick} from 'inkweave-ui/utils/touchGuard';
 import {getStrengthTier} from '../utils';
 
 interface SynergyCardProps {

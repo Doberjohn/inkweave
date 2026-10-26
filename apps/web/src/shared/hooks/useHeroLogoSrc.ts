@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {HERO_LOGO_ANIMATED_SRC, HERO_LOGO_IMG} from '../constants';
 import {whenLoadedAndIdle} from '../lib/whenLoadedAndIdle';
-import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
+import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
 
 // Set by the first swap. A later mount (returning to `/`) starts on the animated logo: swapping
 // again would jump from the static first frame to an image that is already mid-animation.

@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import {RouterProvider} from 'react-router-dom';
 import {registerSW} from 'virtual:pwa-register';
 import 'react-loading-skeleton/dist/skeleton.css';
+import 'inkweave-ui/styles/primitives.css';
 import './index.css';
 import {router} from './router';
 import {HOLD_CAP_MS, holdPrerenderedPage} from './shared/lib/prerenderHold';

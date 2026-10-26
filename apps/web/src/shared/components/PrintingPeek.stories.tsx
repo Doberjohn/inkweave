@@ -1,7 +1,7 @@
 import {useState, type ReactNode} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {CardImage} from './CardImage';
-import {CtaButton} from './CtaButton';
+import {CtaButton} from 'inkweave-ui/components/CtaButton';
 import {TurnNotice} from './PrintingPeek';
 import {RADIUS, SPACING} from '../constants';
 import type {Printing} from '../hooks/usePrintingSelection';

@@ -1,9 +1,9 @@
 import {useRef, type ReactNode} from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import {COLORS, FONT_SIZES, SHADOWS, SPACING, RADIUS, Z_INDEX} from '../constants';
-import {CtaButton} from './CtaButton';
-import {IconButton} from './IconButton';
-import {LinkButton} from './LinkButton';
+import {CtaButton} from 'inkweave-ui/components/CtaButton';
+import {IconButton} from 'inkweave-ui/components/IconButton';
+import {LinkButton} from 'inkweave-ui/components/LinkButton';
 import {useDraftFilters} from '../hooks/useDraftFilters';
 import {useInlineCostFilters} from '../hooks';
 import {FilterContent} from './FilterContent';

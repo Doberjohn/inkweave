@@ -14,7 +14,7 @@ import {
 } from '../features/synergies/components/RoleTileRow';
 import {MechanicsBottomSheet} from '../features/synergies/components/MechanicsBottomSheet';
 import {MechanicsButton} from '../features/synergies/components/MechanicsButton';
-import {Chip} from '../shared/components/Chip';
+import {Chip} from 'inkweave-ui/components/Chip';
 import {BrowseToolbar, CardGrid, CardGridSkeleton} from '../features/cards';
 import {
   searchCardsByName,

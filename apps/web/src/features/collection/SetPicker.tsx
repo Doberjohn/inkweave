@@ -11,8 +11,8 @@ import {
 } from 'react';
 import Skeleton from 'react-loading-skeleton';
 import {CtaButton} from '../../shared/components';
-import {useHover} from '../../shared/hooks/useHover';
-import {useResponsive} from '../../shared/hooks/useResponsive';
+import {useHover} from 'inkweave-ui/hooks/useHover';
+import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 import {RaritySymbol} from '../reveals/RaritySymbol';
 import loreSymbol from '../../assets/lore.webp?no-inline';
 import {isFinished, percentOf} from './collectionStats';

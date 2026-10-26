@@ -2,7 +2,7 @@ import {useEffect, type CSSProperties, type RefObject} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, ICON_SIZE, LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
-import {IconButton} from '../../../shared/components/IconButton';
+import {IconButton} from 'inkweave-ui/components/IconButton';
 import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
 import {
   hasForeignScan,

@@ -1,11 +1,12 @@
 import type {Ink, VariantRarity} from 'inkweave-synergy-engine';
-import {ALL_INKS, type SetCode} from './theme';
+import {ALL_INKS} from 'inkweave-ui/tokens/lorcana';
+import type {SetCode} from './appConstants';
 
 /**
  * The set currently in reveal season. This file is the ONE place to change when
  * a new season starts (runbook: docs/reveals/START_REVEAL_SEASON.md).
  *
- * `satisfies SetCode` ties it to theme.ts: forgetting to add the new set to
+ * `satisfies SetCode` ties it to appConstants.ts: forgetting to add the new set to
  * SetCode / SET_NAMES / SET_ABBREVIATIONS is a compile error here, instead of a
  * bare "Set N" label at runtime.
  */

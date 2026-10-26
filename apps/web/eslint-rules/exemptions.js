@@ -35,13 +35,13 @@ export function isExempt(context, {paths = [], patterns = []}) {
  */
 export const COLOR_EXEMPT = {
   paths: [
-    'apps/web/src/shared/constants/theme.ts',
+    'packages/ui/src/tokens/',
     'apps/web/src/shared/constants/playstyleUi.ts',
     'apps/web/src/features/cards/components/binderLook.ts',
-    'apps/web/src/docs/',
+    'packages/ui/src/docs/',
     'apps/web/src/shared/components/CostIcon.tsx',
-    'apps/web/src/shared/components/FilterIcon.tsx',
-    'apps/web/src/shared/components/SearchIcon.tsx',
+    'packages/ui/src/components/FilterIcon.tsx',
+    'packages/ui/src/components/SearchIcon.tsx',
     'apps/web/src/shared/components/InkIcon.tsx',
     'apps/web/src/shared/components/InkwellIcon.tsx',
   ],
@@ -56,7 +56,7 @@ export const TEST_EXEMPT = {patterns: [TEST_FILE]};
  * not exempt, unlike for the color rules: its raw spacing goes in the ledger like any other
  * file's (owner, 2026-10-22).
  */
-export const SPACING_EXEMPT = {paths: ['apps/web/src/docs/'], patterns: [TEST_FILE, STORY_FILE]};
+export const SPACING_EXEMPT = {paths: ['packages/ui/src/docs/'], patterns: [TEST_FILE, STORY_FILE]};
 
 /**
  * The blessed button menu is closed (#509): the kit's own internals and the domain families below
@@ -64,7 +64,15 @@ export const SPACING_EXEMPT = {paths: ['apps/web/src/docs/'], patterns: [TEST_FI
  */
 export const ADHOC_BUTTON_EXEMPT = {
   paths: [
-    'apps/web/src/shared/components/', // the kit itself, QuantityStepper's domain stepper family too
+    'packages/ui/src/components/', // the kit itself, QuantityStepper's domain stepper family too
+    'apps/web/src/shared/components/BackLink.tsx', // back-navigation link
+    'apps/web/src/shared/components/CardImageButton.tsx', // a card's enlargeable art
+    'apps/web/src/shared/components/ConnectionGroup.tsx', // a synergy group's expand toggle
+    'apps/web/src/shared/components/CopiesStripe.tsx', // the collection's copies stepper family
+    'apps/web/src/shared/components/ErrorBoundary.tsx', // the error screen's action
+    'apps/web/src/shared/components/MobileBottomNav.tsx', // bottom-nav tab family
+    'apps/web/src/shared/components/PrintingPeek.tsx', // the printing stack's peek arrows
+    'apps/web/src/shared/components/SearchBottomSheet.tsx', // search sheet's clear and recent chips
     'apps/web/src/features/voting/components/OptionPicker.tsx', // vote picker family (CarriesPicker adapts it)
     'apps/web/src/features/voting/components/ScorePicker.tsx', // vote score row
     'apps/web/src/features/voting/components/QuickVoteControl.tsx', // vote control family
@@ -87,8 +95,8 @@ export const ADHOC_BUTTON_EXEMPT = {
  */
 export const ARIA_MODAL_EXEMPT = {
   paths: [
-    'apps/web/src/shared/components/DialogShell.tsx',
-    'apps/web/src/shared/components/BottomSheet.tsx',
+    'packages/ui/src/components/DialogShell.tsx',
+    'packages/ui/src/components/BottomSheet.tsx',
     'apps/web/src/shared/components/FilterDialog.tsx',
   ],
   patterns: [TEST_FILE, STORY_FILE],

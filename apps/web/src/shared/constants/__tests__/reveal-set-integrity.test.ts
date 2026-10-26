@@ -115,7 +115,7 @@ describe('reveal-set integrity', () => {
   it('previewCards.json has a dated entry for the reveal set', () => {
     const set = preview.sets[REVEAL_SET_CODE];
     expect(set?.number).toBe(REVEAL_SET_NUMBER);
-    // The page's copy reads theme.ts; the E2E spec reads this file. They must agree.
+    // The page's copy reads appConstants.ts; the E2E spec reads this file. They must agree.
     expect(set?.name).toBe(SET_NAMES[REVEAL_SET_CODE]);
     expect(set?.prereleaseDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(set?.releaseDate).toMatch(/^\d{4}-\d{2}-\d{2}$/);

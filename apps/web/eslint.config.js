@@ -130,7 +130,8 @@ export default tseslint.config(
     plugins: {inkweave},
     rules: {'inkweave/no-compiler-opt-out': 'error'},
   },
-  // No-new-styling-infrastructure + use-the-barrel guards (#508), and inkweave-ui's door.
+  // No-new-styling-infrastructure + use-the-barrel guards (#508), and inkweave-ui's door. The
+  // tokens come through the barrel (shared/constants), which takes inkweave-ui's from the package.
   {
     files: ['src/**/*.{ts,tsx}'],
     rules: {
@@ -140,7 +141,11 @@ export default tseslint.config(
           paths: STYLING_BANS,
           patterns: [
             {
-              group: ['**/shared/constants/theme', '**/shared/constants/playstyleUi'],
+              group: [
+                '**/shared/constants/appConstants',
+                '**/shared/constants/playstyleUi',
+                'inkweave-ui/tokens/*',
+              ],
               message: 'Import tokens through the barrel (shared/constants), not the theme files directly.',
             },
             ...UI_PACKAGE_DOOR,
@@ -148,6 +153,12 @@ export default tseslint.config(
         },
       ],
     },
+  },
+  // The barrel and its neighbours are where the tokens come in. A later block replaces the rule's
+  // options, so this one restates the rest.
+  {
+    files: ['src/shared/constants/*.ts'],
+    rules: {'no-restricted-imports': ['error', {paths: STYLING_BANS, patterns: UI_PACKAGE_DOOR}]},
   },
   // The app imports only types from the engine's root (#930): its display text comes from
   // `inkweave-synergy-engine/catalog.json` (features/synergies/engineCatalog.ts) and its card

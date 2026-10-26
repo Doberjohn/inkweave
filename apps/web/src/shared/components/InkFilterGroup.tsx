@@ -1,6 +1,6 @@
 import type {Ink} from 'inkweave-synergy-engine';
 import {ALL_INKS, INK_COLORS, SPACING} from '../constants';
-import {FilterButton} from './FilterButton';
+import {FilterButton} from 'inkweave-ui/components/FilterButton';
 import {InkIcon} from './InkIcon';
 
 type FilterButtonSize = 'sm' | 'md';

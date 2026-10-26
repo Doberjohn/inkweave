@@ -40,16 +40,16 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/shared/components/CardImage.stories.tsx', // x1
     'apps/web/src/shared/components/CardLightbox.stories.tsx', // x1
     'apps/web/src/shared/components/CardTextBlock.stories.tsx', // x1
-    'apps/web/src/shared/components/CollapsibleSection.stories.tsx', // x1
     'apps/web/src/shared/components/ConnectionGroup.stories.tsx', // x1
-    'apps/web/src/shared/components/CountBadge.tsx', // x1
-    'apps/web/src/shared/components/EtherealBackground.tsx', // x1
-    'apps/web/src/shared/components/FilterButton.stories.tsx', // x1
     'apps/web/src/shared/components/Footer.stories.tsx', // x1
-    'apps/web/src/shared/components/Sparkles.stories.tsx', // x9
-    'apps/web/src/shared/components/Sparkles.tsx', // x1
     'apps/web/src/shared/components/StrengthBadge.stories.tsx', // x8
     'apps/web/src/shared/components/TierCircle.stories.tsx', // x2
+    'packages/ui/src/components/CollapsibleSection.stories.tsx', // x1
+    'packages/ui/src/components/CountBadge.tsx', // x1
+    'packages/ui/src/components/EtherealBackground.tsx', // x1
+    'packages/ui/src/components/FilterButton.stories.tsx', // x1
+    'packages/ui/src/components/Sparkles.stories.tsx', // x9
+    'packages/ui/src/components/Sparkles.tsx', // x1
   ],
   // 63 files, 259 violations at seeding
   'no-raw-rgba': [
@@ -66,10 +66,10 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/pages/NotFoundPage.tsx', // x4
     'apps/web/src/shared/components/AbilityCallout.tsx', // x1
     'apps/web/src/shared/components/BetaNotice.tsx', // x1
-    'apps/web/src/shared/components/CountBadge.tsx', // x1
-    'apps/web/src/shared/components/EtherealBackground.tsx', // x4
-    'apps/web/src/shared/components/FilterButton.stories.tsx', // x1
-    'apps/web/src/shared/components/Sparkles.stories.tsx', // x2
+    'packages/ui/src/components/CountBadge.tsx', // x1
+    'packages/ui/src/components/EtherealBackground.tsx', // x4
+    'packages/ui/src/components/FilterButton.stories.tsx', // x1
+    'packages/ui/src/components/Sparkles.stories.tsx', // x2
   ],
   // 6 files, 15 violations at seeding
   'no-literal-font-family': [
@@ -87,10 +87,10 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/voting/components/VoteProgress.tsx', // x1
     'apps/web/src/features/voting/components/VoteStatusBanner.tsx', // x2
     'apps/web/src/shared/components/CardImage.stories.tsx', // x1
-    'apps/web/src/shared/components/CollapsibleSection.stories.tsx', // x2
-    'apps/web/src/shared/components/EmptyState.stories.tsx', // x3
     'apps/web/src/shared/components/MobileBottomNav.tsx', // x1
-    'apps/web/src/shared/components/Sparkles.stories.tsx', // x3
+    'packages/ui/src/components/CollapsibleSection.stories.tsx', // x2
+    'packages/ui/src/components/EmptyState.stories.tsx', // x3
+    'packages/ui/src/components/Sparkles.stories.tsx', // x3
   ],
   // 62 files, 102 violations at seeding
   'no-raw-radius': [
@@ -114,9 +114,9 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/voting/components/VoteStatusBanner.tsx', // x2
     'apps/web/src/shared/components/CardLightbox.stories.tsx', // x1
     'apps/web/src/shared/components/CardTextBlock.stories.tsx', // x1
-    'apps/web/src/shared/components/CollapsibleSection.stories.tsx', // x1
     'apps/web/src/shared/components/ConnectionGroup.stories.tsx', // x1
-    'apps/web/src/shared/components/Sparkles.stories.tsx', // x3
+    'packages/ui/src/components/CollapsibleSection.stories.tsx', // x1
+    'packages/ui/src/components/Sparkles.stories.tsx', // x3
   ],
   // 5 files, 5 violations at seeding
   'no-raw-z-index': [
@@ -160,15 +160,15 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/pages/PrivacyPage.tsx', // x1
     'apps/web/src/pages/VotePage.tsx', // x7
     'apps/web/src/shared/components/BetaNotice.tsx', // x1
-    'apps/web/src/shared/components/Chip.tsx', // x2
     'apps/web/src/shared/components/CompactHeader.tsx', // x2
     'apps/web/src/shared/components/ConnectionGroup.tsx', // x2
-    'apps/web/src/shared/components/CtaButton.tsx', // x1
-    'apps/web/src/shared/components/DialogShell.tsx', // x1
     'apps/web/src/shared/components/HeroSection.tsx', // x8
     'apps/web/src/shared/components/SearchBottomSheet.tsx', // x2
-    'apps/web/src/shared/components/TabList.tsx', // x1
-    'apps/web/src/shared/constants/theme.ts', // x1
+    'packages/ui/src/components/Chip.tsx', // x2
+    'packages/ui/src/components/CtaButton.tsx', // x1
+    'packages/ui/src/components/DialogShell.tsx', // x1
+    'packages/ui/src/components/TabList.tsx', // x1
+    'packages/ui/src/tokens/theme.ts', // x1
   ],
   // Ad-hoc styled <button> sites pre-dating the #509 kit. Converge each to a
   // kit component (CtaButton/LinkButton/TabList/IconButton/Chip) on touch.
