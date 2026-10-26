@@ -12,8 +12,8 @@ When a PR changes any of the following, refresh the design system project afterw
 | `packages/ui/src/docs/SpacingLayout.stories.tsx` | Spacing scale + layout constants |
 | `apps/web/index.html` (font imports) | Google Fonts imports; flag any swap |
 | `apps/web/public/brand/` | Logo (static + animated) |
-| `apps/web/src/assets/*.svg` | Ink icons + inkable/uninkable glyphs |
-| `packages/ui/src/assets/*.svg` | The ink icons and glyphs, once they move into inkweave-ui |
+| `apps/web/src/assets/*.svg` | The sign-in logos (Discord, Google) |
+| `packages/ui/src/assets/*.svg` | Ink icons, inkable/uninkable glyphs and rarity symbols |
 | `apps/web/public/art/playstyles/` | Playstyle cover imagery |
 | `apps/web/public/art/franchises/` | Franchise cover imagery |
 | `.claude/rules/mockups.md` | Mockup design tokens + design-session workflow |

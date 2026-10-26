@@ -1,6 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {RarityBreakdown} from './RarityBreakdown';
-import {SPECIAL_RARITIES} from './rarity';
+import {SPECIAL_RARITIES} from 'inkweave-ui/lib/rarity';
 
 const meta: Meta<typeof RarityBreakdown> = {
   title: 'Features/Reveals/RarityBreakdown',

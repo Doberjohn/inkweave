@@ -17,7 +17,6 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/playstyles/PlaystyleSection.stories.tsx', // x2
     'apps/web/src/features/reveals/NewFranchises.tsx', // x5
     'apps/web/src/features/reveals/ProgressRing.tsx', // x2
-    'apps/web/src/features/reveals/RaritySymbol.stories.tsx', // x1
     'apps/web/src/features/reveals/RevealHero.tsx', // x10
     'apps/web/src/features/reveals/RevealsPromoCard.tsx', // x1
     'apps/web/src/features/reveals/WhatsNewSection.tsx', // x3
@@ -38,18 +37,19 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/voting/components/VoteStatusBanner.tsx', // x9
     'apps/web/src/pages/NotFoundPage.tsx', // x5
     'apps/web/src/shared/components/CardImage.stories.tsx', // x1
-    'apps/web/src/shared/components/CardLightbox.stories.tsx', // x1
-    'apps/web/src/shared/components/CardTextBlock.stories.tsx', // x1
     'apps/web/src/shared/components/ConnectionGroup.stories.tsx', // x1
     'apps/web/src/shared/components/Footer.stories.tsx', // x1
-    'apps/web/src/shared/components/StrengthBadge.stories.tsx', // x8
-    'apps/web/src/shared/components/TierCircle.stories.tsx', // x2
     'packages/ui/src/components/CollapsibleSection.stories.tsx', // x1
     'packages/ui/src/components/CountBadge.tsx', // x1
     'packages/ui/src/components/EtherealBackground.tsx', // x1
     'packages/ui/src/components/FilterButton.stories.tsx', // x1
     'packages/ui/src/components/Sparkles.stories.tsx', // x9
     'packages/ui/src/components/Sparkles.tsx', // x1
+    'packages/ui/src/lorcana/CardLightbox.stories.tsx', // x1
+    'packages/ui/src/lorcana/CardTextBlock.stories.tsx', // x1
+    'packages/ui/src/lorcana/RaritySymbol.stories.tsx', // x1
+    'packages/ui/src/lorcana/StrengthBadge.stories.tsx', // x8
+    'packages/ui/src/lorcana/TierCircle.stories.tsx', // x2
   ],
   // 63 files, 259 violations at seeding
   'no-raw-rgba': [
@@ -64,12 +64,12 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/voting/components/OptionPicker.stories.tsx', // x3
     'apps/web/src/features/voting/components/QuickVoteControl.tsx', // x21
     'apps/web/src/pages/NotFoundPage.tsx', // x4
-    'apps/web/src/shared/components/AbilityCallout.tsx', // x1
     'apps/web/src/shared/components/BetaNotice.tsx', // x1
     'packages/ui/src/components/CountBadge.tsx', // x1
     'packages/ui/src/components/EtherealBackground.tsx', // x4
     'packages/ui/src/components/FilterButton.stories.tsx', // x1
     'packages/ui/src/components/Sparkles.stories.tsx', // x2
+    'packages/ui/src/lorcana/AbilityCallout.tsx', // x1
   ],
   // 6 files, 15 violations at seeding
   'no-literal-font-family': [
@@ -78,7 +78,6 @@ export const KNOWN_OFFENDERS = {
   // 44 files, 116 violations at seeding
   'no-raw-font-size': [
     'apps/web/src/features/reveals/NewFranchises.tsx', // x1
-    'apps/web/src/features/reveals/RaritySymbol.stories.tsx', // x1
     'apps/web/src/features/reveals/RevealHero.tsx', // x1
     'apps/web/src/features/synergies/components/DeltaPanel.tsx', // x5
     'apps/web/src/features/voting/components/DistributionBar.tsx', // x2
@@ -91,6 +90,7 @@ export const KNOWN_OFFENDERS = {
     'packages/ui/src/components/CollapsibleSection.stories.tsx', // x2
     'packages/ui/src/components/EmptyState.stories.tsx', // x3
     'packages/ui/src/components/Sparkles.stories.tsx', // x3
+    'packages/ui/src/lorcana/RaritySymbol.stories.tsx', // x1
   ],
   // 62 files, 102 violations at seeding
   'no-raw-radius': [
@@ -112,11 +112,11 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/voting/components/ScorePicker.tsx', // x1
     'apps/web/src/features/voting/components/VoteAffirmation.stories.tsx', // x1
     'apps/web/src/features/voting/components/VoteStatusBanner.tsx', // x2
-    'apps/web/src/shared/components/CardLightbox.stories.tsx', // x1
-    'apps/web/src/shared/components/CardTextBlock.stories.tsx', // x1
     'apps/web/src/shared/components/ConnectionGroup.stories.tsx', // x1
     'packages/ui/src/components/CollapsibleSection.stories.tsx', // x1
     'packages/ui/src/components/Sparkles.stories.tsx', // x3
+    'packages/ui/src/lorcana/CardLightbox.stories.tsx', // x1
+    'packages/ui/src/lorcana/CardTextBlock.stories.tsx', // x1
   ],
   // 5 files, 5 violations at seeding
   'no-raw-z-index': [

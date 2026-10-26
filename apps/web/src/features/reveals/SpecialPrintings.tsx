@@ -4,9 +4,10 @@ import {CAP_LABEL_XS, COLORS, FONT_SIZES, ICON_SIZE, SPACING, TABULAR, hexRgba} 
 import {useContainerWidth} from '../../shared/hooks';
 import {CardSlot} from './CardSlot';
 import {ROWS_MOBILE} from './CardMosaic';
-import {RaritySymbol} from './RaritySymbol';
+import {RaritySymbol} from 'inkweave-ui/lorcana/RaritySymbol';
 import {isNarrowSlot, slotSize} from './mosaicSizing';
-import {isSpecialSlotDimmed, SPECIAL_RARITIES} from './rarity';
+import {SPECIAL_RARITIES} from 'inkweave-ui/lib/rarity';
+import {isSpecialSlotDimmed} from './slotDimming';
 import type {SpecialSlot} from './useRevealProgress';
 
 interface SpecialPrintingsProps {

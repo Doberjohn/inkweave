@@ -1,6 +1,6 @@
 import {useState, type CSSProperties, type ReactNode} from 'react';
 import type {CardPrinting, Ink, LorcanaCard} from 'inkweave-synergy-engine';
-import {InkIcon} from '../../shared/components/InkIcon';
+import {InkIcon} from 'inkweave-ui/lorcana/InkIcon';
 import {COLORS, EASING, RADIUS, blackRgba, hexRgba, whiteRgba} from '../../shared/constants';
 import {smallImageUrl} from '../cards/loader';
 import {inkRgba} from './inkTint';

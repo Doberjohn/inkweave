@@ -1,6 +1,6 @@
 import Skeleton from 'react-loading-skeleton';
 import {LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
-import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
+import {InkCardPlaceholder} from 'inkweave-ui/lorcana/InkCardPlaceholder';
 import {useContainerWidth} from 'inkweave-ui/hooks/useContainerWidth';
 import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 import {useRef} from 'react';

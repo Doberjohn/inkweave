@@ -5,7 +5,7 @@ import {createCard, createVotingPair, createConnection} from '../../../../shared
 import type {Score} from '../../../../shared/lib/supabase';
 import type {PairPreview} from '../../hooks/usePairQueue';
 
-vi.mock('../../../synergies/utils/scoreUtils', () => ({
+vi.mock('inkweave-ui/lib/scoreUtils', () => ({
   getStrengthTier: (score: number) => ({
     label: score >= 9.5 ? 'Perfect' : score >= 7 ? 'Strong' : score >= 4 ? 'Moderate' : 'Weak',
     color: '#fbbf24',

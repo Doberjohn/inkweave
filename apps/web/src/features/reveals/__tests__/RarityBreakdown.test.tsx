@@ -1,7 +1,7 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {RarityBreakdown} from '../RarityBreakdown';
-import {SPECIAL_RARITIES} from '../rarity';
+import {SPECIAL_RARITIES} from 'inkweave-ui/lib/rarity';
 
 const counts = {common: 6, uncommon: 5, rare: 6, 'super rare': 3, legendary: 0};
 

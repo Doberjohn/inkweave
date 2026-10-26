@@ -1,10 +1,10 @@
 import type {CSSProperties} from 'react';
 import {FINISH_WORD, printingKind, promoCode, type Printing} from '../hooks/usePrintingSelection';
 import {COLORS, FOIL_SHEEN, GOLD_GLOW, ICON_SIZE, RADIUS} from '../constants';
-import enchantedSymbol from '../../assets/enchanted.webp?no-inline';
-import epicSymbol from '../../assets/epic.webp?no-inline';
-import iconicSymbol from '../../assets/iconic.webp?no-inline';
-import promoSymbol from '../../assets/promo.webp?no-inline';
+import enchantedSymbol from 'inkweave-ui/assets/enchanted.webp?no-inline';
+import epicSymbol from 'inkweave-ui/assets/epic.webp?no-inline';
+import iconicSymbol from 'inkweave-ui/assets/iconic.webp?no-inline';
+import promoSymbol from 'inkweave-ui/assets/promo.webp?no-inline';
 
 /** What a printing's name reads from usePrintingSelection's Printing. */
 export type NamedPrinting = Pick<

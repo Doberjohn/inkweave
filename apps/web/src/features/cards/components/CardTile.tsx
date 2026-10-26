@@ -1,7 +1,7 @@
 import {useState, type CSSProperties, type MouseEvent, type ReactNode} from 'react';
 import type {CardPrinting} from 'inkweave-synergy-engine';
 import type {LorcanaCard} from '../types';
-import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
+import {InkCardPlaceholder} from 'inkweave-ui/lorcana/InkCardPlaceholder';
 import {
   INK_COLORS,
   CARD_TILE_GLOW,
