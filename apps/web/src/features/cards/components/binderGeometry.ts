@@ -16,7 +16,28 @@ export interface PageGrid {
 export const SPREAD_PAGE: PageGrid = {columns: 4, rows: 3};
 /** A phone's lone page, 3 by 3 (owner, 2026-10-25, #969): its pockets about 38% wider than 4 across. */
 export const LONE_PAGE: PageGrid = {columns: 3, rows: 3};
+export const PER_PAGE = SPREAD_PAGE.columns * SPREAD_PAGE.rows;
+export const PER_SPREAD = PER_PAGE * 2;
 export const PER_LONE_PAGE = LONE_PAGE.columns * LONE_PAGE.rows;
+
+/**
+ * How a binder pages its pockets, which the binder, its map and their caller must agree on: the
+ * pockets a view holds, and those whose room the front cover takes before the first card.
+ */
+export interface BinderPaging {
+  perView: number;
+  lead: number;
+}
+
+/**
+ * A spread binder pages two pages of twelve at a time, opening on the inside front cover (owner,
+ * 2026-10-18), which takes the first spread's left page: its cards start a page in.
+ */
+export const SPREAD_PAGING: BinderPaging = {perView: PER_SPREAD, lead: PER_PAGE};
+/** A phone pages a lone page of nine at a time, with no covers (#969). */
+export const LONE_PAGING: BinderPaging = {perView: PER_LONE_PAGE, lead: 0};
+
+export const pagingOf = (single: boolean) => (single ? LONE_PAGING : SPREAD_PAGING);
 
 /** Lorcana cards are 0.72 wide-to-tall. Drives the whole layout. */
 export const CARD_ASPECT = 0.72;
@@ -58,3 +79,32 @@ export function loneBoardHeight(width: string): string {
   const down = 2 * BOARD + 2 * PAGE_PADDING + (LONE_PAGE.rows - 1) * POCKET_GAP;
   return `calc(${down}px + ${LONE_PAGE.rows} * (${width} - ${across}px) / ${LONE_PAGE.columns} / ${CARD_ASPECT})`;
 }
+
+/** A cell of the binder's map at full size (`BinderSpreadMap`): 7px across, so 9 tall, the nearest to a card's shape. */
+export const MAP_CELL = {width: 7, height: Math.round(7 / 0.75)};
+
+/** The gap between a mini page's cells. */
+export const MAP_CELL_GAP = SPACING.xxs;
+
+/** A mini spread's or page's padding round its cells, and its border round that. */
+export const MINI_PADDING = SPACING.xs;
+export const MINI_BORDER = 1;
+
+/** A mini page's side of `cells` cells `cell` long: the cells, their gaps, and its padding and border either side. */
+const miniSide = (cells: number, cell: number) =>
+  cells * cell + (cells - 1) * MAP_CELL_GAP + 2 * (MINI_PADDING + MINI_BORDER);
+
+/** A phone's mini page, at full size as it always is (#969): 35 by 41. */
+export const LONE_MINI = {
+  width: miniSide(LONE_PAGE.columns, MAP_CELL.width),
+  height: miniSide(LONE_PAGE.rows, MAP_CELL.height),
+};
+
+/** How far a phone's page map sits under its page. */
+export const MAP_GAP_ABOVE = SPACING.xs;
+
+/**
+ * The band a phone's page map takes under its page: its gap, then a mini page, its tallest. The
+ * binder's loading frame keeps it empty, so the map that arrives draws in it (`BinderChunkFallback`).
+ */
+export const MAP_BAND_HEIGHT = MAP_GAP_ABOVE + LONE_MINI.height;

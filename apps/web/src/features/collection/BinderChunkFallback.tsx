@@ -1,10 +1,10 @@
 import type {CSSProperties} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
-import {LONE_INSET, LONE_TOP_OVER_MAP, loneBoardHeight} from '../cards/components/binderGeometry';
+import {LONE_INSET, LONE_TOP_OVER_MAP, MAP_BAND_HEIGHT, loneBoardHeight} from '../cards/components/binderGeometry';
 import {useResponsive} from '../../shared/hooks/useResponsive';
 import {FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
-import {BAR, NUMBERS_STYLE, SHEET_NUMBERS_STYLE, sectionStyle} from './binderLayout';
+import {BAR, NUMBERS_STYLE, ROW_CONTROL_HEIGHT, SHEET_NUMBERS_STYLE, sectionStyle} from './binderLayout';
 
 /*
  * What collection mode draws while the binder's chunk downloads (#913), each in the box of what
@@ -17,8 +17,6 @@ import {BAR, NUMBERS_STYLE, SHEET_NUMBERS_STYLE, sectionStyle} from './binderLay
 
 /** The toolbar's set picker and Collection beside it are as tall (`TOOLBAR_TRIGGER` in SetPicker.tsx). */
 const TOOLBAR_CONTROL_HEIGHT = 34;
-/** A phone row's set picker, as tall as Binder options beside it (`ROW_TRIGGER` in SetPicker.tsx). */
-const ROW_CONTROL_HEIGHT = 40;
 /** What the binder shows, All, Owned or Missing (`Segments`), in the docked panel. */
 const SHOWS_HEIGHT = 42;
 
@@ -34,8 +32,6 @@ const SPREAD_SHAPE: CSSProperties = {width: 'min(100%, 200cqh)', aspectRatio: '2
 const LONE_BOARD: CSSProperties = {height: loneBoardHeight(`100cqw - ${2 * LONE_INSET}px`)};
 /** The board's room in the section, as the binder's lone page has it over its map (`SingleView`). */
 const LONE_ROOM: CSSProperties = {padding: `${LONE_TOP_OVER_MAP}px ${LONE_INSET}px 0`};
-/** A phone's page map under the board: 4px, then a mini page 41 tall (`PageMap` in BinderSpreadMap.tsx). */
-const MAP_BAND_HEIGHT = 45;
 
 const COLUMN: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.sm};
 

@@ -326,15 +326,15 @@ describe("FilterDialog with a caller's own controls (the Binder sheet, #969)", (
   });
 
   it("shows Clear all for the caller's own changes alone, and its press clears them and the filters", () => {
-    const onClearAll = vi.fn();
-    render(<FilterDialog {...defaultProps} variant="drawer" extraCount={1} onClearAll={onClearAll} />);
+    const onClear = vi.fn();
+    render(<FilterDialog {...defaultProps} variant="drawer" extra={{count: 1, onClear}} />);
     // No filter on yet: the caller's change alone shows it.
     const clear = screen.getByRole('button', {name: /clear all/i});
     fireEvent.click(screen.getByRole('button', {name: /character/i}));
 
     fireEvent.click(clear);
 
-    expect(onClearAll).toHaveBeenCalledTimes(1);
+    expect(onClear).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', {name: /character/i})).toHaveAttribute('aria-pressed', 'false');
   });
 });

@@ -26,7 +26,8 @@ import {
 } from './CollectionSetPanel';
 import type {BinderView} from './BinderShows';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
-import {BinderSpread, BinderSlotSkeleton, PER_PAGE} from '../cards/components/BinderSpread';
+import {BinderSpread, BinderSlotSkeleton} from '../cards/components/BinderSpread';
+import {PER_PAGE} from '../cards/components/binderGeometry';
 import {BinderSpreadMap} from '../cards/components/BinderSpreadMap';
 import {CtaButton} from '../../shared/components';
 import {CardWindowSlotContext} from '../../shared/contexts/cardWindowSlot';

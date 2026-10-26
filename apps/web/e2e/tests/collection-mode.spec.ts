@@ -1208,7 +1208,7 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await signInAsCollector(page, ENTRIES);
     await openPhoneBinder(page, `/browse?binder=${SET}`);
     const before = {url: page.url(), page: await shownPage(page).getAttribute('aria-label')};
-    const options = phoneRow(page).getByRole('button', {name: 'Binder options'});
+    const options = phoneRow(page).getByRole('button', {name: /^Binder options/});
     await expect(options, 'no badge with nothing on').toHaveText('');
     await clearUrlWrites(page);
 
@@ -1237,7 +1237,7 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await signInAsCollector(page, ENTRIES);
     await openPhoneBinder(page, `/browse?binder=${SET}&owned=missing&sort=name-asc&ink=Amber`);
     const before = page.url();
-    const options = phoneRow(page).getByRole('button', {name: 'Binder options'});
+    const options = phoneRow(page).getByRole('button', {name: /^Binder options/});
     await expect(options).toHaveText('2');
 
     await options.click();
@@ -1274,7 +1274,7 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await openPhoneBinder(page, `/browse?binder=${SET}`);
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
 
-    await phoneRow(page).getByRole('button', {name: 'Binder options'}).click();
+    await phoneRow(page).getByRole('button', {name: /^Binder options/}).click();
     await expect(binderSheet(page)).toBeVisible();
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
   });

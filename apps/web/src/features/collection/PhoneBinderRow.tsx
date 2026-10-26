@@ -2,6 +2,7 @@ import type {CSSProperties, ReactNode} from 'react';
 import {CtaButton} from '../../shared/components';
 import {useHover} from '../../shared/hooks/useHover';
 import {COLORS, EASING, FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
+import {ROW_CONTROL_HEIGHT} from './binderLayout';
 
 interface PhoneBinderRowProps {
   /** The set button (`PhoneSetPicker`), or its placeholder while the binder's chunk loads. */
@@ -14,8 +15,8 @@ interface PhoneBinderRowProps {
   modeSwitch: ReactNode;
 }
 
-/** Binder options and the set button beside it are 40px tall (`ROW_TRIGGER` in SetPicker.tsx). */
-const OPTIONS_SIZE = 40;
+/** Binder options is square, as tall as the set button beside it. */
+const OPTIONS_SIZE = ROW_CONTROL_HEIGHT;
 
 /** The badge's circle, which a two-digit count stretches into a pill. */
 const BADGE_SIZE = 17;
@@ -85,11 +86,17 @@ function SlidersIcon() {
   );
 }
 
+/**
+ * Binder options' name, with the badge's count, which screen readers otherwise never hear: on a
+ * phone it is all that shows the binder narrowed to Owned or Missing.
+ */
+const optionsName = (count: number) => (count > 0 ? `Binder options, ${count} on` : 'Binder options');
+
 /** Opens the Binder sheet, its badge counting what is on, hidden at none. */
 function BinderOptions({count, onOpen}: Pick<PhoneBinderRowProps, 'count' | 'onOpen'>) {
   const {hovered, hoverProps} = useHover();
   return (
-    <CtaButton variant="neutral" {...hoverProps} aria-label="Binder options" onClick={onOpen} style={optionsStyle(hovered)}>
+    <CtaButton variant="neutral" {...hoverProps} aria-label={optionsName(count)} onClick={onOpen} style={optionsStyle(hovered)}>
       <SlidersIcon />
       {count > 0 && <span style={BADGE_STYLE}>{count}</span>}
     </CtaButton>

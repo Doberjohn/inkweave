@@ -29,6 +29,13 @@ export function sectionStyle(isMobile: boolean, docked = false): CSSProperties {
   return {padding: `${top}px ${sides}px ${SPACING.xxl}px`, height: '100%'};
 }
 
+/**
+ * How tall a phone binder row's controls are (#969): the set button (`ROW_TRIGGER` in
+ * SetPicker.tsx), Binder options beside it (`PhoneBinderRow`), and the set button's placeholder
+ * while the binder's chunk downloads (`BinderChunkFallback`).
+ */
+export const ROW_CONTROL_HEIGHT = 40;
+
 /** Bar heights, by how much the number above them matters. */
 export const BAR = {headline: 8, second: 6, row: 4} as const;
 

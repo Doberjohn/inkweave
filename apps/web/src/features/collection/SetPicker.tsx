@@ -29,6 +29,7 @@ import {
 import {Segment, Segments} from './Segments';
 import {useCloseOnPressOutside} from './useCloseOnPressOutside';
 import {SIDE_PANEL_WIDTH} from '../cards/components/BrowseSidePanel';
+import {ROW_CONTROL_HEIGHT} from './binderLayout';
 import {
   COLORS,
   EASING,
@@ -149,7 +150,7 @@ const TOOLBAR_TRIGGER: TriggerGeometry = {
  * it, a small logo, the scope's name over its figures. Its list is the panel's.
  */
 const ROW_TRIGGER: TriggerGeometry = {
-  height: 40,
+  height: ROW_CONTROL_HEIGHT,
   logoBox: {...LOGO_BOX, width: 44, height: 26},
   chevron: {width: 10, height: 6},
   gap: SPACING.sm,
@@ -163,11 +164,6 @@ const TRIGGERS: Record<TriggerSize, TriggerGeometry> = {panel: PANEL_TRIGGER, to
 
 /** Below this window width the row's button leaves its logo out, so at 320px its words keep 93px (#969). */
 const ROW_LOGO_MIN_WIDTH = 360;
-
-/** The button's geometry where it is drawn: the row's, on the narrowest phones, without its logo. */
-function triggerGeometry(size: TriggerSize, windowWidth: number): TriggerGeometry {
-  return size === 'row' && windowWidth < ROW_LOGO_MIN_WIDTH ? NARROW_ROW_TRIGGER : TRIGGERS[size];
-}
 
 /**
  * The tabs and about ten rows, past which the list scrolls. Half the window at most, so on
@@ -612,13 +608,37 @@ function TriggerLabel({setCode, sets, size, figures}: Pick<TriggerProps, 'setCod
 const KICKER_STYLE: CSSProperties = {fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.25, color: COLORS.textMuted};
 
 /**
+ * The button, drawn as its size draws it. Only the row's reads the window's width, so the
+ * toolbar's and the panel's never redraw as the window resizes.
+ */
+function Trigger(props: TriggerProps) {
+  return props.size === 'row' ? <RowTrigger {...props} /> : <TriggerButton {...props} geometry={TRIGGERS[props.size]} />;
+}
+
+/** The row's button, which leaves its logo out on the narrowest phones. */
+function RowTrigger(props: TriggerProps) {
+  const {windowWidth} = useResponsive();
+  return <TriggerButton {...props} geometry={windowWidth < ROW_LOGO_MIN_WIDTH ? NARROW_ROW_TRIGGER : ROW_TRIGGER} />;
+}
+
+/**
  * The button: the choice's picture (the two-line button's and the row's), its words, and a
  * chevron that turns over while open.
  */
-function Trigger({setCode, sets, size, figures, open, menuId, disabled, onToggle, onKeyDown, onBlur}: TriggerProps) {
+function TriggerButton({
+  setCode,
+  sets,
+  size,
+  figures,
+  open,
+  menuId,
+  disabled,
+  onToggle,
+  onKeyDown,
+  onBlur,
+  geometry,
+}: TriggerProps & {geometry: TriggerGeometry}) {
   const {hovered, hoverProps} = useHover();
-  const {windowWidth} = useResponsive();
-  const geometry = triggerGeometry(size, windowWidth);
   const art = geometry.logoBox && choiceArt(setCode, geometry.logoBox);
   return (
     <CtaButton

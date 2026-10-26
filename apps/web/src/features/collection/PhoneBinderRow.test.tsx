@@ -15,7 +15,7 @@ function renderRow(count = 0) {
   return {onOpen};
 }
 
-const options = () => screen.getByRole('button', {name: 'Binder options'});
+const options = () => screen.getByRole('button', {name: /^Binder options/});
 
 describe('PhoneBinderRow (#969)', () => {
   it('holds the set button, Binder options and Collection, in that order', () => {
@@ -33,13 +33,15 @@ describe('PhoneBinderRow (#969)', () => {
     expect(onOpen).toHaveBeenCalledOnce();
   });
 
-  it("counts what is on in Binder options' badge", () => {
+  it("counts what is on in Binder options' badge, and says it in the button's name", () => {
     renderRow(2);
     expect(options()).toHaveTextContent(/^2$/);
+    expect(options()).toHaveAccessibleName('Binder options, 2 on');
   });
 
-  it('draws no badge while nothing is on', () => {
+  it('draws no badge while nothing is on, and names no count', () => {
     renderRow(0);
     expect(options()).toHaveTextContent(/^$/);
+    expect(options()).toHaveAccessibleName('Binder options');
   });
 });

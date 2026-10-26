@@ -23,9 +23,11 @@ import {
   LONE_TOP_OVER_MAP,
   PAGE_PADDING,
   PER_LONE_PAGE,
+  PER_PAGE,
   POCKET_GAP,
   SPINE_WIDTH,
   SPREAD_PAGE,
+  pagingOf,
   type PageGrid,
 } from './binderGeometry';
 import {BINDER_LOOK} from './binderLook';
@@ -88,14 +90,10 @@ import './binder.css';
  */
 
 /**
- * A spread's page, four columns by three rows (`SPREAD_PAGE`); a spread is two of these. A phone's
- * lone page is three by three (`LONE_PAGE`, #969). The measures live in `binderGeometry.ts`.
+ * A view's pockets: a phone's lone page of nine (`LONE_PAGE`, #969), or a spread's two pages of
+ * twelve (`SPREAD_PAGE`). The measures, and how each pages, live in `binderGeometry.ts`.
  */
-export const PER_PAGE = SPREAD_PAGE.columns * SPREAD_PAGE.rows;
-export const PER_SPREAD = PER_PAGE * 2;
-
-/** A view's pockets: a phone's lone page, or a spread's two pages. */
-const perViewOf = (single: boolean) => (single ? PER_LONE_PAGE : PER_SPREAD);
+const perViewOf = (single: boolean) => pagingOf(single).perView;
 
 /** The binder's cover board: the inside front cover, and the inside back cover past the last card. */
 const COVER_BOARD = '/art/backgrounds/binder-cover.webp';
@@ -351,7 +349,7 @@ interface BinderSpreadProps {
    * A spread at 390px left each card ~26px wide; one page with the arrows moved
    * to a row underneath gave ~75px, and 3 by 3 pockets in place of 4 by 3 about
    * 38% more (owner, 2026-10-25, #969). A lone page holds `PER_LONE_PAGE`, nine,
-   * so the caller pages by that instead of `PER_SPREAD`: page p holds slots 9p to
+   * so the caller pages by that (`pagingOf`) instead of a spread's: page p holds slots 9p to
    * 9p + 8, and every card keeps its slot.
    *
    * The CALLER decides, because the paging step is the caller's arithmetic and
@@ -902,9 +900,8 @@ const NO_SHEETS: ViewSheets = {left: 0, right: 0};
  */
 function sheetsAt(start: number, single: boolean, cardCount: number | undefined): ViewSheets {
   if (cardCount === undefined) return NO_SHEETS;
-  const perView = perViewOf(single);
   // A spread binder's views start a page in, for the front cover (see `start`).
-  const lead = single ? 0 : PER_PAGE;
+  const {perView, lead} = pagingOf(single);
   return viewSheets((start + lead) / perView, Math.max(1, Math.ceil((cardCount + lead) / perView)), single);
 }
 

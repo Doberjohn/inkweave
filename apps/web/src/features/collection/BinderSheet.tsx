@@ -7,7 +7,7 @@ import {BINDER_SORT_OPTIONS, writeShowParam, type BinderShow} from './binderCard
 import {BinderShows} from './BinderShows';
 
 /** The filter sheet's props the Binder sheet sets itself. */
-type SheetOwn = 'variant' | 'onApply' | 'title' | 'prelude' | 'postlude' | 'extraCount' | 'onClearAll';
+type SheetOwn = 'variant' | 'onApply' | 'title' | 'prelude' | 'postlude' | 'extra';
 
 export interface BinderSheetProps extends Omit<ComponentProps<typeof FilterDialog>, SheetOwn> {
   /** What the binder shows, where the sheet's Show starts each time it opens. */
@@ -89,8 +89,7 @@ export function BinderSheet({show, sortOrder, onApply, progress, ...dialog}: Bin
       title="Binder"
       prelude={<SheetPrelude {...drafts} />}
       postlude={<FilterSection label="Progress">{progress}</FilterSection>}
-      extraCount={drafts.show === 'all' ? 0 : 1}
-      onClearAll={() => drafts.setShow('all')}
+      extra={{count: drafts.show === 'all' ? 0 : 1, onClear: () => drafts.setShow('all')}}
       onApply={apply}
     />
   );

@@ -12,8 +12,20 @@ import {
   hexRgba,
 } from '../../../shared/constants';
 import {useHover} from '../../../shared/hooks/useHover';
-import {PER_PAGE, PER_SPREAD} from './BinderSpread';
-import {LONE_PAGE, PER_LONE_PAGE} from './binderGeometry';
+import {
+  LONE_MINI,
+  LONE_PAGE,
+  LONE_PAGING,
+  MAP_CELL,
+  MAP_CELL_GAP,
+  MAP_GAP_ABOVE,
+  MINI_BORDER,
+  MINI_PADDING,
+  PER_LONE_PAGE,
+  PER_PAGE,
+  SPREAD_PAGING,
+  type BinderPaging,
+} from './binderGeometry';
 
 /**
  * The binder's pager where Browse docks its panels (owner, 2026-10-12): the spreads in
@@ -47,7 +59,7 @@ import {LONE_PAGE, PER_LONE_PAGE} from './binderGeometry';
  * tinted the cover's blue, as `BinderSpread` draws it.
  *
  * AND THE FIRST SPREAD'S LEFT PAGE IS THE FRONT COVER (owner, 2026-10-18), so the spreads
- * here page as the binder's do, a page in (`LEAD`), and each names the cards it shows.
+ * here page as the binder's do, a page in (`SPREAD_PAGING`), and each names the cards it shows.
  *
  * THE WINDOW HOLDS AS MANY SPREADS AS FIT ITS ROW (owner, 2026-10-16, option B of
  * `public/mockups/binder-map-narrow.html`), each at least `MIN_MINI` wide, up to
@@ -137,7 +149,7 @@ const WINDOW = 11;
 const MINI_WIDTH = 90;
 
 /** A cell in a spread at its widest (`MINI_WIDTH`): 7px across, so 9 tall. */
-const FULL_CELL = 7;
+const FULL_CELL = MAP_CELL.width;
 
 /**
  * Whether the browser can round a length to whole pixels against its container: CSS
@@ -167,7 +179,7 @@ const CELL_BOX: CSSProperties = SNAPS
   : {aspectRatio: '0.75'};
 
 /** A lone page's cell, always at full size: 7 by 9 (#969). */
-const LONE_CELL: CSSProperties = {width: FULL_CELL, height: Math.round(FULL_CELL / 0.75)};
+const LONE_CELL: CSSProperties = MAP_CELL;
 
 /** Behind a mini's cells: neutral, so the ink cells read true; gold would warm every one of them. */
 const PAGE_TINT = hexRgba(COLORS.text, 0.06);
@@ -243,12 +255,6 @@ function MiniPage({pockets, cover = false}: {pockets: readonly Pocket[]; cover?:
   );
 }
 
-/**
- * The page the front cover takes before the first card, as on the binder (`CollectionBinder`):
- * spread `s` holds the pockets from `s * PER_SPREAD - LEAD` on.
- */
-const LEAD = PER_PAGE;
-
 /** A mini spread's two pages of pockets, and which of them is a cover. */
 interface SpreadPages {
   left: readonly Pocket[];
@@ -263,7 +269,8 @@ interface SpreadPages {
  * right page stays a page, like the spread it stands for.
  */
 function spreadPages(pockets: readonly Pocket[], {spread}: Pick<SpreadPlace, 'spread'>): SpreadPages {
-  const from = spread * PER_SPREAD - LEAD;
+  // As on the binder, the front cover takes a page before the first card (`SPREAD_PAGING`).
+  const from = spread * SPREAD_PAGING.perView - SPREAD_PAGING.lead;
   const right = from + PER_PAGE;
   return {
     left: from < 0 ? [] : pockets.slice(from, right),
@@ -284,11 +291,7 @@ interface SetSpan {
  * How the map pages its pockets: spreads after the front cover's page, or a phone's lone pages of
  * nine, with no covers (#969).
  */
-interface MapViews {
-  /** The pockets a view holds. */
-  perView: number;
-  /** The pockets whose room the front cover takes, before the first card. */
-  lead: number;
+interface MapViews extends BinderPaging {
   /** What a mini's name calls its view: "Spread 3 of 9", "Page 5 of 27". */
   noun: 'spread' | 'page';
   /** How many minis a row this many pixels wide holds. */
@@ -328,10 +331,10 @@ function miniStyle({on, hovered}: Look): CSSProperties {
     flexShrink: 1,
     minWidth: 0,
     minHeight: 0,
-    padding: SPACING.xs,
+    padding: MINI_PADDING,
     gap: SPACING.xs,
     borderRadius: RADIUS.md,
-    border: `1px solid ${on ? GOLD_GLOW.activeBorder : 'transparent'}`,
+    border: `${MINI_BORDER}px solid ${on ? GOLD_GLOW.activeBorder : 'transparent'}`,
     background: on ? GOLD_GLOW.activeBg : hovered ? GOLD_GLOW.hoverBg : 'transparent',
     boxShadow: on ? GOLD_GLOW.shadow : 'none',
   };
@@ -374,8 +377,8 @@ function Mini({view, label, current, onGo, look, children}: MiniProps) {
 /** A lone page's cells: three across, 2px apart, as a spread's pages space theirs. */
 const LONE_GRID: CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: `repeat(${LONE_PAGE.columns}, ${FULL_CELL}px)`,
-  gap: SPACING.xxs,
+  gridTemplateColumns: `repeat(${LONE_PAGE.columns}, ${MAP_CELL.width}px)`,
+  gap: MAP_CELL_GAP,
 };
 
 /** A page of nine's cells, each at full size. */
@@ -401,20 +404,14 @@ function spreadsThatFit(room: number): number {
   return Math.max(1, Math.min(WINDOW, fit));
 }
 
-/**
- * A mini page at full size, as it always is: three 7px cells 2px apart, its padding and its
- * 1px border, either side.
- */
-const LONE_MINI = LONE_PAGE.columns * FULL_CELL + (LONE_PAGE.columns - 1) * SPACING.xxs + 2 * (SPACING.xs + 1);
-
-/** How many mini pages `room` pixels hold, 4px apart: at least the one on show. */
+/** How many mini pages `room` pixels hold, 4px apart, each at full size (`LONE_MINI`): at least the one on show. */
 function pagesThatFit(room: number): number {
-  return Math.max(1, Math.floor((room + SPACING.xs) / (LONE_MINI + SPACING.xs)));
+  return Math.max(1, Math.floor((room + SPACING.xs) / (LONE_MINI.width + SPACING.xs)));
 }
 
 /** The map of spreads, beside the front cover, and a phone's map of pages, with none. */
-const SPREAD_VIEWS: MapViews = {perView: PER_SPREAD, lead: LEAD, noun: 'spread', fits: spreadsThatFit};
-const PAGE_VIEWS: MapViews = {perView: PER_LONE_PAGE, lead: 0, noun: 'page', fits: pagesThatFit};
+const SPREAD_VIEWS: MapViews = {...SPREAD_PAGING, noun: 'spread', fits: spreadsThatFit};
+const PAGE_VIEWS: MapViews = {...LONE_PAGING, noun: 'page', fits: pagesThatFit};
 
 /**
  * How many minis the window holds: as many as fit the row (`fits`). Measured before the
@@ -582,7 +579,7 @@ function PageMap({pockets, current, onGo, sets = []}: MapProps) {
   const {rowRef, total, shown} = useMapWindow(pockets, current, PAGE_VIEWS);
   const spans = setSpans(sets, pockets.length, PAGE_VIEWS);
   return (
-    <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm, padding: `${SPACING.xs}px ${SPACING.xs}px 0`}}>
+    <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm, padding: `${MAP_GAP_ABOVE}px ${SPACING.xs}px 0`}}>
       <nav
         ref={rowRef}
         aria-label="Binder pages"

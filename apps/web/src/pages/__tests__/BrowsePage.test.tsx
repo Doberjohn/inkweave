@@ -221,6 +221,21 @@ describe('BrowseBody with collection mode on', () => {
       );
     });
 
+    it('closes the Binder sheet when the window widens past a phone, rather than swap in the filter dialog', async () => {
+      renderBody();
+      fireEvent.click(screen.getByRole('button', {name: 'Binder options 0'}));
+      expect(screen.getByRole('dialog', {name: /^Binder sheet/})).toBeInTheDocument();
+
+      vi.stubGlobal('innerWidth', 800);
+      act(() => {
+        window.dispatchEvent(new Event('resize'));
+      });
+
+      // useResponsive settles a resize after a debounce.
+      await waitFor(() => expect(screen.queryByRole('dialog', {name: /^Binder sheet/})).toBeNull());
+      expect(screen.queryByTestId('filter-modal')).toBeNull();
+    });
+
     it('keeps the toolbar, the title and the filter sheet in grid mode', () => {
       const grid = {
         ...slots,

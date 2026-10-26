@@ -375,6 +375,22 @@ function useSearchCards(
   };
 }
 
+/**
+ * Whether Filters or Binder options' sheet is open. A phone in collection mode opens the Binder
+ * sheet and anything wider the filter dialog, so crossing that line closes the open one, which
+ * would otherwise swap for the other mid-edit.
+ */
+function useSheetOpen(isMobile: boolean, collection: BrowseCollectionSlots | null) {
+  const binderSheet = isMobile && (collection?.active ?? false);
+  const [open, setOpen] = useState(false);
+  const [wasBinderSheet, setWasBinderSheet] = useState(binderSheet);
+  if (binderSheet !== wasBinderSheet) {
+    setWasBinderSheet(binderSheet);
+    setOpen(false);
+  }
+  return [open, setOpen] as const;
+}
+
 /** Browse's content, with collection mode's slots when the page wires them in (`BrowseCollectionPage`). */
 export function BrowseBody({collection}: {collection: BrowseCollectionSlots | null}) {
   const {openCardModal} = useCardModal();
@@ -382,7 +398,7 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
   const {cards, isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets, getCardById} =
     useCardDataContext();
   const params = useFilterParams();
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useSheetOpen(isMobile, collection);
   const docked = useSidePanelDocked();
   const panel = useSidePanelState();
   const search = useSearchCards(params.searchQuery, collection?.active ?? false, getCardById);

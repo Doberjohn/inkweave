@@ -27,10 +27,10 @@ interface FilterDialogProps extends FilterPanelProps {
   postlude?: ReactNode;
   /**
    * What the caller drafts beside the filters, which Clear all puts back too (the Binder sheet's
-   * Show, #969): while it counts any, Clear all shows, and pressing it also calls `onClearAll`.
+   * Show, #969): while `count` is above 0, Clear all shows, and pressing it also calls `onClear`.
+   * One prop, so a count never comes without the clear that takes it away.
    */
-  extraCount?: number;
-  onClearAll?: () => void;
+  extra?: {count: number; onClear: () => void};
 }
 
 /**
@@ -126,8 +126,7 @@ export function FilterDialog({
   title,
   prelude,
   postlude,
-  extraCount = 0,
-  onClearAll,
+  extra,
 }: FilterDialogProps) {
   const draft = useDraftFilters({isOpen, inkFilters, typeFilters, costFilters, filters});
   const returnFocus = useReturnFocus();
@@ -140,7 +139,7 @@ export function FilterDialog({
   };
   const clearAll = () => {
     draft.clearAll();
-    onClearAll?.();
+    extra?.onClear();
   };
   const count = draft.activeFilterCount;
 
@@ -232,7 +231,7 @@ export function FilterDialog({
           <DialogHeader
             variant={variant}
             title={title ?? `Filters${count > 0 ? ` (${count})` : ''}`}
-            canClear={count + extraCount > 0}
+            canClear={count + (extra?.count ?? 0) > 0}
             onClear={clearAll}
             onApply={handleApply}
           />
