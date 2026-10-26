@@ -771,7 +771,8 @@ flowchart TD
 | Vercel Edge | `/card-images-preview/(.*)` | `Cache-Control: public, max-age=86400, must-revalidate` | `vercel.json:24-32` — non-hashed, must revalidate |
 | Vercel Edge | `/data/synergies/(.*)` | `Cache-Control: public, max-age=3600, stale-while-revalidate=86400` | `vercel.json:33-41` |
 | Service Worker | `/data/allCards.json` | `StaleWhileRevalidate`, 24h, 1 entry | `vite.config.ts:154-159` |
-| Service Worker | `/data/synergies/.+\.json$` | `CacheFirst`, 24h, 500 entries | `vite.config.ts:161-167` |
+| Service Worker | `/data/synergies/.+\.json$` | `StaleWhileRevalidate`, 24h, 500 entries | `vite.config.ts:161-167` |
+| Service Worker | `/data/playstyleGuides.json` | `StaleWhileRevalidate`, 24h, 1 entry | `vite.config.ts` `runtimeCaching`, for the playstyle pages' guides (#995), written by hand |
 | Service Worker | `/card-images/.+\.avif$` | `CacheFirst`, 30d, 600 entries | `vite.config.ts:169-176` |
 | Service Worker | `navigateFallbackDenylist` excludes `/card-images/`, `/card-images-preview/`, `/data/` | — | `vite.config.ts:147-151` — prevents direct-URL pastes from rendering the SPA NotFoundPage |
 

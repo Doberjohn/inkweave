@@ -1,10 +1,13 @@
 import {useEffect, useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {useCardDataContext} from '../../../shared/contexts/CardDataContext';
+import type {PlaystyleGuides} from '../../playstyles/playstyleGuides';
 import {
   fetchPlaystyleCardIds,
+  fetchPlaystyleGuides,
   fetchPlaystyleMechanicIds,
   playstyleCardIdsIfLoaded,
+  playstyleGuidesIfLoaded,
   playstyleMechanicIdsIfLoaded,
   type MechanicIdsByCard,
 } from './playstyleFiles';
@@ -14,6 +17,9 @@ import {
  * load after they failed, which only the tiles wait for; failed; or loaded.
  */
 export type MechanicsStatus = 'loading' | 'reloading' | 'failed' | 'loaded';
+
+/** Where the playstyle guides stand (#995): their first load, which the page waits for; failed; or loaded. */
+export type GuidesStatus = 'loading' | 'failed' | 'loaded';
 
 // ── Hooks ──
 
@@ -101,13 +107,50 @@ function usePlaystyleMechanicIds(): {
 }
 
 /**
- * Starts every playstyle card's mechanic ids once the gallery is `drawn`, so a playstyle opened
- * from it draws its cards and tiles on its first render (#913, #930), and the request never
- * competes with the gallery's own. The playstyle's page logs a failure, and asks again.
+ * Every playstyle's written guide (#995), starting from the shared request's result, as the
+ * mechanic ids do (#913). A failure leaves the guides out rather than failing the page: it is
+ * logged, `status` says so, and the next visit asks again.
  */
-export function usePreloadPlaystyleMechanics(drawn: boolean): void {
+export function usePlaystyleGuides(): {guides: PlaystyleGuides | null; status: GuidesStatus} {
+  const [guides, setGuides] = useState(playstyleGuidesIfLoaded);
+  const [status, setStatus] = useState<GuidesStatus>(() =>
+    playstyleGuidesIfLoaded() === null ? 'loading' : 'loaded',
+  );
+
   useEffect(() => {
-    if (drawn) fetchPlaystyleMechanicIds().catch(() => undefined);
+    let cancelled = false;
+
+    fetchPlaystyleGuides().then(
+      (data) => {
+        if (cancelled) return;
+        setGuides(data);
+        setStatus('loaded');
+      },
+      (err: unknown) => {
+        console.error('Failed to load playstyle guides:', err);
+        if (!cancelled) setStatus('failed');
+      },
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return {guides, status};
+}
+
+/**
+ * Starts the files a playstyle's page waits for besides its card ids, every playstyle card's
+ * mechanic ids and the guides, once the gallery is `drawn`, so a playstyle opened from it draws
+ * its cards, tiles and guide on its first render (#913, #930, #995), and the requests never
+ * compete with the gallery's own. The playstyle's page logs a failure, and asks again.
+ */
+export function usePreloadPlaystyleFiles(drawn: boolean): void {
+  useEffect(() => {
+    if (!drawn) return;
+    fetchPlaystyleMechanicIds().catch(() => undefined);
+    fetchPlaystyleGuides().catch(() => undefined);
   }, [drawn]);
 }
 

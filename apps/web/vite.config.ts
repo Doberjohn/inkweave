@@ -502,6 +502,16 @@ export default defineConfig({
             },
           },
           {
+            // The playstyle pages' guides (#995), edited at the same path like the synergy files, so
+            // a playstyle page keeps its guide offline and a returning visitor gets an edit next visit.
+            urlPattern: /\/data\/playstyleGuides\.json$/,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'playstyle-guides',
+              expiration: {maxEntries: 1, maxAgeSeconds: 60 * 60 * 24},
+            },
+          },
+          {
             urlPattern: /\/card-images\/.+\.avif$/,
             handler: 'CacheFirst',
             options: {

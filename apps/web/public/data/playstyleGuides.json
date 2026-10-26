@@ -1,0 +1,351 @@
+{
+  "lore-denial": {
+    "paragraphs": [
+      "Lore Denial decks win the race to 20 lore from both ends: they quest like any other deck and make the opponent lose lore they already have. Some cards only take lore away, on play, when they challenge or when they are challenged, while the strongest steal it: the opponent loses lore and you gain the same amount, so each point moves the race twice.",
+      "Most lore-loss cards are Ruby, including every card that steals lore, and the rest are Emerald, so the deck starts from Ruby. Several of them fire when they challenge, which pairs them with Ruby's fast challengers and with effects that keep opposing characters exerted. Lead with the cheap ones to start the pressure, and save the big swings for the last turns, when taking a few lore can stop the opponent from reaching 20."
+    ],
+    "keyCards": [
+      "2068",
+      "2579",
+      "2587",
+      "3091",
+      "2590",
+      "2302"
+    ]
+  },
+  "location-control": {
+    "paragraphs": [
+      "Locations stay in play, gain you their lore at the start of each of your turns, and often give the characters at them extra abilities. A Locations deck plays more of them than usual and adds the cards that reward having them: characters that get stronger or draw cards while at a location, cards that trigger whenever you play a location or move a character to one, and cards that protect locations from challenges.",
+      "Location cards come in every ink, but most of the payoffs are Ruby, Steel and Emerald. Play cheap locations early so their lore adds up over many turns, and use the cards that cut a location's cost or play one from your discard to get ahead. Move characters in with free moves where you can, and protect your locations with Steel's cards that give them Resist or stop challenges to them, since a banished location stops gaining you lore."
+    ],
+    "keyCards": [
+      "3084",
+      "2586",
+      "2909",
+      "3046",
+      "2128",
+      "2593"
+    ]
+  },
+  "discard": {
+    "paragraphs": [
+      "Discard decks empty the opponent's hand. Each card they discard is one they can't play or put into their inkwell, so the deck wins by leaving them short of options while you keep playing yours. Some cards make each opponent choose and discard a card on play or when they quest, some only when they are challenged, which makes challenging them costly, and others reveal the opponent's hand and let you pick the card that goes: a non-character card, an action, a song or a location.",
+      "Most of the deck is Emerald, with more discard in Amber, so the deck pairs Emerald with Amber. Play discard early, while the opponent still holds cards worth taking, and lead with the cheap actions and characters, since a discard effect late in the game, against an empty hand, does nothing. Characters that punish being challenged make good early defenders, and repeatable effects that trigger on questing keep the hand empty turn after turn."
+    ],
+    "keyCards": [
+      "2031",
+      "2029",
+      "2007",
+      "2554",
+      "2479",
+      "2284"
+    ]
+  },
+  "toy": {
+    "paragraphs": [
+      "Toys is a Toy Story tribal deck built from characters with the Toy classification, in two builds. Andy's toys, led by Woody and Buzz Lightyear in Amber and Emerald, draw cards and play cheap characters for free, and several do more when another Toy is in play. Sid's toys in Ruby want to be banished: they gain lore, draw cards or get cheaper when a Toy is banished on your turn, and others get cheaper with Toys in your discard.",
+      "Andy's toys are the steadier build: deck searches find the other Toys, and several cards pay off each card you pay 2 or less to play, so the curve stays low. Sid's toys play like a sacrifice deck and pair with Ruby cards that banish your own characters, Sid Phillips among them. Either way, count your Toys: many of the payoffs check for other Toys in play or in your discard."
+    ],
+    "keyCards": [
+      "2736",
+      "2735",
+      "2730",
+      "2841",
+      "2835",
+      "2745"
+    ]
+  },
+  "ramp": {
+    "paragraphs": [
+      "Ramp decks get more ink than the one card a turn the rules allow. Their cards put the top card of your deck, or a card from your hand, into your inkwell as an extra, and others cut what your next character or card costs, so the deck plays its biggest cards turns earlier than usual, before the opponent is ready for them. A few payoffs also trigger whenever a card enters your inkwell.",
+      "Almost all of the ramp is Sapphire, with discounts in Amber, so the deck is Sapphire first. Most of it puts the new ink in exerted, so it pays off from your next turn: ramp early, when an extra ink is a big share of what you have, and keep a few expensive cards worth reaching. Without them, the extra ink has nothing to buy, so build the top of the curve before adding more ramp."
+    ],
+    "keyCards": [
+      "2101",
+      "2104",
+      "2088",
+      "2095",
+      "1968",
+      "2348"
+    ]
+  },
+  "sacrifice": {
+    "paragraphs": [
+      "Sacrifice decks banish their own characters on purpose. Cheap characters with an effect when they are banished, such as drawing a card, going into your inkwell or letting you play another character for free, are worth more gone than in play. The cards that banish your own characters cash them in on your turn, when several of these effects work, instead of waiting for the opponent to challenge, and payoffs that draw a card whenever one of your characters is banished on your turn reward every sacrifice.",
+      "Ruby holds most of the cards that banish your own characters and the payoffs that draw when you do, with more of them in Emerald, and Sapphire adds characters that go into your inkwell when banished. Most self-banish cards are items or actions that also do something useful, such as banishing an opposing character or playing a bigger one, so each sacrifice buys something. Keep a few cheap characters with banish effects to feed them, and a draw payoff to make each one count."
+    ],
+    "keyCards": [
+      "2320",
+      "3395",
+      "2563",
+      "2305",
+      "2834",
+      "1985"
+    ]
+  },
+  "self-discard": {
+    "paragraphs": [
+      "Self-Discard decks treat their own discard pile as a second hand. Cards that draw and then discard, or that ask you to discard as a cost, dig through your deck for what you need while filling the pile, and the payoffs cash it in: some play or return cards from your discard, some reward the discard itself or an empty hand, and some grow stronger or cheaper as the pile fills, a few of them counting the songs, actions or items in it.",
+      "The cards that fill the pile sit mostly in Steel and Emerald, those that bring cards back in Amber and Sapphire, and Ruby holds payoffs that count the pile, so pick the two inks that hold both halves of your plan. Draw and discard early to fix your hand, and keep a few strong cards you are happy to discard, since a card sent to the pile on purpose should come back or pay off later. Discarding without payoffs only throws cards away."
+    ],
+    "keyCards": [
+      "2278",
+      "3162",
+      "3071",
+      "2480",
+      "2995",
+      "3384"
+    ]
+  },
+  "dwarfs": {
+    "paragraphs": [
+      "Seven Dwarfs is a small Amethyst tribal deck built around Snow White and the seven Dwarfs: Doc, Grumpy, Happy, Sleepy, Bashful, Sneezy and Dopey. Its payoffs check what you have in play: Doc and Sleepy draw a card beside another Dwarf or a Princess, Right Behind You plays a Dwarf for free when you have both, and Don't Be Nervous draws 2 cards and gains 2 lore with two Dwarfs out, so the deck snowballs once a few of them are on the board.",
+      "Every card in it is Amethyst, so the deck is Amethyst plus a second ink for more Princesses or a backup plan. Play the cheap Dwarfs first, so the checks are on when Doc and the actions land. Snow White is a Princess herself, so she switches on the Princess checks, and when she quests she can return a Dwarf to your hand to draw a card, which lets you replay it for its play effect."
+    ],
+    "keyCards": [
+      "2752",
+      "2755",
+      "2780",
+      "2779",
+      "2759"
+    ]
+  },
+  "floodborn": {
+    "paragraphs": [
+      "Floodborn is a classification, and most Floodborn characters have Shift: you play them on top of a character with the same name, usually for less than their cost. The Floodborn characters created by the Vine have no Shift, and most of the tribe's payoffs come from them and from two locations: they give all your Floodborn characters extra strength, willpower, lore or keywords, and trigger when one is played, quests, challenges or is banished, gaining lore, drawing cards or making your next shift cheaper.",
+      "Floodborn characters come in every ink, but Steel and Amethyst hold most of the payoffs, so the deck usually pairs those two. Count your shift targets: a Shift character is cheapest when a character with its name is already in play, so play the base characters early. Put a team buff down before the shifts land, and keep the payoffs that trigger on playing a Floodborn character in play while you shift."
+    ],
+    "keyCards": [
+      "3026",
+      "3086",
+      "3044",
+      "3022",
+      "3165",
+      "3168"
+    ]
+  },
+  "hunny": {
+    "paragraphs": [
+      "Hunny is the Winnie the Pooh tribe: Pooh, Piglet, Tigger, Eeyore and the rest of the Hundred Acre Wood, each with the Hunny classification. Several of them get better while other Hunny characters are in play, gaining Resist, Evasive or lore, and others hand extra lore, Ward or Evasive to a chosen Hunny character, so the deck wants a few of them on the board at once.",
+      "The tribe spans every ink, and one Christopher Robin lets a deck that runs him include Hunny characters of any ink. The Pooh and Piglet team-up rewards that with +1 lore for each different ink among your characters in play. Build around Amethyst and Sapphire, Christopher Robin's two inks, and play the cheap members early, so the checks for another Hunny character are already on when the rest arrive."
+    ],
+    "keyCards": [
+      "3032",
+      "3033",
+      "3135",
+      "3011",
+      "3156",
+      "3145"
+    ]
+  },
+  "red-panda": {
+    "paragraphs": [
+      "Red Panda is the Turning Red tribe: Meilin Lee, Ming Lee, Grandma Wu and Sun Yee. Its big Ruby red pandas use Temporary Shift: you shift one onto a matching character for a low cost, and at the end of the turn its damage is removed and only the red panda card returns to your hand, leaving the character underneath in play. If that character was in play when your turn began, the red panda can challenge or sing at once. The smaller Amethyst versions reward being shifted onto, with lore, Evasive or an opposing character that can't ready.",
+      "Most base characters are Amethyst and Amber, and most of the Ruby cards use Temporary Shift, so the deck is Ruby with one of the other two. With Amethyst, play a base character early, then shift a red panda onto it each turn for its reward again, since the red panda comes back to your hand. With Amber, lean on songs: an Amber Meilin Lee finds Red Pandas or songs, and the big Ruby Meilin Lee gains 3 lore when she sings."
+    ],
+    "keyCards": [
+      "3091",
+      "3096",
+      "3100",
+      "3024",
+      "2987",
+      "3020"
+    ]
+  },
+  "items": {
+    "paragraphs": [
+      "Items stay in play, and most keep working turn after turn: they draw cards, give your characters keywords or strength, or add to your ink. An Items deck plays plenty of them and adds the characters that reward having them. Some trigger whenever you play an item, drawing a card, buffing one of your characters or weakening an opposing one. Others get more lore or draw a card when you have an item in play, and others make items cheaper or play one for free.",
+      "Almost every payoff is Sapphire, so the deck starts from Sapphire and adds a second ink for the items it wants most. Play cheap items early, since several payoffs only check that you have an item in play, and run the characters and actions that find items in your deck or bring them back from your discard, so the payoffs always have one to work with. Ariel rewards items with different names, so a deck built around her runs many different items rather than four copies of a few."
+    ],
+    "keyCards": [
+      "3421",
+      "2860",
+      "2092",
+      "3122",
+      "2612",
+      "3115"
+    ]
+  },
+  "healing": {
+    "paragraphs": [
+      "Healing decks remove damage from their own characters and cash in the payoffs that reward it. Each time you remove damage from one of your characters, a payoff can gain you lore, draw you a card, put a card into your inkwell, ready that character or exert an opposing one, so a healer that works every turn becomes an engine. Removing damage also keeps your characters alive through the next challenge, so they stay in play to quest.",
+      "Most healers and payoffs are Amber or Sapphire, so the deck pairs those two inks. Healers need damage to remove, so the deck is happy to challenge, and a few cards even damage your own characters on purpose, such as Pepa Madrigal in Amethyst. Prefer healers that work every turn, such as characters that heal when they quest or at the end of your turn, over one-shot actions, since they fire the payoffs again every turn."
+    ],
+    "keyCards": [
+      "2086",
+      "2734",
+      "2869",
+      "2610",
+      "2484",
+      "2771"
+    ]
+  },
+  "exert": {
+    "paragraphs": [
+      "Only exerted characters can be challenged, so a character your opponent keeps ready is safe from your challengers. Exert decks take that away: their effects exert opposing characters on your turn, opening them to challenges, and their payoffs make it count for more. Some stop an exerted character from readying, so it can't quest or challenge on its owner's next turn, while others banish a strong exerted character or gain lore or a card from it.",
+      "Most exert cards are Amethyst, with a few in Ruby and Amber, so the deck starts from Amethyst and picks a second ink with strong challengers to finish what it exerts. Lead with cheap exert effects, keep a card that stops a character from readying for the opponent's best quester, and balance exert effects against payoffs: a payoff needs an exerted target, while a spare exert effect still opens a challenge."
+    ],
+    "keyCards": [
+      "1989",
+      "3037",
+      "1999",
+      "2530",
+      "2256",
+      "1941"
+    ]
+  },
+  "bounce": {
+    "paragraphs": [
+      "Bounce decks return characters from play to a hand. Returning one of your own lets you play it again and repeat the effect it has when played, such as drawing two cards, searching your deck or banishing a character. Returning an opposing one costs the opponent the ink and the turn they spent on it. Many bounce cards can do either, since they return a chosen character, yours or the opponent's, to its player's hand, and the payoffs are characters whose play effects are worth using twice.",
+      "Most cards that return characters are Amethyst, with more in Emerald, while Amber holds the most characters worth replaying, so the deck pairs Amethyst with Amber or Emerald. Read each returner's limits: many reach only cards that cost 2 or less, which suits setting the opponent back more than replaying your own. To replay your best play effects, lean on the cards that return any character of yours, and keep one that returns any character for the opponent's biggest threat."
+    ],
+    "keyCards": [
+      "2520",
+      "2778",
+      "2035",
+      "2500",
+      "3052",
+      "2986"
+    ]
+  },
+  "ink-drops": {
+    "paragraphs": [
+      "An ink drop is banked ink: a card gets you one, and you remove it when you choose to pay 1 ink. On their own, drops work like ramp, so an Ink Drops deck adds the payoffs that turn them into a plan: cards that do more if you removed a drop to play them, one that draws a card the first time you remove one each turn, characters that get stronger or gain a keyword while you have one, and a cheap, strong character that can quest or challenge only on a turn you got one.",
+      "Steel and Emerald hold the most drop makers, while the payoffs sit in Steel, Sapphire and Amethyst, so Steel is the steadiest base. Makers that repeat, such as an item or a location that gives a drop each turn, keep the payoffs that check for a drop switched on, while one-shot makers suit the cards that do more when a drop pays for them. Some Emerald and Amber makers also give the opponent a drop, which is ink for them too."
+    ],
+    "keyCards": [
+      "3324",
+      "3332",
+      "3446",
+      "3322",
+      "3429",
+      "3462"
+    ]
+  },
+  "monster": {
+    "paragraphs": [
+      "Monsters is the Monsters, Inc. tribe: Sulley, Mike Wazowski, Randall Boggs and their coworkers, with a few other characters that carry the Monster classification. One card rewards the tribe directly: Red Alert banishes a character with 3 strength or less and, if you have a Monster in play, makes an opponent lose 1 lore. Several of the Monsters care about your inkwell instead, and the deck is built around them.",
+      "Red Alert and most of the Monsters that reward an exerted inkwell are Ruby, and those that want a big inkwell are Sapphire, so Ruby with Sapphire is the natural pair. Both Randall Boggs and one Sulley gain lore or Rush while every card in your inkwell is exerted, so plan turns that spend all your ink. Others get stronger with a big inkwell, which suits Sapphire's cards that put extra cards into it. Amber holds most of the rest of the cast, Mike Wazowski included."
+    ],
+    "keyCards": [
+      "3106",
+      "3094",
+      "3124",
+      "3099",
+      "3134",
+      "3123"
+    ]
+  },
+  "princess": {
+    "paragraphs": [
+      "Princesses is a tribal deck of the characters with the Princess classification: Cinderella, Moana, Mulan, Jasmine, Snow White and the rest. Its payoffs reward playing them. Beast gives your Princesses +1 strength and +1 willpower, one Moana readies your other exerted Princesses when she quests so they can challenge, and others draw a card or gain lore when a Princess is in play or was played this turn. Fairy Godmother's Wand gives a Princess Ward whenever you put a card into your inkwell.",
+      "Sapphire and Amber hold the most Princesses, and the payoffs that need only a Princess, so Amber with Sapphire is the steadiest pair. The Amethyst payoffs come from the Seven Dwarfs cards and check for Dwarfs, a Princess or both, which suits a Snow White and Dwarfs build. Play a Princess every turn, since several payoffs check for one in play or played this turn, and let one Mulan or Don't Be Nervous find more."
+    ],
+    "keyCards": [
+      "1940",
+      "1956",
+      "2078",
+      "2344",
+      "2357",
+      "2084"
+    ]
+  },
+  "hero": {
+    "paragraphs": [
+      "Heroes is the largest tribe: most protagonists carry the Hero classification, so almost any deck already holds a few. A Heroes deck adds the cards that reward them. Philoctetes gains you 1 lore whenever you play a Hero and gives your Heroes Challenger +1, one Prince Phillip gives your other Heroes Ward, one Hercules stops them being dealt damage outside challenges while he is exerted, and others draw a card or gain lore when a Hero is in play.",
+      "Steel holds the most payoffs, so the deck usually starts from Steel, and since every ink has plenty of Heroes, the second ink can be whichever holds the Heroes you want. Play Philoctetes before the rest of your Heroes, since he gains lore for each one played after him, and save Hero Work or One Last Hope for a turn of challenges: one lets your Heroes steal lore when they challenge, the other lets a Hero challenge a ready character."
+    ],
+    "keyCards": [
+      "2107",
+      "2008",
+      "2307",
+      "3147",
+      "2847",
+      "2073"
+    ]
+  },
+  "super": {
+    "paragraphs": [
+      "Supers is the tribe of characters with the Super classification: the Incredibles, Darkwing Duck and his rivals, and the Big Hero 6 team. Its payoffs reward having several in play: one Mr. Incredible draws a card whenever one of your Supers challenges, Edna Mode gives your Supers +1 lore when she quests, one Fred gets you an ink drop whenever you play a Super, and Mirage and one Frozone do more when you already have a Super in play.",
+      "Amethyst holds three of the payoffs, so the deck often starts there and adds Ruby for the Mr. Incredible that draws, Steel for the Mrs. Incredible that readies Supers or Emerald for the Freds, one of whom finds Supers in your deck. Play cheap Supers first, so the checks for another Super are already on when the payoffs land, and save your challenges for a turn when that Mr. Incredible is in play, since each Super that challenges then draws you a card."
+    ],
+    "keyCards": [
+      "2842",
+      "2769",
+      "2774",
+      "3351",
+      "3341",
+      "2910"
+    ]
+  },
+  "royalty": {
+    "paragraphs": [
+      "Royalty gathers the Queens, Kings and Princes: Elsa and Anna, the Queen of Hearts, Simba, Hercules, Prince Eric and many more, while Princesses have a tribe of their own. Only two cards check for Royalty in play, and both look for a Queen. Agnarr gets +2 strength while you have a Queen in play, and one Hans gains 1 lore when you play him if a Princess or Queen is in play. So the deck is built on Queens, with Kings and Princes for their own abilities.",
+      "Most Queens are Amethyst or Ruby, where Elsa and the Queen of Hearts have most of their versions, and Agnarr is Ruby too, so Amethyst with Ruby is the natural pair. Agnarr's bonus lasts only while a Queen is in play, so play one before he challenges, and a Queen of Hearts that draws a card whenever one of your characters challenges rewards the same turns. That Hans is Sapphire, and his check counts either player's Princesses and Queens."
+    ],
+    "keyCards": [
+      "2577",
+      "2084",
+      "2576",
+      "2056",
+      "1979",
+      "2515"
+    ]
+  },
+  "detective": {
+    "paragraphs": [
+      "Detectives is a tribal deck of characters with the Detective classification, led by Judy Hopps and Nick Wilde. Its payoffs reward playing several of them: they help your Detectives challenge by giving them Alert, Challenger and Resist, draw you a card when a Detective banishes a character in a challenge, and switch on extra effects when you already have another Detective in play.",
+      "The payoffs are split almost evenly between Amber, Sapphire and Steel, so the deck pairs two of those three inks. Play cheap Detectives early, so the checks for another Detective are already on when the payoffs land, and play the buffs that last one turn just before a Detective challenges. Cards that find Detectives in your deck or return them from your discard keep the count up when challenges thin it."
+    ],
+    "keyCards": [
+      "2339",
+      "2345",
+      "2368",
+      "2376",
+      "2361",
+      "3281"
+    ]
+  },
+  "gargoyle": {
+    "paragraphs": [
+      "Gargoyles is the clan from the Gargoyles series: Goliath, Demona, Brooklyn, Lexington, Hudson, Broadway, Bronx and Elisa Maza. Most of them carry Stone by Day: while you have 3 or more cards in your hand, they can't ready. One Goliath gains you 1 lore whenever one of your Gargoyles challenges, one Demona gives a Gargoyle Rush and Evasive, and Angela makes all your Gargoyles lose Stone by Day.",
+      "The clan is split across Amethyst, Steel and Ruby: Goliath's lore trigger is Ruby, Angela is Steel and Demona's ability is Amethyst. Keep two cards or fewer in your hand at the start of your turn so your Gargoyles ready, by playing cheap cards and paying discard costs such as Demona's, or let another Goliath set each player's hand to two cards at the end of their own turn. Coldstone gains you 2 lore when played if two Gargoyles are already in your discard."
+    ],
+    "keyCards": [
+      "2650",
+      "2308",
+      "3321",
+      "2362",
+      "2240",
+      "2309"
+    ]
+  },
+  "madrigal": {
+    "paragraphs": [
+      "Madrigals is the Encanto family: Mirabel, Luisa, Isabela, Bruno, Julieta, Pepa, Alma and the rest. Its payoffs switch on while the family is together: one Alma exerts an opposing character and Pedro removes his own damage when you play them beside another Madrigal, and Julieta's Arepas removes damage at the start of each of your turns while you have one in play. Many of the family also remove or move damage, so the tribe overlaps with Healing.",
+      "The family spans Amber, Amethyst and Sapphire, with one payoff in each, so a two-ink deck holds two of them. Amber with Sapphire holds most of the healers and Healing payoffs, plus The Madrigal Family, who can shift onto any of your Madrigals. Amethyst adds Pepa, whose damage to your own characters gives the healers work, and one Luisa and another Alma, who move damage onto opposing characters. Play a cheap Madrigal first, so the checks are on."
+    ],
+    "keyCards": [
+      "2881",
+      "2751",
+      "2720",
+      "2734",
+      "2771",
+      "3001"
+    ]
+  },
+  "villain": {
+    "paragraphs": [
+      "Villains gathers the characters with the Villain classification: Ursula, Maleficent, Hades, Jafar, Cruella De Vil, Captain Hook and many more, across every ink. Only two cards reward running them. One Queen of Hearts gives your other Villains +1 lore this turn whenever she quests. Diablo gets +2 strength and +1 lore while you have a Villain in play, and while he is exerted, your Villains can't be challenged.",
+      "Villains are most common in Ruby and Amethyst, while the two payoffs are Amber and Steel, so the deck takes one payoff's ink and pairs it with Ruby or Amethyst for more Villains. Diablo costs only 2, so play him early: when he quests he stays exerted through the opponent's turn, and your Villains can't be challenged until he readies. Quest with that Queen of Hearts before your other Villains, so their extra lore counts."
+    ],
+    "keyCards": [
+      "2911",
+      "1959",
+      "2111",
+      "3460",
+      "2044",
+      "2245"
+    ]
+  }
+}

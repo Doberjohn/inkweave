@@ -3,10 +3,13 @@ import {useParams, useNavigate, Navigate} from 'react-router-dom';
 import type {PlaystyleId, LorcanaCard} from 'inkweave-synergy-engine';
 import {getPlaystyleById, mechanicDescription, mechanicLabel} from '../features/synergies/engineCatalog';
 import {
+  usePlaystyleGuides,
   usePrecomputedPlaystyleCards,
+  type GuidesStatus,
   type MechanicIdsByCard,
   type MechanicsStatus,
 } from '../features/synergies/hooks';
+import {PlaystyleGuide, type PlaystyleGuideProps} from '../features/playstyles';
 import {
   RoleTiles,
   type RoleTile,
@@ -72,6 +75,13 @@ const GRID_PADDING_BOTTOM = 48;
  */
 const PHONE_GRID_PADDING = `${SPACING.md}px ${SPACING.lg}px ${GRID_PADDING_BOTTOM}px`;
 const DESKTOP_GRID_PADDING = `${SPACING.xxl}px ${SPACING.xxxl}px ${GRID_PADDING_BOTTOM}px`;
+
+/** The guide under the card grid (#995): the grid's sides, and the grid's room under it. */
+const PHONE_GUIDE_PADDING = `0 ${SPACING.lg}px ${GRID_PADDING_BOTTOM}px`;
+const DESKTOP_GUIDE_PADDING = `0 ${SPACING.xxxl}px ${GRID_PADDING_BOTTOM}px`;
+
+/** What the views hand the guide under their grids, which adds their own padding (#995). */
+type GuideSection = Omit<PlaystyleGuideProps, 'padding'>;
 
 // ── Hero Section ──
 
@@ -444,7 +454,7 @@ export function PlaystyleDetailPage() {
 
   const {playstyle, ui} = useResolvedPlaystyle(playstyleId);
   const playstyleLoad = usePlaystyleDetailLoad(playstyle?.id, {isLoading, error, retry: retryLoad});
-  const {cards: playstyleCards, mechanicIds, pageLoad, tileRow} = playstyleLoad;
+  const {cards: playstyleCards, mechanicIds, pageLoad, tileRow, guide} = playstyleLoad;
 
   const combinedFilters = buildCombinedFilters(filters, inkFilters, typeFilters, costFilters);
   const sortedCards = applyFilterAndSort(playstyleCards, searchQuery, combinedFilters, sortOrder);
@@ -454,10 +464,12 @@ export function PlaystyleDetailPage() {
 
   const goHome = () => navigate('/');
   const goPlaystyles = () => navigate('/playstyles');
-  const handleCardSelect = (card: {id: string}) => {
-    trackCardSelected(getCardById(card.id), 'playstyle');
-    openCardModal(card.id, displayedCards.map((c) => c.id));
+  // A card opened from the grid or the guide's key cards, with the cards it came from as its list.
+  const openCard = (cardId: string, cardIds: string[]) => {
+    trackCardSelected(getCardById(cardId), 'playstyle');
+    openCardModal(cardId, cardIds);
   };
+  const handleCardSelect = (card: {id: string}) => openCard(card.id, displayedCards.map((c) => c.id));
 
   // An unknown id: the gallery. Ids resolve with no data, so this needs no wait.
   if (!playstyle || !ui) return <Navigate to="/playstyles" replace />;
@@ -490,6 +502,9 @@ export function PlaystyleDetailPage() {
     uniqueRarities,
     sets,
   });
+  // The guide under the cards, there once the page has loaded (#995). It finds its key cards among
+  // all of the playstyle's cards, so a filter that hides one doesn't take it off the guide.
+  const guideSection = {name: playstyle.name, guide, cards: playstyleCards, onOpenCard: openCard};
 
   // While the card data or the playstyles' own lists load, the views draw the hero and the
   // toolbar as loaded, with placeholders for the mechanics and the cards, so nothing moves when
@@ -512,6 +527,7 @@ export function PlaystyleDetailPage() {
         clearRoles={() => setActiveRoles(new Set())}
         roleFilteredCards={roleFilteredCards}
         displayedCards={displayedCards}
+        guideSection={guideSection}
         toolbarProps={toolbarProps}
         filterDialogProps={filterDialogProps}
       />
@@ -533,6 +549,7 @@ export function PlaystyleDetailPage() {
       toggleRole={toggleRole}
       roleFilteredCards={roleFilteredCards}
       displayedCards={displayedCards}
+      guideSection={guideSection}
       toolbarProps={toolbarProps}
       filterDialogProps={filterDialogProps}
     />
@@ -547,15 +564,18 @@ interface PageLoad {
 }
 
 /**
- * The card data and the playstyles' lists as one load: loading while either is, and the
- * retry for whichever failed, the card data first, or null when both loaded.
+ * The card data, the playstyles' lists and the guides' first load as one load: loading while
+ * any is, and the retry for whichever list failed, the card data first, or null when both
+ * loaded. The guides never fail the page: a failure leaves only the guide out (#995).
  */
 function combineLoads(
   cardData: PageLoad,
   playstyleCards: PageLoad,
+  guides: GuidesStatus,
 ): {isLoading: boolean; retry: (() => void) | null} {
   const failed = [cardData, playstyleCards].find((load) => load.error);
-  return {isLoading: cardData.isLoading || playstyleCards.isLoading, retry: failed?.retry ?? null};
+  const isLoading = cardData.isLoading || playstyleCards.isLoading || guides === 'loading';
+  return {isLoading, retry: failed?.retry ?? null};
 }
 
 /** The mechanic tiles' state on the page, and the retry their failure offers (#930). */
@@ -574,18 +594,21 @@ function tileRowStatus(pageLoading: boolean, mechanics: MechanicsStatus): RoleTi
 }
 
 /**
- * The playstyle's cards and mechanic ids, the page's load over them and the card data, and the
- * tiles' own state, which fails without failing the page (#930).
+ * The playstyle's cards, mechanic ids and guide, the page's load over them and the card data,
+ * and the tiles' own state, which fails without failing the page (#930). The guide is there
+ * once the page has loaded, and missing when the guides failed (#995).
  */
 function usePlaystyleDetailLoad(playstyleId: PlaystyleId | undefined, cardData: PageLoad) {
   const {cards, mechanicIds, mechanicsStatus, retryMechanics, ...playstyleCardsLoad} =
     usePrecomputedPlaystyleCards(playstyleId);
-  const pageLoad = combineLoads(cardData, playstyleCardsLoad);
+  const guides = usePlaystyleGuides();
+  const pageLoad = combineLoads(cardData, playstyleCardsLoad, guides.status);
   const tileRow: TileRow = {
     status: tileRowStatus(pageLoad.isLoading, mechanicsStatus),
     retry: retryMechanics,
   };
-  return {cards, mechanicIds, pageLoad, tileRow};
+  const guide = pageLoad.isLoading || !playstyleId ? undefined : guides.guides?.[playstyleId];
+  return {cards, mechanicIds, pageLoad, tileRow, guide};
 }
 
 // ── Page sub-views (extracted to keep PlaystyleDetailPage under CC 10) ──
@@ -755,6 +778,7 @@ function PlaystyleDetailMobileView({
   clearRoles,
   roleFilteredCards,
   displayedCards,
+  guideSection,
   toolbarProps,
   filterDialogProps,
 }: {
@@ -772,6 +796,7 @@ function PlaystyleDetailMobileView({
   clearRoles: () => void;
   roleFilteredCards: LorcanaCard[];
   displayedCards: LorcanaCard[];
+  guideSection: GuideSection;
   toolbarProps: ToolbarProps;
   filterDialogProps: FilterDialogSharedProps;
 }) {
@@ -837,6 +862,9 @@ function PlaystyleDetailMobileView({
             borderRadius={10}
           />
         </ErrorBoundary>
+        <ErrorBoundary>
+          <PlaystyleGuide {...guideSection} padding={PHONE_GUIDE_PADDING} />
+        </ErrorBoundary>
       </div>
       <FilterDialog {...filterDialogProps} variant="drawer" />
       <MechanicsBottomSheet
@@ -867,6 +895,7 @@ function PlaystyleDetailDesktopView({
   toggleRole,
   roleFilteredCards,
   displayedCards,
+  guideSection,
   toolbarProps,
   filterDialogProps,
 }: {
@@ -883,6 +912,7 @@ function PlaystyleDetailDesktopView({
   toggleRole: (role: string) => void;
   roleFilteredCards: LorcanaCard[];
   displayedCards: LorcanaCard[];
+  guideSection: GuideSection;
   toolbarProps: ToolbarProps;
   filterDialogProps: FilterDialogSharedProps;
 }) {
@@ -929,6 +959,9 @@ function PlaystyleDetailDesktopView({
             handleCardSelect={handleCardSelect}
             padding={DESKTOP_GRID_PADDING}
           />
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <PlaystyleGuide {...guideSection} padding={DESKTOP_GUIDE_PADDING} />
         </ErrorBoundary>
       </div>
       <FilterDialog {...filterDialogProps} variant="modal" />

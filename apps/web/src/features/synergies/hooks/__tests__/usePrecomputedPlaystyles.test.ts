@@ -3,12 +3,14 @@ import {act, renderHook, waitFor} from '@testing-library/react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {
   useAllPlaystyleCards,
+  usePlaystyleGuides,
   usePrecomputedPlaystyleCards,
-  usePreloadPlaystyleMechanics,
+  usePreloadPlaystyleFiles,
 } from '../usePrecomputedPlaystyles';
 import {
   _resetPlaystyleFiles,
   fetchPlaystyleCardIds,
+  fetchPlaystyleGuides,
   fetchPlaystyleMechanicIds,
 } from '../playstyleFiles';
 
@@ -23,15 +25,24 @@ vi.mock('../../../../shared/contexts/CardDataContext', () => ({
 
 const IDS = {'lore-denial': ['2', '1']};
 const MECHANICS = {'lore-denial': {'1': ['lore-burn'], '2': ['draw']}};
+const GUIDES = {'lore-denial': {paragraphs: ['How it wins.', 'How to build it.'], keyCards: ['1']}};
+const MECHANICS_URL = '/data/synergies/_playstyleMechanics.json';
+const GUIDES_URL = '/data/playstyleGuides.json';
 const json = (body: unknown) => ({
   ok: true,
   headers: {get: () => 'application/json'},
   json: async () => body,
 });
 
-/** A fetch that answers `_playstyles.json` with IDS, and the mechanics file with `mechanics()`. */
-const byFile = (mechanics: () => unknown) =>
-  vi.fn(async (url: string) => (url.endsWith('/_playstyles.json') ? json(IDS) : mechanics()));
+/**
+ * A fetch that answers `_playstyles.json` with IDS, the mechanics file with `mechanics()` and the
+ * guides with `guides()`.
+ */
+const byFile = (mechanics: () => unknown, guides: () => unknown = () => json(GUIDES)) =>
+  vi.fn(async (url: string) => {
+    if (url.endsWith('/_playstyles.json')) return json(IDS);
+    return url === GUIDES_URL ? guides() : mechanics();
+  });
 
 beforeEach(() => {
   _resetPlaystyleFiles();
@@ -238,41 +249,121 @@ describe('usePrecomputedPlaystyleCards', () => {
   });
 });
 
-describe('usePreloadPlaystyleMechanics', () => {
-  it('starts the mechanic ids that a playstyle opened next starts from', async () => {
-    const fetchMock = byFile(() => json(MECHANICS));
-    vi.stubGlobal('fetch', fetchMock);
+describe('usePlaystyleGuides', () => {
+  it('starts from guides that have already loaded, with no loading render (#913)', async () => {
+    vi.stubGlobal('fetch', byFile(() => json(MECHANICS)));
+    await fetchPlaystyleGuides();
+    const statusByRender: string[] = [];
 
-    renderHook(() => usePreloadPlaystyleMechanics(true));
+    const {result} = renderHook(() => {
+      const guides = usePlaystyleGuides();
+      statusByRender.push(guides.status);
+      return guides;
+    });
 
-    expect(fetchMock).toHaveBeenCalledExactlyOnceWith('/data/synergies/_playstyleMechanics.json');
-    await expect(fetchPlaystyleMechanicIds()).resolves.toEqual(MECHANICS);
-    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(statusByRender).not.toContain('loading');
+    expect(result.current.guides).toEqual(GUIDES);
   });
 
-  it('waits until the gallery is drawn, so the request never competes with its own', () => {
+  it('shares the request the hold started instead of fetching again', async () => {
+    const fetchMock = byFile(() => json(MECHANICS));
+    vi.stubGlobal('fetch', fetchMock);
+    const held = fetchPlaystyleGuides();
+
+    const {result} = renderHook(() => usePlaystyleGuides());
+    await held;
+
+    await waitFor(() => expect(result.current.status).toBe('loaded'));
+    expect(result.current.guides).toEqual(GUIDES);
+    expect(fetchMock).toHaveBeenCalledExactlyOnceWith(GUIDES_URL);
+  });
+
+  it('says the guides failed and logs why, and the next visit asks again', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const answers = [{ok: false, status: 500}, json(GUIDES)];
+    vi.stubGlobal(
+      'fetch',
+      byFile(
+        () => json(MECHANICS),
+        () => answers.shift(),
+      ),
+    );
+
+    const first = renderHook(() => usePlaystyleGuides());
+    await waitFor(() => expect(first.result.current.status).toBe('failed'));
+    expect(first.result.current.guides).toBeNull();
+    expect(consoleError).toHaveBeenCalledWith('Failed to load playstyle guides:', expect.any(Error));
+    first.unmount();
+    const second = renderHook(() => usePlaystyleGuides());
+
+    await waitFor(() => expect(second.result.current.guides).toEqual(GUIDES));
+  });
+
+  it('leaves the cards and their mechanic ids loaded when the guides fail', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      byFile(
+        () => json(MECHANICS),
+        () => ({ok: false, status: 500}),
+      ),
+    );
+
+    const {result} = renderHook(() => ({
+      playstyle: usePrecomputedPlaystyleCards('lore-denial'),
+      guides: usePlaystyleGuides(),
+    }));
+
+    await waitFor(() => expect(result.current.guides.status).toBe('failed'));
+    await waitFor(() => expect(result.current.playstyle.isLoading).toBe(false));
+    expect(result.current.playstyle.cards.map((c) => c.id)).toEqual(['1', '2']);
+    expect(result.current.playstyle.mechanicsStatus).toBe('loaded');
+    expect(result.current.playstyle.error).toBeNull();
+  });
+});
+
+describe('usePreloadPlaystyleFiles', () => {
+  it('starts the mechanic ids and the guides that a playstyle opened next starts from', async () => {
     const fetchMock = byFile(() => json(MECHANICS));
     vi.stubGlobal('fetch', fetchMock);
 
-    const {rerender} = renderHook(({drawn}) => usePreloadPlaystyleMechanics(drawn), {
+    renderHook(() => usePreloadPlaystyleFiles(true));
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([MECHANICS_URL, GUIDES_URL]);
+    await expect(fetchPlaystyleMechanicIds()).resolves.toEqual(MECHANICS);
+    await expect(fetchPlaystyleGuides()).resolves.toEqual(GUIDES);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('waits until the gallery is drawn, so the requests never compete with its own', () => {
+    const fetchMock = byFile(() => json(MECHANICS));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const {rerender} = renderHook(({drawn}) => usePreloadPlaystyleFiles(drawn), {
       initialProps: {drawn: false},
     });
     expect(fetchMock).not.toHaveBeenCalled();
     rerender({drawn: true});
 
-    expect(fetchMock).toHaveBeenCalledExactlyOnceWith('/data/synergies/_playstyleMechanics.json');
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([MECHANICS_URL, GUIDES_URL]);
   });
 
   it('leaves a failure to the playstyle page, which asks again', async () => {
-    const answers = [{ok: false, status: 503}, json(MECHANICS)];
-    const fetchMock = byFile(() => answers.shift());
+    const failed = {ok: false, status: 503};
+    const mechanicsAnswers = [failed, json(MECHANICS)];
+    const guidesAnswers = [failed, json(GUIDES)];
+    const fetchMock = byFile(
+      () => mechanicsAnswers.shift(),
+      () => guidesAnswers.shift(),
+    );
     vi.stubGlobal('fetch', fetchMock);
 
-    renderHook(() => usePreloadPlaystyleMechanics(true));
-    // Lets the failure settle: a rejection the hook left unhandled would fail the run.
+    renderHook(() => usePreloadPlaystyleFiles(true));
+    // Lets the failures settle: a rejection the hook left unhandled would fail the run.
     await new Promise((resolve) => setTimeout(resolve));
 
     await expect(fetchPlaystyleMechanicIds()).resolves.toEqual(MECHANICS);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await expect(fetchPlaystyleGuides()).resolves.toEqual(GUIDES);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 });
