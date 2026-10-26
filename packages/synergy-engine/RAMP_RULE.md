@@ -238,7 +238,7 @@ In `ramp.test.ts`, under `describe('Ramp')`:
 - Explanations are non-empty and mention ink
 - All matches marked bidirectional
 
-### Misread fixes (`ramp.test.ts`, real card text)
+### Misread fixes (`ramp.test.ts`, 7 tests, real card text)
 - A discount for the cards of one name (Munchings and Crunchings, Carl Fredricksen - Loving Husband) gains no cost-reduction role, and pairs with no general discount (Pluto - Friendly Pooch)
 - A trigger that grants a keyword until your next turn (Fairy Godmother's Wand) reads as once per turn, not repeating
 - Ink put into your inkwell from your discard (Jiminy Cricket - Ghost of Christmas Past) reads as ramp from that clause alone, with or without his Boost reminder
@@ -248,7 +248,7 @@ In `ramp.test.ts`, under `describe('Ramp')`:
 - Ink that lands on the opponent's turn (Ink Amplifier) pairs with a trigger that fires only during your turn (Scrooge McDuck - Miserly Ebenezer, Chief Tui - Weaving a Tale) at density, from either side; ramp on your own turn (Mama Odie) keeps the chain
 
 ### Chain-key routing (`ramp.test.ts`, 4 tests)
-- With test-only scores of 9, 8 and 6, each chain shape reads its own tuning key (`chain.deckRepeating`, `chain.mixed`, `chain.neither`) from the ramp card's side and from the trigger card's, where the ramp card is named {B}, so a routing bug fails a test even while the tuned scores tie
+- With test-only scores of 9, 8 and 6, each chain shape reads its own tuning key (`chain.deckRepeating`, `chain.mixed`, `chain.neither`) from either card, so a routing bug fails a test even while the tuned scores tie. From the trigger card's side the test also checks that the explanation names the ramp card {B} (`tuning-equivalence.test.ts` checks that it names the ramp card {A} from the ramp card's side)
 
 ---
 
