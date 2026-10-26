@@ -175,7 +175,7 @@
     },
     "ramp": {
       "scores": {
-        "chain.deckRepeating": 8,
+        "chain.deckRepeating": 7,
         "chain.mixed": 7,
         "chain.neither": 7,
         "costOverlap": 6,

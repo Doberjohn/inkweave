@@ -103,15 +103,15 @@ Real cards the `getRampRoles` detector tags for each role (names from the live d
 
 ---
 
-## Scoring (5–8 chain ladder + density baseline)
+## Scoring (chain ladder at 7 + density baseline)
 
-The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral default (parallel acceleration / same-axis density, no compounding), 6+ = specific mechanical interaction. The chain ladder (Ramp↔Trigger, scored 7–8) is the only real mechanical chain in the playstyle and sits above the density baseline.
+The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral default (parallel acceleration / same-axis density, no compounding), 6+ = specific mechanical interaction. The chain ladder (Ramp↔Trigger, scored 7) is the only real mechanical chain in the playstyle and sits above the density baseline.
 
 ### Score Table
 
 | # | Pair | Score | Example |
 |---|------|-------|---------|
-| 1 | Deck Ramp ↔ Repeating Trigger | **8** | Mama Odie + Jafar — every free ink fires the trigger (snowball) |
+| 1 | Deck Ramp ↔ Repeating Trigger | **7** | Mama Odie + Jafar — every free ink fires the trigger (snowball) |
 | 2 | Deck Ramp ↔ Once/turn Trigger | **7** | One Jump Ahead + Raya Kumandran — free ink, capped trigger |
 | 3 | Self-Sacrifice ↔ Repeating Trigger | **7** | Winnie the Pooh + Rafiki — hand→ink fires every event |
 | 4 | Self-Sacrifice ↔ Once/turn Trigger | **7** | Cinderella + Dawson — card cost + capped trigger |
@@ -128,10 +128,10 @@ The rule applies the project-wide **5-baseline scoring convention**: 5 = neutral
 ```
 if ramp ↔ trigger:
   5 if the ramp's ink lands only on the turn the trigger can't fire (Ink Amplifier)
-  8 if ramp card is deck ramp (free mana) and trigger is repeating (scales with ramp): chain.deckRepeating
+  7 if ramp card is deck ramp (free mana) and trigger is repeating (scales with ramp): chain.deckRepeating
   7 if only one of the two holds: chain.mixed
   7 if neither holds: chain.neither
-  # chain.mixed shares chain.neither's 7 since community-vote tuning: 7 is as low as it can go while the ladder stays in order
+  # all three chain shapes share 7 since community-vote tuning; the ladder keeps its order, with ties
 
 if cost-reduction ↔ cost-reduction:
   6 if discount target types overlap (real stacking on same play)
@@ -153,7 +153,7 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 
 | Pair shape | Pairs | Score | Share |
 |----------|-----|-----|-----|
-| Deck ramp ↔ repeating trigger | 24 | 8 | 1.4% |
+| Deck ramp ↔ repeating trigger | 24 | 7 | 1.4% |
 | Deck ramp ↔ once-per-turn trigger | 48 | 7 | 2.9% |
 | Self-sacrifice ↔ repeating trigger | 13 | 7 | 0.8% |
 | Self-sacrifice ↔ once-per-turn trigger | 26 | 7 | 1.6% |
@@ -165,7 +165,7 @@ Counted by `pnpm refresh-rule-coverage` over the Core cards in the synergy pool 
 | Trigger ↔ cost reduction | 57 | 5 | 3.4% |
 <!-- coverage:end -->
 
-The 7-8 pairs aren't inflation: they're the ramp ↔ trigger chains, the only real mechanical chain in the playstyle. Most inkwell-ramp cards are deck ramp (the strongest variant), so most pairs that *can* chain score 8 when the trigger repeats and 7 when it pays off once a turn; how many chains there are follows how many trigger cards the pool holds. A broad density floor with rare, mechanically real spikes is the right curve. The scores and explanation templates live in `tuning.json`, and the table reads both from the engine.
+The 7 pairs aren't inflation: they're the ramp ↔ trigger chains, the only real mechanical chain in the playstyle. Every chain scores 7, whether the trigger repeats or pays off once a turn; how many chains there are follows how many trigger cards the pool holds. A broad density floor with rare, mechanically real spikes is the right curve. The scores and explanation templates live in `tuning.json`, and the table reads both from the engine.
 
 ### Explanation Templates
 
@@ -255,4 +255,4 @@ Cards like Hide Away and Wipe Out! share the word "inkwell" with ramp cards but 
 Free play ("play X for free") bypasses mana entirely rather than accelerating it. A card that plays something for free doesn't benefit from having more ink — the ink is irrelevant. Free play could be its own future rule.
 
 ### Why sub-pattern scoring?
-Not all ramp↔trigger pairs are equal: deck ramp (free mana) + repeating trigger (fires every ink) is strictly better than self-sacrifice (card cost) + once-per-turn (capped). The 7-8 range captures this nuance without overcomplicating the system. It was 7-9 until community-vote tuning moved deck ramp + repeating trigger to 8 and the mixed shapes to 7 in `tuning.json`.
+On paper not all ramp↔trigger pairs are equal: deck ramp (free mana) + repeating trigger (fires every ink) is strictly better than self-sacrifice (card cost) + once-per-turn (capped), and the ladder ran 7-9 to show it. Community votes rate the shapes alike, so community-vote tuning moved deck ramp + repeating trigger to 8 and then 7, and the mixed shapes to 7, in `tuning.json`. The shapes now share 7 and differ only in their explanations; their separate keys let later votes split them again.
