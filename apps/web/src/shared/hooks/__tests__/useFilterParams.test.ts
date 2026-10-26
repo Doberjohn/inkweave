@@ -299,6 +299,42 @@ describe('useFilterParams', () => {
     });
   });
 
+  describe('applyDraft (the Binder sheet, #969)', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it('writes the filters, the sort and more params in one URL write', () => {
+      // A second write in the same tick would start from the same snapshot, `binder=9`, and
+      // drop what the first wrote: any split shows in the URL.
+      const {result} = renderHook(() => ({filters: useFilterParams(), url: useSearchParams()[0]}), {
+        wrapper: createWrapper(['/?binder=9']),
+      });
+
+      act(() =>
+        result.current.filters.applyDraft(
+          {inks: ['Amber'], types: [], costs: [], opts: {}},
+          {sortOrder: 'name-asc', edit: (params) => params.set('owned', 'missing')},
+        ),
+      );
+
+      expect(result.current.url.toString()).toBe('binder=9&ink=Amber&sort=name-asc&owned=missing');
+    });
+
+    it('sends sort_changed when the sort it writes moves, and not when it stays', () => {
+      const {result} = renderHook(() => useFilterParams(), {wrapper: createWrapper(['/?sort=name-asc'])});
+      const draft = {inks: [], types: [], costs: [], opts: {}};
+
+      act(() => result.current.applyDraft(draft, {sortOrder: 'name-asc'}));
+      expect(trackEvent).not.toHaveBeenCalled();
+
+      act(() => result.current.applyDraft(draft, {sortOrder: 'newest'}));
+      expect(trackEvent).toHaveBeenCalledTimes(1);
+      expect(trackEvent).toHaveBeenCalledWith('sort_changed', {sortOrder: 'newest', previousSort: 'name-asc'});
+      expect(result.current.sortOrder).toBe('newest');
+    });
+  });
+
   describe('setFilters', () => {
     it('should set keyword, classification, and set params', () => {
       const {result} = renderHook(() => useFilterParams(), {

@@ -8,10 +8,12 @@ import {SPACING} from '../../shared/constants';
  * downloads (#913). A module of its own, so that fallback doesn't pull in the chunk.
  *
  * A phone's single page is WIDTH-driven, so its height is not bounded by the
- * space left under the toolbar, and Browse's `<main>` clips overflow. Measured:
- * at 375x667 the arrows clear the bottom by 2px; a shorter phone would hide them.
- * Scrolling the section keeps them reachable at any height. A desktop spread is
- * height-capped and never needs it.
+ * space left under the row above it, and Browse's `<main>` clips overflow. On the
+ * five phones #969 measured, the row, the page and its map fit with the browser's
+ * bars showing, 1px to spare on an iPhone 13 mini (375x629) once the section's
+ * padding came down to 4px above and below the binder; a shorter screen would hide
+ * the map. Scrolling the section keeps it reachable at any height. A desktop spread
+ * is height-capped and never needs it.
  *
  * DOCKED, THE SIDES ARE BROWSE'S GUTTER (owner, 2026-10-08): the binder, drawn
  * there without arrows or padding of its own, starts where the search bar does,
@@ -21,11 +23,18 @@ import {SPACING} from '../../shared/constants';
  * before the toolbar came to end at its controls (`BROWSE_ROW_TOP`).
  */
 export function sectionStyle(isMobile: boolean, docked = false): CSSProperties {
-  const gutter = isMobile ? SPACING.sm : SPACING.xxl;
-  const sides = docked ? BROWSE_GUTTER : gutter;
+  if (isMobile) return {padding: `${SPACING.xs}px ${SPACING.sm}px`, height: '100%', overflowY: 'auto'};
+  const sides = docked ? BROWSE_GUTTER : SPACING.xxl;
   const top = docked ? BROWSE_ROW_TOP : SPACING.md;
-  return {padding: `${top}px ${sides}px ${gutter}px`, height: '100%', ...(isMobile && {overflowY: 'auto'})};
+  return {padding: `${top}px ${sides}px ${SPACING.xxl}px`, height: '100%'};
 }
+
+/**
+ * How tall a phone binder row's controls are (#969): the set button (`ROW_TRIGGER` in
+ * SetPicker.tsx), Binder options beside it (`PhoneBinderRow`), and the set button's placeholder
+ * while the binder's chunk downloads (`BinderChunkFallback`).
+ */
+export const ROW_CONTROL_HEIGHT = 40;
 
 /** Bar heights, by how much the number above them matters. */
 export const BAR = {headline: 8, second: 6, row: 4} as const;
@@ -49,3 +58,10 @@ export const NUMBERS_STYLE: CSSProperties = {
   flexDirection: 'column',
   gap: SPACING.xl,
 };
+
+/**
+ * The numbers in a phone's Binder sheet, under Progress (#969): in the sheet's flow, which
+ * scrolls them with the filters, so they keep the panel's column and gap but none of its
+ * scrolling box. Their fallback (`SheetNumbersFallback`) holds the same column.
+ */
+export const SHEET_NUMBERS_STYLE: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.xl};

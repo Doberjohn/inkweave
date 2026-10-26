@@ -1,4 +1,4 @@
-import {useRef} from 'react';
+import {useRef, type ReactNode} from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import {COLORS, FONT_SIZES, SHADOWS, SPACING, RADIUS, Z_INDEX} from '../constants';
 import {CtaButton} from 'inkweave-ui/components/CtaButton';
@@ -19,6 +19,18 @@ interface FilterDialogProps extends FilterPanelProps {
    * `false` for each, or those filters are unreachable on desktop.
    */
   toolbarCarries?: {cost: boolean; inkwell: boolean};
+  /** The title, in place of "Filters (n)": a phone binder's sheet is "Binder" (#969). */
+  title?: string;
+  /** Drawn above the filters: the Binder sheet's Show and sort (#969). */
+  prelude?: ReactNode;
+  /** Drawn after the filters: the Binder sheet's numbers (#969). */
+  postlude?: ReactNode;
+  /**
+   * What the caller drafts beside the filters, which Clear all puts back too (the Binder sheet's
+   * Show, #969): while `count` is above 0, Clear all shows, and pressing it also calls `onClear`.
+   * One prop, so a count never comes without the clear that takes it away.
+   */
+  extra?: {count: number; onClear: () => void};
 }
 
 /**
@@ -41,6 +53,59 @@ function useReturnFocus() {
   };
 }
 
+interface DialogHeaderProps {
+  variant: FilterDialogProps['variant'];
+  title: string;
+  /** Whether anything is on that Clear all would clear. */
+  canClear: boolean;
+  onClear: () => void;
+  onApply: () => void;
+}
+
+/** The title, Clear all while anything is on, and the drawer's Apply or the modal's ×. */
+function DialogHeader({variant, title, canClear, onClear, onApply}: DialogHeaderProps) {
+  return (
+    <div
+      style={{
+        padding: variant === 'modal' ? `${SPACING.lg}px ${SPACING.xl}px` : `${SPACING.lg}px`,
+        borderBottom: `1px solid ${variant === 'modal' ? COLORS.surfaceBorder : COLORS.gray200}`,
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexShrink: 0,
+      }}>
+      <Dialog.Title
+        style={{
+          margin: 0,
+          fontSize: `${FONT_SIZES.xl}px`,
+          fontWeight: 600,
+          color: COLORS.text,
+        }}>
+        {title}
+      </Dialog.Title>
+
+      <div style={{display: 'flex', gap: `${SPACING.md}px`, alignItems: 'center'}}>
+        {canClear && (
+          <LinkButton onClick={onClear} style={{padding: `${SPACING.sm}px`}}>
+            Clear all
+          </LinkButton>
+        )}
+        {variant === 'modal' ? (
+          <Dialog.Close asChild>
+            <IconButton
+              aria-label="Close filters"
+              style={{fontSize: `${FONT_SIZES.xxl}px`, lineHeight: 1}}>
+              ×
+            </IconButton>
+          </Dialog.Close>
+        ) : (
+          <CtaButton onClick={onApply}>Apply</CtaButton>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function FilterDialog({
   isOpen,
   onClose,
@@ -58,6 +123,10 @@ export function FilterDialog({
   showSetFilter,
   showArtPresets,
   toolbarCarries = {cost: true, inkwell: true},
+  title,
+  prelude,
+  postlude,
+  extra,
 }: FilterDialogProps) {
   const draft = useDraftFilters({isOpen, inkFilters, typeFilters, costFilters, filters});
   const returnFocus = useReturnFocus();
@@ -68,6 +137,11 @@ export function FilterDialog({
     onApply(draft.draftInks, draft.draftTypes, draft.draftCosts, draft.draftFilters);
     onClose();
   };
+  const clearAll = () => {
+    draft.clearAll();
+    extra?.onClear();
+  };
+  const count = draft.activeFilterCount;
 
   const getVariantStyles = (): {
     overlay: React.CSSProperties;
@@ -154,45 +228,13 @@ export function FilterDialog({
             </div>
           )}
 
-          {/* Header */}
-          <div
-            style={{
-              padding: variant === 'modal' ? `${SPACING.lg}px ${SPACING.xl}px` : `${SPACING.lg}px`,
-              borderBottom: `1px solid ${variant === 'modal' ? COLORS.surfaceBorder : COLORS.gray200}`,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexShrink: 0,
-            }}>
-            <Dialog.Title
-              style={{
-                margin: 0,
-                fontSize: `${FONT_SIZES.xl}px`,
-                fontWeight: 600,
-                color: COLORS.text,
-              }}>
-              Filters{draft.activeFilterCount > 0 ? ` (${draft.activeFilterCount})` : ''}
-            </Dialog.Title>
-
-            <div style={{display: 'flex', gap: `${SPACING.md}px`, alignItems: 'center'}}>
-              {draft.activeFilterCount > 0 && (
-                <LinkButton onClick={draft.clearAll} style={{padding: `${SPACING.sm}px`}}>
-                  Clear all
-                </LinkButton>
-              )}
-              {variant === 'modal' ? (
-                <Dialog.Close asChild>
-                  <IconButton
-                    aria-label="Close filters"
-                    style={{fontSize: `${FONT_SIZES.xxl}px`, lineHeight: 1}}>
-                    ×
-                  </IconButton>
-                </Dialog.Close>
-              ) : (
-                <CtaButton onClick={handleApply}>Apply</CtaButton>
-              )}
-            </div>
-          </div>
+          <DialogHeader
+            variant={variant}
+            title={title ?? `Filters${count > 0 ? ` (${count})` : ''}`}
+            canClear={count + (extra?.count ?? 0) > 0}
+            onClear={clearAll}
+            onApply={handleApply}
+          />
 
           {/* Content */}
           <div
@@ -201,6 +243,7 @@ export function FilterDialog({
               overflowY: 'auto',
               padding: variant === 'modal' ? `${SPACING.xl}px` : `${SPACING.lg}px`,
             }}>
+            {prelude}
             <FilterContent
               inkFilters={draft.draftInks}
               typeFilters={draft.draftTypes}
@@ -221,6 +264,7 @@ export function FilterDialog({
               showSetFilter={showSetFilter}
               showArtPresets={showArtPresets}
             />
+            {postlude}
           </div>
 
           {/* Footer (modal only; drawer has Apply in header) */}

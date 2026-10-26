@@ -15,6 +15,21 @@ import {ArtOnScreen} from '../../../shared/hooks/useArtLoad';
 import {useContainerWidth} from 'inkweave-ui/hooks/useContainerWidth';
 import {blackRgba, COLORS, RADIUS, SPACING} from '../../../shared/constants';
 import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
+import {
+  BOARD,
+  CARD_ASPECT,
+  LONE_INSET,
+  LONE_PAGE,
+  LONE_TOP_OVER_MAP,
+  PAGE_PADDING,
+  PER_LONE_PAGE,
+  PER_PAGE,
+  POCKET_GAP,
+  SPINE_WIDTH,
+  SPREAD_PAGE,
+  pagingOf,
+  type PageGrid,
+} from './binderGeometry';
 import {BINDER_LOOK} from './binderLook';
 import {viewSheets, type ViewSheets} from './binderSheets';
 import {PageTurn} from './PageTurn';
@@ -74,23 +89,11 @@ import './binder.css';
  * everything they genuinely have in common.
  */
 
-/** Four columns x three rows, per page. A spread is two of these. */
-const PAGE_COLUMNS = 4;
-const PAGE_ROWS = 3;
-export const PER_PAGE = PAGE_COLUMNS * PAGE_ROWS;
-export const PER_SPREAD = PER_PAGE * 2;
-
-/** Lorcana cards are 0.72 wide-to-tall. Drives the whole layout. */
-const CARD_ASPECT = 0.72;
-
-/** A page's margin around its pockets. */
-const PAGE_PADDING = SPACING.md;
-
 /**
- * The board round the pages, which the zip runs along (#941): the spread's sizing counts it on
- * both axes, and on a phone it comes out of the lone page's width.
+ * A view's pockets: a phone's lone page of nine (`LONE_PAGE`, #969), or a spread's two pages of
+ * twelve (`SPREAD_PAGE`). The measures, and how each pages, live in `binderGeometry.ts`.
  */
-const BOARD = SPACING.section;
+const perViewOf = (single: boolean) => pagingOf(single).perView;
 
 /** The binder's cover board: the inside front cover, and the inside back cover past the last card. */
 const COVER_BOARD = '/art/backgrounds/binder-cover.webp';
@@ -115,8 +118,8 @@ const COVER_BOARD = '/art/backgrounds/binder-cover.webp';
  * size. So nothing the pages share their height with may come out a different size on that pass:
  * the spread map under them once did (see its `FULL_CELL`), and every pocket came out 0 wide.
  */
-const PAGE_CHROME_HEIGHT = 2 * PAGE_PADDING + (PAGE_ROWS - 1) * SPACING.sm + 2 * BOARD;
-const SPREAD_COLUMN = `calc((100cqh - ${PAGE_CHROME_HEIGHT}px) / ${PAGE_ROWS} * ${CARD_ASPECT})`;
+const PAGE_CHROME_HEIGHT = 2 * PAGE_PADDING + (SPREAD_PAGE.rows - 1) * POCKET_GAP + 2 * BOARD;
+const SPREAD_COLUMN = `calc((100cqh - ${PAGE_CHROME_HEIGHT}px) / ${SPREAD_PAGE.rows} * ${CARD_ASPECT})`;
 
 /**
  * A page. The rows are `minmax(0, 1fr)`, so the grid claims exactly the height it is
@@ -155,9 +158,9 @@ function pageStyle(side: 'left' | 'right', cover = false): CSSProperties {
     // such dependency — the width is derived from a definite row height and is
     // identical at zero images loaded and at twenty-four.
     display: 'grid',
-    gridTemplateColumns: `repeat(${PAGE_COLUMNS}, ${SPREAD_COLUMN})`,
-    gridTemplateRows: `repeat(${PAGE_ROWS}, minmax(0, 1fr))`,
-    gap: SPACING.sm,
+    gridTemplateColumns: `repeat(${SPREAD_PAGE.columns}, ${SPREAD_COLUMN})`,
+    gridTemplateRows: `repeat(${SPREAD_PAGE.rows}, minmax(0, 1fr))`,
+    gap: POCKET_GAP,
     padding: PAGE_PADDING,
     // A page wider than its cards (one widened to its box, see `EDGE_FRAME`) keeps its
     // pockets together in its middle: the extra width is margin, never slack between them.
@@ -183,13 +186,6 @@ function coverStyle(side: 'left' | 'right'): CSSProperties {
   };
 }
 
-/**
- * The spine. Wide enough to hold hardware, because a bare gap reads as two
- * separate panels rather than one bound object. Rings are the most legible
- * signal of "binder" and survive at any spread height, where stitching or a
- * leather texture would compete with the pages and need its own asset.
- */
-const SPINE_WIDTH = SPACING.xxl;
 const ARROW_WIDTH = 44;
 /** The two arrows beside a spread and the gaps around them, where they are drawn. */
 const ARROWS_CHROME = 2 * ARROW_WIDTH + 3 * SPACING.sm;
@@ -268,8 +264,8 @@ const singlePageStyle: CSSProperties = {
   height: 'auto',
   // The width it is given, not a spread's height-drawn columns: a lone page sits in
   // no size container, where `100cqh` would read the viewport's height.
-  gridTemplateColumns: `repeat(${PAGE_COLUMNS}, minmax(0, 1fr))`,
-  gridTemplateRows: 'repeat(3, auto)',
+  gridTemplateColumns: `repeat(${LONE_PAGE.columns}, minmax(0, 1fr))`,
+  gridTemplateRows: `repeat(${LONE_PAGE.rows}, auto)`,
 };
 
 const singleSlotStyle: CSSProperties = {
@@ -296,12 +292,12 @@ function spreadMaxHeight(width: number, withArrows: boolean): number | undefined
   // are drawn, the board round the pages, the spine, and each page's padding and
   // column gaps.
   const chrome =
-    (withArrows ? ARROWS_CHROME : 0) + 2 * BOARD + SPINE_WIDTH + 2 * (2 * PAGE_PADDING + 3 * SPACING.sm);
+    (withArrows ? ARROWS_CHROME : 0) + 2 * BOARD + SPINE_WIDTH + 2 * (2 * PAGE_PADDING + 3 * POCKET_GAP);
   const cardWidth = (width - chrome) / 8;
   if (cardWidth <= 0) return undefined;
   const cardHeight = cardWidth / CARD_ASPECT;
   // Three rows, two row gaps, the page's own vertical padding, and the board above and below.
-  return 3 * cardHeight + 2 * SPACING.sm + 2 * PAGE_PADDING + 2 * BOARD;
+  return 3 * cardHeight + 2 * POCKET_GAP + 2 * PAGE_PADDING + 2 * BOARD;
 }
 
 
@@ -351,9 +347,10 @@ interface BinderSpreadProps {
   /**
    * One page per view instead of a spread, for phone widths (owner, 2026-10-07).
    * A spread at 390px left each card ~26px wide; one page with the arrows moved
-   * to a row underneath gives ~75px. Slots stay where they were: a page is still
-   * the same 12-card block, so the caller pages by `PER_PAGE` instead of
-   * `PER_SPREAD` and every card keeps its pocket.
+   * to a row underneath gave ~75px, and 3 by 3 pockets in place of 4 by 3 about
+   * 38% more (owner, 2026-10-25, #969). A lone page holds `PER_LONE_PAGE`, nine,
+   * so the caller pages by that (`pagingOf`) instead of a spread's: page p holds slots 9p to
+   * 9p + 8, and every card keeps its slot.
    *
    * The CALLER decides, because the paging step is the caller's arithmetic and
    * the two must come from one fact. Read it from `useResponsive().isMobile`.
@@ -364,12 +361,13 @@ interface BinderSpreadProps {
    * panels, on its outer edges, as small discs that grow under the pointer (owner,
    * 2026-10-22). There the spread fills its box's width from the top, with no padding of
    * its own, so its edges line up with what the page puts around it. A lone page keeps its
-   * row of arrows under it either way.
+   * row of arrows under it either way, unless a `footer` takes its place.
    */
   arrows?: 'beside' | 'edges';
   /**
-   * Drawn directly under a spread with its arrows on its edges: the collection binder's
-   * spread map. The spread gives up only the height it needs.
+   * Drawn directly under a spread with its arrows on its edges, or under a lone page in its
+   * arrows' place: the collection binder's map (#969). The spread gives up only the height
+   * it needs.
    */
   footer?: ReactNode;
   /**
@@ -494,9 +492,10 @@ function coverOf({from, side}: TurnPage, single: boolean, cardCount: number | un
 }
 
 /**
- * One page of twelve pockets, slots sized for a spread or for a lone page. A cover keeps
- * its twelve slots, empty: a page takes its width from them, and without them it would
- * collapse. Empty whatever `renderSlot` gives, so a loading binder's shimmer stays off it.
+ * One page of pockets: a spread's twelve, sized from its height, or a phone's lone page of nine,
+ * sized from its width. A cover keeps its twelve slots, empty: a page takes its width from them,
+ * and without them it would collapse. Empty whatever `renderSlot` gives, so a loading binder's
+ * shimmer stays off it.
  * Every slot on a page of cards is a pocket (`binder-pocket`), its sleeve and front sheet
  * drawn round whatever it holds, so one past the last card shows an empty sleeve.
  */
@@ -511,7 +510,7 @@ export function BinderPage({from, side, single, renderSlot, cover, pageRef, grab
       role="group"
       style={single ? {...pageStyle(side), ...singlePageStyle} : pageStyle(side, cover !== undefined)}
       aria-label={pageLabel({side, single, cover})}>
-      {Array.from({length: PER_PAGE}, (_, i) => (
+      {Array.from({length: single ? PER_LONE_PAGE : PER_PAGE}, (_, i) => (
         <div key={from + i} className={cover ? undefined : 'binder-pocket'} style={single ? singleSlotStyle : slotStyle}>
           {cover ? null : renderSlot(from + i)}
         </div>
@@ -525,7 +524,10 @@ interface ViewProps {
   renderSlot: (index: number) => ReactNode;
   /** The page arrows: beside a spread or on its outer edges, or in a row under a lone page. */
   arrows: {prev: ReactNode; next: ReactNode};
-  /** Under a spread with its arrows on its edges (see `BinderSpreadProps.footer`). */
+  /**
+   * Under a spread with its arrows on its edges, or under a lone page in its arrows' place
+   * (see `BinderSpreadProps.footer`).
+   */
   footer?: ReactNode;
   /** How many pockets the binder fills (see `BinderSpreadProps.cardCount`). */
   cardCount?: number;
@@ -722,16 +724,17 @@ function SpreadView({edges, ...props}: ViewProps & {edges: boolean}) {
 }
 
 /**
- * One page, sized from the width (see `singlePageStyle`), arrows in a row below.
- * The lone page is the RIGHT-hand sheet: rings on its left edge, so it still reads
- * as a page in a binder rather than a loose card grid, in a board with one zip
- * round it (#941). Nothing here is measured, which is what keeps the arrows below
- * it from moving after first paint.
+ * One page, sized from the width (see `singlePageStyle`), with its footer below it, or a
+ * row of arrows where it has none. The lone page is the RIGHT-hand sheet: rings on its
+ * left edge, so it still reads as a page in a binder rather than a loose card grid, in a
+ * board with one zip round it (#941). Nothing here is measured, which is what keeps what
+ * lies below it from moving after first paint.
  */
-function SingleView({start, renderSlot, arrows, sheets, turn}: ViewProps) {
+function SingleView({start, renderSlot, arrows, footer, sheets, turn}: ViewProps) {
   return (
     <>
-      <div style={{padding: `${SPACING.sm}px ${SPACING.sm}px 0`}}>
+      {/* Over a footer, half the room above the board: the map's band needs it (#969). */}
+      <div style={{padding: `${footer ? LONE_TOP_OVER_MAP : SPACING.sm}px ${LONE_INSET}px 0`}}>
         <Board sheets={sheets} turn={turn} single>
           <Spine />
           <BinderPage
@@ -744,30 +747,36 @@ function SingleView({start, renderSlot, arrows, sheets, turn}: ViewProps) {
           />
         </Board>
       </div>
-      <div style={{display: 'flex', justifyContent: 'center', gap: SPACING.xxl, paddingTop: SPACING.sm}}>
-        {arrows.prev}
-        {arrows.next}
-      </div>
+      {footer ?? (
+        <div style={{display: 'flex', justifyContent: 'center', gap: SPACING.xxl, paddingTop: SPACING.sm}}>
+          {arrows.prev}
+          {arrows.next}
+        </div>
+      )}
     </>
   );
 }
 
-/** A pocket's place on the grid in view: a spread's two pages side by side are eight columns. */
+/**
+ * A pocket's place on the grid in view: a spread's two pages side by side are eight columns, and
+ * a phone's lone page three.
+ */
 interface Cell {
   row: number;
   col: number;
 }
 
-const cellOf = (pocket: number): Cell => {
-  const onPage = pocket % PER_PAGE;
+const cellOf = (pocket: number, {columns, rows}: PageGrid): Cell => {
+  const perPage = columns * rows;
+  const onPage = pocket % perPage;
   return {
-    row: Math.floor(onPage / PAGE_COLUMNS),
-    col: Math.floor(pocket / PER_PAGE) * PAGE_COLUMNS + (onPage % PAGE_COLUMNS),
+    row: Math.floor(onPage / columns),
+    col: Math.floor(pocket / perPage) * columns + (onPage % columns),
   };
 };
 
-const pocketAt = ({row, col}: Cell): number =>
-  Math.floor(col / PAGE_COLUMNS) * PER_PAGE + row * PAGE_COLUMNS + (col % PAGE_COLUMNS);
+const pocketAt = ({row, col}: Cell, {columns, rows}: PageGrid): number =>
+  Math.floor(col / columns) * columns * rows + row * columns + (col % columns);
 
 /** Where each arrow key steps on that grid. */
 const STEPS = new Map<string, Cell>([
@@ -783,10 +792,12 @@ interface PocketView {
   focusable: readonly number[];
   /** Pages across: two for a spread, one for a lone page. */
   pages: number;
+  /** Each page's grid: a spread's 4 by 3, or a lone page's 3 by 3. */
+  grid: PageGrid;
 }
 
-const onGrid = ({row, col}: Cell, pages: number) =>
-  row >= 0 && row < PAGE_ROWS && col >= 0 && col < pages * PAGE_COLUMNS;
+const onGrid = ({row, col}: Cell, {pages, grid}: PocketView) =>
+  row >= 0 && row < grid.rows && col >= 0 && col < pages * grid.columns;
 
 /**
  * The pocket an arrow steps to from the cell `from`: the next one that way with a card in it,
@@ -794,8 +805,8 @@ const onGrid = ({row, col}: Cell, pages: number) =>
  */
 function stepFrom(from: Cell, step: Cell, view: PocketView): number | null {
   const to = {row: from.row + step.row, col: from.col + step.col};
-  if (!onGrid(to, view.pages)) return null;
-  const pocket = pocketAt(to);
+  if (!onGrid(to, view)) return null;
+  const pocket = pocketAt(to, view.grid);
   return view.focusable.includes(pocket) ? pocket : stepFrom(to, step, view);
 }
 
@@ -812,7 +823,7 @@ function pocketForKey(e: KeyboardEvent, from: number | undefined, view: PocketVi
   if (e.key === 'Home') return focusable[0];
   if (e.key === 'End') return focusable[focusable.length - 1];
   const step = STEPS.get(e.key);
-  return step ? stepFrom(cellOf(from), step, view) : null;
+  return step ? stepFrom(cellOf(from, view.grid), step, view) : null;
 }
 
 const NEVER_OPEN = () => false;
@@ -889,9 +900,8 @@ const NO_SHEETS: ViewSheets = {left: 0, right: 0};
  */
 function sheetsAt(start: number, single: boolean, cardCount: number | undefined): ViewSheets {
   if (cardCount === undefined) return NO_SHEETS;
-  const perView = single ? PER_PAGE : PER_SPREAD;
   // A spread binder's views start a page in, for the front cover (see `start`).
-  const lead = single ? 0 : PER_PAGE;
+  const {perView, lead} = pagingOf(single);
   return viewSheets((start + lead) / perView, Math.max(1, Math.ceil((cardCount + lead) / perView)), single);
 }
 
@@ -950,9 +960,10 @@ const turnKey = ({from, to, held}: Turn) => `${from}>${to}${held ? ' held' : ''}
  */
 function useViewTurn(props: TurnProps): ViewTurn {
   const {start, single, renderSlot, cardCount} = props;
-  const perView = single ? PER_PAGE : PER_SPREAD;
+  const perView = perViewOf(single);
   const reducedMotion = usePrefersReducedMotion();
-  const {turn, hold, end} = usePageTurns(start, {single, perPage: PER_PAGE, reducedMotion});
+  const perPage = single ? PER_LONE_PAGE : PER_PAGE;
+  const {turn, hold, end} = usePageTurns(start, {single, perPage, reducedMotion});
   const grab = useGrabTurn({...props, perView, turning: turn !== null, hold, end, reducedMotion, spine: SPINE_WIDTH});
   const left = useRef<HTMLDivElement>(null);
   const right = useRef<HTMLDivElement>(null);
@@ -1035,9 +1046,12 @@ export function BinderSpread({
   isOpen,
 }: BinderSpreadProps) {
   const unit = single ? 'page' : 'spread';
-  const perView = single ? PER_PAGE : PER_SPREAD;
-  const focusable = focusableInView(start, perView, {cardCount, isOpen});
-  const pockets = usePocketFocus(start, {focusable, pages: single ? 1 : 2});
+  const focusable = focusableInView(start, perViewOf(single), {cardCount, isOpen});
+  const pockets = usePocketFocus(start, {
+    focusable,
+    pages: single ? 1 : 2,
+    grid: single ? LONE_PAGE : SPREAD_PAGE,
+  });
   const sectionRef = useRef<HTMLElement>(null);
   const follow = useFocusFollowsView(sectionRef, start, single);
   const edges = arrows === 'edges' && !single;

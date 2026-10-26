@@ -9,8 +9,8 @@ import {ALL_INKS, COLORS, SET_NAMES, SPACING, type SetCode} from '../../../share
  * miniature, one cell per pocket in its card's ink, filled where you hold the card and a
  * ring where you are missing it. The window holds as many spreads as fit the row, eleven
  * at most; going set by set, each spread names its sets on hover. The first spread's left
- * page is the front cover (owner, 2026-10-18), so every binder here opens on it. Live here:
- * click a spread, or step with Previous and Next.
+ * page is the front cover (owner, 2026-10-18), so every binder here opens on it. Under a
+ * phone's lone page it draws pages of nine instead (#969). Live here: click a spread or a page.
  */
 
 /**
@@ -49,9 +49,16 @@ const WHOLE_SETS: MapSet[] = SET_SIZES.map((_, i) => {
   return {start: SET_SIZES.slice(0, i).reduce((sum, size) => sum + size, 0), label: `Set ${set}, ${SET_NAMES[set as SetCode]}`};
 });
 
-function LiveMap({pockets, sets, start = 2}: {pockets: Pocket[]; sets?: MapSet[]; start?: number}) {
+interface LiveMapProps {
+  pockets: Pocket[];
+  sets?: MapSet[];
+  start?: number;
+  single?: boolean;
+}
+
+function LiveMap({pockets, sets, start = 2, single = false}: LiveMapProps) {
   const [current, setCurrent] = useState(start);
-  return <BinderSpreadMap pockets={pockets} current={current} onGo={setCurrent} sets={sets} />;
+  return <BinderSpreadMap single={single} pockets={pockets} current={current} onGo={setCurrent} sets={sets} />;
 }
 
 const meta: Meta<typeof LiveMap> = {
@@ -135,4 +142,20 @@ export const WholeCollection: Story = {
 export const WholeCollectionNarrow: Story = {
   args: {pockets: WHOLE, sets: WHOLE_SETS, start: 20},
   parameters: {binderWidth: 792},
+};
+
+/**
+ * Under a phone's lone page (#969): a mini per page of nine, its cells always at full size, as
+ * many as fit the row, and where the binder is after them. 377px is the map's width on an
+ * iPhone 15, inside the binder's 8px gutters.
+ */
+export const PhonePages: Story = {
+  args: {single: true, start: 4},
+  parameters: {binderWidth: 377},
+};
+
+/** The whole collection under a phone's lone page: each page names its sets, as a spread does. */
+export const PhonePagesWholeCollection: Story = {
+  args: {single: true, pockets: WHOLE, sets: WHOLE_SETS, start: 60},
+  parameters: {binderWidth: 377},
 };
