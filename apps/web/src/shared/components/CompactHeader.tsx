@@ -1,7 +1,7 @@
 import {type ReactNode, useState} from 'react';
 import {Link, NavLink} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX, searchFieldStyle} from '../constants';
+import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, INSET_FOCUS_RING, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX, searchFieldStyle} from '../constants';
 import {useAutocomplete, useHover} from '../hooks';
 import {suggestCardsByName} from '../../features/cards/loader';
 import {useRevealPhase} from '../../features/reveals';
@@ -314,11 +314,14 @@ function NavItemLink({path, label, isHovered, onMouseEnter, onMouseLeave}: NavIt
   return (
     <NavLink
       to={path}
+      // Its ring drawn inside: the control's `overflow: hidden` cuts the global outline to slivers.
+      className="inset-focus-ring"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       style={({isActive}) => {
         const state: InteractionState = {isActive, isHovered};
         return {
+          ...INSET_FOCUS_RING,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
