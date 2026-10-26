@@ -70,7 +70,7 @@ Playstyle pairs are no longer flat-7. Each rule now applies a role-driven matrix
 
 - **Lore Denial**: 5 / 6 / 7 by burn-vs-steal pair shape
 - **Discard**: 5 / 8 — broad density floor + asymmetric kill combo at the rare hand-size payoff
-- **Ramp**: 5 / 6 / 7 — density floor + chain ladder for deck-ramp + repeating-trigger combos. The chain topped out at 9, the snowball anchor, until community-vote tuning moved it to 8 and then 7 in `tuning.json`, where all three chain shapes now share 7
+- **Ramp**: 5 / 6 / 7 — density floor, cost-overlap 6, and every ramp ↔ trigger chain at 7. The deck-ramp + repeating-trigger chain topped out at 9, the snowball anchor, until community-vote tuning moved it to 8 and then 7 in `tuning.json`, where all three chain shapes now share 7
 - **Toy**: 5 / 7 / 8 — same-deck baseline + tribal compounding + peak chains
 - **Location Control**: tiered by role pair (8 sub-rules — see `LOCATION_CONTROL_RULE.md`)
 - **Ink Drops**: 5 / 6 / 7 / 8, payoff-anchored (maker ↔ maker never emitted). A one-shot drop switching a payoff on is 6-7; 8 is kept for a steady maker feeding a per-turn payoff; an opponent-gated maker takes -1, floored at 5 (see `INK_DROPS_RULE.md`)

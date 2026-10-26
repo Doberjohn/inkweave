@@ -759,7 +759,10 @@ function classifyRampPair(
   return flags;
 }
 
-/** Score the ramp ↔ trigger chain (the only pair shape with a tiered ladder). */
+/**
+ * Score the ramp ↔ trigger chain. Its three shapes (deck ramp with a repeating trigger, one of
+ * the two, neither) keep separate tuning keys, so votes can score them apart even while they tie.
+ */
 function scoreRampTriggerChain(rampCard: LorcanaCard, triggerCard: LorcanaCard): number {
   const deckRamp = isDeckRamp(rampCard);
   const repeatingTrigger = isRepeatingTrigger(triggerCard);
@@ -784,7 +787,7 @@ function scoreRampCostPair(cardA: LorcanaCard, cardB: LorcanaCard): number {
  * *amplifies* the other (not just parallel acceleration).
  *
  * Scoring priority (each name is a key of `ramp.scores` in tuning.json, which holds the value):
- * - Deck ramp ↔ Repeating trigger: chain.deckRepeating (snowball chain — every free ink fires a trigger)
+ * - Deck ramp ↔ Repeating trigger: chain.deckRepeating (every free ink fires a trigger)
  * - Deck ramp ↔ Once/turn trigger: chain.mixed (free ink but trigger capped)
  * - Self-sacrifice ↔ Repeating trigger: chain.mixed (fires every event but costs a card)
  * - Self-sacrifice ↔ Once/turn trigger: chain.neither (card cost + capped)
