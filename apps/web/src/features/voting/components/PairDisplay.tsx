@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, SPACING, hexRgba} from '../../../shared/constants';
-import {getStrengthTier} from '../../synergies/utils/scoreUtils';
+import {getStrengthTier} from 'inkweave-ui/lib/scoreUtils';
 import type {Score} from '../../../shared/lib/supabase';
 import type {VotingPair} from '../types';
 import type {PairPreview} from '../hooks/usePairQueue';

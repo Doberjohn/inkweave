@@ -1,6 +1,6 @@
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, GOLD_GLOW, INK_COLORS, RADIUS, blackRgba, hexRgba} from '../../../shared/constants';
-import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
+import {InkCardPlaceholder} from 'inkweave-ui/lorcana/InkCardPlaceholder';
 
 interface ComparisonCardTileProps {
   card: LorcanaCard;

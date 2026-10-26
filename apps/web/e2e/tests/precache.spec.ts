@@ -34,7 +34,10 @@ async function precached(page: Page): Promise<Set<string>> {
   return new Set([...(await response.text()).matchAll(/url:"([^"]+)"/g)].map((match) => match[1]));
 }
 
-/** The address of each ink's symbol on a card placeholder (`.ink-card-placeholder` in index.css). */
+/**
+ * The address of each ink's symbol on a card placeholder (`.ink-card-placeholder`, in
+ * inkweave-ui's styles/lorcana.css).
+ */
 function placeholderSymbols(page: Page) {
   return page.evaluate((inks) => {
     return inks.map((ink) => {

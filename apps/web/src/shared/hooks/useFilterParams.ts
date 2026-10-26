@@ -4,7 +4,7 @@ import type {Ink} from '../../features/cards';
 import {countFilterOptions, offersDualOnly, type CardFilterOptions} from '../../features/cards/loader';
 import type {CardTypeFilter, BrowseSortOrder} from '../constants';
 import {BROWSE_SORT_OPTIONS} from '../constants';
-import type {InkwellValue} from '../components/InkwellIcon';
+import type {InkwellValue} from 'inkweave-ui/lorcana/InkwellIcon';
 import {trackEvent} from '../lib/analytics';
 
 const VALID_INKS = new Set<string>(['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel']);

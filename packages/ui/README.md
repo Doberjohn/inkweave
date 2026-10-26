@@ -8,11 +8,14 @@ Inkweave's design tokens, UI primitives and Lorcana display components, for the 
 |---|---|---|
 | `tokens/` | `theme.ts`, the design tokens (colors, type, spacing, radii, easings, shadows and the micro-pattern styles), and `lorcana.ts`, the ink colors, ink order and cost buttons | `inkweave-ui/tokens/theme` |
 | `components/` | The primitives: buttons (`CtaButton`, `LinkButton`, `IconButton`, `NavArrowButton`), chips and tags, `DialogShell` and `BottomSheet`, `Tooltip`, `TabList`, `SortSelect`, `QuantityStepper`, the filter controls and the small icons | `inkweave-ui/components/CtaButton` |
+| `lorcana/` | The Lorcana display components: `CardImageButton`, `CardLightbox`, `CardTextBlock`, `CardTranslationPanel` and `CardTranslationToggle`, `AbilityCallout` and `AbilityTag`, `InkCardPlaceholder`, `TierCircle`, `StrengthBadge`, the ink, cost and inkwell icons and filter groups, and `RaritySymbol` | `inkweave-ui/lorcana/InkIcon` |
 | `hooks/` | `useBoop`, `useContainerWidth`, `useDialogFocus`, `useFinePointer`, `useHover`, `useResponsive`, `useRovingTabIndex`, `useScrollLock`, `useScrollSnapIndex`, `useTooltip`, `useTransitionPresence` and `useWheelTurn` | `inkweave-ui/hooks/useHover` |
 | `utils/` | `focusedByKeyboard`, `prefersReducedMotion` and `touchGuard` | `inkweave-ui/utils/touchGuard` |
-| `lib/` | `ctaStyles` and `isOff`, which the buttons share | `inkweave-ui/lib/ctaStyles` |
-| `styles/` | `primitives.css`: the focus rings, overlay transitions, foil sweep, quantity pop and touch target the components draw with. A consumer imports it before its own stylesheet | `inkweave-ui/styles/primitives.css` |
+| `lib/` | `ctaStyles` and `isOff`, which the buttons share, `rarity` (each rarity's symbol and label) and `scoreUtils` (the synergy score tiers) | `inkweave-ui/lib/rarity` |
+| `assets/` | The ink icons, inkwell glyphs and rarity symbols, each shipped as its own file (`?no-inline`) | `inkweave-ui/assets/amber.svg?no-inline` |
+| `styles/` | `primitives.css`: the focus rings, overlay transitions, foil sweep, quantity pop and touch target the components draw with. A consumer imports it before its own stylesheet. `lorcana.css`: the ink card placeholder, drawn from `assets/`, imported after `primitives.css` | `inkweave-ui/styles/primitives.css` |
 | `docs/` | The design-system docs stories (Colors, Typography, Spacing & Layout, MicroPatterns) | Storybook only |
+| `test-utils/` | `createCard`, a card for the package's tests and stories | Tests and stories only |
 
 The app's barrels (`shared/constants`, `shared/components`, `shared/hooks`) forward these names, so app code keeps importing tokens through `shared/constants`; a direct `inkweave-ui/tokens/*` import there fails lint. The app's own constants (set codes and names, sort and card-type options) stay in `apps/web/src/shared/constants/appConstants.ts`.
 

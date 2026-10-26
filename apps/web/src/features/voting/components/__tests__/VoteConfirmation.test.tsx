@@ -3,7 +3,7 @@ import {render, screen, act} from '@testing-library/react';
 import {VoteConfirmation} from '../VoteConfirmation';
 import type {Score} from '../../../../shared/lib/supabase';
 
-vi.mock('../../../synergies/utils/scoreUtils', () => ({
+vi.mock('inkweave-ui/lib/scoreUtils', () => ({
   getStrengthTier: (score: number) => ({
     label: score >= 9.5 ? 'Perfect' : score >= 7 ? 'Strong' : score >= 4 ? 'Moderate' : 'Weak',
     color: '#fbbf24',

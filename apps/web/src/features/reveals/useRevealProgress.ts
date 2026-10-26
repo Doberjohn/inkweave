@@ -3,7 +3,7 @@ import {useCardDataContext} from '../../shared/contexts/CardDataContext';
 import {ALL_INKS, REVEAL_SET_CODE, specialSlotsFor, type SpecialSlotSpec} from '../../shared/constants';
 import {isChaseRarity} from '../cards/loader';
 import {PER_INK, SET_TOTAL} from './setComposition';
-import {rarityConfigOf, SPECIAL_RARITIES} from './rarity';
+import {rarityConfigOf, SPECIAL_RARITIES} from 'inkweave-ui/lib/rarity';
 
 /** One special printing slot on an ink board, filled once that printing is revealed. */
 export interface SpecialSlot extends SpecialSlotSpec {

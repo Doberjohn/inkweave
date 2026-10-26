@@ -13,7 +13,7 @@ import {
   specialSlotsFor,
 } from '..';
 import {FRANCHISE_SPOTLIGHTS, SET_SPOTLIGHTS} from '../../../features/reveals/setSpotlights';
-import {rarityConfigOf} from '../../../features/reveals/rarity';
+import {rarityConfigOf} from 'inkweave-ui/lib/rarity';
 
 // Guards the reveal season's one-constant switch (revealSet.ts) against the data
 // it must agree with. A half-done switch is otherwise silent: the page renders,
