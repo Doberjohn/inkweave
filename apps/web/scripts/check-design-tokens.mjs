@@ -9,11 +9,14 @@
 // It reads the app's source and inkweave-ui's (packages/ui/src), keyed from the repo root.
 // In .css and .html, which ESLint never reads, it also counts raw values that
 // are not tokens at all (#546): literal rgb()/rgba(), keyword and bezier
-// easings, and hexes no token declares.
+// easings, and hexes no token declares. In .css it also counts the radii, font
+// sizes, shadows and durations typed in where a token scale holds them (#1013,
+// scripts/css-scale-values.mjs).
 //
 // Baseline: scripts/known-design-values.json maps file -> hit count at
-// enforcement day, and a .css or .html file's raw values to an entry of their
-// own, `<file> (raw)`. A NEW entry, or an INCREASED count, fails; a decreased
+// enforcement day, a .css or .html file's raw values to an entry of their
+// own, `<file> (raw)`, and a .css file's scale values to another,
+// `<file> (scale)`. A NEW entry, or an INCREASED count, fails; a decreased
 // count prints a prompt to shrink the baseline. Tripwires have no baseline:
 // any hit fails, in public/ and e2e/ as well (#912).
 //
@@ -25,6 +28,7 @@
 import {readdirSync, readFileSync, writeFileSync, statSync} from 'node:fs';
 import {join, relative} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {countScaleValues} from './css-scale-values.mjs';
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..'); // apps/web
 const REPO = join(ROOT, '..', '..');
@@ -66,6 +70,10 @@ const UNLINTED = /\.(css|html)$/;
 const RAW_ENTRY = ' (raw)';
 const RAW_VALUES = [/rgba?\(\s*\d/g, /cubic-bezier\(|\bease(?:-in-out|-in|-out)?\b/g];
 const HEX_COLOR = /#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6})\b/g;
+// The values RADIUS, FONT_SIZES, SHADOWS and DURATION hold, typed into a .css file (#1013), one
+// per declaration. Baselined apart from both counts above, for the same reason.
+const STYLESHEET = /\.css$/;
+const SCALE_ENTRY = ' (scale)';
 
 // ── Scan scope ─────────────────────────────────────────────────────────
 // Everything that can carry styles is in, but DECLARATION_FILES.
@@ -122,11 +130,13 @@ function countHits(file) {
     sumNeedleHits(text, EASING_STRINGS) +
     sumNeedleHits(text, FONT_NAMES);
   const raw = UNLINTED.test(file) ? countRawValues(text) : 0;
-  return {values, raw, trips: tripwiresIn(text)};
+  const scale = STYLESHEET.test(file) ? countScaleValues(text) : 0;
+  return {values, raw, scale, trips: tripwiresIn(text)};
 }
 
-/** How many files the entries cover (a file can have a token entry and a raw one). */
-const fileCount = (entries) => new Set(Object.keys(entries).map((key) => key.replace(RAW_ENTRY, ''))).size;
+/** How many files the entries cover (a file can have a token entry, a raw one and a scale one). */
+const fileCount = (entries) =>
+  new Set(Object.keys(entries).map((key) => key.replace(RAW_ENTRY, '').replace(SCALE_ENTRY, ''))).size;
 
 const relPath = (file) => relative(REPO, file).replaceAll('\\', '/');
 
@@ -135,9 +145,10 @@ const tripHits = [];
 for (const file of files) {
   if (DECLARATION_FILES.includes(file)) continue;
   const rel = relPath(file);
-  const {values, raw, trips} = countHits(file);
+  const {values, raw, scale, trips} = countHits(file);
   if (values > 0) current[rel] = values;
   if (raw > 0) current[rel + RAW_ENTRY] = raw;
+  if (scale > 0) current[rel + SCALE_ENTRY] = scale;
   for (const t of trips) tripHits.push(`${rel}: '${t}'`);
 }
 for (const file of tripwireOnlyFiles) {
@@ -146,7 +157,7 @@ for (const file of tripwireOnlyFiles) {
 
 if (process.argv.includes('--update-baseline')) {
   writeFileSync(BASELINE_PATH, JSON.stringify(current, null, 2) + '\n');
-  console.log(`✅ Baseline updated: ${fileCount(current)} files carry token-value literals or raw values.`);
+  console.log(`✅ Baseline updated: ${fileCount(current)} files carry token-value literals, raw values or scale values.`);
   process.exit(0);
 }
 
@@ -162,7 +173,7 @@ const violations = [];
 const shrunk = [];
 for (const [file, count] of Object.entries(current)) {
   const base = baseline[file];
-  if (base === undefined) violations.push(`NEW file restates token values or carries raw ones: ${file} (x${count})`);
+  if (base === undefined) violations.push(`NEW file restates token values or carries raw or scale ones: ${file} (x${count})`);
   else if (count > base) violations.push(`Value count INCREASED: ${file} (${base} -> ${count})`);
   else if (count < base) shrunk.push(`${file} (${base} -> ${count})`);
 }
@@ -180,6 +191,7 @@ if (violations.length > 0) {
   for (const v of violations) console.error(`   ${v}`);
   console.error('  Use the token (COLORS.*, EASING.*, FONTS.*) instead of restating its value; see .claude/rules/design-tokens.md.');
   console.error('  In .css and .html, raw rgb()/rgba(), easings and hexes no token declares count too: style inline with tokens, or pass a token in through a CSS variable.');
+  console.error('  In .css, so do radii, font sizes, shadows and durations (the "(scale)" entries): take RADIUS, FONT_SIZES, SHADOWS or DURATION in the same ways.');
   process.exit(1);
 }
 console.log(`✅ Design-token value gate passed (${fileCount(current)} baselined files, ${TOKEN_HEXES.length} token hexes guarded, ${tripwireOnlyFiles.length} more files read for the tripwires).`);
