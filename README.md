@@ -106,16 +106,7 @@ The synergy engine is a standalone package (`inkweave-synergy-engine`) with zero
 
 ### Rules
 
-| Rule | Type | What it detects |
-|------|------|-----------------|
-| **Shift Targets** | Direct | Shift cards paired with same-named base characters |
-| **Named Companions** | Direct | Cards referencing specific named entities |
-| **Singer + Songs** | Direct | Singer characters + cost-compatible Song actions |
-| **Discard** | Playstyle | Discard enablers + hand-size payoffs (5-baseline + asymmetric-kill at 8) |
-| **Location Control** | Playstyle | 8 sub-roles: at-payoff, play-trigger, buff, ramp, move, in-play-check, search, boost |
-| **Lore Denial** | Playstyle | Burn (opponent loses lore) + steal (opponent loses, you gain). Tiered 5/6/7 by role pair |
-| **Ramp** | Playstyle | Inkwell-ramp + inkwell-trigger + cost-reduction (5-baseline + ramp ↔ trigger chain at 7) |
-| **Toys** | Playstyle | Toy classification + tribal payoffs (search, banish-trigger, self-discount) + composed generic mechanics — role-driven 5/7/8 matrix |
+The engine has two kinds of rules: direct rules, which connect one specific pair of cards (such as a Shift card and its base), and playstyles, which connect cards that push the same strategy. Each rule's spec, with its detection patterns and scores, is its own `*_RULE.md` in [`packages/synergy-engine/`](packages/synergy-engine/), and the [Synergy Rules registry](CLAUDE.md#synergy-rules) lists them all.
 
 ## Card Data
 
