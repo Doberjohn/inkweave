@@ -82,7 +82,7 @@ inkweave/
             │   ├── cards/    # Card loading, browsing, filtering, preview
             │   └── synergies/# Synergy display, grouping, detail modal
             └── shared/
-                ├── components/# Shared UI (Chip, FilterDialog, SearchAutocomplete, etc.)
+                ├── components/# App UI (CardFilterDialog, SearchAutocomplete, etc.)
                 ├── contexts/  # CardDataContext, CardPreviewContext
                 ├── hooks/     # useResponsive, useFilterParams, useScrollLock
                 └── constants/ # Design tokens, layout values

@@ -1,0 +1,330 @@
+import {describe, it, expect, vi} from 'vitest';
+import {fireEvent, render, screen, within} from '@testing-library/react';
+import {FilterContent} from 'inkweave-ui/lorcana/FilterContent';
+import {FILTER_VOCABULARY} from '../filterOptions';
+import type {CardFilterOptions} from '../loader';
+import type {Ink} from '../types';
+import type {CardTypeFilter} from '../../../shared/constants';
+
+// inkweave-ui's FilterContent with the app's vocabulary: the app's rarity names, presets,
+// Dual-ink rule and buttons. The package's own test proves it reads each member.
+
+function defaultProps(overrides = {}) {
+  return {
+    inkFilters: [] as Ink[],
+    typeFilters: [] as CardTypeFilter[],
+    costFilters: [] as number[],
+    filters: {} as CardFilterOptions,
+    uniqueKeywords: [],
+    uniqueClassifications: [],
+    uniqueRarities: [] as string[],
+    sets: [],
+    onToggleInk: vi.fn(),
+    onToggleType: vi.fn(),
+    onToggleCost: vi.fn(),
+    onFiltersChange: vi.fn(),
+    variant: 'desktop' as const,
+    vocabulary: FILTER_VOCABULARY,
+    ...overrides,
+  };
+}
+
+describe('FilterContent cost section', () => {
+  it('hides the Ink Cost section on desktop when cost icons are inline', () => {
+    render(<FilterContent {...defaultProps({variant: 'desktop', showInlineCost: true})} />);
+    expect(screen.queryByText('Ink Cost')).not.toBeInTheDocument();
+  });
+
+  it('shows the Ink Cost section on desktop when cost icons are tucked away', () => {
+    render(<FilterContent {...defaultProps({variant: 'desktop', showInlineCost: false})} />);
+    expect(screen.getByText('Ink Cost')).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Cost 3'})).toBeInTheDocument();
+  });
+
+  it('always shows the Ink Cost section on mobile', () => {
+    render(<FilterContent {...defaultProps({variant: 'mobile', showInlineCost: true})} />);
+    expect(screen.getByText('Ink Cost')).toBeInTheDocument();
+  });
+});
+
+describe('FilterContent button options', () => {
+  it('offers only the values in buttonOptions', () => {
+    const buttonOptions = {
+      inks: ['Ruby'] as Ink[],
+      costs: [2, 9],
+      types: ['Song'] as CardTypeFilter[],
+      inkwell: ['inkable'] as const,
+    };
+    render(<FilterContent {...defaultProps({variant: 'mobile', buttonOptions})} />);
+    // Type starts folded on a phone, as in the panel.
+    fireEvent.click(screen.getByRole('button', {name: /^Type/}));
+
+    // Icon buttons are named by aria-label, text buttons by their text.
+    const buttonNames = (group: string) =>
+      within(screen.getByRole('group', {name: group}))
+        .getAllByRole('button')
+        .map((button) => button.getAttribute('aria-label') ?? button.textContent);
+    expect(buttonNames('Ink color filters')).toEqual(['Filter by Ruby']);
+    expect(buttonNames('Ink cost filters')).toEqual(['Cost 2', 'Cost 9+']);
+    expect(buttonNames('Card type filters')).toEqual(['Song']);
+    expect(buttonNames('Inkwell filters')).toEqual(['Inkable']);
+  });
+
+  it('leaves out a chip section with nothing to offer', () => {
+    render(<FilterContent {...defaultProps({variant: 'mobile', uniqueClassifications: ['Hero']})} />);
+
+    // Folded or not: the chip sections start folded on a phone.
+    expect(screen.queryByRole('group', {name: 'Keyword filters', hidden: true})).not.toBeInTheDocument();
+    expect(screen.getByRole('group', {name: 'Classification filters', hidden: true})).toBeInTheDocument();
+  });
+});
+
+// A phone's filter sheets fold as the docked panel does (owner, 2026-10-26).
+describe('FilterContent folds on a phone', () => {
+  const offered = {
+    uniqueKeywords: ['Evasive'],
+    uniqueClassifications: ['Hero'],
+    uniqueRarities: ['Rare'],
+    sets: [{code: '9', name: 'Fabled', number: 9}],
+  };
+  const header = (label: string) => screen.getByRole('button', {name: new RegExp(`^${label}(\\s*·|$)`)});
+
+  it('starts with Ink, Inkwell, Ink Cost and Rarity open, and Type, Keyword, Classification and Set folded', () => {
+    render(<FilterContent {...defaultProps({variant: 'mobile', ...offered})} />);
+    for (const open of ['Ink', 'Inkwell', 'Ink Cost', 'Rarity']) {
+      expect(header(open)).toHaveAttribute('aria-expanded', 'true');
+    }
+    for (const folded of ['Type', 'Keyword', 'Classification', 'Set']) {
+      expect(header(folded)).toHaveAttribute('aria-expanded', 'false');
+    }
+  });
+
+  it('shows what is picked in a folded section on its header', () => {
+    render(<FilterContent {...defaultProps({variant: 'mobile', ...offered, filters: {keywords: ['Evasive']}})} />);
+    expect(header('Keyword')).toHaveTextContent('· Evasive');
+  });
+
+  it('gives each header a touch-sized tap area that leaves the line its height', () => {
+    render(<FilterContent {...defaultProps({variant: 'mobile', ...offered})} />);
+    // 24px at rest: 14px of padding over and under its line, 12px of it given back by the margins,
+    // and never under 44px if its line comes out short.
+    expect(header('Keyword')).toHaveStyle({paddingTop: '14px', paddingBottom: '14px', marginTop: '-12px', marginBottom: '-12px'});
+    expect(header('Keyword')).toHaveStyle({minHeight: '44px'});
+  });
+
+  it('never folds the desktop dialog', () => {
+    render(<FilterContent {...defaultProps({variant: 'desktop', ...offered})} />);
+    expect(screen.queryAllByRole('button', {expanded: false})).toHaveLength(0);
+    expect(screen.getByRole('group', {name: 'Keyword filters'})).toBeVisible();
+  });
+});
+
+describe('FilterContent inkwell section', () => {
+  it('leaves Inkwell to a desktop toolbar that carries it inline', () => {
+    render(<FilterContent {...defaultProps({variant: 'desktop'})} />);
+    expect(screen.queryByText('Inkwell')).not.toBeInTheDocument();
+  });
+
+  it('shows Inkwell on desktop when the toolbar has no inline toggles', () => {
+    render(<FilterContent {...defaultProps({variant: 'desktop', showInlineInkwell: false})} />);
+    expect(screen.getByRole('button', {name: /Uninkable/})).toBeInTheDocument();
+  });
+});
+
+describe('FilterContent chip pickers', () => {
+  it('adds a second keyword to the picks rather than replacing the first', () => {
+    const onFiltersChange = vi.fn();
+    render(
+      <FilterContent
+        {...defaultProps({
+          variant: 'panel',
+          uniqueKeywords: ['Evasive', 'Ward'],
+          filters: {keywords: ['Evasive']},
+          onFiltersChange,
+        })}
+      />,
+    );
+    // Panel sections other than Ink, Inkwell and Ink Cost start folded.
+    fireEvent.click(screen.getByRole('button', {name: /^Keyword/}));
+    fireEvent.click(screen.getByRole('button', {name: 'Ward'}));
+    expect(onFiltersChange).toHaveBeenCalledWith({keywords: ['Evasive', 'Ward']});
+  });
+
+  it('offers the given rarities, open in the panel, picking any of them', () => {
+    const onFiltersChange = vi.fn();
+    render(
+      <FilterContent
+        {...defaultProps({variant: 'panel', uniqueRarities: ['Common', 'Rare'], filters: {rarities: ['Rare']}, onFiltersChange})}
+      />,
+    );
+    // Open by default in the panel: no header click needed.
+    const group = screen.getByRole('group', {name: 'Rarity filters'});
+    fireEvent.click(within(group).getByRole('button', {name: 'Common'}));
+    expect(onFiltersChange).toHaveBeenCalledWith({rarities: ['Rare', 'Common']});
+  });
+
+  it('shows each rarity by its symbol alone, and one without a symbol by its name', () => {
+    // Every rarity Browse or collection mode offers, so one claimed to have a
+    // symbol that RaritySymbol cannot draw shows up as a blank chip here. Mythic,
+    // made up, stands in for a rarity LorcanaJSON might add one day.
+    const symbolled = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', 'Epic', 'Enchanted', 'Iconic'];
+    render(<FilterContent {...defaultProps({variant: 'panel', uniqueRarities: [...symbolled, 'Special', 'Mythic']})} />);
+    const group = screen.getByRole('group', {name: 'Rarity filters'});
+    for (const rarity of symbolled) {
+      const chip = within(group).getByRole('button', {name: rarity});
+      expect(chip.querySelector('img')).not.toBeNull();
+      expect(chip.textContent).toBe('');
+    }
+    expect(within(group).getByRole('button', {name: 'Mythic'})).toHaveTextContent('Mythic');
+  });
+
+  // LorcanaJSON gives promos the rarity Special (#805).
+  it('shows Special as the promo symbol, named "Promo" in its tooltip and in the folded summary', () => {
+    render(
+      <FilterContent
+        {...defaultProps({variant: 'panel', uniqueRarities: ['Legendary', 'Special'], filters: {rarities: ['Special']}})}
+      />,
+    );
+    const chip = within(screen.getByRole('group', {name: 'Rarity filters'})).getByRole('button', {name: 'Promo'});
+    expect(chip.querySelector('img')).toHaveAttribute('src', expect.stringContaining('promo'));
+    expect(chip).toHaveAttribute('title', 'Promo');
+
+    fireEvent.click(screen.getByRole('button', {name: /^Rarity/}));
+    expect(screen.getByRole('button', {name: /^Rarity/})).toHaveTextContent('· Promo');
+  });
+
+  describe('rarity lines', () => {
+    const lineBreaks = () =>
+      [...screen.getByRole('group', {name: 'Rarity filters'}).children].filter((el) => el.tagName === 'SPAN');
+
+    it("puts the five card rarities on the top line and the printings' below (owner, 2026-10-17)", () => {
+      const rarities = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', 'Epic', 'Enchanted', 'Iconic', 'Special'];
+      render(<FilterContent {...defaultProps({variant: 'panel', uniqueRarities: rarities})} />);
+      // One line break, right before Epic: Legendary ends the top line.
+      expect(lineBreaks()).toHaveLength(1);
+      expect(lineBreaks()[0].nextElementSibling).toBe(screen.getByRole('button', {name: 'Epic'}));
+    });
+
+    it('keeps five rarities without printings on one line', () => {
+      const rarities = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary'];
+      render(<FilterContent {...defaultProps({variant: 'panel', uniqueRarities: rarities})} />);
+      expect(lineBreaks()).toHaveLength(0);
+    });
+  });
+
+  it('lists the set logos newest first, and adds a second set to the picks', () => {
+    const onFiltersChange = vi.fn();
+    const sets = [
+      {code: '9', name: 'Fabled', number: 9},
+      {code: '11', name: 'Winterspell', number: 11},
+      {code: '10', name: 'Whispers in the Well', number: 10},
+    ];
+    render(<FilterContent {...defaultProps({sets, filters: {setCodes: ['11']}, onFiltersChange})} />);
+    const group = screen.getByRole('group', {name: 'Set filters'});
+    const names = within(group)
+      .getAllByRole('button')
+      .map((b) => b.getAttribute('aria-label'));
+    expect(names).toEqual(['Winterspell', 'Whispers in the Well', 'Fabled']);
+    fireEvent.click(within(group).getByRole('button', {name: 'Fabled'}));
+    expect(onFiltersChange).toHaveBeenCalledWith({setCodes: ['11', '9']});
+  });
+
+  it('clears the option when its last pick is unpicked', () => {
+    const onFiltersChange = vi.fn();
+    render(
+      <FilterContent
+        {...defaultProps({uniqueClassifications: ['Hero'], filters: {classifications: ['Hero']}, onFiltersChange})}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', {name: 'Hero'}));
+    expect(onFiltersChange).toHaveBeenCalledWith({});
+  });
+});
+
+describe('FilterContent Dual-ink cards switch', () => {
+  const toggle = () => screen.queryByRole('button', {name: 'Dual-ink cards'});
+
+  it.each([
+    ['no inks', []],
+    ['three inks', ['Amber', 'Steel', 'Ruby']],
+  ])('is not offered with %s selected', (_label, inks) => {
+    render(<FilterContent {...defaultProps({variant: 'panel', inkFilters: inks as Ink[]})} />);
+    expect(toggle()).toBeNull();
+  });
+
+  it.each([
+    ['one ink', ['Amber']],
+    ['a pair', ['Amber', 'Steel']],
+  ])('is offered for %s, and switches the mode on', (_label, inks) => {
+    const onFiltersChange = vi.fn();
+    render(<FilterContent {...defaultProps({variant: 'panel', inkFilters: inks as Ink[], onFiltersChange})} />);
+    fireEvent.click(toggle()!);
+    expect(onFiltersChange).toHaveBeenCalledWith({inkMatch: 'dual'});
+  });
+});
+
+describe('FilterContent art presets', () => {
+  const RARITIES = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary', 'Epic', 'Enchanted', 'Iconic', 'Special'];
+  const STANDARD = ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary'];
+  const standard = () => screen.getByRole('button', {name: 'Standard cards'});
+
+  it('pick promos with the alt art printings (owner, 2026-10-17), or only the offered ones, as they say', () => {
+    const onFiltersChange = vi.fn();
+    const props = {variant: 'panel', showArtPresets: true, onFiltersChange};
+    const alt = () => screen.getByRole('button', {name: 'Alt art cards'});
+    const {rerender} = render(<FilterContent {...defaultProps({...props, uniqueRarities: RARITIES})} />);
+    fireEvent.click(alt());
+    expect(onFiltersChange).toHaveBeenLastCalledWith({rarities: ['Epic', 'Enchanted', 'Iconic', 'Special']});
+    expect(alt()).toHaveAttribute('title', 'Pick Epic, Enchanted, Iconic and Promo');
+    // Offered no promo, it picks the chase rarities, and says so.
+    rerender(<FilterContent {...defaultProps({...props, uniqueRarities: RARITIES.slice(0, -1)})} />);
+    fireEvent.click(alt());
+    expect(onFiltersChange).toHaveBeenLastCalledWith({rarities: ['Epic', 'Enchanted', 'Iconic']});
+    expect(alt()).toHaveAttribute('title', 'Pick Epic, Enchanted and Iconic');
+  });
+
+  it('are offered only where asked, and only with rarities of both kinds to pick', () => {
+    const {rerender} = render(<FilterContent {...defaultProps({variant: 'panel', uniqueRarities: RARITIES})} />);
+    expect(screen.queryByRole('group', {name: 'Card art'})).toBeNull();
+    rerender(<FilterContent {...defaultProps({variant: 'panel', uniqueRarities: STANDARD, showArtPresets: true})} />);
+    expect(screen.queryByRole('group', {name: 'Card art'})).toBeNull();
+    rerender(<FilterContent {...defaultProps({variant: 'panel', uniqueRarities: RARITIES, showArtPresets: true})} />);
+    expect(screen.getByRole('button', {name: 'Alt art cards'})).toBeInTheDocument();
+  });
+
+  it('pick a whole kind in place of the picks, and light up only while the picks are exactly it', () => {
+    const onFiltersChange = vi.fn();
+    const props = {variant: 'panel', uniqueRarities: RARITIES, showArtPresets: true, onFiltersChange};
+    const {rerender} = render(<FilterContent {...defaultProps({...props, filters: {rarities: ['Epic']}})} />);
+    fireEvent.click(standard());
+    expect(onFiltersChange).toHaveBeenLastCalledWith({rarities: STANDARD});
+    // Every symbol stays: the preset picks them, as picking them one by one would.
+    rerender(<FilterContent {...defaultProps({...props, filters: {rarities: [...STANDARD].reverse()}})} />);
+    expect(within(screen.getByRole('group', {name: 'Rarity filters'})).getAllByRole('button')).toHaveLength(9);
+    expect(standard()).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(standard());
+    expect(onFiltersChange).toHaveBeenLastCalledWith({});
+    // Another pick besides puts it out.
+    rerender(<FilterContent {...defaultProps({...props, filters: {rarities: [...STANDARD, 'Epic']}})} />);
+    expect(standard()).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('take the kit touch size in the phone drawer, with Dual-ink cards, and stay compact elsewhere', () => {
+    const props = {uniqueRarities: RARITIES, showArtPresets: true, inkFilters: ['Amber'] as Ink[]};
+    const {rerender} = render(<FilterContent {...defaultProps({...props, variant: 'mobile'})} />);
+    expect(standard()).toHaveStyle({padding: '8px 14px'});
+    expect(screen.getByRole('button', {name: 'Dual-ink cards'})).toHaveStyle({padding: '8px 14px'});
+    rerender(<FilterContent {...defaultProps({...props, variant: 'panel'})} />);
+    expect(standard()).toHaveStyle({padding: '2px 12px'});
+  });
+});
+
+describe('FilterContent Set section', () => {
+  it('leaves the Set filter out in collection mode, where the collection panel picks the set', () => {
+    const sets = [{code: '9', name: 'Fabled', number: 9}];
+    const {rerender} = render(<FilterContent {...defaultProps({variant: 'panel', sets})} />);
+    expect(screen.getByRole('button', {name: 'Set'})).toBeInTheDocument();
+    rerender(<FilterContent {...defaultProps({variant: 'panel', sets, showSetFilter: false})} />);
+    expect(screen.queryByRole('button', {name: 'Set'})).toBeNull();
+  });
+});

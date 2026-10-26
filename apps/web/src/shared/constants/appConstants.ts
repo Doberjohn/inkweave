@@ -1,4 +1,4 @@
-import type {CardType} from 'inkweave-synergy-engine';
+import type {CardTypeFilter} from 'inkweave-ui/lib/filterModel';
 
 // App branding
 export const APP_NAME = 'Inkweave';
@@ -50,7 +50,7 @@ export const SET_NAMES: Record<SetCode, string> = {
 export const INLINE_COST_FILTER_MIN_WIDTH = 1580;
 
 // Card type filter options (includes "Song" pseudo-type for UI filtering)
-export type CardTypeFilter = CardType | 'Song';
+export type {CardTypeFilter};
 export const CARD_TYPE_FILTERS: CardTypeFilter[] = [
   'Character',
   'Action',

@@ -1,7 +1,9 @@
-import type {CardPrinting, LorcanaJSONCard, RawCardVariant, VariantRarity} from 'inkweave-synergy-engine';
+import type {CardPrinting, LorcanaJSONCard, RawCardVariant} from 'inkweave-synergy-engine';
 import {transformCard as baseTransformCard, isCoreSet} from 'inkweave-synergy-engine/card';
 import type {LorcanaCard, Ink, CardType} from './types';
 import {fetchPreviewCards} from './previewCards';
+import {PROMO_RARITY, isChaseRarity} from 'inkweave-ui/lib/printings';
+import type {FilterPicks} from 'inkweave-ui/lib/filterModel';
 import {ALL_INKS, binderSetOf, editionRank, promoSetRank, type BrowseSortOrder} from '../../shared/constants';
 
 interface LorcanaJSONSet {
@@ -337,34 +339,25 @@ export function searchCardsByName(cards: LorcanaCard[], query: string): LorcanaC
 }
 
 /**
- * Filter options for cards
+ * The search box's suggestions: what `searchCardsByName` finds, newest set first by
+ * `parseSetOrder`, so quest sets come last. inkweave-ui's `useAutocomplete` takes it as its
+ * `search`.
  */
-export interface CardFilterOptions {
+export function suggestCardsByName(cards: LorcanaCard[], term: string): LorcanaCard[] {
+  return searchCardsByName(cards, term).sort((a, b) => parseSetOrder(b.setCode) - parseSetOrder(a.setCode));
+}
+
+/**
+ * Filter options for cards: the filter panel's picks (`FilterPicks`, which FilterContent sets)
+ * plus the fields only this module's filtering reads. A picked rarity matches the card's own
+ * rarity, and with `rarityMatch` its printings too; `inkMatch` applies only to selections
+ * `offersDualOnly` offers it for (`matchesInk`).
+ */
+export interface CardFilterOptions extends FilterPicks {
   ink?: Ink | Ink[];
   type?: (CardType | 'Song') | (CardType | 'Song')[];
   costs?: number[];
-  keywords?: string[];
-  classifications?: string[];
   textSearch?: string;
-  /**
-   * Picked sets, ANY of them (owner, 2026-10-08: the set logos replaced a
-   * single-pick dropdown). A card belongs to one set, so several widen the result,
-   * as types do.
-   */
-  setCodes?: string[];
-  /**
-   * Picked rarities, ANY of them (owner, 2026-10-08), matched against the card's
-   * own rarity, and with `rarityMatch` against its printings too. A card has one
-   * rarity, so several widen the result, as types do.
-   */
-  rarities?: string[];
-  inkwell?: 'inkable' | 'uninkable';
-  /**
-   * `dual`: the DUAL-INK CARDS switch (owner, 2026-10-08), narrowing the result to dual-ink
-   * cards: one ink's, or exactly one pair's. Applies only to selections that
-   * offer it; see `offersDualOnly` and `matchesInk`.
-   */
-  inkMatch?: 'dual';
   /**
    * `printings`: a picked rarity also matches a card's Epic, Enchanted or Iconic
    * printing (owner, 2026-10-08). Browse sets it, since it folds those printings
@@ -377,8 +370,8 @@ export interface CardFilterOptions {
 /** The two kinds of printing the art presets pick: standard cards, and the alternate-art printings. */
 export type ArtKind = 'standard' | 'alt';
 
-/** The rarity LorcanaJSON gives every promo printing, shown as "Promo" (`rarityLabel`). */
-export const PROMO_RARITY = 'Special';
+/** Both live in inkweave-ui (#980); the loader forwards them for its importers. */
+export {PROMO_RARITY, isChaseRarity};
 
 /**
  * The rarities of each kind (owner, 2026-10-15): the five a standard card comes in, and
@@ -389,14 +382,6 @@ export const RARITIES_BY_ART: Readonly<Record<ArtKind, readonly string[]>> = {
   standard: ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary'],
   alt: ['Epic', 'Enchanted', 'Iconic', PROMO_RARITY],
 };
-
-/** The chase printings' rarities, each with a symbol of its own: the engine's `VariantRarity`. */
-const CHASE_RARITIES: ReadonlySet<string> = new Set<VariantRarity>(['Epic', 'Enchanted', 'Iconic']);
-
-/** Whether a rarity is a chase printing's (Epic, Enchanted, Iconic; not a promo's), narrowed to it. */
-export function isChaseRarity(rarity: string | undefined): rarity is VariantRarity {
-  return rarity !== undefined && CHASE_RARITIES.has(rarity);
-}
 
 type CardFilterPredicate = (card: LorcanaCard, options: CardFilterOptions) => boolean;
 

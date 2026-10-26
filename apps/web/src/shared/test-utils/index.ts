@@ -5,7 +5,7 @@ export {
   createConnection,
   createVotingPair,
 } from './factories';
-export {swipeCard} from './printingSwipe';
-export {fingerMove, touchMoveKept} from './touchMove';
+export {swipeCard} from 'inkweave-ui/test-utils/printingSwipe';
+export {fingerMove, touchMoveKept} from 'inkweave-ui/test-utils/touchMove';
 export {fakeAccessToken} from './supabaseSession';
 // Note: setup.ts is imported by vitest.config.ts, not re-exported here

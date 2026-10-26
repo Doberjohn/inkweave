@@ -1,6 +1,6 @@
 # Card image pipeline
 
-Production is **content-addressed and self-hosted**; dev falls back to proxies. All URLs route through `resolveImageUrl(raw)` / `smallImageUrl(card)` in [`loader.ts`](loader.ts).
+Production is **content-addressed and self-hosted**; dev falls back to proxies. All URLs route through `resolveImageUrl(raw)` / `smallImageUrl(card)` in [`loader.ts`](loader.ts). inkweave-ui's CardTile takes its art URL through `artUrl`, which the app's CardTile ([`components/CardTile.tsx`](components/CardTile.tsx)) fills with `smallImageUrl` where a grid asks for small art (#980).
 
 ## The rule that matters
 

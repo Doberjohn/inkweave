@@ -7,7 +7,7 @@ import {
   getUniqueSets,
 } from '../../cards';
 import {cardListIfLoaded, startCardList} from '../../cards/cardListRequest';
-import {whenLoadedAndIdle} from '../../../shared/lib/whenLoadedAndIdle';
+import {whenLoadedAndIdle} from 'inkweave-ui/lib/whenLoadedAndIdle';
 
 /**
  * How long a deferred load waits, after `load` and an idle moment, before it starts on its own

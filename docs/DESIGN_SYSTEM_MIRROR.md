@@ -6,7 +6,7 @@ When a PR changes any of the following, refresh the design system project afterw
 
 | File / folder | What lives there |
 |---|---|
-| `packages/ui/src/tokens/` | All design tokens: `theme.ts` (colors, type scale, spacing, easings) and `lorcana.ts` (ink colors, ink order, cost buttons) |
+| `packages/ui/src/tokens/` | All design tokens: `theme.ts` (colors, type scale, spacing, easings), `lorcana.ts` (ink colors, ink order, cost buttons) and `cardBar.ts` (a card's black bar as a share of its width, which the copies stripe takes) |
 | `packages/ui/src/docs/Colors.stories.tsx` | Canonical color palette + usage guide |
 | `packages/ui/src/docs/Typography.stories.tsx` | Type scale + font families + usage guide |
 | `packages/ui/src/docs/SpacingLayout.stories.tsx` | Spacing scale + layout constants |

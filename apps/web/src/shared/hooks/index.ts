@@ -1,5 +1,5 @@
-export {useAutocomplete} from './useAutocomplete';
-export type {UseAutocompleteReturn} from './useAutocomplete';
+export {useAutocomplete} from 'inkweave-ui/hooks/useAutocomplete';
+export type {UseAutocompleteReturn} from 'inkweave-ui/hooks/useAutocomplete';
 export {useContainerWidth} from 'inkweave-ui/hooks/useContainerWidth';
 export {useDialogFocus} from 'inkweave-ui/hooks/useDialogFocus';
 export {useDraftFilters} from './useDraftFilters';
@@ -14,14 +14,8 @@ export {useScrollToTopOnRouteChange} from './useScrollToTopOnRouteChange';
 export {useScrollSnapIndex} from 'inkweave-ui/hooks/useScrollSnapIndex';
 export {useTooltip} from 'inkweave-ui/hooks/useTooltip';
 export {useBackOrNavigate} from './useBackOrNavigate';
-export {
-  usePrintingSelection,
-  printedCardNumber,
-  printedFullName,
-  printingAlt,
-  printingsOf,
-  hasForeignScan,
-} from './usePrintingSelection';
-export type {Printing} from './usePrintingSelection';
+export {usePrintingSelection, printedCardNumber} from './usePrintingSelection';
+export {printedFullName, printingAlt, printingsOf, hasForeignScan} from 'inkweave-ui/lib/printings';
+export type {Printing} from 'inkweave-ui/lib/printings';
 export {useTransitionPresence} from 'inkweave-ui/hooks/useTransitionPresence';
 export {useBoop} from 'inkweave-ui/hooks/useBoop';

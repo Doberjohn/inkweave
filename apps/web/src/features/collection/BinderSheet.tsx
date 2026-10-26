@@ -1,6 +1,6 @@
 import {useState, type ComponentProps, type ReactNode} from 'react';
-import {FilterDialog, FilterSection, SortSelect} from '../../shared/components';
-import type {FilterPanelProps} from '../../shared/components/FilterContent';
+import {CardFilterDialog, FilterSection, SortSelect} from '../../shared/components';
+import type {FilterPanelProps} from '../../shared/components/CardFilterDialog';
 import type {BrowseSortOrder} from '../../shared/constants';
 import type {AlsoWrite, FilterDraft} from '../../shared/hooks/useFilterParams';
 import {BINDER_SORT_OPTIONS, writeShowParam, type BinderShow} from './binderCards';
@@ -9,7 +9,7 @@ import {BinderShows} from './BinderShows';
 /** The filter sheet's props the Binder sheet sets itself. */
 type SheetOwn = 'variant' | 'onApply' | 'title' | 'prelude' | 'postlude' | 'extra';
 
-export interface BinderSheetProps extends Omit<ComponentProps<typeof FilterDialog>, SheetOwn> {
+export interface BinderSheetProps extends Omit<ComponentProps<typeof CardFilterDialog>, SheetOwn> {
   /** What the binder shows, where the sheet's Show starts each time it opens. */
   show: BinderShow;
   /** The binder's sort, where the sheet's Sort starts. */
@@ -83,7 +83,7 @@ export function BinderSheet({show, sortOrder, onApply, progress, ...dialog}: Bin
       {sortOrder: drafts.sortOrder, edit: (params) => writeShowParam(params, drafts.show)},
     );
   return (
-    <FilterDialog
+    <CardFilterDialog
       {...dialog}
       variant="drawer"
       title="Binder"

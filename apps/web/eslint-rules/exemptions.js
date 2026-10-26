@@ -66,12 +66,13 @@ export const ADHOC_BUTTON_EXEMPT = {
   paths: [
     'packages/ui/src/components/', // the kit itself, QuantityStepper's domain stepper family too
     'packages/ui/src/lorcana/CardImageButton.tsx', // a card's enlargeable art
+    'packages/ui/src/lorcana/CardTile.tsx', // card-grid tile family
+    'packages/ui/src/lorcana/ConnectionGroup.tsx', // a synergy group's expand toggle
+    'packages/ui/src/lorcana/CopiesStripe.tsx', // the collection's copies stepper family
+    'packages/ui/src/lorcana/PrintingPeek.tsx', // the printing stack's peek arrows
     'apps/web/src/shared/components/BackLink.tsx', // back-navigation link
-    'apps/web/src/shared/components/ConnectionGroup.tsx', // a synergy group's expand toggle
-    'apps/web/src/shared/components/CopiesStripe.tsx', // the collection's copies stepper family
     'apps/web/src/shared/components/ErrorBoundary.tsx', // the error screen's action
     'apps/web/src/shared/components/MobileBottomNav.tsx', // bottom-nav tab family
-    'apps/web/src/shared/components/PrintingPeek.tsx', // the printing stack's peek arrows
     'apps/web/src/shared/components/SearchBottomSheet.tsx', // search sheet's clear and recent chips
     'apps/web/src/features/voting/components/OptionPicker.tsx', // vote picker family (CarriesPicker adapts it)
     'apps/web/src/features/voting/components/ScorePicker.tsx', // vote score row
@@ -81,7 +82,6 @@ export const ADHOC_BUTTON_EXEMPT = {
     'apps/web/src/features/synergies/components/SynergyMoreTile.tsx', // a synergy group's "+N more" tile
     'apps/web/src/features/synergies/components/ComparisonCardTile.tsx', // phone comparison card tile family (#835)
     'apps/web/src/features/synergies/components/ScoreChevronsTab.tsx', // phone comparison score tab family (#835)
-    'apps/web/src/features/cards/components/CardTile.tsx', // card-grid tile family
     'apps/web/src/features/reveals/CardSlot.tsx', // reveals tile family
     'apps/web/src/features/reveals/InkTrackerTile.tsx', // reveals ink-selection tile family (#511)
     'apps/web/src/features/reveals/SpotlightHero.tsx', // reveals spotlight tile family (#835)
@@ -97,7 +97,13 @@ export const ARIA_MODAL_EXEMPT = {
   paths: [
     'packages/ui/src/components/DialogShell.tsx',
     'packages/ui/src/components/BottomSheet.tsx',
-    'apps/web/src/shared/components/FilterDialog.tsx',
+    'packages/ui/src/components/FilterDialog.tsx',
   ],
   patterns: [TEST_FILE, STORY_FILE],
 };
+
+/**
+ * Where Radix Dialog may be imported: FilterDialog alone, with no test or story pattern, since a
+ * story or test that builds its own Radix dialog shows a surface the overlay contract never wired.
+ */
+export const RADIX_DIALOG_EXEMPT = {paths: ['packages/ui/src/components/FilterDialog.tsx']};

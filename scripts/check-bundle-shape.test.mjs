@@ -11,7 +11,8 @@ const CRITICAL_CSS =
   '@keyframes inkweave-qty-pop{50%{scale:1.2}}.overlay-transition{transition:opacity .2s}' +
   '.touch-target{min-width:44px}@media (prefers-reduced-motion:reduce){' +
   '.inkweave-foil-shimmer{animation:none!important}.overlay-transition{transition:none!important}}' +
-  `.ink-card-placeholder{aspect-ratio:5/7}${AMBER}${RUBY}`;
+  `.ink-card-placeholder{aspect-ratio:5/7}${AMBER}${RUBY}` +
+  '.printing-stack:focus-visible{outline:none}';
 
 /** index.html as the build writes it: the entry, its modulepreloads and the inlined CSS. */
 function indexHtml({
@@ -66,13 +67,18 @@ describe('shapeProblems', () => {
   });
 
   it('names each critical rule the inlined CSS lacks', () => {
-    expect(shapeProblems(indexHtml({css: '.card-tile{color:red}'}))).toHaveLength(8);
+    expect(shapeProblems(indexHtml({css: '.card-tile{color:red}'}))).toHaveLength(9);
     expect(
       shapeProblems(indexHtml({css: CRITICAL_CSS.replace('.overlay-transition{', '.x{')})),
     ).toEqual([expect.stringContaining('overlay-transition')]);
     expect(
       shapeProblems(indexHtml({css: CRITICAL_CSS.replace('.ink-card-placeholder{', '.x{')})),
     ).toEqual([expect.stringContaining('ink-card-placeholder')]);
+  });
+
+  it("names the printing stack's focus ring, which inkweave-ui's lorcana.css carries (#980)", () => {
+    const css = CRITICAL_CSS.replace('.printing-stack:focus-visible{', '.printing-stack{');
+    expect(shapeProblems(indexHtml({css}))).toEqual([expect.stringContaining('printing-stack')]);
   });
 
   it('takes the reduced-motion overlay override only inside its media query', () => {

@@ -26,7 +26,7 @@ import {
   type CardFilterOptions,
 } from '../features/cards/loader';
 import {getPoolFilterOptions} from '../features/cards/filterOptions';
-import {CompactHeader, CtaButton, ErrorBoundary, EtherealBackground, FilterDialog, Seo} from '../shared/components';
+import {CardFilterDialog, CompactHeader, CtaButton, ErrorBoundary, EtherealBackground, Seo} from '../shared/components';
 import {
   COLORS,
   FONTS,
@@ -327,7 +327,7 @@ function toggleSetMember<T>(prev: Set<T>, item: T): Set<T> {
 }
 
 /**
- * Bundle the BrowseToolbar + FilterDialog props for PlaystyleDetailPage.
+ * Bundle the BrowseToolbar + CardFilterDialog props for PlaystyleDetailPage.
  * Extracted so the page component stays under the Large Method threshold.
  * The filter options are narrowed to the playstyle's cards (#248).
  */
@@ -642,16 +642,16 @@ interface ToolbarProps {
 interface FilterDialogSharedProps {
   isOpen: boolean;
   onClose: () => void;
-  onApply: Parameters<typeof FilterDialog>[0]['onApply'];
-  inkFilters: Parameters<typeof FilterDialog>[0]['inkFilters'];
-  typeFilters: Parameters<typeof FilterDialog>[0]['typeFilters'];
-  costFilters: Parameters<typeof FilterDialog>[0]['costFilters'];
-  filters: Parameters<typeof FilterDialog>[0]['filters'];
+  onApply: Parameters<typeof CardFilterDialog>[0]['onApply'];
+  inkFilters: Parameters<typeof CardFilterDialog>[0]['inkFilters'];
+  typeFilters: Parameters<typeof CardFilterDialog>[0]['typeFilters'];
+  costFilters: Parameters<typeof CardFilterDialog>[0]['costFilters'];
+  filters: Parameters<typeof CardFilterDialog>[0]['filters'];
   uniqueKeywords: string[];
   uniqueClassifications: string[];
   uniqueRarities: string[];
-  sets: Parameters<typeof FilterDialog>[0]['sets'];
-  buttonOptions: Parameters<typeof FilterDialog>[0]['buttonOptions'];
+  sets: Parameters<typeof CardFilterDialog>[0]['sets'];
+  buttonOptions: Parameters<typeof CardFilterDialog>[0]['buttonOptions'];
 }
 
 /**
@@ -870,7 +870,7 @@ function PlaystyleDetailMobileView({
           <PlaystyleGuide {...guideSection} padding={PHONE_GUIDE_PADDING} />
         </ErrorBoundary>
       </div>
-      <FilterDialog {...filterDialogProps} variant="drawer" />
+      <CardFilterDialog {...filterDialogProps} variant="drawer" />
       <MechanicsBottomSheet
         isOpen={sheetOpen}
         onClose={() => setSheetOpen(false)}
@@ -968,7 +968,7 @@ function PlaystyleDetailDesktopView({
           <PlaystyleGuide {...guideSection} padding={DESKTOP_GUIDE_PADDING} />
         </ErrorBoundary>
       </div>
-      <FilterDialog {...filterDialogProps} variant="modal" />
+      <CardFilterDialog {...filterDialogProps} variant="modal" />
     </main>
   );
 }

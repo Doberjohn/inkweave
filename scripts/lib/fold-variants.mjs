@@ -38,8 +38,8 @@ const UNNUMBERED = Number.MAX_SAFE_INTEGER;
 
 /**
  * A card's printings in the order the web app's switcher shows them (`byDisplayOrder` in
- * usePrintingSelection.ts): the other printings by collector number, then the promos by set in
- * natural order (C2 before CC1, P2 before P10) and number, an unknown number last (#805).
+ * inkweave-ui's lib/printings.ts): the other printings by collector number, then the promos by
+ * set in natural order (C2 before CC1, P2 before P10) and number, an unknown number last (#805).
  */
 export function byPrintingOrder(a, b) {
   const promosLast = Number(isPromo(a)) - Number(isPromo(b));

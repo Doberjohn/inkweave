@@ -1,12 +1,12 @@
 import {createPortal} from 'react-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CopiesStripe} from '../../shared/components';
-import type {StripePart} from '../../shared/components/CopiesStripe';
+import type {StripePart} from 'inkweave-ui/lorcana/CopiesStripe';
 import {useCardDataContext} from '../../shared/contexts/CardDataContext';
 import {useCardModal} from '../../shared/contexts/CardModalContext';
 import {useCardWindowSlot, useHoldCopiesRow} from '../../shared/contexts/cardWindowSlot';
 import {useSession} from '../../shared/contexts/SessionContext';
-import {printedFullName} from '../../shared/hooks/usePrintingSelection';
+import {printedFullName} from 'inkweave-ui/lib/printings';
 import {useCollection} from './CollectionContext';
 import type {CollectionEntry, Finish} from './collectionParser';
 import {finishesOf, type FinishFacts} from './printingFinishes';

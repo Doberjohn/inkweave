@@ -13,8 +13,8 @@ import {
   CompactHeader,
   CtaButton,
   ErrorBoundary,
+  CardFilterDialog,
   EtherealBackground,
-  FilterDialog,
   MOBILE_NAV_HEIGHT,
   Seo,
 } from '../shared/components';
@@ -336,7 +336,7 @@ function phoneRow(
 }
 
 /** The filter dialog's props apart from its variant and its Apply, which the page's sheets set. */
-type FilterSheetProps = Omit<React.ComponentProps<typeof FilterDialog>, 'variant' | 'onApply'>;
+type FilterSheetProps = Omit<React.ComponentProps<typeof CardFilterDialog>, 'variant' | 'onApply'>;
 
 /**
  * What Filters opens: on a phone in collection mode, from the binder's row, the Binder sheet
@@ -352,7 +352,7 @@ function filterSheet(
     ? collection?.renderPhoneSheet(listing, {...dialog, sortOrder: params.sortOrder, onApply: params.applyDraft})
     : undefined;
   return (
-    binderSheet ?? <FilterDialog {...dialog} onApply={params.replaceFilters} variant={isMobile ? 'drawer' : 'modal'} />
+    binderSheet ?? <CardFilterDialog {...dialog} onApply={params.replaceFilters} variant={isMobile ? 'drawer' : 'modal'} />
   );
 }
 

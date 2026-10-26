@@ -52,7 +52,7 @@ describe('isUnder', () => {
 
 describe('isExempt', () => {
   it('exempts only the app file a table names, never a look-alike elsewhere', () => {
-    const tile = 'features/cards/components/CardTile.tsx';
+    const tile = 'features/reveals/CardSlot.tsx';
     expect(isExempt(at(`/repo/apps/web/src/${tile}`), ADHOC_BUTTON_EXEMPT)).toBe(true);
     expect(isExempt(at(`/repo/packages/ui/src/${tile}`), ADHOC_BUTTON_EXEMPT)).toBe(false);
     expect(isExempt(at(`/work/inkweave-admin/src/${tile}`), ADHOC_BUTTON_EXEMPT)).toBe(false);

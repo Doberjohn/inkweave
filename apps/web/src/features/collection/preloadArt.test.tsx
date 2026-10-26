@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, describe, it, expect, vi} from 'vitest';
 import {fireEvent, render, screen} from '@testing-library/react';
-import {ArtOnScreen, useArtLoad} from '../../shared/hooks/useArtLoad';
+import {ArtOnScreen, useArtLoad} from 'inkweave-ui/hooks/useArtLoad';
 import {preloadArt} from './preloadArt';
 
 /** Art hidden until loaded, with its fade unless it started loaded, and its placeholder kept under it while `underlay`. */

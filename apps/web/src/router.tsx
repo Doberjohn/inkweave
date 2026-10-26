@@ -7,7 +7,7 @@ import {HomePageSkeleton} from './pages/HomePageSkeleton';
 import {COLORS, RADIUS, SPACING} from './shared/constants';
 import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 import {lazyWithRetry} from './shared/lib/lazyWithRetry';
-import {forgetArtOnLeave} from './shared/lib/prerenderedArt';
+import {forgetArtOnLeave} from 'inkweave-ui/lib/prerenderedArt';
 import {readyWhen} from './shared/lib/routeReadiness';
 import {withSpeedInsightsRoutes} from './shared/lib/speedInsightsRoute';
 import {SHOW_COLLECTION} from './features/collection/flag';
