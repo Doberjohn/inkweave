@@ -211,9 +211,9 @@ describe('Ramp', () => {
 
   // ── Scoring ──
 
-  it('should score deck ramp + repeating trigger at 8', () => {
+  it('should score deck ramp + repeating trigger at 7', () => {
     const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, jafar]);
-    expect(synergies[0].score).toBe(8);
+    expect(synergies[0].score).toBe(7);
   });
 
   it('should score deck ramp + once-per-turn trigger at 7', () => {
@@ -380,7 +380,7 @@ describe("Ramp: ink that lands on the turn a trigger can't fire", () => {
   });
 
   it('keeps the chain for ramp on your own turn', () => {
-    expect(rampPair(mamaOdie, scrooge)?.score).toBe(8);
+    expect(rampPair(mamaOdie, scrooge)?.score).toBe(7);
     expect(rampPair(mamaOdie, chiefTui)?.score).toBe(7);
   });
 });
@@ -410,9 +410,9 @@ describe('Ramp: a trigger that grants a lasting keyword', () => {
     expect(isRepeatingTrigger(scrooge)).toBe(true);
   });
 
-  it('scores one tier below a repeating trigger with deck ramp', () => {
+  it('scores the same 7 as a repeating trigger with deck ramp', () => {
     expect(rampPair(mamaOdie, fairyGodmothersWand)?.score).toBe(7);
-    expect(rampPair(mamaOdie, scrooge)?.score).toBe(8);
+    expect(rampPair(mamaOdie, scrooge)?.score).toBe(7);
     expect(rampPair(winnieThePooh, fairyGodmothersWand)?.score).toBe(7);
     expect(rampPair(winnieThePooh, scrooge)?.score).toBe(7);
   });
@@ -465,6 +465,6 @@ describe('Ramp: a deck look that puts a card into your inkwell', () => {
   it('scores a card that puts itself into your inkwell in the self-sacrifice tier', () => {
     expect(rampPair(closetDoorPortal, scrooge)?.score).toBe(7);
     expect(rampPair(closetDoorPortal, chiefTui)?.score).toBe(7);
-    expect(rampPair(whatElse, scrooge)?.score).toBe(8);
+    expect(rampPair(whatElse, scrooge)?.score).toBe(7);
   });
 });
