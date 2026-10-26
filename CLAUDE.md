@@ -269,7 +269,7 @@ Dark fantasy theme inspired by Lorcana:
 - **Drafting issues**: The moment scope is agreed for a new GitHub issue, invoke `/draft-issue` — do not draft issue markdown in a message. The skill scores against an 8-section rubric and publishes on approval. Publishing bypass: `SKILL_APPROVED=1 gh issue create ...`.
 
 ### Pre-Commit & Pre-Push (automated)
-- **Pre-commit hook** runs lint + tests on every `git commit`. Do not skip.
+- **Pre-commit hook** runs lint + tests on every `git commit`, side by side. Do not skip. Each lint script keeps an ESLint cache in its package's `node_modules/.cache/eslint/` (`--cache-strategy content`); the `inkweave` plugin's version is a hash of every non-test file under `apps/web/eslint-rules/` (`rulesVersion()`), so a changed rule or ledger re-lints every file. A rule that reads a file outside that folder at lint time must add it to `rulesVersion()`, or the cache misses its changes.
 - **Local Windows Vitest runs use 4 workers** (`resolveVitestWorkers` in `apps/web/vitest-workers.ts`, which inkweave-ui's config shares, #720): on a cold disk cache, Vitest's default first wave misses its hardcoded 60 s worker-start limit and those files never run. CI keeps Vitest's default; `VITEST_MAX_WORKERS` overrides the cap.
 - **Pre-push hook** (husky) runs E2E chromium on every `git push`. Do not skip.
 - Full 5-browser E2E suite runs in CI as safety net: chromium and mobile-chrome on the dev server, firefox, webkit and mobile-safari on a production build (`E2E_SERVER=preview`, #869; reproduce one with `E2E_SERVER=preview pnpm test:e2e --project=<name>` in Bash, or the PowerShell form in `apps/web/e2e/E2E_TESTS.md`). The pre-push hook always runs the dev server.

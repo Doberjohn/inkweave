@@ -11,7 +11,7 @@
     "typecheck": "pnpm --filter inkweave-synergy-engine build && tsc -b",
     "build:storybook": "storybook build -o dist/storybook",
     "preview": "vite preview",
-    "lint": "eslint .",
+    "lint": "eslint . --cache --cache-strategy content --cache-location node_modules/.cache/eslint/",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
