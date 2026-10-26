@@ -149,6 +149,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      # Startup loads four JS files and the kit's critical CSS (#978): a module newly shared with
+      # a lazy chunk that no STARTUP_SHARED line names splits into a fifth file, which the size
+      # budgets barely see. Runs before the size check, which leaves the base's build in dist.
+      - name: Startup shape (PR)
+        if: github.event_name == 'pull_request'
+        run: pnpm build && node scripts/check-bundle-shape.mjs apps/web/dist
+
       # Builds the PR and its base and comments the difference.
       - name: Check bundle size
         if: github.event_name == 'pull_request'
@@ -163,6 +170,10 @@ jobs:
       - name: Build (master)
         if: github.event_name == 'push'
         run: pnpm build
+
+      - name: Startup shape (master)
+        if: github.event_name == 'push'
+        run: node scripts/check-bundle-shape.mjs apps/web/dist
 
       - name: Check bundle size (master)
         if: github.event_name == 'push'
