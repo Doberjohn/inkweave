@@ -381,9 +381,10 @@ function guideCaptureProblems(capture, markup, {name, guide}) {
   return [`its ${capture} capture lacks its guide's ${missing.join(', ')} (#995)`];
 }
 
-/** Check 11's offenders on one playstyle page the crawl wrote (#995). */
+/** Check 11's offenders on one playstyle page (#995). */
 function findGuidePageOffenders(page, phones) {
   const {file, guide} = page;
+  if (!existsSync(file)) return [{file, reason: 'prerendered playstyle page missing (#995)'}];
   if (!guide) return [{file, reason: 'has no guide in data/playstyleGuides.json to show (#995)'}];
   const captures = guideCaptures(readFileSync(file, 'utf8'), phones);
   return Object.entries(captures)
@@ -392,25 +393,12 @@ function findGuidePageOffenders(page, phones) {
 }
 
 /**
- * The playstyle pages the crawl wrote, of `playstyles`, each with its file. A sample crawl
- * (PRERENDER_SAMPLE=1) writes only the first few.
- *
- * @param {string} targetDir - build output root
- * @param {Array<{id: string, name: string}>} playstyles - every playstyle, from the engine
- * @returns {Array<{id: string, name: string, file: string}>}
- */
-export function findPlaystylePages(targetDir, playstyles) {
-  return playstyles
-    .map(({id, name}) => ({id, name, file: join(targetDir, 'playstyles', id, 'index.html')}))
-    .filter(({file}) => existsSync(file));
-}
-
-/**
- * Check 11 (#995): every playstyle page the crawl wrote carries its guide as text, in each
- * capture `guideCaptures` names, so a crawler without JavaScript reads the guide the page shows
- * under its cards. The page waits for the guides before it draws its cards (#930's pattern), so
- * a capture without one means the hold or the guides file broke. A build with no playstyle page
- * fails too, as the check would then pass having read nothing.
+ * Check 11 (#995): every playstyle page carries its guide as text, in each capture
+ * `guideCaptures` names, so a crawler without JavaScript reads the guide the page shows under its
+ * cards. The page waits for the guides before it draws its cards (#930's pattern), and the crawl
+ * retries a page drawn without one (prerender.mjs), so a capture without one means the hold or
+ * the guides file broke. A playstyle page the crawl never wrote fails too: like the sampled card
+ * pages, there are few of them, and a missing one serves crawlers no guide at all.
  *
  * @param {string} targetDir - build output root
  * @param {Array<{id: string, name: string}>} playstyles - every playstyle, from the engine; none
@@ -425,13 +413,11 @@ export function findPlaystyleGuideOffenders(targetDir, playstyles, {phones}) {
     const reason = 'missing from the build, so no playstyle page has its guide (#995)';
     return [{file: guidesFile, reason}];
   }
-  const pages = findPlaystylePages(targetDir, playstyles);
-  if (pages.length === 0) {
-    const reason = 'holds no playstyle page, so no guide was checked (crawl skipped them? #995)';
-    return [{file: join(targetDir, 'playstyles'), reason}];
-  }
   const guides = JSON.parse(readFileSync(guidesFile, 'utf8'));
-  return pages.flatMap((page) => findGuidePageOffenders({...page, guide: guides[page.id]}, phones));
+  return playstyles.flatMap(({id, name}) => {
+    const file = join(targetDir, 'playstyles', id, 'index.html');
+    return findGuidePageOffenders({id, name, file, guide: guides[id]}, phones);
+  });
 }
 
 /**
@@ -694,12 +680,11 @@ async function main() {
 
   // The chunk counts make a vacuous check 7 visible: 0 means it had nothing to look for. PostHog
   // counts 0 until Vercel Production has its key (#827).
-  const guides = findPlaystylePages(targetDir, playstyles).length;
   console.log(
     `✓ Prerendered HTML verified in "${targetDir}" (${samples.length} card page(s), /browse and /; ` +
       `lazy SDK chunks checked: ${countBySdk(sdkChunks)}; ` +
       `phone captures ${phones ? 'checked' : 'skipped, PRERENDER_PHONE=0'}; ` +
-      `playstyle guides checked on ${guides} of ${playstyles.length} playstyle page(s)).`,
+      `playstyle guides checked on ${playstyles.length} playstyle page(s)).`,
   );
 }
 

@@ -1,6 +1,13 @@
 import {describe, it, expect} from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  isCoreSet,
+  synergyEngine,
+  transformCards,
+  type LorcanaJSONCard,
+  type PlaystyleId,
+} from 'inkweave-synergy-engine';
 import {getAllPlaystyles} from '../../synergies/engineCatalog';
 import type {PlaystyleGuide} from '../playstyleGuides';
 
@@ -10,8 +17,14 @@ function readData<T>(file: string): T {
 
 // At module scope: the card list is large, and a cold read can outlast a test's timeout (#712).
 const guides = Object.entries(readData<Record<string, PlaystyleGuide>>('playstyleGuides.json'));
-// allCards.json holds only Core cards, so an id it lacks is a card no playstyle page shows.
-const coreIds = new Set(readData<{cards: {id: number}[]}>('allCards.json').cards.map((c) => String(c.id)));
+// The cards precompute hands the engine, so each playstyle's cards here are its _playstyles.json list.
+const pool = transformCards(
+  ['allCards.json', 'previewCards.json']
+    .flatMap((file) => readData<{cards: LorcanaJSONCard[]}>(file).cards)
+    .filter((c) => isCoreSet(c.setCode)),
+);
+const playstyleCardIds = (id: string) =>
+  new Set(synergyEngine.getPlaystyleCards(id as PlaystyleId, pool).map((c) => c.id));
 
 const wordCount = (text: string) => text.trim().split(/\s+/).length;
 
@@ -32,12 +45,21 @@ describe('playstyleGuides.json (#995)', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('lists 4 to 6 distinct key cards in each guide, each a Core card', () => {
-    const offenders = guides.flatMap(([id, {keyCards}]) => [
-      ...(keyCards.length < 4 || keyCards.length > 6 ? [`${id}: ${keyCards.length} key cards`] : []),
-      ...(new Set(keyCards).size < keyCards.length ? [`${id}: a key card listed twice`] : []),
-      ...keyCards.filter((card) => !coreIds.has(card)).map((card) => `${id}: no Core card ${card}`),
-    ]);
+  // The page leaves out a key card its playstyle no longer holds, so a rule change that drops one
+  // turns this red instead of quietly shortening the guide.
+  it("lists 4 to 6 distinct key cards in each guide, each among its playstyle's cards", () => {
+    const offenders = guides.flatMap(([id, {keyCards}]) => {
+      const cards = playstyleCardIds(id);
+      return [
+        ...(keyCards.length < 4 || keyCards.length > 6
+          ? [`${id}: ${keyCards.length} key cards`]
+          : []),
+        ...(new Set(keyCards).size < keyCards.length ? [`${id}: a key card listed twice`] : []),
+        ...keyCards
+          .filter((card) => !cards.has(card))
+          .map((card) => `${id}: ${card} is not one of its cards`),
+      ];
+    });
     expect(offenders).toEqual([]);
   });
 });

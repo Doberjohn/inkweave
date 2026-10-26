@@ -12,7 +12,6 @@ import {
   findLazySdkPreloads,
   findPhoneCaptureProblems,
   findPlaystyleGuideOffenders,
-  findPlaystylePages,
   readCanonical,
   readPrerenderRoute,
   SITE_ORIGIN,
@@ -606,10 +605,11 @@ describe('findPlaystyleGuideOffenders (check 11, #995)', () => {
     expect(check11()).toEqual([]);
   });
 
-  it('checks only the pages the crawl wrote, as a sample crawl writes the first few', () => {
+  it('fails a playstyle page the crawl never wrote, as a missing page serves crawlers no guide', () => {
     seedPlaystyles([PLAYSTYLES[0]]);
-    expect(check11()).toEqual([]);
-    expect(findPlaystylePages(dist, PLAYSTYLES).map(({id}) => id)).toEqual(['exert']);
+    expect(check11()).toEqual([
+      {file: playstyleFile('hunny'), reason: 'prerendered playstyle page missing (#995)'},
+    ]);
   });
 
   it('fails a page whose desktop capture lacks a paragraph, naming the page and the paragraph', () => {
@@ -656,16 +656,11 @@ describe('findPlaystyleGuideOffenders (check 11, #995)', () => {
     ]);
   });
 
-  it('fails a build without the guides file, or without a playstyle page to read', () => {
+  it('fails a build without the guides file', () => {
     seedPlaystyles();
     fs.rmSync(path.join(dist, 'data'), {recursive: true});
     expect(check11().map((o) => o.reason)).toEqual([
       'missing from the build, so no playstyle page has its guide (#995)',
-    ]);
-    fs.rmSync(path.join(dist, 'playstyles'), {recursive: true});
-    seedPlaystyles([]);
-    expect(check11().map((o) => o.reason)).toEqual([
-      'holds no playstyle page, so no guide was checked (crawl skipped them? #995)',
     ]);
   });
 
