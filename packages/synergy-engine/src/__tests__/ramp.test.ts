@@ -278,13 +278,11 @@ describe('Ramp', () => {
     expect(synergies).toHaveLength(0);
   });
 
-  it('should generate non-empty mechanic-level explanations', () => {
-    // Card-name interpolation was removed in favor of mechanic-focused copy
-    // (modal context provides identity via the visible cards). Assert the
-    // explanation is present and references ink/inkwell mechanics.
-    const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, jafar]);
-    expect(synergies[0].explanation.length).toBeGreaterThan(0);
-    expect(synergies[0].explanation).toMatch(/ink|inkwell/i);
+  it('should explain the pair, naming both cards with chips', () => {
+    // The wording is tuned in tuning.json; tuning-equivalence.test.ts checks this pair's line.
+    const {explanation} = rampRule.findSynergies(mamaOdie, [mamaOdie, jafar])[0];
+    expect(explanation).toContain('{A}');
+    expect(explanation).toContain('{B}');
   });
 
   it('should mark all matches as bidirectional', () => {
@@ -507,10 +505,30 @@ describe('Ramp: each chain shape reads its own tuning key', () => {
 
   it('reads the same keys from the trigger card, naming the ramp card {B}', () => {
     const template = TUNING.ruleTexts.ramp.templates['ramp-trigger'];
-    const rampAsB = template.replace('{RAMP}', '{B}').replace('{TRIGGER}', '{A}');
+    const rampAsB = template.replaceAll('{RAMP}', '{B}').replaceAll('{TRIGGER}', '{A}');
     expect(rampPair(scrooge, mamaOdie)).toMatchObject({score: 9, explanation: rampAsB});
     expect(rampPair(chiefTui, mamaOdie)).toMatchObject({score: 8, explanation: rampAsB});
     expect(rampPair(scrooge, closetDoorPortal)).toMatchObject({score: 8, explanation: rampAsB});
     expect(rampPair(chiefTui, closetDoorPortal)).toMatchObject({score: 6, explanation: rampAsB});
+  });
+});
+
+// Admin's tuning editor accepts a line that names a role more than once, so every mention
+// becomes the chip of the card that holds the role, never a raw {RAMP}.
+describe('Ramp: a line that names a role twice', () => {
+  const templates = TUNING.ruleTexts.ramp.templates;
+  const tuned = {...templates};
+
+  afterEach(() => {
+    Object.assign(templates, tuned);
+  });
+
+  it.each([
+    {shape: 'ramp-trigger', roles: ['{RAMP}', '{TRIGGER}'], card: mamaOdie, partner: scrooge},
+    {shape: 'ramp-cost', roles: ['{RAMP}', '{COST}'], card: mamaOdie, partner: pluto},
+    {shape: 'trigger-cost', roles: ['{TRIGGER}', '{COST}'], card: scrooge, partner: pluto},
+  ])('swaps every mention in the $shape line', ({shape, roles: [mine, theirs], card, partner}) => {
+    templates[shape] = `${mine} and ${theirs}, then ${mine} and ${theirs} again.`;
+    expect(rampPair(card, partner)?.explanation).toBe('{A} and {B}, then {A} and {B} again.');
   });
 });

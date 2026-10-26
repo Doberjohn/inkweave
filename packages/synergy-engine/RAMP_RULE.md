@@ -169,7 +169,7 @@ The 7 pairs aren't inflation: they're the ramp ↔ trigger chains, the only real
 
 ### Explanation Templates
 
-The templates live in `tuning.json` (`ruleTexts.ramp.templates`). A two-role template names each card by its role (`{RAMP}`, `{TRIGGER}`, `{COST}`), which the engine swaps for the `{A}`/`{B}` chips; a same-role template names them `{A}` and `{B}` directly. `tuning.test.ts` fails on a template that drops a card.
+The templates live in `tuning.json` (`ruleTexts.ramp.templates`). A two-role template names each card by its role (`{RAMP}`, `{TRIGGER}`, `{COST}`), and the engine swaps every mention for the `{A}`/`{B}` chips; a same-role template names them `{A}` and `{B}` directly. `tuning.test.ts` fails on a template that drops a card, or that carries a token its shape doesn't fill (another role's, or `{A}`/`{B}` in a two-role template), which would show raw or name the wrong card. This doc's generated coverage blocks read the templates too (`templatePattern` in `scripts/lib/rule-coverage/stats.mjs`), and match a role named twice to the same card.
 
 | Pair | Template |
 |------|----------|
@@ -214,7 +214,7 @@ Inkwell ramp is Sapphire's identity mechanic and cost reduction is Amber's suppo
 
 ## Test Coverage
 
-The tests read every tuned score they expect from `tuning.json` (`ruleTexts.ramp.scores`), never as a literal, because admin's tuning editor changes those scores (the chain-key routing tests below set test-only scores of their own). CI's `test:perturbed` run changes every tuned value, giving each Ramp score a value no other holds, and fails a test that pins one or reads the wrong key.
+The tests read every tuned score they expect from `tuning.json` (`ruleTexts.ramp.scores`), never as a literal, because admin's tuning editor changes those scores (the chain-key routing tests below set test-only scores of their own). CI's `test:perturbed` run changes every tuned value, giving each Ramp score a value no other holds and rewording every template down to its placeholders, each named twice, and fails a test that pins a score or any wording, or reads the wrong key.
 
 In `ramp.test.ts`, under `describe('Ramp')`:
 
@@ -237,7 +237,7 @@ In `ramp.test.ts`, under `describe('Ramp')`:
 ### Integration (4 tests)
 - No synergies with unrelated cards
 - No synergies for excluded opponent-ink cards
-- Explanations are non-empty and mention ink
+- Explanations name both cards with chips
 - All matches marked bidirectional
 
 ### Misread fixes (`ramp.test.ts`, 7 tests, real card text)
@@ -251,6 +251,9 @@ In `ramp.test.ts`, under `describe('Ramp')`:
 
 ### Chain-key routing (`ramp.test.ts`, 4 tests)
 - With test-only scores of 9, 8 and 6, each chain shape reads its own tuning key (`chain.deckRepeating`, `chain.mixed`, `chain.neither`) from either card, so a routing bug fails a test even while the tuned scores tie. From the trigger card's side the test also checks that the explanation names the ramp card {B} (`tuning-equivalence.test.ts` checks that it names the ramp card {A} from the ramp card's side)
+
+### A line that names a role twice (`ramp.test.ts`, 3 tests)
+- A test-only `ramp-trigger`, `ramp-cost` and `trigger-cost` template that names each role twice shows every mention as its card's chip, never a raw `{RAMP}`, `{TRIGGER}` or `{COST}`, since admin's tuning editor accepts such a line
 
 ---
 

@@ -501,8 +501,8 @@ describe('Location Control and Ramp', () => {
   // role token swapped for the chip of the card that holds the role.
   const triggerCost = (trigger: string, cost: string) =>
     TUNING.ruleTexts.ramp.templates['trigger-cost']
-      .replace('{TRIGGER}', trigger)
-      .replace('{COST}', cost);
+      .replaceAll('{TRIGGER}', trigger)
+      .replaceAll('{COST}', cost);
 
   it.each<LineCase & {rule: string}>([
     {

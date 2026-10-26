@@ -166,14 +166,21 @@ export function tokenCard(pair, token) {
 /**
  * A pattern matching the explanations a tunable template produces (tuning.json), so a spec
  * follows the template instead of copying it. Each {PLACEHOLDER} matches the {A} or {B} token
- * it is filled with and captures it as a named group.
+ * it is filled with and captures it as a named group. A placeholder the template names again
+ * (admin's tuning editor allows it) matches the same token there.
  *
  * @param {string} template - "{RAMP} adds ink to your inkwell, triggering {TRIGGER}'s inkwell effect."
  * @returns {RegExp}
  */
 export function templatePattern(template) {
   const escaped = template.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`^${escaped.replace(/\\\{([A-Z]+)\\\}/g, '(?<$1>\\{[AB]\\})')}$`);
+  const named = new Set();
+  const placeholder = (_, name) => {
+    if (named.has(name)) return `\\k<${name}>`;
+    named.add(name);
+    return `(?<${name}>\\{[AB]\\})`;
+  };
+  return new RegExp(`^${escaped.replace(/\\\{([A-Z]+)\\\}/g, placeholder)}$`);
 }
 
 /**

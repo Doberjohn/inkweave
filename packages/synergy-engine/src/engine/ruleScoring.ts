@@ -809,6 +809,12 @@ export function getRampPairScore(
   return RAMP.scores.density;
 }
 
+type RampRoleName = 'RAMP' | 'TRIGGER' | 'COST';
+
+/** Fills every mention of a role in a Ramp template with the chip of the card that holds it. */
+const fillRoles = (template: string, chips: Partial<Record<RampRoleName, ChipToken>>): string =>
+  template.replace(/\{(RAMP|TRIGGER|COST)\}/g, (token, role: RampRoleName) => chips[role] ?? token);
+
 /** Explanation templates keyed by ramp pair shape. */
 const RAMP_EXPLANATIONS: Record<
   RampPairShape,
@@ -816,28 +822,20 @@ const RAMP_EXPLANATIONS: Record<
 > = {
   'ramp-trigger': (a, _b, f) => {
     // `a` is the searcher (modal cardA / left / token A); `_b` is the partner (B).
-    const rampIsA = f.rampCard.id === a.id;
-    const rampToken = rampIsA ? '{A}' : '{B}';
-    const triggerToken = rampIsA ? '{B}' : '{A}';
-    return RAMP.templates['ramp-trigger']
-      .replace('{RAMP}', rampToken)
-      .replace('{TRIGGER}', triggerToken);
+    const [ramp, trigger] = tokenPair(f.rampCard.id === a.id);
+    return fillRoles(RAMP.templates['ramp-trigger'], {RAMP: ramp, TRIGGER: trigger});
   },
   'ramp-trigger-off-turn': () => sameDeckLine('a Ramp'),
   'ramp-ramp': (_a, _b) => RAMP.templates['ramp-ramp'],
   'ramp-cost': (a, _b, f) => {
-    const rampIsA = f.rampCard.id === a.id;
-    const rampToken = rampIsA ? '{A}' : '{B}';
-    const costToken = rampIsA ? '{B}' : '{A}';
-    return RAMP.templates['ramp-cost'].replace('{RAMP}', rampToken).replace('{COST}', costToken);
+    const [ramp, cost] = tokenPair(f.rampCard.id === a.id);
+    return fillRoles(RAMP.templates['ramp-cost'], {RAMP: ramp, COST: cost});
   },
   'trigger-trigger': (_a, _b) => RAMP.templates['trigger-trigger'],
   'cost-cost': (_a, _b) => RAMP.templates['cost-cost'],
   'trigger-cost': (a, _b, f) => {
-    const [triggerToken, costToken] = tokenPair(f.triggerCard.id === a.id);
-    return RAMP.templates['trigger-cost']
-      .replace('{TRIGGER}', triggerToken)
-      .replace('{COST}', costToken);
+    const [trigger, cost] = tokenPair(f.triggerCard.id === a.id);
+    return fillRoles(RAMP.templates['trigger-cost'], {TRIGGER: trigger, COST: cost});
   },
 };
 

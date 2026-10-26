@@ -116,4 +116,15 @@ describe('templatePattern', () => {
       false,
     );
   });
+
+  // Admin's tuning editor accepts a template that names a role twice, and the engine fills every
+  // mention with the same card's token.
+  it('matches a role the template names twice to the same token each time', () => {
+    const twice = templatePattern('{RAMP} feeds {TRIGGER}, and {RAMP} again.');
+    expect('{A} feeds {B}, and {A} again.'.match(twice).groups).toEqual({
+      RAMP: '{A}',
+      TRIGGER: '{B}',
+    });
+    expect(twice.test('{A} feeds {B}, and {B} again.')).toBe(false);
+  });
 });
