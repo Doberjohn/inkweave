@@ -2,8 +2,9 @@ import {describe, it, expect} from 'vitest';
 import {compareProblems, readShape, shapeProblems, sizeDeltas} from './check-bundle-shape.mjs';
 
 const AMBER =
-  '.ink-card-placeholder[data-ink=Amber]:before{background:url(/assets/amber-AAAA.svg)}';
-const RUBY = ".ink-card-placeholder[data-ink=Ruby]:before{background:url('/assets/ruby-BBBB.svg')}";
+  '.ink-card-placeholder[data-ink=Amber]:before{background:url(/assets/amber-AAAA_a-1.svg)}';
+const RUBY =
+  ".ink-card-placeholder[data-ink=Ruby]:before{background:url('/assets/ruby-BBBBbbbb.svg')}";
 const CRITICAL_CSS =
   'body{margin:0}:focus-visible{outline:2px solid}.inset-focus-ring{outline-offset:-2px}' +
   '@keyframes inkweave-foil-sweep{to{background-position:160% 0}}' +
@@ -132,13 +133,21 @@ describe('compareProblems', () => {
   });
 
   it("fails a startup url the head lost or gained, but not the urls' order", () => {
-    const moved = CRITICAL_CSS.replace('/assets/amber-AAAA.svg', './assets/amber.svg?no-inline');
+    const moved = CRITICAL_CSS.replace(
+      '/assets/amber-AAAA_a-1.svg',
+      './assets/amber.svg?no-inline',
+    );
     expect(compareProblems(build(), build(ROWS, indexHtml({css: moved})))).toEqual([
-      "the head's startup <style> lost url(/assets/amber-AAAA.svg)",
-      "the head's startup <style> gained url(./assets/amber.svg?no-inline)",
+      "the head's startup <style> lost url(/assets/amber.svg)",
+      "the head's startup <style> gained url(./assets/amber.svg)",
     ]);
     const reordered = CRITICAL_CSS.replace(`${AMBER}${RUBY}`, `${RUBY}${AMBER}`);
     expect(reordered).not.toBe(CRITICAL_CSS);
     expect(compareProblems(build(), build(ROWS, indexHtml({css: reordered})))).toEqual([]);
+  });
+
+  it('passes a startup url whose file only changed its content hash', () => {
+    const edited = CRITICAL_CSS.replace('/assets/amber-AAAA_a-1.svg', '/assets/amber-CCCCcccc.svg');
+    expect(compareProblems(build(), build(ROWS, indexHtml({css: edited})))).toEqual([]);
   });
 });

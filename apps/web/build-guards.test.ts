@@ -84,6 +84,15 @@ describe('unresolvedCssUrls', () => {
     expect(unresolvedCssUrls(bundle, PUBLIC)).toEqual([]);
   });
 
+  it("decodes a url's percent escapes, and keeps one it can't decode as written", () => {
+    const bundle = build(
+      html('.m{background:url(/assets/a%20b.svg)}.n{background:url(/assets/100%.svg)}'),
+      asset('assets/a b.svg', '<svg/>'),
+      asset('assets/100%.svg', '<svg/>'),
+    );
+    expect(unresolvedCssUrls(bundle, PUBLIC)).toEqual([]);
+  });
+
   it('names each url no file backs once, with its stylesheet', () => {
     const missing = ".e{background:url('./assets/amber.svg?no-inline')}";
     const bundle = build(

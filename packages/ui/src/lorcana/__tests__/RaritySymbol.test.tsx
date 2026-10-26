@@ -1,9 +1,7 @@
 import {render} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 import {RaritySymbol} from '../RaritySymbol';
-
-/** The file an asset url names, without its folder or query. */
-const fileOf = (src: string | null | undefined) => src?.split('?')[0].split('/').pop();
+import {fileOf} from '../../test-utils/files';
 
 const FILES: Record<string, string> = {
   common: 'common.svg',

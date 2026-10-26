@@ -2,11 +2,9 @@ import {render, screen} from '@testing-library/react';
 import {describe, it, expect} from 'vitest';
 import {InkIcon} from '../InkIcon';
 import type {Ink} from 'inkweave-synergy-engine';
+import {fileOf} from '../../test-utils/files';
 
 const ALL_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
-
-/** The file an asset url names, without its folder or query. */
-const fileOf = (src: string | null | undefined) => src?.split('?')[0].split('/').pop();
 
 describe('InkIcon', () => {
   it('renders an img for each ink color', () => {

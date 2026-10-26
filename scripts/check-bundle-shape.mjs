@@ -19,7 +19,8 @@
  *     delta, and fails when a WATCHED_ROWS row grew more than the allowance (MAX_GROWTH_BYTES
  *     unless given), a row is missing from either side, the JS file or style block counts
  *     differ, or the startup <style> names a url on one side only: a symbol whose file moved
- *     keeps its name only if its url stays the same.
+ *     keeps its name only if its url stays the same. Urls compare without their query, fragment
+ *     or the build's content hash, so an edited symbol keeps its url.
  */
 import {readFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
@@ -116,10 +117,15 @@ function countChanges(base, head) {
 }
 
 const STYLE_URL = /url\(\s*(['"]?)(.*?)\1\s*\)/g;
+/** A built asset's name: its source name, then the 8-character content hash Vite adds. */
+const ASSET_HASH = /^(\/assets\/.+)-[\w-]{8}(\.\w+)$/;
+
+/** A url as the build names its file across edits: no query or fragment, no content hash. */
+const stableUrl = (url) => url.replace(/[?#].*$/, '').replace(ASSET_HASH, '$1$2');
 
 /** The urls the startup <style> text names, each once. */
 const styleUrls = (html) =>
-  new Set([...readShape(html).styleText.matchAll(STYLE_URL)].map((match) => match[2]));
+  new Set([...readShape(html).styleText.matchAll(STYLE_URL)].map((match) => stableUrl(match[2])));
 
 /** Each url the startup <style> names on one side only. */
 export function urlProblems(baseHtml, headHtml) {

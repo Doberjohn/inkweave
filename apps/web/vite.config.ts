@@ -156,7 +156,8 @@ function missingStylesheets(bundle: OutputBundle): string[] {
  * bundle doesn't have.
  *
  * A build with a relative base (Storybook's `./`) keeps its stylesheets as files. Vite writes their
- * urls relative to the stylesheet, so in a page one folder up they would name nothing (#979).
+ * urls relative to the stylesheet, so in a page one folder up they would name nothing (#979). An
+ * absolute base, a path or an origin, gives every url its whole path, so those builds inline.
  */
 function inlineCssPlugin(): Plugin {
   let base = '/';
@@ -170,11 +171,14 @@ function inlineCssPlugin(): Plugin {
     transformIndexHtml: {
       order: 'post',
       handler(html, ctx) {
-        if (!ctx.bundle || base !== '/') return html;
+        if (!ctx.bundle || base === '' || base.startsWith('.')) return html;
 
         for (const [fileName, chunk] of Object.entries(ctx.bundle)) {
           if (chunk.type === 'asset' && fileName.endsWith('.css')) {
-            const cssContent = typeof chunk.source === 'string' ? chunk.source : '';
+            const cssContent =
+              typeof chunk.source === 'string'
+                ? chunk.source
+                : new TextDecoder().decode(chunk.source);
             const before = html;
             // Replace the entry <link> tag with an inline <style> tag
             html = html.replace(

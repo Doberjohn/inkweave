@@ -1,9 +1,7 @@
 import {render, screen} from '@testing-library/react';
 import {describe, expect, it} from 'vitest';
 import {InkwellIcon, type InkwellValue} from '../InkwellIcon';
-
-/** The file an asset url names, without its folder or query. */
-const fileOf = (src: string | null | undefined) => src?.split('?')[0].split('/').pop();
+import {fileOf} from '../../test-utils/files';
 
 describe('InkwellIcon', () => {
   it('draws each value from its own file', () => {
