@@ -13,13 +13,36 @@ import {
 } from './playstyleFiles';
 
 /**
- * Where a playstyle's mechanic ids stand (#930): their first load, which the page waits for; a
- * load after they failed, which only the tiles wait for; failed; or loaded.
+ * Where one of a playstyle page's files stands (#930, #995): its first load, which the page
+ * waits for; a load after it failed, which only what it fills waits for; failed; or loaded.
  */
-export type MechanicsStatus = 'loading' | 'reloading' | 'failed' | 'loaded';
+type PlaystyleFileStatus = 'loading' | 'reloading' | 'failed' | 'loaded';
 
-/** Where the playstyle guides stand (#995): their first load, which the page waits for; failed; or loaded. */
-export type GuidesStatus = 'loading' | 'failed' | 'loaded';
+/** Where a playstyle's mechanic ids stand (#930): a load after they failed, only the tiles wait for. */
+export type MechanicsStatus = PlaystyleFileStatus;
+
+/** Where the playstyle guides stand (#995): a load after they failed holds nothing. */
+export type GuidesStatus = PlaystyleFileStatus;
+
+/** One of a playstyle page's files, as its hooks load it (#913). */
+interface PlaystyleFile<T> {
+  fetch: () => Promise<T>;
+  ifLoaded: () => T | null;
+  /** What the console says before the error when the file fails. */
+  failure: string;
+}
+
+const MECHANIC_IDS_FILE: PlaystyleFile<Record<string, MechanicIdsByCard>> = {
+  fetch: fetchPlaystyleMechanicIds,
+  ifLoaded: playstyleMechanicIdsIfLoaded,
+  failure: 'Failed to load playstyle mechanics:',
+};
+
+const GUIDES_FILE: PlaystyleFile<PlaystyleGuides> = {
+  fetch: fetchPlaystyleGuides,
+  ifLoaded: playstyleGuidesIfLoaded,
+  failure: 'Failed to load playstyle guides:',
+};
 
 // ── Hooks ──
 
@@ -41,9 +64,9 @@ export function usePrecomputedPlaystyleCards(playstyleId: string | undefined): {
   retryMechanics: () => void;
 } {
   const {data, isLoading: allLoading, error, retry} = useAllPlaystyleCards();
-  const mechanics = usePlaystyleMechanicIds();
+  const mechanics = usePlaystyleFile(MECHANIC_IDS_FILE, playstyleId);
   const psData = playstyleId ? data.get(playstyleId) : undefined;
-  const mechanicIds = playstyleId ? mechanics.ids?.[playstyleId] : undefined;
+  const mechanicIds = playstyleId ? mechanics.data?.[playstyleId] : undefined;
 
   return {
     cards: psData?.allCards ?? [],
@@ -61,18 +84,19 @@ export function usePrecomputedPlaystyleCards(playstyleId: string | undefined): {
 }
 
 /**
- * Every playstyle card's mechanic ids, starting from the shared request's result (#913). A
- * failure leaves the tiles out rather than failing the page: it is logged, `status` says so, and
- * `retry` or the next visit asks again.
+ * One of a playstyle page's files, starting from the shared request's result (#913). A failure
+ * leaves out what the file fills rather than failing the page: it is logged, `status` says so,
+ * and `retry`, the next playstyle the page shows or the next visit asks again. The page stays
+ * mounted from one playstyle to the next, so each new `playstyleId` asks too, which the file's
+ * cache answers at once once it has loaded.
  */
-function usePlaystyleMechanicIds(): {
-  ids: Record<string, MechanicIdsByCard> | null;
-  status: MechanicsStatus;
-  retry: () => void;
-} {
-  const [ids, setIds] = useState(playstyleMechanicIdsIfLoaded);
-  const [status, setStatus] = useState<MechanicsStatus>(() =>
-    playstyleMechanicIdsIfLoaded() === null ? 'loading' : 'loaded',
+function usePlaystyleFile<T>(
+  file: PlaystyleFile<T>,
+  playstyleId: string | undefined,
+): {data: T | null; status: PlaystyleFileStatus; retry: () => void} {
+  const [data, setData] = useState(file.ifLoaded);
+  const [status, setStatus] = useState<PlaystyleFileStatus>(() =>
+    file.ifLoaded() === null ? 'loading' : 'loaded',
   );
   // Bumped by `retry`: a new attempt runs the fetch effect again.
   const [attempt, setAttempt] = useState(0);
@@ -80,64 +104,41 @@ function usePlaystyleMechanicIds(): {
   useEffect(() => {
     let cancelled = false;
 
-    fetchPlaystyleMechanicIds().then(
-      (data) => {
+    file.fetch().then(
+      (loaded) => {
         if (cancelled) return;
-        setIds(data);
+        setData(loaded);
         setStatus('loaded');
       },
       (err: unknown) => {
-        console.error('Failed to load playstyle mechanics:', err);
-        if (!cancelled) setStatus('failed');
+        // Logged once: a cancelled effect shares its request with the one that replaced it.
+        if (cancelled) return;
+        console.error(file.failure, err);
+        setStatus('failed');
       },
     );
 
     return () => {
       cancelled = true;
     };
-  }, [attempt]);
+  }, [file, playstyleId, attempt]);
 
-  // A load after a failure: the page keeps its cards, and only the tiles wait for it.
+  // A load after a failure: the page keeps its cards, and only what the file fills waits for it.
   const retry = () => {
     setStatus('reloading');
     setAttempt((n) => n + 1);
   };
 
-  return {ids, status, retry};
+  return {data, status, retry};
 }
 
-/**
- * Every playstyle's written guide (#995), starting from the shared request's result, as the
- * mechanic ids do (#913). A failure leaves the guides out rather than failing the page: it is
- * logged, `status` says so, and the next visit asks again.
- */
-export function usePlaystyleGuides(): {guides: PlaystyleGuides | null; status: GuidesStatus} {
-  const [guides, setGuides] = useState(playstyleGuidesIfLoaded);
-  const [status, setStatus] = useState<GuidesStatus>(() =>
-    playstyleGuidesIfLoaded() === null ? 'loading' : 'loaded',
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-
-    fetchPlaystyleGuides().then(
-      (data) => {
-        if (cancelled) return;
-        setGuides(data);
-        setStatus('loaded');
-      },
-      (err: unknown) => {
-        console.error('Failed to load playstyle guides:', err);
-        if (!cancelled) setStatus('failed');
-      },
-    );
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  return {guides, status};
+/** Every playstyle's written guide (#995), loaded as usePlaystyleFile says, for `playstyleId`'s page. */
+export function usePlaystyleGuides(playstyleId: string | undefined): {
+  guides: PlaystyleGuides | null;
+  status: GuidesStatus;
+} {
+  const {data, status} = usePlaystyleFile(GUIDES_FILE, playstyleId);
+  return {guides: data, status};
 }
 
 /**

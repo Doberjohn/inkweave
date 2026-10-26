@@ -426,3 +426,27 @@ test.describe('Playstyle Detail — guide that failed to load', () => {
     await expect(page.getByText('Failed to load card data.')).toHaveCount(0);
   });
 });
+
+/**
+ * A playstyle's card list that failed shows the error view without waiting for the guides, which
+ * never fail the page, so a slow guides file can't keep its Retry away (#995).
+ */
+test.describe('Playstyle Detail — cards that failed to load', () => {
+  // The page logs the failure it then shows.
+  test.use({expectedConsoleErrors: [/^Failed to load playstyle data:/]});
+
+  test('shows the error view and its Retry while the guides still load', async ({page}) => {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/data/playstyleGuides.json', async (route) => {
+      await held;
+      await route.continue();
+    });
+    await page.route('**/data/synergies/_playstyles.json', (route) => route.fulfill({status: 500, body: ''}));
+
+    await page.goto('/playstyles/exert');
+    await expect(page.getByText('Failed to load card data.')).toBeVisible({timeout: 15000});
+    await expect(page.getByRole('button', {name: 'Retry'})).toBeVisible();
+    release();
+  });
+});

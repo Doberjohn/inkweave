@@ -256,7 +256,7 @@ describe('usePlaystyleGuides', () => {
     const statusByRender: string[] = [];
 
     const {result} = renderHook(() => {
-      const guides = usePlaystyleGuides();
+      const guides = usePlaystyleGuides('lore-denial');
       statusByRender.push(guides.status);
       return guides;
     });
@@ -270,7 +270,7 @@ describe('usePlaystyleGuides', () => {
     vi.stubGlobal('fetch', fetchMock);
     const held = fetchPlaystyleGuides();
 
-    const {result} = renderHook(() => usePlaystyleGuides());
+    const {result} = renderHook(() => usePlaystyleGuides('lore-denial'));
     await held;
 
     await waitFor(() => expect(result.current.status).toBe('loaded'));
@@ -289,14 +289,60 @@ describe('usePlaystyleGuides', () => {
       ),
     );
 
-    const first = renderHook(() => usePlaystyleGuides());
+    const first = renderHook(() => usePlaystyleGuides('lore-denial'));
     await waitFor(() => expect(first.result.current.status).toBe('failed'));
     expect(first.result.current.guides).toBeNull();
     expect(consoleError).toHaveBeenCalledWith('Failed to load playstyle guides:', expect.any(Error));
     first.unmount();
-    const second = renderHook(() => usePlaystyleGuides());
+    const second = renderHook(() => usePlaystyleGuides('lore-denial'));
 
     await waitFor(() => expect(second.result.current.guides).toEqual(GUIDES));
+  });
+
+  it('asks for the guides again when the page moves to another playstyle after they failed', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const answers = [{ok: false, status: 500}, json(GUIDES)];
+    vi.stubGlobal(
+      'fetch',
+      byFile(
+        () => json(MECHANICS),
+        () => answers.shift(),
+      ),
+    );
+
+    // The page stays mounted from one playstyle to the next, as the route element has no key.
+    const {result, rerender} = renderHook(({id}) => usePlaystyleGuides(id), {
+      initialProps: {id: 'lore-denial'},
+    });
+    await waitFor(() => expect(result.current.status).toBe('failed'));
+    rerender({id: 'exert'});
+
+    await waitFor(() => expect(result.current.guides).toEqual(GUIDES));
+    expect(result.current.status).toBe('loaded');
+  });
+
+  it('logs a failure once when a playstyle change replaces the request it shares', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    let fail: () => void = () => {};
+    const answer = new Promise((resolve) => {
+      fail = () => resolve({ok: false, status: 500});
+    });
+    vi.stubGlobal(
+      'fetch',
+      byFile(
+        () => json(MECHANICS),
+        () => answer,
+      ),
+    );
+
+    const {result, rerender} = renderHook(({id}) => usePlaystyleGuides(id), {
+      initialProps: {id: 'lore-denial'},
+    });
+    rerender({id: 'exert'});
+    await act(async () => fail());
+
+    await waitFor(() => expect(result.current.status).toBe('failed'));
+    expect(consoleError).toHaveBeenCalledOnce();
   });
 
   it('leaves the cards and their mechanic ids loaded when the guides fail', async () => {
@@ -311,7 +357,7 @@ describe('usePlaystyleGuides', () => {
 
     const {result} = renderHook(() => ({
       playstyle: usePrecomputedPlaystyleCards('lore-denial'),
-      guides: usePlaystyleGuides(),
+      guides: usePlaystyleGuides('lore-denial'),
     }));
 
     await waitFor(() => expect(result.current.guides.status).toBe('failed'));

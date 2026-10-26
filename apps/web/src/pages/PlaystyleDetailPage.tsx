@@ -566,7 +566,8 @@ interface PageLoad {
 /**
  * The card data, the playstyles' lists and the guides' first load as one load: loading while
  * any is, and the retry for whichever list failed, the card data first, or null when both
- * loaded. The guides never fail the page: a failure leaves only the guide out (#995).
+ * loaded. The guides never fail the page: a failure leaves only the guide out, and a list that
+ * failed shows the error without waiting for them (#995).
  */
 function combineLoads(
   cardData: PageLoad,
@@ -574,7 +575,8 @@ function combineLoads(
   guides: GuidesStatus,
 ): {isLoading: boolean; retry: (() => void) | null} {
   const failed = [cardData, playstyleCards].find((load) => load.error);
-  const isLoading = cardData.isLoading || playstyleCards.isLoading || guides === 'loading';
+  const guidesHold = guides === 'loading' && !failed;
+  const isLoading = cardData.isLoading || playstyleCards.isLoading || guidesHold;
   return {isLoading, retry: failed?.retry ?? null};
 }
 
@@ -601,7 +603,7 @@ function tileRowStatus(pageLoading: boolean, mechanics: MechanicsStatus): RoleTi
 function usePlaystyleDetailLoad(playstyleId: PlaystyleId | undefined, cardData: PageLoad) {
   const {cards, mechanicIds, mechanicsStatus, retryMechanics, ...playstyleCardsLoad} =
     usePrecomputedPlaystyleCards(playstyleId);
-  const guides = usePlaystyleGuides();
+  const guides = usePlaystyleGuides(playstyleId);
   const pageLoad = combineLoads(cardData, playstyleCardsLoad, guides.status);
   const tileRow: TileRow = {
     status: tileRowStatus(pageLoad.isLoading, mechanicsStatus),
