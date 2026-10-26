@@ -48,9 +48,11 @@ function errorThrownIn(url: string, message: string): Error {
 
 describe('sentryEnvironment', () => {
   // Vercel opens every new deployment at its own vercel.app address, and a PR's Deploy dry run
-  // stages a production build there too, so only inkweave.ink is production.
+  // stages a production build there too, so only inkweave.ink is production, also when the
+  // address ends in a fully qualified name's dot, which serves the same site.
   it.each([
     {deployEnv: 'production', hostname: 'inkweave.ink', expected: 'production'},
+    {deployEnv: 'production', hostname: 'inkweave.ink.', expected: 'production'},
     {
       deployEnv: 'production',
       hostname: 'inkweave-abc123-johnfanidis-projects.vercel.app',
@@ -58,11 +60,14 @@ describe('sentryEnvironment', () => {
     },
     {deployEnv: 'preview', hostname: 'staging.inkweave.ink', expected: 'preview'},
     {deployEnv: 'unknown', hostname: 'localhost', expected: 'unknown'},
-  ])('reports $expected for a $deployEnv build on $hostname', async ({deployEnv, hostname, expected}) => {
-    const {sentryEnvironment} = await import('../sentryClient');
+  ])(
+    'reports $expected for a $deployEnv build on $hostname',
+    async ({deployEnv, hostname, expected}) => {
+      const {sentryEnvironment} = await import('../sentryClient');
 
-    expect(sentryEnvironment(deployEnv, hostname)).toBe(expected);
-  });
+      expect(sentryEnvironment(deployEnv, hostname)).toBe(expected);
+    },
+  );
 });
 
 describe('startSentry', () => {
@@ -119,13 +124,14 @@ describe('startSentry', () => {
 
   // Vercel adds its toolbar to previews and staging for people signed in to the team, and the SDK
   // wraps the toolbar's requestAnimationFrame callbacks too, so its errors reached Sentry as the
-  // app's (INKWEAVE-15). The real SDK, which sends in order: once the app error captured second
-  // is out, the toolbar's would be too.
+  // app's (INKWEAVE-15). The real SDK, whose flush waits until both errors have been processed
+  // and sent, so the check holds whatever order it sends them in.
   it("never sends an error thrown inside Vercel's toolbar", async () => {
     const sent = captureSent();
     vi.stubEnv('VITE_SENTRY_DSN', 'http://public@127.0.0.1:9/1');
     vi.resetModules();
     const {startSentry} = await import('../sentryClient');
+    const {flush} = await import('@sentry/react');
     const sentry = startSentry();
     expect(sentry).not.toBeNull();
 
@@ -135,9 +141,12 @@ describe('startSentry', () => {
         'toolbar broke',
       ),
     );
-    sentry?.captureException(errorThrownIn('https://staging.inkweave.ink/assets/BrowsePage-x1.js', 'app broke'));
+    sentry?.captureException(
+      errorThrownIn('https://staging.inkweave.ink/assets/BrowsePage-x1.js', 'app broke'),
+    );
 
-    await vi.waitFor(() => expect(sent.join('\n')).toContain('app broke'));
+    expect(await flush(2000)).toBe(true);
+    expect(sent.join('\n')).toContain('app broke');
     expect(sent.join('\n')).not.toContain('toolbar broke');
   });
 });

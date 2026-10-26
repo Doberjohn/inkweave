@@ -60,10 +60,12 @@ const PRODUCTION_HOST = 'inkweave.ink';
  * Sentry's environment: the build's (production, preview or unknown, #740), except that a
  * production build counts as production only on inkweave.ink. Vercel opens every new deployment
  * at its own vercel.app address, and a PR's Deploy dry run stages a production build there too:
- * neither is a visitor, so both report as preview.
+ * neither is a visitor, so both report as preview. The hostname keeps a fully qualified name's
+ * trailing dot, and inkweave.ink. serves the same site, so the dot is dropped first.
  */
 export function sentryEnvironment(deployEnv: string, hostname: string): string {
-  return deployEnv === 'production' && hostname !== PRODUCTION_HOST ? 'preview' : deployEnv;
+  const host = hostname.replace(/[.]$/, '');
+  return deployEnv === 'production' && host !== PRODUCTION_HOST ? 'preview' : deployEnv;
 }
 
 function sentryOptions(): Parameters<typeof init>[0] {
