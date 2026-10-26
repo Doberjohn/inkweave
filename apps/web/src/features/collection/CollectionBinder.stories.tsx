@@ -83,7 +83,7 @@ export const WithMap: Story = {
   args: {pager: 'map'},
 };
 
-/** Phone width: one page per view, paged by twelve. */
+/** Phone width: one page of nine per view, three across (#969). */
 export const SinglePage: Story = {
   args: {single: true},
   globals: {viewport: {value: 'mobile1'}},

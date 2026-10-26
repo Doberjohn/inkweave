@@ -6,7 +6,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CollectionBinder} from './CollectionBinder';
 import {settleOf} from './binderPockets';
 
-/** A 48-card set: three spreads, the first opening on the front cover, or four single pages. */
+/** A 48-card set: three spreads, the first opening on the front cover, or six lone pages of nine. */
 const CARDS = Array.from(
   {length: 48},
   (_, i) =>
@@ -103,21 +103,23 @@ describe('CollectionBinder', () => {
     expect(firstShown()).toBe('Card 37');
   });
 
-  it('pages a single page, 12 at a time, on phone widths, with no cover', () => {
+  it('pages a single page, 9 at a time, on phone widths, with no cover (#969)', () => {
     render(binder({single: true}));
     expect(screen.queryByRole('group', {name: 'Front cover'})).toBeNull();
     expect(firstShown()).toBe('Card 1');
     fireEvent.click(screen.getByRole('button', {name: 'Next page'}));
-    expect(firstShown()).toBe('Card 13');
+    expect(firstShown()).toBe('Card 10');
   });
 
   it('keeps the cards in view when the layout switches between spreads and single pages', () => {
     // Spread 2 holds slots 12-35, a page in for the cover: on one page per view the binder
-    // opens that spread's first page of cards (slots 12-23), and back on spreads, spread 2.
+    // opens the page that holds its first card (slots 9-17, cards 10 to 18), and back on
+    // spreads, spread 2.
     const view = render(binder());
     fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
     view.rerender(binder({single: true}));
-    expect(firstShown()).toBe('Card 13');
+    expect(firstShown()).toBe('Card 10');
+    expect(pocket(13)).toBeInTheDocument();
     view.rerender(binder());
     expect(firstShown()).toBe('Card 13');
   });
@@ -267,10 +269,15 @@ describe('CollectionBinder', () => {
       expect(screen.getByRole('button', {name: 'Spread 1 of 1: nothing missing'})).toBeInTheDocument();
     });
 
-    it('leaves a lone page its arrows: the map draws spreads', () => {
+    it("draws pages under a phone's lone page, in its arrows' place, and turns to the one tapped (#969)", () => {
+      // Six pages of nine: cards 22 to 24, the ones missing, on the third.
       render(binder({pager: 'map', single: true}));
-      expect(screen.queryByRole('navigation', {name: 'Binder pages'})).toBeNull();
-      expect(screen.getByRole('button', {name: 'Next page'})).toBeInTheDocument();
+      const map = screen.getByRole('navigation', {name: 'Binder pages'});
+      expect(within(map).getAllByRole('button')).toHaveLength(6);
+      expect(screen.queryByRole('button', {name: /(Previous|Next) page/})).toBeNull();
+      fireEvent.click(screen.getByRole('button', {name: 'Page 3 of 6: 3 missing'}));
+      expect(firstShown()).toBe('Card 19');
+      expect(screen.getByRole('button', {name: 'Page 3 of 6: 3 missing'})).toHaveAttribute('aria-current', 'true');
     });
 
     it("never counts an open pocket as a missing card: there's no card in it", () => {

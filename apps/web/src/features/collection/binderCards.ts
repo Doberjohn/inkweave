@@ -95,13 +95,24 @@ export const setLabel = (setCode: string) =>
  * you don't, toward the headline chosen beside it (owner, 2026-10-20): under Master set, a
  * card held in one finish only is missing, unless that is the one finish it comes in
  * (`isHeld`, #880). A view of the binder chosen in the collection panel, not one of the page's
- * filters: the Filters count and Clear all leave it be.
+ * filters: the Filters count and Clear all leave it be. On a phone it is chosen in the Binder
+ * sheet with the filters (#969): Binder options counts it in its badge, Owned or Missing as one,
+ * and the sheet's Clear all puts back All.
  */
 export type BinderShow = 'all' | 'owned' | 'missing';
 
 /** The binder view a link asks for: anything but `owned` or `missing` is `all`. */
 export function parseBinderShow(raw: string | null): BinderShow {
   return raw === 'owned' || raw === 'missing' ? raw : 'all';
+}
+
+/**
+ * Writes what the binder shows into `params`, All by leaving the param out: the set panel's
+ * press, and the Binder sheet's Apply (#969), which writes it with the filters in one write.
+ */
+export function writeShowParam(params: URLSearchParams, show: BinderShow): void {
+  if (show === 'all') params.delete(OWNED_PARAM);
+  else params.set(OWNED_PARAM, show);
 }
 
 /**

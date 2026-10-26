@@ -17,15 +17,17 @@ import {sectionStyle} from './binderLayout';
 import {
   CollectionSetBody,
   CollectionSetRail,
-  CollectionSetStrip,
+  RowSetPicker,
+  SheetNumbers,
   ToolbarSetPicker,
   type AxisChoice,
-  type BinderView,
   type CollectionSetPanelProps,
   type SetSwitching,
 } from './CollectionSetPanel';
+import type {BinderView} from './BinderShows';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
-import {BinderSpread, BinderSlotSkeleton, PER_PAGE} from '../cards/components/BinderSpread';
+import {BinderSpread, BinderSlotSkeleton} from '../cards/components/BinderSpread';
+import {PER_PAGE} from '../cards/components/binderGeometry';
 import {BinderSpreadMap} from '../cards/components/BinderSpreadMap';
 import {CtaButton} from '../../shared/components';
 import {CardWindowSlotContext} from '../../shared/contexts/cardWindowSlot';
@@ -37,15 +39,18 @@ import {COLORS, FONT_SIZES, SPACING, type BrowseSortOrder} from '../../shared/co
  *
  * THE SET IS CHOSEN IN THE SET PICKER, through the `?binder=` param, and only there: the
  * filters panel drops its Set section in collection mode. On desktop it sits in the
- * toolbar beside Collection (owner, 2026-10-20; `DockedSetPicker`), on tablets and phones
- * in the collection panel's rail and strip (owner, 2026-10-12; a picker under the set's
- * logo before). See `CollectionSetPanel`.
+ * toolbar beside Collection (owner, 2026-10-20; `DockedSetPicker`), on tablets in the
+ * collection panel's rail (owner, 2026-10-12; a picker under the set's logo before), and
+ * on phones at the head of the binder's row (owner, 2026-10-25, #969; `PhoneSetPicker`).
+ * See `CollectionSetPanel`.
  *
  * THE PANEL ADAPTS (owner, 2026-10-07): on desktop it is docked on the binder's
  * right, under the Collection button (owner, 2026-10-08; it was a tab beside the
  * filters before), and the PAGE renders it (see `DockedSetBody`), so this section
- * draws only the binder; on tablets, where nothing docks, a collapsible rail; on
- * phones, a strip above the page.
+ * draws only the binder; on tablets, where nothing docks, a collapsible rail. On phones
+ * the binder has the section to itself (owner, 2026-10-25, #969): the page draws the
+ * set picker in the row above it, in place of Browse's title, toolbar and the set strip
+ * that sat here.
  *
  * THE BINDER HOLDS WHAT THE PAGE LISTS: the set's cards that pass its filters (owner,
  * 2026-10-12; they used to dim in place), in its sort (owner, 2026-10-08), packed pocket
@@ -62,7 +67,8 @@ import {COLORS, FONT_SIZES, SPACING, type BrowseSortOrder} from '../../shared/co
  * across every set in any other sort. See `binderContents`.
  *
  * WHERE THE PAGE DOCKS ITS PANELS, THE SPREAD MAP TURNS THE PAGES (owner, 2026-10-12),
- * in the band under the spread; see `BinderSpreadMap`.
+ * in the band under the spread, AND ON A PHONE A MAP OF PAGES DOES (owner, 2026-10-25,
+ * #969), under the lone page in its arrows' place; see `BinderSpreadMap`.
  *
  * COUNTS CHANGE WHERE A MOUSE POINTS (#826): a spread's pocket opens its copies stripe
  * (`CollectionSlotCounts`), and the card window's stripe changes them too (`WindowCopies`).
@@ -100,22 +106,14 @@ function useCardWindowOpen(): boolean {
 type PanelControls = SetSwitching & BinderView & AxisChoice;
 
 /**
- * The set panel around the binder, where the page does not dock it: a strip
- * above the page on a phone, so the page keeps the full width, and a rail beside
- * the binder on a tablet.
+ * The set panel around the binder, where the page does not dock it: a rail beside the
+ * binder on a tablet. A phone's binder sits in the section alone, the page's row above it
+ * holding its set picker (#969).
  */
 function PanelLayout({panel, children}: {panel: CollectionSetPanelProps; children: ReactNode}) {
   const {isMobile} = useResponsive();
   const docked = useSidePanelDocked();
-  if (docked) return <div style={sectionStyle(false, true)}>{children}</div>;
-  if (isMobile) {
-    return (
-      <div style={sectionStyle(true)}>
-        <CollectionSetStrip {...panel} />
-        {children}
-      </div>
-    );
-  }
+  if (docked || isMobile) return <div style={sectionStyle(isMobile, docked)}>{children}</div>;
   return (
     <div style={sectionStyle(false)}>
       <div style={{display: 'flex', gap: SPACING.md, height: '100%', minHeight: 0}}>
@@ -190,13 +188,14 @@ function LoadingBinder({single, docked}: {single: boolean; docked: boolean}) {
       start={single ? 0 : -PER_PAGE}
       single={single}
       arrows={docked ? 'edges' : 'beside'}
-      // Docked, a map of one empty spread holds the band the real map will fill. It holds
-      // no cards yet, so it is out of the Tab order and the accessibility tree: it would
-      // otherwise announce "nothing missing" about a collection that has not loaded.
+      // Docked, or on a phone, a map of one empty spread or page holds the band the real map
+      // will fill. It holds no cards yet, so it is out of the Tab order and the accessibility
+      // tree: it would otherwise announce "nothing missing" about a collection that has not
+      // loaded.
       footer={
-        docked ? (
+        docked || single ? (
           <div inert aria-hidden="true">
-            <BinderSpreadMap pockets={[]} current={0} onGo={NOOP} />
+            <BinderSpreadMap single={single} pockets={[]} current={0} onGo={NOOP} />
           </div>
         ) : undefined
       }
@@ -258,8 +257,9 @@ function SectionContent({
     );
   }
 
-  // Docked, the page renders the panel itself (`DockedSetBody`); no need to count here.
-  const stats = docked ? null : tallyCollection(counted, entries, controls.sets);
+  // Docked, the page renders the panel itself (`DockedSetBody`), and on a phone its set picker
+  // (`PhoneSetPicker`): only the tablet's rail counts here.
+  const stats = docked || isMobile ? null : tallyCollection(counted, entries, controls.sets);
   const shown = binderContents(cards, setCode, sortOrder, controls.sets).filter((card) => matchedIds.has(card.id));
   const slots = binderSlots(shown, {
     scope: setCode,
@@ -285,7 +285,7 @@ function SectionContent({
           onCountChange={onCountChange}
           windowOpen={windowOpen}
           single={isMobile}
-          pager={docked ? 'map' : 'arrows'}
+          pager={docked || isMobile ? 'map' : 'arrows'}
         />
       )}
     </PanelLayout>
@@ -353,4 +353,21 @@ export function DockedSetBody(props: DockedSetBodyProps) {
  */
 export function DockedSetPicker(props: DockedSetBodyProps) {
   return <ToolbarSetPicker {...dockedPanel(props)} />;
+}
+
+/**
+ * The set picker at the head of a phone's binder row (owner, 2026-10-25, #969), with the
+ * headlines' percentages, which count what the docked panel counts.
+ */
+export function PhoneSetPicker(props: DockedSetBodyProps) {
+  return <RowSetPicker {...dockedPanel(props)} />;
+}
+
+/**
+ * The numbers in a phone's Binder sheet, under Progress (#969), counting what the docked panel
+ * counts. Here, so they ride the binder's chunk, which a phone in collection mode has asked for
+ * by the time Binder options opens the sheet.
+ */
+export function PhoneSetNumbers(props: DockedSetBodyProps) {
+  return <SheetNumbers {...dockedPanel(props)} />;
 }

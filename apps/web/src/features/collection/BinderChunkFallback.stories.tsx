@@ -1,12 +1,17 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
-import {BinderChunkFallback, DockedSetBodyFallback, ToolbarSetPickerFallback} from './BinderChunkFallback';
+import {
+  BinderChunkFallback,
+  DockedSetBodyFallback,
+  RowSetPickerFallback,
+  ToolbarSetPickerFallback,
+} from './BinderChunkFallback';
 import {DockedSetPanel} from '../cards/components/BrowseSidePanel';
 import {COLORS, SPACING} from '../../shared/constants';
 
 /**
  * What collection mode draws while the binder's chunk downloads (#913): the binder section in
- * its own box, a spread on desktop and the set strip over a page on a phone, plus the two small
- * placeholders that hold the docked set panel's body and the toolbar's set picker.
+ * its own box, a spread on desktop and a page on a phone, plus the small placeholders that hold
+ * the docked set panel's body, the toolbar's set picker and a phone row's (#969).
  */
 const meta: Meta<typeof BinderChunkFallback> = {
   title: 'Collection/BinderChunkFallback',
@@ -28,14 +33,15 @@ type Story = StoryObj<typeof meta>;
 /** At 1024 px and up the section is the docked binder's: one spread. */
 export const Desktop: Story = {};
 
-/** A phone: the set strip's picker and segments, then one page. */
+/** A phone (#969): the board of a page of nine, and the empty band its map takes under it. */
 export const Mobile: Story = {
   globals: {viewport: {value: 'mobile1'}},
 };
 
 /**
  * The docked panel's body in the panel itself (what the binder shows, then the numbers' loading
- * shape filling the rest), and the toolbar's set picker at its slot's width.
+ * shape filling the rest), the toolbar's set picker at its slot's width, and a phone row's at
+ * an iPhone 15's (#969).
  */
 export const PanelAndPicker: Story = {
   render: () => (
@@ -47,6 +53,9 @@ export const PanelAndPicker: Story = {
       </div>
       <div style={{width: 111}}>
         <ToolbarSetPickerFallback />
+      </div>
+      <div style={{width: 210}}>
+        <RowSetPickerFallback />
       </div>
     </div>
   ),

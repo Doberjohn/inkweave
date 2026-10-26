@@ -1,4 +1,5 @@
 import type {Locator, Page} from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import {test, expect} from '../fixtures';
 import {
   cardFullNameById,
@@ -73,16 +74,67 @@ const binderLoading = (page: Page) => page.getByRole('region', {name: 'Loading y
 /** A lazy module's request, on the dev server or in a production build (see helpers/lazyModule.ts). */
 const isModuleRequest = (url: string, name: string) => new RegExp(`/${name}(\\.tsx|-[\\w-]+\\.js)(\\?|$)`).test(url);
 
+/** Browse's toolbar, and the row a phone draws in its place in collection mode (#969). */
+const TOOLBAR = 'browse-toolbar';
+const PHONE_ROW = 'phone-binder-row';
+
+const phoneRow = (page: Page) => page.getByTestId(PHONE_ROW);
+
+/**
+ * The open page's mini in a phone's page map (#969), named like "Page 5 of 27: 4 missing". Found
+ * by CSS, so it reads under the Binder sheet too, where the page behind is hidden from the
+ * accessibility tree.
+ */
+const shownPage = (page: Page) => page.locator('nav[aria-label="Binder pages"] [aria-current="true"]');
+
+/** The Binder sheet, which Binder options opens on a phone (#969): not the "Binder set" list. */
+const binderSheet = (page: Page) => page.getByRole('dialog', {name: 'Binder', exact: true});
+
+/**
+ * Opens a phone's binder at `url`, and waits for its page map: the binder's own, which is named,
+ * not the one it draws while its cards load, hidden since it holds none.
+ */
+async function openPhoneBinder(page: Page, url: string): Promise<void> {
+  await page.goto(url);
+  await expect(binder(page).getByRole('navigation', {name: 'Binder pages'})).toBeVisible();
+}
+
+/** A 1x1 PNG: any card art at all. */
+const ART = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+  'base64',
+);
+
+type UrlWrites = Window & {urlWrites?: string[]};
+
+/** Records the page's URL writes (`history.replaceState`), from before its first navigation. */
+async function countUrlWrites(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const writes: string[] = [];
+    (window as UrlWrites).urlWrites = writes;
+    const replace = history.replaceState.bind(history);
+    history.replaceState = (state: unknown, unused: string, url?: string | URL | null) => {
+      writes.push(String(url));
+      replace(state, unused, url);
+    };
+  });
+}
+
+/** The URL writes since the last clear. */
+const urlWrites = (page: Page) => page.evaluate(() => (window as UrlWrites).urlWrites ?? []);
+const clearUrlWrites = (page: Page) => page.evaluate(() => (window as UrlWrites).urlWrites?.splice(0));
+
 /**
  * Where each of Browse's toolbar controls stands, by name, once the page's fonts are in: its
  * layout box, which the hover's brief scale on a button (CtaButton's boop) leaves alone, where
  * getBoundingClientRect would catch the button mid-scale under the pointer that pressed it.
+ * `testId` names the toolbar, or a phone's row.
  */
-async function toolbarPlaces(page: Page): Promise<Record<string, Place>> {
+async function toolbarPlaces(page: Page, testId = TOOLBAR): Promise<Record<string, Place>> {
   // A late font changes the labels' widths, and with them where the controls after them stand.
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
   return page
-    .getByTestId('browse-toolbar')
+    .getByTestId(testId)
     .first()
     .evaluate((toolbar) => {
       const places: Record<string, Place> = {};
@@ -126,9 +178,13 @@ function expectPlacesHeld(parts: {name: string; before: Place; after: Place}[]):
 
 /**
  * Presses Collection with the binder's code held: the binder's frame shows at once, in place of
- * an empty area. Returns the toolbar as it stood then, and the release.
+ * an empty area. Returns the toolbar (`testId`, or a phone's row) as it stood then, and the
+ * release.
  */
-async function pressCollectionWithBinderHeld(page: Page): Promise<{before: Record<string, Place>; release: () => void}> {
+async function pressCollectionWithBinderHeld(
+  page: Page,
+  testId = TOOLBAR,
+): Promise<{before: Record<string, Place>; release: () => void}> {
   const binderCode = await holdLazyModule(page, 'CollectionBinderSection');
   // The session is back once the sync reads the account's copy. The header's Account button
   // says so too (`signedIn`), but a phone has no header.
@@ -143,7 +199,7 @@ async function pressCollectionWithBinderHeld(page: Page): Promise<{before: Recor
     .poll(binderCode.caught, {message: "the binder's chunk never reached the hold", timeout: 10000})
     .toBeGreaterThan(0);
   await expect(binderLoading(page)).toBeVisible();
-  return {before: await toolbarPlaces(page), release: binderCode.release};
+  return {before: await toolbarPlaces(page, testId), release: binderCode.release};
 }
 
 /**
@@ -279,8 +335,8 @@ test.describe('Collection mode', () => {
 test.describe('Collection mode, signed in', () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   test.beforeEach(async ({page: _}, testInfo) => {
-    // The docked collection and Filters panels are the desktop layout. Phones get the set
-    // strip (tested at phone width below) and the filter drawer, which these locators miss.
+    // The docked collection and Filters panels are the desktop layout. Phones get the binder's
+    // row (tested at phone width below) and the filter drawer, which these locators miss.
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
   });
 
@@ -1003,12 +1059,50 @@ test.describe('Collection mode, signed in', () => {
   });
 });
 
+/** Phones' screens in CSS pixels, with the browser's bars showing, as #969 measured them. */
+const PHONES = [
+  {width: 393, height: 659}, // iPhone 15, Safari
+  {width: 375, height: 629}, // iPhone 13 mini, Safari
+  {width: 430, height: 739}, // iPhone 15 Pro Max, Safari
+  {width: 360, height: 732}, // a 360px Android (Galaxy S24 class), Chrome
+  {width: 412, height: 839}, // a Pixel 7 class Android, Chrome
+];
+
+type Span = {top: number; bottom: number};
+
+/**
+ * How a phone's binder sits on its screen: `<main>`, the board and the page map, the open page's
+ * pockets and columns, how far the box round the binder that scrolls (the section's) has to
+ * scroll, and the page sideways. `scrollToEnd` scrolls that box to its end first.
+ */
+async function phoneBinderFit(page: Page, {scrollToEnd = false} = {}) {
+  const pockets = binder(page).getByRole('group', {name: 'Page', exact: true}).locator('.binder-pocket');
+  const lefts = await pockets.evaluateAll((all) => all.map((pocket) => Math.round(pocket.getBoundingClientRect().left)));
+  const boxes = await binder(page).evaluate((section, toEnd) => {
+    let scroller = section.parentElement;
+    while (scroller && !['auto', 'scroll'].includes(getComputedStyle(scroller).overflowY)) scroller = scroller.parentElement;
+    if (!scroller) throw new Error('nothing round the binder scrolls');
+    if (toEnd) scroller.scrollTop = scroller.scrollHeight;
+    const span = (element: Element | null): Span => {
+      if (!element) throw new Error('a part of the page is missing');
+      const {top, bottom} = element.getBoundingClientRect();
+      return {top, bottom};
+    };
+    return {
+      main: span(document.querySelector('main')),
+      board: span(section.querySelector('.binder-board')),
+      map: span(section.querySelector('nav[aria-label="Binder pages"]')),
+      overflow: scroller.scrollHeight - scroller.clientHeight,
+      sideways: document.documentElement.scrollWidth - window.innerWidth,
+    };
+  }, scrollToEnd);
+  return {...boxes, pockets: lefts.length, columns: new Set(lefts).size};
+}
+
 test.describe('Collection mode, signed in (phone width)', () => {
-  // Runs on every project, not just mobile-*: the strip is chosen by width (useResponsive), so a
+  // Runs on every project, not just mobile-*: the row is chosen by width (useResponsive), so a
   // forced phone viewport renders it anywhere, including the chromium-only Windows pre-push.
-  test("the set strip reads the set's two percentages and opens its numbers inline", async ({
-    page,
-  }) => {
+  test("the set button reads the set's two percentages, in words too, and opens the set list", async ({page}) => {
     await page.setViewportSize({width: 390, height: 844});
     await signInAsCollector(page, ENTRIES);
     await page.goto(`/browse?binder=${SET}`);
@@ -1016,20 +1110,51 @@ test.describe('Collection mode, signed in (phone width)', () => {
     // No gear on phones (owner, 2026-10-20): it wrapped Collection onto a row of its own.
     await expect(page.getByRole('button', {name: 'Collection actions'})).toHaveCount(0);
 
-    // Above the page, in place of the docked panel: the numbers stay folded behind a toggle
-    // that reads the two headline percentages, Complete then Master.
-    const strip = page.getByRole('region', {name: 'Set', exact: true});
-    const show = strip.getByRole('button', {name: 'Show the numbers'});
-    await expect(show).toHaveText(`${percentOfSet(HELD)}% · ${percentOfSet(MASTER)}%`);
-    await expect(numbers(page)).toHaveCount(0);
+    // At the head of the row over the binder (#969): the set's name over its two headline
+    // percentages, Complete then Master. Its name, a line only screen readers get, says what it
+    // draws and then the figures in words.
+    const [complete, master] = [percentOfSet(HELD), percentOfSet(MASTER)];
+    const button = phoneRow(page).getByRole('button', {name: /^Binder set: /});
+    const drawn = button.locator(':scope > span[aria-hidden="true"]');
+    await expect(drawn).toContainText(`${complete}% · ${master}%`);
+    const setName = (await drawn.locator('span').first().innerText()).trim();
+    await expect(button).toHaveAccessibleName(
+      `Binder set: ${setName}, ${complete}% · ${master}%: ${complete}% complete, ${master}% master`,
+    );
 
-    await show.click();
-    const hide = strip.getByRole('button', {name: 'Hide the numbers'});
-    await expect(hide).toHaveAttribute('aria-expanded', 'true');
-    await expect(numbers(page).getByText('Complete set', {exact: true})).toBeVisible();
+    await button.click();
+    const set = page.getByRole('dialog', {name: 'Binder set'}).getByRole('option', {name: new RegExp(`^Set ${SET},`)});
+    await expect(set).toHaveAttribute('aria-selected', 'true');
+  });
 
-    await hide.click();
-    await expect(numbers(page)).toHaveCount(0);
+  test('the binder opens whole on a phone: the row, a 3x3 page and its map on screen, nothing to scroll', async ({
+    page,
+  }) => {
+    await signInAsCollector(page, ENTRIES);
+    for (const size of PHONES) {
+      await page.setViewportSize(size);
+      await page.goto(`/browse?binder=${SET}`);
+      await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
+      const at = `at ${size.width}x${size.height}`;
+      const fit = await phoneBinderFit(page);
+      expect(fit.pockets, `the page's pockets ${at}`).toBe(9);
+      expect(fit.columns, `their columns ${at}`).toBe(3);
+      expect(fit.board.top, `the board's top ${at}`).toBeGreaterThanOrEqual(fit.main.top);
+      expect(fit.map.bottom, `the map's foot ${at}`).toBeLessThanOrEqual(fit.main.bottom);
+      expect(fit.overflow, `what the binder section scrolls ${at}`).toBeLessThanOrEqual(0);
+      expect(fit.sideways, `what the page scrolls sideways ${at}`).toBeLessThanOrEqual(0);
+      await expect(page.getByTestId('browse-toolbar')).toHaveCount(0);
+      await expect(page.getByRole('heading', {level: 1, name: 'Browse Cards'})).toBeAttached();
+    }
+
+    // A shorter screen than any of them: the section scrolls, and at its end shows the map whole.
+    await page.setViewportSize({width: 375, height: 548});
+    await page.goto(`/browse?binder=${SET}`);
+    await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
+    expect((await phoneBinderFit(page)).overflow, 'what the binder section scrolls at 375x548').toBeGreaterThan(0);
+    const end = await phoneBinderFit(page, {scrollToEnd: true});
+    expect(end.map.top, "the map's top, scrolled to the end").toBeGreaterThanOrEqual(end.main.top);
+    expect(end.map.bottom, "the map's foot, scrolled to the end").toBeLessThanOrEqual(end.main.bottom);
   });
 
   test('the lone page sits in its board, one zip round its outer edge, with no scroll sideways (#941)', async ({
@@ -1060,16 +1185,97 @@ test.describe('Collection mode, signed in (phone width)', () => {
     expect(await teethIn(page, {...strip, x: frame.left + 3}), "teeth down the spine's side").toBe(0);
   });
 
-  test("the first switch draws the binder's frame while its code loads, and the toolbar holds still", async ({
+  test("the first switch draws the binder's frame while its code loads, and the row holds still", async ({
     page,
   }) => {
     await page.setViewportSize({width: 390, height: 844});
     await signInAsCollector(page, ENTRIES);
-    const {before, release} = await pressCollectionWithBinderHeld(page);
+    const {before, release} = await pressCollectionWithBinderHeld(page, PHONE_ROW);
+    const placeholder = await placeOf(phoneRow(page).locator('.react-loading-skeleton'));
 
     release();
     await expect(binder(page)).toBeVisible();
     await expect(binderLoading(page)).toHaveCount(0);
-    expectToolbarHeld(before, await toolbarPlaces(page));
+    expectToolbarHeld(before, await toolbarPlaces(page, PHONE_ROW));
+    // The set button lands in its placeholder's box.
+    const button = await placeOf(phoneRow(page).getByRole('button', {name: /^Binder set: /}));
+    expectPlacesHeld([{name: 'the set button', before: placeholder, after: button}]);
+  });
+
+  test('the Binder sheet applies Show, the sort and the filters together, in one write', async ({page}) => {
+    await page.setViewportSize({width: 390, height: 844});
+    await countUrlWrites(page);
+    await signInAsCollector(page, ENTRIES);
+    await openPhoneBinder(page, `/browse?binder=${SET}`);
+    const before = {url: page.url(), page: await shownPage(page).getAttribute('aria-label')};
+    const options = phoneRow(page).getByRole('button', {name: /^Binder options/});
+    await expect(options, 'no badge with nothing on').toHaveText('');
+    await clearUrlWrites(page);
+
+    await options.click();
+    const sheet = binderSheet(page);
+    await sheet.getByRole('group', {name: 'Binder shows'}).getByRole('button', {name: 'Missing', exact: true}).click();
+    await sheet.getByRole('combobox', {name: 'Sort cards'}).selectOption('name-asc');
+    await sheet.getByRole('button', {name: 'Filter by Amber'}).click();
+    // Picked, not applied: the link and the binder behind the sheet are as they were.
+    expect(await urlWrites(page)).toEqual([]);
+    expect(page.url()).toBe(before.url);
+    await expect(shownPage(page)).toHaveAttribute('aria-label', before.page!);
+
+    await sheet.getByRole('button', {name: 'Apply', exact: true}).click();
+    await expect(sheet).toHaveCount(0);
+    // The badge counts what the link holds, so once it reads 2 every write Apply makes is in.
+    await expect(options, 'Amber, and Missing').toHaveText('2');
+    const params = new URL(page.url()).searchParams;
+    expect([params.get('owned'), params.get('sort'), params.get('ink')]).toEqual(['missing', 'name-asc', 'Amber']);
+    expect(await urlWrites(page), 'Apply writes the link once').toHaveLength(1);
+    await expect(shownPage(page)).not.toHaveAttribute('aria-label', before.page!);
+  });
+
+  test('closing the Binder sheet keeps Show, the sort and the filters as they were', async ({page}) => {
+    await page.setViewportSize({width: 390, height: 844});
+    await signInAsCollector(page, ENTRIES);
+    await openPhoneBinder(page, `/browse?binder=${SET}&owned=missing&sort=name-asc&ink=Amber`);
+    const before = page.url();
+    const options = phoneRow(page).getByRole('button', {name: /^Binder options/});
+    await expect(options).toHaveText('2');
+
+    await options.click();
+    const sheet = binderSheet(page);
+    const shows = sheet.getByRole('group', {name: 'Binder shows'});
+    await shows.getByRole('button', {name: 'All', exact: true}).click();
+    await sheet.getByRole('combobox', {name: 'Sort cards'}).selectOption('cost-desc');
+    await sheet.getByRole('button', {name: 'Filter by Amber'}).click();
+    // A press on the backdrop, above the sheet, closes it without Apply.
+    await page.getByTestId('filter-drawer-backdrop').click({position: {x: 195, y: 40}});
+    await expect(sheet).toHaveCount(0);
+    expect(page.url()).toBe(before);
+    await expect(options).toHaveText('2');
+
+    // Opened again, it starts from what the binder shows.
+    await options.click();
+    await expect(shows.getByRole('button', {name: 'Missing', exact: true})).toHaveAttribute('aria-pressed', 'true');
+    await expect(sheet.getByRole('combobox', {name: 'Sort cards'})).toHaveValue('name-asc');
+    await expect(sheet.getByRole('button', {name: 'Filter by Amber'})).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('the phone binder has no axe violations, with the Binder sheet closed and open', async ({page}, testInfo) => {
+    // Desktop only, as accessibility.spec.ts's audits are: a phone's size draws the phone binder.
+    test.skip(testInfo.project.name.startsWith('mobile-'), 'axe audits run on the desktop projects');
+    // A pocket whose art fails to load shows the card's cost, which its name lacks (axe's
+    // label-content-name-mismatch): any art at all keeps each pocket a card, as CI's real art does.
+    await page.route('**/card-images/**', (route) =>
+      route.request().resourceType() === 'image'
+        ? route.fulfill({contentType: 'image/png', body: ART})
+        : route.fallback(),
+    );
+    await page.setViewportSize({width: 390, height: 844});
+    await signInAsCollector(page, ENTRIES);
+    await openPhoneBinder(page, `/browse?binder=${SET}`);
+    expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+
+    await phoneRow(page).getByRole('button', {name: /^Binder options/}).click();
+    await expect(binderSheet(page)).toBeVisible();
+    expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
   });
 });
