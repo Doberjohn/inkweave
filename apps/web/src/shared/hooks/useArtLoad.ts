@@ -1,5 +1,5 @@
 import {createContext, useContext, useState} from 'react';
-import {EASING} from '../constants';
+import {DURATION, EASING} from '../constants';
 import {prerenderedArtShown} from '../lib/prerenderedArt';
 
 /**
@@ -9,7 +9,7 @@ import {prerenderedArtShown} from '../lib/prerenderedArt';
 type ArtLoad = 'loading' | 'loaded' | 'cached' | 'held';
 
 /** The fade art takes in over its ink placeholder. */
-const FADE_IN = `opacity 0.2s ${EASING.smooth}`;
+const FADE_IN = `opacity ${DURATION.base}ms ${EASING.smooth}`;
 
 /**
  * How an `<img>` loads art the browser already has: at once, since a lazy one waits to be laid

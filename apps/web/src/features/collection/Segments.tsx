@@ -1,7 +1,7 @@
 import type {CSSProperties, MouseEventHandler, ReactNode} from 'react';
 import {CtaButton} from '../../shared/components';
 import {useHover} from 'inkweave-ui/hooks/useHover';
-import {COLORS, EASING, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING} from '../../shared/constants';
+import {COLORS, DURATION, EASING, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING} from '../../shared/constants';
 
 const SEGMENTS_STYLE: CSSProperties = {
   display: 'grid',
@@ -41,7 +41,7 @@ function segmentStyle(active: boolean, hovered: boolean): CSSProperties {
     whiteSpace: 'nowrap',
     // Segments don't boop, as chips don't.
     transform: undefined,
-    transition: `background 0.15s ${EASING.snappy}, color 0.15s ${EASING.snappy}`,
+    transition: `background ${DURATION.fast}ms ${EASING.snappy}, color ${DURATION.fast}ms ${EASING.snappy}`,
   };
 }
 

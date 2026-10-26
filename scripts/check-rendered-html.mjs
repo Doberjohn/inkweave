@@ -17,7 +17,8 @@
  * failure the `|| echo` exists to prevent.
  *
  * Checks, against a sample of card pages plus the /browse hub (and, for checks 6, 7, 9 and 10, the
- * homepage). Checks 2, 4 and 8 read the desktop capture apart from the phone capture (#915):
+ * homepage; check 11 reads the playstyle pages). Checks 2, 4 and 8 read the desktop capture apart
+ * from the phone capture (#915):
  *   1. dist/card/<id>/<slug>/index.html exists
  *   2. it contains the card's fullName as visible content (not just an SPA shell)
  *   3. its <link rel="canonical"> is self-referential (the slug URL), not the homepage
@@ -39,6 +40,9 @@
  *  10. every sampled card page, / and /browse carries a phone capture of its own, and no eager
  *      image a phone would fetch for the desktop capture alone (#915): see
  *      findPhoneCaptureProblems. Skipped when the crawl skipped phones (PRERENDER_PHONE=0).
+ *  11. every playstyle page the crawl wrote carries its guide's heading and paragraphs as text,
+ *      from the build's data/playstyleGuides.json, in its desktop capture and in its phone
+ *      capture, and the crawl wrote at least one (#995): see findPlaystyleGuideOffenders.
  *
  * Usage: node scripts/check-rendered-html.mjs [targetDir]   (default: apps/web/dist)
  * Bypass: SKIP_RENDER_GUARD=1  (emergency escape hatch)
@@ -317,6 +321,105 @@ export function findPhoneCaptureProblems(html) {
 const phoneCaptureOffenders = (file, html, phones) =>
   phones ? findPhoneCaptureProblems(html).map((reason) => ({file, reason})) : [];
 
+/** The build's copy of the guides the playstyle pages fetch (#995), under the build root. */
+const GUIDES_FILE = join('data', 'playstyleGuides.json');
+
+const NO_BREAK_SPACE = String.fromCodePoint(0xa0);
+
+/**
+ * Text as the crawl's browser writes it into a capture. Serializing a text node escapes only
+ * `&`, `<`, `>` and the no-break space, never a quote or an apostrophe, so text is looked for
+ * escaped the same way.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function asCapturedText(text) {
+  return text
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll(NO_BREAK_SPACE, '&nbsp;');
+}
+
+/**
+ * What one capture of a playstyle page lacks of its guide (#995): the heading that names the
+ * playstyle, then each paragraph by its place. Each must be an element's whole text, as the
+ * guide renders it, so a sentence of it elsewhere on the page doesn't count.
+ *
+ * @param {string} markup - one capture's markup
+ * @param {string} name - the playstyle's name
+ * @param {{paragraphs: string[]}} guide - the playstyle's entry in the guides
+ * @returns {string[]} what it lacks, as `heading "How to play Exert"` or `paragraph 2`
+ */
+export function findMissingGuideText(markup, name, guide) {
+  const heading = `How to play ${name}`;
+  return [
+    [heading, `heading "${heading}"`],
+    ...guide.paragraphs.map((text, i) => [text, `paragraph ${i + 1}`]),
+  ]
+    .filter(([text]) => !markup.includes(`>${asCapturedText(text)}<`))
+    .map(([, part]) => part);
+}
+
+/**
+ * The captures a playstyle page's guide must be in (#995): the desktop one, which crawlers
+ * read, and the phone one, which index.html swaps in on a phone, unless the crawl skipped
+ * phones. A phone capture the page lacks is undefined.
+ */
+function guideCaptures(html, phones) {
+  const captures = readCaptures(html);
+  const desktop = captures?.desktop ?? withoutPhoneCapture(html);
+  return phones ? {desktop, phone: captures?.phone} : {desktop};
+}
+
+/** Why one capture of a playstyle page fails check 11 (#995), if it does. */
+function guideCaptureProblems(capture, markup, {name, guide}) {
+  if (markup === undefined) return ['has no phone capture to carry its guide (#915, #995)'];
+  const missing = findMissingGuideText(markup, name, guide);
+  if (missing.length === 0) return [];
+  return [`its ${capture} capture lacks its guide's ${missing.join(', ')} (#995)`];
+}
+
+/** Check 11's offenders on one playstyle page (#995). */
+function findGuidePageOffenders(page, phones) {
+  const {file, guide} = page;
+  if (!existsSync(file)) return [{file, reason: 'prerendered playstyle page missing (#995)'}];
+  if (!guide) return [{file, reason: 'has no guide in data/playstyleGuides.json to show (#995)'}];
+  const captures = guideCaptures(readFileSync(file, 'utf8'), phones);
+  return Object.entries(captures)
+    .flatMap(([capture, markup]) => guideCaptureProblems(capture, markup, page))
+    .map((reason) => ({file, reason}));
+}
+
+/**
+ * Check 11 (#995): every playstyle page carries its guide as text, in each capture
+ * `guideCaptures` names, so a crawler without JavaScript reads the guide the page shows under its
+ * cards. The page waits for the guides before it draws its cards (#930's pattern), and the crawl
+ * retries a page drawn without one (prerender.mjs), so a capture without one means the hold or
+ * the guides file broke. A playstyle page the crawl never wrote fails too: like the sampled card
+ * pages, there are few of them, and a missing one serves crawlers no guide at all.
+ *
+ * @param {string} targetDir - build output root
+ * @param {Array<{id: string, name: string}>} playstyles - every playstyle, from the engine; none
+ *   skips the check
+ * @param {{phones: boolean}} checks - whether the crawl captured phones
+ * @returns {Array<{file: string, reason: string}>} empty when every page carries its guide
+ */
+export function findPlaystyleGuideOffenders(targetDir, playstyles, {phones}) {
+  if (playstyles.length === 0) return [];
+  const guidesFile = join(targetDir, GUIDES_FILE);
+  if (!existsSync(guidesFile)) {
+    const reason = 'missing from the build, so no playstyle page has its guide (#995)';
+    return [{file: guidesFile, reason}];
+  }
+  const guides = JSON.parse(readFileSync(guidesFile, 'utf8'));
+  return playstyles.flatMap(({id, name}) => {
+    const file = join(targetDir, 'playstyles', id, 'index.html');
+    return findGuidePageOffenders({id, name, file, guide: guides[id]}, phones);
+  });
+}
+
 /**
  * Choose which card pages this guard verifies.
  *
@@ -501,15 +604,17 @@ function findEntryPageOffenders(targetDir, {sdkChunks, phones}) {
  * @param {object} [checks]
  * @param {Map<string, string>} [checks.sdkChunks] - the build's lazy SDK chunks (default: read
  *   from targetDir)
- * @param {boolean} [checks.phones] - whether the crawl captured phones, so check 10 runs
- *   (default: true; main reads PRERENDER_PHONE)
+ * @param {boolean} [checks.phones] - whether the crawl captured phones, so check 10 runs, and
+ *   check 11 reads the phone captures (default: true; main reads PRERENDER_PHONE)
+ * @param {Array<{id: string, name: string}>} [checks.playstyles] - every playstyle, whose pages
+ *   check 11 reads (default: none, which skips it; main reads the engine's)
  * @returns {Array<{file: string, reason: string}>} empty when the build is sound
  */
 export function findOffenders(
   targetDir,
   samples,
   cardPath,
-  {sdkChunks = findLazySdkChunks(targetDir), phones = true} = {},
+  {sdkChunks = findLazySdkChunks(targetDir), phones = true, playstyles = []} = {},
 ) {
   // Distinguish "wrong path" from "bad crawl" before anything else. Without this,
   // a mistyped targetDir reports every sampled page as missing and blocks the
@@ -526,6 +631,7 @@ export function findOffenders(
     ...samples.flatMap((card) => findCardPageOffenders(targetDir, card, cardPath(card), checks)),
     ...findBrowseHubOffenders(targetDir),
     ...findEntryPageOffenders(targetDir, checks),
+    ...findPlaystyleGuideOffenders(targetDir, playstyles, checks),
   ];
 }
 
@@ -537,7 +643,7 @@ async function main() {
     return;
   }
 
-  const {cardPath} = await loadEngine();
+  const {cardPath, getAllPlaystyles} = await loadEngine();
   const {cards} = JSON.parse(
     readFileSync(join(ROOT, 'apps/web/public/data/allCards.json'), 'utf8'),
   );
@@ -547,11 +653,18 @@ async function main() {
     console.error('✖ Render guard misconfigured: selectSampleCards returned no cards.');
     process.exit(1);
   }
+  // The routes the crawl writes a playstyle page for (prerender.mjs), as check 11 reads them.
+  const playstyles = getAllPlaystyles().map(({id, name}) => ({id, name}));
+  if (playstyles.length === 0) {
+    console.error('✖ Render guard misconfigured: the engine lists no playstyles.');
+    process.exit(1);
+  }
 
   const sdkChunks = findLazySdkChunks(targetDir);
-  // PRERENDER_PHONE=0 skips the crawl's phone captures (#915), so it skips check 10 with them.
+  // PRERENDER_PHONE=0 skips the crawl's phone captures (#915), so it skips check 10 with them,
+  // and check 11 reads only the desktop captures.
   const phones = process.env.PRERENDER_PHONE !== '0';
-  const offenders = findOffenders(targetDir, samples, cardPath, {sdkChunks, phones});
+  const offenders = findOffenders(targetDir, samples, cardPath, {sdkChunks, phones, playstyles});
 
   if (offenders.length > 0) {
     console.error(`✖ Render guard failed in "${targetDir}":`);
@@ -570,7 +683,8 @@ async function main() {
   console.log(
     `✓ Prerendered HTML verified in "${targetDir}" (${samples.length} card page(s), /browse and /; ` +
       `lazy SDK chunks checked: ${countBySdk(sdkChunks)}; ` +
-      `phone captures ${phones ? 'checked' : 'skipped, PRERENDER_PHONE=0'}).`,
+      `phone captures ${phones ? 'checked' : 'skipped, PRERENDER_PHONE=0'}; ` +
+      `playstyle guides checked on ${playstyles.length} playstyle page(s)).`,
   );
 }
 

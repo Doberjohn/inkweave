@@ -258,10 +258,13 @@ option {
    keyframe but Card B applies `animation-delay: -1.8s` to phase the breathing
    opposite — when A peaks at the high glow, B is at the low glow, and vice
    versa. Subtle: the dark depth shadow (0 8px 24px / 0.5) stays constant; only
-   the gold-tinted aura cycles between low and high spread. */
+   the gold-tinted aura cycles between low and high spread. The aura's golds are
+   theme.ts's GOLD_GLOW hoverBg (low) and hoverBorder (high), which the cards' row
+   sets for both cards (`FOCUSED_CARD_GLOW`, cardOverviewModalStyles.ts), so a
+   retune reaches it. */
 @keyframes focused-card-glow-breathe {
-  0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(212, 175, 55, 0.08); }
-  50%      { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 26px rgba(212, 175, 55, 0.22); }
+  0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px var(--focused-glow-low); }
+  50%      { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 26px var(--focused-glow-high); }
 }
 .focused-card-glow {
   animation: focused-card-glow-breathe 3.6s ease-in-out infinite;

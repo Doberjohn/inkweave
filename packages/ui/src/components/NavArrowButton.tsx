@@ -1,5 +1,5 @@
 import {useState, type CSSProperties, type FocusEvent} from 'react';
-import {DURATION, EASING, ICON_SIZE} from '../tokens/theme';
+import {DURATION, EASING, ICON_SIZE, TOUCH_TARGET} from '../tokens/theme';
 import {useHover} from '../hooks/useHover';
 import {focusedByKeyboard} from '../utils/focusedByKeyboard';
 import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
@@ -34,7 +34,7 @@ import {CtaButton} from './CtaButton';
  */
 
 /** The round arrow: a gold disc around the chevron. */
-const ROUND: CSSProperties = {flexShrink: 0, width: 44, height: 44, minHeight: 0, padding: 0, borderRadius: '50%'};
+const ROUND: CSSProperties = {flexShrink: 0, width: TOUCH_TARGET, height: TOUCH_TARGET, minHeight: 0, padding: 0, borderRadius: '50%'};
 
 /** The edge disc's size at rest (owner, 2026-10-22). Its consumer places it by it. */
 export const EDGE_DISC_SIZE = 28;

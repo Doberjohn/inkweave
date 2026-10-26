@@ -31,7 +31,7 @@ export function SynergyMoreTile({
       onClick={onClick}
       aria-label={`Show ${count} more cards`}
       style={pickMoreTileButtonStyle({config, compact, isMobile})}>
-      <span style={{fontSize: `${config.countFontSize}px`, fontWeight: 700, color: COLORS.primary500}}>
+      <span style={{fontSize: `${config.countFontSize}px`, fontWeight: 700, color: COLORS.primary}}>
         +{count}
       </span>
       {/* The flex column never renders this space, but without it the tile's text reads "+12more

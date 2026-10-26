@@ -34,9 +34,10 @@ import {
   FONT_SIZES,
   LETTER_SPACING,
   RADIUS,
+  SHADOWS,
   SPACING,
+  TOUCH_TARGET,
   VISUALLY_HIDDEN,
-  hexRgba,
 } from '../../../shared/constants';
 import {Chip} from 'inkweave-ui/components/Chip';
 import {LinkButton} from 'inkweave-ui/components/LinkButton';
@@ -718,10 +719,10 @@ function ModalContentRegion({
  */
 const SIBLING_BTN_STYLE: React.CSSProperties = {
   position: 'absolute',
-  top: 'calc(50% - 22px)',
+  top: `calc(50% - ${TOUCH_TARGET / 2}px)`,
   zIndex: 4,
-  width: 44,
-  height: 44,
+  width: TOUCH_TARGET,
+  height: TOUCH_TARGET,
   padding: 0,
   pointerEvents: 'auto',
 };
@@ -1237,7 +1238,7 @@ function HeroDivider({inComparison}: HeroDividerProps) {
       style={{
         height: 1,
         border: 'none',
-        background: `linear-gradient(90deg, transparent, ${COLORS.primary500} 50%, transparent)`,
+        background: `linear-gradient(90deg, transparent, ${COLORS.primary} 50%, transparent)`,
         margin: `${SPACING.lg}px 0 0`,
         opacity: inComparison ? 0 : 1,
         transition: `opacity 250ms ${EASING.smooth}`,
@@ -1489,8 +1490,9 @@ interface CardImageDisplayProps {
 function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCard, inComparison}: CardImageDisplayProps) {
   // In comparison mode the wrapper takes the ambient `focused-card-glow` className
   // (#332 #6 idea D). The animation cycles `box-shadow` between a low and high gold-tinted
-  // aura around the card. Setting borderRadius=14 on the wrapper makes the shadow follow
-  // the card's rounded corners instead of drawing against a rectangular bounding box.
+  // aura around the card, in the golds the cards' row sets (`FOCUSED_CARD_GLOW`). The
+  // wrapper's `RADIUS.xl`, CardImage's own, makes the shadow follow the card's rounded corners
+  // instead of drawing against a rectangular bounding box.
   const useGlow = !isMobile && inComparison;
   const translation = useContext(CardTranslationContext);
   const reducedMotion = usePrefersReducedMotion();
@@ -1533,6 +1535,13 @@ const OVER_MODAL_SCAN: React.CSSProperties = {
 /** The hover dimming and glow, which fade, shared by card A and card B. */
 const HOVER_FADES = `opacity ${DURATION.base}ms ${EASING.smooth}, filter ${DURATION.base}ms ${EASING.smooth}`;
 
+/**
+ * The glow on the card a hovered name chip points at, card A or card B, while the other dims.
+ * `drop-shadow()` takes one shadow with no spread, so it holds only while `SHADOWS.glowSm` is
+ * one: a spread or a list would drop the whole `filter` silently (inkweave-ui's theme test).
+ */
+const LIT_CARD_GLOW = `drop-shadow(${SHADOWS.glowSm})`;
+
 /** Card A's transition: its hover fades, and its slide into a comparison unless reduced motion skips it (#790). */
 function cardWrapperTransition(reducedMotion: boolean): string {
   return reducedMotion ? HOVER_FADES : `${HOVER_FADES}, transform ${FLIP_DURATION}ms ${FLIP_EASING}`;
@@ -1556,11 +1565,11 @@ function pickCardWrapperStyle({isMobile, cardWidth, highlightedCard, inCompariso
     transform: inset ? `translateX(${inset}px)` : undefined,
     transition: cardWrapperTransition(reducedMotion),
     opacity: highlightedCard === 'b' ? 0.4 : 1,
-    filter: highlightedCard === 'a' ? `drop-shadow(0 0 8px ${hexRgba(COLORS.primary500, 0.6)})` : undefined,
+    filter: highlightedCard === 'a' ? LIT_CARD_GLOW : undefined,
     // borderRadius matches CardImage's so the ambient glow's box-shadow follows the rounded
     // card silhouette instead of a rectangular bounding box. Only applied in comparison mode
     // (when the glow class is also active); default state stays as-is.
-    borderRadius: inset ? 14 : undefined,
+    borderRadius: inset ? RADIUS.xl : undefined,
   };
 }
 
@@ -1687,7 +1696,8 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
       // `focused-card-glow focused-card-glow-offset` adds the ambient breathing animation
       // (#332 #6 idea D) phased opposite to Card A — when A's glow peaks, B is at its
       // minimum and vice versa. The keyframe bakes in the same 0 8px 24px depth shadow
-      // that was previously inline, plus the breathing aura. Reduced-motion override in
+      // that was previously inline, plus the breathing aura in the golds the cards' row sets
+      // (`FOCUSED_CARD_GLOW`). Reduced-motion override in
       // index.css disables the animation; the previous static shadow is then absent —
       // documented as acceptable since the cards still have CardImage's inner styling.
       className="focused-card-glow focused-card-glow-offset"
@@ -1708,7 +1718,7 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
         // so React doesn't manage the property — that way the exit FLIP's `el.style.opacity = '0'`
         // (#332 #7) persists across re-renders during the 480ms exit window.
         opacity: highlightedCard === 'a' ? 0.4 : undefined,
-        filter: highlightedCard === 'b' ? `drop-shadow(0 0 8px ${hexRgba(COLORS.primary500, 0.6)})` : undefined,
+        filter: highlightedCard === 'b' ? LIT_CARD_GLOW : undefined,
         transition: HOVER_FADES,
       }}>
       <InkCardPlaceholder ink={pair.cardB.ink} ink2={pair.cardB.ink2} />
@@ -1829,7 +1839,7 @@ function PairConnector({cardHeight, exiting}: PairConnectorProps) {
           display: 'block',
           width: '100%',
           height: 2,
-          backgroundImage: `repeating-linear-gradient(to right, ${COLORS.primary500} 0, ${COLORS.primary500} 6px, transparent 6px, transparent 12px)`,
+          backgroundImage: `repeating-linear-gradient(to right, ${COLORS.primary} 0, ${COLORS.primary} 6px, transparent 6px, transparent 12px)`,
           backgroundSize: '12px 2px',
           opacity: 0.7,
           animation: exiting

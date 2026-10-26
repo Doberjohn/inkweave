@@ -6,6 +6,7 @@ import {useCloseOnPressOutside} from './useCloseOnPressOutside';
 import {
   COLORS,
   DISABLED_STYLE,
+  DURATION,
   EASING,
   FONT_SIZES,
   GOLD_GLOW,
@@ -196,7 +197,7 @@ function actionStyle({hovered, waits}: {hovered: boolean; waits: boolean}): CSSP
     whiteSpace: 'nowrap',
     // Rows don't boop: a growing row would clip against the menu's edge.
     transform: undefined,
-    transition: `background 0.15s ${EASING.snappy}`,
+    transition: `background ${DURATION.fast}ms ${EASING.snappy}`,
     ...(waits && DISABLED_STYLE),
   };
 }

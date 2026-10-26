@@ -1,7 +1,7 @@
 import type {CSSProperties, ReactNode} from 'react';
 import {CtaButton} from '../../shared/components';
 import {useHover} from 'inkweave-ui/hooks/useHover';
-import {COLORS, EASING, FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
+import {COLORS, DURATION, EASING, FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
 import {ROW_CONTROL_HEIGHT} from './binderLayout';
 
 interface PhoneBinderRowProps {
@@ -54,7 +54,7 @@ function optionsStyle(hovered: boolean): CSSProperties {
     color: COLORS.primary,
     // As the set button beside it: no boop.
     transform: undefined,
-    transition: `border-color 0.15s ${EASING.snappy}`,
+    transition: `border-color ${DURATION.fast}ms ${EASING.snappy}`,
   };
 }
 

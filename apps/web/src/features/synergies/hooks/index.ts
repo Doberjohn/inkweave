@@ -6,7 +6,8 @@ export {usePreloadSiblingSynergies} from './usePreloadSiblingSynergies';
 export {
   usePrecomputedPlaystyleCards,
   useAllPlaystyleCards,
-  usePreloadPlaystyleMechanics,
+  usePlaystyleGuides,
+  usePreloadPlaystyleFiles,
 } from './usePrecomputedPlaystyles';
-export type {MechanicsStatus} from './usePrecomputedPlaystyles';
+export type {GuidesStatus, MechanicsStatus} from './usePrecomputedPlaystyles';
 export type {MechanicIdsByCard} from './playstyleFiles';

@@ -37,13 +37,20 @@ type AnalyticsEvents = {
     userScore: number | null;
   };
   // A card detail was opened from a discovery surface: a grid, featured cards or a search pick.
-  // `source` is the originating page, or `mobile_sheet` for the mobile search sheet. Reveals and
-  // synergy clicks are NOT card_selected; they have their own events (reveal_card_click,
-  // synergy_card_clicked).
+  // `source` is the originating page, `playstyle_guide` for a key card in a playstyle page's guide
+  // (#995), or `mobile_sheet` for the mobile search sheet. Reveals and synergy clicks are NOT
+  // card_selected; they have their own events (reveal_card_click, synergy_card_clicked).
   card_selected: {
     cardId: string;
     cardName: string;
-    source: 'browse' | 'home' | 'playstyle' | 'playstyle_gallery' | 'ink_hub' | 'mobile_sheet';
+    source:
+      | 'browse'
+      | 'home'
+      | 'playstyle'
+      | 'playstyle_guide'
+      | 'playstyle_gallery'
+      | 'ink_hub'
+      | 'mobile_sheet';
     ink: Ink;
     type: CardType;
   };

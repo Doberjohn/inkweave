@@ -1,5 +1,5 @@
 import {useState, type CSSProperties} from 'react';
-import {COLORS, DURATION, EASING, FOIL_SHEEN, FONTS, FONT_SIZES, hexRgba} from '../tokens/theme';
+import {COLORS, DURATION, EASING, FOIL_SHEEN, FONTS, FONT_SIZES, GOLD_GLOW, hexRgba} from '../tokens/theme';
 import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
 
 interface QuantityStepperProps {
@@ -261,7 +261,7 @@ export function QuantityStepper({
         alignItems: 'stretch',
         height: dims.height,
         borderRadius: dims.radius,
-        border: `1px solid ${hexRgba(COLORS.primary, 0.5)}`,
+        border: `1px solid ${GOLD_GLOW.activeBorder}`,
         // The foil surface layers OVER the ground rather than replacing it: its
         // gold is semi-transparent, and the ground is what keeps the count
         // readable. Flat brand gold behind white bold text is 3.0:1 and fails.

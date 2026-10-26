@@ -1,8 +1,10 @@
+import type {PlaystyleGuides} from '../../playstyles/playstyleGuides';
+
 /** Each playstyle card's mechanic ids, by card id (precompute's `getPlaystyleMechanicIds`, #930). */
 export type MechanicIdsByCard = Readonly<Record<string, readonly string[]>>;
 
 /**
- * One of precompute's playstyle files, fetched once for the page: main.tsx's hold (#915) and the
+ * One of the playstyle pages' files, fetched once for the page: main.tsx's hold (#915) and the
  * playstyle pages share the request. A failure is forgotten, so the next ask fetches again. The
  * files live apart from the hooks so the router can start them without carrying the hooks into
  * the entry.
@@ -28,9 +30,9 @@ function playstyleFile<T>(file: string, what: string) {
   };
 }
 
-/** Fetches `file`, which `what` names in errors ("data", "mechanics"). */
+/** Fetches `file`, a path under /data/, which `what` names in errors ("data", "mechanics"). */
 async function fetchPlaystyleFile<T>(file: string, what: string): Promise<T> {
-  const response = await fetch(`/data/synergies/${file}`);
+  const response = await fetch(`/data/${file}`);
   if (!response.ok) throw new Error(`Failed to fetch playstyle ${what}: ${response.status}`);
 
   // Guard against SPA fallback returning HTML instead of JSON
@@ -42,11 +44,13 @@ async function fetchPlaystyleFile<T>(file: string, what: string): Promise<T> {
   return response.json();
 }
 
-const cardIds = playstyleFile<Record<string, string[]>>('_playstyles.json', 'data');
+// Precompute writes the two synergy files; the guides are written by hand (#995).
+const cardIds = playstyleFile<Record<string, string[]>>('synergies/_playstyles.json', 'data');
 const mechanicIds = playstyleFile<Record<string, MechanicIdsByCard>>(
-  '_playstyleMechanics.json',
+  'synergies/_playstyleMechanics.json',
   'mechanics',
 );
+const guides = playstyleFile<PlaystyleGuides>('playstyleGuides.json', 'guides');
 
 /** Every playstyle's card ids. */
 export const fetchPlaystyleCardIds = cardIds.get;
@@ -60,8 +64,15 @@ export const fetchPlaystyleMechanicIds = mechanicIds.get;
 /** The mechanic ids once fetchPlaystyleMechanicIds() has resolved. */
 export const playstyleMechanicIdsIfLoaded = mechanicIds.ifLoaded;
 
+/** Every playstyle's written guide, which a playstyle's page shows under its cards (#995). */
+export const fetchPlaystyleGuides = guides.get;
+
+/** The guides once fetchPlaystyleGuides() has resolved. */
+export const playstyleGuidesIfLoaded = guides.ifLoaded;
+
 /** @internal reset for testing */
 export function _resetPlaystyleFiles(): void {
   cardIds.reset();
   mechanicIds.reset();
+  guides.reset();
 }
