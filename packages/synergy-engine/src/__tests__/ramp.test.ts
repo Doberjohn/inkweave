@@ -12,6 +12,9 @@ import {TUNING} from '../data/tuning';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
 
+// Admin's tuning editor changes these scores in tuning.json, so tests read them, never literals.
+const scores = TUNING.ruleTexts.ramp.scores;
+
 describe('Ramp', () => {
   const rampRule = getRuleById('ramp')!;
 
@@ -212,44 +215,44 @@ describe('Ramp', () => {
 
   // ── Scoring ──
 
-  it('should score deck ramp + repeating trigger at 7', () => {
+  it('should score deck ramp + repeating trigger at chain.deckRepeating', () => {
     const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, jafar]);
-    expect(synergies[0].score).toBe(7);
+    expect(synergies[0].score).toBe(scores['chain.deckRepeating']);
   });
 
-  it('should score deck ramp + once-per-turn trigger at 7', () => {
+  it('should score deck ramp + once-per-turn trigger at chain.mixed', () => {
     const synergies = rampRule.findSynergies(oneJumpAhead, [oneJumpAhead, rayaKumandran]);
-    expect(synergies[0].score).toBe(7);
+    expect(synergies[0].score).toBe(scores['chain.mixed']);
   });
 
-  it('should score self-sacrifice + repeating trigger at 7', () => {
+  it('should score self-sacrifice + repeating trigger at chain.mixed', () => {
     const synergies = rampRule.findSynergies(winniePooh, [winniePooh, jafar]);
-    expect(synergies[0].score).toBe(7);
+    expect(synergies[0].score).toBe(scores['chain.mixed']);
   });
 
-  it('should score self-sacrifice + once-per-turn trigger at 7', () => {
+  it('should score self-sacrifice + once-per-turn trigger at chain.neither', () => {
     const synergies = rampRule.findSynergies(winniePooh, [winniePooh, rayaKumandran]);
-    expect(synergies[0].score).toBe(7);
+    expect(synergies[0].score).toBe(scores['chain.neither']);
   });
 
-  it('ramp ↔ ramp scores 5 (parallel ramp, no compounding)', () => {
+  it('ramp ↔ ramp scores at density (parallel ramp, no compounding)', () => {
     const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, oneJumpAhead]);
-    expect(synergies[0].score).toBe(5);
+    expect(synergies[0].score).toBe(scores.density);
   });
 
-  it('ramp ↔ cost reduction scores 5 (parallel curve acceleration)', () => {
+  it('ramp ↔ cost reduction scores at density (parallel curve acceleration)', () => {
     const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, pluto]);
-    expect(synergies[0].score).toBe(5);
+    expect(synergies[0].score).toBe(scores.density);
   });
 
-  it('trigger ↔ trigger scores 5 (parallel triggers, both need ramp to fire)', () => {
+  it('trigger ↔ trigger scores at density (parallel triggers, both need ramp to fire)', () => {
     const synergies = rampRule.findSynergies(jafar, [jafar, amberCoil]);
-    expect(synergies[0].score).toBe(5);
+    expect(synergies[0].score).toBe(scores.density);
   });
 
-  it('should score cost reduction + cost reduction at 6 when same target type', () => {
+  it('should score cost reduction + cost reduction at costOverlap when same target type', () => {
     const synergies = rampRule.findSynergies(pluto, [pluto, lantern]);
-    expect(synergies[0].score).toBe(6);
+    expect(synergies[0].score).toBe(scores.costOverlap);
   });
 
   it('should not pair cost reduction cards that discount different types', () => {
@@ -258,9 +261,9 @@ describe('Ramp', () => {
     expect(synergies).toHaveLength(0);
   });
 
-  it('should score trigger + cost reduction at 5', () => {
+  it('should score trigger + cost reduction at density', () => {
     const synergies = rampRule.findSynergies(amberCoil, [amberCoil, pluto]);
-    expect(synergies[0].score).toBe(5);
+    expect(synergies[0].score).toBe(scores.density);
   });
 
   // ── Integration ──
@@ -370,19 +373,22 @@ describe("Ramp: ink that lands on the turn a trigger can't fire", () => {
     expect(inkLandsOffTriggerTurn(mamaOdie, scrooge)).toBe(false);
   });
 
-  it('scores the pair at 5, from either side', () => {
+  it('scores the pair at density, from either side', () => {
     const pairs = [scrooge, chiefTui].flatMap((trigger) => [
       rampPair(inkAmplifier, trigger),
       rampPair(trigger, inkAmplifier),
     ]);
     for (const pair of pairs) {
-      expect(pair).toMatchObject({score: 5, explanation: '{A} and {B} both go in a Ramp deck.'});
+      expect(pair).toMatchObject({
+        score: scores.density,
+        explanation: '{A} and {B} both go in a Ramp deck.',
+      });
     }
   });
 
   it('keeps the chain for ramp on your own turn', () => {
-    expect(rampPair(mamaOdie, scrooge)?.score).toBe(7);
-    expect(rampPair(mamaOdie, chiefTui)?.score).toBe(7);
+    expect(rampPair(mamaOdie, scrooge)?.score).toBe(scores['chain.deckRepeating']);
+    expect(rampPair(mamaOdie, chiefTui)?.score).toBe(scores['chain.mixed']);
   });
 });
 
@@ -411,11 +417,11 @@ describe('Ramp: a trigger that grants a lasting keyword', () => {
     expect(isRepeatingTrigger(scrooge)).toBe(true);
   });
 
-  it('scores the same 7 as a repeating trigger with deck ramp', () => {
-    expect(rampPair(mamaOdie, fairyGodmothersWand)?.score).toBe(7);
-    expect(rampPair(mamaOdie, scrooge)?.score).toBe(7);
-    expect(rampPair(winnieThePooh, fairyGodmothersWand)?.score).toBe(7);
-    expect(rampPair(winnieThePooh, scrooge)?.score).toBe(7);
+  it('chains with ramp as a once-per-turn trigger, where a repeating one reads its own key', () => {
+    expect(rampPair(mamaOdie, fairyGodmothersWand)?.score).toBe(scores['chain.mixed']);
+    expect(rampPair(mamaOdie, scrooge)?.score).toBe(scores['chain.deckRepeating']);
+    expect(rampPair(winnieThePooh, fairyGodmothersWand)?.score).toBe(scores['chain.neither']);
+    expect(rampPair(winnieThePooh, scrooge)?.score).toBe(scores['chain.mixed']);
   });
 });
 
@@ -464,16 +470,15 @@ describe('Ramp: a deck look that puts a card into your inkwell', () => {
   });
 
   it('pairs a card that puts itself into your inkwell as a chain', () => {
-    expect(rampPair(closetDoorPortal, scrooge)?.score).toBe(7);
-    expect(rampPair(closetDoorPortal, chiefTui)?.score).toBe(7);
-    expect(rampPair(whatElse, scrooge)?.score).toBe(7);
+    expect(rampPair(closetDoorPortal, scrooge)?.score).toBe(scores['chain.mixed']);
+    expect(rampPair(closetDoorPortal, chiefTui)?.score).toBe(scores['chain.neither']);
+    expect(rampPair(whatElse, scrooge)?.score).toBe(scores['chain.deckRepeating']);
   });
 });
 
 // Every chain shape scores the same today, so the tuned scores can't show which key a pair
 // reads. These tests give each key its own score to pin the routing itself, from either card.
 describe('Ramp: each chain shape reads its own tuning key', () => {
-  const scores = TUNING.ruleTexts.ramp.scores;
   const tuned = {...scores};
 
   beforeEach(() => {

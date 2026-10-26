@@ -1,8 +1,25 @@
 import {describe, it, expect} from 'vitest';
 import {getNamedReferences, getShiftAliasNames, isDuoShift} from '../utils';
 import {getRuleById} from '../engine';
+import {TUNING} from '../data/tuning';
 import {createCard} from './fixtures';
 import type {LorcanaCard, SynergyRule} from '../types';
+
+// Admin's tuning editor changes the tiers' scores and lines in tuning.json, so tests read them,
+// never literals. Several tiers share a score, so each test names its tier by the line too.
+const TIERS = TUNING.ruleTexts['shift-targets'];
+
+/** A tier's line as the pair shows it: the Shift card is {A} on its own page, {B} on the base's. */
+function tierLine(key: string, from: 'shift' | 'base' = 'shift'): string {
+  const [shift, base] = from === 'shift' ? ['{A}', '{B}'] : ['{B}', '{A}'];
+  return TIERS[key].text!.replaceAll('<SHIFT>', shift).replaceAll('<BASE>', base);
+}
+
+/** The score and line a tier gives the pair. */
+const tier = (key: string, from: 'shift' | 'base' = 'shift') => ({
+  score: TIERS[key].score,
+  explanation: tierLine(key, from),
+});
 
 describe('Shift Targets', () => {
   const shiftRule = getRuleById('shift-targets')!;
@@ -179,7 +196,7 @@ describe('Shift Targets', () => {
       shiftKeyword: string;
       baseCost: number;
       baseInkwell: boolean;
-      expected: number;
+      tierKey: string;
       shiftInkwell?: boolean;
     }>([
       {
@@ -188,7 +205,7 @@ describe('Shift Targets', () => {
         shiftKeyword: 'Shift 5',
         baseCost: 4,
         baseInkwell: true,
-        expected: 8,
+        tierKey: 'curve.bothInkable',
       },
       {
         label: 'on-curve one inkable (curveGap 1)',
@@ -196,7 +213,7 @@ describe('Shift Targets', () => {
         shiftKeyword: 'Shift 5',
         baseCost: 4,
         baseInkwell: false,
-        expected: 8,
+        tierKey: 'curve.oneInkable',
       },
       {
         label: 'on-curve neither inkable (curveGap 1)',
@@ -204,7 +221,7 @@ describe('Shift Targets', () => {
         shiftKeyword: 'Shift 5',
         baseCost: 4,
         baseInkwell: false,
-        expected: 7,
+        tierKey: 'curve.neitherInkable',
         shiftInkwell: false,
       },
       {
@@ -213,7 +230,7 @@ describe('Shift Targets', () => {
         shiftKeyword: 'Shift 6',
         baseCost: 4,
         baseInkwell: true,
-        expected: 7,
+        tierKey: 'curve.gap2',
       },
       {
         label: 'slightly off-curve (curveGap 3)',
@@ -221,7 +238,7 @@ describe('Shift Targets', () => {
         shiftKeyword: 'Shift 5',
         baseCost: 2,
         baseInkwell: true,
-        expected: 5,
+        tierKey: 'curve.gap3',
       },
       {
         label: 'far off-curve (curveGap >= 4)',
@@ -229,7 +246,7 @@ describe('Shift Targets', () => {
         shiftKeyword: 'Shift 5',
         baseCost: 1,
         baseInkwell: true,
-        expected: 3,
+        tierKey: 'curve.poor',
       },
       {
         label: 'same-cost-as-shift (curveGap 0)',
@@ -237,11 +254,11 @@ describe('Shift Targets', () => {
         shiftKeyword: 'Shift 5',
         baseCost: 5,
         baseInkwell: true,
-        expected: 5,
+        tierKey: 'curve.gap0',
       },
-    ])('$label → score $expected', ({expected, ...pairOpts}) => {
+    ])('$label reads $tierKey', ({tierKey, ...pairOpts}) => {
       const synergies = shiftPair(pairOpts);
-      expect(synergies[0].score).toBe(expected);
+      expect(synergies[0]).toMatchObject(tier(tierKey));
     });
 
     it('should produce consistent score in reverse direction', () => {
@@ -251,24 +268,24 @@ describe('Shift Targets', () => {
       expect(forward[0].score).toBe(reverse[0].score);
     });
 
-    it('regression: small shift onto cheap base scores 8, not 3 (#108)', () => {
+    it('regression: small shift onto cheap base reads curve.bothInkable, not curve.poor (#108)', () => {
       const synergies = shiftPair({
         shiftCost: 4,
         shiftKeyword: 'Shift 3',
         baseCost: 2,
         baseInkwell: true,
       });
-      expect(synergies[0].score).toBe(8);
+      expect(synergies[0]).toMatchObject(tier('curve.bothInkable'));
     });
 
-    it('regression: huge shift onto tiny base scores 3, not high (#108)', () => {
+    it('regression: huge shift onto tiny base reads curve.poor, not a higher tier (#108)', () => {
       const synergies = shiftPair({
         shiftCost: 10,
         shiftKeyword: 'Shift 8',
         baseCost: 2,
         baseInkwell: true,
       });
-      expect(synergies[0].score).toBe(3);
+      expect(synergies[0]).toMatchObject(tier('curve.poor'));
     });
   });
 
@@ -297,34 +314,40 @@ describe('Shift Targets', () => {
       });
     }
 
+    // A base that switches the condition on scores one above its own tier, at most 10.
+    const activated = {
+      score: Math.min(TIERS['free.cheapBase'].score! + 1, 10),
+      explanation: tierLine('activationBonus'),
+    };
+
     it.each<{
       label: string;
       baseCost: number;
-      expected: number;
+      expected: {score?: number; explanation: string};
       shiftText?: string;
       baseText?: string;
     }>([
       {
-        label: 'base activates condition → 10',
+        label: 'base activates condition: one above its tier',
         baseCost: 2,
-        expected: 10,
+        expected: activated,
         shiftText: conditionText,
         baseText: conditionBaseText,
       },
       {
-        label: 'base activates a condition printed with typographic apostrophes → 10',
+        label: 'base activates a condition printed with typographic apostrophes',
         baseCost: 2,
-        expected: 10,
+        expected: activated,
         shiftText: conditionText.replace("'", '’'),
         baseText: conditionBaseText.replace("'", '’'),
       },
-      {label: 'cheap base (cost <= 3) → 9', baseCost: 2, expected: 9},
-      {label: 'mid-cost base (cost 4-5) → 7', baseCost: 4, expected: 7},
-      {label: 'expensive base (cost 6+) → 5', baseCost: 7, expected: 5},
+      {label: 'cheap base (cost <= 3)', baseCost: 2, expected: tier('free.cheapBase')},
+      {label: 'mid-cost base (cost 4-5)', baseCost: 4, expected: tier('free.midBase')},
+      {label: 'expensive base (cost 6+)', baseCost: 7, expected: tier('free.expensiveBase')},
     ])('$label', ({baseCost, expected, shiftText, baseText}) => {
       const {shiftCard, base} = freeShiftSetup(baseCost, {shiftText, baseText});
       const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
-      expect(synergies[0].score).toBe(expected);
+      expect(synergies[0]).toMatchObject(expected);
     });
   });
 
@@ -348,26 +371,29 @@ describe('Shift Targets', () => {
       });
 
     it.each([
-      {label: 'cheap half (cost <= 3) → 7', version: 'Steamboat Pilot', cost: 3, expected: 7},
       {
-        label: 'mid-cost half (cost 4-5) → 5',
+        label: 'cheap half (cost <= 3)',
+        version: 'Steamboat Pilot',
+        cost: 3,
+        tierKey: 'duo.cheapHalf',
+      },
+      {
+        label: 'mid-cost half (cost 4-5)',
         version: 'Inquisitive Explorer',
         cost: 4,
-        expected: 5,
+        tierKey: 'duo.midHalf',
       },
-      {label: 'expensive half (cost 6+) → 3', version: 'Snowboard Ace', cost: 6, expected: 3},
-    ])('$label, from either card', ({version, cost, expected}) => {
+      {
+        label: 'expensive half (cost 6+)',
+        version: 'Snowboard Ace',
+        cost: 6,
+        tierKey: 'duo.expensiveHalf',
+      },
+    ])('$label reads $tierKey, from either card', ({version, cost, tierKey}) => {
       const half = mickey(version, cost);
       const pool = [duo, half];
-      expect(shiftRule.findSynergies(duo, pool)[0].score).toBe(expected);
-      expect(shiftRule.findSynergies(half, pool)[0].score).toBe(expected);
-    });
-
-    it("says the half's other half must be in play too", () => {
-      const half = mickey('Steamboat Pilot', 3);
-      expect(shiftRule.findSynergies(half, [duo, half])[0].explanation).toBe(
-        'Duo Shift: play {A} early, then shift {B} in for 0 ink once its other half is in play too.',
-      );
+      expect(shiftRule.findSynergies(duo, pool)[0]).toMatchObject(tier(tierKey, 'shift'));
+      expect(shiftRule.findSynergies(half, pool)[0]).toMatchObject(tier(tierKey, 'base'));
     });
 
     it('leaves a Combo Shift, which takes either half, as a plain team Shift', () => {
@@ -398,20 +424,24 @@ describe('Shift Targets', () => {
       });
     }
 
-    it('scores 8 both ways when the base gets the drops itself (Baymax - Lab Assistant)', () => {
+    it('reads drops.basePays both ways when the base gets the drops itself (Baymax - Lab Assistant)', () => {
       const {shiftCard, base} = inkDropSetup(
         4,
         'RESUPPLY When you play this character, if you have 2 or more items in play, get 2 ink drops.',
       );
       const pool = [shiftCard, base];
-      expect(shiftRule.findSynergies(shiftCard, pool)[0].score).toBe(8);
-      expect(shiftRule.findSynergies(base, pool)[0].score).toBe(8);
+      expect(shiftRule.findSynergies(shiftCard, pool)[0]).toMatchObject(
+        tier('drops.basePays', 'shift'),
+      );
+      expect(shiftRule.findSynergies(base, pool)[0]).toMatchObject(tier('drops.basePays', 'base'));
     });
 
-    it('scores 5, not a free Shift, when the base gets fewer drops than the Shift removes', () => {
-      // A cost-1 base scores 8 on the ink curve (gap 1) and 9 on the free-Shift path.
+    it('reads drops.outside, not a free Shift, when the base gets fewer drops than the Shift removes', () => {
+      // A cost-1 base would read curve.bothInkable (gap 1), or free.cheapBase as a free Shift.
       const {shiftCard, base} = inkDropSetup(1, 'When you play this character, get 1 ink drop.');
-      expect(shiftRule.findSynergies(shiftCard, [shiftCard, base])[0].score).toBe(5);
+      expect(shiftRule.findSynergies(shiftCard, [shiftCard, base])[0]).toMatchObject(
+        tier('drops.outside'),
+      );
     });
   });
 });

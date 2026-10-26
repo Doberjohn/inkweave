@@ -1,5 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {getRuleById} from '../engine';
+import {TUNING} from '../data/tuning';
 import type {LorcanaCard} from '../types';
 import {createCard} from './fixtures.js';
 
@@ -496,6 +497,12 @@ describe('Location Control and Ramp', () => {
     cost: 1,
     text: 'GOOD DOG ⟳ — You pay 1 ⬡ less for the next character you play this turn.',
   });
+  // Admin's tuning editor can reword Ramp's lines, so this one comes from tuning.json, with each
+  // role token swapped for the chip of the card that holds the role.
+  const triggerCost = (trigger: string, cost: string) =>
+    TUNING.ruleTexts.ramp.templates['trigger-cost']
+      .replace('{TRIGGER}', trigger)
+      .replace('{COST}', cost);
 
   it.each<LineCase & {rule: string}>([
     {
@@ -531,14 +538,14 @@ describe('Location Control and Ramp', () => {
       name: 'an inkwell trigger beside a discount, from the trigger',
       card: chiefTui,
       partner: pluto,
-      expected: '{A} rewards cards going into your inkwell, and {B} gives ink discounts.',
+      expected: triggerCost('{A}', '{B}'),
     },
     {
       rule: 'ramp',
       name: 'an inkwell trigger beside a discount, from the discount',
       card: pluto,
       partner: chiefTui,
-      expected: '{B} rewards cards going into your inkwell, and {A} gives ink discounts.',
+      expected: triggerCost('{B}', '{A}'),
     },
   ])('$name ($rule)', ({rule, card, partner, expected}) => {
     expect(line(rule, card, partner)).toBe(expected);
