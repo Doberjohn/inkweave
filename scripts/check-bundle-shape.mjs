@@ -7,8 +7,8 @@
  * shares, and no STARTUP_SHARED line names, splits into a fifth file; startupGroupsGuard fails a
  * stale line but never sees that, and size-limit's budgets barely move. The critical CSS that
  * the inline-css plugin puts in index.html must also keep the kit's focus rings, overlay
- * transitions (and their reduced-motion override), foil sweep, quantity pop and touch target,
- * wherever their stylesheet lives.
+ * transitions (and their reduced-motion override), foil sweep, quantity pop and touch target, and
+ * the ink card placeholder (#979), wherever their stylesheet lives.
  *
  * Usage:
  *   node scripts/check-bundle-shape.mjs <distDir>
@@ -17,8 +17,9 @@
  *   node scripts/check-bundle-shape.mjs --compare <base> <head> [--max-growth <bytes>]
  *     reads each folder's index.html and size.json (`size-limit --json`), prints each row's
  *     delta, and fails when a WATCHED_ROWS row grew more than the allowance (MAX_GROWTH_BYTES
- *     unless given), a row is missing from either side, or the JS file or style block counts
- *     differ.
+ *     unless given), a row is missing from either side, the JS file or style block counts
+ *     differ, or the startup <style> names a url on one side only: a symbol whose file moved
+ *     keeps its name only if its url stays the same.
  */
 import {readFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
@@ -33,6 +34,7 @@ export const REQUIRED_STARTUP_CSS = [
   /@keyframes inkweave-foil-sweep\b/,
   /@keyframes inkweave-qty-pop\b/,
   /\.touch-target\{/,
+  /\.ink-card-placeholder\{/,
 ];
 export const MAX_GROWTH_BYTES = 100;
 export const WATCHED_ROWS = ['User-facing JS', 'Entry chunk'];
@@ -113,6 +115,25 @@ function countChanges(base, head) {
   return changes;
 }
 
+const STYLE_URL = /url\(\s*(['"]?)(.*?)\1\s*\)/g;
+
+/** The urls the startup <style> text names, each once. */
+const styleUrls = (html) =>
+  new Set([...readShape(html).styleText.matchAll(STYLE_URL)].map((match) => match[2]));
+
+/** Each url the startup <style> names on one side only. */
+export function urlProblems(baseHtml, headHtml) {
+  const [base, head] = [styleUrls(baseHtml), styleUrls(headHtml)];
+  return [
+    ...[...base]
+      .filter((url) => !head.has(url))
+      .map((url) => `the head's startup <style> lost url(${url})`),
+    ...[...head]
+      .filter((url) => !base.has(url))
+      .map((url) => `the head's startup <style> gained url(${url})`),
+  ];
+}
+
 /**
  * What fails a head against its base, each `{sizes, html}`: size-limit's JSON rows and the
  * build's index.html.
@@ -121,7 +142,12 @@ export function compareProblems(base, head, maxGrowth = MAX_GROWTH_BYTES) {
   const grown = sizeDeltas(base.sizes, head.sizes)
     .filter((row) => WATCHED_ROWS.includes(row.name) && row.delta > maxGrowth)
     .map((row) => `${row.name} grew ${row.delta} B, more than ${maxGrowth} B`);
-  return [...missingRows(base.sizes, head.sizes), ...grown, ...countChanges(base, head)];
+  return [
+    ...missingRows(base.sizes, head.sizes),
+    ...grown,
+    ...countChanges(base, head),
+    ...urlProblems(base.html, head.html),
+  ];
 }
 
 function readBuild(dir) {

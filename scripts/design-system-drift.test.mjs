@@ -72,4 +72,13 @@ describe('design-system-drift.yml', () => {
     );
     expect(unwatched).toEqual([]);
   });
+
+  it('words a reminder for each tracked icon, in the app or the package', () => {
+    const buckets = BUCKETS.map((source) => new RegExp(source));
+    const icons = TRACKED.filter((file) =>
+      /^(apps\/web|packages\/ui)\/src\/assets\/.*\.svg$/.test(file),
+    );
+    expect(icons.length).toBeGreaterThan(0);
+    expect(icons.filter((file) => !buckets.some((bucket) => bucket.test(file)))).toEqual([]);
+  });
 });

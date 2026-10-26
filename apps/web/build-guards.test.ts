@@ -1,6 +1,12 @@
 // @vitest-environment node
+import path from 'node:path';
 import {describe, expect, it} from 'vitest';
-import {staleStartupEntries, uiCompilerReport} from './build-guards.ts';
+import {
+  type BuiltFiles,
+  staleStartupEntries,
+  uiCompilerReport,
+  unresolvedCssUrls,
+} from './build-guards.ts';
 
 const GROUPS = {vendor: ['react', 'react-dom'], shared: ['apps/web/src/shared/hooks/useHover.ts']};
 const REACT = '/r/node_modules/.pnpm/react@19.3.1/node_modules/react/index.js';
@@ -52,5 +58,58 @@ describe('uiCompilerReport', () => {
       component('/r/packages/ui/src/components/Probe.test.tsx', false),
     ]);
     expect(report).toEqual({compiled: [], skipped: []});
+  });
+});
+
+describe('unresolvedCssUrls', () => {
+  const PUBLIC = path.join(import.meta.dirname, 'public');
+  const SYMBOL = 'assets/amber-AAAA.svg';
+  const asset = (fileName: string, source: string | Uint8Array) => ({
+    type: 'asset' as const,
+    fileName,
+    source,
+  });
+  const build = (...assets: ReturnType<typeof asset>[]): BuiltFiles =>
+    Object.fromEntries([[SYMBOL, asset(SYMBOL, '<svg/>')], ...assets.map((a) => [a.fileName, a])]);
+  const html = (style: string) => asset('index.html', `<head><style>${style}</style></head>`);
+
+  it('passes urls the bundle writes or the public folder holds, in a .css file or an inlined style', () => {
+    const css = new TextEncoder().encode(
+      `.a{background:url("/${SYMBOL}")}.b{mask:url(./amber-AAAA.svg)}`,
+    );
+    const bundle = build(
+      html(`.c{background:url(/${SYMBOL})}.d{background:url('/brand/mark.svg?v=2#top')}`),
+      asset('assets/Page-BBBB.css', css),
+    );
+    expect(unresolvedCssUrls(bundle, PUBLIC)).toEqual([]);
+  });
+
+  it('names each url no file backs once, with its stylesheet', () => {
+    const missing = ".e{background:url('./assets/amber.svg?no-inline')}";
+    const bundle = build(
+      html(missing + missing),
+      asset('assets/Page-BBBB.css', `.f{mask:url(./${SYMBOL})}.g{mask:url(/brand/gone.svg)}`),
+    );
+    expect(unresolvedCssUrls(bundle, PUBLIC)).toEqual([
+      './assets/amber.svg?no-inline in index.html',
+      `./${SYMBOL} in assets/Page-BBBB.css`,
+      '/brand/gone.svg in assets/Page-BBBB.css',
+    ]);
+  });
+
+  it('skips inline data, other origins and fragments, and text outside a stylesheet', () => {
+    const bundle = build(
+      html('.h{background:url(data:image/svg+xml,%3Csvg%3E)}.i{filter:url(#glow)}'),
+      asset('assets/Page-BBBB.css', '.j{background:url(https://x.test/a.png),url(//x.test/b.png)}'),
+      asset('assets/note.svg', '<svg><rect fill="url(./missing.png)"/></svg>'),
+      asset('page.html', '<p>url(./missing.png)</p><style>.k{}</style>'),
+    );
+    expect(unresolvedCssUrls(bundle, PUBLIC)).toEqual([]);
+  });
+
+  it('never takes a url above the root for a public file', () => {
+    expect(
+      unresolvedCssUrls(build(html('.l{background:url(../public/brand/mark.svg)}')), PUBLIC),
+    ).toEqual(['../public/brand/mark.svg in index.html']);
   });
 });

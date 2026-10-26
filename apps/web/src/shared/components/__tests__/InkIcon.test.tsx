@@ -5,6 +5,9 @@ import type {Ink} from '../../../features/cards';
 
 const ALL_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
 
+/** The file an asset url names, without its folder or query. */
+const fileOf = (src: string | null | undefined) => src?.split('?')[0].split('/').pop();
+
 describe('InkIcon', () => {
   it('renders an img for each ink color', () => {
     const {container} = render(
@@ -16,6 +19,16 @@ describe('InkIcon', () => {
     );
     const imgs = container.querySelectorAll('img');
     expect(imgs).toHaveLength(6);
+  });
+
+  it('draws each ink from its own file', () => {
+    for (const ink of ALL_INKS) {
+      const {container, unmount} = render(<InkIcon ink={ink} />);
+      expect(fileOf(container.querySelector('img')?.getAttribute('src')), ink).toBe(
+        `${ink.toLowerCase()}.svg`,
+      );
+      unmount();
+    }
   });
 
   it('uses the specified size', () => {

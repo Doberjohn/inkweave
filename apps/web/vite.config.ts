@@ -6,7 +6,13 @@ import react, {reactCompilerPreset} from '@vitejs/plugin-react';
 import babel from '@rolldown/plugin-babel';
 import {VitePWA} from 'vite-plugin-pwa';
 import {visualizer} from 'rollup-plugin-visualizer';
-import {isSharedModule, isVendorModule, startupGroupsGuard, uiCompilerGuard} from './build-guards.ts';
+import {
+  cssUrlGuard,
+  isSharedModule,
+  isVendorModule,
+  startupGroupsGuard,
+  uiCompilerGuard,
+} from './build-guards.ts';
 import {resolveVitestWorkers} from './vitest-workers.ts';
 import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
@@ -513,6 +519,7 @@ export default defineConfig({
       },
     }),
     inlineCssPlugin(),
+    cssUrlGuard(),
     unloadableChunksPlugin(),
     startupGroupsGuard({vendor: STARTUP_VENDOR, shared: STARTUP_SHARED}),
     uiCompilerGuard(),
