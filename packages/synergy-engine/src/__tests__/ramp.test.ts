@@ -1,4 +1,4 @@
-import {describe, it, expect} from 'vitest';
+import {afterEach, beforeEach, describe, it, expect} from 'vitest';
 import {
   getCostReductionTarget,
   getRampRoles,
@@ -8,6 +8,7 @@ import {
   isRepeatingTrigger,
 } from '../utils';
 import {getRuleById} from '../engine';
+import {TUNING} from '../data/tuning';
 import {createCard} from './fixtures';
 import type {LorcanaCard} from '../types';
 
@@ -462,9 +463,40 @@ describe('Ramp: a deck look that puts a card into your inkwell', () => {
     expect(getRampRoles(closetDoorPortal)).toEqual(['inkwell-ramp']);
   });
 
-  it('scores a card that puts itself into your inkwell in the self-sacrifice tier', () => {
+  it('pairs a card that puts itself into your inkwell as a chain', () => {
     expect(rampPair(closetDoorPortal, scrooge)?.score).toBe(7);
     expect(rampPair(closetDoorPortal, chiefTui)?.score).toBe(7);
     expect(rampPair(whatElse, scrooge)?.score).toBe(7);
+  });
+});
+
+// Every chain shape scores the same today, so the tuned scores can't show which key a pair
+// reads. These tests give each key its own score to pin the routing itself.
+describe('Ramp: each chain shape reads its own tuning key', () => {
+  const scores = TUNING.ruleTexts.ramp.scores;
+  const tuned = {...scores};
+
+  beforeEach(() => {
+    Object.assign(scores, {'chain.deckRepeating': 9, 'chain.mixed': 8, 'chain.neither': 6});
+  });
+  afterEach(() => {
+    Object.assign(scores, tuned);
+  });
+
+  it('reads chain.deckRepeating for deck ramp with a repeating trigger', () => {
+    expect(rampPair(mamaOdie, scrooge)?.score).toBe(9);
+    expect(rampPair(whatElse, scrooge)?.score).toBe(9);
+  });
+
+  it('reads chain.mixed when only one of the two holds', () => {
+    expect(rampPair(mamaOdie, chiefTui)?.score).toBe(8);
+    expect(rampPair(mamaOdie, fairyGodmothersWand)?.score).toBe(8);
+    expect(rampPair(closetDoorPortal, scrooge)?.score).toBe(8);
+    expect(rampPair(winnieThePooh, scrooge)?.score).toBe(8);
+  });
+
+  it('reads chain.neither for self-sacrifice with a once-per-turn trigger', () => {
+    expect(rampPair(closetDoorPortal, chiefTui)?.score).toBe(6);
+    expect(rampPair(winnieThePooh, fairyGodmothersWand)?.score).toBe(6);
   });
 });
