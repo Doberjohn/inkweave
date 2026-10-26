@@ -1,4 +1,4 @@
-import {useState, type AnimationEvent, type CSSProperties, type PointerEvent} from 'react';
+import {useEffect, useState, type AnimationEvent, type CSSProperties, type PointerEvent} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from '../cards/components/CardTile';
 import {PROMO_RARITY, smallImageUrl} from '../cards/loader';
@@ -6,12 +6,13 @@ import {CollectionSlotCounts, type SlotCountsEditor} from './CollectionSlotCount
 import type {CollectionEntry, Finish} from './collectionParser';
 import {finishesOf} from './printingFinishes';
 import {BinderSpread} from '../cards/components/BinderSpread';
-import {pagingOf} from '../cards/components/binderGeometry';
+import {pagingOf, type BinderPaging} from '../cards/components/binderGeometry';
 import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/BinderSpreadMap';
 import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
 import {settleOf} from './binderPockets';
 import {FINISH_WORD, printingName, promoCode} from '../../shared/hooks/usePrintingSelection';
 import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
+import {preloadArt} from './preloadArt';
 import {CardImageButton, CardLightbox} from '../../shared/components';
 import {COLORS, FONT_SIZES, SPACING} from '../../shared/constants';
 
@@ -362,6 +363,26 @@ function OpenPocketView({pocket, tabIndex}: {pocket: OpenPocket; tabIndex: numbe
   return <WaitingPromoPocket key={src} pocket={pocket} src={src} tabIndex={tabIndex} />;
 }
 
+/** The art of the cards in view `view`: the pockets' small art, and the waiting promos' scans. */
+function viewArt(slots: readonly BinderSlot[], view: number, {perView, lead}: BinderPaging): string[] {
+  if (view < 0) return [];
+  // A spread binder's first view starts a page before its first slot, at the front cover.
+  const from = view * perView - lead;
+  return slots
+    .slice(Math.max(0, from), from + perView)
+    .flatMap((slot) => (isOpenPocket(slot) ? waitingScan(slot) : smallImageUrl(slot)) ?? []);
+}
+
+/**
+ * Loads the art of the views either side of the one in view (owner, 2026-10-26), so a page turned
+ * either way lands with its cards drawn, where it showed their ink placeholders until they came.
+ */
+function usePreloadNeighbours(slots: readonly BinderSlot[], current: number, paging: BinderPaging) {
+  useEffect(() => {
+    preloadArt([...viewArt(slots, current + 1, paging), ...viewArt(slots, current - 1, paging)]);
+  }, [slots, current, paging]);
+}
+
 export function CollectionBinder({
   slots,
   bySet = false,
@@ -373,7 +394,8 @@ export function CollectionBinder({
   windowOpen = false,
 }: CollectionBinderProps) {
   // A phone pages by nine, a spread binder by 24, a page in for the front cover (`pagingOf`).
-  const {perView, lead} = pagingOf(single);
+  const paging = pagingOf(single);
+  const {perView, lead} = paging;
   // Held as the first SLOT in view, not a view number, so crossing the phone
   // breakpoint stays in the same part of the set: from spread 2 (slots 12-35) a
   // phone opens page 2 (slots 9-17), the page that holds slot 12, and back again.
@@ -385,6 +407,8 @@ export function CollectionBinder({
     const to = Math.max(0, Math.min(view, total - 1));
     setFirstSlot(Math.max(0, to * perView - lead));
   };
+
+  usePreloadNeighbours(slots, current, paging);
 
   const map =
     pager === 'map' ? (

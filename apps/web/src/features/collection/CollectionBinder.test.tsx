@@ -5,6 +5,10 @@ import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CollectionBinder} from './CollectionBinder';
 import {settleOf} from './binderPockets';
+import {preloadArt} from './preloadArt';
+
+// jsdom loads no image: the binder's art loaded ahead is only asked for.
+vi.mock('./preloadArt', () => ({preloadArt: vi.fn()}));
 
 /** A 48-card set: three spreads, the first opening on the front cover, or six lone pages of nine. */
 const CARDS = Array.from(
@@ -109,6 +113,40 @@ describe('CollectionBinder', () => {
     expect(firstShown()).toBe('Card 1');
     fireEvent.click(screen.getByRole('button', {name: 'Next page'}));
     expect(firstShown()).toBe('Card 10');
+  });
+
+  describe("the art either side, loaded ahead so a turn lands drawn (owner, 2026-10-26)", () => {
+    const WITH_ART = CARDS.map((card) => ({...card, imageUrl: `/art/${card.id}.avif`}));
+    /** The small art of cards `from` to `to`, as their pockets draw it. */
+    const artOf = (from: number, to: number) =>
+      Array.from({length: to - from + 1}, (_, i) => `/art/c${from + i}-sm.avif`);
+    const askedFor = () => {
+      const asked = vi.mocked(preloadArt).mock.calls.flatMap(([srcs]) => srcs);
+      vi.mocked(preloadArt).mockClear();
+      return asked.sort();
+    };
+
+    it('on a phone, loads the next page ahead, then the pages either side of the one turned to', () => {
+      vi.mocked(preloadArt).mockClear();
+      render(binder({slots: WITH_ART, single: true}));
+      expect(askedFor()).toEqual(artOf(10, 18).sort());
+
+      fireEvent.click(screen.getByRole('button', {name: 'Next page'}));
+      expect(askedFor()).toEqual([...artOf(1, 9), ...artOf(19, 27)].sort());
+    });
+
+    it('on a spread, loads the next spread ahead, past the front cover', () => {
+      vi.mocked(preloadArt).mockClear();
+      render(binder({slots: WITH_ART}));
+      expect(askedFor()).toEqual(artOf(13, 36).sort());
+    });
+
+    it("loads a waiting promo's scan ahead too, and nothing for an empty pocket (Claude review, PR #1002)", () => {
+      vi.mocked(preloadArt).mockClear();
+      const empty = {open: true, setCode: 'C3', setNumber: 30} as const;
+      render(binder({slots: [...WITH_ART.slice(0, 9), WAITING_HADES, empty], single: true}));
+      expect(askedFor()).toEqual(['/card-images-preview/80033-sm.avif']);
+    });
   });
 
   it('keeps the cards in view when the layout switches between spreads and single pages', () => {

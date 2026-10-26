@@ -38,6 +38,12 @@ const POSES = [0, TURN_MS / 4, TURN_MS / 2, (3 * TURN_MS) / 4, TURN_MS];
 /** A pause the pointer makes before letting go, so it lets go with no speed: past the flick's 80 ms. */
 const STILL_MS = 150;
 
+/** A 1x1 PNG: any card art at all. */
+const ART = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+  'base64',
+);
+
 interface Box {
   x: number;
   y: number;
@@ -219,6 +225,75 @@ async function endedTurns(page: Page): Promise<SeenTurn[]> {
   await expect.poll(async () => (await turnLog(page)).turns.every((turn) => turn.goneAt !== null)).toBe(true);
   return (await turnLog(page)).turns;
 }
+
+/** What `watchStripes` saw: the count stripes judged, and those drawn full size as they first laid out. */
+interface StripeLog {
+  seen: number;
+  fullSize: number;
+}
+
+/**
+ * The page's watch on its count stripes' size (owner, 2026-10-26: counts drawn large for a frame
+ * as a page turned), set up before it loads. A stripe sizes its counts to its pocket from the
+ * width it measures, and that size has to land before the stripe first paints. Each new stripe's
+ * pocket gets a ResizeObserver of its own, made after the app's, so in the step that runs both,
+ * before the paint, it reads the zoom the stripe is drawn at: 1 is the full size of a stripe not
+ * yet measured. A stripe with no width yet is judged once it has one. It watches the pocket, not
+ * the stripe, whose height that zoom changes: WebKit reports a box observed there that changes
+ * size in that step as an uncaught error.
+ */
+function watchStripes() {
+  const log: StripeLog = {seen: 0, fullSize: 0};
+  (window as unknown as {stripeLog: StripeLog}).stripeLog = log;
+  const watch = (stripe: Element) => {
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry.contentRect.width === 0) return;
+      observer.disconnect();
+      log.seen += 1;
+      const row = stripe.querySelector<HTMLElement>('[style*="zoom"]');
+      if (row && getComputedStyle(row).zoom === '1') log.fullSize += 1;
+    });
+    observer.observe(stripe.parentElement ?? stripe);
+  };
+  new MutationObserver((records) => {
+    for (const node of records.flatMap((record) => [...record.addedNodes])) {
+      if (!(node instanceof Element)) continue;
+      if (node.matches('.binder-copies')) watch(node);
+      node.querySelectorAll('.binder-copies').forEach(watch);
+    }
+  }).observe(document, {childList: true, subtree: true});
+}
+
+const stripeLog = (page: Page) => page.evaluate(() => (window as unknown as {stripeLog: StripeLog}).stripeLog);
+
+/** What `watchArt` saw: art mounted in the binder's own pockets, and how much of it mounted hidden. */
+interface ArtLog {
+  mounted: number;
+  hidden: number;
+}
+
+/**
+ * The page's watch on the art its pages' pockets mount (owner, 2026-10-26: cards gone for a moment
+ * as a page turned), set up before it loads: a page remounts its pockets on every turn, and art
+ * mounted hidden shows the ink placeholder and fades back in. A turn's copies are left out.
+ */
+function watchArt() {
+  const log: ArtLog = {mounted: 0, hidden: 0};
+  (window as unknown as {artLog: ArtLog}).artLog = log;
+  const artIn = (node: Node): HTMLImageElement[] => {
+    if (node instanceof HTMLImageElement) return [node];
+    return node instanceof Element ? [...node.querySelectorAll('img')] : [];
+  };
+  const inPocket = (img: HTMLImageElement) => img.closest('.binder-pocket') !== null && img.closest('.binder-turn') === null;
+  new MutationObserver((records) => {
+    for (const img of records.flatMap((record) => [...record.addedNodes].flatMap(artIn)).filter(inPocket)) {
+      log.mounted += 1;
+      if (img.style.opacity === '0') log.hidden += 1;
+    }
+  }).observe(document, {childList: true, subtree: true});
+}
+
+const artLog = (page: Page) => page.evaluate(() => (window as unknown as {artLog: ArtLog}).artLog);
 
 /** The turning sheet's layer: a copy of pages, never the binder's own. */
 const sheets = (page: Page) => binder(page).locator('.binder-turn');
@@ -767,6 +842,14 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
   const swipe = (page: Page, cdp: CDPSession, [x0, y0]: Point, [x1, y1]: Point) =>
     swipeThrough(page, cdp, fingerPath([x0, y0], [10, [(x1 - x0) / 10, (y1 - y0) / 10]]));
 
+  /** Any art at all, so every pocket keeps its image: one whose art fails shows the card's cost. */
+  const stubArt = (page: Page) =>
+    page.route('**/card-images/**', (route) =>
+      route.request().resourceType() === 'image'
+        ? route.fulfill({contentType: 'image/png', body: ART})
+        : route.fallback(),
+    );
+
   /** The mini for page `n` in the map under the page, which turns the pages on a phone (#969). */
   const mini = (page: Page, n: number) => binder(page).getByRole('button', {name: new RegExp(`^Page ${n} of `)});
 
@@ -900,6 +983,85 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     expect(await scrolledRound(binder(page)), 'how far the page scrolled down').toBe(before);
     await expect(sheets(page)).toHaveCount(0);
     await expect(cardWindow(page)).toHaveCount(0);
+  });
+
+  test("a turn draws each page's counts at their pocket's size from their first frame, both ways (owner, 2026-10-26)", async ({
+    page,
+  }) => {
+    await page.addInitScript(watchStripes);
+    await openBinder(page, PHONE);
+    await page.evaluate(() => Object.assign((window as unknown as {stripeLog: StripeLog}).stripeLog, {seen: 0, fullSize: 0}));
+
+    await mini(page, 2).click();
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[9].fullName);
+    await expect(sheets(page)).toHaveCount(0);
+    await mini(page, 1).click();
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[0].fullName);
+    await expect(sheets(page)).toHaveCount(0);
+
+    // Both turns' copies and both pages they land on: four pages of nine.
+    const {seen, fullSize} = await stripeLog(page);
+    expect(seen, 'the stripes judged').toBeGreaterThanOrEqual(36);
+    expect(fullSize, 'the stripes that first drew full size').toBe(0);
+  });
+
+  test("the pages either side load their art before a turn shows them, and the pages past them don't (owner, 2026-10-26)", async ({
+    page,
+  }) => {
+    await stubArt(page);
+    const asked = new Set<string>();
+    page.on('request', (request) => {
+      if (request.resourceType() === 'image') asked.add(request.url());
+    });
+    await openBinder(page, PHONE);
+    await page.waitForLoadState('networkidle');
+    const before = new Set(asked);
+    /** The art on the page in view, as its pockets draw it. */
+    const artInView = () =>
+      lonePage(page)
+        .locator('img')
+        .evaluateAll((imgs) => imgs.map((img) => (img as HTMLImageElement).src));
+
+    await mini(page, 2).click();
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[9].fullName);
+    const second = await artInView();
+    expect(second.length, "page 2's art").toBeGreaterThan(0);
+    expect(second.filter((src) => !before.has(src)), "page 2's art not asked for before the turn").toEqual([]);
+
+    // On page 2, the pages either side are 1 and 3: page 4's art waits for a turn to page 3.
+    await page.waitForLoadState('networkidle');
+    const onSecond = new Set(asked);
+    await mini(page, 4).click();
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[27].fullName);
+    const fourth = await artInView();
+    expect(fourth.length, "page 4's art").toBeGreaterThan(0);
+    expect(fourth.filter((src) => onSecond.has(src)), "page 4's art asked for while page 2 showed").toEqual([]);
+  });
+
+  test('a turn lands on cards already drawn, with no placeholder between, both ways (owner, 2026-10-26)', async ({page}) => {
+    await stubArt(page);
+    await page.addInitScript(watchArt);
+    // Every <img> reports itself not complete, as Safari reported the art it held as a page's
+    // pockets remounted: Chromium reports such art complete as its <img> mounts, so it starts
+    // drawn there whatever the app does.
+    await page.addInitScript(() =>
+      Object.defineProperty(HTMLImageElement.prototype, 'complete', {get: () => false, configurable: true}),
+    );
+    await openBinder(page, PHONE);
+    // Page 1's art drawn, and page 2's loaded ahead.
+    await page.waitForLoadState('networkidle');
+    await page.evaluate(() => Object.assign((window as unknown as {artLog: ArtLog}).artLog, {mounted: 0, hidden: 0}));
+
+    await mini(page, 2).click();
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[9].fullName);
+    await expect(sheets(page)).toHaveCount(0);
+    await mini(page, 1).click();
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[0].fullName);
+    await expect(sheets(page)).toHaveCount(0);
+
+    const {mounted, hidden} = await artLog(page);
+    expect(mounted, 'the art the two pages mounted').toBeGreaterThanOrEqual(18);
+    expect(hidden, 'the art that mounted hidden over its placeholder').toBe(0);
   });
 
   test('a mostly vertical swipe scrolls the page and turns nothing', async ({page, browserName}) => {
