@@ -9,6 +9,7 @@ const PROMOTED = [
   'components/SegmentedControl',
   'components/Tag',
   'components/Notice',
+  'components/Panel',
 ];
 
 /** Admin's classes, theme and bridge: package source names none of them. */
