@@ -595,11 +595,13 @@ function contentWidth(el: HTMLElement): number {
 /**
  * The row's width, from before the first paint and on every resize after it.
  *
- * MEASURED IN A LAYOUT EFFECT TOO (#790). `useContainerWidth` reads its first width
- * after the first paint, and the collection binder remounts on every new set, sort or
- * filter (keyed by its cards, see `CollectionBinderSection`), so each switch painted a
+ * MEASURED IN A LAYOUT EFFECT TOO (#790). `useContainerWidth` read its first width
+ * after the first paint then, and the collection binder remounts on every new set, sort
+ * or filter (keyed by its cards, see `CollectionBinderSection`), so each switch painted a
  * frame with no height cap: at 1920x1080, one frame of 257px cards before the capped
- * 200px, on every switch. The layout effect reads it before that paint.
+ * 200px, on every switch. The layout effect reads it before that paint. The hook now
+ * renders its first width before the paint too (2026-10-26), so this read is what sets
+ * the cap only where no ResizeObserver runs, as in jsdom.
  */
 function useRowWidth(ref: RefObject<HTMLDivElement | null>): number {
   const observed = useContainerWidth(ref);
@@ -905,9 +907,6 @@ function sheetsAt(start: number, single: boolean, cardCount: number | undefined)
   return viewSheets((start + lead) / perView, Math.max(1, Math.ceil((cardCount + lead) / perView)), single);
 }
 
-/** Whether a turn's page was in view as the turn began, its art on screen a moment ago. */
-const wasInView = ({from}: TurnPage, turn: Turn, perView: number) => from >= turn.from && from < turn.from + perView;
-
 /** Which pages take a grab: the left while there is a view before, the right while there is one after, a phone's either. */
 const grabMarks = ({single, canPrev, canNext}: Pick<TurnProps, 'single' | 'canPrev' | 'canNext'>) => ({
   left: canPrev && !single,
@@ -926,9 +925,8 @@ type TurnProps = Pick<BinderSpreadProps, 'start' | 'renderSlot' | 'onPrev' | 'on
 
 interface TurnSheetProps {
   turn: Turn;
-  /** A copy of a page; `shown` when its art was on screen as the turn began. */
-  copy: (page: TurnPage, shown: boolean) => ReactNode;
-  perView: number;
+  /** A copy of a page. */
+  copy: (page: TurnPage) => ReactNode;
   pages: {left: RefObject<HTMLDivElement | null>; right: RefObject<HTMLDivElement | null>};
   end: (turn: Turn) => void;
   /** Where a page in hand has got to (`useGrabTurn`). */
@@ -936,11 +934,11 @@ interface TurnSheetProps {
 }
 
 /** The turn's sheet over the pages: a page in hand is held where it has got to, for the grab to pose; any other turns. */
-function TurnSheet({turn, copy, perView, pages, end, heldAt}: TurnSheetProps) {
+function TurnSheet({turn, copy, pages, end, heldAt}: TurnSheetProps) {
   return (
     <PageTurn
       plan={turn.plan}
-      renderPage={(page) => copy(page, wasInView(page, turn, perView))}
+      renderPage={copy}
       pages={pages}
       spine={SPINE_WIDTH}
       at={turn.held ? heldAt : undefined}
@@ -967,16 +965,14 @@ function useViewTurn(props: TurnProps): ViewTurn {
   const grab = useGrabTurn({...props, perView, turning: turn !== null, hold, end, reducedMotion, spine: SPINE_WIDTH});
   const left = useRef<HTMLDivElement>(null);
   const right = useRef<HTMLDivElement>(null);
-  const copy = (page: TurnPage, shown: boolean) => (
-    <ArtOnScreen.Provider value={shown}>
-      <BinderPage
-        from={page.from}
-        side={page.side}
-        single={single}
-        renderSlot={(index) => renderSlot(index, -1)}
-        cover={coverOf(page, single, cardCount)}
-      />
-    </ArtOnScreen.Provider>
+  const copy = (page: TurnPage) => (
+    <BinderPage
+      from={page.from}
+      side={page.side}
+      single={single}
+      renderSlot={(index) => renderSlot(index, -1)}
+      cover={coverOf(page, single, cardCount)}
+    />
   );
   return {
     boardClass: turnClass(turn !== null, grab.grabbing),
@@ -986,7 +982,6 @@ function useViewTurn(props: TurnProps): ViewTurn {
         key={turnKey(turn)}
         turn={turn}
         copy={copy}
-        perView={perView}
         pages={{left, right}}
         end={end}
         heldAt={grab.heldAt}
@@ -1095,7 +1090,10 @@ export function BinderSpread({
       }}
       onBlur={follow.onBlur}
       style={{...BINDER_LOOK, height: '100%', display: 'flex', flexDirection: 'column', minHeight: 0}}>
-      {single ? <SingleView {...views} /> : <SpreadView {...views} edges={edges} />}
+      {/* Art the tab already holds starts drawn, in the pages and in a turn's copies of them (see `ArtOnScreen`). */}
+      <ArtOnScreen.Provider value>
+        {single ? <SingleView {...views} /> : <SpreadView {...views} edges={edges} />}
+      </ArtOnScreen.Provider>
     </section>
   );
 }

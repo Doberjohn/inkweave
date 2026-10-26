@@ -15,16 +15,26 @@ const FADE_IN = `opacity 0.2s ${EASING.smooth}`;
 const HELD_ART = {loading: 'eager', decoding: 'sync'} as const;
 
 /**
- * Art that was on screen a moment ago and is drawn again in a copy: the binder's pages a page turn
- * lifts (#942). Art that had drawn starts loaded, as art the browser already holds does. Chromium
- * gives the copy's `<img>` its image a task after it mounts (see `renderOverPrerenderedPage`), so
- * the art draws blank that long at most, where the ink placeholder would show and fade back in.
- * Art still on its way keeps its placeholder in the copy too.
+ * Art drawn again where it was on screen a moment ago: the collection binder, whose pages remount
+ * their pockets on every turn and whose turns draw copies of them (#942). There art the tab already
+ * holds, drawn or loaded ahead (`markArtDrawn`), starts loaded and loads at once, as art the browser
+ * already holds does: an `<img>` mounted lazy waits for layout before it looks in the cache, so the
+ * ink placeholder showed and the art faded back in at every turn (owner, 2026-10-26). Chromium
+ * gives a new `<img>` its image a task after it mounts (see `renderOverPrerenderedPage`), so the
+ * art draws blank that long at most. Art still on its way keeps its placeholder.
  */
 export const ArtOnScreen = createContext(false);
 
-/** The art that has drawn in this tab: the copies `ArtOnScreen` marks may start with it loaded. */
+/** The art that has drawn, or loaded ahead (`markArtDrawn`), in this tab: where `ArtOnScreen` is set, it starts loaded. */
 const drawn = new Set<string>();
+
+/**
+ * Counts art loaded ahead of its `<img>` as drawn, as the binder's `preloadArt` does once the art
+ * decodes (owner, 2026-10-26): the pocket that shows it, under `ArtOnScreen`, starts with it.
+ */
+export function markArtDrawn(src: string) {
+  drawn.add(src);
+}
 
 /** Art starts loaded where a copy draws it again (`ArtOnScreen`) after it drew, or where the prerendered page showed it. */
 const firstLoad = (src: string | undefined, onScreen: boolean): ArtLoad =>
