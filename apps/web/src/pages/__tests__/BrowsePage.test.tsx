@@ -59,8 +59,8 @@ describe('BrowsePage with the collection flag off', () => {
       </MemoryRouter>,
     );
     expect(screen.getByTestId('browse-search')).toBeInTheDocument();
-    // The grid, empty with this fixture, says so in its status line.
-    expect(screen.getByText('No cards match your filters.')).toBeInTheDocument();
+    // The grid, empty with this fixture, shows it, and the page's status line says it.
+    expect(screen.getByRole('status')).toHaveTextContent('No cards match your filters.');
     expect(screen.queryByRole('button', {name: 'Show my collection'})).not.toBeInTheDocument();
     // Sets 1-8 wait for a search (#911), and so does their loader's module, which Browse
     // imports dynamically so as not to ship collection mode's data layer to every visitor.
@@ -117,8 +117,11 @@ describe('BrowsePage with the collection flag off', () => {
       await waitFor(() => expect(fixtures.loadPreCoreSearchCards).toHaveBeenCalled());
       expect(screen.getByLabelText('Loading cards')).toBeInTheDocument();
       expect(screen.queryByText('No cards match your filters.')).not.toBeInTheDocument();
+      // The status line is in the page while the cards load, so screen readers hear it change.
+      expect(screen.getByRole('status')).toBeEmptyDOMElement();
       await act(async () => deliver([onHumanLegs]));
       expect(screen.getByRole('button', {name: /On Human Legs/})).toBeInTheDocument();
+      expect(screen.getByRole('status')).toHaveTextContent('1 card');
     });
   });
 });
@@ -183,6 +186,11 @@ describe('BrowseBody with collection mode on', () => {
     renderBody();
     fireEvent.click(screen.getByRole('button', {name: 'binder card'}));
     expect(trackCardSelected).toHaveBeenCalledWith(outside, 'browse');
+  });
+
+  it('leaves the status line empty while the binder shows, since it lights slots rather than listing cards', () => {
+    renderBody();
+    expect(screen.getByTestId('browse-count')).toBeEmptyDOMElement();
   });
 
   describe("on a phone, the binder's one row (#969)", () => {

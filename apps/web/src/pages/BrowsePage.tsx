@@ -24,7 +24,7 @@ import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
 import type {BrowseCollectionSlots, BrowseListing} from '../features/collection/useBrowseCollection';
-import {browseView, gridModalTarget, printingIdsFor, tilePrintingFor} from './browseView';
+import {browseCountMessage, browseView, gridModalTarget, printingIdsFor, tilePrintingFor} from './browseView';
 import {usePreCoreSearchCards} from './preCoreSearch';
 
 // =====================================================================
@@ -125,6 +125,11 @@ function BrowseContentSection({
         }}>
         Browse Cards
       </h1>
+      {/* In the page from the start, so screen readers hear each change (WCAG 4.1.3). Empty while
+          the cards load, and while the binder shows, which lights slots rather than listing cards. */}
+      <p role="status" data-testid="browse-count" style={VISUALLY_HIDDEN}>
+        {binder || isLoading ? '' : browseCountMessage(cards.length)}
+      </p>
       {/* The toolbar serves BOTH modes: in collection mode its filters decide which
           binder slots stay lit rather than which cards are listed. On a phone the binder's
           row stands in for it, the filters a press away in the Binder sheet. */}
