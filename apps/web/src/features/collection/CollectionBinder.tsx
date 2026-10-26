@@ -6,7 +6,7 @@ import {CollectionSlotCounts, type SlotCountsEditor} from './CollectionSlotCount
 import type {CollectionEntry, Finish} from './collectionParser';
 import {finishesOf} from './printingFinishes';
 import {BinderSpread} from '../cards/components/BinderSpread';
-import {pagingOf, type BinderPaging, type LoneFit} from '../cards/components/binderGeometry';
+import {pagingOf, THREE_ROWS, type BinderPaging, type LoneFit} from '../cards/components/binderGeometry';
 import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/BinderSpreadMap';
 import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
 import {settleOf} from './binderPockets';
@@ -88,9 +88,6 @@ interface CollectionBinderProps {
    */
   windowOpen?: boolean;
 }
-
-/** A phone's page where the section gives no fit: 3 rows, as wide as the binder. */
-const THREE_ROWS: LoneFit = {rows: 3};
 
 /**
  * Whether you hold the card at all. On the TOTAL, not on one finish: grey and the

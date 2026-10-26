@@ -12,6 +12,7 @@ import {
   MINI_PADDING,
   PER_PAGE,
   SPREAD_PAGING,
+  byRows,
   lonePage,
   pagingOf,
   perLonePage,
@@ -406,10 +407,7 @@ function pagesThatFit(room: number): number {
 
 /** The map of spreads, beside the front cover, and a phone's map of pages, with none, by their rows. */
 const SPREAD_VIEWS: MapViews = {...SPREAD_PAGING, noun: 'spread', fits: spreadsThatFit};
-const PAGE_VIEWS: Record<LoneRows, MapViews> = {
-  3: {...pagingOf(true, 3), noun: 'page', fits: pagesThatFit},
-  4: {...pagingOf(true, 4), noun: 'page', fits: pagesThatFit},
-};
+const PAGE_VIEWS = byRows((rows): MapViews => ({...pagingOf(true, rows), noun: 'page', fits: pagesThatFit}));
 
 /**
  * How many minis the window holds: as many as fit the row (`fits`). Measured before the
@@ -544,8 +542,8 @@ function SpreadMap({pockets, current, onGo, sets = []}: MapProps) {
 
 /**
  * A phone's map: a mini per page, 4px under the page, as many as fit the row, and
- * nothing after them: the open mini's name and `aria-current` say where the page is,
- * and "5 / 27" took the room of two minis. Each mini draws its page's rows, 3 or 4.
+ * nothing after them: the open mini's name and `aria-current` say where the page is.
+ * Each mini draws its page's rows, 3 or 4.
  */
 function PageMap({pockets, current, onGo, sets = [], rows}: MapProps & {rows: LoneRows}) {
   const views = PAGE_VIEWS[rows];

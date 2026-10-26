@@ -1,4 +1,4 @@
-import {useContext, useRef, useSyncExternalStore, type ReactNode, type RefObject} from 'react';
+import {useContext, useRef, useState, useSyncExternalStore, type ReactNode, type Ref} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries, CollectionEntry, Finish} from './collectionParser';
 import type {CollectionPromo} from './collectionPromos';
@@ -113,7 +113,7 @@ type PanelControls = SetSwitching & BinderView & AxisChoice;
  */
 function PanelLayout({panel, section, children}: {
   panel: CollectionSetPanelProps;
-  section: RefObject<HTMLDivElement | null>;
+  section: Ref<HTMLDivElement>;
   children: ReactNode;
 }) {
   const {isMobile} = useResponsive();
@@ -240,7 +240,7 @@ function SectionContent({
   const docked = useSidePanelDocked();
   const windowOpen = useCardWindowOpen();
   // A phone's page has the rows its section fits, the loading binder's as the loaded one's.
-  const section = useRef<HTMLDivElement>(null);
+  const [section, setSection] = useState<HTMLDivElement | null>(null);
   const loneFit = useLoneFit(section, isMobile);
   const {setCode} = controls;
 
@@ -266,7 +266,7 @@ function SectionContent({
   // in place, so the arrival is a change of contents and nothing else.
   if (isLoading) {
     return (
-      <PanelLayout panel={{...controls, stats: null, filtered}} section={section}>
+      <PanelLayout panel={{...controls, stats: null, filtered}} section={setSection}>
         <LoadingBinder single={isMobile} docked={docked} loneFit={loneFit} />
       </PanelLayout>
     );
@@ -284,7 +284,7 @@ function SectionContent({
     waiting,
   });
   return (
-    <PanelLayout panel={{...controls, stats, filtered}} section={section}>
+    <PanelLayout panel={{...controls, stats, filtered}} section={setSection}>
       {shown.length === 0 ? (
         <NoMatches show={controls.show} setCode={setCode} />
       ) : (

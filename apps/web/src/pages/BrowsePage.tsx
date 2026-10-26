@@ -339,8 +339,8 @@ function phoneRow(
 type FilterSheetProps = Omit<React.ComponentProps<typeof CardFilterDialog>, 'variant' | 'onApply'>;
 
 /**
- * What Filters opens: on a phone in collection mode, from the binder's row, the Binder sheet
- *, whose Apply writes Show and the sort with the filters in one write; elsewhere the
+ * What Filters opens: on a phone in collection mode, from the binder's row, the Binder sheet,
+ * whose Apply writes Show and the sort with the filters in one write; elsewhere the
  * filter dialog, a sheet from the bottom on a phone.
  */
 function filterSheet(

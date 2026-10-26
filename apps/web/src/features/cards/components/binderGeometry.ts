@@ -24,8 +24,14 @@ export const PER_SPREAD = PER_PAGE * 2;
  */
 export type LoneRows = 3 | 4;
 
+/**
+ * A table of one entry per row count, each made once: a caller that keeps an entry in a
+ * dependency list sees a change only when the rows change.
+ */
+export const byRows = <T>(make: (rows: LoneRows) => T): Record<LoneRows, T> => ({3: make(3), 4: make(4)});
+
 /** A phone's lone page, 3 across (owner, 2026-10-25): its pockets about 38% wider than 4 across. */
-const LONE_PAGES: Record<LoneRows, PageGrid> = {3: {columns: 3, rows: 3}, 4: {columns: 3, rows: 4}};
+const LONE_PAGES = byRows((rows): PageGrid => ({columns: 3, rows}));
 export const lonePage = (rows: LoneRows): PageGrid => LONE_PAGES[rows];
 export const perLonePage = (rows: LoneRows) => LONE_PAGES[rows].columns * rows;
 
@@ -43,11 +49,8 @@ export interface BinderPaging {
  * 2026-10-18), which takes the first spread's left page: its cards start a page in.
  */
 export const SPREAD_PAGING: BinderPaging = {perView: PER_SPREAD, lead: PER_PAGE};
-/**
- * A phone pages a lone page at a time, nine or twelve, with no covers. One object per row
- * count, so a caller that keeps it in a dependency list sees a change only when the rows change.
- */
-const LONE_PAGINGS: Record<LoneRows, BinderPaging> = {3: {perView: perLonePage(3), lead: 0}, 4: {perView: perLonePage(4), lead: 0}};
+/** A phone pages a lone page at a time, nine or twelve, with no covers. */
+const LONE_PAGINGS = byRows((rows): BinderPaging => ({perView: perLonePage(rows), lead: 0}));
 
 export const pagingOf = (single: boolean, rows: LoneRows) => (single ? LONE_PAGINGS[rows] : SPREAD_PAGING);
 
@@ -149,10 +152,21 @@ export interface LoneFit {
   maxWidth?: number;
 }
 
+/** A lone page at 3 rows, as wide as the binder: where no room was measured, and where 4 rows don't fit it. */
+export const THREE_ROWS: LoneFit = {rows: 3};
+
+/**
+ * Room a height-capped page leaves unused under its map. The browser rounds each row's height,
+ * so a page sized to fill its room exactly can come out a fraction of a pixel taller and scroll
+ * its section, and where scrollbars take width, the scrollbar would narrow the page back out of it.
+ */
+const LONE_FIT_SLACK = 2;
+
 /** A lone page's card width at `rows`: as wide as `room` lets the page be, and no taller than it lets the page and map be. */
 function loneCardWidth({width, height}: LoneRoom, rows: LoneRows): number {
   const byWidth = (width - 2 * LONE_INSET - LONE_ACROSS) / LONE_PAGES[rows].columns;
-  const byHeight = ((height - LONE_TOP_OVER_MAP - mapBandHeight(rows) - loneDown(rows)) * CARD_ASPECT) / rows;
+  const below = LONE_TOP_OVER_MAP + mapBandHeight(rows) + loneDown(rows) + LONE_FIT_SLACK;
+  const byHeight = ((height - below) * CARD_ASPECT) / rows;
   return Math.min(byWidth, byHeight);
 }
 
@@ -168,6 +182,6 @@ const FOUR_ROWS_SHARE = 0.9;
 export function loneFitFor(room: LoneRoom): LoneFit {
   const three = (room.width - 2 * LONE_INSET - LONE_ACROSS) / LONE_PAGES[3].columns;
   const four = loneCardWidth(room, 4);
-  if (four < FOUR_ROWS_SHARE * three) return {rows: 3};
+  if (four < FOUR_ROWS_SHARE * three) return THREE_ROWS;
   return {rows: 4, maxWidth: 2 * LONE_INSET + LONE_ACROSS + LONE_PAGES[4].columns * four};
 }

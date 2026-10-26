@@ -8,7 +8,7 @@ function section(width: number, height: number) {
   box.style.padding = '0 8px 4px';
   Object.defineProperty(box, 'offsetWidth', {value: width});
   Object.defineProperty(box, 'clientHeight', {value: height});
-  return {current: box};
+  return box;
 }
 
 describe('useLoneFit (#1000)', () => {
@@ -26,5 +26,18 @@ describe('useLoneFit (#1000)', () => {
   it('keeps three rows off a phone, and while the section has no size yet', () => {
     expect(renderHook(() => useLoneFit(section(394, 904), false)).result.current).toEqual({rows: 3});
     expect(renderHook(() => useLoneFit(section(0, 0), true)).result.current).toEqual({rows: 3});
+  });
+
+  it('measures a section that mounts after the first render, and one that replaces it', () => {
+    // The error state draws no section, and Try again mounts one; a short phone's box can also
+    // give way to a tall one.
+    const {result, rerender} = renderHook(({box}) => useLoneFit(box, true), {
+      initialProps: {box: null as HTMLElement | null},
+    });
+    expect(result.current).toEqual({rows: 3});
+    rerender({box: section(394, 587)});
+    expect(result.current).toEqual({rows: 3});
+    rerender({box: section(394, 904)});
+    expect(result.current.rows).toBe(4);
   });
 });

@@ -24,6 +24,7 @@ import {
   POCKET_GAP,
   SPINE_WIDTH,
   SPREAD_PAGE,
+  THREE_ROWS,
   loneBoxStyle,
   lonePage,
   pagingOf,
@@ -386,9 +387,6 @@ interface BinderSpreadProps {
    */
   loneFit?: LoneFit;
 }
-
-/** A lone page's fit where none is given: 3 rows, as wide as the binder. */
-const THREE_ROWS: LoneFit = {rows: 3};
 
 /** The binder's ringed spine. A lone page keeps it, so it still reads as a binder. */
 function Spine() {

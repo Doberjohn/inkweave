@@ -1,8 +1,5 @@
-import {useLayoutEffect, useState, type RefObject} from 'react';
-import {loneFitFor, type LoneFit, type LoneRoom} from '../cards/components/binderGeometry';
-
-/** Before the section is measured, and anywhere it isn't (a test renderer lays nothing out): the 3-row page. */
-const THREE_ROWS: LoneFit = {rows: 3};
+import {useLayoutEffect, useState} from 'react';
+import {loneFitFor, THREE_ROWS, type LoneFit, type LoneRoom} from '../cards/components/binderGeometry';
 
 /**
  * The room inside `section`'s padding. Its width is its border box's, as if no scrollbar stood in
@@ -25,14 +22,18 @@ const sameFit = (a: LoneFit, b: LoneFit) => a.rows === b.rows && a.maxWidth === 
  * effect, so the first paint already has the page's rows, and again whenever the section resizes
  * (a rotation, the browser's bars). The loaded binder and its loading frame both read it, so the
  * one takes over the other's rows. `on`: only a phone's section is measured.
+ *
+ * `section` is the element itself, held in state by a callback ref, not a ref object: the
+ * element can be replaced while the component stays mounted (the error state draws its own box,
+ * and Try again mounts a new one), and only a new value re-runs the effect on the new element.
  */
-export function useLoneFit(section: RefObject<HTMLElement | null>, on: boolean): LoneFit {
+export function useLoneFit(section: HTMLElement | null, on: boolean): LoneFit {
+  // Before the section is measured, and anywhere it isn't (a test renderer lays nothing out): 3 rows.
   const [fit, setFit] = useState<LoneFit>(THREE_ROWS);
   useLayoutEffect(() => {
-    const box = section.current;
-    if (!on || !box) return;
+    if (!on || !section) return;
     const measure = () => {
-      const room = roomOf(box);
+      const room = roomOf(section);
       if (room.width <= 0 || room.height <= 0) return;
       const next = loneFitFor(room);
       setFit((shown) => (sameFit(shown, next) ? shown : next));
@@ -40,7 +41,7 @@ export function useLoneFit(section: RefObject<HTMLElement | null>, on: boolean):
     measure();
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(measure);
-    observer.observe(box);
+    observer.observe(section);
     return () => observer.disconnect();
   }, [section, on]);
   return on ? fit : THREE_ROWS;

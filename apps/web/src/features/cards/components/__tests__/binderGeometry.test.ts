@@ -4,18 +4,18 @@ import {loneFitFor, mapBandHeight, pagingOf, perLonePage} from '../binderGeometr
 /**
  * Rows that fit. A room 378 wide gives the 3-row page cards 90px wide: 378, less 16 for
  * the board's inset and 92 for the board, spine, padding and gaps across, over three. Down, a
- * 4-row page takes 134 besides its cards (2 over the map, the map's band of 56, and 76 of board,
- * padding and gaps), so its cards are (height - 134) x 0.72 / 4 wide, and keep 90% of 90 from a
- * height of 584.
+ * 4-row page takes 136 besides its cards (2 over the map, the map's band of 56, 76 of board,
+ * padding and gaps, and 2 left unused against rounding), so its cards are (height - 136) x 0.72 / 4
+ * wide, and keep 90% of 90 from a height of 586.
  */
 describe('loneFitFor', () => {
   it('draws 3 rows where 4 would shrink the cards below 90% of their 3-row width', () => {
-    expect(loneFitFor({width: 378, height: 583})).toEqual({rows: 3});
+    expect(loneFitFor({width: 378, height: 585})).toEqual({rows: 3});
   });
 
   it('draws 4 rows from there, the box capped to the width whose page and map fit the height', () => {
-    // Cards (585 - 134) x 0.18 = 81.18 wide, so 16 + 92 + 3 x 81.18 across.
-    const fit = loneFitFor({width: 378, height: 585});
+    // Cards (587 - 136) x 0.18 = 81.18 wide, so 16 + 92 + 3 x 81.18 across.
+    const fit = loneFitFor({width: 378, height: 587});
     expect(fit.rows).toBe(4);
     expect(fit.maxWidth).toBeCloseTo(351.54, 2);
   });
@@ -27,9 +27,9 @@ describe('loneFitFor', () => {
   });
 
   it("weighs a wider phone's page by its own width", () => {
-    // 414 wide: cards 102 at 3 rows, so 4 need a height of 134 + 5 x 102 = 644.
-    expect(loneFitFor({width: 414, height: 643}).rows).toBe(3);
-    expect(loneFitFor({width: 414, height: 645}).rows).toBe(4);
+    // 414 wide: cards 102 at 3 rows, so 4 need a height of 136 + 5 x 102 = 646.
+    expect(loneFitFor({width: 414, height: 645}).rows).toBe(3);
+    expect(loneFitFor({width: 414, height: 647}).rows).toBe(4);
   });
 });
 

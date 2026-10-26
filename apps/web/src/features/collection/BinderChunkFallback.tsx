@@ -1,4 +1,4 @@
-import {useRef, type CSSProperties} from 'react';
+import {useState, type CSSProperties} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
 import {
@@ -77,11 +77,11 @@ function LonePageFallback({fit}: {fit: LoneFit}) {
 export function BinderChunkFallback() {
   const {isMobile} = useResponsive();
   const docked = useSidePanelDocked();
-  const section = useRef<HTMLElement>(null);
+  const [section, setSection] = useState<HTMLElement | null>(null);
   const fit = useLoneFit(section, isMobile);
   return (
     <section
-      ref={section}
+      ref={setSection}
       aria-busy="true"
       aria-label="Loading your binder"
       style={{...sectionStyle(isMobile, docked), ...COLUMN, containerType: 'size'}}>
