@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {renderHook, act} from '@testing-library/react';
-import {useAutocomplete} from '../useAutocomplete';
+import {useAutocomplete, type CardSearch} from '../useAutocomplete';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 
 // Minimal card fixtures
@@ -23,6 +23,15 @@ const cards: LorcanaCard[] = [
   makeCard('5', 'Stitch', 'Stitch - Rock Star', 6),
 ];
 
+/** A stand-in for the app's search: each word of the term begins a word of the full name. */
+const nameSearch: CardSearch = (list, term) => {
+  const words = term.toLowerCase().split(' ').filter(Boolean);
+  return list.filter((card) => {
+    const nameWords = card.fullName.toLowerCase().split(/[\s-]+/);
+    return words.every((word) => nameWords.some((nameWord) => nameWord.startsWith(word)));
+  });
+};
+
 describe('useAutocomplete', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -36,6 +45,7 @@ describe('useAutocomplete', () => {
     query: '',
     onQueryChange: vi.fn(),
     onSelect: vi.fn(),
+    search: nameSearch,
     debounceMs: 100,
   });
 
@@ -56,6 +66,56 @@ describe('useAutocomplete', () => {
     });
     expect(result.current.suggestions).toHaveLength(2);
     expect(result.current.suggestions[0].fullName).toBe('Elsa - Snow Queen');
+  });
+
+  it("lists the search's results in the search's order", () => {
+    const newestLast: CardSearch = (list, term) => nameSearch(list, term).reverse();
+    const {result} = renderHook(() =>
+      useAutocomplete({...defaultOptions(), query: 'Elsa', search: newestLast}),
+    );
+    act(() => {
+      result.current.inputProps.onFocus();
+    });
+    expect(result.current.suggestions.map((card) => card.fullName)).toEqual([
+      'Elsa - Ice Surfer',
+      'Elsa - Snow Queen',
+    ]);
+  });
+
+  it('keeps its defaults: two characters, 150 ms and ten results', () => {
+    const {result, rerender} = renderHook(
+      ({query, list}) =>
+        useAutocomplete({cards: list, query, onQueryChange: vi.fn(), onSelect: vi.fn(), search: nameSearch}),
+      {initialProps: {query: '', list: cards}},
+    );
+    act(() => {
+      result.current.inputProps.onFocus();
+    });
+    const typeAndWait = (value: string, ms: number) => {
+      act(() => {
+        result.current.inputProps.onChange({target: {value}} as React.ChangeEvent<HTMLInputElement>);
+      });
+      rerender({query: value, list: cards});
+      act(() => {
+        vi.advanceTimersByTime(ms);
+      });
+    };
+
+    typeAndWait('E', 150);
+    expect(result.current.suggestions).toHaveLength(0);
+    typeAndWait('El', 149);
+    expect(result.current.suggestions).toHaveLength(0);
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(result.current.suggestions.map((card) => card.fullName)).toEqual([
+      'Elsa - Snow Queen',
+      'Elsa - Ice Surfer',
+    ]);
+
+    const elsas = Array.from({length: 12}, (_, i) => makeCard(`e${i}`, 'Elsa', `Elsa - Copy ${i}`));
+    rerender({query: 'El', list: elsas});
+    expect(result.current.suggestions).toHaveLength(10);
   });
 
   it('limits results to maxResults', () => {

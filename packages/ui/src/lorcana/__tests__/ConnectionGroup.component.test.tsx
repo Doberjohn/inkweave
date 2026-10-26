@@ -1,8 +1,7 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
-import type {LorcanaCard} from '../../../features/cards';
-import type {PairSynergyConnection} from 'inkweave-synergy-engine';
-import type {ConnectionGroupData} from '../groupConnections';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
+import type {ConnectionGroupData, LabelledConnection} from '../ConnectionGroup';
 
 const mockUseResponsive = vi.fn(() => ({
   isMobile: false,
@@ -12,7 +11,7 @@ const mockUseResponsive = vi.fn(() => ({
   windowWidth: 1280,
 }));
 
-vi.mock('../../hooks', () => ({
+vi.mock('../../hooks/useResponsive', () => ({
   useResponsive: () => mockUseResponsive(),
 }));
 
@@ -35,10 +34,11 @@ const cardB: LorcanaCard = {
   ink: 'Amethyst',
 } as unknown as LorcanaCard;
 
-function locConn(role: string, score: number): PairSynergyConnection {
+function locConn(role: string, roleLabel: string, score: number): LabelledConnection {
   return {
     ruleId: `location-${role}`,
     ruleName: 'Location Control',
+    roleLabel,
     category: 'playstyle',
     playstyleId: 'location-control',
     score,
@@ -56,6 +56,7 @@ function singleRoleGroup(): ConnectionGroupData {
       {
         ruleId: 'shift-targets',
         ruleName: 'Shift Targets',
+        roleLabel: 'Shift Targets',
         category: 'direct',
         score: 8,
         explanation: 'Pair lines up perfectly for Shift.',
@@ -71,7 +72,7 @@ function multiRoleGroup(): ConnectionGroupData {
     label: 'Location Control',
     score: 7,
     category: 'playstyle',
-    connections: [locConn('move', 5), locConn('at-payoff', 7), locConn('buff', 6)],
+    connections: [locConn('move', 'Move', 5), locConn('at-payoff', 'At Location', 7), locConn('buff', 'Buff', 6)],
   };
 }
 

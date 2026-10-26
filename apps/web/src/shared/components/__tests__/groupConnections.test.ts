@@ -1,5 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {groupConnections} from '../groupConnections';
+import {LOCATION_ROLE_CHIP_LABELS} from '../../../features/synergies/engineCatalog';
 import type {PairSynergyConnection, PlaystyleId} from 'inkweave-synergy-engine';
 
 const direct = (id: string, score: number): PairSynergyConnection => ({
@@ -64,6 +65,19 @@ describe('groupConnections', () => {
     expect(groups).toHaveLength(2);
     expect(groups[0].key).toBe('shift-targets');
     expect(groups[1].key).toBe('location-control');
+  });
+
+  it("labels a location role with its chip label and any other rule with its name", () => {
+    const groups = groupConnections([
+      direct('shift-targets', 8),
+      playstyle('location-at-payoff', 'location-control', 7),
+      playstyle('location-unlisted', 'location-control', 5),
+    ]);
+    expect(groups.flatMap((g) => g.connections.map((c) => c.roleLabel))).toEqual([
+      'shift-targets',
+      LOCATION_ROLE_CHIP_LABELS['at-payoff'],
+      'location-unlisted',
+    ]);
   });
 
   it('returns empty array for empty input', () => {

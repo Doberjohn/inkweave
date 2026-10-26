@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest';
 import {chipCardName, fillChipNames} from '../chipNames';
-import {createCard} from '../../../../shared/test-utils';
+import {createCard} from '../../test-utils/cards';
 
 const ariel = createCard({id: 'ariel', name: 'Ariel', fullName: 'Ariel - Sonic Warrior'});
 const song = createCard({id: 'song', name: "A Pirate's Life", fullName: "A Pirate's Life"});

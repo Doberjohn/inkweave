@@ -3,7 +3,7 @@ import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {render, screen, fireEvent, waitFor} from '@testing-library/react';
 import type {Ink} from '../../../features/cards';
 import type {CardTypeFilter} from '../../constants';
-import {FilterDialog} from '../FilterDialog';
+import {CardFilterDialog} from '../CardFilterDialog';
 
 const defaultProps = {
   isOpen: true,
@@ -31,7 +31,7 @@ function unfoldAll() {
   for (const header of screen.queryAllByRole('button', {expanded: false})) fireEvent.click(header);
 }
 
-describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant) => {
+describe.each(['modal', 'drawer'] as const)('CardFilterDialog variant=%s', (variant) => {
   const testId = variant === 'modal' ? 'filter-modal' : 'filter-drawer';
   // The modal is the desktop variant, which has no ink buttons: desktop shows the ink filters in
   // the toolbar instead (FilterContent renders its ink section on mobile only). So the three ink
@@ -42,17 +42,17 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
   });
 
   it('should not render when closed', () => {
-    render(<FilterDialog {...defaultProps} variant={variant} isOpen={false} />);
+    render(<CardFilterDialog {...defaultProps} variant={variant} isOpen={false} />);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
   it('should render filter title when open', () => {
-    render(<FilterDialog {...defaultProps} variant={variant} />);
+    render(<CardFilterDialog {...defaultProps} variant={variant} />);
     expect(screen.getByRole('heading', {name: /filters/i})).toBeInTheDocument();
   });
 
   it.skipIf(variant === 'modal')('should render all ink filter buttons', () => {
-    render(<FilterDialog {...defaultProps} variant={variant} />);
+    render(<CardFilterDialog {...defaultProps} variant={variant} />);
 
     for (const ink of ['amber', 'amethyst', 'emerald', 'ruby', 'sapphire', 'steel']) {
       expect(screen.getByRole('button', {name: new RegExp(ink, 'i')})).toBeInTheDocument();
@@ -60,7 +60,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
   });
 
   it('should render card type filter buttons', () => {
-    render(<FilterDialog {...defaultProps} variant={variant} />);
+    render(<CardFilterDialog {...defaultProps} variant={variant} />);
     unfoldAll();
 
     for (const type of ['character', 'action', 'item', 'location']) {
@@ -69,7 +69,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
   });
 
   it.skipIf(variant === 'modal')('should toggle ink in draft state without calling onApply', () => {
-    render(<FilterDialog {...defaultProps} variant={variant} />);
+    render(<CardFilterDialog {...defaultProps} variant={variant} />);
 
     fireEvent.click(screen.getByRole('button', {name: /amber/i}));
 
@@ -79,7 +79,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
 
   it('should call onApply with draft state when clicking Apply button', () => {
     const onApply = vi.fn();
-    render(<FilterDialog {...defaultProps} variant={variant} onApply={onApply} />);
+    render(<CardFilterDialog {...defaultProps} variant={variant} onApply={onApply} />);
     unfoldAll();
 
     // Modal doesn't show ink buttons (they're inline in toolbar), so only toggle type
@@ -98,7 +98,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
 
   it('should call onClose when clicking Apply button', () => {
     const onClose = vi.fn();
-    render(<FilterDialog {...defaultProps} variant={variant} onClose={onClose} />);
+    render(<CardFilterDialog {...defaultProps} variant={variant} onClose={onClose} />);
 
     fireEvent.click(screen.getByRole('button', {name: /apply/i}));
 
@@ -109,7 +109,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
     const onClose = vi.fn();
     const onApply = vi.fn();
     render(
-      <FilterDialog {...defaultProps} variant={variant} onClose={onClose} onApply={onApply} />,
+      <CardFilterDialog {...defaultProps} variant={variant} onClose={onClose} onApply={onApply} />,
     );
 
     fireEvent.keyDown(screen.getByRole('dialog'), {key: 'Escape'});
@@ -127,7 +127,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
           <button type="button" onClick={() => setOpen(true)}>
             Filters
           </button>
-          <FilterDialog {...defaultProps} variant={variant} isOpen={open} onClose={() => setOpen(false)} />
+          <CardFilterDialog {...defaultProps} variant={variant} isOpen={open} onClose={() => setOpen(false)} />
         </>
       );
     }
@@ -142,18 +142,18 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
   });
 
   it('should show Clear all button when draft filters are active', () => {
-    render(<FilterDialog {...defaultProps} variant={variant} inkFilters={['Amber']} />);
+    render(<CardFilterDialog {...defaultProps} variant={variant} inkFilters={['Amber']} />);
     expect(screen.getByRole('button', {name: /clear all/i})).toBeInTheDocument();
   });
 
   it('should not show Clear all button when no filters are active', () => {
-    render(<FilterDialog {...defaultProps} variant={variant} />);
+    render(<CardFilterDialog {...defaultProps} variant={variant} />);
     expect(screen.queryByRole('button', {name: /clear all/i})).not.toBeInTheDocument();
   });
 
   it('should clear draft state when clicking Clear all', () => {
     render(
-      <FilterDialog
+      <CardFilterDialog
         {...defaultProps}
         variant={variant}
         inkFilters={['Amber']}
@@ -187,7 +187,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
 
   it('should show active filter count in title', () => {
     render(
-      <FilterDialog
+      <CardFilterDialog
         {...defaultProps}
         variant={variant}
         inkFilters={['Amber']}
@@ -199,14 +199,14 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
   });
 
   it.skipIf(variant === 'modal')('should mark current ink as active from draft state', () => {
-    render(<FilterDialog {...defaultProps} variant={variant} inkFilters={['Ruby']} />);
+    render(<CardFilterDialog {...defaultProps} variant={variant} inkFilters={['Ruby']} />);
 
     expect(screen.getByRole('button', {name: /ruby/i})).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', {name: /amber/i})).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('should toggle type in draft state', () => {
-    render(<FilterDialog {...defaultProps} variant={variant} />);
+    render(<CardFilterDialog {...defaultProps} variant={variant} />);
     unfoldAll();
 
     fireEvent.click(screen.getByRole('button', {name: /character/i}));
@@ -220,7 +220,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
 
   it('should collect several draft keywords from their chips', () => {
     const onApply = vi.fn();
-    render(<FilterDialog {...defaultProps} variant={variant} onApply={onApply} />);
+    render(<CardFilterDialog {...defaultProps} variant={variant} onApply={onApply} />);
     unfoldAll();
 
     fireEvent.click(screen.getByRole('button', {name: 'Singer'}));
@@ -231,20 +231,20 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
   });
 
   it('should have correct ARIA attributes', () => {
-    render(<FilterDialog {...defaultProps} variant={variant} />);
+    render(<CardFilterDialog {...defaultProps} variant={variant} />);
 
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveAttribute('aria-labelledby');
   });
 
   it('should have the correct data-testid', () => {
-    render(<FilterDialog {...defaultProps} variant={variant} />);
+    render(<CardFilterDialog {...defaultProps} variant={variant} />);
     expect(screen.getByTestId(testId)).toBeInTheDocument();
   });
 
   it('should count all active draft filters correctly', () => {
     render(
-      <FilterDialog
+      <CardFilterDialog
         {...defaultProps}
         variant={variant}
         inkFilters={['Amber']}
@@ -264,23 +264,23 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
   });
 });
 
-describe('FilterDialog modal-specific', () => {
+describe('CardFilterDialog modal-specific', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should render close button on modal variant', () => {
-    render(<FilterDialog {...defaultProps} variant="modal" />);
+    render(<CardFilterDialog {...defaultProps} variant="modal" />);
     expect(screen.getByRole('button', {name: /close filters/i})).toBeInTheDocument();
   });
 
   it('should render Apply Filters in footer on modal variant', () => {
-    render(<FilterDialog {...defaultProps} variant="modal" />);
+    render(<CardFilterDialog {...defaultProps} variant="modal" />);
     expect(screen.getByRole('button', {name: /apply filters/i})).toBeInTheDocument();
   });
 
   it('should focus the close button when modal opens', async () => {
-    render(<FilterDialog {...defaultProps} variant="modal" />);
+    render(<CardFilterDialog {...defaultProps} variant="modal" />);
 
     await waitFor(() => {
       expect(screen.getByRole('button', {name: /close filters/i})).toHaveFocus();
@@ -288,34 +288,34 @@ describe('FilterDialog modal-specific', () => {
   });
 });
 
-describe('FilterDialog drawer-specific', () => {
+describe('CardFilterDialog drawer-specific', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should render drag handle on drawer variant', () => {
-    render(<FilterDialog {...defaultProps} variant="drawer" />);
+    render(<CardFilterDialog {...defaultProps} variant="drawer" />);
     expect(screen.getByTestId('filter-drawer')).toBeInTheDocument();
   });
 
   it('should not render close button on drawer variant', () => {
-    render(<FilterDialog {...defaultProps} variant="drawer" />);
+    render(<CardFilterDialog {...defaultProps} variant="drawer" />);
     expect(screen.queryByRole('button', {name: /close filters/i})).not.toBeInTheDocument();
   });
 
   it('should have Apply button in header on drawer variant', () => {
-    render(<FilterDialog {...defaultProps} variant="drawer" />);
+    render(<CardFilterDialog {...defaultProps} variant="drawer" />);
     expect(screen.getByRole('button', {name: /apply/i})).toBeInTheDocument();
   });
 });
 
-describe("FilterDialog with a caller's own controls (the Binder sheet, #969)", () => {
+describe("CardFilterDialog with a caller's own controls (the Binder sheet, #969)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('takes a title in place of "Filters (n)"', () => {
-    render(<FilterDialog {...defaultProps} variant="drawer" title="Binder" inkFilters={['Amber']} />);
+    render(<CardFilterDialog {...defaultProps} variant="drawer" title="Binder" inkFilters={['Amber']} />);
 
     expect(screen.getByRole('heading', {name: 'Binder'})).toBeInTheDocument();
     expect(screen.queryByText(/filters \(1\)/i)).not.toBeInTheDocument();
@@ -323,7 +323,7 @@ describe("FilterDialog with a caller's own controls (the Binder sheet, #969)", (
 
   it('draws the prelude above the filters and the postlude after them', () => {
     render(
-      <FilterDialog
+      <CardFilterDialog
         {...defaultProps}
         variant="drawer"
         prelude={<p>Before the filters</p>}
@@ -341,7 +341,7 @@ describe("FilterDialog with a caller's own controls (the Binder sheet, #969)", (
 
   it("shows Clear all for the caller's own changes alone, and its press clears them and the filters", () => {
     const onClear = vi.fn();
-    render(<FilterDialog {...defaultProps} variant="drawer" extra={{count: 1, onClear}} />);
+    render(<CardFilterDialog {...defaultProps} variant="drawer" extra={{count: 1, onClear}} />);
     unfoldAll();
     // No filter on yet: the caller's change alone shows it.
     const clear = screen.getByRole('button', {name: /clear all/i});

@@ -53,7 +53,11 @@ mechanically: `aria-modal` in a file that imports neither `DialogShell` /
 - **Scrims are tokens**: `COLORS.scrim` / `COLORS.scrimHeavy` only.
 - **FilterDialog stays Radix** (the one exception, named in the lint rule):
   Radix supplies trap/lock/Escape/outside-close natively; do not add a second
-  Radix dialog without an owner ruling.
+  Radix dialog without an owner ruling. It is inkweave-ui's
+  `packages/ui/src/components/FilterDialog.tsx`, the shell alone (#981); the
+  app's `CardFilterDialog` fills it and is no exception. `no-unshelled-dialogs`
+  reports an `@radix-ui/react-dialog` import anywhere else, since Radix sets
+  `aria-modal` at run time, where the attribute check can't see it.
 
 ## E2E contract (do not break)
 

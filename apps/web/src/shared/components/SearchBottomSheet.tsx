@@ -6,7 +6,7 @@ import {BottomSheet} from 'inkweave-ui/components/BottomSheet';
 import {LinkButton} from 'inkweave-ui/components/LinkButton';
 import {useCardDataContext} from '../contexts/CardDataContext';
 import {useCardModal} from '../contexts/CardModalContext';
-import {smallImageUrl} from '../../features/cards/loader';
+import {smallImageUrl, suggestCardsByName} from '../../features/cards/loader';
 import {trackCardSelected} from '../../features/cards/lib/cardAnalytics';
 import {useAutocomplete, useDialogFocus, useScrollLock, useTransitionPresence} from '../hooks';
 import {trackEvent} from '../lib/analytics';
@@ -629,6 +629,7 @@ export const SearchBottomSheet = forwardRef<SearchBottomSheetHandle, SearchBotto
       query,
       onQueryChange: setQuery,
       onSelect: handleSelect,
+      search: suggestCardsByName,
     });
 
     // Reset state when isOpen changes (previous-value pattern per React docs).

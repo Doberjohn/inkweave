@@ -6,9 +6,9 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {SearchBottomSheet, type SearchBottomSheetHandle} from '../SearchBottomSheet';
 import {trackCardSelected} from '../../../features/cards/lib/cardAnalytics';
 
-const {mockOpenCardModal, mockSearchCardsByName} = vi.hoisted(() => ({
+const {mockOpenCardModal, mockSuggestCardsByName} = vi.hoisted(() => ({
   mockOpenCardModal: vi.fn(),
-  mockSearchCardsByName: vi.fn(),
+  mockSuggestCardsByName: vi.fn(),
 }));
 
 const ELSA = {id: 'elsa-1', fullName: 'Elsa - Snow Queen', ink: 'Amethyst'} as LorcanaCard;
@@ -37,8 +37,7 @@ vi.mock('../../contexts/CardModalContext', () => ({
 // Mock card loader
 vi.mock('../../../features/cards/loader', () => ({
   smallImageUrl: (card: {id: string}) => `/images/${card.id}.avif`,
-  searchCardsByName: mockSearchCardsByName,
-  parseSetOrder: () => 0,
+  suggestCardsByName: mockSuggestCardsByName,
 }));
 
 vi.mock('../../../features/cards/lib/cardAnalytics', () => ({trackCardSelected: vi.fn()}));
@@ -46,7 +45,7 @@ vi.mock('../../../features/cards/lib/cardAnalytics', () => ({trackCardSelected: 
 describe('SearchBottomSheet', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSearchCardsByName.mockReturnValue([]);
+    mockSuggestCardsByName.mockReturnValue([]);
     localStorage.clear(); // selecting a card records it as a recent search
   });
 
@@ -96,7 +95,7 @@ describe('SearchBottomSheet', () => {
 
   /** Type a query, let the autocomplete debounce settle, then pick ELSA from the results. */
   const selectElsa = () => {
-    mockSearchCardsByName.mockReturnValue([ELSA]);
+    mockSuggestCardsByName.mockReturnValue([ELSA]);
     fireEvent.change(screen.getByTestId('search-sheet-input'), {target: {value: 'Elsa'}});
     act(() => {
       vi.advanceTimersByTime(150);

@@ -11,6 +11,7 @@ import {
   searchFieldStyle,
 } from '../constants';
 import {useAutocomplete, useHeroLogoSrc, useHover} from '../hooks';
+import {suggestCardsByName} from '../../features/cards/loader';
 import {SearchAutocomplete} from './SearchAutocomplete';
 import {SearchIcon} from 'inkweave-ui/components/SearchIcon';
 import {CtaButton} from 'inkweave-ui/components/CtaButton';
@@ -162,6 +163,7 @@ export function HeroSection({
     query: searchQuery,
     onQueryChange: onSearchChange,
     onSelect: handleAutoSelect,
+    search: suggestCardsByName,
   });
   // The hook's focus state carries the blur delay and cancels it on refocus and unmount.
   const isSearchFocused = autocomplete.isFocused;

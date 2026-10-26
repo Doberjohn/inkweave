@@ -1,7 +1,5 @@
 import {useState, useEffect} from 'react';
-import type {LorcanaCard} from '../../features/cards';
-import type {LocationRole, PairSynergyConnection} from 'inkweave-synergy-engine';
-import {LOCATION_ROLE_CHIP_LABELS} from '../../features/synergies/engineCatalog';
+import type {LorcanaCard, PairSynergyConnection} from 'inkweave-synergy-engine';
 import {
   COLORS,
   DURATION,
@@ -9,17 +7,28 @@ import {
   FONTS,
   FONT_SIZES,
   GOLD_GLOW,
-  INK_CHIP_COLORS,
   RADIUS,
   SHADOWS,
   VISUALLY_HIDDEN,
   blackRgba,
   hexRgba,
   whiteRgba,
-} from '../constants';
-import {chipCardName} from '../../features/synergies/utils/chipNames';
-import {useResponsive} from '../hooks';
-import type {ConnectionGroupData} from './groupConnections';
+} from '../tokens/theme';
+import {INK_CHIP_COLORS} from '../tokens/lorcana';
+import {chipCardName} from '../lib/chipNames';
+import {useResponsive} from '../hooks/useResponsive';
+
+/** A pair connection with the words its row shows: a location role's chip label, or the rule's name. */
+export type LabelledConnection = PairSynergyConnection & {roleLabel: string};
+
+/** Aggregated rule grouping for the synergy detail modal. The app's `groupConnections` builds it. */
+export interface ConnectionGroupData {
+  key: string;
+  label: string;
+  score: number;
+  connections: LabelledConnection[];
+  category: 'direct' | 'playstyle';
+}
 
 interface ConnectionGroupProps {
   group: ConnectionGroupData;
@@ -45,14 +54,6 @@ const ABILITY_BOX_SHADOW =
 type AbilityRowPosition = 'solo' | 'first' | 'middle' | 'last';
 
 // ── Internal helpers ──
-
-function extractLocationRole(ruleId: string): LocationRole | null {
-  const prefix = 'location-';
-  if (!ruleId.startsWith(prefix)) return null;
-  const candidate = ruleId.slice(prefix.length);
-  if (candidate in LOCATION_ROLE_CHIP_LABELS) return candidate as LocationRole;
-  return null;
-}
 
 function findCardInText(text: string, fullName: string): {index: number; match: string} {
   if (!fullName) return {index: -1, match: ''};
@@ -414,14 +415,12 @@ function pickStackPosition(index: number, total: number): AbilityRowPosition {
 }
 
 /** Resolve a connection's display label + description: a location role reads under its chip label. */
-function resolveRoleDisplay(conn: PairSynergyConnection): {
+function resolveRoleDisplay(conn: LabelledConnection): {
   key: string;
   label: string;
   description: string;
 } {
-  const role = extractLocationRole(conn.ruleId);
-  const label = role ? LOCATION_ROLE_CHIP_LABELS[role] : conn.ruleName;
-  return {key: conn.ruleId, label, description: conn.explanation};
+  return {key: conn.ruleId, label: conn.roleLabel, description: conn.explanation};
 }
 
 /**
@@ -452,7 +451,7 @@ function MultiRoleAbilityList({
   cardB,
   onHighlight,
 }: {
-  connections: PairSynergyConnection[];
+  connections: LabelledConnection[];
   cardA: LorcanaCard;
   cardB: LorcanaCard;
   onHighlight?: (card: 'a' | 'b' | null) => void;

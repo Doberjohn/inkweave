@@ -3,6 +3,7 @@ import {Link, NavLink} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX, searchFieldStyle} from '../constants';
 import {useAutocomplete, useHover} from '../hooks';
+import {suggestCardsByName} from '../../features/cards/loader';
 import {useRevealPhase} from '../../features/reveals';
 import {AuthButton} from './AuthButton';
 import {CTA_FILLED_STYLE} from 'inkweave-ui/lib/ctaStyles';
@@ -233,6 +234,7 @@ function HeaderSearch({cards, query, onChange, onSubmit, onCardSelect, viewport}
     query,
     onQueryChange: onChange,
     onSelect: handleSelect,
+    search: suggestCardsByName,
   });
   // The hook's focus state carries the blur delay and cancels it on refocus and unmount.
   const focused = autocomplete.isFocused;

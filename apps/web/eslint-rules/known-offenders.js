@@ -37,7 +37,7 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/voting/components/VoteStatusBanner.tsx', // x9
     'apps/web/src/pages/NotFoundPage.tsx', // x5
     'packages/ui/src/lorcana/CardImage.stories.tsx', // x1
-    'apps/web/src/shared/components/ConnectionGroup.stories.tsx', // x1
+    'packages/ui/src/lorcana/ConnectionGroup.stories.tsx', // x1
     'apps/web/src/shared/components/Footer.stories.tsx', // x1
     'packages/ui/src/components/CollapsibleSection.stories.tsx', // x1
     'packages/ui/src/components/CountBadge.tsx', // x1
@@ -112,7 +112,7 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/voting/components/ScorePicker.tsx', // x1
     'apps/web/src/features/voting/components/VoteAffirmation.stories.tsx', // x1
     'apps/web/src/features/voting/components/VoteStatusBanner.tsx', // x2
-    'apps/web/src/shared/components/ConnectionGroup.stories.tsx', // x1
+    'packages/ui/src/lorcana/ConnectionGroup.stories.tsx', // x1
     'packages/ui/src/components/CollapsibleSection.stories.tsx', // x1
     'packages/ui/src/components/Sparkles.stories.tsx', // x3
     'packages/ui/src/lorcana/CardLightbox.stories.tsx', // x1
@@ -161,7 +161,7 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/pages/VotePage.tsx', // x7
     'apps/web/src/shared/components/BetaNotice.tsx', // x1
     'apps/web/src/shared/components/CompactHeader.tsx', // x2
-    'apps/web/src/shared/components/ConnectionGroup.tsx', // x2
+    'packages/ui/src/lorcana/ConnectionGroup.tsx', // x2
     'apps/web/src/shared/components/HeroSection.tsx', // x8
     'apps/web/src/shared/components/SearchBottomSheet.tsx', // x2
     'packages/ui/src/components/Chip.tsx', // x2
