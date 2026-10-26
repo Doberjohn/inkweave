@@ -347,12 +347,22 @@ const noAdhocButtons = {
 // The overlay contract (#510): a surface claiming aria-modal must get its behavior from the house
 // machinery, DialogShell / BottomSheet (which wire the hook trio) or useDialogFocus directly.
 // ARIA_MODAL_EXEMPT (exemptions.js) names those and FilterDialog, the documented Radix exception.
+// Radix sets aria-modal at run time, where the attribute check can't see it, so its import is
+// reported too: outside the exception, Radix Dialog is a surface the contract never wired (#981).
 const UNSHELLED_MESSAGE =
   'aria-modal without the overlay contract. Render through DialogShell / BottomSheet, or wire useDialogFocus + useScrollLock + useTransitionPresence directly (#510, .claude/rules/overlays.md)';
+const RADIX_DIALOG_MESSAGE =
+  'Radix Dialog outside the overlay contract. FilterDialog is its one exception; render through DialogShell / BottomSheet (#510, .claude/rules/overlays.md)';
+function reportRadixDialog(context, node) {
+  if (node.source.value === '@radix-ui/react-dialog') context.report({node, message: RADIX_DIALOG_MESSAGE});
+}
 const noUnshelledDialogs = {
   meta: {
     type: 'problem',
-    docs: {description: 'aria-modal surfaces must use DialogShell/BottomSheet or the useDialogFocus trio'},
+    docs: {
+      description:
+        'aria-modal surfaces must use DialogShell/BottomSheet or the useDialogFocus trio, and Radix Dialog stays in FilterDialog',
+    },
     schema: [],
   },
   create(context) {
@@ -361,6 +371,7 @@ const noUnshelledDialogs = {
     let firstAriaModal = null;
     return {
       ImportDeclaration(node) {
+        reportRadixDialog(context, node);
         if (/DialogShell|BottomSheet|useDialogFocus/.test(context.sourceCode.getText(node))) sanctioned = true;
       },
       JSXAttribute(node) {
