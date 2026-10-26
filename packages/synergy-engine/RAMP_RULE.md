@@ -214,6 +214,8 @@ Inkwell ramp is Sapphire's identity mechanic and cost reduction is Amber's suppo
 
 ## Test Coverage
 
+The tests read every tuned score they expect from `tuning.json` (`ruleTexts.ramp.scores`), never as a literal, because admin's tuning editor changes those scores (the chain-key routing tests below set test-only scores of their own). CI's `test:perturbed` run changes every tuned value, giving each Ramp score a value no other holds, and fails a test that pins one or reads the wrong key.
+
 In `ramp.test.ts`, under `describe('Ramp')`:
 
 ### Role Detection (10 tests)

@@ -26,6 +26,7 @@
     "dev": "tsup --watch",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:perturbed": "vitest run --config vitest.perturbed.config.ts",
     "bench": "vitest bench --reporter=verbose",
     "bench:run": "vitest bench --run --reporter=verbose",
     "lint": "eslint src",

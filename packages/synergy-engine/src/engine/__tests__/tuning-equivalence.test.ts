@@ -1,27 +1,23 @@
 import {describe, it, expect} from 'vitest';
+import {TUNING} from '../../data/tuning';
 import {getAllPlaystyles} from '../playstyles';
 import {getRuleById} from '../rules';
 import {createCard} from '../../__tests__/fixtures.js';
 
 /**
- * Snapshot-equivalence guard for the tuning.json refactor (Tasks 3-5).
- *
- * Pins the CURRENT scoring/text output that still comes from code literals
- * in rules.ts / playstyles.ts. Once scoring/explanations are sourced from
- * tuning.json instead, this test must keep passing unchanged — any drift
- * in a pinned value means the refactor altered behavior.
+ * Checks that values from tuning.json reach the engine's output: a playstyle's copy, a Shift
+ * tier's score and text, and a Ramp score and template. Admin's tuning editor changes these
+ * values, so the expected ones are read from TUNING, never written as literals.
  */
-describe('Tuning equivalence (pre-refactor snapshot)', () => {
-  it('Ramp playstyle keeps its current name and tagline', () => {
+describe('Tuning values reach the engine', () => {
+  it('Ramp playstyle takes its name and tagline from tuning.json', () => {
     const ramp = getAllPlaystyles().find((p) => p.id === 'ramp');
-    expect(ramp).toMatchObject({
-      name: 'Ramp',
-      tagline: 'Speed up your ink so you can play powerful cards earlier than your opponent.',
-    });
+    expect(ramp).toMatchObject(TUNING.playstyles.ramp);
   });
 
-  it('a gap-3 Shift pair scores 5 with the "Wide gap" explanation', () => {
+  it('a gap-3 Shift pair reads the curve.gap3 tier', () => {
     const shiftRule = getRuleById('shift-targets')!;
+    const tier = TUNING.ruleTexts['shift-targets']['curve.gap3'];
     // Base cost 2 + Shift 5 → curveGap = shiftCost(5) - baseCost(2) = 3.
     const base = createCard({id: 'elsa-base', name: 'Elsa', fullName: 'Elsa - Snow Queen', cost: 2});
     const shiftCard = createCard({
@@ -35,15 +31,16 @@ describe('Tuning equivalence (pre-refactor snapshot)', () => {
     const synergies = shiftRule.findSynergies(shiftCard, [shiftCard, base]);
     const match = synergies.find((s) => s.card.id === 'elsa-base');
 
-    expect(match?.score).toBe(5);
+    expect(match?.score).toBe(tier.score);
     // The Shift card is the searcher, so <SHIFT> reads as {A} and <BASE> as {B}.
     expect(match?.explanation).toBe(
-      'Wide gap: {A} shifts onto {B} 3 turns after it lands. Playable, but slow to set up.',
+      tier.text!.replaceAll('<SHIFT>', '{A}').replaceAll('<BASE>', '{B}'),
     );
   });
 
-  it('a Ramp deck-ramp + repeating-trigger pair scores 7', () => {
+  it('a Ramp deck-ramp + repeating-trigger pair reads chain.deckRepeating', () => {
     const rampRule = getRuleById('ramp')!;
+    const {scores, templates} = TUNING.ruleTexts.ramp;
     const mamaOdie = createCard({
       id: 'mama-odie',
       name: 'Mama Odie',
@@ -63,12 +60,11 @@ describe('Tuning equivalence (pre-refactor snapshot)', () => {
 
     const synergies = rampRule.findSynergies(mamaOdie, [mamaOdie, jafar]);
 
-    expect(synergies[0].score).toBe(7);
-    // Exact string pins the {A}/{B} positional token mapping — the riskiest part
-    // of the Task 5 Ramp refactor, where semantic {RAMP}/{TRIGGER} tuning tokens
-    // must resolve back to exactly these positional tokens.
+    expect(synergies[0].score).toBe(scores['chain.deckRepeating']);
+    // From the ramp card's page, the semantic {RAMP}/{TRIGGER} tokens must resolve to the
+    // positional {A}/{B} chips this way round (the engine swaps each token once, as here).
     expect(synergies[0].explanation).toBe(
-      "{A} adds ink to your inkwell, triggering {B}'s inkwell effect.",
+      templates['ramp-trigger'].replace('{RAMP}', '{A}').replace('{TRIGGER}', '{B}'),
     );
   });
 });
