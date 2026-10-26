@@ -245,9 +245,18 @@ const READY_ATTEMPTS = 3;
  */
 export const CARD_READY_SELECTOR = 'footer[aria-label="Site footer"]';
 
+/**
+ * Playstyle pages wait for their guide (#995), which check-rendered-html.mjs's check 11 demands
+ * of each capture. One failed request for the guides file draws the page without it, title and
+ * all, so only the selector's retries give that page another try.
+ */
+export const PLAYSTYLE_READY_SELECTOR = '#playstyle-guide-heading';
+
 /** The selector `route` waits for before capture, if any. */
 export function readySelectorFor(route) {
-  return READY_SELECTORS[route] ?? (route.startsWith('/card/') ? CARD_READY_SELECTOR : undefined);
+  if (READY_SELECTORS[route]) return READY_SELECTORS[route];
+  if (route.startsWith('/card/')) return CARD_READY_SELECTOR;
+  return route.startsWith('/playstyles/') ? PLAYSTYLE_READY_SELECTOR : undefined;
 }
 
 /**
@@ -286,8 +295,9 @@ async function applyCpuThrottle(page) {
 /**
  * Does the page show the route's real content (#584)? A route with a ready selector (see
  * readySelectorFor) waits up to 15 s for it: on /browse the title passes before the virtualized
- * grid has drawn a single card link, and on a card page before its footer. Every other route has
- * no selector and passes at once. Exported for scripts/prerender.test.mjs.
+ * grid has drawn a single card link, on a card page before its footer, and on a playstyle page
+ * whose guides failed to load without its guide. Every other route has no selector and passes at
+ * once. Exported for scripts/prerender.test.mjs.
  */
 export async function hasReadyContent(page, selector) {
   if (!selector) return true;
@@ -420,7 +430,7 @@ async function loadRoute(page, route, selector) {
   // in main() can catch a broken crawl. Otherwise a timing-out crawl would write content-less
   // shells for every route and still report success, shipping a hollow "prerender". Routes with
   // a ready selector are the exception: their content lands after the title, so
-  // hasReadyContent waits for it below (#584, #532).
+  // hasReadyContent waits for it below (#584, #532, #995).
   const rendered = await page
     .waitForFunction((shell) => document.title && document.title !== shell, SHELL_TITLE, {
       timeout: 15000,
