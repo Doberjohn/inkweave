@@ -13,11 +13,13 @@ if [ ! -d apps/web/node_modules/.cache/eslint ]; then
   exit $?
 fi
 lint_log=$(mktemp)
+lint_pid=
+# Stop lint and drop its log however the hook ends. A terminal's Ctrl-C reaches
+# the ESLint processes too; a kill of the hook alone stops only the top pnpm.
+trap 'rc=$?; [ -z "$lint_pid" ] || kill "$lint_pid" 2>/dev/null || :; rm -f "$lint_log" || :; exit $rc' EXIT
+trap 'exit 130' HUP INT TERM
 pnpm run lint >"$lint_log" 2>&1 &
 lint_pid=$!
-# Stop lint and drop its log however the hook ends, Ctrl-C included.
-trap 'rc=$?; kill "$lint_pid" 2>/dev/null || :; rm -f "$lint_log"; exit $rc' EXIT
-trap 'exit 130' INT TERM
 test_rc=0
 pnpm run test || test_rc=$?
 lint_rc=0
