@@ -150,7 +150,9 @@ jobs:
             GitHub. The working tree's uncommitted changes are the review action's copies of
             CLAUDE.md and .claude/ from the base branch, not the pull request's: leave them
             out of the review. Files .gitattributes marks linguist-generated are card data
-            and the lockfile: check only that they still parse, never review them line by line."
+            and the lockfile: don't review their entries line by line, but do check that they
+            still parse, and in the lockfile that every changed resolution follows from a
+            package.json change in this pull request."
 
       # The skill posts nothing when it finds nothing, so this step says so on the pull
       # request, quoting the review's closing summary, which also shows why a review that

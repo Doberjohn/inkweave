@@ -3,9 +3,11 @@ version: 1
 reviews:
   ignore:
     files:
-      # Card data, the promo catalog, the slug map and the lockfile (#1025): admin and the
-      # scripts write them, and .gitattributes marks them linguist-generated.
-      - apps/web/public/data/**/*.json
+      # Card data, the promo catalog, the slug map and the lockfile: admin and the scripts
+      # write them. Keep in step with the linguist-generated list in .gitattributes.
+      - apps/web/public/data/allCards.json
+      - apps/web/public/data/previewCards.json
+      - apps/web/public/data/collection/*.json
       - scripts/data/promo-printings.json
       - middleware-data/card-slugs.json
       - pnpm-lock.yaml

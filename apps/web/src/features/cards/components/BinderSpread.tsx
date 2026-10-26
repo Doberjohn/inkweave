@@ -635,8 +635,7 @@ function FlankedSpread({start, renderSlot, arrows, cardCount, sheets, turn}: Vie
 /**
  * An arrow on the spread's outer edge, where Browse docks its panels (owner, 2026-10-22):
  * halfway down it, the disc's centre a little past the board's edge, so at rest it covers the
- * board's edge and stops short of
- * the page, the rest of it in the gutter beside the spread. Grown under the pointer, it reaches
+ * board's edge and stops short of the page, the rest of it in the gutter beside the spread. Grown under the pointer, it reaches
  * onto the page's margin and stays clear of the pockets. A page that takes spare width (see
  * `EDGE_FRAME`) has a wider margin, which keeps the disc further from its pockets. Over them,
  * so a pocket's glow under the pointer never covers it.
@@ -854,9 +853,8 @@ function cardsAt(e: SyntheticEvent<HTMLElement>, view: PocketView) {
  * ONE TAB STOP FOR THE POCKETS (#790): Tab enters the view on one card and leaves it with
  * the next press, and the arrow keys move between its cards, across the spine too, with
  * Home and End going to the first and last, so whatever comes after the binder is one press
- * past it, not 25. The card focused last
- * keeps the stop, however it took focus (a key, a click, the card modal handing it back),
- * and a new view starts on its first card. An open pocket holds no card (a promo set's),
+ * past it, not 25. The card focused last keeps the stop, however it took focus (a key, a
+ * click, the card modal handing it back), and a new view starts on its first card. An open pocket holds no card (a promo set's),
  * so the stop and the arrow keys pass over it.
  *
  * Not `useRovingTabIndex`, which reads its items as one grid, row by row. A spread's

@@ -4,8 +4,9 @@
 // a uid appears, and again each time the tab comes back into view. Still far
 // simpler than `DeckContext`, which carries a dirty fingerprint for a draft that is
 // mutated continuously. Here every write replaces the whole copy: an import, or
-// one count changed in the app, which is a new copy written the same way. Only the edits' UPLOADS are coalesced (`UPLOAD_DELAY_MS`), so a burst of
-// clicks is one write, and the upload is flushed at every way out of the page.
+// one count changed in the app, which is a new copy written the same way. Only the
+// edits' UPLOADS are coalesced (`UPLOAD_DELAY_MS`), so a burst of clicks is one
+// write, and the upload is flushed at every way out of the page.
 //
 // TWO PLACES IT DIVERGES FROM `DeckContext`, both owner rulings (2026-08-11):
 //   - SIGN-OUT KEEPS the local copy. `DeckContext` calls `clearDraft()`; a deck

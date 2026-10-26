@@ -1694,11 +1694,10 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
       ref={compareCardRef}
       aria-hidden="true"
       // `focused-card-glow focused-card-glow-offset` adds the ambient breathing animation
-      // phased opposite to Card A — when A's glow peaks, B is at its
-      // minimum and vice versa. The keyframe bakes in the 0 8px 24px depth shadow,
-      // plus the breathing aura in the golds the cards' row sets
-      // (`FOCUSED_CARD_GLOW`). Reduced-motion override in
-      // index.css disables the animation; the previous static shadow is then absent —
+      // phased opposite to Card A — when A's glow peaks, B is at its minimum and vice
+      // versa. The keyframe bakes in the 0 8px 24px depth shadow, plus the breathing aura
+      // in the golds the cards' row sets (`FOCUSED_CARD_GLOW`). Reduced-motion override in
+      // index.css disables the animation; the 0 8px 24px depth shadow is then absent too —
       // documented as acceptable since the cards still have CardImage's inner styling.
       className="focused-card-glow focused-card-glow-offset"
       style={{

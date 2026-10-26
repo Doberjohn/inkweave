@@ -13,7 +13,7 @@
  *
  * Wired into build:vercel after precompute-synergies (engine built → getAllPlaystyles resolves)
  * and before build:web (so public/ is copied into dist/), so prod never drifts. The output is
- * git-ignored (#1025): only the deploy build writes the copy that ships.
+ * git-ignored: only the deploy build writes the copy that ships.
  *
  * Usage: node scripts/generate-sitemap.mjs
  */
