@@ -8,7 +8,7 @@ import 'inkweave-ui/styles/lorcana.css';
 import './index.css';
 import {router} from './router';
 import {HOLD_CAP_MS, holdPrerenderedPage} from './shared/lib/prerenderHold';
-import {renderOverPrerenderedPage} from './shared/lib/prerenderedArt';
+import {renderOverPrerenderedPage} from 'inkweave-ui/lib/prerenderedArt';
 import {whenRouteReady} from './shared/lib/routeReadiness';
 import {applyWaitingUpdate, reloadOntoNewVersion} from './shared/lib/swUpdate';
 import {UPDATE_TOAST_LEAD_MS, showUpdateToast} from './shared/lib/swUpdateToast';

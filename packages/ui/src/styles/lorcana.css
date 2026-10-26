@@ -1,6 +1,6 @@
-/* inkweave-ui's Lorcana display rules (#979): the ink card placeholder, beside the symbols it
-   draws. The app imports it after primitives.css and before its own index.css; admin imports it
-   for the card art it bridges. */
+/* inkweave-ui's Lorcana display rules: the ink card placeholder, beside the symbols it draws
+   (#979), and the printing stack's focus ring (#980). The app imports it after primitives.css and
+   before its own index.css; admin imports it for the card art it bridges. */
 
 /* InkCardPlaceholder (lorcana/): a card's place while its art loads, the reveals
    board's unrevealed slot (CardSlot) grown to any size. One element, drawn here: it covers its
@@ -102,4 +102,21 @@
 .ink-card-placeholder[data-ink='Steel']::before,
 .ink-card-placeholder[data-ink2='Steel']::after {
   background-image: url('../assets/steel.svg?no-inline');
+}
+
+/* The printings stack (PrintingCarousel, lorcana/): the printings behind the card show past its
+   sides, where an outline would run over them, so its focus draws the inset ring on the card
+   instead. Above the printings (layers 1 to 3), beside the peeks' buttons, under the peek's name
+   and the turn's notice (PrintingPeek). */
+.printing-stack:focus-visible {
+  outline: none;
+}
+.printing-stack:focus-visible::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border: 2px solid var(--inkweave-gold);
+  border-radius: inherit;
+  pointer-events: none;
 }

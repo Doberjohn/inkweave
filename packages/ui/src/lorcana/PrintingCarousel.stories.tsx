@@ -2,8 +2,8 @@ import {useState, type CSSProperties} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {PrintingCarousel} from './PrintingCarousel';
-import {COLORS, SPACING} from '../constants';
-import {usePrintingSelection} from '../hooks';
+import {COLORS, SPACING} from '../tokens/theme';
+import {printingsOf} from '../lib/printings';
 
 const meta: Meta<typeof PrintingCarousel> = {
   title: 'Shared/PrintingCarousel',
@@ -64,17 +64,20 @@ interface DemoProps {
   locked?: boolean;
 }
 
-/** Wired as every surface wires it: the printing in front, and the views it records. */
+/**
+ * Wired as a surface wires it, the printing in front following each turn. The app's surfaces
+ * also record the printing each turn settles on (usePrintingSelection's `settle`).
+ */
 function Demo({card = beast, width, height, frame, enlarges = false, locked}: DemoProps) {
-  const {printings, index, select, settle} = usePrintingSelection(card, {surface: 'card_page'});
+  const printings = printingsOf(card);
+  const [index, setIndex] = useState(0);
   const [enlarged, setEnlarged] = useState<string | null>(null);
   const carousel = (
     <PrintingCarousel
       card={card}
       printings={printings}
       index={index}
-      onIndexChange={select}
-      onSettle={settle}
+      onIndexChange={setIndex}
       locked={locked}
       onEnlarge={enlarges ? (i) => setEnlarged(printings[i].label) : undefined}
       room={frame}

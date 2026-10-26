@@ -1,5 +1,5 @@
 import type {CardPrinting, LorcanaCard} from 'inkweave-synergy-engine';
-import {byDisplayOrder} from '../../shared/hooks/usePrintingSelection';
+import {byDisplayOrder} from 'inkweave-ui/lib/printings';
 import type {CollectionPromo} from './collectionPromos';
 
 /*

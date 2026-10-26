@@ -1,8 +1,9 @@
 import {useState} from 'react';
-import type {Ink} from '../../features/cards';
-import {INK_COLORS, FONT_SIZES, RADIUS} from '../constants';
+import type {Ink} from 'inkweave-synergy-engine';
+import {INK_COLORS} from '../tokens/lorcana';
+import {FONT_SIZES, RADIUS} from '../tokens/theme';
 import {useArtLoad, type ArtProps} from '../hooks/useArtLoad';
-import {InkCardPlaceholder} from 'inkweave-ui/lorcana/InkCardPlaceholder';
+import {InkCardPlaceholder} from './InkCardPlaceholder';
 
 interface CardImageProps {
   src: string | undefined;

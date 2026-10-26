@@ -1,5 +1,5 @@
 import {useEffect, useState, type CSSProperties} from 'react';
-import {printingSpokenName} from '../hooks/usePrintingSelection';
+import {printingSpokenName} from '../lib/printings';
 import {
   COLORS,
   DURATION,
@@ -12,8 +12,8 @@ import {
   SPACING,
   VISUALLY_HIDDEN,
   hexRgba,
-} from '../constants';
-import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
+} from '../tokens/theme';
+import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
 import {PrintingName, type NamedPrinting} from './PrintingName';
 
 /** Which side of the card a printing behind it sits on. */

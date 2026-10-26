@@ -1,7 +1,7 @@
 import {afterEach, describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {CardImage} from '../CardImage';
-import {DURATION} from '../../constants';
+import {DURATION} from '../../tokens/theme';
 import {_resetPrerenderedArt} from '../../lib/prerenderedArt';
 import {showPrerenderedArt, stubLoadedArt} from '../../test-utils/loadedArt';
 

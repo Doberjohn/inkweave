@@ -1,8 +1,8 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {matchRoutes, type RouteObject} from 'react-router-dom';
-import {_resetPrerenderedArt, prerenderedArtShown} from '../prerenderedArt';
+import {_resetPrerenderedArt, prerenderedArtShown} from 'inkweave-ui/lib/prerenderedArt';
 import {readyWhen, whenRouteReady} from '../routeReadiness';
-import {showPrerenderedArt} from '../../test-utils/loadedArt';
+import {showPrerenderedArt} from 'inkweave-ui/test-utils/loadedArt';
 import prerenderedRoutes from '../../../prerenderedRoutes.json';
 
 /** A promise and the function that settles it, so a test can hold a ready open. */
@@ -106,6 +106,14 @@ describe("router.tsx's readiness rules", () => {
 
 describe("router.tsx and the prerendered page's art", () => {
   afterEach(() => _resetPrerenderedArt());
+
+  // main.tsx remembers the art through the package's subpath and the package's own files reach
+  // it by relative path: two copies of the module would each hold half of what was shown (#980).
+  it("shares one record of the art between the app and inkweave-ui's own files", () => {
+    showPrerenderedArt('/card-images/1936.avif');
+
+    expect(prerenderedArtShown('/card-images/1936.avif')).toBe(true);
+  });
 
   // A page that shows no art looks none up, so only the router can tell that the visitor left.
   it('forgets the art once the visitor leaves its page, through pages without art too', async () => {

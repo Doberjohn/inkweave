@@ -6,16 +6,16 @@ Inkweave's design tokens, UI primitives and Lorcana display components, for the 
 
 | Folder | Holds | Import |
 |---|---|---|
-| `tokens/` | `theme.ts`, the design tokens (colors, type, spacing, radii, easings, shadows and the micro-pattern styles), and `lorcana.ts`, the ink colors, ink order and cost buttons | `inkweave-ui/tokens/theme` |
+| `tokens/` | `theme.ts`, the design tokens (colors, type, spacing, radii, easings, shadows and the micro-pattern styles), `lorcana.ts`, the ink colors, ink order and cost buttons, and `cardBar.ts`, a card's black bar as a share of its width | `inkweave-ui/tokens/theme` |
 | `components/` | The primitives: buttons (`CtaButton`, `LinkButton`, `IconButton`, `NavArrowButton`), chips and tags, `DialogShell` and `BottomSheet`, `Tooltip`, `TabList`, `SortSelect`, `QuantityStepper`, the filter controls and the small icons | `inkweave-ui/components/CtaButton` |
-| `lorcana/` | The Lorcana display components: `CardImageButton`, `CardLightbox`, `CardTextBlock`, `CardTranslationPanel` and `CardTranslationToggle`, `AbilityCallout` and `AbilityTag`, `InkCardPlaceholder`, `TierCircle`, `StrengthBadge`, the ink, cost and inkwell icons and filter groups, and `RaritySymbol` | `inkweave-ui/lorcana/InkIcon` |
-| `hooks/` | `useBoop`, `useContainerWidth`, `useDialogFocus`, `useFinePointer`, `useHover`, `useResponsive`, `useRovingTabIndex`, `useScrollLock`, `useScrollSnapIndex`, `useTooltip`, `useTransitionPresence` and `useWheelTurn` | `inkweave-ui/hooks/useHover` |
+| `lorcana/` | The Lorcana display components: `CardImage` and `CardTile` (#980), the printing stack (`PrintingCarousel`, with `PrintingName` and `PrintingPeek`), the collection's `CopiesStripe`, `CardImageButton`, `CardLightbox`, `CardTextBlock`, `CardTranslationPanel` and `CardTranslationToggle`, `AbilityCallout` and `AbilityTag`, `InkCardPlaceholder`, `TierCircle`, `StrengthBadge`, the ink, cost and inkwell icons and filter groups, and `RaritySymbol` | `inkweave-ui/lorcana/InkIcon` |
+| `hooks/` | `useArtLoad` (card art's load over its placeholder, and `ArtOnScreen`), `useCardThrow` and `useTouchHold`, `useBoop`, `useContainerWidth`, `useDialogFocus`, `useFinePointer`, `useHover`, `useResponsive`, `useRovingTabIndex`, `useScrollLock`, `useScrollSnapIndex`, `useTooltip`, `useTransitionPresence` and `useWheelTurn` | `inkweave-ui/hooks/useHover` |
 | `utils/` | `focusedByKeyboard`, `prefersReducedMotion` and `touchGuard` | `inkweave-ui/utils/touchGuard` |
-| `lib/` | `ctaStyles` and `isOff`, which the buttons share, `rarity` (each rarity's symbol and label) and `scoreUtils` (the synergy score tiers) | `inkweave-ui/lib/rarity` |
+| `lib/` | `ctaStyles` and `isOff`, which the buttons share, `rarity` (each rarity's symbol and label), `scoreUtils` (the synergy score tiers), `printings` (a card's printings, their order and names), `prerenderedArt` (the art the prerendered page showed, #915) and `whenLoadedAndIdle` | `inkweave-ui/lib/rarity` |
 | `assets/` | The ink icons, inkwell glyphs and rarity symbols, each shipped as its own file (`?no-inline`) | `inkweave-ui/assets/amber.svg?no-inline` |
-| `styles/` | `primitives.css`: the focus rings, overlay transitions, foil sweep, quantity pop and touch target the components draw with. A consumer imports it before its own stylesheet. `lorcana.css`: the ink card placeholder, drawn from `assets/`, imported after `primitives.css` | `inkweave-ui/styles/primitives.css` |
+| `styles/` | `primitives.css`: the focus rings, overlay transitions, foil sweep, quantity pop and touch target the components draw with. A consumer imports it before its own stylesheet. `lorcana.css`: the ink card placeholder, drawn from `assets/`, and the printing stack's focus ring, imported after `primitives.css` | `inkweave-ui/styles/primitives.css` |
 | `docs/` | The design-system docs stories (Colors, Typography, Spacing & Layout, MicroPatterns) | Storybook only |
-| `test-utils/` | `createCard`, a card for the package's tests and stories | Tests and stories only |
+| `test-utils/` | `createCard`, a card for the package's tests and stories, and the art and touch helpers `loadedArt`, `printingSwipe` and `touchMove`, which the app's tests share | `inkweave-ui/test-utils/loadedArt`, tests and stories only |
 
 The app's barrels (`shared/constants`, `shared/components`, `shared/hooks`) forward these names, so app code keeps importing tokens through `shared/constants`; a direct `inkweave-ui/tokens/*` import there fails lint. The app's own constants (set codes and names, sort and card-type options) stay in `apps/web/src/shared/constants/appConstants.ts`.
 
@@ -23,7 +23,8 @@ The app's barrels (`shared/constants`, `shared/components`, `shared/hooks`) forw
 
 - **Source, not a build.** The package ships `.ts` and `.tsx` files and has no build step. Each consumer compiles it with its own Vite and React Compiler. `apps/web/build-guards.ts` fails the app's build when React Compiler compiled none of its components.
 - **Subpath exports only.** Import `inkweave-ui/components/CtaButton`, never `inkweave-ui` or a path into `packages/ui`: `apps/web/eslint.config.js` blocks both.
-- **No app ties.** Package source never imports the app, a router, Supabase, Vercel, PostHog or Sentry (`eslint.config.js`). It takes data, links and callbacks as props.
+- **No app ties.** Package source never imports the app, a router, Supabase, Vercel, PostHog or Sentry (`eslint.config.js`). It takes data, links and callbacks as props, and app behaviour through seams: CardTile's `artUrl` names the art's URL and `onIntent` runs as the visitor heads for a link tile, which the app's CardTile fills with its small grid art and its card modal's warm-up (#980).
+- **One copy of page-wide state.** `lib/prerenderedArt` and `hooks/useArtLoad`'s `ArtOnScreen` hold state for the whole page, so the app imports them from here and keeps no copy: two would each hold half of it.
 - **React is a peer.** The consumer's React is the one that renders.
 
 ## Gates

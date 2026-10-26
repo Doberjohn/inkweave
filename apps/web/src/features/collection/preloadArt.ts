@@ -1,4 +1,4 @@
-import {markArtDrawn} from '../../shared/hooks/useArtLoad';
+import {markArtDrawn} from 'inkweave-ui/hooks/useArtLoad';
 
 /** Art loaded ahead, by its URL: its image while it decodes, held so the browser keeps it, then null. */
 const ahead = new Map<string, HTMLImageElement | null>();

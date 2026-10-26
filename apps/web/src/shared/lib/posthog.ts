@@ -1,6 +1,6 @@
 import type {EventProperties, PostHogApi} from './posthogClient';
 import {onSentryReady} from './sentry';
-import {whenLoadedAndIdle} from './whenLoadedAndIdle';
+import {whenLoadedAndIdle} from 'inkweave-ui/lib/whenLoadedAndIdle';
 
 /*
  * PostHog (#827), kept off the critical path like Sentry (#640). It loads after `load` and an

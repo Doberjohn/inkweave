@@ -1,7 +1,7 @@
 import {useRef} from 'react';
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen} from '@testing-library/react';
-import {fingerMove, touchMoveKept} from '../../test-utils';
+import {fingerMove, touchMoveKept} from '../../test-utils/touchMove';
 import {useTouchHold} from '../useTouchHold';
 
 function Held({enabled = true, holding}: {enabled?: boolean; holding: () => boolean}) {

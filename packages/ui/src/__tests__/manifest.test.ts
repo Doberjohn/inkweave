@@ -14,6 +14,7 @@ const SUBPATHS = [
   './lib/*',
   './assets/*',
   './styles/*.css',
+  './test-utils/*',
 ];
 
 describe('inkweave-ui manifest', () => {

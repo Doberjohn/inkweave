@@ -8,7 +8,8 @@
  * stale line but never sees that, and size-limit's budgets barely move. The critical CSS that
  * the inline-css plugin puts in index.html must also keep the kit's focus rings, overlay
  * transitions (and their reduced-motion override), foil sweep, quantity pop and touch target, and
- * the ink card placeholder (#979), wherever their stylesheet lives.
+ * the ink card placeholder (#979) and the printing stack's focus ring (#980), wherever their
+ * stylesheet lives.
  *
  * Usage:
  *   node scripts/check-bundle-shape.mjs <distDir>
@@ -36,6 +37,7 @@ export const REQUIRED_STARTUP_CSS = [
   /@keyframes inkweave-qty-pop\b/,
   /\.touch-target\{/,
   /\.ink-card-placeholder\{/,
+  /\.printing-stack:focus-visible\{/,
 ];
 export const MAX_GROWTH_BYTES = 100;
 export const WATCHED_ROWS = ['User-facing JS', 'Entry chunk'];

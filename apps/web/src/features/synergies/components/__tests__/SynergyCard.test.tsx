@@ -2,8 +2,8 @@ import {afterEach, describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {SynergyCard} from '../SynergyCard';
 import type {LorcanaCard} from '../../../cards';
-import {_resetPrerenderedArt} from '../../../../shared/lib/prerenderedArt';
-import {showPrerenderedArt, stubLoadedArt} from '../../../../shared/test-utils/loadedArt';
+import {_resetPrerenderedArt} from 'inkweave-ui/lib/prerenderedArt';
+import {showPrerenderedArt, stubLoadedArt} from 'inkweave-ui/test-utils/loadedArt';
 
 vi.mock('../../../shared/components', () => ({
   CardLightbox: () => null,

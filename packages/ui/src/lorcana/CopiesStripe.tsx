@@ -1,6 +1,6 @@
 import {useLayoutEffect, useRef, useState, type CSSProperties, type RefObject} from 'react';
+import {CARD_BAR_SHARE} from '../tokens/cardBar';
 import {
-  CARD_BAR_SHARE,
   COLORS,
   DURATION,
   EASING,
@@ -10,10 +10,10 @@ import {
   INSET_FOCUS_RING,
   TABULAR,
   hexRgba,
-} from '../constants';
-import {useContainerWidth} from 'inkweave-ui/hooks/useContainerWidth';
-import {useHover} from 'inkweave-ui/hooks/useHover';
-import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
+} from '../tokens/theme';
+import {useContainerWidth} from '../hooks/useContainerWidth';
+import {useHover} from '../hooks/useHover';
+import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
 
 /** One finish's part of the stripe: its count, and how the − and + change it. */
 export interface StripePart {

@@ -15,7 +15,8 @@
     "./utils/*": "./src/utils/*.ts",
     "./lib/*": "./src/lib/*.ts",
     "./assets/*": "./src/assets/*",
-    "./styles/*.css": "./src/styles/*.css"
+    "./styles/*.css": "./src/styles/*.css",
+    "./test-utils/*": "./src/test-utils/*.ts"
   },
   "scripts": {
     "lint": "eslint . --cache --cache-strategy content --cache-location node_modules/.cache/eslint/",

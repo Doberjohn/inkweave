@@ -11,7 +11,7 @@ import {
   type SyntheticEvent,
 } from 'react';
 import {EDGE_DISC_SIZE, InkCardPlaceholder, NavArrowButton} from '../../../shared/components';
-import {ArtOnScreen} from '../../../shared/hooks/useArtLoad';
+import {ArtOnScreen} from 'inkweave-ui/hooks/useArtLoad';
 import {useContainerWidth} from 'inkweave-ui/hooks/useContainerWidth';
 import {blackRgba, COLORS, RADIUS, SPACING} from '../../../shared/constants';
 import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
