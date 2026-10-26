@@ -9,6 +9,7 @@ import {router} from './router';
 import {HOLD_CAP_MS, holdPrerenderedPage} from './shared/lib/prerenderHold';
 import {renderOverPrerenderedPage} from './shared/lib/prerenderedArt';
 import {whenRouteReady} from './shared/lib/routeReadiness';
+import {applyWaitingUpdate, reloadOnce} from './shared/lib/swUpdate';
 import {showUpdateToast} from './shared/lib/swUpdateToast';
 import {reloadForStaleChunk} from './shared/lib/staleChunkReload';
 import {loadSentryWhenIdle} from './shared/lib/sentry';
@@ -34,39 +35,25 @@ loadPostHogWhenIdle();
 
 // Register service worker with auto-update flow: when a new SW reaches
 // `waiting` state, show a bottom-right toast for ~600ms so the user sees the
-// version swap, then activate + reload automatically.
+// version swap, then activate + reload automatically (shared/lib/swUpdate.ts).
 if (import.meta.env.PROD) {
-  // Backstop reload: fire exactly once when a new SW takes control. workbox-
-  // window's built-in controlling-reload only covers updates it initiated via
-  // updateSW(); this also catches a wedged `waiting` worker activated by the
-  // direct SKIP_WAITING message below. `hadController` gates out the first-ever
-  // install (no prior controller), which would otherwise spuriously reload a
-  // user's very first visit.
+  // Reload once a new SW takes control of this page, whichever tab asked it to
+  // (vite-plugin-pwa's own reload only follows an update this page was told
+  // of). `hadController` gates out the first-ever install (no prior
+  // controller), which would otherwise spuriously reload a user's very first
+  // visit. A page with no controller gets no `controllerchange` at all:
+  // applyWaitingUpdate watches the new worker instead.
   if ('serviceWorker' in navigator) {
     const hadController = Boolean(navigator.serviceWorker.controller);
-    let reloaded = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!hadController || reloaded) return;
-      reloaded = true;
-      window.location.reload();
+      if (hadController) reloadOnce();
     });
   }
 
-  const updateSW = registerSW({
+  registerSW({
     onNeedRefresh() {
       showUpdateToast();
-      window.setTimeout(() => {
-        void updateSW(true);
-        // Backstop for a wedged `waiting` worker that updateSW() doesn't
-        // activate: message it directly so it calls skipWaiting() and fires
-        // `controllerchange` (handled above). skipWaiting is idempotent, so
-        // overlapping with updateSW(true) is harmless.
-        if ('serviceWorker' in navigator) {
-          void navigator.serviceWorker.getRegistration().then((reg) => {
-            reg?.waiting?.postMessage({type: 'SKIP_WAITING'});
-          });
-        }
-      }, 600);
+      window.setTimeout(() => void applyWaitingUpdate(navigator.serviceWorker), 600);
     },
     onOfflineReady() {
       console.log('Inkweave is ready for offline use');

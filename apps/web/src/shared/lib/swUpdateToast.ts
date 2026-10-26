@@ -13,6 +13,14 @@ import {BREAKPOINTS, COLORS, FONTS, FONT_SIZES, LAYOUT, RADIUS, SHADOWS, SPACING
 
 const TOAST_ID = 'sw-update-toast';
 
+/**
+ * How long the toast waits for the reload before it goes. The swap takes about a second, but
+ * Chrome holds a new worker back until the old one's requests finish, for up to five minutes,
+ * and a browser that never reports the swap would leave the toast up for good. The reload
+ * still comes whenever the new worker takes over.
+ */
+export const UPDATE_TOAST_MAX_MS = 10000;
+
 export function showUpdateToast(): HTMLElement {
   const existing = document.getElementById(TOAST_ID);
   if (existing) return existing;
@@ -22,7 +30,7 @@ export function showUpdateToast(): HTMLElement {
   toast.setAttribute('role', 'status');
   toast.setAttribute('aria-live', 'polite');
   toast.className = 'sw-update-toast';
-  // The offset is picked once: the toast lives about 600 ms, until the reload.
+  // The offset is picked once: the toast lives about a second, until the reload.
   const bottom = window.innerWidth < BREAKPOINTS.tablet ? LAYOUT.mobileNavHeight + SPACING.lg : SPACING.lg;
   toast.style.cssText =
     `position:fixed;right:${SPACING.lg}px;bottom:${bottom}px;background:${COLORS.surface};color:${COLORS.text};` +
@@ -39,5 +47,6 @@ export function showUpdateToast(): HTMLElement {
 
   toast.append(spinner, label);
   document.body.appendChild(toast);
+  window.setTimeout(() => toast.remove(), UPDATE_TOAST_MAX_MS);
   return toast;
 }

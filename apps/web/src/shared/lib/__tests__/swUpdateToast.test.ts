@@ -1,10 +1,11 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
-import {showUpdateToast} from '../swUpdateToast';
+import {UPDATE_TOAST_MAX_MS, showUpdateToast} from '../swUpdateToast';
 
 describe('showUpdateToast', () => {
   afterEach(() => {
     document.getElementById('sw-update-toast')?.remove();
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   it('mounts a polite live-region toast in the document body', () => {
@@ -22,6 +23,17 @@ describe('showUpdateToast', () => {
 
     expect(spinner).not.toBeNull();
     expect(spinner?.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  // Chrome holds a new worker back while the old one has requests in flight, for up to 5 minutes.
+  it('goes after UPDATE_TOAST_MAX_MS when no reload comes', () => {
+    vi.useFakeTimers();
+    showUpdateToast();
+
+    vi.advanceTimersByTime(UPDATE_TOAST_MAX_MS - 1);
+    expect(document.getElementById('sw-update-toast')).not.toBeNull();
+    vi.advanceTimersByTime(1);
+    expect(document.getElementById('sw-update-toast')).toBeNull();
   });
 
   it('is idempotent: calling twice does not mount a second toast', () => {

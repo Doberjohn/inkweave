@@ -32,6 +32,7 @@ jobs:
     outputs:
       engine: ${{ steps.filter.outputs.engine }}
       handoff: ${{ steps.filter.outputs.handoff }}
+      sw-update: ${{ steps.filter.outputs.sw-update }}
     steps:
       - uses: actions/checkout@v7
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
@@ -43,6 +44,9 @@ jobs:
           # first render each page makes from that data and the capture's art, the check
           # itself, and the dependencies they all run on (a React Router, Vite or Playwright
           # bump can change the handoff with no file here).
+          # sw-update: what decides how an open page moves onto a new service worker: the code
+          # that registers it and reloads, the Vite config that writes it, how Vercel serves
+          # it, the check itself, and the dependencies (vite-plugin-pwa, Workbox, Playwright).
           filters: |
             engine:
               - 'packages/synergy-engine/**'
@@ -88,6 +92,19 @@ jobs:
               - 'scripts/check-rendered-html.mjs'
               - 'scripts/lib/mime.mjs'
               - 'scripts/lib/captureMedia.mjs'
+              - 'vercel.json'
+              - '.github/workflows/perf-gates.yml'
+              - 'package.json'
+              - 'apps/web/package.json'
+              - 'pnpm-lock.yaml'
+            sw-update:
+              - 'apps/web/src/main.tsx'
+              - 'apps/web/src/shared/lib/swUpdate.ts'
+              - 'apps/web/src/shared/lib/swUpdateToast.ts'
+              - 'apps/web/vite.config.ts'
+              - 'scripts/check-sw-update.mjs'
+              - 'scripts/serve-dist.mjs'
+              - 'scripts/lib/mime.mjs'
               - 'vercel.json'
               - '.github/workflows/perf-gates.yml'
               - 'package.json'
@@ -182,12 +199,12 @@ jobs:
         if: github.event_name == 'push'
         run: pnpm size
 
-  # prerender-handoff runs in Playwright's image for the version pnpm-lock.yaml pins, read here
-  # as ci.yml's playwright-version job reads it for the e2e jobs.
+  # prerender-handoff and sw-update run in Playwright's image for the version pnpm-lock.yaml pins,
+  # read here as ci.yml's playwright-version job reads it for the e2e jobs.
   handoff-playwright-version:
     name: Playwright Version
     needs: detect-changes
-    if: needs.detect-changes.outputs.handoff == 'true'
+    if: needs.detect-changes.outputs.handoff == 'true' || needs.detect-changes.outputs.sw-update == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
@@ -218,7 +235,8 @@ jobs:
   # the crawl or Deploy itself changes, and never runs this check.
   prerender-handoff:
     name: Prerender Handoff
-    needs: handoff-playwright-version
+    needs: [detect-changes, handoff-playwright-version]
+    if: needs.detect-changes.outputs.handoff == 'true'
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v${{ needs.handoff-playwright-version.outputs.version }}-noble
@@ -260,6 +278,50 @@ jobs:
 
       - name: Check the prerender handoff
         run: pnpm check:prerender-handoff
+
+  # An open page must move onto a new service worker, and its "Updating to new version" toast
+  # must go: in a tab the old worker controls, in one it doesn't (a hard reload, a first visit)
+  # when another tab takes the update, and when Chrome holds the new worker back. E2E blocks
+  # service workers, so this builds the app and serves it as two deploys in Chromium
+  # (scripts/check-sw-update.mjs).
+  sw-update:
+    name: Service Worker Update
+    needs: [detect-changes, handoff-playwright-version]
+    if: needs.detect-changes.outputs.sw-update == 'true'
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.handoff-playwright-version.outputs.version }}-noble
+      # As in ci.yml's e2e jobs: run as uid 1001, the runner user that owns $HOME.
+      options: --user 1001
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The app builds against the engine, and its home page reads the data precompute writes.
+      - name: Build the engine and its synergy data
+        run: pnpm build:engine && pnpm precompute-synergies
+
+      - name: Build the web app
+        run: pnpm build:web
+
+      - name: Check the service worker update
+        run: pnpm check:sw-update
 
   engine-benchmarks:
     name: Engine Benchmarks
