@@ -1,6 +1,6 @@
 import Skeleton from 'react-loading-skeleton';
 import {RADIUS, SPACING} from '../../../shared/constants';
-import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
+import {InkCardPlaceholder} from 'inkweave-ui/lorcana/InkCardPlaceholder';
 
 interface CardDetailSkeletonProps {
   /** Card image width (default: 298, matches CardDetailPanel's image) */

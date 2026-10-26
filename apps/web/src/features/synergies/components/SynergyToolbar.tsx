@@ -11,7 +11,7 @@ import {FilterDialog} from '../../../shared/components/FilterDialog';
 import {LinkButton} from 'inkweave-ui/components/LinkButton';
 import {Chip} from 'inkweave-ui/components/Chip';
 import {FiltersButton} from 'inkweave-ui/components/FiltersButton';
-import {InkFilterGroup} from '../../../shared/components/InkFilterGroup';
+import {InkFilterGroup} from 'inkweave-ui/lorcana/InkFilterGroup';
 import {SortSelect} from 'inkweave-ui/components/SortSelect';
 import type {ChipData} from '../../../shared/types';
 

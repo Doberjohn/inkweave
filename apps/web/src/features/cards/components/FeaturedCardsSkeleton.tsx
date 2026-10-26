@@ -1,5 +1,5 @@
 import {COLORS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
-import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
+import {InkCardPlaceholder} from 'inkweave-ui/lorcana/InkCardPlaceholder';
 
 /**
  * The phone layout's bottom padding, past the spacing scale's top step (SPACING.xxxl, 32).

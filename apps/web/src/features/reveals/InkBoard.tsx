@@ -2,13 +2,13 @@ import './reveals.css';
 import {useState} from 'react';
 import type {CardPrinting, Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, blackRgba, hexRgba} from '../../shared/constants';
-import {InkIcon} from '../../shared/components/InkIcon';
+import {InkIcon} from 'inkweave-ui/lorcana/InkIcon';
 import {CardMosaic} from './CardMosaic';
 import {RarityBreakdown} from './RarityBreakdown';
 import {SpecialPrintings} from './SpecialPrintings';
 import {PER_INK} from './setComposition';
 import {inkRgba} from './inkTint';
-import {SPECIAL_RARITIES, type RarityConfig} from './rarity';
+import {SPECIAL_RARITIES, type RarityConfig} from 'inkweave-ui/lib/rarity';
 import type {InkProgress, SpecialSlot} from './useRevealProgress';
 
 interface InkBoardProps {

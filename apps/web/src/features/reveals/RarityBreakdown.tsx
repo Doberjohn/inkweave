@@ -1,7 +1,7 @@
 import {Chip} from 'inkweave-ui/components/Chip';
 import {COLORS, ICON_SIZE, SPACING, TABULAR, VISUALLY_HIDDEN, hexRgba} from '../../shared/constants';
-import {RARITIES, type RarityConfig} from './rarity';
-import {RaritySymbol} from './RaritySymbol';
+import {RARITIES, type RarityConfig} from 'inkweave-ui/lib/rarity';
+import {RaritySymbol} from 'inkweave-ui/lorcana/RaritySymbol';
 
 interface RarityBreakdownProps {
   /** Revealed count per rarity key (from useRevealProgress). */

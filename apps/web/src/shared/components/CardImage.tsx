@@ -2,7 +2,7 @@ import {useState} from 'react';
 import type {Ink} from '../../features/cards';
 import {INK_COLORS, FONT_SIZES, RADIUS} from '../constants';
 import {useArtLoad, type ArtProps} from '../hooks/useArtLoad';
-import {InkCardPlaceholder} from './InkCardPlaceholder';
+import {InkCardPlaceholder} from 'inkweave-ui/lorcana/InkCardPlaceholder';
 
 interface CardImageProps {
   src: string | undefined;

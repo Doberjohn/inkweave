@@ -23,6 +23,8 @@ ruleTester.run('no-raw-hex-colors', inkweave.rules['no-raw-hex-colors'], {
     ok("const COLORS = {primary: '#ffb900'};", '/repo/packages/ui/src/tokens/theme.ts'),
     ok("const COLORS = {primary: '#ffb900'};", 'C:\\repo\\packages\\ui\\src\\tokens\\theme.ts'),
     ok("const INK = {Amber: {bg: '#f5b202'}};", '/repo/packages/ui/src/tokens/lorcana.ts'),
+    // An icon's vector art, which moved into inkweave-ui with its exemption (#979).
+    ok("const FILL = '#f5b202';", '/repo/packages/ui/src/lorcana/CostIcon.tsx'),
   ],
   invalid: [
     hex("const s = {color: '#fff'};"),
@@ -34,10 +36,11 @@ ruleTester.run('no-raw-hex-colors', inkweave.rules['no-raw-hex-colors'], {
     hex('const label = `see #511`;'),
     // The exemptions name repo paths exactly: the app's constants, where the tokens lived until
     // #978, and admin's files (admin lints with these rules) get no pass from sharing a name with
-    // an exempt file, nor do inkweave-ui's components.
+    // an exempt file, nor do inkweave-ui's components, its Lorcana ones beside the icons included.
     {...hex("const s = {color: '#ffb900'};"), filename: '/repo/apps/web/src/shared/constants/appConstants.ts'},
     {...hex("const s = {color: '#ffb900'};"), filename: '/repo/apps/web/src/shared/constants/theme.ts'},
     {...hex("const s = {color: '#ffb900'};"), filename: '/repo/packages/ui/src/components/Demo.tsx'},
+    {...hex("const s = {color: '#ffb900'};"), filename: '/repo/packages/ui/src/lorcana/AbilityTag.tsx'},
     {...hex("const s = {color: '#ffb900'};"), filename: '/repo/packages/ui/src/shared/constants/theme.ts'},
     {...hex("const s = {color: '#ffb900'};"), filename: '/work/inkweave-admin/src/shared/constants/theme.ts'},
   ],
