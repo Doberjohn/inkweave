@@ -1,37 +1,9 @@
-import type {Ink, CardType} from 'inkweave-synergy-engine';
-
-// App branding
-export const APP_NAME = 'Inkweave';
-
-// Ink color styling (vibrant on dark backgrounds)
-export const INK_COLORS: Record<Ink, {bg: string; text: string; border: string}> = {
-  Amber: {bg: '#3d2e10', text: '#f5c542', border: '#f59e0b'},
-  Amethyst: {bg: '#2a1a45', text: '#c4a5f5', border: '#8b5cf6'},
-  Emerald: {bg: '#0f2e1f', text: '#6ee7a0', border: '#10b981'},
-  Ruby: {bg: '#3d1515', text: '#f87171', border: '#ef4444'},
-  Sapphire: {bg: '#0f1e3d', text: '#7db5f5', border: '#3b82f6'},
-  Steel: {bg: '#252530', text: '#a0a0b0', border: '#6b7280'},
-};
-
-/**
- * The game's own ink-symbol colours, for the letter chips that name each card in a synergy line
- * (ConnectionGroup, #786). They are brighter than INK_COLORS, which is tuned for badges on dark
- * surfaces, so each ink carries the text colour that reads on its chip.
- */
-export const INK_CHIP_COLORS: Record<Ink, {bg: string; text: string}> = {
-  Amber: {bg: '#f5b202', text: '#000000'},
-  Amethyst: {bg: '#81377b', text: '#ffffff'},
-  Emerald: {bg: '#2a8934', text: '#ffffff'},
-  Ruby: {bg: '#d3082f', text: '#ffffff'},
-  Sapphire: {bg: '#0189c4', text: '#ffffff'},
-  Steel: {bg: '#9fa8b4', text: '#000000'},
-};
-
 /**
  * The sign-in dialog's provider buttons (owner, 2026-10-22): each provider's own colours, so
  * each button reads as that provider's rather than ours. Google's are its light "Sign in with
  * Google" button (white fill, grey 1px stroke, near-black label); Discord's is its Blurple,
- * with white label and symbol. The logos themselves are files in src/assets.
+ * with white label and symbol. The logos themselves are the app's files,
+ * apps/web/src/assets/google.svg and discord.svg (SignInDialog).
  */
 export const PROVIDER_COLORS = {
   google: {bg: '#ffffff', text: '#1f1f1f', border: '#747775'},
@@ -265,60 +237,11 @@ export const COLORS = {
   lorcanaCardLink: '#7a4d18',
 } as const;
 
-// All inks for iteration
-export const ALL_INKS: Ink[] = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
-
-// Known set codes
-export type SetCode = '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12' | '13' | '14';
-
-// Set abbreviations (keyed by setCode)
-export const SET_ABBREVIATIONS: Record<SetCode, string> = {
-  '1': '1TFC',
-  '2': '2ROF',
-  '3': '3INK',
-  '4': '4URS',
-  '5': '5SSK',
-  '6': '6AZS',
-  '7': '7ARI',
-  '8': '8JAF',
-  '9': '9FAB',
-  '10': '10WHI',
-  '11': '11WSP',
-  '12': '12WIL',
-  '13': '13AVN',
-  '14': '14HYP',
-} as const;
-
-// Set full names (keyed by setCode)
-export const SET_NAMES: Record<SetCode, string> = {
-  '1': 'The First Chapter',
-  '2': 'Rise of the Floodborn',
-  '3': 'Into the Inklands',
-  '4': "Ursula's Return",
-  '5': 'Shimmering Skies',
-  '6': 'Azurite Sea',
-  '7': "Archazia's Island",
-  '8': 'The Reign of Jafar',
-  '9': 'Fabled',
-  '10': 'Whispers in the Well',
-  '11': 'Winterspell',
-  '12': 'The Wilds Unknown',
-  '13': 'Attack of the Vine!',
-  '14': 'Hyperia City',
-} as const;
-
 // Breakpoints for responsive design
 export const BREAKPOINTS = {
   tablet: 768,
   desktop: 1024,
 } as const;
-
-// Below this viewport width the inline cost-filter group (the widest inline
-// toolbar control at ~482px) tucks into the Filters dialog so the toolbar stays
-// one row alongside the 300px search box; ink + inkable icons are compact enough
-// to remain. Math: Filters(86) + search(300) + full icon group(1106) + gaps +
-// side padding needs ~1580px for one row; dropping cost frees ~493px → fits ~1075px.
-export const INLINE_COST_FILTER_MIN_WIDTH = 1580;
 
 // Z-index scale for layering
 export const Z_INDEX = {
@@ -333,16 +256,6 @@ export const Z_INDEX = {
   swUpdate: 1300,
 } as const;
 
-// Card type filter options (includes "Song" pseudo-type for UI filtering)
-export type CardTypeFilter = CardType | 'Song';
-export const CARD_TYPE_FILTERS: CardTypeFilter[] = [
-  'Character',
-  'Action',
-  'Song',
-  'Item',
-  'Location',
-];
-
 // Shared select style (dark theme)
 export const SELECT_STYLE_MD: React.CSSProperties = {
   padding: '12px 16px',
@@ -355,9 +268,6 @@ export const SELECT_STYLE_MD: React.CSSProperties = {
   cursor: 'pointer',
   minHeight: '44px',
 };
-
-// Ink cost values for filter buttons
-export const COST_BUTTONS = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
 /** Convert a hex color (#rrggbb) to "r, g, b" string for use in rgba() */
 export const hexToRgb = (hex: string) =>
@@ -543,11 +453,11 @@ export function searchFieldStyle({focused, hovered}: {focused: boolean; hovered:
 }
 
 /**
- * The inset focus ring's gold, as the custom property `.inset-focus-ring` (index.css) reads:
- * the card art buttons (CardImageButton), the Reveals promo and the copies stripe's − and +.
+ * The inset focus ring's gold, as the custom property `.inset-focus-ring` (styles/primitives.css)
+ * reads: the card art buttons (CardImageButton), the Reveals promo and the copies stripe's − and +.
  * Spread into each control's own style rather than set once on the page root, so the ring
  * shows wherever the control renders: in the card modal's portal, in Storybook, and in admin,
- * which imports the components and index.css but not this app's bootstrap.
+ * which imports the components and their stylesheet but not this app's bootstrap.
  */
 export const INSET_FOCUS_RING = {'--inkweave-gold': COLORS.primary} as React.CSSProperties;
 
@@ -582,7 +492,7 @@ export const CARD_TILE_GLOW = {
  * fails; over this ground it is 6.4:1. Recompute before raising it.
  *
  * The band is a separate layer sized to a fraction of the pill precisely so it can
- * travel: `.inkweave-foil-shimmer` in index.css animates the FIRST layer's
+ * travel: `.inkweave-foil-shimmer` in styles/primitives.css animates the FIRST layer's
  * `background-position` and leaves the other two pinned, so the layer order is
  * load-bearing. Only the hovered control sweeps.
  */
@@ -617,7 +527,7 @@ export const FOIL_SHEEN = {
     backgroundPosition: band ? '-20% 0, 0 0, 0 0' : '0 0, 0 0',
   }),
 
-  /** index.css owns the keyframes so `prefers-reduced-motion` can kill them. */
+  /** styles/primitives.css owns the keyframes so `prefers-reduced-motion` can kill them. */
   shimmerClass: 'inkweave-foil-shimmer',
 } as const;
 
@@ -635,52 +545,3 @@ export const DISABLED_STYLE: React.CSSProperties = {
   opacity: 0.4,
   cursor: 'not-allowed',
 };
-
-// Browse sort order
-// ── Sort orders ──
-// Labels are words, never arrows: an <option> can't hide part of its text, and screen
-// readers would read "right arrow" in every name (#835).
-
-export type BrowseSortOrder =
-  | 'ink-cost'
-  | 'newest'
-  | 'name-asc'
-  | 'name-desc'
-  | 'cost-asc'
-  | 'cost-desc';
-
-export type SynergySortOrder =
-  | 'ink-cost'
-  | 'cost-asc'
-  | 'cost-desc'
-  | 'strength-desc'
-  | 'strength-asc'
-  | 'name-asc'
-  | 'name-desc';
-
-export const BROWSE_SORT_OPTIONS: {
-  value: BrowseSortOrder;
-  label: string;
-  mobileLabel?: string;
-}[] = [
-  {value: 'ink-cost', label: 'Color, then Cost', mobileLabel: 'Color/Cost'},
-  {value: 'newest', label: 'Newest first', mobileLabel: 'Newest'},
-  {value: 'name-asc', label: 'Name A\u2013Z', mobileLabel: 'A\u2013Z'},
-  {value: 'name-desc', label: 'Name Z\u2013A', mobileLabel: 'Z\u2013A'},
-  {value: 'cost-asc', label: 'Cost: Low to High', mobileLabel: 'Low cost'},
-  {value: 'cost-desc', label: 'Cost: High to Low', mobileLabel: 'High cost'},
-];
-
-export const SYNERGY_SORT_OPTIONS: {
-  value: SynergySortOrder;
-  label: string;
-  mobileLabel?: string;
-}[] = [
-  {value: 'ink-cost', label: 'Color, then Cost', mobileLabel: 'Color/Cost'},
-  {value: 'cost-asc', label: 'Cost: Low to High', mobileLabel: 'Low cost'},
-  {value: 'cost-desc', label: 'Cost: High to Low', mobileLabel: 'High cost'},
-  {value: 'strength-desc', label: 'Score: High to Low', mobileLabel: 'High score'},
-  {value: 'strength-asc', label: 'Score: Low to High', mobileLabel: 'Low score'},
-  {value: 'name-asc', label: 'Name A\u2013Z', mobileLabel: 'A\u2013Z'},
-  {value: 'name-desc', label: 'Name Z\u2013A', mobileLabel: 'Z\u2013A'},
-];

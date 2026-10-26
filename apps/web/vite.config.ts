@@ -256,7 +256,9 @@ const STARTUP_VENDOR = [
   'react-loading-skeleton',
 ];
 const STARTUP_SHARED = [
-  'apps/web/src/shared/constants/theme.ts',
+  'apps/web/src/shared/constants/appConstants.ts',
+  'packages/ui/src/tokens/theme.ts',
+  'packages/ui/src/tokens/lorcana.ts',
   'apps/web/src/shared/constants/setLogos.ts',
   'apps/web/src/shared/constants/promoSets.ts',
   'apps/web/src/shared/constants/cardBar.ts',

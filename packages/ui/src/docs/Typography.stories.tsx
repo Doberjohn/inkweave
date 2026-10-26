@@ -1,6 +1,6 @@
 import {Fragment} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
-import {FONTS, FONT_SIZES, COLORS} from '../shared/constants';
+import {FONTS, FONT_SIZES, COLORS} from '../tokens/theme';
 
 const sectionHeading: React.CSSProperties = {
   fontSize: FONT_SIZES.xl,
@@ -187,7 +187,7 @@ function TypeScale() {
         Typography
       </h1>
       <p style={{...mutedText, margin: '0 0 32px'}}>
-        Type scale and font families from <code style={codeNote}>shared/constants/theme.ts</code>.
+        Type scale and font families from <code style={codeNote}>inkweave-ui/tokens/theme.ts</code>.
         Based on a ~1.25 major third ratio with 13px base.
       </p>
       <FontFamiliesSection />

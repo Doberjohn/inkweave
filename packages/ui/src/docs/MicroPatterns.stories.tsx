@@ -15,7 +15,7 @@ import {
   TRUNCATE,
   VISUALLY_HIDDEN,
   searchFieldStyle,
-} from '../shared/constants';
+} from '../tokens/theme';
 
 const meta: Meta = {
   title: 'Docs/MicroPatterns',

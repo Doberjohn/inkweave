@@ -76,7 +76,7 @@ describe('exemption tables and the ledger', () => {
   );
 
   it.each(LEDGER)('the %s ledger names %s, a file in the repo', (_rule, file) => {
-    expect(file).toMatch(/^apps\/web\//);
+    expect(file).toMatch(/^(apps\/web|packages\/ui)\//);
     expect(statSync(REPO + file, {throwIfNoEntry: false})?.isFile()).toBe(true);
   });
 });

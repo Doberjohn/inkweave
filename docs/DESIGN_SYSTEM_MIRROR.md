@@ -6,14 +6,13 @@ When a PR changes any of the following, refresh the design system project afterw
 
 | File / folder | What lives there |
 |---|---|
-| `apps/web/src/shared/constants/theme.ts` | All design tokens (colors, type scale, spacing, easings) |
-| `apps/web/src/docs/Colors.stories.tsx` | Canonical color palette + usage guide |
-| `apps/web/src/docs/Typography.stories.tsx` | Type scale + font families + usage guide |
-| `apps/web/src/docs/SpacingLayout.stories.tsx` | Spacing scale + layout constants |
+| `packages/ui/src/tokens/` | All design tokens: `theme.ts` (colors, type scale, spacing, easings) and `lorcana.ts` (ink colors, ink order, cost buttons) |
+| `packages/ui/src/docs/Colors.stories.tsx` | Canonical color palette + usage guide |
+| `packages/ui/src/docs/Typography.stories.tsx` | Type scale + font families + usage guide |
+| `packages/ui/src/docs/SpacingLayout.stories.tsx` | Spacing scale + layout constants |
 | `apps/web/index.html` (font imports) | Google Fonts imports; flag any swap |
 | `apps/web/public/brand/` | Logo (static + animated) |
 | `apps/web/src/assets/*.svg` | Ink icons + inkable/uninkable glyphs |
-| `packages/ui/src/tokens/` | The design tokens, once they move into inkweave-ui (the app's `theme.ts` until then) |
 | `packages/ui/src/assets/*.svg` | The ink icons and glyphs, once they move into inkweave-ui |
 | `apps/web/public/art/playstyles/` | Playstyle cover imagery |
 | `apps/web/public/art/franchises/` | Franchise cover imagery |
@@ -23,5 +22,5 @@ When a PR changes any of the following, refresh the design system project afterw
 ## How to refresh
 
 1. Open the design system project in Claude.
-2. Say: *"refresh against the latest of Doberjohn/inkweave master, focus on the tokens (`theme.ts`), the storybook docs, the ink icons and glyphs, and anything in `public/brand` or `public/art` that changed."* Once inkweave-ui holds the tokens and icons, point the prompt at `packages/ui/src/tokens/` and `packages/ui/src/assets/` for them. The drift workflow's comment lists the exact files a PR touched.
+2. Say: *"refresh against the latest of Doberjohn/inkweave master, focus on the tokens (`packages/ui/src/tokens/`), the storybook docs (`packages/ui/src/docs/`), the ink icons and glyphs, and anything in `public/brand` or `public/art` that changed."* Once inkweave-ui holds the icons, point the prompt at `packages/ui/src/assets/` for them. The drift workflow's comment lists the exact files a PR touched.
 3. Review the diff before approving.

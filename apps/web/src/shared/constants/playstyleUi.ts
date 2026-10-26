@@ -1,5 +1,5 @@
 import type {PlaystyleId} from 'inkweave-synergy-engine';
-import {hexToRgb} from './theme';
+import {hexToRgb} from 'inkweave-ui/tokens/theme';
 
 export interface PlaystyleUiMeta {
   /** The hero card's ink colour (from INK_COLORS[color].border). */

@@ -35,10 +35,10 @@ export function isExempt(context, {paths = [], patterns = []}) {
  */
 export const COLOR_EXEMPT = {
   paths: [
-    'apps/web/src/shared/constants/theme.ts',
+    'packages/ui/src/tokens/',
     'apps/web/src/shared/constants/playstyleUi.ts',
     'apps/web/src/features/cards/components/binderLook.ts',
-    'apps/web/src/docs/',
+    'packages/ui/src/docs/',
     'apps/web/src/shared/components/CostIcon.tsx',
     'apps/web/src/shared/components/FilterIcon.tsx',
     'apps/web/src/shared/components/SearchIcon.tsx',
@@ -56,7 +56,7 @@ export const TEST_EXEMPT = {patterns: [TEST_FILE]};
  * not exempt, unlike for the color rules: its raw spacing goes in the ledger like any other
  * file's (owner, 2026-10-22).
  */
-export const SPACING_EXEMPT = {paths: ['apps/web/src/docs/'], patterns: [TEST_FILE, STORY_FILE]};
+export const SPACING_EXEMPT = {paths: ['packages/ui/src/docs/'], patterns: [TEST_FILE, STORY_FILE]};
 
 /**
  * The blessed button menu is closed (#509): the kit's own internals and the domain families below

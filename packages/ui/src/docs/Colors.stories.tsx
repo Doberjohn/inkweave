@@ -1,15 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
-import {
-  COLORS,
-  FONTS,
-  FONT_SIZES,
-  INK_CHIP_COLORS,
-  INK_COLORS,
-  ALL_INKS,
-  RADIUS,
-  TIER_COLORS,
-  blackRgba,
-} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, TIER_COLORS, blackRgba} from '../tokens/theme';
+import {INK_CHIP_COLORS, INK_COLORS, ALL_INKS} from '../tokens/lorcana';
 
 // ── Swatch component ─────────────────────────────────────────────────
 // Renders a single color token with visual preview, name, and hex value.
@@ -258,7 +249,7 @@ function ColorPalette() {
           fontFamily: FONTS.body,
           margin: '0 0 32px',
         }}>
-        All color tokens from <code style={{color: '#c8c8d8'}}>shared/constants/theme.ts</code>.
+        All color tokens from <code style={{color: '#c8c8d8'}}>inkweave-ui/tokens/</code>.
         These render live from the actual COLORS object. If a token changes, this page updates
         automatically.
       </p>

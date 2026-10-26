@@ -3,8 +3,8 @@
 //
 // The AST rules (eslint-rules/index.js) cannot see literals inside cssText
 // strings, quoted CSS shorthands, .css files, or index.html. This gate greps
-// the LITERAL VALUES of the tokens themselves — every COLORS hex parsed live
-// from theme.ts (the needle list can never rot), the EASING linear() strings,
+// the LITERAL VALUES of the tokens themselves — every hex parsed live from
+// inkweave-ui's token files (the needle list can never rot), the EASING linear() strings,
 // the font family names, and three hard tripwires ('Barlow', 'Tinos', backdrop-filter).
 // It reads the app's source and inkweave-ui's (packages/ui/src), keyed from the repo root.
 // In .css and .html, which ESLint never reads, it also counts raw values that
@@ -29,9 +29,11 @@ import {fileURLToPath} from 'node:url';
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..'); // apps/web
 const REPO = join(ROOT, '..', '..');
 const BASELINE_PATH = join(ROOT, 'scripts', 'known-design-values.json');
-// The files that declare token values: every hex they hold is a needle, so a token file that
-// moves into inkweave-ui changes this one list.
-const TOKEN_FILES = [join(ROOT, 'src', 'shared', 'constants', 'theme.ts')];
+// The files that declare token values: every hex they hold is a needle. Both live in inkweave-ui
+// (#978), and the ink colours only in lorcana.ts.
+const TOKEN_FILES = ['theme.ts', 'lorcana.ts'].map((file) =>
+  join(REPO, 'packages', 'ui', 'src', 'tokens', file),
+);
 // Declaration sites are exempt from the scan.
 const DECLARATION_FILES = [...TOKEN_FILES, join(ROOT, 'src', 'shared', 'constants', 'playstyleUi.ts')];
 const THEME = TOKEN_FILES.map((file) => readFileSync(file, 'utf8')).join('\n');

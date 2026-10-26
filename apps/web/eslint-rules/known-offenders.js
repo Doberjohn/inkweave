@@ -169,7 +169,7 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/shared/components/HeroSection.tsx', // x8
     'apps/web/src/shared/components/SearchBottomSheet.tsx', // x2
     'apps/web/src/shared/components/TabList.tsx', // x1
-    'apps/web/src/shared/constants/theme.ts', // x1
+    'packages/ui/src/tokens/theme.ts', // x1
   ],
   // Ad-hoc styled <button> sites pre-dating the #509 kit. Converge each to a
   // kit component (CtaButton/LinkButton/TabList/IconButton/Chip) on touch.

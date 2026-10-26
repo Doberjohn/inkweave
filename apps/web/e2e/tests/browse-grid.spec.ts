@@ -1,6 +1,6 @@
 import type {Page, TestInfo} from '@playwright/test';
 import {test, expect} from '../fixtures';
-import {LAYOUT, SPACING} from '../../src/shared/constants/theme';
+import {LAYOUT, SPACING} from 'inkweave-ui/tokens/theme';
 
 /**
  * Browse's grid draws only the rows near its view and holds the room of the rest with its

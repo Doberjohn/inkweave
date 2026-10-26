@@ -8,7 +8,7 @@ import {
   COLORS,
   FONTS,
   FONT_SIZES,
-} from '../shared/constants';
+} from '../tokens/theme';
 
 const sectionHeading: React.CSSProperties = {
   fontSize: FONT_SIZES.xl,

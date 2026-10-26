@@ -1,6 +1,4 @@
 {
-  "apps/web/src/docs/Colors.stories.tsx": 13,
-  "apps/web/src/docs/Typography.stories.tsx": 6,
   "apps/web/src/features/cards/components/CardDetailSkeleton.stories.tsx": 1,
   "apps/web/src/features/playstyles/PlaystyleFanTile.stories.tsx": 2,
   "apps/web/src/features/playstyles/PlaystyleSection.stories.tsx": 2,
@@ -50,5 +48,7 @@
   "apps/web/src/shared/components/__tests__/StrengthBadge.test.tsx": 2,
   "apps/web/src/shared/components/__tests__/TierCircle.test.tsx": 2,
   "apps/web/src/shared/components/__tests__/axe-audit.test.tsx": 4,
+  "packages/ui/src/docs/Colors.stories.tsx": 13,
+  "packages/ui/src/docs/Typography.stories.tsx": 6,
   "apps/web/index.html": 1
 }

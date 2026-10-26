@@ -21,10 +21,6 @@ const TRACKED = execFileSync('git', ['ls-files'], {cwd: ROOT, encoding: 'utf8'})
 // Paths that name no tracked file on purpose, each with why.
 const PENDING = new Map([
   ['apps/web/public/mockups/**', 'git-ignored design scratch: it reaches a PR only when forced in'],
-  [
-    'packages/ui/src/tokens/**',
-    "inkweave-ui's tokens arrive with #978's Track 2, which drops this line",
-  ],
   ['packages/ui/src/assets/*.svg', "inkweave-ui's icons arrive with #979, which drops this line"],
 ]);
 

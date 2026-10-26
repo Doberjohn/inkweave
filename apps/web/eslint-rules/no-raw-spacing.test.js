@@ -29,9 +29,9 @@ ruleTester.run('no-raw-spacing', inkweave.rules['no-raw-spacing'], {
     ok('const s = {padding: SPACING.md, margin: 0};'),
     ok('const s = {gap: compact ? SPACING.sm : SPACING.md};'),
     ok('const s = {marginTop: -SPACING.md, marginLeft: -0};'),
-    // Exempt: stories and the src/docs/ showcase (fixtures, not product), and tests.
+    // Exempt: stories and inkweave-ui's src/docs/ showcase (fixtures, not product), and tests.
     exempt('/repo/apps/web/src/features/demo/Demo.stories.tsx'),
-    exempt('/repo/apps/web/src/docs/tokens.ts'),
+    exempt('/repo/packages/ui/src/docs/tokens.ts'),
     exempt('/repo/apps/web/src/features/demo/Demo.test.tsx'),
     exempt('C:\\repo\\apps\\web\\src\\features\\demo\\Demo.stories.tsx'),
     exempt('/repo/packages/ui/src/components/Demo.stories.tsx'),
@@ -47,7 +47,7 @@ ruleTester.run('no-raw-spacing', inkweave.rules['no-raw-spacing'], {
     raw('const s = {paddingInline: 12, marginBlockStart: 4};', 2),
     raw('const s = {marginTop: -14};'),
     raw('const s = {marginLeft: isMobile ? -4 : -SPACING.sm};'),
-    // The ledger holds the app's files only: the same path under inkweave-ui, or under a folder
+    // A ledger entry names one repo path: an app entry's path under inkweave-ui, or under a folder
     // that merely ends in it, is held to the rule.
     {...raw('const s = {padding: 30};'), filename: '/repo/packages/ui/src/components/Demo.tsx'},
     {...raw('const s = {padding: 30};'), filename: under('packages/ui/')},
