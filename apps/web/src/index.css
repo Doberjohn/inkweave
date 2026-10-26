@@ -343,8 +343,8 @@ option {
 
 /* Service-worker update toast spinner. Rendered inside #sw-update-toast by
    shared/lib/swUpdateToast.ts as a <span> with aria-hidden="true". The toast
-   stays on-screen ~600ms before the SW activates and the page reloads, so the
-   animation only needs to look alive for that window. */
+   stays on-screen about a second before the SW activates and the page reloads
+   (10 s at most), so the animation only needs to look alive for that window. */
 .sw-update-spinner {
   display: inline-block;
   width: 14px;

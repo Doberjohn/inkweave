@@ -76,8 +76,11 @@ export function readSiteHeaders() {
  * A server over `dist` that answers as vercel.json does, with `headers` on every response.
  * `sendPage(res, body, url)`, if given, sends each HTML page in place of sending it whole:
  * scripts/check-prerender-handoff.mjs sends one in two parts, as a slow network delivers it.
+ * `bodyFor(file, url)`, if given, may answer with a body of its own in place of the file's, or
+ * undefined for the file's, and the response waits for it: scripts/check-sw-update.mjs serves
+ * two deploys of one build through it, and holds a request.
  */
-export function createDistServer(dist, {headers = readSiteHeaders(), sendPage} = {}) {
+export function createDistServer(dist, {headers = readSiteHeaders(), sendPage, bodyFor} = {}) {
   return createServer((req, res) => {
     void (async () => {
       const url = req.url ?? '/';
@@ -89,7 +92,7 @@ export function createDistServer(dist, {headers = readSiteHeaders(), sendPage} =
       }
       let body;
       try {
-        body = await readFile(file);
+        body = (await bodyFor?.(file, url)) ?? (await readFile(file));
       } catch {
         // Gone since it was found, as when a rebuild empties dist under a running server.
         res.writeHead(500, headers);
