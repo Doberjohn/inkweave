@@ -62,9 +62,9 @@ describe('Tuning values reach the engine', () => {
 
     expect(synergies[0].score).toBe(scores['chain.deckRepeating']);
     // From the ramp card's page, the semantic {RAMP}/{TRIGGER} tokens must resolve to the
-    // positional {A}/{B} chips this way round (the engine swaps each token once, as here).
+    // positional {A}/{B} chips this way round (the engine swaps every mention, as here).
     expect(synergies[0].explanation).toBe(
-      templates['ramp-trigger'].replace('{RAMP}', '{A}').replace('{TRIGGER}', '{B}'),
+      templates['ramp-trigger'].replaceAll('{RAMP}', '{A}').replaceAll('{TRIGGER}', '{B}'),
     );
   });
 });

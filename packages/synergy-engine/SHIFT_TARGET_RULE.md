@@ -421,7 +421,7 @@ Tests live in `packages/synergy-engine/src/__tests__/shift-targets.test.ts` unde
 
 ### Scoring tests
 
-Each test expects the score and line of the tier it names, read from `tuning.json` (`ruleTexts['shift-targets']`), never written as literals, because admin's tuning editor changes them. The line tells apart tiers that share a score. CI's `test:perturbed` run changes every tuned value and fails a test that pins one.
+Each test expects the score and line of the tier it names, read from `tuning.json` (`ruleTexts['shift-targets']`), never written as literals, because admin's tuning editor changes them. The line tells apart tiers that share a score: Shift has more tiers than there are scores, so ties survive any edit, and a Shift test checks the tier's line as well as its score. CI's `test:perturbed` run changes every tuned value, rewording every line down to its placeholders, and fails a test that pins a score or any wording.
 
 | Test | Tier | Scenario |
 |------|------|----------|

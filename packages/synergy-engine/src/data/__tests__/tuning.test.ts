@@ -28,9 +28,9 @@ describe('tuning.json', () => {
     }
   });
 
-  it('ramp scores are integers 0-10 and every template is non-empty', () => {
+  it('ramp scores are integers 1-10 and every template is non-empty', () => {
     for (const s of Object.values(TUNING.ruleTexts.ramp.scores)) {
-      expect(isIntInRange(s, 0, 10)).toBe(true);
+      expect(isIntInRange(s, 1, 10)).toBe(true);
     }
     for (const t of Object.values(TUNING.ruleTexts.ramp.templates)) {
       expect(t.trim()).not.toBe('');
