@@ -19,11 +19,14 @@ const reword = (text: string) => {
   return [`Edited line ${++lines}`, ...kept, ...kept].join(' ');
 };
 
-function perturb() {
+function editShift() {
   for (const tier of Object.values(TUNING.ruleTexts['shift-targets'])) {
     if (tier.score !== undefined) tier.score = step(tier.score);
     if (tier.text) tier.text = reword(tier.text);
   }
+}
+
+function editRamp() {
   const ramp = TUNING.ruleTexts.ramp;
   // Each Ramp score moves to the nearest value no other Ramp score holds (lower first), so a test
   // that reads the wrong key fails too, even while tuned scores tie (all three chain shapes do).
@@ -37,6 +40,9 @@ function perturb() {
     ramp.scores[key] = edited;
   }
   for (const key of Object.keys(ramp.templates)) ramp.templates[key] = reword(ramp.templates[key]);
+}
+
+function editCatalog() {
   for (const p of Object.values(TUNING.playstyles)) {
     Object.assign(p, {name: reword(p.name), tagline: reword(p.tagline)});
   }
@@ -49,6 +55,8 @@ function perturb() {
 // TUNING, which a second pass would edit again, so it is marked once edited.
 const EDITED = Symbol.for('inkweave.editedTuning');
 if (!(EDITED in TUNING)) {
-  perturb();
+  editShift();
+  editRamp();
+  editCatalog();
   Object.defineProperty(TUNING, EDITED, {value: true});
 }
