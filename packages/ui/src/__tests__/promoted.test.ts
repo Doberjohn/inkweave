@@ -7,6 +7,7 @@ import {existsSync, readFileSync} from 'node:fs';
 // Admin keeps its own copies until Doberjohn/inkweave-admin#103 bridges these.
 const PROMOTED = [
   'components/SegmentedControl',
+  'components/Tag',
 ];
 
 /** Admin's classes, theme and bridge: package source names none of them. */
