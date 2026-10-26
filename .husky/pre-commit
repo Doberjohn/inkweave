@@ -5,12 +5,15 @@
 # don't interleave; the commit goes through only when both pass. Each lint
 # script keeps an ESLint cache in its package's node_modules/.cache/eslint/,
 # so a repeat lint re-lints only the files that changed.
-lint_log=$(mktemp)
+lint_log=
 lint_pid=
 # Stop lint and drop its log however the hook ends. A terminal's Ctrl-C reaches
 # the ESLint processes too; a kill of the hook alone stops only the top pnpm.
-trap 'rc=$?; [ -z "$lint_pid" ] || kill "$lint_pid" 2>/dev/null || :; rm -f "$lint_log" || :; exit $rc' EXIT
-trap 'exit 130' HUP INT TERM
+trap 'rc=$?; [ -z "$lint_pid" ] || kill "$lint_pid" 2>/dev/null || :; [ -z "$lint_log" ] || rm -f "$lint_log" || :; exit $rc' EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+lint_log=$(mktemp)
 FORCE_COLOR=1 pnpm run lint >"$lint_log" 2>&1 &
 lint_pid=$!
 test_rc=0
@@ -19,7 +22,6 @@ lint_rc=0
 wait "$lint_pid" || lint_rc=$?
 lint_pid=
 cat "$lint_log"
-rm -f "$lint_log"
 [ "$lint_rc" -eq 0 ] || echo "pre-commit: lint failed (exit $lint_rc)"
 [ "$test_rc" -eq 0 ] || echo "pre-commit: tests failed (exit $test_rc)"
 [ "$lint_rc" -eq 0 ] && [ "$test_rc" -eq 0 ]
