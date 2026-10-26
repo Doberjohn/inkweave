@@ -1,6 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {MemoryRouter} from 'react-router-dom';
-import {fn, userEvent} from 'storybook/test';
+import {fn, within} from 'storybook/test';
 import {CompactHeader} from './CompactHeader';
 import {SessionProvider} from '../contexts/SessionContext';
 
@@ -47,11 +47,13 @@ export const WithSearch: Story = {
   },
 };
 
-/** The skip link (WCAG 2.4.1), shown while it has focus: the first Tab stop on every page with the header. */
+/**
+ * The skip link (WCAG 2.4.1), shown while it has focus: the first Tab stop on every page with the
+ * header. Focused in this story's own canvas, since the docs page renders every story in one page.
+ */
 export const SkipLinkFocused: Story = {
-  args: {},
-  play: async () => {
-    await userEvent.tab();
+  play: ({canvasElement}) => {
+    within(canvasElement).getByRole('link', {name: 'Skip to main content'}).focus();
   },
 };
 

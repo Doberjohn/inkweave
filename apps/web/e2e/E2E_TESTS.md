@@ -581,7 +581,7 @@ The service worker's precache (#928) and the small symbols it keeps on screen of
 
 | Test | What it verifies |
 |---|---|
-| on Browse, whose header is inside `<main>`, lands before the Filters button | The link is 1px wide until the first Tab focuses it, then over 100px wide in the viewport's top corner. Enter focuses `#main-content` and leaves the URL as it was, and the next Tab lands inside `<main>` and outside `<header>`: on the Filters button |
+| on Browse, whose header is inside `<main>`, lands before the Filters button | Until the first Tab focuses it, the link's `.skip-link` rule (index.css) clips it away, so the middle of its box hits what lies under it; focused, the link itself is there, in the viewport's top corner. Enter focuses `#main-content`, leaves the URL as it was and clips the link away again, and the next Tab lands inside `<main>` and outside `<header>`: on the Filters button |
 | on a card page, whose header is outside `<main>` | The same steps on `/card/3286`: after the skip, the next Tab lands inside `<main>` and outside `<header>` |
 | a phone has no skip link | At 390px, once Browse's tiles show, the page has no "Skip to main content" link |
 

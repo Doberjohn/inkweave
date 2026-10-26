@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
-import {act, render, screen, fireEvent} from '@testing-library/react';
+import {render, screen, fireEvent} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import {CompactHeader} from '../CompactHeader';
 import {SessionProvider} from '../../contexts/SessionContext';
@@ -61,16 +61,14 @@ describe("CompactHeader's skip link", () => {
       </MemoryRouter>,
     );
 
-  it('comes before the header, hidden until it has focus', () => {
+  it('comes before the header, as the link the stylesheet clips away until it has focus', () => {
     const {container} = renderHeader();
     const link = screen.getByRole('link', {name: 'Skip to main content'});
 
     expect(container.querySelector('a, button, input, select')).toBe(link);
-    expect(link).toHaveStyle({position: 'absolute', width: '1px', height: '1px'});
-    act(() => link.focus());
-    expect(link).toHaveStyle({position: 'fixed'});
-    act(() => link.blur());
-    expect(link).toHaveStyle({width: '1px'});
+    // index.css's `.skip-link:not(:focus)`, which jsdom doesn't load: skip-link.spec.ts checks
+    // in a browser that it shows only while focused.
+    expect(link).toHaveClass('skip-link');
   });
 
   it('moves focus past the header, leaving the address as it is', () => {

@@ -7,16 +7,27 @@ import {test, expect} from '../fixtures';
 
 const skipLink = (page: Page) => page.getByRole('link', {name: 'Skip to main content'});
 
+/**
+ * Whether the page shows the link at the middle of its box, on top of the header. Clipped away,
+ * it keeps its box, so its size can't tell, but the point then reaches what lies under it.
+ */
+const shownOnTop = (page: Page) =>
+  skipLink(page).evaluate((link) => {
+    const box = link.getBoundingClientRect();
+    const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+    return hit !== null && link.contains(hit);
+  });
+
 /** Tabs to the skip link, follows it, and Tabs once more, which must land past the header. */
 async function skipPastHeader(page: Page) {
   const link = skipLink(page);
-  expect((await link.boundingBox())!.width).toBeLessThanOrEqual(1);
+  expect(await shownOnTop(page)).toBe(false);
 
   await page.keyboard.press('Tab');
   await expect(link).toBeFocused();
   // Shown while it has focus, in the page's top corner.
+  expect(await shownOnTop(page)).toBe(true);
   const box = (await link.boundingBox())!;
-  expect(box.width).toBeGreaterThan(100);
   expect(box.x).toBeGreaterThanOrEqual(0);
   expect(box.y).toBeGreaterThanOrEqual(0);
 
@@ -24,6 +35,7 @@ async function skipPastHeader(page: Page) {
   await page.keyboard.press('Enter');
   await expect(page.locator('#main-content')).toBeFocused();
   expect(page.url()).toBe(url);
+  expect(await shownOnTop(page)).toBe(false);
 
   await page.keyboard.press('Tab');
   const landed = await page.evaluate(() => ({

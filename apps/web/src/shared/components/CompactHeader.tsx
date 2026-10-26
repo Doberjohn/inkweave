@@ -1,7 +1,7 @@
 import {type ReactNode, useState} from 'react';
 import {Link, NavLink} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, VISUALLY_HIDDEN, Z_INDEX, searchFieldStyle} from '../constants';
+import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX, searchFieldStyle} from '../constants';
 import {useAutocomplete, useHover} from '../hooks';
 import {suggestCardsByName} from '../../features/cards/loader';
 import {useRevealPhase} from '../../features/reveals';
@@ -465,11 +465,17 @@ function DesktopNav({isRevealSeason}: DesktopNavProps) {
   );
 }
 
-/** Where the skip link lands: the spot right after the header. */
+/**
+ * Where the skip link lands: right after the header in the page's order, so the next Tab
+ * reaches the page's first control.
+ */
 const MAIN_CONTENT_ID = 'main-content';
 
-/** The skip link while it has focus: the top corner, above the sticky header. */
-const SKIP_LINK_SHOWN: React.CSSProperties = {
+/**
+ * The skip link as it shows while it has focus: the top corner, above the sticky header. Fixed,
+ * so it takes no room while `.skip-link` (index.css) clips it away.
+ */
+const SKIP_LINK_STYLE: React.CSSProperties = {
   ...CTA_FILLED_STYLE,
   position: 'fixed',
   top: SPACING.md,
@@ -483,27 +489,31 @@ const SKIP_LINK_SHOWN: React.CSSProperties = {
   textDecoration: 'none',
 };
 
-/** Out of the page's flex or grid flow, and no ring: the target is never a Tab stop or a control. */
+/**
+ * Out of the page's flex or grid flow, and no ring: the target is never a Tab stop or a control.
+ * Out of flow it sits at its container's top, where the header starts, so focusing it brings the
+ * top of the page's content into view.
+ */
 const SKIP_TARGET_STYLE: React.CSSProperties = {position: 'absolute', outline: 'none'};
 
 /**
  * "Skip to main content" (WCAG 2.4.1): the first Tab stop on every page with the header, shown
- * only while focused. Its target renders with it, after the header, so axe's skip-link rule
- * always finds it; several pages put the header inside their <main>, so <main> can't be the
- * target. The click focuses the target itself, so the address never gains the fragment.
+ * only while focused. The stylesheet shows it, not React state, so a prerendered page's own copy
+ * shows it too, before the app takes over. Its target renders with it, after the header, so axe's
+ * skip-link rule always finds it; several pages put the header inside their <main>, so <main>
+ * can't be the target. The click focuses the target itself, so the address never gains the
+ * fragment.
  */
 function SkipLink() {
-  const [shown, setShown] = useState(false);
   return (
     <a
       href={`#${MAIN_CONTENT_ID}`}
-      onFocus={() => setShown(true)}
-      onBlur={() => setShown(false)}
+      className="skip-link"
       onClick={(event) => {
         event.preventDefault();
         document.getElementById(MAIN_CONTENT_ID)?.focus();
       }}
-      style={shown ? SKIP_LINK_SHOWN : VISUALLY_HIDDEN}>
+      style={SKIP_LINK_STYLE}>
       Skip to main content
     </a>
   );
