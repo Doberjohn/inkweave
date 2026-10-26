@@ -53,6 +53,19 @@ function reportStartFailure(error: unknown): void {
   }
 }
 
+/** The one address where a production build serves visitors. */
+const PRODUCTION_HOST = 'inkweave.ink';
+
+/**
+ * Sentry's environment: the build's (production, preview or unknown, #740), except that a
+ * production build counts as production only on inkweave.ink. Vercel opens every new deployment
+ * at its own vercel.app address, and a PR's Deploy dry run stages a production build there too:
+ * neither is a visitor, so both report as preview.
+ */
+export function sentryEnvironment(deployEnv: string, hostname: string): string {
+  return deployEnv === 'production' && hostname !== PRODUCTION_HOST ? 'preview' : deployEnv;
+}
+
 function sentryOptions(): Parameters<typeof init>[0] {
   // Sentry 11 collects user info, cookies, request/response bodies and query data by
   // default (v10 did not), and bodies here could include Supabase sign-in and vote
@@ -62,8 +75,7 @@ function sentryOptions(): Parameters<typeof init>[0] {
 
   return {
     dsn: import.meta.env.VITE_SENTRY_DSN,
-    // production, preview or unknown: baked in at build time, so previews never pose as prod.
-    environment: __DEPLOY_ENV__,
+    environment: sentryEnvironment(__DEPLOY_ENV__, window.location.hostname),
     // The Supabase integration joins later, from shared/lib/supabase.ts, once a page creates
     // the client: registering it here would download the Supabase SDK on every page.
     integrations: [browserTracingIntegration()],
@@ -88,5 +100,8 @@ function sentryOptions(): Parameters<typeof init>[0] {
       'Importing a module script failed',
       'error loading dynamically imported module',
     ],
+    // Vercel's toolbar, which Vercel adds to previews and staging for people signed in to the
+    // team: an error thrown inside it isn't the app's (INKWEAVE-15).
+    denyUrls: ['/_next-live/'],
   };
 }
