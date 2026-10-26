@@ -1,6 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
-import {FilterDialog} from './FilterDialog';
+import {CardFilterDialog} from './CardFilterDialog';
 
 const mockSets = [
   {code: '5', name: 'Shimmering Skies', number: 5},
@@ -22,9 +22,9 @@ const baseArgs = {
   sets: mockSets,
 };
 
-const meta: Meta<typeof FilterDialog> = {
+const meta: Meta<typeof CardFilterDialog> = {
   title: 'Shared/FilterDialog',
-  component: FilterDialog,
+  component: CardFilterDialog,
   parameters: {layout: 'fullscreen'},
   tags: ['autodocs'],
   args: {...baseArgs, variant: 'modal'},

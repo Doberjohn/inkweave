@@ -97,7 +97,7 @@ export const ARIA_MODAL_EXEMPT = {
   paths: [
     'packages/ui/src/components/DialogShell.tsx',
     'packages/ui/src/components/BottomSheet.tsx',
-    'apps/web/src/shared/components/FilterDialog.tsx',
+    'packages/ui/src/components/FilterDialog.tsx',
   ],
   patterns: [TEST_FILE, STORY_FILE],
 };

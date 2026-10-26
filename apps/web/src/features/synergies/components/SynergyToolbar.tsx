@@ -7,7 +7,7 @@ import type {CardTypeFilter, SynergySortOrder} from '../../../shared/constants';
 import type {SynergyFilterState, StrengthTierFilter} from '../utils/filterSynergyCards';
 import {EMPTY_SYNERGY_FILTERS, withoutStaleDualOnly} from '../utils/filterSynergyCards';
 import {SYNERGY_SORT_OPTIONS, SPACING} from '../../../shared/constants';
-import {FilterDialog} from '../../../shared/components/FilterDialog';
+import {CardFilterDialog} from '../../../shared/components/CardFilterDialog';
 import {LinkButton} from 'inkweave-ui/components/LinkButton';
 import {Chip} from 'inkweave-ui/components/Chip';
 import {FiltersButton} from 'inkweave-ui/components/FiltersButton';
@@ -262,7 +262,7 @@ export function SynergyToolbar({
       </div>
 
       {/* Filter dialog (modal on desktop, drawer on mobile) */}
-      <FilterDialog
+      <CardFilterDialog
         isOpen={filterOpen}
         onClose={() => setFilterOpen(false)}
         onApply={handleApplyFilters}

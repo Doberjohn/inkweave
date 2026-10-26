@@ -3,6 +3,7 @@ import {transformCard as baseTransformCard, isCoreSet} from 'inkweave-synergy-en
 import type {LorcanaCard, Ink, CardType} from './types';
 import {fetchPreviewCards} from './previewCards';
 import {PROMO_RARITY, isChaseRarity} from 'inkweave-ui/lib/printings';
+import type {FilterPicks} from 'inkweave-ui/lib/filterModel';
 import {ALL_INKS, binderSetOf, editionRank, promoSetRank, type BrowseSortOrder} from '../../shared/constants';
 
 interface LorcanaJSONSet {
@@ -347,34 +348,16 @@ export function suggestCardsByName(cards: LorcanaCard[], term: string): LorcanaC
 }
 
 /**
- * Filter options for cards
+ * Filter options for cards: the filter panel's picks (`FilterPicks`, which FilterContent sets)
+ * plus the fields only this module's filtering reads. A picked rarity matches the card's own
+ * rarity, and with `rarityMatch` its printings too; `inkMatch` applies only to selections
+ * `offersDualOnly` offers it for (`matchesInk`).
  */
-export interface CardFilterOptions {
+export interface CardFilterOptions extends FilterPicks {
   ink?: Ink | Ink[];
   type?: (CardType | 'Song') | (CardType | 'Song')[];
   costs?: number[];
-  keywords?: string[];
-  classifications?: string[];
   textSearch?: string;
-  /**
-   * Picked sets, ANY of them (owner, 2026-10-08: the set logos replaced a
-   * single-pick dropdown). A card belongs to one set, so several widen the result,
-   * as types do.
-   */
-  setCodes?: string[];
-  /**
-   * Picked rarities, ANY of them (owner, 2026-10-08), matched against the card's
-   * own rarity, and with `rarityMatch` against its printings too. A card has one
-   * rarity, so several widen the result, as types do.
-   */
-  rarities?: string[];
-  inkwell?: 'inkable' | 'uninkable';
-  /**
-   * `dual`: the DUAL-INK CARDS switch (owner, 2026-10-08), narrowing the result to dual-ink
-   * cards: one ink's, or exactly one pair's. Applies only to selections that
-   * offer it; see `offersDualOnly` and `matchesInk`.
-   */
-  inkMatch?: 'dual';
   /**
    * `printings`: a picked rarity also matches a card's Epic, Enchanted or Iconic
    * printing (owner, 2026-10-08). Browse sets it, since it folds those printings

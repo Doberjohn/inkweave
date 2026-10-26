@@ -1,72 +1,43 @@
 import {Fragment} from 'react';
-import type {Ink, SetInfo} from '../../features/cards';
-import type {CardFilterOptions} from '../../features/cards';
+import type {Ink} from 'inkweave-synergy-engine';
 import {
-  ART_OPTIONS,
   picksExactly,
-  raritiesOfKind,
-  rarityLabel,
+  type ArtPreset,
+  type CardTypeFilter,
   type FilterButtonOptions,
-} from '../../features/cards/filterOptions';
-import type {CardTypeFilter} from '../constants';
-import type {InkwellValue} from 'inkweave-ui/lorcana/InkwellIcon';
-import {CARD_TYPE_FILTERS, COST_BUTTONS, COLORS, FONT_SIZES, SET_LOGOS, SPACING} from '../constants';
-import {Chip} from 'inkweave-ui/components/Chip';
-import {offersDualOnly} from '../../features/cards/loader';
-import {CostIcon} from 'inkweave-ui/lorcana/CostIcon';
-import {FilterButton} from 'inkweave-ui/components/FilterButton';
-import {FilterSection} from 'inkweave-ui/components/FilterSection';
-import {InkFilterGroup} from 'inkweave-ui/lorcana/InkFilterGroup';
-import {InkwellIcon} from 'inkweave-ui/lorcana/InkwellIcon';
-import {RaritySymbol} from 'inkweave-ui/lorcana/RaritySymbol';
-import {hasRaritySymbol, rarityConfigOf} from 'inkweave-ui/lib/rarity';
+  type FilterPicks,
+  type FilterSet,
+  type FilterVocabulary,
+} from '../lib/filterModel';
+import {COLORS, FONT_SIZES, SPACING} from '../tokens/theme';
+import {Chip} from '../components/Chip';
+import {FilterButton} from '../components/FilterButton';
+import {FilterSection} from '../components/FilterSection';
+import {CostIcon} from './CostIcon';
+import {InkFilterGroup} from './InkFilterGroup';
+import {InkwellIcon} from './InkwellIcon';
+import {RaritySymbol} from './RaritySymbol';
+import {hasRaritySymbol, rarityConfigOf} from '../lib/rarity';
 
-/** Shared props for FilterModal (desktop) and FilterDrawer (mobile). */
-export interface FilterPanelProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onApply: (
-    inks: Ink[],
-    types: CardTypeFilter[],
-    costs: number[],
-    filters: CardFilterOptions,
-  ) => void;
+export interface FilterContentProps {
   inkFilters: Ink[];
   typeFilters: CardTypeFilter[];
   costFilters: number[];
-  filters: CardFilterOptions;
+  /** The picks, kept whole: a field FilterContent doesn't know goes back as it came. */
+  filters: FilterPicks;
   uniqueKeywords: string[];
   uniqueClassifications: string[];
-  /** The pool's rarities, in rarity order (`getUniqueRarities`). */
+  /** The pool's rarities, in rarity order. */
   uniqueRarities: string[];
-  sets: SetInfo[];
-  /**
-   * Limits the ink, cost, type and inkwell buttons to these values (a playstyle's card
-   * pool). Left out, every value shows.
-   */
-  buttonOptions?: FilterButtonOptions;
-  /** Offer the Set filter (the default); collection mode turns it off (see `FilterContentProps`). */
-  showSetFilter?: boolean;
-  /** Offer the art presets under the rarities; Browse does (see `FilterContentProps`). */
-  showArtPresets?: boolean;
-}
-
-interface FilterContentProps {
-  inkFilters: Ink[];
-  typeFilters: CardTypeFilter[];
-  costFilters: number[];
-  filters: CardFilterOptions;
-  uniqueKeywords: string[];
-  uniqueClassifications: string[];
-  /** The pool's rarities, in rarity order (`getUniqueRarities`). */
-  uniqueRarities: string[];
-  sets: SetInfo[];
-  /** Limits the button groups to these values; left out, every value shows. */
+  sets: FilterSet[];
+  /** Limits the button groups to these values; left out, the vocabulary's `allButtons` show. */
   buttonOptions?: FilterButtonOptions;
   onToggleInk: (ink: Ink) => void;
   onToggleType: (type: CardTypeFilter) => void;
   onToggleCost: (cost: number) => void;
-  onFiltersChange: (filters: CardFilterOptions) => void;
+  onFiltersChange: (filters: FilterPicks) => void;
+  /** The app's words and rules: rarity names, set logos, art presets, Dual-ink and the default buttons (#981). */
+  vocabulary: FilterVocabulary;
   /**
    * Layout variant controls icon sizing and flex layout per section. `panel` is
    * Browse's docked side panel: the same narrow column as `mobile`, every section
@@ -266,9 +237,9 @@ function ChipFilterSection({
 /**
  * A rarity's chip shows its symbol alone (owner, 2026-10-08: the symbols are
  * recognizable); the name stays as the chip's accessible name and tooltip, Promo
- * for Special (`rarityLabel`). A rarity without a symbol, should LorcanaJSON add
- * one, shows its name rather than an empty chip. Lowercased: RaritySymbol keys on
- * "super rare".
+ * for Special in the app's vocabulary (`rarityLabel`). A rarity without a symbol,
+ * should LorcanaJSON add one, shows its name rather than an empty chip. Lowercased:
+ * RaritySymbol keys on "super rare".
  */
 const raritySymbol = (rarity: string) =>
   hasRaritySymbol(rarity) ? <RaritySymbol rarity={rarity.toLowerCase()} size={24} /> : undefined;
@@ -299,26 +270,25 @@ const compactChip = (isMobile: boolean) =>
  * besides puts it out; picked again while lit, it clears them. Under the rarity symbols,
  * as Dual-ink cards sits under the inks.
  */
-function ArtPresets({rarities, filters, onFiltersChange, isMobile}: {
-  rarities: string[];
-  filters: CardFilterOptions;
-  onFiltersChange: (filters: CardFilterOptions) => void;
+function ArtPresets({presets, filters, onFiltersChange, isMobile}: {
+  presets: readonly ArtPreset[];
+  filters: FilterPicks;
+  onFiltersChange: (filters: FilterPicks) => void;
   isMobile: boolean;
 }) {
   const picked = filters.rarities ?? [];
   return (
     // The same gap as between the rarity chips above.
     <div role="group" aria-label="Card art" style={{display: 'flex', justifyContent: 'center', gap: SPACING.sm}}>
-      {ART_OPTIONS.map(({value, label, title}) => {
-        const kind = raritiesOfKind(rarities, value);
-        const lit = picksExactly(picked, kind);
+      {presets.map(({value, label, title, rarities}) => {
+        const lit = picksExactly(picked, rarities);
         return (
           <Chip
             key={value}
             label={label}
             active={lit}
-            title={title(kind)}
-            onClick={() => onFiltersChange(withOption(filters, 'rarities', lit ? [] : kind))}
+            title={title}
+            onClick={() => onFiltersChange(withOption(filters, 'rarities', lit ? [] : [...rarities]))}
             isMobile={isMobile}
             style={compactChip(isMobile)}
           />
@@ -328,9 +298,9 @@ function ArtPresets({rarities, filters, onFiltersChange, isMobile}: {
   );
 }
 
-/** Whether the offered rarities include both kinds, the only time the art presets mean anything. */
-const offersBothKinds = (rarities: readonly string[]) =>
-  ART_OPTIONS.every(({value}) => raritiesOfKind(rarities, value).length > 0);
+/** Whether every preset picks something of the offered rarities, the only time the presets mean anything. */
+const offersEveryKind = (presets: readonly ArtPreset[]) =>
+  presets.length > 0 && presets.every((preset) => preset.rarities.length > 0);
 
 /**
  * Rarity: any picked rarity, from the page's options (Browse's include its cards' printings:
@@ -344,15 +314,17 @@ function RaritySection({
   showArtPresets,
   fold,
   isMobile,
+  vocabulary,
 }: {
   rarities: string[];
-  filters: CardFilterOptions;
-  onFiltersChange: (filters: CardFilterOptions) => void;
+  filters: FilterPicks;
+  onFiltersChange: (filters: FilterPicks) => void;
   showArtPresets: boolean;
   fold: Fold;
   isMobile: boolean;
+  vocabulary: FilterVocabulary;
 }) {
-  const presets = showArtPresets && offersBothKinds(rarities);
+  const presets = showArtPresets ? vocabulary.artPresets(rarities) : [];
   return (
     <ChipFilterSection
       label="Rarity"
@@ -363,13 +335,13 @@ function RaritySection({
       fold={fold}
       isMobile={isMobile}
       iconFor={raritySymbol}
-      labelFor={rarityLabel}
+      labelFor={vocabulary.rarityLabel}
       groupOf={rarityLines(rarities)}
       // The symbols spread across each line (owner, 2026-10-08).
       justifyContent="space-around"
       below={
-        presets ? (
-          <ArtPresets rarities={rarities} filters={filters} onFiltersChange={onFiltersChange} isMobile={isMobile} />
+        offersEveryKind(presets) ? (
+          <ArtPresets presets={presets} filters={filters} onFiltersChange={onFiltersChange} isMobile={isMobile} />
         ) : undefined
       }
     />
@@ -404,18 +376,17 @@ function CostFilterSection({
   onToggleCost: (cost: number) => void;
   grid: boolean;
   /** The inkwell filter: Uninkable redraws the buttons in the uninkable cost hexagon. */
-  inkwell: CardFilterOptions['inkwell'];
+  inkwell: FilterPicks['inkwell'];
   fold: Fold;
-  options: FilterButtonOptions | undefined;
+  options: FilterButtonOptions;
 }) {
-  const costs = options?.costs ?? COST_BUTTONS;
   return (
     <FilterSection label="Ink Cost" {...fold} summary={costSummary(costFilters)}>
       <div
         role="group"
         aria-label="Ink cost filters"
         style={grid ? PANEL_GRID_STYLE : COST_WRAP_STYLE}>
-        {costs.map((cost) => (
+        {options.costs.map((cost) => (
           <FilterButton
             key={cost}
             size="sm"
@@ -441,12 +412,12 @@ const INK_ROW_STYLE: React.CSSProperties = {flexWrap: 'nowrap', justifyContent: 
 /**
  * DUAL-INK CARDS (owner, 2026-10-08): narrows the ink result to its dual-ink cards,
  * one ink's (Amber: every Amber dual) or one pair's (Amber + Steel: Amber-Steel).
- * See `CardFilterOptions.inkMatch` and `offersDualOnly`. One toggle chip: off is
+ * See `FilterPicks.inkMatch` and the vocabulary's `offersDualInk`. One toggle chip: off is
  * the default, and the kit's chip already has the selected-state recipe.
  */
 function DualInkToggle({filters, onFiltersChange, isMobile}: {
-  filters: CardFilterOptions;
-  onFiltersChange: (filters: CardFilterOptions) => void;
+  filters: FilterPicks;
+  onFiltersChange: (filters: FilterPicks) => void;
   isMobile: boolean;
 }) {
   const on = filters.inkMatch === 'dual';
@@ -469,6 +440,7 @@ function InkFilterSection({
   grid,
   fold,
   modeSwitch,
+  offersDualInk,
   action,
   options,
 }: {
@@ -477,15 +449,16 @@ function InkFilterSection({
   grid: boolean;
   fold: Fold;
   modeSwitch: React.ReactNode;
+  offersDualInk: FilterVocabulary['offersDualInk'];
   action: React.ReactNode;
-  options: FilterButtonOptions | undefined;
+  options: FilterButtonOptions;
 }) {
   return (
     <FilterSection label="Ink" {...fold} summary={inkFilters.join(', ') || undefined} action={action}>
       <InkFilterGroup
         inkFilters={inkFilters}
         onToggleInk={onToggleInk}
-        inks={options?.inks}
+        inks={options.inks}
         size="sm"
         iconSize={30}
         style={grid ? PANEL_GRID_STYLE : INK_ROW_STYLE}
@@ -494,7 +467,7 @@ function InkFilterSection({
           beyond a pair the question has no single answer. Under the icons, not in
           the header: it changes how THEY combine, and the header's right end is
           the panel's "Clear all". */}
-      {offersDualOnly(inkFilters.length) && (
+      {offersDualInk(inkFilters.length) && (
         <div style={{display: 'flex', justifyContent: 'center', marginTop: SPACING.sm}}>{modeSwitch}</div>
       )}
     </FilterSection>
@@ -508,12 +481,11 @@ function InkwellFilterSection({
   fold,
   options,
 }: {
-  filters: CardFilterOptions;
-  onFiltersChange: (filters: CardFilterOptions) => void;
+  filters: FilterPicks;
+  onFiltersChange: (filters: FilterPicks) => void;
   fold: Fold;
-  options: FilterButtonOptions | undefined;
+  options: FilterButtonOptions;
 }) {
-  const values: readonly InkwellValue[] = options?.inkwell ?? ['inkable', 'uninkable'];
   return (
     <FilterSection
       label="Inkwell"
@@ -527,7 +499,7 @@ function InkwellFilterSection({
           flexWrap: 'wrap',
           justifyContent: 'space-evenly',
         }}>
-        {values.map((value) => (
+        {options.inkwell.map((value) => (
           <FilterButton
             key={value}
             size="md"
@@ -565,13 +537,12 @@ function CardTypeFilterSection({
   isDesktop: boolean;
   isMobile: boolean;
   fold: Fold;
-  options: FilterButtonOptions | undefined;
+  options: FilterButtonOptions;
 }) {
-  const types = options?.types ?? CARD_TYPE_FILTERS;
   return (
     <FilterSection label={isDesktop ? 'Card Type' : 'Type'} {...fold} summary={listSummary(typeFilters)}>
       <ChipToggleGroup
-        values={types}
+        values={options.types}
         selected={typeFilters}
         onToggle={onToggleType}
         ariaLabel="Card type filters"
@@ -582,8 +553,7 @@ function CardTypeFilterSection({
 }
 
 /** A set's logo, sized for its tile; its name where a set has no logo art yet. */
-function SetLogo({set}: {set: SetInfo}) {
-  const logo = SET_LOGOS[set.code];
+function SetLogo({set, logo}: {set: FilterSet; logo: string | undefined}) {
   if (!logo) return <span style={{fontSize: `${FONT_SIZES.sm}px`}}>{set.name}</span>;
   // Decorative: the tile's aria-label names the set. Lazy, so a folded section
   // (display: none) fetches nothing until it opens.
@@ -599,7 +569,7 @@ function SetLogo({set}: {set: SetInfo}) {
 }
 
 /** "Winterspell", or "2" for several: what a folded Set header shows. */
-function setSummary(picked: string[], sets: SetInfo[]): string | undefined {
+function setSummary(picked: string[], sets: FilterSet[]): string | undefined {
   return listSummary(picked.map((code) => sets.find((s) => s.code === code)?.name ?? `Set ${code}`));
 }
 
@@ -609,11 +579,12 @@ function setSummary(picked: string[], sets: SetInfo[]): string | undefined {
  * `matchesSet`). The tiles are the kit's FilterButton, the same selected glow as
  * the ink and cost buttons above.
  */
-function SetLogoSection({sets, selected, onChange, fold}: {
-  sets: SetInfo[];
+function SetLogoSection({sets, selected, onChange, fold, setLogo}: {
+  sets: FilterSet[];
   selected: string[];
   onChange: (next: string[]) => void;
   fold: Fold;
+  setLogo: FilterVocabulary['setLogo'];
 }) {
   const newestFirst = [...sets].sort((a, b) => b.number - a.number);
   return (
@@ -631,7 +602,7 @@ function SetLogoSection({sets, selected, onChange, fold}: {
             activeColor={COLORS.primary}
             activeBgColor={COLORS.primary200}
             aria-label={set.name}>
-            <SetLogo set={set} />
+            <SetLogo set={set} logo={setLogo(set.code)} />
           </FilterButton>
         ))}
       </div>
@@ -640,11 +611,7 @@ function SetLogoSection({sets, selected, onChange, fold}: {
 }
 
 /** The options with one option set, or removed when it is empty (`isEmptyFilterValue`). */
-function withOption<K extends keyof CardFilterOptions>(
-  filters: CardFilterOptions,
-  key: K,
-  value: CardFilterOptions[K],
-): CardFilterOptions {
+function withOption<K extends keyof FilterPicks>(filters: FilterPicks, key: K, value: FilterPicks[K]): FilterPicks {
   const next = {...filters};
   if (isEmptyFilterValue(value)) delete next[key];
   else next[key] = value;
@@ -660,23 +627,24 @@ function TraitSections({
   uniqueKeywords,
   uniqueClassifications,
   sets,
-  buttonOptions,
+  buttons,
+  setLogo,
   showSetFilter,
   isDesktop,
   isMobile,
   fold,
 }: Pick<
   FilterContentProps,
-  | 'filters'
-  | 'onFiltersChange'
-  | 'typeFilters'
-  | 'onToggleType'
-  | 'uniqueKeywords'
-  | 'uniqueClassifications'
-  | 'sets'
-  | 'buttonOptions'
-> & {showSetFilter: boolean; isDesktop: boolean; isMobile: boolean; fold: Fold}) {
-  const update = <K extends keyof CardFilterOptions>(key: K, value: CardFilterOptions[K]) =>
+  'filters' | 'onFiltersChange' | 'typeFilters' | 'onToggleType' | 'uniqueKeywords' | 'uniqueClassifications' | 'sets'
+> & {
+  buttons: FilterButtonOptions;
+  setLogo: FilterVocabulary['setLogo'];
+  showSetFilter: boolean;
+  isDesktop: boolean;
+  isMobile: boolean;
+  fold: Fold;
+}) {
+  const update = <K extends keyof FilterPicks>(key: K, value: FilterPicks[K]) =>
     onFiltersChange(withOption(filters, key, value));
   return (
     <>
@@ -687,7 +655,7 @@ function TraitSections({
         isDesktop={isDesktop}
         isMobile={isMobile}
         fold={fold}
-        options={buttonOptions}
+        options={buttons}
       />
 
       {/* Keywords: every picked keyword (see `matchesKeywords`) */}
@@ -720,11 +688,16 @@ function TraitSections({
           selected={filters.setCodes ?? []}
           onChange={(next) => update('setCodes', next)}
           fold={fold}
+          setLogo={setLogo}
         />
       )}
     </>
   );
 }
+
+/** The button values to show: the page's own, or every value the vocabulary offers. */
+const buttonsOf = (options: FilterButtonOptions | undefined, vocabulary: FilterVocabulary) =>
+  options ?? vocabulary.allButtons;
 
 /**
  * Shared filter sections rendered identically in FilterModal (desktop) and
@@ -750,7 +723,9 @@ export function FilterContent({
   headerAction,
   showSetFilter = true,
   showArtPresets = false,
+  vocabulary,
 }: FilterContentProps) {
+  const buttons = buttonsOf(buttonOptions, vocabulary);
   const isDesktop = variant === 'desktop';
   const isPanel = variant === 'panel';
   // The phone drawer's chips take the kit's larger touch padding.
@@ -770,8 +745,9 @@ export function FilterContent({
           grid={isPanel}
           fold={open}
           modeSwitch={<DualInkToggle filters={filters} onFiltersChange={onFiltersChange} isMobile={isMobile} />}
+          offersDualInk={vocabulary.offersDualInk}
           action={headerAction}
-          options={buttonOptions}
+          options={buttons}
         />
       )}
 
@@ -783,7 +759,7 @@ export function FilterContent({
           filters={filters}
           onFiltersChange={onFiltersChange}
           fold={open}
-          options={buttonOptions}
+          options={buttons}
         />
       )}
 
@@ -795,7 +771,7 @@ export function FilterContent({
           grid={isPanel}
           inkwell={filters.inkwell}
           fold={open}
-          options={buttonOptions}
+          options={buttons}
         />
       )}
 
@@ -806,6 +782,7 @@ export function FilterContent({
         showArtPresets={showArtPresets}
         fold={open}
         isMobile={isMobile}
+        vocabulary={vocabulary}
       />
 
       <TraitSections
@@ -816,7 +793,8 @@ export function FilterContent({
         uniqueKeywords={uniqueKeywords}
         uniqueClassifications={uniqueClassifications}
         sets={sets}
-        buttonOptions={buttonOptions}
+        buttons={buttons}
+        setLogo={vocabulary.setLogo}
         showSetFilter={showSetFilter}
         isDesktop={isDesktop}
         isMobile={isMobile}

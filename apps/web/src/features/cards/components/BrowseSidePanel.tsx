@@ -1,5 +1,6 @@
 import {useRef, type CSSProperties, type ReactNode} from 'react';
-import {FilterContent} from '../../../shared/components/FilterContent';
+import {FilterContent} from 'inkweave-ui/lorcana/FilterContent';
+import {FILTER_VOCABULARY} from '../filterOptions';
 import {LinkButton} from 'inkweave-ui/components/LinkButton';
 import {COLORS, RADIUS, SPACING} from '../../../shared/constants';
 import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
@@ -82,7 +83,7 @@ export function useSidePanelDocked(): boolean {
 /** What `FilterContent` needs, wired straight to the URL state. The panel adds its own Clear all. */
 export type PanelFilterProps = Omit<
   React.ComponentProps<typeof FilterContent>,
-  'variant' | 'showInlineCost' | 'headerAction'
+  'variant' | 'showInlineCost' | 'headerAction' | 'vocabulary'
 >;
 
 interface BrowseSidePanelProps {
@@ -99,6 +100,7 @@ function FiltersBody({filterProps, activeFilterCount, onClearFilters}: BrowseSid
       <FilterContent
         {...filterProps}
         variant="panel"
+        vocabulary={FILTER_VOCABULARY}
         // On the first section's header line (Ink), not a row of its own, so appearing
         // never shifts the sections and no empty strip sits above them while nothing is
         // active. An item of that line, not an overlay: the Ink toggle and its hover wash

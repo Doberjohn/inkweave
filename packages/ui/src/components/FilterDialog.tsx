@@ -1,36 +1,30 @@
 import {useRef, type ReactNode} from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import {COLORS, FONT_SIZES, SHADOWS, SPACING, RADIUS, Z_INDEX} from '../constants';
-import {CtaButton} from 'inkweave-ui/components/CtaButton';
-import {IconButton} from 'inkweave-ui/components/IconButton';
-import {LinkButton} from 'inkweave-ui/components/LinkButton';
-import {useDraftFilters} from '../hooks/useDraftFilters';
-import {useInlineCostFilters} from '../hooks';
-import {FilterContent} from './FilterContent';
-import type {FilterPanelProps} from './FilterContent';
+import {COLORS, FONT_SIZES, SHADOWS, SPACING, RADIUS, Z_INDEX} from '../tokens/theme';
+import {CtaButton} from './CtaButton';
+import {IconButton} from './IconButton';
+import {LinkButton} from './LinkButton';
 
-interface FilterDialogProps extends FilterPanelProps {
-  /** Responsive variant. Controls layout and animation. */
-  variant: 'modal' | 'drawer';
-  /**
-   * Whether the page's toolbar carries the cost and inkwell buttons inline, so the
-   * desktop modal can leave them out. Defaults to Browse's toolbar: inkwell always,
-   * cost on wide screens. A toolbar without them (the synergy toolbar) passes
-   * `false` for each, or those filters are unreachable on desktop.
-   */
-  toolbarCarries?: {cost: boolean; inkwell: boolean};
+/**
+ * The filter dialog's shell: the overlay contract's one Radix exception (#510,
+ * .claude/rules/overlays.md), which the caller fills with its filters and drafts (#981).
+ */
+export interface FilterDialogProps {
+  isOpen: boolean;
+  /** Closes without applying: Escape, the backdrop, the modal's ×, and after Apply. */
+  onClose: () => void;
+  /** Apply's press, before `onClose`. */
+  onApply: () => void;
+  /** Clear all's press. */
+  onClearAll: () => void;
+  /** What Clear all would clear: while above 0, it shows, and the title counts it. */
+  activeCount: number;
   /** The title, in place of "Filters (n)": a phone binder's sheet is "Binder" (#969). */
   title?: string;
-  /** Drawn above the filters: the Binder sheet's Show and sort (#969). */
-  prelude?: ReactNode;
-  /** Drawn after the filters: the Binder sheet's numbers (#969). */
-  postlude?: ReactNode;
-  /**
-   * What the caller drafts beside the filters, which Clear all puts back too (the Binder sheet's
-   * Show, #969): while `count` is above 0, Clear all shows, and pressing it also calls `onClear`.
-   * One prop, so a count never comes without the clear that takes it away.
-   */
-  extra?: {count: number; onClear: () => void};
+  /** Responsive variant. Controls layout and animation. */
+  variant: 'modal' | 'drawer';
+  /** The dialog's body, which scrolls. */
+  children: ReactNode;
 }
 
 /**
@@ -110,38 +104,18 @@ export function FilterDialog({
   isOpen,
   onClose,
   onApply,
-  variant,
-  inkFilters,
-  typeFilters,
-  costFilters,
-  filters,
-  uniqueKeywords,
-  uniqueClassifications,
-  uniqueRarities,
-  sets,
-  buttonOptions,
-  showSetFilter,
-  showArtPresets,
-  toolbarCarries = {cost: true, inkwell: true},
+  onClearAll,
+  activeCount,
   title,
-  prelude,
-  postlude,
-  extra,
+  variant,
+  children,
 }: FilterDialogProps) {
-  const draft = useDraftFilters({isOpen, inkFilters, typeFilters, costFilters, filters});
   const returnFocus = useReturnFocus();
-  // Cost rides inline only on wide screens, and only in a toolbar that has it.
-  const showInlineCost = useInlineCostFilters() && toolbarCarries.cost;
 
   const handleApply = () => {
-    onApply(draft.draftInks, draft.draftTypes, draft.draftCosts, draft.draftFilters);
+    onApply();
     onClose();
   };
-  const clearAll = () => {
-    draft.clearAll();
-    extra?.onClear();
-  };
-  const count = draft.activeFilterCount;
 
   const getVariantStyles = (): {
     overlay: React.CSSProperties;
@@ -230,9 +204,9 @@ export function FilterDialog({
 
           <DialogHeader
             variant={variant}
-            title={title ?? `Filters${count > 0 ? ` (${count})` : ''}`}
-            canClear={count + (extra?.count ?? 0) > 0}
-            onClear={clearAll}
+            title={title ?? `Filters${activeCount > 0 ? ` (${activeCount})` : ''}`}
+            canClear={activeCount > 0}
+            onClear={onClearAll}
             onApply={handleApply}
           />
 
@@ -243,28 +217,7 @@ export function FilterDialog({
               overflowY: 'auto',
               padding: variant === 'modal' ? `${SPACING.xl}px` : `${SPACING.lg}px`,
             }}>
-            {prelude}
-            <FilterContent
-              inkFilters={draft.draftInks}
-              typeFilters={draft.draftTypes}
-              costFilters={draft.draftCosts}
-              filters={draft.draftFilters}
-              uniqueKeywords={uniqueKeywords}
-              uniqueClassifications={uniqueClassifications}
-              uniqueRarities={uniqueRarities}
-              sets={sets}
-              buttonOptions={buttonOptions}
-              onToggleInk={draft.toggleInk}
-              onToggleType={draft.toggleType}
-              onToggleCost={draft.toggleCost}
-              onFiltersChange={draft.updateFilters}
-              variant={variant === 'modal' ? 'desktop' : 'mobile'}
-              showInlineCost={showInlineCost}
-              showInlineInkwell={toolbarCarries.inkwell}
-              showSetFilter={showSetFilter}
-              showArtPresets={showArtPresets}
-            />
-            {postlude}
+            {children}
           </div>
 
           {/* Footer (modal only; drawer has Apply in header) */}

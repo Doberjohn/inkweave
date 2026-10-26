@@ -2,8 +2,9 @@ import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import type {Ink} from 'inkweave-synergy-engine';
-import type {CardFilterOptions} from '../../features/cards';
-import {COLORS, RADIUS, SPACING, type CardTypeFilter} from '../constants';
+import type {CardTypeFilter, FilterPicks} from '../lib/filterModel';
+import {COLORS, RADIUS, SPACING} from '../tokens/theme';
+import {TEST_FILTER_VOCABULARY} from '../test-utils/filterVocabulary';
 import {FilterContent} from './FilterContent';
 
 const noopHandlers = {
@@ -18,6 +19,14 @@ const mockSets = [
   {code: '6', name: 'Azurite Sea', number: 6},
   {code: '7', name: 'Archazia', number: 7},
 ];
+
+/** The app's logo art for the story's sets, from the app's public folder, which Storybook serves. */
+const STORY_SET_LOGOS: Partial<Record<string, string>> = {
+  '5': '/art/sets/shimmering-skies.webp',
+  '6': '/art/sets/azurite-sea.webp',
+  '7': '/art/sets/archazias-island.webp',
+};
+const vocabulary = {...TEST_FILTER_VOCABULARY, setLogo: (code: string) => STORY_SET_LOGOS[code]};
 
 const meta: Meta<typeof FilterContent> = {
   title: 'Shared/FilterContent',
@@ -42,6 +51,7 @@ const meta: Meta<typeof FilterContent> = {
     uniqueRarities: ['Common', 'Uncommon', 'Rare', 'Super Rare', 'Legendary'],
     sets: mockSets,
     variant: 'desktop',
+    vocabulary,
   },
 };
 export default meta;
@@ -88,7 +98,7 @@ export const ArtPresets: Story = {
     ),
   ],
   render: (args) => {
-    const [filters, setFilters] = useState<CardFilterOptions>({});
+    const [filters, setFilters] = useState<FilterPicks>({});
     return <FilterContent {...args} filters={filters} onFiltersChange={setFilters} />;
   },
 };

@@ -1,9 +1,13 @@
 import {describe, it, expect, vi} from 'vitest';
 import {fireEvent, render, screen, within} from '@testing-library/react';
-import {FilterContent} from '../FilterContent';
-import type {Ink} from '../../../features/cards';
-import type {CardFilterOptions} from '../../../features/cards';
-import type {CardTypeFilter} from '../../constants';
+import {FilterContent} from 'inkweave-ui/lorcana/FilterContent';
+import {FILTER_VOCABULARY} from '../filterOptions';
+import type {CardFilterOptions} from '../loader';
+import type {Ink} from '../types';
+import type {CardTypeFilter} from '../../../shared/constants';
+
+// inkweave-ui's FilterContent with the app's vocabulary: the app's rarity names, presets,
+// Dual-ink rule and buttons (#981). The package's own test proves it reads each member.
 
 function defaultProps(overrides = {}) {
   return {
@@ -20,6 +24,7 @@ function defaultProps(overrides = {}) {
     onToggleCost: vi.fn(),
     onFiltersChange: vi.fn(),
     variant: 'desktop' as const,
+    vocabulary: FILTER_VOCABULARY,
     ...overrides,
   };
 }

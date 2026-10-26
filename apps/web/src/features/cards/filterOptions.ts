@@ -1,20 +1,28 @@
 import {
+  picksExactly,
+  type ArtPreset,
+  type FilterButtonOptions,
+  type FilterVocabulary,
+} from 'inkweave-ui/lib/filterModel';
+import {
   ALL_INKS,
   CARD_TYPE_FILTERS,
   COST_BUTTONS,
+  SET_LOGOS,
   type CardTypeFilter,
 } from '../../shared/constants';
 import {
   PROMO_RARITY,
   RARITIES_BY_ART,
   anyCardMatches,
+  offersDualOnly,
   type ArtKind,
   type CardFilterOptions,
   type SetInfo,
 } from './loader';
 import type {Ink, LorcanaCard} from './types';
 
-export type InkwellFilter = NonNullable<CardFilterOptions['inkwell']>;
+export type {FilterButtonOptions};
 
 /**
  * The art presets, in the panel's order (owner, 2026-10-15): shortcuts that pick one
@@ -42,11 +50,6 @@ export function rarityLabel(rarity: string): string {
   return rarity === PROMO_RARITY ? 'Promo' : rarity;
 }
 
-/** Whether the picks are exactly these rarities, in any order. */
-export function picksExactly(picked: readonly string[], rarities: readonly string[]): boolean {
-  return picked.length === rarities.length && rarities.every((rarity) => picked.includes(rarity));
-}
-
 /**
  * The offered rarities of one kind, in the offered order: what its preset picks. Where no
  * Special is offered, the Alt art kind is the three chase rarities.
@@ -63,14 +66,6 @@ export function artPresetOf(picked: readonly string[], offered?: readonly string
     const kind = offered ? raritiesOfKind(offered, value) : RARITIES_BY_ART[value];
     return kind.length > 0 && picksExactly(picked, kind);
   });
-}
-
-/** The values each filter button group shows: ink, cost, card type and inkwell. */
-export interface FilterButtonOptions {
-  inks: readonly Ink[];
-  costs: readonly number[];
-  types: readonly CardTypeFilter[];
-  inkwell: readonly InkwellFilter[];
 }
 
 /** The lists behind the filter dialog's Keyword, Classification, Rarity and Set sections. */
@@ -99,6 +94,22 @@ export const ALL_FILTER_BUTTONS: FilterButtonOptions = {
   costs: COST_BUTTONS,
   types: CARD_TYPE_FILTERS,
   inkwell: ['inkable', 'uninkable'],
+};
+
+/** Each art preset with what it picks of the offered rarities, and its tooltip saying so. */
+export const artPresetsFor = (offered: readonly string[]): ArtPreset[] =>
+  ART_OPTIONS.map(({value, label, title}) => {
+    const rarities = raritiesOfKind(offered, value);
+    return {value, label, title: title(rarities), rarities};
+  });
+
+/** The app's words and rules for inkweave-ui's FilterContent (#981). */
+export const FILTER_VOCABULARY: FilterVocabulary = {
+  allButtons: ALL_FILTER_BUTTONS,
+  setLogo: (code) => SET_LOGOS[code],
+  rarityLabel,
+  artPresets: artPresetsFor,
+  offersDualInk: offersDualOnly,
 };
 
 // A value stays when it matches a card in the pool, or when it is already applied, so an
