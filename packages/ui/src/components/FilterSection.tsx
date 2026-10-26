@@ -42,13 +42,14 @@ const labelStyle = (compact: boolean): React.CSSProperties => ({
  */
 const WASH_BLEED = 6;
 
-/** The folding header's height at rest: its 13 px label's line, and 4 px above and below. */
+/** The folding header's height at rest: its 13 px label's 16 px line, and 4 px above and below. */
 const HEADER_LINE = 24;
 
 /**
  * On a phone, how far the toggle's tap area reaches above and below the header line, so
  * it is `TOUCH_TARGET` tall. Negative margins give the room back, so the line keeps its
  * height, and the section's contents, later in the page, keep their taps where they meet.
+ * The toggle's `minHeight` holds the target if the line comes out shorter than 16 px.
  */
 const TOUCH_REACH = (TOUCH_TARGET - HEADER_LINE) / 2;
 
@@ -104,6 +105,7 @@ function ToggleLabel({label, open, summary, controls, touch, onToggle}: {
           // reach too.
           margin: `-${SPACING.xxs + reach}px -${WASH_BLEED}px`,
           padding: `${SPACING.xs + reach}px ${WASH_BLEED}px`,
+          minHeight: touch ? TOUCH_TARGET : undefined,
           borderRadius: RADIUS.sm,
           background: hovered ? GOLD_GLOW.hoverBg : 'transparent',
           transition: `color ${DURATION.fast}ms ${EASING.snappy}, background ${DURATION.fast}ms ${EASING.snappy}`,

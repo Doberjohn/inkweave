@@ -176,7 +176,7 @@ async function expectGridAsBefore(page: Page, isPhone: boolean) {
   await openBrowse(page);
   const layout = await readLayout(
     page,
-    isPhone ? LAYOUT.browseGridMinWidthMobile : LAYOUT.cardGridMinWidth,
+    isPhone ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth,
   );
 
   expect(layout.columns, JSON.stringify(layout)).toBe(layout.autoFill.columns);

@@ -27,7 +27,7 @@ interface CardGridProps {
  * Layout: CSS Grid auto-fill + minmax. Column count emerges from viewport,
  * as in BrowseCardGrid (which windows its rows, with the same minimums).
  *
- * - Mobile MIN: `LAYOUT.browseGridMinWidthMobile` (96): three cards across on
+ * - Mobile MIN: `LAYOUT.cardGridMinWidthMobile` (96): three cards across on
  *   every common phone, as Browse shows them (owner, 2026-10-26).
  * - Desktop MIN: `LAYOUT.cardGridMinWidth` (180) — varies by viewport.
  *
@@ -46,7 +46,7 @@ export function CardGrid({
   linkToCards,
 }: CardGridProps) {
   const {isMobile} = useResponsive();
-  const minColWidth = isMobile ? LAYOUT.browseGridMinWidthMobile : LAYOUT.cardGridMinWidth;
+  const minColWidth = isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth;
 
   if (cards.length === 0 && emptyMessage) {
     return (

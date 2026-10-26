@@ -47,9 +47,13 @@ export const BROWSE_ROW_TOP = SPACING.xxl;
  */
 export const BROWSE_PHONE_TOOLBAR_BOTTOM = SPACING.sm;
 
-/** The card grid's room above its first row, inside its scroller: on a phone, less what the toolbar keeps. */
+/**
+ * The card grid's room above its first row, inside its scroller. On a phone that is
+ * `BROWSE_ROW_TOP`'s 24px less the 8px the toolbar keeps (`BROWSE_PHONE_TOOLBAR_BOTTOM`), so
+ * the cards at rest sit where they were: change one of the three, change the others.
+ */
 export function browseRowTop(isMobile: boolean): number {
-  return isMobile ? BROWSE_ROW_TOP - BROWSE_PHONE_TOOLBAR_BOTTOM : BROWSE_ROW_TOP;
+  return isMobile ? SPACING.lg : BROWSE_ROW_TOP;
 }
 
 /** The panel surface, shared with the collection set panel's other layouts. */

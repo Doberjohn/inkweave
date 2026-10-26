@@ -43,14 +43,14 @@ export function BrowseCardGrid({
 }: BrowseCardGridProps) {
   const {isMobile} = useResponsive();
   const paddingX = isMobile ? SPACING.lg : BROWSE_GUTTER;
-  const minColWidth = isMobile ? LAYOUT.browseGridMinWidthMobile : LAYOUT.cardGridMinWidth;
+  const minColWidth = isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth;
   const rowTop = browseRowTop(isMobile);
   const eagerTiles = isMobile ? PHONE_EAGER_TILES : EAGER_TILES;
 
   if (isLoading) {
-    // The loaded grid's room above its first row (`browseRowTop`), its gutters and its
-    // columns (#914).
-    return <CardGridSkeleton padding={`${rowTop}px ${paddingX}px 0`} minColWidth={minColWidth} />;
+    // The loaded grid's room above its first row (`browseRowTop`) and its gutters; its
+    // columns follow from the same minimum (#914).
+    return <CardGridSkeleton padding={`${rowTop}px ${paddingX}px 0`} />;
   }
 
   const displayedCards = cards.slice(0, LAYOUT.maxDisplayedCards);

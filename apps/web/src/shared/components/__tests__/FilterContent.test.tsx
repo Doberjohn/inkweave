@@ -101,8 +101,10 @@ describe('FilterContent folds on a phone', () => {
 
   it('gives each header a touch-sized tap area that leaves the line its height', () => {
     render(<FilterContent {...defaultProps({variant: 'mobile', ...offered})} />);
-    // 24px at rest: 14px of padding over and under its line, 12px of it given back by the margins.
+    // 24px at rest: 14px of padding over and under its line, 12px of it given back by the margins,
+    // and never under 44px if its line comes out short.
     expect(header('Keyword')).toHaveStyle({paddingTop: '14px', paddingBottom: '14px', marginTop: '-12px', marginBottom: '-12px'});
+    expect(header('Keyword')).toHaveStyle({minHeight: '44px'});
   });
 
   it('never folds the desktop dialog', () => {

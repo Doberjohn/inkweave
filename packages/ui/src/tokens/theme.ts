@@ -32,7 +32,7 @@ export const LAYOUT = {
    * shared CardGrid's (2026-10-26): three cards across from 344 to 451px wide, every common
    * phone, and two at 320px.
    */
-  browseGridMinWidthMobile: 96,
+  cardGridMinWidthMobile: 96,
   synergyCardMinWidth: 160,
   /** A card tile's width over its height (`CardTile`), which Browse's window sizes its rows by. */
   cardAspect: 0.72,

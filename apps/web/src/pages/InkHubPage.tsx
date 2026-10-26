@@ -60,7 +60,7 @@ export function InkHubPage() {
           position: 'relative',
           zIndex: 1,
           // A phone's gutter is Browse's, so the cards are as wide as Browse's (owner, 2026-10-26).
-          padding: `${isMobile ? SPACING.lg : SPACING.xl}px`,
+          padding: `${SPACING.xl}px ${isMobile ? SPACING.lg : SPACING.xl}px`,
           maxWidth: 1320,
           width: '100%',
           margin: '0 auto',
