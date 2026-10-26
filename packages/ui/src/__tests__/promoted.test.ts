@@ -8,6 +8,7 @@ import {existsSync, readFileSync} from 'node:fs';
 const PROMOTED = [
   'components/SegmentedControl',
   'components/Tag',
+  'components/Notice',
 ];
 
 /** Admin's classes, theme and bridge: package source names none of them. */
