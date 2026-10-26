@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-323 tests across 31 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+326 tests across 32 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -587,6 +587,16 @@ The service worker's precache (#928) and the small symbols it keeps on screen of
 | on Browse, whose header is inside `<main>`, lands before the Filters button | Until the first Tab focuses it, the link's `.skip-link` rule (index.css) clips it away, so the middle of its box hits what lies under it; focused, the link itself is there, in the viewport's top corner. Enter focuses `#main-content`, leaves the URL as it was and clips the link away again, and the next Tab lands inside `<main>` and outside `<header>`: on the Filters button |
 | on a card page, whose header is outside `<main>` | The same steps on `/card/3286`: after the skip, the next Tab lands inside `<main>` and outside `<header>` |
 | a phone has no skip link | At 390px, once Browse's tiles show, the page has no "Skip to main content" link |
+
+## `focus-rings.spec.ts`: 3 tests (desktop only)
+
+Focus you can see (WCAG 2.4.13 Focus Appearance, accessibility check 2026-10-26). The header nav's segmented control has `overflow: hidden`, which cut the global 2px outline to slivers at a link's sides, so its links take `inset-focus-ring` and `INSET_FOCUS_RING`, drawn inside on `::after`, and the first and last links round their outer corners to the control's clip, which the ring inherits. `GOLD_GLOW.focusRing`, which every search field and Sort menu draws, was a 2px ring at 15% gold (2.3:1 against the page) and is now solid `COLORS.primary`. Each control is reached by Tab, so `:focus-visible` matches.
+
+| Test | What it verifies |
+|---|---|
+| the header nav's Browse link draws its ring inside, on all four sides | Tabbed to, the `Main navigation` "Browse" link's `::after` has a `2px solid rgb(255, 185, 0)` border on each side. Fails with no `inset-focus-ring` class on `NavItemLink` |
+| the header nav's end links round their rings to the control's corners | The control's clip radius is its `border-top-left-radius` less its `border-top-width` (not 0). Tabbed to, the control's first link's `::after` has that radius at its top-left and bottom-left corners, and its last link's at its top-right and bottom-right. Fails with the links' corners square, where the clip thinned the ring's stroke to almost nothing |
+| Browse's search and its Sort menu draw a solid 2 px gold ring | Tabbed to, `browse-search` and the "Sort cards" combobox each get a `box-shadow` starting `rgb(255, 185, 0) 0px 0px 0px 2px` (retried, since the ring fades in). Fails with the token's ring back at 15% gold |
 
 ## Patterns
 

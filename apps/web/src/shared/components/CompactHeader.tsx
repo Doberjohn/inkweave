@@ -1,7 +1,7 @@
 import {type ReactNode, useState} from 'react';
 import {Link, NavLink} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX, searchFieldStyle} from '../constants';
+import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, INSET_FOCUS_RING, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX, searchFieldStyle} from '../constants';
 import {useAutocomplete, useHover} from '../hooks';
 import {suggestCardsByName} from '../../features/cards/loader';
 import {useRevealPhase} from '../../features/reveals';
@@ -124,6 +124,22 @@ function getNavItemBoxShadow(state: InteractionState): string {
   if (!state.isHovered) return 'none';
   if (state.isActive) return 'none';
   return GOLD_GLOW.shadow;
+}
+
+/** The nav links' control: its `overflow: hidden` clips them inside this border, at these corners. */
+const NAV_CONTROL_RADIUS = RADIUS.lg;
+const NAV_CONTROL_BORDER = 1;
+
+/**
+ * The corners of the nav link at `index`: the first and last round their outer corners to the
+ * control's clip, so the inset focus ring, which takes the link's radius, closes there instead of
+ * being cut off.
+ */
+function getNavItemRadius(index: number): string {
+  const clip = NAV_CONTROL_RADIUS - NAV_CONTROL_BORDER;
+  const start = index === 0 ? clip : 0;
+  const end = index === NAV_ITEMS.length - 1 ? clip : 0;
+  return `${start}px ${end}px ${end}px ${start}px`;
 }
 
 interface SearchSizing {
@@ -305,25 +321,38 @@ function HeaderSearch({cards, query, onChange, onSubmit, onCardSelect, viewport}
 interface NavItemLinkProps {
   path: string;
   label: string;
+  /** From `getNavItemRadius`, by the link's place in the control. */
+  borderRadius: string;
   isHovered: boolean;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
 }
 
-function NavItemLink({path, label, isHovered, onMouseEnter, onMouseLeave}: NavItemLinkProps) {
+function NavItemLink({
+  path,
+  label,
+  borderRadius,
+  isHovered,
+  onMouseEnter,
+  onMouseLeave,
+}: NavItemLinkProps) {
   return (
     <NavLink
       to={path}
+      // Its ring drawn inside: the control's `overflow: hidden` cuts the global outline to slivers.
+      className="inset-focus-ring"
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       style={({isActive}) => {
         const state: InteractionState = {isActive, isHovered};
         return {
+          ...INSET_FOCUS_RING,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           padding: '0 20px',
           height: '100%',
+          borderRadius,
           background: getNavItemBackground(state),
           color: getNavItemColor(state),
           fontFamily: FONTS.body,
@@ -438,16 +467,17 @@ function DesktopNav({isRevealSeason}: DesktopNavProps) {
           display: 'flex',
           alignItems: 'center',
           height: 38,
-          borderRadius: RADIUS.lg,
-          border: `1px solid ${COLORS.surfaceBorder}`,
+          borderRadius: NAV_CONTROL_RADIUS,
+          border: `${NAV_CONTROL_BORDER}px solid ${COLORS.surfaceBorder}`,
           background: COLORS.background,
           overflow: 'hidden',
         }}>
-        {NAV_ITEMS.map(({path, label}) => (
+        {NAV_ITEMS.map(({path, label}, index) => (
           <NavItemLink
             key={path}
             path={path}
             label={label}
+            borderRadius={getNavItemRadius(index)}
             isHovered={hoveredNav === path}
             onMouseEnter={() => setHoveredNav(path)}
             onMouseLeave={() => setHoveredNav(null)}
