@@ -65,7 +65,8 @@ test.describe('Browse filters picked in the desktop panel', () => {
     await press(page, 'Evasive', /[?&]keyword=Evasive(&|$)/);
 
     // The chips show only while the panel is closed: open, it already shows the same filters.
-    await page.getByRole('button', {name: 'Filters', exact: true}).click();
+    // The button's name says its badge's count.
+    await page.getByRole('button', {name: 'Filters, 2 on', exact: true}).click();
     await expect(panel(page)).toHaveCount(0);
     const costChip = page.getByRole('button', {name: /^Cost: 3/});
     await expect(costChip).toBeVisible();
@@ -114,8 +115,9 @@ test.describe('Browse filters picked in the phone drawer', () => {
     await expect(page).toHaveURL(/[?&]keyword=Evasive(&|$)/);
     await expect(drawer).toHaveCount(0);
 
-    // Opened again, the section is folded, and its header names the pick.
-    await filters.click();
+    // Opened again, the section is folded, and its header names the pick. The button's name now
+    // says its badge's count.
+    await page.getByRole('button', {name: 'Filters, 1 on', exact: true}).click();
     await expect(drawer.getByRole('button', {name: /^Keyword\s*· Evasive$/})).toHaveAttribute('aria-expanded', 'false');
   });
 });
