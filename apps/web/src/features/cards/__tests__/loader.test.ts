@@ -1,6 +1,7 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {
   searchCardsByName,
+  suggestCardsByName,
   filterCards,
   countFilterOptions,
   getUniqueRarities,
@@ -76,6 +77,18 @@ describe('Card Search', () => {
     ['the start of a word', 'hop', 1],
   ])('should search by %s', (_label, query, expectedCount) => {
     expect(searchCardsByName(cards, query)).toHaveLength(expectedCount);
+  });
+
+  it('suggests exactly the cards the search finds', () => {
+    const ids = (found: LorcanaCard[]) => found.map((card) => card.id).sort();
+    expect(ids(suggestCardsByName(cards, 'el'))).toEqual(ids(searchCardsByName(cards, 'el')));
+  });
+
+  it('suggests the newest set first and quest sets last', () => {
+    const elsas = ['9', 'Q1', '12', '10'].map((setCode) =>
+      createCard({id: `elsa-${setCode}`, name: 'Elsa', fullName: 'Elsa - Snow Queen', setCode}),
+    );
+    expect(suggestCardsByName(elsas, 'elsa').map((card) => card.setCode)).toEqual(['12', '10', '9', 'Q1']);
   });
 });
 

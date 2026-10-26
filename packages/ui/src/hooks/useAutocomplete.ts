@@ -1,12 +1,18 @@
 import {useEffect, useId, useRef, useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {searchCardsByName, parseSetOrder} from '../../features/cards/loader';
+
+/**
+ * The cards a term suggests, in the order the list shows them. The app passes its loader's
+ * `suggestCardsByName` (#981).
+ */
+export type CardSearch = (cards: LorcanaCard[], term: string) => LorcanaCard[];
 
 interface UseAutocompleteOptions {
   cards: LorcanaCard[];
   query: string;
   onQueryChange: (query: string) => void;
   onSelect: (card: LorcanaCard) => void;
+  search: CardSearch;
   minChars?: number;
   maxResults?: number;
   debounceMs?: number;
@@ -65,6 +71,7 @@ export function useAutocomplete({
   query,
   onQueryChange,
   onSelect,
+  search,
   minChars = 2,
   maxResults = 10,
   debounceMs = 150,
@@ -108,12 +115,10 @@ export function useAutocomplete({
     }, debounceMs);
   };
 
-  // Suggestions for a search term, sorted by descending set code
+  // Suggestions for a search term, in the search's order
   const suggestionsFor = (term: string) => {
     if (!term || term.length < minChars) return [];
-    return searchCardsByName(cards, term)
-      .sort((a, b) => parseSetOrder(b.setCode) - parseSetOrder(a.setCode))
-      .slice(0, maxResults);
+    return search(cards, term).slice(0, maxResults);
   };
   const suggestions = suggestionsFor(debouncedQuery);
 

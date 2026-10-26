@@ -1,5 +1,5 @@
-export {useAutocomplete} from './useAutocomplete';
-export type {UseAutocompleteReturn} from './useAutocomplete';
+export {useAutocomplete} from 'inkweave-ui/hooks/useAutocomplete';
+export type {UseAutocompleteReturn} from 'inkweave-ui/hooks/useAutocomplete';
 export {useContainerWidth} from 'inkweave-ui/hooks/useContainerWidth';
 export {useDialogFocus} from 'inkweave-ui/hooks/useDialogFocus';
 export {useDraftFilters} from './useDraftFilters';
