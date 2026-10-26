@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-319 tests across 31 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+320 tests across 31 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -574,13 +574,14 @@ The service worker's precache (#928) and the small symbols it keeps on screen of
 | lists exactly the ten small symbols | `sw.js` lists the six ink symbols, inkable, uninkable, common and uncommon as `.svg` files, and no other SVG |
 | are files, each ink the one its card placeholders draw | On `/browse`, in the docked panel (desktop) or the Filters drawer (phones): no ink, inkwell or rarity symbol is a `data:` URI, and each ink's icon has the address its `.ink-card-placeholder` draws (inkweave-ui's `styles/lorcana.css`), so a page showing both downloads it once. A production build inlines an imported file under 4 kB unless it is imported `?no-inline`; the dev server serves every asset as a file, so there only the ink check can fail |
 
-## `focus-rings.spec.ts`: 2 tests (desktop only)
+## `focus-rings.spec.ts`: 3 tests (desktop only)
 
-Focus you can see (WCAG 2.4.13 Focus Appearance, accessibility check 2026-10-26). The header nav's segmented control has `overflow: hidden`, which cut the global 2px outline to slivers at a link's sides, so its links take `inset-focus-ring` and `INSET_FOCUS_RING`, drawn inside on `::after`. `GOLD_GLOW.focusRing`, which every search field and Sort menu draws, was a 2px ring at 15% gold (2.3:1 against the page) and is now solid `COLORS.primary`. Each control is reached by Tab, so `:focus-visible` matches.
+Focus you can see (WCAG 2.4.13 Focus Appearance, accessibility check 2026-10-26). The header nav's segmented control has `overflow: hidden`, which cut the global 2px outline to slivers at a link's sides, so its links take `inset-focus-ring` and `INSET_FOCUS_RING`, drawn inside on `::after`, and the first and last links round their outer corners to the control's clip, which the ring inherits. `GOLD_GLOW.focusRing`, which every search field and Sort menu draws, was a 2px ring at 15% gold (2.3:1 against the page) and is now solid `COLORS.primary`. Each control is reached by Tab, so `:focus-visible` matches.
 
 | Test | What it verifies |
 |---|---|
 | the header nav's Browse link draws its ring inside, on all four sides | Tabbed to, the `Main navigation` "Browse" link's `::after` has a `2px solid rgb(255, 185, 0)` border on each side. Fails with no `inset-focus-ring` class on `NavItemLink` |
+| the header nav's end links round their rings to the control's corners | The control's clip radius is its `border-top-left-radius` less its `border-top-width` (not 0). Tabbed to, the control's first link's `::after` has that radius at its top-left and bottom-left corners, and its last link's at its top-right and bottom-right. Fails with the links' corners square, where the clip thinned the ring's stroke to almost nothing |
 | Browse's search and its Sort menu draw a solid 2 px gold ring | Tabbed to, `browse-search` and the "Sort cards" combobox each get a `box-shadow` starting `rgb(255, 185, 0) 0px 0px 0px 2px` (retried, since the ring fades in). Fails with the token's ring back at 15% gold |
 
 ## Patterns

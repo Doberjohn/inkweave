@@ -2,7 +2,8 @@ import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 
 // Focus you can see (WCAG 2.4.13). The header nav's control clips the global outline
-// (`overflow: hidden`), so its links draw the inset ring on `::after`. Browse's search and Sort
+// (`overflow: hidden`), so its links draw the inset ring on `::after`, and its end links round
+// their outer corners to the control's, so the ring closes there. Browse's search and Sort
 // draw `GOLD_GLOW.focusRing`, a solid 2 px gold ring, as every search field and Sort menu does.
 
 const GOLD = 'rgb(255, 185, 0)';
@@ -39,6 +40,35 @@ test.describe('Focus rings on Browse', () => {
       );
     });
     expect(sides).toEqual(Array(4).fill(`2px solid ${GOLD}`));
+  });
+
+  test("the header nav's end links round their rings to the control's corners", async ({page}) => {
+    const control = page
+      .getByRole('navigation', {name: 'Main navigation'})
+      .getByRole('link', {name: 'Browse', exact: true})
+      .locator('..');
+    // The control clips its links inside its border, so its corner radius less its border.
+    const clip = await control.evaluate((el) => {
+      const style = getComputedStyle(el);
+      return `${parseFloat(style.borderTopLeftRadius) - parseFloat(style.borderTopWidth)}px`;
+    });
+    expect(clip).not.toBe('0px');
+
+    const ends = [
+      {link: control.getByRole('link').first(), corners: ['top-left', 'bottom-left']},
+      {link: control.getByRole('link').last(), corners: ['top-right', 'bottom-right']},
+    ];
+    for (const {link, corners} of ends) {
+      await tabTo(page, link);
+      const radii = await link.evaluate(
+        (el, names) =>
+          names.map((name) =>
+            getComputedStyle(el, '::after').getPropertyValue(`border-${name}-radius`),
+          ),
+        corners,
+      );
+      expect(radii).toEqual([clip, clip]);
+    }
   });
 
   test("Browse's search and its Sort menu draw a solid 2 px gold ring", async ({page}) => {

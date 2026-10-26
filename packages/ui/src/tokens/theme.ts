@@ -454,7 +454,8 @@ export function searchFieldStyle({focused, hovered}: {focused: boolean; hovered:
 
 /**
  * The inset focus ring's gold, as the custom property `.inset-focus-ring` (styles/primitives.css)
- * reads: the card art buttons (CardImageButton), the Reveals promo and the copies stripe's − and +.
+ * reads: the card art buttons (CardImageButton), the Reveals promo, the copies stripe's − and +
+ * and the header nav's links.
  * Spread into each control's own style rather than set once on the page root, so the ring
  * shows wherever the control renders: in the card modal's portal, in Storybook, and in admin,
  * which imports the components and their stylesheet but not this app's bootstrap.
