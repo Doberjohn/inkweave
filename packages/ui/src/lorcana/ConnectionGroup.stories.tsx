@@ -1,6 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
-import {ConnectionGroup} from './ConnectionGroup';
-import type {ConnectionGroupData} from './groupConnections';
+import {ConnectionGroup, type ConnectionGroupData} from './ConnectionGroup';
 
 const mockCardA = {
   id: '1004',
@@ -45,6 +44,7 @@ const directGroup: ConnectionGroupData = {
   connections: [{
     ruleId: 'shift-targets',
     ruleName: 'Shift Targets',
+    roleLabel: 'Shift Targets',
     category: 'direct',
     score: 8,
     explanation: 'Perfect curve: {B} shifts onto {A} the turn after. Only one of them is inkable as a fallback.',
@@ -60,6 +60,7 @@ const multiRoleGroup: ConnectionGroupData = {
     {
       ruleId: 'location-at-payoff',
       ruleName: 'At Payoff',
+      roleLabel: 'At Location',
       category: 'playstyle',
       playstyleId: 'location-control',
       score: 7,
@@ -68,6 +69,7 @@ const multiRoleGroup: ConnectionGroupData = {
     {
       ruleId: 'location-move',
       ruleName: 'Move',
+      roleLabel: 'Move',
       category: 'playstyle',
       playstyleId: 'location-control',
       score: 5,

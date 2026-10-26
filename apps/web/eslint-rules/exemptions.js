@@ -67,10 +67,10 @@ export const ADHOC_BUTTON_EXEMPT = {
     'packages/ui/src/components/', // the kit itself, QuantityStepper's domain stepper family too
     'packages/ui/src/lorcana/CardImageButton.tsx', // a card's enlargeable art
     'packages/ui/src/lorcana/CardTile.tsx', // card-grid tile family
+    'packages/ui/src/lorcana/ConnectionGroup.tsx', // a synergy group's expand toggle
     'packages/ui/src/lorcana/CopiesStripe.tsx', // the collection's copies stepper family
     'packages/ui/src/lorcana/PrintingPeek.tsx', // the printing stack's peek arrows
     'apps/web/src/shared/components/BackLink.tsx', // back-navigation link
-    'apps/web/src/shared/components/ConnectionGroup.tsx', // a synergy group's expand toggle
     'apps/web/src/shared/components/ErrorBoundary.tsx', // the error screen's action
     'apps/web/src/shared/components/MobileBottomNav.tsx', // bottom-nav tab family
     'apps/web/src/shared/components/SearchBottomSheet.tsx', // search sheet's clear and recent chips
