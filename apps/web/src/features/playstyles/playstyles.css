@@ -39,3 +39,16 @@
     transition: none !important;
   }
 }
+
+/* A playstyle guide's key card links (#995). Their colours come from theme.ts, which each link
+   sets on itself (PlaystyleGuide): the gold edge and glow show while pointed at, on pointers
+   only, so a tap on a phone cannot leave them on. Keyboard focus draws the app's focus ring. */
+.playstyle-key-card {
+  border: 1px solid var(--key-card-edge);
+}
+@media (hover: hover) {
+  .playstyle-key-card:hover {
+    border-color: var(--key-card-hover-edge);
+    box-shadow: var(--key-card-hover-glow);
+  }
+}

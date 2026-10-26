@@ -54,7 +54,8 @@ test.describe('Accessibility — axe audits', () => {
 
   test('playstyle detail should have no axe violations', async ({page}) => {
     await page.goto('/playstyles/discard');
-    await page.waitForSelector('h1');
+    // The guide comes in the cards' render, so axe audits the loaded page, guide included (#995).
+    await page.waitForSelector('#playstyle-guide-heading');
 
     const results = await new AxeBuilder({page}).analyze();
     expect(results.violations).toEqual([]);

@@ -12,6 +12,7 @@ import {
   isRevealSeasonActive,
   markPrerenderedRoot,
   mergePhoneCapture,
+  PLAYSTYLE_READY_SELECTOR,
   readPhoneCapture,
   READY_SELECTORS,
   readySelectorFor,
@@ -408,6 +409,13 @@ describe('readySelectorFor', () => {
     // the footer does, and the footer renders only once the card's synergies have loaded.
     expect(readySelectorFor('/card/1989/elsa-snow-queen')).toBe(CARD_READY_SELECTOR);
     expect(CARD_READY_SELECTOR).toBe('footer[aria-label="Site footer"]');
+  });
+
+  it('makes a playstyle page wait for the guide the render guard requires (#995)', () => {
+    // check-rendered-html's check 11 fails the deploy unless each playstyle page carries its guide,
+    // and a failed guides request draws the page, title and all, without one.
+    expect(readySelectorFor('/playstyles/exert')).toBe(PLAYSTYLE_READY_SELECTOR);
+    expect(PLAYSTYLE_READY_SELECTOR).toBe('#playstyle-guide-heading');
   });
 
   it('keeps every other route on the title check alone', () => {

@@ -3,12 +3,15 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
+  asCapturedText,
   selectSampleCards,
   findDesktopOnlyEagerImages,
+  findMissingGuideText,
   findOffenders,
   findOrphanImagePreloads,
   findLazySdkPreloads,
   findPhoneCaptureProblems,
+  findPlaystyleGuideOffenders,
   readCanonical,
   readPrerenderRoute,
   SITE_ORIGIN,
@@ -544,5 +547,128 @@ describe('findOffenders', () => {
     const offenders = findOffenders(path.join(dist, 'no-such-dir'), [CARD], cardPath);
     expect(offenders).toHaveLength(1);
     expect(offenders[0].reason).toMatch(/wrong path/);
+  });
+});
+
+describe('asCapturedText', () => {
+  it('escapes text as the browser writes it: &, <, > and the no-break space, never a quote', () => {
+    const noBreakSpace = String.fromCodePoint(0xa0);
+    expect(asCapturedText(`Pooh & Piglet <3 > "Owl"'s${noBreakSpace}book`)).toBe(
+      `Pooh &amp; Piglet &lt;3 &gt; "Owl"'s&nbsp;book`,
+    );
+  });
+});
+
+/** Two playstyles as the engine lists them (#995). */
+const PLAYSTYLES = [
+  {id: 'exert', name: 'Exert'},
+  {id: 'hunny', name: 'Hunny'},
+];
+
+/** Their guides as the build's data/playstyleGuides.json holds them, an apostrophe and an & included. */
+const GUIDES = {
+  exert: {paragraphs: ["Exert decks can't wait.", 'Pick a second ink & build.'], keyCards: ['1989']},
+  hunny: {paragraphs: ['Hunny decks quest.', 'Play the cheap ones first.'], keyCards: ['3032']},
+};
+
+/** A guide as the crawl's browser writes it into a capture (#995). */
+const guideMarkup = (name, {paragraphs}) =>
+  '<section aria-labelledby="playstyle-guide-heading">' +
+  `<h2 id="playstyle-guide-heading" style="margin: 0px">How to play ${name}</h2>` +
+  paragraphs.map((text) => `<p style="margin: 0px">${asCapturedText(text)}</p>`).join('') +
+  '</section>';
+
+/** A playstyle page's file in the build. */
+const playstyleFile = (id) => path.join(dist, 'playstyles', id, 'index.html');
+
+/** A captured playstyle page: its #root, then its phone capture, each as given. */
+const playstylePage = (id, desktop, phone = desktop) =>
+  `<!doctype html><html><body><div id="root" data-prerender-route="/playstyles/${id}">` +
+  `${desktop}</div>${phone === null ? '' : phoneCapture(phone)}</body></html>`;
+
+/** Writes the build's guides file and a page carrying its guide in both captures for each playstyle. */
+function seedPlaystyles(playstyles = PLAYSTYLES) {
+  fs.mkdirSync(path.join(dist, 'data'), {recursive: true});
+  fs.writeFileSync(path.join(dist, 'data', 'playstyleGuides.json'), JSON.stringify(GUIDES));
+  for (const {id, name} of playstyles) {
+    fs.mkdirSync(path.dirname(playstyleFile(id)), {recursive: true});
+    const content = `<h1>${name}</h1>${guideMarkup(name, GUIDES[id])}`;
+    fs.writeFileSync(playstyleFile(id), playstylePage(id, content));
+  }
+}
+
+const check11 = (phones = true) => findPlaystyleGuideOffenders(dist, PLAYSTYLES, {phones});
+
+describe('findPlaystyleGuideOffenders (check 11, #995)', () => {
+  it('passes playstyle pages that carry their guide in both captures', () => {
+    seedPlaystyles();
+    expect(check11()).toEqual([]);
+  });
+
+  it('fails a playstyle page the crawl never wrote, as a missing page serves crawlers no guide', () => {
+    seedPlaystyles([PLAYSTYLES[0]]);
+    expect(check11()).toEqual([
+      {file: playstyleFile('hunny'), reason: 'prerendered playstyle page missing (#995)'},
+    ]);
+  });
+
+  it('fails a page whose desktop capture lacks a paragraph, naming the page and the paragraph', () => {
+    seedPlaystyles();
+    const phone = `<h1>Exert</h1>${guideMarkup('Exert', GUIDES.exert)}`;
+    const desktop = phone.replace(/<p [^>]*>Pick a second[^<]*<\/p>/, '');
+    fs.writeFileSync(playstyleFile('exert'), playstylePage('exert', desktop, phone));
+    expect(check11()).toEqual([
+      {file: playstyleFile('exert'), reason: "its desktop capture lacks its guide's paragraph 2 (#995)"},
+    ]);
+  });
+
+  it('fails a page whose phone capture was taken without its guide', () => {
+    seedPlaystyles();
+    const desktop = `<h1>Exert</h1>${guideMarkup('Exert', GUIDES.exert)}`;
+    fs.writeFileSync(playstyleFile('exert'), playstylePage('exert', desktop, '<h1>Exert</h1>'));
+    expect(check11().map((o) => o.reason)).toEqual([
+      'its phone capture lacks its guide\'s heading "How to play Exert", paragraph 1, paragraph 2 (#995)',
+    ]);
+  });
+
+  it("counts a paragraph only as an element's whole text, not inside another", () => {
+    const quoted = `<p>As the guide says, ${GUIDES.hunny.paragraphs[0]} Then more.</p>`;
+    const markup = `<h2>How to play Hunny</h2>${quoted}<p>${GUIDES.hunny.paragraphs[1]}</p>`;
+    expect(findMissingGuideText(markup, 'Hunny', GUIDES.hunny)).toEqual(['paragraph 1']);
+  });
+
+  it('reads the desktop capture alone when the crawl skipped phones, and fails a missing phone capture otherwise', () => {
+    seedPlaystyles();
+    const desktop = `<h1>Exert</h1>${guideMarkup('Exert', GUIDES.exert)}`;
+    fs.writeFileSync(playstyleFile('exert'), playstylePage('exert', desktop, null));
+    expect(check11(false)).toEqual([]);
+    expect(check11().map((o) => o.reason)).toEqual([
+      'has no phone capture to carry its guide (#915, #995)',
+    ]);
+  });
+
+  it('fails a page whose playstyle has no guide in the build', () => {
+    seedPlaystyles();
+    const onlyExert = {exert: GUIDES.exert};
+    fs.writeFileSync(path.join(dist, 'data', 'playstyleGuides.json'), JSON.stringify(onlyExert));
+    expect(check11()).toEqual([
+      {file: playstyleFile('hunny'), reason: 'has no guide in data/playstyleGuides.json to show (#995)'},
+    ]);
+  });
+
+  it('fails a build without the guides file', () => {
+    seedPlaystyles();
+    fs.rmSync(path.join(dist, 'data'), {recursive: true});
+    expect(check11().map((o) => o.reason)).toEqual([
+      'missing from the build, so no playstyle page has its guide (#995)',
+    ]);
+  });
+
+  it('runs inside findOffenders for the playstyles it is given, and not without them', () => {
+    seedGoodBuild();
+    seedPlaystyles();
+    fs.writeFileSync(playstyleFile('hunny'), playstylePage('hunny', '<h1>Hunny</h1>'));
+    expect(findOffenders(dist, [CARD], cardPath, {playstyles: PLAYSTYLES})).toHaveLength(2);
+    expect(findOffenders(dist, [CARD], cardPath)).toEqual([]);
   });
 });

@@ -1,6 +1,30 @@
-import type {Page} from '@playwright/test';
+import fs from 'node:fs';
+import path from 'node:path';
+import type {Locator, Page} from '@playwright/test';
+import {cardPath} from 'inkweave-synergy-engine/card';
 import {test, expect} from '../fixtures';
+import {cardFullNameById} from '../helpers/cardData';
 import {slidePointerOnto} from '../helpers/pointer';
+
+/** Exert's guide, as the page fetches it (`public/data/playstyleGuides.json`, #995). */
+const EXERT_GUIDE = (
+  JSON.parse(fs.readFileSync(path.resolve(process.cwd(), 'public/data/playstyleGuides.json'), 'utf8')) as Record<
+    string,
+    {paragraphs: string[]; keyCards: string[]}
+  >
+).exert;
+
+/**
+ * A file the playstyle page waits for, held while the others land: `companion` (a selector) must
+ * be on the page whenever a card is, and `shown` appears once the file is let go (#930, #995).
+ */
+interface DrawnWithCards {
+  path: string;
+  heldFile: string;
+  otherFiles: string[];
+  companion: string;
+  shown: Locator;
+}
 
 test.describe('Playstyle Detail — Desktop', () => {
   test.beforeEach(async ({page}, testInfo) => {
@@ -109,12 +133,52 @@ test.describe('Playstyle Detail — Desktop', () => {
 /**
  * A playstyle page waits for its own card list, `_playstyles.json`, as well as the card list
  * (#913): until both are in, it shows its loading view, never "No cards match your filters."
- * It waits for its cards' mechanic tiles too, `_playstyleMechanics.json` (#930), so the tiles
- * never arrive after the cards.
+ * It waits for its cards' mechanic tiles too, `_playstyleMechanics.json` (#930), and for the
+ * guides, `playstyleGuides.json` (#995), so neither the tiles nor the guide arrive after the cards.
  */
 test.describe('Playstyle Detail — loading', () => {
   const LOADING_VIEW = '[aria-label="Loading playstyle cards"]';
   const EMPTY_GRID = 'No cards match your filters.';
+
+  /**
+   * Opens `path` with `heldFile` held back until the page's other files have landed, then checks
+   * that the page showed its loading view, never a card without `companion` on the page, and that
+   * `shown` appears once the file is let go.
+   */
+  async function expectDrawnWithCards(
+    page: Page,
+    {path, heldFile, otherFiles, companion, shown}: DrawnWithCards,
+  ) {
+    // Notes any moment a card is on the page without its companion, from the first byte on.
+    await page.addInitScript((selector) => {
+      const seen = window as Window & {sawCardsAlone?: boolean};
+      seen.sawCardsAlone = false;
+      new MutationObserver(() => {
+        const card = document.querySelector('[data-testid="card-tile"]');
+        if (card && !document.querySelector(selector)) seen.sawCardsAlone = true;
+      }).observe(document, {childList: true, subtree: true});
+    }, companion);
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route(`**/data/${heldFile}`, async (route) => {
+      await held;
+      await route.continue();
+    });
+    const landed = otherFiles.map((file) =>
+      page.waitForResponse((response) => response.url().includes(`/data/${file}`)),
+    );
+
+    await page.goto(path);
+    await Promise.all(landed);
+    // Time for the other files to land in the page, which could then draw its cards alone.
+    await page.waitForTimeout(1000);
+    await expect(page.locator(LOADING_VIEW)).toBeVisible();
+
+    release();
+    await expect(shown).toBeVisible({timeout: 15000});
+    await expect(page.getByTestId('card-tile').first()).toBeVisible();
+    expect(await page.evaluate(() => (window as Window & {sawCardsAlone?: boolean}).sawCardsAlone)).toBe(false);
+  }
 
   test("shows its loading view, not an empty grid, until the playstyle's cards arrive", async ({page}) => {
     // Notes any moment the empty message is on the page, from the first byte on.
@@ -148,43 +212,32 @@ test.describe('Playstyle Detail — loading', () => {
   test('draws its mechanic tiles in the same render as its cards', async ({page}, testInfo) => {
     // A phone keeps the tiles in a sheet; the desktop row shows them beside the cards.
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
-    // Notes any moment a card is on the page with no mechanic tile, from the first byte on.
-    await page.addInitScript(() => {
-      const seen = window as Window & {sawCardsWithoutTiles?: boolean};
-      seen.sawCardsWithoutTiles = false;
-      new MutationObserver(() => {
-        const card = document.querySelector('[data-testid="card-tile"]');
-        const tile = document.querySelector('section[aria-label="Mechanics"] button');
-        if (card && !tile) seen.sawCardsWithoutTiles = true;
-      }).observe(document, {childList: true, subtree: true});
+    await expectDrawnWithCards(page, {
+      path: '/playstyles/discard',
+      heldFile: 'synergies/_playstyleMechanics.json',
+      otherFiles: ['allCards.json', 'synergies/_playstyles.json'],
+      companion: 'section[aria-label="Mechanics"] button',
+      shown: page.getByRole('button', {name: /Forced Discard/}),
     });
-    let release = () => {};
-    const held = new Promise<void>((resolve) => (release = resolve));
-    await page.route('**/data/synergies/_playstyleMechanics.json', async (route) => {
-      await held;
-      await route.continue();
-    });
-    const cardList = page.waitForResponse((response) => response.url().includes('/data/allCards.json'));
-    const cardIds = page.waitForResponse((response) => response.url().includes('/data/synergies/_playstyles.json'));
-
-    await page.goto('/playstyles/discard');
-    await Promise.all([cardList, cardIds]);
-    // Time for both lists to land in the page, which could then draw its cards without their tiles.
-    await page.waitForTimeout(1000);
-    await expect(page.locator(LOADING_VIEW)).toBeVisible();
-
-    release();
-    await expect(page.getByRole('button', {name: /Forced Discard/})).toBeVisible({timeout: 15000});
-    await expect(page.getByTestId('card-tile').first()).toBeVisible();
-    expect(
-      await page.evaluate(() => (window as Window & {sawCardsWithoutTiles?: boolean}).sawCardsWithoutTiles),
-    ).toBe(false);
   });
 
-  test('the gallery asks for the mechanic ids only once it has drawn with its own card ids', async ({page}) => {
-    let mechanicsAsked = false;
+  test('draws its guide in the same render as its cards', async ({page}) => {
+    await expectDrawnWithCards(page, {
+      path: '/playstyles/exert',
+      heldFile: 'playstyleGuides.json',
+      otherFiles: ['allCards.json', 'synergies/_playstyles.json', 'synergies/_playstyleMechanics.json'],
+      companion: '#playstyle-guide-heading',
+      shown: page.getByRole('region', {name: 'How to play Exert'}),
+    });
+  });
+
+  test('the gallery asks for the mechanic ids and the guides only once it has drawn with its own card ids', async ({
+    page,
+  }) => {
+    const LATER_FILES = ['/data/synergies/_playstyleMechanics.json', '/data/playstyleGuides.json'];
+    const asked = new Set<string>();
     page.on('request', (request) => {
-      if (request.url().includes('/data/synergies/_playstyleMechanics.json')) mechanicsAsked = true;
+      for (const file of LATER_FILES) if (request.url().includes(file)) asked.add(file);
     });
     let release = () => {};
     const held = new Promise<void>((resolve) => (release = resolve));
@@ -197,20 +250,19 @@ test.describe('Playstyle Detail — loading', () => {
     await expect(page.locator('a[href="/playstyles/lore-denial"]').first()).toBeVisible({timeout: 15000});
     // Time for a request the gallery would make before its card ids, competing with them.
     await page.waitForTimeout(1000);
-    expect(mechanicsAsked).toBe(false);
+    expect([...asked]).toEqual([]);
 
-    const mechanics = page.waitForResponse((response) =>
-      response.url().includes('/data/synergies/_playstyleMechanics.json'),
-    );
+    const later = LATER_FILES.map((file) => page.waitForResponse((response) => response.url().includes(file)));
     release();
-    await mechanics;
+    await Promise.all(later);
   });
 
   test('opened from the gallery, a playstyle shows its cards with no loading view between', async ({page}) => {
-    // The gallery reads both files a playstyle page waits for: the mechanic ids once it has drawn.
+    // The gallery reads every file a playstyle page waits for: the mechanic ids and the guides
+    // once it has drawn.
     const playstyleFiles = Promise.all(
-      ['_playstyles.json', '_playstyleMechanics.json'].map((file) =>
-        page.waitForResponse((response) => response.url().includes(`/data/synergies/${file}`)),
+      ['synergies/_playstyles.json', 'synergies/_playstyleMechanics.json', 'playstyleGuides.json'].map((file) =>
+        page.waitForResponse((response) => response.url().includes(`/data/${file}`)),
       ),
     );
     await page.goto('/playstyles');
@@ -305,5 +357,96 @@ test.describe('Playstyle Detail — tiles that failed to load', () => {
     await expect(sheet.getByRole('button', {name: /Forced Discard/})).toBeVisible({timeout: 15000});
     await expect(sheet).toBeFocused();
     expect(await sawCardsLoading(page)).toBe(false);
+  });
+});
+
+/**
+ * Exert's key cards as the page lists them: those still among its cards, which precompute writes
+ * to `_playstyles.json`. Read when called, inside a test, since the dev server writes that file.
+ */
+function exertKeyCards(): {fullName: string; path: string}[] {
+  const file = path.resolve(process.cwd(), 'public/data/synergies/_playstyles.json');
+  const exertCards = new Set<string>(JSON.parse(fs.readFileSync(file, 'utf8')).exert);
+  return EXERT_GUIDE.keyCards
+    .filter((id) => exertCards.has(id))
+    .map((id) => {
+      const fullName = cardFullNameById(id);
+      return {fullName, path: cardPath({id, fullName})};
+    });
+}
+
+/**
+ * Under its cards, a playstyle page has a written guide (#995): how the deck wins, how to build
+ * it, and its key cards, each a link to its card page that opens the card window on a click.
+ */
+test.describe('Playstyle Detail — guide', () => {
+  test('shows its guide under its cards, and a key card opens its window there', async ({page}) => {
+    await page.goto('/playstyles/exert');
+    const guide = page.getByRole('region', {name: 'How to play Exert'});
+    await expect(guide).toBeVisible({timeout: 15000});
+    await expect(guide.locator('p')).toHaveText(EXERT_GUIDE.paragraphs);
+
+    const lastCard = (await page.getByTestId('card-tile').last().boundingBox())!;
+    expect((await guide.boundingBox())!.y).toBeGreaterThanOrEqual(lastCard.y + lastCard.height);
+
+    const keyCards = exertKeyCards();
+    const links = guide.getByRole('link');
+    await expect(links).toHaveText(keyCards.map((card) => card.fullName));
+    expect(await links.evaluateAll((anchors) => anchors.map((a) => a.getAttribute('href')))).toEqual(
+      keyCards.map((card) => card.path),
+    );
+
+    await links.first().click();
+    const modal = page.getByTestId('card-overview-modal');
+    await expect(modal).toBeVisible({timeout: 15000});
+    await expect(modal.locator('h1')).toHaveText(keyCards[0].fullName);
+    await expect(page).toHaveURL(/\/playstyles\/exert$/);
+  });
+});
+
+/**
+ * When `playstyleGuides.json` fails, the page leaves its guide out and shows everything else, as
+ * it would with no guide at all: no error view, and nothing to retry (#995).
+ */
+test.describe('Playstyle Detail — guide that failed to load', () => {
+  // The page logs the failure it then hides.
+  test.use({expectedConsoleErrors: [/^Failed to load playstyle guides:/]});
+
+  test('shows the cards and their tiles, with no guide and no error', async ({page}, testInfo) => {
+    // A phone keeps the tiles in a sheet; the desktop row shows them beside the cards.
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    await page.route('**/data/playstyleGuides.json', (route) => route.fulfill({status: 500, body: ''}));
+
+    await page.goto('/playstyles/discard');
+    await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 15000});
+    const row = page.getByRole('group', {name: 'Mechanics'});
+    await expect(row.getByRole('button', {name: /Forced Discard/})).toBeVisible();
+    await expect(row.getByRole('alert')).toHaveCount(0);
+    await expect(page.getByRole('region', {name: /^How to play/})).toHaveCount(0);
+    await expect(page.getByText('Failed to load card data.')).toHaveCount(0);
+  });
+});
+
+/**
+ * A playstyle's card list that failed shows the error view without waiting for the guides, which
+ * never fail the page, so a slow guides file can't keep its Retry away (#995).
+ */
+test.describe('Playstyle Detail — cards that failed to load', () => {
+  // The page logs the failure it then shows.
+  test.use({expectedConsoleErrors: [/^Failed to load playstyle data:/]});
+
+  test('shows the error view and its Retry while the guides still load', async ({page}) => {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route('**/data/playstyleGuides.json', async (route) => {
+      await held;
+      await route.continue();
+    });
+    await page.route('**/data/synergies/_playstyles.json', (route) => route.fulfill({status: 500, body: ''}));
+
+    await page.goto('/playstyles/exert');
+    await expect(page.getByText('Failed to load card data.')).toBeVisible({timeout: 15000});
+    await expect(page.getByRole('button', {name: 'Retry'})).toBeVisible();
+    release();
   });
 });

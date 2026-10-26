@@ -16,6 +16,7 @@ import {startFeaturedCards} from './features/cards/featured';
 import {fetchCardSynergies} from './features/synergies/hooks/usePrecomputedSynergies';
 import {
   fetchPlaystyleCardIds,
+  fetchPlaystyleGuides,
   fetchPlaystyleMechanicIds,
 } from './features/synergies/hooks/playstyleFiles';
 import {fetchPairsIndex} from './features/voting/pairsIndexRequest';
@@ -238,12 +239,14 @@ const routes: RouteObject[] = [
       },
       {
         path: 'playstyles/:playstyleId',
-        // Its mechanic ids too: the page draws its cards and their tiles in one render (#930).
+        // Its mechanic ids and the guides too: the page draws its cards, their tiles and its
+        // guide in one render (#930, #995).
         handle: readyWhen(
           PlaystyleDetailPage,
           startCardList,
           fetchPlaystyleCardIds,
           fetchPlaystyleMechanicIds,
+          fetchPlaystyleGuides,
         ),
         element: (
           <SuspenseWrapper>

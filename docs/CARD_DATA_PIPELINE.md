@@ -767,13 +767,14 @@ flowchart TD
 
 | Layer | Path pattern | Strategy | Reference |
 |---|---|---|---|
-| Vercel Edge | `/card-images/(.*)` | `Cache-Control: public, max-age=31536000, immutable` | `vercel.json:14-23` — safe because URLs are content-addressed |
-| Vercel Edge | `/card-images-preview/(.*)` | `Cache-Control: public, max-age=86400, must-revalidate` | `vercel.json:24-32` — non-hashed, must revalidate |
-| Vercel Edge | `/data/synergies/(.*)` | `Cache-Control: public, max-age=3600, stale-while-revalidate=86400` | `vercel.json:33-41` |
-| Service Worker | `/data/allCards.json` | `StaleWhileRevalidate`, 24h, 1 entry | `vite.config.ts:154-159` |
-| Service Worker | `/data/synergies/.+\.json$` | `CacheFirst`, 24h, 500 entries | `vite.config.ts:161-167` |
-| Service Worker | `/card-images/.+\.avif$` | `CacheFirst`, 30d, 600 entries | `vite.config.ts:169-176` |
-| Service Worker | `navigateFallbackDenylist` excludes `/card-images/`, `/card-images-preview/`, `/data/` | — | `vite.config.ts:147-151` — prevents direct-URL pastes from rendering the SPA NotFoundPage |
+| Vercel Edge | `/card-images/(.*)` | `Cache-Control: public, max-age=31536000, immutable` | `vercel.json` `headers`: safe because URLs are content-addressed |
+| Vercel Edge | `/card-images-preview/(.*)` | `Cache-Control: public, max-age=86400, must-revalidate` | `vercel.json` `headers`: non-hashed, must revalidate |
+| Vercel Edge | `/data/synergies/(.*)` | `Cache-Control: public, max-age=3600, stale-while-revalidate=86400` | `vercel.json` `headers` |
+| Service Worker | `/data/allCards.json` | `StaleWhileRevalidate`, 24h, 1 entry | `vite.config.ts` `runtimeCaching` |
+| Service Worker | `/data/synergies/.+\.json$` | `StaleWhileRevalidate`, 24h, 500 entries | `vite.config.ts` `runtimeCaching` |
+| Service Worker | `/data/playstyleGuides.json` | `StaleWhileRevalidate`, 24h, 1 entry | `vite.config.ts` `runtimeCaching`, for the playstyle pages' guides (#995) |
+| Service Worker | `/card-images/.+\.avif$` | `CacheFirst`, 30d, 600 entries | `vite.config.ts` `runtimeCaching` |
+| Service Worker | `navigateFallbackDenylist` excludes `/card-images/`, `/card-images-preview/`, `/data/` | — | `vite.config.ts` `navigateFallbackDenylist`: prevents direct-URL pastes from rendering the SPA NotFoundPage |
 
 No SW cache rule for `previewCards.json` itself — its graceful 404 path is browser-native.
 
