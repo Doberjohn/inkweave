@@ -18,7 +18,7 @@
     "test:supabase": "node scripts/test-supabase-integration.mjs",
     "bench:engine": "pnpm --filter inkweave-synergy-engine bench:run",
     "lint": "pnpm lint:root && pnpm -r lint",
-    "lint:root": "eslint scripts .claude/hooks vitest.scripts.config.mjs middleware.ts && tsc -p tsconfig.middleware.json",
+    "lint:root": "eslint scripts .claude/hooks vitest.scripts.config.mjs middleware.ts --cache --cache-strategy content --cache-location node_modules/.cache/eslint/ && tsc -p tsconfig.middleware.json",
     "knip": "knip --include files,dependencies,unlisted,binaries,unresolved",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

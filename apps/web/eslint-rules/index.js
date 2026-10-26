@@ -15,6 +15,8 @@
 //
 // One rule here isn't about tokens: no-compiler-opt-out (#937, in its own file)
 // keeps React Compiler's checks on.
+import {createHash} from 'node:crypto';
+import {readdirSync, readFileSync} from 'node:fs';
 import {KNOWN_OFFENDERS} from './known-offenders.js';
 import {noCompilerOptOut} from './no-compiler-opt-out.js';
 import {
@@ -450,8 +452,22 @@ const noDimText = {
   },
 };
 
+/**
+ * The plugin's version: a hash of this folder's rule sources, ledgers included. ESLint's
+ * --cache keys each file's result on the config, which names a plugin by its version, so a
+ * changed rule or a shrunk ledger re-lints every file instead of trusting a stale pass.
+ */
+function rulesVersion() {
+  const dir = new URL('.', import.meta.url);
+  const hash = createHash('sha256');
+  for (const name of readdirSync(dir).filter((f) => f.endsWith('.js') && !f.endsWith('.test.js')).sort()) {
+    hash.update(name).update(readFileSync(new URL(name, dir)));
+  }
+  return hash.digest('hex').slice(0, 12);
+}
+
 export const inkweave = {
-  meta: {name: 'eslint-plugin-inkweave', version: '1.0.0'},
+  meta: {name: 'eslint-plugin-inkweave', version: rulesVersion()},
   rules: {
     'no-raw-hex-colors': noRawHexColors,
     'no-raw-rgba': noRawRgba,

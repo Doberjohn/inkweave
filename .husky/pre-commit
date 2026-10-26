@@ -1,3 +1,19 @@
 #!/bin/sh
 . "$(dirname "$0")/handoff.sh"
-pnpm run lint && pnpm run test
+
+# Lint runs beside the tests, its output held until they finish so the two
+# don't interleave; the commit goes through only when both pass. Each lint
+# script keeps an ESLint cache in its package's node_modules/.cache/eslint/,
+# so a repeat lint re-reads only the files that changed.
+lint_log=$(mktemp)
+pnpm run lint >"$lint_log" 2>&1 &
+lint_pid=$!
+test_rc=0
+pnpm run test || test_rc=$?
+lint_rc=0
+wait "$lint_pid" || lint_rc=$?
+cat "$lint_log"
+rm -f "$lint_log"
+[ "$lint_rc" -eq 0 ] || echo "pre-commit: lint failed (exit $lint_rc)"
+[ "$test_rc" -eq 0 ] || echo "pre-commit: tests failed (exit $test_rc)"
+[ "$lint_rc" -eq 0 ] && [ "$test_rc" -eq 0 ]
