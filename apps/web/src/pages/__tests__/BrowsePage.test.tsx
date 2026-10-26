@@ -121,7 +121,9 @@ describe('BrowsePage with the collection flag off', () => {
       expect(screen.getByRole('status')).toBeEmptyDOMElement();
       await act(async () => deliver([onHumanLegs]));
       expect(screen.getByRole('button', {name: /On Human Legs/})).toBeInTheDocument();
-      expect(screen.getByRole('status')).toHaveTextContent('1 card');
+      // The count comes once it has held, so a search typed letter by letter is one message.
+      expect(screen.getByRole('status')).toBeEmptyDOMElement();
+      await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('1 card'));
     });
   });
 });

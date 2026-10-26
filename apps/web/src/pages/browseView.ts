@@ -215,8 +215,10 @@ export function browseView(
 export function browseCountMessage(count: number): string {
   if (count === 0) return 'No cards match your filters.';
   if (count === 1) return '1 card';
-  const total = count.toLocaleString('en-US');
-  return count > LAYOUT.maxDisplayedCards ? `Showing ${LAYOUT.maxDisplayedCards} of ${total} cards` : `${total} cards`;
+  const grouped = (n: number) => n.toLocaleString('en-US');
+  return count > LAYOUT.maxDisplayedCards
+    ? `Showing ${grouped(LAYOUT.maxDisplayedCards)} of ${grouped(count)} cards`
+    : `${grouped(count)} cards`;
 }
 
 /** The printing the modal opens each card on, by id: the one its grid tile shows, if any. */

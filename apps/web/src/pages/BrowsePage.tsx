@@ -22,7 +22,7 @@ import {COLORS, FONTS, FONT_SIZES, SPACING, VISUALLY_HIDDEN} from '../shared/con
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
-import {useResponsive, useFilterParams} from '../shared/hooks';
+import {useResponsive, useFilterParams, useSettledValue} from '../shared/hooks';
 import type {BrowseCollectionSlots, BrowseListing} from '../features/collection/useBrowseCollection';
 import {browseCountMessage, browseView, gridModalTarget, printingIdsFor, tilePrintingFor} from './browseView';
 import {usePreCoreSearchCards} from './preCoreSearch';
@@ -63,6 +63,12 @@ function BrowsePageError({onRetry}: {onRetry: () => void}) {
   );
 }
 
+/**
+ * How long the card count holds before the status line says it: a search typed letter by letter
+ * is one message, not one per keystroke, each cutting into the screen reader's typing echo.
+ */
+const COUNT_SETTLE_MS = 500;
+
 interface BrowseContentSectionProps {
   isMobile: boolean;
   toolbarProps: React.ComponentProps<typeof BrowseToolbar>;
@@ -102,6 +108,10 @@ function BrowseContentSection({
   const titlePadding = isMobile
     ? `${SPACING.lg}px ${SPACING.lg}px 0`
     : `${SPACING.xxl}px ${BROWSE_GUTTER}px 0`;
+  const countMessage = useSettledValue(
+    binder || isLoading ? '' : browseCountMessage(cards.length),
+    COUNT_SETTLE_MS,
+  );
   return (
     <div
       style={{
@@ -128,7 +138,7 @@ function BrowseContentSection({
       {/* In the page from the start, so screen readers hear each change (WCAG 4.1.3). Empty while
           the cards load, and while the binder shows, which lights slots rather than listing cards. */}
       <p role="status" data-testid="browse-count" style={VISUALLY_HIDDEN}>
-        {binder || isLoading ? '' : browseCountMessage(cards.length)}
+        {countMessage}
       </p>
       {/* The toolbar serves BOTH modes: in collection mode its filters decide which
           binder slots stay lit rather than which cards are listed. On a phone the binder's
