@@ -1,6 +1,6 @@
 import {GOLD_GLOW} from '../../../shared/constants';
-import {CountBadge} from '../../../shared/components/CountBadge';
-import {ToolbarToggle} from '../../../shared/components/ToolbarToggle';
+import {CountBadge} from 'inkweave-ui/components/CountBadge';
+import {ToolbarToggle} from 'inkweave-ui/components/ToolbarToggle';
 
 interface MechanicsButtonProps {
   onClick: () => void;

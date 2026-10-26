@@ -1,8 +1,8 @@
 import {useRef, type CSSProperties, type ReactNode} from 'react';
 import {FilterContent} from '../../../shared/components/FilterContent';
-import {LinkButton} from '../../../shared/components/LinkButton';
+import {LinkButton} from 'inkweave-ui/components/LinkButton';
 import {COLORS, RADIUS, SPACING} from '../../../shared/constants';
-import {useResponsive} from '../../../shared/hooks/useResponsive';
+import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 
 /**
  * Browse's docked side panels (desktop): the filters on the left, live, in place of

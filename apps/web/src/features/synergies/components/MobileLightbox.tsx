@@ -4,7 +4,7 @@ import type {Ink} from 'inkweave-synergy-engine';
 import {COLORS, EASING, FONT_SIZES, INK_COLORS, RADIUS, Z_INDEX, blackRgba, hexRgba} from '../../../shared/constants';
 import {IconButton} from '../../../shared/components';
 import {useDialogFocus, useScrollLock} from '../../../shared/hooks';
-import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
+import {prefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
 
 interface MobileLightboxProps {
   imageUrl: string;

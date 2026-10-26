@@ -22,9 +22,9 @@ import {
   InkCardPlaceholder,
   RenderProfiler,
 } from '../../../shared/components';
-import {useDialogFocus} from '../../../shared/hooks/useDialogFocus';
+import {useDialogFocus} from 'inkweave-ui/hooks/useDialogFocus';
 import {useScrollLock, useTransitionPresence} from '../../../shared/hooks';
-import {prefersReducedMotion, usePrefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
+import {prefersReducedMotion, usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {trackSynergyCardClicked, trackSynergyGroupViewed} from '../lib/synergyAnalytics';
 import {
@@ -38,8 +38,8 @@ import {
   VISUALLY_HIDDEN,
   hexRgba,
 } from '../../../shared/constants';
-import {Chip} from '../../../shared/components/Chip';
-import {LinkButton} from '../../../shared/components/LinkButton';
+import {Chip} from 'inkweave-ui/components/Chip';
+import {LinkButton} from 'inkweave-ui/components/LinkButton';
 import {ModalCloseButton, SynergiesLoadingSkeleton} from './CardOverviewModalFallback';
 import {LOGO_HEIGHT, ModalCardTitle} from './ModalCardTitle';
 import {

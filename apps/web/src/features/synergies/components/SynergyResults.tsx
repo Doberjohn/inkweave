@@ -6,7 +6,7 @@ import {CardDetailLoading} from './CardDetail';
 import {ExpandedGroupView} from './ExpandedGroupView';
 import {SynergyResultsSkeleton} from './SynergyResultsSkeleton';
 import {Chip, RenderProfiler} from '../../../shared/components';
-import {SortSelect} from '../../../shared/components/SortSelect';
+import {SortSelect} from 'inkweave-ui/components/SortSelect';
 import type {SynergySortOrder} from '../../../shared/constants';
 import {
   COLORS,

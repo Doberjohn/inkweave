@@ -1,7 +1,7 @@
 import type {CSSProperties} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
-import {useResponsive} from '../../shared/hooks/useResponsive';
+import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 import {FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
 import {BAR, NUMBERS_STYLE, sectionStyle} from './binderLayout';
 

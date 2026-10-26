@@ -2,8 +2,8 @@ import {forwardRef, useEffect, useImperativeHandle, useRef, useState} from 'reac
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SPACING, TRUNCATE} from '../constants';
-import {BottomSheet} from './BottomSheet';
-import {LinkButton} from './LinkButton';
+import {BottomSheet} from 'inkweave-ui/components/BottomSheet';
+import {LinkButton} from 'inkweave-ui/components/LinkButton';
 import {useCardDataContext} from '../contexts/CardDataContext';
 import {useCardModal} from '../contexts/CardModalContext';
 import {smallImageUrl} from '../../features/cards/loader';

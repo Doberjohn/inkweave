@@ -5,7 +5,7 @@ import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, LAYOUT, RADIUS, SHADOWS, S
 import {useAutocomplete, useHover} from '../hooks';
 import {useRevealPhase} from '../../features/reveals';
 import {AuthButton} from './AuthButton';
-import {CTA_FILLED_STYLE} from './ctaStyles';
+import {CTA_FILLED_STYLE} from 'inkweave-ui/lib/ctaStyles';
 import {headerCarriesAuth, type ViewportConfig} from './headerChrome';
 import {SignInDialog} from './SignInDialog';
 import {SearchAutocomplete} from './SearchAutocomplete';

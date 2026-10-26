@@ -1,9 +1,9 @@
 import {createContext, useContext, useState, type CSSProperties, type ReactNode} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
 import {CtaButton, IconButton, InkIcon} from '../../shared/components';
-import {useHover} from '../../shared/hooks/useHover';
-import {focusedByKeyboard} from '../../shared/utils/focusedByKeyboard';
-import {usePrefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
+import {useHover} from 'inkweave-ui/hooks/useHover';
+import {focusedByKeyboard} from 'inkweave-ui/utils/focusedByKeyboard';
+import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
 import {RaritySymbol} from '../reveals/RaritySymbol';
 import {rarityLabel} from '../cards/filterOptions';
 import {

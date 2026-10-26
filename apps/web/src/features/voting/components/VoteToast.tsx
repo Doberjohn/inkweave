@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, SHADOWS, SPACING, TIER_COLORS, TRUNCATE, Z_INDEX} from '../../../shared/constants';
-import {LinkButton} from '../../../shared/components/LinkButton';
+import {LinkButton} from 'inkweave-ui/components/LinkButton';
 import type {Score} from '../../../shared/lib/supabase';
 import {getStrengthTier} from '../../synergies/utils/scoreUtils';
 

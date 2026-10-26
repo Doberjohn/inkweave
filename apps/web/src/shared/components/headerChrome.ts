@@ -2,7 +2,7 @@
  * Where the header's chrome applies. Lives outside `CompactHeader.tsx` so the rule
  * is importable without dragging a component along, and so that file keeps
  * exporting only components (react-refresh/only-export-components). Same split as
- * `ctaStyles.ts` beside `CtaButton.tsx`.
+ * inkweave-ui's `lib/ctaStyles.ts`, kept out of `components/CtaButton.tsx`.
  */
 
 /** Responsive viewport config. Derived from CompactHeader's `isMobile` prop. */

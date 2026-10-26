@@ -1,4 +1,4 @@
-import {ToolbarToggle} from '../../shared/components/ToolbarToggle';
+import {ToolbarToggle} from 'inkweave-ui/components/ToolbarToggle';
 
 /**
  * Collection mode's toolbar control, rendered into `BrowseToolbar`'s

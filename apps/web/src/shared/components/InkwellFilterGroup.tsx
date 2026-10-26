@@ -1,5 +1,5 @@
 import type {InkwellValue} from './InkwellIcon';
-import {FilterButton} from './FilterButton';
+import {FilterButton} from 'inkweave-ui/components/FilterButton';
 import {InkwellIcon} from './InkwellIcon';
 import {COLORS, SPACING} from '../constants';
 

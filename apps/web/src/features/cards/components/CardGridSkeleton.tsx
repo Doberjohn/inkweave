@@ -1,8 +1,8 @@
 import Skeleton from 'react-loading-skeleton';
 import {LAYOUT, RADIUS, SPACING} from '../../../shared/constants';
 import {InkCardPlaceholder} from '../../../shared/components/InkCardPlaceholder';
-import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
-import {useResponsive} from '../../../shared/hooks/useResponsive';
+import {useContainerWidth} from 'inkweave-ui/hooks/useContainerWidth';
+import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 import {useRef} from 'react';
 
 interface CardGridSkeletonProps {

@@ -5,7 +5,7 @@ import {AppLayout} from './AppLayout';
 import {RevealsGate} from './features/reveals';
 import {HomePageSkeleton} from './pages/HomePageSkeleton';
 import {COLORS, RADIUS, SPACING} from './shared/constants';
-import {useResponsive} from './shared/hooks/useResponsive';
+import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 import {lazyWithRetry} from './shared/lib/lazyWithRetry';
 import {forgetArtOnLeave} from './shared/lib/prerenderedArt';
 import {readyWhen} from './shared/lib/routeReadiness';

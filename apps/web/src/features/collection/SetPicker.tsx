@@ -10,7 +10,7 @@ import {
   type RefObject,
 } from 'react';
 import {CtaButton} from '../../shared/components';
-import {useHover} from '../../shared/hooks/useHover';
+import {useHover} from 'inkweave-ui/hooks/useHover';
 import {RaritySymbol} from '../reveals/RaritySymbol';
 import loreSymbol from '../../assets/lore.webp?no-inline';
 import {isFinished, percentOf} from './collectionStats';

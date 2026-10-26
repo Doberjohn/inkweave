@@ -1,6 +1,6 @@
 import {useNavigate} from 'react-router-dom';
 import {useSession} from '../contexts/SessionContext';
-import {CtaButton} from './CtaButton';
+import {CtaButton} from 'inkweave-ui/components/CtaButton';
 
 interface AuthButtonProps {
   /** Opens the caller's SignInDialog. Only called when signed out. */

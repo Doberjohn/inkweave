@@ -29,7 +29,7 @@ import {BinderSpread, BinderSlotSkeleton, PER_PAGE} from '../cards/components/Bi
 import {BinderSpreadMap} from '../cards/components/BinderSpreadMap';
 import {CtaButton} from '../../shared/components';
 import {CardWindowSlotContext} from '../../shared/contexts/cardWindowSlot';
-import {useResponsive} from '../../shared/hooks/useResponsive';
+import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 import {COLORS, FONT_SIZES, SPACING, type BrowseSortOrder} from '../../shared/constants';
 
 /**

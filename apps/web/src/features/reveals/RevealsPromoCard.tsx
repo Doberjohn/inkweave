@@ -10,7 +10,7 @@ import {
   REVEAL_SET_NUMBER,
 } from '../../shared/constants';
 import {useResponsive} from '../../shared/hooks';
-import {prefersReducedMotion} from '../../shared/utils/prefersReducedMotion';
+import {prefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
 
 /** Staggered firefly configs — stable across renders so animations stay in sync. */
 const FIREFLY_SEEDS: ReadonlyArray<{left: string; delay: string; drift: string}> = [

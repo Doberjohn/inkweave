@@ -40,8 +40,8 @@ export const COLOR_EXEMPT = {
     'apps/web/src/features/cards/components/binderLook.ts',
     'packages/ui/src/docs/',
     'apps/web/src/shared/components/CostIcon.tsx',
-    'apps/web/src/shared/components/FilterIcon.tsx',
-    'apps/web/src/shared/components/SearchIcon.tsx',
+    'packages/ui/src/components/FilterIcon.tsx',
+    'packages/ui/src/components/SearchIcon.tsx',
     'apps/web/src/shared/components/InkIcon.tsx',
     'apps/web/src/shared/components/InkwellIcon.tsx',
   ],
@@ -64,7 +64,8 @@ export const SPACING_EXEMPT = {paths: ['packages/ui/src/docs/'], patterns: [TEST
  */
 export const ADHOC_BUTTON_EXEMPT = {
   paths: [
-    'apps/web/src/shared/components/', // the kit itself, QuantityStepper's domain stepper family too
+    'packages/ui/src/components/', // the kit itself, QuantityStepper's domain stepper family too
+    'apps/web/src/shared/components/', // the shared components the app keeps
     'apps/web/src/features/voting/components/OptionPicker.tsx', // vote picker family (CarriesPicker adapts it)
     'apps/web/src/features/voting/components/ScorePicker.tsx', // vote score row
     'apps/web/src/features/voting/components/QuickVoteControl.tsx', // vote control family
@@ -87,8 +88,8 @@ export const ADHOC_BUTTON_EXEMPT = {
  */
 export const ARIA_MODAL_EXEMPT = {
   paths: [
-    'apps/web/src/shared/components/DialogShell.tsx',
-    'apps/web/src/shared/components/BottomSheet.tsx',
+    'packages/ui/src/components/DialogShell.tsx',
+    'packages/ui/src/components/BottomSheet.tsx',
     'apps/web/src/shared/components/FilterDialog.tsx',
   ],
   patterns: [TEST_FILE, STORY_FILE],

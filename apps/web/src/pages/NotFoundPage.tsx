@@ -1,6 +1,6 @@
 import {useLocation, useNavigate} from 'react-router-dom';
 import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
-import {CtaButton} from '../shared/components/CtaButton';
+import {CtaButton} from 'inkweave-ui/components/CtaButton';
 import {Seo} from '../shared/components';
 
 /**

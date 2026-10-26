@@ -1,4 +1,4 @@
-import {CtaButton} from './CtaButton';
+import {CtaButton} from 'inkweave-ui/components/CtaButton';
 
 // Its own module, apart from CardTranslationPanel, so importing the toggle doesn't bring
 // CardTextBlock with it: the card modal's loading shell renders it invisibly, from the entry

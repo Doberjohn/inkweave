@@ -3,7 +3,7 @@ import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, EASING, FONTS, INK_COLORS, VISUALLY_HIDDEN} from '../../../shared/constants';
 import {usePairScore} from '../../voting/hooks/usePairScore';
 import {formatScore} from '../../../shared/utils/scoreFormatting';
-import {prefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
+import {prefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
 import {useScrollSnapIndex} from '../../../shared/hooks';
 import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';

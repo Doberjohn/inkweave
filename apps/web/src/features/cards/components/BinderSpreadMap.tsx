@@ -1,8 +1,8 @@
 import {useLayoutEffect, useRef, useState, type CSSProperties, type RefObject} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
-import {CtaButton} from '../../../shared/components/CtaButton';
+import {CtaButton} from 'inkweave-ui/components/CtaButton';
 import {COLORS, GOLD_GLOW, INK_COLORS, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
-import {useHover} from '../../../shared/hooks/useHover';
+import {useHover} from 'inkweave-ui/hooks/useHover';
 import {PER_PAGE, PER_SPREAD} from './BinderSpread';
 
 /**

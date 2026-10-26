@@ -1,6 +1,6 @@
 import type {ReactNode} from 'react';
 import {COLORS, DURATION, EASING, FONT_SIZES, FONTS, INK_COLORS, RADIUS, SPACING, hexRgba, whiteRgba} from '../../../shared/constants';
-import {CtaButton} from '../../../shared/components/CtaButton';
+import {CtaButton} from 'inkweave-ui/components/CtaButton';
 import {VoteAffirmation} from '../../voting/components';
 
 // Amethyst is the community-column accent across the modal, the token CommunityColumn uses (#511).

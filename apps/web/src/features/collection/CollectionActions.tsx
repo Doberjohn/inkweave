@@ -1,7 +1,7 @@
 import {useEffect, useId, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type ReactNode} from 'react';
 import {CtaButton} from '../../shared/components';
-import {ToolbarToggle} from '../../shared/components/ToolbarToggle';
-import {useHover} from '../../shared/hooks/useHover';
+import {ToolbarToggle} from 'inkweave-ui/components/ToolbarToggle';
+import {useHover} from 'inkweave-ui/hooks/useHover';
 import {useCloseOnPressOutside} from './useCloseOnPressOutside';
 import {
   COLORS,

@@ -1,6 +1,6 @@
 import type {CSSProperties, MouseEventHandler, ReactNode} from 'react';
 import {CtaButton} from '../../shared/components';
-import {useHover} from '../../shared/hooks/useHover';
+import {useHover} from 'inkweave-ui/hooks/useHover';
 import {COLORS, EASING, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING} from '../../shared/constants';
 
 const SEGMENTS_STYLE: CSSProperties = {

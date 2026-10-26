@@ -32,8 +32,11 @@ describe('inkweave-ui manifest', () => {
 
   it("names every dependency it shares with the app at the app's version", () => {
     const appVersions = {...app.dependencies, ...app.devDependencies};
-    const own = {...pkg.dependencies, ...pkg.devDependencies, ...pkg.peerDependencies};
-    const mismatched = Object.entries(own).filter(
+    // Section by section: spread into one object, the peer range would hide a devDependency's.
+    const own = [pkg.dependencies, pkg.devDependencies, pkg.peerDependencies].flatMap((deps) =>
+      Object.entries(deps ?? {}),
+    );
+    const mismatched = own.filter(
       ([name, version]) => name in appVersions && appVersions[name] !== version,
     );
     expect(mismatched).toEqual([]);

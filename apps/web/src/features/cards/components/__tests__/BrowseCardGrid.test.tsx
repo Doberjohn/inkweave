@@ -8,7 +8,7 @@ import {createCard} from '../../../../shared/test-utils';
 
 const layout = vi.hoisted(() => ({isMobile: false}));
 
-vi.mock('../../../../shared/hooks/useResponsive', () => ({
+vi.mock('inkweave-ui/hooks/useResponsive', () => ({
   useResponsive: () => ({
     isMobile: layout.isMobile,
     isTablet: false,

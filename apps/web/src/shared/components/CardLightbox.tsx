@@ -3,7 +3,7 @@ import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {COLORS, FONT_SIZES, RADIUS, SHADOWS, SPACING} from '../constants';
 import {CardTranslationPanel} from './CardTranslationPanel';
 import {CardTranslationToggle} from './CardTranslationToggle';
-import {DialogShell} from './DialogShell';
+import {DialogShell} from 'inkweave-ui/components/DialogShell';
 import {InkCardPlaceholder} from './InkCardPlaceholder';
 
 interface CardLightboxProps {

@@ -12,9 +12,9 @@ import {
 } from 'react';
 import {EDGE_DISC_SIZE, InkCardPlaceholder, NavArrowButton} from '../../../shared/components';
 import {ArtOnScreen} from '../../../shared/hooks/useArtLoad';
-import {useContainerWidth} from '../../../shared/hooks/useContainerWidth';
+import {useContainerWidth} from 'inkweave-ui/hooks/useContainerWidth';
 import {blackRgba, COLORS, RADIUS, SPACING} from '../../../shared/constants';
-import {usePrefersReducedMotion} from '../../../shared/utils/prefersReducedMotion';
+import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
 import {BINDER_LOOK} from './binderLook';
 import {viewSheets, type ViewSheets} from './binderSheets';
 import {PageTurn} from './PageTurn';

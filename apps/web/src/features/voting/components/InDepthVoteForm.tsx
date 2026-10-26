@@ -7,7 +7,7 @@ import {OptionPicker} from './OptionPicker';
 import {ScorePicker} from './ScorePicker';
 import {CarriesPicker} from './CarriesPicker';
 import {VoteGroupTabs} from './VoteGroupTabs';
-import {CtaButton} from '../../../shared/components/CtaButton';
+import {CtaButton} from 'inkweave-ui/components/CtaButton';
 import {
   COLORS,
   DURATION,

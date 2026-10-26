@@ -12,8 +12,8 @@ import {
 } from '../constants';
 import {useAutocomplete, useHeroLogoSrc, useHover} from '../hooks';
 import {SearchAutocomplete} from './SearchAutocomplete';
-import {SearchIcon} from './SearchIcon';
-import {CtaButton} from './CtaButton';
+import {SearchIcon} from 'inkweave-ui/components/SearchIcon';
+import {CtaButton} from 'inkweave-ui/components/CtaButton';
 
 interface HeroSectionProps {
   searchQuery: string;
