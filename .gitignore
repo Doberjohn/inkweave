@@ -61,6 +61,9 @@ apps/web/public/data/featuredCards.json
 # Build commit stamp (written by scripts/write-version.mjs in build:vercel, #569)
 apps/web/public/version.json
 
+# Sitemap (written by scripts/generate-sitemap.mjs in build:vercel, #1025)
+apps/web/public/sitemap.xml
+
 # Git worktrees
 .worktrees/
 

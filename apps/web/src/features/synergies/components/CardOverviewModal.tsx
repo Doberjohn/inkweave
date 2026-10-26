@@ -66,7 +66,7 @@ const FLIP_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
  * Paging to a sibling can unmount the focused control (the translation toggle, when no printing
  * of the next card is a foreign scan), which drops focus to <body>, outside the frame's
  * arrow-key handler. Or it can hide the control in place (the toggle, when the next card's
- * foreign scan is a variant, #681), leaving focus on a button nobody can see. Either way, put
+ * foreign scan is a variant), leaving focus on a button nobody can see. Either way, put
  * it back on the close button so the arrow keys keep paging. A swipe to an English printing
  * hides a focused toggle the same way, but a swipe often leaves focus on <body>, so after a
  * printing change only a control hidden in place counts as lost.
@@ -139,7 +139,7 @@ interface CardOverviewModalProps {
    *  fetch lifecycle. */
   synergiesLoading?: boolean;
   /**
-   * The card is outside Core (sets 1-8, from a collection, #553 Phase C). The engine
+   * The card is outside Core (sets 1-8, from a collection). The engine
    * never analyses those sets, so the synergy column says so instead of reading as
    * "no synergies yet", which would imply a rule might still match.
    */
@@ -172,18 +172,18 @@ interface CardOverviewModalProps {
   onGoToSibling?: (direction: 1 | -1) => void;
   /**
    * Mount already visible, with no entrance: CardOverviewModalFallback has just played it while
-   * this chunk downloaded (#640), so animating again would flash the page behind the scrim.
+   * this chunk downloaded, so animating again would flash the page behind the scrim.
    */
   skipEnterTransition?: boolean;
   /** Open on this Epic/Enchanted/Iconic printing (a variant id) instead of the Standard art. */
   initialPrintingId?: string | null;
   /**
-   * Takes the element in the row under the card that a page may fill through a portal (#826):
+   * Takes the element in the row under the card that a page may fill through a portal:
    * Browse's copies stripe. Given only while a page holds that row (`useHoldCopiesRow`); without
    * it the window draws no row and has no slot.
    */
   copiesSlotRef?: (el: HTMLElement | null) => void;
-  /** Told the printing on show whenever it changes: a variant's id, or null for the card's own (#826). */
+  /** Told the printing on show whenever it changes: a variant's id, or null for the card's own. */
   onShownPrintingChange?: (printingId: string | null) => void;
 }
 
@@ -198,7 +198,7 @@ interface ModalState {
   expandedGroupKey: string | null;
   comparisonPair: DetailedPairSynergy | null;
   /**
-   * The pair held during the exit animation (#332 #7). When the user clicks BACK,
+   * The pair held during the exit animation. When the user clicks BACK,
    * `comparisonPair` becomes null but `exitingPair` retains the pair so CompareCardOverlay
    * and PairConnector stay mounted long enough to animate out. Cleared after FLIP_DURATION.
    */
@@ -237,7 +237,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   const [expandedGroupKey, setExpandedGroupKey] = useState<string | null>(null);
   const [comparisonPair, setComparisonPair] = useState<DetailedPairSynergy | null>(null);
   const [highlightedCard, setHighlightedCard] = useState<'a' | 'b' | null>(null);
-  // Exit-animation state (#332 #7). When the user clicks BACK, `comparisonPair` becomes null
+  // Exit-animation state. When the user clicks BACK, `comparisonPair` becomes null
   // immediately (chrome starts fading back in, Card A drifts back, panel collapses via existing
   // transitions). `exitingPair` retains the pair so CompareCardOverlay + PairConnector stay
   // mounted for the FLIP_DURATION exit window. The destination tile rect is read inside the
@@ -294,7 +294,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
   const visibleGroups = buildVisibleGroups(props.synergies, activeGroupFilter);
 
   const {compareCardRef, captureStartRect} = useFLIPAnimation(comparisonPair, exitingPair);
-  // Re-entry guard for the 90ms click-ack window (#332 #6 idea B). Holds the setTimeout id while
+  // Re-entry guard for the 90ms click-ack window. Holds the setTimeout id while
   // the ack is in flight; null when idle. Doubles as a cancellation handle so the timeout can be
   // cleared if the modal closes mid-ack (otherwise `fireComparison` would fire ~90ms after the
   // user has already dismissed the modal, triggering state updates on a tearing-down component).
@@ -552,7 +552,7 @@ function isTextEntryTarget(target: EventTarget | null): boolean {
 
 /**
  * Controls that use the arrow keys themselves: text entry, radio groups, whose arrows move their
- * selection, and the printings strip (#625), whose arrows turn it. There they are not "next card".
+ * selection, and the printings strip, whose arrows turn it. There they are not "next card".
  */
 const OWNS_ARROW_KEYS = '[role="radiogroup"], [aria-roledescription="carousel"]';
 
@@ -589,7 +589,7 @@ function deriveModalFlags(input: DeriveModalFlagsInput): ModalFlags {
 
 /**
  * The parts of a key press the shell's handling reads: React's event, or a native one for a
- * key pressed in what a page portals into the window's slot (#826, `CopiesSlot`).
+ * key pressed in what a page portals into the window's slot (`CopiesSlot`).
  */
 type ShellKeyEvent = Pick<KeyboardEvent, 'key' | 'shiftKey' | 'target' | 'preventDefault'>;
 
@@ -811,7 +811,7 @@ interface FLIPAnimationApi {
 }
 
 /**
- * FLIP animation for comparison entry AND exit (#332 #6 entry, #332 #7 exit).
+ * FLIP animation for comparison entry AND exit.
  *
  * Entry: when `comparisonPair` becomes set, animate from the captured source rect (the clicked
  * tile) to the destination ref's current rect (the CompareCardOverlay position). 480ms cubic.
@@ -942,7 +942,7 @@ interface SynergyCardClickInput {
   getPairSynergies: (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null;
   onEnterComparison?: (partnerId: string, groupKey?: string) => void;
   /**
-   * Re-entry guard for the click-ack beat (#332 #6 idea B). Holds the setTimeout id while the
+   * Re-entry guard for the click-ack beat. Holds the setTimeout id while the
    * ack is in flight; null when idle. Truthy → ignore subsequent clicks. Also serves as the
    * cancellation handle so the timeout can be cleared if the modal closes mid-ack.
    */
@@ -1055,7 +1055,7 @@ interface ModalHeaderProps {
   hideBackButton: boolean;
   onClose: () => void;
   exitComparison: () => void;
-  /** useDialogFocus's initial-focus target — attached to the close × (#510: it was created but never attached). */
+  /** useDialogFocus's initial-focus target — attached to the close ×. */
   initialFocusRef: React.RefObject<HTMLButtonElement | null>;
   /** The expanded group view shows no card image, so it has nothing to translate. */
   showExpanded: boolean;
@@ -1101,7 +1101,7 @@ interface ChipFilterBlockProps {
  * takes the space back too:
  * - Desktop: the block collapses with the cards' FLIP (same duration and easing), so card A rises
  *   and slides right along one straight line while card B lands in the same rising row.
- * - Mobile: the layout never changes (#332 #5). The block stays put, hidden with the default
+ * - Mobile: the layout never changes. The block stays put, hidden with the default
  *   view, and MobileComparisonView's overlay covers it from just under the header.
  */
 function ChipFilterBlock({synergies, isMobile, comparisonPair, exitingPair, activeGroupFilter, toggleChip}: ChipFilterBlockProps) {
@@ -1273,7 +1273,7 @@ interface MobileOrDesktopBodyProps extends CardsRowProps {
 }
 
 /**
- * Default-view exit reveal (#332 #5). On exit the default view fades back IN, but DELAYED — the
+ * Default-view exit reveal. On exit the default view fades back IN, but DELAYED — the
  * delay must clear MobileComparisonView's chrome fade (`CHROME_EXIT_FADE_MS`, ~200ms) so the
  * comparison layout and the default layout are never both visible. Overlapping them is what
  * produced the cross-layout ghosting; sequencing the fades removes it.
@@ -1305,7 +1305,7 @@ function pickScrollAreaRevealStyle(args: {
  * Dispatch between the tabbed {@link MobileComparisonView} (mobile + comparison) and the
  * default CardsRow + ComparisonDetailPanel layout (everything else).
  *
- * Layout stability is the design rule here (#332 #5): the default view lives in a
+ * Layout stability is the design rule here: the default view lives in a
  * permanently-mounted ScrollArea whose layout NEVER changes when comparison opens/closes, and
  * MobileComparisonView is ALWAYS an absolute overlay on top of it. Entering/exiting comparison
  * only toggles the ScrollArea's `visibility` (paint-only, zero reflow) and fades the overlay —
@@ -1398,7 +1398,7 @@ interface CardsRowProps {
   visibleGroups: SynergyGroupData[];
   activeGroupFilter: string | null;
   comparisonPair: DetailedPairSynergy | null;
-  /** Pair held during exit animation (#332 #7). Keeps CompareCardOverlay + PairConnector mounted
+  /** Pair held during exit animation. Keeps CompareCardOverlay + PairConnector mounted
    *  for the FLIP_DURATION exit window after `comparisonPair` becomes null. */
   exitingPair: DetailedPairSynergy | null;
   highlightedCard: 'a' | 'b' | null;
@@ -1488,8 +1488,8 @@ interface CardImageDisplayProps {
 }
 
 function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCard, inComparison}: CardImageDisplayProps) {
-  // In comparison mode the wrapper takes the ambient `focused-card-glow` className
-  // (#332 #6 idea D). The animation cycles `box-shadow` between a low and high gold-tinted
+  // In comparison mode the wrapper takes the ambient `focused-card-glow` className.
+  // The animation cycles `box-shadow` between a low and high gold-tinted
   // aura around the card, in the golds the cards' row sets (`FOCUSED_CARD_GLOW`). The
   // wrapper's `RADIUS.xl`, CardImage's own, makes the shadow follow the card's rounded corners
   // instead of drawing against a rectangular bounding box.
@@ -1504,7 +1504,7 @@ function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCar
       <CardWithCopies cardWidth={cardWidth} isMobile={isMobile} inComparison={inComparison}>
         {/* Shrink-wrap span carrying the `data-comparison-card-a` marker — its rect is exactly
             the card image (not the full-width flex wrapper), so the click handler captures the
-            correct FLIP origin for Card A's mobile comparison transition (#332 #5). */}
+            correct FLIP origin for Card A's mobile comparison transition. */}
         <span data-comparison-card-a style={ART_BOX_STYLE}>
           <ModalCardArt card={card} cardWidth={cardWidth} cardHeight={cardHeight} />
           {translation?.shown && !inComparison && (
@@ -1542,7 +1542,7 @@ const HOVER_FADES = `opacity ${DURATION.base}ms ${EASING.smooth}, filter ${DURAT
  */
 const LIT_CARD_GLOW = `drop-shadow(${SHADOWS.glowSm})`;
 
-/** Card A's transition: its hover fades, and its slide into a comparison unless reduced motion skips it (#790). */
+/** Card A's transition: its hover fades, and its slide into a comparison unless reduced motion skips it. */
 function cardWrapperTransition(reducedMotion: boolean): string {
   return reducedMotion ? HOVER_FADES : `${HOVER_FADES}, transform ${FLIP_DURATION}ms ${FLIP_EASING}`;
 }
@@ -1632,7 +1632,7 @@ function DefaultInfoColumn({synergies, synergiesLoading, outsideCore, visibleGro
 }
 
 /**
- * In place of synergies for a card from sets 1-8 (#553 Phase C). Collection mode
+ * In place of synergies for a card from sets 1-8. Collection mode
  * shows every card a collection can hold, but Inkweave analyses Core only, so the
  * honest answer is "not analysed", not "none found".
  */
@@ -1694,9 +1694,9 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
       ref={compareCardRef}
       aria-hidden="true"
       // `focused-card-glow focused-card-glow-offset` adds the ambient breathing animation
-      // (#332 #6 idea D) phased opposite to Card A — when A's glow peaks, B is at its
-      // minimum and vice versa. The keyframe bakes in the same 0 8px 24px depth shadow
-      // that was previously inline, plus the breathing aura in the golds the cards' row sets
+      // phased opposite to Card A — when A's glow peaks, B is at its
+      // minimum and vice versa. The keyframe bakes in the 0 8px 24px depth shadow,
+      // plus the breathing aura in the golds the cards' row sets
       // (`FOCUSED_CARD_GLOW`). Reduced-motion override in
       // index.css disables the animation; the previous static shadow is then absent —
       // documented as acceptable since the cards still have CardImage's inner styling.
@@ -1716,7 +1716,7 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
         zIndex: 5,
         // Only set opacity inline when actively dimming via hover. Default case is `undefined`
         // so React doesn't manage the property — that way the exit FLIP's `el.style.opacity = '0'`
-        // (#332 #7) persists across re-renders during the 480ms exit window.
+        // persists across re-renders during the 480ms exit window.
         opacity: highlightedCard === 'a' ? 0.4 : undefined,
         filter: highlightedCard === 'b' ? LIT_CARD_GLOW : undefined,
         transition: HOVER_FADES,
@@ -1745,7 +1745,7 @@ interface ComparisonDetailPanelProps {
   inComparison: boolean;
   comparisonPair: DetailedPairSynergy | null;
   /** Held during the 480ms exit window so the inner content stays mounted while the grid row
-   *  collapses (#332 #7). Without this, the inner `{comparisonPair && ...}` would unmount the
+   *  collapses. Without this, the inner `{comparisonPair && ...}` would unmount the
    *  EngineColumn + CommunityColumn instantly on BACK, leaving the row to collapse around
    *  empty space — which reads as a "pop" instead of a smooth shrink. */
   exitingPair: DetailedPairSynergy | null;
@@ -1805,7 +1805,7 @@ function ComparisonDetailPanel({isMobile, inComparison, comparisonPair, exitingP
 interface PairConnectorProps {
   cardHeight: number;
   /** When true, play the reverse-draw exit animation (clip-path collapses from inset(0) back to
-   *  inset(0 50% 0 50%); wrapper fades out). #332 #7 exit choreography. */
+   *  inset(0 50% 0 50%); wrapper fades out). */
   exiting: boolean;
 }
 
@@ -1815,7 +1815,7 @@ interface PairConnectorProps {
  * Entry: The line spans the full info-col gap and reveals from center outward (clip-path
  * inset(0 50% 0 50%) → inset(0)) over 1s with a 200ms delay.
  *
- * Exit (#332 #7): wrapper fades out (200ms), line collapses centre-in (clip-path back to
+ * Exit: wrapper fades out (200ms), line collapses centre-in (clip-path back to
  * inset(0 50% 0 50%)) over 480ms. Faster than entry's narrative 1000ms reveal — exit doesn't
  * need the dramatic buildup since the user already understands the pair.
  */
@@ -1852,7 +1852,7 @@ function PairConnector({cardHeight, exiting}: PairConnectorProps) {
 }
 
 /**
- * BACK button (focused-state nav): the shared LinkButton in its gold tone (#509). It takes focus
+ * BACK button (focused-state nav): the shared LinkButton in its gold tone. It takes focus
  * when it appears: the comparison makes the default view inert, the pressed tile with it, which
  * would drop focus to <body> (WCAG 2.4.3).
  */

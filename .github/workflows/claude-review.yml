@@ -149,7 +149,8 @@ jobs:
             git diff @{upstream}...HEAD. The shell has no GitHub token, so gh can't reach
             GitHub. The working tree's uncommitted changes are the review action's copies of
             CLAUDE.md and .claude/ from the base branch, not the pull request's: leave them
-            out of the review."
+            out of the review. Files .gitattributes marks linguist-generated are card data
+            and the lockfile: check only that they still parse, never review them line by line."
 
       # The skill posts nothing when it finds nothing, so this step says so on the pull
       # request, quoting the review's closing summary, which also shows why a review that

@@ -302,6 +302,7 @@ Dark fantasy theme inspired by Lorcana:
 - Use `/refactor-code` for periodic comprehensive codebase audits
 - When reviewing code or doing a re-review, always re-read the current file contents first — never assume you know what's already been changed. Diff against the actual working tree, not your memory of previous edits.
 - When editing theme or config files, re-read the full file after edits to ensure no constants or exports were accidentally removed by the edit tool
+- **Comments say why, not what changed.** Keep a comment that gives a reason, a constraint a reader would otherwise break (a browser quirk, an ordering rule, a contract with admin or the scripts), or a pointer the reader needs (a spec doc, a `*_RULE.md`). Leave out what the code used to do, which issue added it, or that something was fixed: `git log` and `git blame` hold that, and an issue number stays only where it is the quickest route to a constraint's full story (#1026).
 - **Dead code**: CI's `pnpm knip` fails on unused files, dependencies and binaries. Something that only looks unused (run from a shell script or `vercel.json`, loaded at run time) goes in `knip.jsonc` with the reason.
 
 ### Design Token Changes

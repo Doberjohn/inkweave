@@ -1,0 +1,11 @@
+# cubic's review settings (https://docs.cubic.dev/configure/cubic-yaml), read from master only.
+version: 1
+reviews:
+  ignore:
+    files:
+      # Card data, the promo catalog, the slug map and the lockfile (#1025): admin and the
+      # scripts write them, and .gitattributes marks them linguist-generated.
+      - apps/web/public/data/**/*.json
+      - scripts/data/promo-printings.json
+      - middleware-data/card-slugs.json
+      - pnpm-lock.yaml

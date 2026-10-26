@@ -1,11 +1,10 @@
-// Imported-collection state (#553, cloud-backed since #555): what the user owns.
+// Imported-collection state, kept in this browser and the account: what the user owns.
 //
 // Reads localStorage on mount, then reconciles with the `collections` table once
 // a uid appears, and again each time the tab comes back into view. Still far
 // simpler than `DeckContext`, which carries a dirty fingerprint for a draft that is
 // mutated continuously. Here every write replaces the whole copy: an import, or
-// since #826 one count changed in the app, which is a new copy written the same
-// way. Only the edits' UPLOADS are coalesced (`UPLOAD_DELAY_MS`), so a burst of
+// one count changed in the app, which is a new copy written the same way. Only the edits' UPLOADS are coalesced (`UPLOAD_DELAY_MS`), so a burst of
 // clicks is one write, and the upload is flushed at every way out of the page.
 //
 // TWO PLACES IT DIVERGES FROM `DeckContext`, both owner rulings (2026-08-11):
@@ -29,7 +28,7 @@
 //
 // It still takes no other context beyond the session. Entries are keyed by card
 // id, and resolving those to cards is the consumer's job. Where each copy shows
-// (#880) comes in as `placements`, which the parent builds from the card data.
+// comes in as `placements`, which the parent builds from the card data.
 
 import {createContext, useContext, useEffect, useRef, useState, type ReactNode} from 'react';
 import type {CollectionEntries, Finish} from './collectionParser';
@@ -58,7 +57,7 @@ import {useSession} from '../../shared/contexts/SessionContext';
 
 interface CollectionContextValue {
   /**
-   * Owned copies per card id, as shown (#880): a copy counted in a finish its printing doesn't
+   * Owned copies per card id, as shown: a copy counted in a finish its printing doesn't
    * come in shows where it belongs (`placeCopies`), while the saved counts stay as they were
    * entered. Empty when nothing has been imported.
    */
@@ -100,7 +99,7 @@ interface CollectionContextValue {
   clearImported: () => void;
   /**
    * Set one finish's copies of one card (never below 0), saving it locally now and to
-   * the account shortly (#826).
+   * the account shortly.
    *
    * An edit is a new copy, written as an import is: under a fresh stamp, and marked
    * pending at once, so a reload before its upload still uploads it. A card left at 0
@@ -108,7 +107,7 @@ interface CollectionContextValue {
    * account's copy has answered ({@link syncing}): an edit is owed to an account, and is
    * built on its latest copy.
    *
-   * The count set is the one shown (#880), so the edit saves it as the player sees it, and
+   * The count set is the one shown, so the edit saves it as the player sees it, and
    * clears the copies shown in it from wherever they were counted (`editAsShown`).
    */
   setCount: (cardId: string, finish: Finish, count: number) => void;
@@ -221,7 +220,7 @@ function restampAsServerCopy(uid: Uid, copy: LocalCollection, setState: (next: C
 }
 
 /**
- * How long after the last edit its upload starts (#826, owner 2026-10-19: saves are
+ * How long after the last edit its upload starts (owner ruling 2026-10-19: saves are
  * batched a moment after the last click), so a burst of clicks is one write, of the
  * copy the last click made.
  */
@@ -267,7 +266,7 @@ function scheduleUpload(
 }
 
 /**
- * The provider's waiting edit upload (#826), flushed at every way out, since a timer
+ * The provider's waiting edit upload, flushed at every way out, since a timer
  * never fires for a page that has gone: the page hidden (a tab switch, a close, a
  * reload) and the provider unmounting (leaving `/browse` or `/account`).
  *
@@ -295,7 +294,7 @@ function useUploadBatch(uid: Uid | null): UploadSlot {
 }
 
 /**
- * Calls `onWrite` whenever another tab of this origin writes the stored collection (#826), or
+ * Calls `onWrite` whenever another tab of this origin writes the stored collection, or
  * clears the whole store (`key` null). The tab that writes hears nothing: a `storage` event goes
  * only to the others. The latest `onWrite` is called, through a ref refreshed each render.
  */
@@ -427,7 +426,7 @@ function applySyncPlan(
 
 /**
  * Drop this browser's copy of a collection the account no longer has (owner ruling
- * 2026-10-19, #826): it was cleared from another device, so it goes here too, as a clear
+ * 2026-10-19): it was cleared from another device, so it goes here too, as a clear
  * made here would take it. Any pending marker named a different copy, or the plan would
  * have been upload.
  */
@@ -487,7 +486,7 @@ interface SyncReads {
  * The third is a local mutation landing mid-flight: a clear during the fetch would be
  * undone by the adopt-server branch applying a snapshot taken before it, restoring the
  * collection the user just deleted, and an import or an edit in the same window is
- * overwritten the same way. The fourth is a newer read (#826): a tab shown twice in
+ * overwritten the same way. The fourth is a newer read: a tab shown twice in
  * quick succession reads twice, and the older answer must not land last.
  */
 function readAccountCopy(uid: Uid, reads: SyncReads, {latest, localEpoch, setState, answered}: SyncDeps): void {
@@ -511,7 +510,7 @@ function readAccountCopy(uid: Uid, reads: SyncReads, {latest, localEpoch, setSta
 
 /**
  * Reconcile this browser's collection with the account's: once per uid, and again
- * each time the tab comes back into view (#826, owner 2026-10-19). A tab left open
+ * each time the tab comes back into view (owner ruling 2026-10-19). A tab left open
  * then picks up counts saved from another device before it can save over them. The
  * decision is the same either way: a copy with an upload pending uploads, and
  * otherwise the account's copy is adopted.
@@ -519,10 +518,9 @@ function readAccountCopy(uid: Uid, reads: SyncReads, {latest, localEpoch, setSta
  * The effect re-runs only when the account changes: its other deps are a state setter
  * and a ref, both stable, and one that changed identity would refetch on every change.
  * Each run reads for itself and its cleanup cancels that read, so StrictMode's dev
- * double run (mount, clean up, mount) ends with exactly one answer applied. A claim
- * kept across the cleanup once skipped the second read and dropped the cancelled
- * first's answer, so in dev a collection that lived only on the server was never
- * adopted.
+ * double run (mount, clean up, mount) ends with exactly one answer applied. Keep no
+ * claim across the cleanup: it would skip the second read and drop the cancelled
+ * first's answer, so in dev a server-only collection would never be adopted.
  *
  * Deliberately NOT gated on `state`: the effect must run on the sign-in moment,
  * not on every import. `latest` carries the current value in without making it
@@ -575,7 +573,7 @@ function useCollectionSync(
 interface CollectionProviderProps {
   children: ReactNode;
   /**
-   * Where each printing's copies show (#880), from the card data the parent has loaded. None
+   * Where each printing's copies show, from the card data the parent has loaded. None
    * known by default, so every copy shows where it was counted.
    */
   placements?: Placements;
@@ -594,8 +592,8 @@ export function CollectionProvider({children, placements = NO_PLACEMENTS}: Colle
   useOtherTabsWrites(takeOtherTabsCopy);
   const visible = state !== null && visibleTo(state, {uid, loading}) ? state : null;
 
-  // No useMemo/useCallback anywhere below: the React Compiler memoizes this file
-  // (#291), and the repo's lint forbids hand-rolling it.
+  // No useMemo/useCallback anywhere below: the React Compiler memoizes this file,
+  // and the repo's lint forbids hand-rolling it.
   function importCollection(entries: CollectionEntries, importedAt: number): string | null {
     const stamp = uniqueImportStamp(importedAt, uid, state);
     const {data, error} = writeCollection(entries, stamp, uid, 'import');
@@ -632,7 +630,7 @@ export function CollectionProvider({children, placements = NO_PLACEMENTS}: Colle
   }
 
   /**
-   * Another tab's write, taken in here (#826). The tabs share the one stored copy and its
+   * Another tab's write, taken in here. The tabs share the one stored copy and its
    * markers, but each holds its own copy in memory. Without this a tab works on a copy another
    * has replaced: an edit there builds on stale counts, and a re-read there pairs the stale
    * copy with the other tab's pending marker, so it adopts the account's older row over the
@@ -664,7 +662,7 @@ export function CollectionProvider({children, placements = NO_PLACEMENTS}: Colle
     scheduleUpload(waitingUpload, uid, data, setState);
   }
 
-  // Every copy where it shows (#880); the saved counts stay as they are.
+  // Every copy where it shows; the saved counts stay as they are.
   const shown = placeCopies(visible?.entries ?? NO_ENTRIES, placements);
   const ownedCount = (cardId: string) => totalOwned(shown[cardId]);
 

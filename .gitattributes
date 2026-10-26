@@ -24,3 +24,11 @@
 *.ttf binary
 *.otf binary
 *.eot binary
+
+# Data and generated files: collapsed in GitHub diffs and left out of language stats (#1025).
+# They stay in git (admin and the scripts write them); this only changes how diffs show.
+# Card JSON keeps its local text diff so a card edit stays readable in `git diff`.
+apps/web/public/data/**/*.json linguist-generated
+scripts/data/promo-printings.json linguist-generated
+middleware-data/card-slugs.json linguist-generated
+pnpm-lock.yaml linguist-generated -diff
