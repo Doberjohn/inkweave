@@ -242,6 +242,8 @@ describe('BinderSpread lone page (#969)', () => {
     expect(card(4)).toHaveFocus();
     await user.keyboard('{End}');
     expect(card(9)).toHaveFocus();
+    await user.keyboard('{Home}');
+    expect(card(1)).toHaveFocus();
   });
 
   it("draws a footer in its arrows' place, half as far under the board's top edge", () => {

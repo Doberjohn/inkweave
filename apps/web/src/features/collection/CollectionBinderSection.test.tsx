@@ -122,7 +122,7 @@ describe('CollectionBinderSection', () => {
     vi.stubGlobal('innerWidth', 390);
     renderSection(['a']);
     expect(pockets()).toEqual(['Card a']);
-    expect(screen.queryByRole('region', {name: 'Set'})).toBeNull();
+    expect(screen.queryByRole('complementary', {name: 'Set'})).toBeNull();
     expect(screen.queryByRole('button', {name: /^Binder set/})).toBeNull();
   });
 

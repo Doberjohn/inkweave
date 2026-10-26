@@ -194,6 +194,13 @@ describe("BinderSpreadMap, under a phone's lone page (#969)", () => {
     expect([cell.style.width, cell.style.height]).toEqual(['7px', '9px']);
   });
 
+  it("fills a held card's cell and rings a missing one's", () => {
+    render(<BinderSpreadMap single pockets={PAGES} current={4} onGo={() => {}} />);
+    const cells = [...screen.getByRole('button', {name: /^Page 5 of 27/}).querySelectorAll<HTMLElement>('span[aria-hidden] > span')];
+    expect(cells.map((cell) => cell.style.mask !== '')).toEqual([...Array<boolean>(4).fill(true), ...Array<boolean>(5).fill(false)]);
+    expect(cells.every((cell) => cell.style.background !== '')).toBe(true);
+  });
+
   it('names each page and what it is missing, and marks the one on show', () => {
     render(<BinderSpreadMap single pockets={PAGES} current={4} onGo={() => {}} />);
     expect(screen.getByRole('button', {name: 'Page 5 of 27: 4 missing'})).toHaveAttribute('aria-current', 'true');

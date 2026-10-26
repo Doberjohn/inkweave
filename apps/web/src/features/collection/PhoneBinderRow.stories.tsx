@@ -9,14 +9,11 @@ import {STORY_SETS, STORY_STATS} from './collectionStoryData';
 import {COLORS} from '../../shared/constants';
 
 /** Each set's progress, by code, and the whole collection's, as the set list reads it. */
-const PROGRESS = new Map<string, {complete: number; cards: number}>([
-  ['all', STORY_STATS.totals],
-  ...STORY_STATS.sets.map((set) => [set.code, set.tally] as const),
-]);
+const PROGRESS = new Map([['all', STORY_STATS.totals], ...STORY_STATS.sets.map((set) => [set.code, set.tally] as const)]);
 
-/** A set's two headline percentages, as the row's button draws them and says them. */
+/** A scope's two headline percentages, a set's or All sets', as the row's button draws them and says them. */
 function figuresOf(setCode: string): RowFigures {
-  const {complete, master, cards} = STORY_STATS.sets.find((set) => set.code === setCode)!.tally;
+  const {complete, master, cards} = PROGRESS.get(setCode)!;
   const [done, all] = [percentOf(complete, cards), percentOf(master, cards)];
   return {shown: `${done}% · ${all}%`, words: `${done}% complete, ${all}% master`};
 }
