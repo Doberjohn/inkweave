@@ -23,6 +23,14 @@ const defaultProps = {
   ],
 };
 
+/**
+ * Opens the sections a phone's drawer starts folded, as the docked panel does (owner,
+ * 2026-10-26): Type, Keyword, Classification and Set. The desktop modal folds none.
+ */
+function unfoldAll() {
+  for (const header of screen.queryAllByRole('button', {expanded: false})) fireEvent.click(header);
+}
+
 describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant) => {
   const testId = variant === 'modal' ? 'filter-modal' : 'filter-drawer';
   // The modal is the desktop variant, which has no ink buttons: desktop shows the ink filters in
@@ -53,6 +61,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
 
   it('should render card type filter buttons', () => {
     render(<FilterDialog {...defaultProps} variant={variant} />);
+    unfoldAll();
 
     for (const type of ['character', 'action', 'item', 'location']) {
       expect(screen.getByRole('button', {name: new RegExp(type, 'i')})).toBeInTheDocument();
@@ -71,6 +80,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
   it('should call onApply with draft state when clicking Apply button', () => {
     const onApply = vi.fn();
     render(<FilterDialog {...defaultProps} variant={variant} onApply={onApply} />);
+    unfoldAll();
 
     // Modal doesn't show ink buttons (they're inline in toolbar), so only toggle type
     if (variant === 'drawer') {
@@ -150,6 +160,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
         typeFilters={['Character']}
       />,
     );
+    unfoldAll();
 
     // Modal doesn't show ink buttons; verify via type button instead
     if (variant === 'drawer') {
@@ -196,6 +207,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
 
   it('should toggle type in draft state', () => {
     render(<FilterDialog {...defaultProps} variant={variant} />);
+    unfoldAll();
 
     fireEvent.click(screen.getByRole('button', {name: /character/i}));
 
@@ -209,6 +221,7 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
   it('should collect several draft keywords from their chips', () => {
     const onApply = vi.fn();
     render(<FilterDialog {...defaultProps} variant={variant} onApply={onApply} />);
+    unfoldAll();
 
     fireEvent.click(screen.getByRole('button', {name: 'Singer'}));
     fireEvent.click(screen.getByRole('button', {name: 'Ward'}));
@@ -317,6 +330,7 @@ describe("FilterDialog with a caller's own controls (the Binder sheet, #969)", (
         postlude={<p>After the filters</p>}
       />,
     );
+    unfoldAll();
 
     const type = screen.getByRole('button', {name: /character/i});
     const before = screen.getByText('Before the filters');
@@ -328,6 +342,7 @@ describe("FilterDialog with a caller's own controls (the Binder sheet, #969)", (
   it("shows Clear all for the caller's own changes alone, and its press clears them and the filters", () => {
     const onClear = vi.fn();
     render(<FilterDialog {...defaultProps} variant="drawer" extra={{count: 1, onClear}} />);
+    unfoldAll();
     // No filter on yet: the caller's change alone shows it.
     const clear = screen.getByRole('button', {name: /clear all/i});
     fireEvent.click(screen.getByRole('button', {name: /character/i}));

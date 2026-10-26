@@ -27,11 +27,10 @@ export const LAYOUT = {
   maxDisplayedCards: 204,
   /** CardGrid auto-fill minimum column width on desktop. Used by BrowseCardGrid + the shared CardGrid component. */
   cardGridMinWidth: 180,
-  /** The shared CardGrid's auto-fill minimum on a phone: two columns in 292px or more. */
-  cardGridMinWidthMobile: 140,
   /**
-   * Browse's grid on a phone (owner, 2026-10-25): three cards across from 344 to 451px wide,
-   * every common phone, and two at 320px.
+   * Every card grid's auto-fill minimum on a phone, Browse's (owner, 2026-10-25) and the
+   * shared CardGrid's (2026-10-26): three cards across from 344 to 451px wide, every common
+   * phone, and two at 320px.
    */
   browseGridMinWidthMobile: 96,
   synergyCardMinWidth: 160,

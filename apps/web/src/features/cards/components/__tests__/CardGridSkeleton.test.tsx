@@ -24,18 +24,19 @@ const columnWidth = (width: number, columns: number) => (width - SPACING.md * (c
 
 // #914: the skeleton picks its columns as the loaded grid does, so nothing reflows when cards land.
 describe('CardGridSkeleton', () => {
-  it("gives a phone the loaded grid's two columns", () => {
+  it("gives a phone the loaded grid's three columns, as Browse's (owner, 2026-10-26)", () => {
+    // Three 96px columns fit 358px, gaps included.
     const {grid, tiles} = renderGrid(358, true);
-    expect(LAYOUT.cardGridMinWidthMobile).toBe(140);
-    expect(grid.style.gridTemplateColumns).toBe('repeat(2, 1fr)');
-    expect(tiles).toHaveLength(2);
+    expect(LAYOUT.browseGridMinWidthMobile).toBe(96);
+    expect(grid.style.gridTemplateColumns).toBe('repeat(3, 1fr)');
+    expect(tiles).toHaveLength(3);
   });
 
   it("takes the loaded grid's minimum when given one", () => {
-    // Browse's phone grid has its own: three 96px columns fit 358px, gaps included.
-    const {grid, tiles} = renderGrid(358, true, LAYOUT.browseGridMinWidthMobile);
-    expect(grid.style.gridTemplateColumns).toBe('repeat(3, 1fr)');
-    expect(tiles).toHaveLength(3);
+    // A grid with a wider minimum of its own: two 140px columns fit 358px, three don't.
+    const {grid, tiles} = renderGrid(358, true, 140);
+    expect(grid.style.gridTemplateColumns).toBe('repeat(2, 1fr)');
+    expect(tiles).toHaveLength(2);
   });
 
   it('gives a wide desktop grid seven columns, at the desktop minimum', () => {
@@ -46,7 +47,7 @@ describe('CardGridSkeleton', () => {
 
   it('draws each tile exactly a card of its column tall, with no line box around it', () => {
     const {grid, tiles} = renderGrid(358, true);
-    for (const tile of tiles) expect(tile.style.height).toBe(`${columnWidth(358, 2) / 0.72}px`);
+    for (const tile of tiles) expect(tile.style.height).toBe(`${columnWidth(358, 3) / 0.72}px`);
     expect(grid.querySelector('br')).toBeNull();
   });
 

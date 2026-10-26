@@ -312,7 +312,7 @@ describe('BrowseToolbar on Browse', () => {
 
   it("ends at its controls on Browse, whose grid keeps that room for a card's glow, and not on the playstyle page", () => {
     const toolbar = () => screen.getByTestId('browse-toolbar');
-    const {rerender} = render(<BrowseToolbar {...defaultProps({flushBottom: true, isMobile: true})} />);
+    const {rerender} = render(<BrowseToolbar {...defaultProps({flushBottom: true})} />);
     expect(toolbar().style.paddingBottom).toBe('0px');
 
     rerender(<BrowseToolbar {...defaultProps({flushBottom: true, ...docked(true)})} />);
@@ -320,6 +320,11 @@ describe('BrowseToolbar on Browse', () => {
 
     rerender(<BrowseToolbar {...defaultProps({isMobile: true})} />);
     expect(toolbar().style.paddingBottom).toBe('12px');
+  });
+
+  it("keeps 8px under its controls on a phone's Browse, so scrolled cards stop short of them (owner, 2026-10-26)", () => {
+    render(<BrowseToolbar {...defaultProps({flushBottom: true, isMobile: true})} />);
+    expect(screen.getByTestId('browse-toolbar').style.paddingBottom).toBe('8px');
   });
 });
 

@@ -450,3 +450,28 @@ test.describe('Playstyle Detail — cards that failed to load', () => {
     release();
   });
 });
+
+// On a phone a playstyle page and an ink page show their cards as Browse does: three a row,
+// as wide as Browse's (owner, 2026-10-26).
+test.describe('Card grids on a phone', () => {
+  const firstTile = (page: Page) => page.getByTestId('card-tile').first();
+  const firstRow = (page: Page) =>
+    page.getByTestId('card-tile').evaluateAll((tiles) => {
+      const boxes = tiles.map((tile) => tile.getBoundingClientRect());
+      return {columns: boxes.filter((box) => Math.abs(box.top - boxes[0].top) < 1).length, width: boxes[0].width};
+    });
+
+  test("a playstyle page and an ink page show three cards a row, as wide as Browse's", async ({page}) => {
+    await page.setViewportSize({width: 393, height: 659});
+    await page.goto('/browse');
+    await expect(firstTile(page)).toBeVisible({timeout: 15000});
+    const browse = await firstRow(page);
+    for (const path of ['/playstyles/lore-denial', '/ink/amber']) {
+      await page.goto(path);
+      await expect(firstTile(page)).toBeVisible({timeout: 15000});
+      const row = await firstRow(page);
+      expect(row.columns, path).toBe(3);
+      expect(row.width, path).toBeCloseTo(browse.width, 0);
+    }
+  });
+});

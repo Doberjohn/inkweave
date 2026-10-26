@@ -51,6 +51,8 @@ describe('FilterContent button options', () => {
       inkwell: ['inkable'] as const,
     };
     render(<FilterContent {...defaultProps({variant: 'mobile', buttonOptions})} />);
+    // Type starts folded on a phone, as in the panel.
+    fireEvent.click(screen.getByRole('button', {name: /^Type/}));
 
     // Icon buttons are named by aria-label, text buttons by their text.
     const buttonNames = (group: string) =>
@@ -66,8 +68,47 @@ describe('FilterContent button options', () => {
   it('leaves out a chip section with nothing to offer', () => {
     render(<FilterContent {...defaultProps({variant: 'mobile', uniqueClassifications: ['Hero']})} />);
 
-    expect(screen.queryByRole('group', {name: 'Keyword filters'})).not.toBeInTheDocument();
-    expect(screen.getByRole('group', {name: 'Classification filters'})).toBeInTheDocument();
+    // Folded or not: the chip sections start folded on a phone.
+    expect(screen.queryByRole('group', {name: 'Keyword filters', hidden: true})).not.toBeInTheDocument();
+    expect(screen.getByRole('group', {name: 'Classification filters', hidden: true})).toBeInTheDocument();
+  });
+});
+
+// A phone's filter sheets fold as the docked panel does (owner, 2026-10-26).
+describe('FilterContent folds on a phone', () => {
+  const offered = {
+    uniqueKeywords: ['Evasive'],
+    uniqueClassifications: ['Hero'],
+    uniqueRarities: ['Rare'],
+    sets: [{code: '9', name: 'Fabled', number: 9}],
+  };
+  const header = (label: string) => screen.getByRole('button', {name: new RegExp(`^${label}(\\s*·|$)`)});
+
+  it('starts with Ink, Inkwell, Ink Cost and Rarity open, and Type, Keyword, Classification and Set folded', () => {
+    render(<FilterContent {...defaultProps({variant: 'mobile', ...offered})} />);
+    for (const open of ['Ink', 'Inkwell', 'Ink Cost', 'Rarity']) {
+      expect(header(open)).toHaveAttribute('aria-expanded', 'true');
+    }
+    for (const folded of ['Type', 'Keyword', 'Classification', 'Set']) {
+      expect(header(folded)).toHaveAttribute('aria-expanded', 'false');
+    }
+  });
+
+  it('shows what is picked in a folded section on its header', () => {
+    render(<FilterContent {...defaultProps({variant: 'mobile', ...offered, filters: {keywords: ['Evasive']}})} />);
+    expect(header('Keyword')).toHaveTextContent('· Evasive');
+  });
+
+  it('gives each header a touch-sized tap area that leaves the line its height', () => {
+    render(<FilterContent {...defaultProps({variant: 'mobile', ...offered})} />);
+    // 24px at rest: 14px of padding over and under its line, 12px of it given back by the margins.
+    expect(header('Keyword')).toHaveStyle({paddingTop: '14px', paddingBottom: '14px', marginTop: '-12px', marginBottom: '-12px'});
+  });
+
+  it('never folds the desktop dialog', () => {
+    render(<FilterContent {...defaultProps({variant: 'desktop', ...offered})} />);
+    expect(screen.queryAllByRole('button', {expanded: false})).toHaveLength(0);
+    expect(screen.getByRole('group', {name: 'Keyword filters'})).toBeVisible();
   });
 });
 

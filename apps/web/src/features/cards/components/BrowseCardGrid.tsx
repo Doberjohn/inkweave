@@ -7,7 +7,7 @@ import {COLORS, FONT_SIZES, LAYOUT, SPACING} from '../../../shared/constants';
 import {RenderProfiler} from '../../../shared/components';
 import {useResponsive} from '../../../shared/hooks';
 import {CardGridSkeleton} from './CardGridSkeleton';
-import {BROWSE_GUTTER, BROWSE_ROW_TOP} from './BrowseSidePanel';
+import {BROWSE_GUTTER, browseRowTop} from './BrowseSidePanel';
 
 interface BrowseCardGridProps {
   cards: LorcanaCard[];
@@ -44,14 +44,13 @@ export function BrowseCardGrid({
   const {isMobile} = useResponsive();
   const paddingX = isMobile ? SPACING.lg : BROWSE_GUTTER;
   const minColWidth = isMobile ? LAYOUT.browseGridMinWidthMobile : LAYOUT.cardGridMinWidth;
+  const rowTop = browseRowTop(isMobile);
   const eagerTiles = isMobile ? PHONE_EAGER_TILES : EAGER_TILES;
 
   if (isLoading) {
-    // The loaded grid's room above its first row (`BROWSE_ROW_TOP`), its gutters and its
+    // The loaded grid's room above its first row (`browseRowTop`), its gutters and its
     // columns (#914).
-    return (
-      <CardGridSkeleton padding={`${BROWSE_ROW_TOP}px ${paddingX}px 0`} minColWidth={minColWidth} />
-    );
+    return <CardGridSkeleton padding={`${rowTop}px ${paddingX}px 0`} minColWidth={minColWidth} />;
   }
 
   const displayedCards = cards.slice(0, LAYOUT.maxDisplayedCards);
@@ -76,8 +75,7 @@ export function BrowseCardGrid({
     <RenderProfiler id="BrowseCardGrid">
       <TileRows
         cards={displayedCards}
-        paddingX={paddingX}
-        minColWidth={minColWidth}
+        sizing={{paddingX, minColWidth, rowTop}}
         eagerTiles={eagerTiles}
         renderTile={(card, index) => (
           // No `isSelected`: a card without a page is a plain button that opens it, not a toggle.
@@ -179,10 +177,14 @@ interface DrawnTiles {
   roomBelow: number;
 }
 
-/** What sizes a tile: the gutters either side of the grid, and a column's narrowest width. */
+/**
+ * What sizes and places a tile: the gutters either side of the grid, a column's narrowest width,
+ * and the room above the first row (`browseRowTop`).
+ */
 interface TileSizing {
   paddingX: number;
   minColWidth: number;
+  rowTop: number;
 }
 
 /**
@@ -211,7 +213,7 @@ function tilesInView(view: ScrollerView, count: number, sizing: TileSizing): Dra
   const columns = Math.max(1, Math.floor((inner + TILE_GAP) / (sizing.minColWidth + TILE_GAP)));
   const rowHeight = (inner - (columns - 1) * TILE_GAP) / columns / LAYOUT.cardAspect + TILE_GAP;
   const rowCount = Math.ceil(count / columns);
-  const [firstRow, endRow] = rowWindow(view, rowHeight, rowCount);
+  const [firstRow, endRow] = rowWindow(view, rowHeight, rowCount, sizing.rowTop);
   return {
     first: firstRow * columns,
     end: endRow * columns,
@@ -236,15 +238,12 @@ function sameTiles(shown: ScrollerView, next: ScrollerView, count: number, sizin
  * list (a filter, scrolled far down) lowers the grid, and the browser pulls the scroller's offset
  * back within it: the rows are those of the offset it will have, so they show at once.
  */
-function rowWindow(view: ScrollerView, rowHeight: number, rowCount: number): [number, number] {
-  const height = BROWSE_ROW_TOP + rowCount * rowHeight - TILE_GAP + SPACING.xxl;
+function rowWindow(view: ScrollerView, rowHeight: number, rowCount: number, rowTop: number): [number, number] {
+  const height = rowTop + rowCount * rowHeight - TILE_GAP + SPACING.xxl;
   const top = Math.max(0, Math.min(view.top, height - view.height));
   const clamp = (row: number, min: number) => Math.min(rowCount, Math.max(min, row));
-  const first = clamp(Math.floor((top - BROWSE_ROW_TOP) / rowHeight) - OVERSCAN_ROWS, 0);
-  const end = clamp(
-    Math.ceil((top + view.height - BROWSE_ROW_TOP) / rowHeight) + OVERSCAN_ROWS,
-    first,
-  );
+  const first = clamp(Math.floor((top - rowTop) / rowHeight) - OVERSCAN_ROWS, 0);
+  const end = clamp(Math.ceil((top + view.height - rowTop) / rowHeight) + OVERSCAN_ROWS, first);
   return [first, end];
 }
 
@@ -254,21 +253,19 @@ function rowWindow(view: ScrollerView, rowHeight: number, rowCount: number): [nu
  */
 function TileRows({
   cards,
-  paddingX,
-  minColWidth,
+  sizing,
   eagerTiles,
   renderTile,
 }: {
   cards: LorcanaCard[];
-  paddingX: number;
-  minColWidth: number;
+  sizing: TileSizing;
   /** The tiles drawn before the scroller is measured, whose art loads at once. */
   eagerTiles: number;
   renderTile: (card: LorcanaCard, index: number) => ReactNode;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
-  const sizing = {paddingX, minColWidth};
+  const {paddingX, minColWidth, rowTop} = sizing;
   const view = useScrollerView(scrollerRef, gridRef, (shown, next) =>
     sameTiles(shown, next, cards.length, sizing),
   );
@@ -293,7 +290,7 @@ function TileRows({
           // Room above the first row and under the last, inside the scroller: a pointed-at
           // card's glow reaches past its tile, and the scroller clips whatever lies outside it.
           // The last row ends level with the docked panels. Undrawn rows add their own height.
-          paddingTop: BROWSE_ROW_TOP + tiles.roomAbove,
+          paddingTop: rowTop + tiles.roomAbove,
           paddingBottom: SPACING.xxl + tiles.roomBelow,
           paddingLeft: paddingX,
           paddingRight: paddingX,

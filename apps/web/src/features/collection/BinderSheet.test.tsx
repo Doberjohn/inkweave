@@ -61,7 +61,8 @@ describe('BinderSheet (#969)', () => {
     const order = [
       screen.getByRole('group', {name: 'Binder shows'}),
       sort(),
-      screen.getByRole('button', {name: /character/i}),
+      // Folded, as in every phone sheet (owner, 2026-10-26).
+      screen.getByRole('button', {name: /^Type/, expanded: false}),
       screen.getByText('Progress'),
       screen.getByText("The set's numbers"),
     ];

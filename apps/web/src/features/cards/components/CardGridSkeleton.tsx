@@ -15,7 +15,7 @@ interface CardGridSkeletonProps {
   padding?: string;
   /** Force column count (bypasses dynamic calculation) */
   columns?: number;
-  /** The loaded grid's column minimum, where it is not CardGrid's (Browse's phone grid). */
+  /** The loaded grid's column minimum, where it is not CardGrid's. */
   minColWidth?: number;
   /** Number of skeleton rows to show (default: 3) */
   rows?: number;
@@ -47,7 +47,7 @@ export function CardGridSkeleton({
   const containerWidth = useContainerWidth(containerRef);
   const {isMobile} = useResponsive();
   const minColWidth =
-    minColWidthProp ?? (isMobile ? LAYOUT.cardGridMinWidthMobile : LAYOUT.cardGridMinWidth);
+    minColWidthProp ?? (isMobile ? LAYOUT.browseGridMinWidthMobile : LAYOUT.cardGridMinWidth);
 
   const gap = gapProp ?? DEFAULT_GAP;
   const containerPadding = paddingProp ?? 0;

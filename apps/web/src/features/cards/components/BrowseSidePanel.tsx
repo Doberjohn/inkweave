@@ -39,6 +39,19 @@ export const BROWSE_GUTTER = 32;
  */
 export const BROWSE_ROW_TOP = SPACING.xxl;
 
+/**
+ * On a phone, the room Browse's toolbar keeps under its controls (owner, 2026-10-26), so cards
+ * scrolled under it stop short of the buttons rather than at their edge. The binder's row keeps
+ * the same under its own. A phone draws no hover glow, so the grid gives it back from its room
+ * above its first row (`browseRowTop`), and the cards at rest stay where they were.
+ */
+export const BROWSE_PHONE_TOOLBAR_BOTTOM = SPACING.sm;
+
+/** The card grid's room above its first row, inside its scroller: on a phone, less what the toolbar keeps. */
+export function browseRowTop(isMobile: boolean): number {
+  return isMobile ? BROWSE_ROW_TOP - BROWSE_PHONE_TOOLBAR_BOTTOM : BROWSE_ROW_TOP;
+}
+
 /** The panel surface, shared with the collection set panel's other layouts. */
 export const SIDE_PANEL_STYLE: CSSProperties = {
   width: SIDE_PANEL_WIDTH,
