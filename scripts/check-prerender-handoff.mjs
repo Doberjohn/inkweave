@@ -34,20 +34,21 @@
  *      no image only the other capture shows (the app's code held). A phone's preload scanner
  *      reads the desktop capture before the inline script swaps the phone one in.
  *   8. With the data a page waits for held back DATA_HOLD_MS (the home page's featured cards, the
- *      card list, a playstyle's card ids and their mechanic ids, the synergy file of the vote
- *      page's first pair), the page asks for all of its data before the app renders (a card page
- *      its synergy file too, a playstyle's page the card list and its other playstyle file, the
- *      vote page the card list and the pairs index) and for none it defers (the home page's card
- *      list, #641; the gallery's mechanic ids, #930), its capture stays on screen until the
- *      data arrives, then the app's page replaces it whole, within a frame of letting go: no frame
- *      shows a loading state (`[aria-busy="true"]`, the route's fallback included) or an empty
- *      #root, the app's first frame shows every image the capture showed on screen, at full
- *      opacity, and no later frame leaves out or fades its card art. Each page runs again with
- *      view transitions taken away, as in Firefox before 144 and Safari before 18, which the
- *      app's first render must pass alone: there the images go unchecked, since Chromium draws a
- *      new `<img>` blank for a frame without a transition to hold the page. The vote page's
- *      capture is its loading view, since the crawl draws no pair and each visit draws its own:
- *      there the capture must show that view, and no frame of the app's page a loading state.
+ *      card list, a playstyle's card ids, their mechanic ids and the guides, the synergy file of
+ *      the vote page's first pair), the page asks for all of its data before the app renders (a
+ *      card page its synergy file too, a playstyle's page the card list and its other playstyle
+ *      files, the vote page the card list and the pairs index) and for none it defers (the home
+ *      page's card list, #641; the gallery's mechanic ids and guides, #930, #995), its capture
+ *      stays on screen until the data arrives, then the app's page replaces it whole, within a
+ *      frame of letting go: no frame shows a loading state (`[aria-busy="true"]`, the route's
+ *      fallback included) or an empty #root, the app's first frame shows every image the capture
+ *      showed on screen, at full opacity, and no later frame leaves out or fades its card art.
+ *      Each page runs again with view transitions taken away, as in Firefox before 144 and
+ *      Safari before 18, which the app's first render must pass alone: there the images go
+ *      unchecked, since Chromium draws a new `<img>` blank for a frame without a transition to
+ *      hold the page. The vote page's capture is its loading view, since the crawl draws no pair
+ *      and each visit draws its own: there the capture must show that view, and no frame of the
+ *      app's page a loading state.
  *   9. With the card list held past the hold's cap, Browse lets go at the cap, counted from the
  *      start of the visit, and the app shows its loading state.
  *  10. During the hold, a click or a key press shows the app's page at once, a click on one of
@@ -761,7 +762,7 @@ export function routesOf(dist) {
     // before the app renders (`wants`) and those it leaves to the app (`avoids`): the home page
     // doesn't wait for the card list (#641) unless its featured file can't be used (`missing`),
     // when it shows the featured cards from that list, and a playstyle's page waits for its card
-    // ids and their mechanic ids too (#930), which the gallery leaves to the app.
+    // ids, their mechanic ids and the guides too (#930, #995), which the gallery leaves to the app.
     // The vote page's first pair is drawn at random, so the synergy files it asks for are held
     // by pattern (`match`), and its capture is its loading view (`loadingCapture`): the crawl
     // draws no pair.
@@ -774,16 +775,25 @@ export function routesOf(dist) {
         file: 'allCards.json',
         wants: [`synergies/${cardId}.json`],
       },
-      {path: '/playstyles', file: '_playstyles.json', avoids: ['_playstyleMechanics.json']},
+      {
+        path: '/playstyles',
+        file: '_playstyles.json',
+        avoids: ['_playstyleMechanics.json', 'playstyleGuides.json'],
+      },
       {
         path: `/playstyles/${playstyle}`,
         file: '_playstyles.json',
-        wants: ['allCards.json', '_playstyleMechanics.json'],
+        wants: ['allCards.json', '_playstyleMechanics.json', 'playstyleGuides.json'],
       },
       {
         path: `/playstyles/${playstyle}`,
         file: '_playstyleMechanics.json',
-        wants: ['allCards.json', '_playstyles.json'],
+        wants: ['allCards.json', '_playstyles.json', 'playstyleGuides.json'],
+      },
+      {
+        path: `/playstyles/${playstyle}`,
+        file: 'playstyleGuides.json',
+        wants: ['allCards.json', '_playstyles.json', '_playstyleMechanics.json'],
       },
       {
         path: '/vote',
