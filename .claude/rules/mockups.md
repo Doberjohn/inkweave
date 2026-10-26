@@ -8,7 +8,7 @@ paths:
 
 Inkweave uses iterative HTML/CSS mockups instead of Figma. Mockups live in `apps/web/public/mockups/`, a **git-ignored, local-only** scratch folder for pre-code design work; the files are never committed. They are the working reference for visual design during a design session, before React implementation.
 
-The tokens below are the **mockup** design language. The shipped app's tokens live in `apps/web/src/shared/constants/theme.ts`, which is the source of truth for React code.
+The tokens below are the **mockup** design language. The shipped app's tokens live in inkweave-ui's `packages/ui/src/tokens/` (`theme.ts`, and `lorcana.ts` for the inks), which is the source of truth for React code.
 
 ## Session Structure
 1. **Start**: Read ALL mockup files in parallel before making any changes. Never work from memory of a previous session, files may have changed.

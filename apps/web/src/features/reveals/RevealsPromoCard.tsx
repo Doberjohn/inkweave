@@ -30,7 +30,7 @@ const FIREFLY_SEEDS: ReadonlyArray<{left: string; delay: string; drift: string}>
 
 /**
  * Inject keyframes + :hover rules once per document.
- * Mirrors the pattern used by shared/components/Sparkles.tsx.
+ * Mirrors the pattern used by inkweave-ui's components/Sparkles.tsx.
  *
  * Transition is declared on the class (not inline) so the `:hover` rule can
  * override scale/translate/box-shadow. An inline `transition: ...` would
