@@ -1,12 +1,17 @@
 import {describe, it, expect} from 'vitest';
 import {compareProblems, readShape, shapeProblems, sizeDeltas} from './check-bundle-shape.mjs';
 
+const AMBER =
+  '.ink-card-placeholder[data-ink=Amber]:before{background:url(/assets/amber-AAAA_a-1.svg)}';
+const RUBY =
+  ".ink-card-placeholder[data-ink=Ruby]:before{background:url('/assets/ruby-BBBBbbbb.svg')}";
 const CRITICAL_CSS =
   'body{margin:0}:focus-visible{outline:2px solid}.inset-focus-ring{outline-offset:-2px}' +
   '@keyframes inkweave-foil-sweep{to{background-position:160% 0}}' +
   '@keyframes inkweave-qty-pop{50%{scale:1.2}}.overlay-transition{transition:opacity .2s}' +
   '.touch-target{min-width:44px}@media (prefers-reduced-motion:reduce){' +
-  '.inkweave-foil-shimmer{animation:none!important}.overlay-transition{transition:none!important}}';
+  '.inkweave-foil-shimmer{animation:none!important}.overlay-transition{transition:none!important}}' +
+  `.ink-card-placeholder{aspect-ratio:5/7}${AMBER}${RUBY}`;
 
 /** index.html as the build writes it: the entry, its modulepreloads and the inlined CSS. */
 function indexHtml({
@@ -61,10 +66,13 @@ describe('shapeProblems', () => {
   });
 
   it('names each critical rule the inlined CSS lacks', () => {
-    expect(shapeProblems(indexHtml({css: '.card-tile{color:red}'}))).toHaveLength(7);
+    expect(shapeProblems(indexHtml({css: '.card-tile{color:red}'}))).toHaveLength(8);
     expect(
       shapeProblems(indexHtml({css: CRITICAL_CSS.replace('.overlay-transition{', '.x{')})),
     ).toEqual([expect.stringContaining('overlay-transition')]);
+    expect(
+      shapeProblems(indexHtml({css: CRITICAL_CSS.replace('.ink-card-placeholder{', '.x{')})),
+    ).toEqual([expect.stringContaining('ink-card-placeholder')]);
   });
 
   it('takes the reduced-motion overlay override only inside its media query', () => {
@@ -122,5 +130,24 @@ describe('compareProblems', () => {
     expect(compareProblems(build(), build(ROWS, extraStyle))).toEqual([
       'startup <style> blocks went from 2 to 3',
     ]);
+  });
+
+  it("fails a startup url the head lost or gained, but not the urls' order", () => {
+    const moved = CRITICAL_CSS.replace(
+      '/assets/amber-AAAA_a-1.svg',
+      './assets/amber.svg?no-inline',
+    );
+    expect(compareProblems(build(), build(ROWS, indexHtml({css: moved})))).toEqual([
+      "the head's startup <style> lost url(/assets/amber.svg)",
+      "the head's startup <style> gained url(./assets/amber.svg)",
+    ]);
+    const reordered = CRITICAL_CSS.replace(`${AMBER}${RUBY}`, `${RUBY}${AMBER}`);
+    expect(reordered).not.toBe(CRITICAL_CSS);
+    expect(compareProblems(build(), build(ROWS, indexHtml({css: reordered})))).toEqual([]);
+  });
+
+  it('passes a startup url whose file only changed its content hash', () => {
+    const edited = CRITICAL_CSS.replace('/assets/amber-AAAA_a-1.svg', '/assets/amber-CCCCcccc.svg');
+    expect(compareProblems(build(), build(ROWS, indexHtml({css: edited})))).toEqual([]);
   });
 });

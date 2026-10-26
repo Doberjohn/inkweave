@@ -1,5 +1,5 @@
 import type {Ink} from 'inkweave-synergy-engine';
-import {InkIcon} from '../../shared/components/InkIcon';
+import {InkIcon} from 'inkweave-ui/lorcana/InkIcon';
 import {PER_INK} from './setComposition';
 import {inkRgb, inkRgba} from './inkTint';
 

@@ -2,9 +2,8 @@ import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
 import {Chip, type ChipProps} from './Chip';
-import {COLORS, FONT_SIZES} from '../tokens/theme';
-import {FilterIcon} from './FilterIcon';
-import {SearchIcon} from './SearchIcon';
+import {FONT_SIZES} from '../tokens/theme';
+import {RaritySymbol} from '../lorcana/RaritySymbol';
 
 // Chip's props are a discriminated union (toggle | dismiss). Storybook's CSF
 // generics can't reconcile both variants in one StoryObj, so the meta is pinned
@@ -55,13 +54,11 @@ export const ToggleWithTooltip: Story = {
 };
 
 /** A glyph instead of the label, as in the Rarity filter: the label names the chip and is its tooltip. */
-// The app's rarity filter uses icon-only chips with RaritySymbol, which moves into inkweave-ui
-// with #979 and takes this story back; until then the package's own icons stand in.
 export const ToggleIconOnly: Story = {
   render: () => (
     <div style={{display: 'flex', gap: 6}}>
-      <Chip label="Search" icon={<SearchIcon size={24} color={COLORS.text} />} active={false} onClick={fn()} />
-      <Chip label="Filters" icon={<FilterIcon />} active onClick={fn()} />
+      <Chip label="Rare" icon={<RaritySymbol rarity="rare" size={24} />} active={false} onClick={fn()} />
+      <Chip label="Legendary" icon={<RaritySymbol rarity="legendary" size={24} />} active onClick={fn()} />
     </div>
   ),
 };

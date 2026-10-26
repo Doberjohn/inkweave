@@ -1,7 +1,7 @@
 import {useRef, useState} from 'react';
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {CardSlot} from './CardSlot';
-import {isSlotDimmed} from './rarity';
+import {isSlotDimmed} from './slotDimming';
 import {slotSize} from './mosaicSizing';
 import {PER_INK} from './setComposition';
 import {placeCards} from './boardOrder';

@@ -372,7 +372,7 @@ It yields `"Shift Remove 2 ink drops"`: the same string a reveal-publisher entry
 
 ## Display Tiers
 
-Scores map to visual display tiers in the UI (`apps/web/src/features/synergies/utils/scoreUtils.ts`):
+Scores map to visual display tiers in the UI (`packages/ui/src/lib/scoreUtils.ts`):
 
 | Tier | Score Range | Color | Background | Short Label |
 |------|------------|-------|------------|-------------|

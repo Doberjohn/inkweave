@@ -4,7 +4,7 @@ import {CtaButton, IconButton, InkIcon} from '../../shared/components';
 import {useHover} from 'inkweave-ui/hooks/useHover';
 import {focusedByKeyboard} from 'inkweave-ui/utils/focusedByKeyboard';
 import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
-import {RaritySymbol} from '../reveals/RaritySymbol';
+import {RaritySymbol} from 'inkweave-ui/lorcana/RaritySymbol';
 import {rarityLabel} from '../cards/filterOptions';
 import {
   isFinished,

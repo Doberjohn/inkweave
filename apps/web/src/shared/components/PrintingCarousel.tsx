@@ -19,7 +19,7 @@ import {whenIdle} from '../lib/whenLoadedAndIdle';
 import {focusedByKeyboard} from 'inkweave-ui/utils/focusedByKeyboard';
 import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
 import {CardImage} from './CardImage';
-import {CardImageButton} from './CardImageButton';
+import {CardImageButton} from 'inkweave-ui/lorcana/CardImageButton';
 import {PeekButton, TurnNotice, type PeekSide} from './PrintingPeek';
 import {placeOf, round, slideCount, useFrontSlide, type Step} from './printingLoop';
 import {STACK_EDGE, slideStyle, stackPose} from './printingStack';

@@ -12,8 +12,8 @@ import {
 } from '../../cards/loader';
 import type {CardTypeFilter} from '../../../shared/constants';
 import type {SynergyMatchDisplay} from '../types';
-import {getStrengthTier} from './scoreUtils';
-import type {StrengthTierLabel} from './scoreUtils';
+import {getStrengthTier} from 'inkweave-ui/lib/scoreUtils';
+import type {StrengthTierLabel} from 'inkweave-ui/lib/scoreUtils';
 
 /** Strength tier labels used for filtering synergy results (Perfect folds into Strong). */
 export type StrengthTierFilter = Exclude<StrengthTierLabel, 'Perfect'>;
