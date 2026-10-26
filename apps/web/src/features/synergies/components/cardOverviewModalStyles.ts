@@ -1,5 +1,5 @@
 import type {CSSProperties} from 'react';
-import {CARD_BAR_SHARE, COLORS, FONTS, FONT_SIZES, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
+import {CARD_BAR_SHARE, COLORS, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
 
 /*
  * The card modal's chrome, shared by CardOverviewModal and CardOverviewModalFallback (#640). The
@@ -107,11 +107,15 @@ export const MODAL_HEADER_STYLE: CSSProperties = {
   flexWrap: 'wrap',
 };
 
+/**
+ * The modal's title. Phones keep 18px, between the scale's steps: at `FONT_SIZES.xxl` (20) 53%
+ * of names take two lines on a 390px phone, against 38% at 18 (measured 2026-10-26, #1004).
+ */
 export function pickModalTitleStyle(isMobile: boolean): CSSProperties {
   return {
     margin: 0,
     fontFamily: FONTS.body,
-    fontSize: isMobile ? FONT_SIZES.xxl : FONT_SIZES.xxxl,
+    fontSize: isMobile ? 18 : FONT_SIZES.xxxl,
     fontWeight: 700,
     color: COLORS.text,
     lineHeight: 1.2,
@@ -212,8 +216,19 @@ interface PickCardsRowStyleInput {
   rowHeight: number;
 }
 
+/**
+ * The breathing aura's golds, which `.focused-card-glow` (index.css) reads: GOLD_GLOW's hoverBg
+ * at its low and hoverBorder at its high. Set on the cards' row, which holds card A and card B,
+ * so both inherit them, as the binder's pages read `BINDER_LOOK`, and theme.ts stays their source.
+ */
+const FOCUSED_CARD_GLOW = {
+  '--focused-glow-low': GOLD_GLOW.hoverBg,
+  '--focused-glow-high': GOLD_GLOW.hoverBorder,
+} as CSSProperties;
+
 export function pickCardsRowStyle({isMobile, cardWidth, rowHeight}: PickCardsRowStyleInput): CSSProperties {
   return {
+    ...FOCUSED_CARD_GLOW,
     display: isMobile ? 'flex' : 'grid',
     flexDirection: isMobile ? 'column' : undefined,
     gridTemplateColumns: isMobile ? undefined : `${cardWidth}px 1fr`,

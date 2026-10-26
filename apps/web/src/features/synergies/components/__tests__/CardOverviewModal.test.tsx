@@ -8,6 +8,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {SynergyGroup as SynergyGroupData} from '../../types';
 import {CardOverviewModal} from '../CardOverviewModal';
 import {CardDataProvider} from '../../../../shared/contexts/CardDataContext';
+import {GOLD_GLOW} from '../../../../shared/constants';
 import {trackEvent} from '../../../../shared/lib/analytics';
 import {swipeCard} from '../../../../shared/test-utils';
 
@@ -498,6 +499,19 @@ test("a comparison drops the copies row, so card A's column, which carries its g
 
   expect(cardRowOf(container).style.height).toBe('470px');
   expect(screen.queryByTestId('card-overview-copies-slot')).toBeNull();
+});
+
+test("a comparison's row sets GOLD_GLOW's golds for the breathing aura of both its cards", () => {
+  // index.css's keyframes draw them through var(), so a retune of GOLD_GLOW reaches the aura.
+  Element.prototype.scrollTo = vi.fn();
+  const {container} = render(<SlotHost comparison />);
+  const row = cardRowOf(container);
+  const breathing = [...document.querySelectorAll<HTMLElement>('.focused-card-glow')];
+
+  expect(row.style.getPropertyValue('--focused-glow-low')).toBe(GOLD_GLOW.hoverBg);
+  expect(row.style.getPropertyValue('--focused-glow-high')).toBe(GOLD_GLOW.hoverBorder);
+  expect(breathing).toHaveLength(2);
+  for (const card of breathing) expect(row).toContainElement(card);
 });
 
 test('desktop leaves the art of a card without printings at full size, in a row of its own height', () => {

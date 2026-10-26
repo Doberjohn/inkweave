@@ -1490,8 +1490,9 @@ interface CardImageDisplayProps {
 function CardImageDisplay({card, cardWidth, cardHeight, isMobile, highlightedCard, inComparison}: CardImageDisplayProps) {
   // In comparison mode the wrapper takes the ambient `focused-card-glow` className
   // (#332 #6 idea D). The animation cycles `box-shadow` between a low and high gold-tinted
-  // aura around the card. Setting borderRadius=14 on the wrapper makes the shadow follow
-  // the card's rounded corners instead of drawing against a rectangular bounding box.
+  // aura around the card, in the golds the cards' row sets (`FOCUSED_CARD_GLOW`). The
+  // wrapper's `RADIUS.xl`, CardImage's own, makes the shadow follow the card's rounded corners
+  // instead of drawing against a rectangular bounding box.
   const useGlow = !isMobile && inComparison;
   const translation = useContext(CardTranslationContext);
   const reducedMotion = usePrefersReducedMotion();
@@ -1534,7 +1535,11 @@ const OVER_MODAL_SCAN: React.CSSProperties = {
 /** The hover dimming and glow, which fade, shared by card A and card B. */
 const HOVER_FADES = `opacity ${DURATION.base}ms ${EASING.smooth}, filter ${DURATION.base}ms ${EASING.smooth}`;
 
-/** The glow on the card a hovered name chip points at, card A or card B, while the other dims. */
+/**
+ * The glow on the card a hovered name chip points at, card A or card B, while the other dims.
+ * `drop-shadow()` takes one shadow with no spread, so it holds only while `SHADOWS.glowSm` is
+ * one: a spread or a list would drop the whole `filter` silently (inkweave-ui's theme test).
+ */
 const LIT_CARD_GLOW = `drop-shadow(${SHADOWS.glowSm})`;
 
 /** Card A's transition: its hover fades, and its slide into a comparison unless reduced motion skips it (#790). */
@@ -1691,7 +1696,8 @@ function CompareCardOverlay({pair, cardWidth, cardHeight, highlightedCard, compa
       // `focused-card-glow focused-card-glow-offset` adds the ambient breathing animation
       // (#332 #6 idea D) phased opposite to Card A — when A's glow peaks, B is at its
       // minimum and vice versa. The keyframe bakes in the same 0 8px 24px depth shadow
-      // that was previously inline, plus the breathing aura. Reduced-motion override in
+      // that was previously inline, plus the breathing aura in the golds the cards' row sets
+      // (`FOCUSED_CARD_GLOW`). Reduced-motion override in
       // index.css disables the animation; the previous static shadow is then absent —
       // documented as acceptable since the cards still have CardImage's inner styling.
       className="focused-card-glow focused-card-glow-offset"
