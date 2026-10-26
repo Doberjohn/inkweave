@@ -38,7 +38,7 @@ import {
   accentRgba,
 } from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
-import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
+import {trackCardSelected, type CardSelectSource} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
 
@@ -465,10 +465,12 @@ export function PlaystyleDetailPage() {
   const goHome = () => navigate('/');
   const goPlaystyles = () => navigate('/playstyles');
   // A card opened from the grid or the guide's key cards, with the cards it came from as its list.
-  const openCard = (cardId: string, cardIds: string[]) => {
-    trackCardSelected(getCardById(cardId), 'playstyle');
+  const openCard = (cardId: string, cardIds: string[], source: CardSelectSource = 'playstyle') => {
+    trackCardSelected(getCardById(cardId), source);
     openCardModal(cardId, cardIds);
   };
+  const openKeyCard = (cardId: string, cardIds: string[]) =>
+    openCard(cardId, cardIds, 'playstyle_guide');
   const handleCardSelect = (card: {id: string}) => openCard(card.id, displayedCards.map((c) => c.id));
 
   // An unknown id: the gallery. Ids resolve with no data, so this needs no wait.
@@ -504,7 +506,7 @@ export function PlaystyleDetailPage() {
   });
   // The guide under the cards, there once the page has loaded (#995). It finds its key cards among
   // all of the playstyle's cards, so a filter that hides one doesn't take it off the guide.
-  const guideSection = {name: playstyle.name, guide, cards: playstyleCards, onOpenCard: openCard};
+  const guideSection = {name: playstyle.name, guide, cards: playstyleCards, onOpenCard: openKeyCard};
 
   // While the card data or the playstyles' own lists load, the views draw the hero and the
   // toolbar as loaded, with placeholders for the mechanics and the cards, so nothing moves when
