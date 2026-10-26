@@ -14,7 +14,8 @@
     "./hooks/*": "./src/hooks/*.ts",
     "./utils/*": "./src/utils/*.ts",
     "./lib/*": "./src/lib/*.ts",
-    "./assets/*": "./src/assets/*"
+    "./assets/*": "./src/assets/*",
+    "./styles/*.css": "./src/styles/*.css"
   },
   "scripts": {
     "lint": "eslint .",

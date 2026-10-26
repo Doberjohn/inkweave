@@ -183,7 +183,7 @@ function pressUnlessDisabled(disabled: boolean, press: () => void): () => void {
 // Owns the pop animation state so the component stays a thin view. Controlled
 // (parent passes `popping`/`onPopEnd`) or uncontrolled (internal state); the pop
 // is triggered from the click handlers only, never a render-time effect. The
-// animation is inline, where index.css's reduced-motion block can't reach it, so
+// animation is inline, where a stylesheet's reduced-motion block can't reach it, so
 // under reduced motion this hook drops it, and sets no pop of its own: the
 // animation's end is what clears one, and with no animation that never fires. A
 // parent that owns the pop gets no `onPopEnd` then either, so it skips its own (#790).

@@ -72,7 +72,7 @@ describe('QuantityStepper', () => {
   });
 
   it("drops a parent's pop under reduced motion", () => {
-    // The pop is set inline, where index.css's reduced-motion block can't reach it (#790).
+    // The pop is set inline, where a stylesheet's reduced-motion block can't reach it (#790).
     stubReducedMotion();
     renderStepper({popping: true, onPopEnd: vi.fn()});
     expect(screen.getByText('2').style.animation).toBe('');

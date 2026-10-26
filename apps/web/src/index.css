@@ -189,32 +189,6 @@ option {
   background: rgba(212, 175, 55, 0.45);
 }
 
-/* Focus indicators for keyboard navigation */
-:focus-visible {
-  outline: 2px solid #d4af37;
-  outline-offset: 2px;
-}
-
-/* The focus ring drawn INSIDE the element, for controls whose frame clips the outline above
-   with `overflow: hidden` (the card art buttons, the Reveals promo, the copies stripe's − and
-   +). On ::after so it paints over the art, which an inset outline would sit under. The gold
-   comes from theme.ts via `--inkweave-gold` (INSET_FOCUS_RING), which each control sets on
-   itself. */
-.inset-focus-ring {
-  position: relative;
-}
-.inset-focus-ring:focus-visible {
-  outline: none;
-}
-.inset-focus-ring:focus-visible::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border: 2px solid var(--inkweave-gold);
-  border-radius: inherit;
-  pointer-events: none;
-}
-
 /* The printings stack (PrintingCarousel): the printings behind the card show past its sides,
    where an outline would run over them, so its focus draws the inset ring on the card instead.
    Above the printings (layers 1 to 3), beside the peeks' buttons, under the peek's name and the
@@ -328,18 +302,6 @@ option {
   animation: tile-click-ack 90ms ease-out;
 }
 
-/* Foil sweep for the collection binder's foil stepper (#553 Phase C). Moves ONLY
-   the first background layer — the light band — and pins the gold and the ground
-   beneath it, which is why the layer order in `FOIL_SHEEN` is load-bearing.
-   Declared as a class so the prefers-reduced-motion block below can stop it. */
-@keyframes inkweave-foil-sweep {
-  0%   { background-position: -60% 0, 0 0, 0 0; }
-  100% { background-position: 160% 0, 0 0, 0 0; }
-}
-.inkweave-foil-shimmer {
-  animation: inkweave-foil-sweep 3.5s linear infinite;
-}
-
 /* The collection panel's bars (#553, owner 2026-10-15). A bar fills from empty when it
    first appears, then glides between lengths through an inline `width` transition; a full
    bar gets one pass of light after its glide. The panel sets the duration, easing and delay
@@ -366,16 +328,6 @@ option {
 .collection-bar-sheen {
   animation-name: collection-bar-sheen;
   animation-fill-mode: both;
-}
-
-/* QuantityStepper: quantity-change pop on the count (replays on count remount). */
-@keyframes inkweave-qty-pop {
-  from {
-    transform: scale(1.5);
-  }
-  to {
-    transform: scale(1);
-  }
 }
 
 /* InkCardPlaceholder (shared/components): a card's place while its art loads, the reveals
@@ -543,13 +495,6 @@ option {
   .pair-mystery-pulse {
     animation: none !important;
   }
-  /* Park the foil sweep. The band's resting position is OFF the left edge (so
-     the sweep enters from outside rather than fading in over the count), which
-     means parking it leaves plain gold — exactly the resting foil surface, and
-     still visibly the foil one. Purely decorative; nothing is encoded in it. */
-  .inkweave-foil-shimmer {
-    animation: none !important;
-  }
   /* The collection panel's bars stand at their lengths: no fill on arrival, and the pass
      of light stays parked off the track's left edge. */
   .collection-bar-fill,
@@ -583,7 +528,8 @@ option {
    replaced an inner gold ring (10-08), which had replaced a scale-and-lift: the lift was
    too big, and the ring was one of several highlight styles across the app. Hover-capable
    pointers only, so a tap on a phone cannot leave it stuck on; keyboard focus lights it
-   too, beside the focus outline above. A synergy group's "+N more" tile lights the same.
+   too, beside the focus outline (inkweave-ui's styles/primitives.css, which loads before this
+   file). A synergy group's "+N more" tile lights the same.
    THE RESTING SHADOW IS `--tile-shadow` (CardTile), NEVER AN INLINE box-shadow: inline
    beats these rules, and the glow would never show.
    The colours come from theme.ts (`CARD_TILE_GLOW`), which each tile sets on itself, so
@@ -636,62 +582,12 @@ option {
   transform: scale(0.97);
 }
 
-/* Overlay transitions (modals, drawers, popovers, autocomplete) */
-.overlay-transition {
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease,
-    visibility 0.2s ease;
-}
-.overlay-enter {
-  opacity: 0;
-  visibility: hidden;
-}
-.overlay-enter.overlay-visible {
-  opacity: 1;
-  visibility: visible;
-}
-
-/* Modal/popover scale variant */
-.overlay-scale {
-  transform: scale(0.95);
-}
-.overlay-scale.overlay-visible {
-  transform: scale(1);
-}
-
-/* Drawer slide-up variant */
-.overlay-slide-up {
-  transform: translateY(100%);
-}
-.overlay-slide-up.overlay-visible {
-  transform: translateY(0);
-  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-/* Autocomplete slide variant */
-.overlay-slide-down {
-  transform: translateY(-4px);
-}
-.overlay-slide-down.overlay-visible {
-  transform: translateY(0);
-}
-
-/* Popover quick transition */
-.overlay-fast {
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease,
-    visibility 0.15s ease;
-}
-
 @media (prefers-reduced-motion: reduce) {
   /* .card-tile-img: the card image's inline opacity fade (CardTile.tsx); !important beats
      the inline style, so the image appears at full opacity the moment it loads. */
   .card-tile,
   .synergy-more-tile,
-  .card-tile-img,
-  .overlay-transition {
+  .card-tile-img {
     transition: none !important;
   }
 }
@@ -749,10 +645,4 @@ option {
   textarea {
     font-size: 16px !important;
   }
-}
-
-/* Touch target minimum size utility */
-.touch-target {
-  min-height: 44px;
-  min-width: 44px;
 }

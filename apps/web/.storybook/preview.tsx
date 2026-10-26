@@ -1,8 +1,10 @@
 import 'react-loading-skeleton/dist/skeleton.css';
-// The app's own stylesheet, as main.tsx loads it. Without it no story had the
-// classes defined there: the card tiles' hover glow and press, the binder's
+// inkweave-ui's primitives and the app's own stylesheet, in main.tsx's order.
+// Without them no story had the classes defined there: the focus rings, the
+// overlays' transitions, the card tiles' hover glow and press, the binder's
 // unowned grey, the foil shimmer and every keyframe, so stories quietly differed
 // from the app.
+import 'inkweave-ui/styles/primitives.css';
 import '../src/index.css';
 import type {Preview} from '@storybook/react-vite';
 import {SkeletonTheme} from 'react-loading-skeleton';
