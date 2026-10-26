@@ -10,7 +10,8 @@ import {TUNING} from '../data/tuning';
 // stay tied: Shift tests also check each tier's line, which `reword` keeps unique.
 const step = (n: number) => (n > 1 ? n - 1 : 2);
 
-const PLACEHOLDERS = /<BASE>|<SHIFT>|\{RAMP\}|\{TRIGGER\}|\{COST\}|\{A\}|\{B\}/g;
+// Any <NAME> or {NAME}, so a placeholder a later tunable text adds is kept too.
+const PLACEHOLDERS = /<[A-Z]+>|\{[A-Z]+\}/g;
 let lines = 0;
 // A new line in place of the tuned one, so a test that pins any of its wording fails. It keeps the
 // line's placeholders, each named twice, so a swap that stops at the first one fails too.

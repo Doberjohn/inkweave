@@ -4,6 +4,14 @@ import {TUNING} from '../tuning';
 const isIntInRange = (n: unknown, min: number, max: number) =>
   Number.isInteger(n) && (n as number) >= min && (n as number) <= max;
 
+// A Ramp template names its cards by role ({RAMP}, {TRIGGER}, {COST}), or {A} and {B} when both
+// share one (`ramp-ramp`).
+const rampTokens = (shape: string) => {
+  const [first, second] = shape.split('-');
+  if (first === second) return ['{A}', '{B}'];
+  return [first, second].map((role) => `{${role.toUpperCase()}}`);
+};
+
 describe('tuning.json', () => {
   it('every playstyle has a non-empty name + tagline', () => {
     const entries = Object.values(TUNING.playstyles);
@@ -48,12 +56,18 @@ describe('tuning.json', () => {
 
   it('every ramp template names both cards: by role ({RAMP}, {TRIGGER}, {COST}), or {A} and {B} when they share one', () => {
     for (const [shape, template] of Object.entries(TUNING.ruleTexts.ramp.templates)) {
-      const [first, second] = shape.split('-');
-      const tokens =
-        first === second
-          ? ['{A}', '{B}']
-          : [first, second].map((role) => `{${role.toUpperCase()}}`);
-      for (const token of tokens) expect(template).toContain(token);
+      for (const token of rampTokens(shape)) expect(template).toContain(token);
+    }
+  });
+
+  // The engine fills only its shape's tokens: another role's would show raw, and {A} or {B} in a
+  // two-role line would name the searcher whatever its role.
+  it("every ramp template uses only its own shape's tokens", () => {
+    for (const [shape, template] of Object.entries(TUNING.ruleTexts.ramp.templates)) {
+      const others = (template.match(/\{[^{}]*\}/g) ?? []).filter(
+        (token) => !rampTokens(shape).includes(token),
+      );
+      expect(others, shape).toEqual([]);
     }
   });
 });

@@ -169,7 +169,7 @@ The 7 pairs aren't inflation: they're the ramp ↔ trigger chains, the only real
 
 ### Explanation Templates
 
-The templates live in `tuning.json` (`ruleTexts.ramp.templates`). A two-role template names each card by its role (`{RAMP}`, `{TRIGGER}`, `{COST}`), and the engine swaps every mention for the `{A}`/`{B}` chips; a same-role template names them `{A}` and `{B}` directly. `tuning.test.ts` fails on a template that drops a card.
+The templates live in `tuning.json` (`ruleTexts.ramp.templates`). A two-role template names each card by its role (`{RAMP}`, `{TRIGGER}`, `{COST}`), and the engine swaps every mention for the `{A}`/`{B}` chips; a same-role template names them `{A}` and `{B}` directly. `tuning.test.ts` fails on a template that drops a card, or that carries a token its shape doesn't fill (another role's, or `{A}`/`{B}` in a two-role template), which would show raw or name the wrong card. This doc's generated coverage blocks read the templates too (`templatePattern` in `scripts/lib/rule-coverage/stats.mjs`), and match a role named twice to the same card.
 
 | Pair | Template |
 |------|----------|
