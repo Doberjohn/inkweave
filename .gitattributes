@@ -24,3 +24,13 @@
 *.ttf binary
 *.otf binary
 *.eot binary
+
+# Card data and generated files: collapsed in GitHub diffs and left out of language stats.
+# They stay in git (admin and the scripts write them), and keep their text diff locally.
+# Listed by name: playstyleGuides.json beside them is prose people read, so it stays reviewed.
+apps/web/public/data/allCards.json linguist-generated
+apps/web/public/data/previewCards.json linguist-generated
+apps/web/public/data/collection/*.json linguist-generated
+scripts/data/promo-printings.json linguist-generated
+middleware-data/card-slugs.json linguist-generated
+pnpm-lock.yaml linguist-generated

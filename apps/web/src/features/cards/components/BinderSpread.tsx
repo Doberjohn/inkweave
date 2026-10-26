@@ -43,7 +43,7 @@ import './binder.css';
  * between them, and a page arrow on each side. Presentational only — it owns how a
  * binder LOOKS and how big a card may be, and knows nothing about which cards are in it.
  *
- * PRO PAGES IN A ZIP BINDER (owner, 2026-10-24, #941), in place of parchment pages: black
+ * PRO PAGES IN A ZIP BINDER (owner, 2026-10-24), in place of parchment pages: black
  * textured pages whose pockets are a frosted sleeve under a clear front sheet, in a black
  * board with a zip round its outer edge, and the edges of the sheets under each page along
  * its foot, more under the right page near the start and under the left near the end. The
@@ -90,7 +90,7 @@ import './binder.css';
  */
 
 /**
- * A view's pockets: a phone's lone page of nine (`LONE_PAGE`, #969), or a spread's two pages of
+ * A view's pockets: a phone's lone page of nine (`LONE_PAGE`), or a spread's two pages of
  * twelve (`SPREAD_PAGE`). The measures, and how each pages, live in `binderGeometry.ts`.
  */
 const perViewOf = (single: boolean) => pagingOf(single).perView;
@@ -133,30 +133,20 @@ const SPREAD_COLUMN = `calc((100cqh - ${PAGE_CHROME_HEIGHT}px) / ${SPREAD_PAGE.r
  * refuse to shrink: measured, three 249px cards overflowed a 561px page instead
  * of sizing down to fit it.
  *
- * COLUMNS WERE `auto` UNTIL 2026-08-14, which made width derive from height with
- * no width constraint at all. On a tall window that is unbounded: measured on
- * Browse's binder view (since removed) the spread ran 88px past the viewport at 1440x900, 47px at
- * 2560x1440 and 588px at 1400x1400. Nobody noticed while the pager was a row
- * underneath, because the casualty was a clipped card edge; the moment the page
- * arrows moved beside the spread the casualty became the navigation itself,
- * pushed off-screen. The height cap (`spreadMaxHeight`) is what bounds it: the
- * columns follow the page's height, and the cap keeps that height to what fits.
+ * Columns of `auto` would derive width from height with no width constraint at all,
+ * which on a tall window is unbounded (measured: up to 588px past the viewport, the
+ * page arrows pushed off-screen). The height cap (`spreadMaxHeight`) is what bounds it:
+ * the columns follow the page's height, and the cap keeps that height to what fits.
  */
 function pageStyle(side: 'left' | 'right', cover = false): CSSProperties {
   return {
     height: '100%',
     // A page HUGS ITS CARDS, and that is safe only because the slots are sized
-    // from the row height (see `slotStyle`), which is definite. It was briefly
-    // `flex: 1 1 0` while the slots were width-driven, and the pages then filled
-    // the row while the cards stayed height-bound — measured at 1920x855, 864px
-    // pages holding 128px cards, so every pocket carried 88px of slack and the
-    // spread read as a loose grid rather than a binder.
-    //
-    // The trap that forced that detour: with width-driven slots a page's width
-    // came from the card IMAGES' intrinsic size, so a page turn collapsed both
-    // pages from 642px to 48px until they decoded. Height-driven slots have no
-    // such dependency — the width is derived from a definite row height and is
-    // identical at zero images loaded and at twenty-four.
+    // from the row height (see `slotStyle`), which is definite. Pages that fill the
+    // row (`flex: 1 1 0`) leave every pocket slack round a height-bound card, and
+    // width-driven slots take a page's width from the images' intrinsic size, so a
+    // page turn collapses the pages until they decode. Height-driven slots are the
+    // same width at zero images loaded and at twenty-four.
     display: 'grid',
     gridTemplateColumns: `repeat(${SPREAD_PAGE.columns}, ${SPREAD_COLUMN})`,
     gridTemplateRows: `repeat(${SPREAD_PAGE.rows}, minmax(0, 1fr))`,
@@ -348,7 +338,7 @@ interface BinderSpreadProps {
    * One page per view instead of a spread, for phone widths (owner, 2026-10-07).
    * A spread at 390px left each card ~26px wide; one page with the arrows moved
    * to a row underneath gave ~75px, and 3 by 3 pockets in place of 4 by 3 about
-   * 38% more (owner, 2026-10-25, #969). A lone page holds `PER_LONE_PAGE`, nine,
+   * 38% more (owner, 2026-10-25). A lone page holds `PER_LONE_PAGE`, nine,
    * so the caller pages by that (`pagingOf`) instead of a spread's: page p holds slots 9p to
    * 9p + 8, and every card keeps its slot.
    *
@@ -366,7 +356,7 @@ interface BinderSpreadProps {
   arrows?: 'beside' | 'edges';
   /**
    * Drawn directly under a spread with its arrows on its edges, or under a lone page in its
-   * arrows' place: the collection binder's map (#969). The spread gives up only the height
+   * arrows' place: the collection binder's map. The spread gives up only the height
    * it needs.
    */
   footer?: ReactNode;
@@ -379,7 +369,7 @@ interface BinderSpreadProps {
   cardCount?: number;
   /**
    * Whether a pocket the binder fills is open: drawn with nothing in it to press, as a promo set
-   * draws a number that has no card yet (#805), so it takes no focus. The pockets' Tab stop and
+   * draws a number that has no card yet, so it takes no focus. The pockets' Tab stop and
    * arrow keys pass over it. A waiting promo's scan, which opens full size, is not open here.
    * Left out, every pocket the binder fills holds a card.
    */
@@ -401,7 +391,7 @@ function Spine() {
 const BOARD_ROW: CSSProperties = {display: 'flex', alignItems: 'stretch'};
 
 /**
- * What turning the pages adds to a view (#942): the board's classes, the grab's handlers on it and
+ * What turning the pages adds to a view: the board's classes, the grab's handlers on it and
  * the turning sheet in it, and the real pages' refs and which of them take a grab.
  */
 interface ViewTurn {
@@ -416,11 +406,11 @@ interface ViewTurn {
 }
 
 /**
- * The binder's cover board round the pages and spine (#941), with the zip running round its
+ * The binder's cover board round the pages and spine, with the zip running round its
  * outer edge and its pull: the look is binder.css's, and its padding is `BOARD`, which the
  * spread's sizing counts. It tells binder.css how many sheet edges to draw under each page
  * (`sheets`) and how wide the spine between the two zips is. A page turn draws its sheet in it,
- * and the grab takes its pointer (#942).
+ * and the grab takes its pointer.
  */
 function Board({
   sheets,
@@ -465,7 +455,7 @@ interface BinderPageProps {
   renderSlot: (index: number) => ReactNode;
   /** Drawn as a cover, which holds no cards. */
   cover?: Cover;
-  /** The page itself, which a page turn lines its sheet up with (#942). */
+  /** The page itself, which a page turn lines its sheet up with. */
   pageRef?: Ref<HTMLDivElement>;
   /** It turns when dragged sideways (`useGrabTurn`): binder.css gives it the grab cursor. */
   grab?: boolean;
@@ -573,8 +563,8 @@ function Pages({start, renderSlot, cardCount, turn}: Pick<ViewProps, 'start' | '
  * which matters because the cap arrived one frame late (ResizeObserver runs after
  * first paint). On the row itself that late arrival shrank it from 700px to 669px
  * and scored a 0.036 layout shift; on the inner box the same measurement only moves
- * content inside a box that never changed. Since #790 the first cap comes before the
- * first paint (see `useRowWidth`), but one after a resize still lands a frame late.
+ * content inside a box that never changed. The first cap comes before the first
+ * paint (see `useRowWidth`), but one after a resize still lands a frame late.
  */
 const PAGES_BOX: CSSProperties = {
   minWidth: 0,
@@ -644,9 +634,8 @@ function FlankedSpread({start, renderSlot, arrows, cardCount, sheets, turn}: Vie
 
 /**
  * An arrow on the spread's outer edge, where Browse docks its panels (owner, 2026-10-22):
- * halfway down it, the disc's centre a little past the board's edge (the page's, before the
- * board came round the pages, #941), so at rest it covers the board's edge and stops short of
- * the page, the rest of it in the gutter beside the spread. Grown under the pointer, it reaches
+ * halfway down it, the disc's centre a little past the board's edge, so at rest it covers the
+ * board's edge and stops short of the page, the rest of it in the gutter beside the spread. Grown under the pointer, it reaches
  * onto the page's margin and stays clear of the pockets. A page that takes spare width (see
  * `EDGE_FRAME`) has a wider margin, which keeps the disc further from its pockets. Over them,
  * so a pocket's glow under the pointer never covers it.
@@ -668,7 +657,7 @@ function onEdge(side: 'left' | 'right', edges: boolean) {
 
 /**
  * The spread itself, filling the width of the box the height cap sizes: two equal pages
- * either side of the spine, in the board (#941), so the arrows laid over its outer edges sit
+ * either side of the spine, in the board, so the arrows laid over its outer edges sit
  * on the box's edges. Arrows laid over the row instead landed inside the cards (see
  * `FlankedSpread`).
  *
@@ -727,7 +716,7 @@ function SpreadView({edges, ...props}: ViewProps & {edges: boolean}) {
  * One page, sized from the width (see `singlePageStyle`), with its footer below it, or a
  * row of arrows where it has none. The lone page is the RIGHT-hand sheet: rings on its
  * left edge, so it still reads as a page in a binder rather than a loose card grid, in a
- * board with one zip round it (#941). Nothing here is measured, which is what keeps what
+ * board with one zip round it. Nothing here is measured, which is what keeps what
  * lies below it from moving after first paint.
  */
 function SingleView({start, renderSlot, arrows, footer, sheets, turn}: ViewProps) {
@@ -830,7 +819,7 @@ const NEVER_OPEN = () => false;
 
 /**
  * The pockets in view that hold a card, by their place in it: the filled ones, which run from
- * the first card, past the front cover's page on the first spread (#806), less any open one.
+ * the first card, past the front cover's page on the first spread, less any open one.
  * Every pocket while the binder is loading.
  */
 function focusableInView(
@@ -851,7 +840,7 @@ function focusableInView(
  * pockets than the view holds, so the tiles have the last word on how many cards there are.
  */
 function cardsAt(e: SyntheticEvent<HTMLElement>, view: PocketView) {
-  // A page turn's copies are real pockets made inert (#942), never among the cards in view.
+  // A page turn's copies are real pockets made inert, never among the cards in view.
   const tiles = [...e.currentTarget.querySelectorAll<HTMLElement>('[data-roving-item]')].filter(
     (tile) => !tile.closest('[inert]'),
   );
@@ -863,11 +852,10 @@ function cardsAt(e: SyntheticEvent<HTMLElement>, view: PocketView) {
 /**
  * ONE TAB STOP FOR THE POCKETS (#790): Tab enters the view on one card and leaves it with
  * the next press, and the arrow keys move between its cards, across the spine too, with
- * Home and End going to the first and last. Before, every card was a Tab stop, so whatever
- * came after the binder sat 25 presses past it on every spread. The card focused last
- * keeps the stop, however it took focus (a key, a click, the card modal handing it back),
- * and a new view starts on its first card. An open pocket holds no card (a promo set's,
- * #805), so the stop and the arrow keys pass over it.
+ * Home and End going to the first and last, so whatever comes after the binder is one press
+ * past it, not 25. The card focused last keeps the stop, however it took focus (a key, a
+ * click, the card modal handing it back), and a new view starts on its first card. An open pocket holds no card (a promo set's),
+ * so the stop and the arrow keys pass over it.
  *
  * Not `useRovingTabIndex`, which reads its items as one grid, row by row. A spread's
  * pockets run page by page, so its Right from the left page's last column would drop to
@@ -949,7 +937,7 @@ function TurnSheet({turn, copy, pages, end, heldAt}: TurnSheetProps) {
 const turnKey = ({from, to, held}: Turn) => `${from}>${to}${held ? ' held' : ''}`;
 
 /**
- * TURNING THE PAGES LIKE A REAL BINDER (owner, 2026-10-24, #942): every way the view changes
+ * TURNING THE PAGES LIKE A REAL BINDER (owner, 2026-10-24): every way the view changes
  * turns a sheet over the rings (`usePageTurns`), and a page dragged sideways turns under the
  * pointer (`useGrabTurn`). The view changes at once, so the spread map, the focus and the keys
  * see it; the sheet is a copy drawn over it (`PageTurn`).
@@ -996,7 +984,7 @@ const isCard = (el: EventTarget | null): el is HTMLElement =>
   el instanceof HTMLElement && el.hasAttribute('data-roving-item');
 
 /**
- * THE FOCUS FOLLOWS THE VIEW (#942). When the view changes while the focus sits on one of its
+ * THE FOCUS FOLLOWS THE VIEW. When the view changes while the focus sits on one of its
  * cards, the card leaves the page with the old view, and the focus would fall to the page's body:
  * it moves to the new view's Tab stop, its first card. A drag or swipe that turns the page does
  * this, and so does a click on a disc in a browser that doesn't focus a clicked button, as Safari
