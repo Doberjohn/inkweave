@@ -14,7 +14,7 @@ import {
   type CardFilterOptions,
 } from '../features/cards/loader';
 import type {BrowseCollectionSlots} from '../features/collection/useBrowseCollection';
-import type {CardTypeFilter} from '../shared/constants';
+import {LAYOUT, type CardTypeFilter} from '../shared/constants';
 import type {useFilterParams} from '../shared/hooks';
 
 /** The URL's filter state that decides what Browse lists. */
@@ -205,6 +205,20 @@ export function browseView(
     matchedCards: sorted,
     filtered: narrowsList(params, filters),
   };
+}
+
+/**
+ * What Browse's status line tells screen readers after each filter or search (WCAG 4.1.3): how
+ * many cards the grid lists, and that it lists only the first `LAYOUT.maxDisplayedCards` when
+ * more match, which nothing on screen says.
+ */
+export function browseCountMessage(count: number): string {
+  if (count === 0) return 'No cards match your filters.';
+  if (count === 1) return '1 card';
+  const grouped = (n: number) => n.toLocaleString('en-US');
+  return count > LAYOUT.maxDisplayedCards
+    ? `Showing ${grouped(LAYOUT.maxDisplayedCards)} of ${grouped(count)} cards`
+    : `${grouped(count)} cards`;
 }
 
 /** The printing the modal opens each card on, by id: the one its grid tile shows, if any. */

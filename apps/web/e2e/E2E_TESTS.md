@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-317 tests across 30 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+321 tests across 31 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -130,9 +130,9 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | a search lists the sets 1-8 cards Core doesn't have, opened in the card window (#911) | `/browse?q=Ariel+On+Human` lists Ariel - On Human Legs (Set 1) as a button, not a link, since it has no card page; clicking it opens `card-overview-modal` titled with its name, with `card-overview-outside-core` where the synergies would be. After the dialog's 100ms initial-focus timer, Escape closes it, and "Ariel Singing Mermaid" in `browse-search` leaves one tile, the Core card, linking to `/card/<id>/ariel-singing-mermaid`: Set 9 reprints Set 4's Singing Mermaid, so Set 4's printing adds no tile of its own |
 | a search downloads sets 1-8 and the promos once, and never sets 9-14 (#911) | Chromium only: it asserts the network. `/browse` requests nothing under `/data/collection/`; "Ariel", then "Ariel On Human" (its Set 1 card shows), then an emptied box and "Stitch" request `1.json` to `8.json` and `promos.json` once each, and no `9.json` to `14.json`. Each fill waits for the box to show it (`toHaveValue`): the box shows the URL's query, which each change sets in a transition, and the URL moves before the transition renders, so a fill made once the URL changed could still land on the text before it ("ArielAriel On Human") |
 
-## `browse-filters.spec.ts`: 8 tests (6 desktop only, 2 mobile only)
+## `browse-filters.spec.ts`: 9 tests (7 desktop only, 2 mobile only)
 
-Every other spec sets Browse's filters through the URL. These press the filter buttons and check `aria-pressed` and the URL param each one writes (`useFilterParams.ts`), which is what a shared link carries. The desktop tests use the panel docked beside the cards at 1024px and wider (`complementary` "Filters"), where Type, Keyword, Classification and Set start folded behind a header button; the phone tests use the Filters drawer, which applies only on Apply and folds the same sections (owner, 2026-10-26).
+Every other spec sets Browse's filters through the URL. These press the filter buttons and check `aria-pressed` and the URL param each one writes (`useFilterParams.ts`), which is what a shared link carries. The desktop tests use the panel docked beside the cards at 1024px and wider (`complementary` "Filters"), where Type, Keyword, Classification and Set start folded behind a header button; the phone tests use the Filters drawer, which applies only on Apply and folds the same sections (owner, 2026-10-26). The last desktop test checks the status line that tells screen readers what the grid lists.
 
 | Test | What it verifies |
 |---|---|
@@ -142,6 +142,7 @@ Every other spec sets Browse's filters through the URL. These press the filter b
 | a card type, a keyword and a classification, each in its folded section | Unfolds Type, Keyword and Classification (`aria-expanded`); Character, Evasive and Hero each turn pressed and write `type=Character`, `keyword=Evasive` and `classification=Hero` |
 | an ink, then Dual-ink cards | "Filter by Amber" writes `ink=Amber`, and the "Dual-ink cards" toggle it reveals writes `inkmatch=dual` |
 | with the panel closed, the active chips list the filters and one can be dismissed | After Cost 3 and Evasive, the Filters button closes the panel; the chips "Cost: 3" and "Evasive" show (only while it is closed), and dismissing "Cost: 3" drops `cost=` and keeps `keyword=Evasive` |
+| a status line says how many cards match, and changes with each filter | WCAG 4.1.3 (accessibility check, 2026-10-26). `browse-count` has `role="status"` and reads "Showing 204 of N cards" on load (`LAYOUT.maxDisplayedCards`: the grid lists only its first 204); "Filter by Amber" changes it to Amber's count; a search no card matches makes it read "No cards match your filters.", and it is the only `status` with those words, since the grid's copy of them is no live region |
 | a pick applies only on Apply | Phone drawer: "Cost 3" turns pressed with no `cost=` in the URL yet; "Apply" writes `cost=3` and closes the drawer |
 | a keyword, in its section folded as in the panel, which says the pick once folded again | Phone drawer (owner, 2026-10-26): the Keyword header starts `aria-expanded="false"` with Evasive hidden, and its tap area is at least 44px tall; unfolded, Evasive then Apply writes `keyword=Evasive`; the drawer opened again shows Keyword folded, its header reading "Keyword · Evasive" |
 
@@ -573,6 +574,16 @@ The service worker's precache (#928) and the small symbols it keeps on screen of
 | lists every script the pages load | `/`, `/browse`, `/card/1939`, `/playstyles`, `/playstyles/discard`, `/vote`, `/inks`, `/ink/amber`, `/about`, `/release-notes`, `/account` and a missing page, each loaded to network idle: every `/assets/*.js` file they request is in `sw.js`'s manifest |
 | lists exactly the ten small symbols | `sw.js` lists the six ink symbols, inkable, uninkable, common and uncommon as `.svg` files, and no other SVG |
 | are files, each ink the one its card placeholders draw | On `/browse`, in the docked panel (desktop) or the Filters drawer (phones): no ink, inkwell or rarity symbol is a `data:` URI, and each ink's icon has the address its `.ink-card-placeholder` draws (inkweave-ui's `styles/lorcana.css`), so a page showing both downloads it once. A production build inlines an imported file under 4 kB unless it is imported `?no-inline`; the dev server serves every asset as a file, so there only the ink check can fail |
+
+## `skip-link.spec.ts`: 3 tests (2 desktop only, 1 on every project at a 390px viewport)
+
+"Skip to main content" (WCAG 2.4.1, accessibility check 2026-10-26). `CompactHeader` renders it before the header and its landing spot, `#main-content`, right after it, so a page without the header (Home, Not Found, every page on a phone) has neither, and axe's `skip-link` rule never meets a link whose target is missing. Browse renders the header inside `<main>`, the card page outside it, so the spec visits both.
+
+| Test | What it verifies |
+|---|---|
+| on Browse, whose header is inside `<main>`, lands before the Filters button | Until the first Tab focuses it, the link's `.skip-link` rule (index.css) clips it away, so the middle of its box hits what lies under it; focused, the link itself is there, in the viewport's top corner. Enter focuses `#main-content`, leaves the URL as it was and clips the link away again, and the next Tab lands inside `<main>` and outside `<header>`: on the Filters button |
+| on a card page, whose header is outside `<main>` | The same steps on `/card/3286`: after the skip, the next Tab lands inside `<main>` and outside `<header>` |
+| a phone has no skip link | At 390px, once Browse's tiles show, the page has no "Skip to main content" link |
 
 ## Patterns
 

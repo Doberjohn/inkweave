@@ -56,10 +56,9 @@ export function BrowseCardGrid({
   const displayedCards = cards.slice(0, LAYOUT.maxDisplayedCards);
 
   if (displayedCards.length === 0) {
+    // Not a live region: Browse's status line (BrowsePage.tsx) says it, so it is said once.
     return (
       <div
-        role="status"
-        aria-live="polite"
         style={{
           textAlign: 'center',
           padding: NO_MATCH_PADDING,

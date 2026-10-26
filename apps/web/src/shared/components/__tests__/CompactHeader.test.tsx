@@ -50,3 +50,42 @@ describe('CompactHeader', () => {
     }
   });
 });
+
+describe("CompactHeader's skip link", () => {
+  const renderHeader = (isMobile?: boolean) =>
+    render(
+      <MemoryRouter>
+        <SessionProvider>
+          <CompactHeader isMobile={isMobile} />
+        </SessionProvider>
+      </MemoryRouter>,
+    );
+
+  it('comes before the header, as the link the stylesheet clips away until it has focus', () => {
+    const {container} = renderHeader();
+    const link = screen.getByRole('link', {name: 'Skip to main content'});
+
+    expect(container.querySelector('a, button, input, select')).toBe(link);
+    // index.css's `.skip-link:not(:focus)`, which jsdom doesn't load: skip-link.spec.ts checks
+    // in a browser that it shows only while focused.
+    expect(link).toHaveClass('skip-link');
+  });
+
+  it('moves focus past the header, leaving the address as it is', () => {
+    renderHeader();
+    const target = document.getElementById('main-content')!;
+
+    expect(screen.getByTestId('compact-header').compareDocumentPosition(target)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+    // fireEvent returns false once a handler has called preventDefault: no fragment navigation.
+    expect(fireEvent.click(screen.getByRole('link', {name: 'Skip to main content'}))).toBe(false);
+    expect(target).toHaveFocus();
+    expect(target).toHaveAttribute('tabindex', '-1');
+  });
+
+  it('renders on a phone no more than the header does: nothing', () => {
+    const {container} = renderHeader(true);
+    expect(container).toBeEmptyDOMElement();
+  });
+});

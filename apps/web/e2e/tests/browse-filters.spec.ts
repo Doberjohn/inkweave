@@ -1,5 +1,6 @@
 import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
+import {LAYOUT} from 'inkweave-ui/tokens/theme';
 
 // Every other spec sets Browse's filters through the URL, so none presses a filter button. These
 // press each kind and check what a shared link carries. Evasive (57 Core cards) and Hero (338) are
@@ -75,6 +76,26 @@ test.describe('Browse filters picked in the desktop panel', () => {
     await expect(costChip).toHaveCount(0);
     await expect(page).not.toHaveURL(/[?&]cost=/);
     await expect(page).toHaveURL(/[?&]keyword=Evasive(&|$)/);
+  });
+
+  // WCAG 4.1.3: screen readers hear each change to what Browse lists, and that the grid lists
+  // only its first cards when more match.
+  test('a status line says how many cards match, and changes with each filter', async ({page}) => {
+    const status = page.getByTestId('browse-count');
+    await expect(status).toHaveAttribute('role', 'status');
+    await expect(status).toHaveText(new RegExp(`^Showing ${LAYOUT.maxDisplayedCards} of [\\d,]+ cards$`));
+    const before = await status.textContent();
+
+    await press(page, 'Filter by Amber', /[?&]ink=Amber(&|$)/);
+    await expect(status).not.toHaveText(before!);
+    await expect(status).toHaveText(/^(Showing \d+ of )?[\d,]+ cards?$/);
+
+    const search = page.getByTestId('browse-search');
+    await search.fill('zzqx no such card');
+    await expect(search).toHaveValue('zzqx no such card');
+    await expect(status).toHaveText('No cards match your filters.');
+    // The grid shows the same words, but only the status line says them.
+    await expect(page.getByRole('status').filter({hasText: 'No cards match your filters.'})).toHaveCount(1);
   });
 });
 
