@@ -47,18 +47,27 @@ type GridWindow = Window & {
 
 /**
  * Gives the page `readGrid`, so the tests and the frame-by-frame count in `blankFramesDuring`
- * read the grid the same way. Null while it draws no tiles. Also notes the scroller's height at
- * the first frame that draws a tile: an animation frame runs before the frame's own layout and
- * resize observers, so it reads what the frame paints, unless an observer changes it before then.
+ * read the grid the same way. Null while it draws no tiles. Also notes the scroller's height in
+ * the first frame that draws a tile, as that frame paints it: from a resize observer on the grid
+ * made after the grid's own, which runs after it, and after layout, in the same frame.
  */
 function installGridReader({selector, room}: {selector: string; room: number}) {
   const seen = window as unknown as GridWindow;
-  const noteFirstFrame = () => {
+  const watchGrid = () => {
     const scroller = document.querySelector<HTMLElement>(selector);
-    if (scroller?.querySelector('[data-testid="card-tile"]')) seen.firstScrollHeight = scroller.scrollHeight;
-    else requestAnimationFrame(noteFirstFrame);
+    const grid = scroller?.firstElementChild;
+    if (!scroller || !grid) {
+      requestAnimationFrame(watchGrid);
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      if (!scroller.querySelector('[data-testid="card-tile"]')) return;
+      seen.firstScrollHeight = scroller.scrollHeight;
+      observer.disconnect();
+    });
+    observer.observe(grid);
   };
-  requestAnimationFrame(noteFirstFrame);
+  requestAnimationFrame(watchGrid);
   seen.readGrid = () => {
     const scroller = document.querySelector<HTMLElement>(selector);
     const tiles = [...(scroller?.querySelectorAll('[data-testid="card-tile"]') ?? [])];
