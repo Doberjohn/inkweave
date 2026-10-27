@@ -324,7 +324,7 @@ const noBackdropFilter = {
 // The blessed button menu is closed (#509): ADHOC_BUTTON_EXEMPT (exemptions.js) names the kit and
 // the domain families, the only legitimate styled-button authors.
 const ADHOC_BUTTON_MESSAGE =
-  'Ad-hoc styled <button>. Use the kit: CtaButton (filled/ghost/neutral/pill), LinkButton, TabList, IconButton, FiltersButton, Chip — or extend a kit component (#509)';
+  'Ad-hoc styled <button>. Use the kit: CtaButton (filled/ghost/neutral/pill), LinkButton, TabList, IconButton, FiltersButton, Chip, SegmentedControl — or extend a kit component (#509)';
 const noAdhocButtons = {
   meta: {
     type: 'problem',

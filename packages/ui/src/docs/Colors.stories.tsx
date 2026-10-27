@@ -1,12 +1,25 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, TIER_COLORS, blackRgba} from '../tokens/theme';
+import {COLORS, FONTS, FONT_SIZES, NEUTRAL_LADDER, RADIUS, TIER_COLORS, blackRgba} from '../tokens/theme';
 import {INK_CHIP_COLORS, INK_COLORS, ALL_INKS} from '../tokens/lorcana';
 
 // ── Swatch component ─────────────────────────────────────────────────
 // Renders a single color token with visual preview, name, and hex value.
 
-function ColorSwatch({name, value, large}: {name: string; value: string; large?: boolean}) {
+function ColorSwatch({name, value, large, ground}: {name: string; value: string; large?: boolean; ground?: string}) {
   const height = large ? 72 : 56;
+  // A translucent token drawn over the ground it is made for (the page), rather than the
+  // checkerboard, which would land it lighter than it ever shows.
+  const preview: React.CSSProperties = ground
+    ? {backgroundColor: ground, backgroundImage: `linear-gradient(${value}, ${value})`}
+    : {
+        background: value,
+        // Subtle checkerboard behind transparent/dark colors so they're distinguishable
+        backgroundImage:
+          'linear-gradient(45deg, rgba(255,255,255,0.03) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.03) 75%),' +
+          'linear-gradient(45deg, rgba(255,255,255,0.03) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.03) 75%)',
+        backgroundSize: '8px 8px',
+        backgroundPosition: '0 0, 4px 4px',
+      };
 
   return (
     <div
@@ -20,13 +33,7 @@ function ColorSwatch({name, value, large}: {name: string; value: string; large?:
       <div
         style={{
           height,
-          background: value,
-          // Subtle checkerboard behind transparent/dark colors so they're distinguishable
-          backgroundImage:
-            'linear-gradient(45deg, rgba(255,255,255,0.03) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.03) 75%),' +
-            'linear-gradient(45deg, rgba(255,255,255,0.03) 25%, transparent 25%, transparent 75%, rgba(255,255,255,0.03) 75%)',
-          backgroundSize: '8px 8px',
-          backgroundPosition: '0 0, 4px 4px',
+          ...preview,
           borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
         }}
       />
@@ -60,10 +67,12 @@ function ColorGroup({
   title,
   colors,
   large,
+  ground,
 }: {
   title: string;
   colors: {name: string; value: string}[];
   large?: boolean;
+  ground?: string;
 }) {
   return (
     <section style={{marginBottom: 32}}>
@@ -88,7 +97,7 @@ function ColorGroup({
           gap: 12,
         }}>
         {colors.map((c) => (
-          <ColorSwatch key={c.name} name={c.name} value={c.value} large={large} />
+          <ColorSwatch key={c.name} name={c.name} value={c.value} large={large} ground={ground} />
         ))}
       </div>
     </section>
@@ -118,6 +127,11 @@ const PALETTE_GROUPS = [
         {name: 'surfaceFloating', value: COLORS.surfaceFloating},
         {name: 'surfaceOverlay', value: COLORS.surfaceOverlay},
       ],
+    },
+    {
+      title: 'Neutral Ladder (NEUTRAL_LADDER: gray400 over the page, for surfaces and lines)',
+      ground: COLORS.background,
+      colors: Object.entries(NEUTRAL_LADDER).map(([name, value]) => ({name, value})),
     },
     {
       title: 'Strength Tiers (TIER_COLORS)',
@@ -255,7 +269,7 @@ function ColorPalette() {
       </p>
 
       {groups.map((g) => (
-        <ColorGroup key={g.title} title={g.title} colors={g.colors} large={g.large} />
+        <ColorGroup key={g.title} title={g.title} colors={g.colors} large={g.large} ground={g.ground} />
       ))}
 
       {/* Ink colors get special treatment (3 values per ink) */}

@@ -8,6 +8,7 @@ import {
   FONTS,
   FONT_SIZES,
   GOLD_GLOW,
+  NEUTRAL_LADDER,
   RADIUS,
   SPACING,
   SURFACE_CARD,
@@ -59,8 +60,32 @@ export const Consts: Story = {
           background: GOLD_GLOW.activeBg,
           boxShadow: GOLD_GLOW.shadow,
         }}>
-        GOLD_GLOW: the one-gold selection recipe (activeBorder / hoverBorder / activeBg / hoverBg /
-        shadow / focusRing) — every value derives from COLORS.primary.
+        GOLD_GLOW: the one-gold selection recipe (activeBorder / hoverBorder / strongBorder /
+        activeBg / hoverBg / shadow / focusRing) — every value derives from COLORS.primary.
+      </div>
+
+      <div
+        style={{
+          padding: SPACING.lg,
+          borderRadius: RADIUS.card,
+          background: NEUTRAL_LADDER.card,
+          backgroundClip: 'padding-box',
+          border: `1px solid ${NEUTRAL_LADDER.border}`,
+        }}>
+        NEUTRAL_LADDER: gray400 over the page (panel / card / navHover / border / strongBorder).
+        This box is card on border, its fill clipped to the padding box.
+        <span
+          style={{
+            display: 'inline-block',
+            marginLeft: SPACING.sm,
+            padding: `0 ${SPACING.sm}px`,
+            borderRadius: RADIUS.md,
+            background: NEUTRAL_LADDER.navHover,
+            color: COLORS.primary,
+            boxShadow: `inset 0 0 0 1px ${GOLD_GLOW.strongBorder}`,
+          }}>
+          GOLD_GLOW.strongBorder
+        </span>
       </div>
 
       <button type="button" disabled style={{...SURFACE_CARD, ...DISABLED_STYLE, fontFamily: FONTS.body, color: COLORS.text}}>
