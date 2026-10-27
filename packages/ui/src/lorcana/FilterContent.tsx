@@ -474,7 +474,8 @@ function InkFilterSection({
   );
 }
 
-// Mobile-only: desktop renders the inkable/uninkable toggles inline in the toolbar.
+// Not in the desktop dialog, whose toolbar shows the inkable/uninkable toggles inline. The panel
+// keeps both chips on one row beside its scrollbar on FilterButton md's side padding (12px).
 function InkwellFilterSection({
   filters,
   onFiltersChange,

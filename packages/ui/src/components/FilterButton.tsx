@@ -25,7 +25,7 @@ const SIZE_STYLES: Record<FilterButtonSize, React.CSSProperties> = {
     fontSize: `${FONT_SIZES.sm}px`,
   },
   md: {
-    padding: '10px 16px',
+    padding: '10px 12px',
     borderRadius: `${RADIUS.lg}px`,
     fontSize: `${FONT_SIZES.base}px`,
     minHeight: '44px',

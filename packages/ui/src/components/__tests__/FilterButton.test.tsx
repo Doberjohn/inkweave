@@ -156,7 +156,7 @@ describe('FilterButton', () => {
       );
 
       const button = screen.getByRole('button');
-      expect(button.style.padding).toBe('10px 16px');
+      expect(button.style.padding).toBe('10px 12px');
     });
   });
 });
