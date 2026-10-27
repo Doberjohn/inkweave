@@ -42,7 +42,6 @@ import {
   BinderChunkFallback,
   DockedSetBodyFallback,
   RowSetPickerFallback,
-  SheetNumbersFallback,
   ToolbarSetPickerFallback,
 } from './BinderChunkFallback';
 
@@ -66,11 +65,10 @@ const CollectionBinderSection = lazyWithRetry(
   'CollectionBinderSection',
 );
 // Same module as the binder, so the same chunk: the docked set panel costs no request of its own,
-// nor do a phone row's set picker and its Binder sheet's numbers.
+// nor does a phone row's set picker.
 const DockedSetBody = lazyWithRetry(() => import('./CollectionBinderSection'), 'DockedSetBody');
 const DockedSetPicker = lazyWithRetry(() => import('./CollectionBinderSection'), 'DockedSetPicker');
 const PhoneSetPicker = lazyWithRetry(() => import('./CollectionBinderSection'), 'PhoneSetPicker');
-const PhoneSetNumbers = lazyWithRetry(() => import('./CollectionBinderSection'), 'PhoneSetNumbers');
 const ImportCollectionDialog = lazyWithRetry(
   () => import('./ImportCollectionDialog'),
   'ImportCollectionDialog',
@@ -353,7 +351,7 @@ export interface BrowseCollectionSlots {
 }
 
 /** What the page hands a phone's Binder sheet: its filter sheet's props, the sort, and its one write. */
-export type PhoneSheetOptions = Omit<BinderSheetProps, 'show' | 'progress'>;
+export type PhoneSheetOptions = Omit<BinderSheetProps, 'show'>;
 
 /** What the page hands a phone's binder row: its Filters' badge and press. */
 interface PhoneRowOptions {
@@ -571,17 +569,6 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           modeSwitch={modeSwitch}
         />
       ) : undefined,
-    renderPhoneSheet: (listing, sheet) =>
-      collectionMode ? (
-        <BinderSheet
-          {...sheet}
-          show={show}
-          progress={
-            <Suspense fallback={<SheetNumbersFallback promo={isPromoScope(setCode)} />}>
-              <PhoneSetNumbers {...setCounts(listing)} {...panelControls} />
-            </Suspense>
-          }
-        />
-      ) : undefined,
+    renderPhoneSheet: (_listing, sheet) => (collectionMode ? <BinderSheet {...sheet} show={show} /> : undefined),
   };
 }

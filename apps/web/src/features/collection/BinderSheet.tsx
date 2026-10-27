@@ -1,4 +1,4 @@
-import {useState, type ComponentProps, type ReactNode} from 'react';
+import {useState, type ComponentProps} from 'react';
 import {CardFilterDialog, FilterSection, SortSelect} from '../../shared/components';
 import type {FilterPanelProps} from '../../shared/components/CardFilterDialog';
 import type {BrowseSortOrder} from '../../shared/constants';
@@ -7,7 +7,7 @@ import {BINDER_SORT_OPTIONS, writeShowParam, type BinderShow} from './binderCard
 import {BinderShows} from './BinderShows';
 
 /** The filter sheet's props the Binder sheet sets itself. */
-type SheetOwn = 'variant' | 'onApply' | 'title' | 'prelude' | 'postlude' | 'extra';
+type SheetOwn = 'variant' | 'onApply' | 'title' | 'prelude' | 'extra';
 
 export interface BinderSheetProps extends Omit<ComponentProps<typeof CardFilterDialog>, SheetOwn> {
   /** What the binder shows, where the sheet's Show starts each time it opens. */
@@ -16,8 +16,6 @@ export interface BinderSheetProps extends Omit<ComponentProps<typeof CardFilterD
   sortOrder: BrowseSortOrder;
   /** The page's one URL write, of the filters, the sort and Show together (`applyDraft`). */
   onApply: (draft: FilterDraft, also: AlsoWrite) => void;
-  /** The scope's numbers, under Progress: their Complete / Master choice acts at once. */
-  progress: ReactNode;
 }
 
 /** Show and the sort as the sheet drafts them. */
@@ -69,13 +67,13 @@ function SheetPrelude({show, setShow, sortOrder, setSortOrder}: SheetDrafts) {
 
 /**
  * A phone's Binder sheet (owner, 2026-10-25), which the binder row's Filters opens: the filter
- * sheet, titled Binder, with Show and the sort above the filters and the scope's numbers after
- * them. THE SHEET IS ONE CHANGE: Show and the sort wait for Apply, as the filters do, and Apply
- * writes all three in the page's one URL write, since two writers in one tick can lose one of
- * the two (`useBinderParams`). Clear all puts back All with the filters; the sort is no filter,
- * so it stays.
+ * sheet, titled Binder, with Show and the sort above the filters (the scope's numbers are on the
+ * binder's inside cover, owner 2026-10-27). THE SHEET IS ONE CHANGE: Show and the sort wait for
+ * Apply, as the filters do, and Apply writes all three in the page's one URL write, since two
+ * writers in one tick can lose one of the two (`useBinderParams`). Clear all puts back All with
+ * the filters; the sort is no filter, so it stays.
  */
-export function BinderSheet({show, sortOrder, onApply, progress, ...dialog}: BinderSheetProps) {
+export function BinderSheet({show, sortOrder, onApply, ...dialog}: BinderSheetProps) {
   const drafts = useSheetDrafts(dialog.isOpen, show, sortOrder);
   const apply: FilterPanelProps['onApply'] = (inks, types, costs, opts) =>
     onApply(
@@ -88,7 +86,6 @@ export function BinderSheet({show, sortOrder, onApply, progress, ...dialog}: Bin
       variant="drawer"
       title="Binder"
       prelude={<SheetPrelude {...drafts} />}
-      postlude={<FilterSection label="Progress">{progress}</FilterSection>}
       extra={{count: drafts.show === 'all' ? 0 : 1, onClear: () => drafts.setShow('all')}}
       onApply={apply}
     />

@@ -1,4 +1,13 @@
-import {useContext, useRef, useState, useSyncExternalStore, type ReactNode, type Ref} from 'react';
+import {
+  useContext,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ComponentProps,
+  type ReactNode,
+  type Ref,
+} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries, CollectionEntry, Finish} from './collectionParser';
 import type {CollectionPromo} from './collectionPromos';
@@ -12,14 +21,14 @@ import {
   slotKey,
   type BinderShow,
 } from './binderCards';
-import {tallyCollection} from './collectionStats';
+import {tallyCollection, type Axis} from './collectionStats';
 import {sectionStyle} from './binderLayout';
 import {useLoneFit} from './useLoneFit';
 import {
   CollectionSetBody,
   CollectionSetRail,
+  CoverNumbers,
   RowSetPicker,
-  SheetNumbers,
   ToolbarSetPicker,
   type AxisChoice,
   type CollectionSetPanelProps,
@@ -28,8 +37,8 @@ import {
 import type {BinderView} from './BinderShows';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
 import {BinderSpread, BinderSlotSkeleton} from '../cards/components/BinderSpread';
-import {PER_PAGE, type LoneFit} from '../cards/components/binderGeometry';
-import {BinderSpreadMap} from '../cards/components/BinderSpreadMap';
+import {PER_PAGE, pagingOf, type LoneFit} from '../cards/components/binderGeometry';
+import {BinderSpreadMap, type Pocket} from '../cards/components/BinderSpreadMap';
 import {CtaButton} from '../../shared/components';
 import {CardWindowSlotContext} from '../../shared/contexts/cardWindowSlot';
 import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
@@ -191,11 +200,19 @@ export function CollectionBinderSection({onRetry, ...props}: CollectionBinderSec
   );
 }
 
+/**
+ * A phone's loading map: the cover's mini and page 1's, empty, page 1 marked, as the loaded binder
+ * opens. Its pockets are open ones, which draw as empty cells.
+ */
+const loadingPages = (loneFit: LoneFit): Pocket[] =>
+  Array.from({length: pagingOf(true, loneFit.rows).perView}, () => ({owned: false, inks: [], open: true}));
+
 /** The binder while its cards load: its chrome, as the loaded binder's, with shimmer in the pockets. */
 function LoadingBinder({single, docked, loneFit}: {single: boolean; docked: boolean; loneFit: LoneFit}) {
   return (
     <BinderSpread
-      // Spreads open on the front cover, as the binder does (owner, 2026-10-18); a phone's page has none.
+      // Spreads open on the front cover, as the binder does (owner, 2026-10-18); a phone on page 1,
+      // past its cover.
       start={single ? 0 : -PER_PAGE}
       single={single}
       loneFit={loneFit}
@@ -207,7 +224,13 @@ function LoadingBinder({single, docked, loneFit}: {single: boolean; docked: bool
       footer={
         docked || single ? (
           <div inert aria-hidden="true">
-            <BinderSpreadMap single={single} rows={loneFit.rows} pockets={[]} current={0} onGo={NOOP} />
+            <BinderSpreadMap
+              single={single}
+              rows={loneFit.rows}
+              pockets={single ? loadingPages(loneFit) : []}
+              current={single ? 1 : 0}
+              onGo={NOOP}
+            />
           </div>
         ) : undefined
       }
@@ -272,9 +295,9 @@ function SectionContent({
     );
   }
 
-  // Docked, the page renders the panel itself (`DockedSetBody`), and on a phone its set picker
-  // (`PhoneSetPicker`): only the tablet's rail counts here.
-  const stats = docked || isMobile ? null : tallyCollection(counted, entries, controls.sets);
+  // Docked, the page renders the panel itself (`DockedSetBody`): the tablet's rail counts here,
+  // and a phone's cover.
+  const stats = docked ? null : tallyCollection(counted, entries, controls.sets);
   const shown = binderContents(cards, setCode, sortOrder, controls.sets).filter((card) => matchedIds.has(card.id));
   const slots = binderSlots(shown, {
     scope: setCode,
@@ -288,11 +311,9 @@ function SectionContent({
       {shown.length === 0 ? (
         <NoMatches show={controls.show} setCode={setCode} />
       ) : (
-        <CollectionBinder
-          // Keyed by what it holds, in order, so a new set, sort or filter opens the
-          // binder at its first spread: the old page would land on unrelated cards. A
-          // count changed by hand leaves what it holds alone (`useKeptCards`).
-          key={slots.map(slotKey).join()}
+        <KeyedBinder
+          axis={controls.axis}
+          cover={isMobile ? <CoverNumbers {...controls} stats={stats} filtered={filtered} /> : undefined}
           slots={slots}
           bySet={namesStretches(setCode, sortOrder)}
           countsFor={(cardId) => entries[cardId] ?? ZERO}
@@ -306,6 +327,43 @@ function SectionContent({
       )}
     </PanelLayout>
   );
+}
+
+/** The cover's chosen headline: the cover's own, never a page turn's copy of it. */
+function chosenHeadline(): HTMLElement | undefined {
+  const chosen = document.querySelectorAll<HTMLElement>('[aria-label="Front cover"] [aria-pressed="true"]');
+  return [...chosen].find((el) => !el.closest('[inert]'));
+}
+
+/**
+ * Whether the binder that replaces the one on show opens on a phone's cover: only when the cover
+ * was on show and the headline chosen there changed the cards the binder holds, as it does in the
+ * Owned and Missing views (owner, 2026-10-27). A new set, sort or filter opens on page 1. The
+ * focus, which left with the old cover's headline, goes to the new cover's chosen one.
+ *
+ * Noted while rendering (the "previous render" pattern), so the new binder mounts knowing.
+ */
+function useCoverKept(cards: string, axis: Axis) {
+  const [shown, setShown] = useState(false);
+  const [seen, setSeen] = useState({cards, axis, kept: false});
+  if (seen.cards !== cards || seen.axis !== axis) {
+    setSeen({cards, axis, kept: shown && seen.cards !== cards && seen.axis !== axis});
+  }
+  useLayoutEffect(() => {
+    if (seen.kept && document.activeElement === document.body) chosenHeadline()?.focus({preventScroll: true});
+  }, [seen]);
+  return {opensOnCover: seen.kept, onCoverChange: setShown};
+}
+
+/**
+ * The binder, keyed by what it holds, in order, so a new set, sort or filter opens it at its
+ * start: the old page would land on unrelated cards. A count changed by hand leaves what it holds
+ * alone (`useKeptCards`). A phone's cover outlives a change its own headlines make (`useCoverKept`).
+ */
+function KeyedBinder({axis, ...props}: ComponentProps<typeof CollectionBinder> & {axis: Axis}) {
+  const cards = props.slots.map(slotKey).join();
+  const kept = useCoverKept(cards, axis);
+  return <CollectionBinder key={cards} {...props} {...kept} />;
 }
 
 /** Where the binder found nothing, for the scopes spanning sets; any set is "this set". */
@@ -377,13 +435,4 @@ export function DockedSetPicker(props: DockedSetBodyProps) {
  */
 export function PhoneSetPicker(props: DockedSetBodyProps) {
   return <RowSetPicker {...dockedPanel(props)} />;
-}
-
-/**
- * The numbers in a phone's Binder sheet, under Progress (#969), counting what the docked panel
- * counts. Here, so they ride the binder's chunk, which a phone in collection mode has asked for
- * by the time the row's Filters opens the sheet.
- */
-export function PhoneSetNumbers(props: DockedSetBodyProps) {
-  return <SheetNumbers {...dockedPanel(props)} />;
 }

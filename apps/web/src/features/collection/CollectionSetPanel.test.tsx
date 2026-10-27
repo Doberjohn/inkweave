@@ -1,6 +1,6 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent, within} from '@testing-library/react';
-import {CollectionSetBody} from './CollectionSetPanel';
+import {CollectionSetBody, CoverNumbers} from './CollectionSetPanel';
 import {tallyCollection} from './collectionStats';
 import {
   STORY_PROMO_SET,
@@ -167,5 +167,20 @@ describe('CollectionSetBody', () => {
       // A headline's place is its line and its bar.
       expect(numbers().querySelectorAll('.react-loading-skeleton')).toHaveLength(2);
     });
+  });
+});
+
+describe('CoverNumbers', () => {
+  it("packs a phone cover's numbers tighter than the panel's, and draws them alone", () => {
+    // Tighter so a set's numbers and the whole collection's fit a 4-row page whole (owner,
+    // 2026-10-27): the panel's 12px under a breakdown's heading is 8 here.
+    const {view} = renderBody();
+    expect(screen.getByRole('region', {name: 'By ink, complete'})).toHaveStyle({gap: '12px'});
+    view.unmount();
+    render(<CoverNumbers {...bodyProps()} />);
+    expect(screen.getByRole('region', {name: 'By ink, complete'})).toHaveStyle({gap: '8px'});
+    expect(within(numbers()).getByRole('button', {name: /^Complete set/})).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.queryByRole('button', {name: /^Binder set/})).toBeNull();
+    expect(screen.queryByRole('group', {name: 'Binder shows'})).toBeNull();
   });
 });

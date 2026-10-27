@@ -49,8 +49,12 @@ export interface BinderPaging {
  * 2026-10-18), which takes the first spread's left page: its cards start a page in.
  */
 export const SPREAD_PAGING: BinderPaging = {perView: PER_SPREAD, lead: PER_PAGE};
-/** A phone pages a lone page at a time, nine or twelve, with no covers. */
-const LONE_PAGINGS = byRows((rows): BinderPaging => ({perView: perLonePage(rows), lead: 0}));
+/**
+ * A phone pages a lone page at a time, nine or twelve, after an inside front cover that holds the
+ * collection's numbers (owner, 2026-10-27): its cards start a page in. It opens on page 1, the
+ * view after the cover, so the cards come first.
+ */
+const LONE_PAGINGS = byRows((rows): BinderPaging => ({perView: perLonePage(rows), lead: perLonePage(rows)}));
 
 export const pagingOf = (single: boolean, rows: LoneRows) => (single ? LONE_PAGINGS[rows] : SPREAD_PAGING);
 

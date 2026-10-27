@@ -1,10 +1,12 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
-import {fireEvent, render, screen} from '@testing-library/react';
+import {fireEvent, render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {BrowseSortOrder} from '../../shared/constants';
 import type {CollectionEntries} from './collectionParser';
+import type {BinderShow} from './binderCards';
+import type {Axis} from './collectionStats';
 import {CollectionBinderSection} from './CollectionBinderSection';
 
 afterEach(() => {
@@ -37,12 +39,25 @@ interface SectionOptions {
   entries?: CollectionEntries;
   isLoading?: boolean;
   error?: string | null;
+  show?: BinderShow;
+  axis?: Axis;
+  onAxisChange?: (axis: Axis) => void;
 }
 
 /** The section with `matched` the cards the page's filters let through, as the page counts them. */
 function section(
   matched: string[],
-  {pool = POOL, sortOrder = 'newest', setCode = '9', entries = {}, isLoading = false, error = null}: SectionOptions = {},
+  {
+    pool = POOL,
+    sortOrder = 'newest',
+    setCode = '9',
+    entries = {},
+    isLoading = false,
+    error = null,
+    show = 'all',
+    axis = 'complete',
+    onAxisChange = vi.fn(),
+  }: SectionOptions = {},
 ) {
   const counted = pool.filter((card) => matched.includes(card.id));
   return (
@@ -62,10 +77,10 @@ function section(
         sets={['10', '9']}
         setsLoading={false}
         onSetChange={vi.fn()}
-        show="all"
+        show={show}
         onShowChange={vi.fn()}
-        axis="complete"
-        onAxisChange={vi.fn()}
+        axis={axis}
+        onAxisChange={onAxisChange}
       />
     </MemoryRouter>
   );
@@ -174,5 +189,62 @@ describe('CollectionBinderSection', () => {
         name: 'Set 10, Whispers in the Well, spread 1 of 1, then Set 9, Fabled, spread 1 of 1: 3 missing',
       }),
     ).toBeInTheDocument();
+  });
+
+  describe("a phone's inside front cover, which holds the numbers (owner, 2026-10-27)", () => {
+    const cover = () => screen.getByRole('group', {name: 'Front cover'});
+    // A phone's binder has no arrows: its map's minis, and swipes, turn its pages.
+    const toCover = () => fireEvent.click(screen.getByRole('button', {name: 'Front cover: collection numbers'}));
+    /** Set 9's a, held in one finish, and b, held in both: Owned holds both under Complete, b alone under Master. */
+    const HELD: CollectionEntries = {a: {normal: 1, foil: 0}, b: {normal: 1, foil: 1}};
+
+    it('holds the numbers a page before page 1, where the binder opens', () => {
+      vi.stubGlobal('innerWidth', 390);
+      renderSection(['a', 'b'], {entries: HELD});
+      expect(pockets()).toEqual(['Card a', 'Card b']);
+      expect(screen.queryByRole('region', {name: 'Collection numbers'})).toBeNull();
+      toCover();
+      expect(within(cover()).getByRole('region', {name: 'Collection numbers'})).toHaveTextContent('Complete2 of 2 cards100%');
+      expect(screen.queryAllByRole('button', {name: /^Card /})).toHaveLength(0);
+    });
+
+    it('keeps the cover, and the focus on the chosen headline, when Master changes what Owned holds', async () => {
+      // The page lets through what Owned holds under the chosen headline (`isHeld`): Master drops
+      // a, held in one finish. The binder holds other cards, so it is a new one, which opens on
+      // the cover rather than page 1.
+      vi.stubGlobal('innerWidth', 390);
+      const user = userEvent.setup();
+      const onAxisChange = vi.fn();
+      const view = renderSection(['a', 'b'], {entries: HELD, show: 'owned', onAxisChange});
+      toCover();
+      await user.click(within(cover()).getByRole('button', {name: /^Master/}));
+      expect(onAxisChange).toHaveBeenCalledWith('master');
+      view.rerender(section(['b'], {entries: HELD, show: 'owned', axis: 'master', onAxisChange}));
+      const master = within(cover()).getByRole('button', {name: /^Master/});
+      expect(master).toHaveAttribute('aria-pressed', 'true');
+      expect(master).toHaveFocus();
+      fireEvent.click(screen.getByRole('button', {name: /^Page 1 of 1/}));
+      expect(pockets()).toEqual(['Card b']);
+    });
+
+    it('opens on page 1 when a filter changes what it holds, even from the cover', () => {
+      vi.stubGlobal('innerWidth', 390);
+      const view = renderSection(['a', 'b'], {entries: HELD});
+      toCover();
+      view.rerender(section(['b'], {entries: HELD}));
+      expect(screen.queryByRole('group', {name: 'Front cover'})).toBeNull();
+      expect(pockets()).toEqual(['Card b']);
+    });
+
+    it('has no cover where nothing matches, and none on a tablet', () => {
+      vi.stubGlobal('innerWidth', 390);
+      const view = renderSection(['next']);
+      expect(screen.queryByRole('group', {name: 'Front cover'})).toBeNull();
+      expect(screen.queryByRole('region', {name: 'Collection numbers'})).toBeNull();
+      view.unmount();
+      vi.stubGlobal('innerWidth', 800);
+      renderSection(['a']);
+      expect(screen.queryByRole('group', {name: 'Front cover'})).not.toHaveTextContent('Complete');
+    });
   });
 });

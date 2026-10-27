@@ -73,7 +73,10 @@ import {
  * UNDER A PHONE'S LONE PAGE IT DRAWS PAGES (owner, 2026-10-25, #969), where the page's arrows
  * were: one mini per page, its 3 by 3 or 3 by 4 cells always at full size, the window holding as
  * many as fit and moving as the spreads' does, and nothing after them: the row is all minis
- * (owner, 2026-10-26). Pages have no covers.
+ * (owner, 2026-10-26).
+ *
+ * AND THERE ITS FIRST MINI IS THE FRONT COVER (owner, 2026-10-27), which holds the collection's
+ * numbers: a small bar chart in place of cells, which turns to it. The pages after it count from 1.
  */
 
 /** A pocket in the map: whether you hold its card, and the card's ink, or two for a dual-ink card. */
@@ -285,11 +288,16 @@ interface SetSpan {
 
 /**
  * How the map pages its pockets: spreads after the front cover's page, or a phone's lone pages of
- * nine, with no covers (#969).
+ * nine or twelve after a front cover of their own.
  */
 interface MapViews extends BinderPaging {
   /** What a mini's name calls its view: "Spread 3 of 9", "Page 5 of 27". */
   noun: 'spread' | 'page';
+  /**
+   * Whether the first view is a cover alone, as a phone's is: its mini draws the numbers it holds,
+   * and the pages after it count from 1 without it.
+   */
+  cover: boolean;
   /** How many minis a row this many pixels wide holds. */
   fits: (room: number) => number;
 }
@@ -309,11 +317,12 @@ function setSpans(sets: readonly MapSet[], count: number, {perView, lead}: MapVi
  * 11: nothing missing". Sets run on from one another, so a spread where one ends and the next
  * begins names both. A phone's mini pages name pages: "Page 5 of 27: 4 missing" (#969).
  */
-function viewLabel({spread, total}: SpreadPlace, pockets: readonly Pocket[], spans: readonly SetSpan[], {noun}: MapViews): string {
+function viewLabel({spread, total}: SpreadPlace, pockets: readonly Pocket[], spans: readonly SetSpan[], {noun, cover}: MapViews): string {
   const missing = pockets.filter((p) => !p.owned && !p.open).length;
   const state = missing === 0 ? 'nothing missing' : `${missing} missing`;
   const named = spans.filter((span) => span.first <= spread && spread <= span.last);
-  if (named.length === 0) return `${noun[0].toUpperCase()}${noun.slice(1)} ${spread + 1} of ${total}: ${state}`;
+  const covers = cover ? 1 : 0;
+  if (named.length === 0) return `${noun[0].toUpperCase()}${noun.slice(1)} ${spread + 1 - covers} of ${total - covers}: ${state}`;
   const places = named.map((span) => `${span.label}, ${noun} ${spread - span.first + 1} of ${span.last - span.first + 1}`);
   return `${places.join(', then ')}: ${state}`;
 }
@@ -406,8 +415,8 @@ function pagesThatFit(room: number): number {
 }
 
 /** The map of spreads, beside the front cover, and a phone's map of pages, with none, by their rows. */
-const SPREAD_VIEWS: MapViews = {...SPREAD_PAGING, noun: 'spread', fits: spreadsThatFit};
-const PAGE_VIEWS = byRows((rows): MapViews => ({...pagingOf(true, rows), noun: 'page', fits: pagesThatFit}));
+const SPREAD_VIEWS: MapViews = {...SPREAD_PAGING, noun: 'spread', cover: false, fits: spreadsThatFit};
+const PAGE_VIEWS = byRows((rows): MapViews => ({...pagingOf(true, rows), noun: 'page', cover: true, fits: pagesThatFit}));
 
 /**
  * How many minis the window holds: as many as fit the row (`fits`). Measured before the
@@ -432,6 +441,9 @@ function useViewsThatFit(rowRef: RefObject<HTMLElement | null>, fits: MapViews['
   return fit;
 }
 
+/** The view on show in the binder, and whether its first view is a cover alone (`MapViews.cover`). */
+type WindowPlace = SpreadPlace & Pick<Partial<MapViews>, 'cover'>;
+
 /** Where the window sits: its first spread and how many it holds, in a binder of `total`. */
 interface WindowView {
   start: number;
@@ -447,8 +459,12 @@ function nextWindowStart({start, size, total}: WindowView, to: number): number {
   return start;
 }
 
-/** A window of `size` opening on the spread, or as near as the binder's end allows. */
-const windowAt = ({spread, total}: SpreadPlace, size: number) => Math.max(0, Math.min(spread, total - size));
+/**
+ * A window of `size` opening on the spread, or as near as the binder's end allows. A phone's page 1
+ * opens it on the cover's mini, the page before, so the map shows where the cover is.
+ */
+const windowAt = ({spread, total, cover = false}: WindowPlace, size: number) =>
+  Math.max(0, Math.min(cover && spread === 1 ? 0 : spread, total - size));
 
 /**
  * The window's first spread once it holds `size`: where it was, if the spread on show
@@ -467,7 +483,7 @@ interface WindowState {
 }
 
 /** Where the window goes when the spread on show, the binder's length or the room changes. */
-function followWindow(state: WindowState, place: SpreadPlace, fit: number | null): number {
+function followWindow(state: WindowState, place: WindowPlace, fit: number | null): number {
   const size = fit ?? WINDOW;
   if (state.total !== place.total) return windowAt(place, size);
   if (state.fit === fit) return nextWindowStart({start: state.start, size, total: state.total}, place.spread);
@@ -483,7 +499,7 @@ function followWindow(state: WindowState, place: SpreadPlace, fit: number | null
  * on show changes (the "previous render" pattern, so the window and the spread never
  * disagree for a frame).
  */
-function useWindowStart(place: SpreadPlace, fit: number | null): number {
+function useWindowStart(place: WindowPlace, fit: number | null): number {
   const [state, setState] = useState<WindowState>({
     start: windowAt(place, fit ?? WINDOW),
     at: place.spread,
@@ -506,7 +522,7 @@ function useMapWindow(pockets: readonly Pocket[], current: number, views: MapVie
   const fit = useViewsThatFit(rowRef, views.fits);
   const size = fit ?? WINDOW;
   const total = Math.max(1, Math.ceil((pockets.length + views.lead) / views.perView));
-  const start = useWindowStart({spread: current, total}, fit);
+  const start = useWindowStart({spread: current, total, cover: views.cover}, fit);
   const shown = Array.from({length: Math.min(size, total - start)}, (_, i) => start + i);
   return {rowRef, total, shown};
 }
@@ -540,10 +556,50 @@ function SpreadMap({pockets, current, onGo, sets = []}: MapProps) {
   );
 }
 
+/** The cover's bar chart, centred over the cells it stands in for. */
+const CHART_BOX: CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
+
+/** Three rising bars, the last fainter, as a collection still filling. */
+function BarChartGlyph() {
+  return (
+    <svg width={20} height={20} viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+      <rect x={2} y={11} width={4} height={7} rx={1} fill={COLORS.primary} />
+      <rect x={8} y={6} width={4} height={12} rx={1} fill={COLORS.primary} />
+      <rect x={14} y={2} width={4} height={16} rx={1} fill={COLORS.primary} opacity={0.55} />
+    </svg>
+  );
+}
+
 /**
- * A phone's map: a mini per page, 4px under the page, as many as fit the row, and
- * nothing after them: the open mini's name and `aria-current` say where the page is.
- * Each mini draws its page's rows, 3 or 4.
+ * The front cover's mini: a page's mini in size, its cells there but unseen, so it is exactly as big
+ * as the pages beside it, and a bar chart over them for the numbers the cover holds.
+ */
+function CoverCells({rows}: {rows: LoneRows}) {
+  return (
+    <span aria-hidden style={{...LONE_GRID, position: 'relative'}}>
+      {Array.from({length: perLonePage(rows)}, (_, i) => (
+        <span key={i} style={{...LONE_CELL, visibility: 'hidden'}} />
+      ))}
+      <span style={CHART_BOX}>
+        <BarChartGlyph />
+      </span>
+    </span>
+  );
+}
+
+/** The cover's mini's name, for screen readers and on hover. */
+const COVER_MINI_LABEL = 'Front cover: collection numbers';
+
+/**
+ * A phone's map: the front cover's mini, then a mini per page, 4px under the page, as many as fit
+ * the row, and nothing after them: the open mini's name and `aria-current` say where the page is.
+ * Each page's mini draws its rows, 3 or 4.
  */
 function PageMap({pockets, current, onGo, sets = [], rows}: MapProps & {rows: LoneRows}) {
   const views = PAGE_VIEWS[rows];
@@ -554,16 +610,19 @@ function PageMap({pockets, current, onGo, sets = [], rows}: MapProps & {rows: Lo
     <div style={{padding: `${MAP_GAP_ABOVE}px ${SPACING.xs}px 0`}}>
       <nav ref={rowRef} aria-label="Binder pages" style={{display: 'flex', justifyContent: 'center', gap: SPACING.xs}}>
         {shown.map((page) => {
-          const held = pockets.slice(page * views.perView, (page + 1) * views.perView);
+          // The cover takes the first view, a page before the first card (`pagingOf`).
+          const from = page * views.perView - views.lead;
+          const held = pockets.slice(Math.max(0, from), from + views.perView);
+          const cover = page === 0;
           return (
             <Mini
               key={page}
               view={page}
-              label={viewLabel({spread: page, total}, held, spans, views)}
+              label={cover ? COVER_MINI_LABEL : viewLabel({spread: page, total}, held, spans, views)}
               current={page === current}
               onGo={onGo}
               look={lonePageStyle}>
-              <LonePageCells pockets={held} rows={rows} />
+              {cover ? <CoverCells rows={rows} /> : <LonePageCells pockets={held} rows={rows} />}
             </Mini>
           );
         })}

@@ -1113,6 +1113,33 @@ async function phoneBinderFit(page: Page, {scrollToEnd = false} = {}) {
   return {...boxes, pockets: lefts.length, columns: new Set(lefts).size};
 }
 
+/** A phone binder's inside front cover (owner, 2026-10-27), and its mini, first in the page map. */
+const COVER_MINI = 'Front cover: collection numbers';
+const phoneCover = (page: Page) => binder(page).getByRole('group', {name: 'Front cover', exact: true});
+const lonePage = (page: Page) => binder(page).getByRole('group', {name: 'Page', exact: true});
+
+/** Turns a phone's binder to its inside cover from the page map, and waits for the turn to land. */
+async function toPhoneCover(page: Page): Promise<Locator> {
+  await binder(page).getByRole('button', {name: COVER_MINI, exact: true}).click();
+  await expect(binder(page).locator('.binder-turn')).toHaveCount(0);
+  await expect(shownPage(page)).toHaveAttribute('aria-label', COVER_MINI);
+  return phoneCover(page);
+}
+
+/**
+ * What scrolls round the cover's numbers: the box they scroll in on the cover, past its end, and
+ * the binder's section and the document, which should not.
+ */
+async function coverScrolls(page: Page) {
+  const cover = await numbers(page).evaluate((region) => {
+    const box = region.parentElement!;
+    return {cover: box.scrollHeight - box.clientHeight, overflowY: getComputedStyle(box).overflowY};
+  });
+  const fit = await phoneBinderFit(page);
+  const document = await page.evaluate(() => window.document.documentElement.scrollHeight - window.innerHeight);
+  return {...cover, section: fit.overflow, document, sideways: fit.sideways};
+}
+
 test.describe('Collection mode, signed in (phone width)', () => {
   // Runs on every project, not just mobile-*: the row is chosen by width (useResponsive), so a
   // forced phone viewport renders it anywhere, including the chromium-only Windows pre-push.
@@ -1263,6 +1290,80 @@ test.describe('Collection mode, signed in (phone width)', () => {
     expectPlacesHeld([{name: 'the set button', before: placeholder, after: button}]);
   });
 
+  test("a phone's binder opens on page 1, its inside cover a page before it: page 1's size and place, holding the numbers, its mini first in the map (owner, 2026-10-27)", async ({
+    page,
+  }) => {
+    await page.setViewportSize({width: 393, height: 815});
+    await signInAsCollector(page, ENTRIES);
+    await openPhoneBinder(page, `/browse?binder=${SET}`);
+    await expect(shownPage(page)).toHaveAttribute('aria-label', /^Page 1 of /);
+    const minis = binder(page).getByRole('navigation', {name: 'Binder pages'}).getByRole('button');
+    await expect(minis.first()).toHaveAccessibleName(COVER_MINI);
+    await expect(numbers(page), 'no numbers on page 1').toHaveCount(0);
+    const pageOne = await edges(lonePage(page));
+
+    const cover = await toPhoneCover(page);
+    const drawn = await edges(cover);
+    for (const side of ['left', 'right', 'top', 'bottom'] as const) {
+      expect(Math.abs(drawn[side] - pageOne[side]), `the cover's ${side}, at page 1's`).toBeLessThanOrEqual(1);
+    }
+    await expect(cover.getByRole('region', {name: 'Collection numbers'})).toContainText(`${HELD} of ${SET_TOTAL} cards`);
+    await expect(cover.getByTestId('card-tile')).toHaveCount(0);
+    await expect(lonePage(page)).toHaveCount(0);
+  });
+
+  test("the cover's numbers fit it whole on a 4-row phone, for a set, the whole collection and the promos, and scroll inside it on a 3-row one, alone (owner, 2026-10-27)", async ({
+    page,
+  }) => {
+    // Seven binders, each opened and turned to its cover.
+    test.slow();
+    await signInAsCollector(page, ENTRIES);
+    for (const size of [
+      {width: 393, height: 815},
+      {width: 412, height: 839},
+    ]) {
+      await page.setViewportSize(size);
+      for (const scope of [SET, 'all', 'promos']) {
+        await openPhoneBinder(page, `/browse?binder=${scope}`);
+        await toPhoneCover(page);
+        const at = `at ${size.width}x${size.height}, binder=${scope}`;
+        const scrolls = await coverScrolls(page);
+        expect(scrolls.cover, `what the cover's numbers scroll ${at}`).toBeLessThanOrEqual(0);
+        expect(Math.max(scrolls.section, scrolls.document, scrolls.sideways), `what else scrolls ${at}`).toBeLessThanOrEqual(0);
+      }
+    }
+
+    // An iPhone 15 with Safari's bars: three rows, a cover too short for the whole collection's
+    // numbers, which scroll inside it while the section and the page stay put.
+    await page.setViewportSize({width: 393, height: 659});
+    await openPhoneBinder(page, '/browse?binder=all');
+    await toPhoneCover(page);
+    const scrolls = await coverScrolls(page);
+    expect(scrolls.overflowY).toBe('auto');
+    expect(scrolls.cover, "what the cover's numbers scroll at 393x659").toBeGreaterThan(0);
+    expect(Math.max(scrolls.section, scrolls.document, scrolls.sideways), 'what else scrolls at 393x659').toBeLessThanOrEqual(0);
+  });
+
+  test('Master on the cover keeps the cover, the focus on it, while Owned drops the cards it no longer holds (owner, 2026-10-27)', async ({
+    page,
+  }) => {
+    // A printing held in its one finish, so Master leaves Owned a card and the binder stays.
+    expect(MASTER, 'the cards held toward Master').toBe(1);
+    await page.setViewportSize({width: 393, height: 815});
+    await signInAsCollector(page, ENTRIES);
+    await openPhoneBinder(page, `/browse?binder=${SET}&owned=owned`);
+    await expect(binder(page).getByTestId('card-tile')).toHaveCount(HELD);
+    const cover = await toPhoneCover(page);
+
+    await cover.getByRole('button', {name: /^Master set/}).click();
+    const master = cover.getByRole('button', {name: /^Master set/});
+    await expect(master).toHaveAttribute('aria-pressed', 'true');
+    await expect(master).toBeFocused();
+    await expect(shownPage(page)).toHaveAttribute('aria-label', COVER_MINI);
+    await binder(page).getByRole('button', {name: /^Page 1 of /}).click();
+    await expect(binder(page).getByTestId('card-tile')).toHaveCount(MASTER);
+  });
+
   test('the Binder sheet applies Show, the sort and the filters together, in one write', async ({page}) => {
     await page.setViewportSize({width: 390, height: 844});
     await countUrlWrites(page);
@@ -1275,6 +1376,9 @@ test.describe('Collection mode, signed in (phone width)', () => {
 
     await filters.click();
     const sheet = binderSheet(page);
+    // The numbers are on the binder's inside cover (owner, 2026-10-27), not under Progress here.
+    await expect(sheet.getByRole('region', {name: 'Collection numbers'})).toHaveCount(0);
+    await expect(sheet.getByText('Progress', {exact: true})).toHaveCount(0);
     await sheet.getByRole('group', {name: 'Binder shows'}).getByRole('button', {name: 'Missing', exact: true}).click();
     await sheet.getByRole('combobox', {name: 'Sort cards'}).selectOption('name-asc');
     await sheet.getByRole('button', {name: 'Filter by Amber'}).click();
@@ -1320,7 +1424,7 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await expect(sheet.getByRole('button', {name: 'Filter by Amber'})).toHaveAttribute('aria-pressed', 'true');
   });
 
-  test('the phone binder has no axe violations, with the Binder sheet closed and open', async ({page}, testInfo) => {
+  test('the phone binder has no axe violations, on a page and on its cover, and with the Binder sheet open', async ({page}, testInfo) => {
     // Desktop only, as accessibility.spec.ts's audits are: a phone's size draws the phone binder.
     test.skip(testInfo.project.name.startsWith('mobile-'), 'axe audits run on the desktop projects');
     // A pocket whose art fails to load shows the card's cost, which its name lacks (axe's
@@ -1329,6 +1433,8 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await page.setViewportSize({width: 390, height: 844});
     await signInAsCollector(page, ENTRIES);
     await openPhoneBinder(page, `/browse?binder=${SET}`);
+    expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+    await toPhoneCover(page);
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
 
     await phoneRow(page).getByRole('button', {name: /^Filters/}).click();

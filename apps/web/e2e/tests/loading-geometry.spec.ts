@@ -482,6 +482,10 @@ for (const [rows, size] of [
     const loadingMap = binder(page).locator('[inert]');
     await expect(loadingMap, 'the loading binder draws its map').toBeVisible();
     const cardsLoading = {board: await boxOf(board(page)), map: await boxOf(loadingMap)};
+    // As the binder opens (owner, 2026-10-27): its inside cover's mini, then page 1's, marked.
+    const minis = loadingMap.locator('nav button');
+    await expect(minis.first()).toHaveAttribute('aria-label', 'Front cover: collection numbers');
+    await expect(loadingMap.locator('[aria-current="true"]')).toHaveAttribute('aria-label', /^Page 1 of 1\b/);
 
     releaseCards();
     const map = binder(page).getByRole('navigation', {name: 'Binder pages'});

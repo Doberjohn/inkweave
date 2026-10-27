@@ -2,11 +2,7 @@ import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import type {Ink} from 'inkweave-synergy-engine';
 import {BinderSheet} from './BinderSheet';
-import {SheetNumbers} from './CollectionSetPanel';
 import {OWNED_PARAM, parseBinderShow, type BinderShow} from './binderCards';
-import {tallyCollection, type Axis} from './collectionStats';
-import {STORY_ENTRIES, STORY_POOL, STORY_SETS} from './collectionStoryData';
-import {filterCards, type CardFilterOptions} from '../cards/loader';
 import {CtaButton} from '../../shared/components';
 import type {BrowseSortOrder} from '../../shared/constants';
 import type {FilterDraft} from '../../shared/hooks/useFilterParams';
@@ -20,34 +16,15 @@ interface LiveSheetProps {
   inks: Ink[];
 }
 
-/** The set the stories' numbers count. */
-const SET = '13';
-
-/** The filters applied, as Browse combines them for the cards it counts. */
-function optionsOf({inks, types, costs, opts}: FilterDraft): CardFilterOptions {
-  return {
-    ...opts,
-    ...(inks.length > 0 ? {ink: inks} : {}),
-    ...(types.length > 0 ? {type: types} : {}),
-    ...(costs.length > 0 ? {costs} : {}),
-  };
-}
-
 /**
  * The Binder sheet over a phone's binder, live: the row's Filters opens it, and its Apply sets what
- * the binder shows, its sort and its filters at once, as Browse's one URL write does. The numbers
- * under Progress count the cards the filters let through, and their headlines choose what the
- * breakdowns count.
+ * the binder shows, its sort and its filters at once, as Browse's one URL write does.
  */
 function LiveSheet({open, show: startShow, inks: startInks}: LiveSheetProps) {
   const [isOpen, setOpen] = useState(open);
   const [show, setShow] = useState(startShow);
   const [sortOrder, setSortOrder] = useState<BrowseSortOrder>('newest');
   const [applied, setApplied] = useState<FilterDraft>({inks: startInks, types: [], costs: [], opts: {}});
-  const [axis, setAxis] = useState<Axis>('complete');
-  const options = optionsOf(applied);
-  const filtered = Object.keys(options).length > 0;
-  const counted = filtered ? filterCards(STORY_POOL, options) : STORY_POOL;
   return (
     <>
       <CtaButton onClick={() => setOpen(true)}>Filters</CtaButton>
@@ -63,20 +40,6 @@ function LiveSheet({open, show: startShow, inks: startInks}: LiveSheetProps) {
         }}
         show={show}
         sortOrder={sortOrder}
-        progress={
-          <SheetNumbers
-            setCode={SET}
-            sets={STORY_SETS}
-            setsLoading={false}
-            onSetChange={() => {}}
-            show={show}
-            onShowChange={() => {}}
-            axis={axis}
-            onAxisChange={setAxis}
-            stats={tallyCollection(counted, STORY_ENTRIES, STORY_SETS)}
-            filtered={filtered}
-          />
-        }
         inkFilters={applied.inks}
         typeFilters={applied.types}
         costFilters={applied.costs}
@@ -94,8 +57,8 @@ function LiveSheet({open, show: startShow, inks: startInks}: LiveSheetProps) {
 
 /**
  * A phone's Binder sheet (owner, 2026-10-25, #969): the filter sheet, titled Binder, with what the
- * binder shows and its sort above the filters and the set's numbers, Progress, after them. All of
- * it waits for Apply; closing the sheet any other way drops it.
+ * binder shows and its sort above the filters. All of it waits for Apply; closing the sheet any
+ * other way drops it.
  */
 const meta: Meta<typeof LiveSheet> = {
   title: 'Collection/BinderSheet',
@@ -111,7 +74,7 @@ type Story = StoryObj<typeof meta>;
 /** Closed: the row's Filters opens it. */
 export const Closed: Story = {args: {open: false}, globals: {viewport: {value: 'mobile1'}}};
 
-/** Open over a binder filtered to two inks: Clear all shows, and the numbers count those inks. */
+/** Open over a binder filtered to two inks: Clear all shows. */
 export const OpenWithFilters: Story = {args: {inks: ['Amber', 'Steel']}, globals: {viewport: {value: 'mobile1'}}};
 
 /** Open over a binder showing Owned, which Clear all puts back to All with no filter on. */

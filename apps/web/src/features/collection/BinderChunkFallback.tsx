@@ -11,7 +11,7 @@ import {
 } from '../cards/components/binderGeometry';
 import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 import {FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
-import {BAR, NUMBERS_STYLE, ROW_CONTROL_HEIGHT, SHEET_NUMBERS_STYLE, sectionStyle} from './binderLayout';
+import {BAR, NUMBERS_STYLE, ROW_CONTROL_HEIGHT, sectionStyle} from './binderLayout';
 import {useLoneFit} from './useLoneFit';
 
 /*
@@ -123,18 +123,6 @@ export function DockedSetBodyFallback({promo = false}: {promo?: boolean}) {
         <NumbersLoading promo={promo} />
       </div>
     </>
-  );
-}
-
-/**
- * A phone's Binder sheet's numbers while the chunk downloads (#969), in the column they draw in.
- * `promo`: the sheet counts a promo scope, whose numbers have one headline.
- */
-export function SheetNumbersFallback({promo}: {promo: boolean}) {
-  return (
-    <div style={SHEET_NUMBERS_STYLE}>
-      <NumbersLoading promo={promo} />
-    </div>
   );
 }
 

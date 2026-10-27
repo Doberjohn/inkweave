@@ -10,8 +10,8 @@ import {ALL_INKS, COLORS, SET_NAMES, SPACING, type SetCode} from '../../../share
  * ring where you are missing it. The window holds as many spreads as fit the row, eleven
  * at most; going set by set, each spread names its sets on hover. The first spread's left
  * page is the front cover (owner, 2026-10-18), so every binder here opens on it. Under a
- * phone's lone page it draws its pages instead, of nine or twelve. Live here:
- * click a spread or a page.
+ * phone's lone page it draws its pages instead, of nine or twelve, after the inside cover's
+ * bar chart (owner, 2026-10-27). Live here: click a spread or a page.
  */
 
 /**
@@ -161,6 +161,15 @@ export const PhonePages: Story = {
 /** Under a phone's page of four rows: a mini per page of twelve, four rows of cells. */
 export const PhonePagesFourRows: Story = {
   args: {single: true, rows: 4, start: 4},
+  parameters: {binderWidth: 377},
+};
+
+/**
+ * On a phone's inside front cover (owner, 2026-10-27), which holds the collection's numbers: its
+ * mini, a gold bar chart, first and marked, then page 1's.
+ */
+export const PhonePagesOnCover: Story = {
+  args: {single: true, start: 0},
   parameters: {binderWidth: 377},
 };
 

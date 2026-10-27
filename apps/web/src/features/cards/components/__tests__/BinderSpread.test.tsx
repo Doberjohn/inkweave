@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
-import {act, fireEvent, render, screen} from '@testing-library/react';
+import {act, fireEvent, render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {touchMoveKept} from '../../../../shared/test-utils';
 import {BinderSpread} from '../BinderSpread';
@@ -290,5 +290,42 @@ describe('BinderSpread lone page (#969)', () => {
     render(spread());
     expect(pocketsOn('Left page')).toHaveLength(12);
     expect(pocketsOn('Right page')).toHaveLength(12);
+  });
+});
+
+describe("BinderSpread, a phone's inside front cover (owner, 2026-10-27)", () => {
+  const COVER = <button type="button">Master set</button>;
+  const cover = () => screen.getByRole('group', {name: 'Front cover'});
+
+  it('draws the page before the first card as the front cover, what it holds over its empty slots', () => {
+    render(spread({single: true, start: -9, canPrev: false, cover: COVER}));
+    // Its nine slots keep the page a page's size, empty: no pocket, no card.
+    expect(cover().querySelectorAll('.binder-pocket')).toHaveLength(0);
+    expect(cover().children).toHaveLength(10);
+    expect(screen.queryByRole('button', {name: /^Card \d+$/})).toBeNull();
+    const holds = screen.getByRole('button', {name: 'Master set'}).parentElement!;
+    expect(holds.parentElement).toBe(cover());
+    // It scrolls inside the page where it is the taller, and leaves a sideways swipe to the binder.
+    expect([holds.style.position, holds.style.overflowY, holds.style.touchAction]).toEqual(['absolute', 'auto', 'pan-y']);
+  });
+
+  it('leaves a lone page of cards a page, whatever the cover holds', () => {
+    render(spread({single: true, start: 0, cover: COVER}));
+    expect(screen.getByRole('group', {name: 'Page'})).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Master set'})).toBeNull();
+  });
+
+  it('draws what the cover holds on the sheet a turn to it lifts, so it never turns in blank', () => {
+    const view = render(spread({single: true, start: 0, cover: <p>The numbers</p>}));
+    view.rerender(spread({single: true, start: -9, canPrev: false, cover: <p>The numbers</p>}));
+    const [sheet] = sheets();
+    expect(sheet.textContent).toContain('The numbers');
+    expect(within(cover()).getByText('The numbers')).toBeInTheDocument();
+  });
+
+  it("leaves a spread's front cover its plain board", () => {
+    render(spread({start: -12, canPrev: false, cover: COVER}));
+    expect(cover()).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Master set'})).toBeNull();
   });
 });

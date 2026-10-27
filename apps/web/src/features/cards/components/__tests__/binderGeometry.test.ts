@@ -42,7 +42,8 @@ describe('a lone page by its rows', () => {
   it('pages by one object per row count, so a dependency list sees a change only when the rows change', () => {
     expect(pagingOf(true, 4)).toBe(pagingOf(true, 4));
     expect(pagingOf(true, 3)).not.toBe(pagingOf(true, 4));
-    expect(pagingOf(true, 4)).toEqual({perView: 12, lead: 0});
+    expect(pagingOf(true, 4)).toEqual({perView: 12, lead: 12});
+    expect(pagingOf(true, 3)).toEqual({perView: 9, lead: 9});
     expect(pagingOf(false, 4)).toEqual({perView: 24, lead: 12});
   });
 });

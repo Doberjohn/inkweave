@@ -267,12 +267,11 @@ describe("useBrowseCollection's Binder sheet (#969)", () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it("draws the sheet in collection mode, from what the binder shows, with the scope's numbers under Progress", async () => {
+  it("draws the sheet in collection mode, from what the binder shows, the scope's numbers left to the binder's cover", () => {
     renderSheet('/browse?binder=9&owned=missing');
     expect(screen.getByRole('heading', {name: 'Binder'})).toBeInTheDocument();
     const shows = within(screen.getByRole('group', {name: 'Binder shows'}));
     expect(shows.getByRole('button', {pressed: true})).toHaveTextContent('Missing');
-    // From the binder's chunk, once it is in.
-    expect(await screen.findByRole('region', {name: 'Collection numbers'})).toBeInTheDocument();
+    expect(screen.queryByRole('region', {name: 'Collection numbers'})).toBeNull();
   });
 });

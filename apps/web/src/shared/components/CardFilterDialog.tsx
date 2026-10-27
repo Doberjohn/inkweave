@@ -52,8 +52,6 @@ interface CardFilterDialogProps extends FilterPanelProps {
   title?: string;
   /** Drawn above the filters: the Binder sheet's Show and sort (#969). */
   prelude?: ReactNode;
-  /** Drawn after the filters: the Binder sheet's numbers (#969). */
-  postlude?: ReactNode;
   /**
    * What the caller drafts beside the filters, which Clear all puts back too (the Binder sheet's
    * Show, #969): while `count` is above 0, Clear all shows, and pressing it also calls `onClear`.
@@ -79,7 +77,6 @@ export function CardFilterDialog({
   toolbarCarries = {cost: true, inkwell: true},
   title,
   prelude,
-  postlude,
   extra,
   ...content
 }: CardFilterDialogProps) {
@@ -117,7 +114,6 @@ export function CardFilterDialog({
         showInlineInkwell={toolbarCarries.inkwell}
         vocabulary={FILTER_VOCABULARY}
       />
-      {postlude}
     </FilterDialog>
   );
 }

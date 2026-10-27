@@ -68,6 +68,8 @@ interface SeenTurn {
   front: string | null;
   back: string | null;
   flat: string | null;
+  /** Whether its front holds a phone's inside cover, with the collection's numbers (owner, 2026-10-27). */
+  numbers: boolean;
   /** The binder's real pages, as it was drawn. */
   pages: {left: Box | null; right: Box | null};
   /** A turn's time and its poses; a page in hand has neither. */
@@ -157,6 +159,7 @@ function watchTurns(poses: number[]) {
       front: firstCard(turn, '.binder-leaf-face:not(.binder-leaf-back)'),
       back: firstCard(turn, '.binder-leaf-back'),
       flat: firstCard(turn, '.binder-turn-flat'),
+      numbers: turn.querySelector('.binder-leaf-face:not(.binder-leaf-back) [aria-label="Collection numbers"]') !== null,
       pages: {left: boxOf(realPage('left')), right: boxOf(realPage('right'))},
       ...motionOf(turn.querySelector('.binder-leaf')),
     };
@@ -1057,6 +1060,56 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     const {mounted, hidden} = await artLog(page);
     expect(mounted, 'the art the two pages mounted').toBeGreaterThanOrEqual(2 * PER_PAGE);
     expect(hidden, 'the art that mounted hidden over its placeholder').toBe(0);
+  });
+
+  test("a finger swiping right from page 1 swings the inside cover in over it, its numbers drawn on the sheet, and swiping left turns back (owner, 2026-10-27)", async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', "Touch goes through Chromium's DevTools protocol");
+    await openBinder(page, PHONE);
+    const cdp = await page.context().newCDPSession(page);
+    const box = await edges(lonePage(page));
+    const y = box.top + (box.bottom - box.top) / 2;
+    const cover = binder(page).getByRole('group', {name: 'Front cover', exact: true});
+    await clearTurns(page);
+
+    await swipe(page, cdp, [box.left + 20, y], [box.right - 20, y]);
+    await expect(cover.getByRole('region', {name: 'Collection numbers'})).toBeVisible();
+    await expect(shown(page)).toHaveAccessibleName('Front cover: collection numbers');
+    const [back] = await endedTurns(page);
+    expect([back.numbers, back.front], 'the cover on the sheet, with no card').toEqual([true, null]);
+    expectSameBox(await cover.boundingBox(), back.pages.right, 'the cover, where page 1 was');
+
+    await clearTurns(page);
+    await swipe(page, cdp, [box.right - 20, y], [box.left + 20, y]);
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[0].fullName);
+    const [away] = await endedTurns(page);
+    expect(away.numbers, 'the cover swinging away').toBe(true);
+  });
+
+  test('a mostly vertical swipe on the inside cover scrolls its numbers and turns nothing (owner, 2026-10-27)', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', "Touch goes through Chromium's DevTools protocol");
+    await openBinder(page, SHORT_PHONE);
+    await binder(page).getByRole('button', {name: 'Front cover: collection numbers'}).click();
+    await expect(sheets(page)).toHaveCount(0);
+    const cover = binder(page).getByRole('group', {name: 'Front cover', exact: true});
+    const numbers = cover.getByRole('region', {name: 'Collection numbers'});
+    const scrolled = () => numbers.evaluate((region) => region.parentElement!.scrollTop);
+    const cdp = await page.context().newCDPSession(page);
+    const box = await edges(cover);
+    const x = middle(box);
+    const y = box.top + (box.bottom - box.top) / 2;
+    await clearTurns(page);
+
+    await swipe(page, cdp, [x, y + 80], [x - 10, y - 120]);
+    await expect.poll(scrolled, {message: "how far the cover's numbers scrolled"}).toBeGreaterThan(40);
+    await pause(page, 100);
+    expect((await turnLog(page)).turns, 'sheets drawn').toEqual([]);
+    await expect(cover).toBeVisible();
   });
 
   test('a mostly vertical swipe scrolls the page and turns nothing', async ({page, browserName}) => {
