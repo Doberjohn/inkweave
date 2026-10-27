@@ -541,6 +541,7 @@ const PANEL_SPAN_STYLE: React.CSSProperties = {
  */
 function FlowToolbar({
   isMobile,
+  phoneRow,
   flushBottom,
   filters,
   sort,
@@ -550,29 +551,46 @@ function FlowToolbar({
   modeActions,
   icons,
   extraChips,
-}: ToolbarSlots & {isMobile: boolean; flushBottom?: boolean; icons: React.ReactNode; extraChips: React.ReactNode}) {
+}: ToolbarSlots & {
+  isMobile: boolean;
+  /** Placed as a phone's row with Collection (`isPhoneRow`), as the sort's width is. */
+  phoneRow: boolean;
+  flushBottom?: boolean;
+  icons: React.ReactNode;
+  extraChips: React.ReactNode;
+}) {
   return (
     <div data-testid="browse-toolbar" style={getToolbarStyle(isMobile, flushBottom)}>
       {filters}
       {modeSwitch ? sort : null}
       {search}
       {extraChips}
-      {chips}
+      {!phoneRow && chips}
       <div style={{marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10}}>
         {icons}
         {modeSwitch || sort}
         {/* Not on phones (owner, 2026-10-20): it wrapped Collection onto a row of its own. */}
         {!isMobile && modeActions}
       </div>
+      {phoneRow && chips}
     </div>
   );
 }
 
 /**
- * Docked, Filters and the sort share the panel's width in both modes: the sort takes
- * what Filters leaves. Elsewhere it keeps its own width.
+ * A phone's row with Collection is the binder's (`PhoneBinderRow`, owner 2026-10-26): Filters,
+ * the sort taking what Filters and Collection leave, as the set button does there, then
+ * Collection, so the three keep one line at any phone width and switching modes moves none
+ * of them. The chips get a row of their own under all three.
  */
-const DOCKED_SORT_STYLE: React.CSSProperties = {flex: 1, minWidth: 0};
+const isPhoneRow = (isMobile: boolean, modeSwitch: React.ReactNode) => isMobile && Boolean(modeSwitch);
+
+/**
+ * Docked, Filters and the sort share the panel's width in both modes: the sort takes
+ * what Filters leaves. In a phone's row it takes what Filters and Collection leave
+ * (`isPhoneRow`). Elsewhere it keeps its own width.
+ */
+const FILL_SORT_STYLE: React.CSSProperties = {flex: 1, minWidth: 0, textOverflow: 'ellipsis'};
 
 // =====================================================================
 // Public component — layout shell that delegates to subcomponents.
@@ -609,6 +627,7 @@ export function BrowseToolbar({
   // Filters dialog and surface as a chip instead (see buildHiddenIconChips).
   const showCost = useInlineCostFilters();
   const parts = toolbarParts(isMobile, docked);
+  const phoneRow = isPhoneRow(isMobile, modeSwitch);
   const chips = buildActiveChips({
     iconsHidden: parts.iconsHidden,
     showCost,
@@ -642,7 +661,7 @@ export function BrowseToolbar({
         onChange={onSortChange}
         ariaLabel="Sort cards"
         isMobile={isMobile}
-        style={docked ? DOCKED_SORT_STYLE : undefined}
+        style={docked || phoneRow ? FILL_SORT_STYLE : undefined}
       />
     ),
     search: (
@@ -668,6 +687,13 @@ export function BrowseToolbar({
     />
   ) : null;
   return (
-    <FlowToolbar {...slots} isMobile={isMobile} flushBottom={flushBottom} icons={icons} extraChips={extraChips} />
+    <FlowToolbar
+      {...slots}
+      isMobile={isMobile}
+      phoneRow={phoneRow}
+      flushBottom={flushBottom}
+      icons={icons}
+      extraChips={extraChips}
+    />
   );
 }
