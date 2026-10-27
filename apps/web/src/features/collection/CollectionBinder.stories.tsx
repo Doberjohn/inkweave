@@ -4,10 +4,13 @@ import {fn} from 'storybook/test';
 import {CollectionBinder} from './CollectionBinder';
 import type {CollectionEntry} from './collectionParser';
 import {promoSetPockets} from './binderCards';
+import {CoverNumbers} from './CollectionSetPanel';
 import {
   STORY_PROMO_CARDS,
   STORY_PROMO_ENTRIES,
   STORY_PROMO_SET,
+  STORY_SETS,
+  STORY_STATS,
   STORY_WAITING,
 } from './collectionStoryData';
 import {BINDER_CARDS} from '../cards/components/binderStoryCards';
@@ -95,6 +98,34 @@ export const SinglePage: Story = {
  */
 export const SinglePageFourRows: Story = {
   args: {single: true, loneFit: {rows: 4, maxWidth: 300}},
+  globals: {viewport: {value: 'mobile1'}},
+};
+
+/**
+ * A phone's inside front cover (owner, 2026-10-27): the collection's numbers, a page before page
+ * 1, page 1's size and place, its spacing packed so a set's fit a 4-row page whole; where they
+ * don't, they scroll inside it. The binder opens on page 1; this one opens on the cover, as one
+ * does after Master or Complete changes what Owned or Missing holds.
+ */
+export const SinglePageCover: Story = {
+  args: {
+    single: true,
+    loneFit: {rows: 4, maxWidth: 300},
+    opensOnCover: true,
+    cover: (
+      <CoverNumbers
+        setCode="13"
+        sets={STORY_SETS}
+        setsLoading={false}
+        onSetChange={fn()}
+        show="all"
+        onShowChange={fn()}
+        axis="complete"
+        onAxisChange={fn()}
+        stats={STORY_STATS}
+      />
+    ),
+  },
   globals: {viewport: {value: 'mobile1'}},
 };
 

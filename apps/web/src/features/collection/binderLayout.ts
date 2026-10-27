@@ -61,8 +61,14 @@ export const NUMBERS_STYLE: CSSProperties = {
 };
 
 /**
- * The numbers in a phone's Binder sheet, under Progress (#969): in the sheet's flow, which
- * scrolls them with the filters, so they keep the panel's column and gap but none of its
- * scrolling box. Their fallback (`SheetNumbersFallback`) holds the same column.
+ * The numbers on a phone's inside front cover (owner, 2026-10-27): the panel's column, packed
+ * closer (12px between the headlines and each breakdown, not 20), and 16px in from the page's
+ * sides, so the chosen headline's ring, which reaches 9px past the column, keeps clear of them.
+ * The cover's own box scrolls them where they are taller than the page.
  */
-export const SHEET_NUMBERS_STYLE: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.xl};
+export const COVER_NUMBERS_STYLE: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: SPACING.md,
+  padding: `${SPACING.sm}px ${SPACING.lg}px`,
+};

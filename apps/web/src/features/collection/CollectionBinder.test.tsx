@@ -107,12 +107,62 @@ describe('CollectionBinder', () => {
     expect(firstShown()).toBe('Card 37');
   });
 
-  it('pages a single page, 9 at a time, on phone widths, with no cover (#969)', () => {
-    render(binder({single: true}));
+  it('pages a single page, 9 at a time, on phone widths, opening on page 1 (#969)', () => {
+    render(binder({single: true, cover: <p>The numbers</p>}));
     expect(screen.queryByRole('group', {name: 'Front cover'})).toBeNull();
     expect(firstShown()).toBe('Card 1');
     fireEvent.click(screen.getByRole('button', {name: 'Next page'}));
     expect(firstShown()).toBe('Card 10');
+  });
+
+  describe("a phone's inside front cover (owner, 2026-10-27)", () => {
+    const COVER = <p>The numbers</p>;
+    const cover = () => screen.getByRole('group', {name: 'Front cover'});
+
+    it('holds what the binder gives it, a page before page 1, with no card on it', () => {
+      render(binder({single: true, cover: COVER}));
+      fireEvent.click(screen.getByRole('button', {name: 'Previous page'}));
+      expect(within(cover()).getByText('The numbers')).toBeInTheDocument();
+      expect(screen.queryAllByRole('button', {name: /^Card \d+$/})).toHaveLength(0);
+      expect(screen.getByRole('button', {name: 'Previous page'})).toHaveAttribute('aria-disabled', 'true');
+      fireEvent.click(screen.getByRole('button', {name: 'Next page'}));
+      expect(firstShown()).toBe('Card 1');
+    });
+
+    it('keeps the cover when the page gains or loses a row', () => {
+      const view = render(binder({single: true, cover: COVER}));
+      fireEvent.click(screen.getByRole('button', {name: 'Previous page'}));
+      view.rerender(binder({single: true, cover: COVER, loneFit: {rows: 4}}));
+      expect(within(cover()).getByText('The numbers')).toBeInTheDocument();
+      view.rerender(binder({single: true, cover: COVER}));
+      expect(within(cover()).getByText('The numbers')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', {name: 'Next page'}));
+      expect(firstShown()).toBe('Card 1');
+    });
+
+    it("opens the first spread from the cover once the screen is a spread's, whose cover holds nothing", () => {
+      const view = render(binder({single: true, cover: COVER}));
+      fireEvent.click(screen.getByRole('button', {name: 'Previous page'}));
+      view.rerender(binder({cover: COVER}));
+      expect(firstShown()).toBe('Card 1');
+      expect(cover()).toBeInTheDocument();
+      expect(screen.queryByText('The numbers')).toBeNull();
+    });
+
+    it('opens on the cover when asked to, as the binder that replaces one showing it', () => {
+      render(binder({single: true, cover: COVER, opensOnCover: true}));
+      expect(within(cover()).getByText('The numbers')).toBeInTheDocument();
+    });
+
+    it('says whether the cover is on show, as it changes', () => {
+      const onCoverChange = vi.fn();
+      render(binder({single: true, cover: COVER, onCoverChange}));
+      expect(onCoverChange).toHaveBeenLastCalledWith(false);
+      fireEvent.click(screen.getByRole('button', {name: 'Previous page'}));
+      expect(onCoverChange).toHaveBeenLastCalledWith(true);
+      fireEvent.click(screen.getByRole('button', {name: 'Next page'}));
+      expect(onCoverChange).toHaveBeenLastCalledWith(false);
+    });
   });
 
   it('pages 12 at a time where a phone fits four rows (#1000)', () => {
@@ -329,10 +379,11 @@ describe('CollectionBinder', () => {
     });
 
     it("draws pages under a phone's lone page, in its arrows' place, and turns to the one tapped (#969)", () => {
-      // Six pages of nine: cards 22 to 24, the ones missing, on the third.
+      // The front cover, then six pages of nine: cards 22 to 24, the ones missing, on the third.
       render(binder({pager: 'map', single: true}));
       const map = screen.getByRole('navigation', {name: 'Binder pages'});
-      expect(within(map).getAllByRole('button')).toHaveLength(6);
+      expect(within(map).getAllByRole('button')).toHaveLength(7);
+      expect(screen.getByRole('button', {name: 'Page 1 of 6: nothing missing'})).toHaveAttribute('aria-current', 'true');
       expect(screen.queryByRole('button', {name: /(Previous|Next) page/})).toBeNull();
       fireEvent.click(screen.getByRole('button', {name: 'Page 3 of 6: 3 missing'}));
       expect(firstShown()).toBe('Card 19');

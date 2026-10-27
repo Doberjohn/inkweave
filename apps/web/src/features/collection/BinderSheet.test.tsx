@@ -23,7 +23,6 @@ function sheet({isOpen = true, show = 'all', sortOrder = 'newest'}: Opening, cal
       onApply={calls.onApply}
       show={show}
       sortOrder={sortOrder}
-      progress={<p>The set's numbers</p>}
       inkFilters={[]}
       typeFilters={[]}
       costFilters={[]}
@@ -55,7 +54,7 @@ function written(also: AlsoWrite): string {
 }
 
 describe('BinderSheet (#969)', () => {
-  it('is titled Binder, with Show and the sort above the filters and Progress after them', () => {
+  it('is titled Binder, with Show and the sort above the filters, and nothing after them', () => {
     renderSheet();
     expect(screen.getByRole('heading', {name: 'Binder'})).toBeInTheDocument();
     const order = [
@@ -63,12 +62,13 @@ describe('BinderSheet (#969)', () => {
       sort(),
       // Folded, as in every phone sheet (owner, 2026-10-26).
       screen.getByRole('button', {name: /^Type/, expanded: false}),
-      screen.getByText('Progress'),
-      screen.getByText("The set's numbers"),
     ];
     order.slice(1).forEach((after, i) => {
       expect(order[i].compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
+    // The numbers are on the binder's inside cover (owner, 2026-10-27).
+    expect(screen.queryByText('Progress')).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', {name: 'Collection numbers'})).not.toBeInTheDocument();
   });
 
   it("starts from what the binder shows and its sort, and changes neither before Apply", () => {

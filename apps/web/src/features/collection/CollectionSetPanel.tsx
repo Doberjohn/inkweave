@@ -18,7 +18,7 @@ import {SetPicker, type RowFigures, type SetPickerProps} from './SetPicker';
 import {BinderShows, type BinderView} from './BinderShows';
 import {SIDE_PANEL_STYLE} from '../cards/components/BrowseSidePanel';
 import {NumbersLoading} from './BinderChunkFallback';
-import {BAR, NUMBERS_STYLE, SHEET_NUMBERS_STYLE} from './binderLayout';
+import {BAR, COVER_NUMBERS_STYLE, NUMBERS_STYLE} from './binderLayout';
 import {
   ALL_INKS,
   COLORS,
@@ -381,14 +381,35 @@ function ChoosableHeadline({chosen, onChoose, ...props}: HeadlineProps & {chosen
   );
 }
 
+/** Between the rarity rows (owner, 2026-10-15): a pixel past the panel's 8, off the 4px scale at the owner's ask. */
+const RARITY_GAP = 9;
+
+/** The gaps in the numbers: under a breakdown's heading, between the inks, and between the rarity rows. */
+interface Gaps {
+  breakdown: number;
+  inks: number;
+  rarities: number;
+}
+
+/**
+ * The panel's gaps, and a phone cover's, packed so a set's numbers and the whole collection's fit
+ * a 4-row page whole (owner, 2026-10-27): about 75px less, the type the same.
+ */
+const PANEL_GAPS: Gaps = {breakdown: SPACING.md, inks: SPACING.md, rarities: RARITY_GAP};
+const COVER_GAPS: Gaps = {breakdown: SPACING.sm, inks: SPACING.sm, rarities: SPACING.xs};
+
+/** The gaps the numbers below are drawn with: the panel's, unless a cover packs them. */
+const NumbersGaps = createContext(PANEL_GAPS);
+
 /**
  * A breakdown under its heading. What it counts is the chosen headline's, ringed in gold,
  * so only its accessible name says so: the grey "complete" / "master" beside the heading
  * went (owner, 2026-10-15).
  */
 function Breakdown({title, axis, children}: {title: string; axis: Axis; children: ReactNode}) {
+  const {breakdown} = useContext(NumbersGaps);
   return (
-    <section aria-label={`${title}, ${axis}`} style={{...COLUMN, gap: SPACING.md}}>
+    <section aria-label={`${title}, ${axis}`} style={{...COLUMN, gap: breakdown}}>
       <span style={HEADING_STYLE}>{title}</span>
       {children}
     </section>
@@ -424,8 +445,9 @@ interface BreakdownSlots<T> {
  * gives the bars room to show their gold.
  */
 function InkGrid({slots, axis, delay}: BreakdownSlots<Tally['byInk']>) {
+  const {inks} = useContext(NumbersGaps);
   return (
-    <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: SPACING.md}}>
+    <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: inks}}>
       {/* Canonical ink order, not the data's: the tally lists inks in the order the set's
           cards happen to arrive, which put Sapphire first. */}
       {[...slots]
@@ -450,13 +472,11 @@ const rarityRow = (wide: boolean): CSSProperties => ({
   fontSize: `${FONT_SIZES.lg}px`,
 });
 
-/** Between the rarity rows (owner, 2026-10-15): a pixel past the panel's 8, off the 4px scale at the owner's ask. */
-const RARITY_GAP = 9;
-
 /** By rarity: a named row each, since rarity symbols are harder to tell apart than ink symbols. */
 function RarityRows({slots, axis, wide, delay}: BreakdownSlots<Tally['byRarity']> & {wide: boolean}) {
+  const {rarities} = useContext(NumbersGaps);
   return (
-    <div style={{...COLUMN, gap: RARITY_GAP}}>
+    <div style={{...COLUMN, gap: rarities}}>
       {slots.map((slot, i) => (
         <div key={slot.rarity} style={rarityRow(wide)}>
           <RaritySymbol rarity={rarityKey(slot.rarity)} size={20} />
@@ -633,11 +653,15 @@ export function CollectionSetBody({withPicker = true, ...props}: CollectionSetPa
 }
 
 /**
- * The numbers alone, as a phone's Binder sheet holds them under Progress (#969), in the sheet's
- * flow. Their Complete / Master choice acts at once, as in the panel.
+ * The numbers alone, as a phone's binder holds them on its inside front cover (owner, 2026-10-27),
+ * packed closer than the panel's. Their Complete / Master choice acts at once, as in the panel.
  */
-export function SheetNumbers(props: CollectionSetPanelProps) {
-  return <NumbersRegion {...numbersProps(props)} style={SHEET_NUMBERS_STYLE} />;
+export function CoverNumbers(props: CollectionSetPanelProps) {
+  return (
+    <NumbersGaps.Provider value={COVER_GAPS}>
+      <NumbersRegion {...numbersProps(props)} style={COVER_NUMBERS_STYLE} />
+    </NumbersGaps.Provider>
+  );
 }
 
 /** The set picker as the desktop toolbar holds it, beside Collection: a short label with no picture, as tall as Collection. */

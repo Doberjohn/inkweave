@@ -21,6 +21,16 @@ const spreads = () => screen.getAllByRole('button', {name: /spread \d+ of \d+/i}
 /** Under a lone page, the pages in view, by their names. */
 const pages = () => screen.getAllByRole('button', {name: /page \d+ of \d+/i}).map((b) => b.getAttribute('aria-label'));
 
+/** Every mini in view, the front cover's too, by their names. */
+const minis = () =>
+  screen
+    .getAllByRole('button')
+    .filter((b) => b.closest('nav[aria-label="Binder pages"]'))
+    .map((b) => b.getAttribute('aria-label'));
+
+/** A phone's cover's mini, first in its map. */
+const COVER_MINI = 'Front cover: collection numbers';
+
 describe('BinderSpreadMap, for a long binder', () => {
   it('shows eleven spreads at a time', () => {
     render(<Live />);
@@ -120,25 +130,33 @@ describe('BinderSpreadMap, fitted to its row', () => {
     expect(spreads()).toEqual([expect.stringMatching(/^Spread 3 of 9/), expect.stringMatching(/^Spread 4 of 9/)]);
   });
 
-  // Under a lone page each page is 35px, always, and 4px after it: (row + 4) / 39, rounded down,
-  // with no cap, so a wide phone layout shows more pages than a row shows spreads (#969).
+  // Under a lone page each mini is 35px, always, and 4px after it: (row + 4) / 39, rounded down,
+  // with no cap, so a wide phone layout shows more pages than a row shows spreads (#969). The
+  // front cover's mini is one of them.
   it.each([
     [680, 17], // 767 px wide, the widest phone layout
     [314, 8],
     [273, 7],
     [20, 1], // no room at all: the open page still shows
-  ])('a %ipx row under a lone page shows %i pages', (nav, count) => {
+  ])('a %ipx row under a lone page shows %i minis', (nav, count) => {
     layOut({nav});
     render(<Live single />);
-    expect(pages()).toHaveLength(count);
+    expect(minis()).toHaveLength(count);
   });
 
   it('moves a window of pages on at its own last page, as the spreads do', () => {
-    layOut({nav: 314}); // eight pages
+    layOut({nav: 314}); // eight minis: the cover's, then pages 1 to 7
     render(<Live single />);
-    fireEvent.click(screen.getByRole('button', {name: /^Page 8 of 106/}));
-    expect(pages()[0]).toMatch(/^Page 8 of 106/);
-    expect(pages()[7]).toMatch(/^Page 15 of 106/);
+    fireEvent.click(screen.getByRole('button', {name: /^Page 7 of 106/}));
+    expect(minis()[0]).toMatch(/^Page 7 of 106/);
+    expect(minis()[7]).toMatch(/^Page 14 of 106/);
+  });
+
+  it("opens a phone's window on the cover's mini while page 1 shows, so the map shows where the cover is", () => {
+    layOut({nav: 74}); // two minis
+    render(<BinderSpreadMap single pockets={POCKETS} current={1} onGo={() => {}} />);
+    expect(minis()).toEqual([COVER_MINI, expect.stringMatching(/^Page 1 of 106/)]);
+    expect(screen.getByRole('button', {name: /^Page 1 of 106/})).toHaveAttribute('aria-current', 'true');
   });
 
   it('keeps the open spread in view when the row narrows', () => {
@@ -179,15 +197,15 @@ describe("BinderSpreadMap, under a phone's lone page (#969)", () => {
       (cell) => cell.style.background !== '',
     );
 
-  it('draws a mini per page of nine, page p holding pockets 9p to 9p + 8: pages have no covers', () => {
-    render(<BinderSpreadMap single pockets={POCKETS.slice(0, 43)} current={0} onGo={() => {}} />);
-    expect(pages()).toEqual([1, 2, 3, 4, 5].map((page) => `Page ${page} of 5: nothing missing`));
+  it("draws the front cover's mini, then a mini per page of nine, page p holding pockets 9(p - 1) to 9(p - 1) + 8", () => {
+    render(<BinderSpreadMap single pockets={POCKETS.slice(0, 43)} current={1} onGo={() => {}} />);
+    expect(minis()).toEqual([COVER_MINI, ...[1, 2, 3, 4, 5].map((page) => `Page ${page} of 5: nothing missing`)]);
     expect(held(/^Page 1 of 5/)).toEqual(Array<boolean>(9).fill(true));
     expect(held(/^Page 5 of 5/)).toEqual([...Array<boolean>(7).fill(true), false, false]);
   });
 
   it('draws a mini per page of twelve at four rows, four rows of cells each (#1000)', () => {
-    render(<BinderSpreadMap single rows={4} pockets={POCKETS.slice(0, 43)} current={0} onGo={() => {}} />);
+    render(<BinderSpreadMap single rows={4} pockets={POCKETS.slice(0, 43)} current={1} onGo={() => {}} />);
     expect(pages()).toEqual([1, 2, 3, 4].map((page) => `Page ${page} of 4: nothing missing`));
     expect(held(/^Page 1 of 4/)).toEqual(Array<boolean>(12).fill(true));
     expect(held(/^Page 4 of 4/)).toEqual([...Array<boolean>(7).fill(true), ...Array<boolean>(5).fill(false)]);
@@ -196,7 +214,7 @@ describe("BinderSpreadMap, under a phone's lone page (#969)", () => {
   });
 
   it("draws a page's cells at full size, 7 by 9, three across", () => {
-    render(<BinderSpreadMap single pockets={POCKETS.slice(0, 9)} current={0} onGo={() => {}} />);
+    render(<BinderSpreadMap single pockets={POCKETS.slice(0, 9)} current={1} onGo={() => {}} />);
     const cells = screen.getByRole('button', {name: /^Page 1 of 1/}).firstElementChild as HTMLElement;
     const cell = cells.firstElementChild as HTMLElement;
     expect(cells.style.gridTemplateColumns).toBe('repeat(3, 7px)');
@@ -204,14 +222,14 @@ describe("BinderSpreadMap, under a phone's lone page (#969)", () => {
   });
 
   it("fills a held card's cell and rings a missing one's", () => {
-    render(<BinderSpreadMap single pockets={PAGES} current={4} onGo={() => {}} />);
+    render(<BinderSpreadMap single pockets={PAGES} current={5} onGo={() => {}} />);
     const cells = [...screen.getByRole('button', {name: /^Page 5 of 27/}).querySelectorAll<HTMLElement>('span[aria-hidden] > span')];
     expect(cells.map((cell) => cell.style.mask !== '')).toEqual([...Array<boolean>(4).fill(true), ...Array<boolean>(5).fill(false)]);
     expect(cells.every((cell) => cell.style.background !== '')).toBe(true);
   });
 
   it('names each page and what it is missing, and marks the one on show', () => {
-    render(<BinderSpreadMap single pockets={PAGES} current={4} onGo={() => {}} />);
+    render(<BinderSpreadMap single pockets={PAGES} current={5} onGo={() => {}} />);
     expect(screen.getByRole('button', {name: 'Page 5 of 27: 4 missing'})).toHaveAttribute('aria-current', 'true');
     expect(screen.getByRole('button', {name: 'Page 6 of 27: nothing missing'})).not.toHaveAttribute('aria-current');
   });
@@ -222,7 +240,7 @@ describe("BinderSpreadMap, under a phone's lone page (#969)", () => {
       {start: 0, label: 'Set A'},
       {start: 2 * 9 + 4, label: 'Set B'},
     ];
-    render(<BinderSpreadMap single pockets={POCKETS.slice(0, 6 * 9)} current={0} onGo={() => {}} sets={sets} />);
+    render(<BinderSpreadMap single pockets={POCKETS.slice(0, 6 * 9)} current={1} onGo={() => {}} sets={sets} />);
     expect(pages()).toEqual([
       'Set A, page 1 of 3: nothing missing',
       'Set A, page 2 of 3: nothing missing',
@@ -234,22 +252,43 @@ describe("BinderSpreadMap, under a phone's lone page (#969)", () => {
   });
 
   it('draws no page counter after the pages, which fill the row (owner, 2026-10-26, #1000)', () => {
-    render(<BinderSpreadMap single pockets={PAGES} current={4} onGo={() => {}} />);
+    render(<BinderSpreadMap single pockets={PAGES} current={5} onGo={() => {}} />);
     expect(screen.queryByText(/\d+ \/ \d+/)).toBeNull();
     expect(screen.getByRole('button', {name: /^Page 5 of 27/})).toHaveAttribute('aria-current', 'true');
   });
 
-  it('says nowhere while the binder has no pockets, as its loading frame', () => {
-    render(<BinderSpreadMap single pockets={[]} current={0} onGo={() => {}} />);
-    expect(pages()).toEqual(['Page 1 of 1: nothing missing']);
+  it('says nowhere while its page is all open pockets, as the loading frame draws it', () => {
+    const open = Array.from({length: 9}, (): Pocket => ({owned: false, inks: [], open: true}));
+    render(<BinderSpreadMap single pockets={open} current={1} onGo={() => {}} />);
+    expect(minis()).toEqual([COVER_MINI, 'Page 1 of 1: nothing missing']);
+    expect(screen.getByRole('button', {name: /^Page 1 of 1/})).toHaveAttribute('aria-current', 'true');
     expect(screen.queryByText(/\d+ \/ \d+/)).toBeNull();
   });
 
   it('turns to the page tapped', () => {
     const onGo = vi.fn();
-    render(<BinderSpreadMap single pockets={PAGES} current={0} onGo={onGo} />);
+    render(<BinderSpreadMap single pockets={PAGES} current={1} onGo={onGo} />);
     fireEvent.click(screen.getByRole('button', {name: /^Page 3 of 27/}));
-    expect(onGo).toHaveBeenCalledWith(2);
+    expect(onGo).toHaveBeenCalledWith(3);
+  });
+
+  it("draws the front cover's mini as a bar chart over unseen cells, a page's mini in size, and turns to the cover", () => {
+    const onGo = vi.fn();
+    render(<BinderSpreadMap single rows={4} pockets={PAGES} current={1} onGo={onGo} />);
+    const cover = screen.getByRole('button', {name: COVER_MINI});
+    const cells = [...cover.querySelectorAll<HTMLElement>('span[aria-hidden] > span')].filter((el) => !el.querySelector('svg'));
+    expect(cells).toHaveLength(12);
+    expect(cells.every((cell) => cell.style.visibility === 'hidden' && cell.style.width === '7px')).toBe(true);
+    expect(cover.querySelector('svg')).not.toBeNull();
+    expect(cover).not.toHaveAttribute('aria-current');
+    fireEvent.click(cover);
+    expect(onGo).toHaveBeenCalledWith(0);
+  });
+
+  it("marks the cover's mini while the cover shows", () => {
+    render(<BinderSpreadMap single pockets={PAGES} current={0} onGo={() => {}} />);
+    expect(screen.getByRole('button', {name: COVER_MINI})).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('button', {name: /^Page 1 of 27/})).not.toHaveAttribute('aria-current');
   });
 });
 

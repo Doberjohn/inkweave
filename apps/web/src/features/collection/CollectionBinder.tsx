@@ -1,4 +1,4 @@
-import {useEffect, useState, type AnimationEvent, type CSSProperties, type PointerEvent} from 'react';
+import {useEffect, useState, type AnimationEvent, type CSSProperties, type PointerEvent, type ReactNode} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from '../cards/components/CardTile';
 import {PROMO_RARITY, smallImageUrl} from '../cards/loader';
@@ -87,6 +87,18 @@ interface CollectionBinderProps {
    * it is plays its slide in or grey out once it closes, where the change can be seen.
    */
   windowOpen?: boolean;
+  /**
+   * What a phone's inside front cover holds, the page before page 1: the collection's numbers
+   * (owner, 2026-10-27). The binder opens on page 1 all the same, so the cards come first.
+   */
+  cover?: ReactNode;
+  /**
+   * Opens on the cover instead: for the binder that replaces one showing it, when the headline
+   * chosen there changed the cards it holds.
+   */
+  opensOnCover?: boolean;
+  /** Told whether a phone's cover is the view on show, as it changes. */
+  onCoverChange?: (shown: boolean) => void;
 }
 
 /**
@@ -388,6 +400,47 @@ function usePreloadNeighbours(slots: readonly BinderSlot[], current: number, pag
   }, [slots, current, paging]);
 }
 
+/**
+ * The first slot of view `view`. A phone's view 0 is its front cover, before slot 0, and keeps
+ * its place there (`-lead`), so a change of rows on it stays on it; a spread's view 0 holds cards
+ * from slot 0 on its right page.
+ */
+function firstSlotOf(view: number, {perView, lead}: BinderPaging, single: boolean): number {
+  return single && view === 0 ? -lead : Math.max(0, view * perView - lead);
+}
+
+/** Where a binder opens, and what it holds. */
+interface ViewOptions {
+  slotCount: number;
+  paging: BinderPaging;
+  single: boolean;
+  opensOnCover: boolean;
+}
+
+/**
+ * The view on show, how many there are, and the way to another. Held as the first SLOT in view,
+ * not a view number, so crossing the phone breakpoint stays in the same part of the set: from
+ * spread 2 (slots 12-35) a phone opens page 2 (slots 9-17), the page that holds slot 12, and back
+ * again. A stored view NUMBER would have jumped to other cards instead. A phone's page gaining a
+ * row does the same: from page 4 of nine (slots 27-35), page 3 of twelve (slots 24-35), which
+ * holds slot 27. Slot 0 opens a phone on page 1, past its cover, unless it opens on the cover.
+ */
+function useBinderView({slotCount, paging, single, opensOnCover}: ViewOptions) {
+  const {perView, lead} = paging;
+  const [firstSlot, setFirstSlot] = useState(() => (opensOnCover && single ? -lead : 0));
+  const total = Math.max(1, Math.ceil((slotCount + lead) / perView));
+  const current = Math.max(0, Math.min(Math.floor((firstSlot + lead) / perView), total - 1));
+  const goTo = (view: number) => setFirstSlot(firstSlotOf(Math.max(0, Math.min(view, total - 1)), paging, single));
+  return {current, total, goTo};
+}
+
+/** Tells `onCoverChange` whether a phone's cover is on show, each time that changes. */
+function useCoverReport(onCover: boolean, onCoverChange: ((shown: boolean) => void) | undefined) {
+  useEffect(() => {
+    onCoverChange?.(onCover);
+  }, [onCover, onCoverChange]);
+}
+
 export function CollectionBinder({
   slots,
   bySet = false,
@@ -398,26 +451,17 @@ export function CollectionBinder({
   pager = 'arrows',
   onCountChange,
   windowOpen = false,
+  cover,
+  opensOnCover = false,
+  onCoverChange,
 }: CollectionBinderProps) {
-  // A phone pages by nine, or twelve at 4 rows, a spread binder by 24, a page in for the front
-  // cover (`pagingOf`).
+  // A phone pages by nine, or twelve at 4 rows, a spread binder by 24, each a page in for its
+  // front cover (`pagingOf`).
   const paging = pagingOf(single, loneFit.rows);
-  const {perView, lead} = paging;
-  // Held as the first SLOT in view, not a view number, so crossing the phone
-  // breakpoint stays in the same part of the set: from spread 2 (slots 12-35) a
-  // phone opens page 2 (slots 9-17), the page that holds slot 12, and back again.
-  // A stored view NUMBER would have jumped to other cards instead. A phone's page
-  // gaining a row does the same: from page 4 of nine (slots 27-35), page 3 of
-  // twelve (slots 24-35), which holds slot 27.
-  const [firstSlot, setFirstSlot] = useState(0);
-  const total = Math.max(1, Math.ceil((slots.length + lead) / perView));
-  const current = Math.min(Math.floor((firstSlot + lead) / perView), total - 1);
-  const goTo = (view: number) => {
-    const to = Math.max(0, Math.min(view, total - 1));
-    setFirstSlot(Math.max(0, to * perView - lead));
-  };
-
+  const {current, total, goTo} = useBinderView({slotCount: slots.length, paging, single, opensOnCover});
   usePreloadNeighbours(slots, current, paging);
+  // A spread's view 0 is its first, whose cover holds nothing.
+  useCoverReport(single && current === 0, onCoverChange);
 
   const map =
     pager === 'map' ? (
@@ -433,9 +477,10 @@ export function CollectionBinder({
 
   return (
     <BinderSpread
-      start={current * perView - lead}
+      start={current * paging.perView - paging.lead}
       single={single}
       loneFit={loneFit}
+      cover={cover}
       arrows={map === undefined ? 'beside' : 'edges'}
       footer={map}
       cardCount={slots.length}
