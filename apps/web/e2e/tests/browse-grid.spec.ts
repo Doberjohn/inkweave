@@ -22,6 +22,8 @@ const ROOM = SPACING.xxl;
 const roomAbove = (isPhone: boolean) => (isPhone ? ROOM - SPACING.sm : ROOM);
 /** A name only one card has. */
 const ONE_CARD = 'Ariel Singing Mermaid';
+/** Two inks' actions, some 55 cards: seven rows in a window 1900 px wide, twice as many at 1024. */
+const SOME_CARDS = '/browse?ink=Amber%2CSteel&type=Action';
 
 /** Where the grid's drawn tiles sit against its view. */
 interface Drawn {
@@ -546,6 +548,43 @@ test.describe("Browse's grid", () => {
       await page.setViewportSize({width, height: 900});
       await frames(page, 1);
     }
+    const errors = await page.evaluate(() => (window as unknown as GridWindow).windowErrors);
+    expect(errors, 'error events the page raised on window').toEqual([]);
+  });
+
+  test('raises no resize observer error when a wider window takes its scrollbar away', async ({
+    page,
+  }, testInfo) => {
+    if (onPhone(testInfo)) test.skip();
+    await page.addInitScript(collectWindowErrors);
+    await page.setViewportSize({width: 1900, height: 900});
+    await page.goto(SOME_CARDS);
+    await expect(page.getByTestId('card-tile').first()).toBeVisible();
+    await page.getByRole('button', {name: 'Filters, 3 on', exact: true}).click();
+    // A window a little taller than the list at 1900 px: at 1024 px the list is longer than the
+    // rows drawn, and the grid holds the others' room.
+    const {listHeight, aboveAndBelow} = await page.locator(SCROLLER).evaluate((s) => ({
+      listHeight: s.scrollHeight,
+      aboveAndBelow: window.innerHeight - s.clientHeight,
+    }));
+    const height = listHeight + aboveAndBelow + 60;
+    const resizeTo = async (width: number) => {
+      await page.setViewportSize({width, height});
+      await frames(page, 2);
+      return page.locator(SCROLLER).evaluate((s) => ({
+        overflows: s.scrollHeight > s.clientHeight,
+        tiles: s.querySelectorAll('[data-testid="card-tile"]').length,
+      }));
+    };
+    const wide = await resizeTo(1900);
+    const narrow = await resizeTo(1024);
+    expect(wide.overflows, 'the list overflows at 1900 px').toBe(false);
+    expect(narrow.overflows, 'the list overflows at 1024 px').toBe(true);
+    expect(narrow.tiles, 'the tiles drawn at 1024 px').toBeLessThan(wide.tiles);
+    // Widening draws every row inside the observer's callback, which takes a classic scrollbar
+    // away there: had the scroller's box changed with it, the observer would have left that
+    // undelivered, raising its loop error.
+    expect(await resizeTo(1900)).toEqual(wide);
     const errors = await page.evaluate(() => (window as unknown as GridWindow).windowErrors);
     expect(errors, 'error events the page raised on window').toEqual([]);
   });

@@ -1,6 +1,6 @@
 import {afterEach, describe, it, expect, vi} from 'vitest';
 import {Profiler} from 'react';
-import {act, fireEvent, render, screen} from '@testing-library/react';
+import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {flushSync} from 'react-dom';
 import {createRoot} from 'react-dom/client';
 import {BrowseCardGrid} from '../BrowseCardGrid';
@@ -27,10 +27,13 @@ const cards = Array.from({length: 40}, (_, i) =>
 const ROW = 262;
 const view = {width: 820, height: 600, top: 0};
 
-/** The grid's ResizeObserver callback, which a test calls as a browser does on a resize. */
-let resized = () => {};
-/** The elements it observes. */
-let observed: Element[] = [];
+/**
+ * Calls the grid's ResizeObserver callback as a browser does on a resize, reporting the boxes of
+ * `targets`: by default every element it observes, as a window resize changes them all.
+ */
+let resized: (targets?: Element[]) => void = () => {};
+/** The elements it observes, and the box it watches on each. */
+let observed: {target: Element; box?: ResizeObserverBoxOptions}[] = [];
 
 const MEASURED = ['clientWidth', 'clientHeight', 'scrollTop', 'getBoundingClientRect'] as const;
 
@@ -40,11 +43,12 @@ function measureScroller({observer = true} = {}) {
     vi.stubGlobal(
       'ResizeObserver',
       class {
-        constructor(callback: () => void) {
-          resized = callback;
+        constructor(callback: ResizeObserverCallback) {
+          resized = (targets = observed.map(({target}) => target)) =>
+            callback(targets.map((target) => ({target}) as ResizeObserverEntry), this as never);
         }
-        observe(element: Element) {
-          observed.push(element);
+        observe(target: Element, options?: ResizeObserverOptions) {
+          observed.push({target, box: options?.box});
         }
         disconnect() {}
       },
@@ -74,6 +78,19 @@ afterEach(() => {
 
 const tileNames = () => screen.getAllByRole('link').map((link) => link.getAttribute('aria-label'));
 const grid = () => screen.getByTestId('browse-grid-scroller').firstElementChild as HTMLElement;
+
+/** Renders the grid 820px wide; gives the room it holds for the undrawn rows there and at 1100px. */
+function renderAt820() {
+  view.width = 1100;
+  const {unmount} = render(
+    <BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />,
+  );
+  const roomAt1100 = grid().style.paddingBottom;
+  unmount();
+  view.width = 820;
+  render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
+  return {roomAt1100, roomAt820: grid().style.paddingBottom};
+}
 
 describe('BrowseCardGrid window', () => {
   it('draws the rows in view and one more, and holds the room of the rest', () => {
@@ -193,11 +210,14 @@ describe('BrowseCardGrid window', () => {
     expect(tileNames()).toEqual(cards.slice(0, 15).map((card) => card.fullName));
   });
 
-  it("watches the grid's width as well as the scroller, since a scrollbar narrows only the grid", () => {
+  it("watches the scroller's border box, which no scrollbar changes, and the grid, which one narrows", () => {
     measureScroller();
     render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
 
-    expect(observed).toEqual([screen.getByTestId('browse-grid-scroller'), grid()]);
+    expect(observed).toEqual([
+      {target: screen.getByTestId('browse-grid-scroller'), box: 'border-box'},
+      {target: grid(), box: undefined},
+    ]);
   });
 
   it('measures the grid again when the room it gives the rows brings a scrollbar in', () => {
@@ -222,23 +242,29 @@ describe('BrowseCardGrid window', () => {
     // A window resize or the docked Filters panel changes the grid's width without a commit of
     // its own. Drawn later, the frame would paint room worked out from the old width (#1052).
     measureScroller();
-    view.width = 1100;
-    const {unmount} = render(
-      <BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />,
-    );
-    const roomAtWidth = grid().style.paddingBottom;
-    unmount();
-    view.width = 820;
-    render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
-    const roomBefore = grid().style.paddingBottom;
+    const {roomAt1100, roomAt820} = renderAt820();
 
     // Outside act, which would also flush an update left for later.
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', false);
     view.width = 1100;
     resized();
 
-    expect(roomBefore).not.toBe(roomAtWidth);
-    expect(grid().style.paddingBottom).toBe(roomAtWidth);
+    expect(roomAt820).not.toBe(roomAt1100);
+    expect(grid().style.paddingBottom).toBe(roomAt1100);
+  });
+
+  it("draws a new width after the paint when the scroller's box is not among those reported", async () => {
+    // Only the grid's box, as when a scrollbar comes in: a render inside the callback would change
+    // that box again, which the observer would leave undelivered, raising its loop error.
+    measureScroller();
+    const {roomAt1100, roomAt820} = renderAt820();
+
+    vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', false);
+    view.width = 1100;
+    resized([grid()]);
+
+    expect(grid().style.paddingBottom).toBe(roomAt820);
+    await waitFor(() => expect(grid().style.paddingBottom).toBe(roomAt1100));
   });
 
   it('moves the window as the scroller scrolls', () => {
