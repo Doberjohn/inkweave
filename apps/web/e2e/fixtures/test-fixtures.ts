@@ -3,6 +3,7 @@ import {test as base, expect} from '@playwright/test';
 import {AppPage} from '../pages/app.page';
 import {SynergyResultsPage} from '../pages/synergy-results.page';
 import {VotePage} from '../pages/vote.page';
+import {stubCardArt} from './cardArtStub';
 import {stubSupabase} from './supabaseStub';
 
 // Define fixture types
@@ -68,14 +69,6 @@ const BENIGN_CONSOLE: readonly RegExp[] = [
   // checks" phrase) so it can't mask a real data fault — a genuine problem surfaces as an HTTP
   // status or JSON parse error, which contain neither anchor and still fail the guard.
   /\/data\/(allCards|previewCards|featuredCards)\.json.*access control checks/i,
-  // Firefox-only: in dev and CI, card art is proxied to Ravensburger's CDN (the '/card-images/'
-  // proxy in vite.config.ts; production self-hosts it, see IMAGES.md), and now and then an image
-  // arrives incomplete. Gecko then logs an error naming it:
-  //   "Image corrupt or truncated." {file: ".../card-images/en/set12/91_<hash>.jpg" line: 0}
-  // A different card failed each time, and reruns load the same images whole, so it is the
-  // transfer, not the file. BOTH anchors are required (the message AND the proxied path) so a
-  // truncated image the app serves itself ('/card-images-preview/', '/art/') still fails the guard.
-  /Image corrupt or truncated.*\/card-images\//,
 ];
 
 // Extend base test with custom fixtures + a global console-error guard.
@@ -87,6 +80,9 @@ export const test = base.extend<TestFixtures & TestOptions>({
     // Before anything navigates: the placeholder Supabase host does not resolve, and the
     // guard below would fail on the resulting network errors. See supabaseStub.ts.
     await stubSupabase(page);
+    // Proxied art can hold every connection to the dev server, and a page's code and data
+    // then wait behind it. See cardArtStub.ts.
+    await stubCardArt(page);
     // A production build (E2E_SERVER=preview, #869) loads <Analytics/>'s and <SpeedInsights/>'s
     // scripts from /_vercel/, which only Vercel serves. Answer with an empty script instead of
     // vite preview's 404, which each browser reports in its own words. On the dev server they

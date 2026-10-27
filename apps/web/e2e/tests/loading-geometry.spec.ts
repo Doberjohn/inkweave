@@ -1,6 +1,7 @@
 import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {E2E_FRIEND_CODE, holdSupabasePath} from '../fixtures/supabaseStub';
+import {ART} from '../fixtures/cardArtStub';
 import {
   everyCardPage,
   longestPlainNamedCoreCharacter,
@@ -366,12 +367,6 @@ test("on phones, the card page's loading name takes the name's lines for all but
     expect(misses.length, `${width} px: ${misses.join('; ')}`).toBeLessThanOrEqual(cards.length * 0.02);
   }
 });
-
-/** A 1x1 PNG: any art at all, since the box keeps the card's shape whatever arrives. */
-const ART = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-  'base64',
-);
 
 test('the phone vote form holds still when the card art arrives', async ({page}, testInfo) => {
   test.skip(!isPhone(testInfo.project.name), "The phone's stacked pair");

@@ -1,7 +1,7 @@
 import type {CDPSession, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {newestCoreSet, setCards} from '../helpers/cardData';
-import {binder, type Entries, signInAsCollector, stubCardArt} from '../helpers/collector';
+import {binder, type Entries, signInAsCollector} from '../helpers/collector';
 import {edges, middle} from '../helpers/screen';
 import {fingerPath, keptTouchMoves, scrolledRound, swipeThrough, watchTouchMoves, type Point} from '../helpers/touch';
 import {FLICK_SPEED, SLOP} from '../../src/features/cards/components/pageTurnMath';
@@ -313,7 +313,6 @@ const pause = (page: Page, ms: number) => page.evaluate((t) => new Promise((reso
 async function openBinder(page: Page, size = {width: 1440, height: 900}): Promise<void> {
   await page.setViewportSize(size);
   await page.addInitScript(watchTurns, POSES);
-  await stubCardArt(page);
   await signInAsCollector(page, ENTRIES);
   await page.goto(`/browse?binder=${SET}`);
   await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
