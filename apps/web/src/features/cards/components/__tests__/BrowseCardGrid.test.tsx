@@ -200,6 +200,24 @@ describe('BrowseCardGrid window', () => {
     expect(observed).toEqual([screen.getByTestId('browse-grid-scroller'), grid()]);
   });
 
+  it('measures the grid again when the room it gives the rows brings a scrollbar in', () => {
+    // A classic scrollbar comes in once the undrawn rows' room makes the scroller overflow, and
+    // narrows the grid: 836px before, 820 with it. The observer would report that only after the
+    // frame paints, so the commit that gave the room reads the width again (#1047).
+    measureScroller();
+    Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => {
+        const drawn = document.querySelector<HTMLElement>('[data-testid="browse-grid-scroller"] > div');
+        const overflows = drawn !== null && parseFloat(drawn.style.paddingBottom) > 24;
+        return {width: overflows ? 820 : 836, height: view.height};
+      },
+    });
+    render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
+
+    expect(grid().style.paddingBottom).toBe(`${24 + 6 * ROW}px`);
+  });
+
   it('moves the window as the scroller scrolls', () => {
     measureScroller();
     render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
