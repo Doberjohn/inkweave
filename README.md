@@ -1,6 +1,6 @@
 # Inkweave
 
-[![CI](https://github.com/Doberjohn/inkweave/actions/workflows/ci.yml/badge.svg)](https://github.com/Doberjohn/inkweave/actions/workflows/ci.yml) [![CodeScene general](https://codescene.io/images/analyzed-by-codescene-badge.svg)](https://codescene.io/projects/79388)
+[![CI](https://github.com/Doberjohn/inkweave/actions/workflows/ci.yml/badge.svg)](https://github.com/Doberjohn/inkweave/actions/workflows/ci.yml) [![CodeScene general](https://codescene.io/images/analyzed-by-codescene-badge.svg)](https://codescene.io/projects/79825)
 
 A synergy finder for [Disney Lorcana TCG](https://www.disneylorcana.com/en-US/) focused on Core format. Select any card to discover what synergizes with it through pattern-based rules and archetype detection.
 
