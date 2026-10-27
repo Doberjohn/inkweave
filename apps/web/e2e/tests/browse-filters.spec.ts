@@ -47,6 +47,8 @@ test.describe('Browse filters picked in the desktop panel', () => {
     // the two chips wrapped onto two rows once it showed. Headless Chromium draws none, so the
     // check also keeps a classic scrollbar's room free: 17px, the widest a desktop browser draws.
     await page.setViewportSize({width: 1280, height: 600});
+    // The chips' widths in the fallback font would say nothing about the real one's.
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
     const room = await panel(page).evaluate((aside: HTMLElement) => {
       const group = aside.querySelector('[aria-label="Inkwell filters"]')!;
       const chips = [...group.querySelectorAll('button')].map((chip) => chip.getBoundingClientRect());
