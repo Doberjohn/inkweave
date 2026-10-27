@@ -90,6 +90,15 @@ export const SinglePage: Story = {
 };
 
 /**
+ * A tall phone: one page of twelve, four rows of three, as the section measured them
+ * (`useLoneFit`); its board no wider than lets the page and its map fit the screen.
+ */
+export const SinglePageFourRows: Story = {
+  args: {single: true, loneFit: {rows: 4, maxWidth: 300}},
+  globals: {viewport: {value: 'mobile1'}},
+};
+
+/**
  * A promo set (owner, 2026-10-17, #805): a pocket per number, twins one each, foil first; a
  * number nobody has listed open, with its code, a promo whose card is not out named in its
  * open pocket, and the promo with no number last.

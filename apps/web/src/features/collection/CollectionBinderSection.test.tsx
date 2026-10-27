@@ -8,6 +8,7 @@ import type {CollectionEntries} from './collectionParser';
 import {CollectionBinderSection} from './CollectionBinderSection';
 
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -103,6 +104,20 @@ describe('CollectionBinderSection', () => {
     await user.click(screen.getByRole('button', {name: 'Try again'}));
     view.rerender(section([], {isLoading: true}));
     expect(screen.getByRole('group', {name: 'Collection'})).toHaveFocus();
+  });
+
+  it("fits a phone's page to the section that Try again mounts in place of the error", () => {
+    // The error state draws its own box, so the binder's section is a new element: a 394 by 904
+    // section fits four rows, and its first page twelve of the thirteen cards.
+    vi.stubGlobal('innerWidth', 390);
+    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(394);
+    vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(904);
+    const thirteen = Array.from({length: 13}, (_, i) => card(`s${i + 1}`, i + 1, 1));
+    const ids = thirteen.map((held) => held.id);
+    const view = renderSection(ids, {pool: thirteen, error: 'The rest of the cards did not load.'});
+    view.rerender(section(ids, {pool: thirteen}));
+    expect(pockets()).toContain('Card s12');
+    expect(pockets()).not.toContain('Card s13');
   });
 
   it("holds only this set's cards that pass the filters, packed in the page's sort", () => {

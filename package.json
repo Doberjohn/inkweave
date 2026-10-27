@@ -92,7 +92,7 @@
         "apps/web/dist/assets/AccountCollection-*.js",
         "apps/web/dist/assets/AccountFriends-*.js"
       ],
-      "limit": "73 kB",
+      "limit": "74 kB",
       "gzip": true
     },
     {

@@ -115,6 +115,27 @@ describe('CollectionBinder', () => {
     expect(firstShown()).toBe('Card 10');
   });
 
+  it('pages 12 at a time where a phone fits four rows (#1000)', () => {
+    render(binder({single: true, loneFit: {rows: 4}}));
+    expect(firstShown()).toBe('Card 1');
+    expect(pocket(12)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: 'Next page'}));
+    expect(firstShown()).toBe('Card 13');
+  });
+
+  it("keeps the page's first card in view when a phone's page gains or loses a row", () => {
+    // Page 4 of nine holds slots 27-35 (cards 28 to 36): at twelve a page, the page that holds its
+    // first card is page 3 (slots 24-35, cards 25 to 36), and back at nine, page 4 again.
+    const view = render(binder({single: true}));
+    for (let i = 0; i < 3; i++) fireEvent.click(screen.getByRole('button', {name: 'Next page'}));
+    expect(firstShown()).toBe('Card 28');
+    view.rerender(binder({single: true, loneFit: {rows: 4}}));
+    expect(firstShown()).toBe('Card 25');
+    expect(pocket(28)).toBeInTheDocument();
+    view.rerender(binder({single: true}));
+    expect(firstShown()).toBe('Card 28');
+  });
+
   describe("the art either side, loaded ahead so a turn lands drawn (owner, 2026-10-26)", () => {
     const WITH_ART = CARDS.map((card) => ({...card, imageUrl: `/art/${card.id}.avif`}));
     /** The small art of cards `from` to `to`, as their pockets draw it. */

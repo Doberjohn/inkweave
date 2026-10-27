@@ -52,6 +52,6 @@ describe('SynergyToolbar', () => {
 
   it('counts an active inkwell filter on the Filters button', () => {
     renderToolbar({filters: {inkwell: 'inkable'}});
-    expect(screen.getByRole('button', {name: 'Filters'})).toHaveTextContent('1');
+    expect(screen.getByRole('button', {name: 'Filters, 1 on'})).toHaveTextContent('1');
   });
 });

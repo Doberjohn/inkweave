@@ -18,9 +18,14 @@ interface FiltersButtonProps {
   active?: boolean;
 }
 
+/** Its name, with the badge's count, which screen readers otherwise never hear. */
+const filtersName = (count: number) => (count > 0 ? `Filters, ${count} on` : 'Filters');
+
 /**
  * The toolbar "Filters" button (#509): a ToolbarToggle, the toolbar's filled-or-ghost
- * recipe it shares with Browse's Collection button.
+ * recipe it shares with Browse's Collection button. A phone's binder row opens its Binder
+ * sheet with it, where its count is all that shows the binder narrowed to Owned or
+ * Missing.
  */
 export function FiltersButton({onClick, activeCount, isMobile, expanded, active = true}: FiltersButtonProps) {
   return (
@@ -28,7 +33,7 @@ export function FiltersButton({onClick, activeCount, isMobile, expanded, active 
       active={active}
       isMobile={isMobile}
       onClick={onClick}
-      aria-label="Filters"
+      aria-label={filtersName(activeCount)}
       aria-expanded={expanded}>
       <FilterIcon />
       Filters

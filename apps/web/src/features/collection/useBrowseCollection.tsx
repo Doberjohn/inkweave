@@ -340,12 +340,12 @@ export interface BrowseCollectionSlots {
   renderSetPicker: (listing: BrowseListing) => ReactNode | undefined;
   /**
    * A phone's one row over the binder (owner, 2026-10-25, #969) while collection mode is on,
-   * else undefined: the set button, Binder options with its `count`, and Collection. The page
+   * else undefined: Filters with its `count`, the set button and Collection. The page
    * draws it in place of its title and toolbar.
    */
   renderPhoneRow: (listing: BrowseListing, options: PhoneRowOptions) => ReactNode | undefined;
   /**
-   * A phone's Binder sheet (#969), which Binder options opens, while collection mode is on, else
+   * A phone's Binder sheet, which the row's Filters opens, while collection mode is on, else
    * undefined: Show and the sort above the filters, the scope's numbers after them, all three
    * applied in the page's one URL write. The page draws it in place of its filter sheet.
    */
@@ -355,7 +355,7 @@ export interface BrowseCollectionSlots {
 /** What the page hands a phone's Binder sheet: its filter sheet's props, the sort, and its one write. */
 export type PhoneSheetOptions = Omit<BinderSheetProps, 'show' | 'progress'>;
 
-/** What the page hands a phone's binder row: Binder options' badge and press. */
+/** What the page hands a phone's binder row: its Filters' badge and press. */
 interface PhoneRowOptions {
   /** The filters on, plus one while the binder shows only Owned or Missing. */
   count: number;

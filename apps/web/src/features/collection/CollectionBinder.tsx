@@ -6,7 +6,7 @@ import {CollectionSlotCounts, type SlotCountsEditor} from './CollectionSlotCount
 import type {CollectionEntry, Finish} from './collectionParser';
 import {finishesOf} from './printingFinishes';
 import {BinderSpread} from '../cards/components/BinderSpread';
-import {pagingOf, type BinderPaging} from '../cards/components/binderGeometry';
+import {pagingOf, THREE_ROWS, type BinderPaging, type LoneFit} from '../cards/components/binderGeometry';
 import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/BinderSpreadMap';
 import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
 import {settleOf} from './binderPockets';
@@ -64,6 +64,11 @@ interface CollectionBinderProps {
    * `BinderSpread`'s layout, and both read it from this one prop.
    */
   single?: boolean;
+  /**
+   * How a phone's lone page fits the section: its rows, 3 or 4, change the paging step
+   * as `single` does, so this component pages by them and hands them to `BinderSpread`.
+   */
+  loneFit?: LoneFit;
   /**
    * What turns the pages: arrows beside the spread, or under a lone page (the
    * default); or the map, under the spread where Browse docks its panels (owner,
@@ -389,17 +394,21 @@ export function CollectionBinder({
   countsFor,
   onSelect,
   single = false,
+  loneFit = THREE_ROWS,
   pager = 'arrows',
   onCountChange,
   windowOpen = false,
 }: CollectionBinderProps) {
-  // A phone pages by nine, a spread binder by 24, a page in for the front cover (`pagingOf`).
-  const paging = pagingOf(single);
+  // A phone pages by nine, or twelve at 4 rows, a spread binder by 24, a page in for the front
+  // cover (`pagingOf`).
+  const paging = pagingOf(single, loneFit.rows);
   const {perView, lead} = paging;
   // Held as the first SLOT in view, not a view number, so crossing the phone
   // breakpoint stays in the same part of the set: from spread 2 (slots 12-35) a
   // phone opens page 2 (slots 9-17), the page that holds slot 12, and back again.
-  // A stored view NUMBER would have jumped to other cards instead.
+  // A stored view NUMBER would have jumped to other cards instead. A phone's page
+  // gaining a row does the same: from page 4 of nine (slots 27-35), page 3 of
+  // twelve (slots 24-35), which holds slot 27.
   const [firstSlot, setFirstSlot] = useState(0);
   const total = Math.max(1, Math.ceil((slots.length + lead) / perView));
   const current = Math.min(Math.floor((firstSlot + lead) / perView), total - 1);
@@ -414,6 +423,7 @@ export function CollectionBinder({
     pager === 'map' ? (
       <BinderSpreadMap
         single={single}
+        rows={loneFit.rows}
         pockets={slots.map((slot) => pocketOf(slot, countsFor))}
         current={current}
         onGo={goTo}
@@ -425,6 +435,7 @@ export function CollectionBinder({
     <BinderSpread
       start={current * perView - lead}
       single={single}
+      loneFit={loneFit}
       arrows={map === undefined ? 'beside' : 'edges'}
       footer={map}
       cardCount={slots.length}

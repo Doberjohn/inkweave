@@ -96,7 +96,7 @@ describe('SetPicker', () => {
       // the drawn lines' text as axe reads it, run together (WCAG 2.5.3).
       expect(button()).not.toHaveAttribute('aria-label');
       expect(button().querySelector(':scope > [aria-hidden="true"]')).toHaveTextContent(/^Attack of the Vine!36% · 12%$/);
-      expect(button()).toHaveStyle({minHeight: '40px'});
+      expect(button()).toHaveStyle({minHeight: '34px'});
       expect(button().querySelector('img')).not.toBeNull();
       fireEvent.click(button());
       fireEvent.click(option('12'));
@@ -109,12 +109,12 @@ describe('SetPicker', () => {
       expect(button().querySelector('.react-loading-skeleton')).not.toBeNull();
     });
 
-    it('leaves its logo out below 360px, so its words keep their room', () => {
-      vi.stubGlobal('innerWidth', 359);
+    it('leaves its logo out below 393px, beside Filters, so its words keep their room (#1000)', () => {
+      vi.stubGlobal('innerWidth', 392);
       renderPicker({size: 'row', figures});
       expect(button().querySelector('img')).toBeNull();
       cleanup();
-      vi.stubGlobal('innerWidth', 360);
+      vi.stubGlobal('innerWidth', 393);
       renderPicker({size: 'row', figures});
       expect(button().querySelector('img')).not.toBeNull();
     });

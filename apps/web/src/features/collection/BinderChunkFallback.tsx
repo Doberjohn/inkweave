@@ -1,10 +1,18 @@
-import type {CSSProperties} from 'react';
+import {useState, type CSSProperties} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
-import {LONE_INSET, LONE_TOP_OVER_MAP, MAP_BAND_HEIGHT, loneBoardHeight} from '../cards/components/binderGeometry';
+import {
+  LONE_INSET,
+  LONE_TOP_OVER_MAP,
+  loneBoardHeight,
+  loneBoxStyle,
+  mapBandHeight,
+  type LoneFit,
+} from '../cards/components/binderGeometry';
 import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 import {FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
 import {BAR, NUMBERS_STYLE, ROW_CONTROL_HEIGHT, SHEET_NUMBERS_STYLE, sectionStyle} from './binderLayout';
+import {useLoneFit} from './useLoneFit';
 
 /*
  * What collection mode draws while the binder's chunk downloads (#913), each in the box of what
@@ -26,12 +34,14 @@ const SHOWS_HEIGHT = 42;
  */
 const SPREAD_SHAPE: CSSProperties = {width: 'min(100%, 200cqh)', aspectRatio: '2'};
 /**
- * A phone's lone board, as tall as the binder draws it at the section's width (#969): the section
- * is a size container, so `100cqw` is that width, and the board comes in from both its sides.
+ * A phone's lone board, as tall as the binder draws its `rows` at the section's width, or at
+ * `maxWidth` where the page's height caps it: the section is a size container, so `100cqw`
+ * is that width, and the board comes in from both its sides.
  */
-const LONE_BOARD: CSSProperties = {height: loneBoardHeight(`100cqw - ${2 * LONE_INSET}px`)};
-/** The board's room in the section, as the binder's lone page has it over its map (`SingleView`). */
-const LONE_ROOM: CSSProperties = {padding: `${LONE_TOP_OVER_MAP}px ${LONE_INSET}px 0`};
+function loneBoard({rows, maxWidth}: LoneFit): CSSProperties {
+  const box = maxWidth === undefined ? '100cqw' : `min(100cqw, ${maxWidth}px)`;
+  return {height: loneBoardHeight(`${box} - ${2 * LONE_INSET}px`, rows)};
+}
 
 const COLUMN: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.sm};
 
@@ -46,15 +56,16 @@ function Block({height, style}: {height?: number; style?: CSSProperties}) {
 /**
  * A phone's page while the chunk downloads (#969): the board in its place over the map, and the
  * map's band under it, empty, so the binder that replaces them draws its page and map in their
- * boxes. One box, so the section's column gap never comes between the two.
+ * boxes, with the rows it will draw. One box, so the section's column gap never comes
+ * between the two.
  */
-function LonePageFallback() {
+function LonePageFallback({fit}: {fit: LoneFit}) {
   return (
     <div>
-      <div style={LONE_ROOM}>
-        <Block style={LONE_BOARD} />
+      <div style={loneBoxStyle(LONE_TOP_OVER_MAP, fit.maxWidth)}>
+        <Block style={loneBoard(fit)} />
       </div>
-      <div data-testid="binder-map-band" style={{height: MAP_BAND_HEIGHT}} />
+      <div data-testid="binder-map-band" style={{height: mapBandHeight(fit.rows)}} />
     </div>
   );
 }
@@ -66,12 +77,15 @@ function LonePageFallback() {
 export function BinderChunkFallback() {
   const {isMobile} = useResponsive();
   const docked = useSidePanelDocked();
+  const [section, setSection] = useState<HTMLElement | null>(null);
+  const fit = useLoneFit(section, isMobile);
   return (
     <section
+      ref={setSection}
       aria-busy="true"
       aria-label="Loading your binder"
       style={{...sectionStyle(isMobile, docked), ...COLUMN, containerType: 'size'}}>
-      {isMobile ? <LonePageFallback /> : <Block style={SPREAD_SHAPE} />}
+      {isMobile ? <LonePageFallback fit={fit} /> : <Block style={SPREAD_SHAPE} />}
     </section>
   );
 }
@@ -129,7 +143,10 @@ export function ToolbarSetPickerFallback() {
   return <Block height={TOOLBAR_CONTROL_HEIGHT} />;
 }
 
-/** A phone row's set picker while the chunk downloads, filling its place before Binder options (#969). */
+/**
+ * A phone row's set picker while the chunk downloads, filling its place between Filters and
+ * Collection.
+ */
 export function RowSetPickerFallback() {
   return <Block height={ROW_CONTROL_HEIGHT} />;
 }

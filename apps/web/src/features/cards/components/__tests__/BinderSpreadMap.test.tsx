@@ -186,6 +186,15 @@ describe("BinderSpreadMap, under a phone's lone page (#969)", () => {
     expect(held(/^Page 5 of 5/)).toEqual([...Array<boolean>(7).fill(true), false, false]);
   });
 
+  it('draws a mini per page of twelve at four rows, four rows of cells each (#1000)', () => {
+    render(<BinderSpreadMap single rows={4} pockets={POCKETS.slice(0, 43)} current={0} onGo={() => {}} />);
+    expect(pages()).toEqual([1, 2, 3, 4].map((page) => `Page ${page} of 4: nothing missing`));
+    expect(held(/^Page 1 of 4/)).toEqual(Array<boolean>(12).fill(true));
+    expect(held(/^Page 4 of 4/)).toEqual([...Array<boolean>(7).fill(true), ...Array<boolean>(5).fill(false)]);
+    const cells = screen.getByRole('button', {name: /^Page 1 of 4/}).firstElementChild as HTMLElement;
+    expect(cells.style.gridTemplateColumns).toBe('repeat(3, 7px)');
+  });
+
   it("draws a page's cells at full size, 7 by 9, three across", () => {
     render(<BinderSpreadMap single pockets={POCKETS.slice(0, 9)} current={0} onGo={() => {}} />);
     const cells = screen.getByRole('button', {name: /^Page 1 of 1/}).firstElementChild as HTMLElement;
@@ -224,11 +233,10 @@ describe("BinderSpreadMap, under a phone's lone page (#969)", () => {
     ]);
   });
 
-  it('says where the binder is after the pages, "5 / 27", which screen readers skip', () => {
+  it('draws no page counter after the pages, which fill the row (owner, 2026-10-26, #1000)', () => {
     render(<BinderSpreadMap single pockets={PAGES} current={4} onGo={() => {}} />);
-    const caption = screen.getByText('5 / 27');
-    expect(caption.closest('[aria-hidden="true"]')).not.toBeNull();
-    expect(caption.closest('nav')).toBeNull();
+    expect(screen.queryByText(/\d+ \/ \d+/)).toBeNull();
+    expect(screen.getByRole('button', {name: /^Page 5 of 27/})).toHaveAttribute('aria-current', 'true');
   });
 
   it('says nowhere while the binder has no pockets, as its loading frame', () => {

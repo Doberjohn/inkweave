@@ -1,4 +1,4 @@
-import {useContext, useRef, useSyncExternalStore, type ReactNode} from 'react';
+import {useContext, useRef, useState, useSyncExternalStore, type ReactNode, type Ref} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries, CollectionEntry, Finish} from './collectionParser';
 import type {CollectionPromo} from './collectionPromos';
@@ -14,6 +14,7 @@ import {
 } from './binderCards';
 import {tallyCollection} from './collectionStats';
 import {sectionStyle} from './binderLayout';
+import {useLoneFit} from './useLoneFit';
 import {
   CollectionSetBody,
   CollectionSetRail,
@@ -27,7 +28,7 @@ import {
 import type {BinderView} from './BinderShows';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
 import {BinderSpread, BinderSlotSkeleton} from '../cards/components/BinderSpread';
-import {PER_PAGE} from '../cards/components/binderGeometry';
+import {PER_PAGE, type LoneFit} from '../cards/components/binderGeometry';
 import {BinderSpreadMap} from '../cards/components/BinderSpreadMap';
 import {CtaButton} from '../../shared/components';
 import {CardWindowSlotContext} from '../../shared/contexts/cardWindowSlot';
@@ -108,12 +109,22 @@ type PanelControls = SetSwitching & BinderView & AxisChoice;
 /**
  * The set panel around the binder, where the page does not dock it: a rail beside the
  * binder on a tablet. A phone's binder sits in the section alone, the page's row above it
- * holding its set picker (#969).
+ * holding its set picker, and the section is what its page's rows fit (`section`).
  */
-function PanelLayout({panel, children}: {panel: CollectionSetPanelProps; children: ReactNode}) {
+function PanelLayout({panel, section, children}: {
+  panel: CollectionSetPanelProps;
+  section: Ref<HTMLDivElement>;
+  children: ReactNode;
+}) {
   const {isMobile} = useResponsive();
   const docked = useSidePanelDocked();
-  if (docked || isMobile) return <div style={sectionStyle(isMobile, docked)}>{children}</div>;
+  if (docked || isMobile) {
+    return (
+      <div ref={section} style={sectionStyle(isMobile, docked)}>
+        {children}
+      </div>
+    );
+  }
   return (
     <div style={sectionStyle(false)}>
       <div style={{display: 'flex', gap: SPACING.md, height: '100%', minHeight: 0}}>
@@ -181,12 +192,13 @@ export function CollectionBinderSection({onRetry, ...props}: CollectionBinderSec
 }
 
 /** The binder while its cards load: its chrome, as the loaded binder's, with shimmer in the pockets. */
-function LoadingBinder({single, docked}: {single: boolean; docked: boolean}) {
+function LoadingBinder({single, docked, loneFit}: {single: boolean; docked: boolean; loneFit: LoneFit}) {
   return (
     <BinderSpread
       // Spreads open on the front cover, as the binder does (owner, 2026-10-18); a phone's page has none.
       start={single ? 0 : -PER_PAGE}
       single={single}
+      loneFit={loneFit}
       arrows={docked ? 'edges' : 'beside'}
       // Docked, or on a phone, a map of one empty spread or page holds the band the real map
       // will fill. It holds no cards yet, so it is out of the Tab order and the accessibility
@@ -195,7 +207,7 @@ function LoadingBinder({single, docked}: {single: boolean; docked: boolean}) {
       footer={
         docked || single ? (
           <div inert aria-hidden="true">
-            <BinderSpreadMap single={single} pockets={[]} current={0} onGo={NOOP} />
+            <BinderSpreadMap single={single} rows={loneFit.rows} pockets={[]} current={0} onGo={NOOP} />
           </div>
         ) : undefined
       }
@@ -227,6 +239,9 @@ function SectionContent({
   // Docked, the spread's arrows sit on its edges; the skeleton's too, so it has the binder's geometry.
   const docked = useSidePanelDocked();
   const windowOpen = useCardWindowOpen();
+  // A phone's page has the rows its section fits, the loading binder's as the loaded one's.
+  const [section, setSection] = useState<HTMLDivElement | null>(null);
+  const loneFit = useLoneFit(section, isMobile);
   const {setCode} = controls;
 
   // Both states are rendered rather than falling through to an empty binder.
@@ -251,8 +266,8 @@ function SectionContent({
   // in place, so the arrival is a change of contents and nothing else.
   if (isLoading) {
     return (
-      <PanelLayout panel={{...controls, stats: null, filtered}}>
-        <LoadingBinder single={isMobile} docked={docked} />
+      <PanelLayout panel={{...controls, stats: null, filtered}} section={setSection}>
+        <LoadingBinder single={isMobile} docked={docked} loneFit={loneFit} />
       </PanelLayout>
     );
   }
@@ -269,7 +284,7 @@ function SectionContent({
     waiting,
   });
   return (
-    <PanelLayout panel={{...controls, stats, filtered}}>
+    <PanelLayout panel={{...controls, stats, filtered}} section={setSection}>
       {shown.length === 0 ? (
         <NoMatches show={controls.show} setCode={setCode} />
       ) : (
@@ -285,6 +300,7 @@ function SectionContent({
           onCountChange={onCountChange}
           windowOpen={windowOpen}
           single={isMobile}
+          loneFit={loneFit}
           pager={docked || isMobile ? 'map' : 'arrows'}
         />
       )}
@@ -366,7 +382,7 @@ export function PhoneSetPicker(props: DockedSetBodyProps) {
 /**
  * The numbers in a phone's Binder sheet, under Progress (#969), counting what the docked panel
  * counts. Here, so they ride the binder's chunk, which a phone in collection mode has asked for
- * by the time Binder options opens the sheet.
+ * by the time the row's Filters opens the sheet.
  */
 export function PhoneSetNumbers(props: DockedSetBodyProps) {
   return <SheetNumbers {...dockedPanel(props)} />;

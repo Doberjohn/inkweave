@@ -10,7 +10,8 @@ import {ALL_INKS, COLORS, SET_NAMES, SPACING, type SetCode} from '../../../share
  * ring where you are missing it. The window holds as many spreads as fit the row, eleven
  * at most; going set by set, each spread names its sets on hover. The first spread's left
  * page is the front cover (owner, 2026-10-18), so every binder here opens on it. Under a
- * phone's lone page it draws pages of nine instead (#969). Live here: click a spread or a page.
+ * phone's lone page it draws its pages instead, of nine or twelve. Live here:
+ * click a spread or a page.
  */
 
 /**
@@ -54,11 +55,14 @@ interface LiveMapProps {
   sets?: MapSet[];
   start?: number;
   single?: boolean;
+  rows?: 3 | 4;
 }
 
-function LiveMap({pockets, sets, start = 2, single = false}: LiveMapProps) {
+function LiveMap({pockets, sets, start = 2, single = false, rows}: LiveMapProps) {
   const [current, setCurrent] = useState(start);
-  return <BinderSpreadMap single={single} pockets={pockets} current={current} onGo={setCurrent} sets={sets} />;
+  return (
+    <BinderSpreadMap single={single} rows={rows} pockets={pockets} current={current} onGo={setCurrent} sets={sets} />
+  );
 }
 
 const meta: Meta<typeof LiveMap> = {
@@ -146,11 +150,17 @@ export const WholeCollectionNarrow: Story = {
 
 /**
  * Under a phone's lone page (#969): a mini per page of nine, its cells always at full size, as
- * many as fit the row, and where the binder is after them. 377px is the map's width on an
- * iPhone 15, inside the binder's 8px gutters.
+ * many as fit the row, and nothing after them: the open mini says where the binder is.
+ * 377px is the map's width on an iPhone 15, inside the binder's 8px gutters.
  */
 export const PhonePages: Story = {
   args: {single: true, start: 4},
+  parameters: {binderWidth: 377},
+};
+
+/** Under a phone's page of four rows: a mini per page of twelve, four rows of cells. */
+export const PhonePagesFourRows: Story = {
+  args: {single: true, rows: 4, start: 4},
   parameters: {binderWidth: 377},
 };
 
