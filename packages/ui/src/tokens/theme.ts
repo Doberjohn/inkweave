@@ -418,6 +418,22 @@ export const VISUALLY_HIDDEN: React.CSSProperties = {
 };
 
 /**
+ * The neutral ladder (owner, 2026-10-26, https://github.com/Doberjohn/inkweave/issues/982#issuecomment-6417313865):
+ * COLORS.gray400 at a small alpha over the page: admin's surfaces and lines, which the
+ * SegmentedControl, Tag, Notice and Panel promoted from admin draw with. gray400 keeps the page's cool
+ * cast, where white drifts warm (admin's adminTheme.ts has each step's composite). The fills are
+ * translucent, so a card inside a panel lands a step lighter, and anything with a fill and a
+ * border clips the fill to its padding box, or its edge lands lighter.
+ */
+export const NEUTRAL_LADDER = {
+  panel: hexRgba(COLORS.gray400, 0.025),
+  card: hexRgba(COLORS.gray400, 0.04),
+  navHover: hexRgba(COLORS.gray400, 0.125),
+  border: hexRgba(COLORS.gray400, 0.15),
+  strongBorder: hexRgba(COLORS.gray400, 0.325),
+} as const;
+
+/**
  * The gold interaction glow, unified per the one-gold ruling: every value
  * derives from COLORS.primary (#ffb900). Selection/hover chips, nav pills,
  * and search focus rings compose from these.
@@ -425,6 +441,11 @@ export const VISUALLY_HIDDEN: React.CSSProperties = {
 export const GOLD_GLOW = {
   activeBorder: hexRgba(COLORS.primary, 0.4),
   hoverBorder: hexRgba(COLORS.primary, 0.25),
+  /**
+   * A selected option's edge where it must reach 3:1 (WCAG 1.4.11): 3.33:1 on SegmentedControl's
+   * fill, where activeBorder gives 2.61:1 (owner, 2026-10-26, #982).
+   */
+  strongBorder: hexRgba(COLORS.primary, 0.5),
   activeBg: hexRgba(COLORS.primary, 0.12),
   hoverBg: hexRgba(COLORS.primary, 0.06),
   shadow: `0 0 12px ${hexRgba(COLORS.primary, 0.15)}, inset 0 0 8px ${hexRgba(COLORS.primary, 0.05)}`,

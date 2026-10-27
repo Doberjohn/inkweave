@@ -1,0 +1,98 @@
+/* SegmentedControl's states: what inline styles can't say, :hover, :focus-visible and the
+   ARIA state selectors. Selection is read from
+   aria-pressed and a held control from aria-disabled, never from a class, so the look and what
+   assistive tech hears can't disagree. Every colour, radius, size and easing is a custom
+   property the group sets from the tokens (SEGMENTED_LOOK in SegmentedControl.tsx). */
+
+/* A translucent fill shows through its own border, so it stops at the padding box. It is set
+   as background-color: the background shorthand would reset the clip. */
+.segmented {
+  display: inline-flex;
+  align-items: stretch;
+  gap: var(--segmented-gap);
+  padding: var(--segmented-gap);
+  background-color: var(--segmented-fill);
+  background-clip: padding-box;
+  border: 1px solid var(--segmented-edge);
+  border-radius: var(--segmented-radius);
+}
+
+.segmented-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--segmented-height);
+  margin: 0;
+  padding: 0 var(--segmented-pad);
+  border: none;
+  border-radius: var(--segmented-radius);
+  background: transparent;
+  color: var(--segmented-text);
+  font-family: inherit;
+  font-size: var(--segmented-font-size);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--segmented-motion),
+    color var(--segmented-motion);
+}
+
+/* A held option takes no hover, and nor does a touch screen, where :hover sticks to the last
+   option tapped. */
+@media (hover: hover) {
+  .segmented-btn:hover:where(:not([aria-disabled='true'])) {
+    background: var(--segmented-hover);
+    color: var(--segmented-text-hover);
+  }
+}
+
+.segmented-btn[aria-pressed='true'] {
+  background: var(--segmented-hover);
+  color: var(--segmented-accent);
+  box-shadow: var(--segmented-pressed-ring);
+}
+
+/* The one gold, over the package's global ring (styles/primitives.css), which is the legacy gold. */
+.segmented-btn:focus-visible {
+  outline: 2px solid var(--segmented-accent);
+  outline-offset: 2px;
+}
+
+/* A held control looks off as a disabled one does (DISABLED_STYLE). */
+.segmented-btn[aria-disabled='true'] {
+  opacity: var(--segmented-held-opacity);
+  cursor: not-allowed;
+}
+
+/* fill: the buttons share the row from the group's pad. They sit two by two in a pair, which
+   never wraps inside, so where one line can't hold them all (a 320px phone) the second pair takes
+   the next line whole. A pair grows by its button count, from the gap inside it, so on a line
+   they share every button gets an equal share, an odd count's last one, alone in its pair, too.
+   A label wider than its share keeps its width (nowrap, min-width auto) and the others give way.
+   A lone button alone on the last line fills that line. */
+.segmented[data-fill='true'] {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.segmented-pair {
+  display: flex;
+  flex: 2 1 var(--segmented-gap);
+  gap: var(--segmented-gap);
+}
+
+.segmented-pair[data-lone='true'] {
+  flex: 1 1 0;
+}
+
+.segmented-pair > .segmented-btn {
+  flex: 1 1 0;
+  padding: 0 var(--segmented-pair-pad);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segmented-btn {
+    transition: none;
+  }
+}
