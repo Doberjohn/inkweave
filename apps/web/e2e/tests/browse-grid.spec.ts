@@ -215,8 +215,12 @@ async function expectGridAsBefore(page: Page, isPhone: boolean) {
   ).toBeLessThanOrEqual(rows / 60 + 1);
   // And from its first frame: a classic scrollbar that comes in with the rows' room narrows the
   // grid, and room worked out from the width before it is too tall by a little every row (#1047).
-  const firstFrame = await page.waitForFunction(() => (window as unknown as GridWindow).firstScrollHeight);
-  const first = Number(await firstFrame.jsonValue());
+  // Waits for it to be noted, not to be truthy: a height of 0 fails below, with the number.
+  const firstFrame = await page.waitForFunction(() => {
+    const height = (window as unknown as GridWindow).firstScrollHeight;
+    return height === undefined ? false : {height};
+  });
+  const {height: first} = (await firstFrame.jsonValue()) as {height: number};
   expect(
     Math.abs(first - fullHeight),
     `the first frame's scrollHeight ${first} against ${rows} rows' ${fullHeight}`,
