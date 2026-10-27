@@ -285,6 +285,35 @@ describe('BrowseToolbar on Browse', () => {
     expect(order().at(-1)).toBe('Sort cards');
   });
 
+  it("puts a phone's chips under its row with Collection, and before the far end elsewhere", () => {
+    const filtered = {...search, typeFilters: ['Character'] as CardTypeFilter[]};
+    const chipIndex = () => order().findIndex((name) => name?.includes('Character'));
+    const phone = render(<BrowseToolbar {...defaultProps({...filtered, modeSwitch, isMobile: true})} />);
+    expect(chipIndex()).toBe(order().indexOf('Collection') + 1);
+    phone.unmount();
+
+    const tablet = render(<BrowseToolbar {...defaultProps({...filtered, modeSwitch})} />);
+    expect(chipIndex()).toBeLessThan(order().indexOf('Collection'));
+    tablet.unmount();
+
+    render(<BrowseToolbar {...defaultProps({...filtered, isMobile: true})} />);
+    expect(chipIndex()).toBeLessThan(order().indexOf('Sort cards'));
+  });
+
+  it("lets the sort take what Filters and Collection leave in a phone's row, as the binder's set button does", () => {
+    const sort = () => screen.getByRole('combobox', {name: 'Sort cards'});
+    const phone = render(<BrowseToolbar {...defaultProps({...search, modeSwitch, isMobile: true})} />);
+    expect(sort().style).toMatchObject({flexGrow: '1', minWidth: '0px', textOverflow: 'ellipsis'});
+    phone.unmount();
+
+    const tablet = render(<BrowseToolbar {...defaultProps({...search, modeSwitch})} />);
+    expect(sort().style.flexGrow).toBe('');
+    tablet.unmount();
+
+    render(<BrowseToolbar {...defaultProps({...search, isMobile: true})} />);
+    expect(sort().style.flexGrow).toBe('');
+  });
+
   it('fills Filters while the docked panel is open, and outlines it while closed', () => {
     const {rerender} = render(<BrowseToolbar {...defaultProps(docked(true))} />);
     const filters = () => screen.getByRole('button', {name: 'Filters'});

@@ -37,9 +37,9 @@ const SET_SLOT: CSSProperties = {flex: 1, minWidth: 0};
  * IT IS GRID MODE'S ROW (owner, 2026-10-26): Filters first, the set button where the sort
  * sits, then Collection, each 34px tall, with Browse's room above and below, so switching modes
  * moves nothing in it. Filters opens the Binder sheet, which holds what the binder shows, its
- * sort, the filters and the numbers, its badge counting the filters on and Owned or Missing, and
- * its name saying the count (`FiltersButton`), so no chips sit under the row. The set button
- * shows the scope and its two percentages and opens the set list.
+ * sort and the filters. Its badge counts the filters on and Owned or Missing, and its name says
+ * the count (`FiltersButton`), so no chips sit under the row. The set button shows the scope and
+ * its two percentages and opens the set list.
  */
 export function PhoneBinderRow({setPicker, count, onOpen, modeSwitch}: PhoneBinderRowProps) {
   return (

@@ -1233,6 +1233,11 @@ test.describe('Collection mode, signed in (phone width)', () => {
       Math.abs(row[setButton].x - sort.x),
       "the set button's left, at the sort's",
     ).toBeLessThanOrEqual(1);
+    // And as wide: each takes what Filters and Collection leave (#1039).
+    expect(
+      Math.abs(row[setButton].width - sort.width),
+      "the set button's width, the sort's",
+    ).toBeLessThanOrEqual(1);
     // All three 34px tall, the set button's two lines inside it, with grid mode's room above
     // them and below (#998: 12px and 8px).
     for (const [name, place] of Object.entries(row)) {
@@ -1243,6 +1248,42 @@ test.describe('Collection mode, signed in (phone width)', () => {
     // The map's minis alone, with no "5 / 27" after them.
     const map = binder(page).getByRole('navigation', {name: 'Binder pages'});
     await expect(map.locator('..')).not.toContainText(/\d+ \/ \d+/);
+  });
+
+  test("grid mode's row keeps Filters, the sort and Collection on one line, plain and with filters on, the chips under them (#1039)", async ({
+    page,
+  }) => {
+    await signInAsCollector(page, ENTRIES);
+    for (const size of [
+      {width: 360, height: 732},
+      {width: 393, height: 659},
+    ]) {
+      await page.setViewportSize(size);
+      for (const [url, chipCount] of [
+        ['/browse', 0],
+        ['/browse?ink=Amber%2CSteel&cost=3', 3],
+      ] as const) {
+        await page.goto(url);
+        const toolbar = page.getByTestId(TOOLBAR);
+        const controls = [
+          toolbar.getByRole('button', {name: /^Filters/}),
+          toolbar.getByRole('combobox', {name: 'Sort cards'}),
+          toolbar.getByRole('button', {name: 'Show my collection'}),
+        ];
+        await expect(controls[2]).toBeVisible();
+        const at = `${url} at ${size.width}x${size.height}`;
+        const [filters, sort, collection] = await Promise.all(controls.map(placeOf));
+        expect(Math.abs(sort.y - filters.y), `the sort's top, Filters' ${at}`).toBeLessThanOrEqual(1);
+        expect(Math.abs(collection.y - filters.y), `Collection's top, Filters' ${at}`).toBeLessThanOrEqual(1);
+        expect(collection.x + collection.width, `Collection's right ${at}`).toBeLessThanOrEqual(size.width);
+
+        const chips = toolbar.getByRole('button', {name: /^(Amber|Steel|Cost: 3)/});
+        await expect(chips).toHaveCount(chipCount);
+        for (const chip of await chips.all()) {
+          expect((await placeOf(chip)).y, `a chip's top ${at}`).toBeGreaterThanOrEqual(filters.y + filters.height);
+        }
+      }
+    }
   });
 
   test('the lone page sits in its board, one zip round its outer edge, with no scroll sideways (#941)', async ({
