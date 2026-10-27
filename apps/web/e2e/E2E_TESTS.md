@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-326 tests across 32 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+327 tests across 32 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -130,7 +130,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | a search lists the sets 1-8 cards Core doesn't have, opened in the card window (#911) | `/browse?q=Ariel+On+Human` lists Ariel - On Human Legs (Set 1) as a button, not a link, since it has no card page; clicking it opens `card-overview-modal` titled with its name, with `card-overview-outside-core` where the synergies would be. After the dialog's 100ms initial-focus timer, Escape closes it, and "Ariel Singing Mermaid" in `browse-search` leaves one tile, the Core card, linking to `/card/<id>/ariel-singing-mermaid`: Set 9 reprints Set 4's Singing Mermaid, so Set 4's printing adds no tile of its own |
 | a search downloads sets 1-8 and the promos once, and never sets 9-14 (#911) | Chromium only: it asserts the network. `/browse` requests nothing under `/data/collection/`; "Ariel", then "Ariel On Human" (its Set 1 card shows), then an emptied box and "Stitch" request `1.json` to `8.json` and `promos.json` once each, and no `9.json` to `14.json`. Each fill waits for the box to show it (`toHaveValue`): the box shows the URL's query, which each change sets in a transition, and the URL moves before the transition renders, so a fill made once the URL changed could still land on the text before it ("ArielAriel On Human") |
 
-## `browse-filters.spec.ts`: 9 tests (7 desktop only, 2 mobile only)
+## `browse-filters.spec.ts`: 10 tests (8 desktop only, 2 mobile only)
 
 Every other spec sets Browse's filters through the URL. These press the filter buttons and check `aria-pressed` and the URL param each one writes (`useFilterParams.ts`), which is what a shared link carries. The desktop tests use the panel docked beside the cards at 1024px and wider (`complementary` "Filters"), where Type, Keyword, Classification and Set start folded behind a header button; the phone tests use the Filters drawer, which applies only on Apply and folds the same sections (owner, 2026-10-26). The last desktop test checks the status line that tells screen readers what the grid lists.
 
@@ -138,6 +138,7 @@ Every other spec sets Browse's filters through the URL. These press the filter b
 |---|---|
 | an ink cost | "Cost 3" turns `aria-pressed` and the URL gains `cost=3` |
 | Uninkable, which redraws the cost buttons as uninkable hexagons | "Cost 1" has no `<polygon>` before; "Uninkable" turns pressed and writes `inkwell=uninkable`, and "Cost 1" then draws `CostIcon`'s uninkable hexagon |
+| Inkable and Uninkable share one row, with room left for a classic scrollbar | At 1280×600, where the panel scrolls, the two Inkwell chips sit at the same top, and their widths plus 17px (the widest classic scrollbar), less the scrollbar the browser drew, fit the row. Headless Chromium draws none, so the 17px is what makes it fail there on chips that would wrap beside one |
 | a rarity | "Legendary" turns pressed and writes `rarity=Legendary` |
 | a card type, a keyword and a classification, each in its folded section | Unfolds Type, Keyword and Classification (`aria-expanded`); Character, Evasive and Hero each turn pressed and write `type=Character`, `keyword=Evasive` and `classification=Hero` |
 | an ink, then Dual-ink cards | "Filter by Amber" writes `ink=Amber`, and the "Dual-ink cards" toggle it reveals writes `inkmatch=dual` |

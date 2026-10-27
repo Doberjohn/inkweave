@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, DISABLED_STYLE, EASING, RADIUS, FONT_SIZES} from '../tokens/theme';
+import {COLORS, DISABLED_STYLE, EASING, RADIUS, FONT_SIZES, SPACING} from '../tokens/theme';
 
 type FilterButtonSize = 'sm' | 'md';
 
@@ -25,7 +25,10 @@ const SIZE_STYLES: Record<FilterButtonSize, React.CSSProperties> = {
     fontSize: `${FONT_SIZES.sm}px`,
   },
   md: {
-    padding: '10px 16px',
+    // Browse's docked filter panel (260px, 12px padding) holds its Inkable and Uninkable chips on
+    // one row, with room for a 17px classic scrollbar beside them: wider side padding wraps them
+    // (browse-filters.spec.ts checks it). minHeight sets the height, not the top padding.
+    padding: `${SPACING.sm}px ${SPACING.md}px`,
     borderRadius: `${RADIUS.lg}px`,
     fontSize: `${FONT_SIZES.base}px`,
     minHeight: '44px',

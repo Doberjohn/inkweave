@@ -42,6 +42,32 @@ test.describe('Browse filters picked in the desktop panel', () => {
     await expect(cost1.locator('polygon')).toHaveCount(1);
   });
 
+  test('Inkable and Uninkable share one row, with room left for a classic scrollbar', async ({page}) => {
+    // Short enough that the panel scrolls. Its scrollbar takes its width out of the row, and
+    // the two chips wrapped onto two rows once it showed. Headless Chromium draws none, so the
+    // check also keeps a classic scrollbar's room free: 17px, the widest a desktop browser draws.
+    await page.setViewportSize({width: 1280, height: 600});
+    // The chips' widths in the fallback font would say nothing about the real one's.
+    await page.evaluate(() => document.fonts.ready.then(() => undefined));
+    const room = await panel(page).evaluate((aside: HTMLElement) => {
+      const group = aside.querySelector('[aria-label="Inkwell filters"]')!;
+      const chips = [...group.querySelectorAll('button')].map((chip) => chip.getBoundingClientRect());
+      const style = getComputedStyle(aside);
+      const borders = parseFloat(style.borderLeftWidth) + parseFloat(style.borderRightWidth);
+      return {
+        scrolls: aside.scrollHeight > aside.clientHeight,
+        drawnScrollbar: aside.offsetWidth - aside.clientWidth - borders,
+        rowWidth: group.getBoundingClientRect().width,
+        chipsWidth: chips.reduce((sum, chip) => sum + chip.width, 0),
+        tops: chips.map((chip) => chip.top),
+      };
+    });
+    expect(room.scrolls).toBe(true);
+    expect(room.tops).toHaveLength(2);
+    expect(room.tops[1]).toBe(room.tops[0]);
+    expect(room.chipsWidth + 17 - room.drawnScrollbar).toBeLessThanOrEqual(room.rowWidth);
+  });
+
   test('a rarity', async ({page}) => {
     await press(page, 'Legendary', /[?&]rarity=Legendary(&|$)/);
   });
