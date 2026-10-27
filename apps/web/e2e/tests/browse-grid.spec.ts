@@ -41,14 +41,25 @@ interface Drawn {
 type GridWindow = Window & {
   readGrid: () => Drawn | null;
   blankFrames: {count: number; stopped: boolean};
+  /** The scroller's scrollHeight at the first frame that drew a tile. */
+  firstScrollHeight?: number;
 };
 
 /**
  * Gives the page `readGrid`, so the tests and the frame-by-frame count in `blankFramesDuring`
- * read the grid the same way. Null while it draws no tiles.
+ * read the grid the same way. Null while it draws no tiles. Also notes the scroller's height at
+ * the first frame that draws a tile: an animation frame runs before the frame's own layout and
+ * resize observers, so it reads what the frame paints, unless an observer changes it before then.
  */
 function installGridReader({selector, room}: {selector: string; room: number}) {
-  (window as unknown as GridWindow).readGrid = () => {
+  const seen = window as unknown as GridWindow;
+  const noteFirstFrame = () => {
+    const scroller = document.querySelector<HTMLElement>(selector);
+    if (scroller?.querySelector('[data-testid="card-tile"]')) seen.firstScrollHeight = scroller.scrollHeight;
+    else requestAnimationFrame(noteFirstFrame);
+  };
+  requestAnimationFrame(noteFirstFrame);
+  seen.readGrid = () => {
     const scroller = document.querySelector<HTMLElement>(selector);
     const tiles = [...(scroller?.querySelectorAll('[data-testid="card-tile"]') ?? [])];
     if (!scroller || !tiles.length) return null;
@@ -192,6 +203,14 @@ async function expectGridAsBefore(page: Page, isPhone: boolean) {
   expect(
     Math.abs(layout.scrollHeight - fullHeight),
     `scrollHeight ${layout.scrollHeight} against ${rows} rows' ${fullHeight}`,
+  ).toBeLessThanOrEqual(rows / 60 + 1);
+  // And from its first frame: a classic scrollbar that comes in with the rows' room narrows the
+  // grid, and room worked out from the width before it is too tall by a little every row (#1047).
+  const firstFrame = await page.waitForFunction(() => (window as unknown as GridWindow).firstScrollHeight);
+  const first = Number(await firstFrame.jsonValue());
+  expect(
+    Math.abs(first - fullHeight),
+    `the first frame's scrollHeight ${first} against ${rows} rows' ${fullHeight}`,
   ).toBeLessThanOrEqual(rows / 60 + 1);
 
   // Scrolled a third and two thirds of the way down, then to the end: no frame shows a blank row.

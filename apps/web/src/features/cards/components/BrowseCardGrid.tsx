@@ -120,11 +120,12 @@ const UNMEASURED: ScrollerView = {width: 0, top: 0, height: 0};
 
 /**
  * The scroller's view: the grid's width, the scroll offset and the scroller's height, read before
- * paint, then on scroll and resize. A scroll is drawn inside its own event, as react-virtuoso drew
- * it: a render left for later reaches the screen a frame after the scroll, and a fast scroll shows
- * blank rows meanwhile. A read that would draw the same tiles (`sameWindow`) renders nothing,
- * keeping the view last drawn: a list that changes before the next scroll counts its rows from an
- * offset at most a row from the real one, which `OVERSCAN_ROWS` covers. A hidden scroller measures 0 wide and keeps its last view: the prerender crawl marks a phone
+ * paint, after every commit, and on scroll and resize. A scroll is drawn inside its own event, as
+ * react-virtuoso drew it: a render left for later reaches the screen a frame after the scroll, and
+ * a fast scroll shows blank rows meanwhile. A read that would draw the same tiles (`sameWindow`)
+ * renders nothing, keeping the view last drawn: a list that changes before the next scroll counts
+ * its rows from an offset at most a row from the real one, which `OVERSCAN_ROWS` covers. A hidden
+ * scroller measures 0 wide and keeps its last view: the prerender crawl marks a phone
  * page's #root before it reads it, which takes the root out of the layout there (#915). Without
  * ResizeObserver nothing is read, so a resize can't leave a stale window: every tile is drawn.
  */
@@ -135,6 +136,7 @@ function useScrollerView(
 ): ScrollerView {
   const [view, setView] = useState(UNMEASURED);
   const sameWindowRef = useRef(sameWindow);
+  const readRef = useRef(() => {});
   useLayoutEffect(() => {
     sameWindowRef.current = sameWindow;
   });
@@ -153,6 +155,7 @@ function useScrollerView(
       setView(next);
     };
     const onScroll = () => flushSync(read);
+    readRef.current = read;
     read();
     scroller.addEventListener('scroll', onScroll, {passive: true});
     const observer = new ResizeObserver(read);
@@ -163,8 +166,15 @@ function useScrollerView(
     return () => {
       scroller.removeEventListener('scroll', onScroll);
       observer.disconnect();
+      readRef.current = () => {};
     };
   }, [scrollerRef, gridRef]);
+  // A commit that changes the undrawn rows' room can bring a classic scrollbar in or take it away,
+  // and with it the grid's width. The observer sees that within the frame, but its render lands
+  // after the paint, which shows room worked out from the old width: so each commit reads again.
+  useLayoutEffect(() => {
+    readRef.current();
+  });
   return view;
 }
 
