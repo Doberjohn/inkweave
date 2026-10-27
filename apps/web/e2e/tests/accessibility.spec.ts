@@ -166,30 +166,39 @@ test.describe('Accessibility: reflow at 320px', () => {
 
 /**
  * The card that has focus (its link and name), and whether it shows in the grid's scroller; null
- * once focus has left the grid. After a press that scrolled the grid, read two frames on: focus
- * scrolls the grid at once, but the scroll event that draws the rows past the new view fires at
- * the next frame. A person's presses always leave it that frame; Playwright's come faster. A press
- * that scrolled nothing drew nothing, so its read waits for no frame: the two frames are most of
- * a read's time in WebKit in CI (about 580ms), and most presses stay in their row. One call waits
- * and reads, since each call is a round trip.
+ * once focus has left the grid. A press that scrolls the grid draws the rows past the new view on
+ * the scroll event, a frame later: a person's presses always leave it that frame, Playwright's come
+ * faster. So a read waits two frames when the grid scrolled since the last read, or when the card
+ * isn't wholly in view yet: WebKit scrolls to a focused card a moment after the press, not inside
+ * it, so the offset alone can't tell. Otherwise nothing moved and nothing is left to draw, so it
+ * reads at once: the two frames are most of a read's time in WebKit in CI (about 580ms), and most
+ * presses stay in their row. One call waits and reads, since each call is a round trip.
  */
 function focusedCard(page: Page) {
   return page.evaluate(async () => {
     const seen = window as typeof window & {lastGridTop?: number};
-    const gridTop = document.querySelector('[data-testid="browse-grid-scroller"]')?.scrollTop;
-    if (gridTop !== seen.lastGridTop) {
+    const read = () => {
+      const tile = document.activeElement?.closest('[data-testid="card-tile"]');
+      const scroller = document.querySelector('[data-testid="browse-grid-scroller"]');
+      if (!tile || !scroller) return null;
+      const t = tile.getBoundingClientRect();
+      const s = scroller.getBoundingClientRect();
+      return {
+        card: `${tile.getAttribute('href')} ${tile.getAttribute('aria-label')}`,
+        // Some of the card shows, and (a pixel's slack, as a scroll lands on whole pixels) all of it.
+        inView: Math.min(t.bottom - s.top, s.bottom - t.top) > 0,
+        wholly: Math.max(s.top - t.top, t.bottom - s.bottom) <= 1,
+        top: scroller.scrollTop,
+      };
+    };
+    const first = read();
+    if (!first) return null;
+    if (first.top !== seen.lastGridTop || !first.wholly) {
       await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
     }
-    seen.lastGridTop = gridTop;
-    const tile = document.activeElement?.closest('[data-testid="card-tile"]');
-    const scroller = tile?.closest('[data-testid="browse-grid-scroller"]');
-    if (!tile || !scroller) return null;
-    const t = tile.getBoundingClientRect();
-    const s = scroller.getBoundingClientRect();
-    return {
-      card: `${tile.getAttribute('href')} ${tile.getAttribute('aria-label')}`,
-      inView: t.bottom > s.top && t.top < s.bottom,
-    };
+    const focused = read();
+    if (focused) seen.lastGridTop = focused.top;
+    return focused;
   });
 }
 
