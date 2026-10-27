@@ -148,7 +148,7 @@ describe('FilterButton', () => {
       expect(button.style.padding).toBe('5px 10px');
     });
 
-    it('should apply md size styles when specified', () => {
+    it('should give md a 44px touch target', () => {
       render(
         <FilterButton active={false} onClick={() => {}} size="md">
           Test
@@ -156,7 +156,7 @@ describe('FilterButton', () => {
       );
 
       const button = screen.getByRole('button');
-      expect(button.style.padding).toBe('10px 12px');
+      expect(button.style.minHeight).toBe('44px');
     });
   });
 });

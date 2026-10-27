@@ -474,8 +474,8 @@ function InkFilterSection({
   );
 }
 
-// Not in the desktop dialog, whose toolbar shows the inkable/uninkable toggles inline. The panel
-// keeps both chips on one row beside its scrollbar on FilterButton md's side padding (12px).
+// Not in the desktop dialog, whose toolbar shows the inkable/uninkable toggles inline. The panel's
+// row fits both chips only at FilterButton md's padding: see the note there.
 function InkwellFilterSection({
   filters,
   onFiltersChange,
