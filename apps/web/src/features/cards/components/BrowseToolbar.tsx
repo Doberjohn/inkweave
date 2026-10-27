@@ -541,6 +541,7 @@ const PANEL_SPAN_STYLE: React.CSSProperties = {
  */
 function FlowToolbar({
   isMobile,
+  phoneRow,
   flushBottom,
   filters,
   sort,
@@ -550,8 +551,14 @@ function FlowToolbar({
   modeActions,
   icons,
   extraChips,
-}: ToolbarSlots & {isMobile: boolean; flushBottom?: boolean; icons: React.ReactNode; extraChips: React.ReactNode}) {
-  const phoneRow = isPhoneRow(isMobile, modeSwitch);
+}: ToolbarSlots & {
+  isMobile: boolean;
+  /** Placed as a phone's row with Collection (`isPhoneRow`), as the sort's width is. */
+  phoneRow: boolean;
+  flushBottom?: boolean;
+  icons: React.ReactNode;
+  extraChips: React.ReactNode;
+}) {
   return (
     <div data-testid="browse-toolbar" style={getToolbarStyle(isMobile, flushBottom)}>
       {filters}
@@ -576,7 +583,7 @@ function FlowToolbar({
  * Collection, so the three keep one line at any phone width and switching modes moves none
  * of them. The chips get a row of their own under all three.
  */
-const isPhoneRow = (isMobile: boolean, modeSwitch: React.ReactNode) => isMobile && modeSwitch !== undefined;
+const isPhoneRow = (isMobile: boolean, modeSwitch: React.ReactNode) => isMobile && Boolean(modeSwitch);
 
 /**
  * Docked, Filters and the sort share the panel's width in both modes: the sort takes
@@ -620,6 +627,7 @@ export function BrowseToolbar({
   // Filters dialog and surface as a chip instead (see buildHiddenIconChips).
   const showCost = useInlineCostFilters();
   const parts = toolbarParts(isMobile, docked);
+  const phoneRow = isPhoneRow(isMobile, modeSwitch);
   const chips = buildActiveChips({
     iconsHidden: parts.iconsHidden,
     showCost,
@@ -653,7 +661,7 @@ export function BrowseToolbar({
         onChange={onSortChange}
         ariaLabel="Sort cards"
         isMobile={isMobile}
-        style={docked || isPhoneRow(isMobile, modeSwitch) ? FILL_SORT_STYLE : undefined}
+        style={docked || phoneRow ? FILL_SORT_STYLE : undefined}
       />
     ),
     search: (
@@ -679,6 +687,13 @@ export function BrowseToolbar({
     />
   ) : null;
   return (
-    <FlowToolbar {...slots} isMobile={isMobile} flushBottom={flushBottom} icons={icons} extraChips={extraChips} />
+    <FlowToolbar
+      {...slots}
+      isMobile={isMobile}
+      phoneRow={phoneRow}
+      flushBottom={flushBottom}
+      icons={icons}
+      extraChips={extraChips}
+    />
   );
 }

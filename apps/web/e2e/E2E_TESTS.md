@@ -231,7 +231,7 @@ At page load, the Supabase SDK is downloaded only when there is a session to res
 | a stored session downloads the Supabase SDK to restore it | An `inkweave:auth` entry seeded before load makes `/browse` request the SDK (all projects) |
 | the sign-in control opens the provider dialog | Clicking it opens the `SignInDialog`. Stops at the provider choice: signing in needs a real round-trip no placeholder project can serve |
 
-## `collection-mode.spec.ts`: 43 tests (1 every project, 5 chromium only, 26 desktop only, 10 on every project at phone viewports, 1 desktop only at a phone viewport)
+## `collection-mode.spec.ts`: 44 tests (1 every project, 5 chromium only, 26 desktop only, 11 on every project at phone viewports, 1 desktop only at a phone viewport)
 
 Covers Browse's collection mode (#553 Phase C), which ships behind `VITE_SHOW_COLLECTION` (default OFF). The flag REQUIRES `VITE_SHOW_ACCOUNTS`, and `playwright.config.ts` pins both ON. The Collection button is gated on sign-in (owner ruling 2026-10-07).
 

@@ -310,7 +310,12 @@ describe('BrowseToolbar on Browse', () => {
     expect(sort().style.flexGrow).toBe('');
     tablet.unmount();
 
-    render(<BrowseToolbar {...defaultProps({...search, isMobile: true})} />);
+    const noSwitch = render(<BrowseToolbar {...defaultProps({...search, isMobile: true})} />);
+    expect(sort().style.flexGrow).toBe('');
+    noSwitch.unmount();
+
+    // A slot a caller fills with `{flag && <Switch />}` holds no Collection either.
+    render(<BrowseToolbar {...defaultProps({...search, modeSwitch: false, isMobile: true})} />);
     expect(sort().style.flexGrow).toBe('');
   });
 
