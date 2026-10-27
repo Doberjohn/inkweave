@@ -122,14 +122,14 @@ const UNMEASURED: ScrollerView = {width: 0, top: 0, height: 0};
  * The scroller's view: the grid's width, the scroll offset and the scroller's height, read before
  * paint, after a commit that can change the rows' total height, and on scroll and resize. A scroll
  * is drawn inside its own event, as react-virtuoso drew it: a render left for later reaches the
- * screen a frame after the scroll, and a fast scroll shows blank rows meanwhile. A new width that
- * comes with the scroller's own new size is drawn inside the resize observer's callback, before the
- * frame paints, for the same reason. A read that would draw the same tiles (`sameWindow`) renders
- * nothing, keeping the view last drawn: a list that changes before the next scroll counts its rows
- * from an offset at most a row from the real one, which `OVERSCAN_ROWS` covers. A hidden scroller
- * measures 0 wide and keeps its last view: the prerender crawl marks a phone page's #root before it
- * reads it, which takes the root out of the layout there (#915). Without ResizeObserver nothing is
- * read, so a resize can't leave a stale window: every tile is drawn.
+ * screen a frame after the scroll, and a fast scroll shows blank rows meanwhile. A new size of the
+ * scroller, and the grid's width with it, is drawn inside the resize observer's callback, before
+ * the frame paints, for the same reason. A read that would draw the same tiles (`sameWindow`)
+ * renders nothing, keeping the view last drawn: a list that changes before the next scroll counts
+ * its rows from an offset at most a row from the real one, which `OVERSCAN_ROWS` covers. A hidden
+ * scroller measures 0 wide and keeps its last view: the prerender crawl marks a phone page's #root
+ * before it reads it, which takes the root out of the layout there (#915). Without ResizeObserver
+ * nothing is read, so a resize can't leave a stale window: every tile is drawn.
  */
 function useScrollerView(
   scrollerRef: RefObject<HTMLElement | null>,
@@ -162,18 +162,17 @@ function useScrollerView(
     readRef.current = read;
     read();
     scroller.addEventListener('scroll', onScroll, {passive: true});
-    // A new width is drawn before the paint, as a scroll is: a window resize or the docked Filters
-    // panel would otherwise paint a frame of room worked out from the old width. A box that
-    // changes inside the callback no deeper than the shallowest box reported is left undelivered,
-    // and the observer raises its loop error, which Sentry would report. So the render happens
-    // here only when the scroller's box is among those reported, as a resize's or the panel's
-    // is, and then changes only the grid's box, which is deeper. And the box watched is the
-    // scroller's border box, which a scrollbar the render brings in or takes away leaves as it
-    // is. A scrollbar's new width has been read by the commit already (below); any other change
-    // is drawn after the paint.
+    // A new size of the scroller is drawn before the paint, as a scroll is: a window resize or the
+    // docked Filters panel would otherwise paint a frame of room worked out from the old width,
+    // or of blank room where a taller view meets rows not drawn yet. A box that changes inside
+    // the callback no deeper than the shallowest box reported is left undelivered, and the
+    // observer raises its loop error, which Sentry would report. So the render happens here only
+    // when the scroller's box is among those reported, and then changes only the grid's box,
+    // which is deeper. And the box watched is the scroller's border box, which a scrollbar the
+    // render brings in or takes away leaves as it is. A scrollbar's new width has been read by
+    // the commit already (below); a change of the grid's box alone is drawn after the paint.
     const observer = new ResizeObserver((entries) => {
-      const scrollerResized = entries.some((entry) => entry.target === scroller);
-      if (scrollerResized && grid.getBoundingClientRect().width !== shown.width) flushSync(read);
+      if (entries.some((entry) => entry.target === scroller)) flushSync(read);
       else read();
     });
     // The grid too, which a scrollbar narrows: on CI's WebKit, watching the scroller alone once

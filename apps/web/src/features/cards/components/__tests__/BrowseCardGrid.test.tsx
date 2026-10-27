@@ -240,7 +240,7 @@ describe('BrowseCardGrid window', () => {
 
   it('draws a new width inside the resize observer, before the frame paints', () => {
     // A window resize or the docked Filters panel changes the grid's width without a commit of
-    // its own. Drawn later, the frame would paint room worked out from the old width (#1052).
+    // its own. Drawn later, the frame would paint room worked out from the old width.
     measureScroller();
     const {roomAt1100, roomAt820} = renderAt820();
 
@@ -251,6 +251,20 @@ describe('BrowseCardGrid window', () => {
 
     expect(roomAt820).not.toBe(roomAt1100);
     expect(grid().style.paddingBottom).toBe(roomAt1100);
+  });
+
+  it('draws a taller view inside the resize observer, before the frame paints', () => {
+    // A window made taller brings rows into view past the one drawn beyond its bottom edge.
+    // Drawn later, the frame would show their room blank.
+    measureScroller();
+    render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
+    const drawnBefore = tileNames().length;
+
+    vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', false);
+    view.height = 1400;
+    resized();
+
+    expect(tileNames().length).toBeGreaterThan(drawnBefore);
   });
 
   it("draws a new width after the paint when the scroller's box is not among those reported", async () => {
