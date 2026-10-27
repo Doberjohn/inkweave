@@ -1,4 +1,5 @@
 import {chromium, type FullConfig, type Page, type Request} from '@playwright/test';
+import {stubCardArt} from './fixtures/cardArtStub';
 
 /** The pages accessibility.spec.ts opens first: each is a lazy page chunk to compile. */
 const WARM_ROUTES = [
@@ -82,6 +83,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
   const browser = await chromium.launch();
   try {
     const context = await browser.newContext({baseURL});
+    await stubCardArt(context);
     const started = Date.now();
     const queue = [...WARM_ROUTES];
     const warmFromQueue = async () => {
