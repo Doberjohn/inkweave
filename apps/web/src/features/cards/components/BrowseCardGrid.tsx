@@ -122,13 +122,14 @@ const UNMEASURED: ScrollerView = {width: 0, top: 0, height: 0};
  * The scroller's view: the grid's width, the scroll offset and the scroller's height, read before
  * paint, after a commit that can change the rows' total height, and on scroll and resize. A scroll
  * is drawn inside its own event, as react-virtuoso drew it: a render left for later reaches the
- * screen a frame after the scroll, and a fast scroll shows blank rows meanwhile. A read that would
- * draw the same tiles (`sameWindow`) renders nothing, keeping the view last drawn: a list that
- * changes before the next scroll counts its rows from an offset at most a row from the real one,
- * which `OVERSCAN_ROWS` covers. A hidden scroller measures 0 wide and keeps its last view: the
- * prerender crawl marks a phone page's #root before it reads it, which takes the root out of the
- * layout there (#915). Without ResizeObserver nothing is read, so a resize can't leave a stale
- * window: every tile is drawn.
+ * screen a frame after the scroll, and a fast scroll shows blank rows meanwhile. A new width is
+ * drawn inside the resize observer's callback, before the frame paints, for the same reason. A
+ * read that would draw the same tiles (`sameWindow`) renders nothing, keeping the view last drawn:
+ * a list that changes before the next scroll counts its rows from an offset at most a row from the
+ * real one, which `OVERSCAN_ROWS` covers. A hidden scroller measures 0 wide and keeps its last
+ * view: the prerender crawl marks a phone page's #root before it reads it, which takes the root out
+ * of the layout there (#915). Without ResizeObserver nothing is read, so a resize can't leave a
+ * stale window: every tile is drawn.
  */
 function useScrollerView(
   scrollerRef: RefObject<HTMLElement | null>,
@@ -161,7 +162,17 @@ function useScrollerView(
     readRef.current = read;
     read();
     scroller.addEventListener('scroll', onScroll, {passive: true});
-    const observer = new ResizeObserver(read);
+    // A new width is drawn before the paint, as a scroll is: a window resize or the docked Filters
+    // panel would otherwise paint a frame of room worked out from the old width. Only a new width,
+    // which they bring with the scroller's own box: the render's change to the grid's height is
+    // then a deeper box, which the observer reports again in this frame instead of leaving it
+    // undelivered (its loop error, which Sentry would report). A scrollbar's new width has been
+    // read by the commit already (below); a change of the grid's height alone is drawn after the
+    // paint.
+    const observer = new ResizeObserver(() => {
+      if (grid.getBoundingClientRect().width !== shown.width) flushSync(read);
+      else read();
+    });
     // The grid too, which a scrollbar narrows: on CI's WebKit, watching the scroller alone once
     // left the undrawn rows' room measured from the width before its scrollbar appeared.
     observer.observe(scroller);
@@ -173,9 +184,10 @@ function useScrollerView(
     };
   }, [scrollerRef, gridRef]);
   // A commit that changes the rows' total height (the first measured, a new width, another list)
-  // can bring a classic scrollbar in or take it away, and with it the grid's width. The observer
-  // sees that within the frame, but its render lands after the paint, which would show room worked
-  // out from the old width: so such a commit reads again. A scroll keeps the total as it was.
+  // can bring a classic scrollbar in or take it away, and with it the grid's width: so such a
+  // commit reads again, before the paint. The observer sees it in that frame too, but as a change
+  // of the grid's box alone (the scroller's stays put), and a render inside its callback would
+  // change that box again, which leaves an observation undelivered. A scroll keeps the total.
   useLayoutEffect(() => {
     readRef.current();
   }, [view.width, count]);

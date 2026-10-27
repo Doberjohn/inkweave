@@ -43,6 +43,10 @@ type GridWindow = Window & {
   blankFrames: {count: number; stopped: boolean};
   /** The scroller's scrollHeight at the first frame that drew a tile. */
   firstScrollHeight?: number;
+  /** The scroller's scrollHeight at the first frame with the grid at a new width. */
+  nextWidthHeight?: number;
+  /** The messages of the error events the page raised on window. */
+  windowErrors: string[];
 };
 
 /**
@@ -147,6 +151,36 @@ async function scrollTo(page: Page, top: number) {
   );
   expect(blank, `frames with a blank row, scrolling to ${top}`).toBe(0);
   return (await readGrid(page))!;
+}
+
+/**
+ * Notes the scroller's height in the next frame that lays the grid out at another width, as that
+ * frame paints it: from a resize observer made after the grid's own, which runs after it.
+ */
+function watchNextWidth(page: Page) {
+  return page.locator(SCROLLER).evaluate((scroller) => {
+    const grid = scroller.firstElementChild!;
+    const seen = window as unknown as GridWindow;
+    seen.nextWidthHeight = undefined;
+    const width = grid.getBoundingClientRect().width;
+    const observer = new ResizeObserver(() => {
+      if (grid.getBoundingClientRect().width === width) return;
+      seen.nextWidthHeight = scroller.scrollHeight;
+      observer.disconnect();
+    });
+    observer.observe(grid);
+  });
+}
+
+/**
+ * Collects the error events the page raises on window. A resize observer's "loop completed with
+ * undelivered notifications" is one: the console guard and Playwright's pageerror never see it,
+ * and Sentry would report it.
+ */
+function collectWindowErrors() {
+  const errors: string[] = [];
+  (window as unknown as GridWindow).windowErrors = errors;
+  window.addEventListener('error', (event) => errors.push(event.message));
 }
 
 const onPhone = (testInfo: TestInfo) => testInfo.project.name.startsWith('mobile-');
@@ -466,6 +500,54 @@ test.describe("Browse's grid", () => {
       await wheelUntil(-600, (drawn) => drawn.firstTop - drawn.viewTop > roomAbove(onPhone(testInfo)) - 0.5);
     });
     expect(blank, 'frames with a blank row').toBe(0);
+  });
+
+  test("holds its rows' room from the first frame after a resize or the Filters panel", async ({
+    page,
+  }, testInfo) => {
+    if (onPhone(testInfo)) test.skip();
+    await page.addInitScript(collectWindowErrors);
+    await page.setViewportSize({width: 1600, height: 900});
+    await openBrowse(page);
+    await scrollTo(page, Math.round((await maxScrollTop(page)) / 2));
+    // A width the window or the docked panel changes, drawn a frame late, paints the drawn tiles
+    // in the new columns under room worked out from the old width (#1052).
+    const changes: [string, () => Promise<unknown>][] = [
+      [
+        'the window 40 px narrower, as many columns',
+        () => page.setViewportSize({width: 1560, height: 900}),
+      ],
+      [
+        'the window at 1280 px, fewer columns',
+        () => page.setViewportSize({width: 1280, height: 900}),
+      ],
+      [
+        'the Filters panel closed, more columns',
+        () => page.getByRole('button', {name: 'Filters', exact: true}).click(),
+      ],
+    ];
+    for (const [change, act] of changes) {
+      await watchNextWidth(page);
+      await act();
+      // Waits for the height to be noted, not to be truthy: a height of 0 fails below, with the
+      // number.
+      const noted = await page.waitForFunction(() => {
+        const height = (window as unknown as GridWindow).nextWidthHeight;
+        return height === undefined ? false : {height};
+      });
+      const {height: first} = (await noted.jsonValue()) as {height: number};
+      await frames(page, 2);
+      const settled = await page.locator(SCROLLER).evaluate((s) => s.scrollHeight);
+      expect(first, `the first frame's scrollHeight with ${change}`).toBe(settled);
+    }
+    // Then through 30 widths: a render inside the grid's observer must leave none of its
+    // observations undelivered.
+    for (let width = 1024; width <= 1900; width += 30) {
+      await page.setViewportSize({width, height: 900});
+      await frames(page, 1);
+    }
+    const errors = await page.evaluate(() => (window as unknown as GridWindow).windowErrors);
+    expect(errors, 'error events the page raised on window').toEqual([]);
   });
 
   test("shows a new order's cards at once while scrolled far down", async ({page}) => {

@@ -218,6 +218,29 @@ describe('BrowseCardGrid window', () => {
     expect(grid().style.paddingBottom).toBe(`${24 + 6 * ROW}px`);
   });
 
+  it('draws a new width inside the resize observer, before the frame paints', () => {
+    // A window resize or the docked Filters panel changes the grid's width without a commit of
+    // its own. Drawn later, the frame would paint room worked out from the old width (#1052).
+    measureScroller();
+    view.width = 1100;
+    const {unmount} = render(
+      <BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />,
+    );
+    const roomAtWidth = grid().style.paddingBottom;
+    unmount();
+    view.width = 820;
+    render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
+    const roomBefore = grid().style.paddingBottom;
+
+    // Outside act, which would also flush an update left for later.
+    vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', false);
+    view.width = 1100;
+    resized();
+
+    expect(roomBefore).not.toBe(roomAtWidth);
+    expect(grid().style.paddingBottom).toBe(roomAtWidth);
+  });
+
   it('moves the window as the scroller scrolls', () => {
     measureScroller();
     render(<BrowseCardGrid cards={cards} isLoading={false} onCardSelect={vi.fn()} />);
