@@ -38,10 +38,13 @@
     color var(--segmented-motion);
 }
 
-/* A held option takes no hover. */
-.segmented-btn:hover:where(:not([aria-disabled='true'])) {
-  background: var(--segmented-hover);
-  color: var(--segmented-text-hover);
+/* A held option takes no hover, and nor does a touch screen, where :hover sticks to the last
+   option tapped. */
+@media (hover: hover) {
+  .segmented-btn:hover:where(:not([aria-disabled='true'])) {
+    background: var(--segmented-hover);
+    color: var(--segmented-text-hover);
+  }
 }
 
 .segmented-btn[aria-pressed='true'] {
@@ -65,7 +68,8 @@
 /* fill: the buttons share the row from the group's pad. They sit two by two in a pair, which
    never wraps inside, so where one line can't hold them all (a 320px phone) the second pair takes
    the next line whole. A pair grows by its button count, from the gap inside it, so on a line
-   they share every button takes the same width, an odd count's last one, alone in its pair, too.
+   they share every button gets an equal share, an odd count's last one, alone in its pair, too.
+   A label wider than its share keeps its width (nowrap, min-width auto) and the others give way.
    A lone button alone on the last line fills that line. */
 .segmented[data-fill='true'] {
   display: flex;

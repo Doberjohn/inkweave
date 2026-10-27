@@ -48,6 +48,15 @@ describe('Panel', () => {
     expect(screen.queryByRole('region')).not.toBeInTheDocument();
   });
 
+  it('draws no header row for an action that renders nothing, such as a false condition', () => {
+    const {container} = render(
+      <Panel action={false} padded={false}>
+        <p>Body only</p>
+      </Panel>,
+    );
+    expect(container.querySelector('section')?.children).toHaveLength(1);
+  });
+
   it('lets its title take focus from script, but never from Tab, when asked', () => {
     const {rerender} = render(
       <Panel title="Engine view">

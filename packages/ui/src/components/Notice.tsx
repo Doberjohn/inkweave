@@ -30,6 +30,9 @@ interface NoticeProps {
 export function Notice({tone = 'info', children}: NoticeProps) {
   return (
     <div
+      // A loading notice that turns into the error one mounts a new box: some screen readers
+      // never announce an alert whose role arrives with its text on a box already there.
+      key={tone}
       role={tone === 'error' ? 'alert' : undefined}
       style={{
         ...TONES[tone],

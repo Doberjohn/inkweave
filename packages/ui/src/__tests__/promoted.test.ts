@@ -18,16 +18,18 @@ const ADMIN_REACH = /\badm-|ADMIN_|app-bridge/;
 const at = (path: string) => new URL(`../${path}`, import.meta.url);
 const read = (path: string) => (existsSync(at(path)) ? readFileSync(at(path), 'utf8') : '');
 
-// Read at module scope (tests.md): each pick's files, and its source with its stylesheet.
+// Read at module scope (tests.md): each pick's files, and every one of them as text, so a story
+// or test ported from admin's can't bring an admin class along either.
 const PICKS = PROMOTED.map((path) => {
   const slash = path.lastIndexOf('/');
   const tests = `${path.slice(0, slash)}/__tests__/${path.slice(slash + 1)}.test.tsx`;
+  const files = [`${path}.tsx`, `${path}.css`, `${path}.stories.tsx`, tests];
   return {
     path,
     module: existsSync(at(`${path}.tsx`)),
     story: existsSync(at(`${path}.stories.tsx`)),
     test: existsSync(at(tests)),
-    source: read(`${path}.tsx`) + read(`${path}.css`),
+    source: files.map(read).join('\n'),
   };
 });
 

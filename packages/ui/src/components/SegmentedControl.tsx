@@ -49,8 +49,9 @@ interface SegmentedControlProps<T extends string> {
    * Stretch the options across the width the control is given, padded 4px at the least. They
    * sit two by two (inPairs), so where one line can't hold them all a whole pair moves to the
    * next (`.segmented[data-fill='true']`, `.segmented-pair`). On a line they share, every button
-   * takes the same width, an odd count's lone last one too; a lone button alone on the last line
-   * fills that line. Default false: the control is as wide as its options.
+   * gets an equal share, an odd count's lone last one too, though a label wider than its share
+   * keeps its width and the others give way; a lone button alone on the last line fills that
+   * line. Default false: the control is as wide as its options.
    */
   fill?: boolean;
   /**
@@ -65,7 +66,7 @@ interface SegmentedControlProps<T extends string> {
 /**
  * Fill's buttons, two to a pair: a row that wraps them goes two and two, never three and one. A
  * pair of one, an odd count's last, says so (data-lone): on a line it shares, it takes one
- * button's width, and alone on the last line it fills that line.
+ * button's share, and alone on the last line it fills that line.
  */
 function inPairs(buttons: React.ReactElement[]) {
   const pairs: React.ReactElement[] = [];

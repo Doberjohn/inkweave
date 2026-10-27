@@ -23,6 +23,14 @@ interface PanelProps {
   titleFocusable?: boolean;
 }
 
+/**
+ * One rule for the title and the action, so `action={loading && <Spinner />}` draws no empty
+ * header and `title={0}` no bare "0": a node React would render as nothing counts as none.
+ */
+function hasContent(node: React.ReactNode) {
+  return node != null && node !== false && node !== '' && node !== true;
+}
+
 /** The header row: the h2 title on the left, the action on the right. Flush panels pad it and rule it off. */
 function PanelHeader({
   title,
@@ -46,7 +54,7 @@ function PanelHeader({
               borderBottom: `1px solid ${NEUTRAL_LADDER.border}`,
             }),
       }}>
-      {title && (
+      {hasContent(title) && (
         <h2
           id={titleId}
           tabIndex={titleFocusable ? -1 : undefined}
@@ -54,7 +62,7 @@ function PanelHeader({
           {title}
         </h2>
       )}
-      {action != null && (
+      {hasContent(action) && (
         <div style={{marginLeft: 'auto', fontSize: FONT_SIZES.md, color: COLORS.textMuted}}>
           {action}
         </div>
@@ -73,7 +81,7 @@ export function Panel({title, action, children, padded = true, titleFocusable}: 
   const titleId = useId();
   return (
     <section
-      aria-labelledby={title ? titleId : undefined}
+      aria-labelledby={hasContent(title) ? titleId : undefined}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -89,7 +97,7 @@ export function Panel({title, action, children, padded = true, titleFocusable}: 
         // A flush table's corners would poke past the radius.
         overflow: padded ? undefined : 'hidden',
       }}>
-      {(Boolean(title) || action != null) && (
+      {(hasContent(title) || hasContent(action)) && (
         <PanelHeader
           title={title}
           titleId={titleId}
