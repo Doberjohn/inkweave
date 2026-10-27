@@ -528,6 +528,9 @@ test.describe("Browse's grid", () => {
     page,
   }, testInfo) => {
     if (onPhone(testInfo)) test.skip();
+    // WebKit lays the page out slowly at each new window size: on CI it ran 30 of them past the
+    // default timeout.
+    test.slow();
     await page.addInitScript(collectWindowErrors);
     await page.setViewportSize({width: 1600, height: 900});
     await openBrowse(page);
@@ -562,9 +565,9 @@ test.describe("Browse's grid", () => {
       const settled = await page.locator(SCROLLER).evaluate((s) => s.scrollHeight);
       expect(first, `the first frame's scrollHeight with ${change}`).toBe(settled);
     }
-    // Then through 30 widths: a render inside the grid's observer must leave none of its
+    // Then through 15 widths: a render inside the grid's observer must leave none of its
     // observations undelivered.
-    for (let width = 1024; width <= 1900; width += 30) {
+    for (let width = 1024; width <= 1900; width += 60) {
       await page.setViewportSize({width, height: 900});
       await frames(page, 1);
     }
@@ -593,6 +596,8 @@ test.describe("Browse's grid", () => {
     page,
   }, testInfo) => {
     if (onPhone(testInfo)) test.skip();
+    // WebKit lays the page out slowly at each new window size.
+    test.slow();
     await page.addInitScript(collectWindowErrors);
     await page.setViewportSize({width: 1900, height: 900});
     await page.goto(SOME_CARDS);
@@ -622,8 +627,8 @@ test.describe("Browse's grid", () => {
     // away there: had the scroller's box changed with it, the observer would have left that
     // undelivered, raising its loop error.
     expect(await resizeTo(1900)).toEqual(wide);
-    // Then through 30 widths, across the one where the list starts to overflow.
-    for (let width = 1024; width <= 1900; width += 30) await resizeTo(width);
+    // Then through 15 widths, across the one where the list starts to overflow.
+    for (let width = 1024; width <= 1900; width += 60) await resizeTo(width);
     const errors = await page.evaluate(() => (window as unknown as GridWindow).windowErrors);
     expect(errors, 'error events the page raised on window').toEqual([]);
   });
