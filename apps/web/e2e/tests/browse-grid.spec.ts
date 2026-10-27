@@ -1,5 +1,6 @@
 import type {Page, TestInfo} from '@playwright/test';
 import {test, expect} from '../fixtures';
+import {ART} from '../fixtures/cardArtStub';
 import {LAYOUT, SPACING} from 'inkweave-ui/tokens/theme';
 
 /**
@@ -287,12 +288,6 @@ async function search(page: Page, isPhone: boolean, name: string) {
     await expect(input).toHaveValue(name);
   }
 }
-
-/** A 1x1 PNG: art for a tile, which keeps its image only while its art loads. */
-const ART = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
-  'base64',
-);
 
 /**
  * Phones as their browsers show a page, with the bars showing: the five the owner compared before

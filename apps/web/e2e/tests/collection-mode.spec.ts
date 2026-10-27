@@ -1467,6 +1467,8 @@ test.describe('Collection mode, signed in (phone width)', () => {
   test('the phone binder has no axe violations, on a page and on its cover, and with the Binder sheet open', async ({page}, testInfo) => {
     // Desktop only, as accessibility.spec.ts's audits are: a phone's size draws the phone binder.
     test.skip(testInfo.project.name.startsWith('mobile-'), 'axe audits run on the desktop projects');
+    // Every pocket needs its art, which the fixture answers (cardArtStub.ts): one whose art fails
+    // shows the card's cost, which its name lacks (axe's label-content-name-mismatch).
     await page.setViewportSize({width: 390, height: 844});
     await signInAsCollector(page, ENTRIES);
     await openPhoneBinder(page, `/browse?binder=${SET}`);

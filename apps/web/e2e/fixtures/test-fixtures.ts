@@ -20,11 +20,6 @@ type TestOptions = {
    * that set it with `test.use` allow them, so the same message anywhere else still fails.
    */
   expectedConsoleErrors: readonly RegExp[];
-  /**
-   * Load card art through the E2E server's proxy to Ravensburger's CDN instead of the
-   * 1x1 stand-in every other spec gets (cardArtStub.ts). For a test that needs the art itself.
-   */
-  realCardArt: boolean;
 };
 
 /**
@@ -80,15 +75,14 @@ const BENIGN_CONSOLE: readonly RegExp[] = [
 // Note: `use` is Playwright's fixture function, not a React Hook.
 export const test = base.extend<TestFixtures & TestOptions>({
   expectedConsoleErrors: [[], {option: true}],
-  realCardArt: [false, {option: true}],
   // Override the built-in `page` fixture so every spec inherits the guard.
-  page: async ({page, expectedConsoleErrors, realCardArt}, use) => {
+  page: async ({page, expectedConsoleErrors}, use) => {
     // Before anything navigates: the placeholder Supabase host does not resolve, and the
     // guard below would fail on the resulting network errors. See supabaseStub.ts.
     await stubSupabase(page);
     // Proxied art can hold every connection to the dev server, and a page's code and data
     // then wait behind it. See cardArtStub.ts.
-    if (!realCardArt) await stubCardArt(page);
+    await stubCardArt(page);
     // A production build (E2E_SERVER=preview, #869) loads <Analytics/>'s and <SpeedInsights/>'s
     // scripts from /_vercel/, which only Vercel serves. Answer with an empty script instead of
     // vite preview's 404, which each browser reports in its own words. On the dev server they
