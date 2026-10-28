@@ -59,6 +59,8 @@
         "!apps/web/dist/assets/AccountFriends-*.js",
         "!apps/web/dist/assets/sharingRepository-*.js",
         "!apps/web/dist/assets/FriendChip-*.js",
+        "!apps/web/dist/assets/WindowFriends-*.js",
+        "!apps/web/dist/assets/friendBinderPath-*.js",
         "!apps/web/dist/assets/supabaseClient-*.js",
         "!apps/web/dist/assets/posthogClient-*.js"
       ],
@@ -94,9 +96,11 @@
         "apps/web/dist/assets/AccountCollection-*.js",
         "apps/web/dist/assets/AccountFriends-*.js",
         "apps/web/dist/assets/sharingRepository-*.js",
-        "apps/web/dist/assets/FriendChip-*.js"
+        "apps/web/dist/assets/FriendChip-*.js",
+        "apps/web/dist/assets/WindowFriends-*.js",
+        "apps/web/dist/assets/friendBinderPath-*.js"
       ],
-      "limit": "83 kB",
+      "limit": "92 kB",
       "gzip": true
     },
     {

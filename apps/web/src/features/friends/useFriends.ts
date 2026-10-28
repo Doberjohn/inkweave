@@ -4,29 +4,27 @@ import type {PublicIdentity} from '../profile';
 import {SHOW_COLLECTION} from '../collection/flag';
 import {
   SEND_FAILED,
+  UNNAMED,
   acceptFriendRequest,
   claimFriendCode,
   listFriendIdentities,
   listFriendships,
   listSharingFriends,
+  namedFriend,
+  otherSide,
   removeFriendship,
   sendFriendRequest,
   type Friendship,
   type FriendshipPair,
+  type NamedFriend,
   type SentRequest,
 } from './friendRepository';
 
-/** What a row shows when the other player has no public name yet. */
-export const UNNAMED = 'Inkweave player';
 const ACTION_FAILED = "That didn't go through. Try again.";
 const ACCEPT_GONE = 'That request is no longer there.';
 
 /** One person in the section's lists. */
-export interface FriendRow {
-  /** The other player's account id. */
-  id: string;
-  name: string;
-  handle: string | null;
+export interface FriendRow extends NamedFriend {
   /** When you became friends, or null while a request waits. */
   since: string | null;
   /** The row's two ids, which name it for a decline, a cancel or a remove. */
@@ -60,16 +58,9 @@ interface View {
 
 const EMPTY: Snapshot = {code: null, received: [], sent: [], friends: []};
 
-const otherSide = (row: Friendship, userId: string) =>
-  row.requesterId === userId ? row.addresseeId : row.requesterId;
-
 function toRow(row: Friendship, userId: string, names: Map<string, PublicIdentity>): FriendRow {
-  const id = otherSide(row, userId);
-  const identity = names.get(id);
   return {
-    id,
-    name: identity?.displayName ?? UNNAMED,
-    handle: identity?.handle ?? null,
+    ...namedFriend(otherSide(row, userId), names),
     since: row.acceptedAt,
     pair: {requesterId: row.requesterId, addresseeId: row.addresseeId},
   };

@@ -81,10 +81,14 @@ export function useModalPrinting(
   return {printings, index, select, settle, locked: inComparison};
 }
 
-/** The window's row under its card (#826), as `CopiesSlot` needs it. */
+type Attach = (el: HTMLElement | null) => void;
+
+/** The window's row under its card (#826), and its friends slot, as `CopiesSlot` and `FriendsSlot` need them. */
 export interface CopiesSlotState {
   /** Hands the slot's element to its host, and null once it goes: `CardModalContext`'s `copiesSlot`. */
-  attach: (el: HTMLElement | null) => void;
+  attach: Attach;
+  /** The same for the friends slot, beside the set's logo on a computer, under the copies on a phone; absent where the host keeps none. */
+  attachFriends?: Attach;
   /** The window's own key handling (the Tab trap, the arrows' paging), for keys pressed in the slot. */
   onKeyDown: (e: KeyboardEvent) => void;
 }
@@ -92,12 +96,13 @@ export interface CopiesSlotState {
 /** Null where nothing hosts a slot: a story, a test, or a window outside `CardModalProvider`. */
 export const CopiesSlotContext = createContext<CopiesSlotState | null>(null);
 
-/** The row under the card, wired to the window's own keys, or null where no page holds one. */
+/** The row under the card and the friends slot, wired to the window's own keys, or null where no page holds the row. */
 export function pickCopiesSlot(
-  attach: ((el: HTMLElement | null) => void) | undefined,
+  attach: Attach | undefined,
+  attachFriends: Attach | undefined,
   onKeyDown: (e: KeyboardEvent) => void,
 ): CopiesSlotState | null {
-  return attach ? {attach, onKeyDown} : null;
+  return attach ? {attach, attachFriends, onKeyDown} : null;
 }
 
 /**

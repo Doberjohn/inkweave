@@ -1,5 +1,5 @@
 import {Suspense, useEffect, useRef, useState, type ReactNode} from 'react';
-import {useSearchParams} from 'react-router-dom';
+import {useLocation, useSearchParams, type Location} from 'react-router-dom';
 import {SET_PARAM, SORT_PARAM} from '../../shared/hooks/useFilterParams';
 import {trackEvent} from '../../shared/lib/analytics';
 import {lazyWithRetry} from '../../shared/lib/lazyWithRetry';
@@ -47,6 +47,8 @@ import {BinderSheet, type BinderSheetProps} from './BinderSheet';
 import type {CompareCounts} from './BinderShows';
 import {FriendBinderBanner, FriendNotSharing} from './FriendBinderBanner';
 import {useFriendCollection, type FriendBinder} from './useFriendCollection';
+import type {BinderStart} from './CollectionBinderSection';
+import type {AtCard} from './FriendsWhoHaveIt';
 import {
   BinderChunkFallback,
   DockedSetBodyFallback,
@@ -82,6 +84,8 @@ const ImportCollectionDialog = lazyWithRetry(
   () => import('./ImportCollectionDialog'),
   'ImportCollectionDialog',
 );
+// Friends who have it, and the friends' reads behind it: loaded only with the friends flag on.
+const WindowFriends = lazyWithRetry(() => import('./WindowFriends'), 'WindowFriends');
 
 /**
  * Starts the binder's chunk on intent (#913): one request for the binder, its docked set panel
@@ -452,6 +456,12 @@ function countScopeOnce(scope: CompareScope, compare: Compare, axis: Axis): Comp
 const shownOf = (show: BinderShow, compare: Compare | null): BinderShow =>
   compare === null && comparesWith(show) ? 'all' : show;
 
+/** The card a friend's binder opens at: Friends who have it's row names it in the router's state, never the address. */
+function startAtOf({state, key}: Location): BinderStart | undefined {
+  const atCard = (state as Partial<AtCard> | null)?.atCard;
+  return typeof atCard === 'string' ? {cardId: atCard, key} : undefined;
+}
+
 /** A friend who doesn't share, or whose binder didn't load, leaves the binder's place to a line saying so. */
 const hidesPanel = (friend: FriendBinder | null) => friend?.status === 'not-sharing' || friend?.status === 'failed';
 
@@ -544,6 +554,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   const friendView = useFriendView(collectionMode ? friendHandle : null, user?.id ?? null, leaveFriend);
   const {friend} = friendView;
   const show = shownOf(asked, friendView.compare);
+  const location = useLocation();
 
   // Only collection mode (or the import, which parses against the full pool)
   // widens the pool, so a visitor who never switches fetches no chunks at all.
@@ -661,6 +672,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           onCardSelect={onCardSelect}
           // A friend's binder is read only: no − and + in its pockets.
           onCountChange={friend === null ? changeCount : undefined}
+          startAt={friend === null ? undefined : startAtOf(location)}
         />
       </Suspense>
     );
@@ -714,6 +726,11 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
       )}
       {/* The card window keeps your own copies, in a friend's binder too. */}
       <WindowCopies onEdit={keep} />
+      {SHOW_FRIENDS && user !== null && hasCollection && (
+        <Suspense fallback={null}>
+          <WindowFriends axis={ownsAxis(setCode, axis)} />
+        </Suspense>
+      )}
     </>
   );
 

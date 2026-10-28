@@ -369,13 +369,15 @@ function renderPrintingModal(
  * (#826): from OUTSIDE the window's tree, so React sends the button's events up this host, never
  * up the window. A button appended to the slot by hand would be found under the window's own tree.
  */
-function SlotHost({onShownPrintingChange, onGoToSibling = () => {}, comparison = false}: {
+function SlotHost({onShownPrintingChange, onGoToSibling = () => {}, comparison = false, isMobile = false}: {
   onShownPrintingChange?: (printingId: string | null) => void;
   onGoToSibling?: (d: 1 | -1) => void;
   /** Opens on a comparison of the card with another. */
   comparison?: boolean;
+  isMobile?: boolean;
 }) {
   const [slot, setSlot] = useState<HTMLElement | null>(null);
+  const [friendsSlot, setFriendsSlot] = useState<HTMLElement | null>(null);
   const card = withEnchanted(makeCard('b'));
   return (
     <MemoryRouter>
@@ -388,12 +390,15 @@ function SlotHost({onShownPrintingChange, onGoToSibling = () => {}, comparison =
         siblingCardIds={['a', 'b', 'c']}
         onGoToSibling={onGoToSibling}
         copiesSlotRef={setSlot}
+        friendsSlotRef={setFriendsSlot}
+        isMobile={isMobile}
         onShownPrintingChange={onShownPrintingChange}
         initialComparison={
           comparison ? {cardA: card, cardB: makeCard('c'), connections: [], aggregateScore: 5} : undefined
         }
       />
       {slot && createPortal(<button type="button">Add a copy</button>, slot)}
+      {friendsSlot && createPortal(<button type="button">2 friends have it</button>, friendsSlot)}
     </MemoryRouter>
   );
 }
@@ -403,6 +408,21 @@ test('hands a page the row under the card, which its content fills inside the wi
   render(<SlotHost />);
 
   expect(screen.getByTestId('card-overview-modal')).toContainElement(screen.getByRole('button', {name: 'Add a copy'}));
+});
+
+test("puts a page's friends count beside the set's logo on a computer, in the window's header", () => {
+  Element.prototype.scrollTo = vi.fn();
+  render(<SlotHost />);
+  const count = screen.getByRole('button', {name: '2 friends have it'});
+  expect(screen.getByRole('heading', {level: 1}).parentElement?.parentElement).toContainElement(count);
+});
+
+test("puts a page's friends count under the copies on a phone, after them in the window", () => {
+  Element.prototype.scrollTo = vi.fn();
+  render(<SlotHost isMobile />);
+  const count = screen.getByRole('button', {name: '2 friends have it'});
+  expect(screen.getByTestId('card-overview-modal')).toContainElement(count);
+  expect(precedes(screen.getByRole('button', {name: 'Add a copy'}), count)).toBe(true);
 });
 
 test('tells the page the printing a turn puts on show, and the Standard art as none', async () => {

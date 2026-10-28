@@ -40,3 +40,23 @@ export function EyeIcon() {
     </svg>
   );
 }
+
+/** Two people, for the friends who have a card, in the same 16px and 1.5px strokes. */
+export function PeopleIcon() {
+  return (
+    <svg aria-hidden="true" width={ICON_SIZE.sm} height={ICON_SIZE.sm} viewBox="0 0 16 16" fill="none">
+      <circle cx="6" cy="5.25" r="2.25" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M1.75 13.25c0-2.35 1.9-4 4.25-4s4.25 1.65 4.25 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M10.75 3.15a2.25 2.25 0 0 1 0 4.2M12 9.4c1.4.5 2.25 1.85 2.25 3.85" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** A right chevron, for a row or a button that opens what it names. */
+export function ChevronIcon() {
+  return (
+    <svg aria-hidden="true" width={ICON_SIZE.sm} height={ICON_SIZE.sm} viewBox="0 0 16 16" fill="none">
+      <path d="M6 3.5L10.5 8 6 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}

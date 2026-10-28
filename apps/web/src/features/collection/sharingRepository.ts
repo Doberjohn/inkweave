@@ -108,6 +108,24 @@ export function getFriendCollection(friendId: string): Promise<RepoResult<Collec
 }
 
 /**
+ * Every collection a friend shares with the caller, by owner id; empty when none does. A row
+ * this app can't read fails the whole read, so no friend's copies drop out of a count unsaid.
+ */
+export function getSharedCollections(): Promise<RepoResult<Map<string, CollectionEntries>>> {
+  return run(async (client) => {
+    const {data, error} = await client.rpc('friend_collections');
+    if (error || !data) return {data: null, error};
+    const byOwner = new Map<string, CollectionEntries>();
+    for (const row of data as FriendRow[]) {
+      const entries = friendEntries(row);
+      if (entries === null) return {data: null, error: {message: `unusable friend collection (schema ${String(row.schema_version)})`}};
+      byOwner.set(String(row.owner_id), entries);
+    }
+    return {data: byOwner, error: null};
+  });
+}
+
+/**
  * A player's id, handle and name, looked up by handle, from their public `profiles` row,
  * which anyone may read once it has a handle. Null when no one has the handle.
  */

@@ -205,4 +205,10 @@ describe('trackEvent', () => {
     trackEvent('friend_binder_opened', props);
     expectSentToBoth('friend_binder_opened', props);
   });
+
+  it('forwards a friends_who_have_it_opened event', () => {
+    const props = {from: 'window'} as const;
+    trackEvent('friends_who_have_it_opened', props);
+    expectSentToBoth('friends_who_have_it_opened', props);
+  });
 });

@@ -16,8 +16,20 @@ interface BottomSheetProps {
   onKeyDown: React.KeyboardEventHandler<HTMLDivElement>;
   /** Per-sheet container deltas (top/maxHeight/inline transition), merged last. */
   sheetStyle?: React.CSSProperties;
+  /** `lightbox` stacks the sheet and its scrim above an open modal, as it does a DialogShell. */
+  layer?: keyof typeof LAYERS;
   children: React.ReactNode;
 }
+
+/**
+ * DialogShell's `modal` and `lightbox` tiers, under the same names, so a dialog and the sheet that
+ * stands in for it on a phone stack alike. A copy, not an import: sharing the map put it in a
+ * chunk of its own, one more request for every dialog.
+ */
+const LAYERS = {
+  modal: {scrim: Z_INDEX.modalBackdrop, panel: Z_INDEX.modal},
+  lightbox: {scrim: Z_INDEX.popoverBackdrop, panel: Z_INDEX.popover},
+} as const;
 
 /**
  * Shared bottom-sheet chrome (#510): the scrim backdrop, slide-up sheet
@@ -36,8 +48,10 @@ export function BottomSheet({
   sheetRef,
   onKeyDown,
   sheetStyle,
+  layer = 'modal',
   children,
 }: BottomSheetProps) {
+  const tiers = LAYERS[layer];
   return (
     <>
       <div
@@ -51,7 +65,7 @@ export function BottomSheet({
           inset: 0,
           // Solid scrim only — no backdrop-filter (WebKit continuous-repaint trap; see #444).
           background: COLORS.scrim,
-          zIndex: Z_INDEX.modalBackdrop,
+          zIndex: tiers.scrim,
         }}
       />
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Tab trap via useDialogFocus) */}
@@ -72,7 +86,7 @@ export function BottomSheet({
           background: COLORS.surface,
           borderRadius: '24px 24px 0 0',
           boxShadow: SHADOWS.sheet,
-          zIndex: Z_INDEX.modal,
+          zIndex: tiers.panel,
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',

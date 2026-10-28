@@ -352,6 +352,12 @@ describe("a friend's binder (#1045)", () => {
     expect(url.searchParams.get(BINDER_PARAM)).toBe(WHOLE_COLLECTION);
     expect(url.searchParams.get(FRIEND_PARAM)).toBe('ruby_hero_042');
   });
+
+  it("links Friends who have it to the friend's binder on the card's set", () => {
+    const url = new URL(friendBinderPath('ruby_hero_042', '12'), 'https://inkweave.ink');
+    expect(url.searchParams.get(BINDER_PARAM)).toBe('12');
+    expect(url.searchParams.get(FRIEND_PARAM)).toBe('ruby_hero_042');
+  });
 });
 
 describe('rarityPicksPromos (owner, 2026-10-20)', () => {

@@ -115,6 +115,19 @@ describe('CollectionBinder', () => {
     expect(firstShown()).toBe('Card 10');
   });
 
+  it("opens on the spread, or a phone's page, holding the card it is asked to start at", () => {
+    const {unmount} = render(binder({startCard: 'c30'}));
+    expect(firstShown()).toBe('Card 13');
+    unmount();
+    render(binder({single: true, startCard: 'c30'}));
+    expect(firstShown()).toBe('Card 28');
+  });
+
+  it('opens at its start when the card to start at has no pocket', () => {
+    render(binder({startCard: 'not-here'}));
+    expect(firstShown()).toBe('Card 1');
+  });
+
   describe("a phone's inside front cover (owner, 2026-10-27)", () => {
     const COVER = <p>The numbers</p>;
     const cover = () => screen.getByRole('group', {name: 'Front cover'});

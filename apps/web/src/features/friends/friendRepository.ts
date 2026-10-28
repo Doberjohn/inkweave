@@ -31,6 +31,28 @@ export interface SentRequest {
   status: FriendStatus;
 }
 
+/** What a friend's name shows when they have no public name yet. */
+export const UNNAMED = 'Inkweave player';
+
+/** A friend as every list names them, the Friends list and Friends who have it alike. */
+export interface NamedFriend {
+  /** Their account id. */
+  id: string;
+  name: string;
+  /** Null for a friend with no public name yet: there is no binder link to them. */
+  handle: string | null;
+}
+
+/** The other player in a friendship row, seen from `userId`'s side. */
+export const otherSide = (row: FriendshipPair, userId: string) =>
+  row.requesterId === userId ? row.addresseeId : row.requesterId;
+
+/** A friend by their public name (`listFriendIdentities`), or `UNNAMED` with no handle when they have none. */
+export function namedFriend(id: string, names: ReadonlyMap<string, PublicIdentity>): NamedFriend {
+  const identity = names.get(id);
+  return {id, name: identity?.displayName ?? UNNAMED, handle: identity?.handle ?? null};
+}
+
 /** What the section shows when a send fails for a reason other than a refusal. */
 export const SEND_FAILED = 'Could not send the request. Try again.';
 

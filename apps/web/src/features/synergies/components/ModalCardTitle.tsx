@@ -1,4 +1,4 @@
-import type {CSSProperties} from 'react';
+import type {CSSProperties, ReactNode} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {
   COLORS,
@@ -21,6 +21,8 @@ interface ModalCardTitleProps {
   printing?: Printing;
   /** `h1` in the modal; the loading fallback, a status region, uses a `div`. */
   as?: 'h1' | 'div';
+  /** After the logo on desktop (the window's friends slot): on the same line, or under a name too long to share it. */
+  trailing?: ReactNode;
 }
 
 /**
@@ -68,23 +70,42 @@ export const LOGO_HEIGHT = 34;
  * reads the name alone. Shared with the loading fallback, so nothing moves when the modal
  * arrives.
  */
-export function ModalCardTitle({card, isMobile, printing, as: Title = 'h1'}: ModalCardTitleProps) {
+export function ModalCardTitle({card, isMobile, printing, as: Title = 'h1', trailing}: ModalCardTitleProps) {
   const logo = !isMobile && card.setCode ? SET_LOGOS[card.setCode] : undefined;
   const setName = SET_NAMES[card.setCode as SetCode] ?? `Set ${card.setCode}`;
   const number = isMobile ? undefined : printedCardNumber(card, printing);
   const name = printedFullName(card, printing?.printedName);
   return (
-    <div style={{display: 'flex', alignItems: 'center', gap: SPACING.md, flex: 1, minWidth: 0}}>
-      <Title style={{...pickModalTitleStyle(isMobile), flex: '0 1 auto'}}>{name}</Title>
-      {number && <CardNumber number={number} />}
-      {logo && (
-        <img
-          src={logo}
-          alt={setName}
-          title={setName}
-          style={{display: 'block', height: LOGO_HEIGHT, width: 'auto', flexShrink: 0}}
-        />
-      )}
+    <div style={TITLE_ROW_STYLE}>
+      <div style={TITLE_STYLE}>
+        <Title style={{...pickModalTitleStyle(isMobile), flex: '0 1 auto'}}>{name}</Title>
+        {number && <CardNumber number={number} />}
+        {logo && (
+          <img
+            src={logo}
+            alt={setName}
+            title={setName}
+            style={{display: 'block', height: LOGO_HEIGHT, width: 'auto', flexShrink: 0}}
+          />
+        )}
+      </div>
+      {trailing}
     </div>
   );
 }
+
+/**
+ * The title, then what trails it, wrapping onto a line of its own rather than squeezing the
+ * name: the name, its number and the logo shrink together only once they fill a line alone.
+ */
+const TITLE_ROW_STYLE: CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  columnGap: SPACING.md,
+  rowGap: SPACING.sm,
+  flex: 1,
+  minWidth: 0,
+};
+
+const TITLE_STYLE: CSSProperties = {display: 'flex', alignItems: 'center', gap: SPACING.md, flex: '0 1 auto', minWidth: 0};

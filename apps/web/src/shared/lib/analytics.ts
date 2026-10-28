@@ -137,6 +137,9 @@ type AnalyticsEvents = {
   // handle or name, as with the friends events.
   collection_sharing_changed: {state: 'on' | 'off'};
   friend_binder_opened: {result: 'shown' | 'not_sharing' | 'failed'};
+  // Friends who have it, behind SHOW_COLLECTION and SHOW_FRIENDS: where it was opened from.
+  // Never an id, handle or name.
+  friends_who_have_it_opened: {from: 'window'};
 };
 
 /**
