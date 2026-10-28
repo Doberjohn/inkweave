@@ -11,7 +11,7 @@
  */
 
 import {isReloading, reloadOnce} from './pageReload';
-import {announceReload} from './swUpdateToast';
+import {announceReload, showUpdateToast} from './swUpdateToast';
 
 /**
  * Reloads the page onto the new version, with the update toast on screen first, once however
@@ -20,6 +20,67 @@ import {announceReload} from './swUpdateToast';
 export function reloadOntoNewVersion(): void {
   if (isReloading()) return;
   reloadOnce(announceReload());
+}
+
+let workerRegistered: (registration: ServiceWorkerRegistration | undefined) => void = () => {};
+/**
+ * The page's worker registration, once the update flow listens to it. main.tsx settles it with
+ * none when the browser has no service worker or the registration fails; in dev it never settles.
+ */
+const registration = new Promise<ServiceWorkerRegistration | undefined>((resolve) => {
+  workerRegistered = resolve;
+});
+
+/**
+ * main.tsx's onRegisteredSW. From here on vite-plugin-pwa hears of every new worker the
+ * registration finds. A worker found before that, still installing when the page registers, it
+ * never hears of, so checkForNewVersion waits for this.
+ */
+export function onWorkerRegistered(registered: ServiceWorkerRegistration | undefined): void {
+  workerRegistered(registered);
+}
+
+/**
+ * Looks for a newer worker now. The browser looks only when the page navigates, which a tab left
+ * open, or an installed app the phone resumes, may not do for days. A newer one takes main.tsx's
+ * usual path: onNeedRefresh shows the toast, then applyWaitingUpdate reloads onto it. Waits for
+ * the page's registration (onWorkerRegistered), so with none (dev, E2E) it never looks. Never
+ * throws: offline, there is nothing to find.
+ */
+export async function checkForNewVersion(): Promise<void> {
+  try {
+    await (await registration)?.update();
+  } catch {
+    // The worker script didn't load; the next navigation looks again.
+  }
+}
+
+/**
+ * Reloads onto the newest version the browser holds: the card list error screen's Reload. A
+ * reload alone leaves the old worker in control, which serves the old version again, so a newer
+ * worker, still installing or waiting, takes over first (applyWaitingUpdate), with the toast on
+ * screen. With none, the page reloads as it is.
+ */
+export async function reloadOntoNewestVersion(
+  container: ServiceWorkerContainer | undefined = navigator.serviceWorker,
+): Promise<void> {
+  const found = await container?.getRegistration().catch(() => undefined);
+  const next = found?.installing ?? found?.waiting;
+  if (!container || !next) {
+    reloadOnce();
+    return;
+  }
+  showUpdateToast();
+  if (next.state === 'installing') applyOnceInstalled(next, container);
+  else void applyWaitingUpdate(container);
+}
+
+/** Hands `worker` to applyWaitingUpdate once it is installed, or reloads if it never will be. */
+function applyOnceInstalled(worker: ServiceWorker, container: ServiceWorkerContainer): void {
+  worker.addEventListener('statechange', () => {
+    if (worker.state === 'installed') void applyWaitingUpdate(container);
+    else if (worker.state === 'redundant') reloadOnce();
+  });
 }
 
 /**

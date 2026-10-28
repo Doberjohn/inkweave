@@ -1,4 +1,4 @@
-import type {Page} from '@playwright/test';
+import type {Page, Route} from '@playwright/test';
 import {test, expect} from '../fixtures';
 
 // #641: the homepage renders its featured cards from a small prebuilt file
@@ -108,4 +108,55 @@ test.describe('Card data on the homepage (#641)', () => {
 
     release();
   });
+});
+
+// A copy of the app the service worker kept can meet card data whose shape changed after it was
+// built. Data that arrived and can't be read offers a reload, which brings the newest version;
+// data that never arrived offers another try.
+test.describe('Card data that fails to load', () => {
+  test('card data the page cannot read offers Reload, which reloads the page', async ({appPage, page}) => {
+    // A shape no version of the reader takes: `cards` is not a list.
+    await page.route(ALL_CARDS, (route) => route.fulfill({json: {cards: 'unreadable'}}));
+    await page.goto('/browse');
+
+    await expect(appPage.errorMessage).toBeVisible({timeout: 15000});
+    await expect(page.getByText("The card data couldn't be read.", {exact: false})).toBeVisible();
+    await expect(appPage.retryButton).toHaveCount(0);
+
+    await page.evaluate(() => ((window as {beforeReload?: boolean}).beforeReload = true));
+    await Promise.all([page.waitForEvent('load'), appPage.reloadButton.click()]);
+    expect(await page.evaluate(() => (window as {beforeReload?: boolean}).beforeReload)).toBeUndefined();
+    await expect(appPage.errorMessage).toBeVisible({timeout: 15000});
+  });
+
+  const UNDELIVERED: {failure: string; fail: (route: Route) => Promise<void>; line: string}[] = [
+    {failure: 'never arrived', fail: (route) => route.abort('internetdisconnected'), line: "Couldn't reach Inkweave."},
+    {
+      failure: 'came back with a server error',
+      fail: (route) => route.fulfill({status: 503}),
+      line: "Inkweave couldn't send the card data (error 503).",
+    },
+  ];
+
+  for (const {failure, fail, line} of UNDELIVERED) {
+    test(`a card list that ${failure} offers Try Again, and a retry that lands shows the cards`, async ({
+      appPage,
+      page,
+    }) => {
+      let failed = false;
+      await page.route(ALL_CARDS, async (route) => {
+        if (failed) return route.continue();
+        failed = true;
+        await fail(route);
+      });
+      await page.goto('/browse');
+
+      await expect(appPage.errorMessage).toBeVisible({timeout: 15000});
+      await expect(page.getByText(line, {exact: false})).toBeVisible();
+      await expect(appPage.reloadButton).toHaveCount(0);
+
+      await appPage.retryButton.click();
+      await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 15000});
+    });
+  }
 });
