@@ -46,8 +46,9 @@ jobs:
           # bump can change the handoff with no file here).
           # sw-update: what decides how an open page moves onto a new service worker: the page
           # and the code that registers it and reloads, the failed card list that looks for one
-          # (check 5), the Vite config that writes it, how Vercel serves it, the check itself,
-          # and the dependencies (vite-plugin-pwa, Workbox, Playwright).
+          # and the loader that tells unreadable data from data that never arrived (check 5), the
+          # Vite config that writes it, how Vercel serves it, the check itself, and the
+          # dependencies (vite-plugin-pwa, Workbox, Playwright).
           filters: |
             engine:
               - 'packages/synergy-engine/**'
@@ -108,6 +109,8 @@ jobs:
               - 'apps/web/src/shared/lib/swUpdateToast.ts'
               - 'apps/web/src/features/cards/cardListFailure.ts'
               - 'apps/web/src/features/cards/cardListRequest.ts'
+              - 'apps/web/src/features/cards/loader.ts'
+              - 'apps/web/src/AppLayout.tsx'
               - 'apps/web/vite.config.ts'
               - 'scripts/check-sw-update.mjs'
               - 'scripts/serve-dist.mjs'

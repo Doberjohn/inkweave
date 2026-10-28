@@ -110,9 +110,9 @@ test.describe('Card data on the homepage (#641)', () => {
   });
 });
 
-// #1061: a copy of the app the service worker kept can meet card data whose shape changed after
-// it was built. Data that arrived and can't be read offers a reload, which brings the newest
-// version; data that never arrived offers another try.
+// A copy of the app the service worker kept can meet card data whose shape changed after it was
+// built. Data that arrived and can't be read offers a reload, which brings the newest version;
+// data that never arrived offers another try.
 test.describe('Card data that fails to load', () => {
   test('card data the page cannot read offers Reload, which reloads the page', async ({appPage, page}) => {
     // A shape no version of the reader takes: `cards` is not a list.

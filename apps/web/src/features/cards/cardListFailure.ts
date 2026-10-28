@@ -1,19 +1,15 @@
 import {loadSentry} from '../../shared/lib/sentry';
 import {checkForNewVersion} from '../../shared/lib/swUpdate';
-import {CardDataUnavailableError} from './loader';
 
 /**
- * What a failed card list sets off besides its error screen, which catches the failure, so
- * nothing else would report it. Data that never arrived sets off nothing: the device is offline,
- * or the server failed to send it, and Try Again is the fix.
- *
- * Any other failure means the data reached the page and the page couldn't use it. The usual
- * cause is an out-of-date copy of the app, which the service worker kept, meeting data whose
- * shape changed after it was built (the slimmed card data broke copies from before #929). It goes
- * to Sentry, and the page looks for a newer version, which the update flow moves it onto.
+ * What a card list sets off when its data arrived and the page couldn't use it (main.tsx hands it
+ * to whenCardListUnreadable). The usual cause is an out-of-date copy of the app, which the service
+ * worker kept, meeting data whose shape changed after it was built: nothing ties the card data to
+ * the version that reads it. The failure goes to Sentry, since the error screen catches it and
+ * nothing else would report it, and the page looks for a newer version, which the update flow
+ * moves it onto.
  */
-export function onCardListFailure(error: unknown): void {
-  if (error instanceof CardDataUnavailableError) return;
+export function onUnreadableCardList(error: unknown): void {
   void loadSentry().then((sentry) => sentry?.captureException(error));
   void checkForNewVersion();
 }

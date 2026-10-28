@@ -11,7 +11,7 @@
  */
 
 import {isReloading, reloadOnce} from './pageReload';
-import {announceReload} from './swUpdateToast';
+import {announceReload, showUpdateToast} from './swUpdateToast';
 
 /**
  * Reloads the page onto the new version, with the update toast on screen first, once however
@@ -23,7 +23,10 @@ export function reloadOntoNewVersion(): void {
 }
 
 let workerRegistered: (registration: ServiceWorkerRegistration | undefined) => void = () => {};
-/** The page's worker registration, once the update flow listens to it; never where none registers. */
+/**
+ * The page's worker registration, once the update flow listens to it. main.tsx settles it with
+ * none when the browser has no service worker or the registration fails; in dev it never settles.
+ */
 const registration = new Promise<ServiceWorkerRegistration | undefined>((resolve) => {
   workerRegistered = resolve;
 });
@@ -50,6 +53,34 @@ export async function checkForNewVersion(): Promise<void> {
   } catch {
     // The worker script didn't load; the next navigation looks again.
   }
+}
+
+/**
+ * Reloads onto the newest version the browser holds: the card list error screen's Reload. A
+ * reload alone leaves the old worker in control, which serves the old version again, so a newer
+ * worker, still installing or waiting, takes over first (applyWaitingUpdate), with the toast on
+ * screen. With none, the page reloads as it is.
+ */
+export async function reloadOntoNewestVersion(
+  container: ServiceWorkerContainer | undefined = navigator.serviceWorker,
+): Promise<void> {
+  const found = await container?.getRegistration().catch(() => undefined);
+  const next = found?.installing ?? found?.waiting;
+  if (!container || !next) {
+    reloadOnce();
+    return;
+  }
+  showUpdateToast();
+  if (next.state === 'installing') applyOnceInstalled(next, container);
+  else void applyWaitingUpdate(container);
+}
+
+/** Hands `worker` to applyWaitingUpdate once it is installed, or reloads if it never will be. */
+function applyOnceInstalled(worker: ServiceWorker, container: ServiceWorkerContainer): void {
+  worker.addEventListener('statechange', () => {
+    if (worker.state === 'installed') void applyWaitingUpdate(container);
+    else if (worker.state === 'redundant') reloadOnce();
+  });
 }
 
 /**

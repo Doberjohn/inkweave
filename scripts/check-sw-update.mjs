@@ -26,6 +26,9 @@
  *      data it can't read. An in-app link loads the list, which fails, and with no navigation for
  *      the browser to look for the new worker on, the page looks itself (cardListFailure.ts): it
  *      shows the toast, then reloads once onto the new version.
+ *   6. The same, with the new worker held mid-install: the error screen's Reload, pressed then,
+ *      waits for it rather than reloading onto the old version, which the old worker would serve
+ *      again, and the tab reloads once onto the new version when the install ends.
  *
  * Usage: `pnpm build:web`, then `pnpm check:sw-update [--dir apps/web/dist]`
  */
@@ -62,6 +65,13 @@ const CARD_LIST_REQUEST = /^\/data\/allCards\.json/;
 const WORKER_SCRIPT = /^\/sw\.js(\?|$)/;
 /** Card data that no version of the app can read: `cards` is not a list. */
 const UNREADABLE_CARDS = JSON.stringify({cards: 'unreadable'});
+/**
+ * index.html, which only a new worker's install asks the network for: the old worker answers
+ * every navigation from its precache, and the other precached files keep their cache keys.
+ */
+const INSTALL_REQUEST = /^\/index\.html(\?|$)/;
+/** How long check 6 waits, after Reload is pressed, for a reload that mustn't come. */
+const NO_RELOAD_MS = 2000;
 
 /**
  * The number `source` exports as `name`, written with or without a type or numeric separators.
@@ -99,16 +109,26 @@ export function versionsOf(indexHtml, swSource) {
   };
 }
 
+/** Whether `url` is the new version's worker installing while check 6 holds its install. */
+function holdsInstall(deploy, url) {
+  return Boolean(deploy.installHold) && deploy.current === 'new' && INSTALL_REQUEST.test(url);
+}
+
 /**
  * A server over `dist` that answers as vercel.json does (serve-dist.mjs), with index.html and
  * sw.js from the version `deploy.current` names, and the card list held `deploy.holdMs` (check 4)
  * or answered with `deploy.cardList` (check 5), which the checks set as the new version goes out.
  * It counts the browser's looks for a new worker, each a request for sw.js, in
- * `deploy.workerLooks`.
+ * `deploy.workerLooks`, and once the new version is out, holds its worker's install until
+ * `deploy.installHold` settles, counting the installs it holds in `deploy.installsHeld` (check 6).
  */
 function startServer(dist, versions, deploy) {
   const bodyFor = async (file, url) => {
     if (WORKER_SCRIPT.test(url)) deploy.workerLooks += 1;
+    if (holdsInstall(deploy, url)) {
+      deploy.installsHeld += 1;
+      await deploy.installHold;
+    }
     if (deploy.holdMs && CARD_LIST_REQUEST.test(url)) {
       await new Promise((done) => setTimeout(done, deploy.holdMs));
     }
@@ -273,6 +293,32 @@ function lateToastFailure(tab, load, lead) {
   return null;
 }
 
+/**
+ * Checks 5 and 6: a tab the old worker controls, whose card list hasn't loaded yet, meets a deploy
+ * with card data it can't read, and an in-app link loads the list. The tab and its page loads so
+ * far, or why it couldn't be set up.
+ */
+async function unreadableDeployTab(context, base, deploy) {
+  await context.addInitScript(neverIdle);
+  const page = await context.newPage();
+  await page.goto(base, {timeout: LOAD_TIMEOUT_MS});
+  await waitForWorker(page);
+  const looksBefore = deploy.workerLooks;
+  await page.reload({timeout: LOAD_TIMEOUT_MS});
+  // The reload sets off the browser's own look for a new worker, which Chromium makes once the
+  // worker has gone a second without a request. Had it come after the deploy, it would find the
+  // new version without the page's help, so the deploy waits for it.
+  if (!(await until(() => deploy.workerLooks > looksBefore, LOAD_TIMEOUT_MS)))
+    return 'the reload never looked for a new worker';
+  const before = await waitForTab(page, (state) => state.controlled, LOAD_TIMEOUT_MS);
+  if (!before) return 'the old worker never took control of the tab';
+  deploy.current = 'new';
+  deploy.cardList = UNREADABLE_CARDS;
+  // The router's link changes the page without navigating, so the browser looks for no worker.
+  await page.getByTestId('cta-browse').click();
+  return {page, loads: before.loads};
+}
+
 const checks = [
   {
     name: '1. a tab the old worker controls reloads onto the new version',
@@ -343,24 +389,28 @@ const checks = [
   {
     name: "5. a tab the old worker controls looks for the new version when it can't read the new deploy's card data",
     async run({context, base, deploy}) {
-      await context.addInitScript(neverIdle);
-      const page = await context.newPage();
-      await page.goto(base, {timeout: LOAD_TIMEOUT_MS});
-      await waitForWorker(page);
-      const looksBefore = deploy.workerLooks;
-      await page.reload({timeout: LOAD_TIMEOUT_MS});
-      // The reload sets off the browser's own look for a new worker, which Chromium makes once
-      // the worker has gone a second without a request. Had it come after the deploy, it would
-      // find the new version without the page's help, so the deploy waits for it.
-      if (!(await until(() => deploy.workerLooks > looksBefore, LOAD_TIMEOUT_MS)))
-        return 'the reload never looked for a new worker';
-      const before = await waitForTab(page, (state) => state.controlled, LOAD_TIMEOUT_MS);
-      if (!before) return 'the old worker never took control of the tab';
-      const {loads} = before;
-      deploy.current = 'new';
-      deploy.cardList = UNREADABLE_CARDS;
-      // The router's link changes the page without navigating, so the browser looks for no worker.
-      await page.getByTestId('cta-browse').click();
+      const tab = await unreadableDeployTab(context, base, deploy);
+      if (typeof tab === 'string') return tab;
+      return newVersionFailure(tab.page, tab.loads);
+    },
+  },
+  {
+    name: '6. the error screen\'s Reload, pressed while the new worker installs, waits for it and reloads once onto the new version',
+    async run({context, base, deploy}) {
+      let release;
+      deploy.installHold = new Promise((done) => (release = done));
+      const tab = await unreadableDeployTab(context, base, deploy);
+      if (typeof tab === 'string') return tab;
+      const {page, loads} = tab;
+      if (!(await until(() => deploy.installsHeld > 0, UPDATE_TIMEOUT_MS)))
+        return 'no new worker started to install';
+      await page.getByRole('button', {name: 'Reload'}).click({timeout: LOAD_TIMEOUT_MS});
+      await new Promise((settle) => setTimeout(settle, NO_RELOAD_MS));
+      const pressed = await readTab(page);
+      release();
+      if (pressed.loads !== loads)
+        return 'Reload reloaded before the new worker installed, so the old worker served the old version again';
+      if (!pressed.toast) return 'Reload showed no update toast while it waited';
       return newVersionFailure(page, loads);
     },
   },
@@ -371,7 +421,14 @@ async function runChecks(dist, versions, {cap, lead}) {
   const browser = await chromium.launch();
   const results = [];
   for (const check of checks) {
-    const deploy = {current: 'old', holdMs: 0, cardList: null, workerLooks: 0};
+    const deploy = {
+      current: 'old',
+      holdMs: 0,
+      cardList: null,
+      workerLooks: 0,
+      installHold: null,
+      installsHeld: 0,
+    };
     const server = await startServer(dist, versions, deploy);
     // Each server takes a port of its own, so each check starts with no worker registered.
     const base = `http://localhost:${server.address().port}/`;

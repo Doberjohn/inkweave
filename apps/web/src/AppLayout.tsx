@@ -20,7 +20,7 @@ import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
 import {useResponsive, useScrollToTopOnRouteChange} from './shared/hooks';
 import {lazyWithRetry} from './shared/lib/lazyWithRetry';
-import {reloadOnce} from './shared/lib/pageReload';
+import {reloadOntoNewestVersion} from './shared/lib/swUpdate';
 import {CardDataUnavailableError} from './features/cards/loader';
 import {useSpeedInsightsRoute} from './shared/lib/speedInsightsRoute';
 
@@ -121,9 +121,9 @@ interface CardListErrorCopy {
 
 /**
  * The card list error screen's line and button. Data that never arrived is worth another try.
- * Data that arrived and couldn't be read won't read any better on a retry with the same code: a
- * reload brings the newest version, if the update flow hasn't moved the page onto it already
- * (cardListFailure.ts).
+ * Data that arrived and couldn't be read won't read any better on a retry with the same code:
+ * Reload brings the newest version (reloadOntoNewestVersion), if the update flow hasn't moved the
+ * page onto it already (cardListFailure.ts).
  */
 function cardListErrorCopy(error: Error, retry: () => void): CardListErrorCopy {
   if (error instanceof CardDataUnavailableError) {
@@ -132,7 +132,7 @@ function cardListErrorCopy(error: Error, retry: () => void): CardListErrorCopy {
   return {
     message: "The card data couldn't be read. Reload the page to get the newest version of Inkweave.",
     action: 'Reload',
-    onAction: () => reloadOnce(),
+    onAction: () => void reloadOntoNewestVersion(),
   };
 }
 

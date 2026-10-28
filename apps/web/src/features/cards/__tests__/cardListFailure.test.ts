@@ -1,8 +1,8 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {loadSentry} from '../../../shared/lib/sentry';
 import {checkForNewVersion} from '../../../shared/lib/swUpdate';
-import {onCardListFailure} from '../cardListFailure';
-import {_resetCardListRequest, startCardList} from '../cardListRequest';
+import {onUnreadableCardList} from '../cardListFailure';
+import {_resetCardListRequest, startCardList, whenCardListUnreadable} from '../cardListRequest';
 import {CardDataUnavailableError} from '../loader';
 import {_resetPreviewCardsCache} from '../previewCards';
 
@@ -14,6 +14,14 @@ const captureException = vi.fn();
 /** Lets loadSentry's promise hand Sentry over. */
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+/** A fetch whose allCards.json answer is `allCards`, and every other file a 404. */
+function stubCardFetch(allCards: () => Promise<unknown>) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((url: string) => (url.includes('allCards') ? allCards() : Promise.resolve({ok: false, status: 404}))),
+  );
+}
+
 beforeEach(() => {
   vi.mocked(loadSentry).mockResolvedValue({captureException} as never);
 });
@@ -23,63 +31,49 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('onCardListFailure', () => {
-  it('reports data the page could not read to Sentry, and looks for a newer version', async () => {
+describe('onUnreadableCardList', () => {
+  it('reports the failure to Sentry, and looks for a newer version', async () => {
     const error = new TypeError("undefined is not an object (evaluating 'r.match')");
-    onCardListFailure(error);
+    onUnreadableCardList(error);
     await settle();
 
     expect(captureException).toHaveBeenCalledWith(error);
     expect(checkForNewVersion).toHaveBeenCalledTimes(1);
   });
-
-  it('does neither for a card list that never arrived', async () => {
-    onCardListFailure(new CardDataUnavailableError("Couldn't reach Inkweave."));
-    await settle();
-
-    expect(loadSentry).not.toHaveBeenCalled();
-    expect(checkForNewVersion).not.toHaveBeenCalled();
-  });
 });
 
-describe('startCardList on card data it cannot read', () => {
+describe('startCardList when the card list fails', () => {
+  const unreadable = vi.fn();
+
   beforeEach(() => {
     _resetCardListRequest();
     _resetPreviewCardsCache();
-    // A shape no version of the reader takes: `cards` is not a list.
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (url: string) =>
-        url.includes('allCards')
-          ? {ok: true, json: async () => ({cards: 'unreadable'})}
-          : {ok: false, status: 404},
-      ),
-    );
+    whenCardListUnreadable(unreadable);
   });
 
-  it('reports the failure once, however many callers share the request', async () => {
+  afterEach(() => {
+    whenCardListUnreadable(() => {});
+  });
+
+  it('passes data it cannot read on once, however many callers share the request', async () => {
+    // A shape no version of the reader takes: `cards` is not a list.
+    stubCardFetch(async () => ({ok: true, json: async () => ({cards: 'unreadable'})}));
     const callers = [startCardList(), startCardList()];
     await Promise.allSettled(callers);
-    await settle();
 
     await expect(callers[0]).rejects.toThrow(TypeError);
-    expect(captureException).toHaveBeenCalledTimes(1);
-    expect(checkForNewVersion).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('startCardList when the server answers with an error', () => {
-  beforeEach(() => {
-    _resetCardListRequest();
-    _resetPreviewCardsCache();
-    vi.stubGlobal('fetch', vi.fn(async () => ({ok: false, status: 503})));
+    expect(unreadable).toHaveBeenCalledTimes(1);
+    expect(unreadable).toHaveBeenCalledWith(expect.any(TypeError));
   });
 
-  it('reports nothing and looks for no new version: Try Again is the fix', async () => {
+  // Try Again is the fix for both, so neither goes to Sentry nor looks for a new version.
+  it.each([
+    ['a server error', () => Promise.resolve({ok: false, status: 503})],
+    ['no connection', () => Promise.reject(new TypeError('Failed to fetch'))],
+  ])('passes nothing on for %s', async (_label, allCards) => {
+    stubCardFetch(allCards);
+
     await expect(startCardList()).rejects.toBeInstanceOf(CardDataUnavailableError);
-    await settle();
-
-    expect(loadSentry).not.toHaveBeenCalled();
-    expect(checkForNewVersion).not.toHaveBeenCalled();
+    expect(unreadable).not.toHaveBeenCalled();
   });
 });
