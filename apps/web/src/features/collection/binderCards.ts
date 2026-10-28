@@ -20,6 +20,7 @@ import {
 } from '../../shared/constants';
 import {RARITY_PARAM, SET_PARAM} from '../../shared/hooks/useFilterParams';
 import type {CollectionPromo} from './collectionPromos';
+import type {Axis} from './collectionStats';
 
 /**
  * THE MODE LIVES IN THE URL (owner, 2026-10-07): `?binder=<set>` present means
@@ -235,6 +236,13 @@ export const spansSets = (scope: string) => scope === WHOLE_COLLECTION || scope 
 
 /** Whether a scope holds promos alone: one promo set, or every one. */
 export const isPromoScope = (scope: string) => scope === ALL_PROMO_SETS || isPromoSet(scope);
+
+/**
+ * The headline Owned and Missing ask of in a scope: the one chosen, but Complete in a promo
+ * scope, whose panel shows no other (`ScopeNumbers`): there a promo in both finishes held in
+ * one (#880) would otherwise drop out of Owned under a Master set chosen on another set.
+ */
+export const ownsAxis = (scope: string, axis: Axis): Axis => (isPromoScope(scope) ? 'complete' : axis);
 
 /** The sets a scope spans, in the order given: every one, the promo sets, or the one set. */
 export function scopeSets(scope: string, sets: readonly string[]): readonly string[] {

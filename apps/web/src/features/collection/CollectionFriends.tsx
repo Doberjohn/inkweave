@@ -21,7 +21,7 @@ import {finishesOf} from './printingFinishes';
 import {useWindowCard} from './windowCard';
 
 /**
- * Friends who have it (#1055): the card window's count, a pocket's badge, the empty Missing
+ * Friends who have it: the card window's count, a pocket's badge, the empty Missing
  * view's pointer to the foils friends have, and the one dialog they open. Its own chunk, loaded
  * only with both flags on: the friends' reads and the dialog stay out of Browse's.
  */
@@ -47,6 +47,14 @@ function ask(card: LorcanaCard, from: Source, printedName?: string): Asked {
   return {card, printedName, from, open: true};
 }
 
+/** A badge's press: asks the mounted host, and with none, opens and tracks nothing. */
+function askFromBadge(card: LorcanaCard): void {
+  if (askHost) askHost(ask(card, 'badge'));
+}
+
+/** Whether the read has friends who hold the card for the reader. */
+const hasFriends = (have: FriendsFor | null | undefined): have is FriendsFor => (have?.friends.length ?? 0) > 0;
+
 /** Whether the reader's copies count yet: signed in with a collection, once the account's copy has answered. */
 function useCounting(): boolean {
   const {user} = useSession();
@@ -68,14 +76,27 @@ function placedFriends(sharing: readonly SharingFriend[], place: Place): Sharing
   return placedFor.placed;
 }
 
-/** The friends who hold `card` for the reader under `axis`, once their copies are in, else null. */
-function useFriendsFor(card: LorcanaCard | null, axis: Axis, need: boolean) {
+/**
+ * The friends' copies, read when `need`, the reader's own, and the sharing friends placed as the
+ * reader's copies are once the read is in, else null; null while the reader's copies don't count.
+ * Every count of what friends have for the reader starts here, so the badges, the window and the
+ * foil pointer count alike.
+ */
+function useReadersFriends(need: boolean) {
   const counting = useCounting();
   const copies = useFriendsCopies(counting, need);
   const {entries, place} = useCollection();
   if (!counting) return null;
-  if (copies.status !== 'ready' || card === null) return {copies, have: null};
-  return {copies, have: friendsFor(card, entries, placedFriends(copies.sharing, place), axis)};
+  return {copies, entries, placed: copies.status === 'ready' ? placedFriends(copies.sharing, place) : null};
+}
+
+/** The friends who hold `card` for the reader under `axis`, once their copies are in, else null. */
+function useFriendsFor(card: LorcanaCard | null, axis: Axis, need: boolean) {
+  const friends = useReadersFriends(need);
+  if (friends === null) return null;
+  const {copies, entries, placed} = friends;
+  if (placed === null || card === null) return {copies, have: null};
+  return {copies, have: friendsFor(card, entries, placed, axis)};
 }
 
 /** The printing the window shows, as a card of its own: the variant on show, else the card. */
@@ -140,9 +161,9 @@ function useAsked(axis: Axis) {
     };
   }, []);
   const found = useFriendsFor(asked?.card ?? null, axis, true);
-  // A re-read that leaves no friend with the card closes the dialog, so it can't pop open again
-  // on a later read that brings one back.
-  if (asked?.open && found?.have?.friends.length === 0) setAsked({...asked, open: false});
+  // Once the dialog can't show (a re-read leaves no friend with the card, or the copies stop
+  // counting), it closes, so a later read that brings a friend back can't pop it open unasked.
+  if (asked?.open && !hasFriends(found?.have)) setAsked({...asked, open: false});
   return {asked, setAsked, found};
 }
 
@@ -163,7 +184,7 @@ function WindowCount({shown, axis, onAsk}: {shown: Shown; axis: Axis; onAsk: (as
     if (finishesLacked(printing, entries, axis).length === 0) return null;
     return createPortal(<FriendsHaveFailed isMobile={isMobile} onRetry={copies.retry} />, slot);
   }
-  if (have === null || have.friends.length === 0) return null;
+  if (!hasFriends(have)) return null;
   return createPortal(
     <FriendsHaveButton
       isMobile={isMobile}
@@ -192,7 +213,7 @@ function FriendsDialog({asked, have, notSharing, onClose}: FriendsDialogProps) {
   const {card, printedName, from, open} = asked;
   return (
     <FriendsWhoHaveIt
-      isOpen={open && have.friends.length > 0}
+      isOpen={open && hasFriends(have)}
       onClose={onClose}
       card={card}
       printedName={printedName}
@@ -218,14 +239,14 @@ function FriendsDialog({asked, have, notSharing, onClose}: FriendsDialogProps) {
 export function PocketFriends({card, axis}: {card: LorcanaCard; axis: Axis}) {
   const found = useFriendsFor(card, axis, true);
   const have = found?.have;
-  if (!have || have.friends.length === 0) return null;
+  if (!hasFriends(have)) return null;
   const count = have.friends.length;
   return (
     <FriendsBadge
       count={count}
       label={friendsHaveLine(count, have.lacked, finishesOf(card))}
       gold={foilOnly(have)}
-      onPress={() => askHost?.(ask(card, 'badge'))}
+      onPress={() => askFromBadge(card)}
     />
   );
 }
@@ -236,11 +257,9 @@ export function PocketFriends({card, axis}: {card: LorcanaCard; axis: Axis}) {
  * Nothing until friends' copies are in, or while no friend has one.
  */
 export function FoilPointer({cards, onShow}: {cards: readonly LorcanaCard[]; onShow: () => void}) {
-  const counting = useCounting();
-  const copies = useFriendsCopies(counting, true);
-  const {entries, place} = useCollection();
-  if (!counting || copies.status !== 'ready') return null;
-  const {missing, onOffer} = foilsOnOffer(cards, entries, placedFriends(copies.sharing, place));
+  const friends = useReadersFriends(true);
+  if (!friends?.placed) return null;
+  const {missing, onOffer} = foilsOnOffer(cards, friends.entries, friends.placed);
   if (onOffer === 0) return null;
   return (
     <div style={POINTER_STYLE}>

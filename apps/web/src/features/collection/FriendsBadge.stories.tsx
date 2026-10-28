@@ -5,7 +5,7 @@ import {COLORS, SPACING} from '../../shared/constants';
 import {FriendsBadge} from './FriendsBadge';
 
 /**
- * A binder pocket's friends badge (#1055): at its top right, how many sharing friends hold the
+ * A binder pocket's friends badge: at its top right, how many sharing friends hold the
  * card in a finish you lack. It opens Friends who have it. Drawn for a 130px pocket and zoomed
  * with a smaller one, as the copies stripe is. Each story draws it on a plain pocket of the
  * width a pocket has there; judge it over real art in the running app's binder.

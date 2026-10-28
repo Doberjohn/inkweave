@@ -22,7 +22,7 @@ const badge = (props: Partial<Parameters<typeof FriendsBadge>[0]> = {}) => (
   <FriendsBadge count={11} label="11 friends have it" gold={false} onPress={vi.fn()} {...props} />
 );
 
-describe('FriendsBadge (#1055)', () => {
+describe('FriendsBadge', () => {
   beforeEach(() => {
     reports = [];
     vi.stubGlobal('ResizeObserver', TestResizeObserver);
@@ -52,11 +52,18 @@ describe('FriendsBadge (#1055)', () => {
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  it('is dark, or brushed gold when every copy on offer is a foil', () => {
+  it('is dark, or brushed gold when every copy on offer is a foil, turning in place', () => {
+    // A mounted badge turns when the reader adds a copy: React logs a style rerender whose shorthand
+    // and longhands collide, which the E2E console guard fails on.
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const view = render(badge());
     expect(screen.getByRole('button').style.backgroundImage).not.toContain('linear-gradient');
     view.rerender(badge({gold: true}));
     expect(screen.getByRole('button').style.backgroundImage).toContain('linear-gradient');
+    view.rerender(badge());
+    expect(screen.getByRole('button').style.backgroundImage).not.toContain('linear-gradient');
+    expect(error).not.toHaveBeenCalled();
+    error.mockRestore();
   });
 
   it("takes a smaller pocket's zoom before it paints, and never grows past a 130px pocket's", () => {

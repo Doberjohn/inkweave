@@ -86,7 +86,7 @@ function section(
         onRetry={vi.fn()}
         onCardSelect={vi.fn()}
         setCode={setCode}
-        sets={['10', '9']}
+        sets={['10', '9', 'P1']}
         setsLoading={false}
         onSetChange={vi.fn()}
         show={show}
@@ -242,8 +242,13 @@ describe('CollectionBinderSection', () => {
       ['all', 'complete', true, 'They have every card in every set.'],
       ['promos', 'master', false, 'You have every card in every promo set.'],
     ] as const)('says every card in %s is held under %s set (friend: %s)', (setCode, axis, friend, line) => {
-      renderSection([], {show: 'missing', setCode, axis, friend, filtered: false});
+      renderSection([], {pool: [...POOL, card('promo', 1, 1, 'P1')], show: 'missing', setCode, axis, friend, filtered: false});
       expect(screen.getByRole('status')).toHaveTextContent(line);
+    });
+
+    it('blames the filters, not a full binder, when the scope has no cards to hold', () => {
+      renderSection([], {pool: [], show: 'missing', filtered: false});
+      expect(screen.getByRole('status')).toHaveTextContent('No missing cards in this set match your filters.');
     });
 
     it("points to the foils friends have under Complete set, given the scope's cards", () => {

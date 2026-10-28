@@ -80,7 +80,7 @@ export const NothingOwned: Story = {
 };
 
 /**
- * Your own binder with friends who share (#1055): a badge on each card you're missing that a
+ * Your own binder with friends who share: a badge on each card you're missing that a
  * friend has, counting the friends, gold where every copy on offer is a foil. Pressing one opens
  * Friends who have it; here it reports to the Actions panel.
  */

@@ -38,7 +38,7 @@ const zoomFor = (width: number) => Math.min(1, width / DRAWN_POCKET);
 const keepFocus = (e: MouseEvent) => e.preventDefault();
 
 /**
- * A binder pocket's friends badge (#1055): at the pocket's top right, the people glyph and how
+ * A binder pocket's friends badge: at the pocket's top right, the people glyph and how
  * many sharing friends hold the card in a finish the reader lacks. Pressing it opens Friends who
  * have it, and never the card window under it.
  *

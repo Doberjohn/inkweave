@@ -10,7 +10,7 @@ import type {FriendsCopies, SharingFriend} from './friendsCopies';
 import {CollectionFriends, FoilPointer, PocketFriends} from './CollectionFriends';
 
 /**
- * Friends who have it (#1055), Browse's side: the card window's count, portalled into the
+ * Friends who have it, Browse's side: the card window's count, portalled into the
  * window's friends slot, which a bare element stands in for here; a pocket's badge; the foil
  * pointer; and the one dialog they open.
  */
@@ -129,6 +129,19 @@ describe('CollectionFriends, the window\'s count', () => {
     await waitFor(() => expect(screen.queryByRole('dialog', {name: 'Friends who have it'})).toBeNull());
   });
 
+  it('closes Friends who have it while the copies are read again, so it never reopens alone', async () => {
+    const view = render(inWindow());
+    await act(async () => {});
+    const slot = within(mockWindow.friendsSlot!);
+    fireEvent.click(slot.getByRole('button', {name: '2 friends have it'}));
+    mockCopies.value = {status: 'loading'};
+    view.rerender(inWindow());
+    mockCopies.value = ready([RUBY, EMERALD]);
+    view.rerender(inWindow());
+    expect(slot.getByRole('button', {name: '2 friends have it'})).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('dialog', {name: 'Friends who have it'})).toBeNull());
+  });
+
   it('says a failed read on a card the reader lacks, with a retry', async () => {
     const retry = vi.fn();
     mockCopies.value = {status: 'failed', retry};
@@ -212,6 +225,21 @@ describe('PocketFriends', () => {
       '/browse?binder=9&friend=emerald_fairy_913',
     ]);
     expect(trackEvent).toHaveBeenCalledWith('friends_who_have_it_opened', {from: 'badge'});
+  });
+
+  it('opens and counts nothing with no Friends who have it mounted to open', async () => {
+    mockModal.selectedCardId = null;
+    render(
+      <MemoryRouter>
+        <CollectionProvider>
+          <PocketFriends card={ELSA} axis="complete" />
+        </CollectionProvider>
+      </MemoryRouter>,
+    );
+    await act(async () => {});
+    fireEvent.click(screen.getByRole('button', {name: '2 friends have it'}));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(trackEvent).not.toHaveBeenCalled();
   });
 
   it('leaves the card window alone when a row it opened is followed', async () => {

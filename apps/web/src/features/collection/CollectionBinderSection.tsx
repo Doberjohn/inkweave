@@ -18,6 +18,7 @@ import {
   binderContents,
   binderSlots,
   isPromoScope,
+  ownsAxis,
   namesStretches,
   slotKey,
   type BinderShow,
@@ -469,9 +470,6 @@ const EVERY_CARD_WHERE: Record<string, string> = {
   [ALL_PROMO_SETS]: 'every promo set',
 };
 
-/** The headline the views count by: a promo scope has no Master set. */
-const viewAxis = (setCode: string, axis: Axis): Axis => (isPromoScope(setCode) ? 'complete' : axis);
-
 /** An empty Missing view with nothing narrowing it: the binder holds every card, under its headline. */
 const holdsEveryCard = (show: BinderShow, filtered: boolean) => show === 'missing' && !filtered;
 
@@ -484,7 +482,7 @@ const pointsToFoils = ({show, axis, setCode}: {show: BinderShow; axis: Axis; set
 
 /** "You have every card in this set.", or under Master set "…, in every finish." */
 function everyCardLine(setCode: string, friend: boolean, axis: Axis): string {
-  const finishes = viewAxis(setCode, axis) === 'master' ? ', in every finish' : '';
+  const finishes = ownsAxis(setCode, axis) === 'master' ? ', in every finish' : '';
   return `${friend ? 'They' : 'You'} have every card in ${EVERY_CARD_WHERE[setCode] ?? 'this set'}${finishes}.`;
 }
 
@@ -515,6 +513,8 @@ interface NoMatchesProps {
  */
 function NoMatches({show, setCode, friend, filtered, axis, scope, renderFoilPointer}: NoMatchesProps) {
   const where = (friend ? NO_MATCHES_THEIRS : NO_MATCHES_WHERE)[setCode] ?? 'this set';
+  // A scope with no cards to hold, such as a promo set whose cards no dataset has yet, isn't complete.
+  const everyCard = scope.length > 0 && holdsEveryCard(show, filtered);
   const foilPointer = pointsToFoils({show, axis, setCode}, filtered) ? renderFoilPointer?.(scope) : undefined;
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.xxl, padding: NO_MATCH_PADDING}}>
@@ -522,7 +522,7 @@ function NoMatches({show, setCode, friend, filtered, axis, scope, renderFoilPoin
         role="status"
         aria-live="polite"
         style={{textAlign: 'center', margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
-        {holdsEveryCard(show, filtered)
+        {everyCard
           ? everyCardLine(setCode, friend, axis)
           : `No ${VIEW_CARDS[show]} in ${where} match your filters.`}
       </p>

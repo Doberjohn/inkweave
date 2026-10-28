@@ -27,6 +27,7 @@ import {
   binderRarities,
   binderSets,
   isPromoScope,
+  ownsAxis,
   isPromoSet,
   parseBinderShow,
   rarityPicksPromos,
@@ -410,13 +411,6 @@ interface PhoneRowOptions {
   /** Opens the Binder sheet. */
   onOpen: () => void;
 }
-
-/**
- * The headline Owned and Missing ask of in a scope: the one chosen, but Complete in a promo
- * scope, whose panel shows no other (`ScopeNumbers`): there a promo in both finishes held in
- * one (#880) would otherwise drop out of Owned under a Master set chosen on another set.
- */
-const ownsAxis = (setCode: string, axis: Axis): Axis => (isPromoScope(setCode) ? 'complete' : axis);
 
 const NO_ENTRIES: CollectionEntries = {};
 
