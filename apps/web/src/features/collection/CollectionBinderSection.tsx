@@ -165,8 +165,15 @@ interface CollectionBinderSectionProps extends PanelControls {
   filtered: boolean;
   /** The page's sort: the order the binder's pockets fill in. */
   sortOrder: BrowseSortOrder;
-  /** Owned copies per card id, split by finish. */
+  /** Owned copies per card id, split by finish: a friend's, in a friend's binder. */
   entries: CollectionEntries;
+  /**
+   * In a friend's binder, the reader's own copies, for the "You" lines under the friend's
+   * headlines; absent for a reader with no collection, or in their own binder.
+   */
+  yourEntries?: CollectionEntries;
+  /** The binder is a friend's, so its empty views speak of "their" collection. */
+  friend?: boolean;
   /** True while the non-Core chunks are in flight. */
   isLoading: boolean;
   /** Set when they failed to load. */
@@ -243,6 +250,24 @@ function LoadingBinder({single, docked, loneFit}: {single: boolean; docked: bool
   );
 }
 
+/** The panel's numbers counted nowhere yet: docked, the page counts them, and a pool still loading has none. */
+const NO_TALLIES = {stats: null, yours: null};
+
+/**
+ * The panel's numbers: the binder's collection toward its headlines, and in a friend's binder
+ * the reader's own (`yours`), null without a collection of their own.
+ */
+function talliesOf(
+  cards: LorcanaCard[],
+  {entries, yourEntries}: {entries: CollectionEntries; yourEntries?: CollectionEntries},
+  sets: readonly string[],
+) {
+  return {
+    stats: tallyCollection(cards, entries, sets),
+    yours: yourEntries ? tallyCollection(cards, yourEntries, sets) : null,
+  };
+}
+
 function SectionContent({
   cards,
   waiting = [],
@@ -251,6 +276,8 @@ function SectionContent({
   filtered,
   sortOrder,
   entries,
+  yourEntries,
+  friend = false,
   isLoading,
   error,
   onRetry,
@@ -297,7 +324,7 @@ function SectionContent({
 
   // Docked, the page renders the panel itself (`DockedSetBody`): the tablet's rail counts here,
   // and a phone's cover.
-  const stats = docked ? null : tallyCollection(counted, entries, controls.sets);
+  const {stats, yours} = docked ? NO_TALLIES : talliesOf(counted, {entries, yourEntries}, controls.sets);
   const shown = binderContents(cards, setCode, sortOrder, controls.sets).filter((card) => matchedIds.has(card.id));
   const slots = binderSlots(shown, {
     scope: setCode,
@@ -307,13 +334,13 @@ function SectionContent({
     waiting,
   });
   return (
-    <PanelLayout panel={{...controls, stats, filtered}} section={setSection}>
+    <PanelLayout panel={{...controls, stats, yours, filtered}} section={setSection}>
       {shown.length === 0 ? (
-        <NoMatches show={controls.show} setCode={setCode} />
+        <NoMatches show={controls.show} setCode={setCode} friend={friend} />
       ) : (
         <KeyedBinder
           axis={controls.axis}
-          cover={isMobile ? <CoverNumbers {...controls} stats={stats} filtered={filtered} /> : undefined}
+          cover={isMobile ? <CoverNumbers {...controls} stats={stats} yours={yours} filtered={filtered} /> : undefined}
           slots={slots}
           bySet={namesStretches(setCode, sortOrder)}
           countsFor={(cardId) => entries[cardId] ?? ZERO}
@@ -371,6 +398,20 @@ const NO_MATCHES_WHERE: Record<string, string> = {
   [WHOLE_COLLECTION]: 'your collection',
   [ALL_PROMO_SETS]: 'your promo sets',
 };
+/** The same, in a friend's binder. */
+const NO_MATCHES_THEIRS: Record<string, string> = {
+  [WHOLE_COLLECTION]: 'their collection',
+  [ALL_PROMO_SETS]: 'their promo sets',
+};
+
+/** The cards a view holds, as its empty line names them; All's are just "cards". */
+const VIEW_CARDS: Record<BinderShow, string> = {
+  all: 'cards',
+  owned: 'owned cards',
+  missing: 'missing cards',
+  'you-need': 'cards you need',
+  'they-need': 'cards they need',
+};
 
 /**
  * Nothing to show. Said in words, not as an empty binder: blank pockets would read as a
@@ -380,14 +421,14 @@ const NO_MATCHES_WHERE: Record<string, string> = {
  * A status (#790), like Browse's empty grid: a search that empties the binder changes
  * nothing where the reader is typing, so it is announced.
  */
-function NoMatches({show, setCode}: {show: BinderShow; setCode: string}) {
-  const where = NO_MATCHES_WHERE[setCode] ?? 'this set';
+function NoMatches({show, setCode, friend}: {show: BinderShow; setCode: string; friend: boolean}) {
+  const where = (friend ? NO_MATCHES_THEIRS : NO_MATCHES_WHERE)[setCode] ?? 'this set';
   return (
     <p
       role="status"
       aria-live="polite"
       style={{textAlign: 'center', padding: 64, margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
-      {show === 'all' ? `No cards in ${where} match your filters.` : `No ${show} cards in ${where} match your filters.`}
+      {`No ${VIEW_CARDS[show]} in ${where} match your filters.`}
     </p>
   );
 }
@@ -398,6 +439,8 @@ interface DockedSetBodyProps extends PanelControls {
   /** Whether any filter or a search is on, so the numbers say they are filtered. */
   filtered: boolean;
   entries: CollectionEntries;
+  /** In a friend's binder, the reader's own copies, for the "You" lines. */
+  yourEntries?: CollectionEntries;
   /** True until the pool is complete: the header shows, the stats wait. */
   isLoading: boolean;
 }
@@ -407,8 +450,8 @@ interface DockedSetBodyProps extends PanelControls {
  * numbers both read, none until the pool is complete. Each still counts for itself: they
  * are two lazy components in two places on the page.
  */
-function dockedPanel({cards, filtered, entries, isLoading, ...controls}: DockedSetBodyProps) {
-  return {...controls, filtered, stats: isLoading ? null : tallyCollection(cards, entries, controls.sets)};
+function dockedPanel({cards, filtered, entries, yourEntries, isLoading, ...controls}: DockedSetBodyProps) {
+  return {...controls, filtered, ...(isLoading ? NO_TALLIES : talliesOf(cards, {entries, yourEntries}, controls.sets))};
 }
 
 /**

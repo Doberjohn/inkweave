@@ -16,7 +16,7 @@ import {storedSession} from './session';
  */
 
 /** The collector's uid: the session's user, and the owner stamped on the local copy. */
-const COLLECTOR_ID = 'e2e-collector';
+export const COLLECTOR_ID = 'e2e-collector';
 const IMPORTED_AT = Date.parse('2026-10-12T10:00:00Z');
 
 export type Entries = Record<string, {normal: number; foil: number}>;

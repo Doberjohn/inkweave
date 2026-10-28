@@ -4,7 +4,7 @@ import type {FilterPanelProps} from '../../shared/components/CardFilterDialog';
 import type {BrowseSortOrder} from '../../shared/constants';
 import type {AlsoWrite, FilterDraft} from '../../shared/hooks/useFilterParams';
 import {BINDER_SORT_OPTIONS, writeShowParam, type BinderShow} from './binderCards';
-import {BinderShows} from './BinderShows';
+import {BinderShows, type CompareCounts} from './BinderShows';
 
 /** The filter sheet's props the Binder sheet sets itself. */
 type SheetOwn = 'variant' | 'onApply' | 'title' | 'prelude' | 'extra';
@@ -12,6 +12,8 @@ type SheetOwn = 'variant' | 'onApply' | 'title' | 'prelude' | 'extra';
 export interface BinderSheetProps extends Omit<ComponentProps<typeof CardFilterDialog>, SheetOwn> {
   /** What the binder shows, where the sheet's Show starts each time it opens. */
   show: BinderShow;
+  /** A friend's binder's You need and They need, as the set panel shows them. */
+  compare?: CompareCounts | null;
   /** The binder's sort, where the sheet's Sort starts. */
   sortOrder: BrowseSortOrder;
   /** The page's one URL write, of the filters, the sort and Show together (`applyDraft`). */
@@ -46,11 +48,11 @@ function useSheetDrafts(isOpen: boolean, show: BinderShow, sortOrder: BrowseSort
 }
 
 /** Above the filters: what the binder shows, and its sort. */
-function SheetPrelude({show, setShow, sortOrder, setSortOrder}: SheetDrafts) {
+function SheetPrelude({show, setShow, sortOrder, setSortOrder, compare}: SheetDrafts & {compare?: CompareCounts | null}) {
   return (
     <>
       <FilterSection label="Show">
-        <BinderShows show={show} onShowChange={setShow} />
+        <BinderShows show={show} onShowChange={setShow} compare={compare} />
       </FilterSection>
       <FilterSection label="Sort">
         <SortSelect
@@ -73,7 +75,7 @@ function SheetPrelude({show, setShow, sortOrder, setSortOrder}: SheetDrafts) {
  * writers in one tick can lose one of the two (`useBinderParams`). Clear all puts back All with
  * the filters; the sort is no filter, so it stays.
  */
-export function BinderSheet({show, sortOrder, onApply, ...dialog}: BinderSheetProps) {
+export function BinderSheet({show, compare, sortOrder, onApply, ...dialog}: BinderSheetProps) {
   const drafts = useSheetDrafts(dialog.isOpen, show, sortOrder);
   const apply: FilterPanelProps['onApply'] = (inks, types, costs, opts) =>
     onApply(
@@ -85,7 +87,7 @@ export function BinderSheet({show, sortOrder, onApply, ...dialog}: BinderSheetPr
       {...dialog}
       variant="drawer"
       title="Binder"
-      prelude={<SheetPrelude {...drafts} />}
+      prelude={<SheetPrelude {...drafts} compare={compare} />}
       extra={{count: drafts.show === 'all' ? 0 : 1, onClear: () => drafts.setShow('all')}}
       onApply={apply}
     />

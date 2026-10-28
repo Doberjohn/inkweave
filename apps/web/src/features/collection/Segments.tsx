@@ -1,7 +1,7 @@
 import type {CSSProperties, MouseEventHandler, ReactNode} from 'react';
 import {CtaButton} from '../../shared/components';
 import {useHover} from 'inkweave-ui/hooks/useHover';
-import {COLORS, DURATION, EASING, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING} from '../../shared/constants';
+import {COLORS, DURATION, EASING, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, TABULAR} from '../../shared/constants';
 
 const SEGMENTS_STYLE: CSSProperties = {
   display: 'grid',
@@ -45,17 +45,36 @@ function segmentStyle(active: boolean, hovered: boolean): CSSProperties {
   };
 }
 
+/** A segment's count: a small pill, gold while its segment is chosen. */
+function countStyle(active: boolean): CSSProperties {
+  return {
+    ...TABULAR,
+    minWidth: 22,
+    padding: `${SPACING.xxs}px ${SPACING.xs}px`,
+    borderRadius: `${RADIUS.pill}px`,
+    background: active ? GOLD_GLOW.activeBg : COLORS.surfaceHover,
+    color: active ? COLORS.primary : COLORS.text,
+    fontSize: `${FONT_SIZES.sm}px`,
+    fontWeight: 700,
+    lineHeight: 1.2,
+  };
+}
+
 interface SegmentProps {
   label: string;
   /** A picture before the label (the promo sets' symbol), hidden from assistive tech. */
   icon?: ReactNode;
+  /** A count after the label, in a pill: how many cards the view holds (You need). */
+  count?: number;
+  /** How many of the row's grid columns it takes, where segments of two widths share a grid. */
+  span?: number;
   active: boolean;
   onSelect: MouseEventHandler<HTMLButtonElement>;
   /** -1 where the row's arrows move focus rather than Tab (the set picker's menu). */
   tabIndex?: number;
 }
 
-export function Segment({label, icon, active, onSelect, tabIndex}: SegmentProps) {
+export function Segment({label, icon, count, span, active, onSelect, tabIndex}: SegmentProps) {
   const {hovered, hoverProps} = useHover();
   return (
     <CtaButton
@@ -64,9 +83,16 @@ export function Segment({label, icon, active, onSelect, tabIndex}: SegmentProps)
       aria-pressed={active}
       tabIndex={tabIndex}
       onClick={onSelect}
-      style={segmentStyle(active, hovered)}>
+      style={{...segmentStyle(active, hovered), ...(span && {gridColumn: `span ${span}`})}}>
       {icon}
       {label}
+      {/* The space parts the two in the button's name; the flex gap parts them on screen. */}
+      {count !== undefined && (
+        <>
+          {' '}
+          <span style={countStyle(active)}>{count.toLocaleString('en-US')}</span>
+        </>
+      )}
     </CtaButton>
   );
 }

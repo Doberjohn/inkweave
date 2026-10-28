@@ -262,6 +262,13 @@ interface CollectionSectionProps {
   onAskClear: () => void;
   onConfirmClear: () => void;
   onCancelClear: () => void;
+  /**
+   * The friends' sharing switch, drawn under the rows behind a rule. Passed in by
+   * `AccountCollection`, so its code stays in that lazy chunk, out of this route's.
+   */
+  sharing?: React.ReactNode;
+  /** The switch is on: clearing turns it off too, and the confirm line says so. */
+  sharingOn?: boolean;
 }
 
 export function CollectionSection({
@@ -274,6 +281,8 @@ export function CollectionSection({
   onAskClear,
   onConfirmClear,
   onCancelClear,
+  sharing,
+  sharingOn = false,
 }: CollectionSectionProps) {
   return (
     <Section title="Collection">
@@ -288,6 +297,16 @@ export function CollectionSection({
             ? 'Checking your account for a collection…'
             : 'Import a Dreamborn CSV export to see what you own while you browse.'}
         </p>
+      )}
+      {hasCollection && sharing && (
+        <div
+          style={{
+            borderTop: `1px solid ${COLORS.surfaceBorder}`,
+            marginTop: SPACING.md,
+            paddingTop: SPACING.lg,
+          }}>
+          {sharing}
+        </div>
       )}
       <div style={{display: 'flex', gap: SPACING.md, marginTop: SPACING.lg, flexWrap: 'wrap'}}>
         <CtaButton variant="ghost" onClick={onImport} disabled={checking}>
@@ -313,7 +332,7 @@ export function CollectionSection({
           {/* The account copy goes too: this page is signed-in only, and a clear
               while signed in deletes the server row as well (#555). */}
           This deletes your imported collection from this browser and from your account. It cannot be
-          undone.
+          undone.{sharingOn && ' Sharing with your friends turns off too.'}
         </p>
       )}
     </Section>

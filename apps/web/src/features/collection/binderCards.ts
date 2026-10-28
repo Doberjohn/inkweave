@@ -34,12 +34,18 @@ export const BINDER_PARAM = 'binder';
 /** What the binder shows (owner, 2026-10-12): `?owned=owned|missing`, absent for every card. */
 export const OWNED_PARAM = 'owned';
 
+/**
+ * Whose binder shows: `?friend=<handle>` names a friend who shares their collection,
+ * read only. By handle, not id, so the address reads the same for both friends.
+ */
+export const FRIEND_PARAM = 'friend';
+
 /** The params collection mode never keeps: a set filter, since its panel picks the set. */
 const INSIDE_STRAYS = [SET_PARAM];
 /** And a binder of promos alone: a rarity filter too, since every card in it is a promo. */
 const PROMO_STRAYS = [SET_PARAM, RARITY_PARAM];
-/** The params the grid never keeps: the binder's view, since the grid has no collection to view. */
-const OUTSIDE_STRAYS = [OWNED_PARAM];
+/** The params the grid never keeps: the binder's view and whose binder, since the grid has no collection to view. */
+const OUTSIDE_STRAYS = [OWNED_PARAM, FRIEND_PARAM];
 
 /** The strays of a binder scope, or of the grid's (`null`, no binder). */
 function straysOf(binder: string | null): readonly string[] {
@@ -99,11 +105,23 @@ export const setLabel = (setCode: string) =>
  * Binder sheet with the filters: the binder row's Filters counts it in its badge, Owned or
  * Missing as one, and the sheet's Clear all puts back All.
  */
-export type BinderShow = 'all' | 'owned' | 'missing';
+export type BinderShow = 'all' | 'owned' | 'missing' | 'you-need' | 'they-need';
 
-/** The binder view a link asks for: anything but `owned` or `missing` is `all`. */
-export function parseBinderShow(raw: string | null): BinderShow {
-  return raw === 'owned' || raw === 'missing' ? raw : 'all';
+/**
+ * The views a friend's binder adds: the cards they hold in a finish you lack (You
+ * need), and the ones you hold in a finish they lack (They need).
+ */
+export const COMPARE_SHOWS: readonly BinderShow[] = ['you-need', 'they-need'];
+
+const OWN_SHOWS: readonly BinderShow[] = ['owned', 'missing'];
+
+/**
+ * The binder view a link asks for: `owned` or `missing`, and with a friend's binder open
+ * `you-need` or `they-need`; anything else is `all`.
+ */
+export function parseBinderShow(raw: string | null, hasFriend = false): BinderShow {
+  const known = OWN_SHOWS.find((show) => show === raw) ?? (hasFriend ? COMPARE_SHOWS.find((show) => show === raw) : undefined);
+  return known ?? 'all';
 }
 
 /**

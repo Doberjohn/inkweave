@@ -1,5 +1,5 @@
 import {afterEach, describe, it, expect, vi} from 'vitest';
-import {render, screen} from '@testing-library/react';
+import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {trackEvent} from '../../shared/lib/analytics';
 import {AccountCollection} from '../AccountCollection';
@@ -30,8 +30,26 @@ vi.mock('../../shared/contexts/CardDataContext', () => ({
   useCardDataContext: () => ({cards: []}),
 }));
 vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
+vi.mock('../../shared/contexts/SessionContext', () => ({
+  useSession: () => ({user: {id: 'reader'}, loading: false}),
+}));
+// Sharing with friends (#1045): its switch shows only with friends on, and reads the saved state.
+const sharing = vi.hoisted(() => ({friends: false, saved: false}));
+vi.mock('../../features/friends/flag', () => ({
+  get SHOW_FRIENDS() {
+    return sharing.friends;
+  },
+}));
+vi.mock('../../features/collection/sharingRepository', () => ({
+  getSharing: vi.fn(() => Promise.resolve({data: sharing.saved, error: null})),
+  setSharing: vi.fn(() => Promise.resolve({data: null, error: null})),
+}));
 
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {
+  vi.clearAllMocks();
+  sharing.friends = false;
+  sharing.saved = false;
+});
 
 describe('AccountCollection', () => {
   it('dates the collection by its last change, which an import and each edit in the app stamp (#826)', () => {
@@ -79,5 +97,32 @@ describe('AccountCollection', () => {
     expect(trackEvent).not.toHaveBeenCalled();
     expect(screen.getByRole('button', {name: 'Clear'})).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('has no sharing switch while friends are off', () => {
+    render(<AccountCollection />);
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
+  });
+
+  it('shows the sharing switch as saved, and says Clear turns it off while it is on (#1045)', async () => {
+    sharing.friends = true;
+    sharing.saved = true;
+    const user = userEvent.setup();
+    render(<AccountCollection />);
+    const toggle = screen.getByRole('switch', {name: 'Let my friends see my collection'});
+    await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'true'));
+
+    await user.click(screen.getByRole('button', {name: 'Clear'}));
+    expect(screen.getByRole('alert')).toHaveTextContent('Sharing with your friends turns off too.');
+  });
+
+  it("leaves Clear's line as it was while sharing is off", async () => {
+    sharing.friends = true;
+    const user = userEvent.setup();
+    render(<AccountCollection />);
+    await waitFor(() => expect(screen.getByRole('switch')).toBeEnabled());
+
+    await user.click(screen.getByRole('button', {name: 'Clear'}));
+    expect(screen.getByRole('alert')).not.toHaveTextContent('Sharing');
   });
 });

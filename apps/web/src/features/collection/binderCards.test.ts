@@ -1,7 +1,10 @@
 import {describe, it, expect} from 'vitest';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
+import {friendBinderPath} from '../friends/friendBinderPath';
 import {
   ALL_PROMO_SETS,
+  BINDER_PARAM,
+  FRIEND_PARAM,
   WHOLE_COLLECTION,
   binderCardsForSet,
   binderContents,
@@ -11,6 +14,7 @@ import {
   binderSlots,
   isOpenPocket,
   namesStretches,
+  parseBinderShow,
   promoSetPockets,
   rarityPicksPromos,
   setFromFilter,
@@ -323,6 +327,30 @@ describe('withoutStrays', () => {
     expect(left(new URLSearchParams('binder=promos&rarity=Common&ink=Amber'))).toBe('binder=promos&ink=Amber');
     expect(left(new URLSearchParams('binder=P1&rarity=Special'))).toBe('binder=P1');
     expect(left(new URLSearchParams('binder=13&rarity=Common'))).toBe('binder=13&rarity=Common');
+  });
+});
+
+describe("a friend's binder (#1045)", () => {
+  it("keeps whose binder inside collection mode, and drops it outside, with the binder's view", () => {
+    const left = (params: string) => withoutStrays(new URLSearchParams(params)).toString();
+    expect(left('binder=all&friend=ruby_hero_042&owned=you-need')).toBe('binder=all&friend=ruby_hero_042&owned=you-need');
+    expect(left('friend=ruby_hero_042&owned=you-need&ink=Ruby')).toBe('ink=Ruby');
+  });
+
+  it('reads You need and They need only with a friend named, and anything else as All', () => {
+    expect(parseBinderShow('you-need', true)).toBe('you-need');
+    expect(parseBinderShow('they-need', true)).toBe('they-need');
+    expect(parseBinderShow('you-need')).toBe('all');
+    expect(parseBinderShow('they-need', false)).toBe('all');
+    expect(parseBinderShow('owned', true)).toBe('owned');
+    expect(parseBinderShow('everything', true)).toBe('all');
+  });
+
+  it("links the Friends list to the friend's whole collection by the binder's own params", () => {
+    const url = new URL(friendBinderPath('ruby_hero_042'), 'https://inkweave.ink');
+    expect(url.pathname).toBe('/browse');
+    expect(url.searchParams.get(BINDER_PARAM)).toBe(WHOLE_COLLECTION);
+    expect(url.searchParams.get(FRIEND_PARAM)).toBe('ruby_hero_042');
   });
 });
 

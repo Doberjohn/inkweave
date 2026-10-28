@@ -193,4 +193,16 @@ describe('trackEvent', () => {
     trackEvent('friend_action', props);
     expectSentToBoth('friend_action', props);
   });
+
+  it('forwards a collection_sharing_changed event', () => {
+    const props = {state: 'on'} as const;
+    trackEvent('collection_sharing_changed', props);
+    expectSentToBoth('collection_sharing_changed', props);
+  });
+
+  it('forwards a friend_binder_opened event', () => {
+    const props = {result: 'not_sharing'} as const;
+    trackEvent('friend_binder_opened', props);
+    expectSentToBoth('friend_binder_opened', props);
+  });
 });

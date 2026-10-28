@@ -47,15 +47,26 @@ const PROFILE_SENTENCE =
   /Your account also gets a made-up public name and handle, such as Emerald Princess 330, which anyone can see\. You can change the name\./;
 // The two feature matchers start at the full stop before their sentence, so a lost space between
 // the sentences fails them too.
-// The account's row is readable only by its owner, the browser's copy outlives sign-out
+// The account's row is readable only by its owner, unless they share it with their friends
+// (#1045), which needs friends on too. The browser's copy outlives sign-out
 // (`collectionStorage.ts`), and a clear removes both (`clearImported`).
-const COLLECTION_SENTENCE =
-  /\. If you keep your collection on Inkweave, I store it with your account: how many copies of each card you own, normal and foil, so it’s there on any device you sign in on\. Only you can see it\. A copy also stays in this browser, even after you sign out\. Clearing your collection on your account page deletes both\./;
+const COLLECTION = (who: string) =>
+  new RegExp(
+    `\\. If you keep your collection on Inkweave, I store it with your account: how many copies of each card you own, normal and foil, so it’s there on any device you sign in on\\. ${who} A copy also stays in this browser, even after you sign out\\. Clearing your collection on your account page deletes both\\.`,
+  );
+const COLLECTION_SENTENCE = COLLECTION('Only you can see it\\.');
+const SHARED_COLLECTION_SENTENCE = COLLECTION(
+  'Only you can see it, unless you turn on sharing with friends on your account page\\. Then your friends can see which cards you own and how many\\.',
+);
 // The code is made and stored when the account page first loads, friends or not
 // (`claim_friend_code`), so the sentence ties it to that visit. Each try at a code is logged
-// against its sender (#860).
-const FRIENDS_SENTENCE =
-  /\. Opening your account page also gives you a friend code, which I store\. If you add friends, I store who your friends and friend requests are\. To stop anyone guessing codes, I also note when you try one\. Your friends see your public name and handle\./;
+// against its sender (#860). A friend sees a collection only where both flags are on.
+const FRIENDS = (sees: string) =>
+  new RegExp(
+    `\\. Opening your account page also gives you a friend code, which I store\\. If you add friends, I store who your friends and friend requests are\\. To stop anyone guessing codes, I also note when you try one\\. Your friends see ${sees}\\.`,
+  );
+const FRIENDS_SENTENCE = FRIENDS('your public name and handle');
+const SHARED_FRIENDS_SENTENCE = FRIENDS('your public name and handle, and your collection if you share it with them');
 
 function renderPolicy(state: Flags) {
   Object.assign(flags, state);
@@ -86,7 +97,8 @@ describe('PrivacyPage', () => {
     'describes the collection only with its flag on (collection $collection, friends $friends)',
     (state) => {
       renderPolicy(state);
-      expect(screen.queryByText(COLLECTION_SENTENCE) !== null).toBe(state.collection);
+      expect(screen.queryByText(COLLECTION_SENTENCE) !== null).toBe(state.collection && !state.friends);
+      expect(screen.queryByText(SHARED_COLLECTION_SENTENCE) !== null).toBe(state.collection && state.friends);
     },
   );
 
@@ -94,7 +106,8 @@ describe('PrivacyPage', () => {
     'describes friends only with its flag on (collection $collection, friends $friends)',
     (state) => {
       renderPolicy(state);
-      expect(screen.queryByText(FRIENDS_SENTENCE) !== null).toBe(state.friends);
+      expect(screen.queryByText(FRIENDS_SENTENCE) !== null).toBe(state.friends && !state.collection);
+      expect(screen.queryByText(SHARED_FRIENDS_SENTENCE) !== null).toBe(state.friends && state.collection);
     },
   );
 });

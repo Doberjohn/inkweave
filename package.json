@@ -57,6 +57,8 @@
         "!apps/web/dist/assets/BrowseCollectionPage-*.js",
         "!apps/web/dist/assets/AccountCollection-*.js",
         "!apps/web/dist/assets/AccountFriends-*.js",
+        "!apps/web/dist/assets/sharingRepository-*.js",
+        "!apps/web/dist/assets/FriendChip-*.js",
         "!apps/web/dist/assets/supabaseClient-*.js",
         "!apps/web/dist/assets/posthogClient-*.js"
       ],
@@ -90,9 +92,11 @@
         "apps/web/dist/assets/ImportCollectionDialog-*.js",
         "apps/web/dist/assets/BrowseCollectionPage-*.js",
         "apps/web/dist/assets/AccountCollection-*.js",
-        "apps/web/dist/assets/AccountFriends-*.js"
+        "apps/web/dist/assets/AccountFriends-*.js",
+        "apps/web/dist/assets/sharingRepository-*.js",
+        "apps/web/dist/assets/FriendChip-*.js"
       ],
-      "limit": "75 kB",
+      "limit": "83 kB",
       "gzip": true
     },
     {

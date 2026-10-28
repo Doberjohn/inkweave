@@ -5,6 +5,7 @@ import {
   claimFriendCode,
   listFriendIdentities,
   listFriendships,
+  listSharingFriends,
   removeFriendship,
   sendFriendRequest,
 } from './friendRepository';
@@ -174,5 +175,21 @@ describe('listFriendIdentities', () => {
   it('makes no request for an empty list', async () => {
     await expect(listFriendIdentities([])).resolves.toEqual({data: new Map(), error: null});
     expect(mockProfilesIn).not.toHaveBeenCalled();
+  });
+});
+
+describe('listSharingFriends (#1045)', () => {
+  it('returns the ids shared_friends() answers', async () => {
+    mockRpc.mockResolvedValue({data: ['amber', 'ruby'], error: null});
+    await expect(listSharingFriends()).resolves.toEqual({data: new Set(['amber', 'ruby']), error: null});
+    expect(mockRpc).toHaveBeenCalledWith('shared_friends');
+  });
+
+  it('passes a failed call on as an error, never as no one sharing', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockRpc.mockResolvedValue({data: null, error: {message: 'boom'}});
+    const result = await listSharingFriends();
+    expect(result.data).toBeNull();
+    expect(result.error).toBeTruthy();
   });
 });

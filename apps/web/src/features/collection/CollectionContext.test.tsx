@@ -849,5 +849,15 @@ describe('CollectionContext, counts changed in the app (#826)', () => {
       await advance(UPLOAD_DELAY_MS);
       expect(upsertCollection).toHaveBeenCalledWith('user-a', saved, 9000);
     });
+
+    it("places a friend's copies as it places the player's own (#1045), and saves nothing of theirs", async () => {
+      const {result} = await renderPlaced();
+      const theirs = {owned: {normal: 2, foil: 0}, other: {normal: 1, foil: 0}};
+
+      expect(result.current.place(theirs)).toEqual({owned: {normal: 0, foil: 2}, other: {normal: 1, foil: 0}});
+      await advance(UPLOAD_DELAY_MS);
+      expect(readCollection()?.entries).toEqual(ENTRIES);
+      expect(upsertCollection).not.toHaveBeenCalled();
+    });
   });
 });

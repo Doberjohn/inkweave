@@ -42,6 +42,8 @@ interface SectionOptions {
   show?: BinderShow;
   axis?: Axis;
   onAxisChange?: (axis: Axis) => void;
+  /** A friend's binder (#1045). */
+  friend?: boolean;
 }
 
 /** The section with `matched` the cards the page's filters let through, as the page counts them. */
@@ -57,6 +59,7 @@ function section(
     show = 'all',
     axis = 'complete',
     onAxisChange = vi.fn(),
+    friend = false,
   }: SectionOptions = {},
 ) {
   const counted = pool.filter((card) => matched.includes(card.id));
@@ -69,6 +72,7 @@ function section(
         filtered={counted.length < pool.length}
         sortOrder={sortOrder}
         entries={entries}
+        friend={friend}
         isLoading={isLoading}
         error={error}
         onRetry={vi.fn()}
@@ -173,6 +177,16 @@ describe('CollectionBinderSection', () => {
     renderSection(['next']);
     expect(screen.getByRole('status')).toHaveTextContent('No cards in this set match your filters.');
     expect(screen.queryByRole('region', {name: 'Binder'})).toBeNull();
+  });
+
+  it.each([
+    ['you-need', '9', 'No cards you need in this set match your filters.'],
+    ['they-need', '9', 'No cards they need in this set match your filters.'],
+    ['owned', 'all', 'No owned cards in their collection match your filters.'],
+    ['all', 'promos', 'No cards in their promo sets match your filters.'],
+  ] as const)("words a friend's empty %s view in a full sentence (#1045)", (show, setCode, line) => {
+    renderSection([], {show, setCode, friend: true});
+    expect(screen.getByRole('status')).toHaveTextContent(line);
   });
 
   it('announces a load error as an alert', () => {

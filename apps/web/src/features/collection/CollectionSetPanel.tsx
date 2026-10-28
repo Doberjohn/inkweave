@@ -135,6 +135,12 @@ export interface CollectionSetPanelProps extends SetSwitching, BinderView, AxisC
    * counted are no whole set or collection.
    */
   filtered?: boolean;
+  /**
+   * In a friend's binder, the reader's own tally of the same cards, for a "You" line
+   * under each of the friend's headlines; absent for a reader with no collection, or in
+   * their own binder.
+   */
+  yours?: CollectionStats | null;
 }
 
 /** How long a bar takes to glide to a new length, or to fill from empty when it first appears. */
@@ -263,10 +269,18 @@ const countStyle = (done: boolean): CSSProperties => ({
   fontWeight: done ? 700 : 400,
 });
 
+/** The reader's own count toward a friend's headline. */
+interface YouFigure {
+  value: number;
+  total: number;
+}
+
 interface HeadlineProps {
   label: string;
   value: number;
   total: number;
+  /** In a friend's binder, the reader's own figure, drawn under the friend's bar. */
+  you?: YouFigure;
   /** What its count counts: cards, or a promo set's promos. */
   unit?: 'cards' | 'promos';
   /** The tab's lead number, at display size. */
@@ -301,6 +315,7 @@ function HeadlineBody({
   unit = 'cards',
   lead = false,
   delay = 0,
+  you,
   attended,
 }: HeadlineProps & {attended: boolean}) {
   const motion = !usePrefersReducedMotion();
@@ -325,7 +340,21 @@ function HeadlineBody({
         </span>
       </span>
       <Bar value={value} total={total} height={lead ? BAR.headline : BAR.second} delay={delay} />
+      {you && <YouLine {...you} delay={delay} />}
     </>
+  );
+}
+
+/** The reader's own figure under a friend's headline: You, a thin bar, and the percentage. */
+function YouLine({value, total, delay}: YouFigure & {delay: number}) {
+  return (
+    <span style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
+      <span style={DETAIL_STYLE}>You</span>
+      <span style={{flex: 1, minWidth: 0}}>
+        <Bar value={value} total={total} height={BAR.row} delay={delay} />
+      </span>
+      <span style={DETAIL_STYLE}>{percentOf(value, total)}%</span>
+    </span>
   );
 }
 
@@ -515,6 +544,8 @@ function scopeTally(stats: CollectionStats, setCode: string) {
 
 interface ScopeNumbersProps extends AxisChoice {
   figures: ScopeFigures;
+  /** In a friend's binder, the reader's own headlines over the same cards. */
+  yours?: Headlines;
   /** The whole collection's five-figure counts, which take room from the rarity rows' bars. */
   wide: boolean;
   /** A promo set's: Complete set and By ink alone (see the header). */
@@ -526,7 +557,7 @@ interface ScopeNumbersProps extends AxisChoice {
  * headlines, which also choose what the breakdowns count, then the breakdowns. A promo set
  * has the first headline and the inks only, which then count it whatever was chosen.
  */
-function ScopeNumbers({figures, wide, promo, axis: chosen, onAxisChange}: ScopeNumbersProps) {
+function ScopeNumbers({figures, yours, wide, promo, axis: chosen, onAxisChange}: ScopeNumbersProps) {
   const axis = promo ? 'complete' : chosen;
   return (
     <>
@@ -538,6 +569,7 @@ function ScopeNumbers({figures, wide, promo, axis: chosen, onAxisChange}: ScopeN
           value={figures.complete}
           total={figures.cards}
           unit={promo ? 'promos' : 'cards'}
+          you={yours && {value: yours.complete, total: yours.cards}}
           chosen={axis === 'complete'}
           onChoose={() => onAxisChange('complete')}
         />
@@ -546,6 +578,7 @@ function ScopeNumbers({figures, wide, promo, axis: chosen, onAxisChange}: ScopeN
             label={figures.noun ? `Master ${figures.noun}` : 'Master'}
             value={figures.master}
             total={figures.cards}
+            you={yours && {value: yours.master, total: yours.cards}}
             chosen={axis === 'master'}
             onChoose={() => onAxisChange('master')}
             delay={STAGGER_MS}
@@ -572,12 +605,13 @@ function ScopeNumbers({figures, wide, promo, axis: chosen, onAxisChange}: ScopeN
 
 interface NumbersProps extends AxisChoice {
   stats: CollectionStats | null;
+  yours?: CollectionStats | null;
   setCode: string;
   filtered: boolean;
 }
 
 /** The numbers for what the picker shows: the whole collection, every promo set, or the open set. */
-function Numbers({stats, setCode, filtered, axis, onAxisChange}: NumbersProps) {
+function Numbers({stats, yours, setCode, filtered, axis, onAxisChange}: NumbersProps) {
   const promo = isPromoScope(setCode);
   if (stats === null) return <NumbersLoading promo={promo} />;
   const tally = scopeTally(stats, setCode);
@@ -585,7 +619,10 @@ function Numbers({stats, setCode, filtered, axis, onAxisChange}: NumbersProps) {
   const figures = {...tally, noun: headlineNoun({setCode, filtered})};
   if (figures.cards > 0) {
     const wide = setCode === WHOLE_COLLECTION;
-    return <ScopeNumbers figures={figures} wide={wide} promo={promo} axis={axis} onAxisChange={onAxisChange} />;
+    const mine = yours ? scopeTally(yours, setCode) : undefined;
+    return (
+      <ScopeNumbers figures={figures} yours={mine} wide={wide} promo={promo} axis={axis} onAxisChange={onAxisChange} />
+    );
   }
   // Filters that leave no card: said in words, since 0% of nothing would read as owning none.
   // The count line above the numbers otherwise went (owner, 2026-10-15).
@@ -626,12 +663,13 @@ function pickerProps({setCode, sets, setsLoading, onSetChange, stats, picksPromo
 /** The numbers' view of the panel's props. */
 function numbersProps({
   stats,
+  yours,
   setCode,
   filtered = false,
   axis,
   onAxisChange,
 }: CollectionSetPanelProps): NumbersProps {
-  return {stats, setCode, filtered, axis, onAxisChange};
+  return {stats, yours, setCode, filtered, axis, onAxisChange};
 }
 
 /**
@@ -646,7 +684,7 @@ export function CollectionSetBody({withPicker = true, ...props}: CollectionSetPa
   return (
     <>
       {withPicker && <SetPicker {...pickerProps(props)} />}
-      <BinderShows show={props.show} onShowChange={props.onShowChange} />
+      <BinderShows show={props.show} onShowChange={props.onShowChange} compare={props.compare} />
       <NumbersRegion {...numbersProps(props)} />
     </>
   );

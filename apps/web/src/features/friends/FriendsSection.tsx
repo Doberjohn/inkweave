@@ -1,8 +1,10 @@
 import {useEffect, useId, useRef, useState} from 'react';
 import {flushSync} from 'react-dom';
+import {Link} from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
 import {CtaButton, IconButton} from '../../shared/components';
 import type {CtaVariant} from 'inkweave-ui/components/CtaButton';
+import {CTA_GHOST_STYLE} from 'inkweave-ui/lib/ctaStyles';
 import {
   CAP_LABEL_XS,
   COLORS,
@@ -19,8 +21,10 @@ import {
 } from '../../shared/constants';
 import {useHover} from '../../shared/hooks';
 import {trackEvent} from '../../shared/lib/analytics';
+import {FriendChip} from './FriendChip';
+import {friendBinderPath} from './friendBinderPath';
 import {formatFriendCode, normalizeFriendCode} from './friendCode';
-import {CheckIcon, CopyIcon} from './icons';
+import {CheckIcon, CopyIcon, EyeIcon} from './icons';
 import type {FriendRow, FriendsStatus, SendOutcome} from './useFriends';
 
 /**
@@ -47,6 +51,11 @@ export interface FriendsSectionProps {
   onAccept: (row: FriendRow) => Promise<string | null>;
   /** Declining, cancelling and removing a friend are all this. */
   onRemove: (row: FriendRow) => Promise<string | null>;
+  /**
+   * The friends who share their collection, by id: View binder beside each of them,
+   * Not sharing beside the rest. Undefined says neither, as with collections off.
+   */
+  sharing?: ReadonlySet<string>;
 }
 
 const MUTED: React.CSSProperties = {color: COLORS.textMuted, fontSize: `${FONT_SIZES.md}px`, margin: 0};
@@ -169,7 +178,7 @@ interface Leaving {
   id: string;
 }
 
-function FriendsReady({code, received, sent, friends, busy, onSend, onAccept, onRemove}: FriendsSectionProps) {
+function FriendsReady({code, received, sent, friends, busy, onSend, onAccept, onRemove, sharing}: FriendsSectionProps) {
   const [failure, setFailure] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<string | null>(null);
   const {watch, listRefs, headingRefs} = useFocusAfterLeaving({received, sent, friends});
@@ -205,7 +214,13 @@ function FriendsReady({code, received, sent, friends, busy, onSend, onAccept, on
       <div style={{borderTop: RULE, marginTop: SPACING.md}} />
       <Requests rows={received} listRef={listRefs.received} headingRef={headingRefs.received} actions={rowActions} />
       <Sent rows={sent} listRef={listRefs.sent} headingRef={headingRefs.sent} actions={rowActions} />
-      <Friends rows={friends} listRef={listRefs.friends} headingRef={headingRefs.friends} actions={rowActions} />
+      <Friends
+        rows={friends}
+        listRef={listRefs.friends}
+        headingRef={headingRefs.friends}
+        actions={rowActions}
+        sharing={sharing}
+      />
       {failure && (
         <p role="alert" style={{...ANSWER, color: COLORS.error}}>
           {failure}
@@ -535,7 +550,7 @@ function formatDay(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, {day: 'numeric', month: 'short', year: 'numeric'});
 }
 
-function Friends({rows, listRef, headingRef, actions}: ListProps) {
+function Friends({rows, listRef, headingRef, actions, sharing}: ListProps & {sharing?: ReadonlySet<string>}) {
   return (
     <PeopleList
       heading={rows.length > 0 ? `Your friends (${rows.length})` : 'Your friends'}
@@ -545,15 +560,64 @@ function Friends({rows, listRef, headingRef, actions}: ListProps) {
       empty="No friends yet. Share your code, or enter a friend's."
       meta={(row) => (row.since ? `Friends since ${formatDay(row.since)}` : null)}
       buttons={(row, index, labelledBy) => (
-        <RemoveControls
-          labelledBy={labelledBy}
-          busy={actions.busy}
-          confirming={actions.confirming === row.id}
-          onAsk={(open, focusId) => actions.ask(open ? row.id : null, focusId)}
-          onRemove={() => actions.remove({list: 'friends', index, id: row.id}, row)}
-        />
+        <>
+          {sharing && <SharingMark row={row} shares={sharing.has(row.id)} labelledBy={labelledBy} />}
+          <RemoveControls
+            labelledBy={labelledBy}
+            busy={actions.busy}
+            confirming={actions.confirming === row.id}
+            onAsk={(open, focusId) => actions.ask(open ? row.id : null, focusId)}
+            onRemove={() => actions.remove({list: 'friends', index, id: row.id}, row)}
+          />
+        </>
       )}
     />
+  );
+}
+
+/** The ghost CTA's look (`CtaButton`), on a link: View binder goes somewhere, so it's an anchor. */
+const GHOST_LINK: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: SPACING.sm,
+  padding: `0 ${SPACING.xl}px`,
+  minHeight: TOUCH_TARGET,
+  boxSizing: 'border-box',
+  borderRadius: `${RADIUS.lg}px`,
+  ...CTA_GHOST_STYLE,
+  fontFamily: FONTS.body,
+  fontSize: `${FONT_SIZES.base}px`,
+  fontWeight: 500,
+  textDecoration: 'none',
+};
+
+/**
+ * View binder for a friend who shares, Not sharing for one who doesn't. The link's
+ * name is "View binder of <name>", assembled from text on the page as `RowButton`'s are, so no
+ * name reaches PostHog's autocapture. A friend with no handle has no binder address, and
+ * gets neither.
+ */
+function SharingMark({row, shares, labelledBy}: {row: FriendRow; shares: boolean; labelledBy: string}) {
+  const id = useId();
+  const {hovered, hoverProps} = useHover();
+  if (!shares) return <span style={DETAIL}>Not sharing</span>;
+  if (!row.handle) return null;
+  return (
+    <>
+      <span id={`${id}-of`} hidden>
+        of
+      </span>
+      <Link
+        id={id}
+        to={friendBinderPath(row.handle)}
+        aria-labelledby={`${id} ${id}-of ${labelledBy}`}
+        {...hoverProps}
+        style={{...GHOST_LINK, ...(hovered && {borderColor: COLORS.primary})}}>
+        <EyeIcon />
+        View binder
+      </Link>
+    </>
   );
 }
 
@@ -643,6 +707,9 @@ function PeopleList({heading, headingRef, rows, listRef, empty, joiner, meta, bu
   );
 }
 
+/** A row's person, chip and name: it takes the row's free width, and drops the buttons under it before it goes below 16rem. */
+const PERSON: React.CSSProperties = {display: 'flex', alignItems: 'center', gap: SPACING.md, flex: '1 1 16rem', minWidth: 0};
+
 function Person({
   row,
   first,
@@ -665,19 +732,26 @@ function Person({
         padding: `${SPACING.sm}px 0`,
         borderTop: first ? 'none' : RULE,
       }}>
-      {/* Names are public, but who is whose friend is not: kept out of PostHog (#827). */}
-      <span style={{display: 'flex', alignItems: 'baseline', gap: SPACING.sm, flexWrap: 'wrap', minWidth: 0}}>
-        <span id={nameId} className="ph-no-capture" style={{color: COLORS.text, fontSize: `${FONT_SIZES.md}px`, fontWeight: 600}}>
-          {row.name}
-        </span>
-        {row.handle && (
-          <span className="ph-no-capture" style={DETAIL}>
-            @{row.handle}
+      {/*
+        The chip stays beside the name, and the name's line wraps before the row does, so the
+        buttons drop under the person only where the two can't share a line at all (a phone).
+      */}
+      <span style={PERSON}>
+        <FriendChip name={row.name} handle={row.handle} />
+        {/* Names are public, but who is whose friend is not: kept out of PostHog (#827). */}
+        <span style={{display: 'flex', alignItems: 'baseline', gap: SPACING.sm, flexWrap: 'wrap', minWidth: 0}}>
+          <span id={nameId} className="ph-no-capture" style={{color: COLORS.text, fontSize: `${FONT_SIZES.md}px`, fontWeight: 600}}>
+            {row.name}
           </span>
-        )}
-        {meta && <span style={DETAIL}>{meta}</span>}
+          {row.handle && (
+            <span className="ph-no-capture" style={DETAIL}>
+              @{row.handle}
+            </span>
+          )}
+          {meta && <span style={DETAIL}>{meta}</span>}
+        </span>
       </span>
-      <span style={{marginLeft: 'auto', display: 'flex', gap: SPACING.sm}}>{buttons(nameId)}</span>
+      <span style={{marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: SPACING.sm}}>{buttons(nameId)}</span>
     </li>
   );
 }

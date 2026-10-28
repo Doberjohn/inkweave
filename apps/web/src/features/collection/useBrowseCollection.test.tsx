@@ -1,8 +1,11 @@
 import type {ReactNode} from 'react';
 import {beforeEach, describe, it, expect, vi} from 'vitest';
-import {act, fireEvent, render, renderHook, screen, within} from '@testing-library/react';
+import {act, fireEvent, render, renderHook, screen, waitFor, within} from '@testing-library/react';
 import {MemoryRouter, useSearchParams} from 'react-router-dom';
 import {trackEvent} from '../../shared/lib/analytics';
+import {createCard} from '../../shared/test-utils';
+import {forgetFriendCollections} from './useFriendCollection';
+import {countCompare} from './compareCollections';
 import {
   useBinderParams,
   useBrowseCollection,
@@ -14,18 +17,26 @@ import {
 import './CollectionBinderSection';
 
 // Who presses Collection, for useBrowseCollection's own cases; useBinderParams reads none of it.
-const {account} = vi.hoisted(() => ({account: {signedIn: true, hasCollection: true, syncing: false}}));
+const {account} = vi.hoisted(() => ({
+  account: {
+    signedIn: true,
+    hasCollection: true,
+    syncing: false,
+    entries: {} as Record<string, {normal: number; foil: number}>,
+  },
+}));
 
 vi.mock('../../shared/contexts/SessionContext', () => ({
   useSession: () => ({user: account.signedIn ? {id: 'user-1'} : null, loading: false}),
 }));
 vi.mock('./CollectionContext', () => ({
   useCollection: () => ({
-    entries: {},
+    entries: account.entries,
     hasCollection: account.hasCollection,
     syncing: account.syncing,
     importCollection: () => null,
     setCount: () => {},
+    place: (entries: unknown) => entries,
   }),
 }));
 vi.mock('./CollectionCardsContext', () => ({
@@ -33,6 +44,27 @@ vi.mock('./CollectionCardsContext', () => ({
   useCollectionPool: () => ({pool: [], waiting: false, error: null, isReady: true}),
 }));
 vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
+// A friend's binder's reads (#1045): Ruby shares, and anyone else named is no one.
+const friends = vi.hoisted(() => ({
+  getPlayerByHandle: vi.fn(),
+  getFriendCollection: vi.fn(),
+}));
+vi.mock('./sharingRepository', () => friends);
+// The real counts, watched: a friend's binder's slots share one count per render.
+vi.mock('./compareCollections', async (importOriginal) => {
+  const real = await importOriginal<typeof import('./compareCollections')>();
+  return {...real, countCompare: vi.fn(real.countCompare)};
+});
+// The friends flag, on unless a case turns it off.
+const flags = vi.hoisted(() => ({friends: true}));
+vi.mock('../friends/flag', () => ({
+  get SHOW_FRIENDS() {
+    return flags.friends;
+  },
+}));
+beforeEach(() => {
+  flags.friends = true;
+});
 
 type Reader = Parameters<typeof useBinderParams>[0];
 
@@ -99,6 +131,55 @@ describe('useBinderParams', () => {
   ])('keeps a Set filter under a binder link, $who', ({reader}) => {
     const {result} = renderBinderParams('/browse?binder=14&set=5', reader);
     expect(result.current.search).toBe('binder=14&set=5');
+  });
+
+  describe("a friend's binder (#1045)", () => {
+    const FRIEND_URL = '/browse?binder=14&friend=ruby_hero_042&owned=you-need';
+
+    it('opens for a signed-in reader with no collection, whom their own binder link would refuse', () => {
+      const {result} = renderBinderParams(FRIEND_URL, NO_COLLECTION);
+      expect(result.current.mode).toEqual({active: true, dead: false, dropsStrays: true});
+      expect(result.current.friend).toBe('ruby_hero_042');
+      // You need asks of the reader's own collection, which they don't hold.
+      expect(result.current.show).toBe('all');
+    });
+
+    it('keeps the grid signed out, and the link whole, so signing in opens it', () => {
+      const {result} = renderBinderParams(FRIEND_URL, SIGNED_OUT);
+      expect(result.current.mode.active).toBe(false);
+      expect(result.current.search).toBe('binder=14&friend=ruby_hero_042&owned=you-need');
+    });
+
+    it('reads You need for a reader with a collection, and never without a friend', () => {
+      expect(renderBinderParams(FRIEND_URL, COLLECTOR).result.current.show).toBe('you-need');
+      expect(renderBinderParams('/browse?binder=14&owned=you-need', COLLECTOR).result.current.show).toBe('all');
+    });
+
+    it("goes back to the reader's own binder at the same scope, dropping the views only a friend's has", () => {
+      const {result} = renderBinderParams(`${FRIEND_URL}&ink=Ruby`, COLLECTOR);
+      act(() => result.current.leaveFriend());
+      expect(result.current.search).toBe('binder=14&ink=Ruby');
+    });
+
+    it('keeps Owned or Missing on the way back', () => {
+      const {result} = renderBinderParams('/browse?binder=14&friend=ruby_hero_042&owned=missing', COLLECTOR);
+      act(() => result.current.leaveFriend());
+      expect(result.current.search).toBe('binder=14&owned=missing');
+    });
+
+    it('changes nothing with the friends flag off: no friend, and no view only a friend has', () => {
+      flags.friends = false;
+      const {result} = renderBinderParams(FRIEND_URL, COLLECTOR);
+      expect(result.current.friend).toBeNull();
+      expect(result.current.show).toBe('all');
+      expect(result.current.mode.active).toBe(true);
+    });
+
+    it('names no friend outside the binder, where the param is a stray', () => {
+      const {result} = renderBinderParams('/browse?friend=ruby_hero_042&ink=Ruby', COLLECTOR);
+      expect(result.current.friend).toBeNull();
+      expect(result.current.search).toBe('ink=Ruby');
+    });
   });
 });
 
@@ -273,5 +354,138 @@ describe("useBrowseCollection's Binder sheet (#969)", () => {
     const shows = within(screen.getByRole('group', {name: 'Binder shows'}));
     expect(shows.getByRole('button', {pressed: true})).toHaveTextContent('Missing');
     expect(screen.queryByRole('region', {name: 'Collection numbers'})).toBeNull();
+  });
+});
+
+describe("useBrowseCollection: a friend's binder (#1045)", () => {
+  const RUBY = {id: 'ruby', handle: 'ruby_hero_042', name: 'Ruby Hero 042'};
+  // Nani comes in both finishes: you hold her normal, Ruby only her foil. Belle is Ruby's alone.
+  const nani = createCard({id: 'nani', setCode: '14', rarity: 'Uncommon'});
+  const belle = createCard({id: 'belle', setCode: '14', rarity: 'Uncommon'});
+  const LISTING: BrowseListing = {cards: [nani, belle], sortOrder: 'newest', matched: [nani, belle], filtered: false};
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    forgetFriendCollections();
+    account.signedIn = true;
+    account.hasCollection = true;
+    account.syncing = false;
+    account.entries = {nani: {normal: 1, foil: 0}};
+    friends.getPlayerByHandle.mockImplementation((handle: string) =>
+      Promise.resolve({data: handle === RUBY.handle ? RUBY : null, error: null}),
+    );
+    friends.getFriendCollection.mockResolvedValue({
+      data: {nani: {normal: 0, foil: 1}, belle: {normal: 1, foil: 0}},
+      error: null,
+    });
+  });
+
+  let slots: ReturnType<typeof useBrowseCollection> | null = null;
+  /** The hook's slots as Browse draws them on a desktop: the banner, the binder, the actions. */
+  function FriendPage() {
+    slots = useBrowseCollection([]);
+    const [params] = useSearchParams();
+    return (
+      <>
+        {slots.renderBanner(LISTING, false)}
+        {slots.renderBinder(LISTING, () => {})}
+        <div data-testid="actions">{slots.modeActions}</div>
+        <output data-testid="search">{params.toString()}</output>
+      </>
+    );
+  }
+
+  const renderFriend = (url: string) =>
+    render(
+      <MemoryRouter initialEntries={[url]}>
+        <FriendPage />
+      </MemoryRouter>,
+    );
+
+  it('names the friend, says it is read only, and offers no collection actions', async () => {
+    renderFriend('/browse?binder=14&friend=ruby_hero_042');
+    expect(await screen.findByRole('heading', {name: "Ruby Hero 042's binder"})).toBeInTheDocument();
+    expect(screen.getByText('Read only')).toBeInTheDocument();
+    expect(screen.getByTestId('actions')).toBeEmptyDOMElement();
+  });
+
+  it.each([
+    ['owned', ['nani', 'belle']],
+    ['missing', []],
+    ['you-need', ['belle']],
+    ['they-need', []],
+  ])("asks %s of the friend's copies, beside the reader's own", async (show, ids) => {
+    renderFriend(`/browse?binder=14&friend=ruby_hero_042&owned=${show}`);
+    await screen.findByText('Read only');
+    const inView = slots?.inView;
+    expect(inView).not.toBeNull();
+    expect([nani, belle].filter((card) => inView?.(card)).map((card) => card.id)).toEqual(ids);
+  });
+
+  it("goes back to the reader's own binder at the same scope", async () => {
+    renderFriend('/browse?binder=14&friend=ruby_hero_042&owned=they-need');
+    fireEvent.click(await screen.findByRole('button', {name: /Back to your binder/}));
+    expect(screen.getByTestId('search')).toHaveTextContent(/^binder=14$/);
+  });
+
+  it('goes back to Browse for a reader with no collection of their own', async () => {
+    account.hasCollection = false;
+    account.entries = {};
+    renderFriend('/browse?binder=14&friend=ruby_hero_042');
+    fireEvent.click(await screen.findByRole('button', {name: /Back to browse/}));
+    expect(screen.getByTestId('search')).toBeEmptyDOMElement();
+  });
+
+  it("says a friend who doesn't share doesn't, in the binder's place, with no panel", async () => {
+    friends.getFriendCollection.mockResolvedValue({data: null, error: null});
+    renderFriend('/browse?binder=14&friend=ruby_hero_042');
+    expect(await screen.findByText("Ruby Hero 042 doesn't share their collection with you.")).toHaveAttribute(
+      'role',
+      'status',
+    );
+    expect(slots?.renderSetPanel(LISTING)).toBeUndefined();
+  });
+
+  it('shows All, in Show and in the binder, until your own collection is in to compare with', async () => {
+    account.hasCollection = false;
+    account.syncing = true;
+    account.entries = {};
+    renderFriend('/browse?binder=14&friend=ruby_hero_042&owned=you-need');
+    await screen.findByText('Read only');
+    expect(slots?.show).toBe('all');
+    expect(slots?.inView).toBeNull();
+    expect(screen.getByTestId('search')).toHaveTextContent('owned=you-need');
+  });
+
+  it("leaves out the panel and the pickers beside a friend's binder that didn't load", async () => {
+    friends.getFriendCollection.mockResolvedValue({data: null, error: {message: 'offline'}});
+    renderFriend('/browse?binder=14&friend=ruby_hero_042');
+    expect(await screen.findByText("Couldn't load this binder.")).toBeInTheDocument();
+    expect(slots?.renderSetPanel(LISTING)).toBeUndefined();
+    expect(slots?.renderSetPicker(LISTING)).toBeUndefined();
+  });
+
+  it('counts You need and They need once for every slot that shows them', async () => {
+    renderFriend('/browse?binder=14&friend=ruby_hero_042');
+    await screen.findByText('Read only');
+    vi.mocked(countCompare).mockClear();
+    slots?.renderBanner(LISTING, false);
+    slots?.renderBinder(LISTING, () => {});
+    slots?.renderSetPanel(LISTING);
+    expect(vi.mocked(countCompare).mock.calls.length).toBeLessThanOrEqual(1);
+  });
+
+  it("hands the reader's own copies to the docked panel alone, which draws the You lines", async () => {
+    renderFriend('/browse?binder=14&friend=ruby_hero_042');
+    await screen.findByText('Read only');
+    const propsOf = (slot: ReactNode) => (slot as {props: {children: {props: Record<string, unknown>}}}).props.children.props;
+    expect(propsOf(slots?.renderSetPanel(LISTING)).yourEntries).toEqual(account.entries);
+    expect(propsOf(slots?.renderSetPicker(LISTING)).yourEntries).toBeUndefined();
+  });
+
+  it("opens the reader's own binder for their own handle", async () => {
+    friends.getPlayerByHandle.mockResolvedValue({data: {...RUBY, id: 'user-1'}, error: null});
+    renderFriend('/browse?binder=14&friend=ruby_hero_042');
+    await waitFor(() => expect(screen.getByTestId('search')).toHaveTextContent(/^binder=14$/));
   });
 });
