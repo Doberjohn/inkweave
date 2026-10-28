@@ -715,4 +715,35 @@ describe('CollectionBinder', () => {
       expect(look(2).querySelector('.binder-unowned')).toBeNull();
     });
   });
+
+  describe('what lies over a pocket (#1055)', () => {
+    const none = () => ({normal: 0, foil: 0});
+    const badge = (card: LorcanaCard) => (card.id === 'c1' ? <button type="button">3 friends have it</button> : null);
+
+    it('lays what pocketBadge gives over its card, outside the grey, and describes the card by it', () => {
+      render(binder({countsFor: none, pocketBadge: badge}));
+      const layer = screen.getByRole('button', {name: '3 friends have it'}).closest<HTMLElement>('.binder-badge')!;
+      expect(layer.closest('.binder-unowned')).toBeNull();
+      expect(pocket(1)).toHaveAttribute('aria-describedby', layer.id);
+      expect(pocket(1)).toHaveAccessibleDescription('3 friends have it');
+    });
+
+    it('never opens the card under it from a press on it', () => {
+      const onSelect = vi.fn();
+      render(binder({countsFor: none, pocketBadge: badge, onSelect}));
+      fireEvent.click(screen.getByRole('button', {name: '3 friends have it'}));
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it('leaves a pocket it gives nothing for undescribed', () => {
+      render(binder({countsFor: none, pocketBadge: badge}));
+      expect(pocket(2)).toHaveAccessibleDescription('');
+    });
+
+    it('lays nothing over the pockets without it', () => {
+      render(binder());
+      expect(document.querySelector('.binder-badge')).toBeNull();
+      expect(pocket(1)).not.toHaveAttribute('aria-describedby');
+    });
+  });
 });

@@ -2,6 +2,7 @@ import type {Meta, StoryObj} from '@storybook/react-vite';
 import {MemoryRouter} from 'react-router-dom';
 import {fn} from 'storybook/test';
 import {CollectionBinder} from './CollectionBinder';
+import {FriendsBadge} from './FriendsBadge';
 import type {CollectionEntry} from './collectionParser';
 import {promoSetPockets} from './binderCards';
 import {CoverNumbers} from './CollectionSetPanel';
@@ -76,6 +77,29 @@ export const FullyOwned: Story = {
 /** Nothing owned. The set is still legible as a set, which is the point. */
 export const NothingOwned: Story = {
   args: {countsFor: () => ({normal: 0, foil: 0})},
+};
+
+/**
+ * Your own binder with friends who share (#1055): a badge on each card you're missing that a
+ * friend has, counting the friends, gold where every copy on offer is a foil. Pressing one opens
+ * Friends who have it; here it reports to the Actions panel.
+ */
+export const WithFriendsBadges: Story = {
+  args: {
+    pocketBadge: (card) => {
+      const n = Number(card.id);
+      if (counts(card.id).normal + counts(card.id).foil > 0 || n % 7 === 0) return null;
+      const friends = (n % 12) + 1;
+      return (
+        <FriendsBadge
+          count={friends}
+          label={`${friends} ${friends === 1 ? 'friend has' : 'friends have'} it`}
+          gold={n % 4 === 1}
+          onPress={fn()}
+        />
+      );
+    },
+  },
 };
 
 /**

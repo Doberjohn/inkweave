@@ -194,8 +194,24 @@
   translate: calc(var(--sx, 0) * 1px) calc(var(--sy, 0) * 1px);
   rotate: calc(var(--sr, 0) * 1deg);
 }
-.binder-pocket .binder-copies {
+.binder-pocket .binder-copies,
+.binder-pocket .binder-badge {
   translate: calc(var(--sx, 0) * 1px) calc(var(--sy, 0) * 1px);
+}
+
+/* A pocket's friends badge is drawn for a mouse. On a touch screen a transparent ring
+   takes its tap area to 32px each way; a tap past it reaches the card. The badge's zoom scales
+   the ring too, so its size divides by the zoom the badge hands it (--badge-zoom). */
+@media (pointer: coarse) {
+  .binder-friends-badge::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 32px / var(--badge-zoom, 1));
+    height: max(100%, 32px / var(--badge-zoom, 1));
+    translate: -50% -50%;
+  }
 }
 
 /* Slide in, grey out: a first copy slides into its pocket through the mouth at the top as its

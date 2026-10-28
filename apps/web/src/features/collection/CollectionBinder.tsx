@@ -1,4 +1,4 @@
-import {useEffect, useState, type AnimationEvent, type CSSProperties, type PointerEvent, type ReactNode} from 'react';
+import {useEffect, useId, useState, type AnimationEvent, type CSSProperties, type PointerEvent, type ReactNode} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from '../cards/components/CardTile';
 import {PROMO_RARITY, smallImageUrl} from '../cards/loader';
@@ -101,6 +101,11 @@ interface CollectionBinderProps {
   onCoverChange?: (shown: boolean) => void;
   /** Opens on the spread, or the phone's page, that holds this card's pocket, when it has one. */
   startCard?: string;
+  /**
+   * What lies over a card's pocket at its top right, which describes the card: the friends who
+   * have it, in the reader's own binder only. Absent, the pockets hold nothing more.
+   */
+  pocketBadge?: (card: LorcanaCard) => ReactNode;
 }
 
 /**
@@ -227,7 +232,13 @@ function settleStyle(cardId: string): CSSProperties {
   return {'--sx': String(sx), '--sy': String(sy), '--sr': String(sr)} as CSSProperties;
 }
 
-/** One position in the binder: the card, greyed while you hold none, and its counts. */
+/**
+ * The layer a pocket's badge lies in: over the card and the pocket's front sheet, beside the
+ * copies stripe, passing every press to the card but the badge's own.
+ */
+const BADGE_LAYER: CSSProperties = {position: 'absolute', inset: 0, zIndex: 3, pointerEvents: 'none'};
+
+/** One position in the binder: the card, greyed while you hold none, its counts, and what lies over it. */
 function CardPocket({
   card,
   counts,
@@ -235,6 +246,7 @@ function CardPocket({
   tabIndex,
   onCountChange,
   windowOpen,
+  pocketBadge,
 }: {
   card: LorcanaCard;
   counts: CollectionEntry;
@@ -243,9 +255,11 @@ function CardPocket({
   tabIndex: number;
   onCountChange: CollectionBinderProps['onCountChange'];
   windowOpen: boolean;
+  pocketBadge: CollectionBinderProps['pocketBadge'];
 }) {
   const {pointed, pointerProps} = usePointedByMouse();
   const {shown, play, onAnimationEnd} = useShownCopies(isOwned(counts), windowOpen);
+  const badgeId = useId();
   return (
     <div
       className={pocketClass(shown && counts.foil > 0, play)}
@@ -266,8 +280,15 @@ function CardPocket({
           borderRadius={0}
           useSmallImage
           tabIndex={tabIndex}
+          describedBy={pocketBadge && badgeId}
         />
       </div>
+      {/* Outside the grey, so a badge on a card you lack keeps its colours. Empty, it describes nothing. */}
+      {pocketBadge && (
+        <div id={badgeId} className="binder-badge" style={BADGE_LAYER}>
+          {pocketBadge(card)}
+        </div>
+      )}
       <CollectionSlotCounts counts={counts} editor={pocketEditor(card, pointed, onCountChange)} />
     </div>
   );
@@ -466,6 +487,7 @@ export function CollectionBinder({
   opensOnCover = false,
   onCoverChange,
   startCard,
+  pocketBadge,
 }: CollectionBinderProps) {
   // A phone pages by nine, or twelve at 4 rows, a spread binder by 24, each a page in for its
   // front cover (`pagingOf`).
@@ -517,6 +539,7 @@ export function CollectionBinder({
             tabIndex={tabIndex}
             onCountChange={single ? undefined : onCountChange}
             windowOpen={windowOpen}
+            pocketBadge={pocketBadge}
           />
         );
       }}

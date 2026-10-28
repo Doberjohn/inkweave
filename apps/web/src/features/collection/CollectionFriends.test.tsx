@@ -1,5 +1,5 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {act, fireEvent, render, screen, within} from '@testing-library/react';
+import {act, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {createCard} from '../../shared/test-utils';
@@ -7,11 +7,12 @@ import {trackEvent} from '../../shared/lib/analytics';
 import {CollectionProvider} from './CollectionContext';
 import {writeCollection} from './collectionStorage';
 import type {FriendsCopies, SharingFriend} from './friendsCopies';
-import {WindowFriends} from './WindowFriends';
+import {CollectionFriends, FoilPointer, PocketFriends} from './CollectionFriends';
 
 /**
- * The card window's count of the friends who have the card on show (#1055): Browse's side,
- * portalled into the window's friends slot, which a bare element stands in for here.
+ * Friends who have it (#1055), Browse's side: the card window's count, portalled into the
+ * window's friends slot, which a bare element stands in for here; a pocket's badge; the foil
+ * pointer; and the one dialog they open.
  */
 
 vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
@@ -56,7 +57,7 @@ const ready = (friends: SharingFriend[]): FriendsCopies => ({status: 'ready', sh
 const inWindow = (axis: 'complete' | 'master' = 'complete') => (
   <MemoryRouter>
     <CollectionProvider>
-      <WindowFriends axis={axis} />
+      <CollectionFriends axis={axis} />
     </CollectionProvider>
   </MemoryRouter>
 );
@@ -82,7 +83,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe('WindowFriends', () => {
+describe('CollectionFriends, the window\'s count', () => {
   it('counts the friends who have a card the reader lacks, in the window', async () => {
     const slot = await renderInWindow();
     expect(slot.getByRole('button', {name: '2 friends have it'})).toHaveAttribute('aria-haspopup', 'dialog');
@@ -125,7 +126,7 @@ describe('WindowFriends', () => {
     mockCopies.value = ready([RUBY, EMERALD]);
     view.rerender(inWindow());
     expect(slot.getByRole('button', {name: '2 friends have it'})).toBeInTheDocument();
-    expect(screen.queryByRole('dialog', {name: 'Friends who have it'})).toBeNull();
+    await waitFor(() => expect(screen.queryByRole('dialog', {name: 'Friends who have it'})).toBeNull());
   });
 
   it('says a failed read on a card the reader lacks, with a retry', async () => {
@@ -156,5 +157,101 @@ describe('WindowFriends', () => {
     const slot = await renderInWindow();
     expect(mockCopies.calls.at(-1)).toEqual([true, true]);
     expect(slot.queryByRole('button')).toBeNull();
+  });
+});
+
+const inBinder = (card: LorcanaCard, axis: 'complete' | 'master' = 'complete') => (
+  <MemoryRouter>
+    <CollectionProvider>
+      <CollectionFriends axis={axis} />
+      <PocketFriends card={card} axis={axis} />
+    </CollectionProvider>
+  </MemoryRouter>
+);
+
+async function renderInBinder(card: LorcanaCard, axis: 'complete' | 'master' = 'complete') {
+  mockModal.selectedCardId = null;
+  const view = render(inBinder(card, axis));
+  await act(async () => {});
+  return view;
+}
+
+describe('PocketFriends', () => {
+  it('badges a card friends have for the reader, named as the window counts it, out of the Tab order', async () => {
+    await renderInBinder(ELSA);
+    const badge = screen.getByRole('button', {name: '2 friends have it'});
+    expect(badge).toHaveTextContent('2');
+    expect(badge).toHaveAttribute('tabindex', '-1');
+    expect(badge).toHaveAttribute('data-no-grab');
+    expect(badge.style.backgroundImage).not.toContain('linear-gradient');
+  });
+
+  it('badges no card the reader holds under Complete set', async () => {
+    await renderInBinder(MULAN);
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('badges nothing before the friends\' copies are in', async () => {
+    mockCopies.value = {status: 'loading'};
+    await renderInBinder(ELSA);
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('turns gold under Master set over a card held in normal, when every copy on offer is a foil', async () => {
+    await renderInBinder(MULAN, 'master');
+    expect(screen.getByRole('button', {name: '1 friend has the foil'}).style.backgroundImage).toContain('linear-gradient');
+  });
+
+  it('opens Friends who have it for its card, counted as from a badge', async () => {
+    await renderInBinder(ELSA);
+    fireEvent.click(screen.getByRole('button', {name: '2 friends have it'}));
+    const dialog = screen.getByRole('dialog', {name: 'Friends who have it'});
+    expect(within(dialog).getByText("You're missing it")).toBeInTheDocument();
+    expect(within(dialog).getAllByRole('link').map((link) => link.getAttribute('href'))).toEqual([
+      '/browse?binder=9&friend=ruby_hero_042',
+      '/browse?binder=9&friend=emerald_fairy_913',
+    ]);
+    expect(trackEvent).toHaveBeenCalledWith('friends_who_have_it_opened', {from: 'badge'});
+  });
+
+  it('leaves the card window alone when a row it opened is followed', async () => {
+    await renderInBinder(ELSA);
+    fireEvent.click(screen.getByRole('button', {name: '2 friends have it'}));
+    fireEvent.click(within(screen.getByRole('dialog', {name: 'Friends who have it'})).getAllByRole('link')[0]);
+    await waitFor(() => expect(screen.queryByRole('dialog', {name: 'Friends who have it'})).toBeNull());
+    expect(mockModal.closeCardModal).not.toHaveBeenCalled();
+  });
+});
+
+describe('FoilPointer', () => {
+  const pointer = (onShow = vi.fn()) => (
+    <MemoryRouter>
+      <CollectionProvider>
+        <FoilPointer cards={[ELSA, MULAN]} onShow={onShow} />
+      </CollectionProvider>
+    </MemoryRouter>
+  );
+
+  it('counts the foils the reader lacks that friends have, of those they lack', async () => {
+    // Elsa: no foil held, none offered (Ruby has her normal). Mulan: normal held, Ruby has the foil.
+    mockCopies.value = ready([RUBY]);
+    render(pointer());
+    await act(async () => {});
+    expect(screen.getByText("Your friends have 1 of the 2 foils you're missing.")).toBeInTheDocument();
+  });
+
+  it('picks Master set from Show them under Master set', async () => {
+    const onShow = vi.fn();
+    render(pointer(onShow));
+    await act(async () => {});
+    fireEvent.click(screen.getByRole('button', {name: 'Show them under Master set'}));
+    expect(onShow).toHaveBeenCalledTimes(1);
+  });
+
+  it('says nothing while no friend has a foil the reader lacks', async () => {
+    mockCopies.value = ready([sharing('Amber Sage 7', {elsa: {normal: 3, foil: 0}})]);
+    render(pointer());
+    await act(async () => {});
+    expect(screen.queryByText(/Your friends have/)).toBeNull();
   });
 });
