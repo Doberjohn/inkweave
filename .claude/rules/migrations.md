@@ -20,6 +20,11 @@ When editing a file under `supabase/migrations/`:
   Applied first, the reviewed SQL is what production runs. `apply_migration` stores the exact
   SQL it is given, so `md5(statements[1])` in `supabase_migrations.schema_migrations` must
   equal the file's md5.
+- **From a cloud session, SQL that says `update` or `delete` goes through the SQL editor**
+  (#748). The connector asks the owner to confirm such SQL, policies and grants included,
+  and from the cloud that question never reaches them. The owner runs the file in the editor,
+  in one transaction with its history row: version and name from the filename, and
+  `statements` holding the file's text, so the md5 check above still holds (#1045).
 - **That deployer can't tell an applied file from a new one** (cubic on #879). The history
   table is keyed by version, and `apply_migration` records its own apply-time version
   (`20261020235319_friend_send_limit.sql` is production's `20261021074901`), so 25 of the 29
@@ -30,7 +35,9 @@ When editing a file under `supabase/migrations/`:
 - **Replay friends changes locally first** (#860). A change to `friend_codes`, `friendships`,
   `internal.friend_request_attempts` or a friends function re-runs `supabase/replay/friends/`
   on a local Postgres 17 (its README has the commands). Add the change's checks first and
-  watch them fail, then write the migration.
+  watch them fail, then write the migration. A change to `collection_sharing`,
+  `shared_friends()` or `friend_collections()`, or to what they read, re-runs
+  `supabase/replay/collection-sharing/` the same way (#1045).
 
 ## Declare privileges in the migration that creates the object
 
