@@ -9,6 +9,8 @@ It builds on the friends replay (`../friends/`): its `scaffold.sql` stands in fo
 
 Re-run it whenever a migration changes `collection_sharing`, either function, or what they read (`collections`, `friendships`), and add the change's checks first, so you see them fail before the migration exists.
 
+Both functions write out the same friendship and switch check, and the planted mistakes below go into both copies. A change to that check changes both, and the next migration that rewrites the functions can have `friend_collections` read `shared_friends()` instead, so the check lives in one place.
+
 ## What you need
 
 Postgres 17 (`initdb`, `postgres`, `psql`), matching production (17.6), run as a non-root user; see `../friends/README.md` for Windows. In a Linux container without one, the npm package `@embedded-postgres/linux-x64@17.6.0-beta.15` carries 17.6's `initdb`, `pg_ctl` and `postgres` under `native/` (create the library links its `pg-symlinks.json` lists); any `psql` connects to it.
