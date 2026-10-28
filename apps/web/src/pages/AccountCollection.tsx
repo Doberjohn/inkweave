@@ -1,5 +1,6 @@
 import {Suspense, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
+import {BINDER_PARAM, WHOLE_COLLECTION} from '../features/collection/binderCards';
 import {useCollection} from '../features/collection/CollectionContext';
 import {useCollectionCards, useCollectionPool} from '../features/collection/CollectionCardsContext';
 import {SharingSwitch} from '../features/collection/SharingSwitch';
@@ -59,7 +60,7 @@ export function AccountCollection() {
         // while the start reads the account.
         onOpenBinder={() => {
           startCollection('account');
-          navigate('/browse?binder=all');
+          navigate(`/browse?${BINDER_PARAM}=${WHOLE_COLLECTION}`);
         }}
         onAskClear={() => setConfirmClear(true)}
         onConfirmClear={() => {

@@ -117,6 +117,8 @@ interface CollectionContextValue {
    * for, which `collection_started` reports once the empty collection exists.
    */
   startCollection: (surface: StartSurface) => void;
+  /** Withdraw a start still waiting on the account's answer: the reader backed out of it. */
+  cancelStart: () => void;
   /** Drop the collection entirely. */
   clearImported: () => void;
   /**
@@ -444,39 +446,11 @@ function useAccountAnswer(uid: Uid | null): {syncing: boolean; answered: (uid: s
 }
 
 /**
- * A start waiting on a read of the account's copy (`startCollection`): the uid it is for and
- * where it was asked, and what starts the empty collection. Refs: the read lands outside any
- * render, and the start must be the provider's latest.
+ * What a read found, for a start waiting on it: whether the account holds a collection once
+ * the read's plan is applied, or null when it tells nothing (the read failed, a local change
+ * made it stale, or the account changed).
  */
-interface StartWait {
-  wanted: {current: {uid: Uid; surface: StartSurface} | null};
-  startEmpty: {current: (surface: StartSurface) => void};
-}
-
-/**
- * Answer a start waiting on this read: the empty collection, when the read found that the
- * account holds none. A read that failed, or that a local change made stale, starts nothing.
- */
-function answerStart(uid: Uid, holds: boolean | null, {wanted, startEmpty}: StartWait): void {
-  const asked = wanted.current;
-  if (asked?.uid !== uid) return;
-  wanted.current = null;
-  if (holds === false) startEmpty.current(asked.surface);
-}
-
-/**
- * Apply a fresh read's answer, and say whether the account then holds a collection, for a start
- * waiting on it; null when the read failed (`undefined`), which tells nothing.
- */
-function settleRead(
-  uid: Uid,
-  server: StoredCollection | null | undefined,
-  snapshot: SyncSnapshot,
-  setState: (next: CollectionState) => void,
-): boolean | null {
-  if (server === undefined) return null;
-  return holdsAfterSync(applySyncPlan(uid, server, snapshot, setState), snapshot.local, uid);
-}
+type AccountAnswer = Promise<boolean | null>;
 
 /** What a read of the account's copy works with, all stable across the sync's life. */
 interface SyncDeps {
@@ -485,13 +459,13 @@ interface SyncDeps {
   localEpoch: {current: number};
   setState: (next: CollectionState) => void;
   answered: (uid: string) => void;
-  start: StartWait;
 }
 
-/** One uid's reads: whether the sync was cancelled, and the number of the newest read. */
+/** One uid's reads: whether the sync was cancelled, the number of the newest read, and its answer. */
 interface SyncReads {
   cancelled: boolean;
   newest: number;
+  answer?: AccountAnswer;
 }
 
 /**
@@ -505,7 +479,7 @@ interface SyncReads {
  * overwritten the same way. The fourth is a newer read: a tab shown twice in
  * quick succession reads twice, and the older answer must not land last.
  */
-function readAccountCopy(uid: Uid, reads: SyncReads, {latest, localEpoch, setState, answered, start}: SyncDeps): void {
+function readAccountCopy(uid: Uid, reads: SyncReads, {latest, localEpoch, setState, answered}: SyncDeps): AccountAnswer {
   reads.newest += 1;
   const readNumber = reads.newest;
   const epochAtRead = localEpoch.current;
@@ -516,18 +490,21 @@ function readAccountCopy(uid: Uid, reads: SyncReads, {latest, localEpoch, setSta
   const markAnswered = () => {
     if (!superseded()) answered(uid);
   };
-  void serverStateFor(uid)
+  const answer = serverStateFor(uid)
     .then((server) => {
-      // Batched with the plan's own state and a waiting start's below, so the collection and
-      // the answer land together.
+      // A start waiting on this answer acts on it in a microtask, before React renders, so its
+      // collection lands in the same pass as the answer and the binder never sees "none".
       markAnswered();
-      if (superseded()) return;
-      answerStart(uid, isStale() ? null : settleRead(uid, server, snapshot, setState), start);
+      if (superseded()) return reads.cancelled ? null : (reads.answer ?? null);
+      if (isStale() || server === undefined) return null;
+      return holdsAfterSync(applySyncPlan(uid, server, snapshot, setState), snapshot.local, uid);
     })
     .catch(() => {
       markAnswered();
-      if (!superseded()) answerStart(uid, null, start);
+      return null;
     });
+  reads.answer = answer;
+  return answer;
 }
 
 /**
@@ -552,7 +529,8 @@ function readAccountCopy(uid: Uid, reads: SyncReads, {latest, localEpoch, setSta
  * tombstone left by whichever write failed is what the next sync retries.
  *
  * Returns whether the account's copy is still to answer for this uid, and `askAgain`, which
- * reads it again and waits on the answer as at sign-in. Every way this uid's newest read ends
+ * reads it again, waits on the answer as at sign-in, and returns what the read found (null when
+ * no account is being read). Every way this uid's newest read ends
  * marks it answered (adopted, stale, failed, or rejected outright), or a page waiting on it
  * would wait for ever; only a read cancelled by a uid change or an unmount does not, since its
  * answer no longer applies, nor one a newer read replaced, which answers instead. A stale
@@ -562,8 +540,8 @@ function useCollectionSync(
   uid: Uid | null,
   state: CollectionState,
   setState: (next: CollectionState) => void,
-  {localEpoch, wanted, startEmpty}: {localEpoch: {current: number}} & StartWait,
-): {syncing: boolean; askAgain: () => void} {
+  localEpoch: {current: number},
+): {syncing: boolean; askAgain: () => AccountAnswer | null} {
   const {syncing, answered, unanswered} = useAccountAnswer(uid);
   // Synced in an unkeyed effect, never mutated in render — the React Compiler
   // forbids the latter, and `DeckContext`'s `latestDeck` does exactly this.
@@ -572,7 +550,7 @@ function useCollectionSync(
     latest.current = state;
   });
   // The signed-in account's read, for `askAgain`; none signed out.
-  const readNow = useRef<(() => void) | null>(null);
+  const readNow = useRef<(() => AccountAnswer) | null>(null);
 
   useEffect(() => {
     // Signed out: nothing to reconcile, and deliberately NOT a reason to clear the
@@ -580,27 +558,24 @@ function useCollectionSync(
     if (uid === null) return;
 
     const reads: SyncReads = {cancelled: false, newest: 0};
-    const start = {wanted, startEmpty};
-    const read = () => readAccountCopy(uid, reads, {latest, localEpoch, setState, answered, start});
+    const read = () => readAccountCopy(uid, reads, {latest, localEpoch, setState, answered});
     const readIfShown = () => {
-      if (document.visibilityState === 'visible') read();
+      if (document.visibilityState === 'visible') void read();
     };
     readNow.current = read;
-    read();
+    void read();
     document.addEventListener('visibilitychange', readIfShown);
     return () => {
       reads.cancelled = true;
       readNow.current = null;
-      // A start asked of this account no longer applies to the next one.
-      wanted.current = null;
       document.removeEventListener('visibilitychange', readIfShown);
     };
-  }, [uid, setState, localEpoch, answered, wanted, startEmpty]);
+  }, [uid, setState, localEpoch, answered]);
 
   const askAgain = () => {
-    if (readNow.current === null) return;
+    if (readNow.current === null) return null;
     unanswered();
-    readNow.current();
+    return readNow.current();
   };
   return {syncing, askAgain};
 }
@@ -620,12 +595,11 @@ export function CollectionProvider({children, placements = NO_PLACEMENTS}: Colle
   const uid = user?.id ?? null;
   /** Bumped by every local mutation, so an in-flight server read can tell it is stale. */
   const localEpoch = useRef(0);
-  /** A start waiting on the account's answer, and what makes it (`StartWait`). */
-  const startWanted: StartWait['wanted'] = useRef(null);
-  const startEmpty: StartWait['startEmpty'] = useRef(() => {});
+  /** The start waiting on the account's answer, if any; `cancelStart` withdraws it. */
+  const pendingStart = useRef<object | null>(null);
   // The sync reasons about the FULL local copy, another account's included; only
   // what is exposed below is filtered (owner ruling 2026-10-06).
-  const {syncing, askAgain} = useCollectionSync(uid, state, setState, {localEpoch, wanted: startWanted, startEmpty});
+  const {syncing, askAgain} = useCollectionSync(uid, state, setState, localEpoch);
   const waitingUpload = useUploadBatch(uid);
   useOtherTabsWrites(takeOtherTabsCopy);
   const visible = state !== null && visibleTo(state, {uid, loading}) ? state : null;
@@ -655,17 +629,22 @@ export function CollectionProvider({children, placements = NO_PLACEMENTS}: Colle
     return null;
   }
 
-  // The read that answers a start lands outside any render, so it starts through the latest.
-  useEffect(() => {
-    startEmpty.current = (surface) => {
-      if (importCollection(NO_ENTRIES, Date.now()) === null) trackEvent('collection_started', {surface});
-    };
-  });
-
   function startCollection(surface: StartSurface) {
     if (uid === null || visible !== null) return;
-    startWanted.current = {uid, surface};
-    askAgain();
+    const answer = askAgain();
+    if (answer === null) return;
+    const start = {};
+    pendingStart.current = start;
+    // A read that answers at all left this browser's copy as it was when asked (a local change
+    // would have made it stale), so this render's import still applies; a newer start, or a
+    // withdrawn one, has replaced `start`.
+    void answer.then((holds) => {
+      if (pendingStart.current !== start) return;
+      pendingStart.current = null;
+      if (holds === false && importCollection(NO_ENTRIES, Date.now()) === null) {
+        trackEvent('collection_started', {surface});
+      }
+    });
   }
 
   function clearImported() {
@@ -727,6 +706,9 @@ export function CollectionProvider({children, placements = NO_PLACEMENTS}: Colle
     owns: (cardId: string) => ownedCount(cardId) > 0,
     importCollection,
     startCollection,
+    cancelStart: () => {
+      pendingStart.current = null;
+    },
     clearImported,
     setCount,
     place: (entries: CollectionEntries) => placeCopies(entries, placements),

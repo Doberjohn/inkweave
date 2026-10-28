@@ -545,7 +545,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // unmounting mid-animation; never mounted at all for anyone who never opens it.
   const [importMounted, setImportMounted] = useState(false);
   const {user, loading: sessionLoading} = useSession();
-  const {hasCollection, holdsCopies, syncing, importCollection, startCollection, setCount} = useCollection();
+  const {hasCollection, holdsCopies, syncing, importCollection, startCollection, cancelStart, setCount} = useCollection();
   const {retry} = useCollectionCards();
   const {requested, friend: friendHandle, mode, show: asked, enterBinder, writeBinder, leaveBinder, writeShow, leaveFriend} =
     useBinderParams({
@@ -597,7 +597,10 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     toggles.entered();
     enterBinder(setCode, sets);
   };
+  // Backing out of a binder still waiting on the account withdraws its start, as the click
+  // that asked for it is withdrawn (`useModeToggleEvents`).
   const leaveMode = () => {
+    cancelStart();
     toggles.left();
     leaveBinder();
   };

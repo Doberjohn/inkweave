@@ -84,8 +84,9 @@ export async function signInAsCollector(
 }
 
 /**
- * Waits for the restored session: the header's control turns from "Sign in" to "Account". A
- * phone's header has none: wait for the account's read there (`COLLECTIONS_PATH`).
+ * Waits for the restored session: the desktop header's control turns from "Sign in" to
+ * "Account". A phone's header has none, so a phone spec waits for the account's read instead
+ * (`COLLECTIONS_PATH`), as collection-start.spec.ts's phone test does.
  */
 export async function signedIn(page: Page): Promise<void> {
   await expect(page.getByTestId('compact-header').getByRole('button', {name: 'Account', exact: true})).toBeVisible();

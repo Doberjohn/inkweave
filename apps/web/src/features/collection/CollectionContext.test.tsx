@@ -635,6 +635,38 @@ describe('CollectionContext, starting empty', () => {
     expect(result.current.hasCollection).toBe(true);
   });
 
+  it('starts nothing when withdrawn before the answer: the reader backed out of the binder', async () => {
+    const {result} = render();
+    await flush();
+    const answer = holdNextRead();
+    act(() => result.current.startCollection('browse'));
+    act(() => result.current.cancelStart());
+
+    await answer({data: null, error: null});
+    await flush();
+    expect(result.current.syncing).toBe(false);
+    expect(result.current.hasCollection).toBe(false);
+    expect(upsertCollection).not.toHaveBeenCalled();
+    expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  it('starts one collection for two presses before the answer, on the newer read', async () => {
+    const {result} = render();
+    await flush();
+    const answerFirst = holdNextRead();
+    act(() => result.current.startCollection('browse'));
+    const answerSecond = holdNextRead();
+    act(() => result.current.startCollection('account'));
+
+    await answerFirst({data: null, error: null});
+    expect(result.current.hasCollection).toBe(false);
+    await answerSecond({data: null, error: null});
+    await flush();
+    expect(result.current.hasCollection).toBe(true);
+    expect(upsertCollection).toHaveBeenCalledOnce();
+    expect(vi.mocked(trackEvent).mock.calls).toEqual([['collection_started', {surface: 'account'}]]);
+  });
+
   it('does nothing with a collection already, nor signed out', async () => {
     writeCollection(ENTRIES, 5000, 'user-a', 'server');
     vi.mocked(getCollection).mockResolvedValueOnce({data: {schemaVersion: 1, importedAt: 5000, entries: ENTRIES}, error: null});

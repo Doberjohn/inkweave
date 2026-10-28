@@ -382,7 +382,7 @@ function SectionContent({
       ) : (
         <KeyedBinder
           axis={controls.axis}
-          {...coverOf(isMobile, emptyNote, <CoverNumbers {...controls} stats={stats} yours={yours} filtered={filtered} />)}
+          {...insideCoverOf(isMobile, emptyNote, <CoverNumbers {...controls} stats={stats} yours={yours} filtered={filtered} />)}
           slots={slots}
           bySet={namesStretches(setCode, sortOrder)}
           countsFor={(cardId) => entries[cardId] ?? ZERO}
@@ -404,7 +404,7 @@ function SectionContent({
  * What the inside front cover holds, and whether the binder opens on it: on a phone the numbers,
  * under an empty collection's note, whose binder opens there; on a spread the note alone.
  */
-function coverOf(isMobile: boolean, note: ReactNode, numbers: ReactNode): {cover: ReactNode; opensOnCover: boolean} {
+function insideCoverOf(isMobile: boolean, note: ReactNode, numbers: ReactNode): {cover: ReactNode; opensOnCover: boolean} {
   if (!isMobile) return {cover: note, opensOnCover: false};
   return {
     cover: (

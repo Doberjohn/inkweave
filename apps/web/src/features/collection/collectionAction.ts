@@ -38,6 +38,7 @@ export interface ClickActs {
   /** Start an empty collection once the account is known to hold none (`startCollection`). */
   start: () => void;
   enter: () => void;
+  /** Close the binder, withdrawing a start still waiting on the account. */
   leave: () => void;
 }
 

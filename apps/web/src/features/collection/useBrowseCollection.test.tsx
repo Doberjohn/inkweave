@@ -26,6 +26,8 @@ const {account} = vi.hoisted(() => ({
     entries: {} as Record<string, {normal: number; foil: number}>,
     /** The collection's pool of cards, which the binder holds: none unless a case needs some. */
     pool: [] as LorcanaCard[],
+    startCollection: vi.fn(),
+    cancelStart: vi.fn(),
   },
 }));
 
@@ -39,7 +41,8 @@ vi.mock('./CollectionContext', () => ({
     holdsCopies: Object.values(account.entries).some((entry) => entry.normal + entry.foil > 0),
     syncing: account.syncing,
     importCollection: () => null,
-    startCollection: () => {},
+    startCollection: account.startCollection,
+    cancelStart: account.cancelStart,
     setCount: () => {},
     place: (entries: unknown) => entries,
   }),
@@ -275,6 +278,16 @@ describe('useBrowseCollection analytics', () => {
       answer(true);
 
       expect(trackEvent).not.toHaveBeenCalled();
+    });
+
+    it('starts a collection, and a second click before the answer withdraws the start', () => {
+      renderSwitch();
+      pressCollection();
+      expect(account.startCollection).toHaveBeenCalledWith('browse');
+      expect(account.cancelStart).not.toHaveBeenCalled();
+
+      pressCollection();
+      expect(account.cancelStart).toHaveBeenCalledOnce();
     });
   });
 });
