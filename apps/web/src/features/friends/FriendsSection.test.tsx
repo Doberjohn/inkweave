@@ -1,5 +1,6 @@
 import {act, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {MemoryRouter} from 'react-router-dom';
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {trackEvent} from '../../shared/lib/analytics';
 import {FriendsSection, type FriendsSectionProps} from './FriendsSection';
@@ -45,7 +46,8 @@ function setup(props: Partial<FriendsSectionProps> = {}) {
     ...handlers,
     ...props,
   };
-  const view = render(<FriendsSection {...all} />);
+  // In a router, as on /account: View binder is a link.
+  const view = render(<FriendsSection {...all} />, {wrapper: MemoryRouter});
   // The page's reload, as the section sees it: new lists after an action.
   const rerender = (next: Partial<FriendsSectionProps>) => view.rerender(<FriendsSection {...all} {...next} />);
   return {user, rerender, ...handlers};
@@ -214,6 +216,34 @@ describe('FriendsSection', () => {
     expect(screen.getByRole('alert')).toHaveTextContent("Couldn't load your friends.");
     await user.click(screen.getByRole('button', {name: 'Try again'}));
     expect(onRetry).toHaveBeenCalled();
+  });
+});
+
+describe("FriendsSection's binder links (#1045)", () => {
+  it('offers View binder for a friend who shares, named by the friend, and links their binder', () => {
+    setup({friends: [AMBER, EMERALD], sharing: new Set(['amber'])});
+    const link = screen.getByRole('link', {name: 'View binder of Amber Toy 115'});
+    expect(link).toHaveAttribute('href', '/browse?binder=all&friend=amber_toy_115');
+    expect(screen.queryByRole('link', {name: /Emerald/})).toBeNull();
+    expect(screen.getAllByText('Not sharing')).toHaveLength(1);
+  });
+
+  it('says neither while who shares is unknown', () => {
+    setup({friends: [AMBER, EMERALD]});
+    expect(screen.queryByRole('link')).toBeNull();
+    expect(screen.queryByText('Not sharing')).toBeNull();
+  });
+
+  it('keeps the name out of the link’s own text, which PostHog captures (#827)', () => {
+    setup({friends: [AMBER], sharing: new Set(['amber'])});
+    expect(screen.getByRole('link', {name: /View binder/})).toHaveTextContent(/^View binder$/);
+  });
+
+  it("starts every friend's row with their initials, hidden from screen readers", () => {
+    setup({friends: [AMBER]});
+    const chip = screen.getByText('AT');
+    expect(chip).toHaveAttribute('aria-hidden');
+    expect(chip).toHaveClass('ph-no-capture');
   });
 });
 

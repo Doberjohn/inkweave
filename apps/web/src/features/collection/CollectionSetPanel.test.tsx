@@ -1,13 +1,14 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent, within} from '@testing-library/react';
 import {CollectionSetBody, CoverNumbers} from './CollectionSetPanel';
-import {tallyCollection} from './collectionStats';
+import {percentOf, tallyCollection} from './collectionStats';
 import {
   STORY_PROMO_SET,
   STORY_PROMO_STATS,
   STORY_SETS,
   STORY_SETS_WITH_PROMOS,
   STORY_STATS,
+  STORY_YOUR_STATS,
 } from './collectionStoryData';
 
 type BodyProps = Parameters<typeof CollectionSetBody>[0];
@@ -98,6 +99,32 @@ describe('CollectionSetBody', () => {
     const {props} = renderBody();
     fireEvent.click(screen.getByRole('button', {name: 'Missing'}));
     expect(props.onShowChange).toHaveBeenCalledWith('missing');
+  });
+
+  it("draws your own percentage under each of a friend's headlines (#1045)", () => {
+    renderBody({yours: STORY_YOUR_STATS});
+    const {complete, master, cards} = STORY_YOUR_STATS.sets.find((set) => set.code === '13')!.tally;
+    const completeSet = screen.getByRole('button', {name: /^Complete set/});
+    const masterSet = screen.getByRole('button', {name: /^Master set/});
+    expect(completeSet).toHaveTextContent(new RegExp(`You${percentOf(complete, cards)}%$`));
+    expect(masterSet).toHaveTextContent(new RegExp(`You${percentOf(master, cards)}%$`));
+  });
+
+  it('draws no You line in your own binder', () => {
+    renderBody();
+    expect(within(numbers()).queryByText('You')).toBeNull();
+  });
+
+  it("offers You need and They need with their counts in a friend's binder (#1045)", () => {
+    const {props} = renderBody({compare: {youNeed: 1234, theyNeed: 7}});
+    expect(screen.getByRole('button', {name: 'You need 1,234'})).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(screen.getByRole('button', {name: 'They need 7'}));
+    expect(props.onShowChange).toHaveBeenCalledWith('they-need');
+  });
+
+  it('offers neither without a friend, or without a collection of your own', () => {
+    renderBody({compare: null});
+    expect(screen.queryByRole('button', {name: /need/})).toBeNull();
   });
 
   it('breaks even a finished set down toward complete, until Master set is chosen', () => {

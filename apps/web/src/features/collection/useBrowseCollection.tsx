@@ -8,8 +8,9 @@ import {SignInDialog} from '../../shared/components/SignInDialog';
 import {SET_NAMES, type BrowseSortOrder} from '../../shared/constants';
 import {useSession} from '../../shared/contexts/SessionContext';
 import {useCollection} from './CollectionContext';
-import type {Finish} from './collectionParser';
-import {isHeld, type Axis} from './collectionStats';
+import type {CollectionEntries, Finish} from './collectionParser';
+import type {Axis} from './collectionStats';
+import {countCompare, inViewOf, type Compare} from './compareCollections';
 import {useKeptCards} from './useKeptCards';
 import {useCollectionCards, useCollectionPool} from './CollectionCardsContext';
 import {useCollectionClick} from './useCollectionClick';
@@ -18,14 +19,18 @@ import {
   ALL_PROMO_SETS,
   BINDER_PARAM,
   BINDER_SORT_OPTIONS,
+  COMPARE_SHOWS,
+  FRIEND_PARAM,
   OWNED_PARAM,
   WHOLE_COLLECTION,
+  binderCardsForSet,
   binderRarities,
   binderSets,
   isPromoScope,
   isPromoSet,
   parseBinderShow,
   rarityPicksPromos,
+  scopeSets,
   setFromFilter,
   spansSets,
   strayParams,
@@ -38,6 +43,9 @@ import {CollectionActions} from './CollectionActions';
 import {WindowCopies} from './WindowCopies';
 import {PhoneBinderRow} from './PhoneBinderRow';
 import {BinderSheet, type BinderSheetProps} from './BinderSheet';
+import type {CompareCounts} from './BinderShows';
+import {FriendBinderBanner, FriendNotSharing} from './FriendBinderBanner';
+import {useFriendCollection, type FriendBinder} from './useFriendCollection';
 import {
   BinderChunkFallback,
   DockedSetBodyFallback,
@@ -163,13 +171,28 @@ interface BinderMode {
  * grid keeps a Set filter picked on it. Nor does the filter go while a stored session
  * restores: that reader may yet turn out signed out, or holding no collection.
  */
-function binderMode(requested: string | null, reader: BinderReader): BinderMode {
+function binderMode(requested: string | null, reader: BinderReader, friend: boolean): BinderMode {
   if (requested === null) return {active: false, dead: false, dropsStrays: true};
+  if (friend) return friendBinderMode(reader);
   const pending = reader.sessionLoading || reader.syncing;
   const honoured = !pending && reader.signedIn && reader.hasCollection;
   const active = pending || honoured;
   return {active, dead: reader.signedIn && !active, dropsStrays: honoured};
 }
+
+/**
+ * What `?binder=` gets with `?friend=` (#1045): a friend's binder, honoured for any signed-in
+ * reader once the session is known, whether or not they hold a collection of their own.
+ * Signed out it keeps the grid, as any `?binder=` link does, and keeps the params, so signing
+ * in opens the friend's binder. Never dead: the friend decides what it shows.
+ */
+function friendBinderMode(reader: BinderReader): BinderMode {
+  const honoured = !reader.sessionLoading && reader.signedIn;
+  return {active: reader.sessionLoading || honoured, dead: false, dropsStrays: honoured};
+}
+
+/** Whether a view is one only a friend's binder has: You need or They need. */
+const comparesWith = (raw: string | null) => COMPARE_SHOWS.some((show) => show === raw);
 
 /**
  * Collection mode's params: `?binder=` (the mode and its set) and `?owned=` (what the
@@ -199,7 +222,9 @@ export function useBinderParams(reader: BinderReader) {
     );
   }
   const requested = searchParams.get(BINDER_PARAM);
-  const mode = binderMode(requested, reader);
+  // Whose binder: a friend's, by handle (#1045). Outside the binder the param is a stray.
+  const friend = requested === null ? null : searchParams.get(FRIEND_PARAM);
+  const mode = binderMode(requested, reader, friend !== null);
   const hasStrays = mode.dropsStrays && strayParams(searchParams).length > 0;
   useEffect(() => {
     if (!hasStrays) return;
@@ -208,8 +233,11 @@ export function useBinderParams(reader: BinderReader) {
 
   return {
     requested,
+    friend,
     mode,
-    show: parseBinderShow(searchParams.get(OWNED_PARAM)),
+    // You need and They need ask of the reader's own collection too, so only a reader with one
+    // (or whose account has yet to answer) gets them.
+    show: parseBinderShow(searchParams.get(OWNED_PARAM), friend !== null && (reader.hasCollection || reader.syncing)),
     enterBinder: (fallback: string, sets: string[] | null) =>
       rewrite((next) => {
         next.set(BINDER_PARAM, setFromFilter(next.get(SET_PARAM), sets) ?? fallback);
@@ -227,6 +255,12 @@ export function useBinderParams(reader: BinderReader) {
         {replace: true},
       ),
     writeShow: (show: BinderShow) => rewrite((next) => writeShowParam(next, show)),
+    // Back to the reader's own binder at the same scope: the views only a friend's has go too.
+    leaveFriend: () =>
+      rewrite((next) => {
+        next.delete(FRIEND_PARAM);
+        if (comparesWith(next.get(OWNED_PARAM))) next.delete(OWNED_PARAM);
+      }),
   };
 }
 
@@ -312,11 +346,14 @@ export interface BrowseCollectionSlots {
    */
   promoOnly: boolean;
   /**
-   * Whether you hold the card toward the chosen headline (`isHeld`): a copy in either finish
-   * for Complete, one in each it comes in for Master (#880). What Owned and Missing ask (owner,
-   * 2026-10-20). A promo scope asks Complete's, the one headline its panel shows.
+   * Whether a card is in the binder's view, or null for All. Owned and Missing ask whether the
+   * binder's collection holds it toward the chosen headline (`isHeld`): a copy in either finish
+   * for Complete, one in each it comes in for Master (#880; owner, 2026-10-20). A friend's
+   * binder (#1045) asks theirs, and its You need and They need ask whether one of you holds it
+   * in a finish the other lacks (`holdsWhatTheyLack`). A promo scope asks Complete's, the one
+   * headline its panel shows.
    */
-  owns: (card: LorcanaCard) => boolean;
+  inView: ((card: LorcanaCard) => boolean) | null;
   /**
    * The cards changed by hand in the binder's current view, which its Owned and Missing views
    * keep (#826, `useKeptCards`): a first copy leaves a card where it was in Missing.
@@ -348,6 +385,11 @@ export interface BrowseCollectionSlots {
    * applied in the page's one URL write. The page draws it in place of its filter sheet.
    */
   renderPhoneSheet: (listing: BrowseListing, sheet: PhoneSheetOptions) => ReactNode | undefined;
+  /**
+   * A friend's binder's banner (#1045), above the toolbar in the title's place, while one
+   * shows, else undefined: whose binder, Read only, and the way back.
+   */
+  renderBanner: (listing: BrowseListing, isMobile: boolean) => ReactNode | undefined;
 }
 
 /** What the page hands a phone's Binder sheet: its filter sheet's props, the sort, and its one write. */
@@ -368,6 +410,78 @@ interface PhoneRowOptions {
  */
 const ownsAxis = (setCode: string, axis: Axis): Axis => (isPromoScope(setCode) ? 'complete' : axis);
 
+const NO_ENTRIES: CollectionEntries = {};
+
+/** A friend's binder's state while one is asked for: loading until its hook answers. */
+const friendBinderOf = (handle: string | null, binder: FriendBinder | null): FriendBinder | null =>
+  handle === null ? null : (binder ?? {status: 'loading'});
+
+/** Said in the binder's place when a friend's collection didn't load; its Try again reads it again. */
+const FRIEND_FAILED = "Couldn't load this binder.";
+
+/** The cards of a scope, in no particular order: what the compare counts go over. */
+const scopeCardsOf = (cards: readonly LorcanaCard[], setCode: string, sets: readonly string[]) =>
+  scopeSets(setCode, sets).flatMap((set) => binderCardsForSet(cards, set));
+
+/** What a friend's binder shows, and beside what (`useFriendView`). */
+interface FriendView {
+  /** The friend's binder while `?friend=` names one in collection mode, else null. */
+  friend: FriendBinder | null;
+  /** The copies the binder, the panel and Owned and Missing read: the friend's, or the reader's own. */
+  shown: CollectionEntries;
+  /** In a friend's binder, the reader's own copies, for the panel's "You" lines; absent without a collection. */
+  yours: CollectionEntries | undefined;
+  /** Both collections, for You need and They need: a friend's binder on show, beside a collection of your own. */
+  compare: Compare | null;
+  /** The friend's binder is still to answer, or names the reader, whose own binder takes its place. */
+  waiting: boolean;
+}
+
+/**
+ * A friend's binder (#1045) beside the reader's own collection. The friend's copies are placed
+ * as the reader's are (`place`), at render, since the placements grow as the collection's card
+ * data loads. A handle that is the reader's own drops `?friend=`, opening their own binder.
+ */
+function useFriendView(handle: string | null, readerId: string | null, leaveFriend: () => void): FriendView {
+  const {entries, hasCollection, place} = useCollection();
+  const friend = friendBinderOf(handle, useFriendCollection(handle, readerId));
+  const own = friend?.status === 'own';
+  useEffect(() => {
+    if (own) leaveFriend();
+  }, [own, leaveFriend]);
+  if (friend === null) return {friend, shown: entries, yours: undefined, compare: null, waiting: false};
+  return friendViewOf(friend, friend.status === 'shown' ? place(friend.entries) : null, hasCollection ? entries : undefined);
+}
+
+/** A friend's binder beside the reader's copies (`mine`, absent without a collection). */
+function friendViewOf(friend: FriendBinder, theirs: CollectionEntries | null, mine: CollectionEntries | undefined): FriendView {
+  return {
+    friend,
+    shown: theirs ?? NO_ENTRIES,
+    yours: mine,
+    compare: theirs && mine ? {mine, theirs} : null,
+    waiting: friend.status === 'loading' || friend.status === 'own',
+  };
+}
+
+/** The friend's public name, once their binder has answered with one. */
+function friendNameOf(friend: FriendBinder): string | null {
+  if (friend.status === 'shown') return friend.friend.name;
+  return friend.status === 'not-sharing' ? friend.name : null;
+}
+
+/** What the binder says while its copies are still to come, or failed to: the reader's own copy's, or a friend's binder's. */
+interface BinderStatus {
+  error: string | null;
+  onRetry: () => void;
+}
+
+/** A friend's binder that didn't load says so, with its own Try again; the card data's failure comes first. */
+function binderStatusOf(friend: FriendBinder | null, own: BinderStatus): BinderStatus {
+  if (friend?.status !== 'failed' || own.error !== null) return own;
+  return {error: FRIEND_FAILED, onRetry: friend.retry};
+}
+
 /**
  * Collection mode's state and controls for Browse, in one place so the page only
  * slots them in. Requires the collection providers, which the `CollectionScope`
@@ -381,19 +495,22 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // unmounting mid-animation; never mounted at all for anyone who never opens it.
   const [importMounted, setImportMounted] = useState(false);
   const {user, loading: sessionLoading} = useSession();
-  const {entries, hasCollection, syncing, importCollection, setCount} = useCollection();
+  const {hasCollection, syncing, importCollection, setCount} = useCollection();
   const {retry} = useCollectionCards();
-  const {requested, mode, show, enterBinder, writeBinder, leaveBinder, writeShow} = useBinderParams({
-    sessionLoading,
-    syncing,
-    signedIn: user !== null,
-    hasCollection,
-  });
+  const {requested, friend: friendHandle, mode, show, enterBinder, writeBinder, leaveBinder, writeShow, leaveFriend} =
+    useBinderParams({
+      sessionLoading,
+      syncing,
+      signedIn: user !== null,
+      hasCollection,
+    });
 
   const {active: collectionMode, dead} = mode;
   useEffect(() => {
     if (dead) leaveBinder();
   }, [dead, leaveBinder]);
+  const friendView = useFriendView(collectionMode ? friendHandle : null, user?.id ?? null, leaveFriend);
+  const {friend} = friendView;
 
   // Only collection mode (or the import, which parses against the full pool)
   // widens the pool, so a visitor who never switches fetches no chunks at all.
@@ -405,10 +522,12 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   const [axis, setAxis] = useState<Axis>('complete');
 
   // The cards changed by hand in this view of the binder, which its Owned and Missing views
-  // keep: a view is the mode, the set, Owned or Missing, the headline they ask of, and the
-  // sort (`useKeptCards`).
+  // keep: a view is the mode, whose binder, the set, Owned or Missing, the headline they ask
+  // of, and the sort (`useKeptCards`).
   const [searchParams] = useSearchParams();
-  const view = [collectionMode, setCode, show, axis, searchParams.get(SORT_PARAM)].join('|');
+  const view = [collectionMode, friend === null ? '' : friendHandle, setCode, show, axis, searchParams.get(SORT_PARAM)].join(
+    '|',
+  );
   const {kept, keep} = useKeptCards(view);
   const changeCount = (cardId: string, finish: Finish, count: number) => {
     setCount(cardId, finish, count);
@@ -438,17 +557,19 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     {openSignIn: () => setShowSignIn(true), openImport, enter: enterMode, leave: leaveMode},
   );
 
-  // Warmed only for an account: signed out, Collection opens sign-in, never the binder.
+  // Warmed only for an account: signed out, Collection opens sign-in, never the binder. In a
+  // friend's binder it leaves for the grid, as it would leave your own, but toggles nothing of yours.
   const modeSwitch = (
     <CollectionModeSwitch
       active={collectionMode}
-      onToggle={onCollectionClick}
+      onToggle={friend === null ? onCollectionClick : leaveBinder}
       onIntent={user !== null ? preloadBinder : undefined}
     />
   );
-  // Every action needs an account: none signed out. The import waits as Account's does.
+  // Every action needs an account: none signed out, and none in a friend's binder, which is
+  // read only. The import waits as Account's does.
   const modeActions =
-    user !== null ? (
+    user !== null && friend === null ? (
       <CollectionActions onImport={openImport} checking={syncing && !hasCollection} onMenuOpen={preloadImportDialog} />
     ) : null;
 
@@ -463,16 +584,31 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     axis,
     onAxisChange: setAxis,
   };
+  // You need and They need, counted over the scope's cards the page lets through, as the
+  // panel's numbers are; null outside a friend's binder, or for a reader with no collection.
+  const compareFor = (listing: BrowseListing): CompareCounts | null =>
+    friendView.compare &&
+    countCompare(scopeCardsOf(listing.matched, setCode, panelControls.sets), friendView.compare, ownsAxis(setCode, axis));
+  // A friend's binder that hasn't answered, or didn't load, has no numbers to show yet.
+  const friendPending = friendView.waiting || friend?.status === 'failed';
   // What the docked panel and the toolbar's set picker count: the cards the page lets through.
   const setCounts = (listing: BrowseListing) => ({
     cards: listing.matched,
     filtered: listing.filtered,
-    entries,
-    isLoading: syncing || !isReady,
+    entries: friendView.shown,
+    yourEntries: friendView.yours,
+    isLoading: (friend === null ? syncing : friendPending) || !isReady,
   });
+  // A friend who doesn't share leaves the binder's place to the line saying so: no panel, no picker.
+  const binderShows = collectionMode && friend?.status !== 'not-sharing';
+
+  // Loading while the account's copy is still to answer, or a friend's binder.
+  const binderLoading = (friend === null ? syncing : friendView.waiting) || (!isReady && error === null);
+  const binderStatus = binderStatusOf(friend, {error, onRetry: retry});
 
   function renderBinder(listing: BrowseListing, onCardSelect: (card: LorcanaCard) => void) {
     if (!collectionMode) return null;
+    if (friend?.status === 'not-sharing') return <FriendNotSharing name={friend.name} handle={friend.handle} />;
     return (
       <Suspense fallback={<BinderChunkFallback />}>
         <CollectionBinderSection
@@ -484,16 +620,37 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           counted={listing.matched}
           filtered={listing.filtered}
           sortOrder={listing.sortOrder}
-          entries={entries}
-          // Loading while the account's copy is still to answer, too.
-          isLoading={syncing || (!isReady && error === null)}
-          error={error}
-          onRetry={retry}
+          entries={friendView.shown}
+          yourEntries={friendView.yours}
+          friend={friend !== null}
+          isLoading={binderLoading}
+          {...binderStatus}
           {...panelControls}
+          compare={compareFor(listing)}
           onCardSelect={onCardSelect}
-          onCountChange={changeCount}
+          // A friend's binder is read only: no − and + in its pockets.
+          onCountChange={friend === null ? changeCount : undefined}
         />
       </Suspense>
+    );
+  }
+
+  // Back to the reader's own binder, or for a reader with none, out to the grid.
+  const back = hasCollection ? ({back: 'yours', onBack: leaveFriend} as const) : ({back: 'browse', onBack: leaveBinder} as const);
+
+  function renderBanner(listing: BrowseListing, isMobile: boolean) {
+    // Outside collection mode there is no friend's binder (`useFriendView` gets no handle).
+    if (friend === null || friendHandle === null) return undefined;
+    return (
+      <FriendBinderBanner
+        isMobile={isMobile}
+        name={friendNameOf(friend)}
+        handle={friendHandle}
+        shown={friend.status === 'shown'}
+        // Only a friend's binder on show beside your own collection counts any.
+        youNeed={compareFor(listing)?.youNeed ?? null}
+        {...back}
+      />
     );
   }
 
@@ -524,6 +681,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           />
         </Suspense>
       )}
+      {/* The card window keeps your own copies, in a friend's binder too. */}
       <WindowCopies onEdit={keep} />
     </>
   );
@@ -541,23 +699,23 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     show,
     rarityOptions: binderRarities,
     promoOnly: collectionMode && isPromoScope(setCode),
-    owns: (card) => isHeld(card, entries, ownsAxis(setCode, axis)),
+    inView: inViewOf(show, ownsAxis(setCode, axis), friendView),
     kept,
     prompts,
     renderSetPanel: (listing) =>
-      collectionMode ? (
+      binderShows ? (
         <Suspense fallback={<DockedSetBodyFallback promo={isPromoScope(setCode)} />}>
-          <DockedSetBody {...setCounts(listing)} {...panelControls} />
+          <DockedSetBody {...setCounts(listing)} {...panelControls} compare={compareFor(listing)} />
         </Suspense>
       ) : undefined,
     renderSetPicker: (listing) =>
-      collectionMode ? (
+      binderShows ? (
         <Suspense fallback={<ToolbarSetPickerFallback />}>
           <DockedSetPicker {...setCounts(listing)} {...panelControls} />
         </Suspense>
       ) : undefined,
     renderPhoneRow: (listing, {count, onOpen}) =>
-      collectionMode ? (
+      binderShows ? (
         <PhoneBinderRow
           setPicker={
             <Suspense fallback={<RowSetPickerFallback />}>
@@ -569,6 +727,8 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           modeSwitch={modeSwitch}
         />
       ) : undefined,
-    renderPhoneSheet: (_listing, sheet) => (collectionMode ? <BinderSheet {...sheet} show={show} /> : undefined),
+    renderPhoneSheet: (listing, sheet) =>
+      binderShows ? <BinderSheet {...sheet} show={show} compare={compareFor(listing)} /> : undefined,
+    renderBanner,
   };
 }

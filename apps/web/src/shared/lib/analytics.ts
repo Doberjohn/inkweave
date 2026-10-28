@@ -133,6 +133,10 @@ type AnalyticsEvents = {
   };
   // A row's action finished: removing a received request is `decline`, a sent one `cancel`.
   friend_action: {action: 'accept' | 'decline' | 'cancel' | 'remove'; ok: boolean};
+  // Collection sharing (#1045), behind SHOW_COLLECTION and SHOW_FRIENDS. Never an id,
+  // handle or name, as with the friends events.
+  collection_sharing_changed: {state: 'on' | 'off'};
+  friend_binder_opened: {result: 'shown' | 'not_sharing' | 'failed'};
 };
 
 /**

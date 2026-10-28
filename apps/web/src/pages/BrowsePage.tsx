@@ -90,6 +90,11 @@ interface BrowseContentSectionProps {
    * of the title, which stays the page's heading for screen readers.
    */
   phoneRow?: React.ReactNode;
+  /**
+   * A friend's binder's banner (#1045), in the title's place, which stays the page's heading
+   * for screen readers.
+   */
+  banner?: React.ReactNode;
 }
 
 function BrowseContentSection({
@@ -104,6 +109,7 @@ function BrowseContentSection({
   sidePanel,
   setPanel,
   phoneRow,
+  banner,
 }: BrowseContentSectionProps) {
   const titlePadding = isMobile
     ? `${SPACING.lg}px ${SPACING.lg}px 0`
@@ -131,10 +137,11 @@ function BrowseContentSection({
           letterSpacing: '0.06em',
           textTransform: 'uppercase',
           flexShrink: 0,
-          ...(phoneRow ? VISUALLY_HIDDEN : undefined),
+          ...(phoneRow || banner ? VISUALLY_HIDDEN : undefined),
         }}>
         Browse Cards
       </h1>
+      {banner && <div style={{padding: titlePadding, flexShrink: 0}}>{banner}</div>}
       {/* In the page from the start, so screen readers hear each change (WCAG 4.1.3). Empty while
           the cards load, and while the binder shows, which lights slots rather than listing cards. */}
       <p role="status" data-testid="browse-count" style={VISUALLY_HIDDEN}>
@@ -337,6 +344,19 @@ function collectionToolbar(docked: boolean, collection: BrowseCollectionSlots | 
   };
 }
 
+/** Collection mode's binder, and over it a friend's binder's banner (#1045); neither outside the mode. */
+function binderAndBanner(
+  collection: BrowseCollectionSlots | null,
+  listing: BrowseListing,
+  {onCardSelect, isMobile}: {onCardSelect: (card: LorcanaCard) => void; isMobile: boolean},
+) {
+  if (collection === null) return {};
+  return {
+    binder: collection.renderBinder(listing, onCardSelect) ?? undefined,
+    banner: collection.renderBanner(listing, isMobile),
+  };
+}
+
 /**
  * A phone's binder row (owner, 2026-10-25), in collection mode only. Its Filters' badge
  * counts the filters on, and one more while the binder shows only Owned or Missing.
@@ -436,7 +456,6 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
     openFromBrowse(openCardModal, card.id, {...listing, printingFor, resolveCard: search.resolveCard}, collection);
   };
 
-  const binder = collection?.renderBinder(listing, selectCard) ?? undefined;
   // The binder's wide pool brings Keyword and Classification options Core never prints.
   const {keywords, classifications} = binderOptions ?? {
     keywords: uniqueKeywords,
@@ -484,7 +503,7 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
     onCardSelect: selectCard,
     printingFor: tilePrintingFor(search.findCard, filters.rarities),
     hasCardPage: search.hasCardPage,
-    binder,
+    ...binderAndBanner(collection, listing, {onCardSelect: selectCard, isMobile}),
     phoneRow: phoneRow(collection, listing, {
       isMobile,
       filtersOn: params.activeFilterCount,

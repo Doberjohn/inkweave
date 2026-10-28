@@ -11,6 +11,7 @@ import {
   STORY_SETS_WITH_PROMOS,
   STORY_STATS,
   STORY_STITCH_STATS,
+  STORY_YOUR_STATS,
 } from './collectionStoryData';
 import {tallyCollection, type Axis} from './collectionStats';
 import {COLORS} from '../../shared/constants';
@@ -139,3 +140,11 @@ export const Loading: Story = {args: {stats: null, sets: ['13'], setsLoading: tr
 
 /** The collapsed rail, for widths where the open panel would starve the cards. Tap to open over the binder. */
 export const Rail: Story = {args: {layout: 'rail'}};
+
+/**
+ * A friend's binder (#1045): the friend's numbers, with your own percentage under each
+ * headline, and You need and They need under All, Owned and Missing.
+ */
+export const FriendsBinder: Story = {
+  args: {yours: STORY_YOUR_STATS, compare: {youNeed: 41, theyNeed: 12}},
+};

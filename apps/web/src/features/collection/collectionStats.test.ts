@@ -1,7 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import type {Ink} from 'inkweave-synergy-engine';
 import {createCard} from '../../shared/test-utils';
-import {isHeld, percentOf, tallyCollection, tallySet, type Axis} from './collectionStats';
+import {finishesLacked, holdsWhatTheyLack, isHeld, percentOf, tallyCollection, tallySet, type Axis} from './collectionStats';
 import type {CollectionEntries} from './collectionParser';
 
 /** Every chase printing and promo in the data names the card it reprints (#796, #805), so these do too. */
@@ -213,5 +213,47 @@ describe('percentOf', () => {
     expect(percentOf(29, 100)).toBe(29);
     expect(percentOf(58, 200)).toBe(29);
     expect(percentOf(29, 50)).toBe(58);
+  });
+});
+
+describe('finishesLacked (#1045)', () => {
+  const nani = card('nani', 'Uncommon');
+  const elsa = card('elsa', 'Enchanted');
+
+  it('lacks every finish under Complete while none is held, and none once one is', () => {
+    expect(finishesLacked(nani, {}, 'complete')).toEqual(['normal', 'foil']);
+    expect(finishesLacked(nani, {nani: {normal: 0, foil: 1}}, 'complete')).toEqual([]);
+  });
+
+  it('lacks the foil under Master when only the normal is held', () => {
+    expect(finishesLacked(nani, {nani: {normal: 2, foil: 0}}, 'master')).toEqual(['foil']);
+    expect(finishesLacked(nani, {nani: {normal: 1, foil: 1}}, 'master')).toEqual([]);
+  });
+
+  it('lacks nothing of a printing that comes in foil alone, once that foil is held', () => {
+    expect(finishesLacked(elsa, {elsa: {normal: 0, foil: 1}}, 'master')).toEqual([]);
+    expect(finishesLacked(elsa, {}, 'master')).toEqual(['foil']);
+  });
+});
+
+describe('holdsWhatTheyLack (#1045)', () => {
+  const nani = card('nani', 'Uncommon');
+  const yourNormal: CollectionEntries = {nani: {normal: 1, foil: 0}};
+
+  it("counts a friend's only foil for a card you hold in normal under Master, not under Complete", () => {
+    const theirFoil: CollectionEntries = {nani: {normal: 0, foil: 1}};
+    expect(holdsWhatTheyLack(nani, {giver: theirFoil, taker: yourNormal}, 'master')).toBe(true);
+    expect(holdsWhatTheyLack(nani, {giver: theirFoil, taker: yourNormal}, 'complete')).toBe(false);
+  });
+
+  it("never counts a friend's normal that you already hold", () => {
+    const theirNormal: CollectionEntries = {nani: {normal: 3, foil: 0}};
+    expect(holdsWhatTheyLack(nani, {giver: theirNormal, taker: yourNormal}, 'master')).toBe(false);
+    expect(holdsWhatTheyLack(nani, {giver: theirNormal, taker: yourNormal}, 'complete')).toBe(false);
+  });
+
+  it('counts nothing a giver holds no copy of, an entry at zero included', () => {
+    expect(holdsWhatTheyLack(nani, {giver: {}, taker: {}}, 'complete')).toBe(false);
+    expect(holdsWhatTheyLack(nani, {giver: {nani: {normal: 0, foil: 0}}, taker: {}}, 'complete')).toBe(false);
   });
 });

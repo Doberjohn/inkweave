@@ -3,6 +3,8 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {createCard} from '../../shared/test-utils';
 import {browseCountMessage, browseView, gridModalTarget, printingIdsFor, searchPool, tilePrintingFor} from '../browseView';
 import {binderRarities} from '../../features/collection/binderCards';
+import {countCompare, inViewOf} from '../../features/collection/compareCollections';
+import type {Axis} from '../../features/collection/collectionStats';
 import {LAYOUT} from '../../shared/constants';
 
 // Core folds Elsa's Enchanted printing into her card; the collection's wide pool
@@ -32,7 +34,7 @@ const binder = (
   active,
   pool: wide,
   show,
-  owns,
+  inView: show === 'all' ? null : (card: LorcanaCard) => owns(card) === (show === 'owned'),
   kept,
   rarityOptions: binderRarities,
   promoOnly: false,
@@ -108,6 +110,51 @@ describe('browseView', () => {
     expect(browseView(binder(true), core, {...params(), searchQuery: 'Elsa'}).filtered).toBe(true);
     expect(browseView(binder(true), core, params(['Enchanted'])).filtered).toBe(true);
     expect(browseView(binder(true), core, params(undefined, ['99'])).filtered).toBe(false);
+  });
+});
+
+describe("a friend's binder: You need and They need (#1045)", () => {
+  // Hand-counted: Nani a, Belle b, Chip c and Dale e come in both finishes; Elsa d is an
+  // Enchanted, foil alone. You hold a in normal, b in both, d in foil and e in normal; the
+  // friend holds only the foil of a, the normal of b and two normals of c.
+  const two = (id: string) => createCard({id, setCode: '1', rarity: 'Uncommon'});
+  const cards = [two('a'), two('b'), two('c'), createCard({id: 'd', setCode: '1', rarity: 'Enchanted', baseId: 'x'}), two('e')];
+  const mine = {a: {normal: 1, foil: 0}, b: {normal: 1, foil: 1}, d: {normal: 0, foil: 1}, e: {normal: 1, foil: 0}};
+  const theirs = {a: {normal: 0, foil: 1}, b: {normal: 1, foil: 0}, c: {normal: 2, foil: 0}};
+  const compare = {mine, theirs};
+  const shown = (show: 'you-need' | 'they-need', axis: Axis) =>
+    ids(
+      browseView(
+        {...binder(true), pool: cards, inView: inViewOf(show, axis, {shown: theirs, compare})},
+        cards,
+        params(),
+      ).sortedCards,
+    );
+
+  it('lists under Complete set the cards one of you holds and the other holds none of', () => {
+    expect(shown('you-need', 'complete')).toEqual(['c']);
+    expect(shown('they-need', 'complete')).toEqual(['d', 'e']);
+    expect(countCompare(cards, compare, 'complete')).toEqual({youNeed: 1, theyNeed: 2});
+  });
+
+  it("lists under Master set each finish the other lacks: their only foil of your normal Nani, both ways", () => {
+    expect(shown('you-need', 'master')).toEqual(['a', 'c']);
+    expect(shown('they-need', 'master')).toEqual(['a', 'b', 'd', 'e']);
+    expect(countCompare(cards, compare, 'master')).toEqual({youNeed: 2, theyNeed: 4});
+  });
+
+  it("asks Owned and Missing of the friend's copies, and shows All for You need without your own", () => {
+    const view = (show: 'owned' | 'missing' | 'you-need') =>
+      ids(
+        browseView(
+          {...binder(true), pool: cards, inView: inViewOf(show, 'complete', {shown: theirs, compare: null})},
+          cards,
+          params(),
+        ).sortedCards,
+      );
+    expect(view('owned')).toEqual(['a', 'b', 'c']);
+    expect(view('missing')).toEqual(['d', 'e']);
+    expect(view('you-need')).toEqual(['a', 'b', 'c', 'd', 'e']);
   });
 });
 

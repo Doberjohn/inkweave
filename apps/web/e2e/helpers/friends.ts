@@ -28,6 +28,14 @@ export interface FriendsWorld {
   me: Player;
   others: Player[];
   rows: FriendshipRow[];
+  /** Who has turned on sharing with their friends (#1045), by id; the player's own switch is `mySharing`. */
+  sharing?: string[];
+  /** Each other player's collection, by id, as `collections` holds it. */
+  collections?: Record<string, Record<string, {normal: number; foil: number}>>;
+  /** The player's own switch: absent is no row, as for a player who never set it. */
+  mySharing?: boolean;
+  /** Every switch the player's page wrote, oldest first. */
+  sharingWrites?: boolean[];
 }
 
 type Pair = Pick<FriendshipRow, 'requester_id' | 'addressee_id'>;
@@ -107,19 +115,70 @@ async function friendships(route: Route, world: FriendsWorld): Promise<void> {
   await route.fulfill({status: 204, body: ''});
 }
 
-/** Answers every friends call the Friends section makes, from `world`, which it changes as it goes. */
-export async function serveFriends(page: Page, world: FriendsWorld): Promise<void> {
+/** Whether `id` is the player's accepted friend, either way round. */
+const isFriend = (world: FriendsWorld, id: string) =>
+  world.rows.some(
+    (row) =>
+      row.status === 'accepted' &&
+      ((row.requester_id === world.me.id && row.addressee_id === id) ||
+        (row.addressee_id === world.me.id && row.requester_id === id)),
+  );
+
+/** `shared_friends()`: the player's accepted friends whose switch is on. */
+const sharedFriends = (world: FriendsWorld) => (world.sharing ?? []).filter((id) => isFriend(world, id));
+
+/** `friend_collections(only_friend)`: those friends' collections, or the one asked for, and nothing else of the row. */
+function friendCollections(world: FriendsWorld, request: {only_friend?: string | null}) {
+  return sharedFriends(world)
+    .filter((id) => !request.only_friend || id === request.only_friend)
+    .flatMap((id) => {
+      const entries = world.collections?.[id];
+      return entries ? [{owner_id: id, entries, schema_version: 1}] : [];
+    });
+}
+
+/** The player's switch: its row, or none, and the upsert that writes it. */
+async function collectionSharing(route: Route, world: FriendsWorld): Promise<void> {
+  if (route.request().method() !== 'POST') {
+    return answer(route, world.mySharing === undefined ? [] : [{friends: world.mySharing}]);
+  }
+  const sent = route.request().postDataJSON() as {owner_id: string; friends: boolean};
+  world.mySharing = sent.friends;
+  (world.sharingWrites ??= []).push(sent.friends);
+  await route.fulfill({status: 201, body: ''});
+}
+
+/** A `profiles` read: by ids for the Friends list's names, or by handle for a friend's binder. */
+function profiles(route: Route, world: FriendsWorld) {
   const everyone = [world.me, ...world.others];
+  const params = new URL(route.request().url()).searchParams;
+  const handle = params.get('handle')?.replace(/^eq\./, '');
+  const ids = idsIn(params.get('id'));
+  const rows = everyone.filter((player) => (handle ? player.handle === handle : ids.includes(player.id)));
+  return answer(route, rows.map((player) => ({id: player.id, handle: player.handle, display_name: player.displayName})));
+}
+
+/**
+ * Answers every friends call the Friends section and a friend's binder make, from `world`,
+ * which it changes as it goes. Register it after `signInAsCollector`, so a cleared collection
+ * takes its switch with it (`on delete cascade`) before the collector's own route answers.
+ */
+export async function serveFriends(page: Page, world: FriendsWorld): Promise<void> {
   await page.route(rest('rpc/claim_handle'), (route) =>
     answer(route, [{handle: world.me.handle, display_name: world.me.displayName}]),
   );
   await page.route(rest('rpc/claim_friend_code'), (route) => answer(route, world.me.code));
-  await page.route(rest('profiles'), (route) => {
-    const ids = idsIn(new URL(route.request().url()).searchParams.get('id'));
-    const rows = everyone.filter((player) => ids.includes(player.id));
-    return answer(route, rows.map((player) => ({id: player.id, handle: player.handle, display_name: player.displayName})));
-  });
+  await page.route(rest('profiles'), (route) => profiles(route, world));
   await page.route(rest('friendships'), (route) => friendships(route, world));
   await page.route(rest('rpc/send_friend_request'), (route) => answer(route, [send(world, route.request().postDataJSON())]));
   await page.route(rest('rpc/accept_friend_request'), (route) => answer(route, accept(world, route.request().postDataJSON())));
+  await page.route(rest('rpc/shared_friends'), (route) => answer(route, sharedFriends(world)));
+  await page.route(rest('rpc/friend_collections'), (route) =>
+    answer(route, friendCollections(world, route.request().postDataJSON() ?? {})),
+  );
+  await page.route(rest('collection_sharing'), (route) => collectionSharing(route, world));
+  await page.route(rest('collections'), async (route) => {
+    if (route.request().method() === 'DELETE') world.mySharing = undefined;
+    await route.fallback();
+  });
 }

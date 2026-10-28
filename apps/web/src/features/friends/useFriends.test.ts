@@ -13,6 +13,14 @@ const repo = vi.hoisted(() => ({
   sendFriendRequest: vi.fn(),
   acceptFriendRequest: vi.fn(),
   removeFriendship: vi.fn(),
+  listSharingFriends: vi.fn(),
+}));
+// Who shares a collection (#1045) is read only with collections on.
+const flags = vi.hoisted(() => ({collection: false}));
+vi.mock('../collection/flag', () => ({
+  get SHOW_COLLECTION() {
+    return flags.collection;
+  },
 }));
 vi.mock('./friendRepository', async () => ({
   ...(await vi.importActual('./friendRepository')),
@@ -57,6 +65,7 @@ beforeEach(() => {
 // Reset without an event, so no hook still mounted at this point reloads after its test.
 afterEach(() => {
   Object.defineProperty(document, 'visibilityState', {configurable: true, get: () => 'visible'});
+  flags.collection = false;
 });
 
 async function loaded() {
@@ -183,5 +192,32 @@ describe('useFriends', () => {
 
     setVisibility('visible');
     await waitFor(() => expect(repo.listFriendships).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe('useFriends: who shares a collection (#1045)', () => {
+  it('reads it beside the friendships with collections on, and again when the tab is shown', async () => {
+    flags.collection = true;
+    repo.listSharingFriends.mockResolvedValue({data: new Set(['amber']), error: null});
+    const {result} = await loaded();
+    expect(result.current.sharing).toEqual(new Set(['amber']));
+
+    repo.listSharingFriends.mockResolvedValue({data: new Set(), error: null});
+    act(() => setVisibility('visible'));
+    await waitFor(() => expect(result.current.sharing).toEqual(new Set()));
+  });
+
+  it('reads nothing with collections off', async () => {
+    const {result} = await loaded();
+    expect(repo.listSharingFriends).not.toHaveBeenCalled();
+    expect(result.current.sharing).toBeUndefined();
+  });
+
+  it('leaves it unknown when its read fails, and lists the friends all the same', async () => {
+    flags.collection = true;
+    repo.listSharingFriends.mockResolvedValue({data: null, error: 'Network error'});
+    const {result} = await loaded();
+    expect(result.current.sharing).toBeUndefined();
+    expect(result.current.friends).toHaveLength(2);
   });
 });

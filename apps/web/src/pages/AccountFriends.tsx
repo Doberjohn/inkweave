@@ -23,6 +23,7 @@ export function AccountFriends({userId}: {userId: string}) {
         onSend={friends.send}
         onAccept={friends.accept}
         onRemove={friends.remove}
+        sharing={friends.sharing}
       />
     </Section>
   );

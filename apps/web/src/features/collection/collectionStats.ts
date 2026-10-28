@@ -1,6 +1,6 @@
 import type {Ink} from 'inkweave-synergy-engine';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import type {CollectionEntries} from './collectionParser';
+import type {CollectionEntries, Finish} from './collectionParser';
 import {binderCardsForSet, isPromoSet} from './binderCards';
 import {finishesOf} from './printingFinishes';
 import {PROMO_RARITY} from '../cards/loader';
@@ -91,6 +91,36 @@ function heldOf(card: LorcanaCard, entries: CollectionEntries): Holding {
 export function isHeld(card: LorcanaCard, entries: CollectionEntries, axis: Axis): boolean {
   const held = heldOf(card, entries);
   return axis === 'master' ? held.both : held.any;
+}
+
+/**
+ * The finishes `entries` lacks of `card` toward a headline (#1045): under Complete, every
+ * finish the printing comes in while it holds no copy, else none; under Master, each finish
+ * it comes in (`finishesOf`) that it holds no copy of. So a normal-only holding of a card
+ * that comes in both lacks the foil under Master and nothing under Complete, and an
+ * Enchanted (foil alone) held in foil lacks nothing. The entries are placed ones, as the
+ * binder shows them (`placeCopies`), so no copy sits in a finish its printing lacks.
+ */
+export function finishesLacked(card: LorcanaCard, entries: CollectionEntries, axis: Axis): readonly Finish[] {
+  const finishes = finishesOf(card);
+  const entry = entries[card.id];
+  if (axis === 'complete') return heldOf(card, entries).any ? [] : finishes;
+  return finishes.filter((finish) => (entry?.[finish] ?? 0) === 0);
+}
+
+/**
+ * Whether `giver` holds a copy of `card` in a finish `taker` lacks toward a headline
+ * (`finishesLacked`): a friend's You need when the friend gives, their They need when you do.
+ * Comparing `isHeld` on each side would miss a friend whose only copy is the foil you lack
+ * under Master set.
+ */
+export function holdsWhatTheyLack(
+  card: LorcanaCard,
+  {giver, taker}: {giver: CollectionEntries; taker: CollectionEntries},
+  axis: Axis,
+): boolean {
+  const held = giver[card.id];
+  return held !== undefined && finishesLacked(card, taker, axis).some((finish) => held[finish] > 0);
 }
 
 /**

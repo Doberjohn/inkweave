@@ -26,7 +26,7 @@ type ListParams = Pick<
 /** What Browse's listing asks of collection mode. */
 type ViewCollection = Pick<
   BrowseCollectionSlots,
-  'active' | 'pool' | 'show' | 'owns' | 'kept' | 'rarityOptions' | 'promoOnly'
+  'active' | 'pool' | 'inView' | 'kept' | 'rarityOptions' | 'promoOnly'
 >;
 
 function buildCombinedFilters(
@@ -101,22 +101,18 @@ function withPromoTiles(cards: LorcanaCard[], rarities: string[] | undefined): L
 
 /**
  * What the binder shows (owner, 2026-10-12): every card, or only those you hold, or only
- * those you don't, toward the panel's chosen headline (owner, 2026-10-20): a copy in either
- * finish for Complete set, one in each it comes in for Master set, so one finish for a
- * printing that comes in one (`owns`, #880). Applied here, after the loader's filters,
- * because it asks the collection, which the loader cannot see.
+ * those you don't, toward the panel's chosen headline (owner, 2026-10-20), and in a friend's
+ * binder (#1045) the cards one of you holds in a finish the other lacks. Collection mode
+ * builds the test (`inView`); it is applied here, after the loader's filters, because it asks
+ * the collection, which the loader cannot see.
  *
  * A card changed by hand in this view stays in it (`kept`, #826, owner 2026-10-20): a first
  * copy would otherwise take a card out of Missing, and the binder back to its first spread.
  * The other filters still apply to it, having run first.
  */
-function byOwnership(
-  cards: LorcanaCard[],
-  {show, owns, kept}: Pick<ViewCollection, 'show' | 'owns' | 'kept'>,
-) {
-  if (show === 'all') return cards;
-  const wantOwned = show === 'owned';
-  return cards.filter((card) => kept.has(card.id) || owns(card) === wantOwned);
+function byOwnership(cards: LorcanaCard[], {inView, kept}: Pick<ViewCollection, 'inView' | 'kept'>) {
+  if (inView === null) return cards;
+  return cards.filter((card) => kept.has(card.id) || inView(card));
 }
 
 /**

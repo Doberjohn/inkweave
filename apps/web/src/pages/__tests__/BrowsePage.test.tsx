@@ -142,7 +142,7 @@ describe('BrowseBody with collection mode on', () => {
     show: 'all',
     rarityOptions: () => [],
     promoOnly: false,
-    owns: () => true,
+    inView: null,
     kept: new Set(),
     prompts: null,
     renderSetPanel: () => undefined,
@@ -168,6 +168,7 @@ describe('BrowseBody with collection mode on', () => {
           </button>
         </div>
       ) : null,
+    renderBanner: () => undefined,
   };
 
   /** The URL's params, which the page's writes change. */

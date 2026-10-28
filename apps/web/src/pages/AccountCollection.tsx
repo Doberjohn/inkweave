@@ -1,6 +1,9 @@
 import {Suspense, useState} from 'react';
 import {useCollection} from '../features/collection/CollectionContext';
 import {useCollectionCards, useCollectionPool} from '../features/collection/CollectionCardsContext';
+import {SharingSwitch} from '../features/collection/SharingSwitch';
+import {useCollectionSharing} from '../features/collection/useCollectionSharing';
+import {SHOW_FRIENDS} from '../features/friends/flag';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackEvent} from '../shared/lib/analytics';
 import {lazyWithRetry} from '../shared/lib/lazyWithRetry';
@@ -34,6 +37,8 @@ export function AccountCollection() {
   const {pool, error, isReady} = useCollectionPool(cards, showImport);
   const {retry} = useCollectionCards();
   const owned = Object.keys(entries).filter((id) => ownedCount(id) > 0).length;
+  // Friends see a collection only through this switch, so it shows only with friends on.
+  const sharing = useCollectionSharing(SHOW_FRIENDS);
 
   return (
     <>
@@ -54,6 +59,8 @@ export function AccountCollection() {
           setConfirmClear(false);
         }}
         onCancelClear={() => setConfirmClear(false)}
+        sharing={SHOW_FRIENDS && <SharingSwitch sharing={sharing} />}
+        sharingOn={sharing.on}
       />
       {importMounted && (
         <Suspense fallback={null}>

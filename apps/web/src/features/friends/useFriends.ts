@@ -1,12 +1,14 @@
 import {useEffect, useRef, useState} from 'react';
 import {trackEvent} from '../../shared/lib/analytics';
 import type {PublicIdentity} from '../profile';
+import {SHOW_COLLECTION} from '../collection/flag';
 import {
   SEND_FAILED,
   acceptFriendRequest,
   claimFriendCode,
   listFriendIdentities,
   listFriendships,
+  listSharingFriends,
   removeFriendship,
   sendFriendRequest,
   type Friendship,
@@ -44,6 +46,11 @@ interface Snapshot {
   received: FriendRow[];
   sent: FriendRow[];
   friends: FriendRow[];
+  /**
+   * The friends who share their collection with the player (#1045), by id. Undefined
+   * with collections off, or when that read failed: the list then says nothing either way.
+   */
+  sharing?: ReadonlySet<string>;
 }
 
 interface View {
@@ -82,13 +89,23 @@ function splitFriendships(rows: Friendship[], userId: string, names: Map<string,
   };
 }
 
-/** The code and the rows together, then the names of everyone on the other side of them. */
+/** Who shares with the player, read only with collections on; a failed read is no answer. */
+async function fetchSharing(): Promise<ReadonlySet<string> | undefined> {
+  if (!SHOW_COLLECTION) return undefined;
+  return (await listSharingFriends()).data ?? undefined;
+}
+
+/**
+ * The code, the rows and who shares together, then the names of everyone on the other side
+ * of the rows. Who shares rides in the same snapshot, so the reload when the tab is shown
+ * refreshes it too.
+ */
 async function fetchSnapshot(userId: string): Promise<Snapshot | null> {
-  const [code, rows] = await Promise.all([claimFriendCode(), listFriendships()]);
+  const [code, rows, sharing] = await Promise.all([claimFriendCode(), listFriendships(), fetchSharing()]);
   if (!code.data || !rows.data) return null;
   // Names are a nicety: without them every row still shows, as "Inkweave player".
   const names = await listFriendIdentities(rows.data.map((row) => otherSide(row, userId)));
-  return {code: code.data, ...splitFriendships(rows.data, userId, names.data ?? new Map())};
+  return {code: code.data, ...splitFriendships(rows.data, userId, names.data ?? new Map()), sharing};
 }
 
 /** A load's result applied to the view: a failed reload keeps the lists already shown. */

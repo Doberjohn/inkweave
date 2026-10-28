@@ -180,3 +180,15 @@ export function listFriendIdentities(ids: readonly string[]): Promise<RepoResult
     return {data: byId, error};
   });
 }
+
+/**
+ * The friends who share their collection with the caller (#1045), by id: accepted friends
+ * whose switch is on, as `shared_friends()` checks on every call.
+ */
+export function listSharingFriends(): Promise<RepoResult<Set<string>>> {
+  return run(async (c) => {
+    const {data, error} = await c.rpc('shared_friends');
+    const ids = Array.isArray(data) ? data.filter((id): id is string => typeof id === 'string') : null;
+    return {data: ids ? new Set(ids) : null, error};
+  });
+}

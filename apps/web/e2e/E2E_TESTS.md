@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-336 tests across 32 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+347 tests across 33 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -368,6 +368,24 @@ Covers the Friends section on `/account` (#852), which ships behind `VITE_SHOW_F
 | a code no one has says so, and changes nothing | `M3PZ-8RQT` matches no one: the section's alert reads "No one has that friend code. Check it with your friend.", the code stays in the field, and the world holds no new row |
 | with 20 requests waiting, a further code is refused and nothing is added | With `Sent (20)` listed, Steel Pirate 777's real code gets the alert "You have 20 requests waiting. Cancel one to send another." (at the cap even a code someone holds answers `too_many`), and the world still holds 20 rows |
 | /account with requests, sent requests and friends has no axe violations | With a request, a sent request and a friend listed, the whole page passes axe-core. Desktop only, as `accessibility.spec.ts`'s audits are |
+
+## `friend-binder.spec.ts`: 11 tests (10 desktop only, 1 on every project at a 390px viewport)
+
+Covers letting friends see your collection (#1045), behind `VITE_SHOW_COLLECTION` and `VITE_SHOW_FRIENDS`, which `playwright.config.ts` pins on: the switch on `/account`, the Friends list's View binder, and a friend's binder (`?binder=<set>&friend=<handle>`), read only, with You need and They need. The reader is the collector (`signInAsCollector`, `COLLECTOR_ID`), and `serveFriends` (`e2e/helpers/friends.ts`) answers the sharing calls from the same world as the friends calls: `collection_sharing` (a GET of the reader's switch, or the upsert that sets it, which the world records in `sharingWrites`), `profiles` by handle, and the `shared_friends` and `friend_collections` RPCs, which answer only for an accepted friend whose switch is on, as the migration's functions do. A delete of the reader's `collections` row clears their switch, as the foreign key's cascade does. The world: Ruby is a friend who shares, Amber a friend who doesn't, and Steel shares but is no friend. Five of the newest set's cards are hand-counted for both readers (the table at the top of the spec), so each list's cards are known by name. Everything else stays with the unit tests: the switch's write queue and failed reads (`useCollectionSharing.test.ts`), the friend's read, its cache and its failure (`useFriendCollection.test.ts`), the refused shapes (`sharingRepository.test.ts`) and each list's finish rules (`collectionStats.test.ts`).
+
+| Test | What it verifies |
+|---|---|
+| the switch on /account writes each change once, and a reload shows it as saved | Off at first, a press turns it on and upserts `true` once; after a reload it reads on, and a press writes `false`. Desktop only, as every test in the first block is |
+| clearing the collection takes the switch with it | With the switch on, Clear warns "Sharing with your friends turns off too.", and Delete my collection removes the switch from the page and, once the delete lands, the world's switch row |
+| the Friends list offers View binder for a friend who shares, and says Not sharing for one who doesn't | Ruby's row links "View binder of Ruby Hero 042" to her binder, Amber's says Not sharing with no link, and following the link opens "Ruby Hero 042's binder" |
+| a friend's binder shows their copies, read only, under their name | The banner shows Ruby's name, `@ruby_hero_042` and Read only; her pockets show "2 normal" and "1 foil", and there is no Collection actions menu. Pointed at, card 2's stripe stays shut ("2 normal", never "2 normal, 0 foil"). Fails with the binder's count changes left on in a friend's binder |
+| You need and They need list the hand-counted cards, finish by finish under Master set | Under Complete set, You need 1 lists card 2 and They need 2 lists cards 3 and 4. Under Master set, You need 2 lists cards 0 and 2, and They need 4 lists cards 0, 1, 3 and 4 |
+| the set panel shows the friend's percentage, with yours under it | Complete set reads Ruby's 3 cards as her percentage, with "You" and the reader's 4 under it |
+| a link to someone who doesn't share says so and shows none of their cards | Steel (sharing, not a friend) and Amber (a friend, not sharing) each get "… doesn't share their collection with you." and no tiles |
+| a friend who stops sharing drops out once the tab is shown again | Ruby turns her switch off while the binder is open; once the tab is hidden and shown, her binder says she doesn't share and shows no tiles |
+| Back to your binder drops the friend and keeps the scope | From Ruby's binder on They need, Back to your binder leaves `?binder=<set>` alone: the friend and the friend-only view go, and the reader's Collection actions are back |
+| a reader with no collection opens a friend's binder with no compare row, and Back to browse leaves it | Signed in with no collection, Ruby's binder shows with no You need or They need, and Back to browse leaves collection mode with no params |
+| the banner says how many of their cards you need, goes back as Yours, and the Binder sheet offers You need | At 390x844 on every project: the banner reads "Read only · you need 1 of theirs"; the Binder sheet's You need 1 and Apply list card 2 alone; Yours goes back to `?binder=<set>` |
 
 ## `responsive-images.spec.ts` — 4 tests (desktop only)
 

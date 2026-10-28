@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
+import {MemoryRouter} from 'react-router-dom';
 import {fn, userEvent, within} from 'storybook/test';
 import {CAP_LABEL, SPACING, SURFACE_CARD} from '../../shared/constants';
 import {FriendsSection} from './FriendsSection';
@@ -29,10 +30,13 @@ const meta: Meta<typeof FriendsSection> = {
   component: FriendsSection,
   decorators: [
     (Story) => (
-      <section style={{...SURFACE_CARD, padding: SPACING.xl, maxWidth: 656}}>
-        <h2 style={{...CAP_LABEL, margin: `0 0 ${SPACING.md}px`}}>Friends</h2>
-        <Story />
-      </section>
+      // View binder is a link into Browse.
+      <MemoryRouter>
+        <section style={{...SURFACE_CARD, padding: SPACING.xl, maxWidth: 656}}>
+          <h2 style={{...CAP_LABEL, margin: `0 0 ${SPACING.md}px`}}>Friends</h2>
+          <Story />
+        </section>
+      </MemoryRouter>
     ),
   ],
   tags: ['autodocs'],
@@ -63,6 +67,14 @@ export const RequestsAndSent: Story = {
 /** Newest friend first. */
 export const Friends: Story = {
   args: {friends: [EMERALD, AMBER, AMETHYST]},
+};
+
+/**
+ * With collections on (#1045): View binder beside each friend who shares their collection,
+ * and Not sharing beside the rest.
+ */
+export const Sharing: Story = {
+  args: {friends: [EMERALD, AMBER, AMETHYST], sharing: new Set(['emerald', 'amethyst'])},
 };
 
 /** An action running: every button looks off and does nothing until the page's reload lands. */

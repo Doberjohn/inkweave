@@ -61,7 +61,12 @@ export function PrivacyPage() {
               {' '}
               If you keep your collection on Inkweave, I store it with your account: how many copies of each
               card you own, normal and foil, so it&rsquo;s there on any device you sign in on. Only you can see
-              it. A copy also stays in this browser, even after you sign out. Clearing your collection on your
+              it
+              {/* Sharing (#1045) needs friends too, so it shows only with both flags on. */}
+              {SHOW_FRIENDS
+                ? ', unless you turn on sharing with friends on your account page. Then your friends can see which cards you own and how many.'
+                : '.'}{' '}
+              A copy also stays in this browser, even after you sign out. Clearing your collection on your
               account page deletes both.
             </>
           )}
@@ -73,7 +78,8 @@ export function PrivacyPage() {
               {' '}
               Opening your account page also gives you a friend code, which I store. If you add friends, I store
               who your friends and friend requests are. To stop anyone guessing codes, I also note when you try
-              one. Your friends see your public name and handle.
+              one. Your friends see your public name and handle
+              {SHOW_COLLECTION ? ', and your collection if you share it with them.' : '.'}
             </>
           )}
         </li>

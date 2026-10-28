@@ -34,6 +34,7 @@
 import {createContext, useContext, useEffect, useRef, useState, type ReactNode} from 'react';
 import type {CollectionEntries, Finish} from './collectionParser';
 import {totalOwned} from './collectionParser';
+import {enqueueWrite} from './collectionWriteQueue';
 import {editAsShown, NO_PLACEMENTS, placeCopies, type Placements} from './placeCopies';
 import {
   COLLECTION_KEY,
@@ -112,6 +113,13 @@ interface CollectionContextValue {
    * clears the copies shown in it from wherever they were counted (`editAsShown`).
    */
   setCount: (cardId: string, finish: Finish, count: number) => void;
+  /**
+   * Another player's copies placed as this provider places the player's own (`placeCopies`,
+   * #1045): a friend's copy counted in a finish its printing doesn't come in shows where
+   * yours would, so both collections count the same way. Call it at render, since the
+   * placements grow as the collection's card data loads.
+   */
+  place: (entries: CollectionEntries) => CollectionEntries;
 }
 
 const CollectionContext = createContext<CollectionContextValue | null>(null);
@@ -119,53 +127,6 @@ const CollectionContext = createContext<CollectionContextValue | null>(null);
 type CollectionState = LocalCollection | null;
 
 const NO_ENTRIES: CollectionEntries = {};
-
-/**
- * EVERY server write goes through this one chain, so each is issued only after the
- * previous one settled (#739 defect 5). Without it a clear's delete could land
- * before an upsert started earlier, and that upsert would then RECREATE the row the
- * user just cleared. The `localEpoch` latch cannot catch that: it discards a stale
- * READ that is still in memory, while a stale write has already committed.
- *
- * Module scope rather than a provider ref, so the order also holds across a
- * remount: a provider that unmounts with an upsert in flight would otherwise leave
- * it free to land after the next provider's delete. Nothing is persisted here; a
- * reload starts an empty chain, and the markers carry anything left undone.
- *
- * One chain PER UID: two accounts write two different rows, so they never need
- * ordering against each other, and a write hung for one must not hold up another.
- * Deliberately no timeout: a timed-out write is not cancelled, so it could still
- * land after the writes released behind it, which is this defect again. A write
- * that hangs for good is healed by a reload, through the markers.
- *
- * ACROSS TABS TOO, through the Web Locks API: an in-memory chain is per tab, so a
- * clear in one tab could land before an upsert still in flight in another and be
- * undone by it. A named lock is granted in request order to every tab of this
- * origin, and released when the write settles, rejected or not. Where the API is
- * missing (jsdom, Safari before 15.4) the in-memory chain still orders this tab.
- * Two DEVICES racing the same way is out of reach of any client-side queue; that
- * needs the server to refuse a superseded write.
- */
-const WRITE_LOCK_PREFIX = 'inkweave:collection:write';
-const writeChains = new Map<Uid, Promise<unknown>>();
-
-function logQueuedFailure(e: unknown): void {
-  console.error('[CollectionContext] queued write threw:', e);
-}
-
-function enqueueWrite<T>(uid: Uid, op: () => Promise<T>): Promise<T> {
-  const locks: LockManager | undefined = globalThis.navigator?.locks;
-  if (locks) {
-    const locked = locks.request(`${WRITE_LOCK_PREFIX}:${uid}`, () => op());
-    // Handled here so a `void` caller never leaks an unhandled rejection.
-    locked.catch(logQueuedFailure);
-    return locked;
-  }
-  const run = (writeChains.get(uid) ?? Promise.resolve()).then(op);
-  // The chain itself must never reject, or one failed write stalls every later one.
-  writeChains.set(uid, run.catch(logQueuedFailure));
-  return run;
-}
 
 /**
  * An `importedAt` that names no other copy this browser holds for `uid`.
@@ -677,6 +638,7 @@ export function CollectionProvider({children, placements = NO_PLACEMENTS}: Colle
     importCollection,
     clearImported,
     setCount,
+    place: (entries: CollectionEntries) => placeCopies(entries, placements),
   };
 
   return <CollectionContext.Provider value={value}>{children}</CollectionContext.Provider>;
