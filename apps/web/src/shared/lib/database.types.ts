@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      collection_sharing: {
+        Row: {
+          created_at: string
+          friends: boolean
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          friends?: boolean
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          friends?: boolean
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_sharing_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: true
+            referencedRelation: "collections"
+            referencedColumns: ["owner_id"]
+          },
+        ]
+      }
       collections: {
         Row: {
           created_at: string
@@ -226,6 +255,14 @@ export type Database = {
           handle: string
         }[]
       }
+      friend_collections: {
+        Args: { only_friend?: string }
+        Returns: {
+          entries: Json
+          owner_id: string
+          schema_version: number
+        }[]
+      }
       pretty_handle: { Args: { handle: string }; Returns: string }
       random_friend_code: { Args: never; Returns: string }
       random_handle: { Args: never; Returns: string }
@@ -236,6 +273,7 @@ export type Database = {
           status: string
         }[]
       }
+      shared_friends: { Args: never; Returns: string[] }
       submit_vote: {
         Args: {
           p_accuracy?: number

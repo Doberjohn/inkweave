@@ -128,6 +128,25 @@ async function checkTryRecordClosedToAnon() {
   );
 }
 
+/**
+ * Test 12 (#1045): anon reads no player's sharing switch and calls neither function that
+ * hands a friend a shared collection. Kept out of run() for the same reason as Test 9.
+ */
+async function checkCollectionSharingClosedToAnon() {
+  console.log('');
+  console.log('Collection sharing: anon');
+  await expectDenied(
+    'collection_sharing not readable',
+    supabase.from('collection_sharing').select('friends').limit(1),
+  );
+  await expectDenied('shared_friends not callable', supabase.rpc('shared_friends'));
+  await expectDenied('friend_collections not callable', supabase.rpc('friend_collections'));
+  await expectDenied(
+    'friend_collections(only_friend) not callable',
+    supabase.rpc('friend_collections', { only_friend: '00000000-0000-0000-0000-000000000000' }),
+  );
+}
+
 /** Tests 1-3: the submit_vote RPC inserts a vote, upserts it, and accepts a reversed pair. */
 async function checkSubmitVote() {
   // --- Test 1: Submit vote via RPC ---
@@ -278,6 +297,8 @@ async function run() {
   await checkFriendsClosedToAnon();
   // --- Test 11: The record of friend-code tries is out of the Data API's reach (#860) ---
   await checkTryRecordClosedToAnon();
+  // --- Test 12: Collection sharing is closed to anon (#1045) ---
+  await checkCollectionSharingClosedToAnon();
   finish();
 }
 
