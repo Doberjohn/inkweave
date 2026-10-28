@@ -68,7 +68,7 @@ const EXCLUDED = new Set([
   // slot, reading the session, the collection and the window's stores. A story of it would
   // need all three to show only the stripe its own stories already show.
   'WindowCopies.tsx',
-  // Same case (#1055): portals the friends count (FriendsHaveButton, storied) into the card
+  // Same case: portals the friends count (FriendsHaveButton, storied) into the card
   // window's friends slot and opens Friends who have it (storied), reading the session, the
   // collection, the friends' copies and the window's stores.
   'WindowFriends.tsx',

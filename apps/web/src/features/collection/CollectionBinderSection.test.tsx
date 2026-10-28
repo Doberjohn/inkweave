@@ -126,6 +126,13 @@ describe('CollectionBinderSection', () => {
       view.rerender(section(ids.slice(0, 36), {pool: forty, startAt: {cardId: 's30', key: 'first'}}));
       expect(pockets()[0]).toBe('Card s1');
     });
+
+    it('opens at their start the pockets it was asked over, once they changed and came back', () => {
+      const view = render(at('first'));
+      view.rerender(section(ids.slice(0, 36), {pool: forty, startAt: {cardId: 's30', key: 'first'}}));
+      view.rerender(at('first'));
+      expect(pockets()[0]).toBe('Card s1');
+    });
   });
 
   it('keeps the loading map, which holds no cards yet, from announcing "nothing missing"', () => {

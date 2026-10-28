@@ -1,12 +1,12 @@
 import {useEffect, useSyncExternalStore} from 'react';
 import {useSession} from '../../shared/contexts/SessionContext';
-import type {PublicIdentity} from '../profile';
 import {
-  UNNAMED,
   listFriendIdentities,
   listFriendships,
   listSharingFriends,
-  type Friendship,
+  namedFriend,
+  otherSide,
+  type NamedFriend,
 } from '../friends/friendRepository';
 import type {CollectionEntries} from './collectionParser';
 import {getSharedCollections} from './sharingRepository';
@@ -23,21 +23,14 @@ import {getSharedCollections} from './sharingRepository';
  * a friend who stopped sharing drops out then.
  */
 
-export interface Friend {
-  id: string;
-  name: string;
-  /** Null for a friend with no public name yet: there is no binder link to them. */
-  handle: string | null;
-}
-
 /** A sharing friend and their copies, as saved: the reader places them (`useCollection().place`). */
-export interface SharingFriend extends Friend {
+export interface SharingFriend extends NamedFriend {
   entries: CollectionEntries;
 }
 
 interface Loaded {
   sharing: SharingFriend[];
-  notSharing: Friend[];
+  notSharing: NamedFriend[];
 }
 
 export type FriendsCopies =
@@ -77,14 +70,6 @@ export function forgetFriendsCopies(): void {
   publish(null);
 }
 
-const otherSide = (row: Friendship, readerId: string) =>
-  row.requesterId === readerId ? row.addresseeId : row.requesterId;
-
-function friendOf(id: string, names: ReadonlyMap<string, PublicIdentity>): Friend {
-  const identity = names.get(id);
-  return {id, name: identity?.displayName ?? UNNAMED, handle: identity?.handle ?? null};
-}
-
 /** Sharing friends' collections, read only while one shares: no friend shares, no read. */
 function collectionsOf(friendIds: readonly string[], sharingIds: ReadonlySet<string>) {
   if (!friendIds.some((id) => sharingIds.has(id))) return Promise.resolve({data: new Map<string, CollectionEntries>(), error: null});
@@ -99,7 +84,7 @@ async function readFriends(readerId: string): Promise<Loaded | null> {
   const [names, collections] = await Promise.all([listFriendIdentities(ids), collectionsOf(ids, sharingIds.data)]);
   if (collections.data === null) return null;
   // Names are a nicety, as in the Friends list: without them a friend shows as "Inkweave player".
-  const friends = ids.map((id) => friendOf(id, names.data ?? new Map()));
+  const friends = ids.map((id) => namedFriend(id, names.data ?? new Map()));
   const copies = collections.data;
   return {
     sharing: friends.flatMap((friend) => {

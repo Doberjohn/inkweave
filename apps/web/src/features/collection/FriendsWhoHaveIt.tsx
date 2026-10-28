@@ -5,11 +5,14 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {isModifiedClick} from 'inkweave-ui/utils/touchGuard';
 import {BottomSheet, DialogShell, IconButton} from '../../shared/components';
 import {
+  binderSetOf,
+  CAP_LABEL,
   COLORS,
   DIALOG_TITLE,
   EASING,
   FONTS,
   FONT_SIZES,
+  LETTER_SPACING,
   RADIUS,
   SPACING,
   VISUALLY_HIDDEN,
@@ -163,13 +166,12 @@ const HEADING_STYLE: CSSProperties = {
 const COUNTS_STYLE: CSSProperties = {display: 'flex', gap: SPACING.sm};
 
 const COLUMN_LABEL_STYLE: CSSProperties = {
+  ...CAP_LABEL,
   minWidth: 40,
   textAlign: 'center',
   fontSize: `${FONT_SIZES.sm}px`,
   fontWeight: 600,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  color: COLORS.textMuted,
+  letterSpacing: LETTER_SPACING.eyebrow,
 };
 
 /**
@@ -277,7 +279,8 @@ function FriendRow({row, lacked, card, onFollow}: FriendRowProps) {
         <div style={{...GRID, ...ROW_STYLE}}>{content}</div>
       ) : (
         <Link
-          to={friendBinderPath(friend.handle, card.setCode)}
+          // The binder an edition's card is collected in: CC1's is Curator's Collection's, CC.
+          to={friendBinderPath(friend.handle, card.setCode && binderSetOf(card.setCode))}
           state={{atCard: card.id} satisfies AtCard}
           // A click that opens the binder in a new tab or window leaves this one as it was.
           onClick={(e) => {

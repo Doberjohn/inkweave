@@ -410,13 +410,16 @@ function KeyedBinder({axis, startAt, ...props}: ComponentProps<typeof Collection
 
 /**
  * The last navigation that asked to open the binder at a card, and that card while the binder
- * holds the pockets it was asked over. A new navigation opens it there even over the same
- * pockets; an address change after it asks nothing, so it keeps the page on show unless the
- * pockets change, and a new set, sort or filter then opens at its start, as any does.
+ * holds the pockets it was asked over, until they first change. A new navigation opens it there
+ * even over the same pockets; an address change after it asks nothing, so it keeps the page on
+ * show unless the pockets change, and a new set, sort or filter then opens at its start, as any
+ * does. Coming back to the asked pockets (Complete set, then Master set, then Complete again)
+ * is such a change too, so it opens at their start, never at the card asked about before.
  */
 function useAskedStart(startAt: BinderStart | undefined, cards: string): {key: string; cardId?: string} {
-  const [asked, setAsked] = useState({key: startAt?.key ?? '', cards});
+  const [asked, setAsked] = useState<{key: string; cards: string | null}>({key: startAt?.key ?? '', cards});
   if (startAt !== undefined && startAt.key !== asked.key) setAsked({key: startAt.key, cards});
+  else if (asked.cards !== null && asked.cards !== cards) setAsked({...asked, cards: null});
   return {key: startAt?.key ?? asked.key, cardId: asked.cards === cards ? startAt?.cardId : undefined};
 }
 

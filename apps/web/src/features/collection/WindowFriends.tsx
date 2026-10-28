@@ -1,7 +1,6 @@
 import {useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {useCardDataContext} from '../../shared/contexts/CardDataContext';
 import {useCardModal} from '../../shared/contexts/CardModalContext';
 import {useCardWindowSlot} from '../../shared/contexts/cardWindowSlot';
 import {useSession} from '../../shared/contexts/SessionContext';
@@ -9,13 +8,14 @@ import {useResponsive} from '../../shared/hooks';
 import {trackEvent} from '../../shared/lib/analytics';
 import {printingCard} from '../cards/loader';
 import {useCollection} from './CollectionContext';
-import type {CollectionEntry} from './collectionParser';
+import type {CollectionEntries, CollectionEntry} from './collectionParser';
 import {finishesLacked, type Axis} from './collectionStats';
 import {useFriendsCopies, type SharingFriend} from './friendsCopies';
 import {FriendsHaveButton, FriendsHaveFailed} from './FriendsHaveButton';
 import {foilOnly, friendsFor, friendsHaveLine} from './friendsHave';
 import {FriendsWhoHaveIt} from './FriendsWhoHaveIt';
 import {finishesOf} from './printingFinishes';
+import {useWindowCard} from './windowCard';
 
 const NO_COPIES: CollectionEntry = {normal: 0, foil: 0};
 
@@ -23,14 +23,6 @@ const NO_COPIES: CollectionEntry = {normal: 0, foil: 0};
 function printingOf(card: LorcanaCard, printingId: string | null): {printing: LorcanaCard; printedName?: string} {
   const variant = printingId === null ? undefined : card.variants?.find((each) => each.id === printingId);
   return variant ? {printing: printingCard(card, variant), printedName: variant.printedName} : {printing: card};
-}
-
-/** The card the open window shows, by the window's own lookup: Core first, then the open's resolver. */
-function useWindowCard(): LorcanaCard | undefined {
-  const {selectedCardId, resolveCard} = useCardModal();
-  const {getCardById} = useCardDataContext();
-  if (selectedCardId === null) return undefined;
-  return getCardById(selectedCardId) ?? resolveCard?.(selectedCardId);
 }
 
 /** The window's friends slot and the printing it shows, or null while no window holds the slot. */
@@ -45,6 +37,19 @@ function useShown(): Shown | null {
   const card = useWindowCard();
   if (friendsSlot === null || card === undefined) return null;
   return {slot: friendsSlot, ...printingOf(card, shownPrintingId)};
+}
+
+type Place = (entries: CollectionEntries) => CollectionEntries;
+
+/** The last friends placed: the count renders with each step through the window, and would place them all again. */
+let placedFor: {sharing: readonly SharingFriend[]; place: Place; placed: SharingFriend[]} | null = null;
+
+/** Friends' copies placed as the reader's are (`useCollection().place`), so both count the same way. */
+function placedFriends(sharing: readonly SharingFriend[], place: Place): SharingFriend[] {
+  if (placedFor?.sharing !== sharing || placedFor.place !== place) {
+    placedFor = {sharing, place, placed: sharing.map((friend) => ({...friend, entries: place(friend.entries)}))};
+  }
+  return placedFor.placed;
 }
 
 /** Whether the reader's copies count yet: signed in with a collection, once the account's copy has answered. */
@@ -63,12 +68,14 @@ function useCounting(): boolean {
  * under `axis`, the headline the binder counts.
  *
  * Its own chunk, loaded only with both flags on: the friends' reads and the dialog stay out of
- * Browse's. The read starts the first time a window opens on Browse (`useFriendsCopies`).
+ * Browse's. The read starts when Browse shows, before any window opens (`useFriendsCopies`), so
+ * a window opens with its count in place, rather than growing the header or the phone's column
+ * a moment later.
  */
 export function WindowFriends({axis}: {axis: Axis}) {
   const shown = useShown();
   const counting = useCounting();
-  const copies = useFriendsCopies(counting, shown !== null);
+  const copies = useFriendsCopies(counting, true);
   if (!counting || shown === null) return null;
   if (copies.status === 'failed') return <FailedCount shown={shown} axis={axis} onRetry={copies.retry} />;
   if (copies.status !== 'ready') return null;
@@ -89,9 +96,7 @@ function FriendsCount({shown, sharing, notSharing, axis}: FriendsCountProps) {
   const {closeCardModal} = useCardModal();
   const [open, setOpen] = useState(false);
   const {slot, printing, printedName} = shown;
-  // Friends' copies placed as the reader's are, so both count the same way.
-  const placed = sharing.map((friend) => ({...friend, entries: place(friend.entries)}));
-  const have = friendsFor(printing, entries, placed, axis);
+  const have = friendsFor(printing, entries, placedFriends(sharing, place), axis);
   if (have.friends.length === 0) {
     // A re-read that leaves no friend with the card closes the dialog with its count, so it
     // can't pop open again on a later read that brings one back.

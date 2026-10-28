@@ -70,7 +70,7 @@ export const ADHOC_BUTTON_EXEMPT = {
     'packages/ui/src/lorcana/ConnectionGroup.tsx', // a synergy group's expand toggle
     'packages/ui/src/lorcana/CopiesStripe.tsx', // the collection's copies stepper family
     'packages/ui/src/lorcana/PrintingPeek.tsx', // the printing stack's peek arrows
-    'apps/web/src/features/collection/FriendsHaveButton.tsx', // the card window's friends count, on the copies stripe's grounds (#1055)
+    'apps/web/src/features/collection/FriendsHaveButton.tsx', // the card window's friends count, on the copies stripe's grounds
     'apps/web/src/shared/components/BackLink.tsx', // back-navigation link
     'apps/web/src/shared/components/ErrorBoundary.tsx', // the error screen's action
     'apps/web/src/shared/components/MobileBottomNav.tsx', // bottom-nav tab family

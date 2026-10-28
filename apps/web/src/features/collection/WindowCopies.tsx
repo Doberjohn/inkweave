@@ -2,14 +2,13 @@ import {createPortal} from 'react-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CopiesStripe} from '../../shared/components';
 import type {StripePart} from 'inkweave-ui/lorcana/CopiesStripe';
-import {useCardDataContext} from '../../shared/contexts/CardDataContext';
-import {useCardModal} from '../../shared/contexts/CardModalContext';
 import {useCardWindowSlot, useHoldCopiesRow} from '../../shared/contexts/cardWindowSlot';
 import {useSession} from '../../shared/contexts/SessionContext';
 import {printedFullName} from 'inkweave-ui/lib/printings';
 import {useCollection} from './CollectionContext';
 import type {CollectionEntry, Finish} from './collectionParser';
 import {finishesOf, type FinishFacts} from './printingFinishes';
+import {useWindowCard} from './windowCard';
 
 const NO_COPIES: CollectionEntry = {normal: 0, foil: 0};
 
@@ -26,14 +25,6 @@ function shownPrinting(
 ): FinishFacts & {printedName?: string} {
   if (printingId === null) return card;
   return card.variants?.find((variant) => variant.id === printingId) ?? {};
-}
-
-/** The card the open window shows, by the window's own lookup: Core first, then the open's resolver (sets 1-8). */
-function useWindowCard(): LorcanaCard | undefined {
-  const {selectedCardId, resolveCard} = useCardModal();
-  const {getCardById} = useCardDataContext();
-  if (selectedCardId === null) return undefined;
-  return getCardById(selectedCardId) ?? resolveCard?.(selectedCardId);
 }
 
 interface ShownCopies {

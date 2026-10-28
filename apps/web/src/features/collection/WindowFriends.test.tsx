@@ -151,9 +151,10 @@ describe('WindowFriends', () => {
     expect(mockCopies.calls.every(([enabled]) => !enabled)).toBe(true);
   });
 
-  it('asks for no friends while no window is open', async () => {
+  it('reads the friends before any window opens, so a window opens with its count in place', async () => {
     mockModal.selectedCardId = null;
-    await renderInWindow();
-    expect(mockCopies.calls.every(([, need]) => !need)).toBe(true);
+    const slot = await renderInWindow();
+    expect(mockCopies.calls.at(-1)).toEqual([true, true]);
+    expect(slot.queryByRole('button')).toBeNull();
   });
 });

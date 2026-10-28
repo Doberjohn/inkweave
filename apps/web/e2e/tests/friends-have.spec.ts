@@ -84,15 +84,20 @@ async function turnTo(page: Page, to: number): Promise<void> {
   return binder(page).getByRole('navigation', {name: 'Binder pages'}).getByRole('button', {name: new RegExp(`^Page ${to} of`)}).click();
 }
 
-/** Opens the binder on the card's set, and the card's window from its pocket. */
-async function openWindow(page: Page, card: {fullName: string}): Promise<void> {
-  await page.goto(`/browse?binder=${SET}`);
+/** Opens the card's window from its pocket in the binder on show. */
+async function openPocket(page: Page, card: {fullName: string}): Promise<void> {
   const pocket = tile(page, card);
   await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
   // A card past the first spread, or a phone's first pages.
   for (let shown = 1; !(await pocket.isVisible()) && shown < 9; shown++) await turnTo(page, shown + 1);
   await pocket.click();
   await expect(modal(page).locator('h1')).toHaveText(card.fullName);
+}
+
+/** Opens the binder on the card's set, and the card's window from its pocket. */
+async function openWindow(page: Page, card: {fullName: string}): Promise<void> {
+  await page.goto(`/browse?binder=${SET}`);
+  await openPocket(page, card);
 }
 
 test.describe('Friends who have it', () => {
@@ -114,6 +119,20 @@ test.describe('Friends who have it', () => {
       `${RUBY.displayName}: 2 normal, 0 foil. Open their binder`,
     );
     await expect(dialog.getByText("1 friend doesn't share their collection, so they aren't counted.")).toBeVisible();
+  });
+
+  test('the friends are read once Browse shows, so a window opens with its count in place', async ({page}) => {
+    await signIn(page);
+    const read = page.waitForResponse((response) => response.url().includes('rpc/friend_collections'));
+    await page.goto(`/browse?binder=${SET}`);
+    await read;
+    let reads = 0;
+    page.on('request', (request) => {
+      if (request.url().includes('rpc/friend_collections')) reads++;
+    });
+    await openPocket(page, DEEP);
+    await expect(friendsSlot(page).getByRole('button', {name: '2 friends have it'})).toBeVisible();
+    expect(reads, 'the window asked for nothing more').toBe(0);
   });
 
   test('a row opens that friend\'s binder at the card, and the window closes', async ({page}) => {

@@ -5,7 +5,7 @@ import {forgetFriendsCopies, useFriendsCopies} from './friendsCopies';
 const session = vi.hoisted(() => ({user: {id: 'me'} as {id: string} | null}));
 vi.mock('../../shared/contexts/SessionContext', () => ({useSession: () => session}));
 const friends = vi.hoisted(() => ({listFriendships: vi.fn(), listSharingFriends: vi.fn(), listFriendIdentities: vi.fn()}));
-vi.mock('../friends/friendRepository', () => ({...friends, UNNAMED: 'Inkweave player'}));
+vi.mock('../friends/friendRepository', async (actual) => ({...(await actual<object>()), ...friends}));
 const sharing = vi.hoisted(() => ({getSharedCollections: vi.fn()}));
 vi.mock('./sharingRepository', () => sharing);
 

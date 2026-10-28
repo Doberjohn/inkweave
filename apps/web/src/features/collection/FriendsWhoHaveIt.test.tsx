@@ -1,6 +1,7 @@
 import {describe, expect, it, vi} from 'vitest';
 import {fireEvent, render, screen, within} from '@testing-library/react';
 import {createMemoryRouter, RouterProvider} from 'react-router-dom';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {createCard} from '../../shared/test-utils';
 import type {CollectionEntry, Finish} from './collectionParser';
 import type {SharingFriend} from './friendsCopies';
@@ -24,6 +25,7 @@ const MISSING: FriendsFor = {
 };
 
 interface Options {
+  card?: LorcanaCard;
   have?: FriendsFor;
   held?: CollectionEntry;
   notSharing?: number;
@@ -33,12 +35,12 @@ interface Options {
 }
 
 /** The dialog over a page, in a data router, so a row's link can be followed. */
-function renderDialog({have = MISSING, held = {normal: 0, foil: 0}, notSharing = 0, isMobile = false, onClose = vi.fn(), onFollow = vi.fn()}: Options = {}) {
+function renderDialog({card = CARD, have = MISSING, held = {normal: 0, foil: 0}, notSharing = 0, isMobile = false, onClose = vi.fn(), onFollow = vi.fn()}: Options = {}) {
   const dialog = (
     <FriendsWhoHaveIt
       isOpen
       onClose={onClose}
-      card={CARD}
+      card={card}
       finishes={BOTH}
       held={held}
       have={have}
@@ -67,6 +69,11 @@ describe('FriendsWhoHaveIt', () => {
     ]);
     expect(links[0]).toHaveAccessibleName('Emerald Fairy 913: 3 normal, 1 foil. Open their binder');
     expect(links[1]).toHaveAccessibleName('Ruby Hero 042: 2 normal, 0 foil. Open their binder');
+  });
+
+  it("links an edition's card to the binder of the promo set that gathers it", () => {
+    renderDialog({card: createCard({id: 'cc1-3', name: 'Belle', setCode: 'CC1', setNumber: 3, rarity: 'Rare'})});
+    expect(within(whoHasIt()).getAllByRole('link')[0]).toHaveAttribute('href', '/browse?binder=CC&friend=emerald_fairy_913');
   });
 
   it("opens the friend's binder at the card, and hands the follow back to close the window", async () => {
