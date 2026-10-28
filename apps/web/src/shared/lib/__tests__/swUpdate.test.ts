@@ -14,8 +14,8 @@ class FakeWorker extends EventTarget {
   }
 }
 
-/** A registration as the page reads it: whichever worker waits now, or none. */
-type Registration = {waiting: FakeWorker | null};
+/** A registration as the page reads it: whichever worker waits now, or none, and one installing. */
+type Registration = {waiting: FakeWorker | null; installing?: FakeWorker | null};
 
 /** A container that hands out `registration` as it stands at each call, as the browser's does. */
 function containerFor(registration: Registration) {
@@ -130,5 +130,110 @@ describe('applyWaitingUpdate', () => {
     swUpdate.reloadOntoNewVersion();
     expect(document.getElementById('sw-update-toast')).toBeNull();
     expect(reload).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('reloadOntoNewestVersion', () => {
+  const reload = vi.fn();
+  const toast = () => document.getElementById('sw-update-toast');
+
+  beforeEach(async () => {
+    vi.resetModules();
+    swUpdate = await import('../swUpdate');
+    reload.mockClear();
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: {...window.location, reload},
+    });
+  });
+
+  afterEach(() => {
+    toast()?.remove();
+  });
+
+  it('reloads at once when the browser holds no newer worker', async () => {
+    await swUpdate.reloadOntoNewestVersion(containerWith(null));
+
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(toast()).toBeNull();
+  });
+
+  it('reloads at once in a browser with no service worker', async () => {
+    await swUpdate.reloadOntoNewestVersion(undefined);
+
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  // A reload alone would leave the old worker in control, serving the old version again.
+  it('asks a waiting worker to take over, with the toast up, and reloads once it is activated', async () => {
+    const worker = new FakeWorker();
+    await swUpdate.reloadOntoNewestVersion(containerWith(worker));
+    await settle();
+
+    expect(toast()).not.toBeNull();
+    expect(worker.postMessage).toHaveBeenCalledWith({type: 'SKIP_WAITING'});
+    expect(reload).not.toHaveBeenCalled();
+    worker.become('activated');
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  // The worker the failed card list's look found can still be installing when Reload is pressed.
+  it('waits for a worker still installing, then asks it to take over', async () => {
+    const worker = new FakeWorker();
+    worker.state = 'installing';
+    const registration: Registration = {waiting: null, installing: worker};
+    await swUpdate.reloadOntoNewestVersion(containerFor(registration));
+
+    expect(toast()).not.toBeNull();
+    expect(worker.postMessage).not.toHaveBeenCalled();
+    registration.installing = null;
+    registration.waiting = worker;
+    worker.become('installed');
+    await settle();
+
+    expect(worker.postMessage).toHaveBeenCalledWith({type: 'SKIP_WAITING'});
+    worker.become('activated');
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('reloads as it is when the installing worker fails', async () => {
+    const worker = new FakeWorker();
+    worker.state = 'installing';
+    await swUpdate.reloadOntoNewestVersion(containerFor({waiting: null, installing: worker}));
+
+    worker.become('redundant');
+    expect(reload).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('checkForNewVersion', () => {
+  beforeEach(async () => {
+    // A fresh page, whose worker hasn't registered yet.
+    vi.resetModules();
+    swUpdate = await import('../swUpdate');
+  });
+
+  // A worker found before vite-plugin-pwa listens would never reach onNeedRefresh.
+  it('waits for the page to register its worker, then asks the registration to look', async () => {
+    const update = vi.fn().mockResolvedValue(undefined);
+    const looked = swUpdate.checkForNewVersion();
+    await settle();
+    expect(update).not.toHaveBeenCalled();
+
+    swUpdate.onWorkerRegistered({update} as unknown as ServiceWorkerRegistration);
+    await looked;
+    expect(update).toHaveBeenCalledTimes(1);
+  });
+
+  it('does nothing when the page registered no worker', async () => {
+    swUpdate.onWorkerRegistered(undefined);
+    await expect(swUpdate.checkForNewVersion()).resolves.toBeUndefined();
+  });
+
+  // Offline, the worker script fails to load: the caller's own failure is what the page shows.
+  it('never throws when the look fails', async () => {
+    const update = vi.fn().mockRejectedValue(new TypeError('Failed to update a ServiceWorker'));
+    swUpdate.onWorkerRegistered({update} as unknown as ServiceWorkerRegistration);
+    await expect(swUpdate.checkForNewVersion()).resolves.toBeUndefined();
   });
 });

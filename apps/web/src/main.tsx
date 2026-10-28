@@ -10,7 +10,9 @@ import {router} from './router';
 import {HOLD_CAP_MS, holdPrerenderedPage} from './shared/lib/prerenderHold';
 import {renderOverPrerenderedPage} from 'inkweave-ui/lib/prerenderedArt';
 import {whenRouteReady} from './shared/lib/routeReadiness';
-import {applyWaitingUpdate, reloadOntoNewVersion} from './shared/lib/swUpdate';
+import {applyWaitingUpdate, onWorkerRegistered, reloadOntoNewVersion} from './shared/lib/swUpdate';
+import {whenCardListUnreadable} from './features/cards/cardListRequest';
+import {onUnreadableCardList} from './features/cards/cardListFailure';
 import {UPDATE_TOAST_LEAD_MS, showUpdateToast} from './shared/lib/swUpdateToast';
 import {reloadForStaleChunk} from './shared/lib/staleChunkReload';
 import {loadSentryWhenIdle} from './shared/lib/sentry';
@@ -33,6 +35,7 @@ if (import.meta.env.PROD) {
 // shared/lib/sentry.ts and shared/lib/posthog.ts.
 loadSentryWhenIdle();
 loadPostHogWhenIdle();
+whenCardListUnreadable(onUnreadableCardList);
 
 // Register service worker with auto-update flow: when a new SW reaches
 // `waiting` state, show a bottom-right toast so the user sees the version
@@ -50,6 +53,8 @@ if (import.meta.env.PROD) {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (hadController) reloadOntoNewVersion();
     });
+  } else {
+    onWorkerRegistered(undefined);
   }
 
   registerSW({
@@ -62,6 +67,9 @@ if (import.meta.env.PROD) {
     },
     // vite-plugin-pwa's own reload, when this page's controller changes: the same guarded one.
     onNeedReload: reloadOntoNewVersion,
+    // From here on a worker the page finds itself reaches onNeedRefresh (checkForNewVersion).
+    onRegisteredSW: (_url, registration) => onWorkerRegistered(registration),
+    onRegisterError: () => onWorkerRegistered(undefined),
     onOfflineReady() {
       console.log('Inkweave is ready for offline use');
     },

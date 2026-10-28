@@ -11,6 +11,7 @@ export class AppPage {
   readonly searchInput: Locator;
   readonly errorMessage: Locator;
   readonly retryButton: Locator;
+  readonly reloadButton: Locator;
 
   // Home state elements
   readonly heroSection: Locator;
@@ -32,6 +33,7 @@ export class AppPage {
     this.searchInput = page.getByPlaceholder('Search cards...');
     this.errorMessage = page.getByText('Error loading cards');
     this.retryButton = page.getByRole('button', {name: 'Try Again'});
+    this.reloadButton = page.getByRole('button', {name: 'Reload'});
 
     // Home state elements
     this.heroSection = page.getByTestId('hero-section');

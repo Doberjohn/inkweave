@@ -11,6 +11,7 @@ import {
   getUniqueClassifications,
   getUniqueSets,
   loadCardsFromJSON,
+  CardDataUnavailableError,
   fetchCardsFromLocal,
   smallImageUrl,
   applySortOrder,
@@ -661,11 +662,27 @@ describe('fetchCardsFromLocal', () => {
     expect(result.sets).toEqual([]);
   });
 
-  it('should throw error when primary fetch fails', async () => {
-    mockFetch.mockResolvedValueOnce({ok: false, status: 404});
-    await expect(fetchCardsFromLocal('/data/missing.json')).rejects.toThrow(
-      'Failed to fetch local cards: 404',
-    );
+  // Data that never arrived gets Try Again on the error screen; data it can't read gets Reload.
+  it('fails with a CardDataUnavailableError naming the status when the server answers with an error', async () => {
+    mockFetch.mockResolvedValueOnce({ok: false, status: 503});
+    const failure = fetchCardsFromLocal('/data/allCards.json').catch((error: unknown) => error);
+
+    await expect(failure).resolves.toBeInstanceOf(CardDataUnavailableError);
+    await expect(failure).resolves.toHaveProperty('message', expect.stringContaining('(error 503)'));
+  });
+
+  it('fails with a CardDataUnavailableError, keeping its cause, when the request never completes', async () => {
+    const offline = new TypeError('Load failed');
+    mockFetch.mockRejectedValueOnce(offline);
+    const failure = fetchCardsFromLocal('/data/allCards.json').catch((error: unknown) => error);
+
+    await expect(failure).resolves.toBeInstanceOf(CardDataUnavailableError);
+    await expect(failure).resolves.toHaveProperty('cause', offline);
+  });
+
+  it('fails with a CardDataUnavailableError when the body is cut off on the way', async () => {
+    mockFetch.mockResolvedValueOnce({ok: true, json: () => Promise.reject(new TypeError('Load failed'))});
+    await expect(fetchCardsFromLocal('/data/allCards.json')).rejects.toBeInstanceOf(CardDataUnavailableError);
   });
 
   it.each([
