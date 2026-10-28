@@ -4,7 +4,7 @@ import type {CompareCounts} from './BinderShows';
 import type {CollectionEntries} from './collectionParser';
 import {holdsWhatTheyLack, isHeld, type Axis} from './collectionStats';
 
-/** A friend's binder beside the reader's own collection (#1045): what You need and They need compare. */
+/** A friend's binder beside the reader's own collection: what You need and They need compare. */
 export interface Compare {
   mine: CollectionEntries;
   theirs: CollectionEntries;

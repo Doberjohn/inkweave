@@ -91,7 +91,7 @@ interface BrowseContentSectionProps {
    */
   phoneRow?: React.ReactNode;
   /**
-   * A friend's binder's banner (#1045), in the title's place, which stays the page's heading
+   * A friend's binder's banner, in the title's place, which stays the page's heading
    * for screen readers.
    */
   banner?: React.ReactNode;
@@ -344,7 +344,7 @@ function collectionToolbar(docked: boolean, collection: BrowseCollectionSlots | 
   };
 }
 
-/** Collection mode's binder, and over it a friend's binder's banner (#1045); neither outside the mode. */
+/** Collection mode's binder, and over it a friend's binder's banner; neither outside the mode. */
 function binderAndBanner(
   collection: BrowseCollectionSlots | null,
   listing: BrowseListing,

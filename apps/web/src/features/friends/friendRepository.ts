@@ -182,7 +182,7 @@ export function listFriendIdentities(ids: readonly string[]): Promise<RepoResult
 }
 
 /**
- * The friends who share their collection with the caller (#1045), by id: accepted friends
+ * The friends who share their collection with the caller, by id: accepted friends
  * whose switch is on, as `shared_friends()` checks on every call.
  */
 export function listSharingFriends(): Promise<RepoResult<Set<string>>> {

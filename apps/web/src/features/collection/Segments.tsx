@@ -64,7 +64,7 @@ interface SegmentProps {
   label: string;
   /** A picture before the label (the promo sets' symbol), hidden from assistive tech. */
   icon?: ReactNode;
-  /** A count after the label, in a pill: how many cards the view holds (You need, #1045). */
+  /** A count after the label, in a pill: how many cards the view holds (You need). */
   count?: number;
   /** How many of the row's grid columns it takes, where segments of two widths share a grid. */
   span?: number;

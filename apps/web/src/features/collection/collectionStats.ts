@@ -94,7 +94,7 @@ export function isHeld(card: LorcanaCard, entries: CollectionEntries, axis: Axis
 }
 
 /**
- * The finishes `entries` lacks of `card` toward a headline (#1045): under Complete, every
+ * The finishes `entries` lacks of `card` toward a headline: under Complete, every
  * finish the printing comes in while it holds no copy, else none; under Master, each finish
  * it comes in (`finishesOf`) that it holds no copy of. So a normal-only holding of a card
  * that comes in both lacks the foil under Master and nothing under Complete, and an

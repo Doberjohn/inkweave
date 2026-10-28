@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import {COLORS, DISABLED_STYLE, EASING, FONTS, FONT_SIZES, PRESS_SCALE, RADIUS, hexRgba} from '../tokens/theme';
 import {useBoop} from '../hooks/useBoop';
-import {CTA_FILLED_STYLE} from '../lib/ctaStyles';
+import {CTA_FILLED_STYLE, CTA_GHOST_STYLE} from '../lib/ctaStyles';
 import {isOff} from '../lib/isOff';
 
 /**
@@ -24,11 +24,7 @@ function variantStyle(variant: CtaVariant, hot: boolean): React.CSSProperties {
   const styles: Record<CtaVariant, React.CSSProperties> = {
     filled: CTA_FILLED_STYLE,
     pill: {...CTA_FILLED_STYLE, borderRadius: `${RADIUS.pill}px`},
-    ghost: {
-      background: 'transparent',
-      color: COLORS.primary,
-      border: `1px solid ${hexRgba(COLORS.primary, 0.4)}`,
-    },
+    ghost: CTA_GHOST_STYLE,
     neutral: {
       background: 'transparent',
       color: hot ? COLORS.primary : COLORS.textMuted,

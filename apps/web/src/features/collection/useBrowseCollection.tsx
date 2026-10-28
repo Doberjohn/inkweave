@@ -182,7 +182,7 @@ function binderMode(requested: string | null, reader: BinderReader, friend: bool
 }
 
 /**
- * What `?binder=` gets with `?friend=` (#1045): a friend's binder, honoured for any signed-in
+ * What `?binder=` gets with `?friend=`: a friend's binder, honoured for any signed-in
  * reader once the session is known, whether or not they hold a collection of their own.
  * Signed out it keeps the grid, as any `?binder=` link does, and keeps the params, so signing
  * in opens the friend's binder. Never dead: the friend decides what it shows.
@@ -223,7 +223,7 @@ export function useBinderParams(reader: BinderReader) {
     );
   }
   const requested = searchParams.get(BINDER_PARAM);
-  // Whose binder: a friend's, by handle (#1045), only under the friends flag, without which
+  // Whose binder: a friend's, by handle, only under the friends flag, without which
   // the param changes nothing. Outside the binder it is a stray.
   const friend = requested === null || !SHOW_FRIENDS ? null : searchParams.get(FRIEND_PARAM);
   const mode = binderMode(requested, reader, friend !== null);
@@ -351,7 +351,7 @@ export interface BrowseCollectionSlots {
    * Whether a card is in the binder's view, or null for All. Owned and Missing ask whether the
    * binder's collection holds it toward the chosen headline (`isHeld`): a copy in either finish
    * for Complete, one in each it comes in for Master (#880; owner, 2026-10-20). A friend's
-   * binder (#1045) asks theirs, and its You need and They need ask whether one of you holds it
+   * binder asks theirs, and its You need and They need ask whether one of you holds it
    * in a finish the other lacks (`holdsWhatTheyLack`). A promo scope asks Complete's, the one
    * headline its panel shows.
    */
@@ -388,7 +388,7 @@ export interface BrowseCollectionSlots {
    */
   renderPhoneSheet: (listing: BrowseListing, sheet: PhoneSheetOptions) => ReactNode | undefined;
   /**
-   * A friend's binder's banner (#1045), above the toolbar in the title's place, while one
+   * A friend's binder's banner, above the toolbar in the title's place, while one
    * shows, else undefined: whose binder, Read only, and the way back.
    */
   renderBanner: (listing: BrowseListing, isMobile: boolean) => ReactNode | undefined;
@@ -425,6 +425,36 @@ const FRIEND_FAILED = "Couldn't load this binder.";
 const scopeCardsOf = (cards: readonly LorcanaCard[], setCode: string, sets: readonly string[]) =>
   scopeSets(setCode, sets).flatMap((set) => binderCardsForSet(cards, set));
 
+/** A scope of the page's cards: what the compare counts go over. */
+interface CompareScope {
+  cards: readonly LorcanaCard[];
+  setCode: string;
+  sets: readonly string[];
+}
+
+/** The last You need and They need counted, with what they were counted from (`countScopeOnce`). */
+let lastCompare: {inputs: readonly unknown[]; counts: CompareCounts} | null = null;
+
+/**
+ * `countCompare` over a scope's cards, counted once for the same inputs: the banner, the binder,
+ * the set panel and the phone sheet each ask for it in one render, and each count runs over
+ * every card in the scope, set by set.
+ */
+function countScopeOnce(scope: CompareScope, compare: Compare, axis: Axis): CompareCounts {
+  const inputs = [scope.cards, scope.setCode, scope.sets, compare.mine, compare.theirs, axis];
+  if (lastCompare?.inputs.every((input, i) => Object.is(input, inputs[i]))) return lastCompare.counts;
+  const counts = countCompare(scopeCardsOf(scope.cards, scope.setCode, scope.sets), compare, axis);
+  lastCompare = {inputs, counts};
+  return counts;
+}
+
+/** You need and They need ask of both collections: until both are in, the binder shows All, as Show does. */
+const shownOf = (show: BinderShow, compare: Compare | null): BinderShow =>
+  compare === null && comparesWith(show) ? 'all' : show;
+
+/** A friend who doesn't share, or whose binder didn't load, leaves the binder's place to a line saying so. */
+const hidesPanel = (friend: FriendBinder | null) => friend?.status === 'not-sharing' || friend?.status === 'failed';
+
 /** What a friend's binder shows, and beside what (`useFriendView`). */
 interface FriendView {
   /** The friend's binder while `?friend=` names one in collection mode, else null. */
@@ -440,7 +470,7 @@ interface FriendView {
 }
 
 /**
- * A friend's binder (#1045) beside the reader's own collection. The friend's copies are placed
+ * A friend's binder beside the reader's own collection. The friend's copies are placed
  * as the reader's are (`place`), at render, since the placements grow as the collection's card
  * data loads. A handle that is the reader's own drops `?friend=`, opening their own binder.
  */
@@ -499,7 +529,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   const {user, loading: sessionLoading} = useSession();
   const {hasCollection, syncing, importCollection, setCount} = useCollection();
   const {retry} = useCollectionCards();
-  const {requested, friend: friendHandle, mode, show, enterBinder, writeBinder, leaveBinder, writeShow, leaveFriend} =
+  const {requested, friend: friendHandle, mode, show: asked, enterBinder, writeBinder, leaveBinder, writeShow, leaveFriend} =
     useBinderParams({
       sessionLoading,
       syncing,
@@ -513,6 +543,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   }, [dead, leaveBinder]);
   const friendView = useFriendView(collectionMode ? friendHandle : null, user?.id ?? null, leaveFriend);
   const {friend} = friendView;
+  const show = shownOf(asked, friendView.compare);
 
   // Only collection mode (or the import, which parses against the full pool)
   // widens the pool, so a visitor who never switches fetches no chunks at all.
@@ -590,19 +621,17 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // panel's numbers are; null outside a friend's binder, or for a reader with no collection.
   const compareFor = (listing: BrowseListing): CompareCounts | null =>
     friendView.compare &&
-    countCompare(scopeCardsOf(listing.matched, setCode, panelControls.sets), friendView.compare, ownsAxis(setCode, axis));
-  // A friend's binder that hasn't answered, or didn't load, has no numbers to show yet.
-  const friendPending = friendView.waiting || friend?.status === 'failed';
-  // What the docked panel and the toolbar's set picker count: the cards the page lets through.
+    countScopeOnce({cards: listing.matched, setCode, sets: panelControls.sets}, friendView.compare, ownsAxis(setCode, axis));
+  // What the docked panel and the set pickers count: the cards the page lets through. Only the
+  // docked panel draws the reader's own "You" lines, so it alone is handed their copies.
   const setCounts = (listing: BrowseListing) => ({
     cards: listing.matched,
     filtered: listing.filtered,
     entries: friendView.shown,
-    yourEntries: friendView.yours,
-    isLoading: (friend === null ? syncing : friendPending) || !isReady,
+    isLoading: (friend === null ? syncing : friendView.waiting) || !isReady,
   });
-  // A friend who doesn't share leaves the binder's place to the line saying so: no panel, no picker.
-  const binderShows = collectionMode && friend?.status !== 'not-sharing';
+  // No panel and no picker beside a friend's binder that isn't there.
+  const binderShows = collectionMode && !hidesPanel(friend);
 
   // Loading while the account's copy is still to answer, or a friend's binder.
   const binderLoading = (friend === null ? syncing : friendView.waiting) || (!isReady && error === null);
@@ -707,7 +736,12 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     renderSetPanel: (listing) =>
       binderShows ? (
         <Suspense fallback={<DockedSetBodyFallback promo={isPromoScope(setCode)} />}>
-          <DockedSetBody {...setCounts(listing)} {...panelControls} compare={compareFor(listing)} />
+          <DockedSetBody
+            {...setCounts(listing)}
+            yourEntries={friendView.yours}
+            {...panelControls}
+            compare={compareFor(listing)}
+          />
         </Suspense>
       ) : undefined,
     renderSetPicker: (listing) =>

@@ -6,7 +6,7 @@ const SIZES = {md: 28, lg: 36} as const;
 
 /**
  * A friend's initials on a round chip in the ink their handle starts with, from the game's
- * own ink-symbol colours; the neutral surface for a handle with no ink (#1045). Decoration
+ * own ink-symbol colours; the neutral surface for a handle with no ink. Decoration
  * beside the friend's name, so hidden from screen readers, and out of PostHog (#827).
  */
 export function FriendChip({name, handle, size = 'md'}: {name: string; handle: string | null; size?: 'md' | 'lg'}) {

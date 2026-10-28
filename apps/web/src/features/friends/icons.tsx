@@ -26,7 +26,7 @@ export function CheckIcon() {
   );
 }
 
-/** An open eye, for View binder (#1045), in the same 16px and 1.5px strokes. */
+/** An open eye, for View binder, in the same 16px and 1.5px strokes. */
 export function EyeIcon() {
   return (
     <svg aria-hidden="true" width={ICON_SIZE.sm} height={ICON_SIZE.sm} viewBox="0 0 16 16" fill="none">

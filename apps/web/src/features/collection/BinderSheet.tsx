@@ -12,7 +12,7 @@ type SheetOwn = 'variant' | 'onApply' | 'title' | 'prelude' | 'extra';
 export interface BinderSheetProps extends Omit<ComponentProps<typeof CardFilterDialog>, SheetOwn> {
   /** What the binder shows, where the sheet's Show starts each time it opens. */
   show: BinderShow;
-  /** A friend's binder's You need and They need (#1045), as the set panel shows them. */
+  /** A friend's binder's You need and They need, as the set panel shows them. */
   compare?: CompareCounts | null;
   /** The binder's sort, where the sheet's Sort starts. */
   sortOrder: BrowseSortOrder;

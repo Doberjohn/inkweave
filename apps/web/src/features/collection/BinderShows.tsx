@@ -2,7 +2,7 @@ import type {BinderShow} from './binderCards';
 import {Segment, Segments} from './Segments';
 
 /**
- * How many cards a friend's binder's two views hold (#1045): the cards they hold in a finish
+ * How many cards a friend's binder's two views hold: the cards they hold in a finish
  * you lack (You need), and the ones you hold in a finish they lack (They need).
  */
 export interface CompareCounts {

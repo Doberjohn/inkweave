@@ -11,7 +11,7 @@ const LINE: React.CSSProperties = {
 };
 
 /**
- * "Let my friends see my collection" (#1045), in the Collection section of /account. The
+ * "Let my friends see my collection", in the Collection section of /account. The
  * switch is named by its title, which flips it too, and described by the line under it.
  * It holds still while it loads or writes.
  */

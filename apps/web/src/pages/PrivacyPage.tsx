@@ -62,7 +62,7 @@ export function PrivacyPage() {
               If you keep your collection on Inkweave, I store it with your account: how many copies of each
               card you own, normal and foil, so it&rsquo;s there on any device you sign in on. Only you can see
               it
-              {/* Sharing (#1045) needs friends too, so it shows only with both flags on. */}
+              {/* Sharing needs friends too: the friends LAUNCH STEP below drops this condition. */}
               {SHOW_FRIENDS
                 ? ', unless you turn on sharing with friends on your account page. Then your friends can see which cards you own and how many.'
                 : '.'}{' '}
@@ -71,8 +71,8 @@ export function PrivacyPage() {
             </>
           )}
           {/* LAUNCH STEP (Phase 2 of #878): once friends is on in production, drop this condition
-              so the sentence always shows. Turning the flag off later keeps every code and
-              friendship in the database, and the policy must keep describing them. */}
+              and the sharing one above, so both always show. Turning the flag off later keeps every
+              code, friendship and sharing switch in the database, and the policy must describe them. */}
           {SHOW_FRIENDS && (
             <>
               {' '}

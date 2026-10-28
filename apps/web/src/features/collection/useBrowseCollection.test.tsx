@@ -5,6 +5,7 @@ import {MemoryRouter, useSearchParams} from 'react-router-dom';
 import {trackEvent} from '../../shared/lib/analytics';
 import {createCard} from '../../shared/test-utils';
 import {forgetFriendCollections} from './useFriendCollection';
+import {countCompare} from './compareCollections';
 import {
   useBinderParams,
   useBrowseCollection,
@@ -49,6 +50,11 @@ const friends = vi.hoisted(() => ({
   getFriendCollection: vi.fn(),
 }));
 vi.mock('./sharingRepository', () => friends);
+// The real counts, watched: a friend's binder's slots share one count per render.
+vi.mock('./compareCollections', async (importOriginal) => {
+  const real = await importOriginal<typeof import('./compareCollections')>();
+  return {...real, countCompare: vi.fn(real.countCompare)};
+});
 // The friends flag, on unless a case turns it off.
 const flags = vi.hoisted(() => ({friends: true}));
 vi.mock('../friends/flag', () => ({
@@ -438,6 +444,43 @@ describe("useBrowseCollection: a friend's binder (#1045)", () => {
       'status',
     );
     expect(slots?.renderSetPanel(LISTING)).toBeUndefined();
+  });
+
+  it('shows All, in Show and in the binder, until your own collection is in to compare with', async () => {
+    account.hasCollection = false;
+    account.syncing = true;
+    account.entries = {};
+    renderFriend('/browse?binder=14&friend=ruby_hero_042&owned=you-need');
+    await screen.findByText('Read only');
+    expect(slots?.show).toBe('all');
+    expect(slots?.inView).toBeNull();
+    expect(screen.getByTestId('search')).toHaveTextContent('owned=you-need');
+  });
+
+  it("leaves out the panel and the pickers beside a friend's binder that didn't load", async () => {
+    friends.getFriendCollection.mockResolvedValue({data: null, error: {message: 'offline'}});
+    renderFriend('/browse?binder=14&friend=ruby_hero_042');
+    expect(await screen.findByText("Couldn't load this binder.")).toBeInTheDocument();
+    expect(slots?.renderSetPanel(LISTING)).toBeUndefined();
+    expect(slots?.renderSetPicker(LISTING)).toBeUndefined();
+  });
+
+  it('counts You need and They need once for every slot that shows them', async () => {
+    renderFriend('/browse?binder=14&friend=ruby_hero_042');
+    await screen.findByText('Read only');
+    vi.mocked(countCompare).mockClear();
+    slots?.renderBanner(LISTING, false);
+    slots?.renderBinder(LISTING, () => {});
+    slots?.renderSetPanel(LISTING);
+    expect(vi.mocked(countCompare).mock.calls.length).toBeLessThanOrEqual(1);
+  });
+
+  it("hands the reader's own copies to the docked panel alone, which draws the You lines", async () => {
+    renderFriend('/browse?binder=14&friend=ruby_hero_042');
+    await screen.findByText('Read only');
+    const propsOf = (slot: ReactNode) => (slot as {props: {children: {props: Record<string, unknown>}}}).props.children.props;
+    expect(propsOf(slots?.renderSetPanel(LISTING)).yourEntries).toEqual(account.entries);
+    expect(propsOf(slots?.renderSetPicker(LISTING)).yourEntries).toBeUndefined();
   });
 
   it("opens the reader's own binder for their own handle", async () => {

@@ -114,10 +114,10 @@ interface CollectionContextValue {
    */
   setCount: (cardId: string, finish: Finish, count: number) => void;
   /**
-   * Another player's copies placed as this provider places the player's own (`placeCopies`,
-   * #1045): a friend's copy counted in a finish its printing doesn't come in shows where
-   * yours would, so both collections count the same way. Call it at render, since the
-   * placements grow as the collection's card data loads.
+   * Another player's copies placed as this provider places the player's own (`placeCopies`):
+   * a friend's copy counted in a finish its printing doesn't come in shows where yours
+   * would, so both collections count the same way. Call it at render, since the placements
+   * grow as the collection's card data loads.
    */
   place: (entries: CollectionEntries) => CollectionEntries;
 }

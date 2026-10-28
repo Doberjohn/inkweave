@@ -72,7 +72,7 @@ export const STORY_ENTRIES: CollectionEntries = Object.fromEntries(
 export const STORY_STATS = tallyCollection(STORY_POOL, STORY_ENTRIES, STORY_SETS);
 
 /**
- * A second collector's copies, for a friend's binder (#1045), where the story entries are the
+ * A second collector's copies, for a friend's binder, where the story entries are the
  * friend's and these the reader's: every other card of each set in normal, a chase printing in foil.
  */
 export const STORY_YOUR_ENTRIES: CollectionEntries = Object.fromEntries(

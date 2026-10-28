@@ -4,6 +4,7 @@ import {Link} from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
 import {CtaButton, IconButton} from '../../shared/components';
 import type {CtaVariant} from 'inkweave-ui/components/CtaButton';
+import {CTA_GHOST_STYLE} from 'inkweave-ui/lib/ctaStyles';
 import {
   CAP_LABEL_XS,
   COLORS,
@@ -51,7 +52,7 @@ export interface FriendsSectionProps {
   /** Declining, cancelling and removing a friend are all this. */
   onRemove: (row: FriendRow) => Promise<string | null>;
   /**
-   * The friends who share their collection (#1045), by id: View binder beside each of them,
+   * The friends who share their collection, by id: View binder beside each of them,
    * Not sharing beside the rest. Undefined says neither, as with collections off.
    */
   sharing?: ReadonlySet<string>;
@@ -584,8 +585,7 @@ const GHOST_LINK: React.CSSProperties = {
   minHeight: TOUCH_TARGET,
   boxSizing: 'border-box',
   borderRadius: `${RADIUS.lg}px`,
-  border: `1px solid ${hexRgba(COLORS.primary, 0.4)}`,
-  color: COLORS.primary,
+  ...CTA_GHOST_STYLE,
   fontFamily: FONTS.body,
   fontSize: `${FONT_SIZES.base}px`,
   fontWeight: 500,
@@ -593,7 +593,7 @@ const GHOST_LINK: React.CSSProperties = {
 };
 
 /**
- * View binder for a friend who shares, Not sharing for one who doesn't (#1045). The link's
+ * View binder for a friend who shares, Not sharing for one who doesn't. The link's
  * name is "View binder of <name>", assembled from text on the page as `RowButton`'s are, so no
  * name reaches PostHog's autocapture. A friend with no handle has no binder address, and
  * gets neither.

@@ -165,14 +165,14 @@ interface CollectionBinderSectionProps extends PanelControls {
   filtered: boolean;
   /** The page's sort: the order the binder's pockets fill in. */
   sortOrder: BrowseSortOrder;
-  /** Owned copies per card id, split by finish: a friend's, in a friend's binder (#1045). */
+  /** Owned copies per card id, split by finish: a friend's, in a friend's binder. */
   entries: CollectionEntries;
   /**
    * In a friend's binder, the reader's own copies, for the "You" lines under the friend's
    * headlines; absent for a reader with no collection, or in their own binder.
    */
   yourEntries?: CollectionEntries;
-  /** The binder is a friend's (#1045), so its empty views speak of "their" collection. */
+  /** The binder is a friend's, so its empty views speak of "their" collection. */
   friend?: boolean;
   /** True while the non-Core chunks are in flight. */
   isLoading: boolean;
@@ -255,7 +255,7 @@ const NO_TALLIES = {stats: null, yours: null};
 
 /**
  * The panel's numbers: the binder's collection toward its headlines, and in a friend's binder
- * the reader's own (`yours`, #1045), null without a collection of their own.
+ * the reader's own (`yours`), null without a collection of their own.
  */
 function talliesOf(
   cards: LorcanaCard[],
@@ -398,7 +398,7 @@ const NO_MATCHES_WHERE: Record<string, string> = {
   [WHOLE_COLLECTION]: 'your collection',
   [ALL_PROMO_SETS]: 'your promo sets',
 };
-/** The same, in a friend's binder (#1045). */
+/** The same, in a friend's binder. */
 const NO_MATCHES_THEIRS: Record<string, string> = {
   [WHOLE_COLLECTION]: 'their collection',
   [ALL_PROMO_SETS]: 'their promo sets',
@@ -439,7 +439,7 @@ interface DockedSetBodyProps extends PanelControls {
   /** Whether any filter or a search is on, so the numbers say they are filtered. */
   filtered: boolean;
   entries: CollectionEntries;
-  /** In a friend's binder, the reader's own copies, for the "You" lines (#1045). */
+  /** In a friend's binder, the reader's own copies, for the "You" lines. */
   yourEntries?: CollectionEntries;
   /** True until the pool is complete: the header shows, the stats wait. */
   isLoading: boolean;

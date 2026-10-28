@@ -35,7 +35,7 @@ export const BINDER_PARAM = 'binder';
 export const OWNED_PARAM = 'owned';
 
 /**
- * Whose binder shows (#1045): `?friend=<handle>` names a friend who shares their collection,
+ * Whose binder shows: `?friend=<handle>` names a friend who shares their collection,
  * read only. By handle, not id, so the address reads the same for both friends.
  */
 export const FRIEND_PARAM = 'friend';
@@ -108,7 +108,7 @@ export const setLabel = (setCode: string) =>
 export type BinderShow = 'all' | 'owned' | 'missing' | 'you-need' | 'they-need';
 
 /**
- * The views a friend's binder adds (#1045): the cards they hold in a finish you lack (You
+ * The views a friend's binder adds: the cards they hold in a finish you lack (You
  * need), and the ones you hold in a finish they lack (They need).
  */
 export const COMPARE_SHOWS: readonly BinderShow[] = ['you-need', 'they-need'];

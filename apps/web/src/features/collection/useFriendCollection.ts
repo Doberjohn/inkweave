@@ -4,7 +4,7 @@ import type {CollectionEntries} from './collectionParser';
 import {getFriendCollection, getPlayerByHandle, type Player} from './sharingRepository';
 
 /**
- * A friend's binder's data (#1045): who `?friend=<handle>` names, and their collection if
+ * A friend's binder's data: who `?friend=<handle>` names, and their collection if
  * they share it with the reader.
  *
  * IN MEMORY ONLY. Friends' collections are never written to the browser's storage, so none

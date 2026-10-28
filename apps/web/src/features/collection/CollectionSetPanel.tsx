@@ -136,7 +136,7 @@ export interface CollectionSetPanelProps extends SetSwitching, BinderView, AxisC
    */
   filtered?: boolean;
   /**
-   * In a friend's binder (#1045), the reader's own tally of the same cards, for a "You" line
+   * In a friend's binder, the reader's own tally of the same cards, for a "You" line
    * under each of the friend's headlines; absent for a reader with no collection, or in
    * their own binder.
    */
@@ -269,7 +269,7 @@ const countStyle = (done: boolean): CSSProperties => ({
   fontWeight: done ? 700 : 400,
 });
 
-/** The reader's own count toward a friend's headline (#1045). */
+/** The reader's own count toward a friend's headline. */
 interface YouFigure {
   value: number;
   total: number;

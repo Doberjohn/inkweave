@@ -4,7 +4,7 @@ import type {CollectionEntries} from './collectionParser';
 import {isCollectionEntries} from './collectionEntryGuards';
 
 /**
- * Collection sharing (#1045): a player's switch, `collection_sharing`, which only they read
+ * Collection sharing: a player's switch, `collection_sharing`, which only they read
  * and write, and their friends' collections, which a friend reads only through
  * `friend_collections()`. That function checks the friendship and the switch on every call,
  * so a friend who stops sharing, or stops being a friend, answers with no row from the next

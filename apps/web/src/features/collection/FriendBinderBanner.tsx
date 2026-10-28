@@ -39,7 +39,7 @@ const READ_ONLY: React.CSSProperties = {
 const MUTED: React.CSSProperties = {color: COLORS.textMuted, fontSize: `${FONT_SIZES.md}px`};
 
 /**
- * A friend's binder's banner (#1045), above Browse's toolbar where its title sits: whose binder
+ * A friend's binder's banner, above Browse's toolbar where its title sits: whose binder
  * it is, that it is read only, and the way back. On a phone it is two lines beside the chip,
  * the second saying how many of their cards you need. Names stay out of PostHog (#827).
  */

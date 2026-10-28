@@ -263,7 +263,7 @@ interface CollectionSectionProps {
   onConfirmClear: () => void;
   onCancelClear: () => void;
   /**
-   * The friends' sharing switch (#1045), drawn under the rows behind a rule. Passed in by
+   * The friends' sharing switch, drawn under the rows behind a rule. Passed in by
    * `AccountCollection`, so its code stays in that lazy chunk, out of this route's.
    */
   sharing?: React.ReactNode;

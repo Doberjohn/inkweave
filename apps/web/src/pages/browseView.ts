@@ -102,7 +102,7 @@ function withPromoTiles(cards: LorcanaCard[], rarities: string[] | undefined): L
 /**
  * What the binder shows (owner, 2026-10-12): every card, or only those you hold, or only
  * those you don't, toward the panel's chosen headline (owner, 2026-10-20), and in a friend's
- * binder (#1045) the cards one of you holds in a finish the other lacks. Collection mode
+ * binder the cards one of you holds in a finish the other lacks. Collection mode
  * builds the test (`inView`); it is applied here, after the loader's filters, because it asks
  * the collection, which the loader cannot see.
  *

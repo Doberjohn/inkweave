@@ -5,7 +5,7 @@ import {useCollection} from './CollectionContext';
 import {enqueueWrite} from './collectionWriteQueue';
 import {getSharing, setSharing} from './sharingRepository';
 
-/** The switch on /account that lets the player's friends see their collection (#1045). */
+/** The switch on /account that lets the player's friends see their collection. */
 export interface CollectionSharing {
   status: 'loading' | 'ready' | 'failed';
   /** As shown: a write in flight shows its new value at once. */
