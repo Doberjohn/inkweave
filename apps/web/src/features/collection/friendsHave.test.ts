@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest';
 import {createCard} from '../../shared/test-utils';
 import type {CollectionEntries} from './collectionParser';
 import type {SharingFriend} from './friendsCopies';
-import {foilOnly, friendsFor, friendsHaveLine} from './friendsHave';
+import {foilOnly, foilsOnOffer, friendsFor, friendsHaveLine} from './friendsHave';
 
 /** A Common, which comes in both finishes; an Enchanted comes in foil alone. */
 const CARD = createCard({id: 'c', setCode: '9', rarity: 'Common'});
@@ -71,5 +71,21 @@ describe('friendsHaveLine', () => {
   it('names the finish when the reader lacks only one of the two the card comes in', () => {
     expect(friendsHaveLine(6, ['foil'], BOTH)).toBe('6 friends have the foil');
     expect(friendsHaveLine(1, ['foil'], ['foil'])).toBe('1 friend has it');
+  });
+});
+
+describe('foilsOnOffer', () => {
+  it('counts the foils the reader lacks, and those a friend holds, by hand', () => {
+    const common = (id: string) => createCard({id, setCode: '9', rarity: 'Common'});
+    const cards = [
+      common('a'), // normal held, Alba's foil: lacked, on offer
+      common('b'), // foil held: not lacked
+      common('d'), // normal held, Bran has the normal alone: lacked, not on offer
+      createCard({id: 'e2', setCode: '9', rarity: 'Enchanted', baseId: 'd'}), // foil only, none held, Bran's foil: on offer
+      common('f'), // none held, no one has it: lacked, not on offer
+    ];
+    const you = {a: {normal: 1, foil: 0}, b: {normal: 0, foil: 2}, d: {normal: 3, foil: 0}};
+    const friends = [friend('Alba', {a: {normal: 0, foil: 1}, b: {normal: 0, foil: 4}}), friend('Bran', {d: {normal: 2, foil: 0}, e2: {normal: 0, foil: 1}})];
+    expect(foilsOnOffer(cards, you, friends)).toEqual({missing: 4, onOffer: 2});
   });
 });

@@ -69,9 +69,10 @@ const EXCLUDED = new Set([
   // need all three to show only the stripe its own stories already show.
   'WindowCopies.tsx',
   // Same case: portals the friends count (FriendsHaveButton, storied) into the card
-  // window's friends slot and opens Friends who have it (storied), reading the session, the
-  // collection, the friends' copies and the window's stores.
-  'WindowFriends.tsx',
+  // window's friends slot, wraps a pocket's badge (FriendsBadge, storied) and the foil pointer,
+  // and opens Friends who have it (storied), reading the session, the collection, the friends'
+  // copies and the window's stores.
+  'CollectionFriends.tsx',
 ]);
 
 // Pages are route compositions of already-storied components; stories exist

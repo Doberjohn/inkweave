@@ -60,3 +60,18 @@ export function ChevronIcon() {
     </svg>
   );
 }
+
+/**
+ * Two people, filled, for a binder pocket's friends badge: zoomed down with a small pocket, the
+ * outlined glyph's 1.5px strokes thin to a blur under a pixel.
+ */
+export function PeopleSolidIcon() {
+  return (
+    <svg aria-hidden="true" width={ICON_SIZE.sm} height={ICON_SIZE.sm} viewBox="0 0 16 16" fill="none">
+      <circle cx="6" cy="5.3" r="2.5" fill="currentColor" />
+      <path d="M1.6 13.4c.4-2.5 2.2-4 4.4-4s4 1.5 4.4 4z" fill="currentColor" />
+      <circle cx="11.4" cy="5.9" r="2" fill="currentColor" opacity="0.75" />
+      <path d="M11.1 9.5c1.9.1 3.1 1.5 3.4 3.9h-3.2c-.1-1.6-.6-2.9-1.4-3.7z" fill="currentColor" opacity="0.75" />
+    </svg>
+  );
+}

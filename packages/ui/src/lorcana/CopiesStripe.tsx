@@ -1,4 +1,4 @@
-import {useLayoutEffect, useRef, useState, type CSSProperties, type RefObject} from 'react';
+import {useRef, useState, type CSSProperties} from 'react';
 import {CARD_BAR_SHARE} from '../tokens/cardBar';
 import {
   COLORS,
@@ -13,6 +13,7 @@ import {
 } from '../tokens/theme';
 import {useContainerWidth} from '../hooks/useContainerWidth';
 import {useHover} from '../hooks/useHover';
+import {useZoomBeforePaint} from '../hooks/useZoomBeforePaint';
 import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
 
 /** One finish's part of the stripe: its count, and how the − and + change it. */
@@ -95,38 +96,6 @@ export function CopiesStripe({parts, open, tabbable = true, fit = 'pocket'}: Cop
       </div>
     </div>
   );
-}
-
-/**
- * A pocket's stripe takes its zoom before it first paints (owner, 2026-10-26: each page a turn
- * mounted drew its counts full size for a frame, then shrank). The width `useContainerWidth`
- * measures renders after the paint, so an observer started in the commit puts the first width's
- * zoom straight onto the row, before the paint, and the render that follows writes the same zoom.
- * It renders nothing there: a render inside the observer's step (React's `flushSync`) also ran
- * the page's other pending work, such as a page turn under way, and a box observed there that
- * changed size was left for the next frame, which the browser reports as an error ("ResizeObserver
- * loop completed with undelivered notifications", uncaught in WebKit). Only the row changes
- * size, and nothing observes it. The card window's stripe sits in the window's flow, where its
- * zoom moves the window's contents, so it keeps to the render.
- */
-function useZoomBeforePaint(
-  sizer: RefObject<HTMLDivElement | null>,
-  row: RefObject<HTMLDivElement | null>,
-  zoom: ((width: number) => number) | undefined,
-) {
-  useLayoutEffect(() => {
-    const measured = sizer.current;
-    const zoomed = row.current;
-    if (!zoom || !measured || !zoomed || typeof ResizeObserver === 'undefined') return undefined;
-    const observer = new ResizeObserver(([entry]) => {
-      const width = entry?.contentRect.width ?? 0;
-      if (width <= 0) return;
-      zoomed.style.zoom = String(zoom(width));
-      observer.disconnect();
-    });
-    observer.observe(measured);
-    return () => observer.disconnect();
-  }, [sizer, row, zoom]);
 }
 
 /** A part's width: its share open, its count's box held, nothing unheld. */

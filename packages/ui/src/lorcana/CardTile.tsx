@@ -52,6 +52,8 @@ export interface CardTileProps {
    * card modal there (#640). Button tiles never run it. Unset, nothing runs.
    */
   onIntent?: () => void;
+  /** The id of what else describes the card, read after its name: a binder pocket's friends badge. */
+  describedBy?: string;
 }
 
 /**
@@ -190,11 +192,13 @@ function CardTileLink({
   onClick,
   onSelect,
   onIntent,
+  describedBy,
   children,
 }: {
   href: string;
   tabIndex?: number;
   label: string;
+  describedBy?: string;
   style: CSSProperties;
   card: LorcanaCard;
   onClick?: () => void;
@@ -219,6 +223,7 @@ function CardTileLink({
       onPointerEnter={onIntent}
       onFocus={onIntent}
       aria-label={label}
+      aria-describedby={describedBy}
       style={{...style, display: 'block', textDecoration: 'none', color: 'inherit'}}>
       {children}
     </a>
@@ -237,10 +242,12 @@ function CardTileButton({
   card,
   onClick,
   onSelect,
+  describedBy,
   children,
 }: {
   tabIndex?: number;
   label: string;
+  describedBy?: string;
   isSelected: boolean | undefined;
   style: CSSProperties;
   card: LorcanaCard;
@@ -261,6 +268,7 @@ function CardTileButton({
       }}
       aria-pressed={isSelected}
       aria-label={label}
+      aria-describedby={describedBy}
       style={style}>
       {children}
     </button>
@@ -280,6 +288,7 @@ export function CardTile({
   href,
   printing,
   onIntent,
+  describedBy,
 }: CardTileProps) {
   const colors = INK_COLORS[card.ink];
   const name = tileName(card, printing);
@@ -309,7 +318,8 @@ export function CardTile({
         card={card}
         onClick={onClick}
         onSelect={onSelect}
-        onIntent={onIntent}>
+        onIntent={onIntent}
+        describedBy={describedBy}>
         {image}
       </CardTileLink>
     );
@@ -323,7 +333,8 @@ export function CardTile({
       style={tileStyle}
       card={card}
       onClick={onClick}
-      onSelect={onSelect}>
+      onSelect={onSelect}
+      describedBy={describedBy}>
       {image}
     </CardTileButton>
   );

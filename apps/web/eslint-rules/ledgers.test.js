@@ -11,7 +11,7 @@ import {fileURLToPath} from 'node:url';
 import {describe, expect, it} from 'vitest';
 import {KNOWN_OFFENDERS} from './known-offenders.js';
 
-const LEDGER_CEILING = 138;
+const LEDGER_CEILING = 137;
 const BASELINE_CEILING = 261;
 
 const REPO = fileURLToPath(new URL('../../../', import.meta.url));

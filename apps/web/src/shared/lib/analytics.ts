@@ -139,7 +139,7 @@ type AnalyticsEvents = {
   friend_binder_opened: {result: 'shown' | 'not_sharing' | 'failed'};
   // Friends who have it, behind SHOW_COLLECTION and SHOW_FRIENDS: where it was opened from.
   // Never an id, handle or name.
-  friends_who_have_it_opened: {from: 'window'};
+  friends_who_have_it_opened: {from: 'badge' | 'window'};
 };
 
 /**

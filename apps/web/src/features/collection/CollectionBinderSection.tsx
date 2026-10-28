@@ -17,6 +17,8 @@ import {
   WHOLE_COLLECTION,
   binderContents,
   binderSlots,
+  isPromoScope,
+  ownsAxis,
   namesStretches,
   slotKey,
   type BinderShow,
@@ -185,6 +187,13 @@ interface CollectionBinderSectionProps extends PanelControls {
   onCountChange?: (cardId: string, finish: Finish, count: number) => void;
   /** Where the binder opens: at this card's pocket, once for each navigation that asks (`BinderStart`). */
   startAt?: BinderStart;
+  /** What lies over a card's pocket (`CollectionBinder`'s `pocketBadge`): the reader's own binder's friends badges. */
+  pocketBadge?: (card: LorcanaCard) => ReactNode;
+  /**
+   * Under an empty Missing view under Complete set, the scope's foils friends have, given
+   * the scope's cards; the reader's own binder only.
+   */
+  renderFoilPointer?: (cards: readonly LorcanaCard[]) => ReactNode;
 }
 
 /**
@@ -295,6 +304,8 @@ function SectionContent({
   onCardSelect,
   onCountChange,
   startAt,
+  pocketBadge,
+  renderFoilPointer,
   ...controls
 }: CollectionBinderSectionProps) {
   const {isMobile} = useResponsive();
@@ -337,7 +348,8 @@ function SectionContent({
   // Docked, the page renders the panel itself (`DockedSetBody`): the tablet's rail counts here,
   // and a phone's cover.
   const {stats, yours} = docked ? NO_TALLIES : talliesOf(counted, {entries, yourEntries}, controls.sets);
-  const shown = binderContents(cards, setCode, sortOrder, controls.sets).filter((card) => matchedIds.has(card.id));
+  const inScope = binderContents(cards, setCode, sortOrder, controls.sets);
+  const shown = inScope.filter((card) => matchedIds.has(card.id));
   const slots = binderSlots(shown, {
     scope: setCode,
     sets: controls.sets,
@@ -348,7 +360,15 @@ function SectionContent({
   return (
     <PanelLayout panel={{...controls, stats, yours, filtered}} section={setSection}>
       {shown.length === 0 ? (
-        <NoMatches show={controls.show} setCode={setCode} friend={friend} />
+        <NoMatches
+          show={controls.show}
+          setCode={setCode}
+          friend={friend}
+          filtered={filtered}
+          axis={controls.axis}
+          scope={inScope}
+          renderFoilPointer={renderFoilPointer}
+        />
       ) : (
         <KeyedBinder
           axis={controls.axis}
@@ -363,6 +383,7 @@ function SectionContent({
           loneFit={loneFit}
           pager={docked || isMobile ? 'map' : 'arrows'}
           startAt={startAt}
+          pocketBadge={pocketBadge}
         />
       )}
     </PanelLayout>
@@ -443,23 +464,70 @@ const VIEW_CARDS: Record<BinderShow, string> = {
   'they-need': 'cards they need',
 };
 
+/** Where the binder holds every card, for the scopes spanning sets; any set is "this set". */
+const EVERY_CARD_WHERE: Record<string, string> = {
+  [WHOLE_COLLECTION]: 'every set',
+  [ALL_PROMO_SETS]: 'every promo set',
+};
+
+/** An empty Missing view with nothing narrowing it: the binder holds every card, under its headline. */
+const holdsEveryCard = (show: BinderShow, filtered: boolean) => show === 'missing' && !filtered;
+
+/**
+ * Whether the empty Missing view points to the foils friends have: every card held under
+ * Complete set, with nothing narrowing the view, in a scope that has a Master set to show them.
+ */
+const pointsToFoils = ({show, axis, setCode}: {show: BinderShow; axis: Axis; setCode: string}, filtered: boolean) =>
+  holdsEveryCard(show, filtered) && axis === 'complete' && !isPromoScope(setCode);
+
+/** "You have every card in this set.", or under Master set "…, in every finish." */
+function everyCardLine(setCode: string, friend: boolean, axis: Axis): string {
+  const finishes = ownsAxis(setCode, axis) === 'master' ? ', in every finish' : '';
+  return `${friend ? 'They' : 'You'} have every card in ${EVERY_CARD_WHERE[setCode] ?? 'this set'}${finishes}.`;
+}
+
+/** The room around the empty view's line, past the spacing scale's top step (SPACING.xxxl, 32). */
+const NO_MATCH_PADDING = 64;
+
+interface NoMatchesProps {
+  show: BinderShow;
+  setCode: string;
+  friend: boolean;
+  /** Whether any filter or a search is on. */
+  filtered: boolean;
+  axis: Axis;
+  /** The scope's cards, filters aside, for the foil pointer. */
+  scope: readonly LorcanaCard[];
+  /** Under the line, where `pointsToFoils` holds: the foils friends have. */
+  renderFoilPointer?: (cards: readonly LorcanaCard[]) => ReactNode;
+}
+
 /**
  * Nothing to show. Said in words, not as an empty binder: blank pockets would read as a
  * fact about the collection. With the binder showing only owned or only missing cards,
- * that view is as likely the reason as the filters.
+ * that view is as likely the reason as the filters; with nothing else narrowing an empty
+ * Missing view, every card is held.
  *
  * A status (#790), like Browse's empty grid: a search that empties the binder changes
  * nothing where the reader is typing, so it is announced.
  */
-function NoMatches({show, setCode, friend}: {show: BinderShow; setCode: string; friend: boolean}) {
+function NoMatches({show, setCode, friend, filtered, axis, scope, renderFoilPointer}: NoMatchesProps) {
   const where = (friend ? NO_MATCHES_THEIRS : NO_MATCHES_WHERE)[setCode] ?? 'this set';
+  // A scope with no cards to hold, such as a promo set whose cards no dataset has yet, isn't complete.
+  const everyCard = scope.length > 0 && holdsEveryCard(show, filtered);
+  const foilPointer = pointsToFoils({show, axis, setCode}, filtered) ? renderFoilPointer?.(scope) : undefined;
   return (
-    <p
-      role="status"
-      aria-live="polite"
-      style={{textAlign: 'center', padding: 64, margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
-      {`No ${VIEW_CARDS[show]} in ${where} match your filters.`}
-    </p>
+    <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.xxl, padding: NO_MATCH_PADDING}}>
+      <p
+        role="status"
+        aria-live="polite"
+        style={{textAlign: 'center', margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
+        {everyCard
+          ? everyCardLine(setCode, friend, axis)
+          : `No ${VIEW_CARDS[show]} in ${where} match your filters.`}
+      </p>
+      {foilPointer}
+    </div>
   );
 }
 

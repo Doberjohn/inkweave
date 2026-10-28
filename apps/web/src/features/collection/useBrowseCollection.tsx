@@ -27,6 +27,7 @@ import {
   binderRarities,
   binderSets,
   isPromoScope,
+  ownsAxis,
   isPromoSet,
   parseBinderShow,
   rarityPicksPromos,
@@ -85,7 +86,9 @@ const ImportCollectionDialog = lazyWithRetry(
   'ImportCollectionDialog',
 );
 // Friends who have it, and the friends' reads behind it: loaded only with the friends flag on.
-const WindowFriends = lazyWithRetry(() => import('./WindowFriends'), 'WindowFriends');
+const CollectionFriends = lazyWithRetry(() => import('./CollectionFriends'), 'CollectionFriends');
+const PocketFriends = lazyWithRetry(() => import('./CollectionFriends'), 'PocketFriends');
+const FoilPointer = lazyWithRetry(() => import('./CollectionFriends'), 'FoilPointer');
 
 /**
  * Starts the binder's chunk on intent (#913): one request for the binder, its docked set panel
@@ -409,13 +412,6 @@ interface PhoneRowOptions {
   onOpen: () => void;
 }
 
-/**
- * The headline Owned and Missing ask of in a scope: the one chosen, but Complete in a promo
- * scope, whose panel shows no other (`ScopeNumbers`): there a promo in both finishes held in
- * one (#880) would otherwise drop out of Owned under a Master set chosen on another set.
- */
-const ownsAxis = (setCode: string, axis: Axis): Axis => (isPromoScope(setCode) ? 'complete' : axis);
-
 const NO_ENTRIES: CollectionEntries = {};
 
 /** A friend's binder's state while one is asked for: loading until its hook answers. */
@@ -644,6 +640,25 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // No panel and no picker beside a friend's binder that isn't there.
   const binderShows = collectionMode && !hidesPanel(friend);
 
+  // Friends who have a card for the reader: with both flags on, for a reader with a collection.
+  // Their badges and the foil pointer show in the reader's own binder only.
+  const friendsHave = SHOW_FRIENDS && user !== null && hasCollection;
+  const ownFriends = friendsHave && friend === null;
+  const pocketBadge = ownFriends
+    ? (card: LorcanaCard) => (
+        <Suspense fallback={null}>
+          <PocketFriends card={card} axis={ownsAxis(setCode, axis)} />
+        </Suspense>
+      )
+    : undefined;
+  const renderFoilPointer = ownFriends
+    ? (cards: readonly LorcanaCard[]) => (
+        <Suspense fallback={null}>
+          <FoilPointer cards={cards} onShow={() => setAxis('master')} />
+        </Suspense>
+      )
+    : undefined;
+
   // Loading while the account's copy is still to answer, or a friend's binder.
   const binderLoading = (friend === null ? syncing : friendView.waiting) || (!isReady && error === null);
   const binderStatus = binderStatusOf(friend, {error, onRetry: retry});
@@ -673,6 +688,8 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           // A friend's binder is read only: no − and + in its pockets.
           onCountChange={friend === null ? changeCount : undefined}
           startAt={friend === null ? undefined : startAtOf(location)}
+          pocketBadge={pocketBadge}
+          renderFoilPointer={renderFoilPointer}
         />
       </Suspense>
     );
@@ -726,9 +743,9 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
       )}
       {/* The card window keeps your own copies, in a friend's binder too. */}
       <WindowCopies onEdit={keep} />
-      {SHOW_FRIENDS && user !== null && hasCollection && (
+      {friendsHave && (
         <Suspense fallback={null}>
-          <WindowFriends axis={ownsAxis(setCode, axis)} />
+          <CollectionFriends axis={ownsAxis(setCode, axis)} />
         </Suspense>
       )}
     </>

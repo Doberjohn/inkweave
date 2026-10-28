@@ -136,7 +136,6 @@ export const KNOWN_OFFENDERS = {
   'no-raw-spacing': [
     'apps/web/src/features/cards/components/BrowseToolbar.tsx', // x6
     'apps/web/src/features/cards/components/CardGrid.tsx', // x1
-    'apps/web/src/features/collection/CollectionBinderSection.tsx', // x1
     'apps/web/src/features/playstyles/PlaystyleFanTile.tsx', // x3
     'apps/web/src/features/reveals/FranchiseCardsModal.tsx', // x2
     'apps/web/src/features/reveals/InkBoard.tsx', // x6

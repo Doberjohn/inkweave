@@ -60,3 +60,24 @@ export function friendsHaveLine(count: number, lacked: readonly Finish[], finish
   const what = lacked.length === 1 && finishes.length > 1 ? `the ${lacked[0]}` : 'it';
   return `${friendsWord(count)} ${count === 1 ? 'has' : 'have'} ${what}`;
 }
+
+/** The foils the reader lacks among `cards`, and how many of them a sharing friend holds. */
+export interface FoilsOnOffer {
+  missing: number;
+  onOffer: number;
+}
+
+/**
+ * The cards printed in foil that the reader holds no foil of, as Master set counts them
+ * (`finishesLacked`), and how many of those a sharing friend holds a foil of: for the empty
+ * Missing view under Complete set, which points to them.
+ */
+export function foilsOnOffer(
+  cards: readonly LorcanaCard[],
+  you: CollectionEntries,
+  friends: readonly SharingFriend[],
+): FoilsOnOffer {
+  const lacking = cards.filter((card) => finishesLacked(card, you, 'master').includes('foil'));
+  const offered = lacking.filter((card) => friends.some((friend) => (friend.entries[card.id]?.foil ?? 0) > 0));
+  return {missing: lacking.length, onOffer: offered.length};
+}

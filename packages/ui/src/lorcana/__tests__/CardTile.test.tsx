@@ -56,6 +56,19 @@ describe('CardTile', () => {
   });
 
   // A button tile selects in place (the deck builder, voting), so it opens nothing to warm.
+  it.each([
+    ['a link', {href: '/card/1936'}],
+    ['a button', {}],
+  ] as const)('is described by what describedBy names, as %s', (_, as) => {
+    render(
+      <>
+        <CardTile card={card} describedBy="badge" {...as} />
+        <p id="badge">3 friends have it</p>
+      </>,
+    );
+    expect(screen.getByLabelText('Bruno Madrigal - Undetected Uncle')).toHaveAccessibleDescription('3 friends have it');
+  });
+
   it('never runs onIntent from a button', () => {
     const onIntent = vi.fn();
     render(<CardTile card={card} isSelected={false} onIntent={onIntent} />);

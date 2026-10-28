@@ -2,6 +2,7 @@ import {describe, it, expect, vi, afterEach} from 'vitest';
 import {fireEvent, render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
+import type {ReactNode} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {BrowseSortOrder} from '../../shared/constants';
 import type {CollectionEntries} from './collectionParser';
@@ -45,6 +46,9 @@ interface SectionOptions {
   /** A friend's binder (#1045). */
   friend?: boolean;
   startAt?: BinderStart;
+  /** Whether a filter or a search is on; by default, whether `matched` leaves any card out. */
+  filtered?: boolean;
+  renderFoilPointer?: (cards: readonly LorcanaCard[]) => ReactNode;
 }
 
 /** The section with `matched` the cards the page's filters let through, as the page counts them. */
@@ -62,6 +66,8 @@ function section(
     onAxisChange = vi.fn(),
     friend = false,
     startAt,
+    filtered,
+    renderFoilPointer,
   }: SectionOptions = {},
 ) {
   const counted = pool.filter((card) => matched.includes(card.id));
@@ -71,7 +77,7 @@ function section(
         cards={pool}
         matchedIds={new Set(matched)}
         counted={counted}
-        filtered={counted.length < pool.length}
+        filtered={filtered ?? counted.length < pool.length}
         sortOrder={sortOrder}
         entries={entries}
         friend={friend}
@@ -80,7 +86,7 @@ function section(
         onRetry={vi.fn()}
         onCardSelect={vi.fn()}
         setCode={setCode}
-        sets={['10', '9']}
+        sets={['10', '9', 'P1']}
         setsLoading={false}
         onSetChange={vi.fn()}
         show={show}
@@ -88,6 +94,7 @@ function section(
         axis={axis}
         onAxisChange={onAxisChange}
         startAt={startAt}
+        renderFoilPointer={renderFoilPointer}
       />
     </MemoryRouter>
   );
@@ -226,6 +233,41 @@ describe('CollectionBinderSection', () => {
   ] as const)("words a friend's empty %s view in a full sentence (#1045)", (show, setCode, line) => {
     renderSection([], {show, setCode, friend: true});
     expect(screen.getByRole('status')).toHaveTextContent(line);
+  });
+
+  describe('an empty Missing view with nothing narrowing it (#1055)', () => {
+    it.each([
+      ['9', 'complete', false, 'You have every card in this set.'],
+      ['9', 'master', false, 'You have every card in this set, in every finish.'],
+      ['all', 'complete', true, 'They have every card in every set.'],
+      ['promos', 'master', false, 'You have every card in every promo set.'],
+    ] as const)('says every card in %s is held under %s set (friend: %s)', (setCode, axis, friend, line) => {
+      renderSection([], {pool: [...POOL, card('promo', 1, 1, 'P1')], show: 'missing', setCode, axis, friend, filtered: false});
+      expect(screen.getByRole('status')).toHaveTextContent(line);
+    });
+
+    it('blames the filters, not a full binder, when the scope has no cards to hold', () => {
+      renderSection([], {pool: [], show: 'missing', filtered: false});
+      expect(screen.getByRole('status')).toHaveTextContent('No missing cards in this set match your filters.');
+    });
+
+    it("points to the foils friends have under Complete set, given the scope's cards", () => {
+      const renderFoilPointer = vi.fn<(cards: readonly LorcanaCard[]) => ReactNode>(() => <p>Foils on offer</p>);
+      renderSection([], {show: 'missing', filtered: false, renderFoilPointer});
+      expect(screen.getByText('Foils on offer')).toBeInTheDocument();
+      expect(renderFoilPointer.mock.calls[0][0].map((each) => each.id).sort()).toEqual(['a', 'b', 'c']);
+    });
+
+    it.each([
+      ['under Master set', {axis: 'master'}],
+      ['in a promo scope', {setCode: 'promos'}],
+      ['with a filter on', {filtered: true}],
+      ['in another view', {show: 'owned'}],
+    ] as const)('points nowhere %s', (_, options) => {
+      const renderFoilPointer = vi.fn(() => <p>Foils on offer</p>);
+      renderSection([], {show: 'missing', filtered: false, ...options, renderFoilPointer});
+      expect(renderFoilPointer).not.toHaveBeenCalled();
+    });
   });
 
   it('announces a load error as an alert', () => {
