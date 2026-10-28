@@ -241,6 +241,40 @@ export interface CardDataResult {
 }
 
 /**
+ * The card data never arrived: the device is offline, or the request didn't complete. Any other
+ * failure means it arrived and this page couldn't use it (cardListFailure.ts).
+ */
+export class CardDataNetworkError extends Error {
+  constructor(cause: unknown) {
+    super("Couldn't reach Inkweave. Check your connection, then try again.", {cause});
+    this.name = 'CardDataNetworkError';
+  }
+}
+
+/** Fetches `path`, failing with a CardDataNetworkError when no response comes. */
+function fetchCardData(path: string): Promise<Response> {
+  return fetch(path).catch((error: unknown) => {
+    throw new CardDataNetworkError(error);
+  });
+}
+
+/**
+ * The card data's JSON. A body cut off on the way rejects with a TypeError, and is the network's
+ * failure like a request that never completes; bad JSON rejects with a SyntaxError.
+ */
+async function readCardJson(response: Response): Promise<LorcanaJSONData> {
+  try {
+    return await response.json();
+  } catch (parseError) {
+    if (parseError instanceof TypeError) throw new CardDataNetworkError(parseError);
+    throw new Error(
+      `Failed to parse card data: ${parseError instanceof Error ? parseError.message : 'Invalid JSON'}`,
+      {cause: parseError},
+    );
+  }
+}
+
+/**
  * Fetch cards from a local file, merged with optional preview cards.
  * Preview cards are loaded from /data/previewCards.json if present (graceful 404).
  * Deduplication: allCards.json wins on id conflict.
@@ -249,21 +283,13 @@ export async function fetchCardsFromLocal(
   path: string = '/data/allCards.json',
 ): Promise<CardDataResult> {
   // Both files at once (#641): the preview file used to wait until allCards.json had parsed.
-  const [primaryResponse, preview] = await Promise.all([fetch(path), fetchPreviewCards()]);
+  const [primaryResponse, preview] = await Promise.all([fetchCardData(path), fetchPreviewCards()]);
 
   if (!primaryResponse.ok) {
     throw new Error(`Failed to fetch local cards: ${primaryResponse.status}`);
   }
 
-  let primary: LorcanaJSONData;
-  try {
-    primary = await primaryResponse.json();
-  } catch (parseError) {
-    throw new Error(
-      `Failed to parse card data: ${parseError instanceof Error ? parseError.message : 'Invalid JSON'}`,
-      {cause: parseError},
-    );
-  }
+  const primary = await readCardJson(primaryResponse);
 
   const primaryIds = new Set(primary.cards.map((c) => c.id));
   const previewCards = preview?.cards.filter((c) => !primaryIds.has(c.id)) ?? [];

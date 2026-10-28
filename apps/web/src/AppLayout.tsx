@@ -20,6 +20,8 @@ import {COLORS} from './shared/constants';
 import {useCardDataContext} from './shared/contexts/CardDataContext';
 import {useResponsive, useScrollToTopOnRouteChange} from './shared/hooks';
 import {lazyWithRetry} from './shared/lib/lazyWithRetry';
+import {reloadOnce} from './shared/lib/pageReload';
+import {CardDataNetworkError} from './features/cards/loader';
 import {useSpeedInsightsRoute} from './shared/lib/speedInsightsRoute';
 
 // Mobile-only, so it stays out of the entry chunk desktop visitors download (#640). On a phone
@@ -111,6 +113,42 @@ function useScrollPaddingBottom(height: number): void {
   }, [height]);
 }
 
+interface CardListErrorCopy {
+  message: string;
+  action: string;
+  onAction: () => void;
+}
+
+/**
+ * The card list error screen's line and button. Data that never arrived is worth another try.
+ * Data that arrived and couldn't be read won't read any better on a retry with the same code: a
+ * reload brings the newest version, if the update flow hasn't moved the page onto it already
+ * (cardListFailure.ts).
+ */
+function cardListErrorCopy(error: Error, retry: () => void): CardListErrorCopy {
+  if (error instanceof CardDataNetworkError) {
+    return {message: error.message, action: 'Try Again', onAction: retry};
+  }
+  return {
+    message: "The card data couldn't be read. Reload the page to get the newest version of Inkweave.",
+    action: 'Reload',
+    onAction: () => reloadOnce(),
+  };
+}
+
+function CardListError({error, retry}: {error: Error; retry: () => void}) {
+  const {message, action, onAction} = cardListErrorCopy(error, retry);
+  return (
+    <div role="alert" style={{padding: '40px', textAlign: 'center'}}>
+      <h2 style={{color: COLORS.error}}>Error loading cards</h2>
+      <p style={{color: COLORS.gray600, marginBottom: '20px'}}>{message}</p>
+      <CtaButton onClick={onAction} style={{margin: '0 auto'}}>
+        {action}
+      </CtaButton>
+    </div>
+  );
+}
+
 function AppContent() {
   const {error, retryLoad, requestLoad} = useCardDataContext();
   const {isMobile} = useResponsive();
@@ -147,17 +185,7 @@ function AppContent() {
   };
   const closeSearch = () => setIsSearchOpen(false);
 
-  if (error) {
-    return (
-      <div role="alert" style={{padding: '40px', textAlign: 'center'}}>
-        <h2 style={{color: COLORS.error}}>Error loading cards</h2>
-        <p style={{color: COLORS.gray600, marginBottom: '20px'}}>{error.message}</p>
-        <CtaButton onClick={retryLoad} style={{margin: '0 auto'}}>
-          Try Again
-        </CtaButton>
-      </div>
-    );
-  }
+  if (error) return <CardListError error={error} retry={retryLoad} />;
 
   return (
     <>

@@ -10,7 +10,7 @@ import {router} from './router';
 import {HOLD_CAP_MS, holdPrerenderedPage} from './shared/lib/prerenderHold';
 import {renderOverPrerenderedPage} from 'inkweave-ui/lib/prerenderedArt';
 import {whenRouteReady} from './shared/lib/routeReadiness';
-import {applyWaitingUpdate, reloadOntoNewVersion} from './shared/lib/swUpdate';
+import {applyWaitingUpdate, onWorkerRegistered, reloadOntoNewVersion} from './shared/lib/swUpdate';
 import {UPDATE_TOAST_LEAD_MS, showUpdateToast} from './shared/lib/swUpdateToast';
 import {reloadForStaleChunk} from './shared/lib/staleChunkReload';
 import {loadSentryWhenIdle} from './shared/lib/sentry';
@@ -62,6 +62,8 @@ if (import.meta.env.PROD) {
     },
     // vite-plugin-pwa's own reload, when this page's controller changes: the same guarded one.
     onNeedReload: reloadOntoNewVersion,
+    // From here on a worker the page finds itself reaches onNeedRefresh (checkForNewVersion).
+    onRegisteredSW: (_url, registration) => onWorkerRegistered(registration),
     onOfflineReady() {
       console.log('Inkweave is ready for offline use');
     },

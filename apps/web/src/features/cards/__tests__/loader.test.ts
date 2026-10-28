@@ -11,6 +11,7 @@ import {
   getUniqueClassifications,
   getUniqueSets,
   loadCardsFromJSON,
+  CardDataNetworkError,
   fetchCardsFromLocal,
   smallImageUrl,
   applySortOrder,
@@ -666,6 +667,21 @@ describe('fetchCardsFromLocal', () => {
     await expect(fetchCardsFromLocal('/data/missing.json')).rejects.toThrow(
       'Failed to fetch local cards: 404',
     );
+  });
+
+  // Only a request that never completes is the network's: the error screen offers Try Again for it.
+  it('fails with a CardDataNetworkError, keeping its cause, when the request never completes', async () => {
+    const offline = new TypeError('Load failed');
+    mockFetch.mockRejectedValueOnce(offline);
+    const failure = fetchCardsFromLocal('/data/allCards.json').catch((error: unknown) => error);
+
+    await expect(failure).resolves.toBeInstanceOf(CardDataNetworkError);
+    await expect(failure).resolves.toHaveProperty('cause', offline);
+  });
+
+  it('fails with a CardDataNetworkError when the body is cut off on the way', async () => {
+    mockFetch.mockResolvedValueOnce({ok: true, json: () => Promise.reject(new TypeError('Load failed'))});
+    await expect(fetchCardsFromLocal('/data/allCards.json')).rejects.toBeInstanceOf(CardDataNetworkError);
   });
 
   it.each([

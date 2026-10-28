@@ -22,6 +22,36 @@ export function reloadOntoNewVersion(): void {
   reloadOnce(announceReload());
 }
 
+let workerRegistered: (registration: ServiceWorkerRegistration | undefined) => void = () => {};
+/** The page's worker registration, once the update flow listens to it; never where none registers. */
+const registration = new Promise<ServiceWorkerRegistration | undefined>((resolve) => {
+  workerRegistered = resolve;
+});
+
+/**
+ * main.tsx's onRegisteredSW. From here on vite-plugin-pwa hears of every new worker the
+ * registration finds. A worker found before that, still installing when the page registers, it
+ * never hears of, so checkForNewVersion waits for this.
+ */
+export function onWorkerRegistered(registered: ServiceWorkerRegistration | undefined): void {
+  workerRegistered(registered);
+}
+
+/**
+ * Looks for a newer worker now. The browser looks only when the page navigates, which a tab left
+ * open, or an installed app the phone resumes, may not do for days. A newer one takes main.tsx's
+ * usual path: onNeedRefresh shows the toast, then applyWaitingUpdate reloads onto it. Waits for
+ * the page's registration (onWorkerRegistered), so with none (dev, E2E) it never looks. Never
+ * throws: offline, there is nothing to find.
+ */
+export async function checkForNewVersion(): Promise<void> {
+  try {
+    await (await registration)?.update();
+  } catch {
+    // The worker script didn't load; the next navigation looks again.
+  }
+}
+
 /**
  * Asks the waiting worker to take over (its SKIP_WAITING listener calls skipWaiting()) and
  * reloads once it is activated. Chrome holds it back until the old worker's requests finish, for

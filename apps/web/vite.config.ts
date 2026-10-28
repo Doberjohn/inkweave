@@ -293,6 +293,7 @@ const STARTUP_SHARED = [
   'apps/web/src/shared/lib/analytics.ts',
   'apps/web/src/shared/lib/posthog.ts',
   'apps/web/src/shared/lib/sentry.ts',
+  'apps/web/src/shared/lib/pageReload.ts',
   'packages/ui/src/lib/whenLoadedAndIdle.ts',
   'apps/web/src/features/cards/loader.ts',
   'apps/web/src/features/cards/previewCards.ts',

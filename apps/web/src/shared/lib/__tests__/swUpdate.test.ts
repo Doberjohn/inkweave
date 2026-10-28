@@ -132,3 +132,35 @@ describe('applyWaitingUpdate', () => {
     expect(reload).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('checkForNewVersion', () => {
+  beforeEach(async () => {
+    // A fresh page, whose worker hasn't registered yet.
+    vi.resetModules();
+    swUpdate = await import('../swUpdate');
+  });
+
+  // A worker found before vite-plugin-pwa listens would never reach onNeedRefresh.
+  it('waits for the page to register its worker, then asks the registration to look', async () => {
+    const update = vi.fn().mockResolvedValue(undefined);
+    const looked = swUpdate.checkForNewVersion();
+    await settle();
+    expect(update).not.toHaveBeenCalled();
+
+    swUpdate.onWorkerRegistered({update} as unknown as ServiceWorkerRegistration);
+    await looked;
+    expect(update).toHaveBeenCalledTimes(1);
+  });
+
+  it('does nothing when the page registered no worker', async () => {
+    swUpdate.onWorkerRegistered(undefined);
+    await expect(swUpdate.checkForNewVersion()).resolves.toBeUndefined();
+  });
+
+  // Offline, the worker script fails to load: the caller's own failure is what the page shows.
+  it('never throws when the look fails', async () => {
+    const update = vi.fn().mockRejectedValue(new TypeError('Failed to update a ServiceWorker'));
+    swUpdate.onWorkerRegistered({update} as unknown as ServiceWorkerRegistration);
+    await expect(swUpdate.checkForNewVersion()).resolves.toBeUndefined();
+  });
+});
