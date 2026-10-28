@@ -49,6 +49,16 @@ const friends = vi.hoisted(() => ({
   getFriendCollection: vi.fn(),
 }));
 vi.mock('./sharingRepository', () => friends);
+// The friends flag, on unless a case turns it off.
+const flags = vi.hoisted(() => ({friends: true}));
+vi.mock('../friends/flag', () => ({
+  get SHOW_FRIENDS() {
+    return flags.friends;
+  },
+}));
+beforeEach(() => {
+  flags.friends = true;
+});
 
 type Reader = Parameters<typeof useBinderParams>[0];
 
@@ -149,6 +159,14 @@ describe('useBinderParams', () => {
       const {result} = renderBinderParams('/browse?binder=14&friend=ruby_hero_042&owned=missing', COLLECTOR);
       act(() => result.current.leaveFriend());
       expect(result.current.search).toBe('binder=14&owned=missing');
+    });
+
+    it('changes nothing with the friends flag off: no friend, and no view only a friend has', () => {
+      flags.friends = false;
+      const {result} = renderBinderParams(FRIEND_URL, COLLECTOR);
+      expect(result.current.friend).toBeNull();
+      expect(result.current.show).toBe('all');
+      expect(result.current.mode.active).toBe(true);
     });
 
     it('names no friend outside the binder, where the param is a stray', () => {

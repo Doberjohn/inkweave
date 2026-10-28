@@ -41,6 +41,7 @@ import {
 import {CollectionModeSwitch} from './CollectionModeSwitch';
 import {CollectionActions} from './CollectionActions';
 import {WindowCopies} from './WindowCopies';
+import {SHOW_FRIENDS} from '../friends/flag';
 import {PhoneBinderRow} from './PhoneBinderRow';
 import {BinderSheet, type BinderSheetProps} from './BinderSheet';
 import type {CompareCounts} from './BinderShows';
@@ -222,8 +223,9 @@ export function useBinderParams(reader: BinderReader) {
     );
   }
   const requested = searchParams.get(BINDER_PARAM);
-  // Whose binder: a friend's, by handle (#1045). Outside the binder the param is a stray.
-  const friend = requested === null ? null : searchParams.get(FRIEND_PARAM);
+  // Whose binder: a friend's, by handle (#1045), only under the friends flag, without which
+  // the param changes nothing. Outside the binder it is a stray.
+  const friend = requested === null || !SHOW_FRIENDS ? null : searchParams.get(FRIEND_PARAM);
   const mode = binderMode(requested, reader, friend !== null);
   const hasStrays = mode.dropsStrays && strayParams(searchParams).length > 0;
   useEffect(() => {
