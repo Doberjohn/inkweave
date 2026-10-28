@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-362 tests across 34 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+363 tests across 34 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -103,7 +103,7 @@ The card overview modal loads on demand (#640). Both tests hold the modal's modu
 | a cold open shows the loading shell, then the modal takes over | Clicking a featured card while the modal's chunk is held shows `card-overview-fallback` and no modal; releasing the chunk shows the modal and removes the shell |
 | the loading shell closes on a scrim click, like the modal | A click on `card-overview-fallback-backdrop` removes the shell, and the chunk arriving afterwards opens no modal |
 
-## `card-data-loading.spec.ts`: 8 tests (every project; the search test desktop only)
+## `card-data-loading.spec.ts`: 9 tests (every project; the search test desktop only)
 
 The homepage renders its featured cards from a small prebuilt file, `/data/featuredCards.json`, and loads the full card database only when something needs it, or on its own 2 s after the page has loaded and gone idle (#641). The card loader and the reveal dates share one `previewCards.json` request. Some tests hold `**/data/allCards.json` with `page.route` to keep that database from arriving; others replace `requestIdleCallback` (and `cancelIdleCallback`) with a version that never runs, so the deferred load waits for a trigger. The last two fail the card list on purpose (#1061): data the page can't read, as an out-of-date copy of the app meets after the data's shape changes, and a request that never completes.
 
@@ -117,6 +117,7 @@ The homepage renders its featured cards from a small prebuilt file, `/data/featu
 | a search typed before the card list lands keeps its text and gets suggestions | Desktop only. With `allCards.json` held, "Elsa" typed into `hero-search` stays; releasing the file shows the autocomplete `listbox` with an option, and the text is unchanged |
 | card data the page cannot read offers Reload, which reloads the page | `allCards.json` answered with `{"cards": "unreadable"}`: `/browse` shows "Error loading cards" with the line "The card data couldn't be read." and a Reload button, no Try Again; pressing Reload loads the page again (a marker set on `window` before it is gone) |
 | a card list that never arrived offers Try Again, and a retry that lands shows the cards | The first `allCards.json` request aborted (`internetdisconnected`): `/browse` shows "Error loading cards" with "Couldn't reach Inkweave." and Try Again, no Reload; pressing Try Again lets the request through and the card tiles show |
+| a card list that came back with a server error offers Try Again, and a retry that lands shows the cards | The first `allCards.json` request answered 503: `/browse` shows "Error loading cards" with "Inkweave couldn't send the card data (error 503)." and Try Again, no Reload; pressing Try Again lets the request through and the card tiles show |
 
 ## `card-search.spec.ts` — 9 tests (desktop only, 1 of them chromium only)
 

@@ -1,4 +1,4 @@
-import type {Page} from '@playwright/test';
+import type {Page, Route} from '@playwright/test';
 import {test, expect} from '../fixtures';
 
 // #641: the homepage renders its featured cards from a small prebuilt file
@@ -129,23 +129,34 @@ test.describe('Card data that fails to load', () => {
     await expect(appPage.errorMessage).toBeVisible({timeout: 15000});
   });
 
-  test('a card list that never arrived offers Try Again, and a retry that lands shows the cards', async ({
-    appPage,
-    page,
-  }) => {
-    let aborted = false;
-    await page.route(ALL_CARDS, async (route) => {
-      if (aborted) return route.continue();
-      aborted = true;
-      await route.abort('internetdisconnected');
+  const UNDELIVERED: {failure: string; fail: (route: Route) => Promise<void>; line: string}[] = [
+    {failure: 'never arrived', fail: (route) => route.abort('internetdisconnected'), line: "Couldn't reach Inkweave."},
+    {
+      failure: 'came back with a server error',
+      fail: (route) => route.fulfill({status: 503}),
+      line: "Inkweave couldn't send the card data (error 503).",
+    },
+  ];
+
+  for (const {failure, fail, line} of UNDELIVERED) {
+    test(`a card list that ${failure} offers Try Again, and a retry that lands shows the cards`, async ({
+      appPage,
+      page,
+    }) => {
+      let failed = false;
+      await page.route(ALL_CARDS, async (route) => {
+        if (failed) return route.continue();
+        failed = true;
+        await fail(route);
+      });
+      await page.goto('/browse');
+
+      await expect(appPage.errorMessage).toBeVisible({timeout: 15000});
+      await expect(page.getByText(line, {exact: false})).toBeVisible();
+      await expect(appPage.reloadButton).toHaveCount(0);
+
+      await appPage.retryButton.click();
+      await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 15000});
     });
-    await page.goto('/browse');
-
-    await expect(appPage.errorMessage).toBeVisible({timeout: 15000});
-    await expect(page.getByText("Couldn't reach Inkweave.", {exact: false})).toBeVisible();
-    await expect(appPage.reloadButton).toHaveCount(0);
-
-    await appPage.retryButton.click();
-    await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 15000});
-  });
+  }
 });

@@ -3,7 +3,7 @@ import {loadSentry} from '../../../shared/lib/sentry';
 import {checkForNewVersion} from '../../../shared/lib/swUpdate';
 import {onCardListFailure} from '../cardListFailure';
 import {_resetCardListRequest, startCardList} from '../cardListRequest';
-import {CardDataNetworkError} from '../loader';
+import {CardDataUnavailableError} from '../loader';
 import {_resetPreviewCardsCache} from '../previewCards';
 
 vi.mock('../../../shared/lib/sentry', () => ({loadSentry: vi.fn()}));
@@ -34,7 +34,7 @@ describe('onCardListFailure', () => {
   });
 
   it('does neither for a card list that never arrived', async () => {
-    onCardListFailure(new CardDataNetworkError(new TypeError('Load failed')));
+    onCardListFailure(new CardDataUnavailableError("Couldn't reach Inkweave."));
     await settle();
 
     expect(loadSentry).not.toHaveBeenCalled();
@@ -65,5 +65,21 @@ describe('startCardList on card data it cannot read', () => {
     await expect(callers[0]).rejects.toThrow(TypeError);
     expect(captureException).toHaveBeenCalledTimes(1);
     expect(checkForNewVersion).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('startCardList when the server answers with an error', () => {
+  beforeEach(() => {
+    _resetCardListRequest();
+    _resetPreviewCardsCache();
+    vi.stubGlobal('fetch', vi.fn(async () => ({ok: false, status: 503})));
+  });
+
+  it('reports nothing and looks for no new version: Try Again is the fix', async () => {
+    await expect(startCardList()).rejects.toBeInstanceOf(CardDataUnavailableError);
+    await settle();
+
+    expect(loadSentry).not.toHaveBeenCalled();
+    expect(checkForNewVersion).not.toHaveBeenCalled();
   });
 });

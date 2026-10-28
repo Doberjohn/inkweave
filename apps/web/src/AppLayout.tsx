@@ -21,7 +21,7 @@ import {useCardDataContext} from './shared/contexts/CardDataContext';
 import {useResponsive, useScrollToTopOnRouteChange} from './shared/hooks';
 import {lazyWithRetry} from './shared/lib/lazyWithRetry';
 import {reloadOnce} from './shared/lib/pageReload';
-import {CardDataNetworkError} from './features/cards/loader';
+import {CardDataUnavailableError} from './features/cards/loader';
 import {useSpeedInsightsRoute} from './shared/lib/speedInsightsRoute';
 
 // Mobile-only, so it stays out of the entry chunk desktop visitors download (#640). On a phone
@@ -126,7 +126,7 @@ interface CardListErrorCopy {
  * (cardListFailure.ts).
  */
 function cardListErrorCopy(error: Error, retry: () => void): CardListErrorCopy {
-  if (error instanceof CardDataNetworkError) {
+  if (error instanceof CardDataUnavailableError) {
     return {message: error.message, action: 'Try Again', onAction: retry};
   }
   return {

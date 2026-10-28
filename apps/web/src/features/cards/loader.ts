@@ -241,21 +241,30 @@ export interface CardDataResult {
 }
 
 /**
- * The card data never arrived: the device is offline, or the request didn't complete. Any other
- * failure means it arrived and this page couldn't use it (cardListFailure.ts).
+ * The card data never arrived: the device is offline, the request didn't complete, or the server
+ * answered with an error status. Each is worth another try. Any other failure means the data
+ * arrived and this page couldn't use it (cardListFailure.ts).
  */
-export class CardDataNetworkError extends Error {
-  constructor(cause: unknown) {
-    super("Couldn't reach Inkweave. Check your connection, then try again.", {cause});
-    this.name = 'CardDataNetworkError';
+export class CardDataUnavailableError extends Error {
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = 'CardDataUnavailableError';
   }
 }
 
-/** Fetches `path`, failing with a CardDataNetworkError when no response comes. */
-function fetchCardData(path: string): Promise<Response> {
-  return fetch(path).catch((error: unknown) => {
-    throw new CardDataNetworkError(error);
+const UNREACHABLE = "Couldn't reach Inkweave. Check your connection, then try again.";
+
+/** The response to `path`, failing with a CardDataUnavailableError when no good one comes. */
+async function fetchCardData(path: string): Promise<Response> {
+  const response = await fetch(path).catch((error: unknown) => {
+    throw new CardDataUnavailableError(UNREACHABLE, {cause: error});
   });
+  if (!response.ok) {
+    throw new CardDataUnavailableError(
+      `Inkweave couldn't send the card data (error ${response.status}). Try again in a moment.`,
+    );
+  }
+  return response;
 }
 
 /**
@@ -266,7 +275,9 @@ async function readCardJson(response: Response): Promise<LorcanaJSONData> {
   try {
     return await response.json();
   } catch (parseError) {
-    if (parseError instanceof TypeError) throw new CardDataNetworkError(parseError);
+    if (parseError instanceof TypeError) {
+      throw new CardDataUnavailableError(UNREACHABLE, {cause: parseError});
+    }
     throw new Error(
       `Failed to parse card data: ${parseError instanceof Error ? parseError.message : 'Invalid JSON'}`,
       {cause: parseError},
@@ -284,11 +295,6 @@ export async function fetchCardsFromLocal(
 ): Promise<CardDataResult> {
   // Both files at once (#641): the preview file used to wait until allCards.json had parsed.
   const [primaryResponse, preview] = await Promise.all([fetchCardData(path), fetchPreviewCards()]);
-
-  if (!primaryResponse.ok) {
-    throw new Error(`Failed to fetch local cards: ${primaryResponse.status}`);
-  }
-
   const primary = await readCardJson(primaryResponse);
 
   const primaryIds = new Set(primary.cards.map((c) => c.id));
