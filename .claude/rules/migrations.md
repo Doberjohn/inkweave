@@ -24,7 +24,10 @@ When editing a file under `supabase/migrations/`:
   (#748). The connector asks the owner to confirm such SQL, policies and grants included,
   and from the cloud that question never reaches them. The owner runs the file in the editor,
   in one transaction with its history row: version and name from the filename, and
-  `statements` holding the file's text, so the md5 check above still holds (#1045).
+  `statements` holding the file's text, so the md5 check above still holds (#1045). A paste
+  from Windows keeps its CRLF line ends, in `statements` and in function bodies alike, which
+  changes nothing the database runs: compare md5s with the carriage returns stripped
+  (`md5(replace(statements[1], chr(13), ''))`, and the same over `pg_proc.prosrc`).
 - **That deployer can't tell an applied file from a new one** (cubic on #879). The history
   table is keyed by version, and `apply_migration` records its own apply-time version
   (`20261020235319_friend_send_limit.sql` is production's `20261021074901`), so 25 of the 29
