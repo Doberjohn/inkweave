@@ -13,6 +13,7 @@ import {
 import {deleteCollection, getCollection, upsertCollection} from './collectionRepository';
 import type {CollectionEntries} from './collectionParser';
 import {placementsFor} from './placeCopies';
+import {trackEvent} from '../../shared/lib/analytics';
 
 /**
  * Signed out by default. `CollectionProvider` reads `useSession` since #555, and
@@ -35,6 +36,8 @@ vi.mock('./collectionRepository', () => ({
   upsertCollection: vi.fn(async () => ({data: null, error: null})),
   deleteCollection: vi.fn(async () => ({data: null, error: null})),
 }));
+
+vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 
 const ENTRIES: CollectionEntries = {
   owned: {normal: 3, foil: 1},
@@ -559,6 +562,93 @@ describe('CollectionContext — #739 cloud-sync defects', () => {
     render();
     await flush();
     expect(upsertCollection).not.toHaveBeenCalled();
+  });
+});
+
+/** Starting an empty collection, for a player with nothing to import. */
+describe('CollectionContext, starting empty', () => {
+  beforeEach(() => signIn('user-a'));
+  afterEach(() => signIn(null));
+
+  type Answer = Awaited<ReturnType<typeof getCollection>>;
+  /** The next read of the account's copy, held until the test answers it. */
+  function holdNextRead(): (answer: Answer) => Promise<void> {
+    let answer: (value: Answer) => void = () => {};
+    vi.mocked(getCollection).mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
+    return (value) => act(async () => answer(value));
+  }
+
+  it('starts an empty collection, saved to the account, once a fresh read finds none there', async () => {
+    const {result} = render();
+    await flush();
+    const answer = holdNextRead();
+    act(() => result.current.startCollection('browse'));
+    // Waiting on the account again: nothing is started over a collection it may hold.
+    expect(result.current.syncing).toBe(true);
+    expect(result.current.hasCollection).toBe(false);
+
+    await answer({data: null, error: null});
+    expect(result.current.syncing).toBe(false);
+    expect(result.current.hasCollection).toBe(true);
+    expect(result.current.entries).toEqual({});
+    await flush();
+    expect(upsertCollection).toHaveBeenCalledWith('user-a', {}, expect.any(Number));
+    expect(trackEvent).toHaveBeenCalledWith('collection_started', {surface: 'browse'});
+  });
+
+  it("adopts the account's collection instead when the read finds one, saved from another device", async () => {
+    const {result} = render();
+    await flush();
+    vi.mocked(getCollection).mockResolvedValueOnce(SERVER_ROW);
+    act(() => result.current.startCollection('browse'));
+    await flush();
+
+    expect(result.current.entries).toEqual(SERVER_ROW.data.entries);
+    expect(upsertCollection).not.toHaveBeenCalled();
+    expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  it('starts nothing when the read fails, which cannot tell an empty account from one it could not see', async () => {
+    const {result} = render();
+    await flush();
+    vi.mocked(getCollection).mockResolvedValueOnce({data: null, error: 'Network error'});
+    act(() => result.current.startCollection('browse'));
+    await flush();
+
+    expect(result.current.syncing).toBe(false);
+    expect(result.current.hasCollection).toBe(false);
+    expect(upsertCollection).not.toHaveBeenCalled();
+  });
+
+  it("waits for its own read when the sign-in's read is still out, whichever lands first", async () => {
+    const answerSignIn = holdNextRead();
+    const {result} = render();
+    const answerStart = holdNextRead();
+    act(() => result.current.startCollection('browse'));
+
+    await answerSignIn({data: null, error: null});
+    expect(result.current.syncing).toBe(true);
+    expect(result.current.hasCollection).toBe(false);
+
+    await answerStart({data: null, error: null});
+    expect(result.current.syncing).toBe(false);
+    expect(result.current.hasCollection).toBe(true);
+  });
+
+  it('does nothing with a collection already, nor signed out', async () => {
+    writeCollection(ENTRIES, 5000, 'user-a', 'server');
+    vi.mocked(getCollection).mockResolvedValueOnce({data: {schemaVersion: 1, importedAt: 5000, entries: ENTRIES}, error: null});
+    const {result, rerender} = render();
+    await flush();
+    const reads = vi.mocked(getCollection).mock.calls.length;
+    act(() => result.current.startCollection('browse'));
+    signIn(null);
+    rerender();
+    act(() => result.current.startCollection('browse'));
+    await flush();
+
+    expect(getCollection).toHaveBeenCalledTimes(reads);
+    expect(result.current.entries).toEqual(ENTRIES);
   });
 });
 

@@ -47,10 +47,13 @@ function navigateTargets(): {file: string; target: string}[] {
   );
 }
 
-/** A declared path matches a target when every segment matches, `:param` taking any one. */
+/**
+ * A declared path matches a target when every segment matches, `:param` taking any one. A
+ * target's search and hash pick nothing in the route table, so only its path is compared.
+ */
 function matches(declared: string, target: string): boolean {
   const d = declared.split('/');
-  const t = target.split('/');
+  const t = target.split(/[?#]/)[0].split('/');
   return d.length === t.length && d.every((seg, i) => seg.startsWith(':') || seg === t[i]);
 }
 

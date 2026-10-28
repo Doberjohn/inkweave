@@ -1,5 +1,6 @@
 import type {ReactNode} from 'react';
-import {beforeEach, describe, it, expect, vi} from 'vitest';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
+import {afterEach, beforeEach, describe, it, expect, vi} from 'vitest';
 import {act, fireEvent, render, renderHook, screen, waitFor, within} from '@testing-library/react';
 import {MemoryRouter, useSearchParams} from 'react-router-dom';
 import {trackEvent} from '../../shared/lib/analytics';
@@ -23,6 +24,8 @@ const {account} = vi.hoisted(() => ({
     hasCollection: true,
     syncing: false,
     entries: {} as Record<string, {normal: number; foil: number}>,
+    /** The collection's pool of cards, which the binder holds: none unless a case needs some. */
+    pool: [] as LorcanaCard[],
   },
 }));
 
@@ -33,15 +36,17 @@ vi.mock('./CollectionContext', () => ({
   useCollection: () => ({
     entries: account.entries,
     hasCollection: account.hasCollection,
+    holdsCopies: Object.values(account.entries).some((entry) => entry.normal + entry.foil > 0),
     syncing: account.syncing,
     importCollection: () => null,
+    startCollection: () => {},
     setCount: () => {},
     place: (entries: unknown) => entries,
   }),
 }));
 vi.mock('./CollectionCardsContext', () => ({
   useCollectionCards: () => ({retry: () => {}}),
-  useCollectionPool: () => ({pool: [], waiting: false, error: null, isReady: true}),
+  useCollectionPool: () => ({pool: account.pool, waiting: false, error: null, isReady: true}),
 }));
 vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 // A friend's binder's reads (#1045): Ruby shares, and anyone else named is no one.
@@ -226,7 +231,7 @@ describe('useBrowseCollection analytics', () => {
     ]);
   });
 
-  // The click opens sign-in or the import instead: #882 and the import events cover those.
+  // Signed out, the click opens sign-in (#882); with no collection, it waits on the account below.
   it.each([
     {who: 'signed out', signedIn: false, hasCollection: false},
     {who: 'signed in with no collection', signedIn: true, hasCollection: false},
@@ -239,7 +244,7 @@ describe('useBrowseCollection analytics', () => {
     expect(trackEvent).not.toHaveBeenCalled();
   });
 
-  // useCollectionClick's 'wait': signed in, nothing in this browser, the account not answered yet.
+  // collectionAction's 'start': signed in, nothing in this browser, the account not answered yet.
   describe('a click that waits on the account', () => {
     beforeEach(() => {
       account.hasCollection = false;
@@ -255,7 +260,7 @@ describe('useBrowseCollection analytics', () => {
       expect(vi.mocked(trackEvent).mock.calls).toEqual([['collection_mode_toggled', {state: 'on'}]]);
     });
 
-    it('sends nothing when the account answers with none, since the click offers the import', () => {
+    it('sends nothing when no collection comes, as after a read that failed, which closes the binder', () => {
       const answer = renderSwitch();
       pressCollection();
       answer(false);
@@ -354,6 +359,57 @@ describe("useBrowseCollection's Binder sheet (#969)", () => {
     const shows = within(screen.getByRole('group', {name: 'Binder shows'}));
     expect(shows.getByRole('button', {pressed: true})).toHaveTextContent('Missing');
     expect(screen.queryByRole('region', {name: 'Collection numbers'})).toBeNull();
+  });
+});
+
+describe("useBrowseCollection: a collection that holds no copies yet", () => {
+  const nani = createCard({id: 'nani', setCode: '14', rarity: 'Uncommon'});
+  const LISTING: BrowseListing = {cards: [nani], sortOrder: 'newest', matched: [nani], filtered: false};
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    forgetFriendCollections();
+    account.signedIn = true;
+    account.hasCollection = true;
+    account.syncing = false;
+    account.entries = {};
+    account.pool = [nani];
+    friends.getPlayerByHandle.mockResolvedValue({data: {id: 'ruby', handle: 'ruby_hero_042', name: 'Ruby'}, error: null});
+    friends.getFriendCollection.mockResolvedValue({data: {nani: {normal: 1, foil: 0}}, error: null});
+  });
+  afterEach(() => {
+    account.pool = [];
+  });
+
+  // The binder alone: its import, which the prompts draw, is E2E's (collection-mode.spec.ts).
+  function Page() {
+    return <>{useBrowseCollection([]).renderBinder(LISTING, () => {})}</>;
+  }
+  const renderAt = (url: string) =>
+    render(
+      <MemoryRouter initialEntries={[url]}>
+        <Page />
+      </MemoryRouter>,
+    );
+
+  it("says so on your own binder's cover", async () => {
+    renderAt('/browse?binder=14');
+    expect(await screen.findByRole('heading', {name: 'Your binder is empty'})).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Import from Dreamborn'})).toBeInTheDocument();
+  });
+
+  it('says nothing once a copy is held', async () => {
+    account.entries = {nani: {normal: 1, foil: 0}};
+    renderAt('/browse?binder=14');
+    expect(await screen.findByRole('region', {name: 'Binder'})).toBeInTheDocument();
+    expect(screen.queryByRole('heading', {name: 'Your binder is empty'})).toBeNull();
+  });
+
+  it("says nothing in a friend's binder, which isn't yours to fill", async () => {
+    renderAt('/browse?binder=14&friend=ruby_hero_042');
+    await waitFor(() => expect(friends.getFriendCollection).toHaveBeenCalled());
+    expect(await screen.findByRole('region', {name: 'Binder'})).toBeInTheDocument();
+    expect(screen.queryByRole('heading', {name: 'Your binder is empty'})).toBeNull();
   });
 });
 

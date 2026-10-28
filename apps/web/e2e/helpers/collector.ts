@@ -83,6 +83,14 @@ export async function signInAsCollector(
   return writes;
 }
 
+/**
+ * Waits for the restored session: the header's control turns from "Sign in" to "Account". A
+ * phone's header has none: wait for the account's read there (`COLLECTIONS_PATH`).
+ */
+export async function signedIn(page: Page): Promise<void> {
+  await expect(page.getByTestId('compact-header').getByRole('button', {name: 'Account', exact: true})).toBeVisible();
+}
+
 // Exact: the frame drawn while the binder's code loads is named "Loading your binder" (#913).
 export const binder = (page: Page) => page.getByRole('region', {name: 'Binder', exact: true});
 

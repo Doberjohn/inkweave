@@ -247,6 +247,23 @@ function ClearControls({
   );
 }
 
+/**
+ * A collection's two ways in: a binder started empty, or an import. Both wait while the account
+ * is checked, since its copy may be the collection.
+ */
+function StartButtons({checking, onOpenBinder, onImport}: {checking: boolean; onOpenBinder: () => void; onImport: () => void}) {
+  return (
+    <>
+      <CtaButton variant="ghost" onClick={onOpenBinder} disabled={checking}>
+        Open your binder
+      </CtaButton>
+      <CtaButton variant="ghost" onClick={onImport} disabled={checking}>
+        Import collection
+      </CtaButton>
+    </>
+  );
+}
+
 interface CollectionSectionProps {
   hasCollection: boolean;
   /**
@@ -259,6 +276,8 @@ interface CollectionSectionProps {
   importedAt: number | null;
   confirming: boolean;
   onImport: () => void;
+  /** Open the binder with no collection to import: Browse's, started empty (`startCollection`). */
+  onOpenBinder: () => void;
   onAskClear: () => void;
   onConfirmClear: () => void;
   onCancelClear: () => void;
@@ -278,6 +297,7 @@ export function CollectionSection({
   importedAt,
   confirming,
   onImport,
+  onOpenBinder,
   onAskClear,
   onConfirmClear,
   onCancelClear,
@@ -295,7 +315,7 @@ export function CollectionSection({
         <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.md}px`, margin: 0}}>
           {checking
             ? 'Checking your account for a collection…'
-            : 'Import a Dreamborn CSV export to see what you own while you browse.'}
+            : 'Start a binder and add cards as you browse, or import a Dreamborn CSV export.'}
         </p>
       )}
       {hasCollection && sharing && (
@@ -309,16 +329,20 @@ export function CollectionSection({
         </div>
       )}
       <div style={{display: 'flex', gap: SPACING.md, marginTop: SPACING.lg, flexWrap: 'wrap'}}>
-        <CtaButton variant="ghost" onClick={onImport} disabled={checking}>
-          {hasCollection ? 'Re-import' : 'Import collection'}
-        </CtaButton>
-        {hasCollection && (
-          <ClearControls
-            confirming={confirming}
-            onAsk={onAskClear}
-            onConfirm={onConfirmClear}
-            onCancel={onCancelClear}
-          />
+        {hasCollection ? (
+          <>
+            <CtaButton variant="ghost" onClick={onImport}>
+              Re-import
+            </CtaButton>
+            <ClearControls
+              confirming={confirming}
+              onAsk={onAskClear}
+              onConfirm={onConfirmClear}
+              onCancel={onCancelClear}
+            />
+          </>
+        ) : (
+          <StartButtons checking={checking} onOpenBinder={onOpenBinder} onImport={onImport} />
         )}
       </div>
       {confirming && (

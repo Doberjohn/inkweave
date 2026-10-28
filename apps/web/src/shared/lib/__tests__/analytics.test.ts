@@ -150,6 +150,12 @@ describe('trackEvent', () => {
     expectSentToBoth('collection_mode_toggled', props);
   });
 
+  it('forwards a collection_started event', () => {
+    const props = {surface: 'account'} as const;
+    trackEvent('collection_started', props);
+    expectSentToBoth('collection_started', props);
+  });
+
   it('forwards a collection_imported event', () => {
     const props = {
       surface: 'browse',

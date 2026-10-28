@@ -393,9 +393,10 @@ interface BinderSpreadProps {
    */
   loneFit?: LoneFit;
   /**
-   * What a phone's inside front cover holds, the lone page before the first card: the
-   * collection's numbers. It fills the page, scrolling inside it when it is the taller. A
-   * spread's covers hold nothing, so a spread leaves it out.
+   * What the inside front cover holds: on a phone, the lone page before the first card, the
+   * collection's numbers; on a spread, the left page of the first view, only a note while the
+   * collection holds no copies (`EmptyBinderNote`). It fills the page, scrolling inside it when
+   * it is the taller.
    */
   cover?: ReactNode;
 }
@@ -481,7 +482,7 @@ interface BinderPageProps {
   renderSlot: (index: number) => ReactNode;
   /** Drawn as a cover, which holds no cards. */
   cover?: Cover;
-  /** What a phone's front cover holds, over its empty pockets (see `BinderSpreadProps.cover`). */
+  /** What a front cover holds, over its empty pockets (see `BinderSpreadProps.cover`); a back cover holds nothing. */
   coverContent?: ReactNode;
   /** The page itself, which a page turn lines its sheet up with. */
   pageRef?: Ref<HTMLDivElement>;
@@ -512,7 +513,7 @@ function coverOf({from, side}: TurnPage, single: boolean, cardCount: number | un
 }
 
 /**
- * A phone's front cover's content: over the page's empty slots, filling it, and scrolling inside it
+ * A front cover's content: over the page's empty slots, filling it, and scrolling inside it
  * where it is the taller. A sideways swipe that starts on it still turns the page: `pan-y` leaves
  * that to the binder, where the browser would otherwise take it.
  */
@@ -528,7 +529,7 @@ const COVER_CONTENT: CSSProperties = {
  * One page of pockets: a spread's twelve, sized from its height, or a phone's lone page of nine or
  * twelve, sized from its width. A cover keeps its slots, empty: a page takes its size from them,
  * and without them it would collapse. Empty whatever `renderSlot` gives, so a loading binder's
- * shimmer stays off it. A phone's front cover draws what it holds over them.
+ * shimmer stays off it. A front cover draws what it holds over them.
  * Every slot on a page of cards is a pocket (`binder-pocket`), its sleeve and front sheet
  * drawn round whatever it holds, so one past the last card shows an empty sleeve.
  */
@@ -548,7 +549,7 @@ export function BinderPage({from, side, single, rows = 3, renderSlot, cover, cov
           {cover ? null : renderSlot(from + i)}
         </div>
       ))}
-      {cover && coverContent !== undefined && <div style={COVER_CONTENT}>{coverContent}</div>}
+      {cover === 'front' && coverContent !== undefined && <div style={COVER_CONTENT}>{coverContent}</div>}
     </div>
   );
 }
@@ -570,7 +571,7 @@ interface ViewProps {
   turn: ViewTurn;
   /** A lone page's rows and its board's widest (see `BinderSpreadProps.loneFit`); a spread has none. */
   fit: LoneFit;
-  /** What a phone's front cover holds (see `BinderSpreadProps.cover`). */
+  /** What the inside front cover holds (see `BinderSpreadProps.cover`). */
   cover?: ReactNode;
 }
 
@@ -578,7 +579,7 @@ interface ViewProps {
  * The two facing pages and the spine between them: the left one the front cover before the
  * first page, the right one the back cover once the cards run out.
  */
-function Pages({start, renderSlot, cardCount, turn}: Pick<ViewProps, 'start' | 'renderSlot' | 'cardCount' | 'turn'>) {
+function Pages({start, renderSlot, cardCount, turn, cover}: Pick<ViewProps, 'start' | 'renderSlot' | 'cardCount' | 'turn' | 'cover'>) {
   const right = start + PER_PAGE;
   return (
     <>
@@ -588,6 +589,7 @@ function Pages({start, renderSlot, cardCount, turn}: Pick<ViewProps, 'start' | '
         single={false}
         renderSlot={renderSlot}
         cover={coverOf({from: start, side: 'left'}, false, cardCount)}
+        coverContent={cover}
         pageRef={turn.left}
         grab={turn.grab.left}
       />
@@ -649,7 +651,7 @@ function useRowWidth(ref: RefObject<HTMLDivElement | null>): number {
 }
 
 /** Two facing pages, sized from the height they are given, arrows either side. */
-function FlankedSpread({start, renderSlot, arrows, cardCount, sheets, turn}: ViewProps) {
+function FlankedSpread({start, renderSlot, arrows, cardCount, sheets, turn, cover}: ViewProps) {
   const rowRef = useRef<HTMLDivElement>(null);
   const maxHeight = spreadMaxHeight(useRowWidth(rowRef), true);
   return (
@@ -672,7 +674,7 @@ function FlankedSpread({start, renderSlot, arrows, cardCount, sheets, turn}: Vie
       {arrows.prev}
       <div style={{...PAGES_BOX, flex: '1 1 0', height: '100%', maxHeight}}>
         <Board sheets={sheets} turn={turn}>
-          <Pages start={start} renderSlot={renderSlot} cardCount={cardCount} turn={turn} />
+          <Pages start={start} renderSlot={renderSlot} cardCount={cardCount} turn={turn} cover={cover} />
         </Board>
       </div>
       {arrows.next}
@@ -736,7 +738,7 @@ const EDGE_FRAME: CSSProperties = {
  * runs out first (see `EDGE_FRAME`). Pinned left, so on the one paint before a resize's new
  * height cap lands, a spread too wide for its box runs past its right edge, never its left.
  */
-function StackedSpread({start, renderSlot, arrows, footer, cardCount, sheets, turn}: ViewProps) {
+function StackedSpread({start, renderSlot, arrows, footer, cardCount, sheets, turn, cover}: ViewProps) {
   const rowRef = useRef<HTMLDivElement>(null);
   const maxHeight = spreadMaxHeight(useRowWidth(rowRef), false);
   return (
@@ -746,7 +748,7 @@ function StackedSpread({start, renderSlot, arrows, footer, cardCount, sheets, tu
       <div style={{...PAGES_BOX, justifyContent: 'flex-start', flex: '1 1 0', minHeight: 0, maxHeight}}>
         <Board sheets={sheets} turn={turn} layout={EDGE_FRAME}>
           {arrows.prev}
-          <Pages start={start} renderSlot={renderSlot} cardCount={cardCount} turn={turn} />
+          <Pages start={start} renderSlot={renderSlot} cardCount={cardCount} turn={turn} cover={cover} />
           {arrows.next}
         </Board>
       </div>
@@ -1016,7 +1018,7 @@ function useViewTurn(props: TurnProps): ViewTurn {
       rows={rows}
       renderSlot={(index) => renderSlot(index, -1)}
       cover={coverOf(page, single, cardCount)}
-      coverContent={single ? cover : undefined}
+      coverContent={cover}
     />
   );
   return {

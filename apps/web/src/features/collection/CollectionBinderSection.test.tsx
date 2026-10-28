@@ -49,6 +49,8 @@ interface SectionOptions {
   /** Whether a filter or a search is on; by default, whether `matched` leaves any card out. */
   filtered?: boolean;
   renderFoilPointer?: (cards: readonly LorcanaCard[]) => ReactNode;
+  /** An empty collection's import, which puts its note on the cover. */
+  onEmptyImport?: () => void;
 }
 
 /** The section with `matched` the cards the page's filters let through, as the page counts them. */
@@ -68,6 +70,7 @@ function section(
     startAt,
     filtered,
     renderFoilPointer,
+    onEmptyImport,
   }: SectionOptions = {},
 ) {
   const counted = pool.filter((card) => matched.includes(card.id));
@@ -95,6 +98,7 @@ function section(
         onAxisChange={onAxisChange}
         startAt={startAt}
         renderFoilPointer={renderFoilPointer}
+        onEmptyImport={onEmptyImport}
       />
     </MemoryRouter>
   );
@@ -267,6 +271,36 @@ describe('CollectionBinderSection', () => {
       const renderFoilPointer = vi.fn(() => <p>Foils on offer</p>);
       renderSection([], {show: 'missing', filtered: false, ...options, renderFoilPointer});
       expect(renderFoilPointer).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('a collection that holds no copies yet', () => {
+    const note = () => screen.getByRole('heading', {name: 'Your binder is empty'});
+
+    it("says so on a spread's front cover, whose import opens the import", async () => {
+      const onEmptyImport = vi.fn();
+      renderSection(['a', 'b', 'c'], {onEmptyImport});
+      expect(within(screen.getByRole('group', {name: 'Front cover'})).getByRole('heading')).toBe(note());
+      expect(pockets()).toEqual(['Card a', 'Card b', 'Card c']);
+      await userEvent.click(screen.getByRole('button', {name: 'Import from Dreamborn'}));
+      expect(onEmptyImport).toHaveBeenCalledOnce();
+    });
+
+    it("opens a phone's binder on its cover, the note above the numbers", () => {
+      vi.stubGlobal('innerWidth', 390);
+      renderSection(['a', 'b', 'c'], {onEmptyImport: vi.fn()});
+      const cover = screen.getByRole('group', {name: 'Front cover'});
+      const numbers = within(cover).getByRole('region', {name: 'Collection numbers'});
+      expect(note().compareDocumentPosition(numbers) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('says so in an Owned view with nothing narrowing it, and blames the filters when one is on', () => {
+      const view = renderSection([], {show: 'owned', filtered: false, onEmptyImport: vi.fn()});
+      expect(note()).toBeInTheDocument();
+      expect(screen.queryByRole('status')).toBeNull();
+      view.rerender(section([], {show: 'owned', filtered: true, onEmptyImport: vi.fn()}));
+      expect(screen.queryByRole('heading', {name: 'Your binder is empty'})).toBeNull();
+      expect(screen.getByRole('status')).toHaveTextContent('No owned cards in this set match your filters.');
     });
   });
 

@@ -13,7 +13,7 @@ import type {Axis} from './collectionStats';
 import {countCompare, inViewOf, type Compare} from './compareCollections';
 import {useKeptCards} from './useKeptCards';
 import {useCollectionCards, useCollectionPool} from './CollectionCardsContext';
-import {useCollectionClick} from './useCollectionClick';
+import {collectionClick} from './collectionAction';
 import {binderModalTarget, type ModalTarget} from './collectionModalTarget';
 import {
   ALL_PROMO_SETS,
@@ -274,11 +274,11 @@ export function useBinderParams(reader: BinderReader) {
 }
 
 /**
- * `collection_mode_toggled` for the Collection switch's own on and off. A click that waits
- * on the account (`useCollectionClick`'s `'wait'`, the only entry with no collection in this
- * browser) opens the binder at once but counts as on only when the account answers with a
- * collection: an answer with none offers the import, which is no toggle. A second click
- * before the answer withdraws the first, so it sends no off either.
+ * `collection_mode_toggled` for the Collection switch's own on and off. A click with no
+ * collection in this browser (`collectionAction`'s `'start'`) opens the binder at once but
+ * counts as on only once the account answers and a collection is there, its own or the one
+ * started for it: a read that fails starts none and closes the binder, which is no toggle. A
+ * second click before the answer withdraws the first, so it sends no off either.
  */
 function useModeToggleEvents(syncing: boolean, hasCollection: boolean) {
   // A ref, not state: whether a click waits changes nothing on screen.
@@ -458,6 +458,18 @@ function startAtOf({state, key}: Location): BinderStart | undefined {
   return typeof atCard === 'string' ? {cardId: atCard, key} : undefined;
 }
 
+/**
+ * The import an empty binder's cover offers: in the reader's own binder, while their collection
+ * holds no copies, so the cover says how a first one goes in.
+ */
+function emptyImportOf(
+  friend: FriendBinder | null,
+  {hasCollection, holdsCopies}: {hasCollection: boolean; holdsCopies: boolean},
+  openImport: () => void,
+): (() => void) | undefined {
+  return friend === null && hasCollection && !holdsCopies ? openImport : undefined;
+}
+
 /** A friend who doesn't share, or whose binder didn't load, leaves the binder's place to a line saying so. */
 const hidesPanel = (friend: FriendBinder | null) => friend?.status === 'not-sharing' || friend?.status === 'failed';
 
@@ -533,7 +545,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // unmounting mid-animation; never mounted at all for anyone who never opens it.
   const [importMounted, setImportMounted] = useState(false);
   const {user, loading: sessionLoading} = useSession();
-  const {hasCollection, syncing, importCollection, setCount} = useCollection();
+  const {hasCollection, holdsCopies, syncing, importCollection, startCollection, setCount} = useCollection();
   const {retry} = useCollectionCards();
   const {requested, friend: friendHandle, mode, show: asked, enterBinder, writeBinder, leaveBinder, writeShow, leaveFriend} =
     useBinderParams({
@@ -574,15 +586,12 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     keep(cardId);
   };
 
-  // Sign-in first, then import, then toggle; the order is the rule and lives in
-  // `collectionAction`, pure and tested, since two branches need a real session.
-  // `useCollectionClick` adds the wait for an account that has not answered yet.
   const openImport = () => {
     setImportMounted(true);
     setShowImport(true);
   };
-  // Only the switch's own on and off count as toggles: a click that opens sign-in or the
-  // import sends nothing here, and an import that lands in the binder is collection_imported.
+  // Only the switch's own on and off count as toggles: a click that opens sign-in sends
+  // nothing here, and an import that lands in the binder is collection_imported.
   const toggles = useModeToggleEvents(syncing, hasCollection);
   const enterMode = () => {
     toggles.entered();
@@ -592,10 +601,13 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     toggles.left();
     leaveBinder();
   };
-  const onCollectionClick = useCollectionClick(
-    {signedIn: user !== null, hasCollection, syncing, active: collectionMode},
-    {openSignIn: () => setShowSignIn(true), openImport, enter: enterMode, leave: leaveMode},
-  );
+  // Sign-in first, then the binder, started empty for a reader with no collection: the order is
+  // the rule and lives in `collectionAction`, pure and tested, since its branches need a session.
+  const onCollectionClick = () =>
+    collectionClick(
+      {signedIn: user !== null, hasCollection, active: collectionMode},
+      {openSignIn: () => setShowSignIn(true), start: () => startCollection('browse'), enter: enterMode, leave: leaveMode},
+    );
 
   // Warmed only for an account: signed out, Collection opens sign-in, never the binder. In a
   // friend's binder it leaves for the grid, as it would leave your own, but toggles nothing of yours.
@@ -690,6 +702,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           startAt={friend === null ? undefined : startAtOf(location)}
           pocketBadge={pocketBadge}
           renderFoilPointer={renderFoilPointer}
+          onEmptyImport={emptyImportOf(friend, {hasCollection, holdsCopies}, openImport)}
         />
       </Suspense>
     );
@@ -729,10 +742,10 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
             // Outside collection mode the binder, which shows this error too, is not drawn.
             poolError={error}
             onRetryPool={retry}
-            context={{surface: 'browse', replacing: hasCollection}}
-            // Land in collection mode on success: the reader pressed "Collection"
-            // and was diverted through an import to get there. Only on success, or
-            // a refused write would show an empty binder as if it had worked.
+            context={{surface: 'browse', replacing: holdsCopies}}
+            // Land in collection mode on success, from the gear on the grid too: the
+            // import is the reader's collection. Only on success, or a refused write
+            // would show the binder as if it had worked.
             onImport={(imported, at) => {
               const storageError = importCollection(imported, at);
               if (storageError === null) enterBinder(setCode, sets);

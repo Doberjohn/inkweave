@@ -2,7 +2,7 @@ import {describe, it, expect, vi, afterEach} from 'vitest';
 import {act, fireEvent, render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {touchMoveKept} from '../../../../shared/test-utils';
-import {BinderSpread} from '../BinderSpread';
+import {BinderPage, BinderSpread} from '../BinderSpread';
 import {TURN_MS} from '../PageTurn';
 
 /**
@@ -323,9 +323,17 @@ describe("BinderSpread, a phone's inside front cover (owner, 2026-10-27)", () =>
     expect(within(cover()).getByText('The numbers')).toBeInTheDocument();
   });
 
-  it("leaves a spread's front cover its plain board", () => {
-    render(spread({start: -12, canPrev: false, cover: COVER}));
+  it("draws what a spread's front cover holds on it, and leaves it its plain board when it holds nothing", () => {
+    const view = render(spread({start: -12, canPrev: false, cover: COVER}));
+    expect(within(cover()).getByRole('button', {name: 'Master set'})).toBeInTheDocument();
+    view.rerender(spread({start: -12, canPrev: false}));
     expect(cover()).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Master set'})).toBeNull();
+  });
+
+  it('never draws it on a back cover, which a turn to the last spread lifts', () => {
+    render(<BinderPage from={24} side="right" single={false} renderSlot={() => null} cover="back" coverContent={COVER} />);
+    expect(screen.getByRole('group', {name: 'Back cover'})).toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Master set'})).toBeNull();
   });
 });
