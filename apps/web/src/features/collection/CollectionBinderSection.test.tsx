@@ -7,7 +7,7 @@ import type {BrowseSortOrder} from '../../shared/constants';
 import type {CollectionEntries} from './collectionParser';
 import type {BinderShow} from './binderCards';
 import type {Axis} from './collectionStats';
-import {CollectionBinderSection} from './CollectionBinderSection';
+import {CollectionBinderSection, type BinderStart} from './CollectionBinderSection';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -44,6 +44,7 @@ interface SectionOptions {
   onAxisChange?: (axis: Axis) => void;
   /** A friend's binder (#1045). */
   friend?: boolean;
+  startAt?: BinderStart;
 }
 
 /** The section with `matched` the cards the page's filters let through, as the page counts them. */
@@ -60,6 +61,7 @@ function section(
     axis = 'complete',
     onAxisChange = vi.fn(),
     friend = false,
+    startAt,
   }: SectionOptions = {},
 ) {
   const counted = pool.filter((card) => matched.includes(card.id));
@@ -85,6 +87,7 @@ function section(
         onShowChange={vi.fn()}
         axis={axis}
         onAxisChange={onAxisChange}
+        startAt={startAt}
       />
     </MemoryRouter>
   );
@@ -96,6 +99,35 @@ const renderSection = (...args: Parameters<typeof section>) => render(section(..
 const pockets = () => screen.getAllByRole('button', {name: /^Card /}).map((tile) => tile.getAttribute('aria-label'));
 
 describe('CollectionBinderSection', () => {
+  describe('opened at a card (#1055)', () => {
+    // Forty cards: the first spread holds 1 to 12 beside the cover, the second 13 to 36.
+    const forty = Array.from({length: 40}, (_, i) => card(`s${i + 1}`, i + 1, 1));
+    const ids = forty.map((each) => each.id);
+    const at = (key: string) => section(ids, {pool: forty, startAt: {cardId: 's30', key}});
+
+    it('opens at the card each navigation asks for, again over the same pockets', () => {
+      const view = render(at('first'));
+      expect(pockets()[0]).toBe('Card s13');
+      fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+      expect(pockets()[0]).toBe('Card s37');
+      view.rerender(at('second'));
+      expect(pockets()[0]).toBe('Card s13');
+    });
+
+    it('keeps the page on show when a later change of address asks nothing, over the same pockets', () => {
+      const view = render(at('first'));
+      fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+      view.rerender(section(ids, {pool: forty}));
+      expect(pockets()[0]).toBe('Card s37');
+    });
+
+    it('opens new pockets at their start, though the navigation still names the card', () => {
+      const view = render(at('first'));
+      view.rerender(section(ids.slice(0, 36), {pool: forty, startAt: {cardId: 's30', key: 'first'}}));
+      expect(pockets()[0]).toBe('Card s1');
+    });
+  });
+
   it('keeps the loading map, which holds no cards yet, from announcing "nothing missing"', () => {
     // jsdom's 1024px window is desktop, where the map docks under the binder.
     renderSection([], {isLoading: true});

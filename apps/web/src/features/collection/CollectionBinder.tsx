@@ -99,6 +99,8 @@ interface CollectionBinderProps {
   opensOnCover?: boolean;
   /** Told whether a phone's cover is the view on show, as it changes. */
   onCoverChange?: (shown: boolean) => void;
+  /** Opens on the spread, or the phone's page, that holds this card's pocket, when it has one. */
+  startCard?: string;
 }
 
 /**
@@ -415,6 +417,14 @@ interface ViewOptions {
   paging: BinderPaging;
   single: boolean;
   opensOnCover: boolean;
+  /** The slot to open on, or -1 for none. */
+  startSlot: number;
+}
+
+/** The slot a binder opens on: the one it was asked to, else a phone's cover or its first. */
+function openingSlot({startSlot, opensOnCover, single, paging}: ViewOptions): number {
+  if (startSlot >= 0) return startSlot;
+  return opensOnCover && single ? -paging.lead : 0;
 }
 
 /**
@@ -425,9 +435,10 @@ interface ViewOptions {
  * row does the same: from page 4 of nine (slots 27-35), page 3 of twelve (slots 24-35), which
  * holds slot 27. Slot 0 opens a phone on page 1, past its cover, unless it opens on the cover.
  */
-function useBinderView({slotCount, paging, single, opensOnCover}: ViewOptions) {
+function useBinderView(options: ViewOptions) {
+  const {slotCount, paging, single} = options;
   const {perView, lead} = paging;
-  const [firstSlot, setFirstSlot] = useState(() => (opensOnCover && single ? -lead : 0));
+  const [firstSlot, setFirstSlot] = useState(() => openingSlot(options));
   const total = Math.max(1, Math.ceil((slotCount + lead) / perView));
   const current = Math.max(0, Math.min(Math.floor((firstSlot + lead) / perView), total - 1));
   const goTo = (view: number) => setFirstSlot(firstSlotOf(Math.max(0, Math.min(view, total - 1)), paging, single));
@@ -454,11 +465,13 @@ export function CollectionBinder({
   cover,
   opensOnCover = false,
   onCoverChange,
+  startCard,
 }: CollectionBinderProps) {
   // A phone pages by nine, or twelve at 4 rows, a spread binder by 24, each a page in for its
   // front cover (`pagingOf`).
   const paging = pagingOf(single, loneFit.rows);
-  const {current, total, goTo} = useBinderView({slotCount: slots.length, paging, single, opensOnCover});
+  const startSlot = slots.findIndex((slot) => !isOpenPocket(slot) && slot.id === startCard);
+  const {current, total, goTo} = useBinderView({slotCount: slots.length, paging, single, opensOnCover, startSlot});
   usePreloadNeighbours(slots, current, paging);
   // A spread's view 0 is its first, whose cover holds nothing.
   useCoverReport(single && current === 0, onCoverChange);

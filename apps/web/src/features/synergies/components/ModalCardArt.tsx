@@ -97,32 +97,61 @@ export function ModalCardArt({
  * stripe, as tall as the card's own black bar (owner, 2026-10-20). It sat over the card's foot
  * until the owner asked for the full card to show (2026-10-22). There only while a page holds it
  * (`useHoldCopiesRow`), and as tall as the stripe from the start, so filling it moves nothing.
- *
- * Keys pressed in it reach the window's own handling (the Tab trap, the arrows' paging) through
- * a native listener: a portal's React events bubble through the page that fills it, never
- * through the window.
+ * Keys pressed in it reach the window's own handling (`SlotKeys`).
  */
 function CopiesSlot({cardWidth}: {cardWidth: number}) {
   const slot = useContext(CopiesSlotContext);
+  if (slot === null) return null;
+  return (
+    <SlotKeys onKeyDown={slot.onKeyDown} style={{...SLOT_STYLE, width: cardWidth, height: copiesRowHeight(cardWidth)}}>
+      <SlotTarget attach={slot.attach} testId="card-overview-copies-slot" />
+    </SlotKeys>
+  );
+}
+
+/** A slot that draws no box of its own: empty, it takes no place and no gap in its row. */
+const BOXLESS: CSSProperties = {display: 'contents'};
+
+/**
+ * The window's friends slot, which a page fills through a portal as it fills the copies row:
+ * Browse's count of the friends who have the card. Beside the set's logo on a computer (in the
+ * header's title), under the copies on a phone. Boxless, so what the page puts there is the
+ * row's own item, and nothing moves until it does.
+ */
+export function FriendsSlot() {
+  const slot = useContext(CopiesSlotContext);
+  const attach = slot?.attachFriends;
+  if (slot === null || attach === undefined) return null;
+  return (
+    <SlotKeys onKeyDown={slot.onKeyDown} style={BOXLESS}>
+      <SlotTarget attach={attach} testId="card-overview-friends-slot" style={BOXLESS} />
+    </SlotKeys>
+  );
+}
+
+/**
+ * Keys pressed in what a page portals into a slot reach the window's own handling (the Tab trap,
+ * the arrows' paging) through a native listener: a portal's React events bubble through the page
+ * that fills it, never through the window.
+ */
+function SlotKeys({onKeyDown, style, children}: {onKeyDown: (e: KeyboardEvent) => void; style?: CSSProperties; children: ReactNode}) {
   const keysRef = useRef<HTMLDivElement>(null);
-  const onKeyDown = slot?.onKeyDown;
   useEffect(() => {
     const el = keysRef.current;
-    if (!el || !onKeyDown) return;
+    if (!el) return;
     el.addEventListener('keydown', onKeyDown);
     return () => el.removeEventListener('keydown', onKeyDown);
   }, [onKeyDown]);
-  if (slot === null) return null;
   return (
-    <div ref={keysRef} style={{...SLOT_STYLE, width: cardWidth, height: copiesRowHeight(cardWidth)}}>
-      <SlotTarget attach={slot.attach} />
+    <div ref={keysRef} style={style}>
+      {children}
     </div>
   );
 }
 
 /** The element the host fills: its own component, so the host's callback is a plain prop until here. */
-function SlotTarget({attach}: {attach: CopiesSlotState['attach']}) {
-  return <div ref={attach} data-testid="card-overview-copies-slot" />;
+function SlotTarget({attach, testId, style}: {attach: CopiesSlotState['attach']; testId: string; style?: CSSProperties}) {
+  return <div ref={attach} data-testid={testId} style={style} />;
 }
 
 /** As wide as the card, its corners rounded; it clips the stripe to them. */
@@ -183,6 +212,7 @@ export function CardWithCopies({cardWidth, isMobile, inComparison, children}: Ca
     <div style={CARD_WITH_COPIES_STYLE}>
       {children}
       {(isMobile || !inComparison) && <CopiesSlot cardWidth={cardWidth} />}
+      {isMobile && <FriendsSlot />}
     </div>
   );
 }

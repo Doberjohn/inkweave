@@ -13,6 +13,7 @@ const SIZE_MAX_WIDTH = {sm: 360, md: 440, lg: 960} as const;
  * Stacking tiers. `modal` is the default dialog pair; `underModal` sits one
  * layer beneath it so the shared CardOverviewModal can stack on top (the
  * FranchiseCardsModal precedent); `lightbox` clears an open modal entirely.
+ * BottomSheet's `LAYERS` repeats `modal` and `lightbox` under the same names.
  */
 const LAYERS = {
   modal: {scrim: Z_INDEX.modalBackdrop, panel: Z_INDEX.modal},

@@ -31,6 +31,9 @@ export interface SentRequest {
   status: FriendStatus;
 }
 
+/** What a friend's name shows when they have no public name yet. */
+export const UNNAMED = 'Inkweave player';
+
 /** What the section shows when a send fails for a reason other than a refusal. */
 export const SEND_FAILED = 'Could not send the request. Try again.';
 

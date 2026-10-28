@@ -4,6 +4,7 @@ import type {PublicIdentity} from '../profile';
 import {SHOW_COLLECTION} from '../collection/flag';
 import {
   SEND_FAILED,
+  UNNAMED,
   acceptFriendRequest,
   claimFriendCode,
   listFriendIdentities,
@@ -16,8 +17,6 @@ import {
   type SentRequest,
 } from './friendRepository';
 
-/** What a row shows when the other player has no public name yet. */
-export const UNNAMED = 'Inkweave player';
 const ACTION_FAILED = "That didn't go through. Try again.";
 const ACCEPT_GONE = 'That request is no longer there.';
 

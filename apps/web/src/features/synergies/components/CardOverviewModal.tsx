@@ -6,7 +6,7 @@ import {EngineColumn} from './EngineColumn';
 import {CommunityColumn} from './CommunityColumn';
 import {MobileComparisonView, type ComparisonOriginRects} from './MobileComparisonView';
 import {ExpandedGroupView} from './ExpandedGroupView';
-import {CardWithCopies, HeaderTranslationToggle, MobileTranslationToggle, ModalArtState, ModalCardArt} from './ModalCardArt';
+import {CardWithCopies, FriendsSlot, HeaderTranslationToggle, MobileTranslationToggle, ModalArtState, ModalCardArt} from './ModalCardArt';
 import {
   CardPrintingContext,
   CardTranslationContext,
@@ -183,6 +183,8 @@ interface CardOverviewModalProps {
    * it the window draws no row and has no slot.
    */
   copiesSlotRef?: (el: HTMLElement | null) => void;
+  /** Takes the friends slot's element (`FriendsSlot`), given with `copiesSlotRef`. */
+  friendsSlotRef?: (el: HTMLElement | null) => void;
   /** Told the printing on show whenever it changes: a variant's id, or null for the card's own. */
   onShownPrintingChange?: (printingId: string | null) => void;
 }
@@ -495,7 +497,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
             data-highlighted={highlightedCard ?? undefined}
             onTransitionEnd={onTransitionEnd}
             style={pickModalShellStyle(isMobile)}>
-            <ModalArtState translation={translation} printing={printing} copiesSlot={pickCopiesSlot(props.copiesSlotRef, handleShellKeyDown)}>
+            <ModalArtState translation={translation} printing={printing} copiesSlot={pickCopiesSlot(props.copiesSlotRef, props.friendsSlotRef, handleShellKeyDown)}>
             <ModalHeader
               card={card}
               isMobile={isMobile}
@@ -1075,7 +1077,7 @@ function ModalHeader(props: ModalHeaderProps) {
         // As tall as the title's set logo on desktop, so opening a comparison keeps the header's height.
         <BackButton onClick={exitComparison} minHeight={isMobile ? undefined : LOGO_HEIGHT} />
       ) : (
-        <ModalCardTitle card={card} isMobile={isMobile} printing={printing?.printings[printing.index]} />
+        <ModalCardTitle card={card} isMobile={isMobile} printing={printing?.printings[printing.index]} trailing={!isMobile && <FriendsSlot />} />
       )}
       {/* Spacer pushes close button to the right when BACK is in the slot (BACK doesn't have flex:1) */}
       {inComparison && <div style={{flex: 1}} />}

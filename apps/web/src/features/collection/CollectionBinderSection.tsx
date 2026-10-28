@@ -183,6 +183,17 @@ interface CollectionBinderSectionProps extends PanelControls {
   onCardSelect: (card: LorcanaCard) => void;
   /** Change one finish's copies of a card from its pocket (#826); absent, counts are read-only. */
   onCountChange?: (cardId: string, finish: Finish, count: number) => void;
+  /** Where the binder opens: at this card's pocket, once for each navigation that asks (`BinderStart`). */
+  startAt?: BinderStart;
+}
+
+/**
+ * A card to open the binder at, from a row of Friends who have it, with the key of the
+ * navigation that carried it: a binder that already holds the same pockets opens again there.
+ */
+export interface BinderStart {
+  cardId: string;
+  key: string;
 }
 
 /**
@@ -283,6 +294,7 @@ function SectionContent({
   onRetry,
   onCardSelect,
   onCountChange,
+  startAt,
   ...controls
 }: CollectionBinderSectionProps) {
   const {isMobile} = useResponsive();
@@ -350,6 +362,7 @@ function SectionContent({
           single={isMobile}
           loneFit={loneFit}
           pager={docked || isMobile ? 'map' : 'arrows'}
+          startAt={startAt}
         />
       )}
     </PanelLayout>
@@ -386,11 +399,25 @@ function useCoverKept(cards: string, axis: Axis) {
  * The binder, keyed by what it holds, in order, so a new set, sort or filter opens it at its
  * start: the old page would land on unrelated cards. A count changed by hand leaves what it holds
  * alone (`useKeptCards`). A phone's cover outlives a change its own headlines make (`useCoverKept`).
+ * A navigation that names a card to open at keys it too (`useLastAsked`).
  */
-function KeyedBinder({axis, ...props}: ComponentProps<typeof CollectionBinder> & {axis: Axis}) {
+function KeyedBinder({axis, startAt, ...props}: ComponentProps<typeof CollectionBinder> & {axis: Axis; startAt?: BinderStart}) {
   const cards = props.slots.map(slotKey).join();
   const kept = useCoverKept(cards, axis);
-  return <CollectionBinder key={cards} {...props} {...kept} />;
+  const asked = useAskedStart(startAt, cards);
+  return <CollectionBinder key={`${cards}|${asked.key}`} {...props} {...kept} startCard={asked.cardId} />;
+}
+
+/**
+ * The last navigation that asked to open the binder at a card, and that card while the binder
+ * holds the pockets it was asked over. A new navigation opens it there even over the same
+ * pockets; an address change after it asks nothing, so it keeps the page on show unless the
+ * pockets change, and a new set, sort or filter then opens at its start, as any does.
+ */
+function useAskedStart(startAt: BinderStart | undefined, cards: string): {key: string; cardId?: string} {
+  const [asked, setAsked] = useState({key: startAt?.key ?? '', cards});
+  if (startAt !== undefined && startAt.key !== asked.key) setAsked({key: startAt.key, cards});
+  return {key: startAt?.key ?? asked.key, cardId: asked.cards === cards ? startAt?.cardId : undefined};
 }
 
 /** Where the binder found nothing, for the scopes spanning sets; any set is "this set". */

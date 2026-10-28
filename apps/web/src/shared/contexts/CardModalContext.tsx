@@ -258,6 +258,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
           onEnterComparison={enterComparisonRoute}
           onExitComparison={exitComparisonRoute}
           copiesSlotRef={windowStores.slot.set}
+          friendsSlotRef={windowStores.friendsSlot.set}
           onShownPrintingChange={windowStores.shownPrintingId.set}
           skipEnter={skipEnter}
         />
@@ -317,6 +318,8 @@ interface CardModalRootProps {
   onExitComparison: () => void;
   /** Takes the window's slot under its card, for `useCardWindowSlot` (#826). */
   copiesSlotRef: (el: HTMLElement | null) => void;
+  /** Takes the window's friends slot, for `useCardWindowSlot`. */
+  friendsSlotRef: (el: HTMLElement | null) => void;
   /** Takes the printing the window shows, for `useCardWindowSlot` (#826). */
   onShownPrintingChange: (printingId: string | null) => void;
   /** The open takes over from a frame already on screen (OpenComparisonOptions.skipEnter). */
@@ -344,6 +347,7 @@ function CardModalRoot({
   onEnterComparison,
   onExitComparison,
   copiesSlotRef,
+  friendsSlotRef,
   onShownPrintingChange,
   skipEnter,
 }: CardModalRootProps) {
@@ -422,6 +426,7 @@ function CardModalRoot({
         onGoToSibling={goToSibling}
         initialPrintingId={initialPrintingId}
         copiesSlotRef={copiesRow ? copiesSlotRef : undefined}
+        friendsSlotRef={copiesRow ? friendsSlotRef : undefined}
         onShownPrintingChange={onShownPrintingChange}
       />
     </Suspense>

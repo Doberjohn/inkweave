@@ -43,6 +43,8 @@ function createWindowStore<T>(initial: T): WindowStore<T> {
  */
 export interface CardWindowStores {
   slot: WindowStore<HTMLElement | null>;
+  /** The friends slot: beside the set's logo on a computer, under the copies on a phone. */
+  friendsSlot: WindowStore<HTMLElement | null>;
   shownPrintingId: WindowStore<string | null>;
   copiesRow: WindowStore<boolean>;
   open: WindowStore<boolean>;
@@ -50,6 +52,7 @@ export interface CardWindowStores {
 
 export const createCardWindowStores = (): CardWindowStores => ({
   slot: createWindowStore<HTMLElement | null>(null),
+  friendsSlot: createWindowStore<HTMLElement | null>(null),
   shownPrintingId: createWindowStore<string | null>(null),
   copiesRow: createWindowStore(false),
   open: createWindowStore(false),
@@ -71,18 +74,26 @@ function useCardWindowStores(hook: string): CardWindowStores {
  * printing. The printing starts as the one each card arrives on, then follows the window's
  * swipes.
  *
+ * The friends slot is a second element, held with the row: Browse puts there the count of the
+ * friends who have the card.
+ *
  * Only the caller re-renders when these change (see `CardWindowStores`), so call it from the
  * small component that fills the slot, never from a page.
  */
-export function useCardWindowSlot(): {slot: HTMLElement | null; shownPrintingId: string | null} {
+export function useCardWindowSlot(): {
+  slot: HTMLElement | null;
+  friendsSlot: HTMLElement | null;
+  shownPrintingId: string | null;
+} {
   const stores = useCardWindowStores('useCardWindowSlot');
   const slot = useSyncExternalStore(stores.slot.subscribe, stores.slot.get, () => null);
+  const friendsSlot = useSyncExternalStore(stores.friendsSlot.subscribe, stores.friendsSlot.get, () => null);
   const shownPrintingId = useSyncExternalStore(
     stores.shownPrintingId.subscribe,
     stores.shownPrintingId.get,
     () => null,
   );
-  return {slot, shownPrintingId};
+  return {slot, friendsSlot, shownPrintingId};
 }
 
 /**

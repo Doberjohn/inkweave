@@ -13,14 +13,15 @@ export const INK_COLORS: Record<Ink, {bg: string; text: string; border: string}>
 /**
  * The game's own ink-symbol colours, for the letter chips that name each card in a synergy line
  * (ConnectionGroup, #786). They are brighter than INK_COLORS, which is tuned for badges on dark
- * surfaces, so each ink carries the text colour that reads on its chip.
+ * surfaces, so each ink carries whichever of black or white reads better on its chip: Emerald's
+ * and Sapphire's white fell short of 4.5:1 at the chips' 11px.
  */
 export const INK_CHIP_COLORS: Record<Ink, {bg: string; text: string}> = {
   Amber: {bg: '#f5b202', text: '#000000'},
   Amethyst: {bg: '#81377b', text: '#ffffff'},
-  Emerald: {bg: '#2a8934', text: '#ffffff'},
+  Emerald: {bg: '#2a8934', text: '#000000'},
   Ruby: {bg: '#d3082f', text: '#ffffff'},
-  Sapphire: {bg: '#0189c4', text: '#ffffff'},
+  Sapphire: {bg: '#0189c4', text: '#000000'},
   Steel: {bg: '#9fa8b4', text: '#000000'},
 };
 

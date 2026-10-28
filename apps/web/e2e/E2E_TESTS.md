@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-347 tests across 33 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+352 tests across 34 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -386,6 +386,18 @@ Covers letting friends see your collection (#1045), behind `VITE_SHOW_COLLECTION
 | Back to your binder drops the friend and keeps the scope | From Ruby's binder on They need, Back to your binder leaves `?binder=<set>` alone: the friend and the friend-only view go, and the reader's Collection actions are back |
 | a reader with no collection opens a friend's binder with no compare row, and Back to browse leaves it | Signed in with no collection, Ruby's binder shows with no You need or They need, and Back to browse leaves collection mode with no params |
 | the banner says how many of their cards you need, goes back as Yours, and the Binder sheet offers You need | At 390x844 on every project: the banner reads "Read only · you need 1 of theirs"; the Binder sheet's You need 1 and Apply list card 2 alone; Yours goes back to `?binder=<set>` |
+
+## `friends-have.spec.ts`: 5 tests (3 every project, 2 desktop only)
+
+Covers Friends who have it (#1055), behind `VITE_SHOW_COLLECTION` and `VITE_SHOW_FRIENDS`, which `playwright.config.ts` pins on: the card window's count of the sharing friends who hold the card in a finish the reader lacks, the dialog (a sheet on a phone) it opens, and a row opening that friend's binder at the card. The reader is the collector (`signInAsCollector`), and `serveFriends` answers from a world where Ruby and Emerald share and Amber, a friend, doesn't. Two of the newest set's cards are hand-counted (the table at the top of the spec): the set's first card, which the reader holds in normal and Ruby in foil, and a card past the first spread with one pocket, which Ruby holds 2 normal of and Emerald 3 normal and 1 foil. A test turns the binder to it by its Next spread arrow on a computer and its page map on a phone. Everything else stays with the unit tests: the read, its re-read on a shown tab and its failure (`friendsCopies.test.ts`), who counts under each headline (`friendsHave.test.ts`), the dialog's lines (`FriendsWhoHaveIt.test.tsx`), the count's failed state (`WindowFriends.test.tsx`) and the binder opened at a card (`CollectionBinder.test.tsx`, `CollectionBinderSection.test.tsx`).
+
+| Test | What it verifies |
+|---|---|
+| the window counts the friends who have the card, and the dialog lists them, most copies first | The deep card's window shows "2 friends have it" in its friends slot; the dialog reads "You're missing it", and its two rows link "Emerald Fairy 913: 3 normal, 1 foil. Open their binder" then "Ruby Hero 042: 2 normal, 0 foil. Open their binder", over "1 friend doesn't share their collection, so they aren't counted." |
+| a row opens that friend's binder at the card, and the window closes | Ruby's row goes to `?binder=<set>&friend=ruby_hero_042`, the card window closes, and her binder shows the deep card's pocket, not the set's first card |
+| under Master set, a foil a friend has of a card you hold in normal shows in gold, and under Complete set not at all | Desktop only. The first card's window shows no count under Complete set; under Master set it shows "1 friend has the foil" on a gradient ground, and the dialog reads "You have 1 normal · missing the foil" over Ruby's one row, "Ruby Hero 042: 1 foil. Open their binder" |
+| Escape closes the dialog alone, and from the keyboard the count is a stop in the window | Desktop only. Tab reaches the count; Enter opens the dialog, which passes axe-core; Escape closes it alone, with the window still open and the count focused, and a second Escape closes the window |
+| with no friend sharing, the window shows no count and reads no collection | With no friend sharing, the window shows its copies and no count once `shared_friends` has answered, and the page never calls `friend_collections` |
 
 ## `responsive-images.spec.ts` — 4 tests (desktop only)
 

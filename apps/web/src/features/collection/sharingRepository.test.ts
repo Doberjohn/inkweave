@@ -1,5 +1,6 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {getFriendCollection, getPlayerByHandle, getSharing, setSharing} from './sharingRepository';
+import type {CollectionEntries} from './collectionParser';
+import {getFriendCollection, getPlayerByHandle, getSharedCollections, getSharing, setSharing} from './sharingRepository';
 
 // A Supabase double, as friendRepository.test.ts builds it: .env.local puts real credentials in
 // scope under vitest, so an unmocked provider would talk to the real project.
@@ -89,6 +90,41 @@ describe('getFriendCollection', () => {
     const result = await getFriendCollection(FRIEND);
     expect(result.data).toBeNull();
     expect(result.error).toMatch(/unusable friend collection/);
+  });
+});
+
+describe('getSharedCollections', () => {
+  it("returns every sharing friend's entries by owner, asking for no one in particular", async () => {
+    const other = {'card-2': {normal: 0, foil: 3}};
+    mockRpc.mockResolvedValue({
+      data: [
+        {owner_id: FRIEND, entries: ENTRIES, schema_version: 1},
+        {owner_id: 'friend-2', entries: other, schema_version: 1},
+      ],
+      error: null,
+    });
+    const result = await getSharedCollections();
+    expect(result.error).toBeNull();
+    expect(result.data).toEqual(new Map<string, CollectionEntries>([[FRIEND, ENTRIES], ['friend-2', other]]));
+    expect(mockRpc).toHaveBeenCalledWith('friend_collections');
+  });
+
+  it('refuses the whole read when one row is unusable, rather than drop that friend unsaid', async () => {
+    mockRpc.mockResolvedValue({
+      data: [
+        {owner_id: FRIEND, entries: ENTRIES, schema_version: 1},
+        {owner_id: 'friend-2', entries: ENTRIES, schema_version: 2},
+      ],
+      error: null,
+    });
+    const result = await getSharedCollections();
+    expect(result.data).toBeNull();
+    expect(result.error).toMatch(/unusable friend collection/);
+  });
+
+  it('passes a failed read on as an error', async () => {
+    mockRpc.mockResolvedValue({data: null, error: {message: 'boom'}});
+    await expect(getSharedCollections()).resolves.toEqual({data: null, error: 'boom'});
   });
 });
 
