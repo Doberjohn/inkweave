@@ -1,6 +1,7 @@
 import {afterEach, describe, it, expect, vi} from 'vitest';
 import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import {MemoryRouter, Route, Routes, useLocation} from 'react-router-dom';
 import {trackEvent} from '../../shared/lib/analytics';
 import {AccountCollection} from '../AccountCollection';
 
@@ -9,12 +10,19 @@ import {AccountCollection} from '../AccountCollection';
  * from the account, with no undo, so it asks first. The providers are mocked: a reader
  * holding a collection, whose clear this file watches.
  */
-const collection = vi.hoisted(() => ({clearImported: vi.fn(), importedAt: Date.UTC(2026, 9, 12)}));
+const collection = vi.hoisted(() => ({
+  clearImported: vi.fn(),
+  startCollection: vi.fn(),
+  importedAt: Date.UTC(2026, 9, 12),
+  has: true,
+}));
 vi.mock('../../features/collection/CollectionContext', () => ({
   useCollection: () => ({
-    hasCollection: true,
+    hasCollection: collection.has,
+    holdsCopies: collection.has,
     syncing: false,
     importCollection: vi.fn(),
+    startCollection: collection.startCollection,
     clearImported: collection.clearImported,
     // One card owned; `b` is an entry at no copies, which the owned count leaves out.
     ownedCount: (id: string) => (id === 'a' ? 1 : 0),
@@ -45,15 +53,19 @@ vi.mock('../../features/collection/sharingRepository', () => ({
   setSharing: vi.fn(() => Promise.resolve({data: null, error: null})),
 }));
 
+// Open your binder goes to Browse, through the router.
+const renderAccount = () => render(<AccountCollection />, {wrapper: MemoryRouter});
+
 afterEach(() => {
   vi.clearAllMocks();
+  collection.has = true;
   sharing.friends = false;
   sharing.saved = false;
 });
 
 describe('AccountCollection', () => {
   it('dates the collection by its last change, which an import and each edit in the app stamp (#826)', () => {
-    render(<AccountCollection />);
+    renderAccount();
     // The copy's own stamp, formatted as the row formats it: in the machine's locale, so
     // a fixed string would fail outside English, but a wrong stamp still fails.
     const lastChanged = new Date(collection.importedAt).toLocaleDateString(undefined, {
@@ -67,7 +79,7 @@ describe('AccountCollection', () => {
 
   it('asks before clearing, and clears only once the reader confirms', async () => {
     const user = userEvent.setup();
-    render(<AccountCollection />);
+    renderAccount();
     await user.click(screen.getByRole('button', {name: 'Clear'}));
     expect(collection.clearImported).not.toHaveBeenCalled();
     expect(screen.getByRole('alert')).toHaveTextContent('It cannot be undone.');
@@ -79,7 +91,7 @@ describe('AccountCollection', () => {
 
   it('sends the owned count once the reader confirms the delete', async () => {
     const user = userEvent.setup();
-    render(<AccountCollection />);
+    renderAccount();
     await user.click(screen.getByRole('button', {name: 'Clear'}));
     expect(trackEvent).not.toHaveBeenCalled();
 
@@ -90,7 +102,7 @@ describe('AccountCollection', () => {
 
   it('keeps the collection when the reader cancels', async () => {
     const user = userEvent.setup();
-    render(<AccountCollection />);
+    renderAccount();
     await user.click(screen.getByRole('button', {name: 'Clear'}));
     await user.click(screen.getByRole('button', {name: 'Cancel'}));
     expect(collection.clearImported).not.toHaveBeenCalled();
@@ -100,7 +112,7 @@ describe('AccountCollection', () => {
   });
 
   it('has no sharing switch while friends are off', () => {
-    render(<AccountCollection />);
+    renderAccount();
     expect(screen.queryByRole('switch')).not.toBeInTheDocument();
   });
 
@@ -108,7 +120,7 @@ describe('AccountCollection', () => {
     sharing.friends = true;
     sharing.saved = true;
     const user = userEvent.setup();
-    render(<AccountCollection />);
+    renderAccount();
     const toggle = screen.getByRole('switch', {name: 'Let my friends see my collection'});
     await waitFor(() => expect(toggle).toHaveAttribute('aria-checked', 'true'));
 
@@ -119,10 +131,37 @@ describe('AccountCollection', () => {
   it("leaves Clear's line as it was while sharing is off", async () => {
     sharing.friends = true;
     const user = userEvent.setup();
-    render(<AccountCollection />);
+    renderAccount();
     await waitFor(() => expect(screen.getByRole('switch')).toBeEnabled());
 
     await user.click(screen.getByRole('button', {name: 'Clear'}));
     expect(screen.getByRole('alert')).not.toHaveTextContent('Sharing');
   });
+
+  it('opens an empty binder on Browse for an account with nothing to import', async () => {
+    collection.has = false;
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={['/account']}>
+        <Routes>
+          <Route path="/account" element={<AccountCollection />} />
+          <Route path="/browse" element={<Where />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('button', {name: 'Import collection'})).toBeInTheDocument();
+    await user.click(screen.getByRole('button', {name: 'Open your binder'}));
+    expect(collection.startCollection).toHaveBeenCalledWith('account');
+    expect(screen.getByTestId('where')).toHaveTextContent('/browse?binder=all');
+  });
+
+  it('offers no Open your binder once there is a collection', () => {
+    renderAccount();
+    expect(screen.queryByRole('button', {name: 'Open your binder'})).toBeNull();
+  });
 });
+
+function Where() {
+  const {pathname, search} = useLocation();
+  return <output data-testid="where">{pathname + search}</output>;
+}

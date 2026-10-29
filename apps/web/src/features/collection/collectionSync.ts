@@ -127,3 +127,14 @@ export function resolveCollectionSync({
 
   return 'none';
 }
+
+/**
+ * Whether `uid` holds a collection once `plan` has run: the account's, adopted or uploaded, or
+ * this browser's copy when it is theirs. A start waiting on the sync asks it (`startCollection`):
+ * only an account holding none gets the empty collection.
+ */
+export function holdsAfterSync(plan: CollectionSyncPlan, local: {ownerUid: string | null} | null, uid: string): boolean {
+  if (plan === 'adopt-server' || plan === 'upload') return true;
+  if (plan === 'drop-local') return false;
+  return local !== null && belongsTo(local, uid);
+}

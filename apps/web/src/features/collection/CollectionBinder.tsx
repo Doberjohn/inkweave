@@ -88,13 +88,16 @@ interface CollectionBinderProps {
    */
   windowOpen?: boolean;
   /**
-   * What a phone's inside front cover holds, the page before page 1: the collection's numbers
-   * (owner, 2026-10-27). The binder opens on page 1 all the same, so the cards come first.
+   * What the inside front cover holds: a phone's, the page before page 1, the collection's numbers
+   * (owner, 2026-10-27), and a spread's, the first view's left page, a note while the collection
+   * holds no copies (`EmptyBinderNote`). A phone opens on page 1 all the same, so the cards come
+   * first, unless it is asked to open on the cover (`opensOnCover`).
    */
   cover?: ReactNode;
   /**
    * Opens on the cover instead: for the binder that replaces one showing it, when the headline
-   * chosen there changed the cards it holds.
+   * chosen there changed the cards it holds, and while the collection holds no copies, so its
+   * note is the first thing on a phone.
    */
   opensOnCover?: boolean;
   /** Told whether a phone's cover is the view on show, as it changes. */
@@ -495,7 +498,7 @@ export function CollectionBinder({
   const startSlot = slots.findIndex((slot) => !isOpenPocket(slot) && slot.id === startCard);
   const {current, total, goTo} = useBinderView({slotCount: slots.length, paging, single, opensOnCover, startSlot});
   usePreloadNeighbours(slots, current, paging);
-  // A spread's view 0 is its first, whose cover holds nothing.
+  // Only a phone's cover is a view of its own: a spread's shares its first view with page 1.
   useCoverReport(single && current === 0, onCoverChange);
 
   const map =

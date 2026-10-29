@@ -153,13 +153,21 @@ describe('CollectionBinder', () => {
       expect(firstShown()).toBe('Card 1');
     });
 
-    it("opens the first spread from the cover once the screen is a spread's, whose cover holds nothing", () => {
+    it("opens the first spread from the cover once the screen is a spread's, its cover beside page 1", () => {
+      // What each screen's cover holds is the section's to pick: a spread's holds only an
+      // empty collection's note (`CollectionBinderSection`).
       const view = render(binder({single: true, cover: COVER}));
       fireEvent.click(screen.getByRole('button', {name: 'Previous page'}));
-      view.rerender(binder({cover: COVER}));
+      view.rerender(binder({cover: undefined}));
       expect(firstShown()).toBe('Card 1');
       expect(cover()).toBeInTheDocument();
       expect(screen.queryByText('The numbers')).toBeNull();
+    });
+
+    it("draws a spread's cover content on its inside front cover", () => {
+      render(binder({cover: COVER}));
+      expect(within(cover()).getByText('The numbers')).toBeInTheDocument();
+      expect(firstShown()).toBe('Card 1');
     });
 
     it('opens on the cover when asked to, as the binder that replaces one showing it', () => {

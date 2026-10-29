@@ -5,9 +5,10 @@ import {trackEvent} from '../../shared/lib/analytics';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {parseCollectionCsv, type CollectionEntries, type CollectionSummary} from './collectionParser';
 
-/** Where an import runs, and whether it replaces a collection the account already has. */
+/** Where an import runs, and whether it replaces copies the collection already holds. */
 export interface ImportContext {
   surface: 'browse' | 'account';
+  /** The collection holds a copy of something (`holdsCopies`): an empty one has nothing to lose. */
   replacing: boolean;
 }
 
@@ -137,19 +138,23 @@ function ChooseStep({
   busy,
   isPoolReady,
   onRetry,
+  replacing,
 }: {
   onPick: (file: File) => void;
   busy: boolean;
   isPoolReady: boolean;
   /** Set when the card list failed to load: the button retries it instead of picking a file. */
   onRetry: (() => void) | null;
+  /** The import replaces copies the collection holds, which the step warns of. */
+  replacing: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   return (
     <>
       <p style={{...DIALOG_BODY, fontWeight: 400, marginTop: SPACING.xs}}>
-        Export your collection from Dreamborn as CSV, then choose the file here. Importing
-        replaces whatever collection Inkweave already has, counts you changed in the app included.
+        Export your collection from Dreamborn as CSV, then choose the file here.
+        {replacing &&
+          ' Importing replaces whatever collection Inkweave already has, counts you changed in the app included.'}
       </p>
       {/* Visually hidden rather than `display: none`, which some browsers refuse to open a
           picker for. The visible `CtaButton` is what anyone operates; it forwards the click.
@@ -353,6 +358,7 @@ export function ImportCollectionDialog({
           busy={busy}
           isPoolReady={isPoolReady}
           onRetry={poolError === null ? null : onRetryPool}
+          replacing={context.replacing}
         />
       )}
 

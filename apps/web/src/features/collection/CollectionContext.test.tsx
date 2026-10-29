@@ -13,6 +13,7 @@ import {
 import {deleteCollection, getCollection, upsertCollection} from './collectionRepository';
 import type {CollectionEntries} from './collectionParser';
 import {placementsFor} from './placeCopies';
+import {trackEvent} from '../../shared/lib/analytics';
 
 /**
  * Signed out by default. `CollectionProvider` reads `useSession` since #555, and
@@ -35,6 +36,8 @@ vi.mock('./collectionRepository', () => ({
   upsertCollection: vi.fn(async () => ({data: null, error: null})),
   deleteCollection: vi.fn(async () => ({data: null, error: null})),
 }));
+
+vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 
 const ENTRIES: CollectionEntries = {
   owned: {normal: 3, foil: 1},
@@ -559,6 +562,216 @@ describe('CollectionContext — #739 cloud-sync defects', () => {
     render();
     await flush();
     expect(upsertCollection).not.toHaveBeenCalled();
+  });
+});
+
+/** Starting an empty collection, for a player with nothing to import. */
+describe('CollectionContext, starting empty', () => {
+  const UNREACHABLE = "Couldn't reach your account to start your binder.";
+  const HELD =
+    "This browser holds another account's binder with changes that aren't saved yet. Sign in to that account to save them, then try again.";
+  beforeEach(() => signIn('user-a'));
+  afterEach(() => signIn(null));
+
+  type Answer = Awaited<ReturnType<typeof getCollection>>;
+  /** The next read of the account's copy, held until the test answers it. */
+  function holdNextRead(): (answer: Answer) => Promise<void> {
+    let answer: (value: Answer) => void = () => {};
+    vi.mocked(getCollection).mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
+    return (value) => act(async () => answer(value));
+  }
+
+  it('starts an empty collection, saved to the account, once a fresh read finds none there', async () => {
+    const {result} = render();
+    await flush();
+    const answer = holdNextRead();
+    act(() => result.current.startCollection('browse'));
+    // Waiting on the account again: nothing is started over a collection it may hold.
+    expect(result.current.syncing).toBe(true);
+    expect(result.current.hasCollection).toBe(false);
+
+    await answer({data: null, error: null});
+    expect(result.current.syncing).toBe(false);
+    expect(result.current.hasCollection).toBe(true);
+    expect(result.current.entries).toEqual({});
+    await flush();
+    expect(upsertCollection).toHaveBeenCalledWith('user-a', {}, expect.any(Number));
+    expect(trackEvent).toHaveBeenCalledWith('collection_started', {surface: 'browse'});
+  });
+
+  it("adopts the account's collection instead when the read finds one, saved from another device", async () => {
+    const {result} = render();
+    await flush();
+    vi.mocked(getCollection).mockResolvedValueOnce(SERVER_ROW);
+    act(() => result.current.startCollection('browse'));
+    await flush();
+
+    expect(result.current.entries).toEqual(SERVER_ROW.data.entries);
+    expect(upsertCollection).not.toHaveBeenCalled();
+    expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  it('starts nothing when the read fails, which cannot tell an empty account from one it could not see, and says so', async () => {
+    const {result} = render();
+    await flush();
+    expect(result.current.startProblem).toBeNull();
+    const answer = holdNextRead();
+    act(() => result.current.startCollection('browse'));
+
+    await answer({data: null, error: 'Network error'});
+    // In the answer's own pass, so the binder never sees the account answered with no problem.
+    expect(result.current.syncing).toBe(false);
+    expect(result.current.startProblem).toBe(UNREACHABLE);
+    expect(result.current.hasCollection).toBe(false);
+    expect(upsertCollection).not.toHaveBeenCalled();
+  });
+
+  it("drops the problem at the next start, and starts there once the account answers", async () => {
+    const {result} = render();
+    await flush();
+    vi.mocked(getCollection).mockResolvedValueOnce({data: null, error: 'Network error'});
+    act(() => result.current.startCollection('browse'));
+    await flush();
+    expect(result.current.startProblem).toBe(UNREACHABLE);
+
+    const answer = holdNextRead();
+    act(() => result.current.startCollection('browse'));
+    expect(result.current.startProblem).toBeNull();
+    expect(result.current.syncing).toBe(true);
+    await answer({data: null, error: null});
+    expect(result.current.hasCollection).toBe(true);
+    expect(result.current.startProblem).toBeNull();
+  });
+
+  it('drops the problem when withdrawn, once a collection is there, and when the account changes', async () => {
+    const failedStart = async () => {
+      vi.mocked(getCollection).mockResolvedValueOnce({data: null, error: 'Network error'});
+      act(() => result.current.startCollection('browse'));
+      await flush();
+      expect(result.current.startProblem).toBe(UNREACHABLE);
+    };
+    const {result, rerender} = render();
+    await flush();
+
+    await failedStart();
+    act(() => result.current.cancelStart());
+    expect(result.current.startProblem).toBeNull();
+
+    await failedStart();
+    signIn('user-b');
+    rerender();
+    expect(result.current.startProblem).toBeNull();
+    await flush();
+
+    await failedStart();
+    act(() => void result.current.importCollection(ENTRIES, 7000));
+    expect(result.current.startProblem).toBeNull();
+  });
+
+  it('says why when the browser refuses to save the empty collection', async () => {
+    const {result} = render();
+    await flush();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('full', 'QuotaExceededError');
+    });
+    act(() => result.current.startCollection('browse'));
+    await flush();
+
+    expect(result.current.hasCollection).toBe(false);
+    expect(result.current.startProblem).toBe('Your browser would not let us save this collection.');
+    expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  // One copy per browser (owner ruling 2026-10-06): starting here would replace it.
+  it("holds back over another account's copy with changes not yet saved to it, and says why", async () => {
+    writeCollection(ENTRIES, 5000, 'user-b', 'import');
+    markUploadPending('user-b', 5000);
+    const {result} = render();
+    await flush();
+    act(() => result.current.startCollection('browse'));
+    await flush();
+
+    expect(result.current.hasCollection).toBe(false);
+    expect(result.current.startProblem).toBe(HELD);
+    expect(readCollection()).toMatchObject({ownerUid: 'user-b', importedAt: 5000, entries: ENTRIES});
+    expect(upsertCollection).not.toHaveBeenCalled();
+    expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  it("starts over another account's copy once its changes are saved to that account", async () => {
+    writeCollection(ENTRIES, 5000, 'user-b', 'server');
+    markUploadPending('user-b', 4000);
+    const {result} = render();
+    await flush();
+    act(() => result.current.startCollection('browse'));
+    await flush();
+
+    expect(result.current.hasCollection).toBe(true);
+    expect(result.current.startProblem).toBeNull();
+    expect(readCollection()).toMatchObject({ownerUid: 'user-a', entries: {}});
+  });
+
+  it("waits for its own read when the sign-in's read is still out, whichever lands first", async () => {
+    const answerSignIn = holdNextRead();
+    const {result} = render();
+    const answerStart = holdNextRead();
+    act(() => result.current.startCollection('browse'));
+
+    await answerSignIn({data: null, error: null});
+    expect(result.current.syncing).toBe(true);
+    expect(result.current.hasCollection).toBe(false);
+
+    await answerStart({data: null, error: null});
+    expect(result.current.syncing).toBe(false);
+    expect(result.current.hasCollection).toBe(true);
+  });
+
+  it('starts nothing when withdrawn before the answer: the reader backed out of the binder', async () => {
+    const {result} = render();
+    await flush();
+    const answer = holdNextRead();
+    act(() => result.current.startCollection('browse'));
+    act(() => result.current.cancelStart());
+
+    await answer({data: null, error: null});
+    await flush();
+    expect(result.current.syncing).toBe(false);
+    expect(result.current.hasCollection).toBe(false);
+    expect(upsertCollection).not.toHaveBeenCalled();
+    expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  it('starts one collection for two presses before the answer, on the newer read', async () => {
+    const {result} = render();
+    await flush();
+    const answerFirst = holdNextRead();
+    act(() => result.current.startCollection('browse'));
+    const answerSecond = holdNextRead();
+    act(() => result.current.startCollection('account'));
+
+    await answerFirst({data: null, error: null});
+    expect(result.current.hasCollection).toBe(false);
+    await answerSecond({data: null, error: null});
+    await flush();
+    expect(result.current.hasCollection).toBe(true);
+    expect(upsertCollection).toHaveBeenCalledOnce();
+    expect(vi.mocked(trackEvent).mock.calls).toEqual([['collection_started', {surface: 'account'}]]);
+  });
+
+  it('does nothing with a collection already, nor signed out', async () => {
+    writeCollection(ENTRIES, 5000, 'user-a', 'server');
+    vi.mocked(getCollection).mockResolvedValueOnce({data: {schemaVersion: 1, importedAt: 5000, entries: ENTRIES}, error: null});
+    const {result, rerender} = render();
+    await flush();
+    const reads = vi.mocked(getCollection).mock.calls.length;
+    act(() => result.current.startCollection('browse'));
+    signIn(null);
+    rerender();
+    act(() => result.current.startCollection('browse'));
+    await flush();
+
+    expect(getCollection).toHaveBeenCalledTimes(reads);
+    expect(result.current.entries).toEqual(ENTRIES);
   });
 });
 

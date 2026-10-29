@@ -98,3 +98,22 @@ export const Loading: Story = {
 export const LoadFailed: Story = {
   args: {error: 'Could not load the collection (set 4: HTTP 502).'},
 };
+
+/**
+ * A collection started empty: on its first spread the inside front cover says so, with the
+ * import for a player who has a Dreamborn export, and every pocket waits for a first copy.
+ */
+export const EmptyCollection: Story = {
+  args: {entries: {}, onEmptyImport: fn()},
+};
+
+/** The same on a phone: the binder opens on its cover, the note above the collection's numbers. */
+export const EmptyCollectionPhone: Story = {
+  args: {entries: {}, onEmptyImport: fn()},
+  globals: {viewport: {value: 'mobile1'}},
+};
+
+/** An empty collection's Owned view: the note again, rather than a line about the filters. */
+export const EmptyCollectionOwned: Story = {
+  args: {entries: {}, onEmptyImport: fn(), show: 'owned', matchedIds: new Set(), counted: []},
+};

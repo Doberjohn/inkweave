@@ -19,6 +19,7 @@ import {
   hasStyleFor,
   MISSING_GREY,
   openPromoBinder,
+  signedIn,
   signInAsCollector,
   teethIn,
 } from '../helpers/collector';
@@ -59,14 +60,10 @@ const MASTER = HELD_ALT ? 1 : 0;
 /** A share of the set as the panel writes it: a whole percent, rounded down (`percentOf`). */
 const percentOfSet = (count: number) => Math.floor((count / SET_TOTAL) * 100);
 
-/** Waits for the restored session: the header's control turns from "Sign in" to "Account". */
-async function signedIn(page: Page): Promise<void> {
-  await expect(
-    page.getByTestId('compact-header').getByRole('button', {name: 'Account', exact: true}),
-  ).toBeVisible();
-}
-
 const numbers = (page: Page) => page.getByRole('region', {name: 'Collection numbers'});
+
+/** What an empty collection's binder says on its inside front cover. */
+const emptyNote = (page: Page) => binder(page).getByRole('heading', {name: 'Your binder is empty'});
 
 /** What collection mode draws while the binder's code downloads (#913). */
 const binderLoading = (page: Page) => page.getByRole('region', {name: 'Loading your binder'});
@@ -360,12 +357,12 @@ test.describe('Collection mode, signed in', () => {
     await expect(numbers(page).getByText('Complete collection', {exact: true})).toBeVisible();
   });
 
-  test('on a new browser, the Collection button waits for the account instead of offering an import', async ({
+  test('on a new browser, the Collection button waits for the account and opens the collection it holds, starting none', async ({
     page,
   }) => {
     let answer = () => {};
     const answered = new Promise<void>((resolve) => (answer = resolve));
-    await signInAsCollector(page, ENTRIES, {local: false, answered});
+    const writes = await signInAsCollector(page, ENTRIES, {local: false, answered});
     await page.goto('/browse');
     await signedIn(page);
     // Out through Home and back, so the collection's providers mount again with the account
@@ -386,25 +383,9 @@ test.describe('Collection mode, signed in', () => {
     await expect(numbers(page).getByText('Complete collection', {exact: true})).toBeVisible();
     await expect(binder(page)).toBeVisible();
     await expect(page.getByRole('dialog', {name: 'Import your collection'})).toHaveCount(0);
-  });
-
-  test('when the account answers with no collection, the wait offers the import and drops the binder param', async ({
-    page,
-  }) => {
-    let answer = () => {};
-    const answered = new Promise<void>((resolve) => (answer = resolve));
-    await signInAsCollector(page, null, {local: false, answered});
-    await page.goto('/browse');
-    await signedIn(page);
-
-    await page.getByRole('button', {name: 'Show my collection'}).click();
-    await expect(page).toHaveURL(/[?&]binder=/);
-
-    answer();
-    // Nothing came, so the click's import opens, and the binder's param goes with the
-    // binder: left behind, it reloaded into a loading binder.
-    await expect(page.getByRole('dialog', {name: 'Import your collection'})).toBeVisible();
-    await expect(page).not.toHaveURL(/[?&]binder=/);
+    // The click's start found the account's collection, so nothing went up over it.
+    await expect(emptyNote(page)).toHaveCount(0);
+    expect(writes).toEqual([]);
   });
 
   test('on a new browser, the account page checks the account before offering an import', async ({page}) => {
@@ -933,17 +914,6 @@ test.describe('Collection mode, signed in', () => {
     await expect(missing).toHaveCSS('box-shadow', STANDARD_GLOW);
     await expect(missing).toHaveCSS('outline-color', 'rgb(212, 175, 55)');
     expect(await artFilter(missing)).toBe(MISSING_GREY);
-  });
-
-  test('a signed-in visitor without a collection is asked to import one', async ({page}) => {
-    await signInAsCollector(page, null);
-    await page.goto('/browse');
-    await signedIn(page);
-
-    await page.getByRole('button', {name: 'Show my collection'}).click();
-
-    await expect(page.getByRole('dialog', {name: 'Import your collection'})).toBeVisible();
-    await expect(binder(page)).toHaveCount(0);
   });
 
   test("a pre-Core card's window offers its Enchanted, and the Enchanted's pocket opens the card on it (#891)", async ({

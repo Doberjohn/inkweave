@@ -1,4 +1,6 @@
 import {Suspense, useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {BINDER_PARAM, WHOLE_COLLECTION} from '../features/collection/binderCards';
 import {useCollection} from '../features/collection/CollectionContext';
 import {useCollectionCards, useCollectionPool} from '../features/collection/CollectionCardsContext';
 import {SharingSwitch} from '../features/collection/SharingSwitch';
@@ -28,7 +30,9 @@ const ImportCollectionDialog = lazyWithRetry(
  */
 export function AccountCollection() {
   const {cards} = useCardDataContext();
-  const {hasCollection, syncing, importCollection, clearImported, ownedCount, entries, importedAt} = useCollection();
+  const {hasCollection, holdsCopies, syncing, importCollection, startCollection, clearImported, ownedCount, entries, importedAt} =
+    useCollection();
+  const navigate = useNavigate();
   const [showImport, setShowImport] = useState(false);
   // Mounted from first open on, so closing plays the dialog's exit animation.
   const [importMounted, setImportMounted] = useState(false);
@@ -52,6 +56,12 @@ export function AccountCollection() {
           setImportMounted(true);
           setShowImport(true);
         }}
+        // The whole collection, as Browse's Collection button opens it; the binder waits there
+        // while the start reads the account.
+        onOpenBinder={() => {
+          startCollection('account');
+          navigate(`/browse?${BINDER_PARAM}=${WHOLE_COLLECTION}`);
+        }}
         onAskClear={() => setConfirmClear(true)}
         onConfirmClear={() => {
           trackEvent('collection_deleted', {cards: owned});
@@ -74,7 +84,7 @@ export function AccountCollection() {
             poolError={error}
             onRetryPool={retry}
             onImport={importCollection}
-            context={{surface: 'account', replacing: hasCollection}}
+            context={{surface: 'account', replacing: holdsCopies}}
           />
         </Suspense>
       )}

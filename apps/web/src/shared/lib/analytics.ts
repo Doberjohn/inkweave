@@ -108,8 +108,10 @@ type AnalyticsEvents = {
     reason: 'error' | 'cancelled' | 'timeout';
   };
   // Collection mode (#553, #883), behind SHOW_COLLECTION. Enums and counts only: never a
-  // card ref, a file name or a CSV row. `replacing`: the account already had a collection.
+  // card ref, a file name or a CSV row. `replacing`: the collection already held a copy.
   collection_mode_toggled: {state: 'on' | 'off'};
+  // An empty collection made for a player with nothing to import, once the account held none.
+  collection_started: {surface: 'browse' | 'account'};
   collection_imported: {
     surface: 'browse' | 'account';
     replacing: boolean;

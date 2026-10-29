@@ -12,6 +12,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries, CollectionEntry, Finish} from './collectionParser';
 import type {CollectionPromo} from './collectionPromos';
 import {CollectionBinder} from './CollectionBinder';
+import {EmptyBinderNote} from './EmptyBinderNote';
 import {
   ALL_PROMO_SETS,
   WHOLE_COLLECTION,
@@ -194,6 +195,12 @@ interface CollectionBinderSectionProps extends PanelControls {
    * the scope's cards; the reader's own binder only.
    */
   renderFoilPointer?: (cards: readonly LorcanaCard[]) => ReactNode;
+  /**
+   * Set while the reader's own collection holds no copies: the inside front cover then says so
+   * (`EmptyBinderNote`), with this as its import. On a spread the note is the cover's only
+   * content; on a phone it sits above the numbers, and the binder opens on the cover, not page 1.
+   */
+  onEmptyImport?: () => void;
 }
 
 /**
@@ -306,9 +313,11 @@ function SectionContent({
   startAt,
   pocketBadge,
   renderFoilPointer,
+  onEmptyImport,
   ...controls
 }: CollectionBinderSectionProps) {
   const {isMobile} = useResponsive();
+  const emptyNote = onEmptyImport && <EmptyBinderNote onImport={onEmptyImport} />;
   // Docked, the spread's arrows sit on its edges; the skeleton's too, so it has the binder's geometry.
   const docked = useSidePanelDocked();
   const windowOpen = useCardWindowOpen();
@@ -360,7 +369,8 @@ function SectionContent({
   return (
     <PanelLayout panel={{...controls, stats, yours, filtered}} section={setSection}>
       {shown.length === 0 ? (
-        <NoMatches
+        <NothingShown
+          emptyNote={emptyNote}
           show={controls.show}
           setCode={setCode}
           friend={friend}
@@ -372,7 +382,7 @@ function SectionContent({
       ) : (
         <KeyedBinder
           axis={controls.axis}
-          cover={isMobile ? <CoverNumbers {...controls} stats={stats} yours={yours} filtered={filtered} /> : undefined}
+          {...insideCoverOf(isMobile, emptyNote, <CoverNumbers {...controls} stats={stats} yours={yours} filtered={filtered} />)}
           slots={slots}
           bySet={namesStretches(setCode, sortOrder)}
           countsFor={(cardId) => entries[cardId] ?? ZERO}
@@ -388,6 +398,30 @@ function SectionContent({
       )}
     </PanelLayout>
   );
+}
+
+/**
+ * What the inside front cover holds, and whether the binder opens on it: on a phone the numbers,
+ * under an empty collection's note, whose binder opens there; on a spread the note alone.
+ */
+function insideCoverOf(isMobile: boolean, note: ReactNode, numbers: ReactNode): {cover: ReactNode; opensOnCover: boolean} {
+  if (!isMobile) return {cover: note, opensOnCover: false};
+  return {
+    cover: (
+      <>
+        {note}
+        {numbers}
+      </>
+    ),
+    opensOnCover: note !== undefined,
+  };
+}
+
+/** An empty collection's Owned view with nothing narrowing it says what the cover says, not a line blaming the filters. */
+function NothingShown({emptyNote, ...props}: NoMatchesProps & {emptyNote: ReactNode}) {
+  const ownedWhole = props.show === 'owned' && !props.filtered;
+  if (emptyNote !== undefined && ownedWhole) return emptyNote;
+  return <NoMatches {...props} />;
 }
 
 /** The cover's chosen headline: the cover's own, never a page turn's copy of it. */
@@ -419,14 +453,23 @@ function useCoverKept(cards: string, axis: Axis) {
 /**
  * The binder, keyed by what it holds, in order, so a new set, sort or filter opens it at its
  * start: the old page would land on unrelated cards. A count changed by hand leaves what it holds
- * alone (`useKeptCards`). A phone's cover outlives a change its own headlines make (`useCoverKept`).
+ * alone (`useKeptCards`). A phone's cover outlives a change its own headlines make (`useCoverKept`),
+ * and the binder opens there when asked to (`opensOnCover`), as an empty collection's does.
  * A navigation that names a card to open at keys it too (`useLastAsked`).
  */
-function KeyedBinder({axis, startAt, ...props}: ComponentProps<typeof CollectionBinder> & {axis: Axis; startAt?: BinderStart}) {
+function KeyedBinder({axis, startAt, opensOnCover = false, ...props}: ComponentProps<typeof CollectionBinder> & {axis: Axis; startAt?: BinderStart}) {
   const cards = props.slots.map(slotKey).join();
   const kept = useCoverKept(cards, axis);
   const asked = useAskedStart(startAt, cards);
-  return <CollectionBinder key={`${cards}|${asked.key}`} {...props} {...kept} startCard={asked.cardId} />;
+  return (
+    <CollectionBinder
+      key={`${cards}|${asked.key}`}
+      {...props}
+      {...kept}
+      opensOnCover={kept.opensOnCover || opensOnCover}
+      startCard={asked.cardId}
+    />
+  );
 }
 
 /**
