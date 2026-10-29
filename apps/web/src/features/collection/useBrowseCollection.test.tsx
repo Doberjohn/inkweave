@@ -27,6 +27,8 @@ const {account} = vi.hoisted(() => ({
     /** The collection's pool of cards, which the binder holds: none unless a case needs some. */
     pool: [] as LorcanaCard[],
     startCollection: vi.fn(),
+    /** Why the reader's start made no collection (`useCollection().startProblem`). */
+    startProblem: null as string | null,
     cancelStart: vi.fn(),
   },
 }));
@@ -42,6 +44,7 @@ vi.mock('./CollectionContext', () => ({
     syncing: account.syncing,
     importCollection: () => null,
     startCollection: account.startCollection,
+    startProblem: account.startProblem,
     cancelStart: account.cancelStart,
     setCount: () => {},
     place: (entries: unknown) => entries,
@@ -76,13 +79,14 @@ beforeEach(() => {
 
 type Reader = Parameters<typeof useBinderParams>[0];
 
-const COLLECTOR: Reader = {sessionLoading: false, syncing: false, signedIn: true, hasCollection: true};
-const SIGNED_OUT: Reader = {sessionLoading: false, syncing: false, signedIn: false, hasCollection: false};
-const RESTORING: Reader = {sessionLoading: true, syncing: false, signedIn: false, hasCollection: false};
+const READER = {sessionLoading: false, syncing: false, startFailed: false};
+const COLLECTOR: Reader = {...READER, signedIn: true, hasCollection: true};
+const SIGNED_OUT: Reader = {...READER, signedIn: false, hasCollection: false};
+const RESTORING: Reader = {...READER, sessionLoading: true, signedIn: false, hasCollection: false};
 /** Signed in with nothing in this browser, the account not answered yet: a click enters at once. */
-const AWAITING: Reader = {sessionLoading: false, syncing: true, signedIn: true, hasCollection: false};
+const AWAITING: Reader = {...READER, syncing: true, signedIn: true, hasCollection: false};
 /** The account has answered with no collection, so `?binder=` is dead: `useBrowseCollection` drops it. */
-const NO_COLLECTION: Reader = {sessionLoading: false, syncing: false, signedIn: true, hasCollection: false};
+const NO_COLLECTION: Reader = {...READER, signedIn: true, hasCollection: false};
 
 /** The hook on a page at `url`, with the params as they stand after its effects. */
 function renderBinderParams(url: string, reader: Reader) {
@@ -124,6 +128,15 @@ describe('useBinderParams', () => {
     expect(result.current.search).toBe('binder=14&ink=Amber&owned=missing');
     act(() => result.current.writeShow('all'));
     expect(result.current.search).toBe('binder=14&ink=Amber');
+  });
+
+  it('keeps the binder of a start that made no collection, to say why, and drops it once the account has none', () => {
+    expect(renderBinderParams('/browse?binder=14', {...NO_COLLECTION, startFailed: true}).result.current.mode).toEqual({
+      active: true,
+      dead: false,
+      dropsStrays: true,
+    });
+    expect(renderBinderParams('/browse?binder=14', NO_COLLECTION).result.current.mode.dead).toBe(true);
   });
 
   it("drops a set filter once the binder is known to be the reader's", () => {
@@ -197,6 +210,7 @@ describe('useBrowseCollection analytics', () => {
     account.signedIn = true;
     account.hasCollection = true;
     account.syncing = false;
+    account.startProblem = null;
   });
 
   /** Browse's Collection switch, as the toolbar renders it. */
@@ -212,9 +226,10 @@ describe('useBrowseCollection analytics', () => {
       </MemoryRouter>
     );
     const {rerender} = render(page());
-    return (hasCollection: boolean) => {
+    return (hasCollection: boolean, startProblem: string | null = null) => {
       account.syncing = false;
       account.hasCollection = hasCollection;
+      account.startProblem = startProblem;
       rerender(page());
     };
   }
@@ -263,12 +278,27 @@ describe('useBrowseCollection analytics', () => {
       expect(vi.mocked(trackEvent).mock.calls).toEqual([['collection_mode_toggled', {state: 'on'}]]);
     });
 
-    it('sends nothing when no collection comes, as after a read that failed, which closes the binder', () => {
+    it('sends nothing when no collection comes, nor on leaving the binder that says why', () => {
       const answer = renderSwitch();
       pressCollection();
-      answer(false);
+      answer(false, "Couldn't reach your account to start your binder.");
+      pressCollection();
 
+      expect(account.cancelStart).toHaveBeenCalledOnce();
       expect(trackEvent).not.toHaveBeenCalled();
+    });
+
+    it('sends on once a Try again after a start that made none brings a collection', () => {
+      const answer = renderSwitch();
+      pressCollection();
+      answer(false, "Couldn't reach your account to start your binder.");
+      answer(true);
+      pressCollection();
+
+      expect(vi.mocked(trackEvent).mock.calls).toEqual([
+        ['collection_mode_toggled', {state: 'on'}],
+        ['collection_mode_toggled', {state: 'off'}],
+      ]);
     });
 
     it('sends nothing when a second click withdraws it before the answer', () => {
@@ -423,6 +453,68 @@ describe("useBrowseCollection: a collection that holds no copies yet", () => {
     await waitFor(() => expect(friends.getFriendCollection).toHaveBeenCalled());
     expect(await screen.findByRole('region', {name: 'Binder'})).toBeInTheDocument();
     expect(screen.queryByRole('heading', {name: 'Your binder is empty'})).toBeNull();
+  });
+});
+
+describe('useBrowseCollection: a start that made no collection', () => {
+  const nani = createCard({id: 'nani', setCode: '14', rarity: 'Uncommon'});
+  const LISTING: BrowseListing = {cards: [nani], sortOrder: 'newest', matched: [nani], filtered: false};
+  const PROBLEM = "Couldn't reach your account to start your binder.";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    account.signedIn = true;
+    account.hasCollection = false;
+    account.syncing = false;
+    account.entries = {};
+    account.pool = [nani];
+    account.startProblem = PROBLEM;
+  });
+  afterEach(() => {
+    account.pool = [];
+    account.startProblem = null;
+  });
+
+  let slots: ReturnType<typeof useBrowseCollection> | null = null;
+  function Page() {
+    slots = useBrowseCollection([]);
+    const [params] = useSearchParams();
+    return (
+      <>
+        {slots.renderBinder(LISTING, () => {})}
+        <output data-testid="search">{params.toString()}</output>
+      </>
+    );
+  }
+  const renderAt = (url: string) =>
+    render(
+      <MemoryRouter initialEntries={[url]}>
+        <Page />
+      </MemoryRouter>,
+    );
+
+  it("says why in the binder's place, with no panel, and keeps the binder open", async () => {
+    renderAt('/browse?binder=14');
+    expect(await screen.findByRole('alert')).toHaveTextContent(PROBLEM);
+    expect(screen.getByTestId('search')).toHaveTextContent('binder=14');
+    expect(slots?.renderSetPanel(LISTING)).toBeUndefined();
+    expect(slots?.renderSetPicker(LISTING)).toBeUndefined();
+  });
+
+  it('starts again from its Try again', async () => {
+    renderAt('/browse?binder=14');
+    fireEvent.click(await screen.findByRole('button', {name: 'Try again'}));
+    expect(account.startCollection).toHaveBeenCalledWith('browse');
+  });
+
+  it("says nothing of it in a friend's binder", async () => {
+    friends.getPlayerByHandle.mockResolvedValue({data: {id: 'ruby', handle: 'ruby_hero_042', name: 'Ruby'}, error: null});
+    friends.getFriendCollection.mockResolvedValue({data: {nani: {normal: 1, foil: 0}}, error: null});
+    forgetFriendCollections();
+    renderAt('/browse?binder=14&friend=ruby_hero_042');
+    await waitFor(() => expect(friends.getFriendCollection).toHaveBeenCalled());
+    await waitFor(() => expect(screen.getByRole('region', {name: 'Binder'})).toBeInTheDocument());
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 });
 

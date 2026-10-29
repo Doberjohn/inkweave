@@ -25,7 +25,10 @@
 // declined as not-MVP). Each copy records whose it is, so another account never
 // sees or uploads it, but an import or adopt by account B still REPLACES it. An
 // import A had not yet got onto the server is then gone from this browser, and A's
-// pending marker names a copy that no longer exists, which simply never matches.
+// pending marker names a copy that no longer exists, which simply never matches. An
+// empty start by B is held back while A's copy still owes its upload (owner,
+// 2026-10-29, `heldForAnother`): B brings no data of its own, so nothing it gains is
+// worth A's edits.
 //
 // It still takes no other context beyond the session. Entries are keyed by card
 // id, and resolving those to cards is the consumer's job. Where each copy shows
@@ -113,11 +116,20 @@ interface CollectionContextValue {
    * It reads the account's copy again first, and {@link syncing} is true until that read
    * answers. Starting before the account has answered could upload an empty collection over
    * one saved from another device, as an import made then could. A collection the read finds
-   * is adopted instead, and a read that fails starts nothing. `surface` is where it was asked
-   * for, which `collection_started` reports once the empty collection exists.
+   * is adopted instead, and a read that fails starts nothing and says so ({@link startProblem}).
+   * `surface` is where it was asked for, which `collection_started` reports once the empty
+   * collection exists.
    */
   startCollection: (surface: StartSurface) => void;
-  /** Withdraw a start still waiting on the account's answer: the reader backed out of it. */
+  /**
+   * Why the last start made no collection, for the binder to say beside a Try again, or null.
+   * The account didn't answer, the browser refused the write, or this browser's one copy is
+   * another account's with changes not yet saved to it, which a start would replace. Gone at
+   * the next start, when it is withdrawn, once a collection is there, and when the account
+   * changes.
+   */
+  startProblem: string | null;
+  /** Withdraw a start still waiting on the account's answer, and its problem: the reader backed out of it. */
   cancelStart: () => void;
   /** Drop the collection entirely. */
   clearImported: () => void;
@@ -149,6 +161,25 @@ const CollectionContext = createContext<CollectionContextValue | null>(null);
 type CollectionState = LocalCollection | null;
 
 const NO_ENTRIES: CollectionEntries = {};
+
+/** A start whose read failed, or went stale under a change made meanwhile: it can't tell the account holds none. */
+const START_UNREACHABLE = "Couldn't reach your account to start your binder.";
+/** A start held back by another account's unsaved copy (`heldForAnother`). */
+const START_HELD =
+  "This browser holds another account's binder with changes that aren't saved yet. Sign in to that account to save them, then try again.";
+
+/**
+ * Whether this browser's copy is another account's with an upload still owed to it: an edit
+ * made just before that account signed out, or an upload that failed. The browser keeps one
+ * copy (the header), so an empty start for `uid` would replace it, and that account's next
+ * sign-in would find its pending marker naming no copy and adopt its older row over the edits.
+ * A copy already on its account replaces safely, as an import over it always has.
+ */
+function heldForAnother(local: CollectionState, uid: Uid): boolean {
+  // An anonymous copy, as none, is the reader's own (`belongsTo`).
+  const owner = local?.ownerUid ?? uid;
+  return owner !== uid && pendingUploadImportedAt(owner) === local?.importedAt;
+}
 
 /**
  * An `importedAt` that names no other copy this browser holds for `uid`.
@@ -445,6 +476,26 @@ function useAccountAnswer(uid: Uid | null): {syncing: boolean; answered: (uid: s
   return {syncing: uid !== null && answeredFor !== uid, answered: setAnsweredFor, unanswered: () => setAnsweredFor(null)};
 }
 
+/** Why a start made no collection, and for which account. */
+interface StartProblem {
+  uid: Uid;
+  message: string;
+}
+
+/**
+ * The last start's problem (`startProblem`), dropped once a collection is there or another
+ * account is signed in: it was about a start that no longer applies.
+ */
+function useStartProblem(
+  uid: Uid | null,
+  hasCollection: boolean,
+): {startProblem: string | null; setStartProblem: (next: StartProblem | null) => void} {
+  const [problem, setProblem] = useState<StartProblem | null>(null);
+  const applies = problem !== null && !hasCollection && problem.uid === uid;
+  if (problem !== null && !applies) setProblem(null);
+  return {startProblem: applies ? problem.message : null, setStartProblem: setProblem};
+}
+
 /**
  * What a read found, for a start waiting on it: whether the account holds a collection once
  * the read's plan is applied, or null when it tells nothing (the read failed, a local change
@@ -603,6 +654,7 @@ export function CollectionProvider({children, placements = NO_PLACEMENTS}: Colle
   const waitingUpload = useUploadBatch(uid);
   useOtherTabsWrites(takeOtherTabsCopy);
   const visible = state !== null && visibleTo(state, {uid, loading}) ? state : null;
+  const {startProblem, setStartProblem} = useStartProblem(uid, visible !== null);
 
   // No useMemo/useCallback anywhere below: the React Compiler memoizes this file,
   // and the repo's lint forbids hand-rolling it.
@@ -635,16 +687,26 @@ export function CollectionProvider({children, placements = NO_PLACEMENTS}: Colle
     if (answer === null) return;
     const start = {};
     pendingStart.current = start;
+    setStartProblem(null);
     // A read that answers at all left this browser's copy as it was when asked (a local change
-    // would have made it stale), so this render's import still applies; a newer start, or a
-    // withdrawn one, has replaced `start`.
+    // would have made it stale), so this render's copy and import still apply; a newer start, or
+    // a withdrawn one, has replaced `start`. The problem lands in the answer's pass too, so the
+    // binder goes from loading to saying why, never through "no collection".
     void answer.then((holds) => {
       if (pendingStart.current !== start) return;
       pendingStart.current = null;
-      if (holds === false && importCollection(NO_ENTRIES, Date.now()) === null) {
-        trackEvent('collection_started', {surface});
-      }
+      if (holds === true) return;
+      const message = holds === null ? START_UNREACHABLE : startEmpty(uid, surface);
+      if (message !== null) setStartProblem({uid, message});
     });
+  }
+
+  /** Start the empty collection, or say why not: another account's unsaved copy, or a refused write. */
+  function startEmpty(owner: Uid, surface: StartSurface): string | null {
+    if (heldForAnother(state, owner)) return START_HELD;
+    const error = importCollection(NO_ENTRIES, Date.now());
+    if (error === null) trackEvent('collection_started', {surface});
+    return error;
   }
 
   function clearImported() {
@@ -706,8 +768,10 @@ export function CollectionProvider({children, placements = NO_PLACEMENTS}: Colle
     owns: (cardId: string) => ownedCount(cardId) > 0,
     importCollection,
     startCollection,
+    startProblem,
     cancelStart: () => {
       pendingStart.current = null;
+      setStartProblem(null);
     },
     clearImported,
     setCount,

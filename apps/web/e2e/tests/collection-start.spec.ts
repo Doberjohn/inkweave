@@ -1,5 +1,6 @@
 import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
+import {E2E_SUPABASE_ORIGIN} from '../fixtures/supabaseStub';
 import {binder, COLLECTIONS_PATH, signedIn, signInAsCollector} from '../helpers/collector';
 import {edges} from '../helpers/screen';
 
@@ -89,6 +90,47 @@ test.describe('Starting a collection', () => {
     await page.getByRole('button', {name: 'Open your binder'}).click();
     await expect(page).toHaveURL(/\/browse\?binder=all$/);
     await expect(emptyNote(page)).toBeVisible();
+    await expect.poll(() => writes).toEqual([{}]);
+  });
+});
+
+test.describe("Starting a collection the account can't answer", () => {
+  // The repository logs each read the server refuses.
+  test.use({expectedConsoleErrors: [/^\[collectionRepository\] query failed:/]});
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  test.beforeEach(async ({page: _}, testInfo) => {
+    // The header's Account control, which this waits on, is the desktop's.
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+  });
+
+  test('the binder says why in place of an empty one, and its Try again starts the collection', async ({page}) => {
+    const writes = await signInAsCollector(page, null);
+    let reachable = true;
+    // Registered after the collector's route, so it answers first: reads are refused while the account is out of
+    // reach. A 500, since the Supabase client retries a 503 or a dropped request on its own.
+    await page.route(
+      (url) => url.origin === E2E_SUPABASE_ORIGIN && url.pathname === COLLECTIONS_PATH,
+      (route) =>
+        reachable || route.request().method() !== 'GET'
+          ? route.fallback()
+          : route.fulfill({status: 500, contentType: 'application/json', body: '{"message":"unavailable"}'}),
+    );
+    await page.goto('/browse');
+    await signedIn(page);
+
+    reachable = false;
+    await page.getByRole('button', {name: 'Show my collection'}).click();
+    const alert = page.getByRole('group', {name: 'Collection', exact: true}).getByRole('alert');
+    await expect(alert).toHaveText("Couldn't reach your account to start your binder.");
+    // The binder stays open to say so, its param with it, and nothing is started.
+    await expect(page).toHaveURL(/[?&]binder=all(&|$)/);
+    await expect(emptyNote(page)).toHaveCount(0);
+    expect(writes).toEqual([]);
+
+    reachable = true;
+    await page.getByRole('button', {name: 'Try again'}).click();
+    await expect(emptyNote(page)).toBeVisible();
+    await expect(alert).toHaveCount(0);
     await expect.poll(() => writes).toEqual([{}]);
   });
 });

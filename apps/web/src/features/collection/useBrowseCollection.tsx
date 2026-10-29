@@ -144,6 +144,8 @@ interface BinderReader {
   syncing: boolean;
   signedIn: boolean;
   hasCollection: boolean;
+  /** The reader's start made no collection, and the binder says why (`useCollection().startProblem`). */
+  startFailed: boolean;
 }
 
 /** What a `?binder=` param gets (`binderMode`). */
@@ -172,7 +174,8 @@ interface BinderMode {
  *
  * Once a signed-in account has answered with no collection, the mode cannot be had, so
  * the param is DEAD and the page drops it. Left in, it reloaded into a loading binder; a
- * click that waited on the account leaves one behind (#553).
+ * click that waited on the account leaves one behind (#553). A start that made no collection
+ * keeps it instead: the binder the reader opened says why, with a Try again.
  *
  * `strayParams` reads the param, not the mode, so the page drops its strays only once the
  * param is known to be honoured (#790). Signed out, `?binder=` keeps the grid, and the
@@ -183,7 +186,7 @@ function binderMode(requested: string | null, reader: BinderReader, friend: bool
   if (requested === null) return {active: false, dead: false, dropsStrays: true};
   if (friend) return friendBinderMode(reader);
   const pending = reader.sessionLoading || reader.syncing;
-  const honoured = !pending && reader.signedIn && reader.hasCollection;
+  const honoured = !pending && reader.signedIn && (reader.hasCollection || reader.startFailed);
   const active = pending || honoured;
   return {active, dead: reader.signedIn && !active, dropsStrays: honoured};
 }
@@ -276,17 +279,17 @@ export function useBinderParams(reader: BinderReader) {
 /**
  * `collection_mode_toggled` for the Collection switch's own on and off. A click with no
  * collection in this browser (`collectionAction`'s `'start'`) opens the binder at once but
- * counts as on only once the account answers and a collection is there, its own or the one
- * started for it: a read that fails starts none and closes the binder, which is no toggle. A
- * second click before the answer withdraws the first, so it sends no off either.
+ * counts as on only once a collection is there, its own or the one started for it, a Try again
+ * after a start that made none included. Until then it is no toggle, so leaving sends no off.
  */
 function useModeToggleEvents(syncing: boolean, hasCollection: boolean) {
   // A ref, not state: whether a click waits changes nothing on screen.
   const waiting = useRef(false);
   useEffect(() => {
-    if (!waiting.current || syncing) return;
+    const arrived = hasCollection && !syncing;
+    if (!waiting.current || !arrived) return;
     waiting.current = false;
-    if (hasCollection) trackEvent('collection_mode_toggled', {state: 'on'});
+    trackEvent('collection_mode_toggled', {state: 'on'});
   }, [syncing, hasCollection]);
   return {
     entered: () => {
@@ -526,6 +529,11 @@ interface BinderStatus {
   onRetry: () => void;
 }
 
+/** The reader's own binder's failure, with its Try again: the card data's first, then a start that made no collection. */
+function ownStatusOf(cards: BinderStatus, startProblem: string | null, startAgain: () => void): BinderStatus {
+  return cards.error === null && startProblem !== null ? {error: startProblem, onRetry: startAgain} : cards;
+}
+
 /** A friend's binder that didn't load says so, with its own Try again; the card data's failure comes first. */
 function binderStatusOf(friend: FriendBinder | null, own: BinderStatus): BinderStatus {
   if (friend?.status !== 'failed' || own.error !== null) return own;
@@ -545,7 +553,8 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // unmounting mid-animation; never mounted at all for anyone who never opens it.
   const [importMounted, setImportMounted] = useState(false);
   const {user, loading: sessionLoading} = useSession();
-  const {hasCollection, holdsCopies, syncing, importCollection, startCollection, cancelStart, setCount} = useCollection();
+  const {hasCollection, holdsCopies, syncing, importCollection, startCollection, startProblem, cancelStart, setCount} =
+    useCollection();
   const {retry} = useCollectionCards();
   const {requested, friend: friendHandle, mode, show: asked, enterBinder, writeBinder, leaveBinder, writeShow, leaveFriend} =
     useBinderParams({
@@ -553,6 +562,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
       syncing,
       signedIn: user !== null,
       hasCollection,
+      startFailed: startProblem !== null,
     });
 
   const {active: collectionMode, dead} = mode;
@@ -561,6 +571,8 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   }, [dead, leaveBinder]);
   const friendView = useFriendView(collectionMode ? friendHandle : null, user?.id ?? null, leaveFriend);
   const {friend} = friendView;
+  // A start's problem is about the reader's own binder, never a friend's.
+  const ownProblem = friend === null ? startProblem : null;
   const show = shownOf(asked, friendView.compare);
   const location = useLocation();
 
@@ -652,8 +664,8 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     entries: friendView.shown,
     isLoading: (friend === null ? syncing : friendView.waiting) || !isReady,
   });
-  // No panel and no picker beside a friend's binder that isn't there.
-  const binderShows = collectionMode && !hidesPanel(friend);
+  // No panel and no picker beside a binder that isn't there: a friend's, or one whose start made no collection.
+  const binderShows = collectionMode && !hidesPanel(friend) && ownProblem === null;
 
   // Friends who have a card for the reader: with both flags on, for a reader with a collection.
   // Their badges and the foil pointer show in the reader's own binder only.
@@ -676,7 +688,8 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
 
   // Loading while the account's copy is still to answer, or a friend's binder.
   const binderLoading = (friend === null ? syncing : friendView.waiting) || (!isReady && error === null);
-  const binderStatus = binderStatusOf(friend, {error, onRetry: retry});
+  const ownStatus = ownStatusOf({error, onRetry: retry}, ownProblem, () => startCollection('browse'));
+  const binderStatus = binderStatusOf(friend, ownStatus);
 
   function renderBinder(listing: BrowseListing, onCardSelect: (card: LorcanaCard) => void) {
     if (!collectionMode) return null;
