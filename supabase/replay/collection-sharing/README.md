@@ -29,6 +29,7 @@ psql -h localhost -p 5499 -U postgres -d sharing -v ON_ERROR_STOP=1 \
   -f $F/friends/scaffold.sql \
   -f supabase/migrations/20261020184645_friends.sql \
   -f supabase/migrations/20261020235319_friend_send_limit.sql \
+  -f supabase/migrations/20261030214349_friend_tries_prune_all.sql \
   -f $F/collection-sharing/collections.sql \
   -f supabase/migrations/20261028090000_collection_sharing.sql \
   -f $F/friends/helpers.sql

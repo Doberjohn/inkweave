@@ -1,6 +1,8 @@
 -- The pieces of public.collections the collection-sharing migration needs, copied verbatim
 -- from the migrations that made them, so the replay holds what production holds. Copy any
--- later change to collections here too.
+-- later change to collections here too, except collections_drop_remap_backups
+-- (20261030215155): it writes only to internal.card_id_remap_backup, which nothing here
+-- reads, and the remap replay checks it.
 
 -- From 20260710000000_profiles_table.sql: the updated_at trigger function.
 create function public.set_updated_at()
