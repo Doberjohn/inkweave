@@ -82,7 +82,8 @@ export function getCollection(ownerId: string): Promise<RepoResult<StoredCollect
     const collection = toStoredCollection(data);
     if (collection === null) {
       const shape = `schema ${String(data.schema_version)}, imported_at ${String(data.imported_at)}`;
-      return {data: null, error: {message: `unusable collection row (${shape})`}};
+      // An Error, not an answer's shape, so Sentry files it as the app's to look at, not the server's.
+      return {data: null, error: new Error(`unusable collection row (${shape})`)};
     }
     return {data: collection, error: null};
   });

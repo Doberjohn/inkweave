@@ -92,6 +92,8 @@ describe('getFriendCollection', () => {
     const result = await getFriendCollection(FRIEND);
     expect(result.data).toBeNull();
     expect(result.error).toMatch(/unusable friend collection/);
+    // An Error, which Sentry files as unexpected, not as the server's.
+    expect(mockReport).toHaveBeenCalledExactlyOnceWith({area: 'sharing', operation: 'read friend binder'}, expect.any(Error));
   });
 });
 
@@ -122,6 +124,7 @@ describe('getSharedCollections', () => {
     const result = await getSharedCollections();
     expect(result.data).toBeNull();
     expect(result.error).toMatch(/unusable friend collection/);
+    expect(mockReport).toHaveBeenCalledExactlyOnceWith({area: 'sharing', operation: 'read friend binders'}, expect.any(Error));
   });
 
   it('passes a failed read on as an error', async () => {

@@ -96,7 +96,7 @@ test.describe('Starting a collection', () => {
 
 test.describe("Starting a collection the account can't answer", () => {
   // The repository logs each read the server refuses.
-  test.use({expectedConsoleErrors: [/^\[collectionRepository\] query failed:/]});
+  test.use({expectedConsoleErrors: [/^\[collection\] read failed:/]});
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   test.beforeEach(async ({page: _}, testInfo) => {
     // The header's Account control, which this waits on, is the desktop's.

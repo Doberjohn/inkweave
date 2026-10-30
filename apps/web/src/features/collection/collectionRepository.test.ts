@@ -57,10 +57,9 @@ describe('collectionRepository failures', () => {
 
     await getCollection('me');
 
-    expect(mockReport).toHaveBeenCalledWith(
-      {area: 'collection', operation: 'read'},
-      {message: expect.stringContaining('unusable collection row')},
-    );
+    // An Error, which Sentry files as unexpected: the row is the app's to look at, not the server's.
+    expect(mockReport).toHaveBeenCalledExactlyOnceWith({area: 'collection', operation: 'read'}, expect.any(Error));
+    expect(String(mockReport.mock.calls[0][1])).toContain('unusable collection row');
   });
 
   it('reports a Supabase SDK that failed to load, and answers with a network error', async () => {

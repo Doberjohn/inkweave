@@ -68,6 +68,11 @@ function friendEntries(row: FriendRow): CollectionEntries | null {
   return isCollectionEntries(row.entries) ? row.entries : null;
 }
 
+/** Why a friend's row was refused: an Error, so Sentry files it as the app's to look at, not the server's. */
+function unusableRow(row: FriendRow): Error {
+  return new Error(`unusable friend collection (schema ${String(row.schema_version)})`);
+}
+
 /**
  * A friend's collection, or null data when they don't share it with the caller: not a
  * friend, a request still waiting, the switch off, or no collection. The function answers
@@ -80,7 +85,7 @@ export function getFriendCollection(friendId: string): Promise<RepoResult<Collec
     const row = (data as FriendRow[]).find((each) => each.owner_id === friendId);
     if (row === undefined) return {data: null, error: null};
     const entries = friendEntries(row);
-    if (entries === null) return {data: null, error: {message: `unusable friend collection (schema ${String(row.schema_version)})`}};
+    if (entries === null) return {data: null, error: unusableRow(row)};
     return {data: entries, error: null};
   });
 }
@@ -96,7 +101,7 @@ export function getSharedCollections(): Promise<RepoResult<Map<string, Collectio
     const byOwner = new Map<string, CollectionEntries>();
     for (const row of data as FriendRow[]) {
       const entries = friendEntries(row);
-      if (entries === null) return {data: null, error: {message: `unusable friend collection (schema ${String(row.schema_version)})`}};
+      if (entries === null) return {data: null, error: unusableRow(row)};
       byOwner.set(String(row.owner_id), entries);
     }
     return {data: byOwner, error: null};
