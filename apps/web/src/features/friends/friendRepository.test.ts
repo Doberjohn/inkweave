@@ -18,11 +18,13 @@ const mockFriendships = vi.hoisted(() => vi.fn());
 const mockProfilesIn = vi.hoisted(() => vi.fn());
 const mockDeleteEq = vi.hoisted(() => vi.fn());
 const mockState = vi.hoisted(() => ({client: null as unknown}));
+const mockReport = vi.hoisted(() => vi.fn());
 
 vi.mock('../../shared/lib/supabase', () => ({
   isSupabaseConfigured: () => mockState.client !== null,
   loadSupabase: () => Promise.resolve(mockState.client),
 }));
+vi.mock('../../shared/lib/reportFailure', () => ({reportFailure: mockReport}));
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -37,10 +39,8 @@ beforeEach(() => {
       // Records both filters, so a delete that lost one can't pass as scoped.
       delete: () => ({
         eq: (column: string, value: string) => ({
-          eq: (column2: string, value2: string) => {
-            mockDeleteEq({[column]: value, [column2]: value2});
-            return Promise.resolve({data: null, error: null});
-          },
+          eq: (column2: string, value2: string) =>
+            mockDeleteEq({[column]: value, [column2]: value2}) ?? Promise.resolve({data: null, error: null}),
         }),
       }),
     }),
@@ -191,5 +191,55 @@ describe('listSharingFriends (#1045)', () => {
     const result = await listSharingFriends();
     expect(result.data).toBeNull();
     expect(result.error).toBeTruthy();
+  });
+});
+
+describe('failures', () => {
+  const REFUSAL = {message: 'permission denied for table friendships', code: '42501'};
+
+  // Each call names its own operation, so Sentry tells a lost request from a lost list.
+  it.each([
+    {operation: 'claim code', call: () => claimFriendCode()},
+    {operation: 'send request', call: () => sendFriendRequest('ABCD2345')},
+    {operation: 'accept request', call: () => acceptFriendRequest('friend-1')},
+    {operation: 'list', call: () => listFriendships()},
+    {operation: 'remove', call: () => removeFriendship({requesterId: 'me', addresseeId: 'friend-1'})},
+    {operation: 'read names', call: () => listFriendIdentities(['friend-1'])},
+    {operation: 'read sharing', call: () => listSharingFriends()},
+  ])('reports a refused $operation', async ({operation, call}) => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const refused = {data: null, error: REFUSAL};
+    mockRpc.mockResolvedValue(refused);
+    mockFriendships.mockResolvedValue(refused);
+    mockProfilesIn.mockResolvedValue(refused);
+    mockDeleteEq.mockResolvedValue(refused);
+
+    await call();
+
+    expect(mockReport).toHaveBeenCalledWith({area: 'friends', operation}, REFUSAL);
+  });
+
+  it('reports a request that threw', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const failure = new TypeError('Failed to fetch');
+    mockRpc.mockRejectedValue(failure);
+
+    await acceptFriendRequest('friend-1');
+
+    expect(mockReport).toHaveBeenCalledWith({area: 'friends', operation: 'accept request'}, failure);
+  });
+
+  // The answer's rows carry account ids, so Sentry hears that the shape was wrong, never the rows.
+  it('reports an answer of an unknown shape without the answer', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockRpc.mockResolvedValue({data: [{friend_id: 'friend-1', status: 'surprise'}], error: null});
+
+    await sendFriendRequest('ABCD2345');
+
+    expect(mockReport).toHaveBeenCalledWith(
+      {area: 'friends', operation: 'send request'},
+      new Error('unexpected answer from send_friend_request'),
+    );
+    expect(JSON.stringify(mockReport.mock.calls)).not.toContain('friend-1');
   });
 });

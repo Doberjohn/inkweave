@@ -1,3 +1,4 @@
+import {reportFailure} from '../../shared/lib/reportFailure';
 import type {Uid} from './collectionStorage';
 
 /**
@@ -36,6 +37,7 @@ const writeChains = new Map<Uid, Promise<unknown>>();
 
 function logQueuedFailure(e: unknown): void {
   console.error('[collection] queued write threw:', e);
+  reportFailure({area: 'collection', operation: 'queued write'}, e);
 }
 
 export function enqueueWrite<T>(uid: Uid, op: () => Promise<T>): Promise<T> {

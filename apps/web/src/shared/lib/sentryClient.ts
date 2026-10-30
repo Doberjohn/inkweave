@@ -2,21 +2,12 @@
 // through a dynamic import, so the SDK ships in this module's own chunk, `sentryClient-*.js`. A
 // static import of it anywhere else would load the SDK with that module, at startup if main.tsx
 // reaches it. Nor does it import anything from the app: that would reshape the startup chunks.
-import {
-  addIntegration,
-  browserTracingIntegration,
-  captureException,
-  init,
-  startSpan,
-  supabaseIntegration,
-} from '@sentry/react';
+import {browserTracingIntegration, captureException, init, startSpan} from '@sentry/react';
 
 /** The part of Sentry the app calls, once it has loaded. */
 export interface SentryApi {
   captureException: typeof captureException;
   startSpan: typeof startSpan;
-  /** Instruments the SupabaseClient class, so it covers clients created before or after. */
-  addSupabaseIntegration(supabaseClient: unknown): void;
 }
 
 /**
@@ -31,12 +22,7 @@ export function startSentry(): SentryApi | null {
     reportStartFailure(error);
     return null;
   }
-  return {
-    captureException,
-    startSpan,
-    addSupabaseIntegration: (supabaseClient) =>
-      addIntegration(supabaseIntegration({supabaseClient})),
-  };
+  return {captureException, startSpan};
 }
 
 /**
@@ -68,6 +54,83 @@ export function sentryEnvironment(deployEnv: string, hostname: string): string {
   return deployEnv === 'production' && host !== PRODUCTION_HOST ? 'preview' : deployEnv;
 }
 
+/**
+ * An account id. Supabase's user ids are UUIDs written with dashes; card ids are numbers, and
+ * Sentry's event, trace and span ids have no dashes, so neither matches (its debug ids do, which
+ * is why scrubEvent passes them by). No word boundaries: in an encoded `id=in.(…)` filter the id
+ * follows `%28`, whose 8 is a hex digit.
+ */
+const ACCOUNT_ID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
+/**
+ * Address params whose value names a player, or is a sign-in's one-time code: a friend's binder
+ * (binderCards' FRIEND_PARAM; a literal, since this module imports nothing from the app), a
+ * profile looked up by handle, and the sign-in return.
+ */
+const ACCOUNT_PARAM = /\b((?:friend|handle|code)=)[^&#\s"']*/gi;
+
+/** A percent-escaped ASCII character: every character of a param's name, its `=`, and an id is one. */
+const ASCII_ESCAPE = /%([0-7][0-9a-f])/gi;
+
+/**
+ * How many layers of percent-encoding a string is read through: an address can sit encoded in
+ * another address's param, and that one in a third's.
+ */
+const MAX_LAYERS = 4;
+
+function decodeLayer(text: string): string {
+  return text.replace(ASCII_ESCAPE, (_, hex: string) =>
+    String.fromCharCode(Number.parseInt(hex, 16)),
+  );
+}
+
+function replaceAccountData(text: string): string {
+  return text.replace(ACCOUNT_ID, '[id]').replace(ACCOUNT_PARAM, '$1[Filtered]');
+}
+
+/**
+ * `text` with its account ids, handles and sign-in codes replaced, encoded ones included: the
+ * browser reads `?%66riend=` as `?friend=`, and an address nested in another's param is encoded
+ * whole. When a decoded layer holds account data, the text goes decoded that far, so the scrub
+ * shows; otherwise it goes as it came.
+ */
+export function scrubAccountData(text: string): string {
+  let scrubbed = replaceAccountData(text);
+  let layer = scrubbed;
+  for (let depth = 0; depth < MAX_LAYERS; depth++) {
+    const decoded = decodeLayer(layer);
+    if (decoded === layer) break;
+    layer = replaceAccountData(decoded);
+    if (layer !== decoded) scrubbed = layer;
+  }
+  return scrubbed;
+}
+
+/** Scrubs every string inside `value` in place: request addresses, breadcrumbs, spans and messages alike. */
+function scrubStrings<T>(value: T): T {
+  if (typeof value === 'string') return scrubAccountData(value) as T;
+  if (value === null || typeof value !== 'object') return value;
+  const record = value as Record<string, unknown>;
+  for (const key of Object.keys(record)) record[key] = scrubStrings(record[key]);
+  return value;
+}
+
+/**
+ * An event's fields that hold Sentry's own data, never the app's: `debug_meta` names each script's
+ * debug id, a dashed UUID that ties its frames to the uploaded source map, and
+ * `sdkProcessingMetadata` holds the SDK's live state, which never leaves the browser.
+ */
+const SENTRY_OWN_FIELDS = new Set(['debug_meta', 'sdkProcessingMetadata']);
+
+/** Scrubs every string an error report carries except in Sentry's own fields. */
+function scrubEvent<E extends object>(event: E): E {
+  const record = event as Record<string, unknown>;
+  for (const key of Object.keys(record)) {
+    if (!SENTRY_OWN_FIELDS.has(key)) record[key] = scrubStrings(record[key]);
+  }
+  return event;
+}
+
 function sentryOptions(): Parameters<typeof init>[0] {
   // Sentry 11 collects user info, cookies, request/response bodies and query data by
   // default (v10 did not), and bodies here could include Supabase sign-in and vote
@@ -78,8 +141,8 @@ function sentryOptions(): Parameters<typeof init>[0] {
   return {
     dsn: import.meta.env.VITE_SENTRY_DSN,
     environment: sentryEnvironment(__DEPLOY_ENV__, window.location.hostname),
-    // The Supabase integration joins later, from shared/lib/supabase.ts, once a page creates
-    // the client: registering it here would download the Supabase SDK on every page.
+    // No Supabase integration: every Supabase call reports its own failures, named by where
+    // they happened (reportFailure.ts), so the integration would send each refusal twice.
     integrations: [browserTracingIntegration()],
     tracesSampleRate: 0.1,
     dataCollection: {
@@ -105,5 +168,12 @@ function sentryOptions(): Parameters<typeof init>[0] {
     // Vercel's toolbar, which Vercel adds to previews and staging for people signed in to the
     // team: an error thrown inside it isn't the app's (INKWEAVE-15).
     denyUrls: ['/_next-live/'],
+    // The SDK keeps request queries and sends the page's address as it is, and the app's
+    // addresses name accounts and friends: every string an error or a span carries, Sentry's own
+    // fields aside, is scrubbed on the way out, so no report ties to an account. Sentry 11 sends
+    // each span on its own (its default `traceLifecycle`, 'stream'), so traces pass through
+    // beforeSendSpan, never beforeSendTransaction.
+    beforeSend: (event) => scrubEvent(event),
+    beforeSendSpan: (span) => scrubStrings(span),
   };
 }

@@ -20,11 +20,13 @@ const mockMaybeSingle = vi.hoisted(() => vi.fn());
 const mockUpdate = vi.hoisted(() => vi.fn());
 const mockEq = vi.hoisted(() => vi.fn());
 const mockState = vi.hoisted(() => ({client: null as unknown}));
+const mockReport = vi.hoisted(() => vi.fn());
 
 vi.mock('../../shared/lib/supabase', () => ({
   isSupabaseConfigured: () => mockState.client !== null,
   loadSupabase: () => Promise.resolve(mockState.client),
 }));
+vi.mock('../../shared/lib/reportFailure', () => ({reportFailure: mockReport}));
 
 // `clearAllMocks` wipes call history but leaves implementations in place, and
 // vite.config.ts sets no `restoreMocks`. So a console.error spy installed inside a test
@@ -105,6 +107,18 @@ describe('claimIdentity', () => {
   ])('rejects %s rather than passing it through', async (_label, body) => {
     mockRpc.mockResolvedValue({data: body, error: null});
     await expect(claimIdentity()).resolves.toEqual({data: null, error: null});
+  });
+
+  // The answer's rows name the account, so the report carries none of them.
+  it('reports an answer of another shape without its rows', async () => {
+    mockRpc.mockResolvedValue({data: [{handle: 'steel_prince_012', display_name: null}], error: null});
+
+    await claimIdentity();
+
+    expect(mockReport).toHaveBeenCalledExactlyOnceWith(
+      {area: 'profile', operation: 'claim handle'},
+      new Error('unexpected answer from claim_handle'),
+    );
   });
 });
 
@@ -257,5 +271,61 @@ describe('updateDisplayName guards the write', () => {
     const result = await updateDisplayName('u1', '  Doberjohn  ');
     expect(result.data).toBe('Doberjohn');
     expect(mockUpdate).toHaveBeenCalledWith({display_name: 'Doberjohn'});
+  });
+});
+
+describe('failures', () => {
+  const REFUSAL = {message: 'permission denied for table profiles', code: '42501'};
+  const SAVE_NAME = {area: 'profile', operation: 'save name'};
+
+  beforeEach(() => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  it.each([
+    {operation: 'claim handle', call: () => claimIdentity()},
+    {operation: 'read names', call: () => getAuthorNames(['a'])},
+  ])('reports a refused $operation, once', async ({operation, call}) => {
+    mockRpc.mockResolvedValue({data: null, error: REFUSAL});
+    mockIn.mockResolvedValue({data: null, error: REFUSAL});
+
+    await call();
+
+    expect(mockReport).toHaveBeenCalledExactlyOnceWith({area: 'profile', operation}, REFUSAL);
+  });
+
+  it('reports a call that threw', async () => {
+    const failure = new TypeError('Failed to fetch');
+    mockRpc.mockRejectedValue(failure);
+
+    await expect(claimIdentity()).resolves.toEqual({data: null, error: 'Network error'});
+
+    expect(mockReport).toHaveBeenCalledWith({area: 'profile', operation: 'claim handle'}, failure);
+  });
+
+  it('reports a refused name change', async () => {
+    mockMaybeSingle.mockResolvedValue({data: null, error: REFUSAL});
+
+    await updateDisplayName('u1', 'Doberjohn');
+
+    expect(mockReport).toHaveBeenCalledWith(SAVE_NAME, REFUSAL);
+  });
+
+  // The player sees "Could not save that name" while nothing says why.
+  it('reports a name change that matched no row', async () => {
+    mockMaybeSingle.mockResolvedValue({data: null, error: null});
+
+    await updateDisplayName('u1', 'Doberjohn');
+
+    expect(mockReport).toHaveBeenCalledWith(SAVE_NAME, new Error('update matched no row'));
+  });
+
+  it('reports a name change that threw', async () => {
+    const failure = new TypeError('Failed to fetch');
+    mockMaybeSingle.mockRejectedValue(failure);
+
+    await updateDisplayName('u1', 'Doberjohn');
+
+    expect(mockReport).toHaveBeenCalledWith(SAVE_NAME, failure);
   });
 });

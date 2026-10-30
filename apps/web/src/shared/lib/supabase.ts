@@ -1,6 +1,6 @@
 import type { Database } from './database.types';
 import type { AuthOptions, SupabaseClient } from './supabaseClient';
-import { onSentryReady } from './sentry';
+import { reportFailure, type FailureSite } from './reportFailure';
 
 export type InkweaveSupabase = SupabaseClient;
 
@@ -64,15 +64,7 @@ export function loadSupabase(): Promise<InkweaveSupabase | null> {
     // Read the module only as `sdk.<name>` inside this callback, and never pass it on: Rolldown
     // drops the exports a dynamic import never names, but once the namespace escapes it ships
     // the whole module (this is how all of Sentry once landed in a chunk, #640).
-    .then((sdk): InkweaveSupabase => {
-      const client = sdk.createSupabaseClient(url, key, AUTH_OPTIONS);
-      // Sentry's Supabase integration instruments the SupabaseClient class, so it covers this
-      // client whether Sentry loads before or after it exists. Registered here, where the SDK
-      // is already loaded, rather than in Sentry's init, which would download it on every page.
-      const clientClass = sdk.SupabaseClient;
-      onSentryReady((sentry) => sentry.addSupabaseIntegration(clientClass));
-      return client;
-    })
+    .then((sdk): InkweaveSupabase => sdk.createSupabaseClient(url, key, AUTH_OPTIONS))
     // A failed import rejects, except in production builds, where main.tsx cancels Vite's
     // preload error and the import resolves empty, so `createSupabaseClient` above throws. Both
     // land here; clearing the cache lets a later call try again instead of failing forever.
@@ -135,6 +127,8 @@ function toSubmitVoteArgs(vote: QuickVote | InDepthVote) {
   };
 }
 
+const SUBMIT_VOTE: FailureSite = { area: 'votes', operation: 'submit' };
+
 export async function submitVote(
   vote: QuickVote | InDepthVote,
 ): Promise<VoteResult> {
@@ -146,6 +140,7 @@ export async function submitVote(
     if (!supabase) return { error: 'Supabase not configured' };
     const { error } = await supabase.rpc('submit_vote', toSubmitVoteArgs(vote));
 
+    // A rate limit is an answer, not a failure, so Sentry never hears of it.
     if (error?.code === 'P0429') return { error: 'rate_limited' };
 
     // Log RPC errors with context for production debugging
@@ -155,11 +150,13 @@ export async function submitVote(
         message: error.message,
         pair: `${vote.cardA} / ${vote.cardB}`,
       });
+      reportFailure(SUBMIT_VOTE, error);
     }
 
     return { error: error?.message ?? null };
   } catch (e) {
     console.error('[submitVote] Network error:', e);
+    reportFailure(SUBMIT_VOTE, e);
     return { error: 'Network error' };
   }
 }
@@ -167,6 +164,8 @@ export async function submitVote(
 // --- Score reading ---
 
 export type PairScore = Database['public']['Views']['pair_scores']['Row'];
+
+const READ_SCORE: FailureSite = { area: 'votes', operation: 'read score' };
 
 export async function getPairScore(
   cardA: string,
@@ -185,7 +184,7 @@ export async function getPairScore(
       .eq('card_a_id', a)
       .eq('card_b_id', b)
       // maybeSingle() → { data: null, error: null } for a pair with no votes yet,
-      // instead of the PGRST116 error the Sentry Supabase integration captures.
+      // instead of a PGRST116 error that would be reported.
       .maybeSingle();
 
     if (error) {
@@ -194,12 +193,14 @@ export async function getPairScore(
         message: error.message,
         pair: `${a} / ${b}`,
       });
+      reportFailure(READ_SCORE, error);
       return null;
     }
 
     return data;
   } catch (e) {
     console.error('[getPairScore] Network error:', e);
+    reportFailure(READ_SCORE, e);
     return null;
   }
 }

@@ -1,5 +1,5 @@
-import {loadSupabase, type InkweaveSupabase} from '../../shared/lib/supabase';
-import {NOT_CONFIGURED, type RepoResult} from '../../shared/lib/repoResult';
+import type {RepoResult} from '../../shared/lib/repoResult';
+import {callSupabase} from '../../shared/lib/supabaseCall';
 import type {CollectionEntries} from './collectionParser';
 import {isCollectionEntries} from './collectionEntryGuards';
 
@@ -11,7 +11,7 @@ import {isCollectionEntries} from './collectionEntryGuards';
  * read on. The binder's reads live here, in `features/collection`, so the binder's chunk and
  * the friends chunk share no module (`useFriendCollection`).
  *
- * Same house rules as `collectionRepository`: env-gated, every call wrapped, a `RepoResult`.
+ * Every call goes through `callSupabase`, as in `collectionRepository`.
  */
 
 const SCHEMA_VERSION = 1;
@@ -27,31 +27,9 @@ export interface Player {
   name: string | null;
 }
 
-/**
- * Load the client, run the op, normalise everything to a RepoResult. `loadSupabase()` sits
- * inside the try, as in `collectionRepository` (#729): it can reject on a failed download.
- */
-async function run<T>(
-  op: (client: InkweaveSupabase) => PromiseLike<{data: T | null; error: {message: string} | null}>,
-): Promise<RepoResult<T>> {
-  try {
-    const supabase = await loadSupabase();
-    if (!supabase) return {data: null, error: NOT_CONFIGURED};
-    const {data, error} = await op(supabase);
-    if (error) {
-      console.error('[sharingRepository] query failed:', error.message);
-      return {data: null, error: error.message};
-    }
-    return {data, error: null};
-  } catch (e) {
-    console.error('[sharingRepository] network error:', e);
-    return {data: null, error: 'Network error'};
-  }
-}
-
 /** The caller's switch; false when they have never set it (no row). */
 export function getSharing(ownerId: string): Promise<RepoResult<boolean>> {
-  return run(async (client) => {
+  return callSupabase({area: 'sharing', operation: 'read switch'}, async (client) => {
     const {data, error} = await client
       .from('collection_sharing')
       .select('friends')
@@ -67,7 +45,7 @@ export function getSharing(ownerId: string): Promise<RepoResult<boolean>> {
  * with no collection gets an error.
  */
 export function setSharing(ownerId: string, friends: boolean): Promise<RepoResult<null>> {
-  return run(async (client) => {
+  return callSupabase({area: 'sharing', operation: 'save switch'}, async (client) => {
     const {error} = await client.from('collection_sharing').upsert({owner_id: ownerId, friends}, {onConflict: 'owner_id'});
     return {data: null, error};
   });
@@ -90,19 +68,24 @@ function friendEntries(row: FriendRow): CollectionEntries | null {
   return isCollectionEntries(row.entries) ? row.entries : null;
 }
 
+/** Why a friend's row was refused: an Error, so Sentry files it as the app's to look at, not the server's. */
+function unusableRow(row: FriendRow): Error {
+  return new Error(`unusable friend collection (schema ${String(row.schema_version)})`);
+}
+
 /**
  * A friend's collection, or null data when they don't share it with the caller: not a
  * friend, a request still waiting, the switch off, or no collection. The function answers
  * each with no row, so the call tells a stranger nothing.
  */
 export function getFriendCollection(friendId: string): Promise<RepoResult<CollectionEntries | null>> {
-  return run(async (client) => {
+  return callSupabase({area: 'sharing', operation: 'read friend binder'}, async (client) => {
     const {data, error} = await client.rpc('friend_collections', {only_friend: friendId});
     if (error || !data) return {data: null, error};
     const row = (data as FriendRow[]).find((each) => each.owner_id === friendId);
     if (row === undefined) return {data: null, error: null};
     const entries = friendEntries(row);
-    if (entries === null) return {data: null, error: {message: `unusable friend collection (schema ${String(row.schema_version)})`}};
+    if (entries === null) return {data: null, error: unusableRow(row)};
     return {data: entries, error: null};
   });
 }
@@ -112,13 +95,13 @@ export function getFriendCollection(friendId: string): Promise<RepoResult<Collec
  * this app can't read fails the whole read, so no friend's copies drop out of a count unsaid.
  */
 export function getSharedCollections(): Promise<RepoResult<Map<string, CollectionEntries>>> {
-  return run(async (client) => {
+  return callSupabase({area: 'sharing', operation: 'read friend binders'}, async (client) => {
     const {data, error} = await client.rpc('friend_collections');
     if (error || !data) return {data: null, error};
     const byOwner = new Map<string, CollectionEntries>();
     for (const row of data as FriendRow[]) {
       const entries = friendEntries(row);
-      if (entries === null) return {data: null, error: {message: `unusable friend collection (schema ${String(row.schema_version)})`}};
+      if (entries === null) return {data: null, error: unusableRow(row)};
       byOwner.set(String(row.owner_id), entries);
     }
     return {data: byOwner, error: null};
@@ -132,7 +115,7 @@ export function getSharedCollections(): Promise<RepoResult<Map<string, Collectio
 export function getPlayerByHandle(handle: string): Promise<RepoResult<Player | null>> {
   const wanted = handle.toLowerCase();
   if (!HANDLE.test(wanted)) return Promise.resolve({data: null, error: null});
-  return run(async (client) => {
+  return callSupabase({area: 'sharing', operation: 'find player'}, async (client) => {
     const {data, error} = await client
       .from('profiles')
       .select('id, handle, display_name')

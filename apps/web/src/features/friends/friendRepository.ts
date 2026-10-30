@@ -1,16 +1,17 @@
 // Supabase access for friends (#852): the caller's friend code, their friendships, and
 // the public names of the other side of each one.
 //
-// Same house rules as profileRepository: env-gated (loadSupabase() may resolve null), and
-// every call wrapped so a network failure degrades instead of throwing. RLS scopes every
-// read and delete to rows the caller is in; the writes go through SECURITY DEFINER RPCs.
+// Every call goes through callSupabase, so a build without Supabase or a failed request
+// degrades instead of throwing. RLS scopes every read and delete to rows the caller is in;
+// the writes go through SECURITY DEFINER RPCs.
 //
 // The names live here, not in profileRepository: that module loads on every page
 // (ProfileProvider mounts in AppLayout), and this one only with the Friends section.
 
 import type {PublicIdentity} from '../profile';
-import {loadSupabase, type InkweaveSupabase} from '../../shared/lib/supabase';
-import {NOT_CONFIGURED, type RepoResult} from '../../shared/lib/repoResult';
+import type {RepoResult} from '../../shared/lib/repoResult';
+import {reportFailure, type FailureSite} from '../../shared/lib/reportFailure';
+import {callSupabase} from '../../shared/lib/supabaseCall';
 
 export type FriendStatus = 'pending' | 'accepted';
 
@@ -91,33 +92,16 @@ function isRefusal(status: unknown): status is Refusal {
   return REFUSALS.has(status as Refusal);
 }
 
-/** Runs one call; `failure` replaces a query error's own text when the UI shows it. */
-async function run<T>(
-  op: (client: InkweaveSupabase) => PromiseLike<{data: T | null; error: {message: string} | null}>,
-  failure?: string,
-): Promise<RepoResult<T>> {
-  try {
-    const supabase = await loadSupabase();
-    if (!supabase) return {data: null, error: NOT_CONFIGURED};
-    const {data, error} = await op(supabase);
-    if (error) {
-      console.error('[friendRepository] query failed:', error.message);
-      return {data: null, error: failure ?? error.message};
-    }
-    return {data, error: null};
-  } catch (e) {
-    console.error('[friendRepository] network error:', e);
-    return {data: null, error: 'Network error'};
-  }
-}
-
 /** The caller's code, which the database makes the first time it is asked for. */
 export function claimFriendCode(): Promise<RepoResult<string>> {
-  return run(async (c) => {
+  return callSupabase({area: 'friends', operation: 'claim code'}, async (c) => {
     const {data, error} = await c.rpc('claim_friend_code');
     return {data: typeof data === 'string' ? data : null, error};
   });
 }
+
+/** A send's failures report under one name, the call's and its answer's alike. */
+const SEND_REQUEST: FailureSite = {area: 'friends', operation: 'send request'};
 
 /** The single row `send_friend_request` answers with, or null for an answer of any other shape. */
 function onlyRow(rows: unknown): SendAnswerRow | null {
@@ -136,24 +120,32 @@ function readSendAnswer(rows: unknown): SentResult {
   const status = row?.status;
   if (isRefusal(status)) return {data: null, error: REFUSALS.get(status) ?? SEND_FAILED, answer: status};
   console.error('[friendRepository] unexpected answer from send_friend_request:', rows);
+  // Never the rows themselves: they carry account ids.
+  reportFailure(SEND_REQUEST, new Error('unexpected answer from send_friend_request'));
   return {data: null, error: SEND_FAILED, answer: 'failed'};
 }
 
 /** Sends a request to whoever holds `code`, or accepts theirs if they asked first. */
 export async function sendFriendRequest(code: string): Promise<SentResult> {
-  const {data, error} = await run((c) => c.rpc('send_friend_request', {friend_code: code}), SEND_FAILED);
+  const {data, error} = await callSupabase(
+    SEND_REQUEST,
+    (c) => c.rpc('send_friend_request', {friend_code: code}),
+    SEND_FAILED,
+  );
   if (error) return {data: null, error, answer: 'failed'};
   return readSendAnswer(data);
 }
 
 /** Accepts a request sent to the caller. False when there was none to accept. */
 export function acceptFriendRequest(requesterId: string): Promise<RepoResult<boolean>> {
-  return run((c) => c.rpc('accept_friend_request', {requester: requesterId}));
+  return callSupabase({area: 'friends', operation: 'accept request'}, (c) =>
+    c.rpc('accept_friend_request', {requester: requesterId}),
+  );
 }
 
 /** Every friendship row the caller is in, waiting or accepted, either side. */
 export function listFriendships(): Promise<RepoResult<Friendship[]>> {
-  return run(async (c) => {
+  return callSupabase({area: 'friends', operation: 'list'}, async (c) => {
     const {data, error} = await c
       .from('friendships')
       .select('requester_id, addressee_id, status, created_at, accepted_at');
@@ -179,7 +171,9 @@ export function listFriendships(): Promise<RepoResult<Friendship[]>> {
  * delete that matched nothing (the other side removed it first) is still done.
  */
 export function removeFriendship({requesterId, addresseeId}: FriendshipPair): Promise<RepoResult<null>> {
-  return run((c) => c.from('friendships').delete().eq('requester_id', requesterId).eq('addressee_id', addresseeId));
+  return callSupabase({area: 'friends', operation: 'remove'}, (c) =>
+    c.from('friendships').delete().eq('requester_id', requesterId).eq('addressee_id', addresseeId),
+  );
 }
 
 /**
@@ -192,7 +186,7 @@ export function listFriendIdentities(ids: readonly string[]): Promise<RepoResult
   // No ids means no query, as in getAuthorNames.
   if (unique.length === 0) return Promise.resolve({data: new Map(), error: null});
 
-  return run(async (c) => {
+  return callSupabase({area: 'friends', operation: 'read names'}, async (c) => {
     const {data, error} = await c.from('profiles').select('id, handle, display_name').in('id', unique);
     if (!data) return {data: null, error};
     const byId = new Map<string, PublicIdentity>();
@@ -208,7 +202,7 @@ export function listFriendIdentities(ids: readonly string[]): Promise<RepoResult
  * whose switch is on, as `shared_friends()` checks on every call.
  */
 export function listSharingFriends(): Promise<RepoResult<Set<string>>> {
-  return run(async (c) => {
+  return callSupabase({area: 'friends', operation: 'read sharing'}, async (c) => {
     const {data, error} = await c.rpc('shared_friends');
     const ids = Array.isArray(data) ? data.filter((id): id is string => typeof id === 'string') : null;
     return {data: ids ? new Set(ids) : null, error};

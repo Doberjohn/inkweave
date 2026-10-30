@@ -23,6 +23,7 @@
 // because OTHER things share that quota, not because this payload is large.
 
 import type {RepoResult} from '../../shared/lib/repoResult';
+import {reportFailure, type FailureSite} from '../../shared/lib/reportFailure';
 import type {CollectionEntries} from './collectionParser';
 import {isCollectionEntries} from './collectionEntryGuards';
 
@@ -93,6 +94,15 @@ function isCollectionShape(value: unknown): value is StoredCollection & Partial<
   );
 }
 
+/** Where a failed read of the stored copy goes to Sentry. A lost copy goes too, as unexpected. */
+const READ_BINDER: FailureSite = {area: 'collection', operation: 'read binder'};
+
+/** A copy another schema version wrote, which a schema change drops on purpose, so it isn't lost. */
+function isOtherSchema(value: unknown): boolean {
+  const version = (value as {schemaVersion?: unknown} | null)?.schemaVersion;
+  return typeof version === 'number' && version !== COLLECTION_SCHEMA_VERSION;
+}
+
 /**
  * Read the stored collection, or `null` if none. A corrupt entry (bad JSON, wrong
  * shape, or a stale `schemaVersion`) is removed and treated as absent, so the app
@@ -104,6 +114,7 @@ export function readCollection(): LocalCollection | null {
     raw = localStorage.getItem(COLLECTION_KEY);
   } catch (e) {
     console.warn('[collectionStorage] localStorage read denied:', e);
+    reportFailure({...READ_BINDER, storage: true}, e);
     return null;
   }
   if (raw === null) return null;
@@ -114,8 +125,10 @@ export function readCollection(): LocalCollection | null {
       return {...parsed, ownerUid: parsed.ownerUid ?? null, source: parsed.source ?? 'import'};
     }
     console.error('[collectionStorage] Unexpected collection shape, clearing.');
+    if (!isOtherSchema(parsed)) reportFailure(READ_BINDER, new Error('unexpected collection shape'));
   } catch (e) {
     console.error('[collectionStorage] Corrupted collection JSON, clearing key:', e);
+    reportFailure(READ_BINDER, e);
   }
   clearCollection();
   return null;
@@ -158,6 +171,7 @@ export function writeCollection(
     return {data: collection, error: null};
   } catch (e) {
     console.error('[collectionStorage] localStorage write failed:', e);
+    reportFailure({area: 'collection', operation: 'store binder', storage: true}, e);
     return {data: null, error: 'Your browser would not let us save this collection.'};
   }
 }
@@ -168,6 +182,7 @@ export function clearCollection(): void {
     localStorage.removeItem(COLLECTION_KEY);
   } catch (e) {
     console.warn('[collectionStorage] localStorage cleanup failed:', e);
+    reportFailure({area: 'collection', operation: 'clear binder', storage: true}, e);
   }
 }
 
@@ -191,11 +206,14 @@ export type Uid = string;
 
 function markerStore(prefix: string) {
   const keyFor = (uid: Uid) => `${prefix}:${uid}`;
+  // The uid is only ever in the key, so Sentry hears which marker failed, never whose.
+  const site: FailureSite = {area: 'collection', operation: `${prefix} marker`, storage: true};
   const guarded = (action: () => void) => {
     try {
       action();
     } catch (e) {
       console.warn(`[collectionStorage] ${prefix} write failed:`, e);
+      reportFailure(site, e);
     }
   };
   return {
@@ -204,6 +222,7 @@ function markerStore(prefix: string) {
         return localStorage.getItem(keyFor(uid));
       } catch (e) {
         console.warn(`[collectionStorage] ${prefix} read denied:`, e);
+        reportFailure(site, e);
         return null;
       }
     },

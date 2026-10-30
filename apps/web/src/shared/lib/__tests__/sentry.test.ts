@@ -7,8 +7,6 @@ const sentryMock = () => ({
   browserTracingIntegration: vi.fn(() => ({name: 'BrowserTracing'})),
   captureException: vi.fn(),
   startSpan: vi.fn(),
-  addIntegration: vi.fn(),
-  supabaseIntegration: vi.fn(),
 });
 
 // sentry.ts keeps its loaded state at module level, so each test loads fresh copies of it and
@@ -125,8 +123,8 @@ describe('sentry', () => {
     vi.resetModules();
     vi.doMock(mocked, broken);
     const {loadSentry, onSentryReady} = await import('../sentry');
-    // Uses the API, as supabase.ts's callback does, so it throws when handed anything else.
-    const waiting = vi.fn((sentry: SentryApi) => sentry.addSupabaseIntegration({}));
+    // Uses the API, as posthog.ts's callback does, so it throws when handed anything else.
+    const waiting = vi.fn((sentry: SentryApi) => sentry.captureException(new Error('probe')));
     const later = vi.fn();
 
     onSentryReady(waiting);
