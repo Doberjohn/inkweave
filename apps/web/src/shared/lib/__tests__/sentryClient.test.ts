@@ -6,7 +6,14 @@ afterEach(() => {
   vi.doUnmock('@sentry/react');
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+  window.history.replaceState(null, '', '/');
 });
+
+// Made-up account ids, in the forms the repositories send them.
+const ACCOUNT = '00000000-0000-4000-8000-0000000000a1';
+const FRIEND = '00000000-0000-4000-8000-0000000000b2';
+const REST = 'https://example.supabase.co/rest/v1';
 
 // What the SDK sends, decoded. The SDK keeps the first fetch it is handed for as long as its
 // modules live, which outlasts vi.resetModules, so every test stubs fetch with this one function
@@ -68,6 +75,28 @@ describe('sentryEnvironment', () => {
       expect(sentryEnvironment(deployEnv, hostname)).toBe(expected);
     },
   );
+});
+
+describe('scrubAccountData', () => {
+  it.each([
+    [`${REST}/collections?select=entries&owner_id=eq.${ACCOUNT}`, `${REST}/collections?select=entries&owner_id=eq.[id]`],
+    // Encoded, the id follows %28, whose 8 is a hex digit: the match can't lean on a word boundary.
+    [
+      `${REST}/profiles?select=id%2Chandle&id=in.%28${ACCOUNT}%2C${FRIEND}%29`,
+      `${REST}/profiles?select=id%2Chandle&id=in.%28[id]%2C[id]%29`,
+    ],
+    [`${REST}/profiles?select=id&handle=eq.ruby_hero_042`, `${REST}/profiles?select=id&handle=[Filtered]`],
+    ['https://inkweave.ink/browse?binder=all&friend=ruby_hero_042', 'https://inkweave.ink/browse?binder=all&friend=[Filtered]'],
+    ['https://inkweave.ink/auth/callback?code=4f2a9c', 'https://inkweave.ink/auth/callback?code=[Filtered]'],
+    [
+      `${REST}/pair_scores?select=*&card_a_id=eq.14001&card_b_id=eq.2998`,
+      `${REST}/pair_scores?select=*&card_a_id=eq.14001&card_b_id=eq.2998`,
+    ],
+  ])('scrubs %s', async (input, expected) => {
+    const {scrubAccountData} = await import('../sentryClient');
+
+    expect(scrubAccountData(input)).toBe(expected);
+  });
 });
 
 describe('startSentry', () => {
@@ -148,5 +177,58 @@ describe('startSentry', () => {
     expect(await flush(2000)).toBe(true);
     expect(sent.join('\n')).toContain('app broke');
     expect(sent.join('\n')).not.toContain('toolbar broke');
+  });
+
+  // The SDK sends the page's address as it is and keeps every request's query, and the app's
+  // addresses name accounts and friends. The breadcrumbs and the span are written as the SDK writes
+  // its own (a fetch breadcrumb's data.url, a request span's url.full), so these hold whether or not
+  // an earlier test's SDK still has fetch instrumented.
+  it('sends no account id, handle or sign-in code in an error report', async () => {
+    const sent = captureSent();
+    vi.stubEnv('VITE_SENTRY_DSN', 'http://public@127.0.0.1:9/1');
+    window.history.replaceState(null, '', '/browse?binder=all&friend=ruby_hero_042&code=4f2a9c');
+    vi.resetModules();
+    const {startSentry} = await import('../sentryClient');
+    const {addBreadcrumb, flush} = await import('@sentry/react');
+    const sentry = startSentry();
+    addBreadcrumb({
+      category: 'fetch',
+      type: 'http',
+      data: {method: 'GET', url: `${REST}/collections?select=entries&owner_id=eq.${ACCOUNT}`},
+    });
+    addBreadcrumb({category: 'fetch', type: 'http', data: {method: 'GET', url: `${REST}/profiles?select=id&id=in.%28${FRIEND}%29`}});
+
+    sentry?.captureException(new Error(`row for ${ACCOUNT} unusable`));
+
+    expect(await flush(2000)).toBe(true);
+    const body = sent.join('\n');
+    expect(body).toContain('owner_id=eq.[id]');
+    expect(body).toContain('row for [id] unusable');
+    for (const secret of [ACCOUNT, FRIEND, 'ruby_hero_042', '4f2a9c']) expect(body).not.toContain(secret);
+  });
+
+  it('sends no account id in a trace', async () => {
+    const sent = captureSent();
+    vi.stubEnv('VITE_SENTRY_DSN', 'http://public@127.0.0.1:9/1');
+    vi.resetModules();
+    const {startSentry} = await import('../sentryClient');
+    const {flush, startNewTrace} = await import('@sentry/react');
+    const sentry = startSentry();
+    // A new trace draws its sample value from Math.random: 0 is under tracesSampleRate's 0.1.
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+
+    startNewTrace(() =>
+      sentry?.startSpan({name: 'probe', forceTransaction: true}, () =>
+        sentry.startSpan(
+          {name: 'GET /rest/v1/collections', attributes: {'url.full': `${REST}/collections?owner_id=eq.${ACCOUNT}`}},
+          () => undefined,
+        ),
+      ),
+    );
+
+    expect(await flush(2000)).toBe(true);
+    const body = sent.join('\n');
+    expect(body).toContain('owner_id=eq.[id]');
+    expect(body).not.toContain(ACCOUNT);
   });
 });

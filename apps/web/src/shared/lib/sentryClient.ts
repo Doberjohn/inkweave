@@ -68,6 +68,34 @@ export function sentryEnvironment(deployEnv: string, hostname: string): string {
   return deployEnv === 'production' && host !== PRODUCTION_HOST ? 'preview' : deployEnv;
 }
 
+/**
+ * An account id. Supabase's user ids are UUIDs written with dashes; card ids are numbers, and
+ * Sentry's own ids have no dashes, so neither matches. No word boundaries: in an encoded
+ * `id=in.(…)` filter the id follows `%28`, whose 8 is a hex digit.
+ */
+const ACCOUNT_ID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
+/**
+ * Address params whose value names a player, or is a sign-in's one-time code: a friend's binder
+ * (binderCards' FRIEND_PARAM; a literal, since this module imports nothing from the app), a
+ * profile looked up by handle, and the sign-in return.
+ */
+const ACCOUNT_PARAM = /\b((?:friend|handle|code)=)[^&#\s"']*/gi;
+
+/** `text` with its account ids, handles and sign-in codes replaced. */
+export function scrubAccountData(text: string): string {
+  return text.replace(ACCOUNT_ID, '[id]').replace(ACCOUNT_PARAM, '$1[Filtered]');
+}
+
+/** Scrubs every string inside `value` in place: request addresses, breadcrumbs, spans and messages alike. */
+function scrubStrings<T>(value: T): T {
+  if (typeof value === 'string') return scrubAccountData(value) as T;
+  if (value === null || typeof value !== 'object') return value;
+  const record = value as Record<string, unknown>;
+  for (const key of Object.keys(record)) record[key] = scrubStrings(record[key]);
+  return value;
+}
+
 function sentryOptions(): Parameters<typeof init>[0] {
   // Sentry 11 collects user info, cookies, request/response bodies and query data by
   // default (v10 did not), and bodies here could include Supabase sign-in and vote
@@ -105,5 +133,12 @@ function sentryOptions(): Parameters<typeof init>[0] {
     // Vercel's toolbar, which Vercel adds to previews and staging for people signed in to the
     // team: an error thrown inside it isn't the app's (INKWEAVE-15).
     denyUrls: ['/_next-live/'],
+    // The SDK keeps request queries and sends the page's address as it is, and the app's
+    // addresses name accounts and friends: every string an error or a span carries is scrubbed on
+    // the way out, so no report ties to an account. Sentry 11 sends each span on its own (its
+    // default `traceLifecycle`, 'stream'), so traces pass through beforeSendSpan, never
+    // beforeSendTransaction.
+    beforeSend: (event) => scrubStrings(event),
+    beforeSendSpan: (span) => scrubStrings(span),
   };
 }
