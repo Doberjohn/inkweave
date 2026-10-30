@@ -6,14 +6,13 @@
 //   * `display_name` — what people read on a deck. Seeded from the handle in title case
 //                      at claim time, then owned by the user. NOT unique.
 //
-// Same house rules as deckRepository: env-gated (loadSupabase() may resolve null), every call
-// wrapped so a network failure degrades instead of throwing, owner scoping by RLS.
+// Every call goes through callSupabase, so a build without Supabase or a failed request
+// degrades instead of throwing. RLS scopes every write to the owner's own row.
 
-import {isSupabaseConfigured, loadSupabase, type InkweaveSupabase} from '../../shared/lib/supabase';
+import {isSupabaseConfigured} from '../../shared/lib/supabase';
 import {NOT_CONFIGURED, type RepoResult} from '../../shared/lib/repoResult';
 import {reportFailure, type FailureSite} from '../../shared/lib/reportFailure';
-
-type ProfilesClient = InkweaveSupabase;
+import {callSupabase} from '../../shared/lib/supabaseCall';
 
 /** Both names for one account. */
 export interface PublicIdentity {
@@ -57,27 +56,8 @@ export function clampDisplayName(value: string): string {
   return points.length <= DISPLAY_NAME_MAX ? value : points.slice(0, DISPLAY_NAME_MAX).join('');
 }
 
-/** Runs one call. Both failures also go to Sentry, named by `operation`. */
-async function run<T>(
-  operation: string,
-  op: (client: ProfilesClient) => PromiseLike<{data: T | null; error: {message: string} | null}>,
-): Promise<RepoResult<T>> {
-  try {
-    const supabase = await loadSupabase();
-    if (!supabase) return {data: null, error: NOT_CONFIGURED};
-    const {data, error} = await op(supabase);
-    if (error) {
-      console.error('[profileRepository] query failed:', error.message);
-      reportFailure({area: 'profile', operation}, error);
-      return {data: null, error: error.message};
-    }
-    return {data, error: null};
-  } catch (e) {
-    console.error('[profileRepository] network error:', e);
-    reportFailure({area: 'profile', operation}, e);
-    return {data: null, error: 'Network error'};
-  }
-}
+/** A claim's failures report under one name, the call's and its answer's alike. */
+const CLAIM_HANDLE: FailureSite = {area: 'profile', operation: 'claim handle'};
 
 /**
  * Get the caller's public identity, generating one if they have none.
@@ -95,14 +75,12 @@ async function run<T>(
  * caller should not trust, hence the explicit check rather than a bare `data[0]`.
  */
 export function claimIdentity(): Promise<RepoResult<PublicIdentity>> {
-  return run('claim handle', async (c) => {
+  return callSupabase(CLAIM_HANDLE, async (c) => {
     const {data, error} = await c.rpc('claim_handle');
     const row = Array.isArray(data) && data.length === 1 ? data[0] : null;
     if (row?.handle && row.display_name) return {data: {handle: row.handle, displayName: row.display_name}, error};
-    // A refusal is run's to report. Any other answer goes without its rows, which carry account ids.
-    if (!error) {
-      reportFailure({area: 'profile', operation: 'claim handle'}, new Error('unexpected answer from claim_handle'));
-    }
+    // A refusal is callSupabase's to report. Any other answer goes without its rows, which carry account ids.
+    if (!error) reportFailure(CLAIM_HANDLE, new Error('unexpected answer from claim_handle'));
     return {data: null, error};
   });
 }
@@ -124,7 +102,7 @@ export function getAuthorNames(userIds: readonly string[]): Promise<RepoResult<M
   // nothing, so this is purely about not making it.
   if (unique.length === 0) return Promise.resolve({data: new Map(), error: null});
 
-  return run('read names', async (c) => {
+  return callSupabase({area: 'profile', operation: 'read names'}, async (c) => {
     const {data, error} = await c.from('profiles').select('id, display_name').in('id', unique);
     if (!data) return {data: null, error};
     const byId = new Map<string, string>();
@@ -135,8 +113,10 @@ export function getAuthorNames(userIds: readonly string[]): Promise<RepoResult<M
   });
 }
 
-/** Where `updateDisplayName`'s failures go to Sentry: it runs its own call, outside `run`. */
+/** A save's failures report under one name, the call's and a save that matched no row alike. */
 const SAVE_NAME: FailureSite = {area: 'profile', operation: 'save name'};
+
+const SAVE_FAILED = 'Could not save that name. Try again.';
 
 /**
  * Set the caller's display name. Needs no RPC: `profiles_update_own` already permits it
@@ -152,38 +132,31 @@ export async function updateDisplayName(userId: string, displayName: string): Pr
   // but sets no minimum, so the database would happily store "" or "a"; this is the
   // only place the documented 2-character floor is enforced against every caller.
   if (!isValidDisplayName(trimmed)) return {data: null, error: DISPLAY_NAME_RULE};
-  try {
-    const supabase = await loadSupabase();
-    if (!supabase) return {data: null, error: NOT_CONFIGURED};
-    const {data, error} = await supabase
-      .from('profiles')
-      .update({display_name: trimmed})
-      .eq('id', userId)
-      .select('display_name')
-      .maybeSingle();
-
-    if (error) {
-      // No 23514 special case. The guard above mirrors `profiles_display_name_len`
-      // exactly, so a request that gets this far cannot violate it; and a bare 23514
-      // would not prove it was that constraint anyway, since `profiles_handle_format`
-      // sits on the same row and Postgres evaluates every CHECK on an UPDATE. A check
-      // violation here therefore means something unforeseen, which the generic message
-      // reports honestly and the log makes debuggable.
-      console.error('[profileRepository] display name update failed:', error.message);
-      reportFailure(SAVE_NAME, error);
-      return {data: null, error: 'Could not save that name. Try again.'};
-    }
-    // A null row means RLS matched nothing, i.e. the id is not the caller's. Reported
-    // rather than swallowed: succeeding silently would show the new name on screen
-    // while the database still held the old one.
-    if (!data?.display_name) {
-      reportFailure(SAVE_NAME, new Error('update matched no row'));
-      return {data: null, error: 'Could not save that name. Try again.'};
-    }
-    return {data: data.display_name, error: null};
-  } catch (e) {
-    console.error('[profileRepository] network error:', e);
-    reportFailure(SAVE_NAME, e);
-    return {data: null, error: 'Network error'};
+  // A refusal shows the generic message, with no 23514 special case. The guard above mirrors
+  // `profiles_display_name_len` exactly, so a request that gets this far cannot violate it;
+  // and a bare 23514 would not prove it was that constraint anyway, since
+  // `profiles_handle_format` sits on the same row and Postgres evaluates every CHECK on an
+  // UPDATE. A check violation here therefore means something unforeseen, which the generic
+  // message reports honestly and the log makes debuggable.
+  const saved = await callSupabase(
+    SAVE_NAME,
+    async (c) => {
+      const {data, error} = await c
+        .from('profiles')
+        .update({display_name: trimmed})
+        .eq('id', userId)
+        .select('display_name')
+        .maybeSingle();
+      return {data: data?.display_name ?? null, error};
+    },
+    SAVE_FAILED,
+  );
+  // A null row means RLS matched nothing, i.e. the id is not the caller's. Reported
+  // rather than swallowed: succeeding silently would show the new name on screen
+  // while the database still held the old one.
+  if (!saved.error && !saved.data) {
+    reportFailure(SAVE_NAME, new Error('update matched no row'));
+    return {data: null, error: SAVE_FAILED};
   }
+  return saved;
 }

@@ -90,6 +90,20 @@ describe('scrubAccountData', () => {
       `${REST}/pair_scores?select=*&card_a_id=eq.14001&card_b_id=eq.2998`,
       `${REST}/pair_scores?select=*&card_a_id=eq.14001&card_b_id=eq.2998`,
     ],
+    // The browser decodes a param's name, so an escaped name still opens a friend's binder.
+    ['https://inkweave.ink/browse?%66riend=ruby_hero_042', 'https://inkweave.ink/browse?friend=[Filtered]'],
+    [`${REST}/profiles?select=id&id=eq.${ACCOUNT.replaceAll('-', '%2D')}`, `${REST}/profiles?select=id&id=eq.[id]`],
+    // An address in another's param is encoded whole, and once more when that one is nested too.
+    [
+      'https://inkweave.ink/sign-in?next=%2Fbrowse%3Ffriend%3Druby_hero_042',
+      'https://inkweave.ink/sign-in?next=/browse?friend=[Filtered]',
+    ],
+    [
+      'https://inkweave.ink/sign-in?next=%252Fauth%253Fcode%253D4f2a9c',
+      'https://inkweave.ink/sign-in?next=/auth?code=[Filtered]',
+    ],
+    // Encoded text with no account data in any layer goes as it came.
+    ['https://inkweave.ink/browse?q=belle%20%2F%20hero%2541', 'https://inkweave.ink/browse?q=belle%20%2F%20hero%2541'],
   ])('scrubs %s', async (input, expected) => {
     const {scrubAccountData} = await import('../sentryClient');
 

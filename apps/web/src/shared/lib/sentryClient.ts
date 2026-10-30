@@ -69,9 +69,41 @@ const ACCOUNT_ID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
  */
 const ACCOUNT_PARAM = /\b((?:friend|handle|code)=)[^&#\s"']*/gi;
 
-/** `text` with its account ids, handles and sign-in codes replaced. */
-export function scrubAccountData(text: string): string {
+/** A percent-escaped ASCII character: every character of a param's name, its `=`, and an id is one. */
+const ASCII_ESCAPE = /%([0-7][0-9a-f])/gi;
+
+/**
+ * How many layers of percent-encoding a string is read through: an address can sit encoded in
+ * another address's param, and that one in a third's.
+ */
+const MAX_LAYERS = 4;
+
+function decodeLayer(text: string): string {
+  return text.replace(ASCII_ESCAPE, (_, hex: string) =>
+    String.fromCharCode(Number.parseInt(hex, 16)),
+  );
+}
+
+function replaceAccountData(text: string): string {
   return text.replace(ACCOUNT_ID, '[id]').replace(ACCOUNT_PARAM, '$1[Filtered]');
+}
+
+/**
+ * `text` with its account ids, handles and sign-in codes replaced, encoded ones included: the
+ * browser reads `?%66riend=` as `?friend=`, and an address nested in another's param is encoded
+ * whole. When a decoded layer holds account data, the text goes decoded that far, so the scrub
+ * shows; otherwise it goes as it came.
+ */
+export function scrubAccountData(text: string): string {
+  let scrubbed = replaceAccountData(text);
+  let layer = scrubbed;
+  for (let depth = 0; depth < MAX_LAYERS; depth++) {
+    const decoded = decodeLayer(layer);
+    if (decoded === layer) break;
+    layer = replaceAccountData(decoded);
+    if (layer !== decoded) scrubbed = layer;
+  }
+  return scrubbed;
 }
 
 /** Scrubs every string inside `value` in place: request addresses, breadcrumbs, spans and messages alike. */
