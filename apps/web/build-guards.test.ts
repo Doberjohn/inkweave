@@ -1,8 +1,11 @@
 // @vitest-environment node
 import path from 'node:path';
-import {describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {
+  type BuiltChunks,
   type BuiltFiles,
+  collectionModeOn,
+  loadableCollectionCode,
   staleStartupEntries,
   uiCompilerReport,
   unresolvedCssUrls,
@@ -125,5 +128,103 @@ describe('unresolvedCssUrls', () => {
     expect(
       unresolvedCssUrls(build(html('.l{background:url(../public/brand/mark.svg)}')), PUBLIC),
     ).toEqual(['../public/brand/mark.svg in index.html']);
+  });
+});
+
+describe('loadableCollectionCode', () => {
+  const SRC = '/r/apps/web/src';
+  const page = (source: string) => ({type: 'asset' as const, fileName: 'index.html', source});
+  const chunk = (fileName: string, code: string, modules: Record<string, number>) => ({
+    type: 'chunk' as const,
+    fileName,
+    code,
+    modules: Object.fromEntries(
+      Object.entries(modules).map(([id, renderedLength]) => [id, {renderedLength}]),
+    ),
+  });
+  const bundleOf = (...outputs: BuiltChunks[string][]): BuiltChunks =>
+    Object.fromEntries(outputs.map((output) => [output.fileName, output]));
+  const ENTRY = '<script type="module" src="/assets/index-a.js"></script>';
+
+  it('names nothing when only chunks no page loads name the collection', () => {
+    const bundle = bundleOf(
+      page(ENTRY),
+      chunk('assets/index-a.js', 'import("./BrowsePage-b.js")', {[`${SRC}/main.tsx`]: 40}),
+      chunk('assets/BrowsePage-b.js', '', {[`${SRC}/pages/BrowsePage.tsx`]: 40}),
+      chunk('assets/BrowseCollectionPage-c.js', 'import("./CollectionScope-d.js")', {
+        [`${SRC}/pages/BrowseCollectionPage.tsx`]: 40,
+      }),
+      chunk('assets/CollectionScope-d.js', '', {
+        [`${SRC}/features/collection/CollectionScope.tsx`]: 40,
+      }),
+    );
+    expect(loadableCollectionCode(bundle)).toEqual([]);
+  });
+
+  it('names collection code a page reaches through another chunk, on any OS', () => {
+    const bundle = bundleOf(
+      page(ENTRY),
+      chunk('assets/index-a.js', 'import("./CollectionScope-d.js")', {[`${SRC}/router.tsx`]: 40}),
+      chunk('assets/CollectionScope-d.js', '', {
+        'C:\\r\\apps\\web\\src\\features\\collection\\CollectionScope.tsx': 40,
+      }),
+    );
+    expect(loadableCollectionCode(bundle)).toEqual([
+      'src/features/collection/CollectionScope.tsx in assets/CollectionScope-d.js',
+    ]);
+  });
+
+  it("names collection code bundled into a page's own chunk, and collection mode's pages", () => {
+    const bundle = bundleOf(
+      page('<link rel="modulepreload" href="/assets/BrowsePage-b.js">'),
+      chunk('assets/BrowsePage-b.js', '', {
+        [`${SRC}/pages/BrowsePage.tsx`]: 40,
+        [`${SRC}/features/collection/binderEvents.ts`]: 40,
+        [`${SRC}/pages/AccountCollection.tsx`]: 40,
+      }),
+    );
+    expect(loadableCollectionCode(bundle)).toEqual([
+      'src/features/collection/binderEvents.ts in assets/BrowsePage-b.js',
+      'src/pages/AccountCollection.tsx in assets/BrowsePage-b.js',
+    ]);
+  });
+
+  it("leaves out the flag, Browse's non-Core loads, modules the build dropped and friends", () => {
+    const bundle = bundleOf(
+      page(ENTRY),
+      chunk('assets/index-a.js', '', {
+        [`${SRC}/features/collection/flag.ts`]: 30,
+        [`${SRC}/features/collection/collectionChunks.ts`]: 30,
+        [`${SRC}/features/collection/collectionPromos.ts`]: 30,
+        [`${SRC}/features/collection/preCoreVariants.ts`]: 30,
+        [`${SRC}/features/collection/binderCards.ts`]: 0,
+        [`${SRC}/features/friends/FriendChip.tsx`]: 30,
+        [`${SRC}/pages/AccountFriends.tsx`]: 30,
+      }),
+    );
+    expect(loadableCollectionCode(bundle)).toEqual([]);
+  });
+});
+
+describe('collectionModeOn', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  // flag.ts reads import.meta.env, which only the app's tsconfig types, so it is loaded by path.
+  const FLAG = './src/features/collection/flag.ts';
+
+  it.each([
+    ['true', 'true'],
+    ['true', 'false'],
+    ['false', 'true'],
+    ['false', 'false'],
+  ])('reads collection %s and accounts %s as the app does', async (collection, accounts) => {
+    vi.stubEnv('VITE_SHOW_COLLECTION', collection);
+    vi.stubEnv('VITE_SHOW_ACCOUNTS', accounts);
+    vi.resetModules();
+    const {SHOW_COLLECTION} = (await import(/* @vite-ignore */ FLAG)) as {SHOW_COLLECTION: boolean};
+    const env = {VITE_SHOW_COLLECTION: collection, VITE_SHOW_ACCOUNTS: accounts};
+    expect(collectionModeOn(env)).toBe(SHOW_COLLECTION);
   });
 });

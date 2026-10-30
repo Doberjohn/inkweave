@@ -29,7 +29,11 @@ const BrowsePage = SHOW_COLLECTION
   ? lazyWithRetry(() => import('./pages/BrowseCollectionPage'), 'BrowseCollectionPage')
   : lazyWithRetry(() => import('./pages/BrowsePage'), 'BrowsePage');
 const AccountPage = lazyWithRetry(() => import('./pages/AccountPage'), 'AccountPage');
-const CollectionScope = lazyWithRetry(() => import('./features/collection/CollectionScope'), 'CollectionScope');
+// Behind the flag too, so a flag-off build names none of the collection's chunks and its service
+// worker precaches none of them (#928). The build fails if one can load (collectionCodeGuard).
+const CollectionScope = SHOW_COLLECTION
+  ? lazyWithRetry(() => import('./features/collection/CollectionScope'), 'CollectionScope')
+  : null;
 const AuthCallbackPage = lazyWithRetry(() => import('./pages/AuthCallbackPage'), 'AuthCallbackPage');
 const CardPage = lazyWithRetry(() => import('./pages/CardPage'), 'CardPage');
 const ComparePage = lazyWithRetry(() => import('./pages/ComparePage'), 'ComparePage');
@@ -116,7 +120,7 @@ const firstVotePair = () => votePageChunk().then((chunk) => chunk.startFirstPair
  * See `CollectionScope` for why the providers mount here and not in `AppLayout`.
  */
 function withCollectionScope(children: RouteObject[]): RouteObject[] {
-  if (!SHOW_COLLECTION) return children;
+  if (!CollectionScope) return children;
   return [
     {
       element: (

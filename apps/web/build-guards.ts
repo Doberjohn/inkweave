@@ -108,10 +108,17 @@ const STYLE_BLOCK = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
 /** The page inline-css writes styles into. Another, such as Storybook's iframe.html, holds its tool's. */
 const INLINED_PAGE = 'index.html';
 
+interface BuiltAsset {
+  type: 'asset';
+  fileName: string;
+  source: string | Uint8Array;
+}
+
 /** The part of a bundle the url guard reads: Rolldown's OutputBundle fits it. */
-export type BuiltFiles = Readonly<
-  Record<string, {type: 'asset'; fileName: string; source: string | Uint8Array} | {type: 'chunk'}>
->;
+export type BuiltFiles = Readonly<Record<string, BuiltAsset | {type: 'chunk'}>>;
+
+const textOf = ({source}: BuiltAsset) =>
+  typeof source === 'string' ? source : new TextDecoder().decode(source);
 
 interface Stylesheet {
   fileName: string;
@@ -122,9 +129,9 @@ interface Stylesheet {
 function stylesheets(bundle: BuiltFiles): Stylesheet[] {
   return Object.values(bundle).flatMap((output) => {
     if (output.type !== 'asset') return [];
-    const {fileName, source} = output;
+    const {fileName} = output;
     if (!fileName.endsWith('.css') && fileName !== INLINED_PAGE) return [];
-    const text = typeof source === 'string' ? source : new TextDecoder().decode(source);
+    const text = textOf(output);
     if (fileName.endsWith('.css')) return [{fileName, text}];
     return [...text.matchAll(STYLE_BLOCK)].map(([, block]) => ({fileName, text: block}));
   });
@@ -185,6 +192,96 @@ export function cssUrlGuard(): Plugin {
           this.error(`Stylesheets name files this build doesn't have: ${unresolved.join(', ')}`);
         }
       },
+    },
+  };
+}
+
+/** The part of a bundle the chunk reads use: Rolldown's OutputBundle fits it. */
+export type BuiltChunks = Readonly<
+  Record<
+    string,
+    | BuiltAsset
+    | {
+        type: 'chunk';
+        fileName: string;
+        code: string;
+        modules: Readonly<Record<string, {renderedLength: number}>>;
+      }
+  >
+>;
+
+/**
+ * The chunk files a page can load (#928): those an HTML file names, and those a chunk a page can
+ * load names. Static imports, dynamic imports and Vite's preload lists all spell out file names, so
+ * a lazy import behind a flag the build turned off, which the minifier dropped, names nothing.
+ */
+export function loadableChunks(bundle: BuiltChunks): Set<string> {
+  const outputs = Object.values(bundle);
+  const chunks = outputs.filter((output) => output.type === 'chunk');
+  const sources = outputs
+    .filter((output) => output.type === 'asset')
+    .filter((asset) => asset.fileName.endsWith('.html'))
+    .map(textOf);
+  const loadable = new Set<string>();
+  for (let source = sources.pop(); source !== undefined; source = sources.pop()) {
+    for (const chunk of chunks) {
+      if (!loadable.has(chunk.fileName) && source.includes(path.basename(chunk.fileName))) {
+        loadable.add(chunk.fileName);
+        sources.push(chunk.code);
+      }
+    }
+  }
+  return loadable;
+}
+
+/** Collection mode's code (#553): its folder, and the two pages only collection mode routes to. */
+const COLLECTION_CODE =
+  /\/apps\/web\/src\/(features\/collection\/|pages\/(BrowseCollectionPage|AccountCollection)\.tsx$)/;
+/** The flag, which every page reads, and the non-Core card loads Browse's search makes in any build (#911). */
+const SHARED_COLLECTION_CODE =
+  /\/features\/collection\/(flag|collectionChunks|collectionPromos|preCoreVariants)\.ts$/;
+
+const isCollectionCode = (id: string) =>
+  COLLECTION_CODE.test(posix(id)) && !SHARED_COLLECTION_CODE.test(posix(id));
+
+/** Whether a build's env turns collection mode on, by the rule `src/features/collection/flag.ts` reads. */
+export const collectionModeOn = (env: Readonly<Record<string, unknown>>) =>
+  env.VITE_SHOW_COLLECTION === 'true' && env.VITE_SHOW_ACCOUNTS === 'true';
+
+/** Each collection module with code in a chunk a page can load, as "<module> in <chunk>". */
+export function loadableCollectionCode(bundle: BuiltChunks): string[] {
+  const loadable = loadableChunks(bundle);
+  return Object.values(bundle).flatMap((output) => {
+    if (output.type !== 'chunk' || !loadable.has(output.fileName)) return [];
+    return Object.entries(output.modules)
+      .filter(([id, {renderedLength}]) => renderedLength > 0 && isCollectionCode(id))
+      .map(([id]) => `${posix(id).replace(/^.*\/apps\/web\//, '')} in ${output.fileName}`);
+  });
+}
+
+/**
+ * Fails a build with collection mode off when a page can load any of its code (#1068, #1069). Off
+ * means not loaded (`src/features/collection/flag.ts`): what only the flag's branches import ships
+ * in chunks no page names, which the service worker doesn't precache either (#928).
+ */
+export function collectionCodeGuard(): Plugin {
+  let modeOn = false;
+  return {
+    name: 'inkweave:collection-code-guard',
+    apply: 'build',
+    configResolved(config) {
+      modeOn = collectionModeOn(config.env);
+    },
+    // writeBundle, as the precache's unloadable-chunks plugin reads it: every chunk's code is final.
+    writeBundle(_options, bundle) {
+      if (modeOn) return;
+      const loaded = loadableCollectionCode(bundle);
+      if (loaded.length > 0) {
+        this.error(
+          `Collection mode is off, yet a page can load its code: ${loaded.join(', ')}. ` +
+            'Import it only behind SHOW_COLLECTION, as router.tsx does.',
+        );
+      }
     },
   };
 }
