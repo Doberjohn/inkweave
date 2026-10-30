@@ -133,56 +133,63 @@ describe('unresolvedCssUrls', () => {
 
 describe('loadableCollectionCode', () => {
   const SRC = '/r/apps/web/src';
-  const page = (source: string) => ({type: 'asset' as const, fileName: 'index.html', source});
-  const chunk = (fileName: string, code: string, modules: Record<string, number>) => ({
-    type: 'chunk' as const,
-    fileName,
-    code,
-    modules: Object.fromEntries(
-      Object.entries(modules).map(([id, renderedLength]) => [id, {renderedLength}]),
-    ),
-  });
-  const bundleOf = (...outputs: BuiltChunks[string][]): BuiltChunks =>
-    Object.fromEntries(outputs.map((output) => [output.fileName, output]));
+  /** A bundle by file name, as Rolldown hands it over: a page's HTML, or a chunk's code and modules. */
+  const bundleOf = (files: Record<string, string | {code?: string; modules: Record<string, number>}>): BuiltChunks =>
+    Object.fromEntries(
+      Object.entries(files).map(([fileName, file]) => [
+        fileName,
+        typeof file === 'string'
+          ? {type: 'asset' as const, fileName, source: file}
+          : {
+              type: 'chunk' as const,
+              fileName,
+              code: file.code ?? '',
+              modules: Object.fromEntries(
+                Object.entries(file.modules).map(([id, renderedLength]) => [id, {renderedLength}]),
+              ),
+            },
+      ]),
+    );
   const ENTRY = '<script type="module" src="/assets/index-a.js"></script>';
 
   it('names nothing when only chunks no page loads name the collection', () => {
-    const bundle = bundleOf(
-      page(ENTRY),
-      chunk('assets/index-a.js', 'import("./BrowsePage-b.js")', {[`${SRC}/main.tsx`]: 40}),
-      chunk('assets/BrowsePage-b.js', '', {[`${SRC}/pages/BrowsePage.tsx`]: 40}),
-      chunk('assets/BrowseCollectionPage-c.js', 'import("./CollectionScope-d.js")', {
-        [`${SRC}/pages/BrowseCollectionPage.tsx`]: 40,
-      }),
-      chunk('assets/CollectionScope-d.js', '', {
-        [`${SRC}/features/collection/CollectionScope.tsx`]: 40,
-      }),
-    );
+    const bundle = bundleOf({
+      'index.html': ENTRY,
+      'assets/index-a.js': {code: 'import("./BrowsePage-b.js")', modules: {[`${SRC}/main.tsx`]: 40}},
+      'assets/BrowsePage-b.js': {modules: {[`${SRC}/pages/BrowsePage.tsx`]: 40}},
+      'assets/BrowseCollectionPage-c.js': {
+        code: 'import("./CollectionScope-d.js")',
+        modules: {[`${SRC}/pages/BrowseCollectionPage.tsx`]: 40},
+      },
+      'assets/CollectionScope-d.js': {modules: {[`${SRC}/features/collection/CollectionScope.tsx`]: 40}},
+    });
     expect(loadableCollectionCode(bundle)).toEqual([]);
   });
 
   it('names collection code a page reaches through another chunk, on any OS', () => {
-    const bundle = bundleOf(
-      page(ENTRY),
-      chunk('assets/index-a.js', 'import("./CollectionScope-d.js")', {[`${SRC}/router.tsx`]: 40}),
-      chunk('assets/CollectionScope-d.js', '', {
-        'C:\\r\\apps\\web\\src\\features\\collection\\CollectionScope.tsx': 40,
-      }),
-    );
+    const bundle = bundleOf({
+      'index.html': ENTRY,
+      'assets/index-a.js': {code: 'import("./CollectionScope-d.js")', modules: {[`${SRC}/router.tsx`]: 40}},
+      'assets/CollectionScope-d.js': {
+        modules: {'C:\\r\\apps\\web\\src\\features\\collection\\CollectionScope.tsx': 40},
+      },
+    });
     expect(loadableCollectionCode(bundle)).toEqual([
       'src/features/collection/CollectionScope.tsx in assets/CollectionScope-d.js',
     ]);
   });
 
   it("names collection code bundled into a page's own chunk, and collection mode's pages", () => {
-    const bundle = bundleOf(
-      page('<link rel="modulepreload" href="/assets/BrowsePage-b.js">'),
-      chunk('assets/BrowsePage-b.js', '', {
-        [`${SRC}/pages/BrowsePage.tsx`]: 40,
-        [`${SRC}/features/collection/binderEvents.ts`]: 40,
-        [`${SRC}/pages/AccountCollection.tsx`]: 40,
-      }),
-    );
+    const bundle = bundleOf({
+      'index.html': '<link rel="modulepreload" href="/assets/BrowsePage-b.js">',
+      'assets/BrowsePage-b.js': {
+        modules: {
+          [`${SRC}/pages/BrowsePage.tsx`]: 40,
+          [`${SRC}/features/collection/binderEvents.ts`]: 40,
+          [`${SRC}/pages/AccountCollection.tsx`]: 40,
+        },
+      },
+    });
     expect(loadableCollectionCode(bundle)).toEqual([
       'src/features/collection/binderEvents.ts in assets/BrowsePage-b.js',
       'src/pages/AccountCollection.tsx in assets/BrowsePage-b.js',
@@ -190,18 +197,20 @@ describe('loadableCollectionCode', () => {
   });
 
   it("leaves out the flag, Browse's non-Core loads, modules the build dropped and friends", () => {
-    const bundle = bundleOf(
-      page(ENTRY),
-      chunk('assets/index-a.js', '', {
-        [`${SRC}/features/collection/flag.ts`]: 30,
-        [`${SRC}/features/collection/collectionChunks.ts`]: 30,
-        [`${SRC}/features/collection/collectionPromos.ts`]: 30,
-        [`${SRC}/features/collection/preCoreVariants.ts`]: 30,
-        [`${SRC}/features/collection/binderCards.ts`]: 0,
-        [`${SRC}/features/friends/FriendChip.tsx`]: 30,
-        [`${SRC}/pages/AccountFriends.tsx`]: 30,
-      }),
-    );
+    const bundle = bundleOf({
+      'index.html': ENTRY,
+      'assets/index-a.js': {
+        modules: {
+          [`${SRC}/features/collection/flag.ts`]: 30,
+          [`${SRC}/features/collection/collectionChunks.ts`]: 30,
+          [`${SRC}/features/collection/collectionPromos.ts`]: 30,
+          [`${SRC}/features/collection/preCoreVariants.ts`]: 30,
+          [`${SRC}/features/collection/binderCards.ts`]: 0,
+          [`${SRC}/features/friends/FriendChip.tsx`]: 30,
+          [`${SRC}/pages/AccountFriends.tsx`]: 30,
+        },
+      },
+    });
     expect(loadableCollectionCode(bundle)).toEqual([]);
   });
 });
