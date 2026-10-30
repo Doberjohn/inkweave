@@ -56,8 +56,9 @@ export function sentryEnvironment(deployEnv: string, hostname: string): string {
 
 /**
  * An account id. Supabase's user ids are UUIDs written with dashes; card ids are numbers, and
- * Sentry's own ids have no dashes, so neither matches. No word boundaries: in an encoded
- * `id=in.(…)` filter the id follows `%28`, whose 8 is a hex digit.
+ * Sentry's event, trace and span ids have no dashes, so neither matches (its debug ids do, which
+ * is why scrubEvent passes them by). No word boundaries: in an encoded `id=in.(…)` filter the id
+ * follows `%28`, whose 8 is a hex digit.
  */
 const ACCOUNT_ID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
 
@@ -80,6 +81,22 @@ function scrubStrings<T>(value: T): T {
   const record = value as Record<string, unknown>;
   for (const key of Object.keys(record)) record[key] = scrubStrings(record[key]);
   return value;
+}
+
+/**
+ * An event's fields that hold Sentry's own data, never the app's: `debug_meta` names each script's
+ * debug id, a dashed UUID that ties its frames to the uploaded source map, and
+ * `sdkProcessingMetadata` holds the SDK's live state, which never leaves the browser.
+ */
+const SENTRY_OWN_FIELDS = new Set(['debug_meta', 'sdkProcessingMetadata']);
+
+/** Scrubs every string an error report carries except in Sentry's own fields. */
+function scrubEvent<E extends object>(event: E): E {
+  const record = event as Record<string, unknown>;
+  for (const key of Object.keys(record)) {
+    if (!SENTRY_OWN_FIELDS.has(key)) record[key] = scrubStrings(record[key]);
+  }
+  return event;
 }
 
 function sentryOptions(): Parameters<typeof init>[0] {
@@ -120,11 +137,11 @@ function sentryOptions(): Parameters<typeof init>[0] {
     // team: an error thrown inside it isn't the app's (INKWEAVE-15).
     denyUrls: ['/_next-live/'],
     // The SDK keeps request queries and sends the page's address as it is, and the app's
-    // addresses name accounts and friends: every string an error or a span carries is scrubbed on
-    // the way out, so no report ties to an account. Sentry 11 sends each span on its own (its
-    // default `traceLifecycle`, 'stream'), so traces pass through beforeSendSpan, never
-    // beforeSendTransaction.
-    beforeSend: (event) => scrubStrings(event),
+    // addresses name accounts and friends: every string an error or a span carries, Sentry's own
+    // fields aside, is scrubbed on the way out, so no report ties to an account. Sentry 11 sends
+    // each span on its own (its default `traceLifecycle`, 'stream'), so traces pass through
+    // beforeSendSpan, never beforeSendTransaction.
+    beforeSend: (event) => scrubEvent(event),
     beforeSendSpan: (span) => scrubStrings(span),
   };
 }

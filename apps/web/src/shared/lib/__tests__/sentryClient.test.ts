@@ -194,7 +194,11 @@ describe('startSentry', () => {
       type: 'http',
       data: {method: 'GET', url: `${REST}/collections?select=entries&owner_id=eq.${ACCOUNT}`},
     });
-    addBreadcrumb({category: 'fetch', type: 'http', data: {method: 'GET', url: `${REST}/profiles?select=id&id=in.%28${FRIEND}%29`}});
+    addBreadcrumb({
+      category: 'fetch',
+      type: 'http',
+      data: {method: 'GET', url: `${REST}/profiles?select=id&id=in.%28${FRIEND}%29`},
+    });
 
     sentry?.captureException(new Error(`row for ${ACCOUNT} unusable`));
 
@@ -203,6 +207,26 @@ describe('startSentry', () => {
     expect(body).toContain('owner_id=eq.[id]');
     expect(body).toContain('row for [id] unusable');
     for (const secret of [ACCOUNT, FRIEND, 'ruby_hero_042', '4f2a9c']) expect(body).not.toContain(secret);
+  });
+
+  // A production build's scripts each carry a debug id, a dashed UUID like an account's, which
+  // Sentry needs whole to find the script's source map.
+  it("keeps the scripts' debug ids, which find their source maps", async () => {
+    const sent = captureSent();
+    vi.stubEnv('VITE_SENTRY_DSN', 'http://public@127.0.0.1:9/1');
+    const script = 'https://inkweave.ink/assets/BrowsePage-x1.js';
+    const debugId = '00000000-0000-4000-8000-0000000000c3';
+    // As @sentry/vite-plugin's snippet registers a script: its own stack, against its debug id.
+    vi.stubGlobal('_sentryDebugIds', {[errorThrownIn(script, 'registered').stack ?? '']: debugId});
+    vi.resetModules();
+    const {startSentry} = await import('../sentryClient');
+    const {flush} = await import('@sentry/react');
+    const sentry = startSentry();
+
+    sentry?.captureException(errorThrownIn(script, 'app broke'));
+
+    expect(await flush(2000)).toBe(true);
+    expect(sent.join('\n')).toContain(`"debug_id":"${debugId}"`);
   });
 
   it('sends no account id in a trace', async () => {
