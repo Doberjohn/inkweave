@@ -1,3 +1,8 @@
+-- Applied in the Supabase SQL editor like 20261013000000 (it deletes rows, so apply_migration's
+-- confirmation would never reach the owner), in one transaction with its history row under
+-- the filename stamp. That row's statements hold this file's text, so md5(statements[1])
+-- matches the file.
+--
 -- Friends: every send prunes every sender's tries older than an hour (#986).
 --
 -- The privacy policy says a try is noted to stop anyone guessing codes, which needs it

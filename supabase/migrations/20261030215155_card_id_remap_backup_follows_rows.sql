@@ -1,3 +1,8 @@
+-- Applied in the Supabase SQL editor like 20261013000000 (it deletes rows, so apply_migration's
+-- confirmation would never reach the owner), in one transaction with its history row under
+-- the filename stamp. That row's statements hold this file's text, so md5(statements[1])
+-- matches the file.
+--
 -- A graduation's backup of a collection or deck goes when that row goes (#986).
 --
 -- remap_collection_card_ids and remap_deck_card_ids copy each row they rewrite into
