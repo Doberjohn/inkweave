@@ -14,9 +14,10 @@ import {
   type BrowseListing,
   type PhoneSheetOptions,
 } from './useBrowseCollection';
-// The binder's chunk, which the Binder sheet's numbers come from, imported with this file: a cold
-// import inside a test can outlast its wait (#712).
+// The binder's chunk, which the Binder sheet's numbers come from, and friends' chunk, which the foil
+// pointer comes from, imported with this file: a cold import inside a test can outlast its wait (#712).
 import './CollectionBinderSection';
+import './CollectionFriends';
 
 // Who presses Collection, for useBrowseCollection's own cases; useBinderParams reads none of it.
 const {account} = vi.hoisted(() => ({
