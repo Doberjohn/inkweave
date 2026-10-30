@@ -1,4 +1,4 @@
--- Remap race setup, after checks.sql: L has a collection on an id the race remaps.
+-- Remap race 1 setup, after checks.sql: L has a collection on an id the race remaps.
 \set ON_ERROR_STOP on
 \pset tuples_only on
 select t.make_user('L');

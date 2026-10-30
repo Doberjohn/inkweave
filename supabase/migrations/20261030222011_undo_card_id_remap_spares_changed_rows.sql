@@ -39,12 +39,14 @@ begin
   -- also its backup's backed_up_at. So a row no one wrote since still carries its last
   -- backup's backed_up_at, and a re-run's copy carries the backed_up_at of the copy before
   -- it. Any other write stamps its own transaction's now(), which differs even when that
-  -- transaction began first and then waited for the remap's lock.
+  -- transaction began first and then waited for the remap's lock. Last and before go by id,
+  -- not by time: a run that began first and waited for another's lock writes after it with
+  -- the earlier now().
   if to_regclass('pg_temp.remap_undo') is not null then drop table pg_temp.remap_undo; end if;
   create temp table remap_undo on commit drop as
   select distinct on (source_table, row_id) source_table, row_id, old_row,
          bool_or(action = 'deleted') over w as remap_deleted,
-         max(backed_up_at) over w as last_backup,
+         first_value(backed_up_at) over (w order by id desc) as last_backup,
          coalesce(bool_or(written_between) over w, false) as written_between
   from (select b.*,
                b.source_table <> 'votes'

@@ -1,4 +1,4 @@
--- Remap race, first session: L's import begins, then reaches the collection a second later,
+-- Remap race 1, first session: L's import begins, then reaches the collection a second later,
 -- while the remap holds it. Its transaction began first, so its now() is the earlier one.
 \set ON_ERROR_STOP on
 \pset tuples_only on
