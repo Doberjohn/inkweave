@@ -389,4 +389,26 @@ begin
   end loop;
 end $$;
 
+\echo '== 17. a send prunes every sender''s tries older than an hour, not only its own'
+select t.make_user(n) from unnest(array['F', 'G']) n;
+insert into internal.friend_request_attempts (sender_id, attempted_at)
+values (t.uid('F'), now() - interval '2 hours');
+begin;
+select t.act_as('G');
+do $$
+declare r record;
+begin
+  select * into r from public.send_friend_request('ZZZZ-ZZZZ');
+  assert r.status = 'unknown', format('G''s try: %s', row_to_json(r));
+end $$;
+commit;
+do $$
+declare n int;
+begin
+  select count(*) into n from internal.friend_request_attempts where sender_id = t.uid('F');
+  assert n = 0, format('F''s two-hour-old try outlived G''s send: %s left', n);
+  select count(*) into n from internal.friend_request_attempts where attempted_at < now() - interval '1 hour';
+  assert n = 0, format('%s tries older than an hour outlived a send', n);
+end $$;
+
 \echo '== all sequential checks passed'
