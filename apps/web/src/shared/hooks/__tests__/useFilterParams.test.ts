@@ -94,6 +94,18 @@ describe('useFilterParams', () => {
       expect(result.current.url.toString()).toBe('q=elsa&sort=name-asc');
     });
 
+    it('counts a value the address names twice as one', () => {
+      const {result} = renderHook(() => useFilterParams(), {
+        wrapper: createWrapper(['/?ink=Amber,Amber&type=Song,Song&cost=3,3']),
+      });
+      act(() => result.current.clearFilters());
+      expect(vi.mocked(trackEvent).mock.calls).toEqual([
+        ['filter_applied', {facet: 'ink', value: 'Amber', action: 'remove', via: 'inline'}],
+        ['filter_applied', {facet: 'type', value: 'Song', action: 'remove', via: 'inline'}],
+        ['filter_applied', {facet: 'cost', value: '3', action: 'remove', via: 'inline'}],
+      ]);
+    });
+
     it("sends nothing for the logo's reset", () => {
       const {result} = renderHook(() => useFilterParams(), {wrapper: createWrapper(['/?ink=Amber'])});
       act(() => result.current.clearAllFilters());

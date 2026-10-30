@@ -145,12 +145,15 @@ type FilterVia = 'inline' | 'dialog';
 type FilterFacet = 'ink' | 'type' | 'cost';
 const FACETS: readonly FilterFacet[] = ['ink', 'type', 'cost'];
 
-/** The ink, type and cost filters a URL holds: the facets `filter_applied` counts. */
-function facetsOf(params: URLSearchParams): Record<FilterFacet, string[]> {
+/**
+ * The ink, type and cost filters a URL holds: the facets `filter_applied` counts. Each value once,
+ * since an address can name one twice (`?ink=Amber,Amber`), and one toggle turns both off.
+ */
+function facetsOf(params: URLSearchParams): Record<FilterFacet, Set<string>> {
   return {
-    ink: parseCommaSeparated(params.get('ink'), isValidInk),
-    type: parseCommaSeparated(params.get('type'), isValidType),
-    cost: parseCostParam(params.get('cost')).map(String),
+    ink: new Set(parseCommaSeparated(params.get('ink'), isValidInk)),
+    type: new Set(parseCommaSeparated(params.get('type'), isValidType)),
+    cost: new Set(parseCostParam(params.get('cost')).map(String)),
   };
 }
 
@@ -159,8 +162,8 @@ function trackFacetChanges(before: URLSearchParams, after: URLSearchParams, via:
   const was = facetsOf(before);
   const now = facetsOf(after);
   for (const facet of FACETS) {
-    const added = now[facet].filter((value) => !was[facet].includes(value));
-    const removed = was[facet].filter((value) => !now[facet].includes(value));
+    const added = [...now[facet]].filter((value) => !was[facet].has(value));
+    const removed = [...was[facet]].filter((value) => !now[facet].has(value));
     for (const value of added) trackEvent('filter_applied', {facet, value, action: 'add', via});
     for (const value of removed) trackEvent('filter_applied', {facet, value, action: 'remove', via});
   }
