@@ -1232,7 +1232,7 @@ What the function does, so its result can be checked:
 - **Votes** are re-keyed and put back in pair order (the smaller id first, compared as text), flipping `who_carries` when the pair turns round. A voter holds one vote per pair, so a moved vote that lands on that voter's vote on the released pair merges into it the way a re-vote does: the newer answers win and the older fill the gaps. `created_at` is kept (the newer one on a merge), so the move neither trips the vote rate limit nor reshuffles admin's weekly trends.
 - **Collections** rename the key. A collection holding both ids for a card keeps the larger count per finish.
 - **Decks** re-point the card where it stood. A deck listing both ids keeps one entry with the larger quantity.
-- **Every row it changes** is first copied to `internal.card_id_remap_backup` under the migration's label (`set <N> graduation`), which no API role can read. `internal.undo_card_id_remap('<label>')`, run from a migration, puts those rows back, except any deleted since, which stay deleted.
+- **Every row it changes** is first copied to `internal.card_id_remap_backup` under the migration's label (`set <N> graduation`), which no API role can read. `internal.undo_card_id_remap('<label>')`, run from a migration, puts those rows back, except any deleted since, which stay deleted, and any collection or deck its owner imported or edited since, which keeps that change. A collection or deck that goes takes its backups with it (#986).
 - **Running it again is safe**: it moves only what is still on a preview id, such as a vote from a page left open since the graduation.
 
 ### Rules during canonical integration

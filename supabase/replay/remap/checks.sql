@@ -5,8 +5,8 @@
 \pset pager off
 \pset tuples_only on
 
-\echo '== setup: players U, V, W, X, Y, Z and Q'
-select t.make_user(n) from unnest(array['U', 'V', 'W', 'X', 'Y', 'Z', 'Q']) n;
+\echo '== setup: players U, V, W, X, Y, Z, Q, I, J, D, E, G and H'
+select t.make_user(n) from unnest(array['U', 'V', 'W', 'X', 'Y', 'Z', 'Q', 'I', 'J', 'D', 'E', 'G', 'H']) n;
 
 -- How many backups a collection (row id: its owner) or a deck has, under any label.
 create function t.backups(source text, row_id uuid) returns int language sql stable as $$
@@ -133,13 +133,14 @@ do $$ begin
   assert t.backups('votes', t.uid('Q')) = 1, 'Q''s clear dropped a vote''s backup';
 end $$;
 
-\echo '== R6. no client role can call the trigger function, or holds a privilege on the backup table'
+\echo '== R6. no client role can call the trigger function or undo, or holds a privilege on the backup table'
 do $$
-declare who text; n int;
+declare who text; fn text; n int;
 begin
   foreach who in array array['anon', 'authenticated', 'service_role'] loop
-    assert not has_function_privilege(who, 'internal.drop_card_id_remap_backups()', 'execute'),
-      format('%s can call internal.drop_card_id_remap_backups()', who);
+    foreach fn in array array['internal.drop_card_id_remap_backups()', 'internal.undo_card_id_remap(text)'] loop
+      assert not has_function_privilege(who, fn, 'execute'), format('%s can call %s', who, fn);
+    end loop;
   end loop;
   -- Grantee 0 is PUBLIC.
   select count(*) into n
@@ -148,6 +149,103 @@ begin
      and (a.grantee = 0 or a.grantee in (select r.oid from pg_roles r
                                           where r.rolname in ('anon', 'authenticated', 'service_role')));
   assert n = 0, format('client roles or PUBLIC hold %s privileges on internal.card_id_remap_backup', n);
+end $$;
+
+\echo '== R7. an undo after an import over the collection, with no clear, leaves the import as it is'
+insert into public.collections (owner_id, entries, imported_at)
+values (t.uid('I'), '{"r7-old": {"normal": 1}}', now()),
+       (t.uid('J'), '{"r7-old": {"normal": 2}}', now());
+do $$ begin
+  assert internal.remap_collection_card_ids('{"r7-old": "r7-new"}', 'r7') = 2, 'the remap missed I''s or J''s collection';
+end $$;
+-- I imports again, as PostgREST sends the app's upsert: every column it sends, the key included.
+begin;
+select t.act_as('I');
+insert into public.collections (owner_id, entries, imported_at, schema_version)
+values (t.uid('I'), '{"fresh-7": {"normal": 3}}', now(), 1)
+on conflict (owner_id) do update
+  set owner_id = excluded.owner_id, entries = excluded.entries,
+      imported_at = excluded.imported_at, schema_version = excluded.schema_version;
+commit;
+do $$
+declare restored int; got jsonb;
+begin
+  restored := internal.undo_card_id_remap('r7');
+  select entries into got from public.collections where owner_id = t.uid('I');
+  assert got = '{"fresh-7": {"normal": 3}}', format('the undo wrote over I''s new import: %s', got);
+  select entries into got from public.collections where owner_id = t.uid('J');
+  assert got = '{"r7-old": {"normal": 2}}', format('the undo left J''s collection at %s', got);
+  assert restored = 1, format('the undo restored %s rows, not J''s alone', restored);
+end $$;
+
+\echo '== R8. an undo after a deck edit leaves the edit as it is'
+insert into public.decks (owner_id, name, cards)
+values (t.uid('D'), 'R8 edited', '[{"cardId": "r8-old", "quantity": 2}]'),
+       (t.uid('E'), 'R8 untouched', '[{"cardId": "r8-old", "quantity": 1}]');
+do $$ begin
+  assert internal.remap_deck_card_ids('{"r8-old": "r8-new"}', 'r8') = 2, 'the remap missed D''s or E''s deck';
+end $$;
+begin;
+select t.act_as('D');
+update public.decks set cards = '[{"cardId": "r8-new", "quantity": 4}]' where owner_id = t.uid('D');
+commit;
+do $$
+declare restored int; got jsonb;
+begin
+  restored := internal.undo_card_id_remap('r8');
+  select cards into got from public.decks where owner_id = t.uid('D');
+  assert got = '[{"cardId": "r8-new", "quantity": 4}]', format('the undo wrote over D''s edit: %s', got);
+  select cards into got from public.decks where owner_id = t.uid('E');
+  assert got = '[{"cardId": "r8-old", "quantity": 1}]', format('the undo left E''s deck at %s', got);
+  assert restored = 1, format('the undo restored %s rows, not E''s alone', restored);
+end $$;
+
+\echo '== R9. a collection a re-run saved twice under one label goes back to its first copy'
+insert into public.collections (owner_id, entries, imported_at)
+values (t.uid('G'), '{"r9-a": {"normal": 1}, "r9-b": {"normal": 1}}', now());
+-- Each block is its own transaction, so the re-run writes G's row later than the first run.
+do $$ begin
+  assert internal.remap_collection_card_ids('{"r9-a": "r9-a-new"}', 'r9') = 1, 'the first run missed G''s collection';
+end $$;
+do $$ begin
+  assert internal.remap_collection_card_ids('{"r9-b": "r9-b-new"}', 'r9') = 1, 'the re-run missed G''s collection';
+  assert t.backups('collections', t.uid('G')) = 2, 'the two runs saved no two backups of G''s collection';
+end $$;
+do $$
+declare restored int; got jsonb;
+begin
+  restored := internal.undo_card_id_remap('r9');
+  select entries into got from public.collections where owner_id = t.uid('G');
+  assert got = '{"r9-a": {"normal": 1}, "r9-b": {"normal": 1}}', format('the undo left G''s collection at %s', got);
+  assert restored = 1, format('the undo restored %s rows, not G''s', restored);
+end $$;
+
+\echo '== R10. an undo leaves a collection imported again between two runs under one label'
+insert into public.collections (owner_id, entries, imported_at)
+values (t.uid('H'), '{"r10-a": {"normal": 1}}', now());
+do $$ begin
+  assert internal.remap_collection_card_ids('{"r10-a": "r10-a-new"}', 'r10') = 1, 'the first run missed H''s collection';
+end $$;
+-- H imports again from a page still on a preview id, which the re-run then moves.
+begin;
+select t.act_as('H');
+insert into public.collections (owner_id, entries, imported_at, schema_version)
+values (t.uid('H'), '{"r10-b": {"normal": 4}}', now(), 1)
+on conflict (owner_id) do update
+  set owner_id = excluded.owner_id, entries = excluded.entries,
+      imported_at = excluded.imported_at, schema_version = excluded.schema_version;
+commit;
+do $$ begin
+  assert internal.remap_collection_card_ids('{"r10-b": "r10-b-new"}', 'r10') = 1, 'the re-run missed H''s new import';
+end $$;
+do $$
+declare restored int; got jsonb;
+begin
+  restored := internal.undo_card_id_remap('r10');
+  select entries into got from public.collections where owner_id = t.uid('H');
+  assert got = '{"r10-b-new": {"normal": 4}}', format('the undo put H''s collection back to %s, from before the import', got);
+  assert restored = 0, format('the undo restored %s rows, not none', restored);
+  assert t.backups('collections', t.uid('H')) = 0, 'the undo kept H''s backups';
 end $$;
 
 \echo '== all remap checks passed'
