@@ -4,6 +4,7 @@ import {MemoryRouter, useLocation} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {BrowseBody, BrowsePage} from '../BrowsePage';
 import {trackCardSelected} from '../../features/cards/lib/cardAnalytics';
+import {trackEvent} from '../../shared/lib/analytics';
 import type {BrowseCollectionSlots} from '../../features/collection/useBrowseCollection';
 import {createCard} from '../../shared/test-utils';
 
@@ -46,6 +47,7 @@ vi.mock('../../shared/components', async () => {
   return {...actual, CompactHeader: () => <header data-testid="compact-header" />};
 });
 vi.mock('../../features/cards/lib/cardAnalytics', () => ({trackCardSelected: vi.fn()}));
+vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 
 // Lets a mocked dynamic import settle.
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -67,6 +69,52 @@ describe('BrowsePage with the collection flag off', () => {
     await flush();
     expect(fixtures.loadPreCoreSearchCards).not.toHaveBeenCalled();
     expect(fixtures.chunksImported).toBe(false);
+  });
+
+  describe('a pick from the grid', () => {
+    const elsa = createCard({id: '1951', name: 'Elsa', fullName: 'Elsa - Snow Queen', setCode: '9'});
+    beforeEach(() => {
+      fixtures.coreCards = [elsa];
+      vi.mocked(trackCardSelected).mockClear();
+    });
+    afterEach(() => {
+      fixtures.coreCards = [];
+    });
+
+    it('counts as a pick from Browse', () => {
+      render(
+        <MemoryRouter initialEntries={['/browse']}>
+          <BrowsePage />
+        </MemoryRouter>,
+      );
+      fireEvent.click(screen.getByRole('link', {name: /Snow Queen/}));
+      expect(trackCardSelected).toHaveBeenCalledExactlyOnceWith(elsa, 'browse');
+    });
+  });
+
+  describe("the docked filters panel's Clear all", () => {
+    beforeEach(() => {
+      vi.stubGlobal('innerWidth', 1280);
+      vi.mocked(trackEvent).mockClear();
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('counts each filter it turns off as an inline remove', async () => {
+      render(
+        <MemoryRouter initialEntries={['/browse?ink=Amber&cost=3']}>
+          <BrowsePage />
+        </MemoryRouter>,
+      );
+      fireEvent.click(screen.getByRole('button', {name: 'Clear all'}));
+      await waitFor(() =>
+        expect(vi.mocked(trackEvent).mock.calls).toEqual([
+          ['filter_applied', {facet: 'ink', value: 'Amber', action: 'remove', via: 'inline'}],
+          ['filter_applied', {facet: 'cost', value: '3', action: 'remove', via: 'inline'}],
+        ]),
+      );
+    });
   });
 
   describe('search over sets 1-8 (#911)', () => {
@@ -135,7 +183,7 @@ describe('BrowseBody with collection mode on', () => {
     active: true,
     pool: [outside],
     modeSwitch: null,
-    renderBinder: (_listing, onCardSelect) => <button onClick={() => onCardSelect(outside)}>binder card</button>,
+    renderBinder: (_listing, onCardSelect) => <button onClick={() => onCardSelect(outside, 'binder')}>binder card</button>,
     modeActions: null,
     modalTarget: null,
     sortOptions: undefined,
@@ -185,10 +233,23 @@ describe('BrowseBody with collection mode on', () => {
     );
   }
 
-  it('counts a binder click on a card from outside Core in the card analytics', () => {
+  it('counts a binder click on a card from outside Core in the card analytics, from the binder', () => {
+    vi.mocked(trackCardSelected).mockClear();
     renderBody();
     fireEvent.click(screen.getByRole('button', {name: 'binder card'}));
-    expect(trackCardSelected).toHaveBeenCalledWith(outside, 'browse');
+    expect(trackCardSelected).toHaveBeenCalledExactlyOnceWith(outside, 'binder');
+  });
+
+  it("counts a pick from a friend's binder as the binder says", () => {
+    vi.mocked(trackCardSelected).mockClear();
+    renderBody('/browse?binder=3&friend=ruby_hero_042', {
+      ...slots,
+      renderBinder: (_listing, onCardSelect) => (
+        <button onClick={() => onCardSelect(outside, 'friend_binder')}>binder card</button>
+      ),
+    });
+    fireEvent.click(screen.getByRole('button', {name: 'binder card'}));
+    expect(trackCardSelected).toHaveBeenCalledExactlyOnceWith(outside, 'friend_binder');
   });
 
   it('leaves the status line empty while the binder shows, since it lights slots rather than listing cards', () => {

@@ -4,6 +4,7 @@ import type {FilterPanelProps} from '../../shared/components/CardFilterDialog';
 import type {BrowseSortOrder} from '../../shared/constants';
 import type {AlsoWrite, FilterDraft} from '../../shared/hooks/useFilterParams';
 import {BINDER_SORT_OPTIONS, writeShowParam, type BinderShow} from './binderCards';
+import {trackViewPick} from './binderEvents';
 import {BinderShows, type CompareCounts} from './BinderShows';
 
 /** The filter sheet's props the Binder sheet sets itself. */
@@ -18,6 +19,8 @@ export interface BinderSheetProps extends Omit<ComponentProps<typeof CardFilterD
   sortOrder: BrowseSortOrder;
   /** The page's one URL write, of the filters, the sort and Show together (`applyDraft`). */
   onApply: (draft: FilterDraft, also: AlsoWrite) => void;
+  /** A friend's binder's sheet, for `binder_view_changed`. */
+  friend?: boolean;
 }
 
 /** Show and the sort as the sheet drafts them. */
@@ -75,13 +78,15 @@ function SheetPrelude({show, setShow, sortOrder, setSortOrder, compare}: SheetDr
  * writers in one tick can lose one of the two (`useBinderParams`). Clear all puts back All with
  * the filters; the sort is no filter, so it stays.
  */
-export function BinderSheet({show, compare, sortOrder, onApply, ...dialog}: BinderSheetProps) {
+export function BinderSheet({show, compare, sortOrder, onApply, friend = false, ...dialog}: BinderSheetProps) {
   const drafts = useSheetDrafts(dialog.isOpen, show, sortOrder);
-  const apply: FilterPanelProps['onApply'] = (inks, types, costs, opts) =>
+  const apply: FilterPanelProps['onApply'] = (inks, types, costs, opts) => {
+    trackViewPick('show', {value: drafts.show, was: show}, friend);
     onApply(
       {inks, types, costs, opts},
       {sortOrder: drafts.sortOrder, edit: (params) => writeShowParam(params, drafts.show)},
     );
+  };
   return (
     <CardFilterDialog
       {...dialog}

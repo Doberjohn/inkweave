@@ -74,9 +74,18 @@ describe('sign-in events', () => {
     });
   });
 
-  it('sends nothing while accounts are hidden, for a sign-in tried on /account by URL', async () => {
-    const {trackSignInCompleted, trackSignInFailed, trackSignInStarted} = await loadHelpers('false');
+  it('forwards the surface a shown dialog opened from', async () => {
+    const {trackSignInShown} = await loadHelpers();
 
+    trackSignInShown({surface: 'header'});
+
+    expect(trackEvent).toHaveBeenCalledExactlyOnceWith('sign_in_shown', {surface: 'header'});
+  });
+
+  it('sends nothing while accounts are hidden, for a sign-in tried on /account by URL', async () => {
+    const {trackSignInCompleted, trackSignInFailed, trackSignInShown, trackSignInStarted} = await loadHelpers('false');
+
+    trackSignInShown({surface: 'account'});
     trackSignInStarted({provider: 'google', surface: 'account'});
     trackSignInCompleted(sessionFrom('google'));
     trackSignInFailed({provider: null, stage: 'callback', reason: 'timeout'});

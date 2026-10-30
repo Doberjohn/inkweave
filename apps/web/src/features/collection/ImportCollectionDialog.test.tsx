@@ -177,6 +177,14 @@ describe('ImportCollectionDialog analytics', () => {
     expect(trackEvent).toHaveBeenCalledWith('collection_import_failed', {...CONTEXT, reason});
   });
 
+  it("sends the empty binder's cover as the import's surface", async () => {
+    const cover: ImportContext = {surface: 'empty_binder', replacing: false};
+    render(<ImportCollectionDialog isOpen onClose={vi.fn()} pool={POOL} isPoolReady poolError={null} onRetryPool={vi.fn()} onImport={vi.fn(() => null)} context={cover} />);
+    await act(async () => pick(CSV));
+
+    expect(trackEvent).toHaveBeenCalledWith('collection_imported', expect.objectContaining(cover));
+  });
+
   it('sends nothing for a read the reader cancels', async () => {
     render(<ImportCollectionDialog isOpen onClose={vi.fn()} pool={POOL} isPoolReady poolError={null} onRetryPool={vi.fn()} onImport={vi.fn(() => null)} context={CONTEXT} />);
     const finishReading = pickSlowly();

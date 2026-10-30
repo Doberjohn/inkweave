@@ -53,6 +53,7 @@ export function AccountCollection() {
         importedAt={importedAt}
         confirming={confirmClear}
         onImport={() => {
+          trackEvent('collection_import_opened', {surface: 'account', replacing: holdsCopies});
           setImportMounted(true);
           setShowImport(true);
         }}

@@ -20,10 +20,10 @@ import {
 } from '../shared/components';
 import {COLORS, FONTS, FONT_SIZES, SPACING, VISUALLY_HIDDEN} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
-import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
+import {trackCardSelected, type CardSelectSource} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, useFilterParams, useSettledValue} from '../shared/hooks';
-import type {BrowseCollectionSlots, BrowseListing} from '../features/collection/useBrowseCollection';
+import type {BinderCardSource, BrowseCollectionSlots, BrowseListing} from '../features/collection/useBrowseCollection';
 import {browseCountMessage, browseView, gridModalTarget, printingIdsFor, tilePrintingFor} from './browseView';
 import {usePreCoreSearchCards} from './preCoreSearch';
 
@@ -348,7 +348,7 @@ function collectionToolbar(docked: boolean, collection: BrowseCollectionSlots | 
 function binderAndBanner(
   collection: BrowseCollectionSlots | null,
   listing: BrowseListing,
-  {onCardSelect, isMobile}: {onCardSelect: (card: LorcanaCard) => void; isMobile: boolean},
+  {onCardSelect, isMobile}: {onCardSelect: (card: LorcanaCard, source: BinderCardSource) => void; isMobile: boolean},
 ) {
   if (collection === null) return {};
   return {
@@ -449,9 +449,9 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
     search.cards,
   );
   const listing = {cards: sortedCards, sortOrder: params.sortOrder, matched: matchedCards, filtered};
-  const selectCard = (card: LorcanaCard) => {
+  const openCard = (card: LorcanaCard, source: CardSelectSource) => {
     // A card from outside Core is not in CardDataContext: count the card handed over.
-    trackCardSelected(getCardById(card.id) ?? card, 'browse');
+    trackCardSelected(getCardById(card.id) ?? card, source);
     const printingFor = printingIdsFor(search.findCard, filters.rarities);
     openFromBrowse(openCardModal, card.id, {...listing, printingFor, resolveCard: search.resolveCard}, collection);
   };
@@ -494,16 +494,16 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
         onFiltersChange: params.setFilters,
       },
       activeFilterCount: params.activeFilterCount,
-      onClearFilters: () => params.replaceFilters([], [], [], {}),
+      onClearFilters: params.clearFilters,
     }),
     setPanel: dockedSetPanel(docked, collection?.renderSetPanel(listing)),
     cards: sortedCards,
     // While sets 1-8 load, a search only they match would otherwise read "No cards match".
     isLoading: isLoading || (search.isLoading && sortedCards.length === 0),
-    onCardSelect: selectCard,
+    onCardSelect: (card: LorcanaCard) => openCard(card, 'browse'),
     printingFor: tilePrintingFor(search.findCard, filters.rarities),
     hasCardPage: search.hasCardPage,
-    ...binderAndBanner(collection, listing, {onCardSelect: selectCard, isMobile}),
+    ...binderAndBanner(collection, listing, {onCardSelect: openCard, isMobile}),
     phoneRow: phoneRow(collection, listing, {
       isMobile,
       filtersOn: params.activeFilterCount,

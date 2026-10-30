@@ -4,6 +4,8 @@ import {trackEvent} from '../../../shared/lib/analytics';
 /** The discovery surface a card was opened from. Must match the `card_selected` catalog union. */
 export type CardSelectSource =
   | 'browse'
+  | 'binder'
+  | 'friend_binder'
   | 'home'
   | 'playstyle'
   | 'playstyle_guide'

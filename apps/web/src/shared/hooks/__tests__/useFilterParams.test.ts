@@ -27,6 +27,7 @@ describe('useFilterParams', () => {
         facet: 'ink',
         value: 'Amber',
         action: 'add',
+        via: 'inline',
       });
     });
 
@@ -37,7 +38,66 @@ describe('useFilterParams', () => {
         facet: 'ink',
         value: 'Amber',
         action: 'remove',
+        via: 'inline',
       });
+    });
+
+    it("counts each ink, type and cost a dialog's Apply turns on or off, and nothing it keeps", () => {
+      const {result} = renderHook(() => useFilterParams(), {
+        wrapper: createWrapper(['/?ink=Amber&type=Character&cost=3']),
+      });
+      act(() => result.current.replaceFilters(['Ruby'], ['Character'], [3, 5], {keywords: ['Singer']}));
+      expect(vi.mocked(trackEvent).mock.calls).toEqual([
+        ['filter_applied', {facet: 'ink', value: 'Ruby', action: 'add', via: 'dialog'}],
+        ['filter_applied', {facet: 'ink', value: 'Amber', action: 'remove', via: 'dialog'}],
+        ['filter_applied', {facet: 'cost', value: '5', action: 'add', via: 'dialog'}],
+      ]);
+    });
+
+    it('sends nothing for an Apply that changes no ink, type or cost', () => {
+      const {result} = renderHook(() => useFilterParams(), {wrapper: createWrapper(['/?ink=Amber'])});
+      act(() => result.current.replaceFilters(['Amber'], [], [], {keywords: ['Singer']}));
+      expect(trackEvent).not.toHaveBeenCalled();
+    });
+
+    it("counts the Binder sheet's filters beside its sort, as a dialog's", () => {
+      const {result} = renderHook(() => useFilterParams(), {wrapper: createWrapper(['/?sort=name-asc'])});
+      act(() =>
+        result.current.applyDraft({inks: ['Amber'], types: ['Song'], costs: [], opts: {}}, {sortOrder: 'newest'}),
+      );
+      expect(vi.mocked(trackEvent).mock.calls).toEqual([
+        ['sort_changed', {sortOrder: 'newest', previousSort: 'name-asc'}],
+        ['filter_applied', {facet: 'ink', value: 'Amber', action: 'add', via: 'dialog'}],
+        ['filter_applied', {facet: 'type', value: 'Song', action: 'add', via: 'dialog'}],
+      ]);
+    });
+
+    it("counts each cost the cost chip's × clears", () => {
+      const {result} = renderHook(() => useFilterParams(), {wrapper: createWrapper(['/?cost=3,5'])});
+      act(() => result.current.clearCosts());
+      expect(vi.mocked(trackEvent).mock.calls).toEqual([
+        ['filter_applied', {facet: 'cost', value: '3', action: 'remove', via: 'inline'}],
+        ['filter_applied', {facet: 'cost', value: '5', action: 'remove', via: 'inline'}],
+      ]);
+    });
+
+    it('counts each filter Clear all turns off, and keeps the search and the sort', () => {
+      const {result} = renderHook(() => ({filters: useFilterParams(), url: useSearchParams()[0]}), {
+        wrapper: createWrapper(['/?ink=Amber&type=Character&cost=3&keyword=Singer&q=elsa&sort=name-asc']),
+      });
+      act(() => result.current.filters.clearFilters());
+      expect(vi.mocked(trackEvent).mock.calls).toEqual([
+        ['filter_applied', {facet: 'ink', value: 'Amber', action: 'remove', via: 'inline'}],
+        ['filter_applied', {facet: 'type', value: 'Character', action: 'remove', via: 'inline'}],
+        ['filter_applied', {facet: 'cost', value: '3', action: 'remove', via: 'inline'}],
+      ]);
+      expect(result.current.url.toString()).toBe('q=elsa&sort=name-asc');
+    });
+
+    it("sends nothing for the logo's reset", () => {
+      const {result} = renderHook(() => useFilterParams(), {wrapper: createWrapper(['/?ink=Amber'])});
+      act(() => result.current.clearAllFilters());
+      expect(trackEvent).not.toHaveBeenCalled();
     });
   });
 

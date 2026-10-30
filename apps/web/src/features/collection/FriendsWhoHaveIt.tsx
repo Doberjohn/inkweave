@@ -20,7 +20,7 @@ import {
 import {printedCardNumber, useDialogFocus, useHover, useScrollLock, useTransitionPresence} from '../../shared/hooks';
 import {smallImageUrl} from '../cards/loader';
 import {FriendChip} from '../friends/FriendChip';
-import {friendBinderPath} from '../friends/friendBinderPath';
+import {friendBinderPath, type BinderEntry} from '../friends/friendBinderPath';
 import {ChevronIcon} from '../friends/icons';
 import type {CollectionEntry, Finish} from './collectionParser';
 import {FinishCount} from './FinishCount';
@@ -281,7 +281,7 @@ function FriendRow({row, lacked, card, onFollow}: FriendRowProps) {
         <Link
           // The binder an edition's card is collected in: CC1's is Curator's Collection's, CC.
           to={friendBinderPath(friend.handle, card.setCode && binderSetOf(card.setCode))}
-          state={{atCard: card.id} satisfies AtCard}
+          state={{atCard: card.id, binderFrom: 'friends_who_have_it'} satisfies AtCard & BinderEntry}
           // A click that opens the binder in a new tab or window leaves this one as it was.
           onClick={(e) => {
             if (!isModifiedClick(e)) onFollow();

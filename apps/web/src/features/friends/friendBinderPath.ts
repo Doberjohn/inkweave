@@ -7,3 +7,12 @@
  */
 export const friendBinderPath = (handle: string, scope = 'all') =>
   `/browse?binder=${encodeURIComponent(scope)}&friend=${encodeURIComponent(handle)}`;
+
+/**
+ * Where a link into a friend's binder sits, in the navigation's state, for `friend_binder_opened`'s
+ * `from`: never in the address, which a shared link would carry along. A binder reached without
+ * it, by its address alone, is `link`.
+ */
+export interface BinderEntry {
+  binderFrom: 'friends_list' | 'friends_who_have_it';
+}

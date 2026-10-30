@@ -22,7 +22,7 @@ import {
 import {useHover} from '../../shared/hooks';
 import {trackEvent} from '../../shared/lib/analytics';
 import {FriendChip} from './FriendChip';
-import {friendBinderPath} from './friendBinderPath';
+import {friendBinderPath, type BinderEntry} from './friendBinderPath';
 import {formatFriendCode, normalizeFriendCode} from './friendCode';
 import {CheckIcon, CopyIcon, EyeIcon} from './icons';
 import type {FriendRow, FriendsStatus, SendOutcome} from './useFriends';
@@ -594,8 +594,9 @@ const GHOST_LINK: React.CSSProperties = {
 
 /**
  * View binder for a friend who shares, Not sharing for one who doesn't. The link's
- * name is "View binder of <name>", assembled from text on the page as `RowButton`'s are, so no
- * name reaches PostHog's autocapture. A friend with no handle has no binder address, and
+ * name is "View binder of <name>", assembled from text on the page as `RowButton`'s are, and
+ * `ph-no-capture` keeps the link out of PostHog's autocapture, whose click would hold its
+ * address, the friend's handle in it. A friend with no handle has no binder address, and
  * gets neither.
  */
 function SharingMark({row, shares, labelledBy}: {row: FriendRow; shares: boolean; labelledBy: string}) {
@@ -610,7 +611,9 @@ function SharingMark({row, shares, labelledBy}: {row: FriendRow; shares: boolean
       </span>
       <Link
         id={id}
+        className="ph-no-capture"
         to={friendBinderPath(row.handle)}
+        state={{binderFrom: 'friends_list'} satisfies BinderEntry}
         aria-labelledby={`${id} ${id}-of ${labelledBy}`}
         {...hoverProps}
         style={{...GHOST_LINK, ...(hovered && {borderColor: COLORS.primary})}}>

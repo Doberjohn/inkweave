@@ -1,7 +1,7 @@
 import {act, renderHook, waitFor} from '@testing-library/react';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {trackEvent} from '../../shared/lib/analytics';
-import {forgetFriendCollections, useFriendCollection} from './useFriendCollection';
+import {forgetFriendCollections, useFriendCollection, type BinderFrom} from './useFriendCollection';
 
 vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 const repo = vi.hoisted(() => ({getPlayerByHandle: vi.fn(), getFriendCollection: vi.fn()}));
@@ -26,8 +26,8 @@ afterEach(() => {
   Object.defineProperty(document, 'visibilityState', {configurable: true, get: () => 'visible'});
 });
 
-const render = (handle: string | null = RUBY.handle, reader: string | null = 'me') =>
-  renderHook(({h, r}) => useFriendCollection(h, r), {initialProps: {h: handle, r: reader}});
+const render = (handle: string | null = RUBY.handle, reader: string | null = 'me', from?: BinderFrom) =>
+  renderHook(({h, r, f}) => useFriendCollection(h, r, f), {initialProps: {h: handle, r: reader, f: from}});
 
 describe('useFriendCollection', () => {
   it("loads the friend's collection by handle, and counts the binder opened once", async () => {
@@ -36,7 +36,23 @@ describe('useFriendCollection', () => {
     await waitFor(() => expect(result.current).toEqual({status: 'shown', friend: RUBY, entries: ENTRIES}));
     expect(repo.getFriendCollection).toHaveBeenCalledWith('ruby');
     expect(trackEvent).toHaveBeenCalledTimes(1);
-    expect(trackEvent).toHaveBeenCalledWith('friend_binder_opened', {result: 'shown'});
+    expect(trackEvent).toHaveBeenCalledWith('friend_binder_opened', {result: 'shown', from: 'link'});
+  });
+
+  it('says where the binder was reached from', async () => {
+    const {result} = render(RUBY.handle, 'me', 'friends_who_have_it');
+    await waitFor(() => expect(result.current?.status).toBe('shown'));
+    expect(trackEvent).toHaveBeenCalledExactlyOnceWith('friend_binder_opened', {result: 'shown', from: 'friends_who_have_it'});
+  });
+
+  it('keeps where the binder was reached from as its read started, and reads nothing again for a new one', async () => {
+    const {result, rerender} = render(RUBY.handle, 'me', 'friends_list');
+    // A replace of the address drops the router's state: the binder reads as reached by its address.
+    rerender({h: RUBY.handle, r: 'me', f: 'link'});
+    await waitFor(() => expect(result.current?.status).toBe('shown'));
+
+    expect(repo.getPlayerByHandle).toHaveBeenCalledTimes(1);
+    expect(trackEvent).toHaveBeenCalledExactlyOnceWith('friend_binder_opened', {result: 'shown', from: 'friends_list'});
   });
 
   it('asks nothing with no friend named, or no reader signed in', () => {
@@ -51,7 +67,7 @@ describe('useFriendCollection', () => {
     await waitFor(() =>
       expect(result.current).toEqual({status: 'not-sharing', handle: RUBY.handle, name: 'Ruby Hero 042'}),
     );
-    expect(trackEvent).toHaveBeenCalledWith('friend_binder_opened', {result: 'not_sharing'});
+    expect(trackEvent).toHaveBeenCalledWith('friend_binder_opened', {result: 'not_sharing', from: 'link'});
   });
 
   it('says the same for a handle no one has, with no name to give', async () => {
@@ -72,7 +88,7 @@ describe('useFriendCollection', () => {
     repo.getFriendCollection.mockResolvedValueOnce({data: null, error: 'Network error'});
     const {result} = render();
     await waitFor(() => expect(result.current?.status).toBe('failed'));
-    expect(trackEvent).toHaveBeenCalledWith('friend_binder_opened', {result: 'failed'});
+    expect(trackEvent).toHaveBeenCalledWith('friend_binder_opened', {result: 'failed', from: 'link'});
 
     act(() => {
       if (result.current?.status === 'failed') result.current.retry();

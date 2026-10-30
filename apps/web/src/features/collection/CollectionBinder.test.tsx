@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, afterEach} from 'vitest';
+import {describe, it, expect, vi, afterEach, beforeEach} from 'vitest';
 import {act, render, screen, fireEvent, within} from '@testing-library/react';
 import userEvent, {type UserEvent} from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
@@ -6,9 +6,11 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CollectionBinder} from './CollectionBinder';
 import {settleOf} from './binderPockets';
 import {preloadArt} from './preloadArt';
+import {trackEvent} from '../../shared/lib/analytics';
 
 // jsdom loads no image: the binder's art loaded ahead is only asked for.
 vi.mock('./preloadArt', () => ({preloadArt: vi.fn()}));
+vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 
 /** A 48-card set: three spreads, the first opening on the front cover, or six lone pages of nine. */
 const CARDS = Array.from(
@@ -339,6 +341,48 @@ describe('CollectionBinder', () => {
       expect(promoPocket(4)).toHaveFocus();
       await user.keyboard('{ArrowLeft}{ArrowDown}');
       expect(promoPocket(10)).toHaveFocus();
+    });
+  });
+
+  describe('the first turn of each kind, which binder_page_turned reports', () => {
+    beforeEach(() => {
+      vi.mocked(trackEvent).mockClear();
+    });
+
+    it('sends the first turn by an arrow, and none for the turns after it', () => {
+      render(binder());
+      fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+      fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+      expect(vi.mocked(trackEvent).mock.calls).toEqual([['binder_page_turned', {method: 'arrow', layout: 'spread'}]]);
+    });
+
+    it('sends nothing for Previous on the first spread, which goes nowhere', () => {
+      render(binder());
+      fireEvent.click(screen.getByRole('button', {name: 'Previous spread'}));
+      expect(trackEvent).not.toHaveBeenCalled();
+    });
+
+    it('sends a turn by the map, and nothing for a click on the spread already on show', () => {
+      render(binder({pager: 'map'}));
+      fireEvent.click(screen.getByRole('button', {name: /^Spread 1 of 3/}));
+      expect(trackEvent).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', {name: /^Spread 2 of 3/}));
+      expect(vi.mocked(trackEvent).mock.calls).toEqual([['binder_page_turned', {method: 'map', layout: 'spread'}]]);
+    });
+
+    it("sends a phone's turn as a page's", () => {
+      render(binder({pager: 'map', single: true}));
+      fireEvent.click(screen.getByRole('button', {name: 'Page 3 of 6: 3 missing'}));
+      expect(vi.mocked(trackEvent).mock.calls).toEqual([['binder_page_turned', {method: 'map', layout: 'page'}]]);
+    });
+
+    it('counts afresh in a binder mounted again, as a new set, sort or filter mounts one', () => {
+      const {unmount} = render(binder());
+      fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+      unmount();
+      render(binder());
+      fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+      expect(trackEvent).toHaveBeenCalledTimes(2);
     });
   });
 

@@ -33,11 +33,14 @@ export function startPostHog(key: string, onError: (error: unknown) => void): Po
       // The SDK's console logging stays off even with ?__posthog_debug=true in the URL, which
       // would otherwise switch it on and store a ph_debug flag in localStorage.
       debug: false,
-      // Masks a sign-in's one-time code, and ad-click ids such as gclid and fbclid, in each event's
-      // URL and the visit's first URL. The Supabase SDK clears the code from the address bar only
-      // after a successful exchange, so a failed sign-in leaves it there. Referrers are not masked.
+      // Masks a sign-in's one-time code, a friend's handle in their binder's address (binderCards'
+      // FRIEND_PARAM; a literal, since this module imports nothing from the app), and ad-click ids
+      // such as gclid and fbclid, in each event's URL and the visit's first URL. The Supabase SDK
+      // clears the code from the address bar only after a successful exchange, so a failed sign-in
+      // leaves it there. Referrers are not masked: vercel.json's Referrer-Policy keeps other pages'
+      // addresses out of them.
       mask_personal_data_properties: true,
-      custom_personal_data_properties: ['code'],
+      custom_personal_data_properties: ['code', 'friend'],
       // Decided here, never in PostHog's settings: with remote config off, nobody can switch on
       // replays, surveys or extra scripts from the dashboard. Each needs a code change and a
       // privacy page update.

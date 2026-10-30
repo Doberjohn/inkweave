@@ -91,6 +91,10 @@ describe('siteHeaders', () => {
       .find((directive) => directive.startsWith('script-src '));
     expect(scriptSrc.split(' ')).toContain("'unsafe-inline'");
   });
+
+  it('sends other pages only the origin as the referrer, so a binder address never leaves its page', () => {
+    expect(readSiteHeaders()['Referrer-Policy']).toBe('strict-origin');
+  });
 });
 
 describe('createDistServer', () => {

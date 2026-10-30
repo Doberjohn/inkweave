@@ -596,7 +596,7 @@ describe('CollectionContext, starting empty', () => {
     expect(result.current.entries).toEqual({});
     await flush();
     expect(upsertCollection).toHaveBeenCalledWith('user-a', {}, expect.any(Number));
-    expect(trackEvent).toHaveBeenCalledWith('collection_started', {surface: 'browse'});
+    expect(vi.mocked(trackEvent).mock.calls).toEqual([['collection_started', {surface: 'browse'}]]);
   });
 
   it("adopts the account's collection instead when the read finds one, saved from another device", async () => {
@@ -624,6 +624,9 @@ describe('CollectionContext, starting empty', () => {
     expect(result.current.startProblem).toBe(UNREACHABLE);
     expect(result.current.hasCollection).toBe(false);
     expect(upsertCollection).not.toHaveBeenCalled();
+    expect(vi.mocked(trackEvent).mock.calls).toEqual([
+      ['collection_start_failed', {surface: 'browse', reason: 'unreachable'}],
+    ]);
   });
 
   it("drops the problem at the next start, and starts there once the account answers", async () => {
@@ -679,7 +682,7 @@ describe('CollectionContext, starting empty', () => {
 
     expect(result.current.hasCollection).toBe(false);
     expect(result.current.startProblem).toBe('Your browser would not let us save this collection.');
-    expect(trackEvent).not.toHaveBeenCalled();
+    expect(vi.mocked(trackEvent).mock.calls).toEqual([['collection_start_failed', {surface: 'browse', reason: 'storage'}]]);
   });
 
   // One copy per browser (owner ruling 2026-10-06): starting here would replace it.
@@ -695,7 +698,7 @@ describe('CollectionContext, starting empty', () => {
     expect(result.current.startProblem).toBe(HELD);
     expect(readCollection()).toMatchObject({ownerUid: 'user-b', importedAt: 5000, entries: ENTRIES});
     expect(upsertCollection).not.toHaveBeenCalled();
-    expect(trackEvent).not.toHaveBeenCalled();
+    expect(vi.mocked(trackEvent).mock.calls).toEqual([['collection_start_failed', {surface: 'browse', reason: 'held'}]]);
   });
 
   it("starts over another account's copy once its changes are saved to that account", async () => {
@@ -818,9 +821,13 @@ describe('CollectionContext, counts changed in the app (#826)', () => {
     return view;
   }
 
-  it('sets one finish of one card, and the edit survives a remount', async () => {
+  it('sets one finish of one card, says it wrote, and the edit survives a remount', async () => {
     const {result, unmount} = await renderSynced();
-    act(() => result.current.setCount('owned', 'foil', 2));
+    let wrote = false;
+    act(() => {
+      wrote = result.current.setCount('owned', 'foil', 2);
+    });
+    expect(wrote).toBe(true);
     expect(result.current.ownedCount('owned')).toBe(5);
     unmount();
 
@@ -838,8 +845,26 @@ describe('CollectionContext, counts changed in the app (#826)', () => {
 
   it('refuses a count that is not a whole number, which would fail the stored copy on its next read', async () => {
     const {result} = await renderSynced();
-    act(() => result.current.setCount('owned', 'foil', 1.5));
+    let wrote = true;
+    act(() => {
+      wrote = result.current.setCount('owned', 'foil', 1.5);
+    });
 
+    expect(wrote).toBe(false);
+    expect(result.current.entries).toEqual(ENTRIES);
+  });
+
+  it('says it wrote nothing when the browser refuses the write, and keeps the counts', async () => {
+    const {result} = await renderSynced();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('exceeded the quota', 'QuotaExceededError');
+    });
+    let wrote = true;
+    act(() => {
+      wrote = result.current.setCount('owned', 'foil', 2);
+    });
+
+    expect(wrote).toBe(false);
     expect(result.current.entries).toEqual(ENTRIES);
   });
 
@@ -849,7 +874,11 @@ describe('CollectionContext, counts changed in the app (#826)', () => {
     await advance(0);
     expect(result.current.syncing).toBe(true);
 
-    act(() => result.current.setCount('owned', 'foil', 2));
+    let wrote = true;
+    act(() => {
+      wrote = result.current.setCount('owned', 'foil', 2);
+    });
+    expect(wrote).toBe(false);
     expect(result.current.entries).toEqual(ENTRIES);
   });
 

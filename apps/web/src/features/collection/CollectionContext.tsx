@@ -145,8 +145,11 @@ interface CollectionContextValue {
    *
    * The count set is the one shown, so the edit saves it as the player sees it, and
    * clears the copies shown in it from wherever they were counted (`editAsShown`).
+   *
+   * Answers whether the count was written: never while the collection can't be edited, nor
+   * when the browser refuses the write.
    */
-  setCount: (cardId: string, finish: Finish, count: number) => void;
+  setCount: (cardId: string, finish: Finish, count: number) => boolean;
   /**
    * Another player's copies placed as this provider places the player's own (`placeCopies`):
    * a friend's copy counted in a finish its printing doesn't come in shows where yours
@@ -167,6 +170,14 @@ const START_UNREACHABLE = "Couldn't reach your account to start your binder.";
 /** A start held back by another account's unsaved copy (`heldForAnother`). */
 const START_HELD =
   "This browser holds another account's binder with changes that aren't saved yet. Sign in to that account to save them, then try again.";
+
+/** A start that made no collection: why, for `collection_start_failed`, and what the binder says. */
+interface StartFailure {
+  reason: 'unreachable' | 'held' | 'storage';
+  message: string;
+}
+
+const UNREACHABLE: StartFailure = {reason: 'unreachable', message: START_UNREACHABLE};
 
 /**
  * Whether this browser's copy is another account's with an upload still owed to it: an edit
@@ -696,17 +707,20 @@ export function CollectionProvider({children, placements = NO_PLACEMENTS}: Colle
       if (pendingStart.current !== start) return;
       pendingStart.current = null;
       if (holds === true) return;
-      const message = holds === null ? START_UNREACHABLE : startEmpty(uid, surface);
-      if (message !== null) setStartProblem({uid, message});
+      const failure = holds === null ? UNREACHABLE : startEmpty(uid, surface);
+      if (failure === null) return;
+      trackEvent('collection_start_failed', {surface, reason: failure.reason});
+      setStartProblem({uid, message: failure.message});
     });
   }
 
   /** Start the empty collection, or say why not: another account's unsaved copy, or a refused write. */
-  function startEmpty(owner: Uid, surface: StartSurface): string | null {
-    if (heldForAnother(state, owner)) return START_HELD;
+  function startEmpty(owner: Uid, surface: StartSurface): StartFailure | null {
+    if (heldForAnother(state, owner)) return {reason: 'held', message: START_HELD};
     const error = importCollection(NO_ENTRIES, Date.now());
-    if (error === null) trackEvent('collection_started', {surface});
-    return error;
+    if (error !== null) return {reason: 'storage', message: error};
+    trackEvent('collection_started', {surface});
+    return null;
   }
 
   function clearImported() {
@@ -737,21 +751,22 @@ export function CollectionProvider({children, placements = NO_PLACEMENTS}: Colle
     localEpoch.current += 1;
   }
 
-  function setCount(cardId: string, finish: Finish, count: number) {
+  function setCount(cardId: string, finish: Finish, count: number): boolean {
     // Not before the account's copy has answered: an edit made then is built on this browser's
     // copy, and its upload would replace counts saved elsewhere that the read was bringing in.
     const editable = uid !== null && visible !== null && !syncing;
     // A count must stay a whole number: a stored 1.5 fails the copy's guard on the next
     // read, and that read clears the whole collection (`readCollection`).
-    if (!editable || !Number.isSafeInteger(count)) return;
+    if (!editable || !Number.isSafeInteger(count)) return false;
     const entries = editAsShown(visible.entries, placements, {id: cardId, finish}, Math.max(0, count));
     const {data, error} = writeCollection(entries, uniqueImportStamp(Date.now(), uid, state), uid, 'import');
     // As for an import: nothing moves unless the local write landed.
-    if (error !== null) return;
+    if (error !== null) return false;
     setState(data);
     localEpoch.current += 1;
     markUploadPending(uid, data.importedAt);
     scheduleUpload(waitingUpload, uid, data, setState);
+    return true;
   }
 
   // Every copy where it shows; the saved counts stay as they are.

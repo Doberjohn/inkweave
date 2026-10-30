@@ -8,10 +8,11 @@ import {SignInDialog} from '../../shared/components/SignInDialog';
 import {SET_NAMES, type BrowseSortOrder} from '../../shared/constants';
 import {useSession} from '../../shared/contexts/SessionContext';
 import {useCollection} from './CollectionContext';
-import type {CollectionEntries, Finish} from './collectionParser';
+import type {CollectionEntries} from './collectionParser';
+import {trackViewPick, trackedPicks} from './binderEvents';
 import type {Axis} from './collectionStats';
 import {countCompare, inViewOf, type Compare} from './compareCollections';
-import {useKeptCards} from './useKeptCards';
+import {useHandCounts} from './useHandCounts';
 import {useCollectionCards, useCollectionPool} from './CollectionCardsContext';
 import {collectionClick} from './collectionAction';
 import {binderModalTarget, type ModalTarget} from './collectionModalTarget';
@@ -47,9 +48,10 @@ import {PhoneBinderRow} from './PhoneBinderRow';
 import {BinderSheet, type BinderSheetProps} from './BinderSheet';
 import type {CompareCounts} from './BinderShows';
 import {FriendBinderBanner, FriendNotSharing} from './FriendBinderBanner';
-import {useFriendCollection, type FriendBinder} from './useFriendCollection';
+import {useFriendCollection, type BinderFrom, type FriendBinder} from './useFriendCollection';
 import type {BinderStart} from './CollectionBinderSection';
 import type {AtCard} from './FriendsWhoHaveIt';
+import type {BinderEntry} from '../friends/friendBinderPath';
 import {
   BinderChunkFallback,
   DockedSetBodyFallback,
@@ -332,8 +334,14 @@ export interface BrowseCollectionSlots {
    * in either mode: for now, Import collection. Null signed out.
    */
   modeActions: ReactNode;
-  /** Collection mode's content for the page's listing, or null to keep the grid. */
-  renderBinder: (listing: BrowseListing, onCardSelect: (card: LorcanaCard) => void) => ReactNode | null;
+  /**
+   * Collection mode's content for the page's listing, or null to keep the grid. A pocket's card
+   * goes to `onCardSelect` with the binder it was picked in.
+   */
+  renderBinder: (
+    listing: BrowseListing,
+    onCardSelect: (card: LorcanaCard, source: BinderCardSource) => void,
+  ) => ReactNode | null;
   /**
    * How the card modal should open a clicked card, or null to open it as usual.
    * Set while the binder shows, because only it holds cards `CardDataContext` cannot
@@ -462,6 +470,24 @@ function startAtOf({state, key}: Location): BinderStart | undefined {
 }
 
 /**
+ * Where the friend's binder on show was reached from: the state of the link followed, else its
+ * address alone. State no link writes, such as a history entry an older build wrote, counts as
+ * the address.
+ */
+function binderFromOf({state}: Location): BinderFrom {
+  const from = (state as Partial<BinderEntry> | null)?.binderFrom;
+  return from === 'friends_list' || from === 'friends_who_have_it' ? from : 'link';
+}
+
+/** Where a binder's card was opened: your own binder, or a friend's (`card_selected`'s `source`). */
+export type BinderCardSource = 'binder' | 'friend_binder';
+
+const binderSourceOf = (friend: FriendBinder | null): BinderCardSource => (friend === null ? 'binder' : 'friend_binder');
+
+/** Where Browse opens the import: its gear menu, or an empty binder's cover. */
+type ImportSurface = 'browse' | 'empty_binder';
+
+/**
  * The import an empty binder's cover offers: in the reader's own binder, while their collection
  * holds no copies, so the cover says how a first one goes in.
  */
@@ -497,7 +523,7 @@ interface FriendView {
  */
 function useFriendView(handle: string | null, readerId: string | null, leaveFriend: () => void): FriendView {
   const {entries, hasCollection, place} = useCollection();
-  const friend = friendBinderOf(handle, useFriendCollection(handle, readerId));
+  const friend = friendBinderOf(handle, useFriendCollection(handle, readerId, binderFromOf(useLocation())));
   const own = friend?.status === 'own';
   useEffect(() => {
     if (own) leaveFriend();
@@ -553,7 +579,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // unmounting mid-animation; never mounted at all for anyone who never opens it.
   const [importMounted, setImportMounted] = useState(false);
   const {user, loading: sessionLoading} = useSession();
-  const {hasCollection, holdsCopies, syncing, importCollection, startCollection, startProblem, cancelStart, setCount} =
+  const {entries, hasCollection, holdsCopies, syncing, importCollection, startCollection, startProblem, cancelStart, setCount} =
     useCollection();
   const {retry} = useCollectionCards();
   const {requested, friend: friendHandle, mode, show: asked, enterBinder, writeBinder, leaveBinder, writeShow, leaveFriend} =
@@ -592,13 +618,16 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   const view = [collectionMode, friend === null ? '' : friendHandle, setCode, show, axis, searchParams.get(SORT_PARAM)].join(
     '|',
   );
-  const {kept, keep} = useKeptCards(view);
-  const changeCount = (cardId: string, finish: Finish, count: number) => {
-    setCount(cardId, finish, count);
-    keep(cardId);
-  };
+  const {kept, changeCount, noteWindowEdit} = useHandCounts(
+    {collectionMode, friend: friend !== null, view},
+    {entries, setCount},
+  );
 
-  const openImport = () => {
+  // Where the open import was asked for, which its events report.
+  const [importSurface, setImportSurface] = useState<ImportSurface>('browse');
+  const openImport = (surface: ImportSurface) => {
+    trackEvent('collection_import_opened', {surface, replacing: holdsCopies});
+    setImportSurface(surface);
     setImportMounted(true);
     setShowImport(true);
   };
@@ -637,19 +666,24 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // read only. The import waits as Account's does.
   const modeActions =
     user !== null && friend === null ? (
-      <CollectionActions onImport={openImport} checking={syncing && !hasCollection} onMenuOpen={preloadImportDialog} />
+      <CollectionActions
+        onImport={() => openImport('browse')}
+        checking={syncing && !hasCollection}
+        onMenuOpen={preloadImportDialog}
+      />
     ) : null;
 
   const panelControls = {
     setCode,
     sets: panelSets(sets, setCode),
     setsLoading: sets === null,
-    onSetChange: writeBinder,
     picksPromos: rarityPicksPromos(searchParams),
     show,
-    onShowChange: writeShow,
     axis,
-    onAxisChange: setAxis,
+    ...trackedPicks(
+      {onSetChange: writeBinder, onShowChange: writeShow, onAxisChange: setAxis},
+      {setCode, show, axis, friend: friend !== null},
+    ),
   };
   // You need and They need, counted over the scope's cards the page lets through, as the
   // panel's numbers are; null outside a friend's binder, or for a reader with no collection.
@@ -678,10 +712,15 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
         </Suspense>
       )
     : undefined;
+  // The foil pointer's button: Master set, under which the binder shows the foils friends have.
+  const showFoilsOnOffer = () => {
+    trackViewPick('foil_pointer', {value: 'master', was: axis}, false);
+    setAxis('master');
+  };
   const renderFoilPointer = ownFriends
     ? (cards: readonly LorcanaCard[]) => (
         <Suspense fallback={null}>
-          <FoilPointer cards={cards} onShow={() => setAxis('master')} />
+          <FoilPointer cards={cards} onShow={showFoilsOnOffer} />
         </Suspense>
       )
     : undefined;
@@ -691,7 +730,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   const ownStatus = ownStatusOf({error, onRetry: retry}, ownProblem, () => startCollection('browse'));
   const binderStatus = binderStatusOf(friend, ownStatus);
 
-  function renderBinder(listing: BrowseListing, onCardSelect: (card: LorcanaCard) => void) {
+  function renderBinder(listing: BrowseListing, onCardSelect: (card: LorcanaCard, source: BinderCardSource) => void) {
     if (!collectionMode) return null;
     if (friend?.status === 'not-sharing') return <FriendNotSharing name={friend.name} handle={friend.handle} />;
     return (
@@ -712,13 +751,13 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           {...binderStatus}
           {...panelControls}
           compare={compareFor(listing)}
-          onCardSelect={onCardSelect}
+          onCardSelect={(card) => onCardSelect(card, binderSourceOf(friend))}
           // A friend's binder is read only: no − and + in its pockets.
           onCountChange={friend === null ? changeCount : undefined}
           startAt={friend === null ? undefined : startAtOf(location)}
           pocketBadge={pocketBadge}
           renderFoilPointer={renderFoilPointer}
-          onEmptyImport={emptyImportOf(friend, {hasCollection, holdsCopies}, openImport)}
+          onEmptyImport={emptyImportOf(friend, {hasCollection, holdsCopies}, () => openImport('empty_binder'))}
         />
       </Suspense>
     );
@@ -758,7 +797,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
             // Outside collection mode the binder, which shows this error too, is not drawn.
             poolError={error}
             onRetryPool={retry}
-            context={{surface: 'browse', replacing: holdsCopies}}
+            context={{surface: importSurface, replacing: holdsCopies}}
             // Land in collection mode on success, from the gear on the grid too: the
             // import is the reader's collection. Only on success, or a refused write
             // would show the binder as if it had worked.
@@ -771,7 +810,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
         </Suspense>
       )}
       {/* The card window keeps your own copies, in a friend's binder too. */}
-      <WindowCopies onEdit={keep} />
+      <WindowCopies onEdit={noteWindowEdit} />
       {friendsHave && (
         <Suspense fallback={null}>
           <CollectionFriends axis={ownsAxis(setCode, axis)} />
@@ -827,7 +866,9 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
         />
       ) : undefined,
     renderPhoneSheet: (listing, sheet) =>
-      binderShows ? <BinderSheet {...sheet} show={show} compare={compareFor(listing)} /> : undefined,
+      binderShows ? (
+        <BinderSheet {...sheet} show={show} compare={compareFor(listing)} friend={friend !== null} />
+      ) : undefined,
     renderBanner,
   };
 }

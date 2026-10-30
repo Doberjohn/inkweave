@@ -1,11 +1,20 @@
-import {useEffect, useId, useState, type AnimationEvent, type CSSProperties, type PointerEvent, type ReactNode} from 'react';
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type AnimationEvent,
+  type CSSProperties,
+  type PointerEvent,
+  type ReactNode,
+} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardTile} from '../cards/components/CardTile';
 import {PROMO_RARITY, smallImageUrl} from '../cards/loader';
 import {CollectionSlotCounts, type SlotCountsEditor} from './CollectionSlotCounts';
 import type {CollectionEntry, Finish} from './collectionParser';
 import {finishesOf} from './printingFinishes';
-import {BinderSpread} from '../cards/components/BinderSpread';
+import {BinderSpread, type TurnAsk} from '../cards/components/BinderSpread';
 import {pagingOf, THREE_ROWS, type BinderPaging, type LoneFit} from '../cards/components/binderGeometry';
 import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/BinderSpreadMap';
 import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
@@ -15,6 +24,7 @@ import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
 import {preloadArt} from './preloadArt';
 import {CardImageButton, CardLightbox} from '../../shared/components';
 import {COLORS, FONT_SIZES, SPACING} from '../../shared/constants';
+import {trackEvent} from '../../shared/lib/analytics';
 
 /**
  * The collection binder (#553 Phase C): the pockets it is given, in the order it is given them.
@@ -465,8 +475,31 @@ function useBinderView(options: ViewOptions) {
   const [firstSlot, setFirstSlot] = useState(() => openingSlot(options));
   const total = Math.max(1, Math.ceil((slotCount + lead) / perView));
   const current = Math.max(0, Math.min(Math.floor((firstSlot + lead) / perView), total - 1));
-  const goTo = (view: number) => setFirstSlot(firstSlotOf(Math.max(0, Math.min(view, total - 1)), paging, single));
+  // Answers whether the view moved: a view past either end stays where it is.
+  const goTo = (view: number) => {
+    const to = Math.max(0, Math.min(view, total - 1));
+    setFirstSlot(firstSlotOf(to, paging, single));
+    return to !== current;
+  };
   return {current, total, goTo};
+}
+
+/** How a binder's view turned: a disc, a page dragged across, or the spread map. */
+type TurnMethod = TurnAsk | 'map';
+
+/**
+ * Turns the binder's view with `goTo`, sending `binder_page_turned` for the first turn of each kind
+ * in this binder: whether people page at all, and how. A turn that goes nowhere, such as a press on
+ * the spread already on show, counts for nothing. A new set, sort or filter mounts a new binder
+ * (`KeyedBinder`), which counts afresh.
+ */
+function useReportedTurns(goTo: (view: number) => boolean, single: boolean) {
+  const seen = useRef(new Set<TurnMethod>());
+  return (view: number, method: TurnMethod) => {
+    if (!goTo(view) || seen.current.has(method)) return;
+    seen.current.add(method);
+    trackEvent('binder_page_turned', {method, layout: single ? 'page' : 'spread'});
+  };
 }
 
 /** Tells `onCoverChange` whether a phone's cover is on show, each time that changes. */
@@ -497,6 +530,7 @@ export function CollectionBinder({
   const paging = pagingOf(single, loneFit.rows);
   const startSlot = slots.findIndex((slot) => !isOpenPocket(slot) && slot.id === startCard);
   const {current, total, goTo} = useBinderView({slotCount: slots.length, paging, single, opensOnCover, startSlot});
+  const turnTo = useReportedTurns(goTo, single);
   usePreloadNeighbours(slots, current, paging);
   // Only a phone's cover is a view of its own: a spread's shares its first view with page 1.
   useCoverReport(single && current === 0, onCoverChange);
@@ -508,7 +542,7 @@ export function CollectionBinder({
         rows={loneFit.rows}
         pockets={slots.map((slot) => pocketOf(slot, countsFor))}
         current={current}
-        onGo={goTo}
+        onGo={(view) => turnTo(view, 'map')}
         sets={bySet ? mapSets(slots) : undefined}
       />
     ) : undefined;
@@ -523,8 +557,8 @@ export function CollectionBinder({
       footer={map}
       cardCount={slots.length}
       isOpen={(index) => takesNoFocus(slots[index])}
-      onPrev={() => goTo(current - 1)}
-      onNext={() => goTo(current + 1)}
+      onPrev={(ask) => turnTo(current - 1, ask)}
+      onNext={(ask) => turnTo(current + 1, ask)}
       canPrev={current > 0}
       canNext={current < total - 1}
       renderSlot={(index, tabIndex) => {
