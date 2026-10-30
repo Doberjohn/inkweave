@@ -19,6 +19,7 @@ do $$
 declare n int;
 begin
   assert t.backups('collections', t.uid('O')) = 0, 'O''s collection is gone, and its backup outlived the migration';
+  assert t.backups('collections', t.uid('C')) = 0, 'C''s backed-up collection was cleared and imported again, and its backup outlived the migration';
   select count(*) into n from internal.card_id_remap_backup where source_table = 'decks' and label = 'seed';
   assert n = 0, format('O''s deck is gone, and %s backups of it outlived the migration', n);
   assert t.backups('collections', t.uid('K')) = 1, 'the migration dropped the backup of K''s collection, which is still there';

@@ -1,7 +1,9 @@
 -- The decks and collections blocks of 20261005000002_declare_table_privileges.sql, copied
 -- verbatim, so players act under production's grants. The file itself can't load here: its
 -- votes and pair_scores blocks name columns and a view the stand-ins lack. 20261005000000,
--- which it restates, adds nothing to them. Copy any later grant on either table here too.
+-- which it restates, adds nothing to them. Load it in 20261005000002's place, before
+-- 20261005000003, whose owner_id grant its revoke would drop. Copy here any later grant on
+-- either table whose migration the replay doesn't load after this file.
 
 -- decks: anon may read (RLS narrows to is_public); owners get the four verbs.
 revoke all on public.decks from anon, authenticated;

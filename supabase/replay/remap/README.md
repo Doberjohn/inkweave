@@ -6,7 +6,7 @@ It builds on the friends replay (`../friends/`): its `scaffold.sql` stands in fo
 
 - `scaffold.sql` adds `public.votes`, which the remap and undo lock and look up, as a table with an id alone: the checks remap collections and decks only.
 - `grants.sql` holds production's grants on `decks` and `collections`, copied from `20261005000002_declare_table_privileges.sql`, which can't load here, so players clear, delete and import as production lets them.
-- `seed.sql` runs before the backups migration and leaves what graduations left before it: the backups of a collection and a deck deleted since, the backup of a collection still there, and a merged vote's backup.
+- `seed.sql` runs before the backups migration and leaves what graduations left before it: the backups of a collection and a deck deleted since, of a collection cleared and imported again, of a collection still there, and a merged vote's backup.
 - `checks.sql` runs the checks R0 to R6. Each makes its own rows and remaps its own card ids under its own label, so no check leans on another's.
 
 Re-run it whenever a migration changes `internal.card_id_remap_backup`, the remap or undo functions, or the delete paths of `collections` and `decks`, and add the change's checks first, so you see them fail before the migration exists.
@@ -45,7 +45,7 @@ psql -h localhost -p 5499 -U postgres -d remap -f $F/remap/checks.sql
 
 | Check | What it proves |
 |---|---|
-| R0 | the migration drops the backups of the collection and deck deleted before it, and keeps the other collection's and the vote's |
+| R0 | the migration drops the backups of the collection and deck deleted before it and of the collection imported again, and keeps the other collection's and the vote's |
 | R1 | clearing a collection, as its owner, drops its backup |
 | R2 | deleting an account drops the backups of its collection and its deck |
 | R3 | deleting a deck, as its owner, drops its backup |
@@ -65,4 +65,5 @@ Plant the mistake in a copy of the backups migration and load the copy instead. 
 | the collections trigger fires `after delete or update` | R1 (the remap's own update drops its backup), then R4 and R5 |
 | `grant execute` on the trigger function to `authenticated` | R6 |
 | the opening delete drops every collection backup, gone row or not | R0 (K's backup is gone) |
+| the opening delete matches a collection by its owner alone | R0 (C's backup stays) |
 | the trigger's collection delete drops the `source_table` filter | R5 (the vote's backup is gone) |

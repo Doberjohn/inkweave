@@ -49,9 +49,13 @@ create trigger decks_drop_remap_backups
   for each row execute function internal.drop_card_id_remap_backups();
 
 -- Backups of rows already gone. After the triggers: creating them locks both tables until
--- this commits, so no row goes between this delete's read and the triggers taking over.
+-- this commits, so no row goes between this delete's read and the triggers taking over. A
+-- collection is keyed by its owner, so one cleared and imported again is a new row with the
+-- same key: its created_at, which only the server sets, tells it from the row backed up.
 delete from internal.card_id_remap_backup b
  where (b.source_table = 'collections'
-        and not exists (select 1 from public.collections c where c.owner_id::text = b.row_id))
+        and not exists (select 1 from public.collections c
+                         where c.owner_id::text = b.row_id
+                           and c.created_at = (b.old_row ->> 'created_at')::timestamptz))
     or (b.source_table = 'decks'
         and not exists (select 1 from public.decks d where d.id::text = b.row_id));
