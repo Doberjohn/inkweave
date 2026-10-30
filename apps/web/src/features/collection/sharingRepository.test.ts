@@ -9,10 +9,12 @@ const mockMaybeSingle = vi.hoisted(() => vi.fn());
 const mockEq = vi.hoisted(() => vi.fn());
 const mockUpsert = vi.hoisted(() => vi.fn());
 const mockState = vi.hoisted(() => ({client: null as unknown}));
+const mockReport = vi.hoisted(() => vi.fn());
 
 vi.mock('../../shared/lib/supabase', () => ({
   loadSupabase: () => Promise.resolve(mockState.client),
 }));
+vi.mock('../../shared/lib/reportFailure', () => ({reportFailure: mockReport}));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -146,5 +148,35 @@ describe('getPlayerByHandle', () => {
   it('asks nothing for text that cannot be a handle', async () => {
     await expect(getPlayerByHandle('a,b) or (true')).resolves.toEqual({data: null, error: null});
     expect(mockEq).not.toHaveBeenCalled();
+  });
+});
+
+describe('failures', () => {
+  const REFUSAL = {message: 'permission denied for function friend_collections', code: '42501'};
+
+  // Each call names its own operation, so Sentry tells a lost switch from a friend's binder.
+  it.each([
+    {operation: 'read switch', call: () => getSharing('me')},
+    {operation: 'save switch', call: () => setSharing('me', true)},
+    {operation: 'read friend binder', call: () => getFriendCollection(FRIEND)},
+    {operation: 'read friend binders', call: () => getSharedCollections()},
+    {operation: 'find player', call: () => getPlayerByHandle('ruby_hero_042')},
+  ])('reports a refused $operation', async ({operation, call}) => {
+    mockRpc.mockResolvedValue({data: null, error: REFUSAL});
+    mockMaybeSingle.mockResolvedValue({data: null, error: REFUSAL});
+    mockUpsert.mockResolvedValue({error: REFUSAL});
+
+    await call();
+
+    expect(mockReport).toHaveBeenCalledWith({area: 'sharing', operation}, REFUSAL);
+  });
+
+  it('reports a request that threw, and answers with a network error', async () => {
+    const failure = new TypeError('Failed to fetch');
+    mockRpc.mockRejectedValue(failure);
+
+    await expect(getFriendCollection(FRIEND)).resolves.toEqual({data: null, error: 'Network error'});
+
+    expect(mockReport).toHaveBeenCalledWith({area: 'sharing', operation: 'read friend binder'}, failure);
   });
 });

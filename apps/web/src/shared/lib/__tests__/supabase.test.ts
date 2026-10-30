@@ -29,8 +29,10 @@ vi.mock('@sentry/react', () => ({
   captureException: vi.fn(),
   startSpan: vi.fn(),
   addIntegration: vi.fn(),
-  supabaseIntegration: vi.fn((options: unknown) => ({name: 'Supabase', options})),
 }));
+
+const mockReport = vi.hoisted(() => vi.fn());
+vi.mock('../reportFailure', () => ({reportFailure: mockReport}));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -85,41 +87,24 @@ describe('loadSupabase', () => {
     await expect(loadSupabase()).rejects.toThrow(TypeError);
     await expect(loadSupabase()).resolves.not.toBeNull();
   });
-});
 
-describe("Sentry's Supabase integration (#640)", () => {
-  // Fresh copies: sentry.ts and the client singleton keep their state at module level.
-  async function loadFresh() {
+  // Every Supabase call reports its own failures (reportFailure.ts), so Sentry's Supabase
+  // integration would send each refusal a second time.
+  it('gives Sentry no Supabase integration', async () => {
+    // Fresh copies: sentry.ts and the client singleton keep their state at module level.
     vi.resetModules();
     vi.stubEnv('PROD', true);
     vi.stubEnv('VITE_SENTRY_DSN', 'http://public@127.0.0.1:9/1');
     vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
-    const supabase = await import('../supabase');
     const {loadSentry} = await import('../sentry');
+    const fresh = await import('../supabase');
     const Sentry = await import('@sentry/react');
-    const {SupabaseClient} = await import('../supabaseClient');
-    return {loadSupabase: supabase.loadSupabase, loadSentry, Sentry, SupabaseClient};
-  }
 
-  it('is added when Sentry loads after the client exists', async () => {
-    const {loadSupabase, loadSentry, Sentry, SupabaseClient} = await loadFresh();
+    await loadSentry();
+    await fresh.loadSupabase();
 
-    await loadSupabase();
     expect(Sentry.addIntegration).not.toHaveBeenCalled();
-
-    await loadSentry();
-    expect(Sentry.supabaseIntegration).toHaveBeenCalledWith({supabaseClient: SupabaseClient});
-    expect(Sentry.addIntegration).toHaveBeenCalledOnce();
-  });
-
-  it('is added at once when Sentry loaded before the client', async () => {
-    const {loadSupabase, loadSentry, Sentry} = await loadFresh();
-
-    await loadSentry();
-    await loadSupabase();
-
-    expect(Sentry.addIntegration).toHaveBeenCalledOnce();
   });
 });
 
@@ -275,11 +260,12 @@ describe('getPairScore', () => {
     vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
     // maybeSingle() resolves to {data: null, error: null} for zero rows — no
-    // PGRST116 error, so nothing reaches the Sentry Supabase integration.
+    // PGRST116 error, so nothing is reported.
     mockMaybeSingle.mockResolvedValue({data: null, error: null});
 
     const result = await getPairScore('a', 'b');
     expect(result).toBeNull();
+    expect(mockReport).not.toHaveBeenCalled();
 
     vi.unstubAllEnvs();
   });
@@ -302,6 +288,67 @@ describe('getPairScore', () => {
 
     consoleSpy.mockRestore();
     vi.unstubAllEnvs();
+  });
+});
+
+// Handled failures go to Sentry, named by where they happened: the vote panel only shows them.
+describe('vote failures', () => {
+  const SUBMIT = {area: 'votes', operation: 'submit'};
+  const READ_SCORE = {area: 'votes', operation: 'read score'};
+
+  beforeEach(() => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('reports a refused vote', async () => {
+    const refusal = {code: '42P01', message: 'relation does not exist'};
+    mockRpc.mockResolvedValue({error: refusal});
+
+    await submitVote({cardA: 'a', cardB: 'b', accuracy: 0});
+
+    expect(mockReport).toHaveBeenCalledWith(SUBMIT, refusal);
+  });
+
+  it('reports a vote that never reached the database', async () => {
+    const failure = new TypeError('Failed to fetch');
+    mockRpc.mockRejectedValue(failure);
+
+    await submitVote({cardA: 'a', cardB: 'b', accuracy: 0});
+
+    expect(mockReport).toHaveBeenCalledWith(SUBMIT, failure);
+  });
+
+  // A rate limit is the database's answer to too many votes, not a failure.
+  it('reports no rate limit', async () => {
+    mockRpc.mockResolvedValue({error: {code: 'P0429', message: 'Rate limit exceeded'}});
+
+    await submitVote({cardA: 'a', cardB: 'b', accuracy: 0});
+
+    expect(mockReport).not.toHaveBeenCalled();
+  });
+
+  it('reports a refused score read', async () => {
+    const refusal = {code: '42P01', message: 'relation does not exist'};
+    mockMaybeSingle.mockResolvedValue({data: null, error: refusal});
+
+    await getPairScore('a', 'b');
+
+    expect(mockReport).toHaveBeenCalledWith(READ_SCORE, refusal);
+  });
+
+  it('reports a score read that never reached the database', async () => {
+    const failure = new TypeError('Failed to fetch');
+    mockMaybeSingle.mockRejectedValue(failure);
+
+    await getPairScore('a', 'b');
+
+    expect(mockReport).toHaveBeenCalledWith(READ_SCORE, failure);
   });
 });
 

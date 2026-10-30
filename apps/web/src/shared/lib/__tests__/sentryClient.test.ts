@@ -40,8 +40,6 @@ function stubSdk(sdk: {init: (options: unknown) => void; captureException?: () =
     browserTracingIntegration: vi.fn(),
     captureException: vi.fn(),
     startSpan: vi.fn(),
-    addIntegration: vi.fn(),
-    supabaseIntegration: vi.fn(),
     ...sdk,
   }));
 }

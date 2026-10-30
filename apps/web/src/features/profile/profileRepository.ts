@@ -11,6 +11,7 @@
 
 import {isSupabaseConfigured, loadSupabase, type InkweaveSupabase} from '../../shared/lib/supabase';
 import {NOT_CONFIGURED, type RepoResult} from '../../shared/lib/repoResult';
+import {reportFailure, type FailureSite} from '../../shared/lib/reportFailure';
 
 type ProfilesClient = InkweaveSupabase;
 
@@ -56,7 +57,9 @@ export function clampDisplayName(value: string): string {
   return points.length <= DISPLAY_NAME_MAX ? value : points.slice(0, DISPLAY_NAME_MAX).join('');
 }
 
+/** Runs one call. Both failures also go to Sentry, named by `operation`. */
 async function run<T>(
+  operation: string,
   op: (client: ProfilesClient) => PromiseLike<{data: T | null; error: {message: string} | null}>,
 ): Promise<RepoResult<T>> {
   try {
@@ -65,11 +68,13 @@ async function run<T>(
     const {data, error} = await op(supabase);
     if (error) {
       console.error('[profileRepository] query failed:', error.message);
+      reportFailure({area: 'profile', operation}, error);
       return {data: null, error: error.message};
     }
     return {data, error: null};
   } catch (e) {
     console.error('[profileRepository] network error:', e);
+    reportFailure({area: 'profile', operation}, e);
     return {data: null, error: 'Network error'};
   }
 }
@@ -90,7 +95,7 @@ async function run<T>(
  * caller should not trust, hence the explicit check rather than a bare `data[0]`.
  */
 export function claimIdentity(): Promise<RepoResult<PublicIdentity>> {
-  return run(async (c) => {
+  return run('claim handle', async (c) => {
     const {data, error} = await c.rpc('claim_handle');
     const row = Array.isArray(data) && data.length === 1 ? data[0] : null;
     if (!row?.handle || !row.display_name) return {data: null, error};
@@ -115,7 +120,7 @@ export function getAuthorNames(userIds: readonly string[]): Promise<RepoResult<M
   // nothing, so this is purely about not making it.
   if (unique.length === 0) return Promise.resolve({data: new Map(), error: null});
 
-  return run(async (c) => {
+  return run('read names', async (c) => {
     const {data, error} = await c.from('profiles').select('id, display_name').in('id', unique);
     if (!data) return {data: null, error};
     const byId = new Map<string, string>();
@@ -125,6 +130,9 @@ export function getAuthorNames(userIds: readonly string[]): Promise<RepoResult<M
     return {data: byId, error};
   });
 }
+
+/** Where `updateDisplayName`'s failures go to Sentry: it runs its own call, outside `run`. */
+const SAVE_NAME: FailureSite = {area: 'profile', operation: 'save name'};
 
 /**
  * Set the caller's display name. Needs no RPC: `profiles_update_own` already permits it
@@ -158,15 +166,20 @@ export async function updateDisplayName(userId: string, displayName: string): Pr
       // violation here therefore means something unforeseen, which the generic message
       // reports honestly and the log makes debuggable.
       console.error('[profileRepository] display name update failed:', error.message);
+      reportFailure(SAVE_NAME, error);
       return {data: null, error: 'Could not save that name. Try again.'};
     }
     // A null row means RLS matched nothing, i.e. the id is not the caller's. Reported
     // rather than swallowed: succeeding silently would show the new name on screen
     // while the database still held the old one.
-    if (!data?.display_name) return {data: null, error: 'Could not save that name. Try again.'};
+    if (!data?.display_name) {
+      reportFailure(SAVE_NAME, new Error('update matched no row'));
+      return {data: null, error: 'Could not save that name. Try again.'};
+    }
     return {data: data.display_name, error: null};
   } catch (e) {
     console.error('[profileRepository] network error:', e);
+    reportFailure(SAVE_NAME, e);
     return {data: null, error: 'Network error'};
   }
 }

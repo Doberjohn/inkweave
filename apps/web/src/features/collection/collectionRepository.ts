@@ -1,6 +1,7 @@
 import {loadSupabase, type InkweaveSupabase} from '../../shared/lib/supabase';
 import type {Json} from '../../shared/lib/database.types';
 import {NOT_CONFIGURED, type RepoResult} from '../../shared/lib/repoResult';
+import {reportFailure} from '../../shared/lib/reportFailure';
 import type {CollectionEntries} from './collectionParser';
 import {isCollectionEntries} from './collectionEntryGuards';
 import type {StoredCollection} from './collectionStorage';
@@ -35,8 +36,12 @@ type CollectionsClient = InkweaveSupabase;
  * that rejection escapes as an unhandled promise instead of becoming the
  * 'Network error' every caller already handles. TypeScript flags the call-site
  * rename but cannot see this, so it has to be remembered rather than checked.
+ *
+ * Both failures also go to Sentry, named by `operation`: the page handles them
+ * (a Retry, or the pending marker's quiet retry), so nothing else would.
  */
 async function run<T>(
+  operation: string,
   op: (client: CollectionsClient) => PromiseLike<{data: T | null; error: {message: string} | null}>,
 ): Promise<RepoResult<T>> {
   try {
@@ -45,11 +50,13 @@ async function run<T>(
     const {data, error} = await op(supabase);
     if (error) {
       console.error('[collectionRepository] query failed:', error.message);
+      reportFailure({area: 'collection', operation}, error);
       return {data: null, error: error.message};
     }
     return {data, error: null};
   } catch (e) {
     console.error('[collectionRepository] network error:', e);
+    reportFailure({area: 'collection', operation}, e);
     return {data: null, error: 'Network error'};
   }
 }
@@ -97,7 +104,7 @@ function toStoredCollection(row: CollectionRow): StoredCollection | null {
  * to pattern-match out of a message string.
  */
 export function getCollection(ownerId: string): Promise<RepoResult<StoredCollection | null>> {
-  return run(async (client) => {
+  return run('read', async (client) => {
     const {data, error} = await client
       .from('collections')
       .select('entries, imported_at, schema_version')
@@ -133,7 +140,7 @@ export function upsertCollection(
   entries: CollectionEntries,
   importedAt: number,
 ): Promise<RepoResult<null>> {
-  return run(async (client) => {
+  return run('save', async (client) => {
     const {error} = await client.from('collections').upsert(
       {
         owner_id: ownerId,
@@ -155,7 +162,7 @@ export function upsertCollection(
 
 /** Drop the row. Clearing a collection while signed in must clear it everywhere. */
 export function deleteCollection(ownerId: string): Promise<RepoResult<null>> {
-  return run(async (client) => {
+  return run('delete', async (client) => {
     const {error} = await client.from('collections').delete().eq('owner_id', ownerId);
     return {data: null, error};
   });

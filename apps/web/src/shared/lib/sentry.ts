@@ -5,8 +5,9 @@ export type {SentryApi};
 
 /*
  * Sentry, kept off the critical path (#640). It loads after `load` and an idle callback, or at
- * once when an error boundary has something to report. Code that wants Sentry once it is there
- * (render spans, the Supabase integration) queues through onSentryReady, which never loads it.
+ * once when an error boundary or a handled failure (reportFailure.ts) has something to report.
+ * Code that wants Sentry once it is there (render spans, PostHog's own failures) queues through
+ * onSentryReady, which never loads it.
  *
  * It never loads during our own prerender crawl (scripts/prerender.mjs sets
  * `__INKWEAVE_PRERENDER__`): a Sentry import there would bake its modulepreload into every
@@ -76,7 +77,7 @@ function onSentryFailed(): null {
   return null;
 }
 
-// Ready callbacks run inside loadSupabase() and React's Profiler, so a throw from Sentry's side
+// Ready callbacks run inside React's Profiler and PostHog's sends, so a throw from Sentry's side
 // must not escape into them. It goes to Sentry instead.
 function runReadyCallback(callback: (sentry: SentryApi) => void, api: SentryApi): void {
   try {

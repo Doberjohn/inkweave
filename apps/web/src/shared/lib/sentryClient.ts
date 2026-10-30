@@ -2,21 +2,12 @@
 // through a dynamic import, so the SDK ships in this module's own chunk, `sentryClient-*.js`. A
 // static import of it anywhere else would load the SDK with that module, at startup if main.tsx
 // reaches it. Nor does it import anything from the app: that would reshape the startup chunks.
-import {
-  addIntegration,
-  browserTracingIntegration,
-  captureException,
-  init,
-  startSpan,
-  supabaseIntegration,
-} from '@sentry/react';
+import {browserTracingIntegration, captureException, init, startSpan} from '@sentry/react';
 
 /** The part of Sentry the app calls, once it has loaded. */
 export interface SentryApi {
   captureException: typeof captureException;
   startSpan: typeof startSpan;
-  /** Instruments the SupabaseClient class, so it covers clients created before or after. */
-  addSupabaseIntegration(supabaseClient: unknown): void;
 }
 
 /**
@@ -31,12 +22,7 @@ export function startSentry(): SentryApi | null {
     reportStartFailure(error);
     return null;
   }
-  return {
-    captureException,
-    startSpan,
-    addSupabaseIntegration: (supabaseClient) =>
-      addIntegration(supabaseIntegration({supabaseClient})),
-  };
+  return {captureException, startSpan};
 }
 
 /**
@@ -106,8 +92,8 @@ function sentryOptions(): Parameters<typeof init>[0] {
   return {
     dsn: import.meta.env.VITE_SENTRY_DSN,
     environment: sentryEnvironment(__DEPLOY_ENV__, window.location.hostname),
-    // The Supabase integration joins later, from shared/lib/supabase.ts, once a page creates
-    // the client: registering it here would download the Supabase SDK on every page.
+    // No Supabase integration: every Supabase call reports its own failures, named by where
+    // they happened (reportFailure.ts), so the integration would send each refusal twice.
     integrations: [browserTracingIntegration()],
     tracesSampleRate: 0.1,
     dataCollection: {

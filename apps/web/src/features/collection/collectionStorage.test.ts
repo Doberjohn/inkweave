@@ -13,6 +13,9 @@ import {
 } from './collectionStorage';
 import type {CollectionEntries} from './collectionParser';
 
+const mockReport = vi.hoisted(() => vi.fn());
+vi.mock('../../shared/lib/reportFailure', () => ({reportFailure: mockReport}));
+
 const ENTRIES: CollectionEntries = {'2001': {normal: 3, foil: 1}};
 
 describe('collectionStorage', () => {
@@ -125,5 +128,48 @@ describe('collection markers', () => {
     markDeleteTombstone('u');
     clearDeleteTombstone('u', first);
     expect(hasDeleteTombstone('u')).toBe(true);
+  });
+});
+
+// The page handles each of these quietly (the 2026-10-06 rulings keep the markers silent), so
+// Sentry is the only one told.
+describe('storage failures', () => {
+  afterEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    vi.restoreAllMocks();
+  });
+
+  const quota = new DOMException('exceeded the quota', 'QuotaExceededError');
+
+  it.each([
+    {operation: 'read binder', method: 'getItem', act: () => readCollection()},
+    {operation: 'store binder', method: 'setItem', act: () => writeCollection(ENTRIES, 1000, null, 'import')},
+    {operation: 'clear binder', method: 'removeItem', act: () => clearCollection()},
+    // The uid is only in the key: the operation names the marker, never whose it is.
+    {operation: 'inkweave:collection:pending marker', method: 'setItem', act: () => markUploadPending('u', 1000)},
+    {operation: 'inkweave:collection:pending marker', method: 'getItem', act: () => pendingUploadImportedAt('u')},
+  ] as const)('reports the browser refusing $method as $operation', ({operation, method, act}) => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(Storage.prototype, method).mockImplementation(() => {
+      throw quota;
+    });
+
+    act();
+
+    expect(mockReport).toHaveBeenCalledWith({area: 'collection', operation, storage: true}, quota);
+  });
+
+  it.each([
+    {copy: 'corrupt JSON', stored: '{not valid json'},
+    {copy: 'an unexpected shape', stored: JSON.stringify({schemaVersion: 99, importedAt: 1000, entries: ENTRIES})},
+  ])('reports a stored copy lost to $copy', ({stored}) => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    localStorage.setItem(COLLECTION_KEY, stored);
+
+    readCollection();
+
+    expect(mockReport).toHaveBeenCalledWith({area: 'collection', operation: 'read binder'}, expect.any(Error));
   });
 });

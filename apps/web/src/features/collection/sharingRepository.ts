@@ -1,5 +1,6 @@
 import {loadSupabase, type InkweaveSupabase} from '../../shared/lib/supabase';
 import {NOT_CONFIGURED, type RepoResult} from '../../shared/lib/repoResult';
+import {reportFailure} from '../../shared/lib/reportFailure';
 import type {CollectionEntries} from './collectionParser';
 import {isCollectionEntries} from './collectionEntryGuards';
 
@@ -30,8 +31,10 @@ export interface Player {
 /**
  * Load the client, run the op, normalise everything to a RepoResult. `loadSupabase()` sits
  * inside the try, as in `collectionRepository` (#729): it can reject on a failed download.
+ * Both failures also go to Sentry, named by `operation`, as there.
  */
 async function run<T>(
+  operation: string,
   op: (client: InkweaveSupabase) => PromiseLike<{data: T | null; error: {message: string} | null}>,
 ): Promise<RepoResult<T>> {
   try {
@@ -40,18 +43,20 @@ async function run<T>(
     const {data, error} = await op(supabase);
     if (error) {
       console.error('[sharingRepository] query failed:', error.message);
+      reportFailure({area: 'sharing', operation}, error);
       return {data: null, error: error.message};
     }
     return {data, error: null};
   } catch (e) {
     console.error('[sharingRepository] network error:', e);
+    reportFailure({area: 'sharing', operation}, e);
     return {data: null, error: 'Network error'};
   }
 }
 
 /** The caller's switch; false when they have never set it (no row). */
 export function getSharing(ownerId: string): Promise<RepoResult<boolean>> {
-  return run(async (client) => {
+  return run('read switch', async (client) => {
     const {data, error} = await client
       .from('collection_sharing')
       .select('friends')
@@ -67,7 +72,7 @@ export function getSharing(ownerId: string): Promise<RepoResult<boolean>> {
  * with no collection gets an error.
  */
 export function setSharing(ownerId: string, friends: boolean): Promise<RepoResult<null>> {
-  return run(async (client) => {
+  return run('save switch', async (client) => {
     const {error} = await client.from('collection_sharing').upsert({owner_id: ownerId, friends}, {onConflict: 'owner_id'});
     return {data: null, error};
   });
@@ -96,7 +101,7 @@ function friendEntries(row: FriendRow): CollectionEntries | null {
  * each with no row, so the call tells a stranger nothing.
  */
 export function getFriendCollection(friendId: string): Promise<RepoResult<CollectionEntries | null>> {
-  return run(async (client) => {
+  return run('read friend binder', async (client) => {
     const {data, error} = await client.rpc('friend_collections', {only_friend: friendId});
     if (error || !data) return {data: null, error};
     const row = (data as FriendRow[]).find((each) => each.owner_id === friendId);
@@ -112,7 +117,7 @@ export function getFriendCollection(friendId: string): Promise<RepoResult<Collec
  * this app can't read fails the whole read, so no friend's copies drop out of a count unsaid.
  */
 export function getSharedCollections(): Promise<RepoResult<Map<string, CollectionEntries>>> {
-  return run(async (client) => {
+  return run('read friend binders', async (client) => {
     const {data, error} = await client.rpc('friend_collections');
     if (error || !data) return {data: null, error};
     const byOwner = new Map<string, CollectionEntries>();
@@ -132,7 +137,7 @@ export function getSharedCollections(): Promise<RepoResult<Map<string, Collectio
 export function getPlayerByHandle(handle: string): Promise<RepoResult<Player | null>> {
   const wanted = handle.toLowerCase();
   if (!HANDLE.test(wanted)) return Promise.resolve({data: null, error: null});
-  return run(async (client) => {
+  return run('find player', async (client) => {
     const {data, error} = await client
       .from('profiles')
       .select('id, handle, display_name')

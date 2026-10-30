@@ -19,8 +19,7 @@ export type AuthOptions = Required<
  * sign-in and postgrest-js for tables and RPCs, without the realtime, storage and functions
  * clients `createClient` also builds. Its requests carry what supabase-js's carry: the anon key
  * as `apikey`, and as the bearer token until someone signs in, whose access token then takes its
- * place on tables and RPCs. A class, as supabase-js's is, because Sentry's Supabase integration
- * instruments the class's `from`.
+ * place on tables and RPCs. A class, as supabase-js's is.
  */
 export class SupabaseClient extends PostgrestClient<Database> {
   readonly auth: GoTrueClient;
