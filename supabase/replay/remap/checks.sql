@@ -14,6 +14,35 @@ create function t.backups(source text, row_id uuid) returns int language sql sta
    where b.source_table = $1 and b.row_id = $2::text
 $$;
 
+-- For the races: waits up to 10 s until a query finds a row, so the two sessions wait for
+-- each other instead of trusting sleeps. pg_stat_activity holds one snapshot per
+-- transaction unless cleared.
+create function t.wait_until(probe text, what text) returns void language plpgsql as $$
+declare hit boolean;
+begin
+  for attempt in 1..200 loop
+    perform pg_stat_clear_snapshot();
+    execute format('select exists (%s)', probe) into hit;
+    if hit then return; end if;
+    perform pg_sleep(0.05);
+  end loop;
+  raise exception 'gave up waiting for %', what;
+end $$;
+
+-- The races' two probes: another session holds the remap's lock on the tables, or some
+-- session waits for a lock on one of them.
+create function t.holds_tables() returns text language sql immutable as $$
+  select $q$select 1 from pg_locks l
+             where l.relation = 'public.collections'::regclass and l.granted
+               and l.mode = 'ShareRowExclusiveLock' and l.pid <> pg_backend_pid()$q$
+$$;
+create function t.waits_for_tables() returns text language sql immutable as $$
+  select $q$select 1 from pg_locks l
+             where l.relation in ('public.votes'::regclass, 'public.collections'::regclass,
+                                  'public.decks'::regclass)
+               and not l.granted$q$
+$$;
+
 \echo '== R0. the backups of rows deleted before the migration are gone, and the rest stay'
 do $$
 declare n int;
