@@ -23,6 +23,7 @@ import {lazyWithRetry} from './shared/lib/lazyWithRetry';
 import {reloadOntoNewestVersion} from './shared/lib/swUpdate';
 import {CardDataUnavailableError} from './features/cards/loader';
 import {useSpeedInsightsRoute} from './shared/lib/speedInsightsRoute';
+import {withoutAccountParams} from './shared/lib/vercelBeforeSend';
 
 // Mobile-only, so it stays out of the entry chunk desktop visitors download (#640). On a phone
 // it loads right after the first render. A search tap in the moment before it arrives opens the
@@ -237,8 +238,8 @@ export function AppLayout() {
           </SkeletonTheme>
         </ProfileProvider>
       </SessionProvider>
-      <Analytics route={route} path={pathname} />
-      <SpeedInsights route={route} />
+      <Analytics route={route} path={pathname} beforeSend={withoutAccountParams} />
+      <SpeedInsights route={route} beforeSend={withoutAccountParams} />
     </ErrorBoundary>
   );
 }
