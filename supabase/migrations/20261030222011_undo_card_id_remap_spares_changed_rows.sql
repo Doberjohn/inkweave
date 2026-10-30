@@ -17,9 +17,11 @@
 -- collection or deck someone removed, only the votes the remap itself merged away. A
 -- collection or deck changed since the remap keeps its change. Collections and decks get
 -- their entries and cards back, and their updated_at shows the undo, as it showed the
--- remap. Returns the rows restored. It stops, changing nothing, if a vote cast since the
--- remap sits where a restored one goes back to: a stale page that votes on the old ids
--- again, by a voter whose vote moved.
+-- remap. Returns the rows restored. It stops, changing nothing, if no backup carries
+-- p_label: a mistyped label, or one that moved no vote and whose collections and decks have
+-- all been deleted since. It stops too if a vote cast since the remap sits where a restored
+-- one goes back to: a stale page that votes on the old ids again, by a voter whose vote
+-- moved.
 create or replace function internal.undo_card_id_remap(p_label text)
 returns int
 language plpgsql
