@@ -98,8 +98,12 @@ export function claimIdentity(): Promise<RepoResult<PublicIdentity>> {
   return run('claim handle', async (c) => {
     const {data, error} = await c.rpc('claim_handle');
     const row = Array.isArray(data) && data.length === 1 ? data[0] : null;
-    if (!row?.handle || !row.display_name) return {data: null, error};
-    return {data: {handle: row.handle, displayName: row.display_name}, error};
+    if (row?.handle && row.display_name) return {data: {handle: row.handle, displayName: row.display_name}, error};
+    // A refusal is run's to report. Any other answer goes without its rows, which carry account ids.
+    if (!error) {
+      reportFailure({area: 'profile', operation: 'claim handle'}, new Error('unexpected answer from claim_handle'));
+    }
+    return {data: null, error};
   });
 }
 

@@ -97,6 +97,12 @@ function isCollectionShape(value: unknown): value is StoredCollection & Partial<
 /** Where a failed read of the stored copy goes to Sentry. A lost copy goes too, as unexpected. */
 const READ_BINDER: FailureSite = {area: 'collection', operation: 'read binder'};
 
+/** A copy another schema version wrote, which a schema change drops on purpose, so it isn't lost. */
+function isOtherSchema(value: unknown): boolean {
+  const version = (value as {schemaVersion?: unknown} | null)?.schemaVersion;
+  return typeof version === 'number' && version !== COLLECTION_SCHEMA_VERSION;
+}
+
 /**
  * Read the stored collection, or `null` if none. A corrupt entry (bad JSON, wrong
  * shape, or a stale `schemaVersion`) is removed and treated as absent, so the app
@@ -119,7 +125,7 @@ export function readCollection(): LocalCollection | null {
       return {...parsed, ownerUid: parsed.ownerUid ?? null, source: parsed.source ?? 'import'};
     }
     console.error('[collectionStorage] Unexpected collection shape, clearing.');
-    reportFailure(READ_BINDER, new Error('unexpected collection shape'));
+    if (!isOtherSchema(parsed)) reportFailure(READ_BINDER, new Error('unexpected collection shape'));
   } catch (e) {
     console.error('[collectionStorage] Corrupted collection JSON, clearing key:', e);
     reportFailure(READ_BINDER, e);

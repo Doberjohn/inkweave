@@ -163,7 +163,7 @@ describe('storage failures', () => {
 
   it.each([
     {copy: 'corrupt JSON', stored: '{not valid json'},
-    {copy: 'an unexpected shape', stored: JSON.stringify({schemaVersion: 99, importedAt: 1000, entries: ENTRIES})},
+    {copy: 'an unexpected shape', stored: JSON.stringify({schemaVersion: 1, importedAt: 1000, entries: []})},
   ])('reports a stored copy lost to $copy', ({stored}) => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     localStorage.setItem(COLLECTION_KEY, stored);
@@ -171,5 +171,15 @@ describe('storage failures', () => {
     readCollection();
 
     expect(mockReport).toHaveBeenCalledWith({area: 'collection', operation: 'read binder'}, expect.any(Error));
+  });
+
+  // A schema change drops every stored copy on purpose: reported, it would be one error per collector.
+  it('reports no copy that another schema version wrote', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    localStorage.setItem(COLLECTION_KEY, JSON.stringify({schemaVersion: 99, importedAt: 1000, entries: ENTRIES}));
+
+    readCollection();
+
+    expect(mockReport).not.toHaveBeenCalled();
   });
 });

@@ -108,6 +108,18 @@ describe('claimIdentity', () => {
     mockRpc.mockResolvedValue({data: body, error: null});
     await expect(claimIdentity()).resolves.toEqual({data: null, error: null});
   });
+
+  // The answer's rows name the account, so the report carries none of them.
+  it('reports an answer of another shape without its rows', async () => {
+    mockRpc.mockResolvedValue({data: [{handle: 'steel_prince_012', display_name: null}], error: null});
+
+    await claimIdentity();
+
+    expect(mockReport).toHaveBeenCalledExactlyOnceWith(
+      {area: 'profile', operation: 'claim handle'},
+      new Error('unexpected answer from claim_handle'),
+    );
+  });
 });
 
 describe('getAuthorNames', () => {
@@ -273,13 +285,13 @@ describe('failures', () => {
   it.each([
     {operation: 'claim handle', call: () => claimIdentity()},
     {operation: 'read names', call: () => getAuthorNames(['a'])},
-  ])('reports a refused $operation', async ({operation, call}) => {
+  ])('reports a refused $operation, once', async ({operation, call}) => {
     mockRpc.mockResolvedValue({data: null, error: REFUSAL});
     mockIn.mockResolvedValue({data: null, error: REFUSAL});
 
     await call();
 
-    expect(mockReport).toHaveBeenCalledWith({area: 'profile', operation}, REFUSAL);
+    expect(mockReport).toHaveBeenCalledExactlyOnceWith({area: 'profile', operation}, REFUSAL);
   });
 
   it('reports a call that threw', async () => {
