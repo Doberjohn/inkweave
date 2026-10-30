@@ -5,6 +5,7 @@ The database checks for a graduation's backups (#986): what `internal.card_id_re
 It builds on the friends replay (`../friends/`): its `scaffold.sql` stands in for the Supabase pieces, and its `helpers.sql` adds named players and acting as one.
 
 - `scaffold.sql` adds `public.votes`, which the remap and undo lock and look up, as a table with an id alone: the checks remap collections and decks only.
+- `grants.sql` holds production's grants on `decks` and `collections`, copied from `20261005000002_declare_table_privileges.sql`, which can't load here, so players clear, delete and import as production lets them.
 - `seed.sql` runs before the backups migration and leaves what graduations left before it: the backups of a collection and a deck deleted since, the backup of a collection still there, and a merged vote's backup.
 - `checks.sql` runs the checks R0 to R6. Each makes its own rows and remaps its own card ids under its own label, so no check leans on another's.
 
@@ -22,6 +23,7 @@ From the repo root, with the server from the friends README running on port 5499
 export PGOPTIONS="-c plpgsql.extra_warnings=all -c plpgsql.extra_errors=all"
 F=supabase/replay
 M=supabase/migrations
+psql -h localhost -p 5499 -U postgres -c "drop database if exists remap"
 psql -h localhost -p 5499 -U postgres -c "create database remap"
 psql -h localhost -p 5499 -U postgres -d remap -v ON_ERROR_STOP=1 \
   -f $F/friends/scaffold.sql \
@@ -30,6 +32,7 @@ psql -h localhost -p 5499 -U postgres -d remap -v ON_ERROR_STOP=1 \
   -f $M/20260710000001_decks_table.sql \
   -f $M/20260711000000_decks_updated_at_server_owned.sql \
   -f $M/20260811000000_collections_table.sql \
+  -f $F/remap/grants.sql \
   -f $M/20261005000003_collections_upsert_owner_id.sql \
   -f $M/20261013000000_card_id_remap.sql \
   -f $F/friends/helpers.sql \
@@ -47,7 +50,7 @@ psql -h localhost -p 5499 -U postgres -d remap -f $F/remap/checks.sql
 | R2 | deleting an account drops the backups of its collection and its deck |
 | R3 | deleting a deck, as its owner, drops its backup |
 | R4 | an undo after a clear and a fresh import leaves the new import, and restores the other collection |
-| R5 | a remap keeps the backup it saves, though it updates the row, and a clear drops no other row's backup or a vote's |
+| R5 | a remap keeps the backup it saves, though it updates the row, and a clear drops no other collection's backup, nor a vote's that names the same id |
 | R6 | no client role can call the trigger function, and neither they nor PUBLIC hold a privilege on the backup table |
 
 Without the backups migration, R0 stops the run. To watch R0 to R4 each fail (and R6 on the missing function), run a copy of `checks.sql` without its `\set ON_ERROR_STOP on` line: each check makes its own rows, so the rest still run.

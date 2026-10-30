@@ -12,12 +12,9 @@
 -- a clear and a fresh import put the old entries over the new ones. Votes keep theirs: a
 -- remap deletes the votes it merges, and undo needs those copies.
 
--- Backups of rows already gone.
-delete from internal.card_id_remap_backup b
- where (b.source_table = 'collections'
-        and not exists (select 1 from public.collections c where c.owner_id::text = b.row_id))
-    or (b.source_table = 'decks'
-        and not exists (select 1 from public.decks d where d.id::text = b.row_id));
+-- Each deleted row looks up its own backups.
+create index card_id_remap_backup_row
+  on internal.card_id_remap_backup (source_table, row_id);
 
 -- Security definer: a player deleting their collection holds nothing in internal.
 create function internal.drop_card_id_remap_backups()
@@ -30,9 +27,11 @@ begin
   if tg_table_name = 'collections' then
     delete from internal.card_id_remap_backup b
      where b.source_table = 'collections' and b.row_id = old.owner_id::text;
-  else
+  elsif tg_table_name = 'decks' then
     delete from internal.card_id_remap_backup b
      where b.source_table = 'decks' and b.row_id = old.id::text;
+  else
+    raise exception 'drop_card_id_remap_backups knows no backups of %', tg_table_name;
   end if;
   return null;
 end;
@@ -48,3 +47,11 @@ create trigger collections_drop_remap_backups
 create trigger decks_drop_remap_backups
   after delete on public.decks
   for each row execute function internal.drop_card_id_remap_backups();
+
+-- Backups of rows already gone. After the triggers: creating them locks both tables until
+-- this commits, so no row goes between this delete's read and the triggers taking over.
+delete from internal.card_id_remap_backup b
+ where (b.source_table = 'collections'
+        and not exists (select 1 from public.collections c where c.owner_id::text = b.row_id))
+    or (b.source_table = 'decks'
+        and not exists (select 1 from public.decks d where d.id::text = b.row_id));

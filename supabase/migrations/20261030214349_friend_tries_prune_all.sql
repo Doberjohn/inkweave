@@ -7,11 +7,17 @@
 --
 -- The privacy policy says a try is noted to stop anyone guessing codes, which needs it
 -- only for the hour the limit counts, so no try is kept past that hour for its sender's
--- next send. A try outlasts its hour only while nobody sends at all, and the next send
--- by anyone clears it. pg_cron isn't enabled on the project, so no job prunes them.
+-- next send. A try outlasts its hour only until the next send by anyone: while nobody
+-- sends, or after the send that was pruning it rolls back. pg_cron isn't enabled on the
+-- project, so no job prunes them.
 
 -- The tries already past their hour.
 delete from internal.friend_request_attempts where attempted_at < now() - interval '1 hour';
+
+-- Every send finds the tries past their hour, whoever made them, and the sender index
+-- leads with the sender.
+create index friend_request_attempts_time
+  on internal.friend_request_attempts (attempted_at);
 
 -- ── send_friend_request(friend_code) ────────────────────────────────────────────
 --
@@ -20,8 +26,7 @@ delete from internal.friend_request_attempts where attempted_at < now() - interv
 --   invalid    not a friend code             unknown    no account has that code
 --   own        your own code                 too_many   20 of your requests waiting
 --   slow_down  30 tries in the last hour
--- friend_id is null for a refusal. Only real failures raise. The table needs no new
--- index: it now holds only the last hour's tries.
+-- friend_id is null for a refusal. Only real failures raise.
 create or replace function public.send_friend_request(friend_code text)
 returns table (friend_id uuid, status text)
 language plpgsql
