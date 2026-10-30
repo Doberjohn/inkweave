@@ -1,8 +1,10 @@
 import type {StorybookConfig} from '@storybook/react-vite';
 
-// The app build's own plugins: the PWA, and the startup-groups guard, whose modules a Storybook
-// build never loads.
-const SKIPPED_PLUGINS = /^(vite-plugin-pwa|inkweave:startup-groups-guard$)/;
+// The app build's own plugins: the PWA, the startup-groups guard, whose modules a Storybook build
+// never loads, and the collection code guard, since the stories load the collection whatever the
+// flags say.
+const SKIPPED_PLUGINS =
+  /^(vite-plugin-pwa|inkweave:startup-groups-guard$|inkweave:collection-code-guard$)/;
 
 const config: StorybookConfig = {
   stories: [

@@ -1,6 +1,6 @@
-import {useState} from 'react';
+import {useEffect, useEffectEvent, useState} from 'react';
 import {useSession, type AuthProvider} from '../contexts/SessionContext';
-import {trackSignInFailed, trackSignInStarted, type SignInSurface} from '../lib/signInAnalytics';
+import {trackSignInFailed, trackSignInShown, trackSignInStarted, type SignInSurface} from '../lib/signInAnalytics';
 import {
   COLORS,
   DIALOG_BODY,
@@ -74,6 +74,12 @@ export function SignInDialog({isOpen, onClose, surface}: SignInDialogProps) {
   const {signIn, enabled} = useSession();
   const [busy, setBusy] = useState<AuthProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // One per opening, whichever caller opened it.
+  const shown = useEffectEvent(() => trackSignInShown({surface}));
+  useEffect(() => {
+    if (isOpen) shown();
+  }, [isOpen]);
 
   const start = async (provider: AuthProvider) => {
     trackSignInStarted({provider, surface});

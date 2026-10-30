@@ -155,6 +155,19 @@ describe('AccountCollection', () => {
     expect(screen.getByTestId('where')).toHaveTextContent('/browse?binder=all');
   });
 
+  it("sends Import collection's opening, with nothing to replace", async () => {
+    collection.has = false;
+    renderAccount();
+    await userEvent.click(screen.getByRole('button', {name: 'Import collection'}));
+    expect(vi.mocked(trackEvent).mock.calls).toEqual([['collection_import_opened', {surface: 'account', replacing: false}]]);
+  });
+
+  it("sends Re-import's opening as one that replaces the copies held", async () => {
+    renderAccount();
+    await userEvent.click(screen.getByRole('button', {name: 'Re-import'}));
+    expect(vi.mocked(trackEvent).mock.calls).toEqual([['collection_import_opened', {surface: 'account', replacing: true}]]);
+  });
+
   it('offers no Open your binder once there is a collection', () => {
     renderAccount();
     expect(screen.queryByRole('button', {name: 'Open your binder'})).toBeNull();

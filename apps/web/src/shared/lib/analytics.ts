@@ -38,13 +38,16 @@ type AnalyticsEvents = {
   };
   // A card detail was opened from a discovery surface: a grid, featured cards or a search pick.
   // `source` is the originating page, `playstyle_guide` for a key card in a playstyle page's guide
-  // (#995), or `mobile_sheet` for the mobile search sheet. Reveals and synergy clicks are NOT
+  // (#995), `mobile_sheet` for the mobile search sheet, and `binder` or `friend_binder` for a pocket
+  // in collection mode's binder, your own or a friend's. Reveals and synergy clicks are NOT
   // card_selected; they have their own events (reveal_card_click, synergy_card_clicked).
   card_selected: {
     cardId: string;
     cardName: string;
     source:
       | 'browse'
+      | 'binder'
+      | 'friend_binder'
       | 'home'
       | 'playstyle'
       | 'playstyle_guide'
@@ -70,9 +73,11 @@ type AnalyticsEvents = {
   vote_skipped: {cardAId: string; cardBId: string; engineScore: number};
   // A search was submitted (navigates to /browse). `query` is the trimmed term.
   search_submitted: {query: string; source: 'home' | 'gallery' | 'mobile_sheet'};
-  // A single card filter facet was toggled from the toolbar (ink/type/cost).
-  // Bulk dialog facets (keyword/set/classification/inkwell) are not tracked here.
-  filter_applied: {facet: 'ink' | 'type' | 'cost'; value: string; action: 'add' | 'remove'};
+  // An ink, type or cost filter turned on or off, one event per value. `via` is `inline` for a
+  // control on the page that applies at once (the toolbar's and the docked panel's buttons, a chip's
+  // ×, the panel's Clear all) and `dialog` for a Filters dialog or sheet's Apply. The other facets
+  // (keyword, set, classification, inkwell, rarity) are not tracked here.
+  filter_applied: {facet: 'ink' | 'type' | 'cost'; value: string; action: 'add' | 'remove'; via: 'inline' | 'dialog'};
   // The card-list sort order changed on browse/playstyle-detail.
   sort_changed: {sortOrder: string; previousSort: string};
   // A synergy group was isolated (chip) or expanded (show-all), in the card modal or on a card page.
@@ -98,6 +103,8 @@ type AnalyticsEvents = {
     provider: 'google' | 'discord';
     surface: 'header' | 'account' | 'collection' | 'decks' | 'deck_builder';
   };
+  // The dialog opened, before any provider press: started over shown is a surface's sign-in rate.
+  sign_in_shown: {surface: 'header' | 'account' | 'collection' | 'decks' | 'deck_builder'};
   // /auth/callback saw the new session. `provider` is the session's own; anything else is `other`.
   sign_in_completed: {provider: 'google' | 'discord' | 'other'};
   // The start failed in the dialog, or the callback gave up. `reason` comes from the OAuth error
@@ -112,8 +119,13 @@ type AnalyticsEvents = {
   collection_mode_toggled: {state: 'on' | 'off'};
   // An empty collection made for a player with nothing to import, once the account held none.
   collection_started: {surface: 'browse' | 'account'};
+  // A start that made no collection: the account didn't answer, another account's unsaved copy
+  // holds this browser, or the browser refused the write. One per attempt.
+  collection_start_failed: {surface: 'browse' | 'account'; reason: 'unreachable' | 'held' | 'storage'};
+  // The import dialog opened. `empty_binder` is the empty binder's cover, apart from Browse's gear.
+  collection_import_opened: {surface: 'browse' | 'account' | 'empty_binder'; replacing: boolean};
   collection_imported: {
-    surface: 'browse' | 'account';
+    surface: 'browse' | 'account' | 'empty_binder';
     replacing: boolean;
     cards: number;
     copies: number;
@@ -122,11 +134,27 @@ type AnalyticsEvents = {
     unparsed: number;
   };
   collection_import_failed: {
-    surface: 'browse' | 'account';
+    surface: 'browse' | 'account' | 'empty_binder';
     replacing: boolean;
     reason: 'not_ready' | 'unreadable' | 'no_cards' | 'storage';
   };
   collection_deleted: {cards: number};
+  // A count set by hand (#826): a pocket's stripe or the card window's, on the grid, in your binder
+  // or a friend's, whose window keeps your own copies. At most one per card per binder view
+  // (`useKeptCards`). `newCard`: the card held no copies in either finish before.
+  collection_copies_changed: {
+    surface: 'pocket' | 'window';
+    mode: 'grid' | 'binder' | 'friend_binder';
+    finish: 'normal' | 'foil';
+    change: 'add' | 'remove';
+    newCard: boolean;
+  };
+  // A pick that changed what the binder shows: its set (a set code, `all` or `promos`), Show, the
+  // headline Owned and Missing ask of, or the foil pointer's Master set. Never a card or a handle.
+  binder_view_changed: {control: 'set' | 'show' | 'axis' | 'foil_pointer'; value: string; friend: boolean};
+  // The first turn of each kind in one opening of a binder: a disc, a page dragged across, or the
+  // spread map. `page` is a phone's lone page.
+  binder_page_turned: {method: 'arrow' | 'drag' | 'map'; layout: 'spread' | 'page'};
   // Friends (#852, #884), behind SHOW_FRIENDS. Never a friend code, name, handle or id.
   // `result` on a send is send_friend_request's answer: pending, accepted, a refusal, or failed.
   friend_code_copied: {result: 'copied' | 'blocked'};
@@ -138,7 +166,12 @@ type AnalyticsEvents = {
   // Collection sharing, behind SHOW_COLLECTION and SHOW_FRIENDS. Never an id,
   // handle or name, as with the friends events.
   collection_sharing_changed: {state: 'on' | 'off'};
-  friend_binder_opened: {result: 'shown' | 'not_sharing' | 'failed'};
+  // `from`: where the binder was reached, `/account`'s friends list, a row of Friends who have it,
+  // or its address alone (a shared link, a new tab, a bookmark).
+  friend_binder_opened: {
+    result: 'shown' | 'not_sharing' | 'failed';
+    from: 'friends_list' | 'friends_who_have_it' | 'link';
+  };
   // Friends who have it, behind SHOW_COLLECTION and SHOW_FRIENDS: where it was opened from.
   // Never an id, handle or name.
   friends_who_have_it_opened: {from: 'badge' | 'window'};

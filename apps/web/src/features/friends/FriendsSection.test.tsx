@@ -1,6 +1,6 @@
 import {act, render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {MemoryRouter} from 'react-router-dom';
+import {MemoryRouter, RouterProvider, createMemoryRouter} from 'react-router-dom';
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {trackEvent} from '../../shared/lib/analytics';
 import {FriendsSection, type FriendsSectionProps} from './FriendsSection';
@@ -27,9 +27,8 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-/** The section, ready, with a code and nothing listed unless a case says otherwise. */
-function setup(props: Partial<FriendsSectionProps> = {}) {
-  const user = userEvent.setup();
+/** The section's props, ready, with a code and nothing listed unless a case says otherwise. */
+function sectionProps(props: Partial<FriendsSectionProps> = {}) {
   const handlers = {
     onRetry: vi.fn(),
     onSend: vi.fn<FriendsSectionProps['onSend']>().mockResolvedValue({ok: true, message: 'Request sent to Steel Pirate 777.'}),
@@ -46,6 +45,13 @@ function setup(props: Partial<FriendsSectionProps> = {}) {
     ...handlers,
     ...props,
   };
+  return {all, handlers};
+}
+
+/** The section, ready, with a code and nothing listed unless a case says otherwise. */
+function setup(props: Partial<FriendsSectionProps> = {}) {
+  const user = userEvent.setup();
+  const {all, handlers} = sectionProps(props);
   // In a router, as on /account: View binder is a link.
   const view = render(<FriendsSection {...all} />, {wrapper: MemoryRouter});
   // The page's reload, as the section sees it: new lists after an action.
@@ -228,15 +234,28 @@ describe("FriendsSection's binder links (#1045)", () => {
     expect(screen.getAllByText('Not sharing')).toHaveLength(1);
   });
 
+  it("opens the friend's binder saying it came from the friends list", async () => {
+    const router = createMemoryRouter([
+      {path: '/', element: <FriendsSection {...sectionProps({friends: [AMBER], sharing: new Set(['amber'])}).all} />},
+      {path: '/browse', element: <p>The friend's binder</p>},
+    ]);
+    render(<RouterProvider router={router} />);
+    await userEvent.setup().click(screen.getByRole('link', {name: 'View binder of Amber Toy 115'}));
+    expect(await screen.findByText("The friend's binder")).toBeInTheDocument();
+    expect(router.state.location.state).toEqual({binderFrom: 'friends_list'});
+  });
+
   it('says neither while who shares is unknown', () => {
     setup({friends: [AMBER, EMERALD]});
     expect(screen.queryByRole('link')).toBeNull();
     expect(screen.queryByText('Not sharing')).toBeNull();
   });
 
-  it('keeps the name out of the link’s own text, which PostHog captures (#827)', () => {
+  it('keeps View binder, and the handle in its address, out of PostHog (#827)', () => {
     setup({friends: [AMBER], sharing: new Set(['amber'])});
-    expect(screen.getByRole('link', {name: /View binder/})).toHaveTextContent(/^View binder$/);
+    const link = screen.getByRole('link', {name: /View binder/});
+    expect(link).toHaveClass('ph-no-capture');
+    expect(link).toHaveTextContent(/^View binder$/);
   });
 
   it("starts every friend's row with their initials, hidden from screen readers", () => {

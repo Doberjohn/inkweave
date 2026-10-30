@@ -102,7 +102,7 @@
         "apps/web/dist/assets/collectionStats-*.js",
         "apps/web/dist/assets/friendBinderPath-*.js"
       ],
-      "limit": "95 kB",
+      "limit": "96 kB",
       "gzip": true
     },
     {

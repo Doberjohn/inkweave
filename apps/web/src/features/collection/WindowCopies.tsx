@@ -5,6 +5,7 @@ import type {StripePart} from 'inkweave-ui/lorcana/CopiesStripe';
 import {useCardWindowSlot, useHoldCopiesRow} from '../../shared/contexts/cardWindowSlot';
 import {useSession} from '../../shared/contexts/SessionContext';
 import {printedFullName} from 'inkweave-ui/lib/printings';
+import type {HandCount} from './binderEvents';
 import {useCollection} from './CollectionContext';
 import type {CollectionEntry, Finish} from './collectionParser';
 import {finishesOf, type FinishFacts} from './printingFinishes';
@@ -64,10 +65,11 @@ function stripeParts({counts, finishes, cardName, change}: ShownCopies): StripeP
  * row is held once signed in with a collection, this browser's copy counting before the
  * account's has answered (`useHoldCopiesRow`), so the stripe arriving then moves nothing.
  *
- * `onEdit` hears of each card whose count is set here: the binder behind the window keeps that
- * card in its Owned or Missing view (#826, owner 2026-10-20; `useKeptCards`).
+ * `onEdit` hears of each count that lands here, with the card's copies before it: the binder
+ * behind the window keeps that card in its Owned or Missing view (#826, owner 2026-10-20;
+ * `useKeptCards`), and Browse counts it (`collection_copies_changed`).
  */
-export function WindowCopies({onEdit}: {onEdit: (cardId: string) => void}) {
+export function WindowCopies({onEdit}: {onEdit: (edit: HandCount) => void}) {
   const {slot, shownPrintingId} = useCardWindowSlot();
   const card = useWindowCard();
   const {user} = useSession();
@@ -83,8 +85,7 @@ export function WindowCopies({onEdit}: {onEdit: (cardId: string) => void}) {
   const finishes = finishesOf(shown);
   const cardName = printedFullName(card, shown.printedName);
   const change = (finish: Finish, count: number) => {
-    setCount(printingId, finish, count);
-    onEdit(printingId);
+    if (setCount(printingId, finish, count)) onEdit({cardId: printingId, finish, count, before: counts});
   };
   return createPortal(
     <div role="group" aria-label={`Your copies: ${finishes.map((finish) => `${counts[finish]} ${finish}`).join(', ')}`}>

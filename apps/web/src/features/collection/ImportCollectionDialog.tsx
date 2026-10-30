@@ -5,9 +5,12 @@ import {trackEvent} from '../../shared/lib/analytics';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {parseCollectionCsv, type CollectionEntries, type CollectionSummary} from './collectionParser';
 
-/** Where an import runs, and whether it replaces copies the collection already holds. */
+/**
+ * Where an import runs (the empty binder's cover apart from Browse's gear), and whether it
+ * replaces copies the collection already holds.
+ */
 export interface ImportContext {
-  surface: 'browse' | 'account';
+  surface: 'browse' | 'account' | 'empty_binder';
   /** The collection holds a copy of something (`holdsCopies`): an empty one has nothing to lose. */
   replacing: boolean;
 }

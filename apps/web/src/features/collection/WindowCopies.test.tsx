@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {createCard} from '../../shared/test-utils';
 import {WindowCopies} from './WindowCopies';
+import type {HandCount} from './binderEvents';
 import {CollectionProvider} from './CollectionContext';
 import {getCollection} from './collectionRepository';
 import {writeCollection} from './collectionStorage';
@@ -62,7 +63,7 @@ vi.mock('../../shared/contexts/CardDataContext', () => ({
 }));
 
 /** Browse's side, with the window open on Elsa: the stripe lands in the slot once the account's copy has answered. */
-async function renderInWindow(onEdit: (cardId: string) => void = vi.fn()) {
+async function renderInWindow(onEdit: (edit: HandCount) => void = vi.fn()) {
   render(
     <CollectionProvider>
       <WindowCopies onEdit={onEdit} />
@@ -80,7 +81,10 @@ beforeEach(() => {
   mockWindow.rowHeld = false;
   writeCollection(HELD, 5000, 'user-a', 'server');
 });
-afterEach(() => mockWindow.slot?.remove());
+afterEach(() => {
+  mockWindow.slot?.remove();
+  vi.restoreAllMocks();
+});
 
 describe('WindowCopies', () => {
   it("lays the printing on show's copies in the row under the card, open, every finish named", async () => {
@@ -90,7 +94,7 @@ describe('WindowCopies', () => {
     expect(view.getByRole('button', {name: 'Add one copy of Elsa - Snow Queen'})).toHaveAttribute('tabindex', '0');
   });
 
-  it("adds a copy with its finish's +, kept in the collection, and tells Browse which card changed", async () => {
+  it("adds a copy with its finish's +, kept in the collection, and tells Browse the count and the copies before", async () => {
     const onEdit = vi.fn();
     const view = await renderInWindow(onEdit);
 
@@ -98,8 +102,21 @@ describe('WindowCopies', () => {
 
     expect(view.getByRole('group', {name: 'Your copies: 2 normal, 1 foil'})).toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem('inkweave:collection')!).entries.elsa).toEqual({normal: 2, foil: 1});
-    // So the binder behind the window keeps the card in its Owned or Missing view.
-    expect(onEdit).toHaveBeenCalledWith('elsa');
+    // So the binder behind the window keeps the card in its Owned or Missing view, and Browse counts it.
+    expect(onEdit).toHaveBeenCalledExactlyOnceWith({cardId: 'elsa', finish: 'foil', count: 1, before: {normal: 2, foil: 0}});
+  });
+
+  it('tells Browse nothing of a count the browser refused to write, which stays as it was', async () => {
+    const onEdit = vi.fn();
+    const view = await renderInWindow(onEdit);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('exceeded the quota', 'QuotaExceededError');
+    });
+
+    await userEvent.setup().click(view.getByRole('button', {name: 'Add one copy of foil Elsa - Snow Queen'}));
+
+    expect(view.getByRole('group', {name: 'Your copies: 2 normal, 0 foil'})).toBeInTheDocument();
+    expect(onEdit).not.toHaveBeenCalled();
   });
 
   it('greys a − at 0, which then changes nothing', async () => {

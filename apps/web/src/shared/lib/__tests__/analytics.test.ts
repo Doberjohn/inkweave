@@ -93,7 +93,7 @@ describe('trackEvent', () => {
   });
 
   it('forwards a filter_applied event', () => {
-    const props = {facet: 'ink', value: 'Amber', action: 'add'} as const;
+    const props = {facet: 'ink', value: 'Amber', action: 'add', via: 'inline'} as const;
     trackEvent('filter_applied', props);
     expectSentToBoth('filter_applied', props);
   });
@@ -207,7 +207,7 @@ describe('trackEvent', () => {
   });
 
   it('forwards a friend_binder_opened event', () => {
-    const props = {result: 'not_sharing'} as const;
+    const props = {result: 'not_sharing', from: 'friends_list'} as const;
     trackEvent('friend_binder_opened', props);
     expectSentToBoth('friend_binder_opened', props);
   });

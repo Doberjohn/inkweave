@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, afterEach} from 'vitest';
+import {describe, it, expect, vi, afterEach, beforeEach} from 'vitest';
 import {act, fireEvent, render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {touchMoveKept} from '../../../../shared/test-utils';
@@ -211,6 +211,46 @@ describe('BinderSpread page in hand (#963)', () => {
     } finally {
       listen.mockRestore();
     }
+  });
+
+  // How a turn was asked for, which binder_page_turned reports (the binder counts the first of each).
+  it('says a disc asked for its turn as an arrow', () => {
+    const onPrev = vi.fn();
+    const onNext = vi.fn();
+    render(spread({onPrev, onNext}));
+    fireEvent.click(screen.getByRole('button', {name: 'Previous spread'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+    expect(onPrev).toHaveBeenCalledExactlyOnceWith('arrow');
+    expect(onNext).toHaveBeenCalledExactlyOnceWith('arrow');
+  });
+
+  describe('a page dragged across', () => {
+    // Under reduced motion the page turns as the finger lets go, past a quarter of the page: jsdom
+    // lays it out 0 wide, so any drag past the slop does.
+    beforeEach(() => {
+      vi.stubGlobal(
+        'matchMedia',
+        vi.fn((query: string) => ({matches: query.includes('reduce'), addEventListener: vi.fn(), removeEventListener: vi.fn()})),
+      );
+    });
+
+    it('says the right page, dragged left, asked for its turn as a drag', () => {
+      const onNext = vi.fn();
+      render(spread({onNext}));
+      const right = press('Right page');
+      finger('pointerMove', right, -20);
+      finger('pointerUp', right, -20);
+      expect(onNext).toHaveBeenCalledExactlyOnceWith('drag');
+    });
+
+    it('says the left page, dragged right, asked for its turn as a drag', () => {
+      const onPrev = vi.fn();
+      render(spread({onPrev}));
+      const left = press('Left page');
+      finger('pointerMove', left, 20);
+      finger('pointerUp', left, 20);
+      expect(onPrev).toHaveBeenCalledExactlyOnceWith('drag');
+    });
   });
 
   // The new view's board never hears the pointerup that would end the press (PR #965).

@@ -1,5 +1,6 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useEffectEvent, useState} from 'react';
 import {trackEvent} from '../../shared/lib/analytics';
+import type {BinderEntry} from '../friends/friendBinderPath';
 import type {CollectionEntries} from './collectionParser';
 import {getFriendCollection, getPlayerByHandle, type Player} from './sharingRepository';
 
@@ -58,23 +59,36 @@ async function readFriend({handle, readerId}: Wanted): Promise<Settled | null> {
 
 const RESULTS = {shown: 'shown', 'not-sharing': 'not_sharing'} as const;
 
+/** Where a friend's binder was reached from: `friend_binder_opened`'s `from`. */
+export type BinderFrom = BinderEntry['binderFrom'] | 'link';
+
 /** A key's answer as the hook holds it: settled, still loading, or failed. */
 type Held = Settled | 'loading' | 'failed';
 type HeldFor = {key: string; value: Held};
 
 /**
  * The binder of the friend `handle` names, for `readerId`, or null with no friend named or
- * no reader signed in. Reads once per handle, then again whenever the tab is shown.
+ * no reader signed in. Reads once per handle, then again whenever the tab is shown. `from` is
+ * where the binder was reached from, for `friend_binder_opened`.
  */
-export function useFriendCollection(handle: string | null, readerId: string | null): FriendBinder | null {
+export function useFriendCollection(
+  handle: string | null,
+  readerId: string | null,
+  from: BinderFrom = 'link',
+): FriendBinder | null {
   const key = keyOf(handle, readerId);
   const [held, setHeld] = useState<HeldFor | null>(null);
   const [attempt, setAttempt] = useState(0);
+  // Where the binder was reached from, as its read starts: a new `from` is no reason to read
+  // again, and a replace of the address later, which drops the router's state, changes nothing.
+  const fromNow = useEffectEvent(() => from);
 
   useEffect(() => {
     if (key === null) return;
     // A failed re-read keeps the binder on show; only a first read shows the failure.
-    return watchFriend(key, (settled) => setHeld((now) => (settled ? {key, value: settled} : keepShown(now, key))));
+    return watchFriend(key, fromNow(), (settled) =>
+      setHeld((now) => (settled ? {key, value: settled} : keepShown(now, key))),
+    );
   }, [key, attempt]);
 
   if (key === null) return null;
@@ -110,7 +124,7 @@ function toBinder(value: Settled | 'loading', {handle}: Wanted): FriendBinder {
  * Reads `key`'s friend now and again whenever the tab is shown, handing on each answer (null
  * for a failed read) while it is the newest; returns the stop.
  */
-function watchFriend(key: string, onAnswer: (settled: Settled | null) => void): () => void {
+function watchFriend(key: string, from: BinderFrom, onAnswer: (settled: Settled | null) => void): () => void {
   const wanted = partsOf(key);
   let newest = 0;
   let live = true;
@@ -120,7 +134,7 @@ function watchFriend(key: string, onAnswer: (settled: Settled | null) => void): 
     const mine = ++newest;
     const settled = await readFriend(wanted);
     if (!live || mine !== newest) return;
-    if (!tracked) tracked = trackOpened(settled);
+    if (!tracked) tracked = trackOpened(settled, from);
     if (settled) settledByKey.set(key, settled);
     onAnswer(settled);
   };
@@ -136,9 +150,9 @@ function watchFriend(key: string, onAnswer: (settled: Settled | null) => void): 
 }
 
 /** Sends `friend_binder_opened`, unless the handle was the reader's own; whether it did. */
-function trackOpened(settled: Settled | null): boolean {
+function trackOpened(settled: Settled | null, from: BinderFrom): boolean {
   if (settled?.kind === 'own') return false;
-  trackEvent('friend_binder_opened', {result: settled ? RESULTS[settled.kind] : 'failed'});
+  trackEvent('friend_binder_opened', {result: settled ? RESULTS[settled.kind] : 'failed', from});
   return true;
 }
 

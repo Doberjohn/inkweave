@@ -7,9 +7,11 @@ import babel from '@rolldown/plugin-babel';
 import {VitePWA} from 'vite-plugin-pwa';
 import {visualizer} from 'rollup-plugin-visualizer';
 import {
+  collectionCodeGuard,
   cssUrlGuard,
   isSharedModule,
   isVendorModule,
+  loadableChunks,
   startupGroupsGuard,
   uiCompilerGuard,
 } from './build-guards.ts';
@@ -217,34 +219,21 @@ function inlineCssPlugin(): Plugin {
 const unloadableChunks = new Set<string>();
 
 /**
- * Finds the chunks no page can load (#928). A lazy import behind a flag that is off never runs, but
- * Rolldown still emits its chunk, and the service worker precached it for every new visitor. A
- * chunk is loadable when index.html, or a loadable chunk, names its file: static imports, dynamic
- * imports and Vite's preload lists all spell out file names. It reads the bundle as written, so
- * the names are final, and VitePWA writes the service worker after it, in closeBundle.
+ * Finds the chunks no page can load (#928, `loadableChunks`). A lazy import behind a flag that is
+ * off never runs, but Rolldown still emits its chunk, and the service worker precached it for every
+ * new visitor. It reads the bundle as written, so the names are final, and VitePWA writes the
+ * service worker after it, in closeBundle.
  */
 function unloadableChunksPlugin(): Plugin {
   return {
     name: 'unloadable-chunks',
     apply: 'build',
     writeBundle(_options, bundle) {
-      const outputs = Object.values(bundle);
-      const chunks = outputs.filter((output) => output.type === 'chunk');
-      const sources = outputs
-        .filter((output) => output.type === 'asset')
-        .filter((asset) => asset.fileName.endsWith('.html'))
-        .map((page) => String(page.source));
-      const loadable = new Set<string>();
-      for (let source = sources.pop(); source !== undefined; source = sources.pop()) {
-        for (const chunk of chunks) {
-          if (!loadable.has(chunk.fileName) && source.includes(path.basename(chunk.fileName))) {
-            loadable.add(chunk.fileName);
-            sources.push(chunk.code);
-          }
-        }
-      }
+      const loadable = loadableChunks(bundle);
       unloadableChunks.clear();
-      for (const chunk of chunks) if (!loadable.has(chunk.fileName)) unloadableChunks.add(chunk.fileName);
+      for (const {type, fileName} of Object.values(bundle)) {
+        if (type === 'chunk' && !loadable.has(fileName)) unloadableChunks.add(fileName);
+      }
     },
   };
 }
@@ -544,6 +533,7 @@ export default defineConfig({
     inlineCssPlugin(),
     cssUrlGuard(),
     unloadableChunksPlugin(),
+    collectionCodeGuard(),
     startupGroupsGuard({vendor: STARTUP_VENDOR, shared: STARTUP_SHARED}),
     uiCompilerGuard(),
     !!process.env.SENTRY_AUTH_TOKEN &&

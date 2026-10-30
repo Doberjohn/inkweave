@@ -324,6 +324,9 @@ export function BinderSlotSkeleton() {
   );
 }
 
+/** How a turn was asked for: a disc beside or on the binder, or a page dragged across (`useGrabTurn`). */
+export type TurnAsk = 'arrow' | 'drag';
+
 interface BinderSpreadProps {
   /**
    * Absolute index of the first slot on the left page: -12 on a spread binder's first
@@ -342,8 +345,8 @@ interface BinderSpreadProps {
    * open pocket (`isOpen`) takes no focus, so it has no use for it.
    */
   renderSlot: (index: number, tabIndex: number) => ReactNode;
-  onPrev: () => void;
-  onNext: () => void;
+  onPrev: (ask: TurnAsk) => void;
+  onNext: (ask: TurnAsk) => void;
   canPrev: boolean;
   canNext: boolean;
   /**
@@ -957,10 +960,10 @@ const grabMarks = ({single, canPrev, canNext}: Pick<TurnProps, 'single' | 'canPr
 const turnClass = (turning: boolean, grabbing: boolean) =>
   `${turning ? ' binder-turning' : ''}${grabbing ? ' binder-grabbing' : ''}`;
 
-type TurnProps = Pick<
-  BinderSpreadProps,
-  'start' | 'renderSlot' | 'onPrev' | 'onNext' | 'canPrev' | 'canNext' | 'cardCount' | 'cover'
-> & {
+type TurnProps = Pick<BinderSpreadProps, 'start' | 'renderSlot' | 'canPrev' | 'canNext' | 'cardCount' | 'cover'> & {
+  /** A turn by a page dragged across: `useGrabTurn` calls these with no argument. */
+  onPrev: () => void;
+  onNext: () => void;
   single: boolean;
   /** A lone page's rows: what a view and a page hold. */
   rows: LoneRows;
@@ -1106,7 +1109,19 @@ export function BinderSpread({
     footer,
     cardCount,
     sheets: sheetsAt(start, {single, rows}, cardCount),
-    turn: useViewTurn({start, single, rows, renderSlot, onPrev, onNext, canPrev, canNext, cardCount, cover, binder: sectionRef}),
+    turn: useViewTurn({
+      start,
+      single,
+      rows,
+      renderSlot,
+      onPrev: () => onPrev('drag'),
+      onNext: () => onNext('drag'),
+      canPrev,
+      canNext,
+      cardCount,
+      cover,
+      binder: sectionRef,
+    }),
     fit: loneFit,
     cover,
     arrows: {
@@ -1114,7 +1129,7 @@ export function BinderSpread({
         <NavArrowButton
           direction="prev"
           label={`Previous ${unit}`}
-          onClick={onPrev}
+          onClick={() => onPrev('arrow')}
           atEnd={!canPrev}
           {...onEdge('left', edges)}
         />
@@ -1123,7 +1138,7 @@ export function BinderSpread({
         <NavArrowButton
           direction="next"
           label={`Next ${unit}`}
-          onClick={onNext}
+          onClick={() => onNext('arrow')}
           atEnd={!canNext}
           {...onEdge('right', edges)}
         />

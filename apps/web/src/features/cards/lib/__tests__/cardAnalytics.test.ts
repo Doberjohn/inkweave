@@ -31,6 +31,12 @@ describe('trackCardSelected', () => {
     });
   });
 
+  it.each(['binder', 'friend_binder'] as const)('forwards a pick from a %s', (source) => {
+    trackCardSelected(createCard({id: '13001'}), source);
+
+    expect(trackEvent).toHaveBeenCalledWith('card_selected', expect.objectContaining({cardId: '13001', source}));
+  });
+
   it('no-ops when the card cannot be resolved', () => {
     trackCardSelected(undefined, 'home');
 

@@ -139,6 +139,46 @@ export interface AlsoWrite {
   edit?: (params: URLSearchParams) => void;
 }
 
+/** How a filter write was made: `filter_applied`'s `via`. */
+type FilterVia = 'inline' | 'dialog';
+
+type FilterFacet = 'ink' | 'type' | 'cost';
+const FACETS: readonly FilterFacet[] = ['ink', 'type', 'cost'];
+
+/**
+ * The ink, type and cost filters a URL holds: the facets `filter_applied` counts. Each value once,
+ * since an address can name one twice (`?ink=Amber,Amber`), and one toggle turns both off.
+ */
+function facetsOf(params: URLSearchParams): Record<FilterFacet, Set<string>> {
+  return {
+    ink: new Set(parseCommaSeparated(params.get('ink'), isValidInk)),
+    type: new Set(parseCommaSeparated(params.get('type'), isValidType)),
+    cost: new Set(parseCostParam(params.get('cost')).map(String)),
+  };
+}
+
+/** One `filter_applied` for each ink, type or cost value a write turns on or off. */
+function trackFacetChanges(before: URLSearchParams, after: URLSearchParams, via: FilterVia): void {
+  const was = facetsOf(before);
+  const now = facetsOf(after);
+  for (const facet of FACETS) {
+    const added = [...now[facet]].filter((value) => !was[facet].has(value));
+    const removed = [...was[facet]].filter((value) => !now[facet].has(value));
+    for (const value of added) trackEvent('filter_applied', {facet, value, action: 'add', via});
+    for (const value of removed) trackEvent('filter_applied', {facet, value, action: 'remove', via});
+  }
+}
+
+/** Every filter in the URL as a draft holds them: an empty one deletes its param. */
+function writeFilters(params: URLSearchParams, {inks, types, costs, opts}: FilterDraft): void {
+  setOrDelete(params, 'ink', inks.join(','));
+  setOrDelete(params, 'type', types.join(','));
+  setOrDelete(params, 'cost', costs.join(','));
+  serializeFilterOptions(params, opts);
+}
+
+const NO_FILTERS: FilterDraft = {inks: [], types: [], costs: [], opts: {}};
+
 export interface UseFilterParamsReturn {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
@@ -163,6 +203,11 @@ export interface UseFilterParamsReturn {
    * Apply (#969).
    */
   applyDraft: (draft: FilterDraft, also?: AlsoWrite) => void;
+  /**
+   * Every filter off, keeping the search, the sort and the params outside the filters, which
+   * `clearAllFilters` clears too: the docked panel's Clear all.
+   */
+  clearFilters: () => void;
   clearAllFilters: () => void;
   activeFilterCount: number;
   sortOrder: BrowseSortOrder;
@@ -200,14 +245,17 @@ export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseS
   // while the card grid re-renders with the new filters in the background.
   const [, startTransition] = useTransition();
 
-  // Write helpers (all use replace to avoid history pollution)
-  const updateParams = (updater: (params: URLSearchParams) => void) => {
+  // Write helpers (all use replace to avoid history pollution). React Router calls the update once,
+  // as it writes, so each ink, type or cost it turns on or off is counted once, against the params
+  // it starts from. `via` is how the reader made the write: only a dialog's Apply is not `inline`.
+  const updateParams = (updater: (params: URLSearchParams) => void, via: FilterVia = 'inline') => {
     startTransition(() => {
       setSearchParams(
         (prev) => {
           const next = new URLSearchParams(prev);
           updater(next);
           dropDualOnlyWhenNotOffered(next);
+          trackFacetChanges(prev, next, via);
           return next;
         },
         {replace: true},
@@ -223,7 +271,6 @@ export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseS
   };
 
   const toggleInk = (ink: Ink) => {
-    trackEvent('filter_applied', {facet: 'ink', value: ink, action: inkFilters.includes(ink) ? 'remove' : 'add'});
     updateParams((p) => {
       const current = parseCommaSeparated(p.get('ink'), isValidInk);
       const next = current.includes(ink) ? current.filter((i) => i !== ink) : [...current, ink];
@@ -233,7 +280,6 @@ export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseS
   };
 
   const toggleType = (type: CardTypeFilter) => {
-    trackEvent('filter_applied', {facet: 'type', value: type, action: typeFilters.includes(type) ? 'remove' : 'add'});
     updateParams((p) => {
       const current = parseCommaSeparated(p.get('type'), isValidType);
       const next = current.includes(type)
@@ -245,7 +291,6 @@ export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseS
   };
 
   const toggleCost = (cost: number) => {
-    trackEvent('filter_applied', {facet: 'cost', value: String(cost), action: costFilters.includes(cost) ? 'remove' : 'add'});
     updateParams((p) => {
       const current = parseCostParam(p.get('cost'));
       const next = current.includes(cost)
@@ -277,20 +322,19 @@ export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseS
     else p.set(SORT_PARAM, order);
   };
 
-  const applyDraft = ({inks, types, costs, opts}: FilterDraft, {sortOrder: order, edit}: AlsoWrite = {}) => {
+  const applyDraft = (draft: FilterDraft, {sortOrder: order, edit}: AlsoWrite = {}) => {
     if (order) trackSortChange(order);
     updateParams((p) => {
-      setOrDelete(p, 'ink', inks.join(','));
-      setOrDelete(p, 'type', types.join(','));
-      setOrDelete(p, 'cost', costs.join(','));
-      serializeFilterOptions(p, opts);
+      writeFilters(p, draft);
       if (order) writeSort(p, order);
       edit?.(p);
-    });
+    }, 'dialog');
   };
 
   const replaceFilters = (inks: Ink[], types: CardTypeFilter[], costs: number[], opts: CardFilterOptions) =>
     applyDraft({inks, types, costs, opts});
+
+  const clearFilters = () => updateParams((p) => writeFilters(p, NO_FILTERS));
 
   const setSortOrder = (order: BrowseSortOrder) => {
     trackSortChange(order);
@@ -317,6 +361,7 @@ export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseS
     setFilters,
     replaceFilters,
     applyDraft,
+    clearFilters,
     clearAllFilters,
     activeFilterCount,
     sortOrder,

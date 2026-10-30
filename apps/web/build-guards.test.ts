@@ -1,8 +1,11 @@
 // @vitest-environment node
 import path from 'node:path';
-import {describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {
+  type BuiltChunks,
   type BuiltFiles,
+  collectionModeOn,
+  loadableCollectionCode,
   staleStartupEntries,
   uiCompilerReport,
   unresolvedCssUrls,
@@ -125,5 +128,112 @@ describe('unresolvedCssUrls', () => {
     expect(
       unresolvedCssUrls(build(html('.l{background:url(../public/brand/mark.svg)}')), PUBLIC),
     ).toEqual(['../public/brand/mark.svg in index.html']);
+  });
+});
+
+describe('loadableCollectionCode', () => {
+  const SRC = '/r/apps/web/src';
+  /** A bundle by file name, as Rolldown hands it over: a page's HTML, or a chunk's code and modules. */
+  const bundleOf = (files: Record<string, string | {code?: string; modules: Record<string, number>}>): BuiltChunks =>
+    Object.fromEntries(
+      Object.entries(files).map(([fileName, file]) => [
+        fileName,
+        typeof file === 'string'
+          ? {type: 'asset' as const, fileName, source: file}
+          : {
+              type: 'chunk' as const,
+              fileName,
+              code: file.code ?? '',
+              modules: Object.fromEntries(
+                Object.entries(file.modules).map(([id, renderedLength]) => [id, {renderedLength}]),
+              ),
+            },
+      ]),
+    );
+  const ENTRY = '<script type="module" src="/assets/index-a.js"></script>';
+
+  it('names nothing when only chunks no page loads name the collection', () => {
+    const bundle = bundleOf({
+      'index.html': ENTRY,
+      'assets/index-a.js': {code: 'import("./BrowsePage-b.js")', modules: {[`${SRC}/main.tsx`]: 40}},
+      'assets/BrowsePage-b.js': {modules: {[`${SRC}/pages/BrowsePage.tsx`]: 40}},
+      'assets/BrowseCollectionPage-c.js': {
+        code: 'import("./CollectionScope-d.js")',
+        modules: {[`${SRC}/pages/BrowseCollectionPage.tsx`]: 40},
+      },
+      'assets/CollectionScope-d.js': {modules: {[`${SRC}/features/collection/CollectionScope.tsx`]: 40}},
+    });
+    expect(loadableCollectionCode(bundle)).toEqual([]);
+  });
+
+  it('names collection code a page reaches through another chunk, on any OS', () => {
+    const bundle = bundleOf({
+      'index.html': ENTRY,
+      'assets/index-a.js': {code: 'import("./CollectionScope-d.js")', modules: {[`${SRC}/router.tsx`]: 40}},
+      'assets/CollectionScope-d.js': {
+        modules: {'C:\\r\\apps\\web\\src\\features\\collection\\CollectionScope.tsx': 40},
+      },
+    });
+    expect(loadableCollectionCode(bundle)).toEqual([
+      'src/features/collection/CollectionScope.tsx in assets/CollectionScope-d.js',
+    ]);
+  });
+
+  it("names collection code bundled into a page's own chunk, and collection mode's pages", () => {
+    const bundle = bundleOf({
+      'index.html': '<link rel="modulepreload" href="/assets/BrowsePage-b.js">',
+      'assets/BrowsePage-b.js': {
+        modules: {
+          [`${SRC}/pages/BrowsePage.tsx`]: 40,
+          [`${SRC}/features/collection/binderEvents.ts`]: 40,
+          [`${SRC}/pages/AccountCollection.tsx`]: 40,
+        },
+      },
+    });
+    expect(loadableCollectionCode(bundle)).toEqual([
+      'src/features/collection/binderEvents.ts in assets/BrowsePage-b.js',
+      'src/pages/AccountCollection.tsx in assets/BrowsePage-b.js',
+    ]);
+  });
+
+  it("leaves out the flag, Browse's non-Core loads, modules the build dropped and friends", () => {
+    const bundle = bundleOf({
+      'index.html': ENTRY,
+      'assets/index-a.js': {
+        modules: {
+          [`${SRC}/features/collection/flag.ts`]: 30,
+          [`${SRC}/features/collection/collectionChunks.ts`]: 30,
+          [`${SRC}/features/collection/collectionPromos.ts`]: 30,
+          [`${SRC}/features/collection/preCoreVariants.ts`]: 30,
+          [`${SRC}/features/collection/binderCards.ts`]: 0,
+          [`${SRC}/features/friends/FriendChip.tsx`]: 30,
+          [`${SRC}/pages/AccountFriends.tsx`]: 30,
+        },
+      },
+    });
+    expect(loadableCollectionCode(bundle)).toEqual([]);
+  });
+});
+
+describe('collectionModeOn', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  // flag.ts reads import.meta.env, which only the app's tsconfig types, so it is loaded by path.
+  const FLAG = './src/features/collection/flag.ts';
+
+  it.each([
+    ['true', 'true'],
+    ['true', 'false'],
+    ['false', 'true'],
+    ['false', 'false'],
+  ])('reads collection %s and accounts %s as the app does', async (collection, accounts) => {
+    vi.stubEnv('VITE_SHOW_COLLECTION', collection);
+    vi.stubEnv('VITE_SHOW_ACCOUNTS', accounts);
+    vi.resetModules();
+    const {SHOW_COLLECTION} = (await import(/* @vite-ignore */ FLAG)) as {SHOW_COLLECTION: boolean};
+    const env = {VITE_SHOW_COLLECTION: collection, VITE_SHOW_ACCOUNTS: accounts};
+    expect(collectionModeOn(env)).toBe(SHOW_COLLECTION);
   });
 });

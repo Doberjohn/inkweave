@@ -2,7 +2,7 @@ import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {SignInDialog} from '../SignInDialog';
-import {trackSignInFailed, trackSignInStarted} from '../../lib/signInAnalytics';
+import {trackSignInFailed, trackSignInShown, trackSignInStarted} from '../../lib/signInAnalytics';
 
 const {mockSignIn} = vi.hoisted(() => ({mockSignIn: vi.fn()}));
 
@@ -11,6 +11,7 @@ vi.mock('../../contexts/SessionContext', () => ({
 }));
 
 vi.mock('../../lib/signInAnalytics', () => ({
+  trackSignInShown: vi.fn(),
   trackSignInStarted: vi.fn(),
   trackSignInFailed: vi.fn(),
 }));
@@ -34,6 +35,22 @@ describe('SignInDialog', () => {
 describe('SignInDialog analytics', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('tracks each opening once, with the surface it opened from', () => {
+    const {rerender} = render(<SignInDialog isOpen={false} onClose={() => {}} surface="header" />);
+    expect(trackSignInShown).not.toHaveBeenCalled();
+
+    rerender(<SignInDialog isOpen onClose={() => {}} surface="header" />);
+    expect(trackSignInShown).toHaveBeenCalledExactlyOnceWith({surface: 'header'});
+
+    // A render that keeps it open is the same opening.
+    rerender(<SignInDialog isOpen onClose={() => {}} surface="header" />);
+    expect(trackSignInShown).toHaveBeenCalledTimes(1);
+
+    rerender(<SignInDialog isOpen={false} onClose={() => {}} surface="header" />);
+    rerender(<SignInDialog isOpen onClose={() => {}} surface="header" />);
+    expect(trackSignInShown).toHaveBeenCalledTimes(2);
   });
 
   it('tracks a provider press with the surface the dialog opened from', async () => {

@@ -2,7 +2,7 @@ import type {Session} from '@supabase/auth-js';
 import type {AuthProvider} from '../contexts/SessionContext';
 import {trackEvent} from './analytics';
 
-/** Where the sign-in dialog was opened. Must match the catalog's `sign_in_started` union. */
+/** Where the sign-in dialog was opened. Must match the catalog's `sign_in_started` and `sign_in_shown` unions. */
 export type SignInSurface = 'header' | 'account' | 'collection' | 'decks' | 'deck_builder';
 
 /** Why a sign-in did not complete. Must match the catalog's `sign_in_failed` union. */
@@ -18,6 +18,11 @@ const SHOW_ACCOUNTS = import.meta.env.VITE_SHOW_ACCOUNTS === 'true';
 interface SignInStart {
   provider: AuthProvider;
   surface: SignInSurface;
+}
+
+/** Fire `sign_in_shown` when the dialog opens, before any provider press. */
+export function trackSignInShown(shown: {surface: SignInSurface}): void {
+  if (SHOW_ACCOUNTS) trackEvent('sign_in_shown', shown);
 }
 
 /** Fire `sign_in_started` when a provider button is pressed. */

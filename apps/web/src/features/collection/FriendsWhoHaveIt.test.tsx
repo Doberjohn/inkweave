@@ -76,13 +76,13 @@ describe('FriendsWhoHaveIt', () => {
     expect(within(whoHasIt()).getAllByRole('link')[0]).toHaveAttribute('href', '/browse?binder=CC&friend=emerald_fairy_913');
   });
 
-  it("opens the friend's binder at the card, and hands the follow back to close the window", async () => {
+  it("opens the friend's binder at the card, says it came from here, and hands the follow back to close the window", async () => {
     const onFollow = vi.fn();
     const router = renderDialog({onFollow});
     fireEvent.click(within(whoHasIt()).getAllByRole('link')[1]);
     expect(onFollow).toHaveBeenCalledTimes(1);
     expect(await screen.findByText("The friend's binder")).toBeInTheDocument();
-    expect(router.state.location.state).toEqual({atCard: 'c1'});
+    expect(router.state.location.state).toEqual({atCard: 'c1', binderFrom: 'friends_who_have_it'});
   });
 
   it('leaves the window open when a row opens the binder in a new tab', () => {

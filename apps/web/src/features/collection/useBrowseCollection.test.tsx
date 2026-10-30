@@ -7,15 +7,17 @@ import {trackEvent} from '../../shared/lib/analytics';
 import {createCard} from '../../shared/test-utils';
 import {forgetFriendCollections} from './useFriendCollection';
 import {countCompare} from './compareCollections';
+import type {HandCount} from './binderEvents';
 import {
   useBinderParams,
   useBrowseCollection,
   type BrowseListing,
   type PhoneSheetOptions,
 } from './useBrowseCollection';
-// The binder's chunk, which the Binder sheet's numbers come from, imported with this file: a cold
-// import inside a test can outlast its wait (#712).
+// The binder's chunk, which the Binder sheet's numbers come from, and friends' chunk, which the foil
+// pointer comes from, imported with this file: a cold import inside a test can outlast its wait (#712).
 import './CollectionBinderSection';
+import './CollectionFriends';
 
 // Who presses Collection, for useBrowseCollection's own cases; useBinderParams reads none of it.
 const {account} = vi.hoisted(() => ({
@@ -30,6 +32,8 @@ const {account} = vi.hoisted(() => ({
     /** Why the reader's start made no collection (`useCollection().startProblem`). */
     startProblem: null as string | null,
     cancelStart: vi.fn(),
+    /** The collection's answer to a count set by hand: written, unless a case refuses it. */
+    setCount: vi.fn<(cardId: string, finish: 'normal' | 'foil', count: number) => boolean>(() => true),
   },
 }));
 
@@ -46,7 +50,7 @@ vi.mock('./CollectionContext', () => ({
     startCollection: account.startCollection,
     startProblem: account.startProblem,
     cancelStart: account.cancelStart,
-    setCount: () => {},
+    setCount: account.setCount,
     place: (entries: unknown) => entries,
   }),
 }));
@@ -66,6 +70,26 @@ vi.mock('./compareCollections', async (importOriginal) => {
   const real = await importOriginal<typeof import('./compareCollections')>();
   return {...real, countCompare: vi.fn(real.countCompare)};
 });
+// Friends who have it, in part: the foil pointer, drawn whenever the binder asks for one, and no
+// window host, which needs the card window. When each shows is CollectionFriends.test.tsx's.
+vi.mock('./CollectionFriends', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./CollectionFriends')>()),
+  CollectionFriends: () => null,
+  FoilPointer: ({onShow}: {onShow: () => void}) => (
+    <button type="button" onClick={onShow}>
+      Show them under Master set
+    </button>
+  ),
+}));
+// The card window's copies stripe, which a case presses as the window would: its own counting is
+// WindowCopies.test.tsx's.
+vi.mock('./WindowCopies', () => ({
+  WindowCopies: ({onEdit}: {onEdit: (edit: HandCount) => void}) => (
+    <button type="button" onClick={() => onEdit({cardId: 'nani', finish: 'foil', count: 1, before: {normal: 0, foil: 0}})}>
+      Add one copy of foil from the window
+    </button>
+  ),
+}));
 // The friends flag, on unless a case turns it off.
 const flags = vi.hoisted(() => ({friends: true}));
 vi.mock('../friends/flag', () => ({
@@ -211,6 +235,24 @@ describe('useBrowseCollection analytics', () => {
     account.hasCollection = true;
     account.syncing = false;
     account.startProblem = null;
+    account.entries = {};
+  });
+
+  /** The collection's actions, behind the gear after Collection. */
+  function Actions() {
+    return <>{useBrowseCollection([]).modeActions}</>;
+  }
+
+  it("sends the gear's import opening, and whether it would replace copies held", () => {
+    account.entries = {nani: {normal: 2, foil: 0}};
+    render(
+      <MemoryRouter initialEntries={['/browse']}>
+        <Actions />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole('button', {name: 'Collection actions'}));
+    fireEvent.click(screen.getByRole('menuitem', {name: /^Import collection/}));
+    expect(vi.mocked(trackEvent).mock.calls).toEqual([['collection_import_opened', {surface: 'browse', replacing: true}]]);
   });
 
   /** Browse's Collection switch, as the toolbar renders it. */
@@ -356,6 +398,22 @@ describe("useBrowseCollection's phone row (#969)", () => {
   });
 });
 
+/** A phone's sheet as Browse hands it over, open. */
+const SHEET: PhoneSheetOptions = {
+  isOpen: true,
+  onClose: () => {},
+  onApply: () => {},
+  sortOrder: 'newest',
+  inkFilters: [],
+  typeFilters: [],
+  costFilters: [],
+  filters: {},
+  uniqueKeywords: [],
+  uniqueClassifications: [],
+  uniqueRarities: [],
+  sets: [],
+};
+
 describe("useBrowseCollection's Binder sheet (#969)", () => {
   beforeEach(() => {
     account.signedIn = true;
@@ -364,20 +422,6 @@ describe("useBrowseCollection's Binder sheet (#969)", () => {
   });
 
   const LISTING: BrowseListing = {cards: [], sortOrder: 'newest', matched: [], filtered: false};
-  const SHEET: PhoneSheetOptions = {
-    isOpen: true,
-    onClose: () => {},
-    onApply: () => {},
-    sortOrder: 'newest',
-    inkFilters: [],
-    typeFilters: [],
-    costFilters: [],
-    filters: {},
-    uniqueKeywords: [],
-    uniqueClassifications: [],
-    uniqueRarities: [],
-    sets: [],
-  };
 
   /** The sheet the hook draws for a phone, open, as Browse asks for it. */
   function PhoneSheet() {
@@ -439,6 +483,14 @@ describe("useBrowseCollection: a collection that holds no copies yet", () => {
     renderAt('/browse?binder=14');
     expect(await screen.findByRole('heading', {name: 'Your binder is empty'})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: 'Import from Dreamborn'})).toBeInTheDocument();
+  });
+
+  it("sends the cover's import opening apart from the gear's", async () => {
+    renderAt('/browse?binder=14');
+    fireEvent.click(await screen.findByRole('button', {name: 'Import from Dreamborn'}));
+    expect(vi.mocked(trackEvent).mock.calls).toEqual([
+      ['collection_import_opened', {surface: 'empty_binder', replacing: false}],
+    ]);
   });
 
   it('says nothing once a copy is held', async () => {
@@ -648,5 +700,183 @@ describe("useBrowseCollection: a friend's binder (#1045)", () => {
     friends.getPlayerByHandle.mockResolvedValue({data: {...RUBY, id: 'user-1'}, error: null});
     renderFriend('/browse?binder=14&friend=ruby_hero_042');
     await waitFor(() => expect(screen.getByTestId('search')).toHaveTextContent(/^binder=14$/));
+  });
+});
+
+describe("useBrowseCollection: the binder's analytics", () => {
+  const NANI = 'Nani - Caring Sister';
+  const BELLE = 'Belle - Inventive Engineer';
+  const nani = createCard({id: 'nani', fullName: NANI, setCode: '14', rarity: 'Uncommon'});
+  const belle = createCard({id: 'belle', fullName: BELLE, setCode: '14', rarity: 'Uncommon'});
+  const BOTH: BrowseListing = {cards: [nani, belle], sortOrder: 'newest', matched: [nani, belle], filtered: false};
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    forgetFriendCollections();
+    account.signedIn = true;
+    account.hasCollection = true;
+    account.syncing = false;
+    // Belle held, so the binder is no empty one's cover; Nani in neither finish.
+    account.entries = {belle: {normal: 1, foil: 0}};
+    account.pool = [nani, belle];
+    friends.getPlayerByHandle.mockResolvedValue({data: {id: 'ruby', handle: 'ruby_hero_042', name: 'Ruby'}, error: null});
+    friends.getFriendCollection.mockResolvedValue({data: {nani: {normal: 1, foil: 0}}, error: null});
+  });
+  afterEach(() => {
+    account.pool = [];
+    account.setCount.mockReturnValue(true);
+  });
+
+  /** Browse's slots that `pick` draws, on a page at `url`, or at an entry with the router's state. */
+  function renderSlots(
+    url: string | {pathname: string; search: string; state: unknown},
+    pick: (slots: ReturnType<typeof useBrowseCollection>) => ReactNode,
+  ) {
+    function Page() {
+      return <>{pick(useBrowseCollection([]))}</>;
+    }
+    return render(
+      <MemoryRouter initialEntries={[url]}>
+        <Page />
+      </MemoryRouter>,
+    );
+  }
+
+  /** A mouse pointing at the named card's pocket presses its stripe's + for `finish`, then leaves. */
+  function addFromPocket(name: string, finish: 'normal' | 'foil') {
+    const card = screen.getByRole('button', {name});
+    fireEvent.pointerEnter(card, {pointerType: 'mouse'});
+    // The stripe sits under aria-hidden, so its group's label speaks for it: only the pocket
+    // pointed at says "0 foil".
+    const stripe = screen.getByRole('group', {name: / 0 foil$/});
+    fireEvent.click(within(stripe).getByRole('button', {name: `Add one copy of ${finish}`, hidden: true}));
+    fireEvent.pointerLeave(card);
+  }
+
+  const copiesChanged = () => vi.mocked(trackEvent).mock.calls.filter(([name]) => name === 'collection_copies_changed');
+  const viewPicks = () => vi.mocked(trackEvent).mock.calls.filter(([name]) => name === 'binder_view_changed');
+
+  describe('counts set by hand', () => {
+    it('sends a run of presses on one card once, and a second card its own', async () => {
+      renderSlots('/browse?binder=14', (slots) => slots.renderBinder(BOTH, () => {}));
+      await screen.findByRole('button', {name: NANI});
+      addFromPocket(NANI, 'normal');
+      addFromPocket(NANI, 'normal');
+      addFromPocket(NANI, 'normal');
+      addFromPocket(BELLE, 'normal');
+
+      expect(account.setCount).toHaveBeenCalledTimes(4);
+      expect(vi.mocked(trackEvent).mock.calls).toEqual([
+        ['collection_copies_changed', {surface: 'pocket', mode: 'binder', finish: 'normal', change: 'add', newCard: true}],
+        ['collection_copies_changed', {surface: 'pocket', mode: 'binder', finish: 'normal', change: 'add', newCard: false}],
+      ]);
+    });
+
+    it('sends nothing for a count the collection refused', async () => {
+      account.setCount.mockReturnValue(false);
+      renderSlots('/browse?binder=14', (slots) => slots.renderBinder(BOTH, () => {}));
+      await screen.findByRole('button', {name: NANI});
+      addFromPocket(NANI, 'normal');
+
+      expect(account.setCount).toHaveBeenCalledWith('nani', 'normal', 1);
+      expect(trackEvent).not.toHaveBeenCalled();
+    });
+
+    it("sends the card window's count as the window's, and the card's pocket after it nothing more", async () => {
+      renderSlots('/browse?binder=14', (slots) => (
+        <>
+          {slots.renderBinder(BOTH, () => {})}
+          {slots.prompts}
+        </>
+      ));
+      await screen.findByRole('button', {name: NANI});
+      fireEvent.click(screen.getByRole('button', {name: 'Add one copy of foil from the window'}));
+      addFromPocket(NANI, 'normal');
+
+      expect(copiesChanged()).toEqual([
+        ['collection_copies_changed', {surface: 'window', mode: 'binder', finish: 'foil', change: 'add', newCard: true}],
+      ]);
+    });
+
+    it.each([
+      {mode: 'grid', url: '/browse'},
+      {mode: 'friend_binder', url: '/browse?binder=14&friend=ruby_hero_042'},
+    ])("says a count set from the card window over the $mode is the $mode's", async ({mode, url}) => {
+      renderSlots(url, (slots) => slots.prompts);
+      fireEvent.click(screen.getByRole('button', {name: 'Add one copy of foil from the window'}));
+
+      expect(copiesChanged()).toEqual([
+        ['collection_copies_changed', {surface: 'window', mode, finish: 'foil', change: 'add', newCard: true}],
+      ]);
+    });
+  });
+
+  describe('picks that change what the binder shows', () => {
+    it("sends a pick of Owned in the panel, and nothing for a press on what's on show", async () => {
+      renderSlots('/browse?binder=14', (slots) => slots.renderSetPanel(BOTH));
+      const shows = within(await screen.findByRole('group', {name: 'Binder shows'}));
+      fireEvent.click(shows.getByRole('button', {name: 'All'}));
+      expect(trackEvent).not.toHaveBeenCalled();
+
+      fireEvent.click(shows.getByRole('button', {name: 'Owned'}));
+      expect(vi.mocked(trackEvent).mock.calls).toEqual([
+        ['binder_view_changed', {control: 'show', value: 'owned', friend: false}],
+      ]);
+    });
+
+    it("says a pick in a friend's binder is made there", async () => {
+      renderSlots('/browse?binder=14&friend=ruby_hero_042', (slots) => slots.renderSetPanel(BOTH));
+      const shows = within(await screen.findByRole('group', {name: 'Binder shows'}));
+      fireEvent.click(shows.getByRole('button', {name: 'Owned'}));
+
+      expect(viewPicks()).toEqual([['binder_view_changed', {control: 'show', value: 'owned', friend: true}]]);
+    });
+
+    it("says a Show applied from a friend's binder's sheet is picked there", async () => {
+      renderSlots('/browse?binder=14&friend=ruby_hero_042', (slots) => slots.renderPhoneSheet(BOTH, SHEET));
+      const shows = within(await screen.findByRole('group', {name: 'Binder shows'}));
+      fireEvent.click(shows.getByRole('button', {name: 'Owned'}));
+      fireEvent.click(screen.getByRole('button', {name: 'Apply'}));
+
+      expect(viewPicks()).toEqual([['binder_view_changed', {control: 'show', value: 'owned', friend: true}]]);
+    });
+
+    it("sends the foil pointer's press as a pick of Master set", async () => {
+      // Every card held: the Missing view is empty under Complete set, where the pointer shows.
+      account.entries = {nani: {normal: 1, foil: 0}, belle: {normal: 1, foil: 0}};
+      renderSlots('/browse?binder=14&owned=missing', (slots) => slots.renderBinder({...BOTH, cards: []}, () => {}));
+      fireEvent.click(await screen.findByRole('button', {name: 'Show them under Master set'}));
+
+      expect(vi.mocked(trackEvent).mock.calls).toEqual([
+        ['binder_view_changed', {control: 'foil_pointer', value: 'master', friend: false}],
+      ]);
+    });
+  });
+
+  describe("where a card and a friend's binder are opened from (#1070)", () => {
+    it("hands a pocket's card on as picked in your own binder", async () => {
+      const onCardSelect = vi.fn();
+      renderSlots('/browse?binder=14', (slots) => slots.renderBinder(BOTH, onCardSelect));
+      fireEvent.click(await screen.findByRole('button', {name: NANI}));
+      expect(onCardSelect).toHaveBeenCalledExactlyOnceWith(nani, 'binder');
+    });
+
+    it("hands a pocket's card on as picked in a friend's binder", async () => {
+      const onCardSelect = vi.fn();
+      renderSlots('/browse?binder=14&friend=ruby_hero_042', (slots) => slots.renderBinder(BOTH, onCardSelect));
+      fireEvent.click(await screen.findByRole('button', {name: NANI}));
+      expect(onCardSelect).toHaveBeenCalledExactlyOnceWith(nani, 'friend_binder');
+    });
+
+    it.each([
+      {how: 'from the friends list', state: {binderFrom: 'friends_list'}, from: 'friends_list'},
+      {how: 'from Friends who have it', state: {atCard: 'nani', binderFrom: 'friends_who_have_it'}, from: 'friends_who_have_it'},
+      {how: 'by its address alone', state: null, from: 'link'},
+      {how: 'with state no link writes', state: {binderFrom: 'elsewhere'}, from: 'link'},
+    ])("says a friend's binder reached $how came from $from", async ({state, from}) => {
+      const entry = {pathname: '/browse', search: '?binder=14&friend=ruby_hero_042', state};
+      renderSlots(entry, (slots) => slots.renderBinder(BOTH, () => {}));
+      await waitFor(() => expect(trackEvent).toHaveBeenCalledWith('friend_binder_opened', {result: 'shown', from}));
+    });
   });
 });

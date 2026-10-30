@@ -1,9 +1,12 @@
-import {describe, it, expect, vi} from 'vitest';
+import {beforeEach, describe, it, expect, vi} from 'vitest';
 import {fireEvent, render, screen, within} from '@testing-library/react';
 import type {BrowseSortOrder} from '../../shared/constants';
 import type {AlsoWrite, FilterDraft} from '../../shared/hooks/useFilterParams';
+import {trackEvent} from '../../shared/lib/analytics';
 import {BinderSheet} from './BinderSheet';
 import type {BinderShow} from './binderCards';
+
+vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 
 interface Opening {
   isOpen?: boolean;
@@ -133,5 +136,33 @@ describe('BinderSheet (#969)', () => {
     expect(screen.queryByRole('button', {name: /clear all/i})).toBeNull();
     press('Apply');
     expect(onApply.mock.calls[0][1].sortOrder).toBe('cost-desc');
+  });
+});
+
+describe('BinderSheet analytics', () => {
+  beforeEach(() => {
+    vi.mocked(trackEvent).mockClear();
+  });
+
+  it('sends the Show its Apply writes when Show moved', () => {
+    renderSheet();
+    press('Missing');
+    press('Apply');
+    expect(vi.mocked(trackEvent).mock.calls).toEqual([
+      ['binder_view_changed', {control: 'show', value: 'missing', friend: false}],
+    ]);
+  });
+
+  it('sends nothing for an Apply that leaves Show where it was', () => {
+    renderSheet({show: 'owned'});
+    press('Apply');
+    expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  it('sends nothing for a Show drafted and dropped by closing the sheet', () => {
+    const {rerender} = renderSheet();
+    press('Missing');
+    rerender({isOpen: false});
+    expect(trackEvent).not.toHaveBeenCalled();
   });
 });

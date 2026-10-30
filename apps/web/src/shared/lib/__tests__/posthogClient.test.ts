@@ -1,8 +1,10 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
+import {FRIEND_PARAM} from '../../../features/collection/binderCards';
 
 afterEach(() => {
   vi.doUnmock('posthog-js');
   vi.unstubAllGlobals();
+  window.history.replaceState(null, '', '/');
 });
 
 describe('startPostHog', () => {
@@ -35,6 +37,23 @@ describe('startPostHog', () => {
     // Same origin and through the relay: any other host would need a CSP change.
     const relay = `${location.origin}/relay/`;
     expect(sent.filter((url) => !new URL(url, location.href).href.startsWith(relay))).toEqual([]);
+  });
+
+  // A friend's binder names the friend in its address, and a failed sign-in leaves its one-time
+  // code there: neither may reach PostHog in the address every event carries.
+  it('masks a friend handle and a sign-in code in the address of every event', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{"status":1}')));
+    window.history.replaceState(null, '', `/browse?binder=all&${FRIEND_PARAM}=ruby_hero_042&code=4f2a9c`);
+    vi.resetModules();
+    const {startPostHog} = await import('../posthogClient');
+    startPostHog('phc_test', () => {});
+    const {default: posthog} = await import('posthog-js');
+
+    const url = String(posthog.capture('probe', {})?.properties.$current_url);
+
+    expect(url).not.toContain('ruby_hero_042');
+    expect(url).not.toContain('4f2a9c');
+    expect(new URL(url).searchParams.get(FRIEND_PARAM)).toBe('<masked>');
   });
 
   it('returns null, never a throw, when the SDK fails to start, and hands over the error', async () => {
