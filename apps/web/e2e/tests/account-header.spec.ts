@@ -1,4 +1,8 @@
+import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
+import {E2E_FRIEND_CODE} from '../fixtures/supabaseStub';
+import {serveFriends} from '../helpers/friends';
+import {signInAs} from '../helpers/session';
 
 /**
  * The accounts surface is behind `VITE_SHOW_ACCOUNTS`, shipped OFF until there is
@@ -69,5 +73,37 @@ test.describe('Account header control', () => {
     // Stops at the provider choice: actually signing in needs a real round-trip,
     // which no placeholder project can serve.
     await expect(page.getByRole('dialog')).toBeVisible();
+  });
+});
+
+/**
+ * A phone has no header, so its bottom nav carries the same control as an account tab: Sign in
+ * signed out, a link to the account page signed in.
+ */
+test.describe('Account tab on phones', () => {
+  // The desktop projects carry this control in the header, tested above.
+  test.skip(({isMobile}) => !isMobile, 'phones only');
+
+  const mobileNav = (page: Page) => page.getByRole('navigation', {name: 'Mobile navigation'});
+
+  test('signed out, the bottom nav opens the sign-in dialog', async ({page}) => {
+    await page.goto('/browse');
+    await mobileNav(page).getByRole('button', {name: 'Sign in', exact: true}).click();
+
+    await expect(page.getByRole('dialog', {name: 'Sign in to Inkweave'})).toBeVisible();
+  });
+
+  test('signed in, the bottom nav opens the account page', async ({page}) => {
+    const me = {id: 'e2e-phone', handle: 'amber_dreamer', displayName: 'Amber Dreamer', code: E2E_FRIEND_CODE};
+    await signInAs(page, me.id);
+    await serveFriends(page, {me, others: [], rows: []});
+    await page.goto('/browse');
+
+    await mobileNav(page).getByRole('link', {name: 'Your account', exact: true}).click();
+
+    await expect(page).toHaveURL(/\/account$/);
+    await expect(page.getByRole('heading', {name: 'Your account', level: 1})).toBeVisible();
+    const tab = mobileNav(page).getByRole('link', {name: 'Your account', exact: true});
+    await expect(tab).toHaveAttribute('aria-current', 'page');
   });
 });

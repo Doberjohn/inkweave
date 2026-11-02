@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-386 tests across 36 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+388 tests across 36 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised, and with `VITE_SHOW_BETA_NOTICE=true`, as production builds, so every home-page test sees the hero where players do, below the beta notice on screens narrower than 1400 px (`beta-notice.spec.ts`). Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -239,7 +239,7 @@ Eighteen run in `Mobile Viewport`, whose `beforeEach` opens the homepage first.
 | the header search opens a card window from the keyboard, staying on the gallery | On `/playstyles`, the one page whose header has a search field: typing "Elsa" lists suggestions, ArrowDown marks the first `aria-selected`, Enter opens its card window (named after it) and the URL stays `/playstyles` |
 | Enter in the header search goes to Browse with the query | On `/playstyles`, "Elsa" then Enter with nothing highlighted goes to `/browse?q=Elsa` |
 
-## `account-header.spec.ts` — 4 tests (3 desktop only)
+## `account-header.spec.ts` — 6 tests (3 desktop only, 2 phones only)
 
 Covers the accounts surface, which ships behind `VITE_SHOW_ACCOUNTS` (default OFF). `playwright.config.ts` pins the flag ON **and** pins placeholder `VITE_SUPABASE_*` values. Both pins matter: without credentials `isSupabaseConfigured()` is false, `enabled` is false and `AuthButton` renders nothing, so these would pass locally off a developer's `.env.local` and fail in CI, which supplies no Supabase env. Pinning makes the state identical everywhere.
 
@@ -251,6 +251,8 @@ At page load, the Supabase SDK is downloaded only when there is a session to res
 | an anonymous visit never downloads the Supabase SDK | With nothing stored, `/browse` renders the "Sign in" control and reaches network idle without one SDK request |
 | a stored session downloads the Supabase SDK to restore it | An `inkweave:auth` entry seeded before load makes `/browse` request the SDK (all projects) |
 | the sign-in control opens the provider dialog | Clicking it opens the `SignInDialog`. Stops at the provider choice: signing in needs a real round-trip no placeholder project can serve |
+| Account tab on phones › signed out, the bottom nav opens the sign-in dialog | (phones only) A phone has no header, so the `Mobile navigation` carries the control as an account tab: on `/browse` its "Sign in" button opens the `Sign in to Inkweave` dialog. Shown to fail with the tab's press opening nothing |
+| Account tab on phones › signed in, the bottom nav opens the account page | (phones only) Signed in from a stored session (`helpers/session.ts`, the account's reads from `serveFriends`), the nav's "Your account" link goes from `/browse` to `/account`, whose `Your account` heading shows, and is then the nav's current page. Shown to fail with the tab linking elsewhere |
 
 ## `collection-mode.spec.ts`: 42 tests (1 every project, 5 chromium only, 24 desktop only, 11 on every project at phone viewports, 1 desktop only at a phone viewport)
 

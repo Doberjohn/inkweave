@@ -3,7 +3,13 @@ import type {AuthProvider} from '../contexts/SessionContext';
 import {trackEvent} from './analytics';
 
 /** Where the sign-in dialog was opened. Must match the catalog's `sign_in_started` and `sign_in_shown` unions. */
-export type SignInSurface = 'header' | 'account' | 'collection' | 'decks' | 'deck_builder';
+export type SignInSurface =
+  | 'header'
+  | 'bottom_nav'
+  | 'account'
+  | 'collection'
+  | 'decks'
+  | 'deck_builder';
 
 /** Why a sign-in did not complete. Must match the catalog's `sign_in_failed` union. */
 export type SignInFailureReason = 'error' | 'cancelled' | 'timeout';

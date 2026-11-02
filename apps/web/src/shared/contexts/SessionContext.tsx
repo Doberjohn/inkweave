@@ -14,7 +14,7 @@ import {AUTH_STORAGE_KEY, isSupabaseConfigured, loadSupabase} from '../lib/supab
 
 export type AuthProvider = 'google' | 'discord';
 
-interface SessionContextValue {
+export interface SessionContextValue {
   session: Session | null;
   user: User | null;
   /** True until the initial session lookup resolves. */
@@ -160,6 +160,14 @@ export function useSession(): SessionContextValue {
     throw new Error('useSession must be used within a SessionProvider');
   }
   return context;
+}
+
+/**
+ * The session for a component that also renders outside a SessionProvider, which gets null. The
+ * phone's bottom nav reads its account tab from it, and its stories have no provider.
+ */
+export function useOptionalSession(): SessionContextValue | null {
+  return useContext(SessionContext);
 }
 
 /**

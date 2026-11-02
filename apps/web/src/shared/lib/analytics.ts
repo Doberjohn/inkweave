@@ -97,14 +97,17 @@ type AnalyticsEvents = {
     rarity: string;
     surface: 'card_page' | 'modal';
   };
-  // Sign-in (#882). `surface` is where the dialog opened; decks and deck_builder are the
-  // deck builder's DecksPage and DeckBuilderPage (#451). Never an account id, email or handle.
+  // Sign-in (#882). `surface` is where the dialog opened: bottom_nav is the phone's bottom nav,
+  // decks and deck_builder the deck builder's DecksPage and DeckBuilderPage (#451). Never an
+  // account id, email or handle.
   sign_in_started: {
     provider: 'google' | 'discord';
-    surface: 'header' | 'account' | 'collection' | 'decks' | 'deck_builder';
+    surface: 'header' | 'bottom_nav' | 'account' | 'collection' | 'decks' | 'deck_builder';
   };
   // The dialog opened, before any provider press: started over shown is a surface's sign-in rate.
-  sign_in_shown: {surface: 'header' | 'account' | 'collection' | 'decks' | 'deck_builder'};
+  sign_in_shown: {
+    surface: 'header' | 'bottom_nav' | 'account' | 'collection' | 'decks' | 'deck_builder';
+  };
   // /auth/callback saw the new session. `provider` is the session's own; anything else is `other`.
   sign_in_completed: {provider: 'google' | 'discord' | 'other'};
   // The start failed in the dialog, or the callback gave up. `reason` comes from the OAuth error

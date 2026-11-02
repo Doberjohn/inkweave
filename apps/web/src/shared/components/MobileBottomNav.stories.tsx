@@ -44,3 +44,21 @@ export const RevealSeasonRevealsActive: Story = {
   args: {onSearchClick: fn(), phaseOverride: 'pre-release-live'},
   decorators: [withRouter('/reveals')],
 };
+
+/** Accounts on, signed out: the account tab is Sign in, which opens the sign-in dialog in the app. */
+export const AccountSignedOut: Story = {
+  args: {onSearchClick: fn(), phaseOverride: 'hidden', accountOverride: 'sign-in'},
+  decorators: [withRouter('/browse')],
+};
+
+/** Signed in, on the account page: the account tab lights up. */
+export const AccountSignedInActive: Story = {
+  args: {onSearchClick: fn(), phaseOverride: 'hidden', accountOverride: 'account'},
+  decorators: [withRouter('/account')],
+};
+
+/** Reveal season with the account tab: six tabs. */
+export const RevealSeasonAccountActive: Story = {
+  args: {onSearchClick: fn(), phaseOverride: 'pre-release', accountOverride: 'account'},
+  decorators: [withRouter('/account')],
+};
