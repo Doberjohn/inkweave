@@ -1,11 +1,11 @@
 import {useTransition} from 'react';
-import {useSearchParams} from 'react-router-dom';
 import type {Ink} from '../../features/cards';
 import {countFilterOptions, offersDualOnly, type CardFilterOptions} from '../../features/cards/loader';
 import type {CardTypeFilter, BrowseSortOrder} from '../constants';
 import {BROWSE_SORT_OPTIONS} from '../constants';
 import type {InkwellValue} from 'inkweave-ui/lorcana/InkwellIcon';
 import {trackEvent} from '../lib/analytics';
+import {useSearchParamsWriter} from './useSearchParamsWriter';
 
 const VALID_INKS = new Set<string>(['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel']);
 const VALID_TYPES = new Set<string>(['Character', 'Action', 'Song', 'Item', 'Location']);
@@ -220,7 +220,7 @@ export interface UseFilterParamsReturn {
  * render ordered the cards differently from the prerendered page it replaced).
  */
 export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseSortOrder} = {}): UseFilterParamsReturn {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, write] = useSearchParamsWriter();
 
   // Read filter state from URL params
   const searchQuery = searchParams.get('q') ?? '';
@@ -245,21 +245,18 @@ export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseS
   // while the card grid re-renders with the new filters in the background.
   const [, startTransition] = useTransition();
 
-  // Write helpers (all use replace to avoid history pollution). React Router calls the update once,
-  // as it writes, so each ink, type or cost it turns on or off is counted once, against the params
-  // it starts from. `via` is how the reader made the write: only a dialog's Apply is not `inline`.
+  // Write helpers (all replace, to keep the history clean). Each write starts from the page's last
+  // one until that one renders (`useSearchParamsWriter`), so a click that lands before the grid
+  // redraws keeps the click before it. Each ink, type or cost a write turns on or off is
+  // counted once, against the params it starts from. `via` is how the reader made the write: only
+  // a dialog's Apply is not `inline`.
   const updateParams = (updater: (params: URLSearchParams) => void, via: FilterVia = 'inline') => {
     startTransition(() => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          updater(next);
-          dropDualOnlyWhenNotOffered(next);
-          trackFacetChanges(prev, next, via);
-          return next;
-        },
-        {replace: true},
-      );
+      write((next, base) => {
+        updater(next);
+        dropDualOnlyWhenNotOffered(next);
+        trackFacetChanges(base, next, via);
+      });
     });
   };
 
@@ -301,9 +298,8 @@ export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseS
     });
   };
 
-  // Clear every selected cost in one atomic param update. A loop of toggleCost
-  // would be unreliable: each functional setSearchParams reads the current
-  // committed params, so synchronous calls all see the same state.
+  // Every selected cost off in one write: one Clear is one write, and one `filter_applied` for each
+  // cost it turns off.
   const clearCosts = () => {
     updateParams((p) => p.delete('cost'));
   };
@@ -341,9 +337,10 @@ export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseS
     updateParams((p) => writeSort(p, order));
   };
 
+  // Through the writer too, so a click right after Clear all doesn't bring the cleared filters back.
   const clearAllFilters = () => {
     startTransition(() => {
-      setSearchParams({}, {replace: true});
+      write(() => new URLSearchParams());
     });
   };
 

@@ -18,6 +18,7 @@ import {
   TOUCH_TARGET,
   hexRgba,
   searchFieldStyle,
+  FONT_WEIGHT,
 } from '../../shared/constants';
 import {useHover} from '../../shared/hooks';
 import {trackEvent} from '../../shared/lib/analytics';
@@ -329,7 +330,7 @@ function CodeRow({code}: {code: string}) {
               ...TABULAR,
               color: COLORS.text,
               fontSize: `${FONT_SIZES.xl}px`,
-              fontWeight: 600,
+              fontWeight: FONT_WEIGHT.semibold,
               letterSpacing: LETTER_SPACING.eyebrow,
               userSelect: 'all',
             }}>
@@ -588,7 +589,7 @@ const GHOST_LINK: React.CSSProperties = {
   ...CTA_GHOST_STYLE,
   fontFamily: FONTS.body,
   fontSize: `${FONT_SIZES.base}px`,
-  fontWeight: 500,
+  fontWeight: FONT_WEIGHT.medium,
   textDecoration: 'none',
 };
 
@@ -743,7 +744,7 @@ function Person({
         <FriendChip name={row.name} handle={row.handle} />
         {/* Names are public, but who is whose friend is not: kept out of PostHog (#827). */}
         <span style={{display: 'flex', alignItems: 'baseline', gap: SPACING.sm, flexWrap: 'wrap', minWidth: 0}}>
-          <span id={nameId} className="ph-no-capture" style={{color: COLORS.text, fontSize: `${FONT_SIZES.md}px`, fontWeight: 600}}>
+          <span id={nameId} className="ph-no-capture" style={{color: COLORS.text, fontSize: `${FONT_SIZES.md}px`, fontWeight: FONT_WEIGHT.semibold}}>
             {row.name}
           </span>
           {row.handle && (

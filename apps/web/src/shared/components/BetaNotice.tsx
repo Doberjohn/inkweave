@@ -13,6 +13,8 @@ import {
   SHADOWS,
   SPACING,
   TOUCH_TARGET,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
 } from '../constants';
 
 /** The Discord server's invite, set never to expire. */
@@ -62,15 +64,15 @@ const PILL_STYLE: CSSProperties = {
 const TITLE_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: FONTS.hero,
-  fontWeight: 400,
+  fontWeight: FONT_WEIGHT.regular,
   fontSize: FONT_SIZES.xxxl,
-  lineHeight: 1.2,
+  lineHeight: LINE_HEIGHT.tight,
 };
 
 const LINE_STYLE: CSSProperties = {
   margin: 0,
   fontSize: FONT_SIZES.lg,
-  lineHeight: 1.5,
+  lineHeight: LINE_HEIGHT.base,
   color: COLORS.heroSubtitle,
 };
 
@@ -85,7 +87,7 @@ const LINK_STYLE: CSSProperties = {
   background: PROVIDER_COLORS.discord.bg,
   color: PROVIDER_COLORS.discord.text,
   fontSize: FONT_SIZES.lg,
-  fontWeight: 600,
+  fontWeight: FONT_WEIGHT.semibold,
   textDecoration: 'none',
   whiteSpace: 'nowrap',
 };

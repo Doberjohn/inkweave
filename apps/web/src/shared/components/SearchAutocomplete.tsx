@@ -12,6 +12,7 @@ import {
   SPACING,
   TRUNCATE,
   Z_INDEX,
+  FONT_WEIGHT,
 } from '../constants';
 
 interface SearchAutocompleteProps {
@@ -43,7 +44,7 @@ function HighlightedName({fullName, query}: {fullName: string; query: string}) {
         style={{
           background: 'transparent',
           color: COLORS.primary,
-          fontWeight: 600,
+          fontWeight: FONT_WEIGHT.semibold,
         }}>
         {match}
       </mark>
@@ -116,7 +117,7 @@ export function SearchAutocomplete({
                 alignItems: 'center',
                 fontSize: FONT_SIZES.md,
                 color: COLORS.text,
-                fontWeight: 500,
+                fontWeight: FONT_WEIGHT.medium,
                 flexShrink: 0,
                 minWidth: 32,
                 letterSpacing: '0.3px',

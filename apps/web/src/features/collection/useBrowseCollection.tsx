@@ -1,5 +1,6 @@
 import {Suspense, useEffect, useRef, useState, type ReactNode} from 'react';
 import {useLocation, useSearchParams, type Location} from 'react-router-dom';
+import {useSearchParamsWriter} from '../../shared/hooks/useSearchParamsWriter';
 import {SET_PARAM, SORT_PARAM} from '../../shared/hooks/useFilterParams';
 import {trackEvent} from '../../shared/lib/analytics';
 import {lazyWithRetry} from '../../shared/lib/lazyWithRetry';
@@ -210,11 +211,9 @@ const comparesWith = (raw: string | null) => COMPARE_SHOWS.some((show) => show =
 /**
  * Collection mode's params: `?binder=` (the mode and its set) and `?owned=` (what the
  * binder shows), and what the reader gets of the mode (`binderMode`). Every write edits
- * the params rather than replacing them, so the page's filters ride along. It starts
- * from the params as this hook last RENDERED them: react-router 7 hands the updater a
- * copy of its render-time snapshot, not the live URL. So a write here and one through
- * another hook (useFilterParams) in the same tick can still lose one of the two; keep
- * each user action to one writer.
+ * the params rather than replacing them, so the page's filters ride along. A write starts
+ * from the page's last write until that write renders (`useSearchParamsWriter`), so writes
+ * made before a render all land, this hook's and useFilterParams' alike.
  *
  * THE SET IS CHOSEN IN THE COLLECTION PANEL (owner, 2026-10-12), so collection mode
  * keeps no set FILTER: entering it opens the set a Browse set filter names (the newest,
@@ -223,17 +222,7 @@ const comparesWith = (raw: string | null) => COMPARE_SHOWS.some((show) => show =
  * carries one outside the mode loses it too. See `strayParams`.
  */
 export function useBinderParams(reader: BinderReader) {
-  const [searchParams, setSearchParams] = useSearchParams();
-  function rewrite(change: (next: URLSearchParams) => void) {
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        change(next);
-        return next;
-      },
-      {replace: true},
-    );
-  }
+  const [searchParams, write] = useSearchParamsWriter();
   const requested = searchParams.get(BINDER_PARAM);
   // Whose binder: a friend's, by handle, only under the friends flag, without which
   // the param changes nothing. Outside the binder it is a stray.
@@ -242,8 +231,8 @@ export function useBinderParams(reader: BinderReader) {
   const hasStrays = mode.dropsStrays && strayParams(searchParams).length > 0;
   useEffect(() => {
     if (!hasStrays) return;
-    setSearchParams(withoutStrays, {replace: true});
-  }, [hasStrays, setSearchParams]);
+    write(withoutStrays);
+  }, [hasStrays, write]);
 
   return {
     requested,
@@ -253,25 +242,21 @@ export function useBinderParams(reader: BinderReader) {
     // (or whose account has yet to answer) gets them.
     show: parseBinderShow(searchParams.get(OWNED_PARAM), friend !== null && (reader.hasCollection || reader.syncing)),
     enterBinder: (fallback: string, sets: string[] | null) =>
-      rewrite((next) => {
+      write((next) => {
         next.set(BINDER_PARAM, setFromFilter(next.get(SET_PARAM), sets) ?? fallback);
         next.delete(SET_PARAM);
       }),
-    writeBinder: (set: string) => rewrite((next) => next.set(BINDER_PARAM, set)),
+    writeBinder: (set: string) => write((next) => next.set(BINDER_PARAM, set)),
     // Out of the mode, the binder's view is a stray: gone in the same write.
     leaveBinder: () =>
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          next.delete(BINDER_PARAM);
-          return withoutStrays(next);
-        },
-        {replace: true},
-      ),
-    writeShow: (show: BinderShow) => rewrite((next) => writeShowParam(next, show)),
+      write((next) => {
+        next.delete(BINDER_PARAM);
+        return withoutStrays(next);
+      }),
+    writeShow: (show: BinderShow) => write((next) => writeShowParam(next, show)),
     // Back to the reader's own binder at the same scope: the views only a friend's has go too.
     leaveFriend: () =>
-      rewrite((next) => {
+      write((next) => {
         next.delete(FRIEND_PARAM);
         if (comparesWith(next.get(OWNED_PARAM))) next.delete(OWNED_PARAM);
       }),

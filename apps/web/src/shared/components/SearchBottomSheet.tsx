@@ -1,7 +1,7 @@
 import {forwardRef, useEffect, useImperativeHandle, useRef, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SPACING, TRUNCATE} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, INK_COLORS, RADIUS, SET_ABBREVIATIONS, SPACING, TRUNCATE, FONT_WEIGHT} from '../constants';
 import {BottomSheet} from 'inkweave-ui/components/BottomSheet';
 import {LinkButton} from 'inkweave-ui/components/LinkButton';
 import {useCardDataContext} from '../contexts/CardDataContext';
@@ -31,7 +31,7 @@ function HighlightedName({fullName, query}: {fullName: string; query: string}) {
   return (
     <>
       {before}
-      <mark style={{background: 'transparent', color: COLORS.primary, fontWeight: 600}}>
+      <mark style={{background: 'transparent', color: COLORS.primary, fontWeight: FONT_WEIGHT.semibold}}>
         {match}
       </mark>
       {after}
@@ -332,7 +332,7 @@ function SearchResultRow({card, isHighlighted, isLast, query, optionProps}: Sear
           <div
             style={{
               fontSize: `${FONT_SIZES.lg}px`,
-              fontWeight: 500,
+              fontWeight: FONT_WEIGHT.medium,
               color: COLORS.text,
               fontFamily: FONTS.body,
               ...TRUNCATE,
@@ -380,7 +380,7 @@ function SearchResultsList({suggestions, highlightedIndex, query, getOptionProps
           fontSize: `${FONT_SIZES.sm}px`,
           color: COLORS.textMuted,
           fontFamily: FONTS.body,
-          fontWeight: 500,
+          fontWeight: FONT_WEIGHT.medium,
         }}>
         {getResultsCountLabel(suggestions.length)}
       </div>
@@ -418,7 +418,7 @@ function RecentSearchChip({term, onClick}: RecentSearchChipProps) {
         background: COLORS.surfaceAlt,
         color: COLORS.text,
         fontSize: `${FONT_SIZES.xs}px`,
-        fontWeight: 500,
+        fontWeight: FONT_WEIGHT.medium,
         fontFamily: FONTS.body,
         cursor: 'pointer',
       }}>
@@ -457,7 +457,7 @@ function RecentSection({recentSearches, onRecentClick, onClearRecent}: SearchEmp
         <span
           style={{
             fontSize: `${FONT_SIZES.xs}px`,
-            fontWeight: 600,
+            fontWeight: FONT_WEIGHT.semibold,
             color: COLORS.textMuted,
             fontFamily: FONTS.body,
             letterSpacing: '0.5px',

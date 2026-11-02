@@ -8,11 +8,12 @@ import {
   COLORS,
   FONTS,
   FONT_SIZES,
+  FONT_WEIGHT,
 } from '../tokens/theme';
 
 const sectionHeading: React.CSSProperties = {
   fontSize: FONT_SIZES.xl,
-  fontWeight: 600,
+  fontWeight: FONT_WEIGHT.semibold,
   color: COLORS.text,
   fontFamily: FONTS.body,
   margin: '0 0 16px',
@@ -189,7 +190,7 @@ function SpacingScale() {
       <h1
         style={{
           fontSize: FONT_SIZES.xxl,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           color: COLORS.primary500,
           fontFamily: FONTS.body,
           margin: '0 0 8px',

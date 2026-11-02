@@ -1,4 +1,12 @@
-import {COLORS, FONT_SIZES, NEUTRAL_LADDER, RADIUS, SPACING} from '../tokens/theme';
+import {
+  COLORS,
+  FONT_SIZES,
+  NEUTRAL_LADDER,
+  RADIUS,
+  SPACING,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
+} from '../tokens/theme';
 
 /**
  * The chip's size and padding. Admin measures a list width from its widest use, Card studio's
@@ -9,8 +17,8 @@ import {COLORS, FONT_SIZES, NEUTRAL_LADDER, RADIUS, SPACING} from '../tokens/the
 const TAG: React.CSSProperties = {
   flex: 'none',
   fontSize: FONT_SIZES.xs,
-  fontWeight: 500,
-  lineHeight: 1.4,
+  fontWeight: FONT_WEIGHT.medium,
+  lineHeight: LINE_HEIGHT.snug,
   whiteSpace: 'nowrap',
   color: COLORS.textMuted,
   border: `1px solid ${NEUTRAL_LADDER.strongBorder}`,

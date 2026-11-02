@@ -13,6 +13,7 @@ import {
   RADIUS,
   SHADOWS,
   SPACING,
+  FONT_WEIGHT,
 } from '../../shared/constants';
 
 export interface CollectionActionsProps {
@@ -192,7 +193,7 @@ function actionStyle({hovered, waits}: {hovered: boolean; waits: boolean}): CSSP
     background: hovered && !waits ? GOLD_GLOW.hoverBg : 'transparent',
     color: COLORS.text,
     fontSize: `${FONT_SIZES.lg}px`,
-    fontWeight: 500,
+    fontWeight: FONT_WEIGHT.medium,
     textAlign: 'left',
     whiteSpace: 'nowrap',
     // Rows don't boop: a growing row would clip against the menu's edge.

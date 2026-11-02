@@ -1,6 +1,6 @@
 import type {ReactNode} from 'react';
 import {HelpTooltip} from '../../../shared/components';
-import {COLORS, FONTS, FONT_SIZES, LETTER_SPACING, SPACING} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, LETTER_SPACING, SPACING, FONT_WEIGHT} from '../../../shared/constants';
 
 interface ColumnHeaderProps {
   title: string;
@@ -59,8 +59,8 @@ const TITLE_STYLE: React.CSSProperties = {
   // mockup's 17px — column titles are the second most important readout in focused state.
   fontFamily: FONTS.body,
   fontSize: FONT_SIZES.xxxl,
-  fontWeight: 700,
-  letterSpacing: '0.02em',
+  fontWeight: FONT_WEIGHT.bold,
+  letterSpacing: LETTER_SPACING.slight,
   textAlign: 'center',
   lineHeight: 1.15,
 };
@@ -76,7 +76,7 @@ interface ScoreStatsProps {
 }
 
 function ScoreStats({score, scoreColor, scoreFontSize, showScale, scoreTooltip, meta, pulseScoreKey}: ScoreStatsProps) {
-  const scoreStyle: React.CSSProperties = {fontWeight: 700, fontSize: scoreFontSize, color: scoreColor, lineHeight: 1};
+  const scoreStyle: React.CSSProperties = {fontWeight: FONT_WEIGHT.bold, fontSize: scoreFontSize, color: scoreColor, lineHeight: 1};
   return (
     <div
       style={{
@@ -97,7 +97,7 @@ function ScoreStats({score, scoreColor, scoreFontSize, showScale, scoreTooltip, 
           <span style={scoreStyle}>{score}</span>
         )}
         {showScale && (
-          <span style={{fontSize: FONT_SIZES.lg, fontWeight: 600, color: COLORS.textMuted, marginLeft: 2}}>/ 10</span>
+          <span style={{fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textMuted, marginLeft: 2}}>/ 10</span>
         )}
         {scoreTooltip && (
           <HelpTooltip
@@ -114,7 +114,7 @@ function ScoreStats({score, scoreColor, scoreFontSize, showScale, scoreTooltip, 
 
 const META_STYLE: React.CSSProperties = {
   fontSize: FONT_SIZES.sm,
-  fontWeight: 600,
+  fontWeight: FONT_WEIGHT.semibold,
   textTransform: 'uppercase',
   letterSpacing: LETTER_SPACING.eyebrow,
   display: 'inline-flex',

@@ -1,5 +1,14 @@
 import {useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, hexRgba} from '../tokens/theme';
+import {
+  COLORS,
+  EASING,
+  FONTS,
+  FONT_SIZES,
+  GOLD_GLOW,
+  RADIUS,
+  hexRgba,
+  FONT_WEIGHT,
+} from '../tokens/theme';
 
 interface ChipBaseProps {
   label: string;
@@ -72,7 +81,7 @@ export function Chip(props: ChipProps) {
         padding: chipPadding(isDismiss, iconOnly, isMobile),
         borderRadius: RADIUS.pill,
         fontSize: `${FONT_SIZES.base}px`,
-        fontWeight: 500,
+        fontWeight: FONT_WEIGHT.medium,
         cursor: 'pointer',
         fontFamily: FONTS.body,
         transition: `all 0.25s ${EASING.snappy}`,
@@ -104,7 +113,7 @@ export function Chip(props: ChipProps) {
           style={{
             fontSize: `${FONT_SIZES.base}px`,
             color: hovered ? COLORS.text : COLORS.textMuted,
-            fontWeight: 600,
+            fontWeight: FONT_WEIGHT.semibold,
             lineHeight: 1,
           }}>
           ×

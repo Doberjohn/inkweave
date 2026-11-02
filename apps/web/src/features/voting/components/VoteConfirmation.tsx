@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SPACING, TIER_COLORS, Z_INDEX, hexRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SPACING, TIER_COLORS, Z_INDEX, hexRgba, FONT_WEIGHT} from '../../../shared/constants';
 import {Sparkles} from 'inkweave-ui/components/Sparkles';
 import {useScrollLock} from '../../../shared/hooks';
 import type {Score} from '../../../shared/lib/supabase';
@@ -33,7 +33,7 @@ function ScoreCircle({score, size}: {score: number; size: number}) {
       <span
         style={{
           fontSize: size > 40 ? FONT_SIZES.xxl : FONT_SIZES.xl,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           color: tier.color,
           fontFamily: FONTS.body,
         }}>
@@ -118,7 +118,7 @@ export function VoteConfirmation({
           </div>
         </Sparkles>
 
-        <span style={{fontSize: FONT_SIZES.xxl, fontWeight: 700, color: COLORS.text, fontFamily: FONTS.body}}>
+        <span style={{fontSize: FONT_SIZES.xxl, fontWeight: FONT_WEIGHT.bold, color: COLORS.text, fontFamily: FONTS.body}}>
           Vote recorded!
         </span>
 
@@ -143,7 +143,7 @@ export function VoteConfirmation({
         {whoCarries && (
           <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
             <span style={{fontSize: FONT_SIZES.base, color: COLORS.textMuted, fontFamily: FONTS.body}}>Carries:</span>
-            <span style={{fontSize: FONT_SIZES.base, fontWeight: 600, color: COLORS.primary500, fontFamily: FONTS.body}}>
+            <span style={{fontSize: FONT_SIZES.base, fontWeight: FONT_WEIGHT.semibold, color: COLORS.primary500, fontFamily: FONTS.body}}>
               {carriesLabel}
             </span>
           </div>

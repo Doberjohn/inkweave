@@ -4,7 +4,7 @@ import type {LorcanaCard, Playstyle} from 'inkweave-synergy-engine';
 import {getAllPlaystyles} from '../features/synergies/engineCatalog';
 import {useAllPlaystyleCards, usePreloadPlaystyleFiles} from '../features/synergies/hooks';
 import {CardGridSkeleton} from '../features/cards';
-import {CompactHeader, CtaButton, ErrorBoundary, EtherealBackground, Seo} from '../shared/components';
+import {CompactHeader, ErrorBoundary, EtherealBackground, Seo} from '../shared/components';
 import {PlaystyleFanTile, PlaystyleSection} from '../features/playstyles';
 import {
   COLORS,
@@ -13,6 +13,8 @@ import {
   SPACING,
   PLAYSTYLE_UI,
   type PlaystyleUiMeta,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
 } from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
@@ -80,27 +82,6 @@ function fanCardsFor(
 
 // ── Page sub-components ──
 
-function PageErrorView({onRetry}: {onRetry: () => void}) {
-  return (
-    <main
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
-        gap: 16,
-        fontFamily: FONTS.body,
-        background: COLORS.background,
-      }}>
-      <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
-        Failed to load card data.
-      </p>
-      <CtaButton onClick={onRetry}>Retry</CtaButton>
-    </main>
-  );
-}
-
 function PageIntro({layout}: {layout: LayoutConfig}) {
   return (
     <div style={{padding: layout.pagePadding, textAlign: 'center'}}>
@@ -108,7 +89,7 @@ function PageIntro({layout}: {layout: LayoutConfig}) {
         style={{
           fontFamily: FONTS.body,
           fontSize: `${FONT_SIZES.xxxl}px`,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           color: COLORS.text,
           margin: '0 0 4px',
         }}>
@@ -118,7 +99,7 @@ function PageIntro({layout}: {layout: LayoutConfig}) {
         style={{
           fontSize: `${FONT_SIZES.lg}px`,
           color: COLORS.descriptionText,
-          lineHeight: 1.5,
+          lineHeight: LINE_HEIGHT.base,
           maxWidth: layout.maxSubtitleWidth,
           margin: '0 auto',
         }}>
@@ -191,7 +172,7 @@ function PlaystyleGalleryGrid({
 export function PlaystyleGalleryPage() {
   const navigate = useNavigate();
   const {openCardModal} = useCardModal();
-  const {cards, isLoading, error, retryLoad, getCardById} = useCardDataContext();
+  const {cards, isLoading, getCardById} = useCardDataContext();
   const [searchQuery, setSearchQuery] = useState('');
   const {isMobile} = useResponsive();
 
@@ -215,8 +196,6 @@ export function PlaystyleGalleryPage() {
     trackEvent('playstyle_opened', {playstyleId: id, playstyleName: name});
     navigate(`/playstyles/${id}`);
   };
-
-  if (error) return <PageErrorView onRetry={retryLoad} />;
 
   return (
     <main

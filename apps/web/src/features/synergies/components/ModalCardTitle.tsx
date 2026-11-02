@@ -10,6 +10,8 @@ import {
   TABULAR,
   VISUALLY_HIDDEN,
   type SetCode,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
 } from '../../../shared/constants';
 import {printedCardNumber, printedFullName, type Printing} from '../../../shared/hooks';
 import {pickModalTitleStyle} from './cardOverviewModalStyles';
@@ -32,8 +34,8 @@ interface ModalCardTitleProps {
 const NUMBER_TAG_STYLE: CSSProperties = {
   ...TABULAR,
   fontSize: FONT_SIZES.base,
-  fontWeight: 600,
-  lineHeight: 1.4,
+  fontWeight: FONT_WEIGHT.semibold,
+  lineHeight: LINE_HEIGHT.snug,
   color: COLORS.textMuted,
   background: COLORS.surfaceRaised,
   border: `1px solid ${COLORS.surfaceBorder}`,

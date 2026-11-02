@@ -1,4 +1,4 @@
-import {COLORS, FONTS, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
+import {COLORS, FONTS, RADIUS, SPACING, hexRgba, FONT_WEIGHT} from '../../../shared/constants';
 
 interface VoteAffirmationProps {
   /** Column accent — gold for engine, amethyst for community. */
@@ -50,13 +50,13 @@ export function VoteAffirmation({accentColor, title, detail}: VoteAffirmationPro
           alignItems: 'center',
           justifyContent: 'center',
           fontSize: 13,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           lineHeight: 1,
         }}>
         ✓
       </span>
       <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.xxs, minWidth: 0}}>
-        <span style={{fontSize: 12, fontWeight: 600, color: COLORS.text, lineHeight: 1.3}}>
+        <span style={{fontSize: 12, fontWeight: FONT_WEIGHT.semibold, color: COLORS.text, lineHeight: 1.3}}>
           {title}
         </span>
         {detail && (

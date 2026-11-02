@@ -2,7 +2,7 @@ import {useRef, type CSSProperties, type MouseEvent} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {smallImageUrl} from '../cards';
 import {useContainerWidth} from '../../shared/hooks';
-import {COLORS, FONTS, FONT_SIZES} from '../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, FONT_WEIGHT} from '../../shared/constants';
 import './playstyles.css';
 
 /** The inner width the fan geometry is authored for; the tile scales to fill its column. */
@@ -36,7 +36,7 @@ export interface PlaystyleFanTileProps {
 function NameRow({name, accentColor}: {name: string; accentColor: string}) {
   return (
     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6}}>
-      <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.xl}px`, fontWeight: 600, color: COLORS.text}}>{name}</span>
+      <span style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.xl}px`, fontWeight: FONT_WEIGHT.semibold, color: COLORS.text}}>{name}</span>
       <span className="playstyle-name-underline" style={{background: accentColor}} />
     </div>
   );

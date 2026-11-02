@@ -1,6 +1,6 @@
 import {Suspense, useState} from 'react';
 import {NavLink, useLocation} from 'react-router-dom';
-import {COLORS, FONTS, LAYOUT, REVEAL_SET_NUMBER} from '../constants';
+import {COLORS, FONTS, LAYOUT, REVEAL_SET_NUMBER, FONT_WEIGHT} from '../constants';
 import {useRevealPhase, type RevealPhase} from '../../features/reveals';
 import {useSession} from '../contexts/SessionContext';
 import {lazyWithRetry} from '../lib/lazyWithRetry';
@@ -425,7 +425,7 @@ function ActiveLabelStrip({label, visible}: ActiveLabelStripProps) {
         bottom: 13,
         textAlign: 'center',
         fontSize: 13,
-        fontWeight: 500,
+        fontWeight: FONT_WEIGHT.medium,
         color: COLORS.text,
         fontFamily: FONTS.body,
         opacity: visible ? 1 : 0,

@@ -23,7 +23,7 @@ import {FINISH_WORD, printingName, promoCode} from 'inkweave-ui/lib/printings';
 import {usePrefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
 import {preloadArt} from './preloadArt';
 import {CardImageButton, CardLightbox} from '../../shared/components';
-import {COLORS, FONT_SIZES, SPACING} from '../../shared/constants';
+import {COLORS, FONT_SIZES, SPACING, FONT_WEIGHT} from '../../shared/constants';
 import {trackEvent} from '../../shared/lib/analytics';
 
 /**
@@ -327,7 +327,7 @@ const OPEN_STYLE: CSSProperties = {
 };
 
 /** An open pocket's code, and a twin's finish after it. */
-const CODE_STYLE: CSSProperties = {fontSize: `${FONT_SIZES.xl}px`, fontWeight: 700};
+const CODE_STYLE: CSSProperties = {fontSize: `${FONT_SIZES.xl}px`, fontWeight: FONT_WEIGHT.bold};
 
 /**
  * Why an open pocket is empty: its promo's card is not out yet, its set never released it or
@@ -351,7 +351,7 @@ function OpenPocketText({pocket}: {pocket: OpenPocket}) {
       {/* A twin's finish goes on lines of its own: on the code's, "28/C3 non-foil" ran past the pocket's
           sides. Its leading space renders nothing there and keeps the text "28/C3 non-foil". */}
       {pocket.finish && <span style={CODE_STYLE}>{` ${FINISH_WORD[pocket.finish]}`}</span>}
-      {pocket.fullName && <span style={{fontSize: `${FONT_SIZES.xs}px`, fontWeight: 700}}>{pocket.fullName}</span>}
+      {pocket.fullName && <span style={{fontSize: `${FONT_SIZES.xs}px`, fontWeight: FONT_WEIGHT.bold}}>{pocket.fullName}</span>}
       <span style={{fontSize: `${FONT_SIZES.xs}px`, lineHeight: 1.3}}>{openReason(pocket)}</span>
     </div>
   );

@@ -1,5 +1,5 @@
 import {useRef} from 'react';
-import {COLORS, FONTS, FONT_SIZES, SPACING} from '../tokens/theme';
+import {COLORS, FONTS, FONT_SIZES, SPACING, FONT_WEIGHT} from '../tokens/theme';
 
 interface TabListProps<T extends string> {
   tabs: ReadonlyArray<{id: T; label: string}>;
@@ -55,7 +55,7 @@ export function TabList<T extends string>({tabs, active, onChange, ariaLabel}: T
               color: isActive ? COLORS.text : COLORS.textMuted,
               fontFamily: FONTS.body,
               fontSize: `${FONT_SIZES.lg}px`,
-              fontWeight: isActive ? 700 : 500,
+              fontWeight: isActive ? FONT_WEIGHT.bold : FONT_WEIGHT.medium,
               padding: `${SPACING.sm}px ${SPACING.md}px`,
               cursor: 'pointer',
               marginBottom: -1,

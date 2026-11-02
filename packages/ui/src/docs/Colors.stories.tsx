@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
-import {COLORS, FONTS, FONT_SIZES, NEUTRAL_LADDER, RADIUS, TIER_COLORS, blackRgba} from '../tokens/theme';
+import {COLORS, FONTS, FONT_SIZES, NEUTRAL_LADDER, RADIUS, TIER_COLORS, blackRgba, FONT_WEIGHT} from '../tokens/theme';
 import {INK_CHIP_COLORS, INK_COLORS, ALL_INKS} from '../tokens/lorcana';
 
 // ── Swatch component ─────────────────────────────────────────────────
@@ -43,7 +43,7 @@ function ColorSwatch({name, value, large, ground}: {name: string; value: string;
           style={{
             color: '#e8e8e8',
             fontSize: FONT_SIZES.base,
-            fontWeight: 500,
+            fontWeight: FONT_WEIGHT.medium,
             fontFamily: FONTS.body,
             marginBottom: 2,
           }}>
@@ -79,7 +79,7 @@ function ColorGroup({
       <h2
         style={{
           fontSize: FONT_SIZES.xl,
-          fontWeight: 600,
+          fontWeight: FONT_WEIGHT.semibold,
           color: '#e8e8e8',
           fontFamily: FONTS.body,
           margin: '0 0 16px',
@@ -202,7 +202,7 @@ function InkChipSwatches() {
       <h2
         style={{
           fontSize: FONT_SIZES.xl,
-          fontWeight: 600,
+          fontWeight: FONT_WEIGHT.semibold,
           color: COLORS.text,
           fontFamily: FONTS.body,
           margin: '0 0 16px',
@@ -222,7 +222,7 @@ function InkChipSwatches() {
                   color: chip.text,
                   border: `1px solid ${blackRgba(1)}`,
                   fontFamily: FONTS.body,
-                  fontWeight: 700,
+                  fontWeight: FONT_WEIGHT.bold,
                   fontSize: FONT_SIZES.sm,
                   lineHeight: 1,
                   padding: '4px 6px',
@@ -249,7 +249,7 @@ function ColorPalette() {
       <h1
         style={{
           fontSize: FONT_SIZES.xxl,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           color: '#d4af37',
           fontFamily: FONTS.body,
           margin: '0 0 8px',
@@ -277,7 +277,7 @@ function ColorPalette() {
         <h2
           style={{
             fontSize: FONT_SIZES.xl,
-            fontWeight: 600,
+            fontWeight: FONT_WEIGHT.semibold,
             color: '#e8e8e8',
             fontFamily: FONTS.body,
             margin: '0 0 16px',
@@ -305,7 +305,7 @@ function ColorPalette() {
                 style={{
                   color: ink.text,
                   fontSize: FONT_SIZES.lg,
-                  fontWeight: 600,
+                  fontWeight: FONT_WEIGHT.semibold,
                   fontFamily: FONTS.body,
                   marginBottom: 8,
                 }}>

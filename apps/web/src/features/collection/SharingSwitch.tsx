@@ -1,7 +1,7 @@
 import {useId} from 'react';
 import {Switch} from 'inkweave-ui/components/Switch';
 import {LinkButton} from '../../shared/components';
-import {COLORS, FONT_SIZES, SPACING} from '../../shared/constants';
+import {COLORS, FONT_SIZES, SPACING, FONT_WEIGHT} from '../../shared/constants';
 import type {CollectionSharing} from './useCollectionSharing';
 
 const LINE: React.CSSProperties = {
@@ -31,7 +31,7 @@ export function SharingSwitch({sharing}: {sharing: CollectionSharing}) {
         <label
           id={`${id}-title`}
           htmlFor={id}
-          style={{color: COLORS.text, fontSize: `${FONT_SIZES.lg}px`, fontWeight: 600, cursor: 'pointer'}}>
+          style={{color: COLORS.text, fontSize: `${FONT_SIZES.lg}px`, fontWeight: FONT_WEIGHT.semibold, cursor: 'pointer'}}>
           Let my friends see my collection
         </label>
       </div>

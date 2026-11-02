@@ -36,6 +36,8 @@ import {
   SPACING,
   PLAYSTYLE_UI,
   accentRgba,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
 } from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected, type CardSelectSource} from '../features/cards/lib/cardAnalytics';
@@ -156,7 +158,7 @@ function PlaystyleHero({
             Playstyles
           </a>
           <span aria-hidden="true" style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim}}>/</span>
-          <span style={{color: COLORS.text, fontWeight: 500}}>{name}</span>
+          <span style={{color: COLORS.text, fontWeight: FONT_WEIGHT.medium}}>{name}</span>
         </nav>
 
         {/* Header: accent dot + name */}
@@ -173,7 +175,7 @@ function PlaystyleHero({
           <h1
             style={{
               fontSize: `${FONT_SIZES.xxl}px`,
-              fontWeight: 700,
+              fontWeight: FONT_WEIGHT.bold,
               letterSpacing: LETTER_SPACING.eyebrow,
               textTransform: 'uppercase',
               margin: 0,
@@ -189,7 +191,7 @@ function PlaystyleHero({
               fontSize: `${FONT_SIZES.base}px`,
               color: COLORS.textMuted,
               maxWidth: 640,
-              lineHeight: 1.5,
+              lineHeight: LINE_HEIGHT.base,
             }}>
             {tagline}
           </p>
@@ -427,8 +429,7 @@ export function PlaystyleDetailPage() {
   const navigate = useNavigate();
   const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();
-  const {isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, uniqueRarities, sets, getCardById} =
-    useCardDataContext();
+  const {isLoading, uniqueKeywords, uniqueClassifications, uniqueRarities, sets, getCardById} = useCardDataContext();
   const {
     searchQuery,
     setSearchQuery,
@@ -453,7 +454,7 @@ export function PlaystyleDetailPage() {
   const toggleRole = (role: string) => setActiveRoles((prev) => toggleSetMember(prev, role));
 
   const {playstyle, ui} = useResolvedPlaystyle(playstyleId);
-  const playstyleLoad = usePlaystyleDetailLoad(playstyle?.id, {isLoading, error, retry: retryLoad});
+  const playstyleLoad = usePlaystyleDetailLoad(playstyle?.id, {isLoading});
   const {cards: playstyleCards, mechanicIds, pageLoad, tileRow, guide} = playstyleLoad;
 
   const combinedFilters = buildCombinedFilters(filters, inkFilters, typeFilters, costFilters);
@@ -476,7 +477,8 @@ export function PlaystyleDetailPage() {
   // An unknown id: the gallery. Ids resolve with no data, so this needs no wait.
   if (!playstyle || !ui) return <Navigate to="/playstyles" replace />;
 
-  // A list that failed shows the error once neither list is still loading.
+  // The playstyle's list that failed shows the error once nothing else is still loading. A card
+  // list that failed never gets here: AppLayout shows its own screen in place of every page.
   if (!pageLoad.isLoading && pageLoad.retry) return <PlaystyleDetailError onRetry={pageLoad.retry} />;
 
   const heroLayout = getHeroLayout(isMobile);
@@ -567,16 +569,17 @@ interface PageLoad {
 
 /**
  * The card data, the playstyles' lists and the guides' first load as one load: loading while
- * any is, and the retry for whichever list failed, the card data first, or null when both
- * loaded. The guides never fail the page: a failure leaves only the guide out, and a list that
- * failed shows the error without waiting for them (#995).
+ * any is, and the retry for the playstyles' lists when they failed, or null. Only their failure
+ * reaches the page: a card list that failed is AppLayout's screen, in place of every page. The
+ * guides never fail the page: a failure leaves only the guide out, and a list that failed shows
+ * the error without waiting for them (#995).
  */
 function combineLoads(
-  cardData: PageLoad,
+  cardData: Pick<PageLoad, 'isLoading'>,
   playstyleCards: PageLoad,
   guides: GuidesStatus,
 ): {isLoading: boolean; retry: (() => void) | null} {
-  const failed = [cardData, playstyleCards].find((load) => load.error);
+  const failed = playstyleCards.error ? playstyleCards : undefined;
   const guidesHold = guides === 'loading' && !failed;
   const isLoading = cardData.isLoading || playstyleCards.isLoading || guidesHold;
   return {isLoading, retry: failed?.retry ?? null};
@@ -598,11 +601,11 @@ function tileRowStatus(pageLoading: boolean, mechanics: MechanicsStatus): RoleTi
 }
 
 /**
- * The playstyle's cards, mechanic ids and guide, the page's load over them and the card data,
- * and the tiles' own state, which fails without failing the page (#930). The guide is there
- * once the page has loaded, and missing when the guides failed (#995).
+ * The playstyle's cards, mechanic ids and guide, the page's load over them and the card data's
+ * loading, and the tiles' own state, which fails without failing the page (#930). The guide is
+ * there once the page has loaded, and missing when the guides failed (#995).
  */
-function usePlaystyleDetailLoad(playstyleId: PlaystyleId | undefined, cardData: PageLoad) {
+function usePlaystyleDetailLoad(playstyleId: PlaystyleId | undefined, cardData: Pick<PageLoad, 'isLoading'>) {
   const {cards, mechanicIds, mechanicsStatus, retryMechanics, ...playstyleCardsLoad} =
     usePrecomputedPlaystyleCards(playstyleId);
   const guides = usePlaystyleGuides(playstyleId);

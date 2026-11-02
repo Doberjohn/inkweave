@@ -13,13 +13,12 @@ export interface RevealTier {
 export interface UseRevealCardsReturn {
   tiers: RevealTier[];
   loading: boolean;
-  error: Error | null;
 }
 
 const RETURNING_LABEL = `Returning franchises in ${SET_NAMES[REVEAL_SET_CODE]}`;
 
 export function useRevealCards(): UseRevealCardsReturn {
-  const {cards, isLoading, error} = useCardDataContext();
+  const {cards, isLoading} = useCardDataContext();
 
   const revealCards = cards.filter((c) => c.setCode === REVEAL_SET_CODE);
   const newIpMatches = new Set(FRANCHISES.map((f) => f.match));
@@ -41,5 +40,5 @@ export function useRevealCards(): UseRevealCardsReturn {
     {id: 'returning', label: RETURNING_LABEL, cards: returningCards},
   ];
 
-  return {tiers, loading: isLoading, error};
+  return {tiers, loading: isLoading};
 }

@@ -1,6 +1,6 @@
 import type {ReactNode} from 'react';
 import {useLocation} from 'react-router-dom';
-import {COLORS, FONTS, FONT_SIZES, SPACING} from '../constants';
+import {COLORS, FONTS, FONT_SIZES, SPACING, FONT_WEIGHT} from '../constants';
 import {useResponsive} from '../hooks';
 import {CompactHeader} from './CompactHeader';
 import {Footer} from './Footer';
@@ -24,7 +24,7 @@ const CONTENT_MAX_WIDTH = 720;
 export const legalH2Style: React.CSSProperties = {
   fontFamily: FONTS.body,
   fontSize: `${FONT_SIZES.xl}px`,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   color: COLORS.text,
   margin: `${SPACING.xl}px 0 ${SPACING.sm}px`,
 };
@@ -84,7 +84,7 @@ export function LegalPage({title, description, children}: LegalPageProps) {
             margin: `0 0 ${SPACING.xl}px`,
             fontFamily: FONTS.body,
             fontSize: `${FONT_SIZES.xxl}px`,
-            fontWeight: 700,
+            fontWeight: FONT_WEIGHT.bold,
             color: COLORS.text,
           }}>
           {title}

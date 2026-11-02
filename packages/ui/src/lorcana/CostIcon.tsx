@@ -1,3 +1,5 @@
+import {FONT_WEIGHT} from '../tokens/theme';
+
 interface CostIconProps {
   cost: number;
   size?: number;
@@ -80,7 +82,7 @@ export function CostIcon({cost, size = 32, inkwell = 'inkable'}: CostIconProps) 
           transform: 'translate(-50%, -50%)',
           color: '#fff',
           fontSize,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           lineHeight: 1,
           pointerEvents: 'none',
           userSelect: 'none',

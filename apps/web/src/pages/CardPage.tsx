@@ -13,7 +13,7 @@ import {
 import {SynergyResults, SynergyResultsLoading} from '../features/synergies/components/SynergyResults';
 import {CompactHeader, Footer, Seo} from '../shared/components';
 import {useBackOrNavigate, useResponsive} from '../shared/hooks';
-import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING, FONT_WEIGHT} from '../shared/constants';
 import {cardNameHint} from './cardNameHint';
 
 /**
@@ -96,7 +96,7 @@ function CenteredMessage({title, body}: {title: string; body: string}) {
         padding: `${SPACING.xl}px`,
         textAlign: 'center',
       }}>
-      <h1 style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: `${FONT_SIZES.xxl}px`, color: COLORS.text, margin: 0}}>
+      <h1 style={{fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.regular, fontSize: `${FONT_SIZES.xxl}px`, color: COLORS.text, margin: 0}}>
         {title}
       </h1>
       <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.base}px`, margin: 0}}>{body}</p>

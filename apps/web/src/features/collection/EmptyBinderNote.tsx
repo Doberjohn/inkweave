@@ -1,7 +1,7 @@
 import {useFinePointer} from 'inkweave-ui/hooks/useFinePointer';
 import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 import {CtaButton} from '../../shared/components';
-import {COLORS, DIALOG_BODY, DIALOG_TITLE, FONT_SIZES, RADIUS, SPACING, SURFACE_CARD} from '../../shared/constants';
+import {COLORS, DIALOG_BODY, DIALOG_TITLE, FONT_SIZES, RADIUS, SPACING, SURFACE_CARD, FONT_WEIGHT} from '../../shared/constants';
 
 /** The note's widest on a spread's cover, which it sits in the middle of; a phone's page is narrower. */
 const NOTE_MAX_WIDTH = 320;
@@ -39,7 +39,7 @@ export function EmptyBinderNote({onImport}: {onImport: () => void}) {
           textAlign: 'center',
         }}>
         <h2 style={{...DIALOG_TITLE, fontSize: FONT_SIZES.xl}}>Your binder is empty</h2>
-        <p style={{...DIALOG_BODY, fontWeight: 400, marginTop: SPACING.sm}}>
+        <p style={{...DIALOG_BODY, fontWeight: FONT_WEIGHT.regular, marginTop: SPACING.sm}}>
           {pointing ? 'Point at a card and press + to add a copy.' : 'Tap a card, then + to add a copy.'} Your binder
           saves to your account as you go.
         </p>

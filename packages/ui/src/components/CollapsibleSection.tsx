@@ -1,5 +1,5 @@
 import type {ReactNode} from 'react';
-import {CAP_LABEL, COLORS, FONT_SIZES, RADIUS, SPACING} from '../tokens/theme';
+import {CAP_LABEL, COLORS, FONT_SIZES, RADIUS, SPACING, FONT_WEIGHT} from '../tokens/theme';
 
 interface CollapsibleSectionProps {
   title: string;
@@ -47,7 +47,7 @@ export function CollapsibleSection({
           style={{
             ...CAP_LABEL,
             fontSize: `${FONT_SIZES.base}px`,
-            fontWeight: 600,
+            fontWeight: FONT_WEIGHT.semibold,
             display: 'flex',
             alignItems: 'center',
             gap: `${SPACING.sm}px`,

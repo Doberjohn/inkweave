@@ -1,6 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
 import {CtaButton, DialogShell} from '../../shared/components';
-import {COLORS, DIALOG_BODY, DIALOG_TITLE, FONTS, FONT_SIZES, SPACING, VISUALLY_HIDDEN} from '../../shared/constants';
+import {COLORS, DIALOG_BODY, DIALOG_TITLE, FONTS, FONT_SIZES, SPACING, VISUALLY_HIDDEN, FONT_WEIGHT} from '../../shared/constants';
 import {trackEvent} from '../../shared/lib/analytics';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {parseCollectionCsv, type CollectionEntries, type CollectionSummary} from './collectionParser';
@@ -87,7 +87,7 @@ function listed(refs: readonly string[]): string {
 }
 
 /** A receipt line below the headline: what was left out, and why. */
-const NOTE_STYLE: React.CSSProperties = {...DIALOG_BODY, fontWeight: 400, marginTop: SPACING.sm};
+const NOTE_STYLE: React.CSSProperties = {...DIALOG_BODY, fontWeight: FONT_WEIGHT.regular, marginTop: SPACING.sm};
 
 /**
  * The receipt, ALWAYS shown on success. The imported cards land in a mode the
@@ -154,7 +154,7 @@ function ChooseStep({
   const inputRef = useRef<HTMLInputElement>(null);
   return (
     <>
-      <p style={{...DIALOG_BODY, fontWeight: 400, marginTop: SPACING.xs}}>
+      <p style={{...DIALOG_BODY, fontWeight: FONT_WEIGHT.regular, marginTop: SPACING.xs}}>
         Export your collection from Dreamborn as CSV, then choose the file here.
         {replacing &&
           ' Importing replaces whatever collection Inkweave already has, counts you changed in the app included.'}
@@ -215,7 +215,7 @@ function ImportError({error, poolError}: {error: string | null; poolError: strin
       role="alert"
       style={{
         ...DIALOG_BODY,
-        fontWeight: 400,
+        fontWeight: FONT_WEIGHT.regular,
         color: COLORS.error,
         fontSize: `${FONT_SIZES.sm}px`,
         marginTop: SPACING.sm,

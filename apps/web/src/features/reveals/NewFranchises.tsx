@@ -1,6 +1,6 @@
 import './reveals.css';
 import {FRANCHISES, type FranchiseConfig} from './franchise';
-import {INK_COLORS, FONTS} from '../../shared/constants';
+import {INK_COLORS, FONTS, FONT_WEIGHT} from '../../shared/constants';
 import {inkRgba} from './inkTint';
 
 interface NewFranchisesProps {
@@ -59,7 +59,7 @@ function FranchiseCard({franchise, onSelect, compact}: {franchise: FranchiseConf
         <span
           style={{
             display: 'inline-block',
-            fontWeight: 600,
+            fontWeight: FONT_WEIGHT.semibold,
             fontSize: 10,
             letterSpacing: 1.4,
             textTransform: 'uppercase',
@@ -72,10 +72,10 @@ function FranchiseCard({franchise, onSelect, compact}: {franchise: FranchiseConf
         >
           New this set
         </span>
-        <div style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: compact ? 22 : 26, color: '#f0f0f5', margin: '13px 0 0'}}>
+        <div style={{fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.regular, fontSize: compact ? 22 : 26, color: '#f0f0f5', margin: '13px 0 0'}}>
           {franchise.label}
         </div>
-        <p style={{fontWeight: 400, fontSize: compact ? 12 : 13, lineHeight: 1.55, color: '#c8c8d8', margin: '8px 0 0'}}>
+        <p style={{fontWeight: FONT_WEIGHT.regular, fontSize: compact ? 12 : 13, lineHeight: 1.55, color: '#c8c8d8', margin: '8px 0 0'}}>
           {franchise.blurb}
         </p>
       </div>
@@ -91,10 +91,10 @@ export function NewFranchises({onSelect, compact = false}: NewFranchisesProps) {
   return (
     <section>
       <div style={{textAlign: 'center', marginBottom: compact ? 18 : 26}}>
-        <div style={{fontWeight: 600, fontSize: compact ? 10 : 12, letterSpacing: compact ? 2.2 : 2.8, textTransform: 'uppercase', color: '#d4af37'}}>
+        <div style={{fontWeight: FONT_WEIGHT.semibold, fontSize: compact ? 10 : 12, letterSpacing: compact ? 2.2 : 2.8, textTransform: 'uppercase', color: '#d4af37'}}>
           New to the Inkverse
         </div>
-        <h2 style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: compact ? 23 : 32, color: '#ececf2', margin: '10px 0 0'}}>
+        <h2 style={{fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.regular, fontSize: compact ? 23 : 32, color: '#ececf2', margin: '10px 0 0'}}>
           {FRANCHISES.length === 1 ? 'A new franchise' : `${FRANCHISES.length} new franchises`}
         </h2>
       </div>

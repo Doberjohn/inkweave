@@ -7,7 +7,8 @@
  * 2026-07-28 build stayed live until 2026-09-23 while every deploy failed, and nothing said so.
  *
  * Runs first in `build:vercel`. vercel.json serves the file with `Cache-Control: no-store`,
- * and the service worker never touches it (its precache only takes js/css/html/woff2).
+ * and the service worker never touches it: its precache takes the app's own files and the card
+ * data (vite.config.ts's globPatterns), never version.json.
  *
  * It never fails the build. A stamp is not worth a blocked deploy: with no usable sha it
  * writes nothing, and the drift check then reports production's missing stamp instead.

@@ -12,6 +12,8 @@ import {
   Z_INDEX,
   blackRgba,
   hexRgba,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
 } from '../../../shared/constants';
 import {CtaButton} from '../../../shared/components';
 import {useContainerWidth, useTooltip} from '../../../shared/hooks';
@@ -403,7 +405,7 @@ function RoleTileTooltip({tileRef, text, tooltipProps}: RoleTileTooltipProps) {
         borderRadius: RADIUS.lg,
         padding: '8px 12px',
         fontSize: `${FONT_SIZES.md}px`,
-        lineHeight: 1.4,
+        lineHeight: LINE_HEIGHT.snug,
         color: COLORS.descriptionText,
         fontFamily: FONTS.body,
         textAlign: 'center',
@@ -476,7 +478,7 @@ function RoleTileButton({
             top: 8,
             right: 10,
             fontSize: `${FONT_SIZES.md}px`,
-            fontWeight: 700,
+            fontWeight: FONT_WEIGHT.bold,
             fontVariantNumeric: 'tabular-nums',
             // Gold tint (softer than the active accent, so it reads as a count, not a selection).
             color: COLORS.primary500,
@@ -487,8 +489,8 @@ function RoleTileButton({
           aria-hidden="true"
           style={{
             fontSize: `${FONT_SIZES.xl}px`,
-            fontWeight: 600,
-            lineHeight: 1.2,
+            fontWeight: FONT_WEIGHT.semibold,
+            lineHeight: LINE_HEIGHT.tight,
             color: accent ?? COLORS.text,
             textWrap: 'balance',
           }}>
@@ -557,7 +559,7 @@ function ShowMoreTile({hiddenCount, minHeight, onClick}: {hiddenCount: number; m
         aria-hidden="true"
         style={{
           fontSize: `${FONT_SIZES.xl}px`,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           color: COLORS.primary,
         }}>
         +{hiddenCount}
@@ -566,7 +568,7 @@ function ShowMoreTile({hiddenCount, minHeight, onClick}: {hiddenCount: number; m
         aria-hidden="true"
         style={{
           fontSize: `${FONT_SIZES.md}px`,
-          fontWeight: 500,
+          fontWeight: FONT_WEIGHT.medium,
           color: hovered ? COLORS.primary : COLORS.textMuted,
           transition: `color 0.15s ${EASING.snappy}`,
         }}>

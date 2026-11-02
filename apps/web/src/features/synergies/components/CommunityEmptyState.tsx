@@ -1,5 +1,5 @@
 import type {ReactNode} from 'react';
-import {COLORS, DURATION, EASING, FONT_SIZES, FONTS, INK_COLORS, RADIUS, SPACING, hexRgba, whiteRgba} from '../../../shared/constants';
+import {COLORS, DURATION, EASING, FONT_SIZES, FONTS, INK_COLORS, RADIUS, SPACING, hexRgba, whiteRgba, FONT_WEIGHT, LETTER_SPACING, LINE_HEIGHT} from '../../../shared/constants';
 import {CtaButton} from 'inkweave-ui/components/CtaButton';
 import {VoteAffirmation} from '../../voting/components';
 
@@ -87,8 +87,8 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
         style={{
           margin: 0,
           fontSize: `${FONT_SIZES.base}px`,
-          fontWeight: 700,
-          letterSpacing: '0.02em',
+          fontWeight: FONT_WEIGHT.bold,
+          letterSpacing: LETTER_SPACING.slight,
           color: COLORS.text,
         }}>
         {title}
@@ -97,7 +97,7 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
         style={{
           margin: 0,
           fontSize: FONT_SIZES.md,
-          lineHeight: 1.5,
+          lineHeight: LINE_HEIGHT.base,
           color: COLORS.descriptionText,
         }}>
         {renderDesc(remaining)}
@@ -126,7 +126,7 @@ export function CommunityEmptyState({variant, current, threshold = 1, onCta, use
           style={{
             fontSize: FONT_SIZES.sm,
             color: COLORS.textMuted,
-            fontWeight: 600,
+            fontWeight: FONT_WEIGHT.semibold,
             letterSpacing: '0.04em',
             minWidth: 28,
             textAlign: 'right',

@@ -10,6 +10,7 @@ import {
   TOUCH_TARGET,
   hexRgba,
   whiteRgba,
+  FONT_WEIGHT,
 } from '../../../shared/constants';
 
 /** A question group's tab: its key, its name and its colour. */
@@ -63,7 +64,7 @@ function getTabStyle(input: TabStyleInput): React.CSSProperties {
     background: getTabBackground(input),
     color: getTabColor(input),
     fontSize: FONT_SIZES.base,
-    fontWeight: input.isActive ? 700 : 500,
+    fontWeight: input.isActive ? FONT_WEIGHT.bold : FONT_WEIGHT.medium,
     fontFamily: FONTS.body,
     cursor: 'pointer',
     padding: `${SPACING.sm}px ${SPACING.xs}px`,

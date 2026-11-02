@@ -1,5 +1,13 @@
 import {useState} from 'react';
-import {COLORS, DISABLED_STYLE, EASING, RADIUS, FONT_SIZES, SPACING} from '../tokens/theme';
+import {
+  COLORS,
+  DISABLED_STYLE,
+  EASING,
+  RADIUS,
+  FONT_SIZES,
+  SPACING,
+  FONT_WEIGHT,
+} from '../tokens/theme';
 
 type FilterButtonSize = 'sm' | 'md';
 
@@ -86,7 +94,7 @@ export function FilterButton({
         border: hoverStyles.border,
         background: hoverStyles.background,
         color: active ? COLORS.white : inactiveTextColor,
-        fontWeight: 500,
+        fontWeight: FONT_WEIGHT.medium,
         cursor: 'pointer',
         boxShadow: hoverStyles.boxShadow,
         transition: `box-shadow 0.2s ${EASING.snappy}, background 0.2s ${EASING.snappy}, border-color 0.2s ${EASING.snappy}`,

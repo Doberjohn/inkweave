@@ -10,6 +10,7 @@ import {
   INSET_FOCUS_RING,
   TABULAR,
   hexRgba,
+  FONT_WEIGHT,
 } from '../tokens/theme';
 import {useContainerWidth} from '../hooks/useContainerWidth';
 import {useHover} from '../hooks/useHover';
@@ -148,7 +149,7 @@ const COUNT_STYLE: CSSProperties = {
   color: COLORS.text,
   fontFamily: FONTS.body,
   fontSize: `${FONT_SIZES.xl}px`,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   lineHeight: 1,
 };
 

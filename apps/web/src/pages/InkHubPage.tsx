@@ -7,7 +7,7 @@ import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive} from '../shared/hooks';
 import {sortBySetThenNumber} from '../features/cards';
-import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, SPACING, FONT_WEIGHT, LINE_HEIGHT} from '../shared/constants';
 import {NotFoundPage} from './NotFoundPage';
 
 /**
@@ -129,7 +129,7 @@ function InkHubHeader({
           Inks
         </a>
         <span aria-hidden="true" style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim}}>/</span>
-        <span style={{color: COLORS.text, fontWeight: 500}}>{ink}</span>
+        <span style={{color: COLORS.text, fontWeight: FONT_WEIGHT.medium}}>{ink}</span>
       </nav>
 
       {/* No accent dot here, unlike PlaystyleDetailPage: the ink tokens for Steel and
@@ -138,7 +138,7 @@ function InkHubHeader({
       <h1
         style={{
           fontSize: `${FONT_SIZES.xxl}px`,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           color: COLORS.text,
           margin: 0,
         }}>
@@ -153,7 +153,7 @@ function InkHubHeader({
           marginBottom: `${SPACING.xl}px`,
           maxWidth: 720,
           fontSize: `${FONT_SIZES.lg}px`,
-          lineHeight: 1.6,
+          lineHeight: LINE_HEIGHT.relaxed,
           color: COLORS.textMuted,
         }}>
         {blurb}

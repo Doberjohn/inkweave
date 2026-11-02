@@ -1,4 +1,4 @@
-import {COLORS, FONT_SIZES, NEUTRAL_LADDER, RADIUS, SPACING} from '../tokens/theme';
+import {COLORS, FONT_SIZES, NEUTRAL_LADDER, RADIUS, SPACING, LINE_HEIGHT} from '../tokens/theme';
 
 // Fills go in as backgroundColor: a `background` shorthand would reset the clip. Only the info
 // fill is translucent, so only it is clipped to the padding box; errorBg is opaque.
@@ -39,7 +39,7 @@ export function Notice({tone = 'info', children}: NoticeProps) {
         borderRadius: RADIUS.card,
         padding: `${SPACING.section}px ${SPACING.lg}px`,
         fontSize: FONT_SIZES.base,
-        lineHeight: 1.5,
+        lineHeight: LINE_HEIGHT.base,
         // An error can name an API path with no break opportunity, which would push a narrow
         // column sideways.
         overflowWrap: 'anywhere',

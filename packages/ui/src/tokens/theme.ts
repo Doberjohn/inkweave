@@ -130,6 +130,22 @@ export const FONT_SIZES = {
   displayLg: 52,
 } as const;
 
+/**
+ * Font weights: the four faces the body sans ships a woff2 for (index.css), not a taste scale.
+ * font-synthesis is none, so any other weight renders as the nearest face; the hero serif
+ * (FONTS.hero) ships `regular` alone. inkweave/no-unloaded-font-weight holds both to what loads,
+ * and inkweave/no-raw-font-weight to these names.
+ */
+export const FONT_WEIGHT = {regular: 400, medium: 500, semibold: 600, bold: 700} as const;
+
+/**
+ * Line heights (owner ruling 2026-11-02, #544): `base` is the body's (index.css), `snug` and
+ * `tight` for labels and headings, `relaxed` for reading text, and `none` for the kill-the-leading
+ * idiom on display numerals and icon wrappers, which may also stay a raw 1 (or 0). Other ratios
+ * converge to the nearest step when their line is next touched (known-offenders.js).
+ */
+export const LINE_HEIGHT = {none: 1, tight: 1.2, snug: 1.4, base: 1.5, relaxed: 1.6} as const;
+
 // Dark fantasy color palette
 export const COLORS = {
   // Dark backgrounds
@@ -334,8 +350,13 @@ export const TIER_COLORS = {
 // composition never fights flex/grid parents. Spread them, then override.
 // ---------------------------------------------------------------------------
 
-/** Letter-spacing scale: `cap` for uppercase section labels, `eyebrow` for hero kickers. */
-export const LETTER_SPACING = {cap: '0.05em', eyebrow: '0.08em'} as const;
+/**
+ * Letter spacing, in em so tracking follows the font size (owner ruling 2026-11-02, #544):
+ * `slight` for small headings and labels, `cap` for uppercase section labels, `eyebrow` for hero
+ * kickers, `wide` for the most open caps. Other values, px ones included, converge to the nearest
+ * step when their line is next touched (known-offenders.js).
+ */
+export const LETTER_SPACING = {slight: '0.02em', cap: '0.05em', eyebrow: '0.08em', wide: '0.1em'} as const;
 
 /**
  * Dialog copy, so weight is decided ONCE rather than per overlay (owner ruling
@@ -347,7 +368,7 @@ export const DIALOG_TITLE: React.CSSProperties = {
   fontFamily: FONTS.hero,
   fontSize: FONT_SIZES.xxl,
   // The hero serif's one weight, said out loud: an <h2> asks for bold, which it has no face for.
-  fontWeight: 400,
+  fontWeight: FONT_WEIGHT.regular,
   color: COLORS.text,
   margin: 0,
 };
@@ -355,7 +376,7 @@ export const DIALOG_TITLE: React.CSSProperties = {
 export const DIALOG_BODY: React.CSSProperties = {
   fontFamily: FONTS.body,
   fontSize: FONT_SIZES.base,
-  fontWeight: 600,
+  fontWeight: FONT_WEIGHT.semibold,
   color: COLORS.textMuted,
   margin: 0,
 };
@@ -363,7 +384,7 @@ export const DIALOG_BODY: React.CSSProperties = {
 /** Uppercase section label (the 51-site idiom): md size, bold, tracked, muted. */
 export const CAP_LABEL: React.CSSProperties = {
   fontSize: FONT_SIZES.md,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   letterSpacing: LETTER_SPACING.cap,
   textTransform: 'uppercase',
   color: COLORS.textMuted,

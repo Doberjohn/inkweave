@@ -1,5 +1,5 @@
 import {Chip} from 'inkweave-ui/components/Chip';
-import {COLORS, ICON_SIZE, SPACING, TABULAR, VISUALLY_HIDDEN, hexRgba} from '../../shared/constants';
+import {COLORS, ICON_SIZE, SPACING, TABULAR, VISUALLY_HIDDEN, hexRgba, FONT_WEIGHT} from '../../shared/constants';
 import {RARITIES, type RarityConfig} from 'inkweave-ui/lib/rarity';
 import {RaritySymbol} from 'inkweave-ui/lorcana/RaritySymbol';
 
@@ -53,7 +53,7 @@ export function RarityBreakdown({
             <RaritySymbol rarity={rarity.key} size={ICON_SIZE.sm} />
             {/* Read by screen readers, not shown: a phone chip is its symbol and count alone. */}
             <span style={compact ? VISUALLY_HIDDEN : undefined}>{rarity.name}</span>{' '}
-            <span style={{...TABULAR, fontWeight: 700}}>{rarityCounts[rarity.key]}</span>
+            <span style={{...TABULAR, fontWeight: FONT_WEIGHT.bold}}>{rarityCounts[rarity.key]}</span>
           </Chip>
         ))}
       </div>

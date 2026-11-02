@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {CardLightbox} from './CardLightbox';
-import {COLORS} from '../tokens/theme';
+import {COLORS, FONT_WEIGHT} from '../tokens/theme';
 
 const meta: Meta<typeof CardLightbox> = {
   title: 'Components/CardLightbox',
@@ -90,7 +90,7 @@ export const InteractiveToggle: Story = {
             border: 'none',
             borderRadius: 8,
             cursor: 'pointer',
-            fontWeight: 600,
+            fontWeight: FONT_WEIGHT.semibold,
           }}>
           Open Lightbox
         </button>

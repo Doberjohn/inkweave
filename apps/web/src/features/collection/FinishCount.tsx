@@ -1,5 +1,5 @@
 import type {CSSProperties} from 'react';
-import {COLORS, FOIL_SHEEN, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, TABULAR} from '../../shared/constants';
+import {COLORS, FOIL_SHEEN, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, TABULAR, FONT_WEIGHT} from '../../shared/constants';
 import type {Finish} from './collectionParser';
 
 const PILL_STYLE: CSSProperties = {
@@ -13,7 +13,7 @@ const PILL_STYLE: CSSProperties = {
   borderRadius: RADIUS.sm,
   fontFamily: FONTS.body,
   fontSize: `${FONT_SIZES.base}px`,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   lineHeight: 1,
   color: COLORS.text,
 };
@@ -24,7 +24,7 @@ const GROUNDS: Record<Finish, CSSProperties> = {
   foil: {...FOIL_SHEEN.surface(COLORS.background, false), border: `1px solid ${GOLD_GLOW.activeBorder}`},
 };
 
-const NONE_STYLE: CSSProperties = {...PILL_STYLE, color: COLORS.textMuted, fontWeight: 400};
+const NONE_STYLE: CSSProperties = {...PILL_STYLE, color: COLORS.textMuted, fontWeight: FONT_WEIGHT.regular};
 
 /**
  * One finish's copies, read only, on the copies stripe's grounds: the finish is the ground, not

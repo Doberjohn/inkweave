@@ -8,6 +8,7 @@ import {
   RADIUS,
   REVEAL_SET_LOGO_SM,
   REVEAL_SET_NUMBER,
+  FONT_WEIGHT,
 } from '../../shared/constants';
 import {useResponsive} from '../../shared/hooks';
 import {prefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
@@ -203,7 +204,7 @@ function getTitleStyle(viewport: ViewportConfig): React.CSSProperties {
     display: 'block',
     fontFamily: FONTS.body,
     fontSize: viewport.isMobile ? 16 : 18,
-    fontWeight: 600,
+    fontWeight: FONT_WEIGHT.semibold,
     color: COLORS.text,
     margin: 0,
     lineHeight: 1.25,
@@ -214,7 +215,7 @@ const NEW_BADGE_STYLE: React.CSSProperties = {
   display: 'block',
   fontFamily: FONTS.body,
   fontSize: FONT_SIZES.xs,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   color: COLORS.primary500,
   letterSpacing: 0.6,
   textTransform: 'uppercase',

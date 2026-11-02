@@ -1,5 +1,5 @@
 import {useRef} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, SPACING, FONT_WEIGHT} from '../../../shared/constants';
 import {BottomSheet, IconButton, LinkButton} from '../../../shared/components';
 import {useDialogFocus, useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {RoleTiles, type RoleTile, type RoleTilesStatus} from './RoleTileRow';
@@ -31,7 +31,7 @@ function SheetHeader({onClose, onClearAll, hasActive}: {onClose: () => void; onC
           margin: 0,
           fontFamily: FONTS.body,
           fontSize: `${FONT_SIZES.lg}px`,
-          fontWeight: 600,
+          fontWeight: FONT_WEIGHT.semibold,
           color: COLORS.text,
         }}>
         Mechanics

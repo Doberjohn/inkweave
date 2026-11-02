@@ -1,4 +1,4 @@
-import {COLORS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, RADIUS, SPACING, FONT_WEIGHT} from '../../../shared/constants';
 import {InkCardPlaceholder} from 'inkweave-ui/lorcana/InkCardPlaceholder';
 
 /**
@@ -64,7 +64,7 @@ export function FeaturedCardsSkeleton({isMobile = false}: FeaturedCardsSkeletonP
             fontSize: `${isMobile ? FONT_SIZES.xs : FONT_SIZES.base}px`,
             letterSpacing: isMobile ? '2px' : '2.8px',
             color: COLORS.featuredLabel,
-            fontWeight: 400,
+            fontWeight: FONT_WEIGHT.regular,
             textTransform: 'uppercase',
           }}>
           Popular Synergy Starters

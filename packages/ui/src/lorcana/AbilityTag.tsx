@@ -1,4 +1,12 @@
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../tokens/theme';
+import {
+  COLORS,
+  FONTS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  FONT_WEIGHT,
+  LETTER_SPACING,
+} from '../tokens/theme';
 
 export type AbilityTagVariant = 'stacked' | 'page';
 
@@ -29,9 +37,9 @@ export function AbilityTag({variant = 'stacked', children}: AbilityTagProps) {
         background: COLORS.lorcanaTagBg,
         color: COLORS.lorcanaTagText,
         fontFamily: FONTS.body,
-        fontWeight: 700,
+        fontWeight: FONT_WEIGHT.bold,
         fontSize: isPage ? `${FONT_SIZES.xl}px` : `${FONT_SIZES.xs}px`,
-        letterSpacing: isPage ? '0.06em' : '0.08em',
+        letterSpacing: isPage ? '0.06em' : LETTER_SPACING.eyebrow,
         textTransform: 'uppercase',
         padding: isPage
           ? `${SPACING.md}px ${SPACING.xxl}px`

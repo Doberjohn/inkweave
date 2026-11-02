@@ -74,6 +74,8 @@ if (import.meta.env.PROD) {
       console.log('Inkweave is ready for offline use');
     },
   });
+  // The card list's old runtime cache: the precache holds the card data now, so nothing reads it.
+  if ('caches' in window) void caches.delete('card-data').catch(() => {});
 }
 
 /**

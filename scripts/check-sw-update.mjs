@@ -18,21 +18,34 @@
  *      reloads once onto the new version. A page with no controller gets no `controllerchange`.
  *   3. The same for a tab on its first visit, which the worker installed under but doesn't
  *      control.
- *   4. With the old worker's allCards.json request held past UPDATE_TOAST_MAX_MS, so Chrome holds
- *      the new worker back, the toast goes UPDATE_TOAST_MAX_MS after it shows, and once the
+ *   4. With the old worker's playstyleGuides.json request held past UPDATE_TOAST_MAX_MS, so Chrome
+ *      holds the new worker back, the toast goes UPDATE_TOAST_MAX_MS after it shows, and once the
  *      request ends the page shows it again, UPDATE_TOAST_LEAD_MS before it reloads onto the new
- *      version.
- *   5. A tab the old worker controls, whose card list hasn't loaded yet, meets a deploy with card
- *      data it can't read. An in-app link loads the list, which fails, and with no navigation for
- *      the browser to look for the new worker on, the page looks itself (cardListFailure.ts): it
- *      shows the toast, then reloads once onto the new version.
+ *      version. A runtime route's request, since a precached file is answered at once.
+ *   5. A tab a worker from before the card data was precached controls (its sw.js lacks the card
+ *      files, #1064), whose card list hasn't loaded yet, meets a deploy with card data it can't
+ *      read. An in-app link loads the list from the network, which fails, and with no navigation
+ *      for the browser to look for the new worker on, the page looks itself (cardListFailure.ts):
+ *      it shows the toast, then reloads once onto the new version.
  *   6. The same, with the new worker held mid-install: the error screen's Reload, pressed then,
  *      waits for it rather than reloading onto the old version, which the old worker would serve
  *      again, and the tab reloads once onto the new version when the install ends.
+ *   7. A tab the old worker controls, its card list loaded, meets a deploy whose card data no
+ *      version can read, with the new worker held mid-install: two reloads and an in-app link to
+ *      Browse later, it still shows its own version's cards, which its precache holds, and never
+ *      the error screen.
+ *   8. A deploy whose card list renames a card, with that file's new revision in its sw.js: once
+ *      the update reloads a tab the old worker controls onto the new version, Browse finds the
+ *      card by its new name. Workbox fetches a precached file again only when its revision moves.
+ *
+ * Before any check, the build's sw.js must precache the card files with the revisions of the files
+ * dist serves (`cardDataProblems`): a plugin that rewrites them after VitePWA has written sw.js
+ * would leave every worker holding data no file matches.
  *
  * Usage: `pnpm build:web`, then `pnpm check:sw-update [--dir apps/web/dist]`
  */
 import {createRequire} from 'node:module';
+import {createHash} from 'node:crypto';
 import {existsSync, readFileSync} from 'node:fs';
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -56,11 +69,17 @@ const CAP_SLACK_MS = 1500;
 const LEAD_SLACK_MS = 100;
 /** How much longer than UPDATE_TOAST_MAX_MS check 4 holds the old worker's request. */
 const HOLD_PAST_CAP_MS = 5000;
-/**
- * The card list: check 4 holds it (a StaleWhileRevalidate route, so the old worker waits on it),
- * and check 5 answers it with UNREADABLE_CARDS.
- */
+/** The card list, which checks 5 to 8 answer with a deploy's own (`deploy.cardList`). */
 const CARD_LIST_REQUEST = /^\/data\/allCards\.json/;
+/**
+ * What check 4 holds: a StaleWhileRevalidate route's file, so the old worker waits on the network
+ * for it. The card list can't be it: the worker answers it from its precache at once.
+ */
+const HELD_REQUEST = /^\/data\/playstyleGuides\.json/;
+/** The card files each version precaches (vite.config.ts), as sw.js names them. */
+const CARD_DATA_FILES = ['data/allCards.json', 'data/previewCards.json', 'data/featuredCards.json'];
+/** The name check 8's deploy gives its card list's first card. */
+const RENAMED_CARD = 'Check 8 marker';
 /** The worker's script, which the browser requests each time it looks for a new version. */
 const WORKER_SCRIPT = /^\/sw\.js(\?|$)/;
 /** Card data that no version of the app can read: `cards` is not a list. */
@@ -106,7 +125,78 @@ export function versionsOf(indexHtml, swSource) {
   return {
     old: {index: mark('old'), sw: swSource},
     new: {index: mark('new'), sw: swSource.replace(revision, `$1${otherRevision}$3`)},
+    // A worker from before the card data was precached (checks 5 and 6).
+    legacy: {index: mark('old'), sw: withoutPrecached(swSource, CARD_DATA_FILES)},
   };
+}
+
+/** An entry's precache entry in sw.js, `{url:"…",revision:"…"}`, with the revision as its group 2. */
+function precacheEntry(url) {
+  const escaped = url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(\\{url:"${escaped}",revision:")([0-9a-f]+)("\\})`);
+}
+
+/**
+ * The revision sw.js precaches `url` under, or null when it doesn't precache it.
+ * Exported for scripts/check-sw-update.test.mjs.
+ */
+export function precacheRevision(swSource, url) {
+  return precacheEntry(url).exec(swSource)?.[2] ?? null;
+}
+
+/** sw.js with `url` precached under `revision`. Exported for scripts/check-sw-update.test.mjs. */
+export function withRevision(swSource, url, revision) {
+  if (precacheRevision(swSource, url) === null) throw new Error(`sw.js precaches no ${url}`);
+  return swSource.replace(precacheEntry(url), `$1${revision}$3`);
+}
+
+/**
+ * sw.js without the precache entries for `urls`, as a worker built before they were precached.
+ * Exported for scripts/check-sw-update.test.mjs.
+ */
+export function withoutPrecached(swSource, urls) {
+  return urls.reduce((source, url) => source.replace(new RegExp(`${precacheEntry(url).source},?`), ''), swSource);
+}
+
+/**
+ * Why sw.js doesn't precache the card files as dist serves them, one line each, or none. `files`
+ * maps each card file's sw.js url to its MD5 in dist, or null when dist has none: the card list
+ * must be there, and every file dist has must be precached under its own MD5, which is the
+ * revision Workbox gives it. Exported for scripts/check-sw-update.test.mjs.
+ */
+export function cardDataProblems(swSource, files) {
+  const problems = [];
+  for (const [url, md5] of Object.entries(files)) {
+    const revision = precacheRevision(swSource, url);
+    if (md5 === null) {
+      if (url === CARD_DATA_FILES[0]) problems.push(`dist has no ${url}`);
+      continue;
+    }
+    if (revision === null) problems.push(`sw.js doesn't precache ${url}`);
+    else if (revision !== md5) problems.push(`sw.js precaches ${url} as ${revision}, but dist's file is ${md5}`);
+  }
+  return problems;
+}
+
+/** Each card file's MD5 in `dist`, or null where dist has none, by its sw.js url. */
+function cardDataHashes(dist) {
+  return Object.fromEntries(
+    CARD_DATA_FILES.map((url) => {
+      const file = join(dist, url);
+      return [url, existsSync(file) ? createHash('md5').update(readFileSync(file)).digest('hex') : null];
+    }),
+  );
+}
+
+/**
+ * The card list with its first card renamed `name` (check 8). Exported for
+ * scripts/check-sw-update.test.mjs.
+ */
+export function renamedCardList(cardListText, name) {
+  const data = JSON.parse(cardListText);
+  const cards = Array.isArray(data) ? data : data.cards;
+  cards[0] = {...cards[0], name, fullName: name};
+  return JSON.stringify(data);
 }
 
 /** Whether `url` is the new version's worker installing while check 6 holds its install. */
@@ -116,8 +206,9 @@ function holdsInstall(deploy, url) {
 
 /**
  * A server over `dist` that answers as vercel.json does (serve-dist.mjs), with index.html and
- * sw.js from the version `deploy.current` names, and the card list held `deploy.holdMs` (check 4)
- * or answered with `deploy.cardList` (check 5), which the checks set as the new version goes out.
+ * sw.js from the version `deploy.current` names, the playstyle guides held `deploy.holdMs` (check
+ * 4), and the card list answered with `deploy.cardList` (checks 5 to 8), which the checks set as
+ * the new version goes out.
  * It counts the browser's looks for a new worker, each a request for sw.js, in
  * `deploy.workerLooks`, and once the new version is out, holds its worker's install until
  * `deploy.installHold` settles, counting the installs it holds in `deploy.installsHeld` (check 6).
@@ -129,7 +220,7 @@ function startServer(dist, versions, deploy) {
       deploy.installsHeld += 1;
       await deploy.installHold;
     }
-    if (deploy.holdMs && CARD_LIST_REQUEST.test(url)) {
+    if (deploy.holdMs && HELD_REQUEST.test(url)) {
       await new Promise((done) => setTimeout(done, deploy.holdMs));
     }
     if (deploy.cardList && CARD_LIST_REQUEST.test(url)) return deploy.cardList;
@@ -294,11 +385,13 @@ function lateToastFailure(tab, load, lead) {
 }
 
 /**
- * Checks 5 and 6: a tab the old worker controls, whose card list hasn't loaded yet, meets a deploy
- * with card data it can't read, and an in-app link loads the list. The tab and its page loads so
- * far, or why it couldn't be set up.
+ * Checks 5 and 6: a tab a worker from before the card data was precached controls, whose card list
+ * hasn't loaded yet, meets a deploy with card data it can't read, and an in-app link loads the
+ * list. The tab and its page loads so far, or why it couldn't be set up.
  */
 async function unreadableDeployTab(context, base, deploy) {
+  // A worker from before the card data was precached: one from after it reads its own (check 7).
+  deploy.current = 'legacy';
   await context.addInitScript(neverIdle);
   const page = await context.newPage();
   await page.goto(base, {timeout: LOAD_TIMEOUT_MS});
@@ -317,6 +410,47 @@ async function unreadableDeployTab(context, base, deploy) {
   // The router's link changes the page without navigating, so the browser looks for no worker.
   await page.getByTestId('cta-browse').click();
   return {page, loads: before.loads};
+}
+
+/** Waits for Browse's card grid or the card list's error screen: whether the grid came. */
+async function showsCards(page) {
+  const grid = page.getByTestId('card-tile').first();
+  const error = page.getByText('Error loading cards');
+  await grid.or(error).first().waitFor({timeout: LOAD_TIMEOUT_MS});
+  return (await error.count()) === 0;
+}
+
+/**
+ * Check 7: a tab the old worker controls, its card list loaded, meets a deploy whose card data no
+ * version can read, with the new worker's install held so the old one stays in charge. Why the tab
+ * ever showed anything but its own cards, or null.
+ */
+async function ownCardsFailure(context, base, deploy) {
+  let release;
+  deploy.installHold = new Promise((done) => (release = done));
+  try {
+    const page = await controlledTab(context, base);
+    await page.goto(`${base}browse`, {timeout: LOAD_TIMEOUT_MS});
+    if (!(await showsCards(page))) return "the card list failed before the deploy";
+    deploy.current = 'new';
+    deploy.cardList = UNREADABLE_CARDS;
+    // Twice: the precache answers both reloads with the old version's own copy, where a runtime
+    // StaleWhileRevalidate route would answer the second with the copy it fetched beside the first.
+    for (const reload of [1, 2]) {
+      await page.reload({timeout: LOAD_TIMEOUT_MS});
+      if (!(await showsCards(page))) return `reload ${reload} showed the error screen`;
+    }
+    // The browser looks for the new worker once the old one has gone a moment without a request.
+    if (!(await until(() => deploy.installsHeld > 0, UPDATE_TIMEOUT_MS)))
+      return 'no new worker started to install';
+    await page.goto(base, {timeout: LOAD_TIMEOUT_MS});
+    await page.getByTestId('cta-browse').click();
+    if (!(await showsCards(page))) return 'the in-app link to Browse showed the error screen';
+    const tab = await readTab(page);
+    return tab.version === 'old' ? null : 'the tab left the old version while its install was held';
+  } finally {
+    release();
+  }
 }
 
 const checks = [
@@ -367,9 +501,9 @@ const checks = [
       deploy.holdMs = cap + HOLD_PAST_CAP_MS;
       await page.reload();
       const {loads} = await readTab(page);
-      // The app asks for the card list itself; this makes sure a request is out when the toast is.
-      // The reload may end the page before the request does, which rejects the evaluation.
-      page.evaluate(() => fetch('/data/allCards.json')).catch(() => {});
+      // A request the old worker takes to the network, out when the toast is. The reload may end
+      // the page before the request does, which rejects the evaluation.
+      page.evaluate(() => fetch('/data/playstyleGuides.json')).catch(() => {});
       const held = await waitForTab(
         page,
         (state) => state.toasts.some((toast) => toast.goneAt),
@@ -387,7 +521,7 @@ const checks = [
     },
   },
   {
-    name: "5. a tab the old worker controls looks for the new version when it can't read the new deploy's card data",
+    name: "5. a tab on a worker from before the card data was precached looks for the new version when it can't read the new deploy's card data",
     async run({context, base, deploy}) {
       const tab = await unreadableDeployTab(context, base, deploy);
       if (typeof tab === 'string') return tab;
@@ -395,7 +529,7 @@ const checks = [
     },
   },
   {
-    name: '6. the error screen\'s Reload, pressed while the new worker installs, waits for it and reloads once onto the new version',
+    name: '6. on such a worker, the error screen\'s Reload, pressed while the new worker installs, waits for it and reloads once onto the new version',
     async run({context, base, deploy}) {
       let release;
       deploy.installHold = new Promise((done) => (release = done));
@@ -414,10 +548,34 @@ const checks = [
       return newVersionFailure(page, loads);
     },
   },
+  {
+    name: '7. a tab on the old version keeps reading its own card list after a deploy whose card data it cannot read',
+    run: ({context, base, deploy}) => ownCardsFailure(context, base, deploy),
+  },
+  {
+    name: "8. once a tab reloads onto the new version, it shows the new deploy's card data",
+    async run({context, base, deploy}) {
+      const page = await controlledTab(context, base);
+      deploy.current = 'renamed';
+      deploy.cardList = deploy.renamedCardList;
+      await page.reload();
+      const {loads} = await readTab(page);
+      const failure = await newVersionFailure(page, loads);
+      if (failure) return failure;
+      await page.goto(`${base}browse?q=${encodeURIComponent(RENAMED_CARD)}`, {timeout: LOAD_TIMEOUT_MS});
+      const renamed = page.locator(`[data-testid="card-tile"][aria-label*="${RENAMED_CARD}"]`);
+      try {
+        await renamed.first().waitFor({timeout: LOAD_TIMEOUT_MS});
+      } catch {
+        return `Browse never showed the card renamed "${RENAMED_CARD}": the new worker kept the old card list`;
+      }
+      return null;
+    },
+  },
 ];
 
 /** Runs each check in a context of its own, against a server it starts over the two versions. */
-async function runChecks(dist, versions, {cap, lead}) {
+async function runChecks(dist, versions, {cap, lead, renamedCardList}) {
   const browser = await chromium.launch();
   const results = [];
   for (const check of checks) {
@@ -428,6 +586,7 @@ async function runChecks(dist, versions, {cap, lead}) {
       workerLooks: 0,
       installHold: null,
       installsHeld: 0,
+      renamedCardList,
     };
     const server = await startServer(dist, versions, deploy);
     // Each server takes a port of its own, so each check starts with no worker registered.
@@ -455,13 +614,24 @@ async function main() {
     console.error(`✖ ${join(dist, 'sw.js')} not found: run \`pnpm build:web\` first`);
     process.exit(1);
   }
-  const versions = versionsOf(
-    readFileSync(join(dist, 'index.html'), 'utf8'),
-    readFileSync(join(dist, 'sw.js'), 'utf8'),
-  );
+  const sw = readFileSync(join(dist, 'sw.js'), 'utf8');
+  const problems = cardDataProblems(sw, cardDataHashes(dist));
+  if (problems.length > 0) {
+    for (const problem of problems) console.error(`✖ ${problem}`);
+    console.error(
+      '✖ The service worker must precache the card files dist serves (vite.config.ts): did a plugin rewrite them after VitePWA wrote sw.js?',
+    );
+    process.exit(1);
+  }
+  const versions = versionsOf(readFileSync(join(dist, 'index.html'), 'utf8'), sw);
+  // Check 8's deploy: the new version, whose card list renames a card under that file's new revision.
+  const renamedCards = renamedCardList(readFileSync(join(dist, CARD_DATA_FILES[0]), 'utf8'), RENAMED_CARD);
+  const renamedRevision = createHash('md5').update(renamedCards).digest('hex');
+  versions.renamed = {...versions.new, sw: withRevision(versions.new.sw, CARD_DATA_FILES[0], renamedRevision)};
   const results = await runChecks(dist, versions, {
     cap: readToastConstant('UPDATE_TOAST_MAX_MS'),
     lead: readToastConstant('UPDATE_TOAST_LEAD_MS'),
+    renamedCardList: renamedCards,
   });
   for (const {name, failure} of results)
     console.log(failure ? `✖ ${name}: ${failure}` : `✓ ${name}`);

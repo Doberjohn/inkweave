@@ -38,6 +38,8 @@ import {
   SPACING,
   TOUCH_TARGET,
   VISUALLY_HIDDEN,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
 } from '../../../shared/constants';
 import {Chip} from 'inkweave-ui/components/Chip';
 import {LinkButton} from 'inkweave-ui/components/LinkButton';
@@ -1215,7 +1217,7 @@ function FilterChip({group, activeGroupFilter, toggleChip}: FilterChipProps) {
           padding: `${SPACING.xxs}px ${SPACING.sm}px`,
           borderRadius: RADIUS.pill,
           fontSize: FONT_SIZES.sm,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           lineHeight: 1.3,
           background: tier.bg,
           color: tier.color,
@@ -1652,8 +1654,8 @@ function OutsideCoreNotice() {
         padding: SPACING.xxl,
         gap: SPACING.sm,
       }}>
-      <p style={{margin: 0, color: COLORS.text, fontSize: FONT_SIZES.lg, fontWeight: 600}}>Outside Core</p>
-      <p style={{margin: 0, color: COLORS.textMuted, fontSize: FONT_SIZES.md, lineHeight: 1.5, maxWidth: 300}}>
+      <p style={{margin: 0, color: COLORS.text, fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHT.semibold}}>Outside Core</p>
+      <p style={{margin: 0, color: COLORS.textMuted, fontSize: FONT_SIZES.md, lineHeight: LINE_HEIGHT.base, maxWidth: 300}}>
         Inkweave analyses the Core format, sets 9 and later, so this card has no synergies here.
       </p>
     </div>
@@ -1674,8 +1676,8 @@ function SynergiesEmptyState() {
         padding: SPACING.xxl,
         gap: SPACING.sm,
       }}>
-      <p style={{margin: 0, color: COLORS.text, fontSize: FONT_SIZES.lg, fontWeight: 600}}>No synergies yet</p>
-      <p style={{margin: 0, color: COLORS.textMuted, fontSize: FONT_SIZES.md, lineHeight: 1.5, maxWidth: 280}}>
+      <p style={{margin: 0, color: COLORS.text, fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHT.semibold}}>No synergies yet</p>
+      <p style={{margin: 0, color: COLORS.textMuted, fontSize: FONT_SIZES.md, lineHeight: LINE_HEIGHT.base, maxWidth: 280}}>
         This card may match new rules as the engine evolves.
       </p>
     </div>
@@ -1876,7 +1878,7 @@ function BackButton({onClick, minHeight}: BackButtonProps) {
       size="sm"
       style={{
         minHeight,
-        fontWeight: 700,
+        fontWeight: FONT_WEIGHT.bold,
         textTransform: 'uppercase',
         letterSpacing: LETTER_SPACING.eyebrow,
         flexShrink: 0,

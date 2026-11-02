@@ -1,5 +1,5 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONT_SIZES, SPACING} from '../tokens/theme';
+import {COLORS, FONT_SIZES, SPACING, FONT_WEIGHT, LINE_HEIGHT} from '../tokens/theme';
 
 interface CardTextBlockProps {
   card: LorcanaCard;
@@ -29,7 +29,7 @@ function formatSection(text: string): React.ReactNode {
     // The margin widens the word gap after the name; at small sizes a bare space between bold
     // capitals and the effect's first word reads as one run ("SERVICEAt").
     parts.push(
-      <span key="ability" style={{fontWeight: 700, marginRight: SPACING.xxs}}>
+      <span key="ability" style={{fontWeight: FONT_WEIGHT.bold, marginRight: SPACING.xxs}}>
         {abilityName}
       </span>,
     );
@@ -85,7 +85,7 @@ export function CardTextBlock({card, fontSize = FONT_SIZES.sm}: CardTextBlockPro
               margin: spacing,
               padding: spacing,
               fontSize,
-              lineHeight: 1.5,
+              lineHeight: LINE_HEIGHT.base,
               color: COLORS.text,
               borderBottom: divided ? `1px solid ${COLORS.surfaceBorder}` : undefined,
             }}>

@@ -3,7 +3,7 @@ import {cardPath} from 'inkweave-synergy-engine/card';
 import {CardTile} from './CardTile';
 import {FEATURED_MARGIN, FEATURED_PHONE_PADDING_BOTTOM, FeaturedCardsSkeleton} from './FeaturedCardsSkeleton';
 import {FEATURED_IDS, pickFeatured, useFeaturedCardsFile} from '../featured';
-import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, SPACING, FONT_WEIGHT} from '../../../shared/constants';
 import {RenderProfiler} from '../../../shared/components';
 
 const FEATURED_COUNT = FEATURED_IDS.length;
@@ -37,7 +37,7 @@ function getStyles(isMobile: boolean) {
       fontSize: `${isMobile ? FONT_SIZES.xs : FONT_SIZES.base}px`,
       letterSpacing: isMobile ? '2px' : '2.8px',
       color: COLORS.featuredLabel,
-      fontWeight: 400,
+      fontWeight: FONT_WEIGHT.regular,
       textTransform: 'uppercase',
       flexShrink: 0,
     } as React.CSSProperties,

@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {CardImage, CardLightbox} from '../../../shared/components';
-import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SHADOWS, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, RADIUS, SHADOWS, SPACING, FONT_WEIGHT} from '../../../shared/constants';
 
 interface VotingCardDisplayProps {
   card: LorcanaCard;
@@ -150,7 +150,7 @@ export function VotingCardDisplay({card, isMobile, highlighted, dimmed}: VotingC
           )}
         </TapToEnlarge>
         <div style={{minHeight: 36, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'}}>
-          <span style={{fontSize: FONT_SIZES.base, fontWeight: 500, color: COLORS.text, fontFamily: FONTS.body, textAlign: 'center'}}>
+          <span style={{fontSize: FONT_SIZES.base, fontWeight: FONT_WEIGHT.medium, color: COLORS.text, fontFamily: FONTS.body, textAlign: 'center'}}>
             {name}
           </span>
           {version && (

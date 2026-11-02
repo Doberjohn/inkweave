@@ -5,13 +5,16 @@
 // each total holds at a ceiling. Lower a ceiling when an entry goes; never raise one. The baseline's
 // ceiling rose once (#1013): check:design began counting the 56 radii, font sizes, shadows and
 // durations typed into .css files, values there all along, so the total went from 205 to 261 and
-// the ceiling from 207 to that exact total.
+// the ceiling from 207 to that exact total. The ledger's ceiling rose once (#544): two rules
+// turned on with 40 files seeded from that day's lint run, values between the new letter-spacing
+// and line-height steps, and two spacing entries left in the same change, so it went from 134
+// to 172.
 import {readFileSync, statSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {describe, expect, it} from 'vitest';
 import {KNOWN_OFFENDERS} from './known-offenders.js';
 
-const LEDGER_CEILING = 134;
+const LEDGER_CEILING = 172;
 const BASELINE_CEILING = 261;
 
 const REPO = fileURLToPath(new URL('../../../', import.meta.url));

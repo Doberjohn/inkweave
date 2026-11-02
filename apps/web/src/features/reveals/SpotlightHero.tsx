@@ -1,6 +1,6 @@
 import type {CSSProperties} from 'react';
 import './reveals.css';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, blackRgba, hexRgba, hexToRgb} from '../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, blackRgba, hexRgba, hexToRgb, FONT_WEIGHT} from '../../shared/constants';
 
 export interface SupportCard {
   src: string;
@@ -34,7 +34,7 @@ function NewBadge({accent}: {accent: string}) {
     <span
       style={{
         display: 'inline-block',
-        fontWeight: 700,
+        fontWeight: FONT_WEIGHT.bold,
         fontSize: FONT_SIZES.xs,
         letterSpacing: 1.4,
         textTransform: 'uppercase',
@@ -190,12 +190,12 @@ function SpotlightInner({data, dims, onActivate, compact}: {data: SpotlightHeroD
       <div className="reveal-rise reveal-rise-1" style={{flex: '0 1 auto', minWidth: 0, maxWidth: 460}}>
         <div style={{display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap', justifyContent: dims.headerJustify}}>
           {data.isNew && <NewBadge accent={data.accent} />}
-          <span style={{fontSize: FONT_SIZES.xs, fontWeight: 600, letterSpacing: 0.8, textTransform: 'uppercase', color: COLORS.textMuted}}>{data.count}</span>
+          <span style={{fontSize: FONT_SIZES.xs, fontWeight: FONT_WEIGHT.semibold, letterSpacing: 0.8, textTransform: 'uppercase', color: COLORS.textMuted}}>{data.count}</span>
         </div>
-        <h3 style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: dims.titleSize, color: COLORS.gray900, margin: '11px 0 0'}}>{data.title}</h3>
-        <p style={{fontWeight: 400, fontSize: dims.summarySize, lineHeight: 1.55, color: COLORS.gray700, margin: '9px 0 0', maxWidth: 420}}>{data.summary}</p>
+        <h3 style={{fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.regular, fontSize: dims.titleSize, color: COLORS.gray900, margin: '11px 0 0'}}>{data.title}</h3>
+        <p style={{fontWeight: FONT_WEIGHT.regular, fontSize: dims.summarySize, lineHeight: 1.55, color: COLORS.gray700, margin: '9px 0 0', maxWidth: 420}}>{data.summary}</p>
         {interactive && (
-          <span style={{display: 'inline-block', marginTop: 13, fontSize: FONT_SIZES.base, fontWeight: 700, color: data.accent, letterSpacing: 0.3}}>
+          <span style={{display: 'inline-block', marginTop: 13, fontSize: FONT_SIZES.base, fontWeight: FONT_WEIGHT.bold, color: data.accent, letterSpacing: 0.3}}>
             {ctaLabel(data)} <span aria-hidden="true">→</span>
           </span>
         )}

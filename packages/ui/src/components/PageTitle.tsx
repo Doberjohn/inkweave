@@ -1,5 +1,5 @@
 import type {CSSProperties, ReactNode} from 'react';
-import {COLORS, FONT_SIZES} from '../tokens/theme';
+import {COLORS, FONT_SIZES, FONT_WEIGHT} from '../tokens/theme';
 
 interface PageTitleProps {
   children: ReactNode;
@@ -24,7 +24,7 @@ export function PageTitle({children, style}: PageTitleProps) {
     <h1
       style={{
         fontSize: `${FONT_SIZES.xxl}px`,
-        fontWeight: 700,
+        fontWeight: FONT_WEIGHT.bold,
         color: COLORS.text,
         ...style,
       }}>

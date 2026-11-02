@@ -2,7 +2,7 @@ import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
 import type {DetailedPairSynergy, LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, FONTS, FONT_SIZES, INK_COLORS, LETTER_SPACING, RADIUS, SPACING, TIER_COLORS, hexRgba} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, INK_COLORS, LETTER_SPACING, RADIUS, SPACING, TIER_COLORS, hexRgba, FONT_WEIGHT, LINE_HEIGHT} from '../../../shared/constants';
 import {CommunityEmptyState} from './CommunityEmptyState';
 import {ColumnHeader} from './ColumnHeader';
 import {DeltaPanel} from './DeltaPanel';
@@ -333,13 +333,13 @@ function DeltaBadge({delta}: {delta: Delta}) {
           padding: `${SPACING.xxs}px ${SPACING.sm}px`,
           borderRadius: RADIUS.sm,
           fontSize: FONT_SIZES.sm,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           letterSpacing: 'normal',
           textTransform: 'none',
         }}>
         {delta.arrow} {delta.value}
       </span>
-      <span aria-hidden="true" style={{opacity: 0.5, fontWeight: 700}}>·</span>
+      <span aria-hidden="true" style={{opacity: 0.5, fontWeight: FONT_WEIGHT.bold}}>·</span>
     </>
   );
 }
@@ -423,7 +423,7 @@ function MetricRow({
         style={{
           flex: '0 0 80px',
           fontSize: FONT_SIZES.xxxl,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           color: COLORS.text,
           textAlign: 'center',
           lineHeight: 1,
@@ -434,7 +434,7 @@ function MetricRow({
         <div
           style={{
             fontSize: FONT_SIZES.sm,
-            fontWeight: 700,
+            fontWeight: FONT_WEIGHT.bold,
             color: COLORS.textMuted,
             textTransform: 'uppercase',
             letterSpacing: LETTER_SPACING.eyebrow,
@@ -445,7 +445,7 @@ function MetricRow({
           style={{
             fontSize: FONT_SIZES.md,
             color: COLORS.descriptionText,
-            lineHeight: 1.4,
+            lineHeight: LINE_HEIGHT.snug,
           }}>
           {description}
         </div>
