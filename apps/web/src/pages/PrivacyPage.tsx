@@ -1,13 +1,12 @@
 import {LegalPage, legalH2Style, legalLinkStyle} from '../shared/components';
 import {COLORS} from '../shared/constants';
-import {SHOW_COLLECTION} from '../features/collection/flag';
-import {SHOW_FRIENDS} from '../features/friends/flag';
 
 const EMAIL = 'support.inkweave@gmail.com';
 
-// Every build's text changed on this date (the sign-in item, #878). A flag flip can't date
-// itself, so the launch PR (Phase 2 of #878) re-dates the page on launch day.
-const LAST_UPDATED = '26 October 2026';
+// The collection and friends launched in production on this date, and with them the policy's
+// sentences about both, which no build hides any more. The page promises its date says when the
+// text it shows last changed, and a flag flip can't move it.
+const LAST_UPDATED = '2 November 2026';
 
 const DESCRIPTION =
   'What Inkweave collects (anonymous synergy votes, cookieless analytics, error reports, optional account data), where it is kept, for how long, and your rights.';
@@ -53,35 +52,17 @@ export function PrivacyPage() {
           provider (such as your email and a provider id). Your account also gets a made-up public name and
           handle, such as Emerald Princess 330, which anyone can see. You can change the name. Your session
           is stored in your browser, not in a cookie.
-          {/* LAUNCH STEP (Phase 2 of #878): once the collection is on in production, drop this
-              condition so the sentence always shows. Turning the flag off later keeps every
-              collection in the database, and the policy must keep describing them. */}
-          {SHOW_COLLECTION && (
-            <>
-              {' '}
-              If you keep your collection on Inkweave, I store it with your account: how many copies of each
-              card you own, normal and foil, so it&rsquo;s there on any device you sign in on. Only you can see
-              it
-              {/* Sharing needs friends too: the friends LAUNCH STEP below drops this condition. */}
-              {SHOW_FRIENDS
-                ? ', unless you turn on sharing with friends on your account page. Then your friends can see which cards you own and how many.'
-                : '.'}{' '}
-              A copy also stays in this browser, even after you sign out. Clearing your collection on your
-              account page deletes both.
-            </>
-          )}
-          {/* LAUNCH STEP (Phase 2 of #878): once friends is on in production, drop this condition
-              and the sharing one above, so both always show. Turning the flag off later keeps every
-              code, friendship and sharing switch in the database, and the policy must describe them. */}
-          {SHOW_FRIENDS && (
-            <>
-              {' '}
-              Opening your account page also gives you a friend code, which I store. If you add friends, I store
-              who your friends and friend requests are. To stop anyone guessing codes, I also note when you try
-              one. Your friends see your public name and handle
-              {SHOW_COLLECTION ? ', and your collection if you share it with them.' : '.'}
-            </>
-          )}
+          {/* These stay whatever the flags say: turning a feature off keeps its codes, friendships,
+              sharing switches and collections in the database, and the policy must keep describing
+              them. */}{' '}
+          If you keep your collection on Inkweave, I store it with your account: how many copies of each card
+          you own, normal and foil, so it&rsquo;s there on any device you sign in on. Only you can see it,
+          unless you turn on sharing with friends on your account page. Then your friends can see which cards
+          you own and how many. A copy also stays in this browser, even after you sign out. Clearing your
+          collection on your account page deletes both. Opening your account page also gives you a friend
+          code, which I store. If you add friends, I store who your friends and friend requests are. To stop
+          anyone guessing codes, I also note when you try one. Your friends see your public name and handle,
+          and your collection if you share it with them.
         </li>
       </ul>
 
