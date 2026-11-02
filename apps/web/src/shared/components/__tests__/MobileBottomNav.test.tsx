@@ -64,6 +64,9 @@ afterEach(() => {
 describe('MobileBottomNav account tab', () => {
   it('signed out, is a Sign in tab that opens the sign-in dialog from the nav', async () => {
     const nav = await renderNav('/browse');
+    // The dialog comes from the header's module on the first tap. Loading that module here first
+    // keeps its cold transform (over a second on a slow machine) out of findByRole's wait.
+    await import('../CompactHeader');
 
     await userEvent.click(within(nav).getByRole('button', {name: 'Sign in'}));
 
