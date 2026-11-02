@@ -1,4 +1,5 @@
 import {execFileSync} from 'node:child_process';
+import {availableParallelism} from 'node:os';
 import {defineConfig, devices} from '@playwright/test';
 import {E2E_SUPABASE_ANON_KEY, E2E_SUPABASE_ORIGIN} from './e2e/fixtures/supabaseStub';
 
@@ -48,9 +49,12 @@ function resolvePort(): number {
 }
 
 /**
- * CI runs two workers on its 4-vCPU runners (#854). On the chromium project in a 4-vCPU
+ * CI runs two workers where it has 4 or more vCPUs (#854). On the chromium project in a 4-vCPU
  * container, one worker took 8.9 min, two 6.0, three 5.4 and four 5.3: the browsers' renderers
  * fill the CPUs at two, so a third or fourth worker saves under a minute and adds contention.
+ * One worker already keeps about two vCPUs busy, so a private repo's 2-vCPU runners get one: a
+ * second there adds little and slows every test, past WebKit's 5-second waits on the binder
+ * pages (#1093).
  *
  * Local Windows runs cap at 3: Playwright's default (half the logical CPUs, 6 on the dev box)
  * needs an estimated 4.4 GB of commit memory against the 2.7 GB measured for 3, and with other
@@ -61,7 +65,7 @@ function resolvePort(): number {
  * (or PRE_PUSH_E2E_WORKERS in the hook) overrides it.
  */
 function resolveWorkers(): number | undefined {
-  if (process.env.CI) return 2;
+  if (process.env.CI) return availableParallelism() >= 4 ? 2 : 1;
   return process.platform === 'win32' ? 3 : undefined;
 }
 
