@@ -21,6 +21,10 @@ It also injects `imageHash` and `imageHashSm` into `allCards.json`, `previewCard
 
 Those URLs never use a card's `images` links, so the build's copies of the same files ship without them (#932): `cardDataPlugin` in `vite.config.ts` moves each card's and printing's `images` into `data/image-sources.json`, which no page loads, and the next build's restore reads them back from there (`withImageSources` in `scripts/lib/imageRestore.mjs`). `public/data/` keeps them, as does any build without `VITE_LOCAL_IMAGES=true`, such as CI's E2E preview build.
 
+Committed preview AVIFs also pin cards whose Ravensburger link has died, so a build that has to download them again keeps their art. Keep these files through any preview-image cleanup, and delete one only when its card has a working link again:
+
+- `544` Hydra - Deadly Serpent (Set 3 #108): links dead since 2026-10-19; the files are the bytes production served, so the hashes didn't change (#1095).
+
 Variant printings (a card's alternate art in its `variants`: Epic, Enchanted and Iconic, #625, and the printings that keep their base card's rarity, #796) go through the same path under their own id: each is its own image subject, its hashes land on the nested entry, and the loader resolves it with the same `resolveImageUrl`. A committed preview AVIF beats a remote URL for a variant exactly as for a card. A variant the build could not image is a warning in the build log, not a failure; it renders as a broken image, like any unhashed card.
 
 The Ravensburger rewrite in `vercel.json` is now a dev-only fallback, dead in prod since every card has a hashed URL.
