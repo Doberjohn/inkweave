@@ -2,12 +2,24 @@ import type {Meta, StoryObj} from '@storybook/react-vite';
 import {MemoryRouter} from 'react-router-dom';
 import {fn} from 'storybook/test';
 import {MobileBottomNav} from './MobileBottomNav';
+import {SessionProvider} from '../contexts/SessionContext';
 
 const meta: Meta<typeof MobileBottomNav> = {
   title: 'Components/MobileBottomNav',
   component: MobileBottomNav,
   parameters: {layout: 'fullscreen'},
   tags: ['autodocs'],
+  decorators: [
+    // The nav reads the session for its account tab, and its Sign in tab opens the sign-in
+    // dialog, which does too: useSession throws outside a provider. With no Supabase env,
+    // Storybook's session is unconfigured, so the dialog shows its "not configured" note and
+    // only `accountOverride` draws the account tab.
+    (Story) => (
+      <SessionProvider>
+        <Story />
+      </SessionProvider>
+    ),
+  ],
 };
 export default meta;
 type Story = StoryObj<typeof meta>;

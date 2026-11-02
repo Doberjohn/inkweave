@@ -14,7 +14,8 @@ export interface ViewportConfig {
  * Whether the top header renders, and therefore whether it carries the auth control.
  *
  * Where it doesn't, on a phone, the auth control is the bottom nav's account tab
- * (`MobileBottomNav`, which AppLayout mounts only on a phone). One predicate rather than
+ * (`MobileBottomNav`, which AppLayout mounts only on a phone), there while accounts are on
+ * and sign-in is configured, as the header's is. One predicate rather than
  * each side testing `isMobile` on its own, so a future slim phone header cannot leave two
  * controls both named "Sign in" on one page. The deck builder's `/decks` also negates it for
  * a fallback sign-in button that predates the account tab: that button goes when the deck

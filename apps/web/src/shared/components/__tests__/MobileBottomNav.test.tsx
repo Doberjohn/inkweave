@@ -16,9 +16,8 @@ const mocks = vi.hoisted(() => ({session: null as SessionStub | null, trackSignI
 // Pinned, so no test depends on VITE_IS_REVEAL_SEASON or fetches reveal dates.
 vi.mock('../../../features/reveals', () => ({useRevealPhase: (): RevealPhase => 'hidden'}));
 
+// Read by the nav, and by the sign-in dialog once the Sign in tab has opened it.
 vi.mock('../../contexts/SessionContext', () => ({
-  useOptionalSession: () => mocks.session,
-  // The sign-in dialog's own read, once the Sign in tab has opened it.
   useSession: () => ({...mocks.session, signIn: vi.fn(), signOut: vi.fn()}),
 }));
 

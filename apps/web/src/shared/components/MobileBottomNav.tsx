@@ -2,7 +2,7 @@ import {Suspense, useState} from 'react';
 import {NavLink, useLocation} from 'react-router-dom';
 import {COLORS, FONTS, LAYOUT, REVEAL_SET_NUMBER} from '../constants';
 import {useRevealPhase, type RevealPhase} from '../../features/reveals';
-import {useOptionalSession, type SessionContextValue} from '../contexts/SessionContext';
+import {useSession} from '../contexts/SessionContext';
 import {lazyWithRetry} from '../lib/lazyWithRetry';
 
 /** Accounts ship behind this flag; while it is off the nav has no account tab. */
@@ -161,10 +161,10 @@ function pickTabsAndPositions({isRevealSeason, account}: TabsInput): TabsAndPosi
  * a returning player never sees the tab change.
  */
 function accountTabFor(
-  session: Pick<SessionContextValue, 'user' | 'loading' | 'enabled'> | null,
+  session: Pick<ReturnType<typeof useSession>, 'user' | 'loading' | 'enabled'>,
 ): AccountTab {
   if (!SHOW_ACCOUNTS) return 'none';
-  if (!session?.enabled) return 'none';
+  if (!session.enabled) return 'none';
   if (session.user) return 'account';
   if (session.loading) return 'account';
   return 'sign-in';
@@ -449,8 +449,7 @@ export function MobileBottomNav({
   const {pathname} = useLocation();
   const hookPhase = useRevealPhase();
   const phase = phaseOverride ?? hookPhase;
-  // Optional: the nav's stories render it with no SessionProvider.
-  const session = useOptionalSession();
+  const session = useSession();
   const [signIn, setSignIn] = useState<SignInState>('unloaded');
 
   const {tabs, positions} = pickTabsAndPositions({
