@@ -74,15 +74,23 @@ async function heroParts(page: Page): Promise<{name: string; box: Box}[]> {
   return parts;
 }
 
+/**
+ * Whether the page's CSS puts the notice in the corner. Beside a classic scrollbar, WebKit's media
+ * queries leave the scrollbar out, so a window just CORNER_FROM px wide still gets the layout
+ * above the logo there.
+ */
+const inCornerLayout = (page: Page) =>
+  page.evaluate((from) => matchMedia(`(min-width: ${from}px)`).matches, CORNER_FROM);
+
 for (const size of SIZES) {
-  const corner = size.width >= CORNER_FROM;
-  test(`at ${size.width}x${size.height} the notice sits ${corner ? 'in the corner' : 'above the logo'}, clear of the hero`, async ({
+  test(`at ${size.width}x${size.height} the notice sits ${size.width >= CORNER_FROM ? 'in the corner' : 'above the logo'}, clear of the hero`, async ({
     page,
   }, testInfo) => {
     const phoneProject = isPhoneProject(testInfo.project.name);
     test.skip(phoneProject && size.width !== 390, 'Phone projects check their own screen');
     if (!phoneProject) await page.setViewportSize(size);
     await gotoHome(page);
+    const corner = await inCornerLayout(page);
 
     const box = await boxOf(notice(page));
     const parts = await heroParts(page);
@@ -135,9 +143,11 @@ for (const size of SIZES) {
 
 test('in the corner the notice scrolls away with the page, never over the featured cards', async ({page}, testInfo) => {
   test.skip(isPhoneProject(testInfo.project.name), 'The corner layout needs a wide screen');
-  // The narrowest corner width, on a short window.
-  await page.setViewportSize({width: CORNER_FROM, height: 700});
+  // Just past the narrowest corner width, so a classic scrollbar leaves the corner layout on, and
+  // on a short window.
+  await page.setViewportSize({width: CORNER_FROM + 20, height: 700});
   await gotoHome(page);
+  expect(await inCornerLayout(page)).toBe(true);
   const featured = page.getByTestId('featured-cards');
   await expect(featured).toBeVisible();
 

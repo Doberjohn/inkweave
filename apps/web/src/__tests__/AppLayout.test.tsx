@@ -1,5 +1,5 @@
 import type {ReactNode} from 'react';
-import {describe, expect, it, vi} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {render} from '@testing-library/react';
 import {RouterProvider, createMemoryRouter} from 'react-router-dom';
 import {AppLayout} from '../AppLayout';
@@ -30,7 +30,8 @@ vi.mock('../shared/contexts/CardDataContext', () => ({
   CardDataProvider: passThrough,
   useCardDataContext: () => ({error: null, retryLoad: () => {}, requestLoad: () => {}}),
 }));
-vi.mock('../features/reveals', () => ({RevealsPromoCard: () => null, useRevealPhase: () => 'off'}));
+const reveal = vi.hoisted(() => ({phase: 'off'}));
+vi.mock('../features/reveals', () => ({RevealsPromoCard: () => null, useRevealPhase: () => reveal.phase}));
 
 function renderLayout() {
   render(<RouterProvider router={createMemoryRouter([{path: '/', element: <AppLayout />}])} />);
@@ -49,5 +50,39 @@ describe('AppLayout', () => {
     renderLayout();
 
     expect(vercel.speedInsights.beforeSend).toBe(withoutAccountParams);
+  });
+});
+
+// The home page's beta notice keeps clear of the Reveals promo by this mark (index.css), so it
+// must follow the promo's own breakpoint.
+describe('AppLayout, the Reveals promo mark', () => {
+  const width = window.innerWidth;
+  afterEach(() => {
+    reveal.phase = 'off';
+    window.innerWidth = width;
+  });
+  const mark = () => document.querySelector('[data-reveals-promo]')?.getAttribute('data-reveals-promo');
+
+  it('marks the page while the promo sits in the top-right corner', () => {
+    reveal.phase = 'pre-release';
+    window.innerWidth = 768;
+    renderLayout();
+
+    expect(mark()).toBe('corner');
+  });
+
+  it("leaves no mark while the promo sits at a phone's foot", () => {
+    reveal.phase = 'pre-release';
+    window.innerWidth = 767;
+    renderLayout();
+
+    expect(mark()).toBeUndefined();
+  });
+
+  it('leaves no mark outside the reveal season', () => {
+    window.innerWidth = 1280;
+    renderLayout();
+
+    expect(mark()).toBeUndefined();
   });
 });

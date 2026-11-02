@@ -533,19 +533,22 @@ option {
     margin: var(--beta-notice-top) 0 0;
   }
 }
-/* In reveal season the Reveals promo is fixed in the top-right corner from 768 px
-   (RevealsPromoCard: 280 px wide, 32 px from the edges), where the centred card would run under
-   it. Below 1400 px the card moves to the left of it instead, its button going under the copy
-   where the room left can't hold both side by side. Moving it down would push the hero's search
-   box below the fold. */
-@media (min-width: 768px) and (max-width: 1399.98px) {
-  body:has(.rpc-card) .beta-notice {
+/* In reveal season the Reveals promo is fixed in the top-right corner on every screen but a phone
+   (RevealsPromoCard: 280 px wide, 32 px from the edges), where the card would run under it.
+   Below 1400 px the card moves to the left of it instead, its button going under the copy where
+   the room left can't hold both side by side. Moving it down would push the hero's search box
+   below the fold. AppLayout marks the page while the promo sits there, by the promo's own
+   breakpoint rather than a media query's: beside a classic scrollbar, WebKit's media queries
+   leave the scrollbar out, so from 768 px to 768 px plus its width they see a phone where the
+   promo sees a tablet. */
+@media (max-width: 1399.98px) {
+  [data-reveals-promo='corner'] .beta-notice {
     flex-wrap: wrap;
     align-self: flex-start;
     width: min(720px, calc(100% - 2 * var(--beta-notice-gutter) - 280px - var(--beta-notice-edge)));
     margin-left: var(--beta-notice-gutter);
   }
-  body:has(.rpc-card) .beta-notice-copy {
+  [data-reveals-promo='corner'] .beta-notice-copy {
     flex-basis: 280px;
   }
 }

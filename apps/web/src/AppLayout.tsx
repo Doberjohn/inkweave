@@ -78,6 +78,15 @@ function bottomCoverHeight({showsError, showBottomNav, showRevealsPromo, isMobil
 }
 
 /**
+ * 'corner' while the Reveals promo sits in the top-right corner, which it does on every screen but
+ * a phone. The home page's beta notice keeps clear of it by this mark (index.css), so the two
+ * follow the same breakpoint.
+ */
+function revealsPromoMark({showRevealsPromo, isMobile}: Pick<BottomCover, 'showRevealsPromo' | 'isMobile'>) {
+  return showRevealsPromo && !isMobile ? 'corner' : undefined;
+}
+
+/**
  * Keeps keyboard focus clear of a bar fixed over the bottom of the screen (WCAG 2.4.11): the
  * browser scrolls a focused element into view above the root's `scroll-padding-bottom`.
  */
@@ -168,7 +177,7 @@ function AppContent() {
 
   return (
     <>
-      <div style={bottomCover ? {paddingBottom: bottomCover} : undefined}>
+      <div data-reveals-promo={revealsPromoMark({showRevealsPromo, isMobile})} style={bottomCover ? {paddingBottom: bottomCover} : undefined}>
         <Outlet />
       </div>
       {showBottomNav && (
