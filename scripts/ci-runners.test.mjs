@@ -116,6 +116,12 @@ describe('the E2E layout', () => {
     expect(ci.match(/^\s+matrix:/gm)).toHaveLength(1);
   });
 
+  it('gives each E2E job 30 minutes, room for a slow runner', () => {
+    const job = WORKFLOWS['e2e.yml'].match(/^ {2}e2e-tests:\n((?: {4}.*\n|\n)+)/m);
+    expect(job).not.toBeNull();
+    expect(job[1].match(/^ {4}timeout-minutes: (\d+)$/m)?.[1]).toBe('30');
+  });
+
   it('starts the other browsers on a pull request only when it opens, is ready or is labelled', () => {
     expect(full).toContain('types: [opened, reopened, ready_for_review, labeled]');
     expect(full).not.toMatch(/synchronize/);

@@ -66,7 +66,9 @@ jobs:
       # (/github/home). Run as root, Firefox refuses to start in a home it doesn't own. The PC's
       # runner user has uid 1001 too, so the job can write to the workspace it mounts.
       options: --user 1001
-    timeout-minutes: 20
+    # 30, not 20: on a private repo's 2-core runners webkit takes 16 to 19 minutes, so a slow
+    # day cut it off at 20 with no real failure (#1092). The limit is still what stops a stall.
+    timeout-minutes: 30
     strategy:
       # Don't cancel sibling browsers when one fails — we want the full per-browser report.
       fail-fast: false
