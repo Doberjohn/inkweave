@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-386 tests across 36 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+388 tests across 36 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised, and with `VITE_SHOW_BETA_NOTICE=true`, as production builds, so every home-page test sees the hero where players do, below the beta notice on screens narrower than 1400 px (`beta-notice.spec.ts`). Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -116,9 +116,9 @@ The card overview modal loads on demand (#640). Both tests hold the modal's modu
 | a cold open shows the loading shell, then the modal takes over | Clicking a featured card while the modal's chunk is held shows `card-overview-fallback` and no modal; releasing the chunk shows the modal and removes the shell |
 | the loading shell closes on a scrim click, like the modal | A click on `card-overview-fallback-backdrop` removes the shell, and the chunk arriving afterwards opens no modal |
 
-## `card-data-loading.spec.ts`: 9 tests (every project; the search test desktop only)
+## `card-data-loading.spec.ts`: 10 tests (every project; the search test desktop only)
 
-The homepage renders its featured cards from a small prebuilt file, `/data/featuredCards.json`, and loads the full card database only when something needs it, or on its own 2 s after the page has loaded and gone idle (#641). The card loader and the reveal dates share one `previewCards.json` request. Some tests hold `**/data/allCards.json` with `page.route` to keep that database from arriving; others replace `requestIdleCallback` (and `cancelIdleCallback`) with a version that never runs, so the deferred load waits for a trigger. The last two fail the card list on purpose (#1061): data the page can't read, as an out-of-date copy of the app meets after the data's shape changes, and a request that never completes.
+The homepage renders its featured cards from a small prebuilt file, `/data/featuredCards.json`, and loads the full card database only when something needs it, or on its own 2 s after the page has loaded and gone idle (#641). The card loader and the reveal dates share one `previewCards.json` request. Some tests hold `**/data/allCards.json` with `page.route` to keep that database from arriving; others replace `requestIdleCallback` (and `cancelIdleCallback`) with a version that never runs, so the deferred load waits for a trigger. The last four fail the card list on purpose (#1061): data the page can't read, as an out-of-date copy of the app meets after the data's shape changes, a request that never completes or answers an error, and the same screen on the playstyle pages, which keep no screen of their own for it (#1065).
 
 | Test | What it verifies |
 |---|---|
@@ -131,6 +131,7 @@ The homepage renders its featured cards from a small prebuilt file, `/data/featu
 | card data the page cannot read offers Reload, which reloads the page | `allCards.json` answered with `{"cards": "unreadable"}`: `/browse` shows "Error loading cards" with the line "The card data couldn't be read." and a Reload button, no Try Again; pressing Reload loads the page again (a marker set on `window` before it is gone) |
 | a card list that never arrived offers Try Again, and a retry that lands shows the cards | The first `allCards.json` request aborted (`internetdisconnected`): `/browse` shows "Error loading cards" with "Couldn't reach Inkweave." and Try Again, no Reload; pressing Try Again lets the request through and the card tiles show |
 | a card list that came back with a server error offers Try Again, and a retry that lands shows the cards | The first `allCards.json` request answered 503: `/browse` shows "Error loading cards" with "Inkweave couldn't send the card data (error 503)." and Try Again, no Reload; pressing Try Again lets the request through and the card tiles show |
+| the playstyle pages show the same screen for a card list that failed | #1065. `allCards.json` answered 503: `/playstyles` and then `/playstyles/discard` each show AppLayout's "Error loading cards" with Try Again, and no page-level "Failed to load card data." view. Shown to fail with AppLayout's early return removed |
 
 ## `card-search.spec.ts` — 9 tests (desktop only, 1 of them chromium only)
 
@@ -148,7 +149,7 @@ The browse/playstyle search input lives in the toolbar (next to Filters), not th
 | a search lists the sets 1-8 cards Core doesn't have, opened in the card window (#911) | `/browse?q=Ariel+On+Human` lists Ariel - On Human Legs (Set 1) as a button, not a link, since it has no card page; clicking it opens `card-overview-modal` titled with its name, with `card-overview-outside-core` where the synergies would be. After the dialog's 100ms initial-focus timer, Escape closes it, and "Ariel Singing Mermaid" in `browse-search` leaves one tile, the Core card, linking to `/card/<id>/ariel-singing-mermaid`: Set 9 reprints Set 4's Singing Mermaid, so Set 4's printing adds no tile of its own |
 | a search downloads sets 1-8 and the promos once, and never sets 9-14 (#911) | Chromium only: it asserts the network. `/browse` requests nothing under `/data/collection/`; "Ariel", then "Ariel On Human" (its Set 1 card shows), then an emptied box and "Stitch" request `1.json` to `8.json` and `promos.json` once each, and no `9.json` to `14.json`. Each fill waits for the box to show it (`toHaveValue`): the box shows the URL's query, which each change sets in a transition, and the URL moves before the transition renders, so a fill made once the URL changed could still land on the text before it ("ArielAriel On Human") |
 
-## `browse-filters.spec.ts`: 10 tests (8 desktop only, 2 mobile only)
+## `browse-filters.spec.ts`: 11 tests (9 desktop only, 2 mobile only)
 
 Every other spec sets Browse's filters through the URL. These press the filter buttons and check `aria-pressed` and the URL param each one writes (`useFilterParams.ts`), which is what a shared link carries. The desktop tests use the panel docked beside the cards at 1024px and wider (`complementary` "Filters"), where Type, Keyword, Classification and Set start folded behind a header button; the phone tests use the Filters drawer, which applies only on Apply and folds the same sections (owner, 2026-10-26). The last desktop test checks the status line that tells screen readers what the grid lists.
 
@@ -160,6 +161,7 @@ Every other spec sets Browse's filters through the URL. These press the filter b
 | a rarity | "Legendary" turns pressed and writes `rarity=Legendary` |
 | a card type, a keyword and a classification, each in its folded section | Unfolds Type, Keyword and Classification (`aria-expanded`); Character, Evasive and Hero each turn pressed and write `type=Character`, `keyword=Evasive` and `classification=Hero` |
 | an ink, then Dual-ink cards | "Filter by Amber" writes `ink=Amber`, and the "Dual-ink cards" toggle it reveals writes `inkmatch=dual` |
+| two inks clicked before the grid redraws both stay | #1056. "Filter by Amber" and "Filter by Steel" clicked in one task (`evaluate`), so the second runs the handlers of the render before the first: the URL ends with `ink=Amber%2CSteel` and both buttons turn pressed. Fails on master, which keeps only `ink=Steel` (`useSearchParamsWriter`) |
 | with the panel closed, the active chips list the filters and one can be dismissed | After Cost 3 and Evasive, the Filters button closes the panel; the chips "Cost: 3" and "Evasive" show (only while it is closed), and dismissing "Cost: 3" drops `cost=` and keeps `keyword=Evasive` |
 | a status line says how many cards match, and changes with each filter | WCAG 4.1.3 (accessibility check, 2026-10-26). `browse-count` has `role="status"` and reads "Showing 204 of N cards" on load (`LAYOUT.maxDisplayedCards`: the grid lists only its first 204); "Filter by Amber" changes it to Amber's count; a search no card matches makes it read "No cards match your filters.", and it is the only `status` with those words, since the grid's copy of them is no live region |
 | a pick applies only on Apply | Phone drawer: "Cost 3" turns pressed with no `cost=` in the URL yet; "Apply" writes `cost=3` and closes the drawer |

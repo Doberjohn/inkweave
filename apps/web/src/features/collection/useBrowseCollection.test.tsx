@@ -128,6 +128,15 @@ function renderBinderParams(url: string, reader: Reader) {
 }
 
 describe('useBinderParams', () => {
+  it('keeps a set and a view written before a render', () => {
+    const {result} = renderBinderParams('/browse?binder=14', COLLECTOR);
+    act(() => {
+      result.current.writeBinder('9');
+      result.current.writeShow('missing');
+    });
+    expect(result.current.search).toBe('binder=9&owned=missing');
+  });
+
   it('opens the set a set filter names on entering, and drops the filter', () => {
     // Until the account answers, the page drops no strays, so entering drops the filter itself.
     const {result} = renderBinderParams('/browse?set=5,9&ink=Amber', AWAITING);

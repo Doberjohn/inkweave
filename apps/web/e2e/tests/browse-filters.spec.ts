@@ -86,6 +86,23 @@ test.describe('Browse filters picked in the desktop panel', () => {
     await press(page, 'Dual-ink cards', /[?&]inkmatch=dual(&|$)/);
   });
 
+  // Both clicks in one task, so no render can land between them: the second runs the handlers of
+  // the render before the first (#1056).
+  test('two inks clicked before the grid redraws both stay', async ({page}) => {
+    await panel(page).evaluate((aside) => {
+      for (const ink of ['Amber', 'Steel']) {
+        aside.querySelector<HTMLButtonElement>(`[aria-label="Filter by ${ink}"]`)!.click();
+      }
+    });
+    await expect(page).toHaveURL(/[?&]ink=Amber%2CSteel(&|$)/);
+    for (const ink of ['Amber', 'Steel']) {
+      await expect(panel(page).getByRole('button', {name: `Filter by ${ink}`, exact: true})).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
+    }
+  });
+
   test('with the panel closed, the active chips list the filters and one can be dismissed', async ({page}) => {
     await press(page, 'Cost 3', /[?&]cost=3(&|$)/);
     await unfold(page, 'Keyword');

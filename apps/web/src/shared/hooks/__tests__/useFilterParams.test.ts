@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
 import {renderHook, act} from '@testing-library/react';
-import {MemoryRouter, useSearchParams} from 'react-router-dom';
+import {MemoryRouter, useLocation, useSearchParams} from 'react-router-dom';
 import {useFilterParams} from '../useFilterParams';
 import {trackEvent} from '../../lib/analytics';
 import type {ReactNode} from 'react';
@@ -14,7 +14,53 @@ function createWrapper(initialEntries: string[] = ['/']) {
   };
 }
 
+/** The hook beside the location it writes, at `url`. */
+function renderWithUrl(url: string) {
+  return renderHook(() => ({params: useFilterParams(), location: useLocation()}), {wrapper: createWrapper([url])});
+}
+
 describe('useFilterParams', () => {
+  // A click that lands before the last one's render runs that render's handlers (#1056).
+  describe('writes made before a render', () => {
+    it('keeps both inks from two toggles before a render', () => {
+      const {result} = renderWithUrl('/browse');
+      act(() => {
+        result.current.params.toggleInk('Amber');
+        result.current.params.toggleInk('Steel');
+      });
+      expect(result.current.location.search).toBe('?ink=Amber%2CSteel');
+    });
+
+    it('keeps Clear all when an ink follows it before a render', () => {
+      const {result} = renderWithUrl('/browse?ink=Amber&cost=3');
+      act(() => {
+        result.current.params.clearAllFilters();
+        result.current.params.toggleInk('Steel');
+      });
+      expect(result.current.location.search).toBe('?ink=Steel');
+    });
+
+    it('starts from the committed URL once a write has rendered', () => {
+      const {result} = renderWithUrl('/browse?ink=Amber');
+      act(() => result.current.params.toggleInk('Steel'));
+      act(() => result.current.params.toggleInk('Amber'));
+      expect(result.current.location.search).toBe('?ink=Steel');
+    });
+
+    it('counts each toggle once, against the write before it', () => {
+      vi.mocked(trackEvent).mockClear();
+      const {result} = renderWithUrl('/browse');
+      act(() => {
+        result.current.params.toggleInk('Amber');
+        result.current.params.toggleInk('Steel');
+      });
+      expect(vi.mocked(trackEvent).mock.calls).toEqual([
+        ['filter_applied', {facet: 'ink', value: 'Amber', action: 'add', via: 'inline'}],
+        ['filter_applied', {facet: 'ink', value: 'Steel', action: 'add', via: 'inline'}],
+      ]);
+    });
+  });
+
   describe('analytics', () => {
     beforeEach(() => {
       vi.clearAllMocks();
