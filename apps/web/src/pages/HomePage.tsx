@@ -3,11 +3,11 @@ import {useNavigate} from 'react-router-dom';
 import {FeaturedCards, type LorcanaCard} from '../features/cards';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {trackEvent} from '../shared/lib/analytics';
-import {HeroSection, EtherealBackground, ErrorBoundary, Footer, Seo} from '../shared/components';
+import {BetaNotice, HeroSection, EtherealBackground, ErrorBoundary, Footer, Seo} from '../shared/components';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
-import {HOME_PAGE_STYLE, homeMainStyle} from './homeFrame';
+import {HOME_PAGE_STYLE, SHOW_BETA_NOTICE, homeMainStyle} from './homeFrame';
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -38,6 +38,7 @@ export function HomePage() {
         description="Free Disney Lorcana synergy finder for Core format. Discover the strongest card combos and archetype pairings, with community-voted synergy scores, and build better decks."
         canonicalPath="/"
       />
+      {SHOW_BETA_NOTICE && <BetaNotice />}
       {/* The card list waits here until 2 s after the page has loaded (#641); a press or focus
           anywhere in the page (the search box, a featured card) starts it at once, since both
           need it. */}

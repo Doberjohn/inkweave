@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 2,
+  "week": "2026-10-26",
+  "title": "October 26 to November 1, 2026",
+  "summary": "Every playstyle page now ends with a guide to playing it, phone filter sheets fold like the desktop panel, and an update no longer leaves a tab stuck on the old version.",
+  "sections": {
+    "new": [
+      {
+        "title": "How to play guides",
+        "body": "Each of the 25 playstyle pages now ends with a short guide to playing it: how the deck wins, how to build it, and its key cards, each a link to the card.",
+        "highlight": true,
+        "link": {
+          "label": "Browse the playstyles",
+          "to": "/playstyles"
+        },
+        "prs": [
+          1005
+        ]
+      }
+    ],
+    "improved": [
+      {
+        "title": "Phone filters fold like the panel",
+        "body": "On phones, the filter sheets on Browse, playstyle pages and card pages now open as the desktop panel does: Ink, Inkwell, Ink Cost and Rarity open, Type, Keyword, Classification and Set folded, each folded heading naming what you picked. Playstyle and ink pages show three cards across on phones, at Browse's size.",
+        "highlight": true,
+        "prs": [
+          1023
+        ]
+      },
+      {
+        "title": "Keyboard and screen readers",
+        "body": "A Skip to main content link is now the first stop when you press Tab, and screen readers hear how many cards Browse lists after each filter or search. The focus ring shows in full on the header's links and in solid gold on search fields and Sort menus.",
+        "prs": [
+          1031,
+          1033
+        ]
+      }
+    ],
+    "fixed": [
+      {
+        "title": "Stuck update message",
+        "body": "When another tab or the installed app took an update, a tab could keep showing \"Updating to new version...\" for good, still on the old version. Every open tab now reloads onto the new version once, and the message goes after 10 seconds at most.",
+        "highlight": true,
+        "prs": [
+          1011
+        ]
+      },
+      {
+        "title": "Error loading cards after an update",
+        "body": "A copy of the site saved before October 25 couldn't read the new card data and showed \"Error loading cards\", and Try Again only repeated the failure. From now on, a copy that can't read the card data looks for the new version at once and updates, and the error screen offers Reload, keeping Try Again for when the data never arrives.",
+        "prs": [
+          1062
+        ]
+      },
+      {
+        "title": "Inkwell filter chips",
+        "body": "In the Filters panel, Inkable and Uninkable now stay on one row beside the panel's scrollbar.",
+        "prs": [
+          1037
+        ]
+      },
+      {
+        "title": "Browse's grid when the window changes size",
+        "body": "Resizing the window, or opening or closing the Filters panel, no longer shows the grid for a moment with the wrong amount of room to scroll. On browsers that show a scrollbar, such as on Windows, the grid's first frame is sized right too.",
+        "prs": [
+          1048,
+          1053
+        ]
+      }
+    ],
+    "engine": [
+      {
+        "title": "A Ramp score follows the votes",
+        "body": "Deck ramp with a repeating inkwell trigger now scores 7 instead of 8, the same as deck ramp with a once-per-turn trigger, closer to how players rate these pairs in community votes.",
+        "link": {
+          "label": "Vote on synergies",
+          "to": "/vote"
+        },
+        "prs": [
+          994
+        ]
+      }
+    ]
+  },
+  "behindTheScenes": "Plus 34 behind-the-scenes changes: dependency updates, test and tooling work, design cleanups, shared components moving into one package, error reporting, analytics, and work on features that aren't switched on yet."
+}
