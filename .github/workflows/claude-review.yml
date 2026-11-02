@@ -128,7 +128,7 @@ jobs:
         # step's shorter one leaves the report time to say the review didn't finish.
         # Setup takes under a minute, well inside the job's 35.
         timeout-minutes: 25
-        uses: anthropics/claude-code-action@925afb53776cf1a2b738c6bdbed37b4d4000ef13 # v1
+        uses: anthropics/claude-code-action@6d5ae526d25ce88daa2200be073e1a373167f064 # v1
         env:
           # Keeps the Claude token and the job's GitHub token out of the shell commands
           # Claude runs, and runs them in the sandbox above. So gh can't reach GitHub from

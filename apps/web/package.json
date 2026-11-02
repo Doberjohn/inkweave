@@ -26,18 +26,18 @@
     "check:design": "node scripts/check-design-tokens.mjs"
   },
   "dependencies": {
-    "@sentry/react": "^11.8.0",
+    "@sentry/react": "^11.10.0",
     "@supabase/auth-js": "^2.118.0",
     "@supabase/postgrest-js": "^2.118.0",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "inkweave-synergy-engine": "workspace:*",
     "inkweave-ui": "workspace:*",
-    "posthog-js": "^1.438.19",
+    "posthog-js": "^1.442.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-loading-skeleton": "^3.5.0",
-    "react-router-dom": "^7.18.4"
+    "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
