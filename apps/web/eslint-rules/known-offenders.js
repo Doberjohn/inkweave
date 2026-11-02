@@ -64,7 +64,6 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/voting/components/OptionPicker.stories.tsx', // x3
     'apps/web/src/features/voting/components/QuickVoteControl.tsx', // x21
     'apps/web/src/pages/NotFoundPage.tsx', // x4
-    'apps/web/src/shared/components/BetaNotice.tsx', // x1
     'packages/ui/src/components/CountBadge.tsx', // x1
     'packages/ui/src/components/EtherealBackground.tsx', // x4
     'packages/ui/src/components/FilterButton.stories.tsx', // x1
@@ -121,7 +120,6 @@ export const KNOWN_OFFENDERS = {
   // 5 files, 5 violations at seeding
   'no-raw-z-index': [
     'apps/web/src/features/reveals/RevealsPromoCard.tsx', // x1
-    'apps/web/src/shared/components/BetaNotice.tsx', // x1
     'apps/web/src/shared/components/MobileBottomNav.tsx', // x1
   ],
   // 23 files, 54 violations at seeding
@@ -158,7 +156,6 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/pages/PlaystyleGalleryPage.tsx', // x1
     'apps/web/src/pages/PrivacyPage.tsx', // x1
     'apps/web/src/pages/VotePage.tsx', // x7
-    'apps/web/src/shared/components/BetaNotice.tsx', // x1
     'apps/web/src/shared/components/CompactHeader.tsx', // x2
     'packages/ui/src/lorcana/ConnectionGroup.tsx', // x2
     'apps/web/src/shared/components/HeroSection.tsx', // x8

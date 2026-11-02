@@ -194,10 +194,9 @@ export default defineConfig({
       // Show Strategy Tips block so the `playstyle-detail.spec.ts` toggle test has
       // a rendered button to interact with. Production default stays off via .env.example.
       VITE_SHOW_STRATEGY_TIPS: 'true',
-      // Suppress the beta notice in E2E so existing home-page tests don't see an
-      // unexpected floating card. If a future test covers the notice itself, flip
-      // to 'true' and clear localStorage in beforeEach.
-      VITE_SHOW_BETA_NOTICE: 'false',
+      // The home page's beta notice, on as in production, so every home-page test runs with
+      // the hero where players see it; `beta-notice.spec.ts` covers the notice itself.
+      VITE_SHOW_BETA_NOTICE: 'true',
       // A production build (`preview`) starts Sentry and PostHog when it has their keys
       // (shared/lib/sentry.ts, posthog.ts), and with SENTRY_AUTH_TOKEN vite.config.ts uploads its
       // source maps, then deletes dist/**/*.map, the deploy build's included. Blank all three, so
