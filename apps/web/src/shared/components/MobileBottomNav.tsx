@@ -9,9 +9,9 @@ import {lazyWithRetry} from '../lib/lazyWithRetry';
 const SHOW_ACCOUNTS = import.meta.env.VITE_SHOW_ACCOUNTS === 'true';
 
 // The nav sits in the entry chunk, so the dialog waits for the first Sign in tap. It comes from
-// the header's chunk, which every page with the nav but Not found and Compare has already loaded:
-// importing its own module would split the dialog out of that chunk into a file of its own, about
-// 600 B more startup JS.
+// the header's chunk, which most pages with the nav have already loaded (a page drawn without the
+// header, such as Not found, fetches it on the tap): importing its own module would split the
+// dialog out of that chunk into a file of its own, about 600 B more startup JS.
 const SignInDialog = lazyWithRetry(() => import('./CompactHeader'), 'SignInDialog');
 
 /** Height of the nav bar in CSS px. Used for bottom padding on page content. */
