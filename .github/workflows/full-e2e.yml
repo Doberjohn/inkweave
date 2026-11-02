@@ -3,10 +3,11 @@ name: Full E2E
 # The browsers CI's every push leaves out (#1086). A pull request gets firefox, webkit and
 # mobile-safari once, when it opens ready for review or a draft is marked ready; later pushes run
 # chromium and mobile-chrome only (ci.yml), so the PC that runs CI carries about half the load.
-# Adding the full-e2e label runs them again on the pull request's newest commit: do that before
-# merging a change that a later push made to layout, CSS or browser-specific code. Master gets all
-# five browsers nightly, which catches what a later push broke, and Run workflow runs all five on
-# any branch.
+# Adding the full-e2e label runs them again on the pull request's newest commit (if it is already
+# there, remove it and add it again: GitHub sends nothing for a label a PR already has). Do that
+# before merging a change that a later push made to layout, CSS or browser-specific code. A draft
+# gets none, label or not, until it is marked ready. Master gets all five browsers nightly, which
+# catches what a later push broke, and Run workflow runs all five on any branch.
 on:
   pull_request:
     branches: [master, main]
@@ -20,22 +21,25 @@ on:
 permissions:
   contents: read
 
-# A newer request for the same branch replaces the run still going. Pushes start no run here, so
-# they never cancel one. A label other than full-e2e gets a group of its own run, so the run it
-# skips can't cancel one either.
+# A newer request of the same kind for the same branch replaces the run still going: the nightly
+# run and Run workflow never cancel each other, and pushes start no run here. A pull request event
+# the job skips (a draft, or a label other than full-e2e) gets a group of its own run, so it can't
+# cancel a run that is testing. The skip test here and the job's if are the same rule.
 concurrency:
   group: >-
-    ${{ github.event.action == 'labeled' && github.event.label.name != 'full-e2e'
+    ${{ github.event_name == 'pull_request'
+      && (github.event.pull_request.draft
+        || (github.event.action == 'labeled' && github.event.label.name != 'full-e2e'))
       && format('full-e2e-skip-{0}', github.run_id)
-      || format('full-e2e-{0}', github.ref) }}
+      || format('full-e2e-{0}-{1}', github.event_name, github.ref) }}
   cancel-in-progress: true
 
 jobs:
   e2e:
     if: >-
       github.event_name != 'pull_request'
-      || (github.event.action == 'labeled' && github.event.label.name == 'full-e2e')
-      || (github.event.action != 'labeled' && !github.event.pull_request.draft)
+      || (!github.event.pull_request.draft
+        && (github.event.action != 'labeled' || github.event.label.name == 'full-e2e'))
     uses: ./.github/workflows/e2e.yml
     with:
       # Firefox, webkit and mobile-safari test a production build (#869), where a page loads a

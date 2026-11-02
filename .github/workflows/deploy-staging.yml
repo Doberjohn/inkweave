@@ -68,8 +68,10 @@ jobs:
       (github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]'))
     # Every job here runs on the owner's PC while the repository variable CI_ON_PC is 'true',
-    # except for a fork's pull request, which never runs there (docs/SELF_HOSTED_RUNNER.md).
-    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
+    # except a pull request from another repository's branch. That keeps an ordinary fork's PR
+    # off the PC, but a fork's PR runs its own copy of this file, so the repo being private is
+    # what keeps strangers' code off it (docs/SELF_HOSTED_RUNNER.md).
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
     timeout-minutes: 5
     outputs:
       version: ${{ steps.pw.outputs.version }}
@@ -98,7 +100,7 @@ jobs:
       vars.DEPLOY_VIA_CI == 'true' && (github.event_name == 'push' ||
       (github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]'))
-    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
     # A few minutes without the crawl. A cold card image cache adds about 15 (#579).
     timeout-minutes: 30
     # deploy.yml's container, so the card image cache is gzip here too and this job restores the

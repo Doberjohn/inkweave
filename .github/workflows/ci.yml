@@ -16,8 +16,10 @@ concurrency:
 jobs:
   security-audit:
     # Every job here runs on the owner's PC while the repository variable CI_ON_PC is 'true',
-    # except for a fork's pull request, which never runs there (docs/SELF_HOSTED_RUNNER.md).
-    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
+    # except a pull request from another repository's branch. That keeps an ordinary fork's PR
+    # off the PC, but a fork's PR runs its own copy of this file, so the repo being private is
+    # what keeps strangers' code off it (docs/SELF_HOSTED_RUNNER.md).
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
 
     steps:
       - name: Checkout code
@@ -45,7 +47,7 @@ jobs:
         run: pnpm dlx pnpm@11.28.2 audit --pm-on-fail=ignore --audit-level high
 
   build-and-test:
-    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
     # Coverage is collected and uploaded on master pushes only (#964). The second value says
     # whether the token is set, so no step needs the token itself to decide.
     env:
@@ -165,14 +167,14 @@ jobs:
               || echo "::warning::CodeScene coverage upload failed ($metric)"
           done
 
-  # E2E on a pull request's every push: chromium and mobile-chrome, which share a job (#867), on
-  # the dev server, where React logs its development-only errors, which the console guard fails
-  # on, and a PR pushed without the pre-push hook gets that check here. Firefox, webkit and
-  # mobile-safari run once per pull request, when it opens ready for review, and nightly on master
-  # (full-e2e.yml), so the PC that runs CI carries about half the load (#1086). A push to master
-  # runs no E2E: its pull request ran them on the merge ref.
+  # E2E on every push: chromium and mobile-chrome, which share a job (#867), on the dev server,
+  # where React logs its development-only errors, which the console guard fails on, and a PR
+  # pushed without the pre-push hook gets that check here. Master's pushes run it too: admin's
+  # tools commit card data and tuning straight to master, and a merge can land on a master that
+  # moved since the PR's last run. Firefox, webkit and mobile-safari run once per pull request,
+  # when it opens ready for review, and nightly on master (full-e2e.yml), so the PC that runs CI
+  # carries about half the load (#1086).
   e2e:
-    if: github.event_name == 'pull_request'
     uses: ./.github/workflows/e2e.yml
     with:
       matrix: '[{"projects": ["chromium", "mobile-chrome"], "server": "dev"}]'

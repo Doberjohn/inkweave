@@ -5,10 +5,11 @@ While the repo is private, every minute a job spends on GitHub's runners counts 
 ## How jobs find the PC
 
 - **One switch.** The repository variable `CI_ON_PC` (Settings → Secrets and variables → Actions → Variables). Set to `true`, jobs go to runners labelled `inkweave-linux` (Ubuntu in WSL2) and `inkweave-windows` (Windows itself). Unset, they go to GitHub's `ubuntu-latest` and `windows-latest`, as before.
-- **Forks never run on the PC.** A pull request from a fork always gets GitHub's runners, whatever the switch says.
+- **Who can run code on the PC.** Anyone whose push or pull request starts a workflow. While the repo is private, that is you, the people you give access to, and Dependabot: only people with access can fork a private repo. Keep Settings → Actions → General → Fork pull request workflows → "Run workflows from fork pull requests" off. The routing rule sends a pull request from any other repository to GitHub's runners, but that is no barrier on its own: a fork's pull request runs the workflow files on its own branch, which can name the PC's label directly. So **keep the repo private while the runners are registered**, and take them off before it goes public (Day to day, below).
+- **Dependabot proposes versions a week old.** `.github/dependabot.yml` sets a 7-day `cooldown` (GitHub's default is 3), so a newly published version reaches a pull request, and the PC, only after it has been out a week, by when most bad releases have been pulled. Security updates don't wait.
 - **Two workflows stay on GitHub:** Claude review, which installs a sandbox with `sudo` and changes a kernel setting, and the drift alarm, which has to run while the PC is off. `scripts/ci-runners.test.mjs` fails a job that runs anywhere else.
 - **While the PC is off, jobs wait.** GitHub holds a job for a self-hosted runner up to 24 hours, then fails it; re-run it once the PC is back. Deploy waits too, so a merge reaches inkweave.ink only when the PC is on, and the drift alarm opens its issue after 3 hours.
-- **Which browsers run when** (to keep the PC's load down): chromium and mobile-chrome on every pull request push (`ci.yml`); firefox, webkit and mobile-safari once when a pull request opens ready for review, again whenever the `full-e2e` label is added, and all five nightly on master and on Run workflow (`full-e2e.yml`).
+- **Which browsers run when** (to keep the PC's load down): chromium and mobile-chrome on every push, to a pull request or to master (`ci.yml`); firefox, webkit and mobile-safari once when a pull request opens ready for review, again whenever the `full-e2e` label is added (remove it and add it again if it's already there), never on a draft, and all five nightly on master and on Run workflow (`full-e2e.yml`).
 
 ## What the PC needs
 
@@ -139,8 +140,8 @@ Settings → Secrets and variables → Actions → Variables → New repository 
 
 - **The PC was off:** queued jobs start when it's back. Re-run any that failed after 24 hours, and Deploy's newest run if a merge never reached inkweave.ink.
 - **Something is wrong with the PC:** delete `CI_ON_PC`. Every job goes back to GitHub's runners at once, paid while the repo is private.
-- **The repo goes public:** delete `CI_ON_PC` too. Public repos run on GitHub's runners for free, and GitHub advises against self-hosted runners on public repos, since anyone can open a pull request (forks never reach the PC here, but there is no reason to keep it busy).
-- **Secrets:** Deploy's and Deploy Staging's secrets (the Vercel token among them) reach the PC's runner during those jobs, as they reached GitHub's.
+- **The repo goes public:** take the runners off it first. Deleting `CI_ON_PC` alone isn't enough: anyone can then open a pull request, and a fork's pull request can name the PC's label in its own copy of a workflow. Remove every runner (Removing them, below; keep the distro and the scheduled task if you'll be back), then delete `CI_ON_PC`. Public repos run on GitHub's runners for free. When it's private again, cancel any run still queued (Actions, filter `is:queued`), then register the runners again (steps 3 and 5) and set `CI_ON_PC`.
+- **Secrets, and what stays behind:** Deploy's and Deploy Staging's secrets (the Vercel token among them) reach the PC's runners during those jobs. GitHub's runners start clean for every job; the PC's keep their files between jobs (each runner's folder, the pnpm store, Docker images, `gha`'s home), so code that ran in one job could leave something behind for a later one. That is why only your own code and week-old bumps run there, and why a job keeps its temporary files in `$RUNNER_TEMP`, which the runner empties for each job, never `/tmp`, which the runners share.
 - The runners update themselves.
 
 ## Removing them

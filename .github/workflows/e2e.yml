@@ -1,6 +1,6 @@
 name: E2E
 
-# The E2E jobs, called by ci.yml (chromium and mobile-chrome on every PR push) and full-e2e.yml
+# The E2E jobs, called by ci.yml (chromium and mobile-chrome on every push) and full-e2e.yml
 # (the other browsers when a PR opens, and all of them nightly and on request). The caller picks
 # the browsers, so each layout lives in one place and the job itself in this one.
 on:
@@ -21,9 +21,10 @@ jobs:
   # fails here, not as an unpullable image in every e2e job. deploy.yml, deploy-staging.yml and
   # perf-gates.yml (as handoff-playwright-version) run the same job.
   playwright-version:
-    # On the owner's PC while the repository variable CI_ON_PC is 'true', except for a fork's
-    # pull request, which never runs there (docs/SELF_HOSTED_RUNNER.md).
-    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
+    # On the owner's PC while the repository variable CI_ON_PC is 'true', except a pull request
+    # from another repository's branch. A fork's PR runs its own copy of this file, so the repo
+    # being private is what keeps strangers' code off the PC (docs/SELF_HOSTED_RUNNER.md).
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
     timeout-minutes: 5
     outputs:
       version: ${{ steps.pw.outputs.version }}
@@ -50,8 +51,9 @@ jobs:
     # Split by Playwright project so the browsers run in parallel jobs instead of serially in
     # a single job. Previous serial layout sat at an 18m baseline against a 30m wall — variance
     # alone was timing out runs. Parallel matrix gives each browser its own runner + timeout,
-    # except chromium and mobile-chrome, which share one (see ci.yml's matrix).
-    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
+    # except chromium and mobile-chrome, which share one (see the matrices in ci.yml and
+    # full-e2e.yml).
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
     needs: playwright-version
     # Playwright's image ships the browsers and their system packages, so this job installs
     # nothing from apt and downloads no browsers. It used to apt-install about 100 of those
