@@ -175,6 +175,9 @@ type AnalyticsEvents = {
   // Friends who have it, behind SHOW_COLLECTION and SHOW_FRIENDS: where it was opened from.
   // Never an id, handle or name.
   friends_who_have_it_opened: {from: 'badge' | 'window'};
+  // A press of a link to the Discord server's invite, where beta testers report bugs. `surface` is
+  // where the link sits.
+  discord_invite_clicked: {surface: 'beta_notice'};
 };
 
 /**

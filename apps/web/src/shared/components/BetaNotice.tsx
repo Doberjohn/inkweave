@@ -1,6 +1,7 @@
 import type {CSSProperties} from 'react';
 import discordLogo from '../../assets/discord.svg?no-inline';
 import {SHOW_COLLECTION} from '../../features/collection/flag';
+import {trackEvent} from '../lib/analytics';
 import {
   CAP_LABEL_XS,
   COLORS,
@@ -38,6 +39,16 @@ const CARD_STYLE = {
   fontFamily: FONTS.body,
 } as CSSProperties;
 
+// The pill and the title share a line; where it can't hold both, the title wraps under the pill.
+const HEADING_STYLE: CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  columnGap: SPACING.sm,
+  rowGap: SPACING.xs,
+  marginBottom: SPACING.xs,
+};
+
 const PILL_STYLE: CSSProperties = {
   ...CAP_LABEL_XS,
   display: 'inline-block',
@@ -49,7 +60,7 @@ const PILL_STYLE: CSSProperties = {
 };
 
 const TITLE_STYLE: CSSProperties = {
-  margin: `${SPACING.sm}px 0 ${SPACING.xs}px`,
+  margin: 0,
   fontFamily: FONTS.hero,
   fontWeight: 400,
   fontSize: FONT_SIZES.xxxl,
@@ -79,6 +90,11 @@ const LINK_STYLE: CSSProperties = {
   whiteSpace: 'nowrap',
 };
 
+// The invite opens in a new tab, so the page stays to send the event.
+function trackInviteClick() {
+  trackEvent('discord_invite_clicked', {surface: 'beta_notice'});
+}
+
 /**
  * The home page's beta notice: says what is in beta, thanks the people testing it, and invites
  * them to the Discord, where bugs and ideas go. Rendered before the page's `<main>`, since a
@@ -90,8 +106,10 @@ export function BetaNotice() {
   return (
     <aside aria-label="Beta notice" className="beta-notice" style={CARD_STYLE}>
       <div className="beta-notice-copy">
-        <span style={PILL_STYLE}>Beta</span>
-        <p style={TITLE_STYLE}>{subject} is in beta</p>
+        <div style={HEADING_STYLE}>
+          <span style={PILL_STYLE}>Beta</span>
+          <p style={TITLE_STYLE}>{subject} is in beta</p>
+        </div>
         <p style={LINE_STYLE}>Thanks for testing! Found a bug or have an idea? Tell us on Discord.</p>
       </div>
       <a
@@ -99,6 +117,7 @@ export function BetaNotice() {
         href={DISCORD_INVITE_URL}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={trackInviteClick}
         style={LINK_STYLE}>
         <img src={discordLogo} alt="" width={20} height={15} />
         Join our Discord

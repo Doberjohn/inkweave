@@ -1,5 +1,6 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
-import {render, screen} from '@testing-library/react';
+import {fireEvent, render, screen} from '@testing-library/react';
+import {trackEvent} from '../../lib/analytics';
 import {BetaNotice, DISCORD_INVITE_URL} from '../BetaNotice';
 
 // The flag is a module constant, so the mock serves it through a getter each case sets.
@@ -10,8 +11,11 @@ vi.mock('../../../features/collection/flag', () => ({
   },
 }));
 
+vi.mock('../../lib/analytics', () => ({trackEvent: vi.fn()}));
+
 afterEach(() => {
   flags.collection = true;
+  vi.mocked(trackEvent).mockClear();
 });
 
 describe('BetaNotice', () => {
@@ -41,6 +45,22 @@ describe('BetaNotice', () => {
     expect(link).toHaveAttribute('href', DISCORD_INVITE_URL);
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('counts each press of the invite, saying only where the link sits', () => {
+    render(<BetaNotice />);
+    const link = screen.getByRole('link', {name: 'Join our Discord'});
+    // A click on a link with target _blank opens nothing in jsdom, so the page stays.
+    fireEvent.click(link);
+    expect(trackEvent).toHaveBeenCalledTimes(1);
+    expect(trackEvent).toHaveBeenCalledWith('discord_invite_clicked', {surface: 'beta_notice'});
+    fireEvent.click(link);
+    expect(trackEvent).toHaveBeenCalledTimes(2);
+  });
+
+  it('sends nothing until the invite is pressed', () => {
+    render(<BetaNotice />);
+    expect(trackEvent).not.toHaveBeenCalled();
   });
 
   it('is a landmark named for screen readers', () => {
