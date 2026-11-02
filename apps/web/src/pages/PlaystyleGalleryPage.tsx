@@ -13,6 +13,8 @@ import {
   SPACING,
   PLAYSTYLE_UI,
   type PlaystyleUiMeta,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
 } from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
@@ -87,7 +89,7 @@ function PageIntro({layout}: {layout: LayoutConfig}) {
         style={{
           fontFamily: FONTS.body,
           fontSize: `${FONT_SIZES.xxxl}px`,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           color: COLORS.text,
           margin: '0 0 4px',
         }}>
@@ -97,7 +99,7 @@ function PageIntro({layout}: {layout: LayoutConfig}) {
         style={{
           fontSize: `${FONT_SIZES.lg}px`,
           color: COLORS.descriptionText,
-          lineHeight: 1.5,
+          lineHeight: LINE_HEIGHT.base,
           maxWidth: layout.maxSubtitleWidth,
           margin: '0 auto',
         }}>

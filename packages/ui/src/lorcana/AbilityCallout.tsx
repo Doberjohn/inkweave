@@ -1,4 +1,4 @@
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../tokens/theme';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, FONT_WEIGHT, LINE_HEIGHT} from '../tokens/theme';
 
 export type AbilityCalloutVariant = 'standalone' | 'stacked-after-tag';
 
@@ -24,8 +24,8 @@ export function AbilityCallout({variant = 'standalone', children}: AbilityCallou
         color: COLORS.lorcanaTextDark,
         fontFamily: FONTS.body,
         fontSize: `${FONT_SIZES.base}px`,
-        fontWeight: 600,
-        lineHeight: 1.4,
+        fontWeight: FONT_WEIGHT.semibold,
+        lineHeight: LINE_HEIGHT.snug,
         padding: `${SPACING.md}px ${SPACING.section}px`,
         borderRadius: variant === 'stacked-after-tag' ? `0 ${r} ${r} ${r}` : r,
         boxShadow: ABILITY_BOX_SHADOW,

@@ -1,7 +1,7 @@
 import {type ReactNode, useState} from 'react';
 import {Link, NavLink} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, INSET_FOCUS_RING, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX, searchFieldStyle} from '../constants';
+import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, INSET_FOCUS_RING, LAYOUT, RADIUS, SHADOWS, SPACING, Z_INDEX, searchFieldStyle, FONT_WEIGHT} from '../constants';
 import {useAutocomplete, useHover} from '../hooks';
 import {suggestCardsByName} from '../../features/cards/loader';
 import {useRevealPhase} from '../../features/reveals';
@@ -210,7 +210,7 @@ function HeaderLogo({showBackArrow, viewport, onClick}: HeaderLogoProps) {
         textDecoration: 'none',
       }}>
       {showBackArrow && (
-        <span aria-hidden="true" style={{fontSize: `${FONT_SIZES.base}px`, fontWeight: 500, color: COLORS.primary}}>
+        <span aria-hidden="true" style={{fontSize: `${FONT_SIZES.base}px`, fontWeight: FONT_WEIGHT.medium, color: COLORS.primary}}>
           ←
         </span>
       )}
@@ -357,7 +357,7 @@ function NavItemLink({
           color: getNavItemColor(state),
           fontFamily: FONTS.body,
           fontSize: `${FONT_SIZES.base}px`,
-          fontWeight: isActive ? 600 : 500,
+          fontWeight: isActive ? FONT_WEIGHT.semibold : FONT_WEIGHT.medium,
           textDecoration: 'none',
           transition: `background 0.2s ${EASING.snappy}, color 0.2s ${EASING.snappy}, box-shadow 0.2s ${EASING.snappy}`,
           boxShadow: getNavItemBoxShadow(state),
@@ -392,7 +392,7 @@ function RevealsPill({isHovered, onMouseEnter, onMouseLeave}: RevealsPillProps) 
         borderRadius: RADIUS.pill,
         fontFamily: FONTS.body,
         fontSize: `${FONT_SIZES.base}px`,
-        fontWeight: 600,
+        fontWeight: FONT_WEIGHT.semibold,
         textDecoration: 'none',
         transform: isHovered ? 'translateY(-1px)' : 'translateY(0)',
         transition: `transform 0.2s ${EASING.snappy}, box-shadow 0.2s ${EASING.snappy}`,
@@ -406,7 +406,7 @@ function RevealsPill({isHovered, onMouseEnter, onMouseLeave}: RevealsPillProps) 
         aria-hidden="true"
         style={{
           fontSize: FONT_SIZES.xs,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           padding: '2px 6px',
           borderRadius: RADIUS.pill,
           background: COLORS.filterText,
@@ -515,7 +515,7 @@ const SKIP_LINK_STYLE: React.CSSProperties = {
   borderRadius: `${RADIUS.lg}px`,
   fontFamily: FONTS.body,
   fontSize: `${FONT_SIZES.base}px`,
-  fontWeight: 600,
+  fontWeight: FONT_WEIGHT.semibold,
   textDecoration: 'none',
 };
 

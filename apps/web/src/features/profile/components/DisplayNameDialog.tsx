@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {CtaButton, DialogShell} from '../../../shared/components';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, FONT_WEIGHT, LINE_HEIGHT} from '../../../shared/constants';
 import {DISPLAY_NAME_RULE, clampDisplayName, isValidDisplayName, updateDisplayName} from '../profileRepository';
 
 interface DisplayNameDialogProps {
@@ -81,14 +81,14 @@ export function DisplayNameDialog({isOpen, onClose, userId, current, onSaved}: D
       ariaLabel="Change your display name"
       size="sm"
       panelStyle={{padding: SPACING.xl, fontFamily: FONTS.body}}>
-      <h2 style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>Your name</h2>
+      <h2 style={{fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.regular, fontSize: FONT_SIZES.xxl, color: COLORS.text, margin: 0}}>Your name</h2>
       <p
         style={{
           color: COLORS.textMuted,
           fontFamily: FONTS.body,
           fontSize: `${FONT_SIZES.sm}px`,
           marginTop: SPACING.xs,
-          lineHeight: 1.6,
+          lineHeight: LINE_HEIGHT.relaxed,
         }}>
         This is the name shown on every deck you publish. {DISPLAY_NAME_RULE}
       </p>

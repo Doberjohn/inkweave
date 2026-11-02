@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
 import {INK_COLORS} from '../tokens/lorcana';
-import {FONT_SIZES, RADIUS} from '../tokens/theme';
+import {FONT_SIZES, RADIUS, FONT_WEIGHT} from '../tokens/theme';
 import {useArtLoad, type ArtProps} from '../hooks/useArtLoad';
 import {InkCardPlaceholder} from './InkCardPlaceholder';
 
@@ -36,7 +36,7 @@ function CostFallback({inkColor, cost, height}: {inkColor: Ink; cost: number; he
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-      <span style={{fontSize: `${fontSize}px`, fontWeight: 600, color: colors.text}}>{cost}</span>
+      <span style={{fontSize: `${fontSize}px`, fontWeight: FONT_WEIGHT.semibold, color: colors.text}}>{cost}</span>
     </div>
   );
 }

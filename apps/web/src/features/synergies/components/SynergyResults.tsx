@@ -15,6 +15,7 @@ import {
   SPACING,
   RADIUS,
   SYNERGY_SORT_OPTIONS,
+  FONT_WEIGHT,
 } from '../../../shared/constants';
 
 interface SynergyResultsProps {
@@ -70,7 +71,7 @@ function SynergyResultsHeader({totalSynergyCount}: {totalSynergyCount: number}) 
       <h2
         style={{
           fontSize: `${FONT_SIZES.xl}px`,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           color: COLORS.text,
           letterSpacing: LETTER_SPACING.eyebrow,
           textTransform: 'uppercase',
@@ -85,7 +86,7 @@ function SynergyResultsHeader({totalSynergyCount}: {totalSynergyCount: number}) 
           padding: `${SPACING.xxs}px ${SPACING.sm}px`,
           borderRadius: `${RADIUS.sm}px`,
           fontSize: `${FONT_SIZES.xs}px`,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           minWidth: 20,
           textAlign: 'center',
         }}>

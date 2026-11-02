@@ -43,6 +43,8 @@ import {
   TABULAR,
   TRUNCATE,
   VISUALLY_HIDDEN,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
 } from '../../shared/constants';
 
 /** How far through one set you are, of the cards counted; a set's tally carries both. Filtered, a set may count none. */
@@ -479,7 +481,7 @@ function triggerStyle({on: open, hovered}: Look, {withArt, geometry}: Shape): CS
 
 const NAME_STYLE: CSSProperties = {
   fontSize: `${FONT_SIZES.lg}px`,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   lineHeight: 1.25,
   display: '-webkit-box',
   WebkitLineClamp: 2,
@@ -566,7 +568,7 @@ function triggerName({setCode, size, figures}: Pick<TriggerProps, 'setCode' | 's
  * Each of the row's two lines: 13px, the set panel's smallest type, set tight enough that the
  * two and the button's border stay inside the row's 34px.
  */
-const ROW_LINE: CSSProperties = {fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.2};
+const ROW_LINE: CSSProperties = {fontSize: `${FONT_SIZES.base}px`, lineHeight: LINE_HEIGHT.tight};
 
 /** The figures' line: gold, as the strip's figures were, in tabular digits. */
 const ROW_FIGURES: CSSProperties = {...ROW_LINE, ...TABULAR, color: COLORS.primary, whiteSpace: 'nowrap'};
@@ -587,7 +589,7 @@ function RowLabel({setCode, figures}: Pick<TriggerProps, 'setCode' | 'figures'>)
   return (
     <>
       <span aria-hidden="true" style={{minWidth: 0, display: 'flex', flexDirection: 'column'}}>
-        <span style={{...ROW_LINE, ...TRUNCATE, fontWeight: 700}}>{scopeName(setCode)}</span>
+        <span style={{...ROW_LINE, ...TRUNCATE, fontWeight: FONT_WEIGHT.bold}}>{scopeName(setCode)}</span>
         {figures ? (
           <span style={ROW_FIGURES}>{figures.shown}</span>
         ) : (
@@ -605,7 +607,7 @@ function RowLabel({setCode, figures}: Pick<TriggerProps, 'setCode' | 'figures'>)
 function TriggerLabel({setCode, sets, size, figures}: Pick<TriggerProps, 'setCode' | 'sets' | 'size' | 'figures'>) {
   if (size === 'row') return <RowLabel setCode={setCode} figures={figures} />;
   if (size === 'toolbar') {
-    return <span style={{...TRUNCATE, fontSize: `${FONT_SIZES.lg}px`, fontWeight: 700}}>{compactLabel(setCode)}</span>;
+    return <span style={{...TRUNCATE, fontSize: `${FONT_SIZES.lg}px`, fontWeight: FONT_WEIGHT.bold}}>{compactLabel(setCode)}</span>;
   }
   return (
     <span style={{minWidth: 0, display: 'flex', flexDirection: 'column', gap: SPACING.xxs}}>
@@ -744,7 +746,7 @@ const percentStyle = (done: boolean): CSSProperties => ({
   ...TABULAR,
   fontSize: `${FONT_SIZES.base}px`,
   color: done ? COLORS.primary : COLORS.textMuted,
-  fontWeight: done ? 700 : 400,
+  fontWeight: done ? FONT_WEIGHT.bold : FONT_WEIGHT.regular,
 });
 
 interface SetOptionProps {
@@ -778,7 +780,7 @@ function SetOption({setCode, progress, selected, onPick}: SetOptionProps) {
       // A promo set's name can run past the row: whole on hover.
       title={isPromoSet(setCode) ? setName(setCode) : undefined}
       onClick={() => onPick(setCode)}
-      style={{...optionStyle({on: selected, hovered}), fontWeight: spans ? 700 : 500}}>
+      style={{...optionStyle({on: selected, hovered}), fontWeight: spans ? FONT_WEIGHT.bold : FONT_WEIGHT.medium}}>
       {/* Centered in its column (owner, 2026-10-20), a number and a promo code alike. */}
       <span style={{...TABULAR, fontSize: `${FONT_SIZES.base}px`, color: COLORS.textMuted, textAlign: 'center'}}>
         {spans ? '' : setCode}

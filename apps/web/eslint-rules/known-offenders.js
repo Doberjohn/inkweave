@@ -149,11 +149,9 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/synergies/components/SynergyToolbar.tsx', // x3
     'apps/web/src/features/voting/components/DistributionBar.tsx', // x4
     'apps/web/src/features/voting/components/ScorePicker.tsx', // x5
-    'apps/web/src/pages/BrowsePage.tsx', // x1
     'apps/web/src/pages/InDepthVotePage.tsx', // x9
     'apps/web/src/pages/InkHubPage.tsx', // x1
     'apps/web/src/pages/NotFoundPage.tsx', // x1
-    'apps/web/src/pages/PlaystyleGalleryPage.tsx', // x1
     'apps/web/src/pages/PrivacyPage.tsx', // x1
     'apps/web/src/pages/VotePage.tsx', // x7
     'apps/web/src/shared/components/CompactHeader.tsx', // x2
@@ -165,6 +163,56 @@ export const KNOWN_OFFENDERS = {
     'packages/ui/src/components/DialogShell.tsx', // x1
     'packages/ui/src/components/TabList.tsx', // x1
     'packages/ui/src/tokens/theme.ts', // x1
+  ],
+  // Seeded 2026-11-02 when the rule turned on (#544). The sweep that day turned every exact
+  // match into a LETTER_SPACING token; these files keep values between the steps, so their
+  // text doesn't move. Stories and src/docs/ are exempt.
+  // 26 files, 38 values at seeding
+  'no-raw-letter-spacing': [
+    'apps/web/src/features/cards/components/FeaturedCards.tsx', // x2
+    'apps/web/src/features/cards/components/FeaturedCardsSkeleton.tsx', // x2
+    'apps/web/src/features/reveals/FranchiseCardsModal.tsx', // x1
+    'apps/web/src/features/reveals/InkBoard.tsx', // x3
+    'apps/web/src/features/reveals/InkTrackerTile.tsx', // x2
+    'apps/web/src/features/reveals/NewFranchises.tsx', // x3
+    'apps/web/src/features/reveals/RevealHero.tsx', // x2
+    'apps/web/src/features/reveals/RevealsPromoCard.tsx', // x1
+    'apps/web/src/features/reveals/SpotlightHero.tsx', // x3
+    'apps/web/src/features/reveals/WhatsNewSection.tsx', // x1
+    'apps/web/src/features/synergies/components/CommunityEmptyState.tsx', // x1
+    'apps/web/src/features/synergies/components/DeltaPanel.tsx', // x1
+    'apps/web/src/features/synergies/components/MobileLightbox.tsx', // x1
+    'apps/web/src/features/synergies/components/ScoreChevronsTab.tsx', // x1
+    'apps/web/src/features/synergies/components/SynergyGroup.tsx', // x1
+    'apps/web/src/features/voting/components/DistributionBar.tsx', // x1
+    'apps/web/src/features/voting/components/ScorePicker.tsx', // x1
+    'apps/web/src/pages/BrowsePage.tsx', // x1
+    'apps/web/src/pages/InkGalleryPage.tsx', // x1
+    'apps/web/src/pages/InkHubPage.tsx', // x1
+    'apps/web/src/pages/NotFoundPage.tsx', // x3
+    'apps/web/src/shared/components/CompactHeader.tsx', // x1
+    'apps/web/src/shared/components/SearchAutocomplete.tsx', // x1
+    'apps/web/src/shared/components/SearchBottomSheet.tsx', // x1
+    'packages/ui/src/components/ResultCount.tsx', // x1
+    'packages/ui/src/lorcana/AbilityTag.tsx', // x1
+  ],
+  // Seeded 2026-11-02 with no-raw-letter-spacing (#544): values between LINE_HEIGHT's steps.
+  // 14 files, 18 values at seeding
+  'no-raw-line-height': [
+    'apps/web/src/features/collection/CollectionBinder.tsx', // x1
+    'apps/web/src/features/collection/SetPicker.tsx', // x2
+    'apps/web/src/features/playstyles/PlaystyleGuide.tsx', // x1
+    'apps/web/src/features/reveals/InkBoard.tsx', // x1
+    'apps/web/src/features/reveals/NewFranchises.tsx', // x1
+    'apps/web/src/features/reveals/RevealsPromoCard.tsx', // x1
+    'apps/web/src/features/reveals/SpotlightHero.tsx', // x1
+    'apps/web/src/features/synergies/components/CardOverviewModal.tsx', // x1
+    'apps/web/src/features/synergies/components/ColumnHeader.tsx', // x1
+    'apps/web/src/features/voting/components/VoteAffirmation.tsx', // x2
+    'apps/web/src/pages/HomePageSkeleton.tsx', // x2
+    'apps/web/src/pages/InkGalleryPage.tsx', // x1
+    'apps/web/src/shared/components/HeroSection.tsx', // x2
+    'apps/web/src/shared/components/LegalPage.tsx', // x1
   ],
   // Ad-hoc styled <button> sites pre-dating the #509 kit. Converge each to a
   // kit component (CtaButton/LinkButton/TabList/IconButton/Chip) on touch.

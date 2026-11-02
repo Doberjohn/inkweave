@@ -17,7 +17,7 @@ import {
   MOBILE_NAV_HEIGHT,
   Seo,
 } from '../shared/components';
-import {COLORS, FONTS, FONT_SIZES, SPACING, VISUALLY_HIDDEN} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, SPACING, VISUALLY_HIDDEN, FONT_WEIGHT} from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected, type CardSelectSource} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
@@ -110,7 +110,7 @@ function BrowseContentSection({
         style={{
           padding: titlePadding,
           fontSize: `${FONT_SIZES.xxl}px`,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           color: COLORS.text,
           letterSpacing: '0.06em',
           textTransform: 'uppercase',

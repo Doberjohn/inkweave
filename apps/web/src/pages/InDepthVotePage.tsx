@@ -26,6 +26,7 @@ import {
   VISUALLY_HIDDEN,
   hexRgba,
   whiteRgba,
+  FONT_WEIGHT,
 } from '../shared/constants';
 
 /** Inject keyframes once at module load */
@@ -160,7 +161,7 @@ type ProgressVisuals = {
   barBg: string;
   barShadow: string;
   barAnimation: string | undefined;
-  labelWeight: 700 | 600;
+  labelWeight: typeof FONT_WEIGHT.bold | typeof FONT_WEIGHT.semibold;
   labelColor: string;
   labelShadow: string;
   labelText: string;
@@ -177,7 +178,7 @@ function buildProgressVisuals(
       barBg: `linear-gradient(90deg, ${COLORS.success}, ${TIER_COLORS.strong.color}, ${COLORS.success})`,
       barShadow: `0 0 12px 2px ${hexRgba(TIER_COLORS.strong.color, 0.4)}`,
       barAnimation: `idv-complete-pulse 2s ${EASING.smooth} infinite`,
-      labelWeight: 700,
+      labelWeight: FONT_WEIGHT.bold,
       labelColor: TIER_COLORS.strong.color,
       labelShadow: `0 0 8px ${hexRgba(TIER_COLORS.strong.color, 0.4)}`,
       labelText: '✓ Complete',
@@ -188,7 +189,7 @@ function buildProgressVisuals(
     barBg: `linear-gradient(90deg, ${COLORS.primary700}, ${COLORS.primary600}, ${COLORS.primary}, ${COLORS.primaryHover})`,
     barShadow: `0 0 ${8 + glowIntensity * 12}px ${1 + glowIntensity * 2}px ${hexRgba(COLORS.primary, 0.15 + glowIntensity * 0.25)}`,
     barAnimation: undefined,
-    labelWeight: 600,
+    labelWeight: FONT_WEIGHT.semibold,
     labelColor: COLORS.primary,
     labelShadow: `0 0 ${4 + glowIntensity * 6}px ${hexRgba(COLORS.primary, 0.1 + glowIntensity * 0.2)}`,
     labelText: `${answeredCount} / ${TOTAL_DIMENSIONS}`,
@@ -285,7 +286,7 @@ function ProgressEncouragement({answeredCount, maxWidth}: {answeredCount: number
           color: COLORS.primary,
           fontFamily: FONTS.body,
           textAlign: 'center',
-          fontWeight: 500,
+          fontWeight: FONT_WEIGHT.medium,
           fontStyle: 'italic',
         }}>
         Every response helps calibrate synergy scores.
@@ -381,7 +382,7 @@ function SuccessCard({
           />
         </svg>
       </div>
-      <span style={{fontSize: FONT_SIZES.xxl, fontWeight: 700, color: COLORS.primary, fontFamily: FONTS.body}}>
+      <span style={{fontSize: FONT_SIZES.xxl, fontWeight: FONT_WEIGHT.bold, color: COLORS.primary, fontFamily: FONTS.body}}>
         Thanks for your feedback!
       </span>
       <span style={{fontSize: FONT_SIZES.base, color: COLORS.text, fontFamily: FONTS.body}}>{insight}</span>
@@ -550,7 +551,7 @@ function InDepthErrorView({
           gap: 16,
         }}>
         <h1
-          style={{fontSize: FONT_SIZES.xl, fontWeight: 700, color: COLORS.text, fontFamily: FONTS.body, margin: 0}}>
+          style={{fontSize: FONT_SIZES.xl, fontWeight: FONT_WEIGHT.bold, color: COLORS.text, fontFamily: FONTS.body, margin: 0}}>
           {error ?? 'Pair not found'}
         </h1>
         <CtaButton variant="ghost" onClick={onLogoClick}>

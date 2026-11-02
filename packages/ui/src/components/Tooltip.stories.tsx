@@ -1,5 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
-import {COLORS, FONT_SIZES, GOLD_GLOW} from '../tokens/theme';
+import {COLORS, FONT_SIZES, GOLD_GLOW, FONT_WEIGHT} from '../tokens/theme';
 import {HelpTooltip, Tooltip} from './Tooltip';
 
 const meta: Meta<typeof Tooltip> = {
@@ -35,7 +35,7 @@ const InfoButton = ({label, describedBy}: {label: string; describedBy: string | 
       border: `1px solid ${GOLD_GLOW.hoverBorder}`,
       color: COLORS.primary,
       fontSize: FONT_SIZES.md,
-      fontWeight: 700,
+      fontWeight: FONT_WEIGHT.bold,
       cursor: 'help',
       lineHeight: 1,
     }}>

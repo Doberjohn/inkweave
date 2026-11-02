@@ -1,6 +1,6 @@
 import {Link} from 'react-router-dom';
 import {GoldTag, legalLinkStyle} from '../../shared/components';
-import {CAP_LABEL, COLORS, FONT_SIZES, SPACING} from '../../shared/constants';
+import {CAP_LABEL, COLORS, FONT_SIZES, SPACING, FONT_WEIGHT} from '../../shared/constants';
 import {
   RELEASE_NOTES_SECTIONS,
   SECTION_HEADINGS,
@@ -21,7 +21,7 @@ const weekStyle: React.CSSProperties = {
 const weekHeadingStyle: React.CSSProperties = {
   margin: 0,
   fontSize: FONT_SIZES.xxl,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   color: COLORS.text,
 };
 
@@ -55,7 +55,7 @@ const titleRowStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: SPACING.sm,
   color: COLORS.text,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
 };
 
 const followStyle: React.CSSProperties = {margin: `${SPACING.xs}px 0 0`};

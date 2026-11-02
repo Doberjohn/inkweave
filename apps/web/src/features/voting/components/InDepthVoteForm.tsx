@@ -19,6 +19,8 @@ import {
   TIER_COLORS,
   hexRgba,
   whiteRgba,
+  FONT_WEIGHT,
+  LETTER_SPACING,
 } from '../../../shared/constants';
 
 export type FormLayout = 'stacked' | 'tabbed';
@@ -106,10 +108,10 @@ const DIFFICULTY_OPTIONS = [
 function CategoryHeader({stepRange, label, accent, compact}: {stepRange: string; label: string; accent: string; compact?: boolean}) {
   return (
     <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm, marginBottom: compact ? SPACING.xs : SPACING.md}}>
-      <span style={{fontSize: FONT_SIZES.xs, fontWeight: 700, color: accent, background: hexRgba(accent, 0.1), padding: '2px 8px', borderRadius: RADIUS.pill, fontFamily: FONTS.body}}>
+      <span style={{fontSize: FONT_SIZES.xs, fontWeight: FONT_WEIGHT.bold, color: accent, background: hexRgba(accent, 0.1), padding: '2px 8px', borderRadius: RADIUS.pill, fontFamily: FONTS.body}}>
         {stepRange}
       </span>
-      <span style={{fontSize: FONT_SIZES.sm, color: COLORS.textMuted, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONTS.body}}>
+      <span style={{fontSize: FONT_SIZES.sm, color: COLORS.textMuted, fontWeight: FONT_WEIGHT.medium, textTransform: 'uppercase', letterSpacing: LETTER_SPACING.eyebrow, fontFamily: FONTS.body}}>
         {label}
       </span>
     </div>
@@ -164,7 +166,7 @@ function DimensionSection({label, stepNumber, accentColor, isAnswered, animation
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: FONT_SIZES.xs,
-            fontWeight: 700,
+            fontWeight: FONT_WEIGHT.bold,
             color: isAnswered ? COLORS.background : accentColor,
             background: isAnswered ? accentColor : 'transparent',
             fontFamily: FONTS.body,
@@ -173,7 +175,7 @@ function DimensionSection({label, stepNumber, accentColor, isAnswered, animation
           }}>
           {isAnswered ? '✓' : stepNumber}
         </span>
-        <span style={{fontSize: FONT_SIZES.base, fontWeight: 600, color: COLORS.text, fontFamily: FONTS.body, flex: 1}}>
+        <span style={{fontSize: FONT_SIZES.base, fontWeight: FONT_WEIGHT.semibold, color: COLORS.text, fontFamily: FONTS.body, flex: 1}}>
           {label}
         </span>
       </div>

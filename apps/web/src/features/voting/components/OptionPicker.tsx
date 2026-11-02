@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, whiteRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, whiteRgba, FONT_WEIGHT} from '../../../shared/constants';
 
 export interface OptionPickerOption<T> {
   key: string;
@@ -120,7 +120,7 @@ export function OptionPicker<T>({ariaLabel, options, value, onChange, isMobile, 
             background: colors.hintBg,
             border: `2px solid ${colors.border}`,
             color: colors.border,
-            fontWeight: 700,
+            fontWeight: FONT_WEIGHT.bold,
             boxShadow: `0 0 16px ${colors.glow}`,
             opacity: 1,
           }
@@ -130,7 +130,7 @@ export function OptionPicker<T>({ariaLabel, options, value, onChange, isMobile, 
               ? `1px solid ${colors.hoverBorder}`
               : `1px solid ${whiteRgba(0.08)}`,
             color: isHovered ? COLORS.text : COLORS.textMuted,
-            fontWeight: 500,
+            fontWeight: FONT_WEIGHT.medium,
             boxShadow: isHovered ? `inset 0 0 12px ${colors.glow}` : 'none',
             opacity: isDimmed ? 0.45 : 1,
           }),

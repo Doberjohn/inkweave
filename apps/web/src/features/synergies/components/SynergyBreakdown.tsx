@@ -1,5 +1,5 @@
 import type {SynergyGroup} from '../types';
-import {COLORS, FONT_SIZES, SPACING, TRUNCATE} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, SPACING, TRUNCATE, FONT_WEIGHT, LETTER_SPACING, LINE_HEIGHT} from '../../../shared/constants';
 import {getDominantScore, getStrengthTier} from '../utils';
 import {StrengthBadge, TierCircle} from '../../../shared/components';
 
@@ -33,9 +33,9 @@ export function SynergyBreakdown({
         <div
           style={{
             fontSize: `${FONT_SIZES.xs}px`,
-            fontWeight: 600,
+            fontWeight: FONT_WEIGHT.semibold,
             color: COLORS.textMuted,
-            letterSpacing: '0.1em',
+            letterSpacing: LETTER_SPACING.wide,
             textTransform: 'uppercase',
             marginBottom: `${SPACING.xs}px`,
           }}>
@@ -44,7 +44,7 @@ export function SynergyBreakdown({
         <div
           style={{
             fontSize: `${FONT_SIZES.xxxl}px`,
-            fontWeight: 700,
+            fontWeight: FONT_WEIGHT.bold,
             color: COLORS.primary,
           }}>
           {totalCount}
@@ -52,7 +52,7 @@ export function SynergyBreakdown({
             style={{
               fontSize: `${FONT_SIZES.sm}px`,
               color: COLORS.textMuted,
-              fontWeight: 400,
+              fontWeight: FONT_WEIGHT.regular,
               marginLeft: 4,
             }}>
             cards
@@ -81,8 +81,8 @@ export function SynergyBreakdown({
                 style={{
                   fontSize: `${FONT_SIZES.sm}px`,
                   color: COLORS.text,
-                  fontWeight: 500,
-                  lineHeight: 1.2,
+                  fontWeight: FONT_WEIGHT.medium,
+                  lineHeight: LINE_HEIGHT.tight,
                   ...TRUNCATE,
                 }}>
                 {group.label}

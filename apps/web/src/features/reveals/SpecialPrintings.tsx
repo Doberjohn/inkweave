@@ -1,6 +1,6 @@
 import {useRef} from 'react';
 import type {CardPrinting, Ink, LorcanaCard, VariantRarity} from 'inkweave-synergy-engine';
-import {CAP_LABEL_XS, COLORS, FONT_SIZES, ICON_SIZE, SPACING, TABULAR, hexRgba} from '../../shared/constants';
+import {CAP_LABEL_XS, COLORS, FONT_SIZES, ICON_SIZE, SPACING, TABULAR, hexRgba, FONT_WEIGHT} from '../../shared/constants';
 import {useContainerWidth} from '../../shared/hooks';
 import {CardSlot} from './CardSlot';
 import {ROWS_MOBILE} from './CardMosaic';
@@ -118,7 +118,7 @@ export function SpecialPrintings({ink, slots, onOpenPrinting, compact = false, s
     >
       <div style={{display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: SPACING.md}}>
         <span style={CAP_LABEL_XS}>Alt arts</span>
-        <span style={{...TABULAR, fontSize: FONT_SIZES.base, fontWeight: 700, color: COLORS.text}}>
+        <span style={{...TABULAR, fontSize: FONT_SIZES.base, fontWeight: FONT_WEIGHT.bold, color: COLORS.text}}>
           {revealed}
           {/* textMuted, not textDim: at 13px textDim gives 3.5:1 on the page, under the 4.5:1 WCAG asks. */}
           <span style={{color: COLORS.textMuted}}> / {slots.length}</span>

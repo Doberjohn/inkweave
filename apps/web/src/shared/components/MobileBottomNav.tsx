@@ -1,5 +1,5 @@
 import {NavLink, useLocation} from 'react-router-dom';
-import {COLORS, FONTS, LAYOUT, REVEAL_SET_NUMBER} from '../constants';
+import {COLORS, FONTS, LAYOUT, REVEAL_SET_NUMBER, FONT_WEIGHT} from '../constants';
 import {useRevealPhase, type RevealPhase} from '../../features/reveals';
 
 /** Height of the nav bar in CSS px. Used for bottom padding on page content. */
@@ -354,7 +354,7 @@ function ActiveLabelStrip({label, visible}: ActiveLabelStripProps) {
         bottom: 13,
         textAlign: 'center',
         fontSize: 13,
-        fontWeight: 500,
+        fontWeight: FONT_WEIGHT.medium,
         color: COLORS.text,
         fontFamily: FONTS.body,
         opacity: visible ? 1 : 0,

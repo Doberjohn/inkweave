@@ -1,6 +1,6 @@
 import {useState, type ReactNode} from 'react';
 import './reveals.css';
-import {COLORS, FONTS, REVEAL_SET_NUMBER} from '../../shared/constants';
+import {COLORS, FONTS, REVEAL_SET_NUMBER, FONT_WEIGHT} from '../../shared/constants';
 import type {FranchiseConfig} from './franchise';
 import {SpotlightHero} from './SpotlightHero';
 import {SET_SPOTLIGHTS, FRANCHISE_SPOTLIGHTS} from './setSpotlights';
@@ -68,7 +68,7 @@ function WhatsNewTab({label, isActive, compact, id, controls, onSelect}: {label:
         cursor: 'pointer',
         font: 'inherit',
         fontSize: compact ? 12 : 13,
-        fontWeight: 600,
+        fontWeight: FONT_WEIGHT.semibold,
         letterSpacing: 0.3,
         padding: compact ? '7px 14px' : '9px 18px',
         borderRadius: 999,
@@ -122,7 +122,7 @@ export function WhatsNewSection({compact = false, onSelectFranchise}: WhatsNewSe
       <div style={{textAlign: 'center', marginBottom: hasTabBar ? s.headerMargin : s.tablistMargin}}>
         <div
           style={{
-            fontWeight: 600,
+            fontWeight: FONT_WEIGHT.semibold,
             fontSize: s.eyebrowSize,
             letterSpacing: s.eyebrowSpacing,
             textTransform: 'uppercase',
@@ -131,7 +131,7 @@ export function WhatsNewSection({compact = false, onSelectFranchise}: WhatsNewSe
         >
           New this set
         </div>
-        <h2 style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: s.titleSize, color: '#ececf2', margin: '10px 0 0'}}>
+        <h2 style={{fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.regular, fontSize: s.titleSize, color: '#ececf2', margin: '10px 0 0'}}>
           What&apos;s new in Set {REVEAL_SET_NUMBER}
         </h2>
       </div>

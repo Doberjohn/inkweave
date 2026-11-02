@@ -1,6 +1,6 @@
 import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
 import {CardGrid} from '../cards/components/CardGrid';
-import {COLORS, FONTS, FONT_SIZES, INK_COLORS, SHADOWS} from '../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, INK_COLORS, SHADOWS, FONT_WEIGHT} from '../../shared/constants';
 import {DialogShell, IconButton} from '../../shared/components';
 import {inkRgba} from './inkTint';
 
@@ -58,15 +58,15 @@ export function FranchiseCardsModal({source, cards, onClose, onCardClick}: Franc
         }}
       >
         <div>
-          <div style={{fontWeight: 600, fontSize: FONT_SIZES.xs, letterSpacing: 2, textTransform: 'uppercase', color: inkText}}>
+          <div style={{fontWeight: FONT_WEIGHT.semibold, fontSize: FONT_SIZES.xs, letterSpacing: 2, textTransform: 'uppercase', color: inkText}}>
             New this set
           </div>
-          <h2 style={{fontFamily: FONTS.hero, fontWeight: 400, fontSize: FONT_SIZES.xxxl, color: COLORS.text, margin: '4px 0 0'}}>
+          <h2 style={{fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.regular, fontSize: FONT_SIZES.xxxl, color: COLORS.text, margin: '4px 0 0'}}>
             {source.label}
           </h2>
         </div>
         <div style={{display: 'flex', alignItems: 'center', gap: 14}}>
-          <span style={{fontWeight: 600, fontSize: FONT_SIZES.base, color: COLORS.textMuted}}>
+          <span style={{fontWeight: FONT_WEIGHT.semibold, fontSize: FONT_SIZES.base, color: COLORS.textMuted}}>
             {cards.length} card{cards.length === 1 ? '' : 's'}
           </span>
           <IconButton type="button" onClick={onClose} aria-label="Close" size={34} style={{fontSize: FONT_SIZES.xl}}>

@@ -1,4 +1,4 @@
-import {COLORS, FONT_SIZES} from '../tokens/theme';
+import {COLORS, FONT_SIZES, FONT_WEIGHT} from '../tokens/theme';
 
 interface ResultCountProps {
   resultCount: number;
@@ -13,12 +13,12 @@ export function ResultCount({resultCount, totalCount, ...rest}: ResultCountProps
       data-testid={rest['data-testid']}
       style={{
         fontSize: `${FONT_SIZES.base}px`,
-        fontWeight: 600,
+        fontWeight: FONT_WEIGHT.semibold,
         color: COLORS.textMuted,
         letterSpacing: '0.5px',
         textTransform: 'uppercase',
       }}>
-      <strong style={{color: COLORS.text, fontWeight: 700}}>{resultCount}</strong>{' '}
+      <strong style={{color: COLORS.text, fontWeight: FONT_WEIGHT.bold}}>{resultCount}</strong>{' '}
       {resultCount === totalCount ? 'cards' : `of ${totalCount} cards`}
     </span>
   );

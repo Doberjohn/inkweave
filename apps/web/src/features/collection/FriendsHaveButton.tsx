@@ -1,6 +1,6 @@
 import type {CSSProperties} from 'react';
 import {LinkButton} from '../../shared/components';
-import {COLORS, FOIL_SHEEN, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING} from '../../shared/constants';
+import {COLORS, FOIL_SHEEN, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, FONT_WEIGHT} from '../../shared/constants';
 import {useHover} from '../../shared/hooks';
 import {ChevronIcon, PeopleIcon} from '../friends/icons';
 
@@ -48,7 +48,7 @@ const BUTTON_STYLE: CSSProperties = {
   border: '1px solid',
   color: COLORS.text,
   fontSize: `${FONT_SIZES.lg}px`,
-  fontWeight: 600,
+  fontWeight: FONT_WEIGHT.semibold,
   cursor: 'pointer',
   whiteSpace: 'nowrap',
 };

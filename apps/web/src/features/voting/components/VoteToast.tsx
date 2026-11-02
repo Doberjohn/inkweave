@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SHADOWS, SPACING, TIER_COLORS, TRUNCATE, Z_INDEX} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, RADIUS, SHADOWS, SPACING, TIER_COLORS, TRUNCATE, Z_INDEX, FONT_WEIGHT} from '../../../shared/constants';
 import {LinkButton} from 'inkweave-ui/components/LinkButton';
 import type {Score} from '../../../shared/lib/supabase';
 import {getStrengthTier} from 'inkweave-ui/lib/scoreUtils';
@@ -41,7 +41,7 @@ function ScoreCircle({score, label}: {score: number; label: string}) {
           alignItems: 'center',
           justifyContent: 'center',
         }}>
-        <span style={{fontSize: FONT_SIZES.base, fontWeight: 700, color: tier.color, fontFamily: FONTS.body}}>
+        <span style={{fontSize: FONT_SIZES.base, fontWeight: FONT_WEIGHT.bold, color: tier.color, fontFamily: FONTS.body}}>
           {score}
         </span>
       </div>
@@ -125,8 +125,8 @@ export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
         }}>
         {/* Header */}
         <div style={{display: 'flex', alignItems: 'center', gap: SPACING.sm}}>
-          <span style={{color: TIER_COLORS.strong.color, fontSize: FONT_SIZES.lg, fontWeight: 700}}>✓</span>
-          <span style={{fontSize: FONT_SIZES.base, fontWeight: 600, color: COLORS.text, fontFamily: FONTS.body}}>
+          <span style={{color: TIER_COLORS.strong.color, fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHT.bold}}>✓</span>
+          <span style={{fontSize: FONT_SIZES.base, fontWeight: FONT_WEIGHT.semibold, color: COLORS.text, fontFamily: FONTS.body}}>
             Vote submitted
           </span>
           {onUndo && (
@@ -152,7 +152,7 @@ export function VoteToast({data, onDismiss, onUndo, isMobile}: VoteToastProps) {
           <ScoreCircle score={data.userScore} label="You:" />
           <span style={{fontSize: FONT_SIZES.sm, color: COLORS.textMuted, fontFamily: FONTS.body, fontStyle: 'italic'}}>vs</span>
           <ScoreCircle score={data.engineScore} label="Engine:" />
-          <span style={{fontSize: FONT_SIZES.sm, fontWeight: 600, color: reaction.color, fontFamily: FONTS.body, marginLeft: 'auto'}}>
+          <span style={{fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHT.semibold, color: reaction.color, fontFamily: FONTS.body, marginLeft: 'auto'}}>
             {data.streak && data.streak >= 2
               ? `${reaction.text} · ${data.streak} in a row!`
               : reaction.text}

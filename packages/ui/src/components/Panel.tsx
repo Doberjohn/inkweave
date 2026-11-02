@@ -1,5 +1,5 @@
 import {useId} from 'react';
-import {COLORS, FONT_SIZES, NEUTRAL_LADDER, RADIUS, SPACING} from '../tokens/theme';
+import {COLORS, FONT_SIZES, NEUTRAL_LADDER, RADIUS, SPACING, FONT_WEIGHT} from '../tokens/theme';
 
 interface PanelProps {
   /**
@@ -58,7 +58,7 @@ function PanelHeader({
         <h2
           id={titleId}
           tabIndex={titleFocusable ? -1 : undefined}
-          style={{margin: 0, fontSize: FONT_SIZES.base, fontWeight: 700, color: COLORS.text}}>
+          style={{margin: 0, fontSize: FONT_SIZES.base, fontWeight: FONT_WEIGHT.bold, color: COLORS.text}}>
           {title}
         </h2>
       )}

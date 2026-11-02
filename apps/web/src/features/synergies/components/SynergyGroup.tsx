@@ -5,7 +5,7 @@ import type {SynergyGroup as SynergyGroupData, SynergyMatchDisplay} from '../typ
 import {SynergyCard} from './SynergyCard';
 import {SynergyMoreTile} from './SynergyMoreTile';
 import {applySynergySortOrder} from '../utils';
-import {COLORS, FONT_SIZES, LAYOUT, SPACING, type SynergySortOrder} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, LAYOUT, SPACING, type SynergySortOrder, FONT_WEIGHT} from '../../../shared/constants';
 import {AbilityCallout, AbilityTag} from '../../../shared/components';
 import {useContainerWidth, useRovingTabIndex} from '../../../shared/hooks';
 
@@ -98,7 +98,7 @@ export function SynergyGroup({
                 marginBottom: `${SPACING.sm}px`,
                 color: COLORS.primary,
                 fontSize: `${FONT_SIZES.sm}px`,
-                fontWeight: 600,
+                fontWeight: FONT_WEIGHT.semibold,
                 textDecoration: 'none',
               }}>
               View the {group.label} playstyle <span aria-hidden="true">→</span>

@@ -1,4 +1,4 @@
-import {COLORS, FONTS, RADIUS} from '../../../shared/constants';
+import {COLORS, FONTS, RADIUS, FONT_WEIGHT, LETTER_SPACING} from '../../../shared/constants';
 
 /**
  * Vote-tier colors — mirror the inline values in QuickVoteControl.tsx CHOICE_COLORS.
@@ -72,7 +72,7 @@ export function DeltaPanel({engineScore, communityScore, votes}: DeltaPanelProps
       </div>
 
       <div style={FOOTNOTE_STYLE}>
-        Based on <strong style={{color: COLORS.text, fontWeight: 700}}>{votes}</strong>{' '}
+        Based on <strong style={{color: COLORS.text, fontWeight: FONT_WEIGHT.bold}}>{votes}</strong>{' '}
         community {votes === 1 ? 'vote' : 'votes'}
       </div>
     </section>
@@ -128,7 +128,7 @@ const HEADLINE_STYLE: React.CSSProperties = {
 
 const DELTA_NUMBER_STYLE: React.CSSProperties = {
   fontSize: 28,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   letterSpacing: '-0.02em',
   fontFeatureSettings: '"tnum"',
   lineHeight: 1,
@@ -136,13 +136,13 @@ const DELTA_NUMBER_STYLE: React.CSSProperties = {
 
 const ARROW_STYLE: React.CSSProperties = {
   fontSize: 18,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   marginRight: 4,
 };
 
 const DELTA_COPY_STYLE: React.CSSProperties = {
   fontSize: 12,
-  fontWeight: 600,
+  fontWeight: FONT_WEIGHT.semibold,
   color: COLORS.text,
 };
 
@@ -215,9 +215,9 @@ function ScoreMarker({color, position, labelPosition, label}: ScoreMarkerProps) 
           ...pickLabelHorizontalStyle(position),
           [labelPosition === 'above' ? 'bottom' : 'top']: 22,
           fontSize: 10,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           textTransform: 'uppercase',
-          letterSpacing: '0.08em',
+          letterSpacing: LETTER_SPACING.eyebrow,
           whiteSpace: 'nowrap',
           color,
         }}>

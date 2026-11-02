@@ -36,6 +36,8 @@ import {
   SPACING,
   PLAYSTYLE_UI,
   accentRgba,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
 } from '../shared/constants';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected, type CardSelectSource} from '../features/cards/lib/cardAnalytics';
@@ -156,7 +158,7 @@ function PlaystyleHero({
             Playstyles
           </a>
           <span aria-hidden="true" style={{fontSize: `${FONT_SIZES.xs}px`, color: COLORS.textDim}}>/</span>
-          <span style={{color: COLORS.text, fontWeight: 500}}>{name}</span>
+          <span style={{color: COLORS.text, fontWeight: FONT_WEIGHT.medium}}>{name}</span>
         </nav>
 
         {/* Header: accent dot + name */}
@@ -173,7 +175,7 @@ function PlaystyleHero({
           <h1
             style={{
               fontSize: `${FONT_SIZES.xxl}px`,
-              fontWeight: 700,
+              fontWeight: FONT_WEIGHT.bold,
               letterSpacing: LETTER_SPACING.eyebrow,
               textTransform: 'uppercase',
               margin: 0,
@@ -189,7 +191,7 @@ function PlaystyleHero({
               fontSize: `${FONT_SIZES.base}px`,
               color: COLORS.textMuted,
               maxWidth: 640,
-              lineHeight: 1.5,
+              lineHeight: LINE_HEIGHT.base,
             }}>
             {tagline}
           </p>

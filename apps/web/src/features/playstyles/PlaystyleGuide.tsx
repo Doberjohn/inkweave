@@ -12,6 +12,7 @@ import {
   ICON_SIZE,
   RADIUS,
   SPACING,
+  FONT_WEIGHT,
 } from '../../shared/constants';
 import type {PlaystyleGuide as Guide} from './playstyleGuides';
 import './playstyles.css';
@@ -22,7 +23,7 @@ const GUIDE_MAX_WIDTH = 720;
 const HEADING: CSSProperties = {
   fontFamily: FONTS.body,
   fontSize: FONT_SIZES.xxl,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   color: COLORS.text,
   margin: `0 0 ${SPACING.md}px`,
 };
@@ -55,7 +56,7 @@ const KEY_CARD = {
   background: COLORS.surface,
   color: COLORS.text,
   fontSize: FONT_SIZES.lg,
-  fontWeight: 600,
+  fontWeight: FONT_WEIGHT.semibold,
   textDecoration: 'none',
   '--key-card-edge': COLORS.surfaceBorder,
   '--key-card-hover-edge': GOLD_GLOW.activeBorder,

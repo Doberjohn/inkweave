@@ -1,7 +1,7 @@
 import type {CSSProperties} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {PrintingName, type NamedPrinting} from './PrintingName';
-import {COLORS, FONTS, FONT_SIZES, SPACING} from '../tokens/theme';
+import {COLORS, FONTS, FONT_SIZES, SPACING, FONT_WEIGHT} from '../tokens/theme';
 import {printingName, type Printing} from '../lib/printings';
 
 const meta: Meta<typeof PrintingName> = {
@@ -31,7 +31,7 @@ const ROW_STYLE: CSSProperties = {
   color: COLORS.text,
   fontFamily: FONTS.body,
   fontSize: FONT_SIZES.md,
-  fontWeight: 600,
+  fontWeight: FONT_WEIGHT.semibold,
 };
 
 function Names({printings}: {printings: NamedPrinting[]}) {

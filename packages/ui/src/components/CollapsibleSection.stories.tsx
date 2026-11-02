@@ -1,7 +1,7 @@
 import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {CollapsibleSection} from './CollapsibleSection';
-import {COLORS} from '../tokens/theme';
+import {COLORS, FONT_WEIGHT} from '../tokens/theme';
 
 const meta: Meta<typeof CollapsibleSection> = {
   title: 'Components/CollapsibleSection',
@@ -47,7 +47,7 @@ export const WithBadge: Story = {
           borderRadius: 8,
           padding: '1px 6px',
           fontSize: 10,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
         }}>
         4
       </span>

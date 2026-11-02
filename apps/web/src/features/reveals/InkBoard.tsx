@@ -1,7 +1,7 @@
 import './reveals.css';
 import {useState} from 'react';
 import type {CardPrinting, Ink, LorcanaCard} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, blackRgba, hexRgba} from '../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, INK_COLORS, RADIUS, blackRgba, hexRgba, FONT_WEIGHT} from '../../shared/constants';
 import {InkIcon} from 'inkweave-ui/lorcana/InkIcon';
 import {CardMosaic} from './CardMosaic';
 import {RarityBreakdown} from './RarityBreakdown';
@@ -61,13 +61,13 @@ function BoardHeader({ink, count, compact}: {ink: Ink; count: number; compact: b
       </div>
 
       <div>
-        <div style={{fontWeight: 600, fontSize: FONT_SIZES.sm, letterSpacing: 2.4, textTransform: 'uppercase', color: inkText}}>
+        <div style={{fontWeight: FONT_WEIGHT.semibold, fontSize: FONT_SIZES.sm, letterSpacing: 2.4, textTransform: 'uppercase', color: inkText}}>
           Ink board
         </div>
         <div
           style={{
             fontFamily: FONTS.hero,
-            fontWeight: 400,
+            fontWeight: FONT_WEIGHT.regular,
             fontSize: compact ? FONT_SIZES.xxxl : FONT_SIZES.displaySm,
             color: COLORS.gray900,
             lineHeight: 1.05,
@@ -79,9 +79,9 @@ function BoardHeader({ink, count, compact}: {ink: Ink; count: number; compact: b
       </div>
 
       <div style={{marginLeft: 'auto', textAlign: 'right'}}>
-        <div style={{fontWeight: 700, fontSize: compact ? FONT_SIZES.displaySm : FONT_SIZES.displayMd, color: COLORS.primary, lineHeight: 1}}>
+        <div style={{fontWeight: FONT_WEIGHT.bold, fontSize: compact ? FONT_SIZES.displaySm : FONT_SIZES.displayMd, color: COLORS.primary, lineHeight: 1}}>
           {count}
-          <span style={{fontSize: compact ? FONT_SIZES.lg : FONT_SIZES.xxl, fontWeight: 700, color: COLORS.textMuted}}> / {PER_INK[ink]}</span>
+          <span style={{fontSize: compact ? FONT_SIZES.lg : FONT_SIZES.xxl, fontWeight: FONT_WEIGHT.bold, color: COLORS.textMuted}}> / {PER_INK[ink]}</span>
         </div>
         {done ? (
           <div
@@ -91,7 +91,7 @@ function BoardHeader({ink, count, compact}: {ink: Ink; count: number; compact: b
               alignItems: 'center',
               gap: 6,
               marginTop: 8,
-              fontWeight: 700,
+              fontWeight: FONT_WEIGHT.bold,
               fontSize: FONT_SIZES.sm,
               letterSpacing: 1.4,
               textTransform: 'uppercase',
@@ -106,7 +106,7 @@ function BoardHeader({ink, count, compact}: {ink: Ink; count: number; compact: b
             Color complete
           </div>
         ) : (
-          <div style={{fontWeight: 500, fontSize: FONT_SIZES.sm, letterSpacing: 1.4, textTransform: 'uppercase', color: COLORS.textMuted, marginTop: 9}}>
+          <div style={{fontWeight: FONT_WEIGHT.medium, fontSize: FONT_SIZES.sm, letterSpacing: 1.4, textTransform: 'uppercase', color: COLORS.textMuted, marginTop: 9}}>
             Revealed so far
           </div>
         )}

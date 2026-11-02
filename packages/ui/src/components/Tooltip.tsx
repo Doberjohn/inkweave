@@ -1,6 +1,6 @@
 import {useRef, useState, useLayoutEffect, type ReactNode, type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
-import {COLORS, FONT_SIZES, GOLD_GLOW, RADIUS, SHADOWS, Z_INDEX} from '../tokens/theme';
+import {COLORS, FONT_SIZES, GOLD_GLOW, RADIUS, SHADOWS, Z_INDEX, FONT_WEIGHT, LINE_HEIGHT} from '../tokens/theme';
 import {useTooltip} from '../hooks/useTooltip';
 
 const TIP_GAP = 8;
@@ -96,7 +96,7 @@ export function Tooltip({children, content, triggerStyle}: TooltipProps) {
               borderRadius: RADIUS.md,
               boxShadow: SHADOWS.float,
               fontSize: FONT_SIZES.sm,
-              lineHeight: 1.6,
+              lineHeight: LINE_HEIGHT.relaxed,
               color: COLORS.descriptionText,
               textAlign: 'left',
               whiteSpace: 'pre-line',
@@ -143,7 +143,7 @@ const HELP_BUTTON_STYLE: CSSProperties = {
   border: `1px solid ${GOLD_GLOW.hoverBorder}`,
   color: COLORS.primary,
   fontSize: FONT_SIZES.sm,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   cursor: 'help',
   fontFamily: 'inherit',
   display: 'inline-flex',

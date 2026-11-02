@@ -1,10 +1,10 @@
 import {Fragment} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
-import {FONTS, FONT_SIZES, COLORS} from '../tokens/theme';
+import {FONTS, FONT_SIZES, COLORS, FONT_WEIGHT} from '../tokens/theme';
 
 const sectionHeading: React.CSSProperties = {
   fontSize: FONT_SIZES.xl,
-  fontWeight: 600,
+  fontWeight: FONT_WEIGHT.semibold,
   color: COLORS.text,
   fontFamily: FONTS.body,
   margin: '0 0 16px',
@@ -157,7 +157,7 @@ function TextColorsSection() {
               style={{
                 color: t.color,
                 fontSize: FONT_SIZES.xl,
-                fontWeight: 600,
+                fontWeight: FONT_WEIGHT.semibold,
                 fontFamily: FONTS.body,
                 minWidth: 260,
               }}>
@@ -179,7 +179,7 @@ function TypeScale() {
       <h1
         style={{
           fontSize: FONT_SIZES.xxl,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           color: COLORS.primary500,
           fontFamily: FONTS.body,
           margin: '0 0 8px',

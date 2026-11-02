@@ -1,5 +1,5 @@
 import {CtaButton} from '../../shared/components';
-import {CAP_LABEL_XS, COLORS, FONT_SIZES, RADIUS, SPACING, TRUNCATE} from '../../shared/constants';
+import {CAP_LABEL_XS, COLORS, FONT_SIZES, RADIUS, SPACING, TRUNCATE, FONT_WEIGHT, LINE_HEIGHT} from '../../shared/constants';
 import {FriendChip} from '../friends/FriendChip';
 
 /** Where the banner's way back goes: your own binder, or Browse for a reader with no collection. */
@@ -33,7 +33,7 @@ const READ_ONLY: React.CSSProperties = {
   border: `1px solid ${COLORS.surfaceBorder}`,
   borderRadius: `${RADIUS.pill}px`,
   padding: `${SPACING.xxs}px ${SPACING.sm}px`,
-  lineHeight: 1.2,
+  lineHeight: LINE_HEIGHT.tight,
 };
 
 const MUTED: React.CSSProperties = {color: COLORS.textMuted, fontSize: `${FONT_SIZES.md}px`};
@@ -62,7 +62,7 @@ function DesktopBanner({name, handle, shown, back, onBack}: FriendBinderBannerPr
       <FriendChip name={name ?? handle} handle={handle} size="lg" />
       <h2
         className="ph-no-capture"
-        style={{...TRUNCATE, margin: 0, color: COLORS.text, fontSize: `${FONT_SIZES.xxl}px`, fontWeight: 700}}>
+        style={{...TRUNCATE, margin: 0, color: COLORS.text, fontSize: `${FONT_SIZES.xxl}px`, fontWeight: FONT_WEIGHT.bold}}>
         {whose(name, handle)}
       </h2>
       {name !== null && (
@@ -84,7 +84,7 @@ function PhoneBanner({name, handle, shown, youNeed, back, onBack}: FriendBinderB
       <div style={{display: 'flex', flexDirection: 'column', minWidth: 0}}>
         <h2
           className="ph-no-capture"
-          style={{...TRUNCATE, margin: 0, color: COLORS.text, fontSize: `${FONT_SIZES.xl}px`, fontWeight: 700}}>
+          style={{...TRUNCATE, margin: 0, color: COLORS.text, fontSize: `${FONT_SIZES.xl}px`, fontWeight: FONT_WEIGHT.bold}}>
           {whose(name, handle)}
         </h2>
         {detail && <span style={{...MUTED, ...TRUNCATE}}>{detail}</span>}

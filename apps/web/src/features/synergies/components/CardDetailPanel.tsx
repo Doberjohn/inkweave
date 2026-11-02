@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup} from '../types';
 import {getDominantScore, getStrengthTier} from '../utils';
-import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, TRUNCATE, hexRgba} from '../../../shared/constants';
+import {COLORS, FONT_SIZES, RADIUS, SPACING, LAYOUT, TRUNCATE, hexRgba, FONT_WEIGHT, LETTER_SPACING, LINE_HEIGHT} from '../../../shared/constants';
 import {
   CardImage,
   CardImageButton,
@@ -199,10 +199,10 @@ function CardTitleBlock({card}: {card: LorcanaCard}) {
       <h1
         style={{
           fontSize: `${FONT_SIZES.xxl}px`,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           color: COLORS.text,
           margin: 0,
-          lineHeight: 1.2,
+          lineHeight: LINE_HEIGHT.tight,
         }}>
         {card.name}
         {card.version && (
@@ -212,7 +212,7 @@ function CardTitleBlock({card}: {card: LorcanaCard}) {
               style={{
                 display: 'block',
                 fontSize: `${FONT_SIZES.base}px`,
-                fontWeight: 400,
+                fontWeight: FONT_WEIGHT.regular,
                 color: COLORS.textMuted,
                 marginTop: SPACING.xs,
               }}>
@@ -300,7 +300,7 @@ function SynergyBreakdownRow({
           minWidth: 0,
           fontSize: `${FONT_SIZES.base}px`,
           color: COLORS.text,
-          fontWeight: 500,
+          fontWeight: FONT_WEIGHT.medium,
           ...TRUNCATE,
         }}>
         {group.label}
@@ -343,9 +343,9 @@ function SynergyBreakdownBox({
       <div
         style={{
           fontSize: `${FONT_SIZES.xs}px`,
-          fontWeight: 600,
+          fontWeight: FONT_WEIGHT.semibold,
           color: COLORS.textMuted,
-          letterSpacing: '0.1em',
+          letterSpacing: LETTER_SPACING.wide,
           textTransform: 'uppercase',
           marginBottom: SPACING.md,
         }}>

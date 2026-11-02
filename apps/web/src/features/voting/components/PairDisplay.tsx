@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, SPACING, hexRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, SPACING, hexRgba, FONT_WEIGHT} from '../../../shared/constants';
 import {getStrengthTier} from 'inkweave-ui/lib/scoreUtils';
 import type {Score} from '../../../shared/lib/supabase';
 import type {VotingPair} from '../types';
@@ -103,7 +103,7 @@ function MysteryBadge({selectedScore, size}: {selectedScore: Score | null; size:
       <span
         style={{
           fontSize: size > 40 ? FONT_SIZES.xxl : FONT_SIZES.xl,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           color,
           fontFamily: FONTS.body,
           textShadow: textGlow,

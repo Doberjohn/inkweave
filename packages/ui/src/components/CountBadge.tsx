@@ -1,4 +1,4 @@
-import {FONT_SIZES} from '../tokens/theme';
+import {FONT_SIZES, FONT_WEIGHT} from '../tokens/theme';
 
 interface CountBadgeProps {
   count: number;
@@ -16,7 +16,7 @@ export function CountBadge({count}: CountBadgeProps) {
         background: 'rgba(0, 0, 0, 0.3)',
         color: '#ffffff',
         fontSize: `${FONT_SIZES.xs}px`,
-        fontWeight: 700,
+        fontWeight: FONT_WEIGHT.bold,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

@@ -1,5 +1,5 @@
 import {useLocation, useNavigate} from 'react-router-dom';
-import {COLORS, FONTS, FONT_SIZES, SPACING} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, SPACING, FONT_WEIGHT} from '../shared/constants';
 import {CtaButton} from 'inkweave-ui/components/CtaButton';
 import {Seo} from '../shared/components';
 
@@ -105,7 +105,7 @@ function LostInTheInkwell({onReturnHome}: {onReturnHome: () => void}) {
           margin: 0,
           fontFamily: FONTS.hero,
           fontSize: 'clamp(100px, 20vw, 180px)',
-          fontWeight: 400,
+          fontWeight: FONT_WEIGHT.regular,
           letterSpacing: 8,
           lineHeight: 1,
           background:
@@ -135,7 +135,7 @@ function LostInTheInkwell({onReturnHome}: {onReturnHome: () => void}) {
           marginTop: SPACING.xxl,
           fontFamily: FONTS.hero,
           fontSize: `clamp(${FONT_SIZES.xxl}px, 4vw, 28px)`,
-          fontWeight: 400,
+          fontWeight: FONT_WEIGHT.regular,
           color: COLORS.text,
           letterSpacing: 2,
         }}>

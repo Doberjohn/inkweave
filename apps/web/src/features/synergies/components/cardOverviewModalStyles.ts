@@ -1,5 +1,5 @@
 import type {CSSProperties} from 'react';
-import {CARD_BAR_SHARE, COLORS, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../../../shared/constants';
+import {CARD_BAR_SHARE, COLORS, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, SHADOWS, SPACING, Z_INDEX, FONT_WEIGHT, LINE_HEIGHT} from '../../../shared/constants';
 
 /*
  * The card modal's chrome, shared by CardOverviewModal and CardOverviewModalFallback (#640). The
@@ -116,9 +116,9 @@ export function pickModalTitleStyle(isMobile: boolean): CSSProperties {
     margin: 0,
     fontFamily: FONTS.body,
     fontSize: isMobile ? 18 : FONT_SIZES.xxxl,
-    fontWeight: 700,
+    fontWeight: FONT_WEIGHT.bold,
     color: COLORS.text,
-    lineHeight: 1.2,
+    lineHeight: LINE_HEIGHT.tight,
     flex: 1,
     minWidth: 0,
   };

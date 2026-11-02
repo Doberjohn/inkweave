@@ -1,5 +1,5 @@
 import type {Ink} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONT_SIZES, INK_COLORS, RADIUS, SPACING, whiteRgba} from '../../shared/constants';
+import {COLORS, EASING, FONT_SIZES, INK_COLORS, RADIUS, SPACING, whiteRgba, FONT_WEIGHT} from '../../shared/constants';
 import {PER_INK} from './setComposition';
 import {ProgressRing} from './ProgressRing';
 import {inkRgba} from './inkTint';
@@ -30,10 +30,10 @@ function TileLabel({ink, count, selected, compact}: {ink: Ink; count: number; se
   const done = count >= PER_INK[ink];
   return (
     <>
-      <div style={{fontWeight: 600, fontSize: compact ? FONT_SIZES.md : FONT_SIZES.base, letterSpacing: 0.3, color: selected ? INK_COLORS[ink].text : COLORS.text}}>
+      <div style={{fontWeight: FONT_WEIGHT.semibold, fontSize: compact ? FONT_SIZES.md : FONT_SIZES.base, letterSpacing: 0.3, color: selected ? INK_COLORS[ink].text : COLORS.text}}>
         {ink}
       </div>
-      <div style={{fontWeight: 500, fontSize: FONT_SIZES.lg, letterSpacing: 0.5, color: done ? COLORS.primaryHover : COLORS.text}}>
+      <div style={{fontWeight: FONT_WEIGHT.medium, fontSize: FONT_SIZES.lg, letterSpacing: 0.5, color: done ? COLORS.primaryHover : COLORS.text}}>
         {done ? 'Complete' : `${count} / ${PER_INK[ink]}`}
       </div>
     </>

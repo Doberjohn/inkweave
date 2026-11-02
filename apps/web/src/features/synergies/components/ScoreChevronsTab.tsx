@@ -8,6 +8,7 @@ import {
   TABULAR,
   hexRgba,
   whiteRgba,
+  FONT_WEIGHT,
 } from '../../../shared/constants';
 
 interface ScoreChevronsTabProps {
@@ -47,7 +48,7 @@ export function ScoreChevronsTab({
   const scoreStyle: React.CSSProperties = {...TAB_SCORE_STYLE, color: textColor};
   const scaleStyle: React.CSSProperties = {
     fontSize: FONT_SIZES.md,
-    fontWeight: 700,
+    fontWeight: FONT_WEIGHT.bold,
     color: textColor,
     marginLeft: SPACING.xxs,
   };
@@ -81,7 +82,7 @@ const TAB_BASE_STYLE: React.CSSProperties = {
 
 const TAB_LABEL_STYLE: React.CSSProperties = {
   fontSize: FONT_SIZES.xs,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   letterSpacing: '0.12em',
   textTransform: 'uppercase',
 };
@@ -89,6 +90,6 @@ const TAB_LABEL_STYLE: React.CSSProperties = {
 const TAB_SCORE_STYLE: React.CSSProperties = {
   ...TABULAR,
   fontSize: FONT_SIZES.displaySm,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   lineHeight: 1,
 };

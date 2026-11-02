@@ -1,7 +1,7 @@
 import {useLayoutEffect, useRef, useState} from 'react';
 import {createPortal} from 'react-dom';
 import type {Ink} from 'inkweave-synergy-engine';
-import {COLORS, EASING, FONT_SIZES, INK_COLORS, RADIUS, Z_INDEX, blackRgba, hexRgba} from '../../../shared/constants';
+import {COLORS, EASING, FONT_SIZES, INK_COLORS, RADIUS, Z_INDEX, blackRgba, hexRgba, FONT_WEIGHT} from '../../../shared/constants';
 import {IconButton} from '../../../shared/components';
 import {useDialogFocus, useScrollLock} from '../../../shared/hooks';
 import {prefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
@@ -259,7 +259,7 @@ const CAPTION_STYLE: React.CSSProperties = {
   textAlign: 'center',
   color: COLORS.textMuted,
   fontSize: FONT_SIZES.sm,
-  fontWeight: 600,
+  fontWeight: FONT_WEIGHT.semibold,
   letterSpacing: '0.04em',
   zIndex: 12,
   pointerEvents: 'none',

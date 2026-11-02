@@ -113,8 +113,16 @@ const isRawFontFamily = (v) => isStringLiteral(v) && v.value !== 'inherit';
 const isRawFontSize = (v) => isNumberLiteral(v) || (isStringLiteral(v) && /^\d+(px)?$/.test(v.value));
 const isAppLayerZIndex = (v) => isNumberLiteral(v) && v.value >= 50;
 const isNonZeroNumber = (v) => isNumberLiteral(v) && v.value !== 0;
-/** `-14` is a unary minus around 14, so a negative margin is read through it. */
-const isRawSpacing = (v) => isNonZeroNumber(v.type === 'UnaryExpression' && v.operator === '-' ? v.argument : v);
+/** `-14` is a unary minus around 14, so a negative value is read through it. */
+const unsigned = (v) => (v.type === 'UnaryExpression' && v.operator === '-' ? v.argument : v);
+const isRawSpacing = (v) => isNonZeroNumber(unsigned(v));
+/** CSS-wide keywords a typography property may keep as a string: they reset, they don't pick a value. */
+const TYPE_KEYWORDS = new Set(['normal', 'inherit', 'initial', 'unset']);
+const isRawKeywordOr = (v, test) => test(unsigned(v)) || (isStringLiteral(v) && !TYPE_KEYWORDS.has(v.value));
+const isRawFontWeight = (v) => isRawKeywordOr(v, isNumberLiteral);
+const isRawLetterSpacing = (v) => isRawKeywordOr(v, isNonZeroNumber) && !(isStringLiteral(v) && v.value === '0');
+/** 0 and 1 kill the leading (display numerals, icon wrappers): always fine raw, as LINE_HEIGHT.none says. */
+const isRawLineHeight = (v) => isRawKeywordOr(v, (n) => isNumberLiteral(n) && n.value !== 0 && n.value !== 1);
 
 // ---------------------------------------------------------------------------
 // The rules
@@ -160,8 +168,15 @@ const LOADED_FONT_WEIGHTS = new Set([400, 500, 600, 700]);
 const HERO_FONT_WEIGHT = 400;
 const NAMED_WEIGHTS = {normal: 400, bold: 700};
 
-/** A weight literal as a number: `700`, `'700'`, `'bold'`. Anything else (a variable, `'inherit'`) is unknown. */
+/** FONT_WEIGHT's steps (inkweave-ui's tokens/theme.ts), so a weight given as a token is read too. */
+const FONT_WEIGHT_STEPS = {regular: 400, medium: 500, semibold: 600, bold: 700};
+
+/**
+ * A weight as a number: `700`, `'700'`, `'bold'`, `FONT_WEIGHT.bold`. Anything else (a variable,
+ * `'inherit'`) is unknown.
+ */
 function literalWeight(v) {
+  if (v.type === 'MemberExpression' && v.object.name === 'FONT_WEIGHT') return FONT_WEIGHT_STEPS[memberKey(v)];
   if (isNumberLiteral(v)) return v.value;
   if (!isStringLiteral(v)) return undefined;
   return /^\d+$/.test(v.value) ? Number(v.value) : NAMED_WEIGHTS[v.value];
@@ -227,6 +242,44 @@ const noUnloadedFontWeight = {
     };
   },
 };
+
+/**
+ * Typography's last three axes (#544). Font weight is a rename: every weight was already one of
+ * FONT_WEIGHT's four faces, so it holds every file. Letter spacing and line height follow the
+ * owner's scales (2026-11-02); their files with values off the scale wait in the ledger, and
+ * stories and inkweave-ui's src/docs/ are exempt, as for spacing. Each reads both branches of a
+ * ternary. A value in a string of CSS (`cssText`, a `font` shorthand) is invisible to them.
+ */
+const noRawFontWeight = makePropertyRule({
+  name: 'no-raw-font-weight',
+  description: 'Use FONT_WEIGHT.* instead of numeric font weights',
+  props: ['fontWeight'],
+  valueTest: isRawFontWeight,
+  values: ternaryLeaves,
+  exempt: TEST_EXEMPT,
+  message: 'Raw font weight. Use FONT_WEIGHT.* (regular 400, medium 500, semibold 600, bold 700) (#544).',
+});
+
+const noRawLetterSpacing = makePropertyRule({
+  name: 'no-raw-letter-spacing',
+  description: 'Use LETTER_SPACING.* instead of raw letter spacing',
+  props: ['letterSpacing'],
+  valueTest: isRawLetterSpacing,
+  values: ternaryLeaves,
+  exempt: SPACING_EXEMPT,
+  message:
+    "Raw letter spacing. Use LETTER_SPACING.* (slight 0.02em, cap 0.05em, eyebrow 0.08em, wide 0.1em; 'normal' and 0 are fine) (#544).",
+});
+
+const noRawLineHeight = makePropertyRule({
+  name: 'no-raw-line-height',
+  description: 'Use LINE_HEIGHT.* instead of raw line heights (0 and 1 are always fine)',
+  props: ['lineHeight'],
+  valueTest: isRawLineHeight,
+  values: ternaryLeaves,
+  exempt: SPACING_EXEMPT,
+  message: 'Raw line height. Use LINE_HEIGHT.* (tight 1.2, snug 1.4, base 1.5, relaxed 1.6; 0 and 1 are fine) (#544).',
+});
 
 const noRawRadius = makePropertyRule({
   name: 'no-raw-radius',
@@ -502,6 +555,9 @@ export const inkweave = {
     'no-literal-font-family': noLiteralFontFamily,
     'no-raw-font-size': noRawFontSize,
     'no-unloaded-font-weight': noUnloadedFontWeight,
+    'no-raw-font-weight': noRawFontWeight,
+    'no-raw-letter-spacing': noRawLetterSpacing,
+    'no-raw-line-height': noRawLineHeight,
     'no-raw-radius': noRawRadius,
     'no-raw-z-index': noRawZIndex,
     'no-raw-easing': noRawEasing,

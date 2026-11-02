@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {EASING, FONTS} from '../../../shared/constants';
+import {EASING, FONTS, FONT_WEIGHT} from '../../../shared/constants';
 import type {Score} from '../../../shared/lib/supabase';
 import {getStrengthTier} from 'inkweave-ui/lib/scoreUtils';
 
@@ -96,7 +96,7 @@ export function ScorePicker({value, onChange, isMobile, responsive}: ScorePicker
           background: tier.bg,
           color: tier.color,
           fontSize,
-          fontWeight: isSelected ? 700 : 600,
+          fontWeight: isSelected ? FONT_WEIGHT.bold : FONT_WEIGHT.semibold,
           fontFamily: FONTS.body,
           cursor: 'pointer',
           display: 'flex',

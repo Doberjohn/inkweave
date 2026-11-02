@@ -1,4 +1,4 @@
-import {CARD_TILE_GLOW, COLORS, FONT_SIZES, RADIUS, SPACING} from '../../../shared/constants';
+import {CARD_TILE_GLOW, COLORS, FONT_SIZES, RADIUS, SPACING, FONT_WEIGHT} from '../../../shared/constants';
 
 /**
  * A synergy group's "+N more" tile: a dashed, card-sized tile for the cards past the grid's
@@ -31,7 +31,7 @@ export function SynergyMoreTile({
       onClick={onClick}
       aria-label={`Show ${count} more cards`}
       style={pickMoreTileButtonStyle({config, compact, isMobile})}>
-      <span style={{fontSize: `${config.countFontSize}px`, fontWeight: 700, color: COLORS.primary}}>
+      <span style={{fontSize: `${config.countFontSize}px`, fontWeight: FONT_WEIGHT.bold, color: COLORS.primary}}>
         +{count}
       </span>
       {/* The flex column never renders this space, but without it the tile's text reads "+12more
@@ -39,7 +39,7 @@ export function SynergyMoreTile({
       <span
         style={{
           fontSize: `${config.labelFontSize}px`,
-          fontWeight: 500,
+          fontWeight: FONT_WEIGHT.medium,
           color: COLORS.textMuted,
           textTransform: config.labelTextTransform,
           letterSpacing: config.labelLetterSpacing,

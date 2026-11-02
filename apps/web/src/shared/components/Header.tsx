@@ -1,4 +1,4 @@
-import {APP_NAME, COLORS, FONT_SIZES, LAYOUT, SPACING} from '../constants';
+import {APP_NAME, COLORS, FONT_SIZES, LAYOUT, SPACING, FONT_WEIGHT, LETTER_SPACING} from '../constants';
 
 export function Header() {
   return (
@@ -16,10 +16,10 @@ export function Header() {
       <h1
         style={{
           fontSize: `${FONT_SIZES.xxl}px`,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           margin: 0,
           color: COLORS.primary,
-          letterSpacing: '0.02em',
+          letterSpacing: LETTER_SPACING.slight,
         }}>
         {APP_NAME}
       </h1>

@@ -13,6 +13,7 @@ import {
   TABULAR,
   VISUALLY_HIDDEN,
   whiteRgba,
+  FONT_WEIGHT,
 } from '../../shared/constants';
 import {useHover} from '../../shared/hooks';
 import {PeopleSolidIcon} from '../friends/icons';
@@ -109,7 +110,7 @@ const BADGE_STYLE: CSSProperties = {
   color: COLORS.text,
   fontFamily: FONTS.body,
   fontSize: `${FONT_SIZES.xl}px`,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   lineHeight: 1,
   ...TABULAR,
   whiteSpace: 'nowrap',

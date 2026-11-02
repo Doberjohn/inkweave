@@ -3,7 +3,7 @@ import {INK_HUBS, INK_HUB_BLURBS, cardsForInk} from '../features/cards';
 import {CompactHeader, EtherealBackground, Seo} from '../shared/components';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useResponsive} from '../shared/hooks';
-import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING} from '../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, INK_COLORS, RADIUS, SPACING, FONT_WEIGHT, LINE_HEIGHT} from '../shared/constants';
 
 /**
  * `/inks` — index of the six ink hub pages (#530).
@@ -48,7 +48,7 @@ export function InkGalleryPage() {
         <h1
           style={{
             fontSize: `${FONT_SIZES.xxl}px`,
-            fontWeight: 700,
+            fontWeight: FONT_WEIGHT.bold,
             color: COLORS.text,
             margin: 0,
           }}>
@@ -60,7 +60,7 @@ export function InkGalleryPage() {
             marginBottom: `${SPACING.xl}px`,
             maxWidth: 720,
             fontSize: `${FONT_SIZES.lg}px`,
-            lineHeight: 1.6,
+            lineHeight: LINE_HEIGHT.relaxed,
             color: COLORS.textMuted,
           }}>
           Every Lorcana card belongs to at least one of six inks, and each plays differently.
@@ -95,7 +95,7 @@ export function InkGalleryPage() {
                   style={{
                     display: 'block',
                     fontSize: `${FONT_SIZES.xl}px`,
-                    fontWeight: 700,
+                    fontWeight: FONT_WEIGHT.bold,
                     color: COLORS.text,
                     marginBottom: `${SPACING.xs}px`,
                   }}>

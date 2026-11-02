@@ -1,4 +1,4 @@
-import {FONT_SIZES, RADIUS, SPACING} from '../tokens/theme';
+import {FONT_SIZES, RADIUS, SPACING, FONT_WEIGHT, LINE_HEIGHT} from '../tokens/theme';
 import type {StrengthTier} from '../lib/scoreUtils';
 
 type BadgeSize = 'sm' | 'md' | 'lg';
@@ -23,18 +23,18 @@ const SIZE_STYLES: Record<BadgeSize, React.CSSProperties> = {
   sm: {
     padding: `${SPACING.xxs}px ${SPACING.sm}px`,
     fontSize: `${FONT_SIZES.xs}px`,
-    fontWeight: 600,
-    lineHeight: 1.4,
+    fontWeight: FONT_WEIGHT.semibold,
+    lineHeight: LINE_HEIGHT.snug,
   },
   md: {
     padding: `${HAIRLINE}px ${SPACING.sm}px`,
     fontSize: `${FONT_SIZES.xs}px`,
-    fontWeight: 500,
+    fontWeight: FONT_WEIGHT.medium,
   },
   lg: {
     padding: `${SPACING.xs}px ${SPACING.sm}px`,
     fontSize: `${FONT_SIZES.base}px`,
-    fontWeight: 700,
+    fontWeight: FONT_WEIGHT.bold,
     minWidth: 28,
     textAlign: 'center' as const,
   },

@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {COLORS, DISABLED_STYLE, EASING, FONTS, FONT_SIZES, PRESS_SCALE, RADIUS, hexRgba} from '../tokens/theme';
+import {COLORS, DISABLED_STYLE, EASING, FONTS, FONT_SIZES, PRESS_SCALE, RADIUS, hexRgba, FONT_WEIGHT} from '../tokens/theme';
 import {useBoop} from '../hooks/useBoop';
 import {CTA_FILLED_STYLE, CTA_GHOST_STYLE} from '../lib/ctaStyles';
 import {isOff} from '../lib/isOff';
@@ -100,7 +100,7 @@ export function CtaButton({
     borderRadius: `${RADIUS.lg}px`,
     fontFamily: FONTS.body,
     fontSize: `${FONT_SIZES.base}px`,
-    fontWeight: 500,
+    fontWeight: FONT_WEIGHT.medium,
     cursor: 'pointer',
     transition: `all 0.25s ${EASING.snappy}`,
     textDecoration: 'none',

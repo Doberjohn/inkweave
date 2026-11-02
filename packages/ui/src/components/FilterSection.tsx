@@ -1,5 +1,5 @@
 import {useId, useState} from 'react';
-import {COLORS, DURATION, EASING, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, TOUCH_TARGET, TRUNCATE} from '../tokens/theme';
+import {COLORS, DURATION, EASING, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, TOUCH_TARGET, TRUNCATE, FONT_WEIGHT, LETTER_SPACING} from '../tokens/theme';
 import {useHover} from '../hooks/useHover';
 import {LinkButton} from './LinkButton';
 
@@ -31,8 +31,8 @@ const labelStyle = (compact: boolean): React.CSSProperties => ({
   fontSize: `${FONT_SIZES.base}px`,
   color: COLORS.gray700,
   marginBottom: compact ? SPACING.xs : SPACING.sm,
-  fontWeight: 500,
-  letterSpacing: '0.02em',
+  fontWeight: FONT_WEIGHT.medium,
+  letterSpacing: LETTER_SPACING.slight,
 });
 
 /**

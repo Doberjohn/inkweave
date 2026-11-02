@@ -1,6 +1,6 @@
 import {useRef, type ReactNode} from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import {COLORS, FONT_SIZES, SHADOWS, SPACING, RADIUS, Z_INDEX} from '../tokens/theme';
+import {COLORS, FONT_SIZES, SHADOWS, SPACING, RADIUS, Z_INDEX, FONT_WEIGHT} from '../tokens/theme';
 import {CtaButton} from './CtaButton';
 import {IconButton} from './IconButton';
 import {LinkButton} from './LinkButton';
@@ -72,7 +72,7 @@ function DialogHeader({variant, title, canClear, onClear, onApply}: DialogHeader
         style={{
           margin: 0,
           fontSize: `${FONT_SIZES.xl}px`,
-          fontWeight: 600,
+          fontWeight: FONT_WEIGHT.semibold,
           color: COLORS.text,
         }}>
         {title}

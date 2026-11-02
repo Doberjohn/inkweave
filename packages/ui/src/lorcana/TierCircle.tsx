@@ -1,4 +1,4 @@
-import {FONT_SIZES} from '../tokens/theme';
+import {FONT_SIZES, FONT_WEIGHT} from '../tokens/theme';
 import type {StrengthTier} from '../lib/scoreUtils';
 
 type CircleSize = 'sm' | 'md';
@@ -32,7 +32,7 @@ export function TierCircle({tier, children, size = 'md'}: TierCircleProps) {
         alignItems: 'center',
         justifyContent: 'center',
         fontSize,
-        fontWeight: 700,
+        fontWeight: FONT_WEIGHT.bold,
         flexShrink: 0,
       }}>
       {children}

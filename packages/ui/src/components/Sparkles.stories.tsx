@@ -1,5 +1,6 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {Sparkles} from './Sparkles';
+import {FONT_WEIGHT} from '../tokens/theme';
 
 const meta = {
   title: 'Shared/Sparkles',
@@ -21,14 +22,14 @@ type Story = StoryObj<typeof meta>;
 export const Gold: Story = {
   args: {
     color: '#ffd700',
-    children: <span style={{color: '#d4af37', fontSize: 20, fontWeight: 700}}>Sparkly Text</span>,
+    children: <span style={{color: '#d4af37', fontSize: 20, fontWeight: FONT_WEIGHT.bold}}>Sparkly Text</span>,
   },
 };
 
 export const Green: Story = {
   args: {
     color: '#6ee7a0',
-    children: <span style={{color: '#6ee7a0', fontSize: 20, fontWeight: 700}}>Complete!</span>,
+    children: <span style={{color: '#6ee7a0', fontSize: 20, fontWeight: FONT_WEIGHT.bold}}>Complete!</span>,
   },
 };
 
@@ -37,7 +38,7 @@ export const FastRate: Story = {
     color: '#ffd700',
     rate: 150,
     maxSize: 14,
-    children: <span style={{color: '#ffb900', fontSize: 20, fontWeight: 700}}>Celebration</span>,
+    children: <span style={{color: '#ffb900', fontSize: 20, fontWeight: FONT_WEIGHT.bold}}>Celebration</span>,
   },
 };
 

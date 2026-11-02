@@ -1,6 +1,6 @@
 import {Link} from 'react-router-dom';
 import {INK_HUBS} from '../../features/cards/inkHubs';
-import {APP_NAME, COLORS, FONTS, FONT_SIZES, INK_COLORS, SPACING} from '../constants';
+import {APP_NAME, COLORS, FONTS, FONT_SIZES, INK_COLORS, SPACING, FONT_WEIGHT, LINE_HEIGHT} from '../constants';
 
 /**
  * Site footer: legal/product navigation plus the Ravensburger Community Code
@@ -127,7 +127,7 @@ export function Footer() {
             gap: `${SPACING.sm}px`,
             fontSize: `${FONT_SIZES.xs}px`,
           }}>
-          <span style={{color: COLORS.text, fontWeight: 700}}>{APP_NAME}</span>
+          <span style={{color: COLORS.text, fontWeight: FONT_WEIGHT.bold}}>{APP_NAME}</span>
           <span style={{color: COLORS.textMuted}}>unofficial Disney Lorcana synergy finder</span>
           {NAV_LINKS.map((item) => (
             <span
@@ -155,7 +155,7 @@ export function Footer() {
             maxWidth: 620,
             color: COLORS.textMuted,
             fontSize: `${FONT_SIZES.xs}px`,
-            lineHeight: 1.6,
+            lineHeight: LINE_HEIGHT.relaxed,
           }}>
           {APP_NAME} uses trademarks and/or copyrights associated with Disney Lorcana TCG, used under
           Ravensburger&rsquo;s Community Code Policy. We are expressly prohibited from charging you to use or

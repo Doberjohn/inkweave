@@ -1,5 +1,5 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {CAP_LABEL_XS, COLORS, FONT_SIZES, SPACING} from '../tokens/theme';
+import {CAP_LABEL_XS, COLORS, FONT_SIZES, SPACING, FONT_WEIGHT, LINE_HEIGHT} from '../tokens/theme';
 import {CardTextBlock} from './CardTextBlock';
 
 /** Panel spacing and type sizes. */
@@ -74,7 +74,7 @@ export function CardTranslationPanel({
         boxSizing: 'border-box',
         textAlign: 'left',
         // Hosts can sit it in a `lineHeight: 0` image wrapper (the card modal's).
-        lineHeight: 1.4,
+        lineHeight: LINE_HEIGHT.snug,
         ...style,
       }}>
       <span style={{...CAP_LABEL_XS, color: COLORS.primary}}>
@@ -83,10 +83,10 @@ export function CardTranslationPanel({
       <h2
         style={{
           fontSize: `${sizes.name}px`,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           color: COLORS.text,
           margin: 0,
-          lineHeight: 1.2,
+          lineHeight: LINE_HEIGHT.tight,
         }}>
         {card.name}
         {card.version && (
@@ -94,7 +94,7 @@ export function CardTranslationPanel({
             style={{
               display: 'block',
               fontSize: `${sizes.version}px`,
-              fontWeight: 400,
+              fontWeight: FONT_WEIGHT.regular,
               color: COLORS.textMuted,
               marginTop: SPACING.xs,
             }}>
@@ -114,7 +114,7 @@ export function CardTranslationPanel({
           margin: 0,
           marginTop: 'auto',
           fontSize: `${sizes.note}px`,
-          lineHeight: 1.4,
+          lineHeight: LINE_HEIGHT.snug,
           color: COLORS.textMuted,
         }}>
         {official

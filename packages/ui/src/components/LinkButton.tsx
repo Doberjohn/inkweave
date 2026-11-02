@@ -1,4 +1,4 @@
-import {COLORS, DISABLED_STYLE, EASING, FONTS, FONT_SIZES} from '../tokens/theme';
+import {COLORS, DISABLED_STYLE, EASING, FONTS, FONT_SIZES, FONT_WEIGHT} from '../tokens/theme';
 import {useHover} from '../hooks/useHover';
 import {isOff} from '../lib/isOff';
 
@@ -44,7 +44,7 @@ export function LinkButton({
         padding: '2px 0',
         fontFamily: FONTS.body,
         fontSize: `${FONT_SIZES[size]}px`,
-        fontWeight: 500,
+        fontWeight: FONT_WEIGHT.medium,
         color,
         cursor: 'pointer',
         textDecoration: hot && underlineOnHover ? 'underline' : 'none',

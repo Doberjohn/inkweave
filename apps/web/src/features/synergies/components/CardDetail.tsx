@@ -8,6 +8,7 @@ import {
   RADIUS,
   SPACING,
   blackRgba,
+  FONT_WEIGHT,
 } from '../../../shared/constants';
 import {
   CardImage,
@@ -51,7 +52,7 @@ const NAME_STYLE: CSSProperties = {
   minWidth: 0,
   margin: 0,
   fontSize: `${FONT_SIZES.xxl}px`,
-  fontWeight: 700,
+  fontWeight: FONT_WEIGHT.bold,
   lineHeight: NAME_LINE_HEIGHT,
   color: COLORS.text,
 };
@@ -118,7 +119,7 @@ function CardDetailChips({card}: {card: LorcanaCard}) {
           ...CHIP_STYLE,
           background: inkColors.bg,
           color: inkColors.text,
-          fontWeight: 500,
+          fontWeight: FONT_WEIGHT.medium,
           display: 'inline-flex',
           alignItems: 'center',
           gap: SPACING.xs,

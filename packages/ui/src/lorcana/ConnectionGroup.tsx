@@ -13,6 +13,8 @@ import {
   blackRgba,
   hexRgba,
   whiteRgba,
+  FONT_WEIGHT,
+  LETTER_SPACING,
 } from '../tokens/theme';
 import {INK_CHIP_COLORS} from '../tokens/lorcana';
 import {chipCardName} from '../lib/chipNames';
@@ -168,7 +170,7 @@ function ExplanationWithHighlights({
                 background: chip.bg,
                 color: chip.text,
                 border: `1px solid ${blackRgba(1)}`,
-                fontWeight: 700,
+                fontWeight: FONT_WEIGHT.bold,
                 fontSize: `${FONT_SIZES.sm}px`,
                 lineHeight: 1,
                 padding: '4px 6px',
@@ -195,7 +197,7 @@ function ExplanationWithHighlights({
             onMouseLeave={() => onHighlight(null)}
             style={{
               color: COLORS.lorcanaCardLink,
-              fontWeight: 700,
+              fontWeight: FONT_WEIGHT.bold,
               borderBottom: `1px dashed ${hexRgba(COLORS.lorcanaCardLink, 0.45)}`,
               cursor: 'default',
               transition: `border-color ${DURATION.fast}ms ${EASING.snappy}, color ${DURATION.fast}ms ${EASING.snappy}`,
@@ -203,7 +205,7 @@ function ExplanationWithHighlights({
             {seg.text}
           </span>
         ) : (
-          <span key={i} style={{color: COLORS.lorcanaCardLink, fontWeight: 700}}>
+          <span key={i} style={{color: COLORS.lorcanaCardLink, fontWeight: FONT_WEIGHT.bold}}>
             {seg.text}
           </span>
         );
@@ -291,7 +293,7 @@ function pickAbilityRowStyle({
     color: COLORS.lorcanaTextDark,
     fontFamily: FONTS.body,
     fontSize: `${FONT_SIZES.base}px`,
-    fontWeight: 600,
+    fontWeight: FONT_WEIGHT.semibold,
     lineHeight: DESCRIPTION_LINE_HEIGHT,
     cursor: interactive ? 'pointer' : undefined,
     transition: `box-shadow ${DURATION.base}ms ${EASING.snappy}`,
@@ -330,9 +332,9 @@ function AbilityRow({label, description, cardA, cardB, onHighlight, position = '
           background: COLORS.lorcanaTagBg,
           color: COLORS.lorcanaTagText,
           fontFamily: FONTS.body,
-          fontWeight: 700,
+          fontWeight: FONT_WEIGHT.bold,
           fontSize: `${FONT_SIZES.md}px`,
-          letterSpacing: '0.08em',
+          letterSpacing: LETTER_SPACING.eyebrow,
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
           lineHeight: `${FONT_SIZES.md}px`,

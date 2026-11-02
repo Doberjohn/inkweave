@@ -2,7 +2,7 @@ import type {CSSProperties} from 'react';
 import Skeleton from 'react-loading-skeleton';
 import {SET_TOTAL} from './setComposition';
 import type {CountdownMilestone, CountdownState} from './useCountdown';
-import {COLORS, REVEAL_SET_CODE, REVEAL_SET_LOGO, SET_NAMES} from '../../shared/constants';
+import {COLORS, REVEAL_SET_CODE, REVEAL_SET_LOGO, SET_NAMES, FONT_WEIGHT, LINE_HEIGHT} from '../../shared/constants';
 
 interface RevealHeroProps {
   /** Days to the pre-release, then to the store release; null while the reveal dates load. */
@@ -77,7 +77,7 @@ function CountdownPanel({
       </div>
       <div style={{width: 1, height: 40, background: '#3a3a52'}} />
       <div style={{textAlign: 'left'}}>
-        <div style={{fontWeight: 700, fontSize: 18, color: '#e8e8e8', lineHeight: 1.2}}>{releaseDate}</div>
+        <div style={{fontWeight: FONT_WEIGHT.bold, fontSize: 18, color: '#e8e8e8', lineHeight: LINE_HEIGHT.tight}}>{releaseDate}</div>
         <div style={labelStyle}>Set release</div>
       </div>
     </div>
@@ -98,16 +98,16 @@ export function RevealHero({
   compact = false,
 }: RevealHeroProps) {
   const labelStyle = {
-    fontWeight: 500,
+    fontWeight: FONT_WEIGHT.medium,
     fontSize: compact ? 9 : 11,
     letterSpacing: 1.4,
     textTransform: 'uppercase' as const,
     color: '#90a1b9',
     marginTop: 5,
   };
-  const bigStat = {fontWeight: 700, fontSize: compact ? 24 : 30, lineHeight: 1};
+  const bigStat = {fontWeight: FONT_WEIGHT.bold, fontSize: compact ? 24 : 30, lineHeight: 1};
   /** The small unit suffix riding beside a big stat ("days", "/ 204"). */
-  const unitStyle = {fontSize: compact ? 12 : 15, fontWeight: 600};
+  const unitStyle = {fontSize: compact ? 12 : 15, fontWeight: FONT_WEIGHT.semibold};
 
   return (
     <header style={{textAlign: 'center', padding: compact ? '24px 16px 8px' : '40px 36px 12px'}}>

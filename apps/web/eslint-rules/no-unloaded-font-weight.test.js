@@ -37,6 +37,8 @@ ruleTester.run('no-unloaded-font-weight', inkweave.rules['no-unloaded-font-weigh
     // A dynamic key could name any family, whatever the variable is called.
     ok('const s = {fontFamily: FONTS[hero], fontWeight: 700};'),
     ok('const e = <h2 style={{fontFamily: FONTS.hero, fontWeight: 400}}>Title</h2>;'),
+    ok('const s = {fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.regular};'),
+    ok('const s = {fontWeight: FONT_WEIGHT.bold};'),
     // Tests pin whatever weight they assert on.
     ok('const s = {fontWeight: 800};', '/repo/apps/web/src/features/demo/Demo.test.tsx'),
   ],
@@ -51,6 +53,9 @@ ruleTester.run('no-unloaded-font-weight', inkweave.rules['no-unloaded-font-weigh
     hero("const s = {fontWeight: 'bold', fontFamily: FONTS.hero};"),
     hero('const s = {fontFamily: FONTS.hero, fontWeight: 800};'),
     hero('const s = {fontFamily: FONTS.hero, fontWeight: compact ? 600 : 700};', 2),
+    // FONT_WEIGHT's steps read as their weights.
+    hero('const s = {fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.bold};'),
+    hero('const s = {fontFamily: FONTS.hero, fontWeight: compact ? FONT_WEIGHT.semibold : FONT_WEIGHT.regular};'),
     hero('const e = <h3 style={{fontFamily: FONTS.hero, fontWeight: 700, fontSize: 22}}>Title</h3>;'),
   ],
 });

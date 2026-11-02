@@ -1,4 +1,4 @@
-import {COLORS, FONT_SIZES, INK_CHIP_COLORS, RADIUS} from '../../shared/constants';
+import {COLORS, FONT_SIZES, INK_CHIP_COLORS, RADIUS, FONT_WEIGHT} from '../../shared/constants';
 import {initialsOf, inkOfHandle} from './friendInitials';
 
 const NO_INK = {bg: COLORS.surfaceHover, text: COLORS.text};
@@ -28,7 +28,7 @@ export function FriendChip({name, handle, size = 'md'}: {name: string; handle: s
         background: colors.bg,
         color: colors.text,
         fontSize: `${size === 'lg' ? FONT_SIZES.base : FONT_SIZES.sm}px`,
-        fontWeight: 700,
+        fontWeight: FONT_WEIGHT.bold,
         lineHeight: 1,
       }}>
       {initialsOf(name)}

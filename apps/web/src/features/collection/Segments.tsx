@@ -1,7 +1,7 @@
 import type {CSSProperties, MouseEventHandler, ReactNode} from 'react';
 import {CtaButton} from '../../shared/components';
 import {useHover} from 'inkweave-ui/hooks/useHover';
-import {COLORS, DURATION, EASING, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, TABULAR} from '../../shared/constants';
+import {COLORS, DURATION, EASING, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, TABULAR, FONT_WEIGHT, LINE_HEIGHT} from '../../shared/constants';
 
 const SEGMENTS_STYLE: CSSProperties = {
   display: 'grid',
@@ -37,7 +37,7 @@ function segmentStyle(active: boolean, hovered: boolean): CSSProperties {
     boxShadow: active ? GOLD_GLOW.shadow : 'none',
     color: active ? COLORS.primary : hovered ? COLORS.text : COLORS.textMuted,
     fontSize: `${FONT_SIZES.lg}px`,
-    fontWeight: 600,
+    fontWeight: FONT_WEIGHT.semibold,
     whiteSpace: 'nowrap',
     // Segments don't boop, as chips don't.
     transform: undefined,
@@ -55,8 +55,8 @@ function countStyle(active: boolean): CSSProperties {
     background: active ? GOLD_GLOW.activeBg : COLORS.surfaceHover,
     color: active ? COLORS.primary : COLORS.text,
     fontSize: `${FONT_SIZES.sm}px`,
-    fontWeight: 700,
-    lineHeight: 1.2,
+    fontWeight: FONT_WEIGHT.bold,
+    lineHeight: LINE_HEIGHT.tight,
   };
 }
 

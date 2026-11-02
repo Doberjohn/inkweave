@@ -1,4 +1,4 @@
-import {COLORS, EASING, FONTS, FONT_SIZES} from '../constants';
+import {COLORS, EASING, FONTS, FONT_SIZES, FONT_WEIGHT} from '../constants';
 import {useHover} from 'inkweave-ui/hooks/useHover';
 
 interface BackLinkProps {
@@ -26,7 +26,7 @@ export function BackLink({onClick, label, style}: BackLinkProps) {
         color: hovered ? COLORS.primary500 : COLORS.textMuted,
         fontFamily: FONTS.body,
         fontSize: `${FONT_SIZES.base}px`,
-        fontWeight: 500,
+        fontWeight: FONT_WEIGHT.medium,
         padding: 0,
         transition: `color 0.15s ${EASING.snappy}`,
         ...style,

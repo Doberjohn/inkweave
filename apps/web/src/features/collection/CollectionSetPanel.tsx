@@ -32,6 +32,8 @@ import {
   TRUNCATE,
   hexRgba,
   whiteRgba,
+  FONT_WEIGHT,
+  LETTER_SPACING,
 } from '../../shared/constants';
 
 /**
@@ -260,13 +262,13 @@ function Bar({value, total, height, delay = 0}: BarProps) {
 
 const COLUMN: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.sm};
 const SPLIT_ROW: CSSProperties = {display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: SPACING.sm};
-const HEADING_STYLE: CSSProperties = {fontSize: `${FONT_SIZES.lg}px`, fontWeight: 600, color: COLORS.text};
+const HEADING_STYLE: CSSProperties = {fontSize: `${FONT_SIZES.lg}px`, fontWeight: FONT_WEIGHT.semibold, color: COLORS.text};
 const DETAIL_STYLE: CSSProperties = {...TABULAR, fontSize: `${FONT_SIZES.base}px`, color: COLORS.textMuted};
 
 const countStyle = (done: boolean): CSSProperties => ({
   ...DETAIL_STYLE,
   color: done ? COLORS.primary : COLORS.textMuted,
-  fontWeight: done ? 700 : 400,
+  fontWeight: done ? FONT_WEIGHT.bold : FONT_WEIGHT.regular,
 });
 
 /** The reader's own count toward a friend's headline. */
@@ -332,7 +334,7 @@ function HeadlineBody({
           style={{
             ...TABULAR,
             fontSize: `${lead ? FONT_SIZES.displaySm : FONT_SIZES.xl}px`,
-            fontWeight: 700,
+            fontWeight: FONT_WEIGHT.bold,
             lineHeight: 1,
             color: isFinished(value, total) ? COLORS.primary : COLORS.text,
           }}>
@@ -791,7 +793,7 @@ export function CollectionSetRail(props: CollectionSetPanelProps) {
           writingMode: 'vertical-rl',
           fontSize: `${FONT_SIZES.base}px`,
           color: COLORS.textMuted,
-          letterSpacing: '0.08em',
+          letterSpacing: LETTER_SPACING.eyebrow,
         }}>
         {scopeName(props.setCode)}
         {props.filtered && ' · filtered'}

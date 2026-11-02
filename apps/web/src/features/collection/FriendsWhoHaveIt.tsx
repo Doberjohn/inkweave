@@ -16,6 +16,7 @@ import {
   RADIUS,
   SPACING,
   VISUALLY_HIDDEN,
+  FONT_WEIGHT,
 } from '../../shared/constants';
 import {printedCardNumber, useDialogFocus, useHover, useScrollLock, useTransitionPresence} from '../../shared/hooks';
 import {smallImageUrl} from '../cards/loader';
@@ -159,7 +160,7 @@ const HEADING_STYLE: CSSProperties = {
   margin: 0,
   fontFamily: FONTS.body,
   fontSize: `${FONT_SIZES.xl}px`,
-  fontWeight: 600,
+  fontWeight: FONT_WEIGHT.semibold,
   color: COLORS.text,
 };
 
@@ -170,7 +171,7 @@ const COLUMN_LABEL_STYLE: CSSProperties = {
   minWidth: 40,
   textAlign: 'center',
   fontSize: `${FONT_SIZES.sm}px`,
-  fontWeight: 600,
+  fontWeight: FONT_WEIGHT.semibold,
   letterSpacing: LETTER_SPACING.eyebrow,
 };
 
@@ -229,7 +230,7 @@ const ART_STYLE: CSSProperties = {
   background: COLORS.background,
 };
 
-const CARD_NAME_STYLE: CSSProperties = {fontSize: `${FONT_SIZES.xl}px`, fontWeight: 600, color: COLORS.text};
+const CARD_NAME_STYLE: CSSProperties = {fontSize: `${FONT_SIZES.xl}px`, fontWeight: FONT_WEIGHT.semibold, color: COLORS.text};
 const VERSION_STYLE: CSSProperties = {fontSize: `${FONT_SIZES.lg}px`, color: COLORS.textMuted};
 const DETAIL_STYLE: CSSProperties = {fontSize: `${FONT_SIZES.base}px`, color: COLORS.textMuted};
 
@@ -305,7 +306,7 @@ const ROW_STYLE: CSSProperties = {
 
 const ROW_NAME_STYLE: CSSProperties = {
   fontSize: `${FONT_SIZES.lg}px`,
-  fontWeight: 600,
+  fontWeight: FONT_WEIGHT.semibold,
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',

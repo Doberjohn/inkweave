@@ -1,5 +1,5 @@
 import type {ReactNode} from 'react';
-import {COLORS, FONTS, FONT_SIZES, SPACING} from '../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, SPACING, FONT_WEIGHT} from '../../shared/constants';
 
 export interface PlaystyleSectionProps {
   title: string;
@@ -11,7 +11,7 @@ export interface PlaystyleSectionProps {
 export function PlaystyleSection({title, subtitle, children}: PlaystyleSectionProps) {
   return (
     <section style={{marginTop: SPACING.xxxl}}>
-      <h2 style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.xl}px`, fontWeight: 700, color: COLORS.text, margin: 0}}>{title}</h2>
+      <h2 style={{fontFamily: FONTS.body, fontSize: `${FONT_SIZES.xl}px`, fontWeight: FONT_WEIGHT.bold, color: COLORS.text, margin: 0}}>{title}</h2>
       <p style={{fontSize: `${FONT_SIZES.base}px`, color: COLORS.textMuted, margin: `${SPACING.xs}px 0 ${SPACING.section}px`}}>{subtitle}</p>
       <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: SPACING.lg}}>{children}</div>
     </section>

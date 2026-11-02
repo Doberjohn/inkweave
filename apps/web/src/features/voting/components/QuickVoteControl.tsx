@@ -1,6 +1,6 @@
 import {useState, useEffect, useId} from 'react';
 import Skeleton from 'react-loading-skeleton';
-import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, RADIUS, SPACING} from '../../../shared/constants';
+import {COLORS, EASING, FONT_SIZES, FONTS, GOLD_GLOW, RADIUS, SPACING, FONT_WEIGHT} from '../../../shared/constants';
 import {useResponsive} from '../../../shared/hooks';
 import type {AccuracyDistribution} from '../../../shared/lib/supabase';
 import type {QuickVoteError, QuickVoteState, Accuracy} from '../hooks/useQuickVote';
@@ -437,7 +437,7 @@ function PromptOrResult({state, onVote, userChoice, error, isMobile, isResult, i
   }
   return (
     <>
-      <p id={questionId} style={{...QUESTION_STYLE, fontWeight: 600, color: COLORS.text, animation: 'qv-fade-in 0.3s ease-out'}}>
+      <p id={questionId} style={{...QUESTION_STYLE, fontWeight: FONT_WEIGHT.semibold, color: COLORS.text, animation: 'qv-fade-in 0.3s ease-out'}}>
         {pickPromptCopy(engineScore)}
       </p>
       <VoteButtons

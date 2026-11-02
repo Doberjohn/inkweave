@@ -1,6 +1,6 @@
 import type {CSSProperties} from 'react';
 import {FINISH_WORD, printingKind, promoCode, type Printing} from '../lib/printings';
-import {COLORS, FOIL_SHEEN, GOLD_GLOW, ICON_SIZE, RADIUS} from '../tokens/theme';
+import {COLORS, FOIL_SHEEN, GOLD_GLOW, ICON_SIZE, RADIUS, FONT_WEIGHT} from '../tokens/theme';
 import enchantedSymbol from '../assets/enchanted.webp?no-inline';
 import epicSymbol from '../assets/epic.webp?no-inline';
 import iconicSymbol from '../assets/iconic.webp?no-inline';
@@ -42,7 +42,7 @@ const FOIL_MARKER: CSSProperties = {
  * under (#891) or a twin's finish, set lighter. 0.85 keeps the muted text at about 5:1 on
  * COLORS.surface, above WCAG AA's 4.5:1 for 13px text; the mockup's 0.75 fell to about 4.2:1.
  */
-const QUALIFIER_STYLE: CSSProperties = {fontWeight: 500, opacity: 0.85};
+const QUALIFIER_STYLE: CSSProperties = {fontWeight: FONT_WEIGHT.medium, opacity: 0.85};
 
 /**
  * A promo's name: the code printed on it, then the name it was printed under where that isn't its

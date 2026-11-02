@@ -1,5 +1,5 @@
 import {useState, type CSSProperties} from 'react';
-import {COLORS, DURATION, EASING, FOIL_SHEEN, FONTS, FONT_SIZES, GOLD_GLOW, hexRgba} from '../tokens/theme';
+import {COLORS, DURATION, EASING, FOIL_SHEEN, FONTS, FONT_SIZES, GOLD_GLOW, hexRgba, FONT_WEIGHT} from '../tokens/theme';
 import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
 
 interface QuantityStepperProps {
@@ -124,7 +124,7 @@ function cellStyle(dims: StepperDims): CSSProperties {
     border: 'none',
     background: 'transparent',
     fontFamily: FONTS.body,
-    fontWeight: 700,
+    fontWeight: FONT_WEIGHT.bold,
     lineHeight: 1,
     display: 'flex',
     alignItems: 'center',

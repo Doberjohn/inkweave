@@ -12,6 +12,8 @@ import {
   SPACING,
   VISUALLY_HIDDEN,
   hexRgba,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
 } from '../tokens/theme';
 import {usePrefersReducedMotion} from '../utils/prefersReducedMotion';
 import {PrintingName, type NamedPrinting} from './PrintingName';
@@ -43,8 +45,8 @@ const LABEL_STYLE: CSSProperties = {
   boxShadow: SHADOWS.float,
   fontFamily: FONTS.body,
   fontSize: FONT_SIZES.md,
-  fontWeight: 600,
-  lineHeight: 1.2,
+  fontWeight: FONT_WEIGHT.semibold,
+  lineHeight: LINE_HEIGHT.tight,
   whiteSpace: 'nowrap',
   pointerEvents: 'none',
 };
@@ -135,7 +137,7 @@ export function TurnNotice({printing, position, count, turns}: TurnNoticeProps) 
           transition: fade(reducedMotion),
         }}>
         <PrintingName printing={printing} />
-        <span style={{color: COLORS.textMuted, fontWeight: 500}}>
+        <span style={{color: COLORS.textMuted, fontWeight: FONT_WEIGHT.medium}}>
           {position} of {count}
         </span>
       </div>
