@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-378 tests across 36 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+386 tests across 36 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised, and with `VITE_SHOW_BETA_NOTICE=true`, as production builds, so every home-page test sees the hero where players do, below the beta notice on screens narrower than 1400 px (`beta-notice.spec.ts`). Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -42,13 +42,14 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should show featured cards after loading | Featured cards grid has 1-12 card tiles |
 | should open the overview modal when a card is selected | Clicking a featured card opens the modal overlay-style; URL stays `/`, no compact header |
 
-## `beta-notice.spec.ts`: 12 tests (the 8 sizes on the desktop projects and the phone size on every project, 1 desktop only, 3 on every project)
+## `beta-notice.spec.ts`: 20 tests (the 8 sizes, twice, on the desktop projects and the phone size, twice, on every project, 1 desktop only, 3 on every project)
 
-The home page's beta notice (#1084), which index.css's `.beta-notice` lays out by width: above the logo below 1400 px, in the page's top-left corner from there. The phone projects check their own screen and skip the other sizes, since a phone emulator's layout viewport stops tracking a desktop-sized window.
+The home page's beta notice (#1084), which index.css's `.beta-notice` lays out by width: above the logo below 1400 px (on the left in reveal season, clear of the Reveals promo in the top-right corner), in the page's top-left corner from there. The phone projects check their own screen and skip the other sizes, since a phone emulator's layout viewport stops tracking a desktop-sized window.
 
 | Test | What it verifies |
 |---|---|
 | at {size} the notice sits above the logo / in the corner, clear of the hero | At 390x844, 768x1024, 1024x768, 1280x800, 1399x800, 1400x800, 1440x900 and 1920x1080: the notice overlaps none of the hero's logo, subtitle, search box or three buttons; it sits inside the page, which it never widens; its Discord button is whole inside it; from 1400 px it sits 32 px from the top and left edges, left of every hero part, and below that its bottom is above the logo's top |
+| in reveal season at {size} the Reveals promo leaves the notice clear | At the same eight sizes, with the clock in the reveal season (`startClockInRevealSeason`, skipped when `previewCards.json` has no dated set): the Reveals promo shows, it and the notice don't overlap, the notice overlaps no hero part, and its Discord button is whole inside it |
 | in the corner the notice scrolls away with the page, never over the featured cards | At 1440x900, after a 200 px scroll the notice has moved up by the page's scroll: it is placed absolutely, not fixed |
 | the notice says the collection is in beta and thanks the people testing it | With `VITE_SHOW_COLLECTION` on, it reads "Collection is in beta" and the thank-you line |
 | the notice's Discord button opens the invite in a new tab | The button opens https://discord.gg/gvA6qUUPE in a new tab (answered by a stand-in page, so the test never reaches Discord), `rel="noopener noreferrer"`, and the home page stays where it was |

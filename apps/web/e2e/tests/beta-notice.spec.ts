@@ -1,5 +1,6 @@
 import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
+import {startClockInRevealSeason} from '../helpers/revealSeason';
 
 /**
  * The home page's beta notice (#1084): above the logo on phones and narrower screens, in the
@@ -50,6 +51,15 @@ async function boxOf(locator: Locator): Promise<Box> {
 const overlaps = (a: Box, b: Box) =>
   a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 
+/** Its Discord button whole inside it. */
+async function expectButtonInside(page: Page, box: Box): Promise<void> {
+  const link = await boxOf(notice(page).getByRole('link', {name: 'Join our Discord'}));
+  expect(link.x).toBeGreaterThanOrEqual(box.x);
+  expect(link.y).toBeGreaterThanOrEqual(box.y);
+  expect(link.x + link.width).toBeLessThanOrEqual(box.x + box.width);
+  expect(link.y + link.height).toBeLessThanOrEqual(box.y + box.height);
+}
+
 /** The hero's logo, subtitle, search box and buttons, each with what it is, for the failure message. */
 async function heroParts(page: Page): Promise<{name: string; box: Box}[]> {
   const hero = page.locator('section[aria-label="Hero"]');
@@ -86,12 +96,7 @@ for (const size of SIZES) {
     expect(box.x + box.width).toBeLessThanOrEqual(pageWidth);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(pageWidth);
 
-    // Its Discord button whole inside it.
-    const link = await boxOf(notice(page).getByRole('link', {name: 'Join our Discord'}));
-    expect(link.x).toBeGreaterThanOrEqual(box.x);
-    expect(link.y).toBeGreaterThanOrEqual(box.y);
-    expect(link.x + link.width).toBeLessThanOrEqual(box.x + box.width);
-    expect(link.y + link.height).toBeLessThanOrEqual(box.y + box.height);
+    await expectButtonInside(page, box);
 
     const logo = parts[0].box;
     if (corner) {
@@ -101,6 +106,30 @@ for (const size of SIZES) {
     } else {
       expect(box.y + box.height).toBeLessThanOrEqual(logo.y);
     }
+  });
+}
+
+// In reveal season the Reveals promo sits fixed in the top-right corner from 768 px, and at the
+// foot of the screen on a phone (RevealsPromoCard).
+for (const size of SIZES) {
+  test(`in reveal season at ${size.width}x${size.height} the Reveals promo leaves the notice clear`, async ({
+    page,
+  }, testInfo) => {
+    const phoneProject = isPhoneProject(testInfo.project.name);
+    test.skip(phoneProject && size.width !== 390, 'Phone projects check their own screen');
+    test.skip(!(await startClockInRevealSeason(page)), 'previewCards.json has no dated reveal set');
+    if (!phoneProject) await page.setViewportSize(size);
+    await gotoHome(page);
+    const promo = page.getByRole('complementary', {name: /reveals$/});
+    await expect(promo).toBeVisible();
+
+    const box = await boxOf(notice(page));
+    const promoBox = await boxOf(promo);
+    expect(overlaps(box, promoBox), 'the Reveals promo covers the notice').toBe(false);
+    for (const part of await heroParts(page)) {
+      expect(overlaps(box, part.box), `the notice covers the hero's ${part.name}`).toBe(false);
+    }
+    await expectButtonInside(page, box);
   });
 }
 
