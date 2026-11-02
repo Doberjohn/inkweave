@@ -15,7 +15,11 @@ concurrency:
 
 jobs:
   security-audit:
-    runs-on: ubuntu-latest
+    # Every job here runs on the owner's PC while the repository variable CI_ON_PC is 'true',
+    # except a pull request from another repository's branch. That keeps an ordinary fork's PR
+    # off the PC, but a fork's PR runs its own copy of this file, so the repo being private is
+    # what keeps strangers' code off it (docs/SELF_HOSTED_RUNNER.md).
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
 
     steps:
       - name: Checkout code
@@ -43,7 +47,7 @@ jobs:
         run: pnpm dlx pnpm@11.28.2 audit --pm-on-fail=ignore --audit-level high
 
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
     # Coverage is collected and uploaded on master pushes only (#964). The second value says
     # whether the token is set, so no step needs the token itself to decide.
     env:
@@ -163,122 +167,14 @@ jobs:
               || echo "::warning::CodeScene coverage upload failed ($metric)"
           done
 
-  # e2e-tests runs in Playwright's image for this exact version, because an image's browsers
-  # only work with the matching Playwright. Reading it from the lockfile means a Playwright bump
-  # moves the image tag in the same commit (#690), and this sparse checkout takes seconds, so
-  # the E2E jobs start with the run instead of after build-and-test (#854). Anything but X.Y.Z
-  # fails here, not as an unpullable image in every e2e job. deploy.yml, deploy-staging.yml and
-  # perf-gates.yml (as handoff-playwright-version) run the same job.
-  playwright-version:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      version: ${{ steps.pw.outputs.version }}
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          sparse-checkout: pnpm-lock.yaml
-          sparse-checkout-cone-mode: false
-          persist-credentials: false
-
-      # yq ships on ubuntu-latest.
-      - name: Read the Playwright version from the lockfile
-        id: pw
-        run: |
-          version="$(yq '.importers["apps/web"].devDependencies["@playwright/test"].version' pnpm-lock.yaml)"
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Unexpected @playwright/test version in pnpm-lock.yaml: $version"
-            exit 1
-          fi
-          echo "Playwright $version"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
-  e2e-tests:
-    # Split by Playwright project so the browsers run in parallel jobs instead of serially in
-    # a single job. Previous serial layout sat at an 18m baseline against a 30m wall — variance
-    # alone was timing out runs. Parallel matrix gives each browser its own runner + timeout,
-    # except chromium and mobile-chrome, which share one (see the matrix).
-    runs-on: ubuntu-latest
-    needs: playwright-version
-    # Playwright's image ships the browsers and their system packages, so this job installs
-    # nothing from apt and downloads no browsers. It used to apt-install about 100 of those
-    # packages per job, and on 2026-10-01 a stalling Ubuntu mirror stretched that step from
-    # under a minute to 19.5 min, cancelling jobs at the timeout (#690). The tag must equal the
-    # installed Playwright version, which the playwright-version job reads from the lockfile.
-    container:
-      image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.version }}-noble
-      # As in Playwright's CI docs: run as uid 1001, the runner user that owns $HOME
-      # (/github/home). Run as root, Firefox refuses to start in a home it doesn't own.
-      options: --user 1001
-    timeout-minutes: 20
-    strategy:
-      # Don't cancel sibling browsers when one fails — we want the full per-browser report.
-      fail-fast: false
-      matrix:
-        # The Playwright projects each job runs, and the server they test (E2E_SERVER in
-        # playwright.config.ts). chromium and mobile-chrome both run Chromium, so they share a job
-        # (#867), on the dev server: React logs its development-only errors there, which the
-        # console guard fails on, and a PR pushed without the pre-push hook gets that check here.
-        # The other three test a production build (#869), where a page loads a few chunks
-        # instead of hundreds of modules the dev server compiles on request.
-        include:
-          - projects: [chromium, mobile-chrome]
-            server: dev
-          - projects: [firefox]
-            server: preview
-          - projects: [webkit]
-            server: preview
-          - projects: [mobile-safari]
-            server: preview
-    name: e2e-tests (${{ join(matrix.projects, ', ') }})
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install
-
-      # precompute-synergies, the dev server and the web build all import the engine's dist. A
-      # job on the production build makes that build itself, in Playwright's webServer command.
-      - name: Build the engine
-        run: pnpm build:engine
-
-      - name: Pre-compute synergy data
-        run: pnpm precompute-synergies
-
-      - name: Run E2E tests
-        run: pnpm --filter inkweave-web test:e2e --project=${{ join(matrix.projects, ' --project=') }}
-        env:
-          E2E_SERVER: ${{ matrix.server }}
-
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@v7
-        if: always()
-        # Diagnostic artifact only — a storage-quota/upload hiccup must not fail
-        # the e2e job when the tests themselves determined the outcome.
-        continue-on-error: true
-        with:
-          # Per-job artifact names so the parallel jobs don't collide on upload.
-          name: playwright-report-${{ join(matrix.projects, '-') }}
-          path: apps/web/playwright-report/
-          retention-days: 7
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v7
-        if: failure()
-        # Diagnostic artifact only — never fail the job on the upload itself.
-        continue-on-error: true
-        with:
-          name: test-results-${{ join(matrix.projects, '-') }}
-          path: apps/web/test-results/
-          retention-days: 7
+  # E2E on every push: chromium and mobile-chrome, which share a job (#867), on the dev server,
+  # where React logs its development-only errors, which the console guard fails on, and a PR
+  # pushed without the pre-push hook gets that check here. Master's pushes run it too: admin's
+  # tools commit card data and tuning straight to master, and a merge can land on a master that
+  # moved since the PR's last run. Firefox, webkit and mobile-safari run once per pull request,
+  # when it opens ready for review, and nightly on master (full-e2e.yml), so the PC that runs CI
+  # carries about half the load (#1086).
+  e2e:
+    uses: ./.github/workflows/e2e.yml
+    with:
+      matrix: '[{"projects": ["chromium", "mobile-chrome"], "server": "dev"}]'

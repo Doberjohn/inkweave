@@ -24,7 +24,11 @@ jobs:
   detect-changes:
     name: Detect Changes
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    # Every job here runs on the owner's PC while the repository variable CI_ON_PC is 'true',
+    # except a pull request from another repository's branch. That keeps an ordinary fork's PR
+    # off the PC, but a fork's PR runs its own copy of this file, so the repo being private is
+    # what keeps strangers' code off it (docs/SELF_HOSTED_RUNNER.md).
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
     # paths-filter lists the PR's files through the API on pull_request events.
     permissions:
       contents: read
@@ -123,7 +127,7 @@ jobs:
 
   bundle-size:
     name: Bundle Size
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
     # Writes the size-limit PR comment. Permissions cannot vary by event, so master pushes
     # get this grant too; their steps never use the token (see the master checkout below).
     permissions:
@@ -210,12 +214,12 @@ jobs:
         run: pnpm size
 
   # prerender-handoff and sw-update run in Playwright's image for the version pnpm-lock.yaml pins,
-  # read here as ci.yml's playwright-version job reads it for the e2e jobs.
+  # read here as e2e.yml's playwright-version job reads it for the e2e jobs.
   handoff-playwright-version:
     name: Playwright Version
     needs: detect-changes
     if: needs.detect-changes.outputs.handoff == 'true' || needs.detect-changes.outputs.sw-update == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
     timeout-minutes: 5
     outputs:
       version: ${{ steps.pw.outputs.version }}
@@ -226,7 +230,7 @@ jobs:
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
-      # yq ships on ubuntu-latest.
+      # yq ships on ubuntu-latest, and docs/SELF_HOSTED_RUNNER.md installs it on the PC.
       - name: Read the Playwright version from the lockfile
         id: pw
         run: |
@@ -247,10 +251,10 @@ jobs:
     name: Prerender Handoff
     needs: [detect-changes, handoff-playwright-version]
     if: needs.detect-changes.outputs.handoff == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
     container:
       image: mcr.microsoft.com/playwright:v${{ needs.handoff-playwright-version.outputs.version }}-noble
-      # As in ci.yml's e2e jobs: run as uid 1001, the runner user that owns $HOME.
+      # As in e2e.yml's e2e-tests job: run as uid 1001, the runner user that owns $HOME.
       options: --user 1001
     timeout-minutes: 20
 
@@ -298,10 +302,10 @@ jobs:
     name: Service Worker Update
     needs: [detect-changes, handoff-playwright-version]
     if: needs.detect-changes.outputs.sw-update == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
     container:
       image: mcr.microsoft.com/playwright:v${{ needs.handoff-playwright-version.outputs.version }}-noble
-      # As in ci.yml's e2e jobs: run as uid 1001, the runner user that owns $HOME.
+      # As in e2e.yml's e2e-tests job: run as uid 1001, the runner user that owns $HOME.
       options: --user 1001
     timeout-minutes: 20
 
@@ -337,7 +341,7 @@ jobs:
     name: Engine Benchmarks
     needs: detect-changes
     if: needs.detect-changes.outputs.engine == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
     # Writes the benchmark PR comment. It goes through the Issues API, which accepts the
     # pull-requests write scope for comments on a PR.
     permissions:
@@ -358,9 +362,11 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
 
-      # Save bench files so they're available even if base branch lacks them
+      # Save bench files so they're available even if base branch lacks them. Every file this job
+      # keeps goes in RUNNER_TEMP, which the runner empties for each job: the PC's runners keep /tmp
+      # between jobs and share it, so a /tmp file could be an older run's.
       - name: Preserve benchmark files
-        run: cp -r packages/synergy-engine/src/__tests__ /tmp/bench-tests
+        run: cp -r packages/synergy-engine/src/__tests__ "$RUNNER_TEMP/bench-tests"
 
       - name: Checkout base branch
         uses: actions/checkout@v7
@@ -369,7 +375,7 @@ jobs:
           clean: false
 
       - name: Restore benchmark files into base
-        run: cp /tmp/bench-tests/*.bench.* packages/synergy-engine/src/__tests__/ 2>/dev/null || true
+        run: cp "$RUNNER_TEMP"/bench-tests/*.bench.* packages/synergy-engine/src/__tests__/ 2>/dev/null || true
 
       - name: Install dependencies (base)
         run: pnpm install
@@ -383,7 +389,7 @@ jobs:
       - name: Run benchmarks (base)
         run: |
           cd packages/synergy-engine
-          npx vitest bench --run --reporter=verbose --reporter=json --outputFile.json=/tmp/bench-base.json || true
+          npx vitest bench --run --reporter=verbose --reporter=json --outputFile.json="$RUNNER_TEMP/bench-base.json" || true
 
       # --- Now run PR branch (warm runner) ---
       - name: Checkout PR branch
@@ -400,7 +406,7 @@ jobs:
       - name: Run benchmarks (PR)
         run: |
           cd packages/synergy-engine
-          npx vitest bench --run --reporter=verbose --reporter=json --outputFile.json=/tmp/bench-pr.json
+          npx vitest bench --run --reporter=verbose --reporter=json --outputFile.json="$RUNNER_TEMP/bench-pr.json"
 
       - name: Post benchmark results to PR
         if: always()
@@ -412,13 +418,13 @@ jobs:
             // --- Load results ---
             let pr, base;
             try {
-              pr = JSON.parse(fs.readFileSync('/tmp/bench-pr.json', 'utf8'));
+              pr = JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/bench-pr.json`, 'utf8'));
             } catch {
               core.warning('PR benchmark results not found — skipping comment');
               return;
             }
             try {
-              base = JSON.parse(fs.readFileSync('/tmp/bench-base.json', 'utf8'));
+              base = JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/bench-base.json`, 'utf8'));
             } catch {
               core.info('Base benchmark results not found — showing PR results only');
             }
