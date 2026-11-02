@@ -210,7 +210,9 @@ jobs:
       # As in Playwright's CI docs: run as uid 1001, the runner user that owns $HOME
       # (/github/home). Run as root, Firefox refuses to start in a home it doesn't own.
       options: --user 1001
-    timeout-minutes: 20
+    # On a private repo's 2-core runners WebKit's suite runs close to 20 minutes, so a slow day
+    # cut jobs off with no real failure (#1092).
+    timeout-minutes: 30
     strategy:
       # Don't cancel sibling browsers when one fails — we want the full per-browser report.
       fail-fast: false
