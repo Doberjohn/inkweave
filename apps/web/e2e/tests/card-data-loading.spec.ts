@@ -159,4 +159,15 @@ test.describe('Card data that fails to load', () => {
       await expect(page.getByTestId('card-tile').first()).toBeVisible({timeout: 15000});
     });
   }
+
+  // AppLayout's screen stands in for every page, so no page keeps a screen of its own for this.
+  test('the playstyle pages show the same screen for a card list that failed', async ({appPage, page}) => {
+    await page.route(ALL_CARDS, (route) => route.fulfill({status: 503}));
+    for (const path of ['/playstyles', '/playstyles/discard']) {
+      await page.goto(path);
+      await expect(appPage.errorMessage).toBeVisible({timeout: 15000});
+      await expect(appPage.retryButton).toBeVisible();
+      await expect(page.getByText('Failed to load card data.')).toHaveCount(0);
+    }
+  });
 });

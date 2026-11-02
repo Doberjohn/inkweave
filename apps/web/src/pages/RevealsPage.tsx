@@ -61,7 +61,6 @@ const messageStyle: React.CSSProperties = {
 
 interface RevealsBodyProps {
   loading: boolean;
-  error: Error | null;
   progress: RevealProgress;
   selectedInk: Ink;
   onSelectInk: (ink: Ink) => void;
@@ -72,18 +71,11 @@ interface RevealsBodyProps {
 }
 
 /**
- * The page body below the hero: an error/loading message, or the tracker (ink
- * strip + featured board + new-franchises). Early returns keep its branches off
- * RevealsPage.
+ * The page body below the hero: a loading message, or the tracker (ink strip +
+ * featured board + new-franchises). A card list that failed never gets here:
+ * AppLayout shows its own screen in place of every page.
  */
-function RevealsBody({loading, error, progress, selectedInk, onSelectInk, onOpen, onOpenPrinting, onSelectFranchise, compact}: RevealsBodyProps) {
-  if (error) {
-    return (
-      <p role="alert" style={{...messageStyle, color: COLORS.error}}>
-        Could not load reveal cards. Please try again later.
-      </p>
-    );
-  }
+function RevealsBody({loading, progress, selectedInk, onSelectInk, onOpen, onOpenPrinting, onSelectFranchise, compact}: RevealsBodyProps) {
   if (loading) {
     return <p style={{...messageStyle, color: COLORS.textMuted}}>Loading reveal cards…</p>;
   }
@@ -110,7 +102,7 @@ function RevealsBody({loading, error, progress, selectedInk, onSelectInk, onOpen
 
 export function RevealsPage() {
   const {isMobile} = useResponsive();
-  const {tiers, loading, error} = useRevealCards();
+  const {tiers, loading} = useRevealCards();
   const progress = useRevealProgress();
   const {openCardModal} = useCardModal();
   const [dates, setDates] = useState<RevealDates | null>(null);
@@ -186,7 +178,6 @@ export function RevealsPage() {
           />
           <RevealsBody
             loading={loading}
-            error={error}
             progress={progress}
             selectedInk={selectedInk}
             onSelectInk={selectInk}

@@ -11,7 +11,6 @@ import {
 } from '../features/cards/components/BrowseSidePanel';
 import {
   CompactHeader,
-  CtaButton,
   ErrorBoundary,
   CardFilterDialog,
   EtherealBackground,
@@ -39,27 +38,6 @@ function BrowseSeo() {
       description="Browse and search every Disney Lorcana Core-format card by ink, cost, type, and keyword. Open any card for its strongest synergies and combos."
       canonicalPath="/browse"
     />
-  );
-}
-
-function BrowsePageError({onRetry}: {onRetry: () => void}) {
-  return (
-    <main
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'column',
-        gap: 16,
-        fontFamily: FONTS.body,
-        background: COLORS.background,
-      }}>
-      <p style={{color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
-        Failed to load card data.
-      </p>
-      <CtaButton onClick={onRetry}>Retry</CtaButton>
-    </main>
   );
 }
 
@@ -430,16 +408,13 @@ function useSheetOpen(isMobile: boolean, collection: BrowseCollectionSlots | nul
 export function BrowseBody({collection}: {collection: BrowseCollectionSlots | null}) {
   const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();
-  const {cards, isLoading, error, retryLoad, uniqueKeywords, uniqueClassifications, sets, getCardById} =
-    useCardDataContext();
+  const {cards, isLoading, uniqueKeywords, uniqueClassifications, sets, getCardById} = useCardDataContext();
   const params = useFilterParams();
   const [showFilters, setShowFilters] = useSheetOpen(isMobile, collection);
   const docked = useSidePanelDocked();
   const panel = useSidePanelState();
   const search = useSearchCards(params.searchQuery, collection?.active ?? false, getCardById);
   useFocusSearchParam(isMobile);
-
-  if (error) return <BrowsePageError onRetry={retryLoad} />;
 
   const {filters} = params;
   const {rarities, binderOptions, sortedCards, matchedCards, filtered} = browseView(
