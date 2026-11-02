@@ -6,7 +6,7 @@
  * always failed there, and every cloud push skipped all of the hook's gates with
  * `--no-verify`. This runs what a container can: chromium and mobile-chrome, on the specs
  * changed since the branch left origin/master (Playwright's --only-changed follows the files
- * a spec imports, not the app source it only visits). CI still runs all five browsers.
+ * a spec imports, not the app source it only visits). CI runs every spec, on all five browsers once per PR.
  *
  * `.husky/pre-push` calls it when CLAUDE_CODE_REMOTE=true, after its Windows branch, and
  * passes `--workers=<n>` when PRE_PUSH_E2E_WORKERS is set; any argument goes on to
@@ -92,7 +92,7 @@ const args = [
 ];
 
 console.log(
-  `pre-push: cloud session, no WebKit here: chromium + mobile-chrome on specs changed since the branch left ${BASE_REF}. CI runs all five browsers.`,
+  `pre-push: cloud session, no WebKit here: chromium + mobile-chrome on specs changed since the branch left ${BASE_REF}. CI runs every spec, on all five browsers once per PR.`,
 );
 for (const line of linked) console.log(`pre-push: using ${line}`);
 

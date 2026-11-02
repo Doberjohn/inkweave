@@ -23,7 +23,11 @@ jobs:
     # default GITHUB_TOKEN do not recursively trigger workflows, and the commit also
     # carries [skip ci]. This guard covers the paths trigger regardless.
     if: github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
+    # Every job here runs on the owner's PC while the repository variable CI_ON_PC is 'true',
+    # except a pull request from another repository's branch. That keeps an ordinary fork's PR
+    # off the PC, but a fork's PR runs its own copy of this file, so the repo being private is
+    # what keeps strangers' code off it (docs/SELF_HOSTED_RUNNER.md).
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-linux' || 'ubuntu-latest' }}
     permissions:
       contents: write
     env:

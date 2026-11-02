@@ -1,0 +1,51 @@
+name: Full E2E
+
+# The browsers CI's every push leaves out (#1086). A pull request gets firefox, webkit and
+# mobile-safari once, when it opens ready for review or a draft is marked ready; later pushes run
+# chromium and mobile-chrome only (ci.yml), so the PC that runs CI carries about half the load.
+# Adding the full-e2e label runs them again on the pull request's newest commit (if it is already
+# there, remove it and add it again: GitHub sends nothing for a label a PR already has). Do that
+# before merging a change that a later push made to layout, CSS or browser-specific code. A draft
+# gets none, label or not, until it is marked ready. Master gets all five browsers nightly, which
+# catches what a later push broke, and Run workflow runs all five on any branch.
+on:
+  pull_request:
+    branches: [master, main]
+    types: [opened, reopened, ready_for_review, labeled]
+  schedule:
+    # 03:30 UTC. While CI runs on the owner's PC, a run the PC is off for waits until it is back
+    # (up to 24 hours).
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer request of the same kind for the same branch replaces the run still going: the nightly
+# run and Run workflow never cancel each other, and pushes start no run here. A pull request event
+# the job skips (a draft, or a label other than full-e2e) gets a group of its own run, so it can't
+# cancel a run that is testing. The skip test here and the job's if are the same rule.
+concurrency:
+  group: >-
+    ${{ github.event_name == 'pull_request'
+      && (github.event.pull_request.draft
+        || (github.event.action == 'labeled' && github.event.label.name != 'full-e2e'))
+      && format('full-e2e-skip-{0}', github.run_id)
+      || format('full-e2e-{0}-{1}', github.event_name, github.ref) }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    if: >-
+      github.event_name != 'pull_request'
+      || (!github.event.pull_request.draft
+        && (github.event.action != 'labeled' || github.event.label.name == 'full-e2e'))
+    uses: ./.github/workflows/e2e.yml
+    with:
+      # Firefox, webkit and mobile-safari test a production build (#869), where a page loads a
+      # few chunks instead of hundreds of modules the dev server compiles on request. chromium and
+      # mobile-chrome share a job on the dev server, as in ci.yml.
+      matrix: >-
+        ${{ github.event_name == 'pull_request'
+          && '[{"projects": ["firefox"], "server": "preview"}, {"projects": ["webkit"], "server": "preview"}, {"projects": ["mobile-safari"], "server": "preview"}]'
+          || '[{"projects": ["chromium", "mobile-chrome"], "server": "dev"}, {"projects": ["firefox"], "server": "preview"}, {"projects": ["webkit"], "server": "preview"}, {"projects": ["mobile-safari"], "server": "preview"}]' }}

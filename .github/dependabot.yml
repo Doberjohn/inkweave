@@ -6,6 +6,11 @@ updates:
       interval: 'weekly'
       day: 'monday'
     open-pull-requests-limit: 10
+    # A version reaches a PR only once it has been out a week (GitHub's default is 3 days), by when
+    # most bad releases have been pulled: CI runs a PR's code on the owner's PC, whose runners keep
+    # files between jobs (#1086). Security updates don't wait.
+    cooldown:
+      default-days: 7
     labels:
       - 'dependencies'
     groups:
@@ -33,6 +38,8 @@ updates:
     schedule:
       interval: 'weekly'
       day: 'monday'
+    cooldown:
+      default-days: 7
     labels:
       - 'dependencies'
       - 'infrastructure'

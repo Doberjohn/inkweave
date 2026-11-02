@@ -38,8 +38,15 @@ permissions:
 
 jobs:
   script-tests:
-    runs-on: windows-latest
+    # On the owner's PC while the repository variable CI_ON_PC is 'true', except a pull request
+    # from another repository's branch. A fork's PR runs its own copy of this file, so the repo
+    # being private is what keeps strangers' code off the PC (docs/SELF_HOSTED_RUNNER.md).
+    runs-on: ${{ vars.CI_ON_PC == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'inkweave-windows' || 'windows-latest' }}
     timeout-minutes: 20
+    # The PC has Windows PowerShell 5.1 and no pwsh 7, so name the shell both machines have.
+    defaults:
+      run:
+        shell: powershell
 
     steps:
       - name: Checkout code
