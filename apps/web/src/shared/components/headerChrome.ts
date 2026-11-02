@@ -13,15 +13,12 @@ export interface ViewportConfig {
 /**
  * Whether the top header renders, and therefore whether it carries the auth control.
  *
- * Read from two sides. `CompactHeader` gates its whole render on it, and `/decks`
- * NEGATES it to decide whether to render the fallback sign in / sign out button
- * (owner ruling 2026-08-05: mobile auth lives on /decks, because mobile has no
- * header to put it in).
- *
- * One predicate rather than each side testing `isMobile` independently. The values
- * are identical today, so this buys nothing today: it buys that a future slim
- * mobile header cannot leave two controls both named "Sign in" on one page, which
- * nothing in the suite currently checks for. Change the rule here, both follow.
+ * Where it doesn't, on a phone, the auth control is the bottom nav's account tab
+ * (`MobileBottomNav`, which AppLayout mounts only on a phone), there while accounts are on
+ * and sign-in is configured, as the header's is. The tab doesn't read this predicate, so a
+ * future slim phone header that carried auth would have to hide the tab, or the page's chrome
+ * would hold two sign-in controls. The deck builder's `/decks` reads it negated for a phone
+ * sign-in button of its own, which the tab makes a second control (#1100).
  *
  * Mobile chrome is MobileBottomNav + SearchBottomSheet, mounted by AppLayout.
  */

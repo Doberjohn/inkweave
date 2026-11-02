@@ -13,11 +13,11 @@ interface AuthButtonProps {
  * (design doc 2026-08-11) — it is session-ending and rare, so it does not belong
  * one click from every screen.
  *
- * Two surfaces render this: the desktop header's rightmost slot (`HeaderAuth` in
- * CompactHeader) and `/decks` on mobile, where no header exists. It deliberately
- * does NOT own a `SignInDialog`, because `DecksPage` already renders one for
- * `NewDeckDialog`'s "keep both" link and a second would be a duplicate overlay.
- * Dialog ownership stays with the caller; only the button rule is shared.
+ * The desktop header's rightmost slot (`HeaderAuth` in CompactHeader) renders this. A
+ * phone has no header: its bottom nav's account tab does the same job in its own shape
+ * (`MobileBottomNav`). It deliberately does NOT own a `SignInDialog`: dialog ownership
+ * stays with the caller, so a page that already renders one never gets a duplicate
+ * overlay. Only the button rule is shared.
  *
  * Renders NOTHING while `loading`, and that is the load-bearing part. `user` is
  * null during that window, so the naive version shows "Sign in" and then swaps to

@@ -1,9 +1,8 @@
 import type {Session} from '@supabase/auth-js';
 import type {AuthProvider} from '../contexts/SessionContext';
-import {trackEvent} from './analytics';
+import {trackEvent, type SignInSurface} from './analytics';
 
-/** Where the sign-in dialog was opened. Must match the catalog's `sign_in_started` and `sign_in_shown` unions. */
-export type SignInSurface = 'header' | 'account' | 'collection' | 'decks' | 'deck_builder';
+export type {SignInSurface};
 
 /** Why a sign-in did not complete. Must match the catalog's `sign_in_failed` union. */
 export type SignInFailureReason = 'error' | 'cancelled' | 'timeout';

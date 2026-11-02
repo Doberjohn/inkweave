@@ -11,6 +11,9 @@ import {headerCarriesAuth, type ViewportConfig} from './headerChrome';
 import {SignInDialog} from './SignInDialog';
 import {SearchAutocomplete} from './SearchAutocomplete';
 
+// For the phone's bottom nav, which loads the dialog from this chunk (MobileBottomNav).
+export {SignInDialog};
+
 interface CompactHeaderProps {
   /** Optional side-effect callback fired before nav. Link handles the route push. */
   onLogoClick?: () => void;

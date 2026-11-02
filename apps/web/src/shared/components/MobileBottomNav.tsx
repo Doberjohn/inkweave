@@ -1,6 +1,18 @@
+import {Suspense, useState} from 'react';
 import {NavLink, useLocation} from 'react-router-dom';
 import {COLORS, FONTS, LAYOUT, REVEAL_SET_NUMBER} from '../constants';
 import {useRevealPhase, type RevealPhase} from '../../features/reveals';
+import {useSession} from '../contexts/SessionContext';
+import {lazyWithRetry} from '../lib/lazyWithRetry';
+
+/** Accounts ship behind this flag; while it is off the nav has no account tab. */
+const SHOW_ACCOUNTS = import.meta.env.VITE_SHOW_ACCOUNTS === 'true';
+
+// The nav sits in the entry chunk, so the dialog waits for the first Sign in tap. It comes from
+// the header's chunk, which most pages with the nav have already loaded (a page drawn without the
+// header, such as Not found, fetches it on the tap): importing its own module would split the
+// dialog out of that chunk into a file of its own, about 600 B more startup JS.
+const SignInDialog = lazyWithRetry(() => import('./CompactHeader'), 'SignInDialog');
 
 /** Height of the nav bar in CSS px. Used for bottom padding on page content. */
 export const MOBILE_NAV_HEIGHT = LAYOUT.mobileNavHeight;
@@ -11,9 +23,20 @@ interface MobileBottomNavProps {
   searchButtonRef?: React.Ref<HTMLButtonElement>;
   /** Bypass `useRevealPhase` (Storybook / tests). */
   phaseOverride?: RevealPhase;
+  /** Bypass the session (Storybook): which account tab to draw. */
+  accountOverride?: AccountTab;
 }
 
-type TabKind = 'browse' | 'search' | 'reveals' | 'playstyles' | 'vote';
+/**
+ * The account tab, the phone's counterpart of the desktop header's Sign in / Account button:
+ * `none` while accounts are off or auth isn't configured, `sign-in` signed out, `account` signed
+ * in.
+ */
+type AccountTab = 'none' | 'sign-in' | 'account';
+
+type TabKind = 'browse' | 'search' | 'reveals' | 'playstyles' | 'vote' | 'account';
+
+type TabAction = 'search' | 'sign-in';
 
 interface TabDef {
   kind: TabKind;
@@ -22,7 +45,7 @@ interface TabDef {
   /** Navigation path. Mutually exclusive with `action`. */
   href?: string;
   /** Action tab (renders as a button). */
-  action?: 'search';
+  action?: TabAction;
   hasNewDot?: boolean;
 }
 
@@ -41,6 +64,11 @@ const TABS_OFF_SEASON: readonly TabDef[] = [
   {kind: 'vote', label: 'Rate synergies', href: '/vote'},
 ];
 
+const ACCOUNT_TABS: Record<Exclude<AccountTab, 'none'>, TabDef> = {
+  'sign-in': {kind: 'account', label: 'Sign in', action: 'sign-in'},
+  account: {kind: 'account', label: 'Your account', href: '/account'},
+};
+
 /**
  * Per-tab position data. Both padding-top (icon arc) and dash-offset (underline
  * position) are derived from the border curve `M 0 22 Q 195 4 390 22`:
@@ -58,7 +86,18 @@ const POS_4 = {
   dashOffset: [-6.5, -31.5, -56.5, -81.5],
 } as const;
 
-type PositionTable = typeof POS_5 | typeof POS_4;
+/** Reveal season with the account tab. */
+const POS_6 = {
+  paddingTop: [32, 24, 20, 20, 24, 32],
+  dashOffset: [-2.3, -19, -35.7, -52.3, -69, -85.7],
+} as const;
+
+interface PositionTable {
+  paddingTop: readonly number[];
+  dashOffset: readonly number[];
+}
+
+const POSITIONS_BY_COUNT: Record<number, PositionTable> = {4: POS_4, 5: POS_5, 6: POS_6};
 
 // =====================================================================
 // Domain types — aggregate related state so subcomponent signatures read
@@ -80,8 +119,9 @@ interface PhaseInput {
   phase: RevealPhase;
 }
 
-interface SeasonInput {
+interface TabsInput {
   isRevealSeason: boolean;
+  account: AccountTab;
 }
 
 interface TabActiveInput {
@@ -105,9 +145,32 @@ function isRevealSeasonPhase({phase}: PhaseInput): boolean {
   return false;
 }
 
-function pickTabsAndPositions({isRevealSeason}: SeasonInput): TabsAndPositions {
-  if (isRevealSeason) return {tabs: TABS_REVEAL_SEASON, positions: POS_5};
-  return {tabs: TABS_OFF_SEASON, positions: POS_4};
+function seasonTabs(isRevealSeason: boolean): readonly TabDef[] {
+  return isRevealSeason ? TABS_REVEAL_SEASON : TABS_OFF_SEASON;
+}
+
+function pickTabsAndPositions({isRevealSeason, account}: TabsInput): TabsAndPositions {
+  const season = seasonTabs(isRevealSeason);
+  const tabs = account === 'none' ? season : [...season, ACCOUNT_TABS[account]];
+  return {tabs, positions: POSITIONS_BY_COUNT[tabs.length]};
+}
+
+/**
+ * Which account tab to draw. Whether there is one at all is fixed for the build (the flag, and
+ * Supabase being configured), so it never pops in and moves the other tabs. A stored session
+ * still being restored counts as signed in, since it almost always is. The two tabs share an
+ * icon, and the label shows only on the tab's own page, so the swap between them (after a
+ * restore that finds the session expired, or from the prerendered page, crawled signed out, to a
+ * returning player's) changes what the tab does but not how it looks.
+ */
+function accountTabFor(
+  session: Pick<ReturnType<typeof useSession>, 'user' | 'loading' | 'enabled'>,
+): AccountTab {
+  if (!SHOW_ACCOUNTS) return 'none';
+  if (!session.enabled) return 'none';
+  if (session.user) return 'account';
+  if (session.loading) return 'account';
+  return 'sign-in';
 }
 
 /**
@@ -177,6 +240,13 @@ function TabIcon({kind}: {kind: TabKind}) {
         <svg width={24} height={24} viewBox="0 0 24 24" {...iconCommon}>
           <circle cx="12" cy="12" r="10" />
           <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
+        </svg>
+      );
+    case 'account':
+      return (
+        <svg width={24} height={24} viewBox="0 0 24 24" {...iconCommon}>
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" />
         </svg>
       );
     case 'vote':
@@ -260,11 +330,12 @@ function NavCurveBackground({underline}: NavCurveBackgroundProps) {
 interface NavTabProps {
   tab: TabDef;
   paddingTop: number;
-  onSearchClick?: () => void;
+  /** What each action tab does when pressed. */
+  actions: Partial<Record<TabAction, () => void>>;
   searchButtonRef?: React.Ref<HTMLButtonElement>;
 }
 
-function NavTab({tab, paddingTop, onSearchClick, searchButtonRef}: NavTabProps) {
+function NavTab({tab, paddingTop, actions, searchButtonRef}: NavTabProps) {
   const tabStyle: React.CSSProperties = {
     display: 'flex',
     flexDirection: 'column',
@@ -310,14 +381,14 @@ function NavTab({tab, paddingTop, onSearchClick, searchButtonRef}: NavTabProps) 
     </>
   );
 
-  if (tab.action === 'search') {
+  if (tab.action) {
     return (
       <button
-        ref={searchButtonRef}
+        ref={tab.action === 'search' ? searchButtonRef : undefined}
         type="button"
         className="mbn-tab"
         aria-label={tab.label}
-        onClick={onSearchClick}
+        onClick={actions[tab.action]}
         style={tabStyle}>
         {contents}
       </button>
@@ -369,21 +440,29 @@ function ActiveLabelStrip({label, visible}: ActiveLabelStripProps) {
 // Public component.
 // =====================================================================
 
+/** The sign-in dialog's state. `unloaded` until the first tap, so its chunk waits for one. */
+type SignInState = 'unloaded' | 'open' | 'closed';
+
 export function MobileBottomNav({
   onSearchClick,
   searchButtonRef,
   phaseOverride,
+  accountOverride,
 }: MobileBottomNavProps) {
   const {pathname} = useLocation();
   const hookPhase = useRevealPhase();
   const phase = phaseOverride ?? hookPhase;
+  const session = useSession();
+  const [signIn, setSignIn] = useState<SignInState>('unloaded');
 
   const {tabs, positions} = pickTabsAndPositions({
     isRevealSeason: isRevealSeasonPhase({phase}),
+    account: accountOverride ?? accountTabFor(session),
   });
+  const actions = {search: onSearchClick, 'sign-in': () => setSignIn('open')};
 
   // Active tab = first nav tab whose href is a prefix of the current path.
-  // Action tabs (Search) are never "active" — they open a sheet, not a route.
+  // Action tabs (Search, Sign in) are never "active": they open a sheet or a dialog.
   const activeIdx = tabs.findIndex((tab) => isTabActive({tab, pathname}));
   const hasActive = activeIdx >= 0;
   const underline: UnderlineState = {
@@ -422,12 +501,22 @@ export function MobileBottomNav({
             key={tab.kind}
             tab={tab}
             paddingTop={positions.paddingTop[i]}
-            onSearchClick={onSearchClick}
+            actions={actions}
             searchButtonRef={searchButtonRef}
           />
         ))}
       </div>
       <ActiveLabelStrip label={activeLabel} visible={hasActive} />
+      {/* DialogShell portals to <body>, so the nav's stacking context doesn't hold it. */}
+      {signIn !== 'unloaded' && (
+        <Suspense fallback={null}>
+          <SignInDialog
+            isOpen={signIn === 'open'}
+            onClose={() => setSignIn('closed')}
+            surface="bottom_nav"
+          />
+        </Suspense>
+      )}
     </nav>
   );
 }
