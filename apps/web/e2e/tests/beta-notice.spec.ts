@@ -3,15 +3,15 @@ import {test, expect} from '../fixtures';
 import {startClockInRevealSeason} from '../helpers/revealSeason';
 
 /**
- * The home page's beta notice (#1084): above the logo on phones and narrower screens, in the
- * page's top-left corner from 1400 px, never over the hero, and a way into the Discord.
+ * The home page's beta notice: above the logo on phones and narrower screens, in the page's
+ * top-left corner on wide ones, never over the hero, and a way into the Discord.
  *
  * The desktop projects check every size; the phone projects their own screen, since a phone
  * emulator's layout viewport stops tracking a desktop-sized window.
  */
 
 const INVITE = 'https://discord.gg/gvA6qUUPE';
-/** The narrowest width at which the notice moves to the corner (index.css's `.beta-notice`). */
+/** The narrowest width at which the notice moves to the corner: index.css's `.beta-notice` breakpoint. */
 const CORNER_FROM = 1400;
 /** Its distance from the page's top and left edges there: SPACING.xxxl. */
 const CORNER_GUTTER = 32;
@@ -135,13 +135,18 @@ for (const size of SIZES) {
 
 test('in the corner the notice scrolls away with the page, never over the featured cards', async ({page}, testInfo) => {
   test.skip(isPhoneProject(testInfo.project.name), 'The corner layout needs a wide screen');
-  await page.setViewportSize({width: 1440, height: 900});
+  // The narrowest corner width, on a short window.
+  await page.setViewportSize({width: CORNER_FROM, height: 700});
   await gotoHome(page);
+  const featured = page.getByTestId('featured-cards');
+  await expect(featured).toBeVisible();
 
   await page.evaluate(() => window.scrollTo(0, 200));
   const scrolled = await page.evaluate(() => window.scrollY);
   expect(scrolled).toBeGreaterThan(0);
-  expect((await boxOf(notice(page))).y).toBeCloseTo(CORNER_GUTTER - scrolled, 0);
+  const box = await boxOf(notice(page));
+  expect(box.y).toBeCloseTo(CORNER_GUTTER - scrolled, 0);
+  expect(overlaps(box, await boxOf(featured)), 'the notice covers the featured cards').toBe(false);
 });
 
 test('the notice says the collection is in beta and thanks the people testing it', async ({page}) => {

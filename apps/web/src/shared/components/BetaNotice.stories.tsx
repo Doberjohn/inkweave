@@ -3,7 +3,7 @@ import {BetaNotice} from './BetaNotice';
 
 /*
  * index.css's `.beta-notice` lays the card out by the screen's width: in the top-left corner
- * from 1400 px, a wide card above the logo from 768 px, a stacked one below that. The column
+ * on a wide screen, a wide card above the logo from 768 px, a stacked one below that. The column
  * stands in for the home page's frame, which the card sits at the top of.
  */
 const meta: Meta<typeof BetaNotice> = {

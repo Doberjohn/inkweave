@@ -506,7 +506,9 @@ option {
    (by 57 px; at 1280 px it would cover the hero's edge). Media queries, not useResponsive:
    Deploy's crawl takes one desktop capture for every width from 768 px, so a switch in
    JavaScript would paint the capture's layout first and then move the hero. Its spacing
-   comes from the tokens through the variables BetaNotice sets. */
+   comes from the tokens through the variables BetaNotice sets. The 1400 px breakpoint has no
+   token, since a media query can't read one: the reveal-season rule below stops short of it,
+   and beta-notice.spec.ts's CORNER_FROM follows it. */
 .beta-notice {
   position: relative;
   z-index: 1;
