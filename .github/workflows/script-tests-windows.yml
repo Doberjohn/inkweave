@@ -38,8 +38,14 @@ permissions:
 
 jobs:
   script-tests:
-    runs-on: windows-latest
+    # On the owner's PC while the repository variable CI_ON_PC is 'true', except for a fork's pull
+    # request, which never runs there (docs/SELF_HOSTED_RUNNER.md).
+    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-windows' || 'windows-latest' }}
     timeout-minutes: 20
+    # The PC has Windows PowerShell 5.1 and no pwsh 7, so name the shell both machines have.
+    defaults:
+      run:
+        shell: powershell
 
     steps:
       - name: Checkout code

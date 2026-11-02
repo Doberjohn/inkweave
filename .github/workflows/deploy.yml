@@ -82,7 +82,9 @@ jobs:
       vars.DEPLOY_VIA_CI == 'true' && (github.event_name == 'push' ||
       (github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]'))
-    runs-on: ubuntu-latest
+    # Every job here runs on the owner's PC while the repository variable CI_ON_PC is 'true',
+    # except for a fork's pull request, which never runs there (docs/SELF_HOSTED_RUNNER.md).
+    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
     timeout-minutes: 5
     outputs:
       version: ${{ steps.pw.outputs.version }}
@@ -92,7 +94,7 @@ jobs:
           sparse-checkout: pnpm-lock.yaml
           sparse-checkout-cone-mode: false
 
-      # yq ships on ubuntu-latest.
+      # yq ships on ubuntu-latest, and docs/SELF_HOSTED_RUNNER.md installs it on the PC.
       - name: Read the Playwright version from the lockfile
         id: pw
         run: |
@@ -110,7 +112,7 @@ jobs:
       vars.DEPLOY_VIA_CI == 'true' && (github.event_name == 'push' ||
       (github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]'))
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
     # A normal deploy takes 6 to 16 min. A cold card-image cache adds about 15 min (#579).
     # Without a cap a hung step could run to GitHub's 360-min default while every later
     # master push queued behind it in deploy-production (#694).

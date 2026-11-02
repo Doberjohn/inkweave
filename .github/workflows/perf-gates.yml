@@ -24,7 +24,9 @@ jobs:
   detect-changes:
     name: Detect Changes
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    # Every job here runs on the owner's PC while the repository variable CI_ON_PC is 'true',
+    # except for a fork's pull request, which never runs there (docs/SELF_HOSTED_RUNNER.md).
+    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
     # paths-filter lists the PR's files through the API on pull_request events.
     permissions:
       contents: read
@@ -123,7 +125,7 @@ jobs:
 
   bundle-size:
     name: Bundle Size
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
     # Writes the size-limit PR comment. Permissions cannot vary by event, so master pushes
     # get this grant too; their steps never use the token (see the master checkout below).
     permissions:
@@ -215,7 +217,7 @@ jobs:
     name: Playwright Version
     needs: detect-changes
     if: needs.detect-changes.outputs.handoff == 'true' || needs.detect-changes.outputs.sw-update == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
     timeout-minutes: 5
     outputs:
       version: ${{ steps.pw.outputs.version }}
@@ -226,7 +228,7 @@ jobs:
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
-      # yq ships on ubuntu-latest.
+      # yq ships on ubuntu-latest, and docs/SELF_HOSTED_RUNNER.md installs it on the PC.
       - name: Read the Playwright version from the lockfile
         id: pw
         run: |
@@ -247,7 +249,7 @@ jobs:
     name: Prerender Handoff
     needs: [detect-changes, handoff-playwright-version]
     if: needs.detect-changes.outputs.handoff == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
     container:
       image: mcr.microsoft.com/playwright:v${{ needs.handoff-playwright-version.outputs.version }}-noble
       # As in ci.yml's e2e jobs: run as uid 1001, the runner user that owns $HOME.
@@ -298,7 +300,7 @@ jobs:
     name: Service Worker Update
     needs: [detect-changes, handoff-playwright-version]
     if: needs.detect-changes.outputs.sw-update == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
     container:
       image: mcr.microsoft.com/playwright:v${{ needs.handoff-playwright-version.outputs.version }}-noble
       # As in ci.yml's e2e jobs: run as uid 1001, the runner user that owns $HOME.
@@ -337,7 +339,7 @@ jobs:
     name: Engine Benchmarks
     needs: detect-changes
     if: needs.detect-changes.outputs.engine == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
     # Writes the benchmark PR comment. It goes through the Issues API, which accepts the
     # pull-requests write scope for comments on a PR.
     permissions:

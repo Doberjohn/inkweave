@@ -1,0 +1,124 @@
+name: E2E
+
+# The E2E jobs, called by ci.yml (chromium and mobile-chrome on every PR push) and full-e2e.yml
+# (the other browsers when a PR opens, and all of them nightly and on request). The caller picks
+# the browsers, so each layout lives in one place and the job itself in this one.
+on:
+  workflow_call:
+    inputs:
+      matrix:
+        # Each entry is one job: the Playwright projects it runs, and the server they test
+        # (E2E_SERVER in playwright.config.ts).
+        description: 'The E2E jobs to run, as a JSON list of {"projects": [...], "server": "dev" or "preview"}'
+        required: true
+        type: string
+
+jobs:
+  # e2e-tests runs in Playwright's image for this exact version, because an image's browsers
+  # only work with the matching Playwright. Reading it from the lockfile means a Playwright bump
+  # moves the image tag in the same commit (#690), and this sparse checkout takes seconds, so
+  # the E2E jobs start with the run instead of after build-and-test (#854). Anything but X.Y.Z
+  # fails here, not as an unpullable image in every e2e job. deploy.yml, deploy-staging.yml and
+  # perf-gates.yml (as handoff-playwright-version) run the same job.
+  playwright-version:
+    # On the owner's PC while the repository variable CI_ON_PC is 'true', except for a fork's
+    # pull request, which never runs there (docs/SELF_HOSTED_RUNNER.md).
+    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.pw.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: pnpm-lock.yaml
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      # yq ships on ubuntu-latest, and docs/SELF_HOSTED_RUNNER.md installs it on the PC.
+      - name: Read the Playwright version from the lockfile
+        id: pw
+        run: |
+          version="$(yq '.importers["apps/web"].devDependencies["@playwright/test"].version' pnpm-lock.yaml)"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Unexpected @playwright/test version in pnpm-lock.yaml: $version"
+            exit 1
+          fi
+          echo "Playwright $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  e2e-tests:
+    # Split by Playwright project so the browsers run in parallel jobs instead of serially in
+    # a single job. Previous serial layout sat at an 18m baseline against a 30m wall — variance
+    # alone was timing out runs. Parallel matrix gives each browser its own runner + timeout,
+    # except chromium and mobile-chrome, which share one (see ci.yml's matrix).
+    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
+    needs: playwright-version
+    # Playwright's image ships the browsers and their system packages, so this job installs
+    # nothing from apt and downloads no browsers. It used to apt-install about 100 of those
+    # packages per job, and on 2026-10-01 a stalling Ubuntu mirror stretched that step from
+    # under a minute to 19.5 min, cancelling jobs at the timeout (#690). The tag must equal the
+    # installed Playwright version, which the playwright-version job reads from the lockfile.
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.version }}-noble
+      # As in Playwright's CI docs: run as uid 1001, the runner user that owns $HOME
+      # (/github/home). Run as root, Firefox refuses to start in a home it doesn't own. The PC's
+      # runner user has uid 1001 too, so the job can write to the workspace it mounts.
+      options: --user 1001
+    timeout-minutes: 20
+    strategy:
+      # Don't cancel sibling browsers when one fails — we want the full per-browser report.
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(inputs.matrix) }}
+    name: e2e-tests (${{ join(matrix.projects, ', ') }})
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      # precompute-synergies, the dev server and the web build all import the engine's dist. A
+      # job on the production build makes that build itself, in Playwright's webServer command.
+      - name: Build the engine
+        run: pnpm build:engine
+
+      - name: Pre-compute synergy data
+        run: pnpm precompute-synergies
+
+      - name: Run E2E tests
+        run: pnpm --filter inkweave-web test:e2e --project=${{ join(matrix.projects, ' --project=') }}
+        env:
+          E2E_SERVER: ${{ matrix.server }}
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v7
+        if: always()
+        # Diagnostic artifact only — a storage-quota/upload hiccup must not fail
+        # the e2e job when the tests themselves determined the outcome.
+        continue-on-error: true
+        with:
+          # Per-job artifact names so the parallel jobs don't collide on upload.
+          name: playwright-report-${{ join(matrix.projects, '-') }}
+          path: apps/web/playwright-report/
+          retention-days: 7
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v7
+        if: failure()
+        # Diagnostic artifact only — never fail the job on the upload itself.
+        continue-on-error: true
+        with:
+          name: test-results-${{ join(matrix.projects, '-') }}
+          path: apps/web/test-results/
+          retention-days: 7

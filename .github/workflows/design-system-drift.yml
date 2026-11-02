@@ -27,7 +27,9 @@ permissions:
 
 jobs:
   remind:
-    runs-on: ubuntu-latest
+    # Every job here runs on the owner's PC while the repository variable CI_ON_PC is 'true',
+    # except for a fork's pull request, which never runs there (docs/SELF_HOSTED_RUNNER.md).
+    runs-on: ${{ vars.CI_ON_PC == 'true' && !github.event.pull_request.head.repo.fork && 'inkweave-linux' || 'ubuntu-latest' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
