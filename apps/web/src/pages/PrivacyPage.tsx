@@ -3,9 +3,9 @@ import {COLORS} from '../shared/constants';
 
 const EMAIL = 'support.inkweave@gmail.com';
 
-// The collection and friends launched in production on this date, and with them the policy's
-// sentences about both, which no build hides any more. The page promises its date says when the
-// text it shows last changed, and a flag flip can't move it.
+// The day production first showed the collection and friends sentences. The page promises its
+// date says when the text it shows last changed, and a flag flip can't move it, so every change
+// to the text re-dates it here.
 const LAST_UPDATED = '2 November 2026';
 
 const DESCRIPTION =
@@ -59,10 +59,10 @@ export function PrivacyPage() {
           you own, normal and foil, so it&rsquo;s there on any device you sign in on. Only you can see it,
           unless you turn on sharing with friends on your account page. Then your friends can see which cards
           you own and how many. A copy also stays in this browser, even after you sign out. Clearing your
-          collection on your account page deletes both. Opening your account page also gives you a friend
-          code, which I store. If you add friends, I store who your friends and friend requests are. To stop
-          anyone guessing codes, I also note when you try one. Your friends see your public name and handle,
-          and your collection if you share it with them.
+          collection on your account page deletes both. Your account page&rsquo;s Friends section gives you a
+          friend code the first time it opens, which I store. If you add friends, I store who your friends and
+          friend requests are. To stop anyone guessing codes, I also note when you try one. Your friends see
+          your public name and handle, and your collection if you share it with them.
         </li>
       </ul>
 

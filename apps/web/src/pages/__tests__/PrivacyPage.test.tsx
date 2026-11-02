@@ -52,11 +52,11 @@ const PROFILE_SENTENCE =
 // both (`clearImported`).
 const COLLECTION_SENTENCE =
   /\. If you keep your collection on Inkweave, I store it with your account: how many copies of each card you own, normal and foil, so it’s there on any device you sign in on\. Only you can see it, unless you turn on sharing with friends on your account page\. Then your friends can see which cards you own and how many\. A copy also stays in this browser, even after you sign out\. Clearing your collection on your account page deletes both\./;
-// The code is made and stored when the account page first loads, friends or not
-// (`claim_friend_code`), so the sentence ties it to that visit. Each try at a code is logged
-// against its sender (#860).
+// The code is made and stored the first time the Friends section asks for it (`useFriends` calls
+// `claim_friend_code`), never at sign-up, and a build without friends has no section, so the
+// sentence ties the code to that section. Each try at a code is logged against its sender (#860).
 const FRIENDS_SENTENCE =
-  /\. Opening your account page also gives you a friend code, which I store\. If you add friends, I store who your friends and friend requests are\. To stop anyone guessing codes, I also note when you try one\. Your friends see your public name and handle, and your collection if you share it with them\./;
+  /\. Your account page’s Friends section gives you a friend code the first time it opens, which I store\. If you add friends, I store who your friends and friend requests are\. To stop anyone guessing codes, I also note when you try one\. Your friends see your public name and handle, and your collection if you share it with them\./;
 
 function renderPolicy(state: Flags) {
   Object.assign(flags, state);
