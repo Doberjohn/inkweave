@@ -82,13 +82,18 @@ describe('withRevision', () => {
   });
 
   it("says so for a file sw.js doesn't precache", () => {
-    expect(() => withRevision(SW, 'data/allCards.json', 'a'.repeat(32))).toThrow(/precaches no data\/allCards\.json/);
+    expect(() => withRevision(SW, 'data/allCards.json', 'a'.repeat(32))).toThrow(
+      /precaches no data\/allCards\.json/,
+    );
   });
 });
 
 describe('withoutPrecached', () => {
   it('drops only the entries named, keeping the list well formed', () => {
-    const dropped = withoutPrecached(SW_WITH_DATA, ['data/allCards.json', 'data/featuredCards.json']);
+    const dropped = withoutPrecached(SW_WITH_DATA, [
+      'data/allCards.json',
+      'data/featuredCards.json',
+    ]);
     expect(dropped).toBe(SW);
   });
 });
@@ -127,7 +132,10 @@ describe('cardDataProblems', () => {
 
 describe('renamedCardList', () => {
   it("renames the first card of a list or of a file's cards, and nothing else", () => {
-    const cards = [{id: 1, name: 'Elsa', fullName: 'Elsa - Snow Queen'}, {id: 2, name: 'Anna', fullName: 'Anna'}];
+    const cards = [
+      {id: 1, name: 'Elsa', fullName: 'Elsa - Snow Queen'},
+      {id: 2, name: 'Anna', fullName: 'Anna'},
+    ];
     expect(JSON.parse(renamedCardList(JSON.stringify({sets: {}, cards}), 'Marker')).cards).toEqual([
       {id: 1, name: 'Marker', fullName: 'Marker'},
       cards[1],

@@ -776,7 +776,7 @@ flowchart TD
 | Service Worker | `/card-images/.+\.avif$` | `CacheFirst`, 30d, 600 entries | `vite.config.ts` `runtimeCaching` |
 | Service Worker | `navigateFallbackDenylist` excludes `/card-images/`, `/card-images-preview/`, `/data/` | — | `vite.config.ts` `navigateFallbackDenylist`: prevents direct-URL pastes from rendering the SPA NotFoundPage |
 
-Out of reveal season the build has no `previewCards.json`, so nothing is precached for it and its graceful 404 path is browser-native. A deploy that changes only card data still changes `sw.js`, so returning visitors get the update toast for it. Browsers that had the old `card-data` runtime cache delete it once (`main.tsx`).
+Out of reveal season the build has no `previewCards.json`, so nothing is precached for it and its graceful 404 path is browser-native. A deploy that changes only card data still changes `sw.js`, so returning visitors get the update toast for it. Browsers that had the old `card-data` runtime cache delete it once (`main.tsx`). Workbox leaves a file past 2 MiB out of the precache with only a warning, so the build fails when it leaves out a card file (`requireCardData` in `vite.config.ts`); if the slimmed card list outgrows that, raise `maximumFileSizeToCacheInBytes`.
 
 ---
 

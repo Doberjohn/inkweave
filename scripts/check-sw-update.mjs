@@ -434,7 +434,8 @@ async function ownCardsFailure(context, base, deploy) {
     if (!(await showsCards(page))) return "the card list failed before the deploy";
     deploy.current = 'new';
     deploy.cardList = UNREADABLE_CARDS;
-    // A StaleWhileRevalidate route serves its cached copy once, then the one it fetched beside it.
+    // Twice: the precache answers both reloads with the old version's own copy, where a runtime
+    // StaleWhileRevalidate route would answer the second with the copy it fetched beside the first.
     for (const reload of [1, 2]) {
       await page.reload({timeout: LOAD_TIMEOUT_MS});
       if (!(await showsCards(page))) return `reload ${reload} showed the error screen`;

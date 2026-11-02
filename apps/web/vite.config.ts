@@ -219,6 +219,25 @@ function inlineCssPlugin(): Plugin {
 const unloadableChunks = new Set<string>();
 
 /**
+ * Fails the build when the precache leaves out a card file the build serves (#1064). Workbox
+ * skips a file past `maximumFileSizeToCacheInBytes` (2 MiB by default) with only a warning, and a
+ * worker without the card list would leave it uncached, so an old copy of the app would read a
+ * newer deploy's data again. If the slimmed card list outgrows the limit, raise the limit.
+ */
+function requireCardData<T extends {url: string}>(entries: T[]) {
+  const precached = new Set(entries.map((entry) => entry.url));
+  const missing = [CARD_DATA, PREVIEW_DATA, FEATURED_CARDS]
+    .filter((source) => fs.existsSync(source))
+    .map((source) => `data/${path.basename(source)}`)
+    .filter((url) => !precached.has(url));
+  if (missing.length > 0) {
+    const files = missing.join(', ');
+    throw new Error(`The service worker's precache leaves out ${files} (requireCardData, vite.config.ts)`);
+  }
+  return {manifest: entries, warnings: []};
+}
+
+/**
  * Finds the chunks no page can load (#928, `loadableChunks`). A lazy import behind a flag that is
  * off never runs, but Rolldown still emits its chunk, and the service worker precached it for every
  * new visitor. It reads the bundle as written, so the names are final, and VitePWA writes the
@@ -472,8 +491,9 @@ export default defineConfig({
           // The card data each version was built with, so a copy of the app never reads a newer
           // deploy's, whose shape it may not know (#1064): new data arrives with the version that
           // reads it. A file the build lacks (previewCards.json out of reveal season) matches
-          // nothing. cardDataPlugin slims these in its closeBundle, which runs before VitePWA's,
-          // so the revisions are the served files' (check-sw-update.mjs fails the build if not).
+          // nothing, and requireCardData fails the build when one it has is left out.
+          // cardDataPlugin slims these in its closeBundle, which runs before VitePWA's, so the
+          // revisions are the served files' (check:sw-update's first step checks that they are).
           'data/{allCards,previewCards,featuredCards}.json',
         ],
         // Leave out the chunks no page loads (#928), which every new visitor downloaded. It drops
@@ -483,6 +503,7 @@ export default defineConfig({
             manifest: entries.filter((entry) => !unloadableChunks.has(entry.url)),
             warnings: [...unloadableChunks].map((file) => `Not precached, no page loads it: ${file}`),
           }),
+          requireCardData,
         ],
         // Don't fall back to index.html for static-asset paths — they're real
         // files, not SPA routes. Without this, pasting a direct asset URL into
