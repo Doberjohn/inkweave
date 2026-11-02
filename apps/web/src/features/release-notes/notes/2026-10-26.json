@@ -47,7 +47,7 @@
       },
       {
         "title": "Error loading cards after an update",
-        "body": "A copy of the site saved before October 24 couldn't read the new card data and showed \"Error loading cards\", and Try Again only repeated the failure. It now looks for the new version at once and updates, and the error screen offers Reload, keeping Try Again for a dropped connection.",
+        "body": "A copy of the site saved before October 25 couldn't read the new card data and showed \"Error loading cards\", and Try Again only repeated the failure. From now on, a copy that can't read the card data looks for the new version at once and updates, and the error screen offers Reload, keeping Try Again for when the data never arrives.",
         "prs": [
           1062
         ]
