@@ -245,9 +245,9 @@ export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseS
   // while the card grid re-renders with the new filters in the background.
   const [, startTransition] = useTransition();
 
-  // Write helpers (all replace, to keep the history clean). Each write starts from the last one
-  // this hook made until that one renders (`useSearchParamsWriter`), so a click that lands before
-  // the grid redraws keeps the click before it. Each ink, type or cost a write turns on or off is
+  // Write helpers (all replace, to keep the history clean). Each write starts from the page's last
+  // one until that one renders (`useSearchParamsWriter`), so a click that lands before the grid
+  // redraws keeps the click before it. Each ink, type or cost a write turns on or off is
   // counted once, against the params it starts from. `via` is how the reader made the write: only
   // a dialog's Apply is not `inline`.
   const updateParams = (updater: (params: URLSearchParams) => void, via: FilterVia = 'inline') => {

@@ -212,10 +212,8 @@ const comparesWith = (raw: string | null) => COMPARE_SHOWS.some((show) => show =
  * Collection mode's params: `?binder=` (the mode and its set) and `?owned=` (what the
  * binder shows), and what the reader gets of the mode (`binderMode`). Every write edits
  * the params rather than replacing them, so the page's filters ride along. A write starts
- * from this hook's last write until that write renders (`useSearchParamsWriter`), so two
- * writes here before a render both land. A write here and one through another hook
- * (useFilterParams) in the same tick can still lose one of the two: each hook remembers
- * only its own writes, so keep each user action to one writer.
+ * from the page's last write until that write renders (`useSearchParamsWriter`), so writes
+ * made before a render all land, this hook's and useFilterParams' alike.
  *
  * THE SET IS CHOSEN IN THE COLLECTION PANEL (owner, 2026-10-12), so collection mode
  * keeps no set FILTER: entering it opens the set a Browse set filter names (the newest,

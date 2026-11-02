@@ -4,17 +4,19 @@ import {MemoryRouter, useLocation, useNavigate} from 'react-router-dom';
 import type {ReactNode} from 'react';
 import {useSearchParamsWriter} from '../useSearchParamsWriter';
 
+const routerAt = (entries: string[]) =>
+  function Router({children}: {children: ReactNode}) {
+    return <MemoryRouter initialEntries={entries}>{children}</MemoryRouter>;
+  };
+
 /** The writer at `entries`' last URL, beside the location and a navigate. */
 function renderWriter(entries: string[]) {
-  const wrapper = ({children}: {children: ReactNode}) => (
-    <MemoryRouter initialEntries={entries}>{children}</MemoryRouter>
-  );
   return renderHook(
     () => {
       const [, write] = useSearchParamsWriter();
       return {write, location: useLocation(), navigate: useNavigate()};
     },
-    {wrapper},
+    {wrapper: routerAt(entries)},
   );
 }
 
@@ -55,9 +57,28 @@ describe('useSearchParamsWriter', () => {
     expect(started).toBe('ink=Amber&cost=3');
   });
 
-  it('starts from the URL Back reached, not from the write before it', () => {
-    const {result} = renderWriter(['/browse?ink=Ruby', '/browse?ink=Amber']);
-    act(() => result.current.write((next) => next.set('cost', '3')));
+  it('lands writes two hooks make before a render', () => {
+    const {result} = renderHook(
+      () => {
+        const [, filters] = useSearchParamsWriter();
+        const [, binder] = useSearchParamsWriter();
+        return {filters, binder, location: useLocation()};
+      },
+      {wrapper: routerAt(['/browse?binder=9'])},
+    );
+    act(() => {
+      result.current.binder((next) => next.set('owned', 'missing'));
+      result.current.filters((next) => next.set('ink', 'Amber'));
+    });
+    expect(result.current.location.search).toBe('?binder=9&owned=missing&ink=Amber');
+  });
+
+  it.each([
+    {made: 'replaced', entries: ['/browse?ink=Ruby', '/browse?ink=Amber'], replace: true},
+    {made: 'pushed', entries: ['/browse?ink=Ruby'], replace: false},
+  ])('starts from the URL Back reached after a write that $made', ({entries, replace}) => {
+    const {result} = renderWriter(entries);
+    act(() => result.current.write((next) => next.set('cost', '3'), {replace}));
     act(() => {
       void result.current.navigate(-1);
     });
