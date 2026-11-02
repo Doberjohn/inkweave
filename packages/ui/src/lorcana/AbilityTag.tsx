@@ -1,4 +1,12 @@
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, FONT_WEIGHT, LETTER_SPACING} from '../tokens/theme';
+import {
+  COLORS,
+  FONTS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  FONT_WEIGHT,
+  LETTER_SPACING,
+} from '../tokens/theme';
 
 export type AbilityTagVariant = 'stacked' | 'page';
 

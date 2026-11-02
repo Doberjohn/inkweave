@@ -13,7 +13,15 @@ import {usePairQueue} from '../features/voting/hooks/usePairQueue';
 import {useVoteSession} from '../features/voting/hooks/useVoteSession';
 import {trackEvent} from '../shared/lib/analytics';
 import type {Score} from '../shared/lib/supabase';
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, VISUALLY_HIDDEN, FONT_WEIGHT} from '../shared/constants';
+import {
+  COLORS,
+  FONTS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  VISUALLY_HIDDEN,
+  FONT_WEIGHT,
+} from '../shared/constants';
 
 // ──────────────────────────────────────────────────────────
 // Module helpers

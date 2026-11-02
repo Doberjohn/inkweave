@@ -1,4 +1,12 @@
-import {APP_NAME, COLORS, FONT_SIZES, LAYOUT, SPACING, FONT_WEIGHT, LETTER_SPACING} from '../constants';
+import {
+  APP_NAME,
+  COLORS,
+  FONT_SIZES,
+  LAYOUT,
+  SPACING,
+  FONT_WEIGHT,
+  LETTER_SPACING,
+} from '../constants';
 
 export function Header() {
   return (

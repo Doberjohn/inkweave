@@ -1,4 +1,12 @@
-import {COLORS, FONT_SIZES, NEUTRAL_LADDER, RADIUS, SPACING, FONT_WEIGHT, LINE_HEIGHT} from '../tokens/theme';
+import {
+  COLORS,
+  FONT_SIZES,
+  NEUTRAL_LADDER,
+  RADIUS,
+  SPACING,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
+} from '../tokens/theme';
 
 /**
  * The chip's size and padding. Admin measures a list width from its widest use, Card studio's

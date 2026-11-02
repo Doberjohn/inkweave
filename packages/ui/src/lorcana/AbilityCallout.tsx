@@ -1,4 +1,12 @@
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING, FONT_WEIGHT, LINE_HEIGHT} from '../tokens/theme';
+import {
+  COLORS,
+  FONTS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
+} from '../tokens/theme';
 
 export type AbilityCalloutVariant = 'standalone' | 'stacked-after-tag';
 

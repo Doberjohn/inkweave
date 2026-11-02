@@ -1,5 +1,13 @@
 import {useState} from 'react';
-import {COLORS, DISABLED_STYLE, EASING, RADIUS, FONT_SIZES, SPACING, FONT_WEIGHT} from '../tokens/theme';
+import {
+  COLORS,
+  DISABLED_STYLE,
+  EASING,
+  RADIUS,
+  FONT_SIZES,
+  SPACING,
+  FONT_WEIGHT,
+} from '../tokens/theme';
 
 type FilterButtonSize = 'sm' | 'md';
 

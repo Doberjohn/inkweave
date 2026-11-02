@@ -1,7 +1,8 @@
 // @vitest-environment node
-import {describe, it} from 'vitest';
+import {describe, expect, it} from 'vitest';
 import {RuleTester} from 'eslint';
-import {inkweave} from './index.js';
+import {FONT_WEIGHT} from 'inkweave-ui/tokens/theme';
+import {FONT_WEIGHT_STEPS, inkweave} from './index.js';
 
 RuleTester.describe = describe;
 RuleTester.it = it;
@@ -58,4 +59,11 @@ ruleTester.run('no-unloaded-font-weight', inkweave.rules['no-unloaded-font-weigh
     hero('const s = {fontFamily: FONTS.hero, fontWeight: compact ? FONT_WEIGHT.semibold : FONT_WEIGHT.regular};'),
     hero('const e = <h3 style={{fontFamily: FONTS.hero, fontWeight: 700, fontSize: 22}}>Title</h3>;'),
   ],
+});
+
+// The rule reads FONT_WEIGHT through its own copy, so a step theme.ts changes must change there too.
+describe('FONT_WEIGHT_STEPS', () => {
+  it("matches inkweave-ui's FONT_WEIGHT", () => {
+    expect(FONT_WEIGHT_STEPS).toEqual(FONT_WEIGHT);
+  });
 });

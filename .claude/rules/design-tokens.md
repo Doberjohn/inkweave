@@ -20,7 +20,7 @@ Two mechanisms enforce the token system; both run automatically:
 
 ## The grandfather ledger
 
-`apps/web/eslint-rules/known-offenders.js` lists pre-enforcement files per rule, each by its repo path (`apps/web/src/...` or `packages/ui/src/...`), which matches that one file only; the rules' exemptions (`eslint-rules/exemptions.js`) name paths the same way. It ONLY SHRINKS: when you touch a listed file, converge its violations to tokens and remove its entry. Never add entries. The value gate's baseline (`scripts/known-design-values.json`) works the same way — counts may only decrease (`--update-baseline` after shrinking). `eslint-rules/ledgers.test.js` caps both totals (and, with `exemptions.test.js`, fails on a row or key whose file no longer exists): lower a ceiling when you remove an entry, never raise one.
+`apps/web/eslint-rules/known-offenders.js` lists pre-enforcement files per rule, each by its repo path (`apps/web/src/...` or `packages/ui/src/...`), which matches that one file only; the rules' exemptions (`eslint-rules/exemptions.js`) name paths the same way. It ONLY SHRINKS: when you touch a listed file, converge its violations to tokens and remove its entry. Never add entries. The value gate's baseline (`scripts/known-design-values.json`) works the same way — counts may only decrease (`--update-baseline` after shrinking). `eslint-rules/ledgers.test.js` caps both totals (and, with `exemptions.test.js`, fails on a row or key whose file no longer exists): lower a ceiling when you remove an entry, never raise one. The one exception is the day a rule turns on: its ledger is seeded once, from a measured run, with every file the rule would fail (owner rulings #549 for spacing and #544 for typography), and the ceiling rises with it, its reason written in `ledgers.test.js`'s header. From the next commit on, that ledger only shrinks.
 
 ## The micro-pattern consts (#511)
 
@@ -64,7 +64,9 @@ One source per retyped idiom, in inkweave-ui's `tokens/theme.ts` (Storybook: Doc
   allows, which reads the tokens too. `LETTER_SPACING`, in `em` so it follows the font
   size: `slight` 0.02em, `cap` 0.05em (`CAP_LABEL`), `eyebrow` 0.08em, `wide` 0.1em.
   `LINE_HEIGHT`: `none` 1, `tight` 1.2, `snug` 1.4, `base` 1.5, `relaxed` 1.6. Raw `0`
-  and `1` stay legal for both, as do `'normal'` and the CSS-wide keywords.
+  stays legal for letter spacing, and `0` and `1` for line height (as numbers or strings),
+  as do the CSS-wide keywords and, for those two, `'normal'`. To weight `'normal'` is 400,
+  so it takes `FONT_WEIGHT.regular`.
   `no-raw-font-weight` holds every file, stories too: every weight was already one of
   the four. `no-raw-letter-spacing` and `no-raw-line-height` exempt stories and
   `src/docs/`, as `no-raw-spacing` does, and their ledgers were seeded the day they

@@ -36,7 +36,10 @@ function CostFallback({inkColor, cost, height}: {inkColor: Ink; cost: number; he
         alignItems: 'center',
         justifyContent: 'center',
       }}>
-      <span style={{fontSize: `${fontSize}px`, fontWeight: FONT_WEIGHT.semibold, color: colors.text}}>{cost}</span>
+      <span
+        style={{fontSize: `${fontSize}px`, fontWeight: FONT_WEIGHT.semibold, color: colors.text}}>
+        {cost}
+      </span>
     </div>
   );
 }

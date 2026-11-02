@@ -1,5 +1,14 @@
 import {useState} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, GOLD_GLOW, RADIUS, hexRgba, FONT_WEIGHT} from '../tokens/theme';
+import {
+  COLORS,
+  EASING,
+  FONTS,
+  FONT_SIZES,
+  GOLD_GLOW,
+  RADIUS,
+  hexRgba,
+  FONT_WEIGHT,
+} from '../tokens/theme';
 
 interface ChipBaseProps {
   label: string;

@@ -58,7 +58,12 @@ function PanelHeader({
         <h2
           id={titleId}
           tabIndex={titleFocusable ? -1 : undefined}
-          style={{margin: 0, fontSize: FONT_SIZES.base, fontWeight: FONT_WEIGHT.bold, color: COLORS.text}}>
+          style={{
+            margin: 0,
+            fontSize: FONT_SIZES.base,
+            fontWeight: FONT_WEIGHT.bold,
+            color: COLORS.text,
+          }}>
           {title}
         </h2>
       )}

@@ -116,13 +116,21 @@ const isNonZeroNumber = (v) => isNumberLiteral(v) && v.value !== 0;
 /** `-14` is a unary minus around 14, so a negative value is read through it. */
 const unsigned = (v) => (v.type === 'UnaryExpression' && v.operator === '-' ? v.argument : v);
 const isRawSpacing = (v) => isNonZeroNumber(unsigned(v));
-/** CSS-wide keywords a typography property may keep as a string: they reset, they don't pick a value. */
-const TYPE_KEYWORDS = new Set(['normal', 'inherit', 'initial', 'unset']);
-const isRawKeywordOr = (v, test) => test(unsigned(v)) || (isStringLiteral(v) && !TYPE_KEYWORDS.has(v.value));
-const isRawFontWeight = (v) => isRawKeywordOr(v, isNumberLiteral);
-const isRawLetterSpacing = (v) => isRawKeywordOr(v, isNonZeroNumber) && !(isStringLiteral(v) && v.value === '0');
-/** 0 and 1 kill the leading (display numerals, icon wrappers): always fine raw, as LINE_HEIGHT.none says. */
-const isRawLineHeight = (v) => isRawKeywordOr(v, (n) => isNumberLiteral(n) && n.value !== 0 && n.value !== 1);
+/** CSS-wide keywords, which any typography property may keep as a string: they pick no value. */
+const CSS_WIDE_KEYWORDS = new Set(['inherit', 'initial', 'unset', 'revert', 'revert-layer']);
+/** A string a typography property may not keep: anything but a CSS-wide keyword or one of `allowed`. */
+const isRawString = (v, allowed) =>
+  isStringLiteral(v) && !CSS_WIDE_KEYWORDS.has(v.value) && !allowed.includes(v.value);
+/** `'normal'` is a weight (400, FONT_WEIGHT.regular), but to spacing and leading it is the font's own. */
+const isRawFontWeight = (v) => isNumberLiteral(unsigned(v)) || isRawString(v, []);
+const isRawLetterSpacing = (v) => isNonZeroNumber(unsigned(v)) || isRawString(v, ['normal', '0']);
+/**
+ * 0 and 1 kill the leading (display numerals, icon wrappers): always fine raw, as LINE_HEIGHT.none
+ * says. A negative line height is invalid CSS, so `-1` is no 1.
+ */
+const isUnitLeading = (v) => isNumberLiteral(v) && v.value === 1;
+const isRawLeadingNumber = (v) => isNonZeroNumber(unsigned(v)) && !isUnitLeading(v);
+const isRawLineHeight = (v) => isRawLeadingNumber(v) || isRawString(v, ['normal', '0', '1']);
 
 // ---------------------------------------------------------------------------
 // The rules
@@ -168,8 +176,11 @@ const LOADED_FONT_WEIGHTS = new Set([400, 500, 600, 700]);
 const HERO_FONT_WEIGHT = 400;
 const NAMED_WEIGHTS = {normal: 400, bold: 700};
 
-/** FONT_WEIGHT's steps (inkweave-ui's tokens/theme.ts), so a weight given as a token is read too. */
-const FONT_WEIGHT_STEPS = {regular: 400, medium: 500, semibold: 600, bold: 700};
+/**
+ * FONT_WEIGHT's steps, so a weight given as a token is read too: a copy of inkweave-ui's
+ * tokens/theme.ts, which no-unloaded-font-weight.test.js holds it to.
+ */
+export const FONT_WEIGHT_STEPS = {regular: 400, medium: 500, semibold: 600, bold: 700};
 
 /**
  * A weight as a number: `700`, `'700'`, `'bold'`, `FONT_WEIGHT.bold`. Anything else (a variable,

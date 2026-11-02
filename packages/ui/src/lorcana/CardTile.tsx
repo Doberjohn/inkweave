@@ -2,7 +2,15 @@ import {useState, type CSSProperties, type MouseEvent, type ReactNode} from 'rea
 import type {CardPrinting, LorcanaCard} from 'inkweave-synergy-engine';
 import {InkCardPlaceholder} from './InkCardPlaceholder';
 import {INK_COLORS} from '../tokens/lorcana';
-import {CARD_TILE_GLOW, FONT_SIZES, LAYOUT, RADIUS, blackRgba, whiteRgba, FONT_WEIGHT} from '../tokens/theme';
+import {
+  CARD_TILE_GLOW,
+  FONT_SIZES,
+  LAYOUT,
+  RADIUS,
+  blackRgba,
+  whiteRgba,
+  FONT_WEIGHT,
+} from '../tokens/theme';
 import {useArtLoad} from '../hooks/useArtLoad';
 import {PROMO_RARITY, isChaseRarity, printingAlt} from '../lib/printings';
 import {isModifiedClick} from '../utils/touchGuard';
@@ -150,7 +158,12 @@ function CardTileImage({
           alignItems: 'center',
           justifyContent: 'center',
         }}>
-        <span style={{fontSize: `${FONT_SIZES.xxxl}px`, fontWeight: FONT_WEIGHT.semibold, color: colors.text}}>
+        <span
+          style={{
+            fontSize: `${FONT_SIZES.xxxl}px`,
+            fontWeight: FONT_WEIGHT.semibold,
+            color: colors.text,
+          }}>
           {card.cost}
         </span>
       </div>

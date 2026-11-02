@@ -1,6 +1,15 @@
 import {useRef, useState, useLayoutEffect, type ReactNode, type CSSProperties} from 'react';
 import {createPortal} from 'react-dom';
-import {COLORS, FONT_SIZES, GOLD_GLOW, RADIUS, SHADOWS, Z_INDEX, FONT_WEIGHT, LINE_HEIGHT} from '../tokens/theme';
+import {
+  COLORS,
+  FONT_SIZES,
+  GOLD_GLOW,
+  RADIUS,
+  SHADOWS,
+  Z_INDEX,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
+} from '../tokens/theme';
 import {useTooltip} from '../hooks/useTooltip';
 
 const TIP_GAP = 8;
