@@ -1,7 +1,6 @@
 /**
  * Collection mode's feature flag (#553 Phase C), read once at module load like
- * every other `VITE_*` flag. Off in production until the surface is ready
- * (`.env.example`), per the sequential flag-gated PR model (#474).
+ * every other `VITE_*` flag (`.env.example`), per the flag-gated PR model (#474).
  *
  * Off means NOT LOADED, not merely hidden: the providers do not mount and the
  * collection UI's lazy chunks are never requested, so the flag also keeps the

@@ -60,6 +60,14 @@ async function expectButtonInside(page: Page, box: Box): Promise<void> {
   expect(link.y + link.height).toBeLessThanOrEqual(box.y + box.height);
 }
 
+/** The BETA pill on the title's line, before it: their vertical centres within 2 px. */
+async function expectPillBesideTitle(page: Page): Promise<void> {
+  const pill = await boxOf(notice(page).getByText('Beta', {exact: true}));
+  const title = await boxOf(notice(page).getByText(/ is in beta$/));
+  expect(Math.abs(pill.y + pill.height / 2 - (title.y + title.height / 2))).toBeLessThanOrEqual(2);
+  expect(pill.x + pill.width).toBeLessThan(title.x);
+}
+
 /** The hero's logo, subtitle, search box and buttons, each with what it is, for the failure message. */
 async function heroParts(page: Page): Promise<{name: string; box: Box}[]> {
   const hero = page.locator('section[aria-label="Hero"]');
@@ -105,6 +113,7 @@ for (const size of SIZES) {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(pageWidth);
 
     await expectButtonInside(page, box);
+    await expectPillBesideTitle(page);
 
     const logo = parts[0].box;
     if (corner) {
@@ -138,6 +147,7 @@ for (const size of SIZES) {
       expect(overlaps(box, part.box), `the notice covers the hero's ${part.name}`).toBe(false);
     }
     await expectButtonInside(page, box);
+    await expectPillBesideTitle(page);
   });
 }
 

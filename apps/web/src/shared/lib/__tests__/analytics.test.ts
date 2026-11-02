@@ -217,4 +217,10 @@ describe('trackEvent', () => {
     trackEvent('friends_who_have_it_opened', props);
     expectSentToBoth('friends_who_have_it_opened', props);
   });
+
+  it('forwards a discord_invite_clicked event', () => {
+    const props = {surface: 'beta_notice'} as const;
+    trackEvent('discord_invite_clicked', props);
+    expectSentToBoth('discord_invite_clicked', props);
+  });
 });
