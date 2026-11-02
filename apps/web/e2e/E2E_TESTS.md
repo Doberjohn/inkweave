@@ -2,9 +2,9 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-366 tests across 35 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+378 tests across 36 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
-The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised. Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
+The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised, and with `VITE_SHOW_BETA_NOTICE=true`, as production builds, so every home-page test sees the hero where players do, below the beta notice on screens narrower than 1400 px (`beta-notice.spec.ts`). Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
 **Two servers (#869):** `E2E_SERVER` picks what the run tests (`playwright.config.ts`). `dev`, the default, is Vite's dev server, where React logs its development-only errors and the console guard below fails on them. `preview` builds the app into `apps/web/dist/e2e` and serves that production bundle with `vite preview`: a page loads as a few chunks instead of hundreds of modules compiled on request, so the chromium project ran in about half the time (184 s against 358 on two workers in a 4-vCPU container), and the tests run the code that ships. CI runs chromium and mobile-chrome on `dev` (their shared job) and firefox, webkit and mobile-safari on `preview`; a plain `pnpm test:e2e` uses `dev`, and the pre-push hook always does, whatever the shell has set. To reproduce a CI failure from one of those three, run `E2E_SERVER=preview pnpm test:e2e --project=<name>`, which sets it for that one command. PowerShell has no such prefix, and `$env:` would keep the value for the rest of the session, so run it in a child shell there: `powershell -NoProfile -Command { $env:E2E_SERVER = 'preview'; pnpm test:e2e --project=<name> }`. The build doesn't refresh synergy data the way the dev server does, so after an engine change run `pnpm precompute-synergies` first. On either server every context blocks service workers (the production build registers one; `pnpm check:sw-update` drives its update flow instead), and the `page` fixture answers `/_vercel/` (where production loads Vercel's analytics scripts, which only Vercel serves) with an empty script. `webServer.env` also blanks `VITE_SENTRY_DSN`, `VITE_POSTHOG_KEY` and `SENTRY_AUTH_TOKEN`, so a production build never reports a run's errors or events, or uploads its source maps. Specs that hold a lazy chunk name it through `holdLazyModule` (`e2e/helpers/lazyModule.ts`), which matches the dev server's source file and the production chunk alike.
 
@@ -41,6 +41,18 @@ The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the revea
 | should display search input on home page | Hero search input is visible |
 | should show featured cards after loading | Featured cards grid has 1-12 card tiles |
 | should open the overview modal when a card is selected | Clicking a featured card opens the modal overlay-style; URL stays `/`, no compact header |
+
+## `beta-notice.spec.ts`: 12 tests (the 8 sizes on the desktop projects and the phone size on every project, 1 desktop only, 3 on every project)
+
+The home page's beta notice (#1084), which index.css's `.beta-notice` lays out by width: above the logo below 1400 px, in the page's top-left corner from there. The phone projects check their own screen and skip the other sizes, since a phone emulator's layout viewport stops tracking a desktop-sized window.
+
+| Test | What it verifies |
+|---|---|
+| at {size} the notice sits above the logo / in the corner, clear of the hero | At 390x844, 768x1024, 1024x768, 1280x800, 1399x800, 1400x800, 1440x900 and 1920x1080: the notice overlaps none of the hero's logo, subtitle, search box or three buttons; it sits inside the page, which it never widens; its Discord button is whole inside it; from 1400 px it sits 32 px from the top and left edges, left of every hero part, and below that its bottom is above the logo's top |
+| in the corner the notice scrolls away with the page, never over the featured cards | At 1440x900, after a 200 px scroll the notice has moved up by the page's scroll: it is placed absolutely, not fixed |
+| the notice says the collection is in beta and thanks the people testing it | With `VITE_SHOW_COLLECTION` on, it reads "Collection is in beta" and the thank-you line |
+| the notice's Discord button opens the invite in a new tab | The button opens https://discord.gg/gvA6qUUPE in a new tab (answered by a stand-in page, so the test never reaches Discord), `rel="noopener noreferrer"`, and the home page stays where it was |
+| only the home page shows the notice | `/` has it, `/browse` doesn't |
 
 ## `card-detail.spec.ts` — 18 tests (10 desktop only, 3 on every project at a 390px viewport, 2 on every project at a 1024×768 touch viewport, 3 on every project at any viewport)
 

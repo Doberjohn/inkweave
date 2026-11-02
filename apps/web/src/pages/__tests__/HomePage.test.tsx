@@ -1,7 +1,8 @@
-import {describe, it, expect, vi} from 'vitest';
+import {afterEach, describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import {HomePage} from '../HomePage';
+import {HomePageSkeleton} from '../HomePageSkeleton';
 import {trackCardSelected} from '../../features/cards/lib/cardAnalytics';
 
 const mockNavigate = vi.fn();
@@ -61,6 +62,22 @@ vi.mock('../../features/cards', () => ({
 }));
 
 vi.mock('../../features/cards/lib/cardAnalytics', () => ({trackCardSelected: vi.fn()}));
+
+// The notice's build flag is a module constant, so the mock serves it through a getter each case sets.
+const frame = vi.hoisted(() => ({betaNotice: false}));
+vi.mock('../homeFrame', async () => {
+  const actual = await vi.importActual<typeof import('../homeFrame')>('../homeFrame');
+  return {
+    ...actual,
+    get SHOW_BETA_NOTICE() {
+      return frame.betaNotice;
+    },
+  };
+});
+
+afterEach(() => {
+  frame.betaNotice = false;
+});
 
 describe('HomePage', () => {
   beforeEach(() => {
@@ -133,5 +150,24 @@ describe('HomePage', () => {
 
     fireEvent.pointerDown(screen.getByTestId('featured-cards'));
     expect(mockRequestLoad).toHaveBeenCalledOnce();
+  });
+});
+
+// The page and its skeleton both draw the notice above <main>, so the hero sits in the same place
+// before and after the page's code arrives.
+describe.each([
+  ['HomePage', () => <HomePage />],
+  ['HomePageSkeleton', () => <HomePageSkeleton />],
+])('%s', (_name, page) => {
+  it('shows the beta notice above <main> in a build that turns it on', () => {
+    frame.betaNotice = true;
+    render(<MemoryRouter>{page()}</MemoryRouter>);
+    const notice = screen.getByRole('complementary', {name: 'Beta notice'});
+    expect(notice.nextElementSibling?.tagName).toBe('MAIN');
+  });
+
+  it('shows no beta notice in a build that turns it off', () => {
+    render(<MemoryRouter>{page()}</MemoryRouter>);
+    expect(screen.queryByRole('complementary', {name: 'Beta notice'})).not.toBeInTheDocument();
   });
 });

@@ -501,6 +501,48 @@ option {
   clip-path: inset(50%);
 }
 
+/* The home page's beta notice (BetaNotice.tsx): above the logo on phones and narrower screens,
+   in the page's top-left corner from 1400 px, the narrowest width at which it clears the hero
+   (by 57 px; at 1280 px it would cover the hero's edge). Media queries, not useResponsive:
+   Deploy's crawl takes one desktop capture for every width from 768 px, so a switch in
+   JavaScript would paint the capture's layout first and then move the hero. Its spacing
+   comes from the tokens through the variables BetaNotice sets. */
+.beta-notice {
+  position: relative;
+  z-index: 1;
+  flex-direction: column;
+  margin: var(--beta-notice-edge) var(--beta-notice-edge) 0;
+}
+.beta-notice-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+@media (hover: hover) {
+  .beta-notice-link:hover {
+    filter: brightness(1.1);
+  }
+}
+@media (min-width: 768px) {
+  .beta-notice {
+    flex-direction: row;
+    align-items: center;
+    align-self: center;
+    width: min(720px, calc(100% - 2 * var(--beta-notice-gutter)));
+    margin: var(--beta-notice-top) 0 0;
+  }
+}
+@media (min-width: 1400px) {
+  .beta-notice {
+    position: absolute;
+    top: var(--beta-notice-gutter);
+    left: var(--beta-notice-gutter);
+    flex-direction: column;
+    align-items: stretch;
+    width: 300px;
+    margin: 0;
+  }
+}
+
 /* Mobile-specific styles */
 @media (max-width: 767px) {
   .synergy-card-grid {

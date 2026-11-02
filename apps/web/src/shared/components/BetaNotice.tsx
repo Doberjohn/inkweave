@@ -1,46 +1,108 @@
-import {COLORS, FONTS, FONT_SIZES, RADIUS, SPACING} from '../constants';
+import type {CSSProperties} from 'react';
+import discordLogo from '../../assets/discord.svg?no-inline';
+import {SHOW_COLLECTION} from '../../features/collection/flag';
+import {
+  CAP_LABEL_XS,
+  COLORS,
+  FONTS,
+  FONT_SIZES,
+  GOLD_GLOW,
+  PROVIDER_COLORS,
+  RADIUS,
+  SHADOWS,
+  SPACING,
+  TOUCH_TARGET,
+} from '../constants';
+
+/** The Discord server's invite, set never to expire. */
+export const DISCORD_INVITE_URL = 'https://discord.gg/gvA6qUUPE';
 
 /**
- * Persistent beta-warning card on the landing page, top-left.
- *
- * Non-dismissable — the notice stays visible for the duration of the beta.
- * Turn off site-wide via `VITE_SHOW_BETA_NOTICE=false` when no longer needed
- * (e.g., at v1.0.0 launch). Desktop-only — see `AppLayout.tsx` for the
- * `isHome && !isMobile` gate.
+ * The card's look. Where it sits and how wide it is change with the screen, so they live in
+ * index.css's `.beta-notice` media queries alone: an inline value would beat them. The CSS
+ * variables hand that stylesheet its spacing from the tokens.
+ */
+const CARD_STYLE = {
+  '--beta-notice-edge': `${SPACING.lg}px`,
+  '--beta-notice-top': `${SPACING.xxl}px`,
+  '--beta-notice-gutter': `${SPACING.xxxl}px`,
+  boxSizing: 'border-box',
+  display: 'flex',
+  gap: SPACING.lg,
+  padding: SPACING.xl,
+  borderRadius: RADIUS.card,
+  background: `linear-gradient(180deg, ${COLORS.surfaceRaised} 0%, ${COLORS.surfaceAlt} 100%)`,
+  border: `1px solid ${GOLD_GLOW.activeBorder}`,
+  boxShadow: `${SHADOWS.panel}, ${GOLD_GLOW.shadow}`,
+  color: COLORS.text,
+  fontFamily: FONTS.body,
+} as CSSProperties;
+
+const PILL_STYLE: CSSProperties = {
+  ...CAP_LABEL_XS,
+  display: 'inline-block',
+  padding: `${SPACING.xxs}px ${SPACING.sm}px`,
+  borderRadius: RADIUS.pill,
+  background: GOLD_GLOW.activeBg,
+  border: `1px solid ${GOLD_GLOW.activeBorder}`,
+  color: COLORS.primary,
+};
+
+const TITLE_STYLE: CSSProperties = {
+  margin: `${SPACING.sm}px 0 ${SPACING.xs}px`,
+  fontFamily: FONTS.hero,
+  fontWeight: 400,
+  fontSize: FONT_SIZES.xxxl,
+  lineHeight: 1.2,
+};
+
+const LINE_STYLE: CSSProperties = {
+  margin: 0,
+  fontSize: FONT_SIZES.lg,
+  lineHeight: 1.5,
+  color: COLORS.heroSubtitle,
+};
+
+const LINK_STYLE: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: SPACING.sm,
+  minHeight: TOUCH_TARGET,
+  padding: `0 ${SPACING.lg}px`,
+  borderRadius: RADIUS.lg,
+  background: PROVIDER_COLORS.discord.bg,
+  color: PROVIDER_COLORS.discord.text,
+  fontSize: FONT_SIZES.lg,
+  fontWeight: 600,
+  textDecoration: 'none',
+  whiteSpace: 'nowrap',
+};
+
+/**
+ * The home page's beta notice: says what is in beta, thanks the people testing it, and invites
+ * them to the Discord, where bugs and ideas go. Rendered before the page's `<main>`, since a
+ * complementary landmark belongs at the top level.
  */
 export function BetaNotice() {
+  // What the beta covers: the collection once it is on, the whole site before then.
+  const subject = SHOW_COLLECTION ? 'Collection' : 'Inkweave';
   return (
-    <aside
-      aria-label="Beta notice"
-      style={{
-        position: 'fixed',
-        left: 32,
-        top: 32,
-        maxWidth: 320,
-        padding: `${SPACING.md}px ${SPACING.lg}px`,
-        borderRadius: RADIUS.lg,
-        background: `linear-gradient(180deg, ${COLORS.surface} 0%, ${COLORS.surfaceAlt} 100%)`,
-        border: `1px solid ${COLORS.surfaceBorder}`,
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(212, 175, 55, 0.12)',
-        color: COLORS.text,
-        fontFamily: FONTS.body,
-        fontSize: `${FONT_SIZES.sm}px`,
-        lineHeight: 1.5,
-        zIndex: 800,
-      }}>
-      <span
-        style={{
-          display: 'inline-block',
-          fontSize: `${FONT_SIZES.xs}px`,
-          fontWeight: 700,
-          letterSpacing: 0.6,
-          textTransform: 'uppercase',
-          color: COLORS.primary,
-          marginRight: 8,
-        }}>
-        Beta
-      </span>
-      Inkweave is in beta — you may encounter bugs. Thanks for testing!
+    <aside aria-label="Beta notice" className="beta-notice" style={CARD_STYLE}>
+      <div className="beta-notice-copy">
+        <span style={PILL_STYLE}>Beta</span>
+        <p style={TITLE_STYLE}>{subject} is in beta</p>
+        <p style={LINE_STYLE}>Thanks for testing! Found a bug or have an idea? Tell us on Discord.</p>
+      </div>
+      <a
+        className="beta-notice-link"
+        href={DISCORD_INVITE_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={LINK_STYLE}>
+        <img src={discordLogo} alt="" width={20} height={15} />
+        Join our Discord
+      </a>
     </aside>
   );
 }

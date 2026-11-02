@@ -5,13 +5,7 @@ import {SpeedInsights} from '@vercel/speed-insights/react';
 import {SkeletonTheme} from 'react-loading-skeleton';
 import {ProfileProvider} from './features/profile';
 import {RevealsPromoCard, useRevealPhase, type RevealPhase} from './features/reveals';
-import {
-  BetaNotice,
-  CtaButton,
-  ErrorBoundary,
-  MobileBottomNav,
-  MOBILE_NAV_HEIGHT,
-} from './shared/components';
+import {CtaButton, ErrorBoundary, MobileBottomNav, MOBILE_NAV_HEIGHT} from './shared/components';
 import type {SearchBottomSheetHandle} from './shared/components/SearchBottomSheet';
 import {CardDataProvider} from './shared/contexts/CardDataContext';
 import {SessionProvider} from './shared/contexts/SessionContext';
@@ -46,10 +40,6 @@ function focusSearchProxy(sheet: SearchBottomSheetHandle | null, earlyProxy: HTM
   else earlyProxy?.focus();
 }
 
-// Feature flag: gates the desktop-only beta notice card on the landing page.
-// Off at v1.0.0 launch via Vercel env. Default on locally via .env.local.
-const SHOW_BETA_NOTICE = import.meta.env.VITE_SHOW_BETA_NOTICE === 'true';
-
 // Visibility helpers — sequential guards keep each conditional at 0 logical
 // operators, and move their branches out of the parent component's lexical
 // scope (lower CC, easier to unit-test in isolation).
@@ -64,18 +54,6 @@ function shouldShowRevealsPromo({isHome, phase}: RevealsPromoVisibility): boolea
   if (phase === 'pre-release') return true;
   if (phase === 'pre-release-live') return true;
   return false;
-}
-
-interface BetaNoticeVisibility {
-  isHome: boolean;
-  isMobile: boolean;
-}
-
-function shouldShowBetaNotice({isHome, isMobile}: BetaNoticeVisibility): boolean {
-  if (!SHOW_BETA_NOTICE) return false;
-  if (!isHome) return false;
-  if (isMobile) return false;
-  return true;
 }
 
 interface BottomCover {
@@ -210,7 +188,6 @@ function AppContent() {
         </>
       )}
       {showRevealsPromo && <RevealsPromoCard onHeightChange={setPromoHeight} />}
-      {shouldShowBetaNotice({isHome, isMobile}) && <BetaNotice />}
     </>
   );
 }

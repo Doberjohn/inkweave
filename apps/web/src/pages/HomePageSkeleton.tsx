@@ -1,8 +1,9 @@
 import Skeleton from 'react-loading-skeleton';
 import {FeaturedCardsSkeleton} from '../features/cards/components/FeaturedCardsSkeleton';
+import {BetaNotice} from '../shared/components/BetaNotice';
 import {Footer} from '../shared/components/Footer';
 import {COLORS, FONT_SIZES, HERO_LOGO_IMG, RADIUS, SPACING, Z_INDEX} from '../shared/constants';
-import {HOME_PAGE_STYLE, homeMainStyle} from './homeFrame';
+import {HOME_PAGE_STYLE, SHOW_BETA_NOTICE, homeMainStyle} from './homeFrame';
 
 /**
  * Suspense fallback for the `/` route. Mirrors the final HomePage layout:
@@ -26,6 +27,7 @@ interface HomePageSkeletonProps {
 export function HomePageSkeleton({isMobile = false}: HomePageSkeletonProps) {
   return (
     <div style={HOME_PAGE_STYLE}>
+      {SHOW_BETA_NOTICE && <BetaNotice />}
       <main
         aria-busy="true"
         aria-label="Loading home"
