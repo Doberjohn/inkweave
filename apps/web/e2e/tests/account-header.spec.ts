@@ -103,6 +103,8 @@ test.describe('Account tab on phones', () => {
 
     await expect(page).toHaveURL(/\/account$/);
     await expect(page.getByRole('heading', {name: 'Your account', level: 1})).toBeVisible();
+    // The page heads every state with "Your account": only a signed-in account offers Sign out.
+    await expect(page.getByRole('button', {name: 'Sign out'})).toBeVisible();
     const tab = mobileNav(page).getByRole('link', {name: 'Your account', exact: true});
     await expect(tab).toHaveAttribute('aria-current', 'page');
   });

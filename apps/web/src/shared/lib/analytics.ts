@@ -3,6 +3,18 @@ import type {CardType, Ink} from 'inkweave-synergy-engine';
 import {capturePostHog} from './posthog';
 
 /**
+ * Where the sign-in dialog opened: the desktop header, the phone's bottom nav, the account page,
+ * Browse's collection, and the deck builder's DecksPage and DeckBuilderPage (#451).
+ */
+export type SignInSurface =
+  | 'header'
+  | 'bottom_nav'
+  | 'account'
+  | 'collection'
+  | 'decks'
+  | 'deck_builder';
+
+/**
  * The typed event catalog. Every custom analytics event the app sends is declared
  * here. Each shape keeps to 8 properties or fewer. Vercel Pro plus Web Analytics Plus
  * allowed 8 (#124 recorded a cap of 2 on plain Pro); the team had Plus from 2026-07-02
@@ -97,17 +109,11 @@ type AnalyticsEvents = {
     rarity: string;
     surface: 'card_page' | 'modal';
   };
-  // Sign-in (#882). `surface` is where the dialog opened: bottom_nav is the phone's bottom nav,
-  // decks and deck_builder the deck builder's DecksPage and DeckBuilderPage (#451). Never an
-  // account id, email or handle.
-  sign_in_started: {
-    provider: 'google' | 'discord';
-    surface: 'header' | 'bottom_nav' | 'account' | 'collection' | 'decks' | 'deck_builder';
-  };
+  // Sign-in (#882). `surface` is where the dialog opened (SignInSurface). Never an account id,
+  // email or handle.
+  sign_in_started: {provider: 'google' | 'discord'; surface: SignInSurface};
   // The dialog opened, before any provider press: started over shown is a surface's sign-in rate.
-  sign_in_shown: {
-    surface: 'header' | 'bottom_nav' | 'account' | 'collection' | 'decks' | 'deck_builder';
-  };
+  sign_in_shown: {surface: SignInSurface};
   // /auth/callback saw the new session. `provider` is the session's own; anything else is `other`.
   sign_in_completed: {provider: 'google' | 'discord' | 'other'};
   // The start failed in the dialog, or the callback gave up. `reason` comes from the OAuth error

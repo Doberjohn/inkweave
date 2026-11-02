@@ -9,8 +9,9 @@ import {lazyWithRetry} from '../lib/lazyWithRetry';
 const SHOW_ACCOUNTS = import.meta.env.VITE_SHOW_ACCOUNTS === 'true';
 
 // The nav sits in the entry chunk, so the dialog waits for the first Sign in tap. It comes from
-// the header's chunk, which every page with the nav has already loaded: importing its own module
-// would split the dialog out of that chunk into a file of its own.
+// the header's chunk, which every page with the nav but Not found and Compare has already loaded:
+// importing its own module would split the dialog out of that chunk into a file of its own, about
+// 600 B more startup JS.
 const SignInDialog = lazyWithRetry(() => import('./CompactHeader'), 'SignInDialog');
 
 /** Height of the nav bar in CSS px. Used for bottom padding on page content. */
@@ -157,8 +158,10 @@ function pickTabsAndPositions({isRevealSeason, account}: TabsInput): TabsAndPosi
 /**
  * Which account tab to draw. Whether there is one at all is fixed for the build (the flag, and
  * Supabase being configured), so it never pops in and moves the other tabs. A stored session
- * still being restored counts as signed in: it almost always is, and the two tabs look alike, so
- * a returning player never sees the tab change.
+ * still being restored counts as signed in, since it almost always is. The two tabs share an
+ * icon, and the label shows only on the tab's own page, so the swap between them (after a
+ * restore that finds the session expired, or from the prerendered page, crawled signed out, to a
+ * returning player's) changes what the tab does but not how it looks.
  */
 function accountTabFor(
   session: Pick<ReturnType<typeof useSession>, 'user' | 'loading' | 'enabled'>,

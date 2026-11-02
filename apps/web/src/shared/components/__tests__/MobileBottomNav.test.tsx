@@ -27,6 +27,10 @@ vi.mock('../../lib/signInAnalytics', () => ({
   trackSignInFailed: vi.fn(),
 }));
 
+// The Sign in tab loads the dialog from the header's module. Importing it here transforms it while
+// the file loads, which Vitest doesn't time, rather than inside a test (over a second when cold).
+await import('../CompactHeader');
+
 const SIGNED_OUT: SessionStub = {user: null, loading: false, enabled: true};
 const SIGNED_IN: SessionStub = {user: {id: 'u1'}, loading: false, enabled: true};
 
@@ -63,13 +67,14 @@ afterEach(() => {
 describe('MobileBottomNav account tab', () => {
   it('signed out, is a Sign in tab that opens the sign-in dialog from the nav', async () => {
     const nav = await renderNav('/browse');
-    // The dialog comes from the header's module on the first tap. Loading that module here first
-    // keeps its cold transform (over a second on a slow machine) out of findByRole's wait.
-    await import('../CompactHeader');
 
     await userEvent.click(within(nav).getByRole('button', {name: 'Sign in'}));
 
-    expect(await screen.findByRole('dialog', {name: 'Sign in to Inkweave'})).toBeVisible();
+    // The dialog is lazy: the tap loads the header's module afresh after resetModules, which took
+    // close to findByRole's default second on a loaded machine.
+    expect(
+      await screen.findByRole('dialog', {name: 'Sign in to Inkweave'}, {timeout: 3000}),
+    ).toBeVisible();
     expect(mocks.trackSignInShown).toHaveBeenCalledExactlyOnceWith({surface: 'bottom_nav'});
   });
 
