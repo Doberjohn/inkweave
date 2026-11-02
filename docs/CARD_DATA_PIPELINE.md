@@ -770,13 +770,13 @@ flowchart TD
 | Vercel Edge | `/card-images/(.*)` | `Cache-Control: public, max-age=31536000, immutable` | `vercel.json` `headers`: safe because URLs are content-addressed |
 | Vercel Edge | `/card-images-preview/(.*)` | `Cache-Control: public, max-age=86400, must-revalidate` | `vercel.json` `headers`: non-hashed, must revalidate |
 | Vercel Edge | `/data/synergies/(.*)` | `Cache-Control: public, max-age=3600, stale-while-revalidate=86400` | `vercel.json` `headers` |
-| Service Worker | `/data/allCards.json` | `StaleWhileRevalidate`, 24h, 1 entry | `vite.config.ts` `runtimeCaching` |
+| Service Worker | `/data/allCards.json`, `/data/previewCards.json`, `/data/featuredCards.json` | Precached with the app version that was built with them, each under its MD5 revision | `vite.config.ts` `globPatterns` (#1064): a copy of the app only reads its own card data, and new data arrives with the update that can read it. `pnpm check:sw-update` fails a build whose revisions aren't the served files' |
 | Service Worker | `/data/synergies/.+\.json$` | `StaleWhileRevalidate`, 24h, 500 entries | `vite.config.ts` `runtimeCaching` |
 | Service Worker | `/data/playstyleGuides.json` | `StaleWhileRevalidate`, 24h, 1 entry | `vite.config.ts` `runtimeCaching`, for the playstyle pages' guides (#995) |
 | Service Worker | `/card-images/.+\.avif$` | `CacheFirst`, 30d, 600 entries | `vite.config.ts` `runtimeCaching` |
 | Service Worker | `navigateFallbackDenylist` excludes `/card-images/`, `/card-images-preview/`, `/data/` | — | `vite.config.ts` `navigateFallbackDenylist`: prevents direct-URL pastes from rendering the SPA NotFoundPage |
 
-No SW cache rule for `previewCards.json` itself — its graceful 404 path is browser-native.
+Out of reveal season the build has no `previewCards.json`, so nothing is precached for it and its graceful 404 path is browser-native. A deploy that changes only card data still changes `sw.js`, so returning visitors get the update toast for it. Browsers that had the old `card-data` runtime cache delete it once (`main.tsx`).
 
 ---
 

@@ -469,6 +469,12 @@ export default defineConfig({
           // the printing symbols load as pages show them, as before.
           'assets/{amber,amethyst,emerald,ruby,sapphire,steel}-*.svg',
           'assets/{inkable,uninkable,common,uncommon}-*.svg',
+          // The card data each version was built with, so a copy of the app never reads a newer
+          // deploy's, whose shape it may not know (#1064): new data arrives with the version that
+          // reads it. A file the build lacks (previewCards.json out of reveal season) matches
+          // nothing. cardDataPlugin slims these in its closeBundle, which runs before VitePWA's,
+          // so the revisions are the served files' (check-sw-update.mjs fails the build if not).
+          'data/{allCards,previewCards,featuredCards}.json',
         ],
         // Leave out the chunks no page loads (#928), which every new visitor downloaded. It drops
         // only JavaScript chunk files, so the symbols above stay in.
@@ -491,19 +497,11 @@ export default defineConfig({
         ],
         runtimeCaching: [
           {
-            urlPattern: /\/data\/allCards\.json$/,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'card-data',
-              expiration: {maxEntries: 1, maxAgeSeconds: 60 * 60 * 24},
-            },
-          },
-          {
             // Synergy JSON is mutable but its URL is NOT content-addressed (a card's file keeps
             // the same /data/synergies/<id>.json path when a rule change alters its contents), so
             // CacheFirst would pin a returning visitor to pre-deploy synergies until the entry
             // expires (was invisible for 24h after a new rule shipped). StaleWhileRevalidate serves
-            // the cached copy instantly and refetches in the background, matching allCards.json.
+            // the cached copy instantly and refetches in the background.
             urlPattern: /\/data\/synergies\/.+\.json$/,
             handler: 'StaleWhileRevalidate',
             options: {
