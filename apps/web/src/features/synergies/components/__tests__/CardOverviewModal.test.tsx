@@ -331,6 +331,26 @@ test('ArrowRight / ArrowLeft navigate siblings', async () => {
   expect(onGoToSibling).toHaveBeenCalledWith(-1);
 });
 
+test('arrow keys in a synergy grid move between its tiles, not to the next card', async () => {
+  const user = userEvent.setup();
+  const onGoToSibling = vi.fn();
+  render(
+    <MemoryRouter>
+      <CardDataProvider>
+        <CardOverviewModal isOpen card={makeCard('b')} synergies={[makeGroup('singer-songs', 'Singer + Songs', 4)]}
+          getPairSynergies={() => null} onClose={() => {}} siblingCardIds={['a', 'b', 'c']} onGoToSibling={onGoToSibling} />
+      </CardDataProvider>
+    </MemoryRouter>,
+  );
+  const [first, second] = screen.getAllByRole('link', {name: /^Card syn-/});
+  first.focus();
+  await user.keyboard('{ArrowRight}');
+  await waitFor(() => expect(second).toHaveFocus());
+  await user.keyboard('{ArrowLeft}');
+  await waitFor(() => expect(first).toHaveFocus());
+  expect(onGoToSibling).not.toHaveBeenCalled();
+});
+
 /** A card with an Enchanted printing (#625). */
 function withEnchanted(card: LorcanaCard): LorcanaCard {
   return {

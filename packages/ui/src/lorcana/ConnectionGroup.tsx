@@ -425,6 +425,21 @@ function resolveRoleDisplay(conn: LabelledConnection): {
   return {key: conn.ruleId, label: conn.roleLabel, description: conn.explanation};
 }
 
+// The card view closes on a document Escape listener, so the open list takes the key
+// first, in the window's capture phase, and keeps it from reaching the card view.
+function useEscapeToClose(active: boolean, setIsOpen: (v: boolean) => void) {
+  useEffect(() => {
+    if (!active) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      setIsOpen(false);
+    };
+    window.addEventListener('keydown', handler, true);
+    return () => window.removeEventListener('keydown', handler, true);
+  }, [active, setIsOpen]);
+}
+
 /**
  * Multi-role display for connection groups with >1 sub-rule (e.g. Location Control's
  * At-Payoff + Move + Buff).
@@ -436,17 +451,6 @@ function resolveRoleDisplay(conn: LabelledConnection): {
  * Mobile: stacks all roles always-open. No toggle, no overlay (mobile lays the
  * modal columns vertically, so engine column height isn't constrained).
  */
-function useEscapeToClose(active: boolean, setIsOpen: (v: boolean) => void) {
-  useEffect(() => {
-    if (!active) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsOpen(false);
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [active, setIsOpen]);
-}
-
 function MultiRoleAbilityList({
   connections,
   cardA,

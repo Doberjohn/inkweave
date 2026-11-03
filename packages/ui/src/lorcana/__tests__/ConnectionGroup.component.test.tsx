@@ -132,6 +132,23 @@ describe('ConnectionGroup — multi-role expand/collapse', () => {
     expect(toggle()).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('keeps Escape from the card view, which listens on document', () => {
+    render(<ConnectionGroup group={multiRoleGroup()} cardA={cardA} cardB={cardB} />);
+    const toggle = () => screen.getByRole('button', {name: /show all 3 roles|hide additional roles/i});
+    const cardViewEscape = vi.fn();
+    document.addEventListener('keydown', cardViewEscape);
+    try {
+      fireEvent.click(toggle());
+      fireEvent.keyDown(toggle(), {key: 'Escape'});
+      expect(toggle()).toHaveAttribute('aria-expanded', 'false');
+      expect(cardViewEscape).not.toHaveBeenCalled();
+      fireEvent.keyDown(toggle(), {key: 'Escape'});
+      expect(cardViewEscape).toHaveBeenCalledTimes(1);
+    } finally {
+      document.removeEventListener('keydown', cardViewEscape);
+    }
+  });
+
   it('renders all roles always-open with no toggle on mobile', () => {
     mockUseResponsive.mockReturnValue({
       isMobile: true,

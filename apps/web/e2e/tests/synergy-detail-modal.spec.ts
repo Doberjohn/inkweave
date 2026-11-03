@@ -25,6 +25,44 @@ if (!COMPARE_PARTNER_ID || !COMPARE_GROUP_KEY) {
 }
 const COMPARE_URL = `/compare/1947/${COMPARE_PARTNER_ID}/${COMPARE_GROUP_KEY}`;
 
+// The first Location Control pair whose engine column holds three or more roles, so all but one
+// fold behind "Show all N roles". Each role reads under its chip label from the engine's catalog.
+const MULTI_ROLE_PAIR = findMultiRolePair();
+
+function findMultiRolePair(): {url: string; labels: string[]} {
+  const dir = path.resolve(process.cwd(), 'public/data/synergies');
+  const chipLabels = (
+    JSON.parse(
+      fs.readFileSync(
+        path.resolve(process.cwd(), 'node_modules/inkweave-synergy-engine/dist/catalog.json'),
+        'utf8',
+      ),
+    ) as {locationChipLabels: Record<string, string>}
+  ).locationChipLabels;
+  const files = fs
+    .readdirSync(dir)
+    .filter((file) => /^\d+\.json$/.test(file))
+    .sort((a, b) => Number.parseInt(a, 10) - Number.parseInt(b, 10));
+  for (const file of files) {
+    const data = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8')) as {
+      pairs?: Record<string, {connections: {ruleId: string; playstyleId?: string}[]}>;
+    };
+    for (const [partnerId, pair] of Object.entries(data.pairs ?? {})) {
+      const ruleIds = new Set(
+        pair.connections.filter((c) => c.playstyleId === 'location-control').map((c) => c.ruleId),
+      );
+      if (ruleIds.size < 3) continue;
+      const labels = [...ruleIds].map((id) => chipLabels[id.replace(/^location-/, '')]);
+      if (labels.some((label) => !label)) continue;
+      return {
+        url: `/compare/${path.basename(file, '.json')}/${partnerId}/location-control`,
+        labels,
+      };
+    }
+  }
+  throw new Error('Fixture broken: no Location Control pair has three or more roles.');
+}
+
 /**
  * Comparison mode (formerly the separate synergy detail modal). Clicking a synergy card tile
  * inside CardOverviewModal transitions the modal in-place to comparison view: the chip row and
@@ -55,6 +93,60 @@ async function expectPairRightUnderClose(modal: Locator, pairTop: Locator) {
   };
   await expect.poll(settledGap).toBeLessThan(40);
   await expect.poll(settledGap).toBeGreaterThanOrEqual(0);
+}
+
+/**
+ * How many of `labels` show in the engine column: a role folded away sits in a panel of no
+ * height, which clips it to nothing. Only the column's own clipping counts, so the reading
+ * doesn't change with how far the window is scrolled.
+ */
+function rolesShown(engine: Locator, labels: string[]) {
+  return engine.evaluate((column, wanted) => {
+    const unclipped = (el: Element) => {
+      let {left, top, right, bottom} = el.getBoundingClientRect();
+      for (let a = el.parentElement; a && a !== column; a = a.parentElement) {
+        if (getComputedStyle(a).overflow === 'visible') continue;
+        const box = a.getBoundingClientRect();
+        left = Math.max(left, box.left);
+        top = Math.max(top, box.top);
+        right = Math.min(right, box.right);
+        bottom = Math.min(bottom, box.bottom);
+      }
+      return right - left > 1 && bottom - top > 1;
+    };
+    const spans = [...column.querySelectorAll('span')];
+    return wanted.filter((label) =>
+      spans.some((span) => span.textContent === label && unclipped(span)),
+    ).length;
+  }, labels);
+}
+
+/**
+ * Card B's transform and opacity on each of the first four frames the card view spends in
+ * `mode`, read from the page so no frame passes between Playwright's steps. Under reduced motion
+ * card B neither flies in from its tile nor back to it.
+ */
+function cardBFrames(modal: Locator, mode: 'comparison' | 'default') {
+  return modal.evaluate(
+    (root, wanted) =>
+      new Promise<{transform: string; opacity: string}[]>((resolve) => {
+        const frames: {transform: string; opacity: string}[] = [];
+        // Frames to wait for the mode, so a card view that never gets there still answers.
+        let left = 240;
+        const sample = () => {
+          const cardB = root.querySelector('.focused-card-glow-offset');
+          if (root.getAttribute('data-mode') === wanted && cardB) {
+            const style = getComputedStyle(cardB);
+            frames.push({transform: style.transform, opacity: style.opacity});
+          }
+          left -= 1;
+          if (frames.length < 4 && left > 0) requestAnimationFrame(sample);
+          else resolve(frames);
+        };
+        requestAnimationFrame(sample);
+      }),
+    mode,
+  );
 }
 
 test.describe('Synergy comparison — Desktop', () => {
@@ -165,6 +257,93 @@ test.describe('Synergy comparison — Desktop', () => {
     await expect(modal).toHaveAttribute('data-mode', 'comparison');
     await page.keyboard.press('Escape');
     await expect(modal).toHaveAttribute('data-mode', 'default', {timeout: 5000});
+  });
+});
+
+test.describe('Synergy comparison — roles and reduced motion (desktop)', () => {
+  test.describe('in a window tall enough not to scroll', () => {
+    // At 720 px the window scrolls the unfolded list into view and can shift it under a click.
+    test.use({viewport: {width: 1280, height: 1100}});
+
+    test('the role list unfolds and folds, and Escape folds it before the card view hears it', async ({
+      appPage,
+      page,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name.startsWith('mobile-'),
+        'phones stack every role, with no toggle',
+      );
+      const {url, labels} = MULTI_ROLE_PAIR;
+      await page.goto(url);
+      const modal = appPage.cardOverviewModal;
+      await expect(modal).toHaveAttribute('data-mode', 'comparison', {timeout: 10000});
+      const engine = modal.locator('section[aria-label="Engine score"]');
+      const show = engine.getByRole('button', {name: `Show all ${labels.length} roles`});
+      const hide = engine.getByRole('button', {name: 'Hide additional roles'});
+      // The visible role's row is the list's other toggle, and the only role row that is a button.
+      const visibleRow = engine.getByRole('button').filter({hasText: new RegExp(labels.join('|'))});
+      await expect.poll(() => rolesShown(engine, labels)).toBe(1);
+
+      await show.click();
+      await expect(hide).toHaveAttribute('aria-expanded', 'true');
+      await expect.poll(() => rolesShown(engine, labels)).toBe(labels.length);
+      await hide.click();
+      await expect(show).toHaveAttribute('aria-expanded', 'false');
+      await expect.poll(() => rolesShown(engine, labels)).toBe(1);
+
+      await visibleRow.click();
+      await expect(hide).toHaveAttribute('aria-expanded', 'true');
+      await visibleRow.click();
+      await expect(show).toHaveAttribute('aria-expanded', 'false');
+
+      // From the keyboard: Enter unfolds the list, and Escape folds it and does nothing else.
+      await show.focus();
+      await page.keyboard.press('Enter');
+      await expect(hide).toHaveAttribute('aria-expanded', 'true');
+      await page.keyboard.press('Escape');
+      await expect(show).toHaveAttribute('aria-expanded', 'false');
+      await expect.poll(() => rolesShown(engine, labels)).toBe(1);
+      await expect(modal).toHaveAttribute('data-mode', 'comparison');
+      expect(new URL(page.url()).pathname).toBe(url);
+
+      // The next Escape reaches the card view, which a compare link closes.
+      await page.keyboard.press('Escape');
+      await expect(modal).toBeHidden({timeout: 5000});
+      await expect(page).not.toHaveURL(/\/compare\//);
+    });
+  });
+
+  test.describe('with reduced motion', () => {
+    test.use({reducedMotion: 'reduce'});
+
+    test('a comparison opens and closes in place, and opens again', async ({appPage}, testInfo) => {
+      test.skip(
+        testInfo.project.name.startsWith('mobile-'),
+        'phones open a comparison in their own layout',
+      );
+      await appPage.openCardOverview(CARD_NAME);
+      const modal = appPage.cardOverviewModal;
+      const back = modal.getByRole('button', {name: /back to synergies/i});
+      const cardB = modal.locator('.focused-card-glow-offset');
+      const still = {transform: 'none', opacity: '1'};
+
+      // Card B shows where it settles from its first frame, with no flight from the tile.
+      let frames = cardBFrames(modal, 'comparison');
+      await modal.locator('[data-group-key="shift-targets"] a.card-tile').first().click();
+      expect(await frames).toEqual([still, still, still, still]);
+
+      // Leaving hides card B at once instead of flying it back, and then takes it down.
+      frames = cardBFrames(modal, 'default');
+      await back.click();
+      expect((await frames).map((frame) => frame.opacity)).toEqual(['0', '0', '0', '0']);
+      await expect(cardB).toHaveCount(0);
+
+      // The next comparison opens the same way.
+      frames = cardBFrames(modal, 'comparison');
+      await modal.locator('[data-group-key="discard"] a.card-tile').first().click();
+      expect(await frames).toEqual([still, still, still, still]);
+      await expect(back).toBeVisible();
+    });
   });
 });
 
