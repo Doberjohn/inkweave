@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {act, render, screen, fireEvent} from '@testing-library/react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {ConnectionGroupData, LabelledConnection} from '../ConnectionGroup';
 
@@ -17,6 +17,20 @@ vi.mock('../../hooks/useResponsive', () => ({
 
 // Imported after the mock so the module reads the mocked hook.
 import {ConnectionGroup} from '../ConnectionGroup';
+import {useTooltip} from '../../hooks/useTooltip';
+
+/** A control with a tooltip, opened on focus, beside the list. */
+function ScoreHelp() {
+  const tooltip = useTooltip();
+  return (
+    <>
+      <button type="button" aria-describedby={tooltip.describedBy} {...tooltip.triggerProps}>
+        What does this score mean?
+      </button>
+      {tooltip.open && <div {...tooltip.tooltipProps}>How strongly the engine rates this pair.</div>}
+    </>
+  );
+}
 
 const cardA: LorcanaCard = {
   id: 'elsa-cs',
@@ -150,19 +164,22 @@ describe('ConnectionGroup — multi-role expand/collapse', () => {
   });
 
   it('lets a tooltip opened over the open list hide on the same Escape', () => {
-    render(<ConnectionGroup group={multiRoleGroup()} cardA={cardA} cardB={cardB} />);
+    render(
+      <>
+        <ConnectionGroup group={multiRoleGroup()} cardA={cardA} cardB={cardB} />
+        <ScoreHelp />
+      </>,
+    );
     const toggle = () => screen.getByRole('button', {name: /show all 3 roles|hide additional roles/i});
     fireEvent.click(toggle());
-    // useTooltip hides on a capture-phase document listener, added once the tooltip opens.
-    const tooltipEscape = vi.fn();
-    document.addEventListener('keydown', tooltipEscape, true);
-    try {
-      fireEvent.keyDown(toggle(), {key: 'Escape'});
-      expect(tooltipEscape).toHaveBeenCalledTimes(1);
-      expect(toggle()).toHaveAttribute('aria-expanded', 'false');
-    } finally {
-      document.removeEventListener('keydown', tooltipEscape, true);
-    }
+    // As the card view's score help does: focus opens its tooltip while the list stays unfolded.
+    const help = screen.getByRole('button', {name: 'What does this score mean?'});
+    act(() => help.focus());
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+
+    fireEvent.keyDown(help, {key: 'Escape'});
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    expect(toggle()).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('renders all roles always-open with no toggle on mobile', () => {
