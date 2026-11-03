@@ -1,7 +1,8 @@
-import type {Locator} from '@playwright/test';
+import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {holdSupabasePath} from '../fixtures/supabaseStub';
 import {cardFullNameById} from '../helpers/cardData';
+import {failUntilLetThrough} from '../helpers/failingRoute';
 import {slidePointerOnto} from '../helpers/pointer';
 import fs from 'node:fs';
 import {createRequire} from 'node:module';
@@ -554,5 +555,75 @@ test.describe('Synergy comparison — deep link', () => {
     await page.goto(`/compare/1947/99999999/${COMPARE_GROUP_KEY}`);
     await expect(page.getByRole('heading', {level: 1})).toHaveText(/404/, {timeout: 10000});
     await expect(page.getByTestId('card-overview-fallback')).toHaveCount(0);
+  });
+
+  test('a link whose group no longer matches its cards ends on the 404 page, kept out of search', async ({
+    page,
+  }) => {
+    // Both cards exist, so this is the pair check's 404: a stale link after a rule change.
+    await page.goto(`/compare/1947/${COMPARE_PARTNER_ID}/no-such-group`);
+    await expect(page.getByRole('heading', {level: 1})).toHaveText(/404/, {timeout: 10000});
+    await expect(page.locator('meta[name="robots"][content="noindex"]')).toHaveCount(1);
+    await expect(page.getByTestId('card-overview-fallback')).toHaveCount(0);
+  });
+});
+
+/**
+ * A comparison link whose synergy file fails to load can't tell whether its pair exists, so it
+ * opens the card window on card A, which says the file failed; its Try again brings the
+ * comparison in, or the 404 page for a link whose pair is gone. The 404 page at once would tell
+ * a visitor a valid link was wrong.
+ */
+test.describe('Synergy comparison — deep link whose synergy file failed', () => {
+  // The page and the window share one load of the file, which logs the failure they show once.
+  test.use({expectedConsoleErrors: [/^Failed to load synergies for card 1947/]});
+
+  /** Counts the requests for card 1947's synergy file. */
+  function countFileRequests(page: Page): () => number {
+    let count = 0;
+    page.on('request', (request) => {
+      if (request.url().endsWith('/data/synergies/1947.json')) count += 1;
+    });
+    return () => count;
+  }
+
+  test('opens the card window, and Try again shows the comparison', async ({appPage, page}) => {
+    const letThrough = await failUntilLetThrough(page, '**/data/synergies/1947.json');
+    const fileRequests = countFileRequests(page);
+    const modal = appPage.cardOverviewModal;
+    const column = modal.getByRole('region', {name: 'Synergies'});
+
+    await page.goto(COMPARE_URL);
+    await expect(column.getByRole('alert')).toHaveText("Couldn't load this card's synergies.", {timeout: 10000});
+    await expect(modal).toHaveAttribute('data-mode', 'default');
+    await expect(page.getByRole('heading', {name: /404/})).toHaveCount(0);
+    // The window shows the page's failure rather than asking for the file again itself, which it
+    // would do as it mounts: a second of quiet proves it didn't.
+    await page.waitForTimeout(1000);
+    expect(fileRequests()).toBe(1);
+
+    letThrough();
+    await column.getByRole('button', {name: 'Try again'}).click();
+    await expect(modal).toHaveAttribute('data-mode', 'comparison', {timeout: 10000});
+    await expect(page).toHaveURL(new RegExp(`${COMPARE_URL}$`));
+    // The comparison hides the column that held focus for the retry, and a shared link has no
+    // BACK to take it: the close button does.
+    await expect(modal.getByRole('button', {name: 'Close', exact: true})).toBeFocused();
+    expect(fileRequests()).toBe(2);
+  });
+
+  test("a stale link's Try again ends on the 404 page, at the same address", async ({appPage, page}) => {
+    const letThrough = await failUntilLetThrough(page, '**/data/synergies/1947.json');
+    const staleLink = `/compare/1947/${COMPARE_PARTNER_ID}/no-such-group`;
+    const column = appPage.cardOverviewModal.getByRole('region', {name: 'Synergies'});
+
+    await page.goto(staleLink);
+    await expect(column.getByRole('alert')).toHaveText("Couldn't load this card's synergies.", {timeout: 10000});
+
+    letThrough();
+    await column.getByRole('button', {name: 'Try again'}).click();
+    await expect(page.getByRole('heading', {level: 1})).toHaveText(/404/, {timeout: 10000});
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page).toHaveURL(new RegExp(`${staleLink}$`));
   });
 });

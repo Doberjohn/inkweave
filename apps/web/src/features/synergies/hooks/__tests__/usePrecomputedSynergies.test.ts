@@ -1,5 +1,5 @@
 import {afterEach, describe, it, expect, vi} from 'vitest';
-import {renderHook, waitFor} from '@testing-library/react';
+import {act, renderHook, waitFor} from '@testing-library/react';
 import type {LorcanaCard, PairSynergyConnection} from 'inkweave-synergy-engine';
 import {fetchCardSynergies, filterPairByGroup, usePrecomputedSynergies} from '../usePrecomputedSynergies';
 import type {PrecomputedPairData} from '../usePrecomputedSynergies';
@@ -53,6 +53,7 @@ function holdSynergyFetches(): (cardId: string, partnerId: string, explanation?:
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('usePrecomputedSynergies', () => {
@@ -176,6 +177,142 @@ describe('usePrecomputedSynergies', () => {
 
     expect(loadingWithoutCard.length).toBeGreaterThan(0);
     expect(loadingWithoutCard.every((isLoading) => !isLoading)).toBe(true);
+  });
+
+  it('reports a failed file as an error, and retry fetches it again', async () => {
+    const data = {
+      groups: [
+        {
+          groupKey: 'shift-targets',
+          category: 'direct',
+          label: 'Shift',
+          tagline: '',
+          description: '',
+          synergies: [{cardId: '9502', score: 7, explanation: 'Shifts onto it'}],
+        },
+      ],
+      pairs: {},
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ok: false, status: 503})
+      .mockResolvedValueOnce({ok: true, status: 200, headers: {get: () => 'application/json'}, json: async () => data});
+    vi.stubGlobal('fetch', fetchMock);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const selected = card('9501');
+    card('9502');
+
+    const {result} = renderHook(() => usePrecomputedSynergies(selected));
+    await waitFor(() => expect(result.current.error?.message).toMatch('answered 503'));
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.synergies).toEqual([]);
+    expect(result.current.retry).toBeInstanceOf(Function);
+
+    act(() => result.current.retry?.());
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.error).toBeNull();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.error).toBeNull();
+    expect(result.current.retry).toBeUndefined();
+    expect(result.current.synergies.map((g) => g.synergies.map((s) => s.card.id))).toEqual([['9502']]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  describe('views of one card', () => {
+    /** One partner for `cardId`, as a fetch answers it. */
+    const fileWithPartner = (partnerId: string) => ({
+      ok: true,
+      status: 200,
+      headers: {get: () => 'application/json'},
+      json: async () => ({
+        groups: [
+          {
+            groupKey: 'shift-targets',
+            category: 'direct',
+            label: 'Shift',
+            tagline: '',
+            description: '',
+            synergies: [{cardId: partnerId, score: 7, explanation: 'Shifts onto it'}],
+          },
+        ],
+        pairs: {},
+      }),
+    });
+
+    /** Answers the first fetch with a 503 and every later one with the file. */
+    function failOnce(partnerId: string) {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce({ok: false, status: 503})
+        .mockImplementation(async () => fileWithPartner(partnerId));
+      vi.stubGlobal('fetch', fetchMock);
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      return fetchMock;
+    }
+
+    it('share a failure: a view opening on it shows it with no fetch of its own', async () => {
+      // A compare link's page and the window it opens, or the card page and a window over it.
+      const fetchMock = failOnce('9552');
+      const selected = card('9551');
+      card('9552');
+      const page = renderHook(() => usePrecomputedSynergies(selected));
+      await waitFor(() => expect(page.result.current.error).not.toBeNull());
+
+      const window = renderHook(() => usePrecomputedSynergies(selected));
+
+      expect(window.result.current.error).toBe(page.result.current.error);
+      expect(window.result.current.retry).toBeInstanceOf(Function);
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(console.error).toHaveBeenCalledOnce();
+    });
+
+    it("all reload on one view's retry", async () => {
+      const fetchMock = failOnce('9562');
+      const selected = card('9561');
+      card('9562');
+      const page = renderHook(() => usePrecomputedSynergies(selected));
+      await waitFor(() => expect(page.result.current.error).not.toBeNull());
+      const window = renderHook(() => usePrecomputedSynergies(selected));
+
+      act(() => window.result.current.retry?.());
+
+      expect(page.result.current.isLoading).toBe(true);
+      await waitFor(() => expect(page.result.current.synergies).toHaveLength(1));
+      expect(page.result.current.error).toBeNull();
+      expect(window.result.current.synergies).toHaveLength(1);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('read a file another caller fetched over their failure', async () => {
+      failOnce('9572');
+      const selected = card('9571');
+      card('9572');
+      const {result} = renderHook(() => usePrecomputedSynergies(selected));
+      await waitFor(() => expect(result.current.error).not.toBeNull());
+
+      // The window's sibling preload, or main.tsx's hold, fetching the same file.
+      await act(() => fetchCardSynergies('9571'));
+
+      expect(result.current.error).toBeNull();
+      expect(result.current.retry).toBeUndefined();
+      expect(result.current.synergies[0].synergies[0].card.id).toBe('9572');
+    });
+
+    it('drop a failure with the last of them, so a later look fetches again', async () => {
+      const fetchMock = failOnce('9582');
+      const selected = card('9581');
+      card('9582');
+      const first = renderHook(() => usePrecomputedSynergies(selected));
+      await waitFor(() => expect(first.result.current.error).not.toBeNull());
+      first.unmount();
+
+      const later = renderHook(() => usePrecomputedSynergies(selected));
+
+      expect(later.result.current.error).toBeNull();
+      expect(later.result.current.isLoading).toBe(true);
+      await waitFor(() => expect(later.result.current.synergies).toHaveLength(1));
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
   });
 });
 

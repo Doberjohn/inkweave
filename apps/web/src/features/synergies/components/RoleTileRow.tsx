@@ -15,7 +15,7 @@ import {
   FONT_WEIGHT,
   LINE_HEIGHT,
 } from '../../../shared/constants';
-import {CtaButton} from '../../../shared/components';
+import {LoadFailedNotice} from './LoadFailedNotice';
 import {useContainerWidth, useTooltip} from '../../../shared/hooks';
 
 /** Where a playstyle's mechanic tiles stand: loading, failed to load, or loaded (#930). */
@@ -211,6 +211,17 @@ export function RoleTileRow({
   );
 }
 
+/** The failed tiles' line beside its Try again, in place of the tiles. */
+const FAILED_BOX: React.CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: SPACING.md,
+};
+
+const FAILED_LINE: React.CSSProperties = {margin: 0, color: COLORS.textMuted, fontSize: FONT_SIZES.lg};
+
 /**
  * A playstyle's mechanic tiles in the state they stand in (#930): their placeholder while they
  * load, a line saying they failed with a Try again that loads them alone, or the tiles.
@@ -218,12 +229,31 @@ export function RoleTileRow({
 export function RoleTiles({
   status,
   onRetry,
+  focusOnRetry,
   ...row
-}: RoleTileRowProps & {status: RoleTilesStatus; onRetry: () => void}) {
+}: RoleTileRowProps & {
+  status: RoleTilesStatus;
+  onRetry: () => void;
+  /** What holds focus through a retry (`LoadFailedNotice`): the row, or the sheet. */
+  focusOnRetry: RefObject<HTMLElement | null>;
+}) {
   if (status === 'loading') {
     return row.layout === 'grid' ? <RoleTileGridSkeleton /> : <RoleTileRowSkeleton />;
   }
-  if (status === 'failed') return <RoleTilesFailed layout={row.layout} onRetry={onRetry} />;
+  if (status === 'failed') {
+    return (
+      // In the row it keeps the row's box, as the placeholder does, so the cards below stay put
+      // through the retry.
+      <div style={{...FAILED_BOX, ...(row.layout === 'grid' ? {padding: `${SPACING.xxl}px 0`} : rowBoxStyle())}}>
+        <LoadFailedNotice
+          what="this playstyle's mechanics"
+          lineStyle={FAILED_LINE}
+          onRetry={onRetry}
+          focusOnRetry={focusOnRetry}
+        />
+      </div>
+    );
+  }
   return <RoleTileRow {...row} />;
 }
 
@@ -274,40 +304,6 @@ function RoleTileGridSkeleton() {
           style={{display: 'block'}}
         />
       ))}
-    </div>
-  );
-}
-
-/**
- * The tiles' place when they failed to load and the cards did not (#930): what happened, and a
- * Try again. In the row it keeps the row's box, as the placeholder does, so the cards below stay
- * put through the retry. An alert, as the binder's failure is (#790): it takes the place of tiles
- * the reader was waiting for.
- */
-function RoleTilesFailed({
-  onRetry,
-  layout,
-}: {
-  onRetry: () => void;
-  layout: RoleTileRowProps['layout'];
-}) {
-  const box = layout === 'grid' ? {padding: `${SPACING.xxl}px 0`} : rowBoxStyle();
-  return (
-    <div
-      style={{
-        ...box,
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: SPACING.md,
-      }}>
-      <p role="alert" style={{margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.lg}px`}}>
-        Couldn&apos;t load this playstyle&apos;s mechanics.
-      </p>
-      <CtaButton variant="ghost" onClick={onRetry}>
-        Try again
-      </CtaButton>
     </div>
   );
 }

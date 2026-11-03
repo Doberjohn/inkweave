@@ -724,3 +724,39 @@ test('a card opened on its foreign-scan printing offers the translation at once'
 
   expect(screen.getByRole('button', {name: 'See translation'})).toBeVisible();
 });
+
+/** A card whose synergy file holds nothing, or failed to load when `onRetrySynergies` is set. */
+function renderWithoutSynergies(onRetrySynergies?: () => void) {
+  return render(
+    <MemoryRouter>
+      <CardDataProvider>
+        <CardOverviewModal
+          isOpen
+          card={makeCard('source')}
+          synergies={[]}
+          onRetrySynergies={onRetrySynergies}
+          getPairSynergies={() => null}
+          onClose={() => {}}
+        />
+      </CardDataProvider>
+    </MemoryRouter>,
+  );
+}
+
+test('a card with no synergies says so, with no alert', () => {
+  renderWithoutSynergies();
+  expect(screen.getByText('No synergies yet')).toBeVisible();
+  expect(screen.queryByRole('alert')).toBeNull();
+});
+
+test('a failed synergy file says so, and Try again keeps focus in the synergy column', async () => {
+  const user = userEvent.setup();
+  const onRetry = vi.fn();
+  renderWithoutSynergies(onRetry);
+  expect(screen.getByRole('alert')).toHaveTextContent("Couldn't load this card's synergies.");
+  expect(screen.queryByText('No synergies yet')).toBeNull();
+
+  await user.click(screen.getByRole('button', {name: 'Try again'}));
+  expect(onRetry).toHaveBeenCalledOnce();
+  expect(screen.getByRole('region', {name: 'Synergies'})).toHaveFocus();
+});

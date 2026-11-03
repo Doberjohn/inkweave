@@ -5,12 +5,14 @@ import type {LorcanaCard} from '../../features/cards';
 import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
 
 const mockOpenComparison = vi.fn();
+const mockDismissCardModal = vi.fn();
 const mockGetCardById = vi.fn<(id: string) => LorcanaCard | undefined>();
 const mockCardsLoading = vi.fn(() => false);
 const mockGetPairSynergies = vi.fn<
   (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null
 >();
 const mockSynergiesLoading = vi.fn(() => false);
+const mockSynergiesError = vi.fn<() => Error | null>(() => null);
 const mockSelectedCardId = vi.fn<() => string | null>(() => null);
 
 vi.mock('../../shared/contexts/CardDataContext', () => ({
@@ -20,7 +22,11 @@ vi.mock('../../shared/contexts/CardDataContext', () => ({
 }));
 
 vi.mock('../../shared/contexts/CardModalContext', () => ({
-  useCardModal: () => ({openComparison: mockOpenComparison, selectedCardId: mockSelectedCardId()}),
+  useCardModal: () => ({
+    openComparison: mockOpenComparison,
+    dismissCardModal: mockDismissCardModal,
+    selectedCardId: mockSelectedCardId(),
+  }),
 }));
 
 vi.mock('../../features/synergies/hooks', () => ({
@@ -28,7 +34,7 @@ vi.mock('../../features/synergies/hooks', () => ({
     getPairSynergies: mockGetPairSynergies,
     isLoading: mockSynergiesLoading(),
     synergies: [],
-    error: null,
+    error: mockSynergiesError(),
   }),
 }));
 
@@ -81,10 +87,12 @@ function emptyPair(): DetailedPairSynergy {
 describe('ComparePage', () => {
   beforeEach(() => {
     mockOpenComparison.mockReset();
+    mockDismissCardModal.mockReset();
     mockGetCardById.mockReset();
     mockGetPairSynergies.mockReset();
     mockCardsLoading.mockReturnValue(false);
     mockSynergiesLoading.mockReturnValue(false);
+    mockSynergiesError.mockReturnValue(null);
     mockSelectedCardId.mockReturnValue(null);
   });
 
@@ -145,6 +153,69 @@ describe('ComparePage', () => {
     mockGetCardById.mockImplementation((id) => (id === 'a1' ? cardA : id === 'b1' ? cardB : undefined));
     mockGetPairSynergies.mockReturnValue(null);
     renderAt('/compare/a1/b1/shift-targets');
+    expect(screen.getByTestId('not-found')).toBeInTheDocument();
+    expect(mockOpenComparison).not.toHaveBeenCalled();
+  });
+
+  // A file that failed can't rule the pair out: the window opens, and its Try again brings the
+  // comparison in.
+  it('opens the window, not the 404 page, when the synergy file failed to load', () => {
+    mockGetCardById.mockImplementation((id) => (id === 'a1' ? cardA : id === 'b1' ? cardB : undefined));
+    mockSynergiesError.mockReturnValue(new Error('Synergy file for card a1 answered 503'));
+    mockGetPairSynergies.mockReturnValue(null);
+    renderAt('/compare/a1/b1/shift-targets');
+    expect(screen.queryByTestId('not-found')).toBeNull();
+    expect(mockOpenComparison).toHaveBeenCalledWith('a1', 'b1', 'shift-targets', {skipEnter: false});
+  });
+
+  describe('once a failed file loads', () => {
+    const FAILED = new Error('Synergy file for card a1 answered 503');
+
+    /** The window opened unchecked, then its Try again loading the file, with or without the pair. */
+    function retryLoads(pair: DetailedPairSynergy | null) {
+      mockGetCardById.mockImplementation((id) => (id === 'a1' ? cardA : id === 'b1' ? cardB : undefined));
+      mockSynergiesError.mockReturnValue(FAILED);
+      mockGetPairSynergies.mockReturnValue(null);
+      const {rerender} = renderAt('/compare/a1/b1/stale-group');
+      mockSelectedCardId.mockReturnValue('a1');
+
+      mockSynergiesError.mockReturnValue(null);
+      mockSynergiesLoading.mockReturnValue(true);
+      rerender(pageAt('/compare/a1/b1/stale-group'));
+      mockSynergiesLoading.mockReturnValue(false);
+      mockGetPairSynergies.mockReturnValue(pair);
+      rerender(pageAt('/compare/a1/b1/stale-group'));
+    }
+
+    // A stale link that met an error status: the 404 page it would have had, under no window.
+    it('closes the window onto the 404 page when the pair is gone, keeping the address', () => {
+      retryLoads(null);
+      expect(screen.getByTestId('not-found')).toBeInTheDocument();
+      expect(mockDismissCardModal).toHaveBeenCalledOnce();
+    });
+
+    it('leaves the window to take the comparison when the pair is there', () => {
+      retryLoads(pairWithConnections());
+      expect(screen.queryByTestId('not-found')).toBeNull();
+      expect(mockDismissCardModal).not.toHaveBeenCalled();
+      expect(mockOpenComparison).toHaveBeenCalledOnce();
+    });
+  });
+
+  it("never closes a window it didn't open", () => {
+    // A browser Back onto a stale link, over a window opened elsewhere.
+    mockSelectedCardId.mockReturnValue('c1');
+    mockGetCardById.mockImplementation((id) => (id === 'a1' ? cardA : id === 'b1' ? cardB : undefined));
+    mockGetPairSynergies.mockReturnValue(null);
+    renderAt('/compare/a1/b1/stale-group');
+    expect(screen.getByTestId('not-found')).toBeInTheDocument();
+    expect(mockDismissCardModal).not.toHaveBeenCalled();
+  });
+
+  it('still renders NotFoundPage for a missing card when the synergy file failed', () => {
+    mockGetCardById.mockImplementation((id) => (id === 'a1' ? cardA : undefined));
+    mockSynergiesError.mockReturnValue(new Error('Synergy file for card a1 answered 503'));
+    renderAt('/compare/a1/missing/shift-targets');
     expect(screen.getByTestId('not-found')).toBeInTheDocument();
     expect(mockOpenComparison).not.toHaveBeenCalled();
   });
