@@ -164,10 +164,10 @@ function openFromBrowse(
   openCardModal: ReturnType<typeof useCardModal>['openCardModal'],
   cardId: string,
   listing: GridListing,
-  collection: BrowseCollectionSlots | null,
+  collection: BrowseCollectionSlots,
 ) {
   const target =
-    collection?.modalTarget?.(cardId, listing) ??
+    collection.modalTarget?.(cardId, listing) ??
     gridModalTarget(cardId, listing.cards, listing.printingFor, listing.resolveCard);
   openCardModal(target.cardId, target.siblingIds, target.options);
 }
@@ -221,25 +221,6 @@ function BrowseShell({
       {prompts}
     </main>
   );
-}
-
-// =====================================================================
-// Page component — viewport-bounded shell + shared content section.
-// Mobile subtracts the bottom-nav height so AppLayout's padding-bottom
-// doesn't push us past the viewport (would re-introduce page scroll).
-// =====================================================================
-
-/**
- * Browse without collection mode: the route's page while `SHOW_COLLECTION` is off.
- * With the flag on, the router loads `BrowseCollectionPage` instead, which wires the
- * collection into the same `BrowseBody`. Two page modules rather than one choosing a
- * branch (#553 Phase C): any static path from this module into the collection feature
- * put its data layer on Browse for every visitor, flag off. A chunk of React components
- * runs its runtimes' CommonJS initialisers, so the bundler can never prove it free of
- * side effects, and keeps even an import whose every binding it dropped.
- */
-export function BrowsePage() {
-  return <BrowseBody collection={null} />;
 }
 
 /** Focus the search box when Browse opens with `?focus=search` (desktop only; mobile uses the bottom sheet). */
@@ -313,22 +294,21 @@ function dockedSetPanel(docked: boolean, setPanel: React.ReactNode | undefined) 
  * binder's sort names, and, where the set panel docks, its set picker beside Collection (owner,
  * 2026-10-20).
  */
-function collectionToolbar(docked: boolean, collection: BrowseCollectionSlots | null, listing: BrowseListing) {
+function collectionToolbar(docked: boolean, collection: BrowseCollectionSlots, listing: BrowseListing) {
   return {
-    modeSwitch: collection?.modeSwitch,
-    modeActions: collection?.modeActions,
-    setPicker: docked ? collection?.renderSetPicker(listing) : undefined,
-    sortOptions: collection?.sortOptions,
+    modeSwitch: collection.modeSwitch,
+    modeActions: collection.modeActions,
+    setPicker: docked ? collection.renderSetPicker(listing) : undefined,
+    sortOptions: collection.sortOptions,
   };
 }
 
 /** Collection mode's binder, and over it a friend's binder's banner; neither outside the mode. */
 function binderAndBanner(
-  collection: BrowseCollectionSlots | null,
+  collection: BrowseCollectionSlots,
   listing: BrowseListing,
   {onCardSelect, isMobile}: {onCardSelect: (card: LorcanaCard, source: BinderCardSource) => void; isMobile: boolean},
 ) {
-  if (collection === null) return {};
   return {
     binder: collection.renderBinder(listing, onCardSelect) ?? undefined,
     banner: collection.renderBanner(listing, isMobile),
@@ -340,11 +320,11 @@ function binderAndBanner(
  * counts the filters on, and one more while the binder shows only Owned or Missing.
  */
 function phoneRow(
-  collection: BrowseCollectionSlots | null,
+  collection: BrowseCollectionSlots,
   listing: BrowseListing,
   {isMobile, filtersOn, onOpen}: {isMobile: boolean; filtersOn: number; onOpen: () => void},
 ) {
-  if (!isMobile || collection === null) return undefined;
+  if (!isMobile) return undefined;
   return collection.renderPhoneRow(listing, {count: filtersOn + (collection.show === 'all' ? 0 : 1), onOpen});
 }
 
@@ -357,12 +337,12 @@ type FilterSheetProps = Omit<React.ComponentProps<typeof CardFilterDialog>, 'var
  * filter dialog, a sheet from the bottom on a phone.
  */
 function filterSheet(
-  collection: BrowseCollectionSlots | null,
+  collection: BrowseCollectionSlots,
   listing: BrowseListing,
   {isMobile, dialog, params}: {isMobile: boolean; dialog: FilterSheetProps; params: FilterParams},
 ) {
   const binderSheet = isMobile
-    ? collection?.renderPhoneSheet(listing, {...dialog, sortOrder: params.sortOrder, onApply: params.applyDraft})
+    ? collection.renderPhoneSheet(listing, {...dialog, sortOrder: params.sortOrder, onApply: params.applyDraft})
     : undefined;
   return (
     binderSheet ?? <CardFilterDialog {...dialog} onApply={params.replaceFilters} variant={isMobile ? 'drawer' : 'modal'} />
@@ -393,8 +373,8 @@ function useSearchCards(
  * wider the filter dialog, so crossing that line closes the open one, which would otherwise swap
  * for the other mid-edit.
  */
-function useSheetOpen(isMobile: boolean, collection: BrowseCollectionSlots | null) {
-  const binderSheet = isMobile && (collection?.active ?? false);
+function useSheetOpen(isMobile: boolean, collection: BrowseCollectionSlots) {
+  const binderSheet = isMobile && collection.active;
   const [open, setOpen] = useState(false);
   const [wasBinderSheet, setWasBinderSheet] = useState(binderSheet);
   if (binderSheet !== wasBinderSheet) {
@@ -404,8 +384,8 @@ function useSheetOpen(isMobile: boolean, collection: BrowseCollectionSlots | nul
   return [open, setOpen] as const;
 }
 
-/** Browse's content, with collection mode's slots when the page wires them in (`BrowseCollectionPage`). */
-export function BrowseBody({collection}: {collection: BrowseCollectionSlots | null}) {
+/** Browse's content, with collection mode's slots, which `BrowseCollectionPage` wires in. */
+export function BrowseBody({collection}: {collection: BrowseCollectionSlots}) {
   const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();
   const {cards, isLoading, uniqueKeywords, uniqueClassifications, sets, getCardById} = useCardDataContext();
@@ -413,7 +393,7 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
   const [showFilters, setShowFilters] = useSheetOpen(isMobile, collection);
   const docked = useSidePanelDocked();
   const panel = useSidePanelState();
-  const search = useSearchCards(params.searchQuery, collection?.active ?? false, getCardById);
+  const search = useSearchCards(params.searchQuery, collection.active, getCardById);
   useFocusSearchParam(isMobile);
 
   const {filters} = params;
@@ -447,7 +427,7 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
     uniqueRarities: rarities,
     sets,
     // Collection mode's set is chosen in its collection panel, so it keeps no set filter.
-    showSetFilter: !collection?.active,
+    showSetFilter: !collection.active,
     // The art presets pick rarities, so they work in both modes (owner, 2026-10-15).
     showArtPresets: true,
   };
@@ -471,7 +451,7 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
       activeFilterCount: params.activeFilterCount,
       onClearFilters: params.clearFilters,
     }),
-    setPanel: dockedSetPanel(docked, collection?.renderSetPanel(listing)),
+    setPanel: dockedSetPanel(docked, collection.renderSetPanel(listing)),
     cards: sortedCards,
     // While sets 1-8 load, a search only they match would otherwise read "No cards match".
     isLoading: isLoading || (search.isLoading && sortedCards.length === 0),
@@ -496,7 +476,7 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots | nu
         dialog: {...filterOptions, isOpen: showFilters, onClose: () => setShowFilters(false)},
         params,
       })}
-      prompts={collection?.prompts}
+      prompts={collection.prompts}
     />
   );
 }

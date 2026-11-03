@@ -44,7 +44,6 @@ import {
 import {CollectionModeSwitch} from './CollectionModeSwitch';
 import {CollectionActions} from './CollectionActions';
 import {WindowCopies} from './WindowCopies';
-import {SHOW_FRIENDS} from '../friends/flag';
 import {PhoneBinderRow} from './PhoneBinderRow';
 import {BinderSheet, type BinderSheetProps} from './BinderSheet';
 import type {CompareCounts} from './BinderShows';
@@ -88,7 +87,7 @@ const ImportCollectionDialog = lazyWithRetry(
   () => import('./ImportCollectionDialog'),
   'ImportCollectionDialog',
 );
-// Friends who have it, and the friends' reads behind it: loaded only with the friends flag on.
+// Friends who have it, and the friends' reads behind it: loaded only for a reader with a collection.
 const CollectionFriends = lazyWithRetry(() => import('./CollectionFriends'), 'CollectionFriends');
 const PocketFriends = lazyWithRetry(() => import('./CollectionFriends'), 'PocketFriends');
 const FoilPointer = lazyWithRetry(() => import('./CollectionFriends'), 'FoilPointer');
@@ -224,9 +223,8 @@ const comparesWith = (raw: string | null) => COMPARE_SHOWS.some((show) => show =
 export function useBinderParams(reader: BinderReader) {
   const [searchParams, write] = useSearchParamsWriter();
   const requested = searchParams.get(BINDER_PARAM);
-  // Whose binder: a friend's, by handle, only under the friends flag, without which
-  // the param changes nothing. Outside the binder it is a stray.
-  const friend = requested === null || !SHOW_FRIENDS ? null : searchParams.get(FRIEND_PARAM);
+  // Whose binder: a friend's, by handle. Outside the binder it is a stray.
+  const friend = requested === null ? null : searchParams.get(FRIEND_PARAM);
   const mode = binderMode(requested, reader, friend !== null);
   const hasStrays = mode.dropsStrays && strayParams(searchParams).length > 0;
   useEffect(() => {
@@ -340,8 +338,8 @@ export interface BrowseCollectionSlots {
   show: BinderShow;
   /**
    * The binder's Rarity options, whose printings are pockets of their own (`binderRarities`).
-   * Handed to the page rather than imported by it: `browseView` runs with the flag off too,
-   * and a static import from here put the collection's data layer on Browse for everyone.
+   * Handed to the page rather than imported by it, so `browseView` holds no static path into
+   * the collection's data layer.
    */
   rarityOptions: (pool: LorcanaCard[]) => string[];
   /**
@@ -554,8 +552,7 @@ function binderStatusOf(friend: FriendBinder | null, own: BinderStatus): BinderS
 /**
  * Collection mode's state and controls for Browse, in one place so the page only
  * slots them in. Requires the collection providers, which the `CollectionScope`
- * layout route mounts only while `SHOW_COLLECTION` is on, so call it only behind
- * that flag.
+ * layout route mounts.
  */
 export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionSlots {
   const [showSignIn, setShowSignIn] = useState(false);
@@ -686,9 +683,9 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // No panel and no picker beside a binder that isn't there: a friend's, or one whose start made no collection.
   const binderShows = collectionMode && !hidesPanel(friend) && ownProblem === null;
 
-  // Friends who have a card for the reader: with both flags on, for a reader with a collection.
-  // Their badges and the foil pointer show in the reader's own binder only.
-  const friendsHave = SHOW_FRIENDS && user !== null && hasCollection;
+  // Friends who have a card for the reader, for a reader with a collection. Their badges and the
+  // foil pointer show in the reader's own binder only.
+  const friendsHave = user !== null && hasCollection;
   const ownFriends = friendsHave && friend === null;
   const pocketBadge = ownFriends
     ? (card: LorcanaCard) => (

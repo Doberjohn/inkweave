@@ -1,6 +1,5 @@
 import type {CSSProperties} from 'react';
 import discordLogo from '../../assets/discord.svg?no-inline';
-import {SHOW_COLLECTION} from '../../features/collection/flag';
 import {trackEvent} from '../lib/analytics';
 import {
   CAP_LABEL_XS,
@@ -103,14 +102,12 @@ function trackInviteClick() {
  * complementary landmark belongs at the top level.
  */
 export function BetaNotice() {
-  // What the beta covers: the collection once it is on, the whole site before then.
-  const subject = SHOW_COLLECTION ? 'Collection' : 'Inkweave';
   return (
     <aside aria-label="Beta notice" className="beta-notice" style={CARD_STYLE}>
       <div className="beta-notice-copy">
         <div style={HEADING_STYLE}>
           <span style={PILL_STYLE}>Beta</span>
-          <p style={TITLE_STYLE}>{subject} is in beta</p>
+          <p style={TITLE_STYLE}>Collection is in beta</p>
         </div>
         <p style={LINE_STYLE}>Thanks for testing! Found a bug or have an idea? Tell us on Discord.</p>
       </div>

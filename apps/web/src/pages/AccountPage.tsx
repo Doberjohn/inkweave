@@ -12,8 +12,6 @@ import {
 } from '../shared/components';
 import {SignInDialog} from '../shared/components/SignInDialog';
 import {DisplayNameDialog, useProfile, type PublicIdentity} from '../features/profile';
-import {SHOW_COLLECTION} from '../features/collection/flag';
-import {SHOW_FRIENDS} from '../features/friends/flag';
 import {lazyWithRetry} from '../shared/lib/lazyWithRetry';
 import {useSession} from '../shared/contexts/SessionContext';
 import {useResponsive} from '../shared/hooks';
@@ -364,21 +362,17 @@ export function CollectionSection({
 }
 
 /**
- * The collection section and its import (#553 Phase C), only under `SHOW_COLLECTION`.
- * A component of its own because its hooks need the collection providers, which mount
- * only under that flag, and a hook cannot be skipped; a component can. And a MODULE of
- * its own, loaded lazily, so a flag-off build never requests the collection's data layer
- * for /account (`flag.ts`: off means NOT LOADED).
- */
-const AccountCollection = SHOW_COLLECTION ? lazyWithRetry(() => import('./AccountCollection'), 'AccountCollection') : null;
-
-/**
- * The Friends section (#852), only under `SHOW_FRIENDS`, in a module of its own for the
- * same reason: a flag-off build never requests the friends code for /account. Its UI stays
- * out of this file too, since this route's chunk keeps every export it has and counts in
+ * The collection section and its import (#553 Phase C), in a module of its own, loaded
+ * lazily, so the collection's data layer stays out of this route's chunk, which counts in
  * User-facing JS.
  */
-const AccountFriends = SHOW_FRIENDS ? lazyWithRetry(() => import('./AccountFriends'), 'AccountFriends') : null;
+const AccountCollection = lazyWithRetry(() => import('./AccountCollection'), 'AccountCollection');
+
+/**
+ * The Friends section (#852), in a module of its own for the same reason. Its UI stays out
+ * of this file too, since this route's chunk keeps every export it has.
+ */
+const AccountFriends = lazyWithRetry(() => import('./AccountFriends'), 'AccountFriends');
 
 export function AccountPage() {
   const navigate = useNavigate();
@@ -431,8 +425,8 @@ export function AccountPage() {
           // pushed it down when the collection landed between it and Identity.
           <Suspense fallback={<Checking />}>
             <IdentitySection identity={identity} onChange={() => setShowName(true)} />
-            {AccountFriends && <AccountFriends userId={user.id} />}
-            {AccountCollection && <AccountCollection />}
+            <AccountFriends userId={user.id} />
+            <AccountCollection />
             <SessionSection onSignOut={signOut} />
           </Suspense>
         )}

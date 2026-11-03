@@ -41,13 +41,8 @@ vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 vi.mock('../../shared/contexts/SessionContext', () => ({
   useSession: () => ({user: {id: 'reader'}, loading: false}),
 }));
-// Sharing with friends (#1045): its switch shows only with friends on, and reads the saved state.
-const sharing = vi.hoisted(() => ({friends: false, saved: false}));
-vi.mock('../../features/friends/flag', () => ({
-  get SHOW_FRIENDS() {
-    return sharing.friends;
-  },
-}));
+// Sharing with friends (#1045): its switch reads the saved state.
+const sharing = vi.hoisted(() => ({saved: false}));
 vi.mock('../../features/collection/sharingRepository', () => ({
   getSharing: vi.fn(() => Promise.resolve({data: sharing.saved, error: null})),
   setSharing: vi.fn(() => Promise.resolve({data: null, error: null})),
@@ -59,7 +54,6 @@ const renderAccount = () => render(<AccountCollection />, {wrapper: MemoryRouter
 afterEach(() => {
   vi.clearAllMocks();
   collection.has = true;
-  sharing.friends = false;
   sharing.saved = false;
 });
 
@@ -111,13 +105,7 @@ describe('AccountCollection', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('has no sharing switch while friends are off', () => {
-    renderAccount();
-    expect(screen.queryByRole('switch')).not.toBeInTheDocument();
-  });
-
   it('shows the sharing switch as saved, and says Clear turns it off while it is on (#1045)', async () => {
-    sharing.friends = true;
     sharing.saved = true;
     const user = userEvent.setup();
     renderAccount();
@@ -129,7 +117,6 @@ describe('AccountCollection', () => {
   });
 
   it("leaves Clear's line as it was while sharing is off", async () => {
-    sharing.friends = true;
     const user = userEvent.setup();
     renderAccount();
     await waitFor(() => expect(screen.getByRole('switch')).toBeEnabled());

@@ -3,32 +3,16 @@ import {fireEvent, render, screen} from '@testing-library/react';
 import {trackEvent} from '../../lib/analytics';
 import {BetaNotice, DISCORD_INVITE_URL} from '../BetaNotice';
 
-// The flag is a module constant, so the mock serves it through a getter each case sets.
-const flags = vi.hoisted(() => ({collection: true}));
-vi.mock('../../../features/collection/flag', () => ({
-  get SHOW_COLLECTION() {
-    return flags.collection;
-  },
-}));
-
 vi.mock('../../lib/analytics', () => ({trackEvent: vi.fn()}));
 
 afterEach(() => {
-  flags.collection = true;
   vi.mocked(trackEvent).mockClear();
 });
 
 describe('BetaNotice', () => {
-  it('says the collection is in beta while collection mode is on', () => {
+  it('says the collection is in beta', () => {
     render(<BetaNotice />);
     expect(screen.getByText('Collection is in beta')).toBeInTheDocument();
-  });
-
-  it('says Inkweave is in beta in a build without collection mode', () => {
-    flags.collection = false;
-    render(<BetaNotice />);
-    expect(screen.getByText('Inkweave is in beta')).toBeInTheDocument();
-    expect(screen.queryByText(/Collection/)).not.toBeInTheDocument();
   });
 
   it('thanks the people testing and asks for their bugs and ideas', () => {

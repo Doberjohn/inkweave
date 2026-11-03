@@ -7,7 +7,6 @@ import babel from '@rolldown/plugin-babel';
 import {VitePWA} from 'vite-plugin-pwa';
 import {visualizer} from 'rollup-plugin-visualizer';
 import {
-  collectionCodeGuard,
   cssUrlGuard,
   isSharedModule,
   isVendorModule,
@@ -554,7 +553,6 @@ export default defineConfig({
     inlineCssPlugin(),
     cssUrlGuard(),
     unloadableChunksPlugin(),
-    collectionCodeGuard(),
     startupGroupsGuard({vendor: STARTUP_VENDOR, shared: STARTUP_SHARED}),
     uiCompilerGuard(),
     !!process.env.SENTRY_AUTH_TOKEN &&

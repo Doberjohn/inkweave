@@ -5,8 +5,8 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
  * Browse's search over sets 1-8 (#911): the cards Core doesn't have, loaded the first time a
  * visitor searches, and kept for the visit, so leaving Browse and coming back costs nothing.
  *
- * The import is DYNAMIC on purpose: a static path from Browse into features/collection would
- * ship collection mode's data layer to every Browse visitor (BrowsePage.tsx says why). The
+ * The import is DYNAMIC, so Browse's own module holds no static path into features/collection,
+ * whose data layer loads with its own route (`CollectionScope`) and chunks. The
  * state is module state, read through useSyncExternalStore as cardOverviewModalLoader.ts's
  * is: a plain read of it could be memoized by the React Compiler as if it never changed.
  */

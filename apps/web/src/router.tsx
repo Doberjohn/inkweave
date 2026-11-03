@@ -10,7 +10,6 @@ import {lazyWithRetry} from './shared/lib/lazyWithRetry';
 import {forgetArtOnLeave} from 'inkweave-ui/lib/prerenderedArt';
 import {readyWhen} from './shared/lib/routeReadiness';
 import {withSpeedInsightsRoutes} from './shared/lib/speedInsightsRoute';
-import {SHOW_COLLECTION} from './features/collection/flag';
 import {startCardList} from './features/cards/cardListRequest';
 import {startFeaturedCards} from './features/cards/featured';
 import {fetchCardSynergies} from './features/synergies/hooks/usePrecomputedSynergies';
@@ -23,17 +22,9 @@ import {fetchPairsIndex} from './features/voting/pairsIndexRequest';
 
 // Lazy-load page components for code splitting (with retry on chunk load failure)
 const HomePage = lazyWithRetry(() => import('./pages/HomePage'), 'HomePage');
-// The flag picks Browse's page module (#553 Phase C), so a flag-off build never loads the
-// collection feature on /browse. See BrowsePage for why one module cannot choose.
-const BrowsePage = SHOW_COLLECTION
-  ? lazyWithRetry(() => import('./pages/BrowseCollectionPage'), 'BrowseCollectionPage')
-  : lazyWithRetry(() => import('./pages/BrowsePage'), 'BrowsePage');
+const BrowsePage = lazyWithRetry(() => import('./pages/BrowseCollectionPage'), 'BrowseCollectionPage');
 const AccountPage = lazyWithRetry(() => import('./pages/AccountPage'), 'AccountPage');
-// Behind the flag too, so a flag-off build names none of the collection's chunks and its service
-// worker precaches none of them (#928). The build fails if one can load (collectionCodeGuard).
-const CollectionScope = SHOW_COLLECTION
-  ? lazyWithRetry(() => import('./features/collection/CollectionScope'), 'CollectionScope')
-  : null;
+const CollectionScope = lazyWithRetry(() => import('./features/collection/CollectionScope'), 'CollectionScope');
 const AuthCallbackPage = lazyWithRetry(() => import('./pages/AuthCallbackPage'), 'AuthCallbackPage');
 const CardPage = lazyWithRetry(() => import('./pages/CardPage'), 'CardPage');
 const ComparePage = lazyWithRetry(() => import('./pages/ComparePage'), 'ComparePage');
@@ -115,12 +106,10 @@ const cardSynergies = ({cardId}: Params) =>
 const firstVotePair = () => votePageChunk().then((chunk) => chunk.startFirstPair());
 
 /**
- * `/browse` and `/account` under the collection layout route while `SHOW_COLLECTION`
- * is on, and as plain siblings otherwise, so a dark feature adds nothing to either.
- * See `CollectionScope` for why the providers mount here and not in `AppLayout`.
+ * `/browse` and `/account` under the collection layout route. See `CollectionScope` for why
+ * the providers mount here and not in `AppLayout`.
  */
 function withCollectionScope(children: RouteObject[]): RouteObject[] {
-  if (!CollectionScope) return children;
   return [
     {
       element: (

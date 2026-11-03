@@ -65,7 +65,7 @@
         "!apps/web/dist/assets/supabaseClient-*.js",
         "!apps/web/dist/assets/posthogClient-*.js"
       ],
-      "limit": "428 kB",
+      "limit": "421 kB",
       "gzip": true
     },
     {
@@ -87,7 +87,7 @@
       "gzip": true
     },
     {
-      "name": "Flag-gated JS",
+      "name": "Collection and reveals JS",
       "path": [
         "apps/web/dist/assets/RevealsPage-*.js",
         "apps/web/dist/assets/CollectionBinderSection-*.js",
@@ -102,7 +102,7 @@
         "apps/web/dist/assets/collectionStats-*.js",
         "apps/web/dist/assets/friendBinderPath-*.js"
       ],
-      "limit": "96 kB",
+      "limit": "101 kB",
       "gzip": true
     },
     {

@@ -7,8 +7,7 @@ import {binder, COLLECTOR_ID, signInAsCollector, type Entries} from '../helpers/
 import {serveFriends, type FriendsWorld, type FriendshipRow, type Player} from '../helpers/friends';
 
 /**
- * Friends who have it (#1055), behind `VITE_SHOW_COLLECTION` and `VITE_SHOW_FRIENDS`, which
- * `playwright.config.ts` pins on: the card window's count of the sharing friends who hold the
+ * Friends who have it (#1055): the card window's count of the sharing friends who hold the
  * card in a finish the reader lacks, the badges on the reader's own binder's pockets, the dialog
  * (a sheet on a phone) both open, a row of it opening that friend's binder at the card, and the
  * empty Missing view's pointer to the foils friends have.

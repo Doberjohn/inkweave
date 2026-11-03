@@ -7,14 +7,12 @@ import {placementsFor} from './placeCopies';
 
 /**
  * The collection providers, as a LAYOUT ROUTE around the two pages that use them
- * (`/browse` and `/account`), added by `router.tsx` only while `SHOW_COLLECTION`
- * is on (#553 Phase C).
+ * (`/browse` and `/account`), added by `router.tsx` (#553 Phase C).
  *
  * A route, NOT a wrapper in `AppLayout`. Mounted there, the whole collection data
- * layer (seven modules, about 4 kB gzip) was imported statically into the entry
- * chunk, because the flag is a constant the bundler does not fold across modules,
- * so it shipped even with the flag off. As a lazy route it loads only on the pages
- * that read a collection, and never on the home page or a card page.
+ * layer (seven modules, about 4 kB gzip) would be imported statically into the entry
+ * chunk. As a lazy route it loads only on the pages that read a collection, and never
+ * on the home page or a card page.
  *
  * Moving between `/browse` and a card page DOES remount it, which re-reads storage and
  * re-syncs with the server once; that is the price of keeping it out of every other page.

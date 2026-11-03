@@ -6,9 +6,8 @@ import {binder, COLLECTOR_ID, signInAsCollector, type Entries} from '../helpers/
 import {serveFriends, type FriendsWorld, type FriendshipRow, type Player} from '../helpers/friends';
 
 /**
- * Letting friends see your collection (#1045), behind `VITE_SHOW_COLLECTION` and
- * `VITE_SHOW_FRIENDS`, which `playwright.config.ts` pins on: the switch on /account, the
- * Friends list's View binder, and a friend's binder, read only, with You need and They need.
+ * Letting friends see your collection (#1045): the switch on /account, the Friends list's
+ * View binder, and a friend's binder, read only, with You need and They need.
  *
  * The reader is the collector (`helpers/collector.ts`), and every friends and sharing call
  * answers from a world the test keeps (`helpers/friends.ts`), which changes as the database
