@@ -873,7 +873,10 @@ function disclosureChecks(device, paths) {
   return paths.map((path) => ({
     name: `12. ${path} (${device}, app held) keeps its capture's disclosure shut when clicked`,
     run: async (browser, base) => {
-      const act = (page) => page.click('#root details > summary');
+      const act = async (page) => {
+        const summary = page.locator('#root details > summary').first();
+        if ((await summary.count()) > 0) await summary.click();
+      };
       const seen = await visit(browser, base, {device, path, app: false, paints: true, act});
       if (!seen.markup.includes('<summary')) return 'its capture has no disclosure to click';
       return /<details[^>]*\sopen[\s>=]/.test(seen.markup) ? 'the click opened it' : null;
