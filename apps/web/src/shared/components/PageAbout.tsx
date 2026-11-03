@@ -10,7 +10,7 @@ const HEADING: CSSProperties = {
   fontSize: FONT_SIZES.xl,
   fontWeight: FONT_WEIGHT.bold,
   color: COLORS.text,
-  margin: `0 0 ${SPACING.md}px`,
+  margin: 0,
 };
 
 const BODY: CSSProperties = {
@@ -45,7 +45,8 @@ export interface PageAboutProps {
 
 /**
  * A few paragraphs about a hub page, under its grid or vote screen, so the page has words of its
- * own for search without moving anything on its first screen.
+ * own for search without moving anything on its first screen. They sit closed under their
+ * heading (index.css's `.text-disclosure`) until a visitor opens them.
  */
 export function PageAbout({heading, children, padding}: PageAboutProps) {
   const headingId = useId();
@@ -58,10 +59,14 @@ export function PageAbout({heading, children, padding}: PageAboutProps) {
           borderTop: `1px solid ${COLORS.surfaceBorder}`,
           paddingTop: SPACING.xxl,
         }}>
-        <h2 id={headingId} style={HEADING}>
-          {heading}
-        </h2>
-        {children}
+        <details className="text-disclosure">
+          <summary>
+            <h2 id={headingId} style={HEADING}>
+              {heading}
+            </h2>
+          </summary>
+          <div style={{paddingTop: SPACING.md}}>{children}</div>
+        </details>
       </div>
     </section>
   );

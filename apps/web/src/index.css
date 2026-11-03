@@ -359,6 +359,35 @@ option {
   animation: toast-exit 300ms ease-in forwards;
 }
 
+/* A closed <details> whose summary is one line (PageAbout, CardFacts): the text stays in the page,
+   and in its prerendered capture, for search engines, while a visitor sees one line they can
+   open; hiding it outright would be hidden text. Styled here, not inline, so it costs no JS and a
+   capture opens and turns its chevron before the app loads. Safari draws its marker from the
+   -webkit- pseudo-element. */
+.text-disclosure > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  list-style: none;
+  cursor: pointer;
+}
+.text-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.text-disclosure > summary::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  opacity: 0.7;
+  transform: translateY(-2px) rotate(45deg);
+}
+.text-disclosure[open] > summary::after {
+  transform: translateY(2px) rotate(225deg);
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* Stop the SW update spinner from rotating; the toast is still visible and
      the label conveys the state via text alone. */
