@@ -5,8 +5,10 @@ name: Script tests (Windows)
 # they never ran on their own (tech debt sweep, 2026-10-13). The owner works on Windows, so the
 # whole script suite runs here; Linux runs it in CI's build-and-test job on every PR.
 on:
+  # binders collects the binder PRs (#1074 to #1076) until one merge ships them to master, so
+  # PRs into it get the same checks. Drop it once that merge lands.
   pull_request:
-    branches: [master, main]
+    branches: [master, main, binders]
     paths:
       - 'scripts/**'
       - '.claude/hooks/**'

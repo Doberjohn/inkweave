@@ -3,8 +3,10 @@ name: CI
 on:
   push:
     branches: [master, main]
+  # binders collects the binder PRs (#1074 to #1076) until one merge ships them to master, so
+  # PRs into it get the same checks. Drop it once that merge lands.
   pull_request:
-    branches: [master, main]
+    branches: [master, main, binders]
 
 # A newer push to a PR cancels that PR's older run, whose results nobody needs once it is
 # superseded (#867). Each push to master gets a group of its own, so a merge's run is never
