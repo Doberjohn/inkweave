@@ -33,21 +33,14 @@ const LAYERS = {
 
 /** Every sheet slides at one speed: the 2026-07-29 ruling puts a slide on touch at `DURATION.slow`. */
 const MOTION = `${DURATION.slow}ms ${EASING.smooth}`;
-const SLIDE = `transform ${MOTION}, opacity ${MOTION}, top ${MOTION}`;
 
 /**
- * `visibility` turns on at once as a sheet opens, since useDialogFocus's focus is refused while
- * the sheet is still hidden and Chrome keeps an interpolated `visibility` hidden for half its run.
- * It turns off only once the slide is over, so the sheet is seen leaving. `top` moves with the
- * sheet, for the search sheet, which raises it while it lists results.
+ * `visibility` moves with the rest: an interpolated `visibility` is visible whenever either end is,
+ * so a sheet shows from its first frame open and stays seen until it has slid away. `top` moves
+ * too, for the search sheet, which raises it while it lists results.
  */
-const MOTIONS = {
-  shown: {scrim: `opacity ${MOTION}, visibility 0s`, sheet: `${SLIDE}, visibility 0s`},
-  leaving: {
-    scrim: `opacity ${MOTION}, visibility 0s linear ${DURATION.slow}ms`,
-    sheet: `${SLIDE}, visibility 0s linear ${DURATION.slow}ms`,
-  },
-};
+const SCRIM_MOTION = `opacity ${MOTION}, visibility ${MOTION}`;
+const SHEET_MOTION = `transform ${MOTION}, opacity ${MOTION}, top ${MOTION}, visibility ${MOTION}`;
 
 /**
  * Shared bottom-sheet chrome (#510): the scrim backdrop, slide-up sheet
@@ -71,7 +64,6 @@ export function BottomSheet({
   children,
 }: BottomSheetProps) {
   const tiers = LAYERS[layer];
-  const motion = MOTIONS[visible ? 'shown' : 'leaving'];
   // The sheet's own transitions all end with its slide, so any of them ends the exit; the scrim's
   // fade and a child's hover transition (whose transitionend bubbles here) don't.
   const onSlideEnd = (event: React.TransitionEvent<HTMLDivElement>) => {
@@ -90,7 +82,7 @@ export function BottomSheet({
           // Solid scrim only — no backdrop-filter (WebKit continuous-repaint trap; see #444).
           background: COLORS.scrim,
           zIndex: tiers.scrim,
-          transition: motion.scrim,
+          transition: SCRIM_MOTION,
         }}
       />
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Tab trap via useDialogFocus) */}
@@ -120,7 +112,7 @@ export function BottomSheet({
           // order; it only takes focus programmatically so the trap has somewhere to land,
           // and a ring round the whole sheet would mark nothing. Its controls draw their own.
           outline: 'none',
-          transition: motion.sheet,
+          transition: SHEET_MOTION,
           ...sheetStyle,
         }}>
         <div

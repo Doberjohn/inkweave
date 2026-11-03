@@ -59,15 +59,9 @@ describe('BottomSheet', () => {
     expect(scrim.style.transition).toContain(`opacity ${DURATION.slow}ms`);
   });
 
-  it('shows at once as it opens', () => {
-    const {sheet, scrim} = renderSheet();
-    expect(sheet.style.transition).toMatch(/visibility 0s$/);
-    expect(scrim.style.transition).toMatch(/visibility 0s$/);
-  });
-
-  it('hides only once it has slid away', () => {
+  it('stays seen until it has slid away: visibility moves with the slide', () => {
     const {sheet, scrim} = renderSheet({visible: false});
-    expect(sheet.style.transition).toMatch(new RegExp(`visibility 0s linear ${DURATION.slow}ms$`));
-    expect(scrim.style.transition).toMatch(new RegExp(`visibility 0s linear ${DURATION.slow}ms$`));
+    expect(sheet.style.transition).toContain(`visibility ${DURATION.slow}ms`);
+    expect(scrim.style.transition).toContain(`visibility ${DURATION.slow}ms`);
   });
 });
