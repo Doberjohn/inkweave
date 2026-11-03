@@ -16,7 +16,7 @@ export const SECTION_HEADINGS: Record<ReleaseNotesSectionKey, string> = {
   engine: 'Synergy engine',
 };
 
-export interface ReleaseNoteLink {
+interface ReleaseNoteLink {
   label: string;
   /** An in-app path starting with a single "/". Never a reveal-season path, which goes away. */
   to: string;

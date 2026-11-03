@@ -115,6 +115,8 @@ function rememberFailure(entry: CardLoadEntry, error: unknown): void {
  * failure (offline, an error status, a body that won't parse) throws, and only the views showing
  * the card keep it, so the next look fetches again: a passing 5xx never leaves a card reading as
  * none for the visit.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export function fetchCardSynergies(cardId: string): Promise<PrecomputedCardData> {
   return requestSynergies(cardLoadEntry(cardId));

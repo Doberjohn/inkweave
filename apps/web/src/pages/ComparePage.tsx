@@ -88,8 +88,6 @@ export function ComparePage() {
   return renderComparePage(verdict, {cardA, cardB, pathname}, frame);
 }
 
-export default ComparePage;
-
 /**
  * Closes a window this page opened unchecked (`openedRef` holds what it opened) once its pair
  * turns out missing as the file loads: the link was stale, so the window closes onto the 404 page,

@@ -329,15 +329,15 @@ export function remapMigrationName(setCode, date) {
 }
 
 /**
- * The migration that moves votes, cloud collection keys and deck cards from the graduating
- * set's preview ids to its canonical ids (#748), through `internal.remap_card_ids`.
+ * The migration that moves votes, cloud collection keys, deck cards and binder covers from the
+ * graduating set's preview ids to its canonical ids (#748), through `internal.remap_card_ids`.
  */
 export function remapMigrationSql(setCode, previewToCanonical) {
   const map = JSON.stringify(Object.fromEntries(previewToCanonical), null, 2);
-  return `-- Set ${setCode} graduation (#748): move the votes, cloud collection keys and deck cards still
--- on set ${setCode}'s preview ids to the released cards' ids. Written by \`pnpm graduate-set ${setCode}\`,
+  return `-- Set ${setCode} graduation (#748): move the votes, cloud collection keys, deck cards and binder
+-- covers still on set ${setCode}'s preview ids to the released cards' ids. Written by \`pnpm graduate-set ${setCode}\`,
 -- which pairs each preview card with its canonical card by collector number. The function is
--- in 20261013000000_card_id_remap.sql.
+-- in 20261013000000_card_id_remap.sql, and 20261103093102_card_id_remap_covers.sql adds the covers.
 --
 -- Apply it once the graduated cards are live in production, so no vote lands on a preview id
 -- after it runs. Running it again is safe: it moves only what is still on a preview id.

@@ -16,7 +16,7 @@ export interface PageGrid {
 /** A spread's pages, 4 by 3, on tablets and desktop. */
 export const SPREAD_PAGE: PageGrid = {columns: 4, rows: 3};
 export const PER_PAGE = SPREAD_PAGE.columns * SPREAD_PAGE.rows;
-export const PER_SPREAD = PER_PAGE * 2;
+const PER_SPREAD = PER_PAGE * 2;
 
 /**
  * How many rows a phone's lone page has: 3, or 4 where the screen is tall enough that they keep

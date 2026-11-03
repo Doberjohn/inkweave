@@ -114,7 +114,7 @@ export function roleTable(groups, {names = 0, inks, labels = {}, hideEmpty = fal
 }
 
 /** The cards that hold more than one of the roles. */
-export function multiRole(groups) {
+function multiRole(groups) {
   const counts = new Map();
   for (const card of [...groups.values()].flat()) counts.set(card, (counts.get(card) ?? 0) + 1);
   return holders(groups).filter((card) => counts.get(card) > 1);
