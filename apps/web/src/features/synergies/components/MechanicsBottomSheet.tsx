@@ -79,12 +79,6 @@ export function MechanicsBottomSheet({
   if (!mounted) return null;
 
   const hasActive = activeRoles.size > 0;
-  // Try again swaps its line for the placeholder, which unmounts the button that had focus: the
-  // sheet takes focus, as when it opened, so it stays inside the sheet.
-  const retry = () => {
-    sheetRef.current?.focus();
-    onRetry();
-  };
 
   return (
     <BottomSheet
@@ -106,7 +100,9 @@ export function MechanicsBottomSheet({
         }}>
         <RoleTiles
           status={status}
-          onRetry={retry}
+          onRetry={onRetry}
+          // The sheet takes focus through a Try again, as when it opened, so it stays inside.
+          focusOnRetry={sheetRef}
           tiles={tiles}
           activeRoles={activeRoles}
           onToggle={onToggle}

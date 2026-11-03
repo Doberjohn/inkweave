@@ -86,6 +86,12 @@ interface CardModalContextValue {
    */
   openComparison: (cardId: string, partnerId: string, groupKey?: string, options?: OpenComparisonOptions) => void;
   closeCardModal: () => void;
+  /**
+   * Closes the window and leaves the address as it is: for a page that opened it and now shows
+   * something else in its place (ComparePage's 404 page). `closeCardModal` leaves a compare link
+   * for the home page.
+   */
+  dismissCardModal: () => void;
   /** Move to the previous (-1) or next (1) sibling in `siblingCardIds`, wrapping at the ends. */
   goToSibling: (direction: 1 | -1) => void;
 }
@@ -200,7 +206,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     // stays false.
   };
 
-  const closeCardModal = () => {
+  const dismissCardModal = () => {
     setSelectedCardId(null);
     windowStores.open.set(false);
     setComparisonPartnerId(null);
@@ -213,6 +219,10 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     // The provider outlives collection mode; a kept resolver would hold its pool.
     setResolveCard(null);
     setSkipEnter(false);
+  };
+
+  const closeCardModal = () => {
+    dismissCardModal();
     if (location.pathname.startsWith('/compare/')) {
       navigate('/');
     }
@@ -247,6 +257,7 @@ export function CardModalProvider({children}: {children: ReactNode}) {
     openCardModal,
     openComparison,
     closeCardModal,
+    dismissCardModal,
     goToSibling,
   };
 
@@ -388,10 +399,10 @@ function CardModalRoot({
   // earlier would adopt a null pair that the modal would never re-adopt once the real data
   // arrives (the modal's render-time guard keys on cardB.id).
   // No synthesized fallback for empty pairs: ComparePage 404s on invalid groupKeys (group
-  // produces zero connections), so a `/compare/*` URL it checked has at least one connection
-  // by the time we get here. One it couldn't check, because card A's file failed, may have
-  // none once the file arrives: `getPairSynergies` then returns null, and the modal stays in
-  // default state for cardA, which beats an empty comparison view.
+  // produces zero connections), so a `/compare/*` URL has at least one connection by the time
+  // we get here. One it opened unchecked, because card A's file failed, is checked again when
+  // the file arrives, in the same render as this: a pair that turns out missing closes the
+  // window onto the 404 page before the modal draws it without a comparison.
   const partnerReady = partnerCard && !synergiesLoading;
   const initialComparison: DetailedPairSynergy | null = partnerReady
     ? (getPairSynergies(partnerCard, comparisonGroupKey ?? undefined) ?? null)

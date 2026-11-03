@@ -1,6 +1,6 @@
 import type {CSSProperties, RefObject} from 'react';
-import {CtaButton} from '../../../shared/components';
 import {COLORS, FONT_SIZES, FONT_WEIGHT, LINE_HEIGHT, SPACING} from '../../../shared/constants';
+import {LoadFailedNotice} from './LoadFailedNotice';
 
 /** A notice in place of a card's synergies, centered in the column it takes. */
 const NOTICE_STYLE: CSSProperties = {
@@ -66,32 +66,22 @@ export function SynergiesEmptyState() {
 
 interface SynergiesFailedNoticeProps {
   onRetry: () => void;
-  /**
-   * Takes focus before the retry, which swaps this notice for the loading tiles and so unmounts
-   * the button that had it: the column around the notice, so focus stays where the reader is.
-   */
+  /** The column around the notice, which holds focus through the retry (`LoadFailedNotice`). */
   focusOnRetry: RefObject<HTMLElement | null>;
 }
 
 /**
- * In place of a card's synergies when its synergy file failed to load (an error status, or no
- * connection): what happened, and a Try again that fetches it again. Never "no synergies", which
- * only a card with no file has. An alert, as a playstyle's mechanics' failure is: it takes the
- * place of synergies the reader was waiting for.
+ * In place of a card's synergies when its synergy file failed to load: never "no synergies",
+ * which only a card with no file has.
  */
 export function SynergiesFailedNotice({onRetry, focusOnRetry}: SynergiesFailedNoticeProps) {
-  const retry = () => {
-    focusOnRetry.current?.focus({preventScroll: true});
-    onRetry();
-  };
   return (
-    <div data-testid="synergies-failed" style={{...NOTICE_STYLE, gap: SPACING.md}}>
-      <p role="alert" style={TITLE_STYLE}>
-        Couldn&apos;t load this card&apos;s synergies.
-      </p>
-      <CtaButton variant="ghost" onClick={retry}>
-        Try again
-      </CtaButton>
-    </div>
+    <LoadFailedNotice
+      what="this card's synergies"
+      layout="stacked"
+      testId="synergies-failed"
+      onRetry={onRetry}
+      focusOnRetry={focusOnRetry}
+    />
   );
 }
