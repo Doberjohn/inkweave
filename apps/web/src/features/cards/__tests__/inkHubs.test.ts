@@ -1,7 +1,15 @@
 import {describe, it, expect} from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import {INK_HUBS, getInkHub, cardsForInk} from '../inkHubs';
+import {
+  isCoreSet,
+  synergyEngine,
+  transformCards,
+  type Ink,
+  type LorcanaJSONCard,
+} from 'inkweave-synergy-engine';
+import {INK_HUBS, INK_HUB_PLAYSTYLES, getInkHub, cardsForInk} from '../inkHubs';
+import {getAllPlaystyles} from '../../synergies/engineCatalog';
 import {loadCardsFromJSON} from '../loader';
 
 /**
@@ -55,5 +63,42 @@ describe('ink hubs', () => {
     expect(INK_HUBS).toHaveLength(6);
     expect(new Set(INK_HUBS.map((h) => h.slug)).size).toBe(6);
     for (const hub of INK_HUBS) expect(hub.slug).toBe(hub.ink.toLowerCase());
+  });
+});
+
+describe('INK_HUB_PLAYSTYLES', () => {
+  // The cards precompute hands the engine, so each playstyle's cards here are its _playstyles.json
+  // list. allCards.json wins an id both files hold, as in the app's card list.
+  const [primary, preview] = ['allCards.json', 'previewCards.json'].map(
+    (file) =>
+      (
+        JSON.parse(
+          fs.readFileSync(path.resolve(__dirname, '../../../../public/data', file), 'utf8'),
+        ) as {cards: LorcanaJSONCard[]}
+      ).cards,
+  );
+  const primaryIds = new Set(primary.map((c) => c.id));
+  const pool = transformCards(
+    [...primary, ...preview.filter((c) => !primaryIds.has(c.id))].filter((c) =>
+      isCoreSet(c.setCode),
+    ),
+  );
+  const shares = getAllPlaystyles()
+    .map(({id}) => ({id, members: synergyEngine.getPlaystyleCards(id, pool)}))
+    .filter(({members}) => members.length > 0);
+
+  /** The ink's playstyles, largest share of their cards in it first. */
+  const ranked = (ink: Ink) =>
+    shares
+      .map(({id, members}) => ({id, share: cardsForInk(members, ink).length / members.length}))
+      .sort((a, b) => b.share - a.share || a.id.localeCompare(b.id))
+      .map(({id}) => id);
+
+  it('names, for each ink, three playstyles from the five with the largest share of their cards in it', () => {
+    for (const {ink} of INK_HUBS) {
+      const topFive = ranked(ink).slice(0, 5);
+      const outside = INK_HUB_PLAYSTYLES[ink].filter((id) => !topFive.includes(id));
+      expect({ink, outside}).toEqual({ink, outside: []});
+    }
   });
 });

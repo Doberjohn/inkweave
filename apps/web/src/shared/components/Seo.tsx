@@ -24,6 +24,12 @@
  */
 const SITE_ORIGIN = 'https://inkweave.ink';
 
+/** One step of a page's breadcrumb trail: its name and its path on the site. */
+export interface Breadcrumb {
+  name: string;
+  path: string;
+}
+
 export interface SeoProps {
   /** Full <title> text, e.g. "Elsa - Snow Queen | Lorcana Synergies | Inkweave". */
   title: string;
@@ -35,9 +41,36 @@ export interface SeoProps {
   image?: string;
   /** When true, emits <meta name="robots" content="noindex"> (e.g. unknown card ids). */
   noindex?: boolean;
+  /** The page's place in the site, home first and the page last, as BreadcrumbList structured data. */
+  breadcrumbs?: readonly Breadcrumb[];
 }
 
-export function Seo({title, description, canonicalPath, image, noindex = false}: SeoProps) {
+/**
+ * The trail as schema.org JSON-LD, with `<` escaped so no name can close the script early.
+ * Rendered in place rather than hoisted (React 19 hoists only async scripts with a src), so the
+ * prerender crawl captures it in the page's body, where search engines read it as well as in
+ * the head.
+ */
+function BreadcrumbJsonLd({breadcrumbs}: {breadcrumbs: readonly Breadcrumb[]}) {
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumbs.map(({name, path}, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name,
+      item: `${SITE_ORIGIN}${path}`,
+    })),
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{__html: JSON.stringify(data).replace(/</g, '\\u003c')}}
+    />
+  );
+}
+
+export function Seo({title, description, canonicalPath, image, noindex = false, breadcrumbs}: SeoProps) {
   const url = `${SITE_ORIGIN}${canonicalPath}`;
   return (
     <>
@@ -52,6 +85,7 @@ export function Seo({title, description, canonicalPath, image, noindex = false}:
       <meta data-seo="" name="twitter:title" content={title} />
       {description ? <meta data-seo="" name="twitter:description" content={description} /> : null}
       {image ? <meta data-seo="" name="twitter:image" content={image} /> : null}
+      {breadcrumbs?.length ? <BreadcrumbJsonLd breadcrumbs={breadcrumbs} /> : null}
     </>
   );
 }

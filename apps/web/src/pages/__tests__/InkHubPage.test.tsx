@@ -31,11 +31,18 @@ vi.mock('../../shared/contexts/CardModalContext', () => ({
   useCardModal: () => ({openCardModal: mockOpenCardModal}),
 }));
 
-vi.mock('../../shared/components', () => ({
-  CompactHeader: () => <header />,
-  EtherealBackground: () => null,
-  Seo: () => null,
-}));
+vi.mock('../../shared/components', async () => {
+  const {PageAbout, PageAboutLink} = await vi.importActual<
+    typeof import('../../shared/components/PageAbout')
+  >('../../shared/components/PageAbout');
+  return {
+    CompactHeader: () => <header />,
+    EtherealBackground: () => null,
+    PageAbout,
+    PageAboutLink,
+    Seo: () => null,
+  };
+});
 
 // The real grid renders card tiles; one button per card is enough to choose one.
 vi.mock('../../features/cards', async () => {
@@ -91,5 +98,17 @@ describe('InkHubPage', () => {
 
     expect(trackCardSelected).toHaveBeenCalledWith(MICKEY, 'ink_hub');
     expect(mockOpenCardModal).toHaveBeenCalledWith('13002', ['13001', '13002']);
+  });
+
+  it("links the ink's three playstyles in its About section", () => {
+    renderPage();
+    const links = screen
+      .getByRole('region', {name: 'About Amethyst cards'})
+      .querySelectorAll('a');
+    expect([...links].map((a) => [a.textContent, a.getAttribute('href')])).toEqual([
+      ['Seven Dwarfs', '/playstyles/dwarfs'],
+      ['Exert', '/playstyles/exert'],
+      ['Gargoyles', '/playstyles/gargoyle'],
+    ]);
   });
 });

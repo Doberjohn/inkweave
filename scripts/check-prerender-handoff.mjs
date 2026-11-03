@@ -15,7 +15,7 @@
  *      capture of its own does paint the home page's, so the pause still lets the browser paint
  *      a captured page and the checks below can see one that shows.
  *   1. A route without a capture of its own (a compare link, an in-depth vote link, /account,
- *      /auth/callback, a card page by its id alone, an unknown page) is served the home page's
+ *      /auth/callback, a card page by its id alone) is served the home page's
  *      capture and never paints it: with the app's code held nothing paints at all, and with
  *      it no frame shows a captured node before the app's own page. The same holds for
  *      /browse%2F, served Browse's capture here while React Router shows the not-found page.
@@ -54,6 +54,8 @@
  *  10. During the hold, a click or a key press shows the app's page at once, a click on one of
  *      the capture's links loads that link's page, and a scroll keeps the hold, and the app's page
  *      keeps the visitor's place.
+ *  11. A path that matches no route is answered 404 with dist/404.html, the shell with no capture,
+ *      and the app's not-found page (its title) shows.
  *  Checks 8 to 10 are left out when HOLD_CAP_MS is 0, which turns the hold off.
  *
  * Usage: `pnpm build:web`, `PRERENDER_SAMPLE=1 node scripts/prerender.mjs`, then
@@ -385,11 +387,12 @@ async function visit(browser, base, options) {
     const arrived = arrival(page, hold);
     const response = await page.goto(`${base}${path}`, {waitUntil: 'load'});
     const served = await response.text();
+    const status = response.status();
     await act?.(page);
     await arrived;
     await settle(page, {app, waitFor, paints});
     const seen = await page.evaluate(readPage, hold ? {...hold, match: heldPattern(hold)} : {});
-    return {served, servedRoute: readPrerenderRoute(served), ...requests, ...seen};
+    return {served, status, servedRoute: readPrerenderRoute(served), ...requests, ...seen};
   } finally {
     await context.close();
   }
@@ -734,7 +737,6 @@ export function routesOf(dist) {
       '/account',
       '/auth/callback',
       `/card/${cardId}`,
-      '/no-such-page',
       '/browse%2F',
     ],
     // '/browse/' and '/%62rowse' are /browse too: the inline script drops the slash and decodes.
@@ -843,6 +845,24 @@ function withoutCaptureChecks(device, routes) {
       appTakesOver(await visit(browser, base, {device, path, app: true})),
   }));
   return [...held, ...running];
+}
+
+/** NotFoundPage's title, which only the router's catch-all route renders. */
+const NOT_FOUND_HEADING = 'Lost in the Inkwell';
+
+/** Check 11 on `device`: an unknown path gets the 404 page, a shell with no capture to show. */
+function notFoundCheck(device, path) {
+  return {
+    name: `11. ${path} (${device}) answers 404 with the bare shell, and the app's not-found page shows`,
+    run: async (browser, base) => {
+      const waitFor = `h2:has-text("${NOT_FOUND_HEADING}")`;
+      const seen = await visit(browser, base, {device, path, app: true, waitFor});
+      if (seen.status !== 404) return `answered ${seen.status}, not 404`;
+      if (seen.servedRoute !== undefined) return `served a capture marked "${seen.servedRoute}"`;
+      if (!seen.markup.includes(NOT_FOUND_HEADING)) return "the app's not-found page never showed";
+      return appTakesOver(seen);
+    },
+  };
 }
 
 /** Check 2 on `device`: each route with its own capture, the app's code held. */
@@ -1003,6 +1023,7 @@ function planChecks(dist, cap) {
     ...withoutCaptureChecks(device, withoutCapture),
     ...withCaptureChecks(device, withCapture),
     browseCaptureCheck(device),
+    notFoundCheck(device, '/no-such-page'),
     ...fallbackChecks(device, ['/browse', withoutCapture[0]]),
     ...screenChecks(device, eachCapture),
     ...(cap > 0 ? holdChecks(device, routes, cap) : []),
