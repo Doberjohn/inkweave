@@ -30,6 +30,11 @@ interface RawPromo {
   id: number;
   number?: number;
   promoGrouping: string;
+  fullName: string;
+  /** Set on one of a promo's finish twins alone: the finish it is. */
+  finish?: string;
+  /** The art's letter, on promos that share a code and a number (`24A/P2`). */
+  artVariant?: string;
   /** Absent while no dataset holds the promo's card: its pocket waits for it. */
   baseId?: number;
 }
@@ -150,6 +155,20 @@ interface RawChunkCard extends RawCard {
   baseId?: number;
 }
 
+/**
+ * A set's collection chunk (`public/data/collection/{set}.json`, #553): every card of a set
+ * before Core, and only the printings of a Core set, whose cards `allCards.json` holds.
+ */
+export function collectionChunk(setCode: string): RawChunkCard[] {
+  const file = path.resolve(process.cwd(), `public/data/collection/${setCode}.json`);
+  return JSON.parse(fs.readFileSync(file, 'utf8')) as RawChunkCard[];
+}
+
+/** Every promo collection mode lists, in the file's order. */
+export function collectionPromoList(): RawPromo[] {
+  return collectionPromos;
+}
+
 /** The sets outside Core, which the collection's chunks alone serve. */
 const PRE_CORE_SETS = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
@@ -161,8 +180,7 @@ const PRE_CORE_SETS = ['1', '2', '3', '4', '5', '6', '7', '8'];
  */
 export function preCoreCardWithEnchanted(): {setCode: string; fullName: string} {
   for (const setCode of PRE_CORE_SETS) {
-    const file = path.resolve(process.cwd(), `public/data/collection/${setCode}.json`);
-    const chunk = JSON.parse(fs.readFileSync(file, 'utf8')) as RawChunkCard[];
+    const chunk = collectionChunk(setCode);
     const card = chunk.find((base) => {
       if (base.baseId !== undefined) return false;
       const named = chunk.filter((c) => c.fullName === base.fullName);
