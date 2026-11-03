@@ -1,16 +1,16 @@
 # Card id remap replay
 
-The database checks for a graduation's backups (#986): what `internal.card_id_remap_backup` keeps of the collections and decks `internal.remap_card_ids` (#748) rewrites, and what `internal.undo_card_id_remap` puts back. Run on a local Postgres 17 instead of the Supabase project; it never connects to the project.
+The database checks for a graduation's backups (#986): what `internal.card_id_remap_backup` keeps of the collections, decks and binder covers `internal.remap_card_ids` (#748) rewrites, and what `internal.undo_card_id_remap` puts back. Run on a local Postgres 17 instead of the Supabase project; it never connects to the project.
 
 It builds on the friends replay (`../friends/`): its `scaffold.sql` stands in for the Supabase pieces, and its `helpers.sql` adds named players and acting as one.
 
-- `scaffold.sql` adds `public.votes`, which the remap and undo lock and look up, as a table with an id alone: the checks remap collections and decks only.
+- `scaffold.sql` adds `public.votes`, which the remap and undo lock and look up, with the columns the remap reads: no check stores a vote, but R11 to R13 run the whole remap.
 - `grants.sql` holds production's grants on `decks` and `collections`, copied from `20261005000002_declare_table_privileges.sql`, which can't load here, so players clear, delete and import as production lets them.
 - `seed.sql` runs before the backups migration and leaves what graduations left before it: the backups of a collection and a deck deleted since, of a collection cleared and imported again, of a collection still there, and a merged vote's backup.
-- `checks.sql` runs the checks R0 to R10. Each makes its own rows and remaps its own card ids under its own label, so no check leans on another's.
+- `checks.sql` runs the checks R0 to R15. Each makes its own rows and remaps its own card ids under its own label, so no check leans on another's. R11 to R15 cover the binders' covers (#1074): a binder's `cover_id` and My collection's (`collection_shelf`).
 - The two races run after it, each from a `setup`, two sessions side by side (`first` and `second`) and a `verify` file. The sessions wait for each other through `pg_stat_activity` and `pg_locks` (`t.wait_until` in `checks.sql`), so no sleep decides their order, and either may start first. Race 1 (`race1-*.sql`): an import whose transaction begins before a remap's and whose write waits for the remap's lock, so its `updated_at` is earlier than the backup's `backed_up_at`, and an undo must still leave it. Race 2 (`race2-*.sql`): two runs under one label, the one that began first waiting for the other's lock, so the later backup has the earlier `backed_up_at`, and an undo must still put the row back to its first copy.
 
-Re-run it whenever a migration changes `internal.card_id_remap_backup`, the remap or undo functions, or the delete paths of `collections` and `decks`, and add the change's checks first, so you see them fail before the migration exists.
+Re-run it whenever a migration changes `internal.card_id_remap_backup`, the remap or undo functions, or the delete paths of `collections`, `decks`, `collection_binders` and `collection_shelf`, and add the change's checks first, so you see them fail before the migration exists.
 
 ## What you need
 
@@ -39,7 +39,9 @@ psql -h localhost -p 5499 -U postgres -d remap -v ON_ERROR_STOP=1 \
   -f $F/friends/helpers.sql \
   -f $F/remap/seed.sql \
   -f $M/20261030215155_card_id_remap_backup_follows_rows.sql \
-  -f $M/20261030222011_undo_card_id_remap_spares_changed_rows.sql
+  -f $M/20261030222011_undo_card_id_remap_spares_changed_rows.sql \
+  -f $M/20261103064319_collection_binders.sql \
+  -f $M/20261103093102_card_id_remap_covers.sql
 psql -h localhost -p 5499 -U postgres -d remap -f $F/remap/checks.sql
 for n in 1 2; do
   psql -h localhost -p 5499 -U postgres -d remap -f $F/remap/race$n-setup.sql
@@ -49,7 +51,7 @@ for n in 1 2; do
 done
 ```
 
-`profiles_table` is there for `public.set_updated_at()`, which the decks and collections triggers call. `checks.sql` stops at the first failed `assert`, and ends with `== all remap checks passed`; each race's `verify` file ends with `== remap race <n> passed`.
+`profiles_table` is there for `public.set_updated_at()`, which the decks, collections, binders and shelf triggers call. The two binder migrations load last, after the seed, so the seed's graduations predate binders, as production's did. `checks.sql` stops at the first failed `assert`, and ends with `== all remap checks passed`; each race's `verify` file ends with `== remap race <n> passed`.
 
 | Check | What it proves |
 |---|---|
@@ -64,14 +66,19 @@ done
 | R8 | an undo after a deck edit leaves the edit, and restores the other deck |
 | R9 | an undo of a collection a re-run saved twice under one label puts back its first copy, though the re-run wrote it after the first backup |
 | R10 | an undo leaves a collection imported again between two runs under one label, though the re-run then remapped the import |
+| R11 | a remap moves each binder's and shelf's cover on an old id and no other, backs up the row's key, cover and `updated_at` alone, and holds both tables against writers until it commits |
+| R12 | an undo puts back the cover of a binder and a shelf no one wrote since, holding both tables, and leaves a binder whose cover was picked again, one renamed, one moved and a shelf whose cover was picked again |
+| R13 | deleting a binder drops its backup alone, and clearing a collection or deleting an account drops the backups of its binders and shelf, and no other player's |
+| R14 | no client role can call the cover remap, or the remap, undo and trigger functions the cover migration replaced |
+| R15 | an undo leaves a binder whose cover was picked again between two runs under one label, though the re-run then moved the pick |
 | race 1 | an undo leaves an import that began before the remap and landed after it |
 | race 2 | an undo of two runs under one label, the later one with the earlier `backed_up_at`, puts the row back to its first copy |
 
-Without the backups migration, R0 stops the run. To watch R0 to R4 each fail (and R6 on the missing function), run a copy of `checks.sql` without its `\set ON_ERROR_STOP on` line: each check makes its own rows, so the rest still run. Without the undo migration, R7, R8, R10 and race 1 fail; race 2 passes, as it guards the new test.
+Without the backups migration, R0 stops the run; without the cover migration, R11 does, and R11 to R15 all fail. To watch R0 to R4 each fail (and R6 on the missing function), run a copy of `checks.sql` without its `\set ON_ERROR_STOP on` line: each check makes its own rows, so the rest still run. Without the undo migration, R7, R8, R10 and race 1 fail; race 2 passes, as it guards the new test.
 
 ## Proving a check bites
 
-Plant the mistake in a copy of the backups or undo migration and load the copy instead. Each of these stops the run at the check named; the copy without `ON_ERROR_STOP` shows the later ones too:
+Plant the mistake in a copy of the backups, undo or cover migration and load the copy instead. Each of these stops the run at the check named; the copy without `ON_ERROR_STOP` shows the later ones too:
 
 | Planted mistake | Fails at |
 |---|---|
@@ -88,3 +95,16 @@ Plant the mistake in a copy of the backups or undo migration and load the copy i
 | undo's spare drops its collections clause | R7, and race 1 |
 | undo's spare drops its decks clause | R8 |
 | `grant execute` on undo to `authenticated` | R6 |
+| the remap leaves out `remap_cover_card_ids` | R11, then R12 and R13 |
+| the remap locks only `votes`, `collections` and `decks` | R11 |
+| the undo locks only `votes`, `collections` and `decks` | R12 |
+| a binder's backup is the whole row (`b.*`) | R11 |
+| a binder's backup leaves out `updated_at` | R11, then R15 |
+| undo's spare drops its binders clause | R12 |
+| undo's spare drops its shelf clause | R12 |
+| undo puts no binder's cover back | R12 |
+| undo puts no shelf's cover back | R12 |
+| no `collection_binders_drop_remap_backups` trigger | R13 |
+| no `collection_shelf_drop_remap_backups` trigger | R13 (S's clear leaves the shelf's backup) |
+| the trigger function is `security invoker` | R1 (a player's clear can't reach the backups), then R3 to R5 and R13 |
+| `grant execute` on the cover remap to `authenticated` | R14 |
