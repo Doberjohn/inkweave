@@ -44,7 +44,9 @@ When editing a file under `supabase/migrations/`:
   `collection_shelf`, the binders' insert trigger or `move_binder()`, or to what they hang off
   (`collections`), re-runs `supabase/replay/collection-binders/` (#1074), and a change to
   `internal.card_id_remap_backup`, the remap or undo functions, or the delete paths of
-  `collections` and `decks` re-runs `supabase/replay/remap/` (#986).
+  `collections`, `decks`, `collection_binders` and `collection_shelf` re-runs
+  `supabase/replay/remap/` (#986), which loads the binders migration too: a change to a binder
+  table runs both.
 
 ## Declare privileges in the migration that creates the object
 
