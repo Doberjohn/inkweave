@@ -1,4 +1,4 @@
-import type {Page} from '@playwright/test';
+import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {newestCoreSet, setCards, setPrintings} from '../helpers/cardData';
 import {binder, COLLECTOR_ID, signInAsCollector, type Entries} from '../helpers/collector';
@@ -65,11 +65,14 @@ async function openAt(page: Page, url: string): Promise<void> {
   await expect(binder(page)).toBeVisible({timeout: 20_000});
 }
 
-/** Opens the picker's Binders tab, from whichever button names the open choice. */
-async function openBindersTab(page: Page): Promise<void> {
-  const trigger = (await binderButton(page).count()) > 0 ? binderButton(page) : setButton(page);
+/**
+ * Opens the picker's Binders tab from `trigger`, the button the test expects to name the open
+ * choice. Each caller names it: the binder can show a moment before the toolbar names it, so a
+ * check of which button is there yet can pick the one that is about to go.
+ */
+async function openBindersTab(trigger: Locator): Promise<void> {
   await trigger.click();
-  const menu = page.getByRole('dialog', {name: 'Binder set'});
+  const menu = trigger.page().getByRole('dialog', {name: 'Binder set'});
   await menu.getByRole('button', {name: 'Binders', exact: true}).click();
 }
 
@@ -100,7 +103,7 @@ test.describe('a binder of your own', () => {
     await signIn(page);
     await openAt(page, `/browse?binder=${SET}&ink=Amber&q=${encodeURIComponent(HELD[0].fullName)}`);
 
-    await openBindersTab(page);
+    await openBindersTab(setButton(page));
     const rows = page.getByRole('listbox', {name: 'Binders'}).getByRole('option');
     await expect(rows).toHaveCount(4);
     await expect(rows.nth(0)).toHaveAccessibleName(/^My collection/);
@@ -120,7 +123,7 @@ test.describe('a binder of your own', () => {
     await signIn(page);
     await openAt(page, `/browse?binder=all&custom=${AMBER.id}`);
 
-    await openBindersTab(page);
+    await openBindersTab(binderButton(page));
     await binderOption(page, 'My collection').click();
     await expect(page).not.toHaveURL(/[?&]custom=/);
     await expect(page).toHaveURL(/[?&]binder=all(&|$)/);
