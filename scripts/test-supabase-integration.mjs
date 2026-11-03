@@ -147,6 +147,30 @@ async function checkCollectionSharingClosedToAnon() {
   );
 }
 
+/**
+ * Test 13 (#1074): anon reads no player's binders or My collection's cover, and can't move a
+ * binder. Kept out of run() for the same reason as Test 9.
+ */
+async function checkBindersClosedToAnon() {
+  console.log('');
+  console.log('Binders: anon');
+  await expectDenied(
+    'collection_binders not readable',
+    supabase.from('collection_binders').select('name').limit(1),
+  );
+  await expectDenied(
+    'collection_shelf not readable',
+    supabase.from('collection_shelf').select('cover_id').limit(1),
+  );
+  await expectDenied(
+    'move_binder not callable',
+    supabase.rpc('move_binder', {
+      binder_id: '00000000-0000-0000-0000-000000000000',
+      earlier: true,
+    }),
+  );
+}
+
 /** Tests 1-3: the submit_vote RPC inserts a vote, upserts it, and accepts a reversed pair. */
 async function checkSubmitVote() {
   // --- Test 1: Submit vote via RPC ---
@@ -299,6 +323,8 @@ async function run() {
   await checkTryRecordClosedToAnon();
   // --- Test 12: Collection sharing is closed to anon (#1045) ---
   await checkCollectionSharingClosedToAnon();
+  // --- Test 13: Binders are closed to anon (#1074) ---
+  await checkBindersClosedToAnon();
   finish();
 }
 

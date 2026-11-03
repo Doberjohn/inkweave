@@ -40,7 +40,9 @@ When editing a file under `supabase/migrations/`:
   on a local Postgres 17 (its README has the commands). Add the change's checks first and
   watch them fail, then write the migration. A change to `collection_sharing`,
   `shared_friends()` or `friend_collections()`, or to what they read, re-runs
-  `supabase/replay/collection-sharing/` the same way (#1045), and a change to
+  `supabase/replay/collection-sharing/` the same way (#1045), a change to `collection_binders`,
+  `collection_shelf`, the binders' insert trigger or `move_binder()`, or to what they hang off
+  (`collections`), re-runs `supabase/replay/collection-binders/` (#1074), and a change to
   `internal.card_id_remap_backup`, the remap or undo functions, or the delete paths of
   `collections` and `decks` re-runs `supabase/replay/remap/` (#986).
 
