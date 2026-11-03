@@ -75,8 +75,7 @@ describe('loadSupabase', () => {
     expect(createSupabaseClient).toHaveBeenCalledOnce();
   });
 
-  // A failed download (or, in production, the empty module main.tsx leaves behind) must not
-  // poison the cache: the next vote or sign-in tries again.
+  // A failed download must not poison the cache: the next vote or sign-in tries again.
   it('retries after a failed load', async () => {
     vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
@@ -85,6 +84,17 @@ describe('loadSupabase', () => {
     });
 
     await expect(loadSupabase()).rejects.toThrow(TypeError);
+    await expect(loadSupabase()).resolves.not.toBeNull();
+  });
+
+  // How a chunk that won't load arrives in a production build: main.tsx cancels Vite's preload
+  // error, and Vite resolves the import, with its callback, empty.
+  it('rejects a load that comes back empty, and retries after it', async () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co');
+    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-key');
+    vi.mocked(createSupabaseClient).mockReturnValueOnce(undefined as never);
+
+    await expect(loadSupabase()).rejects.toThrow('The Supabase SDK did not load');
     await expect(loadSupabase()).resolves.not.toBeNull();
   });
 
