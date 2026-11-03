@@ -277,4 +277,233 @@ begin
   assert t.backups('collections', t.uid('H')) = 0, 'the undo kept H''s backups';
 end $$;
 
+-- Covers (#1074): a binder's cover_id and My collection's (collection_shelf) name one card each.
+\echo '== setup: players A, B, F, N, P, R and S, for the covers'
+select t.make_user(n) from unnest(array['A', 'B', 'F', 'R', 'S', 'N', 'P']) n;
+insert into public.collections (owner_id, entries, imported_at)
+select t.uid(n), '{}', now() from unnest(array['A', 'B', 'F', 'R', 'P']) n;
+
+-- Every binder name below is used once, so a name finds its binder.
+create function t.binder(binder_name text) returns uuid language sql stable as $$
+  select b.id from public.collection_binders b where b.name = binder_name
+$$;
+create function t.cover(binder_name text) returns text language sql stable as $$
+  select b.cover_id from public.collection_binders b where b.name = binder_name
+$$;
+create function t.shelf_cover(who text) returns text language sql stable as $$
+  select s.cover_id from public.collection_shelf s where s.owner_id = t.uid(who)
+$$;
+-- The keys of a backup's old_row, in order.
+create function t.backup_keys(source text, row_id uuid) returns text[] language sql stable as $$
+  select array_agg(k order by k)
+    from internal.card_id_remap_backup b, jsonb_object_keys(b.old_row) k
+   where b.source_table = $1 and b.row_id = $2::text
+$$;
+-- This session holds the lock that keeps writers out of both cover tables until it commits.
+create function t.holds_cover_tables() returns boolean language sql stable as $$
+  select count(*) = 2 from pg_locks l
+   where l.pid = pg_backend_pid() and l.granted and l.mode = 'ShareRowExclusiveLock'
+     and l.relation in ('public.collection_binders'::regclass, 'public.collection_shelf'::regclass)
+$$;
+
+\echo '== R11. a remap moves each binder and shelf cover on an old id, backs up the covers alone, and keeps writers out'
+insert into public.collection_binders (owner_id, name, scope, rules, cover_id)
+values (t.uid('A'), 'A moved', '12', 'inks=Amber', 'r11-old'),
+       (t.uid('A'), 'A other', 'all', '', 'r11-other'),
+       (t.uid('A'), 'A none', 'all', '', null),
+       (t.uid('B'), 'B moved', 'all', '', 'r11-old');
+insert into public.collection_shelf (owner_id, cover_id)
+values (t.uid('A'), 'r11-old'), (t.uid('B'), null);
+do $$
+declare got jsonb; n int;
+begin
+  got := internal.remap_card_ids('{"r11-old": "r11-new"}', 'r11');
+  assert got @> '{"collections": 0, "decks": 0, "binder_covers": 2, "shelf_covers": 1}',
+    format('the remap returned %s', got);
+  assert t.cover('A moved') = 'r11-new' and t.cover('B moved') = 'r11-new',
+    format('the binder covers are %s and %s, not r11-new', t.cover('A moved'), t.cover('B moved'));
+  assert t.cover('A other') = 'r11-other' and t.cover('A none') is null, 'the remap moved a cover on no old id';
+  assert t.shelf_cover('A') = 'r11-new', format('A''s shelf cover is %s', t.shelf_cover('A'));
+  assert t.shelf_cover('B') is null, format('B''s empty shelf cover is %s', t.shelf_cover('B'));
+  select count(*) into n from internal.card_id_remap_backup where label = 'r11';
+  assert n = 3, format('the remap saved %s backups, not one per cover it moved', n);
+  assert t.backup_keys('collection_binders', t.binder('A moved')) = '{cover_id,id,owner_id,remapped_to}',
+    format('a binder''s backup holds %s', t.backup_keys('collection_binders', t.binder('A moved')));
+  assert t.backup_keys('collection_shelf', t.uid('A')) = '{cover_id,owner_id,remapped_to}',
+    format('a shelf''s backup holds %s', t.backup_keys('collection_shelf', t.uid('A')));
+  assert not exists (select 1 from internal.card_id_remap_backup b
+                      where b.label = 'r11'
+                        and (b.old_row ->> 'cover_id', b.old_row ->> 'remapped_to')
+                            is distinct from ('r11-old', 'r11-new')),
+    'a backup holds another cover than the one before the remap, or another than the one it gave';
+  assert t.holds_cover_tables(), 'the remap left the cover tables open to writers';
+end $$;
+
+\echo '== R12. an undo puts back every cover no one picked since, a binder renamed or moved included'
+insert into public.collection_binders (owner_id, name, cover_id)
+values (t.uid('F'), 'F untouched', 'r12-old'),
+       (t.uid('F'), 'F picked', 'r12-old'),
+       (t.uid('F'), 'F cleared', 'r12-old'),
+       (t.uid('R'), 'R renamed', 'r12-old'),
+       (t.uid('R'), 'R moved', 'r12-old'),
+       (t.uid('R'), 'R neighbour', 'r12-old');
+insert into public.collection_shelf (owner_id, cover_id)
+values (t.uid('F'), 'r12-old'), (t.uid('R'), 'r12-old');
+do $$
+declare got jsonb := internal.remap_card_ids('{"r12-old": "r12-new"}', 'r12');
+begin
+  assert got @> '{"binder_covers": 6, "shelf_covers": 2}', format('the remap returned %s', got);
+end $$;
+-- As the app sends them: F picks another cover for one binder and clears another's; R renames
+-- one, moves another past its neighbour, which swaps the two, and picks another cover for My
+-- collection, through the shelf's upsert.
+begin;
+select t.act_as('F');
+update public.collection_binders set cover_id = 'f-own' where id = t.binder('F picked');
+update public.collection_binders set cover_id = null where id = t.binder('F cleared');
+commit;
+begin;
+select t.act_as('R');
+update public.collection_binders set name = 'R renamed again' where id = t.binder('R renamed');
+select public.move_binder(t.binder('R moved'), false);
+insert into public.collection_shelf (owner_id, cover_id)
+values (t.uid('R'), 'r-own')
+on conflict (owner_id) do update set owner_id = excluded.owner_id, cover_id = excluded.cover_id;
+commit;
+do $$
+declare restored int;
+begin
+  restored := internal.undo_card_id_remap('r12');
+  assert t.cover('F untouched') = 'r12-old', format('the undo left F''s binder at %s', t.cover('F untouched'));
+  assert t.shelf_cover('F') = 'r12-old', format('the undo left F''s shelf at %s', t.shelf_cover('F'));
+  assert t.cover('F picked') = 'f-own', format('the undo wrote over F''s pick: %s', t.cover('F picked'));
+  assert t.cover('F cleared') is null, format('the undo wrote over F''s cleared cover: %s', t.cover('F cleared'));
+  assert t.cover('R renamed again') = 'r12-old', format('the undo left a renamed binder at %s', t.cover('R renamed again'));
+  assert t.cover('R moved') = 'r12-old', format('the undo left a moved binder at %s', t.cover('R moved'));
+  assert t.cover('R neighbour') = 'r12-old', format('the undo left the binder a move swapped at %s', t.cover('R neighbour'));
+  assert t.shelf_cover('R') = 'r-own', format('the undo wrote over R''s pick: %s', t.shelf_cover('R'));
+  assert restored = 5, format('the undo restored %s rows, not the five covers no one picked', restored);
+  assert not exists (select 1 from internal.card_id_remap_backup where label = 'r12'), 'the undo kept r12''s backups';
+  assert t.holds_cover_tables(), 'the undo left the cover tables open to writers';
+end $$;
+
+\echo '== R13. deleting a binder drops its backup, and clearing a collection or deleting an account drops its covers'''
+insert into public.collections (owner_id, entries, imported_at)
+select t.uid(n), '{"r13-old": {"normal": 1}}', now() from unnest(array['S', 'N']) n;
+insert into public.collection_binders (owner_id, name, cover_id)
+values (t.uid('S'), 'S deleted', 'r13-old'),
+       (t.uid('S'), 'S kept', 'r13-old'),
+       (t.uid('N'), 'N binder', 'r13-old');
+insert into public.collection_shelf (owner_id, cover_id)
+values (t.uid('S'), 'r13-old'), (t.uid('N'), 'r13-old');
+do $$
+declare got jsonb := internal.remap_card_ids('{"r13-old": "r13-new"}', 'r13');
+begin
+  assert got @> '{"collections": 2, "binder_covers": 3, "shelf_covers": 2}', format('the remap returned %s', got);
+end $$;
+-- What a backup of S's or N's names: its row, or the owner its old_row holds.
+create function t.r13_backups(who text) returns int language sql stable as $$
+  select count(*)::int from internal.card_id_remap_backup b
+   where b.label = 'r13' and (b.row_id = t.uid(who)::text or b.old_row ->> 'owner_id' = t.uid(who)::text)
+$$;
+-- S deletes a binder, as the shelf's menu does.
+begin;
+select t.act_as('S');
+delete from public.collection_binders where id = t.binder('S deleted');
+commit;
+do $$ begin
+  assert t.binder('S deleted') is null, 'S''s binder is still there';
+  assert t.r13_backups('S') = 3, format('S has %s backups, not the kept binder''s, the shelf''s and the collection''s', t.r13_backups('S'));
+  assert t.backups('collection_binders', t.binder('S kept')) = 1, 'S''s delete dropped the other binder''s backup';
+end $$;
+-- S clears the collection, as the account page's Clear does; N deletes the account.
+begin;
+select t.act_as('S');
+delete from public.collections where owner_id = t.uid('S');
+commit;
+do $$ begin
+  assert not exists (select 1 from public.collection_binders where owner_id = t.uid('S'))
+     and not exists (select 1 from public.collection_shelf where owner_id = t.uid('S')),
+    'S''s binders or shelf outlived the collection';
+  assert t.r13_backups('S') = 0, format('%s of S''s backups outlived the collection', t.r13_backups('S'));
+  assert t.r13_backups('N') = 3, format('S''s clear left N %s backups, not 3', t.r13_backups('N'));
+end $$;
+delete from auth.users where id = t.uid('N');
+do $$ begin
+  assert t.r13_backups('N') = 0, format('%s of N''s backups outlived the account', t.r13_backups('N'));
+end $$;
+
+\echo '== R14. no client role can call the cover remap, or the functions it changed'
+do $$
+declare who text; fn text;
+begin
+  foreach who in array array['anon', 'authenticated', 'service_role'] loop
+    foreach fn in array array['internal.remap_cover_card_ids(jsonb, text)', 'internal.remap_card_ids(jsonb, text)',
+                              'internal.undo_card_id_remap(text)', 'internal.drop_card_id_remap_backups()'] loop
+      assert not has_function_privilege(who, fn, 'execute'), format('%s can call %s', who, fn);
+    end loop;
+  end loop;
+end $$;
+
+\echo '== R15. an undo leaves a cover picked again between two runs under one label'
+insert into public.collection_binders (owner_id, name, cover_id)
+values (t.uid('P'), 'P binder', 'r15-a');
+do $$ begin
+  assert internal.remap_cover_card_ids('{"r15-a": "r15-a-new"}', 'r15') = '{"binder_covers": 1, "shelf_covers": 0}',
+    'the first run missed P''s binder';
+end $$;
+-- P picks a cover from a page still on a preview id, which the re-run then moves.
+begin;
+select t.act_as('P');
+update public.collection_binders set cover_id = 'r15-b' where id = t.binder('P binder');
+commit;
+do $$ begin
+  assert internal.remap_cover_card_ids('{"r15-b": "r15-b-new"}', 'r15') = '{"binder_covers": 1, "shelf_covers": 0}',
+    'the re-run missed P''s pick';
+end $$;
+do $$
+declare restored int;
+begin
+  restored := internal.undo_card_id_remap('r15');
+  assert t.cover('P binder') = 'r15-b-new', format('the undo put P''s cover back to %s, from before the pick', t.cover('P binder'));
+  assert restored = 0, format('the undo restored %s rows, not none', restored);
+  assert t.backups('collection_binders', t.binder('P binder')) = 0, 'the undo kept P''s backups';
+end $$;
+
+\echo '== R16. a map to an id no cover can hold is refused before anything moves'
+insert into public.collection_binders (owner_id, name, cover_id)
+values (t.uid('P'), 'P second', 'r16-old');
+do $$
+declare msg text;
+begin
+  begin
+    perform internal.remap_card_ids('{"r16-old": "r16 new"}', 'r16');
+  exception when others then
+    msg := sqlerrm;
+  end;
+  assert msg like 'remap_card_ids maps r16-old to "r16 new"%',
+    format('the remap answered %s', coalesce(msg, 'nothing: it took the map'));
+  assert t.cover('P second') = 'r16-old', 'the refused remap moved a cover';
+  assert not exists (select 1 from internal.card_id_remap_backup where label = 'r16'), 'the refused remap saved backups';
+end $$;
+
+\echo '== R17. a cover two runs under one label moved in turn goes back to its first card'
+insert into public.collection_binders (owner_id, name, cover_id)
+values (t.uid('P'), 'P chained', 'r17-a');
+do $$ begin
+  assert internal.remap_cover_card_ids('{"r17-a": "r17-b"}', 'r17') = '{"binder_covers": 1, "shelf_covers": 0}',
+    'the first run missed P''s binder';
+end $$;
+do $$ begin
+  assert internal.remap_cover_card_ids('{"r17-b": "r17-c"}', 'r17') = '{"binder_covers": 1, "shelf_covers": 0}',
+    'the re-run missed P''s binder';
+end $$;
+do $$
+declare restored int;
+begin
+  restored := internal.undo_card_id_remap('r17');
+  assert t.cover('P chained') = 'r17-a', format('the undo put P''s cover back to %s, not its first card', t.cover('P chained'));
+  assert restored = 1, format('the undo restored %s rows, not P''s binder', restored);
+end $$;
+
 \echo '== all remap checks passed'

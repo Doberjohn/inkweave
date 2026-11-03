@@ -25,7 +25,11 @@ export interface FinishFacts {
   finishes?: PrintingFinishes;
 }
 
-/** The versions `printing` comes in, in the stripe's order: its data's, else its rarity's. */
+/**
+ * The versions `printing` comes in, in the stripe's order: its data's, else its rarity's.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
+ */
 export function finishesOf(printing: FinishFacts): readonly Finish[] {
   return printing.finishes ?? (isChaseRarity(printing.rarity) ? FOIL_ONLY : BOTH);
 }

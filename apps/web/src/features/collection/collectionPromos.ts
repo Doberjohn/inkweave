@@ -10,7 +10,11 @@ import {printedFullName} from 'inkweave-ui/lib/printings';
  * cards. So this file is the one source of a promo pocket.
  */
 
-/** A promo as the file stores it: a variant entry, its art variant, and its card's name and id. */
+/**
+ * A promo as the file stores it: a variant entry, its art variant, and its card's name and id.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
+ */
 export interface RawCollectionPromo extends RawCardVariant {
   /** "A" in Dreamborn's 24A/P2, for a promo printed in two arts under one number. */
   artVariant?: string;
@@ -21,13 +25,21 @@ export interface RawCollectionPromo extends RawCardVariant {
   baseId?: number;
 }
 
-/** A promo as collection mode holds it: the printing as a card's `variants` hold it, and its card. */
+/**
+ * A promo as collection mode holds it: the printing as a card's `variants` hold it, and its card.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
+ */
 export interface CollectionPromo extends CardPrinting {
   fullName: string;
   baseId?: string;
 }
 
-/** The file's promos, their art resolved as a card's printings' is (`toPrinting`). */
+/**
+ * The file's promos, their art resolved as a card's printings' is (`toPrinting`).
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
+ */
 export function transformPromos(raw: readonly RawCollectionPromo[]): CollectionPromo[] {
   return raw.map((promo) => ({
     ...toPrinting(promo),

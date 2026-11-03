@@ -11,7 +11,7 @@ const CARD_NAME = cardFullNameById(CARD_ID);
 
 interface SynergyGroup {
   groupKey: string;
-  synergies: unknown[];
+  synergies: {cardId: string; score: number}[];
 }
 interface SynergyData {
   groups: SynergyGroup[];
@@ -27,6 +27,38 @@ if (!discardGroup || discardGroup.synergies.length <= 3 || groups.length < 2) {
   throw new Error(
     `Fixture broken: card ${CARD_ID} must have 2+ synergy groups including a 'discard' group ` +
       `with >3 synergies (a truncated group with a "+N more" tile). Is the card still in the pool?`,
+  );
+}
+
+// What the expanded Discard group's controls should leave, read from the same data: each
+// strength chip's count (Perfect counts as Strong, as the chips read it), and the card type the
+// fewest of its cards share, so picking that type in Filters narrows the grid. A song counts as
+// Song, not Action, as the type filter reads it.
+const discardScores = discardGroup.synergies.map((s) => s.score);
+const TIER_COUNTS = {
+  Strong: discardScores.filter((score) => score >= 7).length,
+  Moderate: discardScores.filter((score) => score >= 4 && score < 7).length,
+  Weak: discardScores.filter((score) => score < 4).length,
+};
+const cardTypes = new Map(
+  (
+    JSON.parse(
+      fs.readFileSync(path.resolve(process.cwd(), 'public/data/allCards.json'), 'utf8'),
+    ) as {cards: {id: number | string; type: string; subtypes?: string[] | null}[]}
+  ).cards.map((card) => [
+    String(card.id),
+    card.type === 'Action' && card.subtypes?.includes('Song') ? 'Song' : card.type,
+  ]),
+);
+const typeCounts = new Map<string, number>();
+for (const {cardId} of discardGroup.synergies) {
+  const type = cardTypes.get(cardId) ?? 'unknown';
+  typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1);
+}
+const [NARROW_TYPE, NARROW_TYPE_COUNT] = [...typeCounts].sort((a, b) => a[1] - b[1])[0];
+if (typeCounts.has('unknown') || NARROW_TYPE_COUNT === discardGroup.synergies.length) {
+  throw new Error(
+    `Fixture broken: card ${CARD_ID}'s Discard partners must share at least two known card types.`,
   );
 }
 
@@ -76,6 +108,97 @@ test.describe('Synergy groups — modal default mode (desktop)', () => {
     // One click on the More tile jumps straight to the full ExpandedGroupView.
     await expect(modal).toHaveAttribute('data-state', 'expanded');
     await expect(modal.getByText(/back to all synergies/i)).toBeVisible();
+  });
+});
+
+test.describe('Synergy groups — expanded group view (desktop)', () => {
+  test.beforeEach(async ({appPage}, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    await appPage.openCardOverview(CARD_NAME);
+    const modal = appPage.cardOverviewModal;
+    await modal.locator('[data-group-key="discard"] [data-testid="more-tile"]').click();
+    await expect(modal).toHaveAttribute('data-state', 'expanded');
+    await expect(modal.locator('[data-expanded-group="discard"] a.card-tile')).toHaveCount(
+      discardGroup.synergies.length,
+    );
+  });
+
+  test('a strength chip narrows the grid, one tier at a time, and an empty tier says so', async ({
+    appPage,
+  }) => {
+    const view = appPage.cardOverviewModal.locator('[data-expanded-group="discard"]');
+    const tiles = view.locator('a.card-tile');
+    const noMatches = view.getByRole('status').filter({hasText: 'No cards match your filters.'});
+    for (const tier of ['Strong', 'Moderate', 'Weak'] as const) {
+      const chip = view.getByRole('button', {name: tier, exact: true});
+      await chip.click();
+      await expect(chip).toHaveAttribute('aria-pressed', 'true');
+      await expect(tiles).toHaveCount(TIER_COUNTS[tier]);
+      await expect(noMatches).toHaveCount(TIER_COUNTS[tier] === 0 ? 1 : 0);
+    }
+    // One tier at a time: the last one picked is the only one on, and pressing it again clears it.
+    await expect(view.locator('button[aria-pressed="true"]')).toHaveCount(1);
+    await view.getByRole('button', {name: 'Weak', exact: true}).click();
+    await expect(view.locator('button[aria-pressed="true"]')).toHaveCount(0);
+    await expect(tiles).toHaveCount(discardGroup.synergies.length);
+  });
+
+  test('Filters applies a card type, its chip shows in the toolbar, and Clear all takes it off', async ({
+    appPage,
+    page,
+  }) => {
+    const view = appPage.cardOverviewModal.locator('[data-expanded-group="discard"]');
+    const tiles = view.locator('a.card-tile');
+    const toolbar = view.getByTestId('synergy-toolbar');
+
+    await toolbar.getByRole('button', {name: 'Filters', exact: true}).click();
+    const dialog = page.getByTestId('filter-modal');
+    await dialog
+      .getByRole('group', {name: 'Card type filters'})
+      .getByRole('button', {name: NARROW_TYPE, exact: true})
+      .click();
+    await dialog.getByRole('button', {name: 'Apply Filters'}).click();
+    await expect(dialog).toHaveCount(0);
+
+    await expect(tiles).toHaveCount(NARROW_TYPE_COUNT);
+    await expect(toolbar.getByRole('button', {name: 'Filters, 1 on'})).toBeVisible();
+    // The applied type's chip, which reads its name and the × that takes it off.
+    const typeChip = toolbar.getByRole('button', {name: `${NARROW_TYPE} ×`, exact: true});
+    await expect(typeChip).toBeVisible();
+
+    await toolbar.getByRole('button', {name: 'Clear all'}).click();
+    await expect(tiles).toHaveCount(discardGroup.synergies.length);
+    await expect(typeChip).toHaveCount(0);
+    await expect(toolbar.getByRole('button', {name: 'Filters', exact: true})).toBeVisible();
+  });
+
+  test('arrow keys, Home and End move focus through the grid', async ({appPage, page}) => {
+    const grid = appPage.cardOverviewModal
+      .locator('[data-expanded-group="discard"]')
+      .getByRole('list', {name: 'Synergy cards'});
+    const tiles = grid.locator('[data-roving-item]');
+    // The grid's columns: the tiles that share the first one's row.
+    const tops = await tiles.evaluateAll((items) => items.map((item) => item.getBoundingClientRect().top));
+    const columns = tops.filter((top) => Math.abs(top - tops[0]) < 1).length;
+    expect(columns).toBeGreaterThan(1);
+    expect(tops.length).toBeGreaterThan(columns);
+
+    await tiles.first().focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(tiles.nth(1)).toBeFocused();
+    await page.keyboard.press('ArrowLeft');
+    await expect(tiles.first()).toBeFocused();
+    await page.keyboard.press('ArrowDown');
+    await expect(tiles.nth(columns)).toBeFocused();
+    await page.keyboard.press('ArrowUp');
+    await expect(tiles.first()).toBeFocused();
+    await page.keyboard.press('End');
+    await expect(tiles.last()).toBeFocused();
+    await page.keyboard.press('Home');
+    await expect(tiles.first()).toBeFocused();
+    // Only the focused tile is a Tab stop.
+    await expect(grid.locator('[data-roving-item][tabindex="0"]')).toHaveCount(1);
+    await expect(appPage.cardOverviewModal).toHaveAttribute('data-state', 'expanded');
   });
 });
 

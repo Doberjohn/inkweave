@@ -77,8 +77,16 @@ function toCard([id, fullName, ink, cost]: (typeof SET_9)[number], index: number
 /** 26 cards: more than one spread of 24, so paging has somewhere to go. */
 export const BINDER_CARDS: LorcanaCard[] = SET_9.map(toCard);
 
-/** Exactly one full spread. */
+/**
+ * Exactly one full spread.
+ *
+ * @public deck-builder's BrowseBinder stories import it.
+ */
 export const ONE_SPREAD: LorcanaCard[] = BINDER_CARDS.slice(0, 24);
 
-/** Seven cards — a third of a page, for the trailing-spread empty-pocket case. */
+/**
+ * Seven cards — a third of a page, for the trailing-spread empty-pocket case.
+ *
+ * @public deck-builder's BrowseBinder stories import it.
+ */
 export const PARTIAL_SPREAD: LorcanaCard[] = BINDER_CARDS.slice(0, 7);

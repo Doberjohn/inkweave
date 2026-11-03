@@ -425,6 +425,23 @@ function resolveRoleDisplay(conn: LabelledConnection): {
   return {key: conn.ruleId, label: conn.roleLabel, description: conn.explanation};
 }
 
+// The card view closes on a bubble-phase document Escape listener, so the open list takes the
+// key first, in the document's capture phase, and keeps it from reaching the card view. A
+// tooltip or Radix layer opened over the list listens there too, and still hears the same key:
+// stopping the event skips the nodes after this one, not this node's other listeners.
+function useEscapeToClose(active: boolean, setIsOpen: (v: boolean) => void) {
+  useEffect(() => {
+    if (!active) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      setIsOpen(false);
+    };
+    document.addEventListener('keydown', handler, true);
+    return () => document.removeEventListener('keydown', handler, true);
+  }, [active, setIsOpen]);
+}
+
 /**
  * Multi-role display for connection groups with >1 sub-rule (e.g. Location Control's
  * At-Payoff + Move + Buff).
@@ -436,17 +453,6 @@ function resolveRoleDisplay(conn: LabelledConnection): {
  * Mobile: stacks all roles always-open. No toggle, no overlay (mobile lays the
  * modal columns vertically, so engine column height isn't constrained).
  */
-function useEscapeToClose(active: boolean, setIsOpen: (v: boolean) => void) {
-  useEffect(() => {
-    if (!active) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsOpen(false);
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [active, setIsOpen]);
-}
-
 function MultiRoleAbilityList({
   connections,
   cardA,

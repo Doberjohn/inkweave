@@ -24,9 +24,11 @@ export interface PublicIdentity {
  * What the database enforces on a display name (`profiles_display_name_len`) plus the
  * one rule it cannot: a name made only of whitespace passes a length check and renders
  * as a blank author. Trim first, then measure.
+ *
+ * @public DISPLAY_NAME_MAX: deck-builder's DisplayNameDialog imports it.
  */
 export const DISPLAY_NAME_MAX = 60;
-export const DISPLAY_NAME_MIN = 2;
+const DISPLAY_NAME_MIN = 2;
 export const DISPLAY_NAME_RULE = `Between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters.`;
 
 /**

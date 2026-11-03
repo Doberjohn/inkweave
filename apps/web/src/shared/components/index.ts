@@ -1,7 +1,7 @@
 export {AbilityCallout} from 'inkweave-ui/lorcana/AbilityCallout';
-export type {AbilityCalloutVariant} from 'inkweave-ui/lorcana/AbilityCallout';
 export {AbilityTag} from 'inkweave-ui/lorcana/AbilityTag';
-export type {AbilityTagVariant} from 'inkweave-ui/lorcana/AbilityTag';
+// deck-builder's DecksPage imports it from here.
+/** @public */
 export {AuthButton} from './AuthButton';
 export {BackLink} from './BackLink';
 export {BetaNotice} from './BetaNotice';
@@ -10,41 +10,36 @@ export {CardTextBlock} from 'inkweave-ui/lorcana/CardTextBlock';
 export {CardLightbox} from 'inkweave-ui/lorcana/CardLightbox';
 export {CardTranslationPanel} from 'inkweave-ui/lorcana/CardTranslationPanel';
 export {CardTranslationToggle} from 'inkweave-ui/lorcana/CardTranslationToggle';
-export {CollapsibleSection} from 'inkweave-ui/components/CollapsibleSection';
 export {ConnectionGroup} from 'inkweave-ui/lorcana/ConnectionGroup';
 export {groupConnections} from './groupConnections';
-export type {ConnectionGroupData} from 'inkweave-ui/lorcana/ConnectionGroup';
 export {CompactHeader} from './CompactHeader';
+// deck-builder's DecksPage imports both from here.
+/** @public */
 export {headerCarriesAuth} from './headerChrome';
+/** @public */
 export type {ViewportConfig} from './headerChrome';
-export {CostFilterGroup} from 'inkweave-ui/lorcana/CostFilterGroup';
-export {CostIcon} from 'inkweave-ui/lorcana/CostIcon';
-export {CountBadge} from 'inkweave-ui/components/CountBadge';
-export {BetaTag} from 'inkweave-ui/components/BetaTag';
 export {GoldTag} from 'inkweave-ui/components/GoldTag';
 export {BottomSheet} from 'inkweave-ui/components/BottomSheet';
 export {CtaButton} from 'inkweave-ui/components/CtaButton';
 export {DialogShell} from 'inkweave-ui/components/DialogShell';
 export {LinkButton} from 'inkweave-ui/components/LinkButton';
 export {PageTitle} from 'inkweave-ui/components/PageTitle';
+// deck-builder's DecksPage imports it from here.
+/** @public */
 export {TabList} from 'inkweave-ui/components/TabList';
 export {CardImageButton} from 'inkweave-ui/lorcana/CardImageButton';
 export {PrintingCarousel} from 'inkweave-ui/lorcana/PrintingCarousel';
 export {IconButton} from 'inkweave-ui/components/IconButton';
+// deck-builder's DeckCardRow, PoolCardTile and CollectionSlotSteppers import it from here.
+/** @public */
 export {QuantityStepper} from 'inkweave-ui/components/QuantityStepper';
 export {CopiesStripe} from 'inkweave-ui/lorcana/CopiesStripe';
 export {EDGE_DISC_SIZE, NavArrowButton} from 'inkweave-ui/components/NavArrowButton';
 export {EtherealBackground} from 'inkweave-ui/components/EtherealBackground';
-export {FilterButton} from 'inkweave-ui/components/FilterButton';
 export {Chip} from 'inkweave-ui/components/Chip';
-export type {ChipProps} from 'inkweave-ui/components/Chip';
-export {FilterIcon} from 'inkweave-ui/components/FilterIcon';
-export {FiltersButton} from 'inkweave-ui/components/FiltersButton';
 export {CardFilterDialog} from './CardFilterDialog';
-export type {FilterPanelProps} from './CardFilterDialog';
 export {FilterSection} from 'inkweave-ui/components/FilterSection';
 export {Footer} from './Footer';
-export {Header} from './Header';
 export {LegalPage, legalH2Style, legalLinkStyle} from './LegalPage';
 export {HeroSection} from './HeroSection';
 export {InkCardPlaceholder} from 'inkweave-ui/lorcana/InkCardPlaceholder';
@@ -52,18 +47,14 @@ export {InkIcon} from 'inkweave-ui/lorcana/InkIcon';
 export {PencilIcon} from 'inkweave-ui/components/PencilIcon';
 export {PageAbout, PageAboutLink} from './PageAbout';
 export {Seo} from './Seo';
-export type {Breadcrumb, SeoProps} from './Seo';
-export {SearchAutocomplete} from './SearchAutocomplete';
+export type {Breadcrumb} from './Seo';
 // No SearchBottomSheet here: AppLayout loads it on demand (#640), and a barrel re-export would
 // load it eagerly in dev, where nothing tree-shakes it away.
-export {SearchIcon} from 'inkweave-ui/components/SearchIcon';
 export {SortSelect} from 'inkweave-ui/components/SortSelect';
 export {StrengthBadge} from 'inkweave-ui/lorcana/StrengthBadge';
 export {TierCircle} from 'inkweave-ui/lorcana/TierCircle';
-export {HelpTooltip, Tooltip} from 'inkweave-ui/components/Tooltip';
+export {HelpTooltip} from 'inkweave-ui/components/Tooltip';
 export {MobileBottomNav, MOBILE_NAV_HEIGHT} from './MobileBottomNav';
-export {EmptyState} from 'inkweave-ui/components/EmptyState';
-export {ResultCount} from 'inkweave-ui/components/ResultCount';
 export {ErrorBoundary} from './ErrorBoundary';
 export {RenderProfiler} from './RenderProfiler';
 export {Sparkles} from 'inkweave-ui/components/Sparkles';

@@ -2,7 +2,7 @@ import type {CSSProperties} from 'react';
 import './reveals.css';
 import {COLORS, FONTS, FONT_SIZES, RADIUS, blackRgba, hexRgba, hexToRgb, FONT_WEIGHT} from '../../shared/constants';
 
-export interface SupportCard {
+interface SupportCard {
   src: string;
   alt: string;
 }

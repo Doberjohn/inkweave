@@ -30,7 +30,7 @@ export type {FilterButtonOptions};
  * label, which the toolbar's chip for it repeats, and its tooltip, which names what it picks
  * of the rarities the page offers.
  */
-export const ART_OPTIONS: readonly {value: ArtKind; label: string; title: (picks: readonly string[]) => string}[] = [
+const ART_OPTIONS: readonly {value: ArtKind; label: string; title: (picks: readonly string[]) => string}[] = [
   {value: 'standard', label: 'Standard cards', title: () => 'Pick the five standard rarities'},
   {value: 'alt', label: 'Alt art cards', title: (picks) => `Pick ${inWords(picks.map(rarityLabel))}`},
 ];
@@ -54,7 +54,7 @@ export function rarityLabel(rarity: string): string {
  * The offered rarities of one kind, in the offered order: what its preset picks. Where no
  * Special is offered, the Alt art kind is the three chase rarities.
  */
-export const raritiesOfKind = (offered: readonly string[], kind: ArtKind) =>
+const raritiesOfKind = (offered: readonly string[], kind: ArtKind) =>
   offered.filter((rarity) => RARITIES_BY_ART[kind].includes(rarity));
 
 /**
@@ -97,7 +97,7 @@ export const ALL_FILTER_BUTTONS: FilterButtonOptions = {
 };
 
 /** Each art preset with what it picks of the offered rarities, and its tooltip saying so. */
-export const artPresetsFor = (offered: readonly string[]): ArtPreset[] =>
+const artPresetsFor = (offered: readonly string[]): ArtPreset[] =>
   ART_OPTIONS.map(({value, label, title}) => {
     const rarities = raritiesOfKind(offered, value);
     return {value, label, title: title(rarities), rarities};

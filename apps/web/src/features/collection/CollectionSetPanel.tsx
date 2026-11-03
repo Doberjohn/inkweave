@@ -106,7 +106,7 @@ export interface AxisChoice {
 }
 
 /** Width of the collapsed rail. The open panel's is the side panel's. */
-export const RAIL_WIDTH = 44;
+const RAIL_WIDTH = 44;
 
 /** Export rarity names to `RaritySymbol`'s keys. */
 const rarityKey = (rarity: string) => rarity.toLowerCase();

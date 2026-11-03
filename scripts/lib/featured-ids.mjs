@@ -5,10 +5,18 @@
  * this module into the browser, so it imports nothing from Node.
  */
 
-/** The homepage shows exactly six featured cards (featured.ts). */
+/**
+ * The homepage shows exactly six featured cards (featured.ts).
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
+ */
 export const FEATURED_COUNT = 6;
 
-/** The inks in the list's order, one card for each: Amber to Steel. */
+/**
+ * The inks in the list's order, one card for each: Amber to Steel.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
+ */
 export const FEATURED_INKS = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire', 'Steel'];
 
 /**
@@ -17,6 +25,8 @@ export const FEATURED_INKS = ['Amber', 'Amethyst', 'Emerald', 'Ruby', 'Sapphire'
  *
  * @param {{id: string | number, inks: readonly string[], fullName: string}} card
  * @returns {{id: string, card: string}}
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export function featuredEntry({id, inks, fullName}) {
   return {id: String(id), card: `${inks.join('-')}: ${fullName}`};
@@ -40,6 +50,8 @@ export function missingFeaturedInks(cardInks) {
  *
  * @param {readonly {id: string | number, inks: readonly string[]}[]} cards
  * @returns {string | null}
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export function featuredListProblem(cards) {
   const ids = new Set(cards.map(({id}) => String(id)));
@@ -57,6 +69,8 @@ export function featuredListProblem(cards) {
  *
  * @param {readonly {id: string, card: string}[]} entries
  * @returns {string}
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export function featuredIdsJson(entries) {
   const lines = entries.map(

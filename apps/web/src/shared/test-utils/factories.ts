@@ -21,7 +21,7 @@ export function createCard(overrides: Partial<LorcanaCard> = {}): LorcanaCard {
 }
 
 /** Create a mock SynergyMatchDisplay (a card + score inside a group). */
-export function createSynergyMatch(
+function createSynergyMatch(
   overrides: Omit<Partial<SynergyMatchDisplay>, 'card'> & {card?: Partial<LorcanaCard>} = {},
 ): SynergyMatchDisplay {
   const {card: cardOverrides, ...rest} = overrides;
