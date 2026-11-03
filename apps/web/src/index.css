@@ -367,7 +367,7 @@ option {
 .text-disclosure > summary {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px; /* SPACING.md */
   width: fit-content;
   list-style: none;
   cursor: pointer;

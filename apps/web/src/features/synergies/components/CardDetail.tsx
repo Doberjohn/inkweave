@@ -213,7 +213,8 @@ const CHIP_WIDTHS = [104, 64];
 const TEXT_LINES = 4;
 /** CardFacts' closed "Card facts" line, under the card's text: one line of its small text. */
 const FACTS_LINE_HEIGHT = FONT_SIZES.sm * LINE_HEIGHT.relaxed;
-const FACTS_LINE_WIDTH = 88;
+/** That line's width as drawn: "Card facts" at FONT_SIZES.sm, index.css's 12 px gap and 6 px chevron. */
+const FACTS_LINE_WIDTH = 72;
 
 /** One placeholder exactly its box: no line box around it (`inline`, then drawn as a block). */
 function Block({width, height, radius = RADIUS.sm}: {width?: number | string; height: number; radius?: number}) {
