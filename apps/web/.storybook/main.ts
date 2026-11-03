@@ -1,10 +1,10 @@
 import type {StorybookConfig} from '@storybook/react-vite';
 
 // The app build's own plugins: the PWA, the startup-groups guard, whose modules a Storybook build
-// never loads, the collection code guard, since the stories load the collection whatever the
-// flags say, and the 404 page, a copy of the app's shell that Storybook's output doesn't have.
+// never loads, the binder code guard, since the stories show binders whatever the flag says, and
+// the 404 page, a copy of the app's shell that Storybook's output doesn't have.
 const SKIPPED_PLUGINS =
-  /^(vite-plugin-pwa|inkweave:startup-groups-guard$|inkweave:collection-code-guard$|not-found-page$)/;
+  /^(vite-plugin-pwa|inkweave:startup-groups-guard$|inkweave:binder-code-guard$|not-found-page$)/;
 
 const config: StorybookConfig = {
   stories: [
@@ -23,6 +23,8 @@ const config: StorybookConfig = {
   addons: ['@chromatic-com/storybook', '@storybook/addon-a11y', '@storybook/addon-docs'],
   framework: '@storybook/react-vite',
   viteFinal(config) {
+    // Binders' stories need their flag on, whatever a developer's .env.local says.
+    config.define = {...config.define, 'import.meta.env.VITE_SHOW_BINDERS': JSON.stringify('true')};
     config.plugins = config.plugins
       ?.flat()
       .filter(

@@ -1,7 +1,8 @@
 // Story coverage checker — finds React components without Storybook stories,
 // and orphaned stories without components (#512: reverse direction).
 // Scans shared/components, features/*/components, feature ROOTS (reveals,
-// playstyles, ...), src/pages, and every folder of inkweave-ui (packages/ui/src),
+// playstyles, ...) and their other folders (collection/binders), src/pages, and every
+// folder of inkweave-ui (packages/ui/src),
 // and fails a story file that none of Storybook's stories globs loads.
 //
 // Fails CI only when NEW components are added without stories (or a story's
@@ -123,16 +124,22 @@ function getScanRoster() {
   const roster = [[join(srcDir, 'shared', 'components'), {}]];
 
   const featuresDir = join(srcDir, 'features');
-  if (existsSync(featuresDir)) {
-    for (const feature of readdirSync(featuresDir)) {
-      const featureRoot = join(featuresDir, feature);
-      roster.push([featureRoot, {requireJsx: true}]);
-      const compDir = join(featureRoot, 'components');
-      if (existsSync(compDir)) roster.push([compDir, {}]);
-    }
-  }
+  const features = existsSync(featuresDir) ? readdirSync(featuresDir) : [];
+  for (const feature of features) roster.push(...featureRoster(join(featuresDir, feature)));
   roster.push([join(srcDir, 'pages'), {requireJsx: true}]);
   return [...roster, ...getPackageRoster()];
+}
+
+/** One feature's folders: its root under the JSX sniff, its components/, and its other folders. */
+function featureRoster(featureRoot) {
+  const roster = [[featureRoot, {requireJsx: true}]];
+  const compDir = join(featureRoot, 'components');
+  if (existsSync(compDir)) roster.push([compDir, {}]);
+  // A feature's other folders, such as collection/binders, hold components beside their logic.
+  const others = readdirSync(featureRoot, {withFileTypes: true})
+    .filter((entry) => isScannedFolder(entry) && entry.name !== 'components')
+    .map((entry) => [join(featureRoot, entry.name), {requireJsx: true}]);
+  return [...roster, ...others];
 }
 
 // The tests' folders and their helpers' (test-utils/, which the app's shared/test-utils mirrors

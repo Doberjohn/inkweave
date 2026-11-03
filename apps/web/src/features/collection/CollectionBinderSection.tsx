@@ -363,7 +363,7 @@ function SectionContent({
     scope: setCode,
     sets: controls.sets,
     sortOrder,
-    narrowed: filtered || controls.show !== 'all',
+    narrowed: packsItsCards({show: controls.show, binders: controls.binders}, filtered),
     waiting,
   });
   return (
@@ -373,6 +373,7 @@ function SectionContent({
           emptyNote={emptyNote}
           show={controls.show}
           setCode={setCode}
+          binder={binderPlace(controls.binders)}
           friend={friend}
           filtered={filtered}
           axis={controls.axis}
@@ -513,6 +514,15 @@ const EVERY_CARD_WHERE: Record<string, string> = {
   [ALL_PROMO_SETS]: 'every promo set',
 };
 
+/**
+ * Whether the binder packs its cards into the pockets it fills rather than keeping each card's
+ * own place: the page's filters, the view, or a binder of your own whose rules hold a filter.
+ */
+function packsItsCards({show, binders}: {show: BinderShow; binders: SetSwitching['binders']}, filtered: boolean): boolean {
+  if (filtered || show !== 'all') return true;
+  return binders?.open?.narrowed ?? false;
+}
+
 /** An empty Missing view with nothing narrowing it: the binder holds every card, under its headline. */
 const holdsEveryCard = (show: BinderShow, filtered: boolean) => show === 'missing' && !filtered;
 
@@ -524,9 +534,25 @@ const pointsToFoils = ({show, axis, setCode}: {show: BinderShow; axis: Axis; set
   holdsEveryCard(show, filtered) && axis === 'complete' && !isPromoScope(setCode);
 
 /** "You have every card in this set.", or under Master set "…, in every finish." */
-function everyCardLine(setCode: string, friend: boolean, axis: Axis): string {
+function everyCardLine({setCode, friend, axis, binder}: Pick<NoMatchesProps, 'setCode' | 'friend' | 'axis' | 'binder'>): string {
   const finishes = ownsAxis(setCode, axis) === 'master' ? ', in every finish' : '';
-  return `${friend ? 'They' : 'You'} have every card in ${EVERY_CARD_WHERE[setCode] ?? 'this set'}${finishes}.`;
+  const where = binder === 'own-scope' ? 'this binder' : (EVERY_CARD_WHERE[setCode] ?? 'this set');
+  return `${friend ? 'They' : 'You'} have every card in ${where}${finishes}.`;
+}
+
+/** Which binder of your own shows: none, one at its own Sets, or one at a set picked inside it. */
+type BinderPlace = 'none' | 'own-scope' | 'inside';
+
+/** Where a binder of your own stands, as its empty lines word it. */
+function binderPlace(binders: SetSwitching['binders']): BinderPlace {
+  if (!binders?.open) return 'none';
+  return binders.atOwnScope ? 'own-scope' : 'inside';
+}
+
+/** Where the empty lines say the binder found nothing: "this binder" at a binder of your own's Sets. */
+function whereOf({setCode, friend, binder}: Pick<NoMatchesProps, 'setCode' | 'friend' | 'binder'>) {
+  if (binder === 'own-scope') return 'this binder';
+  return (friend ? NO_MATCHES_THEIRS : NO_MATCHES_WHERE)[setCode] ?? 'this set';
 }
 
 /** The room around the empty view's line, past the spacing scale's top step (SPACING.xxxl, 32). */
@@ -535,6 +561,8 @@ const NO_MATCH_PADDING = 64;
 interface NoMatchesProps {
   show: BinderShow;
   setCode: string;
+  /** Whether a binder of your own shows, and at its own Sets. */
+  binder: BinderPlace;
   friend: boolean;
   /** Whether any filter or a search is on. */
   filtered: boolean;
@@ -554,8 +582,7 @@ interface NoMatchesProps {
  * A status (#790), like Browse's empty grid: a search that empties the binder changes
  * nothing where the reader is typing, so it is announced.
  */
-function NoMatches({show, setCode, friend, filtered, axis, scope, renderFoilPointer}: NoMatchesProps) {
-  const where = (friend ? NO_MATCHES_THEIRS : NO_MATCHES_WHERE)[setCode] ?? 'this set';
+function NoMatches({show, setCode, binder, friend, filtered, axis, scope, renderFoilPointer}: NoMatchesProps) {
   // A scope with no cards to hold, such as a promo set whose cards no dataset has yet, isn't complete.
   const everyCard = scope.length > 0 && holdsEveryCard(show, filtered);
   const foilPointer = pointsToFoils({show, axis, setCode}, filtered) ? renderFoilPointer?.(scope) : undefined;
@@ -565,13 +592,21 @@ function NoMatches({show, setCode, friend, filtered, axis, scope, renderFoilPoin
         role="status"
         aria-live="polite"
         style={{textAlign: 'center', margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.xl}px`}}>
-        {everyCard
-          ? everyCardLine(setCode, friend, axis)
-          : `No ${VIEW_CARDS[show]} in ${where} match your filters.`}
+        {noMatchesLine({show, setCode, binder, friend, axis, scope}, everyCard)}
       </p>
       {foilPointer}
     </div>
   );
+}
+
+/**
+ * The empty view's line: every card held, a binder of your own whose rules hold no card, or what
+ * the view and the filters left out.
+ */
+function noMatchesLine(props: Omit<NoMatchesProps, 'filtered' | 'renderFoilPointer'>, everyCard: boolean): string {
+  if (everyCard) return everyCardLine(props);
+  if (props.binder !== 'none' && props.scope.length === 0) return "No cards match this binder's rules.";
+  return `No ${VIEW_CARDS[props.show]} in ${whereOf(props)} match your filters.`;
 }
 
 interface DockedSetBodyProps extends PanelControls {

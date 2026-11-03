@@ -58,6 +58,13 @@ interface BrowseToolbarProps {
    */
   setPicker?: React.ReactNode;
   /**
+   * The picker names a binder of your own, whose name is the player's own words: its
+   * button then takes the room its words need from the search field, keeping its right edge at
+   * the panel's, rather than cutting every name to the 71px a set's number asks for (owner,
+   * 2026-11-03).
+   */
+  pickerNamesBinder?: boolean;
+  /**
    * Browse's docked side panel holds every filter (desktop, owner 2026-10-07), so
    * the inline ink, cost and inkwell icons give way, the Filters button toggles the
    * panel instead of opening the dialog, and the toolbar lines up with the page below
@@ -470,6 +477,7 @@ interface ToolbarSlots {
   modeSwitch?: React.ReactNode;
   modeActions?: React.ReactNode;
   setPicker?: React.ReactNode;
+  pickerNamesBinder?: boolean;
 }
 
 /**
@@ -490,7 +498,7 @@ interface ToolbarSlots {
  * only change style: a mode change, such as an import from the grid opening the binder, keeps
  * them, so focus on them, or handed back to the actions' gear when its dialog closes, stays.
  */
-function DockedToolbar({filters, sort, search, chips, modeSwitch, modeActions, setPicker}: ToolbarSlots) {
+function DockedToolbar({filters, sort, search, chips, modeSwitch, modeActions, setPicker, pickerNamesBinder}: ToolbarSlots) {
   const overPanel = Boolean(setPicker);
   const controlBox = overPanel ? IN_FLOW : TRAILING_CONTROL_STYLE;
   return (
@@ -503,8 +511,8 @@ function DockedToolbar({filters, sort, search, chips, modeSwitch, modeActions, s
           {sort}
         </div>
         <div style={{flex: 1, minWidth: 0, marginLeft: BROWSE_GUTTER}}>{search}</div>
-        <div style={overPanel ? TRAILING_PANEL_STYLE : IN_FLOW}>
-          {overPanel && <div style={{flex: 1, minWidth: 0}}>{setPicker}</div>}
+        <div style={overPanel ? {...pickerSpanStyle(pickerNamesBinder), marginLeft: BROWSE_GUTTER} : IN_FLOW}>
+          {overPanel && <div style={pickerSlotStyle(pickerNamesBinder)}>{setPicker}</div>}
           {modeSwitch && <div style={controlBox}>{modeSwitch}</div>}
           {modeActions && <div style={controlBox}>{modeActions}</div>}
         </div>
@@ -532,8 +540,19 @@ const PANEL_SPAN_STYLE: React.CSSProperties = {
   gap: SPACING.md,
 };
 
-/** The set picker, Collection and the actions over the set panel, one gutter past the search. */
-const TRAILING_PANEL_STYLE: React.CSSProperties = {...PANEL_SPAN_STYLE, marginLeft: BROWSE_GUTTER};
+/**
+ * The set picker's group: the panel's width, or, while the picker names a binder of your own,
+ * at least that width and as much more as its name needs, taken from the search field beside it
+ * so the group's right edge stays on the panel's.
+ */
+const pickerSpanStyle = (namesBinder = false): React.CSSProperties =>
+  namesBinder ? {...PANEL_SPAN_STYLE, width: 'auto', minWidth: SIDE_PANEL_WIDTH} : PANEL_SPAN_STYLE;
+
+/**
+ * The picker's own slot: it fills the group, from its words' width while it names a binder, so a
+ * short name still keeps Collection and the gear at the panel's right edge.
+ */
+const pickerSlotStyle = (namesBinder = false): React.CSSProperties => ({flex: namesBinder ? '1 1 auto' : 1, minWidth: 0});
 
 /**
  * The flowing toolbar (tablet and phone, and the playstyle page): its controls wrap as
@@ -616,6 +635,7 @@ export function BrowseToolbar({
   modeSwitch,
   modeActions,
   setPicker,
+  pickerNamesBinder,
   extraChips,
   searchQuery,
   onSearchChange,
@@ -672,6 +692,7 @@ export function BrowseToolbar({
     modeSwitch,
     modeActions,
     setPicker,
+    pickerNamesBinder,
   };
   if (docked) return <DockedToolbar {...slots} />;
 

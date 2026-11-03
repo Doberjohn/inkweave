@@ -1,6 +1,7 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {
   PROMO_RARITY,
+  type CardFilterOptions,
   applySortOrder,
   collectorOrder,
   editionThenCollectorOrder,
@@ -18,7 +19,7 @@ import {
   type BrowseSortOrder,
   type SetCode,
 } from '../../shared/constants';
-import {RARITY_PARAM, SET_PARAM} from '../../shared/hooks/useFilterParams';
+import {RARITY_PARAM, RULE_PARAMS, SET_PARAM} from '../../shared/hooks/useFilterParams';
 import type {CollectionPromo} from './collectionPromos';
 import type {Axis} from './collectionStats';
 
@@ -41,17 +42,29 @@ export const OWNED_PARAM = 'owned';
  */
 export const FRIEND_PARAM = 'friend';
 
+/**
+ * Which of the reader's own binders shows: `?custom=<id>`, beside `?binder=` at the Sets
+ * it shows. Absent, the binder is My collection.
+ */
+export const CUSTOM_PARAM = 'custom';
+
 /** The params collection mode never keeps: a set filter, since its panel picks the set. */
 const INSIDE_STRAYS = [SET_PARAM];
 /** And a binder of promos alone: a rarity filter too, since every card in it is a promo. */
 const PROMO_STRAYS = [SET_PARAM, RARITY_PARAM];
-/** The params the grid never keeps: the binder's view and whose binder, since the grid has no collection to view. */
-const OUTSIDE_STRAYS = [OWNED_PARAM, FRIEND_PARAM];
+/**
+ * The params the grid never keeps: the binder's view, whose binder and which of your own, since
+ * the grid has no collection to view.
+ */
+const OUTSIDE_STRAYS = [OWNED_PARAM, FRIEND_PARAM, CUSTOM_PARAM];
 
-/** The strays of a binder scope, or of the grid's (`null`, no binder). */
-function straysOf(binder: string | null): readonly string[] {
+/** The strays of the URL's mode: the grid's, a binder scope's, and in a friend's binder your own binder's id too. */
+function straysOf(params: URLSearchParams): readonly string[] {
+  const binder = params.get(BINDER_PARAM);
   if (binder === null) return OUTSIDE_STRAYS;
-  return isPromoScope(binder) ? PROMO_STRAYS : INSIDE_STRAYS;
+  const inside = isPromoScope(binder) ? PROMO_STRAYS : INSIDE_STRAYS;
+  // A friend's binder shows none of the reader's binders.
+  return params.has(FRIEND_PARAM) ? [...inside, CUSTOM_PARAM] : inside;
 }
 
 /**
@@ -62,7 +75,7 @@ function straysOf(binder: string | null): readonly string[] {
  * the binder out of sight.
  */
 export function strayParams(params: URLSearchParams): string[] {
-  return straysOf(params.get(BINDER_PARAM)).filter((param) => params.has(param));
+  return straysOf(params).filter((param) => params.has(param));
 }
 
 /** The URL less the params its mode never keeps (`strayParams`). */
@@ -73,11 +86,41 @@ export function withoutStrays(params: URLSearchParams): URLSearchParams {
 }
 
 /**
+ * The address that opens a binder of the reader's own, or My collection (null), in one write:
+ * `binder` at its Sets and `custom` its id, or `binder=all` and no `custom`, the page's
+ * filters and search cleared (`RULE_PARAMS`), so it shows what its cover counts. The set picker's
+ * Binders tab, the shelf and a binder's save all open one this way.
+ */
+export function openBinderParams(params: URLSearchParams, binder: {id: string; scope: string} | null): URLSearchParams {
+  const next = new URLSearchParams(params);
+  for (const param of RULE_PARAMS) next.delete(param);
+  next.set(BINDER_PARAM, binder?.scope ?? WHOLE_COLLECTION);
+  if (binder === null) next.delete(CUSTOM_PARAM);
+  else next.set(CUSTOM_PARAM, binder.id);
+  return withoutStrays(next);
+}
+
+/**
  * Whether the page's Rarity filter picks the promos, alone or beside other rarities (owner,
  * 2026-10-20): the set picker then opens the whole collection's menu on its Promo tab.
  */
 export const rarityPicksPromos = (params: URLSearchParams) =>
   (params.get(RARITY_PARAM) ?? '').split(',').includes(PROMO_RARITY);
+
+/**
+ * The filters the binder applies: Browse's, less the set filter. Collection mode's set is
+ * chosen in the collection panel (owner, 2026-10-12), and a set filter could only empty
+ * the binder of every other set. A binder of promos alone drops the rarity filter too
+ * (owner, 2026-10-20, `promoOnly`). The mode drops both params; this covers the render
+ * before they are gone. A binder's rules run through it too, so they hold what the
+ * page's filters would.
+ */
+export function binderFilters(filters: CardFilterOptions, promoOnly: boolean): CardFilterOptions {
+  const rest = {...filters};
+  delete rest.setCodes;
+  if (promoOnly) delete rest.rarities;
+  return rest;
+}
 
 /** Whether a binder set is a promo set (#805), which goes by its code ("P1") rather than a number. */
 export const isPromoSet = (setCode: string) => promoSetOf(setCode) !== undefined;

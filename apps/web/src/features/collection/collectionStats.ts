@@ -1,7 +1,7 @@
 import type {Ink} from 'inkweave-synergy-engine';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries, Finish} from './collectionParser';
-import {binderCardsForSet, isPromoSet} from './binderCards';
+import {ALL_PROMO_SETS, WHOLE_COLLECTION, binderCardsForSet, isPromoSet} from './binderCards';
 import {finishesOf} from './printingFinishes';
 import {PROMO_RARITY} from '../cards/loader';
 
@@ -268,3 +268,10 @@ export function tallyCollection(cards: LorcanaCard[], entries: CollectionEntries
   };
 }
 
+
+/** What a scope counts: the whole collection's totals, every promo set's, or the set's own tally. */
+export function scopeTally(stats: ReturnType<typeof tallyCollection>, scope: string) {
+  if (scope === WHOLE_COLLECTION) return stats.totals;
+  if (scope === ALL_PROMO_SETS) return stats.promoTotals;
+  return stats.sets.find((set) => set.code === scope)?.tally;
+}

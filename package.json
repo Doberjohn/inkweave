@@ -59,9 +59,14 @@
         "!apps/web/dist/assets/collectionStats-*.js",
         "!apps/web/dist/assets/friendBinderPath-*.js",
         "!apps/web/dist/assets/supabaseClient-*.js",
-        "!apps/web/dist/assets/posthogClient-*.js"
+        "!apps/web/dist/assets/posthogClient-*.js",
+        "!apps/web/dist/assets/BinderMedal-*.js",
+        "!apps/web/dist/assets/BinderTab-*.js",
+        "!apps/web/dist/assets/UnknownBinder-*.js",
+        "!apps/web/dist/assets/binderCovers-*.js",
+        "!apps/web/dist/assets/ownBinders-*.js"
       ],
-      "limit": "461 kB",
+      "limit": "463 kB",
       "gzip": true
     },
     {
@@ -95,6 +100,18 @@
         "apps/web/dist/assets/friendBinderPath-*.js"
       ],
       "limit": "67 kB",
+      "gzip": true
+    },
+    {
+      "name": "Binders JS (lazy)",
+      "path": [
+        "apps/web/dist/assets/BinderMedal-*.js",
+        "apps/web/dist/assets/BinderTab-*.js",
+        "apps/web/dist/assets/UnknownBinder-*.js",
+        "apps/web/dist/assets/binderCovers-*.js",
+        "apps/web/dist/assets/ownBinders-*.js"
+      ],
+      "limit": "8 kB",
       "gzip": true
     },
     {

@@ -268,6 +268,22 @@ describe('BrowseToolbar on Browse', () => {
     expect(order()).toEqual(['Filters', 'Sort cards', 'Search cards', 'Binder set', 'Collection']);
   });
 
+  it("gives the picker's group the room a binder's name needs, and the panel's width for a set", () => {
+    const setPicker = <button type="button">Binder set</button>;
+    /** The group the picker sits in: its slot's parent. */
+    const group = () => screen.getByText('Binder set').parentElement?.parentElement;
+    const {unmount} = render(<BrowseToolbar {...defaultProps({...search, modeSwitch, setPicker, ...docked(true)})} />);
+    expect(group()).toHaveStyle({width: '260px'});
+    expect(screen.getByText('Binder set').parentElement).toHaveStyle({flex: '1'});
+    unmount();
+
+    render(
+      <BrowseToolbar {...defaultProps({...search, modeSwitch, setPicker, pickerNamesBinder: true, ...docked(true)})} />,
+    );
+    expect(group()).toHaveStyle({width: 'auto', minWidth: '260px'});
+    expect(screen.getByText('Binder set').parentElement).toHaveStyle({flex: '1 1 auto'});
+  });
+
   it("puts the collection's actions after the mode switch, docked or flowing, but not on phones (owner, 2026-10-20)", () => {
     const modeActions = <button type="button">Collection actions</button>;
     const {unmount} = render(<BrowseToolbar {...defaultProps({...search, modeSwitch, modeActions, ...docked(true)})} />);

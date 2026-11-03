@@ -10,6 +10,7 @@ import {
   STORY_SETS_WITH_PROMOS,
   STORY_STATS,
 } from './collectionStoryData';
+import {STORY_OPEN_AMBER, STORY_OPEN_LONG, storyBinderChoices} from './binders/binderStoryData';
 
 /** What an iPhone 15's 393px leave the row's set button, between Filters and Collection. */
 const ROW_WIDTH = 164;
@@ -154,4 +155,88 @@ export const NoPromoSets: Story = {args: {sets: STORY_SETS, progress: progressOf
  */
 export const CuratorsCollection: Story = {
   args: {setCode: 'CC', sets: [...STORY_SETS, 'CC', 'P1'], progress: null},
+};
+
+/** Opens the picker on a binder of your own, whose button is named for the binder. */
+const openBinderPicker: Story['play'] = async ({canvasElement}) => {
+  await userEvent.click(within(canvasElement).getByRole('button', {name: /^Binder: /}));
+};
+
+/** The toolbar's 111px. */
+const toolbarWidth: Story['decorators'] = [
+  (Story) => (
+    <div style={{width: 111}}>
+      <Story />
+    </div>
+  ),
+];
+
+/** The row's width on an iPhone 15. */
+const rowWidth: Story['decorators'] = [
+  (Story) => (
+    <div style={{width: ROW_WIDTH}}>
+      <Story />
+    </div>
+  ),
+];
+
+/**
+ * Your binders (#1074, 3A): the menu's Binders tab before Standard and Promo, which then hold
+ * their words alone. Open on My collection, the Binders tab is a press away.
+ */
+export const BindersTab: Story = {
+  args: {setCode: 'all', binders: storyBinderChoices({onOpen: fn()})},
+  play: async (context) => {
+    await openPicker(context);
+    await userEvent.click(within(context.canvasElement).getByRole('button', {name: 'Binders'}));
+  },
+};
+
+/**
+ * A binder of your own at its own Sets: the button's medal and "Your binder" over its name, and
+ * the menu opens on Binders, the binder ringed.
+ */
+export const BinderOpen: Story = {
+  args: {setCode: 'all', binders: storyBinderChoices({open: STORY_OPEN_AMBER, onOpen: fn()})},
+  play: openBinderPicker,
+};
+
+/** A set picked inside a binder of your own: "Amber · Set 12" over the set's name. */
+export const BinderInsideSet: Story = {
+  args: {setCode: '12', binders: storyBinderChoices({open: STORY_OPEN_AMBER, atOwnScope: false, onOpen: fn()})},
+};
+
+/** The toolbar's button on a binder of your own: its medal and name, whole on hover. */
+export const CompactBinder: Story = {
+  args: {size: 'toolbar', setCode: 'all', binders: storyBinderChoices({open: STORY_OPEN_AMBER, onOpen: fn()})},
+  decorators: toolbarWidth,
+};
+
+/** The toolbar's button with a set picked inside the binder: "Amber · Set 12", cut short. */
+export const CompactBinderInsideSet: Story = {
+  args: {size: 'toolbar', setCode: '12', binders: storyBinderChoices({open: STORY_OPEN_AMBER, atOwnScope: false, onOpen: fn()})},
+  decorators: toolbarWidth,
+};
+
+/** The toolbar's button on a thirty-letter name, with no card of yours to cover it. */
+export const CompactLongBinderName: Story = {
+  args: {size: 'toolbar', setCode: 'all', binders: storyBinderChoices({open: STORY_OPEN_LONG, onOpen: fn()})},
+  decorators: toolbarWidth,
+};
+
+/** The phone row's button on a binder of your own: its medal, and its name over the figures. */
+export const RowBinder: Story = {
+  args: {
+    size: 'row',
+    setCode: 'all',
+    figures: {shown: '75% · 25%', words: '75% complete, 25% master'},
+    binders: storyBinderChoices({open: STORY_OPEN_AMBER, onOpen: fn()}),
+  },
+  decorators: rowWidth,
+};
+
+/** The phone row's button on a thirty-letter name, cut short. */
+export const RowLongBinderName: Story = {
+  ...RowBinder,
+  args: {...RowBinder.args, binders: storyBinderChoices({open: STORY_OPEN_LONG, onOpen: fn()})},
 };
