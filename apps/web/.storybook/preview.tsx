@@ -16,7 +16,7 @@ const preview: Preview = {
   decorators: [
     (Story) => (
       // AppLayout's one SkeletonTheme (#511): without it, skeletons render light grey here.
-      <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+      <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.skeletonHighlight}>
         <div style={{background: '#0d0d14', minHeight: '100vh', padding: 0}}>
           <Story />
         </div>

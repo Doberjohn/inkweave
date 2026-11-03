@@ -1,15 +1,21 @@
 import {createRef} from 'react';
 import {describe, expect, it, vi} from 'vitest';
-import {render, screen} from '@testing-library/react';
-import {Z_INDEX} from '../../tokens/theme';
+import {fireEvent, render, screen} from '@testing-library/react';
+import {DURATION, Z_INDEX} from '../../tokens/theme';
 import {BottomSheet} from '../BottomSheet';
 
-function renderSheet(layer?: 'modal' | 'lightbox') {
+interface SheetOptions {
+  layer?: 'modal' | 'lightbox';
+  visible?: boolean;
+}
+
+function renderSheet({layer, visible = true}: SheetOptions = {}) {
+  const onTransitionEnd = vi.fn();
   render(
     <BottomSheet
-      visible
+      visible={visible}
       onClose={vi.fn()}
-      onTransitionEnd={vi.fn()}
+      onTransitionEnd={onTransitionEnd}
       ariaLabel="Test sheet"
       backdropTestId="sheet-scrim"
       sheetRef={createRef<HTMLDivElement>()}
@@ -18,7 +24,9 @@ function renderSheet(layer?: 'modal' | 'lightbox') {
       <p>Body</p>
     </BottomSheet>,
   );
-  return {sheet: screen.getByRole('dialog', {name: 'Test sheet'}), scrim: screen.getByTestId('sheet-scrim')};
+  // A closing sheet is hidden from the accessibility tree by its class, so find it by its label.
+  const sheet = document.querySelector<HTMLElement>('[aria-label="Test sheet"]')!;
+  return {sheet, scrim: screen.getByTestId('sheet-scrim'), body: screen.getByText('Body'), onTransitionEnd};
 }
 
 describe('BottomSheet', () => {
@@ -29,8 +37,31 @@ describe('BottomSheet', () => {
   });
 
   it('stacks over an open modal, scrim and all, on the lightbox layer', () => {
-    const {sheet, scrim} = renderSheet('lightbox');
+    const {sheet, scrim} = renderSheet({layer: 'lightbox'});
     expect(sheet).toHaveStyle({zIndex: String(Z_INDEX.popover)});
     expect(scrim).toHaveStyle({zIndex: String(Z_INDEX.popoverBackdrop)});
+  });
+
+  it("ends a closing sheet's exit when its own slide ends, not the scrim's fade or a child's", () => {
+    const {sheet, scrim, body, onTransitionEnd} = renderSheet({visible: false});
+    fireEvent.transitionEnd(scrim, {propertyName: 'opacity'});
+    fireEvent.transitionEnd(body, {propertyName: 'transform'});
+    expect(onTransitionEnd).not.toHaveBeenCalled();
+    fireEvent.transitionEnd(sheet, {propertyName: 'transform'});
+    expect(onTransitionEnd).toHaveBeenCalledOnce();
+  });
+
+  it('moves the scrim, the sheet and the top the search sheet changes at one speed', () => {
+    const {sheet, scrim} = renderSheet();
+    for (const property of ['transform', 'opacity', 'top']) {
+      expect(sheet.style.transition).toContain(`${property} ${DURATION.slow}ms`);
+    }
+    expect(scrim.style.transition).toContain(`opacity ${DURATION.slow}ms`);
+  });
+
+  it('stays seen until it has slid away: visibility moves with the slide', () => {
+    const {sheet, scrim} = renderSheet({visible: false});
+    expect(sheet.style.transition).toContain(`visibility ${DURATION.slow}ms`);
+    expect(scrim.style.transition).toContain(`visibility ${DURATION.slow}ms`);
   });
 });

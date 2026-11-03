@@ -53,7 +53,7 @@ export function FranchiseCardsModal({source, cards, onClose, onCardClick}: Franc
           justifyContent: 'space-between',
           gap: 16,
           padding: '18px 22px',
-          borderBottom: `1px solid ${COLORS.surfaceHover}`,
+          borderBottom: `1px solid ${COLORS.subtleBorder}`,
           backgroundImage: `radial-gradient(420px 120px at 0% 0%, ${inkRgba(source.ink, 0.16)}, transparent)`,
         }}
       >

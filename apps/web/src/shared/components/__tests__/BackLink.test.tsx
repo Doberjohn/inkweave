@@ -1,5 +1,6 @@
 import {describe, it, expect, vi} from 'vitest';
 import {render, screen, fireEvent} from '@testing-library/react';
+import {COLORS} from '../../constants';
 import {BackLink} from '../BackLink';
 
 describe('BackLink', () => {
@@ -18,5 +19,24 @@ describe('BackLink', () => {
   it('renders as a button element', () => {
     render(<BackLink onClick={vi.fn()} label="Back" />);
     expect(screen.getByRole('button')).toBeTruthy();
+  });
+
+  it('takes the brand gold under the pointer, not the legacy accent', () => {
+    render(<BackLink onClick={vi.fn()} label="Back" />);
+    const link = screen.getByRole('button', {name: 'Back'});
+    expect(link).toHaveStyle({color: COLORS.textMuted});
+    fireEvent.mouseEnter(link);
+    expect(link).toHaveStyle({color: COLORS.primary});
+  });
+
+  it('never submits a form it sits in', () => {
+    const onSubmit = vi.fn((event: React.FormEvent) => event.preventDefault());
+    render(
+      <form onSubmit={onSubmit}>
+        <BackLink onClick={vi.fn()} label="Back" />
+      </form>,
+    );
+    fireEvent.click(screen.getByRole('button', {name: 'Back'}));
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });
