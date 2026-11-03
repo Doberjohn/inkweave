@@ -14,10 +14,12 @@ import {
   type BrowseListing,
   type PhoneSheetOptions,
 } from './useBrowseCollection';
-// The binder's chunk, which the Binder sheet's numbers come from, and friends' chunk, which the foil
-// pointer comes from, imported with this file: a cold import inside a test can outlast its wait (#712).
+// The binder's chunk, which the Binder sheet's numbers come from, friends' chunk, which the foil
+// pointer comes from, and the import's, imported with this file: a cold import inside a test can
+// outlast its wait (#712).
 import './CollectionBinderSection';
 import './CollectionFriends';
+import './ImportCollectionDialog';
 
 // Who presses Collection, for useBrowseCollection's own cases; useBinderParams reads none of it.
 const {account} = vi.hoisted(() => ({
@@ -81,6 +83,9 @@ vi.mock('./CollectionFriends', async (importOriginal) => ({
     </button>
   ),
 }));
+// Your binders' reads: an empty shelf unless a case says otherwise.
+const binderRepo = vi.hoisted(() => ({listBinders: vi.fn(async () => ({data: [] as unknown[] | null, error: null as string | null}))}));
+vi.mock('./binders/binderRepository', () => binderRepo);
 // The card window's copies stripe, which a case presses as the window would: its own counting is
 // WindowCopies.test.tsx's.
 vi.mock('./WindowCopies', () => ({
@@ -216,6 +221,32 @@ describe('useBinderParams', () => {
       expect(result.current.friend).toBeNull();
       expect(result.current.search).toBe('ink=Ruby');
     });
+
+    it('names no binder of your own, not even before its param is dropped', () => {
+      const named: (string | null)[] = [];
+      const wrapper = ({children}: {children: ReactNode}) => (
+        <MemoryRouter initialEntries={['/browse?binder=14&friend=ruby_hero_042&custom=b1']}>{children}</MemoryRouter>
+      );
+      const {result} = renderHook(
+        () => {
+          const binder = useBinderParams(COLLECTOR);
+          named.push(binder.custom);
+          return useSearchParams()[0].toString();
+        },
+        {wrapper},
+      );
+      expect(result.current).toBe('binder=14&friend=ruby_hero_042');
+      expect(named).not.toContain('b1');
+    });
+  });
+
+  it("opens a binder of your own at its Sets with the page's filters cleared, and My collection by dropping it", () => {
+    const {result} = renderBinderParams('/browse?binder=14&ink=Amber&owned=missing', COLLECTOR);
+    act(() => result.current.openBinder({id: 'b1', scope: '12'}));
+    expect(result.current.search).toBe('binder=12&owned=missing&custom=b1');
+    expect(result.current.custom).toBe('b1');
+    act(() => result.current.openBinder(null));
+    expect(result.current.search).toBe('binder=all&owned=missing');
   });
 });
 
@@ -869,5 +900,133 @@ describe("useBrowseCollection: the binder's analytics", () => {
       renderSlots(entry, (slots) => slots.renderBinder(BOTH, () => {}));
       await waitFor(() => expect(trackEvent).toHaveBeenCalledWith('friend_binder_opened', {result: 'shown', from}));
     });
+  });
+});
+
+describe('useBrowseCollection: a binder of your own', () => {
+  const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
+  const amber = createCard({id: 'amber', setCode: '14', setNumber: 1, rarity: 'Uncommon', ink: 'Amber'});
+  const steel = createCard({id: 'steel', setCode: '14', setNumber: 2, rarity: 'Uncommon', ink: 'Steel'});
+  const LISTING: BrowseListing = {cards: [amber], sortOrder: 'newest', matched: [amber], filtered: false};
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    forgetFriendCollections();
+    // Signing out forgets the shelf, which the cases share.
+    const {follow} = await import('./binders/ownBinders');
+    follow({uid: null, hasCollection: false, syncing: false, wanted: false});
+    account.signedIn = true;
+    account.hasCollection = true;
+    account.syncing = false;
+    account.entries = {amber: {normal: 1, foil: 0}};
+    account.pool = [amber, steel];
+    binderRepo.listBinders.mockResolvedValue({data: [AMBER], error: null});
+    friends.getPlayerByHandle.mockResolvedValue({data: {id: 'ruby', handle: 'ruby_hero_042', name: 'Ruby'}, error: null});
+    friends.getFriendCollection.mockResolvedValue({data: {}, error: null});
+  });
+  afterEach(() => {
+    account.pool = [];
+    account.entries = {};
+  });
+
+  let slots: ReturnType<typeof useBrowseCollection> | null = null;
+  function Page({draw}: {draw: (state: ReturnType<typeof useBrowseCollection>) => ReactNode}) {
+    slots = useBrowseCollection([]);
+    const [params] = useSearchParams();
+    return (
+      <>
+        {draw(slots)}
+        <output data-testid="search">{params.toString()}</output>
+      </>
+    );
+  }
+  const renderAt = (url: string, draw: (state: ReturnType<typeof useBrowseCollection>) => ReactNode) =>
+    render(
+      <MemoryRouter initialEntries={[url]}>
+        <Page draw={draw} />
+      </MemoryRouter>,
+    );
+  const poolIds = () => slots?.pool.map((each) => each.id);
+
+  it('holds only the cards its rules let through, once your shelf answers', async () => {
+    renderAt('/browse?binder=all&custom=b1', (state) => state.renderBinder(LISTING, () => {}));
+    await waitFor(() => expect(poolIds()).toEqual(['amber']));
+    expect(await screen.findByRole('region', {name: 'Binder'})).toBeInTheDocument();
+    expect(binderRepo.listBinders).toHaveBeenCalledWith('user-1');
+  });
+
+  it("says a binder that isn't on your shelf, with no panel, and opens My collection from there", async () => {
+    binderRepo.listBinders.mockResolvedValue({data: [], error: null});
+    renderAt('/browse?binder=all&custom=someone-elses', (state) => state.renderBinder(LISTING, () => {}));
+    expect(await screen.findByText("This binder isn't on your shelf.")).toBeInTheDocument();
+    expect(slots?.renderSetPanel(LISTING)).toBeUndefined();
+    expect(poolIds()).toEqual(['amber', 'steel']);
+    fireEvent.click(screen.getByRole('button', {name: 'Open My collection'}));
+    expect(screen.getByTestId('search')).toHaveTextContent(/^binder=all$/);
+  });
+
+  it("counts a one-set binder whose rules hold no card as that set, empty, so its numbers don't wait forever", async () => {
+    const NONE_HELD = {id: 'b9', name: 'Ruby', scope: '14', rules: 'ink=Ruby', coverId: null, place: 1};
+    binderRepo.listBinders.mockResolvedValue({data: [AMBER, NONE_HELD], error: null});
+    const EMPTY: BrowseListing = {cards: [], sortOrder: 'newest', matched: [], filtered: false};
+    renderAt('/browse?binder=14&custom=b9', (state) => state.renderBinder(EMPTY, () => {}));
+    await waitFor(() => expect(poolIds()).toEqual([]));
+    const propsOf = (slot: ReactNode) => (slot as {props: {children: {props: Record<string, unknown>}}}).props.children.props;
+    expect(propsOf(slots?.renderSetPanel(EMPTY)).sets).toEqual(['14']);
+  });
+
+  it("says your binders didn't load, and its Try again reads them again", async () => {
+    binderRepo.listBinders.mockResolvedValue({data: null, error: 'Network error'});
+    renderAt('/browse?binder=all&custom=b1', (state) => state.renderBinder(LISTING, () => {}));
+    expect(await screen.findByRole('alert')).toHaveTextContent("Couldn't load your binders.");
+    expect(slots?.renderSetPicker(LISTING)).toBeUndefined();
+
+    binderRepo.listBinders.mockResolvedValue({data: [AMBER], error: null});
+    fireEvent.click(screen.getByRole('button', {name: 'Try again'}));
+    await waitFor(() => expect(poolIds()).toEqual(['amber']));
+  });
+
+  it("offers your binders in the set picker's Binders tab, and a press opens one", async () => {
+    renderAt('/browse?binder=all', (state) => state.renderSetPicker(LISTING));
+    fireEvent.click(await screen.findByRole('button', {name: /^Binder set/}));
+    fireEvent.click(screen.getByRole('button', {name: 'Binders'}));
+    fireEvent.click(await screen.findByRole('option', {name: /^Amber/}));
+    expect(screen.getByTestId('search')).toHaveTextContent(/^binder=all&custom=b1$/);
+  });
+
+  it('tells the toolbar its picker names a binder, so the button takes the room its name needs', async () => {
+    renderAt('/browse?binder=all&custom=b1', (state) => state.renderSetPicker(LISTING));
+    await waitFor(() => expect(slots?.pickerNamesBinder).toBe(true));
+
+    fireEvent.click(await screen.findByRole('button', {name: /^Binder: Amber/}));
+    fireEvent.click(screen.getByRole('button', {name: 'Binders'}));
+    fireEvent.click(await screen.findByRole('option', {name: /^My collection/}));
+    await waitFor(() => expect(slots?.pickerNamesBinder).toBe(false));
+  });
+
+  it("neither reads nor offers your binders in a friend's binder", async () => {
+    renderAt('/browse?binder=all&friend=ruby_hero_042', (state) => state.renderSetPicker(LISTING));
+    fireEvent.click(await screen.findByRole('button', {name: /^Binder set/}));
+    expect(screen.queryByRole('button', {name: 'Binders'})).toBeNull();
+    expect(binderRepo.listBinders).not.toHaveBeenCalled();
+  });
+
+  it('imports against the whole collection from inside a binder of your own', async () => {
+    renderAt('/browse?binder=all&custom=b1', (state) => (
+      <>
+        {state.modeActions}
+        {state.prompts}
+      </>
+    ));
+    await waitFor(() => expect(poolIds()).toEqual(['amber']));
+    fireEvent.click(screen.getByRole('button', {name: 'Collection actions'}));
+    fireEvent.click(screen.getByRole('menuitem', {name: /^Import collection/}));
+    // A row for each card: inside the Amber binder, a pool of its cards alone would match only the first.
+    const csv = 'Set Number,Card Number,Variant,Count,Name,Color,Rarity\n014,1,normal,1,"amber",Amber,Uncommon\n014,2,normal,1,"steel",Steel,Uncommon\n';
+    const file = new File([csv], 'export.csv', {type: 'text/csv'});
+    // The dialog's chunk loads on the press: past findBy's default second in a cold worker.
+    const input = await screen.findByLabelText('Collection CSV file', {}, {timeout: 5000});
+    await act(async () => fireEvent.change(input, {target: {files: [file]}}));
+    expect(await screen.findByText('Collection imported: 2 cards.')).toBeInTheDocument();
   });
 });

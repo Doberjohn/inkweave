@@ -259,7 +259,7 @@ function toolbarPropsFrom(
   params: FilterParams,
   controls: Pick<
     ToolbarProps,
-    'onFiltersClick' | 'docked' | 'isMobile' | 'modeSwitch' | 'modeActions' | 'setPicker' | 'sortOptions' | 'rarities'
+    'onFiltersClick' | 'docked' | 'isMobile' | 'modeSwitch' | 'modeActions' | 'setPicker' | 'pickerNamesBinder' | 'sortOptions' | 'rarities'
   >,
 ): ToolbarProps {
   return {
@@ -304,6 +304,7 @@ function collectionToolbar(docked: boolean, collection: BrowseCollectionSlots, l
     modeSwitch: collection.modeSwitch,
     modeActions: collection.modeActions,
     setPicker: docked ? collection.renderSetPicker(listing) : undefined,
+    pickerNamesBinder: collection.pickerNamesBinder,
     sortOptions: collection.sortOptions,
   };
 }

@@ -14,6 +14,7 @@ import {
   STORY_YOUR_STATS,
 } from './collectionStoryData';
 import {tallyCollection, type Axis} from './collectionStats';
+import {STORY_OPEN_AMBER, storyBinderChoices} from './binders/binderStoryData';
 import {COLORS} from '../../shared/constants';
 
 /**
@@ -147,4 +148,12 @@ export const Rail: Story = {args: {layout: 'rail'}};
  */
 export const FriendsBinder: Story = {
   args: {yours: STORY_YOUR_STATS, compare: {youNeed: 41, theyNeed: 12}},
+};
+
+/**
+ * A binder of your own on show at its own Sets: its medal and "Your binder" over its
+ * name on the picker, and headlines that name the binder, "Complete binder".
+ */
+export const BinderOfYourOwn: Story = {
+  args: {setCode: 'all', binders: storyBinderChoices({open: STORY_OPEN_AMBER, onOpen: fn()})},
 };

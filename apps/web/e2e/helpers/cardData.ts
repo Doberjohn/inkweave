@@ -14,6 +14,8 @@ import {cardPath} from 'inkweave-synergy-engine/card';
 interface RawCard {
   id: number | string;
   fullName: string;
+  /** Its ink, a pair joined by a hyphen for a dual-ink card ("Amber-Steel"). */
+  color?: string;
   setCode?: string;
   type?: string;
   /** Collector number. */

@@ -1,9 +1,11 @@
 // @vitest-environment node
 import path from 'node:path';
-import {describe, expect, it} from 'vitest';
+import {afterEach, describe, expect, it, vi} from 'vitest';
 import {
   type BuiltChunks,
   type BuiltFiles,
+  bindersOn,
+  loadableBinderCode,
   loadableChunks,
   staleStartupEntries,
   uiCompilerReport,
@@ -173,5 +175,88 @@ describe('loadableChunks', () => {
       'assets/BrowsePage-b.js': {},
     });
     expect([...loadableChunks(bundle)]).toEqual(['assets/BrowsePage-b.js']);
+  });
+});
+
+describe('loadableBinderCode', () => {
+  const SRC = '/r/apps/web/src';
+  const BINDERS = `${SRC}/features/collection/binders`;
+  /** A bundle by file name, as Rolldown hands it over: a page's HTML, or a chunk's code and modules. */
+  const bundleOf = (files: Record<string, string | {code?: string; modules: Record<string, number>}>): BuiltChunks =>
+    Object.fromEntries(
+      Object.entries(files).map(([fileName, file]) => [
+        fileName,
+        typeof file === 'string'
+          ? {type: 'asset' as const, fileName, source: file}
+          : {
+              type: 'chunk' as const,
+              fileName,
+              code: file.code ?? '',
+              modules: Object.fromEntries(
+                Object.entries(file.modules).map(([id, renderedLength]) => [id, {renderedLength}]),
+              ),
+            },
+      ]),
+    );
+  const ENTRY = '<script type="module" src="/assets/index-a.js"></script>';
+
+  it('passes a build whose pages load only the flag, the rest left in chunks no page names', () => {
+    const bundle = bundleOf({
+      'index.html': ENTRY,
+      'assets/index-a.js': {code: 'import("./BrowsePage-b.js")', modules: {[`${BINDERS}/flag.ts`]: 30}},
+      'assets/BrowsePage-b.js': {modules: {[`${SRC}/features/collection/useBrowseCollection.tsx`]: 40}},
+      'assets/BinderTab-c.js': {modules: {[`${BINDERS}/BinderTab.tsx`]: 40}},
+    });
+    expect(loadableBinderCode(bundle)).toEqual([]);
+  });
+
+  it('names binder code a page renders, through another chunk too, on any OS', () => {
+    const bundle = bundleOf({
+      'index.html': ENTRY,
+      'assets/index-a.js': {code: 'import("./BrowsePage-b.js")', modules: {[`${SRC}/main.tsx`]: 40}},
+      'assets/BrowsePage-b.js': {
+        code: 'import("./BinderTab-c.js")',
+        modules: {
+          [`${SRC}/pages/BrowsePage.tsx`]: 40,
+          [`${BINDERS}/binderShelf.ts`]: 40,
+        },
+      },
+      'assets/BinderTab-c.js': {
+        modules: {'C:\\r\\apps\\web\\src\\features\\collection\\binders\\BinderTab.tsx': 40},
+      },
+    });
+    expect(loadableBinderCode(bundle)).toEqual([
+      'src/features/collection/binders/binderShelf.ts in assets/BrowsePage-b.js',
+      'src/features/collection/binders/BinderTab.tsx in assets/BinderTab-c.js',
+    ]);
+  });
+
+  it('leaves out a binder module the build dropped, and collection code outside the folder', () => {
+    const bundle = bundleOf({
+      'index.html': ENTRY,
+      'assets/index-a.js': {
+        modules: {
+          [`${BINDERS}/useCustomBinder.ts`]: 0,
+          [`${SRC}/features/collection/binderCards.ts`]: 40,
+        },
+      },
+    });
+    expect(loadableBinderCode(bundle)).toEqual([]);
+  });
+});
+
+describe('bindersOn', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  // flag.ts reads import.meta.env, which only the app's tsconfig types, so it is loaded by path.
+  const FLAG = './src/features/collection/binders/flag.ts';
+
+  it.each(['true', 'false', ''])('reads %j as the app does', async (value) => {
+    vi.stubEnv('VITE_SHOW_BINDERS', value);
+    vi.resetModules();
+    const {SHOW_BINDERS} = (await import(/* @vite-ignore */ FLAG)) as {SHOW_BINDERS: boolean};
+    expect(bindersOn({VITE_SHOW_BINDERS: value})).toBe(SHOW_BINDERS);
   });
 });

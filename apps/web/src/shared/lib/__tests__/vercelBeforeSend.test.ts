@@ -10,6 +10,12 @@ describe('withoutAccountParams', () => {
     expect(withoutAccountParams(event).url).toBe(`${SITE}/browse?binder=all&q=elsa`);
   });
 
+  it("drops the id of a binder of your own", () => {
+    const event = {type: 'pageview' as const, url: `${SITE}/browse?binder=all&custom=0b9e2c4a-1f3d-4e5a-9b8c-7d6e5f4a3b2c`};
+
+    expect(withoutAccountParams(event).url).toBe(`${SITE}/browse?binder=all`);
+  });
+
   it("drops a sign-in's one-time code", () => {
     const event = {type: 'pageview' as const, url: `${SITE}/auth/callback?code=4f2a9c`};
 
@@ -24,7 +30,7 @@ describe('withoutAccountParams', () => {
   });
 
   // Rewriting the query would re-encode it: %20 would go as +.
-  it('sends an address with neither param as it came', () => {
+  it('sends an address with none of them as it came', () => {
     const event = {type: 'pageview' as const, url: `${SITE}/browse?q=a%20b`};
 
     expect(withoutAccountParams(event)).toBe(event);

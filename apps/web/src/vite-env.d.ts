@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_IS_REVEAL_SEASON?: string;
   readonly VITE_SHOW_STRATEGY_TIPS?: string;
   readonly VITE_SHOW_BETA_NOTICE?: string;
+  readonly VITE_SHOW_BINDERS?: string;
 }
 
 /** The Vercel deployment environment the build ran for, or 'unknown' (vite.config.ts, #740). */

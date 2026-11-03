@@ -164,6 +164,10 @@ type AnalyticsEvents = {
   // The first turn of each kind in one opening of a binder: a disc, a page dragged across, or the
   // spread map. `page` is a phone's lone page.
   binder_page_turned: {method: 'arrow' | 'drag' | 'map'; layout: 'spread' | 'page'};
+  // A press that opened a binder: `from` the set picker's Binders tab or the shelf, `mine`
+  // a binder of your own rather than My collection, and `kinds` the kinds of its rules
+  // (`ruleKinds`: "sets,ink,rarity", or "none"). Never a binder's name or id.
+  binder_opened: {from: 'picker' | 'shelf'; mine: boolean; kinds: string};
   // Friends (#852, #884). Never a friend code, name, handle or id.
   // `result` on a send is send_friend_request's answer: pending, accepted, a refusal, or failed.
   friend_code_copied: {result: 'copied' | 'blocked'};

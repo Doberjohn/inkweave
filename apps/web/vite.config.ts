@@ -7,6 +7,7 @@ import babel from '@rolldown/plugin-babel';
 import {VitePWA} from 'vite-plugin-pwa';
 import {visualizer} from 'rollup-plugin-visualizer';
 import {
+  binderCodeGuard,
   cssUrlGuard,
   isSharedModule,
   isVendorModule,
@@ -580,6 +581,7 @@ export default defineConfig({
     unloadableChunksPlugin(),
     startupGroupsGuard({vendor: STARTUP_VENDOR, shared: STARTUP_SHARED}),
     uiCompilerGuard(),
+    binderCodeGuard(),
     !!process.env.SENTRY_AUTH_TOKEN &&
       sentryVitePlugin({
         org: process.env.SENTRY_ORG,
@@ -644,6 +646,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // Binders' tests run with their flag on; a test of the flag off stubs it and reloads.
+    env: {VITE_SHOW_BINDERS: 'true'},
     maxWorkers: resolveVitestWorkers(),
     setupFiles: ['./src/shared/test-utils/setup.ts'],
     exclude: ['**/node_modules/**', '**/e2e/**'],

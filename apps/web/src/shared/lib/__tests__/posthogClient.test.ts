@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
-import {FRIEND_PARAM} from '../../../features/collection/binderCards';
+import {CUSTOM_PARAM, FRIEND_PARAM} from '../../../features/collection/binderCards';
 
 afterEach(() => {
   vi.doUnmock('posthog-js');
@@ -54,6 +54,21 @@ describe('startPostHog', () => {
     expect(url).not.toContain('ruby_hero_042');
     expect(url).not.toContain('4f2a9c');
     expect(new URL(url).searchParams.get(FRIEND_PARAM)).toBe('<masked>');
+  });
+
+  // A binder of your own's id is a key to its rules, which name nothing but are the player's own.
+  it("masks a binder of your own's id in the address of every event", async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{"status":1}')));
+    window.history.replaceState(null, '', `/browse?binder=12&${CUSTOM_PARAM}=9b1c2d3e-binder`);
+    vi.resetModules();
+    const {startPostHog} = await import('../posthogClient');
+    startPostHog('phc_test', () => {});
+    const {default: posthog} = await import('posthog-js');
+
+    const url = String(posthog.capture('probe', {})?.properties.$current_url);
+
+    expect(url).not.toContain('9b1c2d3e-binder');
+    expect(new URL(url).searchParams.get(CUSTOM_PARAM)).toBe('<masked>');
   });
 
   it('returns null, never a throw, when the SDK fails to start, and hands over the error', async () => {
