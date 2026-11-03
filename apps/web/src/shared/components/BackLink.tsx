@@ -1,4 +1,4 @@
-import {COLORS, EASING, FONTS, FONT_SIZES, FONT_WEIGHT} from '../constants';
+import {COLORS, DURATION, EASING, FONTS, FONT_SIZES, FONT_WEIGHT} from '../constants';
 import {useHover} from 'inkweave-ui/hooks/useHover';
 
 interface BackLinkProps {
@@ -8,12 +8,13 @@ interface BackLinkProps {
   style?: React.CSSProperties;
 }
 
-/** Styled back-navigation button with arrow and gold hover effect. The arrow is drawn, not read: its name is the label. */
+/** Styled back-navigation button with arrow and the brand gold on hover. The arrow is drawn, not read: its name is the label. */
 export function BackLink({onClick, label, style}: BackLinkProps) {
   const {hovered, hoverProps} = useHover();
 
   return (
     <button
+      type="button"
       onClick={onClick}
       {...hoverProps}
       style={{
@@ -23,12 +24,12 @@ export function BackLink({onClick, label, style}: BackLinkProps) {
         background: 'none',
         border: 'none',
         cursor: 'pointer',
-        color: hovered ? COLORS.primary500 : COLORS.textMuted,
+        color: hovered ? COLORS.primary : COLORS.textMuted,
         fontFamily: FONTS.body,
         fontSize: `${FONT_SIZES.base}px`,
         fontWeight: FONT_WEIGHT.medium,
         padding: 0,
-        transition: `color 0.15s ${EASING.snappy}`,
+        transition: `color ${DURATION.fast}ms ${EASING.snappy}`,
         ...style,
       }}>
       <span aria-hidden="true" style={{fontSize: `${FONT_SIZES.base}px`}}>&larr;</span>

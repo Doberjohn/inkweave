@@ -1,5 +1,15 @@
-import {CtaButton} from '../../shared/components';
-import {CAP_LABEL_XS, COLORS, FONT_SIZES, RADIUS, SPACING, TRUNCATE, FONT_WEIGHT, LINE_HEIGHT} from '../../shared/constants';
+import {BackLink} from '../../shared/components';
+import {
+  CAP_LABEL_XS,
+  COLORS,
+  FONT_SIZES,
+  RADIUS,
+  SPACING,
+  TOUCH_TARGET,
+  TRUNCATE,
+  FONT_WEIGHT,
+  LINE_HEIGHT,
+} from '../../shared/constants';
 import {FriendChip} from '../friends/FriendChip';
 
 /** Where the banner's way back goes: your own binder, or Browse for a reader with no collection. */
@@ -47,13 +57,11 @@ export function FriendBinderBanner(props: FriendBinderBannerProps) {
   return props.isMobile ? <PhoneBanner {...props} /> : <DesktopBanner {...props} />;
 }
 
+/** At the row's end, a touch target tall: BackLink brings no padding of its own. */
+const BACK_STYLE: React.CSSProperties = {flexShrink: 0, marginLeft: 'auto', minHeight: TOUCH_TARGET};
+
 function BackButton({back, onBack, isMobile}: Pick<FriendBinderBannerProps, 'back' | 'onBack' | 'isMobile'>) {
-  return (
-    <CtaButton variant="neutral" onClick={onBack} style={{flexShrink: 0, marginLeft: 'auto'}}>
-      <span aria-hidden="true">&lsaquo;</span>
-      {BACK_WORDS[back][isMobile ? 'phone' : 'desktop']}
-    </CtaButton>
-  );
+  return <BackLink onClick={onBack} label={BACK_WORDS[back][isMobile ? 'phone' : 'desktop']} style={BACK_STYLE} />;
 }
 
 function DesktopBanner({name, handle, shown, back, onBack}: FriendBinderBannerProps) {

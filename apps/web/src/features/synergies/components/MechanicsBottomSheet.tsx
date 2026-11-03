@@ -1,5 +1,5 @@
 import {useRef} from 'react';
-import {COLORS, EASING, FONTS, FONT_SIZES, SPACING, FONT_WEIGHT} from '../../../shared/constants';
+import {COLORS, FONTS, FONT_SIZES, SPACING, FONT_WEIGHT} from '../../../shared/constants';
 import {BottomSheet, IconButton, LinkButton} from '../../../shared/components';
 import {useDialogFocus, useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {RoleTiles, type RoleTile, type RoleTilesStatus} from './RoleTileRow';
@@ -95,10 +95,7 @@ export function MechanicsBottomSheet({
       backdropTestId="mechanics-sheet-backdrop"
       sheetRef={sheetRef}
       onKeyDown={handleKeyDown}
-      sheetStyle={{
-        maxHeight: '78vh',
-        transition: `transform 0.25s ${EASING.smooth}, opacity 0.25s ${EASING.smooth}`,
-      }}>
+      sheetStyle={{maxHeight: '78vh'}}>
       <SheetHeader onClose={onClose} onClearAll={onClearAll} hasActive={hasActive} />
       <div
         style={{

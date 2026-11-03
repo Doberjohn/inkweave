@@ -1,11 +1,11 @@
-import {COLORS, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../tokens/theme';
+import {COLORS, DURATION, EASING, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../tokens/theme';
 
 interface BottomSheetProps {
   /** useTransitionPresence's `visible` — drives the overlay-* enter/exit classes. */
   visible: boolean;
   onClose: () => void;
-  /** useTransitionPresence's unmount callback; attached to backdrop AND sheet. */
-  onTransitionEnd: React.TransitionEventHandler<HTMLDivElement>;
+  /** useTransitionPresence's unmount callback, called once the sheet has slid away. */
+  onTransitionEnd: () => void;
   /** Required accessible name for the sheet dialog. */
   ariaLabel: string;
   /** E2E contract: existing specs dismiss sheets via the backdrop testid. */
@@ -14,8 +14,8 @@ interface BottomSheetProps {
   sheetRef: React.RefObject<HTMLDivElement | null>;
   /** The consumer's useDialogFocus Tab-trap handler. */
   onKeyDown: React.KeyboardEventHandler<HTMLDivElement>;
-  /** Per-sheet container deltas (top/maxHeight/inline transition), merged last. */
-  sheetStyle?: React.CSSProperties;
+  /** Per-sheet container deltas (top, maxHeight), merged last. The motion is the sheet's own. */
+  sheetStyle?: Omit<React.CSSProperties, 'transition'>;
   /** `lightbox` stacks the sheet and its scrim above an open modal, as it does a DialogShell. */
   layer?: keyof typeof LAYERS;
   children: React.ReactNode;
@@ -31,13 +31,25 @@ const LAYERS = {
   lightbox: {scrim: Z_INDEX.popoverBackdrop, panel: Z_INDEX.popover},
 } as const;
 
+/** Every sheet slides at one speed: the 2026-07-29 ruling puts a slide on touch at `DURATION.slow`. */
+const MOTION = `${DURATION.slow}ms ${EASING.smooth}`;
+
+/**
+ * `visibility` moves with the rest: an interpolated `visibility` is visible whenever either end is,
+ * so a sheet shows from its first frame open and stays seen until it has slid away. `top` moves
+ * too, for the search sheet, which raises it while it lists results.
+ */
+const SCRIM_MOTION = `opacity ${MOTION}, visibility ${MOTION}`;
+const SHEET_MOTION = `transform ${MOTION}, opacity ${MOTION}, top ${MOTION}, visibility ${MOTION}`;
+
 /**
  * Shared bottom-sheet chrome (#510): the scrim backdrop, slide-up sheet
  * container, and drag-handle visual that SearchBottomSheet and
  * MechanicsBottomSheet used to copy-paste. Behavior (presence, focus trap,
  * scroll lock) stays with the consumer via the house hook trio — this
  * component owns only the chrome, including the iOS safe-area inset both
- * sheets previously lacked.
+ * sheets previously lacked. It owns the motion too: the scrim and sheet move together, and the exit
+ * ends when the sheet's own slide does.
  */
 export function BottomSheet({
   visible,
@@ -52,12 +64,16 @@ export function BottomSheet({
   children,
 }: BottomSheetProps) {
   const tiers = LAYERS[layer];
+  // The sheet's own transitions all end with its slide, so any of them ends the exit; the scrim's
+  // fade and a child's hover transition (whose transitionend bubbles here) don't.
+  const onSlideEnd = (event: React.TransitionEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) onTransitionEnd();
+  };
   return (
     <>
       <div
         data-testid={backdropTestId}
         className={`overlay-transition overlay-enter ${visible ? 'overlay-visible' : ''}`}
-        onTransitionEnd={onTransitionEnd}
         onClick={onClose}
         aria-hidden="true"
         style={{
@@ -66,6 +82,7 @@ export function BottomSheet({
           // Solid scrim only — no backdrop-filter (WebKit continuous-repaint trap; see #444).
           background: COLORS.scrim,
           zIndex: tiers.scrim,
+          transition: SCRIM_MOTION,
         }}
       />
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Tab trap via useDialogFocus) */}
@@ -77,7 +94,7 @@ export function BottomSheet({
         tabIndex={-1}
         onKeyDown={onKeyDown}
         className={`overlay-transition overlay-slide-up overlay-enter ${visible ? 'overlay-visible' : ''}`}
-        onTransitionEnd={onTransitionEnd}
+        onTransitionEnd={onSlideEnd}
         style={{
           position: 'fixed',
           left: 0,
@@ -95,6 +112,7 @@ export function BottomSheet({
           // order; it only takes focus programmatically so the trap has somewhere to land,
           // and a ring round the whole sheet would mark nothing. Its controls draw their own.
           outline: 'none',
+          transition: SHEET_MOTION,
           ...sheetStyle,
         }}>
         <div

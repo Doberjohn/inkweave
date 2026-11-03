@@ -29,6 +29,6 @@ describe('FriendChip', () => {
 
   it('draws a handle with no ink on the neutral surface', () => {
     render(<FriendChip name="Mickey Fan" handle="mickey_fan" />);
-    expect(screen.getByText('MF')).toHaveStyle({backgroundColor: COLORS.surfaceHover, color: COLORS.text});
+    expect(screen.getByText('MF')).toHaveStyle({backgroundColor: COLORS.neutralFill, color: COLORS.text});
   });
 });
