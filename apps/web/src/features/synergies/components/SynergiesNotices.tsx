@@ -14,6 +14,9 @@ const NOTICE_STYLE: CSSProperties = {
   gap: SPACING.sm,
 };
 
+/** The other notices' box, with a button's room between the failure's line and its Try again. */
+const FAILED_NOTICE_STYLE: CSSProperties = {...NOTICE_STYLE, gap: SPACING.md};
+
 const TITLE_STYLE: CSSProperties = {
   margin: 0,
   color: COLORS.text,
@@ -76,12 +79,13 @@ interface SynergiesFailedNoticeProps {
  */
 export function SynergiesFailedNotice({onRetry, focusOnRetry}: SynergiesFailedNoticeProps) {
   return (
-    <LoadFailedNotice
-      what="this card's synergies"
-      layout="stacked"
-      testId="synergies-failed"
-      onRetry={onRetry}
-      focusOnRetry={focusOnRetry}
-    />
+    <div style={FAILED_NOTICE_STYLE}>
+      <LoadFailedNotice
+        what="this card's synergies"
+        lineStyle={TITLE_STYLE}
+        onRetry={onRetry}
+        focusOnRetry={focusOnRetry}
+      />
+    </div>
   );
 }

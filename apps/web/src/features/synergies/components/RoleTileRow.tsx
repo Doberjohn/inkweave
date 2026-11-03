@@ -211,6 +211,17 @@ export function RoleTileRow({
   );
 }
 
+/** The failed tiles' line beside its Try again, in place of the tiles. */
+const FAILED_BOX: React.CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: SPACING.md,
+};
+
+const FAILED_LINE: React.CSSProperties = {margin: 0, color: COLORS.textMuted, fontSize: FONT_SIZES.lg};
+
 /**
  * A playstyle's mechanic tiles in the state they stand in (#930): their placeholder while they
  * load, a line saying they failed with a Try again that loads them alone, or the tiles.
@@ -231,15 +242,16 @@ export function RoleTiles({
   }
   if (status === 'failed') {
     return (
-      <LoadFailedNotice
-        what="this playstyle's mechanics"
-        layout="inline"
-        // In the row it keeps the row's box, as the placeholder does, so the cards below stay
-        // put through the retry.
-        style={row.layout === 'grid' ? {padding: `${SPACING.xxl}px 0`} : rowBoxStyle()}
-        onRetry={onRetry}
-        focusOnRetry={focusOnRetry}
-      />
+      // In the row it keeps the row's box, as the placeholder does, so the cards below stay put
+      // through the retry.
+      <div style={{...FAILED_BOX, ...(row.layout === 'grid' ? {padding: `${SPACING.xxl}px 0`} : rowBoxStyle())}}>
+        <LoadFailedNotice
+          what="this playstyle's mechanics"
+          lineStyle={FAILED_LINE}
+          onRetry={onRetry}
+          focusOnRetry={focusOnRetry}
+        />
+      </div>
     );
   }
   return <RoleTileRow {...row} />;
