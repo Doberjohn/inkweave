@@ -283,6 +283,7 @@ test.describe("Collection mode, the binder's pages and pockets (#941)", () => {
     await signInAsCollector(page, ENTRIES);
     await page.goto(`/browse?binder=${SET}`);
     await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
+    await expect(page.getByRole('region', {name: 'Collection numbers'})).toHaveAttribute('aria-busy', 'false');
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
 
     // One spread on, both pages hold cards, once the turned sheet has landed.

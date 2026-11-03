@@ -215,6 +215,9 @@ test.describe("A friend's collection", () => {
     await page.goto(RUBY_BINDER);
     await expect(page.getByRole('heading', {name: "Ruby Hero 042's binder"})).toBeVisible();
     await expect(tiles(page).first()).toBeVisible();
+    // Audited once all of it has mounted: the compare row waits on both collections.
+    await expect(shows(page).getByRole('button', {name: /^You need/})).toHaveAccessibleName('You need 1');
+    await expect(numbers(page)).toHaveAttribute('aria-busy', 'false');
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
 
     await shows(page).getByRole('button', {name: /^You need/}).click();

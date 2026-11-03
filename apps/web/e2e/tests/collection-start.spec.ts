@@ -65,10 +65,13 @@ test.describe('Starting a collection', () => {
     await signedIn(page);
     await page.getByRole('button', {name: 'Show my collection'}).click();
     await expect(emptyNote(page)).toBeVisible();
+    await expect(page.getByRole('region', {name: 'Collection numbers'})).toHaveAttribute('aria-busy', 'false');
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
 
     await binder(page).getByRole('button', {name: 'Import from Dreamborn'}).click();
-    await expect(page.getByRole('dialog', {name: 'Import your collection'})).toBeVisible();
+    const dialog = page.getByRole('dialog', {name: 'Import your collection'});
+    // Until its fade ends, the dialog's text measures against a half-drawn panel.
+    await expect(dialog).toHaveCSS('opacity', '1');
     expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
   });
 
