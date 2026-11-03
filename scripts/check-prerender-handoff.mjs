@@ -56,6 +56,9 @@
  *      keeps the visitor's place.
  *  11. A path that matches no route is answered 404 with dist/404.html, the shell with no capture,
  *      and the app's not-found page (its title) shows.
+ *  12. With the app's code held, a click on a capture's closed disclosure (the About section, a
+ *      card's facts) leaves it shut: the app renders it closed, so one opened there would snap
+ *      shut once the app took over.
  *  Checks 8 to 10 are left out when HOLD_CAP_MS is 0, which turns the hold off.
  *
  * Usage: `pnpm build:web`, `PRERENDER_SAMPLE=1 node scripts/prerender.mjs`, then
@@ -865,6 +868,19 @@ function notFoundCheck(device, path) {
   };
 }
 
+/** Check 12 on `device`: each of `paths` keeps its capture's disclosure shut when it is clicked. */
+function disclosureChecks(device, paths) {
+  return paths.map((path) => ({
+    name: `12. ${path} (${device}, app held) keeps its capture's disclosure shut when clicked`,
+    run: async (browser, base) => {
+      const act = (page) => page.click('#root details > summary');
+      const seen = await visit(browser, base, {device, path, app: false, paints: true, act});
+      if (!seen.markup.includes('<summary')) return 'its capture has no disclosure to click';
+      return /<details[^>]*\sopen[\s>=]/.test(seen.markup) ? 'the click opened it' : null;
+    },
+  }));
+}
+
 /** Check 2 on `device`: each route with its own capture, the app's code held. */
 function withCaptureChecks(device, routes) {
   return routes.map((path) => ({
@@ -1024,6 +1040,10 @@ function planChecks(dist, cap) {
     ...withCaptureChecks(device, withCapture),
     browseCaptureCheck(device),
     notFoundCheck(device, '/no-such-page'),
+    ...disclosureChecks(device, [
+      '/playstyles',
+      withCapture.find((path) => path.startsWith('/card/')),
+    ]),
     ...fallbackChecks(device, ['/browse', withoutCapture[0]]),
     ...screenChecks(device, eachCapture),
     ...(cap > 0 ? holdChecks(device, routes, cap) : []),

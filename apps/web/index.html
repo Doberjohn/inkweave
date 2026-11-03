@@ -144,6 +144,13 @@
           root.replaceChildren(phone.content);
           root.setAttribute('data-layout', 'phone');
         }
+        // The app renders its own closed <details> over the capture, so one opened here would
+        // snap shut: until then a summary's click (Enter and Space send one too) opens nothing.
+        root.querySelectorAll('summary').forEach(function (summary) {
+          summary.addEventListener('click', function (event) {
+            event.preventDefault();
+          });
+        });
         root.setAttribute('data-ready', '');
       })();
     </script>

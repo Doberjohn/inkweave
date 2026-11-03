@@ -361,9 +361,9 @@ option {
 
 /* A closed <details> whose summary is one line (PageAbout, CardFacts): the text stays in the page,
    and in its prerendered capture, for search engines, while a visitor sees one line they can
-   open; hiding it outright would be hidden text. Styled here, not inline, so it costs no JS and a
-   capture opens and turns its chevron before the app loads. Safari draws its marker from the
-   -webkit- pseudo-element. */
+   open; hiding it outright would be hidden text. Styled here, not inline, so it costs no JS.
+   index.html's inline script keeps a capture's ones shut, since the app's render would close
+   them again. Safari draws its marker from the -webkit- pseudo-element. */
 .text-disclosure > summary {
   display: flex;
   align-items: center;
