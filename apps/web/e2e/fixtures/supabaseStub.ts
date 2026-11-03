@@ -28,6 +28,10 @@ export const E2E_FRIEND_CODE = 'ABCD2345';
 
 const E2E_SUPABASE_HOST = new URL(E2E_SUPABASE_ORIGIN).hostname;
 
+/** A `page.route` matcher for one path on the placeholder project, such as `/auth/v1/token`. */
+export const onProject = (pathname: string) => (url: URL) =>
+  url.origin === E2E_SUPABASE_ORIGIN && url.pathname === pathname;
+
 /**
  * The empty answer for a path. `claim_friend_code` answers with a code, a JSON string:
  * `[]` is not one, so every signed-in page opening /account would show the Friends
@@ -50,8 +54,9 @@ export async function stubSupabase(page: Page): Promise<void> {
   await page.route(
     (url) => url.hostname === E2E_SUPABASE_HOST,
     (route, request) =>
-      // No auth call is expected here — with no stored session `getSession()` resolves from
-      // localStorage — but answering with valid JSON beats a parse error if one ever appears.
+      // Auth calls a spec doesn't serve itself land here too, such as Sign out's
+      // `/auth/v1/logout` or the provider's `/auth/v1/authorize` a sign-in leaves for: an empty
+      // object is enough for both.
       route.fulfill({
         status: 200,
         contentType: 'application/json',
