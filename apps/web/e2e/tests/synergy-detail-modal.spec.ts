@@ -132,10 +132,10 @@ type SamplingWindow = Window & {cardBFrames?: Promise<CardBFrame[]>};
 
 /**
  * Card B's transform and opacity on each of the first four frames the card view spends in
- * `mode`, read from the page so no frame passes between Playwright's steps. Under reduced motion
- * card B neither flies in from its tile nor back to it. The sampler is running once this
- * resolves, so the action that changes the mode comes after it; the returned call reads the
- * frames.
+ * `mode`, read from the page so no frame passes between Playwright's steps, or on as many as
+ * card B lasts there. Under reduced motion card B neither flies in from its tile nor back to
+ * it. The sampler is running once this resolves, so the action that changes the mode comes
+ * after it; the returned call reads the frames.
  */
 async function sampleCardB(modal: Locator, mode: 'comparison' | 'default') {
   await modal.evaluate((root, wanted) => {
@@ -150,8 +150,10 @@ async function sampleCardB(modal: Locator, mode: 'comparison' | 'default') {
           frames.push({transform: style.transform, opacity: style.opacity});
         }
         left -= 1;
-        if (frames.length < 4 && left > 0) requestAnimationFrame(sample);
-        else resolve(frames);
+        const settled = frames.length >= 4 || left <= 0;
+        const gone = frames.length > 0 && !cardB;
+        if (settled || gone) resolve(frames);
+        else requestAnimationFrame(sample);
       };
       requestAnimationFrame(sample);
     });
@@ -343,10 +345,14 @@ test.describe('Synergy comparison — roles and reduced motion (desktop)', () =>
       await modal.locator('[data-group-key="shift-targets"] a.card-tile').first().click();
       expect(await frames()).toEqual([still, still, still, still]);
 
-      // Leaving hides card B at once instead of flying it back, and then takes it down.
+      // Leaving hides card B at once instead of flying it back, and then takes it down. Card B
+      // stays for the exit's 480 ms, which WebKit can draw in fewer than four frames, so every
+      // frame it lasts is read.
       frames = await sampleCardB(modal, 'default');
       await back.click();
-      expect((await frames()).map((frame) => frame.opacity)).toEqual(['0', '0', '0', '0']);
+      const leaving = (await frames()).map((frame) => frame.opacity);
+      expect(leaving.length).toBeGreaterThan(0);
+      expect(leaving.filter((opacity) => opacity !== '0')).toEqual([]);
       await expect(cardB).toHaveCount(0);
 
       // The next comparison opens the same way.
