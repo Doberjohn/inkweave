@@ -1,10 +1,10 @@
-import {afterAll, describe, it, expect, vi} from 'vitest';
+import {describe, it, expect, vi} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import {AccountPage} from '../AccountPage';
 
 /*
- * The FLAG-ON page (#852), whose Friends section is a module of its own, loaded lazily
+ * The account page's Friends section (#852) is a module of its own, loaded lazily
  * inside the boundary every section shares, so it arrives with the others, between
  * Identity and Collection, rather than landing late and pushing them down.
  *
@@ -19,13 +19,6 @@ const gate = vi.hoisted(() => {
   });
   return {loaded, open: () => open()};
 });
-vi.hoisted(() => {
-  vi.stubEnv('VITE_SHOW_FRIENDS', 'true');
-  vi.stubEnv('VITE_SHOW_COLLECTION', 'true');
-  vi.stubEnv('VITE_SHOW_ACCOUNTS', 'true');
-});
-// Restored after the file, so the stubs cannot reach a later test file in the same worker.
-afterAll(() => vi.unstubAllEnvs());
 vi.mock('../AccountFriends', async () => {
   await gate.loaded;
   return {AccountFriends: ({userId}: {userId: string}) => <h2>Friends of {userId}</h2>};
@@ -46,7 +39,7 @@ vi.mock('../../shared/components', async () => {
   return {...actual, CompactHeader: () => <header data-testid="compact-header" />};
 });
 
-describe('AccountPage with the friends flag on', () => {
+describe('AccountPage: the Friends section', () => {
   it("brings the player's Friends section in with the others, between Identity and Collection", async () => {
     render(
       <MemoryRouter>

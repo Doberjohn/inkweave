@@ -23,7 +23,8 @@ import {useWindowCard} from './windowCard';
 /**
  * Friends who have it: the card window's count, a pocket's badge, the empty Missing
  * view's pointer to the foils friends have, and the one dialog they open. Its own chunk, loaded
- * only with both flags on: the friends' reads and the dialog stay out of Browse's.
+ * only for a signed-in reader with a collection: the friends' reads and the dialog stay out of
+ * Browse's.
  */
 
 const NO_COPIES: CollectionEntry = {normal: 0, foil: 0};

@@ -8,8 +8,8 @@ let base;
 let dist;
 
 /**
- * A crawled build in miniature: the home page's capture, two routes' captures and one asset,
- * beside a file outside it that no request may reach.
+ * A crawled build in miniature: the home page's capture, two routes' captures, the 404 page and
+ * one asset, beside a file outside it that no request may reach.
  */
 beforeAll(() => {
   base = fs.mkdtempSync(path.join(os.tmpdir(), 'serve-dist-'));
@@ -21,6 +21,7 @@ beforeAll(() => {
   write('dist/index.html', '<div id="root" data-prerender-route="/">home</div>');
   write('dist/browse/index.html', '<div id="root" data-prerender-route="/browse">browse</div>');
   write('dist/card/1989/elsa-snow-queen/index.html', '<div id="root">elsa</div>');
+  write('dist/404.html', '<div id="root">shell</div>');
   write('dist/assets/index-abc.js', 'export {};');
   write('secret.txt', 'not served');
 });
@@ -48,6 +49,12 @@ describe('resolveDistFile', () => {
     // The captures #915's inline script must empty: a compare link, or a card page by its id alone.
     expect(served('/compare/1989/1990')).toBe(path.join(dist, 'index.html'));
     expect(served('/card/1989')).toBe(path.join(dist, 'index.html'));
+  });
+
+  it('serves nothing for a path no route of the app matches', () => {
+    expect(served('/seo-check-missing')).toBeUndefined();
+    expect(served('/ink/purple')).toBeUndefined();
+    expect(served('/compare/1989')).toBeUndefined();
   });
 
   it('serves a file by its path, and a 404 for a path with a dot that names no file', () => {
@@ -109,6 +116,22 @@ describe('createDistServer', () => {
       expect(page.headers.get('x-frame-options')).toBe('DENY');
       expect(await page.text()).toContain('data-prerender-route="/"');
       expect((await fetch(`${base}/assets/index-gone.js`)).status).toBe(404);
+    } finally {
+      server.close();
+    }
+  });
+
+  it('answers a path no route matches with the 404 page and status 404, as Vercel does', async () => {
+    const server = createDistServer(dist, {headers: {'X-Frame-Options': 'DENY'}});
+    await new Promise((done) => server.listen(0, done));
+    try {
+      const base = `http://localhost:${server.address().port}`;
+      for (const missing of ['/seo-check-missing', '/assets/index-gone.js']) {
+        const page = await fetch(`${base}${missing}`);
+        expect(page.status).toBe(404);
+        expect(page.headers.get('x-frame-options')).toBe('DENY');
+        expect(await page.text()).toBe('<div id="root">shell</div>');
+      }
     } finally {
       server.close();
     }

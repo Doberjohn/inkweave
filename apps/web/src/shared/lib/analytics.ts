@@ -123,8 +123,8 @@ type AnalyticsEvents = {
     stage: 'start' | 'callback';
     reason: 'error' | 'cancelled' | 'timeout';
   };
-  // Collection mode (#553, #883), behind SHOW_COLLECTION. Enums and counts only: never a
-  // card ref, a file name or a CSV row. `replacing`: the collection already held a copy.
+  // Collection mode (#553, #883). Enums and counts only: never a card ref, a file name or a
+  // CSV row. `replacing`: the collection already held a copy.
   collection_mode_toggled: {state: 'on' | 'off'};
   // An empty collection made for a player with nothing to import, once the account held none.
   collection_started: {surface: 'browse' | 'account'};
@@ -164,7 +164,7 @@ type AnalyticsEvents = {
   // The first turn of each kind in one opening of a binder: a disc, a page dragged across, or the
   // spread map. `page` is a phone's lone page.
   binder_page_turned: {method: 'arrow' | 'drag' | 'map'; layout: 'spread' | 'page'};
-  // Friends (#852, #884), behind SHOW_FRIENDS. Never a friend code, name, handle or id.
+  // Friends (#852, #884). Never a friend code, name, handle or id.
   // `result` on a send is send_friend_request's answer: pending, accepted, a refusal, or failed.
   friend_code_copied: {result: 'copied' | 'blocked'};
   friend_request_sent: {
@@ -172,8 +172,7 @@ type AnalyticsEvents = {
   };
   // A row's action finished: removing a received request is `decline`, a sent one `cancel`.
   friend_action: {action: 'accept' | 'decline' | 'cancel' | 'remove'; ok: boolean};
-  // Collection sharing, behind SHOW_COLLECTION and SHOW_FRIENDS. Never an id,
-  // handle or name, as with the friends events.
+  // Collection sharing. Never an id, handle or name, as with the friends events.
   collection_sharing_changed: {state: 'on' | 'off'};
   // `from`: where the binder was reached, `/account`'s friends list, a row of Friends who have it,
   // or its address alone (a shared link, a new tab, a bookmark).
@@ -181,8 +180,7 @@ type AnalyticsEvents = {
     result: 'shown' | 'not_sharing' | 'failed';
     from: 'friends_list' | 'friends_who_have_it' | 'link';
   };
-  // Friends who have it, behind SHOW_COLLECTION and SHOW_FRIENDS: where it was opened from.
-  // Never an id, handle or name.
+  // Friends who have it: where it was opened from. Never an id, handle or name.
   friends_who_have_it_opened: {from: 'badge' | 'window'};
   // A press of a link to the Discord server's invite, where beta testers report bugs. `surface` is
   // where the link sits.

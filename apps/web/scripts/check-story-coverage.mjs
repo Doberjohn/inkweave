@@ -47,7 +47,7 @@ const EXCLUDED = new Set([
   'CollectionContext.tsx',
   'CollectionCardsContext.tsx',
   // A hook (#553 Phase C), not a component: it holds collection mode's state and
-  // returns slots for BrowseCollectionPage. Its JSX only composes components that have
+  // returns slots for BrowsePage. Its JSX only composes components that have
   // their own stories (CollectionModeSwitch, CollectionBinderSection,
   // ImportCollectionDialog, SignInDialog), and it needs a session plus both
   // collection providers to run, so a story of it would be a page in disguise.
@@ -55,13 +55,13 @@ const EXCLUDED = new Set([
   // The layout route that mounts the two collection providers around an
   // <Outlet />: like the providers themselves it renders only its children.
   'CollectionScope.tsx',
-  // The account page's collection wiring, split out so a flag-off build never loads
-  // the collection's data layer. Like useBrowseCollection, it only feeds hooks into
+  // The account page's collection wiring, split out so the account route's chunk holds
+  // none of the collection's data layer. Like useBrowseCollection, it only feeds hooks into
   // components with their own coverage: the page's CollectionSection (pages are
   // excluded) and ImportCollectionDialog (storied), and needs both providers to run.
   'AccountCollection.tsx',
-  // Same case (#852): the page's Friends wiring, a module of its own so a flag-off build
-  // never loads the friends code. It only feeds useFriends into FriendsSection, which has
+  // Same case (#852): the page's Friends wiring, a module of its own so the account
+  // route's chunk holds none of the friends code. It only feeds useFriends into FriendsSection, which has
   // its own stories, and needs a session and Supabase to run.
   'AccountFriends.tsx',
   // Wiring (#826): portals the copies stripe (CopiesStripe, storied) into the card window's

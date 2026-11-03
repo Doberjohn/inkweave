@@ -1,7 +1,7 @@
 import {COLORS, FONT_SIZES, INK_CHIP_COLORS, RADIUS, FONT_WEIGHT} from '../../shared/constants';
 import {initialsOf, inkOfHandle} from './friendInitials';
 
-const NO_INK = {bg: COLORS.surfaceHover, text: COLORS.text};
+const NO_INK = {bg: COLORS.neutralFill, text: COLORS.text};
 const SIZES = {md: 28, lg: 36} as const;
 
 /**

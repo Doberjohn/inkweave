@@ -89,3 +89,20 @@ describe("CompactHeader's skip link", () => {
     expect(container).toBeEmptyDOMElement();
   });
 });
+
+describe("CompactHeader's auth control", () => {
+  // The suite's beforeEach blanks the Supabase vars, as a build without them would be.
+  it('offers no sign-in and no account link when Supabase is not configured', () => {
+    render(
+      <MemoryRouter>
+        <SessionProvider>
+          <CompactHeader />
+        </SessionProvider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId('compact-header')).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Sign in'})).toBeNull();
+    expect(screen.queryByRole('button', {name: 'Account'})).toBeNull();
+  });
+});

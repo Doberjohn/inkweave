@@ -3,10 +3,8 @@ name: CI
 on:
   push:
     branches: [master, main]
-  # binders collects the binder PRs (#1074 to #1076) until one merge ships them to master, so
-  # PRs into it get the same checks. Drop it once that merge lands.
   pull_request:
-    branches: [master, main, binders]
+    branches: [master, main]
 
 # A newer push to a PR cancels that PR's older run, whose results nobody needs once it is
 # superseded (#867). Each push to master gets a group of its own, so a merge's run is never
@@ -80,17 +78,6 @@ jobs:
 
       - name: Build packages
         run: pnpm build
-
-      # A build with collection mode off fails when a page can load collection code
-      # (collectionCodeGuard in apps/web/build-guards.ts). "Build packages" built the all-off
-      # app production ships; these build the two other flag-off apps, accounts on alone and with
-      # friends, which load more code. Collection on without accounts builds the all-off app:
-      # SHOW_COLLECTION and SHOW_FRIENDS both need accounts too.
-      - name: Check flag-off builds load no collection code
-        working-directory: apps/web
-        run: |
-          VITE_SHOW_ACCOUNTS=true pnpm exec vite build --logLevel warn --outDir "$RUNNER_TEMP/flag-off" --emptyOutDir
-          VITE_SHOW_ACCOUNTS=true VITE_SHOW_FRIENDS=true pnpm exec vite build --logLevel warn --outDir "$RUNNER_TEMP/flag-off" --emptyOutDir
 
       # Root-level script suites (#524). These were runnable but wired into no hook
       # and no workflow, so the only automated assertions that the sitemap stays on

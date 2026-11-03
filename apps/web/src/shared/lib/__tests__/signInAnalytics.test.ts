@@ -1,17 +1,15 @@
-import {afterEach, describe, it, expect, vi, beforeEach} from 'vitest';
+import {describe, it, expect, vi, beforeEach} from 'vitest';
 import type {Session} from '@supabase/auth-js';
-import {callbackFailureReason} from '../signInAnalytics';
+import {
+  callbackFailureReason,
+  trackSignInCompleted,
+  trackSignInFailed,
+  trackSignInShown,
+  trackSignInStarted,
+} from '../signInAnalytics';
 
-// Hoisted, so every fresh copy of the helpers sends through the same mock.
 const {trackEvent} = vi.hoisted(() => ({trackEvent: vi.fn()}));
 vi.mock('../analytics', () => ({trackEvent}));
-
-/** The helpers read the accounts flag once, at load, so each case loads a fresh copy. */
-async function loadHelpers(accounts: 'true' | 'false' = 'true') {
-  vi.stubEnv('VITE_SHOW_ACCOUNTS', accounts);
-  vi.resetModules();
-  return import('../signInAnalytics');
-}
 
 function sessionFrom(provider: string): Session {
   return {
@@ -34,13 +32,7 @@ describe('sign-in events', () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it('completes a Google session as google, with no identity in the payload', async () => {
-    const {trackSignInCompleted} = await loadHelpers();
-
+  it('completes a Google session as google, with no identity in the payload', () => {
     trackSignInCompleted(sessionFrom('google'));
 
     expect(trackEvent).toHaveBeenCalledWith('sign_in_completed', {provider: 'google'});
@@ -49,17 +41,13 @@ describe('sign-in events', () => {
     expect(sent).not.toContain('player@example.com');
   });
 
-  it('completes a session from any other provider as other', async () => {
-    const {trackSignInCompleted} = await loadHelpers();
-
+  it('completes a session from any other provider as other', () => {
     trackSignInCompleted(sessionFrom('github'));
 
     expect(trackEvent).toHaveBeenCalledWith('sign_in_completed', {provider: 'other'});
   });
 
-  it('forwards a start and a failure as given', async () => {
-    const {trackSignInFailed, trackSignInStarted} = await loadHelpers();
-
+  it('forwards a start and a failure as given', () => {
     trackSignInStarted({provider: 'discord', surface: 'account'});
     trackSignInFailed({provider: null, stage: 'callback', reason: 'timeout'});
 
@@ -74,22 +62,9 @@ describe('sign-in events', () => {
     });
   });
 
-  it('forwards the surface a shown dialog opened from', async () => {
-    const {trackSignInShown} = await loadHelpers();
-
+  it('forwards the surface a shown dialog opened from', () => {
     trackSignInShown({surface: 'header'});
 
     expect(trackEvent).toHaveBeenCalledExactlyOnceWith('sign_in_shown', {surface: 'header'});
-  });
-
-  it('sends nothing while accounts are hidden, for a sign-in tried on /account by URL', async () => {
-    const {trackSignInCompleted, trackSignInFailed, trackSignInShown, trackSignInStarted} = await loadHelpers('false');
-
-    trackSignInShown({surface: 'account'});
-    trackSignInStarted({provider: 'google', surface: 'account'});
-    trackSignInCompleted(sessionFrom('google'));
-    trackSignInFailed({provider: null, stage: 'callback', reason: 'timeout'});
-
-    expect(trackEvent).not.toHaveBeenCalled();
   });
 });

@@ -1,10 +1,8 @@
 name: Performance Gates
 
 on:
-  # binders collects the binder PRs (#1074 to #1076) until one merge ships them to master, so
-  # PRs into it get the same checks. Drop it once that merge lands.
   pull_request:
-    branches: [master, main, binders]
+    branches: [master, main]
   # Master is measured too, so a regression that arrives by merge shows up on the merge
   # commit instead of on whichever PR runs next (#729). Only Bundle Size runs here: the
   # benchmarks compare a PR against its base, and a push has no base.
@@ -79,6 +77,8 @@ jobs:
               - 'apps/web/src/features/cards/components/CardTile.tsx'
               - 'packages/ui/src/lorcana/CardTile.tsx'
               - 'apps/web/src/features/cards/components/FeaturedCards.tsx'
+              - 'apps/web/src/features/collection/CollectionScope.tsx'
+              - 'apps/web/src/features/collection/useBrowseCollection.tsx'
               - 'apps/web/src/features/synergies/components/SynergyCard.tsx'
               - 'apps/web/src/features/synergies/hooks/playstyleFiles.ts'
               - 'apps/web/src/features/synergies/hooks/useCardData.ts'
@@ -150,9 +150,6 @@ jobs:
       VITE_SENTRY_DSN: https://public@ci.placeholder.ingest.sentry.io/1
       VITE_POSTHOG_KEY: phc_ci_placeholder
       VITE_LOCAL_IMAGES: 'true'
-      VITE_SHOW_ACCOUNTS: 'true'
-      VITE_SHOW_COLLECTION: 'true'
-      VITE_SHOW_FRIENDS: 'true'
       VITE_IS_REVEAL_SEASON: 'true'
       VITE_SHOW_BETA_NOTICE: 'true'
 

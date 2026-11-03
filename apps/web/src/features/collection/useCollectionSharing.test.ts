@@ -32,7 +32,7 @@ function deferred<T>() {
 describe('useCollectionSharing', () => {
   it('reads the switch once the account’s copy has answered, and not before', async () => {
     collection.syncing = true;
-    const {result, rerender} = renderHook(() => useCollectionSharing(true));
+    const {result, rerender} = renderHook(() => useCollectionSharing());
     expect(repo.getSharing).not.toHaveBeenCalled();
 
     collection.syncing = false;
@@ -43,16 +43,11 @@ describe('useCollectionSharing', () => {
     expect(repo.getSharing).toHaveBeenCalledWith('me');
   });
 
-  it('reads nothing with friends off', () => {
-    renderHook(() => useCollectionSharing(false));
-    expect(repo.getSharing).not.toHaveBeenCalled();
-  });
-
   it('shows a write at once, then keeps it and counts it once it lands', async () => {
     repo.getSharing.mockResolvedValue({data: false, error: null});
     const write = deferred<{data: null; error: null}>();
     repo.setSharing.mockReturnValue(write.promise);
-    const {result} = renderHook(() => useCollectionSharing(true));
+    const {result} = renderHook(() => useCollectionSharing());
     await waitFor(() => expect(result.current.status).toBe('ready'));
 
     act(() => result.current.set(true));
@@ -67,7 +62,7 @@ describe('useCollectionSharing', () => {
 
   it('puts the switch back when a write fails, and counts nothing', async () => {
     repo.setSharing.mockResolvedValue({data: null, error: 'boom'});
-    const {result} = renderHook(() => useCollectionSharing(true));
+    const {result} = renderHook(() => useCollectionSharing());
     await waitFor(() => expect(result.current.on).toBe(true));
 
     await act(async () => result.current.set(false));
@@ -76,7 +71,7 @@ describe('useCollectionSharing', () => {
   });
 
   it('turns off with no read when the collection is cleared, and reads again for a new one', async () => {
-    const {result, rerender} = renderHook(() => useCollectionSharing(true));
+    const {result, rerender} = renderHook(() => useCollectionSharing());
     await waitFor(() => expect(result.current.on).toBe(true));
 
     collection.hasCollection = false;
@@ -97,7 +92,7 @@ describe('useCollectionSharing', () => {
   it('waits behind a queued collection write, such as an import’s upload, to read and to write', async () => {
     const upload = deferred<void>();
     void enqueueWrite('me', () => upload.promise);
-    const {result} = renderHook(() => useCollectionSharing(true));
+    const {result} = renderHook(() => useCollectionSharing());
     await act(async () => {});
     expect(repo.getSharing).not.toHaveBeenCalled();
     await act(async () => upload.resolve());
@@ -114,7 +109,7 @@ describe('useCollectionSharing', () => {
 
   it('says a failed read failed, and reads again on retry', async () => {
     repo.getSharing.mockResolvedValueOnce({data: null, error: 'boom'});
-    const {result} = renderHook(() => useCollectionSharing(true));
+    const {result} = renderHook(() => useCollectionSharing());
     await waitFor(() => expect(result.current.status).toBe('failed'));
 
     // Nothing to write over while the saved value is unknown.

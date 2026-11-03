@@ -6,8 +6,7 @@ import {serveFriends, type FriendsWorld, type FriendshipRow, type Player} from '
 import {signInAs} from '../helpers/session';
 
 /**
- * The Friends section on /account (#852), behind `VITE_SHOW_FRIENDS`, which
- * `playwright.config.ts` pins on together with the accounts flag it requires.
+ * The Friends section on /account (#852).
  *
  * The player is signed in from a stored session (`helpers/session.ts`), and every friends
  * call answers from a world the test keeps (`helpers/friends.ts`), which changes the way the
