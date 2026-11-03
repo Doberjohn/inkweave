@@ -9,12 +9,14 @@ import {
   CAP_LABEL,
   COLORS,
   DIALOG_TITLE,
+  DURATION,
   EASING,
   FONTS,
   FONT_SIZES,
   LETTER_SPACING,
   RADIUS,
   SPACING,
+  TRUNCATE,
   VISUALLY_HIDDEN,
   FONT_WEIGHT,
 } from '../../shared/constants';
@@ -305,11 +307,9 @@ const ROW_STYLE: CSSProperties = {
 };
 
 const ROW_NAME_STYLE: CSSProperties = {
+  ...TRUNCATE,
   fontSize: `${FONT_SIZES.lg}px`,
   fontWeight: FONT_WEIGHT.semibold,
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
 };
 
 /**
@@ -331,7 +331,7 @@ function PhoneSheet({isOpen, onClose, children}: {isOpen: boolean; onClose: () =
       sheetRef={sheetRef}
       onKeyDown={handleKeyDown}
       layer="lightbox"
-      sheetStyle={{maxHeight: '85vh', transition: `transform 0.25s ${EASING.smooth}, opacity 0.25s ${EASING.smooth}`}}>
+      sheetStyle={{maxHeight: '85vh', transition: `transform ${DURATION.slow}ms ${EASING.smooth}, opacity ${DURATION.slow}ms ${EASING.smooth}`}}>
       <div style={SHEET_HEADER_STYLE}>
         <h2 style={DIALOG_TITLE}>{DIALOG_NAME}</h2>
         <IconButton aria-label="Close" size={36} onClick={onClose}>

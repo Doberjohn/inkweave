@@ -358,7 +358,7 @@ function SearchResultRow({card, isHighlighted, isLast, query, optionProps}: Sear
       </div>
 
       {!isLast && (
-        <div style={{height: 1, background: COLORS.surfaceHover, marginLeft: SPACING.lg, marginRight: SPACING.lg}} />
+        <div style={{height: 1, background: COLORS.subtleBorder, marginLeft: SPACING.lg, marginRight: SPACING.lg}} />
       )}
     </div>
   );

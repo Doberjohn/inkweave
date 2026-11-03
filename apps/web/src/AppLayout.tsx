@@ -215,7 +215,7 @@ export function AppLayout() {
             appears and clears it when they leave. */}
         <ProfileProvider>
           {/* One SkeletonTheme for the whole app (#511) — the 11 per-feature wrappers collapse into this. */}
-          <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.surfaceHover}>
+          <SkeletonTheme baseColor={COLORS.surfaceAlt} highlightColor={COLORS.skeletonHighlight}>
             <CardDataProvider deferInitialLoad={startsOnHome}>
               <CardModalProvider>
                 <AppContent />
