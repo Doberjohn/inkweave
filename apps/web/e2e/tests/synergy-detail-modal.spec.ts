@@ -131,29 +131,42 @@ type CardBFrame = {transform: string; opacity: string};
 type SamplingWindow = Window & {cardBFrames?: Promise<CardBFrame[]>};
 
 /**
- * Card B's transform and opacity on each of the first four frames the card view spends in
- * `mode`, read from the page so no frame passes between Playwright's steps, or on as many as
- * card B lasts there. Under reduced motion card B neither flies in from its tile nor back to
- * it. The sampler is running once this resolves, so the action that changes the mode comes
- * after it; the returned call reads the frames.
+ * Card B's transform and opacity in `mode`, read from the page so no frame passes between
+ * Playwright's steps. Entering a comparison, the first four frames are read. Leaving one, card B
+ * is read as the mode flips, before the browser paints, and then on every frame it lasts, since
+ * WebKit can draw its 480 ms stay in fewer than four, or its first frame after the flip can come
+ * late. Under reduced motion card B neither flies in from its tile nor back to it. The sampler is
+ * running once this resolves, so the action that changes the mode comes after it; the returned
+ * call reads the frames.
  */
 async function sampleCardB(modal: Locator, mode: 'comparison' | 'default') {
   await modal.evaluate((root, wanted) => {
     (window as SamplingWindow).cardBFrames = new Promise((resolve) => {
       const frames: CardBFrame[] = [];
-      // Frames to wait for the mode, so a card view that never gets there still answers.
-      let left = 240;
-      const sample = () => {
+      const leaving = wanted === 'default';
+      const inMode = () => root.getAttribute('data-mode') === wanted;
+      const read = () => {
         const cardB = root.querySelector('.focused-card-glow-offset');
-        if (root.getAttribute('data-mode') === wanted && cardB) {
+        if (cardB && inMode()) {
           const style = getComputedStyle(cardB);
           frames.push({transform: style.transform, opacity: style.opacity});
         }
+        return cardB !== null;
+      };
+      // The exit hides card B in a layout effect, which has run by the time this observer hears
+      // the mode change.
+      const flip = new MutationObserver(() => read());
+      if (leaving) flip.observe(root, {attributes: true, attributeFilter: ['data-mode']});
+      // Frames to wait for the mode, so a card view that never gets there still answers.
+      let left = 240;
+      const sample = () => {
+        const present = read();
         left -= 1;
-        const settled = frames.length >= 4 || left <= 0;
-        const gone = frames.length > 0 && !cardB;
-        if (settled || gone) resolve(frames);
-        else requestAnimationFrame(sample);
+        const done = leaving ? !present && inMode() : frames.length >= 4;
+        if (done || left <= 0) {
+          flip.disconnect();
+          resolve(frames);
+        } else requestAnimationFrame(sample);
       };
       requestAnimationFrame(sample);
     });
@@ -345,14 +358,12 @@ test.describe('Synergy comparison — roles and reduced motion (desktop)', () =>
       await modal.locator('[data-group-key="shift-targets"] a.card-tile').first().click();
       expect(await frames()).toEqual([still, still, still, still]);
 
-      // Leaving hides card B at once instead of flying it back, and then takes it down. Card B
-      // stays for the exit's 480 ms, which WebKit can draw in fewer than four frames, so every
-      // frame it lasts is read.
+      // Leaving hides card B at once instead of flying it back, and then takes it down: it reads
+      // 0 as the mode flips and on every frame it lasts.
       frames = await sampleCardB(modal, 'default');
       await back.click();
       const leaving = (await frames()).map((frame) => frame.opacity);
-      expect(leaving.length).toBeGreaterThan(0);
-      expect(leaving.filter((opacity) => opacity !== '0')).toEqual([]);
+      expect(new Set(leaving)).toEqual(new Set(['0']));
       await expect(cardB).toHaveCount(0);
 
       // The next comparison opens the same way.
