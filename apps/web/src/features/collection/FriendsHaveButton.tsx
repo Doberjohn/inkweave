@@ -1,6 +1,6 @@
 import type {CSSProperties} from 'react';
 import {LinkButton} from '../../shared/components';
-import {COLORS, FOIL_SHEEN, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, FONT_WEIGHT} from '../../shared/constants';
+import {COLORS, FOIL_SHEEN, FONT_SIZES, GOLD_GLOW, RADIUS, SPACING, TOUCH_TARGET, FONT_WEIGHT} from '../../shared/constants';
 import {useHover} from '../../shared/hooks';
 import {ChevronIcon, PeopleIcon} from '../friends/icons';
 
@@ -66,7 +66,7 @@ const CHIP_STYLE: CSSProperties = {
 const LINE_STYLE: CSSProperties = {
   ...BUTTON_STYLE,
   alignSelf: 'stretch',
-  minHeight: 44,
+  minHeight: TOUCH_TARGET,
   padding: `0 ${SPACING.lg}px`,
   borderRadius: RADIUS.card,
 };

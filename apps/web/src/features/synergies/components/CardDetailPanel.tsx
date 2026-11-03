@@ -14,6 +14,7 @@ import {
 } from '../../../shared/components';
 import {printingAlt, usePrintingSelection, type Printing} from '../../../shared/hooks';
 import {CardDetailSkeleton} from '../../cards/components/CardDetailSkeleton';
+import {CardFacts} from '../../cards/components/CardFacts';
 
 interface CardDetailPanelProps {
   card: LorcanaCard;
@@ -412,6 +413,7 @@ export function CardDetailPanel({
       />
       <CardTitleBlock card={card} />
       {hasCardText(card) && <CardTextBox card={card} />}
+      <CardFacts card={card} />
       {hasSynergyGroups(synergies) && (
         <SynergyBreakdownBox
           synergies={synergies}

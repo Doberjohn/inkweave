@@ -5,9 +5,6 @@ import {useRevealPhase, type RevealPhase} from '../../features/reveals';
 import {useSession} from '../contexts/SessionContext';
 import {lazyWithRetry} from '../lib/lazyWithRetry';
 
-/** Accounts ship behind this flag; while it is off the nav has no account tab. */
-const SHOW_ACCOUNTS = import.meta.env.VITE_SHOW_ACCOUNTS === 'true';
-
 // The nav sits in the entry chunk, so the dialog waits for the first Sign in tap. It comes from
 // the header's chunk, which most pages with the nav have already loaded (a page drawn without the
 // header, such as Not found, fetches it on the tap): importing its own module would split the
@@ -29,8 +26,7 @@ interface MobileBottomNavProps {
 
 /**
  * The account tab, the phone's counterpart of the desktop header's Sign in / Account button:
- * `none` while accounts are off or auth isn't configured, `sign-in` signed out, `account` signed
- * in.
+ * `none` while auth isn't configured, `sign-in` signed out, `account` signed in.
  */
 type AccountTab = 'none' | 'sign-in' | 'account';
 
@@ -156,8 +152,8 @@ function pickTabsAndPositions({isRevealSeason, account}: TabsInput): TabsAndPosi
 }
 
 /**
- * Which account tab to draw. Whether there is one at all is fixed for the build (the flag, and
- * Supabase being configured), so it never pops in and moves the other tabs. A stored session
+ * Which account tab to draw. Whether there is one at all is fixed for the build (Supabase being
+ * configured), so it never pops in and moves the other tabs. A stored session
  * still being restored counts as signed in, since it almost always is. The two tabs share an
  * icon, and the label shows only on the tab's own page, so the swap between them (after a
  * restore that finds the session expired, or from the prerendered page, crawled signed out, to a
@@ -166,7 +162,6 @@ function pickTabsAndPositions({isRevealSeason, account}: TabsInput): TabsAndPosi
 function accountTabFor(
   session: Pick<ReturnType<typeof useSession>, 'user' | 'loading' | 'enabled'>,
 ): AccountTab {
-  if (!SHOW_ACCOUNTS) return 'none';
   if (!session.enabled) return 'none';
   if (session.user) return 'account';
   if (session.loading) return 'account';

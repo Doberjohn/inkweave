@@ -26,12 +26,11 @@ type Read = {ownerId: string; value: boolean | 'failed'};
  * (`syncing`), since the switch's row hangs off the collection's. Clearing the collection
  * removes the row, so the switch reads off with no read, and a new import reads it again
  * (a new collection starts with none). Its read and write wait in the collection's write
- * queue, behind an import's upload or a clear's delete. `enabled` false reads nothing, for
- * a page whose friends are off.
+ * queue, behind an import's upload or a clear's delete.
  */
-export function useCollectionSharing(enabled: boolean): CollectionSharing {
+export function useCollectionSharing(): CollectionSharing {
   const {user} = useSession();
-  const ownerId = ownerOf(enabled, useCollection(), user);
+  const ownerId = ownerOf(useCollection(), user);
   const {answer, settle, retry} = useSharingRead(ownerId);
   const status = statusOf(ownerId, answer);
   const {pending, writeFailed, write} = useSharingWrite(ownerId, settle);
@@ -49,8 +48,8 @@ export function useCollectionSharing(enabled: boolean): CollectionSharing {
 }
 
 /** Whose switch to read: the signed-in player's, once their collection's copy has answered. */
-function ownerOf(enabled: boolean, collection: {hasCollection: boolean; syncing: boolean}, user: {id: string} | null): string | null {
-  if (!enabled || user === null) return null;
+function ownerOf(collection: {hasCollection: boolean; syncing: boolean}, user: {id: string} | null): string | null {
+  if (user === null) return null;
   return collection.hasCollection && !collection.syncing ? user.id : null;
 }
 

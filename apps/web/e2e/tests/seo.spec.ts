@@ -333,6 +333,40 @@ test.describe('SEO', () => {
       .toBe(desktopCount);
   });
 
+  /**
+   * The About section and the card facts sentence sit closed (`.text-disclosure` in index.css): a visitor sees
+   * one line, while the text stays in the page for crawlers. Hiding it outright would be hidden
+   * text, so the test also proves a visitor can open it from the keyboard.
+   */
+  test('ink hub About text is in the page while closed, and opens with Enter and Space', async ({
+    page,
+  }) => {
+    await gotoWithRetry(page, '/ink/steel');
+    const heading = page.getByRole('heading', {name: 'About Steel cards'});
+    const about = page.locator('details', {has: heading});
+    await expect(about.locator('summary')).toBeVisible();
+    await expect(about).not.toHaveAttribute('open');
+    const text = about.locator('p').first();
+    await expect(text).toBeHidden();
+    expect((await text.textContent())?.length).toBeGreaterThan(40);
+
+    await about.locator('summary').focus();
+    await page.keyboard.press('Enter');
+    await expect(text).toBeVisible();
+    await page.keyboard.press('Space');
+    await expect(text).toBeHidden();
+  });
+
+  test('card page keeps its facts sentence closed under a Card facts line', async ({page}) => {
+    await gotoWithRetry(page, '/card/1989/elsa-snow-queen');
+    const facts = page.getByTestId('card-facts');
+    await expect(facts.locator('summary')).toHaveText('Card facts');
+    await expect(facts.locator('p')).toBeHidden();
+    await expect(facts.locator('p')).toContainText('Elsa - Snow Queen is a');
+    await facts.locator('summary').click();
+    await expect(facts.locator('p')).toBeVisible();
+  });
+
   test('unknown ink slug renders the 404 page, not an empty hub', async ({page}) => {
     await gotoWithRetry(page, '/ink/nonsense');
     // A thin 200 on a junk URL is what #525's NotFoundPage <Seo> exists to prevent.

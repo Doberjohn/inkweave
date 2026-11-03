@@ -1,15 +1,16 @@
-import {afterAll, describe, it, expect, vi} from 'vitest';
+import {describe, it, expect, vi} from 'vitest';
 import {render, screen} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
 import {AccountPage} from '../AccountPage';
 
 /*
- * The FLAG-ON page (#553 Phase C), whose collection section is a module of its own,
+ * The account page's collection section (#553 Phase C) is a module of its own,
  * loaded lazily. It must arrive with the other sections, not after them: landing late
  * between Identity and Session, it pushed Session down under the reader.
  *
- * The collection module is stubbed (its hooks need both collection providers), and its
- * load waits on a gate this test opens, so "still loading" is a state the test holds
+ * The collection module is stubbed (its hooks need both collection providers), as is the
+ * friends one (it needs a session and its data layer), and the collection's load waits on a
+ * gate this test opens, so "still loading" is a state the test holds
  * rather than a race against the import.
  */
 const gate = vi.hoisted(() => {
@@ -19,18 +20,11 @@ const gate = vi.hoisted(() => {
   });
   return {loaded, open: () => open()};
 });
-vi.hoisted(() => {
-  vi.stubEnv('VITE_SHOW_COLLECTION', 'true');
-  vi.stubEnv('VITE_SHOW_ACCOUNTS', 'true');
-  // Off, so a `.env.local` with friends on can't load the real section, and its calls, here.
-  vi.stubEnv('VITE_SHOW_FRIENDS', 'false');
-});
-// Restored after the file, so the stubs cannot reach a later test file in the same worker.
-afterAll(() => vi.unstubAllEnvs());
 vi.mock('../AccountCollection', async () => {
   await gate.loaded;
   return {AccountCollection: () => <h2>Collection stub</h2>};
 });
+vi.mock('../AccountFriends', () => ({AccountFriends: () => <h2>Friends stub</h2>}));
 vi.mock('../../shared/contexts/SessionContext', () => ({
   useSession: () => ({user: {id: 'user-1'}, loading: false, signOut: vi.fn()}),
 }));
@@ -46,7 +40,7 @@ vi.mock('../../shared/components', async () => {
   return {...actual, CompactHeader: () => <header data-testid="compact-header" />};
 });
 
-describe('AccountPage with the collection flag on', () => {
+describe('AccountPage: the collection section', () => {
   it('holds every section back until the collection has loaded, so none lands late', async () => {
     render(
       <MemoryRouter>

@@ -669,6 +669,11 @@ function PlaystyleSeo({playstyle}: {playstyle: ResolvedPlaystyle}) {
       title={`${playstyle.name} Deck Archetype | Lorcana Synergies | Inkweave`}
       description={`${playstyle.tagline} Explore the cards, enablers, and payoffs that define the ${playstyle.name} archetype in Disney Lorcana Core format.`}
       canonicalPath={`/playstyles/${playstyle.id}`}
+      breadcrumbs={[
+        {name: 'Home', path: '/'},
+        {name: 'Playstyles', path: '/playstyles'},
+        {name: playstyle.name, path: `/playstyles/${playstyle.id}`},
+      ]}
     />
   );
 }

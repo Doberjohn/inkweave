@@ -146,8 +146,8 @@ function viewOf(now: Held | null, readerId: string | null, need: boolean): Frien
 }
 
 /**
- * The reader's friends and their copies. `enabled`: both flags on, signed in with a collection,
- * and the account's copy has answered. `need` starts the read, which then stays for the visit.
+ * The reader's friends and their copies. `enabled`: signed in with a collection, and the
+ * account's copy has answered. `need` starts the read, which then stays for the visit.
  */
 export function useFriendsCopies(enabled: boolean, need: boolean): FriendsCopies {
   const {user} = useSession();
