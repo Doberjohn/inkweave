@@ -52,11 +52,7 @@
         "!apps/web/dist/assets/RevealsPage-*.js",
         "!apps/web/dist/assets/ReleaseNotesPage-*.js",
         "!apps/web/dist/assets/CollectionBinderSection-*.js",
-        "!apps/web/dist/assets/CollectionScope-*.js",
         "!apps/web/dist/assets/ImportCollectionDialog-*.js",
-        "!apps/web/dist/assets/BrowseCollectionPage-*.js",
-        "!apps/web/dist/assets/AccountCollection-*.js",
-        "!apps/web/dist/assets/AccountFriends-*.js",
         "!apps/web/dist/assets/sharingRepository-*.js",
         "!apps/web/dist/assets/FriendChip-*.js",
         "!apps/web/dist/assets/CollectionFriends-*.js",
@@ -65,7 +61,7 @@
         "!apps/web/dist/assets/supabaseClient-*.js",
         "!apps/web/dist/assets/posthogClient-*.js"
       ],
-      "limit": "432 kB",
+      "limit": "459 kB",
       "gzip": true
     },
     {
@@ -87,22 +83,18 @@
       "gzip": true
     },
     {
-      "name": "Flag-gated JS",
+      "name": "Collection and reveals JS",
       "path": [
         "apps/web/dist/assets/RevealsPage-*.js",
         "apps/web/dist/assets/CollectionBinderSection-*.js",
-        "apps/web/dist/assets/CollectionScope-*.js",
         "apps/web/dist/assets/ImportCollectionDialog-*.js",
-        "apps/web/dist/assets/BrowseCollectionPage-*.js",
-        "apps/web/dist/assets/AccountCollection-*.js",
-        "apps/web/dist/assets/AccountFriends-*.js",
         "apps/web/dist/assets/sharingRepository-*.js",
         "apps/web/dist/assets/FriendChip-*.js",
         "apps/web/dist/assets/CollectionFriends-*.js",
         "apps/web/dist/assets/collectionStats-*.js",
         "apps/web/dist/assets/friendBinderPath-*.js"
       ],
-      "limit": "96 kB",
+      "limit": "67 kB",
       "gzip": true
     },
     {

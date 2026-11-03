@@ -205,7 +205,6 @@ export type BuiltChunks = Readonly<
         type: 'chunk';
         fileName: string;
         code: string;
-        modules: Readonly<Record<string, {renderedLength: number}>>;
       }
   >
 >;
@@ -232,56 +231,4 @@ export function loadableChunks(bundle: BuiltChunks): Set<string> {
     }
   }
   return loadable;
-}
-
-/** Collection mode's code (#553): its folder, and the two pages only collection mode routes to. */
-const COLLECTION_CODE =
-  /\/apps\/web\/src\/(features\/collection\/|pages\/(BrowseCollectionPage|AccountCollection)\.tsx$)/;
-/** The flag, which every page reads, and the non-Core card loads Browse's search makes in any build (#911). */
-const SHARED_COLLECTION_CODE =
-  /\/features\/collection\/(flag|collectionChunks|collectionPromos|preCoreVariants)\.ts$/;
-
-const isCollectionCode = (id: string) =>
-  COLLECTION_CODE.test(posix(id)) && !SHARED_COLLECTION_CODE.test(posix(id));
-
-/** Whether a build's env turns collection mode on, by the rule `src/features/collection/flag.ts` reads. */
-export const collectionModeOn = (env: Readonly<Record<string, unknown>>) =>
-  env.VITE_SHOW_COLLECTION === 'true' && env.VITE_SHOW_ACCOUNTS === 'true';
-
-/** Each collection module with code in a chunk a page can load, as "<module> in <chunk>". */
-export function loadableCollectionCode(bundle: BuiltChunks): string[] {
-  const loadable = loadableChunks(bundle);
-  return Object.values(bundle).flatMap((output) => {
-    if (output.type !== 'chunk' || !loadable.has(output.fileName)) return [];
-    return Object.entries(output.modules)
-      .filter(([id, {renderedLength}]) => renderedLength > 0 && isCollectionCode(id))
-      .map(([id]) => `${posix(id).replace(/^.*\/apps\/web\//, '')} in ${output.fileName}`);
-  });
-}
-
-/**
- * Fails a build with collection mode off when a page can load any of its code (#1068, #1069). Off
- * means not loaded (`src/features/collection/flag.ts`): what only the flag's branches import ships
- * in chunks no page names, which the service worker doesn't precache either (#928).
- */
-export function collectionCodeGuard(): Plugin {
-  let modeOn = false;
-  return {
-    name: 'inkweave:collection-code-guard',
-    apply: 'build',
-    configResolved(config) {
-      modeOn = collectionModeOn(config.env);
-    },
-    // writeBundle, as the precache's unloadable-chunks plugin reads it: every chunk's code is final.
-    writeBundle(_options, bundle) {
-      if (modeOn) return;
-      const loaded = loadableCollectionCode(bundle);
-      if (loaded.length > 0) {
-        this.error(
-          `Collection mode is off, yet a page can load its code: ${loaded.join(', ')}. ` +
-            'Import it only behind SHOW_COLLECTION, as router.tsx does.',
-        );
-      }
-    },
-  };
 }

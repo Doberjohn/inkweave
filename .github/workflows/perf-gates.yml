@@ -77,6 +77,8 @@ jobs:
               - 'apps/web/src/features/cards/components/CardTile.tsx'
               - 'packages/ui/src/lorcana/CardTile.tsx'
               - 'apps/web/src/features/cards/components/FeaturedCards.tsx'
+              - 'apps/web/src/features/collection/CollectionScope.tsx'
+              - 'apps/web/src/features/collection/useBrowseCollection.tsx'
               - 'apps/web/src/features/synergies/components/SynergyCard.tsx'
               - 'apps/web/src/features/synergies/hooks/playstyleFiles.ts'
               - 'apps/web/src/features/synergies/hooks/useCardData.ts'
@@ -148,9 +150,6 @@ jobs:
       VITE_SENTRY_DSN: https://public@ci.placeholder.ingest.sentry.io/1
       VITE_POSTHOG_KEY: phc_ci_placeholder
       VITE_LOCAL_IMAGES: 'true'
-      VITE_SHOW_ACCOUNTS: 'true'
-      VITE_SHOW_COLLECTION: 'true'
-      VITE_SHOW_FRIENDS: 'true'
       VITE_IS_REVEAL_SEASON: 'true'
       VITE_SHOW_BETA_NOTICE: 'true'
 

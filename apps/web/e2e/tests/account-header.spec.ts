@@ -5,14 +5,13 @@ import {serveFriends} from '../helpers/friends';
 import {signInAs} from '../helpers/session';
 
 /**
- * The accounts surface is behind `VITE_SHOW_ACCOUNTS`, shipped OFF until there is
- * something to do with an account. `playwright.config.ts` pins it on, along with
- * placeholder Supabase config, so these run against the flag's active path.
+ * The accounts surface needs Supabase configured. `playwright.config.ts` pins placeholder
+ * Supabase config, so these run against the configured path.
  *
- * Both pins are load-bearing. Without the credentials `isSupabaseConfigured()` is false,
+ * The pin is load-bearing. Without the credentials `isSupabaseConfigured()` is false,
  * `enabled` is false and `AuthButton` renders nothing, which is what CI would see:
  * the assertion below would pass locally off a developer's `.env.local` and fail in
- * CI. Pinning both makes the state identical everywhere.
+ * CI. Pinning it makes the state identical everywhere.
  */
 test.describe('Account header control', () => {
   test('the header carries a sign-in control on every page', async ({page}, testInfo) => {

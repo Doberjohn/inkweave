@@ -54,7 +54,7 @@ export interface FriendsSectionProps {
   onRemove: (row: FriendRow) => Promise<string | null>;
   /**
    * The friends who share their collection, by id: View binder beside each of them,
-   * Not sharing beside the rest. Undefined says neither, as with collections off.
+   * Not sharing beside the rest. Undefined, as when that read failed, says neither.
    */
   sharing?: ReadonlySet<string>;
 }
