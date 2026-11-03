@@ -28,10 +28,17 @@ import {
 // Module helpers
 // ──────────────────────────────────────────────────────────
 
+/**
+ * The space under the vote screen and under the About section below it: on phones it clears the
+ * bottom nav, which floats over the page's end.
+ */
+const BOTTOM_SPACE_MOBILE = 120;
+const BOTTOM_SPACE_DESKTOP = 60;
+
 function getMainPadding(isMobile: boolean, compactLayout: boolean): string {
-  if (isMobile) return '16px 16px 120px';
-  if (compactLayout) return '16px 16px 60px';
-  return '0 0 60px';
+  if (isMobile) return `16px 16px ${BOTTOM_SPACE_MOBILE}px`;
+  if (compactLayout) return `16px 16px ${BOTTOM_SPACE_DESKTOP}px`;
+  return `0 0 ${BOTTOM_SPACE_DESKTOP}px`;
 }
 
 function getMainJustify(compactLayout: boolean): 'flex-start' | 'center' {
@@ -213,8 +220,9 @@ function VotePageShell({
           position: 'relative',
           zIndex: 1,
           // The vote screen keeps the whole first screen, so the About section starts below it.
-          // svh: a phone's screen with its browser bars showing, as the page first loads.
-          minHeight: `calc(100svh - ${isMobile ? LAYOUT.compactHeaderHeightMobile : LAYOUT.compactHeaderHeight}px)`,
+          // svh: a phone's screen with its browser bars showing, as the page first loads. A
+          // phone has no top header (CompactHeader renders nothing there).
+          minHeight: isMobile ? '100svh' : `calc(100svh - ${LAYOUT.compactHeaderHeight}px)`,
         }}
         aria-busy={ariaBusy}
         aria-label={ariaLabel}>
@@ -227,13 +235,6 @@ function VotePageShell({
   );
 }
 
-/**
- * The space under the About section, the vote screen's own bottom padding (`getMainPadding`):
- * on phones it clears the bottom nav, which floats over the page's end.
- */
-const ABOUT_BOTTOM_MOBILE = 120;
-const ABOUT_BOTTOM_DESKTOP = 60;
-
 /** What a vote is and what it changes, below the vote screen: the page's words of its own for search. */
 function VoteAbout({isMobile}: {isMobile: boolean}) {
   return (
@@ -241,8 +242,8 @@ function VoteAbout({isMobile}: {isMobile: boolean}) {
       heading="About voting"
       padding={
         isMobile
-          ? `0 ${SPACING.lg}px ${ABOUT_BOTTOM_MOBILE}px`
-          : `0 ${SPACING.xxl}px ${ABOUT_BOTTOM_DESKTOP}px`
+          ? `0 ${SPACING.lg}px ${BOTTOM_SPACE_MOBILE}px`
+          : `0 ${SPACING.xxl}px ${BOTTOM_SPACE_DESKTOP}px`
       }>
       <p>
         Each round shows two Core format cards that Inkweave's engine says work together, and asks
