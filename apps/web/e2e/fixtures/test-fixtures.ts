@@ -52,6 +52,12 @@ const BENIGN_CONSOLE: readonly RegExp[] = [
   // Supabase path, so in E2E a Supabase call that gets no answer was cut off, and the same words
   // anywhere else (an uncaught rejection, another fetch) still fail the guard.
   /^\[(collection|sharing|friends|profile|votes)\] [^:]+ failed(, no answer)?: TypeError: (NetworkError when attempting to fetch resource\.|Load failed)/,
+  // WebKit also logs the same cut-off read in its own words, "Fetch API cannot load <url> due to
+  // access control checks.", which Playwright reports as an uncaught error cut at its first colon
+  // (the source is "javascript": wkPage.js's _onConsoleMessage), so it reads "/e2e.placeholder…".
+  // Held to the stub's host (E2E_SUPABASE_ORIGIN) and its REST paths, as the /data/*.json entry
+  // below is held to the app's data files.
+  /^\/e2e\.placeholder\.supabase\.co\/rest\/v1\/\S+ due to access control checks\.$/,
   // Firefox-only: a self-hosted @font-face weight that ISN'T preloaded (index.html
   // preloads only the 400 weights) can still be in-flight when a test navigates or
   // tears down — e.g. the compact header renders weight-500 text, then the spec moves
