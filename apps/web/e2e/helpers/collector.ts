@@ -8,8 +8,8 @@ import {storedSession} from './session';
  * A collector and their binder, for collection mode's specs (`collection-mode.spec.ts`,
  * `collection-binder.spec.ts`).
  *
- * SIGNED IN WITHOUT SIGNING IN: an OAuth round-trip is out of E2E's reach, but a session
- * the Supabase SDK RESTORES needs none. `signInAsCollector` stores an unexpired session,
+ * SIGNED IN WITHOUT SIGNING IN: a session the Supabase SDK RESTORES needs no OAuth round-trip
+ * (`account.spec.ts` plays one through once). `signInAsCollector` stores an unexpired session,
  * which `getSession()` hands back without a network check, and the collector's collection, both
  * locally and as the server row the sync adopts on every load (`resolveCollectionSync`).
  * Everything else the placeholder project is asked answers empty (`supabaseStub`).

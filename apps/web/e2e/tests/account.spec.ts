@@ -1,20 +1,18 @@
 import {createHash} from 'node:crypto';
 import type {Page, Request} from '@playwright/test';
 import {test, expect} from '../fixtures';
-import {E2E_FRIEND_CODE, E2E_SUPABASE_ORIGIN} from '../fixtures/supabaseStub';
+import {E2E_FRIEND_CODE, onProject} from '../fixtures/supabaseStub';
 import {serveFriends, type Player} from '../helpers/friends';
 import {signInAs, storedSession} from '../helpers/session';
 
 /**
  * The account page and the sign-in round-trip around it, against the placeholder Supabase
  * project (`fixtures/supabaseStub.ts`). The OAuth provider is played by the test: it answers
- * the SDK's `/auth/v1/authorize` with the provider's redirect back, and its code exchange with
- * a session.
+ * the SDK's `/auth/v1/authorize` with the way back to the app, and its code exchange with a
+ * session.
  */
 
 const ME: Player = {id: 'e2e-account', handle: 'amber_dreamer', displayName: 'Amber Dreamer', code: E2E_FRIEND_CODE};
-
-const onProject = (pathname: string) => (url: URL) => url.origin === E2E_SUPABASE_ORIGIN && url.pathname === pathname;
 
 /** The signed-out card's own Sign in, not the header's or the phone nav's. */
 const signedOutCard = (page: Page) => page.locator('section').filter({hasText: 'Sign in to name yourself.'});
@@ -22,13 +20,18 @@ const signedOutCard = (page: Page) => page.locator('section').filter({hasText: '
 test.describe('Signing in', () => {
   test('a sign-in through the provider comes back through the auth callback, signed in', async ({page}) => {
     await serveFriends(page, {me: ME, others: [], rows: []});
-    // The provider: consent given at once, back to where the SDK asked, with a code.
+    // The provider: consent given at once, back to where the SDK asked, with a code. A page
+    // that sends the browser on rather than a 302, which WebKit won't take from a route.
     let authorize: URL | undefined;
     await page.route(onProject('/auth/v1/authorize'), (route) => {
       authorize = new URL(route.request().url());
       const back = new URL(authorize.searchParams.get('redirect_to') ?? '');
       back.searchParams.set('code', 'e2e-code');
-      return route.fulfill({status: 302, headers: {location: back.href}});
+      return route.fulfill({
+        status: 200,
+        contentType: 'text/html',
+        body: `<script>location.replace(${JSON.stringify(back.href)})</script>`,
+      });
     });
     let exchange: Request | undefined;
     await page.route(onProject('/auth/v1/token'), (route) => {
@@ -50,8 +53,9 @@ test.describe('Signing in', () => {
     await expect(page.getByText('@amber_dreamer')).toBeVisible();
     // The SDK traded the provider's code with the verifier it kept for it (PKCE): the challenge
     // it sent the provider is that verifier's hash.
-    expect(new URL(exchange?.url() ?? '').searchParams.get('grant_type')).toBe('pkce');
-    const sent = exchange?.postDataJSON() as {auth_code: string; code_verifier: string};
+    expect(exchange, 'the SDK never traded the code').toBeDefined();
+    expect(new URL(exchange!.url()).searchParams.get('grant_type')).toBe('pkce');
+    const sent = exchange!.postDataJSON() as {auth_code: string; code_verifier: string};
     expect(sent.auth_code).toBe('e2e-code');
     expect(authorize?.searchParams.get('code_challenge')).toBe(
       createHash('sha256').update(sent.code_verifier).digest('base64url'),
@@ -59,7 +63,9 @@ test.describe('Signing in', () => {
   });
 
   test("the auth callback with no session to finish says the sign-in didn't complete", async ({page}) => {
+    // Paused, so only fastForward moves the page's time: installed alone, it runs in real time.
     await page.clock.install();
+    await page.clock.pauseAt(Date.now() + 1000);
     await page.goto('/auth/callback');
     await expect(page.getByText('Finishing sign-in…')).toBeVisible();
     // Nothing to restore: once the SDK has looked, the page waits 4 s before it gives up.
@@ -68,6 +74,8 @@ test.describe('Signing in', () => {
     await page.clock.fastForward(4000);
 
     await expect(page.getByText("Sign-in didn't complete.")).toBeVisible();
+    // The account page waits on timers of its own.
+    await page.clock.resume();
     await page.getByRole('button', {name: 'Go to your account'}).click();
     await expect(page).toHaveURL(/\/account$/);
     await expect(signedOutCard(page)).toBeVisible();
@@ -92,7 +100,7 @@ test.describe('Signing out', () => {
     await signInAs(page, ME.id);
     await serveFriends(page, {me: ME, others: [], rows: []});
     await page.goto('/account');
-    const logout = page.waitForRequest((request) => request.url().startsWith(`${E2E_SUPABASE_ORIGIN}/auth/v1/logout`));
+    const logout = page.waitForRequest((request) => onProject('/auth/v1/logout')(new URL(request.url())));
 
     await page.getByRole('button', {name: 'Sign out'}).click();
     await logout;
@@ -162,6 +170,7 @@ test.describe('Display name', () => {
       await expect(dialog).toBeVisible();
       expect(writes).toHaveLength(1);
       await dialog.getByRole('button', {name: 'Cancel'}).click();
+      await expect(dialog).toBeHidden();
       await expect(nameRow(page)).toContainText('Amber Dreamer');
     });
   });

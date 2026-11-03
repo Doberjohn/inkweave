@@ -1,5 +1,5 @@
 import type {Page, Route} from '@playwright/test';
-import {E2E_SUPABASE_ORIGIN} from '../fixtures/supabaseStub';
+import {onProject} from '../fixtures/supabaseStub';
 
 /** A player as `profiles` and `friend_codes` hold them. */
 export interface Player {
@@ -40,7 +40,7 @@ export interface FriendsWorld {
 
 type Pair = Pick<FriendshipRow, 'requester_id' | 'addressee_id'>;
 
-const rest = (path: string) => (url: URL) => url.origin === E2E_SUPABASE_ORIGIN && url.pathname === `/rest/v1/${path}`;
+const rest = (path: string) => onProject(`/rest/v1/${path}`);
 
 const answer = (route: Route, body: unknown) =>
   route.fulfill({status: 200, contentType: 'application/json', body: JSON.stringify(body)});
