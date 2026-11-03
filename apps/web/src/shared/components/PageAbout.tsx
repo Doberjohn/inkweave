@@ -65,7 +65,7 @@ export function PageAbout({heading, children, padding}: PageAboutProps) {
               {heading}
             </h2>
           </summary>
-          <div style={{paddingTop: SPACING.md}}>{children}</div>
+          {children}
         </details>
       </div>
     </section>
