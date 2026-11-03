@@ -556,9 +556,10 @@ function isTextEntryTarget(target: EventTarget | null): boolean {
 
 /**
  * Controls that use the arrow keys themselves, where they are not "next card": text entry, radio
- * groups and the synergy grids, whose arrows move between their items, and the printings strip.
+ * groups and the synergy grids (`data-owns-arrow-keys`), whose arrows move between their items,
+ * and the printings strip. A grid keeps its arrows at its edges too, where they move nothing.
  */
-const OWNS_ARROW_KEYS = '[role="radiogroup"], [aria-roledescription="carousel"], .synergy-card-grid';
+const OWNS_ARROW_KEYS = '[role="radiogroup"], [aria-roledescription="carousel"], [data-owns-arrow-keys]';
 
 function ownsArrowKeys(target: EventTarget | null): boolean {
   if (isTextEntryTarget(target)) return true;

@@ -222,12 +222,19 @@ test.describe('Card Detail: Show More and sibling navigation (desktop)', () => {
     page,
   }, testInfo) => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
-    await page.goto('/browse');
+    // A playstyle's cards all have synergies, and their window pages through the playstyle's cards.
+    await page.goto('/playstyles/lore-denial');
     await page.getByTestId('card-tile').first().click();
     const modal = appPage.cardOverviewModal;
     const title = modal.locator('h1');
-    const grid = modal.getByRole('list', {name: 'Synergy cards'}).first();
-    await expect(grid).toBeVisible({timeout: 10000});
+    // The first grid with a second tile to move to.
+    const grid = modal
+      .getByRole('list', {name: 'Synergy cards'})
+      .filter({has: page.locator('[data-roving-item]').nth(1)})
+      .first();
+    await expect(grid, 'Fixture broken: no synergy grid with two tiles in the first card').toBeVisible({
+      timeout: 10000,
+    });
     const firstName = (await title.textContent()) ?? '';
 
     // The window takes focus once it has opened; from then on the keys reach it.

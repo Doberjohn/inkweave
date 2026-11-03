@@ -331,7 +331,7 @@ test('ArrowRight / ArrowLeft navigate siblings', async () => {
   expect(onGoToSibling).toHaveBeenCalledWith(-1);
 });
 
-test('arrow keys in a synergy grid move between its tiles, not to the next card', async () => {
+test('arrow keys in a synergy grid move between its tiles, and never to the next card', async () => {
   const user = userEvent.setup();
   const onGoToSibling = vi.fn();
   render(
@@ -348,6 +348,9 @@ test('arrow keys in a synergy grid move between its tiles, not to the next card'
   await waitFor(() => expect(second).toHaveFocus());
   await user.keyboard('{ArrowLeft}');
   await waitFor(() => expect(first).toHaveFocus());
+  // At the grid's edge the arrow moves nothing, and still doesn't page.
+  await user.keyboard('{ArrowLeft}');
+  expect(first).toHaveFocus();
   expect(onGoToSibling).not.toHaveBeenCalled();
 });
 

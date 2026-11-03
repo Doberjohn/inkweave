@@ -425,8 +425,10 @@ function resolveRoleDisplay(conn: LabelledConnection): {
   return {key: conn.ruleId, label: conn.roleLabel, description: conn.explanation};
 }
 
-// The card view closes on a document Escape listener, so the open list takes the key
-// first, in the window's capture phase, and keeps it from reaching the card view.
+// The card view closes on a bubble-phase document Escape listener, so the open list takes the
+// key first, in the document's capture phase, and keeps it from reaching the card view. A
+// tooltip or Radix layer opened over the list listens there too, and still hears the same key:
+// stopping the event skips the nodes after this one, not this node's other listeners.
 function useEscapeToClose(active: boolean, setIsOpen: (v: boolean) => void) {
   useEffect(() => {
     if (!active) return;
@@ -435,8 +437,8 @@ function useEscapeToClose(active: boolean, setIsOpen: (v: boolean) => void) {
       e.stopPropagation();
       setIsOpen(false);
     };
-    window.addEventListener('keydown', handler, true);
-    return () => window.removeEventListener('keydown', handler, true);
+    document.addEventListener('keydown', handler, true);
+    return () => document.removeEventListener('keydown', handler, true);
   }, [active, setIsOpen]);
 }
 

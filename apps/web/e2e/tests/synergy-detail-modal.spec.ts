@@ -4,6 +4,7 @@ import {holdSupabasePath} from '../fixtures/supabaseStub';
 import {cardFullNameById} from '../helpers/cardData';
 import {slidePointerOnto} from '../helpers/pointer';
 import fs from 'node:fs';
+import {createRequire} from 'node:module';
 import path from 'node:path';
 
 // Daisy Duck - Musketeer Spy: has shift-targets (direct) + discard (playstyle) groups, so both
@@ -31,13 +32,9 @@ const MULTI_ROLE_PAIR = findMultiRolePair();
 
 function findMultiRolePair(): {url: string; labels: string[]} {
   const dir = path.resolve(process.cwd(), 'public/data/synergies');
+  const catalog = createRequire(import.meta.url).resolve('inkweave-synergy-engine/catalog.json');
   const chipLabels = (
-    JSON.parse(
-      fs.readFileSync(
-        path.resolve(process.cwd(), 'node_modules/inkweave-synergy-engine/dist/catalog.json'),
-        'utf8',
-      ),
-    ) as {locationChipLabels: Record<string, string>}
+    JSON.parse(fs.readFileSync(catalog, 'utf8')) as {locationChipLabels: Record<string, string>}
   ).locationChipLabels;
   const files = fs
     .readdirSync(dir)
@@ -48,11 +45,13 @@ function findMultiRolePair(): {url: string; labels: string[]} {
       pairs?: Record<string, {connections: {ruleId: string; playstyleId?: string}[]}>;
     };
     for (const [partnerId, pair] of Object.entries(data.pairs ?? {})) {
-      const ruleIds = new Set(
-        pair.connections.filter((c) => c.playstyleId === 'location-control').map((c) => c.ruleId),
-      );
-      if (ruleIds.size < 3) continue;
-      const labels = [...ruleIds].map((id) => chipLabels[id.replace(/^location-/, '')]);
+      // The list shows a row per connection, so a pair whose roles repeat a rule would count
+      // more rows than labels.
+      const ruleIds = pair.connections
+        .filter((c) => c.playstyleId === 'location-control')
+        .map((c) => c.ruleId);
+      if (ruleIds.length < 3 || new Set(ruleIds).size !== ruleIds.length) continue;
+      const labels = ruleIds.map((id) => chipLabels[id.replace(/^location-/, '')]);
       if (labels.some((label) => !label)) continue;
       return {
         url: `/compare/${path.basename(file, '.json')}/${partnerId}/location-control`,
@@ -95,6 +94,12 @@ async function expectPairRightUnderClose(modal: Locator, pairTop: Locator) {
   await expect.poll(settledGap).toBeGreaterThanOrEqual(0);
 }
 
+/** Matches text that starts with one of `labels`, each read literally. */
+function startsWithOneOf(labels: string[]): RegExp {
+  const literal = (label: string) => label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^(?:${labels.map(literal).join('|')})`);
+}
+
 /**
  * How many of `labels` show in the engine column: a role folded away sits in a panel of no
  * height, which clips it to nothing. Only the column's own clipping counts, so the reading
@@ -121,32 +126,37 @@ function rolesShown(engine: Locator, labels: string[]) {
   }, labels);
 }
 
+type CardBFrame = {transform: string; opacity: string};
+type SamplingWindow = Window & {cardBFrames?: Promise<CardBFrame[]>};
+
 /**
  * Card B's transform and opacity on each of the first four frames the card view spends in
  * `mode`, read from the page so no frame passes between Playwright's steps. Under reduced motion
- * card B neither flies in from its tile nor back to it.
+ * card B neither flies in from its tile nor back to it. The sampler is running once this
+ * resolves, so the action that changes the mode comes after it; the returned call reads the
+ * frames.
  */
-function cardBFrames(modal: Locator, mode: 'comparison' | 'default') {
-  return modal.evaluate(
-    (root, wanted) =>
-      new Promise<{transform: string; opacity: string}[]>((resolve) => {
-        const frames: {transform: string; opacity: string}[] = [];
-        // Frames to wait for the mode, so a card view that never gets there still answers.
-        let left = 240;
-        const sample = () => {
-          const cardB = root.querySelector('.focused-card-glow-offset');
-          if (root.getAttribute('data-mode') === wanted && cardB) {
-            const style = getComputedStyle(cardB);
-            frames.push({transform: style.transform, opacity: style.opacity});
-          }
-          left -= 1;
-          if (frames.length < 4 && left > 0) requestAnimationFrame(sample);
-          else resolve(frames);
-        };
-        requestAnimationFrame(sample);
-      }),
-    mode,
-  );
+async function sampleCardB(modal: Locator, mode: 'comparison' | 'default') {
+  await modal.evaluate((root, wanted) => {
+    (window as SamplingWindow).cardBFrames = new Promise((resolve) => {
+      const frames: CardBFrame[] = [];
+      // Frames to wait for the mode, so a card view that never gets there still answers.
+      let left = 240;
+      const sample = () => {
+        const cardB = root.querySelector('.focused-card-glow-offset');
+        if (root.getAttribute('data-mode') === wanted && cardB) {
+          const style = getComputedStyle(cardB);
+          frames.push({transform: style.transform, opacity: style.opacity});
+        }
+        left -= 1;
+        if (frames.length < 4 && left > 0) requestAnimationFrame(sample);
+        else resolve(frames);
+      };
+      requestAnimationFrame(sample);
+    });
+  }, mode);
+  return async (): Promise<CardBFrame[]> =>
+    (await modal.evaluate(() => (window as SamplingWindow).cardBFrames)) ?? [];
 }
 
 test.describe('Synergy comparison — Desktop', () => {
@@ -281,7 +291,7 @@ test.describe('Synergy comparison — roles and reduced motion (desktop)', () =>
       const show = engine.getByRole('button', {name: `Show all ${labels.length} roles`});
       const hide = engine.getByRole('button', {name: 'Hide additional roles'});
       // The visible role's row is the list's other toggle, and the only role row that is a button.
-      const visibleRow = engine.getByRole('button').filter({hasText: new RegExp(labels.join('|'))});
+      const visibleRow = engine.getByRole('button').filter({hasText: startsWithOneOf(labels)});
       await expect.poll(() => rolesShown(engine, labels)).toBe(1);
 
       await show.click();
@@ -328,20 +338,20 @@ test.describe('Synergy comparison — roles and reduced motion (desktop)', () =>
       const still = {transform: 'none', opacity: '1'};
 
       // Card B shows where it settles from its first frame, with no flight from the tile.
-      let frames = cardBFrames(modal, 'comparison');
+      let frames = await sampleCardB(modal, 'comparison');
       await modal.locator('[data-group-key="shift-targets"] a.card-tile').first().click();
-      expect(await frames).toEqual([still, still, still, still]);
+      expect(await frames()).toEqual([still, still, still, still]);
 
       // Leaving hides card B at once instead of flying it back, and then takes it down.
-      frames = cardBFrames(modal, 'default');
+      frames = await sampleCardB(modal, 'default');
       await back.click();
-      expect((await frames).map((frame) => frame.opacity)).toEqual(['0', '0', '0', '0']);
+      expect((await frames()).map((frame) => frame.opacity)).toEqual(['0', '0', '0', '0']);
       await expect(cardB).toHaveCount(0);
 
       // The next comparison opens the same way.
-      frames = cardBFrames(modal, 'comparison');
+      frames = await sampleCardB(modal, 'comparison');
       await modal.locator('[data-group-key="discard"] a.card-tile').first().click();
-      expect(await frames).toEqual([still, still, still, still]);
+      expect(await frames()).toEqual([still, still, still, still]);
       await expect(back).toBeVisible();
     });
   });

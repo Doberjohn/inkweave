@@ -128,7 +128,7 @@ describe('ConnectionGroup — multi-role expand/collapse', () => {
     render(<ConnectionGroup group={multiRoleGroup()} cardA={cardA} cardB={cardB} />);
     const toggle = () => screen.getByRole('button', {name: /show all 3 roles|hide additional roles/i});
     fireEvent.click(toggle());
-    fireEvent.keyDown(window, {key: 'Escape'});
+    fireEvent.keyDown(toggle(), {key: 'Escape'});
     expect(toggle()).toHaveAttribute('aria-expanded', 'false');
   });
 
@@ -146,6 +146,22 @@ describe('ConnectionGroup — multi-role expand/collapse', () => {
       expect(cardViewEscape).toHaveBeenCalledTimes(1);
     } finally {
       document.removeEventListener('keydown', cardViewEscape);
+    }
+  });
+
+  it('lets a tooltip opened over the open list hide on the same Escape', () => {
+    render(<ConnectionGroup group={multiRoleGroup()} cardA={cardA} cardB={cardB} />);
+    const toggle = () => screen.getByRole('button', {name: /show all 3 roles|hide additional roles/i});
+    fireEvent.click(toggle());
+    // useTooltip hides on a capture-phase document listener, added once the tooltip opens.
+    const tooltipEscape = vi.fn();
+    document.addEventListener('keydown', tooltipEscape, true);
+    try {
+      fireEvent.keyDown(toggle(), {key: 'Escape'});
+      expect(tooltipEscape).toHaveBeenCalledTimes(1);
+      expect(toggle()).toHaveAttribute('aria-expanded', 'false');
+    } finally {
+      document.removeEventListener('keydown', tooltipEscape, true);
     }
   });
 
