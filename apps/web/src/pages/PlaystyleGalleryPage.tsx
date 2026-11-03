@@ -4,7 +4,13 @@ import type {LorcanaCard, Playstyle} from 'inkweave-synergy-engine';
 import {getAllPlaystyles} from '../features/synergies/engineCatalog';
 import {useAllPlaystyleCards, usePreloadPlaystyleFiles} from '../features/synergies/hooks';
 import {CardGridSkeleton} from '../features/cards';
-import {CompactHeader, ErrorBoundary, EtherealBackground, Seo} from '../shared/components';
+import {
+  CompactHeader,
+  ErrorBoundary,
+  EtherealBackground,
+  PageAbout,
+  Seo,
+} from '../shared/components';
 import {PlaystyleFanTile, PlaystyleSection} from '../features/playstyles';
 import {
   COLORS,
@@ -27,18 +33,24 @@ import {useResponsive} from '../shared/hooks';
 interface LayoutConfig {
   pagePadding: string;
   gridPadding: string;
+  aboutPadding: string;
   maxSubtitleWidth: number | undefined;
 }
+
+/** The space under the About section: the grid's bottom padding, so the page ends as it did. */
+const ABOUT_BOTTOM = 48;
 
 const DESKTOP_LAYOUT: LayoutConfig = {
   pagePadding: `${SPACING.xxl + 8}px 32px 0`,
   gridPadding: `${SPACING.xxl}px 32px 48px`,
+  aboutPadding: `0 ${SPACING.xxxl}px ${ABOUT_BOTTOM}px`,
   maxSubtitleWidth: 640,
 };
 
 const MOBILE_LAYOUT: LayoutConfig = {
   pagePadding: `${SPACING.xl}px ${SPACING.lg}px 0`,
   gridPadding: `${SPACING.xl}px ${SPACING.lg}px 48px`,
+  aboutPadding: `0 ${SPACING.lg}px ${ABOUT_BOTTOM}px`,
   maxSubtitleWidth: undefined,
 };
 
@@ -167,6 +179,26 @@ function PlaystyleGalleryGrid({
   );
 }
 
+/** What a playstyle is, under the grid: the page's words of its own for search, which its tiles, being card art, don't give it. */
+function PlaystylesAbout({padding}: {padding: string}) {
+  return (
+    <PageAbout heading="About playstyles" padding={padding}>
+      <p>
+        A playstyle is a strategy that a group of cards push forward together: emptying the
+        opponent's hand, ramping ink, filling the board with items, or questing with one tribe of
+        characters. Mechanics gather the cards that share a trick, whatever their classification.
+        Tribes gather the characters who grow stronger beside others of their kind.
+      </p>
+      <p>
+        Inkweave reads every card's rules text and classifications to find each playstyle's cards
+        across all six inks of the Core format. Open a playstyle to see its cards, a guide to how
+        the deck wins and how to build it, and its key cards. Each card links to its own page, where
+        its pairings are scored from 1 to 10 and players vote on how well they really play.
+      </p>
+    </PageAbout>
+  );
+}
+
 // ── Page ──
 
 export function PlaystyleGalleryPage() {
@@ -235,6 +267,7 @@ export function PlaystyleGalleryPage() {
             />
           </ErrorBoundary>
         </div>
+        <PlaystylesAbout padding={layout.aboutPadding} />
       </div>
     </main>
   );
