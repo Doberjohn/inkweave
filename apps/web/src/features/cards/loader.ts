@@ -96,6 +96,8 @@ function drawsHashedArt(card: Pick<LorcanaCard, 'id' | 'imageUrl'>): boolean {
  *
  * Dev/CI: falls back to the legacy string-transform on `card.imageUrl`
  * (`.avif` → `-sm.avif`) so the existing proxy paths keep working.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export function smallImageUrl(
   card: Pick<LorcanaCard, 'id' | 'imageUrl' | 'imageHashSm'>,
@@ -176,7 +178,7 @@ export function printingCard(card: LorcanaCard, printing: CardPrinting): Lorcana
  * Parse set code to a numeric value for comparison
  * Regular sets (1-11) get their number, Q sets get a lower priority
  */
-export function parseSetOrder(setCode: string | undefined): number {
+function parseSetOrder(setCode: string | undefined): number {
   if (!setCode) return -1;
   const num = parseInt(setCode, 10);
   if (!isNaN(num)) return num;
@@ -188,7 +190,7 @@ export function parseSetOrder(setCode: string | undefined): number {
 /**
  * Extract set information from LorcanaJSON data
  */
-export function loadSetsFromJSON(data: LorcanaJSONData): SetInfo[] {
+function loadSetsFromJSON(data: LorcanaJSONData): SetInfo[] {
   if (!data.sets) return [];
 
   return Object.entries(data.sets)
@@ -225,6 +227,8 @@ export function loadCardsFromJSON(data: LorcanaJSONData): LorcanaCard[] {
  * The `transformCard` called here is the LOCAL wrapper above, which attaches
  * `imageUrl` and the content-addressed hashes; the engine's deliberately does
  * not, so calling it directly costs every collection card its artwork.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export function transformRawCards(cards: readonly LorcanaJSONCard[]): LorcanaCard[] {
   const out: LorcanaCard[] = [];
@@ -374,6 +378,8 @@ export function searchCardsByName(cards: LorcanaCard[], query: string): LorcanaC
  * The search box's suggestions: what `searchCardsByName` finds, newest set first by
  * `parseSetOrder`, so quest sets come last. inkweave-ui's `useAutocomplete` takes it as its
  * `search`.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export function suggestCardsByName(cards: LorcanaCard[], term: string): LorcanaCard[] {
   return searchCardsByName(cards, term).sort((a, b) => parseSetOrder(b.setCode) - parseSetOrder(a.setCode));
@@ -777,7 +783,7 @@ export function sortBySetThenNumber(cards: LorcanaCard[]): LorcanaCard[] {
  * Sort cards alphabetically by fullName.
  * Returns a new array. Does not mutate the input.
  */
-export function sortCardsByName(cards: LorcanaCard[], direction: 'asc' | 'desc'): LorcanaCard[] {
+function sortCardsByName(cards: LorcanaCard[], direction: 'asc' | 'desc'): LorcanaCard[] {
   const dir = direction === 'asc' ? 1 : -1;
   return [...cards].sort((a, b) => dir * a.fullName.localeCompare(b.fullName));
 }
@@ -786,7 +792,7 @@ export function sortCardsByName(cards: LorcanaCard[], direction: 'asc' | 'desc')
  * Sort cards by ink cost, with fullName as tiebreaker.
  * Returns a new array. Does not mutate the input.
  */
-export function sortCardsByCost(cards: LorcanaCard[], direction: 'asc' | 'desc'): LorcanaCard[] {
+function sortCardsByCost(cards: LorcanaCard[], direction: 'asc' | 'desc'): LorcanaCard[] {
   const dir = direction === 'asc' ? 1 : -1;
   return [...cards].sort((a, b) => {
     const costDiff = (a.cost ?? 0) - (b.cost ?? 0);

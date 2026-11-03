@@ -23,7 +23,7 @@ import {
   LETTER_SPACING,
 } from '../../../shared/constants';
 
-export type FormLayout = 'stacked' | 'tabbed';
+type FormLayout = 'stacked' | 'tabbed';
 
 interface InDepthVoteFormProps {
   formState: InDepthFormState;

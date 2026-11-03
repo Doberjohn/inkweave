@@ -32,7 +32,7 @@ import type {CollectionSource} from './collectionStorage';
 export type CollectionSyncPlan = 'adopt-server' | 'upload' | 'drop-local' | 'none';
 
 /** The parts of the local copy the decision reads. */
-export interface LocalCopyFacts {
+interface LocalCopyFacts {
   importedAt: number;
   ownerUid: string | null;
   source: CollectionSource;

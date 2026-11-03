@@ -56,7 +56,7 @@ import {TUNING} from '../data/tuning';
 // ============================================
 
 /** Direction-agnostic role-cross matcher: true iff one side has `x` and the other has `y`. */
-export function crossMatcher<T extends string>(aRoles: T[], bRoles: T[]): (x: T, y: T) => boolean {
+function crossMatcher<T extends string>(aRoles: T[], bRoles: T[]): (x: T, y: T) => boolean {
   const a = new Set(aRoles);
   const b = new Set(bRoles);
   return (x, y) => (a.has(x) && b.has(y)) || (b.has(x) && a.has(y));
@@ -1261,7 +1261,7 @@ const ITEM_PAYOFF_LINES: PayoffPairLines = {
  *   member      x payoff-static             = 6  the item satisfies the "have an item in play" check
  * The trailing 5 is an unreachable guard — the payoff gate guarantees a match above.
  */
-export function scoreItemPair(
+function scoreItemPair(
   cardRoles: ItemRole[],
   otherRoles: ItemRole[],
 ): {score: number; explanation: string} {
@@ -1731,7 +1731,7 @@ function scoreTribalLowerTiers(ctx: TribalPairCtx): {score: number; explanation:
  *   buff    <-> member              = 6  the body is pumped by the (team or single-target) buff
  *   check   <-> member              = 6  the body turns on the "have a X in play" payoff
  */
-export function scoreTribalPair(
+function scoreTribalPair(
   tribe: string,
   cardRoles: TribalRole[],
   otherRoles: TribalRole[],

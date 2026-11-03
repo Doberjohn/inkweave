@@ -53,7 +53,11 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {PROMO_RARITY} from '../cards/loader';
 
-/** The two ways a card is printed. `CollectionEntry` is keyed by it. */
+/**
+ * The two ways a card is printed. `CollectionEntry` is keyed by it.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
+ */
 export type Finish = 'normal' | 'foil';
 
 /** Owned copies of one card, split by finish. */
@@ -127,7 +131,7 @@ interface CollectionRow {
 }
 
 /** What a row turned out to be. Drives both `entries` and the summary. */
-export type RowOutcome = {kind: 'owned'; cardId: string} | {kind: 'ambiguous'} | {kind: 'unidentified'};
+type RowOutcome = {kind: 'owned'; cardId: string} | {kind: 'ambiguous'} | {kind: 'unidentified'};
 
 /**
  * Split one CSV line. Fields may be quoted and a quoted field may contain commas

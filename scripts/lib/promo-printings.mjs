@@ -162,6 +162,8 @@ function syncPromos(card, printings) {
  * without changing anything when the catalog can't merge. Returns, for each card that has or had
  * promos, the entries added, updated, removed and unchanged, plus the `noBaseCard` printings
  * skipped.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export function mergePromoPrintings(cards, catalog) {
   const problems = catalogProblems(cards, catalog);
@@ -197,6 +199,8 @@ export function mergePromoPrintings(cards, catalog) {
  * own, which a run never removes. A promo whose card no dataset holds yet has no `baseId`
  * (Hades - Dark Usurper, whose card is in Set 15), so the binder names its pocket until the card
  * arrives.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export function collectionPromos(catalog, kept = new Map()) {
   const folded = catalog.fold.map(({baseId, fullName, variants}) => ({baseId, fullName, variants}));
@@ -221,6 +225,8 @@ export function collectionPromos(catalog, kept = new Map()) {
 /**
  * Why the collection's promos can't ship: one names a card no dataset holds, or a card by
  * another name. Either would leave its pocket waiting for a card that will never come.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export function promoBaseProblems(promos, cards) {
   const names = new Map(cards.map((card) => [String(card.id), card.fullName]));

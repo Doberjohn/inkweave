@@ -13,7 +13,7 @@ import type {RepoResult} from '../../shared/lib/repoResult';
 import {reportFailure, type FailureSite} from '../../shared/lib/reportFailure';
 import {callSupabase} from '../../shared/lib/supabaseCall';
 
-export type FriendStatus = 'pending' | 'accepted';
+type FriendStatus = 'pending' | 'accepted';
 
 export interface Friendship {
   requesterId: string;
@@ -61,7 +61,7 @@ export const SEND_FAILED = 'Could not send the request. Try again.';
 type Refusal = 'invalid' | 'unknown' | 'own' | 'too_many' | 'slow_down';
 
 /** What a send came to, as the friends events name it: the pair's status, a refusal, or failed. */
-export type SendAnswer = FriendStatus | Refusal | 'failed';
+type SendAnswer = FriendStatus | Refusal | 'failed';
 
 /** A send's result, with the database's answer beside the words the section shows. */
 export interface SentResult extends RepoResult<SentRequest> {

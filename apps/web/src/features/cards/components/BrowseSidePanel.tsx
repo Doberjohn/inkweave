@@ -81,7 +81,7 @@ export function useSidePanelDocked(): boolean {
 }
 
 /** What `FilterContent` needs, wired straight to the URL state. The panel adds its own Clear all. */
-export type PanelFilterProps = Omit<
+type PanelFilterProps = Omit<
   React.ComponentProps<typeof FilterContent>,
   'variant' | 'showInlineCost' | 'headerAction' | 'vocabulary'
 >;

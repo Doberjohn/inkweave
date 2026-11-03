@@ -8,7 +8,7 @@ import {VoteAffirmation} from '../../voting/components';
 const COMMUNITY_TINT = INK_COLORS.Amethyst.text;
 const COMMUNITY_TINT_DARK = INK_COLORS.Amethyst.border;
 
-export type CommunityEmptyVariant = 'full-empty' | 'half-empty';
+type CommunityEmptyVariant = 'full-empty' | 'half-empty';
 
 interface CommunityEmptyStateProps {
   variant: CommunityEmptyVariant;

@@ -73,6 +73,8 @@ const entriesOf = (cards) => cards.flatMap((card) => [card, ...(card.variants ??
 /**
  * Every `finishes` already in `cards` and their `variants`, by id: what a run that rebuilds
  * those entries carries over, and what its report compares against (`givenFinishes`).
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export function finishesById(cards) {
   const byId = new Map();
