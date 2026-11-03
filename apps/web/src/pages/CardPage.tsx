@@ -116,7 +116,7 @@ export function CardPage() {
   const {isMobile} = useResponsive();
   const {getCardById, isLoading: cardsLoading} = useCardDataContext();
   const card = cardId ? getCardById(cardId) : undefined;
-  const {synergies, isLoading: synergiesLoading} = usePrecomputedSynergies(card ?? null);
+  const {synergies, isLoading: synergiesLoading, retry} = usePrecomputedSynergies(card ?? null);
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   // The mobile card's ×, like the card modal's: back to where the user came from inside
@@ -205,6 +205,7 @@ export function CardPage() {
           selectedCard={card}
           synergies={synergies}
           isLoading={synergiesLoading}
+          onRetry={retry}
           totalSynergyCount={totalCount}
           onClearSelection={closeCard}
           isMobile={isMobile}

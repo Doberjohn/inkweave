@@ -1,10 +1,11 @@
-import {useState, type CSSProperties} from 'react';
+import {useRef, useState, type CSSProperties, type RefObject} from 'react';
 import type {LorcanaCard} from '../../cards';
 import type {SynergyGroup as SynergyGroupData} from '../types';
 import {CardDetail, SynergyGroup} from '.';
 import {CardDetailLoading} from './CardDetail';
 import {ExpandedGroupView} from './ExpandedGroupView';
 import {SynergyResultsSkeleton} from './SynergyResultsSkeleton';
+import {SynergiesFailedNotice} from './SynergiesNotices';
 import {Chip, RenderProfiler} from '../../../shared/components';
 import {SortSelect} from 'inkweave-ui/components/SortSelect';
 import type {SynergySortOrder} from '../../../shared/constants';
@@ -23,6 +24,8 @@ interface SynergyResultsProps {
   synergies: SynergyGroupData[];
   /** True while the card's synergies are still loading: shows a skeleton, not the empty notice. */
   isLoading?: boolean;
+  /** Set only when the card's synergy file failed to load: the results say so, with a Try again that calls this. */
+  onRetry?: () => void;
   totalSynergyCount: number;
   onClearSelection: () => void;
   isMobile: boolean;
@@ -53,6 +56,9 @@ function buildSectionStyle(isMobile: boolean): CSSProperties {
     minWidth: 0,
     padding: isMobile ? `${SPACING.md}px` : `${SPACING.xl}px`,
     background: isMobile ? COLORS.background : undefined,
+    // It takes focus only to hold it through a retry (SynergiesFailedNotice): a ring round the
+    // whole section would mark no control.
+    outline: 'none',
   };
 }
 
@@ -187,6 +193,9 @@ interface ResultsBodyProps {
   selectedCard: LorcanaCard;
   synergies: SynergyGroupData[];
   isLoading: boolean;
+  onRetry: (() => void) | undefined;
+  /** The results section, which takes focus from the failure notice's Try again. */
+  sectionRef: RefObject<HTMLElement | null>;
   totalSynergyCount: number;
   onClearSelection: () => void;
   isMobile: boolean;
@@ -199,12 +208,14 @@ interface ResultsBodyProps {
   onSynergyCardClick: (card: LorcanaCard, groupKey?: string) => void;
 }
 
-/** The default (non-expanded) view: optional card detail, then the loading skeleton, the empty
- *  notice, or the sorted, filterable group list with its header and toolbar. */
+/** The default (non-expanded) view: optional card detail, then the loading skeleton, the
+ *  failure or empty notice, or the sorted, filterable group list with its header and toolbar. */
 function SynergyResultsBody({
   selectedCard,
   synergies,
   isLoading,
+  onRetry,
+  sectionRef,
   totalSynergyCount,
   onClearSelection,
   isMobile,
@@ -228,6 +239,8 @@ function SynergyResultsBody({
       )}
       {isLoading ? (
         <SynergyResultsSkeleton isMobile={isMobile} />
+      ) : onRetry ? (
+        <SynergiesFailedNotice onRetry={onRetry} focusOnRetry={sectionRef} />
       ) : synergies.length === 0 ? (
         <NoSynergiesNotice />
       ) : (
@@ -266,6 +279,7 @@ function SynergyResultsContent(
   props: SynergyResultsProps & {
     sortOrder: SynergySortOrder;
     setSortOrder: (order: SynergySortOrder) => void;
+    sectionRef: RefObject<HTMLElement | null>;
   },
 ) {
   const {selectedCard, synergies, expandedGroup, onBackToAll, isMobile, onSynergyCardClick} = props;
@@ -290,6 +304,8 @@ function SynergyResultsContent(
       selectedCard={selectedCard}
       synergies={synergies}
       isLoading={props.isLoading ?? false}
+      onRetry={props.onRetry}
+      sectionRef={props.sectionRef}
       totalSynergyCount={props.totalSynergyCount}
       onClearSelection={props.onClearSelection}
       isMobile={isMobile}
@@ -306,11 +322,12 @@ function SynergyResultsContent(
 
 export function SynergyResults(props: SynergyResultsProps) {
   const [sortOrder, setSortOrder] = useState<SynergySortOrder>('ink-cost');
+  const sectionRef = useRef<HTMLElement>(null);
 
   return (
     <RenderProfiler id="SynergyResults">
-      <section aria-label="Synergy results" style={buildSectionStyle(props.isMobile)}>
-        <SynergyResultsContent {...props} sortOrder={sortOrder} setSortOrder={setSortOrder} />
+      <section ref={sectionRef} tabIndex={-1} aria-label="Synergy results" style={buildSectionStyle(props.isMobile)}>
+        <SynergyResultsContent {...props} sortOrder={sortOrder} setSortOrder={setSortOrder} sectionRef={sectionRef} />
       </section>
     </RenderProfiler>
   );

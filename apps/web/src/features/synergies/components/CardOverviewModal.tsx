@@ -39,11 +39,11 @@ import {
   TOUCH_TARGET,
   VISUALLY_HIDDEN,
   FONT_WEIGHT,
-  LINE_HEIGHT,
 } from '../../../shared/constants';
 import {Chip} from 'inkweave-ui/components/Chip';
 import {LinkButton} from 'inkweave-ui/components/LinkButton';
 import {ModalCloseButton, SynergiesLoadingSkeleton} from './CardOverviewModalFallback';
+import {OutsideCoreNotice, SynergiesEmptyState, SynergiesFailedNotice} from './SynergiesNotices';
 import {LOGO_HEIGHT, ModalCardTitle} from './ModalCardTitle';
 import {
   CENTERING_WRAPPER_STYLE,
@@ -60,6 +60,7 @@ import {
   pickSynergyColumnLayout,
 } from './cardOverviewModalStyles';
 import {useModalCardSize} from './useModalCardSize';
+import {useFocusReturnsFromComparison} from './useFocusReturnsFromComparison';
 
 const FLIP_DURATION = 480;
 const FLIP_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
@@ -105,31 +106,6 @@ function focusedWithin(container: HTMLElement | null): HTMLElement | null {
   return active instanceof HTMLElement && container?.contains(active) ? active : null;
 }
 
-/**
- * Focus returns to the synergy tile that opened a comparison once it closes (BACK or Escape),
- * or to the close × if that tile is gone, as a tile of the expanded group view is (WCAG 2.4.3).
- * The × takes it wherever it was: focus left on a control in the comparison's panel, which stays
- * mounted through the exit animation, would fall to <body> when the panel unmounts. BACK takes
- * focus when the comparison opens (BackButton). Returns what keeps the opener: call it with what
- * held focus when the tile was pressed.
- */
-function useFocusReturnsFromComparison(inComparison: boolean, fallbackRef: React.RefObject<HTMLElement | null>) {
-  const openerRef = useRef<HTMLElement | null>(null);
-  const wasInComparison = useRef(inComparison);
-  useLayoutEffect(() => {
-    const left = wasInComparison.current && !inComparison;
-    wasInComparison.current = inComparison;
-    if (!left) return;
-    const opener = openerRef.current;
-    openerRef.current = null;
-    if (opener?.isConnected) opener.focus({preventScroll: true});
-    else fallbackRef.current?.focus({preventScroll: true});
-  }, [inComparison, fallbackRef]);
-  return (opener: HTMLElement | null) => {
-    openerRef.current = opener;
-  };
-}
-
 interface CardOverviewModalProps {
   isOpen: boolean;
   card: LorcanaCard;
@@ -140,6 +116,8 @@ interface CardOverviewModalProps {
    *  card genuinely has zero synergies. See usePrecomputedSynergies for the
    *  fetch lifecycle. */
   synergiesLoading?: boolean;
+  /** Set only when the card's synergy file failed to load: the column says so, with a Try again that calls this. */
+  onRetrySynergies?: () => void;
   /**
    * The card is outside Core (sets 1-8, from a collection). The engine
    * never analyses those sets, so the synergy column says so instead of reading as
@@ -426,7 +404,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
  */
 export function CardOverviewModal(props: CardOverviewModalProps) {
   const {isOpen, card, synergies, synergiesLoading = false, outsideCore = false, onClose, isMobile = false, hideBackButton = false} = props;
-  const {siblingCardIds = [], onGoToSibling} = props;
+  const {siblingCardIds = [], onGoToSibling, onRetrySynergies} = props;
   const {
     modalRef,
     frameRef,
@@ -524,6 +502,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               cardWidth={cardWidth}
               cardHeight={cardHeight}
               synergiesLoading={synergiesLoading}
+              onRetrySynergies={onRetrySynergies}
               outsideCore={outsideCore}
               visibleGroups={visibleGroups}
               comparisonPair={comparisonPair}
@@ -555,10 +534,11 @@ function isTextEntryTarget(target: EventTarget | null): boolean {
 }
 
 /**
- * Controls that use the arrow keys themselves: text entry, radio groups, whose arrows move their
- * selection, and the printings strip, whose arrows turn it. There they are not "next card".
+ * Controls that use the arrow keys themselves, where they are not "next card": text entry, radio
+ * groups and the synergy grids (`data-owns-arrow-keys`), whose arrows move between their items,
+ * and the printings strip. A grid keeps its arrows at its edges too, where they move nothing.
  */
-const OWNS_ARROW_KEYS = '[role="radiogroup"], [aria-roledescription="carousel"]';
+const OWNS_ARROW_KEYS = '[role="radiogroup"], [aria-roledescription="carousel"], [data-owns-arrow-keys]';
 
 function ownsArrowKeys(target: EventTarget | null): boolean {
   if (isTextEntryTarget(target)) return true;
@@ -630,6 +610,7 @@ interface ModalContentRegionProps {
   cardWidth: number;
   cardHeight: number;
   synergiesLoading: boolean;
+  onRetrySynergies?: () => void;
   outsideCore: boolean;
   visibleGroups: SynergyGroupData[];
   comparisonPair: DetailedPairSynergy | null;
@@ -660,6 +641,7 @@ function ModalContentRegion({
   cardWidth,
   cardHeight,
   synergiesLoading,
+  onRetrySynergies,
   outsideCore,
   visibleGroups,
   comparisonPair,
@@ -699,6 +681,7 @@ function ModalContentRegion({
         cardHeight={cardHeight}
         synergies={synergies}
         synergiesLoading={synergiesLoading}
+        onRetrySynergies={onRetrySynergies}
         outsideCore={outsideCore}
         visibleGroups={visibleGroups}
         activeGroupFilter={activeGroupFilter}
@@ -1395,6 +1378,7 @@ interface CardsRowProps {
   card: LorcanaCard;
   cardWidth: number;
   synergiesLoading: boolean;
+  onRetrySynergies?: () => void;
   outsideCore: boolean;
   cardHeight: number;
   isMobile: boolean;
@@ -1433,6 +1417,7 @@ function CardsRow(props: CardsRowProps) {
       <DefaultInfoColumn
         synergies={props.synergies}
         synergiesLoading={props.synergiesLoading}
+        onRetrySynergies={props.onRetrySynergies}
         outsideCore={props.outsideCore}
         visibleGroups={props.visibleGroups}
         activeGroupFilter={props.activeGroupFilter}
@@ -1580,6 +1565,7 @@ function pickCardWrapperStyle({isMobile, cardWidth, highlightedCard, inCompariso
 interface DefaultInfoColumnProps {
   synergies: SynergyGroupData[];
   synergiesLoading: boolean;
+  onRetrySynergies?: () => void;
   outsideCore: boolean;
   visibleGroups: SynergyGroupData[];
   activeGroupFilter: string | null;
@@ -1591,15 +1577,21 @@ interface DefaultInfoColumnProps {
   onCardClick: (card: LorcanaCard, groupKey?: string) => void;
 }
 
-function DefaultInfoColumn({synergies, synergiesLoading, outsideCore, visibleGroups, activeGroupFilter, rowHeight, isMobile, inComparison, onShowAll, onCardClick}: DefaultInfoColumnProps) {
+function DefaultInfoColumn({synergies, synergiesLoading, onRetrySynergies, outsideCore, visibleGroups, activeGroupFilter, rowHeight, isMobile, inComparison, onShowAll, onCardClick}: DefaultInfoColumnProps) {
+  const columnRef = useRef<HTMLElement>(null);
   return (
     <section
+      ref={columnRef}
+      // Takes focus from the failure notice's Try again, which the retry unmounts.
+      tabIndex={-1}
       aria-label="Synergies"
       // `inert` removes the synergy tile buttons from focus order + a11y tree during comparison
       // mode — opacity:0 + pointer-events:none would still leave them tab-reachable.
       inert={inComparison}
       style={{
         ...pickSynergyColumnLayout(isMobile, rowHeight),
+        // No ring round the column it takes for a retry: it marks no control.
+        outline: 'none',
         opacity: inComparison ? 0 : 1,
         pointerEvents: inComparison ? 'none' : 'auto',
         transition: `opacity 250ms ${EASING.smooth}`,
@@ -1612,6 +1604,8 @@ function DefaultInfoColumn({synergies, synergiesLoading, outsideCore, visibleGro
         <OutsideCoreNotice />
       ) : synergiesLoading ? (
         <SynergiesLoadingSkeleton />
+      ) : onRetrySynergies ? (
+        <SynergiesFailedNotice onRetry={onRetrySynergies} focusOnRetry={columnRef} />
       ) : synergies.length === 0 ? (
         <SynergiesEmptyState />
       ) : (
@@ -1632,55 +1626,6 @@ function DefaultInfoColumn({synergies, synergiesLoading, outsideCore, visibleGro
         ))
       )}
     </section>
-  );
-}
-
-/**
- * In place of synergies for a card from sets 1-8. Collection mode
- * shows every card a collection can hold, but Inkweave analyses Core only, so the
- * honest answer is "not analysed", not "none found".
- */
-function OutsideCoreNotice() {
-  return (
-    <div
-      data-testid="card-overview-outside-core"
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        padding: SPACING.xxl,
-        gap: SPACING.sm,
-      }}>
-      <p style={{margin: 0, color: COLORS.text, fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHT.semibold}}>Outside Core</p>
-      <p style={{margin: 0, color: COLORS.textMuted, fontSize: FONT_SIZES.md, lineHeight: LINE_HEIGHT.base, maxWidth: 300}}>
-        Inkweave analyses the Core format, sets 9 and later, so this card has no synergies here.
-      </p>
-    </div>
-  );
-}
-
-function SynergiesEmptyState() {
-  return (
-    <div
-      data-testid="card-overview-empty"
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        padding: SPACING.xxl,
-        gap: SPACING.sm,
-      }}>
-      <p style={{margin: 0, color: COLORS.text, fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHT.semibold}}>No synergies yet</p>
-      <p style={{margin: 0, color: COLORS.textMuted, fontSize: FONT_SIZES.md, lineHeight: LINE_HEIGHT.base, maxWidth: 280}}>
-        This card may match new rules as the engine evolves.
-      </p>
-    </div>
   );
 }
 

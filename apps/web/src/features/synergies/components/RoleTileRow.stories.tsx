@@ -104,7 +104,7 @@ export const ManyMechanics: Story = {
 /** The desktop row's placeholder while the cards load (#914), or the tiles load again (#930). */
 export const Loading: Story = {
   render: () => (
-    <RoleTiles status="loading" onRetry={fn()} tiles={[]} activeRoles={new Set()} onToggle={fn()} />
+    <RoleTiles status="loading" onRetry={fn()} focusOnRetry={{current: null}} tiles={[]} activeRoles={new Set()} onToggle={fn()} />
   ),
 };
 
@@ -114,6 +114,6 @@ export const Loading: Story = {
  */
 export const Failed: Story = {
   render: () => (
-    <RoleTiles status="failed" onRetry={fn()} tiles={[]} activeRoles={new Set()} onToggle={fn()} />
+    <RoleTiles status="failed" onRetry={fn()} focusOnRetry={{current: null}} tiles={[]} activeRoles={new Set()} onToggle={fn()} />
   ),
 };

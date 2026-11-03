@@ -739,24 +739,21 @@ function DesktopMechanicsRow({
   activeRoles: ReadonlySet<string>;
   toggleRole: (role: string) => void;
 }) {
+  // Holds focus through a Try again, which unmounts the button that had it, while the tiles load
+  // again. It takes focus only for that, so it draws no ring.
   const rowRef = useRef<HTMLDivElement>(null);
   if (tileRow.status === 'loaded' && roleChips.length === 0) return null;
-  // Try again swaps its line for the placeholder, which unmounts the button that had focus, so
-  // the row takes focus first and keeps it while the tiles load, as the binder does (#790).
-  const retry = () => {
-    rowRef.current?.focus();
-    tileRow.retry();
-  };
   return (
     <div
       ref={rowRef}
       tabIndex={-1}
       role="group"
       aria-label="Mechanics"
-      style={{padding: '32px 32px 0'}}>
+      style={{padding: '32px 32px 0', outline: 'none'}}>
       <RoleTiles
         status={tileRow.status}
-        onRetry={retry}
+        onRetry={tileRow.retry}
+        focusOnRetry={rowRef}
         tiles={roleChips.map(toRoleTile)}
         activeRoles={activeRoles}
         onToggle={toggleRole}

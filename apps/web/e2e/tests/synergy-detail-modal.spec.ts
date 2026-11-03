@@ -1,9 +1,11 @@
-import type {Locator} from '@playwright/test';
+import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {holdSupabasePath} from '../fixtures/supabaseStub';
 import {cardFullNameById} from '../helpers/cardData';
+import {failUntilLetThrough} from '../helpers/failingRoute';
 import {slidePointerOnto} from '../helpers/pointer';
 import fs from 'node:fs';
+import {createRequire} from 'node:module';
 import path from 'node:path';
 
 // Daisy Duck - Musketeer Spy: has shift-targets (direct) + discard (playstyle) groups, so both
@@ -24,6 +26,42 @@ if (!COMPARE_PARTNER_ID || !COMPARE_GROUP_KEY) {
   throw new Error('Fixture broken: card 1947 has no synergy group for the /compare deep-link test.');
 }
 const COMPARE_URL = `/compare/1947/${COMPARE_PARTNER_ID}/${COMPARE_GROUP_KEY}`;
+
+// The first Location Control pair whose engine column holds three or more roles, so all but one
+// fold behind "Show all N roles". Each role reads under its chip label from the engine's catalog.
+const MULTI_ROLE_PAIR = findMultiRolePair();
+
+function findMultiRolePair(): {url: string; labels: string[]} {
+  const dir = path.resolve(process.cwd(), 'public/data/synergies');
+  const catalog = createRequire(import.meta.url).resolve('inkweave-synergy-engine/catalog.json');
+  const chipLabels = (
+    JSON.parse(fs.readFileSync(catalog, 'utf8')) as {locationChipLabels: Record<string, string>}
+  ).locationChipLabels;
+  const files = fs
+    .readdirSync(dir)
+    .filter((file) => /^\d+\.json$/.test(file))
+    .sort((a, b) => Number.parseInt(a, 10) - Number.parseInt(b, 10));
+  for (const file of files) {
+    const data = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8')) as {
+      pairs?: Record<string, {connections: {ruleId: string; playstyleId?: string}[]}>;
+    };
+    for (const [partnerId, pair] of Object.entries(data.pairs ?? {})) {
+      // The list shows a row per connection, so a pair whose roles repeat a rule would count
+      // more rows than labels.
+      const ruleIds = pair.connections
+        .filter((c) => c.playstyleId === 'location-control')
+        .map((c) => c.ruleId);
+      if (ruleIds.length < 3 || new Set(ruleIds).size !== ruleIds.length) continue;
+      const labels = ruleIds.map((id) => chipLabels[id.replace(/^location-/, '')]);
+      if (labels.some((label) => !label)) continue;
+      return {
+        url: `/compare/${path.basename(file, '.json')}/${partnerId}/location-control`,
+        labels,
+      };
+    }
+  }
+  throw new Error('Fixture broken: no Location Control pair has three or more roles.');
+}
 
 /**
  * Comparison mode (formerly the separate synergy detail modal). Clicking a synergy card tile
@@ -55,6 +93,71 @@ async function expectPairRightUnderClose(modal: Locator, pairTop: Locator) {
   };
   await expect.poll(settledGap).toBeLessThan(40);
   await expect.poll(settledGap).toBeGreaterThanOrEqual(0);
+}
+
+/** Matches text that starts with one of `labels`, each read literally. */
+function startsWithOneOf(labels: string[]): RegExp {
+  const literal = (label: string) => label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^(?:${labels.map(literal).join('|')})`);
+}
+
+/**
+ * How many of `labels` show in the engine column: a role folded away sits in a panel of no
+ * height, which clips it to nothing. Only the column's own clipping counts, so the reading
+ * doesn't change with how far the window is scrolled.
+ */
+function rolesShown(engine: Locator, labels: string[]) {
+  return engine.evaluate((column, wanted) => {
+    const unclipped = (el: Element) => {
+      let {left, top, right, bottom} = el.getBoundingClientRect();
+      for (let a = el.parentElement; a && a !== column; a = a.parentElement) {
+        if (getComputedStyle(a).overflow === 'visible') continue;
+        const box = a.getBoundingClientRect();
+        left = Math.max(left, box.left);
+        top = Math.max(top, box.top);
+        right = Math.min(right, box.right);
+        bottom = Math.min(bottom, box.bottom);
+      }
+      return right - left > 1 && bottom - top > 1;
+    };
+    const spans = [...column.querySelectorAll('span')];
+    return wanted.filter((label) =>
+      spans.some((span) => span.textContent === label && unclipped(span)),
+    ).length;
+  }, labels);
+}
+
+type CardBFrame = {transform: string; opacity: string};
+type SamplingWindow = Window & {cardBFrames?: Promise<CardBFrame[]>};
+
+/**
+ * Card B's transform and opacity on each of the first four frames the card view spends in
+ * `mode`, read from the page so no frame passes between Playwright's steps. Under reduced motion
+ * card B neither flies in from its tile nor back to it. The sampler is running once this
+ * resolves, so the action that changes the mode comes after it; the returned call reads the
+ * frames.
+ */
+async function sampleCardB(modal: Locator, mode: 'comparison' | 'default') {
+  await modal.evaluate((root, wanted) => {
+    (window as SamplingWindow).cardBFrames = new Promise((resolve) => {
+      const frames: CardBFrame[] = [];
+      // Frames to wait for the mode, so a card view that never gets there still answers.
+      let left = 240;
+      const sample = () => {
+        const cardB = root.querySelector('.focused-card-glow-offset');
+        if (root.getAttribute('data-mode') === wanted && cardB) {
+          const style = getComputedStyle(cardB);
+          frames.push({transform: style.transform, opacity: style.opacity});
+        }
+        left -= 1;
+        if (frames.length < 4 && left > 0) requestAnimationFrame(sample);
+        else resolve(frames);
+      };
+      requestAnimationFrame(sample);
+    });
+  }, mode);
+  return async (): Promise<CardBFrame[]> =>
+    (await modal.evaluate(() => (window as SamplingWindow).cardBFrames)) ?? [];
 }
 
 test.describe('Synergy comparison — Desktop', () => {
@@ -165,6 +268,93 @@ test.describe('Synergy comparison — Desktop', () => {
     await expect(modal).toHaveAttribute('data-mode', 'comparison');
     await page.keyboard.press('Escape');
     await expect(modal).toHaveAttribute('data-mode', 'default', {timeout: 5000});
+  });
+});
+
+test.describe('Synergy comparison — roles and reduced motion (desktop)', () => {
+  test.describe('in a window tall enough not to scroll', () => {
+    // At 720 px the window scrolls the unfolded list into view and can shift it under a click.
+    test.use({viewport: {width: 1280, height: 1100}});
+
+    test('the role list unfolds and folds, and Escape folds it before the card view hears it', async ({
+      appPage,
+      page,
+    }, testInfo) => {
+      test.skip(
+        testInfo.project.name.startsWith('mobile-'),
+        'phones stack every role, with no toggle',
+      );
+      const {url, labels} = MULTI_ROLE_PAIR;
+      await page.goto(url);
+      const modal = appPage.cardOverviewModal;
+      await expect(modal).toHaveAttribute('data-mode', 'comparison', {timeout: 10000});
+      const engine = modal.locator('section[aria-label="Engine score"]');
+      const show = engine.getByRole('button', {name: `Show all ${labels.length} roles`});
+      const hide = engine.getByRole('button', {name: 'Hide additional roles'});
+      // The visible role's row is the list's other toggle, and the only role row that is a button.
+      const visibleRow = engine.getByRole('button').filter({hasText: startsWithOneOf(labels)});
+      await expect.poll(() => rolesShown(engine, labels)).toBe(1);
+
+      await show.click();
+      await expect(hide).toHaveAttribute('aria-expanded', 'true');
+      await expect.poll(() => rolesShown(engine, labels)).toBe(labels.length);
+      await hide.click();
+      await expect(show).toHaveAttribute('aria-expanded', 'false');
+      await expect.poll(() => rolesShown(engine, labels)).toBe(1);
+
+      await visibleRow.click();
+      await expect(hide).toHaveAttribute('aria-expanded', 'true');
+      await visibleRow.click();
+      await expect(show).toHaveAttribute('aria-expanded', 'false');
+
+      // From the keyboard: Enter unfolds the list, and Escape folds it and does nothing else.
+      await show.focus();
+      await page.keyboard.press('Enter');
+      await expect(hide).toHaveAttribute('aria-expanded', 'true');
+      await page.keyboard.press('Escape');
+      await expect(show).toHaveAttribute('aria-expanded', 'false');
+      await expect.poll(() => rolesShown(engine, labels)).toBe(1);
+      await expect(modal).toHaveAttribute('data-mode', 'comparison');
+      expect(new URL(page.url()).pathname).toBe(url);
+
+      // The next Escape reaches the card view, which a compare link closes.
+      await page.keyboard.press('Escape');
+      await expect(modal).toBeHidden({timeout: 5000});
+      await expect(page).not.toHaveURL(/\/compare\//);
+    });
+  });
+
+  test.describe('with reduced motion', () => {
+    test.use({reducedMotion: 'reduce'});
+
+    test('a comparison opens and closes in place, and opens again', async ({appPage}, testInfo) => {
+      test.skip(
+        testInfo.project.name.startsWith('mobile-'),
+        'phones open a comparison in their own layout',
+      );
+      await appPage.openCardOverview(CARD_NAME);
+      const modal = appPage.cardOverviewModal;
+      const back = modal.getByRole('button', {name: /back to synergies/i});
+      const cardB = modal.locator('.focused-card-glow-offset');
+      const still = {transform: 'none', opacity: '1'};
+
+      // Card B shows where it settles from its first frame, with no flight from the tile.
+      let frames = await sampleCardB(modal, 'comparison');
+      await modal.locator('[data-group-key="shift-targets"] a.card-tile').first().click();
+      expect(await frames()).toEqual([still, still, still, still]);
+
+      // Leaving hides card B at once instead of flying it back, and then takes it down.
+      frames = await sampleCardB(modal, 'default');
+      await back.click();
+      expect((await frames()).map((frame) => frame.opacity)).toEqual(['0', '0', '0', '0']);
+      await expect(cardB).toHaveCount(0);
+
+      // The next comparison opens the same way.
+      frames = await sampleCardB(modal, 'comparison');
+      await modal.locator('[data-group-key="discard"] a.card-tile').first().click();
+      expect(await frames()).toEqual([still, still, still, still]);
+      await expect(back).toBeVisible();
+    });
   });
 });
 
@@ -365,5 +555,75 @@ test.describe('Synergy comparison — deep link', () => {
     await page.goto(`/compare/1947/99999999/${COMPARE_GROUP_KEY}`);
     await expect(page.getByRole('heading', {level: 1})).toHaveText(/404/, {timeout: 10000});
     await expect(page.getByTestId('card-overview-fallback')).toHaveCount(0);
+  });
+
+  test('a link whose group no longer matches its cards ends on the 404 page, kept out of search', async ({
+    page,
+  }) => {
+    // Both cards exist, so this is the pair check's 404: a stale link after a rule change.
+    await page.goto(`/compare/1947/${COMPARE_PARTNER_ID}/no-such-group`);
+    await expect(page.getByRole('heading', {level: 1})).toHaveText(/404/, {timeout: 10000});
+    await expect(page.locator('meta[name="robots"][content="noindex"]')).toHaveCount(1);
+    await expect(page.getByTestId('card-overview-fallback')).toHaveCount(0);
+  });
+});
+
+/**
+ * A comparison link whose synergy file fails to load can't tell whether its pair exists, so it
+ * opens the card window on card A, which says the file failed; its Try again brings the
+ * comparison in, or the 404 page for a link whose pair is gone. The 404 page at once would tell
+ * a visitor a valid link was wrong.
+ */
+test.describe('Synergy comparison — deep link whose synergy file failed', () => {
+  // The page and the window share one load of the file, which logs the failure they show once.
+  test.use({expectedConsoleErrors: [/^Failed to load synergies for card 1947/]});
+
+  /** Counts the requests for card 1947's synergy file. */
+  function countFileRequests(page: Page): () => number {
+    let count = 0;
+    page.on('request', (request) => {
+      if (request.url().endsWith('/data/synergies/1947.json')) count += 1;
+    });
+    return () => count;
+  }
+
+  test('opens the card window, and Try again shows the comparison', async ({appPage, page}) => {
+    const letThrough = await failUntilLetThrough(page, '**/data/synergies/1947.json');
+    const fileRequests = countFileRequests(page);
+    const modal = appPage.cardOverviewModal;
+    const column = modal.getByRole('region', {name: 'Synergies'});
+
+    await page.goto(COMPARE_URL);
+    await expect(column.getByRole('alert')).toHaveText("Couldn't load this card's synergies.", {timeout: 10000});
+    await expect(modal).toHaveAttribute('data-mode', 'default');
+    await expect(page.getByRole('heading', {name: /404/})).toHaveCount(0);
+    // The window shows the page's failure rather than asking for the file again itself, which it
+    // would do as it mounts: a second of quiet proves it didn't.
+    await page.waitForTimeout(1000);
+    expect(fileRequests()).toBe(1);
+
+    letThrough();
+    await column.getByRole('button', {name: 'Try again'}).click();
+    await expect(modal).toHaveAttribute('data-mode', 'comparison', {timeout: 10000});
+    await expect(page).toHaveURL(new RegExp(`${COMPARE_URL}$`));
+    // The comparison hides the column that held focus for the retry, and a shared link has no
+    // BACK to take it: the close button does.
+    await expect(modal.getByRole('button', {name: 'Close', exact: true})).toBeFocused();
+    expect(fileRequests()).toBe(2);
+  });
+
+  test("a stale link's Try again ends on the 404 page, at the same address", async ({appPage, page}) => {
+    const letThrough = await failUntilLetThrough(page, '**/data/synergies/1947.json');
+    const staleLink = `/compare/1947/${COMPARE_PARTNER_ID}/no-such-group`;
+    const column = appPage.cardOverviewModal.getByRole('region', {name: 'Synergies'});
+
+    await page.goto(staleLink);
+    await expect(column.getByRole('alert')).toHaveText("Couldn't load this card's synergies.", {timeout: 10000});
+
+    letThrough();
+    await column.getByRole('button', {name: 'Try again'}).click();
+    await expect(page.getByRole('heading', {level: 1})).toHaveText(/404/, {timeout: 10000});
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page).toHaveURL(new RegExp(`${staleLink}$`));
   });
 });

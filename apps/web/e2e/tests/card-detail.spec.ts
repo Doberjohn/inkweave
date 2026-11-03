@@ -1,6 +1,7 @@
 import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {cardFullNameById} from '../helpers/cardData';
+import {failUntilLetThrough} from '../helpers/failingRoute';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -216,6 +217,42 @@ test.describe('Card Detail: Show More and sibling navigation (desktop)', () => {
     await page.getByRole('button', {name: 'Next card'}).click();
     await expect(modal.locator('h1')).not.toHaveText(firstName ?? '');
   });
+
+  test('the arrow keys page between cards, but in a synergy grid they move between its tiles', async ({
+    appPage,
+    page,
+  }, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    // A playstyle's cards all have synergies, and their window pages through the playstyle's cards.
+    await page.goto('/playstyles/lore-denial');
+    await page.getByTestId('card-tile').first().click();
+    const modal = appPage.cardOverviewModal;
+    const title = modal.locator('h1');
+    // The first grid with a second tile to move to.
+    const grid = modal
+      .getByRole('list', {name: 'Synergy cards'})
+      .filter({has: page.locator('[data-roving-item]').nth(1)})
+      .first();
+    await expect(grid, 'Fixture broken: no synergy grid with two tiles in the first card').toBeVisible({
+      timeout: 10000,
+    });
+    const firstName = (await title.textContent()) ?? '';
+
+    // The window takes focus once it has opened; from then on the keys reach it.
+    await expect.poll(() => modal.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+    await page.keyboard.press('ArrowRight');
+    await expect(title).not.toHaveText(firstName);
+    await page.keyboard.press('ArrowLeft');
+    await expect(title).toHaveText(firstName);
+
+    const tiles = grid.locator('[data-roving-item]');
+    await tiles.first().focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(tiles.nth(1)).toBeFocused();
+    await page.keyboard.press('ArrowLeft');
+    await expect(tiles.first()).toBeFocused();
+    await expect(title).toHaveText(firstName);
+  });
 });
 
 test.describe('Card window: sibling steps on every screen', () => {
@@ -363,6 +400,48 @@ test.describe('Card page synergy loading', () => {
     await expect(page.locator(`[data-group-key="${EXPAND_GROUP}"]`)).toBeVisible({timeout: 10000});
     await expect(skeleton).toHaveCount(0);
     await expect(emptyNotice).toHaveCount(0);
+  });
+});
+
+/**
+ * A synergy file that fails to load (an error status, or no connection) is not a card with no
+ * synergies: the page and the window say it failed, with a Try again that fetches it again.
+ * Any viewport.
+ */
+test.describe('A synergy file that failed to load', () => {
+  // The hook logs the failure it then shows.
+  test.use({expectedConsoleErrors: [/^Failed to load synergies for card/]});
+  const FAILED = "Couldn't load this card's synergies.";
+
+  test('the card page says so, and Try again shows the synergies', async ({page}) => {
+    const letThrough = await failUntilLetThrough(page, `**/data/synergies/${EXPAND_CARD_ID}.json`);
+    const results = page.getByRole('region', {name: 'Synergy results'});
+
+    await page.goto(`/card/${EXPAND_CARD_ID}`);
+    await expect(results.getByRole('alert')).toHaveText(FAILED, {timeout: 10000});
+    await expect(page.getByText(/no synergies found for this card/i)).toHaveCount(0);
+
+    letThrough();
+    await results.getByRole('button', {name: 'Try again'}).click();
+    await expect(results.locator(`[data-group-key="${EXPAND_GROUP}"]`)).toBeVisible({timeout: 10000});
+    await expect(results.getByRole('alert')).toHaveCount(0);
+    // The button it pressed is gone, so the results hold focus.
+    await expect(results).toBeFocused();
+  });
+
+  test('the card window says so, and Try again shows the synergies', async ({appPage}) => {
+    const letThrough = await failUntilLetThrough(appPage.page, `**/data/synergies/${EXPAND_CARD_ID}.json`);
+    await appPage.openCardOverview(cardFullNameById(EXPAND_CARD_ID));
+    const column = appPage.cardOverviewModal.getByRole('region', {name: 'Synergies'});
+
+    await expect(column.getByRole('alert')).toHaveText(FAILED, {timeout: 10000});
+    await expect(column.getByTestId('card-overview-empty')).toHaveCount(0);
+
+    letThrough();
+    await column.getByRole('button', {name: 'Try again'}).click();
+    await expect(column.locator(`[data-group-key="${EXPAND_GROUP}"]`)).toBeVisible({timeout: 10000});
+    await expect(column.getByRole('alert')).toHaveCount(0);
+    await expect(column).toBeFocused();
   });
 });
 

@@ -120,6 +120,7 @@ function renderTiles(status: RoleTilesStatus, layout: 'carousel' | 'grid', onRet
     <RoleTiles
       status={status}
       onRetry={onRetry}
+      focusOnRetry={{current: null}}
       tiles={tiles}
       activeRoles={new Set()}
       onToggle={vi.fn()}
@@ -143,6 +144,27 @@ describe('RoleTiles', () => {
       expect(onRetry).toHaveBeenCalledOnce();
     },
   );
+
+  it('hands focus to what holds it through the retry, as Try again goes', () => {
+    const holder = document.createElement('div');
+    holder.tabIndex = -1;
+    document.body.append(holder);
+    render(
+      <RoleTiles
+        status="failed"
+        onRetry={vi.fn()}
+        focusOnRetry={{current: holder}}
+        tiles={tiles}
+        activeRoles={new Set()}
+        onToggle={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', {name: 'Try again'}));
+
+    expect(holder).toHaveFocus();
+    holder.remove();
+  });
 
   it.each(['carousel', 'grid'] as const)('shows no tile or button while loading, %s', (layout) => {
     renderTiles('loading', layout);

@@ -125,6 +125,18 @@ describe('SynergyResults', () => {
     expect(screen.queryByRole('status', {name: 'Loading synergies'})).not.toBeInTheDocument();
   });
 
+  // A file that failed to load is not a card with no synergies.
+  it('says the synergies failed, with a Try again that keeps focus in the results', () => {
+    const onRetry = vi.fn();
+    renderResults({synergies: [], totalSynergyCount: 0, onRetry});
+    expect(screen.getByRole('alert')).toHaveTextContent("Couldn't load this card's synergies.");
+    expect(screen.queryByText('No synergies found for this card.')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', {name: 'Try again'}));
+    expect(onRetry).toHaveBeenCalledOnce();
+    expect(screen.getByRole('region', {name: 'Synergy results'})).toHaveFocus();
+  });
+
   it('should still show sort select when only 1 synergy group', () => {
     renderResults({synergies: [mockSynergies[0]], totalSynergyCount: 1});
     expect(screen.getByRole('combobox', {name: 'Sort synergies'})).toBeInTheDocument();
