@@ -1,6 +1,6 @@
 import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
-import {E2E_FRIEND_CODE} from '../fixtures/supabaseStub';
+import {E2E_FRIEND_CODE, E2E_SUPABASE_ORIGIN} from '../fixtures/supabaseStub';
 import {serveFriends} from '../helpers/friends';
 import {signInAs} from '../helpers/session';
 
@@ -69,9 +69,50 @@ test.describe('Account header control', () => {
     await page.goto('/browse');
     await page.getByTestId('compact-header').getByRole('button', {name: 'Sign in', exact: true}).click();
 
-    // Stops at the provider choice: actually signing in needs a real round-trip,
-    // which no placeholder project can serve.
+    // Stops at the provider choice: account.spec.ts fakes the round-trip itself.
     await expect(page.getByRole('dialog')).toBeVisible();
+  });
+
+  test("the sign-in dialog's Close button closes it", async ({page}, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    await page.goto('/browse');
+    await page.getByTestId('compact-header').getByRole('button', {name: 'Sign in', exact: true}).click();
+    const dialog = page.getByRole('dialog', {name: 'Sign in to Inkweave'});
+    await expect(dialog).toBeVisible();
+
+    // The shell's ×: the dialog has no Cancel.
+    await dialog.getByRole('button', {name: 'Close'}).click();
+    await expect(dialog).toBeHidden();
+  });
+
+  test('a sign-in whose SDK cannot load says it could not start', async ({page}, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    await page.route((url) => isSdkRequest(url.href), (route) => route.abort());
+    await page.goto('/browse');
+    await page.getByTestId('compact-header').getByRole('button', {name: 'Sign in', exact: true}).click();
+    const dialog = page.getByRole('dialog', {name: 'Sign in to Inkweave'});
+
+    await dialog.getByRole('button', {name: 'Continue with Google'}).click();
+    await expect(dialog.getByRole('alert')).toHaveText('Sign-in could not start. Check your connection and try again.');
+    // Both providers come back, so the next press tries again.
+    await expect(dialog.getByRole('button', {name: 'Continue with Google'})).toBeEnabled();
+    await expect(dialog.getByRole('button', {name: 'Continue with Discord'})).toBeEnabled();
+  });
+
+  test('Continue with Discord leaves for the provider, to come back to the auth callback', async ({
+    page,
+  }, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    await page.goto('/browse');
+    await page.getByTestId('compact-header').getByRole('button', {name: 'Sign in', exact: true}).click();
+    const authorize = page.waitForRequest(
+      (request) => request.url().startsWith(`${E2E_SUPABASE_ORIGIN}/auth/v1/authorize`),
+    );
+
+    await page.getByRole('dialog', {name: 'Sign in to Inkweave'}).getByRole('button', {name: 'Continue with Discord'}).click();
+    const params = new URL((await authorize).url()).searchParams;
+    expect(params.get('provider')).toBe('discord');
+    expect(params.get('redirect_to')).toBe(`${new URL(page.url()).origin}/auth/callback`);
   });
 });
 

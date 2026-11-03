@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-395 tests across 36 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+405 tests across 37 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised, and with `VITE_SHOW_BETA_NOTICE=true`, as production builds, so every home-page test sees the hero where players do, below the beta notice on screens narrower than 1400 px (`beta-notice.spec.ts`). Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -241,7 +241,7 @@ Eighteen run in `Mobile Viewport`, whose `beforeEach` opens the homepage first.
 | the header search opens a card window from the keyboard, staying on the gallery | On `/playstyles`, the one page whose header has a search field: typing "Elsa" lists suggestions, ArrowDown marks the first `aria-selected`, Enter opens its card window (named after it) and the URL stays `/playstyles` |
 | Enter in the header search goes to Browse with the query | On `/playstyles`, "Elsa" then Enter with nothing highlighted goes to `/browse?q=Elsa` |
 
-## `account-header.spec.ts` — 6 tests (3 desktop only, 2 phones only)
+## `account-header.spec.ts` — 9 tests (6 desktop only, 2 phones only)
 
 Covers the accounts surface. `playwright.config.ts` pins placeholder `VITE_SUPABASE_*` values, which matter: without credentials `isSupabaseConfigured()` is false, `enabled` is false and `AuthButton` renders nothing, so these would pass locally off a developer's `.env.local` and fail in CI, which supplies no Supabase env. Pinning makes the state identical everywhere.
 
@@ -252,9 +252,26 @@ At page load, the Supabase SDK is downloaded only when there is a session to res
 | the header carries a sign-in control on every page | `compact-header` shows a "Sign in" button on `/browse` AND `/playstyles`, proving the header carries it rather than the page |
 | an anonymous visit never downloads the Supabase SDK | With nothing stored, `/browse` renders the "Sign in" control and reaches network idle without one SDK request |
 | a stored session downloads the Supabase SDK to restore it | An `inkweave:auth` entry seeded before load makes `/browse` request the SDK (all projects) |
-| the sign-in control opens the provider dialog | Clicking it opens the `SignInDialog`. Stops at the provider choice: signing in needs a real round-trip no placeholder project can serve |
+| the sign-in control opens the provider dialog | Clicking it opens the `SignInDialog`. Stops at the provider choice; `account.spec.ts` plays the provider's round-trip |
+| the sign-in dialog's Close button closes it | (desktop) #1122. The dialog's only visible way out is the shell's × ("Close"; it has no Cancel), which hides it. Shown to fail with the dialog's close handler not passing the close on |
+| a sign-in whose SDK cannot load says it could not start | (desktop) #1122. With every SDK request aborted (the same matcher as the SDK tests above), "Continue with Google" shows the alert "Sign-in could not start. Check your connection and try again.", and both providers are enabled again for another try. Shown to fail with `startOAuth`'s catch returning no error |
+| Continue with Discord leaves for the provider, to come back to the auth callback | (desktop) #1122. The press sends the page to the placeholder project's `/auth/v1/authorize` (the stub answers it) with `provider=discord` and a `redirect_to` of this origin's `/auth/callback`. Shown to fail with the callback path changed |
 | Account tab on phones › signed out, the bottom nav opens the sign-in dialog | (phones only) A phone has no header, so the `Mobile navigation` carries the control as an account tab: on `/browse` its "Sign in" button opens the `Sign in to Inkweave` dialog. Shown to fail with the tab's press opening nothing |
 | Account tab on phones › signed in, the bottom nav opens the account page | (phones only) Signed in from a stored session (`helpers/session.ts`, the account's reads from `serveFriends`), the nav's "Your account" link goes from `/browse` to `/account`, whose `Your account` heading shows, and is then the nav's current page. Shown to fail with the tab linking elsewhere |
+
+## `account.spec.ts`: 7 tests (6 on every project, 1 on every project at a 390px viewport)
+
+The account page and the sign-in round-trip around it (#1122), against the placeholder Supabase project. The test plays the OAuth provider: it answers the SDK's `/auth/v1/authorize` navigation with a 302 back to its `redirect_to` plus `?code=e2e-code`, and the SDK's code exchange (`/auth/v1/token?grant_type=pkce`) with `storedSession` (`helpers/session.ts`). The signed-in tests store a session with `signInAs` and answer the account's reads with `serveFriends` (`helpers/friends.ts`); the display name tests answer the `profiles` update from a route registered after it, since Playwright tries the newest route first. Each test was shown to fail with the behaviour it covers broken, as its row says.
+
+| Test | What it verifies |
+|---|---|
+| a sign-in through the provider comes back through the auth callback, signed in | Signed out on `/account`, the card's "Sign in" (not the header's or the phone nav's) opens the dialog, and "Continue with Discord" goes through the provider, lands on `/auth/callback?code=e2e-code` (a main-frame navigation the test records) and ends on `/account` with Sign out and `@amber_dreamer` showing. The exchange sent `auth_code` `e2e-code` and a `code_verifier` whose SHA-256, base64url, is the `code_challenge` the authorize request carried (PKCE). Shown to fail with the callback page not moving on to `/account` |
+| the auth callback with no session to finish says the sign-in didn't complete | Under `page.clock`, `/auth/callback` with no code shows "Finishing sign-in…"; once the SDK has looked (network idle) the failure isn't shown yet, and 4 s on "Sign-in didn't complete." shows, whose "Go to your account" goes to `/account`, signed out. Shown to fail with the 4 s timer not setting the failure |
+| on a phone › signed out, the account page's Sign in opens the sign-in dialog | (390x844, every project) A phone has no header: `/account` shows "Sign in to name yourself.", and its Sign in opens the `Sign in to Inkweave` dialog. Shown to fail with the card's Sign in opening nothing |
+| Sign out ends the session: the page asks to sign in, and nothing is stored | Signed in on `/account`, Sign out sends `/auth/v1/logout`, the page shows "Sign in to name yourself.", `inkweave:auth` is gone from storage, and on a computer the header shows Sign in again. Shown to fail with `endSession` making no call |
+| a new name saves, goes to the account and shows on the page | "Change display name" opens "Change your display name" with the field at "Amber Dreamer"; "Ruby Ranger" saved closes it, the Display name row shows it with no reload, and the one write sent `{display_name: "Ruby Ranger"}`. Shown to fail with `adoptDisplayName` doing nothing |
+| refused › a refused save says so and keeps the dialog and the old name | The update answered 500 shows the alert "Could not save that name. Try again." in the open dialog, after one write; its Cancel then leaves the row at "Amber Dreamer". The repository's `[profile] save name failed:` line is allowed (`expectedConsoleErrors`). Shown to fail with the dialog closing on a refusal |
+| Cancel drops the typed name and writes nothing | A typed "Ruby Ranger" and Cancel close the dialog with the row still at "Amber Dreamer"; opened again, the field starts from "Amber Dreamer", and nothing was written. Shown to fail with the dialog keeping its draft on close |
 
 ## `collection-mode.spec.ts`: 42 tests (1 every project, 5 chromium only, 24 desktop only, 11 on every project at phone viewports, 1 desktop only at a phone viewport)
 
