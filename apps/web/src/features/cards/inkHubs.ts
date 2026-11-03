@@ -84,10 +84,10 @@ export const INK_HUB_BLURBS: Record<Ink, string> = {
 };
 
 /**
- * The three playstyles that draw the largest share of their cards from each ink, largest first,
- * which each hub's About section names and links. `inkHubs.test.ts` recounts them from the
- * engine's playstyle card lists, so a rule or card change that reorders them fails it: update
- * the list then, never the test.
+ * Three playstyles that draw many of their cards from each ink, which each hub's About section
+ * names and links: the three with the largest share when the list was written. `inkHubs.test.ts`
+ * recounts the shares and fails only when one falls out of its ink's top five, so a reveal that
+ * reorders the top three leaves the page true and CI green.
  */
 export const INK_HUB_PLAYSTYLES: Record<Ink, readonly [PlaystyleId, PlaystyleId, PlaystyleId]> = {
   Amber: ['healing', 'toy', 'monster'],

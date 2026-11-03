@@ -11,13 +11,20 @@ import {
 } from '../features/cards';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {getPlaystyleById} from '../features/synergies/engineCatalog';
-import {CompactHeader, EtherealBackground, PageAbout, PageAboutLink, Seo} from '../shared/components';
+import {
+  CompactHeader,
+  EtherealBackground,
+  PageAbout,
+  PageAboutLink,
+  Seo,
+} from '../shared/components';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive} from '../shared/hooks';
 import {sortBySetThenNumber} from '../features/cards';
 import {COLORS, FONTS, FONT_SIZES, SPACING, FONT_WEIGHT, LINE_HEIGHT} from '../shared/constants';
 import {NotFoundPage} from './NotFoundPage';
+import {inkHubTrail} from '../shared/lib/breadcrumbs';
 
 /**
  * `/ink/:inkSlug` — one hub per ink colour (#530).
@@ -59,11 +66,7 @@ export function InkHubPage() {
         title={`${hub.ink} Cards | Disney Lorcana | Inkweave`}
         description={INK_HUB_BLURBS[hub.ink]}
         canonicalPath={`/ink/${hub.slug}`}
-        breadcrumbs={[
-          {name: 'Home', path: '/'},
-          {name: 'Inks', path: '/inks'},
-          {name: hub.ink, path: `/ink/${hub.slug}`},
-        ]}
+        breadcrumbs={inkHubTrail(hub.ink)}
       />
       <EtherealBackground />
       <CompactHeader onLogoClick={() => navigate('/')} isMobile={isMobile} />
@@ -142,9 +145,9 @@ function InkHubAbout({ink}: {ink: Ink}) {
         scored from 1 to 10, or follow its link to the card's own page.
       </p>
       <p>
-        The playstyles that draw the largest share of their cards from {ink} are{' '}
-        <PlaystyleLinks ink={ink} />. Each playstyle page gathers the cards behind that strategy
-        from all six inks, with a guide to how the deck wins and the key cards to build around.
+        Playstyles that draw many of their cards from {ink} include <PlaystyleLinks ink={ink} />.
+        Each playstyle page gathers the cards behind that strategy from all six inks, with a guide
+        to how the deck wins and the key cards to build around.
       </p>
     </>
   );

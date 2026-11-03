@@ -126,6 +126,17 @@ describe('card addresses', () => {
     },
   );
 
+  it('asks for the 404 page without following a redirect, as to a login page', async () => {
+    const fetchPage = vi.fn(
+      async () => new Response(null, {status: 302, headers: {Location: '/sso'}}),
+    );
+    vi.stubGlobal('fetch', fetchPage);
+    const res = await middleware(new Request('https://inkweave.ink/card/999999/x'));
+    expect(fetchPage.mock.calls[0][1]).toEqual({redirect: 'manual'});
+    expect(res?.status).toBe(404);
+    expect(await res?.text()).toContain('Page not found');
+  });
+
   it('still answers 404 when the 404 page cannot be fetched', async () => {
     vi.stubGlobal('fetch', async () => new Response('', {status: 401}));
     const res = await middleware(new Request('https://inkweave.ink/card/999999/x'));

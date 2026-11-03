@@ -15,6 +15,7 @@ import {CompactHeader, Footer, Seo, type Breadcrumb} from '../shared/components'
 import {useBackOrNavigate, useResponsive} from '../shared/hooks';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING, FONT_WEIGHT} from '../shared/constants';
 import {cardNameHint} from './cardNameHint';
+import {inkHubTrail} from '../shared/lib/breadcrumbs';
 
 /**
  * `/card/:cardId` — a real, crawlable card detail page (issue #486).
@@ -31,13 +32,9 @@ function buildDescription(card: LorcanaCard): string {
   return `${card.fullName}: a ${card.cost}-cost ${inks} ${card.type}${cls}. See its strongest Disney Lorcana synergies and combos in Core format.`;
 }
 
-/** Home, then the hub of the card's first ink, then the card: the site's path to it. */
+/** The trail to the hub of the card's first ink, then the card: the site's path to it. */
 function cardBreadcrumbs(card: LorcanaCard): Breadcrumb[] {
-  return [
-    {name: 'Home', path: '/'},
-    {name: `${card.ink} cards`, path: `/ink/${card.ink.toLowerCase()}`},
-    {name: card.fullName, path: cardPath(card)},
-  ];
+  return [...inkHubTrail(card.ink), {name: card.fullName, path: cardPath(card)}];
 }
 
 /**

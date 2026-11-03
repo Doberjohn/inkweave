@@ -213,7 +213,8 @@ function VotePageShell({
           position: 'relative',
           zIndex: 1,
           // The vote screen keeps the whole first screen, so the About section starts below it.
-          minHeight: `calc(100vh - ${isMobile ? LAYOUT.compactHeaderHeightMobile : LAYOUT.compactHeaderHeight}px)`,
+          // svh: a phone's screen with its browser bars showing, as the page first loads.
+          minHeight: `calc(100svh - ${isMobile ? LAYOUT.compactHeaderHeightMobile : LAYOUT.compactHeaderHeight}px)`,
         }}
         aria-busy={ariaBusy}
         aria-label={ariaLabel}>
@@ -226,12 +227,23 @@ function VotePageShell({
   );
 }
 
+/**
+ * The space under the About section, the vote screen's own bottom padding (`getMainPadding`):
+ * on phones it clears the bottom nav, which floats over the page's end.
+ */
+const ABOUT_BOTTOM_MOBILE = 120;
+const ABOUT_BOTTOM_DESKTOP = 60;
+
 /** What a vote is and what it changes, below the vote screen: the page's words of its own for search. */
 function VoteAbout({isMobile}: {isMobile: boolean}) {
   return (
     <PageAbout
       heading="About voting"
-      padding={isMobile ? `0 ${SPACING.lg}px 120px` : `0 ${SPACING.xxl}px 60px`}>
+      padding={
+        isMobile
+          ? `0 ${SPACING.lg}px ${ABOUT_BOTTOM_MOBILE}px`
+          : `0 ${SPACING.xxl}px ${ABOUT_BOTTOM_DESKTOP}px`
+      }>
       <p>
         Each round shows two Core format cards that Inkweave's engine says work together, and asks
         how well they really do. Score the pair from 1 to 10: 1 to 3 is weak, 4 to 6 moderate, 7 to

@@ -23,7 +23,7 @@ export const Default: Story = {
           sorted by set and then by card number.
         </p>
         <p>
-          The playstyles that draw the largest share of their cards from Amber are{' '}
+          Playstyles that draw many of their cards from Amber include{' '}
           <PageAboutLink to="/playstyles/healing">Healing</PageAboutLink>,{' '}
           <PageAboutLink to="/playstyles/toy">Toys</PageAboutLink> and{' '}
           <PageAboutLink to="/playstyles/monster">Monsters</PageAboutLink>.

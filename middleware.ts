@@ -125,7 +125,8 @@ function cardAddress(url: URL): Response | Promise<Response> | undefined {
 }
 
 /** For when the 404 page itself can't be fetched, as on a preview behind Vercel's login. */
-const NOT_FOUND_FALLBACK = '<!doctype html><title>Page not found | Inkweave</title><p>Page not found. <a href="/">Go to Inkweave</a></p>';
+const NOT_FOUND_FALLBACK =
+  '<!doctype html><title>Page not found | Inkweave</title><p>Page not found. <a href="/">Go to Inkweave</a></p>';
 
 /**
  * The deployment's own 404 page, the app's shell, with status 404: a browser runs the app, which
@@ -135,7 +136,9 @@ const NOT_FOUND_FALLBACK = '<!doctype html><title>Page not found | Inkweave</tit
 async function notFound(url: URL): Promise<Response> {
   const headers = {'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store'};
   try {
-    const page = await fetch(new URL('/404.html', url));
+    // A deployment behind Vercel's login answers with a redirect to its login page: take that as
+    // a failure, never serve the login page under this deployment's address.
+    const page = await fetch(new URL('/404.html', url), {redirect: 'manual'});
     if (page.ok) return new Response(await page.text(), {status: 404, headers});
   } catch {
     // fall through to the plain page

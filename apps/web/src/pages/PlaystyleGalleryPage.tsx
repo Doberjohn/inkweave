@@ -37,17 +37,20 @@ interface LayoutConfig {
   maxSubtitleWidth: number | undefined;
 }
 
+/** The space under the About section: the grid's bottom padding, so the page ends as it did. */
+const ABOUT_BOTTOM = 48;
+
 const DESKTOP_LAYOUT: LayoutConfig = {
   pagePadding: `${SPACING.xxl + 8}px 32px 0`,
   gridPadding: `${SPACING.xxl}px 32px 48px`,
-  aboutPadding: '0 32px 48px',
+  aboutPadding: `0 ${SPACING.xxxl}px ${ABOUT_BOTTOM}px`,
   maxSubtitleWidth: 640,
 };
 
 const MOBILE_LAYOUT: LayoutConfig = {
   pagePadding: `${SPACING.xl}px ${SPACING.lg}px 0`,
   gridPadding: `${SPACING.xl}px ${SPACING.lg}px 48px`,
-  aboutPadding: `0 ${SPACING.lg}px 48px`,
+  aboutPadding: `0 ${SPACING.lg}px ${ABOUT_BOTTOM}px`,
   maxSubtitleWidth: undefined,
 };
 
