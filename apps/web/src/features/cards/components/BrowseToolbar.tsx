@@ -248,7 +248,7 @@ function getToolbarStyle(isMobile: boolean, flushBottom = false): React.CSSPrope
     padding: `${SPACING.md}px ${sidePad}px ${toolbarBottom(isMobile, flushBottom)}px`,
     display: 'flex',
     alignItems: 'center',
-    gap: isMobile ? SPACING.sm : 10,
+    gap: isMobile ? SPACING.sm : SPACING.md,
     flexWrap: 'wrap',
     position: 'relative',
     zIndex: 1,
@@ -374,7 +374,7 @@ function ActiveChipsRow({chips, isMobile}: ActiveChipsRowProps) {
     <div
       style={{
         display: 'flex',
-        gap: 6,
+        gap: SPACING.sm,
         flexWrap: 'wrap',
         ...(isMobile ? {flexBasis: '100%'} : {flex: 1}),
       }}>
@@ -518,7 +518,7 @@ function DockedToolbar({filters, sort, search, chips, modeSwitch, modeActions, s
 const IN_FLOW: React.CSSProperties = {display: 'contents'};
 
 /** Collection, and the collection's actions, at the far end outside collection mode. */
-const TRAILING_CONTROL_STYLE: React.CSSProperties = {marginLeft: 10, flexShrink: 0};
+const TRAILING_CONTROL_STYLE: React.CSSProperties = {marginLeft: SPACING.md, flexShrink: 0};
 
 /**
  * Controls over a side panel, spanning its width: Filters and the sort, or the set picker,
@@ -529,7 +529,7 @@ const PANEL_SPAN_STYLE: React.CSSProperties = {
   flexShrink: 0,
   display: 'flex',
   alignItems: 'center',
-  gap: 10,
+  gap: SPACING.md,
 };
 
 /** The set picker, Collection and the actions over the set panel, one gutter past the search. */
@@ -567,7 +567,7 @@ function FlowToolbar({
       {search}
       {extraChips}
       {!phoneRow && chips}
-      <div style={{marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10}}>
+      <div style={{marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: SPACING.md}}>
         {icons}
         {modeSwitch || sort}
         {/* Not on phones (owner, 2026-10-20): it wrapped Collection onto a row of its own. */}
