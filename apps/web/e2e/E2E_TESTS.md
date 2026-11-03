@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-419 tests across 38 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+427 tests across 38 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised, and with `VITE_SHOW_BETA_NOTICE=true`, as production builds, so every home-page test sees the hero where players do, below the beta notice on screens narrower than 1400 px (`beta-notice.spec.ts`). Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -55,7 +55,7 @@ The home page's beta notice (#1084), which index.css's `.beta-notice` lays out b
 | the notice's Discord button opens the invite in a new tab | The button opens https://discord.gg/gvA6qUUPE in a new tab (answered by a stand-in page, so the test never reaches Discord), `rel="noopener noreferrer"`, and the home page stays where it was |
 | only the home page shows the notice | `/` has it, `/browse` doesn't |
 
-## `card-detail.spec.ts` — 19 tests (11 desktop only, 3 on every project at a 390px viewport, 2 on every project at a 1024×768 touch viewport, 3 on every project at any viewport)
+## `card-detail.spec.ts` — 21 tests (11 desktop only, 3 on every project at a 390px viewport, 2 on every project at a 1024×768 touch viewport, 5 on every project at any viewport)
 
 Two surfaces: the crawlable `/card/:id` **page** (#486 — renders, not-found, empty state; slug URLs `/card/:id/:slug` with the id as the lookup key and the slug decorative, #498) and the
 CardOverviewModal opened from a tile (render, close, empty, scroll lock, show-all, sibling nav). The
@@ -89,6 +89,8 @@ which is how synergy tiles came to ignore every tap at 768px and wider without a
 | × on a card page reached by the /compare/X/X redirect opens Browse | At 390px, `/compare/2095/2095` redirects (a replace, so a new location key) to `/card/2095`; × still counts it as the page the visit started on and navigates to `/browse`. Without #653's `history.state.idx` check it stepped back to `about:blank`, out of the site |
 | keeps the footer out until the card and its synergies have loaded | `/card/2095` with `allCards.json` and its synergy file held: under the loading skeleton there is no `footer[aria-label="Site footer"]`; with the cards released, the card renders (its `<Seo>` title is set) and there is still no footer; with the synergies released, the footer is attached. Rendered under the loading page, the footer was pushed past the fold as the content arrived, which was the card page's whole layout shift (#532) |
 | shows the synergy skeleton, not the empty notice, until the synergies load | `/card/2095` with its synergy file held: the synergy column shows its skeleton (`synergy-results-loading`) and no "No synergies found for this card" notice; with the file released, the ramp group renders and neither the skeleton nor the notice remains. The empty list during the load used to render the notice on every card page, so a card with synergies flashed "No synergies found" first |
+| the card page says so, and Try again shows the synergies | (any viewport) #1118. `/card/2095` with its synergy file answering 503: the results (`region` "Synergy results") show the `alert` "Couldn't load this card's synergies." and no "No synergies found" notice. With the file let through, Try again shows the ramp group, the alert goes, and the results hold focus (the button it pressed is gone). A failed file used to read as a card with no synergies, with no way to ask again |
+| the card window says so, and Try again shows the synergies | (any viewport) #1118. The same in the card window opened on card 2095 from Browse: its synergy column (`region` "Synergies") shows the alert and no `card-overview-empty`; Try again with the file back shows the ramp group and the column holds focus. The window used to say "No synergies yet" |
 | a tap on a synergy tile opens its card page | At 1024×768 with touch, `/card/2095`: `tap()` on the first tile of a "Synergy cards" list navigates to that tile's `/card/<data-card-id>/` page. SynergyCard used to drop any click within 1 s of a touchstart when `isMobile` was false, and a tap's own click always lands inside that second (#843) |
 | a tap on a synergy tile in the card window opens the comparison | At 1024×768 with touch, the modal opened on card 2095 via `openCardOverview`: `tap()` on its first tile switches it to `data-mode="comparison"`, the same path a mouse click takes |
 
@@ -492,7 +494,7 @@ Covers Friends who have it (#1055): the card window's count of the sharing frien
 | should close dropdown on Escape | Escape key dismisses autocomplete dropdown, within the default timeout (a debounce pending at the keypress used to reopen it, #746) |
 | should NOT show autocomplete on browse page search | Typing in browse page search does NOT show autocomplete (browse filters inline) |
 
-## `seo.spec.ts` — 25 tests (both viewports)
+## `seo.spec.ts` — 28 tests (both viewports)
 
 Route-level metadata coverage (#524). Before this, the file asserted only home-page
 properties, so #486's central acceptance criterion — every route self-references its own
@@ -517,6 +519,7 @@ server prerenders (the dev server and `vite preview` both serve the shell), so b
 | should own its title and canonical: `/inks` | As above, on the ink gallery (#530) |
 | should own its title and canonical: `/ink/steel` | As above, on an ink hub (#530) |
 | should own its title and canonical: `/release-notes` | As above, on a page built on `LegalPage` (#765) |
+| should own its title and canonical: `/privacy`, `/terms`, `/disclaimer` | As above, one test each, on the three legal pages (`LegalPage`), whose lazy chunks no other test loads (#1118) |
 | card page has exactly one h1 at a mobile viewport | 412×915 — CardPage gates the desktop `CardDetailPanel` behind `!isMobile` while `CardDetail` owns the h1 below it (`headingLevel="h1"`, always set by `SynergyResults`). Googlebot renders mobile, so a regression in either branch is invisible at desktop width |
 | vote page has exactly one h1 while its pair loads and once it shows | Holds `_pairs_index.json` to pin the loading state, then releases it. The vote screen shows no heading, so its h1 is visually hidden (`VotePageShell`), and nothing on screen goes missing without it, which is how `/vote` sat in the sitemap with no h1 |
 | vote page has exactly one h1 when its pairs fail to load | `_pairs_index.json` answers 500, so `VoteErrorView` renders, with its own copy of the hidden h1 |
@@ -551,7 +554,7 @@ CardOverviewModal default-mode interactions — chip filtering (→ focused sing
 | a group chip filters the modal to that group (mobile) | Clicking the Discard chip → `data-state="focused"`, one group |
 | the "+N more" tile opens the full expanded group view (mobile) | Clicking the discard `more-tile` once → `data-state="expanded"` with a "Back to all synergies" link |
 
-## `synergy-detail-modal.spec.ts` — 17 tests (7 desktop, 5 mobile, 5 deep-link)
+## `synergy-detail-modal.spec.ts` — 20 tests (7 desktop, 5 mobile, 8 deep-link)
 
 Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #486) transitions CardOverviewModal in-place to the side-by-side comparison view. Desktop uses two columns; mobile uses the tabbed `MobileComparisonView` (#332 #5). Setup opens the modal on the fixture card via `appPage.openCardOverview(name)` (Browse `?q=` + tile click). Deep links open comparison directly via `/compare/A/B/groupKey`.
 
@@ -574,6 +577,9 @@ Comparison mode — clicking a synergy card tile (a crawlable `a.card-tile`, #48
 | the Community column states no votes until the pair score arrives | (deep link, every project) #913. With the pair-score read held (`holdSupabasePath(page, '/rest/v1/pair_scores')` in `e2e/fixtures/supabaseStub.ts`), the comparison opens and, past its 200 ms delay, `community-loading` shows (the first one shown: a phone draws the column twice); a MutationObserver installed before the page loads finds no "N / 1 votes" and no "Not enough votes yet" at any moment before the release (they read a missing score as 0 votes). Released, the stub's empty answer shows the "Not enough votes yet" heading and the skeleton goes |
 | a compare link opens on the window frame, and the window takes over with no gap or second fade | (deep link, every project) #913. With `allCards.json` held, `/compare/A/B/groupKey` shows the window's frame (`status` "Loading comparison"), where the page stayed blank. A `requestAnimationFrame` loop installed by `addInitScript` records each frame's backdrops (`card-overview-fallback-backdrop`, `card-overview-backdrop`) and the most opaque one's opacity: from the frame's first paint to the open comparison, every frame has a backdrop, and the opacity never drops (the window takes over without a second entrance, `openComparison`'s `skipEnter`) |
 | an invalid compare link still ends on the 404 page, with no frame left over | (deep link, every project) `/compare/1947/99999999/<group>`: the `h1` reads 404 once the card list loads, and no `card-overview-fallback` remains |
+| a link whose group no longer matches its cards ends on the 404 page, kept out of search | (deep link, every project) #1118. `/compare/1947/<partner>/no-such-group`, both cards real: the `h1` reads 404, the page carries `robots` `noindex`, and no `card-overview-fallback` remains. The pair check's 404, which a stale shared link takes |
+| opens the card window, and Try again shows the comparison | (deep link whose synergy file failed, every project) #1118. Card 1947's synergy file answers 503: the compare link opens the card window in `data-mode="default"` on card 1947, its synergy column shows the alert, and no 404 heading shows. The file is asked for once: the window shows the page's failure rather than fetching it again (a second of quiet after the alert; fails with the window loading the file itself). With the file let through, Try again puts the window in `data-mode="comparison"` with the address unchanged, and the window's Close button holds focus (the comparison hides the column Try again focused, and a shared link has no BACK). A failed file used to send a valid link to the 404 page |
+| a stale link's Try again ends on the 404 page, at the same address | (deep link whose synergy file failed, every project) #1118. `/compare/1947/<partner>/no-such-group` with card 1947's file answering 503 opens the window with the alert, since a failed file can't rule the pair out. With the file let through, Try again ends on the 404 `h1`, with no dialog left and the address unchanged: the page checks the pair once the file loads and closes the window onto its 404 page. Fails with that close removed |
 
 ## `playstyle-detail.spec.ts` — 16 tests (8 desktop only, 1 phone only, 7 every project)
 

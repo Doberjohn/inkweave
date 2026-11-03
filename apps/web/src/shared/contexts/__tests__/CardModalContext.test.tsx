@@ -1,7 +1,7 @@
 import {useContext, useSyncExternalStore} from 'react';
 import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {MemoryRouter} from 'react-router-dom';
+import {MemoryRouter, useLocation} from 'react-router-dom';
 import {CardModalProvider, useCardModal} from '../CardModalContext';
 import {CardWindowSlotContext, useCardWindowSlot} from '../cardWindowSlot';
 import {CardDataProvider} from '../CardDataContext';
@@ -21,6 +21,7 @@ function Probe() {
     openCardModal,
     openComparison,
     closeCardModal,
+    dismissCardModal,
     goToSibling,
   } = useCardModal();
   const {shownPrintingId} = useCardWindowSlot();
@@ -54,15 +55,17 @@ function Probe() {
       </button>
       <button onClick={() => openComparison('b', 'c')}>compare</button>
       <button onClick={closeCardModal}>close</button>
+      <button onClick={dismissCardModal}>dismiss</button>
+      <span data-testid="address">{useLocation().pathname}</span>
       <button onClick={() => goToSibling(1)}>next</button>
       <button onClick={() => goToSibling(-1)}>prev</button>
     </div>
   );
 }
 
-function renderProbe() {
+function renderProbe(address = '/') {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[address]}>
       <CardDataProvider>
         <CardModalProvider>
           <Probe />
@@ -71,6 +74,20 @@ function renderProbe() {
     </MemoryRouter>,
   );
 }
+
+test("on a compare link, closing goes home and dismissing keeps the address for the page's 404", async () => {
+  const user = userEvent.setup();
+  renderProbe('/compare/b/c/shift-targets');
+  await user.click(screen.getByText('compare'));
+  await user.click(screen.getByText('dismiss'));
+  expect(screen.getByTestId('open')).toHaveTextContent('false');
+  expect(screen.getByTestId('selected')).toHaveTextContent('none');
+  expect(screen.getByTestId('address')).toHaveTextContent('/compare/b/c/shift-targets');
+
+  await user.click(screen.getByText('compare'));
+  await user.click(screen.getByText('close'));
+  expect(screen.getByTestId('address')).toHaveTextContent(/^\/$/);
+});
 
 test('goToSibling walks the snapshot and wraps at both ends', async () => {
   const user = userEvent.setup();

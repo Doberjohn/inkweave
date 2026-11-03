@@ -66,7 +66,7 @@
         "!apps/web/dist/assets/binderCovers-*.js",
         "!apps/web/dist/assets/ownBinders-*.js"
       ],
-      "limit": "462 kB",
+      "limit": "463 kB",
       "gzip": true
     },
     {

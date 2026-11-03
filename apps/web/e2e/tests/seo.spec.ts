@@ -26,6 +26,9 @@ const INDEXABLE_ROUTES = [
   '/inks',
   '/ink/steel',
   '/release-notes',
+  '/privacy',
+  '/terms',
+  '/disclaimer',
 ];
 
 test.describe('SEO', () => {

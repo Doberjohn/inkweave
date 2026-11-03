@@ -1,4 +1,4 @@
-import {useLayoutEffect, useRef} from 'react';
+import {useLayoutEffect, useRef, type RefObject} from 'react';
 import {Navigate, useLocation, useNavigate, useParams} from 'react-router-dom';
 import type {LorcanaCard} from '../features/cards';
 import type {DetailedPairSynergy} from 'inkweave-synergy-engine';
@@ -28,6 +28,8 @@ import {NotFoundPage} from './NotFoundPage';
  *
  * Edge cases:
  * - Same ID (`idA === idB`) → redirects to `/card/A`.
+ * - Card A's synergy file failed to load → opens the window on card A, unchecked, and checks the
+ *   pair once the window's Try again loads the file (see `classifyComparePage`).
  */
 export function ComparePage() {
   const {idA, idB, groupKey} = useParams<{idA: string; idB: string; groupKey?: string}>();
@@ -38,7 +40,7 @@ export function ComparePage() {
   const {openComparison, selectedCardId} = useCardModal();
   const cardA = idA ? getCardById(idA) : undefined;
   const cardB = idB ? getCardById(idB) : undefined;
-  const {getPairSynergies, isLoading: synergiesLoading} = usePrecomputedSynergies(cardA ?? null);
+  const {getPairSynergies, isLoading: synergiesLoading, error: synergiesError} = usePrecomputedSynergies(cardA ?? null);
 
   const verdict = classifyComparePage({
     idA,
@@ -48,6 +50,7 @@ export function ComparePage() {
     cardB,
     cardsLoading,
     synergiesLoading,
+    synergiesFailed: synergiesError !== null,
     getPairSynergies,
   });
 
@@ -74,7 +77,8 @@ export function ComparePage() {
     lastOpenedSignatureRef.current = verdictSignature;
     openComparison(verdict.idA, verdict.idB, verdict.groupKey, {skipEnter: frameDrawnRef.current});
   }, [verdict, verdictSignature, openComparison]);
-  // After the effect above, which reads what the previous commit drew.
+  useCloseStaleWindow(verdict.kind === 'not-found', lastOpenedSignatureRef);
+  // After the effects above, which read what the previous commit drew.
   useLayoutEffect(() => {
     frameDrawnRef.current = showFrame;
   });
@@ -82,6 +86,21 @@ export function ComparePage() {
   // Closing it leaves the link as closing the window does (CardModalContext's `closeCardModal`).
   const frame = showFrame ? <CardOverviewModalFallback isMobile={isMobile} onClose={() => navigate('/')} /> : null;
   return renderComparePage(verdict, {cardA, cardB, pathname}, frame);
+}
+
+/**
+ * Closes a window this page opened unchecked (`openedRef` holds what it opened) once its pair
+ * turns out missing as the file loads: the link was stale, so the window closes onto the 404 page,
+ * keeping the address it has. In the commit that loads the file, so the window never draws card A
+ * without the comparison.
+ */
+function useCloseStaleWindow(notFound: boolean, openedRef: RefObject<string | null>) {
+  const {dismissCardModal} = useCardModal();
+  useLayoutEffect(() => {
+    if (!notFound || openedRef.current === null) return;
+    openedRef.current = null;
+    dismissCardModal();
+  }, [notFound, openedRef, dismissCardModal]);
 }
 
 type ComparePageVerdict =
@@ -98,6 +117,8 @@ interface ClassifyInput {
   cardB: LorcanaCard | undefined;
   cardsLoading: boolean;
   synergiesLoading: boolean;
+  /** Card A's synergy file failed to load, so it can't say whether the pair exists. */
+  synergiesFailed: boolean;
   getPairSynergies: (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null;
 }
 
@@ -107,12 +128,16 @@ interface ClassifyInput {
  * live here.
  */
 function classifyComparePage(input: ClassifyInput): ComparePageVerdict {
-  const {idA, idB, groupKey, cardA, cardB, cardsLoading, synergiesLoading, getPairSynergies} = input;
+  const {idA, idB, groupKey, cardA, cardB, cardsLoading, synergiesLoading, synergiesFailed, getPairSynergies} = input;
   if (isSameIdRoute(idA, idB)) return {kind: 'same-id', idA: idA as string};
   if (!groupKey) return {kind: 'not-found'};
   if (cardsLoading || synergiesLoading) return {kind: 'loading'};
   if (!areIdsAndCardsResolved({idA, idB, cardA, cardB})) return {kind: 'not-found'};
-  if (!hasMatchingPair({cardB: cardB as LorcanaCard, groupKey, getPairSynergies})) {
+  // A file that failed can't rule the pair out, so the window opens on card A, whose synergy
+  // column offers Try again. The window shares this page's load of the file, so the press loads
+  // it for both: the window then takes the comparison, or, for a stale link whose pair is gone,
+  // the verdict turns `not-found` and ComparePage closes the window onto the 404 page.
+  if (!synergiesFailed && !hasMatchingPair({cardB: cardB as LorcanaCard, groupKey, getPairSynergies})) {
     return {kind: 'not-found'};
   }
   return {kind: 'valid', idA: idA as string, idB: idB as string, groupKey};
