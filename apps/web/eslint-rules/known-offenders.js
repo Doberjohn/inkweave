@@ -132,7 +132,6 @@ export const KNOWN_OFFENDERS = {
   // src/docs/ are exempt, so none are listed.
   // 66 files, 191 violations at seeding
   'no-raw-spacing': [
-    'apps/web/src/features/cards/components/BrowseToolbar.tsx', // x6
     'apps/web/src/features/cards/components/CardGrid.tsx', // x1
     'apps/web/src/features/playstyles/PlaystyleFanTile.tsx', // x3
     'apps/web/src/features/reveals/FranchiseCardsModal.tsx', // x2
