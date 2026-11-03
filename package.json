@@ -19,7 +19,7 @@
     "bench:engine": "pnpm --filter inkweave-synergy-engine bench:run",
     "lint": "pnpm lint:root && pnpm -r lint",
     "lint:root": "eslint scripts .claude/hooks vitest.scripts.config.mjs middleware.ts --cache --cache-strategy content --cache-location node_modules/.cache/eslint/ && tsc -p tsconfig.middleware.json",
-    "knip": "knip --include files,dependencies,unlisted,binaries,unresolved",
+    "knip": "knip --include files,dependencies,unlisted,binaries,unresolved,exports,nsExports,types,nsTypes,enumMembers,duplicates",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "size": "size-limit",

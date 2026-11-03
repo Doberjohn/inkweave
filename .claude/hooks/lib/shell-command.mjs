@@ -24,9 +24,9 @@
  * inside $(...) are not resolved.
  */
 
-export const BASH = 'bash';
-export const POWERSHELL = 'powershell';
-export const CMD = 'cmd';
+const BASH = 'bash';
+const POWERSHELL = 'powershell';
+const CMD = 'cmd';
 
 const MAX_DEPTH = 8;
 const ESCAPE = {[BASH]: '\\', [POWERSHELL]: '`', [CMD]: '^'};

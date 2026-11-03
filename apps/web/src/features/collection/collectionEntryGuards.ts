@@ -34,7 +34,7 @@ function isCopyCount(value: unknown): value is number {
  * can add past 2^53, and an entry whose own total is unrepresentable has not
  * really been validated: the one number it exists to report is already wrong.
  */
-export function isCollectionEntry(value: unknown): value is CollectionEntry {
+function isCollectionEntry(value: unknown): value is CollectionEntry {
   if (value === null) return false;
   if (typeof value !== 'object') return false;
   const entry = value as Partial<CollectionEntry>;

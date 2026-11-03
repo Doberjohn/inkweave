@@ -170,12 +170,12 @@ function classifiedLocationScope(
 }
 
 /** Location classifications a card's buff is limited to (['Hyperia City'] for Hyperia City Express). */
-export function getLocationBuffClassifications(card: LorcanaCard): string[] {
+function getLocationBuffClassifications(card: LorcanaCard): string[] {
   return classifiedLocationScope(card, CLASSIFIED_LOCATION_BUFF, (text) => LOCATION_PATTERNS.buff.test(text));
 }
 
 /** Location classifications a card's move is limited to (['Hyperia City'] for Chief Bogo). */
-export function getLocationMoveClassifications(card: LorcanaCard): string[] {
+function getLocationMoveClassifications(card: LorcanaCard): string[] {
   return classifiedLocationScope(card, CLASSIFIED_LOCATION_MOVE, readsAsLocationMove);
 }
 

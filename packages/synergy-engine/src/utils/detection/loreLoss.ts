@@ -6,7 +6,7 @@ import {normalizeCardText} from '../cardHelpers.js';
 // ============================================
 
 /** Cards that directly make the opponent lose lore (any form — burn or steal) */
-export const LORE_LOSS_PATTERN = /(?:each |chosen |all )?opponents? loses? (?:\d+ )?lore/i;
+const LORE_LOSS_PATTERN = /(?:each |chosen |all )?opponents? loses? (?:\d+ )?lore/i;
 
 /**
  * Lore Steal patterns — opponent loses lore AND you gain lore from the same effect.

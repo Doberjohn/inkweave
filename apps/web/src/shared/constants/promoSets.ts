@@ -35,6 +35,8 @@ export interface PromoSet {
  * by the code printed on its cards ("P1" in 25/P1) and its name. Their cards are promo
  * printings of other cards (#805). Disney100's six promos are Promo Set 1's. A set that
  * gathers editions takes the place of its newest, so a new edition brings it forward.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it through shared/constants.
  */
 export const PROMO_SETS: readonly PromoSet[] = [
   {code: 'P1', name: 'Promo Set 1'},

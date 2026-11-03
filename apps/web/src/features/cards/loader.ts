@@ -176,7 +176,7 @@ export function printingCard(card: LorcanaCard, printing: CardPrinting): Lorcana
  * Parse set code to a numeric value for comparison
  * Regular sets (1-11) get their number, Q sets get a lower priority
  */
-export function parseSetOrder(setCode: string | undefined): number {
+function parseSetOrder(setCode: string | undefined): number {
   if (!setCode) return -1;
   const num = parseInt(setCode, 10);
   if (!isNaN(num)) return num;
@@ -188,7 +188,7 @@ export function parseSetOrder(setCode: string | undefined): number {
 /**
  * Extract set information from LorcanaJSON data
  */
-export function loadSetsFromJSON(data: LorcanaJSONData): SetInfo[] {
+function loadSetsFromJSON(data: LorcanaJSONData): SetInfo[] {
   if (!data.sets) return [];
 
   return Object.entries(data.sets)
@@ -777,7 +777,7 @@ export function sortBySetThenNumber(cards: LorcanaCard[]): LorcanaCard[] {
  * Sort cards alphabetically by fullName.
  * Returns a new array. Does not mutate the input.
  */
-export function sortCardsByName(cards: LorcanaCard[], direction: 'asc' | 'desc'): LorcanaCard[] {
+function sortCardsByName(cards: LorcanaCard[], direction: 'asc' | 'desc'): LorcanaCard[] {
   const dir = direction === 'asc' ? 1 : -1;
   return [...cards].sort((a, b) => dir * a.fullName.localeCompare(b.fullName));
 }
@@ -786,7 +786,7 @@ export function sortCardsByName(cards: LorcanaCard[], direction: 'asc' | 'desc')
  * Sort cards by ink cost, with fullName as tiebreaker.
  * Returns a new array. Does not mutate the input.
  */
-export function sortCardsByCost(cards: LorcanaCard[], direction: 'asc' | 'desc'): LorcanaCard[] {
+function sortCardsByCost(cards: LorcanaCard[], direction: 'asc' | 'desc'): LorcanaCard[] {
   const dir = direction === 'asc' ? 1 : -1;
   return [...cards].sort((a, b) => {
     const costDiff = (a.cost ?? 0) - (b.cost ?? 0);

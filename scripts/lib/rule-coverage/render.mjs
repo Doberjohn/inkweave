@@ -66,7 +66,7 @@ function chartJson(value, indent) {
 }
 
 /** A ```chart block. */
-export const chart = (spec) => ['```chart', chartJson(spec, 0), '```'].join('\n');
+const chart = (spec) => ['```chart', chartJson(spec, 0), '```'].join('\n');
 
 /**
  * A doughnut chart of labelled counts; each label carries its count. Empty slices are left out,

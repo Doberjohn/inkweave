@@ -127,7 +127,7 @@ interface CollectionRow {
 }
 
 /** What a row turned out to be. Drives both `entries` and the summary. */
-export type RowOutcome = {kind: 'owned'; cardId: string} | {kind: 'ambiguous'} | {kind: 'unidentified'};
+type RowOutcome = {kind: 'owned'; cardId: string} | {kind: 'ambiguous'} | {kind: 'unidentified'};
 
 /**
  * Split one CSV line. Fields may be quoted and a quoted field may contain commas

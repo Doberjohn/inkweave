@@ -80,7 +80,7 @@ export function inkBlock(ink: Ink): {first: number; last: number} {
 }
 
 /** One rarity's run of special printings: `perInk` of them per ink, in ALL_INKS order from `first`. */
-export interface SpecialBlock {
+interface SpecialBlock {
   rarity: VariantRarity;
   first: number;
   perInk: Record<Ink, number>;
@@ -97,13 +97,13 @@ const THREE_PER_INK: Record<Ink, number> = {Amber: 3, Amethyst: 3, Emerald: 3, R
  * Set 14: Epic #205-222 and Enchanted #223-240, 3 per ink (the Set 9-12 pattern; the Epic
  * Baymax #213 is Emerald).
  */
-export const SPECIAL_BLOCKS: readonly SpecialBlock[] = [
+const SPECIAL_BLOCKS: readonly SpecialBlock[] = [
   {rarity: 'Epic', first: 205, perInk: THREE_PER_INK},
   {rarity: 'Enchanted', first: 223, perInk: THREE_PER_INK},
 ];
 
 /** Iconic printings are too few for a per-ink block, so each is listed with its ink. Set 14: #241-242. */
-export const ICONIC_INKS: Readonly<Record<number, Ink>> = {241: 'Amber', 242: 'Sapphire'};
+const ICONIC_INKS: Readonly<Record<number, Ink>> = {241: 'Amber', 242: 'Sapphire'};
 
 /** One special printing slot on an ink board. */
 export interface SpecialSlotSpec {
