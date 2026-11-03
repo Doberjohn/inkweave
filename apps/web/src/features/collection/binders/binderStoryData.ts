@@ -21,7 +21,7 @@ export const STORY_BINDER_POOL: LorcanaCard[] = [
 ];
 
 /** Every Amber card but one, the Enchanted, and the Set 12 Epic: so each binder reads a different percentage. */
-export const STORY_BINDER_ENTRIES: CollectionEntries = {
+const STORY_BINDER_ENTRIES: CollectionEntries = {
   'amber-legend': {normal: 1, foil: 0},
   'amber-common': {normal: 2, foil: 1},
   'steel-enchanted': {normal: 0, foil: 1},
@@ -30,9 +30,9 @@ export const STORY_BINDER_ENTRIES: CollectionEntries = {
 
 const binderOf = (binder: Omit<Binder, 'coverId' | 'place'>, place: number): Binder => ({...binder, coverId: null, place});
 
-export const STORY_AMBER = binderOf({id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber'}, 0);
+const STORY_AMBER = binderOf({id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber'}, 0);
 
-export const STORY_BINDERS: Binder[] = [
+const STORY_BINDERS: Binder[] = [
   STORY_AMBER,
   binderOf({id: 'b2', name: 'Enchanted chase', scope: 'all', rules: 'rarity=Enchanted'}, 1),
   binderOf({id: 'b3', name: 'The Wilds Unknown', scope: '12', rules: ''}, 2),

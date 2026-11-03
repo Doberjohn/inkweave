@@ -51,8 +51,8 @@ export const subscribe = (listener: () => void) => {
 /** `useSyncExternalStore`'s snapshot: what the module holds now. */
 export const snapshot = (): Held | null => held;
 
-/** Forgets every binder, and drops any answer still on its way: for tests, which share the module, and signing out. */
-export function forgetBinders(): void {
+/** Forgets every binder, and drops any answer still on its way: signing out. */
+function forgetBinders(): void {
   newest++;
   if (held !== null) publish(null);
 }

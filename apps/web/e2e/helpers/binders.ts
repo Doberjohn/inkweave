@@ -26,7 +26,7 @@ export interface BindersWorld {
   rows: BinderRow[];
 }
 
-export const BINDERS_PATH = '/rest/v1/collection_binders';
+const BINDERS_PATH = '/rest/v1/collection_binders';
 
 /** A row with the fields a case doesn't care about filled in. */
 export function binderRow(row: Pick<BinderRow, 'id' | 'name'> & Partial<BinderRow>): BinderRow {
