@@ -97,6 +97,17 @@ describe('useOwnBinders: the shelf', () => {
     await waitFor(() => expect(result.current.shelf?.binders).toEqual([AMBER]));
   });
 
+  it('reads again the next time collection mode wants them, after a read that failed', async () => {
+    repo.listBinders.mockResolvedValue({data: null, error: 'Network error'});
+    const {result, rerender} = render();
+    await waitFor(() => expect(result.current.shelf?.status).toBe('failed'));
+
+    repo.listBinders.mockResolvedValue({data: [AMBER], error: null});
+    rerender({...READER, wanted: false});
+    rerender(READER);
+    await waitFor(() => expect(result.current.shelf?.binders).toEqual([AMBER]));
+  });
+
   it('keeps the binders on show when a re-read fails', async () => {
     const {result} = render();
     await waitFor(() => expect(result.current.shelf?.status).toBe('ready'));
@@ -152,6 +163,19 @@ describe('useOwnBinders: the binder ?custom= names', () => {
     expect(result.current.custom).toMatchObject({binder: AMBER, narrowed: true, cover: {id: 'amber-rare'}});
   });
 
+  it('keeps its cards while only the copies change, and its cover follows them', async () => {
+    const {result, rerender} = renderHook(
+      ({entries}: {entries: CollectionEntries}) => useOwnBinders({...READER, requested: 'b1'}, POOL, entries),
+      {initialProps: {entries: ENTRIES}},
+    );
+    await waitFor(() => expect(result.current.custom.status).toBe('shown'));
+    const cards = result.current.pool;
+
+    rerender({entries: {'amber-common': {normal: 1, foil: 0}}});
+    expect(result.current.pool).toBe(cards);
+    expect(result.current.custom).toMatchObject({cover: {id: 'amber-common'}});
+  });
+
   it('is not narrowed for a binder of Sets alone', async () => {
     repo.listBinders.mockResolvedValue({data: [SET_12], error: null});
     const {result} = render({requested: 'b3'});
@@ -174,6 +198,20 @@ describe('useOwnBinders: the binder ?custom= names', () => {
     const {custom} = result.current;
     act(() => (custom.status === 'failed' ? custom.retry() : undefined));
     await waitFor(() => expect(result.current.custom.status).toBe('shown'));
+  });
+});
+
+describe('loadBinders', () => {
+  afterEach(() => vi.resetModules());
+
+  // main.tsx cancels Vite's preload error in production, so a stale chunk resolves to nothing.
+  it('fails an import that resolves empty, as a stale chunk does, and asks again next time', async () => {
+    vi.resetModules();
+    const {loadBinders} = await import('./useOwnBinders');
+    await expect(loadBinders(() => Promise.resolve(undefined))).rejects.toThrow('resolved empty');
+
+    const module = await import('./binders/ownBinders');
+    await expect(loadBinders(() => Promise.resolve(module))).resolves.toBe(module);
   });
 });
 

@@ -98,7 +98,7 @@ const PocketFriends = lazyWithRetry(() => import('./CollectionFriends'), 'Pocket
 const FoilPointer = lazyWithRetry(() => import('./CollectionFriends'), 'FoilPointer');
 
 /*
- * BINDERS OF YOUR OWN (#1074) LOAD ONLY WITH THEIR FLAG ON (`binders/flag.ts`): the import folds
+ * BINDERS OF YOUR OWN LOAD ONLY WITH THEIR FLAG ON (`binders/flag.ts`): the import folds
  * away on SHOW_BINDERS at build time, and `binderCodeGuard` fails a build in which a page could
  * still load binder code with the flag off. `useOwnBinders` loads the rest the same way.
  */
@@ -146,10 +146,11 @@ function resolveSetCode(requested: string | null, sets: string[] | null): string
 
 /**
  * The panel's list of sets: the real one once known, else just the current set, so the
- * panel's height never changes when the list arrives; none for a scope spanning sets.
+ * panel's height never changes when the list arrives; none for a scope spanning sets. A binder
+ * of your own whose rules hold no card has no set, so its one set is counted, as empty.
  */
 function panelSets(sets: string[] | null, setCode: string): string[] {
-  if (sets !== null) return sets;
+  if (sets !== null && sets.length > 0) return sets;
   return spansSets(setCode) ? [] : [setCode];
 }
 
@@ -392,7 +393,7 @@ export interface BrowseCollectionSlots {
    */
   renderSetPicker: (listing: BrowseListing) => ReactNode | undefined;
   /**
-   * That picker names a binder of your own (#1074), so the toolbar gives its button the room its
+   * That picker names a binder of your own, so the toolbar gives its button the room its
    * name needs (owner, 2026-11-03).
    */
   pickerNamesBinder: boolean;

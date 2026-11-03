@@ -52,7 +52,7 @@ interface SectionOptions {
   renderFoilPointer?: (cards: readonly LorcanaCard[]) => ReactNode;
   /** An empty collection's import, which puts its note on the cover. */
   onEmptyImport?: () => void;
-  /** Your binders, one of them open (#1074). */
+  /** Your binders, one of them open. */
   binders?: BinderChoices;
 }
 
@@ -279,7 +279,7 @@ describe('CollectionBinderSection', () => {
     });
   });
 
-  describe('a binder of your own (#1074)', () => {
+  describe('a binder of your own', () => {
     const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
     const open = (atOwnScope: boolean): BinderChoices => ({
       open: {binder: AMBER, cover: null, narrowed: true},

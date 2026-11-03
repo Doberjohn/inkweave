@@ -3,7 +3,7 @@ import {BinderMedal} from './BinderMedal';
 import {STORY_BINDER_POOL} from './binderStoryData';
 
 /**
- * A binder's medal (#1074): a round crop of its cover card's art, the face at the top of the
+ * A binder's medal: a round crop of its cover card's art, the face at the top of the
  * card, inside a dark and a faint light rim. The set picker draws it at 24px in the Binders tab's
  * rows, 18px in the toolbar's button, and up to 36px in the panel's.
  */

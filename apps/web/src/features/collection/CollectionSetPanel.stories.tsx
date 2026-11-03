@@ -151,7 +151,7 @@ export const FriendsBinder: Story = {
 };
 
 /**
- * A binder of your own on show at its own Sets (#1074): its medal and "Your binder" over its
+ * A binder of your own on show at its own Sets: its medal and "Your binder" over its
  * name on the picker, and headlines that name the binder, "Complete binder".
  */
 export const BinderOfYourOwn: Story = {

@@ -98,6 +98,12 @@ describe('ruleKinds', () => {
   it('says none for every card', () => {
     expect(ruleKinds(binder(WHOLE_COLLECTION))).toBe('none');
   });
+
+  // The filter ignores the switch there, as the page drops it.
+  it('leaves out the dual-ink switch beside no ink, or three or more', () => {
+    expect(ruleKinds(binder(WHOLE_COLLECTION, 'ink=Amber,Steel,Ruby&inkmatch=dual'))).toBe('ink');
+    expect(ruleKinds(binder(WHOLE_COLLECTION, 'inkmatch=dual'))).toBe('none');
+  });
 });
 
 describe('ruleLine', () => {
@@ -113,6 +119,7 @@ describe('ruleLine', () => {
   it('runs two values and three together', () => {
     expect(ruleLine(binder(WHOLE_COLLECTION, 'ink=Amber,Steel'))).toBe('Amber and Steel ink');
     expect(ruleLine(binder(WHOLE_COLLECTION, 'ink=Amber,Steel&inkmatch=dual'))).toBe('Amber and Steel dual-ink');
+    expect(ruleLine(binder(WHOLE_COLLECTION, 'ink=Amber,Steel,Ruby&inkmatch=dual'))).toBe('Amber, Steel and Ruby ink');
     expect(ruleLine(binder(WHOLE_COLLECTION, 'cost=9,3,5'))).toBe('Costs 3, 5 and 9+');
     expect(ruleLine(binder(WHOLE_COLLECTION, 'type=Character,Item'))).toBe('Character and Item');
   });

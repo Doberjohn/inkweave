@@ -4,7 +4,7 @@ import type {BinderChoices, OpenBinder} from './binderChoices';
 import type {Binder} from './binderRules';
 
 /*
- * Binders of your own for the stories (#1074): a small pool whose covers have art in
+ * Binders of your own for the stories: a small pool whose covers have art in
  * `public/card-images-preview`, so each medal draws offline, and a shelf of four.
  */
 

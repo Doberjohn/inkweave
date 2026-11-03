@@ -361,7 +361,7 @@ describe("a friend's binder (#1045)", () => {
   });
 });
 
-describe('a binder of your own (#1074)', () => {
+describe('a binder of your own', () => {
   const left = (params: string) => withoutStrays(new URLSearchParams(params)).toString();
 
   it('keeps which binder in your own binder, and drops it on the grid and in a friend\'s binder', () => {

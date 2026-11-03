@@ -1,13 +1,13 @@
 import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
-import {newestCoreSet, setCards} from '../helpers/cardData';
+import {newestCoreSet, setCards, setPrintings} from '../helpers/cardData';
 import {binder, COLLECTOR_ID, signInAsCollector, type Entries} from '../helpers/collector';
 import {binderRow, failBinderReads, serveBinders, type BindersWorld} from '../helpers/binders';
 import {serveFriends, type FriendsWorld, type Player} from '../helpers/friends';
 import {E2E_FRIEND_CODE} from '../fixtures/supabaseStub';
 
 /**
- * Binders of your own (#1074, PR 2): a link that opens one, the set picker's Binders tab, and
+ * Binders of your own: a link that opens one, the set picker's Binders tab, and
  * a binder that isn't on your shelf.
  *
  * The reader is the collector (`helpers/collector.ts`), and every binder read answers from a
@@ -17,15 +17,15 @@ import {E2E_FRIEND_CODE} from '../fixtures/supabaseStub';
 
 const SET = newestCoreSet();
 
-/** The chase rarities, each printing a pocket of its own, as the binder counts them. */
-const ALT_ART = ['Epic', 'Enchanted', 'Iconic'];
-
 const isAmber = (card: {color?: string}) => (card.color ?? '').split('-').includes('Amber');
 
-
-/** The newest set's Amber cards, and their chase printings: what the "Amber vines" binder holds. */
+/**
+ * The newest set's Amber cards, and their printings that are pockets of their own
+ * (`setPrintings`): what the "Amber vines" binder holds.
+ */
 const AMBER_BASE = setCards(SET).filter(isAmber);
-const AMBER_PRINTINGS = AMBER_BASE.flatMap((card) => (card.variants ?? []).filter((v) => ALT_ART.includes(v.rarity)));
+const AMBER_VARIANT_IDS = new Set(AMBER_BASE.flatMap((card) => (card.variants ?? []).map((v) => String(v.id))));
+const AMBER_PRINTINGS = setPrintings(SET).filter((printing) => AMBER_VARIANT_IDS.has(printing.id));
 const AMBER_TOTAL = AMBER_BASE.length + AMBER_PRINTINGS.length;
 
 /** Two of its Amber cards, in one finish: so Complete counts two and Master none. */

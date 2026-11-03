@@ -83,7 +83,7 @@ vi.mock('./CollectionFriends', async (importOriginal) => ({
     </button>
   ),
 }));
-// Your binders' reads (#1074): an empty shelf unless a case says otherwise.
+// Your binders' reads: an empty shelf unless a case says otherwise.
 const binderRepo = vi.hoisted(() => ({listBinders: vi.fn(async () => ({data: [] as unknown[] | null, error: null as string | null}))}));
 vi.mock('./binders/binderRepository', () => binderRepo);
 // The card window's copies stripe, which a case presses as the window would: its own counting is
@@ -240,7 +240,7 @@ describe('useBinderParams', () => {
     });
   });
 
-  it("opens a binder of your own at its Sets with the page's filters cleared, and My collection by dropping it (#1074)", () => {
+  it("opens a binder of your own at its Sets with the page's filters cleared, and My collection by dropping it", () => {
     const {result} = renderBinderParams('/browse?binder=14&ink=Amber&owned=missing', COLLECTOR);
     act(() => result.current.openBinder({id: 'b1', scope: '12'}));
     expect(result.current.search).toBe('binder=12&owned=missing&custom=b1');
@@ -903,7 +903,7 @@ describe("useBrowseCollection: the binder's analytics", () => {
   });
 });
 
-describe('useBrowseCollection: a binder of your own (#1074)', () => {
+describe('useBrowseCollection: a binder of your own', () => {
   const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
   const amber = createCard({id: 'amber', setCode: '14', setNumber: 1, rarity: 'Uncommon', ink: 'Amber'});
   const steel = createCard({id: 'steel', setCode: '14', setNumber: 2, rarity: 'Uncommon', ink: 'Steel'});
@@ -963,6 +963,16 @@ describe('useBrowseCollection: a binder of your own (#1074)', () => {
     expect(poolIds()).toEqual(['amber', 'steel']);
     fireEvent.click(screen.getByRole('button', {name: 'Open My collection'}));
     expect(screen.getByTestId('search')).toHaveTextContent(/^binder=all$/);
+  });
+
+  it("counts a one-set binder whose rules hold no card as that set, empty, so its numbers don't wait forever", async () => {
+    const NONE_HELD = {id: 'b9', name: 'Ruby', scope: '14', rules: 'ink=Ruby', coverId: null, place: 1};
+    binderRepo.listBinders.mockResolvedValue({data: [AMBER, NONE_HELD], error: null});
+    const EMPTY: BrowseListing = {cards: [], sortOrder: 'newest', matched: [], filtered: false};
+    renderAt('/browse?binder=14&custom=b9', (state) => state.renderBinder(EMPTY, () => {}));
+    await waitFor(() => expect(poolIds()).toEqual([]));
+    const propsOf = (slot: ReactNode) => (slot as {props: {children: {props: Record<string, unknown>}}}).props.children.props;
+    expect(propsOf(slots?.renderSetPanel(EMPTY)).sets).toEqual(['14']);
   });
 
   it("says your binders didn't load, and its Try again reads them again", async () => {

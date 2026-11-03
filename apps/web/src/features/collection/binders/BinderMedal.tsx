@@ -27,7 +27,7 @@ const ART_STYLE: CSSProperties = {
 };
 
 /**
- * A binder's medal (#1074): a round crop of its cover card's small art, as the set picker shows
+ * A binder's medal: a round crop of its cover card's small art, as the set picker shows
  * it beside the binder's name, or an empty ring while the binder holds none of your cards.
  * Decoration: the name beside it says which binder.
  */

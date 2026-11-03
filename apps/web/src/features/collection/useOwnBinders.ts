@@ -6,7 +6,7 @@ import type {BinderShelf} from './binders/binderShelf';
 import type {CustomBinder, OwnBinders, OwnBindersAsk} from './binders/binderChoices';
 
 /**
- * The reader's own binders for Browse (#1074): the shelf, the binder `?custom=` names, and the
+ * The reader's own binders for Browse: the shelf, the binder `?custom=` names, and the
  * cards it holds.
  *
  * OFF MEANS NOT LOADED (`binders/flag.ts`). Every binder module comes in one chunk
@@ -24,15 +24,27 @@ const importBinders = SHOW_BINDERS ? () => import('./binders/ownBinders') : null
 let loaded: BinderModule | null = null;
 let request: Promise<BinderModule> | null = null;
 
-function loadBinders(load: () => Promise<BinderModule>): Promise<BinderModule> {
-  request ??= load().then(
-    (module) => (loaded = module),
-    (error: unknown) => {
-      // A failed chunk can be asked for again (Try again).
-      request = null;
-      throw error;
-    },
-  );
+/**
+ * The chunk, or a throw for an import that resolved empty: how a failed download arrives in a
+ * production build, where main.tsx cancels Vite's preload error to reload onto the new deploy.
+ */
+function present(module: BinderModule | undefined): BinderModule {
+  if (!module) throw new Error('The binder chunk resolved empty');
+  return module;
+}
+
+/** Loads the binder chunk through `load` once for the page: a failure, an empty import among them, is asked for again next time. */
+export function loadBinders(load: () => Promise<BinderModule | undefined>): Promise<BinderModule> {
+  request ??= load()
+    .then(present)
+    .then(
+      (module) => (loaded = module),
+      (error: unknown) => {
+        // A failed chunk can be asked for again (Try again).
+        request = null;
+        throw error;
+      },
+    );
   return request;
 }
 

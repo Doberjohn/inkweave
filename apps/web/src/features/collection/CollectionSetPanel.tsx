@@ -126,7 +126,7 @@ export interface SetSwitching {
   onSetChange: (set: string) => void;
   /** The page's Rarity filter picks the promos: the set picker's whole collection opens on Promo. */
   picksPromos?: boolean;
-  /** Your binders (#1074), outside a friend's binder and with binders on: the picker's Binders tab. */
+  /** Your binders, outside a friend's binder and with binders on: the picker's Binders tab. */
   binders?: BinderChoices;
 }
 
@@ -528,7 +528,7 @@ function RarityRows({slots, axis, wide, delay}: BreakdownSlots<Tally['byRarity']
 
 /** What a scope's numbers need: a set's tally or a scope's totals, one shape, and the headlines' noun. */
 type ScopeFigures = Tally & {
-  /** "set", "collection" or "promos"; none while filtered, since the cards counted are none of those. */
+  /** "set", "collection", "promos" or "binder"; none while filtered, since the cards counted are none of those. */
   noun: string | undefined;
 };
 
@@ -540,7 +540,7 @@ const atOwnBinder = (binders: BinderChoices | undefined) => binders?.open != nul
 
 /**
  * The headlines' noun for what the picker shows, or none while the page filters: "binder" for a
- * binder of your own at its own Sets (#1074), whose cards are no set or collection either.
+ * binder of your own at its own Sets, whose cards are no set or collection either.
  */
 function headlineNoun({setCode, filtered, binder}: {setCode: string; filtered: boolean; binder: boolean}): string | undefined {
   if (filtered) return undefined;

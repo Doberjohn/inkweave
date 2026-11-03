@@ -82,7 +82,7 @@ describe('CollectionSetBody', () => {
     expect(screen.queryByText('Complete collection')).toBeNull();
   });
 
-  // A binder of your own's cards are no set or collection (#1074): at its own Sets they are the binder's.
+  // A binder of your own's cards are no set or collection: at its own Sets they are the binder's.
   it("names the headlines by a binder of your own at its own Sets, and by the set picked inside it", () => {
     const binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
     const binders = (atOwnScope: boolean): BinderChoices => ({

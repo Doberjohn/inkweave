@@ -2,7 +2,7 @@ import {CtaButton} from '../../../shared/components';
 import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
 
 /**
- * In the binder's place when `?custom=` names a binder the reader's shelf doesn't hold (#1074): a
+ * In the binder's place when `?custom=` names a binder the reader's shelf doesn't hold: a
  * link to someone else's binder, or one the reader deleted. Said the same either way, so a link
  * tells a stranger nothing of its owner's binders. Open My collection drops the param.
  */

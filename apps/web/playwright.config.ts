@@ -189,7 +189,7 @@ export default defineConfig({
       // The home page's beta notice, on as in production, so every home-page test runs with
       // the hero where players see it; `beta-notice.spec.ts` covers the notice itself.
       VITE_SHOW_BETA_NOTICE: 'true',
-      // Binders (#1074), on as in Preview, so `binders.spec.ts` finds them; the build guard
+      // Binders, on as in Preview, so `binders.spec.ts` finds them; the build guard
       // and the unit tests cover the flag off.
       VITE_SHOW_BINDERS: 'true',
       // A production build (`preview`) starts Sentry and PostHog when it has their keys

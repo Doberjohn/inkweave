@@ -1,12 +1,12 @@
 import type {RepoResult} from '../../../shared/lib/repoResult';
+import {reportFailure} from '../../../shared/lib/reportFailure';
 import {callSupabase} from '../../../shared/lib/supabaseCall';
 import type {Binder} from './binderRules';
 
 /**
- * The `collection_binders` table (#1074): one row per binder, which only its owner reads and
- * writes, through RLS and column grants. Every call goes through `callSupabase`, as in
- * `collectionRepository`. PR 3 adds the shelf's moves and deletes, and #1075 the writes that make
- * and change a binder.
+ * The `collection_binders` table: one row per binder, which only its owner reads and writes,
+ * through RLS and column grants. Every call goes through `callSupabase`, as in
+ * `collectionRepository`.
  */
 
 /** A binder's name as the table allows it (`collection_binders_name`): 1 to 30 letters. */
@@ -53,15 +53,22 @@ function binderOf(fields: Record<string, unknown>): Binder | null {
 }
 
 /**
- * The caller's binders in shelf order. A row that fails the guard is left out and logged, never
- * an error: one bad row must not hide every other binder.
+ * The caller's binders in shelf order. A row that fails the guard is left out and reported, never
+ * an error: one bad row must not hide every other binder, and Sentry hears of the table and the
+ * guard drifting apart.
  */
 export function listBinders(ownerId: string): Promise<RepoResult<Binder[]>> {
   return callSupabase({area: 'collection', operation: 'read binders'}, async (client) => {
     const {data, error} = await client.from('collection_binders').select(COLUMNS).eq('owner_id', ownerId).order('place');
     if (error || data === null) return {data: null, error};
     const binders = data.map(toBinder).filter((binder): binder is Binder => binder !== null);
-    if (binders.length < data.length) console.warn(`[collection] left out ${data.length - binders.length} unreadable binder row(s)`);
+    if (binders.length < data.length) reportUnreadable(data.length - binders.length);
     return {data: binders, error: null};
   });
+}
+
+function reportUnreadable(count: number): void {
+  const failure = new Error(`left out ${count} unreadable binder row(s)`);
+  console.warn(`[collection] ${failure.message}`);
+  reportFailure({area: 'collection', operation: 'read binder rows'}, failure);
 }

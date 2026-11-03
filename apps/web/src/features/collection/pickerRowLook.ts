@@ -10,7 +10,7 @@ export interface Look {
 /**
  * The kit's neutral button as a row of the set picker's list: gold-ringed for the open set or
  * binder, washed on hover. Its first column fits a promo set's code ("RPH"), where a set has its
- * number (#805), and a binder its medal (#1074).
+ * number (#805), and a binder its medal.
  */
 export function optionStyle({on: selected, hovered}: Look): CSSProperties {
   return {

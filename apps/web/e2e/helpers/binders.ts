@@ -2,7 +2,7 @@ import type {Page, Route} from '@playwright/test';
 import {E2E_SUPABASE_ORIGIN} from '../fixtures/supabaseStub';
 
 /**
- * Binders of your own (#1074), kept in the test as `helpers/friends.ts` keeps the friends:
+ * Binders of your own, kept in the test as `helpers/friends.ts` keeps the friends:
  * `serveBinders` answers the `collection_binders` reads from a world of rows and, from PR 3 on,
  * changes it as the database would, so a spec acts on the page and reads the page again.
  *

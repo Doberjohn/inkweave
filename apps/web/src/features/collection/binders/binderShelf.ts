@@ -3,7 +3,7 @@ import {listBinders} from './binderRepository';
 import type {Binder} from './binderRules';
 
 /**
- * The reader's binders (#1074), held for the visit.
+ * The reader's binders, held for the visit.
  *
  * IN MEMORY ONLY, as Friends who have it holds its copies (`friendsCopies`): never written to the
  * browser's storage. Read once per visit for the reader who asked, the first time collection mode
@@ -107,9 +107,12 @@ function dropWatcher(readerId: string): void {
   document.removeEventListener('visibilitychange', loadIfShown);
 }
 
-/** Starts `readerId`'s read unless the visit already has one, and reads again when the tab is shown; returns the stop. */
+/**
+ * Starts `readerId`'s read unless the visit already has one or one under way, and reads again
+ * when the tab is shown; returns the stop. A read that failed counts as none.
+ */
 function watch(readerId: string): () => void {
-  if (held?.readerId !== readerId) void load(readerId);
+  if (held?.readerId !== readerId || held.value === 'failed') void load(readerId);
   addWatcher(readerId);
   return () => dropWatcher(readerId);
 }

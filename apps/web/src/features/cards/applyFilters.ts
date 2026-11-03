@@ -5,7 +5,7 @@ import type {CardTypeFilter} from '../../shared/constants';
 
 /**
  * The page's filter options with its ink, type and cost picks folded in: the one set of options
- * `applyFilters` runs. Browse's listing and a binder's rules (#1074) both build theirs here, so
+ * `applyFilters` runs. Browse's listing and a binder's rules both build theirs here, so
  * a binder holds exactly what the same filters hold on the page.
  */
 export function buildCombinedFilters(

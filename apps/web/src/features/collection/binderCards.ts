@@ -43,7 +43,7 @@ export const OWNED_PARAM = 'owned';
 export const FRIEND_PARAM = 'friend';
 
 /**
- * Which of the reader's own binders shows (#1074): `?custom=<id>`, beside `?binder=` at the Sets
+ * Which of the reader's own binders shows: `?custom=<id>`, beside `?binder=` at the Sets
  * it shows. Absent, the binder is My collection.
  */
 export const CUSTOM_PARAM = 'custom';
@@ -86,8 +86,8 @@ export function withoutStrays(params: URLSearchParams): URLSearchParams {
 }
 
 /**
- * The address that opens a binder of the reader's own, or My collection (null), in one write
- * (#1074): `binder` at its Sets and `custom` its id, or `binder=all` and no `custom`, the page's
+ * The address that opens a binder of the reader's own, or My collection (null), in one write:
+ * `binder` at its Sets and `custom` its id, or `binder=all` and no `custom`, the page's
  * filters and search cleared (`RULE_PARAMS`), so it shows what its cover counts. The set picker's
  * Binders tab, the shelf and a binder's save all open one this way.
  */
@@ -112,7 +112,7 @@ export const rarityPicksPromos = (params: URLSearchParams) =>
  * chosen in the collection panel (owner, 2026-10-12), and a set filter could only empty
  * the binder of every other set. A binder of promos alone drops the rarity filter too
  * (owner, 2026-10-20, `promoOnly`). The mode drops both params; this covers the render
- * before they are gone. A binder's rules (#1074) run through it too, so they hold what the
+ * before they are gone. A binder's rules run through it too, so they hold what the
  * page's filters would.
  */
 export function binderFilters(filters: CardFilterOptions, promoOnly: boolean): CardFilterOptions {

@@ -123,7 +123,7 @@ describe('SetPicker', () => {
     });
   });
 
-  describe('with your binders (#1074)', () => {
+  describe('with your binders', () => {
     const AMBER: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
     const COVER = {id: 'amber-rare', imageUrl: 'https://art.test/amber-rare.avif'} as LorcanaCard;
     const OPEN = {binder: AMBER, cover: COVER, narrowed: true};

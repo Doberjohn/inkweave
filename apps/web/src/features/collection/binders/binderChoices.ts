@@ -8,7 +8,7 @@ import type {BinderReader, BinderShelf} from './binderShelf';
  * it names binders without breaking "off means not loaded" (`flag.ts`).
  */
 
-/** A binder of the reader's own on show (#1074), as the page holds it. */
+/** A binder of the reader's own on show, as the page holds it. */
 export interface OpenBinder {
   binder: Binder;
   /** The card on its cover (`coverOf`), or none while it holds none of yours. */

@@ -540,7 +540,7 @@ function everyCardLine({setCode, friend, axis, binder}: Pick<NoMatchesProps, 'se
   return `${friend ? 'They' : 'You'} have every card in ${where}${finishes}.`;
 }
 
-/** Which binder of your own shows (#1074): none, one at its own Sets, or one at a set picked inside it. */
+/** Which binder of your own shows: none, one at its own Sets, or one at a set picked inside it. */
 type BinderPlace = 'none' | 'own-scope' | 'inside';
 
 /** Where a binder of your own stands, as its empty lines word it. */
@@ -561,7 +561,7 @@ const NO_MATCH_PADDING = 64;
 interface NoMatchesProps {
   show: BinderShow;
   setCode: string;
-  /** Whether a binder of your own shows, and at its own Sets (#1074). */
+  /** Whether a binder of your own shows, and at its own Sets. */
   binder: BinderPlace;
   friend: boolean;
   /** Whether any filter or a search is on. */

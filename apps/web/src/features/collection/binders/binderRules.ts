@@ -2,10 +2,15 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {applyFilters, buildCombinedFilters} from '../../cards/applyFilters';
 import {rarityLabel} from '../../cards/filterOptions';
 import {binderSetOf} from '../../../shared/constants';
-import {RULE_PARAMS, readFilterParams, type FilterReads} from '../../../shared/hooks/useFilterParams';
+import {
+  RULE_PARAMS,
+  dropDualOnlyWhenNotOffered,
+  readFilterParams,
+  type FilterReads,
+} from '../../../shared/hooks/useFilterParams';
 import {WHOLE_COLLECTION, binderFilters, isPromoScope, scopeName, scopeSets} from '../binderCards';
 
-/** A binder of the player's own (#1074), as its row holds it. */
+/** A binder of the player's own, as its row holds it. */
 export interface Binder {
   id: string;
   name: string;
@@ -19,7 +24,9 @@ export interface Binder {
 
 /**
  * Its rules as the page reads its filters (`readFilterParams`): `RULE_PARAMS` alone, never a set,
- * a sort or a view, and a value the app no longer knows dropped, so an old rule never fails.
+ * a sort or a view, and a value the app no longer knows dropped, so an old rule never fails. The
+ * dual-ink switch goes where the page drops it, beside no ink or three or more, which the filter
+ * ignores, so its kinds and its line never name it there.
  */
 export function readRules(binder: Pick<Binder, 'rules'>): FilterReads {
   const held = new URLSearchParams(binder.rules);
@@ -28,6 +35,7 @@ export function readRules(binder: Pick<Binder, 'rules'>): FilterReads {
     const value = held.get(param);
     if (value !== null) rules.set(param, value);
   }
+  dropDualOnlyWhenNotOffered(rules);
   return readFilterParams(rules);
 }
 

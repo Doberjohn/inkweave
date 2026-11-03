@@ -58,7 +58,7 @@ interface BrowseToolbarProps {
    */
   setPicker?: React.ReactNode;
   /**
-   * The picker names a binder of your own (#1074), whose name is the player's own words: its
+   * The picker names a binder of your own, whose name is the player's own words: its
    * button then takes the room its words need from the search field, keeping its right edge at
    * the panel's, rather than cutting every name to the 71px a set's number asks for (owner,
    * 2026-11-03).
@@ -550,8 +550,11 @@ const PANEL_SPAN_STYLE: React.CSSProperties = {
 const pickerSpanStyle = (namesBinder = false): React.CSSProperties =>
   namesBinder ? {...PANEL_SPAN_STYLE, width: 'auto', minWidth: SIDE_PANEL_WIDTH} : PANEL_SPAN_STYLE;
 
-/** The picker's own slot: it fills the group, or sizes to its words while it names a binder. */
-const pickerSlotStyle = (namesBinder = false): React.CSSProperties => ({flex: namesBinder ? '0 1 auto' : 1, minWidth: 0});
+/**
+ * The picker's own slot: it fills the group, from its words' width while it names a binder, so a
+ * short name still keeps Collection and the gear at the panel's right edge.
+ */
+const pickerSlotStyle = (namesBinder = false): React.CSSProperties => ({flex: namesBinder ? '1 1 auto' : 1, minWidth: 0});
 
 /**
  * The flowing toolbar (tablet and phone, and the playstyle page): its controls wrap as

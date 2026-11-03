@@ -107,9 +107,9 @@ function parseFilterOptions(params: URLSearchParams): CardFilterOptions {
  * EVERY write, so no path (a third ink, clearing them, the dialog's Apply) can
  * strand it out of sight: left in the URL it would come back on, unasked, for the
  * next selection. The filter itself ignores it there too; this keeps the URL
- * honest.
+ * honest. A binder's rules read through it too, so they never say a switch the filter ignores.
  */
-function dropDualOnlyWhenNotOffered(params: URLSearchParams): void {
+export function dropDualOnlyWhenNotOffered(params: URLSearchParams): void {
   const inkCount = new Set(parseCommaSeparated(params.get('ink'), isValidInk)).size;
   if (!offersDualOnly(inkCount)) params.delete('inkmatch');
 }
@@ -134,7 +134,7 @@ export interface FilterReads {
 
 /**
  * The search and filters `params` holds, dropping any value the app doesn't know: what Browse
- * reads, and what a binder's rules read (#1074), so the two never disagree.
+ * reads, and what a binder's rules read, so the two never disagree.
  */
 export function readFilterParams(params: URLSearchParams): FilterReads {
   return {
@@ -147,7 +147,7 @@ export function readFilterParams(params: URLSearchParams): FilterReads {
 }
 
 /**
- * The params a binder's rules hold (#1074): the search and every filter but the set, which a
+ * The params a binder's rules hold: the search and every filter but the set, which a
  * binder's Sets pick. Opening a binder clears them all, so it shows what its cover counts.
  */
 export const RULE_PARAMS: readonly string[] = [

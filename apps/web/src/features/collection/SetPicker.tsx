@@ -53,7 +53,7 @@ import {
 } from '../../shared/constants';
 
 /*
- * Binders of your own (#1074) load only with their flag on (`binders/flag.ts`): each import folds
+ * Binders of your own load only with their flag on (`binders/flag.ts`): each import folds
  * away on SHOW_BINDERS at build time. Both load as soon as the picker can show a binder.
  */
 const BinderMedal = SHOW_BINDERS ? lazyWithRetry(() => import('./binders/BinderMedal'), 'BinderMedal') : null;
@@ -90,7 +90,7 @@ export interface SetPickerProps {
   /** The page's Rarity filter picks the promos: the whole collection's menu opens on Promo. */
   picksPromos?: boolean;
   /**
-   * Your binders (#1074), outside a friend's binder with binders on: the menu's Binders tab, and
+   * Your binders, outside a friend's binder with binders on: the menu's Binders tab, and
    * the button names the binder of your own on show.
    */
   binders?: BinderChoices;
@@ -345,7 +345,7 @@ type MenuTab = 'binders' | 'standard' | 'promo';
  * Rarity filter picks the promos (owner, 2026-10-20).
  */
 function openingTab({setCode, picksPromos, binders}: Pick<SetMenuProps, 'setCode' | 'picksPromos' | 'binders'>): MenuTab {
-  // A binder of your own at its own Sets opens on Binders (#1074); a set picked inside it, on the set's tab.
+  // A binder of your own at its own Sets opens on Binders; a set picked inside it, on the set's tab.
   if (binders?.open && binders.atOwnScope) return 'binders';
   if (isPromoScope(setCode)) return 'promo';
   return picksPromos && setCode === WHOLE_COLLECTION ? 'promo' : 'standard';
@@ -416,7 +416,7 @@ interface MenuTabsProps {
   tab: MenuTab;
   /** The binder holds a promo set, so Promo has sets to list. */
   promo: boolean;
-  /** Your binders have a tab (#1074). */
+  /** Your binders have a tab. */
   binders: boolean;
   show: (tab: MenuTab) => (e: MouseEvent<HTMLButtonElement>) => void;
 }
@@ -558,7 +558,7 @@ const NAME_STYLE: CSSProperties = {
   overflow: 'hidden',
 };
 
-/** The binder of your own on show, as the button names it (#1074). */
+/** The binder of your own on show, as the button names it. */
 interface TriggerBinder {
   open: OpenBinder;
   /** At its own Sets; else the button names the set picked inside it too. */
@@ -717,7 +717,7 @@ const TOOLBAR_MEDAL = 18;
 const TOOLBAR_BINDER_WORDS = 170;
 
 /**
- * The button's words for a binder of your own (#1074): its medal and name in the toolbar, the
+ * The button's words for a binder of your own: its medal and name in the toolbar, the
  * name over its figures in the phone's row, and in the panel "Your binder" over its name, or with
  * a set picked inside it "Amber · Set 12" over the set's name. Named by one screen-reader-only
  * line, as the row's always is, so no binder's name sits in an attribute.

@@ -57,6 +57,7 @@ describe('listBinders', () => {
     const {data} = await listBinders('me');
     expect(data?.map((binder) => binder.id)).toEqual(['ok']);
     expect(console.warn).toHaveBeenCalledOnce();
+    expect(mockReport).toHaveBeenCalledExactlyOnceWith({area: 'collection', operation: 'read binder rows'}, expect.any(Error));
   });
 
   it('passes a refusal on as an error', async () => {

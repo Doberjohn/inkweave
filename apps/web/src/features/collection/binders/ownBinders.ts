@@ -2,11 +2,11 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from '../collectionParser';
 import type {CustomBinder, OwnBinders, OwnBindersAsk} from './binderChoices';
 import {coverOf} from './binderCovers';
-import {filtersCards, rulePool} from './binderRules';
+import {filtersCards, rulePool, type Binder} from './binderRules';
 import {viewOf, type BinderShelf, type Held} from './binderShelf';
 
 /*
- * The binder code the page runs (#1074), one chunk that `useOwnBinders` loads once collection mode
+ * The binder code the page runs, one chunk that `useOwnBinders` loads once collection mode
  * wants your binders, and only with binders on (`flag.ts`): the store, the rules and the covers.
  */
 export {follow, snapshot, subscribe} from './binderShelf';
@@ -20,6 +20,14 @@ function notShown(requested: string | null, shelf: BinderShelf): CustomBinder {
   if (requested === null) return NONE;
   if (shelf.status === 'failed') return {status: 'failed', retry: shelf.retry};
   return shelf.status === 'ready' ? UNKNOWN : LOADING;
+}
+
+/** The open binder's cards, kept while the pool and the binder stay: a count changed inside it reruns no rule. */
+let lastCards: {pool: LorcanaCard[]; binder: Binder; cards: LorcanaCard[]} | null = null;
+
+function cardsOf(pool: LorcanaCard[], binder: Binder): LorcanaCard[] {
+  if (lastCards?.pool !== pool || lastCards.binder !== binder) lastCards = {pool, binder, cards: rulePool(pool, binder)};
+  return lastCards.cards;
 }
 
 /**
@@ -36,7 +44,7 @@ export function ownBindersOf(
   const shelf = viewOf(held, reader);
   const binder = requested === null ? undefined : shelf.binders.find((one) => one.id === requested);
   if (binder === undefined) return {shelf, custom: notShown(requested, shelf), pool};
-  const cards = rulePool(pool, binder);
+  const cards = cardsOf(pool, binder);
   const custom: CustomBinder = {
     status: 'shown',
     binder,
