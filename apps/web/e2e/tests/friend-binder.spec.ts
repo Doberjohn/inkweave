@@ -1,4 +1,5 @@
 import type {Page} from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import {test, expect} from '../fixtures';
 import {E2E_FRIEND_CODE} from '../fixtures/supabaseStub';
 import {newestCoreSet, setCards} from '../helpers/cardData';
@@ -122,6 +123,9 @@ test.describe("A friend's collection", () => {
     await sharingSwitch(page).click();
     await expect(sharingSwitch(page)).toHaveAttribute('aria-checked', 'true');
     await expect.poll(() => sharingWrites(world)).toEqual([true]);
+    // The handler records the upsert before its answer reaches the page: the switch holds still
+    // until it does, and a reload before then cuts the save off.
+    await expect(sharingSwitch(page)).toBeEnabled();
 
     await page.reload();
     await expect(sharingSwitch(page)).toHaveAttribute('aria-checked', 'true');
@@ -207,6 +211,21 @@ test.describe("A friend's collection", () => {
     await expect.poll(() => tileNames(page)).toEqual(
       names(c0, c2),
     );
+  });
+
+  test("a friend's binder has no axe violations, nor with You need on", async ({page}) => {
+    await signIn(page, worldOf());
+    await page.goto(RUBY_BINDER);
+    await expect(page.getByRole('heading', {name: "Ruby Hero 042's binder"})).toBeVisible();
+    await expect(tiles(page).first()).toBeVisible();
+    // Audited once all of it has mounted: the compare row waits on both collections.
+    await expect(shows(page).getByRole('button', {name: /^You need/})).toHaveAccessibleName('You need 1');
+    await expect(numbers(page)).toHaveAttribute('aria-busy', 'false');
+    expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+
+    await shows(page).getByRole('button', {name: /^You need/}).click();
+    await expect.poll(() => tileNames(page)).toEqual(names(c2));
+    expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
   });
 
   test("the set panel shows the friend's percentage, with yours under it", async ({page}) => {

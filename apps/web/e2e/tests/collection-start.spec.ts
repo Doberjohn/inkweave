@@ -1,4 +1,5 @@
 import type {Page} from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import {test, expect} from '../fixtures';
 import {E2E_SUPABASE_ORIGIN} from '../fixtures/supabaseStub';
 import {binder, COLLECTIONS_PATH, signedIn, signInAsCollector} from '../helpers/collector';
@@ -56,6 +57,22 @@ test.describe('Starting a collection', () => {
     await expect
       .poll(() => writes.some((entries) => Object.values(entries).some((entry) => entry.normal === 1)))
       .toBe(true);
+  });
+
+  test('an empty binder has no axe violations, nor with the import it offers open', async ({page}) => {
+    await signInAsCollector(page, null);
+    await page.goto('/browse');
+    await signedIn(page);
+    await page.getByRole('button', {name: 'Show my collection'}).click();
+    await expect(emptyNote(page)).toBeVisible();
+    await expect(page.getByRole('region', {name: 'Collection numbers'})).toHaveAttribute('aria-busy', 'false');
+    expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+
+    await binder(page).getByRole('button', {name: 'Import from Dreamborn'}).click();
+    const dialog = page.getByRole('dialog', {name: 'Import your collection'});
+    // Until its fade ends, the dialog's text measures against a half-drawn panel.
+    await expect(dialog).toHaveCSS('opacity', '1');
+    expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
   });
 
   test('when the account answers with no collection, the waiting binder opens empty and is saved to the account', async ({

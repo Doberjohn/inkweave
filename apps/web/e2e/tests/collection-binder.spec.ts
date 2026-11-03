@@ -1,4 +1,5 @@
 import type {Locator, Page} from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import {test, expect} from '../fixtures';
 import {newestCoreSet, promoSetsWithOpenPockets, setCards} from '../helpers/cardData';
 import {
@@ -275,6 +276,25 @@ test.describe("Collection mode, the binder's pages and pockets (#941)", () => {
     // The binder's own stylesheet is what draws it, loaded with its code (see the visit in
     // collection-mode.spec.ts that never opens collection mode).
     expect(await hasStyleFor(page, '.binder-board')).toBe(true);
+  });
+
+  test('the binder page has no axe violations, on its opening spread and the next', async ({page}) => {
+    // The whole page, round the binder too: friends-have.spec.ts audits the binder's region alone.
+    await signInAsCollector(page, ENTRIES);
+    await page.goto(`/browse?binder=${SET}`);
+    await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
+    await expect(page.getByRole('region', {name: 'Collection numbers'})).toHaveAttribute('aria-busy', 'false');
+    const shown = binder(page).getByRole('navigation', {name: 'Binder pages'}).locator('[aria-current="true"]');
+    await expect(shown).toBeVisible();
+    expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
+
+    // One spread on, both pages hold cards, once the turned sheet has landed.
+    await binder(page).getByRole('button', {name: 'Next spread'}).focus();
+    await page.keyboard.press('Enter');
+    await expect(shown).toHaveAccessibleName(/^Spread 2 of /);
+    await expect(board(page).locator('.binder-turn')).toHaveCount(0);
+    await expect(binder(page).getByRole('group', {name: 'Left page'})).toBeVisible();
+    expect((await new AxeBuilder({page}).analyze()).violations).toEqual([]);
   });
 
   test('the sheets under each page show along its foot, by how far through the binder the spread is', async ({

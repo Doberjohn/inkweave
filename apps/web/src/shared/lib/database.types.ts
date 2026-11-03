@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      collection_binders: {
+        Row: {
+          cover_id: string | null
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          place: number
+          rules: string
+          scope: string
+          updated_at: string
+        }
+        Insert: {
+          cover_id?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+          place: number
+          rules?: string
+          scope?: string
+          updated_at?: string
+        }
+        Update: {
+          cover_id?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          place?: number
+          rules?: string
+          scope?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_binders_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "collections"
+            referencedColumns: ["owner_id"]
+          },
+        ]
+      }
       collection_sharing: {
         Row: {
           created_at: string
@@ -36,6 +80,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "collection_sharing_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: true
+            referencedRelation: "collections"
+            referencedColumns: ["owner_id"]
+          },
+        ]
+      }
+      collection_shelf: {
+        Row: {
+          cover_id: string | null
+          created_at: string
+          owner_id: string
+          updated_at: string
+        }
+        Insert: {
+          cover_id?: string | null
+          created_at?: string
+          owner_id: string
+          updated_at?: string
+        }
+        Update: {
+          cover_id?: string | null
+          created_at?: string
+          owner_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collection_shelf_owner_id_fkey"
             columns: ["owner_id"]
             isOneToOne: true
             referencedRelation: "collections"
@@ -262,6 +335,10 @@ export type Database = {
           owner_id: string
           schema_version: number
         }[]
+      }
+      move_binder: {
+        Args: { binder_id: string; earlier: boolean }
+        Returns: boolean
       }
       pretty_handle: { Args: { handle: string }; Returns: string }
       random_friend_code: { Args: never; Returns: string }

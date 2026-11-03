@@ -49,7 +49,7 @@ Stop the server with `pg_ctl -D "$PGDATA_DIR" stop`, then delete the data folder
 
 ## Proving a check bites
 
-Plant the mistake in a copy of the migration and load the copy instead. Each of these stops the run at the check named. Checks 5b and 5c read the privileges and the function's settings straight from the catalog, so three mistakes stop there first; the second column names the check that catches the same mistake by what a player can do, which you see by running `checks.sql` without 5b and 5c.
+Plant the mistake in a copy of the migration and load the copy instead. Each of these stops the run at the check named. Checks 5b and 5c read the privileges and the function's settings straight from the catalog, so two mistakes stop there first; the second column names the check that catches the same mistake by what a player can do, which you see by running `checks.sql` without 5b and 5c.
 
 | Planted mistake | Fails at | Without 5b and 5c |
 |---|---|---|
@@ -71,6 +71,6 @@ Plant the mistake in a copy of the migration and load the copy instead. Each of 
 | `move_binder`'s first read drops `b.owner_id = uid` | 8 (B's call on A's binder doesn't get `P0002`) | 8 |
 | `move_binder`'s update drops `b.owner_id = uid` | 8 (A's swap moves B's binder too) | 8 |
 | `move_binder` drops its null check on `earlier` | 8 (a null moves the binder later) | 8 |
-| `move_binder` takes the first place before, not the nearest (`min`) | 8 | 8 |
+| `move_binder` finds the binder before with `min` instead of `max`, so it takes the first place rather than the nearest | 8 | 8 |
 | `move_binder` revoked from `public` only | 1 (anon calls it) | 1 |
 | `collection_shelf`'s update grant leaves out `owner_id` | 5b | 10 (the owner's upsert fails `42501`) |
