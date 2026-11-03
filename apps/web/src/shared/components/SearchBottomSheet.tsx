@@ -508,7 +508,7 @@ interface SearchSheetProps {
   sheetTop: number;
   hasResults: boolean;
   onKeyDown: React.KeyboardEventHandler<HTMLDivElement>;
-  onTransitionEnd: React.TransitionEventHandler<HTMLDivElement>;
+  onTransitionEnd: () => void;
   onClose: () => void;
   query: string;
   autocomplete: ReturnType<typeof useAutocomplete>;
@@ -546,10 +546,8 @@ function SearchSheet({
       backdropTestId="search-sheet-backdrop"
       sheetRef={sheetRef}
       onKeyDown={onKeyDown}
-      sheetStyle={{
-        top: sheetTop,
-        transition: `top 0.25s ${EASING.smooth}, opacity 0.25s ${EASING.smooth}, transform 0.25s ${EASING.smooth}`,
-      }}>
+      sheetStyle={{top: sheetTop}}
+      alsoTransition={['top']}>
       <SearchSheetInput
         query={query}
         autocomplete={autocomplete}

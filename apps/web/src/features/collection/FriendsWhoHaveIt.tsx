@@ -9,8 +9,6 @@ import {
   CAP_LABEL,
   COLORS,
   DIALOG_TITLE,
-  DURATION,
-  EASING,
   FONTS,
   FONT_SIZES,
   LETTER_SPACING,
@@ -331,7 +329,7 @@ function PhoneSheet({isOpen, onClose, children}: {isOpen: boolean; onClose: () =
       sheetRef={sheetRef}
       onKeyDown={handleKeyDown}
       layer="lightbox"
-      sheetStyle={{maxHeight: '85vh', transition: `transform ${DURATION.slow}ms ${EASING.smooth}, opacity ${DURATION.slow}ms ${EASING.smooth}`}}>
+      sheetStyle={{maxHeight: '85vh'}}>
       <div style={SHEET_HEADER_STYLE}>
         <h2 style={DIALOG_TITLE}>{DIALOG_NAME}</h2>
         <IconButton aria-label="Close" size={36} onClick={onClose}>
