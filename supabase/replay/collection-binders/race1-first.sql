@@ -10,5 +10,7 @@ begin
   raise notice 'race1 first: place %', r.place;
   assert r.place = 29, format('race 1, first: place %s', r.place);
 end $$;
+-- The second file starts once it sees this name.
+set application_name = 'race1 first';
 select pg_sleep(3);
 commit;

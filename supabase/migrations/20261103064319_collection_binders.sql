@@ -16,8 +16,8 @@
 -- move_binder()        swaps a binder's place with its neighbour's. No client writes place.
 --
 -- A shelf holds 30 binders. The insert trigger and move_binder() take the same lock per owner,
--- so two tabs at once can't both pass the cap or take one place. The replay in
--- supabase/replay/collection-binders/ checks all of it.
+-- so two tabs at once can't both pass the cap or take one place, and only the owner's own
+-- calls take it. The replay in supabase/replay/collection-binders/ checks all of it.
 
 -- ── collection_binders ──────────────────────────────────────────────────────────
 
@@ -31,9 +31,15 @@ create table public.collection_binders (
   place      integer not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  -- As the shelf shows it: 1 to 30 letters, no space at either end, no control characters.
+  -- As the shelf shows it: 1 to 30 characters, no control character or line break, and
+  -- neither end blank, so no name looks empty: no space there, as String.prototype.trim counts
+  -- them, and no zero-width character. The code points are named because what [[:space:]]
+  -- and [[:cntrl:]] match depends on the database's locale.
   constraint collection_binders_name check (
-    char_length(name) between 1 and 30 and name = btrim(name) and name !~ '[[:cntrl:]]'),
+    char_length(name) between 1 and 30
+    and name !~ '[\u0001-\u001f\u007f-\u009f\u2028\u2029]'
+    and name !~ '^[ \u00a0\u1680\u2000-\u200d\u202f\u205f\u2060\u3000\ufeff]'
+    and name !~ '[ \u00a0\u1680\u2000-\u200d\u202f\u205f\u2060\u3000\ufeff]$'),
   -- The set picker's choices: 'all', 'promos', or one set's code ('12', 'P1', 'D23').
   constraint collection_binders_scope check (scope ~ '^[A-Za-z0-9]{1,12}$'),
   -- The app reads the params with the filters' own parser, which drops what it doesn't know,
@@ -73,18 +79,31 @@ create trigger collection_binders_set_updated_at
 -- past the highest. A deleted binder leaves a gap, which the order doesn't mind. It runs as the
 -- caller, so it counts what the select policy shows: every binder of the caller's own. A policy
 -- that hid some of them would let the cap undercount.
+--
+-- A signed-in player's row must name them before the lock: the insert policy checks owner_id
+-- only after this trigger, so a row naming another player would otherwise hold that player's
+-- lock until the policy turned it down.
 create function public.collection_binders_before_insert()
 returns trigger
 language plpgsql
 set search_path = ''
 as $$
+declare
+  held integer;
+  last_place integer;
 begin
+  if current_user = 'authenticated' and new.owner_id is distinct from (select auth.uid()) then
+    raise exception 'A binder''s owner_id must be the signed-in player''s'
+      using errcode = 'insufficient_privilege';
+  end if;
   perform pg_advisory_xact_lock(hashtext('collection_binders'), hashtext(new.owner_id::text));
-  if (select count(*) from public.collection_binders b where b.owner_id = new.owner_id) >= 30 then
+  select count(*), max(b.place) into held, last_place
+    from public.collection_binders b
+   where b.owner_id = new.owner_id;
+  if held >= 30 then
     raise exception 'A shelf holds 30 binders at most' using errcode = 'check_violation';
   end if;
-  new.place := coalesce(
-    (select max(b.place) + 1 from public.collection_binders b where b.owner_id = new.owner_id), 0);
+  new.place := coalesce(last_place + 1, 0);
   return new;
 end;
 $$;
@@ -107,7 +126,9 @@ grant all on public.collection_binders to service_role;
 --
 -- Swaps the caller's binder with the next one before it (earlier) or after it, and says
 -- whether it moved: false when it is already first or last. No such binder of the caller's is
--- P0002, and a null earlier is 22004. Security definer because no client holds UPDATE on place; every statement names the
+-- P0002, and a null earlier is 22004.
+--
+-- Security definer because no client holds UPDATE on place; every statement names the
 -- caller's own rows.
 create function public.move_binder(binder_id uuid, earlier boolean)
 returns boolean
@@ -133,13 +154,16 @@ begin
   if not found then
     raise exception 'No such binder' using errcode = 'no_data_found';
   end if;
-  select b.place into there
-    from public.collection_binders b
-   where b.owner_id = uid
-     and case when move_binder.earlier then b.place < here else b.place > here end
-   order by case when move_binder.earlier then -b.place else b.place end
-   limit 1;
-  if not found then
+  if move_binder.earlier then
+    select max(b.place) into there
+      from public.collection_binders b
+     where b.owner_id = uid and b.place < here;
+  else
+    select min(b.place) into there
+      from public.collection_binders b
+     where b.owner_id = uid and b.place > here;
+  end if;
+  if there is null then
     return false;
   end if;
   update public.collection_binders b

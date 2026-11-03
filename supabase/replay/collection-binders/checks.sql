@@ -79,6 +79,23 @@ begin
   end;
   raise exception 'expected 23514 on "%", but it succeeded: %', want, stmt;
 end $$;
+-- The races' barrier: wait, up to 10 s, until another session on this database names itself
+-- `who`, as the first file of each race does once its open transaction holds what the race is
+-- about. The snapshot is cleared each time round, or pg_stat_activity would keep its first answer.
+create function t.wait_for(who text) returns void language plpgsql as $$
+declare
+  deadline timestamptz := clock_timestamp() + interval '10 seconds';
+begin
+  while clock_timestamp() < deadline loop
+    perform pg_stat_clear_snapshot();
+    if exists (select 1 from pg_stat_activity a
+                where a.datname = current_database() and a.application_name = who) then
+      return;
+    end if;
+    perform pg_sleep(0.05);
+  end loop;
+  raise exception 'no session named % within 10 s', who;
+end $$;
 grant execute on all functions in schema t to anon, authenticated;
 
 do $$
@@ -264,7 +281,7 @@ begin
   end loop;
 end $$;
 
-\echo '== 5c. move_binder is security definer with an empty search_path; only authenticated runs it, and nobody runs the trigger function'
+\echo '== 5c. move_binder is security definer with an empty search_path; of the client roles, only authenticated runs it, and neither runs the trigger function'
 do $$
 declare p record;
 begin
@@ -296,8 +313,22 @@ begin
   perform t.expect_check(t.add_sql('A', 'Trailing space '), 'collection_binders_name');
   perform t.expect_check(t.add_sql('A', E'Tab\there'), 'collection_binders_name');
   perform t.expect_check(t.add_sql('A', E'Line\nbreak'), 'collection_binders_name');
+  -- No end blank, whatever the space or zero-width character, and no line break or control
+  -- character anywhere, past ASCII too.
+  foreach s in array array[
+    E'\u00a0', E'\u3000', E'\u200b', E'\u00a0Name', E'Name\u00a0', E'\u1680Name', E'\u2002Name',
+    E'Name\u202f', E'Name\u205f', E'Name\u200d', E'\u2060Name', E'\ufeffName',
+    E'Del\u007fete', E'Next\u0085line', E'Line\u2028separator', E'Paragraph\u2029separator'] loop
+    perform t.expect_check(t.add_sql('A', s), 'collection_binders_name');
+  end loop;
   execute t.add_sql('A', repeat('x', 30));
   execute t.add_sql('A', repeat('ü', 30));
+  -- Inside a name, spaces and joiners are the player's: a no-break space, two spaces, the
+  -- joiner in a family emoji, and a heart's variation selector at the end.
+  foreach s in array array[E'Red\u00a0Panda', 'Two  spaces', E'Family \U0001F468\u200d\U0001F469',
+                           E'Love \u2764\ufe0f'] loop
+    execute t.add_sql('A', s);
+  end loop;
   foreach s in array array['all', 'promos', '12', 'P1', 'D23'] loop
     execute t.add_sql('A', 'Scope ' || s, s);
   end loop;
@@ -310,10 +341,12 @@ begin
   -- A change can't get past them either.
   perform t.expect_check(format($q$update public.collection_binders set name = '' where id = %L$q$,
     t.binder_at('A', 0)), 'collection_binders_name');
+  perform t.expect_check(format($q$update public.collection_binders set name = %L where id = %L$q$,
+    E'Name\u00a0', t.binder_at('A', 0)), 'collection_binders_name');
   perform t.expect_check(format($q$update public.collection_binders set cover_id = 'a b' where id = %L$q$,
     t.binder_at('A', 0)), 'collection_binders_cover');
-  assert cardinality(t.places('A')) = n + 8,
-    format('A holds %s binders after check 6, not %s', cardinality(t.places('A')), n + 8);
+  assert cardinality(t.places('A')) = n + 12,
+    format('A holds %s binders after check 6, not %s', cardinality(t.places('A')), n + 12);
 end $$;
 commit;
 
