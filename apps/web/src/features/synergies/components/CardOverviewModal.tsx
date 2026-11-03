@@ -60,6 +60,7 @@ import {
   pickSynergyColumnLayout,
 } from './cardOverviewModalStyles';
 import {useModalCardSize} from './useModalCardSize';
+import {useFocusReturnsFromComparison} from './useFocusReturnsFromComparison';
 
 const FLIP_DURATION = 480;
 const FLIP_EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
@@ -103,31 +104,6 @@ function focusLost(active: Element | null): boolean {
 function focusedWithin(container: HTMLElement | null): HTMLElement | null {
   const active = document.activeElement;
   return active instanceof HTMLElement && container?.contains(active) ? active : null;
-}
-
-/**
- * Focus returns to the synergy tile that opened a comparison once it closes (BACK or Escape),
- * or to the close × if that tile is gone, as a tile of the expanded group view is (WCAG 2.4.3).
- * The × takes it wherever it was: focus left on a control in the comparison's panel, which stays
- * mounted through the exit animation, would fall to <body> when the panel unmounts. BACK takes
- * focus when the comparison opens (BackButton). Returns what keeps the opener: call it with what
- * held focus when the tile was pressed.
- */
-function useFocusReturnsFromComparison(inComparison: boolean, fallbackRef: React.RefObject<HTMLElement | null>) {
-  const openerRef = useRef<HTMLElement | null>(null);
-  const wasInComparison = useRef(inComparison);
-  useLayoutEffect(() => {
-    const left = wasInComparison.current && !inComparison;
-    wasInComparison.current = inComparison;
-    if (!left) return;
-    const opener = openerRef.current;
-    openerRef.current = null;
-    if (opener?.isConnected) opener.focus({preventScroll: true});
-    else fallbackRef.current?.focus({preventScroll: true});
-  }, [inComparison, fallbackRef]);
-  return (opener: HTMLElement | null) => {
-    openerRef.current = opener;
-  };
 }
 
 interface CardOverviewModalProps {
@@ -1613,6 +1589,8 @@ function DefaultInfoColumn({synergies, synergiesLoading, onRetrySynergies, outsi
       inert={inComparison}
       style={{
         ...pickSynergyColumnLayout(isMobile, rowHeight),
+        // No ring round the column it takes for a retry: it marks no control.
+        outline: 'none',
         opacity: inComparison ? 0 : 1,
         pointerEvents: inComparison ? 'none' : 'auto',
         transition: `opacity 250ms ${EASING.smooth}`,

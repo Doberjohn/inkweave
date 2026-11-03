@@ -1,6 +1,7 @@
 import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {cardFullNameById} from '../helpers/cardData';
+import {failUntilLetThrough} from '../helpers/failingRoute';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -366,19 +367,10 @@ test.describe('Card page synergy loading', () => {
   });
 });
 
-/** Answers `pattern` with a 503 until the function it returns lets requests through. */
-async function failUntilLetThrough(page: Page, pattern: string): Promise<() => void> {
-  let failing = true;
-  await page.route(pattern, (route) => (failing ? route.fulfill({status: 503, body: ''}) : route.continue()));
-  return () => {
-    failing = false;
-  };
-}
-
 /**
  * A synergy file that fails to load (an error status, or no connection) is not a card with no
- * synergies: the page and the window say it failed, with a Try again that fetches it again
- * (#1118). Any viewport.
+ * synergies: the page and the window say it failed, with a Try again that fetches it again.
+ * Any viewport.
  */
 test.describe('A synergy file that failed to load', () => {
   // The hook logs the failure it then shows.

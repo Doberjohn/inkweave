@@ -2,6 +2,7 @@ import type {Locator} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {holdSupabasePath} from '../fixtures/supabaseStub';
 import {cardFullNameById} from '../helpers/cardData';
+import {failUntilLetThrough} from '../helpers/failingRoute';
 import {slidePointerOnto} from '../helpers/pointer';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -381,17 +382,14 @@ test.describe('Synergy comparison — deep link', () => {
 /**
  * A comparison link whose synergy file fails to load can't tell whether its pair exists, so it
  * opens the card window on card A, which says the file failed; its Try again brings the
- * comparison in (#1118). The 404 page would tell a visitor a valid link was wrong.
+ * comparison in. The 404 page would tell a visitor a valid link was wrong.
  */
 test.describe('Synergy comparison — deep link whose synergy file failed', () => {
   // The hook logs the failure it then shows, once for the page and once for the window.
   test.use({expectedConsoleErrors: [/^Failed to load synergies for card 1947/]});
 
   test('opens the card window, and Try again shows the comparison', async ({appPage, page}) => {
-    let failing = true;
-    await page.route('**/data/synergies/1947.json', (route) =>
-      failing ? route.fulfill({status: 503, body: ''}) : route.continue(),
-    );
+    const letThrough = await failUntilLetThrough(page, '**/data/synergies/1947.json');
     const modal = appPage.cardOverviewModal;
     const column = modal.getByRole('region', {name: 'Synergies'});
 
@@ -400,9 +398,12 @@ test.describe('Synergy comparison — deep link whose synergy file failed', () =
     await expect(modal).toHaveAttribute('data-mode', 'default');
     await expect(page.getByRole('heading', {name: /404/})).toHaveCount(0);
 
-    failing = false;
+    letThrough();
     await column.getByRole('button', {name: 'Try again'}).click();
     await expect(modal).toHaveAttribute('data-mode', 'comparison', {timeout: 10000});
     await expect(page).toHaveURL(new RegExp(`${COMPARE_URL}$`));
+    // The comparison hides the column that held focus for the retry, and a shared link has no
+    // BACK to take it: the close button does.
+    await expect(modal.getByRole('button', {name: 'Close', exact: true})).toBeFocused();
   });
 });

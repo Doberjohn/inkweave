@@ -81,7 +81,7 @@ interface SynergiesFailedNoticeProps {
  */
 export function SynergiesFailedNotice({onRetry, focusOnRetry}: SynergiesFailedNoticeProps) {
   const retry = () => {
-    focusOnRetry.current?.focus();
+    focusOnRetry.current?.focus({preventScroll: true});
     onRetry();
   };
   return (

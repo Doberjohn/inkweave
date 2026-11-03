@@ -28,7 +28,8 @@ import {NotFoundPage} from './NotFoundPage';
  *
  * Edge cases:
  * - Same ID (`idA === idB`) → redirects to `/card/A`.
- * - Card A's synergy file failed to load → opens the window anyway (see `classifyComparePage`).
+ * - Card A's synergy file failed to load → opens the window on card A, unchecked (see
+ *   `classifyComparePage`).
  */
 export function ComparePage() {
   const {idA, idB, groupKey} = useParams<{idA: string; idB: string; groupKey?: string}>();
@@ -119,7 +120,11 @@ function classifyComparePage(input: ClassifyInput): ComparePageVerdict {
   if (cardsLoading || synergiesLoading) return {kind: 'loading'};
   if (!areIdsAndCardsResolved({idA, idB, cardA, cardB})) return {kind: 'not-found'};
   // A file that failed can't rule the pair out, so the window opens on card A, whose synergy
-  // column offers Try again; the window takes the comparison once the file arrives.
+  // column offers Try again; the window takes the comparison once the file arrives. The window
+  // fetches the file again itself as it opens, so a passing failure often clears with no press.
+  // This page never looks at the pair again, so a stale link that failed this way ends on card A
+  // rather than the 404 page: rare (a stale link meeting an error status), and card A's
+  // synergies still answer it.
   if (!synergiesFailed && !hasMatchingPair({cardB: cardB as LorcanaCard, groupKey, getPairSynergies})) {
     return {kind: 'not-found'};
   }

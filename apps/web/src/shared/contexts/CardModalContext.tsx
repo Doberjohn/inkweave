@@ -388,10 +388,10 @@ function CardModalRoot({
   // earlier would adopt a null pair that the modal would never re-adopt once the real data
   // arrives (the modal's render-time guard keys on cardB.id).
   // No synthesized fallback for empty pairs: ComparePage 404s on invalid groupKeys (group
-  // produces zero connections), so a valid `/compare/*` URL always has at least one
-  // connection by the time we get here. If `getPairSynergies` returns null, we leave
-  // initialComparison null and the modal stays in default state for cardA — better UX than
-  // an empty comparison view.
+  // produces zero connections), so a `/compare/*` URL it checked has at least one connection
+  // by the time we get here. One it couldn't check, because card A's file failed, may have
+  // none once the file arrives: `getPairSynergies` then returns null, and the modal stays in
+  // default state for cardA, which beats an empty comparison view.
   const partnerReady = partnerCard && !synergiesLoading;
   const initialComparison: DetailedPairSynergy | null = partnerReady
     ? (getPairSynergies(partnerCard, comparisonGroupKey ?? undefined) ?? null)

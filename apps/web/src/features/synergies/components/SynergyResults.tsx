@@ -56,6 +56,9 @@ function buildSectionStyle(isMobile: boolean): CSSProperties {
     minWidth: 0,
     padding: isMobile ? `${SPACING.md}px` : `${SPACING.xl}px`,
     background: isMobile ? COLORS.background : undefined,
+    // It takes focus only to hold it through a retry (SynergiesFailedNotice): a ring round the
+    // whole section would mark no control.
+    outline: 'none',
   };
 }
 
