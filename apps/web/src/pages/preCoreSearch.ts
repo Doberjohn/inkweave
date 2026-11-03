@@ -1,13 +1,12 @@
 import {useEffect, useSyncExternalStore} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
+import {loadPreCoreSearchCards} from '../features/collection/collectionChunks';
 
 /*
  * Browse's search over sets 1-8 (#911): the cards Core doesn't have, loaded the first time a
  * visitor searches, and kept for the visit, so leaving Browse and coming back costs nothing.
  *
- * The import is DYNAMIC on purpose: a static path from Browse into features/collection would
- * ship collection mode's data layer to every Browse visitor (BrowsePage.tsx says why). The
- * state is module state, read through useSyncExternalStore as cardOverviewModalLoader.ts's
+ * The state is module state, read through useSyncExternalStore as cardOverviewModalLoader.ts's
  * is: a plain read of it could be memoized by the React Compiler as if it never changed.
  */
 
@@ -39,14 +38,11 @@ const getSearch = () => search;
 function requestPreCoreCards() {
   if (search.status === 'loading' || search.status === 'loaded') return;
   setSearch({...search, status: 'loading'});
-  import('../features/collection/collectionChunks')
-    .then((chunks) => chunks.loadPreCoreSearchCards())
-    .then(
-      (cards) => setSearch({status: 'loaded', cards, byId: new Map(cards.map((card) => [card.id, card]))}),
-      // The search keeps Core's matches, as it had before #911. A failed import (a stale
-      // chunk after a deploy) lands here too.
-      () => setSearch({status: 'failed', ...NO_CARDS}),
-    );
+  loadPreCoreSearchCards().then(
+    (cards) => setSearch({status: 'loaded', cards, byId: new Map(cards.map((card) => [card.id, card]))}),
+    // The search keeps Core's matches, as it had before #911.
+    () => setSearch({status: 'failed', ...NO_CARDS}),
+  );
 }
 
 /**

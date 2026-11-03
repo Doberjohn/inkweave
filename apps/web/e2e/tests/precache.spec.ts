@@ -3,8 +3,9 @@ import {test, expect} from '../fixtures';
 
 // The service worker's precache (#928) and the small symbols it keeps on screen offline (#934).
 // E2E blocks service workers, so the precache tests read the list a production build's sw.js
-// would install rather than run it, and skip on the dev server, which writes none. E2E builds with
-// every flag on, where each chunk is one some page loads, so the precache may leave none out.
+// would install rather than run it, and skip on the dev server, which writes none. Every build's
+// pages load the collection's and friends' chunks, and E2E builds with the reveal season on, so
+// each chunk is one some page loads, and the precache may leave none out.
 
 /** The routes #928 opened offline, a missing page included. */
 const ROUTES = [

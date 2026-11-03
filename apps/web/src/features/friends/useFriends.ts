@@ -1,7 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
 import {trackEvent} from '../../shared/lib/analytics';
 import type {PublicIdentity} from '../profile';
-import {SHOW_COLLECTION} from '../collection/flag';
 import {
   SEND_FAILED,
   UNNAMED,
@@ -45,8 +44,8 @@ interface Snapshot {
   sent: FriendRow[];
   friends: FriendRow[];
   /**
-   * The friends who share their collection with the player, by id. Undefined
-   * with collections off, or when that read failed: the list then says nothing either way.
+   * The friends who share their collection with the player, by id. Undefined when that
+   * read failed: the list then says nothing either way.
    */
   sharing?: ReadonlySet<string>;
 }
@@ -80,9 +79,8 @@ function splitFriendships(rows: Friendship[], userId: string, names: Map<string,
   };
 }
 
-/** Who shares with the player, read only with collections on; a failed read is no answer. */
+/** Who shares with the player; a failed read is no answer. */
 async function fetchSharing(): Promise<ReadonlySet<string> | undefined> {
-  if (!SHOW_COLLECTION) return undefined;
   return (await listSharingFriends()).data ?? undefined;
 }
 

@@ -51,10 +51,7 @@ export function PrivacyPage() {
           parts of Inkweave that use an account. If you do, I receive basic account identity from that
           provider (such as your email and a provider id). Your account also gets a made-up public name and
           handle, such as Emerald Princess 330, which anyone can see. You can change the name. Your session
-          is stored in your browser, not in a cookie.
-          {/* These stay whatever the flags say: turning a feature off keeps its codes, friendships,
-              sharing switches and collections in the database, and the policy must keep describing
-              them. */}{' '}
+          is stored in your browser, not in a cookie.{' '}
           If you keep your collection on Inkweave, I store it with your account: how many copies of each card
           you own, normal and foil, so it&rsquo;s there on any device you sign in on. Only you can see it,
           unless you turn on sharing with friends on your account page. Then your friends can see which cards

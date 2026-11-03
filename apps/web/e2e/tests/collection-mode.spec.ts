@@ -27,8 +27,7 @@ import {holdLazyModule} from '../helpers/lazyModule';
 import {colourOf, contrast, edges, lightestIn, middle, type Place, placeOf, type Rgb} from '../helpers/screen';
 
 /**
- * Collection mode (#553 Phase C), behind `VITE_SHOW_COLLECTION` and pinned on in
- * `playwright.config.ts` together with the accounts flag it requires.
+ * Collection mode (#553 Phase C).
  *
  * Signed in without signing in: `signInAsCollector` (`helpers/collector.ts`) restores a stored
  * session and the collector's collection. The binder's look (#941), its pages, pockets and

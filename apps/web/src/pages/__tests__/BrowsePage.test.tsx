@@ -2,24 +2,20 @@ import {afterEach, beforeEach, describe, it, expect, vi} from 'vitest';
 import {act, cleanup, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import {MemoryRouter, useLocation} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {BrowseBody, BrowsePage} from '../BrowsePage';
+import {BrowseBody} from '../BrowsePage';
 import {trackCardSelected} from '../../features/cards/lib/cardAnalytics';
 import {trackEvent} from '../../shared/lib/analytics';
 import type {BrowseCollectionSlots} from '../../features/collection/useBrowseCollection';
 import {createCard} from '../../shared/test-utils';
 
 /*
- * The FLAG-OFF page, which production ships until collection launches (#553 Phase C),
- * and which no E2E test covers: playwright.config.ts pins the flag on, so the router
- * serves BrowseCollectionPage there. No collection provider is mounted below: if this
- * page or BrowseBody came to call a collection hook, this render would throw, and the
- * flag-off page would need providers that only mount under the flag.
+ * Browse's body, with collection mode's slots stubbed: no collection provider is mounted
+ * below, so if BrowseBody came to call a collection hook itself, this render would throw.
  */
 const fixtures = vi.hoisted(() => ({
   coreCards: [] as LorcanaCard[],
   openCardModal: vi.fn(),
   loadPreCoreSearchCards: vi.fn(),
-  chunksImported: false,
 }));
 vi.mock('../../shared/contexts/CardDataContext', () => ({
   useCardDataContext: () => ({
@@ -36,12 +32,10 @@ vi.mock('../../shared/contexts/CardDataContext', () => ({
 vi.mock('../../shared/contexts/CardModalContext', () => ({
   useCardModal: () => ({openCardModal: fixtures.openCardModal}),
 }));
-// Browse's search loads sets 1-8 from here (#911). The factory runs when the module is first
-// imported, so a static import from Browse would run it as this file loads.
-vi.mock('../../features/collection/collectionChunks', () => {
-  fixtures.chunksImported = true;
-  return {loadPreCoreSearchCards: fixtures.loadPreCoreSearchCards};
-});
+// Browse's search loads sets 1-8 from here (#911).
+vi.mock('../../features/collection/collectionChunks', () => ({
+  loadPreCoreSearchCards: fixtures.loadPreCoreSearchCards,
+}));
 vi.mock('../../shared/components', async () => {
   const actual = await vi.importActual('../../shared/components');
   return {...actual, CompactHeader: () => <header data-testid="compact-header" />};
@@ -49,26 +43,47 @@ vi.mock('../../shared/components', async () => {
 vi.mock('../../features/cards/lib/cardAnalytics', () => ({trackCardSelected: vi.fn()}));
 vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 
-// Lets a mocked dynamic import settle.
+// Lets a mocked load settle.
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-describe('BrowsePage with the collection flag off', () => {
-  it('renders the toolbar and grid without a Collection button, and without collection providers', async () => {
+/** Collection mode's slots on the grid, before Collection is pressed: no binder, no panel. */
+const GRID: BrowseCollectionSlots = {
+  active: false,
+  pool: [],
+  modeSwitch: <button type="button">Collection</button>,
+  renderBinder: () => null,
+  modeActions: null,
+  modalTarget: null,
+  sortOptions: undefined,
+  show: 'all',
+  rarityOptions: () => [],
+  promoOnly: false,
+  inView: null,
+  kept: new Set(),
+  prompts: null,
+  renderSetPanel: () => undefined,
+  renderSetPicker: () => undefined,
+  renderPhoneRow: () => undefined,
+  renderPhoneSheet: () => undefined,
+  renderBanner: () => undefined,
+};
+
+describe('BrowseBody on the grid', () => {
+  it('renders the toolbar and grid', async () => {
     fixtures.loadPreCoreSearchCards.mockClear();
     render(
       <MemoryRouter initialEntries={['/browse']}>
-        <BrowsePage />
+        <BrowseBody collection={GRID} />
       </MemoryRouter>,
     );
     expect(screen.getByTestId('browse-search')).toBeInTheDocument();
+    // The toolbar carries collection mode's switch on the grid too.
+    expect(screen.getByRole('button', {name: 'Collection'})).toBeInTheDocument();
     // The grid, empty with this fixture, shows it, and the page's status line says it.
     expect(screen.getByRole('status')).toHaveTextContent('No cards match your filters.');
-    expect(screen.queryByRole('button', {name: 'Show my collection'})).not.toBeInTheDocument();
-    // Sets 1-8 wait for a search (#911), and so does their loader's module, which Browse
-    // imports dynamically so as not to ship collection mode's data layer to every visitor.
+    // Sets 1-8 wait for a search (#911).
     await flush();
     expect(fixtures.loadPreCoreSearchCards).not.toHaveBeenCalled();
-    expect(fixtures.chunksImported).toBe(false);
   });
 
   describe('a pick from the grid', () => {
@@ -84,7 +99,7 @@ describe('BrowsePage with the collection flag off', () => {
     it('counts as a pick from Browse', () => {
       render(
         <MemoryRouter initialEntries={['/browse']}>
-          <BrowsePage />
+          <BrowseBody collection={GRID} />
         </MemoryRouter>,
       );
       fireEvent.click(screen.getByRole('link', {name: /Snow Queen/}));
@@ -104,7 +119,7 @@ describe('BrowsePage with the collection flag off', () => {
     it('counts each filter it turns off as an inline remove', async () => {
       render(
         <MemoryRouter initialEntries={['/browse?ink=Amber&cost=3']}>
-          <BrowsePage />
+          <BrowseBody collection={GRID} />
         </MemoryRouter>,
       );
       fireEvent.click(screen.getByRole('button', {name: 'Clear all'}));
@@ -121,11 +136,11 @@ describe('BrowsePage with the collection flag off', () => {
     const singing = createCard({id: '1951', name: 'Ariel', fullName: 'Ariel - Singing Mermaid', setCode: '9'});
     const onHumanLegs = createCard({id: '1', name: 'Ariel', fullName: 'Ariel - On Human Legs', setCode: '1'});
     // The search keeps its cards at module level for the visit, so each test renders a fresh page.
-    let FreshBrowsePage: typeof BrowsePage;
+    let FreshBrowseBody: typeof BrowseBody;
     const renderAt = (url: string) =>
       render(
         <MemoryRouter initialEntries={[url]}>
-          <FreshBrowsePage />
+          <FreshBrowseBody collection={GRID} />
         </MemoryRouter>,
       );
 
@@ -134,7 +149,7 @@ describe('BrowsePage with the collection flag off', () => {
       fixtures.openCardModal.mockClear();
       fixtures.loadPreCoreSearchCards.mockReset();
       vi.resetModules();
-      ({BrowsePage: FreshBrowsePage} = await import('../BrowsePage'));
+      ({BrowseBody: FreshBrowseBody} = await import('../BrowsePage'));
     });
 
     afterEach(() => {

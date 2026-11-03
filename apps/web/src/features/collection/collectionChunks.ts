@@ -6,8 +6,7 @@
 // only collection mode's binder asks for them. A search and collection mode share the
 // first stage's promise, so a visitor who does both downloads sets 1-8 once.
 //
-// MODULE STATE, not a provider's: Browse searches with no collection provider above it
-// while `SHOW_COLLECTION` is off, and `CollectionScope` remounts between Browse and a card
+// MODULE STATE, not a provider's: `CollectionScope` remounts between Browse and a card
 // page. A failed stage is forgotten, so a later ask fetches again. Never ask from render,
 // or from an effect whose deps change with the result: a forgotten failure would then
 // refetch on every render, the loop `CollectionCardsContext` guards against.
