@@ -52,7 +52,7 @@ function countStyle(active: boolean): CSSProperties {
     minWidth: 22,
     padding: `${SPACING.xxs}px ${SPACING.xs}px`,
     borderRadius: `${RADIUS.pill}px`,
-    background: active ? GOLD_GLOW.activeBg : COLORS.surfaceHover,
+    background: active ? GOLD_GLOW.activeBg : COLORS.neutralFill,
     color: active ? COLORS.primary : COLORS.text,
     fontSize: `${FONT_SIZES.sm}px`,
     fontWeight: FONT_WEIGHT.bold,

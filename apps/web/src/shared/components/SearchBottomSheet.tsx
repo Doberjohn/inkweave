@@ -358,7 +358,7 @@ function SearchResultRow({card, isHighlighted, isLast, query, optionProps}: Sear
       </div>
 
       {!isLast && (
-        <div style={{height: 1, background: COLORS.surfaceHover, marginLeft: SPACING.lg, marginRight: SPACING.lg}} />
+        <div style={{height: 1, background: COLORS.subtleBorder, marginLeft: SPACING.lg, marginRight: SPACING.lg}} />
       )}
     </div>
   );
@@ -508,7 +508,7 @@ interface SearchSheetProps {
   sheetTop: number;
   hasResults: boolean;
   onKeyDown: React.KeyboardEventHandler<HTMLDivElement>;
-  onTransitionEnd: React.TransitionEventHandler<HTMLDivElement>;
+  onTransitionEnd: () => void;
   onClose: () => void;
   query: string;
   autocomplete: ReturnType<typeof useAutocomplete>;
@@ -546,10 +546,7 @@ function SearchSheet({
       backdropTestId="search-sheet-backdrop"
       sheetRef={sheetRef}
       onKeyDown={onKeyDown}
-      sheetStyle={{
-        top: sheetTop,
-        transition: `top 0.25s ${EASING.smooth}, opacity 0.25s ${EASING.smooth}, transform 0.25s ${EASING.smooth}`,
-      }}>
+      sheetStyle={{top: sheetTop}}>
       <SearchSheetInput
         query={query}
         autocomplete={autocomplete}

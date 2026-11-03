@@ -151,9 +151,13 @@ export const COLORS = {
   // Dark backgrounds
   background: '#0d0d14',
   surface: '#1a1a2e',
-  surfaceHover: '#252540',
+  surfaceHover: '#252540', // a hovered or highlighted row or button, and the nav's current page
   surfaceAlt: '#151525',
   surfaceBorder: '#333355',
+  // surfaceHover's other jobs (owner, 2026-11-03): one colour today, a name each so each can move alone.
+  neutralFill: '#252540', // = surfaceHover: a fill with no colour of its own (a count pill, a chip with no ink)
+  subtleBorder: '#252540', // = surfaceHover: a line quieter than surfaceBorder (a divider between rows, a tile's resting edge)
+  skeletonHighlight: '#252540', // = surfaceHover: the shine that sweeps a loading skeleton
 
   // Elevation ladder (2026-07-22 ruling): on this near-black ground, black
   // drop-shadows barely read, so ELEVATION IS LIGHTNESS — higher surfaces get

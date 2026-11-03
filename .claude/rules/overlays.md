@@ -21,7 +21,11 @@ mechanically: `aria-modal` in a file that imports neither `DialogShell` /
   `transition="none"` when the content owns its choreography (MobileLightbox's
   FLIP wires the trio directly instead — the sanctioned escape valve).
 - **Bottom sheet** → `<BottomSheet>` chrome (scrim, drag handle, slide-up,
-  `SHADOWS.sheet`, safe-area inset) + the hook trio in the consumer.
+  `SHADOWS.sheet`, safe-area inset) + the hook trio in the consumer. It owns
+  the motion too (owner, 2026-11-03): every sheet slides at `DURATION.slow`,
+  stays visible until it has slid away, and ends its exit on its own slide's
+  `transitionend`. `sheetStyle` takes no `transition`; the sheet's `top`,
+  which the search sheet moves, slides at the same speed.
 - **Toast / status** → `role="status"` + `aria-live="polite"`, `Z_INDEX.toast`
   (or `swUpdate`); never `aria-modal`, never a trap.
 - **Tooltip / popover** → `role="tooltip"`, `pointerEvents: none`,

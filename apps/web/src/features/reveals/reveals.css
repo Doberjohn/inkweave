@@ -40,7 +40,8 @@
 }
 
 /* Clickable new-franchise card: border + shadow live here (not inline) so the
-   hover state can override them. */
+   hover state can override them. Its resting border is COLORS.subtleBorder's value,
+   typed in since a stylesheet can't read COLORS: when that token moves, move it too. */
 .reveal-franchise-card {
   cursor: pointer;
   border: 1px solid #252540;
