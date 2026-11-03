@@ -28,6 +28,7 @@ import {NotFoundPage} from './NotFoundPage';
  *
  * Edge cases:
  * - Same ID (`idA === idB`) → redirects to `/card/A`.
+ * - Card A's synergy file failed to load → opens the window anyway (see `classifyComparePage`).
  */
 export function ComparePage() {
   const {idA, idB, groupKey} = useParams<{idA: string; idB: string; groupKey?: string}>();
@@ -38,7 +39,7 @@ export function ComparePage() {
   const {openComparison, selectedCardId} = useCardModal();
   const cardA = idA ? getCardById(idA) : undefined;
   const cardB = idB ? getCardById(idB) : undefined;
-  const {getPairSynergies, isLoading: synergiesLoading} = usePrecomputedSynergies(cardA ?? null);
+  const {getPairSynergies, isLoading: synergiesLoading, error: synergiesError} = usePrecomputedSynergies(cardA ?? null);
 
   const verdict = classifyComparePage({
     idA,
@@ -48,6 +49,7 @@ export function ComparePage() {
     cardB,
     cardsLoading,
     synergiesLoading,
+    synergiesFailed: synergiesError !== null,
     getPairSynergies,
   });
 
@@ -100,6 +102,8 @@ interface ClassifyInput {
   cardB: LorcanaCard | undefined;
   cardsLoading: boolean;
   synergiesLoading: boolean;
+  /** Card A's synergy file failed to load, so it can't say whether the pair exists. */
+  synergiesFailed: boolean;
   getPairSynergies: (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null;
 }
 
@@ -109,12 +113,14 @@ interface ClassifyInput {
  * live here.
  */
 function classifyComparePage(input: ClassifyInput): ComparePageVerdict {
-  const {idA, idB, groupKey, cardA, cardB, cardsLoading, synergiesLoading, getPairSynergies} = input;
+  const {idA, idB, groupKey, cardA, cardB, cardsLoading, synergiesLoading, synergiesFailed, getPairSynergies} = input;
   if (isSameIdRoute(idA, idB)) return {kind: 'same-id', idA: idA as string};
   if (!groupKey) return {kind: 'not-found'};
   if (cardsLoading || synergiesLoading) return {kind: 'loading'};
   if (!areIdsAndCardsResolved({idA, idB, cardA, cardB})) return {kind: 'not-found'};
-  if (!hasMatchingPair({cardB: cardB as LorcanaCard, groupKey, getPairSynergies})) {
+  // A file that failed can't rule the pair out, so the window opens on card A, whose synergy
+  // column offers Try again; the window takes the comparison once the file arrives.
+  if (!synergiesFailed && !hasMatchingPair({cardB: cardB as LorcanaCard, groupKey, getPairSynergies})) {
     return {kind: 'not-found'};
   }
   return {kind: 'valid', idA: idA as string, idB: idB as string, groupKey};

@@ -366,6 +366,57 @@ test.describe('Card page synergy loading', () => {
   });
 });
 
+/** Answers `pattern` with a 503 until the function it returns lets requests through. */
+async function failUntilLetThrough(page: Page, pattern: string): Promise<() => void> {
+  let failing = true;
+  await page.route(pattern, (route) => (failing ? route.fulfill({status: 503, body: ''}) : route.continue()));
+  return () => {
+    failing = false;
+  };
+}
+
+/**
+ * A synergy file that fails to load (an error status, or no connection) is not a card with no
+ * synergies: the page and the window say it failed, with a Try again that fetches it again
+ * (#1118). Any viewport.
+ */
+test.describe('A synergy file that failed to load', () => {
+  // The hook logs the failure it then shows.
+  test.use({expectedConsoleErrors: [/^Failed to load synergies for card/]});
+  const FAILED = "Couldn't load this card's synergies.";
+
+  test('the card page says so, and Try again shows the synergies', async ({page}) => {
+    const letThrough = await failUntilLetThrough(page, `**/data/synergies/${EXPAND_CARD_ID}.json`);
+    const results = page.getByRole('region', {name: 'Synergy results'});
+
+    await page.goto(`/card/${EXPAND_CARD_ID}`);
+    await expect(results.getByRole('alert')).toHaveText(FAILED, {timeout: 10000});
+    await expect(page.getByText(/no synergies found for this card/i)).toHaveCount(0);
+
+    letThrough();
+    await results.getByRole('button', {name: 'Try again'}).click();
+    await expect(results.locator(`[data-group-key="${EXPAND_GROUP}"]`)).toBeVisible({timeout: 10000});
+    await expect(results.getByRole('alert')).toHaveCount(0);
+    // The button it pressed is gone, so the results hold focus.
+    await expect(results).toBeFocused();
+  });
+
+  test('the card window says so, and Try again shows the synergies', async ({appPage}) => {
+    const letThrough = await failUntilLetThrough(appPage.page, `**/data/synergies/${EXPAND_CARD_ID}.json`);
+    await appPage.openCardOverview(cardFullNameById(EXPAND_CARD_ID));
+    const column = appPage.cardOverviewModal.getByRole('region', {name: 'Synergies'});
+
+    await expect(column.getByRole('alert')).toHaveText(FAILED, {timeout: 10000});
+    await expect(column.getByTestId('card-overview-empty')).toHaveCount(0);
+
+    letThrough();
+    await column.getByRole('button', {name: 'Try again'}).click();
+    await expect(column.locator(`[data-group-key="${EXPAND_GROUP}"]`)).toBeVisible({timeout: 10000});
+    await expect(column.getByRole('alert')).toHaveCount(0);
+    await expect(column).toBeFocused();
+  });
+});
+
 test.describe('Synergy tiles on a touch screen 768 px and wider', () => {
   // No project runs a tablet: the desktop ones have no touch and the phone ones are under 768px,
   // where taps always worked. Any project will do, since isMobile is width-based.

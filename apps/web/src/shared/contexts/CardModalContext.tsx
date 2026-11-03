@@ -367,7 +367,8 @@ function CardModalRoot({
   const {isMobile} = useResponsive();
   const {card, outsideCore} = resolveModalCard(selectedCardId, getCardById, resolveCard);
   const partnerCard = comparisonPartnerId ? (getCardById(comparisonPartnerId) ?? null) : null;
-  const {synergies, getPairSynergies, isLoading: synergiesLoading} = usePrecomputedSynergies(outsideCore ? null : card);
+  const {synergies, getPairSynergies, isLoading: synergiesLoading, retry: retrySynergies} =
+    usePrecomputedSynergies(outsideCore ? null : card);
   // The synergies of the cards the arrows reach next, so a step shows no loading tiles.
   usePreloadSiblingSynergies({ids: siblingCardIds, index: siblingIndex, settled: !synergiesLoading});
   const {Modal, openedBeforeModalReady} = useModalForOpen(card !== null);
@@ -414,6 +415,7 @@ function CardModalRoot({
         card={card}
         synergies={synergies}
         synergiesLoading={synergiesLoading}
+        onRetrySynergies={retrySynergies}
         outsideCore={outsideCore}
         onClose={closeCardModal}
         getPairSynergies={getPairSynergies}

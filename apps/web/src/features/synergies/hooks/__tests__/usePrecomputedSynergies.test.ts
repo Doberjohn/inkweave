@@ -1,5 +1,5 @@
 import {afterEach, describe, it, expect, vi} from 'vitest';
-import {renderHook, waitFor} from '@testing-library/react';
+import {act, renderHook, waitFor} from '@testing-library/react';
 import type {LorcanaCard, PairSynergyConnection} from 'inkweave-synergy-engine';
 import {fetchCardSynergies, filterPairByGroup, usePrecomputedSynergies} from '../usePrecomputedSynergies';
 import type {PrecomputedPairData} from '../usePrecomputedSynergies';
@@ -53,6 +53,7 @@ function holdSynergyFetches(): (cardId: string, partnerId: string, explanation?:
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('usePrecomputedSynergies', () => {
@@ -176,6 +177,45 @@ describe('usePrecomputedSynergies', () => {
 
     expect(loadingWithoutCard.length).toBeGreaterThan(0);
     expect(loadingWithoutCard.every((isLoading) => !isLoading)).toBe(true);
+  });
+
+  it('reports a failed file as an error, and retry fetches it again', async () => {
+    const data = {
+      groups: [
+        {
+          groupKey: 'shift-targets',
+          category: 'direct',
+          label: 'Shift',
+          tagline: '',
+          description: '',
+          synergies: [{cardId: '9502', score: 7, explanation: 'Shifts onto it'}],
+        },
+      ],
+      pairs: {},
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ok: false, status: 503})
+      .mockResolvedValueOnce({ok: true, status: 200, headers: {get: () => 'application/json'}, json: async () => data});
+    vi.stubGlobal('fetch', fetchMock);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const selected = card('9501');
+    card('9502');
+
+    const {result} = renderHook(() => usePrecomputedSynergies(selected));
+    await waitFor(() => expect(result.current.error?.message).toMatch('answered 503'));
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.synergies).toEqual([]);
+    expect(result.current.retry).toBeInstanceOf(Function);
+
+    act(() => result.current.retry?.());
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.error).toBeNull();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.error).toBeNull();
+    expect(result.current.retry).toBeUndefined();
+    expect(result.current.synergies.map((g) => g.synergies.map((s) => s.card.id))).toEqual([['9502']]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
 

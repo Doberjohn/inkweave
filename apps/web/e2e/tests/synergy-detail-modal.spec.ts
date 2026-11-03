@@ -366,4 +366,43 @@ test.describe('Synergy comparison — deep link', () => {
     await expect(page.getByRole('heading', {level: 1})).toHaveText(/404/, {timeout: 10000});
     await expect(page.getByTestId('card-overview-fallback')).toHaveCount(0);
   });
+
+  test('a link whose group no longer matches its cards ends on the 404 page, kept out of search', async ({
+    page,
+  }) => {
+    // Both cards exist, so this is the pair check's 404: a stale link after a rule change.
+    await page.goto(`/compare/1947/${COMPARE_PARTNER_ID}/no-such-group`);
+    await expect(page.getByRole('heading', {level: 1})).toHaveText(/404/, {timeout: 10000});
+    await expect(page.locator('meta[name="robots"][content="noindex"]')).toHaveCount(1);
+    await expect(page.getByTestId('card-overview-fallback')).toHaveCount(0);
+  });
+});
+
+/**
+ * A comparison link whose synergy file fails to load can't tell whether its pair exists, so it
+ * opens the card window on card A, which says the file failed; its Try again brings the
+ * comparison in (#1118). The 404 page would tell a visitor a valid link was wrong.
+ */
+test.describe('Synergy comparison — deep link whose synergy file failed', () => {
+  // The hook logs the failure it then shows, once for the page and once for the window.
+  test.use({expectedConsoleErrors: [/^Failed to load synergies for card 1947/]});
+
+  test('opens the card window, and Try again shows the comparison', async ({appPage, page}) => {
+    let failing = true;
+    await page.route('**/data/synergies/1947.json', (route) =>
+      failing ? route.fulfill({status: 503, body: ''}) : route.continue(),
+    );
+    const modal = appPage.cardOverviewModal;
+    const column = modal.getByRole('region', {name: 'Synergies'});
+
+    await page.goto(COMPARE_URL);
+    await expect(column.getByRole('alert')).toHaveText("Couldn't load this card's synergies.", {timeout: 10000});
+    await expect(modal).toHaveAttribute('data-mode', 'default');
+    await expect(page.getByRole('heading', {name: /404/})).toHaveCount(0);
+
+    failing = false;
+    await column.getByRole('button', {name: 'Try again'}).click();
+    await expect(modal).toHaveAttribute('data-mode', 'comparison', {timeout: 10000});
+    await expect(page).toHaveURL(new RegExp(`${COMPARE_URL}$`));
+  });
 });

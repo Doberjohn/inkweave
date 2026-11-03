@@ -1,4 +1,4 @@
-import {useReducer, useEffect} from 'react';
+import {useReducer, useEffect, useState} from 'react';
 import type {
   LorcanaCard,
   SynergyGroup,
@@ -152,7 +152,10 @@ function resolveGroups(
 export interface UsePrecomputedSynergiesReturn {
   synergies: SynergyGroup[];
   isLoading: boolean;
+  /** Why the card's file failed to load (not a 404, which reads as no synergies), or null. */
   error: Error | null;
+  /** Fetches the card's file again: set only while its last fetch failed. */
+  retry: (() => void) | undefined;
   getPairSynergies: (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null;
 }
 
@@ -282,13 +285,16 @@ function loadSynergies(
 /**
  * Fetches pre-computed synergies for a card.
  * Replaces client-side engine calls with pre-computed JSON fetches.
- * `isLoading` is true from the first render with a card until its fetch settles.
+ * `isLoading` is true from the first render with a card until its fetch settles, and again
+ * through a `retry`.
  */
 export function usePrecomputedSynergies(
   selectedCard: LorcanaCard | null,
 ): UsePrecomputedSynergiesReturn {
   const {getCardById} = useCardDataContext();
   const [state, dispatch] = useReducer(synergyReducer, INITIAL_STATE);
+  // Bumped by `retry`: a new attempt runs the fetch effect again.
+  const [attempt, setAttempt] = useState(0);
 
   const cardId = selectedCard?.id;
 
@@ -298,7 +304,7 @@ export function usePrecomputedSynergies(
       return;
     }
     return loadSynergies(cardId, getCardById, dispatch);
-  }, [cardId, getCardById]);
+  }, [cardId, getCardById, attempt]);
 
   const current = stateForCard(state, cardId, getCardById);
   const getPairSynergies = buildPairResolver(selectedCard, current.pairs);
@@ -307,6 +313,7 @@ export function usePrecomputedSynergies(
     synergies: current.synergies,
     isLoading: current.isLoading,
     error: current.error,
+    retry: current.error ? () => setAttempt((n) => n + 1) : undefined,
     getPairSynergies,
   };
 }

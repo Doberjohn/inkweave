@@ -11,6 +11,7 @@ const mockGetPairSynergies = vi.fn<
   (clickedCard: LorcanaCard, groupKey?: string) => DetailedPairSynergy | null
 >();
 const mockSynergiesLoading = vi.fn(() => false);
+const mockSynergiesError = vi.fn<() => Error | null>(() => null);
 const mockSelectedCardId = vi.fn<() => string | null>(() => null);
 
 vi.mock('../../shared/contexts/CardDataContext', () => ({
@@ -28,7 +29,7 @@ vi.mock('../../features/synergies/hooks', () => ({
     getPairSynergies: mockGetPairSynergies,
     isLoading: mockSynergiesLoading(),
     synergies: [],
-    error: null,
+    error: mockSynergiesError(),
   }),
 }));
 
@@ -85,6 +86,7 @@ describe('ComparePage', () => {
     mockGetPairSynergies.mockReset();
     mockCardsLoading.mockReturnValue(false);
     mockSynergiesLoading.mockReturnValue(false);
+    mockSynergiesError.mockReturnValue(null);
     mockSelectedCardId.mockReturnValue(null);
   });
 
@@ -145,6 +147,25 @@ describe('ComparePage', () => {
     mockGetCardById.mockImplementation((id) => (id === 'a1' ? cardA : id === 'b1' ? cardB : undefined));
     mockGetPairSynergies.mockReturnValue(null);
     renderAt('/compare/a1/b1/shift-targets');
+    expect(screen.getByTestId('not-found')).toBeInTheDocument();
+    expect(mockOpenComparison).not.toHaveBeenCalled();
+  });
+
+  // A file that failed can't rule the pair out: the window opens, and its Try again brings the
+  // comparison in.
+  it('opens the window, not the 404 page, when the synergy file failed to load', () => {
+    mockGetCardById.mockImplementation((id) => (id === 'a1' ? cardA : id === 'b1' ? cardB : undefined));
+    mockSynergiesError.mockReturnValue(new Error('Synergy file for card a1 answered 503'));
+    mockGetPairSynergies.mockReturnValue(null);
+    renderAt('/compare/a1/b1/shift-targets');
+    expect(screen.queryByTestId('not-found')).toBeNull();
+    expect(mockOpenComparison).toHaveBeenCalledWith('a1', 'b1', 'shift-targets', {skipEnter: false});
+  });
+
+  it('still renders NotFoundPage for a missing card when the synergy file failed', () => {
+    mockGetCardById.mockImplementation((id) => (id === 'a1' ? cardA : undefined));
+    mockSynergiesError.mockReturnValue(new Error('Synergy file for card a1 answered 503'));
+    renderAt('/compare/a1/missing/shift-targets');
     expect(screen.getByTestId('not-found')).toBeInTheDocument();
     expect(mockOpenComparison).not.toHaveBeenCalled();
   });

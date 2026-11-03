@@ -39,11 +39,11 @@ import {
   TOUCH_TARGET,
   VISUALLY_HIDDEN,
   FONT_WEIGHT,
-  LINE_HEIGHT,
 } from '../../../shared/constants';
 import {Chip} from 'inkweave-ui/components/Chip';
 import {LinkButton} from 'inkweave-ui/components/LinkButton';
 import {ModalCloseButton, SynergiesLoadingSkeleton} from './CardOverviewModalFallback';
+import {OutsideCoreNotice, SynergiesEmptyState, SynergiesFailedNotice} from './SynergiesNotices';
 import {LOGO_HEIGHT, ModalCardTitle} from './ModalCardTitle';
 import {
   CENTERING_WRAPPER_STYLE,
@@ -140,6 +140,8 @@ interface CardOverviewModalProps {
    *  card genuinely has zero synergies. See usePrecomputedSynergies for the
    *  fetch lifecycle. */
   synergiesLoading?: boolean;
+  /** Set only when the card's synergy file failed to load: the column says so, with a Try again that calls this. */
+  onRetrySynergies?: () => void;
   /**
    * The card is outside Core (sets 1-8, from a collection). The engine
    * never analyses those sets, so the synergy column says so instead of reading as
@@ -426,7 +428,7 @@ function useCardOverviewModalState(props: CardOverviewModalProps): ModalState {
  */
 export function CardOverviewModal(props: CardOverviewModalProps) {
   const {isOpen, card, synergies, synergiesLoading = false, outsideCore = false, onClose, isMobile = false, hideBackButton = false} = props;
-  const {siblingCardIds = [], onGoToSibling} = props;
+  const {siblingCardIds = [], onGoToSibling, onRetrySynergies} = props;
   const {
     modalRef,
     frameRef,
@@ -524,6 +526,7 @@ export function CardOverviewModal(props: CardOverviewModalProps) {
               cardWidth={cardWidth}
               cardHeight={cardHeight}
               synergiesLoading={synergiesLoading}
+              onRetrySynergies={onRetrySynergies}
               outsideCore={outsideCore}
               visibleGroups={visibleGroups}
               comparisonPair={comparisonPair}
@@ -630,6 +633,7 @@ interface ModalContentRegionProps {
   cardWidth: number;
   cardHeight: number;
   synergiesLoading: boolean;
+  onRetrySynergies?: () => void;
   outsideCore: boolean;
   visibleGroups: SynergyGroupData[];
   comparisonPair: DetailedPairSynergy | null;
@@ -660,6 +664,7 @@ function ModalContentRegion({
   cardWidth,
   cardHeight,
   synergiesLoading,
+  onRetrySynergies,
   outsideCore,
   visibleGroups,
   comparisonPair,
@@ -699,6 +704,7 @@ function ModalContentRegion({
         cardHeight={cardHeight}
         synergies={synergies}
         synergiesLoading={synergiesLoading}
+        onRetrySynergies={onRetrySynergies}
         outsideCore={outsideCore}
         visibleGroups={visibleGroups}
         activeGroupFilter={activeGroupFilter}
@@ -1395,6 +1401,7 @@ interface CardsRowProps {
   card: LorcanaCard;
   cardWidth: number;
   synergiesLoading: boolean;
+  onRetrySynergies?: () => void;
   outsideCore: boolean;
   cardHeight: number;
   isMobile: boolean;
@@ -1433,6 +1440,7 @@ function CardsRow(props: CardsRowProps) {
       <DefaultInfoColumn
         synergies={props.synergies}
         synergiesLoading={props.synergiesLoading}
+        onRetrySynergies={props.onRetrySynergies}
         outsideCore={props.outsideCore}
         visibleGroups={props.visibleGroups}
         activeGroupFilter={props.activeGroupFilter}
@@ -1580,6 +1588,7 @@ function pickCardWrapperStyle({isMobile, cardWidth, highlightedCard, inCompariso
 interface DefaultInfoColumnProps {
   synergies: SynergyGroupData[];
   synergiesLoading: boolean;
+  onRetrySynergies?: () => void;
   outsideCore: boolean;
   visibleGroups: SynergyGroupData[];
   activeGroupFilter: string | null;
@@ -1591,9 +1600,13 @@ interface DefaultInfoColumnProps {
   onCardClick: (card: LorcanaCard, groupKey?: string) => void;
 }
 
-function DefaultInfoColumn({synergies, synergiesLoading, outsideCore, visibleGroups, activeGroupFilter, rowHeight, isMobile, inComparison, onShowAll, onCardClick}: DefaultInfoColumnProps) {
+function DefaultInfoColumn({synergies, synergiesLoading, onRetrySynergies, outsideCore, visibleGroups, activeGroupFilter, rowHeight, isMobile, inComparison, onShowAll, onCardClick}: DefaultInfoColumnProps) {
+  const columnRef = useRef<HTMLElement>(null);
   return (
     <section
+      ref={columnRef}
+      // Takes focus from the failure notice's Try again, which the retry unmounts.
+      tabIndex={-1}
       aria-label="Synergies"
       // `inert` removes the synergy tile buttons from focus order + a11y tree during comparison
       // mode — opacity:0 + pointer-events:none would still leave them tab-reachable.
@@ -1612,6 +1625,8 @@ function DefaultInfoColumn({synergies, synergiesLoading, outsideCore, visibleGro
         <OutsideCoreNotice />
       ) : synergiesLoading ? (
         <SynergiesLoadingSkeleton />
+      ) : onRetrySynergies ? (
+        <SynergiesFailedNotice onRetry={onRetrySynergies} focusOnRetry={columnRef} />
       ) : synergies.length === 0 ? (
         <SynergiesEmptyState />
       ) : (
@@ -1632,55 +1647,6 @@ function DefaultInfoColumn({synergies, synergiesLoading, outsideCore, visibleGro
         ))
       )}
     </section>
-  );
-}
-
-/**
- * In place of synergies for a card from sets 1-8. Collection mode
- * shows every card a collection can hold, but Inkweave analyses Core only, so the
- * honest answer is "not analysed", not "none found".
- */
-function OutsideCoreNotice() {
-  return (
-    <div
-      data-testid="card-overview-outside-core"
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        padding: SPACING.xxl,
-        gap: SPACING.sm,
-      }}>
-      <p style={{margin: 0, color: COLORS.text, fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHT.semibold}}>Outside Core</p>
-      <p style={{margin: 0, color: COLORS.textMuted, fontSize: FONT_SIZES.md, lineHeight: LINE_HEIGHT.base, maxWidth: 300}}>
-        Inkweave analyses the Core format, sets 9 and later, so this card has no synergies here.
-      </p>
-    </div>
-  );
-}
-
-function SynergiesEmptyState() {
-  return (
-    <div
-      data-testid="card-overview-empty"
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center',
-        padding: SPACING.xxl,
-        gap: SPACING.sm,
-      }}>
-      <p style={{margin: 0, color: COLORS.text, fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHT.semibold}}>No synergies yet</p>
-      <p style={{margin: 0, color: COLORS.textMuted, fontSize: FONT_SIZES.md, lineHeight: LINE_HEIGHT.base, maxWidth: 280}}>
-        This card may match new rules as the engine evolves.
-      </p>
-    </div>
   );
 }
 
