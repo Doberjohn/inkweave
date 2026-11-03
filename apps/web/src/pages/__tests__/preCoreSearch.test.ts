@@ -12,7 +12,7 @@ async function freshSearch() {
 }
 
 const onHumanLegs = createCard({id: '1', name: 'Ariel', fullName: 'Ariel - On Human Legs', setCode: '1'});
-// Lets the mocked dynamic import settle.
+// Lets the mocked load settle.
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 describe('usePreCoreSearchCards', () => {

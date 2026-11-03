@@ -47,7 +47,7 @@ const EXCLUDED = new Set([
   'CollectionContext.tsx',
   'CollectionCardsContext.tsx',
   // A hook (#553 Phase C), not a component: it holds collection mode's state and
-  // returns slots for BrowseCollectionPage. Its JSX only composes components that have
+  // returns slots for BrowsePage. Its JSX only composes components that have
   // their own stories (CollectionModeSwitch, CollectionBinderSection,
   // ImportCollectionDialog, SignInDialog), and it needs a session plus both
   // collection providers to run, so a story of it would be a page in disguise.

@@ -16,7 +16,6 @@ const fixtures = vi.hoisted(() => ({
   coreCards: [] as LorcanaCard[],
   openCardModal: vi.fn(),
   loadPreCoreSearchCards: vi.fn(),
-  chunksImported: false,
 }));
 vi.mock('../../shared/contexts/CardDataContext', () => ({
   useCardDataContext: () => ({
@@ -33,12 +32,10 @@ vi.mock('../../shared/contexts/CardDataContext', () => ({
 vi.mock('../../shared/contexts/CardModalContext', () => ({
   useCardModal: () => ({openCardModal: fixtures.openCardModal}),
 }));
-// Browse's search loads sets 1-8 from here (#911). The factory runs when the module is first
-// imported, so a static import from Browse would run it as this file loads.
-vi.mock('../../features/collection/collectionChunks', () => {
-  fixtures.chunksImported = true;
-  return {loadPreCoreSearchCards: fixtures.loadPreCoreSearchCards};
-});
+// Browse's search loads sets 1-8 from here (#911).
+vi.mock('../../features/collection/collectionChunks', () => ({
+  loadPreCoreSearchCards: fixtures.loadPreCoreSearchCards,
+}));
 vi.mock('../../shared/components', async () => {
   const actual = await vi.importActual('../../shared/components');
   return {...actual, CompactHeader: () => <header data-testid="compact-header" />};
@@ -46,14 +43,14 @@ vi.mock('../../shared/components', async () => {
 vi.mock('../../features/cards/lib/cardAnalytics', () => ({trackCardSelected: vi.fn()}));
 vi.mock('../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 
-// Lets a mocked dynamic import settle.
+// Lets a mocked load settle.
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 /** Collection mode's slots on the grid, before Collection is pressed: no binder, no panel. */
 const GRID: BrowseCollectionSlots = {
   active: false,
   pool: [],
-  modeSwitch: null,
+  modeSwitch: <button type="button">Collection</button>,
   renderBinder: () => null,
   modeActions: null,
   modalTarget: null,
@@ -80,13 +77,13 @@ describe('BrowseBody on the grid', () => {
       </MemoryRouter>,
     );
     expect(screen.getByTestId('browse-search')).toBeInTheDocument();
+    // The toolbar carries collection mode's switch on the grid too.
+    expect(screen.getByRole('button', {name: 'Collection'})).toBeInTheDocument();
     // The grid, empty with this fixture, shows it, and the page's status line says it.
     expect(screen.getByRole('status')).toHaveTextContent('No cards match your filters.');
-    // Sets 1-8 wait for a search (#911), and so does their loader's module, which Browse
-    // imports dynamically.
+    // Sets 1-8 wait for a search (#911).
     await flush();
     expect(fixtures.loadPreCoreSearchCards).not.toHaveBeenCalled();
-    expect(fixtures.chunksImported).toBe(false);
   });
 
   describe('a pick from the grid', () => {

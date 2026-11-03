@@ -650,7 +650,7 @@ The `/release-notes` page (#765), which shows one committed JSON file per week, 
 
 ## `precache.spec.ts`: 3 tests (2 on a production build only, 1 on every project)
 
-The service worker's precache (#928) and the small symbols it keeps on screen offline (#934). Every context blocks service workers, so the first two read the list a production build's `sw.js` would install rather than run it, and skip on the dev server, which writes none: CI runs them on firefox, webkit and mobile-safari. E2E builds with every flag on, where each chunk is one some page loads.
+The service worker's precache (#928) and the small symbols it keeps on screen offline (#934). Every context blocks service workers, so the first two read the list a production build's `sw.js` would install rather than run it, and skip on the dev server, which writes none: CI runs them on firefox, webkit and mobile-safari. Every build's pages load the collection's and friends' chunks, and E2E builds with the reveal season on, so each chunk is one some page loads.
 
 | Test | What it verifies |
 |---|---|

@@ -44,8 +44,8 @@ interface Snapshot {
   sent: FriendRow[];
   friends: FriendRow[];
   /**
-   * The friends who share their collection with the player, by id. Undefined
-   * with collections off, or when that read failed: the list then says nothing either way.
+   * The friends who share their collection with the player, by id. Undefined when that
+   * read failed: the list then says nothing either way.
    */
   sharing?: ReadonlySet<string>;
 }

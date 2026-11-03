@@ -67,5 +67,4 @@ describe('sign-in events', () => {
 
     expect(trackEvent).toHaveBeenCalledExactlyOnceWith('sign_in_shown', {surface: 'header'});
   });
-
 });

@@ -10,7 +10,7 @@ interface SessionStub {
   enabled: boolean;
 }
 
-// Hoisted, so the modules each test loads afresh share one stub of each.
+// Hoisted, so the vi.mock factories below can read them.
 const mocks = vi.hoisted(() => ({session: null as SessionStub | null, trackSignInShown: vi.fn()}));
 
 // Pinned, so no test depends on VITE_IS_REVEAL_SEASON or fetches reveal dates.
@@ -59,8 +59,8 @@ describe('MobileBottomNav account tab', () => {
 
     await userEvent.click(within(nav).getByRole('button', {name: 'Sign in'}));
 
-    // The dialog is lazy: the tap loads the header's module afresh after resetModules, which took
-    // close to findByRole's default second on a loaded machine.
+    // The dialog is lazy, so the tap waits on its import, which took close to findByRole's
+    // default second on a loaded machine.
     expect(
       await screen.findByRole('dialog', {name: 'Sign in to Inkweave'}, {timeout: 3000}),
     ).toBeVisible();

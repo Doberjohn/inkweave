@@ -304,7 +304,7 @@ export interface BrowseListing {
   filtered: boolean;
 }
 
-/** What collection mode adds to Browse. `null` from the page when the flag is off. */
+/** What collection mode adds to Browse. */
 export interface BrowseCollectionSlots {
   /** True while collection mode is on: the binder replaces the grid. */
   active: boolean;
@@ -338,8 +338,6 @@ export interface BrowseCollectionSlots {
   show: BinderShow;
   /**
    * The binder's Rarity options, whose printings are pockets of their own (`binderRarities`).
-   * Handed to the page rather than imported by it, so `browseView` holds no static path into
-   * the collection's data layer.
    */
   rarityOptions: (pool: LorcanaCard[]) => string[];
   /**

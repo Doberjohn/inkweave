@@ -22,7 +22,7 @@ import {fetchPairsIndex} from './features/voting/pairsIndexRequest';
 
 // Lazy-load page components for code splitting (with retry on chunk load failure)
 const HomePage = lazyWithRetry(() => import('./pages/HomePage'), 'HomePage');
-const BrowsePage = lazyWithRetry(() => import('./pages/BrowseCollectionPage'), 'BrowseCollectionPage');
+const BrowsePage = lazyWithRetry(() => import('./pages/BrowsePage'), 'BrowsePage');
 const AccountPage = lazyWithRetry(() => import('./pages/AccountPage'), 'AccountPage');
 const CollectionScope = lazyWithRetry(() => import('./features/collection/CollectionScope'), 'CollectionScope');
 const AuthCallbackPage = lazyWithRetry(() => import('./pages/AuthCallbackPage'), 'AuthCallbackPage');

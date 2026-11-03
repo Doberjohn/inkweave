@@ -146,12 +146,12 @@ describe('loadableChunks', () => {
   it('names the chunks a page loads, directly and through other chunks', () => {
     const bundle = bundleOf({
       'index.html': ENTRY,
-      'assets/index-a.js': {code: 'import("./BrowseCollectionPage-c.js")'},
-      'assets/BrowseCollectionPage-c.js': {code: 'import("./CollectionScope-d.js")'},
+      'assets/index-a.js': {code: 'import("./BrowsePage-b.js")'},
+      'assets/BrowsePage-b.js': {code: 'import("./CollectionScope-d.js")'},
       'assets/CollectionScope-d.js': {},
     });
     expect([...loadableChunks(bundle)].sort()).toEqual([
-      'assets/BrowseCollectionPage-c.js',
+      'assets/BrowsePage-b.js',
       'assets/CollectionScope-d.js',
       'assets/index-a.js',
     ]);

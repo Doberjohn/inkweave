@@ -22,7 +22,12 @@ import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected, type CardSelectSource} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, useFilterParams, useSettledValue} from '../shared/hooks';
-import type {BinderCardSource, BrowseCollectionSlots, BrowseListing} from '../features/collection/useBrowseCollection';
+import {
+  useBrowseCollection,
+  type BinderCardSource,
+  type BrowseCollectionSlots,
+  type BrowseListing,
+} from '../features/collection/useBrowseCollection';
 import {browseCountMessage, browseView, gridModalTarget, printingIdsFor, tilePrintingFor} from './browseView';
 import {usePreCoreSearchCards} from './preCoreSearch';
 
@@ -384,7 +389,13 @@ function useSheetOpen(isMobile: boolean, collection: BrowseCollectionSlots) {
   return [open, setOpen] as const;
 }
 
-/** Browse's content, with collection mode's slots, which `BrowseCollectionPage` wires in. */
+/** Browse's route page (`router.tsx`): its content, with collection mode's slots (#553 Phase C). */
+export function BrowsePage() {
+  const {cards} = useCardDataContext();
+  return <BrowseBody collection={useBrowseCollection(cards)} />;
+}
+
+/** Browse's content, given collection mode's slots, which tests hand it directly. */
 export function BrowseBody({collection}: {collection: BrowseCollectionSlots}) {
   const {openCardModal} = useCardModal();
   const {isMobile} = useResponsive();

@@ -35,7 +35,9 @@ describe('PrivacyPage', () => {
   it('says what signing in is for, and dates the page the launch day', () => {
     renderPolicy();
     expect(
-      screen.getByText(/Signing in with Google or Discord is only needed for the parts of Inkweave that use an account\./),
+      screen.getByText(
+        /Signing in with Google or Discord is only needed for the parts of Inkweave that use an account\./,
+      ),
     ).toBeInTheDocument();
     expect(screen.queryByText(/only needed to save decks/)).not.toBeInTheDocument();
     expect(screen.getByText(PROFILE_SENTENCE)).toBeInTheDocument();
