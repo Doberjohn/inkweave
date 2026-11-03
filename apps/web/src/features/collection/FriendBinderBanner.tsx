@@ -13,7 +13,7 @@ import {
 import {FriendChip} from '../friends/FriendChip';
 
 /** Where the banner's way back goes: your own binder, or Browse for a reader with no collection. */
-export type FriendBinderBack = 'yours' | 'browse';
+type FriendBinderBack = 'yours' | 'browse';
 
 export interface FriendBinderBannerProps {
   isMobile: boolean;

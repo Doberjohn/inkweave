@@ -220,5 +220,3 @@ export function CardPage() {
     </PageShell>
   );
 }
-
-export default CardPage;

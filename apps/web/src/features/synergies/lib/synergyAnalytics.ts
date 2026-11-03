@@ -2,7 +2,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {trackEvent} from '../../../shared/lib/analytics';
 
 /** Where a card's synergy results were on screen. Must match the catalog's `surface` unions. */
-export type SynergySurface = 'modal' | 'card_page';
+type SynergySurface = 'modal' | 'card_page';
 
 interface SynergyCardClick {
   sourceCardId: string;

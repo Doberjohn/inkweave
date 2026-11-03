@@ -2,6 +2,8 @@ export type {SetCode, CardTypeFilter, BrowseSortOrder, SynergySortOrder} from '.
 export {
   APP_NAME,
   SET_ABBREVIATIONS,
+  // inkweave-admin's src/app-bridge.ts imports it from here.
+  /** @public */
   SET_NAMES,
   INLINE_COST_FILTER_MIN_WIDTH,
   CARD_TYPE_FILTERS,
@@ -21,12 +23,10 @@ export {
   DURATION,
   BREAKPOINTS,
   Z_INDEX,
-  SELECT_STYLE_MD,
   hexToRgb,
   hexRgba,
   blackRgba,
   whiteRgba,
-  glow,
   SHADOWS,
   TIER_COLORS,
   LETTER_SPACING,
@@ -37,6 +37,8 @@ export {
   CAP_LABEL,
   CAP_LABEL_XS,
   SURFACE_CARD,
+  // deck-builder's DecksPage and DeckViewPage import it from here.
+  /** @public */
   EMPTY_BOX,
   TRUNCATE,
   TABULAR,
@@ -48,36 +50,45 @@ export {
   FOIL_SHEEN,
   TOUCH_TARGET,
   ICON_SIZE,
-  PRESS_SCALE,
   DISABLED_STYLE,
 } from 'inkweave-ui/tokens/theme';
 export {HERO_LOGO_ANIMATED_SRC, HERO_LOGO_IMG} from './heroLogo';
+// inkweave-admin's src/app-bridge.ts imports the five tagged names from here.
 export {
+  /** @public */
   REVEAL_SET_CODE,
+  /** @public */
   REVEAL_SET_NUMBER,
+  /** @public */
   REVEAL_ID_BASE,
   REVEAL_SET_LOGO,
   REVEAL_SET_LOGO_SM,
   PER_INK,
+  /** @public */
   SET_TOTAL,
   INK_BASE,
+  /** @public */
   inkBlock,
-  SPECIAL_BLOCKS,
-  ICONIC_INKS,
   specialSlotsFor,
 } from './revealSet';
-export type {SpecialBlock, SpecialSlotSpec} from './revealSet';
+export type {SpecialSlotSpec} from './revealSet';
+// inkweave-admin's src/app-bridge.ts imports it from here.
+/** @public */
 export {SET_LOGOS} from './setLogos';
 export {SET_PRINTED_SIZES} from './setPrintedSizes';
 export {CARD_BAR_SHARE} from 'inkweave-ui/tokens/cardBar';
+// inkweave-admin's src/app-bridge.ts imports PROMO_SETS, promoSetRank and PromoSet from here.
 export {
+  /** @public */
   PROMO_SETS,
   binderSetOf,
   editionRank,
   printedCodesOf,
   promoEditionOf,
   promoSetOf,
+  /** @public */
   promoSetRank,
+  /** @public */
   type PromoSet,
 } from './promoSets';
 export type {PlaystyleUiMeta} from './playstyleUi';

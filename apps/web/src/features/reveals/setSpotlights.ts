@@ -3,7 +3,7 @@ import {FRANCHISES, type FranchiseConfig, type FranchiseId} from './franchise';
 import {INK_COLORS, PLAYSTYLE_UI} from '../../shared/constants';
 
 /** A reveal-set spotlight, rendered as a SpotlightHero card in the What's New band. */
-export interface Spotlight extends SpotlightHeroData {
+interface Spotlight extends SpotlightHeroData {
   id: string;
 }
 

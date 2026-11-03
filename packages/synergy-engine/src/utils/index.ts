@@ -28,8 +28,6 @@ export type {ShiftType, ShiftPayment} from './cardHelpers.js';
 export {
   isLocationSupportCard,
   getLocationRoles,
-  getLocationBuffClassifications,
-  getLocationMoveClassifications,
   locationRoleReaches,
   isMoveOnlyLocationRamp,
   getSelfOnlyLocationRoles,
@@ -73,7 +71,7 @@ export {
   getCostReductionTarget,
   costReductionTargetsOverlap,
 } from './detection/ramp.js';
-export type {RampRole, CostReductionTarget} from './detection/ramp.js';
+export type {RampRole} from './detection/ramp.js';
 
 export {getToyRoles, isToyCard, toyAbilityCounts, TOY_TRIBAL_ROLES} from './detection/toy.js';
 export type {ToyRole} from './detection/toy.js';
@@ -132,7 +130,7 @@ export {
 export {isBeckonAnchor, getBeckonEnablerTier, isBeckonEnabler} from './detection/meridaWisp.js';
 export type {BeckonEnablerTier} from './detection/meridaWisp.js';
 
-export {getLoreDenialRoles, isLoreDenialCard, LORE_LOSS_PATTERN} from './detection/loreLoss.js';
+export {getLoreDenialRoles, isLoreDenialCard} from './detection/loreLoss.js';
 export type {LoreDenialRole} from './detection/loreLoss.js';
 
 export {
@@ -161,7 +159,6 @@ export {
   mechanicDescription,
   tribalMechanicDescription,
 } from './mechanics.js';
-export type {Mechanic} from './mechanics.js';
 export {getPlaystyleMechanicIds} from './playstyleMechanics.js';
 
 export {slimRawCard, transformCard, transformCards} from './cardTransformer.js';

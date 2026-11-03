@@ -1,7 +1,7 @@
 import {loadSentry, onSentryReady, type SentryApi} from './sentry';
 
 /** The parts of the app whose handled failures go to Sentry. */
-export type FailureArea = 'collection' | 'sharing' | 'friends' | 'profile' | 'votes';
+type FailureArea = 'collection' | 'sharing' | 'friends' | 'profile' | 'votes';
 
 /** Where a failure happened. `storage` marks the browser refusing local storage. */
 export interface FailureSite {

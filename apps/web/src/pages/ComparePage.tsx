@@ -84,8 +84,6 @@ export function ComparePage() {
   return renderComparePage(verdict, {cardA, cardB, pathname}, frame);
 }
 
-export default ComparePage;
-
 type ComparePageVerdict =
   | {kind: 'same-id'; idA: string}
   | {kind: 'not-found'}

@@ -5,7 +5,7 @@
  */
 
 /** Card ids are numeric strings; order them as numbers, so "the lower id" means what it says. */
-export const byId = (a, b) => Number(a.id) - Number(b.id) || a.id.localeCompare(b.id);
+const byId = (a, b) => Number(a.id) - Number(b.id) || a.id.localeCompare(b.id);
 
 /** Cards by full name, then id. */
 export const byName = (a, b) => a.fullName.localeCompare(b.fullName) || byId(a, b);
@@ -99,7 +99,7 @@ function collectRule(rule, {cards, compatible}) {
  * @param {{engine: object, cards: object[]}} input
  * @returns {Map<string, {pairs: Map<string, object>, partners: Map<string, Set<string>>}>}
  */
-export function collectPairs({engine, cards}) {
+function collectPairs({engine, cards}) {
   const compatibleById = new Map();
   const compatible = (card) => {
     if (!compatibleById.has(card.id)) {

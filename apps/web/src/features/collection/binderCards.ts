@@ -300,7 +300,7 @@ export function scopeName(scope: string): string {
 }
 
 /** Whether the binder goes set by set, each set a stretch of its own: a scope spanning sets, in collector order. */
-export const goesSetBySet = (scope: string, sortOrder: BrowseSortOrder) => spansSets(scope) && sortOrder === 'newest';
+const goesSetBySet = (scope: string, sortOrder: BrowseSortOrder) => spansSets(scope) && sortOrder === 'newest';
 
 /**
  * Whether the spread map names the stretches the binder holds, in collector order: the sets of

@@ -15,6 +15,7 @@ interface CardDataProviderProps {
   deferInitialLoad?: boolean;
 }
 
+/** @public inkweave-admin's src/app-bridge.ts imports it. */
 export function CardDataProvider({children, deferInitialLoad}: CardDataProviderProps) {
   const cardData = useCardData({deferInitialLoad});
 
@@ -35,6 +36,7 @@ export function CardDataProvider({children, deferInitialLoad}: CardDataProviderP
   );
 }
 
+/** @public inkweave-admin's src/app-bridge.ts imports it. */
 export function useCardDataContext(): CardDataContextValue {
   const context = useContext(CardDataContext);
   if (!context) {
