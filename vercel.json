@@ -29,7 +29,18 @@
       "source": "/relay/:path(.*)",
       "destination": "https://eu.i.posthog.com/:path"
     },
-    {"source": "/((?!.*\\.).*)", "destination": "/index.html"}
+    {
+      "source": "/:page(browse|account|inks|playstyles|vote|reveals|privacy|terms|disclaimer|about|release-notes)",
+      "destination": "/index.html"
+    },
+    {"source": "/auth/callback", "destination": "/index.html"},
+    {"source": "/card/:cardId", "destination": "/index.html"},
+    {"source": "/card/:cardId/:slug", "destination": "/index.html"},
+    {"source": "/compare/:idA/:idB", "destination": "/index.html"},
+    {"source": "/compare/:idA/:idB/:groupKey", "destination": "/index.html"},
+    {"source": "/ink/:inkSlug(amber|amethyst|emerald|ruby|sapphire|steel)", "destination": "/index.html"},
+    {"source": "/playstyles/:playstyleId", "destination": "/index.html"},
+    {"source": "/vote/:cardAId/:cardBId", "destination": "/index.html"}
   ],
   "headers": [
     {

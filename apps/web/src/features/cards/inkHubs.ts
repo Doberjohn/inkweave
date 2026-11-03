@@ -1,4 +1,4 @@
-import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
+import type {Ink, LorcanaCard, PlaystyleId} from 'inkweave-synergy-engine';
 
 /**
  * The six ink hub pages (#530).
@@ -81,6 +81,21 @@ export const INK_HUB_BLURBS: Record<Ink, string> = {
     "Sapphire builds advantage before it attacks. Support and Ward concentrate here, and it carries the format's item density — the ink that ramps, draws and sets up rather than racing.",
   Steel:
     "Steel wins the ground. Resist clusters here far more than in any other ink, paired with the format's highest Challenger count to trade up, producing bodies that survive removal and hold the board.",
+};
+
+/**
+ * The three playstyles that draw the largest share of their cards from each ink, largest first,
+ * which each hub's About section names and links. `inkHubs.test.ts` recounts them from the
+ * engine's playstyle card lists, so a rule or card change that reorders them fails it: update
+ * the list then, never the test.
+ */
+export const INK_HUB_PLAYSTYLES: Record<Ink, readonly [PlaystyleId, PlaystyleId, PlaystyleId]> = {
+  Amber: ['healing', 'toy', 'monster'],
+  Amethyst: ['dwarfs', 'exert', 'gargoyle'],
+  Emerald: ['discard', 'toy', 'bounce'],
+  Ruby: ['lore-denial', 'red-panda', 'sacrifice'],
+  Sapphire: ['ramp', 'healing', 'items'],
+  Steel: ['detective', 'gargoyle', 'ink-drops'],
 };
 
 /** Alphabetical by ink — the order the gallery and footer render. */

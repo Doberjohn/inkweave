@@ -11,7 +11,7 @@ import {
   trackSynergyGroupViewed,
 } from '../features/synergies/lib/synergyAnalytics';
 import {SynergyResults, SynergyResultsLoading} from '../features/synergies/components/SynergyResults';
-import {CompactHeader, Footer, Seo} from '../shared/components';
+import {CompactHeader, Footer, Seo, type Breadcrumb} from '../shared/components';
 import {useBackOrNavigate, useResponsive} from '../shared/hooks';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING, FONT_WEIGHT} from '../shared/constants';
 import {cardNameHint} from './cardNameHint';
@@ -29,6 +29,15 @@ function buildDescription(card: LorcanaCard): string {
   const inks = card.ink2 ? `${card.ink}/${card.ink2}` : card.ink;
   const cls = card.classifications?.length ? ` ${card.classifications.join(', ')}` : '';
   return `${card.fullName}: a ${card.cost}-cost ${inks} ${card.type}${cls}. See its strongest Disney Lorcana synergies and combos in Core format.`;
+}
+
+/** Home, then the hub of the card's first ink, then the card: the site's path to it. */
+function cardBreadcrumbs(card: LorcanaCard): Breadcrumb[] {
+  return [
+    {name: 'Home', path: '/'},
+    {name: `${card.ink} cards`, path: `/ink/${card.ink.toLowerCase()}`},
+    {name: card.fullName, path: cardPath(card)},
+  ];
 }
 
 /**
@@ -182,6 +191,7 @@ export function CardPage() {
         title={`${card.fullName} | Lorcana Synergies | Inkweave`}
         description={summary || buildDescription(card)}
         canonicalPath={cardPath(card)}
+        breadcrumbs={cardBreadcrumbs(card)}
       />
       <main style={MAIN_STYLE}>
         {!isMobile && (

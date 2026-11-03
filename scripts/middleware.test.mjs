@@ -1,4 +1,4 @@
-import {describe, it, expect} from 'vitest';
+import {afterEach, describe, it, expect, vi} from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -88,21 +88,49 @@ describe('retired-host service worker', () => {
     },
   );
 
-  it('matches the service worker path alongside numeric cards', () => {
-    expect(config.matcher).toEqual(['/card/:id', '/sw.js']);
+  it('matches the service worker path alongside the card URLs', () => {
+    expect(config.matcher).toEqual(['/card/:id', '/card/:id/:slug', '/sw.js']);
   });
 });
 
-describe('numeric card redirect', () => {
-  it('308s a known id to its slug URL and keeps the query', () => {
-    const [id, slug] = Object.entries(slugs)[0];
+describe('card addresses', () => {
+  const [id, slug] = Object.entries(slugs)[0];
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('308s a bare known id to its slug URL and keeps the query', () => {
     const res = middleware(new Request(`https://inkweave.ink/card/${id}?utm=x`));
     expect(res?.status).toBe(308);
     expect(res?.headers.get('location')).toBe(`/card/${id}/${slug}?utm=x`);
   });
 
-  it('falls through for an unknown id', () => {
-    expect(middleware(new Request('https://inkweave.ink/card/nope'))).toBeUndefined();
+  it('308s a known id under an old slug to its current one', () => {
+    const res = middleware(new Request(`https://inkweave.ink/card/${id}/an-old-name?utm=x`));
+    expect(res?.status).toBe(308);
+    expect(res?.headers.get('location')).toBe(`/card/${id}/${slug}?utm=x`);
+  });
+
+  it('falls through to the prerendered page at the current slug', () => {
+    expect(middleware(new Request(`https://inkweave.ink/card/${id}/${slug}`))).toBeUndefined();
+  });
+
+  it.each(['/card/999999', '/card/999999/x', '/card/constructor/x'])(
+    'answers %s with the 404 page and status 404',
+    async (path) => {
+      const fetchPage = vi.fn(async () => new Response('<!doctype html><div id="root"></div>'));
+      vi.stubGlobal('fetch', fetchPage);
+      const res = await middleware(new Request(`https://inkweave.ink${path}`));
+      expect(res?.status).toBe(404);
+      expect(await res?.text()).toBe('<!doctype html><div id="root"></div>');
+      expect(String(fetchPage.mock.calls[0][0])).toBe('https://inkweave.ink/404.html');
+    },
+  );
+
+  it('still answers 404 when the 404 page cannot be fetched', async () => {
+    vi.stubGlobal('fetch', async () => new Response('', {status: 401}));
+    const res = await middleware(new Request('https://inkweave.ink/card/999999/x'));
+    expect(res?.status).toBe(404);
+    expect(await res?.text()).toContain('Page not found');
   });
 });
 

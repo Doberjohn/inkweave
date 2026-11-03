@@ -1,8 +1,17 @@
+import {Fragment} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {CardGrid, CardGridSkeleton, INK_HUB_BLURBS, cardsForInk, getInkHub} from '../features/cards';
+import type {Ink, LorcanaCard} from 'inkweave-synergy-engine';
+import {
+  CardGrid,
+  CardGridSkeleton,
+  INK_HUB_BLURBS,
+  INK_HUB_PLAYSTYLES,
+  cardsForInk,
+  getInkHub,
+} from '../features/cards';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
-import {CompactHeader, EtherealBackground, Seo} from '../shared/components';
+import {getPlaystyleById} from '../features/synergies/engineCatalog';
+import {CompactHeader, EtherealBackground, PageAbout, PageAboutLink, Seo} from '../shared/components';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive} from '../shared/hooks';
@@ -50,6 +59,11 @@ export function InkHubPage() {
         title={`${hub.ink} Cards | Disney Lorcana | Inkweave`}
         description={INK_HUB_BLURBS[hub.ink]}
         canonicalPath={`/ink/${hub.slug}`}
+        breadcrumbs={[
+          {name: 'Home', path: '/'},
+          {name: 'Inks', path: '/inks'},
+          {name: hub.ink, path: `/ink/${hub.slug}`},
+        ]}
       />
       <EtherealBackground />
       <CompactHeader onLogoClick={() => navigate('/')} isMobile={isMobile} />
@@ -88,8 +102,51 @@ export function InkHubPage() {
             emptyMessage={`No ${hub.ink} cards found.`}
           />
         )}
+
+        <PageAbout heading={`About ${hub.ink} cards`} padding={`${SPACING.xxxl}px 0 0`}>
+          <InkHubAbout ink={hub.ink} />
+        </PageAbout>
       </div>
     </main>
+  );
+}
+
+/** What goes before item `i` of `n` in "A, B and C". */
+function listSeparator(i: number, n: number): string {
+  if (i === 0) return '';
+  return i === n - 1 ? ' and ' : ', ';
+}
+
+/** "A, B and C", each a link to its playstyle's page. */
+function PlaystyleLinks({ink}: {ink: Ink}) {
+  const playstyles = INK_HUB_PLAYSTYLES[ink];
+  return playstyles.map((id, i) => (
+    <Fragment key={id}>
+      {listSeparator(i, playstyles.length)}
+      <PageAboutLink to={`/playstyles/${id}`}>{getPlaystyleById(id)?.name ?? id}</PageAboutLink>
+    </Fragment>
+  ));
+}
+
+/**
+ * What the hub lists and where its cards lead, under the grid: the page's words of its own for
+ * search, which its card tiles, being images, don't give it.
+ */
+function InkHubAbout({ink}: {ink: Ink}) {
+  return (
+    <>
+      <p>
+        This page lists every {ink} card in the Core format of Disney Lorcana, from Fabled onward,
+        sorted by set and then by card number. A dual-ink card that carries {ink} appears here and
+        on its other ink's page too. Open any card to see the cards it works best with, each pairing
+        scored from 1 to 10, or follow its link to the card's own page.
+      </p>
+      <p>
+        The playstyles that draw the largest share of their cards from {ink} are{' '}
+        <PlaystyleLinks ink={ink} />. Each playstyle page gathers the cards behind that strategy
+        from all six inks, with a guide to how the deck wins and the key cards to build around.
+      </p>
+    </>
   );
 }
 

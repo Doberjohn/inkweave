@@ -19,6 +19,7 @@ import {
 } from '../../../shared/components';
 import {InkCardPlaceholder} from 'inkweave-ui/lorcana/InkCardPlaceholder';
 import {usePrintingSelection} from '../../../shared/hooks';
+import {CardFacts} from '../../cards/components/CardFacts';
 
 /** The card at the size the card modal shows it on mobile (CardOverviewModal). */
 const ART_WIDTH = 240;
@@ -199,6 +200,7 @@ export function CardDetail({card, onClear, headingLevel = 'h2'}: CardDetailProps
           <CardTextBlock card={card} />
         </div>
       )}
+      <CardFacts card={card} />
     </article>
   );
 }

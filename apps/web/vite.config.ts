@@ -238,6 +238,27 @@ function requireCardData<T extends {url: string}>(entries: T[]) {
 }
 
 /**
+ * Writes dist/404.html, a copy of the app's shell as the build wrote it, before the prerender
+ * crawl overwrites index.html with the home page. Vercel answers a path that matches no file and
+ * no rewrite with it, under a 404 status: a crawler reads the status, and a browser runs the app,
+ * whose router shows its own not-found page (or the route's page, for a route vercel.json's
+ * rewrites missed, which scripts/vercel-routes.test.mjs guards against).
+ */
+function notFoundPagePlugin(): Plugin {
+  let outDir = '';
+  return {
+    name: 'not-found-page',
+    apply: 'build',
+    configResolved(config) {
+      outDir = path.resolve(config.root, config.build.outDir);
+    },
+    writeBundle() {
+      fs.copyFileSync(path.join(outDir, 'index.html'), path.join(outDir, '404.html'));
+    },
+  };
+}
+
+/**
  * Finds the chunks no page can load (#928, `loadableChunks`). A lazy import behind a flag that is
  * off never runs, but Rolldown still emits its chunk, and the service worker precached it for every
  * new visitor. It reads the bundle as written, so the names are final, and VitePWA writes the
@@ -454,6 +475,7 @@ export default defineConfig({
     iconSetPlugin(),
     productionLibrariesPlugin(),
     cardDataPlugin(),
+    notFoundPagePlugin(),
     VitePWA({
       registerType: 'prompt',
       includeAssets: [`${ICON_DIR}favicon.png`, `${ICON_DIR}apple-touch-icon.png`],
@@ -496,6 +518,9 @@ export default defineConfig({
           // revisions are the served files' (check:sw-update's first step checks that they are).
           'data/{allCards,previewCards,featuredCards}.json',
         ],
+        // The 404 page is for crawlers and first visits: once installed, the worker answers every
+        // navigation with index.html itself. Workbox's default ignore list, plus that page.
+        globIgnores: ['**/node_modules/**/*', '404.html'],
         // Leave out the chunks no page loads (#928), which every new visitor downloaded. It drops
         // only JavaScript chunk files, so the symbols above stay in.
         manifestTransforms: [

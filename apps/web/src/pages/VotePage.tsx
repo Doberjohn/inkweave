@@ -2,7 +2,7 @@ import {useEffect, useRef, useState, type ReactNode} from 'react';
 import {useNavigate} from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {CompactHeader, CtaButton, EtherealBackground, Seo} from '../shared/components';
+import {CompactHeader, CtaButton, EtherealBackground, PageAbout, Seo} from '../shared/components';
 import {CardDetailSkeleton} from '../features/cards';
 import {useResponsive} from '../shared/hooks';
 import {useCardDataContext} from '../shared/contexts/CardDataContext';
@@ -17,6 +17,7 @@ import {
   COLORS,
   FONTS,
   FONT_SIZES,
+  LAYOUT,
   RADIUS,
   SPACING,
   VISUALLY_HIDDEN,
@@ -211,14 +212,39 @@ function VotePageShell({
           gap: mainGap,
           position: 'relative',
           zIndex: 1,
+          // The vote screen keeps the whole first screen, so the About section starts below it.
+          minHeight: `calc(100vh - ${isMobile ? LAYOUT.compactHeaderHeightMobile : LAYOUT.compactHeaderHeight}px)`,
         }}
         aria-busy={ariaBusy}
         aria-label={ariaLabel}>
         <VoteHeading />
         {children}
       </main>
+      <VoteAbout isMobile={isMobile} />
       {tail}
     </div>
+  );
+}
+
+/** What a vote is and what it changes, below the vote screen: the page's words of its own for search. */
+function VoteAbout({isMobile}: {isMobile: boolean}) {
+  return (
+    <PageAbout
+      heading="About voting"
+      padding={isMobile ? `0 ${SPACING.lg}px 120px` : `0 ${SPACING.xxl}px 60px`}>
+      <p>
+        Each round shows two Core format cards that Inkweave's engine says work together, and asks
+        how well they really do. Score the pair from 1 to 10: 1 to 3 is weak, 4 to 6 moderate, 7 to
+        9 strong and 10 a perfect pairing. Skip a pair you don't know, and undo a vote you placed by
+        mistake. On a keyboard, the number keys score a pair, 0 gives it a 10 and S skips it.
+      </p>
+      <p>
+        The engine finds its pairings in the cards' rules text, which can't show how a pair plays at
+        the table. Votes show where its scores run high or low, and they guide how its rules are
+        tuned, so the scores on card and playstyle pages come closer to how the cards really play.
+        You can vote without an account.
+      </p>
+    </PageAbout>
   );
 }
 
