@@ -4,7 +4,11 @@ export interface PromoEdition {
   name: string;
 }
 
-/** A promo set: the code printed on its cards ("P1" in 25/P1) and its name. */
+/**
+ * A promo set: the code printed on its cards ("P1" in 25/P1) and its name.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it through shared/constants.
+ */
 export interface PromoSet {
   /** The code on its cards; for a set that gathers editions, the letters theirs share (owner, 2026-10-19: "CC"). */
   code: string;
@@ -65,7 +69,11 @@ export const PROMO_SETS: readonly PromoSet[] = [
 const holds = (set: PromoSet, code: string) =>
   set.code === code || (set.editions?.some((edition) => edition.code === code) ?? false);
 
-/** A promo set's place in release order, 0 for Promo Set 1, an edition its set's; -1 for a code no promo set has. */
+/**
+ * A promo set's place in release order, 0 for Promo Set 1, an edition its set's; -1 for a code no promo set has.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it through shared/constants.
+ */
 export const promoSetRank = (code: string): number =>
   PROMO_SETS.findIndex((set) => holds(set, code));
 

@@ -5,6 +5,8 @@
  * Hyperia City's is the reveal promo's 320px copy, named here rather than read from
  * `REVEAL_SET_LOGO_SM`: the reveal runbook points that constant at each new set, which
  * would have given Set 14 the next set's logo.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it through shared/constants.
  */
 export const SET_LOGOS: Partial<Record<string, string>> = {
   '1': '/art/sets/the-first-chapter.webp',

@@ -96,6 +96,8 @@ function drawsHashedArt(card: Pick<LorcanaCard, 'id' | 'imageUrl'>): boolean {
  *
  * Dev/CI: falls back to the legacy string-transform on `card.imageUrl`
  * (`.avif` → `-sm.avif`) so the existing proxy paths keep working.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export function smallImageUrl(
   card: Pick<LorcanaCard, 'id' | 'imageUrl' | 'imageHashSm'>,
@@ -225,6 +227,8 @@ export function loadCardsFromJSON(data: LorcanaJSONData): LorcanaCard[] {
  * The `transformCard` called here is the LOCAL wrapper above, which attaches
  * `imageUrl` and the content-addressed hashes; the engine's deliberately does
  * not, so calling it directly costs every collection card its artwork.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export function transformRawCards(cards: readonly LorcanaJSONCard[]): LorcanaCard[] {
   const out: LorcanaCard[] = [];
@@ -374,6 +378,8 @@ export function searchCardsByName(cards: LorcanaCard[], query: string): LorcanaC
  * The search box's suggestions: what `searchCardsByName` finds, newest set first by
  * `parseSetOrder`, so quest sets come last. inkweave-ui's `useAutocomplete` takes it as its
  * `search`.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export function suggestCardsByName(cards: LorcanaCard[], term: string): LorcanaCard[] {
   return searchCardsByName(cards, term).sort((a, b) => parseSetOrder(b.setCode) - parseSetOrder(a.setCode));

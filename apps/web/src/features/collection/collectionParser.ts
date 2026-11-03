@@ -53,7 +53,11 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {PROMO_RARITY} from '../cards/loader';
 
-/** The two ways a card is printed. `CollectionEntry` is keyed by it. */
+/**
+ * The two ways a card is printed. `CollectionEntry` is keyed by it.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
+ */
 export type Finish = 'normal' | 'foil';
 
 /** Owned copies of one card, split by finish. */

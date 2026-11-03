@@ -25,6 +25,7 @@ export const SET_ABBREVIATIONS: Record<SetCode, string> = {
 } as const;
 
 // Set full names (keyed by setCode)
+/** @public inkweave-admin's src/app-bridge.ts imports it through shared/constants. */
 export const SET_NAMES: Record<SetCode, string> = {
   '1': 'The First Chapter',
   '2': 'Rise of the Floodborn',

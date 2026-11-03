@@ -56,6 +56,8 @@ function cacheEmptyResult(cardId: string): PrecomputedCardData {
  * server's page in its place) reads as none, and that answer is kept for the page. Any other
  * failure (offline, an error status, a body that won't parse) throws and is forgotten, so the
  * next ask fetches again: a passing 5xx never leaves a card reading as none for the visit.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it.
  */
 export async function fetchCardSynergies(cardId: string): Promise<PrecomputedCardData> {
   const cached = synergyFetchCache.get(cardId);

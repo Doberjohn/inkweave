@@ -9,8 +9,11 @@ import type {SetCode} from './appConstants';
  * `satisfies SetCode` ties it to appConstants.ts: forgetting to add the new set to
  * SetCode / SET_NAMES / SET_ABBREVIATIONS is a compile error here, instead of a
  * bare "Set N" label at runtime.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it through shared/constants.
  */
 export const REVEAL_SET_CODE = '14' satisfies SetCode;
+/** @public inkweave-admin's src/app-bridge.ts imports it through shared/constants. */
 export const REVEAL_SET_NUMBER = Number(REVEAL_SET_CODE);
 
 /**
@@ -19,6 +22,8 @@ export const REVEAL_SET_NUMBER = Number(REVEAL_SET_CODE);
  * whose id collides). Cards revealed without a collector number take an id in
  * the reserved `+900..+999` band instead (docs/PREVIEW_CARD_PARSER.md in
  * Doberjohn/inkweave-admin).
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it through shared/constants.
  */
 export const REVEAL_ID_BASE = REVEAL_SET_NUMBER * 1000;
 
@@ -53,7 +58,11 @@ export const PER_INK: Record<Ink, number> = {
   Steel: 34,
 };
 
-/** Total cards in the set: the sum of the per-ink boards. */
+/**
+ * Total cards in the set: the sum of the per-ink boards.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it through shared/constants.
+ */
 export const SET_TOTAL = Object.values(PER_INK).reduce((sum, n) => sum + n, 0);
 
 /**
@@ -74,6 +83,8 @@ export const INK_BASE = (() => {
 /**
  * The collector-number range of an ink's block, inclusive. A dual-ink card sits
  * in the block of its FIRST ink.
+ *
+ * @public inkweave-admin's src/app-bridge.ts imports it through shared/constants.
  */
 export function inkBlock(ink: Ink): {first: number; last: number} {
   return {first: INK_BASE[ink], last: INK_BASE[ink] + PER_INK[ink] - 1};
