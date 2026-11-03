@@ -2,7 +2,7 @@
 
 > **Keep this file updated** whenever E2E tests are added, removed, or edited.
 
-388 tests across 36 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
+392 tests across 36 spec files, all active (no `describe.skip`'d suites). Tests run on 5 browser projects: `chromium`, `firefox`, `webkit` (desktop), `mobile-chrome`, and `mobile-safari`. Each file skips irrelevant viewports via `startsWith('mobile-')` checks.
 
 The Playwright webServer launches with `VITE_IS_REVEAL_SEASON=true` so the reveal-season active code paths are exercised, and with `VITE_SHOW_BETA_NOTICE=true`, as production builds, so every home-page test sees the hero where players do, below the beta notice on screens narrower than 1400 px (`beta-notice.spec.ts`). Flag-off behavior is covered by unit tests (`useRevealPhase.test.ts` and the route gate). The specs that need the reveal season itself (`reveals-page.spec.ts`, the `/reveals` check in `seo.spec.ts`, and the franchise audit and reflow tests in `accessibility.spec.ts`) start the page's clock two days before the reveal set's `releaseDate` (`e2e/helpers/revealSeason.ts`), so they run on any date.
 
@@ -456,7 +456,7 @@ Covers Friends who have it (#1055): the card window's count of the sharing frien
 | should close dropdown on Escape | Escape key dismisses autocomplete dropdown, within the default timeout (a debounce pending at the keypress used to reopen it, #746) |
 | should NOT show autocomplete on browse page search | Typing in browse page search does NOT show autocomplete (browse filters inline) |
 
-## `seo.spec.ts` — 23 tests (both viewports)
+## `seo.spec.ts` — 25 tests (both viewports)
 
 Route-level metadata coverage (#524). Before this, the file asserted only home-page
 properties, so #486's central acceptance criterion — every route self-references its own
@@ -488,6 +488,8 @@ server prerenders (the dev server and `vite preview` both serve the shell), so b
 | in-depth vote page owns a title naming its pair, and exactly one h1 | `/vote/3286/2983`'s tab reads "\<A\> + \<B\> \| Vote \| Inkweave", and its one h1 is the visually hidden "Vote on \<A\> and \<B\>" (#835) |
 | card page links to all six ink hubs at a mobile viewport | The footer's ink nav is what puts every hub one click from all 1,024 card pages (#530) |
 | ink hub emits one crawlable anchor per card, identically on mobile | `CardGrid`, not the windowed `BrowseCardGrid` — windowing would emit a fraction of the anchors to a crawler (#530) |
+| ink hub About text is in the page while closed, and opens with Enter and Space | `/ink/steel`'s About section is a closed `<details>` (`.text-disclosure`, #1108): its heading shows, its paragraphs are in the DOM but hidden, and Enter opens it and Space closes it, so the text a crawler reads is never text a visitor can't open (Google's hidden-text policy) |
+| card page keeps its facts sentence closed under a Card facts line | Elsa's facts sentence sits in the DOM under a closed "Card facts" summary and shows once it's clicked (#1108) |
 | unknown ink slug renders the 404 page, not an empty hub | Junk URLs under `/ink/` declare themselves unindexable instead of returning a thin 200 (#525) |
 | reveals page owns its title and canonical when in season | Starts the page's clock inside the reveal season, so it runs on any date. `/reveals` has no prerendered file, so production answers it with the HOME page's HTML; those tags carry `data-seo`, the sweep strips them, and with no `<Seo>` of its own the page shipped with no title and no canonical at all |
 | every tag `<Seo>` emits carries the data-seo sweep marker | #535 — an unmarked tag escapes `sweepPrerenderedSeoTags()` and silently duplicates on every real visit |
