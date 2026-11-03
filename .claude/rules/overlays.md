@@ -24,9 +24,8 @@ mechanically: `aria-modal` in a file that imports neither `DialogShell` /
   `SHADOWS.sheet`, safe-area inset) + the hook trio in the consumer. It owns
   the motion too (owner, 2026-11-03): every sheet slides at `DURATION.slow`,
   stays visible until it has slid away, and ends its exit on its own slide's
-  `transitionend`, or a fallback timer when no slide runs. `sheetStyle` takes
-  no `transition`; a property the consumer moves (the search sheet's `top`)
-  goes in `alsoTransition`, at the same speed.
+  `transitionend`. `sheetStyle` takes no `transition`; the sheet's `top`,
+  which the search sheet moves, slides at the same speed.
 - **Toast / status** → `role="status"` + `aria-live="polite"`, `Z_INDEX.toast`
   (or `swUpdate`); never `aria-modal`, never a trap.
 - **Tooltip / popover** → `role="tooltip"`, `pointerEvents: none`,
@@ -71,7 +70,7 @@ mechanically: `aria-modal` in a file that imports neither `DialogShell` /
   `search-sheet-backdrop`, `mechanics-sheet-backdrop`). Pointer-down-outside
   listeners silently break them.
 - Scroll lock sets **body** inline `overflow` (card-detail asserts it exactly).
-- Closed dialogs UNMOUNT (`toHaveCount(0)` assertions) — DialogShell's and
-  BottomSheet's fallback timers guarantee this under `prefers-reduced-motion`.
+- Closed dialogs UNMOUNT (`toHaveCount(0)` assertions) — DialogShell's
+  fallback timer guarantees this under `prefers-reduced-motion`.
 - Existing dialog testids and aria-labels are load-bearing; preserve them
   through any migration.

@@ -1,4 +1,3 @@
-import {useEffect} from 'react';
 import {COLORS, DURATION, EASING, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../tokens/theme';
 
 interface BottomSheetProps {
@@ -17,8 +16,6 @@ interface BottomSheetProps {
   onKeyDown: React.KeyboardEventHandler<HTMLDivElement>;
   /** Per-sheet container deltas (top, maxHeight), merged last. The motion is the sheet's own. */
   sheetStyle?: Omit<React.CSSProperties, 'transition'>;
-  /** Other properties the consumer changes on the sheet (the search sheet's `top`), moved at the sheet's speed. */
-  alsoTransition?: readonly string[];
   /** `lightbox` stacks the sheet and its scrim above an open modal, as it does a DialogShell. */
   layer?: keyof typeof LAYERS;
   children: React.ReactNode;
@@ -36,22 +33,21 @@ const LAYERS = {
 
 /** Every sheet slides at one speed: the 2026-07-29 ruling puts a slide on touch at `DURATION.slow`. */
 const MOTION = `${DURATION.slow}ms ${EASING.smooth}`;
+const SLIDE = `transform ${MOTION}, opacity ${MOTION}, top ${MOTION}`;
 
 /**
- * Reduced motion turns the overlay transitions off, and a sheet closed before it ever showed has
- * nothing to slide, so no `transitionend` comes: the exit ends this long after closing instead.
- */
-const EXIT_FALLBACK_MS = 2 * DURATION.slow;
-
-/**
- * `visibility` turns on at once as the sheet opens, since useDialogFocus's focus is refused while
+ * `visibility` turns on at once as a sheet opens, since useDialogFocus's focus is refused while
  * the sheet is still hidden and Chrome keeps an interpolated `visibility` hidden for half its run.
- * It turns off only once the slide is over, so the sheet is seen leaving.
+ * It turns off only once the slide is over, so the sheet is seen leaving. `top` moves with the
+ * sheet, for the search sheet, which raises it while it lists results.
  */
-function sheetTransition(visible: boolean, properties: readonly string[]): string {
-  const visibility = visible ? 'visibility 0s' : `visibility 0s linear ${DURATION.slow}ms`;
-  return [...properties.map((property) => `${property} ${MOTION}`), visibility].join(', ');
-}
+const MOTIONS = {
+  shown: {scrim: `opacity ${MOTION}, visibility 0s`, sheet: `${SLIDE}, visibility 0s`},
+  leaving: {
+    scrim: `opacity ${MOTION}, visibility 0s linear ${DURATION.slow}ms`,
+    sheet: `${SLIDE}, visibility 0s linear ${DURATION.slow}ms`,
+  },
+};
 
 /**
  * Shared bottom-sheet chrome (#510): the scrim backdrop, slide-up sheet
@@ -71,20 +67,15 @@ export function BottomSheet({
   sheetRef,
   onKeyDown,
   sheetStyle,
-  alsoTransition = [],
   layer = 'modal',
   children,
 }: BottomSheetProps) {
   const tiers = LAYERS[layer];
-  useEffect(() => {
-    if (visible) return;
-    const timer = setTimeout(onTransitionEnd, EXIT_FALLBACK_MS);
-    return () => clearTimeout(timer);
-  }, [visible, onTransitionEnd]);
-  // Only the sheet's own slide ends the exit: the scrim's fade, the sheet's other properties and a
-  // child's hover transition (whose transitionend bubbles here) don't.
+  const motion = MOTIONS[visible ? 'shown' : 'leaving'];
+  // The sheet's own transitions all end with its slide, so any of them ends the exit; the scrim's
+  // fade and a child's hover transition (whose transitionend bubbles here) don't.
   const onSlideEnd = (event: React.TransitionEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget && event.propertyName === 'transform') onTransitionEnd();
+    if (event.target === event.currentTarget) onTransitionEnd();
   };
   return (
     <>
@@ -99,7 +90,7 @@ export function BottomSheet({
           // Solid scrim only — no backdrop-filter (WebKit continuous-repaint trap; see #444).
           background: COLORS.scrim,
           zIndex: tiers.scrim,
-          transition: sheetTransition(visible, ['opacity']),
+          transition: motion.scrim,
         }}
       />
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- dialog keyboard handling (Tab trap via useDialogFocus) */}
@@ -129,7 +120,7 @@ export function BottomSheet({
           // order; it only takes focus programmatically so the trap has somewhere to land,
           // and a ring round the whole sheet would mark nothing. Its controls draw their own.
           outline: 'none',
-          transition: sheetTransition(visible, ['transform', 'opacity', ...alsoTransition]),
+          transition: motion.sheet,
           ...sheetStyle,
         }}>
         <div

@@ -546,8 +546,7 @@ function SearchSheet({
       backdropTestId="search-sheet-backdrop"
       sheetRef={sheetRef}
       onKeyDown={onKeyDown}
-      sheetStyle={{top: sheetTop}}
-      alsoTransition={['top']}>
+      sheetStyle={{top: sheetTop}}>
       <SearchSheetInput
         query={query}
         autocomplete={autocomplete}
