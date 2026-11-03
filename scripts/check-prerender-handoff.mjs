@@ -55,7 +55,7 @@
  *      the capture's links loads that link's page, and a scroll keeps the hold, and the app's page
  *      keeps the visitor's place.
  *  11. A path that matches no route is answered 404 with dist/404.html, the shell with no capture,
- *      and the app's not-found page shows.
+ *      and the app's not-found page (its title) shows.
  *  Checks 8 to 10 are left out when HOLD_CAP_MS is 0, which turns the hold off.
  *
  * Usage: `pnpm build:web`, `PRERENDER_SAMPLE=1 node scripts/prerender.mjs`, then
@@ -847,15 +847,19 @@ function withoutCaptureChecks(device, routes) {
   return [...held, ...running];
 }
 
+/** NotFoundPage's title, which only the router's catch-all route renders. */
+const NOT_FOUND_HEADING = 'Lost in the Inkwell';
+
 /** Check 11 on `device`: an unknown path gets the 404 page, a shell with no capture to show. */
 function notFoundCheck(device, path) {
   return {
-    name: `11. ${path} (${device}) answers 404 with the bare shell, and the app's page shows`,
+    name: `11. ${path} (${device}) answers 404 with the bare shell, and the app's not-found page shows`,
     run: async (browser, base) => {
-      const seen = await visit(browser, base, {device, path, app: true});
+      const waitFor = `h2:has-text("${NOT_FOUND_HEADING}")`;
+      const seen = await visit(browser, base, {device, path, app: true, waitFor});
       if (seen.status !== 404) return `answered ${seen.status}, not 404`;
       if (seen.servedRoute !== undefined) return `served a capture marked "${seen.servedRoute}"`;
-      if (!seen.frames.at(-1)?.app) return "the app's page never showed";
+      if (!seen.markup.includes(NOT_FOUND_HEADING)) return "the app's not-found page never showed";
       return appTakesOver(seen);
     },
   };
