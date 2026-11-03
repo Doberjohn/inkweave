@@ -7,7 +7,7 @@ It builds on the friends replay (`../friends/`): its `scaffold.sql` stands in fo
 - `scaffold.sql` adds `public.votes`, which the remap and undo lock and look up, with the columns the remap reads: no check stores a vote, but R11 to R13 run the whole remap.
 - `grants.sql` holds production's grants on `decks` and `collections`, copied from `20261005000002_declare_table_privileges.sql`, which can't load here, so players clear, delete and import as production lets them.
 - `seed.sql` runs before the backups migration and leaves what graduations left before it: the backups of a collection and a deck deleted since, of a collection cleared and imported again, of a collection still there, and a merged vote's backup.
-- `checks.sql` runs the checks R0 to R15. Each makes its own rows and remaps its own card ids under its own label, so no check leans on another's. R11 to R15 cover the binders' covers (#1074): a binder's `cover_id` and My collection's (`collection_shelf`).
+- `checks.sql` runs the checks R0 to R17. Each makes its own rows and remaps its own card ids under its own label, so no check leans on another's. R11 to R17 cover the binders' covers (#1074): a binder's `cover_id` and My collection's (`collection_shelf`).
 - The two races run after it, each from a `setup`, two sessions side by side (`first` and `second`) and a `verify` file. The sessions wait for each other through `pg_stat_activity` and `pg_locks` (`t.wait_until` in `checks.sql`), so no sleep decides their order, and either may start first. Race 1 (`race1-*.sql`): an import whose transaction begins before a remap's and whose write waits for the remap's lock, so its `updated_at` is earlier than the backup's `backed_up_at`, and an undo must still leave it. Race 2 (`race2-*.sql`): two runs under one label, the one that began first waiting for the other's lock, so the later backup has the earlier `backed_up_at`, and an undo must still put the row back to its first copy.
 
 Re-run it whenever a migration changes `internal.card_id_remap_backup`, the remap or undo functions, or the delete paths of `collections`, `decks`, `collection_binders` and `collection_shelf`, and add the change's checks first, so you see them fail before the migration exists.
@@ -66,15 +66,17 @@ done
 | R8 | an undo after a deck edit leaves the edit, and restores the other deck |
 | R9 | an undo of a collection a re-run saved twice under one label puts back its first copy, though the re-run wrote it after the first backup |
 | R10 | an undo leaves a collection imported again between two runs under one label, though the re-run then remapped the import |
-| R11 | a remap moves each binder's and shelf's cover on an old id and no other, backs up the row's key, cover and `updated_at` alone, and holds both tables against writers until it commits |
-| R12 | an undo puts back the cover of a binder and a shelf no one wrote since, holding both tables, and leaves a binder whose cover was picked again, one renamed, one moved and a shelf whose cover was picked again |
+| R11 | a remap moves each binder's and shelf's cover on an old id and no other, backs up the row's key, the cover before and the id it gave (`remapped_to`) alone, and holds both tables against writers until it commits |
+| R12 | an undo puts back every cover no one picked since, holding both tables: a binder untouched, one renamed, one moved and the neighbour the move swapped, and a shelf; it leaves a binder whose cover was picked again, one whose cover was cleared, and a shelf whose cover was picked again |
 | R13 | deleting a binder drops its backup alone, and clearing a collection or deleting an account drops the backups of its binders and shelf, and no other player's |
 | R14 | no client role can call the cover remap, or the remap, undo and trigger functions the cover migration replaced |
 | R15 | an undo leaves a binder whose cover was picked again between two runs under one label, though the re-run then moved the pick |
+| R16 | a map to an id no cover can hold is refused, with the map's own line, before anything moves |
+| R17 | a cover two runs under one label moved in turn (a to b, then b to c) goes back to a |
 | race 1 | an undo leaves an import that began before the remap and landed after it |
 | race 2 | an undo of two runs under one label, the later one with the earlier `backed_up_at`, puts the row back to its first copy |
 
-Without the backups migration, R0 stops the run; without the cover migration, R11 does, and R11 to R15 all fail. To watch R0 to R4 each fail (and R6 on the missing function), run a copy of `checks.sql` without its `\set ON_ERROR_STOP on` line: each check makes its own rows, so the rest still run. Without the undo migration, R7, R8, R10 and race 1 fail; race 2 passes, as it guards the new test.
+Without the backups migration, R0 stops the run; without the cover migration, R11 does, and R11 to R17 all fail. To watch R0 to R4 each fail (and R6 on the missing function), run a copy of `checks.sql` without its `\set ON_ERROR_STOP on` line: each check makes its own rows, so the rest still run. Without the undo migration and the cover migration, which replaces the undo function too, R7, R8, R10 and race 1 fail; race 2 passes, as it guards the new test.
 
 ## Proving a check bites
 
@@ -99,7 +101,12 @@ Plant the mistake in a copy of the backups, undo or cover migration and load the
 | the remap locks only `votes`, `collections` and `decks` | R11 |
 | the undo locks only `votes`, `collections` and `decks` | R12 |
 | a binder's backup is the whole row (`b.*`) | R11 |
-| a binder's backup leaves out `updated_at` | R11, then R15 |
+| a binder's backup leaves out `remapped_to` | R11, then R12 and R17 |
+| undo spares a binder whose `updated_at` moved, as for a collection, not one whose cover did | R12 (a renamed or moved binder) |
+| undo's binder spare compares covers with `<>`, not `is distinct from` | R12 (a cleared cover) |
+| undo takes the first run's `remapped_to` as the last | R17 |
+| undo's written-between test is false for covers | R15 |
+| the remap takes a map to an id no cover can hold | R16 |
 | undo's spare drops its binders clause | R12 |
 | undo's spare drops its shelf clause | R12 |
 | undo puts no binder's cover back | R12 |

@@ -8,19 +8,21 @@
 -- A binder's cover_id and My collection's (collection_shelf.cover_id) each name one card, and
 -- a player can pick a card still on its preview id. remap_card_ids now moves those covers to
 -- the released id with the votes, collection keys and deck cards, so a cover outlives its
--- card's graduation, and undo_card_id_remap puts them back. Each cover it moves gets a backup
--- like any other row, holding the cover alone: the binder's name and rules are the player's
--- words, and the undo never needs them. A binder or shelf that goes takes its backups with it,
--- as a collection or deck does (20261030215155).
+-- card's graduation, and undo_card_id_remap puts them back, except a cover its owner picked
+-- since. Each cover it moves gets a backup holding the binder's id and owner (a shelf's owner),
+-- the cover before and the id the remap gave it, and nothing else: the binder's name and rules
+-- are the player's words, and the undo never needs them. A binder or shelf that goes takes its
+-- backups with it, as a collection or deck does (20261030215155).
 
 alter table internal.card_id_remap_backup
   drop constraint card_id_remap_backup_source_table_check,
   add constraint card_id_remap_backup_source_table_check check (
     source_table in ('votes', 'collections', 'decks', 'collection_binders', 'collection_shelf'));
 
--- Covers: point each binder's and shelf's cover on an old id at its new id. A backup holds the
--- row's key, its cover and its updated_at, which undo reads to tell a row changed since. Part
--- of remap_card_ids, which validates and locks first.
+-- Covers: point each binder's and shelf's cover on an old id at its new id. A backup's old_row
+-- holds the row's key and its cover before, and remapped_to the id the remap gave it, which undo
+-- compares the cover with: a rename or a move writes the row but picks no cover, so updated_at
+-- can't tell. Part of remap_card_ids, which validates and locks first.
 create function internal.remap_cover_card_ids(p_map jsonb, p_label text)
 returns jsonb
 language plpgsql
@@ -31,7 +33,7 @@ declare
   v_shelves int;
 begin
   with target as (
-    select b.id, b.owner_id, b.cover_id, b.updated_at
+    select b.id, b.owner_id, b.cover_id, p_map ->> b.cover_id as remapped_to
     from public.collection_binders b
     where p_map ? b.cover_id
   ),
@@ -40,13 +42,13 @@ begin
     select p_label, 'collection_binders', t.id::text, 'updated', to_jsonb(t) from target t
   )
   update public.collection_binders b
-     set cover_id = p_map ->> t.cover_id
+     set cover_id = t.remapped_to
     from target t
    where b.id = t.id;
   get diagnostics v_binders = row_count;
 
   with target as (
-    select s.owner_id, s.cover_id, s.updated_at
+    select s.owner_id, s.cover_id, p_map ->> s.cover_id as remapped_to
     from public.collection_shelf s
     where p_map ? s.cover_id
   ),
@@ -55,7 +57,7 @@ begin
     select p_label, 'collection_shelf', t.owner_id::text, 'updated', to_jsonb(t) from target t
   )
   update public.collection_shelf s
-     set cover_id = p_map ->> t.cover_id
+     set cover_id = t.remapped_to
     from target t
    where s.owner_id = t.owner_id;
   get diagnostics v_shelves = row_count;
@@ -75,6 +77,8 @@ set search_path to ''
 as $function$
 declare
   v_result jsonb;
+  v_old    text;
+  v_new    text;
 begin
   if p_label is null or btrim(p_label) = '' then
     raise exception 'remap_card_ids needs a label for its backup rows';
@@ -90,6 +94,16 @@ begin
   -- result depend on the order rows are visited in.
   if exists (select 1 from jsonb_each_text(p_map) m where p_map ? m.value) then
     raise exception 'remap_card_ids found an id that is both old and new';
+  end if;
+  -- A cover holds only an id of this shape (collection_binders_cover, collection_shelf_cover),
+  -- so a map to any other would stop the whole remap at a cover row, far from the map's line.
+  select m.key, m.value into v_old, v_new
+    from jsonb_each_text(p_map) m
+   where m.value !~ '^[A-Za-z0-9_-]{1,40}$'
+   limit 1;
+  if found then
+    raise exception 'remap_card_ids maps % to "%", which no card id looks like: a cover takes letters, digits, _ and -, at most 40',
+      v_old, v_new;
   end if;
 
   -- Writers wait until the remap commits, so nothing lands between the read and the write.
@@ -112,9 +126,10 @@ $function$;
 -- Put back every row a remap labelled p_label changed, as it was before, and drop its
 -- backup. A row deleted since the remap stays deleted: undo never brings back a vote,
 -- collection, deck, binder or shelf someone removed, only the votes the remap itself merged
--- away. A collection, deck, binder or shelf changed since the remap keeps its change, a binder
--- moved or renamed included. Collections and decks get their entries and cards back, binders
--- and shelves their covers, and their updated_at shows the undo, as it showed the remap.
+-- away. A collection or deck changed since the remap keeps its change, and so does a binder or
+-- shelf whose cover its owner picked since; a binder renamed or moved since gets its cover back.
+-- Collections and decks get their entries and cards back, binders and shelves their covers, and
+-- their updated_at shows the undo, as it showed the remap.
 -- Returns the rows restored. It stops, changing nothing, if no backup carries p_label: a
 -- mistyped label, or one that moved no vote and whose other rows have all been deleted since.
 -- It stops too if a vote cast since the remap sits where a restored one goes back to: a stale
@@ -134,8 +149,12 @@ begin
 
   -- Each row's first copy: a re-run under the same label can save a row twice.
   --
-  -- A remap stamps each row other than a vote with its transaction's now(), which is also its
-  -- backup's backed_up_at. So a row no one wrote since still carries its last backup's
+  -- A cover was picked since a run when it differs from the id that run gave it (remapped_to):
+  -- between two runs, the later backup's cover against the earlier's remapped_to, and after the
+  -- last run, the row's cover against its remapped_to (last_cover).
+  --
+  -- A remap stamps each collection or deck it writes with its transaction's now(), which is also
+  -- its backup's backed_up_at. So a row no one wrote since still carries its last backup's
   -- backed_up_at, and a re-run's copy carries the backed_up_at of the copy before it. Any
   -- other write stamps its own transaction's now(), which differs even when that transaction
   -- began first and then waited for the remap's lock. Last and before go by id, not by time:
@@ -146,14 +165,18 @@ begin
   select distinct on (source_table, row_id) source_table, row_id, old_row,
          bool_or(action = 'deleted') over w as remap_deleted,
          first_value(backed_up_at) over (w order by id desc) as last_backup,
+         first_value(old_row ->> 'remapped_to') over (w order by id desc) as last_cover,
          coalesce(bool_or(written_between) over w, false) as written_between
   from (select b.*,
-               b.source_table <> 'votes'
-                 and (b.old_row ->> 'updated_at')::timestamptz
-                     <> lag(b.backed_up_at) over (partition by b.source_table, b.row_id
-                                                  order by b.id) as written_between
+               case
+                 when b.source_table in ('collection_binders', 'collection_shelf')
+                   then b.old_row ->> 'cover_id' <> lag(b.old_row ->> 'remapped_to') over r
+                 else b.source_table <> 'votes'
+                      and (b.old_row ->> 'updated_at')::timestamptz <> lag(b.backed_up_at) over r
+               end as written_between
         from internal.card_id_remap_backup b
-        where b.label = p_label) b
+        where b.label = p_label
+        window r as (partition by b.source_table, b.row_id order by b.id)) b
   window w as (partition by source_table, row_id)
   order by source_table, row_id, id;
 
@@ -175,7 +198,8 @@ begin
                                                    where s.owner_id = u.row_id::uuid)
             end;
 
-  -- A row its owner wrote since this label's first remap keeps that write.
+  -- A collection or deck its owner wrote since this label's first remap keeps that write, and
+  -- so does a cover its owner picked since, a null included.
   delete from pg_temp.remap_undo u
   where u.written_between
      or (u.source_table = 'collections'
@@ -186,10 +210,10 @@ begin
                      where d.id = u.row_id::uuid and d.updated_at <> u.last_backup))
      or (u.source_table = 'collection_binders'
          and exists (select 1 from public.collection_binders b
-                     where b.id = u.row_id::uuid and b.updated_at <> u.last_backup))
+                     where b.id = u.row_id::uuid and b.cover_id is distinct from u.last_cover))
      or (u.source_table = 'collection_shelf'
          and exists (select 1 from public.collection_shelf s
-                     where s.owner_id = u.row_id::uuid and s.updated_at <> u.last_backup));
+                     where s.owner_id = u.row_id::uuid and s.cover_id is distinct from u.last_cover));
   select count(*) into v_count from pg_temp.remap_undo;
 
   -- A changed vote goes back by replacing its current version; a merged-away one returns.
