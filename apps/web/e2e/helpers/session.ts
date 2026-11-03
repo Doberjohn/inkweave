@@ -8,8 +8,8 @@ const base64url = (value: object) => Buffer.from(JSON.stringify(value)).toString
  * past its refresh margin), with the user the app reads `user` from. The token is shaped like a
  * JWT; nothing in the browser verifies its signature.
  *
- * SIGNED IN WITHOUT SIGNING IN: an OAuth round-trip is out of E2E's reach, but a session
- * the Supabase SDK RESTORES needs none. Stored under the app's auth key before the first
+ * SIGNED IN WITHOUT SIGNING IN: a session the Supabase SDK RESTORES needs no OAuth round-trip
+ * (`account.spec.ts` plays one through once). Stored under the app's auth key before the first
  * navigation, `getSession()` hands it back without a network check.
  */
 export function storedSession(userId: string) {

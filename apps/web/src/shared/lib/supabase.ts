@@ -58,21 +58,28 @@ export function loadSupabase(): Promise<InkweaveSupabase | null> {
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !key) return Promise.resolve(null);
 
+  // Clearing the cache on a failure lets a later call try again instead of failing forever.
+  loading ??= createClient(url, key).catch((error: unknown) => {
+    loading = null;
+    throw error;
+  });
+  return loading;
+}
+
+async function createClient(url: string, key: string): Promise<InkweaveSupabase> {
   // A local module rather than the SDK's own packages, so the chunk is named after it and the
   // size budget can find it.
-  loading ??= import('./supabaseClient')
+  const client: InkweaveSupabase | undefined = await import('./supabaseClient')
     // Read the module only as `sdk.<name>` inside this callback, and never pass it on: Rolldown
     // drops the exports a dynamic import never names, but once the namespace escapes it ships
     // the whole module (this is how all of Sentry once landed in a chunk, #640).
-    .then((sdk): InkweaveSupabase => sdk.createSupabaseClient(url, key, AUTH_OPTIONS))
-    // A failed import rejects, except in production builds, where main.tsx cancels Vite's
-    // preload error and the import resolves empty, so `createSupabaseClient` above throws. Both
-    // land here; clearing the cache lets a later call try again instead of failing forever.
-    .catch((error: unknown) => {
-      loading = null;
-      throw error;
-    });
-  return loading;
+    .then((sdk) => sdk.createSupabaseClient(url, key, AUTH_OPTIONS));
+  // A failed import rejects, except in production builds: main.tsx cancels Vite's preload error,
+  // and Vite then resolves the import empty, together with the callback above, which it wraps
+  // with the import. Read as "not configured", that would send sign-in's "unavailable" message
+  // and keep the empty answer for the page.
+  if (!client) throw new Error('The Supabase SDK did not load');
+  return client;
 }
 
 /** @internal Reset singleton for testing. */

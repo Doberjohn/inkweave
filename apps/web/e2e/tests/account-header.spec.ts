@@ -1,6 +1,6 @@
 import type {Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
-import {E2E_FRIEND_CODE} from '../fixtures/supabaseStub';
+import {E2E_FRIEND_CODE, onProject} from '../fixtures/supabaseStub';
 import {serveFriends} from '../helpers/friends';
 import {signInAs} from '../helpers/session';
 
@@ -13,6 +13,14 @@ import {signInAs} from '../helpers/session';
  * the assertion below would pass locally off a developer's `.env.local` and fail in
  * CI. Pinning it makes the state identical everywhere.
  */
+/** Opens the sign-in dialog from the header on the page as it stands, and returns it. */
+async function openSignInDialog(page: Page) {
+  await page.getByTestId('compact-header').getByRole('button', {name: 'Sign in', exact: true}).click();
+  const dialog = page.getByRole('dialog', {name: 'Sign in to Inkweave'});
+  await expect(dialog).toBeVisible();
+  return dialog;
+}
+
 test.describe('Account header control', () => {
   test('the header carries a sign-in control on every page', async ({page}, testInfo) => {
     // Desktop-only by design: CompactHeader returns null on mobile, where the chrome
@@ -67,11 +75,58 @@ test.describe('Account header control', () => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
 
     await page.goto('/browse');
-    await page.getByTestId('compact-header').getByRole('button', {name: 'Sign in', exact: true}).click();
+    const dialog = await openSignInDialog(page);
 
-    // Stops at the provider choice: actually signing in needs a real round-trip,
-    // which no placeholder project can serve.
-    await expect(page.getByRole('dialog')).toBeVisible();
+    // Stops at the provider choice: account.spec.ts fakes the round-trip itself.
+    await expect(dialog.getByRole('button', {name: 'Continue with Discord'})).toBeVisible();
+  });
+
+  test("the sign-in dialog's Close button closes it", async ({page}, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    await page.goto('/browse');
+    const dialog = await openSignInDialog(page);
+
+    // The shell's ×: the dialog has no Cancel.
+    await dialog.getByRole('button', {name: 'Close'}).click();
+    await expect(dialog).toBeHidden();
+  });
+
+  test('a sign-in whose SDK cannot load says it could not start', async ({page}, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    await page.route((url) => isSdkRequest(url.href), (route) => route.abort());
+    await page.goto('/browse');
+    let dialog = await openSignInDialog(page);
+    if (process.env.E2E_SERVER === 'preview') {
+      // A production build takes a chunk that won't load for a stale deploy and reloads onto
+      // the newest, once in 30 s (`staleChunkReload.ts`). The reloaded page has spent that
+      // reload, so its own press reports.
+      const reloaded = page.waitForEvent('load');
+      await dialog.getByRole('button', {name: 'Continue with Google'}).click();
+      await reloaded;
+      dialog = await openSignInDialog(page);
+    }
+
+    await dialog.getByRole('button', {name: 'Continue with Google'}).click();
+    await expect(dialog.getByRole('alert')).toHaveText('Sign-in could not start. Check your connection and try again.');
+    // Both providers come back, so the next press tries again.
+    await expect(dialog.getByRole('button', {name: 'Continue with Google'})).toBeEnabled();
+    await expect(dialog.getByRole('button', {name: 'Continue with Discord'})).toBeEnabled();
+  });
+
+  test('Continue with Discord leaves for the provider, to come back to the auth callback', async ({
+    page,
+  }, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    await page.goto('/browse');
+    // Read before the press: the page is on the provider's address once it leaves.
+    const {origin} = new URL(page.url());
+    const dialog = await openSignInDialog(page);
+    const authorize = page.waitForRequest((request) => onProject('/auth/v1/authorize')(new URL(request.url())));
+
+    await dialog.getByRole('button', {name: 'Continue with Discord'}).click();
+    const params = new URL((await authorize).url()).searchParams;
+    expect(params.get('provider')).toBe('discord');
+    expect(params.get('redirect_to')).toBe(`${origin}/auth/callback`);
   });
 });
 

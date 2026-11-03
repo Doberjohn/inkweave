@@ -196,6 +196,8 @@ function SynergyCardList({
     <ul
       ref={listRef}
       className="synergy-card-grid"
+      // The card window leaves arrow keys pressed in here to the grid (CardOverviewModal).
+      data-owns-arrow-keys
       aria-label="Synergy cards"
       onKeyDown={handleKeyDown}
       style={

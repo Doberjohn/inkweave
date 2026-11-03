@@ -217,6 +217,42 @@ test.describe('Card Detail: Show More and sibling navigation (desktop)', () => {
     await page.getByRole('button', {name: 'Next card'}).click();
     await expect(modal.locator('h1')).not.toHaveText(firstName ?? '');
   });
+
+  test('the arrow keys page between cards, but in a synergy grid they move between its tiles', async ({
+    appPage,
+    page,
+  }, testInfo) => {
+    if (testInfo.project.name.startsWith('mobile-')) test.skip();
+    // A playstyle's cards all have synergies, and their window pages through the playstyle's cards.
+    await page.goto('/playstyles/lore-denial');
+    await page.getByTestId('card-tile').first().click();
+    const modal = appPage.cardOverviewModal;
+    const title = modal.locator('h1');
+    // The first grid with a second tile to move to.
+    const grid = modal
+      .getByRole('list', {name: 'Synergy cards'})
+      .filter({has: page.locator('[data-roving-item]').nth(1)})
+      .first();
+    await expect(grid, 'Fixture broken: no synergy grid with two tiles in the first card').toBeVisible({
+      timeout: 10000,
+    });
+    const firstName = (await title.textContent()) ?? '';
+
+    // The window takes focus once it has opened; from then on the keys reach it.
+    await expect.poll(() => modal.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+    await page.keyboard.press('ArrowRight');
+    await expect(title).not.toHaveText(firstName);
+    await page.keyboard.press('ArrowLeft');
+    await expect(title).toHaveText(firstName);
+
+    const tiles = grid.locator('[data-roving-item]');
+    await tiles.first().focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(tiles.nth(1)).toBeFocused();
+    await page.keyboard.press('ArrowLeft');
+    await expect(tiles.first()).toBeFocused();
+    await expect(title).toHaveText(firstName);
+  });
 });
 
 test.describe('Card window: sibling steps on every screen', () => {
