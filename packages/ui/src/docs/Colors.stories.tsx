@@ -120,9 +120,8 @@ const PALETTE_GROUPS = [
       ],
     },
     {
-      title: "surfaceHover's jobs (one colour today, a name per job so each can move alone)",
+      title: "surfaceHover's other jobs (its colour today, a name per job so each can move alone)",
       colors: [
-        {name: 'surfaceHover (hover, highlight)', value: COLORS.surfaceHover},
         {name: 'neutralFill', value: COLORS.neutralFill},
         {name: 'subtleBorder', value: COLORS.subtleBorder},
         {name: 'skeletonHighlight', value: COLORS.skeletonHighlight},
