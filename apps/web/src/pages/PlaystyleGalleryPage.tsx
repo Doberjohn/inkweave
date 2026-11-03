@@ -4,7 +4,13 @@ import type {LorcanaCard, Playstyle} from 'inkweave-synergy-engine';
 import {getAllPlaystyles} from '../features/synergies/engineCatalog';
 import {useAllPlaystyleCards, usePreloadPlaystyleFiles} from '../features/synergies/hooks';
 import {CardGridSkeleton} from '../features/cards';
-import {CompactHeader, ErrorBoundary, EtherealBackground, PageAbout, Seo} from '../shared/components';
+import {
+  CompactHeader,
+  ErrorBoundary,
+  EtherealBackground,
+  PageAbout,
+  Seo,
+} from '../shared/components';
 import {PlaystyleFanTile, PlaystyleSection} from '../features/playstyles';
 import {
   COLORS,
@@ -181,10 +187,10 @@ function PlaystylesAbout({padding}: {padding: string}) {
         Tribes gather the characters who grow stronger beside others of their kind.
       </p>
       <p>
-        Inkweave reads every card's rules text and classifications to find each playstyle's cards across all six inks
-        of the Core format. Open a playstyle to see its cards, a guide to how the deck wins and how
-        to build it, and its key cards. Each card links to its own page, where its pairings are
-        scored from 1 to 10 and players vote on how well they really play.
+        Inkweave reads every card's rules text and classifications to find each playstyle's cards
+        across all six inks of the Core format. Open a playstyle to see its cards, a guide to how
+        the deck wins and how to build it, and its key cards. Each card links to its own page, where
+        its pairings are scored from 1 to 10 and players vote on how well they really play.
       </p>
     </PageAbout>
   );

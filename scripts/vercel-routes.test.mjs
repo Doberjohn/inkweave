@@ -66,4 +66,9 @@ describe('sourceToRegExp', () => {
     expect(sourceToRegExp('/assets/:path*').test('/assets/a/b.js')).toBe(true);
     expect(sourceToRegExp('/release-notes').test('/release-notesx')).toBe(false);
   });
+
+  it('matches a source written with a trailing slash without one too', () => {
+    expect(sourceToRegExp('/about/').test('/about')).toBe(true);
+    expect(sourceToRegExp('/about/').test('/about/')).toBe(true);
+  });
 });

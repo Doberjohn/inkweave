@@ -36,6 +36,7 @@ export const Song: Story = {
       cost: 8,
       type: 'Action',
       isSong: true,
+      inkwell: false,
       setCode: '9',
       setNumber: 26,
     }),

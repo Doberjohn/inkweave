@@ -22,6 +22,16 @@ const CARD_FILES = ['allCards.json', 'previewCards.json'].map((file) =>
 );
 const OUTPUT_FILE = path.join(ROOT, 'middleware-data/card-slugs.json');
 
+/**
+ * The { id: slug } map for `cards`, allCards.json's first. The first card with an id wins, as in
+ * the app's card list, which drops a preview card whose id allCards.json already holds.
+ */
+export function buildSlugMap(cards, cardSlug) {
+  const map = {};
+  for (const c of cards) map[c.id] ??= cardSlug(c);
+  return map;
+}
+
 async function main() {
   const enginePath = path.join(ROOT, 'packages', 'synergy-engine', 'dist', 'index.js');
   const {cardSlug} = await import(new URL(`file:///${enginePath.replace(/\\/g, '/')}`).href);
@@ -30,15 +40,17 @@ async function main() {
     (file) => JSON.parse(fs.readFileSync(file, 'utf8')).cards,
   );
 
-  const map = {};
-  for (const c of cards) map[c.id] = cardSlug(c);
+  const map = buildSlugMap(cards, cardSlug);
 
   fs.mkdirSync(path.dirname(OUTPUT_FILE), {recursive: true});
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(map) + '\n', 'utf8');
   console.log(`card-slugs.json: ${cards.length} id->slug entries written to middleware-data/card-slugs.json`);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Run only when invoked directly (never when imported).
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

@@ -29,7 +29,7 @@ export function sourceToRegExp(source) {
       i += 1;
     }
   }
-  return new RegExp(`^${pattern}/?$`);
+  return new RegExp(`^${pattern.replace(/\/$/, '')}/?$`);
 }
 
 /** The sources of `config`'s rewrites to /index.html, the app's shell, as RegExps. */

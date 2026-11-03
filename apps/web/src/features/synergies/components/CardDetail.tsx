@@ -9,6 +9,7 @@ import {
   SPACING,
   blackRgba,
   FONT_WEIGHT,
+  LINE_HEIGHT,
 } from '../../../shared/constants';
 import {
   CardImage,
@@ -210,6 +211,9 @@ const CHIP_HEIGHT = FONT_SIZES.base * 1.5 + SPACING.xs * 2;
 /** An ink chip with its icon and a "Cost N" chip, as most cards' row starts. */
 const CHIP_WIDTHS = [104, 64];
 const TEXT_LINES = 4;
+/** The facts sentence's lines at the page's phone width (CardFacts, under the card's text). */
+const FACTS_LINES = 3;
+const FACTS_LINE_HEIGHT = FONT_SIZES.sm * LINE_HEIGHT.relaxed;
 
 /** One placeholder exactly its box: no line box around it (`inline`, then drawn as a block). */
 function Block({width, height, radius = RADIUS.sm}: {width?: number | string; height: number; radius?: number}) {
@@ -275,6 +279,13 @@ export function CardDetailLoading({nameHint = ''}: {nameHint?: string}) {
       <div style={{...TEXT_BOX_STYLE, display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
         {Array.from({length: TEXT_LINES}, (_, i) => (
           <Block key={i} width={i === TEXT_LINES - 1 ? '60%' : '100%'} height={12} />
+        ))}
+      </div>
+      <div data-testid="card-facts-loading">
+        {Array.from({length: FACTS_LINES}, (_, i) => (
+          <div key={i} style={{height: FACTS_LINE_HEIGHT, display: 'flex', alignItems: 'center'}}>
+            <Block width={i === FACTS_LINES - 1 ? '40%' : '100%'} height={FONT_SIZES.sm} />
+          </div>
         ))}
       </div>
     </div>
