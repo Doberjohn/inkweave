@@ -152,6 +152,7 @@ jobs:
       VITE_LOCAL_IMAGES: 'true'
       VITE_IS_REVEAL_SEASON: 'true'
       VITE_SHOW_BETA_NOTICE: 'true'
+      VITE_SHOW_BINDERS: 'true'
 
     steps:
       # The PR path keeps the default persisted token: size-limit-action runs

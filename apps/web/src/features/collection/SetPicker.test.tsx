@@ -1,5 +1,8 @@
 import {afterEach, describe, it, expect, vi} from 'vitest';
 import {cleanup, render, screen, fireEvent, within} from '@testing-library/react';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
+import type {BinderChoices} from './binders/binderChoices';
+import type {Binder} from './binders/binderRules';
 import {SetPicker} from './SetPicker';
 
 const PROGRESS = new Map([
@@ -117,6 +120,112 @@ describe('SetPicker', () => {
       vi.stubGlobal('innerWidth', 393);
       renderPicker({size: 'row', figures});
       expect(button().querySelector('img')).not.toBeNull();
+    });
+  });
+
+  describe('with your binders (#1074)', () => {
+    const AMBER: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
+    const COVER = {id: 'amber-rare', imageUrl: 'https://art.test/amber-rare.avif'} as LorcanaCard;
+    const OPEN = {binder: AMBER, cover: COVER, narrowed: true};
+    const choices = (over: Partial<BinderChoices> = {}): BinderChoices => ({
+      open: null,
+      atOwnScope: true,
+      shelf: {status: 'ready', binders: [AMBER], retry: vi.fn()},
+      pool: null,
+      entries: {},
+      onOpen: vi.fn(),
+      ...over,
+    });
+    const binderButton = () => screen.getByRole('button', {name: /^Binder: /});
+    const tabs = () => within(screen.getByRole('group', {name: 'Sets'})).getAllByRole('button');
+
+    it('puts Binders before Standard and Promo, which then hold their words alone, and before Standard alone with no promo set', () => {
+      renderPicker({sets: ['14', '13', 'P1'], binders: choices()});
+      fireEvent.click(button());
+      expect(tabs().map((segment) => segment.textContent)).toEqual(['Binders', 'Standard', 'Promo']);
+      expect(screen.getByRole('group', {name: 'Sets'}).querySelector('img, svg')).toBeNull();
+      cleanup();
+      renderPicker({binders: choices()});
+      fireEvent.click(button());
+      expect(tabs().map((segment) => segment.textContent)).toEqual(['Binders', 'Standard']);
+    });
+
+    it('lists your binders under Binders, and a press opens one and closes onto the button', async () => {
+      const binders = choices();
+      renderPicker({binders});
+      fireEvent.click(button());
+      fireEvent.click(tab('Binders'));
+      fireEvent.click(await screen.findByRole('option', {name: /^Amber/}));
+      expect(binders.onOpen).toHaveBeenCalledWith(AMBER);
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(button()).toHaveFocus();
+    });
+
+    it("opens on Binders at a binder's own Sets, its row focused, and on the set's tab for a set picked inside it", async () => {
+      renderPicker({setCode: 'all', binders: choices({open: OPEN})});
+      fireEvent.click(binderButton());
+      expect(tab('Binders')).toHaveAttribute('aria-pressed', 'true');
+      // Once its list's code is in, as the picker's mount fetches it, opening focuses the open binder.
+      await screen.findByRole('option', {name: /^Amber/});
+      fireEvent.keyDown(screen.getByRole('option', {name: /^Amber/}), {key: 'Escape'});
+      fireEvent.click(binderButton());
+      expect(screen.getByRole('option', {name: /^Amber/})).toHaveFocus();
+      cleanup();
+      renderPicker({setCode: '12', binders: choices({open: OPEN, atOwnScope: false})});
+      fireEvent.click(binderButton());
+      expect(tab('Standard')).toHaveAttribute('aria-pressed', 'true');
+      expect(option('12')).toHaveFocus();
+    });
+
+    it('goes round the three tabs with the arrows, and up from the first binder reaches them', async () => {
+      renderPicker({sets: ['14', '13', 'P1'], setCode: 'all', binders: choices({open: OPEN})});
+      fireEvent.click(binderButton());
+      const amber = await screen.findByRole('option', {name: /^Amber/});
+      fireEvent.keyDown(amber, {key: 'ArrowUp'});
+      fireEvent.keyDown(screen.getByRole('option', {name: /^My collection/}), {key: 'ArrowUp'});
+      expect(tab('Binders')).toHaveFocus();
+      fireEvent.keyDown(tab('Binders'), {key: 'ArrowLeft'});
+      expect(tab('Promo')).toHaveFocus();
+      fireEvent.keyDown(tab('Promo'), {key: 'ArrowRight'});
+      expect(tab('Binders')).toHaveFocus();
+      expect(tab('Binders')).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it("names a binder of your own on the toolbar's button with its medal, and the set picked inside it", async () => {
+      renderPicker({size: 'toolbar', setCode: 'all', binders: choices({open: OPEN})});
+      expect(binderButton()).toHaveAccessibleName('Binder: Amber');
+      expect(binderButton()).toHaveAttribute('title', 'Amber');
+      const medal = await within(binderButton()).findByTestId('binder-medal');
+      expect(medal.querySelector('img')).toHaveAttribute('src', 'https://art.test/amber-rare-sm.avif');
+      cleanup();
+      renderPicker({size: 'toolbar', setCode: '12', binders: choices({open: OPEN, atOwnScope: false})});
+      expect(binderButton()).toHaveAccessibleName('Binder: Amber · Set 12');
+      expect(binderButton()).toHaveTextContent(/^Amber · Set 12Binder: Amber · Set 12$/);
+    });
+
+    // The binder's name is the player's own words: named by a hidden line, never an aria-label,
+    // and kept from PostHog's autocapture.
+    it("keeps a binder's name out of the button's attributes and autocapture", () => {
+      renderPicker({binders: choices({open: OPEN})});
+      expect(binderButton()).not.toHaveAttribute('aria-label');
+      expect(binderButton()).toHaveClass('ph-no-capture');
+      cleanup();
+      renderPicker({binders: choices()});
+      expect(button()).not.toHaveClass('ph-no-capture');
+    });
+
+    it('says "Your binder" over its name in the panel, or the binder and set over the set\'s name inside it', () => {
+      renderPicker({setCode: 'all', binders: choices({open: OPEN})});
+      expect(binderButton()).toHaveTextContent(/^Your binderAmber/);
+      cleanup();
+      renderPicker({setCode: '12', binders: choices({open: OPEN, atOwnScope: false})});
+      expect(binderButton()).toHaveAccessibleName('Binder: Amber · Set 12, The Wilds Unknown');
+      expect(binderButton()).toHaveTextContent(/^Amber · Set 12The Wilds Unknown/);
+    });
+
+    it("puts the binder's name over its figures in the phone's row, and says them after it", () => {
+      renderPicker({size: 'row', setCode: 'all', figures: {shown: '80% · 10%', words: '80% complete, 10% master'}, binders: choices({open: OPEN})});
+      expect(binderButton()).toHaveAccessibleName('Binder: Amber, 80% · 10%: 80% complete, 10% master');
     });
   });
 

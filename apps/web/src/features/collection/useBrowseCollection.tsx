@@ -22,6 +22,7 @@ import {
   BINDER_PARAM,
   BINDER_SORT_OPTIONS,
   COMPARE_SHOWS,
+  CUSTOM_PARAM,
   FRIEND_PARAM,
   OWNED_PARAM,
   WHOLE_COLLECTION,
@@ -31,6 +32,7 @@ import {
   isPromoScope,
   ownsAxis,
   isPromoSet,
+  openBinderParams,
   parseBinderShow,
   rarityPicksPromos,
   scopeSets,
@@ -58,6 +60,9 @@ import {
   RowSetPickerFallback,
   ToolbarSetPickerFallback,
 } from './BinderChunkFallback';
+import {SHOW_BINDERS} from './binders/flag';
+import type {BinderChoices, CustomBinder, OwnBinders} from './binders/binderChoices';
+import {useOwnBinders} from './useOwnBinders';
 
 /*
  * The collection UI is SPLIT FROM BROWSE (#553 Phase C). The binder and the
@@ -92,6 +97,13 @@ const CollectionFriends = lazyWithRetry(() => import('./CollectionFriends'), 'Co
 const PocketFriends = lazyWithRetry(() => import('./CollectionFriends'), 'PocketFriends');
 const FoilPointer = lazyWithRetry(() => import('./CollectionFriends'), 'FoilPointer');
 
+/*
+ * BINDERS OF YOUR OWN (#1074) LOAD ONLY WITH THEIR FLAG ON (`binders/flag.ts`): the import folds
+ * away on SHOW_BINDERS at build time, and `binderCodeGuard` fails a build in which a page could
+ * still load binder code with the flag off. `useOwnBinders` loads the rest the same way.
+ */
+const UnknownBinder = SHOW_BINDERS ? lazyWithRetry(() => import('./binders/UnknownBinder'), 'UnknownBinder') : null;
+
 /**
  * Starts the binder's chunk on intent (#913): one request for the binder, its docked set panel
  * and the toolbar's set picker, or a phone row's, which share the module. A failed warm-up is
@@ -125,8 +137,10 @@ const DEFAULT_SET = String(Math.max(...Object.keys(SET_NAMES).map(Number)));
  */
 function resolveSetCode(requested: string | null, sets: string[] | null): string {
   if (requested === null || requested === WHOLE_COLLECTION) return WHOLE_COLLECTION;
-  if (requested === ALL_PROMO_SETS) return sets === null || sets.some(isPromoSet) ? ALL_PROMO_SETS : WHOLE_COLLECTION;
-  if (sets === null || sets.includes(requested)) return requested;
+  // A binder of your own whose rules hold no card has no set to fall back to: it stays where it was asked.
+  const unknown = sets === null || sets.length === 0;
+  if (requested === ALL_PROMO_SETS) return unknown || sets.some(isPromoSet) ? ALL_PROMO_SETS : WHOLE_COLLECTION;
+  if (unknown || sets.includes(requested)) return requested;
   return sets[0] ?? DEFAULT_SET;
 }
 
@@ -235,6 +249,8 @@ export function useBinderParams(reader: BinderReader) {
   return {
     requested,
     friend,
+    // Which binder of your own: never in a friend's binder, where it is a stray.
+    custom: friend === null ? searchParams.get(CUSTOM_PARAM) : null,
     mode,
     // You need and They need ask of the reader's own collection too, so only a reader with one
     // (or whose account has yet to answer) gets them.
@@ -245,6 +261,7 @@ export function useBinderParams(reader: BinderReader) {
         next.delete(SET_PARAM);
       }),
     writeBinder: (set: string) => write((next) => next.set(BINDER_PARAM, set)),
+    openBinder: (binder: {id: string; scope: string} | null) => write((next) => openBinderParams(next, binder)),
     // Out of the mode, the binder's view is a stray: gone in the same write.
     leaveBinder: () =>
       write((next) => {
@@ -375,6 +392,11 @@ export interface BrowseCollectionSlots {
    */
   renderSetPicker: (listing: BrowseListing) => ReactNode | undefined;
   /**
+   * That picker names a binder of your own (#1074), so the toolbar gives its button the room its
+   * name needs (owner, 2026-11-03).
+   */
+  pickerNamesBinder: boolean;
+  /**
    * A phone's one row over the binder (owner, 2026-10-25, #969) while collection mode is on,
    * else undefined: Filters with its `count`, the set button and Collection. The page
    * draws it in place of its title and toolbar.
@@ -483,6 +505,84 @@ function emptyImportOf(
 /** A friend who doesn't share, or whose binder didn't load, leaves the binder's place to a line saying so. */
 const hidesPanel = (friend: FriendBinder | null) => friend?.status === 'not-sharing' || friend?.status === 'failed';
 
+/** What the page knows when it asks for your binders. */
+interface BinderAskedBy {
+  uid: string | null;
+  hasCollection: boolean;
+  syncing: boolean;
+  collectionMode: boolean;
+  friendHandle: string | null;
+  customId: string | null;
+}
+
+/** What the shelf is asked: your binders once collection mode opens your own, and the one `?custom=` names. */
+function binderAsk({uid, hasCollection, syncing, collectionMode, friendHandle, customId}: BinderAskedBy) {
+  return {
+    uid,
+    hasCollection,
+    syncing,
+    wanted: collectionMode && friendHandle === null,
+    requested: collectionMode ? customId : null,
+  };
+}
+
+/** Whether the picker names a binder of your own, whose name needs more room than a set's number. */
+const namesOwnBinder = (binders: BinderChoices | undefined) => binders?.open != null;
+
+/** A binder of your own that isn't on your shelf, or whose shelf didn't load, leaves the binder's place to a line too. */
+const hidesOwnPanel = (custom: CustomBinder) => custom.status === 'unknown' || custom.status === 'failed';
+
+/**
+ * Whether the binder and its pickers are drawn: never outside collection mode, and never beside
+ * a binder that isn't there, a friend's, one whose start made no collection, or one of your own
+ * that isn't on your shelf.
+ */
+function binderIsDrawn({friend, custom, problem}: {friend: FriendBinder | null; custom: CustomBinder; problem: string | null}): boolean {
+  if (problem !== null) return false;
+  return !hidesPanel(friend) && !hidesOwnPanel(custom);
+}
+
+/** What the reader's own binder still waits on: the account's copy, and the shelf for a binder of your own. */
+const waitsOnYours = (syncing: boolean, custom: CustomBinder) => syncing || custom.status === 'loading';
+
+/** The binder's sets, once the pool is in and, for a binder of your own, the shelf has answered. */
+function binderSetsNow(pool: readonly LorcanaCard[], isReady: boolean, custom: CustomBinder): string[] | null {
+  if (!isReady || custom.status === 'loading') return null;
+  return binderSets(pool);
+}
+
+/** Said in the binder's place when the reader's binders didn't load; its Try again reads them again. */
+const BINDERS_FAILED = "Couldn't load your binders.";
+
+/** A binder of your own whose shelf didn't load says so, with its Try again; the reader's own binder's failure comes first. */
+function customStatusOf(custom: CustomBinder, own: BinderStatus): BinderStatus {
+  if (custom.status !== 'failed' || own.error !== null) return own;
+  return {error: BINDERS_FAILED, onRetry: custom.retry};
+}
+
+/** Where the set picker's Binders tab stands: the binder on show, and what each row counts. */
+interface ChoicesAt {
+  friend: FriendBinder | null;
+  setCode: string;
+  entries: CollectionEntries;
+  /** The whole pool, null while it loads. */
+  pool: readonly LorcanaCard[] | null;
+}
+
+/**
+ * What the set picker, the panel and the binder know of your binders: none where binders are off,
+ * and none in a friend's binder, which shows none of yours.
+ */
+function binderChoicesOf(
+  {shelf, custom}: OwnBinders,
+  {friend, setCode, entries, pool}: ChoicesAt,
+  onOpen: BinderChoices['onOpen'],
+): BinderChoices | undefined {
+  if (shelf === null || friend !== null) return undefined;
+  const open = custom.status === 'shown' ? custom : null;
+  return {open, atOwnScope: setCode === (open?.binder.scope ?? WHOLE_COLLECTION), shelf, pool, entries, onOpen};
+}
+
 /** What a friend's binder shows, and beside what (`useFriendView`). */
 interface FriendView {
   /** The friend's binder while `?friend=` names one in collection mode, else null. */
@@ -562,8 +662,19 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   const {entries, hasCollection, holdsCopies, syncing, importCollection, startCollection, startProblem, cancelStart, setCount} =
     useCollection();
   const {retry} = useCollectionCards();
-  const {requested, friend: friendHandle, mode, show: asked, enterBinder, writeBinder, leaveBinder, writeShow, leaveFriend} =
-    useBinderParams({
+  const {
+    requested,
+    friend: friendHandle,
+    custom: customId,
+    mode,
+    show: asked,
+    enterBinder,
+    writeBinder,
+    openBinder,
+    leaveBinder,
+    writeShow,
+    leaveFriend,
+  } = useBinderParams({
       sessionLoading,
       syncing,
       signedIn: user !== null,
@@ -584,8 +695,16 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
 
   // Only collection mode (or the import, which parses against the full pool)
   // widens the pool, so a visitor who never switches fetches no chunks at all.
-  const {pool, waiting, error, isReady} = useCollectionPool(coreCards, collectionMode || showImport);
-  const sets = isReady ? binderSets(pool) : null;
+  const {pool: wholePool, waiting, error, isReady} = useCollectionPool(coreCards, collectionMode || showImport);
+  // Your own binders, read once collection mode opens your binder, and the one `?custom=` names.
+  const own = useOwnBinders(
+    binderAsk({uid: user?.id ?? null, hasCollection, syncing, collectionMode, friendHandle, customId}),
+    wholePool,
+    entries,
+  );
+  const {custom, pool} = own;
+  // A binder of your own's sets are unknown until the shelf answers: the request is trusted till then.
+  const sets = binderSetsNow(pool, isReady, custom);
   const setCode = resolveSetCode(requested, sets);
   // What the panel's headlines count, Complete or Master, which Owned and Missing ask too
   // (owner, 2026-10-20): held here rather than in the panel, so the binder's view can ask it.
@@ -595,9 +714,15 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // keep: a view is the mode, whose binder, the set, Owned or Missing, the headline they ask
   // of, and the sort (`useKeptCards`).
   const [searchParams] = useSearchParams();
-  const view = [collectionMode, friend === null ? '' : friendHandle, setCode, show, axis, searchParams.get(SORT_PARAM)].join(
-    '|',
-  );
+  const view = [
+    collectionMode,
+    friend === null ? '' : friendHandle,
+    customId ?? '',
+    setCode,
+    show,
+    axis,
+    searchParams.get(SORT_PARAM),
+  ].join('|');
   const {kept, changeCount, noteWindowEdit} = useHandCounts(
     {collectionMode, friend: friend !== null, view},
     {entries, setCount},
@@ -658,6 +783,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     sets: panelSets(sets, setCode),
     setsLoading: sets === null,
     picksPromos: rarityPicksPromos(searchParams),
+    binders: binderChoicesOf(own, {friend, setCode, entries, pool: isReady ? wholePool : null}, openBinder),
     show,
     axis,
     ...trackedPicks(
@@ -672,14 +798,17 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     countScopeOnce({cards: listing.matched, setCode, sets: panelControls.sets}, friendView.compare, ownsAxis(setCode, axis));
   // What the docked panel and the set pickers count: the cards the page lets through. Only the
   // docked panel draws the reader's own "You" lines, so it alone is handed their copies.
+  // The reader's own binder waits on the account's copy, and a binder of your own on the shelf too.
+  const ownWaiting = waitsOnYours(syncing, custom);
   const setCounts = (listing: BrowseListing) => ({
     cards: listing.matched,
     filtered: listing.filtered,
     entries: friendView.shown,
-    isLoading: (friend === null ? syncing : friendView.waiting) || !isReady,
+    isLoading: (friend === null ? ownWaiting : friendView.waiting) || !isReady,
   });
-  // No panel and no picker beside a binder that isn't there: a friend's, or one whose start made no collection.
-  const binderShows = collectionMode && !hidesPanel(friend) && ownProblem === null;
+  // No panel and no picker beside a binder that isn't there: a friend's, one whose start made no
+  // collection, or a binder of your own that isn't on your shelf or didn't load.
+  const binderShows = collectionMode && binderIsDrawn({friend, custom, problem: ownProblem});
 
   // Friends who have a card for the reader, for a reader with a collection. Their badges and the
   // foil pointer show in the reader's own binder only.
@@ -706,13 +835,20 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     : undefined;
 
   // Loading while the account's copy is still to answer, or a friend's binder.
-  const binderLoading = (friend === null ? syncing : friendView.waiting) || (!isReady && error === null);
-  const ownStatus = ownStatusOf({error, onRetry: retry}, ownProblem, () => startCollection('browse'));
+  const binderLoading = (friend === null ? ownWaiting : friendView.waiting) || (!isReady && error === null);
+  const ownStatus = customStatusOf(custom, ownStatusOf({error, onRetry: retry}, ownProblem, () => startCollection('browse')));
   const binderStatus = binderStatusOf(friend, ownStatus);
 
   function renderBinder(listing: BrowseListing, onCardSelect: (card: LorcanaCard, source: BinderCardSource) => void) {
     if (!collectionMode) return null;
     if (friend?.status === 'not-sharing') return <FriendNotSharing name={friend.name} handle={friend.handle} />;
+    if (custom.status === 'unknown' && UnknownBinder) {
+      return (
+        <Suspense fallback={null}>
+          <UnknownBinder onOpenMine={() => openBinder(null)} />
+        </Suspense>
+      );
+    }
     return (
       <Suspense fallback={<BinderChunkFallback />}>
         <CollectionBinderSection
@@ -770,7 +906,8 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           <ImportCollectionDialog
             isOpen={showImport}
             onClose={() => setShowImport(false)}
-            pool={pool}
+            // The whole pool, inside a binder of your own too: an import is the whole collection.
+            pool={wholePool}
             // Blocks a parse against an incomplete pool: that parse does not fail,
             // it silently drops the cards it cannot see.
             isPoolReady={isReady}
@@ -826,6 +963,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           />
         </Suspense>
       ) : undefined,
+    pickerNamesBinder: binderShows && namesOwnBinder(panelControls.binders),
     renderSetPicker: (listing) =>
       binderShows ? (
         <Suspense fallback={<ToolbarSetPickerFallback />}>

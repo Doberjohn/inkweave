@@ -205,6 +205,8 @@ export type BuiltChunks = Readonly<
         type: 'chunk';
         fileName: string;
         code: string;
+        /** Each module the chunk renders, with its rendered length: 0 for one the build dropped. */
+        modules?: Readonly<Record<string, {renderedLength: number}>>;
       }
   >
 >;
@@ -231,4 +233,51 @@ export function loadableChunks(bundle: BuiltChunks): Set<string> {
     }
   }
   return loadable;
+}
+
+/** Binders' code (#1074): every module in their folder but the flag, which every page reads. */
+const BINDER_CODE = /\/apps\/web\/src\/features\/collection\/binders\//;
+const BINDER_FLAG = /\/features\/collection\/binders\/flag\.ts$/;
+
+const isBinderCode = (id: string) => BINDER_CODE.test(posix(id)) && !BINDER_FLAG.test(posix(id));
+
+/** Whether a build's env turns binders on, by the rule `src/features/collection/binders/flag.ts` reads. */
+export const bindersOn = (env: Readonly<Record<string, unknown>>) => env.VITE_SHOW_BINDERS === 'true';
+
+/** Each binder module with code in a chunk a page can load, as "<module> in <chunk>". */
+export function loadableBinderCode(bundle: BuiltChunks): string[] {
+  const loadable = loadableChunks(bundle);
+  return Object.values(bundle).flatMap((output) => {
+    if (output.type !== 'chunk' || !loadable.has(output.fileName)) return [];
+    return Object.entries(output.modules ?? {})
+      .filter(([id, {renderedLength}]) => renderedLength > 0 && isBinderCode(id))
+      .map(([id]) => `${posix(id).replace(/^.*\/apps\/web\//, '')} in ${output.fileName}`);
+  });
+}
+
+/**
+ * Fails a build with binders off when a page can load any of their code. Off means not loaded
+ * (`src/features/collection/binders/flag.ts`): what only the flag's branches import ships in
+ * chunks no page names, which the service worker doesn't precache either (#928).
+ */
+export function binderCodeGuard(): Plugin {
+  let on = false;
+  return {
+    name: 'inkweave:binder-code-guard',
+    apply: 'build',
+    configResolved(config) {
+      on = bindersOn(config.env);
+    },
+    // writeBundle, as the precache's unloadable-chunks plugin reads it: every chunk's code is final.
+    writeBundle(_options, bundle) {
+      if (on) return;
+      const loaded = loadableBinderCode(bundle);
+      if (loaded.length > 0) {
+        this.error(
+          `Binders are off, yet a page can load their code: ${loaded.join(', ')}. ` +
+            'Reach it only through a choice the bundler folds on SHOW_BINDERS (binders/flag.ts).',
+        );
+      }
+    },
+  };
 }

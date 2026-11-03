@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, afterEach} from 'vitest';
-import {fireEvent, render, screen, within} from '@testing-library/react';
+import {cleanup, fireEvent, render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import type {ReactNode} from 'react';
@@ -8,6 +8,7 @@ import type {BrowseSortOrder} from '../../shared/constants';
 import type {CollectionEntries} from './collectionParser';
 import type {BinderShow} from './binderCards';
 import type {Axis} from './collectionStats';
+import type {BinderChoices} from './binders/binderChoices';
 import {CollectionBinderSection, type BinderStart} from './CollectionBinderSection';
 
 afterEach(() => {
@@ -51,6 +52,8 @@ interface SectionOptions {
   renderFoilPointer?: (cards: readonly LorcanaCard[]) => ReactNode;
   /** An empty collection's import, which puts its note on the cover. */
   onEmptyImport?: () => void;
+  /** Your binders, one of them open (#1074). */
+  binders?: BinderChoices;
 }
 
 /** The section with `matched` the cards the page's filters let through, as the page counts them. */
@@ -71,6 +74,7 @@ function section(
     filtered,
     renderFoilPointer,
     onEmptyImport,
+    binders,
   }: SectionOptions = {},
 ) {
   const counted = pool.filter((card) => matched.includes(card.id));
@@ -99,6 +103,7 @@ function section(
         startAt={startAt}
         renderFoilPointer={renderFoilPointer}
         onEmptyImport={onEmptyImport}
+        binders={binders}
       />
     </MemoryRouter>
   );
@@ -271,6 +276,36 @@ describe('CollectionBinderSection', () => {
       const renderFoilPointer = vi.fn(() => <p>Foils on offer</p>);
       renderSection([], {show: 'missing', filtered: false, ...options, renderFoilPointer});
       expect(renderFoilPointer).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('a binder of your own (#1074)', () => {
+    const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
+    const open = (atOwnScope: boolean): BinderChoices => ({
+      open: {binder: AMBER, cover: null, narrowed: true},
+      atOwnScope,
+      shelf: {status: 'ready', binders: [AMBER], retry: vi.fn()},
+      pool: null,
+      entries: {},
+      onOpen: vi.fn(),
+    });
+
+    it('says every card in this binder is held, at its own Sets', () => {
+      renderSection([], {show: 'missing', setCode: 'all', filtered: false, binders: open(true)});
+      expect(screen.getByRole('status')).toHaveTextContent('You have every card in this binder.');
+    });
+
+    it("says its rules hold no card, rather than blaming the page's filters", () => {
+      renderSection([], {pool: [], setCode: 'all', filtered: false, binders: open(true)});
+      expect(screen.getByRole('status')).toHaveTextContent("No cards match this binder's rules.");
+    });
+
+    it('blames the filters for an empty view of cards it holds, naming the binder at its own Sets and the set inside it', () => {
+      renderSection([], {setCode: 'all', show: 'owned', filtered: true, binders: open(true)});
+      expect(screen.getByRole('status')).toHaveTextContent('No owned cards in this binder match your filters.');
+      cleanup();
+      renderSection(['next'], {binders: open(false)});
+      expect(screen.getByRole('status')).toHaveTextContent('No cards in this set match your filters.');
     });
   });
 

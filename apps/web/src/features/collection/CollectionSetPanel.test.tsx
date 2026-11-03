@@ -1,5 +1,6 @@
 import {describe, it, expect, vi} from 'vitest';
-import {render, screen, fireEvent, within} from '@testing-library/react';
+import {cleanup, render, screen, fireEvent, within} from '@testing-library/react';
+import type {BinderChoices} from './binders/binderChoices';
 import {CollectionSetBody, CoverNumbers} from './CollectionSetPanel';
 import {percentOf, tallyCollection} from './collectionStats';
 import {
@@ -79,6 +80,29 @@ describe('CollectionSetBody', () => {
     // The cards counted are no whole collection.
     expect(screen.getByText('Complete')).toBeInTheDocument();
     expect(screen.queryByText('Complete collection')).toBeNull();
+  });
+
+  // A binder of your own's cards are no set or collection (#1074): at its own Sets they are the binder's.
+  it("names the headlines by a binder of your own at its own Sets, and by the set picked inside it", () => {
+    const binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
+    const binders = (atOwnScope: boolean): BinderChoices => ({
+      open: {binder, cover: null, narrowed: true},
+      atOwnScope,
+      shelf: {status: 'ready', binders: [binder], retry: vi.fn()},
+      pool: null,
+      entries: {},
+      onOpen: vi.fn(),
+    });
+    renderBody({setCode: 'all', binders: binders(true)});
+    expect(numbers()).toHaveTextContent('Complete binder');
+    expect(numbers()).not.toHaveTextContent('Complete collection');
+    cleanup();
+    renderBody({setCode: '13', binders: binders(false)});
+    expect(numbers()).toHaveTextContent('Complete set');
+    cleanup();
+    renderBody({setCode: 'all', filtered: true, binders: binders(true)});
+    expect(screen.getByText('Complete')).toBeInTheDocument();
+    expect(screen.queryByText('Complete binder')).toBeNull();
   });
 
   it('says so when the filters leave no card, rather than drawing empty numbers', () => {

@@ -58,6 +58,13 @@ interface BrowseToolbarProps {
    */
   setPicker?: React.ReactNode;
   /**
+   * The picker names a binder of your own (#1074), whose name is the player's own words: its
+   * button then takes the room its words need from the search field, keeping its right edge at
+   * the panel's, rather than cutting every name to the 71px a set's number asks for (owner,
+   * 2026-11-03).
+   */
+  pickerNamesBinder?: boolean;
+  /**
    * Browse's docked side panel holds every filter (desktop, owner 2026-10-07), so
    * the inline ink, cost and inkwell icons give way, the Filters button toggles the
    * panel instead of opening the dialog, and the toolbar lines up with the page below
@@ -470,6 +477,7 @@ interface ToolbarSlots {
   modeSwitch?: React.ReactNode;
   modeActions?: React.ReactNode;
   setPicker?: React.ReactNode;
+  pickerNamesBinder?: boolean;
 }
 
 /**
@@ -486,7 +494,7 @@ interface ToolbarSlots {
  *
  * It ends at its controls: the row under it keeps the room below them (`BROWSE_ROW_TOP`).
  */
-function DockedToolbar({filters, sort, search, chips, modeSwitch, modeActions, setPicker}: ToolbarSlots) {
+function DockedToolbar({filters, sort, search, chips, modeSwitch, modeActions, setPicker, pickerNamesBinder}: ToolbarSlots) {
   return (
     <div
       data-testid="browse-toolbar"
@@ -498,8 +506,8 @@ function DockedToolbar({filters, sort, search, chips, modeSwitch, modeActions, s
         </div>
         <div style={{flex: 1, minWidth: 0, marginLeft: BROWSE_GUTTER}}>{search}</div>
         {setPicker ? (
-          <div style={{...PANEL_SPAN_STYLE, marginLeft: BROWSE_GUTTER}}>
-            <div style={{flex: 1, minWidth: 0}}>{setPicker}</div>
+          <div style={{...pickerSpanStyle(pickerNamesBinder), marginLeft: BROWSE_GUTTER}}>
+            <div style={pickerSlotStyle(pickerNamesBinder)}>{setPicker}</div>
             {modeSwitch}
             {modeActions}
           </div>
@@ -533,6 +541,17 @@ const PANEL_SPAN_STYLE: React.CSSProperties = {
   alignItems: 'center',
   gap: 10,
 };
+
+/**
+ * The set picker's group: the panel's width, or, while the picker names a binder of your own,
+ * at least that width and as much more as its name needs, taken from the search field beside it
+ * so the group's right edge stays on the panel's.
+ */
+const pickerSpanStyle = (namesBinder = false): React.CSSProperties =>
+  namesBinder ? {...PANEL_SPAN_STYLE, width: 'auto', minWidth: SIDE_PANEL_WIDTH} : PANEL_SPAN_STYLE;
+
+/** The picker's own slot: it fills the group, or sizes to its words while it names a binder. */
+const pickerSlotStyle = (namesBinder = false): React.CSSProperties => ({flex: namesBinder ? '0 1 auto' : 1, minWidth: 0});
 
 /**
  * The flowing toolbar (tablet and phone, and the playstyle page): its controls wrap as
@@ -615,6 +634,7 @@ export function BrowseToolbar({
   modeSwitch,
   modeActions,
   setPicker,
+  pickerNamesBinder,
   extraChips,
   searchQuery,
   onSearchChange,
@@ -671,6 +691,7 @@ export function BrowseToolbar({
     modeSwitch,
     modeActions,
     setPicker,
+    pickerNamesBinder,
   };
   if (docked) return <DockedToolbar {...slots} />;
 

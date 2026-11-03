@@ -9,12 +9,14 @@ import {rarityLabel} from '../cards/filterOptions';
 import {
   isFinished,
   percentOf,
+  scopeTally,
   type Axis,
   type tallyCollection,
   type tallySet,
 } from './collectionStats';
 import {ALL_PROMO_SETS, WHOLE_COLLECTION, isPromoScope, scopeName} from './binderCards';
 import {SetPicker, type RowFigures, type SetPickerProps} from './SetPicker';
+import type {BinderChoices} from './binders/binderChoices';
 import {BinderShows, type BinderView} from './BinderShows';
 import {SIDE_PANEL_STYLE} from '../cards/components/BrowseSidePanel';
 import {NumbersLoading} from './BinderChunkFallback';
@@ -124,6 +126,8 @@ export interface SetSwitching {
   onSetChange: (set: string) => void;
   /** The page's Rarity filter picks the promos: the set picker's whole collection opens on Promo. */
   picksPromos?: boolean;
+  /** Your binders (#1074), outside a friend's binder and with binders on: the picker's Binders tab. */
+  binders?: BinderChoices;
 }
 
 export interface CollectionSetPanelProps extends SetSwitching, BinderView, AxisChoice {
@@ -531,17 +535,17 @@ type ScopeFigures = Tally & {
 /** The headlines' nouns for the scopes spanning sets: "Complete promos" (owner, 2026-10-20). Any set's is "set". */
 const SPAN_NOUNS: Record<string, string> = {[WHOLE_COLLECTION]: 'collection', [ALL_PROMO_SETS]: 'promos'};
 
-/** The headlines' noun for what the picker shows, or none while the page filters. */
-function headlineNoun({setCode, filtered}: {setCode: string; filtered: boolean}): string | undefined {
-  if (filtered) return undefined;
-  return SPAN_NOUNS[setCode] ?? 'set';
-}
+/** Whether a binder of your own shows at its own Sets: its headlines are the binder's. */
+const atOwnBinder = (binders: BinderChoices | undefined) => binders?.open != null && binders.atOwnScope;
 
-/** What the picker shows, counted: the whole collection's totals, every promo set's, or the set's own tally. */
-function scopeTally(stats: CollectionStats, setCode: string) {
-  if (setCode === WHOLE_COLLECTION) return stats.totals;
-  if (setCode === ALL_PROMO_SETS) return stats.promoTotals;
-  return stats.sets.find((set) => set.code === setCode)?.tally;
+/**
+ * The headlines' noun for what the picker shows, or none while the page filters: "binder" for a
+ * binder of your own at its own Sets (#1074), whose cards are no set or collection either.
+ */
+function headlineNoun({setCode, filtered, binder}: {setCode: string; filtered: boolean; binder: boolean}): string | undefined {
+  if (filtered) return undefined;
+  if (binder) return 'binder';
+  return SPAN_NOUNS[setCode] ?? 'set';
 }
 
 interface ScopeNumbersProps extends AxisChoice {
@@ -610,15 +614,17 @@ interface NumbersProps extends AxisChoice {
   yours?: CollectionStats | null;
   setCode: string;
   filtered: boolean;
+  /** A binder of your own shows at its own Sets. */
+  binder: boolean;
 }
 
 /** The numbers for what the picker shows: the whole collection, every promo set, or the open set. */
-function Numbers({stats, yours, setCode, filtered, axis, onAxisChange}: NumbersProps) {
+function Numbers({stats, yours, setCode, filtered, binder, axis, onAxisChange}: NumbersProps) {
   const promo = isPromoScope(setCode);
   if (stats === null) return <NumbersLoading promo={promo} />;
   const tally = scopeTally(stats, setCode);
   if (!tally) return <NumbersLoading promo={promo} />;
-  const figures = {...tally, noun: headlineNoun({setCode, filtered})};
+  const figures = {...tally, noun: headlineNoun({setCode, filtered, binder})};
   if (figures.cards > 0) {
     const wide = setCode === WHOLE_COLLECTION;
     const mine = yours ? scopeTally(yours, setCode) : undefined;
@@ -651,7 +657,7 @@ function NumbersRegion({style = NUMBERS_STYLE, ...props}: NumbersProps & {style?
  * every promo set's, once the pool is in. Filtered, they are the filtered cards' too (owner,
  * 2026-10-15), so the list says which sets the cards still missing are in.
  */
-function pickerProps({setCode, sets, setsLoading, onSetChange, stats, picksPromos}: CollectionSetPanelProps): SetPickerProps {
+function pickerProps({setCode, sets, setsLoading, onSetChange, stats, picksPromos, binders}: CollectionSetPanelProps): SetPickerProps {
   const progress = stats
     ? new Map<string, {complete: number; cards: number}>([
         [WHOLE_COLLECTION, stats.totals],
@@ -659,7 +665,7 @@ function pickerProps({setCode, sets, setsLoading, onSetChange, stats, picksPromo
         ...stats.sets.map((set) => [set.code, set.tally] as const),
       ])
     : null;
-  return {setCode, sets, setsLoading, onSetChange, progress, picksPromos};
+  return {setCode, sets, setsLoading, onSetChange, progress, picksPromos, binders};
 }
 
 /** The numbers' view of the panel's props. */
@@ -668,10 +674,11 @@ function numbersProps({
   yours,
   setCode,
   filtered = false,
+  binders,
   axis,
   onAxisChange,
 }: CollectionSetPanelProps): NumbersProps {
-  return {stats, yours, setCode, filtered, axis, onAxisChange};
+  return {stats, yours, setCode, filtered, binder: atOwnBinder(binders), axis, onAxisChange};
 }
 
 /**

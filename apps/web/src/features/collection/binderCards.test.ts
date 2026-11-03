@@ -14,6 +14,7 @@ import {
   binderSlots,
   isOpenPocket,
   namesStretches,
+  openBinderParams,
   parseBinderShow,
   promoSetPockets,
   rarityPicksPromos,
@@ -357,6 +358,29 @@ describe("a friend's binder (#1045)", () => {
     const url = new URL(friendBinderPath('ruby_hero_042', '12'), 'https://inkweave.ink');
     expect(url.searchParams.get(BINDER_PARAM)).toBe('12');
     expect(url.searchParams.get(FRIEND_PARAM)).toBe('ruby_hero_042');
+  });
+});
+
+describe('a binder of your own (#1074)', () => {
+  const left = (params: string) => withoutStrays(new URLSearchParams(params)).toString();
+
+  it('keeps which binder in your own binder, and drops it on the grid and in a friend\'s binder', () => {
+    expect(left('binder=12&custom=b1&ink=Amber')).toBe('binder=12&custom=b1&ink=Amber');
+    expect(left('custom=b1&ink=Amber')).toBe('ink=Amber');
+    expect(left('binder=all&friend=ruby_hero_042&custom=b1')).toBe('binder=all&friend=ruby_hero_042');
+  });
+
+  it("opens a binder at its Sets with the page's filters and search cleared, keeping the view and sort", () => {
+    const opened = openBinderParams(
+      new URLSearchParams('binder=all&ink=Ruby&rarity=Epic&q=Elsa&set=11&owned=missing&sort=name&keyword=Ward'),
+      {id: 'b1', scope: '12'},
+    );
+    expect(opened.toString()).toBe('binder=12&owned=missing&sort=name&custom=b1');
+  });
+
+  it('opens My collection with no custom param', () => {
+    const opened = openBinderParams(new URLSearchParams('binder=12&custom=b1&cost=3'), null);
+    expect(opened.toString()).toBe('binder=all');
   });
 });
 

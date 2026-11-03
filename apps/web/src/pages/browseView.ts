@@ -1,8 +1,6 @@
 import type {CardPrinting, LorcanaCard} from 'inkweave-synergy-engine';
-import type {Ink} from '../features/cards';
+import {applyFilters, buildCombinedFilters} from '../features/cards/applyFilters';
 import {
-  searchCardsByName,
-  filterCards,
   applySortOrder,
   getRaritiesWithPrintings,
   getUniqueClassifications,
@@ -14,7 +12,8 @@ import {
   type CardFilterOptions,
 } from '../features/cards/loader';
 import type {BrowseCollectionSlots} from '../features/collection/useBrowseCollection';
-import {LAYOUT, type CardTypeFilter} from '../shared/constants';
+import {binderFilters} from '../features/collection/binderCards';
+import {LAYOUT} from '../shared/constants';
 import type {useFilterParams} from '../shared/hooks';
 
 /** The URL's filter state that decides what Browse lists. */
@@ -28,19 +27,6 @@ type ViewCollection = Pick<
   BrowseCollectionSlots,
   'active' | 'pool' | 'inView' | 'kept' | 'rarityOptions' | 'promoOnly'
 >;
-
-function buildCombinedFilters(
-  base: CardFilterOptions,
-  inkFilters: Ink[],
-  typeFilters: CardTypeFilter[],
-  costFilters: number[],
-): CardFilterOptions {
-  const combined: CardFilterOptions = {...base};
-  if (inkFilters.length > 0) combined.ink = inkFilters;
-  if (typeFilters.length > 0) combined.type = typeFilters;
-  if (costFilters.length > 0) combined.costs = costFilters;
-  return combined;
-}
 
 /**
  * The Rarity filter's options: the rarities of the cards the page can show. The
@@ -70,13 +56,6 @@ function binderOptions(binderShows: boolean, pool: LorcanaCard[]) {
  */
 function withPrintingRarities(filters: CardFilterOptions): CardFilterOptions {
   return filters.rarities?.length ? {...filters, rarityMatch: 'printings'} : filters;
-}
-
-function applyFilters(cards: LorcanaCard[], searchQuery: string, combinedFilters: CardFilterOptions): LorcanaCard[] {
-  let result = cards;
-  if (searchQuery.trim()) result = searchCardsByName(result, searchQuery);
-  if (Object.keys(combinedFilters).length > 0) result = filterCards(result, combinedFilters);
-  return result;
 }
 
 /** The picked rarities a card's own tile shows a printing of: all but Special, whose promos get tiles. */
@@ -113,20 +92,6 @@ function withPromoTiles(cards: LorcanaCard[], rarities: string[] | undefined): L
 function byOwnership(cards: LorcanaCard[], {inView, kept}: Pick<ViewCollection, 'inView' | 'kept'>) {
   if (inView === null) return cards;
   return cards.filter((card) => kept.has(card.id) || inView(card));
-}
-
-/**
- * The filters the binder applies: Browse's, less the set filter. Collection mode's set is
- * chosen in the collection panel (owner, 2026-10-12), and a set filter could only empty
- * the binder of every other set. A binder of promos alone drops the rarity filter too
- * (owner, 2026-10-20, `promoOnly`). The mode drops both params; this covers the render
- * before they are gone.
- */
-function binderFilters(filters: CardFilterOptions, promoOnly: boolean): CardFilterOptions {
-  const rest = {...filters};
-  delete rest.setCodes;
-  if (promoOnly) delete rest.rarities;
-  return rest;
 }
 
 /** The filters the page applies: the binder's while it shows, else the grid's. */

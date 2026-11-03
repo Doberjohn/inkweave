@@ -123,6 +123,41 @@ function parseCommaSeparated<T extends string>(
   return raw.split(',').filter(isValid);
 }
 
+/** The filters an address holds, as Browse reads them: the search and every filter, never the sort. */
+export interface FilterReads {
+  searchQuery: string;
+  inkFilters: Ink[];
+  typeFilters: CardTypeFilter[];
+  costFilters: number[];
+  filters: CardFilterOptions;
+}
+
+/**
+ * The search and filters `params` holds, dropping any value the app doesn't know: what Browse
+ * reads, and what a binder's rules read (#1074), so the two never disagree.
+ */
+export function readFilterParams(params: URLSearchParams): FilterReads {
+  return {
+    searchQuery: params.get('q') ?? '',
+    inkFilters: parseCommaSeparated(params.get('ink'), isValidInk),
+    typeFilters: parseCommaSeparated(params.get('type'), isValidType),
+    costFilters: parseCostParam(params.get('cost')),
+    filters: parseFilterOptions(params),
+  };
+}
+
+/**
+ * The params a binder's rules hold (#1074): the search and every filter but the set, which a
+ * binder's Sets pick. Opening a binder clears them all, so it shows what its cover counts.
+ */
+export const RULE_PARAMS: readonly string[] = [
+  'q',
+  'ink',
+  'type',
+  'cost',
+  ...OPTION_PARAMS.map(({param}) => param).filter((param) => param !== SET_PARAM),
+];
+
 /** The filters as a dialog drafts them, which its Apply writes at once. */
 export interface FilterDraft {
   inks: Ink[];
@@ -222,16 +257,7 @@ export interface UseFilterParamsReturn {
 export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseSortOrder} = {}): UseFilterParamsReturn {
   const [searchParams, write] = useSearchParamsWriter();
 
-  // Read filter state from URL params
-  const searchQuery = searchParams.get('q') ?? '';
-
-  const inkFilters: Ink[] = parseCommaSeparated(searchParams.get('ink'), isValidInk);
-
-  const typeFilters: CardTypeFilter[] = parseCommaSeparated(searchParams.get('type'), isValidType);
-
-  const costFilters: number[] = parseCostParam(searchParams.get('cost'));
-
-  const filters = parseFilterOptions(searchParams);
+  const {searchQuery, inkFilters, typeFilters, costFilters, filters} = readFilterParams(searchParams);
 
   const sortOrder: BrowseSortOrder = (() => {
     const raw = searchParams.get(SORT_PARAM);

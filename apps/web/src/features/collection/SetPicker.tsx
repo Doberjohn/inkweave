@@ -1,4 +1,5 @@
 import {
+  Suspense,
   useEffect,
   useId,
   useRef,
@@ -27,6 +28,10 @@ import {
   spansSets,
 } from './binderCards';
 import {Segment, Segments} from './Segments';
+import {optionStyle, percentStyle, type Look} from './pickerRowLook';
+import {lazyWithRetry} from '../../shared/lib/lazyWithRetry';
+import {SHOW_BINDERS} from './binders/flag';
+import type {BinderChoices, OpenBinder} from './binders/binderChoices';
 import {useCloseOnPressOutside} from './useCloseOnPressOutside';
 import {SIDE_PANEL_WIDTH} from '../cards/components/BrowseSidePanel';
 import {ROW_CONTROL_HEIGHT} from './binderLayout';
@@ -46,6 +51,13 @@ import {
   FONT_WEIGHT,
   LINE_HEIGHT,
 } from '../../shared/constants';
+
+/*
+ * Binders of your own (#1074) load only with their flag on (`binders/flag.ts`): each import folds
+ * away on SHOW_BINDERS at build time. Both load as soon as the picker can show a binder.
+ */
+const BinderMedal = SHOW_BINDERS ? lazyWithRetry(() => import('./binders/BinderMedal'), 'BinderMedal') : null;
+const BinderList = SHOW_BINDERS ? lazyWithRetry(() => import('./binders/BinderTab'), 'BinderList') : null;
 
 /** How far through one set you are, of the cards counted; a set's tally carries both. Filtered, a set may count none. */
 interface Progress {
@@ -77,6 +89,11 @@ export interface SetPickerProps {
   figures?: RowFigures;
   /** The page's Rarity filter picks the promos: the whole collection's menu opens on Promo. */
   picksPromos?: boolean;
+  /**
+   * Your binders (#1074), outside a friend's binder with binders on: the menu's Binders tab, and
+   * the button names the binder of your own on show.
+   */
+  binders?: BinderChoices;
 }
 
 /** Where the button is drawn (see `SetPickerProps.size`). */
@@ -223,11 +240,13 @@ export function SetPicker({
   size = 'panel',
   figures,
   picksPromos = false,
+  binders,
 }: SetPickerProps) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
   useCloseOnPressOutside(open, wrapperRef, setOpen);
+  useWarmBinderList(binders !== undefined);
 
   const close = () => {
     setOpen(false);
@@ -272,6 +291,7 @@ export function SetPicker({
         sets={sets}
         size={size}
         figures={figures}
+        binder={triggerBinderOf(binders)}
         open={open}
         menuId={menuId}
         disabled={setsLoading}
@@ -286,7 +306,9 @@ export function SetPicker({
           sets={sets}
           progress={progress}
           picksPromos={picksPromos}
+          binders={binders}
           onPick={pick}
+          onClose={close}
           onKeyDown={onMenuKeyDown}
           onBlur={closeOnLeave}
         />
@@ -295,15 +317,36 @@ export function SetPicker({
   );
 }
 
-/** Which sets the menu lists. */
-type MenuTab = 'standard' | 'promo';
+/** Starts the medal's and the Binders tab's chunks once the picker can show them, so neither waits on a press. */
+function useWarmBinderList(warm: boolean) {
+  useEffect(() => {
+    if (!warm) return;
+    void BinderMedal?.preload().catch(() => {});
+    void BinderList?.preload().catch(() => {});
+  }, [warm]);
+}
+
+/** A medal's place while its chunk loads: the same size, so nothing beside it moves. */
+function Medal({card, size}: {card: OpenBinder['cover']; size: number}) {
+  if (!BinderMedal) return null;
+  return (
+    <Suspense fallback={<span style={{display: 'inline-block', width: size, height: size, flexShrink: 0}} />}>
+      <BinderMedal card={card} size={size} />
+    </Suspense>
+  );
+}
+
+/** Which list the menu shows: your binders, or the sets. */
+type MenuTab = 'binders' | 'standard' | 'promo';
 
 /**
  * The tab the menu opens on: the open choice's own, Promo for a promo set or every one and
  * Standard for a set, and for the whole collection Standard, or Promo while the page's
  * Rarity filter picks the promos (owner, 2026-10-20).
  */
-function openingTab({setCode, picksPromos}: Pick<SetMenuProps, 'setCode' | 'picksPromos'>): MenuTab {
+function openingTab({setCode, picksPromos, binders}: Pick<SetMenuProps, 'setCode' | 'picksPromos' | 'binders'>): MenuTab {
+  // A binder of your own at its own Sets opens on Binders (#1074); a set picked inside it, on the set's tab.
+  if (binders?.open && binders.atOwnScope) return 'binders';
   if (isPromoScope(setCode)) return 'promo';
   return picksPromos && setCode === WHOLE_COLLECTION ? 'promo' : 'standard';
 }
@@ -314,7 +357,10 @@ interface SetMenuProps {
   sets: string[];
   progress: SetPickerProps['progress'];
   picksPromos: boolean;
+  binders: BinderChoices | undefined;
   onPick: (set: string) => void;
+  /** Closes the menu onto its button: after a binder is opened. */
+  onClose: () => void;
   onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
   onBlur: (e: FocusEvent) => void;
 }
@@ -323,8 +369,8 @@ interface SetMenuProps {
  * The open menu: the tabs, then the sets the chosen tab lists, All sets first in both
  * (owner, 2026-10-20). A binder with no promo set has nothing to choose between, so no tabs.
  */
-function SetMenu({id, setCode, sets, progress, picksPromos, onPick, onKeyDown, onBlur}: SetMenuProps) {
-  const [tab, setTab] = useState<MenuTab>(() => openingTab({setCode, picksPromos}));
+function SetMenu({id, setCode, sets, progress, picksPromos, binders, onPick, onClose, onKeyDown, onBlur}: SetMenuProps) {
+  const [tab, setTab] = useState<MenuTab>(() => openingTab({setCode, picksPromos, binders}));
   const menuRef = useRef<HTMLDivElement>(null);
   useFocusOpenChoiceOnMount(menuRef);
   const promoSets = sets.filter(isPromoSet);
@@ -347,33 +393,62 @@ function SetMenu({id, setCode, sets, progress, picksPromos, onPick, onKeyDown, o
       style={MENU_STYLE}
       onKeyDown={onKeyDown}
       onBlur={onBlur}>
-      {promoSets.length > 0 && (
-        <Segments label="Sets" columns="repeat(2, 1fr)">
-          <Segment
-            label="Standard"
-            icon={<LoreSymbol size={16} />}
-            active={tab === 'standard'}
-            tabIndex={-1}
-            onSelect={show('standard')}
-          />
-          <Segment
-            label="Promo"
-            icon={<RaritySymbol rarity="special" size={16} />}
-            active={tab === 'promo'}
-            tabIndex={-1}
-            onSelect={show('promo')}
-          />
-        </Segments>
-      )}
-      <div role="listbox" aria-label={tab === 'promo' ? 'Promo sets' : 'Standard sets'} tabIndex={-1} style={LIST_STYLE}>
-        <div role="presentation" style={ALL_SETS_STYLE}>
-          <SetOption setCode={allSets} progress={progress?.get(allSets)} selected={setCode === allSets} onPick={onPick} />
+      <MenuTabs tab={tab} promo={promoSets.length > 0} binders={binders !== undefined} show={show} />
+      {tab === 'binders' && binders && BinderList ? (
+        <Suspense fallback={<div style={LIST_STYLE} />}>
+          <BinderList choices={binders} onPicked={onClose} />
+        </Suspense>
+      ) : (
+        <div role="listbox" aria-label={tab === 'promo' ? 'Promo sets' : 'Standard sets'} tabIndex={-1} style={LIST_STYLE}>
+          <div role="presentation" style={ALL_SETS_STYLE}>
+            <SetOption setCode={allSets} progress={progress?.get(allSets)} selected={setCode === allSets} onPick={onPick} />
+          </div>
+          {listed.map((set) => (
+            <SetOption key={set} setCode={set} progress={progress?.get(set)} selected={set === setCode} onPick={onPick} />
+          ))}
         </div>
-        {listed.map((set) => (
-          <SetOption key={set} setCode={set} progress={progress?.get(set)} selected={set === setCode} onPick={onPick} />
-        ))}
-      </div>
+      )}
     </div>
+  );
+}
+
+interface MenuTabsProps {
+  tab: MenuTab;
+  /** The binder holds a promo set, so Promo has sets to list. */
+  promo: boolean;
+  /** Your binders have a tab (#1074). */
+  binders: boolean;
+  show: (tab: MenuTab) => (e: MouseEvent<HTMLButtonElement>) => void;
+}
+
+/**
+ * The menu's tabs: Binders, Standard and Promo, each where it has something to list. With one
+ * alone, nothing to choose between, so none. Beside Binders the three hold their words alone,
+ * as 3A drew them (#1074): the symbols would crowd a side panel's width.
+ */
+function MenuTabs({tab, promo, binders, show}: MenuTabsProps) {
+  const count = 1 + Number(promo) + Number(binders);
+  if (count < 2) return null;
+  return (
+    <Segments label="Sets" columns={`repeat(${count}, 1fr)`}>
+      {binders && <Segment label="Binders" active={tab === 'binders'} tabIndex={-1} onSelect={show('binders')} />}
+      <Segment
+        label="Standard"
+        icon={binders ? undefined : <LoreSymbol size={16} />}
+        active={tab === 'standard'}
+        tabIndex={-1}
+        onSelect={show('standard')}
+      />
+      {promo && (
+        <Segment
+          label="Promo"
+          icon={binders ? undefined : <RaritySymbol rarity="special" size={16} />}
+          active={tab === 'promo'}
+          tabIndex={-1}
+          onSelect={show('promo')}
+        />
+      )}
+    </Segments>
   );
 }
 
@@ -443,12 +518,6 @@ function moveFocus(menu: HTMLElement, key: string): boolean {
   return true;
 }
 
-/** How a button is drawn: whether it is open (or the chosen row), and whether it is hovered. */
-interface Look {
-  on: boolean;
-  hovered: boolean;
-}
-
 /** What the button holds: a picture or none, and where it is drawn. */
 interface Shape {
   withArt: boolean;
@@ -489,12 +558,23 @@ const NAME_STYLE: CSSProperties = {
   overflow: 'hidden',
 };
 
+/** The binder of your own on show, as the button names it (#1074). */
+interface TriggerBinder {
+  open: OpenBinder;
+  /** At its own Sets; else the button names the set picked inside it too. */
+  atOwnScope: boolean;
+}
+
+const triggerBinderOf = (binders: BinderChoices | undefined): TriggerBinder | undefined =>
+  binders?.open ? {open: binders.open, atOwnScope: binders.atOwnScope} : undefined;
+
 interface TriggerProps {
   setCode: string;
   /** The sets the binder can show, which a scope spanning them counts on its first line. */
   sets: readonly string[];
   size: TriggerSize;
   figures: RowFigures | undefined;
+  binder: TriggerBinder | undefined;
   open: boolean;
   menuId: string;
   disabled: boolean;
@@ -577,19 +657,19 @@ const ROW_FIGURES: CSSProperties = {...ROW_LINE, ...TABULAR, color: COLORS.prima
 const SHIMMER_INSET = SPACING.xxs;
 
 /**
- * The row's words: the scope's name, cut short, over its figures, or a 60px shimmer holding
- * their line while the numbers load.
+ * The row's words: the scope's name, or a binder's, cut short, over its figures, or a 60px
+ * shimmer holding their line while the numbers load.
  *
  * ITS NAME IS ONE SCREEN-READER-ONLY LINE, and the two lines drawn are hidden from screen
  * readers, as a mechanic tile's are (`RoleTileRow`). An `aria-label` must hold the visible text
  * (WCAG 2.5.3), and axe reads these two lines run together, "Winterspell73% · 19%", which no
  * name holds.
  */
-function RowLabel({setCode, figures}: Pick<TriggerProps, 'setCode' | 'figures'>) {
+function RowLabel({name, spoken, figures}: {name: string; spoken: string; figures: RowFigures | undefined}) {
   return (
     <>
       <span aria-hidden="true" style={{minWidth: 0, display: 'flex', flexDirection: 'column'}}>
-        <span style={{...ROW_LINE, ...TRUNCATE, fontWeight: FONT_WEIGHT.bold}}>{scopeName(setCode)}</span>
+        <span style={{...ROW_LINE, ...TRUNCATE, fontWeight: FONT_WEIGHT.bold}}>{name}</span>
         {figures ? (
           <span style={ROW_FIGURES}>{figures.shown}</span>
         ) : (
@@ -598,14 +678,17 @@ function RowLabel({setCode, figures}: Pick<TriggerProps, 'setCode' | 'figures'>)
           </span>
         )}
       </span>
-      <span style={VISUALLY_HIDDEN}>{triggerName({setCode, size: 'row', figures})}</span>
+      <span style={VISUALLY_HIDDEN}>{spoken}</span>
     </>
   );
 }
 
 /** The button's words: the kicker over the name in the panel, the toolbar's short label, or the row's two lines. */
-function TriggerLabel({setCode, sets, size, figures}: Pick<TriggerProps, 'setCode' | 'sets' | 'size' | 'figures'>) {
-  if (size === 'row') return <RowLabel setCode={setCode} figures={figures} />;
+function TriggerLabel({setCode, sets, size, figures, binder}: Pick<TriggerProps, 'setCode' | 'sets' | 'size' | 'figures' | 'binder'>) {
+  if (binder) return <BinderLabel binder={binder} setCode={setCode} size={size} figures={figures} />;
+  if (size === 'row') {
+    return <RowLabel name={scopeName(setCode)} spoken={triggerName({setCode, size, figures})} figures={figures} />;
+  }
   if (size === 'toolbar') {
     return <span style={{...TRUNCATE, fontSize: `${FONT_SIZES.lg}px`, fontWeight: FONT_WEIGHT.bold}}>{compactLabel(setCode)}</span>;
   }
@@ -618,6 +701,71 @@ function TriggerLabel({setCode, sets, size, figures}: Pick<TriggerProps, 'setCod
 }
 
 const KICKER_STYLE: CSSProperties = {fontSize: `${FONT_SIZES.base}px`, lineHeight: 1.25, color: COLORS.textMuted};
+
+/** A binder of your own's words on the button: its name, and the set picked inside it ("Amber · Set 12"). */
+const binderWords = ({open, atOwnScope}: TriggerBinder, setCode: string) =>
+  atOwnScope ? open.binder.name : `${open.binder.name} · ${compactLabel(setCode)}`;
+
+/** The toolbar's medal: the toolbar's button has no picture column, so it sits beside the words. */
+const TOOLBAR_MEDAL = 18;
+
+/**
+ * How wide a binder's name runs in the toolbar before it is cut short. Its button grows for the
+ * name (owner, 2026-11-03; `pickerNamesBinder` in `BrowseToolbar`), and this holds the growth to
+ * what "Amber · Set 12" needs, so the longest names give the search field back its room.
+ */
+const TOOLBAR_BINDER_WORDS = 170;
+
+/**
+ * The button's words for a binder of your own (#1074): its medal and name in the toolbar, the
+ * name over its figures in the phone's row, and in the panel "Your binder" over its name, or with
+ * a set picked inside it "Amber · Set 12" over the set's name. Named by one screen-reader-only
+ * line, as the row's always is, so no binder's name sits in an attribute.
+ */
+function BinderLabel({binder, setCode, size, figures}: Pick<TriggerProps, 'setCode' | 'size' | 'figures'> & {binder: TriggerBinder}) {
+  const words = binderWords(binder, setCode);
+  if (size === 'row') {
+    const spoken = `Binder: ${words}${figures ? `, ${figures.shown}: ${figures.words}` : ''}`;
+    return <RowLabel name={words} spoken={spoken} figures={figures} />;
+  }
+  const line = size === 'toolbar' ? <ToolbarBinderWords binder={binder} words={words} /> : <PanelBinderWords binder={binder} words={words} setCode={setCode} />;
+  const inside = size === 'panel' && !binder.atOwnScope ? `, ${scopeName(setCode)}` : '';
+  return (
+    <>
+      <span aria-hidden="true" style={{minWidth: 0}}>
+        {line}
+      </span>
+      <span style={VISUALLY_HIDDEN}>{`Binder: ${words}${inside}`}</span>
+    </>
+  );
+}
+
+function ToolbarBinderWords({binder, words}: {binder: TriggerBinder; words: string}) {
+  return (
+    <span style={{display: 'flex', alignItems: 'center', gap: SPACING.xs, minWidth: 0}}>
+      <Medal card={binder.open.cover} size={TOOLBAR_MEDAL} />
+      <span style={{...TRUNCATE, maxWidth: TOOLBAR_BINDER_WORDS, fontSize: `${FONT_SIZES.lg}px`, fontWeight: FONT_WEIGHT.bold}}>
+        {words}
+      </span>
+    </span>
+  );
+}
+
+function PanelBinderWords({binder, words, setCode}: {binder: TriggerBinder; words: string; setCode: string}) {
+  return (
+    <span style={{minWidth: 0, display: 'flex', flexDirection: 'column', gap: SPACING.xxs}}>
+      <span style={{...KICKER_STYLE, ...TRUNCATE}}>{binder.atOwnScope ? 'Your binder' : words}</span>
+      <span style={NAME_STYLE}>{binder.atOwnScope ? binder.open.binder.name : scopeName(setCode)}</span>
+    </span>
+  );
+}
+
+/** The button's picture: a binder of your own's medal, or the choice's own (`choiceArt`). */
+function triggerArt(setCode: string, binder: TriggerBinder | undefined, box: CSSProperties) {
+  if (!binder) return choiceArt(setCode, box);
+  // The panel's box is 40px tall, the row's 22: the medal fills the row's and sits inside the panel's.
+  return <Medal card={binder.open.cover} size={Math.min(Number(box.height), 36)} />;
+}
 
 /**
  * The button, drawn as its size draws it. Only the row's reads the window's width, so the
@@ -642,6 +790,7 @@ function TriggerButton({
   sets,
   size,
   figures,
+  binder,
   open,
   menuId,
   disabled,
@@ -651,7 +800,7 @@ function TriggerButton({
   geometry,
 }: TriggerProps & {geometry: TriggerGeometry}) {
   const {hovered, hoverProps} = useHover();
-  const art = geometry.logoBox && choiceArt(setCode, geometry.logoBox);
+  const art = geometry.logoBox && triggerArt(setCode, binder, geometry.logoBox);
   return (
     <CtaButton
       variant="neutral"
@@ -659,27 +808,50 @@ function TriggerButton({
       aria-haspopup="dialog"
       aria-expanded={open}
       aria-controls={open ? menuId : undefined}
-      // The row's button is named by its words' hidden line (`RowLabel`).
-      aria-label={size === 'row' ? undefined : triggerName({setCode, size, figures})}
-      // The toolbar's short label names a set by its number or code alone: whole on hover.
-      title={size === 'toolbar' ? choiceLabel(setCode) : undefined}
+      {...triggerWording({setCode, size, figures, binder})}
       disabled={disabled}
       onClick={onToggle}
       onKeyDown={onKeyDown}
       onBlur={onBlur}
       style={triggerStyle({on: open, hovered: hovered && !disabled}, {withArt: art !== undefined, geometry})}>
       {art !== undefined && <span style={geometry.logoBox}>{art}</span>}
-      <TriggerLabel setCode={setCode} sets={sets} size={size} figures={figures} />
-      <svg
-        width={geometry.chevron.width}
-        height={geometry.chevron.height}
-        viewBox="0 0 10 6"
-        fill="none"
-        aria-hidden="true"
-        style={{transform: open ? 'rotate(180deg)' : undefined, transition: `transform ${DURATION.fast}ms ${EASING.snappy}`}}>
-        <path d="M1 1l4 4 4-4" stroke={COLORS.text} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <TriggerLabel setCode={setCode} sets={sets} size={size} figures={figures} binder={binder} />
+      <Chevron chevron={geometry.chevron} open={open} />
     </CtaButton>
+  );
+}
+
+type Wording = Pick<TriggerProps, 'setCode' | 'size' | 'figures' | 'binder'>;
+
+/** How the button is named, what hovering it says, and the class a binder's name needs. */
+function triggerWording({setCode, size, figures, binder}: Wording) {
+  // The row's button, and one naming a binder of your own, is named by its words' hidden line.
+  const spoken = size === 'row' || binder !== undefined;
+  return {
+    'aria-label': spoken ? undefined : triggerName({setCode, size, figures}),
+    // The toolbar's short label names a set by its number or code alone, and cuts a binder's
+    // name short: whole on hover.
+    title: size === 'toolbar' ? toolbarTitle(setCode, binder) : undefined,
+    // A binder's name never reaches PostHog's autocapture.
+    className: binder ? 'ph-no-capture' : undefined,
+  };
+}
+
+const toolbarTitle = (setCode: string, binder: TriggerBinder | undefined) =>
+  binder ? binderWords(binder, setCode) : choiceLabel(setCode);
+
+/** The button's chevron, which turns over while its menu is open. */
+function Chevron({chevron, open}: {chevron: TriggerGeometry['chevron']; open: boolean}) {
+  return (
+    <svg
+      width={chevron.width}
+      height={chevron.height}
+      viewBox="0 0 10 6"
+      fill="none"
+      aria-hidden="true"
+      style={{transform: open ? 'rotate(180deg)' : undefined, transition: `transform ${DURATION.fast}ms ${EASING.snappy}`}}>
+      <path d="M1 1l4 4 4-4" stroke={COLORS.text} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
@@ -714,40 +886,6 @@ const LIST_STYLE: CSSProperties = {
   flexDirection: 'column',
   gap: SPACING.xxs,
 };
-
-/**
- * The kit's neutral button as a list row: gold-ringed for the open set, washed on hover. Its
- * first column fits a promo set's code ("RPH"), where a set has its number (#805).
- */
-function optionStyle({on: selected, hovered}: Look): CSSProperties {
-  return {
-    display: 'grid',
-    gridTemplateColumns: '34px minmax(0, 1fr) auto',
-    alignItems: 'center',
-    justifyContent: 'stretch',
-    columnGap: SPACING.sm,
-    width: '100%',
-    minHeight: 0,
-    flexShrink: 0,
-    padding: `${SPACING.sm}px ${SPACING.xs}px`,
-    borderRadius: `${RADIUS.md}px`,
-    border: `1px solid ${selected ? GOLD_GLOW.activeBorder : 'transparent'}`,
-    background: selected ? GOLD_GLOW.activeBg : hovered ? GOLD_GLOW.hoverBg : 'transparent',
-    color: COLORS.text,
-    fontSize: `${FONT_SIZES.lg}px`,
-    textAlign: 'left',
-    // Rows don't boop: a growing row would clip against the list's edge.
-    transform: undefined,
-    transition: `background ${DURATION.fast}ms ${EASING.snappy}`,
-  };
-}
-
-const percentStyle = (done: boolean): CSSProperties => ({
-  ...TABULAR,
-  fontSize: `${FONT_SIZES.base}px`,
-  color: done ? COLORS.primary : COLORS.textMuted,
-  fontWeight: done ? FONT_WEIGHT.bold : FONT_WEIGHT.regular,
-});
 
 interface SetOptionProps {
   setCode: string;
