@@ -6,8 +6,9 @@
  *
  * - A path that names a file gets that file, and one that names a folder gets its index.html,
  *   where the prerender crawl writes each route (dist/<route>/index.html).
- * - Any other path without a dot gets dist/index.html, the home page's capture, as vercel.json's
- *   catch-all rewrite serves it; a path with a dot that names no file is a 404.
+ * - A path that matches one of vercel.json's rewrites to /index.html, one per route of the app,
+ *   gets dist/index.html, the home page's capture. Any other path gets dist/404.html, the app's
+ *   shell, with status 404, as Vercel answers a path that matches nothing.
  * - Every response carries vercel.json's site-wide headers, its Content-Security-Policy among
  *   them, so a page runs under the policy production enforces.
  *
@@ -21,11 +22,14 @@ import {dirname, extname, join, resolve, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {parseArgs} from 'node:util';
 import {contentType} from './lib/mime.mjs';
+import {appRewrites} from './lib/vercel-rewrites.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-/** vercel.json's catch-all rewrite to /index.html, `/((?!.*\.).*)`: every path without a dot. */
-const REWRITTEN = /^\/[^.]*$/;
+/** The repo's vercel.json. */
+function readVercelConfig() {
+  return JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8'));
+}
 
 /** True for a file, false for a folder, undefined for nothing at all. */
 function isFile(path) {
@@ -37,10 +41,11 @@ function isFile(path) {
 }
 
 /**
- * The file a request for `url` gets from `dist`, or undefined for a 404. Exported for
+ * The file a request for `url` gets from `dist`, or undefined for a 404. `rewrites` are
+ * vercel.json's rewrites to the shell, as `appRewrites` reads them. Exported for
  * scripts/serve-dist.test.mjs.
  */
-export function resolveDistFile(dist, url) {
+export function resolveDistFile(dist, url, rewrites = appRewrites(readVercelConfig())) {
   let path;
   try {
     path = decodeURIComponent(url.split('?')[0]);
@@ -52,7 +57,7 @@ export function resolveDistFile(dist, url) {
   const found = isFile(target);
   if (found) return target;
   if (found === false && isFile(join(target, 'index.html'))) return join(target, 'index.html');
-  return REWRITTEN.test(path) ? join(dist, 'index.html') : undefined;
+  return rewrites.some((source) => source.test(path)) ? join(dist, 'index.html') : undefined;
 }
 
 /**
@@ -69,7 +74,15 @@ export function siteHeaders(config) {
 
 /** vercel.json's site-wide headers, read from the repo. */
 export function readSiteHeaders() {
-  return siteHeaders(JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8')));
+  return siteHeaders(readVercelConfig());
+}
+
+/** The file and status a request for `url` gets: its own file, else dist/404.html with a 404. */
+function answerFor(dist, url, rewrites) {
+  const found = resolveDistFile(dist, url, rewrites);
+  if (found) return {file: found, status: 200};
+  const notFoundPage = join(dist, '404.html');
+  return isFile(notFoundPage) ? {file: notFoundPage, status: 404} : undefined;
 }
 
 /**
@@ -81,15 +94,17 @@ export function readSiteHeaders() {
  * two deploys of one build through it, and holds a request.
  */
 export function createDistServer(dist, {headers = readSiteHeaders(), sendPage, bodyFor} = {}) {
+  const rewrites = appRewrites(readVercelConfig());
   return createServer((req, res) => {
     void (async () => {
       const url = req.url ?? '/';
-      const file = resolveDistFile(dist, url);
-      if (!file) {
+      const answer = answerFor(dist, url, rewrites);
+      if (!answer) {
         res.writeHead(404, headers);
         res.end('not found');
         return;
       }
+      const {file, status} = answer;
       let body;
       try {
         body = (await bodyFor?.(file, url)) ?? (await readFile(file));
@@ -99,7 +114,7 @@ export function createDistServer(dist, {headers = readSiteHeaders(), sendPage, b
         res.end('could not read the file');
         return;
       }
-      res.writeHead(200, {...headers, 'Content-Type': contentType(extname(file))});
+      res.writeHead(status, {...headers, 'Content-Type': contentType(extname(file))});
       if (sendPage && extname(file) === '.html') sendPage(res, body, url);
       else res.end(body);
     })();

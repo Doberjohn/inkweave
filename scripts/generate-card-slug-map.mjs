@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
- * Generates middleware/card-slugs.json: a compact { "<id>": "<slug>" } map consumed by the root
- * middleware.ts, which 301-redirects bare numeric /card/:id URLs to their canonical slug URL
- * /card/:id/:slug (#498 Phase 1 follow-up). Built from the SAME engine `cardSlug` the app,
- * sitemap, and prerender use, so the redirect target always matches a prerendered slug page.
+ * Generates middleware-data/card-slugs.json: a compact { "<id>": "<slug>" } map consumed by the
+ * root middleware.ts, which 308s a card URL without its current slug to /card/:id/:slug and
+ * answers an id the map lacks with a 404. Built from the SAME engine `cardSlug` the app, sitemap,
+ * and prerender use, so the redirect target always matches a prerendered slug page. It holds the
+ * preview cards too, since the app gives each its card page and an id left out would 404.
  *
  * Committed AND regenerated in build:vercel, so `vercel build` always finds the map when it
  * compiles the middleware, regardless of build-step ordering.
@@ -16,23 +17,40 @@ import {fileURLToPath} from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const CARDS_FILE = path.join(ROOT, 'apps/web/public/data/allCards.json');
+const CARD_FILES = ['allCards.json', 'previewCards.json'].map((file) =>
+  path.join(ROOT, 'apps/web/public/data', file),
+);
 const OUTPUT_FILE = path.join(ROOT, 'middleware-data/card-slugs.json');
+
+/**
+ * The { id: slug } map for `cards`, allCards.json's first. The first card with an id wins, as in
+ * the app's card list, which drops a preview card whose id allCards.json already holds.
+ */
+export function buildSlugMap(cards, cardSlug) {
+  const map = {};
+  for (const c of cards) map[c.id] ??= cardSlug(c);
+  return map;
+}
 
 async function main() {
   const enginePath = path.join(ROOT, 'packages', 'synergy-engine', 'dist', 'index.js');
   const {cardSlug} = await import(new URL(`file:///${enginePath.replace(/\\/g, '/')}`).href);
-  const {cards} = JSON.parse(fs.readFileSync(CARDS_FILE, 'utf8'));
+  // previewCards.json is absent or empty out of reveal season.
+  const cards = CARD_FILES.filter((file) => fs.existsSync(file)).flatMap(
+    (file) => JSON.parse(fs.readFileSync(file, 'utf8')).cards,
+  );
 
-  const map = {};
-  for (const c of cards) map[c.id] = cardSlug(c);
+  const map = buildSlugMap(cards, cardSlug);
 
   fs.mkdirSync(path.dirname(OUTPUT_FILE), {recursive: true});
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(map) + '\n', 'utf8');
   console.log(`card-slugs.json: ${cards.length} id->slug entries written to middleware-data/card-slugs.json`);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Run only when invoked directly (never when imported).
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

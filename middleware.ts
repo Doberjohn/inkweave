@@ -1,20 +1,17 @@
 /**
  * Vercel Routing Middleware. Two jobs:
  *
- * 1. 308-redirect bare numeric /card/:id to its canonical slug URL /card/:id/:slug (#498 Phase 1
- *    follow-up).
+ * 1. Send every card URL to its one address, /card/:id/:slug.
  *
- *    WHY: Phase 1 made the prerender crawl emit only slug routes, so a bare numeric /card/:id has no
- *    prerendered file and Vercel's SPA rewrite served the homepage shell to non-JS crawlers —
- *    reintroducing the "card URL looks like the homepage" anti-pattern the SEO audit fixed. This
- *    redirects the numeric URL to the prerendered slug page instead.
+ *    A known id under a bare /card/:id or under another slug (a card renamed since, or a slug typed
+ *    by hand) gets a 308 to its current slug URL, the query kept. Its current slug URL falls
+ *    through to the prerendered page. An id the map lacks gets the 404 page with status 404, so a
+ *    crawler reads a made-up card address as missing rather than as a page.
  *
  *    The map (middleware-data/card-slugs.json) is generated at build time from the SAME engine
  *    `cardSlug` the app, sitemap, and prerender use, so the redirect target always matches a
- *    prerendered page. Unknown ids (invalid card, non-numeric) are not in the map and fall through
- *    to the SPA, which renders the noindex not-found page. Two-segment slug routes never match the
- *    matcher, so prerendered pages are served untouched. 308 (permanent) matches the repo's other
- *    vercel.json redirects and preserves the request method.
+ *    prerendered page. 308 (permanent) matches the repo's other vercel.json redirects and
+ *    preserves the request method.
  *
  * 2. Serve a self-unregistering service worker at /sw.js on retired hosts (#634).
  *
@@ -81,14 +78,14 @@ self.addEventListener('activate', (event) => {
 `;
 
 export const config = {
-  // /card/:id: single segment only (/card/:id/:slug is not matched). /sw.js: retired-host worker.
-  matcher: ['/card/:id', '/sw.js'],
+  // The card URLs, bare and with a slug; /sw.js for the retired-host worker.
+  matcher: ['/card/:id', '/card/:id/:slug', '/sw.js'],
 };
 
-export default function middleware(request: Request): Response | undefined {
+export default function middleware(request: Request): Response | Promise<Response> | undefined {
   const url = new URL(request.url);
   if (url.pathname === '/sw.js') return retiredHostServiceWorker(request, url);
-  if (url.pathname.startsWith('/card/')) return cardSlugRedirect(url);
+  if (url.pathname.startsWith('/card/')) return cardAddress(url);
   return undefined;
 }
 
@@ -115,12 +112,36 @@ function retiredHostServiceWorker(request: Request, url: URL): Response | undefi
   });
 }
 
-function cardSlugRedirect(url: URL): Response | undefined {
-  const id = url.pathname.slice('/card/'.length);
-  const slug = SLUGS[id];
-  if (!slug) return undefined; // unknown id: continue to the SPA (renders the noindex not-found page)
+function cardAddress(url: URL): Response | Promise<Response> | undefined {
+  const [id, slug] = url.pathname.slice('/card/'.length).split('/');
+  // Own keys only, so an id like "constructor" can't pick up Object.prototype's.
+  const current = Object.prototype.hasOwnProperty.call(SLUGS, id) ? SLUGS[id] : undefined;
+  if (!current) return notFound(url);
+  if (slug === current) return undefined; // the prerendered page
   return new Response(null, {
     status: 308,
-    headers: {Location: `/card/${id}/${slug}${url.search}`},
+    headers: {Location: `/card/${id}/${current}${url.search}`},
   });
+}
+
+/** For when the 404 page itself can't be fetched, as on a preview behind Vercel's login. */
+const NOT_FOUND_FALLBACK =
+  '<!doctype html><title>Page not found | Inkweave</title><p>Page not found. <a href="/">Go to Inkweave</a></p>';
+
+/**
+ * The deployment's own 404 page, the app's shell, with status 404: a browser runs the app, which
+ * shows its not-found page, and a crawler reads the status. /404.html is outside the matcher, so
+ * fetching it never comes back here.
+ */
+async function notFound(url: URL): Promise<Response> {
+  const headers = {'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store'};
+  try {
+    // A deployment behind Vercel's login answers with a redirect to its login page: take that as
+    // a failure, never serve the login page under this deployment's address.
+    const page = await fetch(new URL('/404.html', url), {redirect: 'manual'});
+    if (page.ok) return new Response(await page.text(), {status: 404, headers});
+  } catch {
+    // fall through to the plain page
+  }
+  return new Response(NOT_FOUND_FALLBACK, {status: 404, headers});
 }
