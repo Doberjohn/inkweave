@@ -280,6 +280,27 @@ describe('BrowseToolbar on Browse', () => {
     expect(order().at(-1)).toBe('Collection');
   });
 
+  it('keeps Collection and the actions, and focus on them, when collection mode comes and goes', () => {
+    const modeActions = <button type="button">Collection actions</button>;
+    const props = defaultProps({...search, modeSwitch, modeActions, ...docked(true)});
+    const setPicker = <button type="button">Binder set</button>;
+    const {rerender} = render(<BrowseToolbar {...props} />);
+    const collection = screen.getByRole('button', {name: 'Collection'});
+    const gear = screen.getByRole('button', {name: 'Collection actions'});
+    gear.focus();
+
+    // As an import from the grid does, opening the binder under the gear's dialog.
+    rerender(<BrowseToolbar {...props} setPicker={setPicker} />);
+    expect(order().slice(-3)).toEqual(['Binder set', 'Collection', 'Collection actions']);
+    expect(screen.getByRole('button', {name: 'Collection'})).toBe(collection);
+    expect(screen.getByRole('button', {name: 'Collection actions'})).toBe(gear);
+    expect(gear).toHaveFocus();
+
+    rerender(<BrowseToolbar {...props} />);
+    expect(screen.getByRole('button', {name: 'Collection actions'})).toBe(gear);
+    expect(gear).toHaveFocus();
+  });
+
   it('keeps the sort at the far end of a toolbar without a mode switch (the playstyle page)', () => {
     render(<BrowseToolbar {...defaultProps(search)} />);
     expect(order().at(-1)).toBe('Sort cards');

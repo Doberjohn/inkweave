@@ -485,8 +485,14 @@ interface ToolbarSlots {
  * the sort ends where the filters panel does. Collection keeps its place in either mode.
  *
  * It ends at its controls: the row under it keeps the room below them (`BROWSE_ROW_TOP`).
+ *
+ * Collection and the collection's actions sit in the same elements in both modes, whose boxes
+ * only change style: a mode change, such as an import from the grid opening the binder, keeps
+ * them, so focus on them, or handed back to the actions' gear when its dialog closes, stays.
  */
 function DockedToolbar({filters, sort, search, chips, modeSwitch, modeActions, setPicker}: ToolbarSlots) {
+  const overPanel = Boolean(setPicker);
+  const controlBox = overPanel ? IN_FLOW : TRAILING_CONTROL_STYLE;
   return (
     <div
       data-testid="browse-toolbar"
@@ -497,30 +503,22 @@ function DockedToolbar({filters, sort, search, chips, modeSwitch, modeActions, s
           {sort}
         </div>
         <div style={{flex: 1, minWidth: 0, marginLeft: BROWSE_GUTTER}}>{search}</div>
-        {setPicker ? (
-          <div style={{...PANEL_SPAN_STYLE, marginLeft: BROWSE_GUTTER}}>
-            <div style={{flex: 1, minWidth: 0}}>{setPicker}</div>
-            {modeSwitch}
-            {modeActions}
-          </div>
-        ) : (
-          <TrailingControls modeSwitch={modeSwitch} modeActions={modeActions} />
-        )}
+        <div style={overPanel ? TRAILING_PANEL_STYLE : IN_FLOW}>
+          {overPanel && <div style={{flex: 1, minWidth: 0}}>{setPicker}</div>}
+          {modeSwitch && <div style={controlBox}>{modeSwitch}</div>}
+          {modeActions && <div style={controlBox}>{modeActions}</div>}
+        </div>
       </div>
       {chips && <div style={{marginTop: SPACING.sm}}>{chips}</div>}
     </div>
   );
 }
 
-/** The far end outside collection mode: Collection, then the collection's actions. */
-function TrailingControls({modeSwitch, modeActions}: Pick<ToolbarSlots, 'modeSwitch' | 'modeActions'>) {
-  return (
-    <>
-      {modeSwitch && <div style={{marginLeft: 10, flexShrink: 0}}>{modeSwitch}</div>}
-      {modeActions && <div style={{marginLeft: 10, flexShrink: 0}}>{modeActions}</div>}
-    </>
-  );
-}
+/** A box that lays out nothing: what it holds sits in the row around it. */
+const IN_FLOW: React.CSSProperties = {display: 'contents'};
+
+/** Collection, and the collection's actions, at the far end outside collection mode. */
+const TRAILING_CONTROL_STYLE: React.CSSProperties = {marginLeft: 10, flexShrink: 0};
 
 /**
  * Controls over a side panel, spanning its width: Filters and the sort, or the set picker,
@@ -533,6 +531,9 @@ const PANEL_SPAN_STYLE: React.CSSProperties = {
   alignItems: 'center',
   gap: 10,
 };
+
+/** The set picker, Collection and the actions over the set panel, one gutter past the search. */
+const TRAILING_PANEL_STYLE: React.CSSProperties = {...PANEL_SPAN_STYLE, marginLeft: BROWSE_GUTTER};
 
 /**
  * The flowing toolbar (tablet and phone, and the playstyle page): its controls wrap as
