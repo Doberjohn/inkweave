@@ -902,7 +902,9 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     }
     await pause(page, STILL_MS);
     await page.mouse.up();
-    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[PER_PAGE].fullName);
+    // CI's WebKit paints the phone at three device pixels to the CSS pixel in software, and while
+    // a sheet is up its frames come seconds apart: the page lands well past the default 5s there.
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[PER_PAGE].fullName, {timeout: 15_000});
     await expect(sheets(page)).toHaveCount(0);
     expect(Math.max(...scrolled), 'sideways scroll during the drag').toBeLessThanOrEqual(0);
   });
@@ -998,9 +1000,11 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[0].fullName);
     await expect(sheets(page)).toHaveCount(0);
 
-    // Both turns' copies and both pages they land on: four pages of twelve.
+    // At least both pages the turns land on. Each turn's copies make two pages more, judged where
+    // a frame draws them: in CI's WebKit, whose frames can come seconds apart, a turn's sheet can
+    // come and go between two, and a stripe never drawn never drew full size.
     const {seen, fullSize} = await stripeLog(page);
-    expect(seen, 'the stripes judged').toBeGreaterThanOrEqual(4 * PER_PAGE);
+    expect(seen, 'the stripes judged').toBeGreaterThanOrEqual(2 * PER_PAGE);
     expect(fullSize, 'the stripes that first drew full size').toBe(0);
   });
 
@@ -1012,7 +1016,12 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
       if (request.resourceType() === 'image') asked.add(request.url());
     });
     await openBinder(page, PHONE);
-    await page.waitForLoadState('networkidle');
+    // Page 1's art, and page 2's loaded ahead. Not network idle, which can settle while the loads
+    // ahead wait on a decode, before they have asked for the rest of page 2's.
+    const cardArt = () => [...asked].filter((src) => new URL(src).pathname.startsWith('/card-images/'));
+    await expect
+      .poll(() => cardArt().length, {message: "page 1's art and page 2's", timeout: 15_000})
+      .toBeGreaterThanOrEqual(2 * PER_PAGE);
     const before = new Set(asked);
     /** The art on the page in view, as its pockets draw it. */
     const artInView = () =>

@@ -123,6 +123,9 @@ test.describe("A friend's collection", () => {
     await sharingSwitch(page).click();
     await expect(sharingSwitch(page)).toHaveAttribute('aria-checked', 'true');
     await expect.poll(() => sharingWrites(world)).toEqual([true]);
+    // The handler records the upsert before its answer reaches the page: the switch holds still
+    // until it does, and a reload before then cuts the save off.
+    await expect(sharingSwitch(page)).toBeEnabled();
 
     await page.reload();
     await expect(sharingSwitch(page)).toHaveAttribute('aria-checked', 'true');

@@ -194,6 +194,8 @@ test.describe('Friends who have it', () => {
     await page.keyboard.press('Enter');
     const dialog = whoHasIt(page);
     await expect(dialog).toBeVisible();
+    // Until its fade ends, the dialog's text measures against a half-drawn panel.
+    await expect(dialog).toHaveCSS('opacity', '1');
     expect((await new AxeBuilder({page}).include('[role="dialog"][aria-label="Friends who have it"]').analyze()).violations).toEqual([]);
 
     await page.keyboard.press('Escape');
@@ -343,6 +345,9 @@ test.describe("Friends who have it, on your binder's pockets", () => {
     await signIn(page);
     await openBinder(page);
     const badge = badgeOn(page, SECOND);
+    // The badge takes its zoom in the frame after it mounts (useZoomBeforePaint), so its box is
+    // read once it holds still: a trial tap waits for the same box two frames running.
+    await badge.tap({trial: true});
     const box = (await badge.boundingBox())!;
     expect(box.height, 'drawn smaller than its tap area').toBeLessThan(32);
     const [x, y] = [box.x + box.width / 2, box.y + box.height / 2];

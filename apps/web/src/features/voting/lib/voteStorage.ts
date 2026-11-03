@@ -88,19 +88,6 @@ export function hasInDepthVote(pair: CardPair): boolean {
   return safeRead(buildStorageKey(DETAIL_PREFIX, pair)) !== null;
 }
 
-export function readInDepthVote(pair: CardPair): StoredInDepthVote | null {
-  const key = buildStorageKey(DETAIL_PREFIX, pair);
-  const raw = safeRead(key);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as StoredInDepthVote;
-  } catch (e) {
-    console.error('[readInDepthVote] Corrupted JSON, clearing key:', key.value, e);
-    safeRemove(key);
-    return null;
-  }
-}
-
 export function writeInDepthVote(
   pair: CardPair,
   payload: Pick<StoredInDepthVote, 'accuracy' | 'score'>,
