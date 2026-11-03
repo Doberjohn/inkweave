@@ -310,6 +310,25 @@ const cardWindow = (page: Page) =>
 
 const pause = (page: Page, ms: number) => page.evaluate((t) => new Promise((resolve) => setTimeout(resolve, t)), ms);
 
+/** Every image URL the page asks for, from now on. */
+function logImages(page: Page): Set<string> {
+  const asked = new Set<string>();
+  page.on('request', (request) => {
+    if (request.resourceType() === 'image') asked.add(request.url());
+  });
+  return asked;
+}
+
+/**
+ * Waits until the page has asked for `count` card images. Not network idle, which can settle while
+ * the art loaded ahead waits on a decode (two at a time, each after the last decodes), before it
+ * has asked for the rest of the page ahead's.
+ */
+async function waitForCardArt(asked: ReadonlySet<string>, count: number, what: string): Promise<void> {
+  const cardArt = () => [...asked].filter((src) => new URL(src).pathname.startsWith('/card-images/')).length;
+  await expect.poll(cardArt, {message: what, timeout: 15_000}).toBeGreaterThanOrEqual(count);
+}
+
 async function openBinder(page: Page, size = {width: 1440, height: 900}): Promise<void> {
   await page.setViewportSize(size);
   await page.addInitScript(watchTurns, POSES);
@@ -889,7 +908,10 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     await expect(shown(page)).toHaveAccessibleName(/^Page 5 of /);
   });
 
-  test('a page dragged across the phone turns with no scroll sideways', async ({page}) => {
+  test('a page dragged across the phone turns with no scroll sideways', async ({page, browserName}) => {
+    // CI's WebKit paints the phone at three device pixels to the CSS pixel in software, and while
+    // a sheet is up its frames come seconds apart: the page lands well past the default 5s there.
+    test.slow(browserName === 'webkit', "CI's WebKit draws a turning sheet's frames seconds apart");
     await openBinder(page, PHONE);
     const box = await edges(lonePage(page));
     const y = box.top + (box.bottom - box.top) / 5;
@@ -902,8 +924,6 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     }
     await pause(page, STILL_MS);
     await page.mouse.up();
-    // CI's WebKit paints the phone at three device pixels to the CSS pixel in software, and while
-    // a sheet is up its frames come seconds apart: the page lands well past the default 5s there.
     await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[PER_PAGE].fullName, {timeout: 15_000});
     await expect(sheets(page)).toHaveCount(0);
     expect(Math.max(...scrolled), 'sideways scroll during the drag').toBeLessThanOrEqual(0);
@@ -988,6 +1008,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
 
   test("a turn draws each page's counts at their pocket's size from their first frame, both ways (owner, 2026-10-26)", async ({
     page,
+    browserName,
   }) => {
     await page.addInitScript(watchStripes);
     await openBinder(page, PHONE);
@@ -1000,28 +1021,22 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[0].fullName);
     await expect(sheets(page)).toHaveCount(0);
 
-    // At least both pages the turns land on. Each turn's copies make two pages more, judged where
-    // a frame draws them: in CI's WebKit, whose frames can come seconds apart, a turn's sheet can
-    // come and go between two, and a stripe never drawn never drew full size.
+    // Both turns' copies and both pages they land on: four pages of twelve. In CI's WebKit, whose
+    // frames can come seconds apart, a turn's sheet can come and go between two, so only the pages
+    // the turns land on are sure to be judged there; a stripe never drawn never drew full size.
     const {seen, fullSize} = await stripeLog(page);
-    expect(seen, 'the stripes judged').toBeGreaterThanOrEqual(2 * PER_PAGE);
+    expect(seen, 'the stripes judged').toBeGreaterThanOrEqual((browserName === 'webkit' ? 2 : 4) * PER_PAGE);
     expect(fullSize, 'the stripes that first drew full size').toBe(0);
   });
 
   test("the pages either side load their art before a turn shows them, and the pages past them don't (owner, 2026-10-26)", async ({
     page,
+    browserName,
   }) => {
-    const asked = new Set<string>();
-    page.on('request', (request) => {
-      if (request.resourceType() === 'image') asked.add(request.url());
-    });
+    test.slow(browserName === 'webkit', "CI's WebKit decodes the art loaded ahead slowly");
+    const asked = logImages(page);
     await openBinder(page, PHONE);
-    // Page 1's art, and page 2's loaded ahead. Not network idle, which can settle while the loads
-    // ahead wait on a decode, before they have asked for the rest of page 2's.
-    const cardArt = () => [...asked].filter((src) => new URL(src).pathname.startsWith('/card-images/'));
-    await expect
-      .poll(() => cardArt().length, {message: "page 1's art and page 2's", timeout: 15_000})
-      .toBeGreaterThanOrEqual(2 * PER_PAGE);
+    await waitForCardArt(asked, 2 * PER_PAGE, "page 1's art and page 2's");
     const before = new Set(asked);
     /** The art on the page in view, as its pockets draw it. */
     const artInView = () =>
@@ -1035,7 +1050,9 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     expect(second.length, "page 2's art").toBeGreaterThan(0);
     expect(second.filter((src) => !before.has(src)), "page 2's art not asked for before the turn").toEqual([]);
 
-    // On page 2, the pages either side are 1 and 3: page 4's art waits for a turn to page 3.
+    // On page 2, the pages either side are 1 and 3: page 4's art waits for a turn to page 3. Page
+    // 3's art asked for first, so the loads ahead have run before the network goes quiet.
+    await waitForCardArt(asked, 3 * PER_PAGE, "page 3's art");
     await page.waitForLoadState('networkidle');
     const onSecond = new Set(asked);
     await mini(page, 4).click();
@@ -1045,7 +1062,12 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     expect(fourth.filter((src) => onSecond.has(src)), "page 4's art asked for while page 2 showed").toEqual([]);
   });
 
-  test('a turn lands on cards already drawn, with no placeholder between, both ways (owner, 2026-10-26)', async ({page}) => {
+  test('a turn lands on cards already drawn, with no placeholder between, both ways (owner, 2026-10-26)', async ({
+    page,
+    browserName,
+  }) => {
+    test.slow(browserName === 'webkit', "CI's WebKit decodes the art loaded ahead slowly");
+    const asked = logImages(page);
     await page.addInitScript(watchArt);
     // Every <img> reports itself not complete, as Safari reported the art it held as a page's
     // pockets remounted: Chromium reports such art complete as its <img> mounts, so it starts
@@ -1054,7 +1076,8 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
       Object.defineProperty(HTMLImageElement.prototype, 'complete', {get: () => false, configurable: true}),
     );
     await openBinder(page, PHONE);
-    // Page 1's art drawn, and page 2's loaded ahead.
+    // Page 1's art drawn, and page 2's loaded ahead: asked for, then done loading.
+    await waitForCardArt(asked, 2 * PER_PAGE, "page 1's art and page 2's");
     await page.waitForLoadState('networkidle');
     await page.evaluate(() => Object.assign((window as unknown as {artLog: ArtLog}).artLog, {mounted: 0, hidden: 0}));
 

@@ -78,7 +78,7 @@ export function writeQuickVote(pair: CardPair, accuracy: Accuracy): void {
 
 // ── In-depth vote storage ──
 
-export interface StoredInDepthVote {
+interface StoredInDepthVote {
   accuracy?: Accuracy;
   score?: Score;
   timestamp: number;

@@ -39,14 +39,19 @@ const BENIGN_CONSOLE: readonly RegExp[] = [
   // resource error that doesn't reflect an app fault.
   /Failed to load resource/i,
   // A mount-time fetch aborted by client navigation (e.g. a test re-navigating
-  // before the fetch settles) rejects with "TypeError: Failed to fetch" in Chromium,
-  // "TypeError: NetworkError when attempting to fetch resource." in Firefox and
-  // "TypeError: Load failed" in WebKit. Every signed-in page reads the friends in
-  // the background, so a signed-in test's reload or second goto meets it. This is
+  // before the fetch settles) rejects with "TypeError: Failed to fetch". This is
   // a navigation artifact, not a data fault — REAL data problems surface as an
   // HTTP status ("...: 404") or "received HTML instead of JSON", which are NOT
   // matched here and still fail the guard.
-  /TypeError: (Failed to fetch|NetworkError when attempting to fetch resource\.|Load failed)/,
+  /TypeError: Failed to fetch/,
+  // The same cut-off fetch in Firefox's ("NetworkError when attempting to fetch resource.") and
+  // WebKit's ("Load failed") words, from a Supabase call only: callSupabase's own line
+  // ("[friends] read sharing failed: ..."). Every signed-in page reads the friends in the
+  // background, so a signed-in test's reload or second goto cuts one off. Each engine words every
+  // failed fetch this way, so the entry is held to that line: supabaseStub.ts answers every
+  // Supabase path, so in E2E a Supabase call that gets no answer was cut off, and the same words
+  // anywhere else (an uncaught rejection, another fetch) still fail the guard.
+  /^\[(collection|sharing|friends|profile|votes)\] [^:]+ failed(, no answer)?: TypeError: (NetworkError when attempting to fetch resource\.|Load failed)/,
   // Firefox-only: a self-hosted @font-face weight that ISN'T preloaded (index.html
   // preloads only the 400 weights) can still be in-flight when a test navigates or
   // tears down — e.g. the compact header renders weight-500 text, then the spec moves
