@@ -57,6 +57,16 @@ export function writeRules(draft: FilterDraft, query: string): string {
   return ruleParamsOf(written).toString();
 }
 
+/**
+ * The longest rules the table holds (`collection_binders_rules`). Every filter picked at once
+ * writes about 930 characters, and holds no card, so only a long search could pass it.
+ */
+export const RULES_MAX = 1000;
+
+/** A promo scope holds no rarity rule, as a binder of promos drops the page's (`binderFilters`). */
+export const scopedDraft = (draft: FilterDraft, scope: string): FilterDraft =>
+  isPromoScope(scope) ? {...draft, opts: {...draft.opts, rarities: undefined}} : draft;
+
 /** Its rules as a filter draft, to edit them: `writeRules` gives back the same rules. */
 export function draftOf(binder: Pick<Binder, 'rules'>): {draft: FilterDraft; query: string} {
   const {inkFilters, typeFilters, costFilters, filters, searchQuery} = readRules(binder);
@@ -116,7 +126,7 @@ export function ruleKinds(binder: Pick<Binder, 'scope' | 'rules'>): string {
 }
 
 /** Names as a sentence runs them: "Amber", "Amber and Steel", "3, 5 and 9+". */
-function inWords(names: readonly string[]): string {
+export function inWords(names: readonly string[]): string {
   if (names.length < 2) return names.join('');
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }

@@ -1,4 +1,4 @@
-import {afterEach, beforeEach, describe, it, expect, vi} from 'vitest';
+import {afterEach, beforeAll, beforeEach, describe, it, expect, vi} from 'vitest';
 import {act, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import {MemoryRouter, useLocation} from 'react-router-dom';
 import {trackEvent} from '../../../shared/lib/analytics';
@@ -12,6 +12,8 @@ vi.mock('../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 const writes = vi.hoisted(() => ({
   moveBinder: vi.fn<(move: {readerId: string; id: string; earlier: boolean}) => Promise<'moved' | 'unmoved' | 'failed'>>(),
   deleteBinder: vi.fn<(binder: {readerId: string; id: string}) => Promise<boolean>>(),
+  updateBinder: vi.fn(),
+  setCover: vi.fn(),
 }));
 vi.mock('./binderShelf', () => writes);
 // The real faces, watched: the shelf must not work them out again on a render that changed none of their inputs.
@@ -65,6 +67,11 @@ const menuOf = (name: string) => {
 };
 
 describe('BinderShelf', () => {
+  // Change cover is lazy: loaded here first, so a busy run's first transform never outlasts a find.
+  beforeAll(async () => {
+    await import('./CoverPicker');
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     writes.moveBinder.mockResolvedValue('moved');
@@ -87,10 +94,47 @@ describe('BinderShelf', () => {
     expect(trackEvent).toHaveBeenLastCalledWith('binder_opened', {from: 'shelf', mine: false, kinds: 'none'});
   });
 
-  it('gives your binders a ⋯ and My collection none, and keeps the whole shelf from autocapture', () => {
+  it("gives every cover a ⋯, My collection's too, and keeps the whole shelf from autocapture", () => {
     const {view} = renderShelf();
-    expect(screen.getAllByRole('button', {name: 'Actions'})).toHaveLength(3);
+    expect(screen.getAllByRole('button', {name: 'Actions'})).toHaveLength(4);
     expect(view.container.firstElementChild).toHaveClass('ph-no-capture');
+  });
+
+  it("offers Open and Change cover alone on My collection's ⋯", () => {
+    renderShelf();
+    fireEvent.click(menuOf('My collection'));
+    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Open', 'Change cover']);
+  });
+
+  it('counts My collection under the cover its shelf picked', () => {
+    renderShelf({shelfCover: 'ruby'});
+    expect(coverFaces.binderFace).toHaveBeenCalledWith(POOL, ENTRIES, null, 'ruby');
+  });
+
+  it("renames a binder from its ⋯, counts it by what changed, and closes once the server has it", async () => {
+    writes.updateBinder.mockResolvedValue({binder: {...BINDERS[1], name: 'Reds'}});
+    renderShelf();
+    fireEvent.click(menuOf('Ruby'));
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Rename'}));
+    const name = screen.getByRole('textbox', {name: 'Name'});
+    expect(name).toHaveValue('Ruby');
+    fireEvent.change(name, {target: {value: 'Reds'}});
+    await act(async () => fireEvent.click(screen.getByRole('button', {name: 'Save'})));
+    expect(writes.updateBinder).toHaveBeenCalledWith({readerId: 'user-1', id: 'b2', patch: {name: 'Reds'}});
+    expect(trackEvent).toHaveBeenCalledWith('binder_changed', {what: 'name'});
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it("opens Change cover on a binder and on My collection, each titled by its name", async () => {
+    renderShelf();
+    fireEvent.click(menuOf('Ruby'));
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Change cover'}));
+    expect(await screen.findByRole('heading', {name: 'Cover for Ruby'})).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: 'Cancel'}));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    fireEvent.click(menuOf('My collection'));
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Change cover'}));
+    expect(await screen.findByRole('heading', {name: 'Cover for My collection'})).toBeInTheDocument();
   });
 
   it('draws a shimmer for My collection, and no link, while the cards, the account or the binders load', () => {

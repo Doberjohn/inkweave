@@ -10,6 +10,13 @@ const body = (
   </p>
 );
 
+/** Stands in for a caller's foot: the app's Save as a binder sits there. */
+const foot = (
+  <p style={{margin: 0, color: COLORS.textMuted, fontSize: `${FONT_SIZES.sm}px`}}>
+    The caller&apos;s foot, which never scrolls with the filters.
+  </p>
+);
+
 const meta = {
   title: 'Components/FilterDialog',
   component: FilterDialog,
@@ -32,4 +39,12 @@ export const Modal: Story = {};
 
 export const Drawer: Story = {
   args: {variant: 'drawer'},
+};
+
+export const ModalWithFoot: Story = {
+  args: {foot},
+};
+
+export const DrawerWithFoot: Story = {
+  args: {variant: 'drawer', foot},
 };

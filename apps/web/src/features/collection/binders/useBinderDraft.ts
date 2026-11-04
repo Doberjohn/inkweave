@@ -2,20 +2,13 @@ import {useState} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {getUniqueClassifications, getUniqueKeywords} from '../../cards/loader';
 import {useDraftFilters} from '../../../shared/hooks/useDraftFilters';
-import type {FilterDraft} from '../../../shared/hooks/useFilterParams';
 import {WHOLE_COLLECTION, binderContents, binderRarities, binderSets, isPromoScope} from '../binderCards';
 import type {CollectionEntries} from '../collectionParser';
 import {isHeld} from '../collectionStats';
 import {faceOf, type BinderFace} from './binderCovers';
 import {clampBinderName, isValidBinderName, trimBinderName} from './binderName';
 import type {BinderInput} from './binderRepository';
-import {draftOf, ruleLine, ruleParts, rulePool, writeRules, type Binder} from './binderRules';
-
-/**
- * The longest rules the table holds (`collection_binders_rules`). Every filter picked at once
- * writes about 930 characters, and holds no card, so only a long search could pass it.
- */
-const RULES_MAX = 1000;
+import {RULES_MAX, draftOf, ruleLine, ruleParts, rulePool, scopedDraft, writeRules, type Binder} from './binderRules';
 
 /** The pockets on a binder's first page, as the window previews them. */
 const FIRST_PAGE = 12;
@@ -28,10 +21,18 @@ export interface DraftStart {
   rules: string;
 }
 
-/** A start for Edit rules (a binder), or for New binder (null): no name, every set, no rule. */
-export const startOf = (binder: Binder | null): DraftStart =>
+/** A new binder's name, Sets and rules, as Save as a binder hands them to the window. */
+export type NewStart = Omit<DraftStart, 'binder'>;
+
+const EMPTY_START: NewStart = {name: '', scope: WHOLE_COLLECTION, rules: ''};
+
+/**
+ * A start for Edit rules (a binder), or for a new binder (null): the `seed` Save as a binder
+ * hands over, else no name, every set and no rule.
+ */
+export const startOf = (binder: Binder | null, seed: NewStart = EMPTY_START): DraftStart =>
   binder === null
-    ? {binder, name: '', scope: WHOLE_COLLECTION, rules: ''}
+    ? {binder, ...seed}
     : {binder, name: binder.name, scope: binder.scope, rules: binder.rules};
 
 /** One pocket of the first page: its card, and whether you have it, else it shows grey. */
@@ -42,10 +43,6 @@ interface PreviewPocket {
 
 /** What a change to a binder comes to, for `binder_changed`: its Sets or rules, else its name alone. */
 export type ChangeKind = 'rules' | 'name';
-
-/** A promo scope holds no rarity rule, as a binder of promos drops the page's (`binderFilters`). */
-const scopedDraft = (draft: FilterDraft, scope: string): FilterDraft =>
-  isPromoScope(scope) ? {...draft, opts: {...draft.opts, rarities: undefined}} : draft;
 
 /**
  * The Rarity options at a Sets: the binder's (`binderRarities`), none for promos alone. A rarity

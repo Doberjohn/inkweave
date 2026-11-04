@@ -456,6 +456,190 @@ test.describe('the New binder window', () => {
   });
 });
 
+const filterPanel = (page: Page) => page.getByRole('complementary', {name: 'Filters'});
+
+/** Save as a binder's box, once it shows: 20 s, for the dev server compiling its chunk on a cold run. */
+async function boxOf(page: Page): Promise<Locator> {
+  const box = page.getByRole('dialog', {name: 'Save as a binder'});
+  await expect(box).toBeVisible({timeout: 20_000});
+  return box;
+}
+
+/** The page's cards, once a filter's write has landed: the binder's tiles, read when they stop changing. */
+async function settledTiles(page: Page): Promise<(string | null)[]> {
+  let last: (string | null)[] = [];
+  await expect
+    .poll(async () => {
+      const now = await tileNames(page);
+      const same = JSON.stringify(now) === JSON.stringify(last);
+      last = now;
+      return same && now.length > 0;
+    })
+    .toBe(true);
+  return last;
+}
+
+test.describe('Save as a binder', () => {
+  test("keeps My collection's Amber ink as a binder: one POST, opened in place over the same cards, the panel clear", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name.startsWith('mobile-'), "The docked filter panel's foot");
+    const world = worldOf();
+    await signIn(page, world);
+    await openAt(page, '/browse?binder=all');
+    const panel = filterPanel(page);
+    const save = panel.getByRole('button', {name: 'Save as a binder'});
+    await expect(save, 'no filter, no offer').toHaveCount(0);
+
+    await panel.getByRole('button', {name: 'Filter by Amber'}).click();
+    await expect(page).toHaveURL(/[?&]ink=Amber(&|$)/);
+    const line = panel.getByText(/^Keeps Amber ink as a binder of its own: [\d,]+ cards$/);
+    await expect(line).toBeVisible();
+    // Pinned to the panel's bottom edge, over its sections, so it shows with no scroll.
+    await expect(save).toBeInViewport();
+    const [panelBox, lineBox] = await Promise.all([panel.boundingBox(), line.boundingBox()]);
+    expect(panelBox!.y + panelBox!.height - (lineBox!.y + lineBox!.height), 'at the foot').toBeLessThan(40);
+    const onScreen = await settledTiles(page);
+
+    await save.click();
+    const box = await boxOf(page);
+    await expect(box.getByRole('textbox', {name: 'Name'})).toHaveValue('Amber');
+    await box.getByRole('button', {name: 'Save binder'}).click();
+    await expect(box).toHaveCount(0);
+    expect(world.calls).toEqual([
+      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber', cover_id: null}},
+    ]);
+    await expect(page).toHaveURL(/[?&]custom=b-made-3(&|$)/);
+    expect(new URL(page.url()).searchParams.has('ink'), 'the filter panel is clear').toBe(false);
+    await expect(binderButton(page)).toHaveAccessibleName(named('Binder: Amber'));
+    await expect(binderButton(page)).toBeFocused();
+    expect(await settledTiles(page)).toEqual(onScreen);
+  });
+
+  test('inside Amber, offers nothing for Steel, and with Epic on saves a binder of Amber Epics holding the cards on screen', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name.startsWith('mobile-'), "The docked filter panel's foot");
+    const world = worldOf();
+    await signIn(page, world);
+    await openAt(page, `/browse?binder=all&custom=${AMBER.id}`);
+    const panel = filterPanel(page);
+    const save = panel.getByRole('button', {name: 'Save as a binder'});
+
+    await panel.getByRole('button', {name: 'Filter by Steel'}).click();
+    await expect(page).toHaveURL(/[?&]ink=Steel(&|$)/);
+    await expect(save, 'Steel widens Amber, so no binder joins them').toHaveCount(0);
+    await panel.getByRole('button', {name: 'Filter by Steel'}).click();
+
+    await panel.getByRole('group', {name: 'Rarity filters'}).getByRole('button', {name: 'Epic'}).click();
+    await expect(page).toHaveURL(/[?&]rarity=Epic(&|$)/);
+    await expect(save).toBeVisible();
+    const onScreen = await settledTiles(page);
+    await save.click();
+    const box = await boxOf(page);
+    await box.getByRole('button', {name: 'Save binder'}).click();
+    await expect(box).toHaveCount(0);
+    expect(world.calls).toEqual([
+      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber&rarity=Epic', cover_id: null}},
+    ]);
+    await expect(page).toHaveURL(/[?&]custom=b-made-3(&|$)/);
+    expect(await settledTiles(page)).toEqual(onScreen);
+  });
+
+  test("on a phone, the Binder sheet's Save as a binder applies its draft, and the box saves and opens the binder", async ({
+    page,
+  }, testInfo) => {
+    test.skip(!testInfo.project.name.startsWith('mobile-'), "A phone's Binder sheet");
+    const world = worldOf();
+    await signIn(page, world);
+    await openAt(page, '/browse?binder=all');
+
+    await page.getByTestId('phone-binder-row').getByRole('button', {name: /^Filters/}).click();
+    const sheet = page.getByRole('dialog', {name: 'Binder', exact: true});
+    await sheet.getByRole('button', {name: 'Filter by Amber'}).click();
+    await sheet.getByRole('button', {name: 'Save as a binder'}).click();
+    // The press applied the draft and closed the sheet, under the box.
+    await expect(sheet).toHaveCount(0);
+    await expect(page).toHaveURL(/[?&]ink=Amber(&|$)/);
+
+    const box = await boxOf(page);
+    await box.getByRole('button', {name: 'Save binder'}).click();
+    await expect(box).toHaveCount(0);
+    expect(world.calls).toEqual([
+      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber', cover_id: null}},
+    ]);
+    await expect(page).toHaveURL(/[?&]custom=b-made-3(&|$)/);
+    await expect(binderButton(page)).toHaveAccessibleName(named('Binder: Amber'));
+  });
+});
+
+/** Change cover's dialog, once it shows: 20 s, for its chunk on a cold run. */
+async function pickerOf(page: Page): Promise<Locator> {
+  const picker = page.getByRole('dialog', {name: 'Change cover'});
+  await expect(picker).toBeVisible({timeout: 20_000});
+  return picker;
+}
+
+/** The art a shelf cover draws, or the art a picker's card shows. */
+const artOf = (where: Locator) => where.locator('img').first().getAttribute('src');
+
+/**
+ * Picks the second card Change cover offers, which is never the cover the rarest card would
+ * give, and answers its art.
+ */
+async function pickSecondCard(picker: Locator): Promise<string | null> {
+  const choice = picker.getByRole('list', {name: 'Your cards'}).getByRole('button').nth(1);
+  const art = await artOf(choice);
+  await choice.click();
+  return art;
+}
+
+test.describe('Rename and Change cover', () => {
+  test('rename a binder, then change its cover and My collection\'s: one PATCH each, one upsert, and the shelf shows each', async ({
+    page,
+  }) => {
+    const world = worldOf();
+    await signIn(page, world);
+    await page.goto('/browse?binder=shelf');
+
+    await actionsOf(page, 'Epics').click({timeout: 20_000});
+    await page.getByRole('menuitem', {name: 'Rename'}).click();
+    const rename = page.getByRole('dialog', {name: 'Rename binder'});
+    await rename.getByRole('textbox', {name: 'Name'}).fill('Epic chase');
+    await rename.getByRole('button', {name: 'Save'}).click();
+    await expect(rename).toHaveCount(0);
+    await expect.poll(() => coverNames(page)).toEqual(['My collection', 'Amber', 'Amber vines', 'Epic chase']);
+    await expect(actionsOf(page, 'Epic chase')).toBeFocused();
+
+    await actionsOf(page, 'Amber').click();
+    await page.getByRole('menuitem', {name: 'Change cover'}).click();
+    let picker = await pickerOf(page);
+    await expect(picker.getByRole('heading', {name: 'Cover for Amber'})).toBeVisible();
+    const amberArt = await pickSecondCard(picker);
+    await expect(picker).toHaveCount(0);
+    await expect.poll(() => artOf(shelfCover(page, 'Amber'))).toBe(amberArt);
+
+    await actionsOf(page, 'My collection').click();
+    await page.getByRole('menuitem', {name: 'Change cover'}).click();
+    picker = await pickerOf(page);
+    await expect(picker.getByRole('heading', {name: 'Cover for My collection'})).toBeVisible();
+    const collectionArt = await pickSecondCard(picker);
+    await expect(picker).toHaveCount(0);
+    await expect.poll(() => artOf(shelfCover(page, 'My collection'))).toBe(collectionArt);
+
+    expect(world.calls).toEqual([
+      {what: 'change', id: EPICS.id, patch: {name: 'Epic chase'}},
+      {what: 'change', id: AMBER.id, patch: {cover_id: expect.any(String)}},
+      {what: 'shelf cover', row: {owner_id: COLLECTOR_ID, cover_id: world.shelfCover}, onConflict: 'owner_id'},
+    ]);
+    expect(world.shelfCover).toEqual(expect.any(String));
+
+    // Read back on the next visit: My collection keeps the card picked.
+    await page.reload();
+    await expect.poll(() => artOf(shelfCover(page, 'My collection')), {timeout: 20_000}).toBe(collectionArt);
+  });
+});
+
 test.describe("a friend's binder", () => {
   const ME: Player = {id: COLLECTOR_ID, handle: 'sapphire_dragon_204', displayName: 'Sapphire Dragon 204', code: E2E_FRIEND_CODE};
   const RUBY: Player = {id: 'e2e-ruby', handle: 'ruby_hero_042', displayName: 'Ruby Hero 042', code: 'RH42Q7KM'};

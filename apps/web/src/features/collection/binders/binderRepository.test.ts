@@ -1,5 +1,14 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {SHELF_FULL, deleteBinderRow, insertBinderRow, listBinders, moveBinderRow, updateBinderRow} from './binderRepository';
+import {
+  SHELF_FULL,
+  deleteBinderRow,
+  getShelfCover,
+  insertBinderRow,
+  listBinders,
+  moveBinderRow,
+  setShelfCover,
+  updateBinderRow,
+} from './binderRepository';
 
 // A Supabase double, as sharingRepository.test.ts builds it: .env.local puts real credentials in
 // scope under vitest, so an unmocked provider would talk to the real project.
@@ -11,6 +20,8 @@ const mockDelete = vi.hoisted(() => vi.fn());
 const mockRpc = vi.hoisted(() => vi.fn());
 const mockInsert = vi.hoisted(() => vi.fn());
 const mockUpdate = vi.hoisted(() => vi.fn());
+const mockShelfRead = vi.hoisted(() => vi.fn());
+const mockUpsert = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../shared/lib/supabase', () => ({
   loadSupabase: () => Promise.resolve(mockState.client),
@@ -26,13 +37,14 @@ beforeEach(() => {
       select: (columns: string) => ({
         eq: (column: string, value: string) => {
           mockEq({table, columns, [column]: value});
-          return {order: mockOrder};
+          return {order: mockOrder, maybeSingle: mockShelfRead};
         },
       }),
       delete: () => ({eq: (column: string, value: string) => mockDelete({table, [column]: value})}),
       insert: (row: object) => ({
         select: (columns: string) => ({single: () => mockInsert({table, row, columns})}),
       }),
+      upsert: (row: object, options: object) => mockUpsert({table, row, options}),
       update: (fields: object) => ({
         eq: (column: string, value: string) => ({
           select: (columns: string) => ({maybeSingle: () => mockUpdate({table, fields, [column]: value, columns})}),
@@ -178,5 +190,48 @@ describe('updateBinderRow', () => {
   it('turns a throw into a network error', async () => {
     mockUpdate.mockRejectedValue(new TypeError('Failed to fetch'));
     await expect(updateBinderRow('b1', {coverId: null})).resolves.toEqual({data: null, error: 'Network error'});
+  });
+});
+
+describe('getShelfCover', () => {
+  it("reads the card the caller's shelf row names", async () => {
+    mockShelfRead.mockResolvedValue({data: {cover_id: '2104'}, error: null});
+    await expect(getShelfCover('me')).resolves.toEqual({data: '2104', error: null});
+    expect(mockEq).toHaveBeenCalledWith({table: 'collection_shelf', columns: 'cover_id', owner_id: 'me'});
+  });
+
+  it('answers no card with no row, and for a cover the guard refuses', async () => {
+    mockShelfRead.mockResolvedValue({data: null, error: null});
+    await expect(getShelfCover('me')).resolves.toEqual({data: null, error: null});
+    mockShelfRead.mockResolvedValue({data: {cover_id: 'not a card'}, error: null});
+    await expect(getShelfCover('me')).resolves.toEqual({data: null, error: null});
+  });
+
+  it('passes a refusal on as an error', async () => {
+    mockShelfRead.mockResolvedValue({data: null, error: {message: 'permission denied', code: '42501'}});
+    await expect(getShelfCover('me')).resolves.toEqual({data: null, error: 'permission denied'});
+  });
+});
+
+describe('setShelfCover', () => {
+  it('upserts the two columns the table grants, on the owner', async () => {
+    mockUpsert.mockResolvedValue({error: null});
+    await expect(setShelfCover('me', '2104')).resolves.toEqual({data: null, error: null});
+    expect(mockUpsert).toHaveBeenCalledExactlyOnceWith({
+      table: 'collection_shelf',
+      row: {owner_id: 'me', cover_id: '2104'},
+      options: {onConflict: 'owner_id'},
+    });
+  });
+
+  it('writes no card to put the rarest back', async () => {
+    mockUpsert.mockResolvedValue({error: null});
+    await setShelfCover('me', null);
+    expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({row: {owner_id: 'me', cover_id: null}}));
+  });
+
+  it('passes a refusal on as an error', async () => {
+    mockUpsert.mockResolvedValue({error: {message: 'permission denied', code: '42501'}});
+    await expect(setShelfCover('me', '2104')).resolves.toEqual({data: null, error: 'permission denied'});
   });
 });

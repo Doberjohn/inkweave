@@ -36,4 +36,25 @@ describe('BrowseSidePanel', () => {
     expect(screen.queryByRole('button', {name: 'Clear all'})).not.toBeInTheDocument();
     expect(screen.getByRole('complementary', {name: 'Filters'})).toHaveFocus();
   });
+
+  it('pins its foot to the bottom after the filters, which stay where they were', () => {
+    const {rerender} = render(<BrowseSidePanel filterProps={filterProps} activeFilterCount={1} onClearFilters={vi.fn()} />);
+    const panel = screen.getByRole('complementary', {name: 'Filters'});
+    const filters = panel.firstElementChild;
+
+    rerender(
+      <BrowseSidePanel
+        filterProps={filterProps}
+        activeFilterCount={1}
+        onClearFilters={vi.fn()}
+        foot={<button type="button">Save as a binder</button>}
+      />,
+    );
+
+    const strip = screen.getByRole('button', {name: 'Save as a binder'}).parentElement as HTMLElement;
+    expect(panel.firstElementChild).toBe(filters);
+    expect(panel.lastElementChild).toBe(strip);
+    expect(strip.style.position).toBe('sticky');
+    expect(strip.style.bottom).toBe('0px');
+  });
 });

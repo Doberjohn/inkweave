@@ -25,7 +25,7 @@ function rowsOf({shelf, pool, entries}: BinderChoices): BinderRow[] {
   const rowOf = (binder: Binder | null): BinderRow => ({
     binder,
     name: binder?.name ?? MY_COLLECTION,
-    ...(pool === null ? {} : binderFace(pool, entries, binder)),
+    ...(pool === null ? {} : binderFace(pool, entries, binder, shelf.shelfCover ?? null)),
   });
   return [rowOf(null), ...shelf.binders.map(rowOf)];
 }

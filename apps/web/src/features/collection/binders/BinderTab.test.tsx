@@ -84,6 +84,11 @@ describe('BinderList', () => {
     expect(row(/^Amber,/).querySelector('img')).toHaveAttribute('src', 'https://art.test/amber-rare-sm.avif');
   });
 
+  it("draws My collection under the cover its shelf picked", () => {
+    renderList({shelf: {status: 'ready', binders: [AMBER], shelfCover: 'amber-rare', retry: vi.fn()}});
+    expect(row(/^My collection,/).querySelector('img')).toHaveAttribute('src', 'https://art.test/amber-rare-sm.avif');
+  });
+
   it('shows a dash for a binder whose rules hold no card', () => {
     renderList({shelf: {status: 'ready', binders: [SAPPHIRE], retry: vi.fn()}});
     expect(row(/^Sapphire/)).toHaveAccessibleName('Sapphire, no cards');

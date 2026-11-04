@@ -2,9 +2,11 @@ import {enqueueWrite} from '../collectionWriteQueue';
 import {
   SHELF_FULL,
   deleteBinderRow,
+  getShelfCover,
   insertBinderRow,
   listBinders,
   moveBinderRow,
+  setShelfCover,
   updateBinderRow,
   type BinderInput,
 } from './binderRepository';
@@ -28,6 +30,8 @@ import type {Binder} from './binderRules';
 export interface BinderShelf {
   status: 'idle' | 'loading' | 'ready' | 'failed';
   binders: readonly Binder[];
+  /** My collection's cover once `ready`: the card picked, or null (or absent) for the rarest. */
+  shelfCover?: string | null;
   retry: () => void;
 }
 
@@ -35,6 +39,8 @@ export interface BinderShelf {
 export interface Held {
   readerId: string;
   value: readonly Binder[] | 'loading' | 'failed';
+  /** My collection's cover, read with the binders. */
+  shelfCover?: string | null;
 }
 
 let held: Held | null = null;
@@ -65,13 +71,21 @@ function forgetBinders(): void {
   if (held !== null) publish(null);
 }
 
+/** The binders and My collection's cover, in one read: either failing fails both. */
+async function readShelf(readerId: string): Promise<Held> {
+  const [binders, cover] = await Promise.all([listBinders(readerId), getShelfCover(readerId)]);
+  const refused = binders.error !== null || cover.error !== null;
+  if (refused || binders.data === null) return {readerId, value: 'failed'};
+  return {readerId, value: binders.data, shelfCover: cover.data};
+}
+
 /** Reads `readerId`'s binders in the write queue; a failed re-read keeps the binders on show. */
 async function load(readerId: string): Promise<void> {
   const mine = ++newest;
   startLoading({readerId, value: 'loading'});
-  const {data, error} = await enqueueWrite(readerId, () => listBinders(readerId));
+  const read = await enqueueWrite(readerId, () => readShelf(readerId));
   if (mine !== newest) return;
-  finishLoad({readerId, value: error === null && data !== null ? data : 'failed'});
+  finishLoad(read);
 }
 
 /** A read shows loading, unless this reader's binders are already in view. */
@@ -149,6 +163,11 @@ function heldBinders({readerId}: {readerId: string}): readonly Binder[] | null {
   return held?.readerId === readerId && Array.isArray(held.value) ? held.value : null;
 }
 
+/** Shows the reader's binders changed, My collection's cover kept. */
+function publishBinders(readerId: string, binders: readonly Binder[]): void {
+  publish({readerId, value: binders, shelfCover: held?.readerId === readerId ? held.shelfCover : null});
+}
+
 /** The shelf with the binder at `from` and its neighbour at `to` in each other's places. */
 function swapped(binders: readonly Binder[], {from, to}: {from: number; to: number}): Binder[] {
   const next = [...binders];
@@ -166,7 +185,7 @@ function showMove(move: BinderMove): void {
   const binders = heldBinders(move) ?? [];
   const from = binders.findIndex((binder) => binder.id === move.id);
   const to = from + (move.earlier ? -1 : 1);
-  if (from !== -1 && binders[to] !== undefined) publish({readerId: move.readerId, value: swapped(binders, {from, to})});
+  if (from !== -1 && binders[to] !== undefined) publishBinders(move.readerId, swapped(binders, {from, to}));
   void load(move.readerId);
 }
 
@@ -193,7 +212,7 @@ export async function deleteBinder({readerId, id}: BinderRef): Promise<boolean> 
   const {error} = await enqueueWrite(readerId, () => deleteBinderRow(id));
   if (error !== null) return false;
   const binders = heldBinders({readerId});
-  if (binders !== null) publish({readerId, value: binders.filter((binder) => binder.id !== id)});
+  if (binders !== null) publishBinders(readerId, binders.filter((binder) => binder.id !== id));
   return true;
 }
 
@@ -214,7 +233,7 @@ export async function createBinder({readerId, input}: {readerId: string; input: 
   if (error !== null || data === null) return {problem: 'failed'};
   const binders = heldBinders({readerId});
   if (binders === null) void load(readerId);
-  else publish({readerId, value: [...binders, data]});
+  else publishBinders(readerId, [...binders, data]);
   return {binder: data};
 }
 
@@ -230,8 +249,27 @@ export async function updateBinder({readerId, id, patch}: BinderRef & {patch: Pa
   const {data, error} = await enqueueWrite(readerId, () => updateBinderRow(id, patch));
   if (error !== null) return {problem: 'failed'};
   const binders = heldBinders({readerId});
-  if (binders !== null) publish({readerId, value: replaced(binders, {id, row: data})});
+  if (binders !== null) publishBinders(readerId, replaced(binders, {id, row: data}));
   return data !== null ? {binder: data} : {problem: 'gone'};
+}
+
+/** What a cover's change came to: set, the binder deleted elsewhere, or it failed. */
+export type CoverResult = 'set' | 'gone' | 'failed';
+
+/**
+ * Sets a cover, or null to put the rarest card back: a binder's (`id`), or My collection's (null),
+ * which `collection_shelf` holds. The shelf shows it once the server has.
+ */
+export async function setCover({readerId, id, coverId}: {readerId: string; id: string | null; coverId: string | null}): Promise<CoverResult> {
+  if (id !== null) {
+    const changed = await updateBinder({readerId, id, patch: {coverId}});
+    return 'binder' in changed ? 'set' : changed.problem;
+  }
+  const {error} = await enqueueWrite(readerId, () => setShelfCover(readerId, coverId));
+  if (error !== null) return 'failed';
+  const binders = heldBinders({readerId});
+  if (binders !== null) publish({readerId, value: binders, shelfCover: coverId});
+  return 'set';
 }
 
 /** The shelf with one binder in the server's row, or without it when the server holds it no more. */
@@ -261,14 +299,14 @@ export function viewOf(now: Held | null, {uid, hasCollection, syncing, wanted}: 
   if (!hasCollection) return {status: 'ready', binders: NONE, retry};
   // Another reader's, or none yet: the hook's own read starts once it has rendered.
   if (now?.readerId !== uid) return {status: wanted ? 'loading' : 'idle', binders: NONE, retry};
-  return heldView(now.value, retry);
+  return heldView(now, retry);
 }
 
 /** What the module's own answer says, once it is this reader's. */
-function heldView(value: Held['value'], retry: () => void): BinderShelf {
+function heldView({value, shelfCover}: Held, retry: () => void): BinderShelf {
   if (value === 'loading') return {status: 'loading', binders: NONE, retry};
   if (value === 'failed') return {status: 'failed', binders: NONE, retry};
-  return {status: 'ready', binders: value, retry};
+  return {status: 'ready', binders: value, shelfCover: shelfCover ?? null, retry};
 }
 
 /**

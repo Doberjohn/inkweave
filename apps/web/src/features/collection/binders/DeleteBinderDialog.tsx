@@ -1,8 +1,7 @@
-import {useRef, type CSSProperties, type ReactNode} from 'react';
-import {createPortal} from 'react-dom';
-import {BottomSheet, CtaButton, DialogShell} from '../../../shared/components';
-import {useDialogFocus, useScrollLock, useTransitionPresence} from '../../../shared/hooks';
-import {COLORS, DIALOG_BODY, DIALOG_TITLE, FONTS, FONT_SIZES, LINE_HEIGHT, SPACING} from '../../../shared/constants';
+import type {CSSProperties} from 'react';
+import {CtaButton} from '../../../shared/components';
+import {COLORS, DIALOG_BODY, DIALOG_TITLE, FONT_SIZES, LINE_HEIGHT, SPACING} from '../../../shared/constants';
+import {AskDialog} from './binderDialogs';
 
 export interface DeleteBinderDialogProps {
   isOpen: boolean;
@@ -38,23 +37,10 @@ export function DeleteBinderDialog({isOpen, name, isMobile, deleting, failed, on
   const close = () => {
     if (!deleting) onClose();
   };
-  const body = <AskBody name={name} deleting={deleting} failed={failed} onConfirm={onConfirm} onKeep={close} />;
-  if (isMobile) {
-    return (
-      <PhoneSheet isOpen={isOpen} onClose={close}>
-        {body}
-      </PhoneSheet>
-    );
-  }
   return (
-    <DialogShell
-      isOpen={isOpen}
-      onClose={close}
-      ariaLabel={DIALOG_NAME}
-      size="sm"
-      panelStyle={{padding: SPACING.xl, fontFamily: FONTS.body}}>
-      {body}
-    </DialogShell>
+    <AskDialog isOpen={isOpen} isMobile={isMobile} onClose={close} dialogName={DIALOG_NAME} size="sm">
+      <AskBody name={name} deleting={deleting} failed={failed} onConfirm={onConfirm} onKeep={close} />
+    </AskDialog>
   );
 }
 
@@ -85,26 +71,5 @@ function AskBody({name, deleting, failed, onConfirm, onKeep}: AskBodyProps) {
         </CtaButton>
       </div>
     </div>
-  );
-}
-
-/** The phone's sheet: the house hook trio over `BottomSheet`, in a portal so no ancestor's transform holds it. */
-function PhoneSheet({isOpen, onClose, children}: {isOpen: boolean; onClose: () => void; children: ReactNode}) {
-  const sheetRef = useRef<HTMLDivElement>(null);
-  const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
-  useScrollLock(isOpen);
-  const {handleKeyDown} = useDialogFocus({isOpen, containerRef: sheetRef, initialFocusRef: sheetRef, onClose});
-  if (!mounted) return null;
-  return createPortal(
-    <BottomSheet
-      visible={visible}
-      onClose={onClose}
-      onTransitionEnd={onTransitionEnd}
-      ariaLabel={DIALOG_NAME}
-      sheetRef={sheetRef}
-      onKeyDown={handleKeyDown}>
-      <div style={{padding: `${SPACING.sm}px ${SPACING.lg}px ${SPACING.lg}px`}}>{children}</div>
-    </BottomSheet>,
-    document.body,
   );
 }

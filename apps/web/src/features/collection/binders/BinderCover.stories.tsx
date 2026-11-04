@@ -41,13 +41,18 @@ type Story = StoryObj<typeof meta>;
 /** A binder of your own, its ⋯ at the top right, shown here as hover shows it. */
 export const WithActions: Story = {
   args: {
-    actions: <BinderMenu first={false} last={false} alwaysShown onOpen={fn()} onMove={fn()} onDelete={fn()} />,
+    actions: <BinderMenu alwaysShown onOpen={fn()} moves={{first: false, last: false, onMove: fn()}} onDelete={fn()} />,
   },
 };
 
-/** My collection: no ⋯ on the shelf. */
+/** My collection, whose ⋯ offers Open and Change cover. */
 export const MyCollection: Story = {
-  args: {name: 'My collection', rule: 'Every card', figures: {complete: 1704, master: 900, cards: 3500}},
+  args: {
+    name: 'My collection',
+    rule: 'Every card',
+    figures: {complete: 1704, master: 900, cards: 3500},
+    actions: <BinderMenu alwaysShown onOpen={fn()} onChangeCover={fn()} />,
+  },
 };
 
 /** Rules that hold none of your cards: an empty sleeve. */

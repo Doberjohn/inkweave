@@ -17,6 +17,7 @@ import {DeleteBinderDialog} from './DeleteBinderDialog';
 import {NewBinderTile, ShelfFullLine} from './NewBinderTile';
 import {MY_COLLECTION, SHELF_MAX} from './shelfWords';
 import type {WindowAsk} from './useBinderWindow';
+import {useShelfChanges} from './useShelfChanges';
 
 export interface BinderShelfProps {
   /** Your binders in place order, and whether they have loaded. */
@@ -67,6 +68,14 @@ function wordsOf(binder: Binder | null) {
   return {name: binder.name, rule: ruleLine(binder), promos: isPromoScope(binder.scope)};
 }
 
+/** What the shelf holds once it has loaded: the binders, and the cover My collection's shelf picked. */
+interface ShelfHeld {
+  binders: readonly Binder[];
+  shelfCover: string | null;
+}
+
+const NOTHING_HELD: ShelfHeld = {binders: [], shelfCover: null};
+
 /** Whether the binders have answered: read, or failed, which leaves My collection alone. */
 const answered = (shelf: Shelf) => shelf.status === 'ready' || shelf.status === 'failed';
 
@@ -79,10 +88,10 @@ const answered = (shelf: Shelf) => shelf.status === 'ready' || shelf.status === 
  * memo the confirm and the moves break. `'use memo'` opts it in: the compiler infers a hook only
  * from the hooks it calls, and this one calls none.
  */
-function useFaces(pool: readonly LorcanaCard[] | null, entries: CollectionEntries, binders: readonly Binder[]) {
+function useFaces(pool: readonly LorcanaCard[] | null, entries: CollectionEntries, {binders, shelfCover}: ShelfHeld) {
   'use memo';
   if (pool === null) return null;
-  const faces = new Map<string | null, BinderFace>([[null, binderFace(pool, entries, null)]]);
+  const faces = new Map<string | null, BinderFace>([[null, binderFace(pool, entries, null, shelfCover)]]);
   for (const binder of binders) faces.set(binder.id, binderFace(pool, entries, binder));
   return faces;
 }
@@ -184,11 +193,31 @@ function useDeletes(readerId: string, binders: readonly Binder[], focusOn: (ask:
   };
 }
 
+/** A binder of your own's ⋯ items beyond Open and Change cover: what the shelf can do to it. */
+interface OwnActs {
+  editRules: ((binder: Binder) => void) | undefined;
+  rename: (binder: Binder) => void;
+  move: (binder: Binder, earlier: boolean) => void;
+  remove: (binder: Binder) => void;
+}
+
+/** The ⋯ props a binder of your own adds, at `index` of `count` on the shelf. */
+function ownMenu(binder: Binder, {index, count}: {index: number; count: number}, acts: OwnActs) {
+  const {editRules} = acts;
+  return {
+    onEditRules: editRules && (() => editRules(binder)),
+    onRename: () => acts.rename(binder),
+    moves: {first: index === 0, last: index === count - 1, onMove: (earlier: boolean) => acts.move(binder, earlier)},
+    onDelete: () => acts.remove(binder),
+  };
+}
+
 /**
- * The binder shelf (#1074): My collection's cover, then each binder of your own in place order,
- * each a link that opens it as a push, so Back returns here. Your binders carry a ⋯ to open,
- * move or delete them (`BinderMenu`). The shelf's heading and count stand in the toolbar, or a
- * phone's binder row (`ShelfHeading`).
+ * The binder shelf: My collection's cover, then each binder of your own in place order, each a
+ * link that opens it as a push, so Back returns here. Each cover carries a ⋯ (`BinderMenu`):
+ * Open and Change cover on My collection's, and on your binders Edit rules, Rename, the moves
+ * and Delete binder too. The shelf's heading and count stand in the toolbar, or a phone's binder
+ * row (`ShelfHeading`).
  *
  * While the cards, the account's copy or the binders load, each cover still to come is a
  * shimmer its size, My collection's from the start, so nothing moves as they land. A failed read
@@ -203,11 +232,34 @@ export function BinderShelf({shelf, pool, entries, waiting, readerId, onWindow}:
   const {pathname, search} = useLocation();
   const focus = useFocusAfter();
   const moves = useMoves(readerId, focus.focusOn);
-  const binders = shelf.status === 'ready' ? shelf.binders : [];
+  const held: ShelfHeld = shelf.status === 'ready' ? {binders: shelf.binders, shelfCover: shelf.shelfCover ?? null} : NOTHING_HELD;
+  const {binders} = held;
   const deletes = useDeletes(readerId, binders, focus.focusOn);
   // Nothing is counted until the cards, the account's copy and the binders are in.
   const counted = waiting || !answered(shelf) ? null : pool;
-  const faces = useFaces(counted, entries, binders);
+  const faces = useFaces(counted, entries, held);
+  const changes = useShelfChanges({readerId, isMobile, pool: counted, entries, shelfCover: held.shelfCover});
+  const acts: OwnActs = {
+    editRules: onWindow
+      ? (binder) => onWindow({binder, onSaved: (saved) => focus.focusOn({id: saved.id, part: 'actions'})})
+      : undefined,
+    rename: changes.rename,
+    move: (binder, earlier) => void moves.move(binder, earlier),
+    remove: deletes.open,
+  };
+
+  const menu = (binder: Binder | null, index: number, to: string) => (
+    <BinderMenu
+      alwaysShown={isMobile}
+      onOpen={() => {
+        trackOpened(binder);
+        void navigate(to);
+      }}
+      onChangeCover={() => changes.changeCover(binder)}
+      {...(binder && ownMenu(binder, {index, count: binders.length}, acts))}
+      buttonRef={binder ? focus.actionsRef(binder.id) : undefined}
+    />
+  );
 
   const cover = (binder: Binder | null, index: number) => {
     const id = binder?.id ?? null;
@@ -224,25 +276,7 @@ export function BinderShelf({shelf, pool, entries, waiting, readerId, onWindow}:
         compact={isMobile}
         linkRef={focus.coverRef(id)}
         note={binder !== null && moves.failedId === binder.id ? "Couldn't move it. Try again." : null}
-        actions={
-          binder && (
-            <BinderMenu
-              first={index === 0}
-              last={index === binders.length - 1}
-              alwaysShown={isMobile}
-              onOpen={() => {
-                trackOpened(binder);
-                void navigate(to);
-              }}
-              onEditRules={
-                onWindow ? () => onWindow({binder, onSaved: (saved) => focus.focusOn({id: saved.id, part: 'actions'})}) : undefined
-              }
-              onMove={(earlier) => void moves.move(binder, earlier)}
-              onDelete={() => deletes.open(binder)}
-              buttonRef={focus.actionsRef(binder.id)}
-            />
-          )
-        }
+        actions={menu(binder, index, to)}
       />
     );
   };
@@ -286,6 +320,7 @@ export function BinderShelf({shelf, pool, entries, waiting, readerId, onWindow}:
           onClose={deletes.close}
         />
       )}
+      {changes.node}
     </div>
   );
 }

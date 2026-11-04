@@ -25,6 +25,11 @@ export interface FilterDialogProps {
   variant: 'modal' | 'drawer';
   /** The dialog's body, which scrolls. */
   children: ReactNode;
+  /**
+   * What sits under the body and never scrolls with it: in the modal's footer before Apply
+   * Filters, and in a footer row of the drawer's own.
+   */
+  foot?: ReactNode;
 }
 
 /**
@@ -100,6 +105,33 @@ function DialogHeader({variant, title, canClear, onClear, onApply}: DialogHeader
   );
 }
 
+interface DialogFooterProps {
+  variant: FilterDialogProps['variant'];
+  foot: ReactNode;
+  onApply: () => void;
+}
+
+/** The modal's footer, the foot beside Apply Filters, or the drawer's foot alone; null for none. */
+function DialogFooter({variant, foot, onApply}: DialogFooterProps) {
+  const isModal = variant === 'modal';
+  if (!isModal && foot == null) return null;
+  return (
+    <div
+      style={{
+        padding: isModal ? `${SPACING.lg}px ${SPACING.xl}px` : `${SPACING.lg}px`,
+        borderTop: `1px solid ${isModal ? COLORS.surfaceBorder : COLORS.gray200}`,
+        display: 'flex',
+        justifyContent: foot == null ? 'flex-end' : 'space-between',
+        alignItems: 'center',
+        gap: `${SPACING.lg}px`,
+        flexShrink: 0,
+      }}>
+      {foot != null && <div style={{flex: 1, minWidth: 0}}>{foot}</div>}
+      {isModal && <CtaButton onClick={onApply}>Apply Filters</CtaButton>}
+    </div>
+  );
+}
+
 export function FilterDialog({
   isOpen,
   onClose,
@@ -109,6 +141,7 @@ export function FilterDialog({
   title,
   variant,
   children,
+  foot,
 }: FilterDialogProps) {
   const returnFocus = useReturnFocus();
 
@@ -220,19 +253,7 @@ export function FilterDialog({
             {children}
           </div>
 
-          {/* Footer (modal only; drawer has Apply in header) */}
-          {variant === 'modal' && (
-            <div
-              style={{
-                padding: `${SPACING.lg}px ${SPACING.xl}px`,
-                borderTop: `1px solid ${COLORS.surfaceBorder}`,
-                display: 'flex',
-                justifyContent: 'flex-end',
-                flexShrink: 0,
-              }}>
-              <CtaButton onClick={handleApply}>Apply Filters</CtaButton>
-            </div>
-          )}
+          <DialogFooter variant={variant} foot={foot} onApply={handleApply} />
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

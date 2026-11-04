@@ -14,7 +14,7 @@ export interface BinderFigures {
 }
 
 /** The cards a binder holds: its rules' over the pool, or for My collection (null) the whole pool. */
-const cardsOf = (pool: readonly LorcanaCard[], binder: Binder | null) =>
+export const cardsOf = (pool: readonly LorcanaCard[], binder: Binder | null) =>
   binder === null ? [...pool] : rulePool(pool, binder);
 
 /** What a binder's cover shows: its card, and its numbers. */
@@ -25,10 +25,15 @@ export interface BinderFace {
 
 /**
  * A binder's cover card (`coverOf`) and its numbers, from one pass of its rules over the pool. My
- * collection (null) holds the whole pool.
+ * collection (null) holds the whole pool, under the cover its shelf picked (`shelfCover`).
  */
-export function binderFace(pool: readonly LorcanaCard[], entries: CollectionEntries, binder: Binder | null): BinderFace {
-  return faceOf(cardsOf(pool, binder), entries, binder ?? {scope: WHOLE_COLLECTION, coverId: null});
+export function binderFace(
+  pool: readonly LorcanaCard[],
+  entries: CollectionEntries,
+  binder: Binder | null,
+  shelfCover: string | null = null,
+): BinderFace {
+  return faceOf(cardsOf(pool, binder), entries, binder ?? {scope: WHOLE_COLLECTION, coverId: shelfCover});
 }
 
 /** A face from the cards a binder holds already: the New binder window's, whose cards it shows too. */
@@ -45,7 +50,7 @@ export function faceOf(
  * Sets and no filter on (`tallyCollection` over its cards, then `scopeTally`), so a cover and
  * the panel always agree.
  */
-function figuresOf(cards: LorcanaCard[], entries: CollectionEntries, scope: string): BinderFigures {
+export function figuresOf(cards: LorcanaCard[], entries: CollectionEntries, scope: string): BinderFigures {
   const tally = scopeTally(tallyCollection(cards, entries, binderSets(cards)), scope);
   return {complete: tally?.complete ?? 0, master: tally?.master ?? 0, cards: tally?.cards ?? 0};
 }
@@ -96,4 +101,9 @@ export function coverOf(
     if (best === null || coverOrder(card, best) < 0) best = card;
   }
   return best;
+}
+
+/** The cards Change cover offers: those the binder holds that the collection holds a copy of, in `coverOf`'s order. */
+export function coverChoices(cards: readonly LorcanaCard[], entries: CollectionEntries): LorcanaCard[] {
+  return cards.filter((card) => isHeld(card, entries, 'complete')).sort(coverOrder);
 }

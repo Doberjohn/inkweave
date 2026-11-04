@@ -1,6 +1,6 @@
 import {Suspense, useEffect, useRef, useState, type ReactNode} from 'react';
 import {useLocation, useSearchParams, type Location} from 'react-router-dom';
-import {SORT_PARAM} from '../../shared/hooks/useFilterParams';
+import {SORT_PARAM, type FilterDraft} from '../../shared/hooks/useFilterParams';
 import {trackEvent} from '../../shared/lib/analytics';
 import {lazyWithRetry} from '../../shared/lib/lazyWithRetry';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
@@ -52,6 +52,7 @@ import type {BinderChoices, CustomBinder, OwnBinders} from './binders/binderChoi
 import {ShelfHeading} from './binders/ShelfHeading';
 import {useShelf, type ShelfSlot} from './binders/useShelf';
 import {useBinderWindow, type BinderWindowSlot} from './binders/useBinderWindow';
+import {useSaveAsBinder, type SaveSlot} from './binders/useSaveAsBinder';
 import {useOwnBinders} from './useOwnBinders';
 
 /*
@@ -105,6 +106,10 @@ const Heading = import.meta.env.VITE_SHOW_BINDERS === 'true' ? ShelfHeading : nu
 const NO_WINDOW: BinderWindowSlot = {open: null, node: null};
 const noWindow = () => NO_WINDOW;
 const useWindowOf = import.meta.env.VITE_SHOW_BINDERS === 'true' ? useBinderWindow : noWindow;
+// Save as a binder's foot and box, picked the same way: the box is lazy.
+const NO_SAVE: SaveSlot = {render: () => null, node: null};
+const noSave = () => NO_SAVE;
+const useSaveOf = import.meta.env.VITE_SHOW_BINDERS === 'true' ? useSaveAsBinder : noSave;
 
 /**
  * Starts the binder's chunk on intent (#913): one request for the binder, its docked set panel
@@ -261,6 +266,13 @@ export interface BrowseCollectionSlots {
    * shows, else undefined: whose binder, Read only, and the way back.
    */
   renderBanner: (listing: BrowseListing, isMobile: boolean) => ReactNode | undefined;
+  /**
+   * Save as a binder for these filters and search, at the foot of each filter surface:
+   * null unless they make a binder of your own (binders on, your own binder or My collection on
+   * show, room on the shelf, a filter or the search on, and rules that join). `before` runs first
+   * on a press: the dialog's and the Binder sheet's Apply and close.
+   */
+  renderSaveAsBinder: (draft: FilterDraft, query: string, before?: () => void) => ReactNode;
 }
 
 /** What the page hands a phone's Binder sheet: its filter sheet's props, the sort, and its one write. */
@@ -675,6 +687,14 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // collection, or a binder of your own that isn't on your shelf or didn't load.
   // Nor beside the shelf, which shows binders rather than a binder's cards.
   const binderShows = collectionMode && shelfSlot === null && binderIsDrawn({friend, custom, problem: ownProblem});
+  // Save as a binder, in the reader's own binders alone, once the cards are in.
+  const saveAsBinder = useSaveOf({
+    readerId: user !== null && hasCollection && friend === null && binderShows && isReady ? user.id : null,
+    offerOf: own.offerOf,
+    scope: setCode,
+    openWindow: binderWindow.open,
+    openBinder,
+  });
 
   // Friends who have a card for the reader, for a reader with a collection. Their badges and the
   // foil pointer show in the reader's own binder only.
@@ -791,6 +811,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     <>
       <SignInDialog isOpen={showSignIn} onClose={() => setShowSignIn(false)} surface="collection" />
       {binderWindow.node}
+      {saveAsBinder.node}
       {importMounted && (
         <Suspense fallback={null}>
           <ImportCollectionDialog
@@ -881,5 +902,6 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
         <BinderSheet {...sheet} show={show} compare={compareFor(listing)} friend={friend !== null} />
       ) : undefined,
     renderBanner,
+    renderSaveAsBinder: saveAsBinder.render,
   };
 }

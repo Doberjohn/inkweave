@@ -475,6 +475,11 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots}) {
       },
       activeFilterCount: params.activeFilterCount,
       onClearFilters: params.clearFilters,
+      // Live, as the panel's filters are.
+      foot: collection.renderSaveAsBinder(
+        {inks: params.inkFilters, types: params.typeFilters, costs: params.costFilters, opts: filters},
+        params.searchQuery,
+      ),
     }),
     setPanel: dockedSetPanel(docked, collection.renderSetPanel(listing)),
     cards: sortedCards,
@@ -498,7 +503,13 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots}) {
       contentProps={contentProps}
       filterSheet={filterSheet(collection, listing, {
         isMobile,
-        dialog: {...filterOptions, isOpen: showFilters, onClose: () => setShowFilters(false)},
+        dialog: {
+          ...filterOptions,
+          isOpen: showFilters,
+          onClose: () => setShowFilters(false),
+          // The sheet's draft, which its press applies first.
+          foot: (draft, applyAndClose) => collection.renderSaveAsBinder(draft, params.searchQuery, applyAndClose),
+        },
         params,
       })}
       prompts={collection.prompts}

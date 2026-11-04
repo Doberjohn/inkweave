@@ -21,22 +21,29 @@ export interface BinderRow {
   place: number;
 }
 
-/** A change the page asked the database for: a binder's `DELETE`, `POST` or `PATCH`, or a `move_binder` call. */
+/**
+ * A change the page asked the database for: a binder's `DELETE`, `POST` or `PATCH`, a
+ * `move_binder` call, or the `POST` that upserts My collection's cover.
+ */
 type BinderCall =
   | {what: 'delete'; id: string}
   | {what: 'move'; id: string; earlier: boolean}
   | {what: 'create'; row: Record<string, unknown>}
-  | {what: 'change'; id: string; patch: Record<string, unknown>};
+  | {what: 'change'; id: string; patch: Record<string, unknown>}
+  | {what: 'shelf cover'; row: Record<string, unknown>; onConflict: string | null};
 
 /** The binders the signed-in collector holds, in shelf order unless a case says otherwise. */
 export interface BindersWorld {
   rows: BinderRow[];
+  /** My collection's cover, as `collection_shelf` holds it: none (no row) unless a case says so. */
+  shelfCover?: string | null;
   /** Each change the page sent, oldest first, filled in by `serveBinders`. */
   calls?: BinderCall[];
 }
 
 const BINDERS_PATH = '/rest/v1/collection_binders';
 const MOVE_PATH = '/rest/v1/rpc/move_binder';
+const SHELF_PATH = '/rest/v1/collection_shelf';
 
 /** The most binders a shelf holds: the table's trigger refuses another with a check violation. */
 const SHELF_MAX = 30;
@@ -106,7 +113,8 @@ export function binderRow(row: Pick<BinderRow, 'id' | 'name'> & Partial<BinderRo
  * Answers the reader's binder reads from `world`, in place order as the query asks, and changes
  * it as the database would: a `DELETE` takes the binder out, a `POST` adds one after the last
  * (or, at 30, answers the cap's check violation), a `PATCH` changes one (and returns no row for
- * one that is gone), and `move_binder` swaps two places. Each change lands in `world.calls`.
+ * one that is gone), and `move_binder` swaps two places. `collection_shelf` reads My
+ * collection's cover from the world, and its upsert sets it. Each change lands in `world.calls`.
  * Registered after the fixture's catch-all stub, so it wins for these paths; register it before
  * the first navigation.
  */
@@ -147,6 +155,21 @@ export async function serveBinders(page: Page, world: BindersWorld): Promise<voi
       const {binder_id: id, earlier} = route.request().postDataJSON() as {binder_id: string; earlier: boolean};
       calls.push({what: 'move', id, earlier});
       return route.fulfill({status: 200, contentType: 'application/json', body: JSON.stringify(move(world, id, earlier))});
+    },
+  );
+  await page.route(
+    (url) => url.origin === E2E_SUPABASE_ORIGIN && url.pathname === SHELF_PATH,
+    (route: Route) => {
+      const request = route.request();
+      if (request.method() === 'POST') {
+        const row = request.postDataJSON() as Record<string, unknown>;
+        calls.push({what: 'shelf cover', row, onConflict: new URL(request.url()).searchParams.get('on_conflict')});
+        world.shelfCover = (row.cover_id as string | null | undefined) ?? null;
+        return route.fulfill({status: 201, body: ''});
+      }
+      // `.maybeSingle()` reads the first row of the set, or none.
+      const cover = world.shelfCover ?? null;
+      return json(route, 200, cover === null ? [] : [{cover_id: cover}]);
     },
   );
 }

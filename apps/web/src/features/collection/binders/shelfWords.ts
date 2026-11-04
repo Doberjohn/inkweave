@@ -1,8 +1,9 @@
+import {isPromoScope} from '../binderCards';
 import type {BinderShelf} from './binderShelf';
 
 /*
  * The words and the count the shelf's heading, its covers and the Binders tab's All your binders
- * row share, so they never disagree.
+ * row share, so they never disagree, and how Save as a binder counts a binder's cards.
  */
 
 /** My collection's name, on its cover and its row. */
@@ -23,3 +24,9 @@ export const SHELF_FULL_WORDS = `Your shelf holds ${SHELF_MAX} binders, the most
 
 /** What stands in New binder's place once the shelf holds `SHELF_MAX`. */
 export const SHELF_FULL_LINE = `${SHELF_FULL_WORDS} Delete one to make another.`;
+
+/** How many cards a binder holds, as a sentence counts them: "625 cards", or for promos alone "1 promo". */
+export function cardCount(cards: number, scope: string): string {
+  const noun = isPromoScope(scope) ? 'promo' : 'card';
+  return `${cards.toLocaleString('en-US')} ${noun}${cards === 1 ? '' : 's'}`;
+}

@@ -5,7 +5,8 @@ import type {OwnBindersAsk} from './binders/binderChoices';
 import type {CollectionEntries} from './collectionParser';
 import {useOwnBinders} from './useOwnBinders';
 
-const repo = vi.hoisted(() => ({listBinders: vi.fn()}));
+// My collection's cover is read with the binders: none picked.
+const repo = vi.hoisted(() => ({listBinders: vi.fn(), getShelfCover: vi.fn(async () => ({data: null, error: null}))}));
 vi.mock('./binders/binderRepository', () => repo);
 // The real queue, watched: each read must wait in it.
 const queue = vi.hoisted(() => ({enqueueWrite: vi.fn()}));
@@ -227,7 +228,7 @@ describe('useOwnBinders with binders off', () => {
     const {useOwnBinders: offHook} = await import('./useOwnBinders');
     const {result} = renderHook(() => offHook({...READER, requested: 'b1'}, POOL, ENTRIES));
     await act(async () => {});
-    expect(result.current).toEqual({shelf: null, custom: {status: 'none'}, pool: POOL});
+    expect(result.current).toEqual({shelf: null, custom: {status: 'none'}, pool: POOL, offerOf: null});
     expect(repo.listBinders).not.toHaveBeenCalled();
   });
 });

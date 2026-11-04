@@ -84,12 +84,12 @@ function statusBeforeLoad({uid, syncing, wanted}: OwnBindersAsk, failed: boolean
 
 /** Before the chunk is in: binders off, or on and loading, or failed to load, with its Try again. */
 function beforeLoad(ask: OwnBindersAsk, pool: LorcanaCard[], load: {failed: boolean; retry: () => void}): OwnBinders {
-  if (!SHOW_BINDERS) return {shelf: null, custom: {status: 'none'}, pool};
+  if (!SHOW_BINDERS) return {shelf: null, custom: {status: 'none'}, pool, offerOf: null};
   const status = statusBeforeLoad(ask, load.failed);
   const shelf: BinderShelf = {status, binders: [], retry: load.failed ? load.retry : NO_RETRY};
   const custom: CustomBinder =
     ask.requested === null ? {status: 'none'} : load.failed ? {status: 'failed', retry: load.retry} : {status: 'loading'};
-  return {shelf, custom, pool};
+  return {shelf, custom, pool, offerOf: null};
 }
 
 /**

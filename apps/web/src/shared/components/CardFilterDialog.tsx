@@ -6,6 +6,7 @@ import type {CardFilterOptions} from '../../features/cards';
 import {FILTER_VOCABULARY, type FilterButtonOptions} from '../../features/cards/filterOptions';
 import type {CardTypeFilter} from '../constants';
 import {useDraftFilters} from '../hooks/useDraftFilters';
+import type {FilterDraft} from '../hooks/useFilterParams';
 import {useInlineCostFilters} from '../hooks';
 
 /** The props every card filter dialog takes, the desktop modal and the phone drawer alike. */
@@ -59,6 +60,12 @@ interface CardFilterDialogProps extends FilterPanelProps {
    * comes without the clear that takes it away.
    */
   extra?: {count: number; onClear: () => void};
+  /**
+   * Drawn under the filters, out of their scroll: collection mode's Save as a binder. Handed the
+   * draft, so what it says follows each pick, and an Apply that also closes, for a press that
+   * puts the draft on the page first.
+   */
+  foot?: (draft: FilterDraft, applyAndClose: () => void) => ReactNode;
 }
 
 /**
@@ -78,6 +85,7 @@ export function CardFilterDialog({
   title,
   prelude,
   extra,
+  foot,
   ...content
 }: CardFilterDialogProps) {
   const draft = useDraftFilters({isOpen, inkFilters, typeFilters, costFilters, filters});
@@ -88,16 +96,22 @@ export function CardFilterDialog({
     draft.clearAll();
     extra?.onClear();
   };
+  const apply = () => onApply(draft.draftInks, draft.draftTypes, draft.draftCosts, draft.draftFilters);
+  const drafted: FilterDraft = {inks: draft.draftInks, types: draft.draftTypes, costs: draft.draftCosts, opts: draft.draftFilters};
 
   return (
     <FilterDialog
       isOpen={isOpen}
       onClose={onClose}
-      onApply={() => onApply(draft.draftInks, draft.draftTypes, draft.draftCosts, draft.draftFilters)}
+      onApply={apply}
       onClearAll={clearAll}
       activeCount={draft.activeFilterCount + (extra?.count ?? 0)}
       title={title}
-      variant={variant}>
+      variant={variant}
+      foot={foot?.(drafted, () => {
+        apply();
+        onClose();
+      })}>
       {prelude}
       <FilterContent
         {...content}
