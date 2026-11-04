@@ -640,6 +640,37 @@ test.describe('Rename and Change cover', () => {
   });
 });
 
+test.describe('Save as a binder from a filter sheet', () => {
+  test("a phone's Binder sheet or a tablet's filter dialog: the press applies the draft, and closing the box hands focus back to Filters", async ({
+    page,
+  }, testInfo) => {
+    const phone = testInfo.project.name.startsWith('mobile-');
+    // Below the desktop width the filters open in a dialog rather than the docked panel.
+    if (!phone) await page.setViewportSize({width: 900, height: 768});
+    await signIn(page);
+    await openAt(page, '/browse?binder=all');
+
+    const filters = phone
+      ? page.getByTestId('phone-binder-row').getByRole('button', {name: /^Filters/})
+      : page.getByRole('button', {name: /^Filters/});
+    await filters.click();
+    const sheet = phone ? page.getByRole('dialog', {name: 'Binder', exact: true}) : page.getByRole('dialog', {name: 'Filters'});
+    // A tablet's dialog has no inks, which its toolbar holds.
+    await (phone
+      ? sheet.getByRole('button', {name: 'Filter by Amber'})
+      : sheet.getByRole('button', {name: 'Common', exact: true})
+    ).click();
+    await sheet.getByRole('button', {name: 'Save as a binder'}).click();
+    await expect(sheet).toHaveCount(0);
+    await expect(page).toHaveURL(phone ? /[?&]ink=Amber(&|$)/ : /[?&]rarity=Common(&|$)/);
+
+    const box = await boxOf(page);
+    await page.keyboard.press('Escape');
+    await expect(box).toHaveCount(0);
+    await expect(filters).toBeFocused();
+  });
+});
+
 test.describe('Change cover under the pointer', () => {
   test("the chosen card keeps its gold ring under the pointer, where another card takes the hover ring", async ({
     page,
