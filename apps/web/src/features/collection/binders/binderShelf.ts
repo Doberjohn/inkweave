@@ -1,5 +1,13 @@
 import {enqueueWrite} from '../collectionWriteQueue';
-import {deleteBinderRow, listBinders, moveBinderRow} from './binderRepository';
+import {
+  SHELF_FULL,
+  deleteBinderRow,
+  insertBinderRow,
+  listBinders,
+  moveBinderRow,
+  updateBinderRow,
+  type BinderInput,
+} from './binderRepository';
 import type {Binder} from './binderRules';
 
 /**
@@ -121,11 +129,11 @@ const NONE: readonly Binder[] = [];
 
 /*
  * THE SHELF'S OWN CHANGES. Each goes through the write queue too, behind an import's upload or a
- * Clear's delete, and the shelf shows it once the server has answered, never before: a move or a
- * delete that fails leaves the shelf as it was.
+ * Clear's delete, and the shelf shows it once the server has answered, never before: a change
+ * that fails leaves the shelf as it was.
  */
 
-/** One of the reader's binders, by id: what a delete names. */
+/** One of the reader's binders, by id: what a delete or a change names. */
 interface BinderRef {
   readerId: string;
   id: string;
@@ -187,6 +195,49 @@ export async function deleteBinder({readerId, id}: BinderRef): Promise<boolean> 
   const binders = heldBinders({readerId});
   if (binders !== null) publish({readerId, value: binders.filter((binder) => binder.id !== id)});
   return true;
+}
+
+/** What a new binder's save came to: the binder as the server stored it, or why not. */
+export type CreateResult = {binder: Binder} | {problem: 'full' | 'failed'};
+
+/**
+ * Makes one of the reader's binders, and puts it at the shelf's end once the server has, where
+ * the insert's trigger placed it. A refusal at the cap reads the shelf again, so the binders
+ * another tab or device made show, with the full line in place of New binder.
+ */
+export async function createBinder({readerId, input}: {readerId: string; input: BinderInput}): Promise<CreateResult> {
+  const {data, error} = await enqueueWrite(readerId, () => insertBinderRow(readerId, input));
+  if (error === SHELF_FULL) {
+    void load(readerId);
+    return {problem: 'full'};
+  }
+  if (error !== null || data === null) return {problem: 'failed'};
+  const binders = heldBinders({readerId});
+  if (binders === null) void load(readerId);
+  else publish({readerId, value: [...binders, data]});
+  return {binder: data};
+}
+
+/** What a change came to: the binder as the server stored it, or why not. */
+export type UpdateResult = {binder: Binder} | {problem: 'gone' | 'failed'};
+
+/**
+ * Changes one of the reader's binders, and shows the server's row in its place, so the shelf, the
+ * Binders tab and an open binder change in one render. One the server no longer holds, deleted
+ * on another device, leaves the shelf as a read would find it.
+ */
+export async function updateBinder({readerId, id, patch}: BinderRef & {patch: Partial<BinderInput>}): Promise<UpdateResult> {
+  const {data, error} = await enqueueWrite(readerId, () => updateBinderRow(id, patch));
+  if (error !== null) return {problem: 'failed'};
+  const binders = heldBinders({readerId});
+  if (binders !== null) publish({readerId, value: replaced(binders, {id, row: data})});
+  return data !== null ? {binder: data} : {problem: 'gone'};
+}
+
+/** The shelf with one binder in the server's row, or without it when the server holds it no more. */
+function replaced(binders: readonly Binder[], {id, row}: {id: string; row: Binder | null}): Binder[] {
+  if (row === null) return binders.filter((binder) => binder.id !== id);
+  return binders.map((binder) => (binder.id === id ? row : binder));
 }
 
 /** Who asks for the binders, and whether the page wants them yet. */

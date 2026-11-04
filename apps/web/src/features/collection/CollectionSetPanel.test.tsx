@@ -93,6 +93,7 @@ describe('CollectionSetBody', () => {
       entries: {},
       onOpen: vi.fn(),
       onShelf: vi.fn(),
+      onNewBinder: null,
     });
     renderBody({setCode: 'all', binders: binders(true)});
     expect(numbers()).toHaveTextContent('Complete binder');

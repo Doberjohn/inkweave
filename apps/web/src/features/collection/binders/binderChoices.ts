@@ -33,6 +33,8 @@ export interface BinderChoices {
   onOpen: (binder: Binder | null) => void;
   /** Opens the shelf, every binder at once: the Binders tab's All your binders. */
   onShelf: () => void;
+  /** Opens the New binder window, whose binder then opens; null until the cards are in. */
+  onNewBinder: (() => void) | null;
 }
 
 /**

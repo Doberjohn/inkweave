@@ -80,14 +80,11 @@ const spokenName = ({name, rule}: CoverWords, words: FigureWords) =>
 const TILE: CSSProperties = {position: 'relative', minWidth: 0};
 
 /**
- * A cover's colours and timings, for `binder.css` and `binderShelf.css`, which hold only `var()`s:
- * on each tile, so a cover draws alike wherever it stands.
+ * A tile's colours and timings for its hover and focus, for `binderShelf.css`, which holds only
+ * `var()`s. The board carries its own (`BOARD`).
  */
 const COVER_LOOK = {
   ...TILE,
-  ...BINDER_LOOK,
-  '--shelf-spine': `linear-gradient(90deg, ${blackRgba(0.6)}, ${blackRgba(0.2)} 55%, ${blackRgba(0.45)})`,
-  '--shelf-spine-edge': `inset -1px 0 0 ${blackRgba(0.7)}`,
   '--shelf-hover-ring': `0 0 0 1px ${GOLD_GLOW.activeBorder}, ${SHADOWS.glowSm}`,
   '--shelf-focus-ring': GOLD_GLOW.focusRing,
   '--shelf-fade': `${DURATION.fast}ms ${EASING.snappy}`,
@@ -104,10 +101,21 @@ const LINK: CSSProperties = {
 };
 
 /** The board, a closed binder's shape. Its look and zip are `binder.css`'s and `binderShelf.css`'s. */
-const BOARD: CSSProperties = {display: 'block', position: 'relative', aspectRatio: '4 / 5'};
+/**
+ * The board, with the colours `binder.css` and `binderShelf.css` draw it in: on the board itself,
+ * so it draws alike on the shelf and in the New binder window's preview.
+ */
+const BOARD = {
+  ...BINDER_LOOK,
+  '--shelf-spine': `linear-gradient(90deg, ${blackRgba(0.6)}, ${blackRgba(0.2)} 55%, ${blackRgba(0.45)})`,
+  '--shelf-spine-edge': `inset -1px 0 0 ${blackRgba(0.7)}`,
+  display: 'block',
+  position: 'relative',
+  aspectRatio: '4 / 5',
+} as CSSProperties;
 
-/** The board's corners, as `binder.css` rounds them, for the shimmer in its place. */
-const BOARD_RADIUS = 20;
+/** The board's corners, as `binder.css` rounds them, for the shimmer in its place and New binder's outline. */
+export const BOARD_RADIUS = 20;
 
 /** The pocket the cover card sits in, centred right of the spine, a card's shape. */
 const POCKET: CSSProperties = {
@@ -210,8 +218,20 @@ const ACTIONS: CSSProperties = {position: 'absolute', top: SPACING.sm, right: SP
 
 const NOTE: CSSProperties = {margin: `${SPACING.sm}px 0 0`, fontSize: `${FONT_SIZES.base}px`, color: COLORS.textMuted};
 
-/** The binder face on: its board, the cover card in its pocket, and its plate. Decoration: the link's words name it. */
-function Board({name, rule, cover}: CoverWords & {cover: LorcanaCard | null}) {
+/** The set panel's gold bar, as full as the binder is complete. Decoration: the words beside it say it. */
+export function CoverBar({figures: {complete, cards}}: {figures: BinderFigures}) {
+  return (
+    <span aria-hidden="true" style={TRACK}>
+      <span style={fillStyle(percentOf(complete, cards), isFinished(complete, cards))} />
+    </span>
+  );
+}
+
+/**
+ * The binder face on: its board, the cover card in its pocket, and its plate. Decoration: the
+ * link's words name it, or the New binder window's preview, which says the same beside it.
+ */
+export function CoverBoard({name, rule, cover}: CoverWords & {cover: LorcanaCard | null}) {
   const art = cover === null ? undefined : smallImageUrl(cover);
   return (
     <span aria-hidden="true" className="binder-board binder-shelf-board" style={BOARD}>
@@ -240,19 +260,16 @@ function Board({name, rule, cover}: CoverWords & {cover: LorcanaCard | null}) {
  */
 export function BinderCover({name, rule, cover, figures, promos, to, onOpen, compact, actions, note, linkRef}: BinderCoverProps) {
   const words = figureWords(figures, promos, compact);
-  const percent = percentOf(figures.complete, figures.cards);
   return (
     <div className="binder-shelf-tile" style={COVER_LOOK}>
       <Link ref={linkRef} to={to} onClick={onOpen} className="binder-shelf-cover" style={LINK}>
-        <Board name={name} rule={rule} cover={cover} />
+        <CoverBoard name={name} rule={rule} cover={cover} />
         <span aria-hidden="true" style={FIGURES}>
           <span style={FIGURE_LINE}>
             <span style={PERCENT}>{words.percent}</span>
             <span>{words.shown}</span>
           </span>
-          <span style={TRACK}>
-            <span style={fillStyle(percent, isFinished(figures.complete, figures.cards))} />
-          </span>
+          <CoverBar figures={figures} />
         </span>
         <span style={VISUALLY_HIDDEN}>{spokenName({name, rule}, words)}</span>
       </Link>

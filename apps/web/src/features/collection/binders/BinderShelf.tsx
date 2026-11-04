@@ -14,7 +14,9 @@ import {binderFace, type BinderFace} from './binderCovers';
 import {ruleKinds, ruleLine, type Binder} from './binderRules';
 import {deleteBinder, moveBinder, type BinderShelf as Shelf} from './binderShelf';
 import {DeleteBinderDialog} from './DeleteBinderDialog';
-import {MY_COLLECTION} from './shelfWords';
+import {NewBinderTile, ShelfFullLine} from './NewBinderTile';
+import {MY_COLLECTION, SHELF_MAX} from './shelfWords';
+import type {WindowAsk} from './useBinderWindow';
 
 export interface BinderShelfProps {
   /** Your binders in place order, and whether they have loaded. */
@@ -26,6 +28,8 @@ export interface BinderShelfProps {
   waiting: boolean;
   /** Whose shelf: each change waits in their write queue. */
   readerId: string;
+  /** Opens the New binder window, for New binder and Edit rules; null until the cards are in. */
+  onWindow: ((ask: WindowAsk) => void) | null;
 }
 
 /** As many covers across as fit at 180 px or more on a computer (six at 1440 px); two on a phone. */
@@ -193,7 +197,7 @@ function useDeletes(readerId: string, binders: readonly Binder[], focusOn: (ask:
  * Lazy, in a chunk of its own, and only with binders on (`flag.ts`). The whole shelf carries
  * `ph-no-capture`: its covers show the player's own names.
  */
-export function BinderShelf({shelf, pool, entries, waiting, readerId}: BinderShelfProps) {
+export function BinderShelf({shelf, pool, entries, waiting, readerId, onWindow}: BinderShelfProps) {
   const {isMobile} = useResponsive();
   const navigate = useNavigate();
   const {pathname, search} = useLocation();
@@ -230,6 +234,9 @@ export function BinderShelf({shelf, pool, entries, waiting, readerId}: BinderShe
                 trackOpened(binder);
                 void navigate(to);
               }}
+              onEditRules={
+                onWindow ? () => onWindow({binder, onSaved: (saved) => focus.focusOn({id: saved.id, part: 'actions'})}) : undefined
+              }
               onMove={(earlier) => void moves.move(binder, earlier)}
               onDelete={() => deletes.open(binder)}
               buttonRef={focus.actionsRef(binder.id)}
@@ -247,6 +254,18 @@ export function BinderShelf({shelf, pool, entries, waiting, readerId}: BinderShe
         {binders.map((binder, index) => (
           <li key={binder.id}>{cover(binder, index)}</li>
         ))}
+        {onWindow && faces !== null && shelf.status === 'ready' && (
+          <li>
+            {binders.length >= SHELF_MAX ? (
+              <ShelfFullLine />
+            ) : (
+              <NewBinderTile
+                compact={isMobile}
+                onNew={() => onWindow({binder: null, onSaved: (saved) => focus.focusOn({id: saved.id, part: 'cover'})})}
+              />
+            )}
+          </li>
+        )}
         {shelf.status === 'failed' && (
           <li style={FAILED_STYLE}>
             <span role="status">Couldn&apos;t load your binders.</span>

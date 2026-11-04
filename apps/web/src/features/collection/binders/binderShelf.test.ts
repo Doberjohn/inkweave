@@ -1,8 +1,16 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
-import {deleteBinder, follow, moveBinder, snapshot, type BinderReader} from './binderShelf';
+import {enqueueWrite} from '../collectionWriteQueue';
+import {SHELF_FULL} from './binderRepository';
+import {createBinder, deleteBinder, follow, moveBinder, snapshot, updateBinder, type BinderReader} from './binderShelf';
 
-const repo = vi.hoisted(() => ({listBinders: vi.fn(), moveBinderRow: vi.fn(), deleteBinderRow: vi.fn()}));
-vi.mock('./binderRepository', () => repo);
+const repo = vi.hoisted(() => ({
+  listBinders: vi.fn(),
+  moveBinderRow: vi.fn(),
+  deleteBinderRow: vi.fn(),
+  insertBinderRow: vi.fn(),
+  updateBinderRow: vi.fn(),
+}));
+vi.mock('./binderRepository', async (actual) => ({SHELF_FULL: (await actual<typeof import('./binderRepository')>()).SHELF_FULL, ...repo}));
 // The real queue, watched: each change must wait in it, as the reads do.
 const queue = vi.hoisted(() => ({enqueueWrite: vi.fn()}));
 vi.mock('../collectionWriteQueue', async (actual) => {
@@ -108,5 +116,71 @@ describe('deleteBinder', () => {
     repo.deleteBinderRow.mockResolvedValue({data: null, error: 'Network error'});
     await expect(deleteBinder({readerId: 'me', id: 'b2'})).resolves.toBe(false);
     expect(shown()).toEqual(['b1', 'b2', 'b3']);
+  });
+});
+
+const INPUT = {name: 'Rares', scope: 'all', rules: 'rarity=Rare', coverId: null};
+const RARES = {...INPUT, id: 'b9', place: 5};
+
+describe('createBinder', () => {
+  it('puts the new binder at the shelf\'s end once the server has it, through the write queue', async () => {
+    const answer = deferred<{data: typeof RARES; error: null}>();
+    repo.insertBinderRow.mockReturnValue(answer.promise);
+    const creating = createBinder({readerId: 'me', input: INPUT});
+    await vi.waitFor(() => expect(repo.insertBinderRow).toHaveBeenCalledExactlyOnceWith('me', INPUT));
+    expect(shown()).toEqual(['b1', 'b2', 'b3']);
+    answer.settle({data: RARES, error: null});
+    await expect(creating).resolves.toEqual({binder: RARES});
+    expect(queue.enqueueWrite).toHaveBeenCalledWith('me', expect.any(Function));
+    expect(shown()).toEqual(['b1', 'b2', 'b3', 'b9']);
+    expect(repo.listBinders).not.toHaveBeenCalled();
+  });
+
+  it('waits for a Clear queued before it', async () => {
+    const clearing = deferred<void>();
+    void enqueueWrite('me', () => clearing.promise);
+    repo.insertBinderRow.mockResolvedValue({data: RARES, error: null});
+    const creating = createBinder({readerId: 'me', input: INPUT});
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(repo.insertBinderRow).not.toHaveBeenCalled();
+    clearing.settle();
+    await expect(creating).resolves.toEqual({binder: RARES});
+  });
+
+  it('says the shelf is full at the cap, and reads it again to show the binders made elsewhere', async () => {
+    repo.insertBinderRow.mockResolvedValue({data: null, error: SHELF_FULL});
+    await expect(createBinder({readerId: 'me', input: INPUT})).resolves.toEqual({problem: 'full'});
+    await vi.waitFor(() => expect(repo.listBinders).toHaveBeenCalledOnce());
+  });
+
+  it('keeps the shelf when the save fails', async () => {
+    repo.insertBinderRow.mockResolvedValue({data: null, error: 'Network error'});
+    await expect(createBinder({readerId: 'me', input: INPUT})).resolves.toEqual({problem: 'failed'});
+    expect(shown()).toEqual(['b1', 'b2', 'b3']);
+  });
+});
+
+describe('updateBinder', () => {
+  it("shows the server's row in the binder's place, and never touches the browser's storage", async () => {
+    const stored = vi.spyOn(Storage.prototype, 'setItem');
+    const changed = {...EPICS, rules: 'rarity=Epic&ink=Amber'};
+    repo.updateBinderRow.mockResolvedValue({data: changed, error: null});
+    await expect(updateBinder({readerId: 'me', id: 'b2', patch: {rules: changed.rules}})).resolves.toEqual({binder: changed});
+    expect(repo.updateBinderRow).toHaveBeenCalledExactlyOnceWith('b2', {rules: changed.rules});
+    expect(snapshot()?.value).toEqual([AMBER, changed, WILDS]);
+    expect(stored).not.toHaveBeenCalled();
+    stored.mockRestore();
+  });
+
+  it('takes a binder the server no longer holds off the shelf', async () => {
+    repo.updateBinderRow.mockResolvedValue({data: null, error: null});
+    await expect(updateBinder({readerId: 'me', id: 'b2', patch: {name: 'Gold'}})).resolves.toEqual({problem: 'gone'});
+    expect(shown()).toEqual(['b1', 'b3']);
+  });
+
+  it('keeps the binder as it was when the change fails', async () => {
+    repo.updateBinderRow.mockResolvedValue({data: null, error: 'Network error'});
+    await expect(updateBinder({readerId: 'me', id: 'b2', patch: {name: 'Gold'}})).resolves.toEqual({problem: 'failed'});
+    expect(snapshot()?.value).toEqual([AMBER, EPICS, WILDS]);
   });
 });

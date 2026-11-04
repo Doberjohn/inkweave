@@ -1,3 +1,4 @@
+import type {TablesInsert} from '../../../shared/lib/database.types';
 import type {RepoResult} from '../../../shared/lib/repoResult';
 import {reportFailure} from '../../../shared/lib/reportFailure';
 import {callSupabase} from '../../../shared/lib/supabaseCall';
@@ -88,4 +89,63 @@ export function moveBinderRow(id: string, earlier: boolean): Promise<RepoResult<
   return callSupabase({area: 'collection', operation: 'move binder'}, (client) =>
     client.rpc('move_binder', {binder_id: id, earlier}),
   );
+}
+
+/** What the client writes of a binder: its id, place and stamps are the server's. */
+export interface BinderInput {
+  name: string;
+  scope: string;
+  rules: string;
+  coverId: string | null;
+}
+
+/**
+ * The shelf's cap, refused: the insert trigger's `check_violation` at 30 binders. The client
+ * holds a name and its rules to the table's other checks (`binderName.ts`, `writeRules`), so a
+ * 23514 on an insert is the cap, and it answers this in place of an error Sentry would hear of.
+ */
+export const SHELF_FULL = 'shelf_full';
+const CHECK_VIOLATION = '23514';
+
+/** A binder's fields as the table names them, only those given. */
+function columnsOf({coverId, ...fields}: Partial<BinderInput>) {
+  return coverId === undefined ? fields : {...fields, cover_id: coverId};
+}
+
+/** The row the server sent back, as a binder; one the guard refuses is reported, never shown. */
+function readBack(result: RepoResult<unknown>): RepoResult<Binder> {
+  if (result.error !== null) return {data: null, error: result.error};
+  if (result.data === SHELF_FULL) return {data: null, error: SHELF_FULL};
+  if (result.data === null) return {data: null, error: null};
+  const binder = toBinder(result.data);
+  if (binder !== null) return {data: binder, error: null};
+  reportUnreadable(1);
+  return {data: null, error: 'Unreadable binder row'};
+}
+
+/**
+ * Makes a binder, and answers it as the server stored it, with its id and its place at the
+ * shelf's end, or `SHELF_FULL`. A plain insert, never an upsert: the client can't send an id, and
+ * Postgres takes no deferrable unique as a conflict target.
+ */
+export async function insertBinderRow(ownerId: string, input: BinderInput): Promise<RepoResult<Binder>> {
+  // The trigger sets place, which the generated type requires and no client may write.
+  const row = {owner_id: ownerId, ...columnsOf(input)} as TablesInsert<'collection_binders'>;
+  const result = await callSupabase<unknown>({area: 'collection', operation: 'create binder'}, async (client) => {
+    const {data, error} = await client.from('collection_binders').insert(row).select(COLUMNS).single();
+    if (error?.code === CHECK_VIOLATION) return {data: SHELF_FULL, error: null};
+    return {data, error};
+  });
+  return readBack(result);
+}
+
+/**
+ * Changes one of the caller's binders, and answers it as the server stored it, or no binder and no
+ * error when it is gone: deleted on another device, or never the caller's.
+ */
+export async function updateBinderRow(id: string, patch: Partial<BinderInput>): Promise<RepoResult<Binder>> {
+  const result = await callSupabase({area: 'collection', operation: 'change binder'}, (client) =>
+    client.from('collection_binders').update(columnsOf(patch)).eq('id', id).select(COLUMNS).maybeSingle(),
+  );
+  return readBack(result);
 }

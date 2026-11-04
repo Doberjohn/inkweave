@@ -8,7 +8,8 @@ import {E2E_FRIEND_CODE} from '../fixtures/supabaseStub';
 
 /**
  * Binders of your own: a link that opens one, the set picker's Binders tab, a binder that
- * isn't on your shelf, and the shelf Collection opens (#1074), where they move and go.
+ * isn't on your shelf, the shelf Collection opens (#1074), where they move and go, and the New
+ * binder window that makes and changes them (#1075).
  *
  * The reader is the collector (`helpers/collector.ts`), and every binder read answers from a
  * world the test keeps (`helpers/binders.ts`). The binders are drawn from the card data, not
@@ -105,12 +106,13 @@ test.describe('a binder of your own', () => {
 
     await openBindersTab(setButton(page));
     const rows = page.getByRole('listbox', {name: 'Binders'}).getByRole('option');
-    await expect(rows).toHaveCount(5);
+    await expect(rows).toHaveCount(6);
     await expect(rows.nth(0)).toHaveAccessibleName('All your binders, 4 binders');
     await expect(rows.nth(1)).toHaveAccessibleName(/^My collection/);
     await expect(binderOption(page, 'Amber vines')).toHaveAccessibleName(
       `Amber vines, ${percentOfBinder(HELD.length)}% complete`,
     );
+    await expect(rows.nth(5)).toHaveAccessibleName('New binder');
 
     await binderOption(page, 'Epics').click();
     await expect(page).toHaveURL(/[?&]custom=b-epics(&|$)/);
@@ -312,13 +314,138 @@ test.describe('the binder shelf', () => {
     await signIn(page);
     await page.goto('/browse?binder=shelf');
 
+    // My collection, the three binders, then New binder.
     const covers = shelf(page).getByRole('listitem');
-    await expect(covers).toHaveCount(4, {timeout: 20_000});
+    await expect(covers).toHaveCount(5, {timeout: 20_000});
     const [first, second, third] = await Promise.all([0, 1, 2].map(async (at) => (await covers.nth(at).boundingBox())!));
     expect(Math.abs(second.y - first.y), 'two across').toBeLessThanOrEqual(1);
     expect(third.y, 'the third on the next row').toBeGreaterThan(first.y + first.height - 1);
     for (const name of ['Amber', 'Amber vines', 'Epics']) await expect(actionsOf(page, name)).toHaveCSS('opacity', '1');
     await expect(page.getByTestId('phone-binder-row').getByRole('heading', {name: 'Your binders'})).toBeVisible();
+  });
+});
+
+/** The New binder window, a dialog on a computer and a sheet on a phone. */
+const windowOf = (page: Page, name: 'New binder' | 'Edit binder') => page.getByRole('dialog', {name});
+
+/** Its save: "Create binder" or "Save changes" on a computer, "Create" or "Save" in a phone's header. */
+const createIn = (dialog: Locator) => dialog.getByRole('button', {name: /^Create( binder)?$/});
+const saveIn = (dialog: Locator) => dialog.getByRole('button', {name: /^Save( changes)?$/});
+
+/** Its Name field: "Name has" is the search's. */
+const nameIn = (dialog: Locator) => dialog.getByRole('textbox', {name: 'Name', exact: true});
+
+/** The count the window says its rules hold, as a number. */
+async function windowCount(dialog: Locator): Promise<number> {
+  const words = await dialog.getByText(/^[\d,]+ cards?$/).textContent();
+  return Number((words ?? '').replace(/\D/g, ''));
+}
+
+/** The cards a cover counts, from its name's "N of M cards". */
+async function coverCards(cover: Locator): Promise<number> {
+  const name = await cover.evaluate((link) => link.querySelector(':scope > :not([aria-hidden])')?.textContent ?? '');
+  return Number(/of ([\d,]+) (cards|promos)$/.exec(name)?.[1].replace(/,/g, '') ?? NaN);
+}
+
+/** A shelf of `count` binders, each Amber's rules under its own name. */
+const rowsOf = (count: number) =>
+  Array.from({length: count}, (_, place) => binderRow({id: `b-${place}`, name: `Binder ${place + 1}`, rules: 'ink=Amber', place}));
+
+test.describe('the New binder window', () => {
+  test('makes a binder from its picks, counted as the shelf counts it: one POST, its cover last and focused', async ({page}) => {
+    const world = worldOf();
+    await signIn(page, world);
+    await page.goto('/browse?binder=shelf');
+    const amberCards = await coverCards(shelfCover(page, 'Amber'));
+
+    await shelf(page).getByRole('button', {name: /^New binder/}).click({timeout: 20_000});
+    const dialog = windowOf(page, 'New binder');
+    await expect(createIn(dialog)).toBeDisabled();
+    await nameIn(dialog).fill('Gold and amber');
+    await dialog.getByRole('button', {name: 'Filter by Amber'}).click();
+    // The Amber binder already on the shelf holds the same rules.
+    await expect.poll(() => windowCount(dialog)).toBe(amberCards);
+
+    await createIn(dialog).click();
+    await expect(dialog).toHaveCount(0);
+    expect(world.calls).toEqual([
+      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Gold and amber', scope: 'all', rules: 'ink=Amber', cover_id: null}},
+    ]);
+    await expect.poll(() => coverNames(page)).toEqual(['My collection', 'Amber', 'Amber vines', 'Epics', 'Gold and amber']);
+    await expect(shelfCover(page, 'Gold and amber')).toBeFocused();
+  });
+
+  test('keeps Create off for rules that hold no card, and says so', async ({page}) => {
+    await signIn(page);
+    await page.goto('/browse?binder=shelf');
+    await shelf(page).getByRole('button', {name: /^New binder/}).click({timeout: 20_000});
+
+    const dialog = windowOf(page, 'New binder');
+    await nameIn(dialog).fill('Nothing');
+    await dialog.getByRole('textbox', {name: 'Name has'}).fill('no card is called this');
+    await expect(dialog.getByText('0 cards')).toBeVisible();
+    await expect(dialog.getByText('No card matches these rules.')).toBeVisible();
+    await expect(createIn(dialog)).toBeDisabled();
+  });
+
+  test("Edit rules adds Epic: one PATCH, the cover's count follows, and focus returns to its ⋯", async ({page}) => {
+    const world = worldOf();
+    await signIn(page, world);
+    await page.goto('/browse?binder=shelf');
+    const before = await coverCards(shelfCover(page, 'Amber'));
+
+    await actionsOf(page, 'Amber').click({timeout: 20_000});
+    await page.getByRole('menuitem', {name: 'Edit rules'}).click();
+    const dialog = windowOf(page, 'Edit binder');
+    await expect(dialog.getByRole('heading', {name: 'Edit Amber'})).toBeVisible();
+    await expect(saveIn(dialog)).toBeDisabled();
+    await dialog.getByRole('group', {name: 'Rarity filters'}).getByRole('button', {name: 'Epic'}).click();
+    const epics = await windowCount(dialog);
+    expect(epics).toBeLessThan(before);
+
+    await saveIn(dialog).click();
+    await expect(dialog).toHaveCount(0);
+    expect(world.calls).toEqual([{what: 'change', id: AMBER.id, patch: {name: 'Amber', scope: 'all', rules: 'ink=Amber&rarity=Epic'}}]);
+    await expect(shelfCover(page, 'Amber')).toHaveAccessibleName(/^Amber, Amber ink · Epic,/);
+    expect(await coverCards(shelfCover(page, 'Amber'))).toBe(epics);
+    await expect(actionsOf(page, 'Amber')).toBeFocused();
+  });
+
+  test('says a shelf filled elsewhere when Create meets the cap, and the shelf then says why there is no New binder', async ({page}) => {
+    const world: BindersWorld = {rows: rowsOf(29)};
+    await signIn(page, world);
+    await page.goto('/browse?binder=shelf');
+    await shelf(page).getByRole('button', {name: /^New binder/}).click({timeout: 20_000});
+
+    const dialog = windowOf(page, 'New binder');
+    await nameIn(dialog).fill('One too many');
+    await dialog.getByRole('button', {name: 'Filter by Amber'}).click();
+    // Another tab makes the thirtieth.
+    world.rows = rowsOf(30);
+    await createIn(dialog).click();
+    await expect(dialog.getByRole('alert')).toHaveText('Your shelf holds 30 binders, the most it can.');
+    await expect(nameIn(dialog)).toHaveValue('One too many');
+
+    await dialog.getByRole('button', {name: 'Cancel'}).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(shelf(page).getByText('Your shelf holds 30 binders, the most it can. Delete one to make another.')).toBeVisible();
+    await expect(shelf(page).getByRole('button', {name: /^New binder/})).toHaveCount(0);
+  });
+
+  test('New binder in the Binders tab opens the binder it makes', async ({page}) => {
+    await signIn(page);
+    await openAt(page, '/browse?binder=all');
+
+    await openBindersTab(setButton(page));
+    await page.getByRole('listbox', {name: 'Binders'}).getByRole('option', {name: 'New binder'}).click();
+    const dialog = windowOf(page, 'New binder');
+    await nameIn(dialog).fill('Sapphire');
+    await dialog.getByRole('button', {name: 'Filter by Sapphire'}).click();
+    await createIn(dialog).click();
+
+    await expect(dialog).toHaveCount(0);
+    await expect(page).toHaveURL(/[?&]custom=b-made-3(&|$)/);
+    await expect(binderButton(page)).toHaveAccessibleName(named('Binder: Sapphire'));
   });
 });
 

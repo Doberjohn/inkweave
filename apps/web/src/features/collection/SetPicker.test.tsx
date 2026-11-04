@@ -135,6 +135,7 @@ describe('SetPicker', () => {
       entries: {},
       onOpen: vi.fn(),
       onShelf: vi.fn(),
+      onNewBinder: null,
       ...over,
     });
     const binderButton = () => screen.getByRole('button', {name: /^Binder: /});

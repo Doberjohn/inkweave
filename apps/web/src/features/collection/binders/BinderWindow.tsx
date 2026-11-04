@@ -1,0 +1,299 @@
+import {useRef, useState, type CSSProperties, type ReactNode} from 'react';
+import {createPortal} from 'react-dom';
+import type {LorcanaCard} from 'inkweave-synergy-engine';
+import {BottomSheet, CtaButton, DialogShell} from '../../../shared/components';
+import {useDialogFocus, useScrollLock, useTransitionPresence} from '../../../shared/hooks';
+import {trackEvent} from '../../../shared/lib/analytics';
+import {COLORS, DIALOG_TITLE, FONTS, FONT_SIZES, LINE_HEIGHT, SPACING} from '../../../shared/constants';
+import type {CollectionEntries} from '../collectionParser';
+import {ruleKinds, type Binder} from './binderRules';
+import {createBinder, updateBinder} from './binderShelf';
+import {DraftCount, DraftCover, DraftPreview, RulesFields} from './BinderWindowParts';
+import {startOf, useBinderDraft, type BinderDraft, type DraftStart} from './useBinderDraft';
+
+export interface BinderWindowProps {
+  isOpen: boolean;
+  /** The binder Edit rules changes, or null for a new one. */
+  binder: Binder | null;
+  /** Every card a binder can hold, which its rules run over. */
+  pool: readonly LorcanaCard[];
+  entries: CollectionEntries;
+  /** Whose shelf: the save waits in their write queue. */
+  readerId: string;
+  isMobile: boolean;
+  /** Told once the server has the binder, as it stored it; the caller closes the window. */
+  onSaved: (binder: Binder) => void;
+  onClose: () => void;
+}
+
+/** Why a save didn't land: the shelf is full, the binder was deleted elsewhere, or it failed. */
+type Problem = 'full' | 'gone' | 'failed';
+
+const PROBLEM_WORDS: Record<Problem, string> = {
+  full: 'Your shelf holds 30 binders, the most it can.',
+  gone: "This binder isn't on your shelf anymore.",
+  failed: "Couldn't save the binder. Try again.",
+};
+
+/** Makes the binder, or changes the one being edited, and counts it once it lands: never its name. */
+async function saveDraft(start: DraftStart, readerId: string, draft: BinderDraft) {
+  const {input, change} = draft;
+  if (start.binder === null) {
+    const made = await createBinder({readerId, input});
+    if ('binder' in made) trackEvent('binder_created', {from: 'window', kinds: ruleKinds(made.binder)});
+    return made;
+  }
+  const {name, scope, rules} = input;
+  const changed = await updateBinder({readerId, id: start.binder.id, patch: {name, scope, rules}});
+  if ('binder' in changed && change !== null) trackEvent('binder_changed', {what: change});
+  return changed;
+}
+
+/**
+ * The save, and what it came to. While it runs every way out waits, as the display name dialog's
+ * does: the window alone would say it failed. A failure keeps everything the player picked. The
+ * button, disabled while it runs, stops a second save: React draws a press's change before the next.
+ */
+function useSave(props: Pick<BinderWindowProps, 'readerId' | 'onSaved' | 'onClose'> & {start: DraftStart}, draft: BinderDraft) {
+  const [saving, setSaving] = useState(false);
+  const [problem, setProblem] = useState<Problem | null>(null);
+  const save = async () => {
+    if (!draft.canSave) return;
+    setSaving(true);
+    setProblem(null);
+    const result = await saveDraft(props.start, props.readerId, draft);
+    setSaving(false);
+    if ('problem' in result) setProblem(result.problem);
+    else props.onSaved(result.binder);
+  };
+  const close = () => {
+    if (!saving) props.onClose();
+  };
+  return {saving, problem, save: () => void save(), close};
+}
+
+type Save = ReturnType<typeof useSave>;
+
+/** The new binder's words, and an edit's. */
+const NEW_WORDS = {dialogName: 'New binder', action: 'Create binder', phoneAction: 'Create'};
+const EDIT_WORDS = {dialogName: 'Edit binder', action: 'Save changes', phoneAction: 'Save'};
+const SAVING_WORDS = {action: 'Saving…', phoneAction: 'Saving…'};
+
+/**
+ * What the window says of itself: its title, its name for screen readers, which is ours and never
+ * the binder's (that stays out of attributes), and its button's words.
+ */
+function wordsOf({binder}: DraftStart, saving: boolean) {
+  const words = binder === null ? NEW_WORDS : EDIT_WORDS;
+  const title = binder === null ? 'New binder' : `Edit ${binder.name}`;
+  return {...words, title, ...(saving ? SAVING_WORDS : {})};
+}
+
+const LEAD = 'Pick the cards it holds. Your copies fill it on their own, and it grows with each new set.';
+const NOTE = 'You can change its rules, name and cover later.';
+
+/**
+ * The New binder window (#1075), and Edit rules': the binder's name, its Sets and its rules,
+ * beside what they would make, its cover, count, chips and first page, each following every
+ * pick. A dialog on a computer and a tablet, a sheet on a phone (`.claude/rules/overlays.md`).
+ * It creates nothing until Create binder, and only a binder with a name and a card.
+ *
+ * Lazy, in a chunk of its own, and only with binders on (`flag.ts`). It carries
+ * `ph-no-capture`: its title and fields hold the player's own words.
+ */
+export function BinderWindow(props: BinderWindowProps) {
+  const start = startOf(props.binder);
+  const draft = useBinderDraft({start, pool: props.pool, entries: props.entries});
+  const save = useSave({...props, start}, draft);
+  const words = wordsOf(start, save.saving);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const lead = props.binder === null ? LEAD : null;
+  if (props.isMobile) {
+    return <PhoneWindow {...props} draft={draft} save={save} words={words} />;
+  }
+  return (
+    <DialogShell
+      isOpen={props.isOpen}
+      onClose={save.close}
+      ariaLabel={words.dialogName}
+      size="lg"
+      initialFocusRef={nameRef}
+      panelStyle={PANEL}>
+      <div className="ph-no-capture" style={FRAME}>
+        <header style={HEAD}>
+          <h2 style={DIALOG_TITLE}>{words.title}</h2>
+          {lead && <p style={LEAD_STYLE}>{lead}</p>}
+        </header>
+        <div style={COLUMNS}>
+          <div style={RULES_COLUMN}>
+            <RulesFields draft={draft} isMobile={false} nameRef={nameRef} />
+          </div>
+          <div style={PREVIEW_COLUMN}>
+            <DraftPreview draft={draft} />
+          </div>
+        </div>
+        <footer style={FOOT}>
+          <ProblemLine problem={save.problem} />
+          <div style={FOOT_ROW}>
+            <p style={NOTE_STYLE}>{NOTE}</p>
+            <CtaButton variant="neutral" onClick={save.close} disabled={save.saving}>
+              Cancel
+            </CtaButton>
+            <CtaButton onClick={save.save} disabled={!draft.canSave || save.saving}>
+              {words.action}
+            </CtaButton>
+          </div>
+        </footer>
+      </div>
+    </DialogShell>
+  );
+}
+
+/** A failed save's line, over the buttons. */
+function ProblemLine({problem}: {problem: Problem | null}) {
+  if (problem === null) return null;
+  return (
+    <p role="alert" style={PROBLEM_STYLE}>
+      {PROBLEM_WORDS[problem]}
+    </p>
+  );
+}
+
+interface PhoneWindowProps extends BinderWindowProps {
+  draft: BinderDraft;
+  save: Save;
+  words: ReturnType<typeof wordsOf>;
+}
+
+/**
+ * A phone's window: a sheet whose header holds Cancel, the title and Create, then the cover with
+ * its count and bar, then the rules in the phone's filter sections.
+ */
+function PhoneWindow({isOpen, draft, save, words}: PhoneWindowProps) {
+  return (
+    <PhoneSheet isOpen={isOpen} onClose={save.close} dialogName={words.dialogName}>
+      <div className="ph-no-capture" style={SHEET_FRAME}>
+        <div style={SHEET_HEAD}>
+          <CtaButton variant="ghost" onClick={save.close} disabled={save.saving}>
+            Cancel
+          </CtaButton>
+          <h2 style={{...DIALOG_TITLE, fontSize: FONT_SIZES.xl, textAlign: 'center', minWidth: 0}}>{words.title}</h2>
+          <CtaButton onClick={save.save} disabled={!draft.canSave || save.saving}>
+            {words.phoneAction}
+          </CtaButton>
+        </div>
+        <div style={SHEET_BODY}>
+          <ProblemLine problem={save.problem} />
+          <div style={PHONE_SUMMARY}>
+            <div style={PHONE_COVER}>
+              <DraftCover draft={draft} />
+            </div>
+            <div style={{flex: 1, minWidth: 0}}>
+              <DraftCount draft={draft} />
+            </div>
+          </div>
+          <RulesFields draft={draft} isMobile />
+        </div>
+      </div>
+    </PhoneSheet>
+  );
+}
+
+interface PhoneSheetProps {
+  isOpen: boolean;
+  onClose: () => void;
+  dialogName: string;
+  children: ReactNode;
+}
+
+/** The phone's sheet: the house hook trio over `BottomSheet`, in a portal so no ancestor's transform holds it. */
+function PhoneSheet({isOpen, onClose, dialogName, children}: PhoneSheetProps) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const {mounted, visible, onTransitionEnd} = useTransitionPresence(isOpen);
+  useScrollLock(isOpen);
+  const {handleKeyDown} = useDialogFocus({isOpen, containerRef: sheetRef, initialFocusRef: sheetRef, onClose});
+  if (!mounted) return null;
+  return createPortal(
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      onTransitionEnd={onTransitionEnd}
+      ariaLabel={dialogName}
+      sheetRef={sheetRef}
+      onKeyDown={handleKeyDown}
+      sheetStyle={{top: SPACING.xxxl}}>
+      {children}
+    </BottomSheet>,
+    document.body,
+  );
+}
+
+/** The panel holds its height, so the rules scroll inside it while the preview and the foot stay. */
+const PANEL: CSSProperties = {
+  padding: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  height: 'min(85vh, 860px)',
+  overflow: 'hidden',
+  fontFamily: FONTS.body,
+};
+
+const FRAME: CSSProperties = {flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column'};
+
+const HEAD: CSSProperties = {padding: `${SPACING.xl}px ${SPACING.xxxl}px ${SPACING.lg}px ${SPACING.xl}px`};
+
+const LEAD_STYLE: CSSProperties = {
+  margin: `${SPACING.xs}px 0 0`,
+  fontSize: `${FONT_SIZES.base}px`,
+  lineHeight: LINE_HEIGHT.relaxed,
+  color: COLORS.textMuted,
+};
+
+const COLUMNS: CSSProperties = {
+  flex: 1,
+  minHeight: 0,
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr) 300px',
+  borderTop: `1px solid ${COLORS.surfaceBorder}`,
+  borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+};
+
+const RULES_COLUMN: CSSProperties = {overflowY: 'auto', padding: `${SPACING.lg}px ${SPACING.xl}px`};
+
+const PREVIEW_COLUMN: CSSProperties = {
+  overflowY: 'auto',
+  padding: SPACING.xl,
+  borderLeft: `1px solid ${COLORS.surfaceBorder}`,
+  background: COLORS.background,
+};
+
+const FOOT: CSSProperties = {padding: `${SPACING.md}px ${SPACING.xl}px`, display: 'flex', flexDirection: 'column', gap: SPACING.sm};
+
+const FOOT_ROW: CSSProperties = {display: 'flex', alignItems: 'center', gap: SPACING.sm};
+
+const NOTE_STYLE: CSSProperties = {flex: 1, margin: 0, fontSize: `${FONT_SIZES.base}px`, color: COLORS.textMuted};
+
+const PROBLEM_STYLE: CSSProperties = {margin: 0, fontSize: `${FONT_SIZES.base}px`, color: COLORS.error};
+
+const SHEET_FRAME: CSSProperties = {flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column'};
+
+const SHEET_HEAD: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'auto minmax(0, 1fr) auto',
+  alignItems: 'center',
+  gap: SPACING.sm,
+  padding: `0 ${SPACING.lg}px ${SPACING.md}px`,
+  borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+};
+
+const SHEET_BODY: CSSProperties = {
+  flex: 1,
+  minHeight: 0,
+  overflowY: 'auto',
+  padding: `${SPACING.lg}px ${SPACING.lg}px ${SPACING.xxl}px`,
+};
+
+/** Near a phone shelf's own cover width, so the plate's words fit as they do there. */
+const PHONE_COVER: CSSProperties = {width: 150, flexShrink: 0};
+
+const PHONE_SUMMARY: CSSProperties = {display: 'flex', alignItems: 'center', gap: SPACING.lg, marginBottom: SPACING.lg};

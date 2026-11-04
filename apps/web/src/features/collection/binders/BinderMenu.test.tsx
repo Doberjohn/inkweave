@@ -2,9 +2,11 @@ import {describe, it, expect, vi} from 'vitest';
 import {fireEvent, render, screen} from '@testing-library/react';
 import {BinderMenu} from './BinderMenu';
 
-function renderMenu(place: {first?: boolean; last?: boolean} = {}) {
+function renderMenu(place: {first?: boolean; last?: boolean; onEditRules?: () => void} = {}) {
   const acts = {onOpen: vi.fn(), onMove: vi.fn(), onDelete: vi.fn()};
-  render(<BinderMenu first={place.first ?? false} last={place.last ?? false} alwaysShown={false} {...acts} />);
+  render(
+    <BinderMenu first={place.first ?? false} last={place.last ?? false} alwaysShown={false} onEditRules={place.onEditRules} {...acts} />,
+  );
   return acts;
 }
 
@@ -17,6 +19,17 @@ describe('BinderMenu', () => {
     fireEvent.click(dots());
     expect(items()).toEqual(['Open', 'Move earlier', 'Move later', 'Delete binder']);
     expect(screen.getByRole('menuitem', {name: 'Open'})).toHaveFocus();
+  });
+
+  it('offers Edit rules after Open when the window can open, closing the menu onto ⋯ first', () => {
+    const onEditRules = vi.fn();
+    renderMenu({onEditRules});
+    fireEvent.click(dots());
+    expect(items()).toEqual(['Open', 'Edit rules', 'Move earlier', 'Move later', 'Delete binder']);
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Edit rules'}));
+    expect(onEditRules).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(dots()).toHaveFocus();
   });
 
   it('has no Move earlier on the first binder and no Move later on the last', () => {

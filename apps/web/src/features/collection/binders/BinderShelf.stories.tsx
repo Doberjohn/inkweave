@@ -3,13 +3,13 @@ import {MemoryRouter} from 'react-router-dom';
 import {fn} from 'storybook/test';
 import {COLORS} from '../../../shared/constants';
 import {BinderShelf} from './BinderShelf';
-import {STORY_BINDER_ENTRIES, STORY_BINDER_POOL, storyShelf} from './binderStoryData';
+import {STORY_BINDER_ENTRIES, STORY_BINDER_POOL, STORY_THIRTY_BINDERS, storyShelf} from './binderStoryData';
 
 /**
  * The binder shelf (#1074): My collection, then your binders in place order, each a closed zip
- * binder holding its cover card, its name on the plate, and how complete it is under it. Hover
- * or focus a binder of your own for its ⋯ (always shown on a phone). The heading, "Your binders"
- * and the count, stands in the toolbar (`ShelfHeading`).
+ * binder holding its cover card, its name on the plate, and how complete it is under it, then
+ * New binder (#1075). Hover or focus a binder of your own for its ⋯ (always shown on a phone).
+ * The heading, "Your binders" and the count, stands in the toolbar (`ShelfHeading`).
  */
 const meta: Meta<typeof BinderShelf> = {
   title: 'Collection/Binders/BinderShelf',
@@ -25,19 +25,29 @@ const meta: Meta<typeof BinderShelf> = {
   ],
   parameters: {layout: 'fullscreen'},
   tags: ['autodocs'],
-  args: {shelf: storyShelf(), pool: STORY_BINDER_POOL, entries: STORY_BINDER_ENTRIES, waiting: false, readerId: 'story-reader'},
+  args: {
+    shelf: storyShelf(),
+    pool: STORY_BINDER_POOL,
+    entries: STORY_BINDER_ENTRIES,
+    waiting: false,
+    readerId: 'story-reader',
+    onWindow: fn(),
+  },
 };
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * Seven covers: My collection and six binders. Binders whose rules hold none of your cards show
- * an empty sleeve; the thirty-letter name is cut short on its plate.
+ * Seven covers: My collection and six binders, then New binder. Binders whose rules hold none of
+ * your cards show an empty sleeve; the thirty-letter name is cut short on its plate.
  */
 export const SevenBinders: Story = {};
 
-/** No binder of your own yet: My collection alone. */
+/** Thirty binders, the most a shelf holds: in New binder's place, the line that says why. */
+export const ShelfFull: Story = {args: {shelf: storyShelf({binders: STORY_THIRTY_BINDERS})}};
+
+/** No binder of your own yet: My collection, then New binder. */
 export const OnlyMyCollection: Story = {args: {shelf: storyShelf({binders: []})}};
 
 /** While the cards or your copy load: My collection's cover is a shimmer its size. */

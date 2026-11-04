@@ -9,7 +9,7 @@ import type {BinderChoices} from './binderChoices';
 import {binderFace, type BinderFace, type BinderFigures} from './binderCovers';
 import {ruleKinds, type Binder} from './binderRules';
 import {BinderMedal} from './BinderMedal';
-import {MY_COLLECTION, binderWord, shelfCount} from './shelfWords';
+import {MY_COLLECTION, SHELF_FULL_LINE, SHELF_MAX, binderWord, shelfCount} from './shelfWords';
 
 /** The medal's size in a row: the set rows' number column holds it. */
 const ROW_MEDAL = 24;
@@ -39,7 +39,7 @@ interface BinderListProps {
 /**
  * The set picker's Binders tab (#1074, 3A): All your binders, which opens the shelf, then My
  * collection, then each binder of your own with its cover's medal, its name and its Complete
- * percentage, the open one chosen. A press opens it with the page's filters cleared
+ * percentage, the open one chosen, then New binder. A press opens it with the page's filters cleared
  * (`openBinderParams`), and counts once (`binder_opened`, the kinds of its rules, never its
  * name). Pressing the open binder at its own Sets only closes the menu.
  *
@@ -61,6 +61,7 @@ export function BinderList({choices, onPicked}: BinderListProps) {
       {rowsOf(choices).map((row) => (
         <BinderOption key={row.binder?.id ?? ''} row={row} selected={(row.binder?.id ?? null) === openId} onPick={pick} />
       ))}
+      <NewBinderOption choices={choices} onPicked={onPicked} />
       <ShelfState choices={choices} />
     </div>
   );
@@ -140,6 +141,52 @@ function ShelfOption({choices, onPicked}: BinderListProps) {
         </span>
       )}
       <span style={VISUALLY_HIDDEN}>{count === null ? 'All your binders' : `All your binders, ${count} ${binderWord(count)}`}</span>
+    </CtaButton>
+  );
+}
+
+/** The + in the medal column. */
+function PlusGlyph() {
+  return (
+    <svg width={ROW_MEDAL} height={ROW_MEDAL} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 6v12M6 12h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+const FULL_LINE = {
+  margin: 0,
+  padding: `${SPACING.sm}px ${SPACING.xs}px`,
+  fontSize: `${FONT_SIZES.base}px`,
+  color: COLORS.textMuted,
+} as const;
+
+/**
+ * New binder (#1075), under the binders once they have read: the menu closes and the window
+ * opens, and a binder made there opens. At 30 binders, the line that says why there is no other.
+ */
+function NewBinderOption({choices, onPicked}: BinderListProps) {
+  const {hovered, hoverProps} = useHover();
+  const {onNewBinder, shelf} = choices;
+  if (onNewBinder === null || shelf.status !== 'ready') return null;
+  if (shelf.binders.length >= SHELF_MAX) return <p style={FULL_LINE}>{SHELF_FULL_LINE}</p>;
+  return (
+    <CtaButton
+      variant="neutral"
+      {...hoverProps}
+      role="option"
+      aria-selected={false}
+      tabIndex={-1}
+      className="ph-no-capture"
+      onClick={() => {
+        onPicked();
+        onNewBinder();
+      }}
+      style={optionStyle({on: false, hovered})}>
+      <span aria-hidden="true" style={{display: 'flex', justifyContent: 'center', color: COLORS.primary}}>
+        <PlusGlyph />
+      </span>
+      <span style={TRUNCATE}>New binder</span>
     </CtaButton>
   );
 }

@@ -51,6 +51,7 @@ import {SHOW_BINDERS} from './binders/flag';
 import type {BinderChoices, CustomBinder, OwnBinders} from './binders/binderChoices';
 import {ShelfHeading} from './binders/ShelfHeading';
 import {useShelf, type ShelfSlot} from './binders/useShelf';
+import {useBinderWindow, type BinderWindowSlot} from './binders/useBinderWindow';
 import {useOwnBinders} from './useOwnBinders';
 
 /*
@@ -100,6 +101,10 @@ const BinderShelf = SHOW_BINDERS ? lazyWithRetry(() => import('./binders/BinderS
 const noShelf = (): ShelfSlot | null => null;
 const useShelfOf = import.meta.env.VITE_SHOW_BINDERS === 'true' ? useShelf : noShelf;
 const Heading = import.meta.env.VITE_SHOW_BINDERS === 'true' ? ShelfHeading : null;
+// The New binder window's place on the page (#1075), picked the same way: the window itself is lazy.
+const NO_WINDOW: BinderWindowSlot = {open: null, node: null};
+const noWindow = () => NO_WINDOW;
+const useWindowOf = import.meta.env.VITE_SHOW_BINDERS === 'true' ? useBinderWindow : noWindow;
 
 /**
  * Starts the binder's chunk on intent (#913): one request for the binder, its docked set panel
@@ -419,12 +424,16 @@ interface ChoicesAt {
 function binderChoicesOf(
   {shelf, custom}: OwnBinders,
   {friend, setCode, entries, pool}: ChoicesAt,
-  {onOpen, onShelf}: Pick<BinderChoices, 'onOpen' | 'onShelf'>,
+  opens: Pick<BinderChoices, 'onOpen' | 'onShelf' | 'onNewBinder'>,
 ): BinderChoices | undefined {
   if (shelf === null || friend !== null) return undefined;
   const open = custom.status === 'shown' ? custom : null;
-  return {open, atOwnScope: setCode === (open?.binder.scope ?? WHOLE_COLLECTION), shelf, pool, entries, onOpen, onShelf};
+  return {open, atOwnScope: setCode === (open?.binder.scope ?? WHOLE_COLLECTION), shelf, pool, entries, ...opens};
 }
+
+/** The Binders tab's New binder: the window, whose new binder then opens. Null until the window can open. */
+const newBinderFrom = ({open}: BinderWindowSlot, openBinder: BinderChoices['onOpen']) =>
+  open && (() => open({binder: null, onSaved: openBinder}));
 
 /** What a friend's binder shows, and beside what (`useFriendView`). */
 interface FriendView {
@@ -552,6 +561,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // The shelf while `?binder=shelf` shows, or for a player with nothing on it, My collection's
   // empty start in its place (4B).
   const shelfSlot = useShelfOf({on: collectionMode && onShelf, syncing, holdsCopies, shelf: own.shelf}, shelfToBinder);
+  const binderWindow = useWindowOf({readerId: user?.id ?? null, pool: isReady ? wholePool : null, entries});
   // A binder of your own's sets are unknown until the shelf answers: the request is trusted till then.
   const sets = binderSetsNow(pool, isReady, custom);
   const setCode = resolveSetCode(requested, sets);
@@ -634,7 +644,11 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     sets: panelSets(sets, setCode),
     setsLoading: sets === null,
     picksPromos: rarityPicksPromos(searchParams),
-    binders: binderChoicesOf(own, {friend, setCode, entries, pool: isReady ? wholePool : null}, {onOpen: openBinder, onShelf: openShelf}),
+    binders: binderChoicesOf(
+      own,
+      {friend, setCode, entries, pool: isReady ? wholePool : null},
+      {onOpen: openBinder, onShelf: openShelf, onNewBinder: newBinderFrom(binderWindow, openBinder)},
+    ),
     show,
     axis,
     ...trackedPicks(
@@ -701,6 +715,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
           entries={entries}
           waiting={syncing || user === null}
           readerId={user?.id ?? ''}
+          onWindow={binderWindow.open}
         />
       </Suspense>
     );
@@ -775,6 +790,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   const prompts = (
     <>
       <SignInDialog isOpen={showSignIn} onClose={() => setShowSignIn(false)} surface="collection" />
+      {binderWindow.node}
       {importMounted && (
         <Suspense fallback={null}>
           <ImportCollectionDialog
