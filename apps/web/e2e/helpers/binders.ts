@@ -21,12 +21,37 @@ export interface BinderRow {
   place: number;
 }
 
+/** A change the page asked the database for: a binder's `DELETE`, or a `move_binder` call. */
+type BinderCall = {what: 'delete'; id: string} | {what: 'move'; id: string; earlier: boolean};
+
 /** The binders the signed-in collector holds, in shelf order unless a case says otherwise. */
 export interface BindersWorld {
   rows: BinderRow[];
+  /** Each change the page sent, oldest first, filled in by `serveBinders`. */
+  calls?: BinderCall[];
 }
 
 const BINDERS_PATH = '/rest/v1/collection_binders';
+const MOVE_PATH = '/rest/v1/rpc/move_binder';
+
+const byPlace = (a: BinderRow, b: BinderRow) => a.place - b.place;
+
+/**
+ * `move_binder` over the world: swaps the binder's place with its neighbour's, or false when it
+ * has none that way. New rows for the two, so a case's own rows, shared across tests, stay as written.
+ */
+function move(world: BindersWorld, id: string, earlier: boolean): boolean {
+  const shelf = [...world.rows].sort(byPlace);
+  const at = shelf.findIndex((row) => row.id === id);
+  const other = at === -1 ? undefined : shelf[at + (earlier ? -1 : 1)];
+  if (other === undefined) return false;
+  const places = new Map([
+    [id, other.place],
+    [other.id, shelf[at].place],
+  ]);
+  world.rows = world.rows.map((row) => (places.has(row.id) ? {...row, place: places.get(row.id)!} : row));
+  return true;
+}
 
 /** A row with the fields a case doesn't care about filled in. */
 export function binderRow(row: Pick<BinderRow, 'id' | 'name'> & Partial<BinderRow>): BinderRow {
@@ -34,19 +59,33 @@ export function binderRow(row: Pick<BinderRow, 'id' | 'name'> & Partial<BinderRo
 }
 
 /**
- * Answers the reader's binder reads from `world`, in place order as the query asks. Registered
- * after the fixture's catch-all stub, so it wins for this table; register it before the first
- * navigation.
+ * Answers the reader's binder reads from `world`, in place order as the query asks, and changes
+ * it as the database would: a `DELETE` takes the binder out, and `move_binder` swaps two places.
+ * Each change lands in `world.calls`. Registered after the fixture's catch-all stub, so it wins
+ * for these paths; register it before the first navigation.
  */
 export async function serveBinders(page: Page, world: BindersWorld): Promise<void> {
+  const calls = (world.calls ??= []);
   await page.route(
     (url) => url.origin === E2E_SUPABASE_ORIGIN && url.pathname === BINDERS_PATH,
-    (route: Route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([...world.rows].sort((a, b) => a.place - b.place)),
-      }),
+    (route: Route) => {
+      const request = route.request();
+      if (request.method() === 'DELETE') {
+        const id = (new URL(request.url()).searchParams.get('id') ?? '').replace(/^eq\./, '');
+        calls.push({what: 'delete', id});
+        world.rows = world.rows.filter((row) => row.id !== id);
+        return route.fulfill({status: 204, body: ''});
+      }
+      return route.fulfill({status: 200, contentType: 'application/json', body: JSON.stringify([...world.rows].sort(byPlace))});
+    },
+  );
+  await page.route(
+    (url) => url.origin === E2E_SUPABASE_ORIGIN && url.pathname === MOVE_PATH,
+    (route: Route) => {
+      const {binder_id: id, earlier} = route.request().postDataJSON() as {binder_id: string; earlier: boolean};
+      calls.push({what: 'move', id, earlier});
+      return route.fulfill({status: 200, contentType: 'application/json', body: JSON.stringify(move(world, id, earlier))});
+    },
   );
 }
 

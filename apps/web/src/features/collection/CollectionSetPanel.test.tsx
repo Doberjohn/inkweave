@@ -92,6 +92,7 @@ describe('CollectionSetBody', () => {
       pool: null,
       entries: {},
       onOpen: vi.fn(),
+      onShelf: vi.fn(),
     });
     renderBody({setCode: 'all', binders: binders(true)});
     expect(numbers()).toHaveTextContent('Complete binder');

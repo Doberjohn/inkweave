@@ -9,6 +9,7 @@ import type {BinderChoices} from './binderChoices';
 import {binderFace, type BinderFace, type BinderFigures} from './binderCovers';
 import {ruleKinds, type Binder} from './binderRules';
 import {BinderMedal} from './BinderMedal';
+import {MY_COLLECTION, binderWord, shelfCount} from './shelfWords';
 
 /** The medal's size in a row: the set rows' number column holds it. */
 const ROW_MEDAL = 24;
@@ -18,8 +19,6 @@ interface BinderRow extends Partial<BinderFace> {
   binder: Binder | null;
   name: string;
 }
-
-const MY_COLLECTION = 'My collection';
 
 /** My collection, then each binder in shelf order, each with its cover and numbers once the pool is in. */
 function rowsOf({shelf, pool, entries}: BinderChoices): BinderRow[] {
@@ -38,10 +37,11 @@ interface BinderListProps {
 }
 
 /**
- * The set picker's Binders tab (#1074, 3A): My collection, then each binder of your own with its
- * cover's medal, its name and its Complete percentage, the open one chosen. A press opens it with
- * the page's filters cleared (`openBinderParams`), and counts once (`binder_opened`, the kinds of
- * its rules, never its name). Pressing the open binder at its own Sets only closes the menu.
+ * The set picker's Binders tab (#1074, 3A): All your binders, which opens the shelf, then My
+ * collection, then each binder of your own with its cover's medal, its name and its Complete
+ * percentage, the open one chosen. A press opens it with the page's filters cleared
+ * (`openBinderParams`), and counts once (`binder_opened`, the kinds of its rules, never its
+ * name). Pressing the open binder at its own Sets only closes the menu.
  *
  * Its rows carry `ph-no-capture`, and each takes its name from its words, so no binder's name
  * reaches an attribute or PostHog's autocapture.
@@ -57,6 +57,7 @@ export function BinderList({choices, onPicked}: BinderListProps) {
   };
   return (
     <div role="listbox" aria-label="Binders" tabIndex={-1} style={LIST_STYLE}>
+      <ShelfOption choices={choices} onPicked={onPicked} />
       {rowsOf(choices).map((row) => (
         <BinderOption key={row.binder?.id ?? ''} row={row} selected={(row.binder?.id ?? null) === openId} onPick={pick} />
       ))}
@@ -93,6 +94,53 @@ function ShelfState({choices}: {choices: BinderChoices}) {
         Try again
       </CtaButton>
     </div>
+  );
+}
+
+/** The shelf's glyph in the medal column: covers side by side, as the shelf shows them. */
+function ShelfGlyph() {
+  return (
+    <svg width={ROW_MEDAL} height={ROW_MEDAL} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <rect x="3" y="4" width="7.5" height="9.5" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="13.5" y="4" width="7.5" height="9.5" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3 18h18M3 20.5h18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/**
+ * All your binders (#1074), above My collection: back to the shelf, with its count, My collection
+ * included, once the binders have loaded. Never chosen: the shelf is never what the picker names.
+ */
+function ShelfOption({choices, onPicked}: BinderListProps) {
+  const {hovered, hoverProps} = useHover();
+  const count = shelfCount(choices.shelf);
+  return (
+    <CtaButton
+      variant="neutral"
+      {...hoverProps}
+      role="option"
+      aria-selected={false}
+      tabIndex={-1}
+      className="ph-no-capture"
+      onClick={() => {
+        choices.onShelf();
+        onPicked();
+      }}
+      style={optionStyle({on: false, hovered})}>
+      <span aria-hidden="true" style={{display: 'flex', justifyContent: 'center', color: COLORS.primary}}>
+        <ShelfGlyph />
+      </span>
+      <span aria-hidden="true" style={TRUNCATE}>
+        All your binders
+      </span>
+      {count !== null && (
+        <span aria-hidden="true" style={percentStyle(false)}>
+          {count}
+        </span>
+      )}
+      <span style={VISUALLY_HIDDEN}>{count === null ? 'All your binders' : `All your binders, ${count} ${binderWord(count)}`}</span>
+    </CtaButton>
   );
 }
 

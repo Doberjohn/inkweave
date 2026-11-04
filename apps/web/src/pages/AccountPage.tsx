@@ -16,6 +16,7 @@ import {lazyWithRetry} from '../shared/lib/lazyWithRetry';
 import {useSession} from '../shared/contexts/SessionContext';
 import {useResponsive} from '../shared/hooks';
 import {CAP_LABEL, COLORS, FONT_SIZES, FONTS, SPACING, SURFACE_CARD} from '../shared/constants';
+import {SHOW_BINDERS} from '../features/collection/binders/flag';
 
 /**
  * The account page (#553 follow-on).
@@ -354,7 +355,8 @@ export function CollectionSection({
           {/* The account copy goes too: this page is signed-in only, and a clear
               while signed in deletes the server row as well (#555). */}
           This deletes your imported collection from this browser and from your account. It cannot be
-          undone.{sharingOn && ' Sharing with your friends turns off too.'}
+          undone.{SHOW_BINDERS && ' Your binders go too.'}
+          {sharingOn && ' Sharing with your friends turns off too.'}
         </p>
       )}
     </Section>

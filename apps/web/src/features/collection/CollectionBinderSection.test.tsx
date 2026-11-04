@@ -288,6 +288,7 @@ describe('CollectionBinderSection', () => {
       pool: null,
       entries: {},
       onOpen: vi.fn(),
+      onShelf: vi.fn(),
     });
 
     it('says every card in this binder is held, at its own Sets', () => {

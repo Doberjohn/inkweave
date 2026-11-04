@@ -10,7 +10,7 @@ const meta: Meta<typeof UnknownBinder> = {
   title: 'Collection/Binders/UnknownBinder',
   component: UnknownBinder,
   tags: ['autodocs'],
-  args: {onOpenMine: fn()},
+  args: {onToShelf: fn()},
 };
 
 export default meta;

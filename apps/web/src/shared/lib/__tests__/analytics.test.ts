@@ -212,6 +212,18 @@ describe('trackEvent', () => {
     expectSentToBoth('friend_binder_opened', props);
   });
 
+  it('forwards a binder_changed event', () => {
+    const props = {what: 'place'} as const;
+    trackEvent('binder_changed', props);
+    expectSentToBoth('binder_changed', props);
+  });
+
+  it('forwards a binder_deleted event', () => {
+    const props = {kinds: 'sets,ink'};
+    trackEvent('binder_deleted', props);
+    expectSentToBoth('binder_deleted', props);
+  });
+
   it('forwards a friends_who_have_it_opened event', () => {
     const props = {from: 'window'} as const;
     trackEvent('friends_who_have_it_opened', props);

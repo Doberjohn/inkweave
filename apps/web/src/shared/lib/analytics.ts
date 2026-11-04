@@ -168,6 +168,11 @@ type AnalyticsEvents = {
   // a binder of your own rather than My collection, and `kinds` the kinds of its rules
   // (`ruleKinds`: "sets,ink,rarity", or "none"). Never a binder's name or id.
   binder_opened: {from: 'picker' | 'shelf'; mine: boolean; kinds: string};
+  // A change to a binder of your own that landed: for now its place on the shelf (Move earlier
+  // or Move later). Never its name or id.
+  binder_changed: {what: 'place'};
+  // A binder of your own deleted, once the delete landed: the kinds of its rules (`ruleKinds`).
+  binder_deleted: {kinds: string};
   // Friends (#852, #884). Never a friend code, name, handle or id.
   // `result` on a send is send_friend_request's answer: pending, accepted, a refusal, or failed.
   friend_code_copied: {result: 'copied' | 'blocked'};

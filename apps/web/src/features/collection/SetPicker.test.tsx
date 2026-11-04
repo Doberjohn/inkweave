@@ -134,6 +134,7 @@ describe('SetPicker', () => {
       pool: null,
       entries: {},
       onOpen: vi.fn(),
+      onShelf: vi.fn(),
       ...over,
     });
     const binderButton = () => screen.getByRole('button', {name: /^Binder: /});
@@ -177,12 +178,13 @@ describe('SetPicker', () => {
       expect(option('12')).toHaveFocus();
     });
 
-    it('goes round the three tabs with the arrows, and up from the first binder reaches them', async () => {
+    it('goes round the three tabs with the arrows, and up from the first row reaches them', async () => {
       renderPicker({sets: ['14', '13', 'P1'], setCode: 'all', binders: choices({open: OPEN})});
       fireEvent.click(binderButton());
       const amber = await screen.findByRole('option', {name: /^Amber/});
       fireEvent.keyDown(amber, {key: 'ArrowUp'});
       fireEvent.keyDown(screen.getByRole('option', {name: /^My collection/}), {key: 'ArrowUp'});
+      fireEvent.keyDown(screen.getByRole('option', {name: /^All your binders/}), {key: 'ArrowUp'});
       expect(tab('Binders')).toHaveFocus();
       fireEvent.keyDown(tab('Binders'), {key: 'ArrowLeft'});
       expect(tab('Promo')).toHaveFocus();

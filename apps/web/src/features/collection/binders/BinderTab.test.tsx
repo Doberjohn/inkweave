@@ -37,6 +37,7 @@ function renderList(over: Partial<BinderChoices> = {}) {
     pool: POOL,
     entries: ENTRIES,
     onOpen: vi.fn(),
+    onShelf: vi.fn(),
     ...over,
   };
   const onPicked = vi.fn();
@@ -52,15 +53,16 @@ beforeEach(() => {
 });
 
 describe('BinderList', () => {
-  it('lists My collection, then each binder in shelf order, each named by its words', () => {
+  it('lists All your binders, My collection, then each binder in shelf order, each named by its words', () => {
     renderList();
     const rows = screen.getAllByRole('option');
     expect(rows.map((option) => option.textContent)).toEqual([
+      'All your binders3All your binders, 3 binders',
       'My collection75%My collection, 75% complete',
       'Amber100%Amber, 100% complete',
       'Wilds epics100%Wilds epics, 100% complete',
     ]);
-    expect(rows[1]).toHaveAccessibleName('Amber, 100% complete');
+    expect(rows[2]).toHaveAccessibleName('Amber, 100% complete');
   });
 
   // A binder's name is the player's own words: never in an attribute, never in autocapture.
@@ -119,10 +121,27 @@ describe('BinderList', () => {
     expect(inside.onOpen).toHaveBeenCalledWith(AMBER);
   });
 
-  it('holds a shimmer under My collection while the binders load', () => {
+  it('holds a shimmer under My collection while the binders load, and no count on All your binders', () => {
     renderList({shelf: {status: 'loading', binders: [], retry: vi.fn()}});
-    expect(screen.getAllByRole('option')).toHaveLength(1);
+    expect(screen.getAllByRole('option')).toHaveLength(2);
+    expect(row(/^All your binders/)).toHaveAccessibleName('All your binders');
     expect(screen.getByRole('listbox').querySelector('.react-loading-skeleton')).not.toBeNull();
+  });
+
+  // The shelf is a push: Back returns to the binder it was opened from.
+  it('opens the shelf from All your binders, counting no binder opened', () => {
+    const {onShelf, onOpen, onPicked} = renderList({open: openAmber});
+    expect(row(/^All your binders/)).toHaveAttribute('aria-selected', 'false');
+    fireEvent.click(row(/^All your binders/));
+    expect(onShelf).toHaveBeenCalledOnce();
+    expect(onOpen).not.toHaveBeenCalled();
+    expect(onPicked).toHaveBeenCalledOnce();
+    expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  it('counts My collection on All your binders: "1 binder" with none of your own', () => {
+    renderList({shelf: {status: 'ready', binders: [], retry: vi.fn()}});
+    expect(row(/^All your binders/)).toHaveAccessibleName('All your binders, 1 binder');
   });
 
   it('says a failed read, and its Try again reads again', () => {

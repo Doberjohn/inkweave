@@ -1,3 +1,4 @@
+import {useEffect} from 'react';
 import {COLORS, DURATION, EASING, RADIUS, SHADOWS, SPACING, Z_INDEX} from '../tokens/theme';
 
 interface BottomSheetProps {
@@ -42,6 +43,9 @@ const MOTION = `${DURATION.slow}ms ${EASING.smooth}`;
 const SCRIM_MOTION = `opacity ${MOTION}, visibility ${MOTION}`;
 const SHEET_MOTION = `transform ${MOTION}, opacity ${MOTION}, top ${MOTION}, visibility ${MOTION}`;
 
+/** How long a closed sheet waits for its slide to end before ending its exit anyway, as DialogShell's does. */
+const EXIT_FALLBACK_MS = DURATION.slow + 200;
+
 /**
  * Shared bottom-sheet chrome (#510): the scrim backdrop, slide-up sheet
  * container, and drag-handle visual that SearchBottomSheet and
@@ -64,6 +68,14 @@ export function BottomSheet({
   children,
 }: BottomSheetProps) {
   const tiers = LAYERS[layer];
+  // Reduced motion takes `.overlay-transition`'s transitions away, so no transitionend comes and a
+  // closed sheet would stay mounted for good. The exit ends anyway once the slide would have. While
+  // a sheet opens it is not yet visible for a frame, which ends nothing: an open sheet stays.
+  useEffect(() => {
+    if (visible) return undefined;
+    const timer = setTimeout(onTransitionEnd, EXIT_FALLBACK_MS);
+    return () => clearTimeout(timer);
+  }, [visible, onTransitionEnd]);
   // The sheet's own transitions all end with its slide, so any of them ends the exit; the scrim's
   // fade and a child's hover transition (whose transitionend bubbles here) don't.
   const onSlideEnd = (event: React.TransitionEvent<HTMLDivElement>) => {

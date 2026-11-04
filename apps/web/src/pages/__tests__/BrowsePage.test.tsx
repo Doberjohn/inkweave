@@ -51,6 +51,7 @@ const GRID: BrowseCollectionSlots = {
   active: false,
   pool: [],
   modeSwitch: <button type="button">Collection</button>,
+  shelf: null,
   renderBinder: () => null,
   modeActions: null,
   pickerNamesBinder: false,
@@ -199,6 +200,7 @@ describe('BrowseBody with collection mode on', () => {
     active: true,
     pool: [outside],
     modeSwitch: null,
+    shelf: null,
     renderBinder: (_listing, onCardSelect) => <button onClick={() => onCardSelect(outside, 'binder')}>binder card</button>,
     modeActions: null,
     pickerNamesBinder: false,
@@ -267,6 +269,20 @@ describe('BrowseBody with collection mode on', () => {
     });
     fireEvent.click(screen.getByRole('button', {name: 'binder card'}));
     expect(trackCardSelected).toHaveBeenCalledExactlyOnceWith(outside, 'friend_binder');
+  });
+
+  it("puts the shelf's heading in the toolbar in place of the filters, the sort and the search (#1074)", () => {
+    renderBody('/browse?binder=shelf', {
+      ...slots,
+      shelf: {heading: <h2>Your binders</h2>},
+      modeSwitch: <button type="button">Collection</button>,
+    });
+    const toolbar = screen.getByTestId('browse-toolbar');
+    expect(within(toolbar).getByRole('heading', {name: 'Your binders'})).toBeInTheDocument();
+    expect(within(toolbar).getByRole('button', {name: 'Collection'})).toBeInTheDocument();
+    expect(within(toolbar).queryByRole('button', {name: /Filters/})).toBeNull();
+    expect(within(toolbar).queryByRole('combobox', {name: 'Sort cards'})).toBeNull();
+    expect(within(toolbar).queryByRole('searchbox')).toBeNull();
   });
 
   it('leaves the status line empty while the binder shows, since it lights slots rather than listing cards', () => {

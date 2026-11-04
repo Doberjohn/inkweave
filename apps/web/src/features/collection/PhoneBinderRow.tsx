@@ -50,3 +50,16 @@ export function PhoneBinderRow({setPicker, count, onOpen, modeSwitch}: PhoneBind
     </div>
   );
 }
+
+/**
+ * The row over the binder shelf (#1074): the shelf's heading in place of Filters and the set
+ * button, which the shelf has no use for, then Collection, where grid mode's row keeps it.
+ */
+export function PhoneShelfRow({heading, modeSwitch}: {heading: ReactNode; modeSwitch: ReactNode}) {
+  return (
+    <div data-testid="phone-binder-row" style={ROW_STYLE}>
+      <div style={SET_SLOT}>{heading}</div>
+      {modeSwitch}
+    </div>
+  );
+}

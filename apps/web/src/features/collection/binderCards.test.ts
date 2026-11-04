@@ -21,6 +21,7 @@ import {
   setFromFilter,
   setLabel,
   setName,
+  shelfParams,
   withPrintingCards,
   withoutStrays,
   type BinderSlot,
@@ -381,6 +382,20 @@ describe('a binder of your own', () => {
   it('opens My collection with no custom param', () => {
     const opened = openBinderParams(new URLSearchParams('binder=12&custom=b1&cost=3'), null);
     expect(opened.toString()).toBe('binder=all');
+  });
+});
+
+describe('the binder shelf (#1074)', () => {
+  const left = (params: string) => withoutStrays(new URLSearchParams(params)).toString();
+
+  it('drops the set filter, the view, whose binder and which of yours, and keeps the other filters out of sight', () => {
+    expect(left('binder=shelf&set=12&owned=missing&friend=ruby_hero_042&custom=b1&ink=Amber&sort=name')).toBe(
+      'binder=shelf&ink=Amber&sort=name',
+    );
+  });
+
+  it('goes to the shelf from a binder of your own, keeping the filters for the grid', () => {
+    expect(shelfParams(new URLSearchParams('binder=12&custom=b1&owned=missing&ink=Ruby')).toString()).toBe('binder=shelf&ink=Ruby');
   });
 });
 

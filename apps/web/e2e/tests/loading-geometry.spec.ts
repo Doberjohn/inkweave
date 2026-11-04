@@ -10,7 +10,8 @@ import {
   shortestNamedCardWithSynergies,
   shortestNamedCoreCharacter,
 } from '../helpers/cardData';
-import {binder, board, COLLECTIONS_PATH, type Entries, signInAsCollector} from '../helpers/collector';
+import {binderRow, serveBinders} from '../helpers/binders';
+import {binder, board, COLLECTIONS_PATH, type Entries, shelf, signInAsCollector} from '../helpers/collector';
 import {serveFriends, type Player} from '../helpers/friends';
 import {holdLazyModule} from '../helpers/lazyModule';
 import {signInAs} from '../helpers/session';
@@ -455,9 +456,10 @@ for (const [rows, size] of [
       (request) =>
         new URL(request.url()).pathname === COLLECTIONS_PATH && request.method() === 'GET',
     );
-    await page.goto('/browse');
+    // My collection's binder by its link: Collection opens the shelf (#1074), whose covers wait
+    // for the cards this holds.
+    await page.goto('/browse?binder=all');
     await synced;
-    await page.getByRole('button', {name: 'Show my collection'}).click();
     await expect
       .poll(binderCode.caught, {
         message: "the binder's chunk never reached the hold",
@@ -495,3 +497,27 @@ for (const [rows, size] of [
     ).toHaveCount(3 * rows);
   });
 }
+
+/**
+ * The binder shelf (#1074): while the cards load, each cover is a shimmer its size, and the
+ * covers then land in those boxes, under a heading that holds still.
+ */
+test("the shelf's covers land in their shimmers' boxes, and its heading holds still", async ({page}) => {
+  const releaseCards = await hold(page, /\/data\/collection\//);
+  await signInAsCollector(page, HELD);
+  await serveBinders(page, {
+    rows: [binderRow({id: 'b1', name: 'Amber', rules: 'ink=Amber'}), binderRow({id: 'b2', name: 'Epics', rules: 'rarity=Epic', place: 1})],
+  });
+  await page.goto('/browse?binder=shelf');
+  const covers = shelf(page).getByRole('listitem');
+  // My collection's shimmer, then one for each binder once they're read.
+  await expect(covers).toHaveCount(3);
+  const heading = page.getByRole('heading', {name: 'Your binders'});
+  const tiles = [0, 1, 2].map((at) => covers.nth(at).locator(':scope > *'));
+  const loading = {heading: await boxOf(heading), tiles: await Promise.all(tiles.map(boxOf))};
+
+  releaseCards();
+  await expect(shelf(page).getByRole('link')).toHaveCount(3);
+  expectSameBox(await boxOf(heading), loading.heading);
+  for (const [at, tile] of tiles.entries()) expectSameBox(await boxOf(tile), loading.tiles[at]);
+});

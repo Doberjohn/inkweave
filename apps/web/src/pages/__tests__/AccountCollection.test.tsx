@@ -125,6 +125,30 @@ describe('AccountCollection', () => {
     expect(screen.getByRole('alert')).not.toHaveTextContent('Sharing');
   });
 
+  // A collection's binders hang off it (#1074): a Clear deletes them too, which the line says
+  // only with binders on, so Production's page names them from the week they launch.
+  it("says Clear's delete takes your binders too, with binders on", async () => {
+    const user = userEvent.setup();
+    renderAccount();
+    await user.click(screen.getByRole('button', {name: 'Clear'}));
+    expect(screen.getByRole('alert')).toHaveTextContent('It cannot be undone. Your binders go too.');
+  });
+
+  it('names no binders with binders off', async () => {
+    vi.stubEnv('VITE_SHOW_BINDERS', 'false');
+    vi.resetModules();
+    try {
+      const {AccountCollection: Off} = await import('../AccountCollection');
+      const user = userEvent.setup();
+      render(<Off />, {wrapper: MemoryRouter});
+      await user.click(screen.getByRole('button', {name: 'Clear'}));
+      expect(screen.getByRole('alert')).toHaveTextContent(/It cannot be undone\.$/);
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
+  });
+
   it('opens an empty binder on Browse for an account with nothing to import', async () => {
     collection.has = false;
     const user = userEvent.setup();

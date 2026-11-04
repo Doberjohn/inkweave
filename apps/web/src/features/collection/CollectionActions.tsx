@@ -1,8 +1,8 @@
-import {useEffect, useId, useRef, useState, type CSSProperties, type FocusEvent, type KeyboardEvent, type ReactNode} from 'react';
+import {useEffect, useRef, type CSSProperties, type FocusEvent, type KeyboardEvent, type ReactNode} from 'react';
 import {CtaButton} from '../../shared/components';
 import {ToolbarToggle} from 'inkweave-ui/components/ToolbarToggle';
 import {useHover} from 'inkweave-ui/hooks/useHover';
-import {useCloseOnPressOutside} from './useCloseOnPressOutside';
+import {useMenuButton} from './useMenuButton';
 import {
   COLORS,
   DISABLED_STYLE,
@@ -40,65 +40,25 @@ export interface CollectionActionsProps {
  * Escape closes the menu onto the gear, and Tab or a press outside closes it.
  */
 export function CollectionActions({onImport, checking, onMenuOpen}: CollectionActionsProps) {
-  const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const menuId = useId();
-  useCloseOnPressOutside(open, wrapperRef, setOpen);
-
-  const openMenu = () => {
-    setOpen(true);
-    onMenuOpen?.();
-  };
-
-  const close = () => {
-    setOpen(false);
-    wrapperRef.current?.querySelector<HTMLElement>('[aria-haspopup]')?.focus();
-  };
+  const menu = useMenuButton(wrapperRef, onMenuOpen);
   /** Import closes the menu onto the gear first, so the dialog it opens gives the focus back there. */
   const startImport = () => {
-    close();
+    menu.close();
     onImport();
   };
-  /** Keyboard focus leaving the gear and its menu closes the menu. */
-  const closeOnLeave = (e: FocusEvent) => {
-    if (e.relatedTarget instanceof Node && !wrapperRef.current?.contains(e.relatedTarget)) setOpen(false);
-  };
-
-  function onButtonKeyDown(e: KeyboardEvent<HTMLButtonElement>) {
-    if (open || !OPENING_KEYS.has(e.key)) return;
-    e.preventDefault();
-    openMenu();
-  }
-
-  function onMenuKeyDown(e: KeyboardEvent<HTMLDivElement>) {
-    if (e.key === 'Escape') {
-      // Ours alone: the page must not also act on it.
-      e.preventDefault();
-      e.stopPropagation();
-      close();
-    } else if (e.key === 'Tab') {
-      setOpen(false);
-    } else if (moveFocus(e.currentTarget, e.key)) {
-      e.preventDefault();
-    }
-  }
 
   return (
     <div ref={wrapperRef} style={{position: 'relative'}}>
       <ToolbarToggle
-        active={open}
+        active={menu.open}
         aria-label="Collection actions"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={open ? menuId : undefined}
-        onClick={open ? () => setOpen(false) : openMenu}
-        onKeyDown={onButtonKeyDown}
-        onBlur={closeOnLeave}
+        {...menu.buttonProps}
         style={{width: 34, padding: 0}}>
         <GearIcon />
       </ToolbarToggle>
-      {open && (
-        <ActionsMenu id={menuId} onKeyDown={onMenuKeyDown} onBlur={closeOnLeave}>
+      {menu.open && (
+        <ActionsMenu label="Collection actions" {...menu.menuProps}>
           <MenuAction
             label="Import collection"
             waitNote={checking ? 'Checking your account…' : undefined}
@@ -109,9 +69,6 @@ export function CollectionActions({onImport, checking, onMenuOpen}: CollectionAc
     </div>
   );
 }
-
-/** The keys that open the menu from the gear, as the set picker's arrows open its list. */
-const OPENING_KEYS = new Set(['ArrowDown', 'ArrowUp']);
 
 /**
  * A gear in the button's text colour: gold on the ghost outline, dark on the fill. Six broad
@@ -152,13 +109,17 @@ const MENU_STYLE: CSSProperties = {
 
 interface ActionsMenuProps {
   id: string;
+  /** What the menu is called: its button's name. */
+  label: string;
   children: ReactNode;
+  /** Changes to the menu's box, such as a narrower one under a binder's ⋯. */
+  style?: CSSProperties;
   onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => void;
   onBlur: (e: FocusEvent) => void;
 }
 
 /** The open menu. Opening puts focus on its first action, as a menu does, so the arrows work at once. */
-function ActionsMenu({id, children, onKeyDown, onBlur}: ActionsMenuProps) {
+export function ActionsMenu({id, label, children, style, onKeyDown, onBlur}: ActionsMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
@@ -168,9 +129,9 @@ function ActionsMenu({id, children, onKeyDown, onBlur}: ActionsMenuProps) {
       ref={menuRef}
       id={id}
       role="menu"
-      aria-label="Collection actions"
+      aria-label={label}
       tabIndex={-1}
-      style={MENU_STYLE}
+      style={{...MENU_STYLE, ...style}}
       onKeyDown={onKeyDown}
       onBlur={onBlur}>
       {children}
@@ -179,7 +140,7 @@ function ActionsMenu({id, children, onKeyDown, onBlur}: ActionsMenuProps) {
 }
 
 /** A menu row: the kit's neutral button, washed on hover, its words stacked. */
-function actionStyle({hovered, waits}: {hovered: boolean; waits: boolean}): CSSProperties {
+function actionStyle({hovered, waits, danger}: {hovered: boolean; waits: boolean; danger: boolean}): CSSProperties {
   return {
     display: 'flex',
     flexDirection: 'column',
@@ -191,7 +152,7 @@ function actionStyle({hovered, waits}: {hovered: boolean; waits: boolean}): CSSP
     borderRadius: `${RADIUS.md}px`,
     border: '1px solid transparent',
     background: hovered && !waits ? GOLD_GLOW.hoverBg : 'transparent',
-    color: COLORS.text,
+    color: danger ? COLORS.error : COLORS.text,
     fontSize: `${FONT_SIZES.lg}px`,
     fontWeight: FONT_WEIGHT.medium,
     textAlign: 'left',
@@ -209,11 +170,13 @@ interface MenuActionProps {
   label: string;
   /** Why the action waits, said under its name. Set, the action waits: it stays in reach but does nothing. */
   waitNote?: string;
+  /** An action that destroys something, such as Delete binder, in red. */
+  danger?: boolean;
   onSelect: () => void;
 }
 
 /** One action in the menu. */
-function MenuAction({label, waitNote, onSelect}: MenuActionProps) {
+export function MenuAction({label, waitNote, danger = false, onSelect}: MenuActionProps) {
   const {hovered, hoverProps} = useHover();
   const waits = waitNote !== undefined;
   return (
@@ -224,29 +187,9 @@ function MenuAction({label, waitNote, onSelect}: MenuActionProps) {
       tabIndex={-1}
       aria-disabled={waits || undefined}
       onClick={waits ? undefined : onSelect}
-      style={actionStyle({hovered, waits})}>
+      style={actionStyle({hovered, waits, danger})}>
       <span>{label}</span>
       {waits && <span style={NOTE_STYLE}>{waitNote}</span>}
     </CtaButton>
   );
-}
-
-/** Where each key takes focus among the actions, from the focused one and the last one's index. */
-const MOVES: Record<string, (at: number, last: number) => number> = {
-  ArrowDown: (at, last) => Math.min(at + 1, last),
-  ArrowUp: (at) => Math.max(at - 1, 0),
-  Home: () => 0,
-  End: (_, last) => last,
-};
-
-/** Move focus through the menu's actions for a navigation key; false for any other key. */
-function moveFocus(menu: HTMLElement, key: string): boolean {
-  if (!(key in MOVES)) return false;
-  const actions = [...menu.querySelectorAll<HTMLElement>('[role="menuitem"]')];
-  const at = Math.max(
-    actions.findIndex((action) => action === document.activeElement),
-    0,
-  );
-  actions[MOVES[key](at, actions.length - 1)]?.focus();
-  return true;
 }

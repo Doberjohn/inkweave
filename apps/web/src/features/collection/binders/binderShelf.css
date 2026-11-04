@@ -1,0 +1,74 @@
+/* The binder shelf's covers (#1074): a closed zip binder face on, drawn with the binder's own
+   board, zip pull and pocket (`binder.css`, its colours from `binderLook.ts`). Every colour and
+   timing here is a custom property `BinderCover` sets from the theme, so nothing restates one. */
+
+/* A closed binder: its spine down the left side, and the zip round the other three edges, from
+   the spine along the top, round the outer side and back along the bottom. */
+.binder-shelf-board::before {
+  display: none;
+}
+/* The board's right-hand zip (`binder.css`, its corners rounded there), run from the spine. */
+.binder-shelf-board::after {
+  left: 7%;
+  width: auto;
+}
+.binder-shelf-spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 7%;
+  border-top-left-radius: inherit;
+  border-bottom-left-radius: inherit;
+  background: var(--shelf-spine);
+  box-shadow: var(--shelf-spine-edge);
+  pointer-events: none;
+}
+
+/* Hover and keyboard focus ring the board in gold; the link round it draws no outline of its own. */
+.binder-shelf-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: var(--shelf-hover-ring);
+  opacity: 0;
+  transition: opacity var(--shelf-fade);
+  pointer-events: none;
+}
+.binder-shelf-cover:hover .binder-shelf-ring {
+  opacity: 1;
+}
+.binder-shelf-cover:focus-visible .binder-shelf-ring {
+  box-shadow: var(--shelf-focus-ring);
+  opacity: 1;
+}
+
+/* A cover's ⋯ shows while the pointer rests on its tile or focus is inside it, and while its
+   menu is open. Hidden by opacity alone, so the keyboard still reaches it. A phone shows it always. */
+.binder-shelf-actions {
+  opacity: 0;
+  transition: opacity var(--shelf-fade);
+}
+.binder-shelf-tile:hover .binder-shelf-actions,
+.binder-shelf-tile:focus-within .binder-shelf-actions,
+.binder-shelf-actions[data-open] {
+  opacity: 1;
+}
+
+/* A binder's ⋯: its disc darkens the art under it, and takes the house surface on hover. Its
+   colours are custom properties `BinderMenu` sets. */
+.binder-shelf-dots {
+  background: var(--shelf-dots);
+  transition: background-color var(--shelf-fade);
+}
+button:hover > .binder-shelf-dots {
+  background: var(--shelf-dots-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .binder-shelf-ring,
+  .binder-shelf-actions,
+  .binder-shelf-dots {
+    transition: none;
+  }
+}

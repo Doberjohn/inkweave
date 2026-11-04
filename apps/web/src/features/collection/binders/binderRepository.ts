@@ -72,3 +72,20 @@ function reportUnreadable(count: number): void {
   console.warn(`[collection] ${failure.message}`);
   reportFailure({area: 'collection', operation: 'read binder rows'}, failure);
 }
+
+/** Deletes one of the caller's binders. Another player's id deletes nothing: the delete policy sees only the caller's rows. */
+export function deleteBinderRow(id: string): Promise<RepoResult<null>> {
+  return callSupabase({area: 'collection', operation: 'delete binder'}, (client) =>
+    client.from('collection_binders').delete().eq('id', id),
+  );
+}
+
+/**
+ * Swaps a binder with its neighbour, the one before it (`earlier`) or after it: the server alone
+ * writes places (`move_binder`). True once they swapped, false when it had no neighbour that way.
+ */
+export function moveBinderRow(id: string, earlier: boolean): Promise<RepoResult<boolean>> {
+  return callSupabase({area: 'collection', operation: 'move binder'}, (client) =>
+    client.rpc('move_binder', {binder_id: id, earlier}),
+  );
+}
