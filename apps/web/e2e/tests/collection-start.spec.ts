@@ -85,13 +85,14 @@ test.describe('Starting a collection', () => {
     await signedIn(page);
 
     await page.getByRole('button', {name: 'Show my collection'}).click();
-    // The binder waits for the account, whose copy may be the collection: nothing is started yet.
-    await expect(page).toHaveURL(/[?&]binder=all(&|$)/);
+    // The shelf waits for the account, whose copy may be the collection: nothing is started yet.
+    await expect(page).toHaveURL(/[?&]binder=shelf(&|$)/);
     await expect(emptyNote(page)).toHaveCount(0);
     expect(writes).toEqual([]);
 
     answer();
-    // Nothing came, so the empty collection starts, and the binder stays, its param with it.
+    // Nothing came, so the empty collection starts, and with no copy and no binder the shelf
+    // gives way to My collection's binder (#1074), which stays, its param with it.
     await expect(emptyNote(page)).toBeVisible();
     await expect(page).toHaveURL(/[?&]binder=all(&|$)/);
     await expect(page.getByRole('dialog', {name: 'Import your collection'})).toHaveCount(0);

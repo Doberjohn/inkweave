@@ -2,6 +2,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from '../collectionParser';
 import type {BinderChoices, OpenBinder} from './binderChoices';
 import type {Binder} from './binderRules';
+import type {BinderShelf} from './binderShelf';
 
 /*
  * Binders of your own for the stories: a small pool whose covers have art in
@@ -21,7 +22,7 @@ export const STORY_BINDER_POOL: LorcanaCard[] = [
 ];
 
 /** Every Amber card but one, the Enchanted, and the Set 12 Epic: so each binder reads a different percentage. */
-const STORY_BINDER_ENTRIES: CollectionEntries = {
+export const STORY_BINDER_ENTRIES: CollectionEntries = {
   'amber-legend': {normal: 1, foil: 0},
   'amber-common': {normal: 2, foil: 1},
   'steel-enchanted': {normal: 0, foil: 1},
@@ -40,6 +41,18 @@ const STORY_BINDERS: Binder[] = [
   binderOf({id: 'b4', name: 'Shimmering Sapphire Collection', scope: 'all', rules: 'ink=Sapphire'}, 3),
 ];
 
+/** The shelf's six binders, so it shows seven covers with My collection: the Binders tab's four and two more. */
+const STORY_SHELF_BINDERS: Binder[] = [
+  ...STORY_BINDERS,
+  binderOf({id: 'b5', name: 'Emerald', scope: 'all', rules: 'ink=Emerald'}, 4),
+  binderOf({id: 'b6', name: 'Legends', scope: 'all', rules: 'rarity=Legendary'}, 5),
+];
+
+/** The shelf as `useOwnBinders` gives it: six binders, read, or none at all. */
+export function storyShelf(over: Partial<BinderShelf> = {}): BinderShelf {
+  return {status: 'ready', binders: STORY_SHELF_BINDERS, retry: () => {}, ...over};
+}
+
 /** Amber on show, its Legendary on the cover. */
 export const STORY_OPEN_AMBER: OpenBinder = {binder: STORY_AMBER, cover: STORY_BINDER_POOL[0], narrowed: true};
 
@@ -55,6 +68,7 @@ export function storyBinderChoices(over: Partial<BinderChoices> = {}): BinderCho
     pool: STORY_BINDER_POOL,
     entries: STORY_BINDER_ENTRIES,
     onOpen: () => {},
+    onShelf: () => {},
     ...over,
   };
 }

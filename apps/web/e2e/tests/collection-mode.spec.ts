@@ -18,7 +18,9 @@ import {
   type Entries,
   hasStyleFor,
   MISSING_GREY,
+  openMyCollection,
   openPromoBinder,
+  shelfCover,
   signedIn,
   signInAsCollector,
   teethIn,
@@ -194,7 +196,9 @@ async function pressCollectionWithBinderHeld(
   );
   await page.goto('/browse');
   await synced;
+  // Collection opens the shelf (#1074); My collection on it opens the binder.
   await page.getByRole('button', {name: 'Show my collection'}).click();
+  await shelfCover(page, 'My collection').click();
   // A hold that caught nothing names itself here, rather than as a frame that never showed.
   await expect
     .poll(binderCode.caught, {message: "the binder's chunk never reached the hold", timeout: 10000})
@@ -341,7 +345,7 @@ test.describe('Collection mode, signed in', () => {
     if (testInfo.project.name.startsWith('mobile-')) test.skip();
   });
 
-  test("the Collection button opens a collector's binder on the whole collection, with its numbers", async ({
+  test("the Collection button opens a collector's shelf, whose My collection is the whole collection, with its numbers", async ({
     page,
   }) => {
     await signInAsCollector(page, ENTRIES);
@@ -349,6 +353,8 @@ test.describe('Collection mode, signed in', () => {
     await signedIn(page);
 
     await page.getByRole('button', {name: 'Show my collection'}).click();
+    await expect(page).toHaveURL(/[?&]binder=shelf(&|$)/);
+    await shelfCover(page, 'My collection').click();
 
     // The whole collection, not the newest set (owner, 2026-10-20).
     await expect(page).toHaveURL(/[?&]binder=all(&|$)/);
@@ -377,8 +383,9 @@ test.describe('Collection mode, signed in', () => {
     await expect(page).toHaveURL(/[?&]binder=/);
 
     answer();
-    // Once the sync has answered, the binder stays only for a collection that arrived, and
-    // its numbers show only once loaded (the click opens the whole collection, as above).
+    // Once the sync has answered, the shelf stays only for a collection that arrived (#1074),
+    // and My collection's numbers show only once loaded.
+    await shelfCover(page, 'My collection').click();
     await expect(numbers(page).getByText('Complete collection', {exact: true})).toBeVisible();
     await expect(binder(page)).toBeVisible();
     await expect(page.getByRole('dialog', {name: 'Import your collection'})).toHaveCount(0);
@@ -959,7 +966,7 @@ test.describe('Collection mode, signed in', () => {
     await expect(page.getByRole('button', {name: 'Ariel - On Human Legs', exact: true})).toBeVisible();
     const searchLoaded = collectionFiles().length;
 
-    await page.getByRole('button', {name: 'Show my collection'}).click();
+    await openMyCollection(page);
 
     // The binder's cards, in place of its shimmer once every chunk has landed (it loads all or nothing).
     await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
@@ -1004,6 +1011,7 @@ test.describe('Collection mode, signed in', () => {
     // Asked for on the pointer's arrival, with no press yet.
     await expect.poll(() => requested.length).toBeGreaterThan(0);
     await toggle.click();
+    await shelfCover(page, 'My collection').click();
     await expect(binder(page)).toBeVisible();
   });
 
@@ -1184,8 +1192,11 @@ test.describe('Collection mode, signed in (phone width)', () => {
     const sort = await placeOf(
       page.getByTestId(TOOLBAR).getByRole('combobox', {name: 'Sort cards'}),
     );
-    await page.getByRole('button', {name: 'Show my collection'}).click();
+    await openMyCollection(page);
     await expect(binder(page).getByRole('navigation', {name: 'Binder pages'})).toBeVisible();
+    // Opened from the shelf, the set button can land a moment after the binder, its shimmer
+    // holding its place: measure the row once it has.
+    await expect(phoneRow(page).locator('button')).toHaveCount(3);
     const row = await toolbarPlaces(page, PHONE_ROW);
 
     // In order, the set button named by its words: the scope's name over its figures.

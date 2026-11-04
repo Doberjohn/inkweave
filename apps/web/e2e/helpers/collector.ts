@@ -95,6 +95,25 @@ export async function signedIn(page: Page): Promise<void> {
 // Exact: the frame drawn while the binder's code loads is named "Loading your binder" (#913).
 export const binder = (page: Page) => page.getByRole('region', {name: 'Binder', exact: true});
 
+/** The binder shelf's list of covers (#1074): My collection's, then the reader's binders. */
+export const shelf = (page: Page) => page.getByRole('list', {name: 'Your binders'});
+
+/** A cover on the shelf, by its binder's name: the link named from its words ("Amber, Amber ink, 46%, ..."). */
+export const shelfCover = (page: Page, name: string) => shelf(page).getByRole('link', {name: new RegExp(`^${name},`)});
+
+/**
+ * Presses Collection, which opens the shelf (#1074), then My collection on it: the whole
+ * collection's binder, as Collection opened before binders. A player the shelf sends straight
+ * to My collection (no copy and no binder) gets there with the press alone.
+ */
+export async function openMyCollection(page: Page): Promise<void> {
+  await page.getByRole('button', {name: 'Show my collection'}).click();
+  const cover = shelfCover(page, 'My collection');
+  await expect(cover.or(binder(page))).toBeVisible();
+  if (await cover.isVisible()) await cover.click();
+  await expect(binder(page)).toBeVisible();
+}
+
 /** The board the binder's pages sit in (#941), whose zip runs round its outer edge. */
 export const board = (page: Page) => binder(page).locator('.binder-board');
 

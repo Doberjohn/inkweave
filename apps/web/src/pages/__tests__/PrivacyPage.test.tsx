@@ -15,8 +15,13 @@ const PROFILE_SENTENCE =
 // The account's row is readable only by its owner, unless they share it with their friends
 // (#1045). The browser's copy outlives sign-out (`collectionStorage.ts`), and a clear removes
 // both (`clearImported`).
+const COLLECTION_SENTENCE_START =
+  /\. If you keep your collection on Inkweave, I store it with your account: how many copies of each card you own, normal and foil, so it’s there on any device you sign in on\. Only you can see it, unless you turn on sharing with friends on your account page\. Then your friends can see which cards you own and how many\./;
 const COLLECTION_SENTENCE =
   /\. If you keep your collection on Inkweave, I store it with your account: how many copies of each card you own, normal and foil, so it’s there on any device you sign in on\. Only you can see it, unless you turn on sharing with friends on your account page\. Then your friends can see which cards you own and how many\. A copy also stays in this browser, even after you sign out\. Clearing your collection on your account page deletes both\./;
+// With binders on, a sentence after the sharing clause, and the Clear's ends on them.
+const BINDERS_SENTENCES =
+  /Then your friends can see which cards you own and how many\. If you make binders, I store each one’s name, the filters it keeps and the card on its cover with your collection\. A copy also stays in this browser, even after you sign out\. Clearing your collection on your account page deletes both, and your binders with them\. Your account page’s/;
 // The code is made and stored the first time the Friends section asks for it (`useFriends` calls
 // `claim_friend_code`), never at sign-up, so the sentence ties the code to that section. Each try
 // at a code is logged against its sender (#860).
@@ -46,7 +51,33 @@ describe('PrivacyPage', () => {
 
   it('describes the collection and friends', () => {
     renderPolicy();
-    expect(screen.getByText(COLLECTION_SENTENCE)).toBeInTheDocument();
+    // Whole with binders off (below); with them on, binders' sentences join it.
+    expect(screen.getByText(COLLECTION_SENTENCE_START)).toBeInTheDocument();
     expect(screen.getByText(FRIENDS_SENTENCE)).toBeInTheDocument();
+  });
+
+  // A binder's row holds its name, its rules and its cover card, and hangs off the collection's,
+  // so a Clear deletes it (#1074). Said only with binders on: Production names them at launch.
+  it('says what binders store, and that a Clear deletes them, with binders on', () => {
+    renderPolicy();
+    expect(screen.getByText(BINDERS_SENTENCES)).toBeInTheDocument();
+  });
+
+  it('names no binders with binders off', async () => {
+    vi.stubEnv('VITE_SHOW_BINDERS', 'false');
+    vi.resetModules();
+    try {
+      const {PrivacyPage: Off} = await import('../PrivacyPage');
+      render(
+        <MemoryRouter>
+          <Off />
+        </MemoryRouter>,
+      );
+      expect(screen.getByText(COLLECTION_SENTENCE)).toBeInTheDocument();
+      expect(screen.queryByText(/binders/)).not.toBeInTheDocument();
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
   });
 });

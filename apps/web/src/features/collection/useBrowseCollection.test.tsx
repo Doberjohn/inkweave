@@ -8,12 +8,8 @@ import {createCard} from '../../shared/test-utils';
 import {forgetFriendCollections} from './useFriendCollection';
 import {countCompare} from './compareCollections';
 import type {HandCount} from './binderEvents';
-import {
-  useBinderParams,
-  useBrowseCollection,
-  type BrowseListing,
-  type PhoneSheetOptions,
-} from './useBrowseCollection';
+import {useBrowseCollection, type BrowseListing, type PhoneSheetOptions} from './useBrowseCollection';
+import {useBinderParams} from './useBinderParams';
 // The binder's chunk, which the Binder sheet's numbers come from, friends' chunk, which the foil
 // pointer comes from, and the import's, imported with this file: a cold import inside a test can
 // outlast its wait (#712).
@@ -955,14 +951,15 @@ describe('useBrowseCollection: a binder of your own', () => {
     expect(binderRepo.listBinders).toHaveBeenCalledWith('user-1');
   });
 
-  it("says a binder that isn't on your shelf, with no panel, and opens My collection from there", async () => {
+  it("says a binder that isn't on your shelf, with no panel, and goes to your binders from there", async () => {
     binderRepo.listBinders.mockResolvedValue({data: [], error: null});
     renderAt('/browse?binder=all&custom=someone-elses', (state) => state.renderBinder(LISTING, () => {}));
     expect(await screen.findByText("This binder isn't on your shelf.")).toBeInTheDocument();
     expect(slots?.renderSetPanel(LISTING)).toBeUndefined();
     expect(poolIds()).toEqual(['amber', 'steel']);
-    fireEvent.click(screen.getByRole('button', {name: 'Open My collection'}));
-    expect(screen.getByTestId('search')).toHaveTextContent(/^binder=all$/);
+    fireEvent.click(screen.getByRole('button', {name: 'Go to your binders'}));
+    // The router's navigation is a transition, which holds this page until the shelf's chunk is in.
+    await waitFor(() => expect(screen.getByTestId('search')).toHaveTextContent(/^binder=shelf$/), {timeout: 5000});
   });
 
   it("counts a one-set binder whose rules hold no card as that set, empty, so its numbers don't wait forever", async () => {
@@ -1028,5 +1025,116 @@ describe('useBrowseCollection: a binder of your own', () => {
     const input = await screen.findByLabelText('Collection CSV file', {}, {timeout: 5000});
     await act(async () => fireEvent.change(input, {target: {files: [file]}}));
     expect(await screen.findByText('Collection imported: 2 cards.')).toBeInTheDocument();
+  });
+});
+
+describe('useBrowseCollection: the binder shelf (#1074)', () => {
+  const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
+  const amber = createCard({id: 'amber', setCode: '14', setNumber: 1, rarity: 'Uncommon', ink: 'Amber'});
+  const steel = createCard({id: 'steel', setCode: '14', setNumber: 2, rarity: 'Uncommon', ink: 'Steel'});
+  const LISTING: BrowseListing = {cards: [amber, steel], sortOrder: 'newest', matched: [amber, steel], filtered: false};
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    forgetFriendCollections();
+    const {follow} = await import('./binders/ownBinders');
+    follow({uid: null, hasCollection: false, syncing: false, wanted: false});
+    account.signedIn = true;
+    account.hasCollection = true;
+    account.syncing = false;
+    account.entries = {amber: {normal: 1, foil: 0}};
+    account.pool = [amber, steel];
+    binderRepo.listBinders.mockResolvedValue({data: [AMBER], error: null});
+  });
+  afterEach(() => {
+    account.pool = [];
+    account.entries = {};
+  });
+
+  let slots: ReturnType<typeof useBrowseCollection> | null = null;
+  /** The page's switch, binder and shelf heading, and the address as it stands. */
+  function Page({use}: {use: typeof useBrowseCollection}) {
+    slots = use([]);
+    const [params] = useSearchParams();
+    return (
+      <>
+        {slots.modeSwitch}
+        {slots.shelf?.heading}
+        {slots.renderBinder(LISTING, () => {})}
+        <output data-testid="search">{params.toString()}</output>
+      </>
+    );
+  }
+  const renderAt = (url: string, use = useBrowseCollection) =>
+    render(
+      <MemoryRouter initialEntries={[url]}>
+        <Page use={use} />
+      </MemoryRouter>,
+    );
+  const address = () => screen.getByTestId('search');
+  /** The shelf's chunk loads on first use: past findBy's default second in a cold worker. */
+  const findCover = (name: RegExp) => screen.findByRole('link', {name}, {timeout: 5000});
+
+  it('opens the shelf from Collection', () => {
+    renderAt('/browse');
+    fireEvent.click(screen.getByRole('button', {name: 'Show my collection'}));
+    expect(address()).toHaveTextContent(/^binder=shelf$/);
+  });
+
+  it('opens My collection at the set a Set filter names, as before binders', () => {
+    renderAt('/browse?set=14');
+    fireEvent.click(screen.getByRole('button', {name: 'Show my collection'}));
+    expect(address()).toHaveTextContent(/^binder=14$/);
+  });
+
+  it("draws the shelf in the binder's place, with its heading and count", async () => {
+    renderAt('/browse?binder=shelf');
+    expect(await findCover(/^My collection,/)).toBeInTheDocument();
+    expect(await findCover(/^Amber,/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', {name: 'Your binders'})).toBeInTheDocument();
+    expect(screen.getByRole('heading', {name: 'Your binders'}).parentElement).toHaveTextContent(/^Your binders2 binders$/);
+    expect(screen.queryByRole('region', {name: 'Binder'})).toBeNull();
+  });
+
+  it('gives a player with no copy and no binder the empty start in its place', async () => {
+    account.entries = {};
+    binderRepo.listBinders.mockResolvedValue({data: [], error: null});
+    renderAt('/browse?binder=shelf');
+    await waitFor(() => expect(address()).toHaveTextContent(/^binder=all$/));
+  });
+
+  it('keeps the shelf for a player with a binder and no copy', async () => {
+    account.entries = {};
+    renderAt('/browse?binder=shelf');
+    expect(await findCover(/^Amber,/)).toBeInTheDocument();
+    expect(address()).toHaveTextContent(/^binder=shelf$/);
+  });
+
+  it("waits for the account's copy before reading the binders or swapping the shelf", async () => {
+    account.entries = {};
+    account.syncing = true;
+    binderRepo.listBinders.mockResolvedValue({data: [], error: null});
+    renderAt('/browse?binder=shelf');
+    await act(async () => {});
+    expect(binderRepo.listBinders).not.toHaveBeenCalled();
+    expect(address()).toHaveTextContent(/^binder=shelf$/);
+    expect(screen.getByRole('heading', {name: 'Your binders'})).toBeInTheDocument();
+  });
+
+  it("with binders off, Collection opens My collection's binder and no binder is read", async () => {
+    vi.stubEnv('VITE_SHOW_BINDERS', 'false');
+    vi.resetModules();
+    try {
+      const {useBrowseCollection: off} = await import('./useBrowseCollection');
+      renderAt('/browse', off);
+      fireEvent.click(screen.getByRole('button', {name: 'Show my collection'}));
+      expect(address()).toHaveTextContent(/^binder=all$/);
+      await act(async () => {});
+      expect(binderRepo.listBinders).not.toHaveBeenCalled();
+      expect(slots?.shelf).toBeNull();
+    } finally {
+      vi.unstubAllEnvs();
+      vi.resetModules();
+    }
   });
 });

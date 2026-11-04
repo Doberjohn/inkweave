@@ -1,12 +1,20 @@
 import {LegalPage, legalH2Style, legalLinkStyle} from '../shared/components';
 import {COLORS} from '../shared/constants';
+import {SHOW_BINDERS} from '../features/collection/binders/flag';
 
 const EMAIL = 'support.inkweave@gmail.com';
 
 // The day production first showed the collection and friends sentences. The page promises its
 // date says when the text it shows last changed, and a flag flip can't move it, so every change
 // to the text re-dates it here.
+//
+// LAUNCH STEP (#1075): the binders' sentences show only under SHOW_BINDERS, so Production's page
+// names binders from the week they launch. Re-date this when Production turns them on.
 const LAST_UPDATED = '2 November 2026';
+
+/** What the policy says of binders, with them on: what is stored, and that a Clear takes them too. */
+const BINDERS_STORED =
+  ' If you make binders, I store each one’s name, the filters it keeps and the card on its cover with your collection.';
 
 const DESCRIPTION =
   'What Inkweave collects (anonymous synergy votes, cookieless analytics, error reports, optional account data), where it is kept, for how long, and your rights.';
@@ -55,8 +63,10 @@ export function PrivacyPage() {
           If you keep your collection on Inkweave, I store it with your account: how many copies of each card
           you own, normal and foil, so it&rsquo;s there on any device you sign in on. Only you can see it,
           unless you turn on sharing with friends on your account page. Then your friends can see which cards
-          you own and how many. A copy also stays in this browser, even after you sign out. Clearing your
-          collection on your account page deletes both. Your account page&rsquo;s Friends section gives you a
+          you own and how many.
+          {SHOW_BINDERS && BINDERS_STORED}{' '}
+          A copy also stays in this browser, even after you sign out. Clearing your collection on your
+          account page deletes both{SHOW_BINDERS ? ', and your binders with them.' : '.'} Your account page&rsquo;s Friends section gives you a
           friend code the first time it opens, which I store. If you add friends, I store who your friends and
           friend requests are. To stop anyone guessing codes, I also note when you try one. Your friends see
           your public name and handle, and your collection if you share it with them.

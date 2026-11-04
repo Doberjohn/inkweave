@@ -64,9 +64,12 @@
         "!apps/web/dist/assets/BinderTab-*.js",
         "!apps/web/dist/assets/UnknownBinder-*.js",
         "!apps/web/dist/assets/binderCovers-*.js",
-        "!apps/web/dist/assets/ownBinders-*.js"
+        "!apps/web/dist/assets/ownBinders-*.js",
+        "!apps/web/dist/assets/binder-*.js",
+        "!apps/web/dist/assets/BinderShelf-*.js",
+        "!apps/web/dist/assets/binderShelf-*.js"
       ],
-      "limit": "463 kB",
+      "limit": "466 kB",
       "gzip": true
     },
     {
@@ -97,9 +100,10 @@
         "apps/web/dist/assets/FriendChip-*.js",
         "apps/web/dist/assets/CollectionFriends-*.js",
         "apps/web/dist/assets/collectionStats-*.js",
-        "apps/web/dist/assets/friendBinderPath-*.js"
+        "apps/web/dist/assets/friendBinderPath-*.js",
+        "apps/web/dist/assets/binder-*.js"
       ],
-      "limit": "67 kB",
+      "limit": "68 kB",
       "gzip": true
     },
     {
@@ -109,9 +113,11 @@
         "apps/web/dist/assets/BinderTab-*.js",
         "apps/web/dist/assets/UnknownBinder-*.js",
         "apps/web/dist/assets/binderCovers-*.js",
-        "apps/web/dist/assets/ownBinders-*.js"
+        "apps/web/dist/assets/ownBinders-*.js",
+        "apps/web/dist/assets/BinderShelf-*.js",
+        "apps/web/dist/assets/binderShelf-*.js"
       ],
-      "limit": "8 kB",
+      "limit": "14 kB",
       "gzip": true
     },
     {

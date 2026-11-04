@@ -1,12 +1,13 @@
 import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {fn} from 'storybook/test';
-import {PhoneBinderRow} from './PhoneBinderRow';
+import {PhoneBinderRow, PhoneShelfRow} from './PhoneBinderRow';
 import {CollectionModeSwitch} from './CollectionModeSwitch';
 import {SetPicker, type RowFigures} from './SetPicker';
 import {percentOf} from './collectionStats';
 import {STORY_SETS, STORY_STATS} from './collectionStoryData';
 import {COLORS} from '../../shared/constants';
+import {ShelfHeading} from './binders/ShelfHeading';
 
 /** Each set's progress, by code, and the whole collection's, as the set list reads it. */
 const PROGRESS = new Map([['all', STORY_STATS.totals], ...STORY_STATS.sets.map((set) => [set.code, set.tally] as const)]);
@@ -94,4 +95,11 @@ export const Narrowest: Story = {
     ),
   ],
   globals: {viewport: {value: 'mobile1'}},
+};
+
+/** On the binder shelf (#1074): the shelf's heading and count beside Collection, no Filters and no set button. */
+export const Shelf: Story = {
+  render: () => (
+    <PhoneShelfRow heading={<ShelfHeading count={7} compact />} modeSwitch={<CollectionModeSwitch active onToggle={fn()} />} />
+  ),
 };

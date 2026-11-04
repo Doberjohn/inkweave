@@ -1,14 +1,14 @@
 import type {Locator, Page} from '@playwright/test';
 import {test, expect} from '../fixtures';
 import {newestCoreSet, setCards, setPrintings} from '../helpers/cardData';
-import {binder, COLLECTOR_ID, signInAsCollector, type Entries} from '../helpers/collector';
+import {binder, COLLECTOR_ID, shelf, shelfCover, signInAsCollector, type Entries} from '../helpers/collector';
 import {binderRow, failBinderReads, serveBinders, type BindersWorld} from '../helpers/binders';
 import {serveFriends, type FriendsWorld, type Player} from '../helpers/friends';
 import {E2E_FRIEND_CODE} from '../fixtures/supabaseStub';
 
 /**
- * Binders of your own: a link that opens one, the set picker's Binders tab, and
- * a binder that isn't on your shelf.
+ * Binders of your own: a link that opens one, the set picker's Binders tab, a binder that
+ * isn't on your shelf, and the shelf Collection opens (#1074), where they move and go.
  *
  * The reader is the collector (`helpers/collector.ts`), and every binder read answers from a
  * world the test keeps (`helpers/binders.ts`). The binders are drawn from the card data, not
@@ -105,8 +105,9 @@ test.describe('a binder of your own', () => {
 
     await openBindersTab(setButton(page));
     const rows = page.getByRole('listbox', {name: 'Binders'}).getByRole('option');
-    await expect(rows).toHaveCount(4);
-    await expect(rows.nth(0)).toHaveAccessibleName(/^My collection/);
+    await expect(rows).toHaveCount(5);
+    await expect(rows.nth(0)).toHaveAccessibleName('All your binders, 4 binders');
+    await expect(rows.nth(1)).toHaveAccessibleName(/^My collection/);
     await expect(binderOption(page, 'Amber vines')).toHaveAccessibleName(
       `Amber vines, ${percentOfBinder(HELD.length)}% complete`,
     );
@@ -161,7 +162,7 @@ test.describe('a binder of your own', () => {
     await expect.poll(() => tileNames(page)).toEqual([held.fullName]);
   });
 
-  test("a binder that isn't on your shelf says so, and Open My collection drops it", async ({page}) => {
+  test("a binder that isn't on your shelf says so, and Go to your binders opens the shelf", async ({page}) => {
     await signIn(page);
     await page.goto('/browse?binder=all&custom=someone-elses');
 
@@ -169,9 +170,10 @@ test.describe('a binder of your own', () => {
     await expect(binder(page)).toHaveCount(0);
     await expect(numbers(page)).toHaveCount(0);
 
-    await page.getByRole('button', {name: 'Open My collection'}).click();
+    await page.getByRole('button', {name: 'Go to your binders'}).click();
     await expect(page).not.toHaveURL(/[?&]custom=/);
-    await expect(binder(page)).toBeVisible();
+    await expect(page).toHaveURL(/[?&]binder=shelf(&|$)/);
+    await expect(shelfCover(page, 'Amber')).toBeVisible();
   });
 
   test.describe('whose read fails', () => {
@@ -188,6 +190,135 @@ test.describe('a binder of your own', () => {
       await page.getByRole('button', {name: 'Try again'}).click();
       await expect(binderButton(page)).toHaveAccessibleName(named('Binder: Amber'));
     });
+  });
+});
+
+/** The shelf's covers by their binders' names, in the order drawn. */
+const coverNames = (page: Page) =>
+  shelf(page)
+    .getByRole('link')
+    .evaluateAll((links) => links.map((link) => link.querySelector(':scope > :not([aria-hidden])')?.textContent?.split(',')[0]));
+
+/** A binder's ⋯ on its cover. */
+const actionsOf = (page: Page, name: string) =>
+  shelf(page)
+    .getByRole('listitem')
+    .filter({has: page.getByRole('link', {name: new RegExp(`^${name},`)})})
+    .getByRole('button', {name: 'Actions'});
+
+const pressCollection = (page: Page) => page.getByRole('button', {name: 'Show my collection'}).click();
+
+test.describe('the binder shelf', () => {
+  test('Collection opens it: its heading and count, My collection, then your binders in place order', async ({page}) => {
+    await signIn(page);
+    await page.goto('/browse');
+    await pressCollection(page);
+
+    await expect(page).toHaveURL(/[?&]binder=shelf(&|$)/);
+    await expect(page.getByRole('heading', {name: 'Your binders'})).toBeVisible({timeout: 20_000});
+    await expect(page.getByText(/^4 binders$/)).toHaveCount(1);
+    await expect.poll(() => coverNames(page)).toEqual(['My collection', 'Amber', 'Amber vines', 'Epics']);
+    // Amber vines, hand-counted: its set's Amber cards and their printings, two of them held.
+    await expect(shelfCover(page, 'Amber vines')).toHaveAccessibleName(
+      new RegExp(`^Amber vines, Amber ink · .+, ${percentOfBinder(HELD.length)}%, ${HELD.length} of ${AMBER_TOTAL} cards$`),
+    );
+  });
+
+  test('a cover opens its binder with the filters cleared, and Back returns to the shelf', async ({page}) => {
+    await signIn(page);
+    await page.goto('/browse?binder=shelf&ink=Steel');
+    await shelfCover(page, 'Epics').click({timeout: 20_000});
+
+    await expect(page).toHaveURL(/[?&]custom=b-epics(&|$)/);
+    await expect(page).not.toHaveURL(/[?&]ink=/);
+    await expect(binderButton(page)).toHaveAccessibleName(named('Binder: Epics'));
+
+    await page.goBack();
+    await expect(page).toHaveURL(/[?&]binder=shelf(&|$)/);
+    await expect(shelfCover(page, 'Epics')).toBeVisible();
+  });
+
+  test('with a Set filter on, Collection opens My collection at that set', async ({page}) => {
+    await signIn(page);
+    await page.goto(`/browse?set=${SET}`);
+    await pressCollection(page);
+
+    await expect(page).toHaveURL(new RegExp(`[?&]binder=${SET}(&|$)`));
+    await expect(binder(page)).toBeVisible({timeout: 20_000});
+    await expect(page).not.toHaveURL(/[?&]custom=/);
+  });
+
+  test("a collector with no copy and no binder gets the empty start; one with a binder and no copy gets the shelf", async ({
+    page,
+  }) => {
+    await signInAsCollector(page, {});
+    const world: BindersWorld = {rows: []};
+    await serveBinders(page, world);
+    await page.goto('/browse');
+    await pressCollection(page);
+    await expect(page).toHaveURL(/[?&]binder=all(&|$)/, {timeout: 20_000});
+    await expect(binder(page)).toBeVisible();
+
+    world.rows = [AMBER];
+    await page.goto('/browse');
+    await pressCollection(page);
+    await expect(shelfCover(page, 'Amber')).toBeVisible({timeout: 20_000});
+    await expect(page).toHaveURL(/[?&]binder=shelf(&|$)/);
+  });
+
+  test('Move later swaps two covers after one move_binder call, and focus stays on its ⋯', async ({page}) => {
+    const world = worldOf();
+    await signIn(page, world);
+    await page.goto('/browse?binder=shelf');
+
+    await actionsOf(page, 'Amber').click({timeout: 20_000});
+    await page.getByRole('menuitem', {name: 'Move later'}).click();
+    await expect.poll(() => coverNames(page)).toEqual(['My collection', 'Amber vines', 'Amber', 'Epics']);
+    expect(world.calls).toEqual([{what: 'move', id: AMBER.id, earlier: false}]);
+    await expect(actionsOf(page, 'Amber')).toBeFocused();
+  });
+
+  test('Delete binder asks first, then sends one DELETE, and the cover goes', async ({page}) => {
+    const world = worldOf();
+    await signIn(page, world);
+    await page.goto('/browse?binder=shelf');
+
+    await actionsOf(page, 'Epics').click({timeout: 20_000});
+    await page.getByRole('menuitem', {name: 'Delete binder'}).click();
+    const confirm = page.getByRole('dialog', {name: 'Delete binder'});
+    await expect(confirm.getByRole('heading', {name: 'Delete Epics?'})).toBeVisible();
+    expect(world.calls).toEqual([]);
+
+    await confirm.getByRole('button', {name: 'Delete binder'}).click();
+    await expect.poll(() => coverNames(page)).toEqual(['My collection', 'Amber', 'Amber vines']);
+    expect(world.calls).toEqual([{what: 'delete', id: EPICS.id}]);
+    await expect(confirm).toHaveCount(0);
+    // The binder before it, as none comes after.
+    await expect(shelfCover(page, 'Amber vines')).toBeFocused();
+  });
+
+  test('All your binders in the Binders tab opens the shelf', async ({page}) => {
+    await signIn(page);
+    await openAt(page, '/browse?binder=all');
+
+    await openBindersTab(setButton(page));
+    await page.getByRole('listbox', {name: 'Binders'}).getByRole('option', {name: /^All your binders/}).click();
+    await expect(page).toHaveURL(/[?&]binder=shelf(&|$)/);
+    await expect(shelfCover(page, 'Epics')).toBeVisible();
+  });
+
+  test("on a phone, two covers across, each binder's ⋯ shown, and the title in the binder row", async ({page}, testInfo) => {
+    test.skip(!testInfo.project.name.startsWith('mobile-'), "A phone's shelf");
+    await signIn(page);
+    await page.goto('/browse?binder=shelf');
+
+    const covers = shelf(page).getByRole('listitem');
+    await expect(covers).toHaveCount(4, {timeout: 20_000});
+    const [first, second, third] = await Promise.all([0, 1, 2].map(async (at) => (await covers.nth(at).boundingBox())!));
+    expect(Math.abs(second.y - first.y), 'two across').toBeLessThanOrEqual(1);
+    expect(third.y, 'the third on the next row').toBeGreaterThan(first.y + first.height - 1);
+    for (const name of ['Amber', 'Amber vines', 'Epics']) await expect(actionsOf(page, name)).toHaveCSS('opacity', '1');
+    await expect(page.getByTestId('phone-binder-row').getByRole('heading', {name: 'Your binders'})).toBeVisible();
   });
 });
 

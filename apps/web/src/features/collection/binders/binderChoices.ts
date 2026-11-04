@@ -31,6 +31,8 @@ export interface BinderChoices {
   entries: CollectionEntries;
   /** Opens a binder of your own, or My collection (null), from the Binders tab. */
   onOpen: (binder: Binder | null) => void;
+  /** Opens the shelf, every binder at once: the Binders tab's All your binders. */
+  onShelf: () => void;
 }
 
 /**

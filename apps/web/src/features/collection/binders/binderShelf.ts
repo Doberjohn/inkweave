@@ -1,5 +1,5 @@
 import {enqueueWrite} from '../collectionWriteQueue';
-import {listBinders} from './binderRepository';
+import {deleteBinderRow, listBinders, moveBinderRow} from './binderRepository';
 import type {Binder} from './binderRules';
 
 /**
@@ -118,6 +118,76 @@ function watch(readerId: string): () => void {
 }
 
 const NONE: readonly Binder[] = [];
+
+/*
+ * THE SHELF'S OWN CHANGES. Each goes through the write queue too, behind an import's upload or a
+ * Clear's delete, and the shelf shows it once the server has answered, never before: a move or a
+ * delete that fails leaves the shelf as it was.
+ */
+
+/** One of the reader's binders, by id: what a delete names. */
+interface BinderRef {
+  readerId: string;
+  id: string;
+}
+
+/** A move of one of the reader's binders: a place earlier, or a place later. */
+interface BinderMove extends BinderRef {
+  earlier: boolean;
+}
+
+/** The reader's binders as the module holds them, or null when it holds none of theirs yet. */
+function heldBinders({readerId}: {readerId: string}): readonly Binder[] | null {
+  return held?.readerId === readerId && Array.isArray(held.value) ? held.value : null;
+}
+
+/** The shelf with the binder at `from` and its neighbour at `to` in each other's places. */
+function swapped(binders: readonly Binder[], {from, to}: {from: number; to: number}): Binder[] {
+  const next = [...binders];
+  next[from] = {...binders[to], place: binders[from].place};
+  next[to] = {...binders[from], place: binders[to].place};
+  return next;
+}
+
+/** Shows a move the server made; a shelf that has changed since (another tab's move) is read again. */
+function showMove(move: BinderMove): void {
+  const binders = heldBinders(move) ?? [];
+  const from = binders.findIndex((binder) => binder.id === move.id);
+  const to = from + (move.earlier ? -1 : 1);
+  // The binder, or its neighbour that way, is no longer where this shelf has it.
+  if (from === -1 || binders[to] === undefined) {
+    void load(move.readerId);
+    return;
+  }
+  publish({readerId: move.readerId, value: swapped(binders, {from, to})});
+}
+
+/** What a move came to: it moved, the server found no neighbour that way, or it failed. */
+export type MoveResult = 'moved' | 'unmoved' | 'failed';
+
+/**
+ * Moves one of the reader's binders a place earlier or later (`move_binder`). A move the server
+ * finds no neighbour for, since another tab moved it first, reads the shelf again.
+ */
+export async function moveBinder(move: BinderMove): Promise<MoveResult> {
+  const {data, error} = await enqueueWrite(move.readerId, () => moveBinderRow(move.id, move.earlier));
+  if (error !== null) return 'failed';
+  if (data !== true) {
+    void load(move.readerId);
+    return 'unmoved';
+  }
+  showMove(move);
+  return 'moved';
+}
+
+/** Deletes one of the reader's binders, and takes it off the shelf once the server has: whether it did. */
+export async function deleteBinder({readerId, id}: BinderRef): Promise<boolean> {
+  const {error} = await enqueueWrite(readerId, () => deleteBinderRow(id));
+  if (error !== null) return false;
+  const binders = heldBinders({readerId});
+  if (binders !== null) publish({readerId, value: binders.filter((binder) => binder.id !== id)});
+  return true;
+}
 
 /** Who asks for the binders, and whether the page wants them yet. */
 export interface BinderReader {

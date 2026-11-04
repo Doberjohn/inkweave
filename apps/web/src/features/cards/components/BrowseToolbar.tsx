@@ -65,6 +65,12 @@ interface BrowseToolbarProps {
    */
   pickerNamesBinder?: boolean;
   /**
+   * In place of the filters, the sort and the search: a heading for what the page shows instead
+   * of cards, such as the binder shelf's "Your binders" (#1074). The mode switch and the
+   * collection's actions keep their places at the far end.
+   */
+  heading?: React.ReactNode;
+  /**
    * Browse's docked side panel holds every filter (desktop, owner 2026-10-07), so
    * the inline ink, cost and inkwell icons give way, the Filters button toggles the
    * panel instead of opening the dialog, and the toolbar lines up with the page below
@@ -599,6 +605,20 @@ function FlowToolbar({
   );
 }
 
+/** The toolbar with a heading in place of its filters: the heading, then Collection and the collection's actions. */
+function HeadingToolbar({heading, modeSwitch, modeActions, isMobile, flushBottom}: Pick<
+  BrowseToolbarProps,
+  'heading' | 'modeSwitch' | 'modeActions' | 'isMobile' | 'flushBottom'
+>) {
+  return (
+    <div data-testid="browse-toolbar" style={getToolbarStyle(isMobile, flushBottom)}>
+      <div style={{flex: 1, minWidth: 0}}>{heading}</div>
+      {modeSwitch}
+      {modeActions}
+    </div>
+  );
+}
+
 /**
  * A phone's row with Collection is the binder's (`PhoneBinderRow`, owner 2026-10-26): Filters,
  * the sort taking what Filters and Collection leave, as the set button does there, then
@@ -618,7 +638,13 @@ const FILL_SORT_STYLE: React.CSSProperties = {flex: 1, minWidth: 0, textOverflow
 // Public component — layout shell that delegates to subcomponents.
 // =====================================================================
 
-export function BrowseToolbar({
+export function BrowseToolbar(props: BrowseToolbarProps) {
+  if (props.heading) return <HeadingToolbar {...props} />;
+  return <CardsToolbar {...props} />;
+}
+
+/** The toolbar over cards: the filters, the sort and the search, laid out for the screen. */
+function CardsToolbar({
   onFiltersClick,
   activeFilterCount,
   inkFilters,

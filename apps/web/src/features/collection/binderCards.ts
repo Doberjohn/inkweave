@@ -22,6 +22,7 @@ import {
 import {RARITY_PARAM, RULE_PARAMS, SET_PARAM} from '../../shared/hooks/useFilterParams';
 import type {CollectionPromo} from './collectionPromos';
 import type {Axis} from './collectionStats';
+import {SHOW_BINDERS} from './binders/flag';
 
 /**
  * THE MODE LIVES IN THE URL (owner, 2026-10-07): `?binder=<set>` present means
@@ -48,8 +49,23 @@ export const FRIEND_PARAM = 'friend';
  */
 export const CUSTOM_PARAM = 'custom';
 
+/**
+ * `?binder=shelf`: the reader's binders, cover by cover, in the binder's place (#1074): a place
+ * in collection mode, not a scope. Only with binders on (`binders/flag.ts`): off, it is a set
+ * the binder doesn't have, as it always was.
+ */
+export const SHELF = 'shelf';
+
+/** Whether `?binder=` names the shelf. */
+export const isShelf = (binder: string | null) => SHOW_BINDERS && binder === SHELF;
+
 /** The params collection mode never keeps: a set filter, since its panel picks the set. */
 const INSIDE_STRAYS = [SET_PARAM];
+/**
+ * The shelf's: no set filter, no binder view, nobody's binder and none of yours. The other
+ * filters stay in the address out of sight, so leaving for the grid brings them back.
+ */
+const SHELF_STRAYS = [SET_PARAM, OWNED_PARAM, FRIEND_PARAM, CUSTOM_PARAM];
 /** And a binder of promos alone: a rarity filter too, since every card in it is a promo. */
 const PROMO_STRAYS = [SET_PARAM, RARITY_PARAM];
 /**
@@ -62,6 +78,7 @@ const OUTSIDE_STRAYS = [OWNED_PARAM, FRIEND_PARAM, CUSTOM_PARAM];
 function straysOf(params: URLSearchParams): readonly string[] {
   const binder = params.get(BINDER_PARAM);
   if (binder === null) return OUTSIDE_STRAYS;
+  if (isShelf(binder)) return SHELF_STRAYS;
   const inside = isPromoScope(binder) ? PROMO_STRAYS : INSIDE_STRAYS;
   // A friend's binder shows none of the reader's binders.
   return params.has(FRIEND_PARAM) ? [...inside, CUSTOM_PARAM] : inside;
@@ -97,6 +114,13 @@ export function openBinderParams(params: URLSearchParams, binder: {id: string; s
   next.set(BINDER_PARAM, binder?.scope ?? WHOLE_COLLECTION);
   if (binder === null) next.delete(CUSTOM_PARAM);
   else next.set(CUSTOM_PARAM, binder.id);
+  return withoutStrays(next);
+}
+
+/** The address of the shelf, its strays gone in the same write: the Binders tab's All your binders. */
+export function shelfParams(params: URLSearchParams): URLSearchParams {
+  const next = new URLSearchParams(params);
+  next.set(BINDER_PARAM, SHELF);
   return withoutStrays(next);
 }
 

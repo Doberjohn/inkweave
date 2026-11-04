@@ -259,7 +259,16 @@ function toolbarPropsFrom(
   params: FilterParams,
   controls: Pick<
     ToolbarProps,
-    'onFiltersClick' | 'docked' | 'isMobile' | 'modeSwitch' | 'modeActions' | 'setPicker' | 'pickerNamesBinder' | 'sortOptions' | 'rarities'
+    | 'onFiltersClick'
+    | 'docked'
+    | 'isMobile'
+    | 'modeSwitch'
+    | 'modeActions'
+    | 'setPicker'
+    | 'pickerNamesBinder'
+    | 'sortOptions'
+    | 'rarities'
+    | 'heading'
   >,
 ): ToolbarProps {
   return {
@@ -283,7 +292,10 @@ function toolbarPropsFrom(
   };
 }
 
-/** The docked filters panel, on desktop while open. Live, unlike the dialog's draft: the grid beside it is the preview. */
+/**
+ * The docked filters panel, on desktop while open. Live, unlike the dialog's draft: the grid beside
+ * it is the preview. None beside the binder shelf (#1074), whose covers no filter narrows.
+ */
 function dockedPanel(docked: boolean, panel: SidePanelState, props: React.ComponentProps<typeof BrowseSidePanel>) {
   if (!docked || !panel.open) return undefined;
   return <BrowseSidePanel {...props} />;
@@ -297,10 +309,11 @@ function dockedSetPanel(docked: boolean, setPanel: React.ReactNode | undefined) 
 /**
  * Collection mode's parts of the toolbar: Collection, the collection's actions after it, the
  * binder's sort names, and, where the set panel docks, its set picker beside Collection (owner,
- * 2026-10-20).
+ * 2026-10-20). On the binder shelf, its heading in place of the filters (#1074).
  */
 function collectionToolbar(docked: boolean, collection: BrowseCollectionSlots, listing: BrowseListing) {
   return {
+    heading: collection.shelf?.heading,
     modeSwitch: collection.modeSwitch,
     modeActions: collection.modeActions,
     setPicker: docked ? collection.renderSetPicker(listing) : undefined,
@@ -452,7 +465,7 @@ export function BrowseBody({collection}: {collection: BrowseCollectionSlots}) {
       isMobile,
       rarities,
     }),
-    sidePanel: dockedPanel(docked, panel, {
+    sidePanel: dockedPanel(docked && collection.shelf === null, panel, {
       filterProps: {
         ...filterOptions,
         onToggleInk: params.toggleInk,
