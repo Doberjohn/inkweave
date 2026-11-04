@@ -6,8 +6,10 @@
  * Off means NOT LOADED, not merely hidden: no read goes to the binder tables, and no page can
  * load a module from this folder but this one. Code outside the folder reaches a binder module
  * only through a choice the bundler folds on `SHOW_BINDERS` (a lazy component, or a hook picked
- * at module level), never an `if` inside a render. A build with the flag off fails when a page
- * can load binder code (`binderCodeGuard` in `apps/web/build-guards.ts`), so keep this a
- * comparison the bundler can fold.
+ * at module level), never an `if` inside a render. A static import picked at module level tests
+ * this same comparison in its own module: Rolldown inlines `SHOW_BINDERS` into other modules only
+ * after it has tree-shaken them, so a choice on the import keeps the module's code. A build with
+ * the flag off fails when a page can load binder code (`binderCodeGuard` in
+ * `apps/web/build-guards.ts`), so keep this a comparison the bundler can fold.
  */
 export const SHOW_BINDERS = import.meta.env.VITE_SHOW_BINDERS === 'true';

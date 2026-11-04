@@ -93,11 +93,13 @@ const FoilPointer = lazyWithRetry(() => import('./CollectionFriends'), 'FoilPoin
  */
 const UnknownBinder = SHOW_BINDERS ? lazyWithRetry(() => import('./binders/UnknownBinder'), 'UnknownBinder') : null;
 // The shelf (#1074): its covers and their menus in a chunk of their own; its heading and the hook
-// that decides whether it stays are small, and picked here, so off they fold away too.
+// that decides whether it stays are small, and picked here, so off they fold away too. These two
+// test the env itself, not SHOW_BINDERS: Rolldown tree-shakes before it inlines another module's
+// constant, so a static import picked on SHOW_BINDERS keeps its code with binders off.
 const BinderShelf = SHOW_BINDERS ? lazyWithRetry(() => import('./binders/BinderShelf'), 'BinderShelf') : null;
 const noShelf = (): ShelfSlot | null => null;
-const useShelfOf = SHOW_BINDERS ? useShelf : noShelf;
-const Heading = SHOW_BINDERS ? ShelfHeading : null;
+const useShelfOf = import.meta.env.VITE_SHOW_BINDERS === 'true' ? useShelf : noShelf;
+const Heading = import.meta.env.VITE_SHOW_BINDERS === 'true' ? ShelfHeading : null;
 
 /**
  * Starts the binder's chunk on intent (#913): one request for the binder, its docked set panel
