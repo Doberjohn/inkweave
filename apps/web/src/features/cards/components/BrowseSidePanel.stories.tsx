@@ -4,7 +4,8 @@ import {MemoryRouter} from 'react-router-dom';
 import {fn} from 'storybook/test';
 import {BrowseSidePanel, DockedPanelsRow, DockedSetPanel} from './BrowseSidePanel';
 import {BrowseToolbar} from './BrowseToolbar';
-import {BINDER_SORT_OPTIONS, type BinderShow} from '../../collection/binderCards';
+import {BINDER_SORT_OPTIONS, WHOLE_COLLECTION, type BinderShow} from '../../collection/binderCards';
+import {SaveAsBinderFoot} from '../../collection/binders/SaveAsBinderFoot';
 import {CollectionBinderSection} from '../../collection/CollectionBinderSection';
 import {CollectionModeSwitch} from '../../collection/CollectionModeSwitch';
 import {CollectionSetBody} from '../../collection/CollectionSetPanel';
@@ -87,6 +88,20 @@ export const WithActiveFilters: Story = {
       filters: {inkwell: 'inkable'},
     },
     activeFilterCount: 3,
+  },
+};
+
+/** Collection mode's Save as a binder at the foot, pinned to the panel's bottom edge as the filters scroll. */
+export const WithSaveAsBinder: Story = {
+  args: {
+    filterProps: {...meta.args!.filterProps!, inkFilters: ['Amber']},
+    activeFilterCount: 1,
+    foot: (
+      <SaveAsBinderFoot
+        offer={{scope: WHOLE_COLLECTION, rules: 'ink=Amber', line: 'Amber ink', figures: {complete: 293, master: 120, cards: 625}}}
+        onPress={fn()}
+      />
+    ),
   },
 };
 

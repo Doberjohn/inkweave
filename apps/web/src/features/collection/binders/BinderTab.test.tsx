@@ -128,6 +128,12 @@ describe('BinderList', () => {
     expect(inside.onOpen).toHaveBeenCalledWith(AMBER);
   });
 
+  it("holds My collection's medal while the binders load, since the shelf may name another cover", () => {
+    // The rarest card held is the one with art, so the medal would draw it.
+    renderList({shelf: {status: 'loading', binders: [], retry: vi.fn()}, entries: {'amber-rare': {normal: 1, foil: 0}}});
+    expect(row(/^My collection,/).querySelector('img')).toBeNull();
+  });
+
   it('holds a shimmer under My collection while the binders load, and no count on All your binders', () => {
     renderList({shelf: {status: 'loading', binders: [], retry: vi.fn()}});
     expect(screen.getAllByRole('option')).toHaveLength(2);

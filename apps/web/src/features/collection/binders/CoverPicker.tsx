@@ -98,6 +98,8 @@ function useShownCards(choices: LorcanaCard[], listRef: RefObject<HTMLUListEleme
     find: (words: string) => {
       setQuery(words);
       setLimit(COVER_PAGE);
+      // A later Show more then focuses again, even where it adds at the same place.
+      setFocusAt(null);
     },
     shown: found.slice(0, limit),
     found: found.length,
@@ -345,8 +347,10 @@ export function CoverPicker(props: CoverPickerProps) {
   const named = namedCover(props, cards);
   // On a phone focus starts on the sheet, so the keyboard waits for a press on Find a card.
   const focusFind = !isMobile && choices.length > 0;
+  // Against the cover saved, not the one shown, so the rarest also clears a card the rules left.
+  const saved = binder === null ? props.shelfCover : binder.coverId;
   const pick = (id: string | null) => {
-    if (id === named) props.onSaved();
+    if (id === saved) props.onSaved();
     else void save.pick(id);
   };
   const close = () => {

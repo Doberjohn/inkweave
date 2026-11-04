@@ -24,6 +24,8 @@
 }
 .cover-choice:focus-visible {
   box-shadow: var(--cover-focus-ring);
+  /* Forced colours drop the shadow and draw this in the system's colour instead. */
+  outline: 2px solid transparent;
 }
 .cover-choice:disabled {
   cursor: default;

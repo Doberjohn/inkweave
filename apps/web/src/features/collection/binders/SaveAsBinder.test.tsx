@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {act, fireEvent, render, screen, within} from '@testing-library/react';
 import {trackEvent} from '../../../shared/lib/analytics';
-import {WHOLE_COLLECTION} from '../binderCards';
+import {WHOLE_COLLECTION, scopeName} from '../binderCards';
 import type {SaveOffer} from './binderChoices';
 import type {Binder} from './binderRules';
 import type {CreateResult} from './binderShelf';
@@ -111,7 +111,7 @@ describe('SaveAsBinder', () => {
   it('names its Sets chip by the set picked, and counts promos as promos', () => {
     renderBox({offer: {scope: 'P1', rules: 'ink=Ruby', line: 'Ruby ink · Promo 1', figures: {complete: 1, master: 0, cards: 1}}});
     const chips = within(screen.getByRole('list', {name: 'Its rules'})).getAllByRole('listitem');
-    expect(chips.at(-1)?.textContent).not.toBe('All sets');
+    expect(chips.at(-1)?.textContent).toBe(scopeName('P1'));
     expect(screen.getByText(/^1 promo, you have 1, 100%$/)).toBeInTheDocument();
   });
 

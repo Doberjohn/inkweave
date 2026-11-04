@@ -106,6 +106,12 @@ describe('BinderShelf', () => {
     expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Open', 'Change cover']);
   });
 
+  it("offers no Change cover after a failed read, which would leave the new cover nowhere to show", () => {
+    renderShelf({status: 'failed', binders: []});
+    fireEvent.click(menuOf('My collection'));
+    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Open']);
+  });
+
   it('counts My collection under the cover its shelf picked', () => {
     renderShelf({shelfCover: 'ruby'});
     expect(coverFaces.binderFace).toHaveBeenCalledWith(POOL, ENTRIES, null, 'ruby');

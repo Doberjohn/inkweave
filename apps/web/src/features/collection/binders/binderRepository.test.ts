@@ -200,11 +200,13 @@ describe('getShelfCover', () => {
     expect(mockEq).toHaveBeenCalledWith({table: 'collection_shelf', columns: 'cover_id', owner_id: 'me'});
   });
 
-  it('answers no card with no row, and for a cover the guard refuses', async () => {
+  it('answers no card with no row, and for a cover the guard refuses, which it reports', async () => {
     mockShelfRead.mockResolvedValue({data: null, error: null});
     await expect(getShelfCover('me')).resolves.toEqual({data: null, error: null});
+    expect(mockReport).not.toHaveBeenCalled();
     mockShelfRead.mockResolvedValue({data: {cover_id: 'not a card'}, error: null});
     await expect(getShelfCover('me')).resolves.toEqual({data: null, error: null});
+    expect(mockReport).toHaveBeenCalledExactlyOnceWith({area: 'collection', operation: 'read shelf cover'}, expect.any(Error));
   });
 
   it('passes a refusal on as an error', async () => {

@@ -27,7 +27,10 @@ function rowsOf({shelf, pool, entries}: BinderChoices): BinderRow[] {
     name: binder?.name ?? MY_COLLECTION,
     ...(pool === null ? {} : binderFace(pool, entries, binder, shelf.shelfCover ?? null)),
   });
-  return [rowOf(null), ...shelf.binders.map(rowOf)];
+  const rows = [rowOf(null), ...shelf.binders.map(rowOf)];
+  // My collection's cover is the shelf's to name, so its medal waits for the read rather than swap.
+  if (shelf.status === 'loading' || shelf.status === 'idle') rows[0] = {...rows[0], cover: null};
+  return rows;
 }
 
 interface BinderListProps {

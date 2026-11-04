@@ -113,12 +113,30 @@ describe('CoverPicker', () => {
     expect(screen.queryByRole('button', {name: 'Show more'})).toBeNull();
   });
 
+  it('hands focus on again after a search starts the cards over', () => {
+    const many = Array.from({length: COVER_PAGE + 5}, (_, at) => cardOf({id: `c${at}`, fullName: `Card ${at}`, setNumber: at + 1}));
+    renderPicker({binder: null, pool: many, entries: Object.fromEntries(many.map((one) => [one.id, {normal: 1, foil: 0}]))});
+    fireEvent.click(screen.getByRole('button', {name: 'Show more'}));
+    const find = screen.getByRole('searchbox', {name: 'Find a card'});
+    fireEvent.change(find, {target: {value: 'card'}});
+    find.focus();
+    fireEvent.click(screen.getByRole('button', {name: 'Show more'}));
+    expect(cards()[COVER_PAGE]).toHaveFocus();
+  });
+
   it("saves a pick, counts the change by what changed, and tells the shelf once it lands", async () => {
     const props = renderPicker();
     await act(async () => fireEvent.click(card('Elsa - Snow Queen')));
     expect(writes.setCover).toHaveBeenCalledExactlyOnceWith({readerId: 'user-1', id: 'b1', coverId: 'elsa-common'});
     expect(trackEvent).toHaveBeenCalledExactlyOnceWith('binder_changed', {what: 'cover'});
     expect(props.onSaved).toHaveBeenCalledOnce();
+  });
+
+  it("clears a saved card the binder's rules no longer hold, though the rarest already shows", async () => {
+    renderPicker({binder: {...AMBER, coverId: 'steel-rare'}});
+    expect(rarest()).toHaveAttribute('aria-pressed', 'true');
+    await act(async () => fireEvent.click(rarest()));
+    expect(writes.setCover).toHaveBeenCalledExactlyOnceWith({readerId: 'user-1', id: 'b1', coverId: null});
   });
 
   it('puts the rarest back with no card picked', async () => {

@@ -1,5 +1,5 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {rarityLabel} from '../../cards/filterOptions';
+import {inWords, rarityLabel} from '../../cards/filterOptions';
 import type {FilterDraft} from '../../../shared/hooks/useFilterParams';
 import {WHOLE_COLLECTION, scopeName} from '../binderCards';
 import type {CollectionEntries} from '../collectionParser';
@@ -8,7 +8,6 @@ import {figuresOf, type BinderFigures} from './binderCovers';
 import {
   RULES_MAX,
   draftOf,
-  inWords,
   readRules,
   ruleLine,
   ruleParts,

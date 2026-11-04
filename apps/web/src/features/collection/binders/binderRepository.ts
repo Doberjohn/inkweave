@@ -156,14 +156,23 @@ export async function updateBinderRow(id: string, patch: Partial<BinderInput>): 
  * owner reads and writes. No row, or no card, is the rarest card you have.
  */
 
-/** My collection's cover: the card the caller's row names, or null with no row; a cover the guard refuses is none. */
+/** My collection's cover: the card the caller's row names, or null with no row; a cover the guard refuses is none, and reported. */
 export function getShelfCover(ownerId: string): Promise<RepoResult<string | null>> {
   return callSupabase({area: 'collection', operation: 'read shelf cover'}, async (client) => {
     const {data, error} = await client.from('collection_shelf').select('cover_id').eq('owner_id', ownerId).maybeSingle();
     if (error) return {data: null, error};
     const cover = data?.cover_id ?? null;
-    return {data: isCover(cover) ? cover : null, error: null};
+    if (isCover(cover)) return {data: cover, error: null};
+    reportUnreadableCover();
+    return {data: null, error: null};
   });
+}
+
+/** As `reportUnreadable`, for My collection's cover: shown as the rarest, and Sentry hears of it. */
+function reportUnreadableCover(): void {
+  const failure = new Error('left out an unreadable shelf cover');
+  console.warn(`[collection] ${failure.message}`);
+  reportFailure({area: 'collection', operation: 'read shelf cover'}, failure);
 }
 
 /**

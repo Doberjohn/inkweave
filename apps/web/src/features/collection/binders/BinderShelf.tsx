@@ -255,7 +255,8 @@ export function BinderShelf({shelf, pool, entries, waiting, readerId, onWindow}:
         trackOpened(binder);
         void navigate(to);
       }}
-      onChangeCover={() => changes.changeCover(binder)}
+      // Only once the shelf is read: after a failed read My collection's cover has nowhere to show.
+      onChangeCover={shelf.status === 'ready' ? () => changes.changeCover(binder) : undefined}
       {...(binder && ownMenu(binder, {index, count: binders.length}, acts))}
       buttonRef={binder ? focus.actionsRef(binder.id) : undefined}
     />

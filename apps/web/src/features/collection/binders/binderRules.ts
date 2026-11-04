@@ -1,6 +1,6 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {applyFilters, buildCombinedFilters} from '../../cards/applyFilters';
-import {rarityLabel} from '../../cards/filterOptions';
+import {inWords, rarityLabel} from '../../cards/filterOptions';
 import {binderSetOf} from '../../../shared/constants';
 import {
   RULE_PARAMS,
@@ -123,12 +123,6 @@ export function ruleKinds(binder: Pick<Binder, 'scope' | 'rules'>): string {
   const rules = readRules(binder);
   const kinds = KINDS.filter(([, holds]) => holds(rules, binder.scope)).map(([kind]) => kind);
   return kinds.length > 0 ? kinds.join(',') : 'none';
-}
-
-/** Names as a sentence runs them: "Amber", "Amber and Steel", "3, 5 and 9+". */
-export function inWords(names: readonly string[]): string {
-  if (names.length < 2) return names.join('');
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
 /** A cost as the filter's button reads it: 9 is "9+". */
