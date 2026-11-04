@@ -69,9 +69,13 @@
         "!apps/web/dist/assets/BinderShelf-*.js",
         "!apps/web/dist/assets/binderShelf-*.js",
         "!apps/web/dist/assets/BinderWindow-*.js",
-        "!apps/web/dist/assets/BinderCover-*.js"
+        "!apps/web/dist/assets/BinderCover-*.js",
+        "!apps/web/dist/assets/CoverPicker-*.js",
+        "!apps/web/dist/assets/SaveAsBinder-*.js",
+        "!apps/web/dist/assets/binderDialogs-*.js",
+        "!apps/web/dist/assets/saveRules-*.js"
       ],
-      "limit": "467 kB",
+      "limit": "468 kB",
       "gzip": true
     },
     {
@@ -119,9 +123,13 @@
         "apps/web/dist/assets/binderCovers-*.js",
         "apps/web/dist/assets/ownBinders-*.js",
         "apps/web/dist/assets/BinderShelf-*.js",
-        "apps/web/dist/assets/binderShelf-*.js"
+        "apps/web/dist/assets/binderShelf-*.js",
+        "apps/web/dist/assets/CoverPicker-*.js",
+        "apps/web/dist/assets/SaveAsBinder-*.js",
+        "apps/web/dist/assets/binderDialogs-*.js",
+        "apps/web/dist/assets/saveRules-*.js"
       ],
-      "limit": "14 kB",
+      "limit": "26 kB",
       "gzip": true
     },
     {
