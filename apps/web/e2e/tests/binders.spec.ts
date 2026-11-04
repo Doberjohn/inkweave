@@ -689,6 +689,8 @@ test.describe('Change cover under the pointer', () => {
     const other = picker.getByRole('list', {name: 'Your cards'}).getByRole('button').nth(1);
     const chosenRing = await ringOf(chosen);
     const otherEdge = await ringOf(other);
+    // The chosen card wears its ring at rest, so holding it under the pointer means something.
+    expect(chosenRing).not.toBe(otherEdge);
     await chosen.hover();
     expect(await ringOf(chosen)).toBe(chosenRing);
     await other.hover();
