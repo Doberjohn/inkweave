@@ -17,7 +17,7 @@ import {
 } from '../../../shared/constants';
 import {searchCardsByName, smallImageUrl} from '../../cards/loader';
 import type {CollectionEntries} from '../collectionParser';
-import {AskDialog, WhenGone} from './binderDialogs';
+import {AskDialog, ProblemLine, WhenGone} from './binderDialogs';
 import {cardsOf, coverChoices} from './binderCovers';
 import {FIELD, HEADING, LEAD} from './binderFields';
 import {BinderMedal} from './BinderMedal';
@@ -54,10 +54,7 @@ export const COVER_PAGE = 40;
 /** Why a pick didn't land. */
 type CoverProblem = Exclude<CoverResult, 'set'>;
 
-const PROBLEM_WORDS: Record<CoverProblem, string> = {
-  gone: "This binder isn't on your shelf anymore.",
-  failed: "Couldn't change the cover. Try again.",
-};
+const FAILED_WORDS = "Couldn't change the cover. Try again.";
 
 /**
  * The pick, and what it came to. While it runs every way out waits, since the picker alone would
@@ -244,7 +241,7 @@ const GRID: CSSProperties = {
 
 const NOTE: CSSProperties = {margin: `${SPACING.md}px 0 0`, fontSize: `${FONT_SIZES.base}px`, color: COLORS.textMuted};
 
-const PROBLEM: CSSProperties = {...NOTE, color: COLORS.error};
+const PROBLEM_SPACE: CSSProperties = {marginTop: SPACING.md};
 
 const FOOT: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.sm, marginTop: SPACING.lg};
 
@@ -284,12 +281,7 @@ function SaveLine({saving, problem}: {saving: boolean; problem: CoverProblem | n
       </p>
     );
   }
-  if (problem === null) return null;
-  return (
-    <p role="alert" style={PROBLEM}>
-      {PROBLEM_WORDS[problem]}
-    </p>
-  );
+  return <ProblemLine problem={problem} failedWords={FAILED_WORDS} style={PROBLEM_SPACE} />;
 }
 
 /** The card the cover names while the binder still holds it, else null: the cover is the rarest. */

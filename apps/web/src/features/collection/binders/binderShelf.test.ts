@@ -199,13 +199,24 @@ describe("My collection's cover", () => {
     expect(shelfCover()).toBe('elsa-12');
   });
 
-  it('fails the whole read when it fails, as the binders would', async () => {
+  it('shows the binders under the rarest when only it fails to read', async () => {
     follow({...READER, uid: null});
     repo.listBinders.mockResolvedValue({data: [AMBER], error: null});
     repo.getShelfCover.mockResolvedValue({data: null, error: 'Network error'});
     const stop = follow(READER);
-    await vi.waitFor(() => expect(shown()).toBe('failed'));
+    await vi.waitFor(() => expect(shown()).toEqual(['b1']));
+    expect(shelfCover()).toBeNull();
     stop?.();
+  });
+
+  it('keeps the cover on show when a read again fails to read it', async () => {
+    follow({...READER, uid: null});
+    await loadShelf('elsa-12');
+    repo.listBinders.mockResolvedValue({data: [AMBER], error: null});
+    repo.getShelfCover.mockResolvedValue({data: null, error: 'Network error'});
+    viewOf(snapshot(), READER).retry();
+    await vi.waitFor(() => expect(shown()).toEqual(['b1']));
+    expect(shelfCover()).toBe('elsa-12');
   });
 
   it('sets it through the write queue, and shows it once the server has, the binders kept', async () => {

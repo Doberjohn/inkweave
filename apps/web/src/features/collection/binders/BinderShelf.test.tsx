@@ -143,6 +143,30 @@ describe('BinderShelf', () => {
     expect(await screen.findByRole('heading', {name: 'Cover for My collection'})).toBeInTheDocument();
   });
 
+  it('never opens Change cover again by itself once the shelf stops counting while it is open', async () => {
+    const {view} = renderShelf();
+    fireEvent.click(menuOf('Ruby'));
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Change cover'}));
+    expect(await screen.findByRole('heading', {name: 'Cover for Ruby'})).toBeInTheDocument();
+    const shelfWaiting = (waiting: boolean) => (
+      <MemoryRouter initialEntries={['/browse?binder=shelf']}>
+        <BinderShelf
+          shelf={{status: 'ready', binders: BINDERS, retry: vi.fn()}}
+          pool={POOL}
+          entries={ENTRIES}
+          waiting={waiting}
+          readerId="user-1"
+          onWindow={null}
+        />
+      </MemoryRouter>
+    );
+    view.rerender(shelfWaiting(true));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    view.rerender(shelfWaiting(false));
+    await act(async () => {});
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
   it('draws a shimmer for My collection, and no link, while the cards, the account or the binders load', () => {
     for (const [shelf, more] of [
       [{}, {pool: null}],

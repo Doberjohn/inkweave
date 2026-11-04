@@ -16,7 +16,8 @@
   box-shadow: var(--cover-edge);
   transition: box-shadow var(--cover-fade);
 }
-.cover-choice:hover:not(:disabled) {
+/* The chosen card keeps its ring under the pointer. */
+.cover-choice:hover:not(:disabled):not([aria-pressed='true']) {
   box-shadow: var(--cover-hover-ring);
 }
 .cover-choice[aria-pressed='true'] {

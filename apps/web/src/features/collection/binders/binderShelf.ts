@@ -71,12 +71,17 @@ function forgetBinders(): void {
   if (held !== null) publish(null);
 }
 
-/** The binders and My collection's cover, in one read: either failing fails both. */
+/** My collection's cover on show for `readerId`, or null for the rarest. */
+const heldCover = (readerId: string) => (held?.readerId === readerId ? (held.shelfCover ?? null) : null);
+
+/**
+ * The binders and My collection's cover, in one read. Only the binders failing fails it: a cover
+ * that can't be read keeps the one on show, or the rarest, rather than hiding every binder.
+ */
 async function readShelf(readerId: string): Promise<Held> {
   const [binders, cover] = await Promise.all([listBinders(readerId), getShelfCover(readerId)]);
-  const refused = binders.error !== null || cover.error !== null;
-  if (refused || binders.data === null) return {readerId, value: 'failed'};
-  return {readerId, value: binders.data, shelfCover: cover.data};
+  if (binders.error !== null || binders.data === null) return {readerId, value: 'failed'};
+  return {readerId, value: binders.data, shelfCover: cover.error === null ? cover.data : heldCover(readerId)};
 }
 
 /** Reads `readerId`'s binders in the write queue; a failed re-read keeps the binders on show. */

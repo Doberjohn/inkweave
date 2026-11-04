@@ -93,12 +93,19 @@ const PROBLEM_WORDS: Record<SaveProblem, string> = {
 
 const PROBLEM_STYLE: CSSProperties = {margin: 0, fontSize: `${FONT_SIZES.base}px`, color: COLORS.error};
 
+interface ProblemLineProps {
+  problem: SaveProblem | null;
+  /** A failure's words where the save is something other than the binder, such as its cover. */
+  failedWords?: string;
+  style?: CSSProperties;
+}
+
 /** A failed save's line, over the buttons. */
-export function ProblemLine({problem, style}: {problem: SaveProblem | null; style?: CSSProperties}) {
+export function ProblemLine({problem, failedWords, style}: ProblemLineProps) {
   if (problem === null) return null;
   return (
     <p role="alert" style={{...PROBLEM_STYLE, ...style}}>
-      {PROBLEM_WORDS[problem]}
+      {problem === 'failed' && failedWords !== undefined ? failedWords : PROBLEM_WORDS[problem]}
     </p>
   );
 }

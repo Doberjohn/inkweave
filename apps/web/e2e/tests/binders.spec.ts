@@ -640,6 +640,31 @@ test.describe('Rename and Change cover', () => {
   });
 });
 
+test.describe('Change cover under the pointer', () => {
+  test("the chosen card keeps its gold ring under the pointer, where another card takes the hover ring", async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name.startsWith('mobile-'), 'A pointer resting on a card');
+    // No fade, so each ring read is the one the card settles on.
+    await page.emulateMedia({reducedMotion: 'reduce'});
+    await signIn(page);
+    await page.goto('/browse?binder=shelf');
+    await actionsOf(page, 'My collection').click({timeout: 20_000});
+    await page.getByRole('menuitem', {name: 'Change cover'}).click();
+    const picker = await pickerOf(page);
+    const ringOf = (choice: Locator) => choice.evaluate((button) => getComputedStyle(button).boxShadow);
+    // My collection follows the rarest card, so "The rarest card you have" is the one chosen.
+    const chosen = picker.locator('.cover-choice[aria-pressed="true"]');
+    const other = picker.getByRole('list', {name: 'Your cards'}).getByRole('button').nth(1);
+    const chosenRing = await ringOf(chosen);
+    const otherEdge = await ringOf(other);
+    await chosen.hover();
+    expect(await ringOf(chosen)).toBe(chosenRing);
+    await other.hover();
+    expect(await ringOf(other)).not.toBe(otherEdge);
+  });
+});
+
 test.describe("a friend's binder", () => {
   const ME: Player = {id: COLLECTOR_ID, handle: 'sapphire_dragon_204', displayName: 'Sapphire Dragon 204', code: E2E_FRIEND_CODE};
   const RUBY: Player = {id: 'e2e-ruby', handle: 'ruby_hero_042', displayName: 'Ruby Hero 042', code: 'RH42Q7KM'};

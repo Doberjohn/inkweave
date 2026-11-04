@@ -83,7 +83,7 @@ function joinNarrowing(joined: URLSearchParams, page: URLSearchParams, param: st
 
 /** Where the page stands: the binder of your own on show (null for My collection), the set picked inside it, and what its rules run over. */
 export interface OfferAt {
-  binder: Pick<Binder, 'rules'> | null;
+  binder: Pick<Binder, 'scope' | 'rules'> | null;
   scope: string;
   pool: readonly LorcanaCard[];
   entries: CollectionEntries;
@@ -104,23 +104,37 @@ function figuresFor(at: OfferAt, rules: string): BinderFigures {
   return figures;
 }
 
+/** Whether the offer is the open binder over again, its own Sets and rules: saving it would only copy it. */
+function isOpenBinder({binder, scope}: OfferAt, rules: string): boolean {
+  if (binder === null || binder.scope !== scope) return false;
+  const own = draftOf(binder);
+  return writeRules(own.draft, own.query) === rules;
+}
+
+/** Whether joined rules make a binder of their own: no clash, within what the table holds, and not the open binder's. */
+const makesNewBinder = (at: OfferAt, rules: string | null): rules is string =>
+  rules !== null && rules.length <= RULES_MAX && !isOpenBinder(at, rules);
+
 /**
  * Save as a binder's offer for the page's filters and search: the new binder's Sets (the set
  * picked) and rules (`joinRules`), its line and its numbers. Null where it offers none: no
- * filter or search on, a pick that can't join the binder's rules, rules longer than the table
- * holds, or no card. A promo scope's rarity stays out, as the window keeps it out.
+ * filter or search on, a pick that can't join the binder's rules, a pick the binder's rules
+ * already hold at its own Sets, rules longer than the table holds, or no card. A promo scope's rarity stays out, as the window keeps it out.
  */
 export function saveOffer(at: OfferAt, draft: FilterDraft, query: string): SaveOffer | null {
   const scoped = scopedDraft(draft, at.scope);
   if (writeRules(scoped, query) === '') return null;
   const rules = joinRules(at.binder, scoped, query);
-  if (rules === null || rules.length > RULES_MAX) return null;
+  if (!makesNewBinder(at, rules)) return null;
   const figures = figuresFor(at, rules);
   if (figures.cards === 0) return null;
   return {scope: at.scope, rules, line: ruleLine({scope: at.scope, rules}), figures};
 }
 
-/** The most letters a name holds (`binderName.ts`). */
+/**
+ * The most letters a name holds: `binderName.ts`'s `BINDER_NAME_MAX`, which the test holds it to.
+ * Importing it here would split the name check off into a shared chunk of its own.
+ */
 const NAME_MAX = 30;
 
 /** Where a name may be cut: before a space or a comma. */

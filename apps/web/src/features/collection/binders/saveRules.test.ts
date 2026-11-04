@@ -4,6 +4,7 @@ import type {FilterDraft} from '../../../shared/hooks/useFilterParams';
 import {ALL_PROMO_SETS, WHOLE_COLLECTION} from '../binderCards';
 import type {CollectionEntries} from '../collectionParser';
 import {binderFace} from './binderCovers';
+import {BINDER_NAME_MAX, isValidBinderName} from './binderName';
 import {joinRules, saveOffer, suggestName} from './saveRules';
 
 /** A page's filters: none unless told otherwise. */
@@ -60,6 +61,12 @@ describe('suggestName', () => {
     expect(name).toBe('Amber, Amethyst, Emerald, Ruby');
     expect(suggestName({scope: WHOLE_COLLECTION, rules: `q=${'x'.repeat(40)}`})).toBe('x'.repeat(30));
   });
+
+  it('cuts at the very limit the name check holds, so a suggestion is never refused nor cut short', () => {
+    const name = suggestName({scope: WHOLE_COLLECTION, rules: `q=${'x'.repeat(BINDER_NAME_MAX + 10)}`});
+    expect(name).toBe('x'.repeat(BINDER_NAME_MAX));
+    expect(isValidBinderName(name)).toBe(true);
+  });
 });
 
 describe('saveOffer', () => {
@@ -85,9 +92,15 @@ describe('saveOffer', () => {
   });
 
   it("joins the page's picks onto the open binder's rules, and offers nothing on a clash", () => {
-    const amber = {...myCollection, binder: rulesOf('ink=Amber')};
+    const amber = {...myCollection, binder: {scope: WHOLE_COLLECTION, ...rulesOf('ink=Amber')}};
     expect(saveOffer(amber, draftOf({opts: {rarities: ['Epic']}}), '')?.rules).toBe('ink=Amber&rarity=Epic');
     expect(saveOffer(amber, draftOf({inks: ['Steel']}), '')).toBeNull();
+  });
+
+  it("offers no copy of the open binder: its own pick at its own Sets, though a set picked in it makes another", () => {
+    const amber = {...myCollection, binder: {scope: WHOLE_COLLECTION, ...rulesOf('ink=Amber')}};
+    expect(saveOffer(amber, draftOf({inks: ['Amber']}), '')).toBeNull();
+    expect(saveOffer({...amber, scope: '12'}, draftOf({inks: ['Amber']}), '')).toMatchObject({scope: '12', rules: 'ink=Amber'});
   });
 
   it('offers nothing for rules that hold no card, or more than the table holds', () => {

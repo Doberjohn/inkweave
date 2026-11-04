@@ -5,7 +5,7 @@
  */
 
 /** The most letters a name holds, counted as the check's `char_length` counts them: in code points. */
-const BINDER_NAME_MAX = 30;
+export const BINDER_NAME_MAX = 30;
 
 /**
  * What the check refuses at either end: every space `String.prototype.trim` strips, and the

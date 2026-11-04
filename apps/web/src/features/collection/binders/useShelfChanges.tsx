@@ -29,6 +29,9 @@ export function useShelfChanges({readerId, isMobile, pool, entries, shelfCover}:
   const covers = useOpening<{binder: Binder | null}>();
   const renaming = renames.opening;
   const picking = covers.opening;
+  // The picker unmounts here without its close (the cards went, or the shelf waits on the account
+  // again), so its opening goes too: kept, it would open again by itself once they are back.
+  if (pool === null && picking !== null) covers.drop();
   const rename = renaming && (
     <RenameBinderDialog
       key={renaming.key}
