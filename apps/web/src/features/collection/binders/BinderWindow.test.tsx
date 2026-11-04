@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {act, fireEvent, render, screen, within} from '@testing-library/react';
+import {act, cleanup, fireEvent, render, screen, within} from '@testing-library/react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {trackEvent} from '../../../shared/lib/analytics';
 import type {CollectionEntries} from '../collectionParser';
@@ -37,6 +37,7 @@ function renderWindow(over: Partial<BinderWindowProps> = {}) {
     isMobile: false,
     onSaved: vi.fn(),
     onClose: vi.fn(),
+    onGone: vi.fn(),
     ...over,
   };
   render(<BinderWindow {...props} />);
@@ -121,13 +122,15 @@ describe('BinderWindow', () => {
     expect(trackEvent).not.toHaveBeenCalled();
   });
 
-  it('waits at every way out while it saves', async () => {
+  it('waits at every way out, and holds every pick, while it saves', async () => {
     const land = heldSave(writes.createBinder);
     const props = renderWindow();
     fillAmber();
     await act(async () => fireEvent.click(button('Create binder')));
     expect(button('Saving…')).toBeDisabled();
     expect(button('Cancel')).toBeDisabled();
+    expect(nameField()).toBeDisabled();
+    expect(button('Filter by Ruby')).toBeDisabled();
     fireEvent.keyDown(document, {key: 'Escape'});
     fireEvent.click(button('Close'));
     // The backdrop, behind the panel's own layer.
@@ -153,6 +156,25 @@ describe('BinderWindow', () => {
     });
     expect(trackEvent).toHaveBeenCalledWith('binder_changed', {what: 'rules'});
     expect(props.onSaved).toHaveBeenCalledWith(EPICS);
+  });
+
+  it('tells a new binder what can change later, and Edit rules nothing of it', () => {
+    const later = 'You can change its rules, name and cover later.';
+    renderWindow();
+    expect(screen.getByText(later)).toBeInTheDocument();
+    cleanup();
+    renderWindow({binder: EPICS});
+    expect(screen.queryByText(later)).toBeNull();
+  });
+
+  it('says why rules too long to keep turn Create binder off, though they hold a card', () => {
+    const long = 'a'.repeat(1001);
+    renderWindow({pool: [...POOL, cardOf({id: 'long', name: long, fullName: long})]});
+    fireEvent.change(nameField(), {target: {value: 'Long'}});
+    fireEvent.change(screen.getByRole('textbox', {name: 'Name has'}), {target: {value: long}});
+    expect(screen.getByText('1 card')).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('These rules are too long to keep. Shorten Name has.');
+    expect(button('Create binder')).toBeDisabled();
   });
 
   it('counts a new name alone as a change of name', async () => {

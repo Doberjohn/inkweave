@@ -115,6 +115,16 @@ describe('useBinderDraft', () => {
     expect(result.current.preview.chips).toEqual(['Epic', 'The Wilds Unknown']);
   });
 
+  it('keeps a picked rarity offered at Sets that hold none of it, so it can be taken off', () => {
+    const {result} = renderDraft(EPICS);
+    act(() => result.current.setScope('11'));
+    expect(result.current.preview.figures.cards).toBe(0);
+    expect(result.current.options.rarities).toEqual(['Common', 'Rare', 'Epic']);
+    act(() => result.current.filters.updateFilters({rarities: undefined}));
+    expect(result.current.options.rarities).toEqual(['Common', 'Rare']);
+    expect(result.current.preview.figures.cards).toBe(2);
+  });
+
   it('drops a rarity rule at a promo Sets, which offers none', () => {
     const {result} = renderDraft(EPICS);
     act(() => result.current.setScope('P1'));

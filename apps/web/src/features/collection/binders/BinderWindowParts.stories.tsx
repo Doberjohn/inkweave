@@ -19,14 +19,14 @@ function WindowPart({binder, part, isMobile}: PartProps) {
   return (
     <div style={{width, padding: SPACING.xl, background: COLORS.background}}>
       {part === 'preview' && <DraftPreview draft={draft} />}
-      {part === 'rules' && <RulesFields draft={draft} isMobile={isMobile} />}
+      {part === 'rules' && <RulesFields draft={draft} isMobile={isMobile} locked={false} />}
       {part === 'count' && <DraftCount draft={draft} />}
     </div>
   );
 }
 
 /**
- * The New binder window's parts (#1075): the preview column (cover, count, chips, first page),
+ * The New binder window's parts: the preview column (cover, count, chips, first page),
  * the rules column (Name, Sets, the filter panel's sections, Name has) and the count alone, as
  * the phone's summary row shows it. `BinderWindow`'s stories show them together.
  */

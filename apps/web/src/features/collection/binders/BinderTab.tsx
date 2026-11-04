@@ -162,7 +162,7 @@ const FULL_LINE = {
 } as const;
 
 /**
- * New binder (#1075), under the binders once they have read: the menu closes and the window
+ * New binder, under the binders once they have read: the menu closes and the window
  * opens, and a binder made there opens. At 30 binders, the line that says why there is no other.
  */
 function NewBinderOption({choices, onPicked}: BinderListProps) {

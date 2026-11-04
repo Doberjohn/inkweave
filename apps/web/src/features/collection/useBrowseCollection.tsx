@@ -101,7 +101,7 @@ const BinderShelf = SHOW_BINDERS ? lazyWithRetry(() => import('./binders/BinderS
 const noShelf = (): ShelfSlot | null => null;
 const useShelfOf = import.meta.env.VITE_SHOW_BINDERS === 'true' ? useShelf : noShelf;
 const Heading = import.meta.env.VITE_SHOW_BINDERS === 'true' ? ShelfHeading : null;
-// The New binder window's place on the page (#1075), picked the same way: the window itself is lazy.
+// The New binder window's place on the page, picked the same way: the window itself is lazy.
 const NO_WINDOW: BinderWindowSlot = {open: null, node: null};
 const noWindow = () => NO_WINDOW;
 const useWindowOf = import.meta.env.VITE_SHOW_BINDERS === 'true' ? useBinderWindow : noWindow;

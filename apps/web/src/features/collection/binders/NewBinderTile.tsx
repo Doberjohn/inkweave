@@ -70,7 +70,7 @@ function PlusIcon() {
 }
 
 /**
- * New binder, after the shelf's last cover (#1075): a cover's board in a dashed outline, a +,
+ * New binder, after the shelf's last cover: a cover's board in a dashed outline, a +,
  * and what a binder keeps. It opens the New binder window.
  */
 export function NewBinderTile({onNew, compact}: {onNew: () => void; compact: boolean}) {

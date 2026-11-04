@@ -48,18 +48,25 @@ function setsOptions(sets: readonly string[], scope: string) {
 interface RulesProps {
   draft: BinderDraft;
   isMobile: boolean;
+  /** While a save runs: what it sends is the picks it began with, so none can change. */
+  locked: boolean;
   nameRef?: Ref<HTMLInputElement>;
 }
+
+/** Holds the fields, so a save can lock them all at once, with no look of its own. */
+const FIELDSET: CSSProperties = {margin: 0, padding: 0, border: 0, minWidth: 0};
+
+const TOO_LONG: CSSProperties = {margin: `${SPACING.xs}px 0 0`, fontSize: `${FONT_SIZES.base}px`, color: COLORS.error};
 
 /**
  * The window's rules, in one column: Name and Sets, then the filter panel's own sections (Ink
  * with its dual-ink switch, Inkwell, Ink Cost, Rarity with its art presets, Type, Classification,
  * Keyword), then Name has, which matches names as the search box does.
  */
-export function RulesFields({draft, isMobile, nameRef}: RulesProps) {
+export function RulesFields({draft, isMobile, locked, nameRef}: RulesProps) {
   const {filters, options} = draft;
   return (
-    <>
+    <fieldset disabled={locked} style={FIELDSET}>
       <FilterSection label="Name">
         <input
           ref={nameRef}
@@ -107,8 +114,14 @@ export function RulesFields({draft, isMobile, nameRef}: RulesProps) {
           onChange={(event) => draft.setQuery(event.target.value)}
           style={FIELD}
         />
+        {/* Only a long search can write rules past what the table holds. */}
+        {draft.rulesTooLong && (
+          <p role="status" style={TOO_LONG}>
+            These rules are too long to keep. Shorten Name has.
+          </p>
+        )}
       </FilterSection>
-    </>
+    </fieldset>
   );
 }
 
@@ -154,8 +167,7 @@ export function DraftCount({draft}: {draft: BinderDraft}) {
 
 /** The draft binder's cover, as the shelf will draw it: its name (or "Name it"), its rules and its card. */
 export function DraftCover({draft}: {draft: BinderDraft}) {
-  const rule = draft.preview.chips.join(' · ') || 'Every card';
-  return <CoverBoard name={draft.name.trim() || 'Name it'} rule={rule} cover={draft.preview.cover} />;
+  return <CoverBoard name={draft.name.trim() || 'Name it'} rule={draft.preview.line} cover={draft.preview.cover} />;
 }
 
 const CHIPS: CSSProperties = {display: 'flex', flexWrap: 'wrap', gap: SPACING.xs, margin: 0, padding: 0, listStyle: 'none'};
@@ -177,7 +189,7 @@ const HEADING: CSSProperties = {
   color: COLORS.textMuted,
 };
 
-/** The page's pockets, four across, on a binder page's own black. */
+/** The page's pockets, four across, on a binder page (`binder-page`: its black, grain and light). */
 const PAGE = {
   ...BINDER_LOOK,
   display: 'grid',
@@ -185,21 +197,18 @@ const PAGE = {
   gap: SPACING.sm,
   padding: SPACING.md,
   borderRadius: `${RADIUS.md}px`,
-  background: 'var(--binder-page)',
 } as CSSProperties;
 
 const POCKET: CSSProperties = {aspectRatio: '63 / 88'};
 
-const pocketArt = (held: boolean): CSSProperties => ({
+const POCKET_ART: CSSProperties = {
   position: 'relative',
   display: 'block',
   width: '100%',
   height: '100%',
   objectFit: 'cover',
   borderRadius: `${RADIUS.xs}px`,
-  // The binder's own grey for a card you don't have.
-  filter: held ? undefined : 'grayscale(1) brightness(0.45)',
-});
+};
 
 /** Beside the rules on a computer: the cover, the count, the rules as chips and the first page. */
 export function DraftPreview({draft}: {draft: BinderDraft}) {
@@ -222,10 +231,18 @@ export function DraftPreview({draft}: {draft: BinderDraft}) {
       {firstPage.length > 0 && (
         <section style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
           <h3 style={HEADING}>Its first page</h3>
-          <div aria-hidden="true" style={PAGE}>
+          <div aria-hidden="true" className="binder-page" style={PAGE}>
             {firstPage.map(({card, held}) => (
               <span key={card.id} className="binder-pocket" style={POCKET}>
-                <img src={smallImageUrl(card)} alt="" decoding="async" loading="lazy" style={pocketArt(held)} />
+                {/* A card you don't have takes the binder's own grey. */}
+                <img
+                  src={smallImageUrl(card)}
+                  alt=""
+                  decoding="async"
+                  loading="lazy"
+                  className={held ? undefined : 'binder-waiting-art'}
+                  style={POCKET_ART}
+                />
               </span>
             ))}
           </div>

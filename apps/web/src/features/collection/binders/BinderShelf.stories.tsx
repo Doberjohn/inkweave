@@ -8,7 +8,7 @@ import {STORY_BINDER_ENTRIES, STORY_BINDER_POOL, STORY_THIRTY_BINDERS, storyShel
 /**
  * The binder shelf (#1074): My collection, then your binders in place order, each a closed zip
  * binder holding its cover card, its name on the plate, and how complete it is under it, then
- * New binder (#1075). Hover or focus a binder of your own for its ⋯ (always shown on a phone).
+ * New binder. Hover or focus a binder of your own for its ⋯ (always shown on a phone).
  * The heading, "Your binders" and the count, stands in the toolbar (`ShelfHeading`).
  */
 const meta: Meta<typeof BinderShelf> = {

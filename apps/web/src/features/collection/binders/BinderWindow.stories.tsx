@@ -4,7 +4,7 @@ import {BinderWindow} from './BinderWindow';
 import {STORY_AMBER, STORY_BINDER_ENTRIES, STORY_BINDER_POOL} from './binderStoryData';
 
 /**
- * The New binder window (#1075), and Edit rules': the binder's name, its Sets and its rules on
+ * The New binder window, and Edit rules': the binder's name, its Sets and its rules on
  * the left, and on the right what they make, its cover, count, chips and first page, following
  * every pick. Create binder stays off until it has a name and a card. A sheet on a phone, with
  * Cancel and Create in its header. The window's saves reach the server, so these stories never
@@ -23,6 +23,7 @@ const meta: Meta<typeof BinderWindow> = {
     isMobile: false,
     onSaved: fn(),
     onClose: fn(),
+    onGone: fn(),
   },
 };
 

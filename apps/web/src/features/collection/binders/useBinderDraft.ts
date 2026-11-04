@@ -9,7 +9,7 @@ import {isHeld} from '../collectionStats';
 import {faceOf, type BinderFace} from './binderCovers';
 import {clampBinderName, isValidBinderName, trimBinderName} from './binderName';
 import type {BinderInput} from './binderRepository';
-import {draftOf, ruleParts, rulePool, writeRules, type Binder} from './binderRules';
+import {draftOf, ruleLine, ruleParts, rulePool, writeRules, type Binder} from './binderRules';
 
 /**
  * The longest rules the table holds (`collection_binders_rules`). Every filter picked at once
@@ -47,9 +47,15 @@ export type ChangeKind = 'rules' | 'name';
 const scopedDraft = (draft: FilterDraft, scope: string): FilterDraft =>
   isPromoScope(scope) ? {...draft, opts: {...draft.opts, rarities: undefined}} : draft;
 
-/** The Rarity options at a Sets: the binder's (`binderRarities`), none for promos alone. */
-function raritiesAt(pool: readonly LorcanaCard[], scope: string): string[] {
-  return isPromoScope(scope) ? [] : binderRarities(rulePool(pool, {scope, rules: ''}));
+/**
+ * The Rarity options at a Sets: the binder's (`binderRarities`), none for promos alone. A rarity
+ * picked under other Sets stays offered, in rarity order, so the player sees why the count fell
+ * and can take it off.
+ */
+function raritiesAt(pool: readonly LorcanaCard[], scope: string, picked: readonly string[]): string[] {
+  if (isPromoScope(scope)) return [];
+  const offered = new Set(binderRarities(rulePool(pool, {scope, rules: ''})));
+  return binderRarities(pool).filter((rarity) => offered.has(rarity) || picked.includes(rarity));
 }
 
 /** The first page as the binder opens it: its Sets in collector order, newest set first. */
@@ -63,7 +69,7 @@ function firstPage(cards: LorcanaCard[], entries: CollectionEntries, scope: stri
 function previewOf(pool: readonly LorcanaCard[], entries: CollectionEntries, ask: {scope: string; rules: string; coverId: string | null}) {
   const cards = rulePool(pool, ask);
   const face: BinderFace = faceOf(cards, entries, ask);
-  return {...face, chips: ruleParts(ask), firstPage: firstPage(cards, entries, ask.scope)};
+  return {...face, chips: ruleParts(ask), line: ruleLine(ask), firstPage: firstPage(cards, entries, ask.scope)};
 }
 
 /**
@@ -85,7 +91,7 @@ function changeOf(binder: Binder, input: BinderInput): ChangeKind | null {
 }
 
 /**
- * The New binder window's state (#1075): the name, the Sets, the filters as a draft, and Name has,
+ * The New binder window's state: the name, the Sets, the filters as a draft, and Name has,
  * and from them the binder they would make: its rules written as the row stores them
  * (`writeRules`), its cards (`rulePool`), its cover and numbers as the shelf counts them
  * (`faceOf`), its chips and its first page. The window mounts it afresh for each opening.
@@ -112,6 +118,7 @@ export function useBinderDraft({start, pool, entries}: {start: DraftStart; pool:
   const input: BinderInput = {name: trimBinderName(name), scope, rules, coverId};
   const change = start.binder === null ? null : changeOf(start.binder, input);
   const holdsCards = preview.figures.cards > 0;
+  const rulesTooLong = rules.length > RULES_MAX;
   return {
     name,
     setName: (next: string) => setName(clampBinderName(next)),
@@ -124,14 +131,15 @@ export function useBinderDraft({start, pool, entries}: {start: DraftStart; pool:
       sets: binderSets(pool),
       keywords: getUniqueKeywords([...pool]),
       classifications: getUniqueClassifications([...pool]),
-      rarities: raritiesAt(pool, scope),
+      rarities: raritiesAt(pool, scope, filters.draftFilters.rarities ?? []),
     },
     preview,
     holdsCards,
+    rulesTooLong,
     input,
     change,
     canSave:
-      isValidBinderName(name) && holdsCards && rules.length <= RULES_MAX && (start.binder === null || change !== null),
+      isValidBinderName(name) && holdsCards && !rulesTooLong && (start.binder === null || change !== null),
   };
 }
 

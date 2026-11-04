@@ -42,7 +42,7 @@ const MOVE_PATH = '/rest/v1/rpc/move_binder';
 const SHELF_MAX = 30;
 
 /** The check violation the cap's trigger raises, as PostgREST hands it back. */
-const SHELF_FULL_ERROR = {code: '23514', message: 'A shelf holds at most 30 binders', details: null, hint: null};
+const SHELF_FULL_ERROR = {code: '23514', message: 'A shelf holds 30 binders at most', details: null, hint: null};
 
 const byPlace = (a: BinderRow, b: BinderRow) => a.place - b.place;
 

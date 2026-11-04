@@ -135,6 +135,16 @@ describe('insertBinderRow', () => {
     expect(mockReport).not.toHaveBeenCalled();
   });
 
+  it("reports a check violation of the table's own, which isn't the cap", async () => {
+    const refused = {code: '23514', message: 'new row for relation "collection_binders" violates check constraint "collection_binders_name"'};
+    mockInsert.mockResolvedValue({data: null, error: refused});
+    await expect(insertBinderRow('me', {name: 'Amber', scope: 'all', rules: '', coverId: null})).resolves.toEqual({
+      data: null,
+      error: refused.message,
+    });
+    expect(mockReport).toHaveBeenCalledOnce();
+  });
+
   it('passes any other refusal on as an error', async () => {
     mockInsert.mockResolvedValue({data: null, error: {code: '42501', message: 'denied'}});
     await expect(insertBinderRow('me', {name: 'Amber', scope: 'all', rules: '', coverId: null})).resolves.toEqual({

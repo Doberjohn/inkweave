@@ -100,12 +100,13 @@ export interface BinderInput {
 }
 
 /**
- * The shelf's cap, refused: the insert trigger's `check_violation` at 30 binders. The client
- * holds a name and its rules to the table's other checks (`binderName.ts`, `writeRules`), so a
- * 23514 on an insert is the cap, and it answers this in place of an error Sentry would hear of.
+ * The shelf's cap, refused: the insert trigger's `check_violation` at 30 binders, answered in
+ * place of an error Sentry would hear of. The table's own checks raise the same code, so the cap
+ * is told by its message: a name or rules the client let through stay an error that is reported.
  */
 export const SHELF_FULL = 'shelf_full';
-const CHECK_VIOLATION = '23514';
+const isShelfCap = (error: {code?: string; message?: string} | null) =>
+  error?.code === '23514' && (error.message ?? '').startsWith('A shelf holds');
 
 /** A binder's fields as the table names them, only those given. */
 function columnsOf({coverId, ...fields}: Partial<BinderInput>) {
@@ -133,7 +134,7 @@ export async function insertBinderRow(ownerId: string, input: BinderInput): Prom
   const row = {owner_id: ownerId, ...columnsOf(input)} as TablesInsert<'collection_binders'>;
   const result = await callSupabase<unknown>({area: 'collection', operation: 'create binder'}, async (client) => {
     const {data, error} = await client.from('collection_binders').insert(row).select(COLUMNS).single();
-    if (error?.code === CHECK_VIOLATION) return {data: SHELF_FULL, error: null};
+    if (isShelfCap(error)) return {data: SHELF_FULL, error: null};
     return {data, error};
   });
   return readBack(result);

@@ -1,4 +1,4 @@
-import {useRef, useState, type CSSProperties, type ReactNode} from 'react';
+import {useEffect, useEffectEvent, useRef, useState, type CSSProperties, type ReactNode} from 'react';
 import {createPortal} from 'react-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {BottomSheet, CtaButton, DialogShell} from '../../../shared/components';
@@ -9,6 +9,7 @@ import type {CollectionEntries} from '../collectionParser';
 import {ruleKinds, type Binder} from './binderRules';
 import {createBinder, updateBinder} from './binderShelf';
 import {DraftCount, DraftCover, DraftPreview, RulesFields} from './BinderWindowParts';
+import {SHELF_FULL_WORDS} from './shelfWords';
 import {startOf, useBinderDraft, type BinderDraft, type DraftStart} from './useBinderDraft';
 
 export interface BinderWindowProps {
@@ -24,13 +25,15 @@ export interface BinderWindowProps {
   /** Told once the server has the binder, as it stored it; the caller closes the window. */
   onSaved: (binder: Binder) => void;
   onClose: () => void;
+  /** Told once a closed window's exit has run, so the page can unmount it. */
+  onGone: () => void;
 }
 
 /** Why a save didn't land: the shelf is full, the binder was deleted elsewhere, or it failed. */
 type Problem = 'full' | 'gone' | 'failed';
 
 const PROBLEM_WORDS: Record<Problem, string> = {
-  full: 'Your shelf holds 30 binders, the most it can.',
+  full: SHELF_FULL_WORDS,
   gone: "This binder isn't on your shelf anymore.",
   failed: "Couldn't save the binder. Try again.",
 };
@@ -93,7 +96,7 @@ const LEAD = 'Pick the cards it holds. Your copies fill it on their own, and it 
 const NOTE = 'You can change its rules, name and cover later.';
 
 /**
- * The New binder window (#1075), and Edit rules': the binder's name, its Sets and its rules,
+ * The New binder window, and Edit rules': the binder's name, its Sets and its rules,
  * beside what they would make, its cover, count, chips and first page, each following every
  * pick. A dialog on a computer and a tablet, a sheet on a phone (`.claude/rules/overlays.md`).
  * It creates nothing until Create binder, and only a binder with a name and a card.
@@ -107,7 +110,7 @@ export function BinderWindow(props: BinderWindowProps) {
   const save = useSave({...props, start}, draft);
   const words = wordsOf(start, save.saving);
   const nameRef = useRef<HTMLInputElement>(null);
-  const lead = props.binder === null ? LEAD : null;
+  const isNew = props.binder === null;
   if (props.isMobile) {
     return <PhoneWindow {...props} draft={draft} save={save} words={words} />;
   }
@@ -120,13 +123,14 @@ export function BinderWindow(props: BinderWindowProps) {
       initialFocusRef={nameRef}
       panelStyle={PANEL}>
       <div className="ph-no-capture" style={FRAME}>
+        <WhenGone onGone={props.onGone} />
         <header style={HEAD}>
           <h2 style={DIALOG_TITLE}>{words.title}</h2>
-          {lead && <p style={LEAD_STYLE}>{lead}</p>}
+          {isNew && <p style={LEAD_STYLE}>{LEAD}</p>}
         </header>
         <div style={COLUMNS}>
           <div style={RULES_COLUMN}>
-            <RulesFields draft={draft} isMobile={false} nameRef={nameRef} />
+            <RulesFields draft={draft} isMobile={false} locked={save.saving} nameRef={nameRef} />
           </div>
           <div style={PREVIEW_COLUMN}>
             <DraftPreview draft={draft} />
@@ -135,7 +139,7 @@ export function BinderWindow(props: BinderWindowProps) {
         <footer style={FOOT}>
           <ProblemLine problem={save.problem} />
           <div style={FOOT_ROW}>
-            <p style={NOTE_STYLE}>{NOTE}</p>
+            <p style={NOTE_STYLE}>{isNew && NOTE}</p>
             <CtaButton variant="neutral" onClick={save.close} disabled={save.saving}>
               Cancel
             </CtaButton>
@@ -147,6 +151,17 @@ export function BinderWindow(props: BinderWindowProps) {
       </div>
     </DialogShell>
   );
+}
+
+/**
+ * Inside the dialog or the sheet, which unmount what they hold once their exit has run: it says
+ * so then, and the page unmounts the window, whose preview would otherwise count each change of
+ * the page's collection for no one.
+ */
+function WhenGone({onGone}: {onGone: () => void}) {
+  const gone = useEffectEvent(onGone);
+  useEffect(() => () => gone(), []);
+  return null;
 }
 
 /** A failed save's line, over the buttons. */
@@ -169,10 +184,11 @@ interface PhoneWindowProps extends BinderWindowProps {
  * A phone's window: a sheet whose header holds Cancel, the title and Create, then the cover with
  * its count and bar, then the rules in the phone's filter sections.
  */
-function PhoneWindow({isOpen, draft, save, words}: PhoneWindowProps) {
+function PhoneWindow({isOpen, onGone, draft, save, words}: PhoneWindowProps) {
   return (
     <PhoneSheet isOpen={isOpen} onClose={save.close} dialogName={words.dialogName}>
       <div className="ph-no-capture" style={SHEET_FRAME}>
+        <WhenGone onGone={onGone} />
         <div style={SHEET_HEAD}>
           <CtaButton variant="ghost" onClick={save.close} disabled={save.saving}>
             Cancel
@@ -192,7 +208,7 @@ function PhoneWindow({isOpen, draft, save, words}: PhoneWindowProps) {
               <DraftCount draft={draft} />
             </div>
           </div>
-          <RulesFields draft={draft} isMobile />
+          <RulesFields draft={draft} isMobile locked={save.saving} />
         </div>
       </div>
     </PhoneSheet>

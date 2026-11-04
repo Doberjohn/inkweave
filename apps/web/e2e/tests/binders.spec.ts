@@ -325,8 +325,15 @@ test.describe('the binder shelf', () => {
   });
 });
 
-/** The New binder window, a dialog on a computer and a sheet on a phone. */
-const windowOf = (page: Page, name: 'New binder' | 'Edit binder') => page.getByRole('dialog', {name});
+/**
+ * The New binder window, a dialog on a computer and a sheet on a phone, once it shows: 20 s, for
+ * the dev server compiling its chunk on a cold run.
+ */
+async function windowOf(page: Page, name: 'New binder' | 'Edit binder'): Promise<Locator> {
+  const dialog = page.getByRole('dialog', {name});
+  await expect(dialog).toBeVisible({timeout: 20_000});
+  return dialog;
+}
 
 /** Its save: "Create binder" or "Save changes" on a computer, "Create" or "Save" in a phone's header. */
 const createIn = (dialog: Locator) => dialog.getByRole('button', {name: /^Create( binder)?$/});
@@ -359,7 +366,7 @@ test.describe('the New binder window', () => {
     const amberCards = await coverCards(shelfCover(page, 'Amber'));
 
     await shelf(page).getByRole('button', {name: /^New binder/}).click({timeout: 20_000});
-    const dialog = windowOf(page, 'New binder');
+    const dialog = await windowOf(page, 'New binder');
     await expect(createIn(dialog)).toBeDisabled();
     await nameIn(dialog).fill('Gold and amber');
     await dialog.getByRole('button', {name: 'Filter by Amber'}).click();
@@ -380,7 +387,7 @@ test.describe('the New binder window', () => {
     await page.goto('/browse?binder=shelf');
     await shelf(page).getByRole('button', {name: /^New binder/}).click({timeout: 20_000});
 
-    const dialog = windowOf(page, 'New binder');
+    const dialog = await windowOf(page, 'New binder');
     await nameIn(dialog).fill('Nothing');
     await dialog.getByRole('textbox', {name: 'Name has'}).fill('no card is called this');
     await expect(dialog.getByText('0 cards')).toBeVisible();
@@ -396,7 +403,7 @@ test.describe('the New binder window', () => {
 
     await actionsOf(page, 'Amber').click({timeout: 20_000});
     await page.getByRole('menuitem', {name: 'Edit rules'}).click();
-    const dialog = windowOf(page, 'Edit binder');
+    const dialog = await windowOf(page, 'Edit binder');
     await expect(dialog.getByRole('heading', {name: 'Edit Amber'})).toBeVisible();
     await expect(saveIn(dialog)).toBeDisabled();
     await dialog.getByRole('group', {name: 'Rarity filters'}).getByRole('button', {name: 'Epic'}).click();
@@ -417,7 +424,7 @@ test.describe('the New binder window', () => {
     await page.goto('/browse?binder=shelf');
     await shelf(page).getByRole('button', {name: /^New binder/}).click({timeout: 20_000});
 
-    const dialog = windowOf(page, 'New binder');
+    const dialog = await windowOf(page, 'New binder');
     await nameIn(dialog).fill('One too many');
     await dialog.getByRole('button', {name: 'Filter by Amber'}).click();
     // Another tab makes the thirtieth.
@@ -438,7 +445,7 @@ test.describe('the New binder window', () => {
 
     await openBindersTab(setButton(page));
     await page.getByRole('listbox', {name: 'Binders'}).getByRole('option', {name: 'New binder'}).click();
-    const dialog = windowOf(page, 'New binder');
+    const dialog = await windowOf(page, 'New binder');
     await nameIn(dialog).fill('Sapphire');
     await dialog.getByRole('button', {name: 'Filter by Sapphire'}).click();
     await createIn(dialog).click();

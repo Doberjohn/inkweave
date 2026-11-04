@@ -3,7 +3,7 @@ import {fn} from 'storybook/test';
 import {NewBinderTile, ShelfFullLine} from './NewBinderTile';
 
 /**
- * New binder, after the shelf's last cover (#1075): a cover's board in a dashed outline that
+ * New binder, after the shelf's last cover: a cover's board in a dashed outline that
  * turns gold on hover and focus, and what a binder keeps. It opens the New binder window. Drawn
  * at a computer shelf's narrowest column.
  */
