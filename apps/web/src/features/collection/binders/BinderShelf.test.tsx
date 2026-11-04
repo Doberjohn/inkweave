@@ -102,11 +102,13 @@ describe('BinderShelf', () => {
     }
   });
 
-  it("works each cover's face out once, not again when a menu opens", () => {
+  it("works each cover's face out once, not again when the shelf opens its delete confirm", () => {
     renderShelf();
     expect(coverFaces.binderFace).toHaveBeenCalledTimes(4);
+    // The confirm is the shelf's own state, so opening it renders the shelf again.
     fireEvent.click(menuOf('Amber'));
-    expect(screen.getByRole('menu')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Delete binder'}));
+    expect(screen.getByRole('heading', {name: 'Delete Amber?'})).toBeInTheDocument();
     expect(coverFaces.binderFace).toHaveBeenCalledTimes(4);
   });
 

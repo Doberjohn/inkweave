@@ -67,11 +67,17 @@ function wordsOf(binder: Binder | null) {
 const answered = (shelf: Shelf) => shelf.status === 'ready' || shelf.status === 'failed';
 
 /**
- * Each cover's face, My collection's under null: every binder's rules run over the whole pool, so
- * they are worked out once for the pool, the copies and the shelf, never on a render that changed
- * none of them (a menu, the confirm, a failed move's line).
+ * Each cover's face, My collection's under null, or null until the counts are in. Every binder's
+ * rules run over the whole pool, so they are worked out once for the pool, the copies and the
+ * shelf, never again for the confirm or a failed move's line.
+ *
+ * A hook of its own, since in the shelf's body the compiler memoizes them with the covers, whose
+ * memo the confirm and the moves break. `'use memo'` opts it in: the compiler infers a hook only
+ * from the hooks it calls, and this one calls none.
  */
-function facesOf(pool: readonly LorcanaCard[], entries: CollectionEntries, binders: readonly Binder[]) {
+function useFaces(pool: readonly LorcanaCard[] | null, entries: CollectionEntries, binders: readonly Binder[]) {
+  'use memo';
+  if (pool === null) return null;
   const faces = new Map<string | null, BinderFace>([[null, binderFace(pool, entries, null)]]);
   for (const binder of binders) faces.set(binder.id, binderFace(pool, entries, binder));
   return faces;
@@ -197,7 +203,7 @@ export function BinderShelf({shelf, pool, entries, waiting, readerId}: BinderShe
   const deletes = useDeletes(readerId, binders, focus.focusOn);
   // Nothing is counted until the cards, the account's copy and the binders are in.
   const counted = waiting || !answered(shelf) ? null : pool;
-  const faces = counted === null ? null : facesOf(counted, entries, binders);
+  const faces = useFaces(counted, entries, binders);
 
   const cover = (binder: Binder | null, index: number) => {
     const id = binder?.id ?? null;
