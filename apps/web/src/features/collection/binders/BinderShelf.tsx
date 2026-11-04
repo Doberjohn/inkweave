@@ -10,10 +10,11 @@ import {isPromoScope, openBinderParams} from '../binderCards';
 import type {CollectionEntries} from '../collectionParser';
 import {BinderCover, CoverSkeleton} from './BinderCover';
 import {BinderMenu} from './BinderMenu';
-import {binderFace} from './binderCovers';
+import {binderFace, type BinderFace} from './binderCovers';
 import {ruleKinds, ruleLine, type Binder} from './binderRules';
 import {deleteBinder, moveBinder, type BinderShelf as Shelf} from './binderShelf';
 import {DeleteBinderDialog} from './DeleteBinderDialog';
+import {MY_COLLECTION} from './shelfWords';
 
 export interface BinderShelfProps {
   /** Your binders in place order, and whether they have loaded. */
@@ -26,8 +27,6 @@ export interface BinderShelfProps {
   /** Whose shelf: each change waits in their write queue. */
   readerId: string;
 }
-
-const MY_COLLECTION = 'My collection';
 
 /** As many covers across as fit at 180 px or more on a computer (six at 1440 px); two on a phone. */
 function gridStyle(isMobile: boolean): CSSProperties {
@@ -62,6 +61,20 @@ function binderHref(pathname: string, search: string, binder: Binder | null): st
 function wordsOf(binder: Binder | null) {
   if (binder === null) return {name: MY_COLLECTION, rule: 'Every card', promos: false};
   return {name: binder.name, rule: ruleLine(binder), promos: isPromoScope(binder.scope)};
+}
+
+/** Whether the binders have answered: read, or failed, which leaves My collection alone. */
+const answered = (shelf: Shelf) => shelf.status === 'ready' || shelf.status === 'failed';
+
+/**
+ * Each cover's face, My collection's under null: every binder's rules run over the whole pool, so
+ * they are worked out once for the pool, the copies and the shelf, never on a render that changed
+ * none of them (a menu, the confirm, a failed move's line).
+ */
+function facesOf(pool: readonly LorcanaCard[], entries: CollectionEntries, binders: readonly Binder[]) {
+  const faces = new Map<string | null, BinderFace>([[null, binderFace(pool, entries, null)]]);
+  for (const binder of binders) faces.set(binder.id, binderFace(pool, entries, binder));
+  return faces;
 }
 
 /** `binder_opened` from the shelf: the kinds of its rules, never its name or id. */
@@ -182,13 +195,14 @@ export function BinderShelf({shelf, pool, entries, waiting, readerId}: BinderShe
   const moves = useMoves(readerId, focus.focusOn);
   const binders = shelf.status === 'ready' ? shelf.binders : [];
   const deletes = useDeletes(readerId, binders, focus.focusOn);
-  // Nothing is counted until the cards and the account's copy are in.
-  const counted = waiting ? null : pool;
+  // Nothing is counted until the cards, the account's copy and the binders are in.
+  const counted = waiting || !answered(shelf) ? null : pool;
+  const faces = counted === null ? null : facesOf(counted, entries, binders);
 
   const cover = (binder: Binder | null, index: number) => {
     const id = binder?.id ?? null;
-    if (counted === null) return <CoverSkeleton />;
-    const face = binderFace(counted, entries, binder);
+    const face = faces?.get(id);
+    if (face === undefined) return <CoverSkeleton />;
     const to = binderHref(pathname, search, binder);
     return (
       <BinderCover

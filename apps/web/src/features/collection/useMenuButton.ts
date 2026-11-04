@@ -52,7 +52,8 @@ export function useMenuButton(wrapperRef: RefObject<HTMLDivElement | null>, onMe
       'aria-haspopup': 'menu' as const,
       'aria-expanded': open,
       'aria-controls': open ? menuId : undefined,
-      onClick: open ? () => setOpen(false) : openMenu,
+      // Closing onto the button: Safari focuses no button a click presses, so focus would go with the menu.
+      onClick: open ? close : openMenu,
       onKeyDown: onButtonKeyDown,
       onBlur: closeOnLeave,
     },

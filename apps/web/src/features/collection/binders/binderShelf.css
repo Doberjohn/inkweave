@@ -55,9 +55,20 @@
   opacity: 1;
 }
 
+/* A binder's ⋯: its disc darkens the art under it, and takes the house surface on hover. Its
+   colours are custom properties `BinderMenu` sets. */
+.binder-shelf-dots {
+  background: var(--shelf-dots);
+  transition: background-color var(--shelf-fade);
+}
+button:hover > .binder-shelf-dots {
+  background: var(--shelf-dots-hover);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .binder-shelf-ring,
-  .binder-shelf-actions {
+  .binder-shelf-actions,
+  .binder-shelf-dots {
     transition: none;
   }
 }

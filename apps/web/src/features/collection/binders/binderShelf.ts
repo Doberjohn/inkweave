@@ -149,17 +149,17 @@ function swapped(binders: readonly Binder[], {from, to}: {from: number; to: numb
   return next;
 }
 
-/** Shows a move the server made; a shelf that has changed since (another tab's move) is read again. */
+/**
+ * Shows a move the server made, then reads the shelf again: `move_binder` swaps the binder with
+ * its neighbour on the server, which another device's change may have made another binder than
+ * this shelf's, and it answers only whether it moved. The swap shows at once; the read corrects it.
+ */
 function showMove(move: BinderMove): void {
   const binders = heldBinders(move) ?? [];
   const from = binders.findIndex((binder) => binder.id === move.id);
   const to = from + (move.earlier ? -1 : 1);
-  // The binder, or its neighbour that way, is no longer where this shelf has it.
-  if (from === -1 || binders[to] === undefined) {
-    void load(move.readerId);
-    return;
-  }
-  publish({readerId: move.readerId, value: swapped(binders, {from, to})});
+  if (from !== -1 && binders[to] !== undefined) publish({readerId: move.readerId, value: swapped(binders, {from, to})});
+  void load(move.readerId);
 }
 
 /** What a move came to: it moved, the server found no neighbour that way, or it failed. */
@@ -167,7 +167,7 @@ export type MoveResult = 'moved' | 'unmoved' | 'failed';
 
 /**
  * Moves one of the reader's binders a place earlier or later (`move_binder`). A move the server
- * finds no neighbour for, since another tab moved it first, reads the shelf again.
+ * finds no neighbour for, since another tab moved it first, reads the shelf again too.
  */
 export async function moveBinder(move: BinderMove): Promise<MoveResult> {
   const {data, error} = await enqueueWrite(move.readerId, () => moveBinderRow(move.id, move.earlier));

@@ -589,7 +589,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   // nothing here, and an import that lands in the binder is collection_imported.
   const toggles = useModeToggleEvents(syncing, hasCollection);
   // Collection lands on the shelf, where binders are on, unless a Set filter names a set: then
-  // My collection at that set, as before binders (`enterBinder`).
+  // My collection at that set (`enterBinder`).
   const enterMode = () => {
     toggles.entered();
     enterBinder(SHOW_BINDERS ? SHELF : setCode, sets);

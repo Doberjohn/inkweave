@@ -42,15 +42,38 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+/** A promise the test settles by hand, to look at the store while a change waits on the server. */
+function deferred<T>() {
+  let settle!: (value: T) => void;
+  const promise = new Promise<T>((resolve) => (settle = resolve));
+  return {promise, settle};
+}
+
 describe('moveBinder', () => {
   it("swaps two binders' places once the server has, through the write queue", async () => {
-    repo.moveBinderRow.mockResolvedValue({data: true, error: null});
-    await expect(moveBinder({readerId: 'me', id: 'b2', earlier: false})).resolves.toBe('moved');
-    expect(repo.moveBinderRow).toHaveBeenCalledExactlyOnceWith('b2', false);
+    const answer = deferred<{data: boolean; error: null}>();
+    repo.moveBinderRow.mockReturnValue(answer.promise);
+    // The read after it: what the server holds once it has moved.
+    const after = [AMBER, {...WILDS, place: 1}, {...EPICS, place: 4}];
+    repo.listBinders.mockResolvedValue({data: after, error: null});
+    const moving = moveBinder({readerId: 'me', id: 'b2', earlier: false});
+    await vi.waitFor(() => expect(repo.moveBinderRow).toHaveBeenCalledExactlyOnceWith('b2', false));
+    // Nothing shows before the server answers.
+    expect(shown()).toEqual(['b1', 'b2', 'b3']);
+    answer.settle({data: true, error: null});
+    await expect(moving).resolves.toBe('moved');
     expect(queue.enqueueWrite).toHaveBeenCalledWith('me', expect.any(Function));
-    expect(shown()).toEqual(['b1', 'b3', 'b2']);
-    // Each keeps the other's place, gap and all.
-    expect(snapshot()?.value).toEqual([AMBER, {...WILDS, place: 1}, {...EPICS, place: 4}]);
+    // Each keeps the other's place, gap and all, from the moment the server answers.
+    expect(snapshot()?.value).toEqual(after);
+    await vi.waitFor(() => expect(repo.listBinders).toHaveBeenCalledOnce());
+  });
+
+  it("shows the server's order after a move another device's change made otherwise", async () => {
+    repo.moveBinderRow.mockResolvedValue({data: true, error: null});
+    // Another device deleted Epics: the server swapped Amber with Wilds, not Epics.
+    repo.listBinders.mockResolvedValue({data: [{...WILDS, place: 0}, {...AMBER, place: 4}], error: null});
+    await expect(moveBinder({readerId: 'me', id: 'b1', earlier: false})).resolves.toBe('moved');
+    await vi.waitFor(() => expect(shown()).toEqual(['b3', 'b1']));
   });
 
   it('keeps the order when the move fails', async () => {
@@ -70,9 +93,13 @@ describe('moveBinder', () => {
 
 describe('deleteBinder', () => {
   it('takes the binder off the shelf once the server has deleted it', async () => {
-    repo.deleteBinderRow.mockResolvedValue({data: null, error: null});
-    await expect(deleteBinder({readerId: 'me', id: 'b2'})).resolves.toBe(true);
-    expect(repo.deleteBinderRow).toHaveBeenCalledExactlyOnceWith('b2');
+    const answer = deferred<{data: null; error: null}>();
+    repo.deleteBinderRow.mockReturnValue(answer.promise);
+    const deleting = deleteBinder({readerId: 'me', id: 'b2'});
+    await vi.waitFor(() => expect(repo.deleteBinderRow).toHaveBeenCalledExactlyOnceWith('b2'));
+    expect(shown()).toEqual(['b1', 'b2', 'b3']);
+    answer.settle({data: null, error: null});
+    await expect(deleting).resolves.toBe(true);
     expect(queue.enqueueWrite).toHaveBeenCalledWith('me', expect.any(Function));
     expect(shown()).toEqual(['b1', 'b3']);
   });

@@ -1,5 +1,6 @@
 import type {CSSProperties} from 'react';
 import {COLORS, FONTS, FONT_SIZES, FONT_WEIGHT, LINE_HEIGHT, SPACING, TRUNCATE, VISUALLY_HIDDEN} from '../../../shared/constants';
+import {binderWord} from './shelfWords';
 
 /** The heading and its count on one line, the count after the words as the mockup set them. */
 const ROW: CSSProperties = {display: 'flex', alignItems: 'baseline', gap: SPACING.md, minWidth: 0};
@@ -22,9 +23,6 @@ const COUNT_STYLE: CSSProperties = {
   color: COLORS.textMuted,
   whiteSpace: 'nowrap',
 };
-
-/** "binders", or "binder" for one: My collection counts as one. */
-const binderWord = (count: number) => (count === 1 ? 'binder' : 'binders');
 
 interface ShelfHeadingProps {
   /** How many binders the shelf holds, My collection included, or null until they have loaded. */

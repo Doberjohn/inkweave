@@ -30,6 +30,20 @@ describe('BinderMenu', () => {
     expect(items()).toEqual(['Open', 'Move earlier', 'Delete binder']);
   });
 
+  it('closes onto ⋯ when ⋯ is pressed again, where a click focuses no button', () => {
+    renderMenu();
+    fireEvent.click(dots());
+    expect(screen.getByRole('menuitem', {name: 'Open'})).toHaveFocus();
+    fireEvent.click(dots());
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(dots()).toHaveFocus();
+  });
+
+  it('gives ⋯ the 44 px touch target round its smaller disc', () => {
+    renderMenu();
+    expect(dots()).toHaveStyle({width: '44px', height: '44px'});
+  });
+
   it('moves the binder, closing the menu onto ⋯ first', () => {
     const acts = renderMenu();
     fireEvent.click(dots());

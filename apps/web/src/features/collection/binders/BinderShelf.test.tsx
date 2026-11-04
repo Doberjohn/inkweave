@@ -13,6 +13,13 @@ const writes = vi.hoisted(() => ({
   deleteBinder: vi.fn<(binder: {readerId: string; id: string}) => Promise<boolean>>(),
 }));
 vi.mock('./binderShelf', () => writes);
+// The real faces, watched: the shelf must not work them out again on a render that changed none of their inputs.
+const coverFaces = vi.hoisted(() => ({binderFace: vi.fn()}));
+vi.mock('./binderCovers', async (actual) => {
+  const real = await actual<typeof import('./binderCovers')>();
+  coverFaces.binderFace.mockImplementation(real.binderFace);
+  return {...real, binderFace: coverFaces.binderFace};
+});
 
 const amber = createCard({id: 'amber', setCode: '14', setNumber: 1, rarity: 'Uncommon', ink: 'Amber'});
 const ruby = createCard({id: 'ruby', setCode: '14', setNumber: 2, rarity: 'Rare', ink: 'Ruby'});
@@ -81,11 +88,26 @@ describe('BinderShelf', () => {
     expect(view.container.firstElementChild).toHaveClass('ph-no-capture');
   });
 
-  it('draws a shimmer for My collection, and no link, while the cards or the account load', () => {
-    renderShelf({status: 'loading', binders: []}, {pool: null});
-    expect(screen.queryAllByRole('link')).toHaveLength(0);
-    renderShelf({}, {waiting: true});
-    expect(screen.queryAllByRole('link')).toHaveLength(0);
+  it('draws a shimmer for My collection, and no link, while the cards, the account or the binders load', () => {
+    for (const [shelf, more] of [
+      [{}, {pool: null}],
+      [{}, {waiting: true}],
+      [{status: 'loading', binders: []}, {}],
+      [{status: 'idle', binders: []}, {}],
+    ] as const) {
+      const {view} = renderShelf(shelf, more);
+      expect(screen.queryAllByRole('link')).toHaveLength(0);
+      expect(view.container.querySelectorAll('.react-loading-skeleton').length).toBeGreaterThan(0);
+      view.unmount();
+    }
+  });
+
+  it("works each cover's face out once, not again when a menu opens", () => {
+    renderShelf();
+    expect(coverFaces.binderFace).toHaveBeenCalledTimes(4);
+    fireEvent.click(menuOf('Amber'));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(coverFaces.binderFace).toHaveBeenCalledTimes(4);
   });
 
   it("says a failed read beside My collection, and its Try again reads again", () => {
@@ -97,9 +119,15 @@ describe('BinderShelf', () => {
   });
 
   it("moves a binder, counts it once it lands, and keeps focus on its ⋯", async () => {
+    let land!: (result: 'moved') => void;
+    writes.moveBinder.mockReturnValue(new Promise((resolve) => (land = resolve)));
     renderShelf();
     fireEvent.click(menuOf('Amber'));
     fireEvent.click(screen.getByRole('menuitem', {name: 'Move later'}));
+    // Nothing is counted while the server has yet to answer.
+    await act(async () => {});
+    expect(trackEvent).not.toHaveBeenCalled();
+    await act(async () => land('moved'));
     await waitFor(() => expect(trackEvent).toHaveBeenCalledWith('binder_changed', {what: 'place'}));
     expect(writes.moveBinder).toHaveBeenCalledWith({readerId: 'user-1', id: 'b1', earlier: false});
     expect(menuOf('Amber')).toHaveFocus();
@@ -125,10 +153,16 @@ describe('BinderShelf', () => {
   });
 
   it('deletes once confirmed, counts it by its rules, and hands focus to the next cover', async () => {
+    let land!: (deleted: boolean) => void;
+    writes.deleteBinder.mockReturnValue(new Promise((resolve) => (land = resolve)));
     const {view} = renderShelf();
     fireEvent.click(menuOf('Ruby'));
     fireEvent.click(screen.getByRole('menuitem', {name: 'Delete binder'}));
     await act(async () => fireEvent.click(screen.getByRole('button', {name: 'Delete binder'})));
+    // While the server has yet to answer, the confirm waits and nothing is counted.
+    expect(screen.getByRole('button', {name: 'Deleting…'})).toBeDisabled();
+    expect(trackEvent).not.toHaveBeenCalled();
+    await act(async () => land(true));
     expect(writes.deleteBinder).toHaveBeenCalledWith({readerId: 'user-1', id: 'b2'});
     expect(trackEvent).toHaveBeenCalledWith('binder_deleted', {kinds: 'ink'});
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());

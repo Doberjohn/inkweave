@@ -76,7 +76,7 @@ export function panelSets(sets: string[] | null, setCode: string): string[] {
 }
 
 /** Who is asking for collection mode, and what is known about them yet. */
-export interface BinderReader {
+export interface ModeReader {
   sessionLoading: boolean;
   /** The account's copy has not answered yet (`useCollection().syncing`). */
   syncing: boolean;
@@ -120,16 +120,16 @@ interface BinderMode {
  * grid keeps a Set filter picked on it. Nor does the filter go while a stored session
  * restores: that reader may yet turn out signed out, or holding no collection.
  */
-function binderMode(requested: string | null, reader: BinderReader, friend: boolean): BinderMode {
+function binderMode(requested: string | null, reader: ModeReader, friend: boolean): BinderMode {
   if (requested === null) return {active: false, dead: false, dropsStrays: true};
   return friend ? friendBinderMode(reader) : ownBinderMode(reader);
 }
 
 /** Someone the Collection button would toggle for: signed in, holding a collection or a start that says why it made none. */
-const takesBinder = (reader: BinderReader) => reader.signedIn && (reader.hasCollection || reader.startFailed);
+const takesBinder = (reader: ModeReader) => reader.signedIn && (reader.hasCollection || reader.startFailed);
 
 /** What `?binder=` gets in the reader's own binders (`binderMode`). */
-function ownBinderMode(reader: BinderReader): BinderMode {
+function ownBinderMode(reader: ModeReader): BinderMode {
   const pending = reader.sessionLoading || reader.syncing;
   const honoured = !pending && takesBinder(reader);
   const active = pending || honoured;
@@ -142,7 +142,7 @@ function ownBinderMode(reader: BinderReader): BinderMode {
  * Signed out it keeps the grid, as any `?binder=` link does, and keeps the params, so signing
  * in opens the friend's binder. Never dead: the friend decides what it shows.
  */
-function friendBinderMode(reader: BinderReader): BinderMode {
+function friendBinderMode(reader: ModeReader): BinderMode {
   const honoured = !reader.sessionLoading && reader.signedIn;
   return {active: reader.sessionLoading || honoured, dead: false, dropsStrays: honoured};
 }
@@ -174,7 +174,7 @@ export const comparesWith = (raw: string | null) => COMPARE_SHOWS.some((show) =>
  * Leaving drops the binder view, which the grid has no collection for; a link that
  * carries one outside the mode loses it too. See `strayParams`.
  */
-export function useBinderParams(reader: BinderReader) {
+export function useBinderParams(reader: ModeReader) {
   const [searchParams, write] = useSearchParamsWriter();
   const requested = searchParams.get(BINDER_PARAM);
   const {onShelf, friend, custom} = whoseBinder(searchParams, requested);

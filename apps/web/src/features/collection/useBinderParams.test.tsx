@@ -2,10 +2,10 @@ import {describe, it, expect} from 'vitest';
 import type {ReactNode} from 'react';
 import {renderHook} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
-import {resolveSetCode, useBinderParams, type BinderReader} from './useBinderParams';
+import {resolveSetCode, useBinderParams, type ModeReader} from './useBinderParams';
 
 /** A signed-in collector whose account has answered. */
-const READER: BinderReader = {sessionLoading: false, syncing: false, signedIn: true, hasCollection: true, startFailed: false};
+const READER: ModeReader = {sessionLoading: false, syncing: false, signedIn: true, hasCollection: true, startFailed: false};
 
 function paramsAt(url: string) {
   const wrapper = ({children}: {children: ReactNode}) => <MemoryRouter initialEntries={[url]}>{children}</MemoryRouter>;

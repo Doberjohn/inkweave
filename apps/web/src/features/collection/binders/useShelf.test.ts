@@ -45,6 +45,17 @@ describe('useShelf', () => {
     }
   });
 
+  it('decides on arrival: a shelf kept stays when its last binder goes, and the next visit decides again', () => {
+    const toBinder = vi.fn();
+    const oneBinder: ShelfAsk = {...ON, holdsCopies: false, shelf: shelfOf('ready', [AMBER])};
+    const {rerender} = renderHook((ask: ShelfAsk) => useShelf(ask, toBinder), {initialProps: oneBinder});
+    rerender({...oneBinder, shelf: shelfOf('ready')});
+    expect(toBinder).not.toHaveBeenCalled();
+    rerender({...oneBinder, on: false, shelf: shelfOf('ready')});
+    rerender({...oneBinder, shelf: shelfOf('ready')});
+    expect(toBinder).toHaveBeenCalledOnce();
+  });
+
   it('keeps the shelf for a binder and no copy, and for copies and no binder', () => {
     expect(renderShelf({...ON, holdsCopies: false, shelf: shelfOf('ready', [AMBER])}).toBinder).not.toHaveBeenCalled();
     const copies = renderShelf({...ON, shelf: shelfOf('ready')});

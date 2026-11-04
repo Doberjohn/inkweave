@@ -9,6 +9,7 @@ import type {BinderChoices} from './binderChoices';
 import {binderFace, type BinderFace, type BinderFigures} from './binderCovers';
 import {ruleKinds, type Binder} from './binderRules';
 import {BinderMedal} from './BinderMedal';
+import {MY_COLLECTION, binderWord, shelfCount} from './shelfWords';
 
 /** The medal's size in a row: the set rows' number column holds it. */
 const ROW_MEDAL = 24;
@@ -18,8 +19,6 @@ interface BinderRow extends Partial<BinderFace> {
   binder: Binder | null;
   name: string;
 }
-
-const MY_COLLECTION = 'My collection';
 
 /** My collection, then each binder in shelf order, each with its cover and numbers once the pool is in. */
 function rowsOf({shelf, pool, entries}: BinderChoices): BinderRow[] {
@@ -115,8 +114,7 @@ function ShelfGlyph() {
  */
 function ShelfOption({choices, onPicked}: BinderListProps) {
   const {hovered, hoverProps} = useHover();
-  const {status, binders} = choices.shelf;
-  const count = status === 'ready' ? binders.length + 1 : null;
+  const count = shelfCount(choices.shelf);
   return (
     <CtaButton
       variant="neutral"
@@ -141,7 +139,7 @@ function ShelfOption({choices, onPicked}: BinderListProps) {
           {count}
         </span>
       )}
-      <span style={VISUALLY_HIDDEN}>{count === null ? 'All your binders' : `All your binders, ${count} ${count === 1 ? 'binder' : 'binders'}`}</span>
+      <span style={VISUALLY_HIDDEN}>{count === null ? 'All your binders' : `All your binders, ${count} ${binderWord(count)}`}</span>
     </CtaButton>
   );
 }
