@@ -6,6 +6,8 @@ import {
   RULE_PARAMS,
   dropDualOnlyWhenNotOffered,
   readFilterParams,
+  writeFilterParams,
+  type FilterDraft,
   type FilterReads,
 } from '../../../shared/hooks/useFilterParams';
 import {WHOLE_COLLECTION, binderFilters, isPromoScope, scopeName, scopeSets} from '../binderCards';
@@ -29,14 +31,36 @@ export interface Binder {
  * ignores, so its kinds and its line never name it there.
  */
 export function readRules(binder: Pick<Binder, 'rules'>): FilterReads {
-  const held = new URLSearchParams(binder.rules);
+  return readFilterParams(ruleParamsOf(new URLSearchParams(binder.rules)));
+}
+
+/** `RULE_PARAMS` alone, in their one order, with the dual-ink switch only where the filter heeds it. */
+function ruleParamsOf(params: URLSearchParams): URLSearchParams {
   const rules = new URLSearchParams();
   for (const param of RULE_PARAMS) {
-    const value = held.get(param);
+    const value = params.get(param);
     if (value !== null) rules.set(param, value);
   }
   dropDualOnlyWhenNotOffered(rules);
-  return readFilterParams(rules);
+  return rules;
+}
+
+/**
+ * Rules as the row stores them, written as Apply writes the filters (`writeFilterParams`) and
+ * then kept to `RULE_PARAMS` in one fixed order, so the same rules always read the same: never
+ * a set, a sort or a view. The search is kept trimmed, as the binder matches it.
+ */
+export function writeRules(draft: FilterDraft, query: string): string {
+  const written = new URLSearchParams();
+  writeFilterParams(written, draft);
+  if (query.trim() !== '') written.set('q', query.trim());
+  return ruleParamsOf(written).toString();
+}
+
+/** Its rules as a filter draft, to edit them: `writeRules` gives back the same rules. */
+export function draftOf(binder: Pick<Binder, 'rules'>): {draft: FilterDraft; query: string} {
+  const {inkFilters, typeFilters, costFilters, filters, searchQuery} = readRules(binder);
+  return {draft: {inks: inkFilters, types: typeFilters, costs: costFilters, opts: filters}, query: searchQuery};
 }
 
 /** Whether a reading holds any filter or a search. */
@@ -122,9 +146,15 @@ const listPart = (names: readonly string[] | undefined) => (names?.length ? inWo
  * Epic". A binder with no rule reads "Every card", as My collection does.
  */
 export function ruleLine(binder: Pick<Binder, 'scope' | 'rules'>): string {
+  const parts = ruleParts(binder);
+  return parts.length > 0 ? parts.join(' · ') : 'Every card';
+}
+
+/** Each part of its line, in the line's order: the New binder window's chips. None for no rule. */
+export function ruleParts(binder: Pick<Binder, 'scope' | 'rules'>): string[] {
   const rules = readRules(binder);
   const {filters, searchQuery} = rules;
-  const parts = [
+  return [
     inkPart(rules),
     filters.inkwell && (filters.inkwell === 'inkable' ? 'Inkable' : 'Uninkable'),
     costPart(rules),
@@ -135,5 +165,4 @@ export function ruleLine(binder: Pick<Binder, 'scope' | 'rules'>): string {
     searchQuery.trim() && `Name has "${searchQuery.trim()}"`,
     binder.scope === WHOLE_COLLECTION ? undefined : scopeName(binder.scope),
   ].filter((part): part is string => typeof part === 'string' && part !== '');
-  return parts.length > 0 ? parts.join(' · ') : 'Every card';
 }

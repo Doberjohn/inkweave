@@ -168,9 +168,12 @@ type AnalyticsEvents = {
   // a binder of your own rather than My collection, and `kinds` the kinds of its rules
   // (`ruleKinds`: "sets,ink,rarity", or "none"). Never a binder's name or id.
   binder_opened: {from: 'picker' | 'shelf'; mine: boolean; kinds: string};
-  // A change to a binder of your own that landed: for now its place on the shelf (Move earlier
-  // or Move later). Never its name or id.
-  binder_changed: {what: 'place'};
+  // A binder of your own made, once the server has it: `from` the New binder window, and `kinds`
+  // the kinds of its rules (`ruleKinds`). Never its name or id.
+  binder_created: {from: 'window'; kinds: string};
+  // A change to a binder of your own that landed: its place on the shelf (Move earlier or Move
+  // later), its Sets or rules (Edit rules), or its name alone. Never its name or id.
+  binder_changed: {what: 'place' | 'rules' | 'name'};
   // A binder of your own deleted, once the delete landed: the kinds of its rules (`ruleKinds`).
   binder_deleted: {kinds: string};
   // Friends (#852, #884). Never a friend code, name, handle or id.

@@ -212,8 +212,14 @@ describe('trackEvent', () => {
     expectSentToBoth('friend_binder_opened', props);
   });
 
+  it('forwards a binder_created event', () => {
+    const props = {from: 'window', kinds: 'ink,rarity'} as const;
+    trackEvent('binder_created', props);
+    expectSentToBoth('binder_created', props);
+  });
+
   it('forwards a binder_changed event', () => {
-    const props = {what: 'place'} as const;
+    const props = {what: 'rules'} as const;
     trackEvent('binder_changed', props);
     expectSentToBoth('binder_changed', props);
   });

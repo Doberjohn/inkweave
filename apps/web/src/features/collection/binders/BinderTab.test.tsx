@@ -38,6 +38,7 @@ function renderList(over: Partial<BinderChoices> = {}) {
     entries: ENTRIES,
     onOpen: vi.fn(),
     onShelf: vi.fn(),
+    onNewBinder: vi.fn(),
     ...over,
   };
   const onPicked = vi.fn();
@@ -53,7 +54,7 @@ beforeEach(() => {
 });
 
 describe('BinderList', () => {
-  it('lists All your binders, My collection, then each binder in shelf order, each named by its words', () => {
+  it('lists All your binders, My collection, each binder in shelf order, each named by its words, then New binder', () => {
     renderList();
     const rows = screen.getAllByRole('option');
     expect(rows.map((option) => option.textContent)).toEqual([
@@ -61,6 +62,7 @@ describe('BinderList', () => {
       'My collection75%My collection, 75% complete',
       'Amber100%Amber, 100% complete',
       'Wilds epics100%Wilds epics, 100% complete',
+      'New binder',
     ]);
     expect(rows[2]).toHaveAccessibleName('Amber, 100% complete');
   });
@@ -142,6 +144,21 @@ describe('BinderList', () => {
   it('counts My collection on All your binders: "1 binder" with none of your own', () => {
     renderList({shelf: {status: 'ready', binders: [], retry: vi.fn()}});
     expect(row(/^All your binders/)).toHaveAccessibleName('All your binders, 1 binder');
+  });
+
+  it('closes the menu and opens the New binder window from New binder, counting nothing yet', () => {
+    const {onNewBinder, onPicked} = renderList();
+    fireEvent.click(row(/^New binder$/));
+    expect(onPicked).toHaveBeenCalledOnce();
+    expect(onNewBinder).toHaveBeenCalledOnce();
+    expect(trackEvent).not.toHaveBeenCalled();
+  });
+
+  it('says why there is no New binder once the shelf holds 30', () => {
+    const thirty = Array.from({length: 30}, (_, place) => ({...AMBER, id: `b${place}`, place}));
+    renderList({shelf: {status: 'ready', binders: thirty, retry: vi.fn()}, pool: null});
+    expect(screen.queryByRole('option', {name: 'New binder'})).toBeNull();
+    expect(screen.getByText('Your shelf holds 30 binders, the most it can. Delete one to make another.')).toBeInTheDocument();
   });
 
   it('says a failed read, and its Try again reads again', () => {

@@ -6,6 +6,7 @@ import {createCard} from '../../../shared/test-utils';
 import {BinderShelf} from './BinderShelf';
 import type {Binder} from './binderRules';
 import type {BinderShelf as Shelf} from './binderShelf';
+import type {WindowAsk} from './useBinderWindow';
 
 vi.mock('../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 const writes = vi.hoisted(() => ({
@@ -34,7 +35,10 @@ function Address() {
   return <output data-testid="search">{search}</output>;
 }
 
-function renderShelf(shelf: Partial<Shelf> = {}, more: {pool?: typeof POOL | null; waiting?: boolean} = {}) {
+function renderShelf(
+  shelf: Partial<Shelf> = {},
+  more: {pool?: typeof POOL | null; waiting?: boolean; onWindow?: (ask: WindowAsk) => void} = {},
+) {
   const retry = vi.fn();
   const view = render(
     <MemoryRouter initialEntries={['/browse?binder=shelf&ink=Steel']}>
@@ -44,6 +48,7 @@ function renderShelf(shelf: Partial<Shelf> = {}, more: {pool?: typeof POOL | nul
         entries={ENTRIES}
         waiting={more.waiting ?? false}
         readerId="user-1"
+        onWindow={more.onWindow ?? null}
       />
       <Address />
     </MemoryRouter>,
@@ -171,10 +176,86 @@ describe('BinderShelf', () => {
     // The store drops the row; the shelf draws what it's given.
     view.rerender(
       <MemoryRouter initialEntries={['/browse?binder=shelf']}>
-        <BinderShelf shelf={{status: 'ready', binders: [BINDERS[0], BINDERS[2]], retry: vi.fn()}} pool={POOL} entries={ENTRIES} waiting={false} readerId="user-1" />
+        <BinderShelf
+          shelf={{status: 'ready', binders: [BINDERS[0], BINDERS[2]], retry: vi.fn()}}
+          pool={POOL}
+          entries={ENTRIES}
+          waiting={false}
+          readerId="user-1"
+          onWindow={null}
+        />
       </MemoryRouter>,
     );
     await waitFor(() => expect(screen.getByRole('link', {name: /^Rares,/})).toHaveFocus());
+  });
+
+  it('ends the shelf with New binder once it has read, and opens the window for a new binder', () => {
+    const onWindow = vi.fn<(ask: WindowAsk) => void>();
+    renderShelf({}, {onWindow});
+    const tiles = screen.getAllByRole('listitem');
+    expect(within(tiles[tiles.length - 1]).getByRole('button', {name: /^New binder/})).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', {name: /^New binder/}));
+    expect(onWindow).toHaveBeenCalledWith({binder: null, onSaved: expect.any(Function)});
+  });
+
+  it('offers no New binder until the window can open, the cards are in and the binders have read', () => {
+    for (const [shelf, more] of [
+      [{}, {}],
+      [{}, {pool: null, onWindow: vi.fn()}],
+      [{status: 'loading', binders: []}, {onWindow: vi.fn()}],
+      [{status: 'failed', binders: []}, {onWindow: vi.fn()}],
+    ] as const) {
+      const {view} = renderShelf(shelf, more);
+      expect(screen.queryByRole('button', {name: /^New binder/})).toBeNull();
+      view.unmount();
+    }
+  });
+
+  it('says why there is no New binder once the shelf holds 30', () => {
+    const thirty = Array.from({length: 30}, (_, place) => binder(`b${place}`, `Binder ${place}`, 'ink=Amber', place));
+    renderShelf({binders: thirty}, {onWindow: vi.fn()});
+    expect(screen.queryByRole('button', {name: /^New binder/})).toBeNull();
+    expect(screen.getByText('Your shelf holds 30 binders, the most it can. Delete one to make another.')).toBeInTheDocument();
+  });
+
+  it('hands focus to the new cover once the window saves a binder', async () => {
+    const onWindow = vi.fn<(ask: WindowAsk) => void>();
+    const {view} = renderShelf({}, {onWindow});
+    fireEvent.click(screen.getByRole('button', {name: /^New binder/}));
+    const made = binder('b4', 'Sapphire', 'ink=Sapphire', 3);
+    // The store adds the row; the shelf draws what it's given, then the window says it saved.
+    view.rerender(
+      <MemoryRouter initialEntries={['/browse?binder=shelf']}>
+        <BinderShelf
+          shelf={{status: 'ready', binders: [...BINDERS, made], retry: vi.fn()}}
+          pool={POOL}
+          entries={ENTRIES}
+          waiting={false}
+          readerId="user-1"
+          onWindow={onWindow}
+        />
+      </MemoryRouter>,
+    );
+    act(() => onWindow.mock.calls[0][0].onSaved(made));
+    await waitFor(() => expect(screen.getByRole('link', {name: /^Sapphire,/})).toHaveFocus());
+  });
+
+  it('opens the window on a binder from its Edit rules, and keeps focus on its ⋯ once it saves', async () => {
+    const onWindow = vi.fn<(ask: WindowAsk) => void>();
+    renderShelf({}, {onWindow});
+    fireEvent.click(menuOf('Ruby'));
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Edit rules'}));
+    const [ask] = onWindow.mock.calls[0];
+    expect(ask.binder).toBe(BINDERS[1]);
+    screen.getByRole('link', {name: /^Amber,/}).focus();
+    act(() => ask.onSaved(BINDERS[1]));
+    await waitFor(() => expect(menuOf('Ruby')).toHaveFocus());
+  });
+
+  it('offers no Edit rules while the window cannot open', () => {
+    renderShelf();
+    fireEvent.click(menuOf('Ruby'));
+    expect(screen.queryByRole('menuitem', {name: 'Edit rules'})).toBeNull();
   });
 
   it("keeps the confirm open with its line when the delete fails", async () => {

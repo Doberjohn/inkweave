@@ -65,10 +65,38 @@ button:hover > .binder-shelf-dots {
   background: var(--shelf-dots-hover);
 }
 
+/* New binder, after the last cover: a button with no chrome of its own, whose face is a board's
+   dashed outline. Its colours are custom properties `NewBinderTile` sets. */
+.binder-shelf-new {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  outline: none;
+}
+.binder-shelf-new-board {
+  border-color: var(--shelf-new-edge);
+  transition:
+    border-color var(--shelf-fade),
+    box-shadow var(--shelf-fade);
+}
+.binder-shelf-new:hover .binder-shelf-new-board {
+  border-color: var(--shelf-new-edge-hover);
+}
+.binder-shelf-new:focus-visible .binder-shelf-new-board {
+  box-shadow: var(--shelf-focus-ring);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .binder-shelf-ring,
   .binder-shelf-actions,
-  .binder-shelf-dots {
+  .binder-shelf-dots,
+  .binder-shelf-new-board {
     transition: none;
   }
 }

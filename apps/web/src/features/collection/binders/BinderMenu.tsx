@@ -13,6 +13,8 @@ export interface BinderMenuProps {
   /** A phone shows the ⋯ always; a computer on hover and focus (`binderShelf.css`). */
   alwaysShown: boolean;
   onOpen: () => void;
+  /** Opens the binder in the New binder window, to change its Sets, rules and name. */
+  onEditRules?: () => void;
   /** Move earlier (true) or later (false). */
   onMove: (earlier: boolean) => void;
   /** Asks first: Delete binder opens the confirm, which deletes. */
@@ -61,14 +63,15 @@ function DotsIcon() {
 
 /**
  * A binder of your own's ⋯ on the shelf (#1074), named "Actions" after the cover's own name,
- * and its menu: Open, Move earlier (not on the first binder), Move later (not on the last) and
- * Delete binder. The keys are the gear's (`useMenuButton`): opening focuses Open, the arrows
- * move, Escape returns focus to ⋯, and Tab or a press outside closes the menu. A choice closes
- * the menu onto ⋯ first, so a move keeps focus there and the delete confirm returns it there.
+ * and its menu: Open, Edit rules, Move earlier (not on the first binder), Move later (not on the
+ * last) and Delete binder. The keys are the gear's (`useMenuButton`): opening focuses Open, the
+ * arrows move, Escape returns focus to ⋯, and Tab or a press outside closes the menu. A choice
+ * closes the menu onto ⋯ first, so a move keeps focus there, and the delete confirm and the
+ * window return it there.
  *
  * Its words are ours alone: the binder's name never reaches its labels.
  */
-export function BinderMenu({first, last, alwaysShown, onOpen, onMove, onDelete, buttonRef}: BinderMenuProps) {
+export function BinderMenu({first, last, alwaysShown, onOpen, onEditRules, onMove, onDelete, buttonRef}: BinderMenuProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const menu = useMenuButton(wrapperRef);
   const choose = (action: () => void) => () => {
@@ -89,6 +92,7 @@ export function BinderMenu({first, last, alwaysShown, onOpen, onMove, onDelete, 
       {menu.open && (
         <ActionsMenu label="Actions" {...menu.menuProps} style={MENU}>
           <MenuAction label="Open" onSelect={choose(onOpen)} />
+          {onEditRules && <MenuAction label="Edit rules" onSelect={choose(onEditRules)} />}
           {!first && <MenuAction label="Move earlier" onSelect={choose(() => onMove(true))} />}
           {!last && <MenuAction label="Move later" onSelect={choose(() => onMove(false))} />}
           <MenuAction label="Delete binder" danger onSelect={choose(onDelete)} />

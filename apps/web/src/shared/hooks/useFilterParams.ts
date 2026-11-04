@@ -204,8 +204,11 @@ function trackFacetChanges(before: URLSearchParams, after: URLSearchParams, via:
   }
 }
 
-/** Every filter in the URL as a draft holds them: an empty one deletes its param. */
-function writeFilters(params: URLSearchParams, {inks, types, costs, opts}: FilterDraft): void {
+/**
+ * Every filter in the URL as a draft holds them: an empty one deletes its param. What Apply
+ * writes, and what a binder's rules are written through (`writeRules`), so the two never differ.
+ */
+export function writeFilterParams(params: URLSearchParams, {inks, types, costs, opts}: FilterDraft): void {
   setOrDelete(params, 'ink', inks.join(','));
   setOrDelete(params, 'type', types.join(','));
   setOrDelete(params, 'cost', costs.join(','));
@@ -347,7 +350,7 @@ export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseS
   const applyDraft = (draft: FilterDraft, {sortOrder: order, edit}: AlsoWrite = {}) => {
     if (order) trackSortChange(order);
     updateParams((p) => {
-      writeFilters(p, draft);
+      writeFilterParams(p, draft);
       if (order) writeSort(p, order);
       edit?.(p);
     }, 'dialog');
@@ -356,7 +359,7 @@ export function useFilterParams({defaultSort = 'newest'}: {defaultSort?: BrowseS
   const replaceFilters = (inks: Ink[], types: CardTypeFilter[], costs: number[], opts: CardFilterOptions) =>
     applyDraft({inks, types, costs, opts});
 
-  const clearFilters = () => updateParams((p) => writeFilters(p, NO_FILTERS));
+  const clearFilters = () => updateParams((p) => writeFilterParams(p, NO_FILTERS));
 
   const setSortOrder = (order: BrowseSortOrder) => {
     trackSortChange(order);

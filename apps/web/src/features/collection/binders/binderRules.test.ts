@@ -1,7 +1,8 @@
 import {describe, expect, it} from 'vitest';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
+import type {FilterDraft} from '../../../shared/hooks/useFilterParams';
 import {ALL_PROMO_SETS, WHOLE_COLLECTION} from '../binderCards';
-import {filtersCards, readRules, ruleKinds, ruleLine, rulePool} from './binderRules';
+import {draftOf, filtersCards, readRules, ruleKinds, ruleLine, rulePool, writeRules} from './binderRules';
 
 /** A card for these tests, named by its id: a 1-cost Amber Common in Set 12 unless told otherwise. */
 const cardOf = (facts: Partial<LorcanaCard> & Pick<LorcanaCard, 'id'>) =>
@@ -132,5 +133,31 @@ describe('ruleLine', () => {
 
   it('reads "Every card" with no rule, as My collection does', () => {
     expect(ruleLine(binder(WHOLE_COLLECTION))).toBe('Every card');
+  });
+});
+
+describe('writeRules', () => {
+  it('writes the rules in one fixed order, never a set', () => {
+    const draft: FilterDraft = {
+      inks: ['Steel', 'Amber'],
+      types: ['Character'],
+      costs: [3],
+      opts: {rarities: ['Epic'], keywords: ['Evasive'], inkMatch: 'dual', setCodes: ['12']},
+    };
+    const rules = new URLSearchParams(writeRules(draft, ' Stitch '));
+    expect([...rules.keys()]).toEqual(['q', 'ink', 'type', 'cost', 'keyword', 'rarity', 'inkmatch']);
+    expect(rules.get('q')).toBe('Stitch');
+  });
+
+  it('reads back as the rules it wrote', () => {
+    const rules = 'q=Stitch&ink=Amber%2CSteel&cost=3&classification=Hero%2CPrincess&inkwell=inkable&inkmatch=dual';
+    const {draft, query} = draftOf({rules});
+    expect(writeRules(draft, query)).toBe(rules);
+    expect(readRules({rules: writeRules(draft, query)})).toEqual(readRules({rules}));
+  });
+
+  it('drops the dual-ink switch where the filter ignores it, and writes nothing for no rule', () => {
+    expect(writeRules({inks: ['Amber'], types: [], costs: [], opts: {inkMatch: 'dual'}}, '')).toBe('ink=Amber&inkmatch=dual');
+    expect(writeRules({inks: [], types: [], costs: [], opts: {inkMatch: 'dual'}}, '  ')).toBe('');
   });
 });

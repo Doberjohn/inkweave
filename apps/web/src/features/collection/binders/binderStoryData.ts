@@ -31,7 +31,8 @@ export const STORY_BINDER_ENTRIES: CollectionEntries = {
 
 const binderOf = (binder: Omit<Binder, 'coverId' | 'place'>, place: number): Binder => ({...binder, coverId: null, place});
 
-const STORY_AMBER = binderOf({id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber'}, 0);
+/** Amber: every Amber card, the window's Edit rules story. */
+export const STORY_AMBER = binderOf({id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber'}, 0);
 
 const STORY_BINDERS: Binder[] = [
   STORY_AMBER,
@@ -47,6 +48,11 @@ const STORY_SHELF_BINDERS: Binder[] = [
   binderOf({id: 'b5', name: 'Emerald', scope: 'all', rules: 'ink=Emerald'}, 4),
   binderOf({id: 'b6', name: 'Legends', scope: 'all', rules: 'rarity=Legendary'}, 5),
 ];
+
+/** Thirty binders, the most a shelf holds: no New binder, and the line that says why. */
+export const STORY_THIRTY_BINDERS: Binder[] = Array.from({length: 30}, (_, place) =>
+  binderOf({...STORY_SHELF_BINDERS[place % STORY_SHELF_BINDERS.length], id: `b${place + 1}`}, place),
+);
 
 /** The shelf as `useOwnBinders` gives it: six binders, read, or none at all. */
 export function storyShelf(over: Partial<BinderShelf> = {}): BinderShelf {
@@ -69,6 +75,7 @@ export function storyBinderChoices(over: Partial<BinderChoices> = {}): BinderCho
     entries: STORY_BINDER_ENTRIES,
     onOpen: () => {},
     onShelf: () => {},
+    onNewBinder: () => {},
     ...over,
   };
 }

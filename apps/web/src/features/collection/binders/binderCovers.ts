@@ -28,11 +28,16 @@ export interface BinderFace {
  * collection (null) holds the whole pool.
  */
 export function binderFace(pool: readonly LorcanaCard[], entries: CollectionEntries, binder: Binder | null): BinderFace {
-  const cards = cardsOf(pool, binder);
-  return {
-    cover: coverOf(cards, entries, binder?.coverId ?? null),
-    figures: figuresOf(cards, entries, binder?.scope ?? WHOLE_COLLECTION),
-  };
+  return faceOf(cardsOf(pool, binder), entries, binder ?? {scope: WHOLE_COLLECTION, coverId: null});
+}
+
+/** A face from the cards a binder holds already: the New binder window's, whose cards it shows too. */
+export function faceOf(
+  cards: LorcanaCard[],
+  entries: CollectionEntries,
+  {scope, coverId}: Pick<Binder, 'scope' | 'coverId'>,
+): BinderFace {
+  return {cover: coverOf(cards, entries, coverId), figures: figuresOf(cards, entries, scope)};
 }
 
 /**
