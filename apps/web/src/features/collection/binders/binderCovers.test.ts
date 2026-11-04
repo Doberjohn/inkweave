@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from '../collectionParser';
 import {ALL_PROMO_SETS, WHOLE_COLLECTION} from '../binderCards';
-import {binderFace} from './binderCovers';
+import {binderFace, coverChoices} from './binderCovers';
 import type {Binder} from './binderRules';
 
 /** A card named by its id: a 1-cost Amber Common in Set 12 unless told otherwise. */
@@ -117,5 +117,33 @@ describe("a binder's cover", () => {
 
   it('falls back to the rarest when its cover names a card the binder no longer holds', () => {
     expect(coverCard(POOL, held('epic-12', 'rare-11'), binder('12', '', 'rare-11'))?.id).toBe('epic-12');
+  });
+});
+
+describe("My collection's cover", () => {
+  const held = (...ids: string[]): CollectionEntries =>
+    Object.fromEntries(ids.map((id) => [id, {normal: 1, foil: 0}]));
+
+  it('shows the card its shelf picked, over the rarest', () => {
+    expect(coverCard(POOL, held('epic-12', 'common-12'), null, 'common-12')?.id).toBe('common-12');
+  });
+
+  it('falls back to the rarest once the card it picked leaves the cards it can show', () => {
+    expect(coverCard(POOL, held('epic-12', 'common-12'), null, 'gone-14')?.id).toBe('epic-12');
+    expect(coverCard(POOL, held('epic-12', 'common-12'), null, null)?.id).toBe('epic-12');
+  });
+});
+
+describe('coverChoices', () => {
+  it("offers the cards you have, in the cover's own order, its first the card the cover picks itself", () => {
+    const entries = {
+      'common-12': {normal: 1, foil: 0},
+      'rare-11': {normal: 1, foil: 0},
+      'promo-p1': {normal: 1, foil: 0},
+      'epic-12': {normal: 0, foil: 1},
+    };
+    const choices = coverChoices(POOL, entries).map((card) => card.id);
+    expect(choices).toEqual(['epic-12', 'promo-p1', 'rare-11', 'common-12']);
+    expect(coverCard(POOL, entries, null)?.id).toBe(choices[0]);
   });
 });

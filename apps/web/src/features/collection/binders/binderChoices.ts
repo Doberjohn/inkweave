@@ -1,5 +1,7 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
+import type {FilterDraft} from '../../../shared/hooks/useFilterParams';
 import type {CollectionEntries} from '../collectionParser';
+import type {BinderFigures} from './binderCovers';
 import type {Binder} from './binderRules';
 import type {BinderReader, BinderShelf} from './binderShelf';
 
@@ -59,4 +61,25 @@ export interface OwnBinders {
   custom: CustomBinder;
   /** The cards the binder on show holds: a binder of your own's (`rulePool`), else the whole pool. */
   pool: LorcanaCard[];
+  /**
+   * What Save as a binder makes of the page's filters and search at the set picked (`saveOffer`),
+   * once the shelf has loaded with room on it, in My collection or a binder of your own on show;
+   * else null.
+   */
+  offerOf: ((page: OfferAsk) => SaveOffer | null) | null;
+}
+
+/** The page Save as a binder reads: its filters, its search, and the set picked. */
+export interface OfferAsk {
+  draft: FilterDraft;
+  query: string;
+  scope: string;
+}
+
+/** A binder Save as a binder would make: its Sets and rules, its line ("Amber ink · Epic") and its numbers. */
+export interface SaveOffer {
+  scope: string;
+  rules: string;
+  line: string;
+  figures: BinderFigures;
 }

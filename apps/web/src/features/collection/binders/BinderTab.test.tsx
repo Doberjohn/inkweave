@@ -84,6 +84,11 @@ describe('BinderList', () => {
     expect(row(/^Amber,/).querySelector('img')).toHaveAttribute('src', 'https://art.test/amber-rare-sm.avif');
   });
 
+  it("draws My collection under the cover its shelf picked", () => {
+    renderList({shelf: {status: 'ready', binders: [AMBER], shelfCover: 'amber-rare', retry: vi.fn()}});
+    expect(row(/^My collection,/).querySelector('img')).toHaveAttribute('src', 'https://art.test/amber-rare-sm.avif');
+  });
+
   it('shows a dash for a binder whose rules hold no card', () => {
     renderList({shelf: {status: 'ready', binders: [SAPPHIRE], retry: vi.fn()}});
     expect(row(/^Sapphire/)).toHaveAccessibleName('Sapphire, no cards');
@@ -121,6 +126,12 @@ describe('BinderList', () => {
     const inside = renderList({open: openAmber, atOwnScope: false});
     fireEvent.click(row(/^Amber,/));
     expect(inside.onOpen).toHaveBeenCalledWith(AMBER);
+  });
+
+  it("holds My collection's medal while the binders load, since the shelf may name another cover", () => {
+    // The rarest card held is the one with art, so the medal would draw it.
+    renderList({shelf: {status: 'loading', binders: [], retry: vi.fn()}, entries: {'amber-rare': {normal: 1, foil: 0}}});
+    expect(row(/^My collection,/).querySelector('img')).toBeNull();
   });
 
   it('holds a shimmer under My collection while the binders load, and no count on All your binders', () => {

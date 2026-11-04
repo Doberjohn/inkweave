@@ -1,0 +1,39 @@
+/* Change cover's choices: buttons with no chrome of their own but the card's edge, ringed in gold
+   while chosen. Every colour, radius and timing is a custom property `CoverPicker` sets. */
+.cover-choice {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--cover-radius);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  outline: none;
+  box-shadow: var(--cover-edge);
+  transition: box-shadow var(--cover-fade);
+}
+/* The chosen card keeps its ring under the pointer. */
+.cover-choice:hover:not(:disabled):not([aria-pressed='true']) {
+  box-shadow: var(--cover-hover-ring);
+}
+.cover-choice[aria-pressed='true'] {
+  box-shadow: var(--cover-chosen-ring);
+}
+.cover-choice:focus-visible {
+  box-shadow: var(--cover-focus-ring);
+  /* Forced colours drop the shadow and draw this in the system's colour instead. */
+  outline: 2px solid transparent;
+}
+.cover-choice:disabled {
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cover-choice {
+    transition: none;
+  }
+}

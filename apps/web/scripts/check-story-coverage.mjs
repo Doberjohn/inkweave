@@ -74,6 +74,9 @@ const EXCLUDED = new Set([
   // and opens Friends who have it (storied), reading the session, the collection, the friends'
   // copies and the window's stores.
   'CollectionFriends.tsx',
+  // A hook, as useBrowseCollection is: Save as a binder's place on the page. Its JSX only composes
+  // SaveAsBinderFoot and SaveAsBinder, each storied, and it needs the reader's shelf to run.
+  'useSaveAsBinder.tsx',
 ]);
 
 // Pages are route compositions of already-storied components; stories exist

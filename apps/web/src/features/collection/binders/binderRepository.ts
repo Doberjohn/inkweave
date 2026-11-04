@@ -150,3 +150,38 @@ export async function updateBinderRow(id: string, patch: Partial<BinderInput>): 
   );
   return readBack(result);
 }
+
+/*
+ * The `collection_shelf` table: My collection's cover, one row per collection, which only its
+ * owner reads and writes. No row, or no card, is the rarest card you have.
+ */
+
+/** My collection's cover: the card the caller's row names, or null with no row; a cover the guard refuses is none, and reported. */
+export function getShelfCover(ownerId: string): Promise<RepoResult<string | null>> {
+  return callSupabase({area: 'collection', operation: 'read shelf cover'}, async (client) => {
+    const {data, error} = await client.from('collection_shelf').select('cover_id').eq('owner_id', ownerId).maybeSingle();
+    if (error) return {data: null, error};
+    const cover = data?.cover_id ?? null;
+    if (isCover(cover)) return {data: cover, error: null};
+    reportUnreadableCover();
+    return {data: null, error: null};
+  });
+}
+
+/** As `reportUnreadable`, for My collection's cover: shown as the rarest, and Sentry hears of it. */
+function reportUnreadableCover(): void {
+  const failure = new Error('left out an unreadable shelf cover');
+  console.warn(`[collection] ${failure.message}`);
+  reportFailure({area: 'collection', operation: 'read shelf cover'}, failure);
+}
+
+/**
+ * Sets My collection's cover, or null to put the rarest back: an upsert of `(owner_id, cover_id)`,
+ * the two columns the table grants the client, as the sharing switch writes its own.
+ */
+export function setShelfCover(ownerId: string, coverId: string | null): Promise<RepoResult<null>> {
+  return callSupabase({area: 'collection', operation: 'save shelf cover'}, async (client) => {
+    const {error} = await client.from('collection_shelf').upsert({owner_id: ownerId, cover_id: coverId}, {onConflict: 'owner_id'});
+    return {data: null, error};
+  });
+}

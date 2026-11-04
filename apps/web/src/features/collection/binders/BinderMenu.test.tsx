@@ -5,7 +5,13 @@ import {BinderMenu} from './BinderMenu';
 function renderMenu(place: {first?: boolean; last?: boolean; onEditRules?: () => void} = {}) {
   const acts = {onOpen: vi.fn(), onMove: vi.fn(), onDelete: vi.fn()};
   render(
-    <BinderMenu first={place.first ?? false} last={place.last ?? false} alwaysShown={false} onEditRules={place.onEditRules} {...acts} />,
+    <BinderMenu
+      moves={{first: place.first ?? false, last: place.last ?? false, onMove: acts.onMove}}
+      alwaysShown={false}
+      onEditRules={place.onEditRules}
+      onOpen={acts.onOpen}
+      onDelete={acts.onDelete}
+    />,
   );
   return acts;
 }
@@ -30,6 +36,36 @@ describe('BinderMenu', () => {
     expect(onEditRules).toHaveBeenCalledOnce();
     expect(screen.queryByRole('menu')).toBeNull();
     expect(dots()).toHaveFocus();
+  });
+
+  it('offers Rename and Change cover after Edit rules, in the order the menu keeps', () => {
+    const onRename = vi.fn();
+    const onChangeCover = vi.fn();
+    render(
+      <BinderMenu
+        alwaysShown={false}
+        onOpen={vi.fn()}
+        onEditRules={vi.fn()}
+        onRename={onRename}
+        onChangeCover={onChangeCover}
+        moves={{first: false, last: false, onMove: vi.fn()}}
+        onDelete={vi.fn()}
+      />,
+    );
+    fireEvent.click(dots());
+    expect(items()).toEqual(['Open', 'Edit rules', 'Rename', 'Change cover', 'Move earlier', 'Move later', 'Delete binder']);
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Rename'}));
+    expect(onRename).toHaveBeenCalledOnce();
+    fireEvent.click(dots());
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Change cover'}));
+    expect(onChangeCover).toHaveBeenCalledOnce();
+    expect(dots()).toHaveFocus();
+  });
+
+  it("offers My collection's Open and Change cover alone: it never moves and can't be deleted", () => {
+    render(<BinderMenu alwaysShown={false} onOpen={vi.fn()} onChangeCover={vi.fn()} />);
+    fireEvent.click(dots());
+    expect(items()).toEqual(['Open', 'Change cover']);
   });
 
   it('has no Move earlier on the first binder and no Move later on the last', () => {

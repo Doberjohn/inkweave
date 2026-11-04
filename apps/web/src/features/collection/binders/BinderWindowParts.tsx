@@ -18,20 +18,8 @@ import '../../cards/components/binder.css';
 import {ALL_PROMO_SETS, WHOLE_COLLECTION, isPromoScope, isPromoSet, setLabel} from '../binderCards';
 import {percentOf} from '../collectionStats';
 import {CoverBar, CoverBoard} from './BinderCover';
+import {CHIP, CHIPS, FIELD, HEADING} from './binderFields';
 import type {BinderDraft} from './useBinderDraft';
-
-/** The field the window's name and Name has share: the display name dialog's. */
-const FIELD: CSSProperties = {
-  width: '100%',
-  boxSizing: 'border-box',
-  padding: SPACING.sm,
-  background: COLORS.surfaceAlt,
-  border: `1px solid ${COLORS.surfaceBorder}`,
-  borderRadius: RADIUS.md,
-  color: COLORS.text,
-  fontFamily: FONTS.body,
-  fontSize: `${FONT_SIZES.md}px`,
-};
 
 /** The Sets a binder can keep, as the set picker offers them: every set, each set, every promo set, each promo set. */
 function setsOptions(sets: readonly string[], scope: string) {
@@ -169,25 +157,6 @@ export function DraftCount({draft}: {draft: BinderDraft}) {
 export function DraftCover({draft}: {draft: BinderDraft}) {
   return <CoverBoard name={draft.name.trim() || 'Name it'} rule={draft.preview.line} cover={draft.preview.cover} />;
 }
-
-const CHIPS: CSSProperties = {display: 'flex', flexWrap: 'wrap', gap: SPACING.xs, margin: 0, padding: 0, listStyle: 'none'};
-
-const CHIP: CSSProperties = {
-  padding: `${SPACING.xxs}px ${SPACING.sm}px`,
-  borderRadius: `${RADIUS.pill}px`,
-  border: `1px solid ${COLORS.surfaceBorder}`,
-  background: COLORS.neutralFill,
-  fontSize: `${FONT_SIZES.sm}px`,
-  fontWeight: FONT_WEIGHT.medium,
-  color: COLORS.text,
-};
-
-const HEADING: CSSProperties = {
-  margin: 0,
-  fontSize: `${FONT_SIZES.base}px`,
-  fontWeight: FONT_WEIGHT.semibold,
-  color: COLORS.textMuted,
-};
 
 /** The page's pockets, four across, on a binder page (`binder-page`: its black, grain and light). */
 const PAGE = {

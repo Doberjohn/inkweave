@@ -35,8 +35,8 @@ const ART_OPTIONS: readonly {value: ArtKind; label: string; title: (picks: reado
   {value: 'alt', label: 'Alt art cards', title: (picks) => `Pick ${inWords(picks.map(rarityLabel))}`},
 ];
 
-/** Names as a sentence runs them: "Epic, Enchanted and Iconic". */
-function inWords(names: readonly string[]): string {
+/** Names as a sentence runs them: "Amber", "Amber and Steel", "Epic, Enchanted and Iconic". */
+export function inWords(names: readonly string[]): string {
   if (names.length < 2) return names.join('');
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }

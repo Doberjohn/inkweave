@@ -80,7 +80,10 @@ vi.mock('./CollectionFriends', async (importOriginal) => ({
   ),
 }));
 // Your binders' reads: an empty shelf unless a case says otherwise.
-const binderRepo = vi.hoisted(() => ({listBinders: vi.fn(async () => ({data: [] as unknown[] | null, error: null as string | null}))}));
+const binderRepo = vi.hoisted(() => ({
+  listBinders: vi.fn(async () => ({data: [] as unknown[] | null, error: null as string | null})),
+  getShelfCover: vi.fn(async () => ({data: null, error: null})),
+}));
 vi.mock('./binders/binderRepository', () => binderRepo);
 // The card window's copies stripe, which a case presses as the window would: its own counting is
 // WindowCopies.test.tsx's.

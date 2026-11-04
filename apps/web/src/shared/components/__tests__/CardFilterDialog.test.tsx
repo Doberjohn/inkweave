@@ -343,4 +343,31 @@ describe("CardFilterDialog with a caller's own controls (the Binder sheet, #969)
     expect(onClear).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button', {name: /character/i})).toHaveAttribute('aria-pressed', 'false');
   });
+
+  it('hands its foot the draft as it changes, and an Apply that also closes', () => {
+    const onApply = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <CardFilterDialog
+        {...defaultProps}
+        variant="drawer"
+        onApply={onApply}
+        onClose={onClose}
+        foot={(draft, applyAndClose) => (
+          <button type="button" onClick={applyAndClose}>
+            {`Keep ${draft.types.join(', ') || 'nothing'}`}
+          </button>
+        )}
+      />,
+    );
+    unfoldAll();
+    expect(screen.getByRole('button', {name: 'Keep nothing'})).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', {name: /character/i}));
+    fireEvent.click(screen.getByRole('button', {name: 'Keep Character'}));
+
+    expect(onApply).toHaveBeenCalledWith([], ['Character'], [], {});
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onApply.mock.invocationCallOrder[0]).toBeLessThan(onClose.mock.invocationCallOrder[0]);
+  });
 });

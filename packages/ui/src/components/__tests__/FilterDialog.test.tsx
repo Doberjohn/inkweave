@@ -49,6 +49,18 @@ describe.each(['modal', 'drawer'] as const)('FilterDialog variant=%s', (variant)
     expect(onApply.mock.invocationCallOrder[0]).toBeLessThan(onClose.mock.invocationCallOrder[0]);
   });
 
+  it('draws its foot under the body, out of its scroll, and before Apply', () => {
+    render(<FilterDialog {...shellProps({variant, foot: <button type="button">Keep these</button>})} />);
+    const foot = screen.getByRole('button', {name: 'Keep these'});
+    const body = screen.getByText('The filters').parentElement as HTMLElement;
+    expect(body.contains(foot)).toBe(false);
+    expect(body.compareDocumentPosition(foot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    if (variant === 'modal') {
+      const apply = screen.getByRole('button', {name: 'Apply Filters'});
+      expect(foot.compareDocumentPosition(apply) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+  });
+
   it('closes on Escape without applying, and hands focus back to its opener', async () => {
     const onApply = vi.fn();
     // Controlled, with no Dialog.Trigger: Radix's own return target is null (WCAG 2.4.3).

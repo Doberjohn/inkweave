@@ -805,6 +805,8 @@ function TriggerButton({
     <CtaButton
       variant="neutral"
       {...hoverProps}
+      // What `focusSetPicker` finds (`binders/focusSetPicker.ts`).
+      data-set-picker=""
       aria-haspopup="dialog"
       aria-expanded={open}
       aria-controls={open ? menuId : undefined}

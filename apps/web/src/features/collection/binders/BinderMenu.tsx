@@ -6,20 +6,61 @@ import {useMenuButton} from '../useMenuButton';
 import './binderShelf.css';
 
 export interface BinderMenuProps {
-  /** The binder heads your shelf: no Move earlier. */
-  first: boolean;
-  /** The binder ends your shelf: no Move later. */
-  last: boolean;
   /** A phone shows the ⋯ always; a computer on hover and focus (`binderShelf.css`). */
   alwaysShown: boolean;
   onOpen: () => void;
   /** Opens the binder in the New binder window, to change its Sets, rules and name. */
   onEditRules?: () => void;
-  /** Move earlier (true) or later (false). */
-  onMove: (earlier: boolean) => void;
-  /** Asks first: Delete binder opens the confirm, which deletes. */
-  onDelete: () => void;
+  /** Opens Rename. */
+  onRename?: () => void;
+  /** Opens Change cover, which My collection's ⋯ offers too. */
+  onChangeCover?: () => void;
+  /**
+   * Its place on the shelf, and the moves it allows: no Move earlier for the first binder, no Move
+   * later for the last. None for My collection, which never moves.
+   */
+  moves?: {first: boolean; last: boolean; onMove: (earlier: boolean) => void};
+  /** Asks first: Delete binder opens the confirm, which deletes. None for My collection. */
+  onDelete?: () => void;
   buttonRef?: Ref<HTMLButtonElement>;
+}
+
+/** One of the menu's choices. */
+interface MenuItem {
+  label: string;
+  action: () => void;
+  danger?: boolean;
+}
+
+/** Edit rules, Rename and Change cover, each one the shelf offers. */
+function changeItems({onEditRules, onRename, onChangeCover}: BinderMenuProps): MenuItem[] {
+  const items = [
+    {label: 'Edit rules', action: onEditRules},
+    {label: 'Rename', action: onRename},
+    {label: 'Change cover', action: onChangeCover},
+  ];
+  return items.filter((item): item is MenuItem => item.action !== undefined);
+}
+
+/** Move earlier and Move later, where the binder has a neighbour that way. */
+function moveItems(moves: BinderMenuProps['moves']): MenuItem[] {
+  if (moves === undefined) return [];
+  const {first, last, onMove} = moves;
+  return [
+    ...(first ? [] : [{label: 'Move earlier', action: () => onMove(true)}]),
+    ...(last ? [] : [{label: 'Move later', action: () => onMove(false)}]),
+  ];
+}
+
+/** Every choice in the menu's order: Open, the changes, the moves, then Delete binder. */
+function itemsOf(props: BinderMenuProps): MenuItem[] {
+  const {onOpen, onDelete} = props;
+  return [
+    {label: 'Open', action: onOpen},
+    ...changeItems(props),
+    ...moveItems(props.moves),
+    ...(onDelete ? [{label: 'Delete binder', action: onDelete, danger: true}] : []),
+  ];
 }
 
 /** The ⋯'s disc, and the touch target round it: the house 44 px floor (`IconButton`). */
@@ -62,16 +103,17 @@ function DotsIcon() {
 }
 
 /**
- * A binder of your own's ⋯ on the shelf (#1074), named "Actions" after the cover's own name,
- * and its menu: Open, Edit rules, Move earlier (not on the first binder), Move later (not on the
- * last) and Delete binder. The keys are the gear's (`useMenuButton`): opening focuses Open, the
- * arrows move, Escape returns focus to ⋯, and Tab or a press outside closes the menu. A choice
- * closes the menu onto ⋯ first, so a move keeps focus there, and the delete confirm and the
- * window return it there.
+ * A cover's ⋯ on the shelf, named "Actions" after the cover's own name, and its menu. A binder of
+ * your own's: Open, Edit rules, Rename, Change cover, Move earlier (not on the first binder),
+ * Move later (not on the last) and Delete binder. My collection's: Open and Change cover. The keys
+ * are the gear's (`useMenuButton`): opening focuses Open, the arrows move, Escape returns focus to
+ * ⋯, and Tab or a press outside closes the menu. A choice closes the menu onto ⋯ first, so a move
+ * keeps focus there, and the dialogs and the window return it there.
  *
  * Its words are ours alone: the binder's name never reaches its labels.
  */
-export function BinderMenu({first, last, alwaysShown, onOpen, onEditRules, onMove, onDelete, buttonRef}: BinderMenuProps) {
+export function BinderMenu(props: BinderMenuProps) {
+  const {alwaysShown, buttonRef} = props;
   const wrapperRef = useRef<HTMLDivElement>(null);
   const menu = useMenuButton(wrapperRef);
   const choose = (action: () => void) => () => {
@@ -91,11 +133,9 @@ export function BinderMenu({first, last, alwaysShown, onOpen, onEditRules, onMov
       </IconButton>
       {menu.open && (
         <ActionsMenu label="Actions" {...menu.menuProps} style={MENU}>
-          <MenuAction label="Open" onSelect={choose(onOpen)} />
-          {onEditRules && <MenuAction label="Edit rules" onSelect={choose(onEditRules)} />}
-          {!first && <MenuAction label="Move earlier" onSelect={choose(() => onMove(true))} />}
-          {!last && <MenuAction label="Move later" onSelect={choose(() => onMove(false))} />}
-          <MenuAction label="Delete binder" danger onSelect={choose(onDelete)} />
+          {itemsOf(props).map((item) => (
+            <MenuAction key={item.label} label={item.label} danger={item.danger} onSelect={choose(item.action)} />
+          ))}
         </ActionsMenu>
       )}
     </div>

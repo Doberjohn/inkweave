@@ -1,6 +1,6 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {applyFilters, buildCombinedFilters} from '../../cards/applyFilters';
-import {rarityLabel} from '../../cards/filterOptions';
+import {inWords, rarityLabel} from '../../cards/filterOptions';
 import {binderSetOf} from '../../../shared/constants';
 import {
   RULE_PARAMS,
@@ -56,6 +56,16 @@ export function writeRules(draft: FilterDraft, query: string): string {
   if (query.trim() !== '') written.set('q', query.trim());
   return ruleParamsOf(written).toString();
 }
+
+/**
+ * The longest rules the table holds (`collection_binders_rules`). Every filter picked at once
+ * writes about 930 characters, and holds no card, so only a long search could pass it.
+ */
+export const RULES_MAX = 1000;
+
+/** A promo scope holds no rarity rule, as a binder of promos drops the page's (`binderFilters`). */
+export const scopedDraft = (draft: FilterDraft, scope: string): FilterDraft =>
+  isPromoScope(scope) ? {...draft, opts: {...draft.opts, rarities: undefined}} : draft;
 
 /** Its rules as a filter draft, to edit them: `writeRules` gives back the same rules. */
 export function draftOf(binder: Pick<Binder, 'rules'>): {draft: FilterDraft; query: string} {
@@ -113,12 +123,6 @@ export function ruleKinds(binder: Pick<Binder, 'scope' | 'rules'>): string {
   const rules = readRules(binder);
   const kinds = KINDS.filter(([, holds]) => holds(rules, binder.scope)).map(([kind]) => kind);
   return kinds.length > 0 ? kinds.join(',') : 'none';
-}
-
-/** Names as a sentence runs them: "Amber", "Amber and Steel", "3, 5 and 9+". */
-function inWords(names: readonly string[]): string {
-  if (names.length < 2) return names.join('');
-  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
 /** A cost as the filter's button reads it: 9 is "9+". */

@@ -68,6 +68,7 @@ const GRID: BrowseCollectionSlots = {
   renderPhoneRow: () => undefined,
   renderPhoneSheet: () => undefined,
   renderBanner: () => undefined,
+  renderSaveAsBinder: () => null,
 };
 
 describe('BrowseBody on the grid', () => {
@@ -236,6 +237,7 @@ describe('BrowseBody with collection mode on', () => {
         </div>
       ) : null,
     renderBanner: () => undefined,
+    renderSaveAsBinder: () => null,
   };
 
   /** The URL's params, which the page's writes change. */

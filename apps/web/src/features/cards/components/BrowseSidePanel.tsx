@@ -90,9 +90,28 @@ interface BrowseSidePanelProps {
   filterProps: PanelFilterProps;
   activeFilterCount: number;
   onClearFilters: () => void;
+  /**
+   * Collection mode's Save as a binder. Pinned to the panel's bottom edge inside its scroll, so
+   * when it comes it covers the end of the last section rather than moving one.
+   */
+  foot?: ReactNode;
 }
 
-function FiltersBody({filterProps, activeFilterCount, onClearFilters}: BrowseSidePanelProps) {
+/**
+ * The foot's strip, edge to edge over the panel's padding (the margins undo it). At the end of the
+ * filters, or at the panel's foot while they are shorter (`marginTop: auto`), and held at the
+ * bottom edge while they scroll under it.
+ */
+const PANEL_FOOT: CSSProperties = {
+  position: 'sticky',
+  bottom: 0,
+  margin: `auto -${SPACING.md}px -${SPACING.md}px`,
+  padding: SPACING.md,
+  background: COLORS.surface,
+  borderTop: `1px solid ${COLORS.surfaceBorder}`,
+};
+
+function FiltersBody({filterProps, activeFilterCount, onClearFilters}: Omit<BrowseSidePanelProps, 'foot'>) {
   return (
     // One child for the panel's flex column, whose gap would otherwise space the
     // sections on top of their own margins.
@@ -112,7 +131,7 @@ function FiltersBody({filterProps, activeFilterCount, onClearFilters}: BrowseSid
 }
 
 /** The filters panel, on the page's left. */
-export function BrowseSidePanel({onClearFilters, ...props}: BrowseSidePanelProps) {
+export function BrowseSidePanel({onClearFilters, foot, ...props}: BrowseSidePanelProps) {
   const panelRef = useRef<HTMLElement>(null);
   // Clear all goes as soon as nothing is active, taking focus with it: hand focus to the
   // panel, or it falls to the page and the next Tab starts from the top.
@@ -123,6 +142,7 @@ export function BrowseSidePanel({onClearFilters, ...props}: BrowseSidePanelProps
   return (
     <aside ref={panelRef} tabIndex={-1} aria-label="Filters" style={{...SIDE_PANEL_STYLE, height: '100%'}}>
       <FiltersBody {...props} onClearFilters={clearAll} />
+      {foot != null && <div style={PANEL_FOOT}>{foot}</div>}
     </aside>
   );
 }
