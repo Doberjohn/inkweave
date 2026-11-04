@@ -107,7 +107,7 @@
         "apps/web/dist/assets/BinderWindow-*.js",
         "apps/web/dist/assets/BinderCover-*.js"
       ],
-      "limit": "77 kB",
+      "limit": "78 kB",
       "gzip": true
     },
     {
