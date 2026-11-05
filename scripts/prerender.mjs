@@ -28,9 +28,9 @@ import {CAPTURE_MEDIA} from './lib/captureMedia.mjs';
 import {OG_MANIFEST, ogImagesByRoute, withOgImage} from './lib/cardOgImage.mjs';
 import {
   OG_PAGE_MANIFEST,
+  isRevealSeasonActive,
   ogImageForRoute,
   pageOgImagesByRoute,
-  revealSeasonSet,
 } from './lib/pageOgImage.mjs';
 import {contentType} from './lib/mime.mjs';
 
@@ -64,7 +64,7 @@ const PHONE = {
 };
 
 /**
- * Is a reveal season live?
+ * Is a reveal season live? (scripts/lib/pageOgImage.mjs)
  *
  * `/reveals` redirects to '/' off-season, so crawling it then would capture the HOME
  * page under a /reveals URL — the exact failure this route is being added to fix.
@@ -72,11 +72,8 @@ const PHONE = {
  * in the future. The season also needs VITE_IS_REVEAL_SEASON at build time, but that
  * is inlined into the bundle and not visible here; the runbook sets both together, and
  * a mismatch only costs one wasted route, which is today's behaviour anyway.
- * scripts/generate-og-images.mjs draws /reveals' preview image by the same test.
  */
-export function isRevealSeasonActive(preview, now = new Date()) {
-  return revealSeasonSet(preview, now) !== null;
-}
+export {isRevealSeasonActive};
 
 async function hasActiveRevealSeason() {
   try {

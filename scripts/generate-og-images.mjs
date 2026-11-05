@@ -1,6 +1,6 @@
 /**
  * Draws the link preview images: every card's (#1133) into apps/web/dist/og/card/, and the home
- * page's, each playstyle page's and, in reveal season, /reveals' (#1135) into
+ * page's, each playstyle page's and, in reveal season, /reveals' into
  * apps/web/dist/og/page/, for scripts/prerender.mjs to write into each page's og:image and
  * twitter:image. Every page without an image of its own gets the home image.
  *
@@ -44,7 +44,7 @@ import {
   parsePlaystyleUi,
   parseRevealSet,
   playstyleOgData,
-  revealSeasonSet,
+  isRevealSeasonActive,
   revealsOgData,
 } from './lib/pageOgImage.mjs';
 
@@ -177,17 +177,25 @@ function playstyleJobs(cardsById, result) {
 }
 
 /**
- * /reveals' image, in season only: the season's set's revealed cards, the app's and the preview
- * file's, in the order they were added. The crawl captures /reveals only in season too.
+ * /reveals' image, in season only: the season's set's revealed cards, in the order they were
+ * added. The crawl captures /reveals only in season too.
  */
-function revealsJobs(cards, preview) {
-  if (!preview || revealSeasonSet(preview) === null) return [];
+function revealsJobs(known, preview) {
+  if (!isRevealSeasonActive(preview)) return [];
   const {code, total} = parseRevealSet(readFileSync(join(ROOT, REVEAL_SET_FILE), 'utf8'));
-  const ids = new Set(cards.map((card) => String(card.id)));
-  const added = (preview.cards ?? []).filter((card) => !ids.has(String(card.id)));
-  const revealed = [...cards, ...added].filter((card) => card.setCode === code);
+  const revealed = known.filter((card) => card.setCode === code);
   const name = preview.sets?.[code]?.name ?? `Set ${code}`;
   return [revealsOgData(revealed, {code, name, total})];
+}
+
+/**
+ * Every card the app shows: allCards.json's, then the preview file's in reveal season, the first
+ * winning on an id both hold, as the app's loader merges them. Precompute lists a playstyle's
+ * preview cards too, so its fan and count need them.
+ */
+function withPreviewCards(cards, preview) {
+  const ids = new Set(cards.map((card) => String(card.id)));
+  return [...cards, ...(preview?.cards ?? []).filter((card) => !ids.has(String(card.id)))];
 }
 
 const readIfBuilt = (file) => (existsSync(file) ? readJson(file) : null);
@@ -203,12 +211,15 @@ function planPart(label, plan, result) {
 }
 
 /** Every page image this build draws: home, each playstyle and, in season, reveals. */
-function planPages(cards, cardsById, result) {
+function planPages(cards, result) {
   const data = (file) => join(DIST, 'data', file);
+  const preview = readIfBuilt(data('previewCards.json'));
+  const known = withPreviewCards(cards, preview);
+  const knownById = new Map(known.map((card) => [String(card.id), card]));
   const parts = [
-    ['/', () => [homeOgData(readJson(data('featuredCards.json')).cards.map(({id}) => id), cardsById)]],
-    ['the playstyle pages', () => playstyleJobs(cardsById, result)],
-    ['/reveals', () => revealsJobs(cards, readIfBuilt(data('previewCards.json')))],
+    ['/', () => [homeOgData(readJson(data('featuredCards.json')).cards.map(({id}) => id), knownById)]],
+    ['the playstyle pages', () => playstyleJobs(knownById, result)],
+    ['/reveals', () => revealsJobs(known, preview)],
   ];
   return parts.flatMap(([label, plan]) => planPart(label, plan, result)).filter(Boolean);
 }
@@ -257,7 +268,7 @@ async function main() {
   const {cards} = readJson(join(DIST, 'data', 'allCards.json'));
   const cardsById = new Map(cards.map((card) => [String(card.id), card]));
   const jobs = planJobs(cards, cardsById);
-  const pageJobs = planPages(cards, cardsById, result);
+  const pageJobs = planPages(cards, result);
   for (const dir of [OG_CARD_DIR, OG_PAGE_DIR]) {
     await rm(join(DIST, dir), {recursive: true, force: true});
     await mkdir(join(DIST, dir), {recursive: true});

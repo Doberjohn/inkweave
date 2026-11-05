@@ -12,7 +12,7 @@ import {
   parsePlaystyleUi,
   parseRevealSet,
   playstyleOgData,
-  revealSeasonSet,
+  isRevealSeasonActive,
   revealsOgData,
 } from '../pageOgImage.mjs';
 
@@ -72,15 +72,15 @@ describe('parseRevealSet', () => {
   });
 });
 
-describe('revealSeasonSet', () => {
+describe('isRevealSeasonActive', () => {
   const NOW = new Date('2026-11-05T12:00:00Z');
 
-  it('is the set whose release date is still ahead, and null when none is', () => {
+  it("is live while a set's release date is still ahead, and only then", () => {
     const preview = {sets: {14: {releaseDate: '2026-10-23'}, 15: {releaseDate: '2027-02-13'}}};
-    expect(revealSeasonSet(preview, NOW)).toBe('15');
-    expect(revealSeasonSet({sets: {14: {releaseDate: '2026-10-23'}}}, NOW)).toBeNull();
-    expect(revealSeasonSet({sets: {15: {}}}, NOW)).toBeNull();
-    expect(revealSeasonSet(undefined, NOW)).toBeNull();
+    expect(isRevealSeasonActive(preview, NOW)).toBe(true);
+    expect(isRevealSeasonActive({sets: {14: {releaseDate: '2026-10-23'}}}, NOW)).toBe(false);
+    expect(isRevealSeasonActive({sets: {15: {}}}, NOW)).toBe(false);
+    expect(isRevealSeasonActive(undefined, NOW)).toBe(false);
   });
 });
 

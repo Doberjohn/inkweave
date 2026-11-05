@@ -47,9 +47,10 @@
  *      og:image and twitter:image, and the build holds that file (#1133): see findOgImageProblem.
  *      It reads every card page, not the sample: a card scripts/generate-og-images.mjs failed to
  *      draw keeps the site banner, and only this check notices.
- *  13. every other page the crawl wrote names the link preview image its route shows (#1135),
- *      and the build holds that file: the home page, each playstyle page and /reveals their own,
- *      every other prerendered route the home image. See findPageOgImageOffenders.
+ *  13. every other page the crawl writes exists and names the link preview image its route shows
+ *      (#1135), and the build holds that file: the home page, each playstyle page and, in reveal
+ *      season, /reveals their own, every other prerendered route the home image. See
+ *      findPageOgImageOffenders.
  *
  * Usage: node scripts/check-rendered-html.mjs [targetDir]   (default: apps/web/dist)
  * Bypass: SKIP_RENDER_GUARD=1  (emergency escape hatch)
@@ -58,8 +59,8 @@ import {readFileSync, readdirSync, existsSync} from 'node:fs';
 import {join, dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {CAPTURE_MEDIA} from './lib/captureMedia.mjs';
-import {OG_CARD_DIR, ogFileNamePattern, readMetaContent} from './lib/cardOgImage.mjs';
-import {OG_PAGE_DIR, pageOgKey} from './lib/pageOgImage.mjs';
+import {OG_CARD_DIR, ogFileNamePattern, ogImageUrl, readMetaContent} from './lib/cardOgImage.mjs';
+import {OG_PAGE_DIR, isRevealSeasonActive, pageOgKey} from './lib/pageOgImage.mjs';
 import {SITE_ORIGIN} from './lib/siteOrigin.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -424,7 +425,7 @@ export function findPlaystyleGuideOffenders(targetDir, playstyles, {phones}) {
   }
   const guides = JSON.parse(readFileSync(guidesFile, 'utf8'));
   return playstyles.flatMap(({id, name}) => {
-    const file = join(targetDir, 'playstyles', id, 'index.html');
+    const file = capturedPageFile(targetDir, `/playstyles/${id}`);
     return findGuidePageOffenders({id, name, file, guide: guides[id]}, phones);
   });
 }
@@ -440,7 +441,7 @@ export function findPlaystyleGuideOffenders(targetDir, playstyles, {phones}) {
  */
 function previewImageProblem(targetDir, html, {dir, pattern, expected, issue}) {
   const og = readMetaContent(html, {attr: 'property', key: 'og:image'});
-  const prefix = `${SITE_ORIGIN}/${dir}/`;
+  const prefix = ogImageUrl(dir, '');
   const file = og?.startsWith(prefix) ? og.slice(prefix.length) : null;
   if (!pattern.test(file ?? '')) return `og:image is "${og ?? '(none)'}", not ${expected} (${issue})`;
   const twitter = readMetaContent(html, {attr: 'name', key: 'twitter:image'});
@@ -467,7 +468,7 @@ export function findOgImageProblem(targetDir, card, html) {
  */
 export function findOgImageOffenders(targetDir, cards, cardPath) {
   return cards.flatMap((card) => {
-    const file = join(targetDir, cardPath(card), 'index.html');
+    const file = capturedPageFile(targetDir, cardPath(card));
     if (!existsSync(file)) return [];
     const reason = findOgImageProblem(targetDir, card, readFileSync(file, 'utf8'));
     return reason ? [{file, reason}] : [];
@@ -475,22 +476,36 @@ export function findOgImageOffenders(targetDir, cards, cardPath) {
 }
 
 /** The page the crawl writes for `route`. */
-const capturedPageFile = (targetDir, route) => join(targetDir, route, 'index.html');
+function capturedPageFile(targetDir, route) {
+  return join(targetDir, route, 'index.html');
+}
 
 /**
- * Check 13 (#1135): every page in `routes` the crawl wrote names the image pageOgKey gives its
- * route, its own or the home image, and the build holds the file. A page left with the site
- * banner means its image, or the home image, failed to draw. A page the crawl never wrote is
- * skipped: /reveals is written in reveal season only, and checks 9 and 11 and the crawl's own
- * failure rate catch a missing page.
+ * The routes check 13 reads: every route the crawl writes but the card pages (prerender.mjs),
+ * /reveals only in reveal season, by the test the crawl uses to decide whether to capture it.
+ *
+ * @param {string[]} staticRoutes - apps/web/src/prerenderedRoutes.json
+ * @param {Array<{id: string}>} playstyles - every playstyle, from the engine
+ * @param {object | null} preview - the build's data/previewCards.json, or null without one
+ */
+export function ogPageRoutes(staticRoutes, playstyles, preview) {
+  const reveals = isRevealSeasonActive(preview) ? ['/reveals'] : [];
+  return [...staticRoutes, ...playstyles.map(({id}) => `/playstyles/${id}`), ...reveals];
+}
+
+/**
+ * Check 13: every page in `routes` names the image pageOgKey gives its route, its own or
+ * the home image, and the build holds the file. A page left with the site banner means its image,
+ * or the home image, failed to draw. A page the crawl never wrote fails too: Vercel would serve
+ * it the home page's capture, title and image included.
  *
  * @param {string} targetDir - build output root
- * @param {string[]} routes - the routes to read: every prerendered route but the card pages
+ * @param {string[]} routes - the routes to read (ogPageRoutes)
  */
 export function findPageOgImageOffenders(targetDir, routes) {
   return routes.flatMap((route) => {
     const file = capturedPageFile(targetDir, route);
-    if (!existsSync(file)) return [];
+    if (!existsSync(file)) return [{file, reason: 'prerendered page missing, so it serves the home page (#1135)'}];
     const key = pageOgKey(route);
     const reason = previewImageProblem(targetDir, readFileSync(file, 'utf8'), {
       dir: OG_PAGE_DIR,
@@ -555,7 +570,7 @@ export function selectSampleCards(cards) {
  * @returns {Array<{file: string, reason: string}>} empty when the page is sound
  */
 function findCardPageOffenders(targetDir, card, route, {sdkChunks, phones}) {
-  const file = join(targetDir, route, 'index.html');
+  const file = capturedPageFile(targetDir, route);
   if (!existsSync(file)) {
     return [{file, reason: 'prerendered card page missing (crawl did not run?)'}];
   }
@@ -760,12 +775,11 @@ async function main() {
   const phones = process.env.PRERENDER_PHONE !== '0';
   // Check 12 reads every card the build drew a preview image for: each one with art.
   const ogCards = cards.filter((card) => card.imageHash);
-  // Check 13 reads every other route the crawl writes (prerender.mjs), /reveals in season only.
-  const ogPages = [
-    ...JSON.parse(readFileSync(join(ROOT, 'apps/web/src/prerenderedRoutes.json'), 'utf8')),
-    ...playstyles.map(({id}) => `/playstyles/${id}`),
-    '/reveals',
-  ];
+  // Check 13 reads every other route the crawl writes, /reveals in season only.
+  const staticRoutes = JSON.parse(readFileSync(join(ROOT, 'apps/web/src/prerenderedRoutes.json'), 'utf8'));
+  const previewFile = join(targetDir, 'data', 'previewCards.json');
+  const preview = existsSync(previewFile) ? JSON.parse(readFileSync(previewFile, 'utf8')) : null;
+  const ogPages = ogPageRoutes(staticRoutes, playstyles, preview);
   const checks = {sdkChunks, phones, playstyles, ogCards, ogPages};
   const offenders = findOffenders(targetDir, samples, cardPath, checks);
 
@@ -788,8 +802,7 @@ async function main() {
       `lazy SDK chunks checked: ${countBySdk(sdkChunks)}; ` +
       `phone captures ${phones ? 'checked' : 'skipped, PRERENDER_PHONE=0'}; ` +
       `playstyle guides checked on ${playstyles.length} playstyle page(s); ` +
-      `preview images checked on ${ogCards.length} card page(s) and ` +
-      `${ogPages.filter((route) => existsSync(capturedPageFile(targetDir, route))).length} other page(s)).`,
+      `preview images checked on ${ogCards.length} card page(s) and ${ogPages.length} other page(s)).`,
   );
 }
 

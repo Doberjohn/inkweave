@@ -1,5 +1,5 @@
 /**
- * The link preview images of the pages that aren't cards (#1135): the home page, each playstyle
+ * The link preview images of the pages that aren't cards: the home page, each playstyle
  * page and, in reveal season, /reveals. What scripts/generate-og-images.mjs draws for each, the
  * key its file is named by, and which image the crawl (scripts/prerender.mjs) writes into each
  * captured page: a card page its card's own (scripts/lib/cardOgImage.mjs), these pages their
@@ -10,8 +10,7 @@
  * hero card and accent (PLAYSTYLE_UI) and the reveal set's size (PER_INK). The parsers below read
  * those files as text, and the tests fail when the real files stop parsing.
  */
-import {SITE_ORIGIN} from './siteOrigin.mjs';
-import {artOf, inkGlow} from './cardOgImage.mjs';
+import {artOf, inkGlow, ogImageUrl} from './cardOgImage.mjs';
 
 /** Where the images are served, under the deploy's root. */
 export const OG_PAGE_DIR = 'og/page';
@@ -67,13 +66,16 @@ export function parseRevealSet(text) {
 }
 
 /**
- * The code of the set in reveal season, or null: one in previewCards.json whose release date is
- * still ahead. The crawl captures /reveals only then (isRevealSeasonActive in prerender.mjs);
- * the rest of the year the route redirects home.
+ * Is a reveal season live? Only while previewCards.json holds a set whose release date is still
+ * ahead: the rest of the year /reveals redirects home. The crawl captures /reveals by this test
+ * (scripts/prerender.mjs), the generator draws its image by it, and check 13 expects the page by
+ * it, so the three never disagree. Which set the page shows is REVEAL_SET_CODE's business, and
+ * the image follows the page.
  */
-export function revealSeasonSet(preview, now = new Date()) {
-  const inSeason = ([, set]) => set?.releaseDate && new Date(set.releaseDate) > now;
-  return Object.entries(preview?.sets ?? {}).find(inSeason)?.[0] ?? null;
+export function isRevealSeasonActive(preview, now = new Date()) {
+  return Object.values(preview?.sets ?? {}).some(
+    (set) => set?.releaseDate && new Date(set.releaseDate) > now,
+  );
 }
 
 /** A card a fan can show: one with art, and not a Location, whose art lies sideways. */
@@ -154,13 +156,10 @@ export function revealsOgData(revealed, {code, name, total}) {
   };
 }
 
-/** The image's absolute URL, as og:image needs it. */
-const pageOgImageUrl = (fileName) => `${SITE_ORIGIN}/${OG_PAGE_DIR}/${fileName}`;
-
 /** Each page's image, `{url, alt}`, by route, from the record the generator saved. */
 export function pageOgImagesByRoute(record) {
   return new Map(
-    Object.entries(record).map(([route, {file, alt}]) => [route, {url: pageOgImageUrl(file), alt}]),
+    Object.entries(record).map(([route, {file, alt}]) => [route, {url: ogImageUrl(OG_PAGE_DIR, file), alt}]),
   );
 }
 

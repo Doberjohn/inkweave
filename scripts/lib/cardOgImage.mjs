@@ -150,8 +150,8 @@ export function ogFileName(id, jpegBytes) {
 /** The pattern a saved image's file name matches, for `id`. */
 export const ogFileNamePattern = (id) => new RegExp(`^${id}\\.[0-9a-f]{16}\\.jpg$`);
 
-/** The image's absolute URL, as og:image needs it. */
-const ogImageUrl = (fileName) => `${SITE_ORIGIN}/${OG_CARD_DIR}/${fileName}`;
+/** An image's absolute URL, as og:image needs it: a card's in OG_CARD_DIR, a page's in og/page. */
+export const ogImageUrl = (dir, fileName) => `${SITE_ORIGIN}/${dir}/${fileName}`;
 
 /**
  * The tags that carry a page's preview image. index.html sets each one once, for the site
@@ -209,7 +209,7 @@ export function ogImagesByRoute(cards, manifest, cardPath) {
       .filter((card) => manifest[card.id])
       .map((card) => {
         const {file, alt} = manifest[card.id];
-        return [cardPath(card), {url: ogImageUrl(file), alt}];
+        return [cardPath(card), {url: ogImageUrl(OG_CARD_DIR, file), alt}];
       }),
   );
 }

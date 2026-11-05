@@ -11,6 +11,7 @@ import {
   findOgImageOffenders,
   findOrphanImagePreloads,
   findPageOgImageOffenders,
+  ogPageRoutes,
   findLazySdkPreloads,
   findPhoneCaptureProblems,
   findPlaystyleGuideOffenders,
@@ -754,12 +755,19 @@ describe('findPageOgImageOffenders (check 13, #1135)', () => {
     for (const file of [HOME, BOUNCE]) fs.writeFileSync(path.join(dist, 'og', 'page', file), 'jpeg');
   }
 
-  const ROUTES = ['/', '/playstyles/bounce', '/browse', '/reveals'];
-  const check13 = () => findPageOgImageOffenders(dist, ROUTES);
+  const ROUTES = ['/', '/playstyles/bounce', '/browse'];
+  const check13 = (routes = ROUTES) => findPageOgImageOffenders(dist, routes);
 
-  it('passes pages that name their own image or the home image, and skips /reveals off season', () => {
+  it('passes pages that name their own image or the home image', () => {
     seedPages();
     expect(check13()).toEqual([]);
+  });
+
+  it('fails a page the crawl never wrote, which would serve the home page', () => {
+    seedPages();
+    expect(check13([...ROUTES, '/reveals'])).toEqual([
+      {file: routeFile('/reveals'), reason: 'prerendered page missing, so it serves the home page (#1135)'},
+    ]);
   });
 
   it('fails a page that kept the site banner', () => {
@@ -774,7 +782,7 @@ describe('findPageOgImageOffenders (check 13, #1135)', () => {
     seedPages();
     seedPage('/playstyles/bounce', imageTags(url(HOME)));
     seedPage('/reveals', imageTags(url(HOME)));
-    expect(check13().map((o) => o.reason)).toEqual([
+    expect(check13([...ROUTES, '/reveals']).map((o) => o.reason)).toEqual([
       `og:image is "${url(HOME)}", not the playstyle-bounce preview image (#1135)`,
       `og:image is "${url(HOME)}", not the reveals preview image (#1135)`,
     ]);
@@ -788,6 +796,20 @@ describe('findPageOgImageOffenders (check 13, #1135)', () => {
       `twitter:image is "${SITE_ORIGIN}/og-image.png", not its og:image (#1135)`,
       `its preview image ${BOUNCE} is missing from the build (#1135)`,
     ]);
+  });
+
+  it('reads /reveals only in reveal season, as the crawl captures it', () => {
+    const now = Date.now();
+    const preview = (days) => ({sets: {15: {releaseDate: new Date(now + days * 86_400_000).toISOString()}}});
+    const playstyles = [{id: 'bounce'}];
+    expect(ogPageRoutes(['/', '/browse'], playstyles, preview(30))).toEqual([
+      '/',
+      '/browse',
+      '/playstyles/bounce',
+      '/reveals',
+    ]);
+    expect(ogPageRoutes(['/'], playstyles, preview(-30))).toEqual(['/', '/playstyles/bounce']);
+    expect(ogPageRoutes(['/'], playstyles, null)).toEqual(['/', '/playstyles/bounce']);
   });
 
   it('runs inside findOffenders for the routes it is given, and not without them', () => {
