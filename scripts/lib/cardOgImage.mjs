@@ -89,13 +89,16 @@ export function pickPartners({groups, pairs}, hasArt) {
   return distinctFirst(ranked, PARTNER_COUNT);
 }
 
-/** A card's art as the template draws it. Locations are printed sideways, so they turn upright. */
-function artOf(card) {
+/** A card's art as the templates draw it. Locations are printed sideways, so they turn upright. */
+export function artOf(card) {
   return {
     src: `/card-images/${card.id}.${card.imageHash}.avif`,
     landscape: card.type === 'Location',
   };
 }
+
+/** The glow around `card`: its ink's, the first ink's for a dual-ink card. */
+export const inkGlow = (card) => INK_GLOW[inksOf(card)[0]] ?? FALLBACK_GLOW;
 
 /** "Ruby · Rare character", for a card with no partners to count. */
 function cardLine(card) {
@@ -121,7 +124,7 @@ export function cardOgData(card, synergyFile, cardsById) {
     hero: artOf(card),
     name: card.name,
     version: card.version ?? '',
-    glow: INK_GLOW[inksOf(card)[0]] ?? FALLBACK_GLOW,
+    glow: inkGlow(card),
     kicker: partnerCount > 0 ? `Pairs with ${cardsWord(partnerCount)}` : cardLine(card),
     partners: partners.map(({id, tag}) => ({...artOf(cardsById.get(id)), tag})),
   };
@@ -148,11 +151,11 @@ export function ogFileName(id, jpegBytes) {
 export const ogFileNamePattern = (id) => new RegExp(`^${id}\\.[0-9a-f]{16}\\.jpg$`);
 
 /** The image's absolute URL, as og:image needs it. */
-export const ogImageUrl = (fileName) => `${SITE_ORIGIN}/${OG_CARD_DIR}/${fileName}`;
+const ogImageUrl = (fileName) => `${SITE_ORIGIN}/${OG_CARD_DIR}/${fileName}`;
 
 /**
  * The tags that carry a page's preview image. index.html sets each one once, for the site
- * banner; a card page swaps their contents for its own image.
+ * banner; the crawl swaps their contents for the page's own image.
  */
 const IMAGE_TAGS = [
   {attr: 'property', key: 'og:image', field: 'url'},
@@ -184,7 +187,7 @@ const escapeAttr = (text) =>
  * holds each tag exactly once: a page without them would keep no image at all, and a second
  * og:image would leave the platform to pick one.
  */
-export function withCardOgImage(html, image) {
+export function withOgImage(html, image) {
   return IMAGE_TAGS.reduce((out, tag) => {
     const found = metaTags(out, tag);
     if (found.length !== 1) throw new Error(`expected one ${tag.key} tag, found ${found.length}`);

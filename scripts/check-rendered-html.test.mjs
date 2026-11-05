@@ -10,6 +10,7 @@ import {
   findOffenders,
   findOgImageOffenders,
   findOrphanImagePreloads,
+  findPageOgImageOffenders,
   findLazySdkPreloads,
   findPhoneCaptureProblems,
   findPlaystyleGuideOffenders,
@@ -726,6 +727,73 @@ describe('findOgImageOffenders (check 12, #1133)', () => {
   it('runs inside findOffenders for the cards it is given, and not without them', () => {
     seedCardPage(imageTags(`${SITE_ORIGIN}/og-image.png`));
     expect(findOffenders(dist, [CARD], cardPath, {ogCards: [CARD]})).toHaveLength(1);
+    expect(findOffenders(dist, [CARD], cardPath)).toEqual([]);
+  });
+});
+
+describe('findPageOgImageOffenders (check 13, #1135)', () => {
+  const HOME = 'home.0123456789abcdef.jpg';
+  const BOUNCE = 'playstyle-bounce.0123456789abcdef.jpg';
+  const url = (file) => `${SITE_ORIGIN}/og/page/${file}`;
+  const imageTags = (og, twitter = og) =>
+    `<meta property="og:image" content="${og}"><meta name="twitter:image" content="${twitter}">`;
+  const routeFile = (route) => path.join(dist, route, 'index.html');
+
+  /** Writes `route`'s page with `tags` in its <head>. */
+  function seedPage(route, tags) {
+    fs.mkdirSync(path.dirname(routeFile(route)), {recursive: true});
+    fs.writeFileSync(routeFile(route), homeHtml(tags));
+  }
+
+  /** The home page, a playstyle page and /browse, each naming its right image, which the build holds. */
+  function seedPages() {
+    seedPage('/', imageTags(url(HOME)));
+    seedPage('/playstyles/bounce', imageTags(url(BOUNCE)));
+    seedPage('/browse', imageTags(url(HOME)));
+    fs.mkdirSync(path.join(dist, 'og', 'page'), {recursive: true});
+    for (const file of [HOME, BOUNCE]) fs.writeFileSync(path.join(dist, 'og', 'page', file), 'jpeg');
+  }
+
+  const ROUTES = ['/', '/playstyles/bounce', '/browse', '/reveals'];
+  const check13 = () => findPageOgImageOffenders(dist, ROUTES);
+
+  it('passes pages that name their own image or the home image, and skips /reveals off season', () => {
+    seedPages();
+    expect(check13()).toEqual([]);
+  });
+
+  it('fails a page that kept the site banner', () => {
+    seedPages();
+    seedPage('/browse', imageTags(`${SITE_ORIGIN}/og-image.png`));
+    expect(check13()).toEqual([
+      {file: routeFile('/browse'), reason: `og:image is "${SITE_ORIGIN}/og-image.png", not the home preview image (#1135)`},
+    ]);
+  });
+
+  it('fails a playstyle page that fell back to the home image, and /reveals without its own', () => {
+    seedPages();
+    seedPage('/playstyles/bounce', imageTags(url(HOME)));
+    seedPage('/reveals', imageTags(url(HOME)));
+    expect(check13().map((o) => o.reason)).toEqual([
+      `og:image is "${url(HOME)}", not the playstyle-bounce preview image (#1135)`,
+      `og:image is "${url(HOME)}", not the reveals preview image (#1135)`,
+    ]);
+  });
+
+  it('fails a page whose twitter:image differs, or whose image the build lacks', () => {
+    seedPages();
+    seedPage('/', imageTags(url(HOME), `${SITE_ORIGIN}/og-image.png`));
+    fs.rmSync(path.join(dist, 'og', 'page', BOUNCE));
+    expect(check13().map((o) => o.reason)).toEqual([
+      `twitter:image is "${SITE_ORIGIN}/og-image.png", not its og:image (#1135)`,
+      `its preview image ${BOUNCE} is missing from the build (#1135)`,
+    ]);
+  });
+
+  it('runs inside findOffenders for the routes it is given, and not without them', () => {
+    seedGoodBuild();
+    seedPage('/', imageTags(`${SITE_ORIGIN}/og-image.png`));
+    expect(findOffenders(dist, [CARD], cardPath, {ogPages: ['/']})).toHaveLength(1);
     expect(findOffenders(dist, [CARD], cardPath)).toEqual([]);
   });
 });

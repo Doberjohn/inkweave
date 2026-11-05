@@ -11,7 +11,7 @@ import {
   ogImagesByRoute,
   pickPartners,
   readMetaContent,
-  withCardOgImage,
+  withOgImage,
 } from '../cardOgImage.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -174,14 +174,14 @@ describe('ogFileName', () => {
   });
 });
 
-describe('withCardOgImage', () => {
+describe('withOgImage', () => {
   const image = {
     url: 'https://inkweave.ink/og/card/1.0123456789abcdef.jpg',
     alt: 'Ariel & "Flounder" $& $\' $$',
   };
 
   it("swaps index.html's image tags and their alt text for the card's, `$` and all, leaving the size tags", () => {
-    const html = withCardOgImage(INDEX_HTML, image);
+    const html = withOgImage(INDEX_HTML, image);
     for (const tag of [
       {attr: 'property', key: 'og:image'},
       {attr: 'name', key: 'twitter:image'},
@@ -200,8 +200,8 @@ describe('withCardOgImage', () => {
       '<meta name="twitter:card"',
       '<meta property="og:image" content="x" />$&',
     );
-    expect(() => withCardOgImage(missing, image)).toThrow('expected one og:image tag, found 0');
-    expect(() => withCardOgImage(doubled, image)).toThrow('expected one og:image tag, found 2');
+    expect(() => withOgImage(missing, image)).toThrow('expected one og:image tag, found 0');
+    expect(() => withOgImage(doubled, image)).toThrow('expected one og:image tag, found 2');
   });
 });
 

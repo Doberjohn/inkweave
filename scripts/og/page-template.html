@@ -1,0 +1,189 @@
+<!doctype html>
+<!--
+  The link preview images of the home page, the playstyle pages and /reveals (#1135), drawn at
+  1200x630 by scripts/generate-og-images.mjs, which serves this page and the build's own files
+  (fonts, brand, card art) from one made-up origin and calls fillPage() once per image. What it
+  fills comes from scripts/lib/pageOgImage.mjs. The look is card-template.html's: the app's colors
+  (packages/ui/src/tokens/theme.ts), the gold frame, and the lockup over inkweave.ink.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: 'Marcellus'; src: url(/fonts/marcellus-400.woff2) format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Jakarta'; src: url(/fonts/plus-jakarta-sans-500.woff2) format('woff2'); font-weight: 500; }
+@font-face { font-family: 'Jakarta'; src: url(/fonts/plus-jakarta-sans-700.woff2) format('woff2'); font-weight: 700; }
+:root { --glow: #ffb900; --gold: #ffb900; --muted: #b8b8cc; --gx: 300px; --gy: 315px; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1200px; height: 630px; overflow: hidden; }
+body {
+  font-family: 'Jakarta', sans-serif; font-weight: 700; color: #e8e8e8; position: relative;
+  background:
+    radial-gradient(ellipse 560px 460px at var(--gx) var(--gy), color-mix(in srgb, var(--glow) 26%, transparent), transparent 70%),
+    radial-gradient(ellipse 760px 520px at 980px 560px, rgba(129, 55, 123, 0.30), transparent 70%),
+    linear-gradient(180deg, #15152b 0%, #0d0d14 60%, #0b0b12 100%);
+}
+.frame { position: absolute; inset: 16px; border: 1.5px solid rgba(255, 185, 0, 0.26); border-radius: 22px; }
+section { display: none; position: absolute; inset: 0; }
+body[data-kind="reveals"] #reveals, body[data-kind="playstyle"] #playstyle, body[data-kind="home"] #home { display: block; }
+
+.kicker { font-size: 18px; line-height: 22px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); display: flex; align-items: center; gap: 10px; }
+.kicker .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; background: var(--glow); box-shadow: 0 0 10px var(--glow); }
+.title { font-family: 'Marcellus', serif; font-weight: 400; color: #fff; margin-top: 16px; overflow-wrap: anywhere; }
+.sub { font-weight: 500; font-size: 26px; line-height: 36px; color: #d6d6e4; margin-top: 18px; }
+.note { font-weight: 500; font-size: 22px; line-height: 32px; color: var(--muted); margin-top: 26px; }
+.label { font-size: 17px; line-height: 20px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-top: 28px; }
+.keys { font-weight: 500; font-size: 21px; line-height: 30px; color: var(--muted); margin-top: 8px; }
+.foot { display: flex; align-items: center; justify-content: space-between; padding-top: 16px; border-top: 1.5px solid rgba(255, 185, 0, 0.25); }
+.foot img { height: 40px; display: block; }
+.foot b { font-size: 23px; color: #fff; }
+
+.col { position: absolute; top: 50px; bottom: 40px; display: flex; flex-direction: column; overflow: hidden; }
+.col .foot { margin-top: auto; }
+
+/* A fan of up to five cards around the hero (c0), as the playstyle gallery's tiles draw them:
+   c1 and c2 beside it, c3 and c4 behind those. */
+.fan { position: absolute; width: 0; height: 0; transform: scale(0.86); }
+.fan .c { position: absolute; transform-origin: 50% 100%; }
+.fan img, .row img { display: block; width: 100%; height: 100%; border-radius: 12px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 0 1.5px rgba(255, 255, 255, 0.12); }
+.fan .c0 img { border-radius: 16px; box-shadow: 0 0 0 3px color-mix(in srgb, var(--glow) 85%, transparent), 0 0 46px color-mix(in srgb, var(--glow) 45%, transparent), 0 20px 50px rgba(0, 0, 0, 0.6); }
+.fan .c0 { width: 236px; height: 330px; left: -118px; top: -175px; z-index: 5; }
+.fan .c1, .fan .c2 { width: 196px; height: 274px; top: -140px; z-index: 3; left: -98px; }
+.fan .c1 { transform: translateX(-108px) rotate(-8deg); }
+.fan .c2 { transform: translateX(108px) rotate(8deg); }
+.fan .c3, .fan .c4 { width: 166px; height: 232px; top: -110px; z-index: 1; left: -83px; filter: brightness(0.85); }
+.fan .c3 { transform: translateX(-196px) rotate(-15deg); }
+.fan .c4 { transform: translateX(196px) rotate(15deg); }
+
+.progress { margin-top: 26px; height: 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); overflow: hidden; width: 420px; flex: none; }
+.progress i { display: block; height: 100%; background: linear-gradient(90deg, #ffb900, #ffd666); border-radius: 999px; box-shadow: 0 0 14px rgba(255, 185, 0, 0.6); }
+
+.row { position: absolute; left: 0; right: 0; top: 330px; display: flex; justify-content: center; gap: 18px; }
+.row .c { width: 160px; height: 223px; }
+.row img { box-shadow: 0 0 0 2.5px color-mix(in srgb, var(--ink) 85%, transparent), 0 0 26px color-mix(in srgb, var(--ink) 50%, transparent), 0 14px 30px rgba(0, 0, 0, 0.6); }
+</style>
+</head>
+<body data-kind="">
+<div class="frame"></div>
+
+<section id="reveals">
+  <div class="col" id="r-col" style="left: 72px; width: 500px;">
+    <div class="kicker"><span class="dot"></span><span id="r-kicker"></span></div>
+    <div class="title" id="r-title"></div>
+    <div class="sub" id="r-sub"></div>
+    <div class="progress"><i id="r-bar"></i></div>
+    <div class="note">Every new card&#8217;s best partners, the day it&#8217;s revealed.</div>
+    <div class="foot"><img src="/brand/lockup.svg" alt=""><b>inkweave.ink</b></div>
+  </div>
+  <div class="fan" id="r-fan" style="left: 880px; top: 340px;"></div>
+</section>
+
+<section id="playstyle">
+  <div class="fan" id="p-fan" style="left: 290px; top: 340px;"></div>
+  <div class="col" id="p-col" style="left: 600px; right: 72px;">
+    <div class="kicker"><span class="dot"></span><span id="p-kicker"></span></div>
+    <div class="title" id="p-title"></div>
+    <div class="sub" id="p-sub"></div>
+    <div class="label">Key cards</div>
+    <div class="keys" id="p-keys"></div>
+    <div class="foot"><img src="/brand/lockup.svg" alt=""><b>inkweave.ink</b></div>
+  </div>
+</section>
+
+<section id="home">
+  <div class="foot" style="position: absolute; left: 72px; right: 72px; top: 44px; border-top: 0; padding-top: 0;"><img src="/brand/lockup.svg" alt=""><b>inkweave.ink</b></div>
+  <div style="position: absolute; left: 72px; right: 72px; top: 120px; text-align: center;">
+    <div class="kicker" style="justify-content: center;">Disney Lorcana synergy finder</div>
+    <div class="title" style="font-size: 62px; line-height: 65px; margin-top: 12px;">Find the cards that work together</div>
+  </div>
+  <div class="row" id="h-row"></div>
+</section>
+
+<script>
+// Title and subline sizes in px, largest first: the first pair the text fits at is used.
+const SIZES = {reveals: [[76, 26], [66, 24], [58, 22], [50, 21]], playstyle: [[84, 26], [74, 24], [64, 22], [56, 21]]};
+const $ = (id) => document.getElementById(id);
+// A face loads only once text uses it: load every face up front, or the first image is fitted
+// in the fallback font.
+const fontsLoaded = Promise.all([...document.fonts].map((face) => face.load()));
+
+function cardNode(className, src) {
+  const node = document.createElement('div');
+  node.className = className;
+  const img = document.createElement('img');
+  img.alt = '';
+  img.src = src;
+  node.append(img);
+  return node;
+}
+
+// The hero first in `srcs`, then the cards beside it, then the ones behind.
+const fillFan = (fan, srcs) => fan.replaceChildren(...srcs.map((src, i) => cardNode(`c c${i}`, src)));
+
+function setSize(el, px, lineHeight) {
+  el.style.fontSize = `${px}px`;
+  el.style.lineHeight = `${Math.round(px * lineHeight)}px`;
+}
+
+const lineCount = (el) => Math.round(el.getBoundingClientRect().height / parseFloat(el.style.lineHeight));
+
+// The title in two lines at most, and nothing past the column's foot.
+function fitText(kind, prefix) {
+  const [title, sub, col] = [$(`${prefix}-title`), $(`${prefix}-sub`), $(`${prefix}-col`)];
+  for (const [titlePx, subPx] of SIZES[kind]) {
+    setSize(title, titlePx, 1.04);
+    setSize(sub, subPx, 1.38);
+    if (lineCount(title) <= 2 && col.scrollHeight <= col.clientHeight) return true;
+  }
+  return false;
+}
+
+const FILL = {
+  reveals(d) {
+    $('r-kicker').textContent = d.kicker;
+    $('r-title').textContent = d.title;
+    $('r-sub').textContent = d.sub;
+    $('r-bar').style.width = `${d.progress * 100}%`;
+    fillFan($('r-fan'), d.cards);
+    return {gx: '872px', fits: fitText('reveals', 'r')};
+  },
+  playstyle(d) {
+    $('p-kicker').textContent = d.kicker;
+    $('p-title').textContent = d.title;
+    // Non-breaking hyphens, so "self-discard" never splits across lines.
+    $('p-sub').textContent = d.sub.replaceAll('-', '‑');
+    $('p-keys').textContent = d.keys;
+    fillFan($('p-fan'), d.cards);
+    return {gx: '300px', fits: fitText('playstyle', 'p')};
+  },
+  home(d) {
+    // A gentle arc: each card tilts and drops by its distance from the middle.
+    const middle = (d.cards.length - 1) / 2;
+    $('h-row').replaceChildren(...d.cards.map(({src, ink}, i) => {
+      const node = cardNode('c', src);
+      const offset = i - middle;
+      node.style.setProperty('--ink', ink);
+      node.style.transform = `translateY(${Math.round(offset * offset * 5.4)}px) rotate(${(offset * 3.6).toFixed(1)}deg)`;
+      return node;
+    }));
+    return {gx: '600px', gy: '470px', fits: true};
+  },
+};
+
+// Draws one image and resolves once every image on it has decoded; a broken image rejects.
+window.fillPage = async ({kind, data}) => {
+  await fontsLoaded;
+  document.body.dataset.kind = kind;
+  const root = document.documentElement.style;
+  root.setProperty('--glow', data.glow ?? '#ffb900');
+  const {gx, gy = '315px', fits} = FILL[kind](data);
+  root.setProperty('--gx', gx);
+  root.setProperty('--gy', gy);
+  const shown = [...document.querySelectorAll(`#${kind} img`)];
+  await Promise.all(shown.map((img) => img.decode()));
+  return {fits};
+};
+</script>
+</body>
+</html>

@@ -25,7 +25,13 @@ import {existsSync} from 'node:fs';
 import {resolve, dirname, join, extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {CAPTURE_MEDIA} from './lib/captureMedia.mjs';
-import {OG_MANIFEST, ogImagesByRoute, withCardOgImage} from './lib/cardOgImage.mjs';
+import {OG_MANIFEST, ogImagesByRoute, withOgImage} from './lib/cardOgImage.mjs';
+import {
+  OG_PAGE_MANIFEST,
+  ogImageForRoute,
+  pageOgImagesByRoute,
+  revealSeasonSet,
+} from './lib/pageOgImage.mjs';
 import {contentType} from './lib/mime.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -66,11 +72,10 @@ const PHONE = {
  * in the future. The season also needs VITE_IS_REVEAL_SEASON at build time, but that
  * is inlined into the bundle and not visible here; the runbook sets both together, and
  * a mismatch only costs one wasted route, which is today's behaviour anyway.
+ * scripts/generate-og-images.mjs draws /reveals' preview image by the same test.
  */
 export function isRevealSeasonActive(preview, now = new Date()) {
-  return Object.values(preview?.sets ?? {}).some(
-    (set) => set?.releaseDate && new Date(set.releaseDate) > now,
-  );
+  return revealSeasonSet(preview, now) !== null;
 }
 
 async function hasActiveRevealSeason() {
@@ -114,21 +119,28 @@ async function enumerateRoutes() {
   };
 }
 
+/** A record scripts/generate-og-images.mjs saved, or null when it didn't run. */
+async function readOgRecord(record) {
+  const file = join(ROOT, record);
+  if (existsSync(file)) return JSON.parse(await readFile(file, 'utf8'));
+  console.warn(
+    `[prerender] no ${record} (run scripts/generate-og-images.mjs first): ` +
+      'its pages keep the site banner',
+  );
+  return {};
+}
+
 /**
- * Each card page's link preview image, by route, from what scripts/generate-og-images.mjs
- * drew just before the crawl. Without its record every card page keeps the site banner, and
- * check 12 of scripts/check-rendered-html.mjs fails the deploy.
+ * The link preview images scripts/generate-og-images.mjs drew just before the crawl, by route:
+ * each card page's and each page's of its own. A page without one of either gets the home image
+ * (ogImageForRoute). A page left with the site banner fails check 12 or 13 of
+ * scripts/check-rendered-html.mjs.
  */
 async function loadOgImages({cards, cardPath}) {
-  const file = join(ROOT, OG_MANIFEST);
-  if (!existsSync(file)) {
-    console.warn(
-      '[prerender] no card preview images (run scripts/generate-og-images.mjs first): ' +
-        'card pages keep the site banner',
-    );
-    return new Map();
-  }
-  return ogImagesByRoute(cards, JSON.parse(await readFile(file, 'utf8')), cardPath);
+  return {
+    cards: ogImagesByRoute(cards, await readOgRecord(OG_MANIFEST), cardPath),
+    pages: pageOgImagesByRoute(await readOgRecord(OG_PAGE_MANIFEST)),
+  };
 }
 
 /**
@@ -512,8 +524,8 @@ async function captureHtml(page, phone, route, selector) {
 
 /**
  * One attempt at `route` on a fresh page in its worker's desktop context: mark it, add its phone
- * capture, capture it, clean it, point a card page's preview image tags at `ogImage`, write it,
- * report on it. A desktop page that isn't ready is still written, as it always was, but skips the
+ * capture, capture it, clean it, point its preview image tags at `ogImage`, write it, report on
+ * it. A desktop page that isn't ready is still written, as it always was, but skips the
  * phone, since the attempt has failed anyway.
  */
 async function crawlRouteOnce({desktop, phone}, route, selector, ogImage) {
@@ -524,7 +536,7 @@ async function crawlRouteOnce({desktop, phone}, route, selector, ogImage) {
     await page.evaluate(markPrerenderedRoot, route);
     const captured = await captureHtml(page, problem ? undefined : phone, route, selector);
     const cleaned = cleanPrerenderedHtml(captured.html, SHELL_TITLE, `http://localhost:${PORT}`);
-    const html = ogImage ? withCardOgImage(cleaned, ogImage) : cleaned;
+    const html = ogImage ? withOgImage(cleaned, ogImage) : cleaned;
     const outDir = route === '/' ? DIST : join(DIST, route);
     await mkdir(outDir, {recursive: true});
     await writeFile(join(outDir, 'index.html'), html, 'utf8');
@@ -625,7 +637,7 @@ async function main() {
   const worker = async () => {
     const contexts = await openContexts(browser, phones);
     const crawlOnce = (route, selector) =>
-      crawlRouteOnce(contexts, route, selector, ogImages.get(route));
+      crawlRouteOnce(contexts, route, selector, ogImageForRoute(route, ogImages));
     while (idx < routes.length) {
       const route = routes[idx++];
       const r = await crawlRoute(route, crawlOnce);
