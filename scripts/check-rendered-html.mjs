@@ -43,6 +43,10 @@
  *  11. every playstyle page the crawl wrote carries its guide's heading and paragraphs as text,
  *      from the build's data/playstyleGuides.json, in its desktop capture and in its phone
  *      capture, and the crawl wrote at least one (#995): see findPlaystyleGuideOffenders.
+ *  12. every card page the crawl wrote for a card with art names its own link preview image in
+ *      og:image and twitter:image, and the build holds that file (#1133): see findOgImageProblem.
+ *      It reads every card page, not the sample: a card scripts/generate-og-images.mjs failed to
+ *      draw keeps the site banner, and only this check notices.
  *
  * Usage: node scripts/check-rendered-html.mjs [targetDir]   (default: apps/web/dist)
  * Bypass: SKIP_RENDER_GUARD=1  (emergency escape hatch)
@@ -51,6 +55,7 @@ import {readFileSync, readdirSync, existsSync} from 'node:fs';
 import {join, dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {CAPTURE_MEDIA} from './lib/captureMedia.mjs';
+import {OG_CARD_DIR, ogFileNamePattern, ogImageUrl, readMetaContent} from './lib/cardOgImage.mjs';
 import {SITE_ORIGIN} from './lib/siteOrigin.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -420,6 +425,43 @@ export function findPlaystyleGuideOffenders(targetDir, playstyles, {phones}) {
   });
 }
 
+/** The file an og:image URL names under /og/card/, or null when it points anywhere else. */
+function ogImageFile(url) {
+  const prefix = ogImageUrl('');
+  return url?.startsWith(prefix) ? url.slice(prefix.length) : null;
+}
+
+/**
+ * Why a card page's link preview image fails check 12 (#1133), or null when it passes: og:image
+ * names the card's own image, twitter:image names the same, and the build holds the file.
+ */
+export function findOgImageProblem(targetDir, card, html) {
+  const og = readMetaContent(html, {attr: 'property', key: 'og:image'});
+  const file = ogImageFile(og);
+  if (!ogFileNamePattern(card.id).test(file ?? '')) {
+    return `og:image is "${og ?? '(none)'}", not the card's own preview image (#1133)`;
+  }
+  const twitter = readMetaContent(html, {attr: 'name', key: 'twitter:image'});
+  if (twitter !== og) return `twitter:image is "${twitter ?? '(none)'}", not its og:image (#1133)`;
+  if (!existsSync(join(targetDir, OG_CARD_DIR, file))) {
+    return `its preview image ${file} is missing from the build (#1133)`;
+  }
+  return null;
+}
+
+/**
+ * Check 12's offenders among `cards` (#1133). A page the crawl never wrote is skipped: check 1
+ * reports the sampled ones, and the crawl fails itself past 2% missing.
+ */
+export function findOgImageOffenders(targetDir, cards, cardPath) {
+  return cards.flatMap((card) => {
+    const file = join(targetDir, cardPath(card), 'index.html');
+    if (!existsSync(file)) return [];
+    const reason = findOgImageProblem(targetDir, card, readFileSync(file, 'utf8'));
+    return reason ? [{file, reason}] : [];
+  });
+}
+
 /**
  * Choose which card pages this guard verifies.
  *
@@ -608,13 +650,15 @@ function findEntryPageOffenders(targetDir, {sdkChunks, phones}) {
  *   check 11 reads the phone captures (default: true; main reads PRERENDER_PHONE)
  * @param {Array<{id: string, name: string}>} [checks.playstyles] - every playstyle, whose pages
  *   check 11 reads (default: none, which skips it; main reads the engine's)
+ * @param {Array<{id: number}>} [checks.ogCards] - the cards whose pages check 12 reads (default:
+ *   none, which skips it; main passes every card with art)
  * @returns {Array<{file: string, reason: string}>} empty when the build is sound
  */
 export function findOffenders(
   targetDir,
   samples,
   cardPath,
-  {sdkChunks = findLazySdkChunks(targetDir), phones = true, playstyles = []} = {},
+  {sdkChunks = findLazySdkChunks(targetDir), phones = true, playstyles = [], ogCards = []} = {},
 ) {
   // Distinguish "wrong path" from "bad crawl" before anything else. Without this,
   // a mistyped targetDir reports every sampled page as missing and blocks the
@@ -632,6 +676,7 @@ export function findOffenders(
     ...findBrowseHubOffenders(targetDir),
     ...findEntryPageOffenders(targetDir, checks),
     ...findPlaystyleGuideOffenders(targetDir, playstyles, checks),
+    ...findOgImageOffenders(targetDir, ogCards, cardPath),
   ];
 }
 
@@ -664,7 +709,10 @@ async function main() {
   // PRERENDER_PHONE=0 skips the crawl's phone captures (#915), so it skips check 10 with them,
   // and check 11 reads only the desktop captures.
   const phones = process.env.PRERENDER_PHONE !== '0';
-  const offenders = findOffenders(targetDir, samples, cardPath, {sdkChunks, phones, playstyles});
+  // Check 12 reads every card the build drew a preview image for: each one with art.
+  const ogCards = cards.filter((card) => card.imageHash);
+  const checks = {sdkChunks, phones, playstyles, ogCards};
+  const offenders = findOffenders(targetDir, samples, cardPath, checks);
 
   if (offenders.length > 0) {
     console.error(`✖ Render guard failed in "${targetDir}":`);
@@ -684,7 +732,8 @@ async function main() {
     `✓ Prerendered HTML verified in "${targetDir}" (${samples.length} card page(s), /browse and /; ` +
       `lazy SDK chunks checked: ${countBySdk(sdkChunks)}; ` +
       `phone captures ${phones ? 'checked' : 'skipped, PRERENDER_PHONE=0'}; ` +
-      `playstyle guides checked on ${playstyles.length} playstyle page(s)).`,
+      `playstyle guides checked on ${playstyles.length} playstyle page(s); ` +
+      `preview images checked on ${ogCards.length} card page(s)).`,
   );
 }
 

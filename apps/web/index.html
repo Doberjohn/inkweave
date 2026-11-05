@@ -19,9 +19,13 @@
          static canonical here so each route self-references its own URL, not the homepage (#486). -->
 
     <!-- Open Graph: og:title/description/url are set per-route by <Seo>; the image + type
-         below are shared defaults (per-card OG images are a later phase). -->
+         below are shared defaults. The prerender crawl swaps each card page's image and its alt
+         for the card's own (scripts/lib/cardOgImage.mjs), so keep each image tag here exactly
+         once: the crawl fails a card page that holds none or two. -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Inkweave" />
     <meta property="og:image" content="https://inkweave.ink/og-image.png" />
+    <meta property="og:image:alt" content="Inkweave: Master Lorcana Synergies" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="en_US" />
@@ -29,6 +33,7 @@
     <!-- Twitter Card: title/description set per-route by <Seo>; card type + image are defaults. -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://inkweave.ink/og-image.png" />
+    <meta name="twitter:image:alt" content="Inkweave: Master Lorcana Synergies" />
 
     <!-- Fonts (self-hosted; @font-face declared in index.css). Preload the body weight
          so first paint doesn't wait on the CSS to parse. The hero serif isn't preloaded:

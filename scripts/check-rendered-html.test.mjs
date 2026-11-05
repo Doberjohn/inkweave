@@ -8,6 +8,7 @@ import {
   findDesktopOnlyEagerImages,
   findMissingGuideText,
   findOffenders,
+  findOgImageOffenders,
   findOrphanImagePreloads,
   findLazySdkPreloads,
   findPhoneCaptureProblems,
@@ -669,6 +670,62 @@ describe('findPlaystyleGuideOffenders (check 11, #995)', () => {
     seedPlaystyles();
     fs.writeFileSync(playstyleFile('hunny'), playstylePage('hunny', '<h1>Hunny</h1>'));
     expect(findOffenders(dist, [CARD], cardPath, {playstyles: PLAYSTYLES})).toHaveLength(2);
+    expect(findOffenders(dist, [CARD], cardPath)).toEqual([]);
+  });
+});
+
+describe('findOgImageOffenders (check 12, #1133)', () => {
+  const FILE = '1989.0123456789abcdef.jpg';
+  const OWN = `${SITE_ORIGIN}/og/card/${FILE}`;
+  const imageTags = (og, twitter = og) =>
+    `<meta property="og:image" content="${og}"><meta name="twitter:image" content="${twitter}">`;
+  const pageFile = () => path.join(dist, 'card', '1989', CARD.slug, 'index.html');
+
+  /** The card page with `tags` in its <head>, and the image file in the build unless told not to. */
+  function seedCardPage(tags, {imageFile = true} = {}) {
+    seedGoodBuild();
+    fs.writeFileSync(pageFile(), goodCardHtml(CARD).replace('</head>', `${tags}</head>`));
+    if (imageFile) {
+      fs.mkdirSync(path.join(dist, 'og', 'card'), {recursive: true});
+      fs.writeFileSync(path.join(dist, 'og', 'card', FILE), 'jpeg');
+    }
+  }
+
+  const check12 = () => findOgImageOffenders(dist, [CARD], cardPath);
+
+  it("passes a card page whose image tags name the card's own image, which the build holds", () => {
+    seedCardPage(imageTags(OWN));
+    expect(check12()).toEqual([]);
+  });
+
+  it('fails a card page that kept the site banner', () => {
+    seedCardPage(imageTags(`${SITE_ORIGIN}/og-image.png`));
+    expect(check12()).toEqual([
+      {file: pageFile(), reason: `og:image is "${SITE_ORIGIN}/og-image.png", not the card's own preview image (#1133)`},
+    ]);
+  });
+
+  it("fails a card page that names another card's image, or a twitter:image of its own", () => {
+    seedCardPage(imageTags(`${SITE_ORIGIN}/og/card/1936.0123456789abcdef.jpg`));
+    expect(check12()).toHaveLength(1);
+    seedCardPage(imageTags(OWN, `${SITE_ORIGIN}/og-image.png`));
+    expect(check12().map((o) => o.reason)).toEqual([
+      `twitter:image is "${SITE_ORIGIN}/og-image.png", not its og:image (#1133)`,
+    ]);
+  });
+
+  it('fails a card page whose image the build lacks', () => {
+    seedCardPage(imageTags(OWN), {imageFile: false});
+    expect(check12().map((o) => o.reason)).toEqual([`its preview image ${FILE} is missing from the build (#1133)`]);
+  });
+
+  it('skips a card page the crawl never wrote', () => {
+    expect(check12()).toEqual([]);
+  });
+
+  it('runs inside findOffenders for the cards it is given, and not without them', () => {
+    seedCardPage(imageTags(`${SITE_ORIGIN}/og-image.png`));
+    expect(findOffenders(dist, [CARD], cardPath, {ogCards: [CARD]})).toHaveLength(1);
     expect(findOffenders(dist, [CARD], cardPath)).toEqual([]);
   });
 });
