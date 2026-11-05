@@ -29,6 +29,10 @@ Variant printings (a card's alternate art in its `variants`: Epic, Enchanted and
 
 The Ravensburger rewrite in `vercel.json` is now a dev-only fallback, dead in prod since every card has a hashed URL.
 
+### Link preview images
+
+Each card page's `og:image` and `twitter:image` name an image of its own (#1133): the card's art, its name, how many cards it pairs with and its three best partners. `scripts/generate-og-images.mjs` draws them after the web build and before the crawl, from the build's own `allCards.json`, synergy files, fonts and the AVIFs above, filling `scripts/og/card-template.html` once per card in Chromium. It saves each as `dist/og/card/{id}.{hash}.jpg`, the hash being the JPEG's own (sha256 prefix, 16 hex chars), which is what lets `vercel.json` serve `/og/` as `immutable` and what gets Facebook to fetch a changed image. The drawing repeats byte for byte (the generator turns off Chromium's partial raster, which otherwise antialiased the logo differently from run to run), so a card that didn't change keeps its URL. The crawl (`scripts/prerender.mjs`) then writes each image's URL and alt text into its card page in place of index.html's site banner, so index.html must keep each of those tags exactly once. A card without art keeps the banner. Check 12 of `scripts/check-rendered-html.mjs` fails the deploy when a card page with art kept it, and `build:vercel` runs the crawl even when the image step fails, so that failure costs the deploy, not every page's prerender. Partners and their tags come from `scripts/lib/cardOgImage.mjs`. The images are about 100 KB each, about 120 MiB a deploy, and Vercel uploads only the ones it hasn't seen. Facebook keeps a link's preview until it scrapes the page again, which its Sharing Debugger forces.
+
 ## Dev / CI
 
 `VITE_LOCAL_IMAGES` unset. `resolveImageUrl` rewrites:

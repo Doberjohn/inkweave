@@ -1,0 +1,135 @@
+<!doctype html>
+<!--
+  A card's link preview image (#1133), drawn at 1200x630 by scripts/generate-og-images.mjs, which
+  serves this page and the build's own files (fonts, brand, card art) from one made-up origin and
+  calls fillCard() once per card. What it fills comes from cardOgData in scripts/lib/cardOgImage.mjs.
+  The colors are the app's (packages/ui/src/tokens/theme.ts): bg #0d0d14, gold #ffb900, text #e8e8e8.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@font-face { font-family: 'Marcellus'; src: url(/fonts/marcellus-400.woff2) format('woff2'); font-weight: 400; }
+@font-face { font-family: 'Jakarta'; src: url(/fonts/plus-jakarta-sans-700.woff2) format('woff2'); font-weight: 700; }
+:root { --glow: #ffb900; --gold: #ffb900; --muted: #b8b8cc; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 1200px; height: 630px; overflow: hidden; }
+body {
+  font-family: 'Jakarta', sans-serif; color: #e8e8e8; position: relative;
+  background:
+    radial-gradient(ellipse 520px 460px at 250px 315px, color-mix(in srgb, var(--glow) 26%, transparent), transparent 70%),
+    radial-gradient(ellipse 760px 520px at 980px 560px, rgba(129, 55, 123, 0.30), transparent 70%),
+    linear-gradient(180deg, #15152b 0%, #0d0d14 60%, #0b0b12 100%);
+}
+.frame { position: absolute; inset: 16px; border: 1.5px solid rgba(255, 185, 0, 0.26); border-radius: 22px; }
+
+/* The art. A Location is printed sideways, so its image turns a quarter clockwise in a landscape box. */
+.art { position: relative; }
+.art img { display: block; width: 100%; height: 100%; }
+.art.landscape img { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(90deg); }
+
+.hero { position: absolute; left: 72px; top: 48px; width: 384px; height: 534px; }
+.hero img { border-radius: 20px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--glow) 85%, transparent), 0 0 50px color-mix(in srgb, var(--glow) 45%, transparent), 0 20px 50px rgba(0, 0, 0, 0.6); }
+.hero.landscape { left: 56px; top: 161px; width: 430px; height: 308px; }
+.hero.landscape img { width: 308px; height: 430px; }
+
+.col { position: absolute; left: 516px; right: 72px; top: 50px; bottom: 40px; display: flex; flex-direction: column; overflow: hidden; }
+.kicker { font-weight: 700; font-size: 18px; line-height: 22px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); display: flex; align-items: center; gap: 10px; }
+.kicker .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; background: var(--glow); box-shadow: 0 0 10px var(--glow); }
+.name { font-family: 'Marcellus', serif; color: #fff; margin-top: 14px; overflow-wrap: anywhere; }
+.version { font-family: 'Marcellus', serif; color: var(--gold); margin-top: 2px; white-space: nowrap; overflow: hidden; }
+.solo .head { margin: auto 0; }
+.solo .name { margin-top: 20px; }
+
+.label { margin-top: 22px; font-weight: 700; font-size: 17px; line-height: 20px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+.partners { margin-top: 12px; display: grid; grid-template-columns: repeat(3, 164px); gap: 30px; }
+.p .art { width: 164px; height: 229px; }
+.p img { border-radius: 10px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55), 0 0 0 1.5px rgba(255, 255, 255, 0.12); }
+.p .art.landscape img { width: 118px; height: 164px; border-radius: 8px; }
+.p .tag { margin-top: 10px; font-weight: 700; font-size: 15px; line-height: 18px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); text-align: center; }
+
+.foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; padding-top: 16px; border-top: 1.5px solid rgba(255, 185, 0, 0.25); }
+.foot img { height: 40px; display: block; }
+.foot b { font-size: 23px; font-weight: 700; color: #fff; }
+</style>
+</head>
+<body>
+<div class="frame"></div>
+<div class="art hero" id="hero"><img alt=""></div>
+<div class="col" id="col">
+  <div class="head">
+    <div class="kicker"><span class="dot"></span><span id="kicker"></span></div>
+    <div class="name" id="name"></div>
+    <div class="version" id="version"></div>
+  </div>
+  <div id="row">
+    <div class="label">Best partners</div>
+    <div class="partners" id="partners"></div>
+  </div>
+  <div class="foot"><img src="/brand/lockup.svg" alt=""><b>inkweave.ink</b></div>
+</div>
+<script>
+// Name and version sizes in px, largest first: the first pair the card's text fits at is used.
+const SIZES = {partners: [[58, 40], [52, 36], [46, 32], [40, 28], [36, 26]], solo: [[84, 58], [72, 50], [62, 44], [54, 38], [46, 32]]};
+const $ = (id) => document.getElementById(id);
+// A face loads only once text uses it, and the name and version are empty until the first card:
+// load every face up front, or each page's first card is fitted in the fallback font.
+const fontsLoaded = Promise.all([...document.fonts].map((face) => face.load()));
+
+function setArt(box, {src, landscape}) {
+  box.classList.toggle('landscape', landscape);
+  box.querySelector('img').src = src;
+}
+
+function partnerNode({tag, ...art}) {
+  const node = document.createElement('div');
+  node.className = 'p';
+  node.innerHTML = '<div class="art"><img alt=""></div><div class="tag"></div>';
+  setArt(node.querySelector('.art'), art);
+  node.querySelector('.tag').textContent = tag;
+  return node;
+}
+
+function setSize(el, px) {
+  el.style.fontSize = `${px}px`;
+  el.style.lineHeight = `${Math.round(px * 1.05)}px`;
+}
+
+const lineCount = (el) => Math.round(el.getBoundingClientRect().height / parseFloat(el.style.lineHeight));
+
+// Name in two lines at most, version in one, tags in two, and nothing past the column's foot.
+function fits() {
+  const tagsFit = [...document.querySelectorAll('.tag')].every((tag) => tag.getBoundingClientRect().height <= 37);
+  const versionFits = $('version').scrollWidth <= $('version').clientWidth;
+  return lineCount($('name')) <= 2 && versionFits && tagsFit && $('col').scrollHeight <= $('col').clientHeight;
+}
+
+function fitText(sizes) {
+  for (const [name, version] of sizes) {
+    setSize($('name'), name);
+    setSize($('version'), version);
+    if (fits()) return true;
+  }
+  return false;
+}
+
+// Fills one card and resolves once every image has decoded; a broken image rejects.
+window.fillCard = async (data) => {
+  await fontsLoaded;
+  document.documentElement.style.setProperty('--glow', data.glow);
+  setArt($('hero'), data.hero);
+  $('kicker').textContent = data.kicker;
+  $('name').textContent = data.name;
+  $('version').textContent = data.version;
+  $('partners').replaceChildren(...data.partners.map(partnerNode));
+  const solo = data.partners.length === 0;
+  $('row').hidden = solo;
+  $('col').classList.toggle('solo', solo);
+  const fitted = fitText(solo ? SIZES.solo : SIZES.partners);
+  await Promise.all([...document.images].map((img) => img.decode()));
+  return {fits: fitted};
+};
+</script>
+</body>
+</html>

@@ -19,7 +19,12 @@ export default tseslint.config(
   {
     // Their page.addInitScript, page.evaluate and page.waitForFunction callbacks run in the
     // browser's page, not Node.
-    files: ['scripts/prerender.mjs', 'scripts/check-prerender-handoff.mjs', 'scripts/check-sw-update.mjs'],
+    files: [
+      'scripts/prerender.mjs',
+      'scripts/check-prerender-handoff.mjs',
+      'scripts/check-sw-update.mjs',
+      'scripts/generate-og-images.mjs',
+    ],
     languageOptions: {
       globals: {
         window: 'readonly',

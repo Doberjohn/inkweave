@@ -540,6 +540,7 @@ export default defineConfig({
           /^\/card-images-preview\//,
           /^\/data\//,
           /^\/assets\//,
+          /^\/og\//,
         ],
         runtimeCaching: [
           {

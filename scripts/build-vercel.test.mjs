@@ -18,6 +18,20 @@ describe('build:vercel', () => {
     expect(convert?.split(/\s+/)).toContain('--force');
   });
 
+  // The images read the web build's card data and art, and the crawl writes their names into
+  // each card page, so they come between the two.
+  it('draws the card preview images after the web build and before the crawl', () => {
+    const draw = stepIndex('scripts/generate-og-images.mjs');
+    expect(draw).toBeGreaterThan(stepIndex('pnpm build:web'));
+    expect(draw).toBeLessThan(stepIndex('scripts/prerender.mjs'));
+  });
+
+  // A failed image step must not cost every page its prerender: check 12 fails the deploy instead.
+  it('runs the crawl even when the preview images fail', () => {
+    const draw = steps[stepIndex('scripts/generate-og-images.mjs')];
+    expect(draw).toMatch(/^\(node scripts\/generate-og-images\.mjs \|\| echo '[^']*'\)$/);
+  });
+
   it('converts the raws before download-card-images copies the preview AVIFs', () => {
     const convert = stepIndex('scripts/convert-preview-images.mjs');
     expect(convert).toBeGreaterThan(-1);

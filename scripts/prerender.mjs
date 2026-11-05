@@ -25,6 +25,7 @@ import {existsSync} from 'node:fs';
 import {resolve, dirname, join, extname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {CAPTURE_MEDIA} from './lib/captureMedia.mjs';
+import {OG_MANIFEST, ogImagesByRoute, withCardOgImage} from './lib/cardOgImage.mjs';
 import {contentType} from './lib/mime.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -108,7 +109,26 @@ async function enumerateRoutes() {
     ],
     playstyleRoutes: getAllPlaystyles().map((p) => `/playstyles/${p.id}`),
     cardRoutes: cardData.cards.map((c) => cardPath(c)),
+    cards: cardData.cards,
+    cardPath,
   };
+}
+
+/**
+ * Each card page's link preview image, by route, from what scripts/generate-og-images.mjs
+ * drew just before the crawl. Without its record every card page keeps the site banner, and
+ * check 12 of scripts/check-rendered-html.mjs fails the deploy.
+ */
+async function loadOgImages({cards, cardPath}) {
+  const file = join(ROOT, OG_MANIFEST);
+  if (!existsSync(file)) {
+    console.warn(
+      '[prerender] no card preview images (run scripts/generate-og-images.mjs first): ' +
+        'card pages keep the site banner',
+    );
+    return new Map();
+  }
+  return ogImagesByRoute(cards, JSON.parse(await readFile(file, 'utf8')), cardPath);
 }
 
 /**
@@ -492,17 +512,19 @@ async function captureHtml(page, phone, route, selector) {
 
 /**
  * One attempt at `route` on a fresh page in its worker's desktop context: mark it, add its phone
- * capture, capture it, clean it, write it, report on it. A desktop page that isn't ready is
- * still written, as it always was, but skips the phone, since the attempt has failed anyway.
+ * capture, capture it, clean it, point a card page's preview image tags at `ogImage`, write it,
+ * report on it. A desktop page that isn't ready is still written, as it always was, but skips the
+ * phone, since the attempt has failed anyway.
  */
-async function crawlRouteOnce({desktop, phone}, route, selector) {
+async function crawlRouteOnce({desktop, phone}, route, selector, ogImage) {
   let page;
   try {
     page = await desktop.newPage();
     const problem = await loadRoute(page, route, selector);
     await page.evaluate(markPrerenderedRoot, route);
     const captured = await captureHtml(page, problem ? undefined : phone, route, selector);
-    const html = cleanPrerenderedHtml(captured.html, SHELL_TITLE, `http://localhost:${PORT}`);
+    const cleaned = cleanPrerenderedHtml(captured.html, SHELL_TITLE, `http://localhost:${PORT}`);
+    const html = ogImage ? withCardOgImage(cleaned, ogImage) : cleaned;
     const outDir = route === '/' ? DIST : join(DIST, route);
     await mkdir(outDir, {recursive: true});
     await writeFile(join(outDir, 'index.html'), html, 'utf8');
@@ -579,7 +601,9 @@ async function main() {
   const only = process.env.PRERENDER_URL;
   const sample = Number(process.env.PRERENDER_SAMPLE || 0);
   const phones = process.env.PRERENDER_PHONE !== '0';
-  const routes = selectRoutes(await enumerateRoutes(), only, sample);
+  const enumerated = await enumerateRoutes();
+  const routes = selectRoutes(enumerated, only, sample);
+  const ogImages = await loadOgImages(enumerated);
 
   console.log(
     `[prerender] ${routes.length} routes @ concurrency ${CONCURRENCY}${sample ? ' (SAMPLE)' : ''}, ` +
@@ -600,7 +624,8 @@ async function main() {
   // state behind for the next.
   const worker = async () => {
     const contexts = await openContexts(browser, phones);
-    const crawlOnce = (route, selector) => crawlRouteOnce(contexts, route, selector);
+    const crawlOnce = (route, selector) =>
+      crawlRouteOnce(contexts, route, selector, ogImages.get(route));
     while (idx < routes.length) {
       const route = routes[idx++];
       const r = await crawlRoute(route, crawlOnce);
