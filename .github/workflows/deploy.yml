@@ -30,14 +30,17 @@ on:
   push:
     branches: [master]
   # A dry run for PRs that change this file, the script that runs `vercel deploy` (#698), the
-  # prerender crawl (#867), the card data guard and the code it checks (#929), or the card preview
-  # images and their check (#1133): no other PR job builds with production's VITE_LOCAL_IMAGES and
-  # card art, checks the card data, or draws the images. Build, verify and stage-deploy, never
+  # prerender crawl (#867), the card data guard and the code it checks (#929), the card preview
+  # images and their check (#1133), or the root package.json, whose build:vercel is the deploy's
+  # build order: no other PR job runs build:vercel, builds with production's VITE_LOCAL_IMAGES and
+  # card art, checks the card data, or draws the images. The lockfile stays out: every Dependabot
+  # bump changes it, and CI's build and E2E cover those. Build, verify and stage-deploy, never
   # promote.
   pull_request:
     branches: [master]
     paths:
       - '.github/workflows/deploy.yml'
+      - 'package.json'
       - 'scripts/vercel-deploy.mjs'
       - 'scripts/prerender.mjs'
       - 'scripts/check-card-data.mjs'
