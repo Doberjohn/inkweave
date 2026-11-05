@@ -1,15 +1,17 @@
 import {useState} from 'react';
 import {useHover} from 'inkweave-ui/hooks/useHover';
-import {COLORS, DURATION, EASING, FONT_SIZES, FONT_WEIGHT, SPACING} from '../constants';
+import {COLORS, DURATION, EASING, FONT_SIZES, FONT_WEIGHT, SPACING, TOUCH_TARGET} from '../constants';
 
 /**
  * "Developed and designed by Recurssive", the studio credit at the foot of the Footer.
  *
- * Inkweave's own copy of Recurssive's shared footer credit (the plain variant), restyled with
- * Inkweave's tokens (owner, 2026-11-05) instead of Recurssive's purples, so it passes the
- * design-token rules with no exemption. It rests in textMuted like the footer's links and lifts
- * to text on hover or keyboard focus, and the mark turns the brand gold. It is no longer
- * generated from the shared snippet, so a change there has to be carried over by hand.
+ * A hand-kept copy of the plain variant of Recurssive's shared footer credit, so a change to the
+ * shared snippet has to be carried over by hand. It is styled with Inkweave's tokens (owner,
+ * 2026-11-05) so it passes the design-token rules with no exemption: it rests in textMuted like
+ * the footer's links, lifts to text on hover or keyboard focus, and the mark turns the brand gold.
+ *
+ * minHeight TOUCH_TARGET: it stands alone on the footer's last row, not inside a sentence, so its
+ * 10px line would otherwise be its whole tap area (WCAG 2.5.8).
  *
  * rel="nofollow": the same link repeats in the footer of every page, and Google lists
  * "widely distributed links in the footers or templates of various sites" under link spam.
@@ -43,6 +45,7 @@ export function RecurssiveCredit() {
       style={{
         display: 'inline-flex',
         alignItems: 'center',
+        minHeight: TOUCH_TARGET,
         gap: `${SPACING.xs}px`,
         color: lit ? COLORS.text : COLORS.textMuted,
         fontSize: `${FONT_SIZES.xs}px`,
