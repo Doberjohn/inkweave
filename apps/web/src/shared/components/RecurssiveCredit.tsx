@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import {useHover} from 'inkweave-ui/hooks/useHover';
+import {focusedByKeyboard} from 'inkweave-ui/utils/focusedByKeyboard';
 import {COLORS, DURATION, EASING, FONT_SIZES, FONT_WEIGHT, SPACING, TOUCH_TARGET} from '../constants';
 
 /**
@@ -40,7 +41,9 @@ export function RecurssiveCredit() {
       target="_blank"
       rel="noopener nofollow"
       {...hoverProps}
-      onFocus={() => setFocused(true)}
+      // Keyboard focus only: a click's focus outlasts the click (the link opens a new tab, and
+      // focus is still here on the way back), which would leave the credit lit.
+      onFocus={(e) => setFocused(focusedByKeyboard(e.currentTarget))}
       onBlur={() => setFocused(false)}
       style={{
         display: 'inline-flex',
