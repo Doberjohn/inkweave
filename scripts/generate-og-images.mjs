@@ -16,8 +16,8 @@
  * SKIP_PRERENDER=1 skips it with the crawl: staging is never indexed or shared (#741).
  */
 import {createRequire} from 'node:module';
-import {existsSync} from 'node:fs';
-import {mkdir, readFile, rm, writeFile} from 'node:fs/promises';
+import {existsSync, readFileSync} from 'node:fs';
+import {mkdir, rm, writeFile} from 'node:fs/promises';
 import {dirname, join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {
@@ -42,12 +42,11 @@ const PAGES = 4;
 const ATTEMPTS = 3;
 const JPEG_QUALITY = 80;
 
-async function readJson(file) {
-  return JSON.parse(await readFile(file, 'utf8'));
-}
+// Read one at a time: about 1,200 synergy files read at once can run out of file descriptors.
+const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
 
 /** The card's synergy file, or null: precompute writes none for a card without synergies. */
-async function readSynergyFile(id) {
+function readSynergyFile(id) {
   const file = join(DIST, 'data', 'synergies', `${id}.json`);
   return existsSync(file) ? readJson(file) : null;
 }
@@ -117,15 +116,11 @@ async function drawAll(browser, jobs, result) {
 }
 
 /** What each card's image shows; a card without art has nothing to draw. */
-async function planJobs(cards) {
+function planJobs(cards) {
   const cardsById = new Map(cards.map((card) => [String(card.id), card]));
-  const drawable = cards.filter((card) => card.imageHash);
-  return Promise.all(
-    drawable.map(async (card) => ({
-      card,
-      data: cardOgData(card, await readSynergyFile(card.id), cardsById),
-    })),
-  );
+  return cards
+    .filter((card) => card.imageHash)
+    .map((card) => ({card, data: cardOgData(card, readSynergyFile(card.id), cardsById)}));
 }
 
 function report({manifest, bytes, failed, tight}, cards, seconds) {
@@ -152,8 +147,8 @@ async function main() {
   const started = Date.now();
   // An earlier build's record names files this build doesn't have: never let the crawl read it.
   await rm(join(ROOT, OG_MANIFEST), {force: true});
-  const {cards} = await readJson(join(DIST, 'data', 'allCards.json'));
-  const jobs = await planJobs(cards);
+  const {cards} = readJson(join(DIST, 'data', 'allCards.json'));
+  const jobs = planJobs(cards);
   await rm(join(DIST, OG_CARD_DIR), {recursive: true, force: true});
   await mkdir(join(DIST, OG_CARD_DIR), {recursive: true});
 

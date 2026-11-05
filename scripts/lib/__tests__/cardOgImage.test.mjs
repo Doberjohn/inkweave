@@ -147,7 +147,7 @@ describe('cardOgData', () => {
       partners: [{src: '/card-images/2.hash2.avif', landscape: true, tag: 'Locations'}],
     });
     expect(ogImageAlt(card(1), data)).toBe(
-      'Card 1 - Version and its best Lorcana synergy partners',
+      'Card 1 - Version and its best Lorcana partners on Inkweave',
     );
   });
 
@@ -155,7 +155,7 @@ describe('cardOgData', () => {
     const data = cardOgData(card(1, {color: 'Ruby-Steel', type: 'Action'}), null, partners);
     expect(data.kicker).toBe('Ruby and Steel · Rare action');
     expect(data.partners).toEqual([]);
-    expect(ogImageAlt(card(1), data)).toBe('Card 1 - Version, a Lorcana card');
+    expect(ogImageAlt(card(1), data)).toBe('Card 1 - Version, a Lorcana card on Inkweave');
   });
 
   it("glows in the app's own ink colors (INK_COLORS' borders)", () => {
@@ -177,10 +177,10 @@ describe('ogFileName', () => {
 describe('withCardOgImage', () => {
   const image = {
     url: 'https://inkweave.ink/og/card/1.0123456789abcdef.jpg',
-    alt: 'Ariel & "Flounder"',
+    alt: 'Ariel & "Flounder" $& $\' $$',
   };
 
-  it("swaps index.html's image tags and their alt text for the card's, leaving the size tags", () => {
+  it("swaps index.html's image tags and their alt text for the card's, `$` and all, leaving the size tags", () => {
     const html = withCardOgImage(INDEX_HTML, image);
     for (const tag of [
       {attr: 'property', key: 'og:image'},
@@ -188,8 +188,9 @@ describe('withCardOgImage', () => {
     ]) {
       expect(readMetaContent(html, tag)).toBe(image.url);
     }
-    expect(html).toContain('property="og:image:alt" content="Ariel &amp; &quot;Flounder&quot;"');
-    expect(html).toContain('name="twitter:image:alt" content="Ariel &amp; &quot;Flounder&quot;"');
+    const alt = "Ariel &amp; &quot;Flounder&quot; $&amp; $' $$";
+    expect(html).toContain(`property="og:image:alt" content="${alt}"`);
+    expect(html).toContain(`name="twitter:image:alt" content="${alt}"`);
     expect(readMetaContent(html, {attr: 'property', key: 'og:image:width'})).toBe('1200');
   });
 

@@ -115,7 +115,7 @@ async function enumerateRoutes() {
 }
 
 /**
- * Each card page's link preview image, by route (#1133), from what scripts/generate-og-images.mjs
+ * Each card page's link preview image, by route, from what scripts/generate-og-images.mjs
  * drew just before the crawl. Without its record every card page keeps the site banner, and
  * check 12 of scripts/check-rendered-html.mjs fails the deploy.
  */

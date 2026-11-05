@@ -18,7 +18,7 @@ describe('build:vercel', () => {
     expect(convert?.split(/\s+/)).toContain('--force');
   });
 
-  // #1133: the images read the web build's card data and art, and the crawl writes their names into
+  // The images read the web build's card data and art, and the crawl writes their names into
   // each card page, so they come between the two.
   it('draws the card preview images after the web build and before the crawl', () => {
     const draw = stepIndex('scripts/generate-og-images.mjs');

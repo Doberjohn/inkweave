@@ -432,7 +432,7 @@ function ogImageFile(url) {
 }
 
 /**
- * Why a card page's link preview image fails check 12 (#1133), or null when it passes: og:image
+ * Why a card page's link preview image fails check 12, or null when it passes: og:image
  * names the card's own image, twitter:image names the same, and the build holds the file.
  */
 export function findOgImageProblem(targetDir, card, html) {
@@ -450,7 +450,7 @@ export function findOgImageProblem(targetDir, card, html) {
 }
 
 /**
- * Check 12's offenders among `cards` (#1133). A page the crawl never wrote is skipped: check 1
+ * Check 12's offenders among `cards`. A page the crawl never wrote is skipped: check 1
  * reports the sampled ones, and the crawl fails itself past 2% missing.
  */
 export function findOgImageOffenders(targetDir, cards, cardPath) {

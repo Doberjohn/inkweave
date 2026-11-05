@@ -66,9 +66,8 @@ function rankPartners(pairs) {
 
 /** The first `count` entries of `ranked` whose tags differ, then the next best, in rank order. */
 function distinctFirst(ranked, count) {
-  const firstOfEachTag = ranked
-    .filter((partner, i) => ranked.findIndex(({tag}) => tag === partner.tag) === i)
-    .slice(0, count);
+  const tags = new Set();
+  const firstOfEachTag = ranked.filter(({tag}) => !tags.has(tag) && tags.add(tag)).slice(0, count);
   const rest = ranked.filter((partner) => !firstOfEachTag.includes(partner));
   const picked = new Set([...firstOfEachTag, ...rest.slice(0, count - firstOfEachTag.length)]);
   return ranked.filter((partner) => picked.has(partner));
@@ -131,8 +130,8 @@ export function cardOgData(card, synergyFile, cardsById) {
 /** The image's alt text, which says what it shows. */
 export function ogImageAlt(card, data) {
   return data.partners.length > 0
-    ? `${card.fullName} and its best Lorcana synergy partners`
-    : `${card.fullName}, a Lorcana card`;
+    ? `${card.fullName} and its best Lorcana partners on Inkweave`
+    : `${card.fullName}, a Lorcana card on Inkweave`;
 }
 
 /**
@@ -189,8 +188,10 @@ export function withCardOgImage(html, image) {
   return IMAGE_TAGS.reduce((out, tag) => {
     const found = metaTags(out, tag);
     if (found.length !== 1) throw new Error(`expected one ${tag.key} tag, found ${found.length}`);
-    const value = escapeAttr(image[tag.field]);
-    return out.replace(found[0], found[0].replace(/\bcontent="[^"]*"/, `content="${value}"`));
+    // Replacer functions, so a `$` in the alt text is never read as a replacement pattern.
+    const content = `content="${escapeAttr(image[tag.field])}"`;
+    const swapped = found[0].replace(/\bcontent="[^"]*"/, () => content);
+    return out.replace(found[0], () => swapped);
   }, html);
 }
 
