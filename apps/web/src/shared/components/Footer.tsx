@@ -1,6 +1,7 @@
 import {Link} from 'react-router-dom';
 import {INK_HUBS} from '../../features/cards/inkHubs';
 import {APP_NAME, COLORS, FONTS, FONT_SIZES, INK_COLORS, SPACING, FONT_WEIGHT, LINE_HEIGHT} from '../constants';
+import {RecurssiveCredit} from './RecurssiveCredit';
 
 /**
  * Site footer: legal/product navigation plus the Ravensburger Community Code
@@ -179,6 +180,8 @@ export function Footer() {
           </a>
           .
         </p>
+
+        <RecurssiveCredit />
       </div>
     </footer>
   );
