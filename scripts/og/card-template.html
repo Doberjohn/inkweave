@@ -10,7 +10,6 @@
 <meta charset="utf-8">
 <style>
 @font-face { font-family: 'Marcellus'; src: url(/fonts/marcellus-400.woff2) format('woff2'); font-weight: 400; }
-@font-face { font-family: 'Jakarta'; src: url(/fonts/plus-jakarta-sans-600.woff2) format('woff2'); font-weight: 600; }
 @font-face { font-family: 'Jakarta'; src: url(/fonts/plus-jakarta-sans-700.woff2) format('woff2'); font-weight: 700; }
 :root { --glow: #ffb900; --gold: #ffb900; --muted: #b8b8cc; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -74,6 +73,9 @@ body {
 // Name and version sizes in px, largest first: the first pair the card's text fits at is used.
 const SIZES = {partners: [[58, 40], [52, 36], [46, 32], [40, 28], [36, 26]], solo: [[84, 58], [72, 50], [62, 44], [54, 38], [46, 32]]};
 const $ = (id) => document.getElementById(id);
+// A face loads only once text uses it, and the name and version are empty until the first card:
+// load every face up front, or each page's first card is fitted in the fallback font.
+const fontsLoaded = Promise.all([...document.fonts].map((face) => face.load()));
 
 function setArt(box, {src, landscape}) {
   box.classList.toggle('landscape', landscape);
@@ -114,6 +116,7 @@ function fitText(sizes) {
 
 // Fills one card and resolves once every image has decoded; a broken image rejects.
 window.fillCard = async (data) => {
+  await fontsLoaded;
   document.documentElement.style.setProperty('--glow', data.glow);
   setArt($('hero'), data.hero);
   $('kicker').textContent = data.kicker;

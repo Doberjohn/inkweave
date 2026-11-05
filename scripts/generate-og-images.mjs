@@ -8,9 +8,10 @@
  * cardOgData (scripts/lib/cardOgImage.mjs) and saved as a JPEG named by a hash of its bytes.
  *
  * A card it can't draw keeps the site banner, and check 12 of scripts/check-rendered-html.mjs
- * then fails the deploy naming it; the crawl still runs. It also writes
- * apps/web/node_modules/.cache/og-cards.json, `{[id]: {file, alt}}`, which the crawl reads.
- * That stays out of dist, so the deploy doesn't serve it.
+ * then fails the deploy naming it. build:vercel runs the crawl whether this succeeds or not, and
+ * this writes what it drew even when a drawing page fails to open, so one failure costs only its
+ * own cards. The record is apps/web/node_modules/.cache/og-cards.json, `{[id]: {file, alt}}`,
+ * which the crawl reads. That stays out of dist, so the deploy doesn't serve it.
  *
  * SKIP_PRERENDER=1 skips it with the crawl: staging is never indexed or shared (#741).
  */
@@ -64,7 +65,6 @@ async function openPage(browser) {
   const page = await browser.newPage({viewport: OG_IMAGE_SIZE});
   await page.route(`${ORIGIN}/**`, serveFromDist);
   await page.goto(`${ORIGIN}/`);
-  await page.evaluate(() => document.fonts.ready);
   return page;
 }
 
@@ -83,24 +83,34 @@ async function drawCard(page, data) {
   throw lastError;
 }
 
-/** Draws `jobs` on PAGES pages at once and saves each image, recording it in `result`. */
+const firstLine = (error) => String(error?.message ?? error).split('\n')[0];
+
+/** Draws one card and saves its image, recording it in `result`. */
+async function drawJob(page, {card, data}, result) {
+  try {
+    const {jpeg, fits} = await drawCard(page, data);
+    const file = ogFileName(card.id, jpeg);
+    await writeFile(join(DIST, OG_CARD_DIR, file), jpeg);
+    result.manifest[card.id] = {file, alt: ogImageAlt(card, data)};
+    result.bytes += jpeg.length;
+    if (!fits) result.tight.push(card.fullName);
+  } catch (error) {
+    result.failed.push(`${card.fullName} (${firstLine(error)})`);
+  }
+}
+
+/**
+ * Draws `jobs` on PAGES pages at once. A page that fails to open leaves its share to the others,
+ * and nothing ends the run early, so every card a page could draw is kept.
+ */
 async function drawAll(browser, jobs, result) {
   let next = 0;
   const worker = async () => {
-    const page = await openPage(browser);
-    while (next < jobs.length) {
-      const {card, data} = jobs[next++];
-      try {
-        const {jpeg, fits} = await drawCard(page, data);
-        const file = ogFileName(card.id, jpeg);
-        await writeFile(join(DIST, OG_CARD_DIR, file), jpeg);
-        result.manifest[card.id] = {file, alt: ogImageAlt(card, data)};
-        result.bytes += jpeg.length;
-        if (!fits) result.tight.push(card.fullName);
-      } catch (error) {
-        result.failed.push(`${card.fullName} (${error.message.split('\n')[0]})`);
-      }
-    }
+    const page = await openPage(browser).catch((error) => {
+      console.warn(`[og] a drawing page failed to open: ${firstLine(error)}`);
+    });
+    if (!page) return;
+    while (next < jobs.length) await drawJob(page, jobs[next++], result);
     await page.close();
   };
   await Promise.all(Array.from({length: PAGES}, worker));
@@ -148,14 +158,16 @@ async function main() {
   await mkdir(join(DIST, OG_CARD_DIR), {recursive: true});
 
   const result = {manifest: {}, bytes: 0, failed: [], tight: []};
-  const browser = await chromium.launch();
+  // Partial raster repaints only the part of a tile that changed, which antialiases the logo's
+  // masks differently from run to run, so a card that didn't change would get a new hash.
+  const browser = await chromium.launch({args: ['--disable-partial-raster']});
   try {
     await drawAll(browser, jobs, result);
   } finally {
+    await mkdir(dirname(join(ROOT, OG_MANIFEST)), {recursive: true});
+    await writeFile(join(ROOT, OG_MANIFEST), JSON.stringify(result.manifest));
     await browser.close();
   }
-  await mkdir(dirname(join(ROOT, OG_MANIFEST)), {recursive: true});
-  await writeFile(join(ROOT, OG_MANIFEST), JSON.stringify(result.manifest));
   report(result, cards, Math.round((Date.now() - started) / 1000));
 }
 
