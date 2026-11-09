@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 2,
+  "week": "2026-11-02",
+  "title": "November 2 to 8, 2026",
+  "summary": "Collection mode and friends opened to everyone in beta: sign in with Google or Discord to track the cards you own and share them with friends. Card and playstyle links now show their own preview images, and phones get an account tab.",
+  "sections": {
+    "new": [
+      {
+        "title": "Collection mode, in beta",
+        "body": "Sign in with Google or Discord, then press Collection on Browse to track the cards you own. Each set has its own binder, with a pocket for every printing, promos included, where you count your normal and foil copies. Show what you own or what you're missing, and follow your progress toward a complete set or a master set. Bring in a Dreamborn collection export instead of counting by hand. Your collection is saved to your account, so it's there on any device. The home page's notice links to our Discord for feedback.",
+        "highlight": true,
+        "link": {
+          "label": "Open Browse",
+          "to": "/browse"
+        },
+        "prs": [
+          1085,
+          1107
+        ]
+      },
+      {
+        "title": "Friends",
+        "body": "Your account page's Friends section gives you a friend code to swap with friends. Turn on sharing there and your friends can open your binders, read only, as you can open theirs. On a card you're missing, see which of your friends have it, with their badges on the binder's pockets.",
+        "highlight": true,
+        "link": {
+          "label": "Open your account",
+          "to": "/account"
+        },
+        "prs": [
+          1107
+        ]
+      },
+      {
+        "title": "Link previews",
+        "body": "Sharing a card's link now shows a preview image of its own: the card's art, its name and its three best partners. The home page and each of the 25 playstyle pages have their own preview image too.",
+        "highlight": true,
+        "prs": [
+          1134,
+          1137
+        ]
+      },
+      {
+        "title": "Card facts and About sections",
+        "body": "Card pages have a Card facts toggle under the rules text, which opens to a sentence of the card's printed facts: cost, ink, type, classifications, stats, set and inkwell. The ink pages, Playstyles and Vote end with an About toggle that says what the page holds. An old card link whose name part has changed now opens the card's current page, and an address that isn't a page gets a proper not found page.",
+        "prs": [
+          1106,
+          1110
+        ]
+      }
+    ],
+    "improved": [
+      {
+        "title": "An account tab on phones",
+        "body": "The bottom bar on phones now ends with Sign in, which opens the sign-in dialog in place, or Your account once you're signed in, so your account page is one tap away.",
+        "highlight": true,
+        "prs": [
+          1099
+        ]
+      },
+      {
+        "title": "Privacy policy",
+        "body": "The privacy policy now describes the collection and friends: what is stored with your account, who can see your collection, and what a friend code and friendships keep. It is dated November 2, the day they launched.",
+        "link": {
+          "label": "Read the privacy policy",
+          "to": "/privacy"
+        },
+        "prs": [
+          1089
+        ]
+      },
+      {
+        "title": "Updates when card data changes",
+        "body": "Each version of the site now keeps the card data it was built with, and an update that changes only card data shows the update message and reloads onto it, as other updates do.",
+        "prs": [
+          1097
+        ]
+      },
+      {
+        "title": "Phone sheets close smoothly",
+        "body": "On phones, the friends, mechanics and search sheets now slide away in view when they close, all at one speed.",
+        "prs": [
+          1104
+        ]
+      },
+      {
+        "title": "Footer credit",
+        "body": "The footer now ends with a credit to Recurssive, who develop and design Inkweave.",
+        "prs": [
+          1136
+        ]
+      }
+    ],
+    "fixed": [
+      {
+        "title": "Synergies that fail to load",
+        "body": "When a card's synergies failed to load, its page and the card window read as if it had none, and a comparison link showed the not found page. Both now say \"Couldn't load this card's synergies.\" with Try again, and a comparison link opens once the synergies arrive.",
+        "prs": [
+          1120
+        ]
+      },
+      {
+        "title": "Sign-in when part of the site fails to load",
+        "body": "If the part of the site that handles sign-in failed to load, the sign-in dialog said \"Sign-in is unavailable (auth not configured).\" until the page was reloaded. It now says \"Sign-in could not start. Check your connection and try again.\", and the next press tries again.",
+        "prs": [
+          1124
+        ]
+      },
+      {
+        "title": "Escape and arrow keys in the card window",
+        "body": "Pressing Escape with a comparison's role list open now folds the list instead of closing the card window, and arrow keys on a synergy tile move between tiles instead of paging to the next card.",
+        "prs": [
+          1117
+        ]
+      },
+      {
+        "title": "Keyboard focus after an import",
+        "body": "After importing a Dreamborn export from Browse with the keyboard, pressing Done now puts focus back on the collection's gear button, instead of losing it.",
+        "prs": [
+          1127
+        ]
+      },
+      {
+        "title": "Quick filter clicks",
+        "body": "Two filter clicks made before the page caught up no longer drop the first one, in collection mode too.",
+        "prs": [
+          1097
+        ]
+      }
+    ]
+  },
+  "behindTheScenes": "Plus 15 behind-the-scenes changes: dependency updates, test and tooling work, a card's art kept safe from a dead link, and work on features that aren't switched on yet."
+}
