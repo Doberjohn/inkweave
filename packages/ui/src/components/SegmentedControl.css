@@ -30,7 +30,7 @@
   color: var(--segmented-text);
   font-family: inherit;
   font-size: var(--segmented-font-size);
-  font-weight: var(--segmented-weight);
+  font-weight: var(--segmented-font-weight);
   white-space: nowrap;
   cursor: pointer;
   transition:
