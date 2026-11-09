@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {RaritySymbol} from './RaritySymbol';
 import {RARITIES} from '../lib/rarity';
-import {FONT_WEIGHT} from '../tokens/theme';
+import {FONT_WEIGHT, LETTER_SPACING} from '../tokens/theme';
 
 const meta: Meta<typeof RaritySymbol> = {
   title: 'Features/Reveals/RaritySymbol',
@@ -25,7 +25,7 @@ export const AllRarities: Story = {
             style={{
               fontWeight: FONT_WEIGHT.semibold,
               fontSize: 10,
-              letterSpacing: 0.6,
+              letterSpacing: LETTER_SPACING.cap,
               textTransform: 'uppercase',
               color: '#7a7a92',
             }}
