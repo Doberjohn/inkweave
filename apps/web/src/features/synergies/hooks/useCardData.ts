@@ -1,14 +1,15 @@
 import {useState, useEffect} from 'react';
-import type {LorcanaCard, SetInfo} from '../../cards';
-// From the loader, not the cards barrel: inkweave-admin's bridge reaches this hook through
+// From their own modules, not the cards barrel: inkweave-admin's bridge reaches this hook through
 // CardDataContext, and the barrel's components would bring the shared components barrel and its
 // lazy imports into admin's build, which then ships chunks it never loads and outgrows its
 // startup budget.
+import type {LorcanaCard} from '../../cards/types';
 import {
   getUniqueKeywords,
   getUniqueClassifications,
   getUniqueRarities,
   getUniqueSets,
+  type SetInfo,
 } from '../../cards/loader';
 import {cardListIfLoaded, startCardList} from '../../cards/cardListRequest';
 import {whenLoadedAndIdle} from 'inkweave-ui/lib/whenLoadedAndIdle';
