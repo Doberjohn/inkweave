@@ -53,6 +53,37 @@ describe('cardSynergySummary', () => {
     );
   });
 
+  it('sheds detail, longest first, to stay within 160 characters', () => {
+    const long = card('1', 'Lyle Tiberius Rourke - Crystallized Commander');
+    const partner = [match('2', 'Darkwing Duck & Launchpad - St. Canard\'s Finest', 8)];
+    const groups = ['Self-Discard', 'Floodborns', 'Lore Denial'].map((label) =>
+      group(label, 'playstyle', partner),
+    );
+    const s = cardSynergySummary(long, groups);
+    expect(s.length).toBeLessThanOrEqual(160);
+    expect(s).toBe(
+      'In Core Lorcana, Lyle Tiberius Rourke - Crystallized Commander pairs with 1 card across 3 archetypes, chiefly Self-Discard and Floodborns.',
+    );
+  });
+
+  it('shortens the archetype clause before dropping the anchor', () => {
+    const groups = ['Self-Discard', 'Royalty', 'Ramp'].map((label) =>
+      group(label, 'playstyle', [match('2', 'Aladdin - Created by the Vine', 7)]),
+    );
+    expect(cardSynergySummary(card('1', 'The Queen - Conceited Ruler'), groups)).toBe(
+      'In Core Lorcana, The Queen - Conceited Ruler pairs with 1 card in Self-Discard, Royalty and more, anchored by Aladdin - Created by the Vine (7/10).',
+    );
+  });
+
+  it('keeps the archetype names after the anchor, in their short form when need be', () => {
+    const groups = ['Self-Discard', 'Floodborns', 'Lore Denial'].map((label) =>
+      group(label, 'playstyle', [match('2', 'X', 6)]),
+    );
+    const s = cardSynergySummary(card('1', `${'A'.repeat(70)} - Long Name`), groups);
+    expect(s.length).toBeLessThanOrEqual(160);
+    expect(s).toMatch(/ in Self-Discard, Floodborns and more\.$/);
+  });
+
   it('produces different summaries for different cards', () => {
     const g = [group('Ramp', 'playstyle', [match('9', 'Z', 5)])];
     expect(cardSynergySummary(card('1', 'Elsa'), g)).not.toBe(cardSynergySummary(card('2', 'Anna'), g));

@@ -8,6 +8,7 @@ import {
   INK_HUB_PLAYSTYLES,
   cardsForInk,
   getInkHub,
+  inkHubDescription,
 } from '../features/cards';
 import {trackCardSelected} from '../features/cards/lib/cardAnalytics';
 import {getPlaystyleById} from '../features/synergies/engineCatalog';
@@ -64,7 +65,7 @@ export function InkHubPage() {
       }}>
       <Seo
         title={`${hub.ink} Cards | Disney Lorcana | Inkweave`}
-        description={INK_HUB_BLURBS[hub.ink]}
+        description={inkHubDescription(hub.ink)}
         canonicalPath={`/ink/${hub.slug}`}
         breadcrumbs={inkHubTrail(hub.ink)}
       />

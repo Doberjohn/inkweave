@@ -20,6 +20,7 @@ export {
   INK_HUBS,
   INK_HUB_BLURBS,
   INK_HUB_PLAYSTYLES,
+  inkHubDescription,
   getInkHub,
   cardsForInk,
 } from './inkHubs';

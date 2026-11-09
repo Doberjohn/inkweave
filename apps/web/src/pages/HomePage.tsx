@@ -35,7 +35,7 @@ export function HomePage() {
     <div style={HOME_PAGE_STYLE}>
       <Seo
         title="Inkweave | Disney Lorcana Synergy Finder & Deck Builder"
-        description="Free Disney Lorcana synergy finder for Core format. Discover the strongest card combos and archetype pairings, with community-voted synergy scores, and build better decks."
+        description="Free Disney Lorcana synergy finder for Core format. Find the strongest card combos and archetype pairings, rated by community votes, and build better decks."
         canonicalPath="/"
       />
       {SHOW_BETA_NOTICE && <BetaNotice />}
