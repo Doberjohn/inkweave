@@ -152,7 +152,7 @@ function actionStyle({hovered, waits, danger}: {hovered: boolean; waits: boolean
     borderRadius: `${RADIUS.md}px`,
     border: '1px solid transparent',
     background: hovered && !waits ? GOLD_GLOW.hoverBg : 'transparent',
-    color: danger ? COLORS.error : COLORS.text,
+    color: danger ? COLORS.errorText : COLORS.text,
     fontSize: `${FONT_SIZES.lg}px`,
     fontWeight: FONT_WEIGHT.medium,
     textAlign: 'left',

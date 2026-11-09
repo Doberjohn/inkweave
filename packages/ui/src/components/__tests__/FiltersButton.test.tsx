@@ -3,9 +3,10 @@ import {fireEvent, render, screen} from '@testing-library/react';
 import {FiltersButton} from '../FiltersButton';
 
 describe('FiltersButton', () => {
+  // Its name holds the words that show, in order (WCAG 2.5.3), so the count is a word of its own.
   it("says its badge's count in its name, which screen readers otherwise never hear (#1000)", () => {
     render(<FiltersButton onClick={vi.fn()} activeCount={3} />);
-    expect(screen.getByRole('button', {name: 'Filters, 3 on'})).toHaveTextContent(/^Filters3$/);
+    expect(screen.getByRole('button', {name: 'Filters, 3 on'})).toHaveTextContent(/^Filters 3$/);
   });
 
   it('is plain Filters with nothing on, and no badge', () => {

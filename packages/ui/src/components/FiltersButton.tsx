@@ -36,7 +36,9 @@ export function FiltersButton({onClick, activeCount, isMobile, expanded, active 
       aria-label={filtersName(activeCount)}
       aria-expanded={expanded}>
       <FilterIcon />
-      Filters
+      {/* The space keeps "Filters" and the count two words, so the name holds the words that show
+          (WCAG 2.5.3: "Filters 3" in "Filters, 3 on"). The row's flex layout draws no gap for it. */}
+      Filters{' '}
       <CountBadge count={activeCount} />
     </ToolbarToggle>
   );

@@ -1,4 +1,5 @@
 import type {Locator, Page} from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
 import {test, expect} from '../fixtures';
 import {newestCoreSet, setCards, setPrintings} from '../helpers/cardData';
 import {binder, COLLECTOR_ID, shelf, shelfCover, signInAsCollector, type Entries} from '../helpers/collector';
@@ -59,6 +60,12 @@ const binderButton = (page: Page) => page.getByRole('button', {name: /^Binder: /
  * after the words (`RowLabel`), so each case matches the words and what may follow.
  */
 const named = (words: string) => new RegExp(`^${words.replaceAll('·', '\\u00b7')}(,|$)`);
+
+/** What axe finds on the whole page: WCAG A and AA, and its best practices. */
+const violations = async (page: Page) => (await new AxeBuilder({page}).analyze()).violations;
+
+/** The audits run on the desktop projects, as `accessibility.spec.ts`'s do. */
+const DESKTOP_AUDIT = 'Audited on the desktop projects';
 
 /** Opens `url` and waits for the binder, past the first visit's chunk download on a cold dev server. */
 async function openAt(page: Page, url: string): Promise<void> {
@@ -309,6 +316,26 @@ test.describe('the binder shelf', () => {
     await expect(shelfCover(page, 'Epics')).toBeVisible();
   });
 
+  test('the shelf has no axe violations, nor with a ⋯ menu or Delete binder open', async ({page}, testInfo) => {
+    test.skip(testInfo.project.name.startsWith('mobile-'), DESKTOP_AUDIT);
+    await signIn(page);
+    await page.goto('/browse?binder=shelf');
+    await expect.poll(() => coverNames(page), {timeout: 20_000}).toEqual(['My collection', 'Amber', 'Amber vines', 'Epics']);
+    expect(await violations(page)).toEqual([]);
+
+    await actionsOf(page, 'Amber').click();
+    await expect(page.getByRole('menu')).toBeVisible();
+    // The ⋯ and its menu fade in together, and axe measures the menu's words through that fade.
+    await expect(shelf(page).locator('.binder-shelf-actions[data-open]')).toHaveCSS('opacity', '1');
+    expect(await violations(page)).toEqual([]);
+
+    await page.getByRole('menuitem', {name: 'Delete binder'}).click();
+    const confirm = page.getByRole('dialog', {name: 'Delete binder'});
+    // Until its fade ends, the dialog's text measures against a half-drawn panel.
+    await expect(confirm).toHaveCSS('opacity', '1');
+    expect(await violations(page)).toEqual([]);
+  });
+
   test("on a phone, two covers across, each binder's ⋯ shown, and the title in the binder row", async ({page}, testInfo) => {
     test.skip(!testInfo.project.name.startsWith('mobile-'), "A phone's shelf");
     await signIn(page);
@@ -380,6 +407,23 @@ test.describe('the New binder window', () => {
     ]);
     await expect.poll(() => coverNames(page)).toEqual(['My collection', 'Amber', 'Amber vines', 'Epics', 'Gold and amber']);
     await expect(shelfCover(page, 'Gold and amber')).toBeFocused();
+  });
+
+  test('has no axe violations, empty and with its rules picked', async ({page}, testInfo) => {
+    test.skip(testInfo.project.name.startsWith('mobile-'), DESKTOP_AUDIT);
+    await signIn(page);
+    await page.goto('/browse?binder=shelf');
+    const amberCards = await coverCards(shelfCover(page, 'Amber'));
+    await shelf(page).getByRole('button', {name: /^New binder/}).click({timeout: 20_000});
+    const dialog = await windowOf(page, 'New binder');
+    await expect(dialog).toHaveCSS('opacity', '1');
+    expect(await violations(page)).toEqual([]);
+
+    await nameIn(dialog).fill('Gold and amber');
+    await dialog.getByRole('button', {name: 'Filter by Amber'}).click();
+    await expect.poll(() => windowCount(dialog)).toBe(amberCards);
+    await expect(createIn(dialog)).toBeEnabled();
+    expect(await violations(page)).toEqual([]);
   });
 
   test('keeps Create off for rules that hold no card, and says so', async ({page}) => {
@@ -546,6 +590,23 @@ test.describe('Save as a binder', () => {
     expect(await settledTiles(page)).toEqual(onScreen);
   });
 
+  test("the panel's Save as a binder and its box have no axe violations", async ({page}, testInfo) => {
+    test.skip(testInfo.project.name.startsWith('mobile-'), DESKTOP_AUDIT);
+    await signIn(page);
+    await openAt(page, '/browse?binder=all');
+    const panel = filterPanel(page);
+    await panel.getByRole('button', {name: 'Filter by Amber'}).click();
+    await expect(panel.getByText(/^Keeps Amber ink as a binder of its own: [\d,]+ cards$/)).toBeVisible();
+    await settledTiles(page);
+    await expect(numbers(page)).toHaveAttribute('aria-busy', 'false');
+    expect(await violations(page)).toEqual([]);
+
+    await panel.getByRole('button', {name: 'Save as a binder'}).click();
+    const box = await boxOf(page);
+    await expect(box).toHaveCSS('opacity', '1');
+    expect(await violations(page)).toEqual([]);
+  });
+
   test("on a phone, the Binder sheet's Save as a binder applies its draft, and the box saves and opens the binder", async ({
     page,
   }, testInfo) => {
@@ -595,6 +656,28 @@ async function pickSecondCard(picker: Locator): Promise<string | null> {
 }
 
 test.describe('Rename and Change cover', () => {
+  test('Rename binder and Change cover have no axe violations', async ({page}, testInfo) => {
+    test.skip(testInfo.project.name.startsWith('mobile-'), DESKTOP_AUDIT);
+    await signIn(page);
+    await page.goto('/browse?binder=shelf');
+
+    await actionsOf(page, 'Epics').click({timeout: 20_000});
+    await page.getByRole('menuitem', {name: 'Rename'}).click();
+    const rename = page.getByRole('dialog', {name: 'Rename binder'});
+    await expect(rename).toHaveCSS('opacity', '1');
+    expect(await violations(page)).toEqual([]);
+    await rename.getByRole('button', {name: 'Cancel'}).click();
+    await expect(rename).toHaveCount(0);
+
+    await actionsOf(page, 'Amber').click();
+    await page.getByRole('menuitem', {name: 'Change cover'}).click();
+    const picker = await pickerOf(page);
+    await expect(picker.getByRole('heading', {name: 'Cover for Amber'})).toBeVisible();
+    await expect(picker.getByRole('list', {name: 'Your cards'}).getByRole('button').first()).toBeVisible();
+    await expect(picker).toHaveCSS('opacity', '1');
+    expect(await violations(page)).toEqual([]);
+  });
+
   test('rename a binder, then change its cover and My collection\'s: one PATCH each, one upsert, and the shelf shows each', async ({
     page,
   }) => {
