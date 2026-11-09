@@ -4,10 +4,6 @@ export type {Ink, LorcanaCard} from './types';
 // Loader functions
 export {
   sortBySetThenNumber,
-  getUniqueKeywords,
-  getUniqueClassifications,
-  getUniqueRarities,
-  getUniqueSets,
   smallImageUrl,
 } from './loader';
 export type {CardFilterOptions, SetInfo} from './loader';

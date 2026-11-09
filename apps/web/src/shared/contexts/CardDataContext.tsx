@@ -1,5 +1,5 @@
 import {createContext, useContext, type ReactNode} from 'react';
-import type {LorcanaCard} from '../../features/cards';
+import type {LorcanaCard} from '../../features/cards/types';
 import {useCardData, type UseCardDataReturn} from '../../features/synergies/hooks/useCardData';
 
 interface CardDataContextValue extends UseCardDataReturn {
