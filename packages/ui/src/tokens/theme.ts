@@ -267,6 +267,8 @@ export const BREAKPOINTS = {
 
 // Z-index scale for layering
 export const Z_INDEX = {
+  /** The reveals promo card, fixed over the page: under the header and the phone's bottom nav (900). */
+  promoCard: 800,
   autocomplete: 900,
   modalBackdrop: 999,
   modal: 1000,

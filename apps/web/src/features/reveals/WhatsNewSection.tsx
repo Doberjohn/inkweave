@@ -1,6 +1,19 @@
 import {useState, type ReactNode} from 'react';
 import './reveals.css';
-import {COLORS, FONTS, REVEAL_SET_NUMBER, FONT_WEIGHT} from '../../shared/constants';
+import {
+  COLORS,
+  DURATION,
+  EASING,
+  FONTS,
+  FONT_SIZES,
+  FONT_WEIGHT,
+  GOLD_GLOW,
+  LETTER_SPACING,
+  RADIUS,
+  REVEAL_SET_NUMBER,
+  SHADOWS,
+  whiteRgba,
+} from '../../shared/constants';
 import type {FranchiseConfig} from './franchise';
 import {SpotlightHero} from './SpotlightHero';
 import {SET_SPOTLIGHTS, FRANCHISE_SPOTLIGHTS} from './setSpotlights';
@@ -40,19 +53,23 @@ function buildTabs(compact: boolean, onSelectFranchise?: (franchise: FranchiseCo
   return tabs.filter((t) => t.cards.length > 0);
 }
 
+const TAB_TRANSITION = ['color', 'background', 'border-color', 'box-shadow']
+  .map((property) => `${property} ${DURATION.base}ms ${EASING.snappy}`)
+  .join(', ');
+
 /** One pill in the What's-New tab bar; active state drives colour, glow, and border. */
 function WhatsNewTab({label, isActive, compact, id, controls, onSelect}: {label: string; isActive: boolean; compact: boolean; id: string; controls: string; onSelect: () => void}) {
   const tone = isActive
     ? {
         border: COLORS.primary500,
-        background: 'linear-gradient(180deg, rgba(255, 185, 0, 0.28) 0%, rgba(255, 185, 0, 0.14) 100%)',
+        background: `linear-gradient(180deg, ${GOLD_GLOW.hoverBorder} 0%, ${GOLD_GLOW.activeBg} 100%)`,
         color: COLORS.primary,
-        boxShadow: '0 0 20px rgba(255, 185, 0, 0.35)',
+        boxShadow: SHADOWS.glowMd,
       }
     : {
-        border: 'rgba(255, 255, 255, 0.1)',
-        background: 'rgba(255, 255, 255, 0.02)',
-        color: '#90a1b9',
+        border: whiteRgba(0.1),
+        background: whiteRgba(0.02),
+        color: COLORS.textMuted,
         boxShadow: 'none',
       };
   return (
@@ -67,16 +84,16 @@ function WhatsNewTab({label, isActive, compact, id, controls, onSelect}: {label:
         appearance: 'none',
         cursor: 'pointer',
         font: 'inherit',
-        fontSize: compact ? 12 : 13,
+        fontSize: compact ? FONT_SIZES.md : FONT_SIZES.base,
         fontWeight: FONT_WEIGHT.semibold,
-        letterSpacing: 0.3,
+        letterSpacing: LETTER_SPACING.slight,
         padding: compact ? '7px 14px' : '9px 18px',
-        borderRadius: 999,
+        borderRadius: RADIUS.pill,
         border: `1px solid ${tone.border}`,
         background: tone.background,
         color: tone.color,
         boxShadow: tone.boxShadow,
-        transition: 'color 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+        transition: TAB_TRANSITION,
       }}
     >
       {label}
@@ -126,12 +143,12 @@ export function WhatsNewSection({compact = false, onSelectFranchise}: WhatsNewSe
             fontSize: s.eyebrowSize,
             letterSpacing: s.eyebrowSpacing,
             textTransform: 'uppercase',
-            color: '#d4af37',
+            color: COLORS.primary500,
           }}
         >
           New this set
         </div>
-        <h2 style={{fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.regular, fontSize: s.titleSize, color: '#ececf2', margin: '10px 0 0'}}>
+        <h2 style={{fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.regular, fontSize: s.titleSize, color: COLORS.text, margin: '10px 0 0'}}>
           What&apos;s new in Set {REVEAL_SET_NUMBER}
         </h2>
       </div>
