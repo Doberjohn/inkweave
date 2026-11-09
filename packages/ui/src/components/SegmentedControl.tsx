@@ -4,6 +4,7 @@ import {
   DURATION,
   EASING,
   FONT_SIZES,
+  FONT_WEIGHT,
   GOLD_GLOW,
   NEUTRAL_LADDER,
   RADIUS,
@@ -15,9 +16,10 @@ import './SegmentedControl.css';
 const BUTTON_HEIGHT = 32;
 
 /**
- * Every value SegmentedControl.css draws with, set on the group as custom properties: the
- * design-token gate counts a colour, radius, font size, shadow or duration typed into a
- * stylesheet, so each comes in from the tokens here (as INSET_FOCUS_RING feeds `.inset-focus-ring`).
+ * Every value SegmentedControl.css draws with, set on the group as custom properties so each
+ * comes in from the tokens here (as INSET_FOCUS_RING feeds `.inset-focus-ring`): no lint rule
+ * reads a stylesheet, and the design-token gate counts only a colour, radius, font size, shadow
+ * or duration typed into one.
  */
 const SEGMENTED_LOOK = {
   '--segmented-fill': NEUTRAL_LADDER.card,
@@ -31,6 +33,7 @@ const SEGMENTED_LOOK = {
   '--segmented-held-opacity': String(DISABLED_STYLE.opacity),
   '--segmented-radius': `${RADIUS.md}px`,
   '--segmented-font-size': `${FONT_SIZES.md}px`,
+  '--segmented-font-weight': String(FONT_WEIGHT.semibold),
   '--segmented-motion': `${DURATION.base}ms ${EASING.snappy}`,
   '--segmented-height': `${BUTTON_HEIGHT}px`,
   '--segmented-gap': `${SPACING.xxs}px`,

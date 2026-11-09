@@ -10,7 +10,6 @@ import {
   LINE_HEIGHT,
   RADIUS,
   SPACING,
-  hexRgba,
   whiteRgba,
 } from '../../../shared/constants';
 import {BOARD_RADIUS} from './BinderCover';
@@ -47,7 +46,7 @@ const PLUS: CSSProperties = {
   width: 44,
   height: 44,
   borderRadius: `${RADIUS.pill}px`,
-  background: hexRgba(COLORS.primary, 0.12),
+  background: GOLD_GLOW.activeBg,
   color: COLORS.primary,
 };
 

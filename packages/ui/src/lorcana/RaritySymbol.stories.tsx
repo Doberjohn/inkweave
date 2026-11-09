@@ -1,7 +1,7 @@
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import {RaritySymbol} from './RaritySymbol';
 import {RARITIES} from '../lib/rarity';
-import {FONT_WEIGHT} from '../tokens/theme';
+import {CAP_LABEL_XS, FONT_WEIGHT} from '../tokens/theme';
 
 const meta: Meta<typeof RaritySymbol> = {
   title: 'Features/Reveals/RaritySymbol',
@@ -21,17 +21,7 @@ export const AllRarities: Story = {
       {RARITIES.map((r) => (
         <div key={r.key} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10}}>
           <RaritySymbol rarity={r.key} size={32} />
-          <span
-            style={{
-              fontWeight: FONT_WEIGHT.semibold,
-              fontSize: 10,
-              letterSpacing: 0.6,
-              textTransform: 'uppercase',
-              color: '#7a7a92',
-            }}
-          >
-            {r.name}
-          </span>
+          <span style={{...CAP_LABEL_XS, fontWeight: FONT_WEIGHT.semibold}}>{r.name}</span>
         </div>
       ))}
     </div>
