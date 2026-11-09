@@ -1,4 +1,5 @@
 import type {LorcanaCard, SynergyGroup} from 'inkweave-synergy-engine';
+import {fitDescription} from '../../shared/lib/seoDescription';
 
 /**
  * Builds a 1-2 sentence, per-card-UNIQUE synergy narrative for a card page (#498 Phase 2).
@@ -27,7 +28,7 @@ import type {LorcanaCard, SynergyGroup} from 'inkweave-synergy-engine';
  *    being {partner} ({score}/10)."
  *   "A cornerstone of the {Archetype} archetype, {card} pairs with {N} cards to {short effect}."
  *
- * Keep it factual and derived from the data (no invented claims), under ~2 sentences. Return ''
+ * Keep it factual and derived from the data (no invented claims), under 160 characters. Return ''
  * when the card has no meaningful synergies, so CardPage uses the generic description instead.
  */
 export function cardSynergySummary(card: LorcanaCard, groups: SynergyGroup[]): string {
@@ -43,16 +44,27 @@ export function cardSynergySummary(card: LorcanaCard, groups: SynergyGroup[]): s
     .sort((a, b) => b.synergies.length - a.synergies.length)
     .map((g) => g.label);
 
-  const cards = count === 1 ? '1 card' : `${count} cards`;
-  return `In Core Lorcana, ${card.fullName} pairs with ${cards}${archetypeClause(archetypes)}, anchored by ${top.name} (${top.score}/10).`;
+  const opening = `In Core Lorcana, ${card.fullName} pairs with ${count === 1 ? '1 card' : `${count} cards`}`;
+  const anchor = `, anchored by ${top.name} (${top.score}/10).`;
+  // Long names push the sentence past what a search result shows, so it sheds detail in order.
+  return fitDescription(
+    `${opening}${archetypeClause(archetypes, true)}${anchor}`,
+    `${opening}${archetypeClause(archetypes, false)}${anchor}`,
+    `${opening}${archetypeClause(archetypes, true)}.`,
+    `${opening}.`,
+  );
 }
 
-/** Names up to two archetypes the card spans; empty when it belongs to none (direct rules only). */
-function archetypeClause(labels: string[]): string {
+/**
+ * Names up to two archetypes the card spans; empty when it belongs to none (direct rules only).
+ * `withCount` keeps "across N archetypes" for a card in three or more.
+ */
+function archetypeClause(labels: string[], withCount: boolean): string {
   if (labels.length === 0) return '';
   if (labels.length === 1) return ` within the ${labels[0]} archetype`;
   if (labels.length === 2) return ` across the ${labels[0]} and ${labels[1]} archetypes`;
-  return ` across ${labels.length} archetypes, chiefly ${labels[0]} and ${labels[1]}`;
+  const chiefly = `chiefly ${labels[0]} and ${labels[1]}`;
+  return withCount ? ` across ${labels.length} archetypes, ${chiefly}` : `, ${chiefly}`;
 }
 
 interface TopPartner {

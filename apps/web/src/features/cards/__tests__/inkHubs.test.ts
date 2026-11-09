@@ -8,7 +8,14 @@ import {
   type Ink,
   type LorcanaJSONCard,
 } from 'inkweave-synergy-engine';
-import {INK_HUBS, INK_HUB_PLAYSTYLES, getInkHub, cardsForInk} from '../inkHubs';
+import {
+  INK_HUBS,
+  INK_HUB_BLURBS,
+  INK_HUB_PLAYSTYLES,
+  getInkHub,
+  cardsForInk,
+  inkHubDescription,
+} from '../inkHubs';
 import {getAllPlaystyles} from '../../synergies/engineCatalog';
 import {loadCardsFromJSON} from '../loader';
 
@@ -99,6 +106,15 @@ describe('INK_HUB_PLAYSTYLES', () => {
       const topFive = ranked(ink).slice(0, 5);
       const outside = INK_HUB_PLAYSTYLES[ink].filter((id) => !topFive.includes(id));
       expect({ink, outside}).toEqual({ink, outside: []});
+    }
+  });
+
+  it('gives every hub a description a search result shows whole, from its own blurb', () => {
+    for (const hub of INK_HUBS) {
+      const description = inkHubDescription(hub.ink);
+      expect(description.length, hub.ink).toBeLessThanOrEqual(160);
+      expect(description.startsWith(INK_HUB_BLURBS[hub.ink].split('. ')[0]), hub.ink).toBe(true);
+      expect(description, hub.ink).toContain('Disney Lorcana');
     }
   });
 });

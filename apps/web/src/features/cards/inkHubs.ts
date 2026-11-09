@@ -1,4 +1,5 @@
 import type {Ink, LorcanaCard, PlaystyleId} from 'inkweave-synergy-engine';
+import {fitDescription} from '../../shared/lib/seoDescription';
 
 /**
  * The six ink hub pages (#530).
@@ -82,6 +83,16 @@ export const INK_HUB_BLURBS: Record<Ink, string> = {
   Steel:
     "Steel wins the ground. Resist clusters here far more than in any other ink, paired with the format's highest Challenger count to trade up, producing bodies that survive removal and hold the board.",
 };
+
+/** A hub's meta description: its blurb, or the blurb's first sentence when the blurb runs long. */
+export function inkHubDescription(ink: Ink): string {
+  const blurb = INK_HUB_BLURBS[ink];
+  const firstSentence = blurb.slice(0, blurb.indexOf('. ') + 1);
+  return fitDescription(
+    blurb,
+    `${firstSentence} Browse every ${ink} card in Disney Lorcana Core format and the synergies each one brings.`,
+  );
+}
 
 /**
  * Three playstyles that draw many of their cards from each ink, which each hub's About section

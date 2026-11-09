@@ -16,6 +16,7 @@ import {useBackOrNavigate, useResponsive} from '../shared/hooks';
 import {COLORS, FONTS, FONT_SIZES, LAYOUT, SPACING, FONT_WEIGHT} from '../shared/constants';
 import {cardNameHint} from './cardNameHint';
 import {inkHubTrail} from '../shared/lib/breadcrumbs';
+import {fitDescription} from '../shared/lib/seoDescription';
 
 /**
  * `/card/:cardId` — a real, crawlable card detail page (issue #486).
@@ -29,7 +30,12 @@ import {inkHubTrail} from '../shared/lib/breadcrumbs';
 function buildDescription(card: LorcanaCard): string {
   const inks = card.ink2 ? `${card.ink}/${card.ink2}` : card.ink;
   const cls = card.classifications?.length ? ` ${card.classifications.join(', ')}` : '';
-  return `${card.fullName}: a ${card.cost}-cost ${inks} ${card.type}${cls}. See its strongest Disney Lorcana synergies and combos in Core format.`;
+  const facts = `${card.fullName}: a ${card.cost}-cost ${inks} ${card.type}`;
+  return fitDescription(
+    `${facts}${cls}. See its strongest Disney Lorcana synergies and combos in Core format.`,
+    `${facts}${cls}. See its Disney Lorcana synergies in Core format.`,
+    `${facts}. See its Disney Lorcana synergies in Core format.`,
+  );
 }
 
 /** The trail to the hub of the card's first ink, then the card: the site's path to it. */
