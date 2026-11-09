@@ -14,7 +14,8 @@
           "to": "/browse"
         },
         "prs": [
-          1085
+          1085,
+          1107
         ]
       },
       {
@@ -26,7 +27,7 @@
           "to": "/account"
         },
         "prs": [
-          1085
+          1107
         ]
       },
       {
@@ -112,6 +113,13 @@
         ]
       },
       {
+        "title": "Keyboard focus after an import",
+        "body": "After importing a Dreamborn export from Browse with the keyboard, pressing Done now puts focus back on the collection's gear button, instead of losing it.",
+        "prs": [
+          1127
+        ]
+      },
+      {
         "title": "Quick filter clicks",
         "body": "Two filter clicks made before the page caught up no longer drop the first one, in collection mode too.",
         "prs": [
@@ -120,5 +128,5 @@
       }
     ]
   },
-  "behindTheScenes": "Plus 17 behind-the-scenes changes: dependency updates, test and tooling work, removing the switches the collection launch no longer needs, a card's art kept safe from a dead link, and work on features that aren't switched on yet."
+  "behindTheScenes": "Plus 15 behind-the-scenes changes: dependency updates, test and tooling work, a card's art kept safe from a dead link, and work on features that aren't switched on yet."
 }
