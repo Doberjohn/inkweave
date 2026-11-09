@@ -66,7 +66,6 @@ const violations = async (page: Page) => (await new AxeBuilder({page}).analyze()
 
 /** The audits run on the desktop projects, as `accessibility.spec.ts`'s do. */
 const DESKTOP_AUDIT = 'Audited on the desktop projects';
-const isPhone = (projectName: string) => projectName.startsWith('mobile-');
 
 /** Opens `url` and waits for the binder, past the first visit's chunk download on a cold dev server. */
 async function openAt(page: Page, url: string): Promise<void> {
@@ -318,7 +317,7 @@ test.describe('the binder shelf', () => {
   });
 
   test('the shelf has no axe violations, nor with a ⋯ menu or Delete binder open', async ({page}, testInfo) => {
-    test.skip(isPhone(testInfo.project.name), DESKTOP_AUDIT);
+    test.skip(testInfo.project.name.startsWith('mobile-'), DESKTOP_AUDIT);
     await signIn(page);
     await page.goto('/browse?binder=shelf');
     await expect.poll(() => coverNames(page), {timeout: 20_000}).toEqual(['My collection', 'Amber', 'Amber vines', 'Epics']);
@@ -326,6 +325,8 @@ test.describe('the binder shelf', () => {
 
     await actionsOf(page, 'Amber').click();
     await expect(page.getByRole('menu')).toBeVisible();
+    // The ⋯ and its menu fade in together, and axe measures the menu's words through that fade.
+    await expect(shelf(page).locator('.binder-shelf-actions[data-open]')).toHaveCSS('opacity', '1');
     expect(await violations(page)).toEqual([]);
 
     await page.getByRole('menuitem', {name: 'Delete binder'}).click();
@@ -409,7 +410,7 @@ test.describe('the New binder window', () => {
   });
 
   test('has no axe violations, empty and with its rules picked', async ({page}, testInfo) => {
-    test.skip(isPhone(testInfo.project.name), DESKTOP_AUDIT);
+    test.skip(testInfo.project.name.startsWith('mobile-'), DESKTOP_AUDIT);
     await signIn(page);
     await page.goto('/browse?binder=shelf');
     const amberCards = await coverCards(shelfCover(page, 'Amber'));
@@ -590,7 +591,7 @@ test.describe('Save as a binder', () => {
   });
 
   test("the panel's Save as a binder and its box have no axe violations", async ({page}, testInfo) => {
-    test.skip(isPhone(testInfo.project.name), DESKTOP_AUDIT);
+    test.skip(testInfo.project.name.startsWith('mobile-'), DESKTOP_AUDIT);
     await signIn(page);
     await openAt(page, '/browse?binder=all');
     const panel = filterPanel(page);
@@ -656,7 +657,7 @@ async function pickSecondCard(picker: Locator): Promise<string | null> {
 
 test.describe('Rename and Change cover', () => {
   test('Rename binder and Change cover have no axe violations', async ({page}, testInfo) => {
-    test.skip(isPhone(testInfo.project.name), DESKTOP_AUDIT);
+    test.skip(testInfo.project.name.startsWith('mobile-'), DESKTOP_AUDIT);
     await signIn(page);
     await page.goto('/browse?binder=shelf');
 

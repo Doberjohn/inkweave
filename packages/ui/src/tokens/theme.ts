@@ -185,8 +185,8 @@ export const COLORS = {
   // Semantic
   white: '#e8e8e8',
   error: '#ef4444',
-  // Red words on a raised surface, such as a menu's Delete binder: `error` falls under 4.5:1 there
-  // (4.07 on surfaceFloating). The same red as Ruby's ink text.
+  // Red words on a menu's surface (surfaceFloating), where `error` reads 4.07:1, under 4.5:1: a
+  // binder's Delete binder. Ruby's ink text has the same value today; the two move independently.
   errorText: '#f87171',
   errorBg: '#2a1515',
   errorBorder: '#5c2020',
