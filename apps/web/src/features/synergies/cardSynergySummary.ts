@@ -28,7 +28,8 @@ import {fitDescription} from '../../shared/lib/seoDescription';
  *    being {partner} ({score}/10)."
  *   "A cornerstone of the {Archetype} archetype, {card} pairs with {N} cards to {short effect}."
  *
- * Keep it factual and derived from the data (no invented claims), under 160 characters. Return ''
+ * Keep it factual and derived from the data (no invented claims). It sheds detail to fit in 160
+ * characters, though a card name long enough can still push the last wording past that. Return ''
  * when the card has no meaningful synergies, so CardPage uses the generic description instead.
  */
 export function cardSynergySummary(card: LorcanaCard, groups: SynergyGroup[]): string {
