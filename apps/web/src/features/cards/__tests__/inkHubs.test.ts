@@ -113,8 +113,16 @@ describe('INK_HUB_PLAYSTYLES', () => {
     for (const hub of INK_HUBS) {
       const description = inkHubDescription(hub.ink);
       expect(description.length, hub.ink).toBeLessThanOrEqual(160);
-      expect(description.startsWith(INK_HUB_BLURBS[hub.ink].split('. ')[0]), hub.ink).toBe(true);
+      const lead = INK_HUB_BLURBS[hub.ink].split('. ')[0];
+      expect(lead.length, hub.ink).toBeGreaterThan(0);
+      expect(description.startsWith(`${lead}. Browse every ${hub.ink} card`), hub.ink).toBe(true);
       expect(description, hub.ink).toContain('Disney Lorcana');
     }
+  });
+
+  it('falls back to the listing line for a blurb with no sentence break', () => {
+    expect(inkHubDescription('Ruby', 'Ruby attacks')).toBe(
+      'Browse every Ruby card in Disney Lorcana Core format and the synergies each one brings.',
+    );
   });
 });

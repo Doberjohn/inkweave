@@ -66,13 +66,22 @@ describe('cardSynergySummary', () => {
     );
   });
 
-  it('drops only "across N archetypes" when that is enough', () => {
+  it('shortens the archetype clause before dropping the anchor', () => {
     const groups = ['Self-Discard', 'Royalty', 'Ramp'].map((label) =>
       group(label, 'playstyle', [match('2', 'Aladdin - Created by the Vine', 7)]),
     );
     expect(cardSynergySummary(card('1', 'The Queen - Conceited Ruler'), groups)).toBe(
-      'In Core Lorcana, The Queen - Conceited Ruler pairs with 1 card, chiefly Self-Discard and Royalty, anchored by Aladdin - Created by the Vine (7/10).',
+      'In Core Lorcana, The Queen - Conceited Ruler pairs with 1 card in Self-Discard, Royalty and more, anchored by Aladdin - Created by the Vine (7/10).',
     );
+  });
+
+  it('keeps the archetype names after the anchor, in their short form when need be', () => {
+    const groups = ['Self-Discard', 'Floodborns', 'Lore Denial'].map((label) =>
+      group(label, 'playstyle', [match('2', 'X', 6)]),
+    );
+    const s = cardSynergySummary(card('1', `${'A'.repeat(70)} - Long Name`), groups);
+    expect(s.length).toBeLessThanOrEqual(160);
+    expect(s).toMatch(/ in Self-Discard, Floodborns and more\.$/);
   });
 
   it('produces different summaries for different cards', () => {

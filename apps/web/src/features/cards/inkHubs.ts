@@ -84,14 +84,14 @@ export const INK_HUB_BLURBS: Record<Ink, string> = {
     "Steel wins the ground. Resist clusters here far more than in any other ink, paired with the format's highest Challenger count to trade up, producing bodies that survive removal and hold the board.",
 };
 
-/** A hub's meta description: its blurb, or the blurb's first sentence when the blurb runs long. */
-export function inkHubDescription(ink: Ink): string {
-  const blurb = INK_HUB_BLURBS[ink];
-  const firstSentence = blurb.slice(0, blurb.indexOf('. ') + 1);
-  return fitDescription(
-    blurb,
-    `${firstSentence} Browse every ${ink} card in Disney Lorcana Core format and the synergies each one brings.`,
-  );
+/**
+ * A hub's meta description: the blurb's first sentence, when it has one that fits, then what the
+ * page lists. The blurb alone never names Disney Lorcana, which searches for an ink's cards use.
+ */
+export function inkHubDescription(ink: Ink, blurb = INK_HUB_BLURBS[ink]): string {
+  const listing = `Browse every ${ink} card in Disney Lorcana Core format and the synergies each one brings.`;
+  const end = blurb.indexOf('. ');
+  return end === -1 ? listing : fitDescription(`${blurb.slice(0, end + 1)} ${listing}`, listing);
 }
 
 /**

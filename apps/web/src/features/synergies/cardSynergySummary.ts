@@ -47,24 +47,27 @@ export function cardSynergySummary(card: LorcanaCard, groups: SynergyGroup[]): s
   const opening = `In Core Lorcana, ${card.fullName} pairs with ${count === 1 ? '1 card' : `${count} cards`}`;
   const anchor = `, anchored by ${top.name} (${top.score}/10).`;
   // Long names push the sentence past what a search result shows, so it sheds detail in order.
+  const full = archetypeClause(archetypes, false);
+  const short = archetypeClause(archetypes, true);
   return fitDescription(
-    `${opening}${archetypeClause(archetypes, true)}${anchor}`,
-    `${opening}${archetypeClause(archetypes, false)}${anchor}`,
-    `${opening}${archetypeClause(archetypes, true)}.`,
+    `${opening}${full}${anchor}`,
+    `${opening}${short}${anchor}`,
+    `${opening}${full}.`,
+    `${opening}${short}.`,
     `${opening}.`,
   );
 }
 
 /**
  * Names up to two archetypes the card spans; empty when it belongs to none (direct rules only).
- * `withCount` keeps "across N archetypes" for a card in three or more.
+ * `short` words a card in three or more without its archetype count.
  */
-function archetypeClause(labels: string[], withCount: boolean): string {
+function archetypeClause(labels: string[], short: boolean): string {
   if (labels.length === 0) return '';
   if (labels.length === 1) return ` within the ${labels[0]} archetype`;
   if (labels.length === 2) return ` across the ${labels[0]} and ${labels[1]} archetypes`;
-  const chiefly = `chiefly ${labels[0]} and ${labels[1]}`;
-  return withCount ? ` across ${labels.length} archetypes, ${chiefly}` : `, ${chiefly}`;
+  if (short) return ` in ${labels[0]}, ${labels[1]} and more`;
+  return ` across ${labels.length} archetypes, chiefly ${labels[0]} and ${labels[1]}`;
 }
 
 interface TopPartner {
