@@ -71,8 +71,8 @@ export const KNOWN_OFFENDERS = {
   ],
   // 44 files, 116 violations at seeding
   'no-raw-font-size': [
-    'apps/web/src/features/reveals/NewFranchises.tsx', // x1
-    'apps/web/src/features/reveals/RevealHero.tsx', // x1
+    'apps/web/src/features/reveals/NewFranchises.tsx', // x9
+    'apps/web/src/features/reveals/RevealHero.tsx', // x7
     'apps/web/src/features/synergies/components/DeltaPanel.tsx', // x5
     'apps/web/src/features/voting/components/DistributionBar.tsx', // x2
     'apps/web/src/features/voting/components/ScorePicker.tsx', // x1
