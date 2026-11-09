@@ -163,10 +163,10 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@size-limit/file": "^14.3.0",
-    "eslint": "^10.13.0",
-    "globals": "^17.13.0",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
     "husky": "^9.1.7",
-    "knip": "^6.44.0",
+    "knip": "^6.44.1",
     "prettier": "^3.9.10",
     "sharp": "^0.35.5",
     "size-limit": "^14.3.0",
