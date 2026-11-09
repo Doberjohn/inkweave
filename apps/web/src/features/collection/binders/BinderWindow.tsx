@@ -130,7 +130,8 @@ export function BinderWindow(props: BinderWindowProps) {
           <div style={RULES_COLUMN}>
             <RulesFields draft={draft} isMobile={false} locked={save.saving} nameRef={nameRef} />
           </div>
-          <div style={PREVIEW_COLUMN}>
+          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- it scrolls with nothing in it to focus, so it takes the focus itself and the keyboard scrolls it (WCAG 2.1.1), as the rule's docs allow a scroll container */}
+          <div role="region" aria-label="Preview" tabIndex={0} className="inset-focus-outline" style={PREVIEW_COLUMN}>
             <DraftPreview draft={draft} />
           </div>
         </div>

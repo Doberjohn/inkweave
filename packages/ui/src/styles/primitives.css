@@ -30,6 +30,13 @@
   pointer-events: none;
 }
 
+/* The focus ring drawn inside a scrolling region the keyboard can focus, such as the New binder
+   window's preview, whose frame clips the outline above. An inset outline, not .inset-focus-ring's
+   ::after, which would scroll away with the region's content. */
+.inset-focus-outline:focus-visible {
+  outline-offset: -2px;
+}
+
 /* Foil sweep for the collection binder's foil stepper (#553 Phase C). Moves ONLY
    the first background layer — the light band — and pins the gold and the ground
    beneath it, which is why the layer order in `FOIL_SHEEN` is load-bearing.

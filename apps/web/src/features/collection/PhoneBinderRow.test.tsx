@@ -40,7 +40,7 @@ describe('PhoneBinderRow (#969)', () => {
 
   it("counts what is on in Filters' badge, and says it in the button's name", () => {
     renderRow(2);
-    expect(filters()).toHaveTextContent(/^Filters2$/);
+    expect(filters()).toHaveTextContent(/^Filters 2$/);
     expect(filters()).toHaveAccessibleName('Filters, 2 on');
   });
 
