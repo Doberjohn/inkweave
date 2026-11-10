@@ -25,7 +25,7 @@ export interface BinderRow {
 }
 
 /** My collection's `collection_shelf` row: its page size and cover. */
-export interface ShelfRow {
+interface ShelfRow {
   pages: number;
   cover: string | null;
 }
