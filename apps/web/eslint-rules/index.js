@@ -159,6 +159,7 @@ const noLiteralFontFamily = makePropertyRule({
   description: 'Use FONTS.body / FONTS.hero instead of font-family string literals',
   props: ['fontFamily'],
   valueTest: isRawFontFamily,
+  values: ternaryLeaves,
   message: "Literal font-family. Use FONTS.body or FONTS.hero ('inherit' is allowed as a UA reset) (#508).",
 });
 
@@ -167,6 +168,7 @@ const noRawFontSize = makePropertyRule({
   description: 'Use FONT_SIZES.* instead of numeric font sizes',
   props: ['fontSize'],
   valueTest: isRawFontSize,
+  values: ternaryLeaves,
   exempt: TEST_EXEMPT,
   message: 'Raw font size. Use FONT_SIZES.* (xs..xxxl, displaySm/Md/Lg for hero sizes) (#508).',
 });
@@ -297,6 +299,7 @@ const noRawRadius = makePropertyRule({
   description: 'Use RADIUS.* (incl. RADIUS.pill) instead of numeric border radii',
   props: ['borderRadius'],
   valueTest: isNumberLiteral,
+  values: ternaryLeaves,
   exempt: TEST_EXEMPT,
   message: "Raw border radius. Use RADIUS.* (pill: 999 exists; '50%' strings are fine for circles) (#508).",
 });
@@ -306,6 +309,7 @@ const noRawZIndex = makePropertyRule({
   description: 'Use Z_INDEX.* for app layers (values >= 50); local stacking below 50 is fine',
   props: ['zIndex'],
   valueTest: isAppLayerZIndex,
+  values: ternaryLeaves,
   message: 'Raw app-layer z-index. Use Z_INDEX.* (toast: 1200 and swUpdate: 1300 exist since #507) (#508).',
 });
 

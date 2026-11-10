@@ -1,14 +1,22 @@
 import {useEffect, useRef, useState, type RefObject} from 'react';
-import {useNavigate} from 'react-router-dom';
+import {Link} from 'react-router-dom';
 import {
+  CAP_LABEL_XS,
   COLORS,
+  DURATION,
+  EASING,
   FONTS,
   FONT_SIZES,
   INSET_FOCUS_RING,
+  LINE_HEIGHT,
   RADIUS,
   REVEAL_SET_LOGO_SM,
   REVEAL_SET_NUMBER,
   FONT_WEIGHT,
+  SHADOWS,
+  SPACING,
+  Z_INDEX,
+  hexRgba,
 } from '../../shared/constants';
 import {useResponsive} from '../../shared/hooks';
 import {prefersReducedMotion} from 'inkweave-ui/utils/prefersReducedMotion';
@@ -29,6 +37,13 @@ const FIREFLY_SEEDS: ReadonlyArray<{left: string; delay: string; drift: string}>
   {left: '94%', delay: '6.8s', drift: '4px'},
 ];
 
+/** The hover's bloom, wider and brighter than SHADOWS.glowLg, the top glow step. */
+const HOVER_BLOOM = `0 0 56px ${hexRgba(COLORS.primary, 0.6)}`;
+
+const CARD_TRANSITION = [`opacity ${DURATION.base}ms`, ...['scale', 'translate', 'box-shadow'].map((p) => `${p} ${DURATION.slow}ms`)]
+  .map((t) => `${t} ${EASING.smooth}`)
+  .join(', ');
+
 /**
  * Inject keyframes + :hover rules once per document.
  * Mirrors the pattern used by inkweave-ui's components/Sparkles.tsx.
@@ -47,18 +62,15 @@ const FIREFLY_SEEDS: ReadonlyArray<{left: string; delay: string; drift: string}>
   style.id = STYLE_ID;
   style.textContent = `
     .rpc-card {
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 24px rgba(255, 185, 0, 0.22);
+      box-shadow: ${SHADOWS.card}, ${SHADOWS.glowLg};
       cursor: pointer;
-      transition: opacity 240ms cubic-bezier(0.2, 0.8, 0.2, 1),
-                  scale 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
-                  translate 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
-                  box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition: ${CARD_TRANSITION};
     }
     @media (hover: hover) {
       .rpc-card:hover {
         scale: 1.03;
         translate: 0 -4px;
-        box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6), 0 0 56px rgba(255, 185, 0, 0.6);
+        box-shadow: ${SHADOWS.panel}, ${HOVER_BLOOM};
       }
       .rpc-card:hover .rpc-firefly {
         animation-duration: 2.2s;
@@ -69,8 +81,8 @@ const FIREFLY_SEEDS: ReadonlyArray<{left: string; delay: string; drift: string}>
       width: 4px;
       height: 4px;
       border-radius: 50%;
-      background: #ffb900;
-      box-shadow: 0 0 6px #ffb900, 0 0 14px rgba(255, 185, 0, 0.6);
+      background: ${COLORS.primary};
+      box-shadow: 0 0 6px ${COLORS.primary}, 0 0 14px ${hexRgba(COLORS.primary, 0.6)};
       pointer-events: none;
       opacity: 0;
       bottom: -8px;
@@ -88,7 +100,7 @@ const FIREFLY_SEEDS: ReadonlyArray<{left: string; delay: string; drift: string}>
       .rpc-card:hover {
         scale: 1;
         translate: 0 0;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 32px rgba(255, 185, 0, 0.3);
+        box-shadow: ${SHADOWS.card}, ${SHADOWS.glowMd};
       }
       .rpc-firefly { display: none; }
     }
@@ -115,7 +127,7 @@ function getAsideStyle(viewport: ViewportConfig, mounted: boolean): React.CSSPro
     position: 'fixed',
     background: `linear-gradient(180deg, ${COLORS.surface} 0%, ${COLORS.surfaceAlt} 100%)`,
     color: COLORS.text,
-    zIndex: 800,
+    zIndex: Z_INDEX.promoCard,
     opacity: mounted ? 1 : 0,
     overflow: 'hidden',
   };
@@ -141,16 +153,13 @@ function getAsideStyle(viewport: ViewportConfig, mounted: boolean): React.CSSPro
   };
 }
 
-function getButtonStyle(viewport: ViewportConfig): React.CSSProperties {
+function getLinkStyle(viewport: ViewportConfig): React.CSSProperties {
   const base: React.CSSProperties = {
     // The gold of its focus ring (`inset-focus-ring`), drawn inside: the aside's
     // `overflow: hidden` clips the global outline.
     ...INSET_FOCUS_RING,
-    background: 'transparent',
-    border: 'none',
     color: 'inherit',
-    cursor: 'pointer',
-    font: 'inherit',
+    textDecoration: 'none',
     position: 'relative',
     zIndex: 2,
   };
@@ -159,7 +168,7 @@ function getButtonStyle(viewport: ViewportConfig): React.CSSProperties {
       ...base,
       display: 'flex',
       alignItems: 'center',
-      gap: 16,
+      gap: SPACING.lg,
       width: '100%',
       textAlign: 'left',
       padding: '14px 20px',
@@ -203,22 +212,19 @@ function getTitleStyle(viewport: ViewportConfig): React.CSSProperties {
   return {
     display: 'block',
     fontFamily: FONTS.body,
-    fontSize: viewport.isMobile ? 16 : 18,
+    fontSize: viewport.isMobile ? FONT_SIZES.xl : FONT_SIZES.xxl,
     fontWeight: FONT_WEIGHT.semibold,
     color: COLORS.text,
     margin: 0,
-    lineHeight: 1.25,
+    lineHeight: LINE_HEIGHT.tight,
   };
 }
 
 const NEW_BADGE_STYLE: React.CSSProperties = {
+  ...CAP_LABEL_XS,
   display: 'block',
   fontFamily: FONTS.body,
-  fontSize: FONT_SIZES.xs,
-  fontWeight: FONT_WEIGHT.bold,
   color: COLORS.primary500,
-  letterSpacing: 0.6,
-  textTransform: 'uppercase',
   margin: '0 0 6px',
 };
 
@@ -279,7 +285,6 @@ interface RevealsPromoCardProps {
 }
 
 export function RevealsPromoCard({onHeightChange}: RevealsPromoCardProps) {
-  const navigate = useNavigate();
   const {isMobile} = useResponsive();
   const viewport: ViewportConfig = {isMobile};
   const reduced = prefersReducedMotion();
@@ -299,11 +304,7 @@ export function RevealsPromoCard({onHeightChange}: RevealsPromoCardProps) {
       aria-label={`Set ${REVEAL_SET_NUMBER} reveals`}
       className="rpc-card"
       style={getAsideStyle(viewport, mounted)}>
-      <button
-        type="button"
-        onClick={() => navigate('/reveals')}
-        className="inset-focus-ring"
-        style={getButtonStyle(viewport)}>
+      <Link to="/reveals" className="inset-focus-ring" style={getLinkStyle(viewport)}>
         <img
           src={REVEAL_SET_LOGO_SM.src}
           width={REVEAL_SET_LOGO_SM.width}
@@ -317,7 +318,7 @@ export function RevealsPromoCard({onHeightChange}: RevealsPromoCardProps) {
           <span style={NEW_BADGE_STYLE}>NEW</span>
           <span style={getTitleStyle(viewport)}>Set {REVEAL_SET_NUMBER} reveals are here!</span>
         </span>
-      </button>
+      </Link>
       {!reduced && <FireflyField />}
     </aside>
   );

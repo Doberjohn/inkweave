@@ -18,8 +18,6 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/reveals/NewFranchises.tsx', // x5
     'apps/web/src/features/reveals/ProgressRing.tsx', // x2
     'apps/web/src/features/reveals/RevealHero.tsx', // x10
-    'apps/web/src/features/reveals/RevealsPromoCard.tsx', // x1
-    'apps/web/src/features/reveals/WhatsNewSection.tsx', // x3
     'apps/web/src/features/synergies/components/ColumnHeader.stories.tsx', // x3
     'apps/web/src/features/synergies/components/CommunityEmptyState.stories.tsx', // x1
     'apps/web/src/features/synergies/components/DeltaPanel.stories.tsx', // x1
@@ -55,8 +53,6 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/playstyles/PlaystyleFanTile.tsx', // x6
     'apps/web/src/features/reveals/ProgressRing.tsx', // x1
     'apps/web/src/features/reveals/RevealHero.tsx', // x5
-    'apps/web/src/features/reveals/RevealsPromoCard.tsx', // x1
-    'apps/web/src/features/reveals/WhatsNewSection.tsx', // x4
     'apps/web/src/features/reveals/inkTint.ts', // x2
     'apps/web/src/features/synergies/components/DeltaPanel.tsx', // x4
     'apps/web/src/features/voting/components/DistributionBar.tsx', // x3
@@ -73,10 +69,11 @@ export const KNOWN_OFFENDERS = {
   'no-literal-font-family': [
     'apps/web/src/shared/components/Footer.stories.tsx', // x1
   ],
-  // 44 files, 116 violations at seeding
+  // 44 files, 116 violations at seeding. NewFranchises and RevealHero were re-counted the day the
+  // rule began reading both branches of a ternary: their values were there all along.
   'no-raw-font-size': [
-    'apps/web/src/features/reveals/NewFranchises.tsx', // x1
-    'apps/web/src/features/reveals/RevealHero.tsx', // x1
+    'apps/web/src/features/reveals/NewFranchises.tsx', // x9
+    'apps/web/src/features/reveals/RevealHero.tsx', // x7
     'apps/web/src/features/synergies/components/DeltaPanel.tsx', // x5
     'apps/web/src/features/voting/components/DistributionBar.tsx', // x2
     'apps/web/src/features/voting/components/ScorePicker.tsx', // x1
@@ -94,7 +91,6 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/playstyles/PlaystyleFanTile.tsx', // x2
     'apps/web/src/features/reveals/NewFranchises.tsx', // x2
     'apps/web/src/features/reveals/RevealHero.tsx', // x2
-    'apps/web/src/features/reveals/WhatsNewSection.tsx', // x1
     'apps/web/src/features/synergies/components/ColumnHeader.stories.tsx', // x1
     'apps/web/src/features/synergies/components/CommunityEmptyState.stories.tsx', // x1
     'apps/web/src/features/synergies/components/DeltaPanel.stories.tsx', // x1
@@ -117,12 +113,10 @@ export const KNOWN_OFFENDERS = {
   ],
   // 5 files, 5 violations at seeding
   'no-raw-z-index': [
-    'apps/web/src/features/reveals/RevealsPromoCard.tsx', // x1
     'apps/web/src/shared/components/MobileBottomNav.tsx', // x1
   ],
   // 23 files, 54 violations at seeding
   'no-raw-easing': [
-    'apps/web/src/features/reveals/WhatsNewSection.tsx', // x1
     'apps/web/src/features/voting/components/QuickVoteControl.tsx', // x6
   ],
   // Seeded 2026-10-22 when the rule turned on (#549), after it began reading
@@ -136,7 +130,6 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/reveals/InkBoard.tsx', // x6
     'apps/web/src/features/reveals/NewFranchises.tsx', // x4
     'apps/web/src/features/reveals/RevealHero.tsx', // x7
-    'apps/web/src/features/reveals/RevealsPromoCard.tsx', // x1
     'apps/web/src/features/reveals/SpotlightHero.tsx', // x5
     'apps/web/src/features/reveals/mosaicSizing.ts', // x1
     'apps/web/src/features/synergies/components/ColumnHeader.tsx', // x5
@@ -173,9 +166,7 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/reveals/InkTrackerTile.tsx', // x2
     'apps/web/src/features/reveals/NewFranchises.tsx', // x3
     'apps/web/src/features/reveals/RevealHero.tsx', // x2
-    'apps/web/src/features/reveals/RevealsPromoCard.tsx', // x1
     'apps/web/src/features/reveals/SpotlightHero.tsx', // x3
-    'apps/web/src/features/reveals/WhatsNewSection.tsx', // x1
     'apps/web/src/features/synergies/components/CommunityEmptyState.tsx', // x1
     'apps/web/src/features/synergies/components/DeltaPanel.tsx', // x1
     'apps/web/src/features/synergies/components/MobileLightbox.tsx', // x1
@@ -201,7 +192,6 @@ export const KNOWN_OFFENDERS = {
     'apps/web/src/features/playstyles/PlaystyleGuide.tsx', // x1
     'apps/web/src/features/reveals/InkBoard.tsx', // x1
     'apps/web/src/features/reveals/NewFranchises.tsx', // x1
-    'apps/web/src/features/reveals/RevealsPromoCard.tsx', // x1
     'apps/web/src/features/reveals/SpotlightHero.tsx', // x1
     'apps/web/src/features/synergies/components/CardOverviewModal.tsx', // x1
     'apps/web/src/features/synergies/components/ColumnHeader.tsx', // x1
@@ -216,8 +206,6 @@ export const KNOWN_OFFENDERS = {
   // 24 files, 29 sites at seeding (2026-07-22).
   'no-adhoc-buttons': [
     'apps/web/src/features/reveals/NewFranchises.tsx', // x1
-    'apps/web/src/features/reveals/RevealsPromoCard.tsx', // x1
-    'apps/web/src/features/reveals/WhatsNewSection.tsx', // x1
     'apps/web/src/features/voting/components/VoteStatusBanner.tsx', // x1
   ],
 };

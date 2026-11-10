@@ -108,14 +108,16 @@ export const MODAL_HEADER_STYLE: CSSProperties = {
 };
 
 /**
- * The modal's title. Phones keep 18px, between the scale's steps: at `FONT_SIZES.xxl` (20) 53%
- * of names take two lines on a 390px phone, against 38% at 18 (measured 2026-10-26, #1004).
+ * The modal's title on a phone, between the scale's steps: at `FONT_SIZES.xxl` (20) 53% of names
+ * take two lines on a 390px phone, against 38% at 18 (measured 2026-10-26, #1004).
  */
+const PHONE_TITLE_SIZE = 18;
+
 export function pickModalTitleStyle(isMobile: boolean): CSSProperties {
   return {
     margin: 0,
     fontFamily: FONTS.body,
-    fontSize: isMobile ? 18 : FONT_SIZES.xxxl,
+    fontSize: isMobile ? PHONE_TITLE_SIZE : FONT_SIZES.xxxl,
     fontWeight: FONT_WEIGHT.bold,
     color: COLORS.text,
     lineHeight: LINE_HEIGHT.tight,

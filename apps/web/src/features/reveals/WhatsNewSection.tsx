@@ -1,6 +1,20 @@
-import {useState, type ReactNode} from 'react';
+import {useRef, useState, type KeyboardEvent, type ReactNode} from 'react';
 import './reveals.css';
-import {COLORS, FONTS, REVEAL_SET_NUMBER, FONT_WEIGHT} from '../../shared/constants';
+import {
+  COLORS,
+  DURATION,
+  EASING,
+  FONTS,
+  FONT_SIZES,
+  FONT_WEIGHT,
+  GOLD_GLOW,
+  LETTER_SPACING,
+  RADIUS,
+  REVEAL_SET_NUMBER,
+  SHADOWS,
+  SPACING,
+  whiteRgba,
+} from '../../shared/constants';
 import type {FranchiseConfig} from './franchise';
 import {SpotlightHero} from './SpotlightHero';
 import {SET_SPOTLIGHTS, FRANCHISE_SPOTLIGHTS} from './setSpotlights';
@@ -40,43 +54,60 @@ function buildTabs(compact: boolean, onSelectFranchise?: (franchise: FranchiseCo
   return tabs.filter((t) => t.cards.length > 0);
 }
 
+const TAB_TRANSITION = ['color', 'background', 'border-color', 'box-shadow']
+  .map((property) => `${property} ${DURATION.base}ms ${EASING.snappy}`)
+  .join(', ');
+
+interface WhatsNewTabProps {
+  label: string;
+  isActive: boolean;
+  compact: boolean;
+  index: number;
+  buttonRef: (el: HTMLButtonElement | null) => void;
+  onSelect: () => void;
+  onKeyDown: (e: KeyboardEvent) => void;
+}
+
 /** One pill in the What's-New tab bar; active state drives colour, glow, and border. */
-function WhatsNewTab({label, isActive, compact, id, controls, onSelect}: {label: string; isActive: boolean; compact: boolean; id: string; controls: string; onSelect: () => void}) {
+function WhatsNewTab({label, isActive, compact, index, buttonRef, onSelect, onKeyDown}: WhatsNewTabProps) {
   const tone = isActive
     ? {
         border: COLORS.primary500,
-        background: 'linear-gradient(180deg, rgba(255, 185, 0, 0.28) 0%, rgba(255, 185, 0, 0.14) 100%)',
+        background: `linear-gradient(180deg, ${GOLD_GLOW.hoverBorder} 0%, ${GOLD_GLOW.activeBg} 100%)`,
         color: COLORS.primary,
-        boxShadow: '0 0 20px rgba(255, 185, 0, 0.35)',
+        boxShadow: SHADOWS.glowMd,
       }
     : {
-        border: 'rgba(255, 255, 255, 0.1)',
-        background: 'rgba(255, 255, 255, 0.02)',
-        color: '#90a1b9',
+        border: whiteRgba(0.1),
+        background: whiteRgba(0.02),
+        color: COLORS.textMuted,
         boxShadow: 'none',
       };
   return (
     <button
+      ref={buttonRef}
       type="button"
       role="tab"
-      id={id}
+      id={`whatsnew-tab-${index}`}
       aria-selected={isActive}
-      aria-controls={controls}
+      aria-controls="whatsnew-panel"
+      tabIndex={isActive ? 0 : -1}
       onClick={onSelect}
+      onKeyDown={onKeyDown}
       style={{
         appearance: 'none',
         cursor: 'pointer',
         font: 'inherit',
-        fontSize: compact ? 12 : 13,
+        fontSize: compact ? FONT_SIZES.md : FONT_SIZES.base,
         fontWeight: FONT_WEIGHT.semibold,
-        letterSpacing: 0.3,
-        padding: compact ? '7px 14px' : '9px 18px',
-        borderRadius: 999,
+        letterSpacing: LETTER_SPACING.slight,
+        padding: `${SPACING.sm}px ${compact ? SPACING.lg : SPACING.xl}px`,
+        borderRadius: RADIUS.pill,
         border: `1px solid ${tone.border}`,
         background: tone.background,
         color: tone.color,
         boxShadow: tone.boxShadow,
-        transition: 'color 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+        transition: TAB_TRANSITION,
       }}
     >
       {label}
@@ -88,15 +119,71 @@ function WhatsNewTab({label, isActive, compact, id, controls, onSelect}: {label:
 interface SectionDims {
   headerMargin: number;
   eyebrowSize: number;
-  eyebrowSpacing: number;
   titleSize: number;
   tablistGap: number;
   tablistMargin: number;
   panelGap: number;
 }
 
-const FULL_SECTION: SectionDims = {headerMargin: 22, eyebrowSize: 12, eyebrowSpacing: 2.8, titleSize: 32, tablistGap: 10, tablistMargin: 26, panelGap: 18};
-const COMPACT_SECTION: SectionDims = {headerMargin: 16, eyebrowSize: 10, eyebrowSpacing: 2.2, titleSize: 23, tablistGap: 6, tablistMargin: 18, panelGap: 14};
+const FULL_SECTION: SectionDims = {
+  headerMargin: SPACING.xxl,
+  eyebrowSize: FONT_SIZES.md,
+  titleSize: FONT_SIZES.displaySm,
+  tablistGap: SPACING.md,
+  tablistMargin: SPACING.xxl,
+  panelGap: SPACING.xl,
+};
+const COMPACT_SECTION: SectionDims = {
+  headerMargin: SPACING.lg,
+  eyebrowSize: FONT_SIZES.xs,
+  titleSize: FONT_SIZES.xxxl,
+  tablistGap: SPACING.sm,
+  tablistMargin: SPACING.xl,
+  panelGap: SPACING.section,
+};
+
+/** The kicker's open caps sit past LETTER_SPACING's top step (`wide`, 0.1em). */
+const EYEBROW_TRACKING = '0.23em';
+
+/**
+ * The tab bar keeps the ARIA tablist contract the kit's TabList keeps: one tab in the
+ * tab order, and Left and Right move focus and selection, wrapping at the ends.
+ */
+function WhatsNewTabBar({tabs, current, compact, onSelect}: {tabs: TabDef[]; current: number; compact: boolean; onSelect: (index: number) => void}) {
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const s = compact ? COMPACT_SECTION : FULL_SECTION;
+
+  function onKeyDown(e: KeyboardEvent, index: number) {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    e.preventDefault();
+    const next = (index + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    onSelect(next);
+    refs.current[next]?.focus();
+  }
+
+  return (
+    <div
+      role="tablist"
+      aria-label="What's new categories"
+      style={{display: 'flex', justifyContent: 'center', gap: s.tablistGap, flexWrap: 'wrap', marginBottom: s.tablistMargin}}
+    >
+      {tabs.map((t, i) => (
+        <WhatsNewTab
+          key={t.key}
+          index={i}
+          buttonRef={(el) => {
+            refs.current[i] = el;
+          }}
+          label={t.label}
+          isActive={i === current}
+          compact={compact}
+          onSelect={() => onSelect(i)}
+          onKeyDown={(e) => onKeyDown(e, i)}
+        />
+      ))}
+    </div>
+  );
+}
 
 /**
  * The reveals "What's New" band. A tab bar (debut franchises, new mechanics,
@@ -124,37 +211,19 @@ export function WhatsNewSection({compact = false, onSelectFranchise}: WhatsNewSe
           style={{
             fontWeight: FONT_WEIGHT.semibold,
             fontSize: s.eyebrowSize,
-            letterSpacing: s.eyebrowSpacing,
+            letterSpacing: EYEBROW_TRACKING,
             textTransform: 'uppercase',
-            color: '#d4af37',
+            color: COLORS.primary500,
           }}
         >
           New this set
         </div>
-        <h2 style={{fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.regular, fontSize: s.titleSize, color: '#ececf2', margin: '10px 0 0'}}>
+        <h2 style={{fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.regular, fontSize: s.titleSize, color: COLORS.text, margin: `${SPACING.md}px 0 0`}}>
           What&apos;s new in Set {REVEAL_SET_NUMBER}
         </h2>
       </div>
 
-      {hasTabBar && (
-        <div
-          role="tablist"
-          aria-label="What's new categories"
-          style={{display: 'flex', justifyContent: 'center', gap: s.tablistGap, flexWrap: 'wrap', marginBottom: s.tablistMargin}}
-        >
-          {tabs.map((t, i) => (
-            <WhatsNewTab
-              key={t.key}
-              id={`whatsnew-tab-${i}`}
-              controls="whatsnew-panel"
-              label={t.label}
-              isActive={i === current}
-              compact={compact}
-              onSelect={() => setActive(i)}
-            />
-          ))}
-        </div>
-      )}
+      {hasTabBar && <WhatsNewTabBar tabs={tabs} current={current} compact={compact} onSelect={setActive} />}
 
       <div {...panelA11y} style={{display: 'flex', flexDirection: 'column', gap: s.panelGap}}>
         {tabs[current].cards}

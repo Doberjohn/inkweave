@@ -87,6 +87,7 @@ export const ADHOC_BUTTON_EXEMPT = {
     'apps/web/src/features/reveals/CardSlot.tsx', // reveals tile family
     'apps/web/src/features/reveals/InkTrackerTile.tsx', // reveals ink-selection tile family (#511)
     'apps/web/src/features/reveals/SpotlightHero.tsx', // reveals spotlight tile family (#835)
+    'apps/web/src/features/reveals/WhatsNewSection.tsx', // the What's new band's gold pill tabs (TabList is an underline strip)
   ],
   patterns: [TEST_FILE, STORY_FILE],
 };

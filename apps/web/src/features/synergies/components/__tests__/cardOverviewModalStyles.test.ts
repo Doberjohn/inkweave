@@ -7,7 +7,9 @@ import {
   pickCardsRowStyle,
   pickModalFrameStyle,
   pickModalShellStyle,
+  pickModalTitleStyle,
 } from '../cardOverviewModalStyles';
+import {FONT_SIZES} from '../../../../shared/constants';
 
 // A phone's window used to shrink-wrap its widest line, so it widened when the synergies landed.
 describe('the frame', () => {
@@ -64,5 +66,12 @@ describe('the card row', () => {
   it('lays the card column over the synergy column, and keeps that layer inside the row', () => {
     expect(pickCardColumnLayout(false)).toMatchObject({position: 'relative', zIndex: 1});
     expect(pickCardsRowStyle({isMobile: false, cardWidth: 337, rowHeight: 514}).isolation).toBe('isolate');
+  });
+});
+
+describe('the title', () => {
+  it("keeps 18px on a phone, between the scale's steps, and the scale's xxxl on a desktop", () => {
+    expect(pickModalTitleStyle(true).fontSize).toBe(18);
+    expect(pickModalTitleStyle(false).fontSize).toBe(FONT_SIZES.xxxl);
   });
 });
