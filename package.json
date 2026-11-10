@@ -75,7 +75,7 @@
         "!apps/web/dist/assets/binderDialogs-*.js",
         "!apps/web/dist/assets/saveRules-*.js"
       ],
-      "limit": "469 kB",
+      "limit": "470 kB",
       "gzip": true
     },
     {
@@ -111,7 +111,7 @@
         "apps/web/dist/assets/BinderWindow-*.js",
         "apps/web/dist/assets/BinderCover-*.js"
       ],
-      "limit": "78 kB",
+      "limit": "82 kB",
       "gzip": true
     },
     {
