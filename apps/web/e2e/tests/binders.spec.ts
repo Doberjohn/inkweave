@@ -55,6 +55,8 @@ const tiles = (page: Page) => binder(page).getByTestId('card-tile');
 const tileNames = (page: Page) => tiles(page).evaluateAll((all) => all.map((tile) => tile.getAttribute('aria-label')));
 const setButton = (page: Page) => page.getByRole('button', {name: /^Binder set/});
 const binderButton = (page: Page) => page.getByRole('button', {name: /^Binder: /});
+/** Below this width a phone's binder row leaves out its picture, the medal with it (SetPicker's `ROW_LOGO_MIN_WIDTH`). */
+const ROW_PICTURE_MIN_WIDTH = 393;
 
 /** The design a shelf cover or a medal draws, by its id. */
 const designOf = (where: Locator) => where.locator('[data-cover]').first().getAttribute('data-cover');
@@ -782,10 +784,12 @@ test.describe('Rename and Change cover', () => {
     ]);
     expect(world.shelf).toEqual({pages: 4, cover: 'argyle'});
 
-    // The open binder's medal, and the Binders tab's, with no reload.
+    // The open binder's medal, where its button draws one, and the Binders tab's, with no reload.
     await shelfCover(page, 'Amber').click();
     await expect(binder(page)).toBeVisible({timeout: 20_000});
-    await expect(binderButton(page).getByTestId('binder-medal')).toHaveAttribute('data-cover', 'tartan', {timeout: 20_000});
+    if ((page.viewportSize()?.width ?? ROW_PICTURE_MIN_WIDTH) >= ROW_PICTURE_MIN_WIDTH) {
+      await expect(binderButton(page).getByTestId('binder-medal')).toHaveAttribute('data-cover', 'tartan', {timeout: 20_000});
+    }
     await openBindersTab(binderButton(page));
     await expect(binderOption(page, 'My collection').getByTestId('binder-medal')).toHaveAttribute('data-cover', 'argyle');
     await expect(binderOption(page, 'Amber').getByTestId('binder-medal')).toHaveAttribute('data-cover', 'tartan');
