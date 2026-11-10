@@ -29,7 +29,7 @@ const ruby = createCard({id: 'ruby', setCode: '14', setNumber: 2, rarity: 'Rare'
 const POOL = [amber, ruby];
 const ENTRIES = {amber: {normal: 1, foil: 0}};
 
-const binder = (id: string, name: string, rules: string, place: number): Binder => ({id, name, scope: 'all', rules, coverId: null, place});
+const binder = (id: string, name: string, rules: string, place: number): Binder => ({id, name, scope: 'all', rules, pages: 4, cover: null, place});
 const BINDERS = [binder('b1', 'Amber', 'ink=Amber', 0), binder('b2', 'Ruby', 'ink=Ruby', 1), binder('b3', 'Rares', 'rarity=Rare', 2)];
 
 function Address() {
@@ -112,9 +112,13 @@ describe('BinderShelf', () => {
     expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Open']);
   });
 
-  it('counts My collection under the cover its shelf picked', () => {
-    renderShelf({shelfCover: 'ruby'});
-    expect(coverFaces.binderFace).toHaveBeenCalledWith(POOL, ENTRIES, null, 'ruby');
+  it("draws My collection under the design its shelf row names, and each binder under its own", () => {
+    const {view} = renderShelf({
+      binders: [{...BINDERS[0], cover: 'argyle'}, ...BINDERS.slice(1)],
+      myCollection: {pages: 4, cover: 'tartan'},
+    });
+    const drawn = [...view.container.querySelectorAll('[data-cover]')].map((face) => face.getAttribute('data-cover'));
+    expect(drawn).toEqual(['tartan', 'argyle', 'starry-night', 'starry-night']);
   });
 
   it("renames a binder from its ⋯, counts it by what changed, and closes once the server has it", async () => {

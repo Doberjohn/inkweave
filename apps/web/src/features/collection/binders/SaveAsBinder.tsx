@@ -43,7 +43,7 @@ function countLine({figures, scope}: SaveOffer): string {
 
 /** Makes the binder from the box's name and the offer's Sets and rules, and counts it once it lands: never its name. */
 async function saveOffered(readerId: string, name: string, {scope, rules}: SaveOffer) {
-  const made = await createBinder({readerId, input: {name: trimBinderName(name), scope, rules, coverId: null}});
+  const made = await createBinder({readerId, input: {name: trimBinderName(name), scope, rules, cover: null}});
   if ('binder' in made) trackEvent('binder_created', {from: 'saved', kinds: ruleKinds(made.binder)});
   return made;
 }

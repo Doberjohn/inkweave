@@ -1,16 +1,16 @@
 import {describe, it, expect, vi} from 'vitest';
 import {fireEvent, render, screen} from '@testing-library/react';
 import {MemoryRouter} from 'react-router-dom';
-import {createCard} from '../../../shared/test-utils';
 import {BinderCover, type BinderCoverProps} from './BinderCover';
+import {coverDesign} from './coverDesigns';
 
-const ART = createCard({id: 'amber-legend', imageUrl: '/card-images-preview/14085.avif'});
+const TARTAN = coverDesign('tartan');
 
 function renderCover(over: Partial<BinderCoverProps> = {}) {
   const props: BinderCoverProps = {
     name: 'Amber',
     rule: 'Amber ink',
-    cover: ART,
+    cover: TARTAN,
     figures: {complete: 293, master: 100, cards: 625},
     promos: false,
     to: '/browse?binder=all&custom=b1',
@@ -45,9 +45,23 @@ describe('BinderCover', () => {
     expect(screen.getByRole('link')).toHaveAccessibleName('Amber, Amber ink, 12%, 2 of 16 promos');
   });
 
-  it('shows an empty sleeve with no card, and a dash for rules that hold none', () => {
-    const {view} = renderCover({cover: null, figures: {complete: 0, master: 0, cards: 0}});
-    expect(view.container.querySelector('img')).toBeNull();
+  it('draws its design across the face, with the name and rule on its label in the foil', () => {
+    const {view} = renderCover();
+    const face = view.container.querySelector('[data-cover]') as HTMLElement;
+    expect(face).toHaveAttribute('data-cover', 'tartan');
+    // jsdom drops a background list it can't parse, so the ground is read as React wrote it.
+    expect(face.getAttribute('style')).toContain('background');
+    expect(screen.getByText('Amber', {selector: 'span'})).toHaveStyle({color: TARTAN.foil});
+    expect(screen.getByText('Amber ink', {selector: 'span'})).toHaveStyle({color: TARTAN.foil});
+  });
+
+  it('cuts a 30-letter name short on its label, with an ellipsis', () => {
+    renderCover({name: 'Shimmering Sapphire Collection'});
+    expect(screen.getByText('Shimmering Sapphire Collection', {selector: 'span'})).toHaveStyle({textOverflow: 'ellipsis', whiteSpace: 'nowrap'});
+  });
+
+  it('says a dash for rules that hold no card', () => {
+    renderCover({figures: {complete: 0, master: 0, cards: 0}});
     expect(screen.getByText('–')).toBeInTheDocument();
     expect(screen.getByRole('link')).toHaveAccessibleName('Amber, Amber ink, no cards');
   });

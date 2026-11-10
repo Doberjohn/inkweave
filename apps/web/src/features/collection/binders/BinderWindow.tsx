@@ -6,9 +6,11 @@ import {COLORS, DIALOG_TITLE, FONTS, FONT_SIZES, SPACING} from '../../../shared/
 import type {CollectionEntries} from '../collectionParser';
 import {PhoneSheet, ProblemLine, WhenGone, type SaveProblem} from './binderDialogs';
 import {LEAD as LEAD_TEXT} from './binderFields';
+import type {BinderInput} from './binderRepository';
 import {ruleKinds, type Binder} from './binderRules';
 import {createBinder, updateBinder} from './binderShelf';
 import {DraftCount, DraftCover, DraftPreview, RulesFields} from './BinderWindowParts';
+import {sameCover} from './coverDesigns';
 import {startOf, useBinderDraft, type BinderDraft, type DraftStart, type NewStart} from './useBinderDraft';
 
 export interface BinderWindowProps {
@@ -44,10 +46,17 @@ async function saveDraft({start, seeded}: {start: DraftStart; seeded: boolean}, 
     if ('binder' in made) trackEvent('binder_created', {from: seeded ? 'saved' : 'window', kinds: ruleKinds(made.binder)});
     return made;
   }
-  const {name, scope, rules} = input;
-  const changed = await updateBinder({readerId, id: start.binder.id, patch: {name, scope, rules}});
+  const changed = await updateBinder({readerId, id: start.binder.id, patch: editPatch(input, start.binder)});
   if ('binder' in changed && change !== null) trackEvent('binder_changed', {what: change});
   return changed;
+}
+
+/**
+ * What Save changes sends: the name, Sets and rules, and the cover only when the pick changed it,
+ * so a cover changed elsewhere since the window opened stays.
+ */
+function editPatch({name, scope, rules, cover}: BinderInput, binder: Binder): Partial<BinderInput> {
+  return sameCover(cover, binder.cover) ? {name, scope, rules} : {name, scope, rules, cover};
 }
 
 /**
@@ -130,12 +139,12 @@ export function BinderWindow(props: BinderWindowProps) {
           <div style={RULES_COLUMN}>
             <RulesFields draft={draft} isMobile={false} locked={save.saving} nameRef={nameRef} />
           </div>
-          {/* The preview scrolls with nothing in it to focus, so it takes the focus itself and the
-              keyboard scrolls it (WCAG 2.1.1). It stays a stop when everything fits, as with rules
-              that hold few cards, at the cost of one Tab more. */}
+          {/* The preview scrolls, and past the cover's choices nothing in it takes focus, so it takes
+              the focus itself and the keyboard scrolls it (WCAG 2.1.1). It stays a stop when
+              everything fits, as with rules that hold few cards, at the cost of one Tab more. */}
           {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scroll container, as the rule's docs allow */}
           <div role="region" aria-label="Preview" tabIndex={0} className="inset-focus-outline" style={PREVIEW_COLUMN}>
-            <DraftPreview draft={draft} />
+            <DraftPreview draft={draft} locked={save.saving} />
           </div>
         </div>
         <footer style={FOOT}>
@@ -163,7 +172,8 @@ interface PhoneWindowProps extends BinderWindowProps {
 
 /**
  * A phone's window: a sheet whose header holds Cancel, the title and Create, then the cover with
- * its count and bar, then the rules, each line's name over its choices.
+ * its count and bar, then Name, Sets and the Cover's designs, then the rules, each line's name over
+ * its choices.
  */
 function PhoneWindow({isOpen, onGone, draft, save, words}: PhoneWindowProps) {
   return (

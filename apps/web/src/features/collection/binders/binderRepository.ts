@@ -2,7 +2,9 @@ import type {TablesInsert} from '../../../shared/lib/database.types';
 import type {RepoResult} from '../../../shared/lib/repoResult';
 import {reportFailure} from '../../../shared/lib/reportFailure';
 import {callSupabase} from '../../../shared/lib/supabaseCall';
+import type {PageSide} from '../../cards/components/binderGeometry';
 import type {Binder} from './binderRules';
+import {DESIGN_ID} from './coverDesigns';
 
 /**
  * The `collection_binders` table: one row per binder, which only its owner reads and writes,
@@ -12,11 +14,9 @@ import type {Binder} from './binderRules';
 
 /** A binder's name as the table allows it (`collection_binders_name`): 1 to 30 letters. */
 const NAME_LENGTH = {min: 1, max: 30};
-/** A cover's id as the table allows it (`collection_binders_cover`). */
-const CARD_ID = /^[A-Za-z0-9_-]{1,40}$/;
 
-/** The columns a binder is read back through. */
-const COLUMNS = 'id, name, scope, rules, cover_id, place';
+/** The columns a binder is read back through. `cover_id`, the card a cover named before, is never read. */
+const COLUMNS = 'id, name, scope, rules, pages, cover, place';
 
 const isWords = (value: unknown): value is string => typeof value === 'string';
 
@@ -27,18 +27,26 @@ function isName(value: unknown): value is string {
   return letters >= NAME_LENGTH.min && letters <= NAME_LENGTH.max;
 }
 
-/** A cover: no card, or one card id. */
+/** A page's side as the table allows it (`collection_binders_pages`). */
+const isPageSide = (value: unknown): value is PageSide => value === 2 || value === 3 || value === 4;
+
+/** A row's page side, or 4 for one this build can't draw, as a design it doesn't know draws as the first. */
+const pageSideOf = (value: unknown): PageSide => (isPageSide(value) ? value : SHELF_DEFAULT.pages);
+
+/** A cover: none, the first design, or a design's id as the table allows it (`collection_binders_cover_design`). */
 function isCover(value: unknown): value is string | null {
   if (value === null) return true;
-  return isWords(value) && CARD_ID.test(value);
+  return isWords(value) && DESIGN_ID.test(value);
 }
 
 const isPlace = (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value);
 
 /**
- * A row we can safely show, or null. The table's checks hold names, ids and places to their
- * shapes, and this guard holds the client to the same, so a row the app can't read never reaches
- * a render: a name past 30 letters, a cover that names no card id, a place that is no whole number.
+ * A row we can safely show, or null. The table's checks hold names, covers and places to their
+ * shapes, and this guard holds the client to the same, so a row the app can't read never reaches a
+ * render: a name past 30 letters, a cover that is no design's id, a place that is no whole number.
+ * What a newer table might hold passes: a design's id this build doesn't know draws as the first,
+ * and a page side it can't draw as 4 (which `listBinders` reports), so neither hides the binder.
  */
 function toBinder(row: unknown): Binder | null {
   if (typeof row !== 'object' || row === null) return null;
@@ -46,30 +54,49 @@ function toBinder(row: unknown): Binder | null {
 }
 
 function binderOf(fields: Record<string, unknown>): Binder | null {
-  const {id, name, scope, rules, cover_id: coverId, place} = fields;
+  const {id, name, scope, rules, pages, cover, place} = fields;
   if (!isWords(id) || !isName(name)) return null;
   if (!isWords(scope) || !isWords(rules)) return null;
-  if (!isCover(coverId) || !isPlace(place)) return null;
-  return {id, name, scope, rules, coverId, place};
+  if (!isCover(cover) || !isPlace(place)) return null;
+  return {id, name, scope, rules, pages: pageSideOf(pages), cover, place};
 }
 
 /**
  * The caller's binders in shelf order. A row that fails the guard is left out and reported, never
  * an error: one bad row must not hide every other binder, and Sentry hears of the table and the
- * guard drifting apart.
+ * guard drifting apart. A page side the guard refuses is reported too, as the shelf's is, though
+ * its binder still shows, at 4.
  */
 export function listBinders(ownerId: string): Promise<RepoResult<Binder[]>> {
   return callSupabase({area: 'collection', operation: 'read binders'}, async (client) => {
     const {data, error} = await client.from('collection_binders').select(COLUMNS).eq('owner_id', ownerId).order('place');
     if (error || data === null) return {data: null, error};
-    const binders = data.map(toBinder).filter((binder): binder is Binder => binder !== null);
-    if (binders.length < data.length) reportUnreadable(data.length - binders.length);
+    const {binders, ...unreadable} = readRows(data);
+    reportUnreadable(unreadable);
     return {data: binders, error: null};
   });
 }
 
-function reportUnreadable(count: number): void {
-  const failure = new Error(`left out ${count} unreadable binder row(s)`);
+/** The rows the guard keeps, how many it left out, and how many it drew at 4 a side. */
+function readRows(rows: readonly unknown[]): {binders: Binder[]; leftOut: number; redrawn: number} {
+  const binders: Binder[] = [];
+  let redrawn = 0;
+  for (const row of rows) {
+    const binder = toBinder(row);
+    if (binder === null) continue;
+    binders.push(binder);
+    if (binder.pages !== (row as {pages: unknown}).pages) redrawn += 1;
+  }
+  return {binders, leftOut: rows.length - binders.length, redrawn};
+}
+
+function reportUnreadable({leftOut, redrawn}: {leftOut: number; redrawn: number}): void {
+  if (leftOut > 0) reportRows(`left out ${leftOut} unreadable binder row(s)`);
+  if (redrawn > 0) reportRows(`drew ${redrawn} binder row(s) at 4 a side`);
+}
+
+function reportRows(message: string): void {
+  const failure = new Error(message);
   console.warn(`[collection] ${failure.message}`);
   reportFailure({area: 'collection', operation: 'read binder rows'}, failure);
 }
@@ -91,12 +118,12 @@ export function moveBinderRow(id: string, earlier: boolean): Promise<RepoResult<
   );
 }
 
-/** What the client writes of a binder: its id, place and stamps are the server's. */
+/** What the client writes of a binder, each field its column's: its id, place and stamps are the server's. */
 export interface BinderInput {
   name: string;
   scope: string;
   rules: string;
-  coverId: string | null;
+  cover: string | null;
 }
 
 /**
@@ -108,11 +135,6 @@ export const SHELF_FULL = 'shelf_full';
 const isShelfCap = (error: {code?: string; message?: string} | null) =>
   error?.code === '23514' && (error.message ?? '').startsWith('A shelf holds');
 
-/** A binder's fields as the table names them, only those given. */
-function columnsOf({coverId, ...fields}: Partial<BinderInput>) {
-  return coverId === undefined ? fields : {...fields, cover_id: coverId};
-}
-
 /** The row the server sent back, as a binder; one the guard refuses is reported, never shown. */
 function readBack(result: RepoResult<unknown>): RepoResult<Binder> {
   if (result.error !== null) return {data: null, error: result.error};
@@ -120,7 +142,7 @@ function readBack(result: RepoResult<unknown>): RepoResult<Binder> {
   if (result.data === null) return {data: null, error: null};
   const binder = toBinder(result.data);
   if (binder !== null) return {data: binder, error: null};
-  reportUnreadable(1);
+  reportUnreadable({leftOut: 1, redrawn: 0});
   return {data: null, error: 'Unreadable binder row'};
 }
 
@@ -131,7 +153,7 @@ function readBack(result: RepoResult<unknown>): RepoResult<Binder> {
  */
 export async function insertBinderRow(ownerId: string, input: BinderInput): Promise<RepoResult<Binder>> {
   // The trigger sets place, which the generated type requires and no client may write.
-  const row = {owner_id: ownerId, ...columnsOf(input)} as TablesInsert<'collection_binders'>;
+  const row = {owner_id: ownerId, ...input} as TablesInsert<'collection_binders'>;
   const result = await callSupabase<unknown>({area: 'collection', operation: 'create binder'}, async (client) => {
     const {data, error} = await client.from('collection_binders').insert(row).select(COLUMNS).single();
     if (isShelfCap(error)) return {data: SHELF_FULL, error: null};
@@ -146,42 +168,58 @@ export async function insertBinderRow(ownerId: string, input: BinderInput): Prom
  */
 export async function updateBinderRow(id: string, patch: Partial<BinderInput>): Promise<RepoResult<Binder>> {
   const result = await callSupabase({area: 'collection', operation: 'change binder'}, (client) =>
-    client.from('collection_binders').update(columnsOf(patch)).eq('id', id).select(COLUMNS).maybeSingle(),
+    client.from('collection_binders').update(patch).eq('id', id).select(COLUMNS).maybeSingle(),
   );
   return readBack(result);
 }
 
 /*
- * The `collection_shelf` table: My collection's cover, one row per collection, which only its
- * owner reads and writes. No row, or no card, is the rarest card you have.
+ * The `collection_shelf` table: My collection's page size and cover, one row per collection,
+ * which only its owner reads and writes. No row is the defaults: 4 pockets a side, the first design.
  */
 
-/** My collection's cover: the card the caller's row names, or null with no row; a cover the guard refuses is none, and reported. */
-export function getShelfCover(ownerId: string): Promise<RepoResult<string | null>> {
-  return callSupabase({area: 'collection', operation: 'read shelf cover'}, async (client) => {
-    const {data, error} = await client.from('collection_shelf').select('cover_id').eq('owner_id', ownerId).maybeSingle();
+/** My collection's page size and cover, as its row keeps them. */
+export interface ShelfLook {
+  pages: PageSide;
+  cover: string | null;
+}
+
+/** My collection's with no row: a binder's own defaults. */
+export const SHELF_DEFAULT: ShelfLook = {pages: 4, cover: null};
+
+/**
+ * My collection's page size and cover: the caller's row, or the defaults with no row. A field the
+ * guard refuses takes its default, and Sentry hears of it, so the other still shows.
+ */
+export function getShelf(ownerId: string): Promise<RepoResult<ShelfLook>> {
+  return callSupabase({area: 'collection', operation: 'read shelf'}, async (client) => {
+    const {data, error} = await client.from('collection_shelf').select('pages, cover').eq('owner_id', ownerId).maybeSingle();
     if (error) return {data: null, error};
-    const cover = data?.cover_id ?? null;
-    if (isCover(cover)) return {data: cover, error: null};
-    reportUnreadableCover();
-    return {data: null, error: null};
+    if (data === null) return {data: SHELF_DEFAULT, error: null};
+    return {data: shelfOf(data), error: null};
   });
 }
 
-/** As `reportUnreadable`, for My collection's cover: shown as the rarest, and Sentry hears of it. */
-function reportUnreadableCover(): void {
-  const failure = new Error('left out an unreadable shelf cover');
+function shelfOf({pages, cover}: {pages: unknown; cover: unknown}): ShelfLook {
+  const look = {pages: pageSideOf(pages), cover: isCover(cover) ? cover : SHELF_DEFAULT.cover};
+  if (look.pages !== pages || look.cover !== cover) reportUnreadableShelf();
+  return look;
+}
+
+/** As `reportUnreadable`, for My collection's row: shown at its defaults, and Sentry hears of it. */
+function reportUnreadableShelf(): void {
+  const failure = new Error('left out an unreadable shelf field');
   console.warn(`[collection] ${failure.message}`);
-  reportFailure({area: 'collection', operation: 'read shelf cover'}, failure);
+  reportFailure({area: 'collection', operation: 'read shelf'}, failure);
 }
 
 /**
- * Sets My collection's cover, or null to put the rarest back: an upsert of `(owner_id, cover_id)`,
- * the two columns the table grants the client, as the sharing switch writes its own.
+ * Changes My collection's page size or cover: an upsert of `owner_id` and the fields given alone,
+ * so a cover's change never writes the page size, the columns the table grants the client.
  */
-export function setShelfCover(ownerId: string, coverId: string | null): Promise<RepoResult<null>> {
-  return callSupabase({area: 'collection', operation: 'save shelf cover'}, async (client) => {
-    const {error} = await client.from('collection_shelf').upsert({owner_id: ownerId, cover_id: coverId}, {onConflict: 'owner_id'});
+export function setShelf(ownerId: string, patch: Partial<ShelfLook>): Promise<RepoResult<null>> {
+  return callSupabase({area: 'collection', operation: 'save shelf'}, async (client) => {
+    const {error} = await client.from('collection_shelf').upsert({owner_id: ownerId, ...patch}, {onConflict: 'owner_id'});
     return {data: null, error};
   });
 }

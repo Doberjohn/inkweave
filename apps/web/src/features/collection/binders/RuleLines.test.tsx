@@ -141,7 +141,8 @@ describe('RuleLines', () => {
       name: 'Amber villains',
       scope: 'all',
       rules: 'q=Ursula&ink=Amber&cost=3&classification=Villain&rarity=Legendary&inkwell=inkable',
-      coverId: null,
+      pages: 4,
+      cover: null,
       place: 0,
     };
     render(<Harness binder={binder} />);

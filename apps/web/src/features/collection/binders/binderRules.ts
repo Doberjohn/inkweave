@@ -1,4 +1,5 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
+import type {PageSide} from '../../cards/components/binderGeometry';
 import {applyFilters, buildCombinedFilters} from '../../cards/applyFilters';
 import {inWords, rarityLabel} from '../../cards/filterOptions';
 import {binderSetOf} from '../../../shared/constants';
@@ -20,7 +21,10 @@ export interface Binder {
   scope: string;
   /** The filter params, as the address writes them: "ink=Amber&rarity=Epic". */
   rules: string;
-  coverId: string | null;
+  /** Its pages' side: 2, 3 or 4 pockets across and down. */
+  pages: PageSide;
+  /** Its cover design's id (`coverDesigns.ts`), or null for the first. */
+  cover: string | null;
   place: number;
 }
 

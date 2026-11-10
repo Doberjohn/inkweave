@@ -1,6 +1,6 @@
 # Collection binders replay
 
-The database checks for binders (#1074): a player's own binders (`collection_binders`), the trigger that caps a shelf at 30 and places each new binder at its end, `move_binder()`, and My collection's cover (`collection_shelf`), run on a local Postgres 17 instead of the Supabase project. It never connects to the project.
+The database checks for binders (#1074): a player's own binders (`collection_binders`), the trigger that caps a shelf at 30 and places each new binder at its end, `move_binder()`, My collection's cover (`collection_shelf`), and each binder's and My collection's page size and cover design (`pages`, `cover`, check 13), run on a local Postgres 17 instead of the Supabase project. It never connects to the project.
 
 It builds on two other replays. The friends replay (`../friends/`) gives `scaffold.sql`, which stands in for the Supabase pieces, and `helpers.sql`, which adds named players, acting as one and expected errors. The collection-sharing replay (`../collection-sharing/`) gives `collections.sql`, the pieces of `public.collections` the binders hang off.
 
@@ -28,6 +28,7 @@ $P -v ON_ERROR_STOP=1 \
   -f $F/friends/scaffold.sql \
   -f $F/collection-sharing/collections.sql \
   -f supabase/migrations/20261103064319_collection_binders.sql \
+  -f supabase/migrations/20261110143338_binder_pages_and_covers.sql \
   -f $F/friends/helpers.sql
 $P -f $F/collection-binders/checks.sql
 $P -f $F/collection-binders/race-setup.sql
@@ -62,6 +63,10 @@ Plant the mistake in a copy of the migration and load the copy instead. Each of 
 | the cap reads `> 30` | 7 (a 31st binder lands, alone or in one insert of many), and race 1's second file | 7 |
 | the trigger takes no lock | race 1's second file gets `23505`, race 2's second file gets `23505` and `race-verify.sql` fails | the same |
 | the trigger takes the lock before checking `owner_id` | race 3's second file (`55P03`: it waited on Q's lock) | the same |
+| `collection_binders_pages` lets 1 to 5 through | 13 (a page side of 5 is stored) | 13 |
+| `collection_binders_cover_design` takes any letters and spaces | 13 (`'Starry Night'` is stored) | 13 |
+| a new binder's `pages` defaults to 3 | 13 (a new binder comes at 3) | 13 |
+| the shelf's `grant update` leaves out `pages` | 5b (`authenticated` can't upsert the shelf's `pages`) | 13 |
 | the name check is `name = btrim(name)` and `!~ '[[:cntrl:]]'` again | 6 (a lone no-break space is a name) | 6 |
 | the name's ends leave out the zero-width characters | 6 (`Name` and a zero-width joiner is a name) | 6 |
 | only the name's start is checked | 6 (`Name` and a no-break space is a name) | 6 |

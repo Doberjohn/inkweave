@@ -18,7 +18,7 @@ function WindowPart({binder, part, isMobile}: PartProps) {
   const width = part === 'rules' && !isMobile ? 480 : 300;
   return (
     <div style={{width, padding: SPACING.xl, background: COLORS.background}}>
-      {part === 'preview' && <DraftPreview draft={draft} />}
+      {part === 'preview' && <DraftPreview draft={draft} locked={false} />}
       {part === 'rules' && <RulesFields draft={draft} isMobile={isMobile} locked={false} />}
       {part === 'count' && <DraftCount draft={draft} />}
     </div>

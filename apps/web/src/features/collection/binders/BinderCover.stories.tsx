@@ -3,11 +3,11 @@ import {MemoryRouter} from 'react-router-dom';
 import {fn} from 'storybook/test';
 import {BinderCover, CoverSkeleton} from './BinderCover';
 import {BinderMenu} from './BinderMenu';
-import {STORY_BINDER_POOL} from './binderStoryData';
+import {COVER_DESIGNS, coverDesign} from './coverDesigns';
 
 /**
- * One binder on the shelf (#1074): the board holding its cover card, its name and rules on the
- * plate, and under it the Complete percentage, the count and the gold bar. The whole cover links
+ * One binder on the shelf (#1074): the board in its cover's design, its name and rules on the
+ * label, and under it the Complete percentage, the count and the gold bar. The whole cover links
  * to the binder; hover or focus rings it in gold.
  */
 const meta: Meta<typeof BinderCover> = {
@@ -26,7 +26,7 @@ const meta: Meta<typeof BinderCover> = {
   args: {
     name: 'Amber',
     rule: 'Amber ink',
-    cover: STORY_BINDER_POOL[0],
+    cover: coverDesign('sunburst'),
     figures: {complete: 293, master: 120, cards: 625},
     promos: false,
     to: '/browse?binder=all',
@@ -55,12 +55,32 @@ export const MyCollection: Story = {
   },
 };
 
-/** Rules that hold none of your cards: an empty sleeve. */
-export const EmptySleeve: Story = {args: {cover: null, figures: {complete: 0, master: 0, cards: 140}}};
+/** Rules that hold none of your cards. */
+export const NoneHeld: Story = {args: {figures: {complete: 0, master: 0, cards: 140}}};
 
 /** A binder of promo sets alone counts promos. */
 export const PromoBinder: Story = {
-  args: {name: 'Promos', rule: 'All promo sets', cover: null, figures: {complete: 2, master: 1, cards: 16}, promos: true},
+  args: {name: 'Promos', rule: 'All promo sets', cover: coverDesign('pinstripe'), figures: {complete: 2, master: 1, cards: 16}, promos: true},
+};
+
+/** The eight designs side by side, as a shelf of them would show. */
+export const EveryDesign: Story = {
+  decorators: [
+    (Story) => (
+      <MemoryRouter>
+        <div style={{display: 'grid', gridTemplateColumns: 'repeat(4, 200px)', gap: 24, padding: 24}}>
+          <Story />
+        </div>
+      </MemoryRouter>
+    ),
+  ],
+  render: (args) => (
+    <>
+      {COVER_DESIGNS.map((design) => (
+        <BinderCover key={design.id} {...args} name={design.label} cover={design} />
+      ))}
+    </>
+  ),
 };
 
 /** Thirty letters, the longest a name runs, and a long rule line: both cut short on the plate. */

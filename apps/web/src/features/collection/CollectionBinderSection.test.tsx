@@ -9,6 +9,8 @@ import type {CollectionEntries} from './collectionParser';
 import type {BinderShow} from './binderCards';
 import type {Axis} from './collectionStats';
 import type {BinderChoices} from './binders/binderChoices';
+import type {Binder} from './binders/binderRules';
+import {coverDesign} from './binders/coverDesigns';
 import {CollectionBinderSection, type BinderStart} from './CollectionBinderSection';
 
 afterEach(() => {
@@ -280,9 +282,9 @@ describe('CollectionBinderSection', () => {
   });
 
   describe('a binder of your own', () => {
-    const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
+    const AMBER: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: null, place: 0};
     const open = (atOwnScope: boolean): BinderChoices => ({
-      open: {binder: AMBER, cover: null, narrowed: true},
+      open: {binder: AMBER, cover: coverDesign(null), narrowed: true},
       atOwnScope,
       shelf: {status: 'ready', binders: [AMBER], retry: vi.fn()},
       pool: null,

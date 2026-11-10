@@ -1,14 +1,16 @@
 import {enqueueWrite} from '../collectionWriteQueue';
 import {
+  SHELF_DEFAULT,
   SHELF_FULL,
   deleteBinderRow,
-  getShelfCover,
+  getShelf,
   insertBinderRow,
   listBinders,
   moveBinderRow,
-  setShelfCover,
+  setShelf,
   updateBinderRow,
   type BinderInput,
+  type ShelfLook,
 } from './binderRepository';
 import type {Binder} from './binderRules';
 
@@ -30,8 +32,8 @@ import type {Binder} from './binderRules';
 export interface BinderShelf {
   status: 'idle' | 'loading' | 'ready' | 'failed';
   binders: readonly Binder[];
-  /** My collection's cover once `ready`: the card picked, or null (or absent) for the rarest. */
-  shelfCover?: string | null;
+  /** My collection's page size and cover once `ready`. */
+  myCollection?: ShelfLook;
   retry: () => void;
 }
 
@@ -39,8 +41,8 @@ export interface BinderShelf {
 export interface Held {
   readerId: string;
   value: readonly Binder[] | 'loading' | 'failed';
-  /** My collection's cover, read with the binders. */
-  shelfCover?: string | null;
+  /** My collection's page size and cover, read with the binders. */
+  myCollection?: ShelfLook;
 }
 
 let held: Held | null = null;
@@ -71,17 +73,18 @@ function forgetBinders(): void {
   if (held !== null) publish(null);
 }
 
-/** My collection's cover on show for `readerId`, or null for the rarest. */
-const heldCover = (readerId: string) => (held?.readerId === readerId ? (held.shelfCover ?? null) : null);
+/** My collection's page size and cover on show for `readerId`, or the defaults. */
+const heldLook = (readerId: string) => (held?.readerId === readerId ? held.myCollection : undefined) ?? SHELF_DEFAULT;
 
 /**
- * The binders and My collection's cover, in one read. Only the binders failing fails it: a cover
- * that can't be read keeps the one on show, or the rarest, rather than hiding every binder.
+ * The binders and My collection's page size and cover, in one read. Only the binders failing
+ * fails it: a shelf row that can't be read keeps the one on show, or the defaults, rather than
+ * hiding every binder.
  */
 async function readShelf(readerId: string): Promise<Held> {
-  const [binders, cover] = await Promise.all([listBinders(readerId), getShelfCover(readerId)]);
+  const [binders, look] = await Promise.all([listBinders(readerId), getShelf(readerId)]);
   if (binders.error !== null || binders.data === null) return {readerId, value: 'failed'};
-  return {readerId, value: binders.data, shelfCover: cover.error === null ? cover.data : heldCover(readerId)};
+  return {readerId, value: binders.data, myCollection: look.data ?? heldLook(readerId)};
 }
 
 /** Reads `readerId`'s binders in the write queue; a failed re-read keeps the binders on show. */
@@ -168,9 +171,9 @@ function heldBinders({readerId}: {readerId: string}): readonly Binder[] | null {
   return held?.readerId === readerId && Array.isArray(held.value) ? held.value : null;
 }
 
-/** Shows the reader's binders changed, My collection's cover kept. */
+/** Shows the reader's binders changed, My collection's page size and cover kept. */
 function publishBinders(readerId: string, binders: readonly Binder[]): void {
-  publish({readerId, value: binders, shelfCover: held?.readerId === readerId ? held.shelfCover : null});
+  publish({readerId, value: binders, myCollection: heldLook(readerId)});
 }
 
 /** The shelf with the binder at `from` and its neighbour at `to` in each other's places. */
@@ -262,18 +265,18 @@ export async function updateBinder({readerId, id, patch}: BinderRef & {patch: Pa
 export type CoverResult = 'set' | 'gone' | 'failed';
 
 /**
- * Sets a cover, or null to put the rarest card back: a binder's (`id`), or My collection's (null),
- * which `collection_shelf` holds. The shelf shows it once the server has.
+ * Sets a cover design by its id: a binder's (`id`), or My collection's (null), which
+ * `collection_shelf` holds. The shelf shows it once the server has.
  */
-export async function setCover({readerId, id, coverId}: {readerId: string; id: string | null; coverId: string | null}): Promise<CoverResult> {
+export async function setCover({readerId, id, cover}: {readerId: string; id: string | null; cover: string}): Promise<CoverResult> {
   if (id !== null) {
-    const changed = await updateBinder({readerId, id, patch: {coverId}});
+    const changed = await updateBinder({readerId, id, patch: {cover}});
     return 'binder' in changed ? 'set' : changed.problem;
   }
-  const {error} = await enqueueWrite(readerId, () => setShelfCover(readerId, coverId));
+  const {error} = await enqueueWrite(readerId, () => setShelf(readerId, {cover}));
   if (error !== null) return 'failed';
   const binders = heldBinders({readerId});
-  if (binders !== null) publish({readerId, value: binders, shelfCover: coverId});
+  if (binders !== null) publish({readerId, value: binders, myCollection: {...heldLook(readerId), cover}});
   return 'set';
 }
 
@@ -308,10 +311,10 @@ export function viewOf(now: Held | null, {uid, hasCollection, syncing, wanted}: 
 }
 
 /** What the module's own answer says, once it is this reader's. */
-function heldView({value, shelfCover}: Held, retry: () => void): BinderShelf {
+function heldView({value, myCollection}: Held, retry: () => void): BinderShelf {
   if (value === 'loading') return {status: 'loading', binders: NONE, retry};
   if (value === 'failed') return {status: 'failed', binders: NONE, retry};
-  return {status: 'ready', binders: value, shelfCover: shelfCover ?? null, retry};
+  return {status: 'ready', binders: value, myCollection: myCollection ?? SHELF_DEFAULT, retry};
 }
 
 /**

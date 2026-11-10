@@ -1,7 +1,5 @@
 import {Suspense} from 'react';
-import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {lazyWithRetry} from '../../../shared/lib/lazyWithRetry';
-import type {CollectionEntries} from '../collectionParser';
 import type {Binder} from './binderRules';
 import {RenameBinderDialog} from './RenameBinderDialog';
 import {useOpening} from './useOpening';
@@ -12,11 +10,10 @@ interface ChangesFor {
   /** Whose shelf: each change waits in their write queue. */
   readerId: string;
   isMobile: boolean;
-  /** The cards the covers are counted over, null until they are: Change cover offers from them. */
-  pool: readonly LorcanaCard[] | null;
-  entries: CollectionEntries;
+  /** The covers are counted: false while the cards, the account's copy or the binders load. */
+  counted: boolean;
   /** My collection's cover as the shelf holds it. */
-  shelfCover: string | null;
+  myCover: string | null;
 }
 
 /**
@@ -24,14 +21,15 @@ interface ChangesFor {
  * words stay, and its element. Rename is small and comes with the shelf; Change cover loads in a
  * chunk of its own on its first opening. Each returns focus to the ⋯ that opened it as it closes.
  */
-export function useShelfChanges({readerId, isMobile, pool, entries, shelfCover}: ChangesFor) {
+export function useShelfChanges({readerId, isMobile, counted, myCover}: ChangesFor) {
   const renames = useOpening<{binder: Binder}>();
   const covers = useOpening<{binder: Binder | null}>();
   const renaming = renames.opening;
   const picking = covers.opening;
-  // The picker unmounts here without its close (the cards went, or the shelf waits on the account
-  // again), so its opening goes too: kept, it would open again by itself once they are back.
-  if (pool === null && picking !== null) covers.drop();
+  // The covers went to shimmers (the cards went, or the shelf waits on the account again), and
+  // the ⋯ that opened the picker with them, so it goes too: kept, it would open again by itself
+  // once they are back.
+  if (!counted && picking !== null) covers.drop();
   const rename = renaming && (
     <RenameBinderDialog
       key={renaming.key}
@@ -44,15 +42,13 @@ export function useShelfChanges({readerId, isMobile, pool, entries, shelfCover}:
       onGone={() => renames.forget(renaming.key)}
     />
   );
-  const cover = picking && pool !== null && (
+  const cover = picking && counted && (
     <Suspense fallback={null}>
       <CoverPicker
         key={picking.key}
         isOpen={picking.open}
         binder={picking.binder}
-        shelfCover={shelfCover}
-        pool={pool}
-        entries={entries}
+        myCover={myCover}
         readerId={readerId}
         isMobile={isMobile}
         onSaved={covers.close}

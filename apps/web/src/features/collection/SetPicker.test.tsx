@@ -1,8 +1,8 @@
 import {afterEach, describe, it, expect, vi} from 'vitest';
 import {cleanup, render, screen, fireEvent, within} from '@testing-library/react';
-import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {BinderChoices} from './binders/binderChoices';
 import type {Binder} from './binders/binderRules';
+import {coverDesign} from './binders/coverDesigns';
 import {SetPicker} from './SetPicker';
 
 const PROGRESS = new Map([
@@ -124,9 +124,8 @@ describe('SetPicker', () => {
   });
 
   describe('with your binders', () => {
-    const AMBER: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
-    const COVER = {id: 'amber-rare', imageUrl: 'https://art.test/amber-rare.avif'} as LorcanaCard;
-    const OPEN = {binder: AMBER, cover: COVER, narrowed: true};
+    const AMBER: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: 'sunburst', place: 0};
+    const OPEN = {binder: AMBER, cover: coverDesign('sunburst'), narrowed: true};
     const choices = (over: Partial<BinderChoices> = {}): BinderChoices => ({
       open: null,
       atOwnScope: true,
@@ -199,7 +198,7 @@ describe('SetPicker', () => {
       expect(binderButton()).toHaveAccessibleName('Binder: Amber');
       expect(binderButton()).toHaveAttribute('title', 'Amber');
       const medal = await within(binderButton()).findByTestId('binder-medal');
-      expect(medal.querySelector('img')).toHaveAttribute('src', 'https://art.test/amber-rare-sm.avif');
+      expect(medal).toHaveAttribute('data-cover', 'sunburst');
       cleanup();
       renderPicker({size: 'toolbar', setCode: '12', binders: choices({open: OPEN, atOwnScope: false})});
       expect(binderButton()).toHaveAccessibleName('Binder: Amber · Set 12');

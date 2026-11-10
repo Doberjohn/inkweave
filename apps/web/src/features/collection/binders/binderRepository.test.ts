@@ -2,11 +2,11 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {
   SHELF_FULL,
   deleteBinderRow,
-  getShelfCover,
+  getShelf,
   insertBinderRow,
   listBinders,
   moveBinderRow,
-  setShelfCover,
+  setShelf,
   updateBinderRow,
 } from './binderRepository';
 
@@ -55,18 +55,18 @@ beforeEach(() => {
   };
 });
 
-const ROW = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', cover_id: '2104', place: 0};
+const ROW = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 3, cover: 'tartan', place: 0};
 
 describe('listBinders', () => {
-  it("reads the caller's own rows in place order", async () => {
-    mockOrder.mockResolvedValue({data: [ROW], error: null});
+  it("reads the caller's own rows in place order, their page size and cover design, and never cover_id", async () => {
+    mockOrder.mockResolvedValue({data: [{...ROW, cover_id: '2104'}], error: null});
     await expect(listBinders('me')).resolves.toEqual({
-      data: [{id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: '2104', place: 0}],
+      data: [{id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 3, cover: 'tartan', place: 0}],
       error: null,
     });
     expect(mockEq).toHaveBeenCalledWith({
       table: 'collection_binders',
-      columns: 'id, name, scope, rules, cover_id, place',
+      columns: 'id, name, scope, rules, pages, cover, place',
       owner_id: 'me',
     });
     expect(mockOrder).toHaveBeenCalledWith('place');
@@ -75,14 +75,24 @@ describe('listBinders', () => {
   it('leaves out a row that fails the guard, and keeps the rest', async () => {
     const bad = [
       {...ROW, id: 'long', name: 'x'.repeat(31)},
-      {...ROW, id: 'cover', cover_id: 'not a card'},
+      {...ROW, id: 'cover', cover: 'Starry Night'},
       {...ROW, id: 'place', place: 1.5},
       null,
     ];
-    mockOrder.mockResolvedValue({data: [...bad, {...ROW, id: 'ok', cover_id: null}], error: null});
+    // A design this build doesn't know passes: it draws as the first.
+    mockOrder.mockResolvedValue({data: [...bad, {...ROW, id: 'ok', cover: null}, {...ROW, id: 'later', cover: 'paisley'}], error: null});
     const {data} = await listBinders('me');
-    expect(data?.map((binder) => binder.id)).toEqual(['ok']);
+    expect(data?.map((binder) => binder.id)).toEqual(['ok', 'later']);
     expect(console.warn).toHaveBeenCalledOnce();
+    expect(mockReport).toHaveBeenCalledExactlyOnceWith({area: 'collection', operation: 'read binder rows'}, expect.any(Error));
+  });
+
+  // A newer table's page side shouldn't hide the binder, but Sentry hears of the drift.
+  it('draws a page side the guard refuses at 4, keeps the binder and reports it', async () => {
+    mockOrder.mockResolvedValue({data: [ROW, {...ROW, id: 'wide', pages: 5}], error: null});
+    const {data} = await listBinders('me');
+    expect(data?.map((binder) => [binder.id, binder.pages])).toEqual([['b1', 3], ['wide', 4]]);
+    expect(console.warn).toHaveBeenCalledExactlyOnceWith('[collection] drew 1 binder row(s) at 4 a side');
     expect(mockReport).toHaveBeenCalledExactlyOnceWith({area: 'collection', operation: 'read binder rows'}, expect.any(Error));
   });
 
@@ -123,24 +133,24 @@ describe('moveBinderRow', () => {
   });
 });
 
-const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: '2104', place: 0};
-const COLUMNS = 'id, name, scope, rules, cover_id, place';
+const AMBER = ROW;
+const COLUMNS = 'id, name, scope, rules, pages, cover, place';
 
 describe('insertBinderRow', () => {
-  it("sends the five columns a client may write, and answers the server's row", async () => {
+  it("sends the owner and the input's columns, and answers the server's row", async () => {
     mockInsert.mockResolvedValue({data: {...ROW, place: 7}, error: null});
-    const input = {name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: '2104'};
+    const input = {name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: 'tartan'};
     await expect(insertBinderRow('me', input)).resolves.toEqual({data: {...AMBER, place: 7}, error: null});
     expect(mockInsert).toHaveBeenCalledExactlyOnceWith({
       table: 'collection_binders',
-      row: {owner_id: 'me', name: 'Amber', scope: 'all', rules: 'ink=Amber', cover_id: '2104'},
+      row: {owner_id: 'me', name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: 'tartan'},
       columns: COLUMNS,
     });
   });
 
   it("answers SHELF_FULL for the cap's check violation, and Sentry hears nothing", async () => {
     mockInsert.mockResolvedValue({data: null, error: {code: '23514', message: 'A shelf holds 30 binders at most'}});
-    await expect(insertBinderRow('me', {name: 'One more', scope: 'all', rules: '', coverId: null})).resolves.toEqual({
+    await expect(insertBinderRow('me', {name: 'One more', scope: 'all', rules: '', cover: null})).resolves.toEqual({
       data: null,
       error: SHELF_FULL,
     });
@@ -150,7 +160,7 @@ describe('insertBinderRow', () => {
   it("reports a check violation of the table's own, which isn't the cap", async () => {
     const refused = {code: '23514', message: 'new row for relation "collection_binders" violates check constraint "collection_binders_name"'};
     mockInsert.mockResolvedValue({data: null, error: refused});
-    await expect(insertBinderRow('me', {name: 'Amber', scope: 'all', rules: '', coverId: null})).resolves.toEqual({
+    await expect(insertBinderRow('me', {name: 'Amber', scope: 'all', rules: '', cover: null})).resolves.toEqual({
       data: null,
       error: refused.message,
     });
@@ -159,7 +169,7 @@ describe('insertBinderRow', () => {
 
   it('passes any other refusal on as an error', async () => {
     mockInsert.mockResolvedValue({data: null, error: {code: '42501', message: 'denied'}});
-    await expect(insertBinderRow('me', {name: 'Amber', scope: 'all', rules: '', coverId: null})).resolves.toEqual({
+    await expect(insertBinderRow('me', {name: 'Amber', scope: 'all', rules: '', cover: null})).resolves.toEqual({
       data: null,
       error: 'denied',
     });
@@ -182,6 +192,12 @@ describe('updateBinderRow', () => {
     });
   });
 
+  it("writes a cover's change to the cover column alone, never cover_id", async () => {
+    mockUpdate.mockResolvedValue({data: {...ROW, cover: 'argyle'}, error: null});
+    await updateBinderRow('b1', {cover: 'argyle'});
+    expect(mockUpdate).toHaveBeenCalledWith(expect.objectContaining({fields: {cover: 'argyle'}}));
+  });
+
   it('answers no binder and no error when the row is gone', async () => {
     mockUpdate.mockResolvedValue({data: null, error: null});
     await expect(updateBinderRow('b1', {name: 'Gold'})).resolves.toEqual({data: null, error: null});
@@ -189,51 +205,56 @@ describe('updateBinderRow', () => {
 
   it('turns a throw into a network error', async () => {
     mockUpdate.mockRejectedValue(new TypeError('Failed to fetch'));
-    await expect(updateBinderRow('b1', {coverId: null})).resolves.toEqual({data: null, error: 'Network error'});
+    await expect(updateBinderRow('b1', {cover: null})).resolves.toEqual({data: null, error: 'Network error'});
   });
 });
 
-describe('getShelfCover', () => {
-  it("reads the card the caller's shelf row names", async () => {
-    mockShelfRead.mockResolvedValue({data: {cover_id: '2104'}, error: null});
-    await expect(getShelfCover('me')).resolves.toEqual({data: '2104', error: null});
-    expect(mockEq).toHaveBeenCalledWith({table: 'collection_shelf', columns: 'cover_id', owner_id: 'me'});
+describe('getShelf', () => {
+  it("reads the page size and cover the caller's shelf row names", async () => {
+    mockShelfRead.mockResolvedValue({data: {pages: 3, cover: 'tartan'}, error: null});
+    await expect(getShelf('me')).resolves.toEqual({data: {pages: 3, cover: 'tartan'}, error: null});
+    expect(mockEq).toHaveBeenCalledWith({table: 'collection_shelf', columns: 'pages, cover', owner_id: 'me'});
   });
 
-  it('answers no card with no row, and for a cover the guard refuses, which it reports', async () => {
+  it('answers the defaults with no row, and for a field the guard refuses, which it reports', async () => {
     mockShelfRead.mockResolvedValue({data: null, error: null});
-    await expect(getShelfCover('me')).resolves.toEqual({data: null, error: null});
+    await expect(getShelf('me')).resolves.toEqual({data: {pages: 4, cover: null}, error: null});
     expect(mockReport).not.toHaveBeenCalled();
-    mockShelfRead.mockResolvedValue({data: {cover_id: 'not a card'}, error: null});
-    await expect(getShelfCover('me')).resolves.toEqual({data: null, error: null});
-    expect(mockReport).toHaveBeenCalledExactlyOnceWith({area: 'collection', operation: 'read shelf cover'}, expect.any(Error));
+    mockShelfRead.mockResolvedValue({data: {pages: 7, cover: 'Tartan'}, error: null});
+    await expect(getShelf('me')).resolves.toEqual({data: {pages: 4, cover: null}, error: null});
+    expect(mockReport).toHaveBeenCalledExactlyOnceWith({area: 'collection', operation: 'read shelf'}, expect.any(Error));
+  });
+
+  it('keeps the field it can read beside one it refuses', async () => {
+    mockShelfRead.mockResolvedValue({data: {pages: 2, cover: 'not a design'}, error: null});
+    await expect(getShelf('me')).resolves.toEqual({data: {pages: 2, cover: null}, error: null});
   });
 
   it('passes a refusal on as an error', async () => {
     mockShelfRead.mockResolvedValue({data: null, error: {message: 'permission denied', code: '42501'}});
-    await expect(getShelfCover('me')).resolves.toEqual({data: null, error: 'permission denied'});
+    await expect(getShelf('me')).resolves.toEqual({data: null, error: 'permission denied'});
   });
 });
 
-describe('setShelfCover', () => {
-  it('upserts the two columns the table grants, on the owner', async () => {
+describe('setShelf', () => {
+  it('upserts the owner and the cover alone, so a cover never writes the page size', async () => {
     mockUpsert.mockResolvedValue({error: null});
-    await expect(setShelfCover('me', '2104')).resolves.toEqual({data: null, error: null});
+    await expect(setShelf('me', {cover: 'argyle'})).resolves.toEqual({data: null, error: null});
     expect(mockUpsert).toHaveBeenCalledExactlyOnceWith({
       table: 'collection_shelf',
-      row: {owner_id: 'me', cover_id: '2104'},
+      row: {owner_id: 'me', cover: 'argyle'},
       options: {onConflict: 'owner_id'},
     });
   });
 
-  it('writes no card to put the rarest back', async () => {
+  it('upserts the page size alone, so it never writes the cover', async () => {
     mockUpsert.mockResolvedValue({error: null});
-    await setShelfCover('me', null);
-    expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({row: {owner_id: 'me', cover_id: null}}));
+    await setShelf('me', {pages: 3});
+    expect(mockUpsert).toHaveBeenCalledWith(expect.objectContaining({row: {owner_id: 'me', pages: 3}}));
   });
 
   it('passes a refusal on as an error', async () => {
     mockUpsert.mockResolvedValue({error: {message: 'permission denied', code: '42501'}});
-    await expect(setShelfCover('me', '2104')).resolves.toEqual({data: null, error: 'permission denied'});
+    await expect(setShelf('me', {cover: 'argyle'})).resolves.toEqual({data: null, error: 'permission denied'});
   });
 });

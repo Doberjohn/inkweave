@@ -3,6 +3,7 @@ import type {FilterDraft} from '../../../shared/hooks/useFilterParams';
 import type {CollectionEntries} from '../collectionParser';
 import type {BinderFigures} from './binderCovers';
 import type {Binder} from './binderRules';
+import type {CoverDesign} from './coverDesigns';
 import type {BinderReader, BinderShelf} from './binderShelf';
 
 /*
@@ -13,8 +14,8 @@ import type {BinderReader, BinderShelf} from './binderShelf';
 /** A binder of the reader's own on show, as the page holds it. */
 export interface OpenBinder {
   binder: Binder;
-  /** The card on its cover (`coverOf`), or none while it holds none of yours. */
-  cover: LorcanaCard | null;
+  /** Its cover's design, which its medal shows. */
+  cover: CoverDesign;
   /** Its rules hold a filter, so it packs its cards as a filtered binder does (`binderSlots`). */
   narrowed: boolean;
 }

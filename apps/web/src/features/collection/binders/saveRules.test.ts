@@ -86,7 +86,7 @@ describe('saveOffer', () => {
 
   it("offers the page's rules, its line, and the numbers the binder would read on its cover", () => {
     const offer = saveOffer(myCollection, draftOf({inks: ['Amber']}), '');
-    const face = binderFace(POOL, ENTRIES, {id: 'b', name: 'Amber', scope: WHOLE_COLLECTION, rules: 'ink=Amber', coverId: null, place: 0});
+    const face = binderFace(POOL, ENTRIES, {id: 'b', name: 'Amber', scope: WHOLE_COLLECTION, rules: 'ink=Amber', pages: 4, cover: null, place: 0});
     expect(offer).toEqual({scope: WHOLE_COLLECTION, rules: 'ink=Amber', line: 'Amber ink', figures: face.figures});
     expect(offer?.figures).toMatchObject({complete: 1, cards: 2});
   });

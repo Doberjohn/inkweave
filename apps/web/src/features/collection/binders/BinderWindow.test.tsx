@@ -24,8 +24,8 @@ const POOL = [
 ];
 const ENTRIES: CollectionEntries = {'amber-epic': {normal: 1, foil: 0}};
 
-const EPICS: Binder = {id: 'b1', name: 'Epics', scope: 'all', rules: 'rarity=Epic', coverId: null, place: 0};
-const MADE: Binder = {id: 'b2', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 1};
+const EPICS: Binder = {id: 'b1', name: 'Epics', scope: 'all', rules: 'rarity=Epic', pages: 4, cover: null, place: 0};
+const MADE: Binder = {id: 'b2', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: null, place: 1};
 
 function renderWindow(over: Partial<BinderWindowProps> = {}) {
   const props: BinderWindowProps = {
@@ -76,10 +76,42 @@ describe('BinderWindow', () => {
     await act(async () => fireEvent.click(button('Create binder')));
     expect(writes.createBinder).toHaveBeenCalledWith({
       readerId: 'user-1',
-      input: {name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null},
+      input: {name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: null},
     });
     expect(trackEvent).toHaveBeenCalledWith('binder_created', {from: 'window', kinds: 'ink'});
     expect(props.onSaved).toHaveBeenCalledWith(MADE);
+  });
+
+  it('makes the binder in the design picked under its cover, Starry night unless one is', async () => {
+    renderWindow();
+    expect(button('Starry night')).toHaveAttribute('aria-pressed', 'true');
+    fillAmber();
+    fireEvent.click(button('Tartan'));
+    expect(button('Tartan')).toHaveAttribute('aria-pressed', 'true');
+    expect(document.querySelector('[data-cover]')).toHaveAttribute('data-cover', 'tartan');
+    await act(async () => fireEvent.click(button('Create binder')));
+    expect(writes.createBinder).toHaveBeenCalledWith({
+      readerId: 'user-1',
+      input: {name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: 'tartan'},
+    });
+  });
+
+  it("saves a new design alone as Edit rules' change, and counts it as the cover's", async () => {
+    renderWindow({binder: EPICS});
+    fireEvent.click(button('Argyle'));
+    await act(async () => fireEvent.click(button('Save changes')));
+    expect(writes.updateBinder).toHaveBeenCalledWith({
+      readerId: 'user-1',
+      id: 'b1',
+      patch: {name: 'Epics', scope: 'all', rules: 'rarity=Epic', cover: 'argyle'},
+    });
+    expect(trackEvent).toHaveBeenCalledWith('binder_changed', {what: 'cover'});
+  });
+
+  it('offers the designs as a Cover row in the rules on a phone', () => {
+    renderWindow({isMobile: true});
+    expect(screen.getAllByRole('list', {name: 'Covers'})).toHaveLength(1);
+    expect(screen.getByText('Cover')).toBeInTheDocument();
   });
 
   it("says rules that hold no card, and keeps Create binder off", () => {
@@ -141,7 +173,7 @@ describe('BinderWindow', () => {
     expect(props.onSaved).toHaveBeenCalledWith(MADE);
   });
 
-  it("titles Edit rules by the binder's name, which stays out of the window's own, and saves only a change", async () => {
+  it("titles Edit rules by the binder's name, which stays out of the window's own, and saves only a change, its cover left alone", async () => {
     const props = renderWindow({binder: EPICS});
     expect(screen.getByRole('dialog', {name: 'Edit binder'})).toBeInTheDocument();
     expect(screen.getByRole('heading', {name: 'Edit Epics'})).toBeInTheDocument();

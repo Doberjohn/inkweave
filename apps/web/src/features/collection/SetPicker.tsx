@@ -35,6 +35,7 @@ import type {BinderChoices, OpenBinder} from './binders/binderChoices';
 import {useCloseOnPressOutside} from './useCloseOnPressOutside';
 import {SIDE_PANEL_WIDTH} from '../cards/components/BrowseSidePanel';
 import {ROW_CONTROL_HEIGHT} from './binderLayout';
+import {ROW_LOGO_MIN_WIDTH} from './setPickerRowWidth';
 import {
   COLORS,
   DURATION,
@@ -184,13 +185,6 @@ const NARROW_ROW_TRIGGER: TriggerGeometry = {...ROW_TRIGGER, logoBox: undefined,
 const TRIGGERS: Record<TriggerSize, TriggerGeometry> = {panel: PANEL_TRIGGER, toolbar: TOOLBAR_TRIGGER, row: ROW_TRIGGER};
 
 /**
- * Below this window width the row's button leaves its logo out, so its words keep the
- * room Filters and Collection leave them: on an iPhone 15 the logo fits, and on a 375 or 360
- * phone the words need its room.
- */
-const ROW_LOGO_MIN_WIDTH = 393;
-
-/**
  * The tabs and about ten rows, past which the list scrolls. Half the window at most, so on
  * a short laptop (about 650px tall) the menu still ends inside the panel it opens over.
  */
@@ -327,11 +321,11 @@ function useWarmBinderList(warm: boolean) {
 }
 
 /** A medal's place while its chunk loads: the same size, so nothing beside it moves. */
-function Medal({card, size}: {card: OpenBinder['cover']; size: number}) {
+function Medal({design, size}: {design: OpenBinder['cover']; size: number}) {
   if (!BinderMedal) return null;
   return (
     <Suspense fallback={<span style={{display: 'inline-block', width: size, height: size, flexShrink: 0}} />}>
-      <BinderMedal card={card} size={size} />
+      <BinderMedal design={design} size={size} />
     </Suspense>
   );
 }
@@ -743,7 +737,7 @@ function BinderLabel({binder, setCode, size, figures}: Pick<TriggerProps, 'setCo
 function ToolbarBinderWords({binder, words}: {binder: TriggerBinder; words: string}) {
   return (
     <span style={{display: 'flex', alignItems: 'center', gap: SPACING.xs, minWidth: 0}}>
-      <Medal card={binder.open.cover} size={TOOLBAR_MEDAL} />
+      <Medal design={binder.open.cover} size={TOOLBAR_MEDAL} />
       <span style={{...TRUNCATE, maxWidth: TOOLBAR_BINDER_WORDS, fontSize: `${FONT_SIZES.lg}px`, fontWeight: FONT_WEIGHT.bold}}>
         {words}
       </span>
@@ -764,7 +758,7 @@ function PanelBinderWords({binder, words, setCode}: {binder: TriggerBinder; word
 function triggerArt(setCode: string, binder: TriggerBinder | undefined, box: CSSProperties) {
   if (!binder) return choiceArt(setCode, box);
   // The panel's box is 40px tall, the row's 22: the medal fills the row's and sits inside the panel's.
-  return <Medal card={binder.open.cover} size={Math.min(Number(box.height), 36)} />;
+  return <Medal design={binder.open.cover} size={Math.min(Number(box.height), 36)} />;
 }
 
 /**

@@ -13,6 +13,9 @@ export interface PageGrid {
   rows: number;
 }
 
+/** A binder's page size as its row keeps it: its pockets across and down (owner, 2026-11-05). */
+export type PageSide = 2 | 3 | 4;
+
 /** A spread's pages, 4 by 3, on tablets and desktop. */
 export const SPREAD_PAGE: PageGrid = {columns: 4, rows: 3};
 export const PER_PAGE = SPREAD_PAGE.columns * SPREAD_PAGE.rows;

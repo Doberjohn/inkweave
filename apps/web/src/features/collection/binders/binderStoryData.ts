@@ -3,11 +3,12 @@ import type {CollectionEntries} from '../collectionParser';
 import type {BinderChoices, OpenBinder} from './binderChoices';
 import type {Binder} from './binderRules';
 import type {BinderShelf} from './binderShelf';
+import {coverDesign} from './coverDesigns';
 
 /*
- * Binders of your own for the stories: a small pool whose covers have art in
- * `public/card-images-preview`, so each medal draws offline, with classifications and keywords
- * for the rule lines' dropdowns, and a shelf of four.
+ * Binders of your own for the stories: a small pool, some of whose cards have art in
+ * `public/card-images-preview`, so the window's first page draws offline, with classifications
+ * and keywords for the rule lines' dropdowns, and a shelf of four, each in its own design.
  */
 
 const cardOf = (id: string, facts: Partial<LorcanaCard>) =>
@@ -30,24 +31,25 @@ export const STORY_BINDER_ENTRIES: CollectionEntries = {
   'emerald-epic': {normal: 1, foil: 0},
 };
 
-const binderOf = (binder: Omit<Binder, 'coverId' | 'place'>, place: number): Binder => ({...binder, coverId: null, place});
+const binderOf = (binder: Omit<Binder, 'pages' | 'place'>, place: number): Binder => ({...binder, pages: 4, place});
 
-/** Amber: every Amber card, the window's Edit rules story. */
-export const STORY_AMBER = binderOf({id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber'}, 0);
+/** Amber: every Amber card, the window's Edit rules story, under Sunburst. */
+export const STORY_AMBER = binderOf({id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: 'sunburst'}, 0);
 
 const STORY_BINDERS: Binder[] = [
   STORY_AMBER,
-  binderOf({id: 'b2', name: 'Enchanted chase', scope: 'all', rules: 'rarity=Enchanted'}, 1),
-  binderOf({id: 'b3', name: 'The Wilds Unknown', scope: '12', rules: ''}, 2),
+  binderOf({id: 'b2', name: 'Enchanted chase', scope: 'all', rules: 'rarity=Enchanted', cover: 'tartan'}, 1),
+  // No cover picked: the first design.
+  binderOf({id: 'b3', name: 'The Wilds Unknown', scope: '12', rules: '', cover: null}, 2),
   // Thirty letters, the longest a binder's name runs, and rules that hold none of the pool's cards.
-  binderOf({id: 'b4', name: 'Shimmering Sapphire Collection', scope: 'all', rules: 'ink=Sapphire'}, 3),
+  binderOf({id: 'b4', name: 'Shimmering Sapphire Collection', scope: 'all', rules: 'ink=Sapphire', cover: 'ripples'}, 3),
 ];
 
 /** The shelf's six binders, so it shows seven covers with My collection: the Binders tab's four and two more. */
 const STORY_SHELF_BINDERS: Binder[] = [
   ...STORY_BINDERS,
-  binderOf({id: 'b5', name: 'Emerald', scope: 'all', rules: 'ink=Emerald'}, 4),
-  binderOf({id: 'b6', name: 'Legends', scope: 'all', rules: 'rarity=Legendary'}, 5),
+  binderOf({id: 'b5', name: 'Emerald', scope: 'all', rules: 'ink=Emerald', cover: 'scales'}, 4),
+  binderOf({id: 'b6', name: 'Legends', scope: 'all', rules: 'rarity=Legendary', cover: 'argyle'}, 5),
 ];
 
 /** Thirty binders, the most a shelf holds: no New binder, and the line that says why. */
@@ -60,11 +62,11 @@ export function storyShelf(over: Partial<BinderShelf> = {}): BinderShelf {
   return {status: 'ready', binders: STORY_SHELF_BINDERS, retry: () => {}, ...over};
 }
 
-/** Amber on show, its Legendary on the cover. */
-export const STORY_OPEN_AMBER: OpenBinder = {binder: STORY_AMBER, cover: STORY_BINDER_POOL[0], narrowed: true};
+/** Amber on show, under Sunburst. */
+export const STORY_OPEN_AMBER: OpenBinder = {binder: STORY_AMBER, cover: coverDesign(STORY_AMBER.cover), narrowed: true};
 
-/** The longest name on show, with no card of yours to cover it. */
-export const STORY_OPEN_LONG: OpenBinder = {binder: STORY_BINDERS[3], cover: null, narrowed: true};
+/** The longest name on show, under Ripples. */
+export const STORY_OPEN_LONG: OpenBinder = {binder: STORY_BINDERS[3], cover: coverDesign(STORY_BINDERS[3].cover), narrowed: true};
 
 /** The Binders tab's view of the shelf: My collection on show unless a story opens a binder. */
 export function storyBinderChoices(over: Partial<BinderChoices> = {}): BinderChoices {
