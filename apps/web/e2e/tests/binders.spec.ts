@@ -424,6 +424,58 @@ test.describe('the New binder window', () => {
     await expect.poll(() => windowCount(dialog)).toBe(amberCards);
     await expect(createIn(dialog)).toBeEnabled();
     expect(await violations(page)).toEqual([]);
+
+    // The Classification dropdown open, its find field and list.
+    await dialog.getByRole('button', {name: 'Any classification'}).click();
+    await expect(dialog.getByRole('listbox', {name: 'Classifications'})).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+  });
+
+  test('shows every rule line and its foot in a 1920x1080 window, with nothing to scroll', async ({page}, testInfo) => {
+    test.skip(testInfo.project.name.startsWith('mobile-'), 'A phone scrolls its sheet; the lines fit a computer.');
+    await page.setViewportSize({width: 1920, height: 1080});
+    await signIn(page);
+    await page.goto('/browse?binder=shelf');
+    await shelf(page).getByRole('button', {name: /^New binder/}).click({timeout: 20_000});
+
+    const dialog = await windowOf(page, 'New binder');
+    for (const line of ['Ink', 'Inkwell', 'Ink cost', 'Rarity', 'Type', 'Classification', 'Keyword']) {
+      await expect(dialog.getByRole('group', {name: line, exact: true})).toBeInViewport({ratio: 1});
+    }
+    await expect(dialog.getByRole('textbox', {name: 'Name has'})).toBeInViewport({ratio: 1});
+    await expect(createIn(dialog)).toBeInViewport({ratio: 1});
+    // The rules' column holds every line without a scroll of its own.
+    const column = dialog.locator('fieldset').locator('..');
+    expect(await column.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(0);
+  });
+
+  test("writes a binder's rules from its lines and the Classification dropdown, whose Escape leaves the window open", async ({page}) => {
+    const world = worldOf();
+    await signIn(page, world);
+    await page.goto('/browse?binder=shelf');
+    await shelf(page).getByRole('button', {name: /^New binder/}).click({timeout: 20_000});
+
+    const dialog = await windowOf(page, 'New binder');
+    await nameIn(dialog).fill('Amber heroes');
+    await dialog.getByRole('button', {name: 'Filter by Amber'}).click();
+    await dialog.getByRole('group', {name: 'Rarity', exact: true}).getByRole('button', {name: 'Legendary'}).click();
+    const classification = dialog.getByRole('group', {name: 'Classification', exact: true});
+    await classification.getByRole('button', {name: 'Any classification'}).click();
+    await dialog.getByRole('combobox', {name: 'Find a classification'}).fill('hero');
+    await dialog.getByRole('option', {name: 'Hero', exact: true}).click();
+    await page.keyboard.press('Escape');
+    await expect(dialog.getByRole('listbox')).toHaveCount(0);
+    await expect(dialog).toBeVisible();
+    await expect(classification.getByRole('button', {name: /^Hero/})).toBeVisible();
+
+    await createIn(dialog).click();
+    await expect(dialog).toHaveCount(0);
+    expect(world.calls).toEqual([
+      {
+        what: 'create',
+        row: {owner_id: COLLECTOR_ID, name: 'Amber heroes', scope: 'all', rules: 'ink=Amber&classification=Hero&rarity=Legendary', cover_id: null},
+      },
+    ]);
   });
 
   test('keeps Create off for rules that hold no card, and says so', async ({page}) => {
@@ -450,7 +502,7 @@ test.describe('the New binder window', () => {
     const dialog = await windowOf(page, 'Edit binder');
     await expect(dialog.getByRole('heading', {name: 'Edit Amber'})).toBeVisible();
     await expect(saveIn(dialog)).toBeDisabled();
-    await dialog.getByRole('group', {name: 'Rarity filters'}).getByRole('button', {name: 'Epic'}).click();
+    await dialog.getByRole('group', {name: 'Rarity', exact: true}).getByRole('button', {name: 'Epic'}).click();
     const epics = await windowCount(dialog);
     expect(epics).toBeLessThan(before);
 
