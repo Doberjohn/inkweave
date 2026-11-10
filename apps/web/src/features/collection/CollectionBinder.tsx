@@ -15,7 +15,7 @@ import {CollectionSlotCounts, type SlotCountsEditor} from './CollectionSlotCount
 import type {CollectionEntry, Finish} from './collectionParser';
 import {finishesOf} from './printingFinishes';
 import {BinderSpread, type TurnAsk} from '../cards/components/BinderSpread';
-import {pagingOf, THREE_ROWS, TODAY_PAGE, type BinderPaging, type LoneFit, type PageGrid} from '../cards/components/binderGeometry';
+import {pagingOf, THREE_ROWS, TODAY_PAGE, type BinderGrid, type BinderPaging, type LoneFit} from '../cards/components/binderGeometry';
 import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/BinderSpreadMap';
 import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
 import {settleOf} from './binderPockets';
@@ -83,7 +83,7 @@ interface CollectionBinderProps {
    * The binder's page: today's 4 by 3 (the default), or a binder's own size. It changes the
    * paging step too, so this component pages by it and hands it to `BinderSpread` and its map.
    */
-  grid?: PageGrid;
+  grid?: BinderGrid;
   /**
    * What turns the pages: arrows beside the spread, or under a lone page (the
    * default); or the map, under the spread where Browse docks its panels (owner,

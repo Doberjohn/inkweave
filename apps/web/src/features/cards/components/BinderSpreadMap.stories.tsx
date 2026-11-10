@@ -2,7 +2,7 @@ import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import type {Ink} from 'inkweave-synergy-engine';
 import {BinderSpreadMap, type MapSet, type Pocket} from './BinderSpreadMap';
-import {squarePage, type PageGrid} from './binderGeometry';
+import {squarePage, type BinderGrid} from './binderGeometry';
 import {ALL_INKS, COLORS, SET_NAMES, SPACING, type SetCode} from '../../../shared/constants';
 
 /**
@@ -56,7 +56,7 @@ interface LiveMapProps {
   sets?: MapSet[];
   start?: number;
   single?: boolean;
-  grid?: PageGrid;
+  grid?: BinderGrid;
   rows?: 3 | 4;
 }
 

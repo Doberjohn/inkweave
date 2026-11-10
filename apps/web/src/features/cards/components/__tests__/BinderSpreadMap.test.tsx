@@ -2,7 +2,7 @@ import {useState} from 'react';
 import {afterEach, beforeEach, describe, it, expect, vi} from 'vitest';
 import {act, render, screen, fireEvent} from '@testing-library/react';
 import {BinderSpreadMap, type Pocket} from '../BinderSpreadMap';
-import {squarePage, type PageGrid} from '../binderGeometry';
+import {squarePage, type BinderGrid} from '../binderGeometry';
 
 /** The pockets that fill `spreads` spreads, the first holding twelve beside the front cover. */
 const filling = (spreads: number) => spreads * 24 - 12;
@@ -11,7 +11,7 @@ const filling = (spreads: number) => spreads * 24 - 12;
 const POCKETS: Pocket[] = Array.from({length: filling(40)}, (): Pocket => ({owned: true, inks: ['Amber']}));
 
 /** The map as the binder drives it: it turns to whatever spread, or page, the map asks for. */
-function Live({single = false, grid}: {single?: boolean; grid?: PageGrid}) {
+function Live({single = false, grid}: {single?: boolean; grid?: BinderGrid}) {
   const [current, setCurrent] = useState(0);
   return <BinderSpreadMap single={single} grid={grid} pockets={POCKETS} current={current} onGo={setCurrent} />;
 }

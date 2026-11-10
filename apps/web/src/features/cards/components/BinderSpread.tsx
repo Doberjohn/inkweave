@@ -31,6 +31,7 @@ import {
   viewPage,
   type LoneFit,
   type LoneRows,
+  type BinderGrid,
   type PageGrid,
 } from './binderGeometry';
 import {BINDER_LOOK} from './binderLook';
@@ -361,7 +362,7 @@ interface BinderSpreadProps {
    * that fit (`loneFit`), and a square page as it is (`viewPage`). The caller pages by the same
    * grid (`pagingOf`).
    */
-  grid?: PageGrid;
+  grid?: BinderGrid;
   /**
    * Where the page arrows go: beside the spread (the default), or, where Browse docks its
    * panels, on its outer edges, as small discs that grow under the pointer (owner,
@@ -574,7 +575,7 @@ interface ViewProps {
   sheets: ViewSheets;
   turn: ViewTurn;
   /** The binder's page (see `BinderSpreadProps.grid`). */
-  grid: PageGrid;
+  grid: BinderGrid;
   /** A lone page's rows and its board's widest (see `BinderSpreadProps.loneFit`); a spread has none. */
   fit: LoneFit;
   /** What the inside front cover holds (see `BinderSpreadProps.cover`). */
@@ -947,7 +948,7 @@ const NO_SHEETS: ViewSheets = {left: 0, right: 0};
 
 /** What a binder's paging follows (`pagingOf`): its page, whether a view is a lone page, and that page's rows. */
 interface PagingKey {
-  grid: PageGrid;
+  grid: BinderGrid;
   single: boolean;
   rows: LoneRows;
 }
@@ -979,7 +980,7 @@ type TurnProps = Pick<BinderSpreadProps, 'start' | 'renderSlot' | 'canPrev' | 'c
   onNext: () => void;
   single: boolean;
   /** The binder's page (see `BinderSpreadProps.grid`). */
-  grid: PageGrid;
+  grid: BinderGrid;
   /** A lone page's rows: what a view and a page hold. */
   rows: LoneRows;
   /** The binder's section, where a page in hand keeps its touch (`useGrabTurn`). */

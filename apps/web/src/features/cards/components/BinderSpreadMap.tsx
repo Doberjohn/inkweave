@@ -16,6 +16,7 @@ import {
   viewPage,
   type BinderPaging,
   type LoneRows,
+  type BinderGrid,
   type PageGrid,
 } from './binderGeometry';
 
@@ -128,13 +129,13 @@ interface BinderSpreadMapProps {
   /** A phone's lone pages: a mini per page, in place of the spreads. */
   single?: boolean;
   /** The binder's page, which each mini draws: today's 4 by 3 when left out (see `BinderSpread`'s `grid`). */
-  grid?: PageGrid;
+  grid?: BinderGrid;
   /** A lone page's rows, 3 or 4, which its mini draws where the page is today's. */
   rows?: LoneRows;
 }
 
 /** What draws a map: all but the choice of spreads or pages, with the binder's page. */
-type MapProps = Omit<BinderSpreadMapProps, 'single' | 'rows' | 'grid'> & {grid: PageGrid};
+type MapProps = Omit<BinderSpreadMapProps, 'single' | 'rows' | 'grid'> & {grid: BinderGrid};
 
 /**
  * The most spreads in view at once: eleven, the biggest set's count in today's pages, so where
@@ -431,7 +432,7 @@ const minisThatFit = (room: number, width: number) => Math.max(1, Math.floor((ro
  * The map of spreads of `grid`, beside the front cover: as many as fit their row at the narrowest
  * (`MIN_CELL`), at most `WINDOW`.
  */
-const spreadViews = (grid: PageGrid): MapViews => ({
+const spreadViews = (grid: BinderGrid): MapViews => ({
   ...pagingOf(grid, false, 3),
   noun: 'spread',
   cover: false,
@@ -443,7 +444,7 @@ const spreadViews = (grid: PageGrid): MapViews => ({
  * A phone's map of the pages a binder of `grid` draws at `rows` (`viewPage`), after a front
  * cover's: paged as the binder is, and as many as fit their row, each at full size.
  */
-const pageViews = (grid: PageGrid, rows: LoneRows): MapViews => ({
+const pageViews = (grid: BinderGrid, rows: LoneRows): MapViews => ({
   ...pagingOf(grid, true, rows),
   noun: 'page',
   cover: true,

@@ -16,24 +16,33 @@ export interface PageGrid {
 /** A binder's page size as its row keeps it: its pockets across and down (owner, 2026-11-05). */
 export type PageSide = 2 | 3 | 4;
 
+declare const BINDER_PAGE: unique symbol;
+
+/**
+ * A binder's own page: today's (`TODAY_PAGE`) or a side's (`squarePage`), the only two that make
+ * one. A page a view draws (`viewPage`) is a plain `PageGrid`, so it can't come back in as a
+ * binder's: a phone's 3 by 3 lone page would pass for a 3 by 3 binder's (`isSquare`).
+ */
+export type BinderGrid = PageGrid & {readonly [BINDER_PAGE]: true};
+
 /**
  * Today's page, 4 by 3: every binder's while binders are off. A spread draws two of them on
  * tablets and desktop, and a phone draws it 3 across (`lonePage`).
  */
-export const TODAY_PAGE: PageGrid = {columns: 4, rows: 3};
+export const TODAY_PAGE = {columns: 4, rows: 3} as BinderGrid;
 
 /** How many pockets a page of `grid` holds. */
 export const pocketsOf = ({columns, rows}: PageGrid) => columns * rows;
 
 /** One grid per side, made once, so a caller that keeps one in a dependency list sees a change only when the side does. */
-const SQUARE_PAGES: Record<PageSide, PageGrid> = {
-  2: {columns: 2, rows: 2},
-  3: {columns: 3, rows: 3},
-  4: {columns: 4, rows: 4},
+const SQUARE_PAGES: Record<PageSide, BinderGrid> = {
+  2: {columns: 2, rows: 2} as BinderGrid,
+  3: {columns: 3, rows: 3} as BinderGrid,
+  4: {columns: 4, rows: 4} as BinderGrid,
 };
 
 /** A binder's page at its size: as many pockets across as down. */
-export const squarePage = (side: PageSide): PageGrid => SQUARE_PAGES[side];
+export const squarePage = (side: PageSide): BinderGrid => SQUARE_PAGES[side];
 
 /**
  * How many rows a phone's lone page of today's has: 3, or 4 where the screen is tall enough that
@@ -52,14 +61,14 @@ const LONE_PAGES = byRows((rows): PageGrid => ({columns: 3, rows}));
 export const lonePage = (rows: LoneRows): PageGrid => LONE_PAGES[rows];
 
 /** Whether a page is a binder's own size, as many across as down, rather than today's 4 by 3. */
-export const isSquare = ({columns, rows}: PageGrid) => columns === rows;
+export const isSquare = ({columns, rows}: BinderGrid) => columns === rows;
 
 /**
  * The page a view draws of a binder whose pages are `grid`: a spread's are the binder's own. A
  * phone draws today's page 3 across, with the rows that fit (`lonePage`), and a square page as it
  * is, so its page 1 holds the same cards on every screen (2A, the binder window's check-in).
  */
-export function viewPage(grid: PageGrid, single: boolean, rows: LoneRows): PageGrid {
+export function viewPage(grid: BinderGrid, single: boolean, rows: LoneRows): PageGrid {
   return single && !isSquare(grid) ? lonePage(rows) : grid;
 }
 
@@ -85,7 +94,7 @@ const PAGINGS = new Map<string, BinderPaging>();
  * numbers (owner, 2026-10-27): its cards start a page in. It opens on page 1, the view after the
  * cover, so the cards come first.
  */
-export function pagingOf(grid: PageGrid, single: boolean, rows: LoneRows): BinderPaging {
+export function pagingOf(grid: BinderGrid, single: boolean, rows: LoneRows): BinderPaging {
   const page = pocketsOf(viewPage(grid, single, rows));
   const key = `${single ? 'lone' : 'spread'} ${page}`;
   const known = PAGINGS.get(key);

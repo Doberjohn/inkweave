@@ -1,4 +1,4 @@
-import {describe, it, expect} from 'vitest';
+import {describe, it, expect, expectTypeOf} from 'vitest';
 import {
   TODAY_PAGE,
   loneFitFor,
@@ -73,6 +73,13 @@ describe('a page at its size', () => {
   it("draws today's page 3 across on a phone, and as it is on a spread", () => {
     expect(viewPage(TODAY_PAGE, true, 4)).toEqual({columns: 3, rows: 4});
     expect(viewPage(TODAY_PAGE, false, 4)).toBe(TODAY_PAGE);
+  });
+
+  it("takes no page a view draws for a binder's own, so a 3 by 3 lone page never passes for a square", () => {
+    // Checked by the typecheck: without the refusal, the directive below is unused and fails it.
+    // @ts-expect-error a lone page is drawn from today's, and is no binder's page
+    expectTypeOf(pagingOf).toBeCallableWith(viewPage(TODAY_PAGE, true, 3), true, 4);
+    expectTypeOf(pagingOf).toBeCallableWith(squarePage(3), true, 4);
   });
 
   it('keeps one grid and one paging per size, so a dependency list sees a change only when the size changes', () => {
