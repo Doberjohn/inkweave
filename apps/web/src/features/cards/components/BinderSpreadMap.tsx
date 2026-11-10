@@ -137,9 +137,11 @@ interface BinderSpreadMapProps {
 type MapProps = Omit<BinderSpreadMapProps, 'single' | 'rows' | 'grid'> & {grid: PageGrid};
 
 /**
- * The most spreads in view at once: eleven, the biggest set's count, so where the row has
- * room for them a set's binder shows whole (owner, 2026-10-12; thirteen until the buttons
- * took their words). Narrower rows hold fewer (`useViewsThatFit`).
+ * The most spreads in view at once: eleven, the biggest set's count in today's pages, so where
+ * the row has room for them a set's binder shows whole (owner, 2026-10-12; thirteen until the
+ * buttons took their words). Every page size keeps it: a binder of smaller pages has more spreads,
+ * and the window moves along them as it does along the whole collection's. Narrower rows hold
+ * fewer (`useViewsThatFit`).
  */
 const WINDOW = 11;
 
@@ -182,7 +184,8 @@ const cellWidth = ({columns}: PageGrid) =>
 
 /** A cell's size on a page of `grid`: whole pixels, its height the nearest to a card's shape (7 by 9 at the widest). */
 function cellBox(grid: PageGrid): CSSProperties {
-  return SNAPS ? {width: cellWidth(grid), height: `round(${cellWidth(grid)} / 0.75, 1px)`} : {aspectRatio: '0.75'};
+  const width = cellWidth(grid);
+  return SNAPS ? {width, height: `round(${width} / 0.75, 1px)`} : {aspectRatio: '0.75'};
 }
 
 /** A lone page's cell, always at full size: 7 by 9 (#969). */
@@ -279,12 +282,14 @@ interface SpreadPages {
  * right page stays a page, like the spread it stands for.
  */
 function spreadPages(pockets: readonly Pocket[], {spread}: Pick<SpreadPlace, 'spread'>, {perView, lead}: BinderPaging): SpreadPages {
-  // As on the binder, the front cover takes a page before the first card (`pagingOf`).
+  // As on the binder, the front cover takes a page before the first card (`pagingOf`), and a
+  // spread is two pages.
   const from = spread * perView - lead;
-  const right = from + lead;
+  const page = perView / 2;
+  const right = from + page;
   return {
     left: from < 0 ? [] : pockets.slice(from, right),
-    right: pockets.slice(right, right + lead),
+    right: pockets.slice(right, right + page),
     frontCover: from < 0,
     backCover: pockets.length > 0 && right >= pockets.length,
   };
@@ -434,14 +439,15 @@ const spreadViews = (grid: PageGrid): MapViews => ({
   most: WINDOW,
 });
 
-/** A phone's map of `page`s, after a front cover's: as many as fit their row, each at full size (`loneMiniWidth`). */
-const pageViews = (page: PageGrid): MapViews => ({
-  // Already the page the binder draws, so it pages by itself, whatever its shape.
-  perView: pocketsOf(page),
-  lead: pocketsOf(page),
+/**
+ * A phone's map of the pages a binder of `grid` draws at `rows` (`viewPage`), after a front
+ * cover's: paged as the binder is, and as many as fit their row, each at full size.
+ */
+const pageViews = (grid: PageGrid, rows: LoneRows): MapViews => ({
+  ...pagingOf(grid, true, rows),
   noun: 'page',
   cover: true,
-  mini: loneMiniWidth(page),
+  mini: loneMiniWidth(viewPage(grid, true, rows)),
   most: Infinity,
 });
 
@@ -631,7 +637,7 @@ const COVER_MINI_LABEL = 'Front cover: collection numbers';
  */
 function PageMap({pockets, current, onGo, sets = [], grid, rows}: MapProps & {rows: LoneRows}) {
   const lone = viewPage(grid, true, rows);
-  const views = pageViews(lone);
+  const views = pageViews(grid, rows);
   const {rowRef, total, shown} = useMapWindow(pockets, current, views);
   const spans = setSpans(sets, pockets.length, views);
   return (
