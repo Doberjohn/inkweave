@@ -4,10 +4,6 @@ export type {Ink, LorcanaCard} from './types';
 // Loader functions
 export {
   sortBySetThenNumber,
-  getUniqueKeywords,
-  getUniqueClassifications,
-  getUniqueRarities,
-  getUniqueSets,
   smallImageUrl,
 } from './loader';
 export type {CardFilterOptions, SetInfo} from './loader';
@@ -20,6 +16,7 @@ export {
   INK_HUBS,
   INK_HUB_BLURBS,
   INK_HUB_PLAYSTYLES,
+  inkHubDescription,
   getInkHub,
   cardsForInk,
 } from './inkHubs';

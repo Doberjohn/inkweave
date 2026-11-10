@@ -6,6 +6,7 @@ import {
   COLORS,
   DISABLED_STYLE,
   FONT_SIZES,
+  FONT_WEIGHT,
   GOLD_GLOW,
   NEUTRAL_LADDER,
   RADIUS,
@@ -115,6 +116,7 @@ describe('SegmentedControl.css', () => {
     expect(value(option, 'border-radius')).toBe(`${RADIUS.md}px`);
     expect(value(option, 'color')).toBe(COLORS.textMuted);
     expect(value(option, 'font-size')).toBe(`${FONT_SIZES.md}px`);
+    expect(value(option, 'font-weight')).toBe(String(FONT_WEIGHT.semibold));
     const pressed = ruleFor(PRESSED);
     expect(buttons.filter((b) => b.matches(pressed.selectorText))).toEqual([buttons[0]]);
     expect(value(pressed, 'background')).toBe(NEUTRAL_LADDER.navHover);

@@ -239,7 +239,7 @@ export function PlaystyleGalleryPage() {
       }}>
       <Seo
         title="Lorcana Playstyles & Deck Archetypes | Inkweave"
-        description="Explore Disney Lorcana deck archetypes for Core format: ramp, discard, tribal packages, and more, each with the cards that power it and community-voted synergies."
+        description="Explore Disney Lorcana deck archetypes for Core format: ramp, discard, tribes and more, each with the cards that power it and community-voted synergies."
         canonicalPath="/playstyles"
       />
       <EtherealBackground />

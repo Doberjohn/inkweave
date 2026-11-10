@@ -47,7 +47,6 @@ export const KNOWN_OFFENDERS = {
     'packages/ui/src/components/Sparkles.tsx', // x1
     'packages/ui/src/lorcana/CardLightbox.stories.tsx', // x1
     'packages/ui/src/lorcana/CardTextBlock.stories.tsx', // x1
-    'packages/ui/src/lorcana/RaritySymbol.stories.tsx', // x1
     'packages/ui/src/lorcana/StrengthBadge.stories.tsx', // x8
     'packages/ui/src/lorcana/TierCircle.stories.tsx', // x2
   ],
@@ -89,7 +88,6 @@ export const KNOWN_OFFENDERS = {
     'packages/ui/src/components/CollapsibleSection.stories.tsx', // x2
     'packages/ui/src/components/EmptyState.stories.tsx', // x3
     'packages/ui/src/components/Sparkles.stories.tsx', // x3
-    'packages/ui/src/lorcana/RaritySymbol.stories.tsx', // x1
   ],
   // 62 files, 102 violations at seeding
   'no-raw-radius': [

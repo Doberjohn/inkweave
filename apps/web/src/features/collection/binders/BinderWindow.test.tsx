@@ -167,6 +167,13 @@ describe('BinderWindow', () => {
     expect(screen.queryByText(later)).toBeNull();
   });
 
+  it('lets the keyboard reach its preview, which scrolls with nothing in it to focus', () => {
+    renderWindow();
+    const preview = screen.getByRole('region', {name: 'Preview'});
+    expect(preview).toHaveAttribute('tabindex', '0');
+    expect(within(preview).getByText(/^\d+ cards$/)).toBeInTheDocument();
+  });
+
   it('says why rules too long to keep turn Create binder off, though they hold a card', () => {
     const long = 'a'.repeat(1001);
     renderWindow({pool: [...POOL, cardOf({id: 'long', name: long, fullName: long})]});

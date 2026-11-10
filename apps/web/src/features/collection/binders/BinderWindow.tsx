@@ -130,7 +130,11 @@ export function BinderWindow(props: BinderWindowProps) {
           <div style={RULES_COLUMN}>
             <RulesFields draft={draft} isMobile={false} locked={save.saving} nameRef={nameRef} />
           </div>
-          <div style={PREVIEW_COLUMN}>
+          {/* The preview scrolls with nothing in it to focus, so it takes the focus itself and the
+              keyboard scrolls it (WCAG 2.1.1). It stays a stop when everything fits, as with rules
+              that hold few cards, at the cost of one Tab more. */}
+          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a scroll container, as the rule's docs allow */}
+          <div role="region" aria-label="Preview" tabIndex={0} className="inset-focus-outline" style={PREVIEW_COLUMN}>
             <DraftPreview draft={draft} />
           </div>
         </div>

@@ -414,7 +414,7 @@ describe("useBrowseCollection's phone row (#969)", () => {
   it('draws the row in collection mode: Filters with its count, then Collection, on', () => {
     renderRow('/browse?binder=9');
     const row = within(screen.getByTestId('phone-binder-row'));
-    expect(row.getByRole('button', {name: 'Filters, 2 on'})).toHaveTextContent(/^Filters2$/);
+    expect(row.getByRole('button', {name: 'Filters, 2 on'})).toHaveTextContent(/^Filters 2$/);
     expect(row.getByRole('button', {name: 'Show my collection'})).toHaveAttribute('aria-pressed', 'true');
   });
 });

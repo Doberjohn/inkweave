@@ -43,6 +43,7 @@ import {useCardDataContext} from '../shared/contexts/CardDataContext';
 import {trackCardSelected, type CardSelectSource} from '../features/cards/lib/cardAnalytics';
 import {useCardModal} from '../shared/contexts/CardModalContext';
 import {useResponsive, useFilterParams} from '../shared/hooks';
+import {playstyleDescription} from '../features/playstyles/playstyleDescription';
 
 // ── Hero layout configs ──
 
@@ -667,7 +668,7 @@ function PlaystyleSeo({playstyle}: {playstyle: ResolvedPlaystyle}) {
   return (
     <Seo
       title={`${playstyle.name} Deck Archetype | Lorcana Synergies | Inkweave`}
-      description={`${playstyle.tagline} Explore the cards, enablers, and payoffs that define the ${playstyle.name} archetype in Disney Lorcana Core format.`}
+      description={playstyleDescription(playstyle)}
       canonicalPath={`/playstyles/${playstyle.id}`}
       breadcrumbs={[
         {name: 'Home', path: '/'},
