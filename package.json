@@ -71,6 +71,7 @@
         "!apps/web/dist/assets/BinderWindow-*.js",
         "!apps/web/dist/assets/BinderCover-*.js",
         "!apps/web/dist/assets/CoverPicker-*.js",
+        "!apps/web/dist/assets/CoverChoices-*.js",
         "!apps/web/dist/assets/SaveAsBinder-*.js",
         "!apps/web/dist/assets/binderDialogs-*.js",
         "!apps/web/dist/assets/saveRules-*.js"
@@ -125,6 +126,7 @@
         "apps/web/dist/assets/BinderShelf-*.js",
         "apps/web/dist/assets/binderShelf-*.js",
         "apps/web/dist/assets/CoverPicker-*.js",
+        "apps/web/dist/assets/CoverChoices-*.js",
         "apps/web/dist/assets/SaveAsBinder-*.js",
         "apps/web/dist/assets/binderDialogs-*.js",
         "apps/web/dist/assets/saveRules-*.js"
