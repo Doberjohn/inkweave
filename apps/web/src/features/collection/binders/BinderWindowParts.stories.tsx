@@ -27,7 +27,7 @@ function WindowPart({binder, part, isMobile}: PartProps) {
 
 /**
  * The New binder window's parts: the preview column (cover, count, chips, first page),
- * the rules column (Name, Sets, the filter panel's sections, Name has) and the count alone, as
+ * the rules column (Name, Sets and "What it holds", one line for each kind of rule) and the count alone, as
  * the phone's summary row shows it. `BinderWindow`'s stories show them together.
  */
 const meta: Meta<typeof WindowPart> = {
@@ -51,10 +51,10 @@ export const PreviewNoCards: Story = {
   args: {binder: {...STORY_AMBER, name: 'Sapphire', rules: 'ink=Sapphire'}},
 };
 
-/** The rules column on a computer: the filter panel's own sections between Sets and Name has. */
+/** The rules column on a computer: Name and Sets, then a line for each kind of rule. */
 export const Rules: Story = {args: {part: 'rules'}};
 
-/** The rules on a phone, in the phone's filter sections. */
+/** The rules on a phone: each line's name over its choices. */
 export const RulesPhone: Story = {args: {part: 'rules', isMobile: true}, globals: {viewport: {value: 'mobile1'}}};
 
 /** The count alone, as the phone's summary row shows it. */

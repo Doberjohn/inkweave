@@ -163,7 +163,7 @@ interface PhoneWindowProps extends BinderWindowProps {
 
 /**
  * A phone's window: a sheet whose header holds Cancel, the title and Create, then the cover with
- * its count and bar, then the rules in the phone's filter sections.
+ * its count and bar, then the rules, each line's name over its choices.
  */
 function PhoneWindow({isOpen, onGone, draft, save, words}: PhoneWindowProps) {
   return (

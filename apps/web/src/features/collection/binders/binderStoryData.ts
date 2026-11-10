@@ -6,18 +6,19 @@ import type {BinderShelf} from './binderShelf';
 
 /*
  * Binders of your own for the stories: a small pool whose covers have art in
- * `public/card-images-preview`, so each medal draws offline, and a shelf of four.
+ * `public/card-images-preview`, so each medal draws offline, with classifications and keywords
+ * for the rule lines' dropdowns, and a shelf of four.
  */
 
 const cardOf = (id: string, facts: Partial<LorcanaCard>) =>
   ({id, name: id, fullName: id, cost: 2, inkwell: true, type: 'Character', setNumber: 1, ...facts}) as LorcanaCard;
 
 export const STORY_BINDER_POOL: LorcanaCard[] = [
-  cardOf('amber-legend', {ink: 'Amber', rarity: 'Legendary', setCode: '14', setNumber: 85, imageUrl: '/card-images-preview/14085.avif'}),
+  cardOf('amber-legend', {ink: 'Amber', rarity: 'Legendary', setCode: '14', setNumber: 85, imageUrl: '/card-images-preview/14085.avif', classifications: ['Storyborn', 'Hero'], keywords: ['Ward']}),
   cardOf('amber-common', {ink: 'Amber', rarity: 'Common', setCode: '13', setNumber: 3}),
-  cardOf('amber-rare', {ink: 'Amber', rarity: 'Rare', setCode: '12', setNumber: 40}),
+  cardOf('amber-rare', {ink: 'Amber', rarity: 'Rare', setCode: '12', setNumber: 40, classifications: ['Dreamborn', 'Princess'], keywords: ['Evasive']}),
   cardOf('steel-enchanted', {ink: 'Steel', rarity: 'Enchanted', setCode: '14', setNumber: 213, imageUrl: '/card-images-preview/14213.avif'}),
-  cardOf('emerald-epic', {ink: 'Emerald', rarity: 'Epic', setCode: '12', setNumber: 14, imageUrl: '/card-images-preview/14014.avif'}),
+  cardOf('emerald-epic', {ink: 'Emerald', rarity: 'Epic', setCode: '12', setNumber: 14, imageUrl: '/card-images-preview/14014.avif', classifications: ['Floodborn', 'Villain'], keywords: ['Shift', 'Rush']}),
   cardOf('emerald-common', {ink: 'Emerald', rarity: 'Common', setCode: '12', setNumber: 23}),
 ];
 

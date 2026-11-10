@@ -48,6 +48,19 @@ describe('CollectionActions', () => {
     expect(gear()).toHaveFocus();
   });
 
+  it('closes on Tab onto the gear first: Tab moves on from there, Shift+Tab stays on it', () => {
+    renderActions();
+    fireEvent.click(gear());
+    // Tab's own move is the browser's, from the gear's place: the key isn't taken.
+    expect(fireEvent.keyDown(importAction(), {key: 'Tab'})).toBe(true);
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(gear()).toHaveFocus();
+    fireEvent.click(gear());
+    expect(fireEvent.keyDown(importAction(), {key: 'Tab', shiftKey: true})).toBe(false);
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(gear()).toHaveFocus();
+  });
+
   it('closes on a press outside', () => {
     renderActions();
     fireEvent.click(gear());

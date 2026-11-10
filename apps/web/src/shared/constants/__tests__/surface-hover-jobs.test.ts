@@ -21,6 +21,7 @@ const ROOTS = ['apps/web/src', 'apps/web/.storybook', 'packages/ui/src'];
 const HOVER_SITES: Record<string, number> = {
   'apps/web/src/features/collection/FriendsWhoHaveIt.tsx': 1, // a friend row under the pointer
   'apps/web/src/features/collection/binders/BinderMenu.tsx': 1, // a binder's ⋯ under the pointer
+  'apps/web/src/features/collection/binders/RulePick.tsx': 1, // the highlighted option
   'apps/web/src/shared/components/CompactHeader.tsx': 1, // the nav's current page
   'apps/web/src/shared/components/SearchAutocomplete.tsx': 1, // the highlighted option
   'apps/web/src/shared/components/SearchBottomSheet.tsx': 1, // the highlighted option

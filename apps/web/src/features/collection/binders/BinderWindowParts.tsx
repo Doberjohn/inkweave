@@ -1,5 +1,4 @@
 import type {CSSProperties, Ref} from 'react';
-import {FilterContent} from 'inkweave-ui/lorcana/FilterContent';
 import {FilterSection, SortSelect} from '../../../shared/components';
 import {
   COLORS,
@@ -11,7 +10,6 @@ import {
   SPACING,
   TABULAR,
 } from '../../../shared/constants';
-import {FILTER_VOCABULARY} from '../../cards/filterOptions';
 import {smallImageUrl} from '../../cards/loader';
 import {BINDER_LOOK} from '../../cards/components/binderLook';
 import '../../cards/components/binder.css';
@@ -19,6 +17,7 @@ import {ALL_PROMO_SETS, WHOLE_COLLECTION, isPromoScope, isPromoSet, setLabel} fr
 import {percentOf} from '../collectionStats';
 import {CoverBar, CoverBoard} from './BinderCover';
 import {CHIP, CHIPS, FIELD, HEADING} from './binderFields';
+import {RuleLines} from './RuleLines';
 import type {BinderDraft} from './useBinderDraft';
 
 /** The Sets a binder can keep, as the set picker offers them: every set, each set, every promo set, each promo set. */
@@ -44,15 +43,27 @@ interface RulesProps {
 /** Holds the fields, so a save can lock them all at once, with no look of its own. */
 const FIELDSET: CSSProperties = {margin: 0, padding: 0, border: 0, minWidth: 0};
 
-const TOO_LONG: CSSProperties = {margin: `${SPACING.xs}px 0 0`, fontSize: `${FONT_SIZES.base}px`, color: COLORS.error};
+/** Between Name and Sets and the rules, as a section's rule. */
+const DIVIDER: CSSProperties = {
+  height: 1,
+  margin: `${SPACING.sm}px 0 ${SPACING.lg}px`,
+  border: 0,
+  background: COLORS.surfaceBorder,
+};
+
+const RULES_HEADING: CSSProperties = {
+  margin: `0 0 ${SPACING.md}px`,
+  fontSize: `${FONT_SIZES.md}px`,
+  fontWeight: FONT_WEIGHT.semibold,
+  color: COLORS.text,
+};
 
 /**
- * The window's rules, in one column: Name and Sets, then the filter panel's own sections (Ink
- * with its dual-ink switch, Inkwell, Ink Cost, Rarity with its art presets, Type, Classification,
- * Keyword), then Name has, which matches names as the search box does.
+ * The window's rules, in one column: Name and Sets, then "What it holds", one line for each kind
+ * of rule (`RuleLines`).
  */
 export function RulesFields({draft, isMobile, locked, nameRef}: RulesProps) {
-  const {filters, options} = draft;
+  const {options} = draft;
   return (
     <fieldset disabled={locked} style={FIELDSET}>
       <FilterSection label="Name">
@@ -75,40 +86,9 @@ export function RulesFields({draft, isMobile, locked, nameRef}: RulesProps) {
           style={{width: '100%'}}
         />
       </FilterSection>
-      <FilterContent
-        inkFilters={filters.draftInks}
-        typeFilters={filters.draftTypes}
-        costFilters={filters.draftCosts}
-        filters={filters.draftFilters}
-        uniqueKeywords={options.keywords}
-        uniqueClassifications={options.classifications}
-        uniqueRarities={options.rarities}
-        sets={[]}
-        onToggleInk={filters.toggleInk}
-        onToggleType={filters.toggleType}
-        onToggleCost={filters.toggleCost}
-        onFiltersChange={filters.updateFilters}
-        vocabulary={FILTER_VOCABULARY}
-        variant={isMobile ? 'mobile' : 'panel'}
-        showSetFilter={false}
-        showArtPresets
-      />
-      <FilterSection label="Name has">
-        <input
-          aria-label="Name has"
-          placeholder="Stitch"
-          autoComplete="off"
-          value={draft.query}
-          onChange={(event) => draft.setQuery(event.target.value)}
-          style={FIELD}
-        />
-        {/* Only a long search can write rules past what the table holds. */}
-        {draft.rulesTooLong && (
-          <p role="status" style={TOO_LONG}>
-            These rules are too long to keep. Shorten Name has.
-          </p>
-        )}
-      </FilterSection>
+      <hr style={DIVIDER} />
+      <h3 style={RULES_HEADING}>What it holds</h3>
+      <RuleLines draft={draft} isMobile={isMobile} />
     </fieldset>
   );
 }
