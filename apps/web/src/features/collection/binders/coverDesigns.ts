@@ -111,3 +111,12 @@ export const COVER_DESIGNS: readonly CoverDesign[] = [
 export function coverDesign(id: string | null): CoverDesign {
   return COVER_DESIGNS.find((design) => design.id === id) ?? COVER_DESIGNS[0];
 }
+
+/**
+ * Whether two stored covers are the same choice. No cover is the first design's, but an id this
+ * build doesn't know is a choice of its own, though it draws as the first: a pick of the first
+ * must still replace it, or a build that knows it keeps showing it.
+ */
+export function sameCover(a: string | null, b: string | null): boolean {
+  return (a ?? COVER_DESIGNS[0].id) === (b ?? COVER_DESIGNS[0].id);
+}

@@ -75,15 +75,16 @@ describe('listBinders', () => {
   it('leaves out a row that fails the guard, and keeps the rest', async () => {
     const bad = [
       {...ROW, id: 'long', name: 'x'.repeat(31)},
-      {...ROW, id: 'pages', pages: 7},
       {...ROW, id: 'cover', cover: 'Starry Night'},
       {...ROW, id: 'place', place: 1.5},
       null,
     ];
-    // A design this build doesn't know passes: it draws as the first.
-    mockOrder.mockResolvedValue({data: [...bad, {...ROW, id: 'ok', cover: null}, {...ROW, id: 'later', cover: 'paisley'}], error: null});
+    // What a newer table might hold passes: a design this build doesn't know draws as the first,
+    // and a page side it can't draw as 4.
+    const later = [{...ROW, id: 'design', cover: 'paisley'}, {...ROW, id: 'pages', pages: 5}];
+    mockOrder.mockResolvedValue({data: [...bad, {...ROW, id: 'ok', cover: null}, ...later], error: null});
     const {data} = await listBinders('me');
-    expect(data?.map((binder) => binder.id)).toEqual(['ok', 'later']);
+    expect(data?.map((binder) => [binder.id, binder.pages])).toEqual([['ok', 3], ['design', 3], ['pages', 4]]);
     expect(console.warn).toHaveBeenCalledOnce();
     expect(mockReport).toHaveBeenCalledExactlyOnceWith({area: 'collection', operation: 'read binder rows'}, expect.any(Error));
   });

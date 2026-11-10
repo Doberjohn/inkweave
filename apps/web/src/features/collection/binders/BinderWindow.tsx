@@ -6,9 +6,11 @@ import {COLORS, DIALOG_TITLE, FONTS, FONT_SIZES, SPACING} from '../../../shared/
 import type {CollectionEntries} from '../collectionParser';
 import {PhoneSheet, ProblemLine, WhenGone, type SaveProblem} from './binderDialogs';
 import {LEAD as LEAD_TEXT} from './binderFields';
+import type {BinderInput} from './binderRepository';
 import {ruleKinds, type Binder} from './binderRules';
 import {createBinder, updateBinder} from './binderShelf';
 import {DraftCount, DraftCover, DraftPreview, RulesFields} from './BinderWindowParts';
+import {sameCover} from './coverDesigns';
 import {startOf, useBinderDraft, type BinderDraft, type DraftStart, type NewStart} from './useBinderDraft';
 
 export interface BinderWindowProps {
@@ -44,9 +46,17 @@ async function saveDraft({start, seeded}: {start: DraftStart; seeded: boolean}, 
     if ('binder' in made) trackEvent('binder_created', {from: seeded ? 'saved' : 'window', kinds: ruleKinds(made.binder)});
     return made;
   }
-  const changed = await updateBinder({readerId, id: start.binder.id, patch: input});
+  const changed = await updateBinder({readerId, id: start.binder.id, patch: editPatch(input, start.binder)});
   if ('binder' in changed && change !== null) trackEvent('binder_changed', {what: change});
   return changed;
+}
+
+/**
+ * What Save changes sends: the name, Sets and rules, and the cover only when the pick changed it,
+ * so a cover changed elsewhere since the window opened stays.
+ */
+function editPatch({name, scope, rules, cover}: BinderInput, binder: Binder): Partial<BinderInput> {
+  return sameCover(cover, binder.cover) ? {name, scope, rules} : {name, scope, rules, cover};
 }
 
 /**

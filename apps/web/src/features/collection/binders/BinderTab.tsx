@@ -6,7 +6,7 @@ import {COLORS, FONT_SIZES, SPACING, TRUNCATE, VISUALLY_HIDDEN} from '../../../s
 import {isFinished, percentOf} from '../collectionStats';
 import {optionStyle, percentStyle} from '../pickerRowLook';
 import type {BinderChoices} from './binderChoices';
-import {binderFace, type BinderFigures} from './binderCovers';
+import {binderFigures, type BinderFigures} from './binderCovers';
 import {ruleKinds, type Binder} from './binderRules';
 import {BinderMedal} from './BinderMedal';
 import {coverDesign, type CoverDesign} from './coverDesigns';
@@ -32,7 +32,7 @@ function rowsOf({shelf, pool, entries}: BinderChoices): BinderRow[] {
     binder,
     name: binder?.name ?? MY_COLLECTION,
     cover: coverDesign(binder === null ? myCover : binder.cover),
-    figures: pool === null ? undefined : binderFace(pool, entries, binder, myCover).figures,
+    figures: pool === null ? undefined : binderFigures(pool, entries, binder),
   });
   const rows = [rowOf(null), ...shelf.binders.map(rowOf)];
   // My collection's cover is the shelf's to name, so its medal waits for the read rather than swap.

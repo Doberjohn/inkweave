@@ -32,8 +32,12 @@ export function binderFace(
   binder: Binder | null,
   myCover: string | null = null,
 ): BinderFace {
-  const {scope, cover} = binder ?? {scope: WHOLE_COLLECTION, cover: myCover};
-  return {cover: coverDesign(cover), figures: figuresOf(cardsOf(pool, binder), entries, scope)};
+  return {cover: coverDesign(binder === null ? myCover : binder.cover), figures: binderFigures(pool, entries, binder)};
+}
+
+/** A binder's numbers alone, for a caller that draws its design before the pool is in. */
+export function binderFigures(pool: readonly LorcanaCard[], entries: CollectionEntries, binder: Binder | null): BinderFigures {
+  return figuresOf(cardsOf(pool, binder), entries, binder?.scope ?? WHOLE_COLLECTION);
 }
 
 /**

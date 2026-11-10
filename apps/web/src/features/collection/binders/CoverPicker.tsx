@@ -7,7 +7,7 @@ import {LEAD} from './binderFields';
 import type {Binder} from './binderRules';
 import {setCover, type CoverResult} from './binderShelf';
 import {CoverChoices} from './CoverChoices';
-import {coverDesign, type CoverDesign} from './coverDesigns';
+import {coverDesign, sameCover, type CoverDesign} from './coverDesigns';
 import {MY_COLLECTION} from './shelfWords';
 
 export interface CoverPickerProps {
@@ -88,9 +88,10 @@ function SaveLine({saving, problem}: {saving: boolean; problem: CoverProblem | n
 export function CoverPicker(props: CoverPickerProps) {
   const {binder, isMobile} = props;
   const save = useCoverSave(props);
-  const chosen = coverDesign(binder === null ? props.myCover : binder.cover);
+  const own = binder === null ? props.myCover : binder.cover;
+  const chosen = coverDesign(own);
   const pick = (design: CoverDesign) => {
-    if (design.id === chosen.id) props.onSaved();
+    if (sameCover(design.id, own)) props.onSaved();
     else void save.pick(design);
   };
   const close = () => {

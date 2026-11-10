@@ -30,6 +30,9 @@ function isName(value: unknown): value is string {
 /** A page's side as the table allows it (`collection_binders_pages`). */
 const isPageSide = (value: unknown): value is PageSide => value === 2 || value === 3 || value === 4;
 
+/** A row's page side, or 4 for one this build can't draw, as a design it doesn't know draws as the first. */
+const pageSideOf = (value: unknown): PageSide => (isPageSide(value) ? value : SHELF_DEFAULT.pages);
+
 /** A cover: none, the first design, or a design's id as the table allows it (`collection_binders_cover_design`). */
 function isCover(value: unknown): value is string | null {
   if (value === null) return true;
@@ -39,11 +42,11 @@ function isCover(value: unknown): value is string | null {
 const isPlace = (value: unknown): value is number => typeof value === 'number' && Number.isInteger(value);
 
 /**
- * A row we can safely show, or null. The table's checks hold names, sizes, covers and places to
- * their shapes, and this guard holds the client to the same, so a row the app can't read never
- * reaches a render: a name past 30 letters, a page side outside 2 to 4, a cover that is no design's
- * id, a place that is no whole number. A design's id this build doesn't know passes: it draws as
- * the first.
+ * A row we can safely show, or null. The table's checks hold names, covers and places to their
+ * shapes, and this guard holds the client to the same, so a row the app can't read never reaches a
+ * render: a name past 30 letters, a cover that is no design's id, a place that is no whole number.
+ * What a newer table might hold passes: a design's id this build doesn't know draws as the first,
+ * and a page side it can't draw as 4, so neither hides the binder.
  */
 function toBinder(row: unknown): Binder | null {
   if (typeof row !== 'object' || row === null) return null;
@@ -54,9 +57,8 @@ function binderOf(fields: Record<string, unknown>): Binder | null {
   const {id, name, scope, rules, pages, cover, place} = fields;
   if (!isWords(id) || !isName(name)) return null;
   if (!isWords(scope) || !isWords(rules)) return null;
-  if (!isPageSide(pages) || !isCover(cover)) return null;
-  if (!isPlace(place)) return null;
-  return {id, name, scope, rules, pages, cover, place};
+  if (!isCover(cover) || !isPlace(place)) return null;
+  return {id, name, scope, rules, pages: pageSideOf(pages), cover, place};
 }
 
 /**
@@ -180,7 +182,7 @@ export function getShelf(ownerId: string): Promise<RepoResult<ShelfLook>> {
 }
 
 function shelfOf({pages, cover}: {pages: unknown; cover: unknown}): ShelfLook {
-  const look = {pages: isPageSide(pages) ? pages : SHELF_DEFAULT.pages, cover: isCover(cover) ? cover : SHELF_DEFAULT.cover};
+  const look = {pages: pageSideOf(pages), cover: isCover(cover) ? cover : SHELF_DEFAULT.cover};
   if (look.pages !== pages || look.cover !== cover) reportUnreadableShelf();
   return look;
 }

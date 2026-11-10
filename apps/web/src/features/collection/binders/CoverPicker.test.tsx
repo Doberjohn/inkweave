@@ -61,9 +61,11 @@ describe('CoverPicker', () => {
     expect(chosen()).toEqual([choice('Sunburst')]);
   });
 
-  it('marks Starry night for a binder with no cover, or one this build does not know', () => {
+  it('marks Starry night for a design this build does not know, and a pick of it replaces that design', async () => {
     renderPicker({binder: {...AMBER, cover: 'paisley'}});
     expect(chosen()).toEqual([choice('Starry night')]);
+    await act(async () => fireEvent.click(choice('Starry night')));
+    expect(writes.setCover).toHaveBeenCalledExactlyOnceWith({readerId: 'user-1', id: 'b1', cover: 'starry-night'});
   });
 
   it("saves a pick by its design's id, counts the change, and tells the shelf once it lands", async () => {

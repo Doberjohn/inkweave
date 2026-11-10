@@ -9,7 +9,7 @@ import {figuresOf} from './binderCovers';
 import {clampBinderName, isValidBinderName, trimBinderName} from './binderName';
 import type {BinderInput} from './binderRepository';
 import {RULES_MAX, draftOf, ruleLine, ruleParts, rulePool, scopedDraft, writeRules, type Binder} from './binderRules';
-import {coverDesign, type CoverDesign} from './coverDesigns';
+import {coverDesign, sameCover, type CoverDesign} from './coverDesigns';
 
 /** The pockets on a binder's first page, as the window previews them. */
 const FIRST_PAGE = 12;
@@ -85,14 +85,11 @@ function usePreview(source: {pool: readonly LorcanaCard[]; entries: CollectionEn
   return previewOf(source.pool, source.entries, {scope, rules});
 }
 
-/**
- * What Save changes would change, or null for nothing. A cover counts by the design it draws, so
- * no cover and the first design's id are the same.
- */
+/** What Save changes would change, or null for nothing. A cover counts as `sameCover` counts it. */
 function changeOf(binder: Binder, input: BinderInput): ChangeKind | null {
   const ruled = draftOf(binder);
   if (input.scope !== binder.scope || input.rules !== writeRules(ruled.draft, ruled.query)) return 'rules';
-  if (coverDesign(input.cover) !== coverDesign(binder.cover)) return 'cover';
+  if (!sameCover(input.cover, binder.cover)) return 'cover';
   return input.name !== binder.name ? 'name' : null;
 }
 

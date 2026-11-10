@@ -126,6 +126,14 @@ describe('useBinderDraft', () => {
     expect(result.current.canSave).toBe(true);
   });
 
+  // It draws as the first design, but a build that knows it would keep showing it.
+  it('counts the first design as a change for a binder whose design this build does not know', () => {
+    const {result} = renderDraft({...EPICS, cover: 'paisley'});
+    expect(result.current.cover.id).toBe('starry-night');
+    act(() => result.current.pickCover(coverDesign('starry-night')));
+    expect(result.current.change).toBe('cover');
+  });
+
   it('counts a change of Sets alone as a change of rules', () => {
     const {result} = renderDraft(EPICS);
     act(() => result.current.setScope('12'));

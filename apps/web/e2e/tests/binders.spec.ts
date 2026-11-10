@@ -519,7 +519,7 @@ test.describe('the New binder window', () => {
     await saveIn(dialog).click();
     await expect(dialog).toHaveCount(0);
     expect(world.calls).toEqual([
-      {what: 'change', id: AMBER.id, patch: {name: 'Amber', scope: 'all', rules: 'ink=Amber&rarity=Epic', cover: 'sunburst'}},
+      {what: 'change', id: AMBER.id, patch: {name: 'Amber', scope: 'all', rules: 'ink=Amber&rarity=Epic'}},
     ]);
     await expect(shelfCover(page, 'Amber')).toHaveAccessibleName(/^Amber, Amber ink · Epic,/);
     expect(await coverCards(shelfCover(page, 'Amber'))).toBe(epics);

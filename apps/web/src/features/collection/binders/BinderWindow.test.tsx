@@ -173,7 +173,7 @@ describe('BinderWindow', () => {
     expect(props.onSaved).toHaveBeenCalledWith(MADE);
   });
 
-  it("titles Edit rules by the binder's name, which stays out of the window's own, and saves only a change", async () => {
+  it("titles Edit rules by the binder's name, which stays out of the window's own, and saves only a change, its cover left alone", async () => {
     const props = renderWindow({binder: EPICS});
     expect(screen.getByRole('dialog', {name: 'Edit binder'})).toBeInTheDocument();
     expect(screen.getByRole('heading', {name: 'Edit Epics'})).toBeInTheDocument();
@@ -184,7 +184,7 @@ describe('BinderWindow', () => {
     expect(writes.updateBinder).toHaveBeenCalledWith({
       readerId: 'user-1',
       id: 'b1',
-      patch: {name: 'Epics', scope: 'all', rules: 'ink=Amber&rarity=Epic', cover: null},
+      patch: {name: 'Epics', scope: 'all', rules: 'ink=Amber&rarity=Epic'},
     });
     expect(trackEvent).toHaveBeenCalledWith('binder_changed', {what: 'rules'});
     expect(props.onSaved).toHaveBeenCalledWith(EPICS);
