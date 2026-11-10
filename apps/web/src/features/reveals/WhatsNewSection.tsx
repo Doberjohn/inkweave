@@ -1,4 +1,4 @@
-import {useState, type ReactNode} from 'react';
+import {useRef, useState, type KeyboardEvent, type ReactNode} from 'react';
 import './reveals.css';
 import {
   COLORS,
@@ -57,8 +57,18 @@ const TAB_TRANSITION = ['color', 'background', 'border-color', 'box-shadow']
   .map((property) => `${property} ${DURATION.base}ms ${EASING.snappy}`)
   .join(', ');
 
+interface WhatsNewTabProps {
+  label: string;
+  isActive: boolean;
+  compact: boolean;
+  index: number;
+  buttonRef: (el: HTMLButtonElement | null) => void;
+  onSelect: () => void;
+  onKeyDown: (e: KeyboardEvent) => void;
+}
+
 /** One pill in the What's-New tab bar; active state drives colour, glow, and border. */
-function WhatsNewTab({label, isActive, compact, id, controls, onSelect}: {label: string; isActive: boolean; compact: boolean; id: string; controls: string; onSelect: () => void}) {
+function WhatsNewTab({label, isActive, compact, index, buttonRef, onSelect, onKeyDown}: WhatsNewTabProps) {
   const tone = isActive
     ? {
         border: COLORS.primary500,
@@ -74,12 +84,15 @@ function WhatsNewTab({label, isActive, compact, id, controls, onSelect}: {label:
       };
   return (
     <button
+      ref={buttonRef}
       type="button"
       role="tab"
-      id={id}
+      id={`whatsnew-tab-${index}`}
       aria-selected={isActive}
-      aria-controls={controls}
+      aria-controls="whatsnew-panel"
+      tabIndex={isActive ? 0 : -1}
       onClick={onSelect}
+      onKeyDown={onKeyDown}
       style={{
         appearance: 'none',
         cursor: 'pointer',
@@ -114,6 +127,46 @@ interface SectionDims {
 
 const FULL_SECTION: SectionDims = {headerMargin: 22, eyebrowSize: 12, eyebrowSpacing: 2.8, titleSize: 32, tablistGap: 10, tablistMargin: 26, panelGap: 18};
 const COMPACT_SECTION: SectionDims = {headerMargin: 16, eyebrowSize: 10, eyebrowSpacing: 2.2, titleSize: 23, tablistGap: 6, tablistMargin: 18, panelGap: 14};
+
+/**
+ * The tab bar keeps the ARIA tablist contract the kit's TabList keeps: one tab in the
+ * tab order, and Left and Right move focus and selection, wrapping at the ends.
+ */
+function WhatsNewTabBar({tabs, current, compact, onSelect}: {tabs: TabDef[]; current: number; compact: boolean; onSelect: (index: number) => void}) {
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const s = compact ? COMPACT_SECTION : FULL_SECTION;
+
+  function onKeyDown(e: KeyboardEvent, index: number) {
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    e.preventDefault();
+    const next = (index + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    onSelect(next);
+    refs.current[next]?.focus();
+  }
+
+  return (
+    <div
+      role="tablist"
+      aria-label="What's new categories"
+      style={{display: 'flex', justifyContent: 'center', gap: s.tablistGap, flexWrap: 'wrap', marginBottom: s.tablistMargin}}
+    >
+      {tabs.map((t, i) => (
+        <WhatsNewTab
+          key={t.key}
+          index={i}
+          buttonRef={(el) => {
+            refs.current[i] = el;
+          }}
+          label={t.label}
+          isActive={i === current}
+          compact={compact}
+          onSelect={() => onSelect(i)}
+          onKeyDown={(e) => onKeyDown(e, i)}
+        />
+      ))}
+    </div>
+  );
+}
 
 /**
  * The reveals "What's New" band. A tab bar (debut franchises, new mechanics,
@@ -153,25 +206,7 @@ export function WhatsNewSection({compact = false, onSelectFranchise}: WhatsNewSe
         </h2>
       </div>
 
-      {hasTabBar && (
-        <div
-          role="tablist"
-          aria-label="What's new categories"
-          style={{display: 'flex', justifyContent: 'center', gap: s.tablistGap, flexWrap: 'wrap', marginBottom: s.tablistMargin}}
-        >
-          {tabs.map((t, i) => (
-            <WhatsNewTab
-              key={t.key}
-              id={`whatsnew-tab-${i}`}
-              controls="whatsnew-panel"
-              label={t.label}
-              isActive={i === current}
-              compact={compact}
-              onSelect={() => setActive(i)}
-            />
-          ))}
-        </div>
-      )}
+      {hasTabBar && <WhatsNewTabBar tabs={tabs} current={current} compact={compact} onSelect={setActive} />}
 
       <div {...panelA11y} style={{display: 'flex', flexDirection: 'column', gap: s.panelGap}}>
         {tabs[current].cards}
