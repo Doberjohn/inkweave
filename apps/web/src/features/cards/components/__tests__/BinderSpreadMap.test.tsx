@@ -306,11 +306,16 @@ describe("BinderSpreadMap at a binder's own size", () => {
     [...screen.getByRole('button', {name}).querySelectorAll<HTMLElement>(':scope > span')].map((page) => ({
       columns: page.style.gridTemplateColumns,
       cells: page.childElementCount,
-      held: [...page.children].filter((cell) => (cell as HTMLElement).style.background !== '').length,
+      // Each cell: a card you hold (x), one you miss (o), or an empty pocket (.).
+      pattern: [...page.querySelectorAll<HTMLElement>(':scope > span')]
+        .map(({style}) => (style.background === '' ? '.' : style.padding === '' ? 'x' : 'o'))
+        .join(''),
     }));
 
   it('draws a 3 by 3 spread as two pages of nine cells, three across, its first nine beside the front cover', () => {
-    render(<BinderSpreadMap grid={squarePage(3)} pockets={POCKETS.slice(0, 20)} current={0} onGo={() => {}} />);
+    // Cards 10 and 20 missing, so each page shows which cards it holds.
+    const pockets = POCKETS.slice(0, 20).map((pocket, i) => (i === 9 || i === 19 ? {...pocket, owned: false} : pocket));
+    render(<BinderSpreadMap grid={squarePage(3)} pockets={pockets} current={0} onGo={() => {}} />);
     expect(spreads()).toEqual([expect.stringMatching(/^Spread 1 of 2/), expect.stringMatching(/^Spread 2 of 2/)]);
     const [cover, cards] = miniPages(/^Spread 1 of 2/);
     expect(cover.cells).toBe(9);
@@ -318,7 +323,7 @@ describe("BinderSpreadMap at a binder's own size", () => {
     expect(cards.columns).toMatch(/^repeat\(3, /);
     expect(screen.getByRole('button', {name: /^Spread 1 of 2/}).style.width).toBe('72px');
     // A page a side: cards 10 to 18 on the left, 19 and 20 on the right, as the binder holds them.
-    expect(miniPages(/^Spread 2 of 2/).map(({held}) => held)).toEqual([9, 2]);
+    expect(miniPages(/^Spread 2 of 2/).map(({pattern}) => pattern)).toEqual(['oxxxxxxxx', 'xo.......']);
   });
 
   it("draws a phone's 4 by 4 page as sixteen cells, four across, whatever rows today's page would fit", () => {
