@@ -8,7 +8,7 @@ import {hasRaritySymbol, rarityConfigOf} from 'inkweave-ui/lib/rarity';
 import {Chip} from '../../../shared/components';
 import {COLORS, FONT_SIZES, FONT_WEIGHT, SPACING} from '../../../shared/constants';
 import {FILTER_VOCABULARY} from '../../cards/filterOptions';
-import {FIELD} from './binderFields';
+import {FIELD, toggledIn} from './binderFields';
 import {RulePick} from './RulePick';
 import type {BinderDraft} from './useBinderDraft';
 
@@ -25,10 +25,6 @@ function withPick<K extends keyof FilterPicks>(picks: FilterPicks, key: K, value
   else next[key] = value;
   return next;
 }
-
-/** The list with `value` added, or removed if it was there. */
-const toggledIn = (values: readonly string[], value: string) =>
-  values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
 
 type DraftFilters = BinderDraft['filters'];
 

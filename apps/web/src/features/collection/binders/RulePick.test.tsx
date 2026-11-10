@@ -66,6 +66,8 @@ describe('RulePick', () => {
     fireEvent.change(find(), {target: {value: 'dragon'}});
     expect(shown()).toEqual([]);
     expect(screen.getByText('No classification matches')).toBeInTheDocument();
+    // With nothing listed, the arrows are the field's own again (fireEvent is false when a key is taken).
+    expect(fireEvent.keyDown(find(), {key: 'ArrowDown'})).toBe(true);
   });
 
   it('moves the highlight with the arrows and picks it with Enter, keeping the focus in the find field', () => {
@@ -81,6 +83,13 @@ describe('RulePick', () => {
     fireEvent.keyDown(find(), {key: 'Enter'});
     expect(onChange).toHaveBeenCalledWith(['Princess']);
     expect(find()).toHaveFocus();
+  });
+
+  it('opens from ArrowUp on its last option', () => {
+    render(<Harness />);
+    fireEvent.keyDown(opener(), {key: 'ArrowUp'});
+    const villain = within(list()).getByRole('option', {name: 'Villain'});
+    expect(find()).toHaveAttribute('aria-activedescendant', villain.id);
   });
 
   it('scrolls the option the arrows reach into view, and never scrolls under the pointer', () => {
@@ -101,25 +110,34 @@ describe('RulePick', () => {
     }
   });
 
-  it('closes on Escape onto its button, and keeps the Escape from the window around it', () => {
+  it('closes on Escape onto its button, from wherever in it the focus is, and keeps the Escape from the window', () => {
     const onWindowKey = vi.fn();
     document.addEventListener('keydown', onWindowKey);
-    render(<Harness />);
+    render(<Harness start={['Hero']} />);
     fireEvent.click(opener());
     fireEvent.keyDown(find(), {key: 'Escape'});
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(opener()).toHaveFocus();
+    // A pick's × inside the open field.
+    fireEvent.click(opener());
+    const chip = screen.getByRole('button', {name: /^Hero/});
+    chip.focus();
+    fireEvent.keyDown(chip, {key: 'Escape'});
     document.removeEventListener('keydown', onWindowKey);
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     expect(opener()).toHaveFocus();
     expect(onWindowKey).not.toHaveBeenCalled();
   });
 
-  it('closes on a press outside it, and on Tab', () => {
+  it('closes on a press outside it, and on Tab onto its button, from which the browser moves on', () => {
     render(<Harness />);
     fireEvent.click(opener());
     fireEvent.pointerDown(document.body);
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     fireEvent.click(opener());
-    fireEvent.keyDown(find(), {key: 'Tab'});
+    // The Tab's own move is the browser's: the key isn't taken.
+    expect(fireEvent.keyDown(find(), {key: 'Tab'})).toBe(true);
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(opener()).toHaveFocus();
   });
 });

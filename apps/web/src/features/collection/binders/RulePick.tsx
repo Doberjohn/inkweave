@@ -6,6 +6,7 @@ import {
   type CSSProperties,
   type FocusEvent,
   type KeyboardEvent,
+  type MouseEvent,
   type RefObject,
 } from 'react';
 import {Chip} from '../../../shared/components';
@@ -21,7 +22,7 @@ import {
   TRUNCATE,
 } from '../../../shared/constants';
 import {useCloseOnPressOutside} from '../useCloseOnPressOutside';
-import {FIELD} from './binderFields';
+import {FIELD, toggledIn} from './binderFields';
 import './rulePick.css';
 
 export interface RulePickProps {
@@ -43,10 +44,6 @@ const POPOVER_ROOM = LIST_MAX + 64;
 
 /** The keys that open the list from its button, as a menu button's do. */
 const OPENING_KEYS = new Set(['ArrowDown', 'ArrowUp']);
-
-/** The list with `value` added, or removed if it was there. */
-const toggledIn = (values: readonly string[], value: string) =>
-  values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
 
 /** The nearest box that scrolls, whose edges the open list must stay inside. */
 function scrollBoxOf(el: HTMLElement): HTMLElement | null {
@@ -72,16 +69,22 @@ function opensUpward(field: HTMLElement | null): boolean {
 const focusLeft = (e: FocusEvent, box: HTMLElement | null) =>
   e.relatedTarget instanceof Node && !box?.contains(e.relatedTarget);
 
+/** How the list opens: above its field near the window's foot, and on its last option from ArrowUp. */
+interface Opening {
+  upward: boolean;
+  fromEnd: boolean;
+}
+
 /**
  * The list's open state, and what opens and closes it: the button, the arrows on it, Escape (onto
  * the button), Tab, keyboard focus leaving the field and its list, and a press outside them.
  */
 function usePickPopup(wrapperRef: RefObject<HTMLDivElement | null>, buttonRef: RefObject<HTMLButtonElement | null>) {
   const [open, setOpen] = useState(false);
-  const [upward, setUpward] = useState(false);
+  const [opening, setOpening] = useState<Opening>({upward: false, fromEnd: false});
   useCloseOnPressOutside(open, wrapperRef, setOpen);
-  const openList = () => {
-    setUpward(opensUpward(wrapperRef.current));
+  const openList = (fromEnd: boolean) => {
+    setOpening({upward: opensUpward(wrapperRef.current), fromEnd});
     setOpen(true);
   };
   // Closing onto the button: Safari focuses no button a click presses, so focus would go with the list.
@@ -91,14 +94,20 @@ function usePickPopup(wrapperRef: RefObject<HTMLDivElement | null>, buttonRef: R
   };
   return {
     open,
-    upward,
+    opening,
     closeOntoButton,
-    close: () => setOpen(false),
-    press: open ? closeOntoButton : openList,
+    press: open ? closeOntoButton : () => openList(false),
     onButtonKeyDown: (e: KeyboardEvent<HTMLButtonElement>) => {
       if (open || !OPENING_KEYS.has(e.key)) return;
       e.preventDefault();
-      openList();
+      openList(e.key === 'ArrowUp');
+    },
+    /** Escape is the open list's alone, wherever in it the focus is: the window must not close too. */
+    onKeyDown: (e: KeyboardEvent) => {
+      if (!open || e.key !== 'Escape') return;
+      e.preventDefault();
+      e.stopPropagation();
+      closeOntoButton();
     },
     closeOnLeave: (e: FocusEvent) => {
       if (focusLeft(e, wrapperRef.current)) setOpen(false);
@@ -129,7 +138,9 @@ export function RulePick({label, options, picked, onChange, isMobile}: RulePickP
     buttonRef.current?.focus();
   };
   return (
-    <div ref={wrapperRef} style={isMobile ? WRAPPER_PHONE : WRAPPER} onBlur={popup.closeOnLeave}>
+    // Escape comes up from whatever inside has the focus: the find field, the button or a chip's ×.
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div ref={wrapperRef} style={isMobile ? WRAPPER_PHONE : WRAPPER} onBlur={popup.closeOnLeave} onKeyDown={popup.onKeyDown}>
       <PickField
         words={{noun, listId}}
         picked={picked}
@@ -144,10 +155,9 @@ export function RulePick({label, options, picked, onChange, isMobile}: RulePickP
           noun={noun}
           options={options}
           picked={picked}
-          upward={popup.upward}
+          opening={popup.opening}
           onToggle={(value) => onChange(toggledIn(picked, value))}
-          onClose={popup.closeOntoButton}
-          onTab={popup.close}
+          onLeave={popup.closeOntoButton}
         />
       )}
     </div>
@@ -208,29 +218,26 @@ interface PickListProps {
   noun: string;
   options: readonly string[];
   picked: readonly string[];
-  upward: boolean;
+  opening: Opening;
   onToggle: (value: string) => void;
-  onClose: () => void;
-  onTab: () => void;
+  /** Closes the list onto its button, from which Tab then moves on. */
+  onLeave: () => void;
 }
 
-/** What a key in the find field does; any other key types. */
-type KeyAct = 'close' | 'leave' | 'pick' | 'down' | 'up';
+/** What a key in the find field does; any other key types. Escape is the wrapper's. */
+type KeyAct = 'leave' | 'pick' | 'down' | 'up';
 
 const KEY_ACTS: Partial<Record<string, KeyAct>> = {
-  Escape: 'close',
   Tab: 'leave',
   Enter: 'pick',
   ArrowDown: 'down',
   ArrowUp: 'up',
 };
 
-/** Takes the key from the page, except Tab, which moves on as ever and closes the list behind it. */
-function claimKey(e: KeyboardEvent, act: KeyAct) {
-  if (act === 'leave') return;
-  e.preventDefault();
-  // Escape is the list's alone: the window must not close too.
-  if (act === 'close') e.stopPropagation();
+/** The key's act: the arrows only while something matches, so with nothing listed they move the caret. */
+function actFor(key: string, anyShown: boolean): KeyAct | undefined {
+  const act = KEY_ACTS[key];
+  return anyShown || (act !== 'down' && act !== 'up') ? act : undefined;
 }
 
 /** The options whose names hold what was typed, any case; all of them before anything is. */
@@ -239,46 +246,86 @@ function optionsMatching(options: readonly string[], find: string): readonly str
   return options.filter((value) => value.toLowerCase().includes(needle));
 }
 
+/** What the find field's keys work over: the options shown, and the highlighted one's index. */
+interface Listing {
+  shown: readonly string[];
+  /** -1 while nothing matches, which leaves Enter nothing to pick. */
+  at: number;
+  optionId: string;
+}
+
+interface FindMoves {
+  setActive: (index: number) => void;
+  onPick: (value: string) => void;
+  onLeave: () => void;
+}
+
+/**
+ * The find field's keys: the arrows move the highlight and bring the option they reach into view,
+ * Enter picks it, and Tab leaves. Only the arrows scroll: the pointer scrolling the list would
+ * slide the next option under it. jsdom has no scrollIntoView.
+ */
+function findKeyHandler({shown, at, optionId}: Listing, moves: FindMoves) {
+  const last = shown.length - 1;
+  const moveTo = (index: number) => {
+    moves.setActive(index);
+    document.getElementById(`${optionId}-${index}`)?.scrollIntoView?.({block: 'nearest'});
+  };
+  const acts: Record<KeyAct, () => void> = {
+    // Focus goes back to the button before the browser moves it, so Tab and Shift+Tab move on
+    // from the field's place, not from a find field that is gone.
+    leave: moves.onLeave,
+    pick: () => shown.slice(at, at + 1).forEach(moves.onPick),
+    down: () => moveTo(Math.min(at + 1, last)),
+    up: () => moveTo(Math.max(at - 1, 0)),
+  };
+  return (e: KeyboardEvent<HTMLInputElement>) => {
+    const act = actFor(e.key, last >= 0);
+    if (!act) return;
+    if (act !== 'leave') e.preventDefault();
+    acts[act]();
+  };
+}
+
+/** A press anywhere in the open list but `keep` (its find field, and its scrollbar) leaves the field the focus. */
+function keepFocusOff(e: MouseEvent, keep: readonly (EventTarget | null)[]) {
+  if (!keep.includes(e.target)) e.preventDefault();
+}
+
+/** Scrolls the list to its top, or from ArrowUp to its end, where the highlight starts. */
+function scrollToHighlight(list: HTMLElement | null, fromEnd: boolean) {
+  if (list) list.scrollTop = fromEnd ? list.scrollHeight : 0;
+}
+
 /** The open list: its find field, which takes the focus, and the options it leaves. */
-function PickList({id, noun, options, picked, upward, onToggle, onClose, onTab}: PickListProps) {
+function PickList({id, noun, options, picked, opening, onToggle, onLeave}: PickListProps) {
   const [find, setFind] = useState('');
-  const [active, setActive] = useState(0);
+  const [active, setActive] = useState(opening.fromEnd ? options.length - 1 : 0);
   const findRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const optionId = useId();
   const shown = optionsMatching(options, find);
-  const last = shown.length - 1;
-  // -1 while nothing matches, which leaves Enter nothing to pick.
-  const at = Math.min(active, last);
+  const at = Math.min(active, shown.length - 1);
   const activeId = at < 0 ? undefined : `${optionId}-${at}`;
+  const {fromEnd} = opening;
   useEffect(() => {
     findRef.current?.focus();
-  }, []);
-
-  /**
-   * The arrows bring the option they reach into view; the pointer never scrolls the list, which
-   * would slide the next option under it. jsdom has no scrollIntoView.
-   */
-  const moveTo = (index: number) => {
-    setActive(index);
-    document.getElementById(`${optionId}-${index}`)?.scrollIntoView?.({block: 'nearest'});
-  };
-  const acts: Record<KeyAct, () => void> = {
-    close: onClose,
-    leave: onTab,
-    pick: () => shown.slice(at, at + 1).forEach(onToggle),
-    down: () => moveTo(Math.min(at + 1, last)),
-    up: () => moveTo(Math.max(at - 1, 0)),
-  };
-  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    const act = KEY_ACTS[e.key];
-    if (!act) return;
-    claimKey(e, act);
-    acts[act]();
+    scrollToHighlight(listRef.current, fromEnd);
+  }, [fromEnd]);
+  const onKeyDown = findKeyHandler({shown, at, optionId}, {setActive, onPick: onToggle, onLeave});
+  const onFind = (value: string) => {
+    setFind(value);
+    // The highlight goes back to the first match, so the list goes back to its top.
+    setActive(0);
+    scrollToHighlight(listRef.current, false);
   };
 
   return (
-    <div style={{...POPOVER, ...(upward ? ABOVE : BELOW)}}>
+    // The pointer only: the find field holds the keyboard.
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+    <div
+      style={{...POPOVER, ...(opening.upward ? ABOVE : BELOW)}}
+      onMouseDown={(e) => keepFocusOff(e, [findRef.current, listRef.current])}>
       <input
         ref={findRef}
         role="combobox"
@@ -290,12 +337,7 @@ function PickList({id, noun, options, picked, upward, onToggle, onClose, onTab}:
         placeholder={`Find a ${noun}`}
         autoComplete="off"
         value={find}
-        onChange={(e) => {
-          setFind(e.target.value);
-          setActive(0);
-          // The highlight goes back to the first match, so the list goes back to its top.
-          if (listRef.current) listRef.current.scrollTop = 0;
-        }}
+        onChange={(e) => onFind(e.target.value)}
         onKeyDown={onKeyDown}
         style={FIND}
       />
@@ -335,8 +377,6 @@ function PickOption({id, value, selected, active, onPick, onPoint}: PickOptionPr
       id={id}
       role="option"
       aria-selected={selected}
-      // Kept off the option, so the find field keeps the focus and the list stays open.
-      onMouseDown={(e) => e.preventDefault()}
       onClick={onPick}
       onMouseMove={onPoint}
       style={{

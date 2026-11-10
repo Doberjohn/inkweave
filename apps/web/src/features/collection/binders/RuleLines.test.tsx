@@ -113,14 +113,17 @@ describe('RuleLines', () => {
     );
   });
 
-  it('offers Dual-ink cards only for one ink or a pair', () => {
+  it('offers Dual-ink cards only for one ink or a pair, and writes it only there', () => {
     render(<Harness />);
     expect(screen.queryByRole('button', {name: 'Dual-ink cards'})).not.toBeInTheDocument();
     press('Filter by Amber');
-    expect(screen.getByRole('button', {name: 'Dual-ink cards'})).toBeInTheDocument();
+    press('Dual-ink cards');
+    expect(rules()).toBe('ink=Amber&inkmatch=dual');
     press('Filter by Steel');
     press('Filter by Ruby');
     expect(screen.queryByRole('button', {name: 'Dual-ink cards'})).not.toBeInTheDocument();
+    // Three inks hold every card of each, so the binder keeps no dual-ink rule it doesn't apply.
+    expect(rules()).toBe('ink=Amber%2CSteel%2CRuby');
   });
 
   it('picks a kind of rarity with an art preset, and lights it while the picks are exactly its own', () => {
