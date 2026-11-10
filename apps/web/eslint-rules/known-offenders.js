@@ -69,7 +69,8 @@ export const KNOWN_OFFENDERS = {
   'no-literal-font-family': [
     'apps/web/src/shared/components/Footer.stories.tsx', // x1
   ],
-  // 44 files, 116 violations at seeding
+  // 44 files, 116 violations at seeding. NewFranchises and RevealHero were re-counted the day the
+  // rule began reading both branches of a ternary: their values were there all along.
   'no-raw-font-size': [
     'apps/web/src/features/reveals/NewFranchises.tsx', // x9
     'apps/web/src/features/reveals/RevealHero.tsx', // x7
