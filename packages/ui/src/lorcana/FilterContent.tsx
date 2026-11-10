@@ -1,8 +1,9 @@
-import {Fragment} from 'react';
 import type {Ink} from 'inkweave-synergy-engine';
 import {
-  picksExactly,
-  type ArtPreset,
+  offersEveryKind,
+  rarityLines,
+  toggledIn,
+  withOption,
   type CardTypeFilter,
   type FilterButtonOptions,
   type FilterPicks,
@@ -10,14 +11,14 @@ import {
   type FilterVocabulary,
 } from '../lib/filterModel';
 import {COLORS, FONT_SIZES, SPACING} from '../tokens/theme';
-import {Chip} from '../components/Chip';
 import {FilterButton} from '../components/FilterButton';
 import {FilterSection} from '../components/FilterSection';
 import {CostIcon} from './CostIcon';
+import {ArtPresets, ChipToggleGroup, DualInkToggle} from './FilterChips';
 import {InkFilterGroup} from './InkFilterGroup';
 import {InkwellIcon} from './InkwellIcon';
 import {RaritySymbol} from './RaritySymbol';
-import {hasRaritySymbol, rarityConfigOf} from '../lib/rarity';
+import {hasRaritySymbol} from '../lib/rarity';
 
 export interface FilterContentProps {
   inkFilters: Ink[];
@@ -77,13 +78,6 @@ export interface FilterContentProps {
   showArtPresets?: boolean;
 }
 
-// A filter value is "empty" (and should be deleted rather than stored) when it's
-// unset, a blank string, or an empty array. Encapsulated so the branch logic in
-// withOption stays a single named predicate instead of a complex conditional.
-function isEmptyFilterValue(value: unknown): boolean {
-  return value === undefined || value === '' || (Array.isArray(value) && value.length === 0);
-}
-
 // A section the desktop toolbar may carry inline (cost, inkwell) shows here on
 // mobile always, and on desktop only when the toolbar does NOT carry it. Hoisted
 // out of the component to keep its CC down.
@@ -118,69 +112,6 @@ function costSummary(costs: number[]): string | undefined {
 function listSummary(values: readonly string[]): string | undefined {
   if (values.length === 0) return undefined;
   return values.length === 1 ? values[0] : String(values.length);
-}
-
-/** The list with `value` added, or removed if it was there. */
-const toggledIn = <T,>(values: readonly T[], value: T): T[] =>
-  values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
-
-/**
- * A wrapping row of toggle chips, the kit's selection recipe (owner, 2026-10-08:
- * chips replace the Type buttons and the Keyword and Classification dropdowns,
- * so several can be picked). What several picks MEAN is the filter's business:
- * any of the types, but every keyword and every classification.
- */
-function ChipToggleGroup<T extends string>({
-  values,
-  selected,
-  onToggle,
-  ariaLabel,
-  isMobile,
-  iconFor,
-  labelFor,
-  groupOf,
-  justifyContent,
-}: {
-  values: readonly T[];
-  selected: readonly T[];
-  onToggle: (value: T) => void;
-  ariaLabel: string;
-  isMobile: boolean;
-  /** A glyph shown instead of a chip's name, e.g. the rarity symbol; a value without one shows its name. */
-  iconFor?: (value: T) => React.ReactNode;
-  /** A chip's name where it isn't the value itself: Special reads "Promo" (#805). */
-  labelFor?: (value: T) => string;
-  /** Each value's group; a value starting another group starts a new line. */
-  groupOf?: (value: T) => string;
-  /** How each line spreads its chips; packed from the start unless set. */
-  justifyContent?: React.CSSProperties['justifyContent'];
-}) {
-  return (
-    // The toolbar's active-chip row should match this gap, so both chip rows read alike (it's
-    // still 6 until deck-builder's spacing lands, #548).
-    <div role="group" aria-label={ariaLabel} style={{display: 'flex', flexWrap: 'wrap', gap: SPACING.sm, justifyContent}}>
-      {values.map((value, i) => (
-        <Fragment key={value}>
-          {startsGroup(values, i, groupOf) && <span aria-hidden style={LINE_BREAK} />}
-          <Chip
-            label={labelFor?.(value) ?? value}
-            icon={iconFor?.(value)}
-            active={selected.includes(value)}
-            onClick={() => onToggle(value)}
-            isMobile={isMobile}
-          />
-        </Fragment>
-      ))}
-    </div>
-  );
-}
-
-/** A zero-height flex item a full line wide: whatever follows it starts a new line. */
-const LINE_BREAK: React.CSSProperties = {flexBasis: '100%', height: 0};
-
-/** Whether `values[i]` starts a group other than the value before it. */
-function startsGroup<T>(values: readonly T[], i: number, groupOf?: (value: T) => string): boolean {
-  return i > 0 && groupOf !== undefined && groupOf(values[i]) !== groupOf(values[i - 1]);
 }
 
 /**
@@ -244,63 +175,8 @@ function ChipFilterSection({
 const raritySymbol = (rarity: string) =>
   hasRaritySymbol(rarity) ? <RaritySymbol rarity={rarity.toLowerCase()} size={24} /> : undefined;
 
-/**
- * The five card rarities on the top line, Common to Legendary, and the printings' below:
- * Epic, Enchanted, Iconic and Promo (owner, 2026-10-17). It was four to a line, Legendary
- * leading the special printings (2026-10-08), until the promo symbol made that line five.
- * A pool without printings (the card page's synergy filters) is one line either way.
- */
-function rarityLines(rarities: readonly string[]): ((rarity: string) => string) | undefined {
-  if (rarities.every((rarity) => rarityConfigOf(rarity))) return undefined;
-  return (rarity) => (rarityConfigOf(rarity) ? 'cards' : 'printings');
-}
-
-/**
- * The small chips under a section's options (the art presets, Dual-ink cards): compact
- * beside full-size options on a wide screen, the kit's touch size in the phone drawer,
- * where they would otherwise be about 20px tall.
- */
-const compactChip = (isMobile: boolean) =>
-  isMobile ? undefined : {padding: `${SPACING.xxs}px ${SPACING.md}px`, fontSize: `${FONT_SIZES.sm}px`};
-
-/**
- * STANDARD CARDS / ALT ART CARDS (owner, 2026-10-15): shortcuts that pick one kind's
- * rarities, as picking them one by one would, replacing whatever else was picked. A preset
- * lights up while the picks are exactly its kind's, so picking or unpicking any rarity
- * besides puts it out; picked again while lit, it clears them. Under the rarity symbols,
- * as Dual-ink cards sits under the inks.
- */
-function ArtPresets({presets, filters, onFiltersChange, isMobile}: {
-  presets: readonly ArtPreset[];
-  filters: FilterPicks;
-  onFiltersChange: (filters: FilterPicks) => void;
-  isMobile: boolean;
-}) {
-  const picked = filters.rarities ?? [];
-  return (
-    // The same gap as between the rarity chips above.
-    <div role="group" aria-label="Card art" style={{display: 'flex', justifyContent: 'center', gap: SPACING.sm}}>
-      {presets.map(({value, label, title, rarities}) => {
-        const lit = picksExactly(picked, rarities);
-        return (
-          <Chip
-            key={value}
-            label={label}
-            active={lit}
-            title={title}
-            onClick={() => onFiltersChange(withOption(filters, 'rarities', lit ? [] : [...rarities]))}
-            isMobile={isMobile}
-            style={compactChip(isMobile)}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-/** Whether every preset picks something of the offered rarities, the only time the presets mean anything. */
-const offersEveryKind = (presets: readonly ArtPreset[]) =>
-  presets.length > 0 && presets.every((preset) => preset.rarities.length > 0);
+/** The art presets centred under the symbols, which spread across each line. */
+const CENTRED: React.CSSProperties = {justifyContent: 'center'};
 
 /**
  * Rarity: any picked rarity, from the page's options (Browse's include its cards' printings:
@@ -341,7 +217,13 @@ function RaritySection({
       justifyContent="space-around"
       below={
         offersEveryKind(presets) ? (
-          <ArtPresets presets={presets} filters={filters} onFiltersChange={onFiltersChange} isMobile={isMobile} />
+          <ArtPresets
+            presets={presets}
+            picked={filters.rarities ?? []}
+            onPick={(next) => onFiltersChange(withOption(filters, 'rarities', next))}
+            isMobile={isMobile}
+            style={CENTRED}
+          />
         ) : undefined
       }
     />
@@ -408,30 +290,6 @@ function CostFilterSection({
 // The drawer fits all six inks on one row; the docked panel's 260px column does
 // not, so there they take a 3x2 grid.
 const INK_ROW_STYLE: React.CSSProperties = {flexWrap: 'nowrap', justifyContent: 'space-evenly'};
-
-/**
- * DUAL-INK CARDS (owner, 2026-10-08): narrows the ink result to its dual-ink cards,
- * one ink's (Amber: every Amber dual) or one pair's (Amber + Steel: Amber-Steel).
- * See `FilterPicks.inkMatch` and the vocabulary's `offersDualInk`. One toggle chip: off is
- * the default, and the kit's chip already has the selected-state recipe.
- */
-function DualInkToggle({filters, onFiltersChange, isMobile}: {
-  filters: FilterPicks;
-  onFiltersChange: (filters: FilterPicks) => void;
-  isMobile: boolean;
-}) {
-  const on = filters.inkMatch === 'dual';
-  return (
-    <Chip
-      label="Dual-ink cards"
-      active={on}
-      title="Only the dual-ink cards of the selected inks"
-      onClick={() => onFiltersChange({...filters, inkMatch: on ? undefined : 'dual'})}
-      isMobile={isMobile}
-      style={compactChip(isMobile)}
-    />
-  );
-}
 
 // Not on desktop, which renders ink icons inline in the toolbar instead.
 function InkFilterSection({
@@ -609,14 +467,6 @@ function SetLogoSection({sets, selected, onChange, fold, setLogo}: {
       </div>
     </FilterSection>
   );
-}
-
-/** The options with one option set, or removed when it is empty (`isEmptyFilterValue`). */
-function withOption<K extends keyof FilterPicks>(filters: FilterPicks, key: K, value: FilterPicks[K]): FilterPicks {
-  const next = {...filters};
-  if (isEmptyFilterValue(value)) delete next[key];
-  else next[key] = value;
-  return next;
 }
 
 /** The sections about what a card IS, all folded in the panel: type, keywords, classifications, set. */

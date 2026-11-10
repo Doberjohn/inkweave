@@ -1,14 +1,5 @@
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type CSSProperties,
-  type FocusEvent,
-  type KeyboardEvent,
-  type MouseEvent,
-  type RefObject,
-} from 'react';
+import {useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type RefObject} from 'react';
+import {toggledIn} from 'inkweave-ui/lib/filterModel';
 import {Chip} from '../../../shared/components';
 import {
   COLORS,
@@ -21,8 +12,8 @@ import {
   SPACING,
   TRUNCATE,
 } from '../../../shared/constants';
-import {useCloseOnPressOutside} from '../useCloseOnPressOutside';
-import {FIELD, toggledIn} from './binderFields';
+import {usePopupButton} from '../usePopupButton';
+import {FIELD} from './binderFields';
 import './rulePick.css';
 
 export interface RulePickProps {
@@ -41,9 +32,6 @@ const LIST_MAX = 240;
 
 /** The room the open list takes: the list, its find field and its padding. */
 const POPOVER_ROOM = LIST_MAX + 64;
-
-/** The keys that open the list from its button, as a menu button's do. */
-const OPENING_KEYS = new Set(['ArrowDown', 'ArrowUp']);
 
 /** The nearest box that scrolls, whose edges the open list must stay inside. */
 function scrollBoxOf(el: HTMLElement): HTMLElement | null {
@@ -65,10 +53,6 @@ function opensUpward(field: HTMLElement | null): boolean {
   return below < POPOVER_ROOM && at.top - box.top > below;
 }
 
-/** Whether focus went somewhere outside `box`: the keyboard leaving, not a click on nothing. */
-const focusLeft = (e: FocusEvent, box: HTMLElement | null) =>
-  e.relatedTarget instanceof Node && !box?.contains(e.relatedTarget);
-
 /** How the list opens: above its field near the window's foot, and on its last option from ArrowUp. */
 interface Opening {
   upward: boolean;
@@ -76,43 +60,16 @@ interface Opening {
 }
 
 /**
- * The list's open state, and what opens and closes it: the button, the arrows on it, Escape (onto
- * the button), Tab, keyboard focus leaving the field and its list, and a press outside them.
+ * The list's open state, and what opens and closes it (`usePopupButton`, as the gear's menu): the
+ * button, the arrows on it, Escape (onto the button), Tab, keyboard focus leaving the field and its
+ * list, and a press outside them. It also says how the list last opened.
  */
-function usePickPopup(wrapperRef: RefObject<HTMLDivElement | null>, buttonRef: RefObject<HTMLButtonElement | null>) {
-  const [open, setOpen] = useState(false);
+function usePickPopup(wrapperRef: RefObject<HTMLDivElement | null>) {
   const [opening, setOpening] = useState<Opening>({upward: false, fromEnd: false});
-  useCloseOnPressOutside(open, wrapperRef, setOpen);
-  const openList = (fromEnd: boolean) => {
-    setOpening({upward: opensUpward(wrapperRef.current), fromEnd});
-    setOpen(true);
-  };
-  // Closing onto the button: Safari focuses no button a click presses, so focus would go with the list.
-  const closeOntoButton = () => {
-    setOpen(false);
-    buttonRef.current?.focus();
-  };
-  return {
-    open,
-    opening,
-    closeOntoButton,
-    press: open ? closeOntoButton : () => openList(false),
-    onButtonKeyDown: (e: KeyboardEvent<HTMLButtonElement>) => {
-      if (open || !OPENING_KEYS.has(e.key)) return;
-      e.preventDefault();
-      openList(e.key === 'ArrowUp');
-    },
-    /** Escape is the open list's alone, wherever in it the focus is: the window must not close too. */
-    onKeyDown: (e: KeyboardEvent) => {
-      if (!open || e.key !== 'Escape') return;
-      e.preventDefault();
-      e.stopPropagation();
-      closeOntoButton();
-    },
-    closeOnLeave: (e: FocusEvent) => {
-      if (focusLeft(e, wrapperRef.current)) setOpen(false);
-    },
-  };
+  const popup = usePopupButton(wrapperRef, (key) =>
+    setOpening({upward: opensUpward(wrapperRef.current), fromEnd: key === 'ArrowUp'}),
+  );
+  return {...popup, opening};
 }
 
 type PickPopup = ReturnType<typeof usePickPopup>;
@@ -129,23 +86,21 @@ type PickPopup = ReturnType<typeof usePickPopup>;
 export function RulePick({label, options, picked, onChange, isMobile}: RulePickProps) {
   const noun = label.toLowerCase();
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const popup = usePickPopup(wrapperRef, buttonRef);
+  const popup = usePickPopup(wrapperRef);
   const listId = useId();
   /** An × takes its pick off; focus goes to the button, since the chip it was on is gone. */
   const drop = (value: string) => {
     onChange(picked.filter((v) => v !== value));
-    buttonRef.current?.focus();
+    popup.focusButton();
   };
   return (
     // Escape comes up from whatever inside has the focus: the find field, the button or a chip's ×.
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div ref={wrapperRef} style={isMobile ? WRAPPER_PHONE : WRAPPER} onBlur={popup.closeOnLeave} onKeyDown={popup.onKeyDown}>
+    <div ref={wrapperRef} style={isMobile ? WRAPPER_PHONE : WRAPPER} onBlur={popup.closeOnLeave} onKeyDown={popup.onEscape}>
       <PickField
         words={{noun, listId}}
         picked={picked}
         popup={popup}
-        buttonRef={buttonRef}
         onDrop={drop}
         isMobile={isMobile}
       />
@@ -157,7 +112,7 @@ export function RulePick({label, options, picked, onChange, isMobile}: RulePickP
           picked={picked}
           opening={popup.opening}
           onToggle={(value) => onChange(toggledIn(picked, value))}
-          onLeave={popup.closeOntoButton}
+          onLeave={popup.leave}
         />
       )}
     </div>
@@ -169,13 +124,12 @@ interface PickFieldProps {
   words: {noun: string; listId: string};
   picked: readonly string[];
   popup: PickPopup;
-  buttonRef: RefObject<HTMLButtonElement | null>;
   onDrop: (value: string) => void;
   isMobile: boolean;
 }
 
 /** The closed field: the picks' chips, then the button that opens the list. */
-function PickField({words, picked, popup, buttonRef, onDrop, isMobile}: PickFieldProps) {
+function PickField({words, picked, popup, onDrop, isMobile}: PickFieldProps) {
   return (
     <div style={BOX}>
       {picked.map((value) => (
@@ -189,7 +143,6 @@ function PickField({words, picked, popup, buttonRef, onDrop, isMobile}: PickFiel
         />
       ))}
       <button
-        ref={buttonRef}
         type="button"
         className="rule-pick-trigger"
         aria-haspopup="listbox"
@@ -220,8 +173,8 @@ interface PickListProps {
   picked: readonly string[];
   opening: Opening;
   onToggle: (value: string) => void;
-  /** Closes the list onto its button, from which Tab then moves on. */
-  onLeave: () => void;
+  /** Tab or Shift+Tab: closes the list onto its button, from which Tab then moves on. */
+  onLeave: (e: KeyboardEvent) => void;
 }
 
 /** What a key in the find field does; any other key types. Escape is the wrapper's. */
@@ -257,7 +210,7 @@ interface Listing {
 interface FindMoves {
   setActive: (index: number) => void;
   onPick: (value: string) => void;
-  onLeave: () => void;
+  onLeave: (e: KeyboardEvent) => void;
 }
 
 /**
@@ -271,9 +224,8 @@ function findKeyHandler({shown, at, optionId}: Listing, moves: FindMoves) {
     moves.setActive(index);
     document.getElementById(`${optionId}-${index}`)?.scrollIntoView?.({block: 'nearest'});
   };
-  const acts: Record<KeyAct, () => void> = {
-    // Focus goes back to the button before the browser moves it, so Tab and Shift+Tab move on
-    // from the field's place, not from a find field that is gone.
+  const acts: Record<KeyAct, (e: KeyboardEvent) => void> = {
+    // The popup's own Tab: it decides which of Tab and Shift+Tab the browser still moves.
     leave: moves.onLeave,
     pick: () => shown.slice(at, at + 1).forEach(moves.onPick),
     down: () => moveTo(Math.min(at + 1, last)),
@@ -283,7 +235,7 @@ function findKeyHandler({shown, at, optionId}: Listing, moves: FindMoves) {
     const act = actFor(e.key, last >= 0);
     if (!act) return;
     if (act !== 'leave') e.preventDefault();
-    acts[act]();
+    acts[act](e);
   };
 }
 

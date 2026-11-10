@@ -129,7 +129,7 @@ describe('RulePick', () => {
     expect(onWindowKey).not.toHaveBeenCalled();
   });
 
-  it('closes on a press outside it, and on Tab onto its button, from which the browser moves on', () => {
+  it('closes on a press outside it, and on Tab onto its button, from which only Tab moves on', () => {
     render(<Harness />);
     fireEvent.click(opener());
     fireEvent.pointerDown(document.body);
@@ -137,6 +137,11 @@ describe('RulePick', () => {
     fireEvent.click(opener());
     // The Tab's own move is the browser's: the key isn't taken.
     expect(fireEvent.keyDown(find(), {key: 'Tab'})).toBe(true);
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(opener()).toHaveFocus();
+    // Shift+Tab's step back lands on the button itself, the control before the list: it is taken.
+    fireEvent.click(opener());
+    expect(fireEvent.keyDown(find(), {key: 'Tab', shiftKey: true})).toBe(false);
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     expect(opener()).toHaveFocus();
   });

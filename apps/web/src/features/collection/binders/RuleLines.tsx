@@ -1,29 +1,21 @@
-import {Fragment, useId, type CSSProperties, type ReactNode} from 'react';
+import {useId, type CSSProperties, type ReactNode} from 'react';
 import {CostFilterGroup} from 'inkweave-ui/lorcana/CostFilterGroup';
+import {ArtPresets, ChipToggleGroup, DualInkToggle} from 'inkweave-ui/lorcana/FilterChips';
 import {InkFilterGroup} from 'inkweave-ui/lorcana/InkFilterGroup';
 import {InkwellIcon} from 'inkweave-ui/lorcana/InkwellIcon';
 import {RaritySymbol} from 'inkweave-ui/lorcana/RaritySymbol';
-import {picksExactly, type ArtPreset, type FilterPicks} from 'inkweave-ui/lib/filterModel';
-import {hasRaritySymbol, rarityConfigOf} from 'inkweave-ui/lib/rarity';
+import {offersEveryKind, rarityLines, toggledIn, withOption, type FilterPicks} from 'inkweave-ui/lib/filterModel';
+import {hasRaritySymbol} from 'inkweave-ui/lib/rarity';
 import {Chip} from '../../../shared/components';
 import {COLORS, FONT_SIZES, FONT_WEIGHT, SPACING} from '../../../shared/constants';
 import {FILTER_VOCABULARY} from '../../cards/filterOptions';
-import {FIELD, toggledIn} from './binderFields';
+import {FIELD} from './binderFields';
 import {RulePick} from './RulePick';
 import type {BinderDraft} from './useBinderDraft';
 
 interface RuleLinesProps {
   draft: BinderDraft;
   isMobile: boolean;
-}
-
-/** The picks with one of them set, or left out when it is empty, as the filter panel keeps them. */
-function withPick<K extends keyof FilterPicks>(picks: FilterPicks, key: K, value: FilterPicks[K]): FilterPicks {
-  const next = {...picks};
-  const empty = value === undefined || (Array.isArray(value) && value.length === 0);
-  if (empty) delete next[key];
-  else next[key] = value;
-  return next;
 }
 
 type DraftFilters = BinderDraft['filters'];
@@ -42,10 +34,10 @@ type Update = <K extends keyof FilterPicks>(key: K, value: FilterPicks[K]) => vo
 export function RuleLines({draft, isMobile}: RuleLinesProps) {
   const {filters, options} = draft;
   const picks = filters.draftFilters;
-  const update: Update = (key, value) => filters.updateFilters(withPick(picks, key, value));
+  const update: Update = (key, value) => filters.updateFilters(withOption(picks, key, value));
   return (
     <div style={isMobile ? LINES_PHONE : LINES}>
-      <InkLine filters={filters} update={update} isMobile={isMobile} />
+      <InkLine filters={filters} isMobile={isMobile} />
       <InkwellLine picks={picks} update={update} isMobile={isMobile} />
       <Line label="Ink cost" isMobile={isMobile}>
         <CostFilterGroup
@@ -78,20 +70,12 @@ export function RuleLines({draft, isMobile}: RuleLinesProps) {
 }
 
 /** The six inks, then Dual-ink cards, which narrows them to their dual-ink cards, for one ink or a pair. */
-function InkLine({filters, update, isMobile}: {filters: DraftFilters; update: Update; isMobile: boolean}) {
-  const dual = filters.draftFilters.inkMatch === 'dual';
+function InkLine({filters, isMobile}: {filters: DraftFilters; isMobile: boolean}) {
   return (
     <Line label="Ink" isMobile={isMobile}>
       <InkFilterGroup inkFilters={filters.draftInks} onToggleInk={filters.toggleInk} iconSize={24} />
       {FILTER_VOCABULARY.offersDualInk(filters.draftInks.length) && (
-        <Chip
-          label="Dual-ink cards"
-          title="Only the dual-ink cards of the selected inks"
-          active={dual}
-          onClick={() => update('inkMatch', dual ? undefined : 'dual')}
-          isMobile={isMobile}
-          style={compactChip(isMobile)}
-        />
+        <DualInkToggle filters={filters.draftFilters} onFiltersChange={filters.updateFilters} isMobile={isMobile} />
       )}
     </Line>
   );
@@ -125,15 +109,12 @@ function InkwellLine({picks, update, isMobile}: {picks: FilterPicks; update: Upd
 function TypeLine({filters, isMobile}: {filters: DraftFilters; isMobile: boolean}) {
   return (
     <Line label="Type" isMobile={isMobile}>
-      {FILTER_VOCABULARY.allButtons.types.map((type) => (
-        <Chip
-          key={type}
-          label={type}
-          active={filters.draftTypes.includes(type)}
-          onClick={() => filters.toggleType(type)}
-          isMobile={isMobile}
-        />
-      ))}
+      <ChipToggleGroup
+        values={FILTER_VOCABULARY.allButtons.types}
+        selected={filters.draftTypes}
+        onToggle={filters.toggleType}
+        isMobile={isMobile}
+      />
     </Line>
   );
 }
@@ -163,13 +144,9 @@ function PickLine(props: {label: string; options: string[]; picked: string[]; on
   );
 }
 
-/** Whether the rarity at `i` is the first of the printings (Epic and after), after the card rarities. */
-const startsPrintings = (rarities: readonly string[], i: number) =>
-  i > 0 && !rarityConfigOf(rarities[i]) && rarityConfigOf(rarities[i - 1]) !== undefined;
-
-/** Whether the art presets mean anything here: each picks some of the offered rarities. */
-const offersEveryKind = (presets: readonly ArtPreset[]) =>
-  presets.length > 0 && presets.every((preset) => preset.rarities.length > 0);
+/** A rarity's symbol, its name where it has none. Lowercased: RaritySymbol keys on "super rare". */
+const raritySymbol = (rarity: string) =>
+  hasRaritySymbol(rarity) ? <RaritySymbol rarity={rarity.toLowerCase()} size={20} /> : undefined;
 
 /**
  * The rarities as their symbols, named for the screen reader and the tooltip (Promo for Special),
@@ -189,47 +166,19 @@ function RarityLine({rarities, picked, update, isMobile}: {
   const pick = (next: string[]) => update('rarities', next);
   return (
     <Line label="Rarity" isMobile={isMobile}>
-      {rarities.map((rarity, i) => (
-        <Fragment key={rarity}>
-          {isMobile && startsPrintings(rarities, i) && <span aria-hidden style={LINE_BREAK} />}
-          <Chip
-            label={FILTER_VOCABULARY.rarityLabel(rarity)}
-            icon={hasRaritySymbol(rarity) ? <RaritySymbol rarity={rarity.toLowerCase()} size={20} /> : undefined}
-            active={picked.includes(rarity)}
-            onClick={() => pick(toggledIn(picked, rarity))}
-            isMobile={isMobile}
-          />
-        </Fragment>
-      ))}
-      {offersEveryKind(presets) && <ArtPresets presets={presets} picked={picked} onPick={pick} isMobile={isMobile} />}
+      <ChipToggleGroup
+        values={rarities}
+        selected={picked}
+        onToggle={(rarity) => pick(toggledIn(picked, rarity))}
+        isMobile={isMobile}
+        iconFor={raritySymbol}
+        labelFor={FILTER_VOCABULARY.rarityLabel}
+        groupOf={isMobile ? rarityLines(rarities) : undefined}
+      />
+      {offersEveryKind(presets) && (
+        <ArtPresets presets={presets} picked={picked} onPick={pick} isMobile={isMobile} style={PRESETS_LINE} />
+      )}
     </Line>
-  );
-}
-
-/** Standard cards and Alt art cards, on a line of their own under the symbols. */
-function ArtPresets({presets, picked, onPick, isMobile}: {
-  presets: readonly ArtPreset[];
-  picked: string[];
-  onPick: (next: string[]) => void;
-  isMobile: boolean;
-}) {
-  return (
-    <div role="group" aria-label="Card art" style={PRESETS}>
-      {presets.map((preset) => {
-        const lit = picksExactly(picked, preset.rarities);
-        return (
-          <Chip
-            key={preset.value}
-            label={preset.label}
-            title={preset.title}
-            active={lit}
-            onClick={() => onPick(lit ? [] : [...preset.rarities])}
-            isMobile={isMobile}
-            style={compactChip(isMobile)}
-          />
-        );
-      })}
-    </div>
   );
 }
 
@@ -276,24 +225,14 @@ const LABEL: CSSProperties = {fontSize: `${FONT_SIZES.base}px`, fontWeight: FONT
 
 const CHOICES: CSSProperties = {display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: SPACING.sm, minWidth: 0};
 
-/**
- * The small chips beside full-size choices on a computer, Dual-ink cards and the art presets; the
- * kit's touch size on a phone.
- */
-const compactChip = (isMobile: boolean): CSSProperties | undefined =>
-  isMobile ? undefined : {padding: `${SPACING.xxs}px ${SPACING.md}px`, fontSize: `${FONT_SIZES.sm}px`};
-
 const LINES: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.md};
 
 const LINES_PHONE: CSSProperties = {...LINES, gap: SPACING.lg};
 
 const ICON_WORD: CSSProperties = {display: 'inline-flex', alignItems: 'center', gap: SPACING.xs};
 
-/** A zero-height item a full line wide: what follows it starts a new line. */
-const LINE_BREAK: CSSProperties = {flexBasis: '100%', height: 0};
-
 /** The art presets take a line of their own under the symbols. */
-const PRESETS: CSSProperties = {display: 'flex', flexWrap: 'wrap', gap: SPACING.sm, flexBasis: '100%'};
+const PRESETS_LINE: CSSProperties = {flexWrap: 'wrap', flexBasis: '100%'};
 
 /** On a phone the nine costs take two even rows, five and four, rather than seven and two. */
 const COSTS_PHONE: CSSProperties = {display: 'grid', gridTemplateColumns: 'repeat(5, max-content)', gap: SPACING.sm};

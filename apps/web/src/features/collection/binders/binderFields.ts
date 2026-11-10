@@ -42,7 +42,3 @@ export const HEADING: CSSProperties = {
   fontWeight: FONT_WEIGHT.semibold,
   color: COLORS.textMuted,
 };
-
-/** The list with `value` added, or removed if it was there: a rule line's chip or option pressed. */
-export const toggledIn = (values: readonly string[], value: string) =>
-  values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
