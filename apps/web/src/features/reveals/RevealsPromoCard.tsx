@@ -3,6 +3,8 @@ import {Link} from 'react-router-dom';
 import {
   CAP_LABEL_XS,
   COLORS,
+  DURATION,
+  EASING,
   FONTS,
   FONT_SIZES,
   INSET_FOCUS_RING,
@@ -11,9 +13,9 @@ import {
   REVEAL_SET_LOGO_SM,
   REVEAL_SET_NUMBER,
   FONT_WEIGHT,
+  SHADOWS,
   SPACING,
   Z_INDEX,
-  blackRgba,
   hexRgba,
 } from '../../shared/constants';
 import {useResponsive} from '../../shared/hooks';
@@ -35,6 +37,13 @@ const FIREFLY_SEEDS: ReadonlyArray<{left: string; delay: string; drift: string}>
   {left: '94%', delay: '6.8s', drift: '4px'},
 ];
 
+/** The hover's bloom, wider and brighter than SHADOWS.glowLg, the top glow step. */
+const HOVER_BLOOM = `0 0 56px ${hexRgba(COLORS.primary, 0.6)}`;
+
+const CARD_TRANSITION = [`opacity ${DURATION.base}ms`, ...['scale', 'translate', 'box-shadow'].map((p) => `${p} ${DURATION.slow}ms`)]
+  .map((t) => `${t} ${EASING.smooth}`)
+  .join(', ');
+
 /**
  * Inject keyframes + :hover rules once per document.
  * Mirrors the pattern used by inkweave-ui's components/Sparkles.tsx.
@@ -53,18 +62,15 @@ const FIREFLY_SEEDS: ReadonlyArray<{left: string; delay: string; drift: string}>
   style.id = STYLE_ID;
   style.textContent = `
     .rpc-card {
-      box-shadow: 0 8px 32px ${blackRgba(0.5)}, 0 0 24px ${hexRgba(COLORS.primary, 0.22)};
+      box-shadow: ${SHADOWS.card}, ${SHADOWS.glowLg};
       cursor: pointer;
-      transition: opacity 240ms cubic-bezier(0.2, 0.8, 0.2, 1),
-                  scale 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
-                  translate 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
-                  box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition: ${CARD_TRANSITION};
     }
     @media (hover: hover) {
       .rpc-card:hover {
         scale: 1.03;
         translate: 0 -4px;
-        box-shadow: 0 14px 40px ${blackRgba(0.6)}, 0 0 56px ${hexRgba(COLORS.primary, 0.6)};
+        box-shadow: ${SHADOWS.panel}, ${HOVER_BLOOM};
       }
       .rpc-card:hover .rpc-firefly {
         animation-duration: 2.2s;
@@ -94,7 +100,7 @@ const FIREFLY_SEEDS: ReadonlyArray<{left: string; delay: string; drift: string}>
       .rpc-card:hover {
         scale: 1;
         translate: 0 0;
-        box-shadow: 0 8px 32px ${blackRgba(0.5)}, 0 0 32px ${hexRgba(COLORS.primary, 0.3)};
+        box-shadow: ${SHADOWS.card}, ${SHADOWS.glowMd};
       }
       .rpc-firefly { display: none; }
     }

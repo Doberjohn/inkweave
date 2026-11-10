@@ -12,6 +12,7 @@ import {
   RADIUS,
   REVEAL_SET_NUMBER,
   SHADOWS,
+  SPACING,
   whiteRgba,
 } from '../../shared/constants';
 import type {FranchiseConfig} from './franchise';
@@ -100,7 +101,7 @@ function WhatsNewTab({label, isActive, compact, index, buttonRef, onSelect, onKe
         fontSize: compact ? FONT_SIZES.md : FONT_SIZES.base,
         fontWeight: FONT_WEIGHT.semibold,
         letterSpacing: LETTER_SPACING.slight,
-        padding: compact ? '7px 14px' : '9px 18px',
+        padding: `${SPACING.sm}px ${compact ? SPACING.lg : SPACING.xl}px`,
         borderRadius: RADIUS.pill,
         border: `1px solid ${tone.border}`,
         background: tone.background,
@@ -118,15 +119,31 @@ function WhatsNewTab({label, isActive, compact, index, buttonRef, onSelect, onKe
 interface SectionDims {
   headerMargin: number;
   eyebrowSize: number;
-  eyebrowSpacing: number;
   titleSize: number;
   tablistGap: number;
   tablistMargin: number;
   panelGap: number;
 }
 
-const FULL_SECTION: SectionDims = {headerMargin: 22, eyebrowSize: 12, eyebrowSpacing: 2.8, titleSize: 32, tablistGap: 10, tablistMargin: 26, panelGap: 18};
-const COMPACT_SECTION: SectionDims = {headerMargin: 16, eyebrowSize: 10, eyebrowSpacing: 2.2, titleSize: 23, tablistGap: 6, tablistMargin: 18, panelGap: 14};
+const FULL_SECTION: SectionDims = {
+  headerMargin: SPACING.xxl,
+  eyebrowSize: FONT_SIZES.md,
+  titleSize: FONT_SIZES.displaySm,
+  tablistGap: SPACING.md,
+  tablistMargin: SPACING.xxl,
+  panelGap: SPACING.xl,
+};
+const COMPACT_SECTION: SectionDims = {
+  headerMargin: SPACING.lg,
+  eyebrowSize: FONT_SIZES.xs,
+  titleSize: FONT_SIZES.xxxl,
+  tablistGap: SPACING.sm,
+  tablistMargin: SPACING.xl,
+  panelGap: SPACING.section,
+};
+
+/** The kicker's open caps sit past LETTER_SPACING's top step (`wide`, 0.1em). */
+const EYEBROW_TRACKING = '0.23em';
 
 /**
  * The tab bar keeps the ARIA tablist contract the kit's TabList keeps: one tab in the
@@ -194,14 +211,14 @@ export function WhatsNewSection({compact = false, onSelectFranchise}: WhatsNewSe
           style={{
             fontWeight: FONT_WEIGHT.semibold,
             fontSize: s.eyebrowSize,
-            letterSpacing: s.eyebrowSpacing,
+            letterSpacing: EYEBROW_TRACKING,
             textTransform: 'uppercase',
             color: COLORS.primary500,
           }}
         >
           New this set
         </div>
-        <h2 style={{fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.regular, fontSize: s.titleSize, color: COLORS.text, margin: '10px 0 0'}}>
+        <h2 style={{fontFamily: FONTS.hero, fontWeight: FONT_WEIGHT.regular, fontSize: s.titleSize, color: COLORS.text, margin: `${SPACING.md}px 0 0`}}>
           What&apos;s new in Set {REVEAL_SET_NUMBER}
         </h2>
       </div>
