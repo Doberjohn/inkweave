@@ -239,35 +239,36 @@ function optionsMatching(options: readonly string[], find: string): readonly str
   return options.filter((value) => value.toLowerCase().includes(needle));
 }
 
-/** Keeps the highlighted option in view as the arrows move it. jsdom has no scrollIntoView. */
-function useKeptInView(id: string | undefined) {
-  useEffect(() => {
-    if (id) document.getElementById(id)?.scrollIntoView?.({block: 'nearest'});
-  }, [id]);
-}
-
 /** The open list: its find field, which takes the focus, and the options it leaves. */
 function PickList({id, noun, options, picked, upward, onToggle, onClose, onTab}: PickListProps) {
   const [find, setFind] = useState('');
   const [active, setActive] = useState(0);
   const findRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
   const optionId = useId();
   const shown = optionsMatching(options, find);
   const last = shown.length - 1;
   // -1 while nothing matches, which leaves Enter nothing to pick.
   const at = Math.min(active, last);
   const activeId = at < 0 ? undefined : `${optionId}-${at}`;
-  useKeptInView(activeId);
   useEffect(() => {
     findRef.current?.focus();
   }, []);
 
+  /**
+   * The arrows bring the option they reach into view; the pointer never scrolls the list, which
+   * would slide the next option under it. jsdom has no scrollIntoView.
+   */
+  const moveTo = (index: number) => {
+    setActive(index);
+    document.getElementById(`${optionId}-${index}`)?.scrollIntoView?.({block: 'nearest'});
+  };
   const acts: Record<KeyAct, () => void> = {
     close: onClose,
     leave: onTab,
     pick: () => shown.slice(at, at + 1).forEach(onToggle),
-    down: () => setActive(Math.min(at + 1, last)),
-    up: () => setActive(Math.max(at - 1, 0)),
+    down: () => moveTo(Math.min(at + 1, last)),
+    up: () => moveTo(Math.max(at - 1, 0)),
   };
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     const act = KEY_ACTS[e.key];
@@ -292,11 +293,13 @@ function PickList({id, noun, options, picked, upward, onToggle, onClose, onTab}:
         onChange={(e) => {
           setFind(e.target.value);
           setActive(0);
+          // The highlight goes back to the first match, so the list goes back to its top.
+          if (listRef.current) listRef.current.scrollTop = 0;
         }}
         onKeyDown={onKeyDown}
         style={FIND}
       />
-      <ul id={id} role="listbox" aria-label={`${noun[0].toUpperCase()}${noun.slice(1)}s`} aria-multiselectable="true" style={LIST}>
+      <ul ref={listRef} id={id} role="listbox" aria-label={`${noun[0].toUpperCase()}${noun.slice(1)}s`} aria-multiselectable="true" style={LIST}>
         {shown.map((value, index) => (
           <PickOption
             key={value}

@@ -83,6 +83,24 @@ describe('RulePick', () => {
     expect(find()).toHaveFocus();
   });
 
+  it('scrolls the option the arrows reach into view, and never scrolls under the pointer', () => {
+    const scrolled: string[] = [];
+    // jsdom has no scrollIntoView, so the test gives elements one that records who asked.
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolled.push(this.textContent ?? '');
+    };
+    try {
+      render(<Harness />);
+      fireEvent.click(opener());
+      fireEvent.mouseMove(within(list()).getByRole('option', {name: 'Princess'}));
+      expect(scrolled).toEqual([]);
+      fireEvent.keyDown(find(), {key: 'ArrowDown'});
+      expect(scrolled).toEqual(['Storyborn']);
+    } finally {
+      delete (Element.prototype as {scrollIntoView?: unknown}).scrollIntoView;
+    }
+  });
+
   it('closes on Escape onto its button, and keeps the Escape from the window around it', () => {
     const onWindowKey = vi.fn();
     document.addEventListener('keydown', onWindowKey);
