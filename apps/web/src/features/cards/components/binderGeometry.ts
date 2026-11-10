@@ -16,14 +16,28 @@ export interface PageGrid {
 /** A binder's page size as its row keeps it: its pockets across and down (owner, 2026-11-05). */
 export type PageSide = 2 | 3 | 4;
 
-/** A spread's pages, 4 by 3, on tablets and desktop. */
-export const SPREAD_PAGE: PageGrid = {columns: 4, rows: 3};
-export const PER_PAGE = SPREAD_PAGE.columns * SPREAD_PAGE.rows;
-const PER_SPREAD = PER_PAGE * 2;
+/**
+ * Today's page, 4 by 3: every binder's while binders are off. A spread draws two of them on
+ * tablets and desktop, and a phone draws it 3 across (`lonePage`).
+ */
+export const TODAY_PAGE: PageGrid = {columns: 4, rows: 3};
+
+/** How many pockets a page of `grid` holds. */
+export const pocketsOf = ({columns, rows}: PageGrid) => columns * rows;
+
+/** One grid per side, made once, so a caller that keeps one in a dependency list sees a change only when the side does. */
+const SQUARE_PAGES: Record<PageSide, PageGrid> = {
+  2: {columns: 2, rows: 2},
+  3: {columns: 3, rows: 3},
+  4: {columns: 4, rows: 4},
+};
+
+/** A binder's page at its size: as many pockets across as down. */
+export const squarePage = (side: PageSide): PageGrid => SQUARE_PAGES[side];
 
 /**
- * How many rows a phone's lone page has: 3, or 4 where the screen is tall enough that they keep
- * their cards near the 3-row page's size (`loneFitFor`, owner 2026-10-26).
+ * How many rows a phone's lone page of today's has: 3, or 4 where the screen is tall enough that
+ * they keep their cards near the 3-row page's size (`loneFitFor`, owner 2026-10-26).
  */
 export type LoneRows = 3 | 4;
 
@@ -31,12 +45,23 @@ export type LoneRows = 3 | 4;
  * A table of one entry per row count, each made once: a caller that keeps an entry in a
  * dependency list sees a change only when the rows change.
  */
-export const byRows = <T>(make: (rows: LoneRows) => T): Record<LoneRows, T> => ({3: make(3), 4: make(4)});
+const byRows = <T>(make: (rows: LoneRows) => T): Record<LoneRows, T> => ({3: make(3), 4: make(4)});
 
-/** A phone's lone page, 3 across (owner, 2026-10-25): its pockets about 38% wider than 4 across. */
+/** A phone's lone page of today's, 3 across (owner, 2026-10-25): its pockets about 38% wider than 4 across. */
 const LONE_PAGES = byRows((rows): PageGrid => ({columns: 3, rows}));
 export const lonePage = (rows: LoneRows): PageGrid => LONE_PAGES[rows];
-export const perLonePage = (rows: LoneRows) => LONE_PAGES[rows].columns * rows;
+
+/** Whether a page is a binder's own size, as many across as down, rather than today's 4 by 3. */
+export const isSquare = ({columns, rows}: PageGrid) => columns === rows;
+
+/**
+ * The page a view draws of a binder whose pages are `grid`: a spread's are the binder's own. A
+ * phone draws today's page 3 across, with the rows that fit (`lonePage`), and a square page as it
+ * is, so its page 1 holds the same cards on every screen (2A, the binder window's check-in).
+ */
+export function viewPage(grid: PageGrid, single: boolean, rows: LoneRows): PageGrid {
+  return single && !isSquare(grid) ? lonePage(rows) : grid;
+}
 
 /**
  * How a binder pages its pockets, which the binder, its map and their caller must agree on: the
@@ -47,19 +72,28 @@ export interface BinderPaging {
   lead: number;
 }
 
-/**
- * A spread binder pages two pages of twelve at a time, opening on the inside front cover (owner,
- * 2026-10-18), which takes the first spread's left page: its cards start a page in.
- */
-export const SPREAD_PAGING: BinderPaging = {perView: PER_SPREAD, lead: PER_PAGE};
-/**
- * A phone pages a lone page at a time, nine or twelve, after an inside front cover that holds the
- * collection's numbers (owner, 2026-10-27): its cards start a page in. It opens on page 1, the
- * view after the cover, so the cards come first.
- */
-const LONE_PAGINGS = byRows((rows): BinderPaging => ({perView: perLonePage(rows), lead: perLonePage(rows)}));
+/** Each paging made once, so a caller that keeps one in a dependency list sees a change only when it does. */
+const PAGINGS = new Map<string, BinderPaging>();
 
-export const pagingOf = (single: boolean, rows: LoneRows) => (single ? LONE_PAGINGS[rows] : SPREAD_PAGING);
+/**
+ * How a binder of `grid` pages, by the page its view draws (`viewPage`).
+ *
+ * A spread pages two pages at a time, opening on the inside front cover (owner, 2026-10-18),
+ * which takes the first spread's left page: its cards start a page in.
+ *
+ * A phone pages a lone page at a time, after an inside front cover that holds the collection's
+ * numbers (owner, 2026-10-27): its cards start a page in. It opens on page 1, the view after the
+ * cover, so the cards come first.
+ */
+export function pagingOf(grid: PageGrid, single: boolean, rows: LoneRows): BinderPaging {
+  const page = pocketsOf(viewPage(grid, single, rows));
+  const key = `${single ? 'lone' : 'spread'} ${page}`;
+  const known = PAGINGS.get(key);
+  if (known) return known;
+  const paging = {perView: single ? page : 2 * page, lead: page};
+  PAGINGS.set(key, paging);
+  return paging;
+}
 
 /** Lorcana cards are 0.72 wide-to-tall. Drives the whole layout. */
 export const CARD_ASPECT = 0.72;
@@ -133,8 +167,11 @@ export const MINI_BORDER = 1;
 const miniSide = (cells: number, cell: number) =>
   cells * cell + (cells - 1) * MAP_CELL_GAP + 2 * (MINI_PADDING + MINI_BORDER);
 
-/** A phone's mini page, at full size as it always is: 35 wide, 41 tall at 3 rows and 52 at 4. */
-export const LONE_MINI_WIDTH = miniSide(LONE_PAGES[3].columns, MAP_CELL.width);
+/**
+ * A phone's mini page of `page`, at full size as it always is: 35 wide for today's 3 across, and
+ * 41 tall at 3 rows and 52 at 4.
+ */
+export const loneMiniWidth = ({columns}: PageGrid) => miniSide(columns, MAP_CELL.width);
 const loneMiniHeight = (rows: LoneRows) => miniSide(rows, MAP_CELL.height);
 
 /** How far a phone's page map sits under its page. */

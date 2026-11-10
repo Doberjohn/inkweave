@@ -4,20 +4,19 @@ import {CtaButton} from 'inkweave-ui/components/CtaButton';
 import {COLORS, GOLD_GLOW, INK_COLORS, RADIUS, SPACING, hexRgba} from '../../../shared/constants';
 import {useHover} from 'inkweave-ui/hooks/useHover';
 import {
-  LONE_MINI_WIDTH,
   MAP_CELL,
   MAP_CELL_GAP,
   MAP_GAP_ABOVE,
   MINI_BORDER,
   MINI_PADDING,
-  PER_PAGE,
-  SPREAD_PAGING,
-  byRows,
-  lonePage,
+  TODAY_PAGE,
+  loneMiniWidth,
   pagingOf,
-  perLonePage,
+  pocketsOf,
+  viewPage,
   type BinderPaging,
   type LoneRows,
+  type PageGrid,
 } from './binderGeometry';
 
 /**
@@ -52,10 +51,10 @@ import {
  * tinted the cover's blue, as `BinderSpread` draws it.
  *
  * AND THE FIRST SPREAD'S LEFT PAGE IS THE FRONT COVER (owner, 2026-10-18), so the spreads
- * here page as the binder's do, a page in (`SPREAD_PAGING`), and each names the cards it shows.
+ * here page as the binder's do, a page in (`pagingOf`), and each names the cards it shows.
  *
  * THE WINDOW HOLDS AS MANY SPREADS AS FIT ITS ROW (owner, 2026-10-16, option B of
- * `public/mockups/binder-map-narrow.html`), each at least `MIN_MINI` wide, up to
+ * `public/mockups/binder-map-narrow.html`), each at least `MIN_CELL` a cell, up to
  * `WINDOW`. Eleven squeezed into a narrow row drew cells too small to show a gap: at 1440
  * (a 792px binder) a missing card's ring filled in and read as held, and at 1280 the held
  * cells rounded to nothing. Now 1920 keeps all eleven at full size; with the buttons gone
@@ -68,12 +67,14 @@ import {
  * by 8.67px reaches the screen as 6 or 7 by 8 or 9, depending on where its edges fall, so
  * neighbours differed by a pixel. At its widest a spread now holds 7 by 9 cells exactly;
  * where the row shrinks it, each page rounds its cells down to whole pixels against its
- * own width (`CELL_BOX`).
+ * own width (`cellBox`).
  *
  * UNDER A PHONE'S LONE PAGE IT DRAWS PAGES (owner, 2026-10-25, #969), where the page's arrows
- * were: one mini per page, its 3 by 3 or 3 by 4 cells always at full size, the window holding as
- * many as fit and moving as the spreads' does, and nothing after them: the row is all minis
- * (owner, 2026-10-26).
+ * were: one mini per page, its cells always at full size, the window holding as many as fit and
+ * moving as the spreads' does, and nothing after them: the row is all minis (owner, 2026-10-26).
+ *
+ * EACH MINI DRAWS ITS BINDER'S PAGE: today's 4 by 3, or 3 across on a phone, or a binder's own
+ * size, 2, 3 or 4 a side (`grid`).
  *
  * AND THERE ITS FIRST MINI IS THE FRONT COVER (owner, 2026-10-27), which holds the collection's
  * numbers: a small bar chart in place of cells, which turns to it. The pages after it count from 1.
@@ -126,12 +127,14 @@ interface BinderSpreadMapProps {
   sets?: readonly MapSet[];
   /** A phone's lone pages: a mini per page, in place of the spreads. */
   single?: boolean;
-  /** A lone page's rows, 3 or 4, which its mini draws. */
+  /** The binder's page, which each mini draws: today's 4 by 3 when left out (see `BinderSpread`'s `grid`). */
+  grid?: PageGrid;
+  /** A lone page's rows, 3 or 4, which its mini draws where the page is today's. */
   rows?: LoneRows;
 }
 
-/** What draws a map: all but the choice of spreads or pages. */
-type MapProps = Omit<BinderSpreadMapProps, 'single' | 'rows'>;
+/** What draws a map: all but the choice of spreads or pages, with the binder's page. */
+type MapProps = Omit<BinderSpreadMapProps, 'single' | 'rows' | 'grid'> & {grid: PageGrid};
 
 /**
  * The most spreads in view at once: eleven, the biggest set's count, so where the row has
@@ -141,13 +144,17 @@ type MapProps = Omit<BinderSpreadMapProps, 'single' | 'rows'>;
 const WINDOW = 11;
 
 /**
- * A mini spread's widest: two pages of four 7px cells with their gaps and padding, the
- * gap between the pages, its own padding and its border (owner, 2026-10-12: a bit bigger
- * than 6px). Exactly that, so the cells come out whole pixels: 86 once made them 6.5px.
+ * A mini spread's width with cells `cell` wide: two pages of a row's cells with their gaps and
+ * padding, the gap between the pages, its own padding and its border.
  */
-const MINI_WIDTH = 90;
+const miniSpreadWidth = ({columns}: PageGrid, cell: number) =>
+  2 * (columns * cell + (columns + 1) * SPACING.xxs) + SPACING.xs + 2 * (MINI_PADDING + MINI_BORDER);
 
-/** A cell in a spread at its widest (`MINI_WIDTH`): 7px across, so 9 tall. */
+/**
+ * A cell in a spread at its widest: 7px across, so 9 tall (owner, 2026-10-12: a bit bigger than
+ * 6px). A mini spread is exactly as wide as those cells need, so they come out whole pixels: 86
+ * once made today's 4 across 6.5px, where 90 is right.
+ */
 const FULL_CELL = MAP_CELL.width;
 
 /**
@@ -158,7 +165,7 @@ const FULL_CELL = MAP_CELL.width;
 const SNAPS = typeof CSS !== 'undefined' && CSS.supports('width', 'round(down, 1cqw, 1px)');
 
 /**
- * A cell's width: a quarter of its page's width less the gaps, rounded down to a whole pixel,
+ * A cell's width: its share of its page's width less the gaps, rounded down to a whole pixel,
  * and never wider than a full cell.
  *
  * NEVER WIDER THAN A FULL CELL, FOR FIREFOX (#922). Until a page has been laid out, Firefox
@@ -170,12 +177,13 @@ const SNAPS = typeof CSS !== 'undefined' && CSS.supports('width', 'round(down, 1
  * piled up. Capped, that pass draws the map at its full size, as it is drawn wherever the height
  * runs out first (1920x900, 2560x1080), so the pages get their real height.
  */
-const CELL_WIDTH = `min(${FULL_CELL}px, round(down, (100cqw - ${3 * SPACING.xxs}px) / 4, 1px))`;
+const cellWidth = ({columns}: PageGrid) =>
+  `min(${FULL_CELL}px, round(down, (100cqw - ${(columns - 1) * SPACING.xxs}px) / ${columns}, 1px))`;
 
-/** A cell's size: whole pixels, its height the nearest to a card's shape (7 by 9 at the widest). */
-const CELL_BOX: CSSProperties = SNAPS
-  ? {width: CELL_WIDTH, height: `round(${CELL_WIDTH} / 0.75, 1px)`}
-  : {aspectRatio: '0.75'};
+/** A cell's size on a page of `grid`: whole pixels, its height the nearest to a card's shape (7 by 9 at the widest). */
+function cellBox(grid: PageGrid): CSSProperties {
+  return SNAPS ? {width: cellWidth(grid), height: `round(${cellWidth(grid)} / 0.75, 1px)`} : {aspectRatio: '0.75'};
+}
 
 /** A lone page's cell, always at full size: 7 by 9 (#969). */
 const LONE_CELL: CSSProperties = MAP_CELL;
@@ -183,12 +191,13 @@ const LONE_CELL: CSSProperties = MAP_CELL;
 /** Behind a mini's cells: neutral, so the ink cells read true; gold would warm every one of them. */
 const PAGE_TINT = hexRgba(COLORS.text, 0.06);
 
-const PAGE_STYLE: CSSProperties = {
+/** A mini page of `grid`. */
+const pageStyle = ({columns}: PageGrid): CSSProperties => ({
   flex: 1,
   minWidth: 0,
   display: 'grid',
   // Whole-pixel cells size their own columns, centred in what rounding leaves over.
-  gridTemplateColumns: SNAPS ? 'repeat(4, auto)' : 'repeat(4, minmax(0, 1fr))',
+  gridTemplateColumns: SNAPS ? `repeat(${columns}, auto)` : `repeat(${columns}, minmax(0, 1fr))`,
   justifyContent: 'center',
   gap: SPACING.xxs,
   padding: SPACING.xxs,
@@ -196,13 +205,13 @@ const PAGE_STYLE: CSSProperties = {
   containerType: SNAPS ? 'inline-size' : undefined,
   background: PAGE_TINT,
   borderRadius: RADIUS.xs,
-};
+});
 
 /**
- * A cover in miniature, front or back. No token is the cover board's blue; Sapphire's at this
- * strength lands on the texture's average over the page (sampled 2026-10-12: rgb 42 53 110).
+ * A cover's tint in miniature, front or back. No token is the cover board's blue; Sapphire's at
+ * this strength lands on the texture's average over the page (sampled 2026-10-12: rgb 42 53 110).
  */
-const COVER_STYLE: CSSProperties = {...PAGE_STYLE, background: hexRgba(INK_COLORS.Sapphire.border, 0.35)};
+const COVER_TINT = hexRgba(INK_COLORS.Sapphire.border, 0.35);
 
 /** A card's ink, or its two inks split on the diagonal, at `alpha`. */
 function inkPaint(inks: readonly Ink[], alpha: number): string {
@@ -234,7 +243,7 @@ const SCAN_FILL = hexRgba(COLORS.text, 0.3);
  * A card-shaped cell in its card's ink: filled for a card you hold, a ring for one you are
  * missing; grey for a waiting promo's scan.
  */
-function cellStyle(pocket: Pocket | undefined, box = CELL_BOX): CSSProperties {
+function cellStyle(pocket: Pocket | undefined, box: CSSProperties): CSSProperties {
   const cell: CSSProperties = {...box, borderRadius: RADIUS.xs};
   // Past the binder's last card, or an open pocket: empty, as on the spread itself.
   if (!pocket) return cell;
@@ -243,12 +252,14 @@ function cellStyle(pocket: Pocket | undefined, box = CELL_BOX): CSSProperties {
   return {...cell, ...RING_STYLE, background: inkPaint(pocket.inks, 0.85)};
 }
 
-/** One page of a mini spread: twelve cells, which a cover keeps empty for its size. */
-function MiniPage({pockets, cover = false}: {pockets: readonly Pocket[]; cover?: boolean}) {
+/** One page of a mini spread: a cell per pocket, which a cover keeps empty for its size. */
+function MiniPage({pockets, grid, cover = false}: {pockets: readonly Pocket[]; grid: PageGrid; cover?: boolean}) {
+  const page = pageStyle(grid);
+  const box = cellBox(grid);
   return (
-    <span aria-hidden style={cover ? COVER_STYLE : PAGE_STYLE}>
-      {Array.from({length: PER_PAGE}, (_, i) => (
-        <span key={i} style={cellStyle(pockets[i])} />
+    <span aria-hidden style={cover ? {...page, background: COVER_TINT} : page}>
+      {Array.from({length: pocketsOf(grid)}, (_, i) => (
+        <span key={i} style={cellStyle(pockets[i], box)} />
       ))}
     </span>
   );
@@ -267,13 +278,13 @@ interface SpreadPages {
  * binder's last card the back cover. The loading map's one spread holds no pockets, so its
  * right page stays a page, like the spread it stands for.
  */
-function spreadPages(pockets: readonly Pocket[], {spread}: Pick<SpreadPlace, 'spread'>): SpreadPages {
-  // As on the binder, the front cover takes a page before the first card (`SPREAD_PAGING`).
-  const from = spread * SPREAD_PAGING.perView - SPREAD_PAGING.lead;
-  const right = from + PER_PAGE;
+function spreadPages(pockets: readonly Pocket[], {spread}: Pick<SpreadPlace, 'spread'>, {perView, lead}: BinderPaging): SpreadPages {
+  // As on the binder, the front cover takes a page before the first card (`pagingOf`).
+  const from = spread * perView - lead;
+  const right = from + lead;
   return {
     left: from < 0 ? [] : pockets.slice(from, right),
-    right: pockets.slice(right, right + PER_PAGE),
+    right: pockets.slice(right, right + lead),
     frontCover: from < 0,
     backCover: pockets.length > 0 && right >= pockets.length,
   };
@@ -287,8 +298,8 @@ interface SetSpan {
 }
 
 /**
- * How the map pages its pockets: spreads after the front cover's page, or a phone's lone pages of
- * nine or twelve after a front cover of their own.
+ * How the map pages its pockets: spreads after the front cover's page, or a phone's lone pages
+ * after a front cover of their own.
  */
 interface MapViews extends BinderPaging {
   /** What a mini's name calls its view: "Spread 3 of 9", "Page 5 of 27". */
@@ -298,8 +309,10 @@ interface MapViews extends BinderPaging {
    * and the pages after it count from 1 without it.
    */
   cover: boolean;
-  /** How many minis a row this many pixels wide holds. */
-  fits: (room: number) => number;
+  /** The narrowest a mini draws, which says how many a row holds (`minisThatFit`). */
+  mini: number;
+  /** The most minis in view at once, however many the row holds. */
+  most: number;
 }
 
 /** Each set's views, from where each starts and where the binder's `count` pockets end. */
@@ -328,11 +341,11 @@ function viewLabel({spread, total}: SpreadPlace, pockets: readonly Pocket[], spa
 }
 
 /** The kit's neutral button, restyled as a mini spread: gold-ringed while on show. */
-function miniStyle({on, hovered}: Look): CSSProperties {
+function miniStyle({on, hovered}: Look, width?: number): CSSProperties {
   return {
     // A WIDTH, not a flex-basis: the row shrink-wraps the spreads, and their cells have
     // no width of their own, so a basis alone measured 34px. Shrinkable, for narrow rows.
-    width: MINI_WIDTH,
+    width,
     flexShrink: 1,
     minWidth: 0,
     minHeight: 0,
@@ -345,7 +358,10 @@ function miniStyle({on, hovered}: Look): CSSProperties {
   };
 }
 
-/** A page of nine or twelve in miniature: the page itself is the button, never squeezed. */
+/** A spread of `grid` in miniature, at its widest (`miniSpreadWidth`). */
+const spreadMiniStyle = (grid: PageGrid) => (look: Look) => miniStyle(look, miniSpreadWidth(grid, FULL_CELL));
+
+/** A lone page in miniature: the page itself is the button, never squeezed. */
 function lonePageStyle(look: Look): CSSProperties {
   const style = miniStyle(look);
   return {...style, width: 'auto', flexShrink: 0, background: look.on || look.hovered ? style.background : PAGE_TINT};
@@ -379,18 +395,18 @@ function Mini({view, label, current, onGo, look, children}: MiniProps) {
   );
 }
 
-/** A lone page's cells: three across, 2px apart, as a spread's pages space theirs. */
-const LONE_GRID: CSSProperties = {
+/** A lone page's cells, as many across as `page`, 2px apart, as a spread's pages space theirs. */
+const loneGrid = ({columns}: PageGrid): CSSProperties => ({
   display: 'grid',
-  gridTemplateColumns: `repeat(${lonePage(3).columns}, ${MAP_CELL.width}px)`,
+  gridTemplateColumns: `repeat(${columns}, ${MAP_CELL.width}px)`,
   gap: MAP_CELL_GAP,
-};
+});
 
-/** A lone page's cells, nine or twelve, each at full size. */
-function LonePageCells({pockets, rows}: {pockets: readonly Pocket[]; rows: LoneRows}) {
+/** A lone page's cells, each at full size. */
+function LonePageCells({pockets, page}: {pockets: readonly Pocket[]; page: PageGrid}) {
   return (
-    <span aria-hidden style={LONE_GRID}>
-      {Array.from({length: perLonePage(rows)}, (_, i) => (
+    <span aria-hidden style={loneGrid(page)}>
+      {Array.from({length: pocketsOf(page)}, (_, i) => (
         <span key={i} style={cellStyle(pockets[i], LONE_CELL)} />
       ))}
     </span>
@@ -399,45 +415,56 @@ function LonePageCells({pockets, rows}: {pockets: readonly Pocket[]; rows: LoneR
 
 /**
  * The narrowest a mini spread may draw: its cells 4px wide, the least that leaves a
- * missing card's 1px ring a hole, so a gap never reads as a card you hold.
+ * missing card's 1px ring a hole, so a gap never reads as a card you hold. 66 for today's page.
  */
-const MIN_MINI = 66;
+const MIN_CELL = 4;
 
-/** How many mini spreads `room` pixels hold at `MIN_MINI` or wider, 4px apart: at least the one on show, at most `WINDOW`. */
-function spreadsThatFit(room: number): number {
-  const fit = Math.floor((room + SPACING.xs) / (MIN_MINI + SPACING.xs));
-  return Math.max(1, Math.min(WINDOW, fit));
-}
-
-/** How many mini pages `room` pixels hold, 4px apart, each at full size (`LONE_MINI_WIDTH`): at least the one on show. */
-function pagesThatFit(room: number): number {
-  return Math.max(1, Math.floor((room + SPACING.xs) / (LONE_MINI_WIDTH + SPACING.xs)));
-}
-
-/** The map of spreads, beside the front cover, and a phone's map of pages, with none, by their rows. */
-const SPREAD_VIEWS: MapViews = {...SPREAD_PAGING, noun: 'spread', cover: false, fits: spreadsThatFit};
-const PAGE_VIEWS = byRows((rows): MapViews => ({...pagingOf(true, rows), noun: 'page', cover: true, fits: pagesThatFit}));
+/** How many minis `width` wide `room` pixels hold, 4px apart: at least the one on show. */
+const minisThatFit = (room: number, width: number) => Math.max(1, Math.floor((room + SPACING.xs) / (width + SPACING.xs)));
 
 /**
- * How many minis the window holds: as many as fit the row (`fits`). Measured before the
+ * The map of spreads of `grid`, beside the front cover: as many as fit their row at the narrowest
+ * (`MIN_CELL`), at most `WINDOW`.
+ */
+const spreadViews = (grid: PageGrid): MapViews => ({
+  ...pagingOf(grid, false, 3),
+  noun: 'spread',
+  cover: false,
+  mini: miniSpreadWidth(grid, MIN_CELL),
+  most: WINDOW,
+});
+
+/** A phone's map of `page`s, after a front cover's: as many as fit their row, each at full size (`loneMiniWidth`). */
+const pageViews = (page: PageGrid): MapViews => ({
+  // Already the page the binder draws, so it pages by itself, whatever its shape.
+  perView: pocketsOf(page),
+  lead: pocketsOf(page),
+  noun: 'page',
+  cover: true,
+  mini: loneMiniWidth(page),
+  most: Infinity,
+});
+
+/**
+ * How many minis the window holds: as many as fit the row, up to `most`. Measured before the
  * first paint, so the row never shows a window it cannot fit, and again whenever the row
  * resizes (a panel docking, the browser narrowing). Null until measured, which a test
  * renderer, laying nothing out, never is; the window then holds the full `WINDOW`.
  */
-function useViewsThatFit(rowRef: RefObject<HTMLElement | null>, fits: MapViews['fits']): number | null {
+function useViewsThatFit(rowRef: RefObject<HTMLElement | null>, {mini, most}: Pick<MapViews, 'mini' | 'most'>): number | null {
   const [fit, setFit] = useState<number | null>(null);
   useLayoutEffect(() => {
     const row = rowRef.current;
     if (!row) return;
     const measure = () => {
-      if (row.clientWidth > 0) setFit(fits(row.clientWidth));
+      if (row.clientWidth > 0) setFit(Math.min(most, minisThatFit(row.clientWidth, mini)));
     };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(measure);
     observer.observe(row);
     return () => observer.disconnect();
-  }, [rowRef, fits]);
+  }, [rowRef, mini, most]);
   return fit;
 }
 
@@ -519,7 +546,7 @@ function useWindowStart(place: WindowPlace, fit: number | null): number {
  */
 function useMapWindow(pockets: readonly Pocket[], current: number, views: MapViews) {
   const rowRef = useRef<HTMLElement>(null);
-  const fit = useViewsThatFit(rowRef, views.fits);
+  const fit = useViewsThatFit(rowRef, views);
   const size = fit ?? WINDOW;
   const total = Math.max(1, Math.ceil((pockets.length + views.lead) / views.perView));
   const start = useWindowStart({spread: current, total, cover: views.cover}, fit);
@@ -527,9 +554,10 @@ function useMapWindow(pockets: readonly Pocket[], current: number, views: MapVie
   return {rowRef, total, shown};
 }
 
-function SpreadMap({pockets, current, onGo, sets = []}: MapProps) {
-  const {rowRef, total, shown} = useMapWindow(pockets, current, SPREAD_VIEWS);
-  const spans = setSpans(sets, pockets.length, SPREAD_VIEWS);
+function SpreadMap({pockets, current, onGo, sets = [], grid}: MapProps) {
+  const views = spreadViews(grid);
+  const {rowRef, total, shown} = useMapWindow(pockets, current, views);
+  const spans = setSpans(sets, pockets.length, views);
   return (
     // 8px under the spread, so at 1920x900 map and binder fit the band without the
     // binder giving up height, and its left edge stays on the search bar's.
@@ -538,17 +566,17 @@ function SpreadMap({pockets, current, onGo, sets = []}: MapProps) {
       aria-label="Binder pages"
       style={{display: 'flex', justifyContent: 'center', gap: SPACING.xs, paddingTop: SPACING.sm}}>
       {shown.map((spread) => {
-        const pages = spreadPages(pockets, {spread});
+        const pages = spreadPages(pockets, {spread}, views);
         return (
           <Mini
             key={spread}
             view={spread}
-            label={viewLabel({spread, total}, [...pages.left, ...pages.right], spans, SPREAD_VIEWS)}
+            label={viewLabel({spread, total}, [...pages.left, ...pages.right], spans, views)}
             current={spread === current}
             onGo={onGo}
-            look={miniStyle}>
-            <MiniPage pockets={pages.left} cover={pages.frontCover} />
-            <MiniPage pockets={pages.right} cover={pages.backCover} />
+            look={spreadMiniStyle(grid)}>
+            <MiniPage pockets={pages.left} grid={grid} cover={pages.frontCover} />
+            <MiniPage pockets={pages.right} grid={grid} cover={pages.backCover} />
           </Mini>
         );
       })}
@@ -580,10 +608,10 @@ function BarChartGlyph() {
  * The front cover's mini: a page's mini in size, its cells there but unseen, so it is exactly as big
  * as the pages beside it, and a bar chart over them for the numbers the cover holds.
  */
-function CoverCells({rows}: {rows: LoneRows}) {
+function CoverCells({page}: {page: PageGrid}) {
   return (
-    <span aria-hidden style={{...LONE_GRID, position: 'relative'}}>
-      {Array.from({length: perLonePage(rows)}, (_, i) => (
+    <span aria-hidden style={{...loneGrid(page), position: 'relative'}}>
+      {Array.from({length: pocketsOf(page)}, (_, i) => (
         <span key={i} style={{...LONE_CELL, visibility: 'hidden'}} />
       ))}
       <span style={CHART_BOX}>
@@ -599,10 +627,11 @@ const COVER_MINI_LABEL = 'Front cover: collection numbers';
 /**
  * A phone's map: the front cover's mini, then a mini per page, 4px under the page, as many as fit
  * the row, and nothing after them: the open mini's name and `aria-current` say where the page is.
- * Each page's mini draws its rows, 3 or 4.
+ * Each page's mini draws the page the binder does (`viewPage`): today's with its rows, 3 or 4.
  */
-function PageMap({pockets, current, onGo, sets = [], rows}: MapProps & {rows: LoneRows}) {
-  const views = PAGE_VIEWS[rows];
+function PageMap({pockets, current, onGo, sets = [], grid, rows}: MapProps & {rows: LoneRows}) {
+  const lone = viewPage(grid, true, rows);
+  const views = pageViews(lone);
   const {rowRef, total, shown} = useMapWindow(pockets, current, views);
   const spans = setSpans(sets, pockets.length, views);
   return (
@@ -622,7 +651,7 @@ function PageMap({pockets, current, onGo, sets = [], rows}: MapProps & {rows: Lo
               current={page === current}
               onGo={onGo}
               look={lonePageStyle}>
-              {cover ? <CoverCells rows={rows} /> : <LonePageCells pockets={held} rows={rows} />}
+              {cover ? <CoverCells page={lone} /> : <LonePageCells pockets={held} page={lone} />}
             </Mini>
           );
         })}
@@ -631,6 +660,6 @@ function PageMap({pockets, current, onGo, sets = [], rows}: MapProps & {rows: Lo
   );
 }
 
-export function BinderSpreadMap({single = false, rows = 3, ...props}: BinderSpreadMapProps) {
-  return single ? <PageMap {...props} rows={rows} /> : <SpreadMap {...props} />;
+export function BinderSpreadMap({single = false, grid = TODAY_PAGE, rows = 3, ...props}: BinderSpreadMapProps) {
+  return single ? <PageMap {...props} grid={grid} rows={rows} /> : <SpreadMap {...props} grid={grid} />;
 }

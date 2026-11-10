@@ -2,6 +2,7 @@ import {useState} from 'react';
 import {afterEach, beforeEach, describe, it, expect, vi} from 'vitest';
 import {act, render, screen, fireEvent} from '@testing-library/react';
 import {BinderSpreadMap, type Pocket} from '../BinderSpreadMap';
+import {squarePage, type PageGrid} from '../binderGeometry';
 
 /** The pockets that fill `spreads` spreads, the first holding twelve beside the front cover. */
 const filling = (spreads: number) => spreads * 24 - 12;
@@ -10,9 +11,9 @@ const filling = (spreads: number) => spreads * 24 - 12;
 const POCKETS: Pocket[] = Array.from({length: filling(40)}, (): Pocket => ({owned: true, inks: ['Amber']}));
 
 /** The map as the binder drives it: it turns to whatever spread, or page, the map asks for. */
-function Live({single = false}: {single?: boolean}) {
+function Live({single = false, grid}: {single?: boolean; grid?: PageGrid}) {
   const [current, setCurrent] = useState(0);
-  return <BinderSpreadMap single={single} pockets={POCKETS} current={current} onGo={setCurrent} />;
+  return <BinderSpreadMap single={single} grid={grid} pockets={POCKETS} current={current} onGo={setCurrent} />;
 }
 
 /** The spreads in view, by their names. */
@@ -114,6 +115,13 @@ describe('BinderSpreadMap, fitted to its row', () => {
     layOut({nav});
     render(<Live />);
     expect(spreads()).toHaveLength(count);
+  });
+
+  // A smaller page's spread needs less: at 2 by 2, cells 4px wide make it 42px, and 4px after it.
+  it("fits a binder's own size by its own narrowest", () => {
+    layOut({nav: 376});
+    render(<Live grid={squarePage(2)} />);
+    expect(spreads()).toHaveLength(8);
   });
 
   it('moves a narrow window on at its own last spread', () => {
@@ -289,6 +297,33 @@ describe("BinderSpreadMap, under a phone's lone page (#969)", () => {
     render(<BinderSpreadMap single pockets={PAGES} current={0} onGo={() => {}} />);
     expect(screen.getByRole('button', {name: COVER_MINI})).toHaveAttribute('aria-current', 'true');
     expect(screen.getByRole('button', {name: /^Page 1 of 27/})).not.toHaveAttribute('aria-current');
+  });
+});
+
+describe("BinderSpreadMap at a binder's own size", () => {
+  /** The cells of a mini's pages, by the mini's name: each page's columns and how many cells it holds. */
+  const miniPages = (name: RegExp) =>
+    [...screen.getByRole('button', {name}).querySelectorAll<HTMLElement>(':scope > span')].map((page) => ({
+      columns: page.style.gridTemplateColumns,
+      cells: page.childElementCount,
+    }));
+
+  it('draws a 3 by 3 spread as two pages of nine cells, three across, its first nine beside the front cover', () => {
+    render(<BinderSpreadMap grid={squarePage(3)} pockets={POCKETS.slice(0, 20)} current={0} onGo={() => {}} />);
+    expect(spreads()).toEqual([expect.stringMatching(/^Spread 1 of 2/), expect.stringMatching(/^Spread 2 of 2/)]);
+    const [cover, cards] = miniPages(/^Spread 1 of 2/);
+    expect(cover.cells).toBe(9);
+    expect(cards.cells).toBe(9);
+    expect(cards.columns).toMatch(/^repeat\(3, /);
+    expect(screen.getByRole('button', {name: /^Spread 1 of 2/}).style.width).toBe('72px');
+  });
+
+  it("draws a phone's 4 by 4 page as sixteen cells, four across, whatever rows today's page would fit", () => {
+    render(<BinderSpreadMap single grid={squarePage(4)} rows={3} pockets={POCKETS.slice(0, 40)} current={1} onGo={() => {}} />);
+    expect(minis()).toEqual([COVER_MINI, ...[1, 2, 3].map((page) => `Page ${page} of 3: nothing missing`)]);
+    const cells = screen.getByRole('button', {name: /^Page 1 of 3/}).firstElementChild as HTMLElement;
+    expect(cells.style.gridTemplateColumns).toBe('repeat(4, 7px)');
+    expect(cells.childElementCount).toBe(16);
   });
 });
 

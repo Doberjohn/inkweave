@@ -4,7 +4,7 @@ import {createPortal} from 'react-dom';
 import {MemoryRouter} from 'react-router-dom';
 import {fn} from 'storybook/test';
 import {BinderPage, BinderSpread} from './BinderSpread';
-import {PER_PAGE} from './binderGeometry';
+import {TODAY_PAGE, lonePage, pocketsOf} from './binderGeometry';
 import {CardTile} from './CardTile';
 import {BINDER_CARDS} from './binderStoryCards';
 import {PageTurn} from './PageTurn';
@@ -60,6 +60,7 @@ function HeldTurn({from, to, at, single = false}: HeldTurnProps) {
       from={page.from}
       side={page.side}
       single={single}
+      page={single ? lonePage(3) : TODAY_PAGE}
       renderSlot={slot}
       cover={!single && page.from < 0 ? 'front' : undefined}
     />
@@ -79,7 +80,7 @@ function HeldTurn({from, to, at, single = false}: HeldTurnProps) {
       {board &&
         createPortal(
           <PageTurn
-            plan={turnPlan(from, to, {single, held: true, perPage: PER_PAGE})}
+            plan={turnPlan(from, to, {single, held: true, perPage: pocketsOf(TODAY_PAGE)})}
             renderPage={copy}
             pages={{left, right}}
             // The spine's width, as the binder draws it (`SPINE_WIDTH`).
