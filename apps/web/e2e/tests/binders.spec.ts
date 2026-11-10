@@ -37,8 +37,9 @@ const ENTRIES: Entries = Object.fromEntries(HELD.map((card) => [String(card.id),
 /** A share of a binder as the panel writes it: a whole percent, rounded down (`percentOf`). */
 const percentOfBinder = (count: number) => Math.floor((count / AMBER_TOTAL) * 100);
 
-const AMBER = binderRow({id: 'b-amber', name: 'Amber', scope: 'all', rules: 'ink=Amber', place: 0});
-const VINES = binderRow({id: 'b-vines', name: 'Amber vines', scope: SET, rules: 'ink=Amber', place: 1});
+const AMBER = binderRow({id: 'b-amber', name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: 'sunburst', place: 0});
+const VINES = binderRow({id: 'b-vines', name: 'Amber vines', scope: SET, rules: 'ink=Amber', cover: 'scales', place: 1});
+// No cover picked: Starry night, the first design.
 const EPICS = binderRow({id: 'b-epics', name: 'Epics', scope: 'all', rules: 'rarity=Epic', place: 2});
 
 const worldOf = (): BindersWorld => ({rows: [AMBER, VINES, EPICS]});
@@ -54,6 +55,9 @@ const tiles = (page: Page) => binder(page).getByTestId('card-tile');
 const tileNames = (page: Page) => tiles(page).evaluateAll((all) => all.map((tile) => tile.getAttribute('aria-label')));
 const setButton = (page: Page) => page.getByRole('button', {name: /^Binder set/});
 const binderButton = (page: Page) => page.getByRole('button', {name: /^Binder: /});
+
+/** The design a shelf cover or a medal draws, by its id. */
+const designOf = (where: Locator) => where.locator('[data-cover]').first().getAttribute('data-cover');
 
 /**
  * What a trigger's name says, however it is drawn: a phone's row button adds its two percentages
@@ -386,7 +390,7 @@ const rowsOf = (count: number) =>
   Array.from({length: count}, (_, place) => binderRow({id: `b-${place}`, name: `Binder ${place + 1}`, rules: 'ink=Amber', place}));
 
 test.describe('the New binder window', () => {
-  test('makes a binder from its picks, counted as the shelf counts it: one POST, its cover last and focused', async ({page}) => {
+  test('makes a binder from its picks and design, counted as the shelf counts it: one POST, its cover last and focused', async ({page}) => {
     const world = worldOf();
     await signIn(page, world);
     await page.goto('/browse?binder=shelf');
@@ -399,14 +403,20 @@ test.describe('the New binder window', () => {
     await dialog.getByRole('button', {name: 'Filter by Amber'}).click();
     // The Amber binder already on the shelf holds the same rules.
     await expect.poll(() => windowCount(dialog)).toBe(amberCards);
+    // Under its cover on a computer, a Cover row in the rules on a phone.
+    const designs = dialog.getByRole('list', {name: 'Covers'});
+    await expect(designs.getByRole('button', {name: 'Starry night'})).toHaveAttribute('aria-pressed', 'true');
+    await designs.getByRole('button', {name: 'Honeycomb'}).click();
+    await expect(designs.getByRole('button', {name: 'Honeycomb'})).toHaveAttribute('aria-pressed', 'true');
 
     await createIn(dialog).click();
     await expect(dialog).toHaveCount(0);
     expect(world.calls).toEqual([
-      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Gold and amber', scope: 'all', rules: 'ink=Amber', cover_id: null}},
+      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Gold and amber', scope: 'all', rules: 'ink=Amber', cover: 'honeycomb'}},
     ]);
     await expect.poll(() => coverNames(page)).toEqual(['My collection', 'Amber', 'Amber vines', 'Epics', 'Gold and amber']);
     await expect(shelfCover(page, 'Gold and amber')).toBeFocused();
+    expect(await designOf(shelfCover(page, 'Gold and amber'))).toBe('honeycomb');
   });
 
   test('has no axe violations, empty and with its rules picked', async ({page}, testInfo) => {
@@ -473,7 +483,7 @@ test.describe('the New binder window', () => {
     expect(world.calls).toEqual([
       {
         what: 'create',
-        row: {owner_id: COLLECTOR_ID, name: 'Amber heroes', scope: 'all', rules: 'ink=Amber&classification=Hero&rarity=Legendary', cover_id: null},
+        row: {owner_id: COLLECTOR_ID, name: 'Amber heroes', scope: 'all', rules: 'ink=Amber&classification=Hero&rarity=Legendary', cover: null},
       },
     ]);
   });
@@ -508,7 +518,9 @@ test.describe('the New binder window', () => {
 
     await saveIn(dialog).click();
     await expect(dialog).toHaveCount(0);
-    expect(world.calls).toEqual([{what: 'change', id: AMBER.id, patch: {name: 'Amber', scope: 'all', rules: 'ink=Amber&rarity=Epic'}}]);
+    expect(world.calls).toEqual([
+      {what: 'change', id: AMBER.id, patch: {name: 'Amber', scope: 'all', rules: 'ink=Amber&rarity=Epic', cover: 'sunburst'}},
+    ]);
     await expect(shelfCover(page, 'Amber')).toHaveAccessibleName(/^Amber, Amber ink · Epic,/);
     expect(await coverCards(shelfCover(page, 'Amber'))).toBe(epics);
     await expect(actionsOf(page, 'Amber')).toBeFocused();
@@ -603,7 +615,7 @@ test.describe('Save as a binder', () => {
     await box.getByRole('button', {name: 'Save binder'}).click();
     await expect(box).toHaveCount(0);
     expect(world.calls).toEqual([
-      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber', cover_id: null}},
+      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: null}},
     ]);
     await expect(page).toHaveURL(/[?&]custom=b-made-3(&|$)/);
     expect(new URL(page.url()).searchParams.has('ink'), 'the filter panel is clear').toBe(false);
@@ -636,7 +648,7 @@ test.describe('Save as a binder', () => {
     await box.getByRole('button', {name: 'Save binder'}).click();
     await expect(box).toHaveCount(0);
     expect(world.calls).toEqual([
-      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber&rarity=Epic', cover_id: null}},
+      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber&rarity=Epic', cover: null}},
     ]);
     await expect(page).toHaveURL(/[?&]custom=b-made-3(&|$)/);
     expect(await settledTiles(page)).toEqual(onScreen);
@@ -679,7 +691,7 @@ test.describe('Save as a binder', () => {
     await box.getByRole('button', {name: 'Save binder'}).click();
     await expect(box).toHaveCount(0);
     expect(world.calls).toEqual([
-      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber', cover_id: null}},
+      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: null}},
     ]);
     await expect(page).toHaveURL(/[?&]custom=b-made-3(&|$)/);
     await expect(binderButton(page)).toHaveAccessibleName(named('Binder: Amber'));
@@ -693,19 +705,9 @@ async function pickerOf(page: Page): Promise<Locator> {
   return picker;
 }
 
-/** The art a shelf cover draws, or the art a picker's card shows. */
-const artOf = (where: Locator) => where.locator('img').first().getAttribute('src');
-
-/**
- * Picks the second card Change cover offers, which is never the cover the rarest card would
- * give, and answers its art.
- */
-async function pickSecondCard(picker: Locator): Promise<string | null> {
-  const choice = picker.getByRole('list', {name: 'Your cards'}).getByRole('button').nth(1);
-  const art = await artOf(choice);
-  await choice.click();
-  return art;
-}
+/** Picks `label`'s design in Change cover. */
+const pickDesign = (picker: Locator, label: string) =>
+  picker.getByRole('list', {name: 'Covers'}).getByRole('button', {name: label, exact: true}).click();
 
 test.describe('Rename and Change cover', () => {
   test('Rename binder and Change cover have no axe violations', async ({page}, testInfo) => {
@@ -725,12 +727,20 @@ test.describe('Rename and Change cover', () => {
     await page.getByRole('menuitem', {name: 'Change cover'}).click();
     const picker = await pickerOf(page);
     await expect(picker.getByRole('heading', {name: 'Cover for Amber'})).toBeVisible();
-    await expect(picker.getByRole('list', {name: 'Your cards'}).getByRole('button').first()).toBeVisible();
+    await expect(picker.getByRole('list', {name: 'Covers'}).getByRole('button')).toHaveCount(8);
     await expect(picker).toHaveCSS('opacity', '1');
     expect(await violations(page)).toEqual([]);
   });
 
-  test('rename a binder, then change its cover and My collection\'s: one PATCH each, one upsert, and the shelf shows each', async ({
+  test("draws each binder in its row's design, one with none in Starry night, and My collection in its shelf row's", async ({page}) => {
+    await signIn(page, {...worldOf(), shelf: {pages: 4, cover: 'ripples'}});
+    await page.goto('/browse?binder=shelf');
+    await expect(shelfCover(page, 'Epics')).toBeVisible({timeout: 20_000});
+    const designs = await Promise.all(['My collection', 'Amber', 'Amber vines', 'Epics'].map((name) => designOf(shelfCover(page, name))));
+    expect(designs).toEqual(['ripples', 'sunburst', 'scales', 'starry-night']);
+  });
+
+  test("rename a binder, then change My collection's cover and its: one upsert, one PATCH each, shown on the shelf, the Binders tab and the open binder", async ({
     page,
   }) => {
     const world = worldOf();
@@ -746,32 +756,44 @@ test.describe('Rename and Change cover', () => {
     await expect.poll(() => coverNames(page)).toEqual(['My collection', 'Amber', 'Amber vines', 'Epic chase']);
     await expect(actionsOf(page, 'Epic chase')).toBeFocused();
 
-    await actionsOf(page, 'Amber').click();
-    await page.getByRole('menuitem', {name: 'Change cover'}).click();
-    let picker = await pickerOf(page);
-    await expect(picker.getByRole('heading', {name: 'Cover for Amber'})).toBeVisible();
-    const amberArt = await pickSecondCard(picker);
-    await expect(picker).toHaveCount(0);
-    await expect.poll(() => artOf(shelfCover(page, 'Amber'))).toBe(amberArt);
-
     await actionsOf(page, 'My collection').click();
     await page.getByRole('menuitem', {name: 'Change cover'}).click();
-    picker = await pickerOf(page);
+    let picker = await pickerOf(page);
     await expect(picker.getByRole('heading', {name: 'Cover for My collection'})).toBeVisible();
-    const collectionArt = await pickSecondCard(picker);
+    // No shelf row yet: Starry night.
+    await expect(picker.getByRole('button', {name: 'Starry night'})).toHaveAttribute('aria-pressed', 'true');
+    await pickDesign(picker, 'Argyle');
     await expect(picker).toHaveCount(0);
-    await expect.poll(() => artOf(shelfCover(page, 'My collection'))).toBe(collectionArt);
+    await expect.poll(() => designOf(shelfCover(page, 'My collection'))).toBe('argyle');
+
+    await actionsOf(page, 'Amber').click();
+    await page.getByRole('menuitem', {name: 'Change cover'}).click();
+    picker = await pickerOf(page);
+    await expect(picker.getByRole('heading', {name: 'Cover for Amber'})).toBeVisible();
+    await expect(picker.getByRole('button', {name: 'Sunburst'})).toHaveAttribute('aria-pressed', 'true');
+    await pickDesign(picker, 'Tartan');
+    await expect(picker).toHaveCount(0);
+    await expect.poll(() => designOf(shelfCover(page, 'Amber'))).toBe('tartan');
 
     expect(world.calls).toEqual([
       {what: 'change', id: EPICS.id, patch: {name: 'Epic chase'}},
-      {what: 'change', id: AMBER.id, patch: {cover_id: expect.any(String)}},
-      {what: 'shelf cover', row: {owner_id: COLLECTOR_ID, cover_id: world.shelfCover}, onConflict: 'owner_id'},
+      {what: 'shelf', row: {owner_id: COLLECTOR_ID, cover: 'argyle'}, onConflict: 'owner_id'},
+      {what: 'change', id: AMBER.id, patch: {cover: 'tartan'}},
     ]);
-    expect(world.shelfCover).toEqual(expect.any(String));
+    expect(world.shelf).toEqual({pages: 4, cover: 'argyle'});
 
-    // Read back on the next visit: My collection keeps the card picked.
-    await page.reload();
-    await expect.poll(() => artOf(shelfCover(page, 'My collection')), {timeout: 20_000}).toBe(collectionArt);
+    // The open binder's medal, and the Binders tab's, with no reload.
+    await shelfCover(page, 'Amber').click();
+    await expect(binder(page)).toBeVisible({timeout: 20_000});
+    await expect(binderButton(page).getByTestId('binder-medal')).toHaveAttribute('data-cover', 'tartan', {timeout: 20_000});
+    await openBindersTab(binderButton(page));
+    await expect(binderOption(page, 'My collection').getByTestId('binder-medal')).toHaveAttribute('data-cover', 'argyle');
+    await expect(binderOption(page, 'Amber').getByTestId('binder-medal')).toHaveAttribute('data-cover', 'tartan');
+
+    // Read back on the next visit.
+    await page.goto('/browse?binder=shelf');
+    await expect.poll(() => designOf(shelfCover(page, 'My collection')), {timeout: 20_000}).toBe('argyle');
+    expect(await designOf(shelfCover(page, 'Amber'))).toBe('tartan');
   });
 });
 
@@ -807,11 +829,11 @@ test.describe('Save as a binder from a filter sheet', () => {
 });
 
 test.describe('Change cover under the pointer', () => {
-  test("the chosen card keeps its gold ring under the pointer, where another card takes the hover ring", async ({
+  test("the chosen design keeps its gold ring under the pointer, where another design takes the hover ring", async ({
     page,
   }, testInfo) => {
-    test.skip(testInfo.project.name.startsWith('mobile-'), 'A pointer resting on a card');
-    // No fade, so each ring read is the one the card settles on.
+    test.skip(testInfo.project.name.startsWith('mobile-'), 'A pointer resting on a design');
+    // No fade, so each ring read is the one the design settles on.
     await page.emulateMedia({reducedMotion: 'reduce'});
     await signIn(page);
     await page.goto('/browse?binder=shelf');
@@ -819,12 +841,12 @@ test.describe('Change cover under the pointer', () => {
     await page.getByRole('menuitem', {name: 'Change cover'}).click();
     const picker = await pickerOf(page);
     const ringOf = (choice: Locator) => choice.evaluate((button) => getComputedStyle(button).boxShadow);
-    // My collection follows the rarest card, so "The rarest card you have" is the one chosen.
+    // My collection has no shelf row, so Starry night, the first, is the one chosen.
     const chosen = picker.locator('.cover-choice[aria-pressed="true"]');
-    const other = picker.getByRole('list', {name: 'Your cards'}).getByRole('button').nth(1);
+    const other = picker.getByRole('list', {name: 'Covers'}).getByRole('button').nth(1);
     const chosenRing = await ringOf(chosen);
     const otherEdge = await ringOf(other);
-    // The chosen card wears its ring at rest, so holding it under the pointer means something.
+    // The chosen design wears its ring at rest, so holding it under the pointer means something.
     expect(chosenRing).not.toBe(otherEdge);
     await chosen.hover();
     expect(await ringOf(chosen)).toBe(chosenRing);

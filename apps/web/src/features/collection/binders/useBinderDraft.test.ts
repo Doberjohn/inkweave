@@ -4,6 +4,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from '../collectionParser';
 import {binderFace} from './binderCovers';
 import type {Binder} from './binderRules';
+import {coverDesign} from './coverDesigns';
 import {startOf, useBinderDraft} from './useBinderDraft';
 
 /** A card named by its id: a 1-cost Amber Common in Set 12 unless told otherwise. */
@@ -19,7 +20,7 @@ const POOL = [
 ];
 const ENTRIES: CollectionEntries = {'amber-epic': {normal: 1, foil: 0}, 'steel-rare': {normal: 0, foil: 1}};
 
-const EPICS: Binder = {id: 'b1', name: 'Epics', scope: 'all', rules: 'rarity=Epic', coverId: null, place: 0};
+const EPICS: Binder = {id: 'b1', name: 'Epics', scope: 'all', rules: 'rarity=Epic', pages: 4, cover: null, place: 0};
 
 function renderDraft(binder: Binder | null = null) {
   return renderHook(() => useBinderDraft({start: startOf(binder), pool: POOL, entries: ENTRIES}));
@@ -41,11 +42,11 @@ describe('useBinderDraft', () => {
       result.current.filters.toggleInk('Amber');
     });
     const {input, preview} = result.current;
-    expect(input).toEqual({name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null});
+    expect(input).toEqual({name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: null});
     expect(preview.chips).toEqual(['Amber ink']);
     // The shelf's own face for the binder these rules make.
     const shelf = binderFace(POOL, ENTRIES, {...EPICS, ...input});
-    expect({cover: preview.cover, figures: preview.figures}).toEqual(shelf);
+    expect({cover: result.current.cover, figures: preview.figures}).toEqual(shelf);
     expect(preview.figures).toMatchObject({complete: 1, cards: 2});
     expect(preview.firstPage).toEqual([
       {card: POOL[0], held: false},
@@ -105,6 +106,23 @@ describe('useBinderDraft', () => {
     expect(result.current.change).toBe('name');
     act(() => result.current.filters.toggleInk('Amber'));
     expect(result.current.change).toBe('rules');
+    expect(result.current.canSave).toBe(true);
+  });
+
+  it('starts a new binder on the first design, and sends the one picked', () => {
+    const {result} = renderDraft();
+    expect(result.current.cover.id).toBe('starry-night');
+    act(() => result.current.pickCover(coverDesign('tartan')));
+    expect(result.current.cover.id).toBe('tartan');
+    expect(result.current.input.cover).toBe('tartan');
+  });
+
+  it("counts a new design as a change of cover, and the design a binder with none already shows as none", () => {
+    const {result} = renderDraft(EPICS);
+    act(() => result.current.pickCover(coverDesign('starry-night')));
+    expect(result.current.change).toBeNull();
+    act(() => result.current.pickCover(coverDesign('argyle')));
+    expect(result.current.change).toBe('cover');
     expect(result.current.canSave).toBe(true);
   });
 

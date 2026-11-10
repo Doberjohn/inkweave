@@ -16,33 +16,39 @@ export type Database = {
     Tables: {
       collection_binders: {
         Row: {
+          cover: string | null
           cover_id: string | null
           created_at: string
           id: string
           name: string
           owner_id: string
+          pages: number
           place: number
           rules: string
           scope: string
           updated_at: string
         }
         Insert: {
+          cover?: string | null
           cover_id?: string | null
           created_at?: string
           id?: string
           name: string
           owner_id: string
+          pages?: number
           place: number
           rules?: string
           scope?: string
           updated_at?: string
         }
         Update: {
+          cover?: string | null
           cover_id?: string | null
           created_at?: string
           id?: string
           name?: string
           owner_id?: string
+          pages?: number
           place?: number
           rules?: string
           scope?: string
@@ -89,21 +95,27 @@ export type Database = {
       }
       collection_shelf: {
         Row: {
+          cover: string | null
           cover_id: string | null
           created_at: string
           owner_id: string
+          pages: number
           updated_at: string
         }
         Insert: {
+          cover?: string | null
           cover_id?: string | null
           created_at?: string
           owner_id: string
+          pages?: number
           updated_at?: string
         }
         Update: {
+          cover?: string | null
           cover_id?: string | null
           created_at?: string
           owner_id?: string
+          pages?: number
           updated_at?: string
         }
         Relationships: [

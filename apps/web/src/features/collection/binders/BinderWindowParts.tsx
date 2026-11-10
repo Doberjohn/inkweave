@@ -16,6 +16,7 @@ import '../../cards/components/binder.css';
 import {ALL_PROMO_SETS, WHOLE_COLLECTION, isPromoScope, isPromoSet, setLabel} from '../binderCards';
 import {percentOf} from '../collectionStats';
 import {CoverBar, CoverBoard} from './BinderCover';
+import {CoverChoices} from './CoverChoices';
 import {CHIP, CHIPS, FIELD, HEADING} from './binderFields';
 import {RuleLines} from './RuleLines';
 import type {BinderDraft} from './useBinderDraft';
@@ -58,9 +59,14 @@ const RULES_HEADING: CSSProperties = {
   color: COLORS.text,
 };
 
+/** The eight designs to pick the draft's cover from, locked while a save runs. */
+function DraftCoverChoices({draft, locked}: {draft: BinderDraft; locked: boolean}) {
+  return <CoverChoices chosen={draft.cover.id} onPick={draft.pickCover} disabled={locked} named={false} />;
+}
+
 /**
- * The window's rules, in one column: Name and Sets, then "What it holds", one line for each kind
- * of rule (`RuleLines`).
+ * The window's rules, in one column: Name and Sets, on a phone the Cover after them, then "What
+ * it holds", one line for each kind of rule (`RuleLines`).
  */
 export function RulesFields({draft, isMobile, locked, nameRef}: RulesProps) {
   const {options} = draft;
@@ -86,6 +92,11 @@ export function RulesFields({draft, isMobile, locked, nameRef}: RulesProps) {
           style={{width: '100%'}}
         />
       </FilterSection>
+      {isMobile && (
+        <FilterSection label="Cover">
+          <DraftCoverChoices draft={draft} locked={locked} />
+        </FilterSection>
+      )}
       <hr style={DIVIDER} />
       <h3 style={RULES_HEADING}>What it holds</h3>
       <RuleLines draft={draft} isMobile={isMobile} />
@@ -133,9 +144,9 @@ export function DraftCount({draft}: {draft: BinderDraft}) {
   );
 }
 
-/** The draft binder's cover, as the shelf will draw it: its name (or "Name it"), its rules and its card. */
+/** The draft binder's cover, as the shelf will draw it: its name (or "Name it"), its rules and its design. */
 export function DraftCover({draft}: {draft: BinderDraft}) {
-  return <CoverBoard name={draft.name.trim() || 'Name it'} rule={draft.preview.line} cover={draft.preview.cover} />;
+  return <CoverBoard name={draft.name.trim() || 'Name it'} rule={draft.preview.line} cover={draft.cover} />;
 }
 
 /** The page's pockets, four across, on a binder page (`binder-page`: its black, grain and light). */
@@ -159,13 +170,19 @@ const POCKET_ART: CSSProperties = {
   borderRadius: `${RADIUS.xs}px`,
 };
 
-/** Beside the rules on a computer: the cover, the count, the rules as chips and the first page. */
-export function DraftPreview({draft}: {draft: BinderDraft}) {
+/**
+ * Beside the rules on a computer: the cover with the eight designs to pick from under it, the
+ * count, the rules as chips and the first page. `locked` while a save runs, as the rules are.
+ */
+export function DraftPreview({draft, locked}: {draft: BinderDraft; locked: boolean}) {
   const {chips, firstPage} = draft.preview;
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.lg}}>
-      <div style={{width: '72%', alignSelf: 'center'}}>
-        <DraftCover draft={draft} />
+      <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
+        <div style={{width: '72%', alignSelf: 'center'}}>
+          <DraftCover draft={draft} />
+        </div>
+        <DraftCoverChoices draft={draft} locked={locked} />
       </div>
       <DraftCount draft={draft} />
       {chips.length > 0 && (

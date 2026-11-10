@@ -5,8 +5,12 @@ import type {OwnBindersAsk} from './binders/binderChoices';
 import type {CollectionEntries} from './collectionParser';
 import {useOwnBinders} from './useOwnBinders';
 
-// My collection's cover is read with the binders: none picked.
-const repo = vi.hoisted(() => ({listBinders: vi.fn(), getShelfCover: vi.fn(async () => ({data: null, error: null}))}));
+// My collection's page size and cover are read with the binders: the defaults.
+const repo = vi.hoisted(() => ({
+  listBinders: vi.fn(),
+  getShelf: vi.fn(async () => ({data: {pages: 4, cover: null}, error: null})),
+  SHELF_DEFAULT: {pages: 4, cover: null},
+}));
 vi.mock('./binders/binderRepository', () => repo);
 // The real queue, watched: each read must wait in it.
 const queue = vi.hoisted(() => ({enqueueWrite: vi.fn()}));
@@ -16,9 +20,9 @@ vi.mock('./collectionWriteQueue', async (actual) => {
   return queue;
 });
 
-const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
-const EPICS = {id: 'b2', name: 'Epics', scope: 'all', rules: 'rarity=Epic', coverId: null, place: 1};
-const SET_12 = {id: 'b3', name: 'Wilds', scope: '12', rules: '', coverId: null, place: 2};
+const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: 'sunburst', place: 0};
+const EPICS = {id: 'b2', name: 'Epics', scope: 'all', rules: 'rarity=Epic', pages: 4, cover: null, place: 1};
+const SET_12 = {id: 'b3', name: 'Wilds', scope: '12', rules: '', pages: 4, cover: null, place: 2};
 
 const cardOf = (facts: Partial<LorcanaCard> & Pick<LorcanaCard, 'id'>) =>
   ({name: facts.id, fullName: facts.id, cost: 1, ink: 'Amber', inkwell: true, type: 'Character', rarity: 'Common', setCode: '12', ...facts}) as LorcanaCard;
@@ -161,10 +165,10 @@ describe('useOwnBinders: the binder ?custom= names', () => {
     expect(result.current.custom.status).toBe('loading');
     await waitFor(() => expect(result.current.custom.status).toBe('shown'));
     expect(result.current.pool.map((card) => card.id)).toEqual(['amber-common', 'amber-rare']);
-    expect(result.current.custom).toMatchObject({binder: AMBER, narrowed: true, cover: {id: 'amber-rare'}});
+    expect(result.current.custom).toMatchObject({binder: AMBER, narrowed: true, cover: {id: 'sunburst'}});
   });
 
-  it('keeps its cards while only the copies change, and its cover follows them', async () => {
+  it('keeps its cards and its cover while only the copies change', async () => {
     const {result, rerender} = renderHook(
       ({entries}: {entries: CollectionEntries}) => useOwnBinders({...READER, requested: 'b1'}, POOL, entries),
       {initialProps: {entries: ENTRIES}},
@@ -174,7 +178,7 @@ describe('useOwnBinders: the binder ?custom= names', () => {
 
     rerender({entries: {'amber-common': {normal: 1, foil: 0}}});
     expect(result.current.pool).toBe(cards);
-    expect(result.current.custom).toMatchObject({cover: {id: 'amber-common'}});
+    expect(result.current.custom).toMatchObject({cover: {id: 'sunburst'}});
   });
 
   it('is not narrowed for a binder of Sets alone', async () => {

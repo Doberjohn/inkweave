@@ -1,8 +1,6 @@
 import type {CSSProperties, ReactNode, Ref} from 'react';
 import {Link} from 'react-router-dom';
 import Skeleton from 'react-loading-skeleton';
-import type {LorcanaCard} from 'inkweave-synergy-engine';
-import {smallImageUrl} from '../../cards/loader';
 import {BINDER_LOOK} from '../../cards/components/binderLook';
 import '../../cards/components/binder.css';
 import './binderShelf.css';
@@ -27,6 +25,7 @@ import {
 } from '../../../shared/constants';
 import {isFinished, percentOf} from '../collectionStats';
 import type {BinderFigures} from './binderCovers';
+import type {CoverDesign} from './coverDesigns';
 
 /** What a cover says: the binder's name, and the line its rules read as (`ruleLine`). */
 export interface CoverWords {
@@ -35,8 +34,8 @@ export interface CoverWords {
 }
 
 export interface BinderCoverProps extends CoverWords {
-  /** The card in its pocket, or none: an empty sleeve. */
-  cover: LorcanaCard | null;
+  /** Its cover's design, drawn across the board's face. */
+  cover: CoverDesign;
   figures: BinderFigures;
   /** Its Sets are promos alone, so it counts promos. */
   promos: boolean;
@@ -100,7 +99,6 @@ const LINK: CSSProperties = {
   outline: 'none',
 };
 
-/** The board, a closed binder's shape. Its look and zip are `binder.css`'s and `binderShelf.css`'s. */
 /**
  * The board, with the colours `binder.css` and `binderShelf.css` draw it in: on the board itself,
  * so it draws alike on the shelf and in the New binder window's preview.
@@ -117,29 +115,28 @@ const BOARD = {
 /** The board's corners, as `binder.css` rounds them, for the shimmer in its place and New binder's outline. */
 export const BOARD_RADIUS = 20;
 
-/** The pocket the cover card sits in, centred right of the spine, a card's shape. */
-const POCKET: CSSProperties = {
+/**
+ * How far the face sits in from the board's top, right and bottom: the zip's tape runs from 2 to
+ * 8px in (`binder.css`), and the face starts clear of it.
+ */
+const FACE_INSET = 10;
+
+/** The face, the design across it: inside the zip on three sides, from the spine (7%) on the fourth. */
+const FACE: CSSProperties = {
   position: 'absolute',
-  top: '9%',
-  left: '26.5%',
-  width: '54%',
-  aspectRatio: '63 / 88',
+  top: FACE_INSET,
+  right: FACE_INSET,
+  bottom: FACE_INSET,
+  left: 'calc(7% + 3px)',
+  borderRadius: `${RADIUS.card}px`,
+  overflow: 'hidden',
+  boxShadow: `inset 0 0 0 1px ${blackRgba(0.6)}, inset 0 1px 0 ${whiteRgba(0.12)}`,
 };
 
-/** Positioned, so it paints over the pocket's sleeve (`::before`) and under its front sheet (`::after`). */
-const ART: CSSProperties = {
-  position: 'relative',
-  display: 'block',
-  width: '100%',
-  height: '100%',
-  objectFit: 'cover',
-  borderRadius: `${RADIUS.sm}px`,
-};
-
-/** The label plate: sunk into the board, the name over the rule line. */
-const PLATE: CSSProperties = {
+/** The label near the face's foot: a dark plate over the pattern, edged in the design's foil, the name over the rule line. */
+const labelStyle = (foil: string): CSSProperties => ({
   position: 'absolute',
-  left: '16%',
+  left: '9%',
   right: '9%',
   bottom: '8%',
   display: 'flex',
@@ -147,31 +144,34 @@ const PLATE: CSSProperties = {
   alignItems: 'center',
   gap: SPACING.xxs,
   padding: `${SPACING.sm}px ${SPACING.sm}px ${SPACING.xs}px`,
-  borderRadius: `${RADIUS.md}px`,
-  background: `linear-gradient(180deg, ${blackRgba(0.45)}, ${blackRgba(0.2)})`,
-  boxShadow: `inset 0 1px 2px ${blackRgba(0.9)}, 0 1px 0 ${whiteRgba(0.07)}`,
+  borderRadius: `${RADIUS.lg}px`,
+  background: COLORS.scrim,
+  boxShadow: `0 0 0 1px ${hexRgba(foil, 0.33)}, 0 4px 10px ${blackRgba(0.55)}`,
   textAlign: 'center',
   minWidth: 0,
-};
+});
 
-const NAME: CSSProperties = {
+const nameStyle = (foil: string): CSSProperties => ({
   ...TRUNCATE,
   maxWidth: '100%',
   fontFamily: FONTS.hero,
   fontSize: `${FONT_SIZES.xl}px`,
   fontWeight: FONT_WEIGHT.regular,
   lineHeight: LINE_HEIGHT.tight,
-  color: COLORS.text,
-};
+  color: foil,
+  textShadow: `0 1px 0 ${blackRgba(0.6)}, 0 -1px 0 ${whiteRgba(0.1)}`,
+});
 
-const RULE: CSSProperties = {
+const ruleStyle = (foil: string): CSSProperties => ({
   ...TRUNCATE,
   maxWidth: '100%',
   fontSize: `${FONT_SIZES.sm}px`,
   fontWeight: FONT_WEIGHT.semibold,
   lineHeight: LINE_HEIGHT.snug,
-  color: COLORS.textMuted,
-};
+  color: foil,
+  opacity: 0.78,
+  textShadow: `0 1px 0 ${blackRgba(0.55)}`,
+});
 
 const FIGURES: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.sm, padding: `0 ${SPACING.xxs}px`};
 
@@ -228,29 +228,28 @@ export function CoverBar({figures: {complete, cards}}: {figures: BinderFigures})
 }
 
 /**
- * The binder face on: its board, the cover card in its pocket, and its plate. Decoration: the
- * link's words name it, or the New binder window's preview, which says the same beside it.
+ * The binder face on: its board, its design across the face inside the zip, and the label with
+ * its name and rule in the design's foil. Decoration: the link's words name it, or the New binder
+ * window's preview, which says the same beside it.
  */
-export function CoverBoard({name, rule, cover}: CoverWords & {cover: LorcanaCard | null}) {
-  const art = cover === null ? undefined : smallImageUrl(cover);
+export function CoverBoard({name, rule, cover}: CoverWords & {cover: CoverDesign}) {
   return (
     <span aria-hidden="true" className="binder-board binder-shelf-board" style={BOARD}>
       <span className="binder-shelf-spine" />
+      <span data-cover={cover.id} style={{...FACE, background: cover.ground}}>
+        <span style={labelStyle(cover.foil)}>
+          <span style={nameStyle(cover.foil)}>{name}</span>
+          <span style={ruleStyle(cover.foil)}>{rule}</span>
+        </span>
+      </span>
       <span className="binder-zip-pull" />
-      <span className="binder-pocket" style={POCKET}>
-        {art !== undefined && <img src={art} alt="" decoding="async" loading="lazy" style={ART} />}
-      </span>
-      <span style={PLATE}>
-        <span style={NAME}>{name}</span>
-        <span style={RULE}>{rule}</span>
-      </span>
       <span className="binder-shelf-ring" />
     </span>
   );
 }
 
 /**
- * One binder on the shelf (#1074): a closed zip binder holding its cover card, its name on a plate
+ * One binder on the shelf (#1074): a closed zip binder in its cover's design, its name on a label
  * with its rules under it, and under the board its Complete percentage, its count and the set
  * panel's gold bar. The whole cover is a link to the binder.
  *

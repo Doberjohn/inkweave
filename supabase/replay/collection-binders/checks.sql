@@ -253,11 +253,11 @@ begin
          'authenticated can''t delete a binder';
   assert not has_table_privilege('authenticated', 'public.collection_shelf', 'DELETE'),
          'authenticated can delete the shelf row';
-  foreach col in array array['owner_id', 'name', 'scope', 'rules', 'cover_id'] loop
+  foreach col in array array['owner_id', 'name', 'scope', 'rules', 'cover_id', 'pages', 'cover'] loop
     assert has_column_privilege('authenticated', 'public.collection_binders', col, 'INSERT'),
            format('authenticated can''t insert a binder''s %s', col);
   end loop;
-  foreach col in array array['name', 'scope', 'rules', 'cover_id'] loop
+  foreach col in array array['name', 'scope', 'rules', 'cover_id', 'pages', 'cover'] loop
     assert has_column_privilege('authenticated', 'public.collection_binders', col, 'UPDATE'),
            format('authenticated can''t change a binder''s %s', col);
   end loop;
@@ -269,7 +269,7 @@ begin
     assert not has_column_privilege('authenticated', 'public.collection_binders', col, 'UPDATE'),
            format('authenticated can change a binder''s %s', col);
   end loop;
-  foreach col in array array['owner_id', 'cover_id'] loop
+  foreach col in array array['owner_id', 'cover_id', 'pages', 'cover'] loop
     assert has_column_privilege('authenticated', 'public.collection_shelf', col, 'INSERT')
        and has_column_privilege('authenticated', 'public.collection_shelf', col, 'UPDATE'),
            format('authenticated can''t upsert the shelf''s %s', col);
@@ -597,5 +597,50 @@ begin
   assert t.shelf_rows('A') = 0, 'A''s shelf row outlived the account';
   assert t.places('B') = '{0}', format('B''s binders went with A: %s', t.places('B'));
 end $$;
+
+\echo '== 13. page sizes and cover designs: a binder starts at 4 with no design, takes 2, 3 or 4 and a design''s id, and the shelf''s upsert changes one and keeps the other (23514)'
+begin;
+select t.act_as('B');
+do $$
+declare
+  r record;
+  s text;
+begin
+  execute t.add_sql('B', 'Sized') into r;
+  assert r.pages = 4 and r.cover is null, format('a new binder came as %s', row_to_json(r));
+  execute format($q$update public.collection_binders set pages = 3, cover = 'starry-night' where id = %L$q$, r.id);
+  select * into r from public.collection_binders where id = r.id;
+  assert r.pages = 3 and r.cover = 'starry-night', format('B''s pick read back as %s', row_to_json(r));
+  execute format($q$insert into public.collection_binders (owner_id, name, pages, cover)
+                    values (%L, 'Small', 2, 'tartan') returning *$q$, t.uid('B')) into r;
+  assert r.pages = 2 and r.cover = 'tartan', format('B''s new binder came as %s', row_to_json(r));
+  foreach s in array array['5', '1', '0'] loop
+    perform t.expect_check(format('update public.collection_binders set pages = %s where id = %L', s, r.id),
+      'collection_binders_pages');
+  end loop;
+  -- A design's id: lowercase words joined by hyphens, as the app names them.
+  foreach s in array array['Starry Night', 'starry night', '', '-tartan', '9lives', repeat('a', 25)] loop
+    perform t.expect_check(format('update public.collection_binders set cover = %L where id = %L', s, r.id),
+      'collection_binders_cover_design');
+  end loop;
+  execute format('update public.collection_binders set cover = %L where id = %L', repeat('a', 24), r.id);
+  perform t.expect_error(format('update public.collection_binders set place = 9 where id = %L', r.id), '42501');
+  -- The shelf: the client's upsert sends owner_id and the one column it changes.
+  execute format($q$insert into public.collection_shelf (owner_id, cover) values (%L, 'argyle')
+                    on conflict ("owner_id") do update set "cover" = excluded."cover",
+                      "owner_id" = excluded."owner_id"$q$, t.uid('B'));
+  select * into r from public.collection_shelf where owner_id = t.uid('B');
+  assert r.pages = 4 and r.cover = 'argyle', format('B''s shelf came as %s', row_to_json(r));
+  execute format($q$insert into public.collection_shelf (owner_id, pages) values (%L, 3)
+                    on conflict ("owner_id") do update set "pages" = excluded."pages",
+                      "owner_id" = excluded."owner_id"$q$, t.uid('B'));
+  select * into r from public.collection_shelf where owner_id = t.uid('B');
+  assert r.pages = 3 and r.cover = 'argyle', format('B''s shelf read back as %s', row_to_json(r));
+  perform t.expect_check(format('update public.collection_shelf set pages = 5 where owner_id = %L', t.uid('B')),
+    'collection_shelf_pages');
+  perform t.expect_check(format('update public.collection_shelf set cover = %L where owner_id = %L', 'Argyle', t.uid('B')),
+    'collection_shelf_cover_design');
+end $$;
+commit;
 
 \echo '== all sequential checks passed'

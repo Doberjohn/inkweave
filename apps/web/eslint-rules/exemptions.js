@@ -29,15 +29,17 @@ export function isExempt(context, {paths = [], patterns = []}) {
 }
 
 /**
- * Permanently exempt files for the color rules: token declaration sites, the token documentation
- * stories (they must show literals), unit tests (assertion pins), and the SVG icon components
- * (vector art, not themed UI).
+ * Permanently exempt files for the color rules: token declaration sites, the binder covers'
+ * designs (each pattern's colours are the design itself, not the app's theme), the token
+ * documentation stories (they must show literals), unit tests (assertion pins), and the SVG icon
+ * components (vector art, not themed UI).
  */
 export const COLOR_EXEMPT = {
   paths: [
     'packages/ui/src/tokens/',
     'apps/web/src/shared/constants/playstyleUi.ts',
     'apps/web/src/features/cards/components/binderLook.ts',
+    'apps/web/src/features/collection/binders/coverDesigns.ts',
     'packages/ui/src/docs/',
     'packages/ui/src/components/FilterIcon.tsx',
     'packages/ui/src/components/SearchIcon.tsx',

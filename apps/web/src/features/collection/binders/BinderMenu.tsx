@@ -74,7 +74,7 @@ const TARGET_SIZE = 44;
  */
 const BUTTON: CSSProperties = {margin: -(TARGET_SIZE - DISC_SIZE) / 2, background: 'transparent'};
 
-/** The ⋯ on the board: a dark disc, so it reads over a cover card's art, the house surface on hover. */
+/** The ⋯ on the board: a dark disc, so it reads over a cover's pattern, the house surface on hover. */
 const DISC = {
   display: 'inline-flex',
   alignItems: 'center',

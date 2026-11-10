@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from '../collectionParser';
 import {ALL_PROMO_SETS, WHOLE_COLLECTION} from '../binderCards';
-import {binderFace, coverChoices} from './binderCovers';
+import {binderFace} from './binderCovers';
 import type {Binder} from './binderRules';
 
 /** A card named by its id: a 1-cost Amber Common in Set 12 unless told otherwise. */
@@ -30,17 +30,18 @@ const POOL = [
   cardOf({id: 'promo-p2', ink: 'Steel', rarity: 'Special', setCode: 'P2', setNumber: 9, baseId: 'steel-12'}),
 ];
 
-const binder = (scope: string, rules = '', coverId: string | null = null): Binder => ({
+const binder = (scope: string, rules = '', cover: string | null = null): Binder => ({
   id: 'b1',
   name: 'Binder',
   scope,
   rules,
-  coverId,
+  pages: 4,
+  cover,
   place: 0,
 });
 
 const binderFigures = (...args: Parameters<typeof binderFace>) => binderFace(...args).figures;
-const coverCard = (...args: Parameters<typeof binderFace>) => binderFace(...args).cover;
+const coverDesign = (...args: Parameters<typeof binderFace>) => binderFace(...args).cover;
 
 describe("a binder's figures", () => {
   // Held: common-12 in normal only, epic-12 in foil (all it comes in), rare-11 in both, promo-p1 in normal.
@@ -87,63 +88,17 @@ describe("a binder's figures", () => {
 });
 
 describe("a binder's cover", () => {
-  const held = (...ids: string[]): CollectionEntries =>
-    Object.fromEntries(ids.map((id) => [id, {normal: 1, foil: 0}]));
-
-  it('picks the rarest card held: a chase printing over a promo over the five', () => {
-    expect(coverCard(POOL, held('common-12', 'promo-p1', 'epic-12'), null)?.id).toBe('epic-12');
-    expect(coverCard(POOL, held('common-12', 'promo-p1', 'steel-12'), null)?.id).toBe('promo-p1');
-    expect(coverCard(POOL, held('common-12', 'rare-11', 'steel-12'), null)?.id).toBe('steel-12');
+  it('is the design its row names', () => {
+    expect(coverDesign(POOL, {}, binder('12', '', 'tartan')).id).toBe('tartan');
   });
 
-  it('breaks a tie by the newest set, then by the lowest number', () => {
-    const pool = [...POOL, cardOf({id: 'rare-12-low', rarity: 'Rare', setNumber: 7})];
-    expect(coverCard(pool, held('rare-11', 'rare-12'), null)?.id).toBe('rare-12');
-    expect(coverCard(pool, held('rare-11', 'rare-12', 'rare-12-low'), null)?.id).toBe('rare-12-low');
+  it('is the first design with none named, or one this build does not know', () => {
+    expect(coverDesign(POOL, {}, binder('12')).id).toBe('starry-night');
+    expect(coverDesign(POOL, {}, binder('12', '', 'paisley')).id).toBe('starry-night');
   });
 
-  it("never picks a card the binder's rules leave out, nor one the collection lacks", () => {
-    expect(coverCard(POOL, held('epic-12', 'steel-12'), binder(WHOLE_COLLECTION, 'ink=Steel'))?.id).toBe('steel-12');
-    expect(coverCard(POOL, held('common-12'), binder(WHOLE_COLLECTION, 'ink=Steel'))).toBeNull();
-  });
-
-  it('is null with nothing held', () => {
-    expect(coverCard(POOL, {}, null)).toBeNull();
-  });
-
-  it('shows the card its cover names while the binder holds it, held or not', () => {
-    expect(coverCard(POOL, held('epic-12'), binder('12', '', 'common-12'))?.id).toBe('common-12');
-  });
-
-  it('falls back to the rarest when its cover names a card the binder no longer holds', () => {
-    expect(coverCard(POOL, held('epic-12', 'rare-11'), binder('12', '', 'rare-11'))?.id).toBe('epic-12');
-  });
-});
-
-describe("My collection's cover", () => {
-  const held = (...ids: string[]): CollectionEntries =>
-    Object.fromEntries(ids.map((id) => [id, {normal: 1, foil: 0}]));
-
-  it('shows the card its shelf picked, over the rarest', () => {
-    expect(coverCard(POOL, held('epic-12', 'common-12'), null, 'common-12')?.id).toBe('common-12');
-  });
-
-  it('falls back to the rarest once the card it picked leaves the cards it can show', () => {
-    expect(coverCard(POOL, held('epic-12', 'common-12'), null, 'gone-14')?.id).toBe('epic-12');
-    expect(coverCard(POOL, held('epic-12', 'common-12'), null, null)?.id).toBe('epic-12');
-  });
-});
-
-describe('coverChoices', () => {
-  it("offers the cards you have, in the cover's own order, its first the card the cover picks itself", () => {
-    const entries = {
-      'common-12': {normal: 1, foil: 0},
-      'rare-11': {normal: 1, foil: 0},
-      'promo-p1': {normal: 1, foil: 0},
-      'epic-12': {normal: 0, foil: 1},
-    };
-    const choices = coverChoices(POOL, entries).map((card) => card.id);
-    expect(choices).toEqual(['epic-12', 'promo-p1', 'rare-11', 'common-12']);
-    expect(coverCard(POOL, entries, null)?.id).toBe(choices[0]);
+  it("is My collection's shelf design for My collection, never a binder's", () => {
+    expect(coverDesign(POOL, {}, null, 'argyle').id).toBe('argyle');
+    expect(coverDesign(POOL, {}, binder('12'), 'argyle').id).toBe('starry-night');
   });
 });

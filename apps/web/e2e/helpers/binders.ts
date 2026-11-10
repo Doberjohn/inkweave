@@ -17,26 +17,35 @@ export interface BinderRow {
   scope: string;
   /** Its filters, as the address writes them: "ink=Amber&rarity=Epic". */
   rules: string;
-  cover_id: string | null;
+  /** Its page's side, 2 to 4 pockets across and down. */
+  pages: number;
+  /** Its cover's design id, or null for the first design. */
+  cover: string | null;
   place: number;
+}
+
+/** My collection's `collection_shelf` row: its page size and cover. */
+export interface ShelfRow {
+  pages: number;
+  cover: string | null;
 }
 
 /**
  * A change the page asked the database for: a binder's `DELETE`, `POST` or `PATCH`, a
- * `move_binder` call, or the `POST` that upserts My collection's cover.
+ * `move_binder` call, or the `POST` that upserts My collection's shelf row.
  */
 type BinderCall =
   | {what: 'delete'; id: string}
   | {what: 'move'; id: string; earlier: boolean}
   | {what: 'create'; row: Record<string, unknown>}
   | {what: 'change'; id: string; patch: Record<string, unknown>}
-  | {what: 'shelf cover'; row: Record<string, unknown>; onConflict: string | null};
+  | {what: 'shelf'; row: Record<string, unknown>; onConflict: string | null};
 
 /** The binders the signed-in collector holds, in shelf order unless a case says otherwise. */
 export interface BindersWorld {
   rows: BinderRow[];
-  /** My collection's cover, as `collection_shelf` holds it: none (no row) unless a case says so. */
-  shelfCover?: string | null;
+  /** My collection's `collection_shelf` row: none unless a case says so. */
+  shelf?: ShelfRow;
   /** Each change the page sent, oldest first, filled in by `serveBinders`. */
   calls?: BinderCall[];
 }
@@ -82,7 +91,8 @@ function insert(world: BindersWorld, sent: Record<string, unknown>): BinderRow |
     name: String(sent.name),
     scope: String(sent.scope),
     rules: String(sent.rules),
-    cover_id: (sent.cover_id as string | null | undefined) ?? null,
+    pages: (sent.pages as number | undefined) ?? 4,
+    cover: (sent.cover as string | null | undefined) ?? null,
     place,
   };
   world.rows = [...world.rows, row];
@@ -106,7 +116,7 @@ const idOf = (url: string) => (new URL(url).searchParams.get('id') ?? '').replac
 
 /** A row with the fields a case doesn't care about filled in. */
 export function binderRow(row: Pick<BinderRow, 'id' | 'name'> & Partial<BinderRow>): BinderRow {
-  return {scope: 'all', rules: '', cover_id: null, place: 0, ...row};
+  return {scope: 'all', rules: '', pages: 4, cover: null, place: 0, ...row};
 }
 
 /**
@@ -114,7 +124,7 @@ export function binderRow(row: Pick<BinderRow, 'id' | 'name'> & Partial<BinderRo
  * it as the database would: a `DELETE` takes the binder out, a `POST` adds one after the last
  * (or, at 30, answers the cap's check violation), a `PATCH` changes one (and returns no row for
  * one that is gone), and `move_binder` swaps two places. `collection_shelf` reads My
- * collection's cover from the world, and its upsert sets it. Each change lands in `world.calls`.
+ * collection's row from the world, and its upsert sets the columns it sends. Each change lands in `world.calls`.
  * Registered after the fixture's catch-all stub, so it wins for these paths; register it before
  * the first navigation.
  */
@@ -164,18 +174,21 @@ function answerBinders(route: Route, world: BindersWorld, calls: BinderCall[]): 
   return write ? write(route, world, calls) : json(route, 200, [...world.rows].sort(byPlace));
 }
 
-/** `collection_shelf`: the upsert sets My collection's cover, and a read answers it. */
+/** A shelf row's columns as the table makes them: 4 and no cover. */
+const SHELF_DEFAULTS: ShelfRow = {pages: 4, cover: null};
+
+/** `collection_shelf`: the upsert sets the columns it sends over My collection's row, and a read answers the row. */
 function answerShelf(route: Route, world: BindersWorld, calls: BinderCall[]): Promise<void> {
   const request = route.request();
   if (request.method() === 'POST') {
     const row = request.postDataJSON() as Record<string, unknown>;
-    calls.push({what: 'shelf cover', row, onConflict: new URL(request.url()).searchParams.get('on_conflict')});
-    world.shelfCover = (row.cover_id as string | null | undefined) ?? null;
+    calls.push({what: 'shelf', row, onConflict: new URL(request.url()).searchParams.get('on_conflict')});
+    const {pages, cover} = {...(world.shelf ?? SHELF_DEFAULTS), ...row} as ShelfRow;
+    world.shelf = {pages, cover};
     return route.fulfill({status: 201, body: ''});
   }
   // `.maybeSingle()` reads the first row of the set, or none.
-  const cover = world.shelfCover ?? null;
-  return json(route, 200, cover === null ? [] : [{cover_id: cover}]);
+  return json(route, 200, world.shelf === undefined ? [] : [world.shelf]);
 }
 
 /** Fails every binder read, as a reader offline or a server error does. */

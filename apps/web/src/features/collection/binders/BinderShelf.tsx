@@ -68,13 +68,13 @@ function wordsOf(binder: Binder | null) {
   return {name: binder.name, rule: ruleLine(binder), promos: isPromoScope(binder.scope)};
 }
 
-/** What the shelf holds once it has loaded: the binders, and the cover My collection's shelf picked. */
+/** What the shelf holds once it has loaded: the binders, and the cover My collection's row names. */
 interface ShelfHeld {
   binders: readonly Binder[];
-  shelfCover: string | null;
+  myCover: string | null;
 }
 
-const NOTHING_HELD: ShelfHeld = {binders: [], shelfCover: null};
+const NOTHING_HELD: ShelfHeld = {binders: [], myCover: null};
 
 /** Whether the binders have answered: read, or failed, which leaves My collection alone. */
 const answered = (shelf: Shelf) => shelf.status === 'ready' || shelf.status === 'failed';
@@ -88,10 +88,10 @@ const answered = (shelf: Shelf) => shelf.status === 'ready' || shelf.status === 
  * memo the confirm and the moves break. `'use memo'` opts it in: the compiler infers a hook only
  * from the hooks it calls, and this one calls none.
  */
-function useFaces(pool: readonly LorcanaCard[] | null, entries: CollectionEntries, {binders, shelfCover}: ShelfHeld) {
+function useFaces(pool: readonly LorcanaCard[] | null, entries: CollectionEntries, {binders, myCover}: ShelfHeld) {
   'use memo';
   if (pool === null) return null;
-  const faces = new Map<string | null, BinderFace>([[null, binderFace(pool, entries, null, shelfCover)]]);
+  const faces = new Map<string | null, BinderFace>([[null, binderFace(pool, entries, null, myCover)]]);
   for (const binder of binders) faces.set(binder.id, binderFace(pool, entries, binder));
   return faces;
 }
@@ -232,13 +232,13 @@ export function BinderShelf({shelf, pool, entries, waiting, readerId, onWindow}:
   const {pathname, search} = useLocation();
   const focus = useFocusAfter();
   const moves = useMoves(readerId, focus.focusOn);
-  const held: ShelfHeld = shelf.status === 'ready' ? {binders: shelf.binders, shelfCover: shelf.shelfCover ?? null} : NOTHING_HELD;
+  const held: ShelfHeld = shelf.status === 'ready' ? {binders: shelf.binders, myCover: shelf.myCollection?.cover ?? null} : NOTHING_HELD;
   const {binders} = held;
   const deletes = useDeletes(readerId, binders, focus.focusOn);
   // Nothing is counted until the cards, the account's copy and the binders are in.
   const counted = waiting || !answered(shelf) ? null : pool;
   const faces = useFaces(counted, entries, held);
-  const changes = useShelfChanges({readerId, isMobile, pool: counted, entries, shelfCover: held.shelfCover});
+  const changes = useShelfChanges({readerId, isMobile, counted: counted !== null, myCover: held.myCover});
   const acts: OwnActs = {
     editRules: onWindow
       ? (binder) => onWindow({binder, onSaved: (saved) => focus.focusOn({id: saved.id, part: 'actions'})})

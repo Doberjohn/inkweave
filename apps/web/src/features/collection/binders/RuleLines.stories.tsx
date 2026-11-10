@@ -21,7 +21,7 @@ function StoryLines({binder, isMobile}: LinesProps) {
   );
 }
 
-const binderWith = (name: string, rules: string): Binder => ({id: 'b1', name, scope: 'all', rules, coverId: null, place: 0});
+const binderWith = (name: string, rules: string): Binder => ({id: 'b1', name, scope: 'all', rules, pages: 4, cover: null, place: 0});
 
 /**
  * The New binder window's "What it holds": one line for each kind of rule, its name on the left

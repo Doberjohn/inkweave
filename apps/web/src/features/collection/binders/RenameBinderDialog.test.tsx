@@ -11,7 +11,7 @@ const writes = vi.hoisted(() => ({
 }));
 vi.mock('./binderShelf', () => writes);
 
-const AMBER: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
+const AMBER: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: null, place: 0};
 
 function renderDialog(over: Partial<RenameBinderDialogProps> = {}) {
   const props: RenameBinderDialogProps = {

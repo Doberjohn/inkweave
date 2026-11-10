@@ -1,9 +1,9 @@
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from '../collectionParser';
 import type {CustomBinder, OfferAsk, OwnBinders, OwnBindersAsk, SaveOffer} from './binderChoices';
-import {coverOf} from './binderCovers';
 import {filtersCards, rulePool, type Binder} from './binderRules';
 import {viewOf, type BinderShelf, type Held} from './binderShelf';
+import {coverDesign} from './coverDesigns';
 import {saveOffer} from './saveRules';
 import {SHELF_MAX} from './shelfWords';
 
@@ -45,7 +45,7 @@ function offersOf(
 /**
  * The reader's shelf from what the store holds (`viewOf`), and the binder `?custom=` names over
  * the whole `pool`: its cards, which the binder, the set picker and the set panel then hold and
- * count, and its cover. The import dialog keeps the whole pool.
+ * count, and its cover's design. The import dialog keeps the whole pool.
  */
 export function ownBindersOf(
   held: Held | null,
@@ -64,7 +64,7 @@ export function ownBindersOf(
   const custom: CustomBinder = {
     status: 'shown',
     binder,
-    cover: coverOf(cards, entries, binder.coverId),
+    cover: coverDesign(binder.cover),
     narrowed: filtersCards(binder),
   };
   return {shelf, custom, pool: cards, offerOf: offersOf(shelf, binder, {pool, entries})};

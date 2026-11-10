@@ -327,11 +327,11 @@ function useWarmBinderList(warm: boolean) {
 }
 
 /** A medal's place while its chunk loads: the same size, so nothing beside it moves. */
-function Medal({card, size}: {card: OpenBinder['cover']; size: number}) {
+function Medal({design, size}: {design: OpenBinder['cover']; size: number}) {
   if (!BinderMedal) return null;
   return (
     <Suspense fallback={<span style={{display: 'inline-block', width: size, height: size, flexShrink: 0}} />}>
-      <BinderMedal card={card} size={size} />
+      <BinderMedal design={design} size={size} />
     </Suspense>
   );
 }
@@ -743,7 +743,7 @@ function BinderLabel({binder, setCode, size, figures}: Pick<TriggerProps, 'setCo
 function ToolbarBinderWords({binder, words}: {binder: TriggerBinder; words: string}) {
   return (
     <span style={{display: 'flex', alignItems: 'center', gap: SPACING.xs, minWidth: 0}}>
-      <Medal card={binder.open.cover} size={TOOLBAR_MEDAL} />
+      <Medal design={binder.open.cover} size={TOOLBAR_MEDAL} />
       <span style={{...TRUNCATE, maxWidth: TOOLBAR_BINDER_WORDS, fontSize: `${FONT_SIZES.lg}px`, fontWeight: FONT_WEIGHT.bold}}>
         {words}
       </span>
@@ -764,7 +764,7 @@ function PanelBinderWords({binder, words, setCode}: {binder: TriggerBinder; word
 function triggerArt(setCode: string, binder: TriggerBinder | undefined, box: CSSProperties) {
   if (!binder) return choiceArt(setCode, box);
   // The panel's box is 40px tall, the row's 22: the medal fills the row's and sits inside the panel's.
-  return <Medal card={binder.open.cover} size={Math.min(Number(box.height), 36)} />;
+  return <Medal design={binder.open.cover} size={Math.min(Number(box.height), 36)} />;
 }
 
 /**

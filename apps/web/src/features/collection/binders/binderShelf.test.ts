@@ -1,6 +1,6 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {enqueueWrite} from '../collectionWriteQueue';
-import {SHELF_FULL} from './binderRepository';
+import {SHELF_FULL, type ShelfLook} from './binderRepository';
 import {createBinder, deleteBinder, follow, moveBinder, setCover, snapshot, updateBinder, viewOf, type BinderReader} from './binderShelf';
 
 const repo = vi.hoisted(() => ({
@@ -9,10 +9,13 @@ const repo = vi.hoisted(() => ({
   deleteBinderRow: vi.fn(),
   insertBinderRow: vi.fn(),
   updateBinderRow: vi.fn(),
-  getShelfCover: vi.fn(),
-  setShelfCover: vi.fn(),
+  getShelf: vi.fn(),
+  setShelf: vi.fn(),
 }));
-vi.mock('./binderRepository', async (actual) => ({SHELF_FULL: (await actual<typeof import('./binderRepository')>()).SHELF_FULL, ...repo}));
+vi.mock('./binderRepository', async (actual) => {
+  const {SHELF_FULL, SHELF_DEFAULT} = await actual<typeof import('./binderRepository')>();
+  return {SHELF_FULL, SHELF_DEFAULT, ...repo};
+});
 // The real queue, watched: each change must wait in it, as the reads do.
 const queue = vi.hoisted(() => ({enqueueWrite: vi.fn()}));
 vi.mock('../collectionWriteQueue', async (actual) => {
@@ -21,10 +24,10 @@ vi.mock('../collectionWriteQueue', async (actual) => {
   return queue;
 });
 
-const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
-const EPICS = {id: 'b2', name: 'Epics', scope: 'all', rules: 'rarity=Epic', coverId: null, place: 1};
+const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: null, place: 0};
+const EPICS = {id: 'b2', name: 'Epics', scope: 'all', rules: 'rarity=Epic', pages: 4, cover: null, place: 1};
 // A gap a delete left: places needn't follow on.
-const WILDS = {id: 'b3', name: 'Wilds', scope: '12', rules: '', coverId: null, place: 4};
+const WILDS = {id: 'b3', name: 'Wilds', scope: '12', rules: '', pages: 4, cover: null, place: 4};
 
 const READER: BinderReader = {uid: 'me', hasCollection: true, syncing: false, wanted: true};
 
@@ -35,9 +38,9 @@ function shown(): string[] | string | undefined {
 }
 
 /** Reads the reader's shelf into the store, as collection mode does. */
-async function loadShelf(shelfCover: string | null = null) {
+async function loadShelf(look: ShelfLook = {pages: 4, cover: null}) {
   repo.listBinders.mockResolvedValue({data: [AMBER, EPICS, WILDS], error: null});
-  repo.getShelfCover.mockResolvedValue({data: shelfCover, error: null});
+  repo.getShelf.mockResolvedValue({data: look, error: null});
   const stop = follow(READER);
   await vi.waitFor(() => expect(shown()).toEqual(['b1', 'b2', 'b3']));
   stop?.();
@@ -122,7 +125,7 @@ describe('deleteBinder', () => {
   });
 });
 
-const INPUT = {name: 'Rares', scope: 'all', rules: 'rarity=Rare', coverId: null};
+const INPUT = {name: 'Rares', scope: 'all', rules: 'rarity=Rare', cover: null};
 const RARES = {...INPUT, id: 'b9', place: 5};
 
 describe('createBinder', () => {
@@ -188,77 +191,80 @@ describe('updateBinder', () => {
   });
 });
 
-describe("My collection's cover", () => {
-  /** What the page reads of the store: My collection's cover once the shelf is ready. */
-  const shelfCover = () => viewOf(snapshot(), READER).shelfCover;
+describe("My collection's page size and cover", () => {
+  /** What the page reads of the store: My collection's once the shelf is ready. */
+  const mine = () => viewOf(snapshot(), READER).myCollection;
+  const TARTAN: ShelfLook = {pages: 3, cover: 'tartan'};
 
-  it('is read with the binders, in the same queued read', async () => {
+  it('are read with the binders, in the same queued read', async () => {
     follow({...READER, uid: null});
-    await loadShelf('elsa-12');
-    expect(repo.getShelfCover).toHaveBeenCalledWith('me');
-    expect(shelfCover()).toBe('elsa-12');
+    await loadShelf(TARTAN);
+    expect(repo.getShelf).toHaveBeenCalledWith('me');
+    expect(mine()).toEqual(TARTAN);
   });
 
-  it('shows the binders under the rarest when only it fails to read', async () => {
+  it('show the binders at the defaults when only they fail to read', async () => {
     follow({...READER, uid: null});
     repo.listBinders.mockResolvedValue({data: [AMBER], error: null});
-    repo.getShelfCover.mockResolvedValue({data: null, error: 'Network error'});
+    repo.getShelf.mockResolvedValue({data: null, error: 'Network error'});
     const stop = follow(READER);
     await vi.waitFor(() => expect(shown()).toEqual(['b1']));
-    expect(shelfCover()).toBeNull();
+    expect(mine()).toEqual({pages: 4, cover: null});
     stop?.();
   });
 
-  it('keeps the cover on show when a read again fails to read it', async () => {
+  it('keep the ones on show when a read again fails to read them', async () => {
     follow({...READER, uid: null});
-    await loadShelf('elsa-12');
+    await loadShelf(TARTAN);
     repo.listBinders.mockResolvedValue({data: [AMBER], error: null});
-    repo.getShelfCover.mockResolvedValue({data: null, error: 'Network error'});
+    repo.getShelf.mockResolvedValue({data: null, error: 'Network error'});
     viewOf(snapshot(), READER).retry();
     await vi.waitFor(() => expect(shown()).toEqual(['b1']));
-    expect(shelfCover()).toBe('elsa-12');
+    expect(mine()).toEqual(TARTAN);
   });
 
-  it('sets it through the write queue, and shows it once the server has, the binders kept', async () => {
+  it('set the cover through the write queue, and show it once the server has, the size and binders kept', async () => {
+    follow({...READER, uid: null});
+    await loadShelf(TARTAN);
     const answer = deferred<{data: null; error: null}>();
-    repo.setShelfCover.mockReturnValue(answer.promise);
-    const setting = setCover({readerId: 'me', id: null, coverId: 'elsa-12'});
-    await vi.waitFor(() => expect(repo.setShelfCover).toHaveBeenCalledExactlyOnceWith('me', 'elsa-12'));
-    expect(shelfCover()).toBeNull();
+    repo.setShelf.mockReturnValue(answer.promise);
+    const setting = setCover({readerId: 'me', id: null, cover: 'argyle'});
+    await vi.waitFor(() => expect(repo.setShelf).toHaveBeenCalledExactlyOnceWith('me', {cover: 'argyle'}));
+    expect(mine()).toEqual(TARTAN);
     answer.settle({data: null, error: null});
     await expect(setting).resolves.toBe('set');
     expect(queue.enqueueWrite).toHaveBeenCalledWith('me', expect.any(Function));
-    expect(shelfCover()).toBe('elsa-12');
+    expect(mine()).toEqual({pages: 3, cover: 'argyle'});
     expect(shown()).toEqual(['b1', 'b2', 'b3']);
   });
 
-  it('keeps the cover it had when the save fails', async () => {
-    repo.setShelfCover.mockResolvedValue({data: null, error: 'Network error'});
-    await expect(setCover({readerId: 'me', id: null, coverId: 'elsa-12'})).resolves.toBe('failed');
-    expect(shelfCover()).toBeNull();
+  it('keep the cover they had when the save fails', async () => {
+    repo.setShelf.mockResolvedValue({data: null, error: 'Network error'});
+    await expect(setCover({readerId: 'me', id: null, cover: 'argyle'})).resolves.toBe('failed');
+    expect(mine()).toEqual({pages: 4, cover: null});
   });
 
-  it('stays through a change to a binder', async () => {
+  it('stay through a change to a binder', async () => {
     follow({...READER, uid: null});
-    await loadShelf('elsa-12');
+    await loadShelf(TARTAN);
     repo.deleteBinderRow.mockResolvedValue({data: null, error: null});
     await deleteBinder({readerId: 'me', id: 'b2'});
-    expect(shelfCover()).toBe('elsa-12');
+    expect(mine()).toEqual(TARTAN);
   });
 });
 
 describe("a binder's cover", () => {
   it("sets it as a change to the binder's row, and shows the server's row", async () => {
-    const changed = {...EPICS, coverId: 'epic-12'};
+    const changed = {...EPICS, cover: 'tartan'};
     repo.updateBinderRow.mockResolvedValue({data: changed, error: null});
-    await expect(setCover({readerId: 'me', id: 'b2', coverId: 'epic-12'})).resolves.toBe('set');
-    expect(repo.updateBinderRow).toHaveBeenCalledExactlyOnceWith('b2', {coverId: 'epic-12'});
-    expect(repo.setShelfCover).not.toHaveBeenCalled();
+    await expect(setCover({readerId: 'me', id: 'b2', cover: 'tartan'})).resolves.toBe('set');
+    expect(repo.updateBinderRow).toHaveBeenCalledExactlyOnceWith('b2', {cover: 'tartan'});
+    expect(repo.setShelf).not.toHaveBeenCalled();
     expect(snapshot()?.value).toEqual([AMBER, changed, WILDS]);
   });
 
   it('says a binder deleted elsewhere is gone', async () => {
     repo.updateBinderRow.mockResolvedValue({data: null, error: null});
-    await expect(setCover({readerId: 'me', id: 'b2', coverId: null})).resolves.toBe('gone');
+    await expect(setCover({readerId: 'me', id: 'b2', cover: 'tartan'})).resolves.toBe('gone');
   });
 });

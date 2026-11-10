@@ -6,26 +6,33 @@ import {COLORS, FONT_SIZES, SPACING, TRUNCATE, VISUALLY_HIDDEN} from '../../../s
 import {isFinished, percentOf} from '../collectionStats';
 import {optionStyle, percentStyle} from '../pickerRowLook';
 import type {BinderChoices} from './binderChoices';
-import {binderFace, type BinderFace, type BinderFigures} from './binderCovers';
+import {binderFace, type BinderFigures} from './binderCovers';
 import {ruleKinds, type Binder} from './binderRules';
 import {BinderMedal} from './BinderMedal';
+import {coverDesign, type CoverDesign} from './coverDesigns';
 import {MY_COLLECTION, SHELF_FULL_LINE, SHELF_MAX, binderWord, shelfCount} from './shelfWords';
 
 /** The medal's size in a row: the set rows' number column holds it. */
 const ROW_MEDAL = 24;
 
 /** One row of the Binders tab: My collection (no binder) or a binder of your own. */
-interface BinderRow extends Partial<BinderFace> {
+interface BinderRow {
   binder: Binder | null;
   name: string;
+  /** Its cover's design, or none while My collection's is still to be read. */
+  cover: CoverDesign | null;
+  /** Its numbers, once the pool is in. */
+  figures?: BinderFigures;
 }
 
-/** My collection, then each binder in shelf order, each with its cover and numbers once the pool is in. */
+/** My collection, then each binder in shelf order, each with its cover, and its numbers once the pool is in. */
 function rowsOf({shelf, pool, entries}: BinderChoices): BinderRow[] {
+  const myCover = shelf.myCollection?.cover ?? null;
   const rowOf = (binder: Binder | null): BinderRow => ({
     binder,
     name: binder?.name ?? MY_COLLECTION,
-    ...(pool === null ? {} : binderFace(pool, entries, binder, shelf.shelfCover ?? null)),
+    cover: coverDesign(binder === null ? myCover : binder.cover),
+    figures: pool === null ? undefined : binderFace(pool, entries, binder, myCover).figures,
   });
   const rows = [rowOf(null), ...shelf.binders.map(rowOf)];
   // My collection's cover is the shelf's to name, so its medal waits for the read rather than swap.
@@ -229,7 +236,7 @@ function BinderOption({row, selected, onPick}: BinderOptionProps) {
       onClick={() => onPick(row.binder)}
       style={optionStyle({on: selected, hovered})}>
       <span aria-hidden="true" style={{display: 'flex', justifyContent: 'center'}}>
-        <BinderMedal card={row.cover ?? null} size={ROW_MEDAL} />
+        <BinderMedal design={row.cover} size={ROW_MEDAL} />
       </span>
       <span aria-hidden="true" style={TRUNCATE}>
         {row.name}

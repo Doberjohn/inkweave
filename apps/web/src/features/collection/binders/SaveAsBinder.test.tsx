@@ -19,7 +19,7 @@ const OFFER: SaveOffer = {
   line: 'Amber ink · Epic',
   figures: {complete: 293, master: 120, cards: 625},
 };
-const MADE: Binder = {id: 'b9', name: 'Amber', scope: WHOLE_COLLECTION, rules: OFFER.rules, coverId: null, place: 3};
+const MADE: Binder = {id: 'b9', name: 'Amber', scope: WHOLE_COLLECTION, rules: OFFER.rules, pages: 4, cover: null, place: 3};
 
 function renderBox(over: Partial<SaveAsBinderProps> = {}) {
   const props: SaveAsBinderProps = {
@@ -62,7 +62,7 @@ describe('SaveAsBinder', () => {
     await act(async () => fireEvent.click(saveButton()));
     expect(writes.createBinder).toHaveBeenCalledExactlyOnceWith({
       readerId: 'user-1',
-      input: {name: 'Amber epics', scope: WHOLE_COLLECTION, rules: OFFER.rules, coverId: null},
+      input: {name: 'Amber epics', scope: WHOLE_COLLECTION, rules: OFFER.rules, cover: null},
     });
     expect(trackEvent).toHaveBeenCalledExactlyOnceWith('binder_created', {from: 'saved', kinds: 'ink,rarity'});
     expect(props.onSaved).toHaveBeenCalledWith(MADE);

@@ -19,11 +19,11 @@ const POOL = [
 ];
 const ENTRIES: CollectionEntries = {'amber-epic': {normal: 1, foil: 0}};
 
-const binderOf = (id: string, rules: string, place = 0): Binder => ({id, name: id, scope: WHOLE_COLLECTION, rules, coverId: null, place});
+const binderOf = (id: string, rules: string, place = 0): Binder => ({id, name: id, scope: WHOLE_COLLECTION, rules, pages: 4, cover: null, place});
 const AMBER = binderOf('amber', 'ink=Amber');
 
 const ASK: OwnBindersAsk = {uid: 'me', hasCollection: true, syncing: false, wanted: true, requested: null};
-const held = (binders: Binder[]): Held => ({readerId: 'me', value: binders, shelfCover: null});
+const held = (binders: Binder[]): Held => ({readerId: 'me', value: binders, myCollection: {pages: 4, cover: null}});
 const EPIC: FilterDraft = {inks: [], types: [], costs: [], opts: {rarities: ['Epic']}};
 const page = {draft: EPIC, query: '', scope: WHOLE_COLLECTION};
 

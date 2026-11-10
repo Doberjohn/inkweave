@@ -13,7 +13,7 @@ const writes = vi.hoisted(() => ({createBinder: vi.fn<(make: unknown) => Promise
 vi.mock('./binderShelf', () => writes);
 
 const OFFER: SaveOffer = {scope: WHOLE_COLLECTION, rules: 'ink=Amber', line: 'Amber ink', figures: {complete: 2, master: 1, cards: 5}};
-const MADE: Binder = {id: 'b9', name: 'Amber', scope: WHOLE_COLLECTION, rules: 'ink=Amber', coverId: null, place: 0};
+const MADE: Binder = {id: 'b9', name: 'Amber', scope: WHOLE_COLLECTION, rules: 'ink=Amber', pages: 4, cover: null, place: 0};
 const DRAFT: FilterDraft = {inks: ['Amber'], types: [], costs: [], opts: {}};
 
 function Host({before, ...page}: SaveFor & {before?: () => void}) {

@@ -82,7 +82,8 @@ vi.mock('./CollectionFriends', async (importOriginal) => ({
 // Your binders' reads: an empty shelf unless a case says otherwise.
 const binderRepo = vi.hoisted(() => ({
   listBinders: vi.fn(async () => ({data: [] as unknown[] | null, error: null as string | null})),
-  getShelfCover: vi.fn(async () => ({data: null, error: null})),
+  getShelf: vi.fn(async () => ({data: {pages: 4, cover: null}, error: null})),
+  SHELF_DEFAULT: {pages: 4, cover: null},
 }));
 vi.mock('./binders/binderRepository', () => binderRepo);
 // The card window's copies stripe, which a case presses as the window would: its own counting is
@@ -903,7 +904,7 @@ describe("useBrowseCollection: the binder's analytics", () => {
 });
 
 describe('useBrowseCollection: a binder of your own', () => {
-  const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
+  const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: null, place: 0};
   const amber = createCard({id: 'amber', setCode: '14', setNumber: 1, rarity: 'Uncommon', ink: 'Amber'});
   const steel = createCard({id: 'steel', setCode: '14', setNumber: 2, rarity: 'Uncommon', ink: 'Steel'});
   const LISTING: BrowseListing = {cards: [amber], sortOrder: 'newest', matched: [amber], filtered: false};
@@ -966,7 +967,7 @@ describe('useBrowseCollection: a binder of your own', () => {
   });
 
   it("counts a one-set binder whose rules hold no card as that set, empty, so its numbers don't wait forever", async () => {
-    const NONE_HELD = {id: 'b9', name: 'Ruby', scope: '14', rules: 'ink=Ruby', coverId: null, place: 1};
+    const NONE_HELD = {id: 'b9', name: 'Ruby', scope: '14', rules: 'ink=Ruby', pages: 4, cover: null, place: 1};
     binderRepo.listBinders.mockResolvedValue({data: [AMBER, NONE_HELD], error: null});
     const EMPTY: BrowseListing = {cards: [], sortOrder: 'newest', matched: [], filtered: false};
     renderAt('/browse?binder=14&custom=b9', (state) => state.renderBinder(EMPTY, () => {}));
@@ -1032,7 +1033,7 @@ describe('useBrowseCollection: a binder of your own', () => {
 });
 
 describe('useBrowseCollection: the binder shelf (#1074)', () => {
-  const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
+  const AMBER = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: null, place: 0};
   const amber = createCard({id: 'amber', setCode: '14', setNumber: 1, rarity: 'Uncommon', ink: 'Amber'});
   const steel = createCard({id: 'steel', setCode: '14', setNumber: 2, rarity: 'Uncommon', ink: 'Steel'});
   const LISTING: BrowseListing = {cards: [amber, steel], sortOrder: 'newest', matched: [amber, steel], filtered: false};

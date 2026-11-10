@@ -6,6 +6,7 @@ import type {CollectionEntries} from '../collectionParser';
 import type {BinderChoices} from './binderChoices';
 import type {Binder} from './binderRules';
 import {BinderList} from './BinderTab';
+import {coverDesign} from './coverDesigns';
 
 vi.mock('../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 
@@ -25,9 +26,9 @@ const ENTRIES: CollectionEntries = {
   'steel-epic': {normal: 0, foil: 1},
 };
 
-const AMBER: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
-const WILDS: Binder = {id: 'b2', name: 'Wilds epics', scope: '11', rules: 'rarity=Epic', coverId: null, place: 1};
-const SAPPHIRE: Binder = {id: 'b3', name: 'Sapphire', scope: 'all', rules: 'ink=Sapphire', coverId: null, place: 2};
+const AMBER: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: 'sunburst', place: 0};
+const WILDS: Binder = {id: 'b2', name: 'Wilds epics', scope: '11', rules: 'rarity=Epic', pages: 4, cover: null, place: 1};
+const SAPPHIRE: Binder = {id: 'b3', name: 'Sapphire', scope: 'all', rules: 'ink=Sapphire', pages: 4, cover: null, place: 2};
 
 function renderList(over: Partial<BinderChoices> = {}) {
   const choices: BinderChoices = {
@@ -46,8 +47,10 @@ function renderList(over: Partial<BinderChoices> = {}) {
   return {...choices, onPicked};
 }
 
-const openAmber = {binder: AMBER, cover: POOL[1], narrowed: true};
+const openAmber = {binder: AMBER, cover: coverDesign(AMBER.cover), narrowed: true};
 const row = (name: RegExp) => screen.getByRole('option', {name});
+/** The design a row's medal draws, or undefined for an empty ring. */
+const medalOf = (option: HTMLElement) => option.querySelector('[data-testid="binder-medal"]')?.getAttribute('data-cover') ?? undefined;
 
 beforeEach(() => {
   vi.mocked(trackEvent).mockClear();
@@ -77,16 +80,22 @@ describe('BinderList', () => {
     }
   });
 
-  it("chooses the open binder, My collection when none is, and draws each binder's cover", () => {
+  it("chooses the open binder, My collection when none is, and draws each binder's design", () => {
     renderList({open: openAmber});
     expect(row(/^Amber,/)).toHaveAttribute('aria-selected', 'true');
     expect(row(/^My collection,/)).toHaveAttribute('aria-selected', 'false');
-    expect(row(/^Amber,/).querySelector('img')).toHaveAttribute('src', 'https://art.test/amber-rare-sm.avif');
+    expect(medalOf(row(/^Amber,/))).toBe('sunburst');
+    expect(medalOf(row(/^Wilds epics,/))).toBe('starry-night');
   });
 
-  it("draws My collection under the cover its shelf picked", () => {
-    renderList({shelf: {status: 'ready', binders: [AMBER], shelfCover: 'amber-rare', retry: vi.fn()}});
-    expect(row(/^My collection,/).querySelector('img')).toHaveAttribute('src', 'https://art.test/amber-rare-sm.avif');
+  it("draws My collection under the design its shelf row names", () => {
+    renderList({shelf: {status: 'ready', binders: [AMBER], myCollection: {pages: 4, cover: 'tartan'}, retry: vi.fn()}});
+    expect(medalOf(row(/^My collection,/))).toBe('tartan');
+  });
+
+  it("draws a binder's design before the pool is in", () => {
+    renderList({pool: null});
+    expect(medalOf(row(/^Amber/))).toBe('sunburst');
   });
 
   it('shows a dash for a binder whose rules hold no card', () => {
@@ -128,10 +137,9 @@ describe('BinderList', () => {
     expect(inside.onOpen).toHaveBeenCalledWith(AMBER);
   });
 
-  it("holds My collection's medal while the binders load, since the shelf may name another cover", () => {
-    // The rarest card held is the one with art, so the medal would draw it.
-    renderList({shelf: {status: 'loading', binders: [], retry: vi.fn()}, entries: {'amber-rare': {normal: 1, foil: 0}}});
-    expect(row(/^My collection,/).querySelector('img')).toBeNull();
+  it("holds My collection's medal while the binders load, since the shelf may name another design", () => {
+    renderList({shelf: {status: 'loading', binders: [], retry: vi.fn()}});
+    expect(medalOf(row(/^My collection,/))).toBeUndefined();
   });
 
   it('holds a shimmer under My collection while the binders load, and no count on All your binders', () => {

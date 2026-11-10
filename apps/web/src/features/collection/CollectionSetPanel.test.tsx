@@ -1,6 +1,8 @@
 import {describe, it, expect, vi} from 'vitest';
 import {cleanup, render, screen, fireEvent, within} from '@testing-library/react';
 import type {BinderChoices} from './binders/binderChoices';
+import type {Binder} from './binders/binderRules';
+import {coverDesign} from './binders/coverDesigns';
 import {CollectionSetBody, CoverNumbers} from './CollectionSetPanel';
 import {percentOf, tallyCollection} from './collectionStats';
 import {
@@ -84,9 +86,9 @@ describe('CollectionSetBody', () => {
 
   // A binder of your own's cards are no set or collection: at its own Sets they are the binder's.
   it("names the headlines by a binder of your own at its own Sets, and by the set picked inside it", () => {
-    const binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
+    const binder: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: null, place: 0};
     const binders = (atOwnScope: boolean): BinderChoices => ({
-      open: {binder, cover: null, narrowed: true},
+      open: {binder, cover: coverDesign(null), narrowed: true},
       atOwnScope,
       shelf: {status: 'ready', binders: [binder], retry: vi.fn()},
       pool: null,

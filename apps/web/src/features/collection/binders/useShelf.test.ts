@@ -4,7 +4,7 @@ import type {Binder} from './binderRules';
 import type {BinderShelf} from './binderShelf';
 import {useShelf, type ShelfAsk} from './useShelf';
 
-const AMBER: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', coverId: null, place: 0};
+const AMBER: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: null, place: 0};
 const shelfOf = (status: BinderShelf['status'], binders: Binder[] = []): BinderShelf => ({status, binders, retry: () => {}});
 
 /** On the shelf, the account answered, a copy held, two binders read. */
