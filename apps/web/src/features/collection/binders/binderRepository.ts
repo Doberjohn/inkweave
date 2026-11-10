@@ -46,7 +46,7 @@ const isPlace = (value: unknown): value is number => typeof value === 'number' &
  * shapes, and this guard holds the client to the same, so a row the app can't read never reaches a
  * render: a name past 30 letters, a cover that is no design's id, a place that is no whole number.
  * What a newer table might hold passes: a design's id this build doesn't know draws as the first,
- * and a page side it can't draw as 4, so neither hides the binder.
+ * and a page side it can't draw as 4 (which `listBinders` reports), so neither hides the binder.
  */
 function toBinder(row: unknown): Binder | null {
   if (typeof row !== 'object' || row === null) return null;
@@ -64,20 +64,39 @@ function binderOf(fields: Record<string, unknown>): Binder | null {
 /**
  * The caller's binders in shelf order. A row that fails the guard is left out and reported, never
  * an error: one bad row must not hide every other binder, and Sentry hears of the table and the
- * guard drifting apart.
+ * guard drifting apart. A page side the guard refuses is reported too, as the shelf's is, though
+ * its binder still shows, at 4.
  */
 export function listBinders(ownerId: string): Promise<RepoResult<Binder[]>> {
   return callSupabase({area: 'collection', operation: 'read binders'}, async (client) => {
     const {data, error} = await client.from('collection_binders').select(COLUMNS).eq('owner_id', ownerId).order('place');
     if (error || data === null) return {data: null, error};
-    const binders = data.map(toBinder).filter((binder): binder is Binder => binder !== null);
-    if (binders.length < data.length) reportUnreadable(data.length - binders.length);
+    const {binders, ...unreadable} = readRows(data);
+    reportUnreadable(unreadable);
     return {data: binders, error: null};
   });
 }
 
-function reportUnreadable(count: number): void {
-  const failure = new Error(`left out ${count} unreadable binder row(s)`);
+/** The rows the guard keeps, how many it left out, and how many it drew at 4 a side. */
+function readRows(rows: readonly unknown[]): {binders: Binder[]; leftOut: number; redrawn: number} {
+  const binders: Binder[] = [];
+  let redrawn = 0;
+  for (const row of rows) {
+    const binder = toBinder(row);
+    if (binder === null) continue;
+    binders.push(binder);
+    if (binder.pages !== (row as {pages: unknown}).pages) redrawn += 1;
+  }
+  return {binders, leftOut: rows.length - binders.length, redrawn};
+}
+
+function reportUnreadable({leftOut, redrawn}: {leftOut: number; redrawn: number}): void {
+  if (leftOut > 0) reportRows(`left out ${leftOut} unreadable binder row(s)`);
+  if (redrawn > 0) reportRows(`drew ${redrawn} binder row(s) at 4 a side`);
+}
+
+function reportRows(message: string): void {
+  const failure = new Error(message);
   console.warn(`[collection] ${failure.message}`);
   reportFailure({area: 'collection', operation: 'read binder rows'}, failure);
 }
@@ -123,7 +142,7 @@ function readBack(result: RepoResult<unknown>): RepoResult<Binder> {
   if (result.data === null) return {data: null, error: null};
   const binder = toBinder(result.data);
   if (binder !== null) return {data: binder, error: null};
-  reportUnreadable(1);
+  reportUnreadable({leftOut: 1, redrawn: 0});
   return {data: null, error: 'Unreadable binder row'};
 }
 

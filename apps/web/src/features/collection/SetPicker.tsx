@@ -35,6 +35,7 @@ import type {BinderChoices, OpenBinder} from './binders/binderChoices';
 import {useCloseOnPressOutside} from './useCloseOnPressOutside';
 import {SIDE_PANEL_WIDTH} from '../cards/components/BrowseSidePanel';
 import {ROW_CONTROL_HEIGHT} from './binderLayout';
+import {ROW_LOGO_MIN_WIDTH} from './setPickerRowWidth';
 import {
   COLORS,
   DURATION,
@@ -182,13 +183,6 @@ const ROW_TRIGGER: TriggerGeometry = {
 const NARROW_ROW_TRIGGER: TriggerGeometry = {...ROW_TRIGGER, logoBox: undefined, padding: TOOLBAR_TRIGGER.padding};
 
 const TRIGGERS: Record<TriggerSize, TriggerGeometry> = {panel: PANEL_TRIGGER, toolbar: TOOLBAR_TRIGGER, row: ROW_TRIGGER};
-
-/**
- * Below this window width the row's button leaves its logo out, so its words keep the
- * room Filters and Collection leave them: on an iPhone 15 the logo fits, and on a 375 or 360
- * phone the words need its room.
- */
-const ROW_LOGO_MIN_WIDTH = 393;
 
 /**
  * The tabs and about ten rows, past which the list scrolls. Half the window at most, so on

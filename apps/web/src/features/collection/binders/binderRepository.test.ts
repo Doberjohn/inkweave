@@ -79,13 +79,20 @@ describe('listBinders', () => {
       {...ROW, id: 'place', place: 1.5},
       null,
     ];
-    // What a newer table might hold passes: a design this build doesn't know draws as the first,
-    // and a page side it can't draw as 4.
-    const later = [{...ROW, id: 'design', cover: 'paisley'}, {...ROW, id: 'pages', pages: 5}];
-    mockOrder.mockResolvedValue({data: [...bad, {...ROW, id: 'ok', cover: null}, ...later], error: null});
+    // A design this build doesn't know passes: it draws as the first.
+    mockOrder.mockResolvedValue({data: [...bad, {...ROW, id: 'ok', cover: null}, {...ROW, id: 'later', cover: 'paisley'}], error: null});
     const {data} = await listBinders('me');
-    expect(data?.map((binder) => [binder.id, binder.pages])).toEqual([['ok', 3], ['design', 3], ['pages', 4]]);
+    expect(data?.map((binder) => binder.id)).toEqual(['ok', 'later']);
     expect(console.warn).toHaveBeenCalledOnce();
+    expect(mockReport).toHaveBeenCalledExactlyOnceWith({area: 'collection', operation: 'read binder rows'}, expect.any(Error));
+  });
+
+  // A newer table's page side shouldn't hide the binder, but Sentry hears of the drift.
+  it('draws a page side the guard refuses at 4, keeps the binder and reports it', async () => {
+    mockOrder.mockResolvedValue({data: [ROW, {...ROW, id: 'wide', pages: 5}], error: null});
+    const {data} = await listBinders('me');
+    expect(data?.map((binder) => [binder.id, binder.pages])).toEqual([['b1', 3], ['wide', 4]]);
+    expect(console.warn).toHaveBeenCalledExactlyOnceWith('[collection] drew 1 binder row(s) at 4 a side');
     expect(mockReport).toHaveBeenCalledExactlyOnceWith({area: 'collection', operation: 'read binder rows'}, expect.any(Error));
   });
 

@@ -6,6 +6,7 @@ import {binder, COLLECTOR_ID, shelf, shelfCover, signInAsCollector, type Entries
 import {binderRow, failBinderReads, serveBinders, type BindersWorld} from '../helpers/binders';
 import {serveFriends, type FriendsWorld, type Player} from '../helpers/friends';
 import {E2E_FRIEND_CODE} from '../fixtures/supabaseStub';
+import {ROW_LOGO_MIN_WIDTH} from '../../src/features/collection/setPickerRowWidth';
 
 /**
  * Binders of your own: a link that opens one, the set picker's Binders tab, a binder that
@@ -55,8 +56,6 @@ const tiles = (page: Page) => binder(page).getByTestId('card-tile');
 const tileNames = (page: Page) => tiles(page).evaluateAll((all) => all.map((tile) => tile.getAttribute('aria-label')));
 const setButton = (page: Page) => page.getByRole('button', {name: /^Binder set/});
 const binderButton = (page: Page) => page.getByRole('button', {name: /^Binder: /});
-/** Below this width a phone's binder row leaves out its picture, the medal with it (SetPicker's `ROW_LOGO_MIN_WIDTH`). */
-const ROW_PICTURE_MIN_WIDTH = 393;
 
 /** The design a shelf cover or a medal draws, by its id. */
 const designOf = (where: Locator) => where.locator('[data-cover]').first().getAttribute('data-cover');
@@ -787,7 +786,8 @@ test.describe('Rename and Change cover', () => {
     // The open binder's medal, where its button draws one, and the Binders tab's, with no reload.
     await shelfCover(page, 'Amber').click();
     await expect(binder(page)).toBeVisible({timeout: 20_000});
-    if ((page.viewportSize()?.width ?? ROW_PICTURE_MIN_WIDTH) >= ROW_PICTURE_MIN_WIDTH) {
+    // Below ROW_LOGO_MIN_WIDTH a phone's binder row leaves out its picture, the medal with it.
+    if ((page.viewportSize()?.width ?? ROW_LOGO_MIN_WIDTH) >= ROW_LOGO_MIN_WIDTH) {
       await expect(binderButton(page).getByTestId('binder-medal')).toHaveAttribute('data-cover', 'tartan', {timeout: 20_000});
     }
     await openBindersTab(binderButton(page));
