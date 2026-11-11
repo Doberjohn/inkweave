@@ -3,6 +3,7 @@ import {MemoryRouter} from 'react-router-dom';
 import {fn} from 'storybook/test';
 import {CollectionBinderSection} from './CollectionBinderSection';
 import {BINDER_CARDS} from '../cards/components/binderStoryCards';
+import {TODAY_PAGE} from '../cards/components/binderGeometry';
 import type {CollectionEntries} from './collectionParser';
 import {COLORS} from '../../shared/constants';
 
@@ -47,6 +48,7 @@ const meta: Meta<typeof CollectionBinderSection> = {
     filtered: false,
     sortOrder: 'newest',
     entries,
+    grid: TODAY_PAGE,
     isLoading: false,
     error: null,
     onRetry: fn(),

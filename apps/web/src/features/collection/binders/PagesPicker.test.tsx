@@ -76,6 +76,7 @@ describe('PagesPicker', () => {
     const props = renderPicker();
     await act(async () => fireEvent.click(choice(3)));
     expect(screen.getByRole('alert')).toHaveTextContent("Couldn't change the page size. Try again.");
+    expect(props.onClose).not.toHaveBeenCalled();
     expect(props.onSaved).not.toHaveBeenCalled();
     expect(trackEvent).not.toHaveBeenCalled();
   });
