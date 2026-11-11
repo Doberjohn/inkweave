@@ -8,7 +8,7 @@ vi.mock('../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 const writes = vi.hoisted(() => ({
   setMyCollection: vi.fn<(change: {readerId: string; patch: Partial<ShelfLook>}) => Promise<boolean>>(),
 }));
-vi.mock('./binderShelf', () => writes);
+vi.mock('./shelfStore', () => writes);
 
 function renderPicker(over: Partial<PagesPickerProps> = {}) {
   const props: PagesPickerProps = {

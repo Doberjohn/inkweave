@@ -10,8 +10,8 @@ import {
   shortestNamedCardWithSynergies,
   shortestNamedCoreCharacter,
 } from '../helpers/cardData';
-import {binderRow, serveBinders} from '../helpers/binders';
-import {binder, board, COLLECTIONS_PATH, type Entries, shelf, signInAsCollector} from '../helpers/collector';
+import {binderRow, serveBinders, SHELF_PATH} from '../helpers/binders';
+import {binder, board, COLLECTIONS_PATH, COLLECTOR_ID, type Entries, shelf, signInAsCollector} from '../helpers/collector';
 import {serveFriends, type Player} from '../helpers/friends';
 import {holdLazyModule} from '../helpers/lazyModule';
 import {signInAs} from '../helpers/session';
@@ -320,12 +320,16 @@ const PHONE_WIDTHS = [360, 390, 412];
 
 /**
  * The lines each text takes set in one of the name's boxes at the page's width: in the box's
- * first child (the placeholder's unseen name) or in the box itself (the heading).
+ * first child (the placeholder's unseen name) or in the box itself (the heading). It counts once
+ * the box's face has loaded: the heading's weight isn't preloaded, and until it arrives the page
+ * sets the name in a fallback face (`font-display: swap`) that wraps names otherwise.
  */
 function linesOf(box: Locator, texts: string[], inFirstChild: boolean): Promise<number[]> {
   return box.evaluate(
-    (el, {texts, inFirstChild, line}) => {
+    async (el, {texts, inFirstChild, line}) => {
       const target = (inFirstChild ? el.firstElementChild : el) ?? el;
+      const style = getComputedStyle(target);
+      await document.fonts.load(`${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`);
       const shown = target.textContent;
       const lines = texts.map((text) => {
         target.textContent = text;
@@ -510,6 +514,49 @@ for (const {side, size, columns, rows} of [
     await expect(
       binder(page).getByRole('group', {name: 'Page', exact: true}).locator('.binder-pocket'),
     ).toHaveCount(columns * rows);
+  });
+}
+
+/** Where the app remembers My collection's page size for the collector (`rememberedPages.ts`). */
+const REMEMBERED_PAGES = `inkweave:collection:pages:${COLLECTOR_ID}`;
+
+/**
+ * My collection's page size is read with the binders, after the account's copy has synced, so on a
+ * visit by its link its loading binder draws the size this browser remembers from the last read:
+ * a phone's 2 by 2 page over a 2-row map, where with nothing remembered it draws a new binder's 4
+ * by 4 (three rows at this size) until the shelf answers. The binder then lands in the frame's box,
+ * and the read remembers the size for the next visit.
+ */
+for (const remembered of ['2', null] as const) {
+  test(`on a phone, My collection's loading binder draws ${remembered === null ? "a new binder's size with none remembered" : 'the size this browser remembers'} before the shelf answers`, async ({
+    page,
+  }, testInfo) => {
+    test.skip(!isPhone(testInfo.project.name), "A phone's lone page");
+    await page.setViewportSize(SHORT);
+    if (remembered !== null) await page.addInitScript(([key, value]) => localStorage.setItem(key, value), [REMEMBERED_PAGES, remembered]);
+    const binderCode = await holdLazyModule(page, 'CollectionBinderSection');
+    const releaseCards = await hold(page, /\/data\/collection\//);
+    await signInAsCollector(page, HELD);
+    await serveBinders(page, {rows: [], shelf: {pages: 2, cover: null}});
+    const releaseShelf = await holdSupabasePath(page, SHELF_PATH);
+    const shelfAsked = page.waitForRequest((request) => new URL(request.url()).pathname === SHELF_PATH);
+    await page.goto('/browse?binder=all');
+    await shelfAsked;
+    await expect.poll(binderCode.caught, {message: "the binder's chunk never reached the hold"}).toBeGreaterThan(0);
+    const frame = page.getByRole('region', {name: 'Loading your binder'});
+    const band = frame.getByTestId('binder-map-band');
+    // The shelf is still held, so this is the size drawn before it answers.
+    await expect.poll(async () => Math.round((await boxOf(band)).height)).toBe(MAP_BAND[remembered === null ? 3 : 2]);
+    const codeLoading = await boxOf(frame.locator('.react-loading-skeleton'));
+
+    releaseShelf();
+    await expect.poll(async () => Math.round((await boxOf(band)).height)).toBe(MAP_BAND[2]);
+    expect(await page.evaluate((key) => localStorage.getItem(key), REMEMBERED_PAGES)).toBe('2');
+    if (remembered === null) return;
+    binderCode.release();
+    releaseCards();
+    await expect(binder(page).getByRole('navigation', {name: 'Binder pages'})).toBeVisible();
+    expectSameBox(await boxOf(board(page)), codeLoading);
   });
 }
 

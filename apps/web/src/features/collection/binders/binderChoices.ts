@@ -4,7 +4,7 @@ import type {CollectionEntries} from '../collectionParser';
 import type {BinderFigures} from './binderCovers';
 import type {Binder} from './binderRules';
 import type {CoverDesign} from './coverDesigns';
-import type {BinderReader, BinderShelf} from './binderShelf';
+import type {BinderReader, BinderShelf} from './shelfStore';
 
 /*
  * Types alone: code outside this folder imports them with `import type`, which loads nothing, so

@@ -52,7 +52,7 @@ export interface BindersWorld {
 
 const BINDERS_PATH = '/rest/v1/collection_binders';
 const MOVE_PATH = '/rest/v1/rpc/move_binder';
-const SHELF_PATH = '/rest/v1/collection_shelf';
+export const SHELF_PATH = '/rest/v1/collection_shelf';
 
 /** The most binders a shelf holds: the table's trigger refuses another with a check violation. */
 const SHELF_MAX = 30;

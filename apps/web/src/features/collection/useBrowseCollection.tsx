@@ -47,13 +47,14 @@ import {
   RowSetPickerFallback,
   ToolbarSetPickerFallback,
 } from './BinderChunkFallback';
-import {DEFAULT_SIDE, TODAY_PAGE, squarePage, type BinderGrid} from '../cards/components/binderGeometry';
+import {DEFAULT_SIDE, TODAY_PAGE, squarePage, type BinderGrid, type PageSide} from '../cards/components/binderGeometry';
 import {SHOW_BINDERS} from './binders/flag';
 import type {BinderChoices, CustomBinder, OwnBinders} from './binders/binderChoices';
 import {ShelfHeading} from './binders/ShelfHeading';
 import {useShelf, type ShelfSlot} from './binders/useShelf';
 import {useBinderWindow, type BinderWindowSlot} from './binders/useBinderWindow';
 import {useSaveAsBinder, type SaveSlot} from './binders/useSaveAsBinder';
+import {rememberedPages} from './binders/rememberedPages';
 import {useOwnBinders} from './useOwnBinders';
 
 /*
@@ -111,6 +112,9 @@ const useWindowOf = import.meta.env.VITE_SHOW_BINDERS === 'true' ? useBinderWind
 const NO_SAVE: SaveSlot = {render: () => null, node: null};
 const noSave = () => NO_SAVE;
 const useSaveOf = import.meta.env.VITE_SHOW_BINDERS === 'true' ? useSaveAsBinder : noSave;
+// My collection's page size as this browser last saw it, for its loading binder: picked the same way.
+const noPages: typeof rememberedPages = () => null;
+const rememberedOf = import.meta.env.VITE_SHOW_BINDERS === 'true' ? rememberedPages : noPages;
 
 /**
  * Starts the binder's chunk on intent (#913): one request for the binder, its docked set panel
@@ -448,17 +452,30 @@ function binderChoicesOf(
  * The page the binder draws: today's 4 by 3 where binders are off. With them on, the binder on
  * show's own size: a binder of your own's, My collection's once the shelf has read it, and a
  * friend's 4 by 4, since a player's shelf row is theirs alone to read. Null while My collection's
- * is still to come: the binder waits for it rather than draw a page that changes as it lands.
+ * is still to come: the binder waits for it rather than draw a page that changes as it lands, and
+ * its loading frame draws the size this browser `remembered`.
  */
-export function binderGridOf({shelf, custom}: Pick<OwnBinders, 'shelf' | 'custom'>, friend: FriendBinder | null): BinderGrid | null {
+export function binderGridOf(
+  {shelf, custom}: Pick<OwnBinders, 'shelf' | 'custom'>,
+  friend: FriendBinder | null,
+  remembered: PageSide | null,
+): BinderGrid | null {
   if (shelf === null) return TODAY_PAGE;
   if (friend !== null) return squarePage(DEFAULT_SIDE);
   if (custom.status === 'shown') return squarePage(custom.binder.pages);
   if (shelf.status === 'loading') return null;
-  // A shelf that didn't load, or none to read (signed out), leaves My collection at a new
-  // binder's size. Idle while the account's copy syncs, the binder waits on that anyway.
-  return squarePage(shelf.myCollection?.pages ?? DEFAULT_SIDE);
+  // A shelf that didn't load, or none to read (signed out), leaves My collection at the size
+  // remembered, else a new binder's. Idle while the account's copy syncs, the binder waits anyway.
+  return squarePage(shelf.myCollection?.pages ?? loadingSideOf(custom, remembered));
 }
+
+/**
+ * The size a binder draws before its shelf row answers: My collection's as this browser
+ * `remembered` it, else a new binder's. A binder of your own (`?custom=`) draws a new binder's,
+ * since the size remembered is My collection's alone.
+ */
+export const loadingSideOf = (custom: CustomBinder, remembered: PageSide | null): PageSide =>
+  (custom.status === 'none' ? remembered : null) ?? DEFAULT_SIDE;
 
 /** The Binders tab's New binder: the window, whose new binder then opens. Null until the window can open. */
 const newBinderFrom = ({open}: BinderWindowSlot, openBinder: BinderChoices['onOpen']) =>
@@ -738,10 +755,12 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
     : undefined;
 
   // Loading while the account's copy is still to answer, or the shelf My collection's size, or a
-  // friend's binder. Until the shelf answers, the loading binder draws a new binder's size.
-  const grid = binderGridOf(own, friend);
+  // friend's binder. Until the shelf answers, the loading binder draws the size this browser
+  // remembers for My collection, else a new binder's.
+  const remembered = user === null ? null : rememberedOf(user.id);
+  const grid = binderGridOf(own, friend, remembered);
   const binderLoading = (friend === null ? ownWaiting || grid === null : friendView.waiting) || (!isReady && error === null);
-  const drawnGrid = grid ?? squarePage(DEFAULT_SIDE);
+  const drawnGrid = grid ?? squarePage(loadingSideOf(custom, remembered));
   const ownStatus = customStatusOf(custom, ownStatusOf({error, onRetry: retry}, ownProblem, () => startCollection('browse')));
   const binderStatus = binderStatusOf(friend, ownStatus);
 

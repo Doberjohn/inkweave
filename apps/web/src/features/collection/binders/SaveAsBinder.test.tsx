@@ -4,14 +4,14 @@ import {trackEvent} from '../../../shared/lib/analytics';
 import {WHOLE_COLLECTION, scopeName} from '../binderCards';
 import type {SaveOffer} from './binderChoices';
 import type {Binder} from './binderRules';
-import type {CreateResult} from './binderShelf';
+import type {CreateResult} from './shelfStore';
 import {SaveAsBinder, type SaveAsBinderProps} from './SaveAsBinder';
 
 vi.mock('../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 const writes = vi.hoisted(() => ({
   createBinder: vi.fn<(make: {readerId: string; input: unknown}) => Promise<CreateResult>>(),
 }));
-vi.mock('./binderShelf', () => writes);
+vi.mock('./shelfStore', () => writes);
 
 const OFFER: SaveOffer = {
   scope: WHOLE_COLLECTION,

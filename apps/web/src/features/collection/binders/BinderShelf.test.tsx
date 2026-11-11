@@ -5,7 +5,7 @@ import {trackEvent} from '../../../shared/lib/analytics';
 import {createCard} from '../../../shared/test-utils';
 import {BinderShelf} from './BinderShelf';
 import type {Binder} from './binderRules';
-import type {BinderShelf as Shelf} from './binderShelf';
+import type {BinderShelf as Shelf} from './shelfStore';
 import type {WindowAsk} from './useBinderWindow';
 
 vi.mock('../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
@@ -16,7 +16,7 @@ const writes = vi.hoisted(() => ({
   setCover: vi.fn(),
   setMyCollection: vi.fn<(change: {readerId: string; patch: {pages?: number}}) => Promise<boolean>>(),
 }));
-vi.mock('./binderShelf', () => writes);
+vi.mock('./shelfStore', () => writes);
 // The real faces, watched: the shelf must not work them out again on a render that changed none of their inputs.
 const coverFaces = vi.hoisted(() => ({binderFace: vi.fn()}));
 vi.mock('./binderCovers', async (actual) => {

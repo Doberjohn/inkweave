@@ -2,14 +2,14 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {act, fireEvent, render, screen} from '@testing-library/react';
 import {trackEvent} from '../../../shared/lib/analytics';
 import type {Binder} from './binderRules';
-import type {UpdateResult} from './binderShelf';
+import type {UpdateResult} from './shelfStore';
 import {RenameBinderDialog, type RenameBinderDialogProps} from './RenameBinderDialog';
 
 vi.mock('../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 const writes = vi.hoisted(() => ({
   updateBinder: vi.fn<(change: {readerId: string; id: string; patch: unknown}) => Promise<UpdateResult>>(),
 }));
-vi.mock('./binderShelf', () => writes);
+vi.mock('./shelfStore', () => writes);
 
 const AMBER: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: null, place: 0};
 

@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import type {BinderShelf} from './binderShelf';
+import type {BinderShelf} from './shelfStore';
 import {shelfCount} from './shelfWords';
 
 /** What the shelf needs of the page: whether it shows, and what decides whether it stays. */
