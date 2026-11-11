@@ -331,3 +331,23 @@ export function clearDeleteTombstone(uid: Uid, token?: string): void {
   if (token !== undefined && tombstone.read(uid) !== token) return;
   tombstone.remove(uid);
 }
+
+/*
+ * MY COLLECTION'S PAGE SIZE, one more per-uid key: the binders' loading frame draws it before the
+ * shelf row answers (`binders/rememberedPages.ts` reads it; the shelf store, `binders/shelfStore.ts`,
+ * writes it). It lives here, beside the markers, because a Clear takes the shelf row with the
+ * collection from whichever page it starts, and only this module is there for every one. Its
+ * failures stay silent, unlike the markers': it is a hint for one frame, read on every render.
+ */
+
+/** Where this browser keeps `uid`'s My collection page size: 2, 3 or 4. */
+export const pagesKey = (uid: Uid) => `inkweave:collection:pages:${uid}`;
+
+/** Forgets `uid`'s page size with their collection, so the next one's loading binder draws a new binder's. */
+export function forgetRememberedPages(uid: Uid): void {
+  try {
+    localStorage.removeItem(pagesKey(uid));
+  } catch {
+    // Storage that refuses: the shelf's next read writes the size the row then has.
+  }
+}

@@ -1,5 +1,6 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
-import {pagesKey, rememberedPages} from './rememberedPages';
+import {rememberedPages} from './rememberedPages';
+import {pagesKey} from '../collectionStorage';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -13,8 +14,8 @@ describe('rememberedPages', () => {
     expect(rememberedPages('you')).toBeNull();
   });
 
-  it('reads a value that is not a page size as none', () => {
-    for (const value of ['7', 'x', '', '3.5']) {
+  it('reads a value that is not exactly a page size as none', () => {
+    for (const value of ['7', 'x', '', '3.5', '2.0', ' 3 ']) {
       localStorage.setItem(pagesKey('me'), value);
       expect(rememberedPages('me')).toBeNull();
     }

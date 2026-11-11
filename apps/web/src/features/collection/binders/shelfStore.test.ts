@@ -289,10 +289,38 @@ describe("the page size this browser remembers for My collection", () => {
   it('stays when a read fails to read the row', async () => {
     follow({...READER, uid: null});
     await loadShelf({pages: 3, cover: null});
+    repo.getShelf.mockClear();
     repo.getShelf.mockResolvedValue({data: null, error: 'Network error'});
+    // The binders read changes, so the re-read shows once it has finished.
+    repo.listBinders.mockResolvedValue({data: [AMBER], error: null});
     viewOf(snapshot(), READER).retry();
-    await vi.waitFor(() => expect(repo.getShelf).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(shown()).toEqual(['b1']));
+    expect(repo.getShelf).toHaveBeenCalledOnce();
     expect(rememberedPages('me')).toBe(3);
+  });
+
+  it('is not put back by a read a Clear overtook', async () => {
+    follow({...READER, uid: null});
+    const row = deferred<{data: ShelfLook; error: null}>();
+    repo.getShelf.mockReturnValue(row.promise);
+    follow(READER);
+    await vi.waitFor(() => expect(repo.getShelf).toHaveBeenCalled());
+    follow({...READER, hasCollection: false});
+    row.settle({data: {pages: 2, cover: null}, error: null});
+    // Every step of the read's answer has run by the next task.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(rememberedPages('me')).toBeNull();
+  });
+
+  it('is not put back by a size change a Clear overtook', async () => {
+    const answer = deferred<{data: null; error: null}>();
+    repo.setShelf.mockReturnValue(answer.promise);
+    const changing = setMyCollection({readerId: 'me', patch: {pages: 2}});
+    await vi.waitFor(() => expect(repo.setShelf).toHaveBeenCalled());
+    follow({...READER, hasCollection: false});
+    answer.settle({data: null, error: null});
+    await expect(changing).resolves.toBe(true);
+    expect(rememberedPages('me')).toBeNull();
   });
 
   it('follows a size change once the server has it, and never a failed one', async () => {
@@ -316,6 +344,8 @@ describe("the page size this browser remembers for My collection", () => {
     follow({...READER, uid: null});
     await loadShelf({pages: 3, cover: null});
     expect(viewOf(snapshot(), READER).myCollection).toEqual({pages: 3, cover: null});
+    // What it had before stays.
+    expect(rememberedPages('me')).toBe(4);
     vi.restoreAllMocks();
   });
 });

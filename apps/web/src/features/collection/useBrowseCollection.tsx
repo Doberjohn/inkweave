@@ -466,8 +466,16 @@ export function binderGridOf(
   if (shelf.status === 'loading') return null;
   // A shelf that didn't load, or none to read (signed out), leaves My collection at the size
   // remembered, else a new binder's. Idle while the account's copy syncs, the binder waits anyway.
-  return squarePage(shelf.myCollection?.pages ?? remembered ?? DEFAULT_SIDE);
+  return squarePage(shelf.myCollection?.pages ?? loadingSideOf(custom, remembered));
 }
+
+/**
+ * The size a binder draws before its shelf row answers: My collection's as this browser
+ * `remembered` it, else a new binder's. A binder of your own (`?custom=`) draws a new binder's,
+ * since the size remembered is My collection's alone.
+ */
+export const loadingSideOf = (custom: CustomBinder, remembered: PageSide | null): PageSide =>
+  (custom.status === 'none' ? remembered : null) ?? DEFAULT_SIDE;
 
 /** The Binders tab's New binder: the window, whose new binder then opens. Null until the window can open. */
 const newBinderFrom = ({open}: BinderWindowSlot, openBinder: BinderChoices['onOpen']) =>
@@ -752,7 +760,7 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
   const remembered = user === null ? null : rememberedOf(user.id);
   const grid = binderGridOf(own, friend, remembered);
   const binderLoading = (friend === null ? ownWaiting || grid === null : friendView.waiting) || (!isReady && error === null);
-  const drawnGrid = grid ?? squarePage(remembered ?? DEFAULT_SIDE);
+  const drawnGrid = grid ?? squarePage(loadingSideOf(custom, remembered));
   const ownStatus = customStatusOf(custom, ownStatusOf({error, onRetry: retry}, ownProblem, () => startCollection('browse')));
   const binderStatus = binderStatusOf(friend, ownStatus);
 

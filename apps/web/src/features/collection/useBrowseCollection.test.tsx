@@ -12,7 +12,7 @@ import {TODAY_PAGE, squarePage} from '../cards/components/binderGeometry';
 import type {Binder} from './binders/binderRules';
 import {coverDesign} from './binders/coverDesigns';
 import type {BinderShelf} from './binders/shelfStore';
-import {binderGridOf, useBrowseCollection, type BrowseListing, type PhoneSheetOptions} from './useBrowseCollection';
+import {binderGridOf, loadingSideOf, useBrowseCollection, type BrowseListing, type PhoneSheetOptions} from './useBrowseCollection';
 import {useBinderParams} from './useBinderParams';
 // The binder's chunk, which the Binder sheet's numbers come from, friends' chunk, which the foil
 // pointer comes from, and the import's, imported with this file: a cold import inside a test can
@@ -1184,5 +1184,22 @@ describe("binderGridOf: the page the binder on show draws", () => {
   it("draws a binder of your own at its size, and a friend's at a new binder's, whatever My collection's remembered", () => {
     expect(binderGridOf({shelf: shelf('ready', 2), custom: SHOWN}, null, 2)).toBe(squarePage(3));
     expect(binderGridOf({shelf: shelf('loading'), custom: NONE}, {status: 'loading'}, 3)).toBe(squarePage(4));
+  });
+
+  it("draws a binder of your own that is still to come at a new binder's size, not My collection's remembered", () => {
+    for (const status of ['failed', 'idle'] as const) {
+      expect(binderGridOf({shelf: shelf(status), custom: {status: 'loading'}}, null, 2)).toBe(squarePage(4));
+    }
+  });
+});
+
+describe("loadingSideOf: the size a binder draws before its shelf row answers", () => {
+  it("is My collection's as remembered, else a new binder's", () => {
+    expect(loadingSideOf({status: 'none'}, 2)).toBe(2);
+    expect(loadingSideOf({status: 'none'}, null)).toBe(4);
+  });
+
+  it("is a new binder's for a binder of your own, whatever My collection's remembered", () => {
+    for (const status of ['loading', 'unknown'] as const) expect(loadingSideOf({status}, 2)).toBe(4);
   });
 });

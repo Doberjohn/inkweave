@@ -6,6 +6,7 @@ import {CollectionProvider, UPLOAD_DELAY_MS, useCollection} from './CollectionCo
 import {
   COLLECTION_KEY,
   markUploadPending,
+  pagesKey,
   pendingUploadImportedAt,
   readCollection,
   writeCollection,
@@ -213,6 +214,19 @@ describe('CollectionContext — signed in', () => {
     });
     // Or it reappears from another device and reads as the delete having failed.
     expect(deleteCollection).toHaveBeenCalledWith('user-1');
+  });
+
+  it("forgets the page size this browser remembers for the account's binders with it, and no other account's", async () => {
+    writeCollection(ENTRIES, 5000, null, 'import');
+    localStorage.setItem(pagesKey('user-1'), '2');
+    localStorage.setItem(pagesKey('user-2'), '3');
+    const {result} = render();
+    await act(async () => {
+      result.current.clearImported();
+    });
+    // The shelf row goes with the collection, so the next one's binder starts at a new binder's size.
+    expect(localStorage.getItem(pagesKey('user-1'))).toBeNull();
+    expect(localStorage.getItem(pagesKey('user-2'))).toBe('3');
   });
 
   it('adopts the account copy over this browser stale one', async () => {

@@ -44,6 +44,7 @@ import {
   clearCollection,
   clearDeleteTombstone,
   clearUploadPending,
+  forgetRememberedPages,
   hasDeleteTombstone,
   markCollectionMigrated,
   markDeleteTombstone,
@@ -731,8 +732,12 @@ export function CollectionProvider({children, placements = NO_PLACEMENTS}: Colle
     cancelUpload(waitingUpload);
     // Clearing while signed in clears it everywhere, or the collection reappears
     // from another device. Queued behind any upload already in flight, and
-    // tombstoned until it lands.
-    if (uid) void deleteFromServer(uid);
+    // tombstoned until it lands. The binders' shelf row goes with it, so the page size this
+    // browser remembers for My collection goes now, whichever page the Clear came from.
+    if (uid) {
+      forgetRememberedPages(uid);
+      void deleteFromServer(uid);
+    }
   }
 
   /**

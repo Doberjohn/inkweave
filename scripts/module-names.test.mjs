@@ -6,7 +6,8 @@ import {fileURLToPath} from 'node:url';
 // Windows and macOS's default file system ignore case, so where two modules' names differ only by
 // case, an import written without its extension finds whichever the resolver tries first: Vite
 // tries `.ts` before `.tsx`, so `./BinderShelf` would load a `binderShelf.ts` beside it. Linux CI
-// tells them apart, so only this check catches it.
+// tells them apart, so only this check catches it. Two folders whose names differ only by case are
+// one folder there, whatever they hold, so a checkout merges them.
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -25,6 +26,20 @@ function caseClashes(files) {
   return [...spellings.values()].filter((stems) => stems.size > 1).map((stems) => [...stems].sort());
 }
 
+/** Each set of folders, among the paths' parents, whose names differ only by case: a group per clash. */
+function folderClashes(files) {
+  const spellings = new Map();
+  for (const file of files) {
+    const parts = file.split('/');
+    for (let depth = 1; depth < parts.length; depth++) {
+      const folder = parts.slice(0, depth).join('/');
+      const key = folder.toLowerCase();
+      spellings.set(key, (spellings.get(key) ?? new Set()).add(folder));
+    }
+  }
+  return [...spellings.values()].filter((folders) => folders.size > 1).map((folders) => [...folders].sort());
+}
+
 const tracked = () => execFileSync('git', ['ls-files', '-z'], {cwd: ROOT, encoding: 'utf8'}).split('\0').filter(Boolean);
 
 describe('module names', () => {
@@ -38,6 +53,13 @@ describe('module names', () => {
     expect(caseClashes(['Cards/loader.ts', 'cards/loader.ts'])).toEqual([['Cards/loader', 'cards/loader']]);
   });
 
+  it('finds two folders whose names differ only by case, whatever files they hold', () => {
+    expect(folderClashes(['src/Cards/loader.ts', 'src/cards/filters.ts', 'src/cards/README.md'])).toEqual([
+      ['src/Cards', 'src/cards'],
+    ]);
+    expect(folderClashes(['src/Cards/loader.ts', 'src/Decks/loader.ts', 'src/cards.ts'])).toEqual([]);
+  });
+
   it('passes names that differ by more than case, and files no import leaves its extension off', () => {
     expect(caseClashes(['a/BinderShelf.tsx', 'a/shelfStore.ts', 'a/binderShelf.css', 'a/Read.md', 'a/read.md'])).toEqual([]);
   });
@@ -46,5 +68,6 @@ describe('module names', () => {
     const files = tracked();
     expect(files.length).toBeGreaterThan(1000);
     expect(caseClashes(files)).toEqual([]);
+    expect(folderClashes(files)).toEqual([]);
   });
 });
