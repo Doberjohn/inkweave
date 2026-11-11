@@ -149,15 +149,8 @@ export function loneBoxStyle(top: number, maxWidth: number | undefined): CSSProp
   return maxWidth === undefined ? box : {...box, maxWidth, width: '100%', margin: '0 auto', boxSizing: 'border-box'};
 }
 
-/**
- * How wide a phone's lone board may be: today's page no wider than its height lets it be
- * (`LoneFit.maxWidth`), a square page as wide as the binder. The binder and its loading frame both ask.
- */
-export const loneMaxWidth = (grid: BinderGrid, {maxWidth}: LoneFit) => (isSquare(grid) ? undefined : maxWidth);
-
 /** What a lone board draws across besides its cards, `columns` of them: the board either side, the spine, the page's padding and gaps. */
 const loneAcross = (columns: number) => 2 * BOARD + SPINE_WIDTH + 2 * PAGE_PADDING + (columns - 1) * POCKET_GAP;
-const LONE_ACROSS = loneAcross(LONE_PAGES[3].columns);
 
 /** What it draws down besides its cards, `rows` of them: the board above and below, the page's padding and gaps. */
 const loneDown = (rows: number) => 2 * BOARD + 2 * PAGE_PADDING + (rows - 1) * POCKET_GAP;
@@ -209,7 +202,10 @@ export interface LoneRoom {
   height: number;
 }
 
-/** How a phone's lone page fits its room: its rows, and how wide its board's box may be, where the height caps it. */
+/**
+ * How a phone's lone page fits its room: today's page's rows (a square page draws its own), and
+ * how wide its board's box may be, where the height caps it.
+ */
 export interface LoneFit {
   rows: LoneRows;
   maxWidth?: number;
@@ -225,26 +221,51 @@ export const THREE_ROWS: LoneFit = {rows: 3};
  */
 const LONE_FIT_SLACK = 2;
 
-/** A lone page's card width at `rows`: as wide as `room` lets the page be, and no taller than it lets the page and map be. */
-function loneCardWidth({width, height}: LoneRoom, rows: LoneRows): number {
-  const byWidth = (width - 2 * LONE_INSET - LONE_ACROSS) / LONE_PAGES[rows].columns;
-  const below = LONE_TOP_OVER_MAP + mapBandHeight(rows) + loneDown(rows) + LONE_FIT_SLACK;
-  const byHeight = ((height - below) * CARD_ASPECT) / rows;
-  return Math.min(byWidth, byHeight);
-}
-
-/** How much of the 3-row page's card width a 4-row page must keep to be drawn (owner, 2026-10-26). */
-const FOUR_ROWS_SHARE = 0.9;
+/** A lone page's card width as wide as `room` lets `page` be. */
+const loneWidthCard = ({width}: LoneRoom, {columns}: PageGrid) => (width - 2 * LONE_INSET - loneAcross(columns)) / columns;
 
 /**
- * ROWS THAT FIT (owner, 2026-10-26): a phone's page has 4 rows where, narrowed to fit the
- * height with its map, their cards keep 90% or more of the 3-row page's width, so a tall phone's
- * page fills its screen; else 3, width-driven as before, which a short phone scrolls to its map.
- * At 4 rows the board's box is capped to the width whose height fits (`maxWidth`), and centred.
+ * A lone page fitted to `room`: its card width as wide as the room lets `page` be and no taller
+ * than it lets the page and map be, and the width of its board's box round cards that wide.
  */
-export function loneFitFor(room: LoneRoom): LoneFit {
-  const three = (room.width - 2 * LONE_INSET - LONE_ACROSS) / LONE_PAGES[3].columns;
-  const four = loneCardWidth(room, 4);
-  if (four < FOUR_ROWS_SHARE * three) return THREE_ROWS;
-  return {rows: 4, maxWidth: 2 * LONE_INSET + LONE_ACROSS + LONE_PAGES[4].columns * four};
+function fitted(room: LoneRoom, page: PageGrid): {card: number; maxWidth: number} {
+  const {columns, rows} = page;
+  const below = LONE_TOP_OVER_MAP + mapBandHeight(rows) + loneDown(rows) + LONE_FIT_SLACK;
+  const card = Math.min(loneWidthCard(room, page), ((room.height - below) * CARD_ASPECT) / rows);
+  return {card, maxWidth: 2 * LONE_INSET + loneAcross(columns) + columns * card};
 }
+
+/**
+ * How much of its width-driven card width a page narrowed to fit the height must keep to be
+ * drawn so (owner, 2026-10-26, for today's 4 rows).
+ */
+const FIT_SHARE = 0.9;
+
+/**
+ * ROWS THAT FIT (owner, 2026-10-26): a phone's page of today's has 4 rows where, narrowed to fit
+ * the height with its map, their cards keep 90% or more of the 3-row page's width, so a tall
+ * phone's page fills its screen; else 3, width-driven as before, which a short phone scrolls to
+ * its map. At 4 rows the board's box is capped to the width whose height fits (`maxWidth`), and
+ * centred.
+ */
+function todayFit(room: LoneRoom): LoneFit {
+  const four = fitted(room, LONE_PAGES[4]);
+  if (four.card < FIT_SHARE * loneWidthCard(room, LONE_PAGES[3])) return THREE_ROWS;
+  return {rows: 4, maxWidth: four.maxWidth};
+}
+
+/**
+ * A square page draws as itself, as wide as the binder. Where its page and map come out taller
+ * than the room, its box is capped to the width that fits, as long as its cards keep 90% of their
+ * width; past that it stays width-driven, and a short phone scrolls to its map, as at 3 rows.
+ */
+function squareFit(room: LoneRoom, grid: BinderGrid): LoneFit {
+  const across = loneWidthCard(room, grid);
+  const {card, maxWidth} = fitted(room, grid);
+  if (card >= across || card < FIT_SHARE * across) return THREE_ROWS;
+  return {rows: 3, maxWidth};
+}
+
+/** How `grid`'s lone page fits `room` on a phone: today's page by the rows that fit, a square page by its own size. */
+export const loneFitFor = (room: LoneRoom, grid: BinderGrid): LoneFit =>
+  isSquare(grid) ? squareFit(room, grid) : todayFit(room);

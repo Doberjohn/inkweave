@@ -62,12 +62,12 @@ describe('BinderMenu', () => {
     expect(dots()).toHaveFocus();
   });
 
-  it("offers My collection's Open, Change cover and Change page size alone: it never moves and can't be deleted", () => {
+  it("offers My collection's Open, Change cover and Pages alone: it never moves and can't be deleted", () => {
     const onChangePages = vi.fn();
     render(<BinderMenu alwaysShown={false} onOpen={vi.fn()} onChangeCover={vi.fn()} onChangePages={onChangePages} />);
     fireEvent.click(dots());
-    expect(items()).toEqual(['Open', 'Change cover', 'Change page size']);
-    fireEvent.click(screen.getByRole('menuitem', {name: 'Change page size'}));
+    expect(items()).toEqual(['Open', 'Change cover', 'Pages']);
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Pages'}));
     expect(onChangePages).toHaveBeenCalledOnce();
     expect(dots()).toHaveFocus();
   });

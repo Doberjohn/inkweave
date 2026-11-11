@@ -7,7 +7,6 @@ import {
   isSquare,
   loneBoardHeight,
   loneBoxStyle,
-  loneMaxWidth,
   mapBandHeight,
   viewPage,
   type BinderGrid,
@@ -69,7 +68,7 @@ function Block({height, style}: {height?: number; style?: CSSProperties}) {
  */
 function LonePageFallback({grid, fit}: {grid: BinderGrid; fit: LoneFit}) {
   const page = viewPage(grid, true, fit.rows);
-  const maxWidth = loneMaxWidth(grid, fit);
+  const {maxWidth} = fit;
   return (
     <div>
       <div style={loneBoxStyle(LONE_TOP_OVER_MAP, maxWidth)}>
@@ -88,7 +87,7 @@ export function BinderChunkFallback({grid}: {grid: BinderGrid}) {
   const {isMobile} = useResponsive();
   const docked = useSidePanelDocked();
   const [section, setSection] = useState<HTMLElement | null>(null);
-  const fit = useLoneFit(section, isMobile);
+  const fit = useLoneFit(section, isMobile, grid);
   return (
     <section
       ref={setSection}

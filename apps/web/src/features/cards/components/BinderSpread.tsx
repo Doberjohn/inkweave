@@ -25,7 +25,6 @@ import {
   THREE_ROWS,
   TODAY_PAGE,
   loneBoxStyle,
-  loneMaxWidth,
   pagingOf,
   pocketsOf,
   viewPage,
@@ -776,14 +775,14 @@ function SpreadView({edges, ...props}: ViewProps & {edges: boolean}) {
  * row of arrows where it has none. The lone page is the RIGHT-hand sheet: rings on its
  * left edge, so it still reads as a page in a binder rather than a loose card grid, in a
  * board with one zip round it. Nothing here is measured, which is what keeps what lies below
- * it from moving after first paint: today's page's rows, and at 4 its width, come from the
- * section, measured before then (`useLoneFit`). A square page is as wide as the binder.
+ * it from moving after first paint: today's page's rows, and its width where the height caps it,
+ * come from the section, measured before then (`useLoneFit`). A square page draws as itself.
  */
 function SingleView({start, grid, renderSlot, arrows, footer, cardCount, sheets, turn, fit, cover}: ViewProps) {
   return (
     <>
       {/* Over a footer, the map's band, the board sits only a little below the binder's top. */}
-      <div style={loneBoxStyle(footer === undefined ? SPACING.sm : LONE_TOP_OVER_MAP, loneMaxWidth(grid, fit))}>
+      <div style={loneBoxStyle(footer === undefined ? SPACING.sm : LONE_TOP_OVER_MAP, fit.maxWidth)}>
         <Board sheets={sheets} turn={turn} single>
           <Spine />
           <BinderPage

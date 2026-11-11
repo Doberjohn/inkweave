@@ -4,6 +4,7 @@ import {test, expect} from '../fixtures';
 import {
   cardFullNameById,
   newestCoreSet,
+  PAGE_POCKETS,
   preCoreCardWithEnchanted,
   promoSetWithOpenPocket,
   setCards,
@@ -265,11 +266,12 @@ async function checkSpreadAt(page: Page, size: {width: number; height: number}):
   expect(Math.abs(middle(next) - frame.right), 'the Next disc off the end').toBeLessThanOrEqual(4);
 
   // Each pocket is a card's shape, 8px (`SPACING.sm`) from its neighbours across and down, and
-  // the three rows fill the page's height inside its 12px padding (`PAGE_PADDING`): the height
-  // gives the cards their size, as on master. Across, a row's four sit in the page's middle.
+  // the four rows of My collection's 4 by 4 page fill the page's height inside its 12px padding
+  // (`PAGE_PADDING`): the height gives the cards their size, as on master. Across, a row's four
+  // sit in the page's middle.
   const pockets = rightPage.locator(':scope > div');
-  await expect(pockets).toHaveCount(12);
-  const [first, second, fourth, below, last] = await Promise.all([0, 1, 3, 4, 11].map((i) => edges(pockets.nth(i))));
+  await expect(pockets).toHaveCount(16);
+  const [first, second, fourth, below, last] = await Promise.all([0, 1, 3, 4, 15].map((i) => edges(pockets.nth(i))));
   const shapeOff = first.right - first.left - 0.72 * (first.bottom - first.top);
   expect(Math.abs(shapeOff), "a pocket off a card's shape").toBeLessThanOrEqual(1);
   expect(Math.abs(second.left - first.right - 8), 'the gap across').toBeLessThanOrEqual(1);
@@ -1042,21 +1044,17 @@ test.describe('Collection mode, signed in', () => {
 });
 
 /**
- * Phones' screens in CSS pixels, with the browser's bars showing, as #969 measured them, and the
- * rows their page has: four where they keep the cards at 90% or more of the 3-row page's
- * width, as the owner's iPhone on iOS 26 does.
+ * Phones' screens in CSS pixels, with the browser's bars showing, as #969 measured them. A square
+ * page draws as itself on a phone, as wide as the binder: My collection's 4 by 4 fits each whole.
  */
 const PHONES = [
-  {width: 393, height: 659, rows: 3}, // iPhone 15, Safari
-  {width: 375, height: 629, rows: 3}, // iPhone 13 mini, Safari
-  {width: 430, height: 739, rows: 3}, // iPhone 15 Pro Max, Safari
-  {width: 360, height: 732, rows: 4}, // a 360px Android (Galaxy S24 class), Chrome
-  {width: 412, height: 839, rows: 4}, // a Pixel 7 class Android, Chrome
-  {width: 393, height: 815, rows: 4}, // an iPhone on iOS 26, Safari
+  {width: 393, height: 659}, // iPhone 15, Safari
+  {width: 375, height: 629}, // iPhone 13 mini, Safari
+  {width: 430, height: 739}, // iPhone 15 Pro Max, Safari
+  {width: 360, height: 732}, // a 360px Android (Galaxy S24 class), Chrome
+  {width: 412, height: 839}, // a Pixel 7 class Android, Chrome
+  {width: 393, height: 815}, // an iPhone on iOS 26, Safari
 ];
-
-/** How far under a 4-row page's map `<main>` may end: an iOS 26 iPhone's page, as wide as its screen lets it be, leaves 18px. */
-const FOUR_ROWS_ROOM_LEFT = 24;
 
 type Span = {top: number; bottom: number};
 
@@ -1148,22 +1146,16 @@ test.describe('Collection mode, signed in (phone width)', () => {
     page,
   }) => {
     await signInAsCollector(page, ENTRIES);
-    for (const {rows, ...size} of PHONES) {
+    for (const size of PHONES) {
       await page.setViewportSize(size);
       await page.goto(`/browse?binder=${SET}`);
       await expect(binder(page).getByTestId('card-tile').first()).toBeVisible();
       const at = `at ${size.width}x${size.height}`;
       const fit = await phoneBinderFit(page);
-      expect(fit.pockets, `the page's pockets ${at}`).toBe(3 * rows);
-      expect(fit.columns, `their columns ${at}`).toBe(3);
+      expect(fit.pockets, `the page's pockets ${at}`).toBe(PAGE_POCKETS);
+      expect(fit.columns, `their columns ${at}`).toBe(4);
       expect(fit.board.top, `the board's top ${at}`).toBeGreaterThanOrEqual(fit.main.top);
       expect(fit.map.bottom, `the map's foot ${at}`).toBeLessThanOrEqual(fit.main.bottom);
-      // Four rows fill the screen (owner, 2026-10-26): the page grows to the room under it.
-      if (rows === 4)
-        expect(
-          fit.main.bottom - fit.map.bottom,
-          `the room under the map ${at}`,
-        ).toBeLessThanOrEqual(FOUR_ROWS_ROOM_LEFT);
       expect(fit.overflow, `what the binder section scrolls ${at}`).toBeLessThanOrEqual(0);
       expect(fit.sideways, `what the page scrolls sideways ${at}`).toBeLessThanOrEqual(0);
       await expect(page.getByTestId('browse-toolbar')).toHaveCount(0);
@@ -1332,15 +1324,17 @@ test.describe('Collection mode, signed in (phone width)', () => {
     await expect(lonePage(page)).toHaveCount(0);
   });
 
-  test("the cover's numbers fit it whole on a 4-row phone, for a set, the whole collection and the promos, and scroll inside it on a 3-row one, alone (owner, 2026-10-27)", async ({
+  test("the cover's numbers scroll inside it on a phone, a set's and the whole collection's, while the section and the page stay put (owner, 2026-10-27)", async ({
     page,
   }) => {
-    // Seven binders, each opened and turned to its cover.
+    // A square page draws as itself on a phone, so the cover, page 1's size, is as tall on a
+    // tall phone as on a short one: a set's numbers and the whole collection's scroll inside it
+    // on both, and the promos', one headline shorter, fit it.
     test.slow();
     await signInAsCollector(page, ENTRIES);
     for (const size of [
       {width: 393, height: 815},
-      {width: 412, height: 839},
+      {width: 393, height: 659},
     ]) {
       await page.setViewportSize(size);
       for (const scope of [SET, 'all', 'promos']) {
@@ -1348,20 +1342,11 @@ test.describe('Collection mode, signed in (phone width)', () => {
         await toPhoneCover(page);
         const at = `at ${size.width}x${size.height}, binder=${scope}`;
         const scrolls = await coverScrolls(page);
-        expect(scrolls.cover, `what the cover's numbers scroll ${at}`).toBeLessThanOrEqual(0);
+        expect(scrolls.overflowY, `the numbers' box ${at}`).toBe('auto');
+        if (scope !== 'promos') expect(scrolls.cover, `what the cover's numbers scroll ${at}`).toBeGreaterThan(0);
         expect(Math.max(scrolls.section, scrolls.document, scrolls.sideways), `what else scrolls ${at}`).toBeLessThanOrEqual(0);
       }
     }
-
-    // An iPhone 15 with Safari's bars: three rows, a cover too short for the whole collection's
-    // numbers, which scroll inside it while the section and the page stay put.
-    await page.setViewportSize({width: 393, height: 659});
-    await openPhoneBinder(page, '/browse?binder=all');
-    await toPhoneCover(page);
-    const scrolls = await coverScrolls(page);
-    expect(scrolls.overflowY).toBe('auto');
-    expect(scrolls.cover, "what the cover's numbers scroll at 393x659").toBeGreaterThan(0);
-    expect(Math.max(scrolls.section, scrolls.document, scrolls.sideways), 'what else scrolls at 393x659').toBeLessThanOrEqual(0);
   });
 
   test('Master on the cover keeps the cover, the focus on it, while Owned drops the cards it no longer holds (owner, 2026-10-27)', async ({

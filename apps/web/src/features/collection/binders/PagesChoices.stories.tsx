@@ -17,7 +17,7 @@ function Choices({chosen, width, ...rest}: Omit<PagesChoicesProps, 'onPick'> & {
 /**
  * How many cards a binder's page holds: 2 × 2, 3 × 3 or 4 × 4, each a small page of its pockets,
  * the chosen one ringed in gold and marked. The New binder window shows them under Sets, Save as
- * a binder under its name, and My collection's Change page size on its own.
+ * a binder under its name, and My collection's Pages on its own.
  */
 const meta: Meta<typeof Choices> = {
   title: 'Collection/Binders/PagesChoices',

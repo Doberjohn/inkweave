@@ -194,9 +194,13 @@ export function preCoreCardWithEnchanted(): {setCode: string; fullName: string} 
   throw new Error('Fixture broken: no card of Sets 1-8 has an Enchanted printing in its set');
 }
 
-/** Today's binder page's pockets, 4 by 3, and a spread's two pages of them (`TODAY_PAGE`, `pagingOf` in binderGeometry.ts). */
-const PAGE_POCKETS = 12;
-const SPREAD_POCKETS = 24;
+/**
+ * My collection's page at the shelf's default size, 4 by 4, which a collector with no shelf row
+ * has, and a spread's two pages of them (`squarePage`, `pagingOf` in binderGeometry.ts). E2E
+ * imports no app code, so the sizes are repeated here.
+ */
+export const PAGE_POCKETS = 16;
+const SPREAD_POCKETS = 32;
 
 /** A promo set's open pockets (#805), and its promos that have a card. */
 interface PromoSetPockets {
@@ -233,7 +237,7 @@ export function promoSetWithOpenPocket(): {code: string; promos: string[]; openP
   if (!set) throw new Error('Fixture broken: every promo set in promos.json numbers its promos without a gap');
   const [gap] = set.gaps;
   // The promos numbered below the first gap fill the pockets before it, and the front cover
-  // takes a page first (#806). E2E imports no app code, so the page sizes are repeated here.
+  // takes a page first (#806).
   const before = collectionPromos.filter(
     (promo) => promo.promoGrouping === set.code && promo.number !== undefined && promo.number < gap,
   ).length;

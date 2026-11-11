@@ -25,11 +25,14 @@ export interface PagesChoicesProps {
 /** The sizes, smallest first (owner, 2026-11-05). */
 const SIDES: readonly PageSide[] = [2, 3, 4];
 
-/** Three across, under Sets in the window, in Save as a binder's box and in My collection's Pages. */
+/**
+ * Three in a row, each at its own size, under Sets in the window, in Save as a binder's box and in
+ * My collection's Pages: short enough that the window's rules still fit a 1920x1080 screen.
+ */
 const GRID: CSSProperties = {
   ...CHOICE_LOOK,
   display: 'grid',
-  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+  gridTemplateColumns: 'repeat(3, max-content)',
   gap: SPACING.sm,
   margin: 0,
   padding: SPACING.xxs,
@@ -41,9 +44,9 @@ const pageStyle = (side: PageSide): CSSProperties => ({
   display: 'grid',
   gridTemplateColumns: `repeat(${side}, minmax(0, 1fr))`,
   gap: SPACING.xxs,
-  width: 40,
+  width: 28,
   aspectRatio: '0.8',
-  padding: SPACING.xs,
+  padding: SPACING.xxs,
   borderRadius: `${RADIUS.sm}px`,
   background: COLORS.background,
   boxShadow: `inset 0 0 0 1px ${whiteRgba(0.1)}`,
@@ -60,6 +63,16 @@ const sizeStyle = (chosen: boolean): CSSProperties => ({
 });
 
 const COUNT: CSSProperties = {...TABULAR, fontSize: `${FONT_SIZES.sm}px`, lineHeight: LINE_HEIGHT.tight, color: COLORS.textMuted};
+
+/** The page beside its words, which sit one over the other. */
+const faceRow = (chosen: boolean): CSSProperties => ({
+  ...faceStyle(chosen),
+  flexDirection: 'row',
+  gap: SPACING.sm,
+  padding: `${SPACING.xs}px ${SPACING.md}px ${SPACING.xs}px ${SPACING.xs}px`,
+});
+
+const WORDS: CSSProperties = {display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: SPACING.xxs};
 
 /** A page of `side` by `side` pockets, drawn small. */
 function PageIcon({side}: {side: PageSide}) {
@@ -87,10 +100,12 @@ export function PagesChoices({chosen, onPick, disabled}: PagesChoicesProps) {
             <button type="button" className="cover-choice" aria-pressed={on} disabled={disabled} onClick={() => onPick(side)}>
               {/* Its name whole, for screen readers: the two lines read alone would run together. */}
               <span style={VISUALLY_HIDDEN}>{`${side} × ${side}, ${side * side} a page`}</span>
-              <span aria-hidden="true" style={faceStyle(on)}>
+              <span aria-hidden="true" style={faceRow(on)}>
                 <PageIcon side={side} />
-                <span style={sizeStyle(on)}>{`${side} × ${side}`}</span>
-                <span style={COUNT}>{`${side * side} a page`}</span>
+                <span style={WORDS}>
+                  <span style={sizeStyle(on)}>{`${side} × ${side}`}</span>
+                  <span style={COUNT}>{`${side * side} a page`}</span>
+                </span>
               </span>
               {on && <ChosenMark />}
             </button>

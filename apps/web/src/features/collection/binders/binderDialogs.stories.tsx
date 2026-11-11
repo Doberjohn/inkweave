@@ -9,7 +9,7 @@ import {PagesChoices} from './PagesChoices';
  * What the binder dialogs share: a small dialog that is a sheet on a phone (`AskDialog`), the
  * Name field, filled in and selected the first time it takes focus, and the line a save that
  * didn't land says over the buttons (`ProblemLine`): the shelf full, the binder gone, or a failure.
- * Change cover and Change page size share a pick dialog (`PickDialog`), whose pick saves at once.
+ * Change cover and Pages share a pick dialog (`PickDialog`), whose pick saves at once.
  */
 function Ask({isMobile, problem}: {isMobile: boolean; problem: SaveProblem | null}) {
   const [name, setName] = useState('Amber');
@@ -54,8 +54,8 @@ export const PickSaving: Story = {
       isOpen
       isMobile={false}
       size="sm"
-      dialogName="Change page size"
-      title="Page size for My collection"
+      dialogName="Pages"
+      title="Pages for My collection"
       lead="Pick how many cards a page holds."
       saving
       problem={null}
@@ -74,8 +74,8 @@ export const PickFailed: Story = {
       isOpen
       isMobile={false}
       size="sm"
-      dialogName="Change page size"
-      title="Page size for My collection"
+      dialogName="Pages"
+      title="Pages for My collection"
       lead="Pick how many cards a page holds."
       saving={false}
       problem="failed"

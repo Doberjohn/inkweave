@@ -1,5 +1,5 @@
 import {useLayoutEffect, useState} from 'react';
-import {loneFitFor, THREE_ROWS, type LoneFit, type LoneRoom} from '../cards/components/binderGeometry';
+import {loneFitFor, THREE_ROWS, type BinderGrid, type LoneFit, type LoneRoom} from '../cards/components/binderGeometry';
 
 /**
  * The room inside `section`'s padding. Its width is its border box's, as if no scrollbar stood in
@@ -18,7 +18,7 @@ function roomOf(section: HTMLElement): LoneRoom {
 const sameFit = (a: LoneFit, b: LoneFit) => a.rows === b.rows && a.maxWidth === b.maxWidth;
 
 /**
- * How a phone's lone page fits the binder's section (`loneFitFor`): measured in a layout
+ * How a phone's lone page of `grid` fits the binder's section (`loneFitFor`): measured in a layout
  * effect, so the first paint already has the page's rows, and again whenever the section resizes
  * (a rotation, the browser's bars). The loaded binder and its loading frame both read it, so the
  * one takes over the other's rows. `on`: only a phone's section is measured.
@@ -27,7 +27,7 @@ const sameFit = (a: LoneFit, b: LoneFit) => a.rows === b.rows && a.maxWidth === 
  * element can be replaced while the component stays mounted (the error state draws its own box,
  * and Try again mounts a new one), and only a new value re-runs the effect on the new element.
  */
-export function useLoneFit(section: HTMLElement | null, on: boolean): LoneFit {
+export function useLoneFit(section: HTMLElement | null, on: boolean, grid: BinderGrid): LoneFit {
   // Before the section is measured, and anywhere it isn't (a test renderer lays nothing out): 3 rows.
   const [fit, setFit] = useState<LoneFit>(THREE_ROWS);
   useLayoutEffect(() => {
@@ -35,7 +35,7 @@ export function useLoneFit(section: HTMLElement | null, on: boolean): LoneFit {
     const measure = () => {
       const room = roomOf(section);
       if (room.width <= 0 || room.height <= 0) return;
-      const next = loneFitFor(room);
+      const next = loneFitFor(room, grid);
       setFit((shown) => (sameFit(shown, next) ? shown : next));
     };
     measure();
@@ -43,6 +43,6 @@ export function useLoneFit(section: HTMLElement | null, on: boolean): LoneFit {
     const observer = new ResizeObserver(measure);
     observer.observe(section);
     return () => observer.disconnect();
-  }, [section, on]);
+  }, [section, on, grid]);
   return on ? fit : THREE_ROWS;
 }

@@ -335,7 +335,7 @@ function SectionContent({
   const windowOpen = useCardWindowOpen();
   // A phone's page has the rows its section fits, the loading binder's as the loaded one's.
   const [section, setSection] = useState<HTMLDivElement | null>(null);
-  const loneFit = useLoneFit(section, isMobile);
+  const loneFit = useLoneFit(section, isMobile, grid);
   const {setCode} = controls;
 
   // Both states are rendered rather than falling through to an empty binder.

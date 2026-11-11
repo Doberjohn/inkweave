@@ -37,8 +37,8 @@ describe('PagesPicker', () => {
 
   it("offers the three sizes, smallest first, My collection's own marked", () => {
     renderPicker({pages: 3});
-    expect(screen.getByRole('dialog', {name: 'Change page size'})).toBeInTheDocument();
-    expect(screen.getByRole('heading', {name: 'Page size for My collection'})).toBeInTheDocument();
+    expect(screen.getByRole('dialog', {name: 'Pages'})).toBeInTheDocument();
+    expect(screen.getByRole('heading', {name: 'Pages for My collection'})).toBeInTheDocument();
     expect(choices()).toEqual([choice(2), choice(3), choice(4)]);
     expect(chosen()).toEqual([choice(3)]);
   });
@@ -82,6 +82,6 @@ describe('PagesPicker', () => {
 
   it("draws a phone's sheet", () => {
     renderPicker({isMobile: true});
-    expect(screen.getByRole('dialog', {name: 'Change page size'})).toHaveClass('overlay-slide-up');
+    expect(screen.getByRole('dialog', {name: 'Pages'})).toHaveClass('overlay-slide-up');
   });
 });

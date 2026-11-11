@@ -102,12 +102,12 @@ describe('BinderShelf', () => {
     expect(view.container.firstElementChild).toHaveClass('ph-no-capture');
   });
 
-  it("offers Open, Change cover and Change page size alone on My collection's ⋯, and no binder's page size", () => {
+  it("offers Open, Change cover and Pages alone on My collection's ⋯, and no binder's page size", () => {
     renderShelf();
     fireEvent.click(menuOf('My collection'));
-    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Open', 'Change cover', 'Change page size']);
+    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Open', 'Change cover', 'Pages']);
     fireEvent.click(menuOf('Ruby'));
-    expect(screen.queryByRole('menuitem', {name: 'Change page size'})).toBeNull();
+    expect(screen.queryByRole('menuitem', {name: 'Pages'})).toBeNull();
   });
 
   it("offers no Change cover after a failed read, which would leave the new cover nowhere to show", () => {
@@ -151,12 +151,12 @@ describe('BinderShelf', () => {
     expect(await screen.findByRole('heading', {name: 'Cover for My collection'})).toBeInTheDocument();
   });
 
-  it("changes My collection's page size from its ⋯, its shelf row's size marked, and closes once the server has it", async () => {
+  it("changes My collection's page size from its ⋯'s Pages, its shelf row's size marked, and closes once the server has it", async () => {
     writes.setMyCollection.mockResolvedValue(true);
     renderShelf({myCollection: {pages: 3, cover: null}});
     fireEvent.click(menuOf('My collection'));
-    fireEvent.click(screen.getByRole('menuitem', {name: 'Change page size'}));
-    expect(await screen.findByRole('heading', {name: 'Page size for My collection'})).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Pages'}));
+    expect(await screen.findByRole('heading', {name: 'Pages for My collection'})).toBeInTheDocument();
     expect(screen.getByRole('button', {name: '3 × 3, 9 a page'})).toHaveAttribute('aria-pressed', 'true');
     await act(async () => fireEvent.click(screen.getByRole('button', {name: '2 × 2, 4 a page'})));
     expect(writes.setMyCollection).toHaveBeenCalledExactlyOnceWith({readerId: 'user-1', patch: {pages: 2}});

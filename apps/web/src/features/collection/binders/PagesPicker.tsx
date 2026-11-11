@@ -42,7 +42,7 @@ function usePagesSave({readerId, onSaved}: Pick<PagesPickerProps, 'readerId' | '
 }
 
 /**
- * Change page size, from My collection's ⋯ on the shelf: its three sizes, 2 × 2 to 4 × 4, its own
+ * Pages, from My collection's ⋯ on the shelf: its three sizes, 2 × 2 to 4 × 4, its own
  * ringed and marked. A binder of your own changes its size in the window, beside its rules. A pick
  * saves at once and closes the picker once it lands; picking the size it has already only closes.
  * A failure keeps it open and says so. A dialog on a computer and a tablet, a sheet on a phone.
@@ -60,8 +60,8 @@ export function PagesPicker(props: PagesPickerProps) {
       isOpen={props.isOpen}
       isMobile={props.isMobile}
       size="sm"
-      dialogName="Change page size"
-      title={`Page size for ${MY_COLLECTION}`}
+      dialogName="Pages"
+      title={`Pages for ${MY_COLLECTION}`}
       lead="Pick how many cards a page holds."
       saving={save.saving}
       problem={save.failed ? 'failed' : null}

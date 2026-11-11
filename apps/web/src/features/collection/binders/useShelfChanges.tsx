@@ -55,7 +55,7 @@ function useCoverChange({readerId, isMobile, counted, myCover}: PickerFor & Pick
   return {open: (binder: Binder | null) => covers.open({binder}), node};
 }
 
-/** Change page size, My collection's alone. */
+/** Pages, My collection's page size, its alone. */
 function usePagesChange({readerId, isMobile, counted, myPages}: PickerFor & Pick<ChangesFor, 'myPages'>) {
   const sizes = usePickerOpening<object>(counted);
   const sizing = sizes.opening;
@@ -77,7 +77,7 @@ function usePagesChange({readerId, isMobile, counted, myPages}: PickerFor & Pick
 }
 
 /**
- * Rename, Change cover and My collection's Change page size from a cover's ⋯: each dialog's
+ * Rename, Change cover and My collection's Pages from a cover's ⋯: each dialog's
  * opening, kept while it closes so its words stay, and its element. Rename is small and comes
  * with the shelf; the two pickers each load in a chunk of their own on their first opening. Each
  * returns focus to the ⋯ that opened it as it closes.

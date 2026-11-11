@@ -358,9 +358,9 @@ describe("BinderSpread at a binder's own size", () => {
     expect(card(12)).toHaveFocus();
   });
 
-  it("draws a phone's 4 by 4 page as it is, as wide as the binder, whatever rows today's page would fit", async () => {
+  it("draws a phone's 4 by 4 page as it is, as wide as the binder where its fit sets no cap, whatever rows today's page would fit", async () => {
     const user = userEvent.setup();
-    render(spread({grid: squarePage(4), single: true, start: 16, loneFit: {rows: 3, maxWidth: 331}}));
+    render(spread({grid: squarePage(4), single: true, start: 16, loneFit: {rows: 4}}));
     expect(pocketsOn('Page')).toHaveLength(16);
     expect(page('Page').style.gridTemplateColumns).toBe('repeat(4, minmax(0, 1fr))');
     expect(document.querySelector<HTMLElement>('.binder-board')!.parentElement!.style.maxWidth).toBe('');

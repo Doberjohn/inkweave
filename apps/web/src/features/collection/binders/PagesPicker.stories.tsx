@@ -3,7 +3,7 @@ import {fn} from 'storybook/test';
 import {PagesPicker} from './PagesPicker';
 
 /**
- * Change page size, from My collection's ⋯: its three sizes, its own ringed and marked. A pick
+ * Pages, from My collection's ⋯: its three sizes, its own ringed and marked. A pick
  * saves at once, and saves reach the server, so these stories never pick; its unit tests hold the
  * saving and failure states. A dialog on a computer, a sheet on a phone.
  */
