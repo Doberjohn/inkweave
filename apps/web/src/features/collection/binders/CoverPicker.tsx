@@ -1,6 +1,6 @@
 import {PickDialog, usePickSave} from './binderDialogs';
 import type {Binder} from './binderRules';
-import {setCover} from './binderShelf';
+import {setCover} from './shelfStore';
 import {CoverChoices} from './CoverChoices';
 import {coverDesign, sameCover, type CoverDesign} from './coverDesigns';
 import {MY_COLLECTION} from './shelfWords';

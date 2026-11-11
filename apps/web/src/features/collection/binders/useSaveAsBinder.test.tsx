@@ -4,13 +4,13 @@ import type {FilterDraft} from '../../../shared/hooks/useFilterParams';
 import {WHOLE_COLLECTION} from '../binderCards';
 import type {SaveOffer} from './binderChoices';
 import type {Binder} from './binderRules';
-import type {CreateResult} from './binderShelf';
+import type {CreateResult} from './shelfStore';
 import type {WindowAsk} from './useBinderWindow';
 import {useSaveAsBinder, type SaveFor} from './useSaveAsBinder';
 
 vi.mock('../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 const writes = vi.hoisted(() => ({createBinder: vi.fn<(make: unknown) => Promise<CreateResult>>()}));
-vi.mock('./binderShelf', () => writes);
+vi.mock('./shelfStore', () => writes);
 
 const OFFER: SaveOffer = {scope: WHOLE_COLLECTION, rules: 'ink=Amber', line: 'Amber ink', figures: {complete: 2, master: 1, cards: 5}};
 const MADE: Binder = {id: 'b9', name: 'Amber', scope: WHOLE_COLLECTION, rules: 'ink=Amber', pages: 4, cover: null, place: 0};

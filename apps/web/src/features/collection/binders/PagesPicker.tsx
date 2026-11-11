@@ -1,6 +1,6 @@
 import type {PageSide} from '../../cards/components/binderGeometry';
 import {PickDialog, usePickSave} from './binderDialogs';
-import {setMyCollection} from './binderShelf';
+import {setMyCollection} from './shelfStore';
 import {PagesChoices} from './PagesChoices';
 import {MY_COLLECTION} from './shelfWords';
 

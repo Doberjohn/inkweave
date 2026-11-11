@@ -9,7 +9,7 @@ import {AskDialog, NameField, ProblemLine, WhenGone, type SaveProblem} from './b
 import {CHIP, CHIPS, HEADING, LEAD} from './binderFields';
 import {isValidBinderName, trimBinderName} from './binderName';
 import {ruleKinds, ruleParts, type Binder} from './binderRules';
-import {createBinder} from './binderShelf';
+import {createBinder} from './shelfStore';
 import {PagesChoices} from './PagesChoices';
 import {suggestName} from './saveRules';
 import {cardCount} from './shelfWords';

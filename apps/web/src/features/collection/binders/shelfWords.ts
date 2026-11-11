@@ -1,5 +1,5 @@
 import {isPromoScope} from '../binderCards';
-import type {BinderShelf} from './binderShelf';
+import type {BinderShelf} from './shelfStore';
 
 /*
  * The words and the count the shelf's heading, its covers and the Binders tab's All your binders

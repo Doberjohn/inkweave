@@ -13,6 +13,8 @@ import {
   type ShelfLook,
 } from './binderRepository';
 import type {Binder} from './binderRules';
+import {pagesKey} from './rememberedPages';
+import type {PageSide} from '../../cards/components/binderGeometry';
 
 /**
  * The reader's binders, held for the visit.
@@ -21,7 +23,9 @@ import type {Binder} from './binderRules';
  * browser's storage. Read once per visit for the reader who asked, the first time collection mode
  * wants them, once the account's copy has answered, and again whenever the tab is shown while
  * something wants them, so a binder made or deleted on another device shows. Another account
- * starts empty, and signing out forgets them.
+ * starts empty, and signing out forgets them. Only My collection's page size is also kept in the
+ * browser (`rememberedPages.ts`), so the next visit's loading binder draws at its size: each read
+ * and size change writes it, and a Clear forgets it.
  *
  * EACH READ WAITS IN THE COLLECTION'S WRITE QUEUE (`enqueueWrite`), as the sharing switch's does:
  * a binder's row hangs off the collection's, so a read must never see rows a queued Clear is
@@ -73,6 +77,20 @@ function forgetBinders(): void {
   if (held !== null) publish(null);
 }
 
+/**
+ * Remembers My collection's page size in the browser for `readerId` (`rememberedPages.ts`), or
+ * forgets it (null). A browser that won't write its storage keeps what it had: the next visit's
+ * loading binder then draws that size, or a new binder's, until the shelf answers.
+ */
+function rememberPages(readerId: string, pages: PageSide | null): void {
+  try {
+    if (pages === null) localStorage.removeItem(pagesKey(readerId));
+    else localStorage.setItem(pagesKey(readerId), String(pages));
+  } catch {
+    // Nothing to do: the shelf's own read still answers with the size.
+  }
+}
+
 /** My collection's page size and cover on show for `readerId`, or the defaults. */
 const heldLook = (readerId: string) => (held?.readerId === readerId ? held.myCollection : undefined) ?? SHELF_DEFAULT;
 
@@ -83,6 +101,7 @@ const heldLook = (readerId: string) => (held?.readerId === readerId ? held.myCol
  */
 async function readShelf(readerId: string): Promise<Held> {
   const [binders, look] = await Promise.all([listBinders(readerId), getShelf(readerId)]);
+  if (look.data !== null) rememberPages(readerId, look.data.pages);
   if (binders.error !== null || binders.data === null) return {readerId, value: 'failed'};
   return {readerId, value: binders.data, myCollection: look.data ?? heldLook(readerId)};
 }
@@ -114,6 +133,7 @@ function finishLoad(done: Held): void {
 /** A Clear took the reader's binders with their collection: none, with no read, and none still on its way. */
 function emptyFor(readerId: string): void {
   newest++;
+  rememberPages(readerId, null);
   if (held?.readerId !== readerId || held.value !== NONE) publish({readerId, value: NONE});
 }
 
@@ -268,6 +288,7 @@ export async function updateBinder({readerId, id, patch}: BinderRef & {patch: Pa
 export async function setMyCollection({readerId, patch}: {readerId: string; patch: Partial<ShelfLook>}): Promise<boolean> {
   const {error} = await enqueueWrite(readerId, () => setShelf(readerId, patch));
   if (error !== null) return false;
+  if (patch.pages !== undefined) rememberPages(readerId, patch.pages);
   const binders = heldBinders({readerId});
   if (binders !== null) publish({readerId, value: binders, myCollection: {...heldLook(readerId), ...patch}});
   return true;

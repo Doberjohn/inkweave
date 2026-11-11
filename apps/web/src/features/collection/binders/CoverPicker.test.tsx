@@ -2,14 +2,14 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {act, fireEvent, render, screen, within} from '@testing-library/react';
 import {trackEvent} from '../../../shared/lib/analytics';
 import type {Binder} from './binderRules';
-import type {CoverResult} from './binderShelf';
+import type {CoverResult} from './shelfStore';
 import {CoverPicker, type CoverPickerProps} from './CoverPicker';
 
 vi.mock('../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
 const writes = vi.hoisted(() => ({
   setCover: vi.fn<(change: {readerId: string; id: string | null; cover: string}) => Promise<CoverResult>>(),
 }));
-vi.mock('./binderShelf', () => writes);
+vi.mock('./shelfStore', () => writes);
 
 const AMBER: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: 'sunburst', place: 0};
 

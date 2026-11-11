@@ -8,7 +8,7 @@ import {PhoneSheet, ProblemLine, WhenGone, type SaveProblem} from './binderDialo
 import {LEAD as LEAD_TEXT} from './binderFields';
 import type {BinderInput} from './binderRepository';
 import {ruleKinds, type Binder} from './binderRules';
-import {createBinder, updateBinder} from './binderShelf';
+import {createBinder, updateBinder} from './shelfStore';
 import {DraftCount, DraftCover, DraftPreview, RulesFields} from './BinderWindowParts';
 import {sameCover} from './coverDesigns';
 import {startOf, useBinderDraft, type BinderDraft, type DraftStart, type NewStart} from './useBinderDraft';

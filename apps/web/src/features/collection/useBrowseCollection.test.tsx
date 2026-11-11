@@ -11,7 +11,7 @@ import type {HandCount} from './binderEvents';
 import {TODAY_PAGE, squarePage} from '../cards/components/binderGeometry';
 import type {Binder} from './binders/binderRules';
 import {coverDesign} from './binders/coverDesigns';
-import type {BinderShelf} from './binders/binderShelf';
+import type {BinderShelf} from './binders/shelfStore';
 import {binderGridOf, useBrowseCollection, type BrowseListing, type PhoneSheetOptions} from './useBrowseCollection';
 import {useBinderParams} from './useBinderParams';
 // The binder's chunk, which the Binder sheet's numbers come from, friends' chunk, which the foil
@@ -1156,24 +1156,33 @@ describe("binderGridOf: the page the binder on show draws", () => {
   });
   const NONE = {status: 'none'} as const;
   const THREES: Binder = {id: 'b1', name: 'Threes', scope: 'all', rules: '', pages: 3, cover: null, place: 0};
+  const SHOWN = {status: 'shown', binder: THREES, cover: coverDesign(null), narrowed: false} as const;
 
   it("draws today's page where binders are off", () => {
-    expect(binderGridOf({shelf: null, custom: NONE}, null)).toBe(TODAY_PAGE);
+    expect(binderGridOf({shelf: null, custom: NONE}, null, 3)).toBe(TODAY_PAGE);
   });
 
-  it("draws My collection at its shelf row's size, and waits while the shelf reads", () => {
-    expect(binderGridOf({shelf: shelf('ready', 2), custom: NONE}, null)).toBe(squarePage(2));
-    expect(binderGridOf({shelf: shelf('loading'), custom: NONE}, null)).toBeNull();
+  it("draws My collection at its shelf row's size over the one remembered, and waits while the shelf reads", () => {
+    expect(binderGridOf({shelf: shelf('ready', 2), custom: NONE}, null, null)).toBe(squarePage(2));
+    expect(binderGridOf({shelf: shelf('ready', 2), custom: NONE}, null, 3)).toBe(squarePage(2));
+    expect(binderGridOf({shelf: shelf('loading'), custom: NONE}, null, null)).toBeNull();
+    expect(binderGridOf({shelf: shelf('loading'), custom: NONE}, null, 3)).toBeNull();
   });
 
   it("draws My collection at a new binder's size with no row, after a failed read, or with no shelf to read", () => {
     for (const status of ['ready', 'failed', 'idle'] as const) {
-      expect(binderGridOf({shelf: shelf(status), custom: NONE}, null)).toBe(squarePage(4));
+      expect(binderGridOf({shelf: shelf(status), custom: NONE}, null, null)).toBe(squarePage(4));
     }
   });
 
-  it("draws a binder of your own at its size, and a friend's at a new binder's", () => {
-    expect(binderGridOf({shelf: shelf('ready', 2), custom: {status: 'shown', binder: THREES, cover: coverDesign(null), narrowed: false}}, null)).toBe(squarePage(3));
-    expect(binderGridOf({shelf: shelf('loading'), custom: NONE}, {status: 'loading'})).toBe(squarePage(4));
+  it('draws My collection at the size remembered after a failed read, or before the shelf can read', () => {
+    for (const status of ['failed', 'idle'] as const) {
+      expect(binderGridOf({shelf: shelf(status), custom: NONE}, null, 3)).toBe(squarePage(3));
+    }
+  });
+
+  it("draws a binder of your own at its size, and a friend's at a new binder's, whatever My collection's remembered", () => {
+    expect(binderGridOf({shelf: shelf('ready', 2), custom: SHOWN}, null, 2)).toBe(squarePage(3));
+    expect(binderGridOf({shelf: shelf('loading'), custom: NONE}, {status: 'loading'}, 3)).toBe(squarePage(4));
   });
 });

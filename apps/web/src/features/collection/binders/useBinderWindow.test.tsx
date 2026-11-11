@@ -5,7 +5,7 @@ import type {CollectionEntries} from '../collectionParser';
 import {useBinderWindow} from './useBinderWindow';
 
 vi.mock('../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
-vi.mock('./binderShelf', () => ({createBinder: vi.fn(), updateBinder: vi.fn()}));
+vi.mock('./shelfStore', () => ({createBinder: vi.fn(), updateBinder: vi.fn()}));
 const drafts = vi.hoisted(() => ({count: 0}));
 vi.mock('./useBinderDraft', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./useBinderDraft')>();

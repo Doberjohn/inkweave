@@ -2,7 +2,7 @@ import {useEffect, useState, useSyncExternalStore} from 'react';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from './collectionParser';
 import {SHOW_BINDERS} from './binders/flag';
-import type {BinderShelf} from './binders/binderShelf';
+import type {BinderShelf} from './binders/shelfStore';
 import type {CustomBinder, OwnBinders, OwnBindersAsk} from './binders/binderChoices';
 
 /**
@@ -93,7 +93,7 @@ function beforeLoad(ask: OwnBindersAsk, pool: LorcanaCard[], load: {failed: bool
 }
 
 /**
- * Your binders: read once for the visit when collection mode `wanted` them (`binders/binderShelf.ts`),
+ * Your binders: read once for the visit when collection mode `wanted` them (`binders/shelfStore.ts`),
  * and the binder `?custom=` names over the whole `pool`, its cards and its cover.
  */
 export function useOwnBinders(ask: OwnBindersAsk, pool: LorcanaCard[], entries: CollectionEntries): OwnBinders {

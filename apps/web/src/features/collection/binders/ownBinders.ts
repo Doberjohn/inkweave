@@ -2,7 +2,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from '../collectionParser';
 import type {CustomBinder, OfferAsk, OwnBinders, OwnBindersAsk, SaveOffer} from './binderChoices';
 import {filtersCards, rulePool, type Binder} from './binderRules';
-import {viewOf, type BinderShelf, type Held} from './binderShelf';
+import {viewOf, type BinderShelf, type Held} from './shelfStore';
 import {coverDesign} from './coverDesigns';
 import {saveOffer} from './saveRules';
 import {SHELF_MAX} from './shelfWords';
@@ -11,7 +11,7 @@ import {SHELF_MAX} from './shelfWords';
  * The binder code the page runs, one chunk that `useOwnBinders` loads once collection mode
  * wants your binders, and only with binders on (`flag.ts`): the store, the rules and the covers.
  */
-export {follow, snapshot, subscribe} from './binderShelf';
+export {follow, snapshot, subscribe} from './shelfStore';
 
 const NONE: CustomBinder = {status: 'none'};
 const LOADING: CustomBinder = {status: 'loading'};

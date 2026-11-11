@@ -145,11 +145,11 @@ describe('useOwnBinders: the shelf', () => {
     expect(repo.listBinders).toHaveBeenLastCalledWith('other');
   });
 
-  it("keeps nothing in the browser's storage", async () => {
+  it("keeps no binder in the browser's storage, only My collection's page size", async () => {
     const setItem = vi.spyOn(Storage.prototype, 'setItem');
     const {result} = render();
     await waitFor(() => expect(result.current.shelf?.status).toBe('ready'));
-    expect(setItem).not.toHaveBeenCalled();
+    expect(setItem.mock.calls).toEqual([['inkweave:collection:pages:me', '4']]);
   });
 });
 

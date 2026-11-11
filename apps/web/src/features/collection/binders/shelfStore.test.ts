@@ -12,7 +12,8 @@ import {
   updateBinder,
   viewOf,
   type BinderReader,
-} from './binderShelf';
+} from './shelfStore';
+import {rememberedPages} from './rememberedPages';
 
 const repo = vi.hoisted(() => ({
   listBinders: vi.fn(),
@@ -270,6 +271,52 @@ describe("My collection's page size and cover", () => {
     repo.deleteBinderRow.mockResolvedValue({data: null, error: null});
     await deleteBinder({readerId: 'me', id: 'b2'});
     expect(mine()).toEqual(TARTAN);
+  });
+});
+
+describe("the page size this browser remembers for My collection", () => {
+  afterEach(() => localStorage.clear());
+
+  it('is what each read of the row answers, a new binder\'s size with no row', async () => {
+    follow({...READER, uid: null});
+    await loadShelf({pages: 3, cover: null});
+    expect(rememberedPages('me')).toBe(3);
+    follow({...READER, uid: null});
+    await loadShelf();
+    expect(rememberedPages('me')).toBe(4);
+  });
+
+  it('stays when a read fails to read the row', async () => {
+    follow({...READER, uid: null});
+    await loadShelf({pages: 3, cover: null});
+    repo.getShelf.mockResolvedValue({data: null, error: 'Network error'});
+    viewOf(snapshot(), READER).retry();
+    await vi.waitFor(() => expect(repo.getShelf).toHaveBeenCalledTimes(2));
+    expect(rememberedPages('me')).toBe(3);
+  });
+
+  it('follows a size change once the server has it, and never a failed one', async () => {
+    repo.setShelf.mockResolvedValue({data: null, error: null});
+    await setMyCollection({readerId: 'me', patch: {pages: 2}});
+    expect(rememberedPages('me')).toBe(2);
+    repo.setShelf.mockResolvedValue({data: null, error: 'Network error'});
+    await setMyCollection({readerId: 'me', patch: {pages: 3}});
+    expect(rememberedPages('me')).toBe(2);
+  });
+
+  it('is forgotten once a Clear has taken the collection, and its row with it', () => {
+    follow({...READER, hasCollection: false});
+    expect(rememberedPages('me')).toBeNull();
+  });
+
+  it("leaves the shelf and its size to the read where the browser refuses its storage", async () => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('full', 'QuotaExceededError');
+    });
+    follow({...READER, uid: null});
+    await loadShelf({pages: 3, cover: null});
+    expect(viewOf(snapshot(), READER).myCollection).toEqual({pages: 3, cover: null});
+    vi.restoreAllMocks();
   });
 });
 

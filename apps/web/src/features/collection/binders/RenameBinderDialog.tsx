@@ -5,7 +5,7 @@ import {DIALOG_TITLE, SPACING} from '../../../shared/constants';
 import {AskDialog, NameField, ProblemLine, WhenGone, type SaveProblem} from './binderDialogs';
 import {isValidBinderName, trimBinderName} from './binderName';
 import type {Binder} from './binderRules';
-import {updateBinder} from './binderShelf';
+import {updateBinder} from './shelfStore';
 
 export interface RenameBinderDialogProps {
   isOpen: boolean;

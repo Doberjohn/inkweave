@@ -2,7 +2,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import type {CollectionEntries} from '../collectionParser';
 import type {BinderChoices, OpenBinder} from './binderChoices';
 import type {Binder} from './binderRules';
-import type {BinderShelf} from './binderShelf';
+import type {BinderShelf} from './shelfStore';
 import {coverDesign} from './coverDesigns';
 
 /*

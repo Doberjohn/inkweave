@@ -1,7 +1,7 @@
 import {describe, it, expect, vi} from 'vitest';
 import {renderHook} from '@testing-library/react';
 import type {Binder} from './binderRules';
-import type {BinderShelf} from './binderShelf';
+import type {BinderShelf} from './shelfStore';
 import {useShelf, type ShelfAsk} from './useShelf';
 
 const AMBER: Binder = {id: 'b1', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: null, place: 0};

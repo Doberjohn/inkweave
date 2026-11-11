@@ -218,7 +218,7 @@ describe('loadableBinderCode', () => {
         code: 'import("./BinderTab-c.js")',
         modules: {
           [`${SRC}/pages/BrowsePage.tsx`]: 40,
-          [`${BINDERS}/binderShelf.ts`]: 40,
+          [`${BINDERS}/shelfStore.ts`]: 40,
         },
       },
       'assets/BinderTab-c.js': {
@@ -226,7 +226,7 @@ describe('loadableBinderCode', () => {
       },
     });
     expect(loadableBinderCode(bundle)).toEqual([
-      'src/features/collection/binders/binderShelf.ts in assets/BrowsePage-b.js',
+      'src/features/collection/binders/shelfStore.ts in assets/BrowsePage-b.js',
       'src/features/collection/binders/BinderTab.tsx in assets/BinderTab-c.js',
     ]);
   });

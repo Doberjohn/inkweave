@@ -13,7 +13,7 @@ import {BinderCover, CoverSkeleton} from './BinderCover';
 import {BinderMenu} from './BinderMenu';
 import {binderFace, type BinderFace} from './binderCovers';
 import {ruleKinds, ruleLine, type Binder} from './binderRules';
-import {deleteBinder, moveBinder, type BinderShelf as Shelf} from './binderShelf';
+import {deleteBinder, moveBinder, type BinderShelf as Shelf} from './shelfStore';
 import {DeleteBinderDialog} from './DeleteBinderDialog';
 import {NewBinderTile, ShelfFullLine} from './NewBinderTile';
 import {MY_COLLECTION, SHELF_MAX} from './shelfWords';

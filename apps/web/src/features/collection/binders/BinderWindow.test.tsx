@@ -4,7 +4,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {trackEvent} from '../../../shared/lib/analytics';
 import type {CollectionEntries} from '../collectionParser';
 import type {Binder} from './binderRules';
-import type {CreateResult, UpdateResult} from './binderShelf';
+import type {CreateResult, UpdateResult} from './shelfStore';
 import {BinderWindow, type BinderWindowProps} from './BinderWindow';
 
 vi.mock('../../../shared/lib/analytics', () => ({trackEvent: vi.fn()}));
@@ -12,7 +12,7 @@ const writes = vi.hoisted(() => ({
   createBinder: vi.fn<(make: {readerId: string; input: unknown}) => Promise<CreateResult>>(),
   updateBinder: vi.fn<(change: {readerId: string; id: string; patch: unknown}) => Promise<UpdateResult>>(),
 }));
-vi.mock('./binderShelf', () => writes);
+vi.mock('./shelfStore', () => writes);
 
 const cardOf = (facts: Partial<LorcanaCard> & Pick<LorcanaCard, 'id'>) =>
   ({name: facts.id, fullName: facts.id, cost: 1, ink: 'Amber', inkwell: true, type: 'Character', rarity: 'Common', setCode: '12', setNumber: 1, ...facts}) as LorcanaCard;

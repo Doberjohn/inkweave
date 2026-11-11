@@ -5,7 +5,7 @@ import {WHOLE_COLLECTION} from '../binderCards';
 import type {CollectionEntries} from '../collectionParser';
 import type {OwnBindersAsk} from './binderChoices';
 import type {Binder} from './binderRules';
-import type {Held} from './binderShelf';
+import type {Held} from './shelfStore';
 import {ownBindersOf} from './ownBinders';
 import {SHELF_MAX} from './shelfWords';
 
