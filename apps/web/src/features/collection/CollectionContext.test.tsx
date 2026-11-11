@@ -12,6 +12,7 @@ import {
   writeCollection,
 } from './collectionStorage';
 import {deleteCollection, getCollection, upsertCollection} from './collectionRepository';
+import {enqueueWrite} from './collectionWriteQueue';
 import type {CollectionEntries} from './collectionParser';
 import {placementsFor} from './placeCopies';
 import {trackEvent} from '../../shared/lib/analytics';
@@ -225,8 +226,21 @@ describe('CollectionContext — signed in', () => {
       result.current.clearImported();
     });
     // The shelf row goes with the collection, so the next one's binder starts at a new binder's size.
-    expect(localStorage.getItem(pagesKey('user-1'))).toBeNull();
+    await vi.waitFor(() => expect(localStorage.getItem(pagesKey('user-1'))).toBeNull());
     expect(localStorage.getItem(pagesKey('user-2'))).toBe('3');
+  });
+
+  it('forgets the page size after a size change already on its way, which would otherwise put it back', async () => {
+    writeCollection(ENTRIES, 5000, null, 'import');
+    let land = () => {};
+    const landed = new Promise<void>((resolve) => (land = resolve));
+    // A binder's size change queued before the Clear: it remembers its size once its write lands.
+    void enqueueWrite('user-1', () => landed).then(() => localStorage.setItem(pagesKey('user-1'), '2'));
+    const {result} = render();
+    act(() => result.current.clearImported());
+    land();
+    await vi.waitFor(() => expect(deleteCollection).toHaveBeenCalledWith('user-1'));
+    await vi.waitFor(() => expect(localStorage.getItem(pagesKey('user-1'))).toBeNull());
   });
 
   it('adopts the account copy over this browser stale one', async () => {

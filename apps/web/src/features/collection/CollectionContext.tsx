@@ -351,6 +351,10 @@ function deleteFromServer(uid: Uid): Promise<boolean> {
   clearUploadPending(uid);
   return enqueueWrite(uid, async () => {
     const {error} = await deleteCollection(uid);
+    // The binders' shelf row goes with the collection, so My collection's page size does too,
+    // whichever page the Clear came from. Here, after every write queued before the delete, so a
+    // binder's size change still on its way can't put it back.
+    forgetRememberedPages(uid);
     if (error === null) clearDeleteTombstone(uid, token);
     return error === null;
   });
@@ -732,12 +736,8 @@ export function CollectionProvider({children, placements = NO_PLACEMENTS}: Colle
     cancelUpload(waitingUpload);
     // Clearing while signed in clears it everywhere, or the collection reappears
     // from another device. Queued behind any upload already in flight, and
-    // tombstoned until it lands. The binders' shelf row goes with it, so the page size this
-    // browser remembers for My collection goes now, whichever page the Clear came from.
-    if (uid) {
-      forgetRememberedPages(uid);
-      void deleteFromServer(uid);
-    }
+    // tombstoned until it lands.
+    if (uid) void deleteFromServer(uid);
   }
 
   /**
