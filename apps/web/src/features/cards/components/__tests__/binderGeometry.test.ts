@@ -42,25 +42,21 @@ describe('loneFitFor', () => {
   });
 });
 
-/**
- * A square page fits by its own size. A room 378 wide gives a 4 by 4 page cards 65.5 wide: 378,
- * less 16 for the inset and 100 for the board, spine, padding and gaps across, over four. Down it
- * takes 136 besides its cards (2 over the map, the map's band of 56, 76 of board, padding and
- * gaps, and 2 against rounding), so its cards are (height - 136) x 0.72 / 4 wide.
- */
-describe('loneFitFor, a square page', () => {
-  it('draws it as wide as the binder where its page and map fit the height', () => {
-    expect(loneFitFor({width: 378, height: 520}, squarePage(4))).toEqual({rows: 3});
+describe("loneFitFor, a binder's own size", () => {
+  it("fits a 4 by 4 page by the rows that fit, as a phone draws it 3 across like today's", () => {
+    for (const height of [585, 587, 900]) {
+      const room = {width: 378, height};
+      expect(loneFitFor(room, squarePage(4))).toEqual(loneFitFor(room, TODAY_PAGE));
+    }
+    expect(loneFitFor({width: 378, height: 900}, squarePage(4)).rows).toBe(4);
   });
 
-  it('caps its box to the width that fits, where its cards keep 90% of their width', () => {
-    // Cards (480 - 136) x 0.18 = 61.92 wide, 95% of 65.5: 16 + 100 + 4 x 61.92 across.
-    expect(loneFitFor({width: 378, height: 480}, squarePage(4)).maxWidth).toBeCloseTo(363.68, 2);
-  });
-
-  it('leaves it width-driven on a phone too short for that, which scrolls to its map', () => {
-    // (450 - 136) x 0.18 = 56.52, under 90% of 65.5.
-    expect(loneFitFor({width: 378, height: 450}, squarePage(4))).toEqual({rows: 3});
+  it('draws a 2 by 2 or 3 by 3 page as wide as the binder at any height, as no taller than 3 rows of 3 across', () => {
+    for (const side of [2, 3] as const) {
+      expect(loneFitFor({width: 378, height: 900}, squarePage(side))).toEqual({rows: 3});
+      expect(loneFitFor({width: 378, height: 450}, squarePage(side))).toEqual({rows: 3});
+    }
+    expect(mapBandHeight(2)).toBeLessThan(mapBandHeight(3));
   });
 });
 
@@ -86,10 +82,16 @@ describe('a page at its size', () => {
     expect(pagingOf(squarePage(4), false, 3)).toEqual({perView: 32, lead: 16});
   });
 
-  it("pages a phone by the square itself, whatever rows today's page would fit", () => {
-    expect(pagingOf(squarePage(4), true, 3)).toEqual({perView: 16, lead: 16});
+  it("pages a phone's 2 by 2 and 3 by 3 by the page itself, whatever rows today's page would fit", () => {
     expect(pagingOf(squarePage(3), true, 4)).toEqual({perView: 9, lead: 9});
+    expect(pagingOf(squarePage(2), true, 4)).toEqual({perView: 4, lead: 4});
     expect(viewPage(squarePage(2), true, 4)).toBe(squarePage(2));
+  });
+
+  it("draws a phone's 4 by 4 page 3 across with the rows that fit, as today's (owner, 2026-11-11)", () => {
+    expect(viewPage(squarePage(4), true, 4)).toBe(lonePage(4));
+    expect(pagingOf(squarePage(4), true, 3)).toEqual({perView: 9, lead: 9});
+    expect(pagingOf(squarePage(4), true, 4)).toBe(pagingOf(TODAY_PAGE, true, 4));
   });
 
   it("draws today's page 3 across on a phone, and as it is on a spread", () => {

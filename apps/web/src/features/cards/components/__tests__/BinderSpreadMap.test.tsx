@@ -326,12 +326,12 @@ describe("BinderSpreadMap at a binder's own size", () => {
     expect(miniPages(/^Spread 2 of 2/).map(({pattern}) => pattern)).toEqual(['oxxxxxxxx', 'xo.......']);
   });
 
-  it("draws a phone's 4 by 4 page as sixteen cells, four across, whatever rows today's page would fit", () => {
-    render(<BinderSpreadMap single grid={squarePage(4)} rows={3} pockets={POCKETS.slice(0, 40)} current={1} onGo={() => {}} />);
-    expect(minis()).toEqual([COVER_MINI, ...[1, 2, 3].map((page) => `Page ${page} of 3: nothing missing`)]);
-    const cells = screen.getByRole('button', {name: /^Page 1 of 3/}).firstElementChild as HTMLElement;
-    expect(cells.style.gridTemplateColumns).toBe('repeat(4, 7px)');
-    expect(cells.childElementCount).toBe(16);
+  it("draws a phone's 4 by 4 page as the phone draws it, 3 across with the rows that fit, as today's", () => {
+    render(<BinderSpreadMap single grid={squarePage(4)} rows={4} pockets={POCKETS.slice(0, 40)} current={1} onGo={() => {}} />);
+    expect(minis()).toEqual([COVER_MINI, ...[1, 2, 3, 4].map((page) => `Page ${page} of 4: nothing missing`)]);
+    const cells = screen.getByRole('button', {name: /^Page 1 of 4/}).firstElementChild as HTMLElement;
+    expect(cells.style.gridTemplateColumns).toBe('repeat(3, 7px)');
+    expect(cells.childElementCount).toBe(12);
   });
 });
 

@@ -221,12 +221,12 @@ describe('CollectionBinder', () => {
       expect(firstShown()).toBe('Card 28');
     });
 
-    it("pages a phone's 4 by 4 page 16 at a time, whatever rows today's page would fit", () => {
+    it("pages a phone's 4 by 4 page 3 across by the rows that fit, as today's", () => {
       render(binder({grid: squarePage(4), single: true, loneFit: {rows: 3}}));
-      expect(pocket(16)).toBeInTheDocument();
-      expect(screen.queryByRole('button', {name: 'Card 17'})).toBeNull();
+      expect(pocket(9)).toBeInTheDocument();
+      expect(screen.queryByRole('button', {name: 'Card 10'})).toBeNull();
       fireEvent.click(screen.getByRole('button', {name: 'Next page'}));
-      expect(firstShown()).toBe('Card 17');
+      expect(firstShown()).toBe('Card 10');
     });
 
     it('keeps the cards in view when its page size changes', () => {

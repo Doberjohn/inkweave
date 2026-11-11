@@ -195,10 +195,10 @@ export const FourByFour: Story = {
 };
 
 /**
- * A 4 by 4 binder on a phone: its page as it is, four across, so page 1 holds the same sixteen
- * cards as on a computer (2A). View it in the Mobile viewport.
+ * A 3 by 3 binder on a phone: its page as it is. A 4 by 4 binder's phone page is today's 3 across
+ * (`SinglePage`). View it in the Mobile viewport.
  */
-export const SinglePageFourByFour: Story = {
-  args: {grid: squarePage(4), single: true, start: 16, canPrev: true, canNext: true},
+export const SinglePageThreeByThree: Story = {
+  args: {grid: squarePage(3), single: true, start: 9, canPrev: true, canNext: true},
   globals: {viewport: {value: 'mobile1'}},
 };

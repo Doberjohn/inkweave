@@ -432,25 +432,33 @@ const HELD: Entries = Object.fromEntries(
 );
 
 /**
- * The band under a phone's page that its map takes, by the page's side: 4px over a mini page of
- * `side` rows of 9px cells, 2px apart, in 4px of padding and a 1px border (`mapBandHeight` in
+ * The band under a phone's page that its map takes, by the page's rows: 4px over a mini page of
+ * that many rows of 9px cells, 2px apart, in 4px of padding and a 1px border (`mapBandHeight` in
  * binderGeometry.ts). E2E imports no app code, so the sizes are repeated here.
  */
 const MAP_BAND = {2: 34, 3: 45, 4: 56} as const;
 
 /**
- * A phone's binder is one page over its map, a square page drawn as itself, as wide as the
- * binder: My collection's at the size the shelf keeps, 4 by 4 when it keeps none. While the
- * binder's code downloads, its section holds the board, sized from the section's width, and the
- * band the map takes; while its cards load, the binder draws its board with empty pockets over an
- * empty map. The binder then draws its page and map in both frames' boxes.
+ * A phone's binder is one page over its map: My collection's at the size the shelf keeps, 4 by 4
+ * when it keeps none. A 2 by 2 or 3 by 3 page draws as itself, as wide as the binder, and a 4 by
+ * 4 one 3 across, as a binder was before sizes, with three rows, or four where the screen is tall
+ * enough: an iPhone 15's 393x659 with the browser's bars showing, and a Pixel 7's 412x839. While
+ * the binder's code downloads, its section holds the board, sized from the section's width and
+ * height, and the band the map takes; while its cards load, the binder draws its board with
+ * empty pockets over an empty map. The binder then draws its page and map in both frames' boxes.
  */
-for (const side of [2, 3, 4] as const) {
-  test(`on a phone, the binder's loading frames hold the page and its map where the binder draws them, at ${side} by ${side}`, async ({
+const SHORT = {width: 393, height: 659};
+for (const {side, size, columns, rows} of [
+  {side: 2, size: SHORT, columns: 2, rows: 2},
+  {side: 3, size: SHORT, columns: 3, rows: 3},
+  {side: 4, size: SHORT, columns: 3, rows: 3},
+  {side: 4, size: {width: 412, height: 839}, columns: 3, rows: 4},
+] as const) {
+  test(`on a phone, the binder's loading frames hold the page and its map where the binder draws them, at ${side} by ${side}, ${size.width}x${size.height}`, async ({
     page,
   }, testInfo) => {
     test.skip(!isPhone(testInfo.project.name), "A phone's lone page");
-    await page.setViewportSize({width: 393, height: 659});
+    await page.setViewportSize(size);
     const binderCode = await holdLazyModule(page, 'CollectionBinderSection');
     const releaseCards = await hold(page, /\/data\/collection\//);
     await signInAsCollector(page, HELD);
@@ -473,10 +481,10 @@ for (const side of [2, 3, 4] as const) {
       .toBeGreaterThan(0);
     const frame = page.getByRole('region', {name: 'Loading your binder'});
     await expect(frame).toBeVisible();
-    // Until the shelf answers, the frame draws a new binder's 4 by 4: the band then takes the size's.
+    // Until the shelf answers, the frame draws a new binder's 4 by 4: the band then takes the page's.
     const band = frame.getByTestId('binder-map-band');
     await expect.poll(async () => Math.round((await boxOf(band)).height), {message: "the map's band at the shelf's size"}).toBe(
-      MAP_BAND[side],
+      MAP_BAND[rows],
     );
     const codeLoading = {board: await boxOf(frame.locator('.react-loading-skeleton')), map: await boxOf(band)};
 
@@ -501,7 +509,7 @@ for (const side of [2, 3, 4] as const) {
     expectSameBox(loaded.map, cardsLoading.map);
     await expect(
       binder(page).getByRole('group', {name: 'Page', exact: true}).locator('.binder-pocket'),
-    ).toHaveCount(side * side);
+    ).toHaveCount(columns * rows);
   });
 }
 

@@ -825,10 +825,11 @@ test.describe("Collection mode, turning the binder's pages (#942)", () => {
     await expect(sheets(page)).toHaveCount(0);
     await clearTurns(page);
 
-    // Spread 2 holds pages 2 and 3: a phone opens the page that holds its first card, page 2,
-    // a square page drawn as itself. And back to the spread.
+    // Spread 2 holds pages 2 and 3, cards 17 to 48: a phone draws the 4 by 4 page 3 across, and
+    // opens the page that holds card 17, at 390x844 page 2 of twelve, cards 13 to 24. And back to
+    // the spread.
     await page.setViewportSize({width: 390, height: 844});
-    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(firstOfPage(2).fullName);
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[12].fullName);
     await page.setViewportSize({width: 1440, height: 900});
     await expect(shown(page)).toBeVisible();
     await pause(page, 100);
@@ -853,12 +854,15 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
   // page is chosen by width. Touch, for the swipes.
   test.use({hasTouch: true});
 
-  // A 390x844 phone's row, 4 by 4 page and map fit, so nothing scrolls there: the swipes that
-  // check the page's scroll take a phone short enough for the binder to scroll. A square page is
-  // drawn as itself on both, as wide as the binder.
+  // A phone draws My collection's 4 by 4 page 3 across, as a binder was before sizes. A 390x844
+  // phone's page has four rows, twelve cards, and its row, page and map fit, so nothing
+  // scrolls there: the swipes that check the page's scroll take a phone short enough
+  // for the binder to scroll, whose page keeps three rows, nine cards. So the turns, swipes and
+  // keys here run at both sizes of page.
   const PHONE = {width: 390, height: 844};
-  const PER_PAGE = PAGE_POCKETS;
+  const PER_PAGE = 12;
   const SHORT_PHONE = {width: 390, height: 520};
+  const PER_SHORT_PAGE = 9;
   const lonePage = (page: Page) => binder(page).getByRole('group', {name: 'Page', exact: true});
 
   /** A finger's swipe through Chromium's protocol, in ten moves a frame apart. */
@@ -872,7 +876,9 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     page,
   }) => {
     await openBinder(page, PHONE);
-    await expect(lonePage(page).locator('.binder-pocket'), 'a page of 4 by 4').toHaveCount(PER_PAGE);
+    await expect(lonePage(page).locator('.binder-pocket'), 'a page of four rows').toHaveCount(
+      PER_PAGE,
+    );
     await clearTurns(page);
     await mini(page, 2).click();
     await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[PER_PAGE].fullName);
@@ -984,7 +990,9 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     test.skip(browserName !== 'chromium', "Touch goes through Chromium's DevTools protocol");
     await page.addInitScript(watchTouchMoves);
     await openBinder(page, SHORT_PHONE);
-    await expect(lonePage(page).locator('.binder-pocket'), 'a page of 4 by 4, on a short phone too').toHaveCount(PER_PAGE);
+    await expect(lonePage(page).locator('.binder-pocket'), 'a page of three rows').toHaveCount(
+      PER_SHORT_PAGE,
+    );
     const cdp = await page.context().newCDPSession(page);
     const box = await edges(lonePage(page));
     const y = box.top + (box.bottom - box.top) / 3;
@@ -995,7 +1003,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     // Halfway across, then on to 20px inside the page's left edge as the finger drifts 100px
     // down. On an iPhone the drift started the page's scroll, which cancelled the turn (2026-10-25).
     await swipeThrough(page, cdp, fingerPath([box.right - 20, y], [5, [-step, 0]], [5, [-step, 20]]));
-    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[PER_PAGE].fullName);
+    await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[PER_SHORT_PAGE].fullName);
     // Every move is a tenth of the page or more from the press, past the slop that lifts the page.
     const kept = await keptTouchMoves(page);
     expect(kept.length, 'the moves the page saw').toBeGreaterThan(5);
@@ -1020,7 +1028,7 @@ test.describe("Collection mode, turning the binder's pages (phone width)", () =>
     await expect(firstCardOn(page, 'Page')).toHaveAccessibleName(BASE[0].fullName);
     await expect(sheets(page)).toHaveCount(0);
 
-    // Both turns' copies and both pages they land on: four pages of sixteen. In CI's WebKit, whose
+    // Both turns' copies and both pages they land on: four pages of twelve. In CI's WebKit, whose
     // frames can come seconds apart, a turn's sheet can come and go between two, so only the pages
     // the turns land on are sure to be judged there; a stripe never drawn never drew full size.
     const {seen, fullSize} = await stripeLog(page);

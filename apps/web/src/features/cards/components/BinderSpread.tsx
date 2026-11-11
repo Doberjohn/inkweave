@@ -346,8 +346,8 @@ interface BinderSpreadProps {
    * One page per view instead of a spread, for phone widths (owner, 2026-10-07).
    * A spread at 390px left each card ~26px wide; one page with the arrows moved
    * to a row underneath gave ~75px, and 3 by 3 pockets in place of 4 by 3 about
-   * 38% more (owner, 2026-10-25). A lone page of today's holds nine, or twelve at 4 rows
-   * (`loneFit`), and a square page its own (`viewPage`), so the caller pages by that
+   * 38% more (owner, 2026-10-25). A lone page 3 across holds nine, or twelve at 4 rows
+   * (`loneFit`), and a 2 by 2 or 3 by 3 page its own (`viewPage`), so the caller pages by that
    * (`pagingOf`) instead of a spread's: at nine, page p holds slots 9p to 9p + 8, and every
    * card keeps its slot.
    *
@@ -357,8 +357,8 @@ interface BinderSpreadProps {
   single?: boolean;
   /**
    * The binder's page: today's 4 by 3 (the default), or a binder's own size, 2, 3 or 4 a side
-   * (owner, 2026-11-05). A spread draws two of it; a phone draws today's 3 across with the rows
-   * that fit (`loneFit`), and a square page as it is (`viewPage`). The caller pages by the same
+   * (owner, 2026-11-05). A spread draws two of it; a phone draws a 2 by 2 or 3 by 3 page as it is,
+   * and a page 4 across 3 across, with the rows that fit (`loneFit`, `viewPage`). The caller pages by the same
    * grid (`pagingOf`).
    */
   grid?: BinderGrid;
@@ -776,7 +776,7 @@ function SpreadView({edges, ...props}: ViewProps & {edges: boolean}) {
  * left edge, so it still reads as a page in a binder rather than a loose card grid, in a
  * board with one zip round it. Nothing here is measured, which is what keeps what lies below
  * it from moving after first paint: today's page's rows, and its width where the height caps it,
- * come from the section, measured before then (`useLoneFit`). A square page draws as itself.
+ * come from the section, measured before then (`useLoneFit`). A 2 by 2 or 3 by 3 page draws as itself.
  */
 function SingleView({start, grid, renderSlot, arrows, footer, cardCount, sheets, turn, fit, cover}: ViewProps) {
   return (

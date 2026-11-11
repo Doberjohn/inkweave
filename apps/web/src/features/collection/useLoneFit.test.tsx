@@ -42,12 +42,12 @@ describe('useLoneFit (#1000)', () => {
     expect(result.current.rows).toBe(4);
   });
 
-  it("fits a square page by its own size, measured again when the binder's size changes", () => {
-    // Room 378 by 480: three rows of today's, and a 4 by 4 page capped to the width that fits.
-    const box = section(394, 484);
-    const {result, rerender} = renderHook(({grid}) => useLoneFit(box, true, grid), {initialProps: {grid: TODAY_PAGE}});
+  it("fits a page by the binder's size, measured again when the size changes", () => {
+    // Room 378 by 900: four rows of a page drawn 3 across, and a 3 by 3 page as wide as the binder.
+    const box = section(394, 904);
+    const {result, rerender} = renderHook(({grid}) => useLoneFit(box, true, grid), {initialProps: {grid: squarePage(4)}});
+    expect(result.current.rows).toBe(4);
+    rerender({grid: squarePage(3)});
     expect(result.current).toEqual({rows: 3});
-    rerender({grid: squarePage(4)});
-    expect(result.current.maxWidth).toBeCloseTo(363.68, 2);
   });
 });

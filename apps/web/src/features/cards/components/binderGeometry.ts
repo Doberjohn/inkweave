@@ -59,20 +59,27 @@ export type LoneRows = 3 | 4;
  */
 const byRows = <T>(make: (rows: LoneRows) => T): Record<LoneRows, T> => ({3: make(3), 4: make(4)});
 
-/** A phone's lone page of today's, 3 across (owner, 2026-10-25): its pockets about 38% wider than 4 across. */
-const LONE_PAGES = byRows((rows): PageGrid => ({columns: 3, rows}));
+/** The most pockets across a phone draws (owner, 2026-10-25): a lone page 3 across has pockets about 38% wider than 4 across. */
+const LONE_COLUMNS = 3;
+
+/** A phone's lone page of today's, 3 across. */
+const LONE_PAGES = byRows((rows): PageGrid => ({columns: LONE_COLUMNS, rows}));
 export const lonePage = (rows: LoneRows): PageGrid => LONE_PAGES[rows];
 
 /** Whether a page is a binder's own size, as many across as down, rather than today's 4 by 3. */
 export const isSquare = ({columns, rows}: BinderGrid) => columns === rows;
 
+/** Whether a phone draws `grid`'s page as it is: 2 or 3 across fit, as today's 3 across does. */
+const drawnWhole = ({columns}: BinderGrid) => columns <= LONE_COLUMNS;
+
 /**
  * The page a view draws of a binder whose pages are `grid`: a spread's are the binder's own. A
- * phone draws today's page 3 across, with the rows that fit (`lonePage`), and a square page as it
- * is, so its page 1 holds the same cards on every screen (2A, the binder window's check-in).
+ * phone draws a 2 by 2 or 3 by 3 page as it is, and a page 4 across (4 by 4, and today's) as
+ * today's 3 across, with the rows that fit (`lonePage`), so a 4 by 4 binder looks on a phone as a
+ * binder did before sizes (owner, 2026-11-11: 2B, the binder window's check-in).
  */
 export function viewPage(grid: BinderGrid, single: boolean, rows: LoneRows): PageGrid {
-  return single && !isSquare(grid) ? lonePage(rows) : grid;
+  return single && !drawnWhole(grid) ? lonePage(rows) : grid;
 }
 
 /**
@@ -203,8 +210,8 @@ export interface LoneRoom {
 }
 
 /**
- * How a phone's lone page fits its room: today's page's rows (a square page draws its own), and
- * how wide its board's box may be, where the height caps it.
+ * How a phone's lone page fits its room: the rows of a page drawn 3 across (a 2 by 2 or 3 by 3
+ * page draws its own), and how wide its board's box may be, where the height caps it.
  */
 export interface LoneFit {
   rows: LoneRows;
@@ -255,17 +262,8 @@ function todayFit(room: LoneRoom): LoneFit {
 }
 
 /**
- * A square page draws as itself, as wide as the binder. Where its page and map come out taller
- * than the room, its box is capped to the width that fits, as long as its cards keep 90% of their
- * width; past that it stays width-driven, and a short phone scrolls to its map, as at 3 rows.
+ * How `grid`'s lone page fits `room` on a phone. A page drawn 3 across takes the rows that fit. A
+ * 2 by 2 or 3 by 3 page draws as wide as the binder: it is no taller than 3 rows of 3 across, so it
+ * fits wherever they do, and a short phone scrolls to its map as at 3 rows.
  */
-function squareFit(room: LoneRoom, grid: BinderGrid): LoneFit {
-  const across = loneWidthCard(room, grid);
-  const {card, maxWidth} = fitted(room, grid);
-  if (card >= across || card < FIT_SHARE * across) return THREE_ROWS;
-  return {rows: 3, maxWidth};
-}
-
-/** How `grid`'s lone page fits `room` on a phone: today's page by the rows that fit, a square page by its own size. */
-export const loneFitFor = (room: LoneRoom, grid: BinderGrid): LoneFit =>
-  isSquare(grid) ? squareFit(room, grid) : todayFit(room);
+export const loneFitFor = (room: LoneRoom, grid: BinderGrid): LoneFit => (drawnWhole(grid) ? THREE_ROWS : todayFit(room));

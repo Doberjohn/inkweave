@@ -358,17 +358,24 @@ describe("BinderSpread at a binder's own size", () => {
     expect(card(12)).toHaveFocus();
   });
 
-  it("draws a phone's 4 by 4 page as it is, as wide as the binder where its fit sets no cap, whatever rows today's page would fit", async () => {
+  it("draws a phone's 4 by 4 page 3 across with the rows its fit sets, capped as today's (owner, 2026-11-11)", async () => {
     const user = userEvent.setup();
-    render(spread({grid: squarePage(4), single: true, start: 16, loneFit: {rows: 4}}));
-    expect(pocketsOn('Page')).toHaveLength(16);
-    expect(page('Page').style.gridTemplateColumns).toBe('repeat(4, minmax(0, 1fr))');
-    expect(document.querySelector<HTMLElement>('.binder-board')!.parentElement!.style.maxWidth).toBe('');
-    act(() => card(17).focus());
+    render(spread({grid: squarePage(4), single: true, start: 12, loneFit: {rows: 4, maxWidth: 331}}));
+    expect(pocketsOn('Page')).toHaveLength(12);
+    expect(page('Page').style.gridTemplateColumns).toBe('repeat(3, minmax(0, 1fr))');
+    expect(document.querySelector<HTMLElement>('.binder-board')!.parentElement!.style.maxWidth).toBe('331px');
+    act(() => card(13).focus());
     await user.keyboard('{ArrowDown}');
-    expect(card(21)).toHaveFocus();
+    expect(card(16)).toHaveFocus();
     await user.keyboard('{End}');
-    expect(card(32)).toHaveFocus();
+    expect(card(24)).toHaveFocus();
+  });
+
+  it("draws a phone's 3 by 3 page as it is, as wide as the binder", () => {
+    render(spread({grid: squarePage(3), single: true, start: 9, loneFit: {rows: 3}}));
+    expect(pocketsOn('Page')).toHaveLength(9);
+    expect(page('Page').style.gridTemplateColumns).toBe('repeat(3, minmax(0, 1fr))');
+    expect(document.querySelector<HTMLElement>('.binder-board')!.parentElement!.style.maxWidth).toBe('');
   });
 });
 

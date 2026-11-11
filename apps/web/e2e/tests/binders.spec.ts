@@ -958,15 +958,19 @@ test.describe("a friend's binder", () => {
     collections: {[RUBY.id]: ENTRIES},
   };
 
-  test("draws a friend's binder 16 cards a page, whatever size your own My collection keeps", async ({page}, testInfo) => {
+  test("draws a friend's binder at 4 by 4, whatever size your own My collection keeps", async ({page}, testInfo) => {
+    // A phone draws a 4 by 4 page 3 across, as a binder was before sizes: under the friend's
+    // banner, a Pixel 7's 412x839 has room for three rows.
+    const phone = testInfo.project.name.startsWith('mobile-');
+    if (phone) await page.setViewportSize({width: 412, height: 839});
     await signIn(page, {...worldOf(), shelf: {pages: 2, cover: null}});
     await serveFriends(page, FRIENDS);
     await openAt(page, `/browse?binder=${SET}&friend=${RUBY.handle}`);
     const open = firstPage(testInfo.project.name);
-    await expect(pocketsOn(page, open)).toHaveCount(PAGE_POCKETS);
+    await expect(pocketsOn(page, open)).toHaveCount(phone ? 9 : PAGE_POCKETS);
 
     // Your own, kept at 2 by 2, draws 4. A phone's banner says Yours.
-    const back = testInfo.project.name.startsWith('mobile-') ? /Yours/ : /Back to your binder/;
+    const back = phone ? /Yours/ : /Back to your binder/;
     await page.getByRole('button', {name: back}).click();
     await expect(page).not.toHaveURL(/[?&]friend=/);
     await expect(pocketsOn(page, open)).toHaveCount(4);
