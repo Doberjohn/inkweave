@@ -6,6 +6,7 @@ import {useResponsive} from '../../../shared/hooks';
 import {trackEvent} from '../../../shared/lib/analytics';
 import {COLORS, FONT_SIZES, SPACING} from '../../../shared/constants';
 import {BROWSE_GUTTER, browseRowTop} from '../../cards/components/BrowseSidePanel';
+import {DEFAULT_SIDE, type PageSide} from '../../cards/components/binderGeometry';
 import {isPromoScope, openBinderParams} from '../binderCards';
 import type {CollectionEntries} from '../collectionParser';
 import {BinderCover, CoverSkeleton} from './BinderCover';
@@ -72,9 +73,16 @@ function wordsOf(binder: Binder | null) {
 interface ShelfHeld {
   binders: readonly Binder[];
   myCover: string | null;
+  myPages: PageSide;
 }
 
-const NOTHING_HELD: ShelfHeld = {binders: [], myCover: null};
+const NOTHING_HELD: ShelfHeld = {binders: [], myCover: null, myPages: DEFAULT_SIDE};
+
+function heldOf(shelf: Shelf): ShelfHeld {
+  if (shelf.status !== 'ready') return NOTHING_HELD;
+  const look = shelf.myCollection;
+  return {binders: shelf.binders, myCover: look?.cover ?? null, myPages: look?.pages ?? DEFAULT_SIDE};
+}
 
 /** Whether the binders have answered: read, or failed, which leaves My collection alone. */
 const answered = (shelf: Shelf) => shelf.status === 'ready' || shelf.status === 'failed';
@@ -232,13 +240,13 @@ export function BinderShelf({shelf, pool, entries, waiting, readerId, onWindow}:
   const {pathname, search} = useLocation();
   const focus = useFocusAfter();
   const moves = useMoves(readerId, focus.focusOn);
-  const held: ShelfHeld = shelf.status === 'ready' ? {binders: shelf.binders, myCover: shelf.myCollection?.cover ?? null} : NOTHING_HELD;
+  const held = heldOf(shelf);
   const {binders} = held;
   const deletes = useDeletes(readerId, binders, focus.focusOn);
   // Nothing is counted until the cards, the account's copy and the binders are in.
   const counted = waiting || !answered(shelf) ? null : pool;
   const faces = useFaces(counted, entries, held);
-  const changes = useShelfChanges({readerId, isMobile, counted: counted !== null, myCover: held.myCover});
+  const changes = useShelfChanges({readerId, isMobile, counted: counted !== null, myCover: held.myCover, myPages: held.myPages});
   const acts: OwnActs = {
     editRules: onWindow
       ? (binder) => onWindow({binder, onSaved: (saved) => focus.focusOn({id: saved.id, part: 'actions'})})
@@ -257,6 +265,7 @@ export function BinderShelf({shelf, pool, entries, waiting, readerId, onWindow}:
       }}
       // Only once the shelf is read: after a failed read My collection's cover has nowhere to show.
       onChangeCover={shelf.status === 'ready' ? () => changes.changeCover(binder) : undefined}
+      onChangePages={shelf.status === 'ready' && binder === null ? changes.changePages : undefined}
       {...(binder && ownMenu(binder, {index, count: binders.length}, acts))}
       buttonRef={binder ? focus.actionsRef(binder.id) : undefined}
     />

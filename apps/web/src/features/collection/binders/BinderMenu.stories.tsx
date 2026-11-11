@@ -5,7 +5,7 @@ import {BinderMenu} from './BinderMenu';
 /**
  * A cover's ⋯ on the shelf, open. A binder of your own's: Open, Edit rules, Rename, Change cover,
  * Move earlier and later, and Delete binder, which asks first. The first binder has no Move
- * earlier, the last no Move later. My collection's: Open and Change cover.
+ * earlier, the last no Move later. My collection's: Open, Change cover and Pages.
  */
 const meta: Meta<typeof BinderMenu> = {
   title: 'Collection/Binders/BinderMenu',
@@ -44,9 +44,12 @@ export const First: Story = {args: {moves: {first: true, last: false, onMove: fn
 /** The last binder: no Move later. */
 export const Last: Story = {args: {moves: {first: false, last: true, onMove: fn()}}};
 
-/** My collection's: Open and Change cover, since it never moves and can't be deleted. */
+/**
+ * My collection's: Open, Change cover and Pages, since it never moves and can't be
+ * deleted, and has no window to hold its size.
+ */
 export const MyCollection: Story = {
-  args: {onEditRules: undefined, onRename: undefined, moves: undefined, onDelete: undefined},
+  args: {onEditRules: undefined, onRename: undefined, onChangePages: fn(), moves: undefined, onDelete: undefined},
 };
 
 /** Closed: the dark disc over a cover's art. */

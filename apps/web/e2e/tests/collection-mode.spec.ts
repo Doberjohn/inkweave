@@ -265,11 +265,12 @@ async function checkSpreadAt(page: Page, size: {width: number; height: number}):
   expect(Math.abs(middle(next) - frame.right), 'the Next disc off the end').toBeLessThanOrEqual(4);
 
   // Each pocket is a card's shape, 8px (`SPACING.sm`) from its neighbours across and down, and
-  // the three rows fill the page's height inside its 12px padding (`PAGE_PADDING`): the height
-  // gives the cards their size, as on master. Across, a row's four sit in the page's middle.
+  // the four rows of My collection's 4 by 4 page fill the page's height inside its 12px padding
+  // (`PAGE_PADDING`): the height gives the cards their size, as on master. Across, a row's four
+  // sit in the page's middle.
   const pockets = rightPage.locator(':scope > div');
-  await expect(pockets).toHaveCount(12);
-  const [first, second, fourth, below, last] = await Promise.all([0, 1, 3, 4, 11].map((i) => edges(pockets.nth(i))));
+  await expect(pockets).toHaveCount(16);
+  const [first, second, fourth, below, last] = await Promise.all([0, 1, 3, 4, 15].map((i) => edges(pockets.nth(i))));
   const shapeOff = first.right - first.left - 0.72 * (first.bottom - first.top);
   expect(Math.abs(shapeOff), "a pocket off a card's shape").toBeLessThanOrEqual(1);
   expect(Math.abs(second.left - first.right - 8), 'the gap across').toBeLessThanOrEqual(1);
@@ -1044,7 +1045,8 @@ test.describe('Collection mode, signed in', () => {
 /**
  * Phones' screens in CSS pixels, with the browser's bars showing, as #969 measured them, and the
  * rows their page has: four where they keep the cards at 90% or more of the 3-row page's
- * width, as the owner's iPhone on iOS 26 does.
+ * width, as the owner's iPhone on iOS 26 does. A phone draws My collection's 4 by 4 page 3
+ * across, as a binder was before sizes (owner, 2026-11-11).
  */
 const PHONES = [
   {width: 393, height: 659, rows: 3}, // iPhone 15, Safari

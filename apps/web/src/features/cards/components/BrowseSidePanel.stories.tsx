@@ -4,6 +4,7 @@ import {MemoryRouter} from 'react-router-dom';
 import {fn} from 'storybook/test';
 import {BrowseSidePanel, DockedPanelsRow, DockedSetPanel} from './BrowseSidePanel';
 import {BrowseToolbar} from './BrowseToolbar';
+import {TODAY_PAGE} from './binderGeometry';
 import {BINDER_SORT_OPTIONS, WHOLE_COLLECTION, type BinderShow} from '../../collection/binderCards';
 import {SaveAsBinderFoot} from '../../collection/binders/SaveAsBinderFoot';
 import {CollectionBinderSection} from '../../collection/CollectionBinderSection';
@@ -178,6 +179,7 @@ function CollectionModeDemo(args: React.ComponentProps<typeof BrowseSidePanel>) 
           filtered={false}
           sortOrder={sortOrder}
           entries={STORY_ENTRIES}
+          grid={TODAY_PAGE}
           isLoading={false}
           error={null}
           onRetry={fn()}

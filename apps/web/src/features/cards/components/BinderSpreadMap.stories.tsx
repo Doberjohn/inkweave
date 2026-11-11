@@ -199,7 +199,10 @@ export const TwoByTwo: Story = {
   args: {grid: squarePage(2)},
 };
 
-/** A 4 by 4 binder under a phone's page: a mini per page of sixteen, four across (2A). */
+/**
+ * A 4 by 4 binder under a phone's page: a mini per phone page, 3 across as today's, since a phone
+ * draws a page 4 across 3 across.
+ */
 export const PhonePagesFourByFour: Story = {
   args: {single: true, grid: squarePage(4), start: 4},
   parameters: {binderWidth: 377},

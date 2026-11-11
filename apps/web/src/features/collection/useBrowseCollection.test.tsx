@@ -8,7 +8,11 @@ import {createCard} from '../../shared/test-utils';
 import {forgetFriendCollections} from './useFriendCollection';
 import {countCompare} from './compareCollections';
 import type {HandCount} from './binderEvents';
-import {useBrowseCollection, type BrowseListing, type PhoneSheetOptions} from './useBrowseCollection';
+import {TODAY_PAGE, squarePage} from '../cards/components/binderGeometry';
+import type {Binder} from './binders/binderRules';
+import {coverDesign} from './binders/coverDesigns';
+import type {BinderShelf} from './binders/binderShelf';
+import {binderGridOf, useBrowseCollection, type BrowseListing, type PhoneSheetOptions} from './useBrowseCollection';
 import {useBinderParams} from './useBinderParams';
 // The binder's chunk, which the Binder sheet's numbers come from, friends' chunk, which the foil
 // pointer comes from, and the import's, imported with this file: a cold import inside a test can
@@ -1140,5 +1144,36 @@ describe('useBrowseCollection: the binder shelf (#1074)', () => {
       vi.unstubAllEnvs();
       vi.resetModules();
     }
+  });
+});
+
+describe("binderGridOf: the page the binder on show draws", () => {
+  const shelf = (status: BinderShelf['status'], pages?: 2 | 3 | 4): BinderShelf => ({
+    status,
+    binders: [],
+    retry: () => {},
+    ...(pages !== undefined && {myCollection: {pages, cover: null}}),
+  });
+  const NONE = {status: 'none'} as const;
+  const THREES: Binder = {id: 'b1', name: 'Threes', scope: 'all', rules: '', pages: 3, cover: null, place: 0};
+
+  it("draws today's page where binders are off", () => {
+    expect(binderGridOf({shelf: null, custom: NONE}, null)).toBe(TODAY_PAGE);
+  });
+
+  it("draws My collection at its shelf row's size, and waits while the shelf reads", () => {
+    expect(binderGridOf({shelf: shelf('ready', 2), custom: NONE}, null)).toBe(squarePage(2));
+    expect(binderGridOf({shelf: shelf('loading'), custom: NONE}, null)).toBeNull();
+  });
+
+  it("draws My collection at a new binder's size with no row, after a failed read, or with no shelf to read", () => {
+    for (const status of ['ready', 'failed', 'idle'] as const) {
+      expect(binderGridOf({shelf: shelf(status), custom: NONE}, null)).toBe(squarePage(4));
+    }
+  });
+
+  it("draws a binder of your own at its size, and a friend's at a new binder's", () => {
+    expect(binderGridOf({shelf: shelf('ready', 2), custom: {status: 'shown', binder: THREES, cover: coverDesign(null), narrowed: false}}, null)).toBe(squarePage(3));
+    expect(binderGridOf({shelf: shelf('loading'), custom: NONE}, {status: 'loading'})).toBe(squarePage(4));
   });
 });

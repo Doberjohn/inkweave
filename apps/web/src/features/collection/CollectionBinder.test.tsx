@@ -3,6 +3,7 @@ import {act, render, screen, fireEvent, within} from '@testing-library/react';
 import userEvent, {type UserEvent} from '@testing-library/user-event';
 import {MemoryRouter} from 'react-router-dom';
 import type {LorcanaCard} from 'inkweave-synergy-engine';
+import {squarePage} from '../cards/components/binderGeometry';
 import {CollectionBinder} from './CollectionBinder';
 import {settleOf} from './binderPockets';
 import {preloadArt} from './preloadArt';
@@ -207,6 +208,37 @@ describe('CollectionBinder', () => {
     expect(pocket(28)).toBeInTheDocument();
     view.rerender(binder({single: true}));
     expect(firstShown()).toBe('Card 28');
+  });
+
+  describe("at a binder's page size", () => {
+    it('opens a 3 by 3 spread on the front cover, cards 1 to 9 beside it, then pages 18 at a time', () => {
+      render(binder({grid: squarePage(3)}));
+      expect(screen.getByRole('group', {name: 'Front cover'})).toBeInTheDocument();
+      expect(within(screen.getByRole('group', {name: 'Right page'})).getAllByRole('button', {name: /^Card \d+$/})).toHaveLength(9);
+      fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+      expect(firstShown()).toBe('Card 10');
+      fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+      expect(firstShown()).toBe('Card 28');
+    });
+
+    it("pages a phone's 4 by 4 page 3 across by the rows that fit, as today's", () => {
+      render(binder({grid: squarePage(4), single: true, loneFit: {rows: 3}}));
+      expect(pocket(9)).toBeInTheDocument();
+      expect(screen.queryByRole('button', {name: 'Card 10'})).toBeNull();
+      fireEvent.click(screen.getByRole('button', {name: 'Next page'}));
+      expect(firstShown()).toBe('Card 10');
+    });
+
+    it('keeps the cards in view when its page size changes', () => {
+      // The second 4 by 4 spread opens on card 17 (slot 16). At 2 by 2, a page in for the cover,
+      // the spread that holds slot 16 holds slots 12 to 19: cards 13 to 20.
+      const view = render(binder({grid: squarePage(4)}));
+      fireEvent.click(screen.getByRole('button', {name: 'Next spread'}));
+      expect(firstShown()).toBe('Card 17');
+      view.rerender(binder({grid: squarePage(2)}));
+      expect(firstShown()).toBe('Card 13');
+      expect(pocket(17)).toBeInTheDocument();
+    });
   });
 
   describe("the art either side, loaded ahead so a turn lands drawn (owner, 2026-10-26)", () => {

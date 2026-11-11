@@ -65,7 +65,7 @@
         "!apps/web/dist/assets/UnknownBinder-*.js",
         "!apps/web/dist/assets/binderCovers-*.js",
         "!apps/web/dist/assets/ownBinders-*.js",
-        "!apps/web/dist/assets/binder-*.js",
+        "!apps/web/dist/assets/binderLook-*.js",
         "!apps/web/dist/assets/BinderShelf-*.js",
         "!apps/web/dist/assets/binderShelf-*.js",
         "!apps/web/dist/assets/BinderWindow-*.js",
@@ -74,7 +74,9 @@
         "!apps/web/dist/assets/CoverChoices-*.js",
         "!apps/web/dist/assets/SaveAsBinder-*.js",
         "!apps/web/dist/assets/binderDialogs-*.js",
-        "!apps/web/dist/assets/saveRules-*.js"
+        "!apps/web/dist/assets/saveRules-*.js",
+        "!apps/web/dist/assets/PagesChoices-*.js",
+        "!apps/web/dist/assets/PagesPicker-*.js"
       ],
       "limit": "471 kB",
       "gzip": true
@@ -108,11 +110,11 @@
         "apps/web/dist/assets/CollectionFriends-*.js",
         "apps/web/dist/assets/collectionStats-*.js",
         "apps/web/dist/assets/friendBinderPath-*.js",
-        "apps/web/dist/assets/binder-*.js",
+        "apps/web/dist/assets/binderLook-*.js",
         "apps/web/dist/assets/BinderWindow-*.js",
         "apps/web/dist/assets/BinderCover-*.js"
       ],
-      "limit": "82 kB",
+      "limit": "83 kB",
       "gzip": true
     },
     {
@@ -129,9 +131,11 @@
         "apps/web/dist/assets/CoverChoices-*.js",
         "apps/web/dist/assets/SaveAsBinder-*.js",
         "apps/web/dist/assets/binderDialogs-*.js",
-        "apps/web/dist/assets/saveRules-*.js"
+        "apps/web/dist/assets/saveRules-*.js",
+        "apps/web/dist/assets/PagesChoices-*.js",
+        "apps/web/dist/assets/PagesPicker-*.js"
       ],
-      "limit": "26 kB",
+      "limit": "28 kB",
       "gzip": true
     },
     {

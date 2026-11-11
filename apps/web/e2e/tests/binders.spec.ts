@@ -1,7 +1,7 @@
 import type {Locator, Page} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import {test, expect} from '../fixtures';
-import {newestCoreSet, setCards, setPrintings} from '../helpers/cardData';
+import {newestCoreSet, PAGE_POCKETS, setCards, setPrintings} from '../helpers/cardData';
 import {binder, COLLECTOR_ID, shelf, shelfCover, signInAsCollector, type Entries} from '../helpers/collector';
 import {binderRow, failBinderReads, serveBinders, type BindersWorld} from '../helpers/binders';
 import {serveFriends, type FriendsWorld, type Player} from '../helpers/friends';
@@ -176,6 +176,20 @@ test.describe('a binder of your own', () => {
     await expect.poll(() => tileNames(page)).toEqual([held.fullName]);
   });
 
+  test('a binder kept at 3 by 3 draws 9 cards a page, and on a computer 18 a spread', async ({page}, testInfo) => {
+    const threes = binderRow({id: 'b-threes', name: 'Amber threes', rules: 'ink=Amber', pages: 3, place: 3});
+    await signIn(page, {rows: [...worldOf().rows, threes]});
+    await openAt(page, `/browse?binder=all&custom=${threes.id}`);
+    await expect(pocketsOn(page, firstPage(testInfo.project.name))).toHaveCount(9);
+    if (testInfo.project.name.startsWith('mobile-')) return;
+
+    // Spread 1 is the inside front cover and page 1; spread 2 holds two pages of cards.
+    await binder(page).getByRole('button', {name: 'Next spread'}).click();
+    await expect(binder(page).locator('.binder-turn')).toHaveCount(0);
+    await expect(pocketsOn(page, 'Left page')).toHaveCount(9);
+    await expect(pocketsOn(page, 'Right page')).toHaveCount(9);
+  });
+
   test("a binder that isn't on your shelf says so, and Go to your binders opens the shelf", async ({page}) => {
     await signIn(page);
     await page.goto('/browse?binder=all&custom=someone-elses');
@@ -221,6 +235,17 @@ const actionsOf = (page: Page, name: string) =>
     .getByRole('button', {name: 'Actions'});
 
 const pressCollection = (page: Page) => page.getByRole('button', {name: 'Show my collection'}).click();
+
+/** The pockets on the binder's open page, on a phone its lone page, or a side of a computer's spread. */
+const pocketsOn = (page: Page, side: 'Page' | 'Left page' | 'Right page') =>
+  binder(page).getByRole('group', {name: side, exact: true}).locator('.binder-pocket');
+
+/** The page a binder opens on: a phone's lone page, or on a computer the right of its first spread. */
+const firstPage = (project: string) => (project.startsWith('mobile-') ? 'Page' : 'Right page');
+
+/** A page size among the Pages tiles, by its side: "3 × 3, 9 a page". */
+const sizeTile = (where: Locator, side: number) =>
+  where.getByRole('list', {name: 'Pages', exact: true}).getByRole('button', {name: new RegExp(`^${side} × ${side},`)});
 
 test.describe('the binder shelf', () => {
   test('Collection opens it: its heading and count, My collection, then your binders in place order', async ({page}) => {
@@ -309,6 +334,31 @@ test.describe('the binder shelf', () => {
     await expect(confirm).toHaveCount(0);
     // The binder before it, as none comes after.
     await expect(shelfCover(page, 'Amber vines')).toBeFocused();
+  });
+
+  test("My collection's Pages picks 3 by 3 in one upsert, focus back on its ⋯, and its binder then draws 9 cards a page", async ({
+    page,
+  }, testInfo) => {
+    const world = worldOf();
+    await signIn(page, world);
+    await page.goto('/browse?binder=shelf');
+
+    await actionsOf(page, 'My collection').click({timeout: 20_000});
+    await page.getByRole('menuitem', {name: 'Pages'}).click();
+    const picker = await pagesPickerOf(page);
+    await expect(picker.getByRole('heading', {name: 'Pages for My collection'})).toBeVisible();
+    // No shelf row yet: 4 by 4.
+    await expect(sizeTile(picker, 4)).toHaveAttribute('aria-pressed', 'true');
+    await sizeTile(picker, 3).click();
+    await expect(picker).toHaveCount(0);
+    await expect(actionsOf(page, 'My collection')).toBeFocused();
+    expect(world.calls).toEqual([{what: 'shelf', row: {owner_id: COLLECTOR_ID, pages: 3}, onConflict: 'owner_id'}]);
+    expect(world.shelf).toEqual({pages: 3, cover: null});
+
+    // My collection's binder, with no reload, draws its cards 9 a page.
+    await shelfCover(page, 'My collection').click();
+    await expect(binder(page)).toBeVisible({timeout: 20_000});
+    await expect(pocketsOn(page, firstPage(testInfo.project.name))).toHaveCount(9);
   });
 
   test('All your binders in the Binders tab opens the shelf', async ({page}) => {
@@ -409,11 +459,18 @@ test.describe('the New binder window', () => {
     await expect(designs.getByRole('button', {name: 'Starry night'})).toHaveAttribute('aria-pressed', 'true');
     await designs.getByRole('button', {name: 'Honeycomb'}).click();
     await expect(designs.getByRole('button', {name: 'Honeycomb'})).toHaveAttribute('aria-pressed', 'true');
+    // A new binder starts at 4 by 4.
+    await expect(sizeTile(dialog, 4)).toHaveAttribute('aria-pressed', 'true');
+    await sizeTile(dialog, 2).click();
+    await expect(sizeTile(dialog, 2)).toHaveAttribute('aria-pressed', 'true');
 
     await createIn(dialog).click();
     await expect(dialog).toHaveCount(0);
     expect(world.calls).toEqual([
-      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Gold and amber', scope: 'all', rules: 'ink=Amber', cover: 'honeycomb'}},
+      {
+        what: 'create',
+        row: {owner_id: COLLECTOR_ID, name: 'Gold and amber', scope: 'all', rules: 'ink=Amber', pages: 2, cover: 'honeycomb'},
+      },
     ]);
     await expect.poll(() => coverNames(page)).toEqual(['My collection', 'Amber', 'Amber vines', 'Epics', 'Gold and amber']);
     await expect(shelfCover(page, 'Gold and amber')).toBeFocused();
@@ -484,7 +541,14 @@ test.describe('the New binder window', () => {
     expect(world.calls).toEqual([
       {
         what: 'create',
-        row: {owner_id: COLLECTOR_ID, name: 'Amber heroes', scope: 'all', rules: 'ink=Amber&classification=Hero&rarity=Legendary', cover: null},
+        row: {
+          owner_id: COLLECTOR_ID,
+          name: 'Amber heroes',
+          scope: 'all',
+          rules: 'ink=Amber&classification=Hero&rarity=Legendary',
+          pages: 4,
+          cover: null,
+        },
       },
     ]);
   });
@@ -616,7 +680,7 @@ test.describe('Save as a binder', () => {
     await box.getByRole('button', {name: 'Save binder'}).click();
     await expect(box).toHaveCount(0);
     expect(world.calls).toEqual([
-      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: null}},
+      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: null}},
     ]);
     await expect(page).toHaveURL(/[?&]custom=b-made-3(&|$)/);
     expect(new URL(page.url()).searchParams.has('ink'), 'the filter panel is clear').toBe(false);
@@ -649,7 +713,7 @@ test.describe('Save as a binder', () => {
     await box.getByRole('button', {name: 'Save binder'}).click();
     await expect(box).toHaveCount(0);
     expect(world.calls).toEqual([
-      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber&rarity=Epic', cover: null}},
+      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber&rarity=Epic', pages: 4, cover: null}},
     ]);
     await expect(page).toHaveURL(/[?&]custom=b-made-3(&|$)/);
     expect(await settledTiles(page)).toEqual(onScreen);
@@ -692,7 +756,7 @@ test.describe('Save as a binder', () => {
     await box.getByRole('button', {name: 'Save binder'}).click();
     await expect(box).toHaveCount(0);
     expect(world.calls).toEqual([
-      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: null}},
+      {what: 'create', row: {owner_id: COLLECTOR_ID, name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: null}},
     ]);
     await expect(page).toHaveURL(/[?&]custom=b-made-3(&|$)/);
     await expect(binderButton(page)).toHaveAccessibleName(named('Binder: Amber'));
@@ -706,12 +770,19 @@ async function pickerOf(page: Page): Promise<Locator> {
   return picker;
 }
 
+/** My collection's Pages picker, once it shows: 20 s, for its chunk on a cold run. */
+async function pagesPickerOf(page: Page): Promise<Locator> {
+  const picker = page.getByRole('dialog', {name: 'Pages', exact: true});
+  await expect(picker).toBeVisible({timeout: 20_000});
+  return picker;
+}
+
 /** Picks `label`'s design in Change cover. */
 const pickDesign = (picker: Locator, label: string) =>
   picker.getByRole('list', {name: 'Covers'}).getByRole('button', {name: label, exact: true}).click();
 
 test.describe('Rename and Change cover', () => {
-  test('Rename binder and Change cover have no axe violations', async ({page}, testInfo) => {
+  test('Rename binder, Change cover and Pages have no axe violations', async ({page}, testInfo) => {
     test.skip(testInfo.project.name.startsWith('mobile-'), DESKTOP_AUDIT);
     await signIn(page);
     await page.goto('/browse?binder=shelf');
@@ -730,6 +801,15 @@ test.describe('Rename and Change cover', () => {
     await expect(picker.getByRole('heading', {name: 'Cover for Amber'})).toBeVisible();
     await expect(picker.getByRole('list', {name: 'Covers'}).getByRole('button')).toHaveCount(8);
     await expect(picker).toHaveCSS('opacity', '1');
+    expect(await violations(page)).toEqual([]);
+    await page.keyboard.press('Escape');
+    await expect(picker).toHaveCount(0);
+
+    await actionsOf(page, 'My collection').click();
+    await page.getByRole('menuitem', {name: 'Pages'}).click();
+    const pages = await pagesPickerOf(page);
+    await expect(pages.getByRole('list', {name: 'Pages', exact: true}).getByRole('button')).toHaveCount(3);
+    await expect(pages).toHaveCSS('opacity', '1');
     expect(await violations(page)).toEqual([]);
   });
 
@@ -877,6 +957,24 @@ test.describe("a friend's binder", () => {
     sharing: [RUBY.id],
     collections: {[RUBY.id]: ENTRIES},
   };
+
+  test("draws a friend's binder at 4 by 4, whatever size your own My collection keeps", async ({page}, testInfo) => {
+    // A phone draws a 4 by 4 page 3 across, as a binder was before sizes: under the friend's
+    // banner, a Pixel 7's 412x839 has room for three rows.
+    const phone = testInfo.project.name.startsWith('mobile-');
+    if (phone) await page.setViewportSize({width: 412, height: 839});
+    await signIn(page, {...worldOf(), shelf: {pages: 2, cover: null}});
+    await serveFriends(page, FRIENDS);
+    await openAt(page, `/browse?binder=${SET}&friend=${RUBY.handle}`);
+    const open = firstPage(testInfo.project.name);
+    await expect(pocketsOn(page, open)).toHaveCount(phone ? 9 : PAGE_POCKETS);
+
+    // Your own, kept at 2 by 2, draws 4. A phone's banner says Yours.
+    const back = phone ? /Yours/ : /Back to your binder/;
+    await page.getByRole('button', {name: back}).click();
+    await expect(page).not.toHaveURL(/[?&]friend=/);
+    await expect(pocketsOn(page, open)).toHaveCount(4);
+  });
 
   test('shows none of your binders: the param goes and the picker has no Binders tab', async ({page}) => {
     await signIn(page);

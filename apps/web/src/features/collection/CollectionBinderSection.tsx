@@ -40,7 +40,7 @@ import {
 import type {BinderView} from './BinderShows';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
 import {BinderSpread, BinderSlotSkeleton} from '../cards/components/BinderSpread';
-import {TODAY_PAGE, pagingOf, pocketsOf, type LoneFit} from '../cards/components/binderGeometry';
+import {pagingOf, pocketsOf, type BinderGrid, type LoneFit} from '../cards/components/binderGeometry';
 import {BinderSpreadMap, type Pocket} from '../cards/components/BinderSpreadMap';
 import {CtaButton} from '../../shared/components';
 import {CardWindowSlotContext} from '../../shared/contexts/cardWindowSlot';
@@ -177,6 +177,8 @@ interface CollectionBinderSectionProps extends PanelControls {
   yourEntries?: CollectionEntries;
   /** The binder is a friend's, so its empty views speak of "their" collection. */
   friend?: boolean;
+  /** The binder's page: today's 4 by 3 with binders off, else the size of the binder on show. */
+  grid: BinderGrid;
   /** True while the non-Core chunks are in flight. */
   isLoading: boolean;
   /** Set when they failed to load. */
@@ -238,17 +240,25 @@ export function CollectionBinderSection({onRetry, ...props}: CollectionBinderSec
  * A phone's loading map: the cover's mini and page 1's, empty, page 1 marked, as the loaded binder
  * opens. Its pockets are open ones, which draw as empty cells.
  */
-const loadingPages = (loneFit: LoneFit): Pocket[] =>
-  Array.from({length: pagingOf(TODAY_PAGE, true, loneFit.rows).perView}, () => ({owned: false, inks: [], open: true}));
+const loadingPages = (grid: BinderGrid, loneFit: LoneFit): Pocket[] =>
+  Array.from({length: pagingOf(grid, true, loneFit.rows).perView}, () => ({owned: false, inks: [], open: true}));
+
+interface LoadingBinderProps {
+  single: boolean;
+  docked: boolean;
+  grid: BinderGrid;
+  loneFit: LoneFit;
+}
 
 /** The binder while its cards load: its chrome, as the loaded binder's, with shimmer in the pockets. */
-function LoadingBinder({single, docked, loneFit}: {single: boolean; docked: boolean; loneFit: LoneFit}) {
+function LoadingBinder({single, docked, grid, loneFit}: LoadingBinderProps) {
   return (
     <BinderSpread
       // Spreads open on the front cover, as the binder does (owner, 2026-10-18); a phone on page 1,
       // past its cover.
-      start={single ? 0 : -pocketsOf(TODAY_PAGE)}
+      start={single ? 0 : -pocketsOf(grid)}
       single={single}
+      grid={grid}
       loneFit={loneFit}
       arrows={docked ? 'edges' : 'beside'}
       // Docked, or on a phone, a map of one empty spread or page holds the band the real map
@@ -260,8 +270,9 @@ function LoadingBinder({single, docked, loneFit}: {single: boolean; docked: bool
           <div inert aria-hidden="true">
             <BinderSpreadMap
               single={single}
+              grid={grid}
               rows={loneFit.rows}
-              pockets={single ? loadingPages(loneFit) : []}
+              pockets={single ? loadingPages(grid, loneFit) : []}
               current={single ? 1 : 0}
               onGo={NOOP}
             />
@@ -305,6 +316,7 @@ function SectionContent({
   entries,
   yourEntries,
   friend = false,
+  grid,
   isLoading,
   error,
   onRetry,
@@ -323,7 +335,7 @@ function SectionContent({
   const windowOpen = useCardWindowOpen();
   // A phone's page has the rows its section fits, the loading binder's as the loaded one's.
   const [section, setSection] = useState<HTMLDivElement | null>(null);
-  const loneFit = useLoneFit(section, isMobile);
+  const loneFit = useLoneFit(section, isMobile, grid);
   const {setCode} = controls;
 
   // Both states are rendered rather than falling through to an empty binder.
@@ -349,7 +361,7 @@ function SectionContent({
   if (isLoading) {
     return (
       <PanelLayout panel={{...controls, stats: null, filtered}} section={setSection}>
-        <LoadingBinder single={isMobile} docked={docked} loneFit={loneFit} />
+        <LoadingBinder single={isMobile} docked={docked} grid={grid} loneFit={loneFit} />
       </PanelLayout>
     );
   }
@@ -391,6 +403,7 @@ function SectionContent({
           onCountChange={onCountChange}
           windowOpen={windowOpen}
           single={isMobile}
+          grid={grid}
           loneFit={loneFit}
           pager={docked || isMobile ? 'map' : 'arrows'}
           startAt={startAt}

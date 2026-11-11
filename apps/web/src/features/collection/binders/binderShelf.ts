@@ -261,23 +261,26 @@ export async function updateBinder({readerId, id, patch}: BinderRef & {patch: Pa
   return data !== null ? {binder: data} : {problem: 'gone'};
 }
 
+/**
+ * Changes My collection's page size or cover, which `collection_shelf` holds, and shows it once
+ * the server has: whether it did.
+ */
+export async function setMyCollection({readerId, patch}: {readerId: string; patch: Partial<ShelfLook>}): Promise<boolean> {
+  const {error} = await enqueueWrite(readerId, () => setShelf(readerId, patch));
+  if (error !== null) return false;
+  const binders = heldBinders({readerId});
+  if (binders !== null) publish({readerId, value: binders, myCollection: {...heldLook(readerId), ...patch}});
+  return true;
+}
+
 /** What a cover's change came to: set, the binder deleted elsewhere, or it failed. */
 export type CoverResult = 'set' | 'gone' | 'failed';
 
-/**
- * Sets a cover design by its id: a binder's (`id`), or My collection's (null), which
- * `collection_shelf` holds. The shelf shows it once the server has.
- */
+/** Sets a cover design by its id: a binder's (`id`), or My collection's (null). The shelf shows it once the server has. */
 export async function setCover({readerId, id, cover}: {readerId: string; id: string | null; cover: string}): Promise<CoverResult> {
-  if (id !== null) {
-    const changed = await updateBinder({readerId, id, patch: {cover}});
-    return 'binder' in changed ? 'set' : changed.problem;
-  }
-  const {error} = await enqueueWrite(readerId, () => setShelf(readerId, {cover}));
-  if (error !== null) return 'failed';
-  const binders = heldBinders({readerId});
-  if (binders !== null) publish({readerId, value: binders, myCollection: {...heldLook(readerId), cover}});
-  return 'set';
+  if (id === null) return (await setMyCollection({readerId, patch: {cover}})) ? 'set' : 'failed';
+  const changed = await updateBinder({readerId, id, patch: {cover}});
+  return 'binder' in changed ? 'set' : changed.problem;
 }
 
 /** The shelf with one binder in the server's row, or without it when the server holds it no more. */

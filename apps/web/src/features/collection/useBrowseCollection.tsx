@@ -47,6 +47,7 @@ import {
   RowSetPickerFallback,
   ToolbarSetPickerFallback,
 } from './BinderChunkFallback';
+import {DEFAULT_SIDE, TODAY_PAGE, squarePage, type BinderGrid} from '../cards/components/binderGeometry';
 import {SHOW_BINDERS} from './binders/flag';
 import type {BinderChoices, CustomBinder, OwnBinders} from './binders/binderChoices';
 import {ShelfHeading} from './binders/ShelfHeading';
@@ -443,6 +444,22 @@ function binderChoicesOf(
   return {open, atOwnScope: setCode === (open?.binder.scope ?? WHOLE_COLLECTION), shelf, pool, entries, ...opens};
 }
 
+/**
+ * The page the binder draws: today's 4 by 3 where binders are off. With them on, the binder on
+ * show's own size: a binder of your own's, My collection's once the shelf has read it, and a
+ * friend's 4 by 4, since a player's shelf row is theirs alone to read. Null while My collection's
+ * is still to come: the binder waits for it rather than draw a page that changes as it lands.
+ */
+export function binderGridOf({shelf, custom}: Pick<OwnBinders, 'shelf' | 'custom'>, friend: FriendBinder | null): BinderGrid | null {
+  if (shelf === null) return TODAY_PAGE;
+  if (friend !== null) return squarePage(DEFAULT_SIDE);
+  if (custom.status === 'shown') return squarePage(custom.binder.pages);
+  if (shelf.status === 'loading') return null;
+  // A shelf that didn't load, or none to read (signed out), leaves My collection at a new
+  // binder's size. Idle while the account's copy syncs, the binder waits on that anyway.
+  return squarePage(shelf.myCollection?.pages ?? DEFAULT_SIDE);
+}
+
 /** The Binders tab's New binder: the window, whose new binder then opens. Null until the window can open. */
 const newBinderFrom = ({open}: BinderWindowSlot, openBinder: BinderChoices['onOpen']) =>
   open && (() => open({binder: null, onSaved: openBinder}));
@@ -720,8 +737,11 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
       )
     : undefined;
 
-  // Loading while the account's copy is still to answer, or a friend's binder.
-  const binderLoading = (friend === null ? ownWaiting : friendView.waiting) || (!isReady && error === null);
+  // Loading while the account's copy is still to answer, or the shelf My collection's size, or a
+  // friend's binder. Until the shelf answers, the loading binder draws a new binder's size.
+  const grid = binderGridOf(own, friend);
+  const binderLoading = (friend === null ? ownWaiting || grid === null : friendView.waiting) || (!isReady && error === null);
+  const drawnGrid = grid ?? squarePage(DEFAULT_SIDE);
   const ownStatus = customStatusOf(custom, ownStatusOf({error, onRetry: retry}, ownProblem, () => startCollection('browse')));
   const binderStatus = binderStatusOf(friend, ownStatus);
 
@@ -743,9 +763,10 @@ export function useBrowseCollection(coreCards: LorcanaCard[]): BrowseCollectionS
 
   function renderBinderSection(listing: BrowseListing, onCardSelect: (card: LorcanaCard, source: BinderCardSource) => void) {
     return (
-      <Suspense key="binder" fallback={<BinderChunkFallback />}>
+      <Suspense key="binder" fallback={<BinderChunkFallback grid={drawnGrid} />}>
         <CollectionBinderSection
           cards={pool}
+          grid={drawnGrid}
           waiting={waiting}
           // Built here, not by the page: in grid mode a Set of up to 3,242 ids
           // would be rebuilt on every render for nobody.

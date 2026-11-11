@@ -1,7 +1,7 @@
 import type {Locator, Page} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import {test, expect} from '../fixtures';
-import {newestCoreSet, promoSetsWithOpenPockets, setCards} from '../helpers/cardData';
+import {newestCoreSet, PAGE_POCKETS, promoSetsWithOpenPockets, setCards} from '../helpers/cardData';
 import {
   artFilter,
   binder,
@@ -44,11 +44,15 @@ const EDGE_LIGHT = 40;
 /**
  * How many sheet edges show along a page's foot: the light rows in the strip just under it,
  * counted as runs, from 2px above its foot to 6px under it. Three edges and the gaps between
- * them take 6px, and the zip's teeth start 7px under the page.
+ * them take 6px, and the zip's teeth start 7px under the page. A cover's strip starts a pixel
+ * under its foot: its blue board, lighter than a page's black, would read as an edge, and the
+ * row its foot falls in is still part board, which a browser can take as the strip's first row.
  */
 async function sheetEdgesUnder(page: Page, sheet: Locator): Promise<number> {
   const box = await edges(sheet);
-  const rows = await pixelsIn(page, {x: middle(box) - 10, y: box.bottom - 2, width: 20, height: 8});
+  const cover = await sheet.evaluate((side) => side.classList.contains('binder-cover'));
+  const top = cover ? box.bottom + 1 : box.bottom - 2;
+  const rows = await pixelsIn(page, {x: middle(box) - 10, y: top, width: 20, height: box.bottom + 6 - top});
   const light = rows.map((row) => row.reduce((sum, pixel) => sum + luminance(pixel), 0) / row.length > EDGE_LIGHT);
   return light.filter((on, i) => on && !light[i - 1]).length;
 }
@@ -345,8 +349,8 @@ test.describe("Collection mode, the binder's pages and pockets (#941)", () => {
     // its top and a seam of welded dots for its border, on every pocket of a page of cards, an
     // empty one past the last card too. Neither takes a press.
     const pockets = binder(page).getByRole('group', {name: 'Right page'}).locator('.binder-pocket');
-    await expect(pockets).toHaveCount(12);
-    expect(await pocketLayers(pockets)).toEqual(Array.from({length: 12}, () => POCKET_LAYERS));
+    await expect(pockets).toHaveCount(PAGE_POCKETS);
+    expect(await pocketLayers(pockets)).toEqual(Array.from({length: PAGE_POCKETS}, () => POCKET_LAYERS));
     expect(await binder(page).getByRole('group', {name: 'Front cover'}).locator('.binder-pocket').count()).toBe(0);
 
     // At the card's centre and 4px inside each of its edges, the page finds the card itself.
@@ -426,7 +430,7 @@ test.describe("Collection mode, the binder's pages and pockets (#941)", () => {
     await signInAsCollector(page, ENTRIES);
     await page.goto(`/browse?binder=${SET}`);
     const tiles = binder(page).getByRole('group', {name: 'Right page'}).getByTestId('card-tile');
-    await expect(tiles).toHaveCount(12);
+    await expect(tiles).toHaveCount(PAGE_POCKETS);
     const settled = () =>
       tiles.evaluateAll((all) =>
         all.map((t) => {
@@ -459,7 +463,7 @@ test.describe("Collection mode, the binder's pages and pockets (#941)", () => {
     }
 
     await page.reload();
-    await expect(tiles).toHaveCount(12);
+    await expect(tiles).toHaveCount(PAGE_POCKETS);
     expect(await settled()).toEqual(first);
   });
 

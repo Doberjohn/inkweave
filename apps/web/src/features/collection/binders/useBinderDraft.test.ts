@@ -42,13 +42,13 @@ describe('useBinderDraft', () => {
       result.current.filters.toggleInk('Amber');
     });
     const {input, preview} = result.current;
-    expect(input).toEqual({name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: null});
+    expect(input).toEqual({name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: null});
     expect(preview.chips).toEqual(['Amber ink']);
     // The shelf's own face for the binder these rules make.
     const shelf = binderFace(POOL, ENTRIES, {...EPICS, ...input});
     expect({cover: result.current.cover, figures: preview.figures}).toEqual(shelf);
     expect(preview.figures).toMatchObject({complete: 1, cards: 2});
-    expect(preview.firstPage).toEqual([
+    expect(result.current.firstPage).toEqual([
       {card: POOL[0], held: false},
       {card: POOL[1], held: true},
     ]);
@@ -107,6 +107,27 @@ describe('useBinderDraft', () => {
     act(() => result.current.filters.toggleInk('Amber'));
     expect(result.current.change).toBe('rules');
     expect(result.current.canSave).toBe(true);
+  });
+
+  it('draws its first page at the size picked, 4 by 4 unless one is, and counts a new size as a change of pages', () => {
+    const {result} = renderDraft();
+    expect(result.current.pages).toBe(4);
+    expect(result.current.firstPage).toHaveLength(POOL.length);
+    act(() => result.current.setPages(2));
+    expect(result.current.firstPage).toHaveLength(4);
+    expect(result.current.input.pages).toBe(2);
+    const edit = renderDraft({...EPICS, pages: 3}).result;
+    expect(edit.current.pages).toBe(3);
+    act(() => edit.current.setPages(4));
+    expect(edit.current.change).toBe('pages');
+  });
+
+  it('starts a new binder from a seed at its size: More rules keeps the size Save as a binder picked', () => {
+    const {result} = renderHook(() =>
+      useBinderDraft({start: startOf(null, {name: 'Gold', scope: 'all', rules: '', pages: 2}), pool: POOL, entries: ENTRIES}),
+    );
+    expect(result.current.pages).toBe(2);
+    expect(result.current.firstPage).toHaveLength(4);
   });
 
   it('starts a new binder on the first design, and sends the one picked', () => {

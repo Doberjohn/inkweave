@@ -15,6 +15,8 @@ export interface BinderMenuProps {
   onRename?: () => void;
   /** Opens Change cover, which My collection's ⋯ offers too. */
   onChangeCover?: () => void;
+  /** Opens Pages, the page size picker: My collection's alone, since a binder's size sits in the window. */
+  onChangePages?: () => void;
   /**
    * Its place on the shelf, and the moves it allows: no Move earlier for the first binder, no Move
    * later for the last. None for My collection, which never moves.
@@ -32,12 +34,13 @@ interface MenuItem {
   danger?: boolean;
 }
 
-/** Edit rules, Rename and Change cover, each one the shelf offers. */
-function changeItems({onEditRules, onRename, onChangeCover}: BinderMenuProps): MenuItem[] {
+/** Edit rules, Rename, Change cover and Pages, each one the shelf offers. */
+function changeItems({onEditRules, onRename, onChangeCover, onChangePages}: BinderMenuProps): MenuItem[] {
   const items = [
     {label: 'Edit rules', action: onEditRules},
     {label: 'Rename', action: onRename},
     {label: 'Change cover', action: onChangeCover},
+    {label: 'Pages', action: onChangePages},
   ];
   return items.filter((item): item is MenuItem => item.action !== undefined);
 }
@@ -105,10 +108,10 @@ function DotsIcon() {
 /**
  * A cover's ⋯ on the shelf, named "Actions" after the cover's own name, and its menu. A binder of
  * your own's: Open, Edit rules, Rename, Change cover, Move earlier (not on the first binder),
- * Move later (not on the last) and Delete binder. My collection's: Open and Change cover. The keys
- * are the gear's (`useMenuButton`): opening focuses Open, the arrows move, Escape returns focus to
- * ⋯, and Tab or a press outside closes the menu. A choice closes the menu onto ⋯ first, so a move
- * keeps focus there, and the dialogs and the window return it there.
+ * Move later (not on the last) and Delete binder. My collection's: Open, Change cover and Pages.
+ * The keys are the gear's (`useMenuButton`): opening focuses Open, the arrows move, Escape returns
+ * focus to ⋯, and Tab or a press outside closes the menu. A choice closes the menu onto ⋯ first,
+ * so a move keeps focus there, and the dialogs and the window return it there.
  *
  * Its words are ours alone: the binder's name never reaches its labels.
  */

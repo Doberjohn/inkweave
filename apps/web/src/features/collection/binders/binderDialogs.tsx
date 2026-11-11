@@ -1,9 +1,10 @@
-import {useEffect, useEffectEvent, useId, useRef, type CSSProperties, type FocusEvent, type ReactNode, type RefObject} from 'react';
+import {useEffect, useEffectEvent, useId, useRef, useState, type CSSProperties, type FocusEvent, type ReactNode, type RefObject} from 'react';
 import {createPortal} from 'react-dom';
-import {BottomSheet, DialogShell} from '../../../shared/components';
+import {BottomSheet, CtaButton, DialogShell} from '../../../shared/components';
 import {useDialogFocus, useScrollLock, useTransitionPresence} from '../../../shared/hooks';
-import {COLORS, FONTS, FONT_SIZES, FONT_WEIGHT, SPACING} from '../../../shared/constants';
-import {FIELD} from './binderFields';
+import {COLORS, DIALOG_TITLE, FONTS, FONT_SIZES, FONT_WEIGHT, SPACING} from '../../../shared/constants';
+import {trackEvent} from '../../../shared/lib/analytics';
+import {FIELD, LEAD} from './binderFields';
 import {clampBinderName} from './binderName';
 import {SHELF_FULL_WORDS} from './shelfWords';
 
@@ -107,6 +108,85 @@ export function ProblemLine({problem, failedWords, style}: ProblemLineProps) {
     <p role="alert" style={{...PROBLEM_STYLE, ...style}}>
       {problem === 'failed' && failedWords !== undefined ? failedWords : PROBLEM_WORDS[problem]}
     </p>
+  );
+}
+
+const PICK_CHOICES: CSSProperties = {marginTop: SPACING.lg};
+
+const PICK_NOTE: CSSProperties = {margin: `${SPACING.md}px 0 0`, fontSize: `${FONT_SIZES.base}px`, color: COLORS.textMuted};
+
+const PICK_PROBLEM: CSSProperties = {marginTop: SPACING.md};
+
+const PICK_FOOT: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.sm, marginTop: SPACING.lg};
+
+/** What a pick dialog's save changes, as `binder_changed` counts it. */
+type PickedWhat = 'cover' | 'pages';
+
+/**
+ * A pick dialog's save (Change cover, Pages), and what it came to. While it runs every way out
+ * waits, since the picker alone would say it failed. One that lands is counted by what it changed,
+ * never the binder's name or id, and told to `onSaved`; one that doesn't keeps its problem to say.
+ */
+export function usePickSave<T>(save: (choice: T) => Promise<'set' | SaveProblem>, what: PickedWhat, onSaved: () => void) {
+  const [saving, setSaving] = useState(false);
+  const [problem, setProblem] = useState<SaveProblem | null>(null);
+  const pick = async (choice: T) => {
+    setSaving(true);
+    setProblem(null);
+    const result = await save(choice);
+    setSaving(false);
+    if (result !== 'set') {
+      setProblem(result);
+      return;
+    }
+    trackEvent('binder_changed', {what});
+    onSaved();
+  };
+  return {saving, problem, pick};
+}
+
+interface PickDialogProps extends Omit<AskDialogProps, 'initialFocusRef'> {
+  title: string;
+  lead: string;
+  /** A pick on its way: every way out waits, since the dialog alone would say it failed. */
+  saving: boolean;
+  /** Why the last pick didn't land, or null. */
+  problem: SaveProblem | null;
+  failedWords: string;
+  /** Told once a closed dialog's exit has run, so the shelf can unmount it. */
+  onGone: () => void;
+}
+
+/**
+ * A shelf dialog whose pick saves at once, Change cover's and Pages': its title and lead, the
+ * choices, then while a pick saves a line saying so, or why the last one didn't land, and Cancel.
+ * It carries `ph-no-capture`: a title may be the player's own words.
+ */
+export function PickDialog({title, lead, saving, problem, failedWords, onGone, children, ...dialog}: PickDialogProps) {
+  const close = () => {
+    if (!saving) dialog.onClose();
+  };
+  return (
+    <AskDialog {...dialog} onClose={close}>
+      <div className="ph-no-capture">
+        <WhenGone onGone={onGone} />
+        <h2 style={DIALOG_TITLE}>{title}</h2>
+        <p style={LEAD}>{lead}</p>
+        <div style={PICK_CHOICES}>{children}</div>
+        {saving ? (
+          <p role="status" style={PICK_NOTE}>
+            Saving…
+          </p>
+        ) : (
+          <ProblemLine problem={problem} failedWords={failedWords} style={PICK_PROBLEM} />
+        )}
+        <div style={PICK_FOOT}>
+          <CtaButton variant="neutral" onClick={close} disabled={saving}>
+            Cancel
+          </CtaButton>
+        </div>
+      </div>
+    </AskDialog>
   );
 }
 

@@ -173,9 +173,10 @@ type AnalyticsEvents = {
   // (`ruleKinds`). Never its name or id.
   binder_created: {from: 'window' | 'saved'; kinds: string};
   // A change to a binder of your own that landed: its place on the shelf (Move earlier or Move
-  // later), its Sets or rules (Edit rules), its name (Edit rules or Rename), or its cover (Change
-  // cover, My collection's too). Never its name or id.
-  binder_changed: {what: 'place' | 'rules' | 'name' | 'cover'};
+  // later), its Sets or rules (Edit rules), its page size (Edit rules, or My collection's Pages),
+  // its name (Edit rules or Rename), or its cover (Change cover, My collection's too). Never its
+  // name or id.
+  binder_changed: {what: 'place' | 'rules' | 'pages' | 'name' | 'cover'};
   // A binder of your own deleted, once the delete landed: the kinds of its rules (`ruleKinds`).
   binder_deleted: {kinds: string};
   // Friends (#852, #884). Never a friend code, name, handle or id.

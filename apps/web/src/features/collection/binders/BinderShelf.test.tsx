@@ -14,6 +14,7 @@ const writes = vi.hoisted(() => ({
   deleteBinder: vi.fn<(binder: {readerId: string; id: string}) => Promise<boolean>>(),
   updateBinder: vi.fn(),
   setCover: vi.fn(),
+  setMyCollection: vi.fn<(change: {readerId: string; patch: {pages?: number}}) => Promise<boolean>>(),
 }));
 vi.mock('./binderShelf', () => writes);
 // The real faces, watched: the shelf must not work them out again on a render that changed none of their inputs.
@@ -67,9 +68,10 @@ const menuOf = (name: string) => {
 };
 
 describe('BinderShelf', () => {
-  // Change cover is lazy: loaded here first, so a busy run's first transform never outlasts a find.
+  // The pickers are lazy: loaded here first, so a busy run's first transform never outlasts a find.
   beforeAll(async () => {
     await import('./CoverPicker');
+    await import('./PagesPicker');
   });
 
   beforeEach(() => {
@@ -100,10 +102,12 @@ describe('BinderShelf', () => {
     expect(view.container.firstElementChild).toHaveClass('ph-no-capture');
   });
 
-  it("offers Open and Change cover alone on My collection's ⋯", () => {
+  it("offers Open, Change cover and Pages alone on My collection's ⋯, and no binder's page size", () => {
     renderShelf();
     fireEvent.click(menuOf('My collection'));
-    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Open', 'Change cover']);
+    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Open', 'Change cover', 'Pages']);
+    fireEvent.click(menuOf('Ruby'));
+    expect(screen.queryByRole('menuitem', {name: 'Pages'})).toBeNull();
   });
 
   it("offers no Change cover after a failed read, which would leave the new cover nowhere to show", () => {
@@ -145,6 +149,19 @@ describe('BinderShelf', () => {
     fireEvent.click(menuOf('My collection'));
     fireEvent.click(screen.getByRole('menuitem', {name: 'Change cover'}));
     expect(await screen.findByRole('heading', {name: 'Cover for My collection'})).toBeInTheDocument();
+  });
+
+  it("changes My collection's page size from its ⋯'s Pages, its shelf row's size marked, and closes once the server has it", async () => {
+    writes.setMyCollection.mockResolvedValue(true);
+    renderShelf({myCollection: {pages: 3, cover: null}});
+    fireEvent.click(menuOf('My collection'));
+    fireEvent.click(screen.getByRole('menuitem', {name: 'Pages'}));
+    expect(await screen.findByRole('heading', {name: 'Pages for My collection'})).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: '3 × 3, 9 a page'})).toHaveAttribute('aria-pressed', 'true');
+    await act(async () => fireEvent.click(screen.getByRole('button', {name: '2 × 2, 4 a page'})));
+    expect(writes.setMyCollection).toHaveBeenCalledExactlyOnceWith({readerId: 'user-1', patch: {pages: 2}});
+    expect(trackEvent).toHaveBeenCalledWith('binder_changed', {what: 'pages'});
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
   it('never opens Change cover again by itself once the shelf stops counting while it is open', async () => {

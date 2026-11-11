@@ -62,7 +62,7 @@ describe('SaveAsBinder', () => {
     await act(async () => fireEvent.click(saveButton()));
     expect(writes.createBinder).toHaveBeenCalledExactlyOnceWith({
       readerId: 'user-1',
-      input: {name: 'Amber epics', scope: WHOLE_COLLECTION, rules: OFFER.rules, cover: null},
+      input: {name: 'Amber epics', scope: WHOLE_COLLECTION, rules: OFFER.rules, pages: 4, cover: null},
     });
     expect(trackEvent).toHaveBeenCalledExactlyOnceWith('binder_created', {from: 'saved', kinds: 'ink,rarity'});
     expect(props.onSaved).toHaveBeenCalledWith(MADE);
@@ -74,11 +74,23 @@ describe('SaveAsBinder', () => {
     expect(saveButton()).toBeDisabled();
   });
 
-  it('hands More rules the name typed and the offer, for the window', () => {
+  it('makes the binder at the page size picked under its name, 4 × 4 unless one is', async () => {
+    renderBox();
+    expect(screen.getByRole('button', {name: '4 × 4, 16 a page'})).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(screen.getByRole('button', {name: '2 × 2, 4 a page'}));
+    await act(async () => fireEvent.click(saveButton()));
+    expect(writes.createBinder).toHaveBeenCalledExactlyOnceWith({
+      readerId: 'user-1',
+      input: {name: 'Amber', scope: WHOLE_COLLECTION, rules: OFFER.rules, pages: 2, cover: null},
+    });
+  });
+
+  it('hands More rules the name typed, the page size picked and the offer, for the window', () => {
     const props = renderBox();
     fireEvent.change(nameField(), {target: {value: 'Gold'}});
+    fireEvent.click(screen.getByRole('button', {name: '3 × 3, 9 a page'}));
     fireEvent.click(screen.getByRole('button', {name: 'More rules'}));
-    expect(props.onMoreRules).toHaveBeenCalledWith({name: 'Gold', scope: WHOLE_COLLECTION, rules: OFFER.rules});
+    expect(props.onMoreRules).toHaveBeenCalledWith({name: 'Gold', scope: WHOLE_COLLECTION, rules: OFFER.rules, pages: 3});
   });
 
   it('holds while the save runs: More rules, Escape and the field all wait', async () => {
