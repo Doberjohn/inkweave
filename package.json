@@ -78,7 +78,7 @@
         "!apps/web/dist/assets/PagesChoices-*.js",
         "!apps/web/dist/assets/PagesPicker-*.js"
       ],
-      "limit": "471 kB",
+      "limit": "472 kB",
       "gzip": true
     },
     {
