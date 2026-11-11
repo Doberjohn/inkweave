@@ -48,7 +48,7 @@ describe('useBinderDraft', () => {
     const shelf = binderFace(POOL, ENTRIES, {...EPICS, ...input});
     expect({cover: result.current.cover, figures: preview.figures}).toEqual(shelf);
     expect(preview.figures).toMatchObject({complete: 1, cards: 2});
-    expect(preview.firstPage).toEqual([
+    expect(result.current.firstPage).toEqual([
       {card: POOL[0], held: false},
       {card: POOL[1], held: true},
     ]);

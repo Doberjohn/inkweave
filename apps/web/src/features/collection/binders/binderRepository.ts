@@ -2,7 +2,7 @@ import type {TablesInsert} from '../../../shared/lib/database.types';
 import type {RepoResult} from '../../../shared/lib/repoResult';
 import {reportFailure} from '../../../shared/lib/reportFailure';
 import {callSupabase} from '../../../shared/lib/supabaseCall';
-import type {PageSide} from '../../cards/components/binderGeometry';
+import {DEFAULT_SIDE, type PageSide} from '../../cards/components/binderGeometry';
 import type {Binder} from './binderRules';
 import {DESIGN_ID} from './coverDesigns';
 
@@ -186,7 +186,7 @@ export interface ShelfLook {
 }
 
 /** My collection's with no row: a binder's own defaults. */
-export const SHELF_DEFAULT: ShelfLook = {pages: 4, cover: null};
+export const SHELF_DEFAULT: ShelfLook = {pages: DEFAULT_SIDE, cover: null};
 
 /**
  * My collection's page size and cover: the caller's row, or the defaults with no row. A field the

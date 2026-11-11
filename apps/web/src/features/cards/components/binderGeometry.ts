@@ -70,7 +70,7 @@ export const lonePage = (rows: LoneRows): PageGrid => LONE_PAGES[rows];
 export const isSquare = ({columns, rows}: BinderGrid) => columns === rows;
 
 /** Whether a phone draws `grid`'s page as it is: 2 or 3 across fit, as today's 3 across does. */
-const drawnWhole = ({columns}: BinderGrid) => columns <= LONE_COLUMNS;
+export const drawnWhole = ({columns}: BinderGrid) => columns <= LONE_COLUMNS;
 
 /**
  * The page a view draws of a binder whose pages are `grid`: a spread's are the binder's own. A

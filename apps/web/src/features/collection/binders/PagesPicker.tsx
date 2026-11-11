@@ -1,7 +1,5 @@
-import {useState} from 'react';
-import {trackEvent} from '../../../shared/lib/analytics';
 import type {PageSide} from '../../cards/components/binderGeometry';
-import {PickDialog} from './binderDialogs';
+import {PickDialog, usePickSave} from './binderDialogs';
 import {setMyCollection} from './binderShelf';
 import {PagesChoices} from './PagesChoices';
 import {MY_COLLECTION} from './shelfWords';
@@ -22,23 +20,11 @@ export interface PagesPickerProps {
 
 const FAILED_WORDS = "Couldn't change the page size. Try again.";
 
-/** The pick, and what it came to. While it runs every way out waits, as Change cover's does. */
+/** The pick, and what it came to (`usePickSave`): My collection's size, on its shelf row. */
 function usePagesSave({readerId, onSaved}: Pick<PagesPickerProps, 'readerId' | 'onSaved'>) {
-  const [saving, setSaving] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const pick = async (pages: PageSide) => {
-    setSaving(true);
-    setFailed(false);
-    const saved = await setMyCollection({readerId, patch: {pages}});
-    setSaving(false);
-    if (!saved) {
-      setFailed(true);
-      return;
-    }
-    trackEvent('binder_changed', {what: 'pages'});
-    onSaved();
-  };
-  return {saving, failed, pick};
+  const save = async (pages: PageSide): Promise<'set' | 'failed'> =>
+    (await setMyCollection({readerId, patch: {pages}})) ? 'set' : 'failed';
+  return usePickSave(save, 'pages', onSaved);
 }
 
 /**
@@ -64,7 +50,7 @@ export function PagesPicker(props: PagesPickerProps) {
       title={`Pages for ${MY_COLLECTION}`}
       lead="Pick how many cards a page holds."
       saving={save.saving}
-      problem={save.failed ? 'failed' : null}
+      problem={save.problem}
       failedWords={FAILED_WORDS}
       onClose={props.onClose}
       onGone={props.onGone}>

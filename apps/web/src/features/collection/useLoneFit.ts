@@ -1,5 +1,5 @@
 import {useLayoutEffect, useState} from 'react';
-import {loneFitFor, THREE_ROWS, type BinderGrid, type LoneFit, type LoneRoom} from '../cards/components/binderGeometry';
+import {drawnWhole, loneFitFor, THREE_ROWS, type BinderGrid, type LoneFit, type LoneRoom} from '../cards/components/binderGeometry';
 
 /**
  * The room inside `section`'s padding. Its width is its border box's, as if no scrollbar stood in
@@ -17,11 +17,16 @@ function roomOf(section: HTMLElement): LoneRoom {
 
 const sameFit = (a: LoneFit, b: LoneFit) => a.rows === b.rows && a.maxWidth === b.maxWidth;
 
+/** The fit the page takes: the section's, on a phone and for a page drawn 3 across alone. */
+const fitShown = (measured: LoneFit, on: boolean, grid: BinderGrid): LoneFit => (on && !drawnWhole(grid) ? measured : THREE_ROWS);
+
 /**
  * How a phone's lone page of `grid` fits the binder's section (`loneFitFor`): measured in a layout
  * effect, so the first paint already has the page's rows, and again whenever the section resizes
  * (a rotation, the browser's bars). The loaded binder and its loading frame both read it, so the
- * one takes over the other's rows. `on`: only a phone's section is measured.
+ * one takes over the other's rows. `on`: only a phone's section is measured. A 2 by 2 or 3 by 3
+ * page draws whole, so it takes no fit, even one measured for the size before it while the
+ * section had no room to measure.
  *
  * `section` is the element itself, held in state by a callback ref, not a ref object: the
  * element can be replaced while the component stays mounted (the error state draws its own box,
@@ -44,5 +49,5 @@ export function useLoneFit(section: HTMLElement | null, on: boolean, grid: Binde
     observer.observe(section);
     return () => observer.disconnect();
   }, [section, on, grid]);
-  return on ? fit : THREE_ROWS;
+  return fitShown(fit, on, grid);
 }

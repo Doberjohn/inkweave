@@ -123,7 +123,8 @@ export function useBinderDraft({start, pool, entries}: {start: DraftStart; pool:
   });
   const draft = {inks: filters.draftInks, types: filters.draftTypes, costs: filters.draftCosts, opts: filters.draftFilters};
   const rules = writeRules(scopedDraft(draft, scope), query);
-  const preview = usePreview({pool, entries}, {scope, rules});
+  // The preview's pockets are the most a page holds; the draft hands on only as many as its size holds.
+  const {firstPage: pockets, ...preview} = usePreview({pool, entries}, {scope, rules});
   const input: BinderInput = {name: trimBinderName(name), scope, rules, pages, cover};
   const change = start.binder === null ? null : changeOf(start.binder, input);
   const holdsCards = preview.figures.cards > 0;
@@ -138,7 +139,7 @@ export function useBinderDraft({start, pool, entries}: {start: DraftStart; pool:
     pages,
     setPages,
     /** The pockets on its first page: as many as its size holds. */
-    firstPage: preview.firstPage.slice(0, pages * pages),
+    firstPage: pockets.slice(0, pages * pages),
     /** The design the preview shows: no cover, the first design, until one is picked. */
     cover: coverDesign(cover),
     pickCover: (design: CoverDesign) => setCover(design.id),

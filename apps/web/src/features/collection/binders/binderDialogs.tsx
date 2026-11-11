@@ -1,8 +1,9 @@
-import {useEffect, useEffectEvent, useId, useRef, type CSSProperties, type FocusEvent, type ReactNode, type RefObject} from 'react';
+import {useEffect, useEffectEvent, useId, useRef, useState, type CSSProperties, type FocusEvent, type ReactNode, type RefObject} from 'react';
 import {createPortal} from 'react-dom';
 import {BottomSheet, CtaButton, DialogShell} from '../../../shared/components';
 import {useDialogFocus, useScrollLock, useTransitionPresence} from '../../../shared/hooks';
 import {COLORS, DIALOG_TITLE, FONTS, FONT_SIZES, FONT_WEIGHT, SPACING} from '../../../shared/constants';
+import {trackEvent} from '../../../shared/lib/analytics';
 import {FIELD, LEAD} from './binderFields';
 import {clampBinderName} from './binderName';
 import {SHELF_FULL_WORDS} from './shelfWords';
@@ -117,6 +118,32 @@ const PICK_NOTE: CSSProperties = {margin: `${SPACING.md}px 0 0`, fontSize: `${FO
 const PICK_PROBLEM: CSSProperties = {marginTop: SPACING.md};
 
 const PICK_FOOT: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.sm, marginTop: SPACING.lg};
+
+/** What a pick dialog's save changes, as `binder_changed` counts it. */
+type PickedWhat = 'cover' | 'pages';
+
+/**
+ * A pick dialog's save (Change cover, Pages), and what it came to. While it runs every way out
+ * waits, since the picker alone would say it failed. One that lands is counted by what it changed,
+ * never the binder's name or id, and told to `onSaved`; one that doesn't keeps its problem to say.
+ */
+export function usePickSave<T>(save: (choice: T) => Promise<'set' | SaveProblem>, what: PickedWhat, onSaved: () => void) {
+  const [saving, setSaving] = useState(false);
+  const [problem, setProblem] = useState<SaveProblem | null>(null);
+  const pick = async (choice: T) => {
+    setSaving(true);
+    setProblem(null);
+    const result = await save(choice);
+    setSaving(false);
+    if (result !== 'set') {
+      setProblem(result);
+      return;
+    }
+    trackEvent('binder_changed', {what});
+    onSaved();
+  };
+  return {saving, problem, pick};
+}
 
 interface PickDialogProps extends Omit<AskDialogProps, 'initialFocusRef'> {
   title: string;

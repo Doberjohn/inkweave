@@ -44,13 +44,15 @@ const EDGE_LIGHT = 40;
 /**
  * How many sheet edges show along a page's foot: the light rows in the strip just under it,
  * counted as runs, from 2px above its foot to 6px under it. Three edges and the gaps between
- * them take 6px, and the zip's teeth start 7px under the page. A cover's strip starts at its
- * foot: its blue board, lighter than a page's black, would read as an edge.
+ * them take 6px, and the zip's teeth start 7px under the page. A cover's strip starts a pixel
+ * under its foot: its blue board, lighter than a page's black, would read as an edge, and the
+ * row its foot falls in is still part board, which a browser can take as the strip's first row.
  */
 async function sheetEdgesUnder(page: Page, sheet: Locator): Promise<number> {
   const box = await edges(sheet);
-  const above = (await sheet.evaluate((side) => side.classList.contains('binder-cover'))) ? 0 : 2;
-  const rows = await pixelsIn(page, {x: middle(box) - 10, y: box.bottom - above, width: 20, height: 6 + above});
+  const cover = await sheet.evaluate((side) => side.classList.contains('binder-cover'));
+  const top = cover ? box.bottom + 1 : box.bottom - 2;
+  const rows = await pixelsIn(page, {x: middle(box) - 10, y: top, width: 20, height: box.bottom + 6 - top});
   const light = rows.map((row) => row.reduce((sum, pixel) => sum + luminance(pixel), 0) / row.length > EDGE_LIGHT);
   return light.filter((on, i) => on && !light[i - 1]).length;
 }

@@ -50,4 +50,14 @@ describe('useLoneFit (#1000)', () => {
     rerender({grid: squarePage(3)});
     expect(result.current).toEqual({rows: 3});
   });
+
+  it("draws a 3 by 3 page whole even when its section can't be measured, whatever the last size's fit", () => {
+    // A 4 by 4's four rows, capped to the room; then a 3 by 3 in a section that measures nothing yet.
+    const {result, rerender} = renderHook(({box, grid}) => useLoneFit(box, true, grid), {
+      initialProps: {box: section(394, 904), grid: squarePage(4)},
+    });
+    expect(result.current.rows).toBe(4);
+    rerender({box: section(0, 0), grid: squarePage(3)});
+    expect(result.current).toEqual({rows: 3});
+  });
 });

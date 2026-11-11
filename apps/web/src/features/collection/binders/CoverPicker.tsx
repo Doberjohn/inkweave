@@ -1,8 +1,6 @@
-import {useState} from 'react';
-import {trackEvent} from '../../../shared/lib/analytics';
-import {PickDialog} from './binderDialogs';
+import {PickDialog, usePickSave} from './binderDialogs';
 import type {Binder} from './binderRules';
-import {setCover, type CoverResult} from './binderShelf';
+import {setCover} from './binderShelf';
 import {CoverChoices} from './CoverChoices';
 import {coverDesign, sameCover, type CoverDesign} from './coverDesigns';
 import {MY_COLLECTION} from './shelfWords';
@@ -26,31 +24,12 @@ export interface CoverPickerProps {
 /** What the picker is called: our words, never the binder's name, which stays out of attributes. */
 const DIALOG_NAME = 'Change cover';
 
-/** Why a pick didn't land. */
-type CoverProblem = Exclude<CoverResult, 'set'>;
-
 const FAILED_WORDS = "Couldn't change the cover. Try again.";
 
-/**
- * The pick, and what it came to. While it runs every way out waits, since the picker alone would
- * say it failed.
- */
+/** The pick, and what it came to (`usePickSave`): the cover, on the binder or My collection's shelf row. */
 function useCoverSave({readerId, binder, onSaved}: Pick<CoverPickerProps, 'readerId' | 'binder' | 'onSaved'>) {
-  const [saving, setSaving] = useState(false);
-  const [problem, setProblem] = useState<CoverProblem | null>(null);
-  const pick = async (design: CoverDesign) => {
-    setSaving(true);
-    setProblem(null);
-    const result = await setCover({readerId, id: binder?.id ?? null, cover: design.id});
-    setSaving(false);
-    if (result !== 'set') {
-      setProblem(result);
-      return;
-    }
-    trackEvent('binder_changed', {what: 'cover'});
-    onSaved();
-  };
-  return {saving, problem, pick};
+  const save = (design: CoverDesign) => setCover({readerId, id: binder?.id ?? null, cover: design.id});
+  return usePickSave(save, 'cover', onSaved);
 }
 
 /**

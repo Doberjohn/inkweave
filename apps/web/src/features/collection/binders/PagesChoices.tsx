@@ -27,7 +27,10 @@ const SIDES: readonly PageSide[] = [2, 3, 4];
 
 /**
  * Three in a row, each at its own size, under Sets in the window, in Save as a binder's box and in
- * My collection's Pages: short enough that the window's rules still fit a 1920x1080 screen.
+ * My collection's Pages: short enough that the window's rules still fit a 1920x1080 screen, in
+ * Firefox too, whose fields stand a little taller. Room at the sides alone for the chosen one's
+ * ring, which the window's scrolling column would clip there; above and below it shows in the
+ * space round the row.
  */
 const GRID: CSSProperties = {
   ...CHOICE_LOOK,
@@ -35,7 +38,7 @@ const GRID: CSSProperties = {
   gridTemplateColumns: 'repeat(3, max-content)',
   gap: SPACING.sm,
   margin: 0,
-  padding: SPACING.xxs,
+  padding: `0 ${SPACING.xxs}px`,
   listStyle: 'none',
 };
 
