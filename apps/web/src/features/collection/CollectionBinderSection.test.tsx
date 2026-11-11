@@ -11,6 +11,7 @@ import type {Axis} from './collectionStats';
 import type {BinderChoices} from './binders/binderChoices';
 import type {Binder} from './binders/binderRules';
 import {coverDesign} from './binders/coverDesigns';
+import {TODAY_PAGE, type BinderGrid} from '../cards/components/binderGeometry';
 import {CollectionBinderSection, type BinderStart} from './CollectionBinderSection';
 
 afterEach(() => {
@@ -56,6 +57,8 @@ interface SectionOptions {
   onEmptyImport?: () => void;
   /** Your binders, one of them open. */
   binders?: BinderChoices;
+  /** The binder's page: today's 4 by 3 unless a case says. */
+  grid?: BinderGrid;
 }
 
 /** The section with `matched` the cards the page's filters let through, as the page counts them. */
@@ -77,6 +80,7 @@ function section(
     renderFoilPointer,
     onEmptyImport,
     binders,
+    grid = TODAY_PAGE,
   }: SectionOptions = {},
 ) {
   const counted = pool.filter((card) => matched.includes(card.id));
@@ -90,6 +94,7 @@ function section(
         sortOrder={sortOrder}
         entries={entries}
         friend={friend}
+        grid={grid}
         isLoading={isLoading}
         error={error}
         onRetry={vi.fn()}

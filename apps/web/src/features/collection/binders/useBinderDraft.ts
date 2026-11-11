@@ -7,34 +7,36 @@ import type {CollectionEntries} from '../collectionParser';
 import {isHeld} from '../collectionStats';
 import {figuresOf} from './binderCovers';
 import {clampBinderName, isValidBinderName, trimBinderName} from './binderName';
+import {DEFAULT_SIDE, type PageSide} from '../../cards/components/binderGeometry';
 import type {BinderInput} from './binderRepository';
 import {RULES_MAX, draftOf, ruleLine, ruleParts, rulePool, scopedDraft, writeRules, type Binder} from './binderRules';
 import {coverDesign, sameCover, type CoverDesign} from './coverDesigns';
 
-/** The pockets on a binder's first page, as the window previews them. */
-const FIRST_PAGE = 12;
+/** The most pockets a binder's first page holds, 4 by 4: the window shows as many as its size holds. */
+const FIRST_PAGE = 16;
 
-/** What the window starts from: the binder Edit rules changes, or a new binder's name, Sets and rules. */
+/** What the window starts from: the binder Edit rules changes, or a new binder's name, Sets, rules and size. */
 export interface DraftStart {
   binder: Binder | null;
   name: string;
   scope: string;
   rules: string;
+  pages: PageSide;
 }
 
-/** A new binder's name, Sets and rules, as Save as a binder hands them to the window. */
+/** A new binder's name, Sets, rules and size, as Save as a binder hands them to the window. */
 export type NewStart = Omit<DraftStart, 'binder'>;
 
-const EMPTY_START: NewStart = {name: '', scope: WHOLE_COLLECTION, rules: ''};
+const EMPTY_START: NewStart = {name: '', scope: WHOLE_COLLECTION, rules: '', pages: DEFAULT_SIDE};
 
 /**
  * A start for Edit rules (a binder), or for a new binder (null): the `seed` Save as a binder
- * hands over, else no name, every set and no rule.
+ * hands over, else no name, every set, no rule and 4 by 4 pages.
  */
 export const startOf = (binder: Binder | null, seed: NewStart = EMPTY_START): DraftStart =>
   binder === null
     ? {binder, ...seed}
-    : {binder, name: binder.name, scope: binder.scope, rules: binder.rules};
+    : {binder, name: binder.name, scope: binder.scope, rules: binder.rules, pages: binder.pages};
 
 /** One pocket of the first page: its card, and whether you have it, else it shows grey. */
 interface PreviewPocket {
@@ -42,8 +44,8 @@ interface PreviewPocket {
   held: boolean;
 }
 
-/** What a change to a binder comes to, for `binder_changed`: its Sets or rules, else its cover, else its name alone. */
-export type ChangeKind = 'rules' | 'cover' | 'name';
+/** What a change to a binder comes to, for `binder_changed`: its Sets or rules, else its size, else its cover, else its name alone. */
+export type ChangeKind = 'rules' | 'pages' | 'cover' | 'name';
 
 /**
  * The Rarity options at a Sets: the binder's (`binderRarities`), none for promos alone. A rarity
@@ -89,16 +91,18 @@ function usePreview(source: {pool: readonly LorcanaCard[]; entries: CollectionEn
 function changeOf(binder: Binder, input: BinderInput): ChangeKind | null {
   const ruled = draftOf(binder);
   if (input.scope !== binder.scope || input.rules !== writeRules(ruled.draft, ruled.query)) return 'rules';
+  if (input.pages !== binder.pages) return 'pages';
   if (!sameCover(input.cover, binder.cover)) return 'cover';
   return input.name !== binder.name ? 'name' : null;
 }
 
 /**
- * The New binder window's state: the name, the Sets, the filters as a draft, Name has and the
- * cover, and from them the binder they would make: its rules written as the row stores them
- * (`writeRules`), its cards (`rulePool`), its numbers as the shelf counts them (`figuresOf`), its
- * chips and its first page. The window mounts it afresh for each opening: a new
- * binder starts on the first design, a binder being edited on its own.
+ * The New binder window's state: the name, the Sets, the filters as a draft, Name has, the page
+ * size and the cover, and from them the binder they would make: its rules written as the row
+ * stores them (`writeRules`), its cards (`rulePool`), its numbers as the shelf counts them
+ * (`figuresOf`), its chips and its first page, as many pockets as its size holds. The window
+ * mounts it afresh for each opening: a new binder starts at 4 by 4 on the first design, a binder
+ * being edited at its own.
  *
  * It saves only a binder the table takes, with a card: a valid name, at least one card, and
  * when editing a change.
@@ -108,6 +112,7 @@ export function useBinderDraft({start, pool, entries}: {start: DraftStart; pool:
   const [name, setName] = useState(start.name);
   const [scope, setScope] = useState(start.scope);
   const [query, setQuery] = useState(begun.query);
+  const [pages, setPages] = useState(start.pages);
   const [cover, setCover] = useState<string | null>(start.binder?.cover ?? null);
   const filters = useDraftFilters({
     isOpen: true,
@@ -119,7 +124,7 @@ export function useBinderDraft({start, pool, entries}: {start: DraftStart; pool:
   const draft = {inks: filters.draftInks, types: filters.draftTypes, costs: filters.draftCosts, opts: filters.draftFilters};
   const rules = writeRules(scopedDraft(draft, scope), query);
   const preview = usePreview({pool, entries}, {scope, rules});
-  const input: BinderInput = {name: trimBinderName(name), scope, rules, cover};
+  const input: BinderInput = {name: trimBinderName(name), scope, rules, pages, cover};
   const change = start.binder === null ? null : changeOf(start.binder, input);
   const holdsCards = preview.figures.cards > 0;
   const rulesTooLong = rules.length > RULES_MAX;
@@ -130,6 +135,10 @@ export function useBinderDraft({start, pool, entries}: {start: DraftStart; pool:
     setScope,
     query,
     setQuery,
+    pages,
+    setPages,
+    /** The pockets on its first page: as many as its size holds. */
+    firstPage: preview.firstPage.slice(0, pages * pages),
     /** The design the preview shows: no cover, the first design, until one is picked. */
     cover: coverDesign(cover),
     pickCover: (design: CoverDesign) => setCover(design.id),

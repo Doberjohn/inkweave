@@ -1,7 +1,18 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {enqueueWrite} from '../collectionWriteQueue';
 import {SHELF_FULL, type ShelfLook} from './binderRepository';
-import {createBinder, deleteBinder, follow, moveBinder, setCover, snapshot, updateBinder, viewOf, type BinderReader} from './binderShelf';
+import {
+  createBinder,
+  deleteBinder,
+  follow,
+  moveBinder,
+  setCover,
+  setMyCollection,
+  snapshot,
+  updateBinder,
+  viewOf,
+  type BinderReader,
+} from './binderShelf';
 
 const repo = vi.hoisted(() => ({
   listBinders: vi.fn(),
@@ -125,7 +136,7 @@ describe('deleteBinder', () => {
   });
 });
 
-const INPUT = {name: 'Rares', scope: 'all', rules: 'rarity=Rare', cover: null};
+const INPUT = {name: 'Rares', scope: 'all', rules: 'rarity=Rare', pages: 4 as const, cover: null};
 const RARES = {...INPUT, id: 'b9', place: 5};
 
 describe('createBinder', () => {
@@ -236,6 +247,15 @@ describe("My collection's page size and cover", () => {
     expect(queue.enqueueWrite).toHaveBeenCalledWith('me', expect.any(Function));
     expect(mine()).toEqual({pages: 3, cover: 'argyle'});
     expect(shown()).toEqual(['b1', 'b2', 'b3']);
+  });
+
+  it('set the page size alone, and show it once the server has, the cover kept', async () => {
+    follow({...READER, uid: null});
+    await loadShelf(TARTAN);
+    repo.setShelf.mockResolvedValue({data: null, error: null});
+    await expect(setMyCollection({readerId: 'me', patch: {pages: 2}})).resolves.toBe(true);
+    expect(repo.setShelf).toHaveBeenCalledExactlyOnceWith('me', {pages: 2});
+    expect(mine()).toEqual({pages: 2, cover: 'tartan'});
   });
 
   it('keep the cover they had when the save fails', async () => {

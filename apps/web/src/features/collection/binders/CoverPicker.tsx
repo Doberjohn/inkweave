@@ -1,9 +1,6 @@
-import {useState, type CSSProperties} from 'react';
-import {CtaButton} from '../../../shared/components';
+import {useState} from 'react';
 import {trackEvent} from '../../../shared/lib/analytics';
-import {COLORS, DIALOG_TITLE, FONT_SIZES, SPACING} from '../../../shared/constants';
-import {AskDialog, ProblemLine, WhenGone} from './binderDialogs';
-import {LEAD} from './binderFields';
+import {PickDialog} from './binderDialogs';
 import type {Binder} from './binderRules';
 import {setCover, type CoverResult} from './binderShelf';
 import {CoverChoices} from './CoverChoices';
@@ -56,26 +53,6 @@ function useCoverSave({readerId, binder, onSaved}: Pick<CoverPickerProps, 'reade
   return {saving, problem, pick};
 }
 
-const CHOICES_SPACE: CSSProperties = {marginTop: SPACING.lg};
-
-const NOTE: CSSProperties = {margin: `${SPACING.md}px 0 0`, fontSize: `${FONT_SIZES.base}px`, color: COLORS.textMuted};
-
-const PROBLEM_SPACE: CSSProperties = {marginTop: SPACING.md};
-
-const FOOT: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.sm, marginTop: SPACING.lg};
-
-/** What the picker says under the designs: a save on its way, or why the last one didn't land. */
-function SaveLine({saving, problem}: {saving: boolean; problem: CoverProblem | null}) {
-  if (saving) {
-    return (
-      <p role="status" style={NOTE}>
-        Saving…
-      </p>
-    );
-  }
-  return <ProblemLine problem={problem} failedWords={FAILED_WORDS} style={PROBLEM_SPACE} />;
-}
-
 /**
  * Change cover, from a cover's ⋯ on the shelf: "Cover for Amber", or for My collection, then the
  * eight designs, four across with their names, the binder's own ringed and marked. A pick saves
@@ -86,7 +63,7 @@ function SaveLine({saving, problem}: {saving: boolean; problem: CoverProblem | n
  * the title is the player's own words.
  */
 export function CoverPicker(props: CoverPickerProps) {
-  const {binder, isMobile} = props;
+  const {binder} = props;
   const save = useCoverSave(props);
   const own = binder === null ? props.myCover : binder.cover;
   const chosen = coverDesign(own);
@@ -94,25 +71,20 @@ export function CoverPicker(props: CoverPickerProps) {
     if (sameCover(design.id, own)) props.onSaved();
     else void save.pick(design);
   };
-  const close = () => {
-    if (!save.saving) props.onClose();
-  };
   return (
-    <AskDialog isOpen={props.isOpen} isMobile={isMobile} onClose={close} dialogName={DIALOG_NAME} size="md">
-      <div className="ph-no-capture">
-        <WhenGone onGone={props.onGone} />
-        <h2 style={DIALOG_TITLE}>Cover for {binder?.name ?? MY_COLLECTION}</h2>
-        <p style={LEAD}>Pick its cover.</p>
-        <div style={CHOICES_SPACE}>
-          <CoverChoices chosen={chosen.id} onPick={pick} disabled={save.saving} named />
-        </div>
-        <SaveLine saving={save.saving} problem={save.problem} />
-        <div style={FOOT}>
-          <CtaButton variant="neutral" onClick={close} disabled={save.saving}>
-            Cancel
-          </CtaButton>
-        </div>
-      </div>
-    </AskDialog>
+    <PickDialog
+      isOpen={props.isOpen}
+      isMobile={props.isMobile}
+      size="md"
+      dialogName={DIALOG_NAME}
+      title={`Cover for ${binder?.name ?? MY_COLLECTION}`}
+      lead="Pick its cover."
+      saving={save.saving}
+      problem={save.problem}
+      failedWords={FAILED_WORDS}
+      onClose={props.onClose}
+      onGone={props.onGone}>
+      <CoverChoices chosen={chosen.id} onPick={pick} disabled={save.saving} named />
+    </PickDialog>
   );
 }

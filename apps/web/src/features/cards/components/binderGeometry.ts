@@ -16,6 +16,9 @@ export interface PageGrid {
 /** A binder's page size as its row keeps it: its pockets across and down (owner, 2026-11-05). */
 export type PageSide = 2 | 3 | 4;
 
+/** A binder's page size until its player picks one, as the tables make a row: 4 by 4 (owner, 2026-11-05). */
+export const DEFAULT_SIDE: PageSide = 4;
+
 declare const BINDER_PAGE: unique symbol;
 
 /**
@@ -146,20 +149,27 @@ export function loneBoxStyle(top: number, maxWidth: number | undefined): CSSProp
   return maxWidth === undefined ? box : {...box, maxWidth, width: '100%', margin: '0 auto', boxSizing: 'border-box'};
 }
 
-/** What a lone board draws across besides its three cards: the board either side, the spine, the page's padding and gaps. */
-const LONE_ACROSS = 2 * BOARD + SPINE_WIDTH + 2 * PAGE_PADDING + (LONE_PAGES[3].columns - 1) * POCKET_GAP;
+/**
+ * How wide a phone's lone board may be: today's page no wider than its height lets it be
+ * (`LoneFit.maxWidth`), a square page as wide as the binder. The binder and its loading frame both ask.
+ */
+export const loneMaxWidth = (grid: BinderGrid, {maxWidth}: LoneFit) => (isSquare(grid) ? undefined : maxWidth);
+
+/** What a lone board draws across besides its cards, `columns` of them: the board either side, the spine, the page's padding and gaps. */
+const loneAcross = (columns: number) => 2 * BOARD + SPINE_WIDTH + 2 * PAGE_PADDING + (columns - 1) * POCKET_GAP;
+const LONE_ACROSS = loneAcross(LONE_PAGES[3].columns);
 
 /** What it draws down besides its cards, `rows` of them: the board above and below, the page's padding and gaps. */
-const loneDown = (rows: LoneRows) => 2 * BOARD + 2 * PAGE_PADDING + (rows - 1) * POCKET_GAP;
+const loneDown = (rows: number) => 2 * BOARD + 2 * PAGE_PADDING + (rows - 1) * POCKET_GAP;
 
 /**
- * How tall a phone's lone board draws in `width`, a CSS length, as CSS: `rows` of cards as
- * wide as the page's three columns leave, with the page's padding and gaps and the board round
- * them. The page is width-driven, so this is all its height; the binder's loading frame sizes its
- * page by it, in container units.
+ * How tall a phone's lone board of `page` draws in `width`, a CSS length, as CSS: its rows of
+ * cards as wide as its columns leave, with the page's padding and gaps and the board round them.
+ * The page is width-driven, so this is all its height; the binder's loading frame sizes its page
+ * by it, in container units.
  */
-export function loneBoardHeight(width: string, rows: LoneRows): string {
-  return `calc(${loneDown(rows)}px + ${rows} * (${width} - ${LONE_ACROSS}px) / ${LONE_PAGES[3].columns} / ${CARD_ASPECT})`;
+export function loneBoardHeight(width: string, {columns, rows}: PageGrid): string {
+  return `calc(${loneDown(rows)}px + ${rows} * (${width} - ${loneAcross(columns)}px) / ${columns} / ${CARD_ASPECT})`;
 }
 
 /** A cell of the binder's map at full size (`BinderSpreadMap`): 7px across, so 9 tall, the nearest to a card's shape. */
@@ -181,7 +191,7 @@ const miniSide = (cells: number, cell: number) =>
  * 41 tall at 3 rows and 52 at 4.
  */
 export const loneMiniWidth = ({columns}: PageGrid) => miniSide(columns, MAP_CELL.width);
-const loneMiniHeight = (rows: LoneRows) => miniSide(rows, MAP_CELL.height);
+const loneMiniHeight = (rows: number) => miniSide(rows, MAP_CELL.height);
 
 /** How far a phone's page map sits under its page. */
 export const MAP_GAP_ABOVE = SPACING.xs;
@@ -191,7 +201,7 @@ export const MAP_GAP_ABOVE = SPACING.xs;
  * tallest. The binder's loading frame keeps it empty, so the map that arrives draws in it
  * (`BinderChunkFallback`).
  */
-export const mapBandHeight = (rows: LoneRows) => MAP_GAP_ABOVE + loneMiniHeight(rows);
+export const mapBandHeight = (rows: number) => MAP_GAP_ABOVE + loneMiniHeight(rows);
 
 /** The room a phone's binder has: its section's content box, which the board, its gap above and the map share. */
 export interface LoneRoom {

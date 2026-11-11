@@ -10,9 +10,11 @@ import {CHIP, CHIPS, HEADING, LEAD} from './binderFields';
 import {isValidBinderName, trimBinderName} from './binderName';
 import {ruleKinds, ruleParts, type Binder} from './binderRules';
 import {createBinder} from './binderShelf';
+import {PagesChoices} from './PagesChoices';
 import {suggestName} from './saveRules';
 import {cardCount} from './shelfWords';
 import type {NewStart} from './useBinderDraft';
+import {DEFAULT_SIDE, type PageSide} from '../../cards/components/binderGeometry';
 
 export interface SaveAsBinderProps {
   isOpen: boolean;
@@ -23,7 +25,7 @@ export interface SaveAsBinderProps {
   isMobile: boolean;
   /** Told once the server has the binder, as it stored it; the caller closes the box. */
   onSaved: (binder: Binder) => void;
-  /** More rules: the window takes over from the box, with its name, Sets and rules. */
+  /** More rules: the window takes over from the box, with its name, Sets, rules and size. */
   onMoreRules: (seed: NewStart) => void;
   onClose: () => void;
   /** Told once a closed box's exit has run, so the page can unmount it. */
@@ -41,9 +43,15 @@ function countLine({figures, scope}: SaveOffer): string {
   return `${cardCount(figures.cards, scope)}, you have ${figures.complete.toLocaleString('en-US')}, ${percentOf(figures.complete, figures.cards)}%`;
 }
 
-/** Makes the binder from the box's name and the offer's Sets and rules, and counts it once it lands: never its name. */
-async function saveOffered(readerId: string, name: string, {scope, rules}: SaveOffer) {
-  const made = await createBinder({readerId, input: {name: trimBinderName(name), scope, rules, cover: null}});
+/** What the box asks: the binder's name and its page size. */
+interface Asked {
+  name: string;
+  pages: PageSide;
+}
+
+/** Makes the binder from the box's name and size and the offer's Sets and rules, and counts it once it lands: never its name. */
+async function saveOffered(readerId: string, {name, pages}: Asked, {scope, rules}: SaveOffer) {
+  const made = await createBinder({readerId, input: {name: trimBinderName(name), scope, rules, pages, cover: null}});
   if ('binder' in made) trackEvent('binder_created', {from: 'saved', kinds: ruleKinds(made.binder)});
   return made;
 }
@@ -55,10 +63,10 @@ async function saveOffered(readerId: string, name: string, {scope, rules}: SaveO
 function useSave({readerId, offer, onSaved, onClose}: Pick<SaveAsBinderProps, 'readerId' | 'offer' | 'onSaved' | 'onClose'>) {
   const [saving, setSaving] = useState(false);
   const [problem, setProblem] = useState<SaveProblem | null>(null);
-  const save = async (name: string) => {
+  const save = async (asked: Asked) => {
     setSaving(true);
     setProblem(null);
-    const made = await saveOffered(readerId, name, offer);
+    const made = await saveOffered(readerId, asked, offer);
     setSaving(false);
     if ('problem' in made) setProblem(made.problem);
     else onSaved(made.binder);
@@ -66,7 +74,7 @@ function useSave({readerId, offer, onSaved, onClose}: Pick<SaveAsBinderProps, 'r
   const close = () => {
     if (!saving) onClose();
   };
-  return {saving, problem, save: (name: string) => void save(name), close};
+  return {saving, problem, save: (asked: Asked) => void save(asked), close};
 }
 
 const HOLDS: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.sm, marginTop: SPACING.lg};
@@ -77,9 +85,9 @@ const BUTTONS: CSSProperties = {display: 'flex', gap: SPACING.sm, marginTop: SPA
 
 /**
  * Save as a binder's box: the page's filters kept as a binder of their own. Its name starts as
- * `suggestName`'s, selected; under it what the binder holds, its rules and Sets as chips and its
- * count. Save binder makes it at the set the page had picked; More rules hands it to the New
- * binder window. A dialog on a computer and a tablet, a sheet on a phone, where focus starts on the
+ * `suggestName`'s, selected; under it its page size, 4 by 4 to start, then what the binder holds,
+ * its rules and Sets as chips and its count. Save binder makes it at the set the page had picked;
+ * More rules hands it to the New binder window. A dialog on a computer and a tablet, a sheet on a phone, where focus starts on the
  * sheet so the keyboard waits for a press on the name.
  *
  * Lazy, in a chunk of its own, and only with binders on (`flag.ts`). It carries `ph-no-capture`:
@@ -88,6 +96,7 @@ const BUTTONS: CSSProperties = {display: 'flex', gap: SPACING.sm, marginTop: SPA
 export function SaveAsBinder(props: SaveAsBinderProps) {
   const {offer, isMobile} = props;
   const [name, setName] = useState(() => suggestName(offer));
+  const [pages, setPages] = useState<PageSide>(DEFAULT_SIDE);
   const save = useSave(props);
   const nameRef = useRef<HTMLInputElement>(null);
   const chips = [...ruleParts({scope: WHOLE_COLLECTION, rules: offer.rules}), setsChip(offer.scope)];
@@ -105,6 +114,10 @@ export function SaveAsBinder(props: SaveAsBinderProps) {
         <p style={LEAD}>Keep these filters as a binder of their own.</p>
         <NameField value={name} onChange={setName} disabled={save.saving} inputRef={nameRef} />
         <section style={HOLDS}>
+          <h3 style={HEADING}>Pages</h3>
+          <PagesChoices chosen={pages} onPick={setPages} disabled={save.saving} />
+        </section>
+        <section style={HOLDS}>
           <h3 style={HEADING}>It holds</h3>
           <ul aria-label="Its rules" style={CHIPS}>
             {chips.map((chip) => (
@@ -120,11 +133,11 @@ export function SaveAsBinder(props: SaveAsBinderProps) {
           <CtaButton
             variant="neutral"
             disabled={save.saving}
-            onClick={() => props.onMoreRules({name, scope: offer.scope, rules: offer.rules})}
+            onClick={() => props.onMoreRules({name, scope: offer.scope, rules: offer.rules, pages})}
             style={{flex: 1}}>
             More rules
           </CtaButton>
-          <CtaButton disabled={!isValidBinderName(name) || save.saving} onClick={() => save.save(name)} style={{flex: 1}}>
+          <CtaButton disabled={!isValidBinderName(name) || save.saving} onClick={() => save.save({name, pages})} style={{flex: 1}}>
             {save.saving ? 'Saving…' : 'Save binder'}
           </CtaButton>
         </div>

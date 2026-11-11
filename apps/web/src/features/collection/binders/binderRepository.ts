@@ -123,6 +123,7 @@ export interface BinderInput {
   name: string;
   scope: string;
   rules: string;
+  pages: PageSide;
   cover: string | null;
 }
 

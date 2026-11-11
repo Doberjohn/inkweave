@@ -2,6 +2,7 @@ import {describe, it, expect, expectTypeOf} from 'vitest';
 import {
   TODAY_PAGE,
   loneFitFor,
+  loneMaxWidth,
   lonePage,
   mapBandHeight,
   pagingOf,
@@ -46,6 +47,12 @@ describe('a lone page by its rows', () => {
   it('holds nine pockets at 3 rows and twelve at 4, its map band 45 and 56 tall', () => {
     expect([pocketsOf(lonePage(3)), pocketsOf(lonePage(4))]).toEqual([9, 12]);
     expect([mapBandHeight(3), mapBandHeight(4)]).toEqual([45, 56]);
+  });
+
+  it("caps today's page to the width whose rows fit, and never a square, which is no taller than today's 3 rows", () => {
+    const fit = {rows: 4 as const, maxWidth: 351.54};
+    expect(loneMaxWidth(TODAY_PAGE, fit)).toBe(351.54);
+    expect(loneMaxWidth(squarePage(4), fit)).toBeUndefined();
   });
 
   it("pages today's binder by one object per row count, so a dependency list sees a change only when the rows change", () => {

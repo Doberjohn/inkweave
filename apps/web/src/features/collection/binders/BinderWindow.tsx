@@ -52,11 +52,17 @@ async function saveDraft({start, seeded}: {start: DraftStart; seeded: boolean}, 
 }
 
 /**
- * What Save changes sends: the name, Sets and rules, and the cover only when the pick changed it,
- * so a cover changed elsewhere since the window opened stays.
+ * What Save changes sends: the name, Sets and rules, and the page size and the cover only when
+ * the picks changed them, so a change made elsewhere since the window opened stays.
  */
-function editPatch({name, scope, rules, cover}: BinderInput, binder: Binder): Partial<BinderInput> {
-  return sameCover(cover, binder.cover) ? {name, scope, rules} : {name, scope, rules, cover};
+function editPatch({name, scope, rules, pages, cover}: BinderInput, binder: Binder): Partial<BinderInput> {
+  return {
+    name,
+    scope,
+    rules,
+    ...(pages !== binder.pages && {pages}),
+    ...(!sameCover(cover, binder.cover) && {cover}),
+  };
 }
 
 /**
@@ -100,7 +106,7 @@ function wordsOf({binder}: DraftStart, saving: boolean) {
 }
 
 const LEAD = 'Pick the cards it holds. Your copies fill it on their own, and it grows with each new set.';
-const NOTE = 'You can change its rules, name and cover later.';
+const NOTE = 'You can change its rules, page size, name and cover later.';
 
 /**
  * The New binder window, and Edit rules': the binder's name, its Sets and its rules,

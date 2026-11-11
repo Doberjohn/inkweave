@@ -2,11 +2,8 @@ import type {CSSProperties} from 'react';
 import {BINDER_LOOK} from '../../cards/components/binderLook';
 import {
   COLORS,
-  DURATION,
-  EASING,
   FONT_SIZES,
   FONT_WEIGHT,
-  GOLD_GLOW,
   LINE_HEIGHT,
   RADIUS,
   SPACING,
@@ -15,6 +12,7 @@ import {
   blackRgba,
   whiteRgba,
 } from '../../../shared/constants';
+import {CHOICE_LOOK, faceStyle} from './choiceLook';
 import {COVER_DESIGNS, type CoverDesign} from './coverDesigns';
 import './coverPicker.css';
 
@@ -27,16 +25,6 @@ export interface CoverChoicesProps {
   named: boolean;
 }
 
-/** The choices' look, for `coverPicker.css`, which holds only `var()`s. */
-const CHOICE_LOOK = {
-  '--cover-radius': `${RADIUS.lg}px`,
-  '--cover-edge': '0 0 0 1px transparent',
-  '--cover-hover-ring': `0 0 0 1px ${GOLD_GLOW.activeBorder}`,
-  '--cover-chosen-ring': `0 0 0 2px ${COLORS.primary}, ${GOLD_GLOW.shadow}`,
-  '--cover-focus-ring': GOLD_GLOW.focusRing,
-  '--cover-fade': `${DURATION.fast}ms ${EASING.snappy}`,
-} as CSSProperties;
-
 /** Four across, as the window's preview and Change cover both lay them. */
 const GRID: CSSProperties = {
   ...CHOICE_LOOK,
@@ -47,17 +35,6 @@ const GRID: CSSProperties = {
   padding: SPACING.xxs,
   listStyle: 'none',
 };
-
-/** Inside the button, which takes no inline style of its own: room round the binder for the ring, and the chosen one's gold wash. */
-const faceStyle = (chosen: boolean): CSSProperties => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: SPACING.xs,
-  padding: SPACING.xs,
-  borderRadius: `${RADIUS.lg}px`,
-  background: chosen ? GOLD_GLOW.activeBg : undefined,
-});
 
 /** A closed binder in small: the board, its spine, and the design across its face. */
 const SWATCH = {
@@ -116,8 +93,8 @@ const CHECK: CSSProperties = {
   color: COLORS.background,
 };
 
-/** The chosen design's mark beside its gold ring, so the pick reads without colour too. */
-function ChosenMark() {
+/** The chosen choice's mark beside its gold ring, so the pick reads without colour too. */
+export function ChosenMark() {
   return (
     <span aria-hidden="true" style={CHECK}>
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none">

@@ -139,18 +139,18 @@ const COLUMNS = 'id, name, scope, rules, pages, cover, place';
 describe('insertBinderRow', () => {
   it("sends the owner and the input's columns, and answers the server's row", async () => {
     mockInsert.mockResolvedValue({data: {...ROW, place: 7}, error: null});
-    const input = {name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: 'tartan'};
+    const input = {name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 3 as const, cover: 'tartan'};
     await expect(insertBinderRow('me', input)).resolves.toEqual({data: {...AMBER, place: 7}, error: null});
     expect(mockInsert).toHaveBeenCalledExactlyOnceWith({
       table: 'collection_binders',
-      row: {owner_id: 'me', name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: 'tartan'},
+      row: {owner_id: 'me', name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 3, cover: 'tartan'},
       columns: COLUMNS,
     });
   });
 
   it("answers SHELF_FULL for the cap's check violation, and Sentry hears nothing", async () => {
     mockInsert.mockResolvedValue({data: null, error: {code: '23514', message: 'A shelf holds 30 binders at most'}});
-    await expect(insertBinderRow('me', {name: 'One more', scope: 'all', rules: '', cover: null})).resolves.toEqual({
+    await expect(insertBinderRow('me', {name: 'One more', scope: 'all', rules: '', pages: 4, cover: null})).resolves.toEqual({
       data: null,
       error: SHELF_FULL,
     });
@@ -160,7 +160,7 @@ describe('insertBinderRow', () => {
   it("reports a check violation of the table's own, which isn't the cap", async () => {
     const refused = {code: '23514', message: 'new row for relation "collection_binders" violates check constraint "collection_binders_name"'};
     mockInsert.mockResolvedValue({data: null, error: refused});
-    await expect(insertBinderRow('me', {name: 'Amber', scope: 'all', rules: '', cover: null})).resolves.toEqual({
+    await expect(insertBinderRow('me', {name: 'Amber', scope: 'all', rules: '', pages: 4, cover: null})).resolves.toEqual({
       data: null,
       error: refused.message,
     });
@@ -169,7 +169,7 @@ describe('insertBinderRow', () => {
 
   it('passes any other refusal on as an error', async () => {
     mockInsert.mockResolvedValue({data: null, error: {code: '42501', message: 'denied'}});
-    await expect(insertBinderRow('me', {name: 'Amber', scope: 'all', rules: '', cover: null})).resolves.toEqual({
+    await expect(insertBinderRow('me', {name: 'Amber', scope: 'all', rules: '', pages: 4, cover: null})).resolves.toEqual({
       data: null,
       error: 'denied',
     });

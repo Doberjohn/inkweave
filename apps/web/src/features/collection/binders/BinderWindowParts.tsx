@@ -17,6 +17,7 @@ import {ALL_PROMO_SETS, WHOLE_COLLECTION, isPromoScope, isPromoSet, setLabel} fr
 import {percentOf} from '../collectionStats';
 import {CoverBar, CoverBoard} from './BinderCover';
 import {CoverChoices} from './CoverChoices';
+import {PagesChoices} from './PagesChoices';
 import {CHIP, CHIPS, FIELD, HEADING} from './binderFields';
 import {RuleLines} from './RuleLines';
 import type {BinderDraft} from './useBinderDraft';
@@ -65,8 +66,8 @@ function DraftCoverChoices({draft, locked}: {draft: BinderDraft; locked: boolean
 }
 
 /**
- * The window's rules, in one column: Name and Sets, on a phone the Cover after them, then "What
- * it holds", one line for each kind of rule (`RuleLines`).
+ * The window's rules, in one column: Name, Sets and Pages, on a phone the Cover after them, then
+ * "What it holds", one line for each kind of rule (`RuleLines`).
  */
 export function RulesFields({draft, isMobile, locked, nameRef}: RulesProps) {
   const {options} = draft;
@@ -91,6 +92,9 @@ export function RulesFields({draft, isMobile, locked, nameRef}: RulesProps) {
           ariaLabel="Sets"
           style={{width: '100%'}}
         />
+      </FilterSection>
+      <FilterSection label="Pages">
+        <PagesChoices chosen={draft.pages} onPick={draft.setPages} disabled={locked} />
       </FilterSection>
       {isMobile && (
         <FilterSection label="Cover">
@@ -149,15 +153,16 @@ export function DraftCover({draft}: {draft: BinderDraft}) {
   return <CoverBoard name={draft.name.trim() || 'Name it'} rule={draft.preview.line} cover={draft.cover} />;
 }
 
-/** The page's pockets, four across, on a binder page (`binder-page`: its black, grain and light). */
-const PAGE = {
-  ...BINDER_LOOK,
-  display: 'grid',
-  gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
-  gap: SPACING.sm,
-  padding: SPACING.md,
-  borderRadius: `${RADIUS.md}px`,
-} as CSSProperties;
+/** The page's pockets, as many across as its size, on a binder page (`binder-page`: its black, grain and light). */
+const pageStyle = (side: number) =>
+  ({
+    ...BINDER_LOOK,
+    display: 'grid',
+    gridTemplateColumns: `repeat(${side}, minmax(0, 1fr))`,
+    gap: SPACING.sm,
+    padding: SPACING.md,
+    borderRadius: `${RADIUS.md}px`,
+  }) as CSSProperties;
 
 const POCKET: CSSProperties = {aspectRatio: '63 / 88'};
 
@@ -175,7 +180,8 @@ const POCKET_ART: CSSProperties = {
  * count, the rules as chips and the first page. `locked` while a save runs, as the rules are.
  */
 export function DraftPreview({draft, locked}: {draft: BinderDraft; locked: boolean}) {
-  const {chips, firstPage} = draft.preview;
+  const {chips} = draft.preview;
+  const {firstPage} = draft;
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.lg}}>
       <div style={{display: 'flex', flexDirection: 'column', gap: SPACING.md}}>
@@ -197,7 +203,7 @@ export function DraftPreview({draft, locked}: {draft: BinderDraft; locked: boole
       {firstPage.length > 0 && (
         <section style={{display: 'flex', flexDirection: 'column', gap: SPACING.sm}}>
           <h3 style={HEADING}>Its first page</h3>
-          <div aria-hidden="true" className="binder-page" style={PAGE}>
+          <div aria-hidden="true" className="binder-page" style={pageStyle(draft.pages)}>
             {firstPage.map(({card, held}) => (
               <span key={card.id} className="binder-pocket" style={POCKET}>
                 {/* A card you don't have takes the binder's own grey. */}

@@ -4,10 +4,15 @@ import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
 import {
   LONE_INSET,
   LONE_TOP_OVER_MAP,
+  isSquare,
   loneBoardHeight,
   loneBoxStyle,
+  loneMaxWidth,
   mapBandHeight,
+  viewPage,
+  type BinderGrid,
   type LoneFit,
+  type PageGrid,
 } from '../cards/components/binderGeometry';
 import {useResponsive} from 'inkweave-ui/hooks/useResponsive';
 import {FONT_SIZES, RADIUS, SPACING} from '../../shared/constants';
@@ -29,18 +34,21 @@ const TOOLBAR_CONTROL_HEIGHT = 34;
 const SHOWS_HEIGHT = 42;
 
 /**
- * A spread is two facing pages, each about square: 792x390 at 1440x900, as wide as the section
- * lets it be, and on a wide, short window as tall (the section is a size container).
+ * A spread is two facing pages: today's each about square, 792x390 at 1440x900, and a square
+ * page's about a card's shape, so about 600x390. As wide as the section lets it be, and on a
+ * wide, short window as tall (the section is a size container).
  */
 const SPREAD_SHAPE: CSSProperties = {width: 'min(100%, 200cqh)', aspectRatio: '2'};
+const SQUARE_SPREAD_SHAPE: CSSProperties = {width: 'min(100%, 150cqh)', aspectRatio: '1.5'};
+
 /**
- * A phone's lone board, as tall as the binder draws its `rows` at the section's width, or at
+ * A phone's lone board, as tall as the binder draws `page` at the section's width, or at
  * `maxWidth` where the page's height caps it: the section is a size container, so `100cqw`
  * is that width, and the board comes in from both its sides.
  */
-function loneBoard({rows, maxWidth}: LoneFit): CSSProperties {
+function loneBoard(page: PageGrid, maxWidth: number | undefined): CSSProperties {
   const box = maxWidth === undefined ? '100cqw' : `min(100cqw, ${maxWidth}px)`;
-  return {height: loneBoardHeight(`${box} - ${2 * LONE_INSET}px`, rows)};
+  return {height: loneBoardHeight(`${box} - ${2 * LONE_INSET}px`, page)};
 }
 
 const COLUMN: CSSProperties = {display: 'flex', flexDirection: 'column', gap: SPACING.sm};
@@ -56,25 +64,27 @@ function Block({height, style}: {height?: number; style?: CSSProperties}) {
 /**
  * A phone's page while the chunk downloads (#969): the board in its place over the map, and the
  * map's band under it, empty, so the binder that replaces them draws its page and map in their
- * boxes, with the rows it will draw. One box, so the section's column gap never comes
+ * boxes, with the page it will draw. One box, so the section's column gap never comes
  * between the two.
  */
-function LonePageFallback({fit}: {fit: LoneFit}) {
+function LonePageFallback({grid, fit}: {grid: BinderGrid; fit: LoneFit}) {
+  const page = viewPage(grid, true, fit.rows);
+  const maxWidth = loneMaxWidth(grid, fit);
   return (
     <div>
-      <div style={loneBoxStyle(LONE_TOP_OVER_MAP, fit.maxWidth)}>
-        <Block style={loneBoard(fit)} />
+      <div style={loneBoxStyle(LONE_TOP_OVER_MAP, maxWidth)}>
+        <Block style={loneBoard(page, maxWidth)} />
       </div>
-      <div data-testid="binder-map-band" style={{height: mapBandHeight(fit.rows)}} />
+      <div data-testid="binder-map-band" style={{height: mapBandHeight(page.rows)}} />
     </div>
   );
 }
 
 /**
  * The binder section while its chunk downloads: the section's box (`sectionStyle`), holding the
- * shape of what arrives, a spread, or on a phone a page over its map.
+ * shape of what arrives, a spread of `grid`'s pages, or on a phone a page over its map.
  */
-export function BinderChunkFallback() {
+export function BinderChunkFallback({grid}: {grid: BinderGrid}) {
   const {isMobile} = useResponsive();
   const docked = useSidePanelDocked();
   const [section, setSection] = useState<HTMLElement | null>(null);
@@ -85,7 +95,11 @@ export function BinderChunkFallback() {
       aria-busy="true"
       aria-label="Loading your binder"
       style={{...sectionStyle(isMobile, docked), ...COLUMN, containerType: 'size'}}>
-      {isMobile ? <LonePageFallback fit={fit} /> : <Block style={SPREAD_SHAPE} />}
+      {isMobile ? (
+        <LonePageFallback grid={grid} fit={fit} />
+      ) : (
+        <Block style={isSquare(grid) ? SQUARE_SPREAD_SHAPE : SPREAD_SHAPE} />
+      )}
     </section>
   );
 }

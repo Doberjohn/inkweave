@@ -76,7 +76,7 @@ describe('BinderWindow', () => {
     await act(async () => fireEvent.click(button('Create binder')));
     expect(writes.createBinder).toHaveBeenCalledWith({
       readerId: 'user-1',
-      input: {name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: null},
+      input: {name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: null},
     });
     expect(trackEvent).toHaveBeenCalledWith('binder_created', {from: 'window', kinds: 'ink'});
     expect(props.onSaved).toHaveBeenCalledWith(MADE);
@@ -92,8 +92,35 @@ describe('BinderWindow', () => {
     await act(async () => fireEvent.click(button('Create binder')));
     expect(writes.createBinder).toHaveBeenCalledWith({
       readerId: 'user-1',
-      input: {name: 'Amber', scope: 'all', rules: 'ink=Amber', cover: 'tartan'},
+      input: {name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 4, cover: 'tartan'},
     });
+  });
+
+  it('makes the binder at the page size picked under Sets, 4 × 4 unless one is', async () => {
+    renderWindow();
+    const sizes = within(screen.getByRole('list', {name: 'Pages'})).getAllByRole('button');
+    expect(sizes.map((size) => size.getAttribute('aria-pressed'))).toEqual(['false', 'false', 'true']);
+    fillAmber();
+    fireEvent.click(button('3 × 3, 9 a page'));
+    expect(button('3 × 3, 9 a page')).toHaveAttribute('aria-pressed', 'true');
+    await act(async () => fireEvent.click(button('Create binder')));
+    expect(writes.createBinder).toHaveBeenCalledWith({
+      readerId: 'user-1',
+      input: {name: 'Amber', scope: 'all', rules: 'ink=Amber', pages: 3, cover: null},
+    });
+  });
+
+  it("saves a new page size alone as Edit rules' change, and counts it as the page size's", async () => {
+    renderWindow({binder: {...EPICS, pages: 3}});
+    expect(button('3 × 3, 9 a page')).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(button('2 × 2, 4 a page'));
+    await act(async () => fireEvent.click(button('Save changes')));
+    expect(writes.updateBinder).toHaveBeenCalledWith({
+      readerId: 'user-1',
+      id: 'b1',
+      patch: {name: 'Epics', scope: 'all', rules: 'rarity=Epic', pages: 2},
+    });
+    expect(trackEvent).toHaveBeenCalledWith('binder_changed', {what: 'pages'});
   });
 
   it("saves a new design alone as Edit rules' change, and counts it as the cover's", async () => {
@@ -191,7 +218,7 @@ describe('BinderWindow', () => {
   });
 
   it('tells a new binder what can change later, and Edit rules nothing of it', () => {
-    const later = 'You can change its rules, name and cover later.';
+    const later = 'You can change its rules, page size, name and cover later.';
     renderWindow();
     expect(screen.getByText(later)).toBeInTheDocument();
     cleanup();

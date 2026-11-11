@@ -24,8 +24,8 @@ import {
   SPINE_WIDTH,
   THREE_ROWS,
   TODAY_PAGE,
-  isSquare,
   loneBoxStyle,
+  loneMaxWidth,
   pagingOf,
   pocketsOf,
   viewPage,
@@ -780,11 +780,10 @@ function SpreadView({edges, ...props}: ViewProps & {edges: boolean}) {
  * section, measured before then (`useLoneFit`). A square page is as wide as the binder.
  */
 function SingleView({start, grid, renderSlot, arrows, footer, cardCount, sheets, turn, fit, cover}: ViewProps) {
-  const maxWidth = isSquare(grid) ? undefined : fit.maxWidth;
   return (
     <>
       {/* Over a footer, the map's band, the board sits only a little below the binder's top. */}
-      <div style={loneBoxStyle(footer === undefined ? SPACING.sm : LONE_TOP_OVER_MAP, maxWidth)}>
+      <div style={loneBoxStyle(footer === undefined ? SPACING.sm : LONE_TOP_OVER_MAP, loneMaxWidth(grid, fit))}>
         <Board sheets={sheets} turn={turn} single>
           <Spine />
           <BinderPage
