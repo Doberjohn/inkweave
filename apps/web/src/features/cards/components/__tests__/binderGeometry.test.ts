@@ -1,5 +1,14 @@
-import {describe, it, expect} from 'vitest';
-import {loneFitFor, mapBandHeight, pagingOf, perLonePage} from '../binderGeometry';
+import {describe, it, expect, expectTypeOf} from 'vitest';
+import {
+  TODAY_PAGE,
+  loneFitFor,
+  lonePage,
+  mapBandHeight,
+  pagingOf,
+  pocketsOf,
+  squarePage,
+  viewPage,
+} from '../binderGeometry';
 
 /**
  * Rows that fit. A room 378 wide gives the 3-row page cards 90px wide: 378, less 16 for
@@ -35,15 +44,46 @@ describe('loneFitFor', () => {
 
 describe('a lone page by its rows', () => {
   it('holds nine pockets at 3 rows and twelve at 4, its map band 45 and 56 tall', () => {
-    expect([perLonePage(3), perLonePage(4)]).toEqual([9, 12]);
+    expect([pocketsOf(lonePage(3)), pocketsOf(lonePage(4))]).toEqual([9, 12]);
     expect([mapBandHeight(3), mapBandHeight(4)]).toEqual([45, 56]);
   });
 
-  it('pages by one object per row count, so a dependency list sees a change only when the rows change', () => {
-    expect(pagingOf(true, 4)).toBe(pagingOf(true, 4));
-    expect(pagingOf(true, 3)).not.toBe(pagingOf(true, 4));
-    expect(pagingOf(true, 4)).toEqual({perView: 12, lead: 12});
-    expect(pagingOf(true, 3)).toEqual({perView: 9, lead: 9});
-    expect(pagingOf(false, 4)).toEqual({perView: 24, lead: 12});
+  it("pages today's binder by one object per row count, so a dependency list sees a change only when the rows change", () => {
+    expect(pagingOf(TODAY_PAGE, true, 4)).toBe(pagingOf(TODAY_PAGE, true, 4));
+    expect(pagingOf(TODAY_PAGE, true, 3)).not.toBe(pagingOf(TODAY_PAGE, true, 4));
+    expect(pagingOf(TODAY_PAGE, true, 4)).toEqual({perView: 12, lead: 12});
+    expect(pagingOf(TODAY_PAGE, true, 3)).toEqual({perView: 9, lead: 9});
+    expect(pagingOf(TODAY_PAGE, false, 4)).toEqual({perView: 24, lead: 12});
+  });
+});
+
+describe('a page at its size', () => {
+  it('pages a spread by two of its pages, the front cover taking the first', () => {
+    expect(pagingOf(squarePage(2), false, 3)).toEqual({perView: 8, lead: 4});
+    expect(pagingOf(squarePage(3), false, 3)).toEqual({perView: 18, lead: 9});
+    expect(pagingOf(squarePage(4), false, 3)).toEqual({perView: 32, lead: 16});
+  });
+
+  it("pages a phone by the square itself, whatever rows today's page would fit", () => {
+    expect(pagingOf(squarePage(4), true, 3)).toEqual({perView: 16, lead: 16});
+    expect(pagingOf(squarePage(3), true, 4)).toEqual({perView: 9, lead: 9});
+    expect(viewPage(squarePage(2), true, 4)).toBe(squarePage(2));
+  });
+
+  it("draws today's page 3 across on a phone, and as it is on a spread", () => {
+    expect(viewPage(TODAY_PAGE, true, 4)).toEqual({columns: 3, rows: 4});
+    expect(viewPage(TODAY_PAGE, false, 4)).toBe(TODAY_PAGE);
+  });
+
+  it("takes no page a view draws for a binder's own, so a 3 by 3 lone page never passes for a square", () => {
+    // Checked by the typecheck: without the refusal, the directive below is unused and fails it.
+    // @ts-expect-error a lone page is drawn from today's, and is no binder's page
+    expectTypeOf(pagingOf).toBeCallableWith(viewPage(TODAY_PAGE, true, 3), true, 4);
+    expectTypeOf(pagingOf).toBeCallableWith(squarePage(3), true, 4);
+  });
+
+  it('keeps one grid and one paging per size, so a dependency list sees a change only when the size changes', () => {
+    expect(squarePage(3)).toBe(squarePage(3));
+    expect(pagingOf(squarePage(3), false, 3)).toBe(pagingOf(squarePage(3), false, 4));
   });
 });

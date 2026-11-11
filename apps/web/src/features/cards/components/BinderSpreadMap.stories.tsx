@@ -2,6 +2,7 @@ import {useState} from 'react';
 import type {Meta, StoryObj} from '@storybook/react-vite';
 import type {Ink} from 'inkweave-synergy-engine';
 import {BinderSpreadMap, type MapSet, type Pocket} from './BinderSpreadMap';
+import {squarePage, type BinderGrid} from './binderGeometry';
 import {ALL_INKS, COLORS, SET_NAMES, SPACING, type SetCode} from '../../../shared/constants';
 
 /**
@@ -55,13 +56,22 @@ interface LiveMapProps {
   sets?: MapSet[];
   start?: number;
   single?: boolean;
+  grid?: BinderGrid;
   rows?: 3 | 4;
 }
 
-function LiveMap({pockets, sets, start = 2, single = false, rows}: LiveMapProps) {
+function LiveMap({pockets, sets, start = 2, single = false, grid, rows}: LiveMapProps) {
   const [current, setCurrent] = useState(start);
   return (
-    <BinderSpreadMap single={single} rows={rows} pockets={pockets} current={current} onGo={setCurrent} sets={sets} />
+    <BinderSpreadMap
+      single={single}
+      grid={grid}
+      rows={rows}
+      pockets={pockets}
+      current={current}
+      onGo={setCurrent}
+      sets={sets}
+    />
   );
 }
 
@@ -176,5 +186,21 @@ export const PhonePagesOnCover: Story = {
 /** The whole collection under a phone's lone page: each page names its sets, as a spread does. */
 export const PhonePagesWholeCollection: Story = {
   args: {single: true, pockets: WHOLE, sets: WHOLE_SETS, start: 60},
+  parameters: {binderWidth: 377},
+};
+
+/** A 3 by 3 binder's spreads (owner, 2026-11-05): each mini page nine cells, three across. */
+export const ThreeByThree: Story = {
+  args: {grid: squarePage(3)},
+};
+
+/** A 2 by 2 binder's spreads: each mini page four cells, so more spreads fit the row. */
+export const TwoByTwo: Story = {
+  args: {grid: squarePage(2)},
+};
+
+/** A 4 by 4 binder under a phone's page: a mini per page of sixteen, four across (2A). */
+export const PhonePagesFourByFour: Story = {
+  args: {single: true, grid: squarePage(4), start: 4},
   parameters: {binderWidth: 377},
 };

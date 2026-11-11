@@ -3,6 +3,7 @@ import {act, fireEvent, render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {touchMoveKept} from '../../../../shared/test-utils';
 import {BinderPage, BinderSpread} from '../BinderSpread';
+import {TODAY_PAGE, squarePage} from '../binderGeometry';
 import {TURN_MS} from '../PageTurn';
 
 /**
@@ -333,6 +334,44 @@ describe('BinderSpread lone page (#969)', () => {
   });
 });
 
+describe("BinderSpread at a binder's own size", () => {
+  const page = (name: string) => screen.getByRole('group', {name});
+  const pocketsOn = (name: string) => page(name).querySelectorAll('.binder-pocket');
+
+  it('draws two pages of nine on a 3 by 3 spread, each 3 columns of a card sized from a third of its height', () => {
+    render(spread({grid: squarePage(3), start: 9}));
+    expect(pocketsOn('Left page')).toHaveLength(9);
+    expect(pocketsOn('Right page')).toHaveLength(9);
+    expect(page('Left page').style.gridTemplateColumns).toBe('repeat(3, calc((100cqh - 68px) / 3 * 0.72))');
+    expect(within(page('Right page')).getByRole('button', {name: 'Card 19'})).toBeInTheDocument();
+    expect(card(27)).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Card 28'})).toBeNull();
+  });
+
+  it("crosses the spine with Right on a 2 by 2 spread, from the left page's second column", async () => {
+    const user = userEvent.setup();
+    render(spread({grid: squarePage(2), start: 4}));
+    act(() => card(6).focus());
+    await user.keyboard('{ArrowRight}');
+    expect(card(9)).toHaveFocus();
+    await user.keyboard('{End}');
+    expect(card(12)).toHaveFocus();
+  });
+
+  it("draws a phone's 4 by 4 page as it is, as wide as the binder, whatever rows today's page would fit", async () => {
+    const user = userEvent.setup();
+    render(spread({grid: squarePage(4), single: true, start: 16, loneFit: {rows: 3, maxWidth: 331}}));
+    expect(pocketsOn('Page')).toHaveLength(16);
+    expect(page('Page').style.gridTemplateColumns).toBe('repeat(4, minmax(0, 1fr))');
+    expect(document.querySelector<HTMLElement>('.binder-board')!.parentElement!.style.maxWidth).toBe('');
+    act(() => card(17).focus());
+    await user.keyboard('{ArrowDown}');
+    expect(card(21)).toHaveFocus();
+    await user.keyboard('{End}');
+    expect(card(32)).toHaveFocus();
+  });
+});
+
 describe("BinderSpread, a phone's inside front cover (owner, 2026-10-27)", () => {
   const COVER = <button type="button">Master set</button>;
   const cover = () => screen.getByRole('group', {name: 'Front cover'});
@@ -372,7 +411,7 @@ describe("BinderSpread, a phone's inside front cover (owner, 2026-10-27)", () =>
   });
 
   it('never draws it on a back cover, which a turn to the last spread lifts', () => {
-    render(<BinderPage from={24} side="right" single={false} renderSlot={() => null} cover="back" coverContent={COVER} />);
+    render(<BinderPage from={24} side="right" single={false} page={TODAY_PAGE} renderSlot={() => null} cover="back" coverContent={COVER} />);
     expect(screen.getByRole('group', {name: 'Back cover'})).toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Master set'})).toBeNull();
   });

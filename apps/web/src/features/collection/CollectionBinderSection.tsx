@@ -40,7 +40,7 @@ import {
 import type {BinderView} from './BinderShows';
 import {useSidePanelDocked} from '../cards/components/BrowseSidePanel';
 import {BinderSpread, BinderSlotSkeleton} from '../cards/components/BinderSpread';
-import {PER_PAGE, pagingOf, type LoneFit} from '../cards/components/binderGeometry';
+import {TODAY_PAGE, pagingOf, pocketsOf, type LoneFit} from '../cards/components/binderGeometry';
 import {BinderSpreadMap, type Pocket} from '../cards/components/BinderSpreadMap';
 import {CtaButton} from '../../shared/components';
 import {CardWindowSlotContext} from '../../shared/contexts/cardWindowSlot';
@@ -239,7 +239,7 @@ export function CollectionBinderSection({onRetry, ...props}: CollectionBinderSec
  * opens. Its pockets are open ones, which draw as empty cells.
  */
 const loadingPages = (loneFit: LoneFit): Pocket[] =>
-  Array.from({length: pagingOf(true, loneFit.rows).perView}, () => ({owned: false, inks: [], open: true}));
+  Array.from({length: pagingOf(TODAY_PAGE, true, loneFit.rows).perView}, () => ({owned: false, inks: [], open: true}));
 
 /** The binder while its cards load: its chrome, as the loaded binder's, with shimmer in the pockets. */
 function LoadingBinder({single, docked, loneFit}: {single: boolean; docked: boolean; loneFit: LoneFit}) {
@@ -247,7 +247,7 @@ function LoadingBinder({single, docked, loneFit}: {single: boolean; docked: bool
     <BinderSpread
       // Spreads open on the front cover, as the binder does (owner, 2026-10-18); a phone on page 1,
       // past its cover.
-      start={single ? 0 : -PER_PAGE}
+      start={single ? 0 : -pocketsOf(TODAY_PAGE)}
       single={single}
       loneFit={loneFit}
       arrows={docked ? 'edges' : 'beside'}

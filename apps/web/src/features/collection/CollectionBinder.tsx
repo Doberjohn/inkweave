@@ -15,7 +15,7 @@ import {CollectionSlotCounts, type SlotCountsEditor} from './CollectionSlotCount
 import type {CollectionEntry, Finish} from './collectionParser';
 import {finishesOf} from './printingFinishes';
 import {BinderSpread, type TurnAsk} from '../cards/components/BinderSpread';
-import {pagingOf, THREE_ROWS, type BinderPaging, type LoneFit} from '../cards/components/binderGeometry';
+import {pagingOf, THREE_ROWS, TODAY_PAGE, type BinderGrid, type BinderPaging, type LoneFit} from '../cards/components/binderGeometry';
 import {BinderSpreadMap, type MapSet, type Pocket} from '../cards/components/BinderSpreadMap';
 import {isOpenPocket, setLabel, type BinderSlot, type OpenPocket} from './binderCards';
 import {settleOf} from './binderPockets';
@@ -79,6 +79,11 @@ interface CollectionBinderProps {
    * as `single` does, so this component pages by them and hands them to `BinderSpread`.
    */
   loneFit?: LoneFit;
+  /**
+   * The binder's page: today's 4 by 3 (the default), or a binder's own size. It changes the
+   * paging step too, so this component pages by it and hands it to `BinderSpread` and its map.
+   */
+  grid?: BinderGrid;
   /**
    * What turns the pages: arrows beside the spread, or under a lone page (the
    * default); or the map, under the spread where Browse docks its panels (owner,
@@ -516,6 +521,7 @@ export function CollectionBinder({
   onSelect,
   single = false,
   loneFit = THREE_ROWS,
+  grid = TODAY_PAGE,
   pager = 'arrows',
   onCountChange,
   windowOpen = false,
@@ -525,9 +531,9 @@ export function CollectionBinder({
   startCard,
   pocketBadge,
 }: CollectionBinderProps) {
-  // A phone pages by nine, or twelve at 4 rows, a spread binder by 24, each a page in for its
-  // front cover (`pagingOf`).
-  const paging = pagingOf(single, loneFit.rows);
+  // A spread binder pages by two of its pages, a phone by one, each a page in for its front
+  // cover (`pagingOf`): today's 24, or on a phone nine, or twelve at 4 rows.
+  const paging = pagingOf(grid, single, loneFit.rows);
   const startSlot = slots.findIndex((slot) => !isOpenPocket(slot) && slot.id === startCard);
   const {current, total, goTo} = useBinderView({slotCount: slots.length, paging, single, opensOnCover, startSlot});
   const turnTo = useReportedTurns(goTo, single);
@@ -539,6 +545,7 @@ export function CollectionBinder({
     pager === 'map' ? (
       <BinderSpreadMap
         single={single}
+        grid={grid}
         rows={loneFit.rows}
         pockets={slots.map((slot) => pocketOf(slot, countsFor))}
         current={current}
@@ -551,6 +558,7 @@ export function CollectionBinder({
     <BinderSpread
       start={current * paging.perView - paging.lead}
       single={single}
+      grid={grid}
       loneFit={loneFit}
       cover={cover}
       arrows={map === undefined ? 'beside' : 'edges'}

@@ -194,7 +194,7 @@ export function preCoreCardWithEnchanted(): {setCode: string; fullName: string} 
   throw new Error('Fixture broken: no card of Sets 1-8 has an Enchanted printing in its set');
 }
 
-/** The binder's pockets per page and per spread (`PER_PAGE`, `PER_SPREAD` in binderGeometry.ts). */
+/** Today's binder page's pockets, 4 by 3, and a spread's two pages of them (`TODAY_PAGE`, `pagingOf` in binderGeometry.ts). */
 const PAGE_POCKETS = 12;
 const SPREAD_POCKETS = 24;
 

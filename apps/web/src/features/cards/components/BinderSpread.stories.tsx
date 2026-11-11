@@ -5,6 +5,7 @@ import type {LorcanaCard} from 'inkweave-synergy-engine';
 import {BinderSlotSkeleton, BinderSpread} from './BinderSpread';
 import {CardTile} from './CardTile';
 import {BINDER_CARDS} from './binderStoryCards';
+import {squarePage} from './binderGeometry';
 import {COLORS} from '../../../shared/constants';
 import {BROWSE_GUTTER} from './BrowseSidePanel';
 
@@ -172,5 +173,32 @@ export const ShortViewport: Story = {
  */
 export const SinglePage: Story = {
   args: {single: true, canPrev: true, canNext: true},
+  globals: {viewport: {value: 'mobile1'}},
+};
+
+/**
+ * A binder at its own size, 3 by 3 (owner, 2026-11-05): two pages of nine, each card sized from a
+ * third of the page's height, so the pages hug narrower cards than today's 4 by 3.
+ */
+export const ThreeByThree: Story = {
+  args: {grid: squarePage(3), start: 9, canPrev: true, canNext: true},
+};
+
+/** A binder at 2 by 2: four big cards a page. */
+export const TwoByTwo: Story = {
+  args: {grid: squarePage(2), start: 4, canPrev: true, canNext: true},
+};
+
+/** A binder at 4 by 4: sixteen cards a page, a fourth row of today's. */
+export const FourByFour: Story = {
+  args: {grid: squarePage(4), start: 16, canPrev: true, canNext: true},
+};
+
+/**
+ * A 4 by 4 binder on a phone: its page as it is, four across, so page 1 holds the same sixteen
+ * cards as on a computer (2A). View it in the Mobile viewport.
+ */
+export const SinglePageFourByFour: Story = {
+  args: {grid: squarePage(4), single: true, start: 16, canPrev: true, canNext: true},
   globals: {viewport: {value: 'mobile1'}},
 };

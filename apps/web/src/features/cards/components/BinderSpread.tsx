@@ -20,17 +20,18 @@ import {
   CARD_ASPECT,
   LONE_TOP_OVER_MAP,
   PAGE_PADDING,
-  PER_PAGE,
   POCKET_GAP,
   SPINE_WIDTH,
-  SPREAD_PAGE,
   THREE_ROWS,
+  TODAY_PAGE,
+  isSquare,
   loneBoxStyle,
-  lonePage,
   pagingOf,
-  perLonePage,
+  pocketsOf,
+  viewPage,
   type LoneFit,
   type LoneRows,
+  type BinderGrid,
   type PageGrid,
 } from './binderGeometry';
 import {BINDER_LOOK} from './binderLook';
@@ -97,12 +98,6 @@ import './binder.css';
  * everything they genuinely have in common.
  */
 
-/**
- * A view's pockets: a phone's lone page of nine or twelve (`lonePage`), or a spread's two pages
- * of twelve (`SPREAD_PAGE`). The measures, and how each pages, live in `binderGeometry.ts`.
- */
-const perViewOf = (single: boolean, rows: LoneRows) => pagingOf(single, rows).perView;
-
 /** The binder's cover board: the inside front cover, and the inside back cover past the last card. */
 const COVER_BOARD = '/art/backgrounds/binder-cover.webp';
 
@@ -110,7 +105,7 @@ const COVER_BOARD = '/art/backgrounds/binder-cover.webp';
  * A spread page's column: one card's width, spelled out from the page's own height.
  * The page is as tall as the box around the pages (`PAGES_BOX`, a size container) less
  * the board round them, so `100cqh` is the page and the board: less those, the page's
- * padding and its row gaps, a third of it is a card's height, and the card's aspect
+ * padding and its row gaps, one row's share of it is a card's height, and the card's aspect
  * turns that into its width.
  *
  * EXPLICIT BECAUSE WEBKIT WILL NOT DERIVE IT (#826). A page hugs its cards, and each
@@ -126,14 +121,14 @@ const COVER_BOARD = '/art/backgrounds/binder-cover.webp';
  * size. So nothing the pages share their height with may come out a different size on that pass:
  * the spread map under them once did (see its `FULL_CELL`), and every pocket came out 0 wide.
  */
-const PAGE_CHROME_HEIGHT = 2 * PAGE_PADDING + (SPREAD_PAGE.rows - 1) * POCKET_GAP + 2 * BOARD;
-const SPREAD_COLUMN = `calc((100cqh - ${PAGE_CHROME_HEIGHT}px) / ${SPREAD_PAGE.rows} * ${CARD_ASPECT})`;
+const pageChromeHeight = ({rows}: PageGrid) => 2 * PAGE_PADDING + (rows - 1) * POCKET_GAP + 2 * BOARD;
+const spreadColumn = (grid: PageGrid) => `calc((100cqh - ${pageChromeHeight(grid)}px) / ${grid.rows} * ${CARD_ASPECT})`;
 
 /**
  * A page. The rows are `minmax(0, 1fr)`, so the grid claims exactly the height it is
  * given and each slot fits the card aspect INSIDE its row: the layout sizes itself
  * from the space it has rather than from a fixed card width. A spread page's columns
- * are that card's width (`SPREAD_COLUMN`); a lone page's are `minmax(0, 1fr)` of the
+ * are that card's width (`spreadColumn`); a lone page's are `minmax(0, 1fr)` of the
  * width it is given (`singlePageStyle`).
  *
  * `minmax(0, 1fr)` is load-bearing where it is used, not stylistic. A bare `1fr` is
@@ -146,7 +141,7 @@ const SPREAD_COLUMN = `calc((100cqh - ${PAGE_CHROME_HEIGHT}px) / ${SPREAD_PAGE.r
  * page arrows pushed off-screen). The height cap (`spreadMaxHeight`) is what bounds it:
  * the columns follow the page's height, and the cap keeps that height to what fits.
  */
-function pageStyle(side: 'left' | 'right', cover = false): CSSProperties {
+function pageStyle(side: 'left' | 'right', grid: PageGrid, cover = false): CSSProperties {
   return {
     height: '100%',
     // A page HUGS ITS CARDS, and that is safe only because the slots are sized
@@ -156,8 +151,8 @@ function pageStyle(side: 'left' | 'right', cover = false): CSSProperties {
     // page turn collapses the pages until they decode. Height-driven slots are the
     // same width at zero images loaded and at twenty-four.
     display: 'grid',
-    gridTemplateColumns: `repeat(${SPREAD_PAGE.columns}, ${SPREAD_COLUMN})`,
-    gridTemplateRows: `repeat(${SPREAD_PAGE.rows}, minmax(0, 1fr))`,
+    gridTemplateColumns: `repeat(${grid.columns}, ${spreadColumn(grid)})`,
+    gridTemplateRows: `repeat(${grid.rows}, minmax(0, 1fr))`,
     gap: POCKET_GAP,
     padding: PAGE_PADDING,
     // A page wider than its cards (one widened to its box, see `EDGE_FRAME`) keeps its
@@ -256,8 +251,7 @@ const slotStyle: CSSProperties = {
  * frame late, and with the arrows BELOW the page that late height would move them:
  * a layout shift on every load.
  */
-function singlePageStyle(rows: LoneRows): CSSProperties {
-  const {columns} = lonePage(rows);
+function singlePageStyle({columns, rows}: PageGrid): CSSProperties {
   return {
     flex: '1 1 0',
     minWidth: 0,
@@ -287,18 +281,18 @@ const singleSlotStyle: CSSProperties = {
  * `max-*` can express it — every CSS attempt distorted the box instead of
  * shrinking it.
  */
-function spreadMaxHeight(width: number, withArrows: boolean): number | undefined {
+function spreadMaxHeight(width: number, withArrows: boolean, {columns, rows}: PageGrid): number | undefined {
   if (width <= 0) return undefined;
-  // Everything the eight cards do NOT get: the arrows and their gaps where they
+  // Everything the two pages' cards do NOT get: the arrows and their gaps where they
   // are drawn, the board round the pages, the spine, and each page's padding and
   // column gaps.
   const chrome =
-    (withArrows ? ARROWS_CHROME : 0) + 2 * BOARD + SPINE_WIDTH + 2 * (2 * PAGE_PADDING + 3 * POCKET_GAP);
-  const cardWidth = (width - chrome) / 8;
+    (withArrows ? ARROWS_CHROME : 0) + 2 * BOARD + SPINE_WIDTH + 2 * (2 * PAGE_PADDING + (columns - 1) * POCKET_GAP);
+  const cardWidth = (width - chrome) / (2 * columns);
   if (cardWidth <= 0) return undefined;
   const cardHeight = cardWidth / CARD_ASPECT;
-  // Three rows, two row gaps, the page's own vertical padding, and the board above and below.
-  return 3 * cardHeight + 2 * POCKET_GAP + 2 * PAGE_PADDING + 2 * BOARD;
+  // The rows, their gaps, the page's own vertical padding, and the board above and below.
+  return rows * cardHeight + (rows - 1) * POCKET_GAP + 2 * PAGE_PADDING + 2 * BOARD;
 }
 
 
@@ -353,14 +347,22 @@ interface BinderSpreadProps {
    * One page per view instead of a spread, for phone widths (owner, 2026-10-07).
    * A spread at 390px left each card ~26px wide; one page with the arrows moved
    * to a row underneath gave ~75px, and 3 by 3 pockets in place of 4 by 3 about
-   * 38% more (owner, 2026-10-25). A lone page holds nine, or twelve at 4 rows (`loneFit`),
-   * so the caller pages by that (`pagingOf`) instead of a spread's: at nine, page p holds
-   * slots 9p to 9p + 8, and every card keeps its slot.
+   * 38% more (owner, 2026-10-25). A lone page of today's holds nine, or twelve at 4 rows
+   * (`loneFit`), and a square page its own (`viewPage`), so the caller pages by that
+   * (`pagingOf`) instead of a spread's: at nine, page p holds slots 9p to 9p + 8, and every
+   * card keeps its slot.
    *
    * The CALLER decides, because the paging step is the caller's arithmetic and
    * the two must come from one fact. Read it from `useResponsive().isMobile`.
    */
   single?: boolean;
+  /**
+   * The binder's page: today's 4 by 3 (the default), or a binder's own size, 2, 3 or 4 a side
+   * (owner, 2026-11-05). A spread draws two of it; a phone draws today's 3 across with the rows
+   * that fit (`loneFit`), and a square page as it is (`viewPage`). The caller pages by the same
+   * grid (`pagingOf`).
+   */
+  grid?: BinderGrid;
   /**
    * Where the page arrows go: beside the spread (the default), or, where Browse docks its
    * panels, on its outer edges, as small discs that grow under the pointer (owner,
@@ -480,8 +482,8 @@ interface BinderPageProps {
   from: number;
   side: 'left' | 'right';
   single: boolean;
-  /** A lone page's rows: 3 unless its binder has the height for 4. */
-  rows?: LoneRows;
+  /** Its pockets, across and down: the page its view draws (`viewPage`). */
+  page: PageGrid;
   renderSlot: (index: number) => ReactNode;
   /** Drawn as a cover, which holds no cards. */
   cover?: Cover;
@@ -529,14 +531,14 @@ const COVER_CONTENT: CSSProperties = {
 };
 
 /**
- * One page of pockets: a spread's twelve, sized from its height, or a phone's lone page of nine or
- * twelve, sized from its width. A cover keeps its slots, empty: a page takes its size from them,
+ * One page of pockets: a spread's, sized from its height, or a phone's lone page, sized from its
+ * width. A cover keeps its slots, empty: a page takes its size from them,
  * and without them it would collapse. Empty whatever `renderSlot` gives, so a loading binder's
  * shimmer stays off it. A front cover draws what it holds over them.
  * Every slot on a page of cards is a pocket (`binder-pocket`), its sleeve and front sheet
  * drawn round whatever it holds, so one past the last card shows an empty sleeve.
  */
-export function BinderPage({from, side, single, rows = 3, renderSlot, cover, coverContent, pageRef, grab}: BinderPageProps) {
+export function BinderPage({from, side, single, page, renderSlot, cover, coverContent, pageRef, grab}: BinderPageProps) {
   return (
     <div
       ref={pageRef}
@@ -545,9 +547,9 @@ export function BinderPage({from, side, single, rows = 3, renderSlot, cover, cov
       // A labelled GROUP, not a section: three region landmarks for one binder
       // made the landmark list noise. The binder itself is the one region.
       role="group"
-      style={single ? {...pageStyle(side), ...singlePageStyle(rows)} : pageStyle(side, cover !== undefined)}
+      style={single ? {...pageStyle(side, page), ...singlePageStyle(page)} : pageStyle(side, page, cover !== undefined)}
       aria-label={pageLabel({side, single, cover})}>
-      {Array.from({length: single ? perLonePage(rows) : PER_PAGE}, (_, i) => (
+      {Array.from({length: pocketsOf(page)}, (_, i) => (
         <div key={from + i} className={cover ? undefined : 'binder-pocket'} style={single ? singleSlotStyle : slotStyle}>
           {cover ? null : renderSlot(from + i)}
         </div>
@@ -572,6 +574,8 @@ interface ViewProps {
   /** The sheets under each page, by how far through the binder the view is (see `viewSheets`). */
   sheets: ViewSheets;
   turn: ViewTurn;
+  /** The binder's page (see `BinderSpreadProps.grid`). */
+  grid: BinderGrid;
   /** A lone page's rows and its board's widest (see `BinderSpreadProps.loneFit`); a spread has none. */
   fit: LoneFit;
   /** What the inside front cover holds (see `BinderSpreadProps.cover`). */
@@ -582,14 +586,15 @@ interface ViewProps {
  * The two facing pages and the spine between them: the left one the front cover before the
  * first page, the right one the back cover once the cards run out.
  */
-function Pages({start, renderSlot, cardCount, turn, cover}: Pick<ViewProps, 'start' | 'renderSlot' | 'cardCount' | 'turn' | 'cover'>) {
-  const right = start + PER_PAGE;
+function Pages({start, grid, renderSlot, cardCount, turn, cover}: Pick<ViewProps, 'start' | 'grid' | 'renderSlot' | 'cardCount' | 'turn' | 'cover'>) {
+  const right = start + pocketsOf(grid);
   return (
     <>
       <BinderPage
         from={start}
         side="left"
         single={false}
+        page={grid}
         renderSlot={renderSlot}
         cover={coverOf({from: start, side: 'left'}, false, cardCount)}
         coverContent={cover}
@@ -601,6 +606,7 @@ function Pages({start, renderSlot, cardCount, turn, cover}: Pick<ViewProps, 'sta
         from={right}
         side="right"
         single={false}
+        page={grid}
         renderSlot={renderSlot}
         cover={coverOf({from: right, side: 'right'}, false, cardCount)}
         pageRef={turn.right}
@@ -624,7 +630,7 @@ const PAGES_BOX: CSSProperties = {
   display: 'flex',
   alignItems: 'stretch',
   justifyContent: 'center',
-  // A size container, so a spread page can read its own height (`SPREAD_COLUMN`). Safe
+  // A size container, so a spread page can read its own height (`spreadColumn`). Safe
   // because nothing inside sizes this box: the row's flex, its height and the cap do.
   containerType: 'size',
 };
@@ -654,9 +660,9 @@ function useRowWidth(ref: RefObject<HTMLDivElement | null>): number {
 }
 
 /** Two facing pages, sized from the height they are given, arrows either side. */
-function FlankedSpread({start, renderSlot, arrows, cardCount, sheets, turn, cover}: ViewProps) {
+function FlankedSpread({start, grid, renderSlot, arrows, cardCount, sheets, turn, cover}: ViewProps) {
   const rowRef = useRef<HTMLDivElement>(null);
-  const maxHeight = spreadMaxHeight(useRowWidth(rowRef), true);
+  const maxHeight = spreadMaxHeight(useRowWidth(rowRef), true, grid);
   return (
     // The arrows are FLEX SIBLINGS of the pages, not an overlay. Overlaying them
     // was tried and reverted the same hour: the spread's width is derived from its
@@ -677,7 +683,7 @@ function FlankedSpread({start, renderSlot, arrows, cardCount, sheets, turn, cove
       {arrows.prev}
       <div style={{...PAGES_BOX, flex: '1 1 0', height: '100%', maxHeight}}>
         <Board sheets={sheets} turn={turn}>
-          <Pages start={start} renderSlot={renderSlot} cardCount={cardCount} turn={turn} cover={cover} />
+          <Pages start={start} grid={grid} renderSlot={renderSlot} cardCount={cardCount} turn={turn} cover={cover} />
         </Board>
       </div>
       {arrows.next}
@@ -741,9 +747,9 @@ const EDGE_FRAME: CSSProperties = {
  * runs out first (see `EDGE_FRAME`). Pinned left, so on the one paint before a resize's new
  * height cap lands, a spread too wide for its box runs past its right edge, never its left.
  */
-function StackedSpread({start, renderSlot, arrows, footer, cardCount, sheets, turn, cover}: ViewProps) {
+function StackedSpread({start, grid, renderSlot, arrows, footer, cardCount, sheets, turn, cover}: ViewProps) {
   const rowRef = useRef<HTMLDivElement>(null);
-  const maxHeight = spreadMaxHeight(useRowWidth(rowRef), false);
+  const maxHeight = spreadMaxHeight(useRowWidth(rowRef), false, grid);
   return (
     <div
       ref={rowRef}
@@ -751,7 +757,7 @@ function StackedSpread({start, renderSlot, arrows, footer, cardCount, sheets, tu
       <div style={{...PAGES_BOX, justifyContent: 'flex-start', flex: '1 1 0', minHeight: 0, maxHeight}}>
         <Board sheets={sheets} turn={turn} layout={EDGE_FRAME}>
           {arrows.prev}
-          <Pages start={start} renderSlot={renderSlot} cardCount={cardCount} turn={turn} cover={cover} />
+          <Pages start={start} grid={grid} renderSlot={renderSlot} cardCount={cardCount} turn={turn} cover={cover} />
           {arrows.next}
         </Board>
       </div>
@@ -770,21 +776,22 @@ function SpreadView({edges, ...props}: ViewProps & {edges: boolean}) {
  * row of arrows where it has none. The lone page is the RIGHT-hand sheet: rings on its
  * left edge, so it still reads as a page in a binder rather than a loose card grid, in a
  * board with one zip round it. Nothing here is measured, which is what keeps what lies below
- * it from moving after first paint: its rows, and at 4 its width, come from the section,
- * measured before then (`useLoneFit`).
+ * it from moving after first paint: today's page's rows, and at 4 its width, come from the
+ * section, measured before then (`useLoneFit`). A square page is as wide as the binder.
  */
-function SingleView({start, renderSlot, arrows, footer, cardCount, sheets, turn, fit, cover}: ViewProps) {
+function SingleView({start, grid, renderSlot, arrows, footer, cardCount, sheets, turn, fit, cover}: ViewProps) {
+  const maxWidth = isSquare(grid) ? undefined : fit.maxWidth;
   return (
     <>
       {/* Over a footer, the map's band, the board sits only a little below the binder's top. */}
-      <div style={loneBoxStyle(footer === undefined ? SPACING.sm : LONE_TOP_OVER_MAP, fit.maxWidth)}>
+      <div style={loneBoxStyle(footer === undefined ? SPACING.sm : LONE_TOP_OVER_MAP, maxWidth)}>
         <Board sheets={sheets} turn={turn} single>
           <Spine />
           <BinderPage
             from={start}
             side="right"
             single
-            rows={fit.rows}
+            page={viewPage(grid, true, fit.rows)}
             renderSlot={renderSlot}
             cover={coverOf({from: start, side: 'right'}, true, cardCount)}
             coverContent={cover}
@@ -838,7 +845,7 @@ interface PocketView {
   focusable: readonly number[];
   /** Pages across: two for a spread, one for a lone page. */
   pages: number;
-  /** Each page's grid: a spread's 4 by 3, or a lone page's 3 by 3 or 3 by 4. */
+  /** Each page's grid (`viewPage`): a spread's own, or a phone's lone page. */
   grid: PageGrid;
 }
 
@@ -939,14 +946,21 @@ function usePocketFocus(start: number, view: PocketView) {
 
 const NO_SHEETS: ViewSheets = {left: 0, right: 0};
 
+/** What a binder's paging follows (`pagingOf`): its page, whether a view is a lone page, and that page's rows. */
+interface PagingKey {
+  grid: BinderGrid;
+  single: boolean;
+  rows: LoneRows;
+}
+
 /**
  * The sheets under each page of the view from `start` (see `viewSheets`): how far through
  * the binder it is, from the view's place among them all. None while the binder loads.
  */
-function sheetsAt(start: number, {single, rows}: {single: boolean; rows: LoneRows}, cardCount: number | undefined): ViewSheets {
+function sheetsAt(start: number, {grid, single, rows}: PagingKey, cardCount: number | undefined): ViewSheets {
   if (cardCount === undefined) return NO_SHEETS;
   // A spread binder's views start a page in, for the front cover (see `start`).
-  const {perView, lead} = pagingOf(single, rows);
+  const {perView, lead} = pagingOf(grid, single, rows);
   return viewSheets((start + lead) / perView, Math.max(1, Math.ceil((cardCount + lead) / perView)), single);
 }
 
@@ -965,6 +979,8 @@ type TurnProps = Pick<BinderSpreadProps, 'start' | 'renderSlot' | 'canPrev' | 'c
   onPrev: () => void;
   onNext: () => void;
   single: boolean;
+  /** The binder's page (see `BinderSpreadProps.grid`). */
+  grid: BinderGrid;
   /** A lone page's rows: what a view and a page hold. */
   rows: LoneRows;
   /** The binder's section, where a page in hand keeps its touch (`useGrabTurn`). */
@@ -1005,10 +1021,11 @@ const turnKey = ({from, to, held}: Turn) => `${from}>${to}${held ? ' held' : ''}
  * see it; the sheet is a copy drawn over it (`PageTurn`).
  */
 function useViewTurn(props: TurnProps): ViewTurn {
-  const {start, single, rows, renderSlot, cardCount, cover} = props;
-  const perView = perViewOf(single, rows);
+  const {start, single, grid, rows, renderSlot, cardCount, cover} = props;
+  const view = viewPage(grid, single, rows);
+  const perView = pagingOf(grid, single, rows).perView;
   const reducedMotion = usePrefersReducedMotion();
-  const perPage = single ? perLonePage(rows) : PER_PAGE;
+  const perPage = pocketsOf(view);
   const {turn, hold, end} = usePageTurns(start, {single, perPage, reducedMotion});
   const grab = useGrabTurn({...props, perView, turning: turn !== null, hold, end, reducedMotion, spine: SPINE_WIDTH});
   const left = useRef<HTMLDivElement>(null);
@@ -1018,7 +1035,7 @@ function useViewTurn(props: TurnProps): ViewTurn {
       from={page.from}
       side={page.side}
       single={single}
-      rows={rows}
+      page={view}
       renderSlot={(index) => renderSlot(index, -1)}
       cover={coverOf(page, single, cardCount)}
       coverContent={cover}
@@ -1085,6 +1102,7 @@ export function BinderSpread({
   canPrev,
   canNext,
   single = false,
+  grid = TODAY_PAGE,
   arrows = 'beside',
   footer,
   cardCount,
@@ -1094,11 +1112,11 @@ export function BinderSpread({
 }: BinderSpreadProps) {
   const unit = single ? 'page' : 'spread';
   const {rows} = loneFit;
-  const focusable = focusableInView(start, perViewOf(single, rows), {cardCount, isOpen});
+  const focusable = focusableInView(start, pagingOf(grid, single, rows).perView, {cardCount, isOpen});
   const pockets = usePocketFocus(start, {
     focusable,
     pages: single ? 1 : 2,
-    grid: single ? lonePage(rows) : SPREAD_PAGE,
+    grid: viewPage(grid, single, rows),
   });
   const sectionRef = useRef<HTMLElement>(null);
   const follow = useFocusFollowsView(sectionRef, start, single);
@@ -1108,10 +1126,11 @@ export function BinderSpread({
     renderSlot: (index) => renderSlot(index, pockets.tabIndexFor(index)),
     footer,
     cardCount,
-    sheets: sheetsAt(start, {single, rows}, cardCount),
+    sheets: sheetsAt(start, {grid, single, rows}, cardCount),
     turn: useViewTurn({
       start,
       single,
+      grid,
       rows,
       renderSlot,
       onPrev: () => onPrev('drag'),
@@ -1122,6 +1141,7 @@ export function BinderSpread({
       cover,
       binder: sectionRef,
     }),
+    grid,
     fit: loneFit,
     cover,
     arrows: {
