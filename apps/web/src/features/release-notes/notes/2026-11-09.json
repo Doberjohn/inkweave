@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 2,
+  "week": "2026-11-09",
+  "title": "November 9 to 15, 2026",
+  "summary": "A quieter week: page descriptions now fit in search results, and two fixes for keyboard and screen reader users in Browse and the collection.",
+  "sections": {
+    "improved": [
+      {
+        "title": "Descriptions in search results",
+        "body": "Every page's description now fits within what search engines show, so a search result for a card, a playstyle or an ink page no longer cuts its description off partway.",
+        "prs": [
+          1147
+        ]
+      }
+    ],
+    "fixed": [
+      {
+        "title": "Keyboard focus in the collection's menu",
+        "body": "Pressing Tab out of the collection's open gear menu now closes it and puts focus back on the gear button, instead of losing focus with the menu.",
+        "prs": [
+          1154
+        ]
+      },
+      {
+        "title": "The Filters button for screen readers",
+        "body": "Screen readers and voice control now read the Filters button the way it looks, with a space between the word and the count of filters on, instead of running them together.",
+        "prs": [
+          1150
+        ]
+      }
+    ]
+  },
+  "behindTheScenes": "Plus 10 behind-the-scenes changes: dependency updates, design cleanups, a fix for the admin tools, and work on features that aren't switched on yet."
+}
