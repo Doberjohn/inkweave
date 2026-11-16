@@ -16,7 +16,7 @@
     "fixed": [
       {
         "title": "Keyboard focus in the collection's menu",
-        "body": "Pressing Tab out of the collection's open gear menu now closes it and puts focus back on the gear button, instead of losing focus with the menu.",
+        "body": "Pressing Tab out of the collection's open gear menu now closes it and moves on from the gear button, and Shift+Tab stops on the gear, instead of losing focus with the menu.",
         "prs": [
           1154
         ]
