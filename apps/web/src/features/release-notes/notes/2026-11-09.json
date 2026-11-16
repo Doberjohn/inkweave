@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "week": "2026-11-09",
   "title": "November 9 to 15, 2026",
-  "summary": "A quieter week: page descriptions now fit in search results, and two fixes for keyboard and screen reader users in Browse and the collection.",
+  "summary": "A quieter week: page descriptions now fit in search results, and focus no longer gets lost when you press Tab out of the collection's gear menu.",
   "sections": {
     "improved": [
       {
@@ -20,15 +20,8 @@
         "prs": [
           1154
         ]
-      },
-      {
-        "title": "The Filters button for screen readers",
-        "body": "Screen readers and voice control now read the Filters button the way it looks, with a space between the word and the count of filters on, instead of running them together.",
-        "prs": [
-          1150
-        ]
       }
     ]
   },
-  "behindTheScenes": "Plus 10 behind-the-scenes changes: dependency updates, design cleanups, a fix for the admin tools, and work on features that aren't switched on yet."
+  "behindTheScenes": "Plus 11 behind-the-scenes changes: dependency updates, design and accessibility cleanups, a fix for the admin tools, and work on features that aren't switched on yet."
 }
