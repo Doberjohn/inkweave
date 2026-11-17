@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 2,
+  "week": "2026-11-09",
+  "title": "November 9 to 15, 2026",
+  "summary": "A quieter week: page descriptions now fit in search results, and focus no longer gets lost when you press Tab out of the collection's gear menu.",
+  "sections": {
+    "improved": [
+      {
+        "title": "Descriptions in search results",
+        "body": "Every page's description now fits within what search engines show, so a search result for a card, a playstyle or an ink page no longer cuts its description off partway.",
+        "prs": [
+          1147
+        ]
+      }
+    ],
+    "fixed": [
+      {
+        "title": "Keyboard focus in the collection's menu",
+        "body": "Pressing Tab out of the collection's open gear menu now closes it and moves on from the gear button, and Shift+Tab stops on the gear, instead of losing focus with the menu.",
+        "prs": [
+          1154
+        ]
+      }
+    ]
+  },
+  "behindTheScenes": "Plus 11 behind-the-scenes changes: dependency updates, design and accessibility cleanups, a fix for the admin tools, and work on features that aren't switched on yet."
+}
