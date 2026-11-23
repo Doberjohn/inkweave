@@ -169,16 +169,16 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@size-limit/file": "^14.3.0",
-    "eslint": "^10.14.0",
+    "eslint": "^10.15.0",
     "globals": "^17.14.0",
     "husky": "^9.1.7",
-    "knip": "^6.44.1",
-    "prettier": "^3.9.10",
+    "knip": "^6.45.1",
+    "prettier": "^3.10.1",
     "sharp": "^0.35.5",
     "size-limit": "^14.3.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.72.1",
-    "vitest": "^5.0.5"
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^5.1.0"
   },
   "packageManager": "pnpm@10.34.7",
   "engines": {

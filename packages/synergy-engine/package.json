@@ -42,11 +42,11 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@vitest/coverage-v8": "~5.0.5",
-    "eslint": "^10.14.0",
+    "@vitest/coverage-v8": "~5.1.0",
+    "eslint": "^10.15.0",
     "tsup": "^9.0.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.72.1",
-    "vitest": "~5.0.5"
+    "typescript-eslint": "^8.72.2",
+    "vitest": "~5.1.0"
   }
 }
