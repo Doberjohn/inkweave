@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 2,
+  "week": "2026-11-16",
+  "title": "November 16 to 22, 2026",
+  "summary": "A quiet week: one promo in collection mode now counts the version it was printed in.",
+  "sections": {
+    "fixed": [
+      {
+        "title": "Rapunzel's promo versions",
+        "body": "In collection mode, Rapunzel - Escaping the Tower's promo 15/P4 now counts normal copies instead of foil, matching how it was printed."
+      }
+    ]
+  }
+}
