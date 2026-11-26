@@ -34749,7 +34749,18 @@
       },
       "number": 10,
       "rarity": "Common",
-      "setCode": "13"
+      "setCode": "13",
+      "variants": [
+        {
+          "id": 80061,
+          "rarity": "Special",
+          "number": 12,
+          "promoGrouping": "DIS",
+          "finishes": [
+            "foil"
+          ]
+        }
+      ]
     },
     {
       "id": 2982,
