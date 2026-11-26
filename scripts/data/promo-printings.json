@@ -1,17 +1,17 @@
 {
   "about": "Disney Lorcana's promo printings, as entries for a card's `variants` array in apps/web/public/data/allCards.json, the shape Epic/Enchanted/Iconic use. `stats` counts them. The list started from the 261 the owner settled on 16 Oct 2026 (Claude Doc 'Promo cards to settle'), less six the owner dropped on 18 Oct (C1's four non-foil twins and its unnumbered 2025 World Champion Mickey, and C2's unnumbered store-event Minnie), and nine the owner added that day: 26/P2's European printing, Vaiana; two Chinese printings, 42/P2 Snow White - Unexpected Houseguest and 43/P2 Stitch - Little Rocket; and six the owner scanned in Japanese, 59/P3 Elsa - Exploring the Unknown, 61/P3 and 62/P3 Maleficent - Monstrous Dragon, 63/P3 Buzz Lightyear - Space Ranger, and 7/P4 and 8/P4 Daisy Duck - Paranormal Investigator. Printings added since come from admin's Card studio (Doberjohn/inkweave-admin#77) or by hand. Read promo-printings-merge-notes.md first.",
   "stats": {
-    "promoPrintings": 270,
+    "promoPrintings": 271,
     "withLorcanaJsonId": 215,
-    "withProvisionalId": 55,
+    "withProvisionalId": 56,
     "withOfficialArtUrl": 215,
     "foldIntoAllCards": {
       "printings": 151,
       "baseCards": 119
     },
     "noBaseCardInAllCards": {
-      "printings": 119,
-      "cards": 99
+      "printings": 120,
+      "cards": 100
     },
     "byPromoGrouping": {
       "C1": 10,
@@ -20,7 +20,7 @@
       "CC1": 6,
       "CC2": 6,
       "D23": 16,
-      "DIS": 13,
+      "DIS": 14,
       "P1": 41,
       "P2": 41,
       "P3": 63,
@@ -4127,6 +4127,23 @@
       ]
     },
     {
+      "fullName": "Stitch - Little Trickster",
+      "lorcanaJsonBaseId": 1225,
+      "baseSetCode": "6",
+      "baseNumber": 26,
+      "variants": [
+        {
+          "id": 80062,
+          "rarity": "Special",
+          "number": 13,
+          "promoGrouping": "DIS",
+          "finishes": [
+            "foil"
+          ]
+        }
+      ]
+    },
+    {
       "fullName": "Rescue Rangers Away!",
       "lorcanaJsonBaseId": 1228,
       "baseSetCode": "6",
@@ -5118,7 +5135,8 @@
     "80058": "9/DIS Tamatoa - So Shiny!",
     "80059": "10/DIS Moana - Kakamora Leader",
     "80060": "11/DIS Maui - Stubborn Trickster",
-    "80061": "12/DIS Lilo - Patient Weaver"
+    "80061": "12/DIS Lilo - Patient Weaver",
+    "80062": "13/DIS Stitch - Little Trickster"
   },
   "notes": [
     {
